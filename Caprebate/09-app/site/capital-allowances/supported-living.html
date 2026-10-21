@@ -876,6 +876,16 @@ html:not(.js) .scanbar{display:none}
 @media (max-width:399px){.foot{grid-template-columns:repeat(2,minmax(0,1fr))}.foot .fb,.foot .fl{grid-column:1/-1}}
 @media (max-width:479px){.foot>div:last-of-type{grid-column:1/-1}}
 
+/* Phase 160l (Lakhbir, 21 Oct): the 3% inked with a black outline; the title block's Scale gone; a signature on the line */
+.spec .sp-fee b{-webkit-text-stroke:3px var(--ink);paint-order:stroke fill}
+#why .fee-n,#why .fee-n small{-webkit-text-stroke:4px var(--ink);paint-order:stroke fill}
+.tb .c-region{grid-column:span 4}
+.sig .line{position:relative;height:34px}
+.sig .sgn{position:absolute;left:2px;bottom:1px;width:min(100%,180px);height:auto;fill:none;stroke:var(--ink);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.sig .sgn.sg-wait path{stroke-dasharray:1;stroke-dashoffset:1}
+.sig .sgn.sg-go path{stroke-dashoffset:0;transition:stroke-dashoffset 1.8s cubic-bezier(.45,0,.2,1)}
+@media (max-width:559px){.tb .c-region{grid-column:span 1}}
+
 /* the page's own rules */
 
 /* page only: breadcrumb, lede, the not-qualifying marks, four views, the question list */
@@ -1307,11 +1317,10 @@ html:not(.js) .scanbar{display:none}
   </div>
   <div class="c-title"><small>Title</small><span>Capital allowances for supported living and supported housing</span></div>
   <div><small>Drawn</small><span>Cap Rebate</span></div>
-  <div><small>Date</small><span>20.10.2026</span></div>
+  <div><small>Date</small><span data-today>20.10.2026</span></div>
   <div><small>Sheet</small><span>5 of 6</span></div>
   <div class="c-region"><small>Region</small><span>England and Wales</span></div>
-  <div class="c-scale"><small>Scale</small><span>Not to scale</span></div>
- </div>
+   </div>
 </section>
 
 <section class="sec" id="brief" data-idx="Summary" aria-labelledby="brief-h">
@@ -2227,6 +2236,18 @@ var links=[].slice.call(document.querySelectorAll('.toc a[href^="#"]'));if(!link
 var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});},{rootMargin:'-30% 0px -60% 0px'});
 Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+})();
+</script>
+<script>
+/* Phase 160l: the title block is dated today; the signature writes itself when it comes into view */
+(function(){
+ var d=new Date(),p=function(n){return (n<10?'0':'')+n;},t=p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear();
+ [].forEach.call(document.querySelectorAll('[data-today]'),function(el){el.textContent=t;});
+ var s=document.querySelector('.sig .sgn');if(!s||!('IntersectionObserver' in window))return;
+ if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ s.classList.add('sg-wait');
+ var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){io.disconnect();requestAnimationFrame(function(){s.classList.add('sg-go');});}});},{threshold:.6});
+ io.observe(s);
 })();
 </script>
 </body>
