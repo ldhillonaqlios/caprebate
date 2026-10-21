@@ -29,7 +29,8 @@ const go = (path: string, init: RequestInit = {}) => fetch(base + path, { redire
 
 describe('addresses nobody owns, and HEAD', () => {
   test('a mistyped address is a page that says so (404), not a 401 in JSON', async () => {
-    for (const path of ['/no-such-page', '/capital-allowances/care-homes/', '/sitemap.xml', '/assets/nope.css']) {
+    // PHASE 160k: /capital-allowances/care-homes/ is a page now; a sector the site does not have is still a 404.
+    for (const path of ['/no-such-page', '/capital-allowances/castles/', '/sitemap.xml', '/assets/nope.css', '/assets/ca-castles.css']) {
       const r = await go(path);
       assert.equal(r.status, 404, path);
       assert.match(r.headers.get('content-type') ?? '', /^text\/html/, path);
@@ -82,7 +83,7 @@ describe('the browser tab’s icon', () => {
     assert.equal(svg.headers.get('content-type'), 'image/svg+xml');
     assert.match(await svg.text(), /<path d="M14 43 H34 A4 4 0 0 0 38 39 V20\.5 L24 8 L10 20\.5 V39/);
     assert.equal((await go('/favicon.ico')).status, 204);
-    for (const path of ['/', '/login', '/privacy/']) {
+    for (const path of ['/', '/login', '/privacy/', '/capital-allowances/care-homes/']) {
       assert.match(await (await go(path)).text(), /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/, path);
     }
   });

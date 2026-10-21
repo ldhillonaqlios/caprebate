@@ -19,12 +19,34 @@
  *    public TEST key, which always passes; /enquiry does not yet check the token (a named job before launch).
  *
  * THE PATHS ARE CONSTANTS. No request path is ever mapped onto the disk.
+ *
+ * PHASE 160k, 21 OCTOBER 2026: THE NEW PUBLIC WEBSITE. Lakhbir: "push it live". The home page is now the
+ * "Kurbelwerk" design, and five sector landing pages join it at /capital-allowances/<sector>/ (site/capital-allowances/
+ * <sector>.html). Both come from their design files through tools/site-from-design.mjs, which turns every style
+ * attribute into a class and self-hosts the fonts. Every page is built the same way here (buildEdition): its <style>
+ * block becomes /assets/<name>.css; the scripts in its <head> become /assets/<name>-head.js, kept in the head; the
+ * scripts in its body become /assets/<name>.js, placed where the LAST of them stood, so they run after the page is
+ * read. The page policy gains font-src 'self' for the fonts (/assets/fonts/, site/fonts/), and nothing else.
  */
 
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const HOME_PATH = join(import.meta.dirname, '..', '..', '..', 'site', 'home.html');
+export const SITE_DIR = join(import.meta.dirname, '..', '..', '..', 'site');
+
+/** The sector landing pages (Phase 160k): their addresses, in the order the site lists them. */
+export const SECTOR_SLUGS = ['care-homes', 'dental-practices', 'gp-surgeries', 'supported-living', 'private-hospitals-and-clinics'] as const;
+export type SectorSlug = (typeof SECTOR_SLUGS)[number];
+export function isSectorSlug(x: string): x is SectorSlug { return (SECTOR_SLUGS as readonly string[]).includes(x); }
+export const sectorPath = (slug: SectorSlug): string => join(SITE_DIR, 'capital-allowances', `${slug}.html`);
+
+/** The self-hosted fonts (IBM Plex, SIL Open Font License): the only names /assets/fonts/ will serve. */
+export const FONT_FILES = [
+  'ibm-plex-sans-latin-400-normal.woff2', 'ibm-plex-sans-latin-500-normal.woff2', 'ibm-plex-sans-latin-600-normal.woff2',
+  'ibm-plex-sans-condensed-latin-500-normal.woff2', 'ibm-plex-sans-condensed-latin-600-normal.woff2', 'ibm-plex-sans-condensed-latin-700-normal.woff2',
+  'ibm-plex-mono-latin-400-normal.woff2', 'ibm-plex-mono-latin-500-normal.woff2', 'ibm-plex-mono-latin-600-normal.woff2',
+] as const;
 export const GSAP_PATH = join(import.meta.dirname, '..', '..', '..', '..', '..', 'node_modules', 'gsap', 'dist', 'gsap.min.js');
 
 /** Where the page's script tag for GSAP points in the source file, and where it points when served. */
@@ -35,7 +57,7 @@ export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
 
 /** The home page's policy: the site's own, plus Cloudflare's security check. Nothing else. */
 export const HOME_PAGE_CSP =
-  "default-src 'none'; style-src 'self'; img-src 'self' data:; " +
+  "default-src 'none'; style-src 'self'; img-src 'self' data:; font-src 'self'; " +
   `script-src 'self' ${TURNSTILE_ORIGIN}; frame-src ${TURNSTILE_ORIGIN}; ` +
   "form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
 
@@ -47,7 +69,7 @@ export const HOME_PAGE_HEADERS: Readonly<Record<string, string>> = Object.freeze
   'content-security-policy': HOME_PAGE_CSP,
 });
 
-export type HomeEdition = { readonly html: string; readonly css: string; readonly js: string };
+export type HomeEdition = { readonly html: string; readonly css: string; readonly js: string; readonly headJs: string };
 
 const INLINE: readonly [RegExp, string][] = [
   [/<style\b/i, 'an inline <style> block'],
@@ -57,30 +79,39 @@ const INLINE: readonly [RegExp, string][] = [
   [/href\s*=\s*["']?\s*javascript:/i, 'a javascript: link'],
 ];
 
-/** Build the served edition from the file's text. Pure, so a test can hand it a string. */
-export function buildHomeEdition(source: string): HomeEdition {
-  let rest = source.replace(/^﻿/, '');
+/** Build a page's served edition from its text (Phase 160k: any page, by name). Pure, so a test can hand it a string.
+ *  The <style> block becomes /assets/<name>.css. Scripts in the <head> become /assets/<name>-head.js where the first
+ *  of them stood; scripts in the body become /assets/<name>.js where the LAST of them stood, so they run once the
+ *  page is read. The structured data (ld+json) stays as it is; anything else inline is refused. */
+export function buildEdition(source: string, name: string): HomeEdition {
+  let rest = source.replace(/^\uFEFF/, '');
   const a = rest.indexOf('<style>');
   const b = a < 0 ? -1 : rest.indexOf('</style>', a);
-  if (a < 0 || b < 0) throw new Error('the home page has no <style> block');
+  if (a < 0 || b < 0) throw new Error(`the ${name} page has no <style> block`);
   const css = rest.slice(a + '<style>'.length, b);
-  rest = `${rest.slice(0, a)}<link rel="stylesheet" href="/assets/home.css">${rest.slice(b + '</style>'.length)}`;
-  // Every script block the browser would run, in order, into one file placed where the first one stood.
-  const scripts: string[] = [];
-  let first = -1;
-  rest = rest.replace(/<script>([\s\S]*?)<\/script>\n?/g, (_m, body: string, at: number) => {
-    if (first < 0) first = at;
-    scripts.push(body);
-    return scripts.length === 1 ? '\u0000HOMEJS\u0000' : '';
+  rest = `${rest.slice(0, a)}<link rel="stylesheet" href="/assets/${name}.css">${rest.slice(b + '</style>'.length)}`;
+  const headEnd = rest.indexOf('</head>');
+  const head: string[] = [];
+  const body: string[] = [];
+  rest = rest.replace(/<script>([\s\S]*?)<\/script>\n?/g, (_m, text: string, at: number) => {
+    if (headEnd >= 0 && at < headEnd) { head.push(text); return head.length === 1 ? '\u0000HEADJS\u0000' : ''; }
+    body.push(text);
+    return '\u0000BODYJS\u0000';
   });
-  if (scripts.length === 0) throw new Error('the home page has no <script> block');
-  rest = rest.replace('\u0000HOMEJS\u0000', '<script src="/assets/home.js"></script>\n');
+  if (body.length === 0) throw new Error(`the ${name} page has no <script> block`);
+  // only the last body marker becomes the script tag; the others are dropped
+  let seen = 0;
+  rest = rest.replace(/\u0000BODYJS\u0000/g, () => (++seen === body.length ? `<script src="/assets/${name}.js"></script>\n` : ''));
+  rest = rest.replace('\u0000HEADJS\u0000', `<script src="/assets/${name}-head.js"></script>\n`);
   rest = rest.replace(GSAP_CDN, GSAP_LOCAL);
   for (const [re, what] of INLINE) {
-    if (re.test(rest)) throw new Error(`the served home page would carry ${what}`);
+    if (re.test(rest)) throw new Error(`the served ${name} page would carry ${what}`);
   }
-  return { html: rest, css, js: scripts.join('\n;\n') };
+  return { html: rest, css, js: body.join('\n;\n'), headJs: head.join('\n;\n') };
 }
+
+/** The home page's edition (its assets are /assets/home.css, /assets/home-head.js and /assets/home.js). */
+export function buildHomeEdition(source: string): HomeEdition { return buildEdition(source, 'home'); }
 
 let cached: { mtimeMs: number; edition: HomeEdition } | undefined;
 
@@ -100,4 +131,34 @@ export function gsapScript(): Buffer | null {
   if (gsapCache !== undefined) return gsapCache;
   try { gsapCache = readFileSync(GSAP_PATH); } catch { gsapCache = null; }
   return gsapCache;
+}
+
+const sectorCache = new Map<SectorSlug, { mtimeMs: number; edition: HomeEdition }>();
+
+/** A sector landing page's edition (assets /assets/ca-<slug>.css, -head.js and .js), rebuilt when its file changes;
+ *  `undefined` when the file is not beside the build. */
+export function sectorEdition(slug: SectorSlug): HomeEdition | undefined {
+  const path = sectorPath(slug);
+  let mtimeMs: number;
+  try { mtimeMs = statSync(path).mtimeMs; } catch { return undefined; }
+  const hit = sectorCache.get(slug);
+  if (hit?.mtimeMs === mtimeMs) return hit.edition;
+  const edition = buildEdition(readFileSync(path, 'utf8'), `ca-${slug}`);
+  sectorCache.set(slug, { mtimeMs, edition });
+  return edition;
+}
+
+const fontCache = new Map<string, Buffer | null>();
+// fixed at start-up from the list, so a request name only ever picks one of these paths (DB-W1)
+const FONT_PATHS = new Map<string, string>(FONT_FILES.map((f) => [f, join(SITE_DIR, 'fonts', f)]));
+
+/** A self-hosted font by its file name, or null for a name not on the list or a file not beside the build. */
+export function fontFile(name: string): Buffer | null {
+  const path = FONT_PATHS.get(name);
+  if (path === undefined) return null;
+  if (fontCache.has(name)) return fontCache.get(name) ?? null;
+  let buf: Buffer | null = null;
+  try { buf = readFileSync(path); } catch { buf = null; }
+  fontCache.set(name, buf);
+  return buf;
 }

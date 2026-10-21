@@ -97,7 +97,7 @@ import {
 } from './introducers.ts';
 import { clientDeliverables, type ClientDeliverable } from './claim-record.ts';
 import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from './public-site.ts';
-import { homeEdition, gsapScript, HOME_PAGE_HEADERS } from './home-site.ts';
+import { homeEdition, gsapScript, HOME_PAGE_HEADERS, sectorEdition, isSectorSlug, fontFile } from './home-site.ts';
 import { checkTurnstile, refusalWords, turnstileSiteKey, withSiteKey, TURNSTILE_FIELD } from '../connectors/turnstile.ts';
 import { receiveEnquiry } from './enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
@@ -156,7 +156,8 @@ function setCookie(res: ServerResponse, name: string, value: string, maxAge: num
 /** STRESS TEST, 29 SEP 2026: the addresses where a HEAD is answered as a GET, because their GET changes nothing. */
 function HEAD_AS_GET(path: string): boolean {
   return path === '/' || path.startsWith('/assets/') || path === '/login' || path === '/favicon.svg' || path === '/favicon.ico'
-    || path === '/privacy/' || path === '/privacy' || path === '/notices/' || path === '/notices';
+    || path === '/privacy/' || path === '/privacy' || path === '/notices/' || path === '/notices'
+    || path.startsWith('/capital-allowances');
 }
 
 /** The browser tab's icon: the home page's mark (the calculator drawn as a house) on the ink ground. */
@@ -558,6 +559,38 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const edition = homeEdition();
     // The configured Turnstile site key goes in here; without one the page keeps Cloudflare's test key.
     if (edition !== undefined) { res.writeHead(200, { ...SITE_JS_HEADERS, 'cache-control': 'public, max-age=300' }); res.end(withSiteKey(edition.js, turnstileSiteKey(d.app.secrets))); return 'handled'; }
+  }
+  /* PHASE 160k, 21 OCTOBER 2026: THE NEW PUBLIC WEBSITE. The home page's head script, the five sector landing pages
+     and their assets, and the self-hosted fonts. Every name is checked against a fixed list; no path reaches the disk. */
+  if (path === '/assets/home-head.js' && method === 'GET') {
+    const edition = homeEdition();
+    if (edition !== undefined && edition.headJs !== '') { res.writeHead(200, { ...SITE_JS_HEADERS, 'cache-control': 'public, max-age=300' }); res.end(edition.headJs); return 'handled'; }
+  }
+  const caAsset = method === 'GET' ? /^\/assets\/ca-([a-z-]+?)(-head\.js|\.js|\.css)$/.exec(path) : null;
+  if (caAsset !== null && isSectorSlug(caAsset[1] ?? '')) {
+    const edition = sectorEdition(caAsset[1] as Parameters<typeof sectorEdition>[0]);
+    if (edition !== undefined) {
+      const kind = caAsset[2];
+      if (kind === '.css') { res.writeHead(200, { ...CSS_HEADERS, 'cache-control': 'public, max-age=300' }); res.end(edition.css); return 'handled'; }
+      const body = kind === '-head.js' ? edition.headJs : withSiteKey(edition.js, turnstileSiteKey(d.app.secrets));
+      if (body !== '') { res.writeHead(200, { ...SITE_JS_HEADERS, 'cache-control': 'public, max-age=300' }); res.end(body); return 'handled'; }
+    }
+  }
+  if (path.startsWith('/assets/fonts/') && method === 'GET') {
+    const font = fontFile(path.slice('/assets/fonts/'.length));
+    if (font !== null) {
+      res.writeHead(200, { 'content-type': 'font/woff2', 'x-content-type-options': 'nosniff', 'cache-control': 'public, max-age=86400' });
+      res.end(font); return 'handled';
+    }
+  }
+  if (path === '/capital-allowances' || path === '/capital-allowances/') {
+    res.writeHead(303, { location: '/#sectors' }); res.end(); return 'handled';
+  }
+  const caPage = /^\/capital-allowances\/([a-z-]+)(\/?)$/.exec(path);
+  if (caPage !== null && method === 'GET' && isSectorSlug(caPage[1] ?? '')) {
+    if (caPage[2] !== '/') { res.writeHead(303, { location: `/capital-allowances/${caPage[1]}/${url.search}` }); res.end(); return 'handled'; }
+    const edition = sectorEdition(caPage[1] as Parameters<typeof sectorEdition>[0]);
+    if (edition !== undefined) { res.writeHead(200, HOME_PAGE_HEADERS); res.end(edition.html); return 'handled'; }
   }
   if (path === '/assets/gsap.min.js' && method === 'GET') {
     const gsap = gsapScript();

@@ -251,14 +251,17 @@ describe('no page carries inline script or style, and the CSP is unchanged', () 
          script and Cloudflare's security check (scripts and frames from that one origin) added, nothing else loosened.
          Its scripts are files from this origin, and the search engines' structured data, which a browser never runs. */
       if (path === '/') {
+        /* PHASE 160k, 21 OCTOBER 2026: the new home page adds its own fonts (font-src 'self') and nothing else; its
+           scripts are its head script and its page script, both files from this site, and its structured data. */
         assert.equal(r.headers.get('content-security-policy'),
-          CSP_BEFORE.replace("form-action", "script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; form-action"),
-          '/ carries a policy other than the back end’s plus its own script and the security check');
+          CSP_BEFORE.replace("img-src 'self' data:;", "img-src 'self' data:; font-src 'self';")
+            .replace("form-action", "script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; form-action"),
+          '/ carries a policy other than the back end’s plus its own fonts, its own script and the security check');
         const scripts = [...body.matchAll(/<script\b[^>]*>/gi)].map((m) => m[0]);
-        assert.deepEqual(scripts, ['<script src="/assets/gsap.min.js" defer>', '<script type="application/ld+json">', '<script src="/assets/home.js">'],
+        assert.deepEqual(scripts, ['<script type="application/ld+json">', '<script src="/assets/home-head.js">', '<script src="/assets/home.js">'],
           '/ carries a script other than its own files and its structured data');
         body = body.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, '')
-          .replace('<script src="/assets/gsap.min.js" defer></script>', '').replace('<script src="/assets/home.js"></script>', '');
+          .replace('<script src="/assets/home-head.js"></script>', '').replace('<script src="/assets/home.js"></script>', '');
       }
       for (const [re, what] of INLINE) assert.equal(re.test(body), false, `${path} carries ${what}`);
     }

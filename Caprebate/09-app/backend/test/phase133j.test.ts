@@ -105,11 +105,12 @@ describe('the website is served at / by the back end', () => {
     const r = await makeClient(base).req('/');
     assert.equal(r.status, 200);
     assert.match(r.body, /<title>Capital Allowances for Healthcare Property \| Cap Rebate<\/title>/);
-    const header = /<header class="bar" id="bar">([\s\S]*?)<\/header>/.exec(r.body)?.[1] ?? '';
-    assert.match(header, /<a class="bar-login" href="\/login">Log in<\/a>/, 'no Log in in the top bar');
+    // PHASE 160k, 21 OCTOBER 2026: the new home page's top bar is <header class="top">, and Log in is in its menu.
+    const header = /<header class="top" id="top">([\s\S]*?)<\/header>/.exec(r.body)?.[1] ?? '';
+    assert.match(header, /<a href="\/login">Log in<\/a>/, 'no Log in in the top bar');
     const assess = [...r.body.matchAll(/<a class="[^"]*" href="(\/assessment)"/g)].map((m) => m[1]);
     assert.ok(assess.length >= 4, 'the assessment links are gone');
-    assert.match(r.body, /<form class="c-form" id="contactform" action="\/enquiry" method="post" novalidate/);
+    assert.match(r.body, /<form class="form" id="contactform" action="\/enquiry" method="post" novalidate/);
     for (const name of ['name', 'firm', 'email', 'phone', 'ptype', 'message']) assert.match(r.body, new RegExp(`name="${name}"`));
     assert.match(r.body, /<link rel="stylesheet" href="\/assets\/home.css">/);
     assert.match(r.body, /<script src="\/assets\/home.js"><\/script>/);

@@ -1,0 +1,2233 @@
+<!doctype html>
+<!-- Cap Rebate sector page: supported-living. Written by tools/site-from-design.mjs from its design file (Phase 160k); edit the design file and run the tool again. -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<title>Capital Allowances for Supported Living | Cap Rebate</title>
+<meta name="description" content="Capital allowances for supported living and supported housing: which shared parts can qualify, why the homes cannot, and a straight answer, even if nil.">
+<link rel="canonical" href="https://caprebate.co.uk/capital-allowances/supported-living/">
+<meta property="og:title" content="Capital Allowances for Supported Living | Cap Rebate">
+<meta property="og:description" content="Capital allowances for supported living and supported housing: which shared parts can qualify, why the homes cannot, and a straight answer, even if nil.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_GB">
+<meta property="og:url" content="https://caprebate.co.uk/capital-allowances/supported-living/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Capital Allowances for Supported Living | Cap Rebate">
+<meta name="twitter:description" content="Capital allowances for supported living and supported housing: which shared parts can qualify, why the homes cannot, and a straight answer, even if nil.">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+/* Cap Rebate, Kurbelwerk style (20 Oct 2026). Shared by the hub (option 5) and the five sector pages. */
+:root{
+ --paper:#EDEAE2; --paper-2:#E4E0D5; --paper-3:#D9D4C6;
+ --ink:#121614; --ink-2:#3B423E; --ink-3:#59615D; --mute:#a4aca8;
+ --line:rgba(18,22,20,.14); --line-2:rgba(18,22,20,.38); --grid:rgba(29,92,76,.07);
+ --mint:#ABEDD8; --mint-2:#D6F3E8; --green:#1d5c4c;
+ --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+ --cond:"IBM Plex Sans Condensed","IBM Plex Sans","Arial Narrow",sans-serif;
+ --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+ --fi:10px; --zx:20px; --zy:20px;
+ --ex:calc(var(--fi) + var(--zx)); --ey:calc(var(--fi) + var(--zy));
+ --gut:clamp(16px,3.2vw,48px);
+ --hh:60px;
+ --ease:cubic-bezier(.16,1,.3,1);
+}
+@media (max-width:639px){:root{--fi:6px;--zx:0px;--zy:15px;--hh:56px}}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:calc(var(--ey) + var(--hh) + 12px)}
+body{background:var(--paper);color:var(--ink);font:400 16px/1.55 var(--sans);padding:var(--ey) var(--ex);overflow-x:clip;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer;text-align:inherit}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+::selection{background:var(--mint);color:var(--ink)}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+.skip{position:fixed;left:calc(var(--ex) + 8px);top:calc(var(--ey) + 8px);z-index:80;background:var(--ink);color:var(--paper);padding:10px 14px;font:500 12px var(--mono);transform:translateY(-200%)}
+.skip:focus{transform:none}
+.mono{font-family:var(--mono)}
+
+/* ---------- the drawing sheet: mask, frame, zone markers ---------- */
+.mask{position:fixed;inset:var(--ey) var(--ex);box-shadow:0 0 0 100vmax var(--paper);pointer-events:none;z-index:60}
+.frame{position:fixed;inset:var(--fi);border:1px solid var(--ink);pointer-events:none;z-index:61}
+.frame::after{content:"";position:absolute;inset:var(--zy) var(--zx);border:1px solid var(--ink)}
+.zn{position:absolute;display:flex;font:500 9.5px/1 var(--mono);color:var(--ink-3)}
+.zn.t,.zn.b{left:var(--zx);right:var(--zx);height:var(--zy)}
+.zn.t{top:0}.zn.b{bottom:0}
+.zn.l,.zn.r{top:var(--zy);bottom:var(--zy);width:var(--zx);flex-direction:column}
+.zn.l{left:0}.zn.r{right:0}
+.zn span{flex:1;display:grid;place-items:center;position:relative}
+.zn.t span+span::before,.zn.b span+span::before{content:"";position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--ink)}
+.zn.l span+span::before,.zn.r span+span::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:var(--ink)}
+@media (max-width:639px){.zn.l,.zn.r{display:none}.zn{font-size:8px}}
+
+/* ---------- header and index tab ---------- */
+.top{position:sticky;top:var(--ey);z-index:50;display:flex;align-items:center;gap:clamp(12px,2vw,28px);height:var(--hh);padding:0 var(--gut);background:var(--paper);border-bottom:1px solid var(--ink)}
+.brand{display:inline-flex;align-items:center;gap:10px;font:600 17px/1 var(--sans);letter-spacing:-.01em;white-space:nowrap}
+.brand svg{width:30px;height:30px;flex:none}
+.nav{margin-left:auto}
+.nav ul{list-style:none;display:flex;gap:clamp(14px,1.7vw,26px)}
+.nav a{display:inline-flex;gap:7px;padding:8px 0;font:500 11.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.nav a span{color:var(--ink-3)}
+.nav a:hover{color:var(--green)}
+.idx{display:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:12px 16px;border:1px solid var(--ink);background:var(--paper);font:500 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;transition:background-color .25s,color .25s}
+.btn.pri{background:var(--mint)}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn .ar{display:inline-block;transition:transform .4s var(--ease)}
+.btn:hover .ar{transform:translate(2px,-2px)}
+.mbtn{display:none}
+@media (min-width:1440px){
+ .idx{display:flex;flex-direction:column;gap:4px;padding-left:16px;border-left:1px solid var(--line-2);width:15.5rem;font:500 10px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.07em}
+ .idx span:first-child{color:var(--ink-3)}
+ .idx b{font-weight:600;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+@media (max-width:1099px){
+ .mbtn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border:1px solid var(--ink);font:500 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em}
+ .mbtn i{width:14px;height:8px;border-top:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transition:transform .35s var(--ease)}
+ .top.open .mbtn i{transform:scaleY(.2)}
+ .nav{position:absolute;top:100%;left:0;right:0;margin:0;background:var(--paper);border-bottom:1px solid var(--ink);display:none}
+ .top.open .nav{display:block}
+ .nav ul{flex-direction:column;gap:0;padding:6px var(--gut) 18px}
+ .nav li{border-bottom:1px solid var(--line)}
+ .nav a{display:flex;width:100%;padding:17px 0;font-size:13px}
+ .top>.btn{margin-left:auto}
+}
+@media (max-width:519px){.top>.btn{display:none}.mbtn{margin-left:auto}}
+
+/* ---------- hero ---------- */
+.hero{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:1fr auto;column-gap:clamp(16px,2.4vw,40px);min-height:calc(100svh - 2 * var(--ey) - var(--hh));padding:clamp(28px,5vw,64px) var(--gut) var(--gut);
+ background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;background-position:-1px -1px}
+.hero-txt{grid-column:1/6;align-self:center;position:relative;z-index:1}
+.eyb{font:500 11.5px/1.5 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--green)}
+h1{margin-top:22px;font:600 clamp(2.6rem,1.2rem + 5.4vw,6.3rem)/.94 var(--cond);letter-spacing:-.015em;text-wrap:balance;overflow-wrap:break-word}
+.hctas{display:grid;max-width:480px;margin-top:clamp(28px,4vw,48px);border-top:1px solid var(--ink)}
+.hcta{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;min-height:66px;padding:14px 18px;border:1px solid var(--ink);border-top:0;background:var(--paper);transition:background-color .25s}
+.hcta small{font:500 10.5px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.hcta b{font:600 clamp(19px,1.6vw,23px)/1.1 var(--cond);white-space:nowrap}
+.hcta .ar{display:inline-block;transition:transform .45s var(--ease)}
+.hcta:hover .ar{transform:translate(3px,-3px)}
+.hcta.dn:hover .ar{transform:translate(3px,3px)}
+.hcta.pri{background:var(--mint)}
+@media (max-width:559px){.hcta{flex-direction:column;align-items:flex-start;gap:6px}}
+.hcta.pri small{color:var(--ink-2)}
+.hcta:not(.pri):hover{background:var(--paper-2)}
+.hero-fig{grid-column:6/13;grid-row:1;align-self:center;margin:0;min-width:0}
+.hero-fig svg{display:block;width:100%;height:auto}
+.figcap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 18px;margin-top:10px;padding-top:8px;border-top:1px solid var(--line-2);font:500 10.5px/1.5 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.figcap b{font-weight:600;color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;list-style:none}
+.legend li{display:inline-flex;align-items:center;gap:6px}
+.legend i{font-style:normal;display:inline-grid;place-items:center;width:17px;height:17px;border:1px solid var(--ink);border-radius:50%;background:var(--mint);color:var(--ink);font-size:9.5px;font-weight:600}
+.spec{grid-column:1/6;grid-row:2;align-self:end;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:32px;border-top:1px solid var(--ink)}
+.spec div{padding:10px 12px 0 0}
+.spec dt{font:500 9.5px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.spec dd{margin-top:4px;font:600 15px/1.25 var(--cond)}
+.tb{grid-column:7/13;grid-row:2;justify-self:end;align-self:end;width:min(100%,560px);margin-top:28px;display:grid;grid-template-columns:5.5rem repeat(3,minmax(0,1fr));gap:1px;background:var(--ink);border:1.5px solid var(--ink);position:relative;z-index:1}
+.tb>div{background:var(--paper);padding:8px 10px 9px;min-width:0}
+.tb small{display:block;margin-bottom:5px;font:500 9px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3)}
+.tb span{display:block;font:500 12.5px/1.3 var(--mono);overflow-wrap:anywhere}
+.tb .c-logo{grid-row:span 2;display:grid;place-items:center;align-content:center;gap:6px;background:var(--mint);text-align:center}
+.tb .c-logo svg{width:34px;height:34px}
+.tb .c-logo span{font:600 11px/1.1 var(--sans)}
+.tb .c-title{grid-column:span 3}
+.tb .c-title span{font:600 17px/1.2 var(--cond)}
+.tb .c-region,.tb .c-scale{grid-column:span 2}
+
+/* drawings */
+.drw{fill:none;stroke:var(--ink);stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.drw *{vector-effect:non-scaling-stroke}
+.drw .k{stroke-width:1.7}
+.drw .dm{stroke:var(--green)}
+.drw .dash{stroke-dasharray:5 4}
+.drw .dd{stroke-dasharray:16 4 2 4;stroke:var(--green)}
+.drw text{fill:var(--ink-2);stroke:none;font:500 13px var(--mono)}
+.drw .dt{fill:var(--green);text-anchor:middle}
+.drw .lb{fill:var(--ink)}
+.drw .bl{fill:var(--paper)}
+.drw .bn{fill:var(--ink);text-anchor:middle;font-weight:600}
+.elev .bl{fill:var(--mint)}
+.cut .it.on :not(text){stroke:var(--green)}
+.cut .it.on .k2{stroke-width:2.4}
+.cut .it.on .bl{fill:var(--mint)}
+@media (max-width:639px){.elev text{display:none}}
+
+/* load reveal */
+.js .hi{opacity:0;transform:translateY(18px);transition:opacity 1.1s var(--ease),transform 1.1s var(--ease);transition-delay:var(--d,0s)}
+.js .ready .hi{opacity:1;transform:none}
+.js .ev1,.js .ev2,.js .ev3{opacity:0;transition:opacity 1.2s var(--ease)}
+.js .ready .ev1{opacity:1;transition-delay:.25s}
+.js .ready .ev2{opacity:1;transition-delay:.75s}
+.js .ready .ev3{opacity:1;transition-delay:1.15s}
+.js .rv{opacity:0;transform:translateY(22px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
+.js .rv.in{opacity:1;transform:none}
+
+/* ---------- sections ---------- */
+.sec{position:relative;padding:clamp(72px,10vw,150px) var(--gut);border-top:1px solid var(--ink)}
+.sec.tight{padding-top:clamp(64px,8vw,112px)}
+.cols{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:clamp(16px,2.4vw,40px);row-gap:28px}
+.sh{margin-bottom:clamp(40px,6vw,88px)}
+.sh .dl{grid-column:1/4}
+.sh .h2{grid-column:4/12}
+.sh .intro{grid-column:4/10}
+.dl{display:flex;gap:14px;align-items:flex-start}
+.bub{flex:none;position:relative;display:grid;grid-template-rows:1fr 1fr;width:54px;height:54px;border:1px solid var(--ink);border-radius:50%;font-family:var(--mono);text-align:center}
+.bub::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--ink)}
+.bub b{align-self:end;padding-bottom:4px;font-size:15px;font-weight:600}
+.bub i{align-self:start;padding-top:4px;font-size:10.5px;font-style:normal;color:var(--ink-3)}
+.dlt{font:500 11px/1.55 var(--mono);text-transform:uppercase;letter-spacing:.07em;padding-top:6px}
+.dlt strong{display:block;font-weight:600;color:var(--green)}
+.dlt span{color:var(--ink-3)}
+.h2{font:600 clamp(2.1rem,1.25rem + 3.3vw,4.4rem)/1.0 var(--cond);letter-spacing:-.012em;text-wrap:balance;overflow-wrap:break-word}
+.intro{font-size:clamp(17px,1.35vw,19.5px);line-height:1.55;color:var(--ink-2);max-width:48ch}
+.h3{font:600 clamp(21px,1.8vw,26px)/1.12 var(--cond);letter-spacing:-.005em}
+@media (max-width:899px){.sh .dl,.sh .h2,.sh .intro{grid-column:1/-1}}
+
+/* Detail A: three views */
+.views{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--ink)}
+.view{padding:26px clamp(16px,2.2vw,36px) 0;border-left:1px solid var(--line-2)}
+.view:first-child{padding-left:0;border-left:0}
+.view:last-child{padding-right:0}
+.view:nth-child(2){padding-top:74px}
+.view:nth-child(3){padding-top:122px}
+.view svg{display:block;width:100%;height:auto;max-width:340px}
+.vcap{display:flex;justify-content:space-between;gap:12px;margin:12px 0 18px;padding-top:8px;border-top:1px solid var(--line-2);font:500 10.5px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.vcap b{color:var(--green);font-weight:600}
+.view p{margin-top:10px;color:var(--ink-2);max-width:40ch}
+@media (max-width:899px){
+ .views{grid-template-columns:1fr}
+ .view,.view:nth-child(n){padding:28px 0 36px;border-left:0;border-bottom:1px solid var(--line-2)}
+ .view:last-child{border-bottom:0;padding-bottom:0}
+ .view{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);column-gap:24px;align-items:start}
+ .view svg{grid-row:1/4}
+}
+@media (max-width:559px){.view{display:block}}
+
+/* Section B-B */
+.bb{align-items:start}
+.bb-fig{grid-column:1/8;margin:0;min-width:0}
+.bb-fig svg{display:block;width:100%;height:auto}
+.bb-side{grid-column:8/13}
+.cyc{display:grid;color:var(--green)}
+.cyc>span{grid-area:1/1;opacity:0;transform:translateY(.3em);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.cyc>span.on{opacity:1;transform:none}
+.sched{width:100%;border-collapse:collapse;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink)}
+.sched th{padding:9px 10px 9px 0;border-bottom:1px solid var(--ink);text-align:left;font:500 10px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.sched td{padding:14px 10px 14px 0;border-bottom:1px solid var(--line-2);vertical-align:top;transition:background-color .3s}
+.sched tr:last-child td{border-bottom:0}
+.sched .p{width:44px;padding-left:8px}
+.sched .p i{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--ink);border-radius:50%;font:600 11px/1 var(--mono);font-style:normal;background:var(--paper)}
+.sched .n{font:600 17px/1.25 var(--cond)}
+.sched .w{font-size:14px;color:var(--ink-2)}
+.sched tr.on td{background:var(--mint)}
+.sched tr.on .p i{background:var(--ink);color:var(--mint)}
+.evid{margin-top:32px;font:600 clamp(24px,2.2vw,32px)/1.1 var(--cond)}
+.note{margin-top:18px;padding:16px 18px 18px;border:1px solid var(--ink);background:var(--paper)}
+.note .lab{display:block;margin-bottom:8px;font:500 10.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--green)}
+.note p{color:var(--ink-2)}
+@media (max-width:999px){.bb-fig,.bb-side{grid-column:1/-1}}
+
+/* Detail C: configurator */
+.cfg{align-items:start}
+.cfg-in{grid-column:1/8;display:grid;gap:clamp(34px,4vw,52px);min-width:0}
+.ro{grid-column:8/13;min-width:0}
+@media (max-width:999px){.cfg-in,.ro{grid-column:1/-1}}
+fieldset{border:0;min-width:0}
+legend,.lg{float:left;width:100%;display:flex;gap:14px;align-items:baseline;margin-bottom:16px;padding:0}
+.lg{float:none}
+.gn{flex:none;padding:3px 6px;border:1px solid var(--green);font:600 11.5px/1.2 var(--mono);color:var(--green)}
+.gq{font:600 clamp(20px,1.7vw,24px)/1.2 var(--cond)}
+.seg{clear:both;display:grid;border-top:1px solid var(--ink);border-left:1px solid var(--ink)}
+.seg5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.seg4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.opt{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-height:104px;padding:12px 12px 14px;border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);background:var(--paper);font:500 14.5px/1.3 var(--sans);transition:background-color .2s}
+.opt .k{flex:none;display:grid;place-items:center;width:22px;height:22px;border:1px solid var(--ink);font:600 11px/1 var(--mono)}
+.opt .t{overflow-wrap:break-word;min-width:0}
+.opt:hover{background:var(--paper-2)}
+.opt[aria-pressed="true"]{background:var(--mint)}
+.opt[aria-pressed="true"] .k{background:var(--ink);color:var(--mint);border-color:var(--ink)}
+.opt:focus-visible{outline:2px solid var(--green);outline-offset:-5px}
+@media (max-width:639px){
+ .seg5,.seg4{grid-template-columns:minmax(0,1fr)}
+ .opt{flex-direction:row;align-items:center;min-height:54px;gap:14px}
+}
+.hint{color:var(--ink-2);font-size:15px}
+.amt{display:block;margin:16px 0 8px;font:600 clamp(1.9rem,1.3rem + 2vw,3rem)/1 var(--mono);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.rng{position:relative;padding-bottom:12px;background:repeating-linear-gradient(90deg,var(--line-2) 0 1px,transparent 1px 5%) bottom/100% 7px no-repeat}
+.rng::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--ink)}
+input[type=range]{-webkit-appearance:none;appearance:none;display:block;width:100%;height:36px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--ink)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-10px;border:1px solid var(--ink);border-radius:0;background:var(--mint);box-shadow:inset 0 0 0 5px var(--mint),inset 0 0 0 6px var(--ink)}
+input[type=range]::-moz-range-track{height:2px;background:var(--ink)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border:1px solid var(--ink);border-radius:0;background:var(--mint)}
+input[type=range]:focus-visible{outline:2px solid var(--green);outline-offset:4px}
+.scale{display:flex;justify-content:space-between;margin-top:8px;font:500 10.5px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.ro{border:1.5px solid var(--ink);background:var(--paper)}
+.ro-hd{display:flex;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--ink);color:var(--paper);font:500 10.5px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.ro-hd .lv::before{content:"";display:inline-block;width:7px;height:7px;margin-right:8px;background:var(--mint);vertical-align:1px}
+.ro-sum{display:grid;grid-template-columns:auto minmax(0,1fr);border-bottom:1px solid var(--ink)}
+.ro-sum dt,.ro-sum dd{padding:9px 16px;border-bottom:1px solid var(--line)}
+.ro-sum dt{padding-right:8px;font:500 10px/1.9 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.ro-sum dd{text-align:right;font:500 13px/1.5 var(--mono)}
+.ro-sum dt:nth-last-of-type(1),.ro-sum dd:last-child{border-bottom:0}
+.ro-sum .na{color:var(--ink-3)}
+.ro-fig{display:flex;flex-direction:column;justify-content:flex-end;min-height:150px;padding:22px 16px 16px}
+.ro-lab{font:500 11px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--green);margin-bottom:10px}
+.fig{font:600 clamp(2rem,1.2rem + 3.2vw,4.1rem)/1 var(--mono);letter-spacing:-.045em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ro-empty{display:none;font:600 clamp(22px,2vw,28px)/1.15 var(--cond);color:var(--ink-3);max-width:16ch}
+.ro.is-empty .ro-lab,.ro.is-empty .fig{display:none}
+.ro.is-empty .ro-empty{display:block}
+.rbar{position:relative;height:30px;margin:0 16px;border:1px solid var(--ink);overflow:hidden;background:repeating-linear-gradient(90deg,var(--line-2) 0 1px,transparent 1px 10%)}
+.rbar .band{position:absolute;inset:0;background:var(--mint);transform-origin:0 50%;transform:scaleX(0);transition:transform .9s var(--ease)}
+.rbar .topm{position:absolute;inset:0;opacity:0;transition:transform .9s var(--ease),opacity .3s}
+.rbar .topm::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--green)}
+.rscale{display:flex;justify-content:space-between;margin:6px 16px 0;font:500 10px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.cap{margin:14px 16px 0;font-size:14.5px;color:var(--ink-2)}
+.sl{margin:12px 16px 0;padding:12px 14px;border-left:3px solid var(--green);background:var(--paper-2);font-size:14px}
+.cav{list-style:none;counter-reset:c;display:grid;gap:8px;margin:18px 16px 0;padding-top:14px;border-top:1px solid var(--line-2)}
+.cav li{counter-increment:c;display:grid;grid-template-columns:22px minmax(0,1fr);font-size:13px;line-height:1.45;color:var(--ink-2)}
+.cav li::before{content:counter(c);font:500 10.5px/1.75 var(--mono);color:var(--green)}
+.ro-act{display:flex;flex-wrap:wrap;gap:10px;padding:18px 16px}
+
+/* Detail D: sectors schedule */
+.parts{width:100%;border-collapse:collapse;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink)}
+.parts th{padding:10px 16px 10px 0;border-bottom:1px solid var(--ink);text-align:left;font:500 10px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.parts td{padding:24px 16px 24px 0;border-bottom:1px solid var(--line-2);vertical-align:top}
+.parts tbody tr:last-child td{border-bottom:0}
+.parts .pos{width:76px;font:500 13px/1.6 var(--mono);color:var(--green)}
+.parts .nm{width:30%;font:600 clamp(21px,2vw,29px)/1.1 var(--cond)}
+.parts .ds{color:var(--ink-2)}
+.parts .go{width:1%;text-align:right;white-space:nowrap}
+.parts tbody tr{transition:background-color .25s}
+.parts tbody tr:hover{background:var(--paper-2)}
+.lnk{display:inline-flex;align-items:center;gap:8px;min-height:40px;font:500 11.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--ink)}
+.lnk:hover{color:var(--green);border-color:var(--green)}
+@media (max-width:759px){
+ .parts thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ .parts,.parts tbody{display:block}
+ .parts tbody tr{display:grid;grid-template-columns:48px minmax(0,1fr);padding:20px 0;border-bottom:1px solid var(--line-2)}
+ .parts tbody tr:last-child{border-bottom:0}
+ .parts td{display:block;padding:0;border:0;width:auto}
+ .parts .pos{grid-row:1/4;width:auto}
+ .parts .nm{width:auto}
+ .parts .ds{margin-top:8px}
+ .parts .go{text-align:left;white-space:normal;margin-top:10px;width:auto}
+}
+
+/* Detail E: why us */
+.fee{grid-column:1/6}
+.notes{grid-column:7/13}
+@media (max-width:899px){.fee,.notes{grid-column:1/-1}}
+.fee-l{font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.fee-n{display:flex;align-items:flex-start;margin-top:14px;font:700 clamp(6.5rem,4rem + 11vw,13.5rem)/.8 var(--cond);letter-spacing:-.05em}
+.fee-n small{margin:.06em 0 0 .08em;font:500 .3em/1 var(--mono);letter-spacing:0}
+.sq{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;width:min(100%,290px);margin:30px 0 12px}
+.sq i{aspect-ratio:1;border:1px solid var(--line-2)}
+.sq i.f{background:var(--mint);border-color:var(--green)}
+.lgd{display:flex;flex-wrap:wrap;gap:8px 20px;font:500 10.5px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
+.lgd span{display:inline-flex;align-items:center;gap:7px}
+.lgd i{width:11px;height:11px;border:1px solid var(--line-2)}
+.lgd i.f{background:var(--mint);border-color:var(--green)}
+.fee p{margin-top:22px;max-width:44ch;color:var(--ink-2)}
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.nl-h{display:flex;justify-content:space-between;padding-bottom:10px;font:500 10.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.nl{list-style:none;border-top:1.5px solid var(--ink)}
+.nl li{display:grid;grid-template-columns:58px minmax(0,1fr);padding:22px 0;border-bottom:1px solid var(--line-2)}
+.nl .no{font:500 12px/1.9 var(--mono);color:var(--green)}
+.nl p{margin-top:6px;color:var(--ink-2)}
+.sig{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:1px;margin-top:28px;background:var(--ink);border:1.5px solid var(--ink)}
+.sig>div{background:var(--paper);padding:10px 12px 12px;min-width:0}
+.sig small{display:block;margin-bottom:6px;font:500 9px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3)}
+.sig span{font:500 13px/1.35 var(--mono)}
+.sig .line{display:block;height:22px;border-bottom:1px dashed var(--ink-3)}
+.sig .st{background:var(--mint)}
+@media (max-width:559px){.sig{grid-template-columns:1fr}}
+
+/* Section F-F: steps on a chain dimension */
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.steps li{position:relative;padding:46px clamp(14px,2vw,30px) 0 0}
+.steps li::before{content:"";position:absolute;top:15px;left:0;right:0;height:1px;background:var(--green)}
+.steps li::after{content:"";position:absolute;top:7px;left:0;width:1px;height:17px;background:var(--green);transform:rotate(45deg)}
+.steps li:last-child .end{position:absolute;top:7px;right:0;width:1px;height:17px;background:var(--green);transform:rotate(45deg)}
+.steps li:nth-child(2){margin-top:36px}
+.steps li:nth-child(3){margin-top:72px}
+.steps li:nth-child(4){margin-top:108px}
+.sn{font:500 10.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.sbig{margin:14px 0 18px;font:600 clamp(3rem,2rem + 3vw,5.2rem)/1 var(--mono);letter-spacing:-.06em;color:var(--green)}
+.steps p{margin-top:10px;color:var(--ink-2);max-width:32ch}
+@media (max-width:899px){
+ .steps{grid-template-columns:minmax(0,1fr)}
+ .steps li,.steps li:nth-child(n){margin-top:0;padding:0 0 40px 34px}
+ .steps li:last-child{padding-bottom:0}
+ .steps li::before{top:0;bottom:0;left:9px;right:auto;width:1px;height:auto}
+ .steps li::after{top:-8px;left:9px}
+ .steps li:last-child .end{top:auto;bottom:-8px;left:9px;right:auto}
+ .sbig{margin:10px 0 10px}
+}
+
+/* Notes G: questions */
+.qa-h{grid-column:1/5}
+.qa-l{grid-column:6/13}
+@media (max-width:899px){.qa-h,.qa-l{grid-column:1/-1}}
+.qa-h .dl{margin-bottom:28px}
+.qa-h .intro{margin-top:18px}
+.qa-h .lnk{margin-top:22px}
+details{border-bottom:1px solid var(--line-2)}
+details:first-child{border-top:1.5px solid var(--ink)}
+summary{display:grid;grid-template-columns:62px minmax(0,1fr) 18px;align-items:center;gap:12px;padding:22px 0;cursor:pointer;list-style:none;font:600 clamp(18px,1.6vw,22px)/1.25 var(--cond)}
+summary::-webkit-details-marker{display:none}
+summary:hover{color:var(--green)}
+summary:focus-visible{outline-offset:-2px}
+.qn{font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--green)}
+.pm{position:relative;width:16px;height:16px}
+.pm::before,.pm::after{content:"";position:absolute;left:0;right:0;top:50%;height:1.5px;margin-top:-.75px;background:var(--ink)}
+.pm::after{transform:rotate(90deg);transition:transform .4s var(--ease)}
+details[open] .pm::after{transform:rotate(0)}
+details p{padding:0 30px 24px 74px;max-width:64ch;color:var(--ink-2)}
+@media (max-width:559px){summary{grid-template-columns:44px minmax(0,1fr) 16px}details p{padding:0 0 22px 56px}}
+
+/* Detail H: contact */
+.ct-h{grid-column:1/6}
+.ct-f{grid-column:7/13}
+@media (max-width:999px){.ct-h,.ct-f{grid-column:1/-1}}
+.ct-h .h2{margin-top:28px}
+.ct-h .intro{margin-top:18px}
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);margin-top:34px;border-top:1.5px solid var(--ink)}
+.facts dt,.facts dd{padding:12px 0;border-bottom:1px solid var(--line-2)}
+.facts dt{padding-right:22px;font:500 10.5px/1.9 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.facts dd{overflow-wrap:anywhere}
+.facts a{border-bottom:1px solid var(--ink)}
+.facts a:hover{color:var(--green);border-color:var(--green)}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--ink);border:1.5px solid var(--ink)}
+.form>*{background:var(--paper);min-width:0}
+.f-hd{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;padding:10px 14px;background:var(--ink);color:var(--paper);font:500 10.5px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.fld{display:flex;flex-direction:column;gap:6px;padding:11px 14px 13px;transition:background-color .2s}
+.fld.w{grid-column:1/-1}
+.fld label{font:500 9.5px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3)}
+.fld input,.fld select,.fld textarea{width:100%;padding:6px 0 7px;border:0;border-bottom:1px solid var(--line-2);border-radius:0;background:transparent;font:400 16px/1.4 var(--sans);color:var(--ink)}
+.fld textarea{min-height:110px;resize:vertical}
+.fld select{-webkit-appearance:none;appearance:none;padding-right:24px;cursor:pointer;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23121614' stroke-width='1.5'/%3E%3C/svg%3E") right 2px center/12px 8px no-repeat}
+.fld:focus-within{background:var(--mint-2)}
+.fld input:focus-visible,.fld select:focus-visible,.fld textarea:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+.f-ft{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;padding:14px}
+.f-note{max-width:38ch;font-size:13.5px;color:var(--ink-2)}
+.f-st{grid-column:1/-1;padding:12px 14px;background:var(--mint);font:500 13px/1.4 var(--mono)}
+@media (max-width:559px){.form{grid-template-columns:minmax(0,1fr)}}
+
+/* footer: a title block */
+.foot{display:grid;grid-template-columns:1.5fr repeat(4,minmax(0,1fr));gap:1px;background:var(--ink);border-top:1.5px solid var(--ink)}
+.foot>*{background:var(--paper);padding:22px clamp(14px,1.6vw,24px) 26px;min-width:0}
+.foot .fb{display:flex;flex-direction:column;gap:14px}
+.foot .fb p{font-size:14px;color:var(--ink-2);max-width:34ch}
+.foot h2{margin-bottom:12px;font:500 10px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3)}
+.foot ul{list-style:none;display:grid;gap:7px;font-size:14.5px}
+.foot ul a:hover{color:var(--green)}
+.foot address{font-style:normal;font-size:14px;display:grid;gap:7px;overflow-wrap:anywhere}
+.foot .fl{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding-top:14px;padding-bottom:14px;font:500 11px/1.5 var(--mono);color:var(--ink-2)}
+@media (max-width:899px){.foot{grid-template-columns:repeat(2,minmax(0,1fr))}.foot .fb{grid-column:1/-1}}
+@media (max-width:399px){.foot{grid-template-columns:minmax(0,1fr)}}
+
+.otag{position:fixed;left:calc(var(--ex) + 10px);bottom:calc(var(--ey) + 10px);z-index:55;padding:6px 9px;background:var(--ink);color:var(--paper);font:500 10px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.06em}
+@media (max-width:899px){.otag{position:static;display:block;width:max-content;max-width:100%;margin:14px var(--gut) 6px}}
+
+/* hero and title block at smaller widths */
+@media (max-width:999px){
+ .hero{grid-template-rows:auto;row-gap:0;min-height:0}
+ .hero-txt,.hero-fig,.spec,.tb{grid-column:1/-1;grid-row:auto}
+ .hero-fig{margin-top:44px}
+ .tb{justify-self:stretch;width:100%}
+}
+@media (max-width:559px){
+ .spec{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .spec div:nth-child(n+3){margin-top:8px}
+ .tb{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .tb .c-logo{grid-row:auto;grid-column:span 2;grid-auto-flow:column;justify-content:start;padding:10px}
+ .tb .c-title,.tb .c-scale{grid-column:span 2}
+ .tb .c-region{grid-column:span 1}
+}
+@media (prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}
+ *,*::before,*::after{transition:none!important;animation:none!important}
+ .js .hi,.js .rv,.js .ev1,.js .ev2,.js .ev3{opacity:1;transform:none}
+}
+/* hub: sector names link to the sector sheets */
+.parts .nm a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;text-decoration-color:var(--line-2)}.parts .nm a:hover{color:var(--green);text-decoration-color:currentColor}
+/* Cap Rebate, Kurbelwerk style: cut-away effects (20 Oct 2026).
+   Each numbered item in a cut-away (.fxd .it) can hold a <g class="fx"> layer. It is hidden until the item is "on"
+   (its schedule row is hovered, or the cycle reaches it), then the item takes its own colour (--fx on the .it group)
+   and the layer plays an animation that shows what the system does: lights flicker on, heating glows red, air and
+   water flow, alarms flash, the X-ray shielding shows a glass shield. Reduced motion: colour and icons only.
+   Building blocks (put these classes on elements inside .fx):
+   .flow  a pipe or duct run, drawn again on top: moving dashes along it
+   .spin  rotates about its own centre (impellers, drums)
+   .glow  a filled light shape that flickers on (cone, beam), fill from --lit
+   .lamp  a filled lamp body that switches on
+   .warm  a filled body that heats up (radiator), fill from --fx
+   .rise  heat shimmer or steam: rises and fades, stagger with style="--dl:.4s"
+   .drop  a drip that falls, stagger with --dl
+   .ring  an alarm or call ring that spreads out, stagger with --dl
+   .blink a small light or panel that blinks
+   .pop   an icon that pops in (the glass shield)
+   .ray   a radiation or signal line that travels and stops at the shield
+   .tint  a filled overlay that tints a wall or room, fill from --fx
+   .lift  a lift car that travels up and down: set the distance with style="--dy:-80px" (in drawing units)
+   .fill  a light fill in the item's colour */
+.fxd .it{cursor:default}
+.fxd .it .fx{opacity:0;transition:opacity .35s var(--ease)}
+.fxd .it.on .fx{opacity:1}
+.fxd .it.on .k2{stroke:var(--fx,var(--green))}
+.fxd .it.on .fx *{stroke:var(--fx,var(--green))}
+.fxd .it.on .fx .flow{stroke-width:2.6;stroke-dasharray:3 9;animation:fx-flow .9s linear infinite}
+.fxd .it.on .fx .flow.slow{animation-duration:1.6s}
+.fxd .it.on .fx .spin{transform-box:fill-box;transform-origin:center;animation:fx-spin 1.1s linear infinite}
+.fxd .it.on .fx .glow{fill:var(--lit,#F2C14E);stroke:none;animation:fx-flicker 1.2s linear both}
+.fxd .it.on .fx .lamp{fill:var(--lit,#F2C14E);stroke:var(--fx);animation:fx-flicker 1.2s linear both}
+.fxd .it.on .fx .warm{fill:var(--fx);fill-opacity:.28;animation:fx-warm 1.6s var(--ease) both}
+.fxd .it.on .fx .rise{stroke-width:1.6;opacity:0;animation:fx-rise 1.8s var(--ease) var(--dl,0s) infinite}
+.fxd .it.on .fx .drop{fill:var(--fx);stroke:none;opacity:0;animation:fx-drop 1.2s cubic-bezier(.55,0,1,.45) var(--dl,0s) infinite}
+.fxd .it.on .fx .ring{fill:none;stroke-width:1.6;transform-box:fill-box;transform-origin:center;opacity:0;animation:fx-ring 1.4s var(--ease) var(--dl,0s) infinite}
+.fxd .it.on .fx .blink{fill:var(--fx);animation:fx-blink .9s steps(1) infinite}
+.fxd .it.on .fx .pop{transform-box:fill-box;transform-origin:center;animation:fx-pop .6s var(--ease) .35s both}
+.fxd .it.on .fx .glass{fill:var(--glass,#CFE3EE);fill-opacity:.85;stroke:var(--fx);stroke-width:1.6}
+.fxd .it.on .fx .shine{stroke:#fff;stroke-width:1.6;opacity:.9}
+.fxd .it.on .fx .ray{stroke-width:1.6;stroke-dasharray:6 6;animation:fx-flow .7s linear infinite}
+.fxd .it.on .fx .tint{fill:var(--fx);fill-opacity:.32;stroke:none;animation:fx-warm 1s var(--ease) both}
+.fxd .it.on .fx .lift{transform-box:fill-box;animation:fx-lift 2.6s cubic-bezier(.65,0,.35,1) infinite alternate}
+.fxd .it.on .fx .fill{fill:var(--fx);fill-opacity:.22}
+.fxd .it .ghost{transition:opacity .3s var(--ease)}.fxd .it.on .ghost{opacity:0}
+@keyframes fx-lift{from{transform:translateY(0)}to{transform:translateY(var(--dy,-60px))}}
+@keyframes fx-flow{to{stroke-dashoffset:-24}}
+@keyframes fx-spin{to{transform:rotate(360deg)}}
+@keyframes fx-flicker{0%{opacity:0}8%{opacity:.85}12%{opacity:.05}20%{opacity:.7}24%{opacity:.1}36%,100%{opacity:1}}
+@keyframes fx-warm{from{fill-opacity:0}}
+@keyframes fx-rise{0%{opacity:0;transform:translateY(6px)}30%{opacity:.9}100%{opacity:0;transform:translateY(-16px)}}
+@keyframes fx-drop{0%{opacity:0;transform:translateY(-4px)}15%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translateY(14px)}}
+@keyframes fx-ring{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(2.2)}}
+@keyframes fx-blink{0%{fill-opacity:1}50%{fill-opacity:.15}}
+@keyframes fx-pop{0%{opacity:0;transform:scale(.4)}100%{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){
+ .fxd .it.on .fx *{animation:none!important}
+ .fxd .it.on .fx .rise,.fxd .it.on .fx .drop,.fxd .it.on .fx .ring{opacity:.8}
+}
+/* hero drawings: the same effects, started from the legend or the numbered callouts, with a slow tour on load */
+.fxd .fx{pointer-events:none}
+.elev .bl[data-it]{cursor:default;transition:fill .3s var(--ease)}
+.elev .bl.on{fill:var(--ink)}
+.elev .bn[data-it]{transition:fill .3s var(--ease)}
+.elev .bn.on{fill:var(--paper)}
+.legend li{cursor:default;padding:2px 6px 2px 2px;margin-left:-2px;transition:background-color .3s var(--ease)}
+.legend li.on{background:var(--mint-2)}
+.legend li:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+/* ================= animated mock-up (21 Oct 2026) ================= */
+/* loading screen: the mark draws, its keys light, the sheet counter fills, then the screen lifts */
+.pre{position:fixed;inset:0;z-index:200;background:var(--paper);display:grid;place-items:center;transition:transform 1s var(--ease),visibility 0s linear 1s}
+html.loaded .pre{transform:translateY(-100%);visibility:hidden}
+html:not(.js) .pre{display:none}
+.pre-in{width:min(360px,80vw);display:grid;gap:14px}
+.pre-mark{width:64px;height:64px;justify-self:center;margin-bottom:10px;overflow:visible}
+.pre-mark .mk{fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:pre-draw 1.2s var(--ease) forwards}
+.pre-mark .mk-scr{fill:var(--green);opacity:0;animation:pre-in .4s .7s forwards}
+.pre-mark .mk-key{fill:var(--ink);opacity:0;animation:pre-in .25s calc(.85s + var(--k) * .07s) forwards}
+.pre-row{display:flex;justify-content:space-between;gap:16px;font:500 11px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink)}
+.pre-row.dim{color:var(--ink-3)}
+.pre-bar{height:1px;background:var(--line-2);position:relative;overflow:hidden}
+.pre-bar i{position:absolute;inset:0;background:var(--green);transform-origin:left;transform:scaleX(0)}
+@keyframes pre-draw{to{stroke-dashoffset:0}}
+@keyframes pre-in{to{opacity:1}}
+
+/* the scan: a dashed blueprint above the line, the building drawn below it, callouts found as it passes */
+.hero-fig{position:relative}
+.elev .scan{opacity:0;transition:opacity .4s var(--ease)}
+.elev.scanning .scan{opacity:1}
+.elev .scan #sc-line{stroke:var(--green);stroke-width:1.6}
+.elev .scan text{fill:var(--green);stroke:none;font:600 11px var(--mono);letter-spacing:.08em}
+.elev .ghost-bp{opacity:.32}
+.elev .ghost-bp *{fill:none!important;stroke-dasharray:3 4}
+.elev .co{transition:opacity .45s var(--ease)}
+.elev.scanning .co:not(.seen){opacity:0}
+.elev.scanning .ev2{opacity:0!important;transition-delay:0s!important}
+.elev .co.seen .bl{animation:co-pop .5s var(--ease)}
+@keyframes co-pop{from{transform:scale(.4)}}
+.elev .co .bl{transform-box:fill-box;transform-origin:center}
+.scanbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line-2);font:500 10.5px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.scanbar b{color:var(--green);font-weight:600}
+.scanbar .sc-re{margin-left:auto;font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--ink);padding:5px 9px;cursor:pointer}
+.scanbar .sc-re:hover{background:var(--mint)}
+html:not(.js) .scanbar{display:none}
+@media (max-width:559px){.scanbar .sc-ex{display:none}}
+
+/* crosshair readout over the drawing, in drawing units */
+.xh{position:absolute;left:0;top:0;pointer-events:none;background:var(--green);opacity:0;transition:opacity .25s;z-index:2}
+.xh-v{width:1px}.xh-h{height:1px}
+.xh-t{position:absolute;left:0;top:0;pointer-events:none;font:500 10px/1 var(--mono);letter-spacing:.06em;color:var(--green);background:var(--paper);border:1px solid var(--green);padding:3px 5px;opacity:0;transition:opacity .25s;white-space:nowrap;z-index:3}
+.hero-fig.hov .xh{opacity:.5}.hero-fig.hov .xh-t{opacity:1}
+
+/* item ticker under the first screen */
+.ticker{overflow:hidden;border-top:1px solid var(--line-2);padding:13px 0;margin:0 var(--ex)}
+.tk-in{display:flex;width:max-content;animation:tk 70s linear infinite}
+.tk-in span{display:inline-flex;align-items:center;gap:22px;padding-right:22px;font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);white-space:nowrap}
+.tk-in span::after{content:"";width:6px;height:6px;background:var(--mint);border:1px solid var(--green)}
+@keyframes tk{to{transform:translateX(-50%)}}
+
+/* where it hides: pinned on desktop, the scroll walks the items */
+.pin-meta,.pin-say{display:none}
+.pin-on .pin-stick{position:sticky;top:calc(var(--ey) + var(--hh) + 24px)}
+.pin-on .pin-meta{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px;font:500 11px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.pin-on .pin-meta b{color:var(--green);font-weight:600;margin-right:8px}
+.pin-on .pin-say{display:block;margin-bottom:22px;font:600 clamp(2rem,1rem + 2.6vw,3.4rem)/1 var(--cond);letter-spacing:-.012em;color:var(--ink)}
+.pin-say em{font-style:normal;color:var(--ink);background:var(--mint);padding:0 .12em}
+.pin-say.swap{animation:say .55s var(--ease)}
+@keyframes say{from{opacity:0;transform:translateY(.3em)}}
+.pin-on .evid{display:none}
+
+/* drawings that draw themselves when they come into view */
+.views .drw.dr :is(path,rect,circle,line,polyline,polygon){vector-effect:none;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.5s var(--ease) calc(var(--i,0) * 35ms)}
+.views .drw.dr.in :is(path,rect,circle,line,polyline,polygon){stroke-dashoffset:0}
+
+/* the fee: the hundred squares arrive, then our three fill */
+.js .fee.rv .sq i{opacity:0;transform:scale(.5);transition:opacity .35s var(--ease) calc(var(--n,0) * 8ms + .2s),transform .35s var(--ease) calc(var(--n,0) * 8ms + .2s)}
+.js .fee.rv.in .sq i{opacity:1;transform:none}
+.js .fee.rv .sq i.f{background:transparent;border-color:var(--line-2);transition:opacity .35s var(--ease) calc(var(--n,0) * 8ms + .2s),transform .35s var(--ease) calc(var(--n,0) * 8ms + .2s),background-color .5s var(--ease) calc(1.3s + var(--n,0) * .35s),border-color .5s var(--ease) calc(1.3s + var(--n,0) * .35s)}
+.js .fee.rv.in .sq i.f{background:var(--mint);border-color:var(--green)}
+
+/* the steps: each dimension line draws across */
+@media (min-width:900px){.js .steps li.rv::before{transform:scaleX(0);transform-origin:left;transition:transform 1.1s var(--ease) .3s}.js .steps li.rv.in::before{transform:none}}
+@media (max-width:899px){.js .steps li.rv::before{transform:scaleY(0);transform-origin:top;transition:transform 1.1s var(--ease) .3s}.js .steps li.rv.in::before{transform:none}}
+
+@media (prefers-reduced-motion:reduce){
+ .pre{display:none}
+ .tk-in{animation:none}
+ .elev .scan,.scanbar .sc-re{display:none}
+ .views .drw.dr :is(path,rect,circle,line,polyline,polygon){stroke-dasharray:none;stroke-dashoffset:0}
+}
+/* ================= round 2 (21 Oct 2026): the user's notes ================= */
+/* hero: the title block moves left, the strip goes under the drawing and the 3% leads it */
+@media (min-width:1000px){
+ .hero .tb{grid-column:1/6;justify-self:start}
+ .hero .spec{grid-column:6/13;margin-left:clamp(0px,2vw,32px)}
+}
+.spec{grid-template-columns:auto repeat(3,minmax(0,1fr));align-items:end;column-gap:clamp(14px,1.6vw,26px)}
+.spec .sp-fee{padding-right:clamp(10px,1.4vw,22px);border-right:1px solid var(--line-2)}
+.spec .sp-fee dd{display:flex;align-items:flex-end;gap:10px}
+.spec .sp-fee b{font:700 clamp(3.2rem,2rem + 2.6vw,4.8rem)/.82 var(--cond);letter-spacing:-.04em;color:var(--green)}
+.spec .sp-fee span{max-width:12ch;font:500 10.5px/1.35 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);padding-bottom:4px}
+@media (max-width:559px){.spec{grid-template-columns:repeat(2,minmax(0,1fr))}.spec .sp-fee{grid-column:1/-1;border-right:0;border-bottom:1px solid var(--line-2);padding-bottom:12px}}
+
+/* Detail A: three equal views, drawings centred, captions and text on one line */
+@media (min-width:900px){
+ .views .view,.views .view:nth-child(n){padding-top:30px;display:flex;flex-direction:column}
+ .views .view svg{width:100%;max-width:none;height:clamp(150px,12vw,186px);margin:0 auto 6px}
+ .views .vcap{margin-top:18px}
+}
+
+/* Detail C: the calculator is its own dark sheet, so it stands out from the page */
+#calculator{--paper:#151a18;--paper-2:#1d2421;--paper-3:#26302c;--ink:#EDEAE2;--ink-2:#cdd1cc;--ink-3:#9fa8a3;--line:rgba(237,234,226,.14);--line-2:rgba(237,234,226,.34);--green:#ABEDD8;--grid:rgba(171,237,216,.06);
+ background-color:var(--paper);color:var(--ink);
+ background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+#calculator .btn.pri,#calculator .opt[aria-pressed="true"],#calculator .opt[aria-pressed="true"] *{color:#121614}
+#calculator .h2::after{content:"";display:block;width:72px;height:4px;margin-top:22px;background:var(--mint)}
+
+/* Detail D: each sector opens to its building, drawn as it opens, with the next steps */
+.parts tr.xp td{padding:0;border-bottom:0}
+.parts tr.xp:hover{background:none}
+.xp-w{display:grid;grid-template-rows:0fr;transition:grid-template-rows .55s var(--ease)}
+.xp.open .xp-w{grid-template-rows:1fr}
+.xp-in{overflow:hidden;min-height:0}
+.xp.open td{border-bottom:1px solid var(--line-2)}
+.xp-in{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:clamp(20px,3vw,48px)}
+.xp-fig{margin:0;padding:26px 0 26px 76px;opacity:0;transition:opacity .4s var(--ease) .1s}
+.xp-tx{padding:26px 0 30px;opacity:0;transform:translateY(10px);transition:opacity .45s var(--ease) .2s,transform .45s var(--ease) .2s}
+.xp.open .xp-fig,.xp.open .xp-tx{opacity:1;transform:none}
+.xp-svg{display:block;width:100%;height:clamp(150px,15vw,210px);fill:none;stroke:var(--ink);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+.xp-svg *{vector-effect:non-scaling-stroke}
+.xp-svg.drawing *{vector-effect:none}
+.xp-svg.drawing :is(path,rect,circle,line){stroke-dasharray:1;stroke-dashoffset:1;animation:xp-draw 1.4s var(--ease) forwards;animation-delay:calc(var(--i,0) * 22ms)}
+@keyframes xp-draw{to{stroke-dashoffset:0}}
+.xp-svg .xp-sign{fill:var(--ink);stroke:none;font:600 9px var(--mono);letter-spacing:.24em}
+.xp-fig figcaption{margin-top:10px;padding-top:8px;border-top:1px solid var(--line-2);font:500 10px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.xp-k{font:500 10.5px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--green)}
+.xp-d{margin-top:12px;max-width:52ch;font-size:clamp(16px,1.2vw,18px);line-height:1.55;color:var(--ink)}
+.xp-c{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;list-style:none}
+.xp-c li{padding:5px 9px;border:1px solid var(--line-2);font:500 10.5px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
+.xp-tx .acts{align-items:center;margin-top:22px}
+.xp-tx .acts .lnk{margin-left:6px}
+.parts tr.sx.xo td{background:var(--paper-2)}
+.parts .xp-t span{display:inline-block;transition:transform .3s var(--ease)}
+.parts tr.sx.xo .xp-t span{transform:rotate(180deg)}
+@media (max-width:759px){
+ .parts tbody tr.xp{display:block;padding:0;border-bottom:0}
+ .xp-in{grid-template-columns:minmax(0,1fr)}
+ .xp-fig{padding:18px 0 0}
+ .xp-tx{padding:16px 0 24px}
+}
+
+/* Detail E: the fee and the notes start on the same line; the 3% is in the accent */
+#why .fee,#why .notes{align-self:start;margin-top:0;padding-top:0}
+#why .fee-l{display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1.5px solid var(--ink);font:500 10.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+#why .nl-h{border-bottom:1.5px solid var(--ink)}
+#why .nl{border-top:0}
+.fee-row{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:clamp(18px,2.4vw,36px);align-items:end;margin-top:26px}
+#why .fee-n{margin-top:0;color:var(--green)}
+#why .fee-n small{color:var(--green)}
+#why .fee-row .sq{margin:0;width:100%;max-width:230px}
+#why .fee-row .lgd{grid-column:2;margin-top:10px}
+#why .fee>p{margin-top:24px}
+#why .fee>.fee-l{margin-top:0;max-width:none}
+#paid{padding-bottom:clamp(56px,6vw,96px)}
+/* the teal accent (the user's note): big numerals are teal, inked with a fine green outline so they read on paper */
+.spec .sp-fee b,#why .fee-n,#why .fee-n small{color:var(--mint);-webkit-text-stroke:2px var(--green);paint-order:stroke fill}
+.steps li:hover .sbig,.steps li:focus-within .sbig{color:var(--mint);-webkit-text-stroke:2px var(--green);paint-order:stroke fill}
+.xp-k{display:inline-block;padding:4px 8px;background:var(--mint);color:var(--ink)}
+.xp-c li{border-color:var(--green);background:var(--mint-2);color:var(--ink)}
+.parts tr.sx.xo td{background:var(--mint-2)}
+@media (max-width:759px){.parts tbody tr.sx.xo{background:var(--mint-2)}.parts tr.sx.xo td{background:none}}
+.xp.open td{background:linear-gradient(var(--mint-2),var(--paper) 140px)}
+
+.spec .sp-fee span{max-width:17ch}
+@media (max-width:559px){.fee-row{grid-template-columns:minmax(0,1fr)}#why .fee-row .lgd{grid-column:1}#why .fee-row .sq{margin-top:18px}}
+
+/* steps: the number takes the accent when you point at a step */
+.steps .sbig{color:var(--ink);transition:color .3s var(--ease)}
+.steps li:hover .sbig,.steps li:focus-within .sbig{color:var(--green)}
+.steps li::before{transition:background-color .3s var(--ease)}
+.steps li:hover::before{background:var(--mint)}
+
+/* Detail H: the form starts level with the title */
+@media (min-width:1000px){
+ #contact .cols{row-gap:0}
+ #contact .ct-h{display:contents}
+ #contact .ct-h>.dl{grid-column:1/-1;grid-row:1;margin-bottom:28px}
+ #contact .ct-h>.h2{grid-column:1/6;grid-row:2;margin-top:0}
+ #contact .ct-h>.intro{grid-column:1/6;grid-row:3}
+ #contact .ct-h>.acts{grid-column:1/6;grid-row:4}
+ #contact .ct-h>.facts{grid-column:1/6;grid-row:5}
+ #contact .ct-f{grid-column:7/13;grid-row:2/span 4;align-self:start}
+}
+@media (prefers-reduced-motion:reduce){.xp-svg.drawing :is(path,rect,circle,line){animation:none;stroke-dasharray:none;stroke-dashoffset:0}}
+
+/* ================= round 3 (21 Oct 2026): the user's notes ================= */
+/* drawings: the item being shown is teal, the others black on paper */
+.elev .bl{fill:var(--paper)}
+.elev .bl.on{fill:var(--mint)}
+.elev .bn.on{fill:var(--ink)}
+.legend i{background:var(--paper)}
+.legend li.on{background:none}
+.legend li.on i{background:var(--mint)}
+.elev.scanning .ev3>:not(.co){opacity:0}
+.elev .ev3>*{transition:opacity .45s var(--ease)}
+/* the teal accent, flat */
+.spec .sp-fee b,#why .fee-n,#why .fee-n small,.steps li:hover .sbig,.steps li:focus-within .sbig{color:var(--mint);-webkit-text-stroke:0;paint-order:normal}
+/* calculator: a pointed-at or chosen answer turns teal; the figure is teal */
+#calculator .opt:hover,#calculator .opt[aria-pressed="true"]{background:var(--mint);color:#121614}
+#calculator .opt:hover *,#calculator .opt[aria-pressed="true"] *{color:#121614}
+#calculator .opt:hover .k,#calculator .opt[aria-pressed="true"] .k{border-color:#121614}
+#calculator .opt[aria-pressed="true"] .k{background:#121614;color:var(--mint)}
+#calculator #c-fig{color:var(--mint)}
+/* the pinned sheet carries its own title, so it never scrolls away */
+.pin-on .pin-stick>.sh{margin-bottom:22px}
+.pin-on .pin-stick .h2{font-size:clamp(2rem,1rem + 2.4vw,3.5rem)}
+.pin-on .bb-fig{position:static!important}
+.pin-on .bb-fig svg{max-height:calc(100vh - 400px);width:auto;max-width:100%;margin:0 auto}
+.h-end{display:none}
+.pin-all .h2>span[aria-hidden]:not(.h-end){display:none}
+.pin-all .h2 .h-end{display:block}
+.h-end em{font-style:normal;background:var(--mint);padding:0 .12em}
+/* views never stagger */
+@media (min-width:900px){.views .view.rv:nth-child(n){padding-top:30px!important}}
+/* contact: the form runs down to the last line of the facts */
+@media (min-width:1000px){
+ #contact .ct-f{align-self:stretch;display:flex}
+ #contact .ct-f .form{flex:1;grid-template-rows:auto auto auto minmax(0,1fr) auto}
+ #contact .fld.w{display:flex;flex-direction:column}
+ #contact .fld.w textarea{flex:1;min-height:90px;height:auto}
+}
+/* menu: the Sectors drop-down */
+.nav-sub{display:inline-flex;align-items:center;gap:7px;padding:8px 0;background:none;border:0;color:inherit;cursor:pointer;font:500 11.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.nav-sub span{color:var(--ink-3)}
+.nav-sub i{font-style:normal;display:inline-block;transition:transform .3s var(--ease)}
+.nav-sub:hover,.has-sub.open .nav-sub{color:var(--green)}
+.has-sub.open .nav-sub i{transform:rotate(180deg)}
+.sub{list-style:none}
+.nav ul.sub{display:block;gap:0}
+.nav .sub li{display:block}
+.sub a{display:flex;gap:12px;font:500 12px/1.25 var(--mono);text-transform:uppercase;letter-spacing:.05em}
+.sub a span{flex:none;min-width:68px;color:var(--ink-3)}
+@media (min-width:1100px){
+ .has-sub{position:relative}
+ .sub{position:absolute;top:calc(100% + 16px);left:-16px;min-width:330px;padding:6px 0;background:var(--paper);border:1.5px solid var(--ink);z-index:60;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .25s var(--ease),transform .25s var(--ease),visibility 0s linear .25s}
+ .sub::before{content:"";position:absolute;left:0;right:0;top:-18px;height:18px}
+ .has-sub.open .sub{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+ .sub a{padding:11px 16px}
+ .sub a:hover,.sub a[aria-current]{background:var(--mint);color:var(--ink)}
+ .sub a:hover span,.sub a[aria-current] span{color:var(--ink)}
+ .sub-all{margin-top:6px;border-top:1px solid var(--line-2)}
+}
+@media (max-width:1099px){
+ .nav-sub{display:flex;width:100%;padding:17px 0;font-size:13px}
+ .nav ul.sub{display:none;padding:0 0 12px 30px}
+ .has-sub.open ul.sub{display:block}
+ .nav .sub li{border-bottom:0}
+ .sub a{padding:11px 0}
+ .sub a[aria-current]{color:var(--green)}
+}
+
+/* pinned parts sheet, compact: the drawing and the table share the width, the notes follow below */
+.bb-after{margin-top:clamp(28px,4vw,48px);align-items:start}
+.bb-more{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:18px 28px;align-items:start}
+.bb-more>*{margin-top:0}
+@media (min-width:1000px){
+ .pin-on .bb-fig{grid-column:1/7}
+ .pin-on .bb-side{grid-column:7/13}
+ .pin-on .sched td{padding-top:6px;padding-bottom:6px}
+ .pin-on .sched .n{font-size:15px}
+ .pin-on .sched .w{font-size:13.5px;line-height:1.35}
+ .pin-on .pin-stick>.sh .intro{margin-top:10px;font-size:15px}
+ .pin-on .pin-say{margin-bottom:14px}
+}
+
+/* sector rows are links all the way across */
+.rowlink{cursor:pointer}
+.parts tr.rowlink:hover .nm a{color:var(--green);text-decoration-color:currentColor}
+
+/* ===== landing-page content (round 4): built to be read and to rank ===== */
+/* In brief: the direct answer, near the top */
+.brief{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);border:1.5px solid var(--ink);background:var(--paper)}
+.brief-a{padding:clamp(20px,2.6vw,36px)}
+.brief-a .lab{display:inline-block;padding:4px 8px;background:var(--mint);font:500 10.5px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.brief-a p{margin-top:14px;font-size:clamp(17px,1.25vw,19px);line-height:1.6;color:var(--ink)}
+.brief-a p+p{margin-top:12px;color:var(--ink-2);font-size:16px}
+.brief-f{padding:clamp(20px,2.6vw,36px);border-left:1.5px solid var(--ink);background:var(--paper-2)}
+.brief-f h3{font:500 10.5px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.brief-f ul{list-style:none;margin-top:10px}
+.brief-f li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px;padding:10px 0;border-bottom:1px solid var(--line-2);line-height:1.45}
+.brief-f li:last-child{border-bottom:0}
+.brief-f li::before{content:"";width:10px;height:10px;margin-top:6px;background:var(--mint);border:1px solid var(--green)}
+@media (max-width:899px){.brief{grid-template-columns:minmax(0,1fr)}.brief-f{border-left:0;border-top:1.5px solid var(--ink)}}
+/* the guide: a contents list that stays in view, and long-form text at a reading width */
+.guide{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:clamp(16px,2.4vw,40px);align-items:start}
+.toc{grid-column:1/4;position:sticky;top:calc(var(--ey) + var(--hh) + 28px)}
+.toc>p{font:500 10.5px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);padding-bottom:10px}
+.toc ol{list-style:none;border-top:1.5px solid var(--ink)}
+.toc a{display:grid;grid-template-columns:30px minmax(0,1fr);gap:6px;padding:10px 0;border-bottom:1px solid var(--line-2);font-size:14px;line-height:1.35}
+.toc a span{font:500 11px/1.6 var(--mono);color:var(--green)}
+.toc a:hover,.toc a.on{color:var(--green)}
+.toc a.on{box-shadow:inset 3px 0 0 var(--mint);padding-left:8px}
+.prose{grid-column:4/12;min-width:0}
+.prose>section+section{margin-top:clamp(44px,5vw,64px);padding-top:clamp(28px,3vw,40px);border-top:1px solid var(--line-2)}
+.prose h3{font:600 clamp(1.45rem,1rem + 1.1vw,2rem)/1.12 var(--cond);letter-spacing:-.01em;scroll-margin-top:130px}
+.prose h3 .q{display:block;margin-bottom:8px;font:500 10.5px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--green)}
+.prose h4{margin-top:24px;font:600 18px/1.25 var(--cond)}
+.prose p{margin-top:14px;max-width:70ch;font-size:17px;line-height:1.68;color:var(--ink-2)}
+.prose strong{color:var(--ink);font-weight:600}
+.prose ul,.prose ol{margin-top:14px;padding-left:1.25em;max-width:68ch}
+.prose li{margin-top:7px;font-size:17px;line-height:1.6;color:var(--ink-2)}
+.prose li::marker{color:var(--green)}
+.prose a{border-bottom:1px solid var(--ink)}
+.prose a:hover{color:var(--green);border-color:var(--green)}
+.kf{margin-top:22px;padding:16px 18px 18px;border:1.5px solid var(--ink);background:var(--paper);max-width:70ch}
+.kf .lab{display:inline-block;padding:3px 7px;background:var(--mint);font:500 10px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.kf p{margin-top:10px;font-size:16px;color:var(--ink)}
+.kt{width:100%;max-width:72ch;margin-top:20px;border-collapse:collapse;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);font-size:15px}
+.kt th{padding:9px 12px 9px 0;text-align:left;border-bottom:1px solid var(--ink);font:500 10px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.kt td{padding:11px 12px 11px 0;border-bottom:1px solid var(--line-2);vertical-align:top;line-height:1.45;color:var(--ink-2)}
+.kt td:first-child{color:var(--ink);font-weight:600}
+.kt tr:last-child td{border-bottom:0}
+.updated{margin-top:28px;font:500 10.5px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+@media (max-width:999px){.toc{position:static;grid-column:1/-1;margin-bottom:32px}.prose{grid-column:1/-1}}
+@media (max-width:559px){.kt{display:block;overflow-x:auto}}
+
+/* ===== round 5 (21 Oct 2026): no section labels; each section has its own ground ===== */
+.sh .h2{grid-column:1/11}
+.sh .intro{grid-column:1/9}
+@media (max-width:899px){.sh .h2,.sh .intro{grid-column:1/-1}}
+/* the grounds: paper with the drafting grid, a warm grey wash, a light teal wash, and the dark sheet.
+   The washes are see-through, so the grid and the frame carry on underneath. */
+.sec{background-color:transparent;transition:background-color .3s}
+#paid,#own,#owned,#ask,#how,#start,#next{background-color:rgba(18,22,20,.055)}
+#brief,#sectors,#sheets,#other,#contact{background-color:rgba(171,237,216,.34)}
+#brief .brief,#contact .form{box-shadow:0 0 0 6px rgba(237,234,226,.55)}
+/* the footer is the dark sheet that closes the page */
+.foot{--paper:#151a18;--paper-2:#1d2421;--ink:#EDEAE2;--ink-2:#cdd1cc;--ink-3:#9fa8a3;--line:rgba(237,234,226,.14);--line-2:rgba(237,234,226,.34);--green:#ABEDD8;color:var(--ink)}
+.foot>*{background:var(--paper)}
+.foot ul a:hover,.foot address a:hover{color:var(--mint)}
+
+/* ===== round 6 (21 Oct 2026): desktop and mobile ===== */
+/* large screens: the content stops at 1,560px and sits in the middle; the section grounds still run full width */
+.sec,.hero,.top{padding-left:max(var(--gut),calc((100% - 1560px) / 2));padding-right:max(var(--gut),calc((100% - 1560px) / 2))}
+/* phones and tablets: controls are big enough for a thumb */
+@media (max-width:899px){
+ .brand{min-height:44px}
+ .sc-re{min-height:40px;padding:9px 12px}
+ .fld input,.fld select{min-height:44px}
+ .parts .nm a{display:inline-block;padding:10px 0}
+ #calculator input[type=range]{height:44px}
+ .xp-t,.lnk{min-height:44px}
+}
+/* phones: the drafting labels stay readable */
+@media (max-width:767px){
+ .brief-a .lab,.brief-f h3,.tb small,.f-hd span,.facts dt,.fee-l span,.figcap span,.hcta small,.kf .lab,.legend li,.lgd span,.nl-h span,.note .lab,
+ .ro-hd span,.ro-sum dt,.rscale span,.sn,.scale span,.scanbar,.scanbar span,.scanbar b,.sc-re,.spec dt,.sig small,.toc>p,.vcap span,.vcap b,.xp-c li,
+ .xp-fig figcaption,.xp-k,.prose h3 .q,.sp-fee span,.sched th,.parts th,.kt th,.foot h2,.otag,.crumb ol,.crumb a,.pin-meta{font-size:11px!important}
+ .fld label{font-size:12px!important}
+ .legend i{width:19px;height:19px;font-size:10.5px}
+}
+/* small phones: the footer keeps two columns of links instead of one long list */
+@media (max-width:399px){.foot{grid-template-columns:repeat(2,minmax(0,1fr))}.foot .fb,.foot .fl{grid-column:1/-1}}
+@media (max-width:479px){.foot>div:last-of-type{grid-column:1/-1}}
+
+/* the page's own rules */
+
+/* page only: breadcrumb, lede, the not-qualifying marks, four views, the question list */
+.crumb{padding:14px var(--gut) 0;font:500 11px/1.5 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.crumb ol{list-style:none;display:flex;flex-wrap:wrap;gap:4px 8px}
+.crumb li+li::before{content:"›";margin-right:8px}
+.crumb a{border-bottom:1px solid var(--line-2)}
+.crumb a:hover{color:var(--green);border-color:var(--green)}
+.crumb [aria-current]{color:var(--ink)}
+.lede{margin-top:22px;max-width:44ch;font-size:clamp(17px,1.35vw,19.5px);color:var(--ink-2)}
+.drw .xo{stroke:var(--ink-3);stroke-dasharray:5 4}
+.drw .bk{fill:var(--paper);stroke:none}
+.cut .rl{fill:var(--ink-3)}
+.legend i.x{background:var(--paper)}
+@media (max-width:639px){.cut .rl,.cut .bk{display:none}}
+.views.v4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.views.v4 .view:nth-child(2){padding-top:48px}
+.views.v4 .view:nth-child(3){padding-top:96px;padding-right:clamp(16px,2.2vw,36px)}
+.views.v4 .view:nth-child(4){padding-top:144px}
+@media (max-width:899px){.views.v4{grid-template-columns:minmax(0,1fr)}.views.v4 .view:nth-child(n){padding:28px 0 36px}.views.v4 .view:last-child{padding-bottom:0}}
+.fee-n.nil{font-size:clamp(5.5rem,3.4rem + 9vw,11rem)}
+.fee .note{margin-top:26px}
+.ask{grid-column:1/8;min-width:0}
+@media (max-width:999px){.ask{grid-column:1/-1}}
+.qs{list-style:none;border-top:1.5px solid var(--ink)}
+.qs li{display:grid;grid-template-columns:52px minmax(0,1fr);padding:14px 0;border-bottom:1px solid var(--line-2);font-size:16.5px}
+.qs li span{font:500 12px/1.9 var(--mono);color:var(--green)}
+.docs{list-style:none}
+.docs li{display:grid;grid-template-columns:22px minmax(0,1fr);padding:12px 16px;border-bottom:1px solid var(--line);font-size:15px;line-height:1.45}
+.docs li::before{content:"";width:10px;height:10px;margin-top:6px;border:1px solid var(--green);background:var(--mint)}
+.docs li:last-child{border-bottom:0}
+.ro .cap{margin:0;padding:14px 16px 18px;border-top:1px solid var(--ink)}
+.feeline{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 24px;margin-top:clamp(48px,6vw,80px);padding-top:18px;border-top:1px solid var(--ink)}
+.feeline b{font:600 clamp(2.4rem,1.6rem + 2.6vw,4rem)/1 var(--mono);letter-spacing:-.05em;color:var(--mint)}
+.feeline p{max-width:58ch;color:var(--ink-2)}
+.parts .go .lnk{white-space:nowrap}
+
+/* IBM Plex, self-hosted (SIL Open Font License, site/fonts/OFL-LICENSE.txt); latin, the weights the pages use */
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/ibm-plex-sans-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/ibm-plex-sans-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/ibm-plex-sans-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Sans Condensed";font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/ibm-plex-sans-condensed-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Sans Condensed";font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/ibm-plex-sans-condensed-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Sans Condensed";font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/ibm-plex-sans-condensed-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-latin-600-normal.woff2) format("woff2")}
+
+/* Phase 160k: Log in, in the menu */
+.nav .nav-login a{color:var(--ink-2)}
+
+/* Phase 160k: the design's style attributes, as classes (tools/site-from-design.mjs) */
+.z138c8cb{--d:.08s!important}
+.z6e61b15{--d:.14s!important}
+.z26f51d7{--d:.2s!important}
+.zd336a95{--fx:#C8961E!important;--lit:#F4C64F!important}
+.z9e4a45e{fill:url(#fx-cone-h)!important}
+.zb7d5112{--fx:#5B6E8C!important}
+.z9dfcc06{--dy:-100px!important}
+.z6ce2856{--fx:#D23B2B!important}
+.z7b04fc8{--dl:0.00s!important}
+.z6f9e4fe{--dl:0.70s!important}
+.z194db14{--dl:0.23s!important}
+.z72aa2f8{--dl:0.93s!important}
+.zb4bf739{--dl:0.46s!important}
+.z96cc0f0{--dl:1.16s!important}
+.z27cea93{--dl:0.69s!important}
+.z6081bc1{--dl:1.39s!important}
+.zea9dcaf{--dl:0.92s!important}
+.ze6a7c03{--dl:1.62s!important}
+.z2b3d4e7{--dl:1.15s!important}
+.zde605f8{--dl:1.85s!important}
+.zdfbea15{--dl:.47s!important}
+.z0a4996d{--dl:.94s!important}
+.zff4277a{--fx:#1d5c4c!important;--lit:#F4C64F!important}
+.z8b8bb5b{fill-opacity:.16!important}
+.zd6014e7{--fx:#D0841C!important}
+.z7d067b5{animation-delay:.3s!important}
+.zf8984dd{animation-delay:.6s!important}
+.zafc81cf{animation-delay:.15s!important}
+.z3d4b0cc{stroke-width:1.4!important}
+.z3784df4{--d:.3s!important}
+.z14c4120{--d:.42s!important}
+.z733c5e9{fill:url(#fx-pool)!important}
+.z69ededa{--dy:-56px!important}
+.zd503c72{stroke-width:2.4!important}
+.zd4450b6{--dl:.2s!important}
+.za345759{--dl:.4s!important}
+.z7ccbb3c{--dl:.6s!important}
+.z64082c3{--dl:.8s!important}
+.ze33ad98{--dl:.7s!important}
+.zac6cecc{--dl:.9s!important}
+.z075c410{--dl:1.1s!important}
+.z4941332{--dl:1.3s!important}
+.zb178e4c{--dl:1.5s!important}
+.z7bf33e6{fill-opacity:.2!important}
+.z9367ee5{--fx:#3B7EB4!important}
+.zf123405{--dl:.35s!important}
+.zbb6e0f6{--dl:1.05s!important}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "Service",
+   "@id": "https://caprebate.co.uk/capital-allowances/supported-living/#service",
+   "name": "Capital allowances for supported living",
+   "serviceType": "Capital allowances claims",
+   "description": "Capital allowances for supported living and supported housing. Homes let to tenants do not qualify; shared and staff areas outside the homes can, and the answer can be nil. Every split of costs is signed by a chartered surveyor. Flat 3% fee of the allowances identified.",
+   "url": "https://caprebate.co.uk/capital-allowances/supported-living/",
+   "areaServed": [
+    {
+     "@type": "AdministrativeArea",
+     "name": "England"
+    },
+    {
+     "@type": "AdministrativeArea",
+     "name": "Wales"
+    }
+   ],
+   "provider": {
+    "@type": "Organization",
+    "name": "Cap Rebate",
+    "legalName": "CAP REBATE LTD",
+    "url": "https://caprebate.co.uk/"
+   }
+  },
+  {
+   "@type": "WebPage",
+   "@id": "https://caprebate.co.uk/capital-allowances/supported-living/#webpage",
+   "name": "Capital Allowances for Supported Living | Cap Rebate",
+   "url": "https://caprebate.co.uk/capital-allowances/supported-living/",
+   "inLanguage": "en-GB",
+   "description": "Capital allowances for supported living and supported housing: which shared parts can qualify, why the homes cannot, and a straight answer, even if nil.",
+   "dateModified": "2026-10-21",
+   "about": {
+    "@id": "https://caprebate.co.uk/capital-allowances/supported-living/#service"
+   }
+  },
+  {
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "Home",
+     "item": "https://caprebate.co.uk/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "Supported living",
+     "item": "https://caprebate.co.uk/capital-allowances/supported-living/"
+    }
+   ]
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "Do supported living flats qualify for capital allowances?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No. Flats let to tenants are homes, and the rules exclude them and everything inside them. In a building with two or more homes, the shared and staff areas outside the homes can qualify, if their cost can be separately identified."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Is supported living taxed like a care home?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Not usually. Where residents have their own tenancy, any claim is limited to the shared parts. Where they live in a registered care home with no tenancy of their own, the building is not treated as homes and a fuller claim may be possible."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Can a housing association or charity claim?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Usually not. Capital allowances reduce a tax bill, and charities, CICs and many housing associations do not pay this tax. In a lease-based scheme, the investor that owns the building may be the one with a claim."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does a communal boiler qualify?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Not where it heats the homes. Plant that serves the homes is excluded wherever it stands. Plant that serves only the shared areas can qualify."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Part of the build was grant-funded. Can we still claim?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Only on the part you paid for yourself. Spend funded by a capital grant is taken out first. Repaying the grant later, for example on an early sale, does not bring the relief back."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Is there any other relief if capital allowances come to nil?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Sometimes. A company that bought a derelict or contaminated building, and did not cause the problem, may be able to claim Land Remediation Relief. Items inside the homes may fall under Replacement of Domestic Items Relief, which your accountant can look at."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Can I claim capital allowances on the communal areas of an HMO or shared house?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Only on the parts with no living function. Where residents share a kitchen or lounge because their own room lacks one, that space is part of their homes and does not qualify. Hallways, stairs, a lift, the fire alarm and door entry outside the homes can, if their cost is split out."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Can an investor in specialist supported housing claim capital allowances?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Sometimes, but the claim is usually small. An investor that owns the building and leases it to a registered provider runs a letting business, so the homes are left out. Any claim is on the shared parts it paid for, after any grant is taken out."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What if the cost of the shared areas was never split out?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "One blended figure can sink a claim, even where the items would qualify. A chartered surveyor can sometimes split the cost afterwards from plans and cost records. If that is not possible, we will tell you there is no claim we can stand behind."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What does a supported living claim cost?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "The assessment is free. If there is a claim worth making, our fee is a flat 3% of the capital allowances we identify. If there is no claim, we tell you early, in writing."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
+
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+
+<div class="mask" aria-hidden="true"></div>
+<div class="frame" aria-hidden="true">
+ <div class="zn t"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
+ <div class="zn b"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
+ <div class="zn l"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span></div>
+ <div class="zn r"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span></div>
+</div>
+
+<header class="top" id="top">
+ <a class="brand" href="/" aria-label="Cap Rebate, home">
+  <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 43 H34 A4 4 0 0 0 38 39 V20.5 L24 8 L10 20.5 V39 A4 4 0 0 0 14 43 Z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><rect x="16" y="20" width="16" height="5.5" rx="1.6" fill="currentColor"/><rect x="16" y="29.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="22" y="29.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="28" y="29.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="16" y="35.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="22" y="35.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="28" y="35.5" width="4" height="4" rx="1" fill="currentColor"/></svg>
+  Cap Rebate
+ </a>
+ <nav class="nav" id="nav" aria-label="Main">
+  <ul>
+   <li><a href="#calculator"><span>01</span>Calculator</a></li>
+   <li class="has-sub"><button type="button" class="nav-sub" aria-expanded="false" aria-controls="sub-sec"><span>02</span>Sectors <i aria-hidden="true">▾</i></button>
+    <ul class="sub" id="sub-sec"><li><a href="/capital-allowances/care-homes/"><span>Sheet 02</span>Care homes</a></li><li><a href="/capital-allowances/dental-practices/"><span>Sheet 03</span>Dental practices</a></li><li><a href="/capital-allowances/gp-surgeries/"><span>Sheet 04</span>GP surgeries</a></li><li><a href="/capital-allowances/supported-living/" aria-current="page"><span>Sheet 05</span>Supported living</a></li><li><a href="/capital-allowances/private-hospitals-and-clinics/"><span>Sheet 06</span>Private hospitals and clinics</a></li><li class="sub-all"><a href="/#sectors"><span>All</span>Compare the sectors</a></li></ul>
+   </li>
+   <li><a href="/#how"><span>03</span>How it works</a></li>
+   <li><a href="/#questions"><span>04</span>Questions</a></li>
+   <li><a href="/#contact"><span>05</span>Contact</a></li>
+   <li class="nav-login"><a href="/login">Log in</a></li>
+  </ul>
+ </nav>
+ <a class="btn pri" href="/assessment">Am I eligible <span class="ar" aria-hidden="true">↗</span></a>
+ <button class="mbtn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav"><span class="mb-t">Menu</span><i aria-hidden="true"></i></button>
+</header>
+
+<main id="main">
+
+<nav class="crumb" aria-label="Breadcrumb">
+ <ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/#sectors">Capital allowances</a></li>
+  <li><span aria-current="page">Supported living</span></li>
+ </ol>
+</nav>
+
+<section class="hero" data-idx="Sheet 5 · Section A-A" aria-labelledby="h1">
+ <div class="hero-txt">
+  <h1 id="h1" class="hi z138c8cb">Capital allowances for supported living</h1>
+  <p class="lede hi z6e61b15">Homes let to tenants do not qualify. The shared stairs, lift, corridors, plant and staff areas outside them sometimes can, and the honest answer can be nil. We find out which, and tell you straight.</p>
+  <div class="hctas hi z26f51d7">
+   <a class="hcta pri" href="/assessment"><small>Free assessment (01)</small><b>Am I eligible? <span class="ar" aria-hidden="true">↗</span></b></a>
+   <a class="hcta dn" href="#calculator"><small>About 20 seconds (02)</small><b>Try the calculator <span class="ar" aria-hidden="true">↘</span></b></a>
+  </div>
+ </div>
+
+ <figure class="hero-fig">
+  <svg class="drw elev fxd" data-scan viewBox="0 0 900 540" role="img" aria-labelledby="ev-t ev-d">
+   <title id="ev-t">Section through a three-storey supported living block</title>
+   <desc id="ev-d">A cut through a three-storey block of flats. The shared stair and lift core, the corridors, the ground floor staff office and sleep-in room and the plant room are hatched as areas that can qualify. The four flats are crossed through and marked as not qualifying, and so is the boiler in the plant room that heats them. Six numbered items: electrics and lighting, lift, fire alarm, door entry, staff areas and landlord's plant.</desc>
+   <defs>
+    <pattern id="ev-h" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V9" stroke="#59615D" stroke-width=".8"/></pattern>
+    <pattern id="ev-q" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V10" stroke="#1d5c4c" stroke-width=".8" stroke-opacity=".4"/></pattern>
+    <g id="ev-w"><rect width="40" height="46"/><path d="M20 0V46M0 23H40"/></g>
+    <path id="ev-l" d="M-8 0H8L5 6H-5Z"/>
+    <g id="ev-d1"><circle r="5"/><circle r="1.6"/></g>
+    <linearGradient id="fx-cone-h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4C64F" stop-opacity=".6"/><stop offset="1" stop-color="#F4C64F" stop-opacity="0"/></linearGradient>
+    <clipPath id="sl-lc"><rect x="470" y="128" width="60" height="312"/></clipPath>
+   <clipPath id="sc-b"><rect id="sc-br" x="0" y="0" width="900" height="540"/></clipPath>
+    <clipPath id="sc-g"><rect id="sc-gr" x="0" y="0" width="900" height="0"/></clipPath>
+    <linearGradient id="sc-glow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ABEDD8" stop-opacity=".55"/><stop offset="1" stop-color="#ABEDD8" stop-opacity="0"/></linearGradient>
+   </defs>
+   <g class="ev1">
+    <rect x="30" y="440" width="840" height="14" fill="url(#ev-h)" stroke="none"/>
+    <rect x="320" y="140" width="280" height="300" fill="url(#ev-q)" stroke="none"/>
+    <rect x="100" y="340" width="220" height="100" fill="url(#ev-q)" stroke="none"/>
+    <rect x="600" y="340" width="200" height="100" fill="url(#ev-q)" stroke="none"/>
+    <path class="k" d="M30 440H870"/>
+    <path class="k" d="M100 440V140H800V440"/>
+    <path d="M94 132H806V140H94Z"/>
+    <path class="k" d="M100 340H800M100 240H800M320 140V440M600 140V440"/>
+    <path d="M390 140V440M470 140V440M530 140V440M210 340V440"/>
+    <path class="k" d="M470 140V108H530V140"/>
+    <use href="#ev-w" x="130" y="168"/><use href="#ev-w" x="240" y="168"/><use href="#ev-w" x="130" y="268"/><use href="#ev-w" x="240" y="268"/>
+    <use href="#ev-w" x="630" y="168"/><use href="#ev-w" x="730" y="168"/><use href="#ev-w" x="630" y="268"/><use href="#ev-w" x="730" y="268"/>
+    <path class="xo" d="M724 372V150M724 321H736M724 221H736M736 316h30v10h-30zM736 216h30v10h-30z"/>
+    <path class="xo" d="M106 146L314 234M314 146L106 234M106 246L314 334M314 246L106 334M606 146L794 234M794 146L606 234M606 246L794 334M794 246L606 334"/>
+    <rect class="bk" x="128" y="179" width="164" height="22"/><rect class="bk" x="128" y="279" width="164" height="22"/>
+    <rect class="bk" x="618" y="179" width="164" height="22"/><rect class="bk" x="618" y="279" width="164" height="22"/>
+    <text class="lb" x="210" y="195" text-anchor="middle">Flat: not qualifying</text>
+    <text class="lb" x="210" y="295" text-anchor="middle">Flat: not qualifying</text>
+    <text class="lb" x="700" y="195" text-anchor="middle">Flat: not qualifying</text>
+    <text class="lb" x="700" y="295" text-anchor="middle">Flat: not qualifying</text>
+    <path d="M394 440L466 390M450 390H470M466 390L394 340M394 340L466 290M450 290H470M466 290L394 240"/>
+    <path d="M484 114h32v14h-32z"/>
+    <g class="it" data-it="2"><path class="ghost" d="M478 288h44v48h-44zM492 128V288M508 128V288"/></g>
+    <use href="#ev-l" x="342" y="140"/><use href="#ev-l" x="586" y="140"/><use href="#ev-l" x="342" y="240"/><use href="#ev-l" x="586" y="240"/><use href="#ev-l" x="342" y="340"/><use href="#ev-l" x="586" y="340"/>
+    <use href="#ev-d1" x="364" y="150"/><use href="#ev-d1" x="548" y="150"/><use href="#ev-d1" x="364" y="250"/><use href="#ev-d1" x="548" y="250"/><use href="#ev-d1" x="364" y="350"/><use href="#ev-d1" x="548" y="350"/>
+    <path d="M326 384h26v56h-26zM360 404h8v12h-8zM386 346l-12 5 2 5 12-5z"/>
+    <path d="M118 410H192M124 410V440M186 410V440M140 394h24v16h-24zM200 380h6v14h-6zM230 420h76v20h-76zM242 420v20"/>
+    <path d="M614 380h44v60h-44zM625 380V440M636 380V440M647 380V440"/>
+    <path class="xo" d="M702 372h44v68h-44zM702 372L746 440M746 372L702 440"/>
+   </g>
+   <g class="hfx">
+    <g class="it zd336a95" data-it="1"><g class="fx">
+     <path class="glow z9e4a45e" d="M336 146L324 222H360L348 146Z"/><path class="glow z9e4a45e" d="M580 146L570 222H598L592 146Z"/><path class="glow z9e4a45e" d="M336 246L324 322H360L348 246Z"/><path class="glow z9e4a45e" d="M580 246L570 322H598L592 246Z"/><path class="glow z9e4a45e" d="M336 346L324 422H360L348 346Z"/><path class="glow z9e4a45e" d="M580 346L570 422H598L592 346Z"/>
+     <path class="flow" d="M324 438V143H336M324 243H336M324 343H336M614 392H596V143"/>
+     <path class="lamp" d="M334 140H350L347 146H337Z"/><path class="lamp" d="M578 140H594L591 146H581Z"/><path class="lamp" d="M334 240H350L347 246H337Z"/><path class="lamp" d="M578 240H594L591 246H581Z"/><path class="lamp" d="M334 340H350L347 346H337Z"/><path class="lamp" d="M578 340H594L591 346H581Z"/>
+    </g></g>
+    <g class="it zb7d5112" data-it="2"><g class="fx">
+     <path class="dash" d="M474 140V440M526 140V440"/>
+     <rect class="fill" x="470" y="108" width="60" height="32"/>
+     <g class="spin"><circle cx="500" cy="121" r="5"/><path d="M500 116V126M495 121H505"/></g>
+     <g clip-path="url(#sl-lc)"><g class="lift z9dfcc06"><path d="M492 288V20M508 288V20"/><rect class="fill" x="478" y="288" width="44" height="48"/><path d="M478 288h44v48h-44zM500 288V336"/></g></g>
+    </g></g>
+    <g class="it z6ce2856" data-it="3"><g class="fx">
+     <circle class="ring z7b04fc8" cx="364" cy="150" r="7"/><circle class="ring z6f9e4fe" cx="364" cy="150" r="7"/><circle class="blink" cx="364" cy="150" r="3.2"/><circle class="ring z194db14" cx="548" cy="150" r="7"/><circle class="ring z72aa2f8" cx="548" cy="150" r="7"/><circle class="blink" cx="548" cy="150" r="3.2"/><circle class="ring zb4bf739" cx="364" cy="250" r="7"/><circle class="ring z96cc0f0" cx="364" cy="250" r="7"/><circle class="blink" cx="364" cy="250" r="3.2"/><circle class="ring z27cea93" cx="548" cy="250" r="7"/><circle class="ring z6081bc1" cx="548" cy="250" r="7"/><circle class="blink" cx="548" cy="250" r="3.2"/><circle class="ring zea9dcaf" cx="364" cy="350" r="7"/><circle class="ring ze6a7c03" cx="364" cy="350" r="7"/><circle class="blink" cx="364" cy="350" r="3.2"/><circle class="ring z2b3d4e7" cx="548" cy="350" r="7"/><circle class="ring zde605f8" cx="548" cy="350" r="7"/><circle class="blink" cx="548" cy="350" r="3.2"/>
+    </g></g>
+    <g class="it z6ce2856" data-it="4"><g class="fx">
+     <rect class="fill" x="326" y="384" width="26" height="56"/>
+     <circle class="ring" cx="364" cy="410" r="8"/><circle class="ring zdfbea15" cx="364" cy="410" r="8"/><circle class="ring z0a4996d" cx="364" cy="410" r="8"/>
+     <rect class="blink" x="360" y="404" width="8" height="12"/>
+     <path class="ray" d="M360 412H352"/><circle class="blink" cx="347" cy="412" r="2.2"/>
+     <circle class="blink" cx="376" cy="354" r="1.8"/>
+    </g></g>
+    <g class="it zff4277a" data-it="5"><g class="fx">
+     <rect class="tint z8b8bb5b" x="100" y="340" width="220" height="100"/>
+     <path class="dash" d="M100 340H320V440H100Z"/>
+     <path class="glow z9e4a45e" d="M149 346L138 402H172L161 346Z"/><path class="glow z9e4a45e" d="M259 346L246 414H284L271 346Z"/>
+     <path class="lamp" d="M147 340H163L160 346H150Z"/><path class="lamp" d="M257 340H273L270 346H260Z"/>
+     <rect class="lamp" x="142" y="396" width="20" height="12"/>
+    </g></g>
+    <g class="it zd6014e7" data-it="6"><g class="fx">
+     <rect class="fill" x="614" y="380" width="44" height="60"/>
+     <path class="flow" d="M636 380V366H602"/>
+     <circle class="blink" cx="619.5" cy="388" r="2"/><circle class="blink z7d067b5" cx="630.5" cy="388" r="2"/><circle class="blink zf8984dd" cx="641.5" cy="388" r="2"/><circle class="blink zafc81cf" cx="652.5" cy="388" r="2"/>
+     <g class="pop"><path class="fill z3d4b0cc" d="M680 344L671 359H678L674 371L686 354H679L683 344Z"/></g>
+    </g></g>
+   </g>
+   <g class="ev2">
+    <path class="dm" d="M100 128V30M800 128V30"/>
+    <path class="dm" d="M90 40H810"/>
+    <path class="dm" d="M94 46L106 34M794 46L806 34"/>
+    <text class="dt" x="450" y="32">21 000</text>
+    <path class="dm" d="M90 132H52"/>
+    <path class="dm" d="M62 122V450"/>
+    <path class="dm" d="M56 138L68 126M56 446L68 434"/>
+    <text class="dt" transform="translate(50 286) rotate(-90)">9 300</text>
+    <path class="dm" d="M810 440H884M810 340H884M810 240H884M810 140H884"/>
+    <path class="dm" d="M833 440l-7-9h14zM833 340l-7-9h14zM833 240l-7-9h14zM833 140l-7-9h14z"/>
+    <text x="846" y="434">±0.000</text><text x="846" y="334">+3.000</text><text x="846" y="234">+6.000</text><text x="846" y="134">+9.000</text>
+   </g>
+   <g class="ev3">
+    <g class="co" data-y="138"><path d="M160 99L336 138"/><circle class="bl" data-it="1" cx="150" cy="92" r="12"/><text class="bn" data-it="1" x="150" y="96.5">1</text><text class="lb" x="168" y="97">Electrics, lighting</text></g>
+    <g class="co" data-y="114"><path d="M440 99L470 114"/><circle class="bl" data-it="2" cx="430" cy="92" r="12"/><text class="bn" data-it="2" x="430" y="96.5">2</text><text class="lb" x="412" y="97" text-anchor="end">Lift</text></g>
+    <g class="co" data-y="146"><path d="M669 98L552 146"/><circle class="bl" data-it="3" cx="680" cy="92" r="12"/><text class="bn" data-it="3" x="680" y="96.5">3</text><text class="lb" x="698" y="97">Fire alarm</text></g>
+    <g class="co" data-y="416"><path d="M364 416V466"/><circle class="bl" data-it="4" cx="364" cy="478" r="12"/><text class="bn" data-it="4" x="364" y="482.5">4</text><text class="lb" x="382" y="483">Door entry</text></g>
+    <g class="co" data-y="410"><path d="M160 410V466"/><circle class="bl" data-it="5" cx="160" cy="478" r="12"/><text class="bn" data-it="5" x="160" y="482.5">5</text><text class="lb" x="178" y="483">Staff areas</text></g>
+    <g class="co" data-y="440"><path d="M636 440V466"/><circle class="bl" data-it="6" cx="636" cy="478" r="12"/><text class="bn" data-it="6" x="636" y="482.5">6</text><text class="lb" x="618" y="483" text-anchor="end">Landlord's plant</text></g>
+    <path class="xo" d="M724 440V498"/><text class="lb" x="724" y="518" text-anchor="middle">Boiler for the flats: not qualifying</text>
+   </g>
+     <g class="scan" id="scan" aria-hidden="true"><rect id="sc-band" x="20" y="0" width="860" height="56" fill="url(#sc-glow)"/><path id="sc-line" d="M20 0H880"/><text id="sc-txt" x="880" y="-7" text-anchor="end">SCAN 000%</text></g>
+  </svg>
+  <div class="scanbar" id="scanbar"><span aria-hidden="true" id="sc-st">Scan 000%</span><span aria-hidden="true" class="sc-ex">Example · supported living</span><span aria-hidden="true">Items found <b id="sc-n">00/00</b></span><button type="button" class="sc-re" id="sc-re">↻ Rebuild</button></div>
+  <i class="xh xh-v" aria-hidden="true"></i><i class="xh xh-h" aria-hidden="true"></i><span class="xh-t" aria-hidden="true"></span>
+  <figcaption class="figcap">
+   <span><b>Section A-A</b> · supported living, three storeys</span>
+   <ul class="legend" aria-label="Numbered items on the drawing">
+    <li><i>1</i>Electrics and lighting</li><li><i>2</i>Lift</li><li><i>3</i>Fire alarm</li><li><i>4</i>Door entry</li><li><i>5</i>Staff areas</li><li><i>6</i>Landlord's plant</li><li><i class="x">×</i>Flats and their boiler: not qualifying</li>
+   </ul>
+  </figcaption>
+ </figure>
+
+ <dl class="spec hi z3784df4">
+  <div class="sp-fee"><dt>Our fee</dt><dd><b>3%</b><span>flat, of the allowances we identify</span></dd></div>
+  <div><dt>Assessment</dt><dd>Free</dd></div>
+  <div><dt>Every claim</dt><dd>Signed by a chartered surveyor</dd></div>
+  <div><dt>Covers</dt><dd>England and Wales</dd></div>
+ </dl>
+
+ <div class="tb hi z14c4120" role="group" aria-label="Drawing title block">
+  <div class="c-logo">
+   <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 43 H34 A4 4 0 0 0 38 39 V20.5 L24 8 L10 20.5 V39 A4 4 0 0 0 14 43 Z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><rect x="16" y="20" width="16" height="5.5" rx="1.6" fill="currentColor"/><rect x="16" y="29.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="22" y="29.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="28" y="29.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="16" y="35.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="22" y="35.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="28" y="35.5" width="4" height="4" rx="1" fill="currentColor"/></svg>
+   <span>Cap Rebate</span>
+  </div>
+  <div class="c-title"><small>Title</small><span>Capital allowances for supported living and supported housing</span></div>
+  <div><small>Drawn</small><span>Cap Rebate</span></div>
+  <div><small>Date</small><span>20.10.2026</span></div>
+  <div><small>Sheet</small><span>5 of 6</span></div>
+  <div class="c-region"><small>Region</small><span>England and Wales</span></div>
+  <div class="c-scale"><small>Scale</small><span>Not to scale</span></div>
+ </div>
+</section>
+
+<section class="sec" id="brief" data-idx="Summary" aria-labelledby="brief-h">
+ <div class="cols sh rv">
+  <h2 class="h2" id="brief-h">Can supported living claim capital allowances?</h2>
+ </div>
+ <div class="brief rv">
+  <div class="brief-a"><span class="lab">The short answer</span><p>It depends on the building, and the honest answer can be nil. Capital allowances for supported living never reach the homes let to tenants, or anything inside them. In a building with two or more homes, the shared stairs, lift, corridors, staff areas and landlord's services outside the homes can qualify, if their cost can be split out.</p><p>Shared kitchens and lounges that are part of residents' homes do not count, and nor does a boiler that heats the homes. If our free assessment finds no claim, we tell you early, in writing.</p></div>
+  <div class="brief-f"><h3>Key points</h3><ul><li>Homes let to tenants, and everything inside them, do not qualify.</li><li>A single house or flat let as one home usually has no claim at all.</li><li>Shared kitchens and lounges count as part of the residents' homes.</li><li>Plant that heats the homes is left out, even in a shared plant room.</li><li>Grant-funded spend comes out, and charities usually cannot claim.</li><li>The assessment is free. Our fee is a flat 3% of the allowances we identify.</li></ul></div>
+ </div>
+</section>
+
+<section class="sec" id="qualifies" data-idx="Detail A · What qualifies" aria-labelledby="a-h">
+ <div class="pin-track" id="pin"><div class="pin-stick">
+ <div class="cols sh rv">
+  <h2 class="h2" id="a-h">What qualifies in a supported living scheme</h2>
+  <p class="intro">In a building with two or more homes, the parts outside the homes can carry a claim: the shared core, the staff areas and the landlord's services, each costed separately.</p>
+ </div>
+
+ <div class="cols bb">
+  <figure class="bb-fig rv">
+   <svg class="drw cut fxd" id="cut" viewBox="0 0 640 440" role="img" aria-labelledby="ct-t ct-d">
+    <title id="ct-t">Ground floor plan of a supported living block</title>
+    <desc id="ct-d">A floor plan with two flats crossed through as not qualifying, the stair and lift core, the corridor, a staff office, staff WC and sleep-in room, the entrance lobby and the plant room. Seven numbered items sit in the shared and staff areas. The boiler that heats the flats is marked as not qualifying.</desc>
+    <defs>
+     <pattern id="ct-h" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V7" stroke="#59615D" stroke-width=".8"/></pattern>
+     <pattern id="ct-q" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V9" stroke="#1d5c4c" stroke-width=".8" stroke-opacity=".35"/></pattern>
+     <radialGradient id="fx-pool"><stop offset="0" stop-color="#F4C64F" stop-opacity=".65"/><stop offset="1" stop-color="#F4C64F" stop-opacity="0"/></radialGradient>
+    </defs>
+    <g>
+     <rect x="48" y="200" width="544" height="50" fill="url(#ct-q)" stroke="none"/>
+     <rect x="250" y="48" width="150" height="152" fill="url(#ct-q)" stroke="none"/>
+     <rect x="48" y="250" width="544" height="142" fill="url(#ct-q)" stroke="none"/>
+     <rect x="40" y="40" width="560" height="8" fill="url(#ct-h)" stroke="none"/>
+     <rect x="40" y="392" width="312" height="8" fill="url(#ct-h)" stroke="none"/>
+     <rect x="392" y="392" width="208" height="8" fill="url(#ct-h)" stroke="none"/>
+     <rect x="40" y="48" width="8" height="344" fill="url(#ct-h)" stroke="none"/>
+     <rect x="592" y="48" width="8" height="344" fill="url(#ct-h)" stroke="none"/>
+     <rect class="bk" x="80" y="40" width="60" height="8"/><rect class="bk" x="160" y="40" width="60" height="8"/><rect class="bk" x="430" y="40" width="60" height="8"/><rect class="bk" x="510" y="40" width="60" height="8"/>
+     <path d="M80 40V48M140 40V48M80 44H140M160 40V48M220 40V48M160 44H220M430 40V48M490 40V48M430 44H490M510 40V48M570 40V48M510 44H570"/>
+     <path class="k" d="M352 400H40V40H600V400H392M352 392H48V48H592V392H392M352 392V400M392 392V400"/>
+     <path class="k" d="M48 200H196M224 200H262M300 200H352M388 200H424M452 200H592M48 250H100M128 250H182M206 250H262M290 250H330M420 250H500M528 250H592"/>
+     <path class="k" d="M250 48V200M340 48V200M400 48V200M170 250V392M230 250V392M330 250V392M420 250V392"/>
+     <path d="M196 200V172M196 172A28 28 0 0 1 224 200M452 200V172M452 172A28 28 0 0 0 424 200M100 250V278M100 278A28 28 0 0 0 128 250M182 250V274M182 274A24 24 0 0 0 206 250M262 250V278M262 278A28 28 0 0 0 290 250M500 250V278M500 278A28 28 0 0 0 528 250M352 392V372M352 372A20 20 0 0 1 372 392M392 392V372M392 372A20 20 0 0 0 372 392"/>
+     <path d="M254 70H336M254 82H336M254 94H336M254 106H336M254 118H336M254 130H336M254 142H336M254 154H336M254 166H336M254 178H336M295 70V190M274 186V84M269 92L274 84L279 92"/>
+     <path d="M120 48V104M48 104H92M54 54h58v20h-58zM150 52h92v14h-92zM210 55h20v8h-20z"/>
+     <path d="M530 48V104M592 104H558M536 54h50v20h-50zM408 52h92v14h-92zM420 55h20v8h-20z"/>
+     <path class="xo" d="M52 52L246 196M246 52L52 196M404 52L588 196M588 52L404 196"/>
+     <path class="xo" d="M568 300V178M554 170h28v8h-28zM548 300h40v50h-40zM548 300L588 350M588 300L548 350"/>
+     <path d="M150 300h16v56h-16zM153 316h10v14h-10zM188 376h24v12h-24zM212 300h16v14h-16zM266 322h56v64h-56zM266 336H322"/>
+     <ellipse cx="200" cy="366" rx="8" ry="9"/>
+     <rect class="bk" x="90" y="116" width="118" height="36"/><rect class="bk" x="437" y="116" width="118" height="36"/>
+     <text class="rl" x="149" y="131" text-anchor="middle">Flat G.01</text><text class="rl" x="149" y="147" text-anchor="middle">not qualifying</text>
+     <text class="rl" x="496" y="131" text-anchor="middle">Flat G.02</text><text class="rl" x="496" y="147" text-anchor="middle">not qualifying</text>
+     <text class="rl" x="295" y="62" text-anchor="middle">Stair</text>
+     <text class="rl" x="370" y="188" text-anchor="middle">Lift</text>
+     <text class="rl" x="100" y="296" text-anchor="middle">Office</text>
+     <text class="rl" x="200" y="296" text-anchor="middle">WC</text>
+     <text class="rl" x="296" y="304" text-anchor="middle">Sleep-in</text>
+     <text class="rl" x="372" y="352" text-anchor="middle">Lobby</text>
+     <text class="rl" x="480" y="320" text-anchor="middle">Plant room</text>
+     <text class="rl" x="520" y="374" text-anchor="middle">Boiler for flats</text>
+    </g>
+    <g class="it zd336a95" data-it="1">
+     <g class="fx"><ellipse class="glow z733c5e9" cx="90" cy="222" rx="30" ry="22"/><ellipse class="glow z733c5e9" cx="170" cy="222" rx="30" ry="22"/><ellipse class="glow z733c5e9" cx="300" cy="222" rx="30" ry="22"/><ellipse class="glow z733c5e9" cx="440" cy="222" rx="30" ry="22"/><ellipse class="glow z733c5e9" cx="530" cy="222" rx="30" ry="22"/><path class="flow" d="M464 260V216M60 216H582"/></g>
+     <path class="dash k2" d="M464 260V216M60 216H582"/>
+     <circle class="bl" cx="90" cy="216" r="6"/><circle class="bl" cx="170" cy="216" r="6"/><circle class="bl" cx="300" cy="216" r="6"/><circle class="bl" cx="440" cy="216" r="6"/><circle class="bl" cx="530" cy="216" r="6"/>
+     <g class="fx"><circle class="lamp" cx="90" cy="216" r="6"/><circle class="lamp" cx="170" cy="216" r="6"/><circle class="lamp" cx="300" cy="216" r="6"/><circle class="lamp" cx="440" cy="216" r="6"/><circle class="lamp" cx="530" cy="216" r="6"/></g>
+     <path d="M85.8 211.8l8.4 8.4M94.2 211.8l-8.4 8.4M165.8 211.8l8.4 8.4M174.2 211.8l-8.4 8.4M295.8 211.8l8.4 8.4M304.2 211.8l-8.4 8.4M435.8 211.8l8.4 8.4M444.2 211.8l-8.4 8.4M525.8 211.8l8.4 8.4M534.2 211.8l-8.4 8.4"/>
+     <path d="M34 216H84"/><circle class="bl" cx="22" cy="216" r="12"/><text class="bn" x="22" y="220.5">1</text>
+    </g>
+    <g class="it zb7d5112" data-it="2">
+     <g class="fx"><g class="lift z69ededa"><rect class="fill zd503c72" x="350" y="110" width="40" height="60"/><path d="M350 110L390 170M390 110L350 170"/></g><rect class="blink" x="364" y="188" width="12" height="4"/></g>
+     <path class="k2 ghost" d="M350 110h40v60h-40z"/><path class="k2" d="M354 196H386"/>
+     <path class="ghost" d="M350 110L390 170M390 110L350 170"/>
+     <path d="M370 30V110"/><circle class="bl" cx="370" cy="18" r="12"/><text class="bn" x="370" y="22.5">2</text>
+    </g>
+    <g class="it z6ce2856" data-it="3">
+     <g class="fx"><circle class="ring" cx="130" cy="236" r="5"/><circle class="ring zd4450b6" cx="240" cy="236" r="5"/><circle class="ring za345759" cx="495" cy="236" r="5"/><circle class="ring z7ccbb3c" cx="95" cy="320" r="5"/><circle class="ring z64082c3" cx="375" cy="300" r="5"/><circle class="ring ze33ad98" cx="130" cy="236" r="5"/><circle class="ring zac6cecc" cx="240" cy="236" r="5"/><circle class="ring z075c410" cx="495" cy="236" r="5"/><circle class="ring z4941332" cx="95" cy="320" r="5"/><circle class="ring zb178e4c" cx="375" cy="300" r="5"/><rect class="blink" x="334" y="290" width="8" height="26"/></g>
+     <circle class="bl" cx="130" cy="236" r="5"/><circle cx="130" cy="236" r="1.6"/>
+     <circle class="bl" cx="240" cy="236" r="5"/><circle cx="240" cy="236" r="1.6"/>
+     <circle class="bl" cx="495" cy="236" r="5"/><circle cx="495" cy="236" r="1.6"/>
+     <circle class="bl" cx="95" cy="320" r="5"/><circle cx="95" cy="320" r="1.6"/>
+     <circle class="bl" cx="375" cy="300" r="5"/><circle cx="375" cy="300" r="1.6"/>
+     <path class="k2" d="M334 290h8v26h-8z"/>
+     <g class="fx"><circle class="blink" cx="130" cy="236" r="2.4"/><circle class="blink" cx="240" cy="236" r="2.4"/><circle class="blink" cx="495" cy="236" r="2.4"/><circle class="blink" cx="95" cy="320" r="2.4"/><circle class="blink" cx="375" cy="300" r="2.4"/></g>
+     <path d="M606 236H500"/><circle class="bl" cx="618" cy="236" r="12"/><text class="bn" x="618" y="240.5">3</text>
+    </g>
+    <g class="it z6ce2856" data-it="4">
+     <g class="fx"><path class="tint z7bf33e6" d="M401 268L368 338H392Z"/><path class="ray" d="M401 268L380 338"/><circle class="blink" cx="410" cy="263" r="2"/><rect class="blink" x="398" y="372" width="10" height="12"/><circle class="ring" cx="403" cy="378" r="5"/><circle class="ring ze33ad98" cx="403" cy="378" r="5"/></g>
+     <path class="k2" d="M398 372h10v12h-10z"/>
+     <path d="M414 258l-14 6 3 6 14-6zM404 268v6"/>
+     <path d="M432 415L408 384"/><circle class="bl" cx="440" cy="424" r="12"/><text class="bn" x="440" y="428.5">4</text>
+    </g>
+    <g class="it z9367ee5" data-it="5">
+     <g class="fx"><rect class="fill" x="60" y="350" width="70" height="22"/><rect class="fill" x="150" y="300" width="16" height="56"/><rect class="fill" x="188" y="376" width="24" height="12"/><ellipse class="fill" cx="200" cy="366" rx="8" ry="9"/><rect class="fill" x="212" y="300" width="16" height="14"/><rect class="fill" x="266" y="322" width="56" height="64"/><circle class="drop" cx="158" cy="318" r="2"/><circle class="drop z7ccbb3c" cx="220" cy="302" r="2"/></g>
+     <path class="k2" d="M60 350h70v22h-70z"/>
+     <path d="M66 372v10M124 372v10"/>
+     <path d="M34 361H60"/><circle class="bl" cx="22" cy="361" r="12"/><text class="bn" x="22" y="365.5">5</text>
+    </g>
+    <g class="it z6ce2856" data-it="6">
+     <g class="fx"><rect class="blink" x="50" y="290" width="6" height="18"/><rect class="blink" x="236" y="300" width="7" height="7"/><rect class="blink" x="404" y="300" width="7" height="7"/><circle class="ring" cx="239.5" cy="303.5" r="5"/><circle class="ring ze33ad98" cx="239.5" cy="303.5" r="5"/><circle class="ring zf123405" cx="407.5" cy="303.5" r="5"/><circle class="ring zbb6e0f6" cx="407.5" cy="303.5" r="5"/></g>
+     <path class="k2" d="M50 290h6v18h-6z"/>
+     <path d="M236 300h7v7h-7zM404 300h7v7h-7z"/>
+     <path d="M34 299H50"/><circle class="bl" cx="22" cy="299" r="12"/><text class="bn" x="22" y="303.5">6</text>
+    </g>
+    <g class="it zd6014e7" data-it="7">
+     <g class="fx"><rect class="fill" x="432" y="260" width="64" height="22"/><circle class="blink" cx="440" cy="266" r="2"/><circle class="blink" cx="456" cy="266" r="2"/><circle class="blink" cx="472" cy="266" r="2"/><circle class="blink" cx="488" cy="266" r="2"/><path class="flow" d="M464 260V216"/><g class="pop"><path class="fill z3d4b0cc" d="M442 288L432 304H440L436 316L448 298H440L444 288Z"/></g></g>
+     <path class="k2" d="M432 260h64v22h-64z"/>
+     <path d="M448 260V282M464 260V282M480 260V282"/>
+     <path d="M606 271H496"/><circle class="bl" cx="618" cy="271" r="12"/><text class="bn" x="618" y="275.5">7</text>
+    </g>
+   </svg>
+   <figcaption class="figcap"><span><b>Plan</b> · ground floor and shared core</span><span>Scale: not to scale</span></figcaption>
+  </figure>
+
+  <div class="bb-side rv">
+   <p class="pin-meta" aria-hidden="true"><span id="pin-pc">000%</span><span><b id="pin-n">01</b> Keep scrolling ↓</span></p>
+   <p class="pin-say" id="pin-say" aria-hidden="true"></p>
+   <table class="sched">
+    <caption class="sr">What can qualify in a supported living scheme, and where it sits</caption>
+    <thead><tr><th scope="col" class="p">Pos.</th><th scope="col">Item</th><th scope="col">Where it sits</th></tr></thead>
+    <tbody>
+     <tr class="on"><td class="p"><i>1</i></td><td class="n">Electrics and lighting</td><td class="w">The landlord's supply, and corridor, stair and emergency lighting</td></tr>
+     <tr><td class="p"><i>2</i></td><td class="n">Lift</td><td class="w">The car, the shaft fittings and the machinery serving the shared parts</td></tr>
+     <tr><td class="p"><i>3</i></td><td class="n">Fire alarm</td><td class="w">Detectors in corridors and stairs, sounders and the panel</td></tr>
+     <tr><td class="p"><i>4</i></td><td class="n">Door entry and CCTV</td><td class="w">Entry panel, access control and cameras at the entrance</td></tr>
+     <tr><td class="p"><i>5</i></td><td class="n">Staff areas</td><td class="w">Office, staff WC and sleep-in room: sanitaryware, staff kitchen, fitted furniture, data cabling</td></tr>
+     <tr><td class="p"><i>6</i></td><td class="n">Staff call and assistive technology</td><td class="w">Call systems, hoists or accessible bathing in shared or staff areas, never inside a home</td></tr>
+     <tr><td class="p"><i>7</i></td><td class="n">Landlord's plant</td><td class="w">Switchgear, and any plant that serves only the shared parts</td></tr>
+    </tbody>
+   </table>
+  </div>
+ </div>
+ </div></div>
+ <div class="cols bb-after"><div class="bb-more">
+   <p class="evid">Only what serves the shared parts</p>
+   <div class="note">
+    <span class="lab">[ Does not qualify ]</span>
+    <p>The homes and everything in them. The boiler or heat pump that heats the homes, wherever it stands. Shared kitchens and lounges that are part of residents' homes. Anything paid for by a capital grant. The structures allowance on the building itself is generally not available for homes either.</p>
+   </div>
+ </div></div>
+</section>
+
+<section class="sec" id="own" data-idx="Section B-B · How you came to own it" aria-labelledby="b-h">
+ <div class="cols sh rv">
+  <h2 class="h2" id="b-h">How you came to own a supported housing scheme</h2>
+  <p class="intro">However you came to own it, a claim only ever reaches the shared parts.</p>
+ </div>
+
+ <div class="views v4">
+  <article class="view rv">
+   <svg class="drw" viewBox="0 0 240 172" aria-hidden="true">
+    <defs><pattern id="v1-q" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V6" stroke="#1d5c4c" stroke-width="1"/></pattern></defs>
+    <rect x="104" y="40" width="32" height="88" fill="url(#v1-q)" stroke="none"/>
+    <path class="k" d="M18 128H222"/>
+    <path class="k" d="M48 128V40H192V128"/>
+    <path d="M44 36H196V40H44Z"/>
+    <path d="M48 99H192M48 70H192M104 40V128M136 40V128M112 128V110H128V128"/>
+    <path d="M58 50h16v12h-16zM82 50h16v12h-16zM144 50h16v12h-16zM168 50h16v12h-16zM58 79h16v12h-16zM82 79h16v12h-16zM144 79h16v12h-16zM168 79h16v12h-16zM58 108h16v12h-16zM168 108h16v12h-16z"/>
+    <rect x="40" y="142" width="160" height="10"/>
+    <rect x="40" y="142" width="30" height="10" fill="url(#v1-q)"/>
+    <path class="dm" d="M40 162H70M40 158V166M70 158V166"/>
+   </svg>
+   <p class="vcap"><span><b>View B1</b> · Bought</span><span>(01)</span></p>
+   <h3 class="h3">You bought a scheme</h3>
+   <p>We check what the seller claimed and whether a fixed value was agreed. An agreed value can limit your claim but never widens it beyond the shared parts. If the seller could not claim, for example a charity, a fresh claim may be open.</p>
+  </article>
+  <article class="view rv">
+   <svg class="drw" viewBox="0 0 240 172" aria-hidden="true">
+    <defs><pattern id="v2-q" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V6" stroke="#1d5c4c" stroke-width="1"/></pattern></defs>
+    <rect x="96" y="48" width="24" height="80" fill="url(#v2-q)" stroke="none"/>
+    <path class="k" d="M10 128H236"/>
+    <path class="k" d="M30 128V48H120V128"/>
+    <path d="M26 44H124V48H26Z"/>
+    <path d="M30 101H120M30 74H120M96 48V128"/>
+    <path d="M40 56h16v10h-16zM64 56h16v10h-16zM40 83h16v10h-16zM64 83h16v10h-16zM40 110h16v10h-16zM64 110h16v10h-16z"/>
+    <path class="k dash" d="M120 128V60H180V128"/>
+    <path class="dash" d="M120 101H180M120 80H180"/>
+    <path class="dm" d="M120 52H180M120 48V56M180 48V56"/>
+    <path d="M206 128V16M174 20H222M206 30L174 20M206 30L222 20M182 20V44M179 44H185"/>
+   </svg>
+   <p class="vcap"><span><b>View B2</b> · Built</span><span>(02)</span></p>
+   <h3 class="h3">You built or converted it</h3>
+   <p>We work from the build costs of the shared and staff areas, after taking out anything grant-funded. A share of fees can follow the qualifying items.</p>
+  </article>
+  <article class="view rv">
+   <svg class="drw" viewBox="0 0 240 172" aria-hidden="true">
+    <defs><pattern id="v3-q" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V6" stroke="#1d5c4c" stroke-width="1"/></pattern></defs>
+    <rect x="100" y="36" width="40" height="92" fill="url(#v3-q)" stroke="none"/>
+    <path class="k" d="M18 128H222"/>
+    <path class="k" d="M40 128V36H200V128"/>
+    <path d="M36 32H204V36H36Z"/>
+    <path d="M40 97H200M40 66H200M100 36V128M140 36V128"/>
+    <path class="dash" d="M44 40L96 62M96 40L44 62M44 70L96 93M96 70L44 93M44 101L96 124M96 101L44 124M144 40L196 62M196 40L144 62M144 70L196 93M196 70L144 93M144 101L196 124M196 101L144 124"/>
+    <path d="M114 36h12l-2 4h-8zM114 66h12l-2 4h-8zM114 97h12l-2 4h-8z"/>
+    <path class="dd" d="M94 28H146V136H94Z"/>
+    <path class="dm" d="M100 150H140M100 146V154M140 146V154"/>
+   </svg>
+   <p class="vcap"><span><b>View B3</b> · Refurbished</span><span>(03)</span></p>
+   <h3 class="h3">You refurbished the shared areas</h3>
+   <p>New systems in corridors, stairs or staff areas may qualify. Like-for-like repairs there may be deducted as a repair instead. Work inside the homes is out either way.</p>
+  </article>
+  <article class="view rv">
+   <svg class="drw" viewBox="0 0 240 172" aria-hidden="true">
+    <defs><pattern id="v4-q" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V6" stroke="#1d5c4c" stroke-width="1"/></pattern></defs>
+    <rect x="22" y="96" width="98" height="54" fill="url(#v4-q)" stroke="none"/>
+    <path class="dash" d="M14 14H226V158H14Z"/>
+    <path class="k" d="M22 22H218V150H22Z"/>
+    <path class="k" d="M22 96H218M120 22V112M120 136V150"/>
+    <path d="M120 112A24 24 0 0 1 144 136M120 136H144"/>
+    <path class="dash" d="M28 28L114 90M114 28L28 90M126 28L212 90M212 28L126 90"/>
+    <path d="M30 140h40v-8h-40zM26 104h4v12h-4z"/>
+    <path class="dm" d="M22 162H120M22 158V166M120 158V166"/>
+   </svg>
+   <p class="vcap"><span><b>View B4</b> · Leased</span><span>(04)</span></p>
+   <h3 class="h3">You lease it or provide the care</h3>
+   <p>A registered provider that leases and sub-lets usually has no spend of its own to claim, and is often a charity. A care or support provider that paid for its own fit-out, such as a staff office, may have a claim on those items.</p>
+  </article>
+ </div>
+</section>
+
+<section class="sec" id="calculator" data-idx="Detail C · Calculator" aria-labelledby="c-h">
+ <div class="cols sh rv">
+  <h2 class="h2" id="c-h">What could your supported living scheme hold?</h2>
+  <p class="intro">Three questions and about 20 seconds. You see the top of the range for your kind of property, before anything about it has been checked.</p>
+ </div>
+
+ <div class="cols cfg" id="calc" data-preset="supported_living">
+  <div class="cfg-in">
+   <fieldset>
+    <legend><span class="gn">01</span><span class="gq">What kind of property is it?</span></legend>
+    <div class="seg seg5">
+     <button type="button" class="opt" data-k="sector" data-v="care_homes" aria-pressed="false"><span class="k" aria-hidden="true">A</span><span class="t">Care home</span></button>
+     <button type="button" class="opt" data-k="sector" data-v="dental" aria-pressed="false"><span class="k" aria-hidden="true">B</span><span class="t">Dental practice</span></button>
+     <button type="button" class="opt" data-k="sector" data-v="gp" aria-pressed="false"><span class="k" aria-hidden="true">C</span><span class="t">GP / primary care</span></button>
+     <button type="button" class="opt" data-k="sector" data-v="supported_living" aria-pressed="false"><span class="k" aria-hidden="true">D</span><span class="t">Supported living</span></button>
+     <button type="button" class="opt" data-k="sector" data-v="private_hospital" aria-pressed="false"><span class="k" aria-hidden="true">E</span><span class="t">Private hospital or clinic</span></button>
+    </div>
+   </fieldset>
+   <fieldset>
+    <legend><span class="gn">02</span><span class="gq">What happened?</span></legend>
+    <div class="seg seg4">
+     <button type="button" class="opt" data-k="trigger" data-v="purchase" aria-pressed="false"><span class="k" aria-hidden="true">A</span><span class="t">I bought the property</span></button>
+     <button type="button" class="opt" data-k="trigger" data-v="new_build" aria-pressed="false"><span class="k" aria-hidden="true">B</span><span class="t">We built it (a new build)</span></button>
+     <button type="button" class="opt" data-k="trigger" data-v="refurb" aria-pressed="false"><span class="k" aria-hidden="true">C</span><span class="t">We refurbished or extended a property we already owned</span></button>
+     <button type="button" class="opt" data-k="trigger" data-v="fit_out" aria-pressed="false"><span class="k" aria-hidden="true">D</span><span class="t">We fitted out a property we lease</span></button>
+    </div>
+   </fieldset>
+   <div>
+    <label class="lg" for="c-spend"><span class="gn">03</span><span class="gq">Roughly how much was the purchase price or spend?</span></label>
+    <p class="hint" id="c-hint">A rough figure is fine. We use it to size the estimate.</p>
+    <output class="amt" id="c-amount" for="c-spend">£1,500,000</output>
+    <div class="rng"><input type="range" id="c-spend" min="0" max="1000" step="1" value="588" aria-describedby="c-hint" aria-valuetext="£1,500,000"></div>
+    <div class="scale" aria-hidden="true"><span>£100k</span><span>£1m</span><span>£10m or more</span></div>
+   </div>
+  </div>
+
+  <aside class="ro is-empty" id="ro" aria-labelledby="ro-h">
+   <div class="ro-hd"><span id="ro-h">04 / Your figure</span><span class="lv">Live</span></div>
+   <dl class="ro-sum">
+    <dt>Property</dt><dd id="s-sector" class="na">Not answered yet</dd>
+    <dt>What happened</dt><dd id="s-trigger" class="na">Not answered yet</dd>
+    <dt>Spend</dt><dd id="s-spend">£1,500,000</dd>
+    <dt>Can qualify</dt><dd id="s-share" class="na">Not answered yet</dd>
+   </dl>
+   <div class="ro-fig">
+    <p class="ro-empty">Choose a property and what happened</p>
+    <p class="ro-lab">Capital allowances of up to</p>
+    <p class="fig" id="c-fig">£0</p>
+   </div>
+   <div class="rbar" aria-hidden="true"><span class="band" id="c-band"></span><span class="topm" id="c-top"></span></div>
+   <div class="rscale" aria-hidden="true"><span>0% of spend</span><span>100%</span></div>
+   <p class="cap" id="c-cap" hidden></p>
+   <p class="sl" id="c-sl" hidden>In supported living the homes are let to tenants, so they don't qualify, but shared communal and staff areas can. The answer can be nil. This is the one sector where we would rather under-promise.</p>
+   <ol class="cav">
+    <li>This is a ceiling, not a forecast: the top of a range. Researching the property moves it down, not up.</li>
+    <li>It is sized by a sector yield band that is assessed, not independently calibrated.</li>
+    <li>It is based only on what you have told us. No registers have been checked.</li>
+    <li>Capital allowances are income or corporation tax relief, not capital gains tax.</li>
+    <li>This is the amount of allowances, not the tax you save. The tax saved depends on your tax rate.</li>
+   </ol>
+   <div class="ro-act">
+    <a class="btn pri" href="/assessment">Am I eligible <span class="ar" aria-hidden="true">↗</span></a>
+    <button type="button" class="btn" id="c-reset">Change my answers</button>
+   </div>
+   <p class="sr" id="c-live" aria-live="polite"></p>
+  </aside>
+ </div>
+</section>
+
+<section class="sec" id="watch" data-idx="Detail D · What to watch for" aria-labelledby="d-h">
+ <div class="cols sh rv">
+  <h2 class="h2" id="d-h">What to watch for in supported living</h2>
+ </div>
+ <div class="cols">
+  <div class="fee rv">
+   <p class="fee-l">The honest answer can be</p>
+   <p class="fee-n nil">nil</p>
+   <p>This sector is often sold on tax benefits that do not survive the rules on homes. We would rather tell you early, in writing, that there is little or no claim than put a figure on something that would not stand up.</p>
+   <div class="acts">
+    <a class="btn pri" href="/assessment">Am I eligible <span class="ar" aria-hidden="true">↗</span></a>
+    <a class="btn" href="#calculator">Try the calculator <span aria-hidden="true">↘</span></a>
+   </div>
+  </div>
+  <div class="notes rv">
+   <p class="nl-h"><span>Watch for</span><span>8 of 8</span></p>
+   <ol class="nl">
+    <li><span class="no">[01]</span><div><h3 class="h3">Homes do not qualify</h3><p>Nothing inside a home let to a tenant qualifies. A single house or flat let as one home usually has no claim at all.</p></div></li>
+    <li><span class="no">[02]</span><div><h3 class="h3">Shared kitchens and lounges count as homes</h3><p>Where residents share a kitchen or lounge because their own room lacks one, that space is part of their homes. Where flats are self-contained, a separate shared lounge is not settled, so we leave it out.</p></div></li>
+    <li><span class="no">[03]</span><div><h3 class="h3">A plant room is not automatically claimable</h3><p>A boiler or heat pump that heats the homes does not qualify, even in a shared plant room. It is often the largest single item.</p></div></li>
+    <li><span class="no">[04]</span><div><h3 class="h3">Costs must be split</h3><p>The shared parts only count if their cost can be separately identified. One blended figure can sink a claim, though a surveyor can sometimes split it afterwards.</p></div></li>
+    <li><span class="no">[05]</span><div><h3 class="h3">Grants come out</h3><p>Spend funded by a capital grant, such as Homes England, GLA or council funding, cannot be claimed.</p></div></li>
+    <li><span class="no">[06]</span><div><h3 class="h3">Someone has to pay the tax</h3><p>Charities, CICs and many housing associations cannot claim. In the usual lease model, the investor that owns the building is often the only taxpayer.</p></div></li>
+    <li><span class="no">[07]</span><div><h3 class="h3">Care home or supported living?</h3><p>A registered care home with no tenancies is treated differently, and a fuller claim may be possible. <a class="lnk" href="/capital-allowances/care-homes/">Capital allowances for care homes <span aria-hidden="true">↗</span></a></p></div></li>
+    <li><span class="no">[08]</span><div><h3 class="h3">Empty spells</h3><p>A gap between tenancies changes nothing. A building empty partway through conversion from another use, such as a former care home, needs a specialist look.</p></div></li>
+   </ol>
+  </div>
+ </div>
+</section>
+
+<section class="sec" id="ask" data-idx="Detail E · What we ask you" aria-labelledby="e-h">
+ <div class="cols sh rv">
+  <h2 class="h2" id="e-h">What we ask about your supported living scheme</h2>
+  <p class="intro">The free assessment asks these first, because they decide whether there is a claim at all. "Not sure" is a fair answer: we check rather than guess.</p>
+ </div>
+ <div class="cols">
+  <div class="ask rv">
+   <ol class="qs">
+    <li><span>Q01</span>Does the owner pay income or corporation tax?</li>
+    <li><span>Q02</span>Are you the investor, the registered provider or the care provider?</li>
+    <li><span>Q03</span>Do residents have their own tenancies, or is it a registered care home?</li>
+    <li><span>Q04</span>How many homes are there, and does each have its own kitchen and bathroom?</li>
+    <li><span>Q05</span>What sits outside the homes: lobby, corridors and stairs, a lift, staff rooms, a plant room, the landlord's services?</li>
+    <li><span>Q06</span>How are the homes heated, and where is their hot water made?</li>
+    <li><span>Q07</span>Can the cost of the shared areas be separated from the cost of the homes?</li>
+    <li><span>Q08</span>Was any of the spend paid for by a capital grant?</li>
+    <li><span>Q09</span>Has anyone already claimed on the shared-area fixtures?</li>
+   </ol>
+  </div>
+  <aside class="ro rv" aria-labelledby="docs-h">
+   <div class="ro-hd"><span id="docs-h">Documents that help</span><span>6 items</span></div>
+   <ul class="docs">
+    <li>A cost plan or final account that shows the shared areas separately</li>
+    <li>Floor plans marking the homes, shared areas and staff rooms</li>
+    <li>The grant agreement, if there was one</li>
+    <li>The lease to the registered provider</li>
+    <li>If you bought: the seller's replies to enquiries on capital allowances, and any agreed fixed value for fixtures</li>
+    <li>Your fixed-asset register or past tax computations</li>
+   </ul>
+  </aside>
+ </div>
+</section>
+
+<section class="sec" id="guide" data-idx="Guide" aria-labelledby="guide-h">
+ <div class="cols sh rv">
+  <h2 class="h2" id="guide-h">A guide to capital allowances for supported living and supported housing</h2>
+  <p class="intro">For investors, owners and providers of supported living and specialist supported housing in England and Wales, and for their accountants.</p>
+ </div>
+ <div class="guide">
+  <nav class="toc" aria-label="In this guide"><p>In this guide</p><ol>
+   <li><a href="#g-1"><span>01</span>The basics</a></li>
+   <li><a href="#g-2"><span>02</span>Care home or supported living?</a></li>
+   <li><a href="#g-3"><span>03</span>Homes and common parts</a></li>
+   <li><a href="#g-4"><span>04</span>What usually qualifies</a></li>
+   <li><a href="#g-5"><span>05</span>Splitting the costs</a></li>
+   <li><a href="#g-6"><span>06</span>Who can claim</a></li>
+   <li><a href="#g-7"><span>07</span>Buying a scheme</a></li>
+   <li><a href="#g-8"><span>08</span>Building and refurbishing</a></li>
+   <li><a href="#g-9"><span>09</span>Grants and other reliefs</a></li>
+   <li><a href="#g-10"><span>10</span>How we check, and the cost</a></li>
+  </ol></nav>
+  <div class="prose">
+   <section id="g-1" aria-labelledby="g-1-h">
+    <h3 id="g-1-h"><span class="q">01 · The basics</span>What are capital allowances for supported living?</h3>
+    <p>Capital allowances are a tax relief on some kinds of capital spending. For property, that mostly means the fixtures and systems inside a building, such as lighting, lifts, fire alarms and door entry. The allowances reduce the income tax or corporation tax on your profits. They are not a capital gains tax relief, and they only help if there is a tax bill to reduce.</p>
+    <p>In most healthcare property, such as <a href="/capital-allowances/private-hospitals-and-clinics/">private hospitals and clinics</a>, the fixtures across the whole building can be looked at. Supported living is different. Residents hold their own tenancies and live in their own homes, and the tax rules shut homes out of a landlord's claim. So capital allowances for supported living usually reach only part of the building, and sometimes none of it.</p>
+    <div class="kf"><span class="lab">Worth knowing</span><p>This is the one sector where we would rather under-promise. Supported living is often sold to investors on tax benefits that do not survive the rules on homes.</p></div>
+   </section>
+   <section id="g-2" aria-labelledby="g-2-h">
+    <h3 id="g-2-h"><span class="q">02 · Care home or supported living?</span>Is supported living taxed like a care home?</h3>
+    <p>Not usually, and this is the first thing we settle. Two buildings can look the same and be taxed in opposite ways. What matters is how people live there.</p>
+    <table class="kt">
+     <thead><tr><th scope="col">How people live there</th><th scope="col">How it is usually treated</th></tr></thead>
+     <tbody>
+      <tr><td>Residents have their own tenancy and live there as their home, with support provided as a service</td><td>Supported living. The homes are left out, and any claim is limited to the shared parts.</td></tr>
+      <tr><td>Residents live in a registered care home, with no tenancy of their own</td><td>A care home. The building is not treated as homes, so a fuller claim may be possible.</td></tr>
+      <tr><td>Not sure, or a mix of both</td><td>We take the narrower view until a specialist has checked the facts.</td></tr>
+     </tbody>
+    </table>
+    <p>Registration helps: a registered provider letting homes points to supported living, while a registered care home points the other way. Extra-care and housing with care for older people follow the same test: where residents hold tenancies, their flats are homes. If your building turns out to be a care home, read our guide to <a href="/capital-allowances/care-homes/">capital allowances for care homes</a>.</p>
+    <p>A gap between tenancies changes nothing. A building empty partway through conversion from another use, such as a former care home, needs a specialist look.</p>
+   </section>
+   <section id="g-3" aria-labelledby="g-3-h">
+    <h3 id="g-3-h"><span class="q">03 · Homes and common parts</span>Which parts of a supported housing scheme can qualify?</h3>
+    <p>The answer turns on how many homes there are, and whether each one has its own kitchen and bathroom.</p>
+    <table class="kt">
+     <thead><tr><th scope="col">How the homes are laid out</th><th scope="col">What we can look at</th></tr></thead>
+     <tbody>
+      <tr><td>One house or flat, let as one home</td><td>Usually nothing. The whole property is a home from end to end.</td></tr>
+      <tr><td>Several self-contained flats, each with its own kitchen and bathroom</td><td>The shared parts outside the flats: entrance, corridors, stairs, lift, staff rooms and the landlord's services.</td></tr>
+      <tr><td>Several bedrooms that share a kitchen or lounge, as in a shared house</td><td>The same shared parts. The shared kitchen and lounge count as part of the residents' homes and are left out.</td></tr>
+     </tbody>
+    </table>
+    <p>The same reasoning applies to the communal areas of a house in multiple occupation (HMO). Where a resident's own room does not give them everything they need for daily life, the shared kitchen and lounge complete their home. Those rooms are part of the homes, so they do not qualify. Hallways, stairs, a lift and the systems that serve them are different, because nobody lives in them.</p>
+    <p>One point is not settled. Where flats are fully self-contained and there is also a separate shared lounge, it is not clear whether that lounge is a common part or part of the homes. We leave it out until that is confirmed, so it could only ever add to a figure later.</p>
+   </section>
+   <section id="g-4" aria-labelledby="g-4-h">
+    <h3 id="g-4-h"><span class="q">04 · What usually qualifies</span>Capital allowances on common parts: what can qualify?</h3>
+    <p>In a building with two or more homes, these items can qualify where they sit in, or serve only, the shared parts:</p>
+    <ul>
+     <li>the landlord's electrical supply, and corridor, stair and emergency lighting</li>
+     <li>a lift serving the shared parts</li>
+     <li>the fire alarm, with its detectors and panel in corridors and stairs</li>
+     <li>door entry, access control and CCTV</li>
+     <li>fittings in a staff office, staff WC or sleep-in room, including a staff kitchen, fitted furniture and data cabling</li>
+     <li>staff call systems, and hoists or accessible bathing in shared or staff areas, never inside a home</li>
+     <li>switchgear, and any plant that serves only the shared parts</li>
+     <li>building work needed to install those items, such as forming an opening for a lift</li>
+    </ul>
+    <p>Being on a list is not the same as qualifying. For some items, such as a fire alarm or a staff kitchen, we still have to show that each one is equipment used in the business. We check item by item, and leave out anything we cannot show.</p>
+    <p>Where one system serves both the homes and the shared parts, such as a main electrical supply, its cost is split between the two, and only the shared part counts.</p>
+    <h4>Does a communal boiler or plant room qualify?</h4>
+    <p>A shared plant room is not claimable just because it sits outside the homes. What matters is what the equipment serves, not where it stands. A communal boiler, heat pump or district heating system that heats the homes or makes their hot water is left out in full, even in a shared plant room or outside the building. So is the building work to house it. It is often the largest single item.</p>
+   </section>
+   <section id="g-5" aria-labelledby="g-5-h">
+    <h3 id="g-5-h"><span class="q">05 · Splitting the costs</span>Why the cost of the common parts must be split out</h3>
+    <p>Shared parts only count if their cost can be separately identified from the cost of the homes. In one tribunal case about shared houses, the landlord was right that some common parts could qualify, but lost the claim because the costs had never been split out.</p>
+    <p>The best evidence is a cost plan or final account that shows the shared areas on their own, with floor plans marking the homes, the shared parts and the staff rooms. Where costs were only ever recorded as one blended figure, a chartered surveyor can sometimes split them afterwards from the plans and cost records. A chartered surveyor signs every split of costs we produce.</p>
+    <p>If the cost truly cannot be split, there is no claim we would stand behind, and we will say so rather than guess.</p>
+   </section>
+   <section id="g-6" aria-labelledby="g-6-h">
+    <h3 id="g-6-h"><span class="q">06 · Who can claim</span>Specialist supported housing: who can claim?</h3>
+    <p>Specialist supported housing is often run on a lease model. An investor owns the building and leases it to a registered provider, which lets the homes to tenants. The council arranges care separately.</p>
+    <table class="kt">
+     <thead><tr><th scope="col">Who you are</th><th scope="col">Your likely position</th></tr></thead>
+     <tbody>
+      <tr><td>Investor or owner that lets the building</td><td>You run a letting business, which is what the rules on homes target. Any claim is limited to the shared parts you paid for. You are often the only taxpayer in the chain.</td></tr>
+      <tr><td>Registered provider or housing association that leases and sub-lets</td><td>Usually no spend of its own to claim, and often a charity or other body that does not pay this tax.</td></tr>
+      <tr><td>Care or support provider</td><td>You run a care business, not a letting business, but you usually do not own the building. Any claim is on fit-out and equipment you paid for yourself, such as a staff office, and used in your business.</td></tr>
+     </tbody>
+    </table>
+    <p>Capital allowances reduce a tax bill, so the claimant must pay UK income tax or corporation tax. Charities, CICs and many housing associations do not, so they cannot claim. A sole trader or partnership using the cash basis cannot claim on property fixtures either.</p>
+    <p>If you are weighing up supported living as an investment, treat any promised tax benefit with care. The claim is usually small, and sometimes nil.</p>
+   </section>
+   <section id="g-7" aria-labelledby="g-7-h">
+    <h3 id="g-7-h"><span class="q">07 · Buying a scheme</span>Buying a supported living property: what the seller claimed matters</h3>
+    <p>If you bought an existing scheme, the seller's history shapes your claim. We check:</p>
+    <ul>
+     <li>whether the seller, or an earlier owner, claimed on the shared-area fixtures</li>
+     <li>whether you and the seller agreed a fixed value for the fixtures in the sale, and what it was</li>
+     <li>whether the seller could claim at all. If the seller was a charity or another body that does not pay this tax, a fresh claim on the shared parts may be open to you</li>
+     <li>whether the sale was between connected companies, which needs a specialist look</li>
+     <li>the seller's replies to enquiries on capital allowances</li>
+    </ul>
+    <p>An agreed fixed value can cap your claim, but it never widens it. Even if the value covers the whole building, your claim still reaches only the shared parts. As the buyer, you have to prove the claim, which is why the paperwork from the sale matters.</p>
+    <p>Where the seller bought the building before April 2008, some systems in the shared parts may be open to a claim the seller could not have made. We check this on the facts.</p>
+   </section>
+   <section id="g-8" aria-labelledby="g-8-h">
+    <h3 id="g-8-h"><span class="q">08 · Building and refurbishing</span>Building, converting or refurbishing supported housing</h3>
+    <p>For a new build or conversion, we work straight from the build costs of the shared and staff areas. A fair share of professional fees and site costs can follow the qualifying items, but only their share.</p>
+    <p>For a refurbishment, new systems in corridors, stairs or staff areas may qualify. Like-for-like repairs in the shared parts may instead be deducted in full as a repair. Work inside the homes is outside the claim either way.</p>
+    <p>VAT you cannot reclaim can form part of the cost. New-build construction of homes is often zero-rated, though, so there may be little VAT to include.</p>
+    <p>Timing matters too. If the tax return for the year of spend can still be amended, the Annual Investment Allowance may relieve the qualifying spend in full in that year. If not, relief usually comes more slowly, through writing-down allowances.</p>
+   </section>
+   <section id="g-9" aria-labelledby="g-9-h">
+    <h3 id="g-9-h"><span class="q">09 · Grants and other reliefs</span>Grant funding, and other supported living property tax relief</h3>
+    <p>Supported housing is often part-funded by capital grants, such as Homes England, GLA or council funding. Spend paid for by a grant cannot be claimed, so it comes out first. That can shrink a small claim further. Repaying the grant later, for example on an early sale or a change of use, does not bring the relief back.</p>
+    <p>When capital allowances come to little or nothing, other reliefs may still help:</p>
+    <ul>
+     <li><strong>Land Remediation Relief.</strong> A company that bought a derelict or contaminated building, and did not cause the problem, may get an extra deduction for cleaning it up, for example removing asbestos. This relief is not limited by the rules on homes, so on a conversion it can be worth more than capital allowances.</li>
+     <li><strong>Replacement of Domestic Items Relief.</strong> This covers replacing items inside let homes. It is not a capital allowance, but your accountant can look at it.</li>
+    </ul>
+    <p>The structures and buildings allowance is generally not available for homes either.</p>
+   </section>
+   <section id="g-10" aria-labelledby="g-10-h">
+    <h3 id="g-10-h"><span class="q">10 · How we check, and the cost</span>How we check a supported living claim, and what it costs</h3>
+    <p>Our free assessment asks the questions that decide whether there is a claim at all, from who pays the tax to how the homes are heated. "Not sure" is a fair answer. We check rather than guess. For a quick ceiling figure first, <a href="#calculator">try the supported living calculator</a>.</p>
+    <p>If there is a claim worth making, a chartered surveyor values the shared-area items and signs every split of costs. We work alongside your accountant. Our fee is a flat 3% of the capital allowances we identify. If HMRC asks about the claim, we support our valuation and cost split free of charge, with no time limit. This does not cover representation at a tax tribunal. We cover England and Wales.</p>
+    <p>See <a href="/#how">how a claim works from start to finish</a>, or <a href="/#contact">ask about your supported living scheme</a>.</p>
+   </section>
+   <p class="updated">Last updated 21 October 2026 · Cap Rebate</p>
+  </div>
+ </div>
+</section>
+
+<section class="sec" id="how" data-idx="Section F-F · How a claim works" aria-labelledby="f-h">
+ <div class="cols sh rv">
+  <h2 class="h2" id="f-h">How a supported living claim works</h2>
+ </div>
+ <ol class="steps">
+  <li class="rv"><p class="sn">Step 01 / 04</p><p class="sbig" aria-hidden="true">01</p><h3 class="h3">Free assessment</h3><p>Answer questions online about your scheme. If there is no claim, you hear it early, in writing.</p></li>
+  <li class="rv"><p class="sn">Step 02 / 04</p><p class="sbig" aria-hidden="true">02</p><h3 class="h3">We agree the work</h3><p>If it is worth going on, you sign our engagement letter. The assessment costs nothing.</p></li>
+  <li class="rv"><p class="sn">Step 03 / 04</p><p class="sbig" aria-hidden="true">03</p><h3 class="h3">Survey and valuation</h3><p>A chartered surveyor values the shared-area items and signs every split of costs.</p></li>
+  <li class="rv"><p class="sn">Step 04 / 04</p><p class="sbig" aria-hidden="true">04</p><h3 class="h3">Your report</h3><p>You and your accountant get the figures and the evidence behind them.</p><span class="end" aria-hidden="true"></span></li>
+ </ol>
+ <div class="feeline rv">
+  <b>3%</b>
+  <p>Our fee is a flat 3% of the capital allowances we identify. If HMRC asks about the claim, we support our valuation and cost split free of charge, with no time limit. This does not cover representation at a tax tribunal.</p>
+ </div>
+</section>
+
+<section class="sec" id="questions" data-idx="Notes G · Questions" aria-labelledby="g-h">
+ <div class="cols">
+  <div class="qa-h rv">
+   <h2 class="h2" id="g-h">Questions about supported living claims</h2>
+   <p class="intro">Something not covered here? Talk to a person about your scheme.</p>
+   <a class="lnk" href="/#contact">Talk to a person <span aria-hidden="true">↗</span></a>
+  </div>
+  <div class="qa-l rv">
+   <details><summary><span class="qn">Note 01</span><span>Do supported living flats qualify for capital allowances?</span><span class="pm" aria-hidden="true"></span></summary><p>No. Flats let to tenants are homes, and the rules exclude them and everything inside them. In a building with two or more homes, the shared and staff areas outside the homes can qualify, if their cost can be separately identified.</p></details>
+   <details><summary><span class="qn">Note 02</span><span>Is supported living taxed like a care home?</span><span class="pm" aria-hidden="true"></span></summary><p>Not usually. Where residents have their own tenancy, any claim is limited to the shared parts. Where they live in a registered care home with no tenancy of their own, the building is not treated as homes and a fuller claim may be possible.</p></details>
+   <details><summary><span class="qn">Note 03</span><span>Can a housing association or charity claim?</span><span class="pm" aria-hidden="true"></span></summary><p>Usually not. Capital allowances reduce a tax bill, and charities, CICs and many housing associations do not pay this tax. In a lease-based scheme, the investor that owns the building may be the one with a claim.</p></details>
+   <details><summary><span class="qn">Note 04</span><span>Does a communal boiler qualify?</span><span class="pm" aria-hidden="true"></span></summary><p>Not where it heats the homes. Plant that serves the homes is excluded wherever it stands. Plant that serves only the shared areas can qualify.</p></details>
+   <details><summary><span class="qn">Note 05</span><span>Part of the build was grant-funded. Can we still claim?</span><span class="pm" aria-hidden="true"></span></summary><p>Only on the part you paid for yourself. Spend funded by a capital grant is taken out first. Repaying the grant later, for example on an early sale, does not bring the relief back.</p></details>
+   <details><summary><span class="qn">Note 06</span><span>Is there any other relief if capital allowances come to nil?</span><span class="pm" aria-hidden="true"></span></summary><p>Sometimes. A company that bought a derelict or contaminated building, and did not cause the problem, may be able to claim Land Remediation Relief. Items inside the homes may fall under Replacement of Domestic Items Relief, which your accountant can look at.</p></details>
+   <details><summary><span class="qn">Note 07</span><span>Can I claim capital allowances on the communal areas of an HMO or shared house?</span><span class="pm" aria-hidden="true"></span></summary><p>Only on the parts with no living function. Where residents share a kitchen or lounge because their own room lacks one, that space is part of their homes and does not qualify. Hallways, stairs, a lift, the fire alarm and door entry outside the homes can, if their cost is split out.</p></details>
+   <details><summary><span class="qn">Note 08</span><span>Can an investor in specialist supported housing claim capital allowances?</span><span class="pm" aria-hidden="true"></span></summary><p>Sometimes, but the claim is usually small. An investor that owns the building and leases it to a registered provider runs a letting business, so the homes are left out. Any claim is on the shared parts it paid for, after any grant is taken out.</p></details>
+   <details><summary><span class="qn">Note 09</span><span>What if the cost of the shared areas was never split out?</span><span class="pm" aria-hidden="true"></span></summary><p>One blended figure can sink a claim, even where the items would qualify. A chartered surveyor can sometimes split the cost afterwards from plans and cost records. If that is not possible, we will tell you there is no claim we can stand behind.</p></details>
+   <details><summary><span class="qn">Note 10</span><span>What does a supported living claim cost?</span><span class="pm" aria-hidden="true"></span></summary><p>The assessment is free. If there is a claim worth making, our fee is a flat 3% of the capital allowances we identify. If there is no claim, we tell you early, in writing.</p></details>
+  </div>
+ </div>
+</section>
+
+<section class="sec" id="sectors" data-idx="Sheets 1 to 6 · Other sectors" aria-labelledby="o-h">
+ <div class="cols sh rv">
+  <h2 class="h2" id="o-h">Capital allowances for other healthcare property</h2>
+ </div>
+ <table class="parts rv">
+  <caption class="sr">Other sheets in this drawing set</caption>
+  <thead><tr><th scope="col">Sheet</th><th scope="col">Sector</th><th scope="col">What we look at</th><th scope="col"><span class="sr">Link</span></th></tr></thead>
+  <tbody>
+   <tr><td class="pos">[01]</td><td class="nm">All healthcare property</td><td class="ds">The whole drawing set, the calculator and the enquiry form.</td><td class="go"><a class="lnk" href="/">Open sheet <span aria-hidden="true">↗</span></a></td></tr>
+   <tr><td class="pos">[02]</td><td class="nm">Care homes</td><td class="ds">The systems that serve every room: nurse call, lifts, heating and hot water, and fire alarms.</td><td class="go"><a class="lnk" href="/capital-allowances/care-homes/">Open sheet <span aria-hidden="true">↗</span></a></td></tr>
+   <tr><td class="pos">[03]</td><td class="nm">Dental practices</td><td class="ds">Surgery plumbing and suction, compressed air, specialist ventilation and lighting.</td><td class="go"><a class="lnk" href="/capital-allowances/dental-practices/">Open sheet <span aria-hidden="true">↗</span></a></td></tr>
+   <tr><td class="pos">[04]</td><td class="nm">GP surgeries</td><td class="ds">Consulting-room plumbing and hand basins, heating, lighting and data cabling.</td><td class="go"><a class="lnk" href="/capital-allowances/gp-surgeries/">Open sheet <span aria-hidden="true">↗</span></a></td></tr>
+   <tr><td class="pos">[06]</td><td class="nm">Private hospitals and clinics</td><td class="ds">Theatre ventilation, medical gases, lifts, standby power and the services behind them.</td><td class="go"><a class="lnk" href="/capital-allowances/private-hospitals-and-clinics/">Open sheet <span aria-hidden="true">↗</span></a></td></tr>
+  </tbody>
+ </table>
+</section>
+
+<section class="sec tight" id="start" data-idx="Detail H · Ask about your scheme" aria-labelledby="h-h">
+ <div class="cols">
+  <div class="ct-h rv">
+   <h2 class="h2" id="h-h">Find out if your supported living scheme holds a claim</h2>
+   <p class="intro">Tell us about the building and who owns it. If there is no claim, we will say so early, in writing.</p>
+   <div class="acts">
+    <a class="btn pri" href="/assessment">Am I eligible <span class="ar" aria-hidden="true">↗</span></a>
+    <a class="btn" href="#calculator">Try the calculator <span aria-hidden="true">↘</span></a>
+   </div>
+  </div>
+  <div class="ct-f rv">
+   <dl class="facts">
+    <dt>Email</dt><dd><a href="mailto:contact@caprebate.co.uk">contact@caprebate.co.uk</a></dd>
+    <dt>Office</dt><dd>1st Floor, 1-9 Castle Street, Hinckley, LE10 1DA</dd>
+    <dt>Covers</dt><dd>England and Wales</dd>
+    <dt>Fee</dt><dd>A flat 3% of the capital allowances we identify. The assessment is free.</dd>
+   </dl>
+  </div>
+ </div>
+</section>
+</main>
+
+<footer class="foot">
+ <div class="fb">
+  <a class="brand" href="/" aria-label="Cap Rebate, back to top">
+   <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 43 H34 A4 4 0 0 0 38 39 V20.5 L24 8 L10 20.5 V39 A4 4 0 0 0 14 43 Z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><rect x="16" y="20" width="16" height="5.5" rx="1.6" fill="currentColor"/><rect x="16" y="29.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="22" y="29.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="28" y="29.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="16" y="35.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="22" y="35.5" width="4" height="4" rx="1" fill="currentColor"/><rect x="28" y="35.5" width="4" height="4" rx="1" fill="currentColor"/></svg>
+   Cap Rebate
+  </a>
+  <p>Capital allowances for healthcare property. A chartered surveyor signs every claim.</p>
+ </div>
+ <nav aria-labelledby="ft-site"><h2 id="ft-site">Site</h2><ul><li><a href="/#calculator">Calculator</a></li><li><a href="/#sectors">Sectors</a></li><li><a href="/#how">How it works</a></li><li><a href="/#questions">Questions</a></li><li><a href="/#contact">Contact</a></li></ul></nav>
+ <nav aria-labelledby="ft-sec"><h2 id="ft-sec">Sectors</h2><ul><li><a href="/capital-allowances/care-homes/">Care homes</a></li><li><a href="/capital-allowances/dental-practices/">Dental practices</a></li><li><a href="/capital-allowances/gp-surgeries/">GP surgeries</a></li><li><a href="/capital-allowances/supported-living/" aria-current="page">Supported living</a></li><li><a href="/capital-allowances/private-hospitals-and-clinics/">Private hospitals</a></li></ul></nav>
+ <nav aria-label="Legal"><h2>Legal</h2><ul><li><a href="/notices/">Public notices</a></li><li><a href="/notices/#privacy">Privacy</a></li><li><a href="/notices/#complaints">Complaints</a></li><li><a href="/terms/">Terms of use</a></li><li><a href="/cookies/">Cookie policy</a></li><li><a href="/cookies/#choice">Cookie settings</a></li><li><a href="/accessibility/">Accessibility</a></li><li><a href="/disclaimer/">Disclaimer</a></li></ul></nav>
+ <div><h2>Contact</h2><address><a href="mailto:contact@caprebate.co.uk">contact@caprebate.co.uk</a><span>1st Floor, 1-9 Castle Street, Hinckley, LE10 1DA</span></address></div>
+ <p class="fl"><span>Cap Rebate is a trading name of CAP REBATE LTD, registered in England and Wales, company number 17307313. © 2026</span><span>Sheet 5 of 6</span></p>
+</footer>
+<script>
+/* Cap Rebate, Kurbelwerk style (20 Oct 2026): menu, scroll reveal, schedule highlight, configurator, enquiry form. */
+(function(){
+var d=document,root=d.documentElement;
+var reduce=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function all(s,el){return [].slice.call((el||d).querySelectorAll(s));}
+
+/* load reveal */
+/* the loading screen calls this when it lifts; a fallback shows the page if the motion script never runs */
+window.CRready=function(){d.body.classList.add('ready');};setTimeout(window.CRready,6000);
+
+/* mobile menu */
+var top=d.getElementById('top'),mb=d.getElementById('menu-btn'),mbt=mb&&mb.querySelector('.mb-t');
+if(mb){
+function menu(open){top.classList.toggle('open',open);mb.setAttribute('aria-expanded',String(open));mbt.textContent=open?'Close':'Menu';}
+mb.addEventListener('click',function(){menu(!top.classList.contains('open'));});
+all('.nav a').forEach(function(a){a.addEventListener('click',function(){menu(false);});});
+d.addEventListener('keydown',function(e){if(e.key==='Escape'&&top.classList.contains('open')){menu(false);mb.focus();}});
+}
+
+/* index tab and scroll reveal */
+var idx=d.getElementById('idx-v');
+if('IntersectionObserver' in window){
+ var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&idx)idx.textContent=e.target.getAttribute('data-idx');});},{rootMargin:'-40% 0px -55% 0px'});
+ all('[data-idx]').forEach(function(s){io.observe(s);});
+ var ro=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');ro.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px',threshold:.08});
+ all('.rv').forEach(function(el){ro.observe(el);});
+}else{all('.rv').forEach(function(el){el.classList.add('in');});}
+
+/* Section B-B: the schedule, the cut and the heading move together */
+var rows=all('.sched tbody tr'),cyc=all('.cyc > span'),its=all('#cut .it'),cur=0,timer=null;
+function setItem(i){cur=i;
+ rows.forEach(function(r,j){r.classList.toggle('on',j===i);});
+ cyc.forEach(function(s,j){s.classList.toggle('on',j===i);});
+ its.forEach(function(g){g.classList.toggle('on',+g.getAttribute('data-it')===i+1);});}
+function stop(){if(timer){clearInterval(timer);timer=null;}}
+function start(){if(reduce||!rows.length||window.CRhold)return;stop();timer=setInterval(function(){setItem((cur+1)%rows.length);},2600);}
+window.CRfx={set:function(i){setItem(i);},stop:stop,start:start,rows:rows,its:its};
+rows.forEach(function(r,i){r.addEventListener('mouseenter',function(){stop();setItem(i);});r.addEventListener('mouseleave',start);});
+/* the drawing answers too: hover an item, or tab to a row */
+its.forEach(function(g){var i=+g.getAttribute('data-it')-1;if(!rows[i])return;g.addEventListener('mouseenter',function(){stop();setItem(i);});g.addEventListener('mouseleave',start);});
+rows.forEach(function(r,i){r.tabIndex=0;r.addEventListener('focus',function(){stop();setItem(i);});r.addEventListener('blur',start);});
+setItem(0);start();
+
+/* Detail C: the configurator. Bands are the live site's (sector yields, assessed, not independently calibrated).
+   The figure is the top of the range. Nothing is sent anywhere. */
+var BANDS={
+ care_homes:{purchase:[.20,.40],new_build:[.25,.35],refurb_fitout:[.60,.90]},
+ dental:{purchase:[.15,.30],new_build:[.30,.40],refurb_fitout:[.50,.90]},
+ supported_living:{purchase:[.10,.25],new_build:[.10,.25],refurb_fitout:[.10,.25]},
+ gp:{purchase:[.15,.30],new_build:[.30,.40],refurb_fitout:[.40,.70]},
+ private_hospital:{purchase:[.25,.45],new_build:[.35,.45],refurb_fitout:[.50,.85]}};
+var KEY={purchase:'purchase',new_build:'new_build',refurb:'refurb_fitout',fit_out:'refurb_fitout'};
+var SECTOR={care_homes:'Care home',dental:'Dental practice',gp:'GP / primary care',supported_living:'Supported living',private_hospital:'Private hospital or clinic'};
+var WHAT={purchase:'Bought',new_build:'New build',refurb:'Refurbished or extended',fit_out:'Fitted out, leased'};
+var calc=d.getElementById('calc');
+if(calc){
+ var st={sector:null,trigger:null,spend:1500000};
+ var slider=d.getElementById('c-spend'),amount=d.getElementById('c-amount'),box=d.getElementById('ro'),fig=d.getElementById('c-fig'),
+     cap=d.getElementById('c-cap'),sl=d.getElementById('c-sl'),band=d.getElementById('c-band'),topm=d.getElementById('c-top'),live=d.getElementById('c-live');
+ var sv={sector:d.getElementById('s-sector'),trigger:d.getElementById('s-trigger'),spend:d.getElementById('s-spend'),share:d.getElementById('s-share')};
+ var shown=0,raf=null,liveT=null;
+ var gbp=function(n){return '£'+Math.round(n).toLocaleString('en-GB');};
+ /* the slider runs on a curve, £100k to £10m, so the amounts most properties cost get most of its length */
+ var spendAt=function(v){var x=100000*Math.pow(100,v/1000);return x>=1000000?Math.round(x/50000)*50000:Math.round(x/10000)*10000;};
+ var label=function(){return st.spend>=10000000?'£10m or more':gbp(st.spend);};
+ function setVal(el,txt,na){el.textContent=txt;el.classList.toggle('na',!!na);}
+ function say(t){clearTimeout(liveT);liveT=setTimeout(function(){live.textContent=t;},700);}
+ function animateTo(target){
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+  if(reduce){shown=target;fig.textContent=gbp(target);return;}
+  var from=shown,t0=null,dur=900;
+  function tick(t){if(t0===null)t0=t;var k=Math.min(1,(t-t0)/dur),e=k>=1?1:1-Math.pow(2,-10*k);
+   shown=from+(target-from)*e;fig.textContent=gbp(shown);raf=k<1?requestAnimationFrame(tick):null;}
+  raf=requestAnimationFrame(tick);
+ }
+ function update(){
+  setVal(sv.sector,st.sector?SECTOR[st.sector]:'Not answered yet',!st.sector);
+  setVal(sv.trigger,st.trigger?WHAT[st.trigger]:'Not answered yet',!st.trigger);
+  setVal(sv.spend,label(),false);
+  var b=(st.sector&&st.trigger&&BANDS[st.sector])?BANDS[st.sector][KEY[st.trigger]]:null;
+  box.classList.toggle('is-empty',!b);
+  if(!b){
+   setVal(sv.share,'Not answered yet',true);
+   cap.hidden=true;sl.hidden=true;
+   band.style.transform='scaleX(0)';topm.style.opacity='0';
+   if(raf){cancelAnimationFrame(raf);raf=null;}
+   shown=0;fig.textContent=gbp(0);
+   say('Choose a property and what happened to see a figure.');
+   return;
+  }
+  var a=Math.round(b[0]*100),z=Math.round(b[1]*100),hi=st.spend*b[1];
+  setVal(sv.share,a+'% to '+z+'%',false);
+  cap.textContent='For this kind of property, '+a+'% to '+z+'% of the spend can qualify. The top of that range is shown.';
+  cap.hidden=false;
+  sl.hidden=st.sector!=='supported_living';
+  band.style.transform='translateX('+a+'%) scaleX('+(b[1]-b[0])+')';
+  topm.style.transform='translateX(calc('+z+'% - 2px))';topm.style.opacity='1';
+  animateTo(hi);
+  say('Capital allowances of up to '+gbp(hi)+'. '+cap.textContent+(sl.hidden?'':' '+sl.textContent));
+ }
+ all('.opt',calc).forEach(function(b){
+  b.addEventListener('click',function(){
+   var k=b.getAttribute('data-k');st[k]=b.getAttribute('data-v');
+   all('.opt[data-k="'+k+'"]',calc).forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});
+   update();
+  });
+ });
+ function onSpend(){st.spend=spendAt(+slider.value);amount.textContent=label();slider.setAttribute('aria-valuetext',label());update();}
+ slider.addEventListener('input',onSpend);
+ d.getElementById('c-reset').addEventListener('click',function(){
+  st.sector=null;st.trigger=null;
+  all('.opt',calc).forEach(function(x){x.setAttribute('aria-pressed','false');});
+  update();
+  var first=calc.querySelector('.opt');if(first)first.focus();
+ });
+ /* the sector schedule can set the property in the configurator */
+ all('[data-pick]').forEach(function(btn){
+  btn.addEventListener('click',function(){
+   var o=calc.querySelector('.opt[data-k="sector"][data-v="'+btn.getAttribute('data-pick')+'"]');
+   if(o)o.click();
+   d.getElementById('calculator').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+   var next=calc.querySelector('.opt[data-k="trigger"][aria-pressed="true"]')||calc.querySelector('.opt[data-k="trigger"]');
+   if(next)next.focus({preventScroll:true});
+  });
+ });
+ onSpend();
+ /* a sector page opens the configurator with its own property already chosen */
+ var pre=calc.getAttribute('data-preset');
+ if(pre){var po=calc.querySelector('.opt[data-k="sector"][data-v="'+pre+'"]');if(po)po.click();}
+}
+
+/* hero drawings: the same effects as the cut-aways, from the legend or the numbered callouts, and a slow tour on load */
+all('svg.elev').forEach(function(svg){
+ var fig=svg.closest('figure'),lis=fig?all('.legend li',fig):[],nums=[];
+ all('[data-it]',svg).forEach(function(el){var n=+el.getAttribute('data-it');if(nums.indexOf(n)<0)nums.push(n);});
+ if(!nums.length)return;
+ nums.sort(function(a,b){return a-b;});
+ var cur=0,t=null;
+ function num(li){var i=li.querySelector('i');return i?+i.textContent:0;}
+ function set(n){cur=n;all('[data-it]',svg).forEach(function(el){el.classList.toggle('on',+el.getAttribute('data-it')===n);});lis.forEach(function(li){li.classList.toggle('on',num(li)===n);});}
+ function stop(){if(t){clearInterval(t);t=null;}}
+ function tour(){if(reduce)return;stop();t=setInterval(function(){set(nums[(nums.indexOf(cur)+1)%nums.length]);},2600);}
+ lis.forEach(function(li){var n=num(li);if(nums.indexOf(n)<0)return;li.tabIndex=0;
+  li.addEventListener('mouseenter',function(){stop();set(n);});li.addEventListener('focus',function(){stop();set(n);});
+  li.addEventListener('mouseleave',tour);li.addEventListener('blur',tour);});
+ all('.bl[data-it]',svg).forEach(function(b){var n=+b.getAttribute('data-it');b.addEventListener('mouseenter',function(){stop();set(n);});b.addEventListener('mouseleave',tour);});
+ if(svg.hasAttribute('data-scan')&&!reduce){svg.addEventListener('cr:built',function(){set(nums[0]);tour();});svg.addEventListener('cr:rebuild',function(){stop();set(0);});}
+ else setTimeout(function(){set(nums[0]);tour();},reduce?0:1800);
+});
+
+/* the enquiry form is a visual only */
+var form=d.getElementById('enquiry'),fst=d.getElementById('f-st');
+if(form&&fst){form.addEventListener('submit',function(e){e.preventDefault();fst.textContent='This form is not connected yet.';fst.hidden=false;});}
+})();
+</script>
+<script>
+/* Animated mock-up (21 Oct 2026): the loading screen, the scan that builds the elevation, the crosshair, the pinned
+   "where it hides" sequence, drawings that draw themselves and the fee squares. Runs after the page script. */
+(function(){
+var d=document,root=d.documentElement;
+var reduce=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function $(s,el){return (el||d).querySelector(s);}
+function $$(s,el){return [].slice.call((el||d).querySelectorAll(s));}
+function pad(n,w){n=String(n);while(n.length<w)n='0'+n;return n;}
+function ease(k){return k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;}
+
+/* ---------- the scan ---------- */
+var svg=$('svg.elev[data-scan]'),ev1=svg&&$('.ev1',svg),cos=svg?$$('.co',svg):[];
+var br=$('#sc-br'),gr=$('#sc-gr'),band=$('#sc-band'),line=$('#sc-line'),txt=$('#sc-txt'),stx=$('#sc-st'),scn=$('#sc-n'),re=$('#sc-re');
+var VB=svg&&svg.viewBox.baseVal,W=VB?VB.width:900,H=VB?VB.height:500,Y0=H-60,Y1=90,BUILD=3600,found=0,ghost=null,busy=false;
+function count(){scn.textContent=pad(found,2)+'/'+pad(cos.length,2);}
+function setY(y){
+ br.setAttribute('y',y);br.setAttribute('height',Math.max(0,H-y));gr.setAttribute('height',Math.max(0,y));
+ band.setAttribute('y',y);line.setAttribute('d','M20 '+y+'H'+(W-20));txt.setAttribute('y',y-7);
+ var pc=pad(Math.round((Y0-y)/(Y0-Y1)*100),3);txt.textContent='SCAN '+pc+'%';stx.textContent='Scan '+pc+'%';
+ cos.forEach(function(c){if(!c.classList.contains('seen')&&y<=+c.getAttribute('data-y')+4){c.classList.add('seen');found++;count();}});
+}
+function prep(){
+ if(!svg||reduce||ghost)return;
+ var bb=ev1.getBBox();Y0=Math.min(H,bb.y+bb.height+4);Y1=Math.max(0,bb.y-6);
+ ghost=ev1.cloneNode(true);ghost.setAttribute('class','ghost-bp');ghost.setAttribute('clip-path','url(#sc-g)');ev1.parentNode.insertBefore(ghost,ev1);ev1.setAttribute('clip-path','url(#sc-b)');
+ svg.classList.add('scanning');setY(Y0);
+}
+function build(){
+ if(!svg||busy)return;
+ if(reduce){cos.forEach(function(c){c.classList.add('seen');});found=cos.length;count();stx.textContent='Scan complete';return;}
+ busy=true;
+ prep();
+ svg.dispatchEvent(new Event('cr:rebuild'));
+ found=0;cos.forEach(function(c){c.classList.remove('seen');});count();
+ svg.classList.add('scanning');setY(Y0);
+ var t0=null;
+ requestAnimationFrame(function fr(t){if(t0===null)t0=t;var k=Math.min(1,(t-t0)/BUILD);setY(Y0-(Y0-Y1)*ease(k));
+  if(k<1){requestAnimationFrame(fr);return;}
+  br.setAttribute('y',0);br.setAttribute('height',H);gr.setAttribute('height',0);
+  svg.classList.remove('scanning');stx.textContent='Scan complete';busy=false;
+  setTimeout(function(){svg.dispatchEvent(new Event('cr:built'));},900);});
+}
+if(re)re.addEventListener('click',build);
+prep();
+
+/* ---------- loading screen ---------- */
+var pn=$('#pre-n'),pb=$('#pre-bar');
+function lift(){root.classList.add('loaded');if(window.CRready)window.CRready();setTimeout(build,reduce?0:650);}
+if(reduce||!pn){lift();}
+else{var T=1500,s0=null;requestAnimationFrame(function tick(t){if(s0===null)s0=t;var k=Math.min(1,(t-s0)/T);
+ pn.textContent=pad(Math.round(k*100),3);pb.style.transform='scaleX('+k+')';
+ if(k<1)requestAnimationFrame(tick);else setTimeout(lift,220);});}
+
+/* ---------- crosshair readout, in drawing units ---------- */
+var fig=svg&&svg.closest('figure');
+if(fig&&window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches){
+ var xv=$('.xh-v',fig),xh=$('.xh-h',fig),xt=$('.xh-t',fig);
+ fig.addEventListener('mousemove',function(e){
+  var r=svg.getBoundingClientRect(),f=fig.getBoundingClientRect();
+  if(e.clientY<r.top||e.clientY>r.bottom){fig.classList.remove('hov');return;}
+  var x=e.clientX-f.left,y=e.clientY-f.top;fig.classList.add('hov');
+  xv.style.cssText='top:'+(r.top-f.top)+'px;height:'+r.height+'px;transform:translateX('+x+'px)';
+  xh.style.cssText='left:'+(r.left-f.left)+'px;width:'+r.width+'px;transform:translateY('+y+'px)';
+  var p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;var q=p.matrixTransform(svg.getScreenCTM().inverse());
+  xt.textContent='X '+pad(Math.max(0,Math.round(q.x)),3)+'  Y '+pad(Math.max(0,Math.round(q.y)),3);
+  var tx=Math.min(x+12,f.width-110);xt.style.transform='translate('+tx+'px,'+(y+10)+'px)';
+ });
+ fig.addEventListener('mouseleave',function(){fig.classList.remove('hov');});
+}
+
+/* ---------- drawings that draw themselves, and the fee squares ---------- */
+$$('.sq i').forEach(function(el,i){el.style.setProperty('--n',el.classList.contains('f')?$$('.sq i.f').indexOf(el):i);});
+if('IntersectionObserver' in window&&!reduce){
+ var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;var v=e.target;v.classList.add('in');io.unobserve(v);
+  setTimeout(function(){v.classList.remove('dr','in');},1500+(+v.getAttribute('data-n')||0)*35+300);});},{threshold:.3});
+ $$('.views .drw').forEach(function(v){var k=0;
+  $$('path,rect,circle,line,polyline,polygon',v).forEach(function(el){if(el.closest('defs')||/\b(dash|dd)\b/.test(el.getAttribute('class')||''))return;el.setAttribute('pathLength','1');el.style.setProperty('--i',k++);});
+  v.setAttribute('data-n',k);v.classList.add('dr');io.observe(v);});
+}
+
+/* ---------- where it hides: pinned on desktop, the scroll walks the items ---------- */
+var pin=$('#pin'),where=pin&&pin.closest('section'),stick=pin&&$('.pin-stick',pin),say=$('#pin-say'),ppc=$('#pin-pc'),ppn=$('#pin-n');
+if(where&&stick&&window.CRfx){
+ var cyc=$$('.cyc > span',where);
+ var SAY=cyc.length?cyc.map(function(s){var t=s.textContent.trim();return t.charAt(0).toUpperCase()+t.slice(1);}):window.CRfx.rows.map(function(r){var n=r.querySelector('.n');return n?n.textContent.trim():'';});
+ SAY.push('We find it, <em>with evidence</em>');
+ var N=SAY.length,on=false,last=-2,ticking=false;
+ function top(){return parseFloat(getComputedStyle(stick).top)||0;}
+ function layout(){
+  where.classList.add('pin-on');pin.style.height='';
+  var ok=!reduce&&innerWidth>=1000&&stick.offsetHeight+top()+56<=innerHeight;
+  if(!ok){where.classList.remove('pin-on','pin-all');window.CRhold=false;on=false;last=-2;window.CRfx.start();return;}
+  on=true;pin.style.height=(stick.offsetHeight+innerHeight*.55*N)+'px';last=-2;upd();
+ }
+ function show(idx){
+  if(idx<0){where.classList.remove('pin-all');window.CRhold=false;window.CRfx.start();return;}
+  window.CRhold=true;window.CRfx.stop();
+  if(idx<N-1){where.classList.remove('pin-all');window.CRfx.set(idx);}
+  else{window.CRfx.set(N-2);where.classList.add('pin-all');window.CRfx.its.forEach(function(g){g.classList.add('on');});window.CRfx.rows.forEach(function(r){r.classList.add('on');});}
+  if(say){say.innerHTML=SAY[idx];say.classList.remove('swap');void say.offsetWidth;say.classList.add('swap');}
+  ppn.textContent=pad(idx+1,2)+' / '+pad(N,2);
+ }
+ function upd(){
+  ticking=false;if(!on)return;
+  var r=pin.getBoundingClientRect(),T=top(),span=pin.offsetHeight-stick.offsetHeight;
+  var p=Math.min(1,Math.max(0,(T-r.top)/span));
+  ppc.textContent=pad(Math.round(p*100),3)+'%';
+  var idx=r.top>T+40?-1:Math.min(N-1,Math.floor(p*N));
+  if(idx!==last){last=idx;show(idx);}
+ }
+ addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(upd);}},{passive:true});
+ var rt;addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(layout,150);});
+ layout();
+}
+})();
+</script>
+<script>
+/* Detail D: each sector opens to its building, drawn as it opens. Hover opens it on a computer (after a short pause,
+   so passing over rows does not flicker); the Details button opens it anywhere. One open at a time. */
+(function(){
+var d=document,reduce=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+var table=d.querySelector('#sectors .parts');if(!table)return;
+var rows=[].slice.call(table.querySelectorAll('tr.sx')),xps=[].slice.call(table.querySelectorAll('tr.xp'));
+var cur=-1,lock=false,tmo=null;
+xps.forEach(function(x){var k=0;[].slice.call(x.querySelectorAll('.xp-svg path,.xp-svg rect,.xp-svg circle,.xp-svg line')).forEach(function(el){el.setAttribute('pathLength','1');el.style.setProperty('--i',k++);});});
+function open(i){
+ if(i===cur)return;cur=i;lock=true;setTimeout(function(){lock=false;},600);
+ xps.forEach(function(x,j){var o=j===i,inn=x.querySelector('.xp-in'),sv=x.querySelector('.xp-svg');
+  x.classList.toggle('open',o);rows[j].classList.toggle('xo',o);
+  var b=rows[j].querySelector('.xp-t');if(b)b.setAttribute('aria-expanded',String(o));
+  if(o){inn.removeAttribute('inert');if(!reduce){sv.classList.remove('drawing');void sv.getBoundingClientRect();sv.classList.add('drawing');}}
+  else inn.setAttribute('inert','');});
+}
+rows.forEach(function(r,i){
+ var b=r.querySelector('.xp-t');if(b)b.addEventListener('click',function(){open(cur===i?-1:i);});
+});
+if(window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches){
+ rows.forEach(function(r,i){r.addEventListener('mouseenter',function(){clearTimeout(tmo);tmo=setTimeout(function go(){if(lock){tmo=setTimeout(go,120);return;}open(i);},180);});});
+ table.addEventListener('mouseenter',function(){clearTimeout(tmo);});
+ table.addEventListener('mouseleave',function(){clearTimeout(tmo);tmo=setTimeout(function(){open(-1);},450);});
+}
+})();
+</script>
+<script>
+/* menu: the Sectors drop-down opens on hover on a computer, and on click or tap anywhere */
+(function(){
+var d=document;
+[].slice.call(d.querySelectorAll('.has-sub')).forEach(function(li){
+ var b=li.querySelector('.nav-sub'),t=null;if(!b)return;
+ function set(o){li.classList.toggle('open',o);b.setAttribute('aria-expanded',String(o));}
+ b.addEventListener('click',function(e){e.stopPropagation();set(!li.classList.contains('open'));});
+ var hov=window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches;
+ li.addEventListener('mouseenter',function(){if(!hov||innerWidth<1100)return;clearTimeout(t);set(true);});
+ li.addEventListener('mouseleave',function(){if(!hov||innerWidth<1100)return;t=setTimeout(function(){set(false);},220);});
+ d.addEventListener('click',function(e){if(!li.contains(e.target))set(false);});
+ d.addEventListener('keydown',function(e){if(e.key==='Escape'&&li.classList.contains('open')){set(false);b.focus();}});
+});
+})();
+</script>
+<script>
+/* sector lists: the whole row (and the drawing in its drop-down) goes to that sector's page; the Details button and links keep their own jobs */
+(function(){
+var d=document;
+[].slice.call(d.querySelectorAll('table.parts tbody tr:not(.xp)')).forEach(function(r){
+ var a=r.querySelector('.nm a')||r.querySelector('a[href]');if(!a)return;
+ r.classList.add('rowlink');
+ r.addEventListener('click',function(e){if(e.target.closest('a,button,input,select,textarea'))return;if(window.getSelection&&String(window.getSelection()))return;location.href=a.href;});
+});
+[].slice.call(d.querySelectorAll('.xp-fig')).forEach(function(f){
+ var a=f.closest('.xp-in').querySelector('.xp-tx a.lnk');if(!a)return;
+ f.classList.add('rowlink');f.addEventListener('click',function(){location.href=a.href;});
+});
+})();
+</script>
+<script>
+/* the guide's contents list marks the part you are reading */
+(function(){
+var links=[].slice.call(document.querySelectorAll('.toc a[href^="#"]'));if(!links.length||!('IntersectionObserver' in window))return;
+var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});},{rootMargin:'-30% 0px -60% 0px'});
+Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+})();
+</script>
+</body>
+</html>
