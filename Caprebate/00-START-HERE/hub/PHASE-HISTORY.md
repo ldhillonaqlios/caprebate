@@ -13500,3 +13500,24 @@ NOTHING LEFT  beyond those lines.
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160n — the X-ray home page — 28 October 2026 (Claude Code, in a worktree of the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 160n, 28 Oct 2026: Lakhbir, "i want you claude to make the website front end as the new design". The home page is now the X-ray (option 02 of the redesign options, chosen 26 Oct, redrawn as a private clinic on 28 Oct): a clinic whose outer walls slide away on a twelve-second scan once the stage is in view, six systems lighting up one by one, ending on "capital allowances of up to £675,000" for a £1.5m private clinic purchase, with Skip and Play it again. test/phase160n.test.ts, 10 tests.
+
+- **Claim.** hub/CLAIM.md and tracker row 13334969551, pushed first, cut from main after PR 68 merged.
+- **The design file made ready for the site** (redesign-options/02-x-ray.html, so the mock-up and the page stay one design): the home page's search head and structured data; a menu with Log in and a phone Menu button (Escape closes it); "Am I eligible?" to the assessment in the header, the X-ray, How it works, the calculator and Contact; each sector card links its page; six questions, word for word the ones the structured data names; the live contact wording; the heading "There is tax relief built into your building" as on the old page; the calculator's inline handler moved into the script.
+- **The tool.** tools/site-from-design.mjs gains `convertXray`: nothing inline, the review label off, Inter Tight and JetBrains Mono self-hosted (SIL Open Font License, site/fonts/), the live enquiry form (same fields, ids, Turnstile and honeypot) in the design's frame, the legal footer. The sector pages are unchanged (the tool's --check says they match their design files).
+- **Tests.** home-page, 160k, 160l and 160m now name the X-ray's markup or the sector pages, where they named the old design's; every older promise holds (the policy, nothing inline, the live form, Log in, "Am I eligible?", the legal footer, the skip link).
+- **Seen in the browser** (the demo server, the served page): the scan plays to its figure at 1440x900 and 1280x720; every section about one window tall at 1280x720 (the calculator and contact 5 to 10px over); no overflow at 320, 375, 768 and 1440; the phone menu opens, closes and draws its cross. The security check cannot load on localhost, as before.
+- **The checks, at the close:** back end 3,029 pass / 7 fail over 193 tracked files in a fresh worktree. Six of the seven fail the same way on untouched main in a fresh worktree: they read files kept out of git (01-rulebooks/README.md, the brand logo, the monday SOP export), which only the OneDrive copy holds. The seventh (Phase 160f, "a proposed mark comes back") passed on its own three times. The site, phase3 and phase9 suites were not re-run; nothing they read changed.
+
+```
+DONE          The X-ray is the home page. test/phase160n.test.ts (10).
+NOT DONE      The five sector pages keep the old (Kurbelwerk) design - restyling them is its own phase if wanted.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines.
+```
+
+**Claim cleared** in the commit that carries this record.
+

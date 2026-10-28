@@ -30,7 +30,10 @@ const visible = (html: string) => html.replace(/<script[\s\S]*?<\/script>/g, ' '
 
 describe('the home page', () => {
   /* PHASE 160k, 21 OCTOBER 2026: the home page is the "Kurbelwerk" design (Lakhbir: "push it live"), written from its
-     design file by tools/site-from-design.mjs. The promises are the same as before; the markup they look for is new. */
+     design file by tools/site-from-design.mjs. The promises are the same as before; the markup they look for is new.
+     PHASE 160n, 28 OCTOBER 2026: the home page is now the X-ray (redesign-options/02-x-ray.html), written by the same
+     tool. The same promises again; where they name the design's own markup (the heading, the drawing, the scan, the
+     fonts), they name the X-ray's. Its own tests are in test/phase160n.test.ts. */
   test('/ is the new page, under its own policy: this site, its fonts, plus Cloudflare’s security check, and nothing else', async () => {
     const r = await get('/');
     assert.equal(r.status, 200);
@@ -38,7 +41,7 @@ describe('the home page', () => {
     assert.match(HOME_PAGE_CSP, /font-src 'self'; script-src 'self' https:\/\/challenges\.cloudflare\.com; frame-src https:\/\/challenges\.cloudflare\.com;/);
     assert.doesNotMatch(HOME_PAGE_CSP, /unsafe-inline|unsafe-eval|\*/);
     const body = await r.text();
-    assert.match(body, /<h1 id="h1"[^>]*><span class="sr">Capital allowances for healthcare property: <\/span>There is tax relief built into your building<\/h1>/);
+    assert.match(body, /<h1 id="h1"><span class="sr">Capital allowances for healthcare property: <\/span>There is tax relief built into <em>your building\.<\/em><\/h1>/);
     assert.doesNotMatch(body, /cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com/, 'something is still fetched from another site');
   });
 
@@ -55,16 +58,16 @@ describe('the home page', () => {
     assert.equal(css.status, 200);
     assert.match(css.headers.get('content-type') ?? '', /^text\/css/);
     const sheet = await css.text();
-    assert.match(sheet, /@font-face\{font-family:"IBM Plex Sans";[^}]*src:url\(\/assets\/fonts\/ibm-plex-sans-latin-400-normal\.woff2\)/);
-    assert.match(sheet, /\.fxd \.it\.on \.fx/, 'the drawings’ effects are missing');
+    assert.match(sheet, /@font-face\{font-family:"Inter Tight";[^}]*src:url\(\/assets\/fonts\/inter-tight-latin-wght-normal\.woff2\)/);
+    assert.match(sheet, /\.skin-in\{position:absolute;inset:0\}/, 'the X-ray’s see-through walls are missing');
     const head = await get('/assets/home-head.js');
     assert.equal(head.status, 200);
-    assert.match(await head.text(), /document\.documentElement\.classList\.add\('js'\)/);
+    assert.match(await head.text(), /document\.documentElement\.classList\.add\('motion'\)/);
     const js = await get('/assets/home.js');
     assert.equal(js.status, 200);
     assert.match(js.headers.get('content-type') ?? '', /^text\/javascript/);
     const src = await js.text();
-    assert.match(src, /function prep\(\)/, 'the scan is missing');
+    assert.match(src, /function render\(p\)/, 'the scan is missing');
     assert.match(src, /var BANDS=\{/, 'the calculator is missing');
     const body = await (await get('/')).text();
     assert.doesNotMatch(body, /\sstyle\s*=/i, 'a style attribute');
@@ -127,7 +130,7 @@ describe('the home page', () => {
   });
 
   test('the file in the repository is the page served', () => {
-    assert.match(readFileSync(HOME_PATH, 'utf8'), /There is tax relief built into your building/);
+    assert.match(readFileSync(HOME_PATH, 'utf8'), /There is tax relief built into <em>your building\.<\/em>/);
   });
 });
 

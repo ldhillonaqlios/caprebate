@@ -5,6 +5,9 @@
  * The rules are made in the design files and written into site/ by tools/site-from-design.mjs. They were measured in a
  * browser at five window sizes; these tests check that what the server sends carries them, and only for a desktop
  * window, so phones and tablets are as they were.
+ *
+ * PHASE 160n, 28 OCTOBER 2026: the home page is now the X-ray, whose sections are one window tall by its own rules
+ * (test/phase160n.test.ts); these rules stay on the five sector pages.
  */
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -46,7 +49,7 @@ function blocks(text: string, head: string): string[] {
 }
 
 describe('Phase 160m: every section fits one window on a desktop screen', () => {
-  for (const asset of ['home', ...SECTOR_SLUGS.map((s) => `ca-${s}`)]) {
+  for (const asset of SECTOR_SLUGS.map((s) => `ca-${s}`)) {
     test(`${asset}: each section is one window tall, sized by the window's height, and the page rests on it`, async () => {
       const text = await css(asset);
       const desk = blocks(text, DESKTOP);

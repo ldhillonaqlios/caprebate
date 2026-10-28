@@ -4,6 +4,9 @@
  * Lakhbir, on the live test site: "add black outline to the 3%", "ensure the date here is always todays date",
  * "remove scale", "add fake signiture". Made in the design files and written into site/ by tools/site-from-design.mjs;
  * these tests read what the server sends.
+ *
+ * PHASE 160n, 28 OCTOBER 2026: the home page is now the X-ray, which has no title block, no 3% figure on a drawing
+ * sheet and no surveyor's line, so these touches are checked on the five sector pages, which still carry them.
  */
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -30,7 +33,6 @@ const text = async (path: string) => {
   return r.text();
 };
 const PAGES = [
-  { page: '/', asset: 'home' },
   ...SECTOR_SLUGS.map((slug) => ({ page: `/capital-allowances/${slug}/`, asset: `ca-${slug}` })),
 ];
 
@@ -70,16 +72,4 @@ describe('Phase 160l: the website finishing touches', () => {
     });
   }
 
-  test('the home page: a made-up signature on the surveyor line that writes itself, and the big 3% outlined too', async () => {
-    const html = await text('/');
-    const sig = html.match(/<div class="sig" aria-hidden="true">[\s\S]*?<\/div>\s*<\/div>/)?.[0] ?? '';
-    assert.match(sig, /<small>Signature<\/small><span class="line"><svg class="sgn" viewBox="0 0 214 46" aria-hidden="true" focusable="false"><path pathLength="1" d="M[^"]+"\/><\/svg><\/span>/);
-    const css = await text('/assets/home.css');
-    assert.match(css, /#why \.fee-n,#why \.fee-n small\{-webkit-text-stroke:4px var\(--ink\);paint-order:stroke fill\}/);
-    // hidden only once the script has taken charge of it, so with no script it is simply there
-    assert.match(css, /\.sig \.sgn\.sg-wait path\{stroke-dasharray:1;stroke-dashoffset:1\}/);
-    assert.doesNotMatch(css, /\.sig \.sgn\.pre\b/, 'the loading screen hides anything called .pre');
-    const js = await text('/assets/home.js');
-    assert.match(js, /prefers-reduced-motion: reduce\)'\)\.matches\)return;\s*s\.classList\.add\('sg-wait'\);/, 'reduced motion should leave the signature still');
-  });
 });

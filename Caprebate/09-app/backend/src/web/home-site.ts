@@ -27,6 +27,10 @@
  * block becomes /assets/<name>.css; the scripts in its <head> become /assets/<name>-head.js, kept in the head; the
  * scripts in its body become /assets/<name>.js, placed where the LAST of them stood, so they run after the page is
  * read. The page policy gains font-src 'self' for the fonts (/assets/fonts/, site/fonts/), and nothing else.
+ *
+ * PHASE 160n, 28 OCTOBER 2026: THE X-RAY HOME PAGE. The home page is now the X-ray (a clinic whose walls turn
+ * see-through on a twelve-second scan, ending on the figure), written by the same tool from its own design file. It is
+ * served exactly as before; its two fonts join the list below. The sector pages are unchanged.
  */
 
 import { readFileSync, statSync } from 'node:fs';
@@ -41,11 +45,14 @@ export type SectorSlug = (typeof SECTOR_SLUGS)[number];
 export function isSectorSlug(x: string): x is SectorSlug { return (SECTOR_SLUGS as readonly string[]).includes(x); }
 export const sectorPath = (slug: SectorSlug): string => join(SITE_DIR, 'capital-allowances', `${slug}.html`);
 
-/** The self-hosted fonts (IBM Plex, SIL Open Font License): the only names /assets/fonts/ will serve. */
+/** The self-hosted fonts (IBM Plex for the sector pages; Inter Tight and JetBrains Mono for the home page since
+ *  Phase 160n; all SIL Open Font License): the only names /assets/fonts/ will serve. */
 export const FONT_FILES = [
   'ibm-plex-sans-latin-400-normal.woff2', 'ibm-plex-sans-latin-500-normal.woff2', 'ibm-plex-sans-latin-600-normal.woff2',
   'ibm-plex-sans-condensed-latin-500-normal.woff2', 'ibm-plex-sans-condensed-latin-600-normal.woff2', 'ibm-plex-sans-condensed-latin-700-normal.woff2',
   'ibm-plex-mono-latin-400-normal.woff2', 'ibm-plex-mono-latin-500-normal.woff2', 'ibm-plex-mono-latin-600-normal.woff2',
+  // Phase 160n: the X-ray home page's two (SIL Open Font License, site/fonts/OFL-INTER-TIGHT.txt, OFL-JETBRAINS-MONO.txt)
+  'inter-tight-latin-wght-normal.woff2', 'jetbrains-mono-latin-500-normal.woff2',
 ] as const;
 export const GSAP_PATH = join(import.meta.dirname, '..', '..', '..', '..', '..', 'node_modules', 'gsap', 'dist', 'gsap.min.js');
 

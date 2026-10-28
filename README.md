@@ -23,7 +23,7 @@ Keep the forwarded port **Private** (the default).
 
 What to try (since 18 September 2026):
 
-- `/` is the home page (`Caprebate/09-app/site/home.html`, since 29 September 2026; `Caprebate site.html` without it).
+- `/` is the home page (`Caprebate/09-app/site/home.html`, since 29 September 2026; `Caprebate site.html` without it). Since 28 October 2026 (Phase 160n) it is the X-ray design: a clinic whose walls turn see-through on a twelve-second scan.
   **Log in** (top bar) goes to the sign-in page; a signed-in person goes straight to their home. **Am I eligible?** goes to
   the real assessment, in the home page's colours.
 - **Send my enquiry** (Contact us, above the questions) sends an enquiry. Sign in as `sales@example.invalid`, open
