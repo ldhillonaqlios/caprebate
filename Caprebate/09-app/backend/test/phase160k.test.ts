@@ -149,8 +149,9 @@ describe('the five sector landing pages', () => {
   });
 
   test('the home page lists the five sectors, and each row links to its page', async () => {
+    // Phase 160n: on the X-ray home page each sector is a card, and its link reads "Read the guide"
     const body = await (await get('/')).text();
-    for (const slug of SECTOR_SLUGS) assert.match(body, new RegExp(`<td class="nm"><a href="/capital-allowances/${slug}/">`), slug);
+    for (const slug of SECTOR_SLUGS) assert.match(body, new RegExp(`<a class="sc-more" href="/capital-allowances/${slug}/">Read the guide`), slug);
   });
 });
 
