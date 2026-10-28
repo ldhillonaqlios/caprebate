@@ -1071,12 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 160n — The X-ray home page
-
-**Model: Opus.** Board item 13334969551. **Why** Lakhbir, 28 Oct 2026: "i want you claude to make the website front end as the new design" (the X-ray, option 02 of the redesign options in Website Content/landing-page/redesign-options, chosen 26 Oct and redrawn as a private clinic on 28 Oct).
-**Build** The design file `redesign-options/02-x-ray.html` made ready for the site (the search head and structured data the home page carries now, a menu with Log in and a phone Menu button, "Am I eligible?" to the assessment, the sector cards linking their pages, the six questions the structured data names, the live contact wording), then `tools/site-from-design.mjs` writes `site/home.html` from it: nothing inline, its two fonts (Inter Tight, JetBrains Mono, SIL Open Font License) served from this site, the live enquiry form with Turnstile, the legal footer. The sector pages are unchanged.
-**Accept** the scan plays and ends on its figure on the served page; the promises of test/home-page.test.ts kept in the new markup; a test of the new page (test/phase160n.test.ts); no overflow at 320/375/768/1440; every section one window tall on a desktop screen.
-
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 

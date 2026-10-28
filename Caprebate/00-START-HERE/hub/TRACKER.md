@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 342 |
-| Working on it | 1 |
+| Done | 343 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160n - The X-ray home page: the chosen redesign (a clinic whose walls turn see-through on a 12-second scan) becomes the website's home page
-
-`13334969551` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-28 (Phase 160n): Written and claimed on Lakhbir's instruction ('i want you claude to make the website front end as the new design': the X-ray, option 02 of the redesign options, chosen 26 Oct 2026 and redrawn as a private clinic on 28 Oct).
-
 ---
 
 ## Z · Complete / Not Applicable
 
-342 items.
+343 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3506,4 +3500,11 @@
 
 - Note 2026-10-21 (Phase 160m): Written and claimed on Lakhbir's instruction ('polish the website - look at the scroll points everything in each section should fit within one window', the hero cropped at the bottom in his screenshot).
 - Note 2026-10-21 (Phase 160m): Done: every home section fits one window at five desktop sizes; sector sections too except the guides and the pinned drawing; 12 tests, 5,318 checks.
+
+### Phase 160n - The X-ray home page: the chosen redesign (a clinic whose walls turn see-through on a 12-second scan) becomes the website's home page
+
+`13334969551` · **Done** · owner Claude
+
+- Note 2026-10-28 (Phase 160n): Written and claimed on Lakhbir's instruction ('i want you claude to make the website front end as the new design': the X-ray, option 02 of the redesign options, chosen 26 Oct 2026 and redrawn as a private clinic on 28 Oct).
+- Note 2026-10-28 (Phase 160n): Done: the X-ray is the home page (the design file made ready for the site, convertXray, its fonts self-hosted); 10 tests; back end 3,029 pass, the 7 failures are files kept out of git in a fresh worktree (6 the same on main) and one that passes alone. The sector pages keep the old design.
 
