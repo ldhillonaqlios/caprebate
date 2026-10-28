@@ -1071,6 +1071,12 @@ command that counts it, never the number.
 ---
 
 
+## PHASE 160o — The website in one design
+
+**Model: Opus.** Board item 13334969552. **Why** Lakhbir, 28 Oct 2026, with three screenshots of the live X-ray home page: "remove the 1-6 this isnt needed", "make the text above it bigger", "remove the survayor icon thing", "we need both am i eligible and also try calculator", "change the log in words to a icon of a person so people know thats log in", "ensure all sectors follow the same wordpress elementor design".
+**Build** In the X-ray design file: no systems count in the scan's box, bigger captions above it, no surveyor placeholder, "Try the calculator" beside every "Am I eligible?" that lacks it, Log in as a person icon (named for screen readers, and in words in the phone menu), a Sectors menu linking the five pages. The five sector pages rebuilt in the same design by a generator (redesign-options/tools/build_sectors.py) that carries every word of the current pages (summary, what qualifies, ownership, watch-outs, questions asked, the guide, the steps, the ten questions, other sectors, the search head and structured data); the tool writes all six site files.
+**Accept** every promise of the sector page tests (the search basics, structured data matching what a person reads, over 3,000 words, links on this site, the calculator opening on its sector); a test of the changes; no overflow at 320/375/768/1440.
+
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 
