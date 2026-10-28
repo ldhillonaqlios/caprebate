@@ -94,7 +94,8 @@ describe('the five sector landing pages', () => {
       assert.ok(eligible.length >= 2);
       for (const m of eligible) assert.equal(m[1], '/assessment');
       const header = /<header class="top" id="top">([\s\S]*?)<\/header>/.exec(body)?.[1] ?? '';
-      assert.match(header, /<li class="nav-login"><a href="\/login">Log in<\/a><\/li>/);
+      // Phase 160o: Log in is a person icon, its words kept for screen readers and for the phone menu
+      assert.match(header, /<li class="nav-login"><a href="\/login" title="Log in"><svg [^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg><span class="nav-login-t">Log in<\/span><\/a><\/li>/);
       for (const other of SECTOR_SLUGS) assert.match(header, new RegExp(`href="/capital-allowances/${other}/"`), `the menu has no link to ${other}`);
       assert.match(header, new RegExp(`href="/capital-allowances/${slug}/" aria-current="page"`), 'the menu does not mark this page');
       for (const m of body.matchAll(/<a\b[^>]*\shref="([^"]+)"/g)) {
@@ -109,7 +110,8 @@ describe('the five sector landing pages', () => {
       const css = await get(`/assets/ca-${slug}.css`);
       assert.equal(css.status, 200);
       assert.match(css.headers.get('content-type') ?? '', /^text\/css/);
-      assert.match(await css.text(), /@font-face\{font-family:"IBM Plex Mono"/);
+      // Phase 160o: the sector pages are in the X-ray design, with its fonts
+      assert.match(await css.text(), /@font-face\{font-family:"Inter Tight"/);
       const head = await get(`/assets/ca-${slug}-head.js`);
       assert.equal(head.status, 200);
       assert.match(await head.text(), /classList\.add\('js'\)/);

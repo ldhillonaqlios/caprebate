@@ -90,7 +90,8 @@ describe('the home page', () => {
   test('a phone can sign in: Log in is in the menu, which a phone opens from the Menu button', async () => {
     const body = await (await get('/')).text();
     const header = /<header class="top" id="top">([\s\S]*?)<\/header>/.exec(body)?.[1] ?? '';
-    assert.match(header, /<li class="nav-login"><a href="\/login">Log in<\/a><\/li>/, 'no Log in in the menu');
+    // Phase 160o: Log in is a person icon; its words are there for screen readers and show in the phone menu
+    assert.match(header, /<li class="nav-login"><a href="\/login" title="Log in"><svg [^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg><span class="nav-login-t">Log in<\/span><\/a><\/li>/, 'no Log in in the menu');
     assert.match(header, /<button class="mbtn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav">/);
   });
 

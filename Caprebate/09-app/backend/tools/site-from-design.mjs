@@ -44,6 +44,8 @@ const SITE = join(HERE, '..', '..', 'site');
 const DEFAULT_SRC = join(HERE, '..', '..', '..', '..', 'Website Content', 'landing-page', 'template-options');
 /** The X-ray design file (Phase 160n), beside the template-options folder. */
 const xrayFile = (src) => join(src, '..', 'redesign-options', '02-x-ray.html');
+/** Phase 160o: each sector page's design file, in the X-ray design (written by redesign-options/tools/build_sectors.py). */
+const xraySectorFile = (src, slug) => join(src, '..', 'redesign-options', 'sectors', `${slug}.html`);
 
 export const SECTORS = ['care-homes', 'dental-practices', 'gp-surgeries', 'supported-living', 'private-hospitals-and-clinics'];
 
@@ -193,32 +195,41 @@ const XRAY_FORM_CSS = `
 .f-end small a{color:var(--green)}
 `;
 
-/** The X-ray design file to the site's home page (Phase 160n). */
-export function convertXray(source) {
+/** The X-ray design file to the site's home page (Phase 160n); since Phase 160o also a sector page in the same design
+ *  (`page` is its slug). A sector page has no enquiry form: it links to the home page's. */
+export function convertXray(source, page = 'home') {
+  const home = page === 'home';
   let s = source.replace(/^\uFEFF/, '');
   s = s.replace(/<!--[\s\S]*?-->\n?/g, '');
-  s = s.replace('<!doctype html>', '<!doctype html>\n<!-- Cap Rebate home page. Written by tools/site-from-design.mjs from its design file, redesign-options/02-x-ray.html (Phase 160n); edit the design file and run the tool again. -->');
+  s = s.replace('<!doctype html>', home
+    ? '<!doctype html>\n<!-- Cap Rebate home page. Written by tools/site-from-design.mjs from its design file, redesign-options/02-x-ray.html (Phase 160n); edit the design file and run the tool again. -->'
+    : `<!doctype html>\n<!-- Cap Rebate sector page: ${page}. Written by tools/site-from-design.mjs from its design file, redesign-options/sectors/${page}.html (Phase 160o), which redesign-options/tools/build_sectors.py writes; run those again rather than editing this file. -->`);
   s = must(s.replace(/<meta name="viewport" content="width=device-width, ?initial-scale=1">/, (m) => `${m}\n<link rel="icon" href="/favicon.svg" type="image/svg+xml">`), 1, 'the viewport line');
   // the review label, and the fonts from Google
-  s = must(s.replace(/\n?<div class="mock">[\s\S]*?<\/div>/, ''), 1, 'the review label');
+  if (home) s = must(s.replace(/\n?<div class="mock">[\s\S]*?<\/div>/, ''), 1, 'the review label');
   s = s.replace(/<link rel="preconnect" href="https:\/\/fonts\.googleapis\.com">\n?/, '').replace(/<link rel="preconnect" href="https:\/\/fonts\.gstatic\.com" crossorigin>\n?/, '');
   s = must(s.replace(/<link href="https:\/\/fonts\.googleapis\.com\/css2[^"]*" rel="stylesheet">\n?/, ''), 1, 'the Google Fonts link');
   // the footer's legal links
+  // every "Am I eligible" is the assessment (as convert() does for the old design)
+  s = s.replace(/<a\b([^>]*?)\shref="[^"]*"([^>]*)>((?:(?!<\/a>)[\s\S])*?Am I eligible(?:(?!<\/a>)[\s\S])*?)<\/a>/g, '<a$1 href="/assessment"$2>$3</a>');
   if (!/<nav aria-label="Legal">[\s\S]*?<\/nav>/.test(s)) throw new Error('site-from-design: the X-ray footer links not found');
   s = s.replace(/<nav aria-label="Legal">[\s\S]*?<\/nav>/, LEGAL_NAV);
-  // the live enquiry form, and its script last
-  const a = s.indexOf('<form class="form" id="cform"'); const b = s.indexOf('</form>', a);
-  if (a < 0 || b < 0) throw new Error('site-from-design: the X-ray form not found');
-  s = `${s.slice(0, a)}${XRAY_FORM}${s.slice(b + '</form>'.length)}`;
-  s = s.replace(/<\/body>(?![\s\S]*<\/body>)/, `<script>${FORM_JS}</script>\n</body>`);
+  // the live enquiry form, and its script last (the home page only)
+  if (home) {
+    const a = s.indexOf('<form class="form" id="cform"'); const b = s.indexOf('</form>', a);
+    if (a < 0 || b < 0) throw new Error('site-from-design: the X-ray form not found');
+    s = `${s.slice(0, a)}${XRAY_FORM}${s.slice(b + '</form>'.length)}`;
+    s = s.replace(/<\/body>(?![\s\S]*<\/body>)/, `<script>${FORM_JS}</script>\n</body>`);
+  }
   const lifted = lift(s);
   s = lifted.html;
   const at = s.indexOf('</style>');
   if (at < 0) throw new Error('site-from-design: no <style> block');
-  s = `${s.slice(0, at)}${XRAY_FONTS}${XRAY_FORM_CSS}${lifted.css}${s.slice(at)}`;
+  s = `${s.slice(0, at)}${XRAY_FONTS}${home ? XRAY_FORM_CSS : ''}${lifted.css}${s.slice(at)}`;
   const markup = s.replace(/<style>[\s\S]*?<\/style>/, '').replace(/<script>[\s\S]*?<\/script>/g, '');
-  if (/\sstyle\s*=/.test(markup)) throw new Error('site-from-design: a style attribute survived on the X-ray home page');
-  if (/fonts\.g(oogleapis|static)\.com/.test(s)) throw new Error('site-from-design: Google Fonts survived on the X-ray home page');
+  if (/\sstyle\s*=/.test(markup)) throw new Error(`site-from-design: a style attribute survived on the X-ray ${page} page`);
+  if (/fonts\.g(oogleapis|static)\.com/.test(s)) throw new Error(`site-from-design: Google Fonts survived on the X-ray ${page} page`);
+  if (/\son[a-z]+\s*=\s*"/.test(markup)) throw new Error(`site-from-design: an inline event handler on the X-ray ${page} page`);
   if (/redesign-options|template-options|index\.html|Mock-up only|mock-up/i.test(markup.replace(/<!--[\s\S]*?-->/g, ''))) throw new Error('site-from-design: a mock-up word or link survived on the X-ray home page');
   if (/<form class="form" id="cform"/.test(s)) throw new Error('site-from-design: the mock-up form survived');
   return s;
@@ -312,11 +323,12 @@ function run() {
   const args = process.argv.slice(2);
   const check = args.includes('--check');
   const src = args.find((a) => !a.startsWith('--')) ?? DEFAULT_SRC;
+  // Phase 160o: every page in the X-ray design; the sector pages from their own design files
   const jobs = [['home', xrayFile(src), join(SITE, 'home.html')],
-    ...SECTORS.map((slug) => [slug, join(src, 'capital-allowances', slug, 'index.html'), join(SITE, 'capital-allowances', `${slug}.html`)])];
+    ...SECTORS.map((slug) => [slug, xraySectorFile(src, slug), join(SITE, 'capital-allowances', `${slug}.html`)])];
   let stale = 0;
   for (const [page, from, to] of jobs) {
-    const out = page === 'home' ? convertXray(readFileSync(from, 'utf8')) : convert(readFileSync(from, 'utf8'), page);
+    const out = convertXray(readFileSync(from, 'utf8'), page);
     if (check) {
       let now = ''; try { now = readFileSync(to, 'utf8'); } catch { /* missing counts as stale */ }
       if (now !== out) { stale += 1; console.log(`STALE  ${to}`); }

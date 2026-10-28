@@ -107,7 +107,8 @@ describe('the website is served at / by the back end', () => {
     assert.match(r.body, /<title>Capital Allowances for Healthcare Property \| Cap Rebate<\/title>/);
     // PHASE 160k, 21 OCTOBER 2026: the new home page's top bar is <header class="top">, and Log in is in its menu.
     const header = /<header class="top" id="top">([\s\S]*?)<\/header>/.exec(r.body)?.[1] ?? '';
-    assert.match(header, /<a href="\/login">Log in<\/a>/, 'no Log in in the top bar');
+    // PHASE 160o, 28 OCTOBER 2026: Log in is a person icon in the menu, its words kept for screen readers
+    assert.match(header, /<a href="\/login" title="Log in">[\s\S]*?<span class="nav-login-t">Log in<\/span><\/a>/, 'no Log in in the top bar');
     const assess = [...r.body.matchAll(/<a class="[^"]*" href="(\/assessment)"/g)].map((m) => m[1]);
     assert.ok(assess.length >= 4, 'the assessment links are gone');
     assert.match(r.body, /<form class="form" id="contactform" action="\/enquiry" method="post" novalidate/);
