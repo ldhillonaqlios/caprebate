@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 343 |
-| Working on it | 1 |
+| Done | 344 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160o - The website in one design: the home page's finishing touches (no systems count, bigger captions, no surveyor placeholder, Am I eligible and Try the calculator together, a person icon for Log in) and the five sector pages in the X-ray design
-
-`13334969552` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-28 (Phase 160o): Written and claimed on Lakhbir's instruction, with three screenshots of the live home page: 'remove the 1-6 this isnt needed', 'make the text above it bigger', 'remove the survayor icon thing', 'we need both am i eligible and also try calculator', 'change the log in words to a icon of a person', 'ensure all sectors follow the same wordpress elementor design'.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-343 items.
+344 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3513,4 +3507,11 @@
 
 - Note 2026-10-28 (Phase 160n): Written and claimed on Lakhbir's instruction ('i want you claude to make the website front end as the new design': the X-ray, option 02 of the redesign options, chosen 26 Oct 2026 and redrawn as a private clinic on 28 Oct).
 - Note 2026-10-28 (Phase 160n): Done: the X-ray is the home page (the design file made ready for the site, convertXray, its fonts self-hosted); 10 tests; back end 3,029 pass, the 7 failures are files kept out of git in a fresh worktree (6 the same on main) and one that passes alone. The sector pages keep the old design.
+
+### Phase 160o - The website in one design: the home page's finishing touches (no systems count, bigger captions, no surveyor placeholder, Am I eligible and Try the calculator together, a person icon for Log in) and the five sector pages in the X-ray design
+
+`13334969552` · **Done** · owner Claude
+
+- Note 2026-10-28 (Phase 160o): Written and claimed on Lakhbir's instruction, with three screenshots of the live home page: 'remove the 1-6 this isnt needed', 'make the text above it bigger', 'remove the survayor icon thing', 'we need both am i eligible and also try calculator', 'change the log in words to a icon of a person', 'ensure all sectors follow the same wordpress elementor design'.
+- Note 2026-10-28 (Phase 160o): Done: the home page's five changes and the five sector pages in the X-ray design, every word kept; 31 tests; back end 3,052 pass, the 7 failures are those of 160n (files kept out of git in a fresh worktree, one that passes alone).
 
