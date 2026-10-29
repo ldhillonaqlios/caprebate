@@ -233,22 +233,13 @@ img,svg{display:block}
 .motion .cap.on{opacity:1;transform:none}
 html:not(.motion) .cap:not(.cap-end){display:none}
 
-.tally{position:relative;display:grid;border-radius:16px;background:rgba(127,224,210,.06);box-shadow:inset 0 0 0 1px rgba(127,224,210,.18);padding:clamp(12px,2vh,18px) 18px}
-.t-run,.t-end{grid-area:1/1;transition:opacity .5s ease,transform .5s ease}
-.t-k{margin-bottom:10px;font:500 12px/1.3 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--on-night-2)}
-.t-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.t-bar i{height:6px;border-radius:3px;background:rgba(127,224,210,.14);position:relative;overflow:hidden}
-.t-bar i::after{content:"";position:absolute;inset:0;background:var(--c);box-shadow:0 0 10px var(--c);transform:scaleX(0);transform-origin:left;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
-.t-bar i.on::after{transform:none}
-html:not(.motion) .t-bar i::after{transform:none}
+.tally{position:relative;display:grid}
+.t-end{grid-area:1/1;transition:opacity .5s ease,transform .5s ease}
 .t-end .t-lead span{display:block}
 .t-end .t-lead{font-size:15px;color:var(--on-night-2);line-height:1.35}
 .t-fig{font-weight:600;font-size:clamp(38px,6.4vh,54px);line-height:1.05;letter-spacing:-.035em;color:var(--mint);font-variant-numeric:tabular-nums;min-height:1.05em}
 .motion .t-end{opacity:0;transform:translateY(10px)}
-.motion .tally.done .t-run{opacity:0;transform:translateY(-10px)}
 .motion .tally.done .t-end{opacity:1;transform:none}
-html:not(.motion) .t-run{visibility:hidden}
-.tally.done{box-shadow:inset 0 0 0 1px rgba(171,237,216,.45),0 0 40px -10px rgba(171,237,216,.35)}
 .acts{display:flex;flex-wrap:wrap;gap:10px 12px}
 .m-only{display:none}
 .cap .m-only a{color:var(--mint)}
@@ -270,6 +261,24 @@ html:not(.motion) .scanwrap{display:none}
 .pulse.slow{animation-duration:2.4s;animation-delay:.5s}
 @keyframes pulse{0%{transform:scale(.6);opacity:.95}100%{transform:scale(3.2);opacity:0}}
 .motion .xr:not(.alarm-live) .pulse{animation-play-state:paused;opacity:0}
+/* the lift travels between the floors once it lights up; the cables shorten as it rises */
+.lift-car{animation:lift 7s ease-in-out infinite}
+.lift-cable{transform-box:fill-box;transform-origin:50% 0;animation:cable 7s ease-in-out infinite}
+@keyframes lift{0%,12%{transform:none}44%,62%{transform:translateY(-210px)}94%,100%{transform:none}}
+@keyframes cable{0%,12%{transform:none}44%,62%{transform:scaleY(.393)}94%,100%{transform:none}}
+.motion .xr:not(.lift-live) .lift-car,.motion .xr:not(.lift-live) .lift-cable{animation:none}
+/* the lights flicker as they come on, each lamp in its own time, then stay on */
+.motion .xr.lights-live .lamp{animation:flick 1.1s linear both}
+.motion .xr.lights-live .lamp:nth-of-type(2){animation-delay:.18s;animation-duration:.9s}
+.motion .xr.lights-live .lamp:nth-of-type(3){animation-delay:.07s}
+.motion .xr.lights-live .lamp:nth-of-type(4){animation-delay:.3s;animation-duration:1.3s}
+.motion .xr.lights-live .lamp:nth-of-type(5){animation-delay:.12s}
+.motion .xr.lights-live .lamp:nth-of-type(6){animation-delay:.24s;animation-duration:.95s}
+.motion .xr.lights-live .lamp:nth-of-type(7){animation-delay:.04s;animation-duration:1.25s}
+.motion .xr.lights-live .lamp:nth-of-type(8){animation-delay:.34s}
+.motion .xr.lights-live .lamp:nth-of-type(9){animation-delay:.15s;animation-duration:1s}
+.motion .xr.lights-live .lamp:nth-of-type(10){animation-delay:.27s}
+@keyframes flick{0%{opacity:0}6%{opacity:.9}10%{opacity:.1}18%{opacity:.75}22%{opacity:.05}34%{opacity:1}40%{opacity:.35}48%,100%{opacity:1}}
 
 /* labels over the drawing */
 .tags{list-style:none;margin:0;padding:0}
@@ -341,7 +350,6 @@ html:not(.motion) .hint{display:none}
 .sc ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
 .sc li{font-size:14.5px;color:var(--muted);line-height:1.35;padding-left:14px;position:relative}
 .sc li::before{content:"";position:absolute;left:0;top:.5em;width:6px;height:6px;border-radius:50%;background:var(--green)}
-.sc .note{font-size:13.5px;color:#7a3b12;background:#fff3e6;border-radius:8px;padding:8px 10px;line-height:1.4}
 .sc-more{margin-top:auto;padding-top:4px;font-size:14.5px;font-weight:600;color:var(--green);text-decoration:none}
 .sc-more:hover{text-decoration:underline}
 .sc-b{flex:1}
@@ -399,6 +407,7 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
 .f label span{font-weight:400;color:var(--muted)}
 .f input,.f select,.f textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid #b9c8c3;border-radius:10px;padding:10px 12px;min-height:46px;width:100%}
 .f textarea{min-height:78px;resize:vertical}
+.f select{-webkit-appearance:none;appearance:none;padding-right:40px;background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);background-position:calc(100% - 21px) 50%,calc(100% - 16px) 50%;background-size:5px 5px;background-repeat:no-repeat}
 .f input:focus,.f select:focus,.f textarea:focus{outline:3px solid #2f8f73;outline-offset:1px;border-color:var(--green)}
 .f-end{grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .f-end small{color:var(--muted);font-size:13.5px}
@@ -464,7 +473,6 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
  .hint{display:none}
  .cap p{font-size:16px}
  .cap h2{font-size:19px;margin-bottom:2px}
- .tally{padding:9px 14px}
  .t-fig{font-size:32px}
  .t-end .t-lead{font-size:14px}
  .cap p{line-height:1.45}

@@ -42,11 +42,9 @@ const PRESET: Record<(typeof SECTOR_SLUGS)[number], string> = {
 const PAGES = ['/', ...SECTOR_SLUGS.map((s) => `/capital-allowances/${s}/`)];
 
 describe('Phase 160o: the home page', () => {
-  test('the scan box has no count of systems found, only its label and the six bars', async () => {
+  test('the scan box has no count of systems found (and since Phase 160p no box at all)', async () => {
     const html = await text('/');
-    const tally = /<div class="tally" id="tally">([\s\S]*?)<div class="t-end">/.exec(html)?.[1] ?? '';
-    assert.match(tally, /<p class="t-k">Qualifying systems found<\/p>/);
-    assert.doesNotMatch(tally, /<b|shown here|id="tN"/);
+    assert.doesNotMatch(html, /<b class="t-n"|shown here|id="tN"/);
     assert.doesNotMatch(await text('/assets/home.js'), /tN\.textContent/, 'the script still writes the count');
   });
 
