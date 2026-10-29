@@ -46,10 +46,8 @@ describe('Phase 160n: the X-ray home page', () => {
     assert.doesNotMatch(label, /care home|nurse/i);
     assert.equal([...html.matchAll(/<svg class="layer sys sys-[a-z]+" data-i="\d"/g)].length, 6, 'not six systems');
     assert.equal([...html.matchAll(/<li class="tag[^"]*" data-i="\d"/g)].length, 6, 'not six labels');
-    // Phase 160o: the count of systems found was taken off; the six bars still fill in
-    const bars = /<div class="t-bar" id="tBar">([\s\S]*?)<\/div>/.exec(html)?.[1] ?? '';
-    assert.equal([...bars.matchAll(/<i\b/g)].length, 6, 'the six bars');
-    assert.doesNotMatch(html, /shown here|id="tN"/);
+    // Phase 160o took off the count of systems found, and Phase 160p the box with its bars
+    assert.doesNotMatch(html, /shown here|id="tN"|id="tBar"/);
     for (const name of ['Wiring', 'Heating and hot water', 'Air and medical gases', 'Lifts', 'Fire alarms and patient call', 'Lighting']) {
       assert.ok(html.includes(`<h2><i></i>${name}<span class="q">Qualifies</span></h2>`), name);
     }

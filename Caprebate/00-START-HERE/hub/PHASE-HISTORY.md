@@ -13540,3 +13540,23 @@ NOTHING LEFT  beyond those lines.
 
 **Claim cleared** in the commit that carries this record.
 
+## Phase 160p — the X-ray's finishing touches — 29 October 2026 (Claude Code, in a worktree of the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 160p, 29 Oct 2026: Lakhbir, with three screenshots of the live home page: "just remove this box it makes no sense", "remove the disclaimer from supported living", "make property type box same height as name email phone ect", "on the animation 1) make the lift go up and down 2) flicker the lights as they turn on". All done. test/phase160p.test.ts, 7 tests.
+
+- **Claim.** hub/CLAIM.md and tracker row 13334969553, pushed first, cut from main after PR 70 merged.
+- **The box under the captions** (redesign-options/02-x-ray.html): its frame, its "Qualifying systems found" label and its six bars are gone, with their styles and script. The figure still arrives on its own at the end of the scan and counts up, in the same place, so nothing below it moves.
+- **The supported-living card** on the home page has no note. The calculator's own supported-living line is unchanged.
+- **The property type menu** is drawn by the page (its own arrow), so it takes the boxes' font, line height, padding and border: 46.8 px, the same as Name, Email and Phone, measured in the browser. A fixed height was tried first and came out 0.8 px short.
+- **The lift.** Once the lift lights up in the scan, its car travels to the first floor and back every 7 seconds, and the cables shorten with it. Measured in the browser, the car's top and the cable ends stay together the whole way.
+- **The lights.** Each of the ten lamps flickers as the lighting comes on, each in its own time, then stays on. The two exit signs stay steady.
+- **Less motion.** A visitor who asks for less motion never gets the page's motion mode, and every animation is off for them, so they see the finished picture.
+- **The sector pages** were rebuilt by build_sectors.py, since they copy the X-ray's styles. The master was rebuilt.
+- **The checks, at the close:** back end 3,059 pass / 7 fail. The 7 failures are those of Phase 160n: six tests read files kept out of git, and one passes when run alone.
+- **Not changed:** the WordPress package (redesign-options/wordpress-x-ray/) is still at Phase 160n.
+
+```
+DONE          The five changes. test/phase160p.test.ts (7).
+```
+**Claim cleared** in the commit that carries this record.
+
