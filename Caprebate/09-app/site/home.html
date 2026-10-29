@@ -81,8 +81,16 @@ img,svg{display:block}
 .nav{display:flex;gap:26px;margin-left:auto;font-size:15px;font-weight:500}
 .nav a{text-decoration:none;color:var(--on-night-2);transition:color .2s}
 .nav a:hover{color:#fff}
-.nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0}
-.nav .nav-login a{color:var(--on-night)}
+.nav ul{display:flex;align-items:center;gap:26px;list-style:none;margin:0;padding:0}
+.nav .nav-login a{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;color:var(--on-night);box-shadow:inset 0 0 0 1px rgba(127,224,210,.35);transition:background-color .2s,box-shadow .2s}
+.nav .nav-login a:hover{background:rgba(127,224,210,.12);box-shadow:inset 0 0 0 1px var(--mint)}
+.nav .nav-login svg{width:19px;height:19px;flex:none}
+.nav-login-t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.has-sub{position:relative}
+.nav .sub{display:none;position:absolute;top:100%;left:-16px;z-index:5;min-width:270px;flex-direction:column;align-items:stretch;gap:0;padding:10px 8px 8px;margin-top:0;background:#061513;border:1px solid rgba(127,224,210,.18);border-radius:12px;box-shadow:0 18px 40px -18px rgba(0,0,0,.8)}
+.nav .sub a{display:block;padding:9px 10px;border-radius:8px;color:var(--on-night-2)}
+.nav .sub a:hover,.nav .sub a[aria-current="page"]{background:rgba(127,224,210,.08);color:#fff}
+.has-sub:hover .sub,.has-sub:focus-within .sub{display:flex}
 .mbtn{display:none;align-items:center;gap:9px;min-height:42px;padding:8px 14px;border-radius:999px;border:1px solid rgba(127,224,210,.32);background:transparent;color:var(--on-night);font:500 14px/1 var(--sans);cursor:pointer}
 .mbtn i{position:relative;width:16px;height:2px;background:currentColor;box-shadow:0 -5px 0 currentColor,0 5px 0 currentColor}
 .mbtn i::after{content:"";position:absolute;inset:0;background:currentColor;display:none;transform:rotate(90deg)}
@@ -102,21 +110,18 @@ img,svg{display:block}
 .xr h1 em{font-style:normal;color:var(--mint)}
 .caps{display:grid}
 .cap{grid-area:1/1;transition:opacity .45s ease,transform .45s ease}
-.cap h2{font-size:clamp(18px,2.6vh,21px);font-weight:600;letter-spacing:-.01em;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.cap h2{font-size:clamp(21px,3.2vh,27px);font-weight:600;letter-spacing:-.01em;margin-bottom:6px;display:flex;align-items:center;gap:10px}
 .cap h2 .q{font:500 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#08201b;background:var(--c);padding:5px 7px;border-radius:5px}
 .cap h2 i{width:10px;height:10px;border-radius:50%;background:var(--c,var(--xr));box-shadow:0 0 12px var(--c,var(--xr));flex:none}
-.cap p{color:var(--on-night-2);font-size:clamp(15px,2.2vh,17px);line-height:1.5}
-.cap .fine{font-size:14px;line-height:1.5}
+.cap p{color:var(--on-night-2);font-size:clamp(16.5px,2.6vh,19.5px);line-height:1.5}
+.cap .fine{font-size:clamp(15.5px,2.3vh,17.5px);line-height:1.5}
 .motion .cap{opacity:0;transform:translateY(8px)}
 .motion .cap.on{opacity:1;transform:none}
 html:not(.motion) .cap:not(.cap-end){display:none}
 
 .tally{position:relative;display:grid;border-radius:16px;background:rgba(127,224,210,.06);box-shadow:inset 0 0 0 1px rgba(127,224,210,.18);padding:clamp(12px,2vh,18px) 18px}
 .t-run,.t-end{grid-area:1/1;transition:opacity .5s ease,transform .5s ease}
-.t-k{font:500 12px/1.3 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--on-night-2)}
-.t-n{display:flex;align-items:baseline;gap:8px;margin:2px 0 10px;font-weight:600}
-.t-n b{font-size:clamp(34px,5.2vh,44px);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#fff}
-.t-n span{color:var(--on-night-2);font-size:15px;font-weight:500}
+.t-k{margin-bottom:10px;font:500 12px/1.3 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--on-night-2)}
 .t-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .t-bar i{height:6px;border-radius:3px;background:rgba(127,224,210,.14);position:relative;overflow:hidden}
 .t-bar i::after{content:"";position:absolute;inset:0;background:var(--c);box-shadow:0 0 10px var(--c);transform:scaleX(0);transform-origin:left;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
@@ -190,10 +195,6 @@ html:not(.motion) .hint{display:none}
 .prom-left{display:flex;flex-direction:column;gap:clamp(16px,3vh,26px)}
 .nil{display:flex;gap:12px;align-items:flex-start;font-size:15.5px;color:var(--ink-2);background:var(--mint-soft);border-radius:12px;padding:14px 16px}
 .nil svg{flex:none;width:22px;height:22px;margin-top:1px}
-.ph{border:2px dashed #93a8a2;border-radius:14px;background:repeating-linear-gradient(135deg,#f7faf9 0 12px,#eef3f1 12px 24px);display:flex;gap:16px;align-items:center;padding:16px 18px;color:#3f524d;font-size:14.5px;line-height:1.45}
-.ph .ph-tag{display:inline-block;font:500 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#3f524d;color:#fff;padding:5px 7px;border-radius:5px;margin-bottom:6px}
-.ph-face{flex:none;width:76px;height:76px;border-radius:50%;border:2px dashed #93a8a2;display:grid;place-items:center;background:#fff}
-.ph-face svg{width:34px;height:34px}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .card{border-radius:var(--r);background:var(--bg);padding:clamp(16px,2.8vh,24px) 22px;box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;gap:8px}
 .card .ico{width:42px;height:42px;border-radius:12px;background:var(--mint-soft);display:grid;place-items:center;margin-bottom:4px}
@@ -214,7 +215,7 @@ html:not(.motion) .hint{display:none}
 .step p{font-size:15.5px;color:var(--muted)}
 .step .pill{align-self:flex-start;font:500 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:var(--mint);color:var(--ink);padding:6px 8px;border-radius:6px}
 .how-cta{margin-top:clamp(24px,5vh,48px);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.how-cta span{color:var(--muted);font-size:15px}
+.how-cta>span{color:var(--muted);font-size:15px}
 
 /* sectors */
 .secs{background:var(--paper)}
@@ -312,8 +313,12 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
  .mbtn{display:inline-flex}
  .top-in{position:relative}
  .top.open .nav{display:block;position:absolute;left:0;right:0;top:100%;background:#061513;border-bottom:1px solid rgba(127,224,210,.12);padding:6px clamp(16px,3.5vw,48px) 14px}
- .top.open .nav ul{flex-direction:column;gap:0}
+ .top.open .nav ul{flex-direction:column;gap:0;align-items:stretch}
  .top.open .nav a{display:block;padding:12px 2px;font-size:17px;color:var(--on-night)}
+ .top.open .nav .sub{display:flex;position:static;min-width:0;padding:0 0 4px 14px;background:none;border:0;box-shadow:none}
+ .top.open .nav .sub a{padding:9px 2px;font-size:16px;color:var(--on-night-2)}
+ .top.open .nav .nav-login a{display:flex;width:auto;height:auto;justify-content:flex-start;gap:10px;border-radius:0;box-shadow:none;padding:12px 2px}
+ .top.open .nav-login-t{position:static;width:auto;height:auto;overflow:visible;clip:auto}
  .top .btn{margin-left:auto}
 }
 @media (max-width:999px){
@@ -343,10 +348,9 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
  .xr .acts .btn-s{display:none}
  .m-only{display:inline}
  .hint{display:none}
- .cap p{font-size:14.5px}
- .cap h2{font-size:17px;margin-bottom:2px}
+ .cap p{font-size:16px}
+ .cap h2{font-size:19px;margin-bottom:2px}
  .tally{padding:9px 14px}
- .t-n{margin:0 0 6px}.t-n b{font-size:28px}
  .t-fig{font-size:32px}
  .t-end .t-lead{font-size:14px}
  .cap p{line-height:1.45}
@@ -355,7 +359,6 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
  .sec-grid{grid-template-columns:1fr}
  .steps{grid-template-columns:1fr}
  .form{grid-template-columns:1fr}
- .ph{flex-direction:column;align-items:flex-start}
  .mock{font-size:12px;left:8px;bottom:8px}
  .top-in{gap:12px}
 }
@@ -457,10 +460,18 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
    <ul>
     <li><a href="#promises">Our promises</a></li>
     <li><a href="#how">How it works</a></li>
-    <li><a href="#sectors">Sectors</a></li>
+    <li class="has-sub"><a href="#sectors">Sectors</a>
+     <ul class="sub">
+      <li><a href="/capital-allowances/care-homes/">Care homes</a></li>
+      <li><a href="/capital-allowances/dental-practices/">Dental practices</a></li>
+      <li><a href="/capital-allowances/gp-surgeries/">GP surgeries</a></li>
+      <li><a href="/capital-allowances/supported-living/">Supported living</a></li>
+      <li><a href="/capital-allowances/private-hospitals-and-clinics/">Private hospitals and clinics</a></li>
+     </ul>
+    </li>
     <li><a href="#calculator">Calculator</a></li>
     <li><a href="#questions">Questions</a></li>
-    <li class="nav-login"><a href="/login">Log in</a></li>
+    <li class="nav-login"><a href="/login" title="Log in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c1.4-3.7 4.2-5.6 7.5-5.6s6.1 1.9 7.5 5.6"/></svg><span class="nav-login-t">Log in</span></a></li>
    </ul>
   </nav>
   <a class="btn btn-p" href="/assessment">Am I eligible? <span class="arr" aria-hidden="true">→</span></a>
@@ -491,7 +502,6 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
      <div class="tally" id="tally">
       <div class="t-run" aria-hidden="true">
        <p class="t-k">Qualifying systems found</p>
-       <p class="t-n"><b id="tN">0</b><span>of the 6 shown here</span></p>
        <div class="t-bar" id="tBar"><i class="zce7794c"></i><i class="z3efe252"></i><i class="z96ada2c"></i><i class="zf662432"></i><i class="z0839f9c"></i><i class="z7c02b55"></i></div>
       </div>
       <div class="t-end">
@@ -525,10 +535,6 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
     <p class="lede">You know what it costs before any work starts, and who stands behind the figures.</p>
    </div>
    <div class="nil"><svg viewBox="0 0 24 24" fill="none" stroke="#1d5c4c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M4 7l8 6 8-6"/></svg><span>If there is no claim, we tell you early, in writing, and explain why.</span></div>
-   <div class="ph" role="note">
-    <div class="ph-face" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#7d918b" stroke-width="1.6"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></div>
-    <div><span class="ph-tag">Placeholder</span><br>Surveyor's photo, name and RICS membership (to be supplied by Cap Rebate).</div>
-   </div>
   </div>
   <div class="cards">
    <article class="card">
@@ -572,6 +578,7 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
   </ol>
   <div class="how-cta">
    <a class="btn btn-p" href="/assessment">Am I eligible? <span class="arr" aria-hidden="true">→</span></a>
+   <a class="btn btn-s" href="#calculator">Try the calculator</a>
    <span>Fee: a flat 3% of the allowances we identify.</span>
   </div>
  </div>
@@ -750,7 +757,7 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
  var skin=document.querySelector('.skin'), skinIn=document.querySelector('.skin-in'), scanner=document.querySelector('.scanner');
  var sys=[].slice.call(document.querySelectorAll('.sys')), tags=[].slice.call(document.querySelectorAll('.tag-in'));
  var caps=[].slice.call(document.querySelectorAll('.cap')), segs=[].slice.call(document.querySelectorAll('#tBar i'));
- var tally=document.getElementById('tally'), tN=document.getElementById('tN'), tFig=document.getElementById('tFig'), hint=document.getElementById('hint');
+ var tally=document.getElementById('tally'), tFig=document.getElementById('tFig'), hint=document.getElementById('hint');
  var FINAL=675000;
  if(!motion){return}
 
@@ -786,7 +793,6 @@ input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--green);height:28p
   stage.classList.toggle('alarm-live',p>=S0+4*SW);
   var ci = p<SCAN0?0 : p<S0?1 : p<END? 2+Math.min(5,Math.floor((p-S0)/SW)) : 8;
   if(ci!==curCap){caps.forEach(function(c){c.classList.toggle('on',+c.getAttribute('data-i')===ci)});curCap=ci}
-  tN.textContent=found;
   segs.forEach(function(g,k){g.classList.toggle('on',k<found)});
   var fin=p>=END+.01 && !gone;
   if(fin!==done){done=fin;tally.classList.toggle('done',fin);if(fin)countUp();else{cancelAnimationFrame(countRaf);tFig.textContent=''}}

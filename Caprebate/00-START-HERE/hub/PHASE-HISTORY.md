@@ -13521,3 +13521,22 @@ NOTHING LEFT  beyond those lines.
 
 **Claim cleared** in the commit that carries this record.
 
+## Phase 160o — the website in one design — 28 October 2026 (Claude Code, in a worktree of the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 160o, 28 Oct 2026: Lakhbir, with three screenshots of the live X-ray home page: "remove the 1-6 this isnt needed", "make the text above it bigger", "remove the survayor icon thing", "we need both am i eligible and also try calculator", "change the log in words to a icon of a person so people know thats log in", "ensure all sectors follow the same wordpress elementor design". All done; the five sector pages are now in the X-ray design. test/phase160o.test.ts, 31 tests.
+
+- **Claim.** hub/CLAIM.md and tracker row 13334969552, pushed first, cut from main after PR 69 merged.
+- **The home page** (redesign-options/02-x-ray.html): the scan's box keeps its label and six bars, no count; captions and the closing small print bigger; no surveyor placeholder; "Try the calculator" beside "Am I eligible?" in How it works (whose arrow was hidden by the fee note's colour); Log in a person icon on every page (words kept for screen readers, shown in the phone menu); a Sectors dropdown listing the five pages.
+- **The sector pages.** redesign-options/tools/build_sectors.py takes the X-ray file's style, header, footer, calculator and drawings and every word of the old pages, and writes redesign-options/sectors/<sector>.html; the tool's convertXray writes them into site/. A comparison while building found no paragraph, list item, table cell or question left behind. Each calculator opens on its own sector with its own small print.
+- **Seen in the browser:** all six pages with no sideways scroll at 320, 768 and 1440; the dropdown, the phone menu and each calculator's sector.
+- **The checks, at the close:** back end 3,052 pass / 7 fail over 194 tracked files in a fresh worktree; the 7 are those of Phase 160n (six read files kept out of git, one passes alone). The site, phase3 and phase9 suites were not re-run; nothing they read changed.
+
+```
+DONE          The home page's five changes; the five sector pages in the X-ray design. test/phase160o.test.ts (31).
+NOT DONE      The WordPress package (redesign-options/wordpress-x-ray) still has the 160n home page and no sector pages.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines.
+```
+
+**Claim cleared** in the commit that carries this record.
+

@@ -46,7 +46,10 @@ describe('Phase 160n: the X-ray home page', () => {
     assert.doesNotMatch(label, /care home|nurse/i);
     assert.equal([...html.matchAll(/<svg class="layer sys sys-[a-z]+" data-i="\d"/g)].length, 6, 'not six systems');
     assert.equal([...html.matchAll(/<li class="tag[^"]*" data-i="\d"/g)].length, 6, 'not six labels');
-    assert.match(html, /of the 6 shown here/);
+    // Phase 160o: the count of systems found was taken off; the six bars still fill in
+    const bars = /<div class="t-bar" id="tBar">([\s\S]*?)<\/div>/.exec(html)?.[1] ?? '';
+    assert.equal([...bars.matchAll(/<i\b/g)].length, 6, 'the six bars');
+    assert.doesNotMatch(html, /shown here|id="tN"/);
     for (const name of ['Wiring', 'Heating and hot water', 'Air and medical gases', 'Lifts', 'Fire alarms and patient call', 'Lighting']) {
       assert.ok(html.includes(`<h2><i></i>${name}<span class="q">Qualifies</span></h2>`), name);
     }
@@ -107,7 +110,7 @@ describe('Phase 160n: the X-ray home page', () => {
 
   test('a phone gets a Menu button that opens and closes the menu', async () => {
     const html = await text('/');
-    assert.match(html, /<nav class="nav" id="nav" aria-label="Main">\s*<ul>[\s\S]*?<li class="nav-login"><a href="\/login">Log in<\/a><\/li>\s*<\/ul>\s*<\/nav>/);
+    assert.match(html, /<nav class="nav" id="nav" aria-label="Main">\s*<ul>[\s\S]*?<li class="nav-login"><a href="\/login" title="Log in"><svg [^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg><span class="nav-login-t">Log in<\/span><\/a><\/li>\s*<\/ul>\s*<\/nav>/);
     const js = await text('/assets/home.js');
     assert.match(js, /function menu\(o\)\{hdr\.classList\.toggle\('open',o\);mb\.setAttribute\('aria-expanded',o\?'true':'false'\)\}/);
     assert.match(js, /e\.key==='Escape'/, 'Escape does not close the menu');
