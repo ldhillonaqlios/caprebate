@@ -1071,12 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 160p — The X-ray's finishing touches
-
-**Model: Opus.** Board item 13334969553. **Why** Lakhbir, 29 Oct 2026, with three screenshots: "just remove this box it makes no sense", "remove the disclaimer from supported living", "make property type box same height as name email phone ect", "on the animation 1) make the lift go up and down 2) flicker the lights as they turn on".
-**Build** In redesign-options/02-x-ray.html, then the tools: the box under the captions goes (the figure still arrives at the end of the scan, on its own); the supported-living card loses its note; the property type menu is as tall as the other fields; once the lift lights up its car travels between the floors and back; each light flickers before it settles.
-**Accept** a test of each; the scan still plays in 12 seconds and ends on its figure; reduced motion sees the finished picture with no movement.
-
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 
