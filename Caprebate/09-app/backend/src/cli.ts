@@ -23,6 +23,7 @@
  */
 
 import { buildApp } from './app.ts';
+import { keyFileStartCheck } from './secrets.ts';
 import { seed } from './seed.ts';
 import { Db, migrate } from './db.ts';
 import { MIGRATIONS_DIR } from './app.ts';
@@ -48,6 +49,12 @@ const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
 
 async function main(): Promise<number> {
   const cmd = process.argv[2];
+
+  /* PHASE 161c: the same start-up check as the server, so a command run by a timer on the live server will not read a
+     key file others could open either. A warning anywhere else. */
+  const keyCheck = keyFileStartCheck();
+  for (const line of keyCheck.lines) console.error(line);
+  if (keyCheck.stop) return 1;
 
   if (cmd === 'migrate') {
     const db = new Db(DEFAULT_DB);

@@ -1634,13 +1634,17 @@ BUILD
    list them from the code) runs on the server, not on a visit, as a
    systemd timer or the app's own scheduler, with a log line each run.
 4. The deploy kit in Caprebate/09-app/deploy/: a systemd unit (its own user,
-   the key file as a credential), a reverse proxy with TLS for
+   the key file as a credential: LoadCredential= and CAPREBATE_PRODUCTION=1,
+   as 09-app/deploy/KEY-FILE-SETUP.md (Phase 161c) sets out, and the same
+   lines on every timer that runs node src/cli.ts), a reverse proxy with TLS for
    caprebate.co.uk (Caddy or nginx), the firewall rules, Node 24, log
    rotation, nightly encrypted backups of the database and the files to a
    second place, a restore script, and an uptime check on /api/health.
 5. The runbook for the developer: set up, deploy an update, roll back,
-   restore a backup, renew TLS, rotate a key. Update the 146g handover to
-   point at it.
+   restore a backup, renew TLS, rotate a key. Its set-up and key steps start
+   from 09-app/deploy/KEY-FILE-SETUP.md (Phase 161c: the key file root's and
+   600 in /etc/caprebate, handed over by systemd; a start that says NOT
+   STARTED names what is wrong). Update the 146g handover to point at it.
 6. The go-live checklist: DNS, email sending records (SPF, DKIM, DMARC),
    the switches that stay off, the legal approval, and "run the sweep
    (Phase 162) before the first client".

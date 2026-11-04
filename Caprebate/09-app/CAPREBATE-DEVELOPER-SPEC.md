@@ -2535,7 +2535,8 @@ that is switched off, such as `/refer`, reads exactly as a missing page either w
 
 | Method | Path | Who | Returns |
 |---|---|---|---|
-| GET | `/api/health` | anyone | `{ ok, stubs }` — **the stub list, machine-readable**, and it is the same array §4 is written from |
+| GET | `/api/health` | anyone | **Phase 161c (4 Nov 2026): exactly `{"ok":true}`**, after asking the database; **503** `{"ok":false}` when it cannot be reached. Nothing about what is built or switched on |
+| GET | `/staff/connections/switches.json` | **Admin only** (anyone else 403) | `{ stubs }` — **the stub list, machine-readable**, the same array §4 is written from. It was served at `/api/health` to anyone until Phase 161c (the ITRoadway audit, section 4 row 4) |
 | POST | `/api/login` | anyone | `{ email, password }`. With nothing left to do, **200** and the user, never a hash, and the session cookie (`SameSite=Strict` here). **Phase 151k: with a step left, 202 and NO session** — `{ step, needs, method, sent_to, app_key, otpauth_uri, expires_at, step_token }`, where `needs` is `CHOOSE_PASSWORD`, `CHOOSE_METHOD`, `ADD_APP` or `GIVE_CODE`. **401** the generic failure, or the expired-temporary-password words |
 | POST | `/api/login/step` · `/api/login/step/new-password` · `/api/login/step/method` · `/api/login/step/code` · `/api/login/step/resend` · `/api/login/step/recovery` | whoever holds the `step_token`, **in the JSON body, never the address** | Phase 151k, on **the same functions as the website's steps** (`src/web/sign-in.ts`: `describeStep`, `submitNewPassword`, `chooseMethod`, `submitCode`, `resendCode`) and the same rows: `{ step_token }` alone says where the step stands; then `{ password, again }`, `{ method: "EMAIL" \| "APP" }` (an app's key and QR address come back once, while it is set up), `{ code }`. **202** with the step still to do; **200** and the session cookie only when the last step is done. **400** a wrong code or password, in words; **401** when the step has gone — 15 minutes, 5 wrong codes, or finished. **Phase 151m:** the answer that finishes setting a step up carries `recovery_codes` (ten) **once**; a session's answer carries `recovery_codes_left` for a person with a second step; a VERIFY step's answer says `recovery_code: true`, and a recovery code goes to **its own route**, `/api/login/step/recovery` with `{ step_token, code }` — not `/code`, so a six-digit code and a recovery code are never guessed apart — sharing the 5 wrong codes |
 | POST | `/api/account/recovery-codes` | the session (`user.change_own_password`, self) | **Phase 151m**, the same function as the website's button (`makeNewRecoveryCodes`): ten new recovery codes in `recovery_codes`, **once**; every unused old one thrown away | **400** with no second step; **401** with no session |
@@ -2570,6 +2571,11 @@ call fires. Turning one on is a one-word change **and a decision**, and the deci
 `~/.caprebate-secrets.env` (or the path in `CAPREBATE_SECRETS`), `chmod 600` it, and fill in
 only what you have. **The back end refuses a key file inside the code folder.** A name left
 empty means that service is not set up, its facts stay as questions, and nothing breaks.
+**On the live server (Phase 161c, 4 November 2026)** systemd hands the file over
+(`LoadCredential=caprebate-secrets:/etc/caprebate/caprebate-secrets`, the source file root's and
+`chmod 600`), the app reads `$CREDENTIALS_DIRECTORY/caprebate-secrets` first, and the unit sets
+`CAPREBATE_PRODUCTION=1`, under which a key file others could open, or another user owns, stops
+the start. **The steps are `09-app/deploy/KEY-FILE-SETUP.md`.**
 
 **THE SMOKE TEST IS ONE COMMAND**, and it is the same command for every register row. **Since Phase
 151g (28 September 2026) it keeps the five conditions Lakhbir allowed test lookups on** (Word question
@@ -2709,8 +2715,11 @@ developer's to choose.
    This is a requirement, not a preference: it is what clause 7 of the engagement letter and
    section 4 of the privacy notice tell a client.
 2. **A SECRET STORE IN PLACE OF THE KEY FILE.** `~/.caprebate-secrets.env` is right for one
-   developer's laptop and wrong for a server. `CAPREBATE_SECRETS` points at another path today;
-   a host's secret manager replaces the file. **The back end refuses a key file inside the code
+   developer's laptop and wrong for a server. **Built by Phase 161c (4 November 2026): on the
+   live server the store is systemd's credentials** — `LoadCredential=` hands a root-only file to
+   the service, the app reads `$CREDENTIALS_DIRECTORY/caprebate-secrets` first, and with
+   `CAPREBATE_PRODUCTION=1` a key file others could open stops the start. The steps are
+   `09-app/deploy/KEY-FILE-SETUP.md`. **The back end refuses a key file inside the code
    folder**, and no key is ever printed, logged or written into a record.
 3. **HTTPS IN FRONT.** The application sets `Secure` on every cookie and terminates nothing
    itself. Certificates, renewal and HSTS are the host's.
@@ -2915,7 +2924,7 @@ exactly the failure this table exists to prevent, and a reader who found three
 rows where there had been four would conclude that the fourth thing now works.
 
 **The machine-readable copy of this table is `STUBS` in `src/app.ts:177`**, served
-at `GET /api/health`.
+to Admin only at `GET /staff/connections/switches.json` (at `GET /api/health` to anyone until Phase 161c).
 
 **FIVE LINE REFERENCES IN THIS TABLE HAD MOVED, AND CRM 10 OF 10 FOUND THEM BY RUNNING A CHECK
 RATHER THAN BY READING.** Every name they pointed at was unchanged; the lines were not —

@@ -176,7 +176,9 @@ a redacting logger teaches callers that it is safe to pass anything.
 
 **Everything else is real.** Each stub is one named module behind an interface,
 so replacing it is a swap and not a search. **`STUBS` in `src/app.ts` is the
-machine-readable copy of this table**, it is served at `GET /api/health`, and a
+machine-readable copy of this table**, it is served to Admin only at
+`GET /staff/connections/switches.json` (since Phase 161c, 4 Nov 2026; `GET /api/health` now answers only
+`{"ok":true}`, or 503 `{"ok":false}` when the database cannot be reached), and a
 test asserts that a module calling itself a stub in prose is in it.
 
 **The two gates are not ours to open.** Free register calls wait on a published

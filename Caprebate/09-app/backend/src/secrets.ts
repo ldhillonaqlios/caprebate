@@ -223,7 +223,29 @@ export function isInside(file: string, root: string): boolean {
 
 export const DEFAULT_SECRETS_FILE = '~/.caprebate-secrets.env';
 
+/**
+ * PHASE 161c, 4 November 2026 (the ITRoadway audit, section 4 row 2): THE LIVE SERVER'S KEY STORE IS SYSTEMD'S.
+ *
+ * On the live server the unit file says `LoadCredential=caprebate-secrets:/etc/caprebate/caprebate-secrets` (the
+ * runbook has the steps). systemd then reads that root-only file when the service starts, puts a copy in a folder of
+ * its own that only this service can open (in memory, never swapped to disk), and names the folder in
+ * CREDENTIALS_DIRECTORY. WHEN THAT FOLDER HOLDS `caprebate-secrets`, IT IS THE KEY FILE, ahead of CAPREBATE_SECRETS and
+ * the home-folder file. Anywhere else - the Mac, the test website - nothing sets CREDENTIALS_DIRECTORY, and the key file
+ * is found exactly as before.
+ */
+export const CREDENTIAL_NAME = 'caprebate-secrets';
+
+/** The key file in systemd's credentials folder, when the folder is named and holds one; otherwise null. */
+export function credentialsFile(env: Record<string, string | undefined> = process.env): string | null {
+  const dir = (env.CREDENTIALS_DIRECTORY ?? '').trim();
+  if (dir === '' || !isAbsolute(dir)) return null;
+  const f = join(dir, CREDENTIAL_NAME);
+  return existsSync(f) ? f : null;
+}
+
 export function secretsPath(env: Record<string, string | undefined> = process.env): string {
+  const fromSystemd = credentialsFile(env);
+  if (fromSystemd !== null) return fromSystemd;
   const raw = (env.CAPREBATE_SECRETS ?? '').trim() || DEFAULT_SECRETS_FILE;
   const expanded = raw === '~' ? homedir() : raw.startsWith('~/') ? join(homedir(), raw.slice(2)) : raw;
   return isAbsolute(expanded) ? expanded : resolve(expanded);
@@ -349,7 +371,8 @@ export function loadSecrets(opts: { env?: Record<string, string | undefined>; re
   try {
     const mode = statSync(path).mode;
     const text = readFileSync(path, 'utf8');
-    return makeStore('LOADED', 'The key file was read.', parseSecretsFile(text), (mode & 0o077) !== 0);
+    const where = credentialsFile(opts.env ?? process.env) === path ? ' from systemd’s credentials folder' : '';
+    return makeStore('LOADED', `The key file was read${where}.`, parseSecretsFile(text), (mode & 0o077) !== 0);
   } catch {
     return makeStore('UNREADABLE', 'The key file is there but could not be read.', new Map(), false);
   }
@@ -375,3 +398,72 @@ export function processSecrets(env: Record<string, string | undefined> = process
  */
 let useInstead: SecretStore | null = null;
 export function useProcessSecrets(store: SecretStore): void { useInstead = store; }
+
+/* ------------------------------------------------------------------ PHASE 161c: the start-up check */
+
+/**
+ * PHASE 161c, 4 November 2026 (the ITRoadway audit, section 4 row 2): A KEY FILE OTHERS CAN OPEN STOPS A LIVE START.
+ *
+ * THE PRODUCTION SETTING is CAPREBATE_PRODUCTION=1, set by the live server's unit file and by nothing else (the Mac and
+ * the test website never set it). On a start with it set, a key file that anyone but the app's own user could read or
+ * change (any permission wider than 600), or that belongs to another user, STOPS THE START with a plain message naming
+ * the file and what is wrong. Without it the same message is a warning and the app starts, as it always has.
+ *
+ * WHAT IS NOT CHECKED, AND WHY. A key file in systemd's credentials folder is systemd's: the folder is the service's
+ * own, and systemd usually grants the read with an access list on a file root owns, which shows as a wider mode and
+ * another owner although nobody else can open it. So that copy is not judged here; the file systemd copies it from is
+ * root's, mode 600, as the runbook sets it. No key file at all is not this check's business: every service then reads
+ * as not set up, as before (N4). The message carries the file's name and its permissions, NEVER a word of what is in it.
+ */
+export function isProduction(env: Record<string, string | undefined> = process.env): boolean {
+  return (env.CAPREBATE_PRODUCTION ?? '').trim() === '1';
+}
+
+export type KeyFileStat = { readonly mode: number; readonly uid: number };
+
+/** What is wrong with the key file's permissions, in words; empty when nothing is. Reads the file's details, never its text. */
+export function keyFileLooseness(st: KeyFileStat, myUid: number | null): string[] {
+  const out: string[] = [];
+  const perms = st.mode & 0o777;
+  if ((perms & ~0o600) !== 0) {
+    const mode = perms.toString(8).padStart(3, '0');
+    out.push((perms & 0o077) !== 0
+      ? `its permissions are ${mode}, so others on this server can read or change it (it must be 600)`
+      : `its permissions are ${mode}, wider than the 600 it must be`);
+  }
+  if (myUid !== null && st.uid !== myUid) out.push(`it belongs to another user (user ${String(st.uid)}), not the user this app runs as (user ${String(myUid)})`);
+  return out;
+}
+
+export type StartCheck = { readonly stop: boolean; readonly lines: readonly string[] };
+
+/** Run before the server or a command starts. Never throws; never prints. The caller prints `lines` and, on `stop`, does not start. */
+export function keyFileStartCheck(opts: {
+  env?: Record<string, string | undefined>;
+  statOf?: (path: string) => KeyFileStat;
+  uid?: number | null;
+} = {}): StartCheck {
+  const env = opts.env ?? process.env;
+  const path = secretsPath(env);
+  if (credentialsFile(env) === path) return { stop: false, lines: [] };
+  let st: KeyFileStat;
+  try {
+    if (opts.statOf === undefined && !existsSync(path)) return { stop: false, lines: [] };
+    st = (opts.statOf ?? statSync)(path);
+  } catch {
+    return { stop: false, lines: [] };
+  }
+  const uid = opts.uid !== undefined ? opts.uid : typeof process.getuid === 'function' ? process.getuid() : null;
+  const loose = keyFileLooseness(st, uid);
+  if (loose.length === 0) return { stop: false, lines: [] };
+  const live = isProduction(env);
+  const fix = `To fix it: chown the file to the app's own user, then chmod 600 "${path}".`;
+  return {
+    stop: live,
+    lines: [
+      `${live ? 'NOT STARTED' : 'Warning'}: the key file ${path} is not locked down: ${loose.join('; ')}.`,
+      live ? `This is the live server (CAPREBATE_PRODUCTION=1), so the app will not start until it is. ${fix}`
+        : `On the live server this would stop the start. ${fix}`,
+    ],
+  };
+}

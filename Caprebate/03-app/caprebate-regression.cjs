@@ -3097,7 +3097,7 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
      "src/web/uploads.ts"].filter(f => spec.indexOf(f) < 0), []);
 
   /* THE ONE THAT CATCHES THE FAILURE THIS DOCUMENT EXISTS TO PREVENT.
-     src/app.ts holds the machine-readable stub list served at /api/health. Every
+     src/app.ts holds the machine-readable stub list (served to Admin at /staff/connections/switches.json since Phase 161c). Every
      module named there must be named in the spec's table, or the spec is a
      shorter list than the code's and a reader would trust the shorter one.
      Phase 108 found exactly that: the text extractor was a stub in prose, in
