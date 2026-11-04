@@ -437,7 +437,9 @@ export type AuditKind =
   /** 29 Sep 2026: an enquiry refused by the contact form's security check (src/connectors/turnstile.ts). Nothing kept. */
   | 'WEBSITE_ENQUIRY_REFUSED'
   | 'CLIENT_SIGNUP_REQUESTED' | 'CLIENT_SIGNUP_VERIFIED'
-  | 'AUTHORISATION_REFUSED';
+  | 'AUTHORISATION_REFUSED'
+  /** PHASE 161b, 4 Nov 2026: a signed-in person's form refused for a missing, wrong or used token (src/web/form-token.ts). */
+  | 'FORM_TOKEN_REFUSED';
 
 export type Outcome = 'ALLOWED' | 'REFUSED' | 'ERROR';
 

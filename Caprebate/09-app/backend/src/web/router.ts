@@ -210,8 +210,21 @@ function closeAfterAnswer(req: IncomingMessage): void {
   res.setHeader('connection', 'close');
 }
 
+/**
+ * PHASE 161b, 4 November 2026: A BODY IS READ ONCE AND KEPT FOR ITS REQUEST. The form-token check (src/server.ts,
+ * src/web/form-token.ts) reads a form before any route does; the route then reads the same bytes from here, with the
+ * token's fields taken out (`keepBody`). A kept body still meets the route's own cap.
+ */
+const KEPT_BODIES = new WeakMap<IncomingMessage, Buffer>();
+export function keepBody(req: IncomingMessage, body: Buffer): void { KEPT_BODIES.set(req, body); }
+
 /** Bodies are capped. A cap is a control, not a nicety. */
 export function readBody(req: IncomingMessage, max = 2 * 1024 * 1024): Promise<Buffer> {
+  const kept = KEPT_BODIES.get(req);
+  if (kept !== undefined) {
+    if (kept.length > max) { closeAfterAnswer(req); return Promise.reject(new PayloadTooLarge()); }
+    return Promise.resolve(kept);
+  }
   if (req.readableEnded) return Promise.resolve(Buffer.alloc(0));
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -232,7 +245,7 @@ export function readBody(req: IncomingMessage, max = 2 * 1024 * 1024): Promise<B
     });
     req.once('end', () => {
       if (over) { refuse(); return; }
-      if (!settled) { settled = true; resolve(Buffer.concat(chunks)); }
+      if (!settled) { settled = true; const all = Buffer.concat(chunks); KEPT_BODIES.set(req, all); resolve(all); }
     });
     req.once('error', (e) => { if (!settled) { settled = true; reject(e); } });
   });

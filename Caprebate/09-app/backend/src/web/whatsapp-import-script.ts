@@ -20,6 +20,8 @@ export const WHATSAPP_IMPORT_JS = `(function () {
   var canInflate = typeof DecompressionStream === 'function';
   // The browser's own fetch, named through root like the other page scripts (test/phase146b: only http.ts calls fetch on the server).
   var root = typeof window !== 'undefined' ? window : globalThis;
+// PHASE 161b: our form token, from the page, for the x-cb-form header (src/web/form-token.ts).
+function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
 
   function say(el, words) { if (el) el.textContent = words; }
   function base(n) { var p = n.split(/[\\\\\\/]/); return p[p.length - 1]; }
@@ -95,7 +97,7 @@ export const WHATSAPP_IMPORT_JS = `(function () {
         fd.append('chat', text, 'chat.txt');
         fd.append('names', new Blob([entries.map(function (e) { return e.name; }).join('\\n')], { type: 'text/plain' }), 'names.txt');
         say(note, 'Sending the chat\\u2019s words (not the photos yet)\\u2026');
-        return store('put', file).then(function () { return root.fetch(up.action, { method: 'POST', body: fd, credentials: 'same-origin' }); });
+        return store('put', file).then(function () { return root.fetch(up.action, { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'x-cb-form': cbForm() } }); });
       });
     }).then(function (res) {
       if (res.redirected) { location.assign(res.url); return; }
@@ -131,7 +133,7 @@ export const WHATSAPP_IMPORT_JS = `(function () {
               say(note2, 'Adding ' + (done + skipped + 1) + ' of ' + todo.length + '\\u2026');
               return entryBlob(file, e).then(function (b) {
                 var fd = new FormData(); fd.append('name', base(e.name)); fd.append('file', b, base(e.name));
-                return root.fetch(box.getAttribute('data-file'), { method: 'POST', body: fd, credentials: 'same-origin', headers: { accept: 'application/json' } });
+                return root.fetch(box.getAttribute('data-file'), { method: 'POST', body: fd, credentials: 'same-origin', headers: { accept: 'application/json', 'x-cb-form': cbForm() } });
               }).then(function (r) { if (r.ok) done++; else skipped++; return next(); });
             };
             return next();

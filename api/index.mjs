@@ -56,6 +56,8 @@ async function build() {
     // 20 OCTOBER 2026 (Phase 160f; Lakhbir: "Build and publish on test"): the public notices page, a draft with its
     // proposed facts marked, and its complaint form. This file only - never the default.
     testNotices: true,
+    // 4 NOVEMBER 2026 (Phase 161b, the ITRoadway audit): the form tokens are on, in so many words (src/web/form-token.ts).
+    formTokens: 'on',
     ...(publicOrigin === undefined ? {} : { publicOrigin }),
   }, 10_000, await sharedDocumentOptions(docs, lasting));
   const made = opened.made;

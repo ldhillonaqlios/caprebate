@@ -17,6 +17,8 @@
 export const PHOTO_UPLOAD_JS = `(function () {
   'use strict';
   var root = typeof globalThis !== 'undefined' ? globalThis : window;
+  // PHASE 161b: our form token, from the page, for the x-cb-form header (src/web/form-token.ts).
+  function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
   var MAGIC = [0x43, 0x42, 0x55, 0x50, 0x31];
   var MAX_BYTES = 25 * 1024 * 1024;
   var MAX_PHOTOS = 100;
@@ -74,7 +76,7 @@ export const PHOTO_UPLOAD_JS = `(function () {
   async function post(url, fields) {
     try {
       var r = await root.fetch(url, { method: 'POST', credentials: 'same-origin',
-        headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new root.URLSearchParams(fields).toString() });
+        headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-cb-form': cbForm() }, body: new root.URLSearchParams(fields).toString() });
       var j = await r.json();
       return j && typeof j.ok === 'boolean' ? j : { ok: false, why: 'The website did not answer. Please try again.' };
     } catch (e) { return { ok: false, why: 'The website did not answer. Please try again.' }; }

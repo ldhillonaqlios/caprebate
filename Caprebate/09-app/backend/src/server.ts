@@ -42,6 +42,8 @@ import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sending
 import { isInventedAddress } from './stubs/email.ts';
 import { refreshSavedKeys } from './web/saved-keys.ts';
 import { openKeptOriginal } from './web/uploads.ts';
+import { formToken, formTokensMode, onceToken, type FormTokens } from './web/form-token.ts';
+import { addTokensToPages, formTokenRefusal, refuseForm } from './web/form-token-check.ts';
 
 function readCookie(req: IncomingMessage, name: string): string | undefined {
   const raw = req.headers.cookie;
@@ -127,6 +129,11 @@ export type ServerOptions = {
   testSigning?: boolean;
   /** PHASE 140: the key a kept original is encrypted with. Absent is CAPREBATE_ORIGINALS_KEY; with neither, nothing is kept. */
   sealKey?: Buffer | null;
+  /**
+   * PHASE 161b, 4 Nov 2026: the form tokens (src/web/form-token.ts). Every real start says 'on'. With no word, they
+   * are on, except inside Node's test runner, where the existing tests post forms without them.
+   */
+  formTokens?: FormTokens;
 };
 
 export async function createApp(
@@ -144,6 +151,7 @@ export async function createApp(
     ...(opts.keepOriginals === undefined ? {} : { originals: opts.keepOriginals }),
     sealKey: opts.sealKey === undefined ? sealKeyFromEnv() : opts.sealKey,
   };
+  const formTokensOn = formTokensMode(opts.formTokens) === 'on';
   const store: FsObjectStore = opts.sharedDocuments === undefined
     ? new FsObjectStore({ root: opts.documentRoot ?? process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'), ...kept })
     : new SharedObjectStore({ ...kept, client: opts.sharedDocuments.client, linkSecret: opts.sharedDocuments.linkSecret });
@@ -219,6 +227,19 @@ export async function createApp(
     const raw = readCookie(req, SESSION_COOKIE_NAME);
     const session = authenticate(app.deps, raw);
     const actor: Actor | undefined = session ? toActor(session.user) : undefined;
+
+    /* PHASE 161b, 4 November 2026 (the ITRoadway audit): A SIGNED-IN PERSON'S FORM CARRIES OUR TOKEN, checked here,
+       before any route, for every request that would change something (src/web/form-token.ts says what and why). And
+       every page this request answers with gets the tokens put into its forms as it leaves. */
+    if (formTokensOn) {
+      if (session !== undefined && actor !== undefined && raw !== undefined) {
+        const who = { cookie: raw, user_id: actor.id, role: actor.role };
+        const deps = { db: app.db, audit: app.audit, now: app.now };
+        const why = await formTokenRefusal(deps, req, path, who);
+        if (why !== null) return refuseForm(deps, res, path, who, why);
+      }
+      addTokensToPages(res, path, SESSION_COOKIE_NAME, session === undefined ? undefined : raw, () => Date.parse(app.now()));
+    }
 
     // THE WEB HALF FIRST. It returns 'not-mine' for anything it does not own,
     // so the JSON API below is unchanged and nothing is shadowed by accident.
@@ -312,9 +333,16 @@ export async function createApp(
       return r.ok ? send(res, 200, { recovery_codes: r.codes }) : send(res, 400, { error: r.why });
     }
 
+    /* PHASE 161b: a single-use token for the JSON API's sensitive actions (x-cb-once), one per ask. */
+    if (path === '/api/once-token' && req.method === 'GET' && raw !== undefined) {
+      return send(res, 200, { once_token: onceToken(raw, Date.parse(app.now())) });
+    }
+
     if (path === '/api/whoami' && req.method === 'GET') {
       return send(res, 200, {
         user: session.user,
+        // PHASE 161b: the form token the JSON API sends in x-cb-form (src/web/form-token.ts).
+        ...(raw === undefined ? {} : { form_token: formToken(raw) }),
         // What THIS actor may do, computed rather than hard-coded per role.
         actions: REGISTERED_ACTIONS.filter((a) =>
           can(actor, a, { type: 'business', id: session.user.business_id ?? 'none' } as Obj),
@@ -375,7 +403,8 @@ if (import.meta.filename === process.argv[1]) {
   const location = process.env.CAPREBATE_DB ?? 'caprebate.db';
   // 6 Oct 2026: CAPREBATE_SIGNING_TEST=1 runs this copy with the test letter and signing on for testing (the test copy only).
   const signingTest = (process.env.CAPREBATE_SIGNING_TEST ?? '').trim() === '1';
-  void createApp(location, signingTest ? { testLetter: true, testSigning: true } : {}).then(({ server, app }) => {
+  // PHASE 161b: a real start says the form tokens are on, in so many words.
+  void createApp(location, signingTest ? { testLetter: true, testSigning: true, formTokens: 'on' } : { formTokens: 'on' }).then(({ server, app }) => {
     server.listen(port, () => {
       console.log(`caprebate back end on http://localhost:${port}`);
       console.log(`  ${turnstileWhy(app.secrets)}`); // 29 Sep 2026: the contact form's security check, said at start-up
