@@ -1761,6 +1761,13 @@ BUILD (in Caprebate/09-app/backend/src/)
 4. styles/: the CSS held as text in web/assets.ts (about 1,900 lines) moves
    into real .css files, served at the same addresses with the same bytes
    (a test compares them) and the same cache headers.
+5. (Added by Phase 161d, 4 Nov 2026.) The five folders 161d made when it
+   brought the draft-folder modules in - src/registers/, documents/,
+   survey/, costing/ and postcodes/ - take their place in this layout too
+   (most belong in shared/ or the modules of 161j and 161k; say which), and
+   their caprebate- file prefix goes. The notes at their old paths in
+   04-phase-work/phase3 and phase9, the site harness (APP_SRC in
+   03-app/caprebate-regression.cjs) and npm run lint:paths follow the move.
 
 ACCEPT
 - The route list and the pass list are unchanged; the served CSS is the

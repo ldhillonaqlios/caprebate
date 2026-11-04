@@ -564,8 +564,12 @@ function selfTest(inp) {
       const r = goodRef(x, (y) => y.form === 'site' && !y.prose && /:\d+$/.test(y.token));
       return r ? { ...x, spec: replaceAtRef(x.spec, r, '`' + r.token + '`', '`' + `${r.file}:${r.lineNo + 1}` + '`') } : x;
     }],
-    ['C a phase9 reference to a file that does not exist', 'C', (x) => {
-      const r = goodRef(x, (y) => y.form === 'phase9' && !y.prose && /:\d+$/.test(y.token));
+    /* Phase 161d (4 Nov 2026) moved the modules §4 cited in phase9 into 09-app/backend/src, so §4 has no phase9 line
+       reference left to break and this control matched nothing. It now breaks the first tree-relative one (phase9 if
+       there is one again, else any other NN-folder file), which is the same rule: the file must exist. */
+    ['C a tree-relative (phase9 or other) reference to a file that does not exist', 'C', (x) => {
+      const r = goodRef(x, (y) => y.form === 'phase9' && !y.prose && /\.ts:\d+$/.test(y.token))
+        || goodRef(x, (y) => y.form === 'other' && !y.prose && /\.ts:\d+$/.test(y.token));
       return r ? { ...x, spec: replaceAtRef(x.spec, r, '`' + r.token + '`', '`' + r.token.replace(/\.ts:/, '-not-there.ts:') + '`') } : x;
     }],
     ['C a package (shared.js) line without the name beside it', 'C', (x) => {
