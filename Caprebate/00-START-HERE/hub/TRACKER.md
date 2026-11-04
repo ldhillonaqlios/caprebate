@@ -7,14 +7,14 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 9 |
-| Ready - Lakhbir action | 27 |
+| Ready - Lakhbir action | 26 |
 | Built - awaiting sign-off | 142 |
 | Blocked - question | 0 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 347 |
+| Done | 348 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -71,7 +71,7 @@
 
 ## 01 · FOR LAKHBIR — decisions, appointments, company, governance
 
-76 items.
+75 items.
 
 ### Register with the ICO and put the data protection basics in place
 
@@ -636,12 +636,6 @@
 `13254356802` · **Ready - Lakhbir action** · owner Lakhbir
 
 - Note 2026-10-10 (Phase 159f): Phase 159f built the importer (node src/cli.ts import-bcis-data --rates --elements --locations; import-bcis-index --tpi), keeping BCIS's data outside the repository. BCIS confirmed our use (relayed by Lakhbir, 9 Oct 2026; Word question 218, closed 10 Oct 2026). Until the export arrives, the test website drafts from invented test rates, labelled as such.
-
-### After Phase 161b is merged: on the test website, send one survey photo from your phone (it must show on the claim), and use one form in the back office, the portal and the surveyor's page; tell Claude if any says This form has expired
-
-`13463588433` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-11-04 (Phase 161b): Two checks only a person signed in on the test website can make. (1) Carried from 161a: the start-up log of the merged 161a shows the Blob store open (uploaded documents are kept in the private document store), but no photo has been sent through it since; send one from your phone and see it on the claim. (2) Phase 161b put a security token on every form; it was checked on a local copy in a browser, and the photo send uses a page script that now sends the token in a header, so the photo also proves that. If anything says This form has expired on a page you have just opened, tell Claude which page.
 
 ---
 
@@ -1520,7 +1514,7 @@
 
 ## Z · Complete / Not Applicable
 
-347 items.
+348 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3621,4 +3615,11 @@
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
 - Note 2026-11-04 (Phase 161b): Claimed: branch claude/phase-161b, the Mac copy.
 - Note 2026-11-04 (Phase 161b): Done: form token on every signed-in form that changes something, single-use token on the sensitive ones (migration 120), checked before any route, refused forms audited; test/phase161b.test.ts (10) incl. a walk of every non-GET route; browser check on a local copy; the suites at this close: back end was 3,087 pass, project was 5,371. The check on the test website after merge is Lakhbir's item 13463588433.
+
+### After Phase 161b is merged: on the test website, send one survey photo from your phone (it must show on the claim), and use one form in the back office, the portal and the surveyor's page; tell Claude if any says This form has expired
+
+`13463588433` · **Done** · owner Lakhbir
+
+- Note 2026-11-04 (Phase 161b): Two checks only a person signed in on the test website can make. (1) Carried from 161a: the start-up log of the merged 161a shows the Blob store open (uploaded documents are kept in the private document store), but no photo has been sent through it since; send one from your phone and see it on the claim. (2) Phase 161b put a security token on every form; it was checked on a local copy in a browser, and the photo send uses a page script that now sends the token in a header, so the photo also proves that. If anything says This form has expired on a page you have just opened, tell Claude which page.
+- Note 2026-11-04 (Phase 161b follow-up): Done (Lakhbir, 4 Nov 2026, on the test website after 161b's merge): a client portal message sent (Sent. We will reply here.), a task started as admin, a room saved as the surveyor, and a photo sent as a file with a client message, which goes into the Blob store. No page said This form has expired, and the function log showed no error. The phone photo page itself was not used: the test client has no survey yet.
 
