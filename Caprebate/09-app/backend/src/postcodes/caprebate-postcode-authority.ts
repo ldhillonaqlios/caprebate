@@ -449,15 +449,15 @@ export function resolveBillingAuthority(
   }
 
   const flags: string[] = [];
-  if (row.terminated_on !== null) {
+  if (row!.terminated_on !== null) {
     if (!(opts && opts.allowTerminated)) {
       fail(
         'E_POSTCODE_TERMINATED',
-        `'${postcode}' was terminated on ${row.terminated_on}. A terminated postcode ` +
+        `'${postcode}' was terminated on ${row!.terminated_on}. A terminated postcode ` +
           'usually means the property was redeveloped or re-addressed, which is a ' +
           'fact a surveyor needs rather than one to resolve past. Pass ' +
           'allowTerminated to accept it deliberately.',
-        { postcode, terminated_on: row.terminated_on },
+        { postcode, terminated_on: row!.terminated_on },
       );
     }
     flags.push('POSTCODE_TERMINATED_ACCEPTED');
@@ -465,11 +465,11 @@ export function resolveBillingAuthority(
 
   return {
     postcode,
-    lad_code: row.lad_code,
-    lad_name: row.lad_name,
-    country_code: row.country_code,
-    region_code: row.region_code ?? null,
-    terminated_on: row.terminated_on,
+    lad_code: row!.lad_code,
+    lad_name: row!.lad_name,
+    country_code: row!.country_code,
+    region_code: row!.region_code ?? null,
+    terminated_on: row!.terminated_on,
     source_id: 'ONS_POSTCODE',
     release: table.release,
     attribution: attributionFor(table),
@@ -508,7 +508,7 @@ export function resolveLocationKey(
       { lad_code: authority.lad_code, lad_name: authority.lad_name },
     );
   }
-  return { location_key: key, authority };
+  return { location_key: key!, authority };
 }
 
 /* ------------------------------------------------------------------ *
@@ -687,7 +687,7 @@ export function createNsplIngest(
          table says what it was built from instead of implying the default. */
       if (at < 0 && key === 'lad_code') {
         at = cells.findIndex((h) => LAD_COLUMN_PATTERN.test(h));
-        if (at > -1) ladColumnUsed = cells[at];
+        if (at > -1) ladColumnUsed = cells[at]!;
       }
 
       if (at < 0) {
@@ -716,7 +716,7 @@ export function createNsplIngest(
        lookup — refuses. */
     regionAt = columns.region ? cells.indexOf(columns.region.toLowerCase()) : -1;
     if (regionAt < 0) regionAt = cells.findIndex((h) => REGION_COLUMN_PATTERN.test(h));
-    regionColumnUsed = regionAt > -1 ? cells[regionAt] : null;
+    regionColumnUsed = regionAt > -1 ? cells[regionAt]! : null;
 
     headerSeen = true;
     return ladColumnUsed;
@@ -730,7 +730,7 @@ export function createNsplIngest(
         `expected ${headerWidth} columns, found ${cells.length}`);
       return false;
     }
-    const rawPc = cells[idx.postcode];
+    const rawPc = cells[idx.postcode!];
     if (!rawPc) { q(lineNumber, raw, 'E_MISSING_POSTCODE', 'no postcode'); return false; }
 
     let pc: string;
@@ -751,14 +751,14 @@ export function createNsplIngest(
       return false;
     }
 
-    const lad = cells[idx.lad_code];
+    const lad = cells[idx.lad_code!];
     if (!lad) { q(lineNumber, raw, 'E_MISSING_LAD_CODE', `no local authority code for ${pc}`); return false; }
     if (byPostcode[pc] !== undefined) {
       q(lineNumber, raw, 'E_DUPLICATE_POSTCODE', `${pc} already seen`);
       return false;
     }
 
-    const term = cells[idx.terminated];
+    const term = cells[idx.terminated!];
     const ctry = countryAt > -1 ? (cells[countryAt] || '').trim() : '';
     const rgn = regionAt > -1 ? (cells[regionAt] || '').trim() : '';
     byPostcode[pc] = {
@@ -812,8 +812,8 @@ export function ingestNspl(
     });
   }
   const ing = createNsplIngest(ladNames, meta, columns);
-  ing.header(lines[0]);
-  for (let i = 1; i < lines.length; i++) ing.row(lines[i], i + 1);
+  ing.header(lines[0]!);
+  for (let i = 1; i < lines.length; i++) ing.row(lines[i]!, i + 1);
   return ing.finish();
 }
 

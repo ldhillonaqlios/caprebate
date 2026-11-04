@@ -215,7 +215,7 @@ describe('a case officer can never be written on a planning record', () => {
   });
 
   test('THE ROW’S CLAIM ABOUT ITSELF IS TRUE NOW: it no longer says it holds no free text, and it says what it does hold', () => {
-    const register = readFileSync(join(HERE, '..', '..', '..', '04-phase-work', 'phase3', 'caprebate-source-register.ts'), 'utf8');
+    const register = readFileSync(join(HERE, '..', 'src', 'registers', 'caprebate-source-register.ts'), 'utf8');
     /* The old sentence may still appear ONCE, quoted, in the paragraph that says it was wrong — that is how the
        correction stays legible to whoever reads it next. It may not appear as a claim. */
     const claim = /contains no free-text field that could carry a third party's name/g;

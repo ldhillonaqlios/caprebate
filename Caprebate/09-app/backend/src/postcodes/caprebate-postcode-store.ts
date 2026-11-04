@@ -272,8 +272,8 @@ export function buildSqliteStore(
   db.exec('BEGIN');
   for (const pc in table.byPostcode) {
     const r = table.byPostcode[pc];
-    ins.run(pc, r.lad_code, r.country_code, r.region_code ?? null, r.terminated_on);
-    if (!names.has(r.lad_code)) { insName.run(r.lad_code, r.lad_name); names.add(r.lad_code); }
+    ins.run(pc, r!.lad_code, r!.country_code, r!.region_code ?? null, r!.terminated_on);
+    if (!names.has(r!.lad_code)) { insName.run(r!.lad_code, r!.lad_name); names.add(r!.lad_code); }
     rows++;
   }
   const meta: Record<string, unknown> = {

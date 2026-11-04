@@ -1214,7 +1214,7 @@ export const DISPOSAL_TASK_TITLE_BEFORE = 'The election on a future sale — rea
 
 /**
  * PHASE 153d, 4 October 2026 (Word question 23, the director's): THE FIXED DISPOSAL FEE, read from the job cost model
- * (04-phase-work/phase9/caprebate-job-economics.cjs, `disposalFee`), never restated here. Built on our recommendation:
+ * (09-app/backend/src/costing/caprebate-job-economics.cjs, `disposalFee`), never restated here. Built on our recommendation:
  * a fixed fee for the review and the drafted election, never a percentage of the sale or the election figure. A TEST
  * DEFAULT, NOT AGREED, and every place it is shown says so. The director decides the figure.
  */

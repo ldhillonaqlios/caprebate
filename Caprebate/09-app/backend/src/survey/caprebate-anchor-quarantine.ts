@@ -143,7 +143,7 @@ export class AnchorLog {
   #entries: LogEntry[] = [];
 
   append(e: Omit<LogEntry, 'seq' | 'prev_hash' | 'hash'>): LogEntry {
-    const prev_hash = this.#entries.length ? this.#entries[this.#entries.length - 1].hash : GENESIS;
+    const prev_hash = this.#entries.length ? this.#entries[this.#entries.length - 1]!.hash : GENESIS;
     const seq = this.#entries.length + 1;
     const body = { seq, kind: e.kind, job_id: e.job_id, actor: e.actor, at: e.at, detail: e.detail, prev_hash };
     const hash = createHash('sha256').update(canonical(body)).digest('hex');
@@ -344,7 +344,7 @@ export class AnchorQuarantine {
           'indistinguishable from anchoring drift',
       );
     }
-    const from = this.amendments.length ? this.amendments[this.amendments.length - 1].to : this.commitment.figures;
+    const from = this.amendments.length ? this.amendments[this.amendments.length - 1]!.to : this.commitment.figures;
     const a: Amendment = { job_id: this.job_id, surveyor_id: input.surveyor_id, at: this.#clock(), from, to: input.to, reason: input.reason };
     this.amendments.push(a);
     this.#log.append({
@@ -369,7 +369,7 @@ export class AnchorQuarantine {
   /** Final figures: the last amendment, or the commitment if none. */
   finalFigures(): SurveyorFigures | null {
     if (!this.commitment) return null;
-    return this.amendments.length ? this.amendments[this.amendments.length - 1].to : this.commitment.figures;
+    return this.amendments.length ? this.amendments[this.amendments.length - 1]!.to : this.commitment.figures;
   }
 
   /** Test-only escape hatch, used to build the drift report without opening the quarantine. */

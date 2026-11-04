@@ -82,7 +82,7 @@ test('A5 a denied attempt is logged — the attempt is evidence in its own right
   assert.throws(() => q.openEstimate(SURVEYOR));
   const denied = log.of('GC-03').filter((e) => e.kind === 'ACCESS_DENIED');
   assert.equal(denied.length, 2);
-  assert.equal(denied[0].actor, 'sv-1');
+  assert.equal(denied[0]!.actor, 'sv-1');
   assert.equal(assureProcess(log, 'GC-03').denied_attempts, 2);
 });
 
@@ -121,7 +121,7 @@ test('A9 release strictly follows commitment in the log', () => {
   const ci = es.findIndex((e) => e.kind === 'COMMITMENT_RECORDED');
   const ri = es.findIndex((e) => e.kind === 'RELEASED');
   assert.ok(ci >= 0 && ri > ci);
-  assert.ok(es[ri].at >= es[ci].at);
+  assert.ok(es[ri]!.at >= es[ci]!.at);
 });
 
 test('A10 a commitment with no stated method is refused', () => {
@@ -233,8 +233,8 @@ test('A19 the log is hash-chained and verifies', () => {
   assert.equal(v.intact, true);
   assert.equal(v.broken_at, null);
   const es = log.entries();
-  assert.equal(es[0].prev_hash, '0'.repeat(64));
-  for (let i = 1; i < es.length; i++) assert.equal(es[i].prev_hash, es[i - 1].hash);
+  assert.equal(es[0]!.prev_hash, '0'.repeat(64));
+  for (let i = 1; i < es.length; i++) assert.equal(es[i]!.prev_hash, es[i - 1]!.hash);
 });
 
 test('A20 an edited entry is detected when the chain is read back', () => {
@@ -244,7 +244,7 @@ test('A20 an edited entry is detected when the chain is read back', () => {
   assert.equal(verifyChain(stored).intact, true, 'the untouched chain verifies');
 
   // Someone edits the surveyor-assignment entry in the database.
-  stored[2] = { ...stored[2], detail: { ...stored[2].detail, surveyor_id: 'sv-9' } };
+  stored[2] = { ...stored[2]!, detail: { ...stored[2]!.detail, surveyor_id: 'sv-9' } };
   const v = verifyChain(stored);
   assert.equal(v.intact, false);
   assert.equal(v.broken_at, 3);
@@ -259,7 +259,7 @@ test('A20b a removed entry is detected, and so is a reordering', () => {
   assert.equal(verifyChain(removed).intact, false, 'a deletion breaks the chain');
 
   const reordered = [...stored];
-  [reordered[3], reordered[4]] = [reordered[4], reordered[3]];
+  [reordered[3], reordered[4]] = [reordered[4]!, reordered[3]!];
   assert.equal(verifyChain(reordered).intact, false, 'a reordering breaks the chain');
 });
 

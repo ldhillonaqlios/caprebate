@@ -1,7 +1,7 @@
 /**
  * THE ONE PLACE THIS APPLICATION NAMES THE UPLOAD HANDLER.
  *
- * `04-phase-work/phase3/caprebate-upload-handler.ts` is 945 lines, has 38
+ * `09-app/backend/src/documents/caprebate-upload-handler.ts` is 945 lines, has 38
  * tests, obeys the twelve-step RECEIPT_CONTRACT order — and until Phase 104
  * NOTHING HAD EVER CALLED IT. Its own header is blunt about what that means:
  * every control on client documents was dormant "in the precise sense that no
@@ -10,7 +10,8 @@
  * This file is the seam. Everything the web half needs from the handler and
  * from the ingestion module comes through here, so:
  *
- *   · `grep -rn "04-phase-work" src/` returns ONE line, and it is below;
+ *   · the handler is imported from this file only (it lived in 04-phase-work/phase3 until Phase 161d moved it
+ *     into src/documents/; tools/lint-paths.cjs now keeps src/ from loading anything outside 09-app);
  *   · THE HANDLER IS IMPORTED, NOT COPIED. There is no second implementation
  *     of the contract order in this package and there must never be one;
  *   · if the handler moves, one path changes.

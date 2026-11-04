@@ -2,7 +2,7 @@
  * CLIENT DOCUMENTS READ BY THE CLAUDE API — BUILT REAL, AND SWITCHED OFF. Phase 146e, 22 September 2026.
  *
  * Lakhbir chose the Claude API on 22 September 2026 to read client documents. The document pipeline
- * (04-phase-work/phase3/caprebate-document-pipeline.ts) already decides what may leave: `sanitise()` keeps only the
+ * (09-app/backend/src/documents/caprebate-document-pipeline.ts) already decides what may leave: `sanitise()` keeps only the
  * segments a document type permits, after the receipt strip and the name exclusion register, and `callModel()`
  * re-checks them at the boundary and records what left. It hands that payload to ONE function, the `ModelFn`, and
  * until this file that function was a stand-in. This file is the real one.

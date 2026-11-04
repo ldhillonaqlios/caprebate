@@ -625,7 +625,7 @@ async function promoteRawFile(deps: UploadHandlerDeps, job: UploadJob): Promise<
   // than on a schedule tomorrow. `deleted_at` is supplied only so the sweep
   // classifies it as discharged and evaluates the out-of-order test; the real
   // discharge follows at step 7 and writes the evidence.
-  assertQuarantineDischarged([{ ...q, deleted_at: q.durable_written_at }], deps.now());
+  assertQuarantineDischarged([{ ...q, deleted_at: q.durable_written_at! }], deps.now());
   return q;
 }
 
@@ -948,11 +948,11 @@ export function assertContractCovered(): void {
   }
   for (let i = 0; i < RECEIPT_CONTRACT.length; i++) {
     const claimed = CONTRACT_COVERAGE[i];
-    if (claimed.step !== i + 1) {
+    if (claimed!.step !== i + 1) {
       throw new UploadHandlerError('E_CONTRACT_ORDER',
-        `CONTRACT_COVERAGE entry ${i} claims step ${claimed.step}. The coverage list is read as ` +
+        `CONTRACT_COVERAGE entry ${i} claims step ${claimed!.step}. The coverage list is read as ` +
           'an ORDERING, not as a set.',
-        { index: i, claimed: claimed.step });
+        { index: i, claimed: claimed!.step });
     }
   }
 }

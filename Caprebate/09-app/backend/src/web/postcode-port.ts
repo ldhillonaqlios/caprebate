@@ -5,7 +5,7 @@
  * `upload-handler-port.ts`: `grep -rn "04-phase-work" src/` must return one
  * line per module and each of them must be here.
  *
- * `04-phase-work/phase9/caprebate-postcode-authority.ts` was built on
+ * `09-app/backend/src/postcodes/caprebate-postcode-authority.ts` was built on
  * 8 September, proven against the real 2.7 million-row ONS download, and
  * called by NOTHING. This file is where that stops.
  *

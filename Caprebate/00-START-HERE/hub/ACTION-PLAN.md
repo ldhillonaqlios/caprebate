@@ -1163,6 +1163,109 @@ ACCEPT
 ```
 
 
+## PHASE 161d1 — The public site file, notices page, fixture list and engagement letters are read from inside the app
+
+ **Model: Opus.** Board item 13466718822. **Written 4 November 2026 by Phase 161d**, which moved every module live code loaded from the draft folders into the app and found these four files still read from outside it. **Why:** the same audit finding as 161d (section 5), and its check: "no file under backend/src or api/ imports or reads anything outside Caprebate/09-app".
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW (Phase 161d, 4 Nov 2026): no live file loads a module from
+04-phase-work any more, and tools/lint-paths.cjs (npm run lint:paths, part of
+npm run check) fails if one does. It still lists five paths that lead
+outside Caprebate/09-app on purpose (KNOWN in that file); two are only
+refusals (secrets.ts and inspire-store.ts name the repository folder so a key
+file or a file store is refused inside it) and stay. FIVE READS ARE MARKED
+"carried" TO THIS PHASE:
+  src/web/public-site.ts    SITE_PATH       Development/Caprebate site.html
+  src/web/notices-site.ts   NOTICES_PATH    03-app/caprebate-notices-page.html
+  src/web/pack-lines.ts     TAXONOMY_FILE   02-modules-and-build-prep/
+                                            Caprebate-Fixture-Taxonomy-v1.csv
+  src/web/letter.ts         LETTER_PATH and TEST_LETTER_PATH
+                                            06-commercial-and-governance/
+                                            Caprebate Engagement Letter.docx
+                                            and its TEST DEFAULTS copy
+Each has other readers and a home that people use: the site file is the
+engine's source (09-app/engine/tools/extract.cjs, the harness, the brand and
+plain-words checks); the notices page is read by four 03-app checks; the
+fixture list is one of the module files the drift checker's stray-copy guard
+keeps ONLY in 02-modules-and-build-prep; the letters are the director's and
+the solicitor's documents. So none was moved by 161d.
+
+BUILD
+1. For each one, choose (and write down why): MOVE it into 09-app (git mv,
+   and point every reader at the new place - the 03-app checks, the
+   extractor, the harness, COORDINATES, the developer spec and the 146g
+   handover), or keep the original where people edit it and give the app its
+   own copy inside 09-app with a check in npm run check that fails when the
+   copy and the original differ (the way extract.cjs --check keeps the
+   engine's generated copy). Grep for every reader first.
+2. Point the live file at the place inside 09-app, and take its row out of
+   KNOWN in tools/lint-paths.cjs (the check fails while a listed path is no
+   longer there, so the list only shrinks on purpose).
+3. The test website's bundle still holds what it needs: deploy the branch
+   preview and open the home page, the notices page, a claim's pack lines and
+   the engagement letter on it.
+
+ACCEPT
+- KNOWN in tools/lint-paths.cjs has no row marked carried; npm run check is
+  green; each fix has a test that fails on the code before it.
+- All four suites pass as before; the test website's preview works.
+```
+
+
 ## PHASE 161e — A fresh copy of the project passes every check, on GitHub as well as the Mac
 
  **Model: Opus.** Board item 13462566368. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 5: "The project is not complete on its own. Some checks need files that were left out, so a fresh copy cannot be fully tested."

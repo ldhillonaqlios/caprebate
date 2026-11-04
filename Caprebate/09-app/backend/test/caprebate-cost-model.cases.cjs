@@ -2093,7 +2093,7 @@ test("J6 over the shipped empty CIBSE stub the check refuses as a gate over an e
 
 test("J7 the real fixture taxonomy: every id read, none repeated — and today no id has a life, so all of them refuse", () => {
   /* Phase 132g, 16 Sep 2026: the live taxonomy is the 02-modules-and-build-prep/ copy; 03-app/ held an older twin */
-  const csv = fs.readFileSync(path.join(__dirname, "..", "..", "02-modules-and-build-prep", "Caprebate-Fixture-Taxonomy-v1.csv"), "utf8");
+  const csv = fs.readFileSync(path.join(__dirname, "..", "..", "..", "02-modules-and-build-prep", "Caprebate-Fixture-Taxonomy-v1.csv"), "utf8");
   const refs = M.taxonomyElementRefs(csv);
   const dataRows = csv.split(/\r?\n/).slice(1).filter(l => l.trim() !== "").length;
   assert.equal(refs.length, dataRows);

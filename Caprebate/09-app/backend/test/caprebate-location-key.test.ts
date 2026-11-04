@@ -215,7 +215,7 @@ test('N4 gate ON with no price-book key table THROWS at the purchase link', () =
     codeOf(() => locationFactorForPostcode('CF10 3NB', {}, {
       store: STORE,
       gates: { [LEG_E4_GATE]: true },
-      tables: { CB_LOCATION_FACTORS: FACTORS },
+      tables: { CB_LOCATION_FACTORS: FACTORS } as never,
     })),
     'E_LOCATION_KEY_TABLE_NOT_LOADED');
 });

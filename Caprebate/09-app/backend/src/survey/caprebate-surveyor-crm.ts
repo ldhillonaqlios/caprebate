@@ -543,7 +543,7 @@ export type AdoptionStats = {
 function median(xs: readonly number[]): number {
   const s = [...xs].sort((a, b) => a - b);
   const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
 }
 
 function verdictFor(n: number, adoption: number, med: number): Verdict {
@@ -813,8 +813,8 @@ export function drift(store: OverrideStore, field_id: string): Drift {
     cohorts.push({
       index: i,
       n: slice.length,
-      from_at: slice[0].at,
-      to_at: slice[slice.length - 1].at,
+      from_at: slice[0]!.at,
+      to_at: slice[slice.length - 1]!.at,
       median_signed_delta: median(slice.map((e) => e.relative_delta)),
       adoption_rate: slice.filter((e) => e.outcome === 'UNTOUCHED').length / slice.length,
     });
@@ -834,7 +834,7 @@ export function drift(store: OverrideStore, field_id: string): Drift {
     };
   }
 
-  const shift = cohorts[cohorts.length - 1].median_signed_delta - cohorts[0].median_signed_delta;
+  const shift = cohorts[cohorts.length - 1]!.median_signed_delta - cohorts[0]!.median_signed_delta;
   let verdict: Drift['verdict'] = 'STABLE';
   if (Math.abs(shift) > DRIFT_THRESHOLD) verdict = shift < 0 ? 'DRIFTING_HIGH' : 'DRIFTING_LOW';
 

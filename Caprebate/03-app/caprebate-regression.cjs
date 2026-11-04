@@ -80,6 +80,10 @@ function phaseDir(name) {
   return "../04-phase-work/" + name;
 }
 const P3 = phaseDir("phase3"), P9 = phaseDir("phase9");
+/* PHASE 161d, 4 November 2026: the modules the application uses moved out of phase3/ and phase9/ into the
+   application (09-app/backend/src/), so the suites below load them from there. phase3/ and phase9/ keep a
+   one-line note at each old path that loads the same module. */
+const APP_SRC = path.join(DIR, "..", "09-app", "backend", "src");
 /* PHASE 132g, 16 September 2026 - THE LIVE COPIES. The six Module-*.md
    specifications and the taxonomy CSV exist twice: in 02-modules-and-build-prep/
    (the copy that is edited) and in 03-app/ (an older copy kept beside this
@@ -2176,7 +2180,7 @@ if (startSuite("I", "Phase 9 — prepared cost model, gated on licence and purch
 
   let CM = null, cmError = null;
   try {
-    CM = require(P9 + "/caprebate-cost-model.cjs");
+    CM = require(path.join(APP_SRC, "costing", "caprebate-cost-model.cjs"));
   } catch (e) {
     cmError = e;
   }
@@ -2326,7 +2330,7 @@ if (startSuite("J", "Phase 13 — document_property_match")) {
   try {
     DPM = require(P3 + "/caprebate-document-property-match.ts");
     RECON = require(P3 + "/caprebate-reconciliation.ts");
-    REG = require(P3 + "/caprebate-source-register.ts");
+    REG = require(path.join(APP_SRC, "registers", "caprebate-source-register.ts"));
   } catch (e) {
     dpmError = e;
   }
@@ -2435,7 +2439,7 @@ if (startSuite("K", "Phase 14 — BUILDING_REGS_COMPLETION and GRANT_FUNDING_AGR
 
   let PIPE = null, DPM2 = null, pipeError = null;
   try {
-    PIPE = require(P3 + "/caprebate-document-pipeline.ts");
+    PIPE = require(path.join(APP_SRC, "documents", "caprebate-document-pipeline.ts"));
     DPM2 = require(P3 + "/caprebate-document-property-match.ts");
   } catch (e) {
     pipeError = e;
@@ -3052,7 +3056,7 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
     ["journey wireframe (archived by Phase 104)", "_archive/superseded/caprebate-journey-wireframe.html"],
     ["the application that replaced it", "09-app/backend/src/web/router.ts"],
     ["CTA switch table", "01-rulebooks/Caprebate-Phase-51-CTA-Switch-Table-v1.md"],
-    ["upload handler", "04-phase-work/phase3/caprebate-upload-handler.ts"],
+    ["upload handler", "09-app/backend/src/documents/caprebate-upload-handler.ts"],
   ];
   check("M4 — every document in the developer handover pack is on disk",
     HANDOVER.filter(h => !fs.existsSync(path.join(ROOT, h[1]))).map(h => h[0]), []);
@@ -3114,7 +3118,7 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
 
   const handler = fs.readFileSync(handoverPath("upload handler"), "utf8");
   const ingestion = fs.readFileSync(
-    path.join(ROOT, "04-phase-work/phase3/caprebate-client-doc-ingestion.ts"), "utf8");
+    path.join(ROOT, "09-app/backend/src/documents/caprebate-client-doc-ingestion.ts"), "utf8");
 
   const contractBlock = ingestion.slice(ingestion.indexOf("export const RECEIPT_CONTRACT"));
   const contractSteps = (contractBlock.slice(0, contractBlock.indexOf("];"))
@@ -5084,7 +5088,7 @@ if (startSuite("S", "Phase 96 — the £1m allowance cap, and the two facts we n
 if (startSuite("T", "Phase 113d — the engagement gate, switched on by Phase 132e")) {
 
   let JE = null, jeError = null;
-  try { JE = require(P9 + "/caprebate-job-economics.cjs"); } catch (e) { jeError = e; }
+  try { JE = require(path.join(APP_SRC, "costing", "caprebate-job-economics.cjs")); } catch (e) { jeError = e; }
 
   const gateSrc = src.slice(src.indexOf("var CB_GATE_CONFIG"), src.indexOf("var CB_BOOKING"));
 
@@ -6585,7 +6589,7 @@ if (startSuite("X", "Phase 132 — s.33B, the company rate, the taper band, part
    ============================================================================= */
 if (startSuite("Y", "Phase 132 — N2, the engine registry against the name-exclusion policy")) {
   let NX = null, nxError = null;
-  try { NX = require(P3 + "/caprebate-name-exclusion.ts"); } catch (e) { nxError = e; }
+  try { NX = require(path.join(APP_SRC, "registers", "caprebate-name-exclusion.ts")); } catch (e) { nxError = e; }
   if (!NX || typeof NX.assertNoUnauthorisedName !== "function") {
     check("Y0 — the Phase 3 name-exclusion module loads", String(nxError || "no assertNoUnauthorisedName export"), "no error");
   } else {
@@ -7188,7 +7192,7 @@ if (startSuite("AB", "Phase 132e — the no-claim threshold")) {
 
   /* --- NCT6: where the engagement gate withholds the quote, no fee is printed here either */
   (function(){
-    let JE = null; try { JE = require(P9 + "/caprebate-job-economics.cjs"); } catch (e) { JE = null; }
+    let JE = null; try { JE = require(path.join(APP_SRC, "costing", "caprebate-job-economics.cjs")); } catch (e) { JE = null; }
     if (!JE) { check("NCT6 — the phase9 job-economics module loads", "missing", "loaded"); return; }
     const keep = { enabled: CB_GATE_CONFIG.enabled, jobs_per_year: CB_GATE_CONFIG.jobs_per_year, costing: CB_GATE_CONFIG.costing };
     try {

@@ -2,6 +2,13 @@
 /**
  * Strict typecheck OF THIS PACKAGE.
  *
+ * PHASE 161d, 4 NOVEMBER 2026: THE PARAGRAPHS BELOW ARE HISTORY. The fourteen modules src/ took from 04-phase-work
+ * (phase3 and phase9) now live in src/ (registers/, documents/, survey/, costing/, postcodes/) with their tests in
+ * test/, so they are this package's own and are checked strictly like everything else. Their diagnostics were
+ * fixed when they moved (each was a value the compiler could not prove present: a `!` was added, nothing that runs
+ * changed). tools/lint-paths.cjs keeps src/ from loading anything outside Caprebate/09-app again, so nothing should
+ * now appear in the "outside this package" list below; the wrapper still reports it if anything does.
+ *
  * WHY THIS WRAPPER EXISTS, AND WHAT IT DOES NOT DO.
  *
  * src/ imports several modules from 04-phase-work/phase3 — the anchor

@@ -4,7 +4,7 @@
  * Homedata sells the outline of the property's registered title as the `title_boundary` slug (5 tokens, 5p), on the same
  * /property/{uprn}/ call the paid address lookup already makes after signing (src/connectors/homedata.ts). This file
  * turns that outline into ONE number, `site_area_m2`, with the area code the land boundary already uses: the boundary
- * module's `parseBoundaryGeometry` and `computeSiteArea` (04-phase-work/phase9/caprebate-boundary-import.ts), the same
+ * module's `parseBoundaryGeometry` and `computeSiteArea` (09-app/backend/src/registers/caprebate-boundary-import.ts), the same
  * pair src/connectors/site-area.ts reaches through `fetchAndImportBoundary`. Nothing here measures an area itself.
  *
  * THE COORDINATES. The boundary module computes an area only in British National Grid (EPSG:27700) and refuses degrees.

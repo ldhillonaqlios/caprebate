@@ -59,10 +59,10 @@ test('R3 every mapped code lands on a real region, or on London', () => {
   const names = new Set<string>(PRICE_BOOK_REGIONS);
   for (const code of Object.keys(ONS_REGION_TO_PRICE_BOOK)) {
     const r = ONS_REGION_TO_PRICE_BOOK[code];
-    assert.ok(r === 'LONDON' || names.has(r), `${code} -> ${r}`);
+    assert.ok(r === 'LONDON' || names.has(r!), `${code} -> ${r}`);
   }
   for (const code of Object.keys(COUNTRY_TO_PRICE_BOOK)) {
-    assert.ok(names.has(COUNTRY_TO_PRICE_BOOK[code]), code);
+    assert.ok(names.has(COUNTRY_TO_PRICE_BOOK[code]!), code);
   }
 });
 
@@ -341,8 +341,8 @@ test('V7 switch ON: a council outside London is not affected', () => {
     assert.deepEqual(errWhole(() => regionOf(a, ON)), errWhole(() => regionOf(a)), a.lad_name);
     assert.deepEqual(regionKeyOf(a, ON), regionKeyOf(a), a.lad_name);
   }
-  assert.equal(regionOf(outside[0], ON), 'North West');
-  assert.equal(regionOf(outside[3], ON), 'South East');
+  assert.equal(regionOf(outside[0]!, ON), 'North West');
+  assert.equal(regionOf(outside[3]!, ON), 'South East');
 });
 
 test('V8 N4 the council code, switch ON: "not sure" and absent refuse identically, and never fall to Outer London', () => {

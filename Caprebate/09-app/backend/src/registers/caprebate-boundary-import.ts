@@ -214,8 +214,8 @@ function ringAreaM2(ring: RawRing): number {
   let sum = 0;
   const n = ring.length;
   for (let i = 0; i < n; i++) {
-    const [x1, y1] = ring[i];
-    const [x2, y2] = ring[(i + 1) % n];
+    const [x1, y1] = ring[i]!;
+    const [x2, y2] = ring[(i + 1) % n]!;
     if (![x1, y1, x2, y2].every(Number.isFinite)) {
       throw new BoundaryImportError('E_INVALID_COORDINATE', 'ring contains a non-finite coordinate', {
         point_a: ring[i],
@@ -595,7 +595,7 @@ export function checkBoundaryUse(
   // purpose === 'FETCH'
   return {
     permitted: false,
-    purpose,
+    purpose: purpose as BoundaryUsePurpose,
     reason:
       'Refused: fetching land boundaries is switched off. It still needs the data protection ' +
       "officer's answer on the small, logged test lookup.",
@@ -1054,7 +1054,7 @@ function parsePosList(posList: string, where: Record<string, unknown>): RawRing 
 }
 
 const sameRing = (a: RawRing, b: RawRing): boolean =>
-  a.length === b.length && a.every((p, i) => p[0] === b[i][0] && p[1] === b[i][1]);
+  a.length === b.length && a.every((p, i) => p[0] === b[i]![0] && p[1] === b[i]![1]);
 
 /**
  * Translates published-shape INSPIRE Index Polygon records into one
@@ -1090,14 +1090,14 @@ export function inspirePolygonsToRawBoundaryGeometry(records: readonly InspireIn
     }
     const polygon: InternalPolygon = {
       exterior: parsePosList(rec.exterior_pos_list, { inspire_id: id, ring: 'exterior' }),
-      holes: (rec.interior_pos_lists ?? []).map((pl, i) => parsePosList(pl, { inspire_id: id, ring: `interior ${i}` })),
+      holes: (rec.interior_pos_lists ?? []).map((pl: string, i: number) => parsePosList(pl, { inspire_id: id, ring: `interior ${i}` })),
     };
     const seen = byId.get(id);
     if (seen) {
       const identical =
         sameRing(seen.exterior, polygon.exterior) &&
         seen.holes.length === polygon.holes.length &&
-        seen.holes.every((h, i) => sameRing(h, polygon.holes[i]));
+        seen.holes.every((h, i) => sameRing(h, polygon.holes[i]!));
       if (!identical) {
         throw new BoundaryImportError(
           'E_CONFLICTING_DUPLICATE_POLYGON',
@@ -1117,7 +1117,7 @@ export function inspirePolygonsToRawBoundaryGeometry(records: readonly InspireIn
   });
   const geometry: RawBoundaryGeometry =
     parts.length === 1
-      ? { type: 'Polygon', crs: crs as CrsCode, ...parts[0] }
+      ? { type: 'Polygon', crs: crs as CrsCode, ...parts[0]! }
       : { type: 'MultiPolygon', crs: crs as CrsCode, polygons: parts };
   return {
     geometry,
@@ -1180,7 +1180,7 @@ function onSegment(px: number, py: number, a: readonly [number, number], b: read
 
 function ringTouches(px: number, py: number, ring: RawRing): boolean {
   const n = ring.length;
-  for (let i = 0; i < n; i++) if (onSegment(px, py, ring[i], ring[(i + 1) % n])) return true;
+  for (let i = 0; i < n; i++) if (onSegment(px, py, ring[i]!, ring[(i + 1) % n]!)) return true;
   return false;
 }
 
@@ -1189,8 +1189,8 @@ function ringContains(px: number, py: number, ring: RawRing): boolean {
   let inside = false;
   const n = ring.length;
   for (let i = 0, j = n - 1; i < n; j = i++) {
-    const [xi, yi] = ring[i];
-    const [xj, yj] = ring[j];
+    const [xi, yi] = ring[i]!;
+    const [xj, yj] = ring[j]!;
     if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) inside = !inside;
   }
   return inside;
@@ -1231,11 +1231,11 @@ export function findInspirePolygonForPoint(point: unknown, polygons: InspireTran
     const id = polygons.inspire_ids[i];
     const rings = [part.exterior, ...(part.holes ?? [])];
     if (rings.some((r) => ringTouches(e, nth, r))) {
-      touching.push(id);
+      touching.push(id!);
       return;
     }
     if (ringContains(e, nth, part.exterior) && !(part.holes ?? []).some((h) => ringContains(e, nth, h))) {
-      containing.push(id);
+      containing.push(id!);
     }
   });
   if (touching.length > 0) {
@@ -1264,5 +1264,5 @@ export function findInspirePolygonForPoint(point: unknown, polygons: InspireTran
         'or the point may be wrong.',
     };
   }
-  return { matched: true, inspire_id: containing[0] };
+  return { matched: true, inspire_id: containing[0]! };
 }

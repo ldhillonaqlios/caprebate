@@ -204,7 +204,7 @@ export type FieldSpec = {
   threshold: number;
   /** Which segments may be searched for it. */
   from: readonly SegmentKind[];
-  note?: string;
+  note?: string | undefined;
 };
 
 /** Threshold by consequence. Stated once so it cannot drift field by field. */
@@ -1081,7 +1081,7 @@ export function toClaims(entity_id: string, r: ExtractionResult, retrieved_at: s
 export type HumanCaptureFieldSpec = {
   field_id: string;
   consequence: FieldSpec['consequence'];
-  note?: string;
+  note?: string | undefined;
 };
 
 export type HumanCaptureDocSpec = {

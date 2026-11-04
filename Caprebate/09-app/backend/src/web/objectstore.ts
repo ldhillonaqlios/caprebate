@@ -2,7 +2,7 @@
  * THE OBJECT STORE — the real implementation of the port the upload handler
  * has been waiting for since 31 August.
  *
- * `04-phase-work/phase3/caprebate-upload-handler.ts` is 945 lines with 38
+ * `09-app/backend/src/documents/caprebate-upload-handler.ts` is 945 lines with 38
  * tests and, until this file, NO CONSUMER. Its own header says so: "Eighty-two
  * tests passed against a module with no consumer, which proves the design is
  * coherent and proves nothing about whether a single client document is

@@ -37,7 +37,7 @@ npm run seed         # invented data + one user per role. Refuses without CAPREB
 npm run verify-audit # recomputes the audit log's hash chain from caprebate.db; writes nothing; exit 1 if broken
 npm start            # http://localhost:8103
 npm run start:demo   # in-memory, seeded, http://localhost:8105 — for looking at the screens
-npm run check        # audit:live, lint:sql, typecheck, the whole suite — run it, do not quote it
+npm run check        # audit:live, lint:sql, lint:paths, typecheck, the whole suite — run it, do not quote it
 ```
 
 **No hidden state.** Everything the application needs is passed to `buildApp` —
@@ -56,6 +56,19 @@ version control. Every table is `STRICT`; foreign keys are on.
 **NO STRING-BUILT SQL ANYWHERE, and it is checked rather than promised.**
 `npm run lint:sql` fails the build on a template literal or a concatenated
 variable inside a statement. It was proved able to fail before it was kept.
+
+**THE APPLICATION USES ONLY ITS OWN FILES, and that is checked too (Phase 161d, 4 November 2026).**
+`npm run lint:paths` (`tools/lint-paths.cjs`) parses every file under `src/` and the repository's `api/`
+and fails on any module they load, or any path they build from their own folder, that lands outside
+`Caprebate/09-app`. Until that day `src/` loaded fourteen modules from the draft folders
+`04-phase-work/phase3` and `phase9` (the ITRoadway audit, section 5). They now live here, by what they do:
+`src/registers/` (the source register, the name exclusion register, the land boundary import),
+`src/documents/` (the document pipeline, client document ingestion, the upload handler), `src/survey/`
+(the anchor quarantine, the surveyor CRM), `src/costing/` (the cost model, the job economics) and
+`src/postcodes/` (postcode to council, the postcode store, the location key, the region), with their tests
+in `test/`. The old paths keep a one-line note that loads the new file. The few paths still allowed
+outside are listed, with the reason, in `KNOWN` in that file; `--self-test` proves a planted import from
+04-phase-work fails.
 
 **Migration 007 rebuilds `businesses`** — the twelve-step SQLite procedure, to
 remove `preferred_contact`, which migration 004 had ended (every value NULL, two

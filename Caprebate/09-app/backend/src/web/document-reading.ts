@@ -8,7 +8,7 @@
  * ------------------------------------------------------------------------------------------------------------
  * 1 · THE TWO FIELDS NOBODY CAN VOUCH FOR
  *
- * `assertClaimsWritable` (04-phase-work/phase3/caprebate-client-doc-ingestion.ts) keeps two CLIENT_DOC fields only
+ * `assertClaimsWritable` (09-app/backend/src/documents/caprebate-client-doc-ingestion.ts) keeps two CLIENT_DOC fields only
  * on the footing that their value names an ORGANISATION: `grant_funder_name` ("the funding body, not an
  * individual") and `brc_issuing_body` (a local authority rather than an individual approved inspector). The name
  * exclusion register classifies by field NAME and never sees a value, so it cannot tell one from the other; the
