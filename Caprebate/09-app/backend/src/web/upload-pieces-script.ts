@@ -16,6 +16,8 @@ export const UPLOAD_PIECES_JS = `(function () {
   'use strict';
   if (typeof document === 'undefined' || typeof window === 'undefined') return;
   var root = window;
+  // PHASE 161b: our form token, from the page, for the x-cb-form header (src/web/form-token.ts).
+  function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
   if (!root.fetch) return;
   var ABOVE = ${String(PIECED_ABOVE)};
   var forms = document.querySelectorAll('form[data-pieces]');
@@ -59,7 +61,7 @@ export const UPLOAD_PIECES_JS = `(function () {
     say(form, 'Sending your file. Keep this page open.');
     root.fetch('/upload/pieces/start', {
       method: 'POST', credentials: 'same-origin',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-cb-form': cbForm() },
       body: 'size=' + encodeURIComponent(String(file.size))
     }).then(answer).then(function (s) {
       if (!s.ok) throw new Error(s.why);
@@ -71,7 +73,7 @@ export const UPLOAD_PIECES_JS = `(function () {
         say(form, 'Sending your file: ' + String(Math.round((from / file.size) * 100)) + '%. Keep this page open.');
         return root.fetch('/upload/pieces/' + encodeURIComponent(s.id) + '/' + String(n), {
           method: 'PUT', credentials: 'same-origin',
-          headers: { 'content-type': 'application/octet-stream' }, body: piece
+          headers: { 'content-type': 'application/octet-stream', 'x-cb-form': cbForm() }, body: piece
         }).then(answer).then(function (p) {
           if (!p.ok) throw new Error(p.why);
           n++;

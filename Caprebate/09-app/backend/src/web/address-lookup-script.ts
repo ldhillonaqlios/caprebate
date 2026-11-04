@@ -14,6 +14,8 @@
 export const ADDRESS_LOOKUP_JS = `(function () {
   'use strict';
   var root = typeof globalThis !== 'undefined' ? globalThis : window;
+  // PHASE 161b: our form token, from the page, for the x-cb-form header (src/web/form-token.ts).
+  function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
   if (typeof document === 'undefined' || !root.fetch || !root.URLSearchParams) return;
   var FULL = /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/;
 
@@ -126,7 +128,7 @@ export const ADDRESS_LOOKUP_JS = `(function () {
       body.set('postcode', pc);
       root.fetch('/assessment/details/addresses', {
         method: 'POST', credentials: 'same-origin',
-        headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' }, body: body.toString(),
+        headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json', 'x-cb-form': cbForm() }, body: body.toString(),
       }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
         if (norm(postcode.value) !== pc) return;
         if (!j) { draw([], 'We could not look up addresses just now. Please type your address below.'); return; }

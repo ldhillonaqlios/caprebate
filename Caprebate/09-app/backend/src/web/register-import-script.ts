@@ -13,6 +13,8 @@
 export const REGISTER_IMPORT_JS = `(function () {
   'use strict';
   var root = typeof window !== 'undefined' ? window : globalThis;
+// PHASE 161b: our form token, from the page, for the x-cb-form header (src/web/form-token.ts).
+function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
 
   function say(el, words) { if (el) el.textContent = words; }
 
@@ -70,7 +72,7 @@ export const REGISTER_IMPORT_JS = `(function () {
         fd.append('filename', file.name);
         fd.append('file', new Blob([small], { type: 'text/csv' }), 'trimmed.csv');
         say(note, 'Sending only the columns we keep\\u2026');
-        return root.fetch(form.action, { method: 'POST', body: fd, credentials: 'same-origin' });
+        return root.fetch(form.action, { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'x-cb-form': cbForm() } });
       }).then(function (res) {
         if (res.redirected) { location.assign(res.url); return; }
         return res.text().then(function (html) { document.open(); document.write(html); document.close(); });
