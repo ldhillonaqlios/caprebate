@@ -263,21 +263,27 @@ function failingTestNames(out) {
    WE DO NOT SHELL OUT TO npm, AND THAT IS NOT A SHORTCUT. COORDINATES records
    that node is NOT on PATH on the Acer - it is a portable install - so npm is
    not reliably on PATH either, and `execFileSync("npm", ...)` additionally
-   needs `npm.cmd` on Windows. So we run npm's three steps ourselves through
+   needs `npm.cmd` on Windows. So we run npm's steps ourselves through
    process.execPath, which is guaranteed. The risk that creates is drift: if
    someone edits the `check` script, this function would silently keep running
-   the old three steps and go on reporting a green number. So it READS
-   package.json and refuses to run if `check` is no longer the three steps it
-   expects. A check that quietly stops covering something is the failure this
+   the old steps and go on reporting a green number. So it READS
+   package.json and refuses to run if `check` is no longer the steps it
+   expects (four since Phase 161a: audit:live, lint:sql, typecheck, test). A check that quietly stops covering something is the failure this
    phase is about; it should not be reintroduced by the fix for it. */
 function runBackendCheck(dir) {
   const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
   const norm = t => String(t || "").replace(/\s+/g, " ").trim();
-  const EXPECTED_CHECK = "npm run lint:sql && npm run typecheck && npm run test";
-  if (norm(pkg.scripts && pkg.scripts.check) !== EXPECTED_CHECK) {
+  /* PHASE 161a, 4 November 2026: `check` begins with `audit:live` (npm audit of the live install, high and above;
+     the ITRoadway audit's first finding). It is run here too, through npm's own program under process.execPath, so
+     a published flaw stops this checker as it stops `npm run check`. It needs the registry: offline, it fails and
+     says so - a figure that skipped the audit is not the figure the documents mean. */
+  const EXPECTED_CHECK = "npm run audit:live && npm run lint:sql && npm run typecheck && npm run test";
+  const EXPECTED_AUDIT = "npm audit --omit=dev --audit-level=high";
+  if (norm(pkg.scripts && pkg.scripts.check) !== EXPECTED_CHECK
+      || norm(pkg.scripts && pkg.scripts["audit:live"]) !== EXPECTED_AUDIT) {
     throw new Error(
-      "09-app/backend package.json `check` is no longer the three steps this file runs.\n" +
-      "  expected: " + EXPECTED_CHECK + "\n" +
+      "09-app/backend package.json `check` (or `audit:live`) is no longer the four steps this file runs.\n" +
+      "  expected: " + EXPECTED_CHECK + "  (audit:live = " + EXPECTED_AUDIT + ")\n" +
       "  found:    " + norm(pkg.scripts && pkg.scripts.check) + "\n" +
       "  Update runBackendCheck() in 03-app/caprebate-figure-drift.cjs to match, or the\n" +
       "  back end's figure stops meaning what the documents say it means.");
@@ -302,6 +308,10 @@ function runBackendCheck(dir) {
         (verdict.length ? verdict : all.filter(l => l.trim())).slice(-14).join("\n"));
     }
   };
+  const npmCli = path.join(path.dirname(process.execPath), "..", "lib", "node_modules", "npm", "bin", "npm-cli.js");
+  if (!fs.existsSync(npmCli)) throw new Error("npm's own program is not beside this node (" + npmCli + "), so the\n" +
+    "  back end's audit:live step cannot run. Run `npm run check` in 09-app/backend instead.");
+  step("audit:live", [npmCli, "audit", "--omit=dev", "--audit-level=high"]);
   step("lint:sql", [path.join(dir, "tools", "lint-sql.cjs")]);
   step("typecheck", [path.join(dir, "tools", "typecheck.cjs")]);
   /* `npm test` is `node --test test/*.test.ts`, whose glob the SHELL expands.

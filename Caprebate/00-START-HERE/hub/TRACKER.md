@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 345 |
-| Working on it | 1 |
+| Done | 346 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-46 items.
+45 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,14 +1434,6 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 161a - The package flaws: update the packages, and keep the test-website package (@vercel/blob, 5 high flaws) out of the live build (audit 2 Nov 2026)
-
-`13462588597` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro.localdomain (the Mac copy)**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
-- Note 2026-11-04 (Phase 161a): Claimed: branch claude/phase-161a, the Mac copy.
-
 ### Phase 161b - A security token on every form that changes something, as well as the browser check (audit 2 Nov 2026)
 
 `13462572170` · **Ready - Claude can build** · owner Claude
@@ -1529,7 +1521,7 @@
 
 ## Z · Complete / Not Applicable
 
-345 items.
+346 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3612,4 +3604,13 @@
 
 - Note 2026-10-29 (Phase 160p): Written and claimed on Lakhbir's instruction, with three screenshots: 'just remove this box it makes no sense' (the qualifying systems box), 'remove the disclaimer from supported living', 'make property type box same height as name email phone ect', 'on the animation 1) make the lift go up and down 2) flicker the lights as they turn on'.
 - Note 2026-10-29 (Phase 160p): Done: no box under the captions, no note on the supported-living card, the property type menu 46.8 px like the other boxes, the lift going up a floor and back, the lamps flickering on. test/phase160p.test.ts (7); back end 3,059 pass / 7 fail (those of 160n).
+
+### Phase 161a - The package flaws: update the packages, and keep the test-website package (@vercel/blob, 5 high flaws) out of the live build (audit 2 Nov 2026)
+
+`13462588597` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
+- Note 2026-11-04 (Phase 161a): Claimed: branch claude/phase-161a, the Mac copy.
+- Note 2026-11-04 (Phase 161a): Done: npm audit 0 (back end and root, full and live); @vercel/blob for the tests and the test website only, live install npm ci --omit=dev; audit:live in npm run check; test/phase161a.test.ts (8); back end 3,077 pass, project 5,361. Photo check after merge carried to 161b; root lock file to 161e; majors parked as 13462946350.
 

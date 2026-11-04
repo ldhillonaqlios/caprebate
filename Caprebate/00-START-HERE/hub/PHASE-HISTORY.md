@@ -13577,3 +13577,34 @@ DONE          The eleven phases, their board items and tracker rows, the sweep r
 NOT DONE      Merging this pull request - Lakhbir's click. Running the phases: one chat each, from 161a.
 NOTHING LEFT  beyond those lines.
 ```
+
+## Phase 161a — the package flaws, and the test website's Blob package kept out of the live install — 4 November 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 161a, 4 Nov 2026: the ITRoadway audit's first finding (High: out-of-date packages with published flaws). npm audit had found 5 high flaws (undici, zod), all through @vercel/blob, which only the test website uses. Now 0, in the back end and the root, for both the full and the live install. Packages updated inside each major. In the back end @vercel/blob is now for the tests only, so the live install (`npm ci --omit=dev`) has none of it. `npm run check` begins with an audit of the live install. test/phase161a.test.ts, 8 tests. Back end 3,077 pass, project 5,361, 0 failures. Branch claude/phase-161a.
+
+- **Claim.** hub/CLAIM.md, tracker row and board item 13462588597, pushed first, on a branch cut from main at 2f6f261.
+- **The premise, re-derived (standing instruction, point 8).** The phase said to make @vercel/blob optional and load it with a dynamic import. It was already loaded on demand (`vercelBlobClient`, src/web/shared-objectstore.ts) and only api/index.mjs asks for it. And the phase's live install, `npm ci --omit=dev --omit=optional`, was tried in a scratch install and **cannot start the server**: the native parts of @node-rs/argon2 and libsql are optional packages, so argon2 fails with "Cannot find native binding". So the split is: back end `devDependencies` (the tests and the typecheck use it), live install `npm ci --omit=dev`, and the root package.json, which builds only the test website, keeps it as a normal package.
+- **Updates** (each published at least three weeks ago, except where said): @node-rs/argon2 2.2.2, @vercel/blob 2.8.2 (bringing undici 6.29.1), gsap 3.15.0 in the root (3.15.1 came out on 4 Nov 2026, too new to take), @types/node 26.6.5 (26.6.6 is a week old). The flawed zod 4.1.11 came only from @vercel/cli-config 0.3.1 under @vercel/oidc 3.x, which Blob 2.8.2 (the newest Blob) still requires. So `overrides` pins zod 4.6.6, the fixed release of 11 Oct 2026, in both package files. Our code never uses zod. Left at their majors on purpose: @anthropic-ai/sdk 0.127 and TypeScript 5.9 (tracker 13462946350, parked).
+- **api/index.mjs.** If a store is set but @vercel/blob is not installed, the test website keeps the temporary disk and the log says why. Any other fault, including a different missing package, still stops the start.
+- **Checks.** `npm run check` is now `audit:live` (npm audit --omit=dev --audit-level=high), then lint:sql, typecheck and the tests. 03-app/caprebate-figure-drift.cjs runs the same four steps; it refused the new script, as it is built to, and now runs the audit through npm's own program under process.execPath.
+- **Proof.** npm audit: back end 0 (full) and 0 (live); root 0 and 0, read from a lock made in a scratch copy, because the root has no lock file (carried to 161e). A live-style install in a scratch copy has no @vercel, undici or Vercel helper. It does have zod 4.6.6 (the Anthropic package can use it), and the server starts from it and answers /api/health. test/phase161a.test.ts: 8 tests; run against the code before this phase, 5 fail (every new behaviour), and the 2 that pass guard what was already true (nothing loads Blob at the top of a file; no store set means the temporary disk).
+- **The four suites, before and after.** Before: site 1,427 pass / 0 fail / 3 xfail, phase3 440, phase9 417, back end 3,069 / 0 fail on the Mac copy. After: the same, and back end 3,077 / 0 fail. The drift checker re-derived 5,361 and found two lines in the developer spec quoting 3,034 and 5,318 (Phases 160n to 160p had not updated them): both corrected. The register check is OK, section 5 included.
+- **Documents.** The developer spec (section 0 and the Blob section), backend/README.md, shared-objectstore.ts's header, FOR THE SOLICITOR, THE DPO AND THE DEVELOPER ("Recorded 4 November 2026 (Phase 161a)": the live install command for the developer).
+- **Not shown here, and why.** That the test website still stores a survey photo in Blob: a branch preview has the Blob store and the database but not the test password, so it runs on memory and keeps documents on its temporary disk. This can only be shown on the test website after the merge, and it is carried into 161b as its first step.
+
+```
+DONE          The 5 high flaws gone (npm audit 0, back end and root, full and live); packages
+              updated inside their majors; @vercel/blob out of the live install; the missing-package
+              fallback; audit:live in npm run check and in the drift checker; test/phase161a.test.ts (8);
+              the four suites green (back end 3,077, project 5,361).
+NOT DONE      [check after merge] A survey photo arriving in Blob on the test website - added to
+              Phase 161b as its first step (both places).
+              [build] The root has no package-lock.json, so each Vercel deploy picks its own versions -
+              added to Phase 161e, BUILD 5 and ACCEPT (both places), with a question for Lakhbir.
+              [parked] @anthropic-ai/sdk 1.x and TypeScript 7 - tracker and board 13462946350,
+              Parked - deliberate, with its trigger.
+              Merging this pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines.
+```
+
+**Claim cleared** in the commit that carries this record.
