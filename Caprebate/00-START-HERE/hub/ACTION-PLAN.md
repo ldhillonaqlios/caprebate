@@ -1071,105 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161b — A security token on every form that changes something, as well as the browser check
-
- **Model: Opus.** Board item 13462572170. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 4, row 3 (Medium): "Forms are protected by browser settings only, with no extra check on sensitive actions such as payments and admin changes. Add a one-time security token to those forms."
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-WHAT IS THERE NOW: src/web/router.ts ~328-333 (Phase 160e) refuses any
-POST, PUT, PATCH or DELETE whose Sec-Fetch-Site is "cross-site", and the
-session cookie is SameSite (Lax in router.ts ~151, Strict in auth.ts). A
-browser that sends no Sec-Fetch-Site gets through on SameSite alone.
-
-CARRIED FROM 161a (4 Nov 2026), DO THIS FIRST: once 161a's pull request is
-merged and the test website has redeployed, send one survey photo on the
-test website (the surveyor's photo send) and confirm it arrives in the Blob
-store: the photo shows on the claim, and the function log says "uploaded
-documents are kept in the private document store". 161a could not show this
-from a branch preview, because previews have no test password and so run on
-memory. If it does not arrive, stop and fix that before anything below.
-
-BUILD
-1. A form token tied to the session: made at sign-in, made again whenever
-   the session rotates (privilege change), kept server side, put in a hidden
-   field by the page helper so no page can forget it, and checked BEFORE
-   any handler runs. The JSON API takes it in a header.
-2. Single-use tokens for the most sensitive actions: payments and refunds,
-   role and staff-account changes, settings and switches, key and
-   connection changes, data export and deletion. A used one is refused.
-3. A refused form gets a plain page: "This form has expired. Go back,
-   reload the page and try again." Nothing is changed and the refusal is in
-   the audit log.
-4. Exempt, and listed in one place with the reason for each: webhooks
-   (signed by the sender), and the public forms that have no session (the
-   enquiry form, the eligibility check, the complaint form). Keep the
-   Sec-Fetch-Site check as well.
-
-ACCEPT
-- A test walks every route in the router that is not GET or HEAD and fails
-  if one is neither checked nor on the exempt list.
-- Tests: no token, a wrong token, another session's token and a used
-  single-use token are each refused; the right token goes through.
-- Every form in the back office, the portal and the surveyor's workspace
-  still works in the browser (sign in on the test website and use one of
-  each).
-```
-
-
 ## PHASE 161c — The status page says only "OK", and the key file is locked down on the live server
 
  **Model: Opus.** Board item 13462600539. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 4, rows 2 and 4: "Service passwords and API keys are read from a plain text file" (Medium) and "A public status page shows details about how the system is built and which features are switched on" (Low).
@@ -2701,7 +2602,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens, 161c status page and key file, 161d off the draft folders, 161e a fresh copy passes every check, 161f the calculator as code, 161g the legal pages, 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file, 161d off the draft folders, 161e a fresh copy passes every check, 161f the calculator as code, 161g the legal pages, 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161h, before go-live (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

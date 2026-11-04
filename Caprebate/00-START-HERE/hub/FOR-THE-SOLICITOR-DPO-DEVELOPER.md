@@ -534,6 +534,10 @@ What we ask:
 
 For the developer, from the ITRoadway audit's first finding (out-of-date packages with published flaws), now fixed. On the live server install with **`npm ci --omit=dev`** in `Caprebate/09-app/backend`. Never add `--omit=optional`: the native parts of the password package (`@node-rs/argon2`) and the database package (`libsql`) are optional packages, and without them the server cannot start. The test website's document store package (`@vercel/blob`) is no longer part of the live install. `npm run check` now begins with `npm audit` of the live install and fails on any high flaw. Nothing here waits on a signature: it is recorded so the hosting set-up (Phase 161h) and the developer pack use the same command. The full record is in PHASE HISTORY, Phase 161a.
 
+## Recorded 4 November 2026 (Phase 161b) · A security token on every form, and one new table
+
+For the developer, from the ITRoadway audit's third finding (forms protected by browser settings only), now fixed. Every form a signed-in person sends that changes something must carry a token of ours, checked before any route runs; money, staff logins and roles, settings, keys and connections, and holds and data rights also need a single-use token. One new table, `form_tokens_used` (migration 120), keeps each single-use token once accepted: a random number, the login that used it, and when. It holds no personal data beyond the login's id, and rows older than two hours are deleted as new ones arrive. For a data specification (SDP-V2), it is a security record, not client data. Nothing here waits on a signature. The full record is in PHASE HISTORY, Phase 161b.
+
 ## Appendix 1 — what is NOT in this register, and why
 
  **This register covers everything on our project board that waits on a solicitor, the data protection officer, the director or a developer, and nothing else.**
