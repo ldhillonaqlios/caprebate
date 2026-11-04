@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 9 |
+| Ready - Claude can build | 8 |
 | Ready - Lakhbir action | 26 |
 | Built - awaiting sign-off | 142 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 348 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1436,7 +1436,7 @@
 
 ### Phase 161c - The status page says only OK, and the key file is locked down on the live server (audit 2 Nov 2026)
 
-`13462600539` · **Ready - Claude can build** · owner Claude
+`13462600539` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro.localdomain (the Mac copy)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
