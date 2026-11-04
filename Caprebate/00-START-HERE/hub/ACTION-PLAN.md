@@ -1071,7 +1071,1045 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161 — Sweep and stress-test (the recurring one, always last)
+## PHASE 161a — The package flaws: update the packages, and keep the test-website package out of the live build
+
+ **Model: Opus.** Board item 13462588597. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 4, row 1 (High): "Some third-party packages are out of date and have published security flaws. Update them, and remove the one package that is only needed for the test website."
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW (checked 4 Nov 2026): npm audit --package-lock-only in
+Caprebate/09-app/backend reports 5 HIGH: undici 4.0.0-6.29.0 and zod <4.6.6,
+both reached only through @vercel/blob -> @vercel/oidc -> @vercel/cli-config.
+@vercel/blob is used in one file, src/web/shared-objectstore.ts, for the test
+website's survey photos. The root package.json (what Vercel installs) pins
+the same packages plus gsap.
+
+BUILD
+1. Update every dependency, in both package.json files, to its current
+   version inside its major; read each changelog for breaking notes. Re-run
+   all four suites.
+2. Keep @vercel/blob for the test website only: move it to
+   optionalDependencies and load it with a dynamic import() only when the
+   test website's switch is on. Anywhere else the object store uses the
+   store on disk (or the one Phase 161h chooses, behind the same interface).
+   The live install is npm ci --omit=dev --omit=optional, and it must not
+   contain @vercel/blob or anything it brings.
+3. Add npm audit --omit=dev --omit=optional --audit-level=high to
+   npm run check, so a new flaw turns the check red.
+
+ACCEPT
+- npm audit --omit=dev --omit=optional reports 0 high and 0 critical, in
+  both the backend and the root.
+- The test website still stores a survey photo in Blob (send one and see it
+  arrive); a run without the switch stores it on disk, and a test shows
+  which store each case picks.
+- All four suites pass as before (the 7 known failures of 160n aside, which
+  161e fixes).
+```
+
+
+## PHASE 161b — A security token on every form that changes something, as well as the browser check
+
+ **Model: Opus.** Board item 13462572170. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 4, row 3 (Medium): "Forms are protected by browser settings only, with no extra check on sensitive actions such as payments and admin changes. Add a one-time security token to those forms."
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: src/web/router.ts ~328-333 (Phase 160e) refuses any
+POST, PUT, PATCH or DELETE whose Sec-Fetch-Site is "cross-site", and the
+session cookie is SameSite (Lax in router.ts ~151, Strict in auth.ts). A
+browser that sends no Sec-Fetch-Site gets through on SameSite alone.
+
+BUILD
+1. A form token tied to the session: made at sign-in, made again whenever
+   the session rotates (privilege change), kept server side, put in a hidden
+   field by the page helper so no page can forget it, and checked BEFORE
+   any handler runs. The JSON API takes it in a header.
+2. Single-use tokens for the most sensitive actions: payments and refunds,
+   role and staff-account changes, settings and switches, key and
+   connection changes, data export and deletion. A used one is refused.
+3. A refused form gets a plain page: "This form has expired. Go back,
+   reload the page and try again." Nothing is changed and the refusal is in
+   the audit log.
+4. Exempt, and listed in one place with the reason for each: webhooks
+   (signed by the sender), and the public forms that have no session (the
+   enquiry form, the eligibility check, the complaint form). Keep the
+   Sec-Fetch-Site check as well.
+
+ACCEPT
+- A test walks every route in the router that is not GET or HEAD and fails
+  if one is neither checked nor on the exempt list.
+- Tests: no token, a wrong token, another session's token and a used
+  single-use token are each refused; the right token goes through.
+- Every form in the back office, the portal and the surveyor's workspace
+  still works in the browser (sign in on the test website and use one of
+  each).
+```
+
+
+## PHASE 161c — The status page says only "OK", and the key file is locked down on the live server
+
+ **Model: Opus.** Board item 13462600539. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 4, rows 2 and 4: "Service passwords and API keys are read from a plain text file" (Medium) and "A public status page shows details about how the system is built and which features are switched on" (Low).
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: src/server.ts ~238 answers GET /api/health with
+{ ok: true, stubs: STUBS }, which tells anyone which outside services are
+switched on. The keys are read from the file named by CAPREBATE_SECRETS,
+else ~/.caprebate-secrets.env (src/secrets.ts); a file inside the
+repository is already refused, each key goes only to its own connector, and
+no key is ever printed.
+
+BUILD
+1. /api/health answers {"ok":true} and nothing else (still checking the
+   database can be reached; a failure answers 503 {"ok":false}). The
+   switch list moves to a staff-only page (the Connections page of Phase
+   156e, or Admin > Settings), for admins only.
+2. A real key store on the live server: read the key file from systemd's
+   credentials folder ($CREDENTIALS_DIRECTORY/caprebate-secrets, set with
+   LoadCredential=) when it is there; that keeps the file readable by root
+   only and hands it to the app at start. The present file stays for the
+   Mac and the test website.
+3. On the live server (the production setting), refuse to start, with a
+   plain message naming the file and what is wrong, if the key file can be
+   read or written by anyone but the app's own user (mode wider than 600)
+   or is owned by another user. Elsewhere this is a warning, not a stop.
+4. Write the set-up steps for the developer into the handover (Phase 146g,
+   item 13104163090) and into the 161h runbook.
+
+ACCEPT
+- Tests: the health body is exactly {"ok":true}; the switch list needs an
+  admin; the credentials folder is read first; a key file with mode 644 stops
+  a production start and only warns elsewhere; no key is printed (the
+  existing tests still pass).
+```
+
+
+## PHASE 161d — Live code no longer loads anything from the draft folders
+
+ **Model: Opus.** Board item 13462566355. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 5: "Live code depends on draft folders. Parts of the system load code from work-in-progress folders."
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW (checked 4 Nov 2026): ten live files import from
+Caprebate/04-phase-work/: phase3/caprebate-anchor-quarantine.ts (src/payload.ts,
+src/roles.ts, src/audit.ts), phase3/caprebate-source-register.ts
+(src/connectors/price-paid.ts, inspire-store.ts), phase3/caprebate-name-
+exclusion.ts (src/stubs/registers.ts), phase3/caprebate-document-pipeline.ts
+(src/connectors/claude.ts) and phase9/caprebate-boundary-import.ts
+(src/connectors/boundary-test-lookup.ts, title-boundary.ts, inspire.ts).
+Grep again before you start: there may be more (readFileSync, import(),
+api/index.mjs, the site build).
+
+BUILD
+1. git mv each module the app uses (and anything it imports in turn) into
+   Caprebate/09-app/backend/src/ (a folder named by what it does, for
+   example src/registers/, ready for the 161i regroup), with its tests into
+   backend/test/. Keep git history. Leave a one-line note in the old place
+   saying where it went; the phase3 and phase9 suites keep running.
+2. A check in npm run check: no file under backend/src or api/ imports or
+   reads anything outside Caprebate/09-app (the engine package is inside it).
+3. The test website's bundle (.vercelignore, vercel.json) still holds what
+   it needs: deploy the branch preview and use it.
+
+ACCEPT
+- The new check passes, and fails on a planted import from 04-phase-work.
+- All four suites pass as before; the test website's preview works.
+- Nothing in 04-phase-work is deleted: it is evidence the standing
+  instruction points at.
+```
+
+
+## PHASE 161e — A fresh copy of the project passes every check, on GitHub as well as the Mac
+
+ **Model: Opus.** Board item 13462566368. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 5: "The project is not complete on its own. Some checks need files that were left out, so a fresh copy cannot be fully tested."
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: the back end has 7 known failures since Phase 160n:
+six tests read files kept out of git (01-rulebooks/README.md, the brand
+logo, the monday SOP export and others; the sweep's note of 3 Oct names
+Disposal, invoice-fraud SOP, rulebooks, logo and phase144a), and one passes
+only when run alone. There is no CI: .github/workflows does not exist.
+There are about 1,870 .bak copies of code files under 09-app (src and test).
+
+BUILD
+1. For each failing test, find what it reads that git does not hold. If it
+   is ours and holds no client data and no keys, commit it (the .gitignore
+   is an allow-list: add the narrowest line). If it is not ours to publish,
+   give the test a small checked-in fixture. A test that truly needs
+   OneDrive-only material skips on a fresh copy and says why in its output;
+   never a silent skip.
+2. Fix the test that fails only alongside the others (shared state, a port,
+   a clock or a temp folder); never by retrying it.
+3. A GitHub Actions workflow on every pull request: fresh checkout, Node 24,
+   npm ci, npm run check and all four suites. Lakhbir merges only when it is
+   green.
+4. The .bak files: ASK LAKHBIR IN THE CHAT FIRST (it deletes files). With his
+   yes, git rm every *.bak* under 09-app; git history keeps every one. Then
+   change the rule that makes them for code (code is backed up by commits;
+   documents keep AMENDMENT 2's cp rule), and add a check that fails on a
+   new .bak file under 09-app.
+
+ACCEPT
+- A clone into an empty temp folder passes all four suites with 0 failures,
+  and so does the workflow on the pull request.
+- The one test that failed alongside the others passes in ten runs in a
+  row of the whole suite.
+```
+
+
+## PHASE 161f — The claim calculator is edited as normal code, and the website takes it from there
+
+ **Model: Opus.** Board item 13462576351. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 5: "The claim calculator is stored in an unusual way. It is copied out of one very large web page file and can't be edited directly, which makes it easy to change the wrong file by mistake."
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: Caprebate/09-app/engine is extracted from
+"Caprebate site.html" (1.2 MB, at the repository root) by
+engine/tools/extract.cjs and checked by verify-extraction.cjs, as
+engine/EXTRACTION.md describes. So the page is the source and the engine
+is the copy.
+
+BUILD
+1. Turn it round: engine/src becomes the only source of the calculator.
+   The site build (tools/site-from-design.mjs, or whatever builds the page
+   now: read it first) takes the built engine (engine/dist) into the page,
+   never the other way.
+2. Retire extract.cjs; verify-extraction.cjs becomes a test that the
+   calculator in the served page is exactly the built engine.
+3. Say it where people look: EXTRACTION.md, the engine's README, the
+   repository README and COORDINATES: "change the calculator in
+   engine/src; the page is built from it".
+
+ACCEPT
+- Every figure is the same before and after: the engine's own tests, and
+  the stress harness (04-phase-work/stress-2026-10-09/engine, node
+  harness.ts) gives the same output, byte for byte.
+- The eligibility check on the test website gives the same answers for
+  the harness's cases.
+- A planted edit to the calculator inside the page turns a test red.
+```
+
+
+## PHASE 161g — The legal pages ready for the live website: one cookie choice, every cookie and every outside service listed, and a review pack for the solicitor and DPO
+
+ **Model: Opus.** Board item 13462566195. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Lakhbir, 4 Nov 2026: "we also need to consider privacy policy, T&C, cookies ect", so the platform can go to production.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: drafts, written by Claude and not yet checked by a
+solicitor or DPO. The privacy notice and public notices, with a complaint
+form, are Phases 160f and 160g (src/web/notices-site.ts). The website terms
+of use, cookie policy, acceptable use, accessibility statement, disclaimer
+and the cookie banner (cookie cb_cookies, "Accept all" and "Reject
+non-essential", 12 months) are Phase 160h (src/web/legal-pages.ts). All of
+them are served on the TEST WEBSITE ONLY (the "notices" switch, which only
+api/index.mjs passes); anywhere else /privacy says they are being prepared.
+LEGAL_GAPS lists what nobody has given us: the ICO registration number and
+a telephone number. There are TWO cookie choices: the banner, and
+SITE_CONSENT inside "Caprebate site.html", which asks before Google
+Analytics loads (Phase 146f, src/analytics.ts). The engagement letter, which
+is the client's terms, is in 06-commercial-and-governance as TEST DEFAULTS,
+not agreed. Board items that touch this: 12552682424 (ICO registration,
+Lakhbir), 12946752268 (public notices), 12552682456 (governance policies),
+13025228235 (the referral opt-in wording), 12552691720 (analytics, parked).
+
+BUILD
+1. ONE cookie choice: the banner. Google Analytics loads only when
+   optionalAllowed says yes; SITE_CONSENT reads cb_cookies instead of asking
+   again. "Reject" is as easy as "Accept" (same size, same place), and the
+   cookie policy page lets a visitor change their answer.
+2. The cookie list is tested, not typed: a test collects every cookie name
+   the app can set (and any storage key the site page writes) and fails
+   unless each is in the cookie policy with its purpose and how long it is
+   kept, and fails on a policy line for a cookie that no longer exists.
+3. The privacy notice names every outside service that receives personal
+   data, from the connectors and SECRET_KEYS owners (identity checks,
+   Zoom, WhatsApp, email, Claude/Anthropic, the database host, the hosting
+   company, Google Analytics, Companies House and the rest): what is sent,
+   why, and where it is held. Where it is held outside the UK, the transfer
+   basis is written "to be confirmed by our DPO", never guessed. A test ties
+   the list to SECRET_KEYS, so a new connector cannot be added without a
+   line.
+4. The client's terms: the portal's sign-up and the engagement letter
+   signing screen link to the website terms and the privacy notice; the
+   engagement letter goes into the review pack below.
+5. Ready for the live website, but not switched on: the legal pages are
+   served wherever a new "legal" setting is on (separate from the test
+   website's "notices"), and each page shows the "Draft" line until an
+   approval is recorded (who approved it, and the date, kept in the
+   database and the audit log). With no approval nothing goes live.
+6. The review pack: ONE Word document in 06-commercial-and-governance with
+   every page's text, the cookie list, the list of outside services, the
+   gaps, and the questions for each reviewer. Add it to FOR THE SOLICITOR,
+   THE DPO AND THE DEVELOPER and to the Word questions document
+   (AMENDMENT 2). For Lakhbir (his items, not built): register with the ICO
+   (12552682424), choose the solicitor and the DPO who will review it, and
+   say whether there will be a phone number.
+
+ACCEPT
+- Tests for items 1 to 5; a visitor who rejects gets no Analytics request
+  (check the network in the browser pane on the test website).
+- With "legal" off, the live start shows what it shows today; with it on
+  and no approval, every page carries the Draft line.
+- The review pack is in OneDrive and its register and question rows exist.
+```
+
+
+## PHASE 161h — The production hosting kit for the Hostinger VPS, and the runbook for the developer
+
+ **Model: Opus.** Board item 13462576350. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Lakhbir, 29 Oct 2026: Cap Rebate is hosted on its own Hostinger VPS, with no WordPress; ITRoadway test it, secure it and host it. The audit (2 Nov 2026) agrees: keep it as a custom application.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: the test website runs on Vercel (api/index.mjs,
+vercel.json), the database is Turso (libsql) and survey photos are in
+Vercel Blob. The handover of every account, key and switch is Phase 146g
+(item 13104163090). The developer pack of 29 Oct 2026 is
+~/Downloads/Cap-Rebate-developer-pack.zip. Open items: the backup question
+for the host (12949133180) and cyber security (12552681921).
+
+BUILD
+1. A live start that is not the test website: no demo, seed or test
+   switches; the 161c key store; the 161g "legal" setting; real email.
+2. Where data lives on the VPS. Write the choice as a question in the Word
+   questions document with our recommendation, and build our
+   recommendation behind the existing interfaces, chosen by a setting: the
+   database (an SQLite file on the VPS, or keep Turso) and the photos and
+   documents (on the VPS's disk, or a UK object store). Client documents
+   are personal data: say where each copy and each backup is held.
+3. Every scheduled job (sending email, reading the mailbox and the rest:
+   list them from the code) runs on the server, not on a visit, as a
+   systemd timer or the app's own scheduler, with a log line each run.
+4. The deploy kit in Caprebate/09-app/deploy/: a systemd unit (its own user,
+   the key file as a credential), a reverse proxy with TLS for
+   caprebate.co.uk (Caddy or nginx), the firewall rules, Node 24, log
+   rotation, nightly encrypted backups of the database and the files to a
+   second place, a restore script, and an uptime check on /api/health.
+5. The runbook for the developer: set up, deploy an update, roll back,
+   restore a backup, renew TLS, rotate a key. Update the 146g handover to
+   point at it.
+6. The go-live checklist: DNS, email sending records (SPF, DKIM, DMARC),
+   the switches that stay off, the legal approval, and "run the sweep
+   (Phase 162) before the first client".
+
+ACCEPT
+- The kit starts the app in a clean Linux container (Ubuntu, Node 24) from
+  a fresh clone with an example key file: /api/health is {"ok":true}, a
+  backup is made, the database is wiped and the restore brings it back.
+- All four suites pass.
+- NEXT: run the sweep (Phase 162) now, out of order, before go-live; it
+  renumbers itself and stays last. Phases 161i to 161k follow after go-live.
+```
+
+
+## PHASE 161i — Regroup 1: the core, the outside services, shared parts, and the CSS as real files
+
+ **Model: Opus.** Board item 13462572168. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: "The code is organised by when it was built, not by what it does. I suggest regrouping it by business area." This is the first of three moves.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+RULES FOR ALL THREE REGROUP PHASES (161i, 161j, 161k), from the audit's
+section 6.2 ("each module holds its own routes, page files, permissions and
+database queries", for example crm/leads.routes.ts, leads.pages.ts,
+leads.repo.ts and leads.permissions.ts):
+- Moves, not rewrites. git mv to keep history; nothing a person sees
+  changes. The full suites give the same pass list before and after.
+- A test lists every route (method and path, in matching order) before the
+  first move; after each move the list must be identical.
+- The dated notes in the comments of every file you move go to
+  docs/CHANGELOG.md (date, phase, what was decided and why), leaving short
+  comments that say why the code is as it is. Names of people stay out of
+  the code.
+- Tests move with their code and are named by feature; docs/TEST-NAMES.md
+  maps each old name to the new one, so PHASE-HISTORY's references still
+  resolve. The drift checker and the register checks that count test files
+  still pass.
+- One area at a time, one commit per area, so any move can be undone alone.
+
+BUILD (in Caprebate/09-app/backend/src/)
+1. core/: server, router shell, config, database, login, permissions
+   (authz.ts), audit log, secrets, security headers.
+2. integrations/: everything in connectors/ and stubs/, and the real email
+   sender out of stubs/ (the audit names it).
+3. shared/: html.ts, page templates and components, PDF, ZIP, dates.
+4. styles/: the CSS held as text in web/assets.ts (about 1,900 lines) moves
+   into real .css files, served at the same addresses with the same bytes
+   (a test compares them) and the same cache headers.
+
+ACCEPT
+- The route list and the pass list are unchanged; the served CSS is the
+  same, byte for byte; the test website's preview works.
+```
+
+
+## PHASE 161j — Regroup 2: the public site, assessment, portal, CRM and claims as modules, and the router split
+
+ **Model: Opus.** Board item 13462572169. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the second of three moves, and the one that splits src/web/router.ts (about 2,500 lines, every page address).
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+RULES FOR ALL THREE REGROUP PHASES (161i, 161j, 161k), from the audit's
+section 6.2 ("each module holds its own routes, page files, permissions and
+database queries", for example crm/leads.routes.ts, leads.pages.ts,
+leads.repo.ts and leads.permissions.ts):
+- Moves, not rewrites. git mv to keep history; nothing a person sees
+  changes. The full suites give the same pass list before and after.
+- A test lists every route (method and path, in matching order) before the
+  first move; after each move the list must be identical.
+- The dated notes in the comments of every file you move go to
+  docs/CHANGELOG.md (date, phase, what was decided and why), leaving short
+  comments that say why the code is as it is. Names of people stay out of
+  the code.
+- Tests move with their code and are named by feature; docs/TEST-NAMES.md
+  maps each old name to the new one, so PHASE-HISTORY's references still
+  resolve. The drift checker and the register checks that count test files
+  still pass.
+- One area at a time, one commit per area, so any move can be undone alone.
+
+BUILD (in Caprebate/09-app/backend/src/modules/)
+1. public-site/ (home, sector pages, enquiry form), assessment/ (eligibility
+   check, sign-up), portal/ (client dashboard, letter signing, uploads,
+   booking), crm/ (organisations, leads, pipeline, tasks, automation,
+   templates, introducers), claims/ (claim record, claim facts, documents,
+   research), from the files now in src/web/.
+2. Each module has its own routes file; router.ts keeps only the shell
+   that asks each module in the same order as today.
+3. Big files split by what they do as they move (crm.ts about 2,200 lines,
+   documents.ts about 2,000), into the routes / pages / repo / permissions
+   pattern.
+
+ACCEPT
+- The route list and the pass list are unchanged; sign in on the preview as
+  staff and as a client and use each module once.
+```
+
+
+## PHASE 161k — Regroup 3: survey, finance, compliance and admin as modules, tests by feature, and the specs out of the code
+
+ **Model: Opus.** Board item 13462572225. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the last of three moves. After it, src/web/ is empty and the folder map in the audit's section 6.2 is true.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+RULES FOR ALL THREE REGROUP PHASES (161i, 161j, 161k), from the audit's
+section 6.2 ("each module holds its own routes, page files, permissions and
+database queries", for example crm/leads.routes.ts, leads.pages.ts,
+leads.repo.ts and leads.permissions.ts):
+- Moves, not rewrites. git mv to keep history; nothing a person sees
+  changes. The full suites give the same pass list before and after.
+- A test lists every route (method and path, in matching order) before the
+  first move; after each move the list must be identical.
+- The dated notes in the comments of every file you move go to
+  docs/CHANGELOG.md (date, phase, what was decided and why), leaving short
+  comments that say why the code is as it is. Names of people stay out of
+  the code.
+- Tests move with their code and are named by feature; docs/TEST-NAMES.md
+  maps each old name to the new one, so PHASE-HISTORY's references still
+  resolve. The drift checker and the register checks that count test files
+  still pass.
+- One area at a time, one commit per area, so any move can be undone alone.
+
+BUILD
+1. modules/survey/ (surveyor workspace, survey pack, report, photos, video),
+   finance/ (invoices, VAT, billing, filing), compliance/ (identity checks,
+   data protection, breach log, retention, complaints), admin/ (users,
+   roles, settings, lists).
+2. backend/test/ in the same folders as src/, named by feature (the map in
+   docs/TEST-NAMES.md).
+3. Specs and guides that sit beside the code move to docs/; a short README
+   in backend/ maps every folder in a line each.
+4. Tell the developer (ITRoadway) the new map: add it to the 161h runbook
+   and the 146g handover.
+
+ACCEPT
+- src/web/ is gone; the route list and the pass list are unchanged; every
+  check that names a path still passes; the preview works.
+```
+
+## PHASE 162 — Sweep and stress-test (the recurring one, always last)
 
 
  **Model: Opus.** **This is the one section that is never deleted.** It renumbers itself forward each time it runs and stays at the bottom of this list.
@@ -1156,7 +2194,10 @@ THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, 
   (158b, 158c, 158d) from their runs of the invented client, and the Phase 159
   sweep (9 Oct 2026) inserted none; the stress test of 9 Oct wrote 159a-159j,
   which wrote 159k and 159l, and the Phase 160 sweep (10 Oct 2026) inserted
-  none, so this sweep's heading is now PHASE 161.
+  none, so this sweep's heading became PHASE 161; Phases 160a to 160p then ran
+  above it without moving it, and on 4 Nov 2026 the planning from the ITRoadway
+  technical audit inserted 161a to 161k, so this sweep's heading is now PHASE 162.
+  RUN IT OUT OF ORDER once, straight after 161h and before go-live (161h says so).
 ADDED 10 OCT 2026 BY THE PHASE 160 SWEEP:
   A CLOSED QUESTION LEAVES ITS OLD WORDS BEHIND. Word question 218 (BCIS) closed
     on 10 Oct, but the source register's licence still refused BCIS in every
@@ -1733,7 +2774,8 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phase 161 — the sweep, always last (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages, 161b form tokens, 161c status page and key file, 161d off the draft folders, 161e a fresh copy passes every check, 161f the calculator as code, 161g the legal pages, 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161h, before go-live (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 
@@ -1858,6 +2900,8 @@ _ |
  **The surveyor never sees our number first.** Structurally, not by hiding it on screen — our figures are not in the data their session receives at all. It is the only way to measure whether our estimates are any good.
 
  **Three first-year reliefs are named and not modelled (Phase 159e, 10 October 2026), because no year they apply to can still be amended.** The super-deduction (130%, company spend from April 2021 to March 2023) needs a contract signed after 3 March 2021, which nothing records; the annual investment allowance limits before 2019 (£200,000 and earlier); and the freeport and investment zone structures allowance (10% a year). A company's amendment window for any of those years closed by March 2025, so a part dated then is W2 (writing-down allowances only) or W3. The return entries say so on the part. Build them only if a claim with such a year still open ever appears.
+
+ **The home-made PDF, ZIP, email and page tools stay (4 November 2026, board item 13462588610).** The ITRoadway audit (2 Nov 2026, section 5) suggests well-known packages instead. Every outside package is code we do not control and can bring published flaws (Phase 161a found five, all through one package), and ours are tested. Revisit when one of them needs a fix it cannot easily take, or when a developer takes over day-to-day upkeep.
 
  **`.bak-`**** snapshots keep their old filenames.** A dated snapshot of a file that was called something else on the day it was taken should say so.
 
