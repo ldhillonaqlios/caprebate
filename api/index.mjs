@@ -219,11 +219,26 @@ export function sharedDocumentStore(env, lasting) {
     : { shared: true, token, why: 'uploaded documents are kept in the private document store, signed in by its token' };
 }
 
-/** The createApp options for the shared store, or none. @vercel/blob is loaded only here, only when it is used. */
-export async function sharedDocumentOptions(docs, lasting, sdk) {
+/**
+ * The createApp options for the shared store, or none. @vercel/blob is loaded only here, only when it is used.
+ * PHASE 161a, 4 November 2026 (the ITRoadway audit): @vercel/blob is an OPTIONAL package, so a live install
+ * (npm ci --omit=dev --omit=optional) leaves it out. If a store is set but the package is not installed, the
+ * documents stay on this copy's temporary disk, as with no store, and the log says why (`docs` is changed to say
+ * so). Any other fault still stops the start. `makeClient` is for the tests.
+ */
+export async function sharedDocumentOptions(docs, lasting, sdk, makeClient) {
   if (!docs.shared || lasting.authToken === undefined) return {};
   const { vercelBlobClient, uploadLinkSecret } = await import('../Caprebate/09-app/backend/src/web/shared-objectstore.ts');
-  const client = await vercelBlobClient(docs.token === undefined ? {} : { token: docs.token }, sdk);
+  let client;
+  try {
+    client = await (makeClient ?? vercelBlobClient)(docs.token === undefined ? {} : { token: docs.token }, sdk);
+  } catch (e) {
+    if (e?.code !== 'ERR_MODULE_NOT_FOUND' || !String(e?.message).includes('@vercel/blob')) throw e;
+    docs.shared = false;
+    delete docs.token;
+    docs.why = 'a document store is set but its package (@vercel/blob) is not installed, so uploaded documents stay on this copy\'s temporary disk';
+    return {};
+  }
   return { sharedDocuments: { client, linkSecret: uploadLinkSecret(lasting.authToken) } };
 }
 

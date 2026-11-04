@@ -43,13 +43,15 @@ that work and check every claim in it against the code and the tests.
 
 ```bash
 cd 09-app/backend
-npm install          # one runtime dependency: @node-rs/argon2 (prebuilt, no compiler)
+npm install          # for development and the tests (the runtime needs @node-rs/argon2 and libsql, both prebuilt)
+                     # ON THE LIVE SERVER: npm ci --omit=dev (Phase 161a). Never --omit=optional: the native
+                     # parts of argon2 and libsql are optional packages, and the server cannot start without them.
 npm run migrate      # creates caprebate.db from migrations/
 npm run seed         # invented data + one user per role. Refuses without CAPREBATE_ALLOW_SEED=1
 npm run verify-audit # recomputes the audit log's hash chain from caprebate.db; writes nothing; exit 1 if broken
 npm start            # http://localhost:8103
 npm run start:demo   # in-memory, seeded — for looking at the screens
-npm run check        # lint:sql, typecheck, the whole test suite
+npm run check        # audit:live (npm audit of the live install, high and above), lint:sql, typecheck, the whole test suite
 ```
 
 Node 24 or later. `node:sqlite` and TypeScript type-stripping are both used
@@ -3576,7 +3578,7 @@ the audit log at once could collide on its next number, and lose a request.
 
 - **What Vercel offers (read in its documentation on 28 September 2026, not from memory).** Vercel Blob, with **private
   stores**: every read and write needs a token; an object's address (`https://<store>.private.blob.vercel-storage.com/…`)
-  "is not publicly accessible"; the `@vercel/blob` SDK (2.3 or later for private; 2.8.0 is installed) signs in by the
+  "is not publicly accessible"; the `@vercel/blob` SDK (2.3 or later for private; 2.8.2 is installed, for the tests and the test website only: Phase 161a) signs in by the
   project's OIDC token with `BLOB_STORE_ID`, or by `BLOB_READ_WRITE_TOKEN`. `get` gives null for a missing object,
   `head` throws `BlobNotFoundError`, `del` of a missing object is not an error, and a deleted object "may take up to
   one minute" to leave Blob's cache.
@@ -3596,7 +3598,9 @@ the audit log at once could collide on its next number, and lose a request.
 - **SWITCHED OFF.** `api/index.mjs` (`sharedDocumentStore`, `sharedDocumentOptions`, `documentsWhy`) uses it only when
   the lasting database is **in use** (it opened; a copy that fell back to memory keeps the folder) **and** a Blob
   setting is present: `BLOB_STORE_ID`, or a read-write token (`CAPREBATE_BLOB_TOKEN`, else `BLOB_READ_WRITE_TOKEN`).
-  `openLasting` hands the store to the lasting database only, never to memory. `@vercel/blob` is loaded only then. The
+  `openLasting` hands the store to the lasting database only, never to memory. `@vercel/blob` is loaded only then. Phase 161a (4 Nov 2026): the back end lists it as a package for the tests only,
+  so the live install (`npm ci --omit=dev`) has none of it; the root `package.json`, which builds only the test
+  website, keeps it; and a store set with the package missing keeps the folder and says why. The
   function log says which it chose, never a token or the store's id. The one page at §3.2 carries the row.
 - **The audit log.** `AuditLog.append` read the last hash and then, in a second statement, the next number. Now one
   statement reads both from the same row, and a clash on `seq` (another copy wrote first) is read again and retried, up
