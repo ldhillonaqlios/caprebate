@@ -33,7 +33,9 @@
  *
  * THE BLOB CLIENT IS A PORT, LIKE THE STORE. `BlobClient` is the four things this store asks of Blob, in our words.
  * `vercelBlobClient` is the real one: @vercel/blob, loaded only when the store is switched on, so the memory and folder
- * modes never load it. The tests hand in a client that answers as Blob's documented SDK does, with no network.
+ * modes never load it. PHASE 161a, 4 Nov 2026 (the ITRoadway audit): the back end lists @vercel/blob for the tests only,
+ * so the live install (npm ci --omit=dev) does not contain it; the root package.json, which builds only the test
+ * website, keeps it; and api/index.mjs keeps the folder, and says why, if a store is set but the package is missing. The tests hand in a client that answers as Blob's documented SDK does, with no network.
  */
 
 import { hkdfSync } from 'node:crypto';

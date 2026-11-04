@@ -29,13 +29,15 @@ See **The back office** below.
 ## From a clean checkout
 
 ```bash
-npm install          # one runtime dependency: @node-rs/argon2 (prebuilt, no compiler)
+npm install          # for development and the tests (the runtime needs @node-rs/argon2 and libsql, both prebuilt)
+                     # ON THE LIVE SERVER: npm ci --omit=dev (Phase 161a). Never --omit=optional: the native
+                     # parts of argon2 and libsql are optional packages, and the server cannot start without them.
 npm run migrate      # creates caprebate.db from migrations/ (007 rebuilds `businesses`)
 npm run seed         # invented data + one user per role. Refuses without CAPREBATE_ALLOW_SEED=1
 npm run verify-audit # recomputes the audit log's hash chain from caprebate.db; writes nothing; exit 1 if broken
 npm start            # http://localhost:8103
 npm run start:demo   # in-memory, seeded, http://localhost:8105 — for looking at the screens
-npm run check        # lint:sql, typecheck, the whole suite — run it, do not quote it
+npm run check        # audit:live, lint:sql, typecheck, the whole suite — run it, do not quote it
 ```
 
 **No hidden state.** Everything the application needs is passed to `buildApp` —

@@ -13,21 +13,27 @@
     "test": "node --test test/*.test.ts",
     "typecheck": "node tools/typecheck.cjs",
     "lint:sql": "node tools/lint-sql.cjs",
-    "check": "npm run lint:sql && npm run typecheck && npm run test",
+    "audit:live": "npm audit --omit=dev --audit-level=high",
+    "check": "npm run audit:live && npm run lint:sql && npm run typecheck && npm run test",
     "start:demo": "node tools/demo-server.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.127.0",
-    "@node-rs/argon2": "^2.0.0",
-    "@vercel/blob": "^2.8.0",
+    "@node-rs/argon2": "^2.2.2",
     "libsql": "^0.5.29",
     "uqr": "^0.1.3"
   },
   "devDependencies": {
-    "@types/node": "^26.5.0",
+    "@types/node": "^26.6.5",
+    "@vercel/blob": "^2.8.2",
     "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=24"
+  },
+  "overrides": {
+    "@vercel/cli-config": {
+      "zod": "4.6.6"
+    }
   }
 }
