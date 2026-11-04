@@ -37,7 +37,7 @@ import { clientOwners } from '../src/web/documents.ts';
 import { ENQUIRY_RETENTION, enquiryRetentionMissing, sweepEnquiries, type EnquiryRetention } from '../src/web/enquiry-retention.ts';
 import { ADDRESS_KEEP_UNTIL } from '../src/connectors/address-lookup.ts';
 import { IDENTITY_CHECK } from '../src/connectors/identity-check.ts';
-import { LICENCES, SOURCES } from '../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { LICENCES, SOURCES } from '../src/registers/caprebate-source-register.ts';
 import { actor, testApp } from './helpers.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;

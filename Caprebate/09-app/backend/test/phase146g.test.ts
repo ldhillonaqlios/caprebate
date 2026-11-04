@@ -27,7 +27,7 @@ import {
   beginUpload, acceptClientBytes, finishUpload, readerFor,
   type ReadingOutcome, type UploadDeps, type UploadReading,
 } from '../src/web/uploads.ts';
-import { specFor, type DocType } from '../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
+import { specFor, type DocType } from '../src/documents/caprebate-document-pipeline.ts';
 import { randomUUID } from 'node:crypto';
 import type { Actor } from '../src/authz.ts';
 import { outboxTransport } from '../src/stubs/email.ts';

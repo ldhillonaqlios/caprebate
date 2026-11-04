@@ -242,7 +242,7 @@ export const ECONOMICS_SECTOR_OF: Readonly<Record<string, string>> = Object.free
 
 const JOB_ECONOMICS_COSTING: GateCosting | null = (() => {
   try {
-    const m = createRequire(import.meta.url)('../../../../04-phase-work/phase9/caprebate-job-economics.cjs') as { costingForGate?: unknown };
+    const m = createRequire(import.meta.url)('../costing/caprebate-job-economics.cjs') as { costingForGate?: unknown };
     const f = m.costingForGate;
     if (typeof f !== 'function') return null;
     const costing = f as GateCosting;

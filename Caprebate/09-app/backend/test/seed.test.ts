@@ -9,7 +9,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { seed } from '../src/seed.ts';
 import { ingestRegisterRecord, planResearch, gateStatus } from '../src/stubs/registers.ts';
-import { NameExclusionError, assertNoUnauthorisedName } from '../../../04-phase-work/phase3/caprebate-name-exclusion.ts';
+import { NameExclusionError, assertNoUnauthorisedName } from '../src/registers/caprebate-name-exclusion.ts';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';

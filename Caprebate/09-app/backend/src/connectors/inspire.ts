@@ -47,7 +47,7 @@ import {
   type BoundaryFetchPlanItem,
   type InspireIndexPolygonRecord,
   type RawBoundaryPayload,
-} from '../../../../04-phase-work/phase9/caprebate-boundary-import.ts';
+} from '../registers/caprebate-boundary-import.ts';
 import { callOutside, type CallDeps, type GateSnapshot } from './http.ts';
 import { INSPIRE_AUTHORITY_FILES } from './inspire-authorities.ts';
 import { inspireReleaseOf, type InspireFileStore } from './inspire-store.ts';

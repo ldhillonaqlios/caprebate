@@ -17,7 +17,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   AnchorLog, AnchorQuarantine, type EstimateOutputs,
-} from '../../../04-phase-work/phase3/caprebate-anchor-quarantine.ts';
+} from '../src/survey/caprebate-anchor-quarantine.ts';
 import { assembleSurveyorPayload, quarantinedKeysAndValues, isQuarantinedRole } from '../src/payload.ts';
 import { APP_ROLES } from '../src/roles.ts';
 import { actor, scalars, keys } from './helpers.ts';

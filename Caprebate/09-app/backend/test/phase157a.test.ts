@@ -21,11 +21,11 @@ import { snapshotOf } from '../src/web/pack-approve.ts';
 import { legalView } from '../src/web/pack-legal.ts';
 import { reportHtml, reportModel } from '../src/web/survey-report.ts';
 import { costModelTestSystem, indexReading, insuranceReading, prelimsReading, rateFlagReading, COST_MODEL_TEST_OPT_IN } from '../src/web/pack-cost-model.ts';
-import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../../../04-phase-work/phase3/caprebate-surveyor-crm.ts';
+import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../src/survey/caprebate-surveyor-crm.ts';
 import { raw } from '../src/web/html.ts';
 import { actor } from './helpers.ts';
 
-const CM = createRequire(import.meta.url)('../../../04-phase-work/phase9/caprebate-cost-model.cjs') as {
+const CM = createRequire(import.meta.url)('../src/costing/caprebate-cost-model.cjs') as {
   CB_P9_GATES: Record<string, boolean>; CB_BCIS_INDEX: { loaded: boolean };
 };
 

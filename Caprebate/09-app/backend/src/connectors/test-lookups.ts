@@ -60,7 +60,7 @@ import {
 } from './boundary-test-lookup.ts';
 import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
 import { readPayloadWithClaude, SERVICE_ID as CLAUDE_SERVICE_ID } from './claude.ts';
-import { sanitise, type Segment } from '../../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
+import { sanitise, type Segment } from '../documents/caprebate-document-pipeline.ts';
 
 /** PHASE 156a: the Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */
 export const OS_TEST_SOURCE = OS_SERVICE_ID;

@@ -35,7 +35,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const M = require("./caprebate-cost-model.cjs");
+const M = require("../src/costing/caprebate-cost-model.cjs");
 
 const near = (a, b, tol) => Math.abs(a - b) < (tol === undefined ? 1e-9 : tol);
 const codeOf = fn => { try { fn(); return "NO_THROW"; } catch (e) { return e.code || e.name; } };
@@ -768,7 +768,7 @@ test("D10 the once-only guard is a live guard — a mutant that re-applies per e
   const os = require("node:os");
   const path = require("node:path");
 
-  const src = fs.readFileSync(require.resolve("./caprebate-cost-model.cjs"), "utf8");
+  const src = fs.readFileSync(require.resolve("../src/costing/caprebate-cost-model.cjs"), "utf8");
   const CORRECT = "const cost = qty * rate * dep.factor * prelims.factor * index;";
   const MUTANT  = "const cost = qty * rate * loc.factor * dep.factor * prelims.factor * index;";
   assert.equal(src.split(CORRECT).length - 1, 1,

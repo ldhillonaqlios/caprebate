@@ -19,7 +19,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { LICENCES } from '../registers/caprebate-source-register.ts';
 import { INSPIRE_AUTHORITY_FILES } from './inspire-authorities.ts';
 
 /** The licence row's limit, read from the register rather than restated. Refuses to load if the row is missing. */

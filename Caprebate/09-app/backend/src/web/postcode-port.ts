@@ -38,7 +38,7 @@ export {
   attributionFor,
   tableIsStale,
   ONS_TABLE_MAX_AGE_DAYS,
-} from '../../../../04-phase-work/phase9/caprebate-postcode-authority.ts';
+} from '../postcodes/caprebate-postcode-authority.ts';
 
 export type {
   BillingAuthority,
@@ -46,7 +46,7 @@ export type {
   PostcodeAuthorityTable,
   PostcodeSource,
   ResolverOptions,
-} from '../../../../04-phase-work/phase9/caprebate-postcode-authority.ts';
+} from '../postcodes/caprebate-postcode-authority.ts';
 
 export {
   inMemoryPostcodeStore,
@@ -55,13 +55,13 @@ export {
   freshnessOf,
   ONS_TABLE_EXPIRY_DAYS,
   ONS_TABLE_STALE_FLAG,
-} from '../../../../04-phase-work/phase9/caprebate-postcode-store.ts';
+} from '../postcodes/caprebate-postcode-store.ts';
 
 export type {
   PostcodeStore,
   Freshness,
   SqliteOpen,
-} from '../../../../04-phase-work/phase9/caprebate-postcode-store.ts';
+} from '../postcodes/caprebate-postcode-store.ts';
 
 export {
   resolveServedAuthority,
@@ -71,13 +71,13 @@ export {
   nationOf,
   LocationKeyError,
   LEG_E4_GATE,
-} from '../../../../04-phase-work/phase9/caprebate-location-key.ts';
+} from '../postcodes/caprebate-location-key.ts';
 
 export type {
   ServedSet,
   Nation,
   ResolveDeps,
-} from '../../../../04-phase-work/phase9/caprebate-location-key.ts';
+} from '../postcodes/caprebate-location-key.ts';
 
 export {
   PRICE_BOOK_REGIONS,
@@ -88,10 +88,10 @@ export {
   /* Phase 132f: the region switches (Phase 132e). Passed explicitly by resolveProperty; the Inner London switch is OFF. */
   REGION_SWITCHES,
   SURVEYOR_INNER_LONDON_ONS_FOURTEEN,
-} from '../../../../04-phase-work/phase9/caprebate-region.ts';
+} from '../postcodes/caprebate-region.ts';
 
 export type {
   PriceBookRegion,
   RegionErrorCode,
   RegionSwitches,
-} from '../../../../04-phase-work/phase9/caprebate-region.ts';
+} from '../postcodes/caprebate-region.ts';

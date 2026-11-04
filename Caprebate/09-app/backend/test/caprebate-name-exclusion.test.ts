@@ -10,7 +10,7 @@ import {
   art14Owed, assertArt14Complete, art14DeadlineFor, art14PendingDpoDecision,
   Art14Error, ART14_NOT_SENT,
   type IngestedRecord, type Art14Record,
-} from './caprebate-name-exclusion.ts';
+} from '../src/registers/caprebate-name-exclusion.ts';
 
 /* --- the register loads and is internally consistent ---------------- */
 

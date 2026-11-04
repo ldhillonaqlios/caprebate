@@ -27,7 +27,7 @@ import { emptySecrets } from '../src/secrets.ts';
 import { Db, migrate } from '../src/db.ts';
 import { MIGRATIONS_DIR } from '../src/app.ts';
 import { ingestRegisterRecord } from '../src/stubs/registers.ts';
-import * as B from '../../../04-phase-work/phase9/caprebate-boundary-import.ts';
+import * as B from '../src/registers/caprebate-boundary-import.ts';
 
 const HERE = import.meta.dirname;
 const T = '2026-09-28T15:00:00.000Z';

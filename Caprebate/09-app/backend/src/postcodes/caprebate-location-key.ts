@@ -95,7 +95,7 @@ import type {
 } from './caprebate-postcode-authority.ts';
 import { freshnessOf, ONS_TABLE_STALE_FLAG } from './caprebate-postcode-store.ts';
 import type { Freshness, PostcodeStore } from './caprebate-postcode-store.ts';
-import COST_MODEL from './caprebate-cost-model.cjs';
+import COST_MODEL from '../costing/caprebate-cost-model.cjs';
 
 /* ------------------------------------------------------------------ *
  * 1. The served set — supplied, never defined here

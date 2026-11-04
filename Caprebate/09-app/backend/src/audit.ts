@@ -25,7 +25,7 @@
 import { createHash } from 'node:crypto';
 import type { Db } from './db.ts';
 import { carriesSecret } from './secrets.ts';
-import { GENESIS } from '../../../04-phase-work/phase3/caprebate-anchor-quarantine.ts';
+import { GENESIS } from './survey/caprebate-anchor-quarantine.ts';
 
 export type AuditKind =
   | 'LOGIN_SUCCEEDED' | 'LOGIN_FAILED' | 'LOGOUT'

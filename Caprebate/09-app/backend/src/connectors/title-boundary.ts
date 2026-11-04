@@ -22,7 +22,7 @@
 import {
   BoundaryImportError, computeSiteArea, parseBoundaryGeometry,
   type RawBoundaryGeometry, type RawRing,
-} from '../../../../04-phase-work/phase9/caprebate-boundary-import.ts';
+} from '../registers/caprebate-boundary-import.ts';
 import { GRS80, projectNationalGrid } from './ostn15.ts';
 import { REGISTER_SWITCHES, switchedOn, type LookupResult, type RegisterConnector } from './registers.ts';
 

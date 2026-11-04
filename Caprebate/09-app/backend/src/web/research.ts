@@ -88,7 +88,7 @@ import { authorise, can, type Actor } from '../authz.ts';
 import type { AuditLog } from '../audit.ts';
 import { registryGate, REGISTRY } from './engine.ts';
 import { DECLINED_LINE, lookupsDeclined } from './address-check.ts';
-import { SOURCES as REGISTER_SOURCES, LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { SOURCES as REGISTER_SOURCES, LICENCES } from '../registers/caprebate-source-register.ts';
 import { switchedOn, runConnector, REGISTER_SWITCHES, PLANNING_ROUTE, switchesHere, freeGateWaived, gateStatus, type Bundle, type ConnectorContext } from '../connectors/registers.ts';
 import type { Env } from '../connectors/place.ts';
 import { checkPostcode } from '../connectors/postcode-check.ts';

@@ -30,8 +30,8 @@ import { acceptClientBytes, DAMAGED_PDF } from '../src/web/uploads.ts';
 import { receiveFile } from '../src/web/client-files-pages.ts';
 import * as D from '../src/web/documents.ts';
 import { FsObjectStore } from '../src/web/objectstore.ts';
-import { classifyHeading, NEVER_TO_MODEL } from '../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
-import { receiptPolicyFor } from '../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
+import { classifyHeading, NEVER_TO_MODEL } from '../src/documents/caprebate-document-pipeline.ts';
+import { receiptPolicyFor } from '../src/documents/caprebate-client-doc-ingestion.ts';
 import { actor, testApp } from './helpers.ts';
 import type { Actor } from '../src/authz.ts';
 

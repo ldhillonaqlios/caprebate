@@ -50,7 +50,7 @@ import { _canonical } from '../audit.ts';
 import {
   AnchorLog, AnchorQuarantine, GENESIS, verifyChain,
   type Commitment, type EstimateOutputs, type LogEntry, type LogKind, type SurveyorFigures,
-} from '../../../../04-phase-work/phase3/caprebate-anchor-quarantine.ts';
+} from '../survey/caprebate-anchor-quarantine.ts';
 
 /** Once per job, by meaning. See the header. */
 const ONCE_PER_JOB: readonly LogKind[] = Object.freeze(['QUARANTINE_CREATED', 'ESTIMATE_SEALED']);

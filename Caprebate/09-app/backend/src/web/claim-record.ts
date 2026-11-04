@@ -1219,7 +1219,7 @@ export const DISPOSAL_TASK_TITLE_BEFORE = 'The election on a future sale — rea
  * DEFAULT, NOT AGREED, and every place it is shown says so. The director decides the figure.
  */
 export type DisposalFee = { readonly pounds: number; readonly pence: number; readonly words: string; readonly status: string };
-export const DISPOSAL_FEE: DisposalFee = (createRequire(import.meta.url)('../../../../04-phase-work/phase9/caprebate-job-economics.cjs') as { disposalFee: () => DisposalFee }).disposalFee();
+export const DISPOSAL_FEE: DisposalFee = (createRequire(import.meta.url)('../costing/caprebate-job-economics.cjs') as { disposalFee: () => DisposalFee }).disposalFee();
 
 export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { openTerms?: readonly OpenTerm[]; today?: string } = {}): AftercarePanel {
   const c = loadClaim(db, claim_id);

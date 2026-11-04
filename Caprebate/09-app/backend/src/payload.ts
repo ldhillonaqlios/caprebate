@@ -27,7 +27,7 @@ import {
   AnchorQuarantine, QuarantineError,
   RELEASED_TO_SURVEYOR_ALWAYS,
   type EstimateOutputs, type Viewer,
-} from '../../../04-phase-work/phase3/caprebate-anchor-quarantine.ts';
+} from './survey/caprebate-anchor-quarantine.ts';
 import { toQuarantineRole, type AppRole } from './roles.ts';
 import { can, type Actor, type Obj } from './authz.ts';
 

@@ -38,10 +38,10 @@ import {
 } from '../src/connectors/site-area.ts';
 import { ingestRegisterRecord } from '../src/stubs/registers.ts';
 import { addressFields } from '../src/connectors/homedata.ts';
-import { assertNoUnauthorisedName } from '../../../04-phase-work/phase3/caprebate-name-exclusion.ts';
+import { assertNoUnauthorisedName } from '../src/registers/caprebate-name-exclusion.ts';
 import { newId } from '../src/users.ts';
-import * as B from '../../../04-phase-work/phase9/caprebate-boundary-import.ts';
-import { LICENCES } from '../../../04-phase-work/phase3/caprebate-source-register.ts';
+import * as B from '../src/registers/caprebate-boundary-import.ts';
+import { LICENCES } from '../src/registers/caprebate-source-register.ts';
 import { zipOf } from './document-fixtures.ts';
 import { testApp, scalars, keys } from './helpers.ts';
 

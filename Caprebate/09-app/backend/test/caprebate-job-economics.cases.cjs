@@ -37,7 +37,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const M = require("./caprebate-job-economics.cjs");
+const M = require("../src/costing/caprebate-job-economics.cjs");
 
 const near = (a, b, tol) => Math.abs(a - b) < (tol === undefined ? 1e-9 : tol);
 

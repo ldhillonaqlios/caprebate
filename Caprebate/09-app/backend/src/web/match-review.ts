@@ -105,7 +105,7 @@ import { FREE_CONNECTORS } from '../connectors/free-registers.ts';
 import { PAID_CONNECTORS } from '../connectors/paid-registers.ts';
 import { switchedOn, REGISTER_SWITCHES } from '../connectors/registers.ts';
 import { UNMEASURED_MATCH_GRADE_CAP, type ReviewCandidate } from '../connectors/matching.ts';
-import { SOURCES as REGISTER_SOURCES, worstGrade, type Grade } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { SOURCES as REGISTER_SOURCES, worstGrade, type Grade } from '../registers/caprebate-source-register.ts';
 import { removeRegisterRecord } from '../stubs/registers.ts';
 import {
   approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain,

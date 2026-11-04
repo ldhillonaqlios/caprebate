@@ -10,7 +10,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SourceRegister, record, type AnyCell } from './caprebate-source-register.ts';
+import { SourceRegister, record, type AnyCell } from '../src/registers/caprebate-source-register.ts';
 import {
   segment, classifyHeading, sanitise, callModel, extract, toClaims, specFor, findCandidates,
   captureHumanRead,
@@ -18,7 +18,7 @@ import {
   HUMAN_READ_ONLY_TYPES, HUMAN_CAPTURE_SPECS, PERSON_REVIEW_BY_DOC_TYPE,
   type Segment, type ModelFn, type EgressEntry, type RawExtraction, type ModelPayload,
   type FinderSpec, type FinderCandidate, type HumanCaptureInput,
-} from './caprebate-document-pipeline.ts';
+} from '../src/documents/caprebate-document-pipeline.ts';
 
 const AT = '2026-08-26T12:00:00Z';
 

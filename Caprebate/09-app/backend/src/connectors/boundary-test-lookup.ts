@@ -33,7 +33,7 @@
  * to name the fetcher.
  */
 import type { Db } from '../db.ts';
-import { BoundaryImportError, type BoundaryFetchPlanItem } from '../../../../04-phase-work/phase9/caprebate-boundary-import.ts';
+import { BoundaryImportError, type BoundaryFetchPlanItem } from '../registers/caprebate-boundary-import.ts';
 import { RateLimiter, type CallDeps } from './http.ts';
 import { inspireBoundaryFetcher } from './inspire.ts';
 import { INSPIRE_COUNCILS, inspireFileForLad } from './inspire-councils.ts';

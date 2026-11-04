@@ -21,7 +21,7 @@ import { basename, isAbsolute, join, resolve } from 'node:path';
 import { isInside, repositoryRoot } from '../secrets.ts';
 
 type IndexTable = { loaded: true; source: string; licence: string; verified_at: string | null; points: readonly (readonly [string, number])[] };
-const costModel = createRequire(import.meta.url)('../../../../04-phase-work/phase9/caprebate-cost-model.cjs') as {
+const costModel = createRequire(import.meta.url)('../costing/caprebate-cost-model.cjs') as {
   parseIndexTable: (text: string, meta: { source: string; verified_at: string; licence?: string }) => { table: IndexTable; passed_over: number };
 };
 

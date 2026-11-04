@@ -12,7 +12,7 @@ import {
   redistributionCheck, stalenessReport, serialise, rehydrate, worstGrade,
   SOURCES, LICENCES,
   type AnyCell, type Retrieval,
-} from './caprebate-source-register.ts';
+} from '../src/registers/caprebate-source-register.ts';
 
 const NOW = '2026-08-26T12:00:00Z';
 const reg = () => new SourceRegister({ clock: () => NOW });

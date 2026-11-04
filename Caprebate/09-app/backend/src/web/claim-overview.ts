@@ -32,7 +32,7 @@ import type { ClaimDocumentsPanel } from './documents.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { localStamp, ukDate } from './localtime.ts';
 import { clientAuditCount } from './audit-log.ts';
-import { SOURCES as REGISTER_SOURCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { SOURCES as REGISTER_SOURCES } from '../registers/caprebate-source-register.ts';
 
 /* ================================================================== *
  * 1 · THE STAGES, IN PLAIN WORDS

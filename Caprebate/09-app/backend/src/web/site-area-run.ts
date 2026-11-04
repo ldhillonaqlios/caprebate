@@ -35,7 +35,7 @@ import { siteAreaFlag, floorAreaForSite } from './who-claims.ts';
 import type { Db } from '../db.ts';
 import type { Actor } from '../authz.ts';
 import type { AuditLog } from '../audit.ts';
-import { BOUNDARY_FETCHING_SWITCHED_ON } from '../../../../04-phase-work/phase9/caprebate-boundary-import.ts';
+import { BOUNDARY_FETCHING_SWITCHED_ON } from '../registers/caprebate-boundary-import.ts';
 import {
   councilOfPostcode, homedataPointOf, planSiteArea, siteAreaFromLandBoundary, SITE_AREA_SOURCE_ID,
   type SiteAreaInput, type SiteAreaOutcome, type SiteAreaState,

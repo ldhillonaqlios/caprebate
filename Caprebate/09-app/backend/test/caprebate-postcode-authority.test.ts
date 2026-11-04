@@ -36,7 +36,7 @@ import {
   ONS_TABLE_MAX_AGE_DAYS,
   NSPL_COLUMNS_VERIFIED,
   type PostcodeAuthorityTable,
-} from './caprebate-postcode-authority.ts';
+} from '../src/postcodes/caprebate-postcode-authority.ts';
 
 const codeOf = (fn: () => unknown): string => {
   try { fn(); return 'NO_THROW'; } catch (e) {

@@ -28,14 +28,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   type DocType, type ModelFn, type EgressEntry, type RawExtraction,
-} from './caprebate-document-pipeline.ts';
+} from '../src/documents/caprebate-document-pipeline.ts';
 import {
   RECEIPT_CONTRACT, INGESTION_BOUNDARY, QUARANTINE_TTL_MINUTES,
   FAIL_CLOSED_SETTINGS, ClientDocIngestionError,
   type QuarantineObject, type RawFileRecord, type IngestionSettings,
   type IdentifiedPerson,
-} from './caprebate-client-doc-ingestion.ts';
-import { NameExclusionError } from './caprebate-name-exclusion.ts';
+} from '../src/documents/caprebate-client-doc-ingestion.ts';
+import { NameExclusionError } from '../src/registers/caprebate-name-exclusion.ts';
 import {
   UploadHandlerError, UPLOAD_LIMITS, PROMOTION_RULE, CONTRACT_COVERAGE,
   sniffAccepted, shouldPromoteRawFile, assertContractCovered,
@@ -46,7 +46,7 @@ import {
   type ObjectStore, type TextExtractor, type DocTypeClassifier,
   type AuditSink, type AuditEvent, type UploadHandlerDeps, type UploadJob,
   type PresignedUpload,
-} from './caprebate-upload-handler.ts';
+} from '../src/documents/caprebate-upload-handler.ts';
 
 /* ------------------------------------------------------------------ *
  * Doubles

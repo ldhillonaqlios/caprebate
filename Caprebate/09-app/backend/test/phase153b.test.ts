@@ -21,7 +21,7 @@ import { PLANNING_ROUTE, REGISTER_SWITCHES } from '../src/connectors/registers.t
 import { catalogue } from '../src/web/research.ts';
 import { fixtureTransport } from '../src/connectors/http.ts';
 import { secretsFromValues } from '../src/secrets.ts';
-import { SOURCES } from '../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { SOURCES } from '../src/registers/caprebate-source-register.ts';
 import type { Snapshot } from '../src/web/pack-approve.ts';
 
 const NOW = '2026-10-04T09:00:00.000Z';

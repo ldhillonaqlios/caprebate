@@ -19,7 +19,7 @@
  * has no login at all and receives the computation pack offline.
  */
 
-import type { Role as QuarantineRole } from '../../../04-phase-work/phase3/caprebate-anchor-quarantine.ts';
+import type { Role as QuarantineRole } from './survey/caprebate-anchor-quarantine.ts';
 import { canSurvey, customRoleOf, isCustomRoleKey } from './custom-roles.ts';
 
 /**

@@ -8,7 +8,7 @@ import {
   AnchorLog, AnchorQuarantine, QuarantineError, driftReport, assureProcess,
   hashFigures, verifyChain, QUARANTINED_ROLES, RELEASED_TO_SURVEYOR_ALWAYS,
   type EstimateOutputs, type SurveyorFigures, type Viewer,
-} from './caprebate-anchor-quarantine.ts';
+} from '../src/survey/caprebate-anchor-quarantine.ts';
 
 const P = (pounds: number) => pounds * 100;
 

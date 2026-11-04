@@ -79,7 +79,7 @@ import type { ExtractedPage, PageImage } from '../web/extract-text.ts';
 import {
   sanitise, callModel, specFor, PipelineError, PERSON_NAME_PATTERNS,
   type DocType, type ModelFn, type ModelPayload, type RawExtraction, type Segment,
-} from '../../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
+} from '../documents/caprebate-document-pipeline.ts';
 
 /** The model, from the claude-api skill. Never from memory. */
 export const CLAUDE_MODEL = 'claude-opus-5';

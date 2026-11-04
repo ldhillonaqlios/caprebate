@@ -37,13 +37,13 @@ import { BAND } from './engine.ts';
 import { acquisitionDateReading } from './claim-facts.ts';
 import { onTestWebsite, type Env } from '../connectors/place.ts';
 import { MIN_CLAIMS } from './sector-ranges.ts';
-import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../../../../04-phase-work/phase3/caprebate-surveyor-crm.ts';
+import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../survey/caprebate-surveyor-crm.ts';
 
 type IndexTable = { loaded: boolean; source: string; points: readonly (readonly [string, number])[] };
 type Includes = { demolition?: boolean; fees?: boolean; prelims?: boolean };
 type Insurance = { verdict: 'SUPPORTS' | 'DOES_NOT_SUPPORT' | 'NOT_COMPARABLE'; gap: number | null; limit: number; steps: string[]; why: string };
 
-const CM = createRequire(import.meta.url)('../../../../04-phase-work/phase9/caprebate-cost-model.cjs') as {
+const CM = createRequire(import.meta.url)('../costing/caprebate-cost-model.cjs') as {
   CB_BCIS_INDEX_PLACEHOLDER: IndexTable;
   TEST_SYSTEM_GATES: Readonly<Record<string, boolean>>;
   SPEC_PRELIMS_DEFAULT: number;

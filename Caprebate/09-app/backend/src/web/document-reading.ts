@@ -63,7 +63,7 @@
 
 import type { Db } from '../db.ts';
 import type { ReadingState } from './uploads.ts';
-import type { ClientDocDiscriminants } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
+import type { ClientDocDiscriminants } from '../documents/caprebate-client-doc-ingestion.ts';
 
 /* ================================================================== *
  * 1 · THE TWO FIELDS, AND THE QUESTION EACH ONE ASKS

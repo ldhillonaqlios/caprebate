@@ -25,8 +25,8 @@ import { PAID_CONNECTORS, PAID_NOT_CHOSEN, PAID_RETIRED, totalBeforePence, pound
 import { FREE_CONNECTORS } from '../src/connectors/free-registers.ts';
 import { epc } from '../src/connectors/epc.ts';
 import { secretsFromValues, emptySecrets, SECRET_KEYS, parseSecretsFile, KEY_OF_NAME } from '../src/secrets.ts';
-import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../../../04-phase-work/phase3/caprebate-source-register.ts';
-import { NAME_EXCLUSION_POLICY, classifyField, assertNoUnauthorisedName } from '../../../04-phase-work/phase3/caprebate-name-exclusion.ts';
+import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/registers/caprebate-source-register.ts';
+import { NAME_EXCLUSION_POLICY, classifyField, assertNoUnauthorisedName } from '../src/registers/caprebate-name-exclusion.ts';
 import * as R from '../src/web/research.ts';
 import * as S from '../src/web/surveyor.ts';
 import { STUBS } from '../src/app.ts';

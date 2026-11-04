@@ -37,7 +37,7 @@ import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
-import { SOURCES as REGISTER_SOURCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { SOURCES as REGISTER_SOURCES } from '../registers/caprebate-source-register.ts';
 import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type EngineWindow, type SectorId } from './engine.ts';
 import { packSwitchReadings } from './money-readings.ts';
 import { TAXONOMY_SECTOR, taxonomy } from './pack-lines.ts';

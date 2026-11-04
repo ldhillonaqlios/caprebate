@@ -44,8 +44,8 @@ import {
   type BoundaryFetchPlanItem,
   type CartographicArtefact,
   type RawBoundaryPayload,
-} from '../../../../04-phase-work/phase9/caprebate-boundary-import.ts';
-import { SOURCES as REGISTER_SOURCES, worstGrade, type Grade } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
+} from '../registers/caprebate-boundary-import.ts';
+import { SOURCES as REGISTER_SOURCES, worstGrade, type Grade } from '../registers/caprebate-source-register.ts';
 import { ingestRegisterRecord } from '../stubs/registers.ts';
 import type { CallDeps, GateSnapshot } from './http.ts';
 import { inspireBoundaryFetcher } from './inspire.ts';

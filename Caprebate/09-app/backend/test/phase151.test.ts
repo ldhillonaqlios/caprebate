@@ -39,7 +39,7 @@ import { assignRole } from '../src/web/settings.ts';
 import { checkPostcode, normalisePostcode, POSTCODE_CHECK, postcodeCheckMissing } from '../src/connectors/postcode-check.ts';
 import { gateStatus } from '../src/connectors/registers.ts';
 import { encodePng } from '../src/web/images.ts';
-import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/registers/caprebate-source-register.ts';
 
 /* ================================================================== *
  * 1 · THE ONLINE IDENTITY CHECK
