@@ -230,5 +230,6 @@ test('161c: the same file elsewhere is a warning, and the server starts; locked 
   chmodSync(f, 0o600);
   const ok = await runServer({ CAPREBATE_SECRETS: f, CAPREBATE_PRODUCTION: '1' }, /caprebate back end on/);
   assert.match(ok.out, /caprebate back end on/);
-  assert.doesNotMatch(ok.out, /key file/);
+  // Only the check's own words: the next start-up line may mention "the key file" too, if it arrives before the stop.
+  assert.doesNotMatch(ok.out, /is not locked down|NOT STARTED|Warning: the key file/);
 });
