@@ -13623,6 +13623,7 @@ NOTHING LEFT  beyond those lines.
 - **The four suites, before and after.** Before: site 1,427 pass / 0 fail / 3 xfail, phase3 440, phase9 417, back end 3,077. After: the same, and back end 3,087 / 0 fail (197 files). The developer spec's two total lines were updated to 3,087 and 5,371, and it gained a Phase 161b entry and a line in the security baseline. Plain words GREEN.
 - **A slip, corrected.** Adding `src/` to the commit took in four leftover untracked `.mutsave` files from earlier phases. They were taken back out of git in the next commit and stay on disk, untracked, as before.
 - **Documents.** The developer spec; FOR THE SOLICITOR, THE DPO AND THE DEVELOPER ("Recorded 4 November 2026 (Phase 161b)": the new table, for the data specification).
+- **The register check, and a wrong word corrected.** The first close commit said "Register check OK" before the check had finished; it had in fact failed. Its section 5 read Phase 161a's tracker note ("back end 3,077 pass, project 5,361") as a current claim, out of date once this phase added ten tests. Both phases' Done notes now give their totals as past values ("was 3,077", "was 3,087"), the form the checker reads as a record, and the check was run again in full before the next commit.
 
 ```
 DONE          Form tokens on every signed-in form that changes something; single-use tokens on the

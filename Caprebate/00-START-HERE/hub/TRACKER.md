@@ -3611,7 +3611,7 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
 - Note 2026-11-04 (Phase 161a): Claimed: branch claude/phase-161a, the Mac copy.
-- Note 2026-11-04 (Phase 161a): Done: npm audit 0 (back end and root, full and live); @vercel/blob for the tests and the test website only, live install npm ci --omit=dev; audit:live in npm run check; test/phase161a.test.ts (8); back end 3,077 pass, project 5,361. Photo check after merge carried to 161b; root lock file to 161e; majors parked as 13462946350.
+- Note 2026-11-04 (Phase 161a): Done: npm audit 0 (back end and root, full and live); @vercel/blob for the tests and the test website only, live install npm ci --omit=dev; audit:live in npm run check; test/phase161a.test.ts (8); the suites at this close: back end was 3,077 pass, project was 5,361. Photo check after merge carried to 161b; root lock file to 161e; majors parked as 13462946350.
 
 ### Phase 161b - A security token on every form that changes something, as well as the browser check (audit 2 Nov 2026)
 
@@ -3620,5 +3620,5 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
 - Note 2026-11-04 (Phase 161b): Claimed: branch claude/phase-161b, the Mac copy.
-- Note 2026-11-04 (Phase 161b): Done: form token on every signed-in form that changes something, single-use token on the sensitive ones (migration 120), checked before any route, refused forms audited; test/phase161b.test.ts (10) incl. a walk of every non-GET route; browser check on a local copy; back end 3,087, project 5,371. The check on the test website after merge is Lakhbir's item 13463588433.
+- Note 2026-11-04 (Phase 161b): Done: form token on every signed-in form that changes something, single-use token on the sensitive ones (migration 120), checked before any route, refused forms audited; test/phase161b.test.ts (10) incl. a walk of every non-GET route; browser check on a local copy; the suites at this close: back end was 3,087 pass, project was 5,371. The check on the test website after merge is Lakhbir's item 13463588433.
 
