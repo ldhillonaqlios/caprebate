@@ -1071,101 +1071,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161d — Live code no longer loads anything from the draft folders
-
- **Model: Opus.** Board item 13462566355. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 5: "Live code depends on draft folders. Parts of the system load code from work-in-progress folders."
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-WHAT IS THERE NOW (checked 4 Nov 2026): ten live files import from
-Caprebate/04-phase-work/: phase3/caprebate-anchor-quarantine.ts (src/payload.ts,
-src/roles.ts, src/audit.ts), phase3/caprebate-source-register.ts
-(src/connectors/price-paid.ts, inspire-store.ts), phase3/caprebate-name-
-exclusion.ts (src/stubs/registers.ts), phase3/caprebate-document-pipeline.ts
-(src/connectors/claude.ts) and phase9/caprebate-boundary-import.ts
-(src/connectors/boundary-test-lookup.ts, title-boundary.ts, inspire.ts).
-Grep again before you start: there may be more (readFileSync, import(),
-api/index.mjs, the site build).
-
-BUILD
-0. FIRST, CARRIED FROM 161c (once Lakhbir has merged it): run
-   curl -s https://caprebate-test.vercel.app/api/health and it must print
-   exactly {"ok":true} (until 161c it printed the whole switch list). If it
-   does not, find out why and fix it before step 1.
-1. git mv each module the app uses (and anything it imports in turn) into
-   Caprebate/09-app/backend/src/ (a folder named by what it does, for
-   example src/registers/, ready for the 161i regroup), with its tests into
-   backend/test/. Keep git history. Leave a one-line note in the old place
-   saying where it went; the phase3 and phase9 suites keep running.
-2. A check in npm run check: no file under backend/src or api/ imports or
-   reads anything outside Caprebate/09-app (the engine package is inside it).
-3. The test website's bundle (.vercelignore, vercel.json) still holds what
-   it needs: deploy the branch preview and use it.
-
-ACCEPT
-- The new check passes, and fails on a planted import from 04-phase-work.
-- All four suites pass as before; the test website's preview works.
-- Nothing in 04-phase-work is deleted: it is evidence the standing
-  instruction points at.
-```
-
-
 ## PHASE 161d1 — The public site file, notices page, fixture list and engagement letters are read from inside the app
 
- **Model: Opus.** Board item 13466718822. **Written 4 November 2026 by Phase 161d**, which moved every module live code loaded from the draft folders into the app and found these four files still read from outside it. **Why:** the same audit finding as 161d (section 5), and its check: "no file under backend/src or api/ imports or reads anything outside Caprebate/09-app".
+ **Model: Opus.** Board item 13466718822. **Written 4 November 2026 by Phase 161d**, which moved every module live code loaded from the draft folders into the app and found these four files still read from outside it. **Why:** the same audit finding as 161d (section 5).
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1224,11 +1132,11 @@ right register.
 
 WHAT IS THERE NOW (Phase 161d, 4 Nov 2026): no live file loads a module from
 04-phase-work any more, and tools/lint-paths.cjs (npm run lint:paths, part of
-npm run check) fails if one does. It still lists five paths that lead
-outside Caprebate/09-app on purpose (KNOWN in that file); two are only
-refusals (secrets.ts and inspire-store.ts name the repository folder so a key
-file or a file store is refused inside it) and stay. FIVE READS ARE MARKED
-"carried" TO THIS PHASE:
+npm run check) stops the build if one does. Its KNOWN list names seven paths
+that still lead out of the app folder (Caprebate/09-app) on purpose. Two are
+not reads at all: secrets.ts and inspire-store.ts name the repository folder
+so that a key file or a file store kept inside it can be turned down. FIVE
+READS ARE MARKED "carried" TO THIS PHASE:
   src/web/public-site.ts    SITE_PATH       Development/Caprebate site.html
   src/web/notices-site.ts   NOTICES_PATH    03-app/caprebate-notices-page.html
   src/web/pack-lines.ts     TAXONOMY_FILE   02-modules-and-build-prep/
@@ -2629,7 +2537,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file, 161d off the draft folders, 161e a fresh copy passes every check, 161f the calculator as code, 161g the legal pages, 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code, 161g the legal pages, 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161h, before go-live (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

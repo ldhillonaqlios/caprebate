@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 349 |
-| Working on it | 1 |
+| Done | 350 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-44 items.
+43 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,13 +1434,6 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 161d - Live code no longer loads anything from the draft folders (04-phase-work/phase3 and phase9) (audit 2 Nov 2026)
-
-`13462566355` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local (the Mac copy)**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
-
 ### Phase 161d1 - The public site file, notices page, fixture list and engagement letters are read from inside the app (audit 2 Nov 2026)
 
 `13466718822` · **Ready - Claude can build** · owner Claude
@@ -1514,7 +1507,7 @@
 
 ## Z · Complete / Not Applicable
 
-349 items.
+350 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3623,6 +3616,14 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
 - Note 2026-11-04 (Phase 161c): Done. /api/health answers only {"ok":true} (503 {"ok":false} without the database); the switch list is Admin's at /staff/connections/switches.json; the live key file comes from systemd's credentials folder, and CAPREBATE_PRODUCTION=1 stops a start on a key file others can open (09-app/deploy/KEY-FILE-SETUP.md). test/phase161c.test.ts (10). The back end was 3,097 pass and the project 5,381 at the close. Carried: the test website's check to 161d step 0; the unit file and runbook to 161h. Record in PHASE-HISTORY.md.
+
+### Phase 161d - Live code no longer loads anything from the draft folders (04-phase-work/phase3 and phase9) (audit 2 Nov 2026)
+
+`13462566355` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
+- Note 2026-11-04 (Phase 161d): Done. The 14 modules live code loaded from 04-phase-work/phase3 and phase9 moved into 09-app/backend/src (registers, documents, survey, costing, postcodes) with their tests; a one-line note at each old path; npm run lint:paths in npm run check fails on anything loaded from outside 09-app (51 findings on the old code, red on a planted import). test/phase161d.test.ts (5). Four suites green: site 1,427, phase3 71, phase9 29, back end 3,859 (757 tests moved, 5 added; project 5,386). Five file reads still outside the app carried to Phase 161d1 (13466718822). Record in PHASE-HISTORY.md.
 
 ### After Phase 161b is merged: on the test website, send one survey photo from your phone (it must show on the claim), and use one form in the back office, the portal and the surveyor's page; tell Claude if any says This form has expired
 
