@@ -13560,3 +13560,20 @@ DONE          The five changes. test/phase160p.test.ts (7).
 ```
 **Claim cleared** in the commit that carries this record.
 
+
+## Planning — production readiness, Phases 161a to 161k — 4 November 2026 (Claude Code, in a worktree cut from main at a029859)
+
+**ACTIONS AND OUTCOMES.** Planning, 4 Nov 2026: Lakhbir received the ITRoadway technical audit (Naeem; audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0; now in OneDrive at 06-commercial-and-governance/"CAP Rebate - Technical Audit Report.docx") and said: "the idea is we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production; we also need to consider privacy policy, T&C, cookies ect; split the fixes in to phases which allows me to go chat by chat for each phase". Eleven phases written, 161a to 161k, above the sweep, which is now Phase 162. Board items made in 05 · FOR DEVELOPMENT and the same rows in the tracker.
+
+- **The audit, checked against the code before writing (4 Nov 2026).** All four security findings are true: npm audit gives 5 high flaws (undici, zod), all through @vercel/blob, used only by src/web/shared-objectstore.ts for the test website; keys come from ~/.caprebate-secrets.env; forms rely on Sec-Fetch-Site and SameSite only (router.ts ~328); /api/health prints the switch list. The structure findings are true too: about 99,000 lines in backend/src, router.ts about 2,500 lines, 207 entries in src/web, ten live files importing from 04-phase-work/phase3 and phase9, and about 1,870 .bak files under 09-app.
+- **The legal pages already exist as drafts** (160f, 160g, 160h), on the test website only; 161g makes them ready for the live website and builds the review pack, and nothing goes live without a recorded approval.
+- **The phases** (board item in brackets): 161a packages (13462588597), 161b form tokens (13462572170), 161c status page and key file (13462600539), 161d off the draft folders (13462566355), 161e a fresh copy passes every check (13462566368), 161f the calculator as code (13462576351), 161g the legal pages (13462566195), 161h the VPS hosting kit (13462576350), then after go-live 161i, 161j and 161k, the regroup by business area (13462572168, 13462572169, 13462572225).
+- **Parked on purpose:** replacing the home-made PDF, ZIP, email and page tools (13462588610, Developer); the reason is in "Things we deliberately have not done".
+- **The sweep** is renumbered 162 on the run sheet and here, and is to be run once out of order straight after 161h, before go-live.
+- **Checks:** the tracker check GREEN and its self-test pass. The CRM fold check is RED and the figure drift checker stops on files kept out of git, both the same on untouched main (161e is the fix for the second). No suite was run: no code changed.
+
+```
+DONE          The eleven phases, their board items and tracker rows, the sweep renumbered.
+NOT DONE      Merging this pull request - Lakhbir's click. Running the phases: one chat each, from 161a.
+NOTHING LEFT  beyond those lines.
+```
