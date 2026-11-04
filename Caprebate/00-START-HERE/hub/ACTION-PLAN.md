@@ -1071,97 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161c — The status page says only "OK", and the key file is locked down on the live server
-
- **Model: Opus.** Board item 13462600539. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 4, rows 2 and 4: "Service passwords and API keys are read from a plain text file" (Medium) and "A public status page shows details about how the system is built and which features are switched on" (Low).
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-WHAT IS THERE NOW: src/server.ts ~238 answers GET /api/health with
-{ ok: true, stubs: STUBS }, which tells anyone which outside services are
-switched on. The keys are read from the file named by CAPREBATE_SECRETS,
-else ~/.caprebate-secrets.env (src/secrets.ts); a file inside the
-repository is already refused, each key goes only to its own connector, and
-no key is ever printed.
-
-BUILD
-1. /api/health answers {"ok":true} and nothing else (still checking the
-   database can be reached; a failure answers 503 {"ok":false}). The
-   switch list moves to a staff-only page (the Connections page of Phase
-   156e, or Admin > Settings), for admins only.
-2. A real key store on the live server: read the key file from systemd's
-   credentials folder ($CREDENTIALS_DIRECTORY/caprebate-secrets, set with
-   LoadCredential=) when it is there; that keeps the file readable by root
-   only and hands it to the app at start. The present file stays for the
-   Mac and the test website.
-3. On the live server (the production setting), refuse to start, with a
-   plain message naming the file and what is wrong, if the key file can be
-   read or written by anyone but the app's own user (mode wider than 600)
-   or is owned by another user. Elsewhere this is a warning, not a stop.
-4. Write the set-up steps for the developer into the handover (Phase 146g,
-   item 13104163090) and into the 161h runbook.
-
-ACCEPT
-- Tests: the health body is exactly {"ok":true}; the switch list needs an
-  admin; the credentials folder is read first; a key file with mode 644 stops
-  a production start and only warns elsewhere; no key is printed (the
-  existing tests still pass).
-```
-
-
 ## PHASE 161d — Live code no longer loads anything from the draft folders
 
  **Model: Opus.** Board item 13462566355. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 5: "Live code depends on draft folders. Parts of the system load code from work-in-progress folders."
@@ -1232,6 +1141,10 @@ Grep again before you start: there may be more (readFileSync, import(),
 api/index.mjs, the site build).
 
 BUILD
+0. FIRST, CARRIED FROM 161c (once Lakhbir has merged it): run
+   curl -s https://caprebate-test.vercel.app/api/health and it must print
+   exactly {"ok":true} (until 161c it printed the whole switch list). If it
+   does not, find out why and fix it before step 1.
 1. git mv each module the app uses (and anything it imports in turn) into
    Caprebate/09-app/backend/src/ (a folder named by what it does, for
    example src/registers/, ready for the 161i regroup), with its tests into
@@ -1634,13 +1547,17 @@ BUILD
    list them from the code) runs on the server, not on a visit, as a
    systemd timer or the app's own scheduler, with a log line each run.
 4. The deploy kit in Caprebate/09-app/deploy/: a systemd unit (its own user,
-   the key file as a credential), a reverse proxy with TLS for
+   the key file as a credential: LoadCredential= and CAPREBATE_PRODUCTION=1,
+   as 09-app/deploy/KEY-FILE-SETUP.md (Phase 161c) sets out, and the same
+   lines on every timer that runs node src/cli.ts), a reverse proxy with TLS for
    caprebate.co.uk (Caddy or nginx), the firewall rules, Node 24, log
    rotation, nightly encrypted backups of the database and the files to a
    second place, a restore script, and an uptime check on /api/health.
 5. The runbook for the developer: set up, deploy an update, roll back,
-   restore a backup, renew TLS, rotate a key. Update the 146g handover to
-   point at it.
+   restore a backup, renew TLS, rotate a key. Its set-up and key steps start
+   from 09-app/deploy/KEY-FILE-SETUP.md (Phase 161c: the key file root's and
+   600 in /etc/caprebate, handed over by systemd; a start that says NOT
+   STARTED names what is wrong). Update the 146g handover to point at it.
 6. The go-live checklist: DNS, email sending records (SPF, DKIM, DMARC),
    the switches that stay off, the legal approval, and "run the sweep
    (Phase 162) before the first client".

@@ -27,7 +27,8 @@ import { turnstileWhy } from './connectors/turnstile.ts';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { buildApp, STUBS } from './app.ts';
+import { buildApp } from './app.ts';
+import { keyFileStartCheck } from './secrets.ts';
 import { withReadMemo } from './db.ts';
 import { authorise, can, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj } from './authz.ts';
 import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAILURE, type LoginResult } from './auth.ts';
@@ -224,6 +225,16 @@ export async function createApp(
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = new URL(req.url ?? '/', 'http://localhost');
     const path = url.pathname;
+
+    /* PHASE 161c, 4 November 2026 (the ITRoadway audit, section 4 row 4): THE STATUS PAGE SAYS ONLY "OK". It answers
+       {"ok":true} when the database answers, and 503 {"ok":false} when it does not - nothing else, so it tells nobody
+       which parts are built or switched on. It is answered first, before any sign-in is read, so an uptime check sees
+       the database and nothing in front of it. The list of what is built and switched off (STUBS) is for Admin only,
+       at /staff/connections/switches.json (src/web/connections.ts). */
+    if (path === '/api/health' && req.method === 'GET') {
+      try { app.db.get('SELECT 1 AS ok'); } catch { return send(res, 503, { ok: false }); }
+      return send(res, 200, { ok: true });
+    }
     const raw = readCookie(req, SESSION_COOKIE_NAME);
     const session = authenticate(app.deps, raw);
     const actor: Actor | undefined = session ? toActor(session.user) : undefined;
@@ -254,10 +265,6 @@ export async function createApp(
         return sendRefusalPage(app, res, actor, path);
       }
       throw e;
-    }
-
-    if (path === '/api/health' && req.method === 'GET') {
-      return send(res, 200, { ok: true, stubs: STUBS });
     }
 
     /* PHASE 151k — THE JSON API WALKS THE SAME STEPS AS THE WEBSITE, through the same functions (src/web/sign-in.ts).
@@ -403,8 +410,13 @@ if (import.meta.filename === process.argv[1]) {
   const location = process.env.CAPREBATE_DB ?? 'caprebate.db';
   // 6 Oct 2026: CAPREBATE_SIGNING_TEST=1 runs this copy with the test letter and signing on for testing (the test copy only).
   const signingTest = (process.env.CAPREBATE_SIGNING_TEST ?? '').trim() === '1';
+  /* PHASE 161c: a key file others could open stops a live start (CAPREBATE_PRODUCTION=1) and is a warning anywhere
+     else. The words name the file and its permissions, never a key. */
+  const keyCheck = keyFileStartCheck();
+  for (const line of keyCheck.lines) console.error(line);
+  if (keyCheck.stop) process.exitCode = 1;
   // PHASE 161b: a real start says the form tokens are on, in so many words.
-  void createApp(location, signingTest ? { testLetter: true, testSigning: true, formTokens: 'on' } : { formTokens: 'on' }).then(({ server, app }) => {
+  else void createApp(location, signingTest ? { testLetter: true, testSigning: true, formTokens: 'on' } : { formTokens: 'on' }).then(({ server, app }) => {
     server.listen(port, () => {
       console.log(`caprebate back end on http://localhost:${port}`);
       console.log(`  ${turnstileWhy(app.secrets)}`); // 29 Sep 2026: the contact form's security check, said at start-up

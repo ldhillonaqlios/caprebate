@@ -13638,3 +13638,38 @@ NOTHING LEFT  beyond those lines.
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 161c — the status page says only "OK", and the key file is locked down on the live server — 4 November 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 161c, 4 Nov 2026: the ITRoadway audit's section 4, rows 2 (Medium, keys in a plain text file) and 4 (Low, a public status page that says what is switched on). The status page `/api/health` now answers only {"ok":true}, or 503 {"ok":false} when the database cannot be reached; the list of what is built and switched off is for Admin only, linked from the Connections page. On the live server the keys come from systemd's credentials folder, and with the live setting (CAPREBATE_PRODUCTION=1) a key file others could open, or another user owns, stops the start with a plain message; elsewhere it is a warning. The developer's steps are 09-app/deploy/KEY-FILE-SETUP.md, and the 146g handover and the 161h prompt point at them. test/phase161c.test.ts, 10 tests, red on the old code. All four suites green (back end 3,087 then 3,097).
+
+- **Claim.** hub/CLAIM.md, tracker row and board item 13462600539, pushed first, on a branch cut from main at c3892ec.
+- **The premise, checked first.** `src/server.ts` answered `GET /api/health` with `{ ok: true, stubs: STUBS }` (line 259, not ~238), and it did not ask the database. The test website answered it to anyone the same day: `curl https://caprebate-test.vercel.app/api/health` printed the whole list. `src/secrets.ts` read `CAPREBATE_SECRETS` or `~/.caprebate-secrets.env` and already refused a file inside the repository; it noted loose permissions (`readable_by_others`) but nothing acted on it. There was no production setting anywhere in the code.
+- **The status page.** It is answered first in the handler, before any sign-in is read, asks the database with `SELECT 1`, and answers exactly `{"ok":true}`, or 503 `{"ok":false}`.
+- **The switch list.** `GET /staff/connections/switches.json` (`SWITCHES_PATH`, `src/web/connections.ts`): Admin gets `{ stubs }`, anyone else 403 and nothing of it. The Connections page says "For the developer: the parts that are built but switched off, as data. Only Admin can open it." The README, the developer spec (route table, §4, a Phase 161c entry, the security baseline), the CRM disposition and the harness's M4a comment now say where it is.
+- **The key store.** `credentialsFile`: when systemd's `LoadCredential=` has put `caprebate-secrets` in `$CREDENTIALS_DIRECTORY`, it is the key file, ahead of `CAPREBATE_SECRETS` and the home-folder file. The Mac and the test website never set that folder, so nothing changes there.
+- **The start-up check.** `keyFileStartCheck` (`src/secrets.ts`), run by the server's start and by every `node src/cli.ts` command: with `CAPREBATE_PRODUCTION=1` (the live setting; set only by the live unit file), a key file with any permission beyond 600, or owned by another user, stops the start. The message names the file, says what is wrong and how to fix it, and never shows a key. Without the setting the same words are a warning. Two choices made and written down: no key file at all is left alone (every service then reads as not set up, as before), and systemd's own copy is not judged, because systemd usually grants the read with an access list on a file root owns, which shows a wider mode and another owner although only this service can open it; the file systemd copies from is what the steps lock down (root, 600).
+- **Tests.** test/phase161c.test.ts, 10 tests: the exact body; the 503 with the database closed; the switch list refused signed out, to Sales and to a client, and whole for Admin, with the Connections page's link; the credentials folder read first (and ignored when empty, unnamed or relative); the production setting on `1` only; 644, 640, 604, 660, 666 and 700 stop a production start and only warn elsewhere, while 600 and 400 pass; another owner stops it; no key file and systemd's copy are left alone; a real start of `src/server.ts` with a 644 file and the setting exits 1 without listening, names the file and prints no key; without the setting it warns and starts; locked down it says nothing. On the old server code five fail; on the old key loader the file cannot load.
+- **Found on the way and fixed (small and safe).** The CRM fold check was red on main with five failures: three sector asset routes written `<sector>` where the check reads `{sector}`, and two stale line references in §4 (`ServerOptions`, `now`); this phase's own edit moved a third (`loadSecrets`). All six are fixed and the fold check is GREEN. The payload proof (`tools/payload-proof.ts`) was red on main too: it looked for "Audit log checked — nothing changed", and the page now says it with a colon. Its pattern takes either; the proof PASSES.
+- **Carried.** The test website's own status page can only be checked after Lakhbir merges this pull request: it is now step 0 of Phase 161d, in terms, on the run sheet and in ACTION-PLAN.md. The live unit file, the timers and the runbook are Phase 161h: its steps 4 and 5 now name `LoadCredential=`, `CAPREBATE_PRODUCTION=1`, the timers, and 09-app/deploy/KEY-FILE-SETUP.md, on the run sheet and in ACTION-PLAN.md.
+- **Not tried in a browser.** The tests open the status page, the switch list and the Connections page over real HTTP on a local copy; nobody looked at the Connections page in a browser.
+- **The four suites, before and after.** Before: site 1,427 pass / 0 fail / 3 xfail, phase3 440, phase9 417, back end 3,087 (197 files). After: the same, and back end 3,097 / 0 fail (198 files); the project total was 5,371 then 5,381. The baseline run was started before the code was edited and ran while the first edits landed; it was green. The after-run was green. At the close the full register check ran the four suites again and found one of this phase's own tests red under load: the server's next start-up line ("...in the key file...") sometimes arrived before the test stopped it, and the test looked for the words "key file" anywhere. It now looks only for the warning's own words; twelve copies run at once all pass, and the register check, run again in full, is GREEN with the same totals. Plain words, brand, analytics, notices, the engine extraction and the tracker GREEN.
+- **The build queue (step 4B).** Eight items at "Ready - Claude can build", Phases 161d to 161k, each with its section in ACTION-PLAN.md. No orphans.
+
+```
+DONE          /api/health is exactly {"ok":true} (503 {"ok":false} without the database); the switch
+              list at /staff/connections/switches.json, Admin only, linked from Connections;
+              $CREDENTIALS_DIRECTORY/caprebate-secrets read first; CAPREBATE_PRODUCTION=1 stops a start on
+              a key file wider than 600 or another user's, a warning elsewhere, in the server and every
+              command; 09-app/deploy/KEY-FILE-SETUP.md; the spec and handover updated;
+              test/phase161c.test.ts (10, red on the old code); the fold check and the payload proof,
+              both red on main, fixed; the four suites green (back end 3,097, project 5,381).
+NOT DONE      The test website's status page saying only {"ok":true} after the merge - BUILDABLE -
+              step 0 of Phase 161d.
+              The live unit file, the timers' lines and the runbook - BUILDABLE - Phase 161h, steps 4
+              and 5 (written in terms).
+              Merging this pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines.
+```
+
+**Claim cleared** in the commit that carries this record.

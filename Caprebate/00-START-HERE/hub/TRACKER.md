@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 9 |
+| Ready - Claude can build | 8 |
 | Ready - Lakhbir action | 26 |
 | Built - awaiting sign-off | 142 |
 | Blocked - question | 0 |
@@ -14,7 +14,7 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 348 |
+| Done | 349 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-44 items.
+43 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,13 +1434,6 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 161c - The status page says only OK, and the key file is locked down on the live server (audit 2 Nov 2026)
-
-`13462600539` · **Ready - Claude can build** · owner Claude
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
-
 ### Phase 161d - Live code no longer loads anything from the draft folders (04-phase-work/phase3 and phase9) (audit 2 Nov 2026)
 
 `13462566355` · **Ready - Claude can build** · owner Claude
@@ -1514,7 +1507,7 @@
 
 ## Z · Complete / Not Applicable
 
-348 items.
+349 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3615,6 +3608,14 @@
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
 - Note 2026-11-04 (Phase 161b): Claimed: branch claude/phase-161b, the Mac copy.
 - Note 2026-11-04 (Phase 161b): Done: form token on every signed-in form that changes something, single-use token on the sensitive ones (migration 120), checked before any route, refused forms audited; test/phase161b.test.ts (10) incl. a walk of every non-GET route; browser check on a local copy; the suites at this close: back end was 3,087 pass, project was 5,371. The check on the test website after merge is Lakhbir's item 13463588433.
+
+### Phase 161c - The status page says only OK, and the key file is locked down on the live server (audit 2 Nov 2026)
+
+`13462600539` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
+- Note 2026-11-04 (Phase 161c): Done. /api/health answers only {"ok":true} (503 {"ok":false} without the database); the switch list is Admin's at /staff/connections/switches.json; the live key file comes from systemd's credentials folder, and CAPREBATE_PRODUCTION=1 stops a start on a key file others can open (09-app/deploy/KEY-FILE-SETUP.md). test/phase161c.test.ts (10). The back end was 3,097 pass and the project 5,381 at the close. Carried: the test website's check to 161d step 0; the unit file and runbook to 161h. Record in PHASE-HISTORY.md.
 
 ### After Phase 161b is merged: on the test website, send one survey photo from your phone (it must show on the claim), and use one form in the back office, the portal and the surveyor's page; tell Claude if any says This form has expired
 

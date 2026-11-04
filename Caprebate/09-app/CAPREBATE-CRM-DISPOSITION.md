@@ -653,7 +653,7 @@ migration 019, `test/configuration.test.ts` and the payload proof; the decisions
 | 28.4 | Every active claim has one owner and one next action | ADOPTED | CRM 3 |
 | 28.5 | Outstanding information visible, not buried in notes | ALREADY BUILT | **The derived "what is still missing" panel** on the business page (`missingFacts` in `src/web/engaged.ts`); CRM 3 and CRM 4 put the rest on the claim |
 | 28.6 | The CRM makes bottlenecks obvious | ADOPTED | CRM 9 — days per procedure stage |
-| 28.7 | Build for integration from day one | ALREADY BUILT | The four stubs, each one module behind an interface (`STUBS` in `src/app.ts`, served at `/api/health`) |
+| 28.7 | Build for integration from day one | ALREADY BUILT | The four stubs, each one module behind an interface (`STUBS` in `src/app.ts`, served to Admin at `/staff/connections/switches.json`; at `/api/health` until Phase 161c) |
 | 28.8 | Prefer configurable workflows over hard-coded assumptions | ADOPTED WITH A RULE | As 20.6 |
 
 ## 29 · Open questions for discovery before development

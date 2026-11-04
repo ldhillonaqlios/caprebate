@@ -4,6 +4,9 @@
  *   GET  /staff/connections                          every outside service on one page, read only. Admin only.
  *   GET  /staff/connections/import?list={CIW|CARE_INSPECTORATE}   the import page, with its one script. Admin only.
  *   POST /staff/connections/register/{CIW|CARE_INSPECTORATE}   import that regulator's downloaded list. Admin only.
+ *   GET  /staff/connections/switches.json            PHASE 161c: the list of what is built and switched off (STUBS in
+ *                                                    src/app.ts), which /api/health served to anyone until 4 Nov 2026.
+ *                                                    Admin only; anyone else gets 403 and nothing of it.
  * The Connections page itself carries no script, as every page reached from Home must (test/phase133a); the import
  * page, which needs one, is opened by a button, as the WhatsApp upload page is (Phase 156c).
  *
@@ -27,7 +30,7 @@
  * A list not imported this calendar month is shown on Home's Admin view, so each new monthly file is imported.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
+import { STUBS, type App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import { SECRET_KEYS, type SecretOwner } from '../secrets.ts';
@@ -259,13 +262,21 @@ export function connectionsPage(app: App, actor: Actor, nav: Safe, done: string 
           <td data-label="Last call">${r.last === null ? h`<span class="help">Never from here</span>` : `${localStamp(r.last.at, now)}: ${RESULT_WORDS[r.last.result] ?? r.last.result.toLowerCase()}${r.last.status === null ? '' : ` (${String(r.last.status)})`}`}</td>
           <td data-label="Waits on">${r.c.waits}</td></tr>`)}</tbody></table>
       <p class="help">Testing only means the test website uses it, with made-up clients. Each one has a written yes from Lakhbir.
-        ${lookupsWaivedHere() ? '' : 'This copy is not the test website, so the free lookups are off here.'}</p>`,
+        ${lookupsWaivedHere() ? '' : 'This copy is not the test website, so the free lookups are off here.'}</p>
+      <p class="help">For the developer: <a href="${SWITCHES_PATH}">the parts that are built but switched off</a>, as data. Only Admin can open it.</p>`,
   });
 }
 
 /* ================================================================== *
  * THE ROUTES
  * ================================================================== */
+
+/** PHASE 161c: where the list of what is built and switched off is served, to Admin only. */
+export const SWITCHES_PATH = '/staff/connections/switches.json';
+const SWITCHES_HEADERS: Readonly<Record<string, string>> = Object.freeze({
+  'content-type': 'application/json; charset=utf-8', 'x-content-type-options': 'nosniff', 'cache-control': 'no-store',
+  'referrer-policy': 'no-referrer', 'content-security-policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+});
 
 /** The test website takes about 4.5 MB a request; a file over this goes trimmed by the page's script. */
 export const ONE_REQUEST_BYTES = Math.floor(4.4 * 1024 * 1024);
@@ -281,6 +292,14 @@ export async function handleConnections(
   body: (r: IncomingMessage, max?: number) => Promise<Buffer>,
 ): Promise<WebResult> {
   const path = url.pathname;
+  if (path === SWITCHES_PATH && method === 'GET') {
+    if (actor.role !== 'ADMIN') {
+      res.writeHead(403, SWITCHES_HEADERS); res.end(JSON.stringify({ error: 'not authorised' }));
+      return 'handled';
+    }
+    res.writeHead(200, SWITCHES_HEADERS); res.end(JSON.stringify({ stubs: STUBS }));
+    return 'handled';
+  }
   if (path === '/staff/connections' && method === 'GET') {
     if (actor.role !== 'ADMIN') return d.problem(res, actor, 'Not for you', 'The Connections page is for Admin.', '/staff');
     const k = url.searchParams.get('done');
