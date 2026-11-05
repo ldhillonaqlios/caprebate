@@ -4,7 +4,7 @@
  * Everything below is wiring. NOT ONE RULE FROM THE HANDLER IS RESTATED HERE:
  * the twelve-step order, the strip, the promotion rule, the quarantine
  * discharge and the fail-closed settings all stay in
- * 04-phase-work/phase3/caprebate-upload-handler.ts, which this phase imported
+ * 09-app/backend/src/documents/caprebate-upload-handler.ts, which this phase imported
  * and did not touch. What this file supplies is the four ports the handler
  * takes — a store, an extractor, a classifier and an audit sink — plus the
  * database rows a screen can render.
@@ -34,8 +34,8 @@ import {
   CLAUDE_SWITCHES, claudeReadiness, prepareClaudeModel, readScannedPages,
   type ClaudeContext, type ClaudeSwitches, type ModelRead,
 } from '../connectors/claude.ts';
-import type { EgressEntry } from '../../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
-import type { ClientDocDiscriminants } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
+import type { EgressEntry } from '../documents/caprebate-document-pipeline.ts';
+import type { ClientDocDiscriminants } from '../documents/caprebate-client-doc-ingestion.ts';
 import { discriminantsFor, recordReading, VOUCHED_FIELDS } from './document-reading.ts';
 import {
   UPLOAD_LIMITS, UploadHandlerError, sniffAccepted, pdfLooksComplete, quarantineKeyFor,

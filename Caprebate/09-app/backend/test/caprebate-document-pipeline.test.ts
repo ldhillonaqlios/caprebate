@@ -10,7 +10,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SourceRegister, record, type AnyCell } from './caprebate-source-register.ts';
+import { SourceRegister, record, type AnyCell } from '../src/registers/caprebate-source-register.ts';
 import {
   segment, classifyHeading, sanitise, callModel, extract, toClaims, specFor, findCandidates,
   captureHumanRead,
@@ -18,7 +18,7 @@ import {
   HUMAN_READ_ONLY_TYPES, HUMAN_CAPTURE_SPECS, PERSON_REVIEW_BY_DOC_TYPE,
   type Segment, type ModelFn, type EgressEntry, type RawExtraction, type ModelPayload,
   type FinderSpec, type FinderCandidate, type HumanCaptureInput,
-} from './caprebate-document-pipeline.ts';
+} from '../src/documents/caprebate-document-pipeline.ts';
 
 const AT = '2026-08-26T12:00:00Z';
 
@@ -168,8 +168,8 @@ test('P9 a person name inside a PERMITTED segment drops the whole segment', () =
   ];
   const { payload, dropped } = sanitise('doc-2', 'PLANNING', segs);
   assert.equal(payload.segments.length, 1);
-  assert.equal(payload.segments[0].kind, 'DECISION');
-  assert.match(dropped[0].reason, /person-name pattern/);
+  assert.equal(payload.segments[0]!.kind, 'DECISION');
+  assert.match(dropped[0]!.reason, /person-name pattern/);
   assert.equal(JSON.stringify(payload).includes('Smith'), false);
 });
 
@@ -195,11 +195,11 @@ test('P12 every model call records what was sent and what was withheld', () => {
   extract('doc-1', 'PLANNING', segment(PLANNING_PAGES), m.fn, { at: AT, egress });
   assert.equal(egress.length, 1);
   const e = egress[0];
-  assert.equal(e.doc_type, 'PLANNING');
-  assert.equal(e.at, AT);
-  assert.equal(e.payload_hash.length, 64);
-  assert.ok(e.segments_sent.length >= 1);
-  assert.ok(e.segments_dropped.some((d) => d.kind === 'REPRESENTATIONS'));
+  assert.equal(e!.doc_type, 'PLANNING');
+  assert.equal(e!.at, AT);
+  assert.equal(e!.payload_hash.length, 64);
+  assert.ok(e!.segments_sent.length >= 1);
+  assert.ok(e!.segments_dropped.some((d) => d.kind === 'REPRESENTATIONS'));
   assert.equal(JSON.stringify(egress).includes('Brookfield'), false, 'nor does the egress log leak');
 });
 
@@ -240,20 +240,20 @@ test('P15 a below-threshold field raises a review task naming the page and the q
   const r = extract('doc-5', 'LEASE', segs, spyModel(raw).fn, { at: AT, egress: [] });
   assert.equal(r.review.length, 1);
   const t = r.review[0];
-  assert.equal(t.asked_of, 'SURVEYOR', 'an apportionment field goes to the surveyor');
-  assert.match(t.question, /61% confidence/);
-  assert.match(t.question, /95% threshold/);
-  assert.match(t.question, /p12 cl\.4\.3/);
+  assert.equal(t!.asked_of, 'SURVEYOR', 'an apportionment field goes to the surveyor');
+  assert.match(t!.question, /61% confidence/);
+  assert.match(t!.question, /95% threshold/);
+  assert.match(t!.question, /p12 cl\.4\.3/);
 });
 
 test('P16 review routing follows consequence: GATE to an analyst, TAXONOMY to an analyst', () => {
   const gate: RawExtraction = [{ field_id: 'lease_repairing_basis', value: 'FRI', confidence: 0.5, page: 2, quote_ref: 'p2' }];
   const rg = extract('d', 'LEASE', [{ kind: 'COVENANTS', heading: 'COVENANTS', text: 'x', page: 2 }], spyModel(gate).fn, { at: AT, egress: [] });
-  assert.equal(rg.review[0].asked_of, 'ANALYST');
+  assert.equal(rg.review[0]!.asked_of, 'ANALYST');
 
   const tax: RawExtraction = [{ field_id: 'fra_alarm_system_category', value: 'L1', confidence: 0.5, page: 4, quote_ref: 'p4' }];
   const rt = extract('d', 'FIRE_RISK_ASSESSMENT', [{ kind: 'FINDINGS', heading: 'FINDINGS', text: 'x', page: 4 }], spyModel(tax).fn, { at: AT, egress: [] });
-  assert.equal(rt.review[0].asked_of, 'ANALYST');
+  assert.equal(rt.review[0]!.asked_of, 'ANALYST');
 });
 
 /* Phase 146, 22 Sep 2026. Caprebate has no tax adviser who could take a per-document
@@ -360,16 +360,16 @@ test('P24 extraction produces CLAIMS, and they are storable provenance cells', (
   const r = extract('doc-10', 'INSURANCE_REINSTATEMENT', segs, spyModel(raw).fn, { at: AT, egress: [] });
   const claims = toClaims('J1', r, AT);
   assert.equal(claims.length, 1);
-  assert.equal(claims[0].source_id, 'CLIENT_DOC');
-  assert.equal(claims[0].grade, 'B');
-  assert.equal(claims[0].retrieval.extraction_confidence, 0.97);
-  assert.match(claims[0].retrieval.locator, /INSURANCE_REINSTATEMENT:doc-10 p3/);
+  assert.equal(claims[0]!.source_id, 'CLIENT_DOC');
+  assert.equal(claims[0]!.grade, 'B');
+  assert.equal(claims[0]!.retrieval.extraction_confidence, 0.97);
+  assert.match(claims[0]!.retrieval.locator, /INSURANCE_REINSTATEMENT:doc-10 p3/);
 
   // And it really does go into the source register from item 12830181420.
   const reg = new SourceRegister({ clock: () => AT });
   const cell = record(reg, {
-    entity_id: claims[0].entity_id, field_id: claims[0].field_id, source_id: claims[0].source_id,
-    retrieval: claims[0].retrieval, value: claims[0].value, grade: claims[0].grade,
+    entity_id: claims[0]!.entity_id, field_id: claims[0]!.field_id, source_id: claims[0]!.source_id,
+    retrieval: claims[0]!.retrieval, value: claims[0]!.value, grade: claims[0]!.grade,
   }) as AnyCell;
   assert.equal(cell.prov.prov, 'CD');
   assert.equal(cell.prov.grade, 'B');
@@ -380,11 +380,11 @@ test('P25 a below-threshold claim enters the register at grade C, so it cannot d
   const raw: RawExtraction = [{ field_id: 'lease_term_years', value: 25, confidence: 0.7, page: 1, quote_ref: 'p1' }];
   const r = extract('doc-11', 'LEASE', [{ kind: 'DEMISE_AND_TERM', heading: 'TERM', text: 'x', page: 1 }], spyModel(raw).fn, { at: AT, egress: [] });
   const claim = toClaims('J1', r, AT)[0];
-  assert.equal(claim.grade, 'C');
+  assert.equal(claim!.grade, 'C');
   const reg = new SourceRegister({ clock: () => AT });
   const cell = record(reg, {
-    entity_id: 'J1', field_id: claim.field_id, source_id: 'CLIENT_DOC',
-    retrieval: claim.retrieval, value: claim.value, grade: 'C',
+    entity_id: 'J1', field_id: claim!.field_id, source_id: 'CLIENT_DOC',
+    retrieval: claim!.retrieval, value: claim!.value, grade: 'C',
   }) as AnyCell;
   assert.equal(cell.prov.grade, 'C');
 });
@@ -500,7 +500,7 @@ test('P32 the controls hold on both new document types: SIGNATORIES, CORRESPONDE
     ];
     const m = spyModel();
     extract('doc-controls', docType, segs, m.fn, { at: AT, egress: [] });
-    const sentKinds = m.seen[0].segments.map((s) => s.kind);
+    const sentKinds = m.seen[0]!.segments.map((s) => s.kind);
     assert.equal(sentKinds.includes('SIGNATORIES'), false, docType);
     assert.equal(sentKinds.includes('CORRESPONDENCE'), false, docType);
     assert.equal(sentKinds.includes('UNCLASSIFIED'), false, docType);
@@ -520,11 +520,11 @@ test('F1 a FinderSpec candidate never enters the source register: no grade, no t
   const tasks = findCandidates(spec, 'doc-fc', candidates);
   assert.equal(tasks.length, 1);
   const t = tasks[0];
-  assert.equal(t.confidence, 0);
-  assert.equal(t.threshold, 0);
-  assert.equal(t.asked_of, 'CTA');
-  assert.equal('grade' in t, false, 'a candidate is not a value and has no grade');
-  assert.ok(t.question.includes('p40 sch.6 cl.4'));
+  assert.equal(t!.confidence, 0);
+  assert.equal(t!.threshold, 0);
+  assert.equal(t!.asked_of, 'CTA');
+  assert.equal('grade' in t!, false, 'a candidate is not a value and has no grade');
+  assert.ok(t!.question.includes('p40 sch.6 cl.4'));
 });
 
 test('F2 the decoy: a schedule headed "Fixtures and Fittings" is FLAGGED, not suppressed, alongside a real election candidate', () => {

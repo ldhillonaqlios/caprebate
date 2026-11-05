@@ -13,8 +13,9 @@
     "test": "node --test test/*.test.ts",
     "typecheck": "node tools/typecheck.cjs",
     "lint:sql": "node tools/lint-sql.cjs",
+    "lint:paths": "node tools/lint-paths.cjs",
     "audit:live": "npm audit --omit=dev --audit-level=high",
-    "check": "npm run audit:live && npm run lint:sql && npm run typecheck && npm run test",
+    "check": "npm run audit:live && npm run lint:sql && npm run lint:paths && npm run typecheck && npm run test",
     "start:demo": "node tools/demo-server.cjs"
   },
   "dependencies": {

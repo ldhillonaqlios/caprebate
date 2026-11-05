@@ -37,7 +37,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const M = require("./caprebate-job-economics.cjs");
+const M = require("../src/costing/caprebate-job-economics.cjs");
 
 const near = (a, b, tol) => Math.abs(a - b) < (tol === undefined ? 1e-9 : tol);
 
@@ -558,7 +558,7 @@ test("E8 THE FEE RATE IS THE ENGINE'S, and this module restates none", () => {
      an unrelated constant gets deleted rather than fixed, and then nothing
      guards the thing that mattered. So: a fee rate is a numeric literal on a
      line that talks about fees. */
-  const own = fs.readFileSync(path.join(__dirname, "caprebate-job-economics.cjs"), "utf8");
+  const own = fs.readFileSync(path.join(__dirname, "..", "src", "costing", "caprebate-job-economics.cjs"), "utf8");
   const body = own.slice(own.indexOf('"use strict"'));
   const offenders = body.split("\n").filter(l =>
     /\bfee[_A-Za-z]*\s*[:=]\s*0?\.\d/i.test(l) || /\bFEE_RATE\b\s*=/.test(l));

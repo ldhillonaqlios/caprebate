@@ -34,7 +34,7 @@ import {
   type Candidate, type MeasureHook, type PickQuery,
 } from './matching.ts';
 import { jurisSource, type Nation, type TypedProperty } from './nations.ts';
-import { LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { LICENCES } from '../registers/caprebate-source-register.ts';
 
 export type PricePaidQuery = {
   readonly property: TypedProperty | null; readonly nation: Nation | null; readonly sector: string | null;

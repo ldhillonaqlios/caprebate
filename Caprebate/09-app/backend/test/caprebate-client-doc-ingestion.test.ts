@@ -44,8 +44,8 @@ import {
   DOC_SPECS, HUMAN_CAPTURE_SPECS, HUMAN_READ_ONLY_TYPES, NEVER_TO_MODEL,
   segment, classifyHeading, sanitise,
   type DocType, type Segment,
-} from './caprebate-document-pipeline.ts';
-import { NameExclusionError } from './caprebate-name-exclusion.ts';
+} from '../src/documents/caprebate-document-pipeline.ts';
+import { NameExclusionError } from '../src/registers/caprebate-name-exclusion.ts';
 import {
   CLIENT_DOC_RECEIPT_POLICY, NEVER_RETAINED_ON_RECEIPT, ALWAYS_NATURAL_PERSON_ROLES,
   VERBATIM_FIELDS, FAIL_CLOSED_SETTINGS, STORAGE_POSITION,
@@ -71,7 +71,7 @@ import {
   // Phase 132 — the backup cycle, the restore guard and RET-3
   BACKUP_CYCLE, assertRestoreApproved, ret3DueAt, knownBackupCycleDays,
   type BackupCycle,
-} from './caprebate-client-doc-ingestion.ts';
+} from '../src/documents/caprebate-client-doc-ingestion.ts';
 
 const ALL_TYPES: readonly DocType[] = [
   'PLANNING', 'FIRE_RISK_ASSESSMENT', 'OM_MANUAL', 'ASBESTOS_REGISTER',
@@ -141,7 +141,7 @@ test('C4 a LEASE loses its parties clause, execution block and witnesses, and ke
 test('C5 the removal log records kind, heading, page and reason — and never the text', () => {
   const r = applyReceiptPolicy('L2', 'LEASE', [seg('SIGNATORIES', 'EXECUTED', 9, 'signed by Mr John Smith of 4 Acacia Ave')]);
   assert.equal(r.removed.length, 1);
-  assert.ok(!('text' in r.removed[0]), 'a removal log carrying the text would recreate the exposure it records');
+  assert.ok(!('text' in r.removed[0]!), 'a removal log carrying the text would recreate the exposure it records');
   assert.equal(JSON.stringify(r.removed).includes('Acacia'), false);
 });
 
@@ -525,7 +525,7 @@ test('W7 brc_issuing_body is refused without its discriminant — an approved in
 
 test('W8 omitting a discriminant fails CLOSED, not open — the same shape as the register\'s T6c', () => {
   assert.throws(
-    () => assertClaimsWritable([{ field_id: 'grant_funder_name', source_id: 'CLIENT_DOC' }], { funder_is_body: undefined }),
+    () => assertClaimsWritable([{ field_id: 'grant_funder_name', source_id: 'CLIENT_DOC' }], { funder_is_body: undefined } as never),
     (e: unknown) => e instanceof ClientDocIngestionError && e.code === 'E_CONDITIONAL_FIELD_UNDISCRIMINATED',
   );
 });
@@ -976,7 +976,7 @@ test('B13 BOUNDARY_POSITION covers all three models and only ONE makes the Phase
   assert.equal(BOUNDARY_POSITION.length, 3);
   const never = BOUNDARY_POSITION.filter((b) => b.unredacted_file_reaches_storage === 'never');
   assert.equal(never.length, 1);
-  assert.equal(never[0].model, 'SERVER_MEDIATED_UPLOAD');
+  assert.equal(never[0]!.model, 'SERVER_MEDIATED_UPLOAD');
   // Both pre-signed models put the file in storage first. That is the finding.
   for (const m of ['DIRECT_TO_DURABLE', 'QUARANTINE_PREFIX']) {
     const row = BOUNDARY_POSITION.find((b) => b.model === m);
@@ -998,7 +998,7 @@ test('B15 NO SURVIVING SENTENCE claims the strip removes content from the FILE o
   // This is the regression that matters most: the defect was prose, three times
   // running, and prose has no type system. Read the module and refuse the two
   // exact overstatements — outside the passages that quote them to correct them.
-  const src = readFileSync(new URL('./caprebate-client-doc-ingestion.ts', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../src/documents/caprebate-client-doc-ingestion.ts', import.meta.url), 'utf8');
 
   // The module must be able to QUOTE the old wording in order to correct it,
   // and it does so in three places. Double quotation marks are the marker that
@@ -1054,10 +1054,10 @@ test('X1 RETAIN_REDACTED_DELETE_ORIGINAL is refused at RUNTIME, not merely remov
 test('X2 the withdrawal records why it went and what brings it back — not just that it went', () => {
   assert.equal(WITHDRAWN_RETENTION_RULES.length, 1);
   const w = WITHDRAWN_RETENTION_RULES[0];
-  assert.equal(w.rule, 'RETAIN_REDACTED_DELETE_ORIGINAL');
-  assert.equal(w.board_item, '12928215019');
-  assert.match(w.reason, /nothing in the codebase can produce/i);
-  assert.match(w.reinstate_when, /REDACTION_PRODUCER_CONTRACT/);
+  assert.equal(w!.rule, 'RETAIN_REDACTED_DELETE_ORIGINAL');
+  assert.equal(w!.board_item, '12928215019');
+  assert.match(w!.reason, /nothing in the codebase can produce/i);
+  assert.match(w!.reinstate_when, /REDACTION_PRODUCER_CONTRACT/);
 });
 
 test('X3 the producer contract requires DESTRUCTION and covers the raster path — a black box is the classic leak', () => {
@@ -1138,7 +1138,7 @@ test('X10 exactly two retention rules remain selectable, and the default is stil
   const selectable: RawFileRetentionRule[] = ['DELETE_ON_EXTRACTION_COMPLETE', 'RETAIN_FOR_DEFENCE_PERIOD'];
   for (const r of selectable) assert.doesNotThrow(() => assertRetentionRuleImplementable(r));
   assert.equal(FAIL_CLOSED_SETTINGS.raw_file_retention, 'DELETE_ON_EXTRACTION_COMPLETE');
-  assert.ok(!(selectable as string[]).includes(WITHDRAWN_RETENTION_RULES[0].rule));
+  assert.ok(!(selectable as string[]).includes(WITHDRAWN_RETENTION_RULES[0]!.rule));
 });
 
 /* ================================================================== *
@@ -1160,7 +1160,7 @@ test('Y1 the answer selects an implementable rule and does NOT reinstate the wit
   assert.doesNotThrow(() => assertRetentionRuleImplementable(Q56_ANSWER.selects_rule));
   // ...and the withdrawn one is still refused, at runtime, unchanged.
   assert.throws(
-    () => assertRetentionRuleImplementable(WITHDRAWN_RETENTION_RULES[0].rule),
+    () => assertRetentionRuleImplementable(WITHDRAWN_RETENTION_RULES[0]!.rule),
     (e: unknown) => e instanceof ClientDocIngestionError && e.code === 'E_RETENTION_RULE_WITHDRAWN',
   );
 });

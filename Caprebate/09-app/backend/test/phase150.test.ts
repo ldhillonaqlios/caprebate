@@ -24,8 +24,8 @@ import { fixtureTransport, RateLimiter, type CallDeps, type Fixture } from '../s
 import { CALL_POLICIES } from '../src/connectors/sources.ts';
 import { inspireBoundaryFetcher, unzipOneGml, readInspireGml, INSPIRE_ENDPOINT, type InspireFetchInput } from '../src/connectors/inspire.ts';
 import { INSPIRE_AUTHORITY_FILES } from '../src/connectors/inspire-authorities.ts';
-import * as B from '../../../04-phase-work/phase9/caprebate-boundary-import.ts';
-import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../../../04-phase-work/phase3/caprebate-source-register.ts';
+import * as B from '../src/registers/caprebate-boundary-import.ts';
+import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/registers/caprebate-source-register.ts';
 import { testApp } from './helpers.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));

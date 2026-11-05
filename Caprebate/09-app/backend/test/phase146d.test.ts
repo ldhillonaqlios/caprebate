@@ -25,8 +25,8 @@ import { PAID_CONNECTORS, PAID_NOT_CHOSEN, PAID_RETIRED, totalBeforePence, pound
 import { FREE_CONNECTORS } from '../src/connectors/free-registers.ts';
 import { epc } from '../src/connectors/epc.ts';
 import { secretsFromValues, emptySecrets, SECRET_KEYS, parseSecretsFile, KEY_OF_NAME } from '../src/secrets.ts';
-import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../../../04-phase-work/phase3/caprebate-source-register.ts';
-import { NAME_EXCLUSION_POLICY, classifyField, assertNoUnauthorisedName } from '../../../04-phase-work/phase3/caprebate-name-exclusion.ts';
+import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/registers/caprebate-source-register.ts';
+import { NAME_EXCLUSION_POLICY, classifyField, assertNoUnauthorisedName } from '../src/registers/caprebate-name-exclusion.ts';
 import * as R from '../src/web/research.ts';
 import * as S from '../src/web/surveyor.ts';
 import { STUBS } from '../src/app.ts';
@@ -215,7 +215,7 @@ describe('a case officer can never be written on a planning record', () => {
   });
 
   test('THE ROW’S CLAIM ABOUT ITSELF IS TRUE NOW: it no longer says it holds no free text, and it says what it does hold', () => {
-    const register = readFileSync(join(HERE, '..', '..', '..', '04-phase-work', 'phase3', 'caprebate-source-register.ts'), 'utf8');
+    const register = readFileSync(join(HERE, '..', 'src', 'registers', 'caprebate-source-register.ts'), 'utf8');
     /* The old sentence may still appear ONCE, quoted, in the paragraph that says it was wrong — that is how the
        correction stays legible to whoever reads it next. It may not appear as a claim. */
     const claim = /contains no free-text field that could carry a third party's name/g;

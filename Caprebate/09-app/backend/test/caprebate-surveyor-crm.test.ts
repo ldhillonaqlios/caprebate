@@ -13,7 +13,7 @@ import {
   isBlankControl, ControlStore, blankControlComparison, BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2,
   calibrationInstrument, CALIBRATION_MODE,
   type Context, type RecordInput, type PlatformDefaults,
-} from './caprebate-surveyor-crm.ts';
+} from '../src/survey/caprebate-surveyor-crm.ts';
 
 const CTX: Context = { sector: 'CARE_HOMES', region: 'Wales' };
 const AT = (d: number) => `2026-0${Math.min(9, Math.floor(d / 28) + 1)}-${String((d % 28) + 1).padStart(2, '0')}T09:00:00Z`;
@@ -231,10 +231,10 @@ test('C18 a surveyor who disagrees with the cohort is surfaced, without a verdic
   for (let i = 0; i < 3; i++) s.record(ev({ job_id: `D${i}`, surveyor_id: 'sv-9', final_value: 50, reason: 'r' }));
   const d = divergences(s, F);
   assert.equal(d.length, 1);
-  assert.equal(d[0].surveyor_id, 'sv-9');
-  assert.equal(d[0].cohort_median_delta, 0);
-  assert.ok(d[0].surveyor_median_delta < -0.2);
-  assert.match(d[0].note, /they may be right/);
+  assert.equal(d[0]!.surveyor_id, 'sv-9');
+  assert.equal(d[0]!.cohort_median_delta, 0);
+  assert.ok(d[0]!.surveyor_median_delta < -0.2);
+  assert.match(d[0]!.note, /they may be right/);
 });
 
 test('C19 a surveyor with fewer than three observations is not called divergent', () => {
@@ -253,7 +253,7 @@ test('C20 the feed separates what can be said from what is still waiting for dat
   assert.equal(feed.min_n, 7);
   assert.equal(feed.fields.length, RATE_FIELDS.length);
   assert.equal(feed.actionable.length, 1);
-  assert.equal(feed.actionable[0].field_id, F);
+  assert.equal(feed.actionable[0]!.field_id, F);
   assert.equal(feed.awaiting_data.length, RATE_FIELDS.length - 1);
   assert.ok(feed.awaiting_data.includes('prelims_pct'));
 });
@@ -432,7 +432,7 @@ test('D9 drift ignores unreviewed events and orders by the event date, not inser
   const d = drift(s, F);
   assert.equal(d.cohorts.length, 3, 'the unreviewed event is excluded, so 12 usable remain');
   assert.equal(d.discarded_tail, 0);
-  assert.ok(d.cohorts[0].median_signed_delta < d.cohorts[2].median_signed_delta,
+  assert.ok(d.cohorts[0]!.median_signed_delta < d.cohorts[2]!.median_signed_delta,
     'cohorts are in date order despite reverse insertion');
   assert.equal(d.verdict, 'DRIFTING_LOW');
 });

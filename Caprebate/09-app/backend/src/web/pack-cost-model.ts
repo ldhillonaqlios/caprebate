@@ -1,7 +1,7 @@
 /**
  * THE COST MODEL IN THE SURVEY PACK — PHASE 157a, 6 October 2026 (from Phase 153e, with 153g's and 155's additions).
  *
- * 04-phase-work/phase9/caprebate-cost-model.cjs has had four of the surveyor's questions built in its own test system
+ * 09-app/backend/src/costing/caprebate-cost-model.cjs has had four of the surveyor's questions built in its own test system
  * since 4 October (Phase 153e): preliminaries by job size (Word question 136), the insurance cross-check (137), the
  * past-claim limits (139) and the index factor (147). The pack did not call it at all. This file reads it for one pack,
  * and the chapters show what it says (src/web/pack-sheets.ts):
@@ -37,13 +37,13 @@ import { BAND } from './engine.ts';
 import { acquisitionDateReading } from './claim-facts.ts';
 import { onTestWebsite, type Env } from '../connectors/place.ts';
 import { MIN_CLAIMS } from './sector-ranges.ts';
-import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../../../../04-phase-work/phase3/caprebate-surveyor-crm.ts';
+import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../survey/caprebate-surveyor-crm.ts';
 
 type IndexTable = { loaded: boolean; source: string; points: readonly (readonly [string, number])[] };
 type Includes = { demolition?: boolean; fees?: boolean; prelims?: boolean };
 type Insurance = { verdict: 'SUPPORTS' | 'DOES_NOT_SUPPORT' | 'NOT_COMPARABLE'; gap: number | null; limit: number; steps: string[]; why: string };
 
-const CM = createRequire(import.meta.url)('../../../../04-phase-work/phase9/caprebate-cost-model.cjs') as {
+const CM = createRequire(import.meta.url)('../costing/caprebate-cost-model.cjs') as {
   CB_BCIS_INDEX_PLACEHOLDER: IndexTable;
   TEST_SYSTEM_GATES: Readonly<Record<string, boolean>>;
   SPEC_PRELIMS_DEFAULT: number;

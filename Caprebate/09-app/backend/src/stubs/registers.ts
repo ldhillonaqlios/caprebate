@@ -22,7 +22,7 @@ import type { Db } from '../db.ts';
 import {
   assertNoUnauthorisedName,
   type IngestedRecord,
-} from '../../../../04-phase-work/phase3/caprebate-name-exclusion.ts';
+} from '../registers/caprebate-name-exclusion.ts';
 
 export {
   gateStatus, planResearch, STUB_NOTICE, REGISTER_SWITCHES, switchedOn,

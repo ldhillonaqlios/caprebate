@@ -12,7 +12,7 @@ import {
   redistributionCheck, stalenessReport, serialise, rehydrate, worstGrade,
   SOURCES, LICENCES,
   type AnyCell, type Retrieval,
-} from './caprebate-source-register.ts';
+} from '../src/registers/caprebate-source-register.ts';
 
 const NOW = '2026-08-26T12:00:00Z';
 const reg = () => new SourceRegister({ clock: () => NOW });
@@ -277,8 +277,8 @@ test('T25 a derived figure is as stale as its stalest input', () => {
   assert.equal(d.prov.effective_cache_max_age_days, 90);
   const stale = stalenessReport(r, [d as AnyCell], NOW);
   assert.equal(stale.length, 1);
-  assert.equal(stale[0].max_age_days, 90);
-  assert.ok(stale[0].age_days > 200);
+  assert.equal(stale[0]!.max_age_days, 90);
+  assert.ok(stale[0]!.age_days > 200);
   // The fresh input on its own is inside its window.
   assert.equal(stalenessReport(r, [fresh as AnyCell], NOW).length, 0);
 });
@@ -300,7 +300,7 @@ test('T27 a licence-restricted figure is caught before it reaches the client rep
   const price = record<number>(r, { entity_id: 'J1', field_id: 'price_paid', source_id: 'HMLR_TITLE', retrieval: ret({ locator: 'official copy, title ZZ1' }), value: 650000 });
   const breaches = redistributionCheck(r, [price as AnyCell], 'client_report');
   assert.equal(breaches.length, 1);
-  assert.equal(breaches[0].licence_id, 'HMLR_TITLE');
+  assert.equal(breaches[0]!.licence_id, 'HMLR_TITLE');
   assert.equal(redistributionCheck(r, [price as AnyCell], 'internal').length, 0);
   const rate = record<number>(r, { entity_id: 'J1', field_id: 'bcis_rate_substructure', source_id: 'BCIS', retrieval: ret({ locator: 'BCIS elemental, rebased 2026Q2' }), value: 310 });
   assert.equal(redistributionCheck(r, [rate as AnyCell], 'client_report').length, 0, 'BCIS confirmed our use');
@@ -334,7 +334,7 @@ test('T30 store.all returns the latest version of every field on a job', () => {
   store.put(record(r, { entity_id: 'J2', field_id: 'price_paid', source_id: 'HMLR_PPD', retrieval: ret(), value: 3 }) as AnyCell);
   const j1 = store.all('J1');
   assert.equal(j1.length, 1);
-  assert.equal(j1[0].value, 2);
+  assert.equal(j1[0]!.value, 2);
 });
 
 /* --- T31–T34: ONS postcode source, added 8 September 2026 (board 12991298199)
@@ -450,12 +450,12 @@ test('T-PL2 no endpoint anywhere in the register uses the bare planit.org.uk dom
   const bare = SOURCES.filter((s) => /\/\/planit\.org\.uk/.test(s.endpoint ?? ''));
   assert.deepEqual(bare.map((s) => s.source_id), []);
   // The file text too, so a commented or unregistered endpoint cannot hide it.
-  const text = readFileSync(join(import.meta.dirname, 'caprebate-source-register.ts'), 'utf8');
+  const text = readFileSync(join(import.meta.dirname, '..', 'src', 'registers', 'caprebate-source-register.ts'), 'utf8');
   assert.equal(/\/\/planit\.org\.uk/.test(text), false, 'the bare planit.org.uk domain appears in the register file');
 });
 
 test('T-PL3 no text in the register contains partnerCode', () => {
-  const text = readFileSync(join(import.meta.dirname, 'caprebate-source-register.ts'), 'utf8');
+  const text = readFileSync(join(import.meta.dirname, '..', 'src', 'registers', 'caprebate-source-register.ts'), 'utf8');
   assert.equal(/partnerCode/i.test(text), false, 'partnerCode appears in the register file');
   assert.equal(/partnerCode/i.test(JSON.stringify({ SOURCES, LICENCES })), false, 'partnerCode appears in the register data');
 });
@@ -474,7 +474,7 @@ test('T-CQ1 the CQC endpoint is the current Syndication host, never the keyless 
   const src = SOURCES.find((s) => s.source_id === 'CQC')!;
   assert.ok(src, 'CQC is not registered');
   assert.equal(src.endpoint, 'https://api.service.cqc.org.uk');
-  const text = readFileSync(join(import.meta.dirname, 'caprebate-source-register.ts'), 'utf8');
+  const text = readFileSync(join(import.meta.dirname, '..', 'src', 'registers', 'caprebate-source-register.ts'), 'utf8');
   assert.equal(/\/\/api\.cqc\.org\.uk/.test(text), false, 'the legacy keyless CQC host appears in the register file');
 });
 

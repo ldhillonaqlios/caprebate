@@ -44,10 +44,10 @@
  *   confirmation.
  */
 
-import type { IngestedRecord } from '../../../../04-phase-work/phase3/caprebate-name-exclusion.ts';
+import type { IngestedRecord } from '../registers/caprebate-name-exclusion.ts';
 import type { OwnerSecrets, SecretOwner, SecretStore } from '../secrets.ts';
 import { callOutside, type CallDeps, type CallRequest, type CallResult, type GateSnapshot } from './http.ts';
-import { BOUNDARY_FETCHING_SWITCHED_ON } from '../../../../04-phase-work/phase9/caprebate-boundary-import.ts';
+import { BOUNDARY_FETCHING_SWITCHED_ON } from '../registers/caprebate-boundary-import.ts';
 import { onTestWebsite, type Env } from './place.ts';
 
 export type Tier = 'FREE' | 'PAID';

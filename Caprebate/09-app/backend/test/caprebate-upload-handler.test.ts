@@ -28,14 +28,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   type DocType, type ModelFn, type EgressEntry, type RawExtraction,
-} from './caprebate-document-pipeline.ts';
+} from '../src/documents/caprebate-document-pipeline.ts';
 import {
   RECEIPT_CONTRACT, INGESTION_BOUNDARY, QUARANTINE_TTL_MINUTES,
   FAIL_CLOSED_SETTINGS, ClientDocIngestionError,
   type QuarantineObject, type RawFileRecord, type IngestionSettings,
   type IdentifiedPerson,
-} from './caprebate-client-doc-ingestion.ts';
-import { NameExclusionError } from './caprebate-name-exclusion.ts';
+} from '../src/documents/caprebate-client-doc-ingestion.ts';
+import { NameExclusionError } from '../src/registers/caprebate-name-exclusion.ts';
 import {
   UploadHandlerError, UPLOAD_LIMITS, PROMOTION_RULE, CONTRACT_COVERAGE,
   sniffAccepted, shouldPromoteRawFile, assertContractCovered,
@@ -46,7 +46,7 @@ import {
   type ObjectStore, type TextExtractor, type DocTypeClassifier,
   type AuditSink, type AuditEvent, type UploadHandlerDeps, type UploadJob,
   type PresignedUpload,
-} from './caprebate-upload-handler.ts';
+} from '../src/documents/caprebate-upload-handler.ts';
 
 /* ------------------------------------------------------------------ *
  * Doubles
@@ -267,7 +267,7 @@ test('G1c — a promotion with no strip recorded is refused by the module sweep'
   };
   const res = runScheduledSweeps([bad], [], '2026-08-31T09:30:00.000Z');
   assert.equal(res.quarantine_ok, false);
-  assert.equal(res.errors[0].code, 'E_DURABLE_WRITE_BEFORE_STRIP');
+  assert.equal(res.errors[0]!.code, 'E_DURABLE_WRITE_BEFORE_STRIP');
 });
 
 test('G1d — the three enforcements are genuinely three, not one restated', () => {
@@ -342,7 +342,7 @@ test('G2d — a failed DELETE fails the job; the object is left for the sweeper'
   ).toISOString();
   const res = runScheduledSweeps([job.quarantine], [], later);
   assert.equal(res.quarantine_ok, false);
-  assert.equal(res.errors[0].code, 'E_QUARANTINE_UNDISCHARGED');
+  assert.equal(res.errors[0]!.code, 'E_QUARANTINE_UNDISCHARGED');
 });
 
 test('G2e — the failure audit event records whether the discharge succeeded', async () => {
@@ -680,7 +680,7 @@ test('P2 — promotion follows the retention rule, in both directions', () => {
     raw_file_retention: 'RETAIN_FOR_DEFENCE_PERIOD',
     grace_days_after_extraction: 0,
     accepts_loss_of_source_reread: true,
-  }), true);
+  } as IngestionSettings), true);
 });
 
 test('P3 — a withdrawn retention rule is refused rather than substituted', () => {
@@ -689,7 +689,7 @@ test('P3 — a withdrawn retention rule is refused rather than substituted', () 
       raw_file_retention: 'RETAIN_REDACTED_DELETE_ORIGINAL' as IngestionSettings['raw_file_retention'],
       grace_days_after_extraction: 0,
       accepts_loss_of_source_reread: false,
-    }),
+    } as IngestionSettings),
     (e: ClientDocIngestionError) => e.code === 'E_RETENTION_RULE_WITHDRAWN',
   );
 });

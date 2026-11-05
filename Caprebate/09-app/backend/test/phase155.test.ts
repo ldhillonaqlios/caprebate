@@ -134,7 +134,7 @@ describe('line 4: the BCIS index from a file Lakhbir downloads, kept outside the
     assert.ok(t.table !== null);
     assert.equal(t.table.source, 'BCIS building price index, imported from bcis-tpi.csv on 2026-10-04');
     const { createRequire } = await import('node:module');
-    const M = createRequire(import.meta.url)('../../../04-phase-work/phase9/caprebate-cost-model.cjs') as { indexFactorFromTable: (t: unknown, a: string, b: string) => { factor: number } };
+    const M = createRequire(import.meta.url)('../src/costing/caprebate-cost-model.cjs') as { indexFactorFromTable: (t: unknown, a: string, b: string) => { factor: number } };
     assert.equal(M.indexFactorFromTable(t.table, '2024-05-01', '2026-01-15').factor, 384 / 396);
   });
 
@@ -299,7 +299,7 @@ describe('lines 1 and 2: the Welsh and Scottish care regulators, imported on thi
 
 describe('line 3: the valuation office’s rating list — its licence read, and not built', () => {
   test('the licence is recorded as it is: not the Open Government Licence, rating purposes only, no channel open', async () => {
-    const { LICENCES, SOURCES, SUPPLIER_DOCS } = await import('../../../04-phase-work/phase3/caprebate-source-register.ts');
+    const { LICENCES, SOURCES, SUPPLIER_DOCS } = await import('../src/registers/caprebate-source-register.ts');
     const voa = SOURCES.find((s) => s.source_id === 'VOA');
     assert.equal(voa?.licence_id, 'VOA_RATING_LIST');
     const lic = LICENCES.find((l) => l.licence_id === 'VOA_RATING_LIST');

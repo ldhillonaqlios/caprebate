@@ -23,7 +23,7 @@ import {
   RegionError,
   regionOf,
   regionKeyOf,
-} from './caprebate-region.ts';
+} from '../src/postcodes/caprebate-region.ts';
 
 const A = (over: Record<string, unknown> = {}) => ({
   postcode: 'M1 1AE', lad_code: 'E08000003', lad_name: 'Manchester',
@@ -59,10 +59,10 @@ test('R3 every mapped code lands on a real region, or on London', () => {
   const names = new Set<string>(PRICE_BOOK_REGIONS);
   for (const code of Object.keys(ONS_REGION_TO_PRICE_BOOK)) {
     const r = ONS_REGION_TO_PRICE_BOOK[code];
-    assert.ok(r === 'LONDON' || names.has(r), `${code} -> ${r}`);
+    assert.ok(r === 'LONDON' || names.has(r!), `${code} -> ${r}`);
   }
   for (const code of Object.keys(COUNTRY_TO_PRICE_BOOK)) {
-    assert.ok(names.has(COUNTRY_TO_PRICE_BOOK[code]), code);
+    assert.ok(names.has(COUNTRY_TO_PRICE_BOOK[code]!), code);
   }
 });
 
@@ -188,7 +188,7 @@ test('U5 regionKeyOf never throws — that is the difference between the two', (
    still load and pass, and only these fail.
    ============================================================================= */
 
-import * as REGION from './caprebate-region.ts';
+import * as REGION from '../src/postcodes/caprebate-region.ts';
 
 const SWITCH = 'SURVEYOR_INNER_LONDON_ONS_FOURTEEN';
 const ON = { [SWITCH]: true };
@@ -341,8 +341,8 @@ test('V7 switch ON: a council outside London is not affected', () => {
     assert.deepEqual(errWhole(() => regionOf(a, ON)), errWhole(() => regionOf(a)), a.lad_name);
     assert.deepEqual(regionKeyOf(a, ON), regionKeyOf(a), a.lad_name);
   }
-  assert.equal(regionOf(outside[0], ON), 'North West');
-  assert.equal(regionOf(outside[3], ON), 'South East');
+  assert.equal(regionOf(outside[0]!, ON), 'North West');
+  assert.equal(regionOf(outside[3]!, ON), 'South East');
 });
 
 test('V8 N4 the council code, switch ON: "not sure" and absent refuse identically, and never fall to Outer London', () => {

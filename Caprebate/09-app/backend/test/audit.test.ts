@@ -7,7 +7,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { AuditError, screenDetail, _canonical } from '../src/audit.ts';
-import { AnchorLog, GENESIS, verifyChain } from '../../../04-phase-work/phase3/caprebate-anchor-quarantine.ts';
+import { AnchorLog, GENESIS, verifyChain } from '../src/survey/caprebate-anchor-quarantine.ts';
 import { testApp, scalars } from './helpers.ts';
 
 describe('append-only is ENFORCED, not documented', () => {

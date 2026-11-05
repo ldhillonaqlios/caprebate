@@ -3,7 +3,7 @@
  * ESTIMATE. Phase 146c, 23 September 2026.
  *
  * Six connectors, each built against the supplier's own published documentation (the dates and addresses are in the
- * source register, 04-phase-work/phase3/caprebate-source-register.ts, `SUPPLIER_DOCS`), each tested on recorded
+ * source register, 09-app/backend/src/registers/caprebate-source-register.ts, `SUPPLIER_DOCS`), each tested on recorded
  * answers, and EVERY ONE SWITCHED OFF (REGISTER_SWITCHES in src/connectors/registers.ts):
  *
  *   CH_COMPANY    Companies House: search, company profile, filing history      src/connectors/companies-house.ts

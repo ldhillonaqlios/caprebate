@@ -27,7 +27,7 @@ import { emptySecrets } from '../src/secrets.ts';
 import { Db, migrate } from '../src/db.ts';
 import { MIGRATIONS_DIR } from '../src/app.ts';
 import { ingestRegisterRecord } from '../src/stubs/registers.ts';
-import * as B from '../../../04-phase-work/phase9/caprebate-boundary-import.ts';
+import * as B from '../src/registers/caprebate-boundary-import.ts';
 
 const HERE = import.meta.dirname;
 const T = '2026-09-28T15:00:00.000Z';
@@ -294,7 +294,7 @@ describe('the switch that ships stays false', () => {
     switchOn(w);
     assert.equal((await smoke(w, [...WHO, ...IN_A, '--not-a-client'])).code, 0);
     assert.equal(B.BOUNDARY_FETCHING_SWITCHED_ON, false);
-    const src = readFileSync(join(HERE, '..', '..', '..', '04-phase-work', 'phase9', 'caprebate-boundary-import.ts'), 'utf8');
+    const src = readFileSync(join(HERE, '..', 'src', 'registers', 'caprebate-boundary-import.ts'), 'utf8');
     assert.match(src, /^export const BOUNDARY_FETCHING_SWITCHED_ON = false as const;$/m);
     await assert.rejects(B.DEFAULT_FETCHER({ kind: 'PARCEL_BOUNDARY', dataset: 'HMLR_INSPIRE_INDEX_POLYGON', locator: 'x' }));
   });

@@ -1,7 +1,7 @@
 /**
  * THE ONE PLACE THIS APPLICATION NAMES THE UPLOAD HANDLER.
  *
- * `04-phase-work/phase3/caprebate-upload-handler.ts` is 945 lines, has 38
+ * `09-app/backend/src/documents/caprebate-upload-handler.ts` is 945 lines, has 38
  * tests, obeys the twelve-step RECEIPT_CONTRACT order — and until Phase 104
  * NOTHING HAD EVER CALLED IT. Its own header is blunt about what that means:
  * every control on client documents was dormant "in the precise sense that no
@@ -10,7 +10,8 @@
  * This file is the seam. Everything the web half needs from the handler and
  * from the ingestion module comes through here, so:
  *
- *   · `grep -rn "04-phase-work" src/` returns ONE line, and it is below;
+ *   · the handler is imported from this file only (it lived in 04-phase-work/phase3 until Phase 161d moved it
+ *     into src/documents/; tools/lint-paths.cjs now keeps src/ from loading anything outside 09-app);
  *   · THE HANDLER IS IMPORTED, NOT COPIED. There is no second implementation
  *     of the contract order in this package and there must never be one;
  *   · if the handler moves, one path changes.
@@ -44,7 +45,7 @@ export {
   INGESTION_BOUNDARY,
   FAIL_CLOSED_SETTINGS,
   receiptPolicyFor,
-} from '../../../../04-phase-work/phase3/caprebate-upload-handler.ts';
+} from '../documents/caprebate-upload-handler.ts';
 
 export type {
   ObjectStore,
@@ -59,10 +60,10 @@ export type {
   ProcessResult,
   Clock,
   UploadHandlerErrorCode,
-} from '../../../../04-phase-work/phase3/caprebate-upload-handler.ts';
+} from '../documents/caprebate-upload-handler.ts';
 
-export type { DocType } from '../../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
-export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
+export type { DocType } from '../documents/caprebate-document-pipeline.ts';
+export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../documents/caprebate-document-pipeline.ts';
 
 /**
  * CRM 4 of 10. The one deletion clock the Retention Procedure gives a client
@@ -71,7 +72,7 @@ export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../../../../04-phase-work/phas
  * than writing "not approved" into a screen, so the day the data protection
  * officer approves it the reading changes with no second edit.
  */
-export { RET7 } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
+export { RET7 } from '../documents/caprebate-client-doc-ingestion.ts';
 
 /**
  * Phase 132, 14 September 2026. The host's backup cycle — NOT SET, a named blank on every deletion — the guard that
@@ -80,8 +81,8 @@ export { RET7 } from '../../../../04-phase-work/phase3/caprebate-client-doc-inge
  */
 export {
   BACKUP_CYCLE, knownBackupCycleDays, assertRestoreApproved, ret3DueAt,
-} from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
-export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryClock } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
+} from '../documents/caprebate-client-doc-ingestion.ts';
+export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryClock } from '../documents/caprebate-client-doc-ingestion.ts';
 
 /**
  * Phase 132. The deletion clock itself — and its rule that where two clocks are known the LATER governs (Word answer
@@ -89,8 +90,8 @@ export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryCl
  * dates src/web/documents.ts reads can be proved against the one function that
  * would turn them into a date. Nothing in src/ calls it: RET-7 is not approved.
  */
-export { deletionDueAt } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
-export type { IngestionSettings, RawFileRecord } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
+export { deletionDueAt } from '../documents/caprebate-client-doc-ingestion.ts';
+export type { IngestionSettings, RawFileRecord } from '../documents/caprebate-client-doc-ingestion.ts';
 
 /**
  * Phase 129. The legal-form test, the roles that are always a person, and the human-capture rule's role tokens and
@@ -98,5 +99,5 @@ export type { IngestionSettings, RawFileRecord } from '../../../../04-phase-work
  */
 export {
   classifyPartyReference, ALWAYS_NATURAL_PERSON_ROLES, ROLE_TOKENS, CAPTURE_NAME_PATTERNS, assertHumanCaptureClean,
-} from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
-export type { PartyLegalForm, PersonRole } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
+} from '../documents/caprebate-client-doc-ingestion.ts';
+export type { PartyLegalForm, PersonRole } from '../documents/caprebate-client-doc-ingestion.ts';

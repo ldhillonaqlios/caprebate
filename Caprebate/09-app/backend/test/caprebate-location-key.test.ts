@@ -28,10 +28,10 @@ import {
   LocationKeyError,
   LEG_E4_GATE,
   type ServedSet,
-} from './caprebate-location-key.ts';
-import { inMemoryPostcodeStore } from './caprebate-postcode-store.ts';
-import type { PostcodeAuthorityTable } from './caprebate-postcode-authority.ts';
-import COST_MODEL from './caprebate-cost-model.cjs';
+} from '../src/postcodes/caprebate-location-key.ts';
+import { inMemoryPostcodeStore } from '../src/postcodes/caprebate-postcode-store.ts';
+import type { PostcodeAuthorityTable } from '../src/postcodes/caprebate-postcode-authority.ts';
+import COST_MODEL from '../src/costing/caprebate-cost-model.cjs';
 
 const CM = COST_MODEL as unknown as {
   CB_P9_GATES: Record<string, boolean>;
@@ -215,7 +215,7 @@ test('N4 gate ON with no price-book key table THROWS at the purchase link', () =
     codeOf(() => locationFactorForPostcode('CF10 3NB', {}, {
       store: STORE,
       gates: { [LEG_E4_GATE]: true },
-      tables: { CB_LOCATION_FACTORS: FACTORS },
+      tables: { CB_LOCATION_FACTORS: FACTORS } as never,
     })),
     'E_LOCATION_KEY_TABLE_NOT_LOADED');
 });

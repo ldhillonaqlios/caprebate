@@ -25,8 +25,8 @@ import { fixtureTransport, RateLimiter } from '../src/connectors/http.ts';
 import { acceptClientBytes, finishUpload, issuedJob, type UploadDeps } from '../src/web/uploads.ts';
 import * as D from '../src/web/documents.ts';
 import * as TH from '../src/web/title-by-hand.ts';
-import { HUMAN_READ_ONLY_TYPES } from '../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
-import { receiptPolicyFor } from '../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
+import { HUMAN_READ_ONLY_TYPES } from '../src/documents/caprebate-document-pipeline.ts';
+import { receiptPolicyFor } from '../src/documents/caprebate-client-doc-ingestion.ts';
 import { actor } from './helpers.ts';
 import { can } from '../src/authz.ts';
 

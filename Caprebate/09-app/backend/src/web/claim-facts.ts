@@ -17,7 +17,7 @@
  *     CB_ELECTION's. WHERE A FACT IS DERIVED, THE STORE REFUSES A RECORDED ONE.
  *
  * 2 · EVERY VALUE CARRIES ITS SOURCE, in the source register's pattern
- *     (04-phase-work/phase3/caprebate-source-register.ts): the register's own
+ *     (09-app/backend/src/registers/caprebate-source-register.ts): the register's own
  *     source id, its publisher and provenance code, whether it was derived, and
  *     exactly where it was read.
  *
@@ -37,7 +37,7 @@ import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
-import { SOURCES as REGISTER_SOURCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { SOURCES as REGISTER_SOURCES } from '../registers/caprebate-source-register.ts';
 import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type EngineWindow, type SectorId } from './engine.ts';
 import { packSwitchReadings } from './money-readings.ts';
 import { TAXONOMY_SECTOR, taxonomy } from './pack-lines.ts';

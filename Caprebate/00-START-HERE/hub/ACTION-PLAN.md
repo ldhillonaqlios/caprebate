@@ -1071,9 +1071,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161d — Live code no longer loads anything from the draft folders
+## PHASE 161d1 — The public site file, notices page, fixture list and engagement letters are read from inside the app
 
- **Model: Opus.** Board item 13462566355. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 5: "Live code depends on draft folders. Parts of the system load code from work-in-progress folders."
+ **Model: Opus.** Board item 13466718822. **Written 4 November 2026 by Phase 161d**, which moved every module live code loaded from the draft folders into the app and found these four files still read from outside it. **Why:** the same audit finding as 161d (section 5).
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1130,36 +1130,47 @@ anything larger goes in a new lettered phase before the sweep; anything that
 needs a person goes in the Word questions document (AMENDMENT 2) and the
 right register.
 
-WHAT IS THERE NOW (checked 4 Nov 2026): ten live files import from
-Caprebate/04-phase-work/: phase3/caprebate-anchor-quarantine.ts (src/payload.ts,
-src/roles.ts, src/audit.ts), phase3/caprebate-source-register.ts
-(src/connectors/price-paid.ts, inspire-store.ts), phase3/caprebate-name-
-exclusion.ts (src/stubs/registers.ts), phase3/caprebate-document-pipeline.ts
-(src/connectors/claude.ts) and phase9/caprebate-boundary-import.ts
-(src/connectors/boundary-test-lookup.ts, title-boundary.ts, inspire.ts).
-Grep again before you start: there may be more (readFileSync, import(),
-api/index.mjs, the site build).
+WHAT IS THERE NOW (Phase 161d, 4 Nov 2026): no live file loads a module from
+04-phase-work any more, and tools/lint-paths.cjs (npm run lint:paths, part of
+npm run check) stops the build if one does. Its KNOWN list names seven paths
+that still lead out of the app folder (Caprebate/09-app) on purpose. Two are
+not reads at all: secrets.ts and inspire-store.ts name the repository folder
+so that a key file or a file store kept inside it can be turned down. FIVE
+READS ARE MARKED "carried" TO THIS PHASE:
+  src/web/public-site.ts    SITE_PATH       Development/Caprebate site.html
+  src/web/notices-site.ts   NOTICES_PATH    03-app/caprebate-notices-page.html
+  src/web/pack-lines.ts     TAXONOMY_FILE   02-modules-and-build-prep/
+                                            Caprebate-Fixture-Taxonomy-v1.csv
+  src/web/letter.ts         LETTER_PATH and TEST_LETTER_PATH
+                                            06-commercial-and-governance/
+                                            Caprebate Engagement Letter.docx
+                                            and its TEST DEFAULTS copy
+Each has other readers and a home that people use: the site file is the
+engine's source (09-app/engine/tools/extract.cjs, the harness, the brand and
+plain-words checks); the notices page is read by four 03-app checks; the
+fixture list is one of the module files the drift checker's stray-copy guard
+keeps ONLY in 02-modules-and-build-prep; the letters are the director's and
+the solicitor's documents. So none was moved by 161d.
 
 BUILD
-0. FIRST, CARRIED FROM 161c (once Lakhbir has merged it): run
-   curl -s https://caprebate-test.vercel.app/api/health and it must print
-   exactly {"ok":true} (until 161c it printed the whole switch list). If it
-   does not, find out why and fix it before step 1.
-1. git mv each module the app uses (and anything it imports in turn) into
-   Caprebate/09-app/backend/src/ (a folder named by what it does, for
-   example src/registers/, ready for the 161i regroup), with its tests into
-   backend/test/. Keep git history. Leave a one-line note in the old place
-   saying where it went; the phase3 and phase9 suites keep running.
-2. A check in npm run check: no file under backend/src or api/ imports or
-   reads anything outside Caprebate/09-app (the engine package is inside it).
-3. The test website's bundle (.vercelignore, vercel.json) still holds what
-   it needs: deploy the branch preview and use it.
+1. For each one, choose (and write down why): MOVE it into 09-app (git mv,
+   and point every reader at the new place - the 03-app checks, the
+   extractor, the harness, COORDINATES, the developer spec and the 146g
+   handover), or keep the original where people edit it and give the app its
+   own copy inside 09-app with a check in npm run check that fails when the
+   copy and the original differ (the way extract.cjs --check keeps the
+   engine's generated copy). Grep for every reader first.
+2. Point the live file at the place inside 09-app, and take its row out of
+   KNOWN in tools/lint-paths.cjs (the check fails while a listed path is no
+   longer there, so the list only shrinks on purpose).
+3. The test website's bundle still holds what it needs: deploy the branch
+   preview and open the home page, the notices page, a claim's pack lines and
+   the engagement letter on it.
 
 ACCEPT
-- The new check passes, and fails on a planted import from 04-phase-work.
+- KNOWN in tools/lint-paths.cjs has no row marked carried; npm run check is
+  green; each fix has a test that fails on the code before it.
 - All four suites pass as before; the test website's preview works.
-- Nothing in 04-phase-work is deleted: it is evidence the standing
-  instruction points at.
 ```
 
 
@@ -1658,6 +1669,13 @@ BUILD (in Caprebate/09-app/backend/src/)
 4. styles/: the CSS held as text in web/assets.ts (about 1,900 lines) moves
    into real .css files, served at the same addresses with the same bytes
    (a test compares them) and the same cache headers.
+5. (Added by Phase 161d, 4 Nov 2026.) The five folders 161d made when it
+   brought the draft-folder modules in - src/registers/, documents/,
+   survey/, costing/ and postcodes/ - take their place in this layout too
+   (most belong in shared/ or the modules of 161j and 161k; say which), and
+   their caprebate- file prefix goes. The notes at their old paths in
+   04-phase-work/phase3 and phase9, the site harness (APP_SRC in
+   03-app/caprebate-regression.cjs) and npm run lint:paths follow the move.
 
 ACCEPT
 - The route list and the pass list are unchanged; the served CSS is the
@@ -2519,7 +2537,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file, 161d off the draft folders, 161e a fresh copy passes every check, 161f the calculator as code, 161g the legal pages, 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code, 161g the legal pages, 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161h, before go-live (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

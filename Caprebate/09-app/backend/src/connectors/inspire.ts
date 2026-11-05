@@ -2,7 +2,7 @@
  * THE LAND BOUNDARY FETCHER — HM LAND REGISTRY'S INSPIRE INDEX POLYGONS. Phase 150, 24 September 2026.
  * BUILT FOR REAL AND SWITCHED OFF.
  *
- * WHAT IT IS. The real `BoundaryFetcher` that 04-phase-work/phase9/caprebate-boundary-import.ts has waited for since
+ * WHAT IT IS. The real `BoundaryFetcher` that 09-app/backend/src/registers/caprebate-boundary-import.ts has waited for since
  * Phase 78. That module's DEFAULT_FETCHER always throws, and it still does: this fetcher is used only when a caller
  * injects it into `fetchAndImportBoundary`, and since Phase 151a exactly one does — src/connectors/site-area.ts, which
  * works out a property's site area from it, switched off by the same word. Given a council's file and a British
@@ -47,7 +47,7 @@ import {
   type BoundaryFetchPlanItem,
   type InspireIndexPolygonRecord,
   type RawBoundaryPayload,
-} from '../../../../04-phase-work/phase9/caprebate-boundary-import.ts';
+} from '../registers/caprebate-boundary-import.ts';
 import { callOutside, type CallDeps, type GateSnapshot } from './http.ts';
 import { INSPIRE_AUTHORITY_FILES } from './inspire-authorities.ts';
 import { inspireReleaseOf, type InspireFileStore } from './inspire-store.ts';

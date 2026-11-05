@@ -34,7 +34,7 @@ import {
   type LicencePermission,
   type BoundarySourceKind,
   type BoundaryFetchPlanItem,
-} from './caprebate-boundary-import.ts';
+} from '../src/registers/caprebate-boundary-import.ts';
 
 /* ------------------------------------------------------------------ *
  * Fixtures — hand-written literal geometry, invented for this file.
@@ -345,10 +345,10 @@ test('T27 releaseGeometryForReport succeeds ONLY once permission explicitly says
   };
   const released = releaseGeometryForReport(a, fullyCleared);
   assert.equal(released.polygons.length, 1);
-  assert.deepEqual(released.polygons[0].exterior, SQUARE_100_CCW.type === 'Polygon' ? SQUARE_100_CCW.exterior : []);
+  assert.deepEqual(released.polygons[0]!.exterior, SQUARE_100_CCW.type === 'Polygon' ? SQUARE_100_CCW.exterior : []);
   // Deep copy, not a live view onto the internal store.
   const releasedAgain = releaseGeometryForReport(a, fullyCleared);
-  assert.notEqual(released.polygons[0].exterior, releasedAgain.polygons[0].exterior);
+  assert.notEqual(released.polygons[0]!.exterior, releasedAgain.polygons[0]!.exterior);
 });
 
 test('T28 parseBoundaryGeometry itself refuses under NOT_CLEARED — geometry may not even be held', () => {
@@ -374,8 +374,8 @@ test('T29 planBoundaryFetch is pure: same input, same output, synchronous (no I/
   assert.deepEqual(plan1, plan2);
   assert.equal(plan1 instanceof Promise, false);
   assert.equal(plan1.items.length, 2);
-  assert.equal(plan1.items[0].dataset, 'HMLR_INSPIRE_INDEX_POLYGON');
-  assert.equal(plan1.items[1].dataset, 'OS_MASTERMAP_BUILDING_FOOTPRINT');
+  assert.equal(plan1.items[0]!.dataset, 'HMLR_INSPIRE_INDEX_POLYGON');
+  assert.equal(plan1.items[1]!.dataset, 'OS_MASTERMAP_BUILDING_FOOTPRINT');
 });
 
 test('T30 DEFAULT_FETCHER always throws E_LICENCE_NOT_CLEARED and performs no I/O', async () => {
@@ -428,8 +428,8 @@ test('T33 fetchAndImportBoundary end-to-end with a hand-written in-memory fetche
     { property_ref: 'PROP-4', title_number: 'XYZ999', wants: ['PARCEL_BOUNDARY', 'BUILDING_FOOTPRINT'] },
     { fetcher: fakeFetcher },
   );
-  const site = computeSiteArea(artefacts.PARCEL_BOUNDARY);
-  const footprint = computeFootprintAreaM2(artefacts.BUILDING_FOOTPRINT);
+  const site = computeSiteArea(artefacts.PARCEL_BOUNDARY!);
+  const footprint = computeFootprintAreaM2(artefacts.BUILDING_FOOTPRINT!);
   const bcr = computeBuildingCoverageRatio(site, footprint);
   assert.equal(site.value, 10000);
   assert.equal(footprint.value, 1200);

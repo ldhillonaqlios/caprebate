@@ -25,7 +25,7 @@ import {
   resolveBillingAuthority,
   PostcodeAuthorityError,
   type PostcodeAuthorityTable,
-} from './caprebate-postcode-authority.ts';
+} from '../src/postcodes/caprebate-postcode-authority.ts';
 import {
   inMemoryPostcodeStore,
   sqlitePostcodeStore,
@@ -34,7 +34,7 @@ import {
   ONS_TABLE_EXPIRY_DAYS,
   ONS_TABLE_STALE_FLAG,
   type SqliteOpen,
-} from './caprebate-postcode-store.ts';
+} from '../src/postcodes/caprebate-postcode-store.ts';
 
 const open: SqliteOpen = (path, opts) =>
   new DatabaseSync(path, { readOnly: opts.readOnly }) as never;

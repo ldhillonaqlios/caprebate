@@ -217,7 +217,7 @@ export function feeDisplay(
  * Phase 132e switched CB_GATE_CONFIG on (120 jobs this year), and nothing handed it costs: `costing` ships null, so
  * every assessment came back UNDETERMINED naming "costing" and the gate stopped nothing. The engine says the costing
  * is "injected by whatever runs it", and that the only calculator is
- * 04-phase-work/phase9/caprebate-job-economics.cjs `costingForGate`. This is the back end injecting it.
+ * 09-app/backend/src/costing/caprebate-job-economics.cjs `costingForGate`. This is the back end injecting it.
  *
  * SCOPED, NOT PERMANENT. The costing is set on CB_GATE_CONFIG for one synchronous call and put back in `finally`,
  * the mutate-and-restore Suite T of the site harness uses. A permanent injection would change every `feeDisplay`
@@ -242,7 +242,7 @@ export const ECONOMICS_SECTOR_OF: Readonly<Record<string, string>> = Object.free
 
 const JOB_ECONOMICS_COSTING: GateCosting | null = (() => {
   try {
-    const m = createRequire(import.meta.url)('../../../../04-phase-work/phase9/caprebate-job-economics.cjs') as { costingForGate?: unknown };
+    const m = createRequire(import.meta.url)('../costing/caprebate-job-economics.cjs') as { costingForGate?: unknown };
     const f = m.costingForGate;
     if (typeof f !== 'function') return null;
     const costing = f as GateCosting;

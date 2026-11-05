@@ -36,7 +36,7 @@ import {
   ONS_TABLE_MAX_AGE_DAYS,
   NSPL_COLUMNS_VERIFIED,
   type PostcodeAuthorityTable,
-} from './caprebate-postcode-authority.ts';
+} from '../src/postcodes/caprebate-postcode-authority.ts';
 
 const codeOf = (fn: () => unknown): string => {
   try { fn(); return 'NO_THROW'; } catch (e) {
@@ -326,14 +326,14 @@ test('E3 Northern Ireland rows are dropped AT INGEST, not merely refused at look
   const { table, quarantined } = ingestNspl(csv, NAMES, META);
   assert.equal(table.record_count, 1);
   assert.equal(Object.keys(table.byPostcode).some((p) => p.startsWith('BT')), false);
-  assert.equal(quarantined[0].code, 'E_NORTHERN_IRELAND_ROW');
+  assert.equal(quarantined[0]!.code, 'E_NORTHERN_IRELAND_ROW');
 });
 
 test('E4 a terminated row is kept, with its date — it is a fact, not a defect', () => {
   const csv = [HEADER, 'M1 1AF,M1  1AF,M1 1AF,199801,201908,E08000003,E92000001'].join('\n');
   const { table, quarantined } = ingestNspl(csv, NAMES, META);
   assert.equal(quarantined.length, 0);
-  assert.equal(table.byPostcode['M1 1AF'].terminated_on, '201908');
+  assert.equal(table.byPostcode['M1 1AF']!.terminated_on, '201908');
 });
 
 test('E5 a bad FILE throws, and the column assumption is named in the message', () => {
@@ -379,11 +379,11 @@ test('E5c the UTF-8 byte-order mark on the ONS files does not break the header',
 test('E5d the country code is read from the file where ONS gives it', () => {
   const withCtry = ingestNspl(
     ['pcds,doterm,lad26cd,ctry26cd', 'CF10 3NB,,W06000015,W92000004'].join('\n'), NAMES, META);
-  assert.equal(withCtry.table.byPostcode['CF10 3NB'].country_code, 'W92000004');
+  assert.equal(withCtry.table.byPostcode['CF10 3NB']!.country_code, 'W92000004');
   /* and falls back to the GSS code's first letter where it does not */
   const without = ingestNspl(
     ['pcds,doterm,lad26cd', 'CF10 3NB,,W06000015'].join('\n'), NAMES, META);
-  assert.equal(without.table.byPostcode['CF10 3NB'].country_code, 'W');
+  assert.equal(without.table.byPostcode['CF10 3NB']!.country_code, 'W');
 });
 
 test('E6 the column names are an argument, so correcting the assumption is a one-liner', () => {
@@ -391,7 +391,7 @@ test('E6 the column names are an argument, so correcting the assumption is a one
   const { table } = ingestNspl(csv, NAMES, META,
     { postcode: 'postcode', terminated: 'end_date', lad_code: 'council' });
   assert.equal(table.record_count, 1);
-  assert.equal(table.byPostcode['CF10 3NB'].lad_name, 'Cardiff');
+  assert.equal(table.byPostcode['CF10 3NB']!.lad_name, 'Cardiff');
   /* and the default is now the VERIFIED name, not the old assumption */
   assert.equal(NSPL_COLUMNS_VERIFIED.lad_code, 'lad26cd');
   assert.equal(NSPL_COLUMNS_VERIFIED.postcode, 'pcds');
@@ -401,7 +401,7 @@ test('E6 the column names are an argument, so correcting the assumption is a one
 test('E7 an unknown LAD code falls back to the code itself, never to a blank name', () => {
   const csv = [HEADER, 'CF1 1AA,CF1  1AA,CF10 3NB,199801,,W06000099,W92000004'].join('\n');
   const { table } = ingestNspl(csv, {}, META);
-  assert.equal(table.byPostcode['CF10 3NB'].lad_name, 'W06000099');
+  assert.equal(table.byPostcode['CF10 3NB']!.lad_name, 'W06000099');
 });
 
 /* =============================================================================
@@ -457,7 +457,7 @@ test('H1 the incremental ingester takes a header and rows separately', () => {
   const { table, quarantined } = ing.finish();
   assert.equal(table.record_count, 1);
   assert.equal(quarantined.length, 1);
-  assert.equal(table.byPostcode['CF10 3NB'].lad_name, 'Cardiff');
+  assert.equal(table.byPostcode['CF10 3NB']!.lad_name, 'Cardiff');
 });
 
 test('H2 a row before a header refuses rather than silently mis-indexing', () => {

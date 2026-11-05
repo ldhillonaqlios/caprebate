@@ -23,7 +23,7 @@ import { CALL_POLICIES } from '../src/connectors/sources.ts';
 import * as C from '../src/connectors/registers.ts';
 import * as S from '../src/stubs/registers.ts';
 import { AuditLog, AuditError } from '../src/audit.ts';
-import { SOURCES as REGISTER_SOURCES, SUPPLIER_DOCS } from '../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { SOURCES as REGISTER_SOURCES, SUPPLIER_DOCS } from '../src/registers/caprebate-source-register.ts';
 import * as R from '../src/web/research.ts';
 import * as E from '../src/web/engaged.ts';
 import { panel2 } from '../src/web/engaged-pages.ts';

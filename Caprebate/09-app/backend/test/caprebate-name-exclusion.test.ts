@@ -10,7 +10,7 @@ import {
   art14Owed, assertArt14Complete, art14DeadlineFor, art14PendingDpoDecision,
   Art14Error, ART14_NOT_SENT,
   type IngestedRecord, type Art14Record,
-} from './caprebate-name-exclusion.ts';
+} from '../src/registers/caprebate-name-exclusion.ts';
 
 /* --- the register loads and is internally consistent ---------------- */
 
@@ -41,24 +41,24 @@ test('R1 the eleven ORIGINAL register sources are still one per subitem 1-11, no
 test('R1b CLIENT_DOC is still the only non-register source; the paid address lookup is a register source, added at subitem 14', () => {
   const clientDoc = NAME_EXCLUSION_POLICY.filter((p) => p.sourceId === 'CLIENT_DOC');
   assert.equal(clientDoc.length, 1);
-  assert.equal(clientDoc[0].subitem, 13, 'subitem 12 is the test suite and is deliberately not reused');
+  assert.equal(clientDoc[0]!.subitem, 13, 'subitem 12 is the test suite and is deliberately not reused');
   // Phase 146d: thirteen entries. HOMEDATA_ADDRESS IS a register — a paid one —
   // so CLIENT_DOC remains the one entry describing documents a client sends in.
   const homedata = NAME_EXCLUSION_POLICY.filter((p) => p.sourceId === 'HOMEDATA_ADDRESS');
   assert.equal(homedata.length, 1);
-  assert.equal(homedata[0].subitem, 14);
+  assert.equal(homedata[0]!.subitem, 14);
   // Phase 151a: fourteen. The land boundary is a register source too, at subitem 15, and keeps no name.
   const inspire = NAME_EXCLUSION_POLICY.filter((p) => p.sourceId === 'HMLR_INSPIRE');
   assert.equal(inspire.length, 1);
-  assert.equal(inspire[0].subitem, 15);
-  assert.deepEqual(inspire[0].nameExceptions, []);
+  assert.equal(inspire[0]!.subitem, 15);
+  assert.deepEqual(inspire[0]!.nameExceptions, []);
   // Phase 155: sixteen. The Welsh and Scottish care regulators, at subitems 16 and 17, each keeping no name.
   // Phase 156f: seventeen. The site area from Homedata's title outline, at subitem 18, keeps no name and no title number.
   for (const [id, n] of [['CIW', 16], ['CARE_INSPECTORATE', 17], ['HOMEDATA_BOUNDARY', 18]] as const) {
     const e = NAME_EXCLUSION_POLICY.filter((p) => p.sourceId === id);
     assert.equal(e.length, 1, id);
-    assert.equal(e[0].subitem, n, id);
-    assert.deepEqual(e[0].nameExceptions, [], id);
+    assert.equal(e[0]!.subitem, n, id);
+    assert.deepEqual(e[0]!.nameExceptions, [], id);
   }
   assert.equal(NAME_EXCLUSION_POLICY.length, 17);
   // Every subitem is still unique: a number is never reused.
