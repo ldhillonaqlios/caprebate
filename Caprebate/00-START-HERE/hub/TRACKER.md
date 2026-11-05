@@ -1452,6 +1452,7 @@
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
+- Note 2026-11-05 (Planning, 5 Nov 2026): Prompt amended by Lakhbir: Google Analytics only after a click; draft the privacy policy; draft the client's terms and their links (with a kept tick at sign-up); check what the live legal pages need first; the review pack as a folder with every document attached. Same text in ACTION-PLAN.md and on the run sheet.
 
 ### Phase 161h - The production hosting kit for the Hostinger VPS, and the runbook for the developer (Lakhbir, 29 Oct 2026)
 
