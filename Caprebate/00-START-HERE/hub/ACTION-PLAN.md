@@ -1139,7 +1139,7 @@ command that counts it, never the number.
 
 ## PHASE 161g — The legal pages ready for the live website: one cookie choice, every cookie and every outside service listed, and a review pack for the solicitor and DPO
 
- **Model: Opus.** Board item 13462566195. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Lakhbir, 4 Nov 2026: "we also need to consider privacy policy, T&C, cookies ect", so the platform can go to production.
+ **Model: Opus.** Board item 13462566195. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Lakhbir, 4 Nov 2026: "we also need to consider privacy policy, T&C, cookies ect", so the platform can go to production. **Amended 5 November 2026 (Lakhbir):** Google Analytics only after a click; draft the privacy policy; draft the client's terms and their links; check what the live pages need before switching anything; the review pack with every document attached.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1213,16 +1213,36 @@ not agreed. Board items that touch this: 12552682424 (ICO registration,
 Lakhbir), 12946752268 (public notices), 12552682456 (governance policies),
 13025228235 (the referral opt-in wording), 12552691720 (analytics, parked).
 
+AMENDED 5 NOV 2026 BY LAKHBIR (items 1, 3, 4, 5 and 6 below say how):
+"Google Analytics only after a click"; draft the privacy policy; draft the
+client's terms and their links; "check what is needed" for the live legal
+pages; the review pack "draft this but add attachments".
+
 BUILD
 1. ONE cookie choice: the banner. Google Analytics loads only when
    optionalAllowed says yes; SITE_CONSENT reads cb_cookies instead of asking
    again. "Reject" is as easy as "Accept" (same size, same place), and the
    cookie policy page lets a visitor change their answer.
+   GOOGLE ANALYTICS ONLY AFTER A CLICK (Lakhbir, 5 Nov 2026): nothing of
+   Google's loads, and no request goes to Google, until the visitor CLICKS
+   "Accept" on the banner (or turns Analytics on in the cookie policy page).
+   Not on a page view, a scroll, a timer, a pre-ticked box or an earlier
+   visit with no answer; no answer is "no". A test proves no Analytics
+   script or request exists before the click and that one does after it.
 2. The cookie list is tested, not typed: a test collects every cookie name
    the app can set (and any storage key the site page writes) and fails
    unless each is in the cookie policy with its purpose and how long it is
    kept, and fails on a policy line for a cookie that no longer exists.
-3. The privacy notice names every outside service that receives personal
+3. DRAFT THE PRIVACY POLICY (Lakhbir, 5 Nov 2026). Turn the Phase 160f
+   notice into a complete draft privacy policy for the live website and the
+   client portal: who we are (CAP REBATE LTD, 17307313, as registered), what
+   we collect and from where, why and on what lawful basis (the free lookups
+   are legitimate interests, never consent: rule 13(b)), who receives it,
+   how long it is kept (the retention schedule), the person's rights and how
+   to use them, complaints (us, then the ICO), cookies (pointing to the
+   cookie policy), and a "last updated" date. Every gap (the ICO number, the
+   DPO's name and contact, a phone number) is a marked blank, never invented.
+   The policy names every outside service that receives personal
    data, from the connectors and SECRET_KEYS owners (identity checks,
    Zoom, WhatsApp, email, Claude/Anthropic, the database host, the hosting
    company, Google Analytics, Companies House and the rest): what is sent,
@@ -1230,28 +1250,65 @@ BUILD
    basis is written "to be confirmed by our DPO", never guessed. A test ties
    the list to SECRET_KEYS, so a new connector cannot be added without a
    line.
-4. The client's terms: the portal's sign-up and the engagement letter
-   signing screen link to the website terms and the privacy notice; the
-   engagement letter goes into the review pack below.
-5. Ready for the live website, but not switched on: the legal pages are
-   served wherever a new "legal" setting is on (separate from the test
-   website's "notices"), and each page shows the "Draft" line until an
-   approval is recorded (who approved it, and the date, kept in the
+4. DRAFT THE CLIENT'S TERMS (Lakhbir, 5 Nov 2026): a short "terms of using
+   the client portal" page (what the portal is for, the login and its
+   second step, keeping the login safe, uploads must be the client's own,
+   our right to suspend misuse, that the engagement letter governs the work
+   and wins over these terms, and governing law), as a draft beside the
+   Phase 160h website terms, which are checked and brought level. Then the
+   links: the portal's sign-up and the engagement letter signing screen
+   link to the client's terms, the website terms and the privacy policy,
+   and the sign-up asks the person to tick that they have read them (the
+   tick, its date and the version are kept, and the audit log records it).
+   The engagement letter's own clauses are NOT rewritten (the fees, the
+   break fee and the clawback are Lakhbir's and the solicitor's decisions);
+   it goes into the review pack below as an attachment.
+5. CHECK WHAT IS NEEDED FIRST (Lakhbir, 5 Nov 2026). Before building the
+   switch, list everything the live legal pages need before they can be
+   switched on, each with who supplies it and whether it is done: the ICO
+   registration number, the company's registered office, the DPO's name
+   and contact, a phone number or a decision not to have one, the
+   solicitor's and the DPO's approval of each page, the live hosting
+   company and where it holds data (the Hostinger VPS, Phase 161h), the
+   email provider, the cookie list, the client's terms and the website
+   terms, the accessibility statement's test date, and anything else found
+   on the way. It goes into the review pack (item 6), the phase record and
+   a tracker row for each missing item under its owner.
+   Then build it ready for the live website, but not switched on: the
+   legal pages are served wherever a new "legal" setting is on (separate
+   from the test website's "notices"), and each page shows the "Draft" line
+   until an approval is recorded (who approved it, and the date, kept in the
    database and the audit log). With no approval nothing goes live.
-6. The review pack: ONE Word document in 06-commercial-and-governance with
-   every page's text, the cookie list, the list of outside services, the
-   gaps, and the questions for each reviewer. Add it to FOR THE SOLICITOR,
+6. The review pack, WITH ATTACHMENTS (Lakhbir, 5 Nov 2026): a folder in
+   06-commercial-and-governance, "Legal review pack (Phase 161g)", holding a
+   cover Word document and every document it asks about as its own
+   attachment. The cover document: what each attachment is, what changed
+   since the last draft, the checklist from item 5, the gaps, and the
+   questions for each reviewer (solicitor, DPO). The attachments, each a
+   Word document a reviewer can mark up: the privacy policy, the cookie
+   policy with the cookie list, the website terms, the client's terms, the
+   acceptable use policy, the accessibility statement, the disclaimer, the
+   complaint form's words, the list of outside services (what is sent, why,
+   where held), and the engagement letter (TEST DEFAULTS, not agreed, copied
+   as it is). OneDrive only: none of it is committed (the repository is
+   public). Add it to FOR THE SOLICITOR,
    THE DPO AND THE DEVELOPER and to the Word questions document
    (AMENDMENT 2). For Lakhbir (his items, not built): register with the ICO
    (12552682424), choose the solicitor and the DPO who will review it, and
    say whether there will be a phone number.
 
 ACCEPT
-- Tests for items 1 to 5; a visitor who rejects gets no Analytics request
-  (check the network in the browser pane on the test website).
+- Tests for items 1 to 5; before any click, and after "Reject", no
+  Analytics script loads and no request goes to Google; after "Accept" it
+  does (check the network in the browser pane on the test website).
+- The privacy policy and the client's terms are drafts with every gap
+  marked, nothing invented; the sign-up's tick is kept with its version.
+- The checklist of what the live pages need exists, every missing item
+  with an owner and a tracker row.
 - With "legal" off, the live start shows what it shows today; with it on
   and no approval, every page carries the Draft line.
-- The review pack is in OneDrive and its register and question rows exist.
+- The review pack folder is in OneDrive with its cover document and every
+  attachment, and its register and question rows exist.
 ```
 
 
