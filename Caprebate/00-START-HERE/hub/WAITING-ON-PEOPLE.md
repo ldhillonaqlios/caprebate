@@ -117,7 +117,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 ## The accountant and the tax adviser
 
 - [ ] 51 items in FOR THE ACCOUNTANT (counted by the register check, 9 Oct 2026; it said 45 and 24 switches on 3 Oct):
-      among them the 29 switched-off tax readings (verify-extraction counts them), the rulebooks and the review pack,
+      among them the 29 switched-off tax readings (engine/tools/verify-page.cjs counts them), the rulebooks and the review pack,
       and the questions for the accountant on the referral channel and AML. The Word questions for the accountant are
       in its Section 3.
 - [ ] Phase 158d (ACC-H3, board 13245993980): is the accountant's own confirmation link asking the right thing, and is

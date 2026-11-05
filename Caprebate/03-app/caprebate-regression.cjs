@@ -128,24 +128,25 @@ const USE_PACKAGE = argv.includes("--package") || process.env.CAPREBATE_ENGINE =
 function packageDir() {
   const tries = [path.join(DIR, "..", "09-app", "engine"), path.join(DIR, "09-app", "engine")];
   for (const c of tries) {
-    try { if (fs.readdirSync(path.join(c, "src", "generated")).length) return c; }
+    try { if (fs.readdirSync(path.join(c, "src", "calculator")).length) return c; }
     catch (e) { /* not there */ }
   }
   return null;
 }
 const PKG = USE_PACKAGE ? packageDir() : null;
 if (USE_PACKAGE && !PKG) {
-  console.error("FATAL: --package was asked for but 09-app/engine/src/generated is empty or missing.\n" +
-                "       Run: node 09-app/engine/tools/extract.cjs");
+  console.error("FATAL: --package was asked for but 09-app/engine/src/calculator is empty or missing.\n" +
+                "       It is the calculator's source (Phase 161f): restore it from git.");
   process.exit(1);
 }
 
-/* The fences the extractor writes round the verbatim slice and round the four
-   lines of renderer shim, so this harness can recover either. */
-const PKG_SLICE = ["/* @@CAPREBATE-SLICE-OPEN@@ */", "/* @@CAPREBATE-SLICE-CLOSE@@ */"];
+/* The fences in each calculator file round the part that goes into the page
+   and round the four lines of renderer shim, so this harness can recover
+   either. (Phase 161f renamed SLICE to PAGE: the package is the source now.) */
+const PKG_SLICE = ["/* @@CAPREBATE-PAGE-OPEN@@ */", "/* @@CAPREBATE-PAGE-CLOSE@@ */"];
 const PKG_SHIM = ["/* @@CAPREBATE-SHIM-OPEN@@ */", "/* @@CAPREBATE-SHIM-CLOSE@@ */"];
 function pkgFenced(file, fence) {
-  const t = fs.readFileSync(path.join(PKG, "src", "generated", file), "utf8");
+  const t = fs.readFileSync(path.join(PKG, "src", "calculator", file), "utf8");
   const a = t.indexOf(fence[0]), b = t.indexOf(fence[1]);
   if (a < 0 || b < 0) throw new Error("no " + fence[0] + " fence in " + file);
   return t.slice(a + fence[0].length + 1, b - 1);
@@ -227,14 +228,14 @@ let layerSrc = engineBody.slice(engineBody.indexOf("var CB_PLANT"), engineBody.i
    The renderer that draws it (`FN`) is deliberately NOT lifted — it is DOM
    code, and lifting it would mean stubbing a browser to test a layout. */
 /* PHASE 102 - in package mode the layer TEXT comes from the package file
-   instead of the page. The extraction verifier proves the two are byte for
-   byte the same, so this changes nothing except which artefact is on trial.
+   instead of the page. tools/verify-page.cjs (the extraction verifier until
+   Phase 161f) proves the two are byte for byte the same, so this changes nothing except which artefact is on trial.
    Only Suite H, which forces CTA switches on by rewriting the text, needs it;
    LAYER and ENGINES below are `require`d from the package as a consumer would. */
 if (USE_PACKAGE) layerSrc = pkgFenced("shared.js", PKG_SLICE);
 
 const LAYER = USE_PACKAGE
-  ? require(path.join(PKG, "src", "generated", "shared.js"))
+  ? require(path.join(PKG, "src", "calculator", "shared.js"))
   : new Function(layerSrc + "; return {CB_PLANT:CB_PLANT, CB_POOL:CB_POOL, CB_S25:CB_S25, CB_ELECTION:CB_ELECTION, CB_RATES:CB_RATES, CB_S187A:CB_S187A, CB_JURIS:CB_JURIS, CB_REGISTRY:CB_REGISTRY, CB_FRONTDOOR:CB_FRONTDOOR, CB_FEE:CB_FEE, CB_FEEGUARD:CB_FEEGUARD, CB_BENEFIT:CB_BENEFIT, CB_GATE_CONFIG:CB_GATE_CONFIG, CB_GATE:CB_GATE, CB_BOOKING:CB_BOOKING, CB_BAND:CB_BAND, CB_FUNNEL:CB_FUNNEL, CB_CASH:CB_CASH, CB_ACQ:CB_ACQ, CB_TAXPOS:CB_TAXPOS, CB_CTA:CB_CTA};")();
 const { CB_PLANT, CB_POOL, CB_S25, CB_ELECTION, CB_RATES, CB_S187A, CB_JURIS, CB_REGISTRY, CB_FRONTDOOR, CB_FEE, CB_FEEGUARD, CB_BENEFIT, CB_GATE_CONFIG, CB_GATE, CB_BOOKING, CB_BAND, CB_FUNNEL, CB_CASH, CB_ACQ, CB_TAXPOS } = LAYER;
 
@@ -290,7 +291,7 @@ try {
        will use, and it needs no DOM stub at all, which is itself part of what
        the extraction promised. */
     ENGINES[s] = USE_PACKAGE
-      ? require(path.join(PKG, "src", "generated", "sector-" + s + ".js"))
+      ? require(path.join(PKG, "src", "calculator", "sector-" + s + ".js"))
       : liftEngine(s);
   });
 }
@@ -4109,7 +4110,7 @@ if (startSuite("Q", "Phase 72 — the funnel, wired in")) {
      package's own sector files passed. Proved rather than assumed, twice —
      Phase 102 moved the care_homes purchase band to [0.20,0.55] in the package
      and package mode stayed green at 634, and Phase 113 reproduced it at 640
-     before changing anything. Only verify-extraction.cjs's byte comparison
+     before changing anything. Only verify-extraction.cjs's byte comparison (verify-page.cjs since 161f)
      caught it either time. Reading ENGINES instead puts the artefact on trial
      that the mode says is on trial, in both modes, with the same two checks.
 
@@ -5887,7 +5888,7 @@ if (startSuite("V", "Phase 113h — a sector that cuts the base for a grant disc
 
   /* (3) THE PANEL — A PAGE-COPY CHECK. Read from the site's own source in both
      modes, for the reason set out at the head of this suite. Sliced per sector
-     from the `/* ===== <sector> ===== *\/` markers the extractor and liftEngine
+     from the `/* ===== <sector> ===== *\/` markers the engine build (09-app/engine/tools/build.cjs) and liftEngine
      both use, so it cannot accidentally read a neighbouring flow's panel. */
   function sectorSource(sector) {
     const start = engineBody.indexOf("/* ===== " + sector + " ===== */");

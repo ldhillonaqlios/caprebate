@@ -20,11 +20,11 @@
     "useUnknownInCatchVariables": true,
     "forceConsistentCasingInFileNames": true,
 
-    /* src/generated/*.js is a VERBATIM slice of the site file and is not ours
-       to annotate — editing it to satisfy the checker would fork the engine,
-       which is the one thing this package exists to prevent. It is typed from
-       the outside by the hand-written .d.ts beside each file, and those ARE
-       checked under every flag above. See EXTRACTION.md. */
+    /* src/calculator/*.js is the calculator's source, and it is also the
+       text the site page carries (npm run page), so it stays plain sloppy-mode
+       JavaScript the page can run as it is. It is typed from the outside by
+       the hand-written .d.ts beside each file, and those ARE checked under
+       every flag above. See EXTRACTION.md. */
     "allowJs": true,
     "checkJs": false,
 

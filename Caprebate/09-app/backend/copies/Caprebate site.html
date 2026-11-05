@@ -1560,7 +1560,7 @@ var CB_PLANT = (function(){
    transaction_tax_in_base, and Phase 113j the twelfth, grant_after_ceilings,
    on 10 September 2026; Phase 129 added five on 12 September 2026, and
    Phase 129a one more, lease_premium_not_item9, on 13 September 2026 - all at
-   the bottom of the table. verify-extraction.cjs counts them at runtime;
+   the bottom of the table. engine/tools/verify-page.cjs counts them live;
    count them there, not here.)
 
    THE RULE, AND IT IS NOT NEGOTIABLE
@@ -9299,7 +9299,7 @@ function pushFlag(s,f){ answerFlagRaised(s,f); if(!s.flags.includes(f)) s.flags.
    wrapper adds nothing and records nothing on the session itself (the record is
    kept off the session, keyed by the session object). Nothing throws that the
    handler itself would not throw. toString is kept as the handler's own source
-   because the engine package's extractor reads the session fact name off it.
+   because the engine package's build (tools/build.cjs) reads the fact name off it.
 
    PHASE 132h, 16 September 2026 - FLAGS, HIDDEN QUESTIONS, EVERY QUESTION.
    (1) Every question with a handler is wrapped now, not a list: 184 questions
@@ -10591,7 +10591,7 @@ function pushFlag(s,f){ answerFlagRaised(s,f); if(!s.flags.includes(f)) s.flags.
    wrapper adds nothing and records nothing on the session itself (the record is
    kept off the session, keyed by the session object). Nothing throws that the
    handler itself would not throw. toString is kept as the handler's own source
-   because the engine package's extractor reads the session fact name off it.
+   because the engine package's build (tools/build.cjs) reads the fact name off it.
 
    PHASE 132h, 16 September 2026 - FLAGS, HIDDEN QUESTIONS, EVERY QUESTION.
    (1) Every question with a handler is wrapped now, not a list: 184 questions
@@ -11871,7 +11871,7 @@ function pushFlag(s,f){ answerFlagRaised(s,f); if(!s.flags.includes(f)) s.flags.
    wrapper adds nothing and records nothing on the session itself (the record is
    kept off the session, keyed by the session object). Nothing throws that the
    handler itself would not throw. toString is kept as the handler's own source
-   because the engine package's extractor reads the session fact name off it.
+   because the engine package's build (tools/build.cjs) reads the fact name off it.
 
    PHASE 132h, 16 September 2026 - FLAGS, HIDDEN QUESTIONS, EVERY QUESTION.
    (1) Every question with a handler is wrapped now, not a list: 184 questions
@@ -13220,7 +13220,7 @@ function pushFlag(s,f){ answerFlagRaised(s,f); if(!s.flags.includes(f)) s.flags.
    wrapper adds nothing and records nothing on the session itself (the record is
    kept off the session, keyed by the session object). Nothing throws that the
    handler itself would not throw. toString is kept as the handler's own source
-   because the engine package's extractor reads the session fact name off it.
+   because the engine package's build (tools/build.cjs) reads the fact name off it.
 
    PHASE 132h, 16 September 2026 - FLAGS, HIDDEN QUESTIONS, EVERY QUESTION.
    (1) Every question with a handler is wrapped now, not a list: 184 questions
@@ -14683,7 +14683,7 @@ function pushFlag(s,f){ answerFlagRaised(s,f); if(!s.flags.includes(f)) s.flags.
    wrapper adds nothing and records nothing on the session itself (the record is
    kept off the session, keyed by the session object). Nothing throws that the
    handler itself would not throw. toString is kept as the handler's own source
-   because the engine package's extractor reads the session fact name off it.
+   because the engine package's build (tools/build.cjs) reads the fact name off it.
 
    PHASE 132h, 16 September 2026 - FLAGS, HIDDEN QUESTIONS, EVERY QUESTION.
    (1) Every question with a handler is wrapped now, not a list: 184 questions
@@ -16002,7 +16002,7 @@ function toggleInfo(id,e){
    form the back office uses (09-app/backend/src/web/localtime.ts, ukDate). An
    input's value, an attribute, <code>, <pre> and <textarea> are left alone, and
    a date inside a longer token is not a date. It is a separate script, so the
-   regression harness and the extractor, which read only the engine's script,
+   regression harness and the engine build, which read only the engine's script,
    never see it. */
 (function(){
   var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];

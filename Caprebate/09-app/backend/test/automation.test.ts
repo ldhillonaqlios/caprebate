@@ -47,7 +47,7 @@ import * as R from '../src/web/claim-record.ts';
 const T0 = '2026-09-08T00:00:00.000Z';
 const SRC = fileURLToPath(new URL('../src/', import.meta.url));
 const require = createRequire(import.meta.url);
-const SHARED = require('../../engine/src/generated/shared.js') as { CB_CTA: Record<string, unknown> };
+const SHARED = require('../../engine/src/calculator/shared.js') as { CB_CTA: Record<string, unknown> };
 
 type App = Awaited<ReturnType<typeof testApp>>;
 type Org = { business: string; property: string; assessment: string | null };

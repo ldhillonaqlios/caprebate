@@ -56,7 +56,7 @@ const P = {
   spec: path.join(ROOT, '09-app/CAPREBATE-DEVELOPER-SPEC.md'),
   guide: path.join(ROOT, '09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md'),
   backend: path.join(ROOT, '09-app/backend'),
-  engineGen: path.join(ROOT, '09-app/engine/src/generated'),
+  engineGen: path.join(ROOT, '09-app/engine/src/calculator'),
   hub: path.join(ROOT, '00-START-HERE/hub'),
 };
 P.questions = path.join(P.hub, 'QUESTIONS-BACKGROUND.md');
@@ -558,7 +558,7 @@ function selfTest(inp) {
     }],
     ['D a training section dropped', 'D', (x) => ({ ...x, guide: x.guide.replace(/^### Training — `B41`.*$/m, '### Search') })],
     // Phase 132g: the forms outside the back end. Their line numbers move while other work edits the
-    // site and re-extracts the package, so each control plants its fault in a reference that lands
+    // site and the calculator (built into the site since 161f), so each control plants its fault in a reference that lands
     // TODAY (a literal line number would go stale and prove nothing), and in memory only.
     ['C a site-file reference shifted by one line', 'C', (x) => {
       const r = goodRef(x, (y) => y.form === 'site' && !y.prose && /:\d+$/.test(y.token));

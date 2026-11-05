@@ -810,15 +810,26 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   OUTSIDE 09-app keep the .bak-phaseNN habit and AMENDMENT 2's cp rule.
   The tree: 00- to 08-, 09-app/, _archive/ and README-file-index.md. Nothing
   numbered may be renamed.
-  THE ENGINE, "Caprebate site.html", IS ONE LEVEL ABOVE THE TREE, in
-  Development/, and is copied
-  byte for byte into 09-app/engine/src/generated/. Change the site file and
-  re-run the extractor; never hand-edit generated/.
+  THE CLAIM CALCULATOR: CHANGE THE CALCULATOR IN engine/src; THE PAGE IS
+  BUILT FROM IT (Phase 161f, 5 Nov 2026; the audit's section 5). Its only
+  source is 09-app/engine/src/calculator/ (shared.js and the five
+  sector-*.js, between their PAGE fences). "Caprebate site.html", one level
+  above the tree in Development/, carries a BUILT copy: run "npm run page" in
+  09-app/engine (tools/build.cjs, then tools/page-from-engine.cjs, which also
+  refreshes the back end's copy). NEVER edit the calculator inside the page:
+  engine/tools/verify-page.cjs and the back end's test/phase161f.test.ts
+  fail on it. tools/extract.cjs (page into engine) is RETIRED; older text
+  that says "change the site and re-run the extractor" or names
+  src/generated/ is history. THE SERVED PAGE CARRIES NO CALCULATOR: its copy
+  sits inside the in-page assessment, which the website drops; the test
+  website's eligibility check runs the engine package on the server
+  (backend/src/web/engine.ts).
   THE APP'S OWN COPIES (Phase 161d1, 5 Nov 2026). The back end reads five
   files people edit elsewhere from its own copies in 09-app/backend/copies/:
   the site file, 03-app/caprebate-notices-page.html, the fixture list and
-  the two engagement letters. EDIT THE ORIGINAL, NEVER THE COPY, then run
-  "npm run copies" in 09-app/backend: npm run check (lint:copies,
+  the two engagement letters. EDIT THE ORIGINAL, NEVER THE COPY (for the
+  site file's calculator, edit engine/src as above; npm run page refreshes
+  the copy itself), then run "npm run copies" in 09-app/backend: npm run check (lint:copies,
   tools/app-copies.cjs) fails while any copy differs by one byte.
   ONEDRIVE CAN FORK A FILE WRITTEN TWICE IN QUICK SUCCESSION (seen 5 Nov 2026
   by Phase 161d1): it kept the first write under the name and saved the
@@ -883,11 +894,17 @@ command that counts it, never the number.
   cd 09-app/backend && node tools/no-backups.cjs --self-test   a planted .bak must fail
   cd 09-app/backend && node tools/app-copies.cjs --self-test   a changed, missing or extra
                                                       copy and a lost original must each fail
-  node 09-app/engine/tools/verify-extraction.cjs      byte for byte, the must-nots, and
-                                                      THE SWITCH COUNT - read it there.
-                                                      Step 3's "eleven engine readings"
-                                                      is a dated example, not a count.
-  node 09-app/engine/tools/extract.cjs --check        exit 1 if the package is stale
+  node 09-app/engine/tools/verify-page.cjs            the page (and the app's copy) carries
+                                                      exactly the built calculator, byte for
+                                                      byte; the must-nots; and THE SWITCH
+                                                      COUNT - read it there. Step 3's
+                                                      "eleven engine readings" is a dated
+                                                      example, not a count. (Was
+                                                      verify-extraction.cjs until 161f.)
+  node 09-app/engine/tools/verify-page.cjs --self-test   a planted edit to the calculator
+                                                      inside the page MUST turn it red
+  node 09-app/engine/tools/build.cjs --check          exit 1 if the derived session types
+                                                      are stale (extract.cjs --check, retired)
   node 03-app/caprebate-figure-drift.cjs              exit 0; it runs all four suites itself,
                                                       after section 0, the STRAY-COPY GUARD:
                                                       exit 1 if a module file is back in
@@ -1118,92 +1135,6 @@ command that counts it, never the number.
  **Three of them touch a decision that is not Claude's, and each is built switched off with a question to Lakhbir:** keeping the original of a client's uploaded file (140), the email provider and the contactus@ mailbox (141), and whether the surveyor sees either chat thread (142).
 
 ---
-
-
-## PHASE 161f — The claim calculator is edited as normal code, and the website takes it from there
-
- **Model: Opus.** Board item 13462576351. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 5: "The claim calculator is stored in an unusual way. It is copied out of one very large web page file and can't be edited directly, which makes it easy to change the wrong file by mistake."
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-WHAT IS THERE NOW: Caprebate/09-app/engine is extracted from
-"Caprebate site.html" (1.2 MB, at the repository root) by
-engine/tools/extract.cjs and checked by verify-extraction.cjs, as
-engine/EXTRACTION.md describes. So the page is the source and the engine
-is the copy.
-
-BUILD
-1. Turn it round: engine/src becomes the only source of the calculator.
-   The site build (tools/site-from-design.mjs, or whatever builds the page
-   now: read it first) takes the built engine (engine/dist) into the page,
-   never the other way.
-2. Retire extract.cjs; verify-extraction.cjs becomes a test that the
-   calculator in the served page is exactly the built engine.
-3. Say it where people look: EXTRACTION.md, the engine's README, the
-   repository README and COORDINATES: "change the calculator in
-   engine/src; the page is built from it".
-
-ACCEPT
-- Every figure is the same before and after: the engine's own tests, and
-  the stress harness (04-phase-work/stress-2026-10-09/engine, node
-  harness.ts) gives the same output, byte for byte.
-- The eligibility check on the test website gives the same answers for
-  the harness's cases.
-- A planted edit to the calculator inside the page turns a test red.
-```
 
 
 ## PHASE 161g — The legal pages ready for the live website: one cookie choice, every cookie and every outside service listed, and a review pack for the solicitor and DPO
@@ -1725,6 +1656,8 @@ ACCEPT
  **Why this exists.** Every sweep so far has found something, and several found things that had survived multiple earlier passes. Re-run it after a meaningful batch of phases has landed, and **always before anything external goes out** — the adviser pack, the solicitor brief, the Valuation Office letter, the insurance broker brief.
 
  **Added 5 November 2026 by Phase 161e, for this sweep to do.** Ten untracked leftovers sit in the back end; git does not hold them and no check names them: four `.mutsave` copies in `src/connectors/` and `src/web/` (from a mutation run), `tools/_159l-legal-moves.ts`, `_159l-pick.ts`, `_159l-red.ts` and `_159l-red2.ts`, `_trg.ts` and the folder `.demo156/`. Ask Lakhbir in the chat, then zip them into `Caprebate/_archive/` and delete them, as Phase 161e did with the .bak copies; commit any that turn out to be real tools.
+
+ **Added 5 November 2026 by Phase 161f, for this sweep to do.** Once pull request 80 (Phase 161f) is merged and the test website has redeployed, check its eligibility check still gives the same answers: `node 04-phase-work/stress-2026-10-09/engine/site-cases.mjs https://caprebate-test.vercel.app <a file in your scratch folder>` drives the same 26 invented cases through it (it stops at the figure page and sends no enquiry), then compare each case's pages and figures with `site-cases-live-main-161f.json` beside it (main, before the change). Phase 161f found them identical on main live and on its own code run locally, because Vercel refused the session access to the branch preview. A difference is a finding for Lakhbir, not something to adjust.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -2384,7 +2317,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code, 161g the legal pages, 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages, 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161h, before go-live (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

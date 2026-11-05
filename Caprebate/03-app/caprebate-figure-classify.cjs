@@ -114,10 +114,10 @@
    A BLIND SPOT OUT OF SCOPE, WRITTEN DOWN (Phase 158 sweep, 7 October 2026):
    this file reads PASS figures only. A COUNT OF ENGINE SWITCHES ("N CTA
    switches counted", "the twenty-four switches") is a different kind of figure
-   and nothing compares it with what verify-extraction.cjs counts: the Developer
+   and nothing compares it with what verify-page.cjs (verify-extraction.cjs until 161f) counts: the Developer
    Spec's section 4 said 25 and FOR THE ACCOUNTANT said twenty-four, in the
    present tense, while the engine held 29. Both corrected by hand. A sweep
-   compares them by eye: run verify-extraction and grep the live documents for
+   compares them by eye: run 09-app/engine/tools/verify-page.cjs and grep the live documents for
    "switches".
    Bare "N engine assertions" with no verb is NOT added - see the list below. */
 const PASS_RE = /(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d{2,5})\s*(?:pass(?:ing|es|ed)?\b|\/\s*0\s*fail\b|\/\s*0\s*\/\s*\d+\b|(?:assertions?|tests?)\s+pass(?:ing|es|ed)?\b|(?:assertions?|tests?)\s*,\s*0\s+fail(?:s|ures?)?\b|assertions\b|(?=(?:(?:of\s+\d[\d,]*|[A-Za-z][\w-]*)\s+){1,3}(?:assertions?|tests?)(?:\s+pass(?:ing|es|ed)?\b|\s*,\s*0\s+fail(?:s|ures?)?\b)))/g;

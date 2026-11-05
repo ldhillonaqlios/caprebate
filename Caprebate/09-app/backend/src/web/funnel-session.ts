@@ -210,8 +210,8 @@ const PROFIT: Readonly<Record<string, string>> = Object.freeze({
  * business that told us only that it was roughly break-even.
  *
  * NOT AN ENGINE SWITCH. It lives at the funnel-to-session boundary in the back
- * end, not in `Caprebate site.html`, so the extraction verifier's count of the
- * tax adviser's engine switches does not include it, and must not be edited to.
+ * end, not in the calculator (09-app/engine/src/calculator), so the page check's count of the
+ * tax adviser's engine switches (engine/tools/verify-page.cjs) does not include it, and must not be edited to.
  */
 export type FunnelSwitches = { readonly breakeven_is_insufficient_profit: boolean };
 

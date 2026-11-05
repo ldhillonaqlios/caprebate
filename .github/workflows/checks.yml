@@ -45,6 +45,15 @@ jobs:
         working-directory: Caprebate/09-app/backend
         run: npm run check
 
+      # Phase 161f, 5 November 2026: the calculator is edited in engine/src and the page is built from it. The page (and
+      # the back end's copy) must carry exactly the built calculator, and a planted edit in the page must turn it red.
+      - name: The page carries exactly the built calculator
+        working-directory: Caprebate/09-app/engine
+        run: |
+          node tools/verify-page.cjs
+          node tools/verify-page.cjs --self-test
+          node tools/build.cjs --check
+
       - name: The site harness
         working-directory: Caprebate
         run: node 03-app/caprebate-regression.cjs

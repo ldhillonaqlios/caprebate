@@ -52,7 +52,7 @@ function cannot(why) { console.error("COULD NOT RUN: " + why); process.exit(2); 
 let src;
 try { src = fs.readFileSync(SITE, "utf8"); } catch (e) { cannot(SITE + " - " + e.message); }
 
-/* The shared layer, on the same boundaries the harness and the extractor use. */
+/* The shared layer, on the same boundaries the harness and the engine build (09-app/engine/tools/build.cjs) use. */
 const layerAt = src.indexOf("var CB_PLANT");
 const layerEnd = src.indexOf("/* ===== care_homes", layerAt);
 const fnAt = src.indexOf("var FN = (function(){");

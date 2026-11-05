@@ -7,14 +7,15 @@
 
    WHAT THIS IS
      Facts in, estimate out. No network, no DOM, no storage, no secrets — those
-     are requirements, they are asserted by tools/verify-extraction.cjs, and the
+     are requirements, they are asserted by tools/verify-page.cjs, and the
      regression harness runs against this package and against the site file and
      must produce the same totals from both.
 
-   WHAT THIS IS NOT
-     It is not a rewrite. The tax logic in src/generated/ is a byte-for-byte
-     slice of "Caprebate site.html". To change a tax answer, change the site and
-     re-run tools/extract.cjs — never edit the generated files.
+   WHERE TO CHANGE IT (Phase 161f, 5 Nov 2026)
+     The calculator's source is src/calculator/ in this package, and only
+     there. "Caprebate site.html" is BUILT from it: `npm run page` copies the
+     calculator into the page, and tools/verify-page.cjs fails while the page's
+     copy differs from it by one byte. Never edit the calculator in the page.
 
    THE TWO GATES ARE SHUT AND STAY SHUT
      Free register lookups wait on a published privacy notice
@@ -24,7 +25,7 @@
      flow work.
    ============================================================================= */
 
-import * as SHARED from "./generated/shared.js";
+import * as SHARED from "./calculator/shared.js";
 
 /* -----------------------------------------------------------------------------
    WHY DEFAULT IMPORTS AND NOT `import x = require(...)`   (Phase 104, 8 Sep 2026)
@@ -43,17 +44,17 @@ import * as SHARED from "./generated/shared.js";
    only after a tsc build is a package the back end cannot use.
 
    A DEFAULT IMPORT WORKS IN BOTH WORLDS and is the smallest change that does.
-   The generated files are CommonJS with `module.exports = {...}` and their
+   The calculator files are CommonJS with `module.exports = {...}` and their
    hand-written .d.ts files use `export =`; under `esModuleInterop` tsc resolves
    a default import of those to the exported object, and Node resolves the
    default export of a CommonJS module to `module.exports`. Same object either
-   way. Nothing in src/generated/ is touched — it stays the byte-for-byte slice.
+   way. (Phase 161f renamed src/generated/ to src/calculator/: it is the source now.)
    ----------------------------------------------------------------------------- */
-import careHomes from "./generated/sector-care_homes.js";
-import dental from "./generated/sector-dental.js";
-import supportedLiving from "./generated/sector-supported_living.js";
-import gp from "./generated/sector-gp.js";
-import privateHospital from "./generated/sector-private_hospital.js";
+import careHomes from "./calculator/sector-care_homes.js";
+import dental from "./calculator/sector-dental.js";
+import supportedLiving from "./calculator/sector-supported_living.js";
+import gp from "./calculator/sector-gp.js";
+import privateHospital from "./calculator/sector-private_hospital.js";
 
 import type {
   Session, SectorId, SectorEngine, EngineResult, Question,
@@ -65,7 +66,7 @@ export type {
   GateState, CashGates, PoolBasis, PoolSplit, CtaSwitches,
   RegistryPrecondition,
 } from "./types.js";
-export type { DerivedSessionFacts } from "./generated/session.js";
+export type { DerivedSessionFacts } from "./calculator/session.js";
 
 /** The five sector engines, by id. */
 export const SECTORS: Readonly<Record<SectorId, SectorEngine>> = Object.freeze({
