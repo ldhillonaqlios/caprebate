@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 352 |
-| Working on it | 1 |
+| Done | 353 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1220,7 +1220,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-41 items.
+40 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1446,13 +1446,6 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 161f - The claim calculator is edited as normal code, and the website takes it from there (audit 2 Nov 2026)
-
-`13462576351` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local (the Mac copy)**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
-
 ### Phase 161g - The legal pages ready for the live website: one cookie choice, every cookie and outside service listed, and a review pack for the solicitor and DPO (Lakhbir, 4 Nov 2026)
 
 `13462566195` · **Ready - Claude can build** · owner Claude
@@ -1505,7 +1498,7 @@
 
 ## Z · Complete / Not Applicable
 
-352 items.
+353 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3638,6 +3631,14 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
 - Note 2026-11-05 (Phase 161e): Done. A fresh copy passes all four suites with 0 failures, on the Mac and on GitHub (.github/workflows/checks.yml on every pull request: npm ci, npm run check, the four suites, the root audit, 0 high). Twelve checks that read OneDrive-only documents skip by name on a fresh copy and run on the Mac (test/onedrive-only.ts; the harness's M4). 2,179 .bak copies zipped into _archive/ and deleted; npm run lint:backups stops new ones. The 'flaky' test was a missing file; ten whole-suite runs in a row passed. test/phase161e.test.ts (11). Project 5,408. Root lock file: Word question 286 (13473533228). PR 79.
+
+### Phase 161f - The claim calculator is edited as normal code, and the website takes it from there (audit 2 Nov 2026)
+
+`13462576351` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
+- Note 2026-11-05 (Phase 161f): Done: the calculator's only source is 09-app/engine/src/calculator; npm run page builds Caprebate site.html from it; extract.cjs retired; verify-page.cjs and test/phase161f.test.ts fail on a calculator edited in the page; every figure the same (harness both ways, stress harness, 26 cases on the live test website and locally). Branch claude/phase-161f, PR 80.
 
 ### After Phase 161b is merged: on the test website, send one survey photo from your phone (it must show on the claim), and use one form in the back office, the portal and the surveyor's page; tell Claude if any says This form has expired
 
