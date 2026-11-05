@@ -20,6 +20,7 @@ import { spawnSync } from 'node:child_process';
 import { createApp } from '../src/server.ts';
 import { seed } from '../src/seed.ts';
 import { HTML_HEADERS } from '../src/web/html.ts';
+import { privacyNoticeForCheck } from './onedrive-only.ts';
 import { buildNoticesEdition, COMPLAINT_SOURCE_LIMIT, DP_MAIL, NOTICES_PATH, refOf } from '../src/web/notices-site.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
@@ -96,12 +97,14 @@ describe('1 · the page as served', () => {
 });
 
 describe('2 · the acceptance check', () => {
-  test('it lists no fact as proposed once the data protection officer confirmed them, and --live passes (Phase 160g)', () => {
-    const r = spawnSync(process.execPath, [CHECK], { encoding: 'utf8' });
+  test('it lists no fact as proposed once the data protection officer confirmed them, and --live passes (Phase 160g)', (t) => {
+    const privacy = privacyNoticeForCheck(); // Phase 161e: the real notice is kept in OneDrive only
+    t.diagnostic(privacy.note);
+    const r = spawnSync(process.execPath, [CHECK, '--privacy', privacy.path], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stdout.slice(-800));
     assert.match(r.stdout, /PROPOSED — filled with our recommendation, awaiting the data protection officer {2}\(0\)/);
     assert.match(r.stdout, /0 facts are unset\. 0 are proposed, awaiting the data protection officer\./);
-    const live = spawnSync(process.execPath, [CHECK, '--live'], { encoding: 'utf8' });
+    const live = spawnSync(process.execPath, [CHECK, '--live', '--privacy', privacy.path], { encoding: 'utf8' });
     assert.equal(live.status, 0, live.stdout.slice(-600));
   });
 });

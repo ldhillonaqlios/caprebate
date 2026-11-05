@@ -43,6 +43,7 @@ import { SITE_CSS } from '../src/web/assets.ts';
 import { gateOut } from '../src/web/pipeline.ts';
 import { PROCEDURE_KEYS } from '../src/web/stages.ts';
 import { avoidHits } from '../src/web/voice.ts';
+import { oneDriveOnly, oneDrivePath } from './onedrive-only.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string; type: string | null };
@@ -208,10 +209,18 @@ describe('the Cap Rebate brand', () => {
     }
   });
 
-  test('the logo served is the supplied file, byte for byte; the sign-in page and the portal show it; the back office shows the name; the invented "C" is gone', async () => {
+  /* Phase 161e: the supplied logo file is kept in OneDrive only (test/onedrive-only.ts), so the byte-for-byte comparison is
+     its own test, which skips on a fresh copy; the pages are checked on every copy. */
+  test('the logo served is the supplied file, byte for byte', { skip: oneDriveOnly('logo') }, async () => {
     const served = Buffer.from(await (await fetch(`${h.base}/assets/cap-rebate-logo.png`)).arrayBuffer());
-    const supplied = readFileSync(join(import.meta.dirname, '..', '..', '..', '04-phase-work', 'phase133c', 'brand-assets', 'caprebate_logo_monoink_924.png'));
+    const supplied = readFileSync(oneDrivePath('logo'));
     assert.equal(Buffer.compare(served, supplied), 0);
+  });
+
+  test('a logo is served; the sign-in page and the portal show the mark; the back office shows the name; the invented "C" is gone', async () => {
+    const logo = await fetch(`${h.base}/assets/cap-rebate-logo.png`);
+    assert.equal(logo.status, 200);
+    assert.equal(Buffer.from(await logo.arrayBuffer()).subarray(1, 4).toString('latin1'), 'PNG', 'the logo served is not a PNG');
     // 29 SEPTEMBER 2026: the public pages (sign-in among them) wear the new home page's mark — the supplied lockup's
     // calculator drawn as a house — with the name beside it. The portal keeps the supplied lockup; the back office the name.
     const login = await (await fetch(`${h.base}/login`)).text();

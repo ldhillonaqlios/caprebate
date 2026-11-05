@@ -80,8 +80,12 @@ describe('1 · the check reads the guide, the Help pages and the assessment', ()
     assert.equal(r.status, 0, r.stdout.slice(0, 2000));
     assert.match(r.stdout, /grade 7 in the guide/);
   });
+  /* Phase 161e: the pre-change copies are test fixtures (from git, at the commit before Phase 144a), not .bak files beside
+     the code, so a fresh copy runs this too. */
   test('the guide and the Help pages as they were before this phase go RED', () => {
-    const r = spawnSync(process.execPath, [CHECK, '--suffix', '.bak-phase144a'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    const before = join(import.meta.dirname, 'fixtures', 'phase144a-before');
+    const r = spawnSync(process.execPath, [CHECK, '--suffix', '.before-phase144a', '--suffix-dir', before], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    assert.match(r.stdout, /\(2 read from their \.before-phase144a copy\)/, 'the check did not read the two pre-change copies');
     assert.equal(r.status, 1);
     assert.match(r.stdout, /FAIL 09-app\/CAPREBATE-ADMIN-AND-USER-GUIDE\.md:/);
     assert.match(r.stdout, /FAIL src\/web\/help-content\.ts:/);

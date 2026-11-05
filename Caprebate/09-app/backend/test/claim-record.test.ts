@@ -55,6 +55,7 @@ import * as D from '../src/web/documents.ts';
 import * as T from '../src/web/tasks.ts';
 import { actor, scalars, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
+import { ONEDRIVE_ONLY, oneDriveOnly } from './onedrive-only.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const SCRIPT = '<script>alert(1)</script>';
@@ -892,8 +893,14 @@ describe('AFTERCARE — HMRC enquiries, clause 13 and the Disposal Note', () => 
     } finally { app.close(); }
   });
 
-  test('A DISPOSAL DATE SET, OR A SALE IN PROSPECT, raises one task pointing at the Disposal Note — never asked, NO and UNKNOWN raise nothing', async () => {
+  /* Phase 161e: the Disposal Note is kept in OneDrive only (test/onedrive-only.ts), so the check that the task points at a
+     real file is its own test, which skips on a fresh copy; the task logic below runs on every copy. */
+  test('the Disposal Note the task points at is on disk', { skip: oneDriveOnly('disposalNote') }, () => {
+    assert.equal(ONEDRIVE_ONLY.disposalNote.path, R.DISPOSAL_NOTE_PATH, 'onedrive-only.ts names a different Disposal Note');
     assert.equal(existsSync(join(ROOT, R.DISPOSAL_NOTE_PATH)), true, 'the Disposal Note the task points at is not on disk');
+  });
+
+  test('A DISPOSAL DATE SET, OR A SALE IN PROSPECT, raises one task pointing at the Disposal Note — never asked, NO and UNKNOWN raise nothing', async () => {
     const app = await testApp();
     try {
       staff(app);

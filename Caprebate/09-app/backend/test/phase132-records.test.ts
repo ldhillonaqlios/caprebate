@@ -41,6 +41,7 @@ import {
 } from '../src/web/upload-handler-port.ts';
 import { actor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
+import { oneDriveOnly } from './onedrive-only.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 type Org = { business: string; property: string; assessment: string };
@@ -202,7 +203,18 @@ describe('line 2 — every sealed case stamped with the engine version, the rule
     } finally { a.close(); }
   });
 
-  test('THE RULEBOOK VERSIONS ARE THE README’S FILENAMES: every row of 01-rulebooks/README.md, in order, with the version its filename carries, its board item and its Monday doc — and every file is on disk', () => {
+  /* Phase 161e: the rulebooks are kept in OneDrive only (test/onedrive-only.ts). The stamp's own list is checked on every
+     copy; the comparison with the README and the files skips on a fresh copy and says why. */
+  test('the stamp lists eleven rulebooks, each once, each with the version its filename carries', () => {
+    assert.equal(CS.RULEBOOK_MODULES.length, 11);
+    assert.equal(new Set(CS.RULEBOOK_MODULES.map((m) => m.file)).size, 11, 'a rulebook is listed twice');
+    for (const m of CS.RULEBOOK_MODULES) {
+      assert.equal(m.version, /-(v\d+)\.md$/.exec(m.file)?.[1], `${m.file}: the version is not the filename’s`);
+      assert.match(m.board_item, /^\d+$/, `${m.file}: the board item`);
+    }
+  });
+
+  test('THE RULEBOOK VERSIONS ARE THE README’S FILENAMES: every row of 01-rulebooks/README.md, in order, with the version its filename carries, its board item and its Monday doc — and every file is on disk', { skip: oneDriveOnly('rulebooks') }, () => {
     const readme = readFileSync(join(ROOT, '01-rulebooks', 'README.md'), 'utf8');
     const rows = [...readme.matchAll(/^\| `([^`]+\.md)` \| ([^|]+) \|/gm)].map((m) => ({ file: m[1] ?? '', cell: (m[2] ?? '').trim() }));
     assert.equal(rows.length, 11, 'the README no longer lists eleven rulebooks');

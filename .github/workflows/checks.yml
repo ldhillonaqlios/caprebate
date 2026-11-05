@@ -1,0 +1,73 @@
+# Phase 161e, 5 November 2026 (the ITRoadway audit, section 5): every pull request is checked on a fresh copy.
+#
+# A fresh checkout on Node 24 runs what the Mac runs before every commit: the back end's `npm run check` (the live
+# package audit, the SQL, path and copies checks, the type check and the back-end tests), the site harness in both
+# modes, the phase3 and phase9 suites, and an audit of the root package.json the test website installs.
+#
+# Tests that read a document kept in OneDrive only (never in git) skip here and say why, by name, in the output.
+# Lakhbir merges a pull request only when this is green.
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: A fresh copy passes every check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TZ: Europe/London
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: Caprebate/09-app/backend/package-lock.json
+
+      - name: Install the back end (npm ci)
+        working-directory: Caprebate/09-app/backend
+        run: npm ci --no-fund
+
+      - name: The back end - npm run check (audit, lint, types, tests)
+        working-directory: Caprebate/09-app/backend
+        run: npm run check
+
+      - name: The site harness
+        working-directory: Caprebate
+        run: node 03-app/caprebate-regression.cjs
+
+      - name: The site harness, against the package
+        working-directory: Caprebate
+        run: node 03-app/caprebate-regression.cjs --package
+
+      - name: The phase3 suite
+        working-directory: Caprebate/04-phase-work/phase3
+        run: node --test
+
+      - name: The phase9 suite
+        working-directory: Caprebate/04-phase-work/phase9
+        run: node --test
+
+      # The root package.json is what Vercel installs for the test website. It has no lock file, so npm audit cannot
+      # read it as it is: work one out in a scratch copy, then audit that. (Whether to commit a root lock file is
+      # Lakhbir's question in the Word questions document.)
+      - name: The root package - npm audit (high and above)
+        run: |
+          scratch="$(mktemp -d)"
+          cp package.json "$scratch/"
+          cd "$scratch"
+          npm install --package-lock-only --no-fund --no-audit
+          npm audit --audit-level=high

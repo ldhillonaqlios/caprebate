@@ -5,6 +5,8 @@
 !/.gitignore
 !/.gitattributes
 !/.vercelignore
+# Phase 161e, 5 Nov 2026: the GitHub workflow that checks every pull request on a fresh copy.
+!/.github/
 !/public/
 /public/*
 !/public/robots.txt

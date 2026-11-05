@@ -769,9 +769,27 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   its junctions, its node or its stale copies is history.
   OneDrive backs up the whole tree. Development/ (one level above the tree) is
   also a git working copy (its .git file points at /Users/lakhbir/code/
-  caprebate.git): remote github.com/ldhillonaqlios/caprebate (private), branch
-  main, one commit per phase since Phase 134. Read "git log --oneline" at the
-  start of a phase: a commit you do not recognise is another session.
+  caprebate.git): remote github.com/ldhillonaqlios/caprebate, branch main, one
+  commit per phase since Phase 134. Read "git log --oneline" at the start of a
+  phase: a commit you do not recognise is another session.
+  THE REPOSITORY IS PUBLIC, ON PURPOSE (found by Phase 161e, 5 Nov 2026: it has
+  been public since it was made on 18 Sep 2026, though this block said
+  private). Lakhbir, 5 Nov 2026: "at the moment its public so the developer can
+  review the code, it will go private once its signed off by developer". So
+  anything committed is published: commit code, tests and the hub files only,
+  never a business document, client data or a key. When it goes private,
+  GitHub's checks come out of the free 2,000 minutes a month.
+  GITHUB CHECKS EVERY PULL REQUEST (Phase 161e): .github/workflows/checks.yml
+  runs, on a fresh checkout with Node 24, npm ci and npm run check in
+  09-app/backend, the site harness in both modes, phase3 and phase9, and an
+  npm audit (high) of the root package.json worked out in a scratch folder.
+  Lakhbir merges only when it is green. Read it with the ccd_pr tools or
+  "gh pr checks <n>". Tests that read a document kept in OneDrive only skip
+  there BY NAME, saying why (09-app/backend/test/onedrive-only.ts lists the
+  back end's five; the harness's M4 lists its five, ONEDRIVE_ONLY_DOCS); in
+  the OneDrive copy (where _archive/ exists) every one must be on disk and a
+  missing one still FAILS (test/phase161e.test.ts). A new test that reads
+  such a document: add it to that list and pass { skip: oneDriveOnly(key) }.
   WHAT GIT HOLDS. Its .gitignore is an ALLOW-LIST: the site file, 09-app/,
   03-app/, 04-phase-work/phase3 and phase9, the six Module files and the
   fixture taxonomy, the engagement letter, and 00-START-HERE/hub/ - never the
@@ -781,6 +799,15 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   attached to a board item, as <item id>__<name>.md (Phase 87 exported them and
   cleared the doc columns). The tracker's files_on_disk says which file is
   whose. A name ending .bak-phaseNN is a dated backup: never edit one.
+  CODE IS BACKED UP BY COMMITS, NOT .bak COPIES (Phase 161e, 5 Nov 2026).
+  Never make a .bak copy of anything under 09-app/ (code, tests, the guide,
+  the spec): commit, and read an older version with git show <commit>:<path>.
+  npm run check (lint:backups, tools/no-backups.cjs) fails on any file under
+  09-app whose name holds ".bak". A test that needs a file as it was before a
+  change keeps that copy under test/fixtures/ (Phase 144a's, from git). The
+  2,179 copies that were there are in _archive/09-app-bak-copies-removed-by-
+  phase161e.zip (OneDrive only; Lakhbir chose zip-then-delete). Documents
+  OUTSIDE 09-app keep the .bak-phaseNN habit and AMENDMENT 2's cp rule.
   The tree: 00- to 08-, 09-app/, _archive/ and README-file-index.md. Nothing
   numbered may be renamed.
   THE ENGINE, "Caprebate site.html", IS ONE LEVEL ABOVE THE TREE, in
@@ -850,8 +877,10 @@ command that counts it, never the number.
   node 03-app/caprebate-regression.cjs --package      the package - MUST MATCH the line above
   cd 04-phase-work/phase3 && node --test              from INSIDE the folder
   cd 04-phase-work/phase9 && node --test              from INSIDE the folder
-  cd 09-app/backend && npm run check                  lint-sql, lint-paths, lint-copies,
+  cd 09-app/backend && npm run check                  audit:live, lint-sql, lint-paths,
+                                                      lint-copies, lint-backups (161e),
                                                       typecheck, tests
+  cd 09-app/backend && node tools/no-backups.cjs --self-test   a planted .bak must fail
   cd 09-app/backend && node tools/app-copies.cjs --self-test   a changed, missing or extra
                                                       copy and a lost original must each fail
   node 09-app/engine/tools/verify-extraction.cjs      byte for byte, the must-nots, and
@@ -927,7 +956,9 @@ command that counts it, never the number.
   node 03-app/caprebate-plain-words-check.cjs         and --self-test; every screen's words, the
                                                       connectors' words, the guide and Help at
                                                       grade 7 (--guide), the assessment at grade
-                                                      9. --suffix .bak-phase144a MUST EXIT 1
+                                                      9. --suffix .before-phase144a --suffix-dir
+                                                      09-app/backend/test/fixtures/phase144a-before
+                                                      MUST EXIT 1 (the .bak copies are gone, 161e)
   node 04-phase-work/phase144/tools/crawl-shots.mjs <outdir>   against a running demo:
                                                       every screen, each login, 1280 and 360 px
   node 03-app/caprebate-gated-exit-renderer-proof.cjs the site's funnel after a gated exit
@@ -1087,107 +1118,6 @@ command that counts it, never the number.
  **Three of them touch a decision that is not Claude's, and each is built switched off with a question to Lakhbir:** keeping the original of a client's uploaded file (140), the email provider and the contactus@ mailbox (141), and whether the surveyor sees either chat thread (142).
 
 ---
-
-
-## PHASE 161e — A fresh copy of the project passes every check, on GitHub as well as the Mac
-
- **Model: Opus.** Board item 13462566368. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 5: "The project is not complete on its own. Some checks need files that were left out, so a fresh copy cannot be fully tested."
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-WHAT IS THERE NOW: the back end has 7 known failures since Phase 160n:
-six tests read files kept out of git (01-rulebooks/README.md, the brand
-logo, the monday SOP export and others; the sweep's note of 3 Oct names
-Disposal, invoice-fraud SOP, rulebooks, logo and phase144a), and one passes
-only when run alone. There is no CI: .github/workflows does not exist.
-There are about 1,870 .bak copies of code files under 09-app (src and test).
-
-BUILD
-1. For each failing test, find what it reads that git does not hold. If it
-   is ours and holds no client data and no keys, commit it (the .gitignore
-   is an allow-list: add the narrowest line). If it is not ours to publish,
-   give the test a small checked-in fixture. A test that truly needs
-   OneDrive-only material skips on a fresh copy and says why in its output;
-   never a silent skip.
-2. Fix the test that fails only alongside the others (shared state, a port,
-   a clock or a temp folder); never by retrying it.
-3. A GitHub Actions workflow on every pull request: fresh checkout, Node 24,
-   npm ci, npm run check and all four suites. Lakhbir merges only when it is
-   green.
-4. The .bak files: ASK LAKHBIR IN THE CHAT FIRST (it deletes files). With his
-   yes, git rm every *.bak* under 09-app; git history keeps every one. Then
-   change the rule that makes them for code (code is backed up by commits;
-   documents keep AMENDMENT 2's cp rule), and add a check that fails on a
-   new .bak file under 09-app.
-5. Carried from 161a (4 Nov 2026): the root package.json (what Vercel
-   installs for the test website) has no package-lock.json, so each deploy
-   picks its own versions of the packages underneath, and npm audit cannot
-   read it as it is. Add a root audit to the workflow (npm install
-   --package-lock-only in a scratch copy, then npm audit --audit-level=high),
-   and put to Lakhbir in the Word questions document whether to commit a
-   root package-lock.json (our recommendation: yes, so the test website
-   installs exactly what was tested).
-
-ACCEPT
-- A clone into an empty temp folder passes all four suites with 0 failures,
-  and so does the workflow on the pull request.
-- The one test that failed alongside the others passes in ten runs in a
-  row of the whole suite.
-- The root audit runs in the workflow and reports 0 high.
-```
 
 
 ## PHASE 161f — The claim calculator is edited as normal code, and the website takes it from there
@@ -1793,6 +1723,8 @@ ACCEPT
  **Model: Opus.** **This is the one section that is never deleted.** It renumbers itself forward each time it runs and stays at the bottom of this list.
 
  **Why this exists.** Every sweep so far has found something, and several found things that had survived multiple earlier passes. Re-run it after a meaningful batch of phases has landed, and **always before anything external goes out** — the adviser pack, the solicitor brief, the Valuation Office letter, the insurance broker brief.
+
+ **Added 5 November 2026 by Phase 161e, for this sweep to do.** Ten untracked leftovers sit in the back end; git does not hold them and no check names them: four `.mutsave` copies in `src/connectors/` and `src/web/` (from a mutation run), `tools/_159l-legal-moves.ts`, `_159l-pick.ts`, `_159l-red.ts` and `_159l-red2.ts`, `_trg.ts` and the folder `.demo156/`. Ask Lakhbir in the chat, then zip them into `Caprebate/_archive/` and delete them, as Phase 161e did with the .bak copies; commit any that turn out to be real tools.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══

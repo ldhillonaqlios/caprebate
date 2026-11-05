@@ -32,6 +32,7 @@
 236) Two tasks are marked done with nothing on file: startup funding and the back-end developer meeting. Were they done?
 238) Which solicitor gave the answers of 24 and 27 September, and are they instructed?
 245) Will you ask Homedata, in writing, if a site area from its title outline may go in a client's report?
+286) Should the test website install exactly the package versions we tested? (a lock file at the top of the repository)
 72) When buying a building, can the buyer add their own fitting costs on top of an agreed value?
 73) If the seller was never allowed to claim, does the pooling rule still apply?
 74) Is there a third way to fix the value of fixtures that we are missing?
