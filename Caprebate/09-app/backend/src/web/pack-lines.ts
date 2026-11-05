@@ -3,7 +3,8 @@
  *
  * Every line a pack starts with is a row of `02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv` (103 rows,
  * each with its statutory authority and its pool), for the building's sector and the rows every sector shares. This
- * file reads that list; it does not keep a second copy of it.
+ * file reads that list from the app's own copy (`backend/copies/`, Phase 161d1), kept byte for byte the same as the
+ * original by `npm run lint:copies`; nothing here re-types it.
  *
  * WHICH ROWS: those that can go in a pool through a survey — main pool (MP), special rate (SR), and the two the list
  * leaves to the surveyor (APPORTION, and builder's work that FOLLOWS_PLANT, whose pool is the plant's). NOT: loose
@@ -26,7 +27,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Pool } from './pack-sums.ts';
 
-export const TAXONOMY_FILE = join(import.meta.dirname, '..', '..', '..', '..', '02-modules-and-build-prep', 'Caprebate-Fixture-Taxonomy-v1.csv');
+/** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
+export const TAXONOMY_FILE = join(import.meta.dirname, '..', '..', 'copies', 'Caprebate-Fixture-Taxonomy-v1.csv');
 
 export type TaxonomyRow = Readonly<Record<string, string>>;
 

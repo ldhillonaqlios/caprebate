@@ -787,11 +787,25 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   Development/, and is copied
   byte for byte into 09-app/engine/src/generated/. Change the site file and
   re-run the extractor; never hand-edit generated/.
+  THE APP'S OWN COPIES (Phase 161d1, 5 Nov 2026). The back end reads five
+  files people edit elsewhere from its own copies in 09-app/backend/copies/:
+  the site file, 03-app/caprebate-notices-page.html, the fixture list and
+  the two engagement letters. EDIT THE ORIGINAL, NEVER THE COPY, then run
+  "npm run copies" in 09-app/backend: npm run check (lint:copies,
+  tools/app-copies.cjs) fails while any copy differs by one byte.
+  ONEDRIVE CAN FORK A FILE WRITTEN TWICE IN QUICK SUCCESSION (seen 5 Nov 2026
+  by Phase 161d1): it kept the first write under the name and saved the
+  second as "<name> 2.<ext>" beside it. The check names both (a copy that
+  differs, a file it does not know): delete the " 2" file and run npm run
+  copies again.
   03-app/phase3 and 03-app/phase9 are EMPTY FOLDERS (on the Acer they were
   junctions). The harness traverses them and falls back to ../04-phase-work.
   THE MODULE FILES: the six Module-*.md files and Caprebate-Fixture-Taxonomy-
   v1.csv live ONLY in 02-modules-and-build-prep/ on the Mac, read there by the
-  harness and the phase9 cost-model test since Phase 132g. THE COMPETITOR
+  harness and the phase9 cost-model test since Phase 132g. The fixture list
+  also has the app's copy in 09-app/backend/copies/ (Phase 161d1), checked
+  equal to this one; the stray-copy guard looks only at 03-app/, so that
+  copy is not a stray. THE COMPETITOR
   PROGRAM'S FULL COPY (Word questions 9 and 214) WAS DELETED AS NOT NEEDED
   (Lakhbir, 25 Sep 2026, Phase 151f); nothing reads it. Phase 151f wrote that
   this block said so, and it did not until the Phase 152 sweep.
@@ -818,7 +832,8 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   "word\document.xml" and the seven policy templates' are not. Match both. To
   EDIT one, rewrite that single entry and keep every other entry's bytes and
   every entry NAME exactly - a zip tool that normalises the backslashes changes
-  a file the back end's letter tests read. Verify every entry's CRC afterwards.
+  a file the back end's letter tests read. Verify every entry's CRC afterwards,
+  then run "npm run copies" in 09-app/backend (the app reads its copy).
 
 THE CHECKS - every one green where it must be and red where it must be at the
 close of Phase 151d. RUN A NEGATIVE CONTROL'S EXIT CODE ON ITS OWN LINE:
@@ -835,7 +850,10 @@ command that counts it, never the number.
   node 03-app/caprebate-regression.cjs --package      the package - MUST MATCH the line above
   cd 04-phase-work/phase3 && node --test              from INSIDE the folder
   cd 04-phase-work/phase9 && node --test              from INSIDE the folder
-  cd 09-app/backend && npm run check                  lint-sql, typecheck, tests
+  cd 09-app/backend && npm run check                  lint-sql, lint-paths, lint-copies,
+                                                      typecheck, tests
+  cd 09-app/backend && node tools/app-copies.cjs --self-test   a changed, missing or extra
+                                                      copy and a lost original must each fail
   node 09-app/engine/tools/verify-extraction.cjs      byte for byte, the must-nots, and
                                                       THE SWITCH COUNT - read it there.
                                                       Step 3's "eleven engine readings"

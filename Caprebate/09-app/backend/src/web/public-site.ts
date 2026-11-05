@@ -23,7 +23,8 @@
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const SITE_PATH = join(import.meta.dirname, '..', '..', '..', '..', '..', 'Caprebate site.html');
+/** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, `Caprebate site.html` in Development/, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
+export const SITE_PATH = join(import.meta.dirname, '..', '..', 'copies', 'Caprebate site.html');
 
 /** The page's policy: the back end's, plus its own script from its own origin. Nothing else is loosened. */
 export const SITE_PAGE_CSP =
