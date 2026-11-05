@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 8 |
+| Ready - Claude can build | 7 |
 | Ready - Lakhbir action | 26 |
 | Built - awaiting sign-off | 142 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 350 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1436,7 +1436,7 @@
 
 ### Phase 161d1 - The public site file, notices page, fixture list and engagement letters are read from inside the app (audit 2 Nov 2026)
 
-`13466718822` · **Ready - Claude can build** · owner Claude
+`13466718822` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local (the Mac copy)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-04 (Phase 161d): Written by Phase 161d. Live code still reads four things outside Caprebate/09-app: the public site file, the notices page, the fixture list and the two engagement letters (tools/lint-paths.cjs KNOWN, marked carried). This phase brings them inside the app and empties that part of the list.
