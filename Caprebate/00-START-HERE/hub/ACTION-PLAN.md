@@ -787,11 +787,25 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   Development/, and is copied
   byte for byte into 09-app/engine/src/generated/. Change the site file and
   re-run the extractor; never hand-edit generated/.
+  THE APP'S OWN COPIES (Phase 161d1, 5 Nov 2026). The back end reads five
+  files people edit elsewhere from its own copies in 09-app/backend/copies/:
+  the site file, 03-app/caprebate-notices-page.html, the fixture list and
+  the two engagement letters. EDIT THE ORIGINAL, NEVER THE COPY, then run
+  "npm run copies" in 09-app/backend: npm run check (lint:copies,
+  tools/app-copies.cjs) fails while any copy differs by one byte.
+  ONEDRIVE CAN FORK A FILE WRITTEN TWICE IN QUICK SUCCESSION (seen 5 Nov 2026
+  by Phase 161d1): it kept the first write under the name and saved the
+  second as "<name> 2.<ext>" beside it. The check names both (a copy that
+  differs, a file it does not know): delete the " 2" file and run npm run
+  copies again.
   03-app/phase3 and 03-app/phase9 are EMPTY FOLDERS (on the Acer they were
   junctions). The harness traverses them and falls back to ../04-phase-work.
   THE MODULE FILES: the six Module-*.md files and Caprebate-Fixture-Taxonomy-
   v1.csv live ONLY in 02-modules-and-build-prep/ on the Mac, read there by the
-  harness and the phase9 cost-model test since Phase 132g. THE COMPETITOR
+  harness and the phase9 cost-model test since Phase 132g. The fixture list
+  also has the app's copy in 09-app/backend/copies/ (Phase 161d1), checked
+  equal to this one; the stray-copy guard looks only at 03-app/, so that
+  copy is not a stray. THE COMPETITOR
   PROGRAM'S FULL COPY (Word questions 9 and 214) WAS DELETED AS NOT NEEDED
   (Lakhbir, 25 Sep 2026, Phase 151f); nothing reads it. Phase 151f wrote that
   this block said so, and it did not until the Phase 152 sweep.
@@ -818,7 +832,8 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   "word\document.xml" and the seven policy templates' are not. Match both. To
   EDIT one, rewrite that single entry and keep every other entry's bytes and
   every entry NAME exactly - a zip tool that normalises the backslashes changes
-  a file the back end's letter tests read. Verify every entry's CRC afterwards.
+  a file the back end's letter tests read. Verify every entry's CRC afterwards,
+  then run "npm run copies" in 09-app/backend (the app reads its copy).
 
 THE CHECKS - every one green where it must be and red where it must be at the
 close of Phase 151d. RUN A NEGATIVE CONTROL'S EXIT CODE ON ITS OWN LINE:
@@ -835,7 +850,10 @@ command that counts it, never the number.
   node 03-app/caprebate-regression.cjs --package      the package - MUST MATCH the line above
   cd 04-phase-work/phase3 && node --test              from INSIDE the folder
   cd 04-phase-work/phase9 && node --test              from INSIDE the folder
-  cd 09-app/backend && npm run check                  lint-sql, typecheck, tests
+  cd 09-app/backend && npm run check                  lint-sql, lint-paths, lint-copies,
+                                                      typecheck, tests
+  cd 09-app/backend && node tools/app-copies.cjs --self-test   a changed, missing or extra
+                                                      copy and a lost original must each fail
   node 09-app/engine/tools/verify-extraction.cjs      byte for byte, the must-nots, and
                                                       THE SWITCH COUNT - read it there.
                                                       Step 3's "eleven engine readings"
@@ -1069,109 +1087,6 @@ command that counts it, never the number.
  **Three of them touch a decision that is not Claude's, and each is built switched off with a question to Lakhbir:** keeping the original of a client's uploaded file (140), the email provider and the contactus@ mailbox (141), and whether the surveyor sees either chat thread (142).
 
 ---
-
-
-## PHASE 161d1 — The public site file, notices page, fixture list and engagement letters are read from inside the app
-
- **Model: Opus.** Board item 13466718822. **Written 4 November 2026 by Phase 161d**, which moved every module live code loaded from the draft folders into the app and found these four files still read from outside it. **Why:** the same audit finding as 161d (section 5).
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-WHAT IS THERE NOW (Phase 161d, 4 Nov 2026): no live file loads a module from
-04-phase-work any more, and tools/lint-paths.cjs (npm run lint:paths, part of
-npm run check) stops the build if one does. Its KNOWN list names seven paths
-that still lead out of the app folder (Caprebate/09-app) on purpose. Two are
-not reads at all: secrets.ts and inspire-store.ts name the repository folder
-so that a key file or a file store kept inside it can be turned down. FIVE
-READS ARE MARKED "carried" TO THIS PHASE:
-  src/web/public-site.ts    SITE_PATH       Development/Caprebate site.html
-  src/web/notices-site.ts   NOTICES_PATH    03-app/caprebate-notices-page.html
-  src/web/pack-lines.ts     TAXONOMY_FILE   02-modules-and-build-prep/
-                                            Caprebate-Fixture-Taxonomy-v1.csv
-  src/web/letter.ts         LETTER_PATH and TEST_LETTER_PATH
-                                            06-commercial-and-governance/
-                                            Caprebate Engagement Letter.docx
-                                            and its TEST DEFAULTS copy
-Each has other readers and a home that people use: the site file is the
-engine's source (09-app/engine/tools/extract.cjs, the harness, the brand and
-plain-words checks); the notices page is read by four 03-app checks; the
-fixture list is one of the module files the drift checker's stray-copy guard
-keeps ONLY in 02-modules-and-build-prep; the letters are the director's and
-the solicitor's documents. So none was moved by 161d.
-
-BUILD
-1. For each one, choose (and write down why): MOVE it into 09-app (git mv,
-   and point every reader at the new place - the 03-app checks, the
-   extractor, the harness, COORDINATES, the developer spec and the 146g
-   handover), or keep the original where people edit it and give the app its
-   own copy inside 09-app with a check in npm run check that fails when the
-   copy and the original differ (the way extract.cjs --check keeps the
-   engine's generated copy). Grep for every reader first.
-2. Point the live file at the place inside 09-app, and take its row out of
-   KNOWN in tools/lint-paths.cjs (the check fails while a listed path is no
-   longer there, so the list only shrinks on purpose).
-3. The test website's bundle still holds what it needs: deploy the branch
-   preview and open the home page, the notices page, a claim's pack lines and
-   the engagement letter on it.
-
-ACCEPT
-- KNOWN in tools/lint-paths.cjs has no row marked carried; npm run check is
-  green; each fix has a test that fails on the code before it.
-- All four suites pass as before; the test website's preview works.
-```
 
 
 ## PHASE 161e — A fresh copy of the project passes every check, on GitHub as well as the Mac

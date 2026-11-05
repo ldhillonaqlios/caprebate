@@ -17,7 +17,7 @@
  *
  * KNOWN, below, lists the few paths that still lead outside, each with the reason. The check fails on any path not in
  * that list, AND on a listed one that is no longer there, so the list can only shrink on purpose. An entry marked
- * `carried` is work for a later phase, named in its reason.
+ * `carried` is work for a later phase, named in its reason (none since Phase 161d1).
  *
  *   node tools/lint-paths.cjs               the check (npm run lint:paths, part of npm run check)
  *   node tools/lint-paths.cjs --self-test   plants an import from 04-phase-work, and the other faults, in a scratch
@@ -35,16 +35,9 @@ const KNOWN = [
     why: 'the repository folder, so a key file inside it is refused; nothing in it is read' },
   { file: 'Caprebate/09-app/backend/src/connectors/inspire-store.ts', target: '.',
     why: 'the repository folder, so the INSPIRE file store is refused inside it; nothing in it is read' },
-  { file: 'Caprebate/09-app/backend/src/web/public-site.ts', target: 'Caprebate site.html', carried: true,
-    why: 'the public website file; carried to Phase 161d1' },
-  { file: 'Caprebate/09-app/backend/src/web/notices-site.ts', target: 'Caprebate/03-app/caprebate-notices-page.html', carried: true,
-    why: 'the notices page; carried to Phase 161d1' },
-  { file: 'Caprebate/09-app/backend/src/web/pack-lines.ts', target: 'Caprebate/02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv', carried: true,
-    why: 'the fixture list; carried to Phase 161d1' },
-  { file: 'Caprebate/09-app/backend/src/web/letter.ts', target: 'Caprebate/06-commercial-and-governance/Caprebate Engagement Letter.docx', carried: true,
-    why: 'the engagement letter; carried to Phase 161d1' },
-  { file: 'Caprebate/09-app/backend/src/web/letter.ts', target: 'Caprebate/06-commercial-and-governance/Caprebate Engagement Letter - TEST DEFAULTS, not agreed.docx', carried: true,
-    why: "the test website's copy of the engagement letter; carried to Phase 161d1" },
+  // Phase 161d1 (5 Nov 2026) took the five reads carried here off this list: the site file, the notices page, the
+  // fixture list and the two engagement letters are now read from the app's own copies in backend/copies/, kept the
+  // same as their originals by tools/app-copies.cjs (npm run lint:copies).
 ];
 
 const CODE = /\.(ts|mts|cts|mjs|cjs|js)$/;

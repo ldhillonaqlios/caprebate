@@ -37,7 +37,8 @@ npm run seed         # invented data + one user per role. Refuses without CAPREB
 npm run verify-audit # recomputes the audit log's hash chain from caprebate.db; writes nothing; exit 1 if broken
 npm start            # http://localhost:8103
 npm run start:demo   # in-memory, seeded, http://localhost:8105 — for looking at the screens
-npm run check        # audit:live, lint:sql, lint:paths, typecheck, the whole suite — run it, do not quote it
+npm run check        # audit:live, lint:sql, lint:paths, lint:copies, typecheck, the whole suite — run it, do not quote it
+npm run copies       # after editing the site file, the notices page, the fixture list or a letter: refresh the app's copies
 ```
 
 **No hidden state.** Everything the application needs is passed to `buildApp` —
@@ -69,6 +70,15 @@ and fails on any module they load, or any path they build from their own folder,
 in `test/`. The old paths keep a one-line note that loads the new file. The few paths still allowed
 outside are listed, with the reason, in `KNOWN` in that file; `--self-test` proves a planted import from
 04-phase-work fails.
+
+**FIVE FILES PEOPLE EDIT ELSEWHERE ARE READ FROM THE APP'S OWN COPIES (Phase 161d1, 5 November 2026).**
+The public website (`Caprebate site.html`), the notices page (`03-app/caprebate-notices-page.html`), the fixture
+list (`02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv`) and the engagement letter and its test copy
+(`06-commercial-and-governance/`) stay where people edit them, because other checks and people use them there. The
+application reads its own copy of each in `copies/` (`SITE_PATH`, `NOTICES_PATH`, `TAXONOMY_FILE`, `LETTER_PATH`,
+`TEST_LETTER_PATH`). `npm run lint:copies` (`tools/app-copies.cjs`, part of `npm run check`) fails while any copy is
+missing or differs from its original by one byte. **Edit the original, never the copy, then run `npm run copies`.**
+`--self-test` proves a changed, missing or extra copy and a lost original each fail.
 
 **Migration 007 rebuilds `businesses`** — the twelve-step SQLite procedure, to
 remove `preferred_contact`, which migration 004 had ended (every value NULL, two

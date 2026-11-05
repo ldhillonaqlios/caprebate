@@ -49,10 +49,8 @@ import { join } from 'node:path';
 import { readZipEntry, DOCX_DOCUMENT_ENTRIES, docxParagraphTexts } from './zip.ts';
 import { plainDashText } from './plain-dashes.ts';
 
-export const LETTER_PATH = join(
-  import.meta.dirname, '..', '..', '..', '..',
-  '06-commercial-and-governance', 'Caprebate Engagement Letter.docx',
-);
+/** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 06-commercial-and-governance/Caprebate Engagement Letter.docx, the director's and the solicitor's, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
+export const LETTER_PATH = join(import.meta.dirname, '..', '..', 'copies', 'Caprebate Engagement Letter.docx');
 
 /**
  * THE TEST-ONLY COPY — Phase 153d, 4 October 2026 (Word questions 33, 34 and 196, the director's). Built on our
@@ -64,9 +62,8 @@ export const LETTER_PATH = join(
  * signed, whatever the switch says (signing.ts), so a real client can never be sent it as a contract.
  */
 export const TEST_LETTER_PATH = join(
-  import.meta.dirname, '..', '..', '..', '..',
-  '06-commercial-and-governance', 'Caprebate Engagement Letter - TEST DEFAULTS, not agreed.docx',
-);
+  import.meta.dirname, '..', '..', 'copies', 'Caprebate Engagement Letter - TEST DEFAULTS, not agreed.docx',
+); // the app's copy, as LETTER_PATH (Phase 161d1); the original is beside the real letter in 06-commercial-and-governance
 export const TEST_COPY_MARK = 'TEST COPY — for the test system only.';
 export const TEST_DEFAULT_MARK = '(test default, not agreed)';
 
