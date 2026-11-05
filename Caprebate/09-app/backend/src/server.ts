@@ -126,6 +126,8 @@ export type ServerOptions = {
   testLetter?: boolean;
   /** PHASE 160f: the public notices page and its complaint form (src/web/notices-site.ts). api/index.mjs passes it; nothing else does. */
   testNotices?: boolean;
+  /** PHASE 161g: the legal pages for the live website, each a Draft until approved (src/web/legal-approvals.ts). Off unless CAPREBATE_LEGAL_PAGES=on. */
+  legal?: boolean;
   /** 6 Oct 2026: signing on for testing — the test copy of the letter only (ENGAGEMENT_SIGNING_TEST). Needs testLetter. api/index.mjs passes it; locally CAPREBATE_SIGNING_TEST=1. */
   testSigning?: boolean;
   /** PHASE 140: the key a kept original is encrypted with. Absent is CAPREBATE_ORIGINALS_KEY; with neither, nothing is kept. */
@@ -136,6 +138,11 @@ export type ServerOptions = {
    */
   formTokens?: FormTokens;
 };
+
+/** PHASE 161g: the `legal` setting, read from CAPREBATE_LEGAL_PAGES. Only the word "on" switches it on. */
+export function legalPagesSetting(env: NodeJS.ProcessEnv = process.env): boolean {
+  return (env.CAPREBATE_LEGAL_PAGES ?? '').trim() === 'on';
+}
 
 export async function createApp(
   location = ':memory:',
@@ -256,7 +263,7 @@ export async function createApp(
     // so the JSON API below is unchanged and nothing is shadowed by accident.
     try {
       const publicOrigin = opts.publicOrigin ?? process.env.CAPREBATE_PUBLIC_ORIGIN;
-      if (await handleWeb({ app, store, ...(opts.referralForm === undefined ? {} : { referralForm: opts.referralForm }), ...(opts.names === undefined ? {} : { names: opts.names }), ...(publicOrigin === undefined ? {} : { publicOrigin }), ...(opts.testLetter === true ? { letterPath: TEST_LETTER_PATH } : {}), ...(opts.testNotices === true ? { notices: true } : {}), ...(opts.testLetter === true && opts.testSigning === true ? { signing: ENGAGEMENT_SIGNING_TEST } : {}) }, req, res) === 'handled') return;
+      if (await handleWeb({ app, store, ...(opts.referralForm === undefined ? {} : { referralForm: opts.referralForm }), ...(opts.names === undefined ? {} : { names: opts.names }), ...(publicOrigin === undefined ? {} : { publicOrigin }), ...(opts.testLetter === true ? { letterPath: TEST_LETTER_PATH } : {}), ...(opts.testNotices === true ? { notices: true } : {}), ...(opts.legal === true ? { legal: true } : {}), ...(opts.testLetter === true && opts.testSigning === true ? { signing: ENGAGEMENT_SIGNING_TEST } : {}) }, req, res) === 'handled') return;
     } catch (e) {
       // PHASE 133a: A REFUSED SCREEN IS STILL REFUSED — 403 — BUT AS A PAGE. A person who follows an address they may not
       // open gets the application's header and a sentence, not a line of JSON. The page names no object, so a refusal
@@ -412,15 +419,18 @@ if (import.meta.filename === process.argv[1]) {
   const signingTest = (process.env.CAPREBATE_SIGNING_TEST ?? '').trim() === '1';
   /* PHASE 161c: a key file others could open stops a live start (CAPREBATE_PRODUCTION=1) and is a warning anywhere
      else. The words name the file and its permissions, never a key. */
+  /* PHASE 161g: CAPREBATE_LEGAL_PAGES=on serves the legal pages (each a Draft until approved). Anything else: off. */
+  const legal = legalPagesSetting();
   const keyCheck = keyFileStartCheck();
   for (const line of keyCheck.lines) console.error(line);
   if (keyCheck.stop) process.exitCode = 1;
   // PHASE 161b: a real start says the form tokens are on, in so many words.
-  else void createApp(location, signingTest ? { testLetter: true, testSigning: true, formTokens: 'on' } : { formTokens: 'on' }).then(({ server, app }) => {
+  else void createApp(location, { ...(signingTest ? { testLetter: true, testSigning: true } : {}), ...(legal ? { legal: true } : {}), formTokens: 'on' }).then(({ server, app }) => {
     server.listen(port, () => {
       console.log(`caprebate back end on http://localhost:${port}`);
       console.log(`  ${turnstileWhy(app.secrets)}`); // 29 Sep 2026: the contact form's security check, said at start-up
       if (signingTest) console.log('  signing ON FOR TESTING: the test copy of the engagement letter only');
+      console.log(legal ? '  legal pages ON (CAPREBATE_LEGAL_PAGES=on): each shows its Draft line until approved' : '  legal pages off (CAPREBATE_LEGAL_PAGES is not on)');
     });
   });
 }

@@ -42,3 +42,20 @@ export function withMeasurementId(html: string, id: string | null): string {
   if (id === null) return html;
   return html.replace('<meta name="cb-ga4-measurement-id" content="">', `<meta name="cb-ga4-measurement-id" content="${id}">`);
 }
+
+/**
+ * PHASE 161g, 5 November 2026 — GOOGLE ANALYTICS ONLY AFTER A CLICK (Lakhbir: "Google Analytics only after a click").
+ *
+ * The served site page, for one visitor. `accepted` is `optionalAllowed` (src/web/legal-pages.ts): true only when the
+ * visitor's `cb_cookies` answer is "all", which only a click on "Accept all" sets. Until then the page is given NO
+ * measurement id and its policy names no Google address, so nothing of Google's can load and no request can go to
+ * Google, whatever the page's script does: not on a page view, a scroll, a timer or an earlier visit with no answer.
+ * The page's own answer meta (cb-cookie-choice) says "all" only then, and SITE_CONSENT starts nothing without it.
+ * `csp` is null when the page's ordinary policy stands.
+ */
+export function sitePageFor(html: string, basePolicy: string, id: string | null, accepted: boolean): { html: string; csp: string | null } {
+  const on = accepted && id !== null ? id : null;
+  const page = withMeasurementId(html, on)
+    .replace('<meta name="cb-cookie-choice" content="">', `<meta name="cb-cookie-choice" content="${on === null ? '' : 'all'}">`);
+  return { html: page, csp: on === null ? null : sitePolicy(basePolicy, on) };
+}

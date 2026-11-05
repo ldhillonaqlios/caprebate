@@ -43,7 +43,8 @@ after(() => { onTest.close(); offTest.close(); });
 
 describe('Phase 160h: the legal pages', () => {
   test('each page is served on the test website, says it is a draft, and has no long dash, script or style attribute', async () => {
-    assert.equal(LEGAL_PAGES.length, 5);
+    // PHASE 161g, 5 Nov 2026: the client portal terms and the privacy policy joined the five.
+    assert.equal(LEGAL_PAGES.length, 7);
     for (const [path, title] of LEGAL_PAGES) {
       const r = await get(baseOn, path, `${CONSENT_COOKIE}=essential`);
       assert.equal(r.status, 200, path);
@@ -70,7 +71,8 @@ describe('Phase 160h: the legal pages', () => {
     assert.match(terms, /1st Floor, 1-9 Castle Street, Hinckley, LE10 1DA/);
     assert.match(terms, /Our telephone number: <span class="gap">to be added<\/span>\./);
     assert.match(terms, /Our registration number with the Information Commissioner: <span class="gap">to be added<\/span>\./);
-    assert.equal(LEGAL_GAPS.length, 2);
+    // PHASE 161g: four more gaps, for the privacy policy (the DPO, the money-laundering basis, the live host, the transfer safeguards).
+    assert.equal(LEGAL_GAPS.length, 6);
     assert.match(legalPageHtml('/accessibility/', null) ?? '', /Telephone:\s*<span class="gap">to be added<\/span>/);
   });
 

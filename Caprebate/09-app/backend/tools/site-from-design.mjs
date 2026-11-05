@@ -63,8 +63,9 @@ const FONTS = `
 `;
 
 const LEGAL_NAV = '<nav aria-label="Legal"><h2>Legal</h2><ul>' +
-  '<li><a href="/notices/">Public notices</a></li><li><a href="/notices/#privacy">Privacy</a></li>' +
-  '<li><a href="/notices/#complaints">Complaints</a></li><li><a href="/terms/">Terms of use</a></li>' +
+  // Phase 161g: the privacy policy is its own page, and the client portal terms join the list.
+  '<li><a href="/notices/">Public notices</a></li><li><a href="/privacy-policy/">Privacy policy</a></li>' +
+  '<li><a href="/notices/#complaints">Complaints</a></li><li><a href="/terms/">Terms of use</a></li><li><a href="/portal-terms/">Client portal terms</a></li>' +
   '<li><a href="/cookies/">Cookie policy</a></li><li><a href="/cookies/#choice">Cookie settings</a></li>' +
   '<li><a href="/accessibility/">Accessibility</a></li><li><a href="/disclaimer/">Disclaimer</a></li></ul></nav>';
 

@@ -66,6 +66,16 @@ export function buildNoticesEdition(source: string): NoticesEdition {
   return { html, css: (style[1] ?? '') + BANNER_CSS };
 }
 
+/**
+ * PHASE 161g: THE SAME PAGE ON THE LIVE WEBSITE (the `legal` setting). The test website's banner ("Our test website")
+ * is replaced by the page's own Draft line, which goes once our solicitor and our data protection officer have both
+ * approved its version (src/web/legal-approvals.ts).
+ */
+export function noticesForLiveSite(html: string, line: string): string {
+  if (!html.includes(BANNER)) throw new Error('the notices page has no test banner to replace');
+  return html.replace(BANNER, line);
+}
+
 let cached: { mtimeMs: number; edition: NoticesEdition } | null = null;
 
 /** The edition of the file beside the build, or undefined if it is missing or refused. */
