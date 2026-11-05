@@ -48,20 +48,27 @@
            that shows B3's "no tag" is the switch and not a broken loader.
      C  THE PORTAL. No 09-app/backend/src/web/*.ts view names CB_TRACK or
         reaches gtag: the post-engagement pages load no tag (5.1).
-     D  THE COOKIE CHOICE (Phase 146f), run in a sandbox from the site's own
-        SITE_CONSENT and CB_TRACK text:
-        D1 the file carries no measurement id - it is configuration, filled in
-           by the back end from the key file - and with none, no choice is
-           shown and nothing loads;
-        D2 with an id and no choice yet, the choice is shown and no tag loads;
-        D3 Refuse: no tag, the choice is kept, and a reload loads nothing and
-           does not ask again;
-        D4 Accept: exactly one tag; a reload with "accepted" loads it without
-           asking;
-        D5 on a page after the engagement (/portal/...) nothing is shown or
-           loaded, whatever was chosen;
-        D6 Refuse is as easy as Accept: two buttons, the same class, side by
-           side in the same block.
+     D  THE COOKIE CHOICE, run in a sandbox from the site's own SITE_CONSENT
+        and CB_TRACK text. PHASE 161g, 5 Nov 2026 (Lakhbir: "Google Analytics
+        only after a click"): the website has ONE cookie choice, the banner the
+        back end adds (cb_cookies; src/web/legal-pages.ts), and the page only
+        READS its answer from the cb-cookie-choice meta tag, which the back end
+        fills with "all" only after a click on "Accept all" (sitePageFor in
+        src/analytics.ts). The back end's half is tested in
+        09-app/backend/test/phase161g.test.ts.
+        D1 the file carries no measurement id and no answer - both are
+           configuration, filled in by the back end - and with neither nothing
+           loads;
+        D2 with an id and no answer: no tag, nothing written to the browser's
+           storage, and an old "accepted" kept by the Phase 146f version is
+           ignored and removed;
+        D3 with an id and the answer "essential" (Reject): no tag;
+        D4 with an id and the answer "all" (after the click): exactly one tag;
+        D5 on a page after the engagement (/portal/...) nothing loads, whatever
+           the answer;
+        D6 one choice: the page asks no question of its own (no data-consent
+           button, no cbConsent block), and its Cookie settings link goes to the
+           cookie policy's answer (/cookies/#choice).
 
    RUN
      node 03-app/caprebate-analytics-allowlist-check.cjs
@@ -327,61 +334,57 @@ function runChecks(tree) {
   tree.ts.forEach(f => { const re = /CB_TRACK|\bgtag\b|\bdataLayer\b|googletagmanager/g; let m; while ((m = re.exec(f.text))) portal.push(f.name + ":" + lineOf(f.text, m.index) + " " + m[0]); });
   is("C1", "no post-engagement portal view names CB_TRACK or reaches a tag (" + tree.ts.length + " views scanned)", portal.length === 0, portal.join("; "));
 
-  /* --- D: the cookie choice --- */
+  /* --- D: the cookie choice (Phase 161g: one choice, the banner; the page reads its answer) --- */
   const C_START = "/* ===== SITE_CONSENT - THE COOKIE CHOICE", C_END = "/* ===== end SITE_CONSENT ===== */";
   const ca = tree.site.indexOf(C_START), cb = ca < 0 ? -1 : tree.site.indexOf(C_END, ca);
   const metaM = /<meta name="cb-ga4-measurement-id" content="([^"]*)">/.exec(tree.site);
+  const choiceM = /<meta name="cb-cookie-choice" content="([^"]*)">/.exec(tree.site);
   if (ca < 0 || cb < 0 || !w) {
     is("D0", "the cookie choice (SITE_CONSENT) is in the site file", false, "no SITE_CONSENT block");
   } else {
     const consentText = tree.site.slice(ca, cb + C_END.length);
-    /* a page, faked just far enough: the meta tag, the choice block, its buttons, cookies, storage, the path */
+    /* a page, faked just far enough: the two meta tags, cookies, storage, the path */
     const run = (opts) => {
       const scripts = [];
-      const banner = { hidden: true };
-      const settings = { hidden: true, addEventListener() {} };
-      const buttons = ["accepted", "refused"].map(v => ({ v, h: null, getAttribute() { return v; }, addEventListener(_e, h) { this.h = h; } }));
-      const store = opts.store;
+      const store = opts.store || {};
+      const writes = [];
       const doc = {
         cookie: "",
         querySelector(sel) {
           if (sel === 'meta[name="cb-ga4-measurement-id"]') return { getAttribute() { return opts.id; } };
-          if (sel === "[data-cookie-settings]") return settings;
+          if (sel === 'meta[name="cb-cookie-choice"]') return { getAttribute() { return opts.choice || ""; } };
           return null;
         },
-        querySelectorAll(sel) { return sel === "[data-consent]" ? buttons : []; },
-        getElementById(id) { return id === "cbConsent" ? banner : null; },
+        querySelectorAll() { return []; },
+        getElementById() { return null; },
         createElement(t) { const el = { tag: t }; scripts.push(el); return el; },
         head: { appendChild() {} }
       };
       const win = {};
       const ctx = vm.createContext({ document: doc, window: win, location: { pathname: opts.path || "/", hostname: "caprebate.co.uk" },
-        localStorage: { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } }, console });
+        localStorage: { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { writes.push(k); store[k] = String(v); }, removeItem: k => { delete store[k]; } }, console });
       vm.runInContext(w.text + "\n" + consentText + "\n;this.__T = CB_TRACK; this.__C = SITE_CONSENT;", ctx);
-      if (opts.press) { const b = buttons.find(x => x.v === opts.press); if (b && b.h) b.h(); }
-      return { scripts: scripts.length, shown: banner.hidden === false, store, T: ctx.__T, C: ctx.__C };
+      return { scripts: scripts.length, store, writes };
     };
-    const noId = run({ id: metaM ? metaM[1] : "", store: {} });
-    is("D1", "the file carries no measurement id (configuration, not code), and with none no choice is shown and nothing loads",
-       !!metaM && metaM[1] === "" && noId.scripts === 0 && noId.shown === false, JSON.stringify({ meta: metaM && metaM[1], scripts: noId.scripts, shown: noId.shown }));
-    const fresh2 = run({ id: "G-TEST123", store: {} });
-    is("D2", "with an id and no choice yet, the choice is shown and no tag loads", fresh2.shown === true && fresh2.scripts === 0,
-       JSON.stringify({ shown: fresh2.shown, scripts: fresh2.scripts }));
-    const s3 = {}; const refused = run({ id: "G-TEST123", store: s3, press: "refused" }); const reload3 = run({ id: "G-TEST123", store: s3 });
-    is("D3", "Refuse: no tag, the choice is kept, and a reload loads nothing and does not ask again",
-       refused.scripts === 0 && s3.cb_analytics_choice_v1 === "refused" && reload3.scripts === 0 && reload3.shown === false,
-       JSON.stringify({ refused: refused.scripts, kept: s3, reload: { scripts: reload3.scripts, shown: reload3.shown } }));
-    const s4 = {}; const accepted = run({ id: "G-TEST123", store: s4, press: "accepted" }); const reload4 = run({ id: "G-TEST123", store: s4 });
-    is("D4", "Accept: exactly one tag; a reload with the choice kept loads it without asking",
-       accepted.scripts === 1 && s4.cb_analytics_choice_v1 === "accepted" && reload4.scripts === 1 && reload4.shown === false,
-       JSON.stringify({ accepted: accepted.scripts, kept: s4, reload: { scripts: reload4.scripts, shown: reload4.shown } }));
-    const portalRun = run({ id: "G-TEST123", store: { cb_analytics_choice_v1: "accepted" }, path: "/portal/letter" });
-    is("D5", "on a page after the engagement nothing is shown or loaded, whatever was chosen", portalRun.scripts === 0 && portalRun.shown === false,
-       JSON.stringify({ scripts: portalRun.scripts, shown: portalRun.shown }));
-    const blockM = /<div id="cbConsent"[\s\S]*?<div class="consent-actions">([\s\S]*?)<\/div>/.exec(tree.site);
-    const btns = blockM ? [...blockM[1].matchAll(/<button type="button" class="([^"]+)" data-consent="(accepted|refused)">/g)] : [];
-    is("D6", "Refuse is as easy as Accept: two buttons, the same class, side by side",
-       btns.length === 2 && btns[0][1] === btns[1][1] && btns.map(b => b[2]).sort().join() === "accepted,refused", JSON.stringify(btns.map(b => [b[1], b[2]])));
+    const none = run({ id: metaM ? metaM[1] : "", choice: choiceM ? choiceM[1] : "" });
+    is("D1", "the file carries no measurement id and no answer (configuration, filled in by the back end), and with neither nothing loads",
+       !!metaM && metaM[1] === "" && !!choiceM && choiceM[1] === "" && none.scripts === 0,
+       JSON.stringify({ id: metaM && metaM[1], choice: choiceM && choiceM[1], scripts: none.scripts }));
+    const old = { cb_analytics_choice_v1: "accepted" };
+    const fresh = run({ id: "G-TEST123", choice: "", store: old });
+    is("D2", "with an id and no answer: no tag, nothing written to storage, and an old kept \"accepted\" is ignored and removed",
+       fresh.scripts === 0 && fresh.writes.length === 0 && !("cb_analytics_choice_v1" in old),
+       JSON.stringify({ scripts: fresh.scripts, writes: fresh.writes, store: old }));
+    const refused = run({ id: "G-TEST123", choice: "essential" });
+    is("D3", "with an id and the answer \"essential\" (Reject): no tag", refused.scripts === 0, JSON.stringify({ scripts: refused.scripts }));
+    const acc = run({ id: "G-TEST123", choice: "all" });
+    is("D4", "with an id and the answer \"all\" (after the click on Accept all): exactly one tag", acc.scripts === 1, JSON.stringify({ scripts: acc.scripts }));
+    const portalRun = run({ id: "G-TEST123", choice: "all", path: "/portal/letter" });
+    is("D5", "on a page after the engagement nothing loads, whatever the answer", portalRun.scripts === 0, JSON.stringify({ scripts: portalRun.scripts }));
+    const ownQuestion = /data-consent=|id="cbConsent"/.test(tree.site);
+    const settings = /<a class="foot-cookies" href="\/cookies\/#choice">Cookie settings<\/a>/.test(tree.site);
+    is("D6", "one choice: the page asks no cookie question of its own, and Cookie settings goes to the cookie policy's answer",
+       !ownQuestion && settings, JSON.stringify({ ownQuestion, settings }));
   }
 
   return results;
@@ -416,8 +419,12 @@ function selfTest() {
     ["one of the ten events with no call site", Object.assign({}, clean, { site: inWrapper('P.CB_TRACK.track("assessment_error", { error_code: "handled_error" });', "void 0;") }), ["A3"]],
     ["a call site outside the assessment", Object.assign({}, clean, { site: plantInPage('CB_TRACK.track("assessment_start", { entry_channel: "direct" });') }), ["A3"]],
     ["a measurement id written into the file", Object.assign({}, clean, { site: inWrapper('<meta name="cb-ga4-measurement-id" content="">', '<meta name="cb-ga4-measurement-id" content="G-PLANTED1">') }), ["D1"]],
-    ["the tag loaded before any choice", Object.assign({}, clean, { site: inWrapper("else if(c === null) show(true);", "else if(c === null){ show(true); start(); }") }), ["D2"]],
-    ["Refuse made smaller than Accept", Object.assign({}, clean, { site: inWrapper('class="btn btn-fill" data-consent="refused"', 'class="btn btn-ghost" data-consent="refused"') }), ["D6"]]
+    /* Phase 161g: the one cookie choice */
+    ["an answer written into the file", Object.assign({}, clean, { site: inWrapper('<meta name="cb-cookie-choice" content="">', '<meta name="cb-cookie-choice" content="all">') }), ["D1"]],
+    ["the tag loaded with no answer", Object.assign({}, clean, { site: inWrapper("if(accepted() && allowedHere()) return start();", "if(allowedHere()){ CB_TRACK.CONFIG.measurement_id = measurementId(); CB_TRACK.CONFIG.enabled = true; return CB_TRACK.load(document, window); }") }), ["D2"]],
+    ["an old kept answer trusted again", Object.assign({}, clean, { site: inWrapper('function accepted(){ return meta("cb-cookie-choice") === "all"; }', 'function accepted(){ var o = null; try{ o = localStorage.getItem(OLD_KEY); }catch(e){} return meta("cb-cookie-choice") === "all" || o === "accepted"; }').replace("forgetOld();\n    if(accepted()", "if(accepted()") }), ["D2"]],
+    ["any answer taken as yes", Object.assign({}, clean, { site: inWrapper('function accepted(){ return meta("cb-cookie-choice") === "all"; }', 'function accepted(){ return meta("cb-cookie-choice") !== ""; }') }), ["D3"]],
+    ["the page's own question put back", Object.assign({}, clean, { site: plantInPage('/* <button type="button" data-consent="accepted"> */') }), ["D6"]]
   ];
   let bad = 0;
   controls.forEach(([what, tree, mustFail]) => {

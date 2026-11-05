@@ -722,6 +722,9 @@ details.more-options{margin:.3rem 0 .6rem}
 .fl{display:block;margin:1rem 0 .3rem;font-size:18px;font-weight:600;color:var(--ink)}
 .fi{width:100%;padding:.6rem .7rem;border:1px solid #6f7a76;border-radius:.4rem;font:inherit;background:var(--white)}
 .ck{display:block;margin:.4rem 0;font-size:16px;font-weight:400;color:var(--body)}
+/* PHASE 161g: the client's tick that they have read the terms (the sign-up and the portal's agreement page) */
+label.tick{display:flex;gap:10px;align-items:flex-start;margin:.8rem 0;font-weight:400}
+label.tick input{margin-top:.3rem}
 .err{color:var(--stop);font-size:16px}
 .opts{display:flex;flex-direction:column;gap:.5rem;margin:1rem 0}
 button.opt,.opt{display:block;width:100%;text-align:left;padding:.85rem 1rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--white);font:inherit;font-weight:400;color:inherit;cursor:pointer;min-height:0}
@@ -1872,6 +1875,7 @@ body.public .f4-events{margin:.3rem 0 0;padding-left:1.1rem;font-size:14px;color
 body.public .legal .draft-note{border:1px solid #f2c46b;background:#2a2210;color:#EDEAE2;border-radius:12px;padding:.8rem 1rem;margin:1rem 0 1.5rem}
 body.public .legal .draft-note strong{color:#f2c46b}
 body.public .legal .gap{color:#f2c46b;font-weight:700}
+body.public .legal .in-force-note{border:1px solid #ABEDD8;border-radius:12px;padding:.8rem 1rem;margin:1rem 0 1.5rem}
 body.public .legal h2{margin-top:2rem}
 body.public .legal ul{padding-left:1.2rem}
 body.public .legal li{margin:.35rem 0;color:#c9ccc8}

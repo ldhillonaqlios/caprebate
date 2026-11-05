@@ -87,7 +87,7 @@ import { receiveWhatsApp } from './whatsapp.ts';
 import { webhookChallenge } from '../connectors/whatsapp.ts';
 import { EMAIL_SENDING, mailWhere, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
 import { bookingInviteFile, sendVideoInvite } from './booking-invite.ts';
-import { ga4MeasurementId, sitePolicy, withMeasurementId } from '../analytics.ts';
+import { ga4MeasurementId, sitePageFor } from '../analytics.ts';
 import { localDate, localStamp, localWhen, ukDate, ukDatesIn, zoneNotice } from './localtime.ts';
 import { formatPence, formatShownRange, toPence, RANGE_QUALIFIER } from './shown-range.ts';
 import { linkBookingToLead, SECTORS } from './leads.ts';
@@ -107,8 +107,10 @@ import { handleSignoffLink, portalReport, portalReportCard } from './report-page
 import { handleConfirmLink } from './accountant-confirm-pages.ts';
 import { acceptReport } from './report-accept.ts';
 import { handlePortalEvidence, portalEvidenceCard } from './evidence-pages.ts';
-import { noticesEdition, receiveComplaintForm } from './notices-site.ts';
-import { CONSENT_COOKIE, COOKIE_BANNER_CSS, consentChoice, consentSetCookie, cookieBanner, legalPageHtml, safeBack, wantsBanner } from './legal-pages.ts';
+import { noticesEdition, noticesForLiveSite, receiveComplaintForm } from './notices-site.ts';
+import { CONSENT_COOKIE, COOKIE_BANNER_CSS, agreementLinks, consentChoice, consentSetCookie, cookieBanner, draftLine, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from './legal-pages.ts';
+import { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from './legal-approvals.ts';
+import { nav as staffNav } from './staff.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -131,6 +133,13 @@ export type WebDeps = {
   signing?: EngagementSigning;
   /** PHASE 160f: the public notices page and its complaint form (src/web/notices-site.ts). Only the test website passes it. */
   notices?: boolean;
+  /**
+   * PHASE 161g, 5 Nov 2026: THE LEGAL SETTING, for the live website. The legal pages, the notices page, the cookie
+   * banner and the client's tick are served wherever it is on, as on the test website, but each page carries its Draft
+   * line until our solicitor and our data protection officer have both approved its version (src/web/legal-approvals.ts).
+   * Off unless CAPREBATE_LEGAL_PAGES=on (src/server.ts). With it and `notices` both off, nothing changes.
+   */
+  legal?: boolean;
 };
 
 /* ------------------------------------------------------------------ *
@@ -339,6 +348,8 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   const method = req.method === 'HEAD' && HEAD_AS_GET(path) ? 'GET' : req.method ?? 'GET';
   const newId = d.newId ?? randomUUID;
   const now = d.app.now;
+  /* PHASE 161g: the legal pages are served on the test website (`notices`) or wherever the `legal` setting is on. */
+  const legalServed = d.notices === true || d.legal === true;
 
   /* PHASE 160e, 19 October 2026: A FORM SENT FROM ANOTHER WEBSITE IS REFUSED. The session cookie is SameSite=Lax, which
      stops a browser sending it with another site's form; this is the second lock. Browsers mark every request with
@@ -357,13 +368,14 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
      visitor who is not signed in and has not answered gets it at the foot of any page of ours: two buttons of the same
      size, no script. It is added as the page leaves, so every page writer (page(), the home page, the notices page)
      carries it without knowing about it. */
-  if (d.notices === true && method === 'GET' && wantsBanner(path, actor !== undefined, consentChoice(cookie(req, CONSENT_COOKIE)))) {
+  if (legalServed && method === 'GET' && wantsBanner(path, actor !== undefined, consentChoice(cookie(req, CONSENT_COOKIE)))) {
+    const analyticsOn = ga4MeasurementId(d.app.secrets) !== null;
     const back = `${path}${url.search}`;
     const end = res.end.bind(res) as (...a: unknown[]) => ServerResponse;
     res.end = ((...args: unknown[]) => {
       const body = args[0];
       if (typeof body === 'string' && res.statusCode === 200 && /^<!doctype html/i.test(body) && body.includes('</body>')) {
-        args[0] = body.replace(/<\/body>(?![\s\S]*<\/body>)/, `${cookieBanner(back)}</body>`);
+        args[0] = body.replace(/<\/body>(?![\s\S]*<\/body>)/, `${cookieBanner(back, analyticsOn)}</body>`);
       }
       return end(...args);
     }) as typeof res.end;
@@ -436,7 +448,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const extra = { ...letterExtra(d.app.db, link.business_id, link.user_id), action: `/sign/${token}`, byLink: true };
     if (method === 'GET') {
       d.app.db.run("UPDATE engagements SET letter_state = 'VIEWED', viewed_at = COALESCE(viewed_at, ?) WHERE id = ? AND letter_state = 'SENT'", [now(), link.engagement_id]);
-      letterHtml(res, 200, letterPage(actor, business, engOf(), undefined, undefined, d.letterPath, cfg, extra));
+      letterHtml(res, 200, letterPage(actor, business, engOf(), undefined, undefined, d.letterPath, cfg, extra, d.notices === true || d.legal === true));
       return 'handled';
     }
     const f = await form(req);
@@ -446,7 +458,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       signature_strokes: f.get('signature_strokes') ?? '', typed_as_signature: f.get('typed_as_signature') === 'on',
     }, clientIp(req), { cfg, ...(d.letterPath === undefined ? {} : { letterPath: d.letterPath }) });
     if (!r.ok) {
-      letterHtml(res, 400, letterPage(actor, business, engOf(), r.why, typed, d.letterPath, cfg, extra));
+      letterHtml(res, 400, letterPage(actor, business, engOf(), r.why, typed, d.letterPath, cfg, extra, d.notices === true || d.legal === true));
       return 'handled';
     }
     html(res, 200, page({ title: 'Letter signed', nav: nav(actor), body: h`<h1>${r.complete ? 'Thank you — the letter is signed' : 'Thank you — you have signed'}</h1>
@@ -492,8 +504,9 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
      and the links answered 401. Until they are published, a page that says so and how to reach us - nothing more. */
   /* PHASE 160f, 20 October 2026: ON THE TEST WEBSITE, THE NOTICES PAGE ITSELF (src/web/notices-site.ts) - a draft,
      its proposed facts marked - with its style as a file and its complaint form working. Anywhere else, as before. */
-  if (d.notices === true) {
-    /* PHASE 160h: the website's other legal pages, the banner's styles, and the answer (src/web/legal-pages.ts). */
+  if (legalServed) {
+    /* PHASE 160h: the website's other legal pages, the banner's styles, and the answer (src/web/legal-pages.ts).
+       PHASE 161g: also wherever the `legal` setting is on; each page says Draft until both approvals are recorded. */
     if (path === '/assets/cookie-banner.css' && method === 'GET') { res.writeHead(200, CSS_HEADERS); res.end(COOKIE_BANNER_CSS); return 'handled'; }
     if (path === '/cookies/choice' && method === 'POST') {
       const f = await form(req);
@@ -505,7 +518,8 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       return 'handled';
     }
     if (method === 'GET') {
-      const legal = legalPageHtml(path, consentChoice(cookie(req, CONSENT_COOKIE)), url.searchParams.get('saved') === '1');
+      const legal = legalPageHtml(path, consentChoice(cookie(req, CONSENT_COOKIE)), url.searchParams.get('saved') === '1',
+        { approvals: currentApprovals(d.app.db), analytics: ga4MeasurementId(d.app.secrets) !== null });
       if (legal !== undefined) {
         if (!path.endsWith('/')) { redirect(res, `${path}/`); return 'handled'; }
         html(res, 200, legal); return 'handled';
@@ -515,10 +529,12 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       const ed = noticesEdition();
       if (ed !== undefined) { res.writeHead(200, CSS_HEADERS); res.end(ed.css); return 'handled'; }
     }
-    if ((path === '/privacy' || path === '/privacy/') && method === 'GET') { redirect(res, '/notices/#privacy'); return 'handled'; }
+    // PHASE 161g: the privacy policy is its own page now; the notices page is for people who are not our clients.
+    if ((path === '/privacy' || path === '/privacy/') && method === 'GET') { redirect(res, '/privacy-policy/'); return 'handled'; }
     if ((path === '/notices' || path === '/notices/') && method === 'GET') {
       const ed = noticesEdition();
-      if (ed !== undefined) { res.writeHead(200, HTML_HEADERS); res.end(ed.html); return 'handled'; }
+      // On the live website (the `legal` setting without the test website's `notices`), its Draft line in place of the test banner.
+      if (ed !== undefined) { res.writeHead(200, HTML_HEADERS); res.end(d.notices === true ? ed.html : noticesForLiveSite(ed.html, draftLine('notices', currentApprovals(d.app.db).get('notices')).html)); return 'handled'; }
     }
     if (path === '/notices/complaint' && method === 'POST') {
       const r = receiveComplaintForm(d.app, await form(req), clientIp(req), newId);
@@ -540,7 +556,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   }
   /* PHASE 160h: away from the test website the legal pages are not served yet; their addresses say so, as the notices'
      do, rather than answer "unknown page" to a footer link. */
-  if (method === 'GET' && /^\/(terms|cookies|acceptable-use|accessibility|disclaimer)\/?$/.test(path)) {
+  if (method === 'GET' && /^\/(terms|portal-terms|privacy-policy|cookies|acceptable-use|accessibility|disclaimer)\/?$/.test(path)) {
     html(res, 200, page({ title: 'Being prepared', nav: nav(actor), body: h`<h1>This page is being prepared</h1>
       <p>It will be published before the website opens to clients. Until then, email
       <a href="mailto:contact@caprebate.co.uk">contact@caprebate.co.uk</a> with any question.</p>
@@ -615,9 +631,13 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const site = siteEdition();
     if (site !== undefined) {
       // PHASE 146f: the analytics measurement id comes from the key file, not the file (src/analytics.ts). None, no change.
-      const ga = ga4MeasurementId();
-      res.writeHead(200, ga === null ? SITE_PAGE_HEADERS : { ...SITE_PAGE_HEADERS, 'content-security-policy': sitePolicy(SITE_PAGE_CSP, ga) });
-      res.end(withMeasurementId(site.html, ga));
+      // PHASE 161g: AND ONLY AFTER A CLICK ON "Accept all". The page is given the id, and its policy names Google, only
+      // when the visitor's answer (cb_cookies, set by that click) is "all". No answer is no: the page then carries no id,
+      // its policy allows only our own address, and nothing of Google's can load (sitePageFor, src/analytics.ts).
+      const ga = ga4MeasurementId(d.app.secrets);
+      const out = sitePageFor(site.html, SITE_PAGE_CSP, ga, optionalAllowed(req, cookie));
+      res.writeHead(200, out.csp === null ? SITE_PAGE_HEADERS : { ...SITE_PAGE_HEADERS, 'content-security-policy': out.csp });
+      res.end(out.html);
       return 'handled';
     }
     html(res, 200, home(actor)); return 'handled';
@@ -711,7 +731,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
 
   /* ------------------------------------------ a client's own login (PHASE 133j) */
   if (path === '/account/create' && method === 'POST') {
-    const r = await requestSignup(d.app, d.publicOrigin ?? 'http://localhost:8103', await form(req));
+    const r = await requestSignup(d.app, d.publicOrigin ?? 'http://localhost:8103', await form(req), legalServed ? currentTermsVersions() : null);
     if (!r.ok) { html(res, 400, simple('Your login was not created', r.why)); return 'handled'; }
     html(res, 200, simple('Check your email',
       'If that address can be given a login, we have sent it a link. Open the link to confirm the address and finish creating your login. It works once, for 24 hours.'));
@@ -727,7 +747,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     return 'handled';
   }
   if (path === '/account/verify' && method === 'POST') {
-    const r = confirmSignup(d.app, (await form(req)).get('token') ?? '');
+    const r = confirmSignup(d.app, (await form(req)).get('token') ?? '', newId);
     if (!r.ok) { html(res, 400, simple('Your login was not created', r.why)); return 'handled'; }
     html(res, 200, page({ title: 'Your login is ready', nav: nav(actor),
       body: h`<h1>Your login is ready.</h1><p>Sign in with the address and password you chose to follow your claim.</p>
@@ -892,7 +912,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       const offer = first !== undefined ? offerSignup(d.app, newId, first.business_id as string, first.assessment_id) : undefined;
       const totals = { business_id: first?.business_id ?? '', assessment_id: first?.assessment_id ?? out.enquiry_id,
         low_pence: out.parts.reduce((a, p) => a + (p.low_pence ?? 0), 0) || null, high_pence: out.parts.reduce((a, p) => a + (p.high_pence ?? 0), 0) || null };
-      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true, video, sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(d.app.secrets), mailWhere(d.app)))); return 'handled';
+      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true, video, sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(d.app.secrets), mailWhere(d.app)), legalServed)); return 'handled';
     }
     if (method === 'POST') {
       const f = await form(req);
@@ -937,7 +957,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       const offer = offerSignup(d.app, newId, out.business_id, out.assessment_id);
       // CRM 3 of 10: lead created → a first follow-up, waiting with Sales until somebody takes it.
       fireAutomation({ db: d.app.db, audit: d.app.audit, now, newId }, null, { trigger: 'LEAD_CREATED', lead_id: out.lead_id });
-      html(res, 200, submittedPage(out, booked, actor, actor === undefined ? offer : undefined)); return 'handled';
+      html(res, 200, submittedPage(out, booked, actor, actor === undefined ? offer : undefined, false, undefined, false, legalServed)); return 'handled';
     }
   }
 
@@ -1102,6 +1122,16 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* ------------------------------------------------------ back office */
   if (path === '/staff' || path.startsWith('/staff/')) {
     if (actor === undefined) { redirect(res, '/login'); return 'handled'; }
+    /* PHASE 161g: the legal pages' approvals (src/web/legal-approvals.ts). Admins only; recorded once, never changed. */
+    if ((path === '/staff/legal' && method === 'GET') || (path === '/staff/legal/approve' && method === 'POST')) {
+      if (actor.role !== 'ADMIN') { html(res, 403, simple('Not allowed', 'Only an admin can see or record the legal pages’ approvals.')); return 'handled'; }
+      return inContext(d, path, async () => {
+        if (method === 'GET') { html(res, 200, approvalsPage(staffNav(actor), currentApprovals(d.app.db))); return 'handled'; }
+        const r = recordApproval(d.app, actor, await form(req), newId);
+        html(res, r.ok ? 200 : 400, approvalsPage(staffNav(actor), currentApprovals(d.app.db), r.ok ? { ok: true, text: 'The approval is recorded.' } : { ok: false, text: r.why }));
+        return 'handled';
+      });
+    }
     // PHASE 133a: the header reads the database, the clock and the address from this context — see src/web/navigation.ts.
     const rerender = async (href: string): Promise<{ status: number; body: string }> => {
       const u = new URL(href, 'http://localhost');
@@ -1117,6 +1147,27 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* ----------------------------------------------------------- portal */
   if (path === '/portal' || path.startsWith('/portal/')) {
     if (actor === undefined) { redirect(res, '/login'); return 'handled'; }
+    /* PHASE 161g: A CLIENT AGREES TO THE CURRENT TERMS BEFORE THE PORTAL OPENS, where the legal pages are served. The
+       sign-up's tick usually covers it; this asks a client who signed up before, was given a login, or when a version
+       changes. Their own second step stays open, so they are never locked out of keeping their login safe. */
+    if (legalServed && actor.role === 'CLIENT' && !/^\/portal\/two-factor(\/|$)/.test(path)) {
+      if (path === '/portal/agree' && method === 'POST') {
+        const f = await form(req);
+        const next = safeBack(f.get('next'));
+        const to = next.startsWith('/portal') ? next : '/portal';
+        if (f.get('agree') !== 'yes') { html(res, 400, agreementPage(nav(actor), to, 'Tick the box to say you have read them.')); return 'handled'; }
+        if (!hasAgreedCurrent(d.app.db, actor.id)) keepAgreement(d.app, actor.id, actor.role, now(), currentTermsVersions(), newId, 'portal');
+        redirect(res, to); return 'handled';
+      }
+      if (!hasAgreedCurrent(d.app.db, actor.id)) {
+        if (path === '/portal/agree' || method === 'GET') {
+          const next = path === '/portal/agree' ? safeBack(url.searchParams.get('next')) : `${path}${url.search}`;
+          html(res, 200, agreementPage(nav(actor), next.startsWith('/portal') ? next : '/portal')); return 'handled';
+        }
+        redirect(res, '/portal/agree'); return 'handled';
+      }
+      if (path === '/portal/agree') { redirect(res, '/portal'); return 'handled'; }
+    }
     return inContext(d, path, () => portalRoutes(d, req, res, url, method, actor, newId, session?.session_id ?? null));
   }
 
@@ -1374,7 +1425,7 @@ async function portalRoutes(
     const { business } = P.progress(db, actor, business_id);
     P.markViewed(db, actor, business_id, now);
     const eng = P.engagement(db, actor, business_id);
-    letterHtml(res, 200, letterPage(actor, business, eng, undefined, undefined, d.letterPath, d.signing, letterExtra(db, business_id, actor.id)));
+    letterHtml(res, 200, letterPage(actor, business, eng, undefined, undefined, d.letterPath, d.signing, letterExtra(db, business_id, actor.id), d.notices === true || d.legal === true));
     return 'handled';
   }
 
@@ -1401,7 +1452,7 @@ async function portalRoutes(
         signature_strokes: f.get('signature_strokes') ?? '', typed_as_signature: f.get('typed_as_signature') === 'on',
       }, { ip: clientIp(req), session_id }, { ...(d.letterPath === undefined ? {} : { letterPath: d.letterPath }), ...(d.signing === undefined ? {} : { cfg: d.signing }) });
     if (!r.ok) {
-      letterHtml(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed, d.letterPath, d.signing, letterExtra(db, business_id, actor.id)));
+      letterHtml(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed, d.letterPath, d.signing, letterExtra(db, business_id, actor.id), d.notices === true || d.legal === true));
       return 'handled';
     }
     html(res, 200, page({ title: 'Letter signed', nav: nav(actor), body: r.complete ? h`<h1>Thank you — the letter is signed</h1>
@@ -1993,6 +2044,8 @@ function submittedPage(
   video?: { join: string | null },
   /** 30 Sep 2026: whether emails are being sent, so the page does not say an invitation is unsent when it is going. */
   sending = false,
+  /** PHASE 161g: where the legal pages are served, the sign-up asks for the tick that the person has read them. */
+  agreement = false,
 ): string {
   return page({
     title: 'Thank you', nav: nav(actor),
@@ -2020,6 +2073,7 @@ function submittedPage(
           <label class="fl" for="signup-email">Your email address</label><input class="fi" id="signup-email" type="email" name="email" autocomplete="email" maxlength="254" required>
           <label class="fl" for="signup-name">Your name</label><input class="fi" id="signup-name" name="display_name" autocomplete="name" maxlength="200" required>
           <label class="fl" for="signup-password">Choose a password (at least ${MIN_PASSWORD} characters)</label><input class="fi" id="signup-password" type="password" name="password" autocomplete="new-password" minlength="${MIN_PASSWORD}" required>
+          ${agreement ? agreementTick() : raw('')}
           <button class="cta" type="submit">Create my login</button>
         </form>
         <p class="help">Already have one? <a href="/login">Log in</a>.</p></div>`}`,
@@ -2495,6 +2549,8 @@ function letterPage(
   problem?: string, typed?: { full_name: string; role: string }, letterPath?: string, signing: EngagementSigning = ENGAGEMENT_SIGNING,
   /** PHASE 157d: where the form posts (the portal, or a signing link), whether this signer has signed, and the steps so far. */
   extra: { readonly action?: string; readonly mine?: boolean; readonly progress?: readonly string[]; readonly byLink?: boolean; readonly facts?: LetterFacts } = {},
+  /** PHASE 161g: where the legal pages are served, the signing screen links the client's terms, the website terms and the privacy policy. */
+  legalLinks = false,
 ): string {
   // The record's number travels with its name. Absent is omitted, never passed as undefined; a blank is passed and
   // letter.ts treats it as absent — the specimen stays and is flagged, never read as the client's (N4).
@@ -2542,6 +2598,7 @@ function letterPage(
           <label class="ck"><input type="checkbox" name="typed_as_signature"> Use my typed name as my signature (if you cannot, or would rather not, draw it)</label>
         </fieldset>
         <label class="ck"><input type="checkbox" name="authorised" required> I confirm I may sign this letter for ${business.name}.</label>
+        ${legalLinks ? h`<p class="help">Please also read ${agreementLinks()}. This letter governs our work for you, and wins if they ever say something different.</p>` : raw('')}
         <button class="cta" type="submit">Sign</button>
       </form>
       ${missing.length === 0 ? raw('') : h`<div class="gate">Signing is not switched on yet.${why(h`${missing.join(' ')}`)}</div>`}` : raw('')}

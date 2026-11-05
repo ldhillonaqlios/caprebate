@@ -439,7 +439,11 @@ export type AuditKind =
   | 'CLIENT_SIGNUP_REQUESTED' | 'CLIENT_SIGNUP_VERIFIED'
   | 'AUTHORISATION_REFUSED'
   /** PHASE 161b, 4 Nov 2026: a signed-in person's form refused for a missing, wrong or used token (src/web/form-token.ts). */
-  | 'FORM_TOKEN_REFUSED';
+  | 'FORM_TOKEN_REFUSED'
+  /** PHASE 161g, 5 Nov 2026: an admin recorded a solicitor's or the DPO's approval of a legal page's version (src/web/legal-approvals.ts). */
+  | 'LEGAL_PAGE_APPROVED'
+  /** PHASE 161g: a client ticked that they have read the portal terms, the website terms and the privacy policy; the versions are kept. */
+  | 'TERMS_AGREED';
 
 export type Outcome = 'ALLOWED' | 'REFUSED' | 'ERROR';
 

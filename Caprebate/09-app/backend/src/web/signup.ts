@@ -27,6 +27,7 @@ import { randomBytes } from 'node:crypto';
 import type { App } from '../app.ts';
 import { rateLimit } from '../auth.ts';
 import { canonicalEmail, createUser, hashToken } from '../users.ts';
+import { keepAgreement, type TermsVersions } from './legal-approvals.ts';
 
 export const OFFER_TTL_MS = 24 * 60 * 60 * 1000;
 export const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
@@ -57,8 +58,12 @@ export function offerSignup(app: App, newId: () => string, business_id: string, 
 
 export type Asked = { ok: true } | { ok: false; why: string };
 
-/** Step 2. */
-export async function requestSignup(app: App, origin: string, f: URLSearchParams): Promise<Asked> {
+/**
+ * Step 2. PHASE 161g: `terms` is the version of each document the person must tick that they have read (the portal
+ * terms, the website terms, the privacy policy), where the legal pages are served; null where they are not. The tick
+ * is kept with the request, with its date, and copied to the login when it is made (step 3).
+ */
+export async function requestSignup(app: App, origin: string, f: URLSearchParams, terms: TermsVersions | null = null): Promise<Asked> {
   const offer = f.get('offer') ?? '';
   const email = (f.get('email') ?? '').trim();
   const name = (f.get('display_name') ?? '').trim();
@@ -79,6 +84,9 @@ export async function requestSignup(app: App, origin: string, f: URLSearchParams
   if (password.length < MIN_PASSWORD || password.length > 1024) {
     return { ok: false, why: `Choose a password of at least ${MIN_PASSWORD} characters.` };
   }
+  if (terms !== null && f.get('agree') !== 'yes') {
+    return { ok: false, why: 'Tick the box to say you have read our client portal terms, our website terms and our privacy policy.' };
+  }
 
   const canonical = canonicalEmail(email);
   const taken = app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM users WHERE email_canonical = ?', [canonical]);
@@ -98,9 +106,9 @@ export async function requestSignup(app: App, origin: string, f: URLSearchParams
   const hash = await app.hasher.hash(password);
   const raw = token();
   app.db.run(
-    'UPDATE client_signups SET email_canonical = ?, display_name = ?, password_hash = ?, verify_hash = ?, verify_expires_at = ?, requested_at = ? ' +
-      'WHERE id = ? AND verified_at IS NULL',
-    [canonical, name, hash, hashToken(raw), later(now, VERIFY_TTL_MS), now, row.id],
+    'UPDATE client_signups SET email_canonical = ?, display_name = ?, password_hash = ?, verify_hash = ?, verify_expires_at = ?, requested_at = ?, ' +
+      'terms_agreed_at = ?, terms_versions = ? WHERE id = ? AND verified_at IS NULL',
+    [canonical, name, hash, hashToken(raw), later(now, VERIFY_TTL_MS), now, terms === null ? null : now, terms === null ? null : JSON.stringify(terms), row.id],
   );
   const sent = app.email.send({
     to_email: email, kind: 'ACCOUNT_VERIFY', business_id: row.business_id,
@@ -121,8 +129,8 @@ export function verifyOpen(app: App, raw: string): boolean {
   return row !== undefined && row.verified_at === null && live(row.verify_expires_at, app.now());
 }
 
-/** Step 3. Creates the CLIENT login for the organisation the offer named. */
-export function confirmSignup(app: App, raw: string): { ok: true } | { ok: false; why: string } {
+/** Step 3. Creates the CLIENT login for the organisation the offer named, and keeps the tick, if one was given, for it. */
+export function confirmSignup(app: App, raw: string, newId?: () => string): { ok: true } | { ok: false; why: string } {
   const now = app.now();
   const row = raw === '' ? undefined : app.db.get<Row>(
     'SELECT id, business_id, offer_expires_at, email_canonical, display_name, password_hash, verify_expires_at, verified_at ' +
@@ -144,5 +152,9 @@ export function confirmSignup(app: App, raw: string): { ok: true } | { ok: false
     object_type: 'user', object_id: made.id, detail: { role: 'CLIENT', route: 'self_signup' } });
   app.audit.append({ at: now, kind: 'CLIENT_SIGNUP_VERIFIED', outcome: 'ALLOWED', actor_id: made.id, actor_role: 'CLIENT',
     object_type: 'client_signup', object_id: row.id, detail: { business: row.business_id, user: made.id } });
+  const tick = app.db.get<{ terms_agreed_at: string | null; terms_versions: string | null }>('SELECT terms_agreed_at, terms_versions FROM client_signups WHERE id = ?', [row.id]);
+  if (tick?.terms_agreed_at != null && tick.terms_versions !== null) {
+    keepAgreement(app, made.id, 'CLIENT', tick.terms_agreed_at, JSON.parse(tick.terms_versions) as TermsVersions, newId ?? (() => randomBytes(16).toString('hex')), 'signup');
+  }
   return { ok: true };
 }

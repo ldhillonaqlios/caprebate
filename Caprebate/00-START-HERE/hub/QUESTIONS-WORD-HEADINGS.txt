@@ -33,6 +33,8 @@
 238) Which solicitor gave the answers of 24 and 27 September, and are they instructed?
 245) Will you ask Homedata, in writing, if a site area from its title outline may go in a client's report?
 286) Should the test website install exactly the package versions we tested? (a lock file at the top of the repository)
+287) Who will review our legal pages: which solicitor, and which data protection officer?
+288) Will the website show a telephone number, or only an email address?
 72) When buying a building, can the buyer add their own fitting costs on top of an agreed value?
 73) If the seller was never allowed to claim, does the pooling rule still apply?
 74) Is there a third way to fix the value of fixtures that we are missing?
@@ -199,6 +201,8 @@
 243) Do you approve WhatsApp (Meta), a US company, for messages with clients?
 246) May a client sign our engagement letter from a link in an email, without logging in to the portal?
 267) May we check an owner's name from the title register against the client's own people, and keep only yes or no?
+289) Will you review the legal review pack and approve each page you are content with?
+290) Do we keep a claim's records for six years or seven?
 1) What do we do when our fee is more than the client saves in year one?
 3) Has the privacy email inbox been set up, and is someone reading it?
 4) Should the business email inboxes be set up on IONOS or Microsoft 365?

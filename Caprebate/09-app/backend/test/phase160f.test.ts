@@ -122,7 +122,8 @@ describe('3 · on the test website only', () => {
       assert.match(css.headers.get('content-type') ?? '', /text\/css/);
       const p = await fetch(`${b.base}/privacy`, { redirect: 'manual' });
       assert.equal(p.status, 303);
-      assert.equal(p.headers.get('location'), '/notices/#privacy');
+      // PHASE 161g, 5 Nov 2026: the privacy policy is its own page now (src/web/privacy-policy.ts).
+      assert.equal(p.headers.get('location'), '/privacy-policy/');
     } finally { b.close(); }
   });
   test('without it: the placeholder, no stylesheet, and no complaint form', async () => {

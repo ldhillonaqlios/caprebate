@@ -1,24 +1,35 @@
 /**
- * THE WEBSITE'S OTHER LEGAL PAGES, AND THE COOKIE BANNER — PHASE 160h, 20 October 2026.
+ * THE WEBSITE'S LEGAL PAGES, AND THE COOKIE BANNER — PHASE 160h, 20 October 2026; PHASE 161g, 5 November 2026.
  *
- * Lakhbir: "draft up some T&C, Policy docs, Cookies (add a cookie consent banner), Privacy policy, all the usual things
- * you see on the website". The privacy notice and the public notices are Phases 160f and 160g (src/web/notices-site.ts).
- * This file holds everything else: the website terms of use, the cookie policy, acceptable use, the accessibility
- * statement and the disclaimer, each a DRAFT for our solicitor and our data protection officer (FOR THE SOLICITOR, DPO
- * AND DEVELOPER), and the banner that asks about cookies.
+ * Lakhbir, 20 Oct 2026: "draft up some T&C, Policy docs, Cookies (add a cookie consent banner), Privacy policy, all the
+ * usual things you see on the website". The public notices are Phases 160f and 160g (src/web/notices-site.ts). This
+ * file holds everything else: the website terms of use, the client's portal terms and the privacy policy (Phase 161g,
+ * src/web/privacy-policy.ts), the cookie policy, acceptable use, the accessibility statement and the disclaimer, each a
+ * DRAFT for our solicitor and our data protection officer (FOR THE SOLICITOR, DPO AND DEVELOPER), and the banner.
  *
- * SERVED ON THE TEST WEBSITE ONLY, with the notices (the same `notices` switch, which api/index.mjs alone passes).
+ * WHERE THEY ARE SERVED (Phase 161g). On the test website (the `notices` switch, which api/index.mjs alone passes), and
+ * wherever the new `legal` setting is on (CAPREBATE_LEGAL_PAGES=on, for the live website once its checklist is done).
+ * Anywhere else their addresses say they are being prepared, as before.
  *
- * A FACT WE DO NOT HAVE IS NEVER MADE UP. It is written as "to be added" and listed in LEGAL_GAPS, so a test can show
- * every gap and Lakhbir has the list.
+ * DRAFT UNTIL APPROVED (Phase 161g). Each page has a VERSION (its date). It carries the Draft line until BOTH our
+ * solicitor and our data protection officer have an approval of that version recorded (legal_approvals, migration 121;
+ * src/web/legal-approvals.ts). A new version is a draft again.
  *
- * THE BANNER NEEDS NO SCRIPT. It is a form with two buttons of the same size and style, "Accept all" and "Reject
- * non-essential". The answer is kept in one cookie (`cb_cookies`, which is itself strictly necessary: it only remembers
- * the answer) for twelve months. Today the website sets no optional cookie at all, so either answer changes nothing it
- * does; anything optional added later (Google Analytics, if it is ever switched on) must ask `optionalAllowed` first.
+ * A FACT WE DO NOT HAVE IS NEVER MADE UP. It is written as "to be added" and listed in LEGAL_GAPS.
+ *
+ * ONE COOKIE CHOICE: THIS BANNER (Phase 161g). It needs no script: a form with two buttons of the same size and style,
+ * in the same place, "Accept all" and "Reject non-essential". The answer is kept in one cookie (`cb_cookies`, strictly
+ * necessary: it only remembers the answer) for twelve months. No answer is "no". Google Analytics, the only optional
+ * thing the website could load, loads only after a CLICK on "Accept all" (here or on the cookie policy page):
+ * `optionalAllowed` is the only gate, and the site page is given its measurement id only when it says yes
+ * (src/web/router.ts, the home route). The site page's own question (SITE_CONSENT) no longer asks: it reads the answer.
+ *
+ * THE COOKIE LIST IS TESTED, NOT TYPED: test/phase161g.test.ts collects every cookie name the app can set and every
+ * browser storage key a page it serves writes, and fails unless COOKIE_LIST has each, and on a line for one that is gone.
  */
 import type { IncomingMessage } from 'node:http';
 import { h, raw, page, type Safe } from './html.ts';
+import { COMPANY, COMPANY_NUMBER, OFFICE, CONTACT, DP_MAIL, SECURITY, mail, LATER, privacyPolicyBody, portalTermsBody } from './privacy-policy.ts';
 
 /** The cookie that keeps the visitor's answer, and how long it is kept. */
 export const CONSENT_COOKIE = 'cb_cookies';
@@ -27,36 +38,57 @@ export type ConsentChoice = 'all' | 'essential';
 
 /** Facts these pages need that nobody has given us yet. Each is shown on the page as "to be added". */
 export const LEGAL_GAPS: readonly (readonly [fact: string, where: string])[] = Object.freeze([
-  ['Our registration number with the Information Commissioner (we have not registered yet)', 'Website terms of use'],
-  ['A telephone number (we answer by email only for now)', 'Website terms of use, Accessibility statement'],
+  ['Our registration number with the Information Commissioner (we have not registered yet)', 'Website terms of use, Privacy policy'],
+  ['A telephone number (we answer by email only for now), or a decision not to have one', 'Three pages: the terms, accessibility, privacy'],
+  ['Our data protection officer’s name and how to reach them', 'Privacy policy'],
+  ['Whether the law makes us check who our clients are', 'Privacy policy'],
+  ['Where the live website’s hosting company, database and document store keep data', 'Privacy policy'],
+  ['The safeguard for each outside service that may hold data outside the UK', 'Privacy policy'],
 ]);
 
-const COMPANY = 'CAP REBATE LTD';
-const COMPANY_NUMBER = '17307313';
-const OFFICE = '1st Floor, 1-9 Castle Street, Hinckley, LE10 1DA';
-const CONTACT = 'contact@caprebate.co.uk';
-const DP_MAIL = 'data.protection@caprebate.co.uk';
-const SECURITY = 'security@caprebate.co.uk';
+/** The legal pages: address, title, key (as legal_approvals names it) and version (the date it last changed). */
+export const LEGAL_PAGES: readonly (readonly [path: string, title: string, key: LegalPageKey, version: string])[] = Object.freeze([
+  ['/terms/', 'Website terms of use', 'terms', '2026-11-05'],
+  ['/portal-terms/', 'Client portal terms', 'portal-terms', '2026-11-05'],
+  ['/privacy-policy/', 'Privacy policy', 'privacy-policy', '2026-11-05'],
+  ['/cookies/', 'Cookie policy', 'cookies', '2026-11-05'],
+  ['/acceptable-use/', 'Acceptable use', 'acceptable-use', '2026-10-20'],
+  ['/accessibility/', 'Accessibility statement', 'accessibility', '2026-10-20'],
+  ['/disclaimer/', 'Disclaimer', 'disclaimer', '2026-10-20'],
+]);
+export type LegalPageKey = 'terms' | 'portal-terms' | 'privacy-policy' | 'cookies' | 'acceptable-use' | 'accessibility' | 'disclaimer' | 'notices';
+/** The public notices page's version (src/web/notices-site.ts serves it; 03-app/caprebate-notices-page.html is its text). */
+export const NOTICES_VERSION = '2026-11-05';
+export const versionOf = (key: LegalPageKey): string => key === 'notices' ? NOTICES_VERSION : LEGAL_PAGES.find((p) => p[2] === key)?.[3] ?? '';
+
+/** Who has approved the current version of a page: the solicitor, the data protection officer, or both. */
+export type PageApproval = { readonly solicitor: { by: string; on: string } | null; readonly dpo: { by: string; on: string } | null };
+export type Approvals = ReadonlyMap<LegalPageKey, PageApproval>;
+export const NO_APPROVALS: Approvals = new Map();
+export const inForce = (a: PageApproval | undefined): boolean => a !== undefined && a.solicitor !== null && a.dpo !== null;
+
 const DRAFTED = '20 October 2026';
+const ukDay = (iso: string): string => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+};
 
-/** The legal pages, by address. */
-export const LEGAL_PAGES: readonly (readonly [path: string, title: string])[] = Object.freeze([
-  ['/terms/', 'Website terms of use'],
-  ['/cookies/', 'Cookie policy'],
-  ['/acceptable-use/', 'Acceptable use'],
-  ['/accessibility/', 'Accessibility statement'],
-  ['/disclaimer/', 'Disclaimer'],
-]);
+/** The line at the top of a page: Draft until both approvals of this version are recorded; then when it took effect. */
+export function draftLine(key: LegalPageKey, a: PageApproval | undefined): Safe {
+  const version = ukDay(versionOf(key));
+  if (inForce(a)) {
+    return h`<p class="in-force-note" role="note">In force. This version, of ${version}, was approved by our solicitor on
+      ${ukDay(a!.solicitor!.on)} and our data protection officer on ${ukDay(a!.dpo!.on)}.</p>`;
+  }
+  const one = a?.solicitor ? `Our solicitor approved it on ${ukDay(a.solicitor.on)}. ` : a?.dpo ? `Our data protection officer approved it on ${ukDay(a.dpo.on)}. ` : '';
+  return h`<p class="draft-note" role="note"><strong>Draft.</strong> Our solicitor and our data protection officer
+  have not yet both checked this page, so it is not yet in force. ${one}This version is of ${version}.</p>`;
+}
 
-const mail = (a: string): Safe => h`<a href="mailto:${a}">${a}</a>`;
-const DRAFT_LINE = h`<p class="draft-note" role="note"><strong>Draft.</strong> Our solicitor and our data protection officer
-  have not yet checked this page, so it is not yet in force. Drafted ${DRAFTED}.</p>`;
-const LATER = h`<span class="gap">to be added</span>`;
-
-function legalPage(title: string, body: Safe): string {
-  return page({ title, body: h`<article class="legal"><h1>${title}</h1>${DRAFT_LINE}${body}
+function legalPage(key: LegalPageKey, title: string, body: Safe, approvals: Approvals): string {
+  return page({ title, body: h`<article class="legal"><h1>${title}</h1>${draftLine(key, approvals.get(key))}${body}
     <p class="legal-more">Our other pages: ${raw(LEGAL_PAGES.filter(([, t]) => t !== title)
-      .map(([p, t]) => h`<a href="${p}">${t}</a>`.html).join(' · '))} · <a href="/notices/">Privacy and public notices</a></p></article>` });
+      .map(([p, t]) => h`<a href="${p}">${t}</a>`.html).join(' · '))} · <a href="/notices/">Public notices</a></p></article>` });
 }
 
 /* ------------------------------------------------------------------ *
@@ -74,7 +106,8 @@ function termsBody(): Safe {
   <p>These terms are about using this website. By using it, you agree to them. If you do not agree, please do not use
   the website.</p>
   <p>If we do work for you, that work is covered by the engagement letter you sign with us, not by these terms. If the
-  two ever say different things, the engagement letter wins.</p>
+  two ever say different things, the engagement letter wins. Our <a href="/portal-terms/">client portal terms</a>
+  also apply when you use our client portal.</p>
 
   <h2>Our free estimate</h2>
   <p>The figure our free assessment shows is an estimate. It is worked out from your answers and from public records.
@@ -109,11 +142,12 @@ function termsBody(): Safe {
   Nothing in these terms limits them.</p>
 
   <h2>Your information</h2>
-  <p>How we use your details is set out in our <a href="/notices/#privacy">privacy notice</a>. How we use cookies is set
+  <p>How we use your details is set out in our <a href="/privacy-policy/">privacy policy</a>. How we use cookies is set
   out in our <a href="/cookies/">cookie policy</a>.</p>
 
   <h2>Changes to these terms</h2>
-  <p>We may change these terms. The version on this page is the one that applies when you use the website.</p>
+  <p>We may change these terms. The version on this page is the one that applies when you use the website. The date
+  at the top says when it last changed.</p>
 
   <h2>The law that applies</h2>
   <p>These terms are governed by the law of England and Wales. Any dispute about them will be dealt with by the courts
@@ -123,31 +157,52 @@ function termsBody(): Safe {
 /* ------------------------------------------------------------------ *
  * COOKIE POLICY, WITH THE PLACE TO CHANGE THE ANSWER
  * ------------------------------------------------------------------ */
-const COOKIES: readonly (readonly [name: string, why: string, howLong: string])[] = Object.freeze([
-  ['cb_session', 'Keeps you signed in after you log in.', 'Up to 8 hours, or until you sign out'],
-  ['cb_step', 'Remembers that you entered your password, while you finish your second sign-in step.', '15 minutes'],
-  ['cb_draft', 'Keeps your answers while you fill in our free assessment, so you do not lose them.', '6 hours'],
-  [CONSENT_COOKIE, 'Remembers your answer to our cookie question, so we do not ask on every page.', '12 months'],
+
+/** Every cookie, and every note in the browser's own storage, that the app or a page it serves can set. */
+export type CookieLine = {
+  readonly name: string;
+  readonly kind: 'cookie' | 'browser storage';
+  readonly optional: boolean;
+  readonly why: string;
+  readonly howLong: string;
+  readonly where: string;
+};
+export const COOKIE_LIST: readonly CookieLine[] = Object.freeze([
+  { name: 'cb_session', kind: 'cookie', optional: false, why: 'Keeps you signed in after you log in.', howLong: 'Up to 8 hours, or until you sign out', where: 'The client portal and the back office' },
+  { name: 'cb_step', kind: 'cookie', optional: false, why: 'Remembers that you entered your password, while you finish your second sign-in step.', howLong: '15 minutes', where: 'Signing in' },
+  { name: 'cb_draft', kind: 'cookie', optional: false, why: 'Keeps your answers while you fill in our free assessment, so you do not lose them.', howLong: '6 hours', where: 'The free assessment' },
+  { name: CONSENT_COOKIE, kind: 'cookie', optional: false, why: 'Remembers your answer to our cookie question, so we do not ask on every page.', howLong: '12 months', where: 'Every page' },
+  { name: '_ga', kind: 'cookie', optional: true, why: 'Set by Google Analytics, only after you press “Accept all”, to tell one visit from the next.', howLong: '2 years', where: 'Our older home page only, and only while Google Analytics is switched on (it is off today)' },
+  { name: '_ga_<id>', kind: 'cookie', optional: true, why: 'Set by Google Analytics with the one above, to keep the count for our website.', howLong: '2 years', where: 'As above' },
+  { name: 'caprebate-whatsapp', kind: 'browser storage', optional: false, why: 'Holds a WhatsApp chat a member of our team has chosen to add to a client’s record, between two steps of adding it.', howLong: 'Until it is added, then deleted', where: 'Our back office only, on our team’s computers' },
 ]);
 
-function cookiesBody(choice: ConsentChoice | null, saved: boolean): Safe {
+function cookiesBody(choice: ConsentChoice | null, saved: boolean, analytics: boolean): Safe {
+  const row = (c: CookieLine): Safe => h`<tr><td><code>${c.name}</code></td><td>${c.why}</td><td>${c.howLong}</td><td>${c.where}</td></tr>`;
   return h`
   <h2>What cookies are</h2>
   <p>A cookie is a small file a website keeps in your browser. Some are needed for the website to work. Others are
   optional, and we may only use those if you say yes.</p>
 
-  <h2>The cookies we use</h2>
-  <p>Every cookie we set today is one the website needs to work. We use them only on this website, and none of them
-  tracks you on other websites.</p>
+  <h2>The cookies we need</h2>
+  <p>These are needed for the website to work, so we do not ask before using them. We use them only on this website,
+  and none of them tracks you on other websites.</p>
   <div class="tablewrap"><table>
-    <thead><tr><th>Name</th><th>What it does</th><th>How long it lasts</th></tr></thead>
-    <tbody>${COOKIES.map(([n, w, l]) => h`<tr><td><code>${n}</code></td><td>${w}</td><td>${l}</td></tr>`)}</tbody>
+    <thead><tr><th>Name</th><th>What it does</th><th>How long it lasts</th><th>Where</th></tr></thead>
+    <tbody>${COOKIE_LIST.filter((c) => !c.optional).map(row)}</tbody>
   </table></div>
 
-  <h2>Optional cookies</h2>
-  <p>We use none today. We may one day add Google Analytics, to count how people use our free assessment. It would
-  only load after you press "Accept all". Our <a href="/notices/#cookies">public notices</a> say what we would use
-  it for.</p>
+  <h2>Optional cookies, only after you say yes</h2>
+  <p>${analytics ? 'We use Google Analytics to count how people use our free assessment.'
+    : 'We could use Google Analytics to count how people use our free assessment. It is switched off today.'}
+  Nothing of Google's loads, and nothing is sent to Google, until you press "Accept all". A page view, scrolling or an
+  earlier visit is never a yes. If you do not answer, the answer is no.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Name</th><th>What it does</th><th>How long it lasts</th><th>Where</th></tr></thead>
+    <tbody>${COOKIE_LIST.filter((c) => c.optional).map(row)}</tbody>
+  </table></div>
+  <p>We never use Google Analytics in our client portal. Our <a href="/privacy-policy/">privacy policy</a> says what
+  is sent to Google and where it is held.</p>
 
   <h2>Other companies on some pages</h2>
   <ul>
@@ -160,8 +215,9 @@ function cookiesBody(choice: ConsentChoice | null, saved: boolean): Safe {
   <h2 id="choice">Your answer</h2>
   ${saved ? h`<p class="saved" role="status">Thank you. Your answer is saved.</p>` : raw('')}
   <p>${choice === 'all' ? 'You have accepted all cookies.' : choice === 'essential'
-    ? 'You have rejected non-essential cookies.' : 'You have not answered yet.'}
-  You can change your answer here at any time.</p>
+    ? 'You have rejected non-essential cookies.' : 'You have not answered yet, so the answer is no.'}
+  You can change your answer here at any time. "Accept all" turns Google Analytics on for you, if we use it. "Reject
+  non-essential" turns it off and stops it at once.</p>
   ${choiceForm('/cookies/#choice')}
 
   <h2>Removing cookies yourself</h2>
@@ -253,7 +309,7 @@ function disclaimerBody(): Safe {
  * THE BANNER AND THE ANSWER
  * ------------------------------------------------------------------ */
 
-/** The two buttons, the same size and style, and where to come back to. */
+/** The two buttons, the same size and style, side by side in the same place, and where to come back to. */
 function choiceForm(back: string): Safe {
   return h`<form class="cookie-choice" method="post" action="/cookies/choice">
     <input type="hidden" name="back" value="${back}">
@@ -262,11 +318,16 @@ function choiceForm(back: string): Safe {
   </form>`;
 }
 
-/** The banner, put at the foot of a public page for a visitor who has not answered. No script. */
-export function cookieBanner(back: string): string {
+/**
+ * The banner, put at the foot of a public page for a visitor who has not answered. No script. `analytics` says
+ * whether Google Analytics is switched on (a measurement id is set), so the banner says what "Accept all" would do.
+ */
+export function cookieBanner(back: string, analytics = false): string {
   return h`<link rel="stylesheet" href="/assets/cookie-banner.css"><section class="cookie-banner" aria-label="Cookies">
-    <p><strong>Cookies.</strong> We use only the cookies our website needs to work. We would only add optional
-    cookies if you say yes. <a href="/cookies/">Read our cookie policy</a>.</p>
+    <p><strong>Cookies.</strong> ${analytics
+      ? 'We use the cookies our website needs to work. With your yes, we also use Google Analytics to count visits. Nothing of Google’s loads unless you press “Accept all”.'
+      : 'We use only the cookies our website needs to work. We would only add optional cookies if you say yes.'}
+    <a href="/cookies/">Read our cookie policy</a>.</p>
     ${choiceForm(back)}
   </section>`.html;
 }
@@ -288,7 +349,7 @@ export function consentChoice(cookieValue: string | undefined): ConsentChoice | 
   return cookieValue === 'all' || cookieValue === 'essential' ? cookieValue : null;
 }
 
-/** Whether an optional cookie or tag may load. Only after "Accept all". */
+/** Whether an optional cookie or tag may load. Only after "Accept all": no answer, and any other answer, is no. */
 export function optionalAllowed(req: IncomingMessage, read: (req: IncomingMessage, name: string) => string | undefined): boolean {
   return consentChoice(read(req, CONSENT_COOKIE)) === 'all';
 }
@@ -310,15 +371,32 @@ export function wantsBanner(path: string, signedIn: boolean, choice: ConsentChoi
   return !/^\/(staff|portal|assets|signoff|accountant|cookies\/choice)(\/|$)/.test(path);
 }
 
+export type LegalRender = { readonly approvals?: Approvals; readonly analytics?: boolean };
+
 /** A legal page by its address, or undefined. `choice` and `saved` only matter to the cookie policy. */
-export function legalPageHtml(path: string, choice: ConsentChoice | null, saved = false): string | undefined {
+export function legalPageHtml(path: string, choice: ConsentChoice | null, saved = false, r: LegalRender = {}): string | undefined {
   const p = path.endsWith('/') ? path : `${path}/`;
-  switch (p) {
-    case '/terms/': return legalPage('Website terms of use', termsBody());
-    case '/cookies/': return legalPage('Cookie policy', cookiesBody(choice, saved));
-    case '/acceptable-use/': return legalPage('Acceptable use', acceptableUseBody());
-    case '/accessibility/': return legalPage('Accessibility statement', accessibilityBody());
-    case '/disclaimer/': return legalPage('Disclaimer', disclaimerBody());
-    default: return undefined;
-  }
+  const approvals = r.approvals ?? NO_APPROVALS;
+  const entry = LEGAL_PAGES.find(([at]) => at === p);
+  if (entry === undefined) return undefined;
+  const [, title, key, version] = entry;
+  const body = ((): Safe => {
+    switch (key) {
+      case 'terms': return termsBody();
+      case 'portal-terms': return portalTermsBody(ukDay(version));
+      case 'privacy-policy': return privacyPolicyBody(ukDay(version));
+      case 'cookies': return cookiesBody(choice, saved, r.analytics === true);
+      case 'acceptable-use': return acceptableUseBody();
+      case 'accessibility': return accessibilityBody();
+      case 'disclaimer': return disclaimerBody();
+      default: return h``;
+    }
+  })();
+  return legalPage(key, title, body, approvals);
+}
+
+/** The words a link to the three documents a client agrees to: used by the agreement page and the letter page. */
+export function agreementLinks(): Safe {
+  return h`our <a href="/portal-terms/">client portal terms</a>, our <a href="/terms/">website terms of use</a> and our
+    <a href="/privacy-policy/">privacy policy</a>`;
 }

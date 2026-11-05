@@ -415,7 +415,9 @@ const EXTRA = [path.join(WEB, '..', 'seed.ts'),
   /* Phase 151b: the identity check's list of what is missing shows on the client page and the due diligence check; the
      postcode check's reasons and the signatory check's lines are written for a person, and the signatory lines reach
      the research panel. */
-  ...['identity-check.ts', 'postcode-check.ts', 'signatory-check.ts'].map((f) => path.join(WEB, '..', 'connectors', f))];
+  ...['identity-check.ts', 'postcode-check.ts', 'signatory-check.ts'].map((f) => path.join(WEB, '..', 'connectors', f)),
+  /* Phase 161g: the outside services the privacy policy lists, in a table a person reads */
+  path.join(WEB, '..', 'outside-services.ts')];
 
 /* The pre-change copy of a file: beside it (f + suffix), or, with --suffix-dir (Phase 161e), in that folder under the
    file's own name plus the suffix. The back end's test keeps the guide's and Help's pre-Phase-144a copies in
