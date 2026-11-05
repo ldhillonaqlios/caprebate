@@ -41,14 +41,14 @@ import * as S from '../src/web/stages.ts';
 import * as T from '../src/web/tasks.ts';
 import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
+import { oneDriveOnly, oneDrivePath } from './onedrive-only.ts';
 import * as R from '../src/web/claim-record.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
 const MIGRATIONS = fileURLToPath(new URL('../migrations/', import.meta.url));
 const SRC = fileURLToPath(new URL('../src/', import.meta.url));
-const SOP_EXPORT = fileURLToPath(new URL(
-  '../../../08-monday-doc-exports/12552682457__Item-2-Standard-Operating-Procedures-enquiry-to-defence-pack.md', import.meta.url));
+const SOP_EXPORT = oneDrivePath('sop');
 
 type App = Awaited<ReturnType<typeof testApp>>;
 type Made = Awaited<ReturnType<typeof createApp>>;
@@ -263,9 +263,9 @@ describe('who may do what — the six new actions, every role', () => {
  * ================================================================== */
 
 describe('stages.ts maps the procedure; it does not invent a stage', () => {
-  const flat = readFileSync(SOP_EXPORT, 'utf8').replace(/[│├─►▼]/g, ' ').replace(/\s+/g, ' ').replace(/\/ /g, '/');
-
-  test('every stage, gate and exit is the procedure’s own words, found in the procedure’s own file', () => {
+  /* Phase 161e: read inside the test, which skips on a fresh copy (the SOP export is kept in OneDrive only). */
+  test('every stage, gate and exit is the procedure’s own words, found in the procedure’s own file', { skip: oneDriveOnly('sop') }, () => {
+    const flat = readFileSync(SOP_EXPORT, 'utf8').replace(/[│├─►▼]/g, ' ').replace(/\s+/g, ' ').replace(/\/ /g, '/');
     assert.equal(S.PROCEDURE_STAGES.length, 10);
     for (const s of S.PROCEDURE_STAGES) {
       assert.ok(flat.includes(`## SOP ${s.sop} — ${s.label}`), `SOP ${s.sop}'s heading is not "${s.label}"`);

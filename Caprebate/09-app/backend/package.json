@@ -16,8 +16,9 @@
     "lint:paths": "node tools/lint-paths.cjs",
     "lint:copies": "node tools/app-copies.cjs",
     "copies": "node tools/app-copies.cjs --write",
+    "lint:backups": "node tools/no-backups.cjs",
     "audit:live": "npm audit --omit=dev --audit-level=high",
-    "check": "npm run audit:live && npm run lint:sql && npm run lint:paths && npm run lint:copies && npm run typecheck && npm run test",
+    "check": "npm run audit:live && npm run lint:sql && npm run lint:paths && npm run lint:copies && npm run lint:backups && npm run typecheck && npm run test",
     "start:demo": "node tools/demo-server.cjs"
   },
   "dependencies": {

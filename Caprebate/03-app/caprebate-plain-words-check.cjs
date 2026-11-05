@@ -39,6 +39,8 @@
      node 03-app/caprebate-plain-words-check.cjs --suffix .bak-phase144
          read each screen file's .bak-phase144 copy where there is one - the
          pre-change words - which MUST go red
+     node 03-app/caprebate-plain-words-check.cjs --suffix .before-phase144a --suffix-dir 09-app/backend/test/fixtures/phase144a-before
+         read the pre-change copies from that folder instead (Phase 161e) - MUST go red
      node 03-app/caprebate-plain-words-check.cjs --file <path>  read one file only (a .md file is read as the guide)
      node 03-app/caprebate-plain-words-check.cjs --guide        read only the admin and user guide
 
@@ -415,22 +417,30 @@ const EXTRA = [path.join(WEB, '..', 'seed.ts'),
      the research panel. */
   ...['identity-check.ts', 'postcode-check.ts', 'signatory-check.ts'].map((f) => path.join(WEB, '..', 'connectors', f))];
 
-function screenFiles(suffix) {
-  const all = fs.readdirSync(WEB).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f)).sort().map((f) => path.join(WEB, f)).concat(EXTRA);
-  return all.map((f) => {
-    const alt = suffix ? f + suffix : null;
-    return { label: path.relative(path.join(WEB, '..', '..'), f), file: alt && fs.existsSync(alt) ? alt : f };
-  }).concat(guideFiles(suffix));
+/* The pre-change copy of a file: beside it (f + suffix), or, with --suffix-dir (Phase 161e), in that folder under the
+   file's own name plus the suffix. The back end's test keeps the guide's and Help's pre-Phase-144a copies in
+   test/fixtures/phase144a-before/, because .bak files are not kept beside the code any more. */
+function altOf(f, suffix, dir) {
+  if (!suffix) return null;
+  return dir ? path.join(dir, path.basename(f) + suffix) : f + suffix;
 }
 
-function guideFiles(suffix) {
-  const alt = suffix ? GUIDE + suffix : null;
+function screenFiles(suffix, dir) {
+  const all = fs.readdirSync(WEB).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f)).sort().map((f) => path.join(WEB, f)).concat(EXTRA);
+  return all.map((f) => {
+    const alt = altOf(f, suffix, dir);
+    return { label: path.relative(path.join(WEB, '..', '..'), f), file: alt && fs.existsSync(alt) ? alt : f };
+  }).concat(guideFiles(suffix, dir));
+}
+
+function guideFiles(suffix, dir) {
+  const alt = altOf(GUIDE, suffix, dir);
   return [{ label: '09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md', file: alt && fs.existsSync(alt) ? alt : GUIDE }];
 }
 
 function readAny(f) {
-  if (/\.md(\.bak-[\w-]+)?$/.test(f.file)) return readGuide(f.file, f.label);
-  if (/help-content\.ts(\.bak-[\w-]+)?$/.test(f.file)) return readHelpContent(f.file, f.label);
+  if (/\.md(\.(?:bak|before)-[\w-]+)?$/.test(f.file)) return readGuide(f.file, f.label);
+  if (/help-content\.ts(\.(?:bak|before)-[\w-]+)?$/.test(f.file)) return readHelpContent(f.file, f.label);
   return readFile(f.file, f.label);
 }
 
@@ -557,10 +567,11 @@ function main(argv) {
   if (argv.includes('--self-test')) return selfTest();
   const at = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null; };
   const suffix = at('--suffix');
+  const suffixDir = at('--suffix-dir') ? path.resolve(at('--suffix-dir')) : null;
   const one = at('--file');
   const voice = path.join(WEB, 'voice.ts');
   const files = one ? [{ file: path.resolve(one), label: path.basename(one) }]
-    : argv.includes('--guide') ? guideFiles(suffix) : screenFiles(suffix);
+    : argv.includes('--guide') ? guideFiles(suffix, suffixDir) : screenFiles(suffix, suffixDir);
   const { strings, fails } = run(files, voice);
   if (argv.includes('--list')) {
     for (const s of strings) console.log(`${s.file}:${s.line}\t${s.text.replace(new RegExp(HOLE, 'g'), '{…}')}`);

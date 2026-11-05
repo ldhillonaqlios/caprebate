@@ -12,6 +12,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { NOTICES_PATH } from '../src/web/notices-site.ts';
+import { privacyNoticeForCheck } from './onedrive-only.ts';
 
 const CHECK = join(import.meta.dirname, '..', '..', '..', '03-app', 'caprebate-notices-acceptance.cjs');
 
@@ -32,12 +33,14 @@ describe('the eight facts confirmed', () => {
     assert.match(src, /CONFIRMED - Sadique Maskeen \(data protection officer\) approved this and the other seven\s+facts Phase 160f proposed, relayed by Lakhbir \("Sadique approves, I relay"\), for testing\./);
     assert.doesNotMatch(body, /set with our chartered tax adviser/, 'no tax adviser is appointed, so the page does not say one set it');
   });
-  test('the acceptance check still refuses --live if a proposed mark comes back', () => {
+  test('the acceptance check still refuses --live if a proposed mark comes back', (t) => {
+    const privacy = privacyNoticeForCheck(); // Phase 161e: the real notice is kept in OneDrive only
+    t.diagnostic(privacy.note);
     const dir = mkdtempSync(join(tmpdir(), 'cb-160g-'));
     const page = join(dir, 'caprebate-notices-page.html');
     writeFileSync(page, src.replace('Last confirmed 20 October 2026.', 'Last confirmed 20 October 2026 <span class="proposed">Proposed, awaiting our data protection officer:</span> the date.'));
     copyFileSync(join(join(import.meta.dirname, '..', '..', '..', '03-app'), 'caprebate-complaint-form.html'), join(dir, 'caprebate-complaint-form.html'));
-    const r = spawnSync(process.execPath, [CHECK, '--live', '--page', page, '--form', join(dir, 'caprebate-complaint-form.html')], { encoding: 'utf8' });
+    const r = spawnSync(process.execPath, [CHECK, '--live', '--page', page, '--form', join(dir, 'caprebate-complaint-form.html'), '--privacy', privacy.path], { encoding: 'utf8' });
     assert.equal(r.status, 1, r.stdout.slice(-600));
     assert.match(r.stdout, /FAIL \(--live\): 1 fact\(s\) proposed/);
   });

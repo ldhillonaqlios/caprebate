@@ -46,11 +46,11 @@ import { feeDisplay, multiSiteDiscount } from '../src/web/engine.ts';
 import { loadLetter, unresolvedTerms, TEST_LETTER_PATH } from '../src/web/letter.ts';
 import { actor, fixedClock, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
+import { oneDriveOnly, oneDrivePath } from './onedrive-only.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
-const SOP_EXPORT = fileURLToPath(new URL(
-  '../../../08-monday-doc-exports/12552682457__Item-2-Standard-Operating-Procedures-enquiry-to-defence-pack.md', import.meta.url));
+const SOP_EXPORT = oneDrivePath('sop');
 
 type Base = { db: Db; audit: AuditLog; now: () => string };
 type Org = { business: string; property: string; assessment: string };
@@ -900,7 +900,9 @@ describe('4 · the finance dashboard: ACCOUNTING and ADMIN, and money only', () 
  * ================================================================== */
 
 describe('5 · the invoice email is not built', () => {
-  test('THE INVOICE-FRAUD PROCEDURE IS NOT IN FORCE — the SOP export carries it as a flagged DRAFT addition — and while it is not, every refusal holds, at the rule store, the template store and the table', async () => {
+  /* Phase 161e: the SOP half is its own test, because the SOP export is kept in OneDrive only (test/onedrive-only.ts);
+     the refusals below run on every copy. */
+  test('THE INVOICE-FRAUD PROCEDURE IS NOT IN FORCE — the SOP export carries it as a flagged DRAFT addition', { skip: oneDriveOnly('sop') }, () => {
     assert.equal(A.INVOICE_FRAUD_PROCEDURE.in_force, false);
     const sop = readFileSync(SOP_EXPORT, 'utf8');
     const sop9 = sop.slice(sop.indexOf('## SOP 9'), sop.indexOf('## SOP 10'));
@@ -908,7 +910,10 @@ describe('5 · the invoice email is not built', () => {
     assert.match(sop9, /invoice-fraud procedure/i);
     assert.match(sop9, /channel other than email/);
     assert.equal(/DRAFT ADDITION/.test(sop9) && A.INVOICE_FRAUD_PROCEDURE.in_force, false, 'the code says in force while the SOP says draft');
+  });
 
+  test('while the invoice-fraud procedure is not in force, every refusal holds, at the rule store, the template store and the table', async () => {
+    assert.equal(A.INVOICE_FRAUD_PROCEDURE.in_force, false);
     for (const key of ['INVOICE_EMAIL', 'INVOICE_REMINDER', 'SEND_BANK_DETAILS']) assert.ok(Object.hasOwn(A.FORBIDDEN_EFFECTS, key), key);
     const app = await testApp();
     try {

@@ -268,7 +268,7 @@ function failingTestNames(out) {
    someone edits the `check` script, this function would silently keep running
    the old steps and go on reporting a green number. So it READS
    package.json and refuses to run if `check` is no longer the steps it
-   expects (four since Phase 161a: audit:live, lint:sql, typecheck, test; five since Phase 161d, which added lint:paths; six since Phase 161d1, which added lint:copies). A check that quietly stops covering something is the failure this
+   expects (four since Phase 161a: audit:live, lint:sql, typecheck, test; five since Phase 161d, which added lint:paths; six since Phase 161d1, which added lint:copies; seven since Phase 161e, which added lint:backups). A check that quietly stops covering something is the failure this
    phase is about; it should not be reintroduced by the fix for it. */
 function runBackendCheck(dir) {
   const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
@@ -277,12 +277,12 @@ function runBackendCheck(dir) {
      the ITRoadway audit's first finding). It is run here too, through npm's own program under process.execPath, so
      a published flaw stops this checker as it stops `npm run check`. It needs the registry: offline, it fails and
      says so - a figure that skipped the audit is not the figure the documents mean. */
-  const EXPECTED_CHECK = "npm run audit:live && npm run lint:sql && npm run lint:paths && npm run lint:copies && npm run typecheck && npm run test";
+  const EXPECTED_CHECK = "npm run audit:live && npm run lint:sql && npm run lint:paths && npm run lint:copies && npm run lint:backups && npm run typecheck && npm run test";
   const EXPECTED_AUDIT = "npm audit --omit=dev --audit-level=high";
   if (norm(pkg.scripts && pkg.scripts.check) !== EXPECTED_CHECK
       || norm(pkg.scripts && pkg.scripts["audit:live"]) !== EXPECTED_AUDIT) {
     throw new Error(
-      "09-app/backend package.json `check` (or `audit:live`) is no longer the six steps this file runs.\n" +
+      "09-app/backend package.json `check` (or `audit:live`) is no longer the seven steps this file runs.\n" +
       "  expected: " + EXPECTED_CHECK + "  (audit:live = " + EXPECTED_AUDIT + ")\n" +
       "  found:    " + norm(pkg.scripts && pkg.scripts.check) + "\n" +
       "  Update runBackendCheck() in 03-app/caprebate-figure-drift.cjs to match, or the\n" +
@@ -316,6 +316,7 @@ function runBackendCheck(dir) {
   /* PHASE 161d, 4 November 2026: live code loads and reads only files inside Caprebate/09-app. */
   step("lint:paths", [path.join(dir, "tools", "lint-paths.cjs")]);
   step("lint:copies", [path.join(dir, "tools", "app-copies.cjs")]);   // Phase 161d1: the app's copies match their originals
+  step("lint:backups", [path.join(dir, "tools", "no-backups.cjs")]);  // Phase 161e: no .bak copy under 09-app
   step("typecheck", [path.join(dir, "tools", "typecheck.cjs")]);
   /* `npm test` is `node --test test/*.test.ts`, whose glob the SHELL expands.
      We enumerate the same files instead, which also keeps the .bak-phaseNN

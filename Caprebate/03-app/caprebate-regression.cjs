@@ -156,6 +156,16 @@ function pkgFenced(file, fence) {
 const results = { pass: 0, fail: 0, xfail: 0, xpass: 0 };
 const failures = [];
 let suite = "";
+/* PHASE 161e, 5 November 2026: a check that reads a document kept in OneDrive only (never in git) SKIPS on a
+   fresh copy of the project - a clone, or GitHub's own check - and says so, by name and with the reason, on its
+   own line. Never a silent skip, and never in the OneDrive copy: there a missing document still FAILS. The
+   summary line below is unchanged; the skips get a line of their own under it. */
+const skipped = [];
+const ONEDRIVE_COPY = fs.existsSync(path.join(DIR, "..", "_archive"));
+function skip(name, why) {
+  skipped.push({ suite, name, why });
+  console.log("  skip   " + name + "\n         " + why);
+}
 
 function startSuite(id, title) {
   suite = id;
@@ -3058,8 +3068,24 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
     ["CTA switch table", "01-rulebooks/Caprebate-Phase-51-CTA-Switch-Table-v1.md"],
     ["upload handler", "09-app/backend/src/documents/caprebate-upload-handler.ts"],
   ];
+  /* PHASE 161e: five of these are business documents kept in OneDrive only, never in git (the repository is
+     public while the developer reviews the code). On a fresh copy each is a named skip; in the OneDrive copy
+     every one must still be on disk. */
+  const ONEDRIVE_ONLY_DOCS = [
+    "_archive/superseded/Caprebate-Developer-Brief.md",
+    "02-modules-and-build-prep/Build-Prep-06-Developer-Build-Specification-v2.md",
+    "06-commercial-and-governance/Caprebate-Decided-And-Not-Decided-v1.md",
+    "_archive/superseded/caprebate-journey-wireframe.html",
+    "01-rulebooks/Caprebate-Phase-51-CTA-Switch-Table-v1.md",
+  ];
+  const absent = HANDOVER.filter(h => !fs.existsSync(path.join(ROOT, h[1])));
+  const keptElsewhere = ONEDRIVE_COPY ? [] : absent.filter(h => ONEDRIVE_ONLY_DOCS.includes(h[1]));
+  for (const h of keptElsewhere) skip("M4 — " + h[0] + " is on disk",
+    "skipped on a fresh copy: Caprebate/" + h[1] + " is kept in OneDrive only, not in git; it is checked on the Mac's OneDrive copy");
   check("M4 — every document in the developer handover pack is on disk",
-    HANDOVER.filter(h => !fs.existsSync(path.join(ROOT, h[1]))).map(h => h[0]), []);
+    absent.filter(h => !keptElsewhere.includes(h)).map(h => h[0]), []);
+  check("M4 — the handover pack's OneDrive-only documents are exactly the five named (Phase 161e)",
+    ONEDRIVE_ONLY_DOCS.filter(d => !HANDOVER.some(h => h[1] === d)), []);
 
   /* BY NAME, NOT BY INDEX. These two reads used HANDOVER[0] and HANDOVER[5],
      so inserting an entry above them silently pointed each at a different
@@ -3072,11 +3098,16 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
     return path.join(ROOT, row[1]);
   };
 
-  const brief = fs.readFileSync(handoverPath("Developer Brief"), "utf8");
-  check("M4 — the Developer Brief carries the section that overrides its own stack table",
-    /### 3\.0 READ THIS BEFORE THE TABLE/.test(brief), true);
-  check("M4 — and the three WordPress control questions are named in it",
-    ["Q51", "Q52", "Q53"].filter(q => brief.indexOf(q) < 0), []);
+  if (keptElsewhere.some(h => h[0].indexOf("Developer Brief") === 0)) {
+    skip("M4 — the Developer Brief carries the section that overrides its own stack table, and names Q51 to Q53",
+      "skipped on a fresh copy: the archived Developer Brief is kept in OneDrive only, not in git");
+  } else {
+    const brief = fs.readFileSync(handoverPath("Developer Brief"), "utf8");
+    check("M4 — the Developer Brief carries the section that overrides its own stack table",
+      /### 3\.0 READ THIS BEFORE THE TABLE/.test(brief), true);
+    check("M4 — and the three WordPress control questions are named in it",
+      ["Q51", "Q52", "Q53"].filter(q => brief.indexOf(q) < 0), []);
+  }
 
   /* --- M4a: the spec that replaced it says what it is NOT, and lists its own
      stubs. Added by Phase 108. These are deliberately assertions about the
@@ -8875,6 +8906,8 @@ if (startSuite("AQ", "Phase 159e — the rates by date, the small pools, the str
 console.log("\n" + "=".repeat(72));
 console.log("  pass " + results.pass + "   fail " + results.fail +
             "   xfail " + results.xfail + "   xpass " + results.xpass);
+if (skipped.length) console.log("  skipped " + skipped.length + " on this fresh copy (documents kept in OneDrive only): " +
+  skipped.map(x => "[" + x.suite + "] " + x.name).join("; "));
 if (results.fail || results.xpass) {
   console.log("\n  Unexpected results:");
   failures.forEach(f => console.log("   [" + f.suite + "] " + f.name +
