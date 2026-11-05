@@ -1873,7 +1873,7 @@ Signed .............................  Date ..........................
 
  **This register gains one entry and one board item**: ACC-H3, the accountant's own confirmation link and the defence pack's list of records (board item 13245993980). Phase 158d wrote the two checks into this register, but made no board item for them, so no count saw them. **Board items covered: 51.**
 
- **And the board's own total at the close of Phase 159l, 10 October 2026, counted in code: 142 items carry that status**: sixty-one in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Sixty-one plus twelve plus sixty-nine is 142. (At the close of Phase 159k it was 141; Phase 159l added ACC-H13.)
+ **And the board's own total at the close of Phase 161g, 5 November 2026, counted in code: 145 items carry that status**: sixty-one in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and seventy-two with the solicitor, the data protection officer and the developer. Sixty-one plus twelve plus seventy-two is 145. (At the close of Phase 159l, 10 October 2026, it was 142; Phase 161g added three with the solicitor, the data protection officer and the developer: the legal review pack, the outside services list and the switch for the live legal pages.) (At the close of Phase 159k it was 141; Phase 159l added ACC-H13.)
 
 ## Phase 159b, 9 October 2026 — ACC-H4 · four readings behind the online figure, built and on in the test system
 

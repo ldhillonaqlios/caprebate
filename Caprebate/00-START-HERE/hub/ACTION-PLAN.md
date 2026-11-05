@@ -1405,6 +1405,19 @@ BUILD
 6. The go-live checklist: DNS, email sending records (SPF, DKIM, DMARC),
    the switches that stay off, the legal approval, and "run the sweep
    (Phase 162) before the first client".
+7. ADDED BY PHASE 161g (5 Nov 2026): the privacy policy names the live
+   hosting company, the database and the document store as "not yet
+   confirmed" (OUTSIDE_SERVICES in src/outside-services.ts: its rows for
+   the hosting company, the database and the document store). When item 2
+   decides where each lives, write it there: the company, the place
+   (country, and the data centre if known), and outsideUk true, false or
+   'unknown'; anything not in the UK keeps the transfer basis "to be
+   confirmed by our data protection officer". Then
+   reprint attachment 9 of the legal review pack (06-commercial-and-
+   governance/Legal review pack (Phase 161g)) and note it on board item
+   13475981923. The live start sets CAPREBATE_LEGAL_PAGES=on only after the
+   solicitor and the DPO have approved every page (board item 13475983553);
+   the go-live checklist says so.
 
 ACCEPT
 - The kit starts the app in a clean Linux container (Ubuntu, Node 24) from
