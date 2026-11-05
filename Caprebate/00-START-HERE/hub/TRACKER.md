@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 353 |
-| Working on it | 1 |
+| Done | 354 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1250,7 +1250,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-43 items.
+42 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1478,14 +1478,6 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 161g - The legal pages ready for the live website: one cookie choice, every cookie and outside service listed, and a review pack for the solicitor and DPO (Lakhbir, 4 Nov 2026)
-
-`13462566195` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local (the Mac copy)**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
-- Note 2026-11-05 (Planning, 5 Nov 2026): Prompt amended by Lakhbir: Google Analytics only after a click; draft the privacy policy; draft the client's terms and their links (with a kept tick at sign-up); check what the live legal pages need first; the review pack as a folder with every document attached. Same text in ACTION-PLAN.md and on the run sheet.
-
 ### Phase 161h - The production hosting kit for the Hostinger VPS, and the runbook for the developer (Lakhbir, 29 Oct 2026)
 
 `13462576350` · **Ready - Claude can build** · owner Claude
@@ -1549,7 +1541,7 @@
 
 ## Z · Complete / Not Applicable
 
-353 items.
+354 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3690,6 +3682,15 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
 - Note 2026-11-05 (Phase 161f): Done: the calculator's only source is 09-app/engine/src/calculator; npm run page builds Caprebate site.html from it; extract.cjs retired; verify-page.cjs and test/phase161f.test.ts fail on a calculator edited in the page; every figure the same (harness both ways, stress harness, 26 cases on the live test website and locally). Branch claude/phase-161f, PR 80.
+
+### Phase 161g - The legal pages ready for the live website: one cookie choice, every cookie and outside service listed, and a review pack for the solicitor and DPO (Lakhbir, 4 Nov 2026)
+
+`13462566195` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
+- Note 2026-11-05 (Planning, 5 Nov 2026): Prompt amended by Lakhbir: Google Analytics only after a click; draft the privacy policy; draft the client's terms and their links (with a kept tick at sign-up); check what the live legal pages need first; the review pack as a folder with every document attached. Same text in ACTION-PLAN.md and on the run sheet.
+- Note 2026-11-05 (Phase 161g): Done: one cookie choice, Analytics only after a click, the cookie list tested, a draft privacy policy and client portal terms, the tick, the legal setting (each page a Draft until approved), the legal review pack in OneDrive, Word questions 287-290. Pull request 82.
 
 ### After Phase 161b is merged: on the test website, send one survey photo from your phone (it must show on the claim), and use one form in the back office, the portal and the surveyor's page; tell Claude if any says This form has expired
 

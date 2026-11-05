@@ -1137,181 +1137,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161g — The legal pages ready for the live website: one cookie choice, every cookie and every outside service listed, and a review pack for the solicitor and DPO
-
- **Model: Opus.** Board item 13462566195. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Lakhbir, 4 Nov 2026: "we also need to consider privacy policy, T&C, cookies ect", so the platform can go to production. **Amended 5 November 2026 (Lakhbir):** Google Analytics only after a click; draft the privacy policy; draft the client's terms and their links; check what the live pages need before switching anything; the review pack with every document attached.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-WHAT IS THERE NOW: drafts, written by Claude and not yet checked by a
-solicitor or DPO. The privacy notice and public notices, with a complaint
-form, are Phases 160f and 160g (src/web/notices-site.ts). The website terms
-of use, cookie policy, acceptable use, accessibility statement, disclaimer
-and the cookie banner (cookie cb_cookies, "Accept all" and "Reject
-non-essential", 12 months) are Phase 160h (src/web/legal-pages.ts). All of
-them are served on the TEST WEBSITE ONLY (the "notices" switch, which only
-api/index.mjs passes); anywhere else /privacy says they are being prepared.
-LEGAL_GAPS lists what nobody has given us: the ICO registration number and
-a telephone number. There are TWO cookie choices: the banner, and
-SITE_CONSENT inside "Caprebate site.html", which asks before Google
-Analytics loads (Phase 146f, src/analytics.ts). The engagement letter, which
-is the client's terms, is in 06-commercial-and-governance as TEST DEFAULTS,
-not agreed. Board items that touch this: 12552682424 (ICO registration,
-Lakhbir), 12946752268 (public notices), 12552682456 (governance policies),
-13025228235 (the referral opt-in wording), 12552691720 (analytics, parked).
-
-AMENDED 5 NOV 2026 BY LAKHBIR (items 1, 3, 4, 5 and 6 below say how):
-"Google Analytics only after a click"; draft the privacy policy; draft the
-client's terms and their links; "check what is needed" for the live legal
-pages; the review pack "draft this but add attachments".
-
-BUILD
-1. ONE cookie choice: the banner. Google Analytics loads only when
-   optionalAllowed says yes; SITE_CONSENT reads cb_cookies instead of asking
-   again. "Reject" is as easy as "Accept" (same size, same place), and the
-   cookie policy page lets a visitor change their answer.
-   GOOGLE ANALYTICS ONLY AFTER A CLICK (Lakhbir, 5 Nov 2026): nothing of
-   Google's loads, and no request goes to Google, until the visitor CLICKS
-   "Accept" on the banner (or turns Analytics on in the cookie policy page).
-   Not on a page view, a scroll, a timer, a pre-ticked box or an earlier
-   visit with no answer; no answer is "no". A test proves no Analytics
-   script or request exists before the click and that one does after it.
-2. The cookie list is tested, not typed: a test collects every cookie name
-   the app can set (and any storage key the site page writes) and fails
-   unless each is in the cookie policy with its purpose and how long it is
-   kept, and fails on a policy line for a cookie that no longer exists.
-3. DRAFT THE PRIVACY POLICY (Lakhbir, 5 Nov 2026). Turn the Phase 160f
-   notice into a complete draft privacy policy for the live website and the
-   client portal: who we are (CAP REBATE LTD, 17307313, as registered), what
-   we collect and from where, why and on what lawful basis (the free lookups
-   are legitimate interests, never consent: rule 13(b)), who receives it,
-   how long it is kept (the retention schedule), the person's rights and how
-   to use them, complaints (us, then the ICO), cookies (pointing to the
-   cookie policy), and a "last updated" date. Every gap (the ICO number, the
-   DPO's name and contact, a phone number) is a marked blank, never invented.
-   The policy names every outside service that receives personal
-   data, from the connectors and SECRET_KEYS owners (identity checks,
-   Zoom, WhatsApp, email, Claude/Anthropic, the database host, the hosting
-   company, Google Analytics, Companies House and the rest): what is sent,
-   why, and where it is held. Where it is held outside the UK, the transfer
-   basis is written "to be confirmed by our DPO", never guessed. A test ties
-   the list to SECRET_KEYS, so a new connector cannot be added without a
-   line.
-4. DRAFT THE CLIENT'S TERMS (Lakhbir, 5 Nov 2026): a short "terms of using
-   the client portal" page (what the portal is for, the login and its
-   second step, keeping the login safe, uploads must be the client's own,
-   our right to suspend misuse, that the engagement letter governs the work
-   and wins over these terms, and governing law), as a draft beside the
-   Phase 160h website terms, which are checked and brought level. Then the
-   links: the portal's sign-up and the engagement letter signing screen
-   link to the client's terms, the website terms and the privacy policy,
-   and the sign-up asks the person to tick that they have read them (the
-   tick, its date and the version are kept, and the audit log records it).
-   The engagement letter's own clauses are NOT rewritten (the fees, the
-   break fee and the clawback are Lakhbir's and the solicitor's decisions);
-   it goes into the review pack below as an attachment.
-5. CHECK WHAT IS NEEDED FIRST (Lakhbir, 5 Nov 2026). Before building the
-   switch, list everything the live legal pages need before they can be
-   switched on, each with who supplies it and whether it is done: the ICO
-   registration number, the company's registered office, the DPO's name
-   and contact, a phone number or a decision not to have one, the
-   solicitor's and the DPO's approval of each page, the live hosting
-   company and where it holds data (the Hostinger VPS, Phase 161h), the
-   email provider, the cookie list, the client's terms and the website
-   terms, the accessibility statement's test date, and anything else found
-   on the way. It goes into the review pack (item 6), the phase record and
-   a tracker row for each missing item under its owner.
-   Then build it ready for the live website, but not switched on: the
-   legal pages are served wherever a new "legal" setting is on (separate
-   from the test website's "notices"), and each page shows the "Draft" line
-   until an approval is recorded (who approved it, and the date, kept in the
-   database and the audit log). With no approval nothing goes live.
-6. The review pack, WITH ATTACHMENTS (Lakhbir, 5 Nov 2026): a folder in
-   06-commercial-and-governance, "Legal review pack (Phase 161g)", holding a
-   cover Word document and every document it asks about as its own
-   attachment. The cover document: what each attachment is, what changed
-   since the last draft, the checklist from item 5, the gaps, and the
-   questions for each reviewer (solicitor, DPO). The attachments, each a
-   Word document a reviewer can mark up: the privacy policy, the cookie
-   policy with the cookie list, the website terms, the client's terms, the
-   acceptable use policy, the accessibility statement, the disclaimer, the
-   complaint form's words, the list of outside services (what is sent, why,
-   where held), and the engagement letter (TEST DEFAULTS, not agreed, copied
-   as it is). OneDrive only: none of it is committed (the repository is
-   public). Add it to FOR THE SOLICITOR,
-   THE DPO AND THE DEVELOPER and to the Word questions document
-   (AMENDMENT 2). For Lakhbir (his items, not built): register with the ICO
-   (12552682424), choose the solicitor and the DPO who will review it, and
-   say whether there will be a phone number.
-
-ACCEPT
-- Tests for items 1 to 5; before any click, and after "Reject", no
-  Analytics script loads and no request goes to Google; after "Accept" it
-  does (check the network in the browser pane on the test website).
-- The privacy policy and the client's terms are drafts with every gap
-  marked, nothing invented; the sign-up's tick is kept with its version.
-- The checklist of what the live pages need exists, every missing item
-  with an owner and a tracker row.
-- With "legal" off, the live start shows what it shows today; with it on
-  and no approval, every page carries the Draft line.
-- The review pack folder is in OneDrive with its cover document and every
-  attachment, and its register and question rows exist.
-```
-
-
 ## PHASE 161h — The production hosting kit for the Hostinger VPS, and the runbook for the developer
 
  **Model: Opus.** Board item 13462576350. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Lakhbir, 29 Oct 2026: Cap Rebate is hosted on its own Hostinger VPS, with no WordPress; ITRoadway test it, secure it and host it. The audit (2 Nov 2026) agrees: keep it as a custom application.
@@ -1728,6 +1553,8 @@ ACCEPT
  **Added 5 November 2026 by Phase 161e, for this sweep to do.** Ten untracked leftovers sit in the back end; git does not hold them and no check names them: four `.mutsave` copies in `src/connectors/` and `src/web/` (from a mutation run), `tools/_159l-legal-moves.ts`, `_159l-pick.ts`, `_159l-red.ts` and `_159l-red2.ts`, `_trg.ts` and the folder `.demo156/`. Ask Lakhbir in the chat, then zip them into `Caprebate/_archive/` and delete them, as Phase 161e did with the .bak copies; commit any that turn out to be real tools.
 
  **Added 5 November 2026 by Phase 161f, for this sweep to do.** Once pull request 80 (Phase 161f) is merged and the test website has redeployed, check its eligibility check still gives the same answers: `node 04-phase-work/stress-2026-10-09/engine/site-cases.mjs https://caprebate-test.vercel.app <a file in your scratch folder>` drives the same 26 invented cases through it (it stops at the figure page and sends no enquiry), then compare each case's pages and figures with `site-cases-live-main-161f.json` beside it (main, before the change). Phase 161f found them identical on main live and on its own code run locally, because Vercel refused the session access to the branch preview. A difference is a finding for Lakhbir, not something to adjust.
+
+ **Added 5 November 2026 by Phase 161g, for this sweep to do.** Once pull request 82 (Phase 161g) is merged and the test website has redeployed, check it in the browser pane: on a fresh visit the cookie banner shows "Accept all" and "Reject non-essential" the same size; the network shows no request to Google before a click, after "Reject non-essential", or after "Accept all" (the test website has no Analytics id, so nothing of Google's should ever load there); /privacy-policy/ and /portal-terms/ open with their Draft line, and /privacy goes to /privacy-policy/; signing in as the invented client asks once for the tick ("Before you go on") and then opens the portal. Phase 161g proved the click rule on a local copy with an invented id (no Google before the click or after Reject; the tag requested after Accept). A difference is a finding for Lakhbir.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -2387,7 +2214,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages, 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161h, before go-live (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
