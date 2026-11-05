@@ -37,9 +37,17 @@ npm run seed         # invented data + one user per role. Refuses without CAPREB
 npm run verify-audit # recomputes the audit log's hash chain from caprebate.db; writes nothing; exit 1 if broken
 npm start            # http://localhost:8103
 npm run start:demo   # in-memory, seeded, http://localhost:8105 — for looking at the screens
-npm run check        # audit:live, lint:sql, lint:paths, lint:copies, typecheck, the whole suite — run it, do not quote it
+npm run check        # audit:live, lint:sql, lint:paths, lint:copies, lint:backups, typecheck, the whole suite — run it, do not quote it
 npm run copies       # after editing the site file, the notices page, the fixture list or a letter: refresh the app's copies
 ```
+
+**A fresh copy runs everything (Phase 161e).** GitHub runs `npm run check`, the site harness, phase3, phase9 and a
+root package audit on every pull request (`.github/workflows/checks.yml`). A test that reads a business document kept
+in OneDrive only (never in git, because the repository is public while the developer reviews it) names it in
+`test/onedrive-only.ts` and skips on a fresh copy, saying which file and why; in the OneDrive copy it runs.
+**Code is backed up by commits:** never leave a `.bak` copy under `09-app` — `npm run lint:backups`
+(`tools/no-backups.cjs`) fails on one. Read an older version with `git show <commit>:<path>`; a test that needs a
+file as it was before a change keeps it under `test/fixtures/`.
 
 **No hidden state.** Everything the application needs is passed to `buildApp` —
 the database location, the clock, the hasher, the transports. There is no
