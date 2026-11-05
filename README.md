@@ -4,6 +4,11 @@ The public website, the free assessment, the client portal and the back office a
 (`Caprebate/09-app/backend`), with the estimate engine in `Caprebate/09-app/engine`. There is no WordPress
 (decided 18 September 2026).
 
+**The claim calculator: change the calculator in engine/src; the page is built from it** (since Phase 161f,
+5 November 2026). Edit `Caprebate/09-app/engine/src/calculator/`, then run `npm run page` in
+`Caprebate/09-app/engine`, which writes it into `Caprebate site.html` and the back end's copy. Never edit the
+calculator inside `Caprebate site.html`: the checks fail on it. `Caprebate/09-app/engine/README.md` says more.
+
 ## THIS REPOSITORY IS FOR TESTING WITH INVENTED DATA ONLY
 
 - No real client, no real document, no real personal data — ever. GitHub and Codespaces are not our production
@@ -43,7 +48,7 @@ and `vercel.json` sends every path to it. The same invented logins and password 
 - **Nothing is kept.** A new instance starts again from the seed, and a login may need repeating.
 - The sign-up's confirmation link is in the project's **Logs**, because no email is sent.
 - The `package.json` files marked `"type"` in `phase3`, `phase9` and `engine/src` (and `"commonjs"` in
-  `engine/src/generated`) are there because Vercel compiles typeless TypeScript as CommonJS. Keep them.
+  `engine/src/calculator`) are there because Vercel compiles typeless TypeScript as CommonJS. Keep them.
 
 ## Run the checks
 
@@ -51,5 +56,6 @@ and `vercel.json` sends every path to it. The same invented logins and password 
     node Caprebate/03-app/caprebate-regression.cjs         # the site harness
     cd Caprebate/04-phase-work/phase3 && node --test       # phase3 modules
     cd Caprebate/04-phase-work/phase9 && node --test       # phase9 modules
+    node Caprebate/09-app/engine/tools/verify-page.cjs     # the page carries exactly the built calculator
 
 Needs Node 24 or later.

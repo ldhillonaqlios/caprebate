@@ -5,8 +5,9 @@
  * The ITRoadway technical audit (2 November 2026, section 5) found live code reading files outside the app. Phase 161d
  * moved the modules; five files it read were left, because each has a home that people use and other readers there:
  *
- *   Caprebate site.html                    the public website and the engine's source (the extractor, the harness,
- *                                          the brand and plain-words checks all read it there)
+ *   Caprebate site.html                    the public website (the harness, the brand and plain-words checks read it
+ *                                          there). Its calculator is BUILT from 09-app/engine/src/calculator/ since
+ *                                          Phase 161f: `npm run page` in 09-app/engine writes it, then runs --write
  *   03-app/caprebate-notices-page.html     the privacy and cookie notices (four 03-app checks read it there)
  *   02-modules-and-build-prep/
  *     Caprebate-Fixture-Taxonomy-v1.csv    the fixture list (a module file: the drift checker's stray-copy guard keeps
@@ -17,8 +18,8 @@
  *
  * So the original stays where people edit it, and the app reads ITS OWN COPY in Caprebate/09-app/backend/copies/.
  * This check fails when a copy is missing or differs from its original by a single byte, so the app can never serve
- * an out-of-date page or letter without the build saying so. It is the same idea as `extract.cjs --check`, which
- * keeps the engine's generated slices in step with the site file.
+ * an out-of-date page or letter without the build saying so. The engine's tools/verify-page.cjs does the same for
+ * the calculator inside the page (Phase 161f).
  *
  *   node tools/app-copies.cjs               the check (npm run lint:copies, part of npm run check)
  *   node tools/app-copies.cjs --write       bring every copy up to date from its original (npm run copies).
@@ -37,7 +38,7 @@ const path = require('path');
 /** Each original (from the repository root, Development/) and the app's copy (in backend/copies/, the same name). */
 const COPIES = [
   { original: 'Caprebate site.html',
-    why: 'the public website (src/web/public-site.ts); the engine is extracted from the original' },
+    why: 'the public website (src/web/public-site.ts); its calculator is built from 09-app/engine/src/calculator (npm run page)' },
   { original: 'Caprebate/03-app/caprebate-notices-page.html',
     why: 'the privacy and cookie notices (src/web/notices-site.ts); four 03-app checks read the original' },
   { original: 'Caprebate/02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv',

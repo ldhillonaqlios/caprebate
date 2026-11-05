@@ -1,141 +1,142 @@
-# How the engine got out of the HTML file, and how to keep it honest
+# How the calculator gets into the page, and how to keep it honest
 
-**Built by Phase 102, 8 September 2026. Block A of the Developer Build Order.**
+**Change the calculator in engine/src; the page is built from it.**
 
-The estimate engine used to live inside `Caprebate site.html`, a 740KB page. A
-website, a back end and a developer spec cannot all share it from there. This
-package is that engine, and nothing else.
-
-**The one thing this extraction had to prove is that it changed no tax answer.**
-Everything below is in service of that.
+**Turned round by Phase 161f, 5 November 2026**, from the ITRoadway technical
+audit (2 November 2026, section 5): *"The claim calculator is stored in an
+unusual way. It is copied out of one very large web page file and can't be
+edited directly, which makes it easy to change the wrong file by mistake."*
+Phase 102 (8 September 2026) first lifted the engine out of the page; until
+Phase 161f the page was the source and this package was the copy. Now this
+package is the source and the page is the copy. `README.md` beside this file is
+the short version.
 
 ---
 
 ## The rule
 
-**Nothing changes except where the code lives.** No rename, no refactor, no
-tidying a switch table or a rate table on the way past. Every behavioural change
-belongs to another phase and would be blamed on this one.
+**The calculator is edited in one place: `src/calculator/` in this package.**
 
-So the engine in `src/generated/` is not a port. It is a **byte-for-byte slice**
-of the site file, cut mechanically by `tools/extract.cjs`. Nobody retyped 9,000
-lines of tax logic, because nobody can prove that safe.
+| What | Where | Who writes it |
+|---|---|---|
+| The shared `CB_` layer | `src/calculator/shared.js`, between its PAGE fences | a person |
+| Each sector calculator | `src/calculator/sector-<sector>.js`, between its PAGE fences | a person |
+| The built calculator | `dist/page/` (not committed) | `tools/build.cjs` |
+| The calculator in the page | `Caprebate site.html`, in the engine script | `tools/page-from-engine.cjs` |
+| The back end's copy of the page | `09-app/backend/copies/Caprebate site.html` | `tools/app-copies.cjs --write` (run by the page tool) |
+| The derived session types | `src/calculator/session.d.ts` | `tools/build.cjs` |
 
-**Never edit `src/generated/`.** To change the engine, change
-`Caprebate site.html` and re-run the extractor. The generated files say so at the
-top of each one.
+`npm run page` does the three writing steps in order. `tools/extract.cjs`, which
+copied the page into the package, was **retired** by Phase 161f: nothing copies
+the page into the engine any more.
+
+**Nothing else changed in Phase 161f.** The text between the fences is the same
+text, byte for byte, that the extractor had cut from the page, and the page was
+already exactly the built engine: running `npm run page` on the first build left
+`Caprebate site.html` unchanged.
 
 ---
 
-## Where the cuts are
+## Where the parts sit in the page
 
-Two of the three boundaries are **the ones the regression harness has always
-used**, so the package and the harness cannot disagree about what "the engine"
+The page holds the calculator in the same places it always has, and these are
+the same boundaries the regression harness uses to lift the engine, so the
+page, the harness and this package cannot disagree about what "the calculator"
 is:
 
-| Piece | From | To |
+| Part | In the page, from | to |
 |---|---|---|
-| The shared `CB_` layer | `var CB_PLANT` | `/* ===== care_homes` |
-| Each sector engine | the `(function(){` after its `/* ===== <sector> ===== */` marker | the `})();` that closes it |
+| `shared.js` | `var CB_PLANT` | `/* ===== care_homes` |
+| `sector-<sector>.js` | just inside the `(function(){` after `/* ===== <sector> ===== */` | that sector's `RENDERER` banner |
 
-The third cut is this package's own, and it is the only structural decision
-here. **Each sector module is cut again at its `RENDERER` banner.** Above the
-banner is the engine — `YIELD_BAND`, the question array `Q`, `pushFlag`,
-`runEngine`. Below it is DOM code that draws the flow. The package takes only
-what is above, which is why it can honestly claim to contain no DOM.
+Below each sector's `RENDERER` banner is the page's own code that draws the
+flow (DOM code). It belongs to the page, not to the calculator, and the build
+never touches it. The build refuses a part that would break these boundaries
+(for example a sector part containing `//  RENDERER`, or any part containing
+`</script>`), and a sector part that loses `runEngine`, `Q`, `YIELD_BAND` or
+`pushFlag`, or gains DOM or network code.
 
-The extractor refuses to write anything if that cut loses `runEngine`, `Q`,
-`YIELD_BAND` or `pushFlag`, or if it leaves any DOM or network call behind.
+### The list of shared modules is read from the code, never listed
 
-### The twenty modules are re-derived, never listed
+The shared layer had eighteen `CB_` modules on 6 September 2026 and has
+twenty-four now. `tools/build.cjs` reads the list off `shared.js` every time. A
+module declared but missing from `module.exports`, or from a sector file's
+`const { ... } = SHARED;` line, stops the build with a sentence saying which.
 
-The shared layer had **eighteen** `CB_` modules on 6 September 2026 and
-**twenty** on 7 September, when Phase 96 added `CB_ACQ` and `CB_TAXPOS`. It will
-happen again. So `tools/extract.cjs` reads the list off the source on every run
-and a hard-coded list appears nowhere in this package.
+### The renderer shim
 
-### The renderer shim — the only lines the extractor writes itself
-
-Two lines above the banner belong to the renderer rather than the engine:
-`let S = {}` and `function reset(){ ... idx=0; history=[]; render(); }`.
-`reset()` is the *flow's* entry point, `runEngine` never calls it, and it sits
-inside the verbatim slice.
-
-Editing the slice to remove it would forfeit the byte-comparison this whole
-design rests on. So instead, each generated sector file carries a **four-line
-shim**, fenced by `@@CAPREBATE-SHIM-OPEN@@` / `@@CAPREBATE-SHIM-CLOSE@@`,
-declaring the three bindings `reset()` names. `render()` **throws**, so DOM code
-can never run from inside this package by accident.
-
-`tools/verify-extraction.cjs` asserts the shim declares those two names and
-nothing else.
+Two lines inside each sector's calculator belong to the page's flow rather than
+the calculator: `let S = {}` and `function reset(){ ... idx=0; history=[]; render(); }`.
+`runEngine` never calls `reset()`. So each sector file carries a short **shim**,
+fenced by `@@CAPREBATE-SHIM-OPEN@@` / `@@CAPREBATE-SHIM-CLOSE@@`, that declares
+`idx`, `history` and `render` so the file can load on its own. `render()`
+**throws**, so DOM code can never run from inside this package. The shim is
+outside the PAGE fences and never goes into the page. `tools/verify-page.cjs`
+checks it declares those names and nothing else.
 
 ### No `"use strict"`, deliberately
 
-The site's script runs in sloppy mode and so does the harness's `new Function`
-lift. Adding strict mode to the generated files would change the semantics of
-the very code this package promises not to change.
+The page's script runs in sloppy mode and so does the harness's `new Function`
+lift. Strict mode in these files would change how the very code every figure
+comes from behaves, and the page carries the same text.
 
 ---
 
 ## The two kinds of evidence
 
-A refactor that fooled one of these would have to fool the other too.
-
-**1. The text is the same.** `node tools/verify-extraction.cjs` re-slices the
-site and byte-compares. A re-indent fails it. A corrected typo in a help string
-fails it. It also asserts what the package must not have acquired — no `fetch(`,
-no DOM, no storage, no secrets, no `process.env` — and that all **twelve** CTA
-switches are still `false`, counted at runtime rather than quoted (eleven until
-Phase 113j added the twelfth on 10 September 2026 — which is why it is counted).
+**1. The text is the same.** `node tools/verify-page.cjs` builds the calculator
+afresh, in memory, and compares it with the calculator in `Caprebate site.html`
+and in the back end's copy, byte for byte. A re-indent fails it. A corrected
+typo in a help string fails it. It also checks what the calculator must not
+have acquired (no `fetch(`, no DOM, no storage, no secrets, no `process.env`),
+that every tax adviser switch in `CB_CTA` is still `false` (counted when it
+runs, never quoted) and that the free-register gate is shut.
+`node tools/verify-page.cjs --self-test` plants edits in a copy of the page (a
+figure in the shared layer, one character in each sector's `runEngine`, a
+re-indent) and proves each one turns the check red, while an edit to the page's
+own renderer does not. The back end's `test/phase161f.test.ts` holds the same,
+so `npm run check` and GitHub's checks fail on a page edited by hand.
 
 **2. The behaviour is the same.** The regression harness runs against **either**
-the site file or this package:
+the page or this package:
 
 ```
-node 03-app/caprebate-regression.cjs             the site file (default)
+node 03-app/caprebate-regression.cjs             the page (default)
 node 03-app/caprebate-regression.cjs --package   this package
 CAPREBATE_ENGINE=package node 03-app/...         the same, by environment
 ```
 
-**There is no cut-over, and that is deliberate.** A harness that only tested the
-package could not tell you the package still matches the file, which is the one
-thing the extraction has to prove. **The totals from the two runs must match.**
-If they ever stop matching, that is the finding — do not adjust an assertion to
-close the gap.
+**The totals from the two runs must match.** If they ever stop matching, that
+is the finding: do not adjust an assertion to close the gap. **Run both; do not
+quote either** — the number moves whenever a suite outside the engine gains a
+test.
 
-Both modes report the same total, and **that matching is the assertion — the
-number itself moves whenever a suite outside the engine gains a test.** It was
-**634 / 0 / 4** at the close of Phase 102 on 8 September 2026 and **640 / 0 / 4**
-on 9 September, when Phase 108 added six handover assertions to suite M. **Run
-both; do not quote either.**
+### Where the website runs the calculator
+
+The engine script in `Caprebate site.html` sits inside the in-page assessment
+(`<template id="assessTpl">`). The served website leaves that template out
+(`backend/src/web/public-site.ts`), so **the served page carries no calculator**.
+The test website's eligibility check runs **this package**, on the server
+(`backend/src/web/engine.ts` imports `src/index.ts`). The back end's
+`test/phase161f.test.ts` checks both: the served page has no calculator, and the
+server's `CB` modules are the objects `src/calculator/shared.js` exports.
 
 ### What the package mode does not test, and you should know it
 
 Suites that assert on the **page's own text** — the brand name, the absence of
-payment processors, the served-jurisdiction sentence — still read the site file
-in both modes. They are website-copy checks, not engine checks, and the package
-is not where that copy lives.
-
-One consequence is worth naming rather than leaving to be discovered. **Suite
-Q's yield-band drift trap reads the bands out of the page text with a regular
-expression, not out of the loaded module.** In package mode it therefore
-compares the *site's* sector bands against the *package's* shared table. A band
-that diverged in the package's sector files alone would pass. This was found by
-negative control — changing a band in the package left the suite green — and it
-is left alone on purpose, because changing an assertion in the same phase as the
-extraction would destroy the before-and-after comparison the phase exists for.
-It is written up as its own phase.
+payment processors, the served-jurisdiction sentence — still read the page in
+both modes. They are website-copy checks, not calculator checks.
 
 ---
 
 ## The TypeScript, and what `strict: true` is actually protecting
 
 `tsconfig.json` turns on `strict`, `exactOptionalPropertyTypes`,
-`noUncheckedIndexedAccess` and the rest. But **the generated files are JavaScript
-and are not type-checked** (`allowJs: true`, `checkJs: false`). Annotating a
-verbatim slice would fork the engine. They are typed from the outside by the
-hand-written `.d.ts` beside each one, and **those are** checked under every flag.
+`noUncheckedIndexedAccess` and the rest. But **the calculator files are
+JavaScript and are not type-checked** (`allowJs: true`, `checkJs: false`),
+because the page runs the same text as it is. They are typed from the outside
+by the hand-written `.d.ts` beside each one, and **those are** checked under
+every flag.
 
 ### `aia_headroom` has four states and they are not interchangeable
 
@@ -148,10 +149,10 @@ Gate 2 of the cash gates tells all four apart:
 | `"unsure"` | they were asked and did not know | no AIA modelled, flagged as not captured |
 | **absent** | nobody ever asked | **identical to `"unsure"`** |
 
-Narrowing this to `number | undefined` would lose the first and the third. Giving
-it a **default** would turn "we do not know" into a favourable answer. That is
-non-negotiable **N4**: unknown is not a branch, and it is the one thing a
-refactor breaks silently.
+Narrowing this to `number | undefined` would lose the first and the third.
+Giving it a **default** would turn "we do not know" into a favourable answer.
+That is non-negotiable **N4**: unknown is not a branch, and it is the one thing
+a refactor breaks silently.
 
 ### A green typecheck does not prove N4 survives — this was tested
 
@@ -165,38 +166,34 @@ three separate breakages (collapsing `AiaHeadroom`, deleting `"unsure"` from
 `sufficient_profit`, removing `null` from a cash gate) each produced errors, and
 the restored file was clean.
 
-```
-npm run typecheck         the package
-npm run typecheck:types   the N4 type assertions
-```
-
 ### Why so much of `Session` is `unknown`
 
 About **190** distinct facts can appear on a session. The ~40 whose value sets
 come from a question's own option list are **derived** into
-`src/generated/session.d.ts` by reading the five `Q` arrays — so they cannot
-drift from the questions. Note what that produces: nearly every union contains
-`"unsure"`. That is N4 showing up in the type system.
+`src/calculator/session.d.ts` by `tools/build.cjs`, reading the five `Q`
+arrays, so they cannot drift from the questions. Nearly every union contains
+`"unsure"`: that is N4 showing up in the type system.
 
 The rest arrive as `unknown` through an index signature, which forces a narrow
 before use. **That is the honest position.** The engine usually compares a fact
 against *one* value and treats everything else as the other branch, so
 `s.claimant_type === "company"` tells you nothing about what the other claimant
-types are called. A type invented for a fact nobody checked is worse than no
-type, because it reads as evidence. Type each one as you come to need it, from
-the code rather than from the name.
+types are called. Type each one as you come to need it, from the code rather
+than from the name.
 
 ---
 
-## Commands
+## Commands (from `Caprebate/09-app/engine`)
 
 ```
-node tools/extract.cjs             rewrite src/generated/ from the site
-node tools/extract.cjs --check     exit 1 if src/generated/ is stale
-node tools/verify-extraction.cjs   byte-compare, and the must-nots
-npm run typecheck                  strict tsc over the package
-npm run typecheck:types            the N4 type assertions
-npm test                           all four
+npm run page                          build, write the page, refresh the back end's copy
+npm run build:page                    build only: dist/page/ and session.d.ts
+node tools/verify-page.cjs            the page carries exactly the built engine; the must-nots
+node tools/verify-page.cjs --self-test   a planted edit in the page turns it red
+node tools/build.cjs --check          exit 1 if session.d.ts (or a dist/page/ that exists) is stale
+npm run typecheck                     strict tsc over the package
+npm run typecheck:types               the N4 type assertions
+npm test                              verify, self-test, build check and both typechecks
 ```
 
 `npm run typecheck` needs `npm install` first; nothing else in this list needs

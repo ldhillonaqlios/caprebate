@@ -34,11 +34,14 @@ training for every CRM screen, each exercise run against the seeded demo.
 
 ### `engine/` — `@caprebate/engine`
 
-Block A. The estimate engine, lifted out of `Caprebate site.html` so that all
-three deliverables can share one copy instead of three forks.
+Block A. The estimate engine, and **the only source of the claim calculator.
+Change the calculator in engine/src; the page is built from it** (Phase 161f,
+5 November 2026): edit `engine/src/calculator/`, then `npm run page` in
+`engine/` writes it into `Caprebate site.html` and the back end's copy.
+`engine/README.md` says how.
 
 **Facts in, estimate out.** No network calls, no DOM, no storage, no secrets —
-those are requirements, not descriptions, and `tools/verify-extraction.cjs`
+those are requirements, not descriptions, and `tools/verify-page.cjs`
 asserts every one of them.
 
 ```js
@@ -60,8 +63,9 @@ Paid lookups wait on a signed engagement asserted server-side plus one operator
 click. This package makes no calls at all, so neither gate is reachable from
 here — do not open either to make a screen flow work.
 
-**Read `engine/EXTRACTION.md` before changing anything in `engine/src/generated/`.**
-The short version: don't. Change the site file and re-run the extractor.
+**Read `engine/README.md` before changing anything in `engine/src/calculator/`.**
+The short version: edit it there, never in the page, then run `npm run page`.
+`engine/EXTRACTION.md` has the history and the reasons.
 
 ### `backend/` — `@caprebate/backend`
 
@@ -76,13 +80,13 @@ From the project root:
 ```bash
 node 03-app/caprebate-regression.cjs              # the site file
 node 03-app/caprebate-regression.cjs --package    # this package — the SAME total
-node 09-app/engine/tools/verify-extraction.cjs    # 21 checks, byte-for-byte
-node 09-app/engine/tools/extract.cjs --check      # is the package stale?
+node 09-app/engine/tools/verify-page.cjs          # the page carries exactly the built calculator
+node 09-app/engine/tools/verify-page.cjs --self-test   # a planted edit in the page turns it red
 node 03-app/caprebate-crm-fold-check.cjs          # the CRM's table, routes, §4 and guide against the code
 ```
 
-**The two harness totals must match.** A difference means the extraction changed
-a tax answer, and that is the finding, not an obstacle. **The total itself moves
+**The two harness totals must match.** A difference means the page and the
+package no longer carry the same calculator, and that is the finding, not an obstacle. **The total itself moves
 whenever a suite outside the engine gains a test** — it was 634 / 0 / 4 on
 8 September 2026 and 640 / 0 / 4 on 9 September — so **the matching is the
 assertion and the number is not.** Run them; this project has had a stale

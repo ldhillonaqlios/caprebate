@@ -810,15 +810,26 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   OUTSIDE 09-app keep the .bak-phaseNN habit and AMENDMENT 2's cp rule.
   The tree: 00- to 08-, 09-app/, _archive/ and README-file-index.md. Nothing
   numbered may be renamed.
-  THE ENGINE, "Caprebate site.html", IS ONE LEVEL ABOVE THE TREE, in
-  Development/, and is copied
-  byte for byte into 09-app/engine/src/generated/. Change the site file and
-  re-run the extractor; never hand-edit generated/.
+  THE CLAIM CALCULATOR: CHANGE THE CALCULATOR IN engine/src; THE PAGE IS
+  BUILT FROM IT (Phase 161f, 5 Nov 2026; the audit's section 5). Its only
+  source is 09-app/engine/src/calculator/ (shared.js and the five
+  sector-*.js, between their PAGE fences). "Caprebate site.html", one level
+  above the tree in Development/, carries a BUILT copy: run "npm run page" in
+  09-app/engine (tools/build.cjs, then tools/page-from-engine.cjs, which also
+  refreshes the back end's copy). NEVER edit the calculator inside the page:
+  engine/tools/verify-page.cjs and the back end's test/phase161f.test.ts
+  fail on it. tools/extract.cjs (page into engine) is RETIRED; older text
+  that says "change the site and re-run the extractor" or names
+  src/generated/ is history. THE SERVED PAGE CARRIES NO CALCULATOR: its copy
+  sits inside the in-page assessment, which the website drops; the test
+  website's eligibility check runs the engine package on the server
+  (backend/src/web/engine.ts).
   THE APP'S OWN COPIES (Phase 161d1, 5 Nov 2026). The back end reads five
   files people edit elsewhere from its own copies in 09-app/backend/copies/:
   the site file, 03-app/caprebate-notices-page.html, the fixture list and
-  the two engagement letters. EDIT THE ORIGINAL, NEVER THE COPY, then run
-  "npm run copies" in 09-app/backend: npm run check (lint:copies,
+  the two engagement letters. EDIT THE ORIGINAL, NEVER THE COPY (for the
+  site file's calculator, edit engine/src as above; npm run page refreshes
+  the copy itself), then run "npm run copies" in 09-app/backend: npm run check (lint:copies,
   tools/app-copies.cjs) fails while any copy differs by one byte.
   ONEDRIVE CAN FORK A FILE WRITTEN TWICE IN QUICK SUCCESSION (seen 5 Nov 2026
   by Phase 161d1): it kept the first write under the name and saved the
@@ -883,11 +894,17 @@ command that counts it, never the number.
   cd 09-app/backend && node tools/no-backups.cjs --self-test   a planted .bak must fail
   cd 09-app/backend && node tools/app-copies.cjs --self-test   a changed, missing or extra
                                                       copy and a lost original must each fail
-  node 09-app/engine/tools/verify-extraction.cjs      byte for byte, the must-nots, and
-                                                      THE SWITCH COUNT - read it there.
-                                                      Step 3's "eleven engine readings"
-                                                      is a dated example, not a count.
-  node 09-app/engine/tools/extract.cjs --check        exit 1 if the package is stale
+  node 09-app/engine/tools/verify-page.cjs            the page (and the app's copy) carries
+                                                      exactly the built calculator, byte for
+                                                      byte; the must-nots; and THE SWITCH
+                                                      COUNT - read it there. Step 3's
+                                                      "eleven engine readings" is a dated
+                                                      example, not a count. (Was
+                                                      verify-extraction.cjs until 161f.)
+  node 09-app/engine/tools/verify-page.cjs --self-test   a planted edit to the calculator
+                                                      inside the page MUST turn it red
+  node 09-app/engine/tools/build.cjs --check          exit 1 if the derived session types
+                                                      are stale (extract.cjs --check, retired)
   node 03-app/caprebate-figure-drift.cjs              exit 0; it runs all four suites itself,
                                                       after section 0, the STRAY-COPY GUARD:
                                                       exit 1 if a module file is back in

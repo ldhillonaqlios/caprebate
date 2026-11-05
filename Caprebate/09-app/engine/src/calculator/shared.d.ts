@@ -1,4 +1,4 @@
-/* Declarations for the generated shared layer.
+/* Declarations for the calculator's shared layer (shared.js).
    HAND-WRITTEN, unlike shared.js itself, and deliberately CONSERVATIVE: a
    member is declared here only where this phase read the implementation and
    can say what it means. Everything else stays `unknown`, which forces the
@@ -87,8 +87,8 @@ export interface RegistrySource {
    WIDENED BY PHASE 132f, 16 September 2026 — classifyField and its engagement.
 
    Phase 132c added `SOURCES[].postSignature` and a third argument to
-   classifyField in the site, and this file (hand-written: the extractor writes
-   shared.js, the sector modules, manifest.json and session.d.ts, nothing else)
+   classifyField in the site, and this file (hand-written: the build, then the
+   extractor, writes session.d.ts here and nothing else of this folder)
    was not widened, so classifyField fell through to the `unknown` index
    signature and the engagement argument was untyped. Read from `classifyField`
    in shared.js, not from its name.
@@ -188,7 +188,7 @@ export type OpaqueModule = Readonly<Record<string, unknown>>;
    say what it means. Return shapes that vary by branch are declared as their
    known fields plus an index signature, so a caller must still narrow rather
    than trust a type nobody checked. Nothing here changes behaviour: these are
-   declarations for a generated .js file that is a byte-for-byte slice.
+   declarations for a .js file, which is not type-checked (allowJs, checkJs off).
    =========================================================================== */
 
 /** A property as CB_FUNNEL models it. Every field starts null — see N4. */
@@ -271,9 +271,8 @@ export interface FunnelModule {
  * declaration named a field `stop`, which the engine has never returned. The
  * renderer read `stop`, the compiler agreed with it, and the gate never fired:
  * a business with no UK tax bill went on to a figure. This file is hand-written
- * beside the generated slice (09-app/engine/EXTRACTION.md) — the extractor
- * writes shared.js, the sector modules, manifest.json and session.d.ts, and
- * nothing else — so the fix is here, and the engine is untouched.
+ * beside shared.js (09-app/engine/EXTRACTION.md) — tools/build.cjs writes only
+ * session.d.ts in this folder — so the fix was here, and the engine untouched.
  */
 export interface Q1bGate {
   /** true for "no" and "charity" only. "not sure" and never-asked are both false (N4). */

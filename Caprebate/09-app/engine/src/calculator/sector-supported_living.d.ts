@@ -1,4 +1,4 @@
-/* Declarations for the generated supported_living engine. HAND-WRITTEN. */
+/* Declarations for the supported_living calculator (sector-supported_living.js). HAND-WRITTEN. */
 import type { SectorEngine } from "../types.js";
 declare const engine: SectorEngine & { readonly sector: "supported_living" };
 export = engine;

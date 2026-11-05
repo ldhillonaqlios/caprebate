@@ -2,7 +2,7 @@
    @caprebate/engine — THE TYPED SURFACE                     Phase 102, Block A
 
    WHAT IS HAND-WRITTEN HERE AND WHAT IS NOT
-     `generated/session.d.ts` carries the ~40 session facts whose value sets are
+     `calculator/session.d.ts` carries the ~40 session facts whose value sets are
      read straight off the five Q arrays. This file carries the rest: the facts
      no option list describes, the result shape, and the module surfaces.
 
@@ -24,7 +24,7 @@
      it, from the code rather than from the name.
    ============================================================================= */
 
-import type { DerivedSessionFacts } from "./generated/session.js";
+import type { DerivedSessionFacts } from "./calculator/session.js";
 
 /* ------------------------------------------------------------------- ranges */
 

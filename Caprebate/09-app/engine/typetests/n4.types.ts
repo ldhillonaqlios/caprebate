@@ -20,7 +20,7 @@
    ============================================================================= */
 
 import type { AiaHeadroom, Session, EngineResult, CashGates, MaybeRange } from "../src/types.js";
-import type { RegistrySource, RegistryModule, EngagementRecord, FieldClassification } from "../src/generated/shared.js";
+import type { RegistrySource, RegistryModule, EngagementRecord, FieldClassification } from "../src/calculator/shared.js";
 
 /* the standard invariant-position equality trick: T and U must be the SAME
    type, not merely assignable to one another in one direction */
