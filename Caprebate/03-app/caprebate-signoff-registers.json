@@ -5,7 +5,7 @@
   "_entry_shapes_in_use": "Two, and the second exists because of a tooling limit recorded in COORDINATES: a row in the register's Appendix 3 index table, or a prose note declaring an entry. A row cannot be added to an existing Monday table through the document API, so every entry added after a register's table was built is declared in prose beside it. SV-S7, SV-S8, SDP-L3, SDP-V3, SDP-L4, SDP-L5, SDP-P5 to SDP-P8 and SDP-V4 are all of that second kind. Since 15 September 2026 (Phase 132d) every entry code in all three registers carries its register's prefix - SV- for FOR THE SURVEYOR, ACC- for FOR THE ACCOUNTANT, SDP- for FOR THE SOLICITOR, THE DPO AND THE DEVELOPER - in the registers themselves and in the refs here; the check matches board ids and counts, never a ref's code.",
   "version": "1.7",
   "written": "5 November 2026",
-  "writtenBy": "Phase 161g (three entries added: the legal review pack, the outside services list and the live legal pages switch; two mentions). Phase 153c (two entries added: SDP-P41 and SDP-P42, built on our recommendation for the data protection officer to check). Phase 153b (four entries added: ACC-A17 to ACC-A20, tax-adviser switches twenty-six to twenty-nine). Phase 153a (one entry added: ACC-A16, the twenty-fifth tax-adviser switch). Phase 151d wrote v1.3 (the register files moved to 00-START-HERE/hub/ when monday.com was dropped; no entry changed). Phase 146i wrote v1.2, Phase 146h v1.1, Phase 146g v1.0",
+  "writtenBy": "6 November 2026 (one mention added: the developer question pack). Phase 161g (three entries added: the legal review pack, the outside services list and the live legal pages switch; two mentions). Phase 153c (two entries added: SDP-P41 and SDP-P42, built on our recommendation for the data protection officer to check). Phase 153b (four entries added: ACC-A17 to ACC-A20, tax-adviser switches twenty-six to twenty-nine). Phase 153a (one entry added: ACC-A16, the twenty-fifth tax-adviser switch). Phase 151d wrote v1.3 (the register files moved to 00-START-HERE/hub/ when monday.com was dropped; no entry changed). Phase 146i wrote v1.2, Phase 146h v1.1, Phase 146g v1.0",
   "board": 18422317809,
   "awaitingLabel": "Built - awaiting sign-off",
   "_boardIds": "A board id looks exactly like an item id, and every register's Appendix 3 opens by naming the board. These are boards, and the check skips them rather than asking anybody to classify them as entries.",
@@ -985,6 +985,10 @@
         {
           "id": "13475962901",
           "why": "Phase 161g's section names the accessibility test item (Ready - Lakhbir action, owner Developer). Not an entry."
+        },
+        {
+          "id": "13486597256",
+          "why": "The 6 November 2026 note names the developer question pack's item (Ready - Lakhbir action, owner Developer): waiting on Lakhbir to send it and on the developer's answers, not a sign-off. Not an entry."
         }
       ]
     }

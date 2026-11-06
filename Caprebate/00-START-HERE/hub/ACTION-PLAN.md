@@ -1202,6 +1202,11 @@ Vercel Blob. The handover of every account, key and switch is Phase 146g
 (item 13104163090). The developer pack of 29 Oct 2026 is
 ~/Downloads/Cap-Rebate-developer-pack.zip. Open items: the backup question
 for the host (12949133180) and cyber security (12552681921).
+ADDED 6 NOV 2026: the developer question pack (06-commercial-and-
+governance/Developer question pack (after the audit, 5 Nov 2026).docx,
+board 13486597256) asks the developer D2 and D5 to D12, which are this
+phase's choices. Read his answers first; where none has come back, build
+our recommendation from the pack and say so in the record.
 
 BUILD
 1. A live start that is not the test website: no demo, seed or test
