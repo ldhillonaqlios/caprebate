@@ -514,6 +514,13 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     offered, else Paris; keys in Vercel's encrypted settings. Phase 161h was
     rewritten for it. No VPS, systemd unit, proxy or firewall is built;
     161c's systemd key store stays in the code, unused.
+  THE STRUCTURE (Lakhbir, 6 Nov 2026: "make a change on one thing without
+    breaking others"): one application split into modules with front doors,
+    one-way dependencies, one owner per table, versioned rules, each with a
+    check, built by Phases 161h1 to 161m (09-app/ARCHITECTURE.md). The
+    database stays SQLite on Turso; it is not ported to Postgres (441
+    triggers and 524 calls would change at once). Look again only if Turso
+    fails the DPO's checks; then Postgres in London, one module at a time.
 
   WHATSAPP - BY MANUAL UPLOAD, WITH PHOTOS (Lakhbir, 5 Oct 2026: "go with
     manual upload, keep photos"). Staff talk to clients on the WhatsApp phone;
@@ -1281,6 +1288,11 @@ BUILD
    switches that stay off, the legal approval, Vercel Pro bought, and "run
    the sweep (Phase 162) before the first client".
 
+10. THE DATABASE STAYS SQLITE (ADDED 6 NOV 2026, 09-app/ARCHITECTURE.md
+   section 2): build the live database as a new Turso database (London if
+   offered, else Paris), with the same migrations. Do not port to
+   Postgres: that would rewrite 441 triggers and all 524 database calls.
+
 ACCEPT
 - A preview of the live project, built from this branch with example keys
   and an empty database in its chosen region, starts with none of the test
@@ -1290,7 +1302,104 @@ ACCEPT
 - The postcode lookup answers from where item 4 put the table.
 - All four suites pass.
 - NEXT: run the sweep (Phase 162) now, out of order, before go-live; it
-  renumbers itself and stays last. Phases 161i to 161k follow after go-live.
+  renumbers itself and stays last. Phases 161h1 to 161m follow after go-live.
+```
+
+
+## PHASE 161h1 — The module map and the boundary check: count today's breaks, then refuse any new one (no code moves)
+
+ **Model: Opus.** Board item 13486965861. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. This phase puts the walls' alarm in before any wall moves. Run it after go-live, first of the after-go-live phases.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: 09-app/ARCHITECTURE.md (read it first: it is the plan
+every phase from here builds to). The business code is one tangle: 43 files
+in src/web reach each other, 385 imports cross business areas, SQL sits in
+105 files. tools/lint-paths.cjs already reads every import with the
+TypeScript compiler; tools/lint-sql.cjs already reads the SQL text.
+
+BUILD
+1. THE MODULE MAP: a data file (09-app/backend/architecture/modules.json)
+   giving every file under src/ one area (core, shared, integrations,
+   public-site, assessment, portal, crm, claims, survey, finance,
+   compliance, admin), and its kind (page, logic, data, routes, other).
+   Every file must be in it; a new file with no area fails the check.
+2. THE TABLE OWNERS: every table in the migrations given one owning module
+   (architecture/tables.json); a new migration's table with no owner fails.
+3. THE BOUNDARY CHECK (tools/boundaries.cjs, in npm run check after
+   lint-paths): rules 1 to 4 of ARCHITECTURE.md - a module imports another
+   only through its front door; no import cycle between modules (report
+   the strongly connected groups); only the owner's data file runs SQL on
+   a table; pages hold no SQL and logic holds no HTML or SQL. Until a
+   module has a front door, its files count as breaks, not errors.
+4. THE RATCHET: today's breaks written to architecture/baseline.json, by
+   rule and module. The check fails on any break not in the baseline, and
+   when a module's count goes down it tells you to lower the baseline (it
+   may only go down). --self-test plants one break of each rule and each
+   must fail.
+5. Print the counts in the record (by module and rule) and add the
+   command to COORDINATES' list of checks and to GitHub's fresh-copy
+   check.
+
+ACCEPT
+- npm run check runs the boundary check; it is green on main with the
+  baseline; a planted new break of each rule turns it red; the baseline
+  can only go down.
+- No file moves and no behaviour changes: all four suites give the same
+  figures as before.
 ```
 
 
@@ -1388,6 +1497,12 @@ BUILD (in Caprebate/09-app/backend/src/)
    04-phase-work/phase3 and phase9, the site harness (APP_SRC in
    03-app/caprebate-regression.cjs) and npm run lint:paths follow the move.
 
+THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
+Phase 161h1): each module this phase moves gets its front door (index.ts),
+its data.ts (the only file running SQL on the tables it owns), pages with
+no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
+zero and the baseline is lowered to match; no new break anywhere.
+
 ACCEPT
 - The route list and the pass list are unchanged; the served CSS is the
   same, byte for byte; the test website's preview works.
@@ -1482,6 +1597,12 @@ BUILD (in Caprebate/09-app/backend/src/modules/)
 3. Big files split by what they do as they move (crm.ts about 2,200 lines,
    documents.ts about 2,000), into the routes / pages / repo / permissions
    pattern.
+
+THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
+Phase 161h1): each module this phase moves gets its front door (index.ts),
+its data.ts (the only file running SQL on the tables it owns), pages with
+no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
+zero and the baseline is lowered to match; no new break anywhere.
 
 ACCEPT
 - The route list and the pass list are unchanged; sign in on the preview as
@@ -1578,10 +1699,198 @@ BUILD
 4. Tell the developer (ITRoadway) the new map: add it to the 161h runbook
    and the 146g handover.
 
+THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
+Phase 161h1): each module this phase moves gets its front door (index.ts),
+its data.ts (the only file running SQL on the tables it owns), pages with
+no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
+zero and the baseline is lowered to match; no new break anywhere.
+
 ACCEPT
 - src/web/ is gone; the route list and the pass list are unchanged; every
   check that names a path still passes; the preview works.
 ```
+
+## PHASE 161l — Undo the tangle: modules depend one way, events in place of upward imports, permissions per module
+
+ **Model: Opus.** Board item 13486969371. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. After 161k every module has a front door; this phase removes the loops between them, so a change in one module cannot reach round into another.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: after 161h1 to 161k, every module is behind its front
+door and the boundary check's counts for rules 1, 3 and 4 are zero. What
+is left is rule 2: modules still depend on each other in both directions
+(CRM and the portal, claims and survey were the worst on 6 Nov 2026), and
+authz.ts holds all 130 actions in one table.
+
+BUILD
+1. THE ORDER: core, shared, integrations, then assessment, claims, survey,
+   finance, compliance, with crm, portal, public-site and admin on top
+   (ARCHITECTURE.md rule 2). Write it into architecture/modules.json; the
+   boundary check refuses an import that goes the wrong way.
+2. EVENTS for every upward need: a small in-process list (core/events.ts)
+   where a module announces what happened ("survey finished", "letter
+   signed", "invoice paid") and others listen. Each announcement and each
+   listener's outcome goes to the audit log. Run in the same transaction
+   as the change that caused it, so nothing is half done.
+3. PERMISSIONS PER MODULE: each module declares its own actions
+   (actions.ts) and core/authz.ts puts them together; authorise() is
+   unchanged and every existing permission test still passes.
+4. No cycle between modules: the check's rule 2 count is zero and the
+   baseline goes to zero for every rule.
+
+ACCEPT
+- The boundary check reports zero breaks of every rule, and its self-test
+  still fails each planted break.
+- Every listener has a test that it runs, and one that a failure in it
+  undoes the change that caused it.
+- All four suites pass with the same figures (plus the new tests).
+```
+
+
+## PHASE 161m — Rules as versioned data: rules registers, the engine's version, and versions on every sealed result
+
+ **Model: Opus.** Board item 13486967146. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. Changing a tax rule must never quietly change a result a client has already been given.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: the tax readings and switches are frozen constants in
+code (money-readings.ts, pack-legal.ts LEGAL_READINGS, the 22 "enabled:
+false" switches, the engine's CB_ modules); a rulebook's version is only
+its filename (case-stamp.ts); the engine package is still 0.1.0, and
+claim_figures.a_engine_version exists but nothing makes it change.
+
+BUILD
+1. A RULES REGISTER in each module that has rules (logic/rules.ts): every
+   reading and switch with an id, a version, the date it takes effect
+   from, who approved it (the tax adviser, the surveyor, the DPO), and its
+   value. The existing constants become entries; nothing changes value.
+2. THE ENGINE'S VERSION: semver in 09-app/engine/package.json, raised by
+   every change to src/calculator (engine/tools/verify-page.cjs fails a
+   calculator change with the same version), and a change log beside it.
+3. VERSIONS ON EVERY RESULT: a sealed estimate, a survey pack, a report
+   and an invoice record the engine version and the version of each rule
+   they used (a migration adds what is missing). A re-run shows what
+   changed and why. Old results keep their figures.
+4. AN ADMIN PAGE listing the rules in force, their versions, dates and
+   approvers, read-only (changing a rule is still a code change with its
+   tests, reviewed in a pull request).
+5. Each rule tested both ways (on and off, old version and new); a test
+   that every sealed result carries its versions.
+
+ACCEPT
+- A planted change to one rule's value without a new version fails a test;
+  a planted calculator change without a new engine version fails
+  verify-page.
+- A result sealed before a rule change shows the same figure after it.
+- All four suites pass with the same figures (plus the new tests).
+```
+
 
 ## PHASE 162 — Sweep and stress-test (the recurring one, always last)
 

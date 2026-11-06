@@ -13884,3 +13884,21 @@ NOT DONE      Buying Vercel Pro - BLOCKED on Lakhbir (spending) - board 13486923
               The server-only documents brought up to date - BUILDABLE - Phase 161h item 3.
 NOTHING LEFT  beyond those lines.
 ```
+
+## Planning, 6 November 2026 — the target structure: change one thing without breaking others
+
+**ACTIONS AND OUTCOMES.** Planning, 6 Nov 2026: Lakhbir asked for the best structure for the database, the hosting and the code, so "we can make a change on one thing without breaking others". The code was measured: 43 business files reach each other, 385 imports cross business areas, SQL is written in 105 files, and the rules are constants with no versions. The answer is in 09-app/ARCHITECTURE.md: hosting on Vercel (test and live projects); the database stays SQLite on Turso (moving to Postgres would change 441 triggers and 524 calls at once); one application split into modules with front doors, one-way dependencies, one owner per table, screens with no rules or SQL, and versioned rules, each rule with an automatic check, reached by a ratchet that refuses any new break. Three new phases (161h1 the check, 161l the tangle undone, 161m versioned rules), with 161h and 161i to 161k amended. The developer question pack's D15 asks Naeem to agree it.
+
+- **Measured, not assumed** (a read-only map of 09-app/backend): 289 files and 114,559 lines in src/, 214 of them in src/web; fan-in db.ts 125, authz.ts 117; one strongly connected group of 43 web files and 25 mutual pairs; 385 of 1,925 imports cross areas (claims to assessment 29, crm to claims 28, portal and crm 27 each way); 524 db calls in 105 files, `claims` touched from 52; 122 migrations, 197 tables, 441 triggers; 22 "enabled: false" switches; a rulebook's version only its filename; the engine at 0.1.0. What already works: the engine package behind one file, db.ts as the one SQL gate, http.ts as the one network caller, app.ts built from its dependencies, authorise() as the one permission check.
+- **Checked:** Neon offers Postgres in London (aws-eu-west-2), kept as the fallback; Turso's location list needs an account (161h checks it).
+- **Written:** 09-app/ARCHITECTURE.md (committed: it holds no business document or client data). ACTION-PLAN.md: phases 161h1, 161l and 161m in the copy-paste format; 161h item 10 (the database stays SQLite) and its last line; 161i, 161j and 161k each with the boundary check paragraph; a DECIDED entry. The run sheet: the same seven phases, each heading, intro and block checked equal to the plan. Board and tracker: 13486965861, 13486969371 and 13486967146 new (Ready - Claude can build); notes on 161h to 161k. OneDrive: the developer question pack's D15 rewritten for the structure.
+
+```
+DONE          The target structure decided and written (09-app/ARCHITECTURE.md), with the measurements;
+              three new phases and four amended, in the plan and on the run sheet; board and tracker rows;
+              the developer asked to agree it (D15).
+NOT DONE      Building it - BUILDABLE - Phases 161h1, 161i to 161k, 161l and 161m, in ACTION-PLAN.md and on
+              the run sheet, after go-live.
+              The developer's view of the structure - BLOCKED on Naeem's answer to D15 (board 13486597256).
+NOTHING LEFT  beyond those lines.
+```
