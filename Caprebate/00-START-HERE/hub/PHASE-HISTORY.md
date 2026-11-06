@@ -13902,3 +13902,21 @@ NOT DONE      Building it - BUILDABLE - Phases 161h1, 161i to 161k, 161l and 161
               The developer's view of the structure - BLOCKED on Naeem's answer to D15 (board 13486597256).
 NOTHING LEFT  beyond those lines.
 ```
+
+## Planning, 6 November 2026 — the order to go live: everything Claude can build runs first
+
+**ACTIONS AND OUTCOMES.** Planning, 6 Nov 2026: Lakhbir asked "review all the phases see exactly what can be run before going live, restructure them". Every phase left (161h, 161h1, 161i to 161m, 162) was read for what it needs. None of 161h to 161m waits on a person; going live waits on people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro and the other sign-offs). So all seven now run before go-live, in order, while the people work; then the sweep, out of order; then a new Phase 161n goes live once its gate is open; then the sweep again before the first client. The numbers are unchanged, because the order still follows the page.
+
+- **Read, phase by phase:** 161h builds the live set-up and proves it on a preview; only making the live project on Pro needs a purchase, so that part moves to 161n if Pro is not bought (161h item 11). 161h1 adds a check and moves no code. 161i to 161k move code by business area; 161l removes the loops; 161m versions the rules. All keep the website working and every test green, and none needs an answer from anyone. Doing them before go-live is safer (no real client on the website while code moves), the developer learns the final layout once, and 161m adds versions before any real result exists, so nothing old needs them filled in.
+- **Written:** ACTION-PLAN.md: THE ORDER paragraph in the blocks of 161h to 161m, each with its NEXT; an Order line in each intro; 161h item 11 (no Pro yet) and its NEXT; the new Phase 161n (the gate of eleven lines, then the switch-on and the checks of the live website); the sweep's number paragraph (out of order after 161m, and again after 161n); a DECIDED entry, THE ORDER TO GO LIVE; the two queue rows in section 6. 09-app/ARCHITECTURE.md: the phase table and why this order. The run sheet: the same, block for block, and its sweep block brought level with the plan (it still said PHASE 161). Board and tracker: 13488910486 new (Phase 161n, Ready - Lakhbir action, owner Lakhbir, because its gate is people's work); 161i to 161k renamed "before go-live"; dated notes on 161h to 161m and on Vercel Pro (13486923814). OneDrive: the developer question pack and its zip say the regroup now runs before go-live.
+
+```
+DONE          Every phase left read for what it needs; 161h to 161m moved before go-live, in order; the new
+              Phase 161n (go live) with its gate; the sweep told when to run; plan, run sheet, board, tracker,
+              ARCHITECTURE.md and the developer pack say the same.
+NOT DONE      The gate - BLOCKED on people, listed in Phase 161n (Vercel Pro, the ICO number, the solicitor
+              and DPO approvals, the DPO appointment, the telephone decision, the safeguards and retention,
+              the engagement letter, the register sign-offs, the live keys, the developer's answers).
+              Phases 161h to 161m - BUILDABLE - next is 161h.
+NOTHING LEFT  beyond those lines.
+```
