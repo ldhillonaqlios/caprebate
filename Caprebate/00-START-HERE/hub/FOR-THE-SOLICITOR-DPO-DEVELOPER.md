@@ -550,6 +550,10 @@ For the developer, from the ITRoadway audit's third finding (forms protected by 
 
 **For the developer.** Board item 13475983553. The legal pages can be switched on for the live website with the setting CAPREBATE_LEGAL_PAGES=on (separate from the test website's switch). Switch it on only once every page is approved. Until a page is approved, it shows its Draft line. Two facts are yours to give: where the live host keeps the website, the database and uploaded documents (board item 13475981923, for Phase 161h), and an accessibility test with its date (board item 13475962901). The full record is in PHASE HISTORY, Phase 161g.
 
+## Recorded 6 November 2026 · The developer question pack, after the audit
+
+**For the developer.** Board item 13486597256 (waiting on Lakhbir to send it; not a sign-off, so not an entry). A Word document in OneDrive, **06-commercial-and-governance/Developer question pack (after the audit, 5 Nov 2026).docx**, written for Naeem at ITRoadway. Part 1 shows each finding of his audit and where it stands, with the pull request that fixed it (73, 74, 76, 77, 78, 79, 80 and 82). Part 2 asks twenty questions, each with our recommendation: D1 to D4 check the fixes (the parked package upgrades, the key store on the server, the single-use token list, the status page); D5 to D12 are the live server's choices for Phase 161h (the data centre, the database, the document store, backups, who can run the server, the web server and email records, the background jobs, the postcode table); D13 and D14 are going live (the legal pages switch, an accessibility test); D15 to D20 are the code after go-live (the regroup, the notes in the code, the home-made tools, the lock file, taking over upkeep, WordPress for marketing pages). D8, D9 and D18 are Word questions 155, 157 and 286. Part 3 lists what is still to do and who does it. Phase 161h reads his answers first.
+
 ## Appendix 1 — what is NOT in this register, and why
 
  **This register covers everything on our project board that waits on a solicitor, the data protection officer, the director or a developer, and nothing else.**
