@@ -505,6 +505,23 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     CB_VOA_FEE_SCALE table and its switches stay off; older text saying
     they wait on "the VOA licence" is history - they wait on the surveyor.
 
+  THE LIVE WEBSITE IS HOSTED ON VERCEL (Lakhbir, 6 Nov 2026, on security:
+    "lets keep it as vercel"). It replaces his 29 Oct 2026 decision to host
+    on a Hostinger VPS, which the ITRoadway audit never asked for (it says
+    nothing about hosting). A live Vercel project apart from the test one,
+    on the Pro plan (the free plan is non-commercial only), functions and
+    the document store in London (lhr1), the database on Turso in London if
+    offered, else Paris; keys in Vercel's encrypted settings. Phase 161h was
+    rewritten for it. No VPS, systemd unit, proxy or firewall is built;
+    161c's systemd key store stays in the code, unused.
+  THE STRUCTURE (Lakhbir, 6 Nov 2026: "make a change on one thing without
+    breaking others"): one application split into modules with front doors,
+    one-way dependencies, one owner per table, versioned rules, each with a
+    check, built by Phases 161h1 to 161m (09-app/ARCHITECTURE.md). The
+    database stays SQLite on Turso; it is not ported to Postgres (441
+    triggers and 524 calls would change at once). Look again only if Turso
+    fails the DPO's checks; then Postgres in London, one module at a time.
+
   WHATSAPP - BY MANUAL UPLOAD, WITH PHOTOS (Lakhbir, 5 Oct 2026: "go with
     manual upload, keep photos"). Staff talk to clients on the WhatsApp phone;
     to keep a conversation they export that chat and upload it to the
@@ -1137,9 +1154,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161h — The production hosting kit for the Hostinger VPS, and the runbook for the developer
+## PHASE 161h — Production on Vercel: the live project in London, its keys, database, files and timers, and the runbook for the developer
 
- **Model: Opus.** Board item 13462576350. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Lakhbir, 29 Oct 2026: Cap Rebate is hosted on its own Hostinger VPS, with no WordPress; ITRoadway test it, secure it and host it. The audit (2 Nov 2026) agrees: keep it as a custom application.
+ **Model: Opus.** Board item 13462576350. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Rewritten 6 November 2026 for Vercel.** **Why:** Lakhbir, 6 Nov 2026, on security: "lets keep it as vercel". This replaces his decision of 29 Oct 2026 to host on a Hostinger VPS. On Vercel nobody runs a server (no operating system to patch, no SSH, no firewall or certificates to look after), every change is built from GitHub where the fresh-copy check runs, and a bad release is rolled back in one click. The audit (2 Nov 2026) said nothing about where to host; it said keep the system custom, not WordPress, and that still stands.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1196,66 +1213,193 @@ anything larger goes in a new lettered phase before the sweep; anything that
 needs a person goes in the Word questions document (AMENDMENT 2) and the
 right register.
 
-WHAT IS THERE NOW: the test website runs on Vercel (api/index.mjs,
-vercel.json), the database is Turso (libsql) and survey photos are in
-Vercel Blob. The handover of every account, key and switch is Phase 146g
-(item 13104163090). The developer pack of 29 Oct 2026 is
-~/Downloads/Cap-Rebate-developer-pack.zip. Open items: the backup question
-for the host (12949133180) and cyber security (12552681921).
-ADDED 6 NOV 2026: the developer question pack (06-commercial-and-
-governance/Developer question pack (after the audit, 5 Nov 2026).docx,
-board 13486597256) asks the developer D2 and D5 to D12, which are this
-phase's choices. Read his answers first; where none has come back, build
-our recommendation from the pack and say so in the record.
+WHAT IS THERE NOW: the test website runs on Vercel (project caprebate-test,
+api/index.mjs, vercel.json), its functions in the US (iad1), its database on
+Turso in AWS us-east-1 and its survey photos and documents in a private
+Vercel Blob store in the US. Its keys come from the project's settings
+(secretsFromEnvironment, the names in TEST_DEPLOY_KEYS). An outside timer
+(cron-job.org, Lakhbir's account) wakes it every five minutes to read email
+replies. The handover of every account, key and switch is Phase 146g (item
+13104163090). The developer question pack (06-commercial-and-governance/
+Developer question pack (after the audit, 5 Nov 2026).docx, board
+13486597256) asks the developer D2 and D5 to D12 about the live set-up:
+read his answers first; where none has come back, build our recommendation
+below and say so in the record. Open items: the backup question (Word
+question 155) and who can run the website (Word question 157).
 
 BUILD
-1. A live start that is not the test website: no demo, seed or test
-   switches; the 161c key store; the 161g "legal" setting; real email.
-2. Where data lives on the VPS. Write the choice as a question in the Word
-   questions document with our recommendation, and build our
-   recommendation behind the existing interfaces, chosen by a setting: the
-   database (an SQLite file on the VPS, or keep Turso) and the photos and
-   documents (on the VPS's disk, or a UK object store). Client documents
-   are personal data: say where each copy and each backup is held.
-3. Every scheduled job (sending email, reading the mailbox and the rest:
-   list them from the code) runs on the server, not on a visit, as a
-   systemd timer or the app's own scheduler, with a log line each run.
-4. The deploy kit in Caprebate/09-app/deploy/: a systemd unit (its own user,
-   the key file as a credential: LoadCredential= and CAPREBATE_PRODUCTION=1,
-   as 09-app/deploy/KEY-FILE-SETUP.md (Phase 161c) sets out, and the same
-   lines on every timer that runs node src/cli.ts), a reverse proxy with TLS for
-   caprebate.co.uk (Caddy or nginx), the firewall rules, Node 24, log
-   rotation, nightly encrypted backups of the database and the files to a
-   second place, a restore script, and an uptime check on /api/health.
-5. The runbook for the developer: set up, deploy an update, roll back,
-   restore a backup, renew TLS, rotate a key. Its set-up and key steps start
-   from 09-app/deploy/KEY-FILE-SETUP.md (Phase 161c: the key file root's and
-   600 in /etc/caprebate, handed over by systemd; a start that says NOT
-   STARTED names what is wrong). Update the 146g handover to point at it.
-6. The go-live checklist: DNS, email sending records (SPF, DKIM, DMARC),
-   the switches that stay off, the legal approval, and "run the sweep
-   (Phase 162) before the first client".
-7. ADDED BY PHASE 161g (5 Nov 2026): the privacy policy names the live
-   hosting company, the database and the document store as "not yet
-   confirmed" (OUTSIDE_SERVICES in src/outside-services.ts: its rows for
-   the hosting company, the database and the document store). When item 2
-   decides where each lives, write it there: the company, the place
-   (country, and the data centre if known), and outsideUk true, false or
-   'unknown'; anything not in the UK keeps the transfer basis "to be
-   confirmed by our data protection officer". Then
-   reprint attachment 9 of the legal review pack (06-commercial-and-
-   governance/Legal review pack (Phase 161g)) and note it on board item
-   13475981923. The live start sets CAPREBATE_LEGAL_PAGES=on only after the
-   solicitor and the DPO have approved every page (board item 13475983553);
-   the go-live checklist says so.
+1. A LIVE PROJECT, apart from the test one: a second Vercel project for the
+   live website (caprebate.co.uk), from the same repository, with none of
+   the test website's switches (no seed, no demo logins, no test letter or
+   signing, no STAFF_EXCEPT_INVENTED, no notices test banner, form tokens
+   on). Its entry decides from its own settings: CAPREBATE_PRODUCTION=1,
+   and the 161g legal setting through legalPagesSetting
+   (CAPREBATE_LEGAL_PAGES=on only once every page is approved, board
+   13475983553). It deploys from main only by a deliberate promotion, not
+   on every merge (say how: a production branch, or Vercel's own promote).
+   On Vercel's Pro plan: the free plan is for non-commercial use only. The
+   purchase is Lakhbir's (board item for it).
+2. LONDON, AS FAR AS EACH SERVICE ALLOWS. The functions pinned to London
+   (lhr1, "regions" in the live project's vercel.json). The document and
+   photo store a NEW private Vercel Blob store created in lhr1 (Vercel's
+   API lists it). The database: Turso in London if Turso offers it on AWS
+   (its docs list Paris, eu-west-3, as the only European AWS place; its
+   locations API names a London "lhr"); check with the turso CLI (turso
+   group locations) and build on what is there; otherwise Paris. Write the
+   choice as a Word question for the developer and the DPO, with our
+   recommendation. Nothing of the test website's US stores is used live.
+3. THE KEYS: Vercel's encrypted project settings, read through
+   secretsFromEnvironment with the live project's own list of names (every
+   live key in SECRET_KEYS, none of the test-only ones). This answers the
+   audit's section 4 row 2 on Vercel; 161c's systemd credentials stay in
+   the code for a server, unused. With CAPREBATE_PRODUCTION=1 a missing
+   required key stops the start with a plain message naming it, never its
+   value. Update 09-app/deploy/KEY-FILE-SETUP.md, secrets.example.env, the
+   Developer Spec's key store section and the 146g handover to say the live
+   website is on Vercel and how its keys are set.
+4. THE BIG DATA FILES. The 292 MB postcode table (CAPREBATE_POSTCODE_DB), the
+   land boundary store (CAPREBATE_INSPIRE_STORE_DIR) and the OSTN15 file are
+   too big, or need a disk, that a Vercel function does not have. Load the
+   postcode table into the database (or another store the function can
+   read), with the quarterly refresh as a command; say where each of the
+   three lives and test the lookups against it.
+5. EVERY SCHEDULED JOB (sending email, reading the mailbox, the clean-up
+   jobs: list them from the code) runs on a timer the live project owns:
+   Vercel Cron on Pro, each call carrying its own secret word (as the reply
+   timer's REPLY_TIMER_TOKEN does), with a log line each run. Say whether
+   cron-job.org stays for the test website.
+6. BACKUPS AND RESTORE: the database and the document store copied every
+   night to a second place (say which, and its country), encrypted, kept
+   for a set time; a restore script, tried on a copy. The holding folder of
+   unredacted uploads is left out (Word question 155).
+7. THE PRIVACY POLICY'S HOSTING LINES (OUTSIDE_SERVICES in
+   src/outside-services.ts: its rows for the hosting company, the database
+   and the document store). Write what item 2 decides: the company, the
+   place, and outsideUk; anything not in the UK keeps the transfer basis "to
+   be confirmed by our data protection officer". Then reprint attachments 1
+   and 9 of the legal review pack (06-commercial-and-governance/Legal review
+   pack (Phase 161g)) and note it on board item 13475981923.
+8. THE RUNBOOK for the developer: set up the live project, set its keys and
+   domain, deploy and promote a release, roll back, restore a backup, rotate
+   a key, add a team member (with two-step sign-in on Vercel and GitHub).
+   Name everyone who can change the live project (Word question 157).
+9. THE GO-LIVE CHECKLIST: the domain at IONOS pointed at Vercel, email
+   sending records (SPF, DKIM, DMARC), an uptime check on /api/health, the
+   switches that stay off, the legal approval, Vercel Pro bought, and "run
+   the sweep (Phase 162) before the first client".
+
+10. THE DATABASE STAYS SQLITE (ADDED 6 NOV 2026, 09-app/ARCHITECTURE.md
+   section 2): build the live database as a new Turso database (London if
+   offered, else Paris), with the same migrations. Do not port to
+   Postgres: that would rewrite 441 triggers and all 524 database calls.
 
 ACCEPT
-- The kit starts the app in a clean Linux container (Ubuntu, Node 24) from
-  a fresh clone with an example key file: /api/health is {"ok":true}, a
-  backup is made, the database is wiped and the restore brings it back.
+- A preview of the live project, built from this branch with example keys
+  and an empty database in its chosen region, starts with none of the test
+  switches: /api/health is {"ok":true}, sign-in needs a second step for
+  staff, the legal pages follow CAPREBATE_LEGAL_PAGES, a timer call without
+  its word is refused, and a backup is made and restored on a copy.
+- The postcode lookup answers from where item 4 put the table.
 - All four suites pass.
 - NEXT: run the sweep (Phase 162) now, out of order, before go-live; it
-  renumbers itself and stays last. Phases 161i to 161k follow after go-live.
+  renumbers itself and stays last. Phases 161h1 to 161m follow after go-live.
+```
+
+
+## PHASE 161h1 — The module map and the boundary check: count today's breaks, then refuse any new one (no code moves)
+
+ **Model: Opus.** Board item 13486965861. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. This phase puts the walls' alarm in before any wall moves. Run it after go-live, first of the after-go-live phases.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: 09-app/ARCHITECTURE.md (read it first: it is the plan
+every phase from here builds to). The business code is one tangle: 43 files
+in src/web reach each other, 385 imports cross business areas, SQL sits in
+105 files. tools/lint-paths.cjs already reads every import with the
+TypeScript compiler; tools/lint-sql.cjs already reads the SQL text.
+
+BUILD
+1. THE MODULE MAP: a data file (09-app/backend/architecture/modules.json)
+   giving every file under src/ one area (core, shared, integrations,
+   public-site, assessment, portal, crm, claims, survey, finance,
+   compliance, admin), and its kind (page, logic, data, routes, other).
+   Every file must be in it; a new file with no area fails the check.
+2. THE TABLE OWNERS: every table in the migrations given one owning module
+   (architecture/tables.json); a new migration's table with no owner fails.
+3. THE BOUNDARY CHECK (tools/boundaries.cjs, in npm run check after
+   lint-paths): rules 1 to 4 of ARCHITECTURE.md - a module imports another
+   only through its front door; no import cycle between modules (report
+   the strongly connected groups); only the owner's data file runs SQL on
+   a table; pages hold no SQL and logic holds no HTML or SQL. Until a
+   module has a front door, its files count as breaks, not errors.
+4. THE RATCHET: today's breaks written to architecture/baseline.json, by
+   rule and module. The check fails on any break not in the baseline, and
+   when a module's count goes down it tells you to lower the baseline (it
+   may only go down). --self-test plants one break of each rule and each
+   must fail.
+5. Print the counts in the record (by module and rule) and add the
+   command to COORDINATES' list of checks and to GitHub's fresh-copy
+   check.
+
+ACCEPT
+- npm run check runs the boundary check; it is green on main with the
+  baseline; a planted new break of each rule turns it red; the baseline
+  can only go down.
+- No file moves and no behaviour changes: all four suites give the same
+  figures as before.
 ```
 
 
@@ -1353,6 +1497,12 @@ BUILD (in Caprebate/09-app/backend/src/)
    04-phase-work/phase3 and phase9, the site harness (APP_SRC in
    03-app/caprebate-regression.cjs) and npm run lint:paths follow the move.
 
+THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
+Phase 161h1): each module this phase moves gets its front door (index.ts),
+its data.ts (the only file running SQL on the tables it owns), pages with
+no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
+zero and the baseline is lowered to match; no new break anywhere.
+
 ACCEPT
 - The route list and the pass list are unchanged; the served CSS is the
   same, byte for byte; the test website's preview works.
@@ -1447,6 +1597,12 @@ BUILD (in Caprebate/09-app/backend/src/modules/)
 3. Big files split by what they do as they move (crm.ts about 2,200 lines,
    documents.ts about 2,000), into the routes / pages / repo / permissions
    pattern.
+
+THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
+Phase 161h1): each module this phase moves gets its front door (index.ts),
+its data.ts (the only file running SQL on the tables it owns), pages with
+no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
+zero and the baseline is lowered to match; no new break anywhere.
 
 ACCEPT
 - The route list and the pass list are unchanged; sign in on the preview as
@@ -1543,10 +1699,198 @@ BUILD
 4. Tell the developer (ITRoadway) the new map: add it to the 161h runbook
    and the 146g handover.
 
+THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
+Phase 161h1): each module this phase moves gets its front door (index.ts),
+its data.ts (the only file running SQL on the tables it owns), pages with
+no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
+zero and the baseline is lowered to match; no new break anywhere.
+
 ACCEPT
 - src/web/ is gone; the route list and the pass list are unchanged; every
   check that names a path still passes; the preview works.
 ```
+
+## PHASE 161l — Undo the tangle: modules depend one way, events in place of upward imports, permissions per module
+
+ **Model: Opus.** Board item 13486969371. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. After 161k every module has a front door; this phase removes the loops between them, so a change in one module cannot reach round into another.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: after 161h1 to 161k, every module is behind its front
+door and the boundary check's counts for rules 1, 3 and 4 are zero. What
+is left is rule 2: modules still depend on each other in both directions
+(CRM and the portal, claims and survey were the worst on 6 Nov 2026), and
+authz.ts holds all 130 actions in one table.
+
+BUILD
+1. THE ORDER: core, shared, integrations, then assessment, claims, survey,
+   finance, compliance, with crm, portal, public-site and admin on top
+   (ARCHITECTURE.md rule 2). Write it into architecture/modules.json; the
+   boundary check refuses an import that goes the wrong way.
+2. EVENTS for every upward need: a small in-process list (core/events.ts)
+   where a module announces what happened ("survey finished", "letter
+   signed", "invoice paid") and others listen. Each announcement and each
+   listener's outcome goes to the audit log. Run in the same transaction
+   as the change that caused it, so nothing is half done.
+3. PERMISSIONS PER MODULE: each module declares its own actions
+   (actions.ts) and core/authz.ts puts them together; authorise() is
+   unchanged and every existing permission test still passes.
+4. No cycle between modules: the check's rule 2 count is zero and the
+   baseline goes to zero for every rule.
+
+ACCEPT
+- The boundary check reports zero breaks of every rule, and its self-test
+  still fails each planted break.
+- Every listener has a test that it runs, and one that a failure in it
+  undoes the change that caused it.
+- All four suites pass with the same figures (plus the new tests).
+```
+
+
+## PHASE 161m — Rules as versioned data: rules registers, the engine's version, and versions on every sealed result
+
+ **Model: Opus.** Board item 13486967146. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. Changing a tax rule must never quietly change a result a client has already been given.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
+(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
+OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
+pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
+2026: "we fix each thing that needs to be fixed on the audit report, as this
+needs to get to a point of production".
+
+EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
+the code before it. Plain words at grade 9 on every screen. Behaviour that
+is not named below does not change: run all four suites before you start
+and again at the end, and say any difference. Fix what is small and safe;
+anything larger goes in a new lettered phase before the sweep; anything that
+needs a person goes in the Word questions document (AMENDMENT 2) and the
+right register.
+
+WHAT IS THERE NOW: the tax readings and switches are frozen constants in
+code (money-readings.ts, pack-legal.ts LEGAL_READINGS, the 22 "enabled:
+false" switches, the engine's CB_ modules); a rulebook's version is only
+its filename (case-stamp.ts); the engine package is still 0.1.0, and
+claim_figures.a_engine_version exists but nothing makes it change.
+
+BUILD
+1. A RULES REGISTER in each module that has rules (logic/rules.ts): every
+   reading and switch with an id, a version, the date it takes effect
+   from, who approved it (the tax adviser, the surveyor, the DPO), and its
+   value. The existing constants become entries; nothing changes value.
+2. THE ENGINE'S VERSION: semver in 09-app/engine/package.json, raised by
+   every change to src/calculator (engine/tools/verify-page.cjs fails a
+   calculator change with the same version), and a change log beside it.
+3. VERSIONS ON EVERY RESULT: a sealed estimate, a survey pack, a report
+   and an invoice record the engine version and the version of each rule
+   they used (a migration adds what is missing). A re-run shows what
+   changed and why. Old results keep their figures.
+4. AN ADMIN PAGE listing the rules in force, their versions, dates and
+   approvers, read-only (changing a rule is still a code change with its
+   tests, reviewed in a pull request).
+5. Each rule tested both ways (on and off, old version and new); a test
+   that every sealed result carries its versions.
+
+ACCEPT
+- A planted change to one rule's value without a new version fails a test;
+  a planted calculator change without a new engine version fails
+  verify-page.
+- A result sealed before a rule change shows the same figure after it.
+- All four suites pass with the same figures (plus the new tests).
+```
+
 
 ## PHASE 162 — Sweep and stress-test (the recurring one, always last)
 
@@ -2219,7 +2563,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (rewritten 6 Nov 2026: Lakhbir chose Vercel over the Hostinger VPS), then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161h, before go-live (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
