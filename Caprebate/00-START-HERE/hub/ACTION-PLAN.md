@@ -505,6 +505,16 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     CB_VOA_FEE_SCALE table and its switches stay off; older text saying
     they wait on "the VOA licence" is history - they wait on the surveyor.
 
+  THE LIVE WEBSITE IS HOSTED ON VERCEL (Lakhbir, 6 Nov 2026, on security:
+    "lets keep it as vercel"). It replaces his 29 Oct 2026 decision to host
+    on a Hostinger VPS, which the ITRoadway audit never asked for (it says
+    nothing about hosting). A live Vercel project apart from the test one,
+    on the Pro plan (the free plan is non-commercial only), functions and
+    the document store in London (lhr1), the database on Turso in London if
+    offered, else Paris; keys in Vercel's encrypted settings. Phase 161h was
+    rewritten for it. No VPS, systemd unit, proxy or firewall is built;
+    161c's systemd key store stays in the code, unused.
+
   WHATSAPP - BY MANUAL UPLOAD, WITH PHOTOS (Lakhbir, 5 Oct 2026: "go with
     manual upload, keep photos"). Staff talk to clients on the WhatsApp phone;
     to keep a conversation they export that chat and upload it to the
@@ -1137,9 +1147,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161h — The production hosting kit for the Hostinger VPS, and the runbook for the developer
+## PHASE 161h — Production on Vercel: the live project in London, its keys, database, files and timers, and the runbook for the developer
 
- **Model: Opus.** Board item 13462576350. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Lakhbir, 29 Oct 2026: Cap Rebate is hosted on its own Hostinger VPS, with no WordPress; ITRoadway test it, secure it and host it. The audit (2 Nov 2026) agrees: keep it as a custom application.
+ **Model: Opus.** Board item 13462576350. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Rewritten 6 November 2026 for Vercel.** **Why:** Lakhbir, 6 Nov 2026, on security: "lets keep it as vercel". This replaces his decision of 29 Oct 2026 to host on a Hostinger VPS. On Vercel nobody runs a server (no operating system to patch, no SSH, no firewall or certificates to look after), every change is built from GitHub where the fresh-copy check runs, and a bad release is rolled back in one click. The audit (2 Nov 2026) said nothing about where to host; it said keep the system custom, not WordPress, and that still stands.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1196,63 +1206,88 @@ anything larger goes in a new lettered phase before the sweep; anything that
 needs a person goes in the Word questions document (AMENDMENT 2) and the
 right register.
 
-WHAT IS THERE NOW: the test website runs on Vercel (api/index.mjs,
-vercel.json), the database is Turso (libsql) and survey photos are in
-Vercel Blob. The handover of every account, key and switch is Phase 146g
-(item 13104163090). The developer pack of 29 Oct 2026 is
-~/Downloads/Cap-Rebate-developer-pack.zip. Open items: the backup question
-for the host (12949133180) and cyber security (12552681921).
-ADDED 6 NOV 2026: the developer question pack (06-commercial-and-
-governance/Developer question pack (after the audit, 5 Nov 2026).docx,
-board 13486597256) asks the developer D2 and D5 to D12, which are this
-phase's choices. Read his answers first; where none has come back, build
-our recommendation from the pack and say so in the record.
+WHAT IS THERE NOW: the test website runs on Vercel (project caprebate-test,
+api/index.mjs, vercel.json), its functions in the US (iad1), its database on
+Turso in AWS us-east-1 and its survey photos and documents in a private
+Vercel Blob store in the US. Its keys come from the project's settings
+(secretsFromEnvironment, the names in TEST_DEPLOY_KEYS). An outside timer
+(cron-job.org, Lakhbir's account) wakes it every five minutes to read email
+replies. The handover of every account, key and switch is Phase 146g (item
+13104163090). The developer question pack (06-commercial-and-governance/
+Developer question pack (after the audit, 5 Nov 2026).docx, board
+13486597256) asks the developer D2 and D5 to D12 about the live set-up:
+read his answers first; where none has come back, build our recommendation
+below and say so in the record. Open items: the backup question (Word
+question 155) and who can run the website (Word question 157).
 
 BUILD
-1. A live start that is not the test website: no demo, seed or test
-   switches; the 161c key store; the 161g "legal" setting; real email.
-2. Where data lives on the VPS. Write the choice as a question in the Word
-   questions document with our recommendation, and build our
-   recommendation behind the existing interfaces, chosen by a setting: the
-   database (an SQLite file on the VPS, or keep Turso) and the photos and
-   documents (on the VPS's disk, or a UK object store). Client documents
-   are personal data: say where each copy and each backup is held.
-3. Every scheduled job (sending email, reading the mailbox and the rest:
-   list them from the code) runs on the server, not on a visit, as a
-   systemd timer or the app's own scheduler, with a log line each run.
-4. The deploy kit in Caprebate/09-app/deploy/: a systemd unit (its own user,
-   the key file as a credential: LoadCredential= and CAPREBATE_PRODUCTION=1,
-   as 09-app/deploy/KEY-FILE-SETUP.md (Phase 161c) sets out, and the same
-   lines on every timer that runs node src/cli.ts), a reverse proxy with TLS for
-   caprebate.co.uk (Caddy or nginx), the firewall rules, Node 24, log
-   rotation, nightly encrypted backups of the database and the files to a
-   second place, a restore script, and an uptime check on /api/health.
-5. The runbook for the developer: set up, deploy an update, roll back,
-   restore a backup, renew TLS, rotate a key. Its set-up and key steps start
-   from 09-app/deploy/KEY-FILE-SETUP.md (Phase 161c: the key file root's and
-   600 in /etc/caprebate, handed over by systemd; a start that says NOT
-   STARTED names what is wrong). Update the 146g handover to point at it.
-6. The go-live checklist: DNS, email sending records (SPF, DKIM, DMARC),
-   the switches that stay off, the legal approval, and "run the sweep
-   (Phase 162) before the first client".
-7. ADDED BY PHASE 161g (5 Nov 2026): the privacy policy names the live
-   hosting company, the database and the document store as "not yet
-   confirmed" (OUTSIDE_SERVICES in src/outside-services.ts: its rows for
-   the hosting company, the database and the document store). When item 2
-   decides where each lives, write it there: the company, the place
-   (country, and the data centre if known), and outsideUk true, false or
-   'unknown'; anything not in the UK keeps the transfer basis "to be
-   confirmed by our data protection officer". Then
-   reprint attachment 9 of the legal review pack (06-commercial-and-
-   governance/Legal review pack (Phase 161g)) and note it on board item
-   13475981923. The live start sets CAPREBATE_LEGAL_PAGES=on only after the
-   solicitor and the DPO have approved every page (board item 13475983553);
-   the go-live checklist says so.
+1. A LIVE PROJECT, apart from the test one: a second Vercel project for the
+   live website (caprebate.co.uk), from the same repository, with none of
+   the test website's switches (no seed, no demo logins, no test letter or
+   signing, no STAFF_EXCEPT_INVENTED, no notices test banner, form tokens
+   on). Its entry decides from its own settings: CAPREBATE_PRODUCTION=1,
+   and the 161g legal setting through legalPagesSetting
+   (CAPREBATE_LEGAL_PAGES=on only once every page is approved, board
+   13475983553). It deploys from main only by a deliberate promotion, not
+   on every merge (say how: a production branch, or Vercel's own promote).
+   On Vercel's Pro plan: the free plan is for non-commercial use only. The
+   purchase is Lakhbir's (board item for it).
+2. LONDON, AS FAR AS EACH SERVICE ALLOWS. The functions pinned to London
+   (lhr1, "regions" in the live project's vercel.json). The document and
+   photo store a NEW private Vercel Blob store created in lhr1 (Vercel's
+   API lists it). The database: Turso in London if Turso offers it on AWS
+   (its docs list Paris, eu-west-3, as the only European AWS place; its
+   locations API names a London "lhr"); check with the turso CLI (turso
+   group locations) and build on what is there; otherwise Paris. Write the
+   choice as a Word question for the developer and the DPO, with our
+   recommendation. Nothing of the test website's US stores is used live.
+3. THE KEYS: Vercel's encrypted project settings, read through
+   secretsFromEnvironment with the live project's own list of names (every
+   live key in SECRET_KEYS, none of the test-only ones). This answers the
+   audit's section 4 row 2 on Vercel; 161c's systemd credentials stay in
+   the code for a server, unused. With CAPREBATE_PRODUCTION=1 a missing
+   required key stops the start with a plain message naming it, never its
+   value. Update 09-app/deploy/KEY-FILE-SETUP.md, secrets.example.env, the
+   Developer Spec's key store section and the 146g handover to say the live
+   website is on Vercel and how its keys are set.
+4. THE BIG DATA FILES. The 292 MB postcode table (CAPREBATE_POSTCODE_DB), the
+   land boundary store (CAPREBATE_INSPIRE_STORE_DIR) and the OSTN15 file are
+   too big, or need a disk, that a Vercel function does not have. Load the
+   postcode table into the database (or another store the function can
+   read), with the quarterly refresh as a command; say where each of the
+   three lives and test the lookups against it.
+5. EVERY SCHEDULED JOB (sending email, reading the mailbox, the clean-up
+   jobs: list them from the code) runs on a timer the live project owns:
+   Vercel Cron on Pro, each call carrying its own secret word (as the reply
+   timer's REPLY_TIMER_TOKEN does), with a log line each run. Say whether
+   cron-job.org stays for the test website.
+6. BACKUPS AND RESTORE: the database and the document store copied every
+   night to a second place (say which, and its country), encrypted, kept
+   for a set time; a restore script, tried on a copy. The holding folder of
+   unredacted uploads is left out (Word question 155).
+7. THE PRIVACY POLICY'S HOSTING LINES (OUTSIDE_SERVICES in
+   src/outside-services.ts: its rows for the hosting company, the database
+   and the document store). Write what item 2 decides: the company, the
+   place, and outsideUk; anything not in the UK keeps the transfer basis "to
+   be confirmed by our data protection officer". Then reprint attachments 1
+   and 9 of the legal review pack (06-commercial-and-governance/Legal review
+   pack (Phase 161g)) and note it on board item 13475981923.
+8. THE RUNBOOK for the developer: set up the live project, set its keys and
+   domain, deploy and promote a release, roll back, restore a backup, rotate
+   a key, add a team member (with two-step sign-in on Vercel and GitHub).
+   Name everyone who can change the live project (Word question 157).
+9. THE GO-LIVE CHECKLIST: the domain at IONOS pointed at Vercel, email
+   sending records (SPF, DKIM, DMARC), an uptime check on /api/health, the
+   switches that stay off, the legal approval, Vercel Pro bought, and "run
+   the sweep (Phase 162) before the first client".
 
 ACCEPT
-- The kit starts the app in a clean Linux container (Ubuntu, Node 24) from
-  a fresh clone with an example key file: /api/health is {"ok":true}, a
-  backup is made, the database is wiped and the restore brings it back.
+- A preview of the live project, built from this branch with example keys
+  and an empty database in its chosen region, starts with none of the test
+  switches: /api/health is {"ok":true}, sign-in needs a second step for
+  staff, the legal pages follow CAPREBATE_LEGAL_PAGES, a timer call without
+  its word is refused, and a backup is made and restored on a copy.
+- The postcode lookup answers from where item 4 put the table.
 - All four suites pass.
 - NEXT: run the sweep (Phase 162) now, out of order, before go-live; it
   renumbers itself and stays last. Phases 161i to 161k follow after go-live.
@@ -2219,7 +2254,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h the VPS hosting kit, then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (rewritten 6 Nov 2026: Lakhbir chose Vercel over the Hostinger VPS), then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161h, before go-live (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

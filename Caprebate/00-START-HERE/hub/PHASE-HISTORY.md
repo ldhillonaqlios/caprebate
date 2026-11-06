@@ -13866,3 +13866,21 @@ NOTHING LEFT  beyond those lines.
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Planning, 6 November 2026 — the live website is hosted on Vercel, not a Hostinger server
+
+**ACTIONS AND OUTCOMES.** Planning, 6 Nov 2026: Lakhbir asked whether the audit recommends Hostinger. It does not: the ITRoadway report says nothing about hosting; the Hostinger VPS was his own decision of 29 Oct 2026, the day before the audit. Asked about security, he chose Vercel ("lets keep it as vercel"): nobody has to run a server, every change is built from GitHub, and a bad release rolls back in one click. Phase 161h is rewritten as "Production on Vercel" (a separate live project on Pro, code and documents in London, the database on Turso in London if offered, else Paris, keys in Vercel's encrypted settings, the big data files, timers, backups, runbook, go-live checklist). The privacy policy's hosting lines, the legal review pack and the developer question pack (D2 and D5 to D12) say so. New board item: buy Vercel Pro (the free plan is non-commercial only). No code behaviour changed.
+
+- **The question.** The audit report (the Downloads copy is byte-identical to OneDrive's) has no mention of Hostinger, a VPS, Vercel or hosting. 161h's own "Why" quoted Lakhbir, 29 Oct 2026.
+- **Checked before advising.** Vercel's API lists lhr1 (London) for a new Blob store; Turso's cloud providers page lists Paris (eu-west-3) as its only European AWS place, while its locations API names a London "lhr": 161h checks with the turso CLI. Vercel's fair use rules restrict the free plan to non-commercial use.
+- **Changed.** ACTION-PLAN.md: 161h rewritten (heading, intro, block) and the same on the run sheet (heading, intro and code block checked equal); a DECIDED - DO NOT REOPEN entry; the phase table. Board and tracker: 13462576350 and 13475981923 renamed, notes; 13486923814 new (buy Vercel Pro, Lakhbir). src/outside-services.ts: the hosting company, database, document store and sign-in key lines (test/phase161g.test.ts 30 pass; plain words green). KEYS-AND-SWITCHES.md: the legal setting lives in the live Vercel project. The register's developer pack note. OneDrive only: the legal review pack's cover, attachments 1 and 9 reprinted; the developer question pack's D2 and D5 to D12 replaced (numbering unchanged).
+- **Left to 161h, in terms (its items 3 and 7).** KEY-FILE-SETUP.md, secrets.example.env, the Developer Spec's key store section and the 146g handover still describe the server set-up; 161h updates them. 161c's systemd code stays, unused.
+
+```
+DONE          The audit question answered; Vercel chosen and recorded; 161h rewritten in both places; the
+              privacy policy's hosting lines; both packs updated before sending; Vercel Pro on the board.
+NOT DONE      Buying Vercel Pro - BLOCKED on Lakhbir (spending) - board 13486923814.
+              The live project, keys, database, files, timers, backups and runbook - BUILDABLE - Phase 161h.
+              The server-only documents brought up to date - BUILDABLE - Phase 161h item 3.
+NOTHING LEFT  beyond those lines.
+```
