@@ -2,7 +2,7 @@
 
 Written 6 November 2026, after the ITRoadway audit (2 Nov 2026) and Lakhbir's question: "the ability for the
 structure to allow us to make a change on one thing without breaking others". This is the structure the phases from
-161h onwards build towards. Each rule below has a check that enforces it, so the structure cannot drift back.
+161h onwards build towards, all of them before go-live. Each rule below has a check that enforces it, so the structure cannot drift back.
 
 ## 1. Where we are (measured 6 November 2026)
 
@@ -103,13 +103,23 @@ keeps all tests green, so behaviour never changes while the walls go up.
 
 | Phase | What it does | When |
 |---|---|---|
-| 161h | The live website on Vercel; the database decision above built in | Next, before go-live |
-| 161h1 | The module map, the boundary check and its baseline (ratchet on); no code moves | After go-live, first |
-| 161i | core, shared, integrations and styles behind their doors; their count to zero | After 161h1 |
-| 161j | public-site, assessment, portal, CRM and claims as modules; the router split; their count to zero | After 161i |
-| 161k | survey, finance, compliance and admin as modules; tests by module; the notes out of the code | After 161j |
-| 161l | The tangle undone: one-way order, events in place of the upward imports, permissions per module; no cycles | After 161k |
-| 161m | Rules as versioned data: the rules registers, the engine's version, versions on every sealed result | After 161l |
+| 161h | The live website on Vercel, built and proved on a preview; the database decision above built in | Next, before go-live |
+| 161h1 | The module map, the boundary check and its baseline (ratchet on); no code moves | Before go-live, after 161h |
+| 161i | core, shared, integrations and styles behind their doors; their count to zero | Before go-live, after 161h1 |
+| 161j | public-site, assessment, portal, CRM and claims as modules; the router split; their count to zero | Before go-live, after 161i |
+| 161k | survey, finance, compliance and admin as modules; tests by module; the notes out of the code | Before go-live, after 161j |
+| 161l | The tangle undone: one-way order, events in place of the upward imports, permissions per module; no cycles | Before go-live, after 161k |
+| 161m | Rules as versioned data: the rules registers, the engine's version, versions on every sealed result | Before go-live, after 161l |
+| 162 | The sweep: every check, and the go-live gate checked | After 161m, out of order |
+| 161n | Go live: the gate (Vercel Pro, the ICO number, every legal page approved, the other sign-offs), then the live website switched on and proved | Once its gate is open |
+| 162 | The sweep again, against the live website | Before the first client |
+
+**Why this order (decided 6 Nov 2026).** Going live waits on people: the solicitor's and the data protection
+officer's approvals, the ICO number and Vercel Pro. None of 161h to 161m waits on a person, so the code is regrouped
+while they work, with no real client on the website. Moving code before there are real clients is safer, the developer
+learns the final layout once, and the sweep checks the code we actually launch. Every phase leaves the website working,
+so if the gate opens early we finish the phase in progress, run the sweep and go live; the phases left run afterwards,
+in the same order.
 
 When 161m is done: a change to (say) the finance module's invoice rules touches the finance module only; the check
 proves no other module reaches inside it; the finance tests run first; old invoices and sealed estimates keep the rules

@@ -521,6 +521,13 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     database stays SQLite on Turso; it is not ported to Postgres (441
     triggers and 524 calls would change at once). Look again only if Turso
     fails the DPO's checks; then Postgres in London, one module at a time.
+  THE ORDER TO GO LIVE (Lakhbir, 6 Nov 2026: "review all the phases see
+    exactly what can be run before going live, restructure them"): 161h,
+    161h1, 161i, 161j, 161k, 161l and 161m all run before go-live; none
+    waits on a person. Then the sweep (162) out of order, then 161n goes
+    live once its gate is open (Vercel Pro, the ICO number, every legal page
+    approved, the other sign-offs), then the sweep again before the first
+    client. If the gate opens early, the phases left run after go-live.
 
   WHATSAPP - BY MANUAL UPLOAD, WITH PHOTOS (Lakhbir, 5 Oct 2026: "go with
     manual upload, keep photos"). Staff talk to clients on the WhatsApp phone;
@@ -1156,7 +1163,7 @@ command that counts it, never the number.
 
 ## PHASE 161h — Production on Vercel: the live project in London, its keys, database, files and timers, and the runbook for the developer
 
- **Model: Opus.** Board item 13462576350. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Rewritten 6 November 2026 for Vercel.** **Why:** Lakhbir, 6 Nov 2026, on security: "lets keep it as vercel". This replaces his decision of 29 Oct 2026 to host on a Hostinger VPS. On Vercel nobody runs a server (no operating system to patch, no SSH, no firewall or certificates to look after), every change is built from GitHub where the fresh-copy check runs, and a bad release is rolled back in one click. The audit (2 Nov 2026) said nothing about where to host; it said keep the system custom, not WordPress, and that still stands.
+ **Model: Opus.** Board item 13462576350. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Rewritten 6 November 2026 for Vercel.** **Why:** Lakhbir, 6 Nov 2026, on security: "lets keep it as vercel". This replaces his decision of 29 Oct 2026 to host on a Hostinger VPS. On Vercel nobody runs a server (no operating system to patch, no SSH, no firewall or certificates to look after), every change is built from GitHub where the fresh-copy check runs, and a bad release is rolled back in one click. The audit (2 Nov 2026) said nothing about where to host; it said keep the system custom, not WordPress, and that still stands. **Order (6 Nov 2026):** the first of seven phases that run before go-live (161h, 161h1, 161i to 161m); then the sweep, then 161n goes live.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1292,6 +1299,23 @@ BUILD
    section 2): build the live database as a new Turso database (London if
    offered, else Paris), with the same migrations. Do not port to
    Postgres: that would rewrite 441 triggers and all 524 database calls.
+11. IF VERCEL PRO IS NOT BOUGHT YET (ADDED 6 NOV 2026): build and prove all
+   of this on a preview (ACCEPT) and buy or switch on nothing paid; making
+   the live project on Pro moves to Phase 161n. Write item 9's checklist so
+   161n can tick it: it becomes 161n's gate.
+
+THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
+what can be run before going live, restructure them"): every phase from
+161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
+161k, 161l, 161m. None of them waits on a person. Going live waits on
+people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
+the code is regrouped while they work, with no real client on it. After
+161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
+its gate is open, then the sweep again before the first client. If the gate
+opens before 161m has run, finish the phase in progress, run the sweep, then
+161n; the phases left run after go-live, in the same order. Every phase
+leaves the website working, so stopping between two is safe.
+NEXT: Phase 161h1.
 
 ACCEPT
 - A preview of the live project, built from this branch with example keys
@@ -1301,14 +1325,13 @@ ACCEPT
   its word is refused, and a backup is made and restored on a copy.
 - The postcode lookup answers from where item 4 put the table.
 - All four suites pass.
-- NEXT: run the sweep (Phase 162) now, out of order, before go-live; it
-  renumbers itself and stays last. Phases 161h1 to 161m follow after go-live.
+- NEXT: Phase 161h1 (see THE ORDER above).
 ```
 
 
 ## PHASE 161h1 — The module map and the boundary check: count today's breaks, then refuse any new one (no code moves)
 
- **Model: Opus.** Board item 13486965861. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. This phase puts the walls' alarm in before any wall moves. Run it after go-live, first of the after-go-live phases.
+ **Model: Opus.** Board item 13486965861. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. This phase puts the walls' alarm in before any wall moves. **Order (6 Nov 2026):** runs before go-live, straight after 161h; see THE ORDER in the block.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1394,6 +1417,19 @@ BUILD
    command to COORDINATES' list of checks and to GitHub's fresh-copy
    check.
 
+THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
+what can be run before going live, restructure them"): every phase from
+161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
+161k, 161l, 161m. None of them waits on a person. Going live waits on
+people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
+the code is regrouped while they work, with no real client on it. After
+161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
+its gate is open, then the sweep again before the first client. If the gate
+opens before 161m has run, finish the phase in progress, run the sweep, then
+161n; the phases left run after go-live, in the same order. Every phase
+leaves the website working, so stopping between two is safe.
+NEXT: Phase 161i.
+
 ACCEPT
 - npm run check runs the boundary check; it is green on main with the
   baseline; a planted new break of each rule turns it red; the baseline
@@ -1405,7 +1441,7 @@ ACCEPT
 
 ## PHASE 161i — Regroup 1: the core, the outside services, shared parts, and the CSS as real files
 
- **Model: Opus.** Board item 13462572168. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: "The code is organised by when it was built, not by what it does. I suggest regrouping it by business area." This is the first of three moves.
+ **Model: Opus.** Board item 13462572168. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: "The code is organised by when it was built, not by what it does. I suggest regrouping it by business area." This is the first of three moves. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1503,6 +1539,19 @@ its data.ts (the only file running SQL on the tables it owns), pages with
 no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
 zero and the baseline is lowered to match; no new break anywhere.
 
+THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
+what can be run before going live, restructure them"): every phase from
+161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
+161k, 161l, 161m. None of them waits on a person. Going live waits on
+people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
+the code is regrouped while they work, with no real client on it. After
+161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
+its gate is open, then the sweep again before the first client. If the gate
+opens before 161m has run, finish the phase in progress, run the sweep, then
+161n; the phases left run after go-live, in the same order. Every phase
+leaves the website working, so stopping between two is safe.
+NEXT: Phase 161j.
+
 ACCEPT
 - The route list and the pass list are unchanged; the served CSS is the
   same, byte for byte; the test website's preview works.
@@ -1511,7 +1560,7 @@ ACCEPT
 
 ## PHASE 161j — Regroup 2: the public site, assessment, portal, CRM and claims as modules, and the router split
 
- **Model: Opus.** Board item 13462572169. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the second of three moves, and the one that splits src/web/router.ts (about 2,500 lines, every page address).
+ **Model: Opus.** Board item 13462572169. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the second of three moves, and the one that splits src/web/router.ts (about 2,500 lines, every page address). **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1604,6 +1653,19 @@ its data.ts (the only file running SQL on the tables it owns), pages with
 no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
 zero and the baseline is lowered to match; no new break anywhere.
 
+THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
+what can be run before going live, restructure them"): every phase from
+161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
+161k, 161l, 161m. None of them waits on a person. Going live waits on
+people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
+the code is regrouped while they work, with no real client on it. After
+161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
+its gate is open, then the sweep again before the first client. If the gate
+opens before 161m has run, finish the phase in progress, run the sweep, then
+161n; the phases left run after go-live, in the same order. Every phase
+leaves the website working, so stopping between two is safe.
+NEXT: Phase 161k.
+
 ACCEPT
 - The route list and the pass list are unchanged; sign in on the preview as
   staff and as a client and use each module once.
@@ -1612,7 +1674,7 @@ ACCEPT
 
 ## PHASE 161k — Regroup 3: survey, finance, compliance and admin as modules, tests by feature, and the specs out of the code
 
- **Model: Opus.** Board item 13462572225. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the last of three moves. After it, src/web/ is empty and the folder map in the audit's section 6.2 is true.
+ **Model: Opus.** Board item 13462572225. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the last of three moves. After it, src/web/ is empty and the folder map in the audit's section 6.2 is true. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1705,6 +1767,19 @@ its data.ts (the only file running SQL on the tables it owns), pages with
 no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
 zero and the baseline is lowered to match; no new break anywhere.
 
+THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
+what can be run before going live, restructure them"): every phase from
+161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
+161k, 161l, 161m. None of them waits on a person. Going live waits on
+people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
+the code is regrouped while they work, with no real client on it. After
+161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
+its gate is open, then the sweep again before the first client. If the gate
+opens before 161m has run, finish the phase in progress, run the sweep, then
+161n; the phases left run after go-live, in the same order. Every phase
+leaves the website working, so stopping between two is safe.
+NEXT: Phase 161l.
+
 ACCEPT
 - src/web/ is gone; the route list and the pass list are unchanged; every
   check that names a path still passes; the preview works.
@@ -1712,7 +1787,7 @@ ACCEPT
 
 ## PHASE 161l — Undo the tangle: modules depend one way, events in place of upward imports, permissions per module
 
- **Model: Opus.** Board item 13486969371. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. After 161k every module has a front door; this phase removes the loops between them, so a change in one module cannot reach round into another.
+ **Model: Opus.** Board item 13486969371. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. After 161k every module has a front door; this phase removes the loops between them, so a change in one module cannot reach round into another. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1791,6 +1866,19 @@ BUILD
 4. No cycle between modules: the check's rule 2 count is zero and the
    baseline goes to zero for every rule.
 
+THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
+what can be run before going live, restructure them"): every phase from
+161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
+161k, 161l, 161m. None of them waits on a person. Going live waits on
+people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
+the code is regrouped while they work, with no real client on it. After
+161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
+its gate is open, then the sweep again before the first client. If the gate
+opens before 161m has run, finish the phase in progress, run the sweep, then
+161n; the phases left run after go-live, in the same order. Every phase
+leaves the website working, so stopping between two is safe.
+NEXT: Phase 161m.
+
 ACCEPT
 - The boundary check reports zero breaks of every rule, and its self-test
   still fails each planted break.
@@ -1802,7 +1890,7 @@ ACCEPT
 
 ## PHASE 161m — Rules as versioned data: rules registers, the engine's version, and versions on every sealed result
 
- **Model: Opus.** Board item 13486967146. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. Changing a tax rule must never quietly change a result a client has already been given.
+ **Model: Opus.** Board item 13486967146. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. Changing a tax rule must never quietly change a result a client has already been given. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1883,12 +1971,131 @@ BUILD
 5. Each rule tested both ways (on and off, old version and new); a test
    that every sealed result carries its versions.
 
+THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
+what can be run before going live, restructure them"): every phase from
+161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
+161k, 161l, 161m. None of them waits on a person. Going live waits on
+people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
+the code is regrouped while they work, with no real client on it. After
+161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
+its gate is open, then the sweep again before the first client. If the gate
+opens before 161m has run, finish the phase in progress, run the sweep, then
+161n; the phases left run after go-live, in the same order. Every phase
+leaves the website working, so stopping between two is safe.
+NEXT: the sweep (Phase 162), out of order, then Phase 161n.
+
 ACCEPT
 - A planted change to one rule's value without a new version fails a test;
   a planted calculator change without a new engine version fails
   verify-page.
 - A result sealed before a rule change shows the same figure after it.
 - All four suites pass with the same figures (plus the new tests).
+```
+
+
+## PHASE 161n — Go live: the gate (people's approvals and purchases), then the live website switched on and proved
+
+ **Model: Opus.** Board item 13488910486. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "review all the phases see exactly what can be run before going live, restructure them". Everything Claude can build runs before this one (161h to 161m, then the sweep). This phase is the switch: it waits for its gate, which is people's work, then turns the live website on. **Order (6 Nov 2026):** after 161m and the sweep; the sweep runs again after it, before the first client.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+WHAT IS THERE NOW: Phase 161h built the live project's set-up, proved it on
+a preview, and wrote the runbook for the developer and the go-live
+checklist. Phases 161h1 to 161m regrouped the code behind the boundary
+check. The sweep (162) ran after 161m. The legal pages are built and off
+until both approvals are recorded (Phase 161g). The developer question pack
+(board 13486597256) asks Naeem D13 and D14 about going live.
+
+THE GATE: check every line and write it in the record as open or not, with
+its board item. If any line is not open, change nothing live: tell Lakhbir
+which lines are left, set this item to its true status, and stop.
+ 1. Vercel Pro bought for the live project (board 13486923814).
+ 2. The ICO registration number, on the privacy policy.
+ 3. A solicitor and a data protection officer chosen, and both have approved
+    the current version of every legal page in the back office (Legal
+    pages; board 13475983553), so CAPREBATE_LEGAL_PAGES can be "on".
+ 4. The DPO's appointment signed, and the name and contact we publish.
+ 5. A telephone number, or Lakhbir's decision to show email only.
+ 6. The safeguard and data processing terms for each outside service that
+    may hold data outside the UK (the outside services list, attachment 9
+    of the legal review pack), and the retention periods approved.
+ 7. The engagement letter agreed (fees, break fee, clawback), not the test
+    defaults.
+ 8. Every register entry marked as needed before go-live signed, or its
+    feature left switched off and said so (FOR-THE-ACCOUNTANT.md,
+    FOR-THE-SURVEYOR.md, FOR-THE-SOLICITOR-DPO-DEVELOPER.md).
+ 9. The live keys set by Lakhbir in the live project's settings (the names
+    from 161h's list; check them by name, never read a value).
+10. The developer's answers to D1 to D20 recorded (board 13486597256), or
+    Lakhbir's word to go without them.
+11. The sweep (162) has run since the last code change, with nothing
+    critical left open.
+
+BUILD (only once every gate line is open)
+1. The live project on Pro, if 161h could not make it: the settings 161h
+   wrote, the functions and the document store in London, the database
+   where 161h chose.
+2. The domain: caprebate.co.uk at IONOS pointed at Vercel by Lakhbir or the
+   developer (the runbook's steps), and the email sending records (SPF,
+   DKIM, DMARC) checked.
+3. CAPREBATE_LEGAL_PAGES=on; every Draft line gone, because every page is
+   approved.
+4. The first release promoted from main by the step 161h chose; the timers
+   running, each run logged; a backup made and restored on a copy; the
+   uptime check on /api/health set.
+5. A check of the live website with no client data: /api/health is
+   {"ok":true}; the home page, the eligibility check, the legal pages and
+   staff sign-in with its second step work; none of the test website's
+   switches shows. Write each in the record.
+6. KEYS-AND-SWITCHES.md, the Developer Spec and the runbook say the live
+   website is on, and from when.
+
+ACCEPT
+- Every gate line is open and written in the record, or nothing live has
+  changed and Lakhbir has the list of what is left.
+- The live website answers on caprebate.co.uk with item 5's checks, and a
+  release can be rolled back.
+- All four suites pass.
+- NEXT: the sweep (Phase 162), in order, against the live website, before
+  the first client is let in. Then any of 161h1 to 161m not yet run.
 ```
 
 
@@ -1985,8 +2192,11 @@ THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, 
   which wrote 159k and 159l, and the Phase 160 sweep (10 Oct 2026) inserted
   none, so this sweep's heading became PHASE 161; Phases 160a to 160p then ran
   above it without moving it, and on 4 Nov 2026 the planning from the ITRoadway
-  technical audit inserted 161a to 161k, so this sweep's heading is now PHASE 162.
-  RUN IT OUT OF ORDER once, straight after 161h and before go-live (161h says so).
+  technical audit inserted 161a to 161k, so this sweep's heading is now PHASE 162;
+  on 6 Nov 2026 planning added 161h1, 161l, 161m and 161n, still lettered, so it
+  stays PHASE 162. RUN IT OUT OF ORDER once, straight after 161m and before 161n
+  goes live (161m says so; order changed 6 Nov 2026), and check 161n's gate list
+  as part of it; then again in order after 161n, before the first client.
 ADDED 10 OCT 2026 BY THE PHASE 160 SWEEP:
   A CLOSED QUESTION LEAVES ITS OLD WORDS BEHIND. Word question 218 (BCIS) closed
     on 10 Oct, but the source register's licence still refused BCIS in every
@@ -2563,8 +2773,8 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (rewritten 6 Nov 2026: Lakhbir chose Vercel over the Hostinger VPS), then after go-live 161i to 161k the regroup by business area |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
-|  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161h, before go-live (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (rewritten 6 Nov 2026: Lakhbir chose Vercel over the Hostinger VPS), then, before go-live (order changed 6 Nov 2026), 161h1 the boundary check, 161i to 161k the regroup by business area, 161l the tangle undone and 161m versioned rules; then the sweep, and 161n goes live once its gate is open |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161m, before 161n goes live, and again after 161n, before the first client (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 
