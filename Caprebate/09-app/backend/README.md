@@ -112,7 +112,7 @@ that state used to write is now refused.
 ## The six application roles
 
 They are **not** the six board owner types, and **not** the five roles in
-`caprebate-anchor-quarantine.ts`. `src/roles.ts` is the only place the three
+`caprebate-anchor-quarantine.ts`. `src/core/roles.ts` is the only place the three
 meet. See the actor table in the Developer Brief.
 
 | Role | What it is |
@@ -122,7 +122,7 @@ meet. See the actor table in the Developer Brief.
 | `ACCOUNTING` | **Caprebate's own finance.** Client name, claim value, fee, invoice and payment status, VAT position. Not the questions and answers, not the register data, not the internal notes, not the surveyor's workings |
 | `SURVEYING` | The review-and-sign workspace, and nothing else |
 | `CLIENT` | Their own record only |
-| `READ_ONLY` | Phase 132e. View only, assigned to nobody: an explicit yes or no on every action in `READ_ONLY_RULES` (`src/authz.ts`). Writes nothing but its own password; never the estimate, a claim value, money, the registers or the audit log; no export |
+| `READ_ONLY` | Phase 132e. View only, assigned to nobody: an explicit yes or no on every action in `READ_ONLY_RULES` (`src/core/authz.ts`). Writes nothing but its own password; never the estimate, a claim value, money, the registers or the audit log; no export |
 
 The client's own accountant is a **different actor**, has no login, and receives
 the computation pack offline.
@@ -137,7 +137,7 @@ can(actor, action, object) -> boolean
 assessment" is the question; "may sales read assessments" is not.
 
 **A screen that omits a field is presentation. A store that refuses it is a
-control.** Nothing in `src/authz.ts` consults a route name, a UI or a hidden
+control.** Nothing in `src/core/authz.ts` consults a route name, a UI or a hidden
 field.
 
 **DENY BY DEFAULT, structurally.** `can` cannot return true without finding a
@@ -200,13 +200,13 @@ a redacting logger teaches callers that it is safe to pass anything.
 
 | Stub | Module | What is not real |
 |---|---|---|
-| Email | `src/stubs/email.ts` | Delivery. Messages are written to the `outbox` table and shown on screen, labelled as not sent. **The token mechanics are real.** |
-| Registers | `src/stubs/registers.ts` | The connectors. Nothing is called. **Both gates are real** and are reported honestly. |
-| Signature | `src/stubs/signature.ts` | The provider. Nothing is executed. |
-| Text extraction | `src/web/uploads.ts` (`documentTextExtractor`) → `src/web/extract-text.ts` | **What is still not read:** a **scanned** PDF (page images, no text operators — that is OCR), an **encrypted** PDF, LZW/ASCII85/JBIG2/CCITT-filtered content, `.doc`, `.xlsx`, `.pptx`. Each returns **one marker line**, so on those the receipt strip runs over a marker rather than over the document. **NARROWED 9 September 2026 (Phase 113c):** `.docx` and PDFs whose text sits in uncompressed or FlateDecode streams **are now read and are stripped**, proved end to end by a name planted in each and removed by the receipt policy. The row changes wording rather than disappearing — added to this table and to `STUBS` on 9 September 2026 (Phase 108), when it had declared itself a stub in its own file and appeared in no list. |
+| Email | `src/integrations/email/email.ts` | Delivery. Messages are written to the `outbox` table and shown on screen, labelled as not sent. **The token mechanics are real.** |
+| Registers | `src/integrations/register-ingest.ts` | The connectors. Nothing is called. **Both gates are real** and are reported honestly. |
+| Signature | `src/integrations/signature.ts` | The provider. Nothing is executed. |
+| Text extraction | `src/web/uploads.ts` (`documentTextExtractor`) → `src/shared/extract-text.ts` | **What is still not read:** a **scanned** PDF (page images, no text operators — that is OCR), an **encrypted** PDF, LZW/ASCII85/JBIG2/CCITT-filtered content, `.doc`, `.xlsx`, `.pptx`. Each returns **one marker line**, so on those the receipt strip runs over a marker rather than over the document. **NARROWED 9 September 2026 (Phase 113c):** `.docx` and PDFs whose text sits in uncompressed or FlateDecode streams **are now read and are stripped**, proved end to end by a name planted in each and removed by the receipt policy. The row changes wording rather than disappearing — added to this table and to `STUBS` on 9 September 2026 (Phase 108), when it had declared itself a stub in its own file and appeared in no list. |
 
 **Everything else is real.** Each stub is one named module behind an interface,
-so replacing it is a swap and not a search. **`STUBS` in `src/app.ts` is the
+so replacing it is a swap and not a search. **`STUBS` in `src/core/app.ts` is the
 machine-readable copy of this table**, it is served to Admin only at
 `GET /staff/connections/switches.json` (since Phase 161c, 4 Nov 2026; `GET /api/health` now answers only
 `{"ok":true}`, or 503 `{"ok":false}` when the database cannot be reached), and a
@@ -251,7 +251,7 @@ passed" lead to four different actions.
 
 ### Stored times are UTC. Screens show UK time. — Phase 113a
 
-**One file names a timezone and nothing else does**: `src/web/localtime.ts`, `DISPLAY_ZONE`.
+**One file names a timezone and nothing else does**: `src/shared/localtime.ts`, `DISPLAY_ZONE`.
 Every `starts_at`, `created_at` and audit `at` is ISO-8601 UTC and stays that way — they sort,
 they survive a Postgres port, and they cannot be confused about seconds and milliseconds.
 **The conversion is at the edges only**: the four functions that print a moment, and the two
@@ -290,7 +290,7 @@ the way out.
 
 ### The client's number and the staff's number are one number
 
-`src/web/shown-range.ts` converts pounds to pence **exactly once**. Four screens render the
+`src/shared/shown-range.ts` converts pounds to pence **exactly once**. Four screens render the
 same function of the same integer, so the two views cannot differ by a double rounding —
 which is what used to make £1,234.4999 read as £1,234 on one screen and £1,235 on the other.
 
@@ -300,7 +300,7 @@ Same hardened path as a client document, with three differences, each on purpose
 allow-list (**PNG only**), a smaller cap (2 MB), and **nothing the user sent is stored at
 all**. The bytes are decoded to pixels and a new file is written from those pixels, so a
 payload in a `tEXt` chunk or appended after `IEND` is gone by construction rather than by
-being stripped. `src/web/images.ts` does the decoding with `node:zlib` and no dependency;
+being stripped. `src/shared/images.ts` does the decoding with `node:zlib` and no dependency;
 decompression bombs are refused from IHDR before any inflate.
 
 **Admin power is over an account, not inside it.** `user.change_own_profile` and

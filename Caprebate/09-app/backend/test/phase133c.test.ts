@@ -27,7 +27,7 @@ type NextStepModule = {
   hasPlainReading: (what: string) => boolean;
 };
 const assets = async (): Promise<AssetsModule> => (await import('../src/shared/assets.ts')) as unknown as AssetsModule;
-const nextStep = async (): Promise<NextStepModule> => (await import(`../src/web/${'next-step'}.ts`)) as unknown as NextStepModule;
+const nextStep = async (): Promise<NextStepModule> => (await import(`../src/shared/${'next-step'}.ts`)) as unknown as NextStepModule;
 
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
    twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */

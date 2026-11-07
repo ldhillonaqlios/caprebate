@@ -525,7 +525,7 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     fails the DPO's checks; then Postgres in London, one module at a time.
   THE ORDER TO GO LIVE (Lakhbir, 6 Nov 2026: "review all the phases see
     exactly what can be run before going live, restructure them"): 161h,
-    161h1, 161i, 161j, 161k, 161l and 161m all run before go-live; none
+    161h1, 161i, 161i1 (added 7 Nov 2026 by Phase 161i), 161j, 161k, 161l and 161m all run before go-live; none
     waits on a person. Then the sweep (162) out of order, then 161n goes
     live once its gate is open (Vercel Pro, the ICO number, every legal page
     approved, the other sign-offs), then the sweep again before the first
@@ -607,7 +607,7 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   UPLOADED DOCUMENTS (Phase 151i, 28 Sep 2026): with the lasting database IN
   USE (it opened) AND a private Vercel Blob store connected (BLOB_STORE_ID,
   or a token: CAPREBATE_BLOB_TOKEN wins over BLOB_READ_WRITE_TOKEN), every
-  copy keeps them in that one store (src/web/shared-objectstore.ts;
+  copy keeps them in that one store (src/shared/shared-objectstore.ts;
   sharedDocumentStore in api/index.mjs); anything less, the temporary disk.
   Every Blob call is private and a public store refuses it; no Blob address
   is kept. The store is connected and holds the survey photos (Word question
@@ -647,16 +647,16 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   and a step begun on one is "timed out" on the next - reproduced that day;
   the time-out page now says so (stepGoneWhy). Sessions live there too.
   Since Phase 151k: /api/login answers 202 and a step token, and
-  /api/login/step/... walk the SAME functions (src/web/sign-in.ts); the
+  /api/login/step/... walk the SAME functions (src/core/sign-in.ts); the
   app's secret is sealed where CAPREBATE_MFA_KEY is set (key file, or the
-  test website's settings; unset = text, as before; src/mfa-seal.ts); a
+  test website's settings; unset = text, as before; src/core/mfa-seal.ts); a
   SENT sign-in code or reset link loses its outbox body (migration 058).
   The screenshot tool signs in with 09-app/backend/tools/demo-sign-in.ts,
   demo logins on this machine only.
   Since Phase 151m: ten RECOVERY CODES, shown once when a second step is set
   up and on "Make new recovery codes" (/staff/two-factor, /portal/two-
   factor; POST /api/account/recovery-codes), kept only as scrypt hashes in
-  recovery_codes (migration 059, src/web/recovery-codes.ts). One is taken
+  recovery_codes (migration 059, src/core/recovery-codes.ts). One is taken
   in place of the code at the VERIFY step (/login/step/recovery,
   /api/login/step/recovery), once, within the same 5 wrong codes.
 
@@ -849,7 +849,7 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   src/generated/ is history. THE SERVED PAGE CARRIES NO CALCULATOR: its copy
   sits inside the in-page assessment, which the website drops; the test
   website's eligibility check runs the engine package on the server
-  (backend/src/web/engine.ts).
+  (backend/src/shared/engine.ts).
   THE APP'S OWN COPIES (Phase 161d1, 5 Nov 2026). The back end reads five
   files people edit elsewhere from its own copies in 09-app/backend/copies/:
   the site file, 03-app/caprebate-notices-page.html, the fixture list and
@@ -874,12 +874,12 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   (Lakhbir, 25 Sep 2026, Phase 151f); nothing reads it. Phase 151f wrote that
   this block said so, and it did not until the Phase 152 sweep.
   KEYS live only in ~/.caprebate-secrets.env, outside the repository (names in
-  09-app/backend/secrets.example.env); src/secrets.ts refuses a key file inside
+  09-app/backend/secrets.example.env); src/core/secrets.ts refuses a key file inside
   the tree, and .gitignore ignores *.env, *secret*, *.p12, *.pfx, *.pem and
   *.key anywhere. Check the key file BY NAME ONLY - never print a value.
-  src/connectors/http.ts is the only file under src/ that may call fetch, and
+  src/integrations/connectors/http.ts is the only file under src/ that may call fetch, and
   test/phase146b.test.ts fails on any other.
-  A MIGRATION AND ITS RECORD LAND TOGETHER (Phase 152, src/db.ts migrate and
+  A MIGRATION AND ITS RECORD LAND TOGETHER (Phase 152, src/core/db.ts migrate and
   splitMigration). A plain file runs in one transaction with its
   schema_migrations row. A file that needs its own transaction (foreign keys
   off) has ONE shape: "PRAGMA foreign_keys = OFF;", a line "BEGIN;", the
@@ -888,7 +888,7 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   THE TEST LOOKUP LOG (Phase 151g) is ~/.caprebate-test-lookups.jsonl, or
   CAPREBATE_TEST_LOOKUP_LOG - outside the repository, refused inside it. The
   smoke command keeps Lakhbir's five conditions there (Word question 170):
-  who and why, three per connector per switch-on (node src/cli.ts
+  who and why, three per connector per switch-on (node src/core/cli.ts
   smoke-switched-on <SOURCE> --who --why restarts the count), never a
   client's values, only connector, time, PASS or NO, who and why.
   node  on PATH (Homebrew).
@@ -1172,9 +1172,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161i — Regroup 1: the core, the outside services, shared parts, and the CSS as real files
+## PHASE 161i1 — Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left
 
- **Model: Opus.** Board item 13462572168. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: "The code is organised by when it was built, not by what it does. I suggest regrouping it by business area." This is the first of three moves. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
+ **Model: Opus.** Board item 13496571315. **Written 7 November 2026 by Phase 161i**, for what it could not finish (one of the regroup phases: 161i, 161i1, 161j, 161k; run in order, one chat each). **Why:** Phase 161i moved core, shared and integrations into their folders behind front doors and brought their rule-1 count from 656 to 96 (09-app/ARCHITECTURE.md). Rules 3 and 4 for those three areas, the dated notes of the files it moved, and the tests by feature are this phase. **Order:** after 161i, before 161j.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1216,84 +1216,64 @@ WHEN THE PHASE IS DONE, in this order:
    plain lines what was done and what is next.
 ═══════════════════════════════════
 
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
+WHAT IS THERE NOW (7 Nov 2026, at 161i's close): src/core/, src/shared/ and
+src/integrations/ hold 126 files, each area with its front door (index.ts),
+which lists only the files that load no business code. 31 bottom-layer files
+still load business code (for example src/core/audit.ts reads survey's anchor
+quarantine; src/shared/upload-handler-port.ts re-exports the claims document
+handler; src/core/router.ts, staff.ts and backoffice.ts load every screen);
+importing them stays direct and counted, and Phase 161l undoes that tangle.
+The boundary check's baseline is 1,612 (node tools/boundaries.cjs --counts).
+Five values are read on first use instead of at load (search "Read when used,
+not while this file loads"): put them back once 161l has removed the loops.
+The developer question pack's D16 (how far the notes come out) is not yet
+answered: build our recommendation (keep one-line "why" comments; move every
+dated note) and say so.
 
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
+BUILD
+1. RULE 3 TO ZERO FOR core AND integrations: src/core/data.ts and
+   src/integrations/data.ts are the only files that run SQL on the tables
+   architecture/tables.json gives them (users, sessions, audit_log, roles and
+   the rest; the outbox, the mailbox, the register records, research runs,
+   WhatsApp and video meetings). Every other file asks through the area's
+   front door. Moves, not rewrites: each statement keeps its exact SQL text,
+   and the route list (test/fixtures/route-list.txt) and the pass list stay
+   identical.
+2. RULE 4 TO ZERO FOR core, shared AND integrations: no page or logic file in
+   them runs SQL or imports db.ts; no logic file builds HTML (split the
+   file's page part out where it does).
+3. THE NOTES: the dated notes in the comments of every file 161i moved go to
+   docs/CHANGELOG.md (date, phase, what was decided and why), leaving short
+   comments that say why the code is as it is; names of people stay out of
+   the code.
+4. TESTS BY FEATURE for core, shared and integrations: backend/test/core/,
+   test/shared/, test/integrations/, named by feature; docs/TEST-NAMES.md
+   maps each old name to the new one. The drift checker and the register
+   checks that count test files still pass.
+5. THE THREE 161d FOLDERS LEFT, their caprebate- prefix dropped: documents/
+   into src/modules/claims/documents/ (claims, Phase 161j's module), survey/
+   into src/modules/survey/ and costing/ into src/modules/survey/costing/
+   (survey, Phase 161k's), with node tools/boundaries.cjs --moved-map, the
+   notes at their old paths in 04-phase-work/phase3 and phase9, and the site
+   harness (APP_SRC in 03-app/caprebate-regression.cjs) following.
+6. Lower the baseline (node tools/boundaries.cjs --lower; --rebase only for a
+   reviewed re-map, with its reason), and print the counts in the record.
 
-RULES FOR ALL THREE REGROUP PHASES (161i, 161j, 161k), from the audit's
-section 6.2 ("each module holds its own routes, page files, permissions and
-database queries", for example crm/leads.routes.ts, leads.pages.ts,
-leads.repo.ts and leads.permissions.ts):
-- Moves, not rewrites. git mv to keep history; nothing a person sees
-  changes. The full suites give the same pass list before and after.
-- A test lists every route (method and path, in matching order) before the
-  first move; after each move the list must be identical.
-- The dated notes in the comments of every file you move go to
-  docs/CHANGELOG.md (date, phase, what was decided and why), leaving short
-  comments that say why the code is as it is. Names of people stay out of
-  the code.
-- Tests move with their code and are named by feature; docs/TEST-NAMES.md
-  maps each old name to the new one, so PHASE-HISTORY's references still
-  resolve. The drift checker and the register checks that count test files
-  still pass.
-- One area at a time, one commit per area, so any move can be undone alone.
-
-BUILD (in Caprebate/09-app/backend/src/)
-1. core/: server, router shell, config, database, login, permissions
-   (authz.ts), audit log, secrets, security headers.
-2. integrations/: everything in connectors/ and stubs/, and the real email
-   sender out of stubs/ (the audit names it).
-3. shared/: html.ts, page templates and components, PDF, ZIP, dates.
-4. styles/: the CSS held as text in web/assets.ts (about 1,900 lines) moves
-   into real .css files, served at the same addresses with the same bytes
-   (a test compares them) and the same cache headers.
-5. (Added by Phase 161d, 4 Nov 2026.) The five folders 161d made when it
-   brought the draft-folder modules in - src/registers/, documents/,
-   survey/, costing/ and postcodes/ - take their place in this layout too
-   (most belong in shared/ or the modules of 161j and 161k; say which), and
-   their caprebate- file prefix goes. The notes at their old paths in
-   04-phase-work/phase3 and phase9, the site harness (APP_SRC in
-   03-app/caprebate-regression.cjs) and npm run lint:paths follow the move.
-
-THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
-Phase 161h1): each module this phase moves gets its front door (index.ts),
-its data.ts (the only file running SQL on the tables it owns), pages with
-no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
-zero and the baseline is lowered to match; no new break anywhere.
-
-THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
-what can be run before going live, restructure them"): every phase from
-161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
-161k, 161l, 161m. None of them waits on a person. Going live waits on
-people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
-the code is regrouped while they work, with no real client on it. After
-161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
-its gate is open, then the sweep again before the first client. If the gate
-opens before 161m has run, finish the phase in progress, run the sweep, then
-161n; the phases left run after go-live, in the same order. Every phase
-leaves the website working, so stopping between two is safe.
+THE ORDER: 161h, 161h1, 161i, 161i1, 161j, 161k, 161l, 161m, all before
+go-live; then the sweep (Phase 162), then Phase 161n once its gate is open.
+Every phase leaves the website working, so stopping between two is safe.
 NEXT: Phase 161j.
 
 ACCEPT
-- The route list and the pass list are unchanged; the served CSS is the
-  same, byte for byte; the test website's preview works.
+- Rules 3 and 4 at zero for core, shared and integrations; no new break.
+- The route list and the pass list unchanged; the served CSS the same.
+- docs/CHANGELOG.md and docs/TEST-NAMES.md written; PHASE-HISTORY's test
+  references still resolve.
 ```
-
 
 ## PHASE 161j — Regroup 2: the public site, assessment, portal, CRM and claims as modules, and the router split
 
- **Model: Opus.** Board item 13462572169. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the second of three moves, and the one that splits src/web/router.ts (about 2,500 lines, every page address). **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
+ **Model: Opus.** Board item 13462572169. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the second of three moves, and the one that splits src/core/router.ts (about 2,500 lines, every page address). **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1771,7 +1751,7 @@ WHEN THE PHASE IS DONE, in this order:
 ═══════════════════════════════════
 
 WHAT IS THERE NOW: Phase 161h (7 Nov 2026) built the live website's start
-(src/live-website.ts: CAPREBATE_PRODUCTION=1, LIVE_KEYS, a missing required
+(src/core/live-website.ts: CAPREBATE_PRODUCTION=1, LIVE_KEYS, a missing required
 setting stops it), vercel.ts (the timers on the live project only), the
 release workflow (.github/workflows/release-live.yml, branch "live"), the
 timers, the nightly backup and its restore, and the reference database for
@@ -2138,7 +2118,7 @@ after that phase.
    Registry half recorded, 233 and 234 (the two answers that never had a
    question) written and closed, 230's answer recorded; the sign-up
    confirmation link out of the outbox (migration 060); a migration and its
-   record as one step (src/db.ts, splitMigration); the CRM fold check's colon
+   record as one step (src/core/db.ts, splitMigration); the CRM fold check's colon
    with no line number; the grid tool's test no longer reads a slow machine
    as a wrong answer.
 
@@ -2429,7 +2409,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  **11** |  **Do the information governance training and record it** |  The duty is on the board and the record is what evidences it |  1 hr |  A control the data protection position asserts |
 |  **12** |  The remaining ten — Homedata trial, cyber security, hardware, brand and online presence, analytics, mailbox provisioning, the business-request template, surveyor steps 2 and 3, and the legal clearance to use government valuation data commercially
  |  Real, but none of them gates anything else today |  — |  — |
-|  **13** |  **DROPPED 6 October 2026 (Lakhbir: "use home data"; Homedata's title outline gives the site area).** ~~Run the land boundary's first download~~ (added 28 September 2026 by Phase 151l) |  The tool is built and keeps your five conditions. From 09-app/backend: first `node src/cli.ts smoke-switched-on HMLR_INSPIRE --who "<you>" --why "<reason>"`, then `CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE --who "<you>" --why "<reason>"`. It downloads Westminster's file and looks for 70 Whitehall; nothing about a client leaves, and nothing is kept but one line of PASS or NO. You may name someone else to run it. Switching the fetcher on is a separate decision, and yours |  10 min, plus the download |  Proof that HM Land Registry's file reads, which is what switching on the site area waits for |
+|  **13** |  **DROPPED 6 October 2026 (Lakhbir: "use home data"; Homedata's title outline gives the site area).** ~~Run the land boundary's first download~~ (added 28 September 2026 by Phase 151l) |  The tool is built and keeps your five conditions. From 09-app/backend: first `node src/core/cli.ts smoke-switched-on HMLR_INSPIRE --who "<you>" --why "<reason>"`, then `CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke HMLR_INSPIRE --who "<you>" --why "<reason>"`. It downloads Westminster's file and looks for 70 Whitehall; nothing about a client leaves, and nothing is kept but one line of PASS or NO. You may name someone else to run it. Switching the fetcher on is a separate decision, and yours |  10 min, plus the download |  Proof that HM Land Registry's file reads, which is what switching on the site area waits for |
 |  **14** |  **DONE - Word questions 230 and 231 closed 6 October 2026 (Turso and the Blob store work).** ~~Look once at the test website: is it on Turso, and does a file stay put?~~ (added 28 September 2026 by the Phase 152 sweep) |  Sign in at caprebate-test.vercel.app and open any client's Identity check. If there is no box saying "Records kept in memory", the records are in the lasting database. Then upload an invented file as one person and open it as another. Tell us what you saw. Or, in Vercel, read the function log's lines that begin "test deployment:". We cannot see either: the connector reaches no project of yours |  5 min |  Closing Word questions 230 and 231 |
 |  **15** |  **DONE 6 October 2026 (moved to the recycle bin on Lakhbir's yes). One NEW DELETE file since 7 October: the second questions item Phase 157c's mv backup made (WAITING-ON-PEOPLE.md).** ~~Delete the DELETE files on the OneDrive web page, not the Mac~~ (added 28 September 2026 by the Phase 152 sweep) |  In OneDrive on the web, Health Capital Allowances: the folder "DELETE - files to delete (sweep 25 Sep 2026)" (143 MB) and the files whose names begin "DELETE -". The folder was deleted on the Mac on 25 September and is still in the cloud, so deleting there did not reach OneDrive |  5 min |  A folder that holds only the live documents and their dated backups |
 |  **16** |  **Answer three new questions** (added 28 September 2026 by the Phase 152 sweep) |  235: do the old extra charges stay - the add-on for complicated jobs and the £1,500 manual-handling charge? (question 60's answer covered the discount, not these). 236: two tasks are marked done with nothing on file - startup funding and the back-end developer meeting. Were they done? And 237 is for the tax adviser, when one is engaged: may the estimate say "refund" when a claim through the pool creates a loss that is carried back? |  10 min |  The rate card; two task records; whether the estimate or the rulebook is corrected |

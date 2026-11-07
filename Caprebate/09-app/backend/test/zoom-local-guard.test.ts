@@ -108,7 +108,7 @@ describe('where a copy may call Zoom from', () => {
 
   test('every screen in src/ asks with the place: no zoomMissing call without it, outside the connector itself', () => {
     const dir = new URL('../src/', import.meta.url);
-    const files = readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.ts') && !f.endsWith('connectors/zoom.ts'));
+    const files = readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.ts') && !f.endsWith('integrations/connectors/zoom.ts'));
     const asked: string[] = [];
     for (const f of files) {
       const s = readFileSync(new URL(f, dir), 'utf8');

@@ -225,7 +225,7 @@ describe('working days, and phone width', () => {
   });
 
   test('the tiles stack into one column at phone width', () => {
-    const css = readFileSync(join(import.meta.dirname, '../src/shared/assets.ts'), 'utf8');
+    const css = readFileSync(join(import.meta.dirname, '../src/styles/site.css'), 'utf8') // Phase 161i: the CSS is its own file;
     const phone = css.slice(css.indexOf('@media (max-width:720px)'));
     assert.match(phone, /\.hometiles\{grid-template-columns:minmax\(0,1fr\)\}/);
   });
