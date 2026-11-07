@@ -13,6 +13,20 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+/* PHASE 161h, 7 November 2026: THE LIVE WEBSITE'S RELEASE (CAPREBATE_PRODUCTION=1) builds its tables here too, and NEVER
+   seeds. Unlike the test website's, a failure FAILS THE RELEASE (exit 1), so the live website stays on the one before. */
+if ((process.env.CAPREBATE_PRODUCTION ?? '').trim() === '1') {
+  try {
+    const { prepareLiveDatabase } = await import('../src/live-website.ts');
+    const r = await prepareLiveDatabase(process.env);
+    console.log(`build (live website): ${r.why}`);
+    process.exit(r.ok ? 0 : 1);
+  } catch (e) {
+    console.log(`build (live website): stopped (${String(e?.code || e?.name || 'an error')})`);
+    process.exit(1);
+  }
+}
+
 try {
   const { lastingDatabase, prepareLasting } = await import('../../../../api/index.mjs');
   const { createApp } = await import('../src/server.ts');

@@ -263,6 +263,27 @@ async function main(): Promise<number> {
     }
   }
 
+  if (cmd === 'reseal-app-secrets') {
+    /* PHASE 161h: changing CAPREBATE_MFA_KEY. The OLD key in CAPREBATE_MFA_KEY_OLD and the NEW one in CAPREBATE_MFA_KEY,
+       each 32 bytes as base64, both from the environment of this one command; the database from CAPREBATE_DB (with
+       CAPREBATE_DB_TOKEN for the live Turso database). All or nothing. Never prints a secret or a key. */
+    const { resealSecrets } = await import('./mfa-seal.ts');
+    const { secretsFromEnvironment } = await import('./secrets.ts');
+    const keyOf = (name: string) => mfaKeyFrom(secretsFromEnvironment({ [MFA_KEY_NAME]: process.env[name] ?? '' }, [MFA_KEY_NAME]));
+    const token = (process.env.CAPREBATE_DB_TOKEN ?? '').trim();
+    const db = new Db(DEFAULT_DB, token === '' ? {} : { authToken: token });
+    try {
+      const r = resealSecrets(db, keyOf('CAPREBATE_MFA_KEY_OLD'), keyOf(MFA_KEY_NAME));
+      if (!r.ok && r.would_not_open === 0) { console.error('Give the old key in CAPREBATE_MFA_KEY_OLD and the new one in CAPREBATE_MFA_KEY, each 32 bytes as base64. Nothing changed.'); return 1; }
+      if (!r.ok) { console.error(`${r.would_not_open} app secret${r.would_not_open === 1 ? '' : 's'} would not open with the old key, so nothing changed.`); return 1; }
+      new AuditLog(db).append({ at: new Date().toISOString(), kind: 'APP_SECRETS_SEALED', outcome: 'ALLOWED', detail: { count: r.resealed } });
+      console.log(`${r.resealed} authenticator app secret${r.resealed === 1 ? '' : 's'} moved to the new key. Now set the new key in the live project and redeploy.`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
   if (cmd === 'sweep-land-boundaries') {
     /* PHASE 151a. A kept council file is deleted when it is next asked for after its time; this deletes the ones
        nobody asks for again, so none outlives the licence's days. With no store set up, nothing is kept and nothing is

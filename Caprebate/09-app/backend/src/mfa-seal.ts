@@ -92,3 +92,26 @@ export function sealTextSecrets(db: Db, k: MfaKey): { state: MfaKey['state']; se
   }
   return { state: 'KEY', sealed };
 }
+
+/**
+ * PHASE 161h, 7 November 2026: CHANGING THE KEY (LIVE-RUNBOOK.md, "Rotate a key"). Every sealed secret is opened with the
+ * old key and sealed again with the new one, ALL OR NOTHING: if any one will not open with the old key, nothing changes
+ * and it says how many would not, so nobody is locked out of their app by a half-done change. Text secrets are sealed
+ * with the new key on the way. Never prints a secret or a key.
+ */
+export function resealSecrets(db: Db, oldK: MfaKey, newK: MfaKey): { ok: boolean; resealed: number; would_not_open: number } {
+  if (oldK.state !== 'KEY' || newK.state !== 'KEY') return { ok: false, resealed: 0, would_not_open: 0 };
+  const rows = db.all<{ id: string; mfa_secret: string }>('SELECT id, mfa_secret FROM users WHERE mfa_secret IS NOT NULL');
+  const next: { id: string; from: string; to: string }[] = [];
+  let bad = 0;
+  for (const r of rows) {
+    const opened = openSecret(oldK, r.id, r.mfa_secret);
+    if (!opened.ok) { bad++; continue; }
+    const sealed = sealSecret(newK, r.id, opened.secret);
+    if (!sealed.ok) { bad++; continue; }
+    next.push({ id: r.id, from: r.mfa_secret, to: sealed.stored });
+  }
+  if (bad > 0) return { ok: false, resealed: 0, would_not_open: bad };
+  db.tx(() => { for (const n of next) db.run('UPDATE users SET mfa_secret = ? WHERE id = ? AND mfa_secret = ?', [n.to, n.id, n.from]); });
+  return { ok: true, resealed: next.length, would_not_open: 0 };
+}

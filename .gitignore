@@ -13,7 +13,7 @@
 !/.devcontainer/
 !/README.md
 !/api/
-!/vercel.json
+!/vercel.ts
 !/package.json
 !/Caprebate site.html
 !/Caprebate/

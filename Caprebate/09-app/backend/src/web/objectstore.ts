@@ -45,7 +45,7 @@
 
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdirSync, existsSync, chmodSync, statSync } from 'node:fs';
-import { readFile, writeFile, unlink, mkdir, copyFile, access } from 'node:fs/promises';
+import { readFile, writeFile, unlink, mkdir, copyFile, access, readdir, stat } from 'node:fs/promises';
 import { constants as FS } from 'node:fs';
 import { join, dirname, normalize, sep } from 'node:path';
 import { durableKeyFor, retainedTextKeyFor, type ObjectStore, type PresignedUpload } from './upload-handler-port.ts';
@@ -340,6 +340,33 @@ export class FsObjectStore implements ObjectStore {
    * machine, exactly as before; src/web/shared-objectstore.ts puts them in a private Vercel Blob store every copy of the
    * test website reaches, and inherits every rule above unchanged. Each step is given a key the public method above
    * has already checked. */
+
+  /* ---------------------------------------------------------------- PHASE 161h: for the backup only (src/backup.ts) */
+
+  /**
+   * Every object's key and when it was last written, oldest first. The backup reads this to copy what is new or changed
+   * since its last run. It names keys only; nothing here reads an object.
+   */
+  async listObjects(): Promise<{ key: string; written_at: string }[]> {
+    const out: { key: string; written_at: string }[] = [];
+    const walk = async (dir: string, prefix: string): Promise<void> => {
+      let names: import('node:fs').Dirent[];
+      try { names = await readdir(dir, { withFileTypes: true }); } catch { return; }
+      for (const e of names) {
+        const key = prefix + e.name;
+        if (e.isDirectory()) await walk(join(dir, e.name), `${key}/`);
+        else if (e.isFile()) out.push({ key, written_at: (await stat(join(dir, e.name))).mtime.toISOString() });
+      }
+    };
+    await walk(this.root, '');
+    return out.sort((a, b) => (a.written_at < b.written_at ? -1 : a.written_at > b.written_at ? 1 : 0));
+  }
+
+  /** One object's bytes exactly as stored (a sealed one stays sealed). For the backup; every other caller uses get. */
+  async readStored(key: string): Promise<Uint8Array> { return this.readBytes(key); }
+
+  /** Puts back one object's stored bytes, exactly as the backup copied them. For a restore only (tools/restore-backup.ts). */
+  async restoreStored(key: string, bytes: Uint8Array): Promise<void> { assertSafeKey(key); await this.writeBytes(key, bytes); }
 
   /** One object's bytes. A missing object throws: it is never an empty file. */
   protected async readBytes(key: string): Promise<Uint8Array> {

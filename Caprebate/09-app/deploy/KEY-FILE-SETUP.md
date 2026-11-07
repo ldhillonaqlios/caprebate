@@ -4,7 +4,7 @@ _Phase 161c, 4 November 2026. For the developer who sets up the live server. It 
 
 The app reads every supplier key (email, Companies House, Homedata and the rest) from one file. On the Mac and the test website nothing changes. On the live server, systemd hands the file to the app, and the app will not start if the file is open to anyone else.
 
-The Phase 161h runbook and deploy kit build on these steps. Until that kit exists, this page is the whole of it.
+**The live website is on Vercel, not a server (Lakhbir, 6 November 2026, for security).** Its keys are the live Vercel project's encrypted settings, read by `src/live-website.ts`; there is no key file and no systemd. How they are set, and every other step, is in [LIVE-RUNBOOK.md](LIVE-RUNBOOK.md) (Phase 161h, 7 November 2026). This page stays for a server, should one ever be used: the code it describes is kept, unused.
 
 ## What the app does
 

@@ -454,9 +454,30 @@ export async function seedOnce(made, seed) {
   }
 }
 
+/**
+ * PHASE 161h, 7 November 2026: THE LIVE WEBSITE STARTS FROM THIS SAME ENTRY, CHOSEN BY ITS OWN SETTINGS. With
+ * CAPREBATE_PRODUCTION=1 (set in the live project, never in this test one) every request goes to the live website
+ * (Caprebate/09-app/backend/src/live-website.ts): no seed, no demo logins, no test letter or signing, no notices banner,
+ * no STAFF_EXCEPT_INVENTED, form tokens on, and never memory. Anything else: the test website, exactly as before.
+ */
+export function isLiveDeploy(env) {
+  return (env.CAPREBATE_PRODUCTION ?? '').trim() === '1';
+}
+
+async function buildLive() {
+  const started = Date.now();
+  process.env.CAPREBATE_TRUST_PROXY ??= '1';
+  const { startLiveWebsite } = await import('../Caprebate/09-app/backend/src/live-website.ts');
+  const r = await startLiveWebsite(process.env);
+  for (const line of r.lines) (r.started ? console.log : console.error)(line);
+  if (r.started) console.log(`live website: this copy started in ${Date.now() - started} ms`);
+  // A copy that could not start answers 503 to everything; the next copy Vercel starts tries again.
+  return r.listener;
+}
+
 export default async function handler(req, res) {
   // A copy whose start failed (a lasting database that could not be reached, say) tries again on the next request.
-  ready ??= build().catch((e) => { ready = undefined; throw e; });
+  ready ??= (isLiveDeploy(process.env) ? buildLive() : build()).catch((e) => { ready = undefined; throw e; });
   const listener = await ready;
   return listener(req, res);
 }
