@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 6 |
+| Ready - Claude can build | 5 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 355 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1563,7 +1563,7 @@
 
 ### Phase 161h1 - The module map and the boundary check: count today's breaks, then refuse any new one (no code moves) (Lakhbir, 6 Nov 2026)
 
-`13486965861` · **Ready - Claude can build** · owner Claude
+`13486965861` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local (the Mac copy)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-06 (Planning, 6 Nov 2026): Lakhbir asked for a structure that lets one thing change without breaking others. The target structure, its seven rules and the measurements are in 09-app/ARCHITECTURE.md; the phase is in ACTION-PLAN.md and on the run sheet.
