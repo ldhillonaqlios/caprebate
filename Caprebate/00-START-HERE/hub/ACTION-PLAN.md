@@ -947,6 +947,15 @@ command that counts it, never the number.
      One check owns the hub, so a file never gets two verdicts.
   node 03-app/caprebate-figure-classify.cjs --self-test --against <an older copy>
                                                       proves a new case can fail
+  cd 09-app/backend && node tools/boundaries.cjs      THE BOUNDARY CHECK (Phase 161h1): rules 1 to 4 of
+                                                      09-app/ARCHITECTURE.md against architecture/baseline.json;
+                                                      any new break fails, and a gone one must be lowered
+                                                      (--lower, which never adds); --counts by area and rule;
+                                                      --self-test plants a break of each rule (in npm run check
+                                                      and GitHub's check). A PHASE THAT MOVES A FILE (161i-161k):
+                                                      --moved src/<old> src/<new> renames its breaks in the
+                                                      baseline (renames only); a file's area changes in
+                                                      architecture/modules.json, reviewed in the pull request
   node 03-app/caprebate-tracker.cjs check             and --self-test (nine planted faults)
   node 03-app/caprebate-signoff-register-check.cjs    reads hub/: TRACKER.csv, the comments and
                                                       the three registers. exit 2 means it
@@ -1161,116 +1170,6 @@ command that counts it, never the number.
  **Three of them touch a decision that is not Claude's, and each is built switched off with a question to Lakhbir:** keeping the original of a client's uploaded file (140), the email provider and the contactus@ mailbox (141), and whether the surveyor sees either chat thread (142).
 
 ---
-
-
-## PHASE 161h1 — The module map and the boundary check: count today's breaks, then refuse any new one (no code moves)
-
- **Model: Opus.** Board item 13486965861. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. This phase puts the walls' alarm in before any wall moves. **Order (6 Nov 2026):** runs before go-live, straight after 161h; see THE ORDER in the block.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-WHAT IS THERE NOW: 09-app/ARCHITECTURE.md (read it first: it is the plan
-every phase from here builds to). The business code is one tangle: 43 files
-in src/web reach each other, 385 imports cross business areas, SQL sits in
-105 files. tools/lint-paths.cjs already reads every import with the
-TypeScript compiler; tools/lint-sql.cjs already reads the SQL text.
-
-BUILD
-1. THE MODULE MAP: a data file (09-app/backend/architecture/modules.json)
-   giving every file under src/ one area (core, shared, integrations,
-   public-site, assessment, portal, crm, claims, survey, finance,
-   compliance, admin), and its kind (page, logic, data, routes, other).
-   Every file must be in it; a new file with no area fails the check.
-2. THE TABLE OWNERS: every table in the migrations given one owning module
-   (architecture/tables.json); a new migration's table with no owner fails.
-3. THE BOUNDARY CHECK (tools/boundaries.cjs, in npm run check after
-   lint-paths): rules 1 to 4 of ARCHITECTURE.md - a module imports another
-   only through its front door; no import cycle between modules (report
-   the strongly connected groups); only the owner's data file runs SQL on
-   a table; pages hold no SQL and logic holds no HTML or SQL. Until a
-   module has a front door, its files count as breaks, not errors.
-4. THE RATCHET: today's breaks written to architecture/baseline.json, by
-   rule and module. The check fails on any break not in the baseline, and
-   when a module's count goes down it tells you to lower the baseline (it
-   may only go down). --self-test plants one break of each rule and each
-   must fail.
-5. Print the counts in the record (by module and rule) and add the
-   command to COORDINATES' list of checks and to GitHub's fresh-copy
-   check.
-
-THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
-what can be run before going live, restructure them"): every phase from
-161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
-161k, 161l, 161m. None of them waits on a person. Going live waits on
-people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
-the code is regrouped while they work, with no real client on it. After
-161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
-its gate is open, then the sweep again before the first client. If the gate
-opens before 161m has run, finish the phase in progress, run the sweep, then
-161n; the phases left run after go-live, in the same order. Every phase
-leaves the website working, so stopping between two is safe.
-NEXT: Phase 161i.
-
-ACCEPT
-- npm run check runs the boundary check; it is green on main with the
-  baseline; a planted new break of each rule turns it red; the baseline
-  can only go down.
-- No file moves and no behaviour changes: all four suites give the same
-  figures as before.
-```
 
 
 ## PHASE 161i — Regroup 1: the core, the outside services, shared parts, and the CSS as real files
@@ -2628,7 +2527,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (**done 7 Nov 2026**: the live start, timers, backup and restore, release workflow, runbook and go-live checklist, built and proved on a database file; no live project made until Pro is bought), then, before go-live (order changed 6 Nov 2026), 161h1 the boundary check, 161i to 161k the regroup by business area, 161l the tangle undone and 161m versioned rules; then the sweep, and 161n goes live once its gate is open |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (**done 7 Nov 2026**: the live start, timers, backup and restore, release workflow, runbook and go-live checklist, built and proved on a database file; no live project made until Pro is bought), then, before go-live (order changed 6 Nov 2026), 161h1 the boundary check (**done 7 Nov 2026**: 2,162 breaks counted, any new one refused), 161i to 161k the regroup by business area, 161l the tangle undone and 161m versioned rules; then the sweep, and 161n goes live once its gate is open |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161m, before 161n goes live, and again after 161n, before the first client (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 6 |
+| Ready - Claude can build | 5 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -14,7 +14,7 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 355 |
+| Done | 356 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -1265,7 +1265,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-46 items.
+45 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1561,14 +1561,6 @@
 - Note 2026-11-06 (Developer question pack, 6 Nov 2026): Written at Lakhbir's request after Phase 161g: where each audit finding stands (with its pull request), twenty questions for the developer (D1-D4 checking the fixes, D5-D12 the live server for Phase 161h, D13-D14 going live, D15-D20 the code after go-live) and what is still to do. D8, D9 and D18 are Word questions 155, 157 and 286. Lakhbir sends it; the answers go into Phase 161h. OneDrive only (the repository is public).
 - Note 2026-11-07 (Phase 161h): No answers back, so 161h built our recommendations for D2 and D5-D12; new finding for D6: Turso's nearest place to London is Ireland. Runbook: 09-app/deploy/LIVE-RUNBOOK.md.
 
-### Phase 161h1 - The module map and the boundary check: count today's breaks, then refuse any new one (no code moves) (Lakhbir, 6 Nov 2026)
-
-`13486965861` · **Ready - Claude can build** · owner Claude
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-06 (Planning, 6 Nov 2026): Lakhbir asked for a structure that lets one thing change without breaking others. The target structure, its seven rules and the measurements are in 09-app/ARCHITECTURE.md; the phase is in ACTION-PLAN.md and on the run sheet.
-- Note 2026-11-06 (Planning): Order changed 6 Nov 2026 (Lakhbir: "review all the phases see exactly what can be run before going live, restructure them"): 161h, 161h1, 161i, 161j, 161k, 161l and 161m all run before go-live, none waits on a person; then the sweep (162) out of order, then 161n goes live once its gate is open (board 13488910486), then the sweep again before the first client. Same text in ACTION-PLAN.md and on the run sheet.
-
 ### Phase 161l - Undo the tangle: modules depend one way, events in place of upward imports, permissions per module (Lakhbir, 6 Nov 2026)
 
 `13486969371` · **Ready - Claude can build** · owner Claude
@@ -1597,7 +1589,7 @@
 
 ## Z · Complete / Not Applicable
 
-355 items.
+356 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3766,4 +3758,13 @@
 
 - Note 2026-11-04 (Phase 161b): Two checks only a person signed in on the test website can make. (1) Carried from 161a: the start-up log of the merged 161a shows the Blob store open (uploaded documents are kept in the private document store), but no photo has been sent through it since; send one from your phone and see it on the claim. (2) Phase 161b put a security token on every form; it was checked on a local copy in a browser, and the photo send uses a page script that now sends the token in a header, so the photo also proves that. If anything says This form has expired on a page you have just opened, tell Claude which page.
 - Note 2026-11-04 (Phase 161b follow-up): Done (Lakhbir, 4 Nov 2026, on the test website after 161b's merge): a client portal message sent (Sent. We will reply here.), a task started as admin, a room saved as the surveyor, and a photo sent as a file with a client message, which goes into the Blob store. No page said This form has expired, and the function log showed no error. The phone photo page itself was not used: the test client has no survey yet.
+
+### Phase 161h1 - The module map and the boundary check: count today's breaks, then refuse any new one (no code moves) (Lakhbir, 6 Nov 2026)
+
+`13486965861` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-06 (Planning, 6 Nov 2026): Lakhbir asked for a structure that lets one thing change without breaking others. The target structure, its seven rules and the measurements are in 09-app/ARCHITECTURE.md; the phase is in ACTION-PLAN.md and on the run sheet.
+- Note 2026-11-06 (Planning): Order changed 6 Nov 2026 (Lakhbir: "review all the phases see exactly what can be run before going live, restructure them"): 161h, 161h1, 161i, 161j, 161k, 161l and 161m all run before go-live, none waits on a person; then the sweep (162) out of order, then 161n goes live once its gate is open (board 13488910486), then the sweep again before the first client. Same text in ACTION-PLAN.md and on the run sheet.
+- Note 2026-11-07 (Phase 161h1): Done 7 Nov 2026: modules.json (297 files), tables.json (197 tables), tools/boundaries.cjs in npm run check and GitHub's check; 2,162 breaks in the baseline (rule 1 1,030; rule 2 92; rule 3 868; rule 4 172); 20 controls; no file moved; project 5,479.
 
