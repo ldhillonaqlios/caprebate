@@ -52,7 +52,13 @@ export type SecretOwner =
   /** 2 Oct 2026: the building outlines for the report's site plan, from Ordnance Survey's free maps (src/connectors/os-buildings.ts). */
   | 'OS_MAPS'
   /** 1 Oct 2026: the outside timer that wakes the website to read email replies (POST /hooks/read-replies). */
-  | 'REPLY_TIMER';
+  | 'REPLY_TIMER'
+  /** PHASE 161h, 7 Nov 2026: the live website's own timers (Vercel Cron), GET /hooks/timer/<job> (src/web/timers.ts). */
+  | 'TIMERS'
+  /** PHASE 161h: the nightly backup - its encryption key and the second place it is copied to (src/backup.ts). */
+  | 'BACKUPS'
+  /** PHASE 161h: the reference database - the ONS postcode table and Ordnance Survey's OSTN15 grid (src/web/reference-db.ts). */
+  | 'REFERENCE_DB';
 
 export type SecretKey = {
   readonly name: string;
@@ -145,6 +151,15 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'WHATSAPP_TEMPLATE_LANGUAGE', owner: 'WHATSAPP', secret: false, phase: 'whatsapp', what: 'the language code of that template; en_GB if empty' },
   { name: 'OS_DATA_HUB_API_KEY', owner: 'OS_MAPS', secret: true, phase: 'site-plan', what: 'the Ordnance Survey Data Hub project key (the free OS OpenData plan, with the OS Features API added). It fetches the building outlines for the report’s site plan.' },
   { name: 'REPLY_TIMER_TOKEN', owner: 'REPLY_TIMER', secret: true, phase: 'reply-timer', what: 'a long random word, 32 characters or more. Only the outside timer sends it. It wakes the website to read email replies.' },
+  // PHASE 161h, 7 November 2026: the live website on Vercel (its runbook: 09-app/deploy/LIVE-RUNBOOK.md).
+  { name: 'CRON_SECRET', owner: 'TIMERS', secret: true, phase: '161h', what: 'a long random word, 32 characters or more. Vercel Cron sends it with every call to the live website\u2019s timers (/hooks/timer/...); without it every call is refused' },
+  { name: 'CAPREBATE_BACKUP_KEY', owner: 'BACKUPS', secret: true, phase: '161h', what: 'the key every backup is locked with before it leaves the website: 32 random bytes, as base64 (openssl rand -base64 32). Keep a copy in the password manager: without it no backup can be opened' },
+  { name: 'BACKUP_S3_BUCKET', owner: 'BACKUPS', secret: false, phase: '161h', what: 'the name of the bucket the nightly backup goes to, at the second firm (not secret)' },
+  { name: 'BACKUP_S3_REGION', owner: 'BACKUPS', secret: false, phase: '161h', what: 'where that bucket is: eu-west-2 is London (not secret)' },
+  { name: 'BACKUP_S3_ACCESS_KEY_ID', owner: 'BACKUPS', secret: false, phase: '161h', what: 'the id of the backup user\u2019s access key; the user may only add and read files in that one bucket' },
+  { name: 'BACKUP_S3_SECRET_ACCESS_KEY', owner: 'BACKUPS', secret: true, phase: '161h', what: 'that access key\u2019s secret' },
+  { name: 'CAPREBATE_REFERENCE_DB_URL', owner: 'REFERENCE_DB', secret: false, phase: '161h', what: 'the address of the reference database (the postcode table and the OSTN15 grid), libsql://...; or the path of the same file on this computer' },
+  { name: 'CAPREBATE_REFERENCE_DB_TOKEN', owner: 'REFERENCE_DB', secret: true, phase: '161h', what: 'a token that can only read the reference database. Make it with: turso db tokens create <name> --read-only' },
 ]);
 
 export type SecretsState = 'LOADED' | 'NO_FILE' | 'REFUSED_INSIDE_REPOSITORY' | 'UNREADABLE';
@@ -340,13 +355,14 @@ export function emptySecrets(why = 'no key file is in use'): SecretStore {
  * it is given, from those variables, and nothing else in the environment. It is called by the test deployment's entry
  * point (api/index.mjs), and only when that deployment has a password of its own; a live server reads the key file.
  */
-export function secretsFromEnvironment(env: Record<string, string | undefined>, names: readonly string[]): SecretStore {
+export function secretsFromEnvironment(env: Record<string, string | undefined>, names: readonly string[],
+  why = 'keys read from the test website’s own settings'): SecretStore {
   const values = new Map<string, string>();
   for (const n of names) {
     const v = (env[n] ?? '').trim();
     if (v !== '') values.set(n, v);
   }
-  return makeStore('LOADED', 'keys read from the test website’s own settings', values, false);
+  return makeStore('LOADED', why, values, false);
 }
 
 /** A store from values in memory. Tests only — a live process reads the file. */

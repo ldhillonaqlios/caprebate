@@ -99,9 +99,11 @@ export type Ostn15Grid = {
   readonly source: string;
   /** Whether every one of the 876,951 points is present. A test's invented grid is not. */
   readonly complete: boolean;
-  readonly se: Float64Array;
-  readonly sn: Float64Array;
-  readonly flag: Uint8Array;
+  /* PHASE 161h: any column that answers by point number - the arrays a file is read into, or the reference database's
+     table read a point at a time (src/web/reference-db.ts, ostn15GridFromDatabase). */
+  readonly se: { readonly [k: number]: number };
+  readonly sn: { readonly [k: number]: number };
+  readonly flag: { readonly [k: number]: number };
 };
 
 export class Ostn15Error extends Error {

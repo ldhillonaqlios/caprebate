@@ -22,6 +22,8 @@ import { fileURLToPath } from 'node:url';
 const HERE = fileURLToPath(new URL('..', import.meta.url));     // 09-app/backend/ (the path has spaces: never .pathname)
 const REPO = join(HERE, '..', '..', '..');                      // Development/ — the repository root
 const read = (p: string) => readFileSync(p, 'utf8');
+/* PHASE 161h: vercel.json became vercel.ts (both projects build from it); vercelConfig({}) is the old file, exactly. */
+const VERCEL_CONFIG: unknown = ((await import(new URL('../../../../vercel.ts', import.meta.url).href)) as { vercelConfig: (e: Record<string, string>) => unknown }).vercelConfig({});
 
 /** Every file under a folder, skipping node_modules and backups. */
 function files(dir: string): string[] {
@@ -67,7 +69,7 @@ describe('151e · the test website installs everything the application imports',
   });
 
   test('vercel.json tells the function to carry every root dependency', () => {
-    const v = JSON.parse(read(join(REPO, 'vercel.json'))) as { functions: Record<string, { includeFiles: string }> };
+    const v = VERCEL_CONFIG as { functions: Record<string, { includeFiles: string }> };
     const include = v.functions['api/index.mjs']?.includeFiles ?? '';
     const root = JSON.parse(read(join(REPO, 'package.json'))) as { dependencies: Record<string, string> };
     for (const name of Object.keys(root.dependencies)) {
@@ -107,7 +109,7 @@ const hashes = (made: Awaited<ReturnType<typeof createApp>>) => made.app.db.all<
 
 describe('151e line 2 · the test website shows no file of ours (Word question 229, answered yes)', () => {
   test('vercel.json serves nothing from the repository: its output folder is public/, which holds robots.txt alone, closed to crawlers', () => {
-    const v = JSON.parse(read(join(REPO, 'vercel.json'))) as { outputDirectory: string };
+    const v = VERCEL_CONFIG as { outputDirectory: string };
     assert.equal(v.outputDirectory, 'public', 'with "." every committed file is served to anyone');
     assert.deepEqual(readdirSync(join(REPO, 'public')).filter((f) => f !== '.DS_Store'), ['robots.txt']);
     assert.match(read(join(REPO, 'public', 'robots.txt')), /^User-agent: \*\nDisallow: \/\n?$/);

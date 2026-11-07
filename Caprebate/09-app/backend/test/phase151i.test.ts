@@ -35,6 +35,8 @@ import * as SO from '../src/web/shared-objectstore.ts';
 import { durableKeyFor, quarantineKeyFor, retainedTextKeyFor } from '../src/web/upload-handler-port.ts';
 import { KEEP_ORIGINALS_QUESTION } from '../src/web/originals.ts';
 import { pdfOf } from './document-fixtures.ts';
+/* PHASE 161h: vercel.json became vercel.ts (both projects build from it); vercelConfig({}) is the old file, exactly. */
+const VERCEL_CONFIG: unknown = ((await import(new URL('../../../../vercel.ts', import.meta.url).href)) as { vercelConfig: (e: Record<string, string>) => unknown }).vercelConfig({});
 
 const HERE = fileURLToPath(new URL('..', import.meta.url));   // 09-app/backend/
 const REPO = join(HERE, '..', '..', '..');                     // Development/
@@ -521,7 +523,7 @@ describe('151i follow-up 3 · a first start cut off while it built the tables', 
   });
 
   test('the website\'s time limit leaves a first start room: 300 seconds, the most Vercel\'s Hobby plan allows (read 28 Sep 2026)', () => {
-    const v = JSON.parse(readFileSync(join(REPO, 'vercel.json'), 'utf8')) as { functions: Record<string, { maxDuration?: number }> };
+    const v = VERCEL_CONFIG as { functions: Record<string, { maxDuration?: number }> };
     assert.equal(v.functions['api/index.mjs']?.maxDuration, 300);
   });
 });
@@ -566,7 +568,7 @@ describe('151i follow-up 4 · the lasting database is built once, while Vercel b
   });
 
   test('vercel.json runs the build step, which sits outside api/ (every file there is a public address) and always exits 0', async () => {
-    const v = JSON.parse(readFileSync(join(REPO, 'vercel.json'), 'utf8')) as { buildCommand: string };
+    const v = VERCEL_CONFIG as { buildCommand: string };
     assert.equal(v.buildCommand, 'node Caprebate/09-app/backend/tools/prepare-lasting.mjs');
     assert.deepEqual(readdirSync(join(REPO, 'api')).filter((f) => !f.includes('.bak')), ['index.mjs'], 'a second file in api/ would be a public address');
     const env = { ...process.env };

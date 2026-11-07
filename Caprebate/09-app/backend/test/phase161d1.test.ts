@@ -18,6 +18,8 @@ import { SITE_PATH } from '../src/web/public-site.ts';
 import { NOTICES_PATH } from '../src/web/notices-site.ts';
 import { TAXONOMY_FILE } from '../src/web/pack-lines.ts';
 import { LETTER_PATH, TEST_LETTER_PATH } from '../src/web/letter.ts';
+/* PHASE 161h: vercel.json became vercel.ts (both projects build from it); vercelConfig({}) is the old file, exactly. */
+const VERCEL_CONFIG: unknown = ((await import(new URL('../../../../vercel.ts', import.meta.url).href)) as { vercelConfig: (e: Record<string, string>) => unknown }).vercelConfig({});
 
 const BACKEND = join(import.meta.dirname, '..');
 const REPO = join(BACKEND, '..', '..', '..');
@@ -74,7 +76,7 @@ test('KNOWN in tools/lint-paths.cjs has no row carried to a later phase, and nam
 });
 
 test("the test website's bundle takes the copies (vercel.json includeFiles)", () => {
-  const v = JSON.parse(readFileSync(join(REPO, 'vercel.json'), 'utf8')) as { functions: Record<string, { includeFiles: string }> };
+  const v = VERCEL_CONFIG as { functions: Record<string, { includeFiles: string }> };
   const inc = v.functions['api/index.mjs']?.includeFiles ?? '';
   assert.match(inc, /(^|[{,])Caprebate\/\*\*([,}]|$)/, `includeFiles is ${inc}`);
   const ignore = existsSync(join(REPO, '.vercelignore')) ? readFileSync(join(REPO, '.vercelignore'), 'utf8') : '';

@@ -1,0 +1,70 @@
+# Phase 161h, 7 November 2026: RELEASE TO THE LIVE WEBSITE - a deliberate step, never a merge.
+#
+# The live Vercel project builds only its production branch, `live` (LIVE-RUNBOOK.md, step 1). A merge to main updates the
+# test website and nothing else. To release, a person runs this workflow (Actions, "Release to the live website", Run
+# workflow) and gives the commit to release, or leaves it blank for main as it stands. It checks that the commit is on
+# main and that "A fresh copy passes every check" passed on it, then moves `live` to it. Vercel builds that commit for
+# the live website, runs its build step (the live database's tables, never a seed), and the release goes out.
+#
+# Rolling back is Vercel's: Deployments, the release before, "Instant Rollback" (LIVE-RUNBOOK.md, "Roll back").
+# This workflow holds no key: the live keys stay in the live Vercel project's settings.
+name: Release to the live website
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: The commit on main to release (blank = main as it stands)
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  checks: read
+
+concurrency:
+  group: release-live
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Move the live branch to a checked commit on main
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find the commit, and check it is on main
+        id: pick
+        env:
+          WANTED: ${{ github.event.inputs.commit }}
+        run: |
+          git fetch origin main
+          sha="$(git rev-parse --verify "${WANTED:-origin/main}^{commit}")"
+          git merge-base --is-ancestor "$sha" origin/main || { echo "That commit is not on main. Only a commit merged to main may be released."; exit 1; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Releasing $sha"
+
+      - name: Check every check passed on it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.pick.outputs.sha }}
+        run: |
+          result="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" --jq '[.check_runs[] | select(.name == "A fresh copy passes every check") | .conclusion] | first // "missing"')"
+          if [ "$result" != "success" ]; then
+            echo "\"A fresh copy passes every check\" is \"$result\" on that commit, not success. It is not released."
+            exit 1
+          fi
+
+      - name: Move the live branch to it
+        env:
+          SHA: ${{ steps.pick.outputs.sha }}
+        run: |
+          if git ls-remote --exit-code origin refs/heads/live >/dev/null; then
+            git fetch origin live
+            git merge-base --is-ancestor origin/live "$SHA" || { echo "The live branch has a commit main does not have (a rollback by hand?). Read LIVE-RUNBOOK.md, Roll back, before releasing."; exit 1; }
+          fi
+          git push origin "$SHA:refs/heads/live"
+          echo "Released $SHA to the live branch. Vercel now builds it for the live website."

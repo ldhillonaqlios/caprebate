@@ -82,6 +82,7 @@ import { letterState, letterSteps, signedCopy } from './engagement-send.ts';
 import { WHATSAPP_IMPORT_JS } from './whatsapp-import-script.ts';
 import { REGISTER_IMPORT_JS } from './register-import-script.ts';
 import { sweepUploads } from './photo-upload.ts';
+import { runTimerJob, timerJobOf, timerWordRefusal, TIMER_PATH_PREFIX } from './timers.ts';
 import { sweepVideos } from './survey-video.ts';
 import { receiveWhatsApp } from './whatsapp.ts';
 import { webhookChallenge } from '../connectors/whatsapp.ts';
@@ -670,6 +671,24 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const r = receiveWhatsApp(d.app, raw0, typeof sig === 'string' ? sig : null);
     res.writeHead(r.status, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
     res.end(r.status === 200 ? 'ok' : 'refused');
+    return 'handled';
+  }
+  /* PHASE 161h, 7 NOV 2026: THE LIVE WEBSITE'S OWN TIMERS (src/web/timers.ts). No login: Vercel Cron calls them, with the
+     project's word (CRON_SECRET) in the Authorization header. Refused without it, and answered with counts only. */
+  if (path.startsWith(TIMER_PATH_PREFIX) && method === 'GET') {
+    const job = timerJobOf(path);
+    const auth = req.headers['authorization'];
+    const why = job === null ? 'there is no such timer' : timerWordRefusal(d.app.secrets, typeof auth === 'string' ? auth : undefined);
+    if (why !== null || job === null) {
+      console.log(`timer ${job ?? 'unknown'}: refused, ${why ?? 'there is no such timer'}`);
+      res.writeHead(job === null ? 404 : 401, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+      res.end(`refused: ${why ?? 'there is no such timer'}`);
+      return 'handled';
+    }
+    const r = await runTimerJob({ app: d.app, store: d.store }, job);
+    console.log(r.line);
+    res.writeHead(r.ok ? 200 : 500, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+    res.end(r.line);
     return 'handled';
   }
   /* 1 OCT 2026: THE REPLY TIMER (src/web/inbound-email.ts, timerMayRead). No login: an outside timer calls it, with its

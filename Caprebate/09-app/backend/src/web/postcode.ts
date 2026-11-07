@@ -34,6 +34,7 @@
  */
 
 import { CB } from './engine.ts';
+import { referencePostcodeStore } from './reference-db.ts';
 import {
   sqlitePostcodeStore,
   resolveServedAuthority,
@@ -93,11 +94,18 @@ export function postcodeStore(
 ): PostcodeStore | null {
   if (cached !== undefined) return cached;
   const path = env.CAPREBATE_POSTCODE_DB;
-  if (path === undefined || path.trim() === '' || open === undefined) {
-    cached = null;
+  if (path !== undefined && path.trim() !== '' && open !== undefined) {
+    cached = sqlitePostcodeStore(open, path);
+    return cached;
+  }
+  /* PHASE 161h, 7 November 2026: THE LIVE WEBSITE READS THE TABLE FROM THE REFERENCE DATABASE (src/web/reference-db.ts),
+     because a Vercel function has no disk to keep a 75 MB file on. Unset, null as before. If it cannot be opened just
+     now, this lookup has no store and says why (N4), and the next one tries again: a failure is not remembered. */
+  try {
+    cached = referencePostcodeStore(env);
+  } catch {
     return null;
   }
-  cached = sqlitePostcodeStore(open, path);
   return cached;
 }
 

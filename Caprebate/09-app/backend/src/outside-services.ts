@@ -112,20 +112,35 @@ export const OUTSIDE_SERVICES: readonly OutsideService[] = Object.freeze([
     sent: 'Nothing. It only knocks on our website’s door.', why: 'So replies are read on time.',
     where: 'Not applicable: it receives nothing about anyone.', outsideUk: false, transfer: null, inUse: 'In use.' },
 
+  /* PHASE 161h, 7 Nov 2026: the live website's timers, its backup and its reference database. */
+  { keyOwner: 'TIMERS', name: 'Vercel Cron (our timers)', role: 'wakes our live website on a timetable for its scheduled jobs', personalData: false,
+    sent: 'Nothing. It only knocks on our website\u2019s door.', why: 'So emails, replies and clean-ups happen on time.',
+    where: 'Not applicable: it receives nothing about anyone.', outsideUk: false, transfer: null, inUse: 'The live website is not yet open.' },
+  { keyOwner: 'BACKUPS', name: 'Our backup store', role: 'keeps a copy of the database and the documents, made every night', personalData: true,
+    sent: 'A copy of all our records and documents. Uploads still in the holding place are left out. Every copy is locked with our own key before it is sent, so the backup company cannot read it.',
+    why: 'So nothing is lost if the website\u2019s own stores fail.',
+    where: 'Not yet chosen. We recommend Amazon Web Services\u2019 storage in London (eu-west-2). Each copy is kept for 35 days.',
+    outsideUk: 'unknown', transfer: TBC, inUse: 'Built and switched off until the backup store is chosen.' },
+  { keyOwner: 'REFERENCE_DB', name: 'Turso (our reference database)', role: 'keeps the published postcode table and Ordnance Survey\u2019s map grid', personalData: false,
+    sent: 'Nothing about anyone. It holds two free public tables, and we only read them.', why: 'To find a property\u2019s council area and place it on the map.',
+    where: 'Turso, beside our database. It holds no personal data.', outsideUk: false, transfer: null, inUse: 'The live website is not yet open.' },
+
   /* ---------------------------------------------------- the services that need no key */
-  /* 6 Nov 2026: the live website is on Vercel (Lakhbir's decision); Phase 161h confirms each place and its safeguard. */
+  /* PHASE 161h, 7 Nov 2026: where the live website keeps data, as the phase decided it (Word question 291 asks the
+     developer and the data protection officer to agree). Vercel and Turso are US companies; Vercel's own records of each
+     request, and Turso's database in Ireland, are outside the UK, so their safeguard is the DPO's to confirm. */
   { keyOwner: null, name: 'Our hosting company', role: 'runs our website and client portal', personalData: true,
     sent: 'Everything our website and portal hold.', why: 'To run the website.',
-    where: 'For the live website: Vercel, a US company, running it in London. Our test website runs on Vercel in the United States and holds invented information only.',
-    outsideUk: 'unknown', transfer: TBC, inUse: 'The live website is not yet open.' },
+    where: 'Vercel Inc., a US company. It runs the live website in London. Its own records of each visit (its logs) may be kept outside the UK. Our test website runs on Vercel in the United States and holds invented information only.',
+    outsideUk: true, transfer: TBC, inUse: 'The live website is not yet open.' },
   { keyOwner: null, name: 'Our database', role: 'keeps the records of our website and portal', personalData: true,
     sent: 'The records: enquiries, clients, claims, messages and sign-in records.', why: 'To keep the records.',
-    where: 'For the live website: Turso, in London if it offers it, otherwise Paris. Not yet confirmed. Our test website uses Turso in the United States (Virginia), with invented information only.',
-    outsideUk: 'unknown', transfer: TBC, inUse: 'The live website is not yet open.' },
+    where: 'Turso, a US company. It keeps the database in Ireland (Amazon\u2019s eu-west-1), its nearest place to London. If Turso offers London when the database is made, London. Our test website uses Turso in the United States (Virginia), with invented information only.',
+    outsideUk: true, transfer: TBC, inUse: 'The live website is not yet open.' },
   { keyOwner: null, name: 'Our document store', role: 'keeps the documents clients upload', personalData: true,
     sent: 'The documents clients upload.', why: 'To keep them safely for the claim.',
-    where: 'For the live website: Vercel Blob, in London. Our test website uses Vercel Blob in the United States, with invented information only.',
-    outsideUk: 'unknown', transfer: TBC, inUse: 'The live website is not yet open.' },
+    where: 'Vercel Blob (Vercel Inc., a US company), in London. Our test website uses Vercel Blob in the United States, with invented information only.',
+    outsideUk: false, transfer: null, inUse: 'The live website is not yet open.' },
   { keyOwner: null, name: 'Microsoft (OneDrive and Microsoft 365)', role: 'our office files and email accounts', personalData: true,
     sent: 'Our working documents about a claim.', why: 'To do our work.',
     where: 'Microsoft says it keeps our email and files in the UK. Its terms let it send them to other countries.',

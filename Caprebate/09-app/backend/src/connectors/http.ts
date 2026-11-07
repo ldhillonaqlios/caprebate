@@ -39,7 +39,8 @@ import { CALL_POLICIES, type CallPolicy } from './sources.ts';
 export type Transport = (url: string, init: {
   readonly method: string;
   readonly headers: Record<string, string>;
-  readonly body?: string;
+  /** PHASE 161h: bytes too - the nightly backup's locked file (src/connectors/s3-backup.ts). */
+  readonly body?: string | Uint8Array;
   readonly signal: AbortSignal;
   /** PHASE 159a: 'manual' hands a redirect back unfollowed, for callOutside to judge; absent, every redirect is refused. */
   readonly redirect?: 'manual';
@@ -164,7 +165,9 @@ export function fixtureTransport(fixtures: Record<string, Fixture | readonly Fix
   const seen: { url: string; method: string; headers: Record<string, string>; body?: string }[] = [];
   const t = async (url: string, init: Parameters<Transport>[1]): Promise<Response> => {
     /* Phase 146e: the body too, so a test can prove what a model was sent — and what it was not. */
-    seen.push({ url, method: init.method, headers: init.headers, ...(init.body === undefined ? {} : { body: init.body }) });
+    // PHASE 161h: a body of bytes (a backup file) is kept as base64, so `seen` stays text for every other test.
+    seen.push({ url, method: init.method, headers: init.headers,
+      ...(init.body === undefined ? {} : { body: typeof init.body === 'string' ? init.body : Buffer.from(init.body).toString('base64') }) });
     const key = `${init.method} ${new URL(url).pathname}`;
     const entry = fixtures[key];
     const list: readonly Fixture[] = entry === undefined ? [{ status: 404, body: '{"errors":[{"error":"not recorded"}]}' }]

@@ -43,6 +43,7 @@ import {
 import { ostn15Grid, type Ostn15Grid } from '../connectors/ostn15.ts';
 import { TITLE_BOUNDARY_LABEL, TITLE_BOUNDARY_SOURCE_ID } from '../connectors/title-boundary.ts';
 import { inspireStoreFromEnv, type InspireFileStore } from '../connectors/inspire-store.ts';
+import { referenceOstn15Grid } from './reference-db.ts';
 import type { RateLimiter, Transport } from '../connectors/http.ts';
 import { DECLINED_LINE } from './address-check.ts';
 import { postcodeStore } from './postcode.ts';
@@ -125,7 +126,9 @@ const isDegrees = (p: unknown): boolean => p !== null && typeof p === 'object' &
 function gridFor(point: unknown, setup: SiteAreaSetup): Ostn15Grid | null {
   if (!isDegrees(point)) return null;
   if (setup.grid !== undefined) return setup.grid;
-  try { return ostn15Grid(setup.env); } catch { return null; }
+  // PHASE 161h: a file named by CAPREBATE_OSTN15_FILE first (a server's disk), else the reference database (the live
+  // website on Vercel, src/web/reference-db.ts). Either one that cannot be read is the same as none: a latitude is refused.
+  try { return ostn15Grid(setup.env) ?? referenceOstn15Grid(setup.env); } catch { return null; }
 }
 
 function storeFor(setup: SiteAreaSetup): InspireFileStore | null {

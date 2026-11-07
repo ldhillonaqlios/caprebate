@@ -61,6 +61,8 @@ export interface BlobClient {
   exists(pathname: string): Promise<boolean>;
   /** Delete one object. Deleting one that is not there is not an error (Blob's `del`). */
   remove(pathname: string): Promise<void>;
+  /** PHASE 161h: every object under `prefix`, with when it was written, a page at a time. For the backup only. */
+  list?(prefix: string, cursor?: string): Promise<{ objects: { pathname: string; written_at: string }[]; cursor: string | null }>;
   /**
    * 2 Oct 2026: a one-time address the PHONE sends one object to, straight to the store (a presigned PUT): only this
    * pathname, only until `validUntil`, at most `maximumSizeInBytes`, private. With the headers it must send.
@@ -142,6 +144,20 @@ export class SharedObjectStore extends FsObjectStore {
     await this.#client.remove(SHARED_PREFIX + key);
   }
 
+  /** PHASE 161h: every object of ours in the Blob store, for the backup. A client that cannot list lists nothing, and the backup says so. */
+  override async listObjects(): Promise<{ key: string; written_at: string }[]> {
+    if (this.#client.list === undefined) throw new Error('this document store cannot list its objects');
+    const out: { key: string; written_at: string }[] = [];
+    let cursor: string | undefined;
+    for (;;) {
+      const page = await this.#client.list(SHARED_PREFIX, cursor);
+      for (const o of page.objects) if (o.pathname.startsWith(SHARED_PREFIX)) out.push({ key: o.pathname.slice(SHARED_PREFIX.length), written_at: o.written_at });
+      if (page.cursor === null) break;
+      cursor = page.cursor;
+    }
+    return out.sort((a, b) => (a.written_at < b.written_at ? -1 : a.written_at > b.written_at ? 1 : 0));
+  }
+
   /** As the folder does: a missing object throws, and so does one still there after the delete. */
   protected override async removeProven(key: string): Promise<void> {
     const p = SHARED_PREFIX + key;
@@ -157,6 +173,8 @@ export type VercelBlobSdk = {
   get(pathname: string, opts: Record<string, unknown>): Promise<{ statusCode: number; stream: ReadableStream<Uint8Array> | null } | null>;
   head(pathname: string, opts: Record<string, unknown>): Promise<unknown>;
   del(pathname: string, opts: Record<string, unknown>): Promise<void>;
+  /** PHASE 161h, for the backup: @vercel/blob's list (prefix, cursor, limit; private stores too). */
+  list?(opts: Record<string, unknown>): Promise<{ blobs: { pathname: string; uploadedAt: Date | string }[]; cursor?: string; hasMore: boolean }>;
   BlobNotFoundError: new (...a: never[]) => Error;
   /** 2 Oct 2026, for a presigned PUT (@vercel/blob 2.8). Absent in an older SDK: then photos go through our own route. */
   issueSignedToken?(opts: Record<string, unknown>): Promise<{ clientSigningToken: string; delegationToken: string }>;
@@ -197,6 +215,15 @@ export async function vercelBlobClient(auth: { token?: string }, sdk?: VercelBlo
     async remove(pathname) {
       await blob.del(pathname, { ...who });
     },
+    ...(blob.list === undefined ? {} : {
+      async list(prefix: string, cursor?: string) {
+        const r = await blob.list!({ prefix, limit: 1000, ...(cursor === undefined ? {} : { cursor }), ...who });
+        return {
+          objects: r.blobs.map((b) => ({ pathname: b.pathname, written_at: new Date(b.uploadedAt).toISOString() })),
+          cursor: r.hasMore && r.cursor !== undefined ? r.cursor : null,
+        };
+      },
+    }),
     ...(blob.issueSignedToken === undefined || blob.presignUrl === undefined || blob.parseStoreIdFromPresignedUrl === undefined ? {} : {
       /* A token for exactly this pathname and only `put`, until `validUntil`; then the address. Its headers are the ones
          @vercel/blob 2.8's own browser client sends to a presigned PUT: private, the API version, the store. */
