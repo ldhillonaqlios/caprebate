@@ -13953,7 +13953,7 @@ NOT DONE      The live project, its Turso databases, its Blob store and its keys
               13496069567; GO-LIVE-CHECKLIST.md line 5.
               Where the data is kept, and how long backups are kept, agreed - BLOCKED on the developer and the
               DPO - Word questions 291 and 292 under section 5.
-              The throwaway Vercel project "probe" deleted - BLOCKED on Lakhbir's word (a deletion) - asked
-              in the chat on 7 Nov 2026.
+              (Closed the same day: Lakhbir said "Yes, delete probe"; the throwaway Vercel project is deleted,
+              and on his word Phase 161h's four blocks were removed from the run sheet.)
 NOTHING LEFT  beyond those lines.
 ```
