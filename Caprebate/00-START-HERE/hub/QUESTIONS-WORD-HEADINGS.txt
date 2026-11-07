@@ -203,6 +203,8 @@
 267) May we check an owner's name from the title register against the client's own people, and keep only yes or no?
 289) Will you review the legal review pack and approve each page you are content with?
 290) Do we keep a claim's records for six years or seven?
+291) Where should the live website keep its records, documents and backups?
+292) How long should we keep the nightly backups?
 1) What do we do when our fee is more than the client saves in year one?
 3) Has the privacy email inbox been set up, and is someone reading it?
 4) Should the business email inboxes be set up on IONOS or Microsoft 365?
