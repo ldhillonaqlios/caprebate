@@ -45,6 +45,12 @@ jobs:
         working-directory: Caprebate/09-app/backend
         run: npm run check
 
+      # Phase 161h1, 7 November 2026: the boundary check runs inside npm run check above; here its self-test proves a
+      # planted break of each rule still turns it red (09-app/ARCHITECTURE.md, the ratchet).
+      - name: The boundary check's own controls
+        working-directory: Caprebate/09-app/backend
+        run: node tools/boundaries.cjs --self-test
+
       # Phase 161f, 5 November 2026: the calculator is edited in engine/src and the page is built from it. The page (and
       # the back end's copy) must carry exactly the built calculator, and a planted edit in the page must turn it red.
       - name: The page carries exactly the built calculator

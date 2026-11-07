@@ -34,7 +34,8 @@ fresh-copy check before it can merge. A bad release is rolled back in one click.
 the 122 migrations and every one of the 524 database calls (Postgres drivers answer later, so each call changes shape),
 and re-proving thousands of tests. That is the single change most likely to break everything at once, which is the
 opposite of what we want. The live database is a new Turso database in London if Turso offers it there, otherwise
-Paris (an EU place UK law treats as adequate, for the data protection officer to confirm). Backups: Turso's own
+Ireland (Phase 161h, 7 Nov 2026: Turso's servers answer London from Ireland and no London or Paris place was found; an
+EU place UK law treats as adequate, for the data protection officer to confirm: Word question 291). Backups: Turso's own
 restore points plus a nightly encrypted copy kept elsewhere (Phase 161h).
 
 **When to look again:** only if Turso cannot meet the data protection officer's checks (where data is held, backups,
@@ -94,6 +95,12 @@ business area is a module with a front door, and a check refuses any route round
    run first; then the full suite, as now. *Check:* GitHub's fresh-copy check, unchanged.
 
 ### The ratchet: how we get there without a big bang
+**Built by Phase 161h1 (7 Nov 2026).** `09-app/backend/architecture/` holds the map (`modules.json`: every file's area
+and kind, and each area's front door), the table owners (`tables.json`) and the baseline (`baseline.json`).
+`node tools/boundaries.cjs` (in `npm run check`) measured **2,162 breaks** on the day it started: rule 1, 1,030; rule 2,
+92 (all twelve areas sit in one cycle); rule 3, 868; rule 4, 172. `--counts` prints them by area; `--lower` takes off
+the ones a phase has removed.
+
 The boundary check starts by **counting** today's breaks of rules 1 to 4 and writing them to a baseline file. From then
 on, any **new** break fails the build at once, and the count may only go down. Each regroup phase moves one group of
 modules behind their front doors and brings their count to zero. No phase moves everything at once, and every phase

@@ -1,0 +1,1207 @@
+{
+ "note": "THE MODULE MAP (Phase 161h1, 7 Nov 2026; 09-app/ARCHITECTURE.md). Every file under src/: its area and its kind (page, logic, data, routes, other). doors: the one file of each area another area may import; until it exists, every import into the area is a break of rule 1. Read by tools/boundaries.cjs. A new file is placed here on purpose; moving a file to another area is a change to review.",
+ "doors": {
+  "core": "src/core/index.ts",
+  "shared": "src/shared/index.ts",
+  "integrations": "src/integrations/index.ts",
+  "public-site": "src/modules/public-site/index.ts",
+  "assessment": "src/modules/assessment/index.ts",
+  "portal": "src/modules/portal/index.ts",
+  "crm": "src/modules/crm/index.ts",
+  "claims": "src/modules/claims/index.ts",
+  "survey": "src/modules/survey/index.ts",
+  "finance": "src/modules/finance/index.ts",
+  "compliance": "src/modules/compliance/index.ts",
+  "admin": "src/modules/admin/index.ts"
+ },
+ "files": {
+  "src/analytics.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/app.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/audit.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/auth.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/authz.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/backup.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/cli.ts": {
+   "area": "core",
+   "kind": "routes"
+  },
+  "src/connectors/address-lookup.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/boundary-test-lookup.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/claude.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/companies-house.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/company-search.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/cqc.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/epc.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/free-registers.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/hmlr-title.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/homedata-planning.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/homedata.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/http.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/identity-check.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/inspire-authorities.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/inspire-councils.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/inspire-store.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/inspire.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/matching.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/nations.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/os-buildings.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/ostn15.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/paid-registers.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/place.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/planning.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/postcode-check.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/postcode.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/price-paid.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/register-files.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/registers.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/s3-backup.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/signatory-check.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/site-area.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/smoke.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/sources.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/test-lookups.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/title-boundary.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/turnstile.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/whatsapp-export.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/whatsapp.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/connectors/zoom.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/costing/caprebate-cost-model.cjs": {
+   "area": "survey",
+   "kind": "other"
+  },
+  "src/costing/caprebate-cost-model.d.cts": {
+   "area": "survey",
+   "kind": "other"
+  },
+  "src/costing/caprebate-job-economics.cjs": {
+   "area": "survey",
+   "kind": "other"
+  },
+  "src/custom-roles.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/db.ts": {
+   "area": "core",
+   "kind": "data"
+  },
+  "src/documents/caprebate-client-doc-ingestion.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/documents/caprebate-document-pipeline.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/documents/caprebate-upload-handler.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/live-website.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/mfa-seal.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/outside-services.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/password.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/payload.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/postcodes/caprebate-location-key.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/postcodes/caprebate-postcode-authority.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/postcodes/caprebate-postcode-store.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/postcodes/caprebate-region.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/registers/caprebate-boundary-import.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/registers/caprebate-name-exclusion.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/registers/caprebate-source-register.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/roles.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/secrets.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/seed.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/server.ts": {
+   "area": "core",
+   "kind": "routes"
+  },
+  "src/stubs/calendar.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/stubs/email-inbound.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/stubs/email-provider.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/stubs/email.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/stubs/registers.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/stubs/signature.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/survey/caprebate-anchor-quarantine.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/survey/caprebate-surveyor-crm.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/totp.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/users.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/accountant-confirm-pages.ts": {
+   "area": "portal",
+   "kind": "page"
+  },
+  "src/web/accountant-confirm.ts": {
+   "area": "portal",
+   "kind": "logic"
+  },
+  "src/web/address-check.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/address-lookup-script.ts": {
+   "area": "integrations",
+   "kind": "other"
+  },
+  "src/web/admin-tiles.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/allowance-profit-comparison.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/allowances.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/anchor-store.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/approvals-pages.ts": {
+   "area": "claims",
+   "kind": "page"
+  },
+  "src/web/approvals.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/assessment.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/assets.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/audit-log.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/automation.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/avatar.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/backoffice.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/bcis-data.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/bcis-index.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/billing.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
+  "src/web/booking-invite.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/brand-logo.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/breach-names.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/case-stamp.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/claim-facts.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/claim-overview.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/claim-record-pages.ts": {
+   "area": "claims",
+   "kind": "page"
+  },
+  "src/web/claim-record.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/claim-route.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/client-checks.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/client-files-pages.ts": {
+   "area": "portal",
+   "kind": "page"
+  },
+  "src/web/client-filing.ts": {
+   "area": "portal",
+   "kind": "logic"
+  },
+  "src/web/client-layout.ts": {
+   "area": "portal",
+   "kind": "page"
+  },
+  "src/web/client-list.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/client-page.ts": {
+   "area": "crm",
+   "kind": "page"
+  },
+  "src/web/communication.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/compliance-aml.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/compliance-breach.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/compliance-clock.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/compliance-identity.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/compliance-pages.ts": {
+   "area": "compliance",
+   "kind": "page"
+  },
+  "src/web/compliance-rights.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/compliance-views.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/compliance.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/components.ts": {
+   "area": "shared",
+   "kind": "page"
+  },
+  "src/web/configuration-pages.ts": {
+   "area": "admin",
+   "kind": "page"
+  },
+  "src/web/configuration.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
+  "src/web/connections.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/conveyancing-strip.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/crm-pages.ts": {
+   "area": "crm",
+   "kind": "page"
+  },
+  "src/web/crm.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/dashboard-pages.ts": {
+   "area": "crm",
+   "kind": "page"
+  },
+  "src/web/dashboard.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/defence-pack.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/desk-first.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/disclosure-log.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/document-reading.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/documents-pages.ts": {
+   "area": "claims",
+   "kind": "page"
+  },
+  "src/web/documents.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/email-chains.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/engaged-pages.ts": {
+   "area": "claims",
+   "kind": "page"
+  },
+  "src/web/engaged.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/engagement-send.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/engine.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/enquiries.ts": {
+   "area": "public-site",
+   "kind": "logic"
+  },
+  "src/web/enquiry-retention.ts": {
+   "area": "public-site",
+   "kind": "logic"
+  },
+  "src/web/evidence-pages.ts": {
+   "area": "survey",
+   "kind": "page"
+  },
+  "src/web/extract-text.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/fee-controls.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/fee-discounts.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/finance-pages.ts": {
+   "area": "finance",
+   "kind": "page"
+  },
+  "src/web/finance.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
+  "src/web/finding-source.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/form-token-check.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/form-token.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/free-email-pages.ts": {
+   "area": "integrations",
+   "kind": "page"
+  },
+  "src/web/free-email.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/funnel-deletable.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/funnel-edges.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/funnel-session.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/funnel4.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/grant-checks.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/help-content.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/help.ts": {
+   "area": "core",
+   "kind": "page"
+  },
+  "src/web/home-site.ts": {
+   "area": "public-site",
+   "kind": "page"
+  },
+  "src/web/home.ts": {
+   "area": "public-site",
+   "kind": "page"
+  },
+  "src/web/html.ts": {
+   "area": "shared",
+   "kind": "page"
+  },
+  "src/web/identity-checks.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/images.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/inbound-email.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/introducers-pages.ts": {
+   "area": "crm",
+   "kind": "page"
+  },
+  "src/web/introducers.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/invoices.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
+  "src/web/lead-cards.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/leads.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/legal-approvals.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/web/legal-pages.ts": {
+   "area": "public-site",
+   "kind": "page"
+  },
+  "src/web/letter.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/lists-pages.ts": {
+   "area": "shared",
+   "kind": "page"
+  },
+  "src/web/lists.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/localtime.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/long-life-and-remediation.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/look.ts": {
+   "area": "core",
+   "kind": "page"
+  },
+  "src/web/mandatory-documents.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/match-review-pages.ts": {
+   "area": "integrations",
+   "kind": "page"
+  },
+  "src/web/match-review.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/message-retention.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/messages-pages.ts": {
+   "area": "crm",
+   "kind": "page"
+  },
+  "src/web/messages.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/money-readings.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/multipart.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/navigation.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/next-step.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/notices-site.ts": {
+   "area": "public-site",
+   "kind": "page"
+  },
+  "src/web/objectstore.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/originals.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/pack-approve.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pack-chapters.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pack-cost-model.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pack-grants.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pack-legal.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pack-lines.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pack-sheets.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pack-sums.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pack-vat.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pack-words.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pdf-canvas.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/pdf-metrics.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/pdf.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/photo-upload-script.ts": {
+   "area": "survey",
+   "kind": "other"
+  },
+  "src/web/photo-upload.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/pipeline-pages.ts": {
+   "area": "crm",
+   "kind": "page"
+  },
+  "src/web/pipeline.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/plain-dashes.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/portal-dashboard.ts": {
+   "area": "portal",
+   "kind": "page"
+  },
+  "src/web/portal-steps.ts": {
+   "area": "portal",
+   "kind": "logic"
+  },
+  "src/web/portal.ts": {
+   "area": "portal",
+   "kind": "logic"
+  },
+  "src/web/postcode-port.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/postcode.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/premises-import.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/privacy-policy.ts": {
+   "area": "public-site",
+   "kind": "page"
+  },
+  "src/web/property-events.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/public-site.ts": {
+   "area": "public-site",
+   "kind": "page"
+  },
+  "src/web/receipt-recommendations.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/recovery-codes.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/reference-db.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/refill.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/register-files.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/register-import-script.ts": {
+   "area": "integrations",
+   "kind": "other"
+  },
+  "src/web/report-accept.ts": {
+   "area": "portal",
+   "kind": "logic"
+  },
+  "src/web/report-assumptions.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/report-pages.ts": {
+   "area": "claims",
+   "kind": "page"
+  },
+  "src/web/report-signoff.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/required.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/research.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/return-entries.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/role-editor-pages.ts": {
+   "area": "admin",
+   "kind": "page"
+  },
+  "src/web/role-editor.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
+  "src/web/rooms.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/router.ts": {
+   "area": "core",
+   "kind": "routes"
+  },
+  "src/web/saved-keys.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/schedule.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/search.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/sections.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/sector-ranges.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/settings.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
+  "src/web/shared-objectstore.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/shown-range.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/sign-in.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/signature-pad-script.ts": {
+   "area": "shared",
+   "kind": "other"
+  },
+  "src/web/signing.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/signup.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/site-area-inputs.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/site-area-run.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/site-plan.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/slot-picker.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/staff-dashboard.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/staff.ts": {
+   "area": "core",
+   "kind": "routes"
+  },
+  "src/web/stages.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/survey-checklist.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/survey-evidence.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/survey-open.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/survey-pack-pages.ts": {
+   "area": "survey",
+   "kind": "page"
+  },
+  "src/web/survey-pack.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/survey-report.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/survey-video.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/surveyor-pages.ts": {
+   "area": "survey",
+   "kind": "page"
+  },
+  "src/web/surveyor.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/web/take-back.ts": {
+   "area": "portal",
+   "kind": "logic"
+  },
+  "src/web/tasks-pages.ts": {
+   "area": "crm",
+   "kind": "page"
+  },
+  "src/web/tasks.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/tell-and-move.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/templates.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/time-blocks.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/timeline.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/web/timers.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/title-by-hand.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/typed.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
+  "src/web/upload-handler-port.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/upload-pieces-script.ts": {
+   "area": "shared",
+   "kind": "other"
+  },
+  "src/web/upload-pieces.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/uploads.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/valuation-lock.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/web/vat.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/video-call-script.ts": {
+   "area": "integrations",
+   "kind": "other"
+  },
+  "src/web/video-calls.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/vocabularies.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/voice.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/welcome.ts": {
+   "area": "core",
+   "kind": "page"
+  },
+  "src/web/whatsapp-import-pages.ts": {
+   "area": "integrations",
+   "kind": "page"
+  },
+  "src/web/whatsapp-import-script.ts": {
+   "area": "integrations",
+   "kind": "other"
+  },
+  "src/web/whatsapp-import.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/whatsapp-page.ts": {
+   "area": "integrations",
+   "kind": "page"
+  },
+  "src/web/whatsapp.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/web/who-claims.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/web/working-days.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/web/zip.ts": {
+   "area": "shared",
+   "kind": "logic"
+  }
+ }
+}
