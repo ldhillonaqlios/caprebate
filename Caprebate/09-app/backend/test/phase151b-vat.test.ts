@@ -20,7 +20,7 @@
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import * as E from '../src/web/engine.ts';
+import * as E from '../src/shared/engine.ts';
 import * as FIN from '../src/web/finance.ts';
 
 type VatSetting = { we_are_vat_registered?: unknown; vat_rate?: unknown };

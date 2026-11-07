@@ -5,7 +5,7 @@
  *   GET  /staff/connections/import?list={CIW|CARE_INSPECTORATE}   the import page, with its one script. Admin only.
  *   POST /staff/connections/register/{CIW|CARE_INSPECTORATE}   import that regulator's downloaded list. Admin only.
  *   GET  /staff/connections/switches.json            PHASE 161c: the list of what is built and switched off (STUBS in
- *                                                    src/app.ts), which /api/health served to anyone until 4 Nov 2026.
+ *                                                    src/core/app.ts), which /api/health served to anyone until 4 Nov 2026.
  *                                                    Admin only; anyone else gets 403 and nothing of it.
  * The Connections page itself carries no script, as every page reached from Home must (test/phase133a); the import
  * page, which needs one, is opened by a button, as the WhatsApp upload page is (Phase 156c).
@@ -13,8 +13,8 @@
  * WHY. "So nobody has to read code to know": one row per outside service - is its key there (yes or no, NEVER the
  * value), is it switched on (and what switch says so), is it on for testing under a waiver or for real clients, when it
  * was last called and how that went, and what it still waits on. Built from what the code already decides - the key
- * list (src/secrets.ts), each service's own switch (src/web/saved-keys.ts, `serviceOn`), the outside-call policies
- * (src/connectors/sources.ts) and the audit log's CONNECTOR_CALLED rows - so the page can never say something the code
+ * list (src/core/secrets.ts), each service's own switch (src/core/saved-keys.ts, `serviceOn`), the outside-call policies
+ * (src/integrations/connectors/sources.ts) and the audit log's CONNECTOR_CALLED rows - so the page can never say something the code
  * does not do. Nothing on it changes anything; keys are changed in Home's Admin tab, switches in code.
  *
  * NOTHING IS ON FOR REAL CLIENTS. Every service that is on, is on for testing only, under a recorded waiver or approval
@@ -30,17 +30,17 @@
  * A list not imported this calendar month is shown on Home's Admin view, so each new monthly file is imported.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { STUBS, type App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { SECRET_KEYS, type SecretOwner } from '../secrets.ts';
-import { serviceOn } from './saved-keys.ts';
-import { switchedOn, switchesHere, TEST_WEBSITE_LOOKUPS, lookupsWaivedHere } from '../connectors/registers.ts';
-import { POSTCODE_CHECK } from '../connectors/postcode-check.ts';
+import { STUBS, type App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { SECRET_KEYS, type SecretOwner } from '../core/index.ts';
+import { serviceOn } from '../core/saved-keys.ts';
+import { switchedOn, switchesHere, TEST_WEBSITE_LOOKUPS, lookupsWaivedHere } from '../integrations/index.ts';
+import { POSTCODE_CHECK } from '../integrations/index.ts';
 import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from './register-files.ts';
-import { singleFile } from './multipart.ts';
-import { localStamp, localPartsOf } from './localtime.ts';
-import { ADDRESS_SEARCH_CAP, searchesToday } from '../connectors/address-lookup.ts';
+import { singleFile } from '../core/index.ts';
+import { localStamp, localPartsOf } from '../shared/index.ts';
+import { ADDRESS_SEARCH_CAP, searchesToday } from '../integrations/index.ts';
 
 /** One outside service as the page shows it. */
 export type Connection = {

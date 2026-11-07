@@ -13,16 +13,16 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import type { App } from '../app.ts';
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { h, raw, page, type Safe } from './html.ts';
-import { savedMessage } from './components.ts';
-import { localStamp } from './localtime.ts';
+import type { App } from '../core/app.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { h, raw, page, type Safe } from '../shared/index.ts';
+import { savedMessage } from '../shared/index.ts';
+import { localStamp } from '../shared/index.ts';
 import { markChannelRead, lastChannelRead } from './messages.ts';
 import { attachmentOf, phoneContacts, ATTACHMENT_WORDS, type PhoneContact } from './whatsapp.ts';
-import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../connectors/whatsapp.ts';
-import { isDoNotContact } from '../stubs/email.ts';
+import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../integrations/index.ts';
+import { isDoNotContact } from '../integrations/index.ts';
 import { importsFor } from './whatsapp-import.ts';
 
 /** One person (or one number we filed under the company) we have a WhatsApp conversation with, or could. */

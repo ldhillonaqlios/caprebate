@@ -1,12 +1,12 @@
 /**
- * UI TIDY PHASE 1 — THE SHARED LOOK (src/web/look.ts and its rules in src/web/assets.ts), 2 October 2026.
+ * UI TIDY PHASE 1 — THE SHARED LOOK (src/core/look.ts and its rules in src/shared/assets.ts), 2 October 2026.
  * The stage colours, the solid number boxes, the group bar, the black table heading and the striped rows.
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { SITE_CSS, BRAND_TOKENS, TEXT_PAIRINGS } from '../src/web/assets.ts';
-import { PROCEDURE_KEYS, EXIT_KEYS } from '../src/web/stages.ts';
-import { STAGE_GROUPS, stageGroupOf, stageBadge, groupBand, kpiRow, groupBar, lateBadge, noDateBadge, nobodyBadge, type KpiTone } from '../src/web/look.ts';
+import { SITE_CSS, BRAND_TOKENS, TEXT_PAIRINGS } from '../src/shared/assets.ts';
+import { PROCEDURE_KEYS, EXIT_KEYS } from '../src/shared/stages.ts';
+import { STAGE_GROUPS, stageGroupOf, stageBadge, groupBand, kpiRow, groupBar, lateBadge, noDateBadge, nobodyBadge, type KpiTone } from '../src/core/look.ts';
 
 const GROUPS = ['win', 'gather', 'survey', 'sign', 'paid'] as const;
 

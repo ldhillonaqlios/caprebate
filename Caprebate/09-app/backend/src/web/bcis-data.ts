@@ -7,7 +7,7 @@
  * not a question any more. The Lockwood run (L12) printed every rate as "Surveyor", with no source.
  *
  * WHAT THIS FILE DOES:
- *   1. THE IMPORTER (`importBcisData`, `node src/cli.ts import-bcis-data`): BCIS's own CSV exports — the average prices
+ *   1. THE IMPORTER (`importBcisData`, `node src/core/cli.ts import-bcis-data`): BCIS's own CSV exports — the average prices
  *      by building function (£/m², rebased to a stated quarter at the UK mean location), the elemental analyses (£/m²
  *      of floor by NRM element), and the location factors. Columns are found by their header words, not their place,
  *      so an export with extra columns still reads; a file this cannot read is refused whole, never half-read. The data
@@ -31,9 +31,9 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { basename, isAbsolute, join, resolve } from 'node:path';
-import { isInside, repositoryRoot } from '../secrets.ts';
+import { isInside, repositoryRoot } from '../core/index.ts';
 import { bcisIndexTable } from './bcis-index.ts';
-import { onTestWebsite, type Env } from '../connectors/place.ts';
+import { onTestWebsite, type Env } from '../integrations/index.ts';
 
 export type BcisType = { readonly name: string; readonly mean_pence: number; readonly median_pence: number | null; readonly sample: number | null };
 export type BcisElement = { readonly type_name: string; readonly code: string; readonly name: string; readonly rate_pence: number };

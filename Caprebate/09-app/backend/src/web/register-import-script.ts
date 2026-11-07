@@ -13,7 +13,7 @@
 export const REGISTER_IMPORT_JS = `(function () {
   'use strict';
   var root = typeof window !== 'undefined' ? window : globalThis;
-// PHASE 161b: our form token, from the page, for the x-cb-form header (src/web/form-token.ts).
+// PHASE 161b: our form token, from the page, for the x-cb-form header (src/core/form-token.ts).
 function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
 
   function say(el, words) { if (el) el.textContent = words; }

@@ -14,27 +14,27 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
-import { createApp } from '../src/server.ts';
-import { Db } from '../src/db.ts';
-import { AuditLog } from '../src/audit.ts';
-import { SECRET_KEYS, secretsFromValues, forgetRegisteredSecretsForTest } from '../src/secrets.ts';
-import { signS3, s3EncodePath, s3LoginFrom, s3Target } from '../src/connectors/s3-backup.ts';
+import { createApp } from '../src/core/server.ts';
+import { Db } from '../src/core/db.ts';
+import { AuditLog } from '../src/core/audit.ts';
+import { SECRET_KEYS, secretsFromValues, forgetRegisteredSecretsForTest } from '../src/core/secrets.ts';
+import { signS3, s3EncodePath, s3LoginFrom, s3Target } from '../src/integrations/connectors/s3-backup.ts';
 import {
   BACKUP_KEEP_DAYS, backupDocuments, folderTarget, lockBackup, restoreDatabase, restoreDocuments, runNightlyBackup, unlockBackup,
-} from '../src/backup.ts';
-import { FsObjectStore } from '../src/web/objectstore.ts';
-import { rowsToRetry, timerJobOf, timerWordRefusal, TIMER_SCHEDULES, TIMER_JOBS } from '../src/web/timers.ts';
+} from '../src/core/backup.ts';
+import { FsObjectStore } from '../src/shared/objectstore.ts';
+import { rowsToRetry, timerJobOf, timerWordRefusal, TIMER_SCHEDULES, TIMER_JOBS } from '../src/core/timers.ts';
 import {
   holdsInventedSeed, LIVE_KEYS, LIVE_REQUIRED, liveStartCheck, prepareLiveDatabase, startLiveWebsite, TEST_ONLY_SETTINGS,
-} from '../src/live-website.ts';
-import { forgetReferenceGrid, OSTN15_SCHEMA, referenceLocation, referenceOstn15Grid, referencePostcodeStore } from '../src/web/reference-db.ts';
-import { SQLITE_SCHEMA } from '../src/postcodes/caprebate-postcode-store.ts';
-import { etrs89ToBritishNationalGrid, ostn15GridFromRows, OSTN15_COLUMNS, OSTN15_ROWS } from '../src/connectors/ostn15.ts';
-import { postcodeStore, resetPostcodeStore, resolveProperty } from '../src/web/postcode.ts';
+} from '../src/core/live-website.ts';
+import { forgetReferenceGrid, OSTN15_SCHEMA, referenceLocation, referenceOstn15Grid, referencePostcodeStore } from '../src/integrations/postcodes/reference-db.ts';
+import { SQLITE_SCHEMA } from '../src/integrations/postcodes/postcode-store.ts';
+import { etrs89ToBritishNationalGrid, ostn15GridFromRows, OSTN15_COLUMNS, OSTN15_ROWS } from '../src/integrations/connectors/ostn15.ts';
+import { postcodeStore, resetPostcodeStore, resolveProperty } from '../src/integrations/postcodes/postcode.ts';
 import { buildReferenceDb } from '../tools/build-reference-db.ts';
 import { restoreFromFolder } from '../tools/restore-backup.ts';
-import { openSecret, resealSecrets, sealSecret, type MfaKey } from '../src/mfa-seal.ts';
-import type { BlobClient } from '../src/web/shared-objectstore.ts';
+import { openSecret, resealSecrets, sealSecret, type MfaKey } from '../src/core/mfa-seal.ts';
+import type { BlobClient } from '../src/shared/shared-objectstore.ts';
 
 const VERCEL = (await import(new URL('../../../../vercel.ts', import.meta.url).href)) as {
   vercelConfig: (e: Record<string, string>) => { crons?: { path: string; schedule: string }[] } & Record<string, unknown>;

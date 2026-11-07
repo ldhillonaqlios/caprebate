@@ -17,7 +17,7 @@ import { join } from 'node:path';
    seeds. Unlike the test website's, a failure FAILS THE RELEASE (exit 1), so the live website stays on the one before. */
 if ((process.env.CAPREBATE_PRODUCTION ?? '').trim() === '1') {
   try {
-    const { prepareLiveDatabase } = await import('../src/live-website.ts');
+    const { prepareLiveDatabase } = await import('../src/core/live-website.ts');
     const r = await prepareLiveDatabase(process.env);
     console.log(`build (live website): ${r.why}`);
     process.exit(r.ok ? 0 : 1);
@@ -29,8 +29,8 @@ if ((process.env.CAPREBATE_PRODUCTION ?? '').trim() === '1') {
 
 try {
   const { lastingDatabase, prepareLasting } = await import('../../../../api/index.mjs');
-  const { createApp } = await import('../src/server.ts');
-  const { seed } = await import('../src/seed.ts');
+  const { createApp } = await import('../src/core/server.ts');
+  const { seed } = await import('../src/core/seed.ts');
   const r = await prepareLasting(createApp, seed, lastingDatabase(process.env), { documentRoot: mkdtempSync(join(tmpdir(), 'cb-prepare-')) });
   console.log(`build: ${r.why}`);
 } catch (e) {

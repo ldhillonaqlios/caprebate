@@ -3,7 +3,7 @@
  *
  * And the first place `assertSignedEngagement` takes any form. It is named in
  * four documents — the Developer Brief, the Build Order, the Provenance Map and
- * src/stubs/signature.ts's own warning — and, until this file, implemented
+ * src/integrations/signature.ts's own warning — and, until this file, implemented
  * nowhere. Every one of those four says the same three things about it, so they
  * are the specification and they are not restated as opinion:
  *
@@ -60,7 +60,7 @@
  * them?" Answer, closed 24 September 2026: "Yes – best to check who signs and if they have authority". So "Run the
  * research" makes ONE MORE STEP after the lookups: `runSignatoryCheck` reads the name typed on the signed engagement
  * letter (engagement_signatures.signer_name, migration 040) on the server, and hands it to `checkSignatory`
- * (src/connectors/signatory-check.ts), which compares it in memory with the Companies House officers list and the care
+ * (src/integrations/connectors/signatory-check.ts), which compares it in memory with the Companies House officers list and the care
  * regulator's registered manager and nominated individual. What comes back is a register, YES, NO or NOT_CHECKED, and
  * a reason code — never a name — and `storeSignatoryChecks` keeps exactly that in signatory_checks (migration 050),
  * with a SIGNATORY_CHECKED audit row carrying the register and the result.
@@ -74,7 +74,7 @@
  * ───────────────────────────────────────────────────────────────────────────
  * THE SITE AREA FROM THE LAND BOUNDARY — PHASE 151c, 25 September 2026
  *
- * "Run the research" is now the one caller of `siteAreaFromLandBoundary` (src/connectors/site-area.ts), through
+ * "Run the research" is now the one caller of `siteAreaFromLandBoundary` (src/integrations/connectors/site-area.ts), through
  * src/web/site-area-run.ts: ONE MORE STEP after the check of who signed, for each of the client's properties, with the
  * postcode's council, any neighbouring council a person added, and the point a person entered or Homedata's own. It
  * waits on the signed letter, the free gate and the client's own choice, as read here, and above them on the boundary
@@ -83,30 +83,30 @@
  */
 
 import { keepCouncilArea, fillTenureFromRegisters } from './who-claims.ts';
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import type { AuditLog } from '../audit.ts';
-import { registryGate, REGISTRY } from './engine.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { registryGate, REGISTRY } from '../shared/index.ts';
 import { DECLINED_LINE, lookupsDeclined } from './address-check.ts';
-import { SOURCES as REGISTER_SOURCES, LICENCES } from '../registers/caprebate-source-register.ts';
-import { switchedOn, runConnector, REGISTER_SWITCHES, PLANNING_ROUTE, switchesHere, freeGateWaived, gateStatus, type Bundle, type ConnectorContext } from '../connectors/registers.ts';
-import type { Env } from '../connectors/place.ts';
-import { checkPostcode } from '../connectors/postcode-check.ts';
-import { nationFromCountry } from '../connectors/nations.ts';
-import type { Transport, RateLimiter } from '../connectors/http.ts';
-import type { SecretStore } from '../secrets.ts';
-import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../connectors/free-registers.ts';
-import type { PickQuery } from '../connectors/matching.ts';
-import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds, uprnFrom } from '../connectors/paid-registers.ts';
-import { ingestRegisterRecord } from '../stubs/registers.ts';
+import { SOURCES as REGISTER_SOURCES, LICENCES } from '../integrations/index.ts';
+import { switchedOn, runConnector, REGISTER_SWITCHES, PLANNING_ROUTE, switchesHere, freeGateWaived, gateStatus, type Bundle, type ConnectorContext } from '../integrations/index.ts';
+import type { Env } from '../integrations/index.ts';
+import { checkPostcode } from '../integrations/index.ts';
+import { nationFromCountry } from '../integrations/index.ts';
+import type { Transport, RateLimiter } from '../integrations/index.ts';
+import type { SecretStore } from '../core/index.ts';
+import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../integrations/connectors/free-registers.ts';
+import type { PickQuery } from '../integrations/index.ts';
+import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds, uprnFrom } from '../integrations/index.ts';
+import { ingestRegisterRecord } from '../integrations/index.ts';
 import { lookAgainShort } from './take-back.ts';
-import { postcodeStore } from './postcode.ts';
-import type { PostcodeStore } from './postcode-port.ts';
+import { postcodeStore } from '../integrations/postcodes/postcode.ts';
+import type { PostcodeStore } from '../integrations/postcodes/postcode-port.ts';
 import { checkSignature } from './signing.ts';
 import {
   checkSignatory, notYet, outcome as signatoryOutcome, signatoryWords, SIGNATORY_SOURCES,
   type SignatoryGates, type SignatoryOutcome, type SignatoryReason, type SignatoryResult, type SignatorySource,
-} from '../connectors/signatory-check.ts';
+} from '../integrations/index.ts';
 import { runSiteAreas, siteAreaLines, storeSiteAreaRuns, type SiteAreaLine, type SiteAreaSetup } from './site-area-run.ts';
 import { raiseToResearch } from './pipeline.ts';
 
@@ -148,7 +148,7 @@ const TIER_BY_SOURCE: Readonly<Record<string, Tier>> = Object.freeze({
      Price Paid Data, and the land-boundary counterpart of "OS" in the documents' tier 1. Only a council's name is
      sent, never anything about the client. */
   HMLR_INSPIRE: 'FREE',
-  /* Phase 151: the free postcode check at the address question (src/connectors/postcode-check.ts). Not run by the button. */
+  /* Phase 151: the free postcode check at the address question (src/integrations/connectors/postcode-check.ts). Not run by the button. */
   POSTCODES_IO: 'FREE',
   /* Tier 2 — paid, gated on a signed engagement. */
   HMLR_TITLE: 'PAID',
@@ -356,7 +356,7 @@ export function freeGate(): FreeGate {
 
 /**
  * 2 Oct 2026: the free gate as it stands for ONE source here — open for a source the test website's waiver names
- * (src/connectors/registers.ts, TEST_WEBSITE_LOOKUPS), and otherwise the free gate itself.
+ * (src/integrations/connectors/registers.ts, TEST_WEBSITE_LOOKUPS), and otherwise the free gate itself.
  */
 export function freeGateFor(free: FreeGate, source_id: string, env: Env = process.env): FreeGate {
   return !free.open && freeGateWaived(source_id, env) ? { open: true, requires: free.requires } : free;
@@ -375,7 +375,7 @@ export type SignedEngagement = {
  *
  * The `engagements` table is the record. Nothing here reads a form field, a
  * cookie, a query parameter or anything the stub signature provider returned to
- * a browser — src/stubs/signature.ts says in terms that it must not, and the
+ * a browser — src/integrations/signature.ts says in terms that it must not, and the
  * reason is that the stub's `executed` is always false and a build that trusted
  * it would be trusting a value it had just made up.
  *
@@ -449,7 +449,7 @@ export type SourceRow = CatalogueEntry & {
    */
   readonly may_retry: boolean;
   /**
-   * PHASE 146b: the source's own connector switch (REGISTER_SWITCHES in src/connectors/registers.ts). Every one is off.
+   * PHASE 146b: the source's own connector switch (REGISTER_SWITCHES in src/integrations/connectors/registers.ts). Every one is off.
    * NOT A THIRD GATE: the gates say whether we may consult a source for this client; this says whether its connector
    * is turned on at all. Shown on the panel in plain words ("not switched on").
    */
@@ -476,7 +476,7 @@ export type SourceRow = CatalogueEntry & {
 /**
  * PHASE 146k — THE SOURCES A PERSON LOOKS UP BY HAND, AND WHERE THEY RECORD WHAT THEY FOUND. Lakhbir, 25 September
  * 2026: HM Land Registry's title register "will be done manually and not via API". The Business Gateway connector
- * (src/connectors/hmlr-title.ts) is retired from the click; a person buys the official copy and records it on the
+ * (src/integrations/connectors/hmlr-title.ts) is retired from the click; a person buys the official copy and records it on the
  * property page (src/web/title-by-hand.ts). The row stays on the panel — it is still a source of the claim's facts,
  * still paid, and still after signing — but no button consults it, and it never costs the click anything.
  */
@@ -845,7 +845,7 @@ export type ResearchOutside = {
   readonly secrets: SecretStore;
   /** REGISTER_SWITCHES (with the test website's waiver, where it holds) unless a test passes its own. */
   readonly switches?: Readonly<Record<string, boolean>>;
-  /** 2 Oct 2026: where this copy runs, for the test website's waiver (src/connectors/registers.ts). Absent: the process's. */
+  /** 2 Oct 2026: where this copy runs, for the test website's waiver (src/integrations/connectors/registers.ts). Absent: the process's. */
   readonly env?: Env;
   readonly limiter?: RateLimiter;
   readonly sleep?: (ms: number) => Promise<void>;

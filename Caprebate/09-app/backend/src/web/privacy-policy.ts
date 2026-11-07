@@ -8,15 +8,15 @@
  * NOTHING HERE IS INVENTED. Every fact nobody has given us (the ICO number, the data protection officer's name and
  * contact, a telephone number, where the live website's host keeps data) is a marked gap: `LATER` on the page, listed
  * in LEGAL_GAPS. The free lookups are LEGITIMATE INTERESTS, never consent (standing rule 13(b)): the only consent here is
- * the optional analytics cookie. The outside services come from OUTSIDE_SERVICES (src/outside-services.ts), tied to
+ * the optional analytics cookie. The outside services come from OUTSIDE_SERVICES (src/integrations/outside-services.ts), tied to
  * SECRET_KEYS by a test; the retention periods come from RETENTION_PARAMETERS (src/web/compliance-identity.ts), the
  * retention schedule, and say they are not yet approved while they are not.
  *
  * The engagement letter's own clauses are not touched here: it governs the work, and these terms say so.
  */
-import { h, raw, type Safe } from './html.ts';
-import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../outside-services.ts';
-import { BACKUP_KEEP_DAYS } from '../backup.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
+import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../integrations/index.ts';
+import { BACKUP_KEEP_DAYS } from '../core/index.ts';
 import { RETENTION_PARAMETERS } from './compliance-identity.ts';
 
 export const COMPANY = 'CAP REBATE LTD';
@@ -48,7 +48,7 @@ function retentionRows(): Safe {
     ['A record of a data breach', ret('RET-5')],
     ['An enquiry from our website that does not become a claim', { says: 'Twelve months after we close it.', approved: false }],
     ['Messages with a client who has no claim with us', { says: 'Twelve months.', approved: false }],
-    // PHASE 161h, 7 Nov 2026: the live website's nightly backup (src/backup.ts, BACKUP_KEEP_DAYS); Word question 292.
+    // PHASE 161h, 7 Nov 2026: the live website's nightly backup (src/core/backup.ts, BACKUP_KEEP_DAYS); Word question 292.
     ['A copy in our nightly backup', { says: `${BACKUP_KEEP_DAYS} days. Something we delete leaves the backup ${BACKUP_KEEP_DAYS} days later.`, approved: false }],
   ];
   return h`${rows.map(([what, r]) => h`<tr><td>${what}</td><td>${r.says}</td><td>${r.approved ? 'Approved' : 'Proposed. Not yet approved by our data protection officer.'}</td></tr>`)}`;

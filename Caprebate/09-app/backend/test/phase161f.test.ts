@@ -9,7 +9,7 @@
  *
  * WHAT THE TEST WEBSITE RUNS. The page's own copy of the calculator sits inside the in-page assessment
  * (`<template id="assessTpl">`), which the served edition leaves out (src/web/public-site.ts). So the website's
- * eligibility check runs the engine package, on the server, through src/web/engine.ts: these tests hold both halves.
+ * eligibility check runs the engine package, on the server, through src/shared/engine.ts: these tests hold both halves.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +18,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { buildSiteEdition, SITE_PATH } from '../src/web/public-site.ts';
-import { CB } from '../src/web/engine.ts';
+import { CB } from '../src/shared/engine.ts';
 
 const ENGINE = join(import.meta.dirname, '..', '..', 'engine');
 const req = createRequire(import.meta.url);

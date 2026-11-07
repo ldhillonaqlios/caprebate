@@ -50,10 +50,10 @@
  * still with no date computed, because RET-7 is not approved.
  */
 
-import type { Db } from '../db.ts';
-import { authorise, type Actor } from '../authz.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, type Actor } from '../core/index.ts';
 import { retentionReading, ret7Limbs } from './documents.ts';
-import { BACKUP_CYCLE } from './upload-handler-port.ts';
+import { BACKUP_CYCLE } from '../shared/upload-handler-port.ts';
 import { MESSAGE_RETENTION_QUESTION } from './message-retention.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, holdsFor, liveHeldIds, NotFoundAsRefusal, opaqueRef, record, requiredText,

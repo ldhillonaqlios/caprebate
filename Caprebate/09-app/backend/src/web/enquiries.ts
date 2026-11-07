@@ -13,10 +13,10 @@
  * record of what the person wrote.
  */
 
-import type { Deps } from '../auth.ts';
-import { rateLimit } from '../auth.ts';
-import { authorise, type Actor } from '../authz.ts';
-import { hashToken } from '../users.ts';
+import type { Deps } from '../core/index.ts';
+import { rateLimit } from '../core/index.ts';
+import { authorise, type Actor } from '../core/index.ts';
+import { hashToken } from '../core/index.ts';
 import type { CrmDeps } from './crm.ts';
 import { createLead } from './leads.ts';
 
@@ -50,7 +50,7 @@ function text(f: URLSearchParams, name: string, max: number): string | null | un
 
 /** Receive the form. No actor: a visitor has no account. */
 /**
- * `check` is what the contact form's security check found (src/connectors/turnstile.ts), recorded on the audit line:
+ * `check` is what the contact form's security check found (src/integrations/connectors/turnstile.ts), recorded on the audit line:
  * 'passed', or 'not_checked' with why. A failed check never reaches here: the router refuses it first.
  */
 export function receiveEnquiry(auth: Deps, newId: () => string, f: URLSearchParams, check: 'passed' | 'not_checked:no_secret' | 'not_checked:transfer_not_approved' = 'not_checked:no_secret'): Received {

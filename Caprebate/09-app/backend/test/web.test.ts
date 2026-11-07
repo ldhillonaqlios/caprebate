@@ -18,15 +18,15 @@ import { mkdtempSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pdfOf } from './document-fixtures.ts';
-import { createApp } from '../src/server.ts';
-import { FsObjectStore, assertNoStaticFileRoute, FILE_MODE } from '../src/web/objectstore.ts';
+import { createApp } from '../src/core/server.ts';
+import { FsObjectStore, assertNoStaticFileRoute, FILE_MODE } from '../src/shared/objectstore.ts';
 import { beginUpload, acceptClientBytes, finishUpload, eventsFor } from '../src/web/uploads.ts';
-import { assertContractCovered, quarantineKeyFor, UPLOAD_LIMITS } from '../src/web/upload-handler-port.ts';
-import { STAGES, progressFor, stageIndex } from '../src/web/stages.ts';
+import { assertContractCovered, quarantineKeyFor, UPLOAD_LIMITS } from '../src/shared/upload-handler-port.ts';
+import { STAGES, progressFor, stageIndex } from '../src/shared/stages.ts';
 import { loadLetter, letterExists } from '../src/web/letter.ts';
 import { SCREEN_IDS, SCREENS, answerRows } from '../src/web/assessment.ts';
-import { escapeHtml, h } from '../src/web/html.ts';
-import { registryGate, FUNNEL, BOOKING } from '../src/web/engine.ts';
+import { escapeHtml, h } from '../src/shared/html.ts';
+import { registryGate, FUNNEL, BOOKING } from '../src/shared/engine.ts';
 
 /* ------------------------------------------------------------------ *
  * a whole application, over real HTTP

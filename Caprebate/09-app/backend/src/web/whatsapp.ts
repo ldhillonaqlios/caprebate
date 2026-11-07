@@ -11,7 +11,7 @@
  * `client_message.write` to write (Admin, Sales), and nothing to a company marked do not contact.
  *
  * SENDING (`sendWhatsApp`). To a contact of this company with a telephone number. Within 24 hours of their last WhatsApp
- * to us, the words typed; outside it, WhatsApp allows only our approved opening message (src/connectors/whatsapp.ts).
+ * to us, the words typed; outside it, WhatsApp allows only our approved opening message (src/integrations/connectors/whatsapp.ts).
  * Every attempt is a row — SENT with Meta's id, or NOT_SENT with why — and an audit line with no number and no words.
  *
  * RECEIVING (`receiveWhatsApp`, POST /hooks/whatsapp). Believed only when Meta's signature over the exact bytes holds;
@@ -22,18 +22,18 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import type { App } from '../app.ts';
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { isDoNotContact } from '../stubs/email.ts';
-import { SENT_SECRET_KINDS } from '../stubs/email-provider.ts';
-import { localStamp } from './localtime.ts';
+import type { App } from '../core/app.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { isDoNotContact } from '../integrations/index.ts';
+import { SENT_SECRET_KINDS } from '../integrations/index.ts';
+import { localStamp } from '../shared/index.ts';
 import { clientThread } from './messages.ts';
 import {
   MAX_WHATSAPP_TEXT, WINDOW_HOURS, fetchWhatsAppMedia, readWebhook, sendWhatsAppOpening, sendWhatsAppText, signatureHolds, waNumber,
   type WhatsAppDeps,
-} from '../connectors/whatsapp.ts';
-import { WHATSAPP_PREFIX, type FsObjectStore } from './objectstore.ts';
+} from '../integrations/index.ts';
+import { WHATSAPP_PREFIX, type FsObjectStore } from '../shared/objectstore.ts';
 
 export function whatsappDeps(app: App): WhatsAppDeps {
   return { audit: app.audit, now: app.now, transport: app.outside, secrets: app.secrets,

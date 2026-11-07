@@ -12,7 +12,7 @@ import { testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 import { insertClaim } from '../src/web/crm.ts';
 import { amendmentWindowReading } from '../src/web/claim-facts.ts';
-import type { App } from '../src/app.ts';
+import type { App } from '../src/core/app.ts';
 
 export const WINDOW_NOW = '2026-10-09T12:00:00.000Z';
 const T0 = '2026-09-08T00:00:00.000Z';

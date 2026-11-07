@@ -1,5 +1,5 @@
 /**
- * REBUILDS THE COUNCIL TABLE in src/connectors/inspire-councils.ts from ONS's published list. Phase 151a.
+ * REBUILDS THE COUNCIL TABLE in src/integrations/connectors/inspire-councils.ts from ONS's published list. Phase 151a.
  *
  *   node tools/inspire-council-table.ts <ons-list.json>           prints what it would write, and every problem
  *   node tools/inspire-council-table.ts <ons-list.json> --write   rewrites the generated rows
@@ -13,8 +13,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { INSPIRE_AUTHORITY_FILES } from '../src/connectors/inspire-authorities.ts';
-import { fileForOnsName, NAMED_PAIRS, type InspireCouncil } from '../src/connectors/inspire-councils.ts';
+import { INSPIRE_AUTHORITY_FILES } from '../src/integrations/connectors/inspire-authorities.ts';
+import { fileForOnsName, NAMED_PAIRS, type InspireCouncil } from '../src/integrations/connectors/inspire-councils.ts';
 
 const [path, flag] = process.argv.slice(2);
 if (path === undefined) {
@@ -62,7 +62,7 @@ for (const p of problems) console.log(`  PROBLEM ${p}`);
 if (problems.length > 0) process.exit(1);
 
 if (flag === '--write') {
-  const file = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'src', 'connectors', 'inspire-councils.ts');
+  const file = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'src', 'integrations', 'connectors', 'inspire-councils.ts');
   const src = readFileSync(file, 'utf8');
   const body = out.map((r) => `  { lad_code: ${JSON.stringify(r.lad_code)}, ons_name: ${JSON.stringify(r.ons_name)}, file: ${JSON.stringify(r.file)} },`).join('\n');
   const next = src.replace(

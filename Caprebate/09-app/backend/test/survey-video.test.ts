@@ -24,13 +24,13 @@ import { mkdtempSync, existsSync, readdirSync, readFileSync, writeFileSync } fro
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import vm from 'node:vm';
-import { createApp } from '../src/server.ts';
-import { FsObjectStore } from '../src/web/objectstore.ts';
+import { createApp } from '../src/core/server.ts';
+import { FsObjectStore } from '../src/shared/objectstore.ts';
 import { PHOTO_UPLOAD_JS } from '../src/web/photo-upload-script.ts';
 import { LOCK_OVERHEAD } from '../src/web/photo-upload.ts';
 import * as V from '../src/web/survey-video.ts';
 import * as E from '../src/web/survey-evidence.ts';
-import { secretsFromValues } from '../src/secrets.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
 import { actor } from './helpers.ts';
 
 type Lock = (key: string, bytes: Uint8Array) => Promise<Uint8Array>;

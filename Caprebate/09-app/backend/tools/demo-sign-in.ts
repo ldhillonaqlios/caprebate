@@ -3,12 +3,12 @@
  *
  * Since Phase 151j every staff login gives a second step, so the screenshot tool
  * (04-phase-work/phase144/tools/crawl-shots.mjs), which signed in with a password, stopped at the step page and reached
- * no staff screen at all. This signs it in through the JSON API's steps (src/server.ts, /api/login and
+ * no staff screen at all. This signs it in through the JSON API's steps (src/core/server.ts, /api/login and
  * /api/login/step/...), the same functions a person's sign-in runs:
  *
  *   SET UP (a login with no second step yet, which is every staff login on a demo just started)
  *       it chooses an authenticator app, is given the key as a person is, and works out the six numbers from it itself
- *       (src/totp.ts). The key is kept only in this process, for this run.
+ *       (src/core/totp.ts). The key is kept only in this process, for this run.
  *   GIVE A CODE
  *       an app it set up in this run: the next code from the key it holds;
  *       an emailed code: read from what the demo prints to its console (`npm run start:demo > <file>`, named to the tool
@@ -20,7 +20,7 @@
  * any website not on this machine (localhost, 127.0.0.1 or ::1) - so it can never set up a second step on the test
  * website's logins, which Lakhbir uses, or anywhere else.
  */
-import { codeAt, stepAt } from '../src/totp.ts';
+import { codeAt, stepAt } from '../src/core/totp.ts';
 
 export const DEMO_DOMAIN = '@example.invalid';
 
@@ -101,7 +101,7 @@ export async function demoSignIn(base: string, email: string, password: string, 
     if (key === undefined) {
       return { ok: false, why: `${email}: its authenticator app was set up before this run, so the tool does not hold its key. Restart the demo (npm run start:demo) and run the tool again` };
     }
-    // The code of this 30 seconds may already have been used by this run; the next one is also taken (src/totp.ts).
+    // The code of this 30 seconds may already have been used by this run; the next one is also taken (src/core/totp.ts).
     for (const ahead of [0, 1]) {
       const done = await giveCode(codeAt(key, stepAt(now()) + ahead));
       if (done.status === 200) return { ok: true, cookies: done.cookies, how: 'authenticator app' };

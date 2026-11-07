@@ -3,13 +3,13 @@
  *
  * Lakhbir, asked how the report travels: "Adviser, then client"; our own adviser's sign-off "Staff record it, as today";
  * the client's accountant by "Email + private sign-off link". The claim's own rule stands: no figure reaches the client
- * before a tax adviser's sign-off is on record (src/web/stages.ts, TAX_ADVISER_SIGNOFF).
+ * before a tax adviser's sign-off is on record (src/shared/stages.ts, TAX_ADVISER_SIGNOFF).
  *
  *   SENT FOR SIGN-OFF   Admin or Sales (`email.queue`) emails an approved version to one of the company's accountants or
  *                       advisers (a contact of that type, with an email address), saying how the client gave their
  *                       permission. The email carries the PDF and a private link: 32 random bytes, of which only the
  *                       SHA-256 is kept. The link works for 30 days, and is answered once. Sending follows the same rules
- *                       as every email: the switch, the test website only (src/connectors/place.ts), never to an invented
+ *                       as every email: the switch, the test website only (src/integrations/connectors/place.ts), never to an invented
  *                       address or a company that asked not to be contacted; once sent, the link leaves the outbox.
  *   ANSWERED            Whoever holds the link reads the report and either signs off (their name, their firm — a name
  *                       ending Limited, LLP or plc, as the claim's sign-off requires — and the title they sign under,
@@ -24,10 +24,10 @@
  *                       sending is on) — once a version.
  */
 import { createHash, randomBytes } from 'node:crypto';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, type Actor } from '../authz.ts';
-import type { EmailTransport } from '../stubs/email.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, type Actor } from '../core/index.ts';
+import type { EmailTransport } from '../integrations/index.ts';
 import { packJob } from './surveyor.ts';
 import { approvedVersion, type ApprovalRow, type Snapshot } from './pack-approve.ts';
 import { reportModel, reportPdf, longDate, REPORT_TITLE } from './survey-report.ts';
@@ -35,7 +35,7 @@ import { freezeReturnContext, returnContext, returnContextFor, returnEntriesCsv 
 import { voidLine } from './valuation-lock.ts';
 import { recordSignOff } from './claim-record.ts';
 import { postClientMessage } from './messages.ts';
-import { localDate } from './localtime.ts';
+import { localDate } from '../shared/index.ts';
 import { poundsWords } from './pack-sums.ts';
 
 export type SignoffDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };

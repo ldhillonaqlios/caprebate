@@ -46,8 +46,8 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { readZipEntry, DOCX_DOCUMENT_ENTRIES, docxParagraphTexts } from './zip.ts';
-import { plainDashText } from './plain-dashes.ts';
+import { readZipEntry, DOCX_DOCUMENT_ENTRIES, docxParagraphTexts } from '../shared/index.ts';
+import { plainDashText } from '../shared/index.ts';
 
 /** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 06-commercial-and-governance/Caprebate Engagement Letter.docx, the director's and the solicitor's, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const LETTER_PATH = join(import.meta.dirname, '..', '..', 'copies', 'Caprebate Engagement Letter.docx');
@@ -186,7 +186,7 @@ export function loadLetter(
   const rendered = paragraphs.map((p) => p.text).join('\n');
   /* PHASE 160d, 19 October 2026: THE LETTER WITHOUT LONG DASHES, as the client reads it on screen since Phase 160c and so
      in the PDF they sign. The Word document itself is not changed (it is with the solicitor, FOR THE SOLICITOR SDP-L3); its
-     words are read as they are and each long dash becomes a colon or a comma here (src/web/plain-dashes.ts). Whether it is
+     words are read as they are and each long dash becomes a colon or a comma here (src/shared/plain-dashes.ts). Whether it is
      the test copy, and which specimens it still holds, are read from the document's own words, before that. A letter
      already signed is never drawn again: its text and PDF are kept as they were signed (src/web/signing.ts). */
   const plain = paragraphs.map((p) => ({ ...p, text: plainDashText(p.text) }));

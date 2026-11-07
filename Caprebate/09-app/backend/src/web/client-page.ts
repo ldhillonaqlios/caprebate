@@ -28,18 +28,18 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { Actor } from '../authz.ts';
-import { can } from '../authz.ts';
+import type { Actor } from '../core/index.ts';
+import { can } from '../core/index.ts';
 import { mayReadQueue, readRepliesIfDue } from './inbound-email.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { breadcrumb, claimName, moreDetail, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
-import { sectionPrefs } from './sections.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { breadcrumb, claimName, moreDetail, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, type Need, type QuickAction, type SectionContext, type SectionSpec } from '../shared/index.ts';
+import { sectionPrefs } from '../core/index.ts';
 import * as C from './crm.ts';
 import * as E from './engaged.ts';
 import * as R from './research.ts';
 import { assertClientsSection } from './engaged.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { opens } from './navigation.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { opens } from '../core/navigation.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { timelineBlock } from './tasks-pages.ts';
@@ -54,10 +54,10 @@ import { letterState, letterSteps } from './engagement-send.ts';
 import { filesButton, folderTiles } from './client-files-pages.ts';
 import { emailButton } from './free-email-pages.ts';
 import { identityChecks, identityPanel } from './identity-checks.ts';
-import { IDENTITY_PROVIDER_NAME } from '../connectors/identity-check.ts';
+import { IDENTITY_PROVIDER_NAME } from '../integrations/index.ts';
 import { complianceObj } from './compliance.ts';
 import { claimBoxes, headerActions, lookupsCard, nextStepCard, presentTabs, progressBar, setClientMenu, tabbed, TAB_OF_SECTION, type TabKey } from './client-layout.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

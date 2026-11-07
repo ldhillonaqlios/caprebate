@@ -34,8 +34,8 @@
  * whatever the recommendation says. Nine of the fourteen are still unbound: Phase 157d (migration 099) bound the completion statement, accounts, contractor's invoices and plans, on these recommendations.
  */
 
-import type { Db } from '../db.ts';
-import { authorise, type Actor, type Obj } from '../authz.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, type Actor, type Obj } from '../core/index.ts';
 import { stripReading, NO_RECEIPT_POLICY, type StripReading } from './documents.ts';
 
 export type RecommendedStrip = 'KEEP_WHOLE' | 'STRIP_INDIVIDUALS_KEEP_FIGURES' | 'REFUSE_AS_UPLOAD';

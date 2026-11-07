@@ -15,7 +15,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import * as mod from '../src/registers/caprebate-boundary-import.ts';
+import * as mod from '../src/integrations/registers/boundary-import.ts';
 
 const I = mod as unknown as Record<string, any>;
 const throwsCode = (code: string) => (e: unknown) => e instanceof mod.BoundaryImportError && e.code === code;

@@ -187,7 +187,7 @@
   "thread_reads": "crm",
   "time_blocks": "crm",
   "title_by_hand": "claims",
-  "upload_pieces": "claims",
+  "upload_pieces": "core",
   "user_photos": "core",
   "users": "core",
   "video_meetings": "integrations",

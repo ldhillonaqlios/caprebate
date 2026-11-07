@@ -1,6 +1,6 @@
 /**
  * PHASE 160b — THE CLIENT PORTAL IN THE SAME LAYOUT AS THE BACK OFFICE, 19 October 2026 (Phase 160a's look, now under
- * body.crm, which both carry; src/web/navigation.ts portalShell and its Shell.bar, src/web/html.ts page()). The menu down
+ * body.crm, which both carry; src/core/navigation.ts portalShell and its Shell.bar, src/shared/html.ts page()). The menu down
  * the left holds the logo and the client's two screens; a top bar over the page holds where you are, Help and the user
  * menu, and no search; a claim page's own trail is moved up into it. What a client may see or do is unchanged.
  */
@@ -10,9 +10,9 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; body: string };

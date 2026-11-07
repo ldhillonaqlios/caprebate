@@ -12,7 +12,7 @@ import {
   redistributionCheck, stalenessReport, serialise, rehydrate, worstGrade,
   SOURCES, LICENCES,
   type AnyCell, type Retrieval,
-} from '../src/registers/caprebate-source-register.ts';
+} from '../src/integrations/registers/source-register.ts';
 
 const NOW = '2026-08-26T12:00:00Z';
 const reg = () => new SourceRegister({ clock: () => NOW });
@@ -450,12 +450,12 @@ test('T-PL2 no endpoint anywhere in the register uses the bare planit.org.uk dom
   const bare = SOURCES.filter((s) => /\/\/planit\.org\.uk/.test(s.endpoint ?? ''));
   assert.deepEqual(bare.map((s) => s.source_id), []);
   // The file text too, so a commented or unregistered endpoint cannot hide it.
-  const text = readFileSync(join(import.meta.dirname, '..', 'src', 'registers', 'caprebate-source-register.ts'), 'utf8');
+  const text = readFileSync(join(import.meta.dirname, '..', 'src', 'integrations', 'registers', 'source-register.ts'), 'utf8');
   assert.equal(/\/\/planit\.org\.uk/.test(text), false, 'the bare planit.org.uk domain appears in the register file');
 });
 
 test('T-PL3 no text in the register contains partnerCode', () => {
-  const text = readFileSync(join(import.meta.dirname, '..', 'src', 'registers', 'caprebate-source-register.ts'), 'utf8');
+  const text = readFileSync(join(import.meta.dirname, '..', 'src', 'integrations', 'registers', 'source-register.ts'), 'utf8');
   assert.equal(/partnerCode/i.test(text), false, 'partnerCode appears in the register file');
   assert.equal(/partnerCode/i.test(JSON.stringify({ SOURCES, LICENCES })), false, 'partnerCode appears in the register data');
 });
@@ -474,7 +474,7 @@ test('T-CQ1 the CQC endpoint is the current Syndication host, never the keyless 
   const src = SOURCES.find((s) => s.source_id === 'CQC')!;
   assert.ok(src, 'CQC is not registered');
   assert.equal(src.endpoint, 'https://api.service.cqc.org.uk');
-  const text = readFileSync(join(import.meta.dirname, '..', 'src', 'registers', 'caprebate-source-register.ts'), 'utf8');
+  const text = readFileSync(join(import.meta.dirname, '..', 'src', 'integrations', 'registers', 'source-register.ts'), 'utf8');
   assert.equal(/\/\/api\.cqc\.org\.uk/.test(text), false, 'the legacy keyless CQC host appears in the register file');
 });
 

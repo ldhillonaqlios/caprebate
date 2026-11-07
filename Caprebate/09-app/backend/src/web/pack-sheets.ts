@@ -14,7 +14,7 @@
  * The Phase 153e lines each chapter carries are named on the chapter (the order: 04-phase-work/phase153f/
  * survey-pack-chapters-order.md).
  */
-import type { Db } from '../db.ts';
+import type { Db } from '../core/index.ts';
 import type { PackView, ViewLine } from './survey-pack.ts';
 import { packWords, WORD_FIELDS, type WordField } from './pack-words.ts';
 import { claimantTypeReading, captured, latestFacts } from './claim-facts.ts';
@@ -22,18 +22,18 @@ import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
 import { proposeRanges } from './sector-ranges.ts';
 import { deskFirstReading } from './desk-first.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
-import { findingSeen, FINDING_LABELS } from './finding-source.ts';
+import { findingSeen, FINDING_LABELS } from '../shared/index.ts';
 import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
-import { RATES } from './engine.ts';
-import { ESTIMATED_AREA_LABEL } from '../connectors/homedata.ts';
-import { BAND, FUNNEL } from './engine.ts';
+import { RATES } from '../shared/index.ts';
+import { ESTIMATED_AREA_LABEL } from '../integrations/index.ts';
+import { BAND, FUNNEL } from '../shared/index.ts';
 
 /** PHASE 159c: the funnel's own words for each kind of event. */
 const FUNNEL_LABEL = (FUNNEL as unknown as { EVENT_LABEL: Record<string, string> }).EVENT_LABEL;
 import { poundsWords, percentWords, quantityWords } from './pack-sums.ts';
 import { indexReading, insuranceReading, prelimsReading, rateFlagReading, shareFlagReading, INCLUDES_WORDS } from './pack-cost-model.ts';
 import { packDateIso, propertyLine } from './survey-pack.ts';
-import type { Env } from '../connectors/place.ts';
+import type { Env } from '../integrations/index.ts';
 
 /** Where a row's value comes from — shown beside it, so nothing reads as more certain than it is. */
 export type RowFrom = 'the pack' | 'the claim' | 'Land Registry' | 'the energy certificate' | 'Homedata (estimate)' | 'the client'

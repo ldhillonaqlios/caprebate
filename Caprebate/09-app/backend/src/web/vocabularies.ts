@@ -25,7 +25,7 @@
  * Each is a rule, and changing one is a migration (configuration.ts refuses each).
  */
 
-import type { Db } from '../db.ts';
+import type { Db } from '../core/index.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 

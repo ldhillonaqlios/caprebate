@@ -9,7 +9,7 @@
  *   chapter 11  THE INDEX DATES. The purchase date (the property record) and the valuation date (the surveyor's, chapter
  *               11), the index at each and the factor between them: index(purchase) / index(valuation), which turns a
  *               cost priced at the valuation date back to the purchase date. The table is the real BCIS index where one
- *               has been imported (src/web/bcis-index.ts, `node src/cli.ts import-bcis-index`); the cost model's
+ *               has been imported (src/web/bcis-index.ts, `node src/core/cli.ts import-bcis-index`); the cost model's
  *               PLACEHOLDER table of invented points ONLY in the test system; otherwise nothing — never a guess.
  *   chapter 14  THE CHECKS. Preliminaries: the model as shipped uses a flat 18% with its switch off; the placeholder bands
  *               by job size are shown, in the test system only, against this pack's rebuild cost. The insurance figure:
@@ -24,18 +24,18 @@
  * surveyor, kept out of the approved version and the client's report (SheetRow.internal), because each rests on a
  * placeholder or a test limit. "Not known" is never a pass (N4): a missing date, figure or answer says so.
  *
- * THE TEST SYSTEM is the deployed test website (src/connectors/place.ts), or a copy started with
+ * THE TEST SYSTEM is the deployed test website (src/integrations/connectors/place.ts), or a copy started with
  * CAPREBATE_COST_MODEL_TEST=1.
  */
 import { createRequire } from 'node:module';
-import type { Db } from '../db.ts';
+import type { Db } from '../core/index.ts';
 import type { PackView } from './survey-pack.ts';
 import { INCLUDES_BITS, packDateIso } from './survey-pack.ts';
 import { bcisIndexTable } from './bcis-index.ts';
 import { indexBetween } from './bcis-data.ts';
-import { BAND } from './engine.ts';
+import { BAND } from '../shared/index.ts';
 import { acquisitionDateReading } from './claim-facts.ts';
-import { onTestWebsite, type Env } from '../connectors/place.ts';
+import { onTestWebsite, type Env } from '../integrations/index.ts';
 import { MIN_CLAIMS } from './sector-ranges.ts';
 import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../survey/caprebate-surveyor-crm.ts';
 

@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { secretsFromValues } from '../src/secrets.ts';
+import { createApp } from '../src/core/server.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
 import * as IE from '../src/web/inbound-email.ts';
 
 const PASSWORD = 'an-invented-password-155';
@@ -140,7 +140,7 @@ describe('line 4: the BCIS index from a file Lakhbir downloads, kept outside the
 
   test('a path inside the repository is refused, and nothing is written there', async () => {
     const { importBcisIndex } = await import('../src/web/bcis-index.ts');
-    const { repositoryRoot } = await import('../src/secrets.ts');
+    const { repositoryRoot } = await import('../src/core/secrets.ts');
     const inside = join(repositoryRoot(), 'bcis-index-155.json');
     const r = importBcisIndex(FILE, 'x.csv', '2026-10-04T15:00:00.000Z', { CAPREBATE_BCIS_INDEX_FILE: inside });
     assert.equal(r.ok, false);
@@ -228,10 +228,10 @@ describe('lines 1 and 2: the Welsh and Scottish care regulators, imported on thi
   });
 
   test('the lookups: Wales from CIW’s list and Scotland from the Care Inspectorate’s, matched on the address, nothing sent outside', async () => {
-    const C = await import('../src/connectors/registers.ts');
-    const { ciw, careInspectorate } = await import('../src/connectors/register-files.ts');
-    const { fixtureTransport } = await import('../src/connectors/http.ts');
-    const { emptySecrets } = await import('../src/secrets.ts');
+    const C = await import('../src/integrations/connectors/registers.ts');
+    const { ciw, careInspectorate } = await import('../src/integrations/connectors/register-files.ts');
+    const { fixtureTransport } = await import('../src/integrations/connectors/http.ts');
+    const { emptySecrets } = await import('../src/core/secrets.ts');
     const t = fixtureTransport({});
     const ctx = { deps: { audit: made.app.audit, now: made.app.now, transport: t }, actor_id: 'u-155-admin', actor_role: 'ADMIN' as const, claim_id: null,
       gate: { free_gate_open: true, engagement_signed: true, switched_on: true }, secrets: null };
@@ -249,7 +249,7 @@ describe('lines 1 and 2: the Welsh and Scottish care regulators, imported on thi
     assert.equal(s.bundle?.facts['ci_cs_number'], 'CS2001000002');
     assert.equal(t.seen.length, 0, 'a call went outside');
     // Through the one door, as a research run stores it: the name exclusion register knows both sources and every field.
-    const { ingestRegisterRecord } = await import('../src/stubs/registers.ts');
+    const { ingestRegisterRecord } = await import('../src/integrations/register-ingest.ts');
     made.app.db.run('INSERT INTO businesses (id,name,sector,stage,created_at) VALUES (?,?,?,?,?)', ['b-155', 'Invented Care Limited', 'care_homes', 'ASSESSMENT_SUBMITTED', MON_10]);
     let n = 0;
     for (const rec of [...(w.bundle?.records ?? []), ...(s.bundle?.records ?? [])]) {
@@ -259,10 +259,10 @@ describe('lines 1 and 2: the Welsh and Scottish care regulators, imported on thi
   });
 
   test('the wrong nation, no nation, no list imported, nothing at the postcode, and the switch off: each says so and keeps nothing', async () => {
-    const C = await import('../src/connectors/registers.ts');
-    const { ciw, careInspectorate } = await import('../src/connectors/register-files.ts');
-    const { fixtureTransport } = await import('../src/connectors/http.ts');
-    const { emptySecrets } = await import('../src/secrets.ts');
+    const C = await import('../src/integrations/connectors/registers.ts');
+    const { ciw, careInspectorate } = await import('../src/integrations/connectors/register-files.ts');
+    const { fixtureTransport } = await import('../src/integrations/connectors/http.ts');
+    const { emptySecrets } = await import('../src/core/secrets.ts');
     const { testApp } = await import('./helpers.ts');
     const ctx = { deps: { audit: made.app.audit, now: made.app.now, transport: fixtureTransport({}) }, actor_id: 'u-155-admin', actor_role: 'ADMIN' as const, claim_id: null,
       gate: { free_gate_open: true, engagement_signed: true, switched_on: true }, secrets: null };
@@ -286,8 +286,8 @@ describe('lines 1 and 2: the Welsh and Scottish care regulators, imported on thi
   });
 
   test('both are switched off as shipped; both are on the research panel as free lookups with a connector; the Welsh one is no longer "not built"', async () => {
-    const C = await import('../src/connectors/registers.ts');
-    const { FREE_CONNECTORS, NOT_BUILT } = await import('../src/connectors/free-registers.ts');
+    const C = await import('../src/integrations/connectors/registers.ts');
+    const { FREE_CONNECTORS, NOT_BUILT } = await import('../src/integrations/connectors/free-registers.ts');
     assert.equal(C.REGISTER_SWITCHES['CIW'], false);
     assert.equal(C.REGISTER_SWITCHES['CARE_INSPECTORATE'], false);
     assert.ok(FREE_CONNECTORS['CIW'] !== undefined && FREE_CONNECTORS['CARE_INSPECTORATE'] !== undefined);
@@ -299,7 +299,7 @@ describe('lines 1 and 2: the Welsh and Scottish care regulators, imported on thi
 
 describe('line 3: the valuation office’s rating list — its licence read, and not built', () => {
   test('the licence is recorded as it is: not the Open Government Licence, rating purposes only, no channel open', async () => {
-    const { LICENCES, SOURCES, SUPPLIER_DOCS } = await import('../src/registers/caprebate-source-register.ts');
+    const { LICENCES, SOURCES, SUPPLIER_DOCS } = await import('../src/integrations/registers/source-register.ts');
     const voa = SOURCES.find((s) => s.source_id === 'VOA');
     assert.equal(voa?.licence_id, 'VOA_RATING_LIST');
     const lic = LICENCES.find((l) => l.licence_id === 'VOA_RATING_LIST');
@@ -310,7 +310,7 @@ describe('line 3: the valuation office’s rating list — its licence read, and
   });
 
   test('nothing imports it, and the research panel says why in plain words', async () => {
-    const { FREE_CONNECTORS, NOT_BUILT } = await import('../src/connectors/free-registers.ts');
+    const { FREE_CONNECTORS, NOT_BUILT } = await import('../src/integrations/connectors/free-registers.ts');
     const { FILE_SOURCES } = await import('../src/web/register-files.ts');
     assert.equal(FREE_CONNECTORS['VOA'], undefined);
     assert.equal((FILE_SOURCES as Record<string, unknown>)['VOA'], undefined);

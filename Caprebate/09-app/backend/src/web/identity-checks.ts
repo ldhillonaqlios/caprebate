@@ -7,7 +7,7 @@
  * check for identity"), so NOTHING HERE READS AML_IN_SCOPE: a check can be sent for any client, from the client's own
  * record or from an open customer due diligence check.
  *
- * THE CONNECTOR IS src/connectors/identity-check.ts (Phase 151), and it decides whether anything leaves this server:
+ * THE CONNECTOR IS src/integrations/connectors/identity-check.ts (Phase 151), and it decides whether anything leaves this server:
  * `startIdentityCheck` refuses before any call while `identityCheckMissing` lists anything — the service named in the
  * privacy notice and in clause 7 of the engagement letter, its three entries in the key file, and the IDENTITY_CHECK switch,
  * which ships false. OFF, A PERSON WHO PRESSES "SEND" IS TOLD, IN WORDS, WHAT IS STILL MISSING, AND NOTHING IS SENT.
@@ -39,19 +39,19 @@
  */
 
 import { createHash } from 'node:crypto';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { can } from '../authz.ts';
-import { h, raw, type Safe } from './html.ts';
-import { localWhen } from './localtime.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { can } from '../core/index.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
+import { localWhen } from '../shared/index.ts';
 import { assertComplianceRead, assertComplianceWrite, complianceObj, record, type ComplianceDeps } from './compliance.ts';
 import { isReachable } from './crm.ts';
 import {
   IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision,
   sentUnderTestingWaiver, startIdentityCheck, type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,
-} from '../connectors/identity-check.ts';
+} from '../integrations/index.ts';
 
-/** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/web/router.ts, outside the login. */
+/** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/core/router.ts, outside the login. */
 export const IDENTITY_HOOK_PATH = '/hooks/identity-check';
 /** The headers the service signs its result with (Didit's own names for them), as Node lower-cases them. */
 export const IDENTITY_SIGNATURE_HEADERS = Object.freeze({ v2: 'x-signature-v2', raw: 'x-signature', timestamp: 'x-timestamp' } as const);

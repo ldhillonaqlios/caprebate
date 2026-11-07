@@ -33,23 +33,23 @@
  */
 
 import { registerCompany, yearEndFrom, dormantWarning, propertyTenure, ROLE_LABELS, type YearEndReading } from './who-claims.ts';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor, type Obj } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { SOURCES as REGISTER_SOURCES } from '../registers/caprebate-source-register.ts';
-import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type EngineWindow, type SectorId } from './engine.ts';
-import { packSwitchReadings } from './money-readings.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor, type Obj } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { SOURCES as REGISTER_SOURCES } from '../integrations/index.ts';
+import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type EngineWindow, type SectorId } from '../shared/index.ts';
+import { packSwitchReadings } from '../shared/index.ts';
 import { TAXONOMY_SECTOR, taxonomy } from './pack-lines.ts';
 import type { PackGrant } from './pack-grants.ts';
 import {
   CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, claimObjFor, claimantTypeForGate, isCompanyOrRoleToken, propertyJurisdiction,
 } from './crm.ts';
 import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
-import { localStamp, ukDate } from './localtime.ts';
-import { formatPence, toPence } from './shown-range.ts';
+import { localStamp, ukDate } from '../shared/index.ts';
+import { formatPence, toPence } from '../shared/index.ts';
 import { VOIDING_REOPEN_STAGES } from './valuation-lock.ts';
-import type { PostcodeStore } from './postcode-port.ts';
+import type { PostcodeStore } from '../integrations/postcodes/postcode-port.ts';
 
 export type FactDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. A refusal

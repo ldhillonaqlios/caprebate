@@ -1,10 +1,10 @@
 /**
  * PHASE 161g — THE LEGAL PAGES READY FOR THE LIVE WEBSITE, 5 November 2026.
  *
- * 1. ONE cookie choice, and Google Analytics only after a click (src/analytics.ts sitePageFor; the site page's
+ * 1. ONE cookie choice, and Google Analytics only after a click (src/integrations/analytics.ts sitePageFor; the site page's
  *    SITE_CONSENT; src/web/legal-pages.ts).
  * 2. The cookie list is tested, not typed: every cookie the app can set and every storage key a page it serves writes.
- * 3. The privacy policy, with every outside service tied to SECRET_KEYS (src/outside-services.ts).
+ * 3. The privacy policy, with every outside service tied to SECRET_KEYS (src/integrations/outside-services.ts).
  * 4. The client's portal terms, the links, and the sign-up's tick kept with its versions (src/web/legal-approvals.ts).
  * 5. The `legal` setting: every page a Draft until both approvals are recorded; with it off, nothing changes.
  *
@@ -19,18 +19,18 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import vm from 'node:vm';
 import type { IncomingMessage } from 'node:http';
-import { createApp, legalPagesSetting } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { SECRET_KEYS } from '../src/secrets.ts';
-import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../src/outside-services.ts';
-import { sitePageFor } from '../src/analytics.ts';
+import { createApp, legalPagesSetting } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { SECRET_KEYS } from '../src/core/secrets.ts';
+import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../src/integrations/outside-services.ts';
+import { sitePageFor } from '../src/integrations/analytics.ts';
 import { siteEdition, SITE_PAGE_CSP } from '../src/web/public-site.ts';
 import {
   CONSENT_COOKIE, CONSENT_MAX_AGE, COOKIE_LIST, LEGAL_GAPS, LEGAL_PAGES, cookieBanner, legalPageHtml, optionalAllowed, versionOf,
 } from '../src/web/legal-pages.ts';
 import { currentApprovals, currentTermsVersions, hasAgreedCurrent } from '../src/web/legal-approvals.ts';
-import { offerSignup, requestSignup, confirmSignup } from '../src/web/signup.ts';
-import { STEP_TTL_MS } from '../src/web/sign-in.ts';
+import { offerSignup, requestSignup, confirmSignup } from '../src/core/signup.ts';
+import { STEP_TTL_MS } from '../src/core/sign-in.ts';
 
 const SRC = join(import.meta.dirname, '..', 'src');
 const SITE_DIR = join(import.meta.dirname, '..', '..', 'site');
@@ -228,8 +228,8 @@ describe('Phase 161g item 2: the cookie list is tested, not typed', () => {
     const line = (n: string) => COOKIE_LIST.find((c) => c.name === n)!.howLong;
     assert.equal(CONSENT_MAX_AGE, 365 * 24 * 60 * 60); assert.equal(line(CONSENT_COOKIE), '12 months');
     assert.equal(STEP_TTL_MS, 15 * 60 * 1000); assert.equal(line('cb_step'), '15 minutes');
-    assert.match(readFileSync(join(SRC, 'auth.ts'), 'utf8'), /const SESSION_TTL_MS = 8 \* 60 \* 60 \* 1000;/); assert.match(line('cb_session'), /^Up to 8 hours/);
-    assert.match(readFileSync(join(SRC, 'web', 'router.ts'), 'utf8'), /setCookie\(res, DRAFT_COOKIE, draft\.token, 60 \* 60 \* 6\)/); assert.equal(line('cb_draft'), '6 hours');
+    assert.match(readFileSync(join(SRC, 'core', 'auth.ts'), 'utf8'), /const SESSION_TTL_MS = 8 \* 60 \* 60 \* 1000;/); assert.match(line('cb_session'), /^Up to 8 hours/);
+    assert.match(readFileSync(join(SRC, 'core', 'router.ts'), 'utf8'), /setCookie\(res, DRAFT_COOKIE, draft\.token, 60 \* 60 \* 6\)/); assert.equal(line('cb_draft'), '6 hours');
   });
 
   test('the collector itself fails a new cookie and a new storage key (a planted fault)', () => {
@@ -326,7 +326,7 @@ describe('Phase 161g item 4: the client\'s terms, the links and the sign-up\'s t
   });
 
   test('the engagement letter signing screen links the three documents where the pages are served', () => {
-    const router = readFileSync(join(SRC, 'web', 'router.ts'), 'utf8');
+    const router = readFileSync(join(SRC, 'core', 'router.ts'), 'utf8');
     assert.match(router, /\$\{legalLinks \? h`<p class="help">Please also read \$\{agreementLinks\(\)\}\./);
   });
 

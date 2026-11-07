@@ -11,13 +11,13 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { dataLink, why } from './components.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { dataLink, why } from '../shared/index.ts';
 import * as D from './dashboard.ts';
-import { localDate } from './localtime.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { localDate } from '../shared/index.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

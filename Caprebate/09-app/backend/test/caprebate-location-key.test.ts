@@ -28,9 +28,9 @@ import {
   LocationKeyError,
   LEG_E4_GATE,
   type ServedSet,
-} from '../src/postcodes/caprebate-location-key.ts';
-import { inMemoryPostcodeStore } from '../src/postcodes/caprebate-postcode-store.ts';
-import type { PostcodeAuthorityTable } from '../src/postcodes/caprebate-postcode-authority.ts';
+} from '../src/integrations/postcodes/location-key.ts';
+import { inMemoryPostcodeStore } from '../src/integrations/postcodes/postcode-store.ts';
+import type { PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-authority.ts';
 import COST_MODEL from '../src/costing/caprebate-cost-model.cjs';
 
 const CM = COST_MODEL as unknown as {

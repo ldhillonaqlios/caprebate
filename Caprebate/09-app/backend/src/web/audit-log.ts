@@ -3,7 +3,7 @@
  *
  * Developer Spec section 1 said Admin reads the audit log. `audit.read` was registered for ADMIN and nothing asked it, and
  * `AuditLog.verify()` was called by the tests alone. This is the page that asks it, and `npm run verify-audit`
- * (src/cli.ts) is the command that verifies the chain without the server.
+ * (src/core/cli.ts) is the command that verifies the chain without the server.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * KINDS, IDS AND OUTCOMES — NEVER A VALUE
@@ -23,10 +23,10 @@
  * three; anything else is dropped and said.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, type Actor } from '../authz.ts';
-import { localStamp } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, type Actor } from '../core/index.ts';
+import { localStamp } from '../shared/index.ts';
 
 export type AuditLogDeps = { db: Db; audit: AuditLog; now: () => string };
 
@@ -110,7 +110,7 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
 
 /**
  * PHASE 133a — THE GATE OF THE AUDIT LOG, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/web/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function auditLogGate(actor: Actor): void {

@@ -1,7 +1,7 @@
 /**
  * 2 OCTOBER 2026 — THE SURVEY PACK, STAGE 6: THE FREE LOOKUPS SWITCHED ON FOR THE TEST WEBSITE, AND THE REPORT'S SITE PLAN
- * FROM ORDNANCE SURVEY'S FREE BUILDING OUTLINES (src/connectors/registers.ts TEST_WEBSITE_LOOKUPS, src/web/research.ts,
- * src/connectors/os-buildings.ts, src/web/site-plan.ts, migration 083, written as 078).
+ * FROM ORDNANCE SURVEY'S FREE BUILDING OUTLINES (src/integrations/connectors/registers.ts TEST_WEBSITE_LOOKUPS, src/web/research.ts,
+ * src/integrations/connectors/os-buildings.ts, src/web/site-plan.ts, migration 083, written as 078).
  *
  * Lakhbir, asked which lookups to switch on for the test website: "All the free ones"; asked how the client's building is
  * chosen on the site plan: "Automatic".
@@ -25,16 +25,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
-import * as C from '../src/connectors/registers.ts';
+import { fixtureTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import * as C from '../src/integrations/connectors/registers.ts';
 import * as R from '../src/web/research.ts';
-import * as OS from '../src/connectors/os-buildings.ts';
+import * as OS from '../src/integrations/connectors/os-buildings.ts';
 import * as SP from '../src/web/site-plan.ts';
-import { secretsFromValues, emptySecrets } from '../src/secrets.ts';
-import { seed } from '../src/seed.ts';
-import { newId } from '../src/users.ts';
+import { secretsFromValues, emptySecrets } from '../src/core/secrets.ts';
+import { seed } from '../src/core/seed.ts';
+import { newId } from '../src/core/users.ts';
 import { testApp, actor } from './helpers.ts';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { reportHtml, reportModel, reportPdf } from '../src/web/survey-report.ts';
 import { packView, savePackValue, saveLine, setLineRemoved } from '../src/web/survey-pack.ts';
 import { answerLegal, legalView } from '../src/web/pack-legal.ts';

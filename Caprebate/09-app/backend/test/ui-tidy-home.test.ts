@@ -8,8 +8,8 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness, type Login } from './ui-tidy-harness.ts';
 import { todayItems } from '../src/web/home.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
-import { localDate } from '../src/web/localtime.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
+import { localDate } from '../src/shared/localtime.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit4'); });

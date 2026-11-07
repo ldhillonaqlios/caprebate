@@ -21,13 +21,13 @@
  * messages (Lakhbir, 5 Oct 2026, "yes same rules").
  */
 import { createHash, randomUUID } from 'node:crypto';
-import type { App } from '../app.ts';
-import { authorise, type Actor } from '../authz.ts';
-import { parseChat, type ExportMessage, type ParsedChat } from '../connectors/whatsapp-export.ts';
-import { localDate } from './localtime.ts';
-import { WHATSAPP_IMPORT_PREFIX, WHATSAPP_PREFIX, type FsObjectStore } from './objectstore.ts';
+import type { App } from '../core/app.ts';
+import { authorise, type Actor } from '../core/index.ts';
+import { parseChat, type ExportMessage, type ParsedChat } from '../integrations/index.ts';
+import { localDate } from '../shared/index.ts';
+import { WHATSAPP_IMPORT_PREFIX, WHATSAPP_PREFIX, type FsObjectStore } from '../shared/objectstore.ts';
 import { phoneContacts } from './whatsapp.ts';
-import { listZipEntries, readZipEntryFromBuffer } from './zip.ts';
+import { listZipEntries, readZipEntryFromBuffer } from '../shared/index.ts';
 
 /** Where an upload's text and .zip are kept, sealed. */
 export const IMPORT_PREFIX = WHATSAPP_IMPORT_PREFIX;

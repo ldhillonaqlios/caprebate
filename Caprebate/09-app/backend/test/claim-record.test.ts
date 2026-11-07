@@ -42,10 +42,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { APP_ROLES, type AppRole } from '../src/roles.ts';
-import { can, REGISTERED_ACTIONS, NotAuthorised, type Obj } from '../src/authz.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
+import { can, REGISTERED_ACTIONS, NotAuthorised, type Obj } from '../src/core/authz.ts';
 import { RELEASED_FACTS_TO_SURVEYOR } from '../src/payload.ts';
 import * as C from '../src/web/crm.ts';
 import * as P from '../src/web/pipeline.ts';
@@ -336,7 +336,7 @@ describe('THE FACTS PANEL — derived first, captured only where nothing derives
       assert.deepEqual(Object.keys(view.facts.facts).sort(), [...RELEASED_FACTS_TO_SURVEYOR].sort());
       for (const k of ['figures', 'deliverables', 'aftercare', 'value']) assert.equal(k in view, false, `the surveyor received ${k}`);
       const wire = JSON.stringify(view);
-      // Amounts are drawn in whole pounds (src/web/shown-range.ts), so the search looks for what a screen would show AND for the pence.
+      // Amounts are drawn in whole pounds (src/shared/shown-range.ts), so the search looks for what a screen would show AND for the pence.
       for (const bad of ['£98,765', '9876543', '£87,654', '8765432', '£76,543', '7654321', '2025-12-31', '12345678', '£123,457', '0.3141', '1.7777']) {
         assert.equal(wire.includes(bad), false, `the surveyor’s view carries ${bad}`);
       }

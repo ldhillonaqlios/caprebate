@@ -49,9 +49,9 @@
  * may not do. The log has one entry per attempt because there was one attempt.
  */
 
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor, type Obj } from '../authz.ts';
-import type { AuditLog } from '../audit.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor, type Obj } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
 import { assembleSurveyorPayload, QUARANTINE_NOTICE, type JobInputs, type SurveyorPayload } from '../payload.ts';
 import {
   assureProcess, driftReport, QuarantineError, RELEASED_TO_SURVEYOR_ALWAYS,
@@ -66,11 +66,11 @@ import { DbAnchorLog, hydrateQuarantine, storeCommitment, type StoredJob } from 
 import { roomsFor, SOURCE_DOCUMENT, type RoomType, type SectorRooms } from './rooms.ts';
 import { missingFacts, NotFoundAsRefusal, type MissingFact } from './engaged.ts';
 import { versionObj } from './documents.ts';
-import { anyStageLabel, stage as stageOf } from './stages.ts';
+import { anyStageLabel, stage as stageOf } from '../shared/index.ts';
 /* Phase 110. The region a rate library entry is keyed on. resolveProperty
    never throws and never guesses — see the comment on REGION_NOT_CAPTURED. */
-import { resolveProperty } from './postcode.ts';
-import { preferHomedataPlanning, supersededPlanning } from '../connectors/homedata-planning.ts';
+import { resolveProperty } from '../integrations/postcodes/postcode.ts';
+import { preferHomedataPlanning, supersededPlanning } from '../integrations/index.ts';
 import { estimateBasis } from './survey-open.ts';
 
 export { NotFoundAsRefusal };
@@ -599,7 +599,7 @@ const CRM_SECTOR: Readonly<Record<string, Sector>> = Object.freeze({
  * A silent default of "London" would still look like data. It is still not
  * there.
  */
-export { REGION_NOT_CAPTURED } from './postcode-port.ts';
+export { REGION_NOT_CAPTURED } from '../integrations/postcodes/postcode-port.ts';
 
 /**
  * The rate library's context for a job.

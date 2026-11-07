@@ -15,23 +15,23 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
-import { fixtureTransport, RateLimiter, callOutside, certificateTransport, chargeFromHeaders, type CallDeps, type GateSnapshot, type Fixture } from '../src/connectors/http.ts';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
-import * as C from '../src/connectors/registers.ts';
-import { homedataAddress, isTierPath, homedataCostPence, addressFields, preCheckOf, uprnOf, HOMEDATA_SLUGS, HOMEDATA_TIER_PATHS } from '../src/connectors/homedata.ts';
-import { hmlrTitle, registerFields, soapText, amount, registerDate, priorOwnerCount, SOAP_PREFIX, REST_PREFIX } from '../src/connectors/hmlr-title.ts';
-import { homedataPlanning, applicationFields } from '../src/connectors/homedata-planning.ts';
-import { PAID_CONNECTORS, PAID_NOT_CHOSEN, PAID_RETIRED, totalBeforePence, pounds, preCheckFrom, uprnFrom } from '../src/connectors/paid-registers.ts';
-import { FREE_CONNECTORS } from '../src/connectors/free-registers.ts';
-import { epc } from '../src/connectors/epc.ts';
-import { secretsFromValues, emptySecrets, SECRET_KEYS, parseSecretsFile, KEY_OF_NAME } from '../src/secrets.ts';
-import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/registers/caprebate-source-register.ts';
-import { NAME_EXCLUSION_POLICY, classifyField, assertNoUnauthorisedName } from '../src/registers/caprebate-name-exclusion.ts';
+import { fixtureTransport, RateLimiter, callOutside, certificateTransport, chargeFromHeaders, type CallDeps, type GateSnapshot, type Fixture } from '../src/integrations/connectors/http.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
+import * as C from '../src/integrations/connectors/registers.ts';
+import { homedataAddress, isTierPath, homedataCostPence, addressFields, preCheckOf, uprnOf, HOMEDATA_SLUGS, HOMEDATA_TIER_PATHS } from '../src/integrations/connectors/homedata.ts';
+import { hmlrTitle, registerFields, soapText, amount, registerDate, priorOwnerCount, SOAP_PREFIX, REST_PREFIX } from '../src/integrations/connectors/hmlr-title.ts';
+import { homedataPlanning, applicationFields } from '../src/integrations/connectors/homedata-planning.ts';
+import { PAID_CONNECTORS, PAID_NOT_CHOSEN, PAID_RETIRED, totalBeforePence, pounds, preCheckFrom, uprnFrom } from '../src/integrations/connectors/paid-registers.ts';
+import { FREE_CONNECTORS } from '../src/integrations/connectors/free-registers.ts';
+import { epc } from '../src/integrations/connectors/epc.ts';
+import { secretsFromValues, emptySecrets, SECRET_KEYS, parseSecretsFile, KEY_OF_NAME } from '../src/core/secrets.ts';
+import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/integrations/registers/source-register.ts';
+import { NAME_EXCLUSION_POLICY, classifyField, assertNoUnauthorisedName } from '../src/integrations/registers/name-exclusion.ts';
 import * as R from '../src/web/research.ts';
 import * as S from '../src/web/surveyor.ts';
-import { STUBS } from '../src/app.ts';
-import { seed } from '../src/seed.ts';
-import { newId } from '../src/users.ts';
+import { STUBS } from '../src/core/app.ts';
+import { seed } from '../src/core/seed.ts';
+import { newId } from '../src/core/users.ts';
 import { testApp, actor, signatureRecordFor } from './helpers.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -166,7 +166,7 @@ describe('the paid address lookup asks for named slugs and never for one of the 
   });
 
   test('the source file names no bundle path, so one cannot be reintroduced by editing a string', () => {
-    const text = readFileSync(join(SRC, 'connectors', 'homedata.ts'), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+    const text = readFileSync(join(SRC, 'integrations', 'connectors', 'homedata.ts'), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
     for (const tier of ['base', 'core', 'complete']) {
       assert.equal(new RegExp(`['"\`][^'"\`]*/property/[^'"\`]*/${tier}/`).test(text), false, `the ${tier} bundle is named in code`);
     }
@@ -215,7 +215,7 @@ describe('a case officer can never be written on a planning record', () => {
   });
 
   test('THE ROW’S CLAIM ABOUT ITSELF IS TRUE NOW: it no longer says it holds no free text, and it says what it does hold', () => {
-    const register = readFileSync(join(HERE, '..', 'src', 'registers', 'caprebate-source-register.ts'), 'utf8');
+    const register = readFileSync(join(HERE, '..', 'src', 'integrations', 'registers', 'source-register.ts'), 'utf8');
     /* The old sentence may still appear ONCE, quoted, in the paragraph that says it was wrong — that is how the
        correction stays legible to whoever reads it next. It may not appear as a claim. */
     const claim = /contains no free-text field that could carry a third party's name/g;
@@ -540,7 +540,7 @@ describe('the cost, shown before the click from a price list and after it from t
  * 7 · THE CERTIFICATE, THE KEY FILE AND THE ONE WAY OUT
  * ================================================================== */
 
-describe('a client certificate can be presented, and only from src/connectors/http.ts', () => {
+describe('a client certificate can be presented, and only from src/integrations/connectors/http.ts', () => {
   test('STILL ONLY ONE FILE UNDER src/ REACHES THE NETWORK, now that one of them uses node:https as well', () => {
     const hits: string[] = [];
     for (const f of readdirSync(SRC, { recursive: true }) as string[]) {
@@ -551,7 +551,7 @@ describe('a client certificate can be presented, and only from src/connectors/ht
          TYPES, and a type is not a way out. */
       if (/(?<![\w.])fetch\s*\((?![^)]*\)\s*[:{])|globalThis\.fetch|\bundici\b|\bhttps?\.(request|get)\s*\(|from ['"]node:https['"]|require\(['"]node:https['"]\)/.test(text)) hits.push(f);
     }
-    assert.deepEqual(hits, ['connectors/http.ts']);
+    assert.deepEqual(hits, ['integrations/connectors/http.ts']);
   });
 
   test('no certificate, no passphrase, or a file that cannot be read: each is a state in words, and none throws', () => {

@@ -2,7 +2,7 @@
  * THE SITE AREA'S CALLER: "RUN THE RESEARCH", AFTER SIGNING — AND ITS LINE ON THE RESEARCH PANEL. Phase 151c,
  * 25 September 2026.
  *
- * Phase 151a built `siteAreaFromLandBoundary` (src/connectors/site-area.ts) and left it with nothing calling it. This
+ * Phase 151a built `siteAreaFromLandBoundary` (src/integrations/connectors/site-area.ts) and left it with nothing calling it. This
  * file is the one caller. It runs on the operator's one click, the same way the paid lookups do (src/web/research.ts):
  * the operator picks the moment, not the calls, and nothing refuses and nothing throws.
  *
@@ -32,22 +32,22 @@
  * councils read and a reason.
  */
 import { siteAreaFlag, floorAreaForSite } from './who-claims.ts';
-import type { Db } from '../db.ts';
-import type { Actor } from '../authz.ts';
-import type { AuditLog } from '../audit.ts';
-import { BOUNDARY_FETCHING_SWITCHED_ON } from '../registers/caprebate-boundary-import.ts';
+import type { Db } from '../core/index.ts';
+import type { Actor } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { BOUNDARY_FETCHING_SWITCHED_ON } from '../integrations/index.ts';
 import {
   councilOfPostcode, homedataPointOf, planSiteArea, siteAreaFromLandBoundary, SITE_AREA_SOURCE_ID,
   type SiteAreaInput, type SiteAreaOutcome, type SiteAreaState,
-} from '../connectors/site-area.ts';
-import { ostn15Grid, type Ostn15Grid } from '../connectors/ostn15.ts';
-import { TITLE_BOUNDARY_LABEL, TITLE_BOUNDARY_SOURCE_ID } from '../connectors/title-boundary.ts';
-import { inspireStoreFromEnv, type InspireFileStore } from '../connectors/inspire-store.ts';
-import { referenceOstn15Grid } from './reference-db.ts';
-import type { RateLimiter, Transport } from '../connectors/http.ts';
+} from '../integrations/connectors/site-area.ts';
+import { ostn15Grid, type Ostn15Grid } from '../integrations/index.ts';
+import { TITLE_BOUNDARY_LABEL, TITLE_BOUNDARY_SOURCE_ID } from '../integrations/index.ts';
+import { inspireStoreFromEnv, type InspireFileStore } from '../integrations/index.ts';
+import { referenceOstn15Grid } from '../integrations/index.ts';
+import type { RateLimiter, Transport } from '../integrations/index.ts';
 import { DECLINED_LINE } from './address-check.ts';
-import { postcodeStore } from './postcode.ts';
-import type { PostcodeStore } from './postcode-port.ts';
+import { postcodeStore } from '../integrations/postcodes/postcode.ts';
+import type { PostcodeStore } from '../integrations/postcodes/postcode-port.ts';
 
 /** Every state a site area line can be in: the function's own seven, and two that belong to the click. */
 export type SiteAreaLineState = SiteAreaState | 'WAITING' | 'READY';
@@ -127,7 +127,7 @@ function gridFor(point: unknown, setup: SiteAreaSetup): Ostn15Grid | null {
   if (!isDegrees(point)) return null;
   if (setup.grid !== undefined) return setup.grid;
   // PHASE 161h: a file named by CAPREBATE_OSTN15_FILE first (a server's disk), else the reference database (the live
-  // website on Vercel, src/web/reference-db.ts). Either one that cannot be read is the same as none: a latitude is refused.
+  // website on Vercel, src/integrations/postcodes/reference-db.ts). Either one that cannot be read is the same as none: a latitude is refused.
   try { return ostn15Grid(setup.env) ?? referenceOstn15Grid(setup.env); } catch { return null; }
 }
 

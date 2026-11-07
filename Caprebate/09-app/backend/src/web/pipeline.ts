@@ -2,7 +2,7 @@
  * THE CLAIM PIPELINE — THE OPERATING PROCEDURE'S TEN STAGES, THEIR GATES AND
  * THEIR EXITS. CRM 2 of 10, 10 September 2026.
  *
- * The stages' words are src/web/stages.ts; the schema is migration 010; the
+ * The stages' words are src/shared/stages.ts; the schema is migration 010; the
  * scope is 09-app/CAPREBATE-CRM-DISPOSITION.md. The routes and pages are
  * src/web/pipeline-pages.ts, which draws what this returns and decides nothing.
  *
@@ -39,12 +39,12 @@
 
 import { qualifyingActivityEvidence } from './who-claims.ts';
 import { claimRoutes, legalDeadlineNeed, routesWhy } from './claim-route.ts';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { NotFoundAsRefusal, answerLabel } from './backoffice.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { NotFoundAsRefusal, answerLabel } from '../core/backoffice.ts';
 import { assertSignedEngagement } from './research.ts';
-import { localStamp } from './localtime.ts';
+import { localStamp } from '../shared/index.ts';
 import { claimObjFor, priorClaimFor } from './crm.ts';
 import { MANDATORY_DOCUMENTS, mandatoryDocumentNeeds, type MandatoryDocuments } from './mandatory-documents.ts';
 import {
@@ -62,7 +62,7 @@ import {
   EXITS, PROCEDURE_KEYS, PROCEDURE_STAGES, anyStageLabel, claimStage, clientStageFor, exitStage,
   nextProcedureKey, procedureIndex, procedureStage, stage as clientStage, stageIndex,
   type ExitKey, type ProcedureKey, type StageKey,
-} from './stages.ts';
+} from '../shared/index.ts';
 import { portalStepLine } from './portal-steps.ts';
 import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from './valuation-lock.ts';
 
@@ -248,7 +248,7 @@ export function packApprovedNeed(db: Db, c: { readonly id: string }): Need {
 }
 
 /**
- * PHASE 159f (item 3): "EVERY RATE SOURCED" — the SOP's Valuation gate (src/web/stages.ts), a test now and not the
+ * PHASE 159f (item 3): "EVERY RATE SOURCED" — the SOP's Valuation gate (src/shared/stages.ts), a test now and not the
  * surveyor's word. Read from the newest approved version: the whole-building rate and every counted line's rate carry a
  * structured source (BCIS's draft, or the surveyor's QS schedule, invoice or price book, with a reference and a day). A
  * version approved before Phase 159f has none, and is not met: approve the pack again with the sources.
@@ -553,7 +553,7 @@ export function signOffNeed(db: Db, c: { id: string; created_at: string }): Need
  * The procedure's words, as a function any client-facing reader must ask before
  * it shows a figure as claimable. The portal shows the indicative range, labelled
  * indicative; the deliverables register lists a client report to its client only
- * once this says yes (`clientDeliverable` in src/authz.ts), and a document of it
+ * once this says yes (`clientDeliverable` in src/core/authz.ts), and a document of it
  * the same (`clientDocument`).
  */
 export function claimableFigureReleased(db: Db, c: { id: string; created_at: string }): { released: boolean; why: string } {

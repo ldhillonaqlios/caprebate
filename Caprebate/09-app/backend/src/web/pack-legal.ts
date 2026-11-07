@@ -20,17 +20,17 @@
  * answer the engine treats as unknown. Where an election or a disposal value statement caps the claim, the cap is
  * returned, and the pack may not be approved above it (stage 3).
  */
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { CB, getSector, newSession } from './engine.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { CB, getSector, newSession } from '../shared/index.ts';
 import { packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
 import { poundsWords } from './pack-sums.ts';
 import { claimantTypeForGate } from './crm.ts';
 import { valuationLock } from './valuation-lock.ts';
 import { claimantRole, type ClaimantRole } from './who-claims.ts';
-import { LEGAL_ENGINE_SWITCHES } from './money-readings.ts';
+import { LEGAL_ENGINE_SWITCHES } from '../shared/index.ts';
 
 export type EngineQuestion = {
   readonly id: string;

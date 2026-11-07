@@ -14,9 +14,9 @@
  * "None of these is this building" is a form of its own beside them.
  */
 
-import { h, raw, page, type Safe } from './html.ts';
-import { why } from './components.ts';
-import { localStamp } from './localtime.ts';
+import { h, raw, page, type Safe } from '../shared/index.ts';
+import { why } from '../shared/index.ts';
+import { localStamp } from '../shared/index.ts';
 import type { PickOffer } from './match-review.ts';
 
 /** A score as a person reads it: two figures, and the words that say what it is. Never a percentage — it is not one. */

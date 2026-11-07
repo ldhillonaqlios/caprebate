@@ -49,13 +49,13 @@
  * person who made it is not shown a failure that was not theirs.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { outboxTransport, STUB_NOTICE } from '../stubs/email.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { localDate, localStamp } from './localtime.ts';
-import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from './stages.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { outboxTransport, STUB_NOTICE } from '../integrations/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { localDate, localStamp } from '../shared/index.ts';
+import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from '../shared/index.ts';
 import { missingFacts } from './engaged.ts';
 import { POOL_ROLES, addDaysToDate, insertTask } from './tasks.ts';
 import { claimWords, type Fields } from './crm.ts';
@@ -778,7 +778,7 @@ export function fireAutomation(d: AutomationDeps, actor: Actor | null, event: Au
 
 /**
  * PHASE 133a — THE GATE OF THE AUTOMATION RULES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/web/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function automationGate(actor: Actor): void {

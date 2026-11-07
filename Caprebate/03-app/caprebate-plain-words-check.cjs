@@ -57,6 +57,14 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const WEB = path.join(ROOT, '09-app', 'backend', 'src', 'web');
+/* PHASE 161i, 7 Nov 2026: screens, sign-in, page parts and the core moved from src/web/ into src/core/ and src/shared/;
+   every file in those two folders is read as src/web/ is (the core's own files, never read before, are read too). */
+const CORE = path.join(WEB, '..', 'core'), SHARED = path.join(WEB, '..', 'shared'), INTEG = path.join(WEB, '..', 'integrations');
+/* The core's files that were never in src/web/ and were never read (the server, database, sign-in rules, permissions,
+   the audit log and the rest): their words are for developers, not a screen. seed.ts and secrets.ts were read before
+   and still are. A new core file is read unless it is named here with that reason. */
+const CORE_NOT_SCREENS = new Set(['app.ts', 'server.ts', 'db.ts', 'audit.ts', 'auth.ts', 'authz.ts', 'roles.ts', 'custom-roles.ts',
+  'users.ts', 'password.ts', 'totp.ts', 'mfa-seal.ts', 'cli.ts', 'live-website.ts', 'backup.ts']);
 const ts = require(path.join(ROOT, '09-app', 'backend', 'node_modules', 'typescript'));
 
 /* ---------------------------------------------------------------- exemptions */
@@ -394,30 +402,32 @@ function readHelpContent(file, label) {
 }
 
 /* The seed is demo data, but it is what a person reads on the test site, so it is read too. */
-const EXTRA = [path.join(WEB, '..', 'seed.ts'),
+const EXTRA = [
+  /* PHASE 161i: the postcode wiring moved from src/web/ to integrations/postcodes/ */
+  ...['postcode.ts', 'postcode-port.ts', 'reference-db.ts'].map((f) => path.join(INTEG, 'postcodes', f)),
   /* the email service's words, which the Settings and Email pages show; the other stubs' words reach no screen */
-  path.join(WEB, '..', 'stubs', 'email.ts'), path.join(WEB, '..', 'stubs', 'email-provider.ts'), path.join(WEB, '..', 'stubs', 'email-inbound.ts'),
+  path.join(INTEG, 'email', 'email.ts'), path.join(INTEG, 'email', 'email-provider.ts'), path.join(INTEG, 'email', 'email-inbound.ts'),
   /* Phase 146b: the connectors' words — why a lookup did not run or did not work — reach the research panel */
-  path.join(WEB, '..', 'connectors', 'registers.ts'), path.join(WEB, '..', 'connectors', 'http.ts'), path.join(WEB, '..', 'secrets.ts'),
+  path.join(INTEG, 'connectors', 'registers.ts'), path.join(INTEG, 'connectors', 'http.ts'),
   /* Phase 146c: the free registers' connectors and the matcher — each lookup's result, in words, is what the research
      panel shows beside it */
   ...['free-registers.ts', 'matching.ts', 'companies-house.ts', 'cqc.ts', 'epc.ts', 'price-paid.ts', 'planning.ts', 'postcode.ts', 'nations.ts']
-    .map((f) => path.join(WEB, '..', 'connectors', f)),
+    .map((f) => path.join(INTEG, 'connectors', f)),
   /* Phase 146i: the document reader's reasons - why a file could not be read - now reach the staff document page,
      which is the change Phase 146g's point 6 was waiting on. Its two model instructions are exempt by name. */
-  path.join(WEB, '..', 'connectors', 'claude.ts'),
+  path.join(INTEG, 'connectors', 'claude.ts'),
   /* Phase 150: the land boundary fetcher's refusals. Nothing shows them yet, but they are written for a person
      (why the site area was not worked out), so they are held to the same grade before a screen is wired to them. */
-  path.join(WEB, '..', 'connectors', 'inspire.ts'),
+  path.join(INTEG, 'connectors', 'inspire.ts'),
   /* Phase 151a: the site area function and the two things it refuses on - a council with no file, a point that
      cannot be converted exactly. Nothing shows them yet; they are written for a person all the same. */
-  ...['site-area.ts', 'inspire-councils.ts', 'ostn15.ts'].map((f) => path.join(WEB, '..', 'connectors', f)),
+  ...['site-area.ts', 'inspire-councils.ts', 'ostn15.ts'].map((f) => path.join(INTEG, 'connectors', f)),
   /* Phase 151b: the identity check's list of what is missing shows on the client page and the due diligence check; the
      postcode check's reasons and the signatory check's lines are written for a person, and the signatory lines reach
      the research panel. */
-  ...['identity-check.ts', 'postcode-check.ts', 'signatory-check.ts'].map((f) => path.join(WEB, '..', 'connectors', f)),
+  ...['identity-check.ts', 'postcode-check.ts', 'signatory-check.ts'].map((f) => path.join(INTEG, 'connectors', f)),
   /* Phase 161g: the outside services the privacy policy lists, in a table a person reads */
-  path.join(WEB, '..', 'outside-services.ts')];
+  path.join(INTEG, 'outside-services.ts')];
 
 /* The pre-change copy of a file: beside it (f + suffix), or, with --suffix-dir (Phase 161e), in that folder under the
    file's own name plus the suffix. The back end's test keeps the guide's and Help's pre-Phase-144a copies in
@@ -428,7 +438,8 @@ function altOf(f, suffix, dir) {
 }
 
 function screenFiles(suffix, dir) {
-  const all = fs.readdirSync(WEB).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f)).sort().map((f) => path.join(WEB, f)).concat(EXTRA);
+  const dirTs = (d) => fs.readdirSync(d).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f) && f !== 'index.ts').sort().map((f) => path.join(d, f));
+  const all = [...dirTs(WEB), ...dirTs(CORE).filter((f) => !CORE_NOT_SCREENS.has(path.basename(f))), ...dirTs(SHARED)].concat(EXTRA);
   return all.map((f) => {
     const alt = altOf(f, suffix, dir);
     return { label: path.relative(path.join(WEB, '..', '..'), f), file: alt && fs.existsSync(alt) ? alt : f };
@@ -456,7 +467,7 @@ function run(files, voiceFile) {
 function selfTest() {
   const os = require('os');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-plain-'));
-  const voice = path.join(WEB, 'voice.ts');
+  const voice = path.join(SHARED, 'voice.ts');
   const planted = [
     ['banned-fired', "export const a = `<p>Sources - what has fired and what has not.</p>`;"],
     ['banned-provenance', "export const b = '<td title=\"The provenance of this fact\">x</td>';"],
@@ -571,7 +582,7 @@ function main(argv) {
   const suffix = at('--suffix');
   const suffixDir = at('--suffix-dir') ? path.resolve(at('--suffix-dir')) : null;
   const one = at('--file');
-  const voice = path.join(WEB, 'voice.ts');
+  const voice = path.join(SHARED, 'voice.ts');
   const files = one ? [{ file: path.resolve(one), label: path.basename(one) }]
     : argv.includes('--guide') ? guideFiles(suffix, suffixDir) : screenFiles(suffix, suffixDir);
   const { strings, fails } = run(files, voice);

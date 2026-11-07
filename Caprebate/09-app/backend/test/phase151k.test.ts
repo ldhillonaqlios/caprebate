@@ -14,14 +14,14 @@ import { mkdtempSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../src/server.ts';
-import { seed, SEED_PASSWORD } from '../src/seed.ts';
-import { codeAt, stepAt } from '../src/totp.ts';
-import { forgetRegisteredSecretsForTest, loadSecrets, secretsFromValues, emptySecrets, SECRET_KEYS } from '../src/secrets.ts';
-import { outboxTransport } from '../src/stubs/email.ts';
-import * as SI from '../src/web/sign-in.ts';
-import * as EP from '../src/stubs/email-provider.ts';
-import type { EmailSending, SmtpLogin } from '../src/stubs/email-provider.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed, SEED_PASSWORD } from '../src/core/seed.ts';
+import { codeAt, stepAt } from '../src/core/totp.ts';
+import { forgetRegisteredSecretsForTest, loadSecrets, secretsFromValues, emptySecrets, SECRET_KEYS } from '../src/core/secrets.ts';
+import { outboxTransport } from '../src/integrations/email/email.ts';
+import * as SI from '../src/core/sign-in.ts';
+import * as EP from '../src/integrations/email/email-provider.ts';
+import type { EmailSending, SmtpLogin } from '../src/integrations/email/email-provider.ts';
 
 const NOW = '2026-09-28T10:00:00.000Z';
 const NOW_MS = Date.parse(NOW);
@@ -31,7 +31,7 @@ const MIGRATIONS = join(import.meta.dirname, '..', 'migrations');
 async function maybe<T>(rel: string): Promise<T | undefined> {
   try { return (await import(new URL(rel, import.meta.url).href)) as T; } catch { return undefined; }
 }
-type MfaModule = typeof import('../src/mfa-seal.ts');
+type MfaModule = typeof import('../src/core/mfa-seal.ts');
 type ToolModule = typeof import('../tools/demo-sign-in.ts');
 
 type Json = { status: number; body: Record<string, unknown>; cookies: Map<string, string> };
@@ -233,8 +233,8 @@ describe('151k · 1 · the JSON API walks the steps, on the same functions as th
       // PHASE 151m: setting the step up answers the recovery codes page, whose one link goes to /staff
       assert.equal(r.status, 200);
       assert.match(await r.text(), /Your recovery codes[\s\S]*href="\/staff">I have saved them/);
-      // and server.ts calls the step functions of src/web/sign-in.ts, and verifies no code of its own
-      const src = readFileSync(join(import.meta.dirname, '..', 'src', 'server.ts'), 'utf8');
+      // and server.ts calls the step functions of src/core/sign-in.ts, and verifies no code of its own
+      const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'server.ts'), 'utf8');
       assert.match(src, /SI\.submitCode\(/);
       assert.doesNotMatch(src, /verifyCode|codeAt|code_hash/);
     } finally { w.close(); }
@@ -259,8 +259,8 @@ describe('151k · 2 · the authenticator app\'s secret is sealed where a key is 
     assert.ok(k !== undefined, 'CAPREBATE_MFA_KEY is not one of the keys');
     assert.equal(k.owner, 'SIGN_IN');
     assert.equal(k.secret, true);
-    const mfa = await maybe<MfaModule>('../src/mfa-seal.ts');
-    assert.ok(mfa !== undefined, 'src/mfa-seal.ts does not exist');
+    const mfa = await maybe<MfaModule>('../src/core/mfa-seal.ts');
+    assert.ok(mfa !== undefined, 'src/core/mfa-seal.ts does not exist');
     // a key file INSIDE the repository is not read, so no key comes from it
     const root = mkdtempSync(join(tmpdir(), 'cb-151k-repo-'));
     mkdirSync(join(root, '.git'));
@@ -316,7 +316,7 @@ describe('151k · 2 · the authenticator app\'s secret is sealed where a key is 
     try {
       w.setKey(randomBytes(32));
       const { key } = await w.apiWithApp('sales@example.invalid');
-      const mfa = (await maybe<MfaModule>('../src/mfa-seal.ts'))!;
+      const mfa = (await maybe<MfaModule>('../src/core/mfa-seal.ts'))!;
       for (const k of [null, randomBytes(32)]) {
         w.setKey(k);
         const again = await w.api('/api/login', { email: 'sales@example.invalid', password: SEED_PASSWORD });
@@ -337,7 +337,7 @@ describe('151k · 2 · the authenticator app\'s secret is sealed where a key is 
       const first = await w.api('/api/login', { email: 'sales@example.invalid', password: SEED_PASSWORD });
       const token = String(first.body.step_token);
       const r = await w.api('/api/login/step/method', { step_token: token, method: 'APP' });
-      const mfa = (await maybe<MfaModule>('../src/mfa-seal.ts'))!;
+      const mfa = (await maybe<MfaModule>('../src/core/mfa-seal.ts'))!;
       assert.equal(r.status, 400);
       assert.equal(r.body.error, mfa.MFA_KEY_BAD);
       assert.equal(w.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM sign_in_steps WHERE pending_secret IS NOT NULL')?.n, 0);
@@ -347,8 +347,8 @@ describe('151k · 2 · the authenticator app\'s secret is sealed where a key is 
   });
 
   test('a sealed secret is bound to its person: copied onto another login it does not open', async () => {
-    const mfa = await maybe<MfaModule>('../src/mfa-seal.ts');
-    assert.ok(mfa !== undefined, 'src/mfa-seal.ts does not exist');
+    const mfa = await maybe<MfaModule>('../src/core/mfa-seal.ts');
+    assert.ok(mfa !== undefined, 'src/core/mfa-seal.ts does not exist');
     const k = { state: 'KEY' as const, key: randomBytes(32) };
     const sealed = mfa.sealSecret(k, 'person-a', 'JBSWY3DPEHPK3PXP');
     assert.ok(sealed.ok);
@@ -362,7 +362,7 @@ describe('151k · 2 · the authenticator app\'s secret is sealed where a key is 
     try {
       await w.apiWithApp('sales@example.invalid');
       await w.apiWithApp('admin@example.invalid');
-      const mfa = (await maybe<MfaModule>('../src/mfa-seal.ts'))!;
+      const mfa = (await maybe<MfaModule>('../src/core/mfa-seal.ts'))!;
       const k = { state: 'KEY' as const, key: randomBytes(32) };
       assert.deepEqual(mfa.sealTextSecrets(w.db, { state: 'NONE' }), { state: 'NONE', sealed: 0 });
       assert.deepEqual(mfa.sealTextSecrets(w.db, k), { state: 'KEY', sealed: 2 });

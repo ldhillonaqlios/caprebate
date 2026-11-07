@@ -32,10 +32,10 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { APP_ROLES, type AppRole } from '../src/roles.ts';
-import { can, REGISTERED_ACTIONS } from '../src/authz.ts';
-import { feeDisplay, feeGuard, feeRate, marginalRateRange } from '../src/web/engine.ts';
+import { createApp } from '../src/core/server.ts';
+import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
+import { can, REGISTERED_ACTIONS } from '../src/core/authz.ts';
+import { feeDisplay, feeGuard, feeRate, marginalRateRange } from '../src/shared/engine.ts';
 import * as F from '../src/web/finance.ts';
 import { actor } from './helpers.ts';
 

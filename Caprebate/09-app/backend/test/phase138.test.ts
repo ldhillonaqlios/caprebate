@@ -29,9 +29,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { SITE_CSS as CSS, BRAND_TOKENS } from '../src/web/assets.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { SITE_CSS as CSS, BRAND_TOKENS } from '../src/shared/assets.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string };
@@ -309,7 +309,7 @@ describe('rules kept', () => {
     for (const path of [`/staff/clients/${biz}`, `/staff/claims/${claim}`]) {
       const got = await as('admin').get(path);
       assert.equal(got.status, 200, path);
-      // PHASE 160e: the claim page's upload form names the one allowed script (src/web/upload-pieces.ts); nothing inline.
+      // PHASE 160e: the claim page's upload form names the one allowed script (src/core/upload-pieces.ts); nothing inline.
       const b = got.body.replace('<script src="/assets/upload-pieces.js" defer></script>', '');
       assert.equal(/<script|\sstyle=|\son[a-z]+=/i.test(b), false, `${path}: a script, a style attribute or a handler`);
       const ids = [...b.matchAll(/\sid="([^"]+)"/g)].map((x) => x[1] ?? '');

@@ -51,15 +51,15 @@
  * writes nothing. The task carries no figure; the finance view carries the reading.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, type Actor } from '../authz.ts';
-import { localDate, localStamp } from './localtime.ts';
-import { formatPence, toPence } from './shown-range.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, type Actor } from '../core/index.ts';
+import { localDate, localStamp } from '../shared/index.ts';
+import { formatPence, toPence } from '../shared/index.ts';
 import { insertTask } from './tasks.ts';
 import { latestSignOff } from './claim-record.ts';
 import { computeFee, FEE_CONTROLS, type FeeControls } from './fee-controls.ts';
-import { feeGate, type FeeGateReading } from './engine.ts';
+import { feeGate, type FeeGateReading } from '../shared/index.ts';
 import { assertFinanceSection, financeSectionObj } from './finance.ts';
 
 type Vocab = Readonly<Record<string, string>>;

@@ -16,8 +16,8 @@
  *
  * N4: a cost not known is NULL and gets no figure; a date not known is NULL. Nothing is ever read as 0.
  */
-import type { Db } from '../db.ts';
-import { BAND } from './engine.ts';
+import type { Db } from '../core/index.ts';
+import { BAND } from '../shared/index.ts';
 
 export const EVENT_KINDS = ['PURCHASE', 'NEW_BUILD', 'EXTENSION', 'REFURBISHMENT', 'FIT_OUT', 'CONVERSION', 'REPAIRS', 'OTHER'] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];

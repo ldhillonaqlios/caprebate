@@ -24,20 +24,20 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { savedMessage, why } from './components.ts';
-import type { FsObjectStore } from './objectstore.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { savedMessage, why } from '../shared/index.ts';
+import type { FsObjectStore } from '../shared/objectstore.ts';
 import * as F from './free-email.ts';
-import { SAVED_NOT_SENT } from '../stubs/email.ts';
-import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, smtpLoginFromKeyFile, smtpProvider, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
+import { SAVED_NOT_SENT } from '../integrations/index.ts';
+import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, smtpLoginFromKeyFile, smtpProvider, type EmailSending, type SmtpLogin } from '../integrations/index.ts';
 import { openKeptOriginal } from './uploads.ts';
 import { markChannelRead } from './messages.ts';
 import { lastReadWords, mayReadQueue, readRepliesIfDue } from './inbound-email.ts';
-import { localStamp } from './localtime.ts';
+import { localStamp } from '../shared/index.ts';
 import type { EmailChain } from './email-chains.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

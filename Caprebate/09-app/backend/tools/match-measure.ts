@@ -3,7 +3,7 @@
  * certificate register), built by Phase 146c on 23 September 2026 and NOT RUN.
  *
  * WHY IT EXISTS. Every free register is matched to a typed address at 0.90 / 0.70 (MATCH_THRESHOLDS in
- * src/connectors/matching.ts). Those numbers are the spec's guesses, and standing rule 13 says in terms: do not assert
+ * src/integrations/connectors/matching.ts). Those numbers are the spec's guesses, and standing rule 13 says in terms: do not assert
  * that the typed-address match is good enough, and do not assert that it is not — measure it. This is the measurement.
  *
  * IT WAITS ON THE DATA PROTECTION OFFICER. It looks up 200 REAL addresses — the spec says drawn from our own client and
@@ -21,10 +21,10 @@
  *
  *   1. SAMPLE — a CSV the person running it provides: id, sector, address_line_1, address_line_2, town, postcode,
  *      nation. 200 rows, 40 per sector. It is personal-adjacent data (our clients' addresses), so every file this tool
- *      reads or writes must be OUTSIDE the repository — the same test the key file passes (src/secrets.ts).
+ *      reads or writes must be OUTSIDE the repository — the same test the key file passes (src/core/secrets.ts).
  *   2. RUN — each address against each register this build can match: the care regulator (England), energy
  *      certificates (non-domestic and display; domestic too for supported living), HM Land Registry sale prices
- *      (supported living only) and planning. Through the real connectors and the one way out (src/connectors/http.ts),
+ *      (supported living only) and planning. Through the real connectors and the one way out (src/integrations/connectors/http.ts),
  *      every call on the audit chain in the database named by --db. The switches are NOT turned on: the tool calls each
  *      connector's lookup directly, which is exactly what this permission is for, and the research flow is untouched.
  *      One output row per (address × register): the band, the top score, how many were scored, and the top candidate's
@@ -41,17 +41,17 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { buildApp } from '../src/app.ts';
-import { loadSecrets, repositoryRoot, isInside, type SecretStore } from '../src/secrets.ts';
-import { liveTransport, fixtureTransport, type Transport } from '../src/connectors/http.ts';
-import type { ConnectorContext, RegisterConnector } from '../src/connectors/registers.ts';
-import { MATCH_THRESHOLDS, type MatchProfile, type MeasureHook, type RawAddress } from '../src/connectors/matching.ts';
-import { cqc } from '../src/connectors/cqc.ts';
-import { epc } from '../src/connectors/epc.ts';
-import { pricePaid } from '../src/connectors/price-paid.ts';
-import { planning } from '../src/connectors/planning.ts';
-import type { Nation, TypedProperty } from '../src/connectors/nations.ts';
-import { resolveProperty, postcodeStore } from '../src/web/postcode.ts';
+import { buildApp } from '../src/core/app.ts';
+import { loadSecrets, repositoryRoot, isInside, type SecretStore } from '../src/core/secrets.ts';
+import { liveTransport, fixtureTransport, type Transport } from '../src/integrations/connectors/http.ts';
+import type { ConnectorContext, RegisterConnector } from '../src/integrations/connectors/registers.ts';
+import { MATCH_THRESHOLDS, type MatchProfile, type MeasureHook, type RawAddress } from '../src/integrations/connectors/matching.ts';
+import { cqc } from '../src/integrations/connectors/cqc.ts';
+import { epc } from '../src/integrations/connectors/epc.ts';
+import { pricePaid } from '../src/integrations/connectors/price-paid.ts';
+import { planning } from '../src/integrations/connectors/planning.ts';
+import type { Nation, TypedProperty } from '../src/integrations/connectors/nations.ts';
+import { resolveProperty, postcodeStore } from '../src/integrations/postcodes/postcode.ts';
 
 /* ================================================================== *
  * THE PERMISSION — one line, and it is the data protection officer's

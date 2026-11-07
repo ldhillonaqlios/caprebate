@@ -27,10 +27,10 @@
  * workstream; this is the application's half.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, type Actor } from '../authz.ts';
-import { localStamp } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, type Actor } from '../core/index.ts';
+import { localStamp } from '../shared/index.ts';
 
 export type Answer = 'YES' | 'NO' | 'UNSURE';
 const ANSWERS: readonly string[] = ['YES', 'NO', 'UNSURE'];

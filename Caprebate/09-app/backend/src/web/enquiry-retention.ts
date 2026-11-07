@@ -4,7 +4,7 @@
  * Word question 222, Sadique's: "How long do we keep a closed website enquiry before it is deleted?" Built on our
  * recommendation for him to check: twelve months after it was closed. A deletion cannot be undone, so — like the
  * message clean-up before it was answered — the job ships OFF and deletes nothing until the officer approves the period
- * and that approval is recorded; then a scheduled run of `node src/cli.ts sweep-enquiries` applies it.
+ * and that approval is recorded; then a scheduled run of `node src/core/cli.ts sweep-enquiries` applies it.
  *
  * TWO KINDS OF ENQUIRY, NAMED:
  *   1. THE CONTACT FORM (/enquiry, `website_enquiries`, migration 031). One closed by staff (status CLOSED, its
@@ -29,11 +29,11 @@
  * enquiry with no closing day is never due.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
 import { liveHeldIds } from './compliance.ts';
 import { addMonths } from './message-retention.ts';
-import { BACKUP_CYCLE, knownBackupCycleDays } from './upload-handler-port.ts';
+import { BACKUP_CYCLE, knownBackupCycleDays } from '../shared/upload-handler-port.ts';
 import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from './funnel-deletable.ts';
 import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from './funnel-edges.ts';
 

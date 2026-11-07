@@ -19,18 +19,18 @@ import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { can, type Actor, type Obj } from '../src/authz.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { can, type Actor, type Obj } from '../src/core/authz.ts';
 import * as D from '../src/web/documents.ts';
 import * as PO from '../src/web/portal.ts';
 import { eventsFor } from '../src/web/uploads.ts';
-import { durableKeyFor, quarantineKeyFor } from '../src/web/upload-handler-port.ts';
-import { KEEP_ORIGINALS, KEEP_ORIGINALS_QUESTION, READ_AND_DELETED, keptDays, seal, unseal } from '../src/web/originals.ts';
+import { durableKeyFor, quarantineKeyFor } from '../src/shared/upload-handler-port.ts';
+import { KEEP_ORIGINALS, KEEP_ORIGINALS_QUESTION, READ_AND_DELETED, keptDays, seal, unseal } from '../src/shared/originals.ts';
 import { backendSwitchReadings } from '../src/web/case-stamp.ts';
 import { pdfOf } from './document-fixtures.ts';
 import { actor } from './helpers.ts';
-import { plainDashText } from '../src/web/plain-dashes.ts';
+import { plainDashText } from '../src/shared/plain-dashes.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string; bytes: Buffer; type: string | null };
@@ -374,7 +374,7 @@ describe('4 · KEEP_ORIGINALS — built, and switched off', () => {
     assert.equal(KEEP_ORIGINALS.enabled, false);
     assert.equal(KEEP_ORIGINALS.retention_days, 2557, 'Lakhbir: 7 years (Word question 219); off until the officer approves');
     assert.equal(KEEP_ORIGINALS.question, 'How long do we keep the files clients upload, and who may open them?');
-    assert.deepEqual(backendSwitchReadings().filter((x) => x.switch === 'KEEP_ORIGINALS'), [{ switch: 'KEEP_ORIGINALS', on: false, home: 'src/web/originals.ts' }]);
+    assert.deepEqual(backendSwitchReadings().filter((x) => x.switch === 'KEEP_ORIGINALS'), [{ switch: 'KEEP_ORIGINALS', on: false, home: 'src/shared/originals.ts' }]);
     const w = await boot();
     try { assert.equal(w.made.store.keptDays, null); } finally { w.close(); }
   });

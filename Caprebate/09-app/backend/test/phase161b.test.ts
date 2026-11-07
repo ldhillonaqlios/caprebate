@@ -1,6 +1,6 @@
 /**
- * PHASE 161b, 4 November 2026 — A SECURITY TOKEN ON EVERY FORM THAT CHANGES SOMETHING (src/web/form-token.ts,
- * src/web/form-token-check.ts, the check at the top of src/server.ts's handler).
+ * PHASE 161b, 4 November 2026 — A SECURITY TOKEN ON EVERY FORM THAT CHANGES SOMETHING (src/core/form-token.ts,
+ * src/core/form-token-check.ts, the check at the top of src/core/server.ts's handler).
  *
  * The ITRoadway technical audit (2 Nov 2026), section 4, row 3. What these tests hold:
  *   - every route that is not GET or HEAD, found in the source, refuses a signed-in person's request with no token,
@@ -20,15 +20,15 @@ import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 import { Readable } from 'node:stream';
 import type { IncomingMessage } from 'node:http';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { SESSION_COOKIE_NAME } from '../src/auth.ts';
-import { readBody } from '../src/web/router.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { SESSION_COOKIE_NAME } from '../src/core/auth.ts';
+import { readBody } from '../src/core/router.ts';
 import {
   EXEMPT, EXPIRED_TITLE, EXPIRED_WORDS, FORM_FIELD, FORM_HEADER, ONCE_FIELD, ONCE_HEADER, SENSITIVE,
   exemptFor, formToken, formTokensMode, isSensitive, onceToken, withFormTokens,
-} from '../src/web/form-token.ts';
-import { formTokenRefusal } from '../src/web/form-token-check.ts';
+} from '../src/core/form-token.ts';
+import { formTokenRefusal } from '../src/core/form-token-check.ts';
 
 const BACKEND = join(import.meta.dirname, '..');
 const ROOT = join(BACKEND, '..', '..', '..');
@@ -79,7 +79,7 @@ function routesInSource(): string[] {
     const s = readFileSync(join(BACKEND, f), 'utf8');
     for (const m of s.matchAll(/(?:path|p|pathname)\s*===\s*(['"`])(\/[^'"`$]+)\1\s*&&\s*\(?\s*(?:method|req\.method)\s*===\s*['"](POST|PUT|DELETE|PATCH)['"]/g)) out.add(m[2] ?? '');
     for (const m of s.matchAll(/(?:method|req\.method)\s*===\s*['"](POST|PUT|DELETE|PATCH)['"]\s*&&\s*(?:path|p)\s*===\s*(['"`])(\/[^'"`$]+)\2/g)) out.add(m[3] ?? '');
-    /* Routes written under a prefix: `${base}/...` (src/web/staff.ts's own-account pages, mounted at /staff/settings
+    /* Routes written under a prefix: `${base}/...` (src/core/staff.ts's own-account pages, mounted at /staff/settings
        and /portal/settings) and `${BASE}/...` (a file's own const BASE). */
     const bases: Record<string, string[]> = { base: ['/staff/settings', '/portal/settings'] };
     const own = /const BASE = ['"`](\/[^'"`]+)['"`]/.exec(s);
@@ -104,7 +104,7 @@ test('161b: off by default only inside the test runner; told, it is what it is t
 });
 
 test('161b: every real start turns the tokens on in so many words', () => {
-  const server = readFileSync(join(BACKEND, 'src', 'server.ts'), 'utf8');
+  const server = readFileSync(join(BACKEND, 'src', 'core', 'server.ts'), 'utf8');
   const main = server.slice(server.indexOf('if (import.meta.filename === process.argv[1])'));
   assert.match(main, /formTokens: 'on'/);
   assert.match(readFileSync(join(ROOT, 'api', 'index.mjs'), 'utf8'), /formTokens: 'on'/);
@@ -184,8 +184,8 @@ test('161b: pages carry the tokens in our POST forms, a sensitive form its singl
     for (const f of forms) assert.ok((f[1] ?? '').startsWith(`<input type="hidden" name="${FORM_FIELD}" value="${t.token('admin')}">`), 'every POST form starts with the token');
     const create = /<form\b[^>]*action="\/staff\/users\/create"[^>]*>([\s\S]{0,400})/i.exec(page.body);
     assert.ok(create !== null && (create[1] ?? '').includes(`name="${ONCE_FIELD}"`), 'the create form has a single-use token');
-    for (const f of ['address-lookup-script.ts', 'photo-upload-script.ts', 'register-import-script.ts', 'upload-pieces-script.ts', 'whatsapp-import-script.ts']) {
-      const s = readFileSync(join(BACKEND, 'src', 'web', f), 'utf8');
+    for (const f of ['web/address-lookup-script.ts', 'web/photo-upload-script.ts', 'web/register-import-script.ts', 'core/upload-pieces-script.ts', 'web/whatsapp-import-script.ts']) {
+      const s = readFileSync(join(BACKEND, 'src', f), 'utf8');
       assert.match(s, /meta\[name="cb-form"\]/, `${f} reads the token`);
       assert.match(s, /'x-cb-form': cbForm\(\)/, `${f} sends it`);
     }

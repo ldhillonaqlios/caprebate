@@ -21,11 +21,11 @@
  *            here applies and that route is unchanged.
  */
 import { createHash, randomBytes } from 'node:crypto';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import type { EmailTransport } from '../stubs/email.ts';
-import { authorise, type Actor } from '../authz.ts';
-import { localDate, ukDate } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import type { EmailTransport } from '../integrations/index.ts';
+import { authorise, type Actor } from '../core/index.ts';
+import { localDate, ukDate } from '../shared/index.ts';
 // Read inside functions only: pipeline.ts reads this module's need the same way, so the loop is never touched at load.
 import { raiseBusinessStage } from './pipeline.ts';
 import { claimReturns, claimRoutes, type ClaimReturn } from './claim-route.ts';

@@ -9,16 +9,16 @@
  *   POST /staff/clients/:id/whatsapp/import/:iid/file          one file from the export (multipart), after saving
  *
  * Who: `client_message.write` — Admin and Sales (src/web/whatsapp-import.ts authorises every step). The logic is in
- * src/web/whatsapp-import.ts; the reader in src/connectors/whatsapp-export.ts; the script in whatsapp-import-script.ts.
+ * src/web/whatsapp-import.ts; the reader in src/integrations/connectors/whatsapp-export.ts; the script in whatsapp-import-script.ts.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, type Safe } from './html.ts';
-import { savedMessage } from './components.ts';
-import { boundaryOf, parseMultipart, MultipartError, type Part } from './multipart.ts';
-import { ukDate } from './localtime.ts';
-import type { FsObjectStore } from './objectstore.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, type Safe } from '../shared/index.ts';
+import { savedMessage } from '../shared/index.ts';
+import { boundaryOf, parseMultipart, MultipartError, type Part } from '../core/index.ts';
+import { ukDate } from '../shared/index.ts';
+import type { FsObjectStore } from '../shared/objectstore.ts';
 import {
   addImportFile, cancelImport, importCheck, importFilesWaiting, saveImport, startImport, IMPORT_MAX_FILE, IMPORT_MAX_ZIP,
 } from './whatsapp-import.ts';

@@ -53,15 +53,15 @@
  * its own about which way it falls.
  */
 
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import type { AuditLog } from '../audit.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
 import {
   feeDisplay, feeGuard, feeRate, marginalRateRange, noClaimThreshold,
   type EntityKey, type FeeComparison, type NoClaimVatReading, type RecommendationThreshold,
-} from './engine.ts';
-import { formatPence } from './shown-range.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
+} from '../shared/index.ts';
+import { formatPence } from '../shared/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
 
 export { NotFoundAsRefusal };
 

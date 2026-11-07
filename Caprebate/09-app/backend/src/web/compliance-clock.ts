@@ -38,7 +38,7 @@
  * a zero-day pause on a limb the pause could apply to.
  *
  * PURE. Calendar days as 'YYYY-MM-DD'. The caller turns a recorded moment into
- * the UK day it fell on (localDate in src/web/localtime.ts); nothing here reads a
+ * the UK day it fell on (localDate in src/shared/localtime.ts); nothing here reads a
  * clock, a database or a setting.
  */
 

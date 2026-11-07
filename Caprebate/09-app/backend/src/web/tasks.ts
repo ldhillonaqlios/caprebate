@@ -32,18 +32,18 @@
  * OVERDUE IS A QUESTION ABOUT TODAY'S UK DATE
  *
  * A due date is a calendar date (row E26). "Overdue" is `due_on` before
- * `localDate(now)`, and src/web/localtime.ts stays the only file naming a zone.
+ * `localDate(now)`, and src/shared/localtime.ts stays the only file naming a zone.
  * A task with no due date is NOT overdue and NOT on time: it has no due date,
  * and every screen says so in those words (N4).
  */
 
-import type { Db } from '../db.ts';
-import type { AuditKind, AuditLog } from '../audit.ts';
-import { authorise, can, type Actor, type Obj } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { localDate, localStamp, ukDate, dueWords } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditKind, AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor, type Obj } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { localDate, localStamp, ukDate, dueWords } from '../shared/index.ts';
 import { claimNaming, claimObjFor, claimWords, PRIORITIES, type Fields } from './crm.ts';
-import { anyStageLabel, claimStage } from './stages.ts';
+import { anyStageLabel, claimStage } from '../shared/index.ts';
 import { waitingOn, type WaitingOn } from './engaged.ts';
 import { fireAutomation } from './automation.ts';
 import { mayTake, vocabLabel } from './vocabularies.ts';
@@ -1111,7 +1111,7 @@ export function followUpsFor(db: Db, contact_id: string): { due_on: string | nul
 
 /**
  * PHASE 133a — THE GATE OF THE ONE-NEXT-ACTION LIST, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/web/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function nextActionsGate(actor: Actor): void {

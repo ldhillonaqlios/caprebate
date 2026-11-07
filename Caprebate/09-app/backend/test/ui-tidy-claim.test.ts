@@ -1,6 +1,6 @@
 /**
- * UI TIDY PHASE 18 — THE CLAIM PAGE, 3 October 2026 (src/web/crm-pages.ts claimPage, src/web/components.ts sectionOpens,
- * src/web/navigation.ts addUnderCurrent). Lakhbir added this phase: the claim page was about 10,700 px because every
+ * UI TIDY PHASE 18 — THE CLAIM PAGE, 3 October 2026 (src/web/crm-pages.ts claimPage, src/shared/components.ts sectionOpens,
+ * src/core/navigation.ts addUnderCurrent). Lakhbir added this phase: the claim page was about 10,700 px because every
  * section "working on it" opened by itself. Now only the stage opens (and the checks after a step was worked in); every
  * other section is a one-line summary with its status until a change just made, or the person's own choice, opens it.
  * The sections are listed under the claim in the left-hand menu, and the header shows the stage in its colour.
@@ -8,8 +8,8 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import { claimHref, sectionOpens } from '../src/web/components.ts';
-import { stageGroupOf } from '../src/web/look.ts';
+import { claimHref, sectionOpens } from '../src/shared/components.ts';
+import { stageGroupOf } from '../src/core/look.ts';
 import { SECTION_STATUS_NOTE } from '../src/web/crm-pages.ts';
 
 let H: Harness;

@@ -16,7 +16,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import {
   ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST, SIGN_LINK_DAYS, SIGN_WORDS, checkSignature, requiredSigners, setRequiredSigners,
   shownLetter, signByLink, signEngagement, signLinkFor, sha256Hex,
@@ -25,15 +25,15 @@ import {
 import { TEST_LETTER_PATH } from '../src/web/letter.ts';
 import { letterState, letterSteps, sendEngagementLetter, signedCopy } from '../src/web/engagement-send.ts';
 import { assertSignedEngagement } from '../src/web/research.ts';
-import { pdfLooksComplete } from '../src/web/upload-handler-port.ts';
+import { pdfLooksComplete } from '../src/shared/upload-handler-port.ts';
 import { acceptClientBytes, DAMAGED_PDF } from '../src/web/uploads.ts';
 import { receiveFile } from '../src/web/client-files-pages.ts';
 import * as D from '../src/web/documents.ts';
-import { FsObjectStore } from '../src/web/objectstore.ts';
+import { FsObjectStore } from '../src/shared/objectstore.ts';
 import { classifyHeading, NEVER_TO_MODEL } from '../src/documents/caprebate-document-pipeline.ts';
 import { receiptPolicyFor } from '../src/documents/caprebate-client-doc-ingestion.ts';
 import { actor, testApp } from './helpers.ts';
-import type { Actor } from '../src/authz.ts';
+import type { Actor } from '../src/core/authz.ts';
 
 type TestApp = Awaited<ReturnType<typeof testApp>>;
 const T0 = '2026-10-06T09:00:00.000Z';

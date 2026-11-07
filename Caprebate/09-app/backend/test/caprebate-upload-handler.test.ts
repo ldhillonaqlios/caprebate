@@ -35,7 +35,7 @@ import {
   type QuarantineObject, type RawFileRecord, type IngestionSettings,
   type IdentifiedPerson,
 } from '../src/documents/caprebate-client-doc-ingestion.ts';
-import { NameExclusionError } from '../src/registers/caprebate-name-exclusion.ts';
+import { NameExclusionError } from '../src/integrations/registers/name-exclusion.ts';
 import {
   UploadHandlerError, UPLOAD_LIMITS, PROMOTION_RULE, CONTRACT_COVERAGE,
   sniffAccepted, shouldPromoteRawFile, assertContractCovered,

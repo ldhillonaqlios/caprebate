@@ -9,7 +9,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { testApp, actor } from './helpers.ts';
-import type { App } from '../src/app.ts';
+import type { App } from '../src/core/app.ts';
 import * as C from '../src/web/crm.ts';
 import * as CF from './claim-fixtures.ts';
 import { ENGAGEMENT_SIGNING_TEST, letterFacts, shownLetter, signEngagement } from '../src/web/signing.ts';
@@ -352,7 +352,7 @@ describe('F46 — the accountant confirms the return fit and the filing through 
 });
 
 async function salesWeb() {
-  const { createApp } = await import('../src/server.ts');
+  const { createApp } = await import('../src/core/server.ts');
   const { mkdtempSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');

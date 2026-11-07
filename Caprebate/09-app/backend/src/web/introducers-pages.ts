@@ -14,17 +14,17 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import { can, type Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { breadcrumb, claimRef, dataLink, savedMessage } from './components.ts';
-import { kpiRow, lateBadge, nobodyBadge } from './look.ts';
-import { setSubMenu } from './navigation.ts';
+import type { App } from '../core/app.ts';
+import { can, type Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { breadcrumb, claimRef, dataLink, savedMessage } from '../shared/index.ts';
+import { kpiRow, lateBadge, nobodyBadge } from '../core/index.ts';
+import { setSubMenu } from '../core/navigation.ts';
 import * as I from './introducers.ts';
 import { vocabulary } from './vocabularies.ts';
 import { SECTORS } from './leads.ts';
-import { STUB_NOTICE } from '../stubs/email.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { STUB_NOTICE } from '../integrations/index.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

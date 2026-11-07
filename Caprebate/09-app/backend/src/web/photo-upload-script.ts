@@ -17,7 +17,7 @@
 export const PHOTO_UPLOAD_JS = `(function () {
   'use strict';
   var root = typeof globalThis !== 'undefined' ? globalThis : window;
-  // PHASE 161b: our form token, from the page, for the x-cb-form header (src/web/form-token.ts).
+  // PHASE 161b: our form token, from the page, for the x-cb-form header (src/core/form-token.ts).
   function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
   var MAGIC = [0x43, 0x42, 0x55, 0x50, 0x31];
   var MAX_BYTES = 25 * 1024 * 1024;

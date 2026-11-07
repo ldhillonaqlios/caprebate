@@ -1,24 +1,24 @@
 /**
  * PHASE 146e, 22 September 2026 — CLIENT DOCUMENTS READ BY THE CLAUDE API, BUILT AND SWITCHED OFF.
  *
- * The real ModelFn (src/connectors/claude.ts) on the Anthropic SDK, its calls going through the one way out, and the
+ * The real ModelFn (src/integrations/connectors/claude.ts) on the Anthropic SDK, its calls going through the one way out, and the
  * vision path for scanned PDFs. EVERY TEST RUNS ON RECORDED ANSWERS (`fixtureTransport`) shaped from the Messages
  * API's published response: no key, no network, and no real client document — every document here is invented.
  * Where a test needs a call to go out at all, it approves the transfer through the tests-only `policy_override`;
- * the row in src/connectors/sources.ts stays unapproved, and the first tests prove that refuses every call.
+ * the row in src/integrations/connectors/sources.ts stays unapproved, and the first tests prove that refuses every call.
  */
 import { test, describe, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { secretsFromValues, emptySecrets, forgetRegisteredSecretsForTest } from '../src/secrets.ts';
-import { fixtureTransport, fetchThroughCallOutside, RateLimiter, OutsideCallFailed, type CallDeps, type GateSnapshot, type Fixture } from '../src/connectors/http.ts';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
-import * as CL from '../src/connectors/claude.ts';
+import { secretsFromValues, emptySecrets, forgetRegisteredSecretsForTest } from '../src/core/secrets.ts';
+import { fixtureTransport, fetchThroughCallOutside, RateLimiter, OutsideCallFailed, type CallDeps, type GateSnapshot, type Fixture } from '../src/integrations/connectors/http.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
+import * as CL from '../src/integrations/connectors/claude.ts';
 import {
   extractPages, isMarkerPages, isScanMarker, pdfPageImages, UNREADABLE_MARKER_PREFIX,
-} from '../src/web/extract-text.ts';
+} from '../src/shared/extract-text.ts';
 import { documentTextExtractor } from '../src/web/uploads.ts';
 import {
   extract, sanitise, PERSON_REVIEW_BY_DOC_TYPE, specFor, type ModelPayload, type Segment,
@@ -106,7 +106,7 @@ describe('as shipped, nothing is sent and every field stays asked', () => {
     assert.equal(Object.isFrozen(CL.CLAUDE_SWITCHES), true);
     const row = CALL_POLICIES.CLAUDE_DOCUMENTS!;
     assert.deepEqual([row.region, row.international_transfer_approved, row.base_url], ['US', true, 'https://api.anthropic.com']);
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'connectors', 'sources.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'integrations', 'connectors', 'sources.ts'), 'utf8');
     assert.match(src, /CLAUDE_DOCUMENTS: \{\s*\/\* THE TRANSFER: Approved FOR TESTING on 5 October 2026/, 'the approval is not recorded beside the row');
     assert.equal(CL.CLAUDE_MODEL, 'claude-opus-5');
   });

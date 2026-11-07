@@ -23,8 +23,8 @@
  *
  * This file imports nothing from claim-facts.ts, which imports from here.
  */
-import type { Db } from '../db.ts';
-import { isDormant, DORMANT_WORDS } from '../connectors/companies-house.ts';
+import type { Db } from '../core/index.ts';
+import { isDormant, DORMANT_WORDS } from '../integrations/index.ts';
 
 const json = (s: string | null | undefined): Record<string, unknown> => {
   if (typeof s !== 'string') return {};

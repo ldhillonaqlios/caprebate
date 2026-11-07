@@ -2,7 +2,7 @@
  * INTRODUCERS AND THE ACCOUNTANT REFERRAL CHANNEL. CRM 5 of 10, 11 September 2026.
  *
  * The schema is migration 014; the routes are src/web/introducers-pages.ts and,
- * for the public referral form, src/web/router.ts. The mechanics are the
+ * for the public referral form, src/core/router.ts. The mechanics are the
  * Accountant Referral Network paper, section 5 — 08-monday-doc-exports/
  * 12552691718__Accountant-Referral-Network.md — and every decision below that is
  * not obvious is a row of Part E of 09-app/CAPREBATE-CRM-DISPOSITION.md.
@@ -52,15 +52,15 @@
  * as nought.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog, AuditKind, Outcome } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { outboxTransport } from '../stubs/email.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog, AuditKind, Outcome } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { outboxTransport } from '../integrations/index.ts';
 import { loadLetter, type OpenTerm } from './letter.ts';
-import { localDate, localStamp } from './localtime.ts';
-import { formatPence, toPence } from './shown-range.ts';
-import { PROCEDURE_KEYS, anyStageLabel } from './stages.ts';
+import { localDate, localStamp } from '../shared/index.ts';
+import { formatPence, toPence } from '../shared/index.ts';
+import { PROCEDURE_KEYS, anyStageLabel } from '../shared/index.ts';
 import { fireAutomation } from './automation.ts';
 import { ownerChoices } from './crm.ts';
 import { SECTORS } from './leads.ts';
@@ -1704,7 +1704,7 @@ export function percentageLedger(db: Db, actor: Actor, introducer_id?: string): 
 
 /**
  * PHASE 133a — THE GATE OF THE REWARD MODEL, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/web/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function rewardModelGate(actor: Actor): void {

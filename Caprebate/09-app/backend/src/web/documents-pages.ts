@@ -18,16 +18,16 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import { authorise, type Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
+import type { App } from '../core/app.ts';
+import { authorise, type Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import * as D from './documents.ts';
-import { badge, claimRef, dataLink, savedMessage, sectionList, why, type RecordTab } from './components.ts';
-import type { FsObjectStore } from './objectstore.ts';
+import { badge, claimRef, dataLink, savedMessage, sectionList, why, type RecordTab } from '../shared/index.ts';
+import type { FsObjectStore } from '../shared/objectstore.ts';
 import { openKeptOriginal, sweepOriginals } from './uploads.ts';
 import { ANSWER_WORDS, LEFT_OUT_NOTE, VOUCH_ANSWERS, earlyVouchesFrom } from './document-reading.ts';
 import { earlyQuestions, readUpload, receiveFile } from './client-files-pages.ts';
-import { piecesOf, piecesPage } from './upload-pieces.ts';
+import { piecesOf, piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

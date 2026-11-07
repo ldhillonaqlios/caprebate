@@ -47,14 +47,14 @@
  *
  * AUDITED WITH IDS AND COUNTS, NEVER THE WORDS: one MESSAGES_DELETED entry per run, naming every id it removed.
  *
- * Run by `node src/cli.ts sweep-messages`. A scheduled run of that one line is all the hosting needs to add.
+ * Run by `node src/core/cli.ts sweep-messages`. A scheduled run of that one line is all the hosting needs to add.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
 import { claimFileDays } from './documents.ts';
 import { liveHeldIds } from './compliance.ts';
-import { BACKUP_CYCLE, RET7, knownBackupCycleDays } from './upload-handler-port.ts';
+import { BACKUP_CYCLE, RET7, knownBackupCycleDays } from '../shared/upload-handler-port.ts';
 
 export type MessageRetention = {
   readonly enabled: boolean;

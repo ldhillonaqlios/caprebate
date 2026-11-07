@@ -10,8 +10,8 @@
  * every screen behind a tile still answers its own address, for every login its own gate admits, exactly as before.
  */
 
-import type { Actor } from '../authz.ts';
-import { h, type Safe } from './html.ts';
+import type { Actor } from '../core/index.ts';
+import { h, type Safe } from '../shared/index.ts';
 import { usersGate } from './settings.ts';
 import { assertConfigurationRead } from './configuration.ts';
 import { documentTypesGate } from './documents.ts';

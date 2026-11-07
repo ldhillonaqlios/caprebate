@@ -21,12 +21,12 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import type { Actor } from '../src/authz.ts';
-import type { AuditLog } from '../src/audit.ts';
-import { Db, migrate } from '../src/db.ts';
-import { MIGRATIONS_DIR } from '../src/app.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import type { Actor } from '../src/core/authz.ts';
+import type { AuditLog } from '../src/core/audit.ts';
+import { Db, migrate } from '../src/core/db.ts';
+import { MIGRATIONS_DIR } from '../src/core/app.ts';
 import * as D from '../src/web/documents.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as F from '../src/web/claim-facts.ts';
@@ -37,7 +37,7 @@ import { acceptClientBytes, finishUpload, issuedJob } from '../src/web/uploads.t
 import {
   retainedTextKeyFor, deletionDueAt, FAIL_CLOSED_SETTINGS, receiptPolicyFor, DOC_SPECS,
   type IngestionSettings, type RawFileRecord,
-} from '../src/web/upload-handler-port.ts';
+} from '../src/shared/upload-handler-port.ts';
 import { pdfOf } from './document-fixtures.ts';
 import { fixedClock } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';

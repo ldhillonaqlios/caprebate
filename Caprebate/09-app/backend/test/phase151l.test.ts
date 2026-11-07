@@ -3,7 +3,7 @@
  *
  * `smoke HMLR_INSPIRE` downloads one council's INSPIRE file under the same five conditions as every other test lookup
  * (Word question 170, answered 25 September 2026), on the same log and through the same refusals in
- * src/connectors/test-lookups.ts. EVERY CONDITION IS TESTED BOTH WAYS for the boundary: refused where it must refuse,
+ * src/integrations/connectors/test-lookups.ts. EVERY CONDITION IS TESTED BOTH WAYS for the boundary: refused where it must refuse,
  * allowed where it must allow. Then a PASS; a NO on a file whose shape the reader refuses; and the shipped switch,
  * BOUNDARY_FETCHING_SWITCHED_ON, untouched.
  *
@@ -11,7 +11,7 @@
  * by fixtureTransport. The log is invented, in a temporary folder. The one real value is the public default point,
  * 70 Whitehall's published grid reference, and it is only ever looked for in an invented file.
  *
- * RED ON THE PRE-CHANGE CODE. These tests import only src/connectors/test-lookups.ts, http.ts, secrets.ts and the
+ * RED ON THE PRE-CHANGE CODE. These tests import only src/integrations/connectors/test-lookups.ts, http.ts, secrets.ts and the
  * boundary module, never the new file, so against the pre-change test-lookups.ts they fail on their assertions
  * (HMLR_INSPIRE is not a source there), not on an import.
  */
@@ -21,13 +21,13 @@ import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, writeFil
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import * as L from '../src/connectors/test-lookups.ts';
-import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
-import { emptySecrets } from '../src/secrets.ts';
-import { Db, migrate } from '../src/db.ts';
-import { MIGRATIONS_DIR } from '../src/app.ts';
-import { ingestRegisterRecord } from '../src/stubs/registers.ts';
-import * as B from '../src/registers/caprebate-boundary-import.ts';
+import * as L from '../src/integrations/connectors/test-lookups.ts';
+import { fixtureTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import { emptySecrets } from '../src/core/secrets.ts';
+import { Db, migrate } from '../src/core/db.ts';
+import { MIGRATIONS_DIR } from '../src/core/app.ts';
+import { ingestRegisterRecord } from '../src/integrations/register-ingest.ts';
+import * as B from '../src/integrations/registers/boundary-import.ts';
 
 const HERE = import.meta.dirname;
 const T = '2026-09-28T15:00:00.000Z';
@@ -294,7 +294,7 @@ describe('the switch that ships stays false', () => {
     switchOn(w);
     assert.equal((await smoke(w, [...WHO, ...IN_A, '--not-a-client'])).code, 0);
     assert.equal(B.BOUNDARY_FETCHING_SWITCHED_ON, false);
-    const src = readFileSync(join(HERE, '..', 'src', 'registers', 'caprebate-boundary-import.ts'), 'utf8');
+    const src = readFileSync(join(HERE, '..', 'src', 'integrations', 'registers', 'boundary-import.ts'), 'utf8');
     assert.match(src, /^export const BOUNDARY_FETCHING_SWITCHED_ON = false as const;$/m);
     await assert.rejects(B.DEFAULT_FETCHER({ kind: 'PARCEL_BOUNDARY', dataset: 'HMLR_INSPIRE_INDEX_POLYGON', locator: 'x' }));
   });

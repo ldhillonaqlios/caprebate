@@ -13,15 +13,15 @@
  */
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CB, clientVatFromWorks } from '../src/web/engine.ts';
+import { CB, clientVatFromWorks } from '../src/shared/engine.ts';
 import { assessLegal, assessLegalUnder } from '../src/web/pack-legal.ts';
 import { csvCell, returnEntries, returnEntriesCsv, RETURN_YEARS } from '../src/web/return-entries.ts';
-import { COMPANY_TYPE_FROM_REGISTER, entityFromCompanyType, searchCompanies } from '../src/connectors/company-search.ts';
-import { PLANNING_ROUTE, REGISTER_SWITCHES } from '../src/connectors/registers.ts';
+import { COMPANY_TYPE_FROM_REGISTER, entityFromCompanyType, searchCompanies } from '../src/integrations/connectors/company-search.ts';
+import { PLANNING_ROUTE, REGISTER_SWITCHES } from '../src/integrations/connectors/registers.ts';
 import { catalogue } from '../src/web/research.ts';
-import { fixtureTransport } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
-import { SOURCES } from '../src/registers/caprebate-source-register.ts';
+import { fixtureTransport } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
+import { SOURCES } from '../src/integrations/registers/source-register.ts';
 import type { Snapshot } from '../src/web/pack-approve.ts';
 
 const NOW = '2026-10-04T09:00:00.000Z';

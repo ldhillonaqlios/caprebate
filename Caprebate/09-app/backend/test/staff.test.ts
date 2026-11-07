@@ -23,16 +23,16 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { APP_ROLES, type AppRole } from '../src/roles.ts';
-import { BOOKING } from '../src/web/engine.ts';
+import { createApp } from '../src/core/server.ts';
+import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
+import { BOOKING } from '../src/shared/engine.ts';
 import {
   SLOT_MINUTES, distinctMoments, isBookable, publicSlots, slotsBetween,
   startOfLocalDay, startOfLocalWeek, addLocalDays,
 } from '../src/web/schedule.ts';
-import { localClock, localDate, localPartsOf, localWhen } from '../src/web/localtime.ts';
-import { formatPence, formatShownRange, toPence } from '../src/web/shown-range.ts';
-import { answerLabel } from '../src/web/backoffice.ts';
+import { localClock, localDate, localPartsOf, localWhen } from '../src/shared/localtime.ts';
+import { formatPence, formatShownRange, toPence } from '../src/shared/shown-range.ts';
+import { answerLabel } from '../src/core/backoffice.ts';
 
 const PASSWORD = 'a-very-long-development-password';
 const T = '2026-09-08T00:00:00.000Z';

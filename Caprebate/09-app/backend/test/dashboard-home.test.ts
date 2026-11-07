@@ -14,10 +14,10 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { isBookable, staffSlots } from '../src/web/schedule.ts';
 import { dashView } from '../src/web/staff-dashboard.ts';
-import { secretsFromValues } from '../src/secrets.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
 
 // Thursday 1 October 2026, 10:00 in the UK (09:00 UTC).
 const T = '2026-10-01T09:00:00.000Z';
@@ -62,7 +62,7 @@ async function req(who: Who, path: string, init: RequestInit = {}) {
 }
 const post = (who: Who, path: string, form: Record<string, string>) => req(who, path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(form).toString() });
 const section = (body: string, id: string): string => new RegExp(`<section class="dash-card" id="${id}"[\\s\\S]*?</section>`).exec(body)?.[0] ?? '';
-// UI tidy phase 4: the figures at a glance are solid boxes (src/web/look.ts kpiRow), label then figure.
+// UI tidy phase 4: the figures at a glance are solid boxes (src/core/look.ts kpiRow), label then figure.
 const stat = (body: string, label: string): string => new RegExp(`<span class="kpi-label">${label}</span><span class="kpi-value">([^<]+)</span>`).exec(body)?.[1] ?? 'missing';
 
 describe('Home as a dashboard', () => {

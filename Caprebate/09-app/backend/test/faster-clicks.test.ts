@@ -1,5 +1,5 @@
 /**
- * FASTER CLICKS, 3 October 2026 (src/db.ts withReadMemo, src/server.ts).
+ * FASTER CLICKS, 3 October 2026 (src/core/db.ts withReadMemo, src/core/server.ts).
  * Lakhbir: "The back end is really slow to react to clicks." Each query on the test website is a trip to the lasting
  * database, and Home asked 467 to 737 of them a click. While one click is answered, the same read is now asked once —
  * and never answered from memory after anything was written, inside a transaction, or with a file's bytes as a value.
@@ -11,9 +11,9 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { Db, withReadMemo, type Engine } from '../src/db.ts';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
+import { Db, withReadMemo, type Engine } from '../src/core/db.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
 import { startHarness } from './ui-tidy-harness.ts';
 
 const fresh = (): Db => {

@@ -23,12 +23,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { createServer, connect as netConnect, type Server } from 'node:net';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { can, type Actor } from '../src/authz.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { can, type Actor } from '../src/core/authz.ts';
 import * as M from '../src/web/messages.ts';
 import * as IE from '../src/web/inbound-email.ts';
-import { INBOUND_EMAIL, imapMailbox, parseEmail, readingMissing, type InboundEmail, type Mailbox } from '../src/stubs/email-inbound.ts';
+import { INBOUND_EMAIL, imapMailbox, parseEmail, readingMissing, type InboundEmail, type Mailbox } from '../src/integrations/email/email-inbound.ts';
 import { addNote } from '../src/web/engaged.ts';
 import { timelineFor } from '../src/web/timeline.ts';
 import { backendSwitchReadings } from '../src/web/case-stamp.ts';
@@ -450,7 +450,7 @@ describe('replies to contact@caprebate.co.uk', () => {
     const OFF = { ...INBOUND_EMAIL, enabled: false };
     // PHASE 142b: IONOS chosen on 22 September 2026, so the mailbox is read over IMAP.
     assert.equal(INBOUND_EMAIL.provider, 'IMAP');
-    assert.ok(backendSwitchReadings().some((s) => s.switch === 'INBOUND_EMAIL' && s.on === true && s.home === 'src/stubs/email-inbound.ts'));
+    assert.ok(backendSwitchReadings().some((s) => s.switch === 'INBOUND_EMAIL' && s.on === true && s.home === 'src/integrations/email/email-inbound.ts'));
     let touched = false;
     const spy: Mailbox = { since: async () => { touched = true; return []; }, one: async () => { touched = true; return null; } };
     const r = await IE.readMailbox(w.deps(), OFF, LOGIN, spy);

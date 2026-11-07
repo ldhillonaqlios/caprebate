@@ -26,27 +26,27 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, randomBytes } from 'node:crypto';
 
-import { fixtureTransport, RateLimiter, type Fixture } from '../src/connectors/http.ts';
-import * as C from '../src/connectors/registers.ts';
-import { secretsFromValues, forgetRegisteredSecretsForTest } from '../src/secrets.ts';
-import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/web/postcode-port.ts';
+import { fixtureTransport, RateLimiter, type Fixture } from '../src/integrations/connectors/http.ts';
+import * as C from '../src/integrations/connectors/registers.ts';
+import { secretsFromValues, forgetRegisteredSecretsForTest } from '../src/core/secrets.ts';
+import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-port.ts';
 import * as R from '../src/web/research.ts';
 import * as MR from '../src/web/match-review.ts';
 import * as TB from '../src/web/take-back.ts';
-import { REGISTRY } from '../src/web/engine.ts';
+import { REGISTRY } from '../src/shared/engine.ts';
 import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../src/web/signing.ts';
-import { seed } from '../src/seed.ts';
-import { createUser, newId } from '../src/users.ts';
-import { ingestRegisterRecord, removeRegisterField, removeRegisterRecord } from '../src/stubs/registers.ts';
-import { createApp } from '../src/server.ts';
-import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../src/connectors/claude.ts';
+import { seed } from '../src/core/seed.ts';
+import { createUser, newId } from '../src/core/users.ts';
+import { ingestRegisterRecord, removeRegisterField, removeRegisterRecord } from '../src/integrations/register-ingest.ts';
+import { createApp } from '../src/core/server.ts';
+import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../src/integrations/connectors/claude.ts';
 import { acceptClientBytes, finishUpload, issuedJob, type ReadingOutcome, type UploadDeps, type UploadReading } from '../src/web/uploads.ts';
 import * as D from '../src/web/documents.ts';
 import { discriminantsFor, earlyVouchesFrom, vouchesFor, vouchView } from '../src/web/document-reading.ts';
 import { earlyQuestions } from '../src/web/client-files-pages.ts';
 import { docxOf } from './document-fixtures.ts';
 import { testApp, actor } from './helpers.ts';
-import type { Actor } from '../src/authz.ts';
+import type { Actor } from '../src/core/authz.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const SRC = join(HERE, '..', 'src');
@@ -716,7 +716,7 @@ describe('2b · the question asked before the first reading, where the type is c
     assert.match(msgs, /earlyQuestions\(earlyQuestionsFor\(actor, business_id, types\)/);
     assert.match(msgs, /mailboxFor\(d\),\n\s*earlyVouchesFrom\(\(n\) => f\.get\(n\)\)\)/);
     assert.match(readFileSync(join(SRC, 'web', 'inbound-email.ts'), 'utf8'), /claim_id: f\.claim_id, early_vouch \}, part\.bytes\)/);
-    assert.doesNotMatch(readFileSync(join(SRC, 'web', 'router.ts'), 'utf8'), /vouch_|earlyQuestions/);
+    assert.doesNotMatch(readFileSync(join(SRC, 'core', 'router.ts'), 'utf8'), /vouch_|earlyQuestions/);
     w.close();
   });
 });
@@ -736,13 +736,13 @@ function sources(dir: string): string[] {
 }
 
 describe('3 · one door out, the tables that keep both facts, and the routes', () => {
-  test('S1 — THE ONE DOOR OUT: only src/stubs/registers.ts deletes or rewrites a register record', () => {
+  test('S1 — THE ONE DOOR OUT: only src/integrations/register-ingest.ts deletes or rewrites a register record', () => {
     const hits: string[] = [];
     for (const p of sources(SRC)) {
       // "UPDAT[E]" so the SQL linter does not read this pattern as a statement being built.
       if (/(DELETE\s+FROM|UPDAT[E])\s+register_records/i.test(readFileSync(p, 'utf8'))) hits.push(p.slice(SRC.length));
     }
-    assert.deepEqual(hits, ['/stubs/registers.ts']);
+    assert.deepEqual(hits, ['/integrations/register-ingest.ts']);
   });
 
   test('S2 — THE DOORS DO ONLY WHAT THEY ARE ASKED: another client’s record, or a field it does not carry, changes nothing', async () => {

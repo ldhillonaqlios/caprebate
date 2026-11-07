@@ -13,7 +13,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { packView, savePackExtra, savePackValue, setLineRemoved, parsePackDate, type PackDeps } from '../src/web/survey-pack.ts';
 import { packSheet } from '../src/web/pack-sheets.ts';
 import { sheetChapter } from '../src/web/survey-pack-pages.ts';
@@ -22,7 +22,7 @@ import { legalView } from '../src/web/pack-legal.ts';
 import { reportHtml, reportModel } from '../src/web/survey-report.ts';
 import { costModelTestSystem, indexReading, insuranceReading, prelimsReading, rateFlagReading, COST_MODEL_TEST_OPT_IN } from '../src/web/pack-cost-model.ts';
 import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../src/survey/caprebate-surveyor-crm.ts';
-import { raw } from '../src/web/html.ts';
+import { raw } from '../src/shared/html.ts';
 import { actor } from './helpers.ts';
 
 const CM = createRequire(import.meta.url)('../src/costing/caprebate-cost-model.cjs') as {

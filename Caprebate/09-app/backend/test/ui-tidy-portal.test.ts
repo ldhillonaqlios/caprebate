@@ -1,6 +1,6 @@
 /**
- * UI TIDY PHASE 16 — THE CLIENT PORTAL, 3 October 2026 (src/web/router.ts portalPage, src/web/portal-dashboard.ts,
- * src/web/navigation.ts portalShell).
+ * UI TIDY PHASE 16 — THE CLIENT PORTAL, 3 October 2026 (src/core/router.ts portalPage, src/web/portal-dashboard.ts,
+ * src/core/navigation.ts portalShell).
  * "Send us a message" four times becomes once, in the header, beside Book a call and a new Send us a document; the
  * questions and the documents asked for are drawn only when there is one (the "What we need from you" card already says
  * when nothing is); How to contact us moves to the end; the page's parts open out under Your claims.

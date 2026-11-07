@@ -8,10 +8,10 @@
  * person_refs, never names.
  */
 
-import { h, raw, page, type Safe } from './html.ts';
-import { localWhen } from './localtime.ts';
+import { h, raw, page, type Safe } from '../shared/index.ts';
+import { localWhen } from '../shared/index.ts';
 import { COMPLAINT_TARGET_NOTE } from './compliance-clock.ts';
-import { kpiRow } from './look.ts';
+import { kpiRow } from '../core/index.ts';
 import type { AmlView, CheckView } from './compliance-aml.ts';
 import { AUTHORITY_BASES, BENEFICIAL_OWNERSHIP, CLAIMANT_TYPES, ENTITY_STATUSES, OFFICES, OWNER_SOURCES, PSC_DECISIONS, RISK_LEVELS, RISK_RATING_NOTE, SANCTIONS_RESULTS } from './compliance-aml.ts';
 import type { ComplaintCount, ComplaintView, RegisterLine, RequestView, SearchResult } from './compliance-rights.ts';

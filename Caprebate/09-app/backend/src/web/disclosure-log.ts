@@ -29,10 +29,10 @@
  * NO PERSON'S NAME IS WRITTEN HERE, and the audit line carries codes and counts only.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, type Actor, type Obj } from '../authz.ts';
-import { localStamp } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, type Actor, type Obj } from '../core/index.ts';
+import { localStamp } from '../shared/index.ts';
 
 export type DisclosureDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;

@@ -1,7 +1,7 @@
 /**
  * PHASE 160d — NO LONG DASHES IN THE EMAILS, THE LETTER AND REPORTS GOING FORWARD, THE TEXT THE SYSTEM WRITES, AND THE
- * EXPORT'S COLUMN NAMES, 19 October 2026 (src/stubs/email.ts, src/web/letter.ts, src/web/claim-record.ts, src/web/leads.ts,
- * src/web/lists.ts, src/web/booking-invite.ts, src/web/templates.ts, migration 117; the report's versions are in
+ * EXPORT'S COLUMN NAMES, 19 October 2026 (src/integrations/email/email.ts, src/web/letter.ts, src/web/claim-record.ts, src/web/leads.ts,
+ * src/shared/lists.ts, src/web/booking-invite.ts, src/web/templates.ts, migration 117; the report's versions are in
  * test/survey-report.test.ts).
  */
 import { test, describe, before, after } from 'node:test';
@@ -9,10 +9,10 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { outboxTransport } from '../src/stubs/email.ts';
-import { plainDashLines } from '../src/web/plain-dashes.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { outboxTransport } from '../src/integrations/email/email.ts';
+import { plainDashLines } from '../src/shared/plain-dashes.ts';
 import { loadLetter, letterExists, LETTER_PATH, TEST_LETTER_PATH } from '../src/web/letter.ts';
 import { DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE } from '../src/web/claim-record.ts';
 
@@ -98,7 +98,7 @@ describe('Phase 160d: the text the system writes', () => {
 
 describe('Phase 160d: the export and the calendar file', () => {
   test('the claims and leads export’s column names hold no long dash', () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'lists.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'shared', 'lists.ts'), 'utf8');
     const cols = src.slice(src.indexOf('const CLAIM_COLUMNS'), src.indexOf('export function', src.indexOf('const LEAD_COLUMNS')));
     assert.match(cols, /'Estimated value: the figure shown'/);
     assert.doesNotMatch(cols, DASH);

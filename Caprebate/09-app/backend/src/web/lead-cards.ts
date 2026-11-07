@@ -5,7 +5,7 @@
  * underneath. A new lead can easily slip out of this whole pile, so it needs to be split up."
  *
  *   New — not contacted yet   status NEW, and the website enquiries nobody has answered. Always first, never folded.
- *                             A card is red once it has waited more than one working day (src/web/working-days.ts —
+ *                             A card is red once it has waited more than one working day (src/shared/working-days.ts —
  *                             the same function Home's New leads row reads, so the two never disagree).
  *   In progress               Contacted and Qualified. Red when the next step is late or there is none — Home's rule.
  *   Later                     Nurture. Red on the same rule as In progress.
@@ -21,18 +21,18 @@
  * details are the store's own `leadView` for that lead, and every button posts to a route that asks the server again.
  */
 
-import { can, type Actor } from '../authz.ts';
+import { can, type Actor } from '../core/index.ts';
 import { emailButton } from './free-email-pages.ts';
-import { h, raw, type Safe } from './html.ts';
-import { plainNeed } from './next-step.ts';
-import { ukDatesIn } from './localtime.ts';
-import type { LeadListRow } from './lists.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
+import { plainNeed } from '../shared/index.ts';
+import { ukDatesIn } from '../shared/index.ts';
+import type { LeadListRow } from '../shared/lists.ts';
 import type { LeadView } from './leads.ts';
 import type { EnquiryRow } from './enquiries.ts';
 import { PROPERTY_TYPES } from './enquiries.ts';
 import { SECTORS } from './leads.ts';
 import { dueReading } from './tasks.ts';
-import { isLateNewLead, waitedWords, workingDaysSince } from './working-days.ts';
+import { isLateNewLead, waitedWords, workingDaysSince } from '../shared/index.ts';
 
 export type LeadSectionKey = 'new' | 'going' | 'later' | 'closed';
 

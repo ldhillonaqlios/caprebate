@@ -2,7 +2,7 @@
  * THE BUILT-IN SIGNATURE FOR THE ENGAGEMENT LETTER — BUILT, AND SWITCHED OFF. Phase 146f, 22 September 2026.
  *
  * Lakhbir decided on 22 September 2026 that the letter is signed inside the application, not through a bought
- * service. It replaces the stub provider in src/stubs/signature.ts for the engagement letter. The surveyor's "commit
+ * service. It replaces the stub provider in src/integrations/signature.ts for the engagement letter. The surveyor's "commit
  * figures" is a different thing and is untouched.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -18,7 +18,7 @@
  *   own hash, and it goes into the audit chain as an ENGAGEMENT_SIGNED row. The chain is tamper-evident, so the record
  *   cannot be changed afterwards without the chain showing it.
  *
- * WHY THE NAME IS NOT IN THE AUDIT ROW ITSELF. src/audit.ts refuses any name, email or address in a log line, and that
+ * WHY THE NAME IS NOT IN THE AUDIT ROW ITSELF. src/core/audit.ts refuses any name, email or address in a log line, and that
  * is a data protection officer's determination, not a choice. The row carries the record's hash, which binds the
  * name, role, business, time, address and session exactly as well — change any of them and the hash no longer matches.
  *
@@ -43,17 +43,17 @@
  */
 
 import { createHash, randomBytes } from 'node:crypto';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import type { EmailTransport } from '../stubs/email.ts';
-import { authorise, type Actor } from '../authz.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import type { EmailTransport } from '../integrations/index.ts';
+import { authorise, type Actor } from '../core/index.ts';
 import { loadLetter } from './letter.ts';
 import { engagement, readBusiness } from './portal.ts';
-import { localWhen, ukDate } from './localtime.ts';
-import { formatPence } from './shown-range.ts';
+import { localWhen, ukDate } from '../shared/index.ts';
+import { formatPence } from '../shared/index.ts';
 import { claimantTypeForGate } from './crm.ts';
-import { buildPdf, flow, type PdfLine } from './pdf.ts';
-import { stageIndex } from './stages.ts';
+import { buildPdf, flow, type PdfLine } from '../shared/index.ts';
+import { stageIndex } from '../shared/index.ts';
 
 export type EngagementSigning = {
   readonly enabled: boolean;
@@ -261,7 +261,7 @@ export function recordHash(f: SignatureFields): string {
  * PHASE 157c — THE DRAWN SIGNATURE
  * ================================================================== */
 
-/** The strokes the signing pad sends (src/web/signature-pad-script.ts): numbers 0 to 1000, within these limits. */
+/** The strokes the signing pad sends (src/shared/signature-pad-script.ts): numbers 0 to 1000, within these limits. */
 export const INK_LIMITS = Object.freeze({ max_strokes: 60, max_points: 3000, min_points: 8, min_span: 60 });
 
 /**

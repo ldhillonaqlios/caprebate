@@ -15,10 +15,10 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { seed } from '../src/seed.ts';
-import type { AppRole } from '../src/roles.ts';
-import type { Actor } from '../src/authz.ts';
-import * as SE from '../src/web/search.ts';
+import { seed } from '../src/core/seed.ts';
+import type { AppRole } from '../src/core/roles.ts';
+import type { Actor } from '../src/core/authz.ts';
+import * as SE from '../src/core/search.ts';
 import * as R from '../src/web/compliance-rights.ts';
 import * as B from '../src/web/compliance-breach.ts';
 import * as SI from '../src/web/compliance-identity.ts';

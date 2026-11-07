@@ -15,11 +15,11 @@
  *
  * Nothing here opens signing: ENGAGEMENT_SIGNING decides that, and is off.
  */
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import type { EmailTransport } from '../stubs/email.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { localWhen } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import type { EmailTransport } from '../integrations/index.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { localWhen } from '../shared/index.ts';
 import { checkSignature, createSignLink, requiredSigners, ENGAGEMENT_SIGNING, SIGN_LINK_DAYS, type EngagementSigning } from './signing.ts';
 
 export type SendDeps = {

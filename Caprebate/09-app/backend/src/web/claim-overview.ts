@@ -18,28 +18,28 @@
  * Admin and Sales only: the pipeline is theirs (pipeline.read), and so are the facts. No script: the rail is links and
  * each source opens in place (<details>). Nothing here writes; every change is made by the forms below it, which audit.
  */
-import type { Db } from '../db.ts';
-import { can, type Actor } from '../authz.ts';
-import { h, raw, type Safe } from './html.ts';
+import type { Db } from '../core/index.ts';
+import { can, type Actor } from '../core/index.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
 import { gateOut, loadPipelineClaim, type Need, type PipelineClaim } from './pipeline.ts';
-import { CLOSED_STAGE, PROCEDURE_STAGES, claimStage, type ProcedureKey } from './stages.ts';
-import { plainNeed } from './next-step.ts';
+import { CLOSED_STAGE, PROCEDURE_STAGES, claimStage, type ProcedureKey } from '../shared/index.ts';
+import { plainNeed } from '../shared/index.ts';
 import { CAPTURE_SOURCES, FACTS, captured, latestFacts, type FactReading, type FactsPanel } from './claim-facts.ts';
 import { waitingForCheck, type ToCheck } from './client-checks.ts';
-import { plainDashText } from './plain-dashes.ts';
+import { plainDashText } from '../shared/index.ts';
 import { claimObjFor, loadClaimRow } from './crm.ts';
 import type { ClaimDocumentsPanel } from './documents.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
-import { localStamp, ukDate } from './localtime.ts';
+import { localStamp, ukDate } from '../shared/index.ts';
 import { clientAuditCount } from './audit-log.ts';
-import { SOURCES as REGISTER_SOURCES } from '../registers/caprebate-source-register.ts';
+import { SOURCES as REGISTER_SOURCES } from '../integrations/index.ts';
 
 /* ================================================================== *
  * 1 · THE STAGES, IN PLAIN WORDS
  * ================================================================== */
 
 /** What each stage is for and who does it, for someone new to capital allowances. The procedure's own words are in
- *  src/web/stages.ts; these say the same thing simply. */
+ *  src/shared/stages.ts; these say the same thing simply. */
 export const STAGE_WORDS: Readonly<Record<ProcedureKey | 'CLOSED', { readonly plain: string; readonly who: string }>> = Object.freeze({
   ENQUIRY: { plain: 'Someone has asked us to look at their building. We check it is a healthcare building in the UK, and that they own it or act for the owner.', who: 'Sales' },
   ASSESSMENT: { plain: 'The client answers our questions online and sees an early figure. We check there is something worth claiming, and that they want to go ahead.', who: 'The client, then Sales' },

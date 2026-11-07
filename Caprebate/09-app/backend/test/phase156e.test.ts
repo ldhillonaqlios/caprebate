@@ -17,12 +17,12 @@ import { mkdtempSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
-import { TEST_WEBSITE_LOOKUPS } from '../src/connectors/registers.ts';
-import { CLAUDE_SWITCHES } from '../src/connectors/claude.ts';
-import { secretsFromValues, forgetRegisteredSecretsForTest } from '../src/secrets.ts';
-import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
-import * as L from '../src/connectors/test-lookups.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
+import { TEST_WEBSITE_LOOKUPS } from '../src/integrations/connectors/registers.ts';
+import { CLAUDE_SWITCHES } from '../src/integrations/connectors/claude.ts';
+import { secretsFromValues, forgetRegisteredSecretsForTest } from '../src/core/secrets.ts';
+import { fixtureTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import * as L from '../src/integrations/connectors/test-lookups.ts';
 import { CONNECTIONS, RETIRED_CALLS, connectionsView, listsToImport, ONE_REQUEST_BYTES } from '../src/web/connections.ts';
 import { REGISTER_IMPORT_JS } from '../src/web/register-import-script.ts';
 import { FILE_SOURCES } from '../src/web/register-files.ts';
@@ -37,7 +37,7 @@ describe('the records of what Lakhbir said', () => {
   test('the Claude API transfer is approved for testing, with who and when beside it; both reading switches still ship off', () => {
     assert.equal(CALL_POLICIES['CLAUDE_DOCUMENTS']?.international_transfer_approved, true);
     assert.deepEqual(CLAUDE_SWITCHES, { DOCUMENT_READING: false, SCANNED_PAGES: false });
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'connectors', 'sources.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'integrations', 'connectors', 'sources.ts'), 'utf8');
     assert.match(src, /Approved FOR TESTING on 5 October 2026 - Sadique Maskeen/);
     assert.match(src, /"Yes, for testing"/);
     // The key never reaches the test website: it is not one of the names the website reads.

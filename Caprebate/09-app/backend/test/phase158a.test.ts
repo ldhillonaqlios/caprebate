@@ -16,12 +16,12 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { F4_TEXT } from '../src/web/funnel4.ts';
-import { RateLimiter, type Transport } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
-import { PAID_CONNECTORS } from '../src/connectors/paid-registers.ts';
-import * as C from '../src/connectors/registers.ts';
+import { RateLimiter, type Transport } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
+import { PAID_CONNECTORS } from '../src/integrations/connectors/paid-registers.ts';
+import * as C from '../src/integrations/connectors/registers.ts';
 import { testApp } from './helpers.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));

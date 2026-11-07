@@ -28,23 +28,23 @@
  * words. A message is never edited and never deleted (triggers in migration 037).
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { localStamp } from './localtime.ts';
-import { propertyIn } from './components.ts';
-import { workingDaysSince, LATE_AFTER_WORKING_DAYS } from './working-days.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { localStamp } from '../shared/index.ts';
+import { propertyIn } from '../shared/index.ts';
+import { workingDaysSince, LATE_AFTER_WORKING_DAYS } from '../shared/index.ts';
 import { documentObj } from './documents.ts';
-import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type EmailSending, type MailWhere, type SmtpLogin } from '../stubs/email-provider.ts';
-import { outboxTransport } from '../stubs/email.ts';
+import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type EmailSending, type MailWhere, type SmtpLogin } from '../integrations/index.ts';
+import { outboxTransport } from '../integrations/index.ts';
 import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from './automation.ts';
 
 export type MessageDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
   /** PHASE 142a: the EMAIL_SENDING switch and the provider's login, for the new-message alert. Absent is the shipped switch, off. */
   sending?: EmailSending; login?: SmtpLogin | null;
-  /** 2 Oct 2026: where the app runs (src/connectors/place.ts). Absent with the key file's login: a real connection. */
+  /** 2 Oct 2026: where the app runs (src/integrations/connectors/place.ts). Absent with the key file's login: a real connection. */
   where?: MailWhere;
   /** Where the site is, for the link in an alert. Absent: CAPREBATE_PUBLIC_ORIGIN, and with neither the email carries no link. */
   origin?: string;
@@ -470,7 +470,7 @@ export type WaitingMessage = {
 /**
  * EVERY COMPANY WHOSE CLIENT HAS WRITTEN AND WE HAVE NOT ANSWERED, oldest first. "Answered" is a message from us after
  * theirs, on the thread. Late once it has waited more than one working day — the same rule, and the same bank holidays,
- * as a new lead (src/web/working-days.ts). Asked of `client_message.read` per company: a login that cannot read a thread
+ * as a new lead (src/shared/working-days.ts). Asked of `client_message.read` per company: a login that cannot read a thread
  * is not told it has a message waiting.
  */
 export function clientMessagesWaiting(db: Db, actor: Actor, nowIso: string): WaitingMessage[] {

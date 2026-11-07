@@ -40,33 +40,33 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Db } from '../db.ts';
-import { _canonical } from '../audit.ts';
-import { DPO_ROLE_SWITCH } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { ctaSwitchReadings, registryGate } from './engine.ts';
+import type { Db } from '../core/index.ts';
+import { _canonical } from '../core/audit.ts';
+import { DPO_ROLE_SWITCH } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { ctaSwitchReadings, registryGate } from '../shared/index.ts';
 import { DISCLOSURE_LOG } from './disclosure-log.ts';
 import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from './introducers.ts';
 import { CONVEYANCING_STRIP } from './conveyancing-strip.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
-import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from './originals.ts';
+import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../shared/index.ts';
 import { ENQUIRY_RETENTION } from './enquiry-retention.ts';
 import { MESSAGE_RETENTION } from './message-retention.ts';
-import { EMAIL_SENDING } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING } from '../integrations/index.ts';
 import { ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST } from './signing.ts';
-import { INBOUND_EMAIL } from '../stubs/email-inbound.ts';
-import { IDENTITY_CHECK } from '../connectors/identity-check.ts';
-import { POSTCODE_CHECK } from '../connectors/postcode-check.ts';
-import { COMPANY_SEARCH, COMPANY_TYPE_FROM_REGISTER } from '../connectors/company-search.ts';
-import { ADDRESS_LOOKUP } from '../connectors/address-lookup.ts';
+import { INBOUND_EMAIL } from '../integrations/index.ts';
+import { IDENTITY_CHECK } from '../integrations/index.ts';
+import { POSTCODE_CHECK } from '../integrations/index.ts';
+import { COMPANY_SEARCH, COMPANY_TYPE_FROM_REGISTER } from '../integrations/index.ts';
+import { ADDRESS_LOOKUP } from '../integrations/index.ts';
 import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
 import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
 import { FUNNEL_SWITCHES } from './funnel-session.ts';
-import { HOMEDATA_DIMENSIONS } from '../connectors/homedata.ts';
-import { REGISTER_SWITCHES } from '../connectors/registers.ts';
-import { CLAUDE_SWITCHES } from '../connectors/claude.ts';
+import { HOMEDATA_DIMENSIONS } from '../integrations/index.ts';
+import { REGISTER_SWITCHES } from '../integrations/index.ts';
+import { CLAUDE_SWITCHES } from '../integrations/connectors/claude.ts';
 import { PICK_SWITCHES } from './match-review.ts';
 
 function sha256(v: unknown): string {
@@ -138,7 +138,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  * EVERY BACK-END SWITCH, BY NAME, WITH ITS POSITION AS THIS BUILD SHIPS IT.
  *
  *   DISCLOSURE_LOG               the per-disclosure log                          src/web/disclosure-log.ts
- *   DPO_ROLE_SWITCH              a data protection officer role                  src/authz.ts
+ *   DPO_ROLE_SWITCH              a data protection officer role                  src/core/authz.ts
  *   FEE_CLAWBACK                 clause 13 — the fee follows a reduced claim     src/web/claim-record.ts
  *   REFERRAL_FORM                the public referral form                        src/web/introducers.ts
  *   CLIENT_SHARE_GIVE            a client giving the share-progress answer       src/web/introducers.ts
@@ -146,21 +146,21 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   FEE_CONTROLS.above_benefit   the fee above the benefit                       src/web/fee-controls.ts
  *   FEE_CONTROLS.break_and_abort the break and abort fees                        src/web/fee-controls.ts
  *   MANDATORY_DOCUMENTS          the documents a gate requires                   src/web/mandatory-documents.ts
- *   KEEP_ORIGINALS               keeping the file a client sent (Phase 140)      src/web/originals.ts
- *   KEEP_ORIGINALS_TEST_WEBSITE  the same, on the test website only (153c)      src/web/originals.ts, passed by api/index.mjs
- *   EMAIL_SENDING                sending email from contact@ (Phase 141)       src/stubs/email-provider.ts
- *   INBOUND_EMAIL                reading replies to contact@ (Phase 142)       src/stubs/email-inbound.ts
- *   IDENTITY_CHECK               the online identity check (Phase 151)          src/connectors/identity-check.ts
- *   POSTCODE_CHECK               the free postcode check (Phase 151)            src/connectors/postcode-check.ts
- *   ADDRESS_LOOKUP               "Find my address", Homedata since 156f (6 Oct)  src/connectors/address-lookup.ts
- *   COMPANY_TYPE_FROM_REGISTER   the company type from Companies House (153b)   src/connectors/company-search.ts
+ *   KEEP_ORIGINALS               keeping the file a client sent (Phase 140)      src/shared/originals.ts
+ *   KEEP_ORIGINALS_TEST_WEBSITE  the same, on the test website only (153c)      src/shared/originals.ts, passed by api/index.mjs
+ *   EMAIL_SENDING                sending email from contact@ (Phase 141)       src/integrations/email/email-provider.ts
+ *   INBOUND_EMAIL                reading replies to contact@ (Phase 142)       src/integrations/email/email-inbound.ts
+ *   IDENTITY_CHECK               the online identity check (Phase 151)          src/integrations/connectors/identity-check.ts
+ *   POSTCODE_CHECK               the free postcode check (Phase 151)            src/integrations/connectors/postcode-check.ts
+ *   ADDRESS_LOOKUP               "Find my address", Homedata since 156f (6 Oct)  src/integrations/connectors/address-lookup.ts
+ *   COMPANY_TYPE_FROM_REGISTER   the company type from Companies House (153b)   src/integrations/connectors/company-search.ts
  *   ENGAGEMENT_SIGNING           the built-in letter signature (Phase 146f)      src/web/signing.ts
  *   ENGAGEMENT_SIGNING_TEST      signing on for testing, test copy only (6 Oct)  src/web/signing.ts
  *   MESSAGE_RETENTION            the message clean-up job (Phase 142a)           src/web/message-retention.ts
  *   ENQUIRY_RETENTION            the closed-enquiry clean-up job (Phase 153c)    src/web/enquiry-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/web/defence-pack.ts
  *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/web/allowance-profit-comparison.ts
- *   HOMEDATA_DIMENSIONS          Homedata's floor-area estimate (Phase 153e)     src/connectors/homedata.ts
+ *   HOMEDATA_DIMENSIONS          Homedata's floor-area estimate (Phase 153e)     src/integrations/connectors/homedata.ts
  *   FUNNEL_SWITCHES.breakeven_is_insufficient_profit
  *                                break-even read as insufficient profit          src/web/funnel-session.ts
  *
@@ -179,7 +179,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
 export function backendSwitchReadings(): readonly BackendSwitchReading[] {
   return [
     { switch: 'DISCLOSURE_LOG', on: DISCLOSURE_LOG.enabled, home: 'src/web/disclosure-log.ts' },
-    { switch: 'DPO_ROLE_SWITCH', on: DPO_ROLE_SWITCH.enabled, home: 'src/authz.ts' },
+    { switch: 'DPO_ROLE_SWITCH', on: DPO_ROLE_SWITCH.enabled, home: 'src/core/authz.ts' },
     { switch: 'FEE_CLAWBACK', on: FEE_CLAWBACK.enabled, home: 'src/web/claim-record.ts' },
     { switch: 'REFERRAL_FORM', on: REFERRAL_FORM.enabled, home: 'src/web/introducers.ts' },
     { switch: 'CLIENT_SHARE_GIVE', on: CLIENT_SHARE_GIVE.enabled, home: 'src/web/introducers.ts' },
@@ -188,22 +188,22 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'FEE_CONTROLS.break_and_abort', on: FEE_CONTROLS.break_and_abort.enabled, home: 'src/web/fee-controls.ts' },
     { switch: 'FEE_CONTROLS.uplifts', on: FEE_CONTROLS.uplifts?.enabled === true, home: 'src/web/fee-controls.ts' }, // Phase 157b, Word question 235
     { switch: 'MANDATORY_DOCUMENTS', on: MANDATORY_DOCUMENTS.enabled, home: 'src/web/mandatory-documents.ts' },
-    { switch: 'KEEP_ORIGINALS', on: KEEP_ORIGINALS.enabled, home: 'src/web/originals.ts' },
-    { switch: 'KEEP_ORIGINALS_TEST_WEBSITE', on: KEEP_ORIGINALS_TEST_WEBSITE.enabled, home: 'src/web/originals.ts (the test website only, through api/index.mjs)' },
-    { switch: 'EMAIL_SENDING', on: EMAIL_SENDING.enabled, home: 'src/stubs/email-provider.ts' },
-    { switch: 'INBOUND_EMAIL', on: INBOUND_EMAIL.enabled, home: 'src/stubs/email-inbound.ts' },
-    { switch: 'IDENTITY_CHECK', on: IDENTITY_CHECK.enabled, home: 'src/connectors/identity-check.ts' },
-    { switch: 'POSTCODE_CHECK', on: POSTCODE_CHECK.enabled, home: 'src/connectors/postcode-check.ts' },
-    { switch: 'COMPANY_SEARCH', on: COMPANY_SEARCH.enabled, home: 'src/connectors/company-search.ts' },
-    { switch: 'COMPANY_TYPE_FROM_REGISTER', on: COMPANY_TYPE_FROM_REGISTER.enabled, home: 'src/connectors/company-search.ts' },
-    { switch: 'ADDRESS_LOOKUP', on: ADDRESS_LOOKUP.enabled, home: 'src/connectors/address-lookup.ts' },
+    { switch: 'KEEP_ORIGINALS', on: KEEP_ORIGINALS.enabled, home: 'src/shared/originals.ts' },
+    { switch: 'KEEP_ORIGINALS_TEST_WEBSITE', on: KEEP_ORIGINALS_TEST_WEBSITE.enabled, home: 'src/shared/originals.ts (the test website only, through api/index.mjs)' },
+    { switch: 'EMAIL_SENDING', on: EMAIL_SENDING.enabled, home: 'src/integrations/email/email-provider.ts' },
+    { switch: 'INBOUND_EMAIL', on: INBOUND_EMAIL.enabled, home: 'src/integrations/email/email-inbound.ts' },
+    { switch: 'IDENTITY_CHECK', on: IDENTITY_CHECK.enabled, home: 'src/integrations/connectors/identity-check.ts' },
+    { switch: 'POSTCODE_CHECK', on: POSTCODE_CHECK.enabled, home: 'src/integrations/connectors/postcode-check.ts' },
+    { switch: 'COMPANY_SEARCH', on: COMPANY_SEARCH.enabled, home: 'src/integrations/connectors/company-search.ts' },
+    { switch: 'COMPANY_TYPE_FROM_REGISTER', on: COMPANY_TYPE_FROM_REGISTER.enabled, home: 'src/integrations/connectors/company-search.ts' },
+    { switch: 'ADDRESS_LOOKUP', on: ADDRESS_LOOKUP.enabled, home: 'src/integrations/connectors/address-lookup.ts' },
     { switch: 'ENGAGEMENT_SIGNING', on: ENGAGEMENT_SIGNING.enabled, home: 'src/web/signing.ts' },
     { switch: 'ENGAGEMENT_SIGNING_TEST', on: ENGAGEMENT_SIGNING_TEST.enabled, home: 'src/web/signing.ts' }, // 6 Oct 2026: the test copy only, test website
     { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/web/message-retention.ts' },
     { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/web/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/web/defence-pack.ts' },
     { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/web/allowance-profit-comparison.ts' },
-    { switch: 'HOMEDATA_DIMENSIONS', on: HOMEDATA_DIMENSIONS.enabled, home: 'src/connectors/homedata.ts' },
+    { switch: 'HOMEDATA_DIMENSIONS', on: HOMEDATA_DIMENSIONS.enabled, home: 'src/integrations/connectors/homedata.ts' },
     { switch: 'FUNNEL_SWITCHES.breakeven_is_insufficient_profit', on: FUNNEL_SWITCHES.breakeven_is_insufficient_profit, home: 'src/web/funnel-session.ts' },
   ];
 }
@@ -214,7 +214,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
  *
  * They are frozen maps of booleans, not `enabled:` flags, so the grep test in test/phase132-records.test.ts cannot see
  * them — the same reason FUNNEL_SWITCHES is stamped by its own key. Every key of REGISTER_SWITCHES
- * (src/connectors/registers.ts) and of CLAUDE_SWITCHES (src/connectors/claude.ts) is read here, so a lookup added to
+ * (src/integrations/connectors/registers.ts) and of CLAUDE_SWITCHES (src/integrations/connectors/claude.ts) is read here, so a lookup added to
  * either map is stamped the day it is added, and test/phase146c.test.ts counts them against the maps.
  *
  * A switch says whether a connector is turned on at all. It is not a gate: the free gate is stamped beside it as
@@ -223,10 +223,10 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
 export function connectorSwitchReadings(): readonly BackendSwitchReading[] {
   return [
     ...Object.keys(REGISTER_SWITCHES).sort().map((k) => ({
-      switch: `REGISTER_SWITCHES.${k}`, on: REGISTER_SWITCHES[k] === true, home: 'src/connectors/registers.ts',
+      switch: `REGISTER_SWITCHES.${k}`, on: REGISTER_SWITCHES[k] === true, home: 'src/integrations/connectors/registers.ts',
     })),
     ...(Object.keys(CLAUDE_SWITCHES) as (keyof typeof CLAUDE_SWITCHES)[]).sort().map((k) => ({
-      switch: `CLAUDE_SWITCHES.${k}`, on: CLAUDE_SWITCHES[k] === true, home: 'src/connectors/claude.ts',
+      switch: `CLAUDE_SWITCHES.${k}`, on: CLAUDE_SWITCHES[k] === true, home: 'src/integrations/connectors/claude.ts',
     })),
     /* PHASE 146h: a person's pick for a close match. Its own map, because what it turns on is not a connector but a
        screen that shows one client's staff a handful of other buildings' register entries — a different decision

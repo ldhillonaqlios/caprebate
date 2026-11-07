@@ -9,7 +9,7 @@
  * (NDR) purposes only" and says "An open government licence does not apply" (read 4 October 2026; the source register's
  * VOA_RATING_LIST licence). A capital allowances claim is not a rating purpose, so it is recorded and not imported.
  *
- * Each is IMPORTED ON A COMMAND (`node src/cli.ts import-register <source> <file> --by <admin>`), never fetched per
+ * Each is IMPORTED ON A COMMAND (`node src/core/cli.ts import-register <source> <file> --by <admin>`), never fetched per
  * client: a person downloads the file from the publisher and the import replaces that source's rows whole, in one
  * transaction. A lookup then reads this table — NOTHING IS SENT OUTSIDE, as for the ONS postcode table.
  *
@@ -23,12 +23,12 @@
  * (the source register's SUPPLIER_DOCS, read 4 October 2026). A row we cannot read (no reference, no postcode we can
  * read) is skipped and counted, never guessed.
  *
- * THE SWITCHES ARE NOT HERE. Importing a file switches nothing on: each lookup (src/connectors/register-files.ts) is
+ * THE SWITCHES ARE NOT HERE. Importing a file switches nothing on: each lookup (src/integrations/connectors/register-files.ts) is
  * behind its own REGISTER_SWITCHES entry, OFF, and the research panel's free gate, shut.
  */
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { postcodeKey } from '../connectors/matching.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { postcodeKey } from '../integrations/index.ts';
 
 export type FileSourceId = 'CIW' | 'CARE_INSPECTORATE';
 

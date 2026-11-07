@@ -21,19 +21,19 @@
  * Every number on these pages says where it came from: the evidence, our draft, or the surveyor's own name. Every form
  * carries the pack's counter (`seq`), so a change from an out-of-date page is refused, never applied blind.
  */
-import { PRICE_PAID_ATTRIBUTION } from '../connectors/price-paid.ts';
+import { PRICE_PAID_ATTRIBUTION } from '../integrations/index.ts';
 import { VAT_POSITION_WORDS } from './pack-vat.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import * as P from './survey-pack.ts';
 import * as L from './pack-legal.ts';
 import * as A from './pack-approve.ts';
 import { sendPanel } from './report-pages.ts';
 import { inspectionChapter, lineEvidence } from './evidence-pages.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
-import { findingSeen } from './finding-source.ts';
+import { findingSeen } from '../shared/index.ts';
 import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from './site-plan.ts';
 import { percentWords, poundsWords, quantityWords, WORKS_FIELDS, WORKS_WORDS, WORKS_PART_FIELDS, WORKS_PART_WORDS, type Source, type Valued, type WorksField, type WorksPartField } from './pack-sums.ts';
 
@@ -49,7 +49,7 @@ export { CHAPTERS } from './pack-chapters.ts';
 import { CHAPTERS } from './pack-chapters.ts';
 import * as S from './surveyor.ts';
 import { jobSite, setJobMenu } from './surveyor-pages.ts';
-import { lateBadge, siteOf } from './look.ts';
+import { lateBadge, siteOf } from '../core/index.ts';
 import { PAYER_CLASSES } from './claim-facts.ts';
 import { deskFirstReading } from './desk-first.ts';
 import { roomsFor } from './rooms.ts';
@@ -534,7 +534,7 @@ export function grantsChapter(v: P.PackView): Safe {
 `;
 }
 
-/** PHASE 159i: what the money readings added to or took off the purchase (src/web/money-readings.ts), in words. */
+/** PHASE 159i: what the money readings added to or took off the purchase (src/shared/money-readings.ts), in words. */
 function moneySection(v: P.PackView): Safe {
   const m = v.money;
   if (m.words.length === 0) return raw('');

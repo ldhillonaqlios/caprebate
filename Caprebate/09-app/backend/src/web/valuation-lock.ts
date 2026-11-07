@@ -21,8 +21,8 @@
  * `voidLine` is the moment of the latest such reopen. A sign-off, an acceptance or an issued deliverable from before it
  * no longer counts.
  */
-import type { Db } from '../db.ts';
-import { PROCEDURE_KEYS, anyStageLabel, claimStage } from './stages.ts';
+import type { Db } from '../core/index.ts';
+import { PROCEDURE_KEYS, anyStageLabel, claimStage } from '../shared/index.ts';
 
 /** Stages at or after which the figures are fixed, in the procedure's order. */
 const SIGNOFF_INDEX = PROCEDURE_KEYS.indexOf('TAX_ADVISER_SIGNOFF');

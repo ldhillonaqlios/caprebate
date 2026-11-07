@@ -23,12 +23,12 @@
 
 import { tellAndMoveOn } from './tell-and-move.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { card, highlights, moreDetail, recordLayout, recordTabs, sidePanel, why, type QuickAction } from './components.ts';
-import { localStamp } from './localtime.ts';
-import { RANGE_QUALIFIER } from './shown-range.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { card, highlights, moreDetail, recordLayout, recordTabs, sidePanel, why, type QuickAction } from '../shared/index.ts';
+import { localStamp } from '../shared/index.ts';
+import { RANGE_QUALIFIER } from '../shared/index.ts';
 import * as E from './engaged.ts';
 import * as R from './research.ts';
 import { sendEngagementLetter, signedCopy } from './engagement-send.ts';
@@ -38,7 +38,7 @@ import { STEP_ANCHOR } from './approvals-pages.ts';
 import { clientList, clientListPage, type ClientSort } from './client-list.ts';
 import * as MR from './match-review.ts';
 import { pickPage } from './match-review-pages.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

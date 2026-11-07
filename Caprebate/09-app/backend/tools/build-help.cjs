@@ -3,11 +3,11 @@
  * PHASE 133c — THE HELP PAGES ARE THE USER GUIDE'S PART 3, COPIED IN, NEVER RETYPED.
  *
  * Reads 09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md, cuts Part 3 ("Training, one screen at a time") into its training
- * sections, and writes src/web/help-content.ts: one constant per section with the screen codes it covers and its
+ * sections, and writes src/core/help-content.ts: one constant per section with the screen codes it covers and its
  * markdown exactly as the guide has it. The application serves Help from that constant, the way it serves the
  * stylesheet and the logo, so there is still no route that reads a file.
  *
- *   node tools/build-help.cjs           write src/web/help-content.ts
+ *   node tools/build-help.cjs           write src/core/help-content.ts
  *   node tools/build-help.cjs --check   exit 1 if it is stale against the guide (test/phase133c.test.ts runs this)
  *
  * Change the guide, then run this. Never edit help-content.ts by hand.
@@ -17,7 +17,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const GUIDE = path.join(__dirname, '..', '..', 'CAPREBATE-ADMIN-AND-USER-GUIDE.md');
-const OUT = path.join(__dirname, '..', 'src', 'web', 'help-content.ts');
+const OUT = path.join(__dirname, '..', 'src', 'core', 'help-content.ts');
 
 function codesOf(heading) {
   const out = [];
@@ -61,7 +61,7 @@ export const HELP_SECTIONS: readonly HelpSection[] = ${JSON.stringify(sections, 
 const out = build();
 if (process.argv.includes('--check')) {
   const have = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
-  if (have !== out) { console.error('src/web/help-content.ts is stale against the user guide: run node tools/build-help.cjs'); process.exit(1); }
+  if (have !== out) { console.error('src/core/help-content.ts is stale against the user guide: run node tools/build-help.cjs'); process.exit(1); }
   console.log('help-content.ts matches the user guide');
 } else {
   fs.writeFileSync(OUT, out);

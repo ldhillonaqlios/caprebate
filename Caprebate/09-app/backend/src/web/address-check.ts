@@ -2,7 +2,7 @@
  * THE POSTCODE CHECK AT THE ADDRESS QUESTION, AND "ANSWER IT MYSELF". Phase 151b, 25 September 2026.
  *
  * 1 · THE POSTCODE CHECK, WIRED INTO THE BACK END'S OWN ASSESSMENT AS A SERVER-SIDE STEP. Phase 151 built the check
- *     (src/connectors/postcode-check.ts: Postcodes.io, the postcode only, switched off behind the free-tier gate and
+ *     (src/integrations/connectors/postcode-check.ts: Postcodes.io, the postcode only, switched off behind the free-tier gate and
  *     until the privacy notice names the service). This runs it when a client saves the property screen (Q2), on this
  *     server, never in the page: THE SITE FILE STILL MAKES NO NETWORK CALL, and neither does the form the back end
  *     draws. The postcode is found in the address the client typed; nothing else is sent.
@@ -21,11 +21,11 @@
  *     Not chosen, or never offered, changes nothing (N4: an absent choice is not a refusal).
  */
 
-import type { Db } from '../db.ts';
-import type { App } from '../app.ts';
-import { checkPostcode, normalisePostcode, POSTCODE_CHECK, type PostcodeCheck, type PostcodeCheckConfig } from '../connectors/postcode-check.ts';
-import { gateStatus, type GateStatus } from '../connectors/registers.ts';
-import { registryGate } from './engine.ts';
+import type { Db } from '../core/index.ts';
+import type { App } from '../core/app.ts';
+import { checkPostcode, normalisePostcode, POSTCODE_CHECK, type PostcodeCheck, type PostcodeCheckConfig } from '../integrations/index.ts';
+import { gateStatus, type GateStatus } from '../integrations/index.ts';
+import { registryGate } from '../shared/index.ts';
 
 /** The free-tier gate, as the research panel reads it. */
 export function freeGate(): GateStatus {

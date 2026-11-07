@@ -27,15 +27,15 @@
  * the database refuses to record an insurer as told on silence.
  */
 
-import type { Db } from '../db.ts';
-import type { Actor } from '../authz.ts';
+import type { Db } from '../core/index.ts';
+import type { Actor } from '../core/index.ts';
 import { carriesBankDetails } from './templates.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, holdsForEntry, linksFor, momentField, nextRef, NotFoundAsRefusal,
   record, requiredText, settingReading, textField, TWO_PERSON_LIMITATION, ukDay, vocabField, words,
   type Check, type ComplianceDeps, type Fields, type HoldRow, type LinkLine, type Vocab, type WriteResult,
 } from './compliance.ts';
-import { localWhen } from './localtime.ts';
+import { localWhen } from '../shared/index.ts';
 
 class Refusal extends Error {}
 

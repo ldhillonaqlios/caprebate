@@ -16,12 +16,12 @@
  * figure, no fact and no value is shown — only words, dates and counts.
  */
 
-import type { Db } from '../db.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, type Safe } from './html.ts';
+import type { Db } from '../core/index.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
 import { clientProgress } from './tell-and-move.ts';
-import { STAGES } from './stages.ts';
-import { localClock, localDate, localPartsOf, ukDate, ukDatesIn, WEEKDAY_NAMES } from './localtime.ts';
+import { STAGES } from '../shared/index.ts';
+import { localClock, localDate, localPartsOf, ukDate, ukDatesIn, WEEKDAY_NAMES } from '../shared/index.ts';
 import { unreadCount } from './messages.ts';
 import type { ClientStep } from './approvals.ts';
 import type { ClientDeliverable } from './claim-record.ts';

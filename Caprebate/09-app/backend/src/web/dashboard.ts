@@ -30,12 +30,12 @@
  * in the tile's `apart` list, and never a zero added into a sum or a ratio.
  */
 
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor, type Obj } from '../authz.ts';
-import { EXITS, PROCEDURE_STAGES, anyStageLabel, claimStage, procedureIndex } from './stages.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor, type Obj } from '../core/index.ts';
+import { EXITS, PROCEDURE_STAGES, anyStageLabel, claimStage, procedureIndex } from '../shared/index.ts';
 import { dueReading, isTerminalStage, nextActionBreakers } from './tasks.ts';
-import { localDate } from './localtime.ts';
-import { formatPence } from './shown-range.ts';
+import { localDate } from '../shared/index.ts';
+import { formatPence } from '../shared/index.ts';
 import { financeDashboard, type FinanceDashboard } from './invoices.ts';
 import {
   DELIVERABLES, QUOTE_GAP_REVIEW_PCT, VARIANCE_CATEGORIES, deliverableIssued, latestSignOff, varianceOf,

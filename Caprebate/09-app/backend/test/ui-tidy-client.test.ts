@@ -7,11 +7,11 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import * as C from '../src/web/crm.ts';
-import { dueReading } from '../src/web/localtime.ts';
-import { propertyIn } from '../src/web/components.ts';
-import { stageGroupOf } from '../src/web/look.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
-import { plainDashText } from '../src/web/plain-dashes.ts';
+import { dueReading } from '../src/shared/localtime.ts';
+import { propertyIn } from '../src/shared/components.ts';
+import { stageGroupOf } from '../src/core/look.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
+import { plainDashText } from '../src/shared/plain-dashes.ts';
 
 let H: Harness;
 let dun = '';

@@ -45,7 +45,7 @@ import {
   segment, classifyHeading, sanitise,
   type DocType, type Segment,
 } from '../src/documents/caprebate-document-pipeline.ts';
-import { NameExclusionError } from '../src/registers/caprebate-name-exclusion.ts';
+import { NameExclusionError } from '../src/integrations/registers/name-exclusion.ts';
 import {
   CLIENT_DOC_RECEIPT_POLICY, NEVER_RETAINED_ON_RECEIPT, ALWAYS_NATURAL_PERSON_ROLES,
   VERBATIM_FIELDS, FAIL_CLOSED_SETTINGS, STORAGE_POSITION,

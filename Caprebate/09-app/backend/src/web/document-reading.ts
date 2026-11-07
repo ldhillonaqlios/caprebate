@@ -61,7 +61,7 @@
  *     does not replace it, and whatever is on the page afterwards is what the next reading reads.
  */
 
-import type { Db } from '../db.ts';
+import type { Db } from '../core/index.ts';
 import type { ReadingState } from './uploads.ts';
 import type { ClientDocDiscriminants } from '../documents/caprebate-client-doc-ingestion.ts';
 

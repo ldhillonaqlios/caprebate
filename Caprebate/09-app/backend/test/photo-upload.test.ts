@@ -25,15 +25,15 @@ import { mkdtempSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import vm from 'node:vm';
-import { createApp } from '../src/server.ts';
-import { FsObjectStore } from '../src/web/objectstore.ts';
-import { SharedObjectStore, vercelBlobClient, BLOB_UPLOAD_ORIGIN, type VercelBlobSdk } from '../src/web/shared-objectstore.ts';
+import { createApp } from '../src/core/server.ts';
+import { FsObjectStore } from '../src/shared/objectstore.ts';
+import { SharedObjectStore, vercelBlobClient, BLOB_UPLOAD_ORIGIN, type VercelBlobSdk } from '../src/shared/shared-objectstore.ts';
 import { PHOTO_UPLOAD_JS } from '../src/web/photo-upload-script.ts';
 import * as U from '../src/web/photo-upload.ts';
 import * as E from '../src/web/survey-evidence.ts';
-import { secretsFromValues } from '../src/secrets.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
 import { actor } from './helpers.ts';
-import { PIECES_PAGE_CSP } from '../src/web/upload-pieces.ts';
+import { PIECES_PAGE_CSP } from '../src/core/upload-pieces.ts';
 
 /* ------------------------------------------------------------------ the phone's lock, from the page's own script */
 
@@ -395,7 +395,7 @@ describe('the page and the whole send over HTTP', () => {
     for (const id of ['many-form', 'many-progress', 'many-list', 'many-bar', 'many-end', 'many-limit', 'many-lock']) assert.ok(page.body.includes(`id="${id}"`), id);
     assert.match(page.body, /<div id="many-progress" class="ev-progress" hidden>/);
     const home = await req('u-pu-client', '/portal');
-    // PHASE 160e: the portal's upload form names its own script, which may send to this site only (src/web/upload-pieces.ts).
+    // PHASE 160e: the portal's upload form names its own script, which may send to this site only (src/core/upload-pieces.ts).
     assert.equal(home.headers.get('content-security-policy') ?? '', PIECES_PAGE_CSP);
     const item = await req('u-pu-client', `/portal/building/item/VOIDS?job=${JOB}`);
     assert.doesNotMatch(item.headers.get('content-security-policy') ?? '', /script-src/);

@@ -7,7 +7,7 @@
  *
  * EVERY TEST RUNS ON RECORDED ANSWERS (`fixtureTransport`): no key, no network, and NO REAL CLIENT DOCUMENT — every
  * document here is invented. Where a call has to go out at all, the transfer is approved through the tests-only
- * `policy_override`; the row in src/connectors/sources.ts stays unapproved, and the first test proves that refuses.
+ * `policy_override`; the row in src/integrations/connectors/sources.ts stays unapproved, and the first test proves that refuses.
  *
  * THE FIRST GROUP IS THE IMPORTANT ONE. Switched off — which is how this ships — a finished upload must behave
  * EXACTLY as it did before this phase: the same row, the same state, the same audit rows, and nothing sent.
@@ -18,24 +18,24 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { docxOf } from './document-fixtures.ts';
-import { secretsFromValues, emptySecrets, forgetRegisteredSecretsForTest } from '../src/secrets.ts';
-import { fixtureTransport, RateLimiter, type Fixture } from '../src/connectors/http.ts';
-import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../src/connectors/claude.ts';
+import { secretsFromValues, emptySecrets, forgetRegisteredSecretsForTest } from '../src/core/secrets.ts';
+import { fixtureTransport, RateLimiter, type Fixture } from '../src/integrations/connectors/http.ts';
+import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../src/integrations/connectors/claude.ts';
 import {
   beginUpload, acceptClientBytes, finishUpload, readerFor,
   type ReadingOutcome, type UploadDeps, type UploadReading,
 } from '../src/web/uploads.ts';
 import { specFor, type DocType } from '../src/documents/caprebate-document-pipeline.ts';
 import { randomUUID } from 'node:crypto';
-import type { Actor } from '../src/authz.ts';
-import { outboxTransport } from '../src/stubs/email.ts';
-import { recordBounce, isSuppressed } from '../src/stubs/email-provider.ts';
+import type { Actor } from '../src/core/authz.ts';
+import { outboxTransport } from '../src/integrations/email/email.ts';
+import { recordBounce, isSuppressed } from '../src/integrations/email/email-provider.ts';
 import { stoppedAddresses, liftStoppedAddress } from '../src/web/settings.ts';
 import { testApp, actor } from './helpers.ts';
-import { smokeOne, smokeSubject, SMOKE_SOURCES, SMOKE_DEFAULTS } from '../src/connectors/smoke.ts';
-import { REGISTER_SWITCHES } from '../src/connectors/registers.ts';
+import { smokeOne, smokeSubject, SMOKE_SOURCES, SMOKE_DEFAULTS } from '../src/integrations/connectors/smoke.ts';
+import { REGISTER_SWITCHES } from '../src/integrations/connectors/registers.ts';
 
 const T = '2026-09-23T09:00:00.000Z';
 const FAKE_KEY = 'sk-ant-fixture-key-146g-0000-1111';

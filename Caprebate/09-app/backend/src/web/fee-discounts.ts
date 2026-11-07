@@ -15,11 +15,11 @@
  * decided, and nothing is refused for want of one.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { multiSiteDiscount } from './engine.ts';
-import { localStamp } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { multiSiteDiscount } from '../shared/index.ts';
+import { localStamp } from '../shared/index.ts';
 
 export type FeeDiscountDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 

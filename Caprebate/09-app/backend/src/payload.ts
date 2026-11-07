@@ -28,8 +28,8 @@ import {
   RELEASED_TO_SURVEYOR_ALWAYS,
   type EstimateOutputs, type Viewer,
 } from './survey/caprebate-anchor-quarantine.ts';
-import { toQuarantineRole, type AppRole } from './roles.ts';
-import { can, type Actor, type Obj } from './authz.ts';
+import { toQuarantineRole, type AppRole } from './core/index.ts';
+import { can, type Actor, type Obj } from './core/index.ts';
 
 /** The parts of a job that are inputs, and are released to everyone always. */
 export type JobInputs = {

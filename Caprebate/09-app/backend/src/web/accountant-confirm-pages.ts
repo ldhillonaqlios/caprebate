@@ -7,12 +7,12 @@
  *   /confirm/{token}    the accountant's own page: no login, the link alone. They confirm, or say it is not so.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import { can, type Actor } from '../authz.ts';
-import type { Db } from '../db.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { badge } from './components.ts';
-import { localDate, localStamp, ukDate } from './localtime.ts';
+import type { App } from '../core/app.ts';
+import { can, type Actor } from '../core/index.ts';
+import type { Db } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { badge } from '../shared/index.ts';
+import { localDate, localStamp, ukDate } from '../shared/index.ts';
 import * as A from './accountant-confirm.ts';
 import { accountantFiles } from './claim-record.ts';
 

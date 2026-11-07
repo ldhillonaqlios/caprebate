@@ -49,7 +49,7 @@
  * request, a click or a document on the organisation linked to nothing is not a received document of the claim.
  */
 
-import type { Db } from '../db.ts';
+import type { Db } from '../core/index.ts';
 import type { Need } from './pipeline.ts';
 import { acquisitionDateReading, clientSaidBought, latestFacts } from './claim-facts.ts';
 

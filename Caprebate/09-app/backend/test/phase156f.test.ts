@@ -1,9 +1,9 @@
 /**
  * PHASE 156f, 6 OCTOBER 2026 — HOMEDATA AS THE PROPERTY SOURCE. Lakhbir's decisions that day:
- *   B1 "one address box on Homedata, with GoAddress removed - yes"   (src/connectors/address-lookup.ts, the funnel)
+ *   B1 "one address box on Homedata, with GoAddress removed - yes"   (src/integrations/connectors/address-lookup.ts, the funnel)
  *   B2 the £1 a day cap: "yes please"                                (ADDRESS_SEARCH_CAP, searchesToday)
  *   B3 "planning history - use homedata"                             (research.ts: PLANNING answered by Homedata after signing)
- *   B4 "site boundary - use home data"                               (src/connectors/title-boundary.ts)
+ *   B4 "site boundary - use home data"                               (src/integrations/connectors/title-boundary.ts)
  *
  * Recorded answers only. The two real ones in test/fixtures/phase156f/ were captured by ONE logged test lookup on a public
  * address (10 Downing Street, SW1A 2AA, UPRN 100023336956), 6 Oct 2026, under Lakhbir's five conditions; Homedata's opaque
@@ -15,27 +15,27 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createApp } from '../src/server.ts';
-import { RateLimiter, type CallDeps, type Transport } from '../src/connectors/http.ts';
-import { secretsFromValues, SECRET_KEYS } from '../src/secrets.ts';
+import { createApp } from '../src/core/server.ts';
+import { RateLimiter, type CallDeps, type Transport } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues, SECRET_KEYS } from '../src/core/secrets.ts';
 import {
   ADDRESS_SEARCH_CAP, CAPPED_WHY, NOT_A_BUILDING, findAddresses, notABuilding, readAddresses, searchesToday, ADDRESS_LOOKUP,
-} from '../src/connectors/address-lookup.ts';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
-import { homedataAddress, homedataSlugs, preCheckOf, uprnBelongs } from '../src/connectors/homedata.ts';
-import { addressFromLines } from '../src/connectors/matching.ts';
-import { homedataBoundary, titleBoundaryArea, TITLE_BOUNDARY_LABEL, TITLE_BOUNDARY_SOURCE_ID } from '../src/connectors/title-boundary.ts';
-import { PAID_CONNECTORS, PAID_NOT_CHOSEN, totalBeforePence } from '../src/connectors/paid-registers.ts';
-import { runOrder } from '../src/connectors/free-registers.ts';
-import { preferHomedataPlanning, supersededPlanning, HOMEDATA_PLANNING_ENTITY } from '../src/connectors/homedata-planning.ts';
-import * as C from '../src/connectors/registers.ts';
+} from '../src/integrations/connectors/address-lookup.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
+import { homedataAddress, homedataSlugs, preCheckOf, uprnBelongs } from '../src/integrations/connectors/homedata.ts';
+import { addressFromLines } from '../src/integrations/connectors/matching.ts';
+import { homedataBoundary, titleBoundaryArea, TITLE_BOUNDARY_LABEL, TITLE_BOUNDARY_SOURCE_ID } from '../src/integrations/connectors/title-boundary.ts';
+import { PAID_CONNECTORS, PAID_NOT_CHOSEN, totalBeforePence } from '../src/integrations/connectors/paid-registers.ts';
+import { runOrder } from '../src/integrations/connectors/free-registers.ts';
+import { preferHomedataPlanning, supersededPlanning, HOMEDATA_PLANNING_ENTITY } from '../src/integrations/connectors/homedata-planning.ts';
+import * as C from '../src/integrations/connectors/registers.ts';
 import * as R from '../src/web/research.ts';
 import { CONNECTIONS } from '../src/web/connections.ts';
 import { ADDRESS_LOOKUP_JS } from '../src/web/address-lookup-script.ts';
-import { ADDRESS_PAGE_CSP } from '../src/web/router.ts';
-import { ingestRegisterRecord } from '../src/stubs/registers.ts';
-import { seed } from '../src/seed.ts';
-import { newId } from '../src/users.ts';
+import { ADDRESS_PAGE_CSP } from '../src/core/router.ts';
+import { ingestRegisterRecord } from '../src/integrations/register-ingest.ts';
+import { seed } from '../src/core/seed.ts';
+import { newId } from '../src/core/users.ts';
 import { testApp, actor } from './helpers.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));

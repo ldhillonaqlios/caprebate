@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { packView, saveLine, savePackValue, setLineRemoved, type PackDeps } from '../src/web/survey-pack.ts';
 import { savePackWords, WORD_FIELD_NAMES, WORD_FIELDS } from '../src/web/pack-words.ts';
 import { packSheet, packSheets, SHEET_CHAPTERS } from '../src/web/pack-sheets.ts';
@@ -19,7 +19,7 @@ import { sheetChapter } from '../src/web/survey-pack-pages.ts';
 import { snapshotOf } from '../src/web/pack-approve.ts';
 import { legalView } from '../src/web/pack-legal.ts';
 import { reportHtml, reportModel, reportPdf } from '../src/web/survey-report.ts';
-import { raw } from '../src/web/html.ts';
+import { raw } from '../src/shared/html.ts';
 import { actor } from './helpers.ts';
 
 const T = '2026-10-04T12:00:00.000Z';

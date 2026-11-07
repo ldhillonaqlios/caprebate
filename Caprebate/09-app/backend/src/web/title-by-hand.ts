@@ -3,7 +3,7 @@
  *
  * Lakhbir, 25 September 2026: HM Land Registry's title register "will be done manually and not via API". The
  * Business Gateway details were taken out of the key file the same day. So the paid lookup Phase 146d built
- * (src/connectors/hmlr-title.ts) no longer runs on "Run the research" — it is retired, not deleted — and a person who
+ * (src/integrations/connectors/hmlr-title.ts) no longer runs on "Run the research" — it is retired, not deleted — and a person who
  * has bought the official copy of the register (HM Land Registry's own portal, about £7 a title) records what it says
  * here, on the property page.
  *
@@ -29,12 +29,12 @@
  */
 
 import { personIsClients, fillTenureFromRegisters } from './who-claims.ts';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
 import { assertSignedEngagement } from './research.ts';
-import { ingestRegisterRecord, removeRegisterRecord } from '../stubs/registers.ts';
-import { amount } from '../connectors/hmlr-title.ts';
+import { ingestRegisterRecord, removeRegisterRecord } from '../integrations/index.ts';
+import { amount } from '../integrations/index.ts';
 import {
   approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain,
 } from './take-back.ts';

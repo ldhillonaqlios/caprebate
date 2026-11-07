@@ -20,21 +20,21 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { NotAuthorised, type Actor } from '../src/authz.ts';
-import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
-import { IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, type IdentityCheckConfig } from '../src/connectors/identity-check.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { NotAuthorised, type Actor } from '../src/core/authz.ts';
+import { fixtureTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
+import { IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, type IdentityCheckConfig } from '../src/integrations/connectors/identity-check.ts';
 import {
   IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, identityChecks, identityPassed, passEvidenceSentence, receiveIdentityResult, sendIdentityCheck,
 } from '../src/web/identity-checks.ts';
 import { checkView } from '../src/web/compliance-aml.ts';
-import type { Db } from '../src/db.ts';
-import { builtInHolds, can, REGISTERED_ACTIONS } from '../src/authz.ts';
-import { NEVER_GRANTED } from '../src/custom-roles.ts';
+import type { Db } from '../src/core/db.ts';
+import { builtInHolds, can, REGISTERED_ACTIONS } from '../src/core/authz.ts';
+import { NEVER_GRANTED } from '../src/core/custom-roles.ts';
 import { ACTION_WORDS, AREAS, offered } from '../src/web/role-editor-pages.ts';
-import { gateStatus } from '../src/connectors/registers.ts';
+import { gateStatus } from '../src/integrations/connectors/registers.ts';
 import { newDraft, loadDraft } from '../src/web/assessment.ts';
 import {
   ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, lookupsDeclined, lookupsOffered, postcodeIn, recordLookupsDeclined,

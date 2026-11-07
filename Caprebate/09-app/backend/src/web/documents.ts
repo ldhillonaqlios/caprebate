@@ -46,13 +46,13 @@
  * page's "answer here" both refuse a document request before the database does.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor, type Obj } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { localDate, localStamp, ukDate } from './localtime.ts';
-import { READ_AND_DELETED } from './originals.ts';
-import { RET7, type DocType, type UploadJob } from './upload-handler-port.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor, type Obj } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { localDate, localStamp, ukDate } from '../shared/index.ts';
+import { READ_AND_DELETED } from '../shared/index.ts';
+import { RET7, type DocType, type UploadJob } from '../shared/upload-handler-port.ts';
 import { dueReading, type DueReading } from './tasks.ts';
 import { fireAutomation, type RunOutcome } from './automation.ts';
 import { beginUpload } from './uploads.ts';
@@ -61,9 +61,9 @@ import {
   adoptRequestVouch, earlyVouchQuestions, isVouchAnswer, readingsFor, vouchedFieldFor, vouchesFor, vouchKeeps, vouchView, writeRequestVouch, writeVouch,
   type ReadingView, type VouchAnswer, type VouchView,
 } from './document-reading.ts';
-import { removeRegisterField } from '../stubs/registers.ts';
+import { removeRegisterField } from '../integrations/index.ts';
 import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from './take-back.ts';
-import type { FsObjectStore } from './objectstore.ts';
+import type { FsObjectStore } from '../shared/objectstore.ts';
 
 export type DocDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -449,7 +449,7 @@ export function clientOwners(db: Db, business_id: string): string[] {
 /**
  * PHASE 140 — CAN THE CLIENT SEE THIS FILE AT ALL? The latest row of `document_visibility` (migration 035) says, where
  * there is one. Where there is none, a file the client sent is theirs to see, and a file staff sent is not — Lakhbir's
- * default, "no". `clientDocument` in src/authz.ts reads this, and still applies every other rule on top of it.
+ * default, "no". `clientDocument` in src/core/authz.ts reads this, and still applies every other rule on top of it.
  */
 export function shownToClient(db: Db, logical_id: string): boolean {
   const v = db.get<{ shown_to_client: number }>(
@@ -485,7 +485,7 @@ export function setShownToClient(d: DocDeps, actor: Actor, logical_id: string, s
  * True only where the document is a capital allowances report that the
  * deliverables register records as an ISSUED client report, on a claim with a
  * tax adviser's sign-off record made since the claim last entered that stage.
- * `clientDocument` in src/authz.ts reads it; nothing else does. Today no CA_REPORT
+ * `clientDocument` in src/core/authz.ts reads it; nothing else does. Today no CA_REPORT
  * can be uploaded — its type has no receipt policy — so this is false on every
  * real document, and test/claim-record.test.ts proves it both ways.
  */
@@ -1250,7 +1250,7 @@ export const HISTORY_NOTE =
   'Nothing is overwritten. Each upload is its own version. Each keeps the deletion rule its type had when it arrived. ' +
   'Uploads we could not use are listed too.';
 
-/** PHASE 140: in words a person reads. `READ_AND_DELETED` (src/web/originals.ts) is the short form a folder shows. */
+/** PHASE 140: in words a person reads. `READ_AND_DELETED` (src/shared/originals.ts) is the short form a folder shows. */
 export const ORIGINALS_NOTE =
   'We read each file and then delete it. We keep what we took from it, not the file. That is on purpose, to keep as little as we can.';
 
@@ -1778,7 +1778,7 @@ export function documentCentre(db: Db, actor: Actor, q: URLSearchParams): Docume
 
 /**
  * PHASE 133a — THE GATE OF THE DOCUMENT CENTRE, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/web/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function documentCentreGate(actor: Actor): void {
@@ -1787,7 +1787,7 @@ export function documentCentreGate(actor: Actor): void {
 
 /**
  * PHASE 133a — THE GATE OF THE DOCUMENT TYPES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/web/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function documentTypesGate(actor: Actor): void {

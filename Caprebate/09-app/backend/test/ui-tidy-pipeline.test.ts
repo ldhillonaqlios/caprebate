@@ -8,8 +8,8 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import * as C from '../src/web/crm.ts';
-import { dueReading } from '../src/web/localtime.ts';
-import { stageGroupOf, STAGE_GROUPS } from '../src/web/look.ts';
+import { dueReading } from '../src/shared/localtime.ts';
+import { stageGroupOf, STAGE_GROUPS } from '../src/core/look.ts';
 import { siteOf } from '../src/web/pipeline-pages.ts';
 
 let H: Harness;

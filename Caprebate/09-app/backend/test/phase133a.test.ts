@@ -27,10 +27,10 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
-import { PIECES_PAGE_CSP } from '../src/web/upload-pieces.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
+import { PIECES_PAGE_CSP } from '../src/core/upload-pieces.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string; csp: string | null; type: string | null };
@@ -39,7 +39,7 @@ type Client = { get(path: string): Promise<Res> };
 const LOGINS = ['admin', 'sales', 'accounting', 'surveying', 'readonly', 'client'] as const;
 type Login = (typeof LOGINS)[number];
 
-/** The CSP the HTML responses carried before this phase, copied from src/web/html.ts.bak-phase133a. */
+/** The CSP the HTML responses carried before this phase, copied from src/shared/html.ts.bak-phase133a. */
 const CSP_BEFORE = "default-src 'none'; style-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
 
 /** EVERY BACK-OFFICE SECTION, listed here by hand from the routes — not read from the navigation it is testing. */
@@ -214,7 +214,7 @@ describe('the menu shows each login what it can open, and nothing it cannot', ()
  * NO INLINE SCRIPT OR STYLE, AND THE CSP
  * ================================================================== */
 
-/* PHASE 160e: the one script a page with an upload form names (src/web/upload-pieces.ts) is allowed; nothing inline. */
+/* PHASE 160e: the one script a page with an upload form names (src/core/upload-pieces.ts) is allowed; nothing inline. */
 const withoutPiecesScript = (b: string): string => b.replace('<script src="/assets/upload-pieces.js" defer></script>', '');
 const INLINE: readonly [RegExp, string][] = [
   [/<script\b/i, 'a script element'],

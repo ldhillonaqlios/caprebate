@@ -12,7 +12,7 @@ import * as S from '../src/web/surveyor.ts';
 import * as P from '../src/web/survey-pack.ts';
 import { jobSite } from '../src/web/surveyor-pages.ts';
 import { lengthWords } from '../src/web/survey-video.ts';
-import { siteOf } from '../src/web/look.ts';
+import { siteOf } from '../src/core/look.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit11'); });

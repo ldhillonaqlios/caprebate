@@ -46,7 +46,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import type { Grade } from '../registers/caprebate-source-register.ts';
+import type { Grade } from '../integrations/index.ts';
 
 /* ------------------------------------------------------------------ *
  * 1. Document and segment taxonomy

@@ -12,8 +12,8 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { IncomingMessage } from 'node:http';
-import { createApp } from '../src/server.ts';
-import { clientIp } from '../src/web/router.ts';
+import { createApp } from '../src/core/server.ts';
+import { clientIp } from '../src/core/router.ts';
 import { HOME_PATH } from '../src/web/home-site.ts';
 
 let made: Awaited<ReturnType<typeof createApp>>;

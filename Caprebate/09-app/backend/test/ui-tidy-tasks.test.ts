@@ -8,8 +8,8 @@ import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import * as T from '../src/web/tasks.ts';
 import { dueCell } from '../src/web/tasks-pages.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
-import { plainDashText } from '../src/web/plain-dashes.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
+import { plainDashText } from '../src/shared/plain-dashes.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit9'); });

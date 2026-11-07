@@ -2,7 +2,7 @@
  * PHASE 156d, 5 October 2026 — ZOOM ON THE FREE PLAN, WITH ONE SHARED HOST.
  *
  * Lakhbir: "yes change 156d so i dont pay", and "right now i dont need to add additonal staff contact@caprebate is
- * enough". So: no ZOOM_PLAN is the free plan (src/connectors/zoom.ts, zoomPlanIsFree); the 40 minutes are said where a
+ * enough". So: no ZOOM_PLAN is the free plan (src/integrations/connectors/zoom.ts, zoomPlanIsFree); the 40 minutes are said where a
  * video call is booked, on its pages and in its invitation; two video calls at the same time on the one Zoom user are
  * warned about, never refused; and staff can ask Zoom how long a call lasted and how many joined (zoomPastCall,
  * checkCallLength, migration 091) - or the screen says our plan does not give it. The walkthrough call's free-plan
@@ -14,9 +14,9 @@
 import { describe, test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { fixtureTransport, liveTransport, type Fixture } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
-import { forgetZoomToken, makeZoomMeeting, zoomPastCall, zoomPlanIsFree, FREE_PLAN_LINE, NOT_ON_PLAN_WORDS } from '../src/connectors/zoom.ts';
+import { fixtureTransport, liveTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
+import { forgetZoomToken, makeZoomMeeting, zoomPastCall, zoomPlanIsFree, FREE_PLAN_LINE, NOT_ON_PLAN_WORDS } from '../src/integrations/connectors/zoom.ts';
 import {
   callLengthOf, callLengthWords, checkCallLength, videoCallsAtSameTime, videoJoinWords, zoomDeps, zoomPlanLine, SAME_TIME_WORDS,
 } from '../src/web/video-calls.ts';

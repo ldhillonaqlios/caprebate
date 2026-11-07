@@ -4,7 +4,7 @@
  * Every page of caprebate-test.vercel.app answered "500 FUNCTION_INVOCATION_FAILED". Reproduced by running
  * api/index.mjs on a clean checkout with only the repository root's dependencies installed — which is all Vercel
  * installs (vercel.json: `npm install --omit=dev` at the root): the first request threw ERR_MODULE_NOT_FOUND, "Cannot
- * find package '@anthropic-ai/sdk' imported from src/connectors/claude.ts". Phase 146e (22 September 2026) added the
+ * find package '@anthropic-ai/sdk' imported from src/integrations/connectors/claude.ts". Phase 146e (22 September 2026) added the
  * Claude API library to THIS package's package.json and not to the root's, so the test website has failed on every
  * request since that deploy — on the Mac it worked, because this folder has its own node_modules.
  *
@@ -88,10 +88,10 @@ describe('151e · the test website installs everything the application imports',
 import { randomBytes as rb151e } from 'node:crypto';
 import { mkdtempSync as mkd151e } from 'node:fs';
 import { tmpdir as tmp151e } from 'node:os';
-import { createApp } from '../src/server.ts';
-import { seed, SEED_PASSWORD } from '../src/seed.ts';
-import { secretsFromEnvironment } from '../src/secrets.ts';
-import { IDENTITY_CHECK, identityCheckMissing } from '../src/connectors/identity-check.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed, SEED_PASSWORD } from '../src/core/seed.ts';
+import { secretsFromEnvironment } from '../src/core/secrets.ts';
+import { IDENTITY_CHECK, identityCheckMissing } from '../src/integrations/connectors/identity-check.ts';
 
 type Configure = (made: Awaited<ReturnType<typeof createApp>>, env: Record<string, string | undefined>) =>
   Promise<{ readonly password_changed: boolean; readonly keys_loaded: readonly string[]; readonly why: string }>;
@@ -160,7 +160,7 @@ describe('151e line 3 · Didit on the test website: keys from its settings, and 
       const r = await configureTestDeploy(made, { ...DIDIT_ENV, ANTHROPIC_API_KEY: 'must-not-load', CAPREBATE_TEST_PASSWORD: pw });
       assert.equal(r.password_changed, true);
       assert.deepEqual([...r.keys_loaded].sort(), ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
-      // PHASE 151k added the fourth: the key that seals the authenticator app secret (src/mfa-seal.ts).
+      // PHASE 151k added the fourth: the key that seals the authenticator app secret (src/core/mfa-seal.ts).
       assert.deepEqual([...TEST_DEPLOY_KEYS].sort(), ['CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY', 'CQC_SUBSCRIPTION_KEY', 'DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'EPC_API_TOKEN', 'HOMEDATA_API_KEY', 'IONOS_IMAP_HOST', 'IONOS_IMAP_PASSWORD', 'IONOS_IMAP_PORT', 'IONOS_IMAP_USER', 'IONOS_SMTP_HOST', 'IONOS_SMTP_PASSWORD', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'OS_DATA_HUB_API_KEY', 'REPLY_TIMER_TOKEN', 'TURNSTILE_SECRET_KEY', 'TURNSTILE_SITE_KEY', 'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_APP_SECRET', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_TEMPLATE_LANGUAGE', 'WHATSAPP_VERIFY_TOKEN', 'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_HOST_EMAIL', 'ZOOM_PLAN', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET']);
       for (const u of hashes(made)) {
         assert.equal(await made.app.hasher.verify(u.password_hash, pw), true, `${u.email} did not move to the test password`);

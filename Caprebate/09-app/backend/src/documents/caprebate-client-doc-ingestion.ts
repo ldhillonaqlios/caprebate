@@ -82,7 +82,7 @@ import {
 import {
   assertNoUnauthorisedName, NameExclusionError,
   type IngestedRecord,
-} from '../registers/caprebate-name-exclusion.ts';
+} from '../integrations/index.ts';
 
 /* ------------------------------------------------------------------ *
  * 0. Errors

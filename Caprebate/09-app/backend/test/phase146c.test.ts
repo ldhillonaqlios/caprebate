@@ -13,33 +13,33 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
-import { fixtureTransport, RateLimiter, callOutside, type CallDeps, type GateSnapshot, type Fixture } from '../src/connectors/http.ts';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
-import * as C from '../src/connectors/registers.ts';
-import * as M from '../src/connectors/matching.ts';
-import { companiesHouse, companiesHousePsc, readAccounts, companyNumberOf } from '../src/connectors/companies-house.ts';
-import { cqc, locationFields } from '../src/connectors/cqc.ts';
-import { epc, registersFor } from '../src/connectors/epc.ts';
-import { pricePaid, PRICE_PAID_ATTRIBUTION, isoDate } from '../src/connectors/price-paid.ts';
-import { planning, PLANIT_USER_AGENT } from '../src/connectors/planning.ts';
-import { onsPostcode } from '../src/connectors/postcode.ts';
-import { FREE_CONNECTORS, NOT_BUILT, DERIVE_FIELD_OF, runOrder, researchSubject, type TypedProperty } from '../src/connectors/free-registers.ts';
-import { secretsFromValues, emptySecrets, SECRET_KEYS } from '../src/secrets.ts';
-import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/registers/caprebate-source-register.ts';
-import { NAME_EXCLUSION_POLICY, classifyField } from '../src/registers/caprebate-name-exclusion.ts';
-import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/web/postcode-port.ts';
+import { fixtureTransport, RateLimiter, callOutside, type CallDeps, type GateSnapshot, type Fixture } from '../src/integrations/connectors/http.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
+import * as C from '../src/integrations/connectors/registers.ts';
+import * as M from '../src/integrations/connectors/matching.ts';
+import { companiesHouse, companiesHousePsc, readAccounts, companyNumberOf } from '../src/integrations/connectors/companies-house.ts';
+import { cqc, locationFields } from '../src/integrations/connectors/cqc.ts';
+import { epc, registersFor } from '../src/integrations/connectors/epc.ts';
+import { pricePaid, PRICE_PAID_ATTRIBUTION, isoDate } from '../src/integrations/connectors/price-paid.ts';
+import { planning, PLANIT_USER_AGENT } from '../src/integrations/connectors/planning.ts';
+import { onsPostcode } from '../src/integrations/connectors/postcode.ts';
+import { FREE_CONNECTORS, NOT_BUILT, DERIVE_FIELD_OF, runOrder, researchSubject, type TypedProperty } from '../src/integrations/connectors/free-registers.ts';
+import { secretsFromValues, emptySecrets, SECRET_KEYS } from '../src/core/secrets.ts';
+import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/integrations/registers/source-register.ts';
+import { NAME_EXCLUSION_POLICY, classifyField } from '../src/integrations/registers/name-exclusion.ts';
+import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-port.ts';
 import * as R from '../src/web/research.ts';
 import * as E from '../src/web/engaged.ts';
-import { REGISTRY, registryGate } from '../src/web/engine.ts';
+import { REGISTRY, registryGate } from '../src/shared/engine.ts';
 import { connectorSwitchReadings } from '../src/web/case-stamp.ts';
 import { PICK_SWITCHES } from '../src/web/match-review.ts';
-import { CLAUDE_SWITCHES } from '../src/connectors/claude.ts';
-import { buildApp, STUBS } from '../src/app.ts';
-import { seed } from '../src/seed.ts';
-import { newId } from '../src/users.ts';
+import { CLAUDE_SWITCHES } from '../src/integrations/connectors/claude.ts';
+import { buildApp, STUBS } from '../src/core/app.ts';
+import { seed } from '../src/core/seed.ts';
+import { newId } from '../src/core/users.ts';
 import { testApp, actor, fakeHasher, fixedClock } from './helpers.ts';
 import * as S from '../src/web/surveyor.ts';
-import { ingestRegisterRecord } from '../src/stubs/registers.ts';
+import { ingestRegisterRecord } from '../src/integrations/register-ingest.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const SRC = join(HERE, '..', 'src');
@@ -112,7 +112,7 @@ describe('matching a typed address or name — the S10 spec’s own cases, and t
     assert.ok(Object.isFrozen(M.MATCH_THRESHOLDS));
     // No connector carries a number of its own: every one reads the constant.
     for (const f of ['companies-house.ts', 'cqc.ts', 'epc.ts', 'price-paid.ts', 'planning.ts']) {
-      const text = readFileSync(join(SRC, 'connectors', f), 'utf8');
+      const text = readFileSync(join(SRC, 'integrations', 'connectors', f), 'utf8');
       assert.equal(/0\.[79]0?\b/.test(text), false, `${f} carries a threshold of its own`);
       assert.match(text, /MATCH_THRESHOLDS\./, `${f} does not read MATCH_THRESHOLDS`);
     }
@@ -434,7 +434,7 @@ describe('HM Land Registry sale prices: every sector (Phase 159g), the latest sa
     assert.equal(PRICE_PAID_ATTRIBUTION,
       'Contains HM Land Registry data © Crown copyright and database right 2021. This data is licensed under the Open Government Licence v3.0.');
     assert.equal(LICENCES.find((l) => l.licence_id === 'HMLR_PPD')?.attribution_text, PRICE_PAID_ATTRIBUTION);
-    assert.equal(readFileSync(join(SRC, 'connectors', 'price-paid.ts'), 'utf8').includes("'Contains HM Land Registry"), false, 'the words were retyped');
+    assert.equal(readFileSync(join(SRC, 'integrations', 'connectors', 'price-paid.ts'), 'utf8').includes("'Contains HM Land Registry"), false, 'the words were retyped');
   });
 
   test('THE SURVEYOR NEVER RECEIVES THE PRICE: a sale price is an amount agreed between buyer and seller, so it waits with our estimate', async () => {
@@ -601,8 +601,8 @@ describe('"Run the research" runs a connector only for what the gates allow — 
     // No module reads the key file per request: loadSecrets/processSecrets are called at start-up (app.ts) and by the
     // four modules that already read it when asked (analytics, the two mail stubs) — and by no connector.
     // (claude.ts, Phase 146e's, takes the store as a default argument; the register connectors take it from the app.)
-    for (const f of readdirSync(join(SRC, 'connectors')).filter((n) => n.endsWith('.ts') && n !== 'claude.ts')) {
-      assert.equal(/\b(loadSecrets|processSecrets)\(/.test(readFileSync(join(SRC, 'connectors', f), 'utf8')), false, `${f} reads the key file`);
+    for (const f of readdirSync(join(SRC, 'integrations', 'connectors')).filter((n) => n.endsWith('.ts') && n !== 'claude.ts')) {
+      assert.equal(/\b(loadSecrets|processSecrets)\(/.test(readFileSync(join(SRC, 'integrations', 'connectors', f), 'utf8')), false, `${f} reads the key file`);
     }
   });
 

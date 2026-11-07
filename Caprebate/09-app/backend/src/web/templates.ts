@@ -36,13 +36,13 @@
  * invoice-fraud procedure (Developer Spec §5.1 item 6).
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { outboxTransport } from '../stubs/email.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { escapeHtml } from './html.ts';
-import { localStamp, ukDate } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { outboxTransport } from '../integrations/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { escapeHtml } from '../shared/index.ts';
+import { localStamp, ukDate } from '../shared/index.ts';
 import { claimObjFor, type Fields } from './crm.ts';
 
 export type TemplateDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
@@ -351,7 +351,7 @@ export function queueTemplate(d: TemplateDeps, actor: Actor, claim_id: string, i
 
 /**
  * PHASE 133a — THE GATE OF THE EMAIL TEMPLATES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/web/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function templatesGate(actor: Actor): void {

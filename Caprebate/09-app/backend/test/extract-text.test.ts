@@ -1,7 +1,7 @@
 /**
  * THE TEXT EXTRACTOR — AND THE ONE ASSERTION THAT ACTUALLY MATTERS.
  *
- * Two thirds of this file is unit work on `src/web/extract-text.ts`: does a
+ * Two thirds of this file is unit work on `src/shared/extract-text.ts`: does a
  * known sentence come back out of a .docx, out of an uncompressed PDF, out of
  * a FlateDecode one. That is worth having. But the test this file exists for
  * is the END-TO-END one: a NAME planted in a real .docx and a real PDF is
@@ -30,13 +30,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { zipOf, docxOf, pdfOf } from './document-fixtures.ts';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { beginUpload, acceptClientBytes, finishUpload, eventsFor } from '../src/web/uploads.ts';
-import { retainedTextKeyFor } from '../src/web/upload-handler-port.ts';
+import { retainedTextKeyFor } from '../src/shared/upload-handler-port.ts';
 import {
   extractPages, isMarkerPages, UNREADABLE_MARKER_PREFIX,
   type ExtractedPage,
-} from '../src/web/extract-text.ts';
+} from '../src/shared/extract-text.ts';
 
 /* ================================================================== *
  * 1. A KNOWN SENTENCE COMES BACK OUT OF EACH

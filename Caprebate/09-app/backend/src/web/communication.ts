@@ -32,25 +32,25 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import type { App } from '../app.ts';
-import { can, type Actor } from '../authz.ts';
-import { h, raw, type Safe } from './html.ts';
-import { savedMessage } from './components.ts';
-import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES } from './localtime.ts';
+import type { App } from '../core/app.ts';
+import { can, type Actor } from '../core/index.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
+import { savedMessage } from '../shared/index.ts';
+import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES } from '../shared/index.ts';
 import * as M from './messages.ts';
 import * as W from './whatsapp.ts';
 import * as F from './free-email.ts';
 import { emailChains, reSubject } from './email-chains.ts';
 import { addNote } from './engaged.ts';
 import { createTask } from './tasks.ts';
-import { mayArrangeCalls } from './backoffice.ts';
+import { mayArrangeCalls } from '../core/backoffice.ts';
 import { addLocalDays, isBookable, SLOT_MINUTES, staffSlots, startOfLocalDay } from './schedule.ts';
 import { activeMeeting, callLengthOf, callLengthWords, reconcileVideoMeeting, videoCallsAtSameTime, zoomBlockers, zoomPlanLine, SAME_TIME_WORDS } from './video-calls.ts';
 import { sendVideoInvite } from './booking-invite.ts';
 import { sendSavedEmailNow } from './free-email-pages.ts';
-import { EMAIL_SENDING, mailWhere, smtpLoginFromKeyFile, sendingOn, SENT_SECRET_KINDS } from '../stubs/email-provider.ts';
-import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../connectors/whatsapp.ts';
-import type { FsObjectStore } from './objectstore.ts';
+import { EMAIL_SENDING, mailWhere, smtpLoginFromKeyFile, sendingOn, SENT_SECRET_KINDS } from '../integrations/index.ts';
+import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../integrations/index.ts';
+import type { FsObjectStore } from '../shared/objectstore.ts';
 import * as IE from './inbound-email.ts';
 import { emailedFiles } from './messages-pages.ts';
 import { receivableTypes } from './documents.ts';

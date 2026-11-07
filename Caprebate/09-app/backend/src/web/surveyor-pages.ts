@@ -32,19 +32,19 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { breadcrumb, claimRef, dataLink, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from './components.ts';
-import { kpiRow, nobodyBadge, siteOf, stageBadge } from './look.ts';
-import { setSubMenu } from './navigation.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { breadcrumb, claimRef, dataLink, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from '../shared/index.ts';
+import { kpiRow, nobodyBadge, siteOf, stageBadge } from '../core/index.ts';
+import { setSubMenu } from '../core/navigation.ts';
 import * as S from './surveyor.ts';
 import { registerAttribution } from './research.ts';
-import { formatPence } from './shown-range.ts';
+import { formatPence } from '../shared/index.ts';
 import { FUNNEL_CEILING, SURVEY_JOB_WORDS as SO_WORDS } from './survey-open.ts';
 import { surveyorThreadPanel } from './messages-pages.ts';
 import { deskFirstReading } from './desk-first.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -223,7 +223,7 @@ export function otherJobs(app: App, actor: Actor, job: S.JobRow): S.JobRow[] {
 }
 
 /**
- * THE JOB'S OWN MENU, opening out under Survey jobs (src/web/navigation.ts, `setSubMenu`): the client and site; the job's
+ * THE JOB'S OWN MENU, opening out under Survey jobs (src/core/navigation.ts, `setSubMenu`): the client and site; the job's
  * parts; the survey pack, marked on the pack (UI tidy phase 11); and the client's other jobs by site.
  */
 export function setJobMenu(app: App, actor: Actor, job: S.JobRow, current: 'pack' | null): void {

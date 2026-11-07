@@ -25,9 +25,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { localDate } from '../src/web/localtime.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { localDate } from '../src/shared/localtime.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string };
@@ -225,7 +225,7 @@ describe('working days, and phone width', () => {
   });
 
   test('the tiles stack into one column at phone width', () => {
-    const css = readFileSync(join(import.meta.dirname, '../src/web/assets.ts'), 'utf8');
+    const css = readFileSync(join(import.meta.dirname, '../src/shared/assets.ts'), 'utf8');
     const phone = css.slice(css.indexOf('@media (max-width:720px)'));
     assert.match(phone, /\.hometiles\{grid-template-columns:minmax\(0,1fr\)\}/);
   });

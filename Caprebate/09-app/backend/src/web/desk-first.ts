@@ -22,7 +22,7 @@
  * for that, as before. This is a reading beside it.
  */
 import { isPricePaidLead } from './who-claims.ts';
-import type { Db } from '../db.ts';
+import type { Db } from '../core/index.ts';
 import { checklistView, type ChecklistView } from './survey-evidence.ts';
 import { mandatoryDocumentNeeds } from './mandatory-documents.ts';
 import { latestFacts } from './claim-facts.ts';

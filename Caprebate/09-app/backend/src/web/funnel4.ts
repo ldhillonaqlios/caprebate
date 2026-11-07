@@ -38,15 +38,15 @@
  * (Phase 156 B3).
  */
 
-import { h, raw, type Safe } from './html.ts';
-import { FUNNEL, FRONTDOOR } from './engine.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
+import { FUNNEL, FRONTDOOR } from '../shared/index.ts';
 import { OPTIONS, addressFrom, submit, type Draft, type FunnelState } from './assessment.ts';
 import { openLeadForGatedExit } from './leads.ts';
-import type { Db } from '../db.ts';
-import { normalisePostcode } from '../connectors/postcode-check.ts';
-import { entityFromCompanyType, accountsTypeWords, type CompanyCandidate } from '../connectors/company-search.ts';
-import { isDormant } from '../connectors/companies-house.ts';
-import type { FoundAddress } from '../connectors/address-lookup.ts';
+import type { Db } from '../core/index.ts';
+import { normalisePostcode } from '../integrations/index.ts';
+import { entityFromCompanyType, accountsTypeWords, type CompanyCandidate } from '../integrations/index.ts';
+import { isDormant } from '../integrations/index.ts';
+import type { FoundAddress } from '../integrations/index.ts';
 import { slotPicker, slotDayProblem } from './slot-picker.ts';
 
 export const F4_SCREENS = ['buildings', 'spend-on', 'amounts', 'tax', 'claims', 'works', 'details'] as const;

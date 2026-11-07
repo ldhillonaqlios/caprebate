@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import { clientList } from '../src/web/client-list.ts';
 import * as C from '../src/web/crm.ts';
-import { siteOf, stageGroupOf } from '../src/web/look.ts';
+import { siteOf, stageGroupOf } from '../src/core/look.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit6'); });

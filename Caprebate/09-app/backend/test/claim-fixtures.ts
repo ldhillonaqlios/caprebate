@@ -18,8 +18,8 @@
 import assert from 'node:assert/strict';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import * as AC from '../src/web/accountant-confirm.ts';
-import type { Db } from '../src/db.ts';
-import type { AuditLog } from '../src/audit.ts';
+import type { Db } from '../src/core/db.ts';
+import type { AuditLog } from '../src/core/audit.ts';
 import * as F from '../src/web/claim-facts.ts';
 import * as R from '../src/web/claim-record.ts';
 import { allocateNumber } from '../src/web/invoices.ts';

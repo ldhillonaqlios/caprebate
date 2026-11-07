@@ -48,12 +48,12 @@
  * organisation's reads its leads' rows as well as its own.
  */
 
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor, type Obj } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { localStamp, localWhen } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor, type Obj } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { localStamp, localWhen } from '../shared/index.ts';
 import { claimObjFor } from './crm.ts';
-import { anyStageLabel } from './stages.ts';
+import { anyStageLabel } from '../shared/index.ts';
 import { ENQUIRY_CHECKS, MILESTONES, MOVE_WORDS, reasonLabel } from './pipeline.ts';
 import { INVOICE_WORDS, PAYMENT_WORDS } from './finance.ts';
 import { CREDIT_BASES, INVOICE_KINDS, formatInvoiceNumber } from './invoices.ts';

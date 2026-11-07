@@ -1,5 +1,5 @@
 /**
- * UI TIDY PHASE 2 — THE LEFT-HAND MENU, 2 October 2026 (src/web/navigation.ts, its rules in src/web/assets.ts).
+ * UI TIDY PHASE 2 — THE LEFT-HAND MENU, 2 October 2026 (src/core/navigation.ts, its rules in src/shared/assets.ts).
  * Each login's menu in named groups with nothing under More; the entries that open out under the current section;
  * the phone's Menu button, which needs no script. Which addresses each login may open is test/phase135.test.ts's.
  */
@@ -8,11 +8,11 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
-import { navContext, setSubMenu, staffShell } from '../src/web/navigation.ts';
-import type { Actor } from '../src/authz.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
+import { navContext, setSubMenu, staffShell } from '../src/core/navigation.ts';
+import type { Actor } from '../src/core/authz.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; body: string };
@@ -161,7 +161,7 @@ describe('UI tidy phase 2: the phone’s Menu button and the left-hand layout', 
       const header = /<header class="top">([\s\S]*?)<\/header>/.exec(body)?.[1] ?? '';
       assert.match(header, /<\/nav><input type="checkbox" id="navtoggle" class="navtoggle"><label for="navtoggle" class="navbutton">Menu<\/label><\/div>$/, `${who} ${path}`);
       assert.equal((body.match(/id="navtoggle"/g) ?? []).length, 1);
-      // PHASE 160e: a page with an upload form names the one allowed script (src/web/upload-pieces.ts); nothing else.
+      // PHASE 160e: a page with an upload form names the one allowed script (src/core/upload-pieces.ts); nothing else.
       assert.doesNotMatch(body.replace('<script src="/assets/upload-pieces.js" defer></script>', ''), /<script/i);
     }
   });

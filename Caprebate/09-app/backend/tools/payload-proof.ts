@@ -54,8 +54,8 @@
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
 import { quarantinedKeysAndValues } from '../src/payload.ts';
 import { randomUUID } from 'node:crypto';
 import * as D from '../src/web/documents.ts';
@@ -64,7 +64,7 @@ import { acceptClientBytes, finishUpload, issuedJob } from '../src/web/uploads.t
 import * as F from '../src/web/claim-facts.ts';
 import { RELEASED_FACTS_TO_SURVEYOR } from '../src/payload.ts';
 import * as DB from '../src/web/dashboard.ts';
-import { can as canForProof } from '../src/authz.ts';
+import { can as canForProof } from '../src/core/authz.ts';
 import { addNote } from '../src/web/engaged.ts';
 
 // PHASE 151j: this proof reads what each ROLE receives once signed in; the second step is not what it proves, and it

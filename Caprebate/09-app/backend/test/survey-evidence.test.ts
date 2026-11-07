@@ -1,6 +1,6 @@
 /**
  * 2 OCTOBER 2026 — THE SURVEY'S EVIDENCE FROM THE CLIENT (src/web/survey-checklist.ts, survey-evidence.ts,
- * evidence-pages.ts; migration 074; the recording call in src/connectors/zoom.ts).
+ * evidence-pages.ts; migration 074; the recording call in src/integrations/connectors/zoom.ts).
  *
  * Lakhbir: "a recorded phone walkthrough … and add the option for … a guided photo checklist in the client portal";
  * the photos kept, for testing ("Keep them, test only"); the walkthrough a recorded Zoom call ("Recorded Zoom call").
@@ -30,16 +30,16 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32 } from 'node:zlib';
-import { createApp } from '../src/server.ts';
-import { FsObjectStore } from '../src/web/objectstore.ts';
-import { manyFiles } from '../src/web/multipart.ts';
+import { createApp } from '../src/core/server.ts';
+import { FsObjectStore } from '../src/shared/objectstore.ts';
+import { manyFiles } from '../src/core/multipart.ts';
 import { checklistFor, GROUPS, NOBODY_IN_SHOT } from '../src/web/survey-checklist.ts';
 import * as E from '../src/web/survey-evidence.ts';
 import { packView } from '../src/web/survey-pack.ts';
-import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
-import { forgetZoomToken, makeZoomMeeting } from '../src/connectors/zoom.ts';
+import { fixtureTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import { forgetZoomToken, makeZoomMeeting } from '../src/integrations/connectors/zoom.ts';
 import { zoomDeps } from '../src/web/video-calls.ts';
-import { secretsFromValues } from '../src/secrets.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
 import { actor } from './helpers.ts';
 
 /* ------------------------------------------------------------------ made-up images */

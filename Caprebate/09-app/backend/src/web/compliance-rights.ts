@@ -24,9 +24,9 @@
  * printed on one is in S2, searched separately and logged there.
  */
 
-import type { Db } from '../db.ts';
-import type { Actor } from '../authz.ts';
-import { outboxTransport } from '../stubs/email.ts';
+import type { Db } from '../core/index.ts';
+import type { Actor } from '../core/index.ts';
+import { outboxTransport } from '../integrations/index.ts';
 import { tipsOff } from './templates.ts';
 import {
   ClockInputError, LIMB_LABELS, LIMBS, EXTENSION_GROUNDS, acknowledgementClock, limbClock, complaintTargets,

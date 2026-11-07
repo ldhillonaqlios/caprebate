@@ -19,30 +19,30 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import { can, type Actor } from '../authz.ts';
-import { badge, brandName, claimRef, dataLink, fields, highlights, nextStepCard, recordLayout, savedMessage, section, sidePanel, why, type Need, type SectionContext, type SectionSpec } from './components.ts';
-import { sectionPrefs } from './sections.ts';
-import { leadNextStep, plainNeed } from './next-step.ts';
-import { dueReading, dueWords, ukDatesIn } from './localtime.ts';
-import { navContext, filterBar, LEAD_FILTERS } from './navigation.ts';
-import { STAGE_GROUPS, groupBand, groupBar, kpiRow, lateBadge, noDateBadge, nobodyBadge, siteOf, stageBadge, stageGroupOf, stageLabel, type GroupKey } from './look.ts';
-export { siteOf } from './look.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
+import type { App } from '../core/app.ts';
+import { can, type Actor } from '../core/index.ts';
+import { badge, brandName, claimRef, dataLink, fields, highlights, nextStepCard, recordLayout, savedMessage, section, sidePanel, why, type Need, type SectionContext, type SectionSpec } from '../shared/index.ts';
+import { sectionPrefs } from '../core/index.ts';
+import { leadNextStep, plainNeed } from '../shared/index.ts';
+import { dueReading, dueWords, ukDatesIn } from '../shared/index.ts';
+import { navContext, filterBar, LEAD_FILTERS } from '../core/navigation.ts';
+import { STAGE_GROUPS, groupBand, groupBar, kpiRow, lateBadge, noDateBadge, nobodyBadge, siteOf, stageBadge, stageGroupOf, stageLabel, type GroupKey } from '../core/index.ts';
+export { siteOf } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import * as C from './crm.ts';
 import * as L from './leads.ts';
 import * as P from './pipeline.ts';
 import * as T from './tasks.ts';
 import { newTaskForm, timelineBlock } from './tasks-pages.ts';
-import * as LI from './lists.ts';
+import * as LI from '../shared/lists.ts';
 import { taskChoices, vocabulary } from './vocabularies.ts';
-import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from './lists-pages.ts';
+import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from '../shared/lists-pages.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';
 import * as E from './enquiries.ts';
 import * as SO from './survey-open.ts';
 import { leadSectionCounts, leadSections, type CardDeps } from './lead-cards.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -135,7 +135,7 @@ export async function handlePipeline(
 
   /* ------------------------------------------------------------ leads */
   if (path === '/staff/leads' && method === 'GET') {
-    // CRM 9 of 10: filtered, sorted and saved through src/web/lists.ts, each row still asked of `lead.read`.
+    // CRM 9 of 10: filtered, sorted and saved through src/shared/lists.ts, each row still asked of `lead.read`.
     // PHASE 137: cards in four sections by default; `layout=list` is the table, for anyone who prefers it. Neither
     // `layout` nor `done` is a filter, so neither is handed to the list to be reported as one it did not apply.
     const asList = url.searchParams.get('layout') === 'list';
@@ -620,7 +620,7 @@ function column(id: string, label: string, list: readonly C.BoardCard[], about: 
 /**
  * Lakhbir chose "design 2" (00-START-HERE/hub/UI-TIDY-PLAN.md): the pipeline as one table, grouped by stage, with colours
  * and darker boxes "to make this easier to read". At laptop width the board of columns ran off the right edge. Every
- * claim the board showed is a row here, in the same groups of stages (src/web/look.ts), the latest next step first; the
+ * claim the board showed is a row here, in the same groups of stages (src/core/look.ts), the latest next step first; the
  * row keeps the card's Move button, under its next step, and the board itself is one click away (`layout=board`). Search and the four
  * filters are links, so nothing needs a script.
  */

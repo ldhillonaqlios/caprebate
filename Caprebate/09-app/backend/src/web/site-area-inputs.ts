@@ -19,15 +19,15 @@
  * NOTHING HERE LOOKS ANYTHING UP. Saving a point sends nothing anywhere; the land boundary is read only by "Run the
  * research", and that is switched off.
  */
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import type { AuditLog } from '../audit.ts';
-import { pointInBritishNationalGrid, councilOfPostcode, homedataPointOf } from '../connectors/site-area.ts';
-import { INSPIRE_COUNCILS, inspireFileForLad } from '../connectors/inspire-councils.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { pointInBritishNationalGrid, councilOfPostcode, homedataPointOf } from '../integrations/connectors/site-area.ts';
+import { INSPIRE_COUNCILS, inspireFileForLad } from '../integrations/index.ts';
 import { assertSignedEngagement } from './research.ts';
 import { enteredCouncils, enteredPoint } from './site-area-run.ts';
-import { postcodeStore } from './postcode.ts';
-import type { PostcodeStore } from './postcode-port.ts';
+import { postcodeStore } from '../integrations/postcodes/postcode.ts';
+import type { PostcodeStore } from '../integrations/postcodes/postcode-port.ts';
 
 export type SiteInputDeps = { readonly db: Db; readonly audit: AuditLog; readonly now: () => string; readonly newId: () => string };
 export type SiteInputResult = { readonly ok: true } | { readonly ok: false; readonly why: string };

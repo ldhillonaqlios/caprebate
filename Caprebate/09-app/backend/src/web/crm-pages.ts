@@ -26,15 +26,15 @@
 import { checksPanelIfPermitted } from './approvals.ts';
 import { checksSummary, claimChecksBlock, STEP_ANCHOR } from './approvals-pages.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { piecesPage } from './upload-pieces.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { piecesPage } from '../core/index.ts';
 import * as C from './crm.ts';
 import type * as F from './claim-facts.ts';
 import type { PipelinePanel } from './pipeline.ts';
 import { enquiryBlock } from './pipeline-pages.ts';
-import { authorise, can } from '../authz.ts';
+import { authorise, can } from '../core/index.ts';
 import { addStaffEvent, approvedEventFigures, eventsOnClaim, setEventVat, EVENT_KINDS, KIND_WORDS, type ApprovedEventFigure, type EventOnClaim } from './property-events.ts';
 import { requestWorkDocuments } from './documents.ts';
 import { claimRoutes } from './claim-route.ts';
@@ -47,20 +47,20 @@ import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { timelineIfPermitted, type Timeline } from './timeline.ts';
 import { activeTemplates } from './templates.ts';
 import { claimDocumentsBlock, placeDocumentsBlock } from './documents-pages.ts';
-import * as LI from './lists.ts';
+import * as LI from '../shared/lists.ts';
 import { taskChoices, vocabulary } from './vocabularies.ts';
-import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from './lists-pages.ts';
+import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from '../shared/lists-pages.ts';
 import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock } from './claim-record-pages.ts';
-import { addUnderCurrent, opens } from './navigation.ts';
-import { nobodyBadge, stageBadge } from './look.ts';
+import { addUnderCurrent, opens } from '../core/navigation.ts';
+import { nobodyBadge, stageBadge } from '../core/index.ts';
 import { assertClientsSection } from './engaged.ts';
-import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, moreDetail, nextStepCard, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, why, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
-import { sectionPrefs } from './sections.ts';
-import { plainNeed } from './next-step.ts';
+import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, moreDetail, nextStepCard, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, why, type Need, type QuickAction, type SectionContext, type SectionSpec } from '../shared/index.ts';
+import { sectionPrefs } from '../core/index.ts';
+import { plainNeed } from '../shared/index.ts';
 import { openClaimQuestions } from './engaged.ts';
-import { claimNextStep } from './next-step.ts';
-import { dueWords, localStamp, ukDate } from './localtime.ts';
-import { nameSwitches, navContext } from './navigation.ts';
+import { claimNextStep } from '../shared/index.ts';
+import { dueWords, localStamp, ukDate } from '../shared/index.ts';
+import { nameSwitches, navContext } from '../core/navigation.ts';
 import * as SI from './site-area-inputs.ts';
 import * as TH from './title-by-hand.ts';
 import * as SO from './survey-open.ts';
@@ -309,7 +309,7 @@ export async function handleCrm(
 
   /* ----------------------------------------------------------- claims */
   if (path === '/staff/claims' && method === 'GET') {
-    // CRM 9 of 10: filtered, sorted and saved through src/web/lists.ts, each row still asked of `claim.read`.
+    // CRM 9 of 10: filtered, sorted and saved through src/shared/lists.ts, each row still asked of `claim.read`.
     const asked = requestParams(d.app, actor, 'CLAIMS', url.searchParams);
     const v = LI.claimsList(db, actor, asked.params, asked.ignored);
     html(res, 200, claimsPage(d, actor, v.rows, listControls('CLAIMS', v, LI.viewsFor(db, actor, 'CLAIMS'), mayShareViews(actor), asked.view), sortHeading('CLAIMS', v)));

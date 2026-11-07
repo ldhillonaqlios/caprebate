@@ -21,12 +21,12 @@
  * OUR READING, put to the tax adviser (Word question 253): that a closed window with the building still owned is W2,
  * read from the client's checked year end for the first open period; and the evidence that counts for ownership.
  */
-import type { Db } from '../db.ts';
+import type { Db } from '../core/index.ts';
 import { acquisitionDateReading, amendmentWindowReading, latestFacts, periodFromYearEnd, windowForPeriod, type WindowReading } from './claim-facts.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, type EventKind, type PropertyEvent } from './property-events.ts';
 import { legalVerdictForClaim } from './pack-legal.ts';
 import { propertyTenure, registerNamesClientPerson } from './who-claims.ts';
-import { localDate } from './localtime.ts';
+import { localDate } from '../shared/index.ts';
 
 export type Route = 'W1' | 'W2' | 'W3' | 'NOT_KNOWN';
 

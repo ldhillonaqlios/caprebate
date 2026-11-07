@@ -12,7 +12,7 @@
  *
  * EVERY TEST RUNS ON RECORDED ANSWERS (`fixtureTransport`): no key, no network, and NO REAL CLIENT DOCUMENT —
  * every document here is invented. Where a call goes out at all, the transfer is approved through the tests-only
- * `policy_override`; the row in src/connectors/sources.ts stays unapproved.
+ * `policy_override`; the row in src/integrations/connectors/sources.ts stays unapproved.
  *
  * AND THE SWITCH IS STILL OFF. `CLAUDE_SWITCHES.DOCUMENT_READING` is false and this phase does not touch it. The
  * first group proves that a finished upload with the switch off is unchanged by any of this, including that it
@@ -25,11 +25,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { docxOf } from './document-fixtures.ts';
-import { secretsFromValues, forgetRegisteredSecretsForTest } from '../src/secrets.ts';
-import { fixtureTransport, RateLimiter, type Fixture } from '../src/connectors/http.ts';
-import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../src/connectors/claude.ts';
+import { secretsFromValues, forgetRegisteredSecretsForTest } from '../src/core/secrets.ts';
+import { fixtureTransport, RateLimiter, type Fixture } from '../src/integrations/connectors/http.ts';
+import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../src/integrations/connectors/claude.ts';
 import {
   acceptClientBytes, finishUpload, issuedJob,
   type ReadingOutcome, type UploadDeps, type UploadReading,
@@ -41,7 +41,7 @@ import {
 } from '../src/web/document-reading.ts';
 import { assertClaimsWritable } from '../src/documents/caprebate-client-doc-ingestion.ts';
 import { actor } from './helpers.ts';
-import type { Actor } from '../src/authz.ts';
+import type { Actor } from '../src/core/authz.ts';
 
 const T = '2026-09-23T09:00:00.000Z';
 const FAKE_KEY = 'sk-ant-fixture-key-146i-0000-1111';

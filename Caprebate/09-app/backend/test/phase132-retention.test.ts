@@ -9,7 +9,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { APP_ROLES } from '../src/roles.ts';
+import { APP_ROLES } from '../src/core/roles.ts';
 import * as S from '../src/web/compliance-identity.ts';
 import { actor, testApp } from './helpers.ts';
 

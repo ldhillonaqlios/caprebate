@@ -34,7 +34,7 @@ import {
   type LicencePermission,
   type BoundarySourceKind,
   type BoundaryFetchPlanItem,
-} from '../src/registers/caprebate-boundary-import.ts';
+} from '../src/integrations/registers/boundary-import.ts';
 
 /* ------------------------------------------------------------------ *
  * Fixtures — hand-written literal geometry, invented for this file.

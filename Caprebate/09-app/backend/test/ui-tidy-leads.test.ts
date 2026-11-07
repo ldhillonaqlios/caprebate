@@ -7,7 +7,7 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import { RECORD_LEAD_HREF } from '../src/web/pipeline-pages.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit5'); });

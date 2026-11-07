@@ -3,7 +3,7 @@
  * AND THE AUDIT LOG ON A DATABASE TWO COPIES SHARE.
  *
  *   1  A document written through one copy is read through another: a private Vercel Blob store, reached through the
- *      same FsObjectStore every caller already takes (src/web/shared-objectstore.ts). Two copies of the website on one
+ *      same FsObjectStore every caller already takes (src/shared/shared-objectstore.ts). Two copies of the website on one
  *      database file and one store: Sales uploads through the first, Admin opens the kept original through the second.
  *   2  Never reachable without the authorising route: every call private, no Blob address kept or shown, the upload
  *      link still ours and still one key, nothing on the copy's own disk.
@@ -26,14 +26,14 @@ import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { createApp } from '../src/server.ts';
-import { seed, SEED_PASSWORD } from '../src/seed.ts';
-import { Db, migrate } from '../src/db.ts';
-import { AuditLog } from '../src/audit.ts';
-import { FsObjectStore, assertNoStaticFileRoute } from '../src/web/objectstore.ts';
-import * as SO from '../src/web/shared-objectstore.ts';
-import { durableKeyFor, quarantineKeyFor, retainedTextKeyFor } from '../src/web/upload-handler-port.ts';
-import { KEEP_ORIGINALS_QUESTION } from '../src/web/originals.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed, SEED_PASSWORD } from '../src/core/seed.ts';
+import { Db, migrate } from '../src/core/db.ts';
+import { AuditLog } from '../src/core/audit.ts';
+import { FsObjectStore, assertNoStaticFileRoute } from '../src/shared/objectstore.ts';
+import * as SO from '../src/shared/shared-objectstore.ts';
+import { durableKeyFor, quarantineKeyFor, retainedTextKeyFor } from '../src/shared/upload-handler-port.ts';
+import { KEEP_ORIGINALS_QUESTION } from '../src/shared/originals.ts';
 import { pdfOf } from './document-fixtures.ts';
 /* PHASE 161h: vercel.json became vercel.ts (both projects build from it); vercelConfig({}) is the old file, exactly. */
 const VERCEL_CONFIG: unknown = ((await import(new URL('../../../../vercel.ts', import.meta.url).href)) as { vercelConfig: (e: Record<string, string>) => unknown }).vercelConfig({});
@@ -280,9 +280,9 @@ describe('151i · 2 · never reachable without the authorising route', () => {
     const s = await sharedStore(blob);
     for (const bad of ['../x', '/abs', 'quarantine/../../x', '']) await assert.rejects(() => s.get(bad));
     assert.equal(blob.calls.length, 0);
-    const src = readFileSync(join(HERE, 'src', 'web', 'shared-objectstore.ts'), 'utf8');
+    const src = readFileSync(join(HERE, 'src', 'shared', 'shared-objectstore.ts'), 'utf8');
     await assertNoStaticFileRoute(src);
-    assert.equal(/\bfetch\s*\(/.test(src), false, 'only src/connectors/http.ts may call fetch');
+    assert.equal(/\bfetch\s*\(/.test(src), false, 'only src/integrations/connectors/http.ts may call fetch');
   });
 });
 
@@ -425,8 +425,8 @@ describe('151i · 4 · the audit log on a database two copies share', () => {
     b.close();
     const url = (p: string) => pathToFileURL(join(HERE, 'src', p)).href;
     const child = spawn(process.execPath, ['--input-type=module', '-e', `
-      const { Db } = await import(${JSON.stringify(url('db.ts'))});
-      const { AuditLog } = await import(${JSON.stringify(url('audit.ts'))});
+      const { Db } = await import(${JSON.stringify(url('core/db.ts'))});
+      const { AuditLog } = await import(${JSON.stringify(url('core/audit.ts'))});
       const db = new Db(${JSON.stringify(file)});
       db.tx(() => {
         new AuditLog(db).append({ at: ${JSON.stringify(NOW)}, kind: 'LOGIN_SUCCEEDED', outcome: 'ALLOWED', actor_id: 'the other process', detail: {} });
@@ -457,7 +457,7 @@ describe('151i · 4 · the audit log on a database two copies share', () => {
       for (let i = 0; i < 4; i++) new AuditLog(i % 2 === 0 ? a : b).append(row(`v-${i}`));
     } finally { a.close(); b.close(); }
     const r = await new Promise<{ code: number | null; out: string }>((resolve) => {
-      const p = spawn(process.execPath, [join(HERE, 'src', 'cli.ts'), 'verify-audit'], { env: { ...process.env, CAPREBATE_DB: file }, stdio: ['ignore', 'pipe', 'pipe'] });
+      const p = spawn(process.execPath, [join(HERE, 'src', 'core', 'cli.ts'), 'verify-audit'], { env: { ...process.env, CAPREBATE_DB: file }, stdio: ['ignore', 'pipe', 'pipe'] });
       let out = '';
       p.stdout.on('data', (d: Buffer) => { out += d.toString(); });
       p.on('exit', (code) => resolve({ code, out }));

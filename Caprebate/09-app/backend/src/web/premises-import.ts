@@ -18,10 +18,10 @@
  * The first real file is checked against them before anything is kept; a file whose columns do not match is refused
  * whole. In the test system it runs on invented rows only.
  */
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
 import { parseCsv } from './pack-lines.ts';
-import { normalisePostcode } from '../connectors/postcode-check.ts';
+import { normalisePostcode } from '../integrations/index.ts';
 
 export type PremisesSector = 'care_homes' | 'dental' | 'supported_living' | 'gp' | 'private_hospital';
 

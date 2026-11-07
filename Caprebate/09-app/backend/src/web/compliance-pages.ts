@@ -9,9 +9,9 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { HTML_HEADERS, type Safe } from './html.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { HTML_HEADERS, type Safe } from '../shared/index.ts';
 import * as C from './compliance.ts';
 import * as A from './compliance-aml.ts';
 import * as R from './compliance-rights.ts';

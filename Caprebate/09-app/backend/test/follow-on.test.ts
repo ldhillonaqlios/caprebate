@@ -27,13 +27,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { APP_ROLES } from '../src/roles.ts';
-import { can, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj } from '../src/authz.ts';
-import { AuditLog } from '../src/audit.ts';
-import { Db, migrate } from '../src/db.ts';
-import { MIGRATIONS_DIR } from '../src/app.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { APP_ROLES } from '../src/core/roles.ts';
+import { can, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj } from '../src/core/authz.ts';
+import { AuditLog } from '../src/core/audit.ts';
+import { Db, migrate } from '../src/core/db.ts';
+import { MIGRATIONS_DIR } from '../src/core/app.ts';
 import * as C from '../src/web/crm.ts';
 import * as D from '../src/web/documents.ts';
 import * as DB from '../src/web/dashboard.ts';
@@ -45,9 +45,9 @@ import * as F from '../src/web/claim-facts.ts';
 import * as MD from '../src/web/mandatory-documents.ts';
 import { invoiceWindowNeed } from '../src/web/claim-record.ts';
 import { acceptClientBytes, finishUpload, issuedJob } from '../src/web/uploads.ts';
-import { formatPence } from '../src/web/shown-range.ts';
-import { localDate } from '../src/web/localtime.ts';
-import { anyStageLabel, stage as stageOf } from '../src/web/stages.ts';
+import { formatPence } from '../src/shared/shown-range.ts';
+import { localDate } from '../src/shared/localtime.ts';
+import { anyStageLabel, stage as stageOf } from '../src/shared/stages.ts';
 import { distinctReasons } from '../src/web/tasks-pages.ts';
 import { actor, fixedClock, keys } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
@@ -800,7 +800,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
     const log = new AuditLog(db);
     for (const kind of ['LOGIN_FAILED', 'LOGIN_FAILED', 'RATE_LIMITED'] as const) log.append({ at: '2026-09-12T10:00:00.000Z', kind, outcome: 'REFUSED', detail: {} });
     db.close();
-    const run = () => spawnSync(process.execPath, ['src/cli.ts', 'verify-audit'], { cwd: BACKEND, env: { ...process.env, CAPREBATE_DB: file }, encoding: 'utf8' });
+    const run = () => spawnSync(process.execPath, ['src/core/cli.ts', 'verify-audit'], { cwd: BACKEND, env: { ...process.env, CAPREBATE_DB: file }, encoding: 'utf8' });
     const ok = run();
     assert.equal(ok.status, 0, ok.stderr);
     assert.match(ok.stdout, /audit log intact: 3 entries/);
@@ -812,7 +812,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
     const broken = run();
     assert.equal(broken.status, 1);
     assert.match(broken.stdout, /AUDIT LOG BROKEN at entry 2 of 3/);
-    assert.match(JSON.parse(readFileSync(join(BACKEND, 'package.json'), 'utf8')).scripts['verify-audit'] as string, /src\/cli\.ts verify-audit/);
+    assert.match(JSON.parse(readFileSync(join(BACKEND, 'package.json'), 'utf8')).scripts['verify-audit'] as string, /src\/core\/cli\.ts verify-audit/);
   });
 
   test('(c) THE ONE-LOGIN NOTICE IS ON EVERY REGISTER PAGE — the identity store, the retention list and a contact’s consent history among them', async () => {
@@ -846,11 +846,11 @@ describe('the defects the guide found by running every exercise on the demo', ()
         assert.match(r.body, /No rule can send a message itself/, effect);
       }
     } finally { h.close(); }
-    const seedSource = readFileSync(join(BACKEND, 'src/seed.ts'), 'utf8');
-    assert.ok(seedSource.includes('`src/cli.ts` refuses to seed') && seedSource.includes('`tools/demo-server.ts`'));
+    const seedSource = readFileSync(join(BACKEND, 'src/core/seed.ts'), 'utf8');
+    assert.ok(seedSource.includes('`src/core/cli.ts` refuses to seed') && seedSource.includes('`tools/demo-server.ts`'));
     assert.equal(seedSource.includes('`app.ts` refuses to seed'), false);
-    for (const f of ['src/cli.ts', 'tools/demo-server.ts']) assert.ok(readFileSync(join(BACKEND, f), 'utf8').includes("CAPREBATE_ALLOW_SEED !== '1'"), f);
-    assert.equal(readFileSync(join(BACKEND, 'src/app.ts'), 'utf8').includes('CAPREBATE_ALLOW_SEED'), false);
+    for (const f of ['src/core/cli.ts', 'tools/demo-server.ts']) assert.ok(readFileSync(join(BACKEND, f), 'utf8').includes("CAPREBATE_ALLOW_SEED !== '1'"), f);
+    assert.equal(readFileSync(join(BACKEND, 'src/core/app.ts'), 'utf8').includes('CAPREBATE_ALLOW_SEED'), false);
   });
 
   test('(e) "CHANGE THE CLAIM" REFUSES A NEXT ACTION WITH ITS REASON, OVER HTTP, and writes nothing', async () => {
@@ -903,7 +903,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
       const reused = await send(PDF);
       assert.equal(reused.status, 409, 'the single-use key was used twice');
       // ONE HANDLER: the router calls the upload's two steps once each, for a PUT and a POST alike.
-      const router = readFileSync(join(BACKEND, 'src/web/router.ts'), 'utf8');
+      const router = readFileSync(join(BACKEND, 'src/core/router.ts'), 'utf8');
       assert.equal(router.split('acceptClientBytes(').length - 1, 1);
       assert.equal(router.split('finishUpload(').length - 1, 1);
     } finally { h.close(); }

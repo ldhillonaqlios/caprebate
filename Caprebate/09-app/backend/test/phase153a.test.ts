@@ -17,7 +17,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import * as F from '../src/web/claim-facts.ts';
 import { packView, savePackValue, saveLine, setLineRemoved, type PackDeps } from '../src/web/survey-pack.ts';
 import { CHAPTERS, chaptersToRead } from '../src/web/pack-chapters.ts';
@@ -25,7 +25,7 @@ import { grantProviderNeed, grantSplitNeed, shippedGrantSwitches, GRANT_PAPERS_T
 import { snapshotOf } from '../src/web/pack-approve.ts';
 import { reportModel } from '../src/web/survey-report.ts';
 import { legalView } from '../src/web/pack-legal.ts';
-import { plainNeed } from '../src/web/next-step.ts';
+import { plainNeed } from '../src/shared/next-step.ts';
 import { actor } from './helpers.ts';
 
 const T = '2026-10-04T09:00:00.000Z';

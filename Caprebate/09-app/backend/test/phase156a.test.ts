@@ -1,7 +1,7 @@
 /**
  * PHASE 156a, 5 October 2026 — THE CONTACT FORM'S CLOUDFLARE KEYS ON THE TEST WEBSITE.
  *
- * The security check itself was built on 29 September 2026 (src/connectors/turnstile.ts, test/turnstile.test.ts). On
+ * The security check itself was built on 29 September 2026 (src/integrations/connectors/turnstile.ts, test/turnstile.test.ts). On
  * the test website it could never work: api/index.mjs reads only the names in TEST_DEPLOY_KEYS from Vercel's
  * settings, and TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY were not among them. So keys added in Vercel would be
  * ignored and the page would keep Cloudflare's test key. These tests prove both names are read, that the page then
@@ -14,10 +14,10 @@ import { randomBytes } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { turnstileSiteKey, turnstileWhy, withSiteKey, TURNSTILE_TEST_SITE_KEY } from '../src/connectors/turnstile.ts';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { turnstileSiteKey, turnstileWhy, withSiteKey, TURNSTILE_TEST_SITE_KEY } from '../src/integrations/connectors/turnstile.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
 
 /** Cloudflare's published test keys: a site key that forces an interactive check, and a secret that always fails. */
 const SITE_FORCES_CHALLENGE = '3x00000000000000000000FF';
@@ -92,9 +92,9 @@ function lookupWorld(): { env: Record<string, string>; lines: () => Record<strin
 const WHO156 = ['--who', 'Invented Tester', '--why', 'Phase 156a: the key went into Vercel'];
 
 async function runLookup(source: string, extra: string[]): Promise<{ code: number; said: string; calls: number }> {
-  const L = await import('../src/connectors/test-lookups.ts');
-  const { fixtureTransport } = await import('../src/connectors/http.ts');
-  const { secretsFromValues, forgetRegisteredSecretsForTest } = await import('../src/secrets.ts');
+  const L = await import('../src/integrations/connectors/test-lookups.ts');
+  const { fixtureTransport } = await import('../src/integrations/connectors/http.ts');
+  const { secretsFromValues, forgetRegisteredSecretsForTest } = await import('../src/core/secrets.ts');
   const w = lookupWorld();
   const said: string[] = [];
   const deps = { now: () => '2026-10-05T11:00:00.000Z', out: (l: string) => { said.push(l); }, err: (l: string) => { said.push(l); } };
@@ -148,9 +148,9 @@ describe('156a B3 · a test lookup of EPC or CQC can be told the nation', () => 
 
 describe('156a B3 · a test lookup of the Ordnance Survey building outlines', () => {
   async function osLookup(extra: string[], keys: Record<string, string>): Promise<{ code: number; said: string; calls: number; urls: string[]; headers: Record<string, string>[] }> {
-    const L = await import('../src/connectors/test-lookups.ts');
-    const { fixtureTransport } = await import('../src/connectors/http.ts');
-    const { secretsFromValues, forgetRegisteredSecretsForTest } = await import('../src/secrets.ts');
+    const L = await import('../src/integrations/connectors/test-lookups.ts');
+    const { fixtureTransport } = await import('../src/integrations/connectors/http.ts');
+    const { secretsFromValues, forgetRegisteredSecretsForTest } = await import('../src/core/secrets.ts');
     const w = lookupWorld();
     const said: string[] = [];
     const deps = { now: () => '2026-10-05T11:00:00.000Z', out: (l: string) => { said.push(l); }, err: (l: string) => { said.push(l); } };

@@ -29,17 +29,17 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { APP_ROLES, type AppRole } from '../src/roles.ts';
-import { can, REGISTERED_ACTIONS, type Obj } from '../src/authz.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
+import { can, REGISTERED_ACTIONS, type Obj } from '../src/core/authz.ts';
 import { quarantinedKeysAndValues } from '../src/payload.ts';
-import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/web/postcode-port.ts';
+import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-port.ts';
 import * as C from '../src/web/crm.ts';
 import * as L from '../src/web/leads.ts';
 import * as P from '../src/web/pipeline.ts';
 import { actor, testApp, keys, scalars } from './helpers.ts';
-import { plainDashText } from '../src/web/plain-dashes.ts';
+import { plainDashText } from '../src/shared/plain-dashes.ts';
 
 const PASSWORD = 'a-very-long-development-password';
 const T = '2026-09-08T00:00:00.000Z';
@@ -630,7 +630,7 @@ describe('N4 — existing capital allowances claimed: UNKNOWN and never-asked ar
       const b = JSON.parse((await sales.req(`/staff/properties/${neverP.id}/view.json`)).body) as { existing_ca_claimed: unknown };
       assert.deepEqual(a.existing_ca_claimed, b.existing_ca_claimed);
       const label = C.priorClaimPosition(null).label;
-      // PHASE 160c: the page reads the label without its long dash (src/web/plain-dashes.ts).
+      // PHASE 160c: the page reads the label without its long dash (src/shared/plain-dashes.ts).
       assert.ok((await sales.req(`/staff/properties/${unknownP.id}`)).body.includes(plainDashText(label)));
       assert.ok((await sales.req(`/staff/properties/${neverP.id}`)).body.includes(plainDashText(label)));
     } finally { h.close(); }

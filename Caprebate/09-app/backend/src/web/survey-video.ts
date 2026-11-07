@@ -20,9 +20,9 @@
  * which is what an iPhone needs to play and seek, and keeps every answer under the test website's limit.
  */
 import { createHash, generateKeyPairSync } from 'node:crypto';
-import type { Actor } from '../authz.ts';
-import { authorise, NotAuthorised } from '../authz.ts';
-import { INCOMING_PREFIX, VIDEO_PREFIX, type FsObjectStore, type IncomingTarget } from './objectstore.ts';
+import type { Actor } from '../core/index.ts';
+import { authorise, NotAuthorised } from '../core/index.ts';
+import { INCOMING_PREFIX, VIDEO_PREFIX, type FsObjectStore, type IncomingTarget } from '../shared/objectstore.ts';
 import { clientOf, NO_KEY, type EvidenceDeps } from './survey-evidence.ts';
 import { failureWords, LOCK_OVERHEAD, SITE_SUFFIX, unlockPhoto, type UploadResult } from './photo-upload.ts';
 import { packJob } from './surveyor.ts';

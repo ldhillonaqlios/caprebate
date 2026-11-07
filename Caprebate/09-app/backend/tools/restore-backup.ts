@@ -1,6 +1,6 @@
 /**
  * RESTORE A BACKUP — one night's database, and the documents, from a copy of the backup bucket. Phase 161h, 7 November
- * 2026 (src/backup.ts makes the backup; 09-app/deploy/LIVE-RUNBOOK.md, "Restore a backup", says when and how).
+ * 2026 (src/core/backup.ts makes the backup; 09-app/deploy/LIVE-RUNBOOK.md, "Restore a backup", says when and how).
  *
  *   1. Copy the bucket to a folder on this computer, OUTSIDE the code folder:
  *        aws s3 sync s3://<BACKUP_S3_BUCKET> ~/caprebate-restore/bucket
@@ -14,11 +14,11 @@
  * It writes only new files and never touches the live website. It prints no key, no address and nothing from a record.
  */
 import { join } from 'node:path';
-import { Db, pendingMigrations } from '../src/db.ts';
-import { MIGRATIONS_DIR } from '../src/app.ts';
-import { AuditLog } from '../src/audit.ts';
-import { folderTarget, restoreDatabase, restoreDocuments } from '../src/backup.ts';
-import { FsObjectStore } from '../src/web/objectstore.ts';
+import { Db, pendingMigrations } from '../src/core/db.ts';
+import { MIGRATIONS_DIR } from '../src/core/app.ts';
+import { AuditLog } from '../src/core/audit.ts';
+import { folderTarget, restoreDatabase, restoreDocuments } from '../src/core/backup.ts';
+import { FsObjectStore } from '../src/shared/objectstore.ts';
 
 export async function restoreFromFolder(o: { from: string; date: string; to: string; documents?: string; keyB64: string }): Promise<string[]> {
   const key = Buffer.from(o.keyB64.trim(), 'base64');

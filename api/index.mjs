@@ -32,8 +32,8 @@ async function build() {
   // overwrites so a visitor cannot set it (vercel.com/docs/headers/request-headers). Without this, the address on a
   // signature was Vercel's own, and the sign-in limit per network address would count every visitor as one.
   process.env.CAPREBATE_TRUST_PROXY ??= '1';
-  const { createApp } = await import('../Caprebate/09-app/backend/src/server.ts');
-  const { seed } = await import('../Caprebate/09-app/backend/src/seed.ts');
+  const { createApp } = await import('../Caprebate/09-app/backend/src/core/server.ts');
+  const { seed } = await import('../Caprebate/09-app/backend/src/core/seed.ts');
   const host = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
   const publicOrigin = process.env.CAPREBATE_PUBLIC_ORIGIN ?? (host ? `https://${host}` : undefined);
   const since = new Date().toISOString();
@@ -46,7 +46,7 @@ async function build() {
     twoFactor: TEST_WEBSITE_TWO_FACTOR,
     // 4 OCTOBER 2026 (Phase 153c, Word question 219): uploads are kept on the test website only - invented files - for
     // 7 years, sealed with CAPREBATE_ORIGINALS_KEY from its settings; without the key nothing is kept. Never the default.
-    keepOriginals: (await import('../Caprebate/09-app/backend/src/web/originals.ts')).KEEP_ORIGINALS_TEST_WEBSITE,
+    keepOriginals: (await import('../Caprebate/09-app/backend/src/shared/originals.ts')).KEEP_ORIGINALS_TEST_WEBSITE,
     // 4 OCTOBER 2026 (Phase 153d, Word questions 33, 34 and 196): the portal shows the TEST-ONLY engagement letter, its
     // clauses 5, 7(d) and 13 filled with test defaults, not agreed. It is never signed. This file only - never the default.
     testLetter: true,
@@ -69,15 +69,15 @@ async function build() {
   const t151e = await configureTestDeploy(made, process.env);
   console.log(`test deployment: ${t151e.why}`);
   // 29 SEPTEMBER 2026: whether the contact form's security check is checked on the server, and if not why (names only).
-  const { turnstileWhy } = await import('../Caprebate/09-app/backend/src/connectors/turnstile.ts');
+  const { turnstileWhy } = await import('../Caprebate/09-app/backend/src/integrations/connectors/turnstile.ts');
   console.log(`test deployment: ${turnstileWhy(made.app.secrets)}`);
   // 30 SEPTEMBER 2026: whether video calls get a Zoom meeting, and if not why (names only).
-  const { zoomWhy } = await import('../Caprebate/09-app/backend/src/connectors/zoom.ts');
+  const { zoomWhy } = await import('../Caprebate/09-app/backend/src/integrations/connectors/zoom.ts');
   console.log(`test deployment: ${zoomWhy(made.app.secrets)}`);
-  const { whatsappWhy } = await import('../Caprebate/09-app/backend/src/connectors/whatsapp.ts');
+  const { whatsappWhy } = await import('../Caprebate/09-app/backend/src/integrations/connectors/whatsapp.ts');
   console.log(`test deployment: ${whatsappWhy(made.app.secrets)}`);
   // 4 OCTOBER 2026 (Phase 153c): whether uploaded files are kept, and if not why (the key's name only, never its value).
-  const { sealKeyFromEnv } = await import('../Caprebate/09-app/backend/src/web/originals.ts');
+  const { sealKeyFromEnv } = await import('../Caprebate/09-app/backend/src/shared/originals.ts');
   console.log(`test deployment: uploaded files ${sealKeyFromEnv() === null ? 'are NOT kept - CAPREBATE_ORIGINALS_KEY is not set in the settings' : 'are kept for 7 years, sealed'}`);
   // PHASE 154a1 (line 10), 4 October 2026: EMAIL IS SENT ON THE TEST WEBSITE (EMAIL_SENDING, on for testing since 30 Sep
   // 2026), and the function log is no place for an email. This used to print every new outbox email - address, subject
@@ -163,13 +163,13 @@ export async function configureTestDeploy(made, env) {
   const hash = await made.app.hasher.hash(pw);
   // PHASE 151j: only the logins STILL ON THE PUBLIC SEED PASSWORD move. On a lasting database a person may have chosen
   // their own password (or been given a temporary one); every cold start overwrote it until 28 Sep 2026.
-  const { SEED_PASSWORD } = await import('../Caprebate/09-app/backend/src/seed.ts');
+  const { SEED_PASSWORD } = await import('../Caprebate/09-app/backend/src/core/seed.ts');
   for (const u of made.app.db.all('SELECT id, password_hash FROM users')) {
     if (await made.app.hasher.verify(u.password_hash, SEED_PASSWORD)) {
       made.app.db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, u.id]);
     }
   }
-  const { secretsFromEnvironment, useProcessSecrets } = await import('../Caprebate/09-app/backend/src/secrets.ts');
+  const { secretsFromEnvironment, useProcessSecrets } = await import('../Caprebate/09-app/backend/src/core/secrets.ts');
   made.app.secrets = secretsFromEnvironment(env, TEST_DEPLOY_KEYS);
   // 30 Sep 2026: every screen that asks the process for a key (the email login) reads these same settings.
   useProcessSecrets(made.app.secrets);
@@ -230,7 +230,7 @@ export function sharedDocumentStore(env, lasting) {
  */
 export async function sharedDocumentOptions(docs, lasting, sdk, makeClient) {
   if (!docs.shared || lasting.authToken === undefined) return {};
-  const { vercelBlobClient, uploadLinkSecret } = await import('../Caprebate/09-app/backend/src/web/shared-objectstore.ts');
+  const { vercelBlobClient, uploadLinkSecret } = await import('../Caprebate/09-app/backend/src/shared/shared-objectstore.ts');
   let client;
   try {
     client = await (makeClient ?? vercelBlobClient)(docs.token === undefined ? {} : { token: docs.token }, sdk);
@@ -395,7 +395,7 @@ export async function emptyLasting(lasting, openDb = undefined) {
   try {
     // `openDb` is for the tests (a local file, never the network); absent, the lasting database itself.
     db = openDb === undefined
-      ? new (await import('../Caprebate/09-app/backend/src/db.ts')).Db(lasting.location, { authToken: lasting.authToken })
+      ? new (await import('../Caprebate/09-app/backend/src/core/db.ts')).Db(lasting.location, { authToken: lasting.authToken })
       : openDb(lasting);
   } catch (e) {
     return { emptied: false, why: `it could not be opened (${openFailure(e, lasting)})` };
@@ -467,7 +467,7 @@ export function isLiveDeploy(env) {
 async function buildLive() {
   const started = Date.now();
   process.env.CAPREBATE_TRUST_PROXY ??= '1';
-  const { startLiveWebsite } = await import('../Caprebate/09-app/backend/src/live-website.ts');
+  const { startLiveWebsite } = await import('../Caprebate/09-app/backend/src/core/live-website.ts');
   const r = await startLiveWebsite(process.env);
   for (const line of r.lines) (r.started ? console.log : console.error)(line);
   if (r.started) console.log(`live website: this copy started in ${Date.now() - started} ms`);

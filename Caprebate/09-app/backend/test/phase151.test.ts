@@ -16,30 +16,30 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 
-import { fixtureTransport, RateLimiter, type CallDeps, type Fixture } from '../src/connectors/http.ts';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
-import { emptySecrets, secretsFromValues, SECRET_KEYS } from '../src/secrets.ts';
+import { fixtureTransport, RateLimiter, type CallDeps, type Fixture } from '../src/integrations/connectors/http.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
+import { emptySecrets, secretsFromValues, SECRET_KEYS } from '../src/core/secrets.ts';
 import {
   IDENTITY_CHECK, IDENTITY_CHECK_QUESTION, IDENTITY_SESSION_ENDPOINT, identityCheckMissing, readIdentityDecision,
   signatureHolds, startIdentityCheck, DIDIT_STATUS_OUTCOME, type IdentityCheckConfig,
-} from '../src/connectors/identity-check.ts';
+} from '../src/integrations/connectors/identity-check.ts';
 import { backendSwitchReadings } from '../src/web/case-stamp.ts';
 import { testApp } from './helpers.ts';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { can, NotAuthorised, REGISTERED_ACTIONS, builtInHolds, type Actor } from '../src/authz.ts';
-import { toQuarantineRole, isStaff } from '../src/roles.ts';
-import { customRoleOf, roleRefusal, NEVER_GRANTED, SEALED_FROM_SURVEY } from '../src/custom-roles.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { can, NotAuthorised, REGISTERED_ACTIONS, builtInHolds, type Actor } from '../src/core/authz.ts';
+import { toQuarantineRole, isStaff } from '../src/core/roles.ts';
+import { customRoleOf, roleRefusal, NEVER_GRANTED, SEALED_FROM_SURVEY } from '../src/core/custom-roles.ts';
 import { makeRole, changeRole, retireRole } from '../src/web/role-editor.ts';
 import { assignRole } from '../src/web/settings.ts';
-import { checkPostcode, normalisePostcode, POSTCODE_CHECK, postcodeCheckMissing } from '../src/connectors/postcode-check.ts';
-import { gateStatus } from '../src/connectors/registers.ts';
-import { encodePng } from '../src/web/images.ts';
-import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/registers/caprebate-source-register.ts';
+import { checkPostcode, normalisePostcode, POSTCODE_CHECK, postcodeCheckMissing } from '../src/integrations/connectors/postcode-check.ts';
+import { gateStatus } from '../src/integrations/connectors/registers.ts';
+import { encodePng } from '../src/shared/images.ts';
+import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/integrations/registers/source-register.ts';
 
 /* ================================================================== *
  * 1 · THE ONLINE IDENTITY CHECK

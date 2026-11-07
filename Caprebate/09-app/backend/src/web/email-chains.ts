@@ -20,10 +20,10 @@
  * back matched to it.
  */
 
-import type { Db } from '../db.ts';
-import { can, type Actor } from '../authz.ts';
-import { SENT_SECRET_KINDS } from '../stubs/email-provider.ts';
-import { localStamp } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import { can, type Actor } from '../core/index.ts';
+import { SENT_SECRET_KINDS } from '../integrations/index.ts';
+import { localStamp } from '../shared/index.ts';
 import { emailsReadUntil } from './messages.ts';
 
 export type ChainEmail = {

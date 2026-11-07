@@ -18,29 +18,29 @@
 
 import { WHATSAPP_PAGE_HEADERS, withImportScript } from './whatsapp-page.ts';
 import { randomUUID } from 'node:crypto';
-import { EMAIL_SENDING, auditMailConnections, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, auditMailConnections, sendingOn, smtpLoginFromKeyFile } from '../integrations/index.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Db } from '../db.ts';
-import { can, type Actor } from '../authz.ts';
-import { h, raw, HTML_HEADERS, type Safe } from './html.ts';
-import { savedMessage, why } from './components.ts';
-import type { FsObjectStore } from './objectstore.ts';
+import type { App } from '../core/app.ts';
+import type { Db } from '../core/index.ts';
+import { can, type Actor } from '../core/index.ts';
+import { h, raw, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { savedMessage, why } from '../shared/index.ts';
+import type { FsObjectStore } from '../shared/objectstore.ts';
 import * as M from './messages.ts';
 import * as IE from './inbound-email.ts';
-import { page } from './html.ts';
-import { localStamp } from './localtime.ts';
-import { imapLoginFromKeyFile, imapMailbox, readingMissing, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../stubs/email-inbound.ts';
+import { page } from '../shared/index.ts';
+import { localStamp } from '../shared/index.ts';
+import { imapLoginFromKeyFile, imapMailbox, readingMissing, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../integrations/index.ts';
 import { earlyQuestions, receiveFile } from './client-files-pages.ts';
 import * as W from './whatsapp.ts';
 import { whatsappPage } from './whatsapp-page.ts';
 import { communicate, composer } from './communication.ts';
-import { boundaryOf, parseMultipart, piecedFields, type Part } from './multipart.ts';
-import { UPLOAD_LIMITS } from './upload-handler-port.ts';
+import { boundaryOf, parseMultipart, piecedFields, type Part } from '../core/index.ts';
+import { UPLOAD_LIMITS } from '../shared/upload-handler-port.ts';
 import { earlyQuestionsFor, receivableTypes } from './documents.ts';
 import { earlyVouchesFrom } from './document-reading.ts';
-import { cleanField } from './typed.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { cleanField } from '../core/index.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -498,7 +498,7 @@ export async function readPortalSend(
     if (boundary === null) return { ok: false, why: 'Something went wrong. Try again.' };
     let raw0: Buffer;
     try { raw0 = await body(req, UPLOAD_LIMITS.max_bytes + 64 * 1024); } catch { return { ok: false, why: `That file is too big. The most we take is ${Math.round(UPLOAD_LIMITS.max_bytes / 1024 / 1024)} MB.` }; }
-    // PHASE 160e: a file over Vercel's 4.5 MB a request came first in pieces (src/web/upload-pieces.ts).
+    // PHASE 160e: a file over Vercel's 4.5 MB a request came first in pieces (src/core/upload-pieces.ts).
     const sent = pieces === undefined ? null : piecedFields(new Uint8Array(raw0), type);
     if (sent !== null && pieces !== undefined) {
       const got = await pieces(sent.id);
