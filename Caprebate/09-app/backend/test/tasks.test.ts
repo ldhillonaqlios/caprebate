@@ -432,7 +432,7 @@ describe('one next action per claim, with an owner and a due date', () => {
         assert.deepEqual(r.waiting, { who: e.waiting_on, why: e.waiting_why }, `${r.client}: a second answer to who is waiting`);
       }
       const src = readFileSync(join(SRC, 'modules/crm/tasks.ts'), 'utf8');
-      assert.match(src, /import \{ waitingOn, type WaitingOn \} from '\.\/engaged\.ts'/);
+      assert.match(src, /import \{[^}]*\bwaitingOn, type WaitingOn\b[^}]*\} from '\.\.\/claims\/index\.ts'/);
       assert.equal(/whoIsWaiting\(|letter_state/.test(src), false, 'tasks.ts has a waiting ladder of its own');
 
       const brackenfell = firstClaim(app.db, businessNamed(app.db, 'Brackenfell Dental Partnership LLP'));

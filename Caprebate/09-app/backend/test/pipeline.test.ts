@@ -413,7 +413,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       assert.equal(fwd(app, 'ADMIN', c, 'DATA_GATHERING').ok, true);
 
       const source = readFileSync(join(SRC, 'modules/crm/pipeline.ts'), 'utf8');
-      assert.match(source, /import \{ assertSignedEngagement \} from '\.\/research\.ts'/);
+      assert.match(source, /import \{[^}]*\bassertSignedEngagement\b[^}]*\} from '\.\.\/claims\/index\.ts'/);
       assert.equal(/FROM engagements/i.test(source), false, 'pipeline.ts reads the engagements table itself — a second gate');
     } finally { app.close(); }
   });
