@@ -2,6 +2,10 @@
  * DOCUMENTS ON THE CLAIM — TYPES, VERSIONS, LINKS, REQUESTS, AND WHO MAY READ
  * WHICH. CRM 4 of 10.
  *
+ * The rules only. The routes are src/modules/claims/documents.routes.ts, the
+ * pages src/modules/claims/documents-pages.ts, and the section gates and the other
+ * "may this login" questions src/modules/claims/documents.permissions.ts.
+ *
  * ───────────────────────────────────────────────────────────────────────────
  * THERE IS STILL ONE UPLOAD HANDLER
  *
@@ -70,13 +74,14 @@ import { getBusinessesIdById, getClientMessageFilesIdDirectionByLogicalDocumentI
 import { getDocumentTypesCodeByCode, getDocumentTypesM, getDocumentTypesOrdByCode, getDocumentsIdBusinessIdById, getDocumentsRoleById, getLogicalDocumentsRoleById, getUsersRoleById2, insertDocumentTypes, listBusinessesOByIdBusinessId, listDocumentTypesCodeLabelByActiveHandlerType, listLogicalDocumentsIdBusinessIdByBusinessId, listRegisterRecordsIdSourceIdBySourceIdBusinessId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2, listSurveyorJobsSurveyorIdByClaimIdSurveyorId, listSurveyorJobsSurveyorIdBySurveyorIdClaimId, updateDocumentTypesLabelReadersByCode } from './data-borrowed.ts';
 import { getDocumentTypesCodeLabelByCode, getLogicalDocumentsIdBusinessIdById, listDocumentTypesCodeLabel2, listDocumentsIdLogicalDocumentIdByLogicalDocumentId, listLogicalDocumentsIdBusinessId, listLogicalDocumentsIdBusinessIdByBusinessId2, listLogicalDocumentsIdBusinessIdByBusinessId3, listLogicalDocumentsIdBusinessIdByIdJO, listLogicalDocumentsIdBusinessIdByIdUnlinkedAt } from './data-borrowed.ts';
 import { listDocumentFieldVouchesIdBusinessIdByRequestIdJO, listDocumentFieldVouchesIdBusinessIdByRequestIdJO2 } from './data-borrowed.ts';
+import { CENTRE_OBJ, mayVouchFor, staffMayOpen, TYPES_OBJ } from './documents.permissions.ts';
 
 export type DocDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
 /** `field` is the posted name a refusal is about, where it is about one. */
 export type DocResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
 type Vocab = Readonly<Record<string, string>>;
-type DocObj = Extract<Obj, { type: 'document' }>;
+export type DocObj = Extract<Obj, { type: 'document' }>;
 
 function has(v: Vocab, k: string | null | undefined): k is string {
   return k !== null && k !== undefined && Object.hasOwn(v, k);
@@ -238,7 +243,7 @@ export function stripReading(handler_type: string | null): StripReading {
  * ================================================================== */
 
 
-type TypeRow = {
+export type TypeRow = {
   code: string; label: string; source: string; handler_type: string | null; readers: string; carries_value: number;
   retention_ref: string | null; active: number; ord: number; note: string; created_at: string; updated_at: string;
 };
@@ -255,8 +260,6 @@ export type TypeView = {
   readonly note: string;
 };
 
-const TYPES_OBJ: Obj = { type: 'document_type', id: '__document_types__' };
-
 function typeView(t: TypeRow): TypeView {
   return {
     code: t.code, label: t.label, source: words(SOURCES, t.source, t.source),
@@ -269,10 +272,6 @@ function typeView(t: TypeRow): TypeView {
 export function typeList(db: Db, actor: Actor): TypeView[] {
   authorise(actor, 'document_type.read', TYPES_OBJ);
   return listDocumentTypesCodeLabel2<TypeRow>(db).map(typeView);
-}
-
-export function mayWriteTypes(actor: Actor): boolean {
-  return can(actor, 'document_type.write', TYPES_OBJ);
 }
 
 /** What an upload may be, and what may be asked for: active, with a receipt policy. A vocabulary, not a record. */
@@ -747,14 +746,6 @@ function recordEarlyVouch(
   if (adopted === null) return null;
   const by = getDocumentFieldVouchesAnsweredByByRequestIdFieldId<{ answered_by: string }>(d.db, [request_id, f.field_id])?.answered_by ?? actor.id;
   return { field_id: f.field_id, answer: adopted, by, asked_on: 'REQUEST', request: request_id };
-}
-
-/** May this login answer the question about a name, for a document of this type that does not exist yet? */
-function mayVouchFor(actor: Actor, business_id: string, t: TypeRow): boolean {
-  return can(actor, 'document.vouch', {
-    type: 'document', id: '__new__', business_id, readers: t.readers, carries_value: t.carries_value === 1,
-    letter_signed: false, assigned_surveyor_ids: [],
-  });
 }
 
 /**
@@ -1444,21 +1435,6 @@ export function withdrawVouch(
   };
 }
 
-function staffMayOpen(db: Db, actor: Actor, k: LinkView): boolean {
-  if (actor.role === 'CLIENT') return false;
-  const id = (k.href ?? '').split('/').pop() ?? '';
-  if (k.to === 'claim') {
-    const c = getClaimsBusinessIdById<{ business_id: string }>(db, [id]);
-    if (c === undefined) return false;
-    const surveyors = listSurveyorJobsSurveyorIdByClaimIdSurveyorId<{ surveyor_id: string }>(db, [id]).map((r) => r.surveyor_id);
-    return can(actor, 'claim.read', { type: 'claim', id, business_id: c.business_id, assigned_surveyor_ids: surveyors });
-  }
-  const p = getPropertiesBusinessIdById<{ business_id: string }>(db, [id]);
-  if (p === undefined) return false;
-  const surveyors = listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2<{ surveyor_id: string }>(db, [p.business_id]).map((r) => r.surveyor_id);
-  return can(actor, 'property.read', { type: 'property', id, business_id: p.business_id, assigned_surveyor_ids: surveyors });
-}
-
 /** The organisation a claim belongs to, for a route that is about to authorise on it. Asks nothing itself. */
 export function businessOfClaim(db: Db, claim_id: string): string {
   const c = getClaimsBusinessIdById<{ business_id: string }>(db, [claim_id]);
@@ -1593,11 +1569,6 @@ export type DocumentCentre = {
   readonly never: readonly string[];
 };
 
-const CENTRE_OBJ: DocObj = {
-  type: 'document', id: '__document_centre__', business_id: '__document_centre__', readers: 'CLAIM_TEAM', carries_value: true,
-  letter_signed: false, assigned_surveyor_ids: [],
-};
-
 function distinctChoices(pairs: readonly (readonly [string, string])[]): CentreChoice[] {
   const seen = new Map<string, string>();
   for (const [v, l] of pairs) if (!seen.has(v)) seen.set(v, l);
@@ -1676,24 +1647,6 @@ export function documentCentre(db: Db, actor: Actor, q: URLSearchParams): Docume
     sorts: Object.entries(CENTRE_SORTS).map(([value, label]) => ({ value, label })),
     never: CENTRE_NEVER,
   };
-}
-
-/**
- * THE GATE OF THE DOCUMENT CENTRE, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
- * every menu link for every login, so a gate that drifted from its route fails there.
- */
-export function documentCentreGate(actor: Actor): void {
-  authorise(actor, 'document_centre.enter', CENTRE_OBJ);
-}
-
-/**
- * THE GATE OF THE DOCUMENT TYPES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
- * every menu link for every login, so a gate that drifted from its route fails there.
- */
-export function documentTypesGate(actor: Actor): void {
-  authorise(actor, 'document_type.read', TYPES_OBJ);
 }
 
 /* ================================================================== *
