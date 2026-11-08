@@ -322,7 +322,8 @@ function expandRegex(src) {
 function codeRoutes(inp) {
   const routes = new Map();
   for (const [f, t] of inp.codeText) {
-    if (!/\/src\/(web\/[^/]+|app|server)\.ts$/.test(f)) continue;
+    // the screens' folder, and since Phase 161j the five business modules' own folders (their files moved there)
+    if (!/\/src\/(web\/[^/]+|modules\/(?:public-site|assessment|portal|crm|claims)\/[^/]+|app|server)\.ts$/.test(f)) continue;
     for (const m of t.matchAll(/path === '(\/[^']*)'/g)) if (PREFIX.test(m[1]) || m[1] === '/') routes.set(m[1], path.basename(f));
     for (const m of t.matchAll(/\/\^(\\\/[^\n]*?)\$\/[a-z]*\.(?:exec|test)\(/g)) for (const r of expandRegex(m[1])) if (PREFIX.test(r)) routes.set(r, path.basename(f));
   }
