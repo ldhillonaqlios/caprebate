@@ -30,14 +30,14 @@ import type { App } from '../../core/app.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { badge, breadcrumb, claimRef, highlights, propertyIn, savedMessage, why } from '../../shared/index.ts';
-import * as C from '../../web/crm.ts';
+import * as C from '../crm/crm.ts';
 import * as D from '../../web/documents.ts';
 import type { FsObjectStore } from '../../shared/objectstore.ts';
 import { piecedFields, singleFile } from '../../core/index.ts';
 import { piecesOf, piecesPage } from '../../core/index.ts';
 import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals, readerFor, DAMAGED_PDF } from '../../web/uploads.ts';
 import { UPLOAD_LIMITS, pdfLooksComplete, sniffAccepted } from '../../shared/upload-handler-port.ts';
-import { NO_DUE_DATE } from '../../web/tasks.ts';
+import { NO_DUE_DATE } from '../crm/tasks.ts';
 import { ANSWER_WORDS, EARLY_VOUCH_PREFIX, VOUCH_ANSWERS, earlyVouchesFrom } from '../../web/document-reading.ts';
 
 export type WebResult = 'handled' | 'not-mine';

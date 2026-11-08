@@ -43,10 +43,10 @@ import { authorise, can, NotAuthorised, type Actor } from '../core/index.ts';
 import type { FsObjectStore } from '../shared/objectstore.ts';
 import { packJob } from './surveyor.ts';
 import { checklistFor, type ChecklistItem } from './survey-checklist.ts';
-import { postClientMessage } from './messages.ts';
-import { isBookable, SLOT_MINUTES } from './schedule.ts';
-import { reconcileVideoMeeting, zoomDeps } from './video-calls.ts';
-import { sendVideoInvite } from './booking-invite.ts';
+import { postClientMessage } from '../modules/crm/messages.ts';
+import { isBookable, SLOT_MINUTES } from '../modules/crm/schedule.ts';
+import { reconcileVideoMeeting, zoomDeps } from '../modules/crm/video-calls.ts';
+import { sendVideoInvite } from '../modules/crm/booking-invite.ts';
 import { zoomRecording } from '../integrations/index.ts';
 
 export type EvidenceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };

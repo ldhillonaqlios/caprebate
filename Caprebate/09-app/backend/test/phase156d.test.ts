@@ -19,8 +19,8 @@ import { secretsFromValues } from '../src/core/secrets.ts';
 import { forgetZoomToken, makeZoomMeeting, zoomPastCall, zoomPlanIsFree, FREE_PLAN_LINE, NOT_ON_PLAN_WORDS } from '../src/integrations/connectors/zoom.ts';
 import {
   callLengthOf, callLengthWords, checkCallLength, videoCallsAtSameTime, videoJoinWords, zoomDeps, zoomPlanLine, SAME_TIME_WORDS,
-} from '../src/web/video-calls.ts';
-import { sendVideoInvite } from '../src/web/booking-invite.ts';
+} from '../src/modules/crm/video-calls.ts';
+import { sendVideoInvite } from '../src/modules/crm/booking-invite.ts';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
 
 const KEYS = {

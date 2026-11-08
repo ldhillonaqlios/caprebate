@@ -36,11 +36,11 @@ import { seedSignatureRecord } from '../web/signing.ts';
 import { ingestRegisterRecord, insertResearchSourcesNotPermittedYet } from '../integrations/index.ts';
 import type { AppRole } from './roles.ts';
 import { catalogue } from '../web/research.ts';
-import { backfillClaimFor, insertClaim } from '../web/crm.ts';
+import { backfillClaimFor, insertClaim } from '../modules/crm/crm.ts';
 import { allocateNumber } from '../web/invoices.ts';
-import { backfillLeadFor } from '../web/leads.ts';
-import { recordOpened } from '../web/pipeline.ts';
-import { insertTask, type TaskInsert } from '../web/tasks.ts';
+import { backfillLeadFor } from '../modules/crm/leads.ts';
+import { recordOpened } from '../modules/crm/pipeline.ts';
+import { insertTask, type TaskInsert } from '../modules/crm/tasks.ts';
 
 /**
  * Development credentials. Printed by `npm run seed`, never a default in any
@@ -293,7 +293,7 @@ function seedClaimAtInvoice(
  * SETTING WORKING TIMES AND BEING BOOKABLE ARE DIFFERENT PERMISSIONS. Everybody
  * on the staff has hours; only ADMIN and SALES are on `booking.write`, so only
  * their diaries are offered for a client call. `bookableUserIds` in
- * src/web/schedule.ts asks the rule table rather than carrying a list, and the
+ * src/modules/crm/schedule.ts asks the rule table rather than carrying a list, and the
  * finance user is here so that a developer can see the distinction working
  * instead of reading about it. Until it existed, an unassigned booking was
  * auto-assigned to whoever's hours covered the slot — and on this very data

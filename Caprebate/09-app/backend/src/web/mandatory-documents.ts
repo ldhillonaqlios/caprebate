@@ -19,7 +19,7 @@
  * The rest of this header is as it was written while the switch was off, and says why it was built that way.
  *
  * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, row 29.5, and Part R. The gate that reads it is the gate out of
- * DATA_GATHERING in src/web/pipeline.ts.
+ * DATA_GATHERING in src/modules/crm/pipeline.ts.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHY IT IS OFF
@@ -50,7 +50,7 @@
  */
 
 import type { Db } from '../core/index.ts';
-import type { Need } from './pipeline.ts';
+import type { Need } from '../modules/crm/pipeline.ts';
 import { acquisitionDateReading, clientSaidBought, latestFacts } from './claim-facts.ts';
 
 export type DocumentCondition = 'ALWAYS' | 'GRANT_FUNDED' | 'ELECTION_MADE' | 'LEASEHOLD' | 'BOUGHT' | 'SBA_ON_PURCHASE';

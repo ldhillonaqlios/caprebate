@@ -34,13 +34,13 @@ import { can, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj } from '..
 import { AuditLog } from '../src/core/audit.ts';
 import { Db, migrate } from '../src/core/db.ts';
 import { MIGRATIONS_DIR } from '../src/core/app.ts';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import * as D from '../src/web/documents.ts';
-import * as DB from '../src/web/dashboard.ts';
-import * as P from '../src/web/pipeline.ts';
-import * as I from '../src/web/introducers.ts';
+import * as DB from '../src/modules/crm/dashboard.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
+import * as I from '../src/modules/crm/introducers.ts';
 import * as V from '../src/modules/assessment/vat.ts';
-import * as T from '../src/web/tasks.ts';
+import * as T from '../src/modules/crm/tasks.ts';
 import * as F from '../src/web/claim-facts.ts';
 import * as MD from '../src/web/mandatory-documents.ts';
 import { invoiceWindowNeed } from '../src/web/claim-record.ts';
@@ -48,7 +48,7 @@ import { acceptClientBytes, finishUpload, issuedJob } from '../src/web/uploads.t
 import { formatPence } from '../src/shared/shown-range.ts';
 import { localDate } from '../src/shared/localtime.ts';
 import { anyStageLabel, stage as stageOf } from '../src/shared/stages.ts';
-import { distinctReasons } from '../src/web/tasks-pages.ts';
+import { distinctReasons } from '../src/modules/crm/tasks-pages.ts';
 import { actor, fixedClock, keys } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 

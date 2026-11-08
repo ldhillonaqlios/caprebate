@@ -107,7 +107,7 @@ export type ServerOptions = {
   sharedDocuments?: { readonly client: BlobClient; readonly linkSecret: Buffer };
   /**
    * THE PUBLIC REFERRAL FORM'S SWITCH — CRM 5 of 10. Absent means the shipped
-   * gate, `REFERRAL_FORM` in src/web/introducers.ts, which is off. A test passes
+   * gate, `REFERRAL_FORM` in src/modules/crm/introducers.ts, which is off. A test passes
    * an open gate to prove the form works; nothing that runs outside a test does.
    */
   referralForm?: { readonly enabled: boolean; readonly requires: string };

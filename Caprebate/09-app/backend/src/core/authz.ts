@@ -69,7 +69,7 @@ export type Obj =
    * `assigned_surveyor_ids` IS HOW A SURVEYOR REACHES A PROPERTY OR A CLAIM, AND
    * THE ONLY WAY. It is the set of surveyors holding a survey job that covers the
    * object — for a property, a job on its organisation; for a claim, a job on
-   * that claim's own assessment — computed by src/web/crm.ts from
+   * that claim's own assessment — computed by src/modules/crm/crm.ts from
    * `surveyor_jobs`, exactly as `surveyor_id` above is read from the job row.
    * `claims.surveyor_id` is deliberately NOT consulted: naming a surveyor on a
    * claim is a record, not an access grant. An empty list reaches nobody.
@@ -615,7 +615,7 @@ const RULES: RuleTable = {
    * proof searches the response for all seven.
    *
    * ACCOUNTING READS A CLAIM AS CLIENT, REFERENCE AND MONEY. `claim.read`
-   * admits it; src/web/crm.ts builds its view from those three and the money
+   * admits it; src/modules/crm/crm.ts builds its view from those three and the money
    * comes through `invoice.read`, which it already holds. No join to the
    * answers, the register data, the notes, the workings or the estimate.
    *
@@ -667,7 +667,7 @@ const RULES: RuleTable = {
    * survey work, so ACCOUNTING and SURVEYING are on none of these rows.
    *
    * `claim.move` IS A MOVE THROUGH A GATE, and the gate is asked on the server
-   * at every write — src/web/pipeline.ts. Holding this action lets a person ASK
+   * at every write — src/modules/crm/pipeline.ts. Holding this action lets a person ASK
    * for a move; it never lets them past a gate that is shut. `claim.reopen`,
    * the one move backwards, is ADMIN alone and needs a reason.
    *
@@ -697,7 +697,7 @@ const RULES: RuleTable = {
    *
    * THE TIMELINE ADMITS ACCOUNTING AND IS BUILT FORWARDS FOR IT. `timeline.read`
    * lets ACCOUNTING open a claim's timeline — it is already on `claim.read` — and
-   * src/web/timeline.ts builds that timeline from `invoice.read` alone, so it
+   * src/modules/crm/timeline.ts builds that timeline from `invoice.read` alone, so it
    * holds financial events and nothing else. SURVEYING reaches only the timeline
    * of a claim an assigned job is on, built from that job's reach.
    *
@@ -789,7 +789,7 @@ const RULES: RuleTable = {
    * the estimated claim value of what it referred — is ADMIN and SALES, as
    * `claim.read_value` is. `introducer.read_money` — the fees invoiced and paid
    * from those claims — is ADMIN and ACCOUNTING, as `invoice.read` is, and
-   * ACCOUNTING opens a firm with that alone: src/web/introducers.ts builds its
+   * ACCOUNTING opens a firm with that alone: src/modules/crm/introducers.ts builds its
    * view forwards from the money, with no join to the answers, the register data,
    * the notes, the workings or the estimate.
    *

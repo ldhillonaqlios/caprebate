@@ -35,10 +35,10 @@ import { seed } from '../src/core/seed.ts';
 import { Db, migrate } from '../src/core/db.ts';
 import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
 import { can, REGISTERED_ACTIONS, NotAuthorised, type Obj } from '../src/core/authz.ts';
-import * as C from '../src/web/crm.ts';
-import * as P from '../src/web/pipeline.ts';
+import * as C from '../src/modules/crm/crm.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
 import * as S from '../src/shared/stages.ts';
-import * as T from '../src/web/tasks.ts';
+import * as T from '../src/modules/crm/tasks.ts';
 import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 import { oneDriveOnly, oneDrivePath } from './onedrive-only.ts';
@@ -412,7 +412,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       letter(app, org.business, 'SIGNED');
       assert.equal(fwd(app, 'ADMIN', c, 'DATA_GATHERING').ok, true);
 
-      const source = readFileSync(join(SRC, 'web/pipeline.ts'), 'utf8');
+      const source = readFileSync(join(SRC, 'modules/crm/pipeline.ts'), 'utf8');
       assert.match(source, /import \{ assertSignedEngagement \} from '\.\/research\.ts'/);
       assert.equal(/FROM engagements/i.test(source), false, 'pipeline.ts reads the engagements table itself — a second gate');
     } finally { app.close(); }

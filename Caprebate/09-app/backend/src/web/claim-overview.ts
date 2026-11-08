@@ -7,7 +7,7 @@
  *
  * One block at the top of the claim page, read from the claim's own records and never invented:
  *   - every stage down the left, the ten in the procedure and Closed, each with what is in out of what it needs
- *     (gateOut, src/web/pipeline.ts); any stage opens with ?stage=, so staff can look back and ahead;
+ *     (gateOut, src/modules/crm/pipeline.ts); any stage opens with ?stage=, so staff can look back and ahead;
  *   - the stage in one plain sentence, who does it, and its needs, met and not;
  *   - still needed: the stage's unmet needs and what was asked of the client, late ones first;
  *   - gathered, grouped by where it came from: lookups (register_records, with exactly what came back, field by field,
@@ -21,13 +21,13 @@
 import type { Db } from '../core/index.ts';
 import { can, type Actor } from '../core/index.ts';
 import { h, raw, type Safe } from '../shared/index.ts';
-import { gateOut, loadPipelineClaim, type Need, type PipelineClaim } from './pipeline.ts';
+import { gateOut, loadPipelineClaim, type Need, type PipelineClaim } from '../modules/crm/pipeline.ts';
 import { CLOSED_STAGE, PROCEDURE_STAGES, claimStage, type ProcedureKey } from '../shared/index.ts';
 import { plainNeed } from '../shared/index.ts';
 import { CAPTURE_SOURCES, FACTS, captured, latestFacts, type FactReading, type FactsPanel } from './claim-facts.ts';
-import { waitingForCheck, type ToCheck } from './client-checks.ts';
+import { waitingForCheck, type ToCheck } from '../modules/crm/client-checks.ts';
 import { plainDashText } from '../shared/index.ts';
-import { claimObjFor, loadClaimRow } from './crm.ts';
+import { claimObjFor, loadClaimRow } from '../modules/crm/crm.ts';
 import type { ClaimDocumentsPanel } from './documents.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { localStamp, ukDate } from '../shared/index.ts';

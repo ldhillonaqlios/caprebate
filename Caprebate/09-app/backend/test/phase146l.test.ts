@@ -102,7 +102,7 @@ describe('the official copy of the title register, uploaded by hand and read by 
     assert.deepEqual(v?.copies.map((c) => [c.id, c.label]), [['ld1', 'Official copy 1']]);
     assert.equal(v?.may_upload, true);
     assert.equal(TH.titleByHandView(db, actor('SURVEYING', 'u-SURVEYING'), 'p1'), null);
-    const pages = readFileSync(join(SRC, 'web', 'crm-pages.ts'), 'utf8');
+    const pages = readFileSync(join(SRC, 'modules', 'crm', 'crm-pages.ts'), 'utf8');
     const block = pages.slice(pages.indexOf('function titleBlock('), pages.indexOf('function propertyPage('));
     assert.match(block, /<input type="hidden" name="type_code" value="\$\{TH\.OFFICIAL_COPY_TYPE\}">/);
     assert.match(block, /action="\/staff\/clients\/\$\{t\.business_id\}\/files" enctype="multipart\/form-data"/);

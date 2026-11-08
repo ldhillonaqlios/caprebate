@@ -35,9 +35,9 @@ import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
 import { can, REGISTERED_ACTIONS, type Obj } from '../src/core/authz.ts';
 import { quarantinedKeysAndValues } from '../src/payload.ts';
 import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-port.ts';
-import * as C from '../src/web/crm.ts';
-import * as L from '../src/web/leads.ts';
-import * as P from '../src/web/pipeline.ts';
+import * as C from '../src/modules/crm/crm.ts';
+import * as L from '../src/modules/crm/leads.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
 import { actor, testApp, keys, scalars } from './helpers.ts';
 import { plainDashText } from '../src/shared/plain-dashes.ts';
 

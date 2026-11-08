@@ -21,9 +21,9 @@
  *
  * WHAT IS KEPT: who it is from, the subject, and THE TEXT PART ONLY. No HTML is kept. A file in the email is counted (its
  * type and size, never its name) and left in the mailbox until a member of staff says what it is — then that one file is
- * read from the mailbox again and goes through the upload path every file takes (src/web/inbound-email.ts).
+ * read from the mailbox again and goes through the upload path every file takes (src/modules/crm/inbound-email.ts).
  *
- * The filing rule lives in src/web/inbound-email.ts: matched by the Message-ID we sent, from one of the company's
+ * The filing rule lives in src/modules/crm/inbound-email.ts: matched by the Message-ID we sent, from one of the company's
  * contacts, or else to a staff queue. Never by the sender's address alone.
  *
  * A small, dependency-free IMAP client over `node:tls`, tested against a fake server in test/phase142.test.ts, in the

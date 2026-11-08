@@ -15,11 +15,11 @@ import { h, type Safe } from '../shared/index.ts';
 import { usersGate } from './settings.ts';
 import { assertConfigurationRead } from './configuration.ts';
 import { documentTypesGate } from './documents.ts';
-import { automationGate } from './automation.ts';
+import { automationGate } from '../modules/crm/automation.ts';
 import { templatesGate } from './templates.ts';
 import { assertComplianceRead } from './compliance.ts';
 import { auditLogGate } from './audit-log.ts';
-import { rewardModelGate } from './introducers.ts';
+import { rewardModelGate } from '../modules/crm/introducers.ts';
 
 export type Tile = {
   readonly href: string;

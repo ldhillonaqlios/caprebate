@@ -51,7 +51,7 @@ import { loadLetter } from './letter.ts';
 import { engagement, readBusiness } from '../modules/portal/portal.ts';
 import { localWhen, ukDate } from '../shared/index.ts';
 import { formatPence } from '../shared/index.ts';
-import { claimantTypeForGate } from './crm.ts';
+import { claimantTypeForGate } from '../modules/crm/crm.ts';
 import { buildPdf, flow, type PdfLine } from '../shared/index.ts';
 import { stageIndex } from '../shared/index.ts';
 import { getAuditLogCountByKindObjectId, getUsersCountByIdBusinessId, getUsersEmailById } from '../core/index.ts';

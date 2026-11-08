@@ -27,7 +27,7 @@ import * as B from '../src/web/compliance-breach.ts';
 import * as N from '../src/web/breach-names.ts';
 import type * as C from '../src/web/compliance.ts';
 import { addCalendarMonth, complaintTargets, COMPLAINT_TARGET_NOTE, COMPLAINT_UPDATE_EVERY_DAYS } from '../src/web/compliance-clock.ts';
-import { importPremises, mayNameAPerson, sectorFromServiceTypes, PREMISES_SOURCES } from '../src/web/premises-import.ts';
+import { importPremises, mayNameAPerson, sectorFromServiceTypes, PREMISES_SOURCES } from '../src/modules/crm/premises-import.ts';
 import { scannedPagesAllowedFor, SCANNED_PAGE_KINDS } from '../src/integrations/connectors/claude.ts';
 import { grantsChapter } from '../src/web/survey-pack-pages.ts';
 import { GRANT_AMOUNTS_TO_SURVEYOR, type PackView } from '../src/web/survey-pack.ts';
@@ -205,7 +205,7 @@ describe('line 9 — Word question 183: healthcare premises from open registers,
       }
     };
     walk(src);
-    assert.deepEqual(readers.sort(), ['web/premises-import.ts'], 'something other than the import reads the premises list');
+    assert.deepEqual(readers.sort(), ['modules/crm/premises-import.ts'], 'something other than the import reads the premises list');
   });
 
   test('the name guard and the sector map, both ways', () => {

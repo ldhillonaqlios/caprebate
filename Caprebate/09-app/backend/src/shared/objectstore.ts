@@ -93,10 +93,10 @@ export const SEALED_PREFIX = 'survey-photos/';
 export const INCOMING_PREFIX = 'survey-incoming/';
 /** Where a client's video is kept, in pieces, each sealed (src/web/survey-video.ts). */
 export const VIDEO_PREFIX = 'survey-videos/';
-/** A file someone sent us on WhatsApp, fetched from Meta and kept sealed (src/web/whatsapp.ts). */
+/** A file someone sent us on WhatsApp, fetched from Meta and kept sealed (src/modules/crm/whatsapp.ts). */
 export const WHATSAPP_PREFIX = 'whatsapp-files/';
 /** A WhatsApp chat exported on the phone and uploaded for checking — its text, and a small .zip
- *  whole (src/web/whatsapp-import.ts). Kept sealed, like the files themselves. */
+ *  whole (src/modules/crm/whatsapp-import.ts). Kept sealed, like the files themselves. */
 export const WHATSAPP_IMPORT_PREFIX = 'whatsapp-imports/';
 const isSealedKey = (key: string): boolean => key.startsWith(SEALED_PREFIX) || key.startsWith(VIDEO_PREFIX) || key.startsWith(WHATSAPP_PREFIX) || key.startsWith(WHATSAPP_IMPORT_PREFIX);
 

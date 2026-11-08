@@ -1,7 +1,7 @@
 /**
  * THE COMPLIANCE REGISTERS — THE ROUTES. CRM 8 of 10, 12 September 2026.
  *
- * Same shape as src/web/introducers-pages.ts: 'not-mine' for anything outside
+ * Same shape as src/modules/crm/introducers-pages.ts: 'not-mine' for anything outside
  * /staff/compliance, so the mounting in staff.ts is one line. NOTHING HERE DECIDES
  * ANYTHING: every read and write authorises itself in the store — src/web/
  * compliance.ts, compliance-aml.ts, compliance-rights.ts, compliance-breach.ts and

@@ -10,7 +10,7 @@
 import { randomUUID } from 'node:crypto';
 import { testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
-import { insertClaim } from '../src/web/crm.ts';
+import { insertClaim } from '../src/modules/crm/crm.ts';
 import { amendmentWindowReading } from '../src/web/claim-facts.ts';
 import type { App } from '../src/core/app.ts';
 

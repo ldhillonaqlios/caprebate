@@ -34,7 +34,7 @@ import { reportModel, reportPdf, longDate, REPORT_TITLE } from './survey-report.
 import { freezeReturnContext, returnContext, returnContextFor, returnEntriesCsv } from './return-entries.ts';
 import { voidLine } from './valuation-lock.ts';
 import { recordSignOff } from './claim-record.ts';
-import { postClientMessage } from './messages.ts';
+import { postClientMessage } from '../modules/crm/messages.ts';
 import { localDate } from '../shared/index.ts';
 import { poundsWords } from './pack-sums.ts';
 import { getOutboxRById } from '../integrations/index.ts';

@@ -256,7 +256,7 @@ export type AuditKind =
   | 'COMPLAINT_LOGGED' | 'COMPLAINT_CLASSIFIED' | 'COMPLAINT_PROGRESS_RECORDED' | 'COMPLAINT_UPDATED' | 'COMPLAINT_CLOSED'
   // A complaint sent through the public notices page's form (src/modules/public-site/notices-site.ts).
   | 'COMPLAINT_FORM_RECEIVED'
-  // Staff checked what a client sent through their portal (src/web/client-checks.ts): accepted, or asked
+  // Staff checked what a client sent through their portal (src/modules/crm/client-checks.ts): accepted, or asked
   // again with a reason. The ids only.
   | 'CLIENT_SENT_ACCEPTED'
   | 'CLIENT_SENT_ASKED_AGAIN'
@@ -378,17 +378,17 @@ export type AuditKind =
    */
   | 'IDENTITY_CHECK_SENT' | 'IDENTITY_CHECK_NOT_SENT' | 'IDENTITY_RESULT_RECEIVED' | 'IDENTITY_RESULT_REFUSED'
   /**
-   * WhatsApp with each client (src/web/whatsapp.ts). Sent, or not sent and why; received and filed (or left
+   * WhatsApp with each client (src/modules/crm/whatsapp.ts). Sent, or not sent and why; received and filed (or left
    * for a person to file); a webhook body refused because Meta's signature did not hold; filed by hand. Ids, counts and
    * outcomes only — NEVER a number or the words.
    */
   | 'WHATSAPP_SENT' | 'WHATSAPP_NOT_SENT' | 'WHATSAPP_RECEIVED' | 'WHATSAPP_REFUSED' | 'WHATSAPP_FILED'
-  // A person blocking off, or freeing, time in their own diary (src/web/time-blocks.ts).
+  // A person blocking off, or freeing, time in their own diary (src/modules/crm/time-blocks.ts).
   | 'TIME_BLOCKED' | 'TIME_FREED'
   // Admin saved a key's new value (sealed), or went back to the key file's (src/core/saved-keys.ts). The name only.
   | 'KEY_SAVED' | 'KEY_UNSAVED'
   // The Communication tab — a Zoom call staff started or booked, a telephone call staff logged, a video call
-  // first opened by its host (src/web/communication.ts). Ids and outcomes only.
+  // first opened by its host (src/modules/crm/communication.ts). Ids and outcomes only.
   | 'BOOKING_CREATED' | 'CALL_LOGGED' | 'VIDEO_CALL_OPENED'
   // A video call made under the shared Zoom host because its member of staff has no Zoom user.
   | 'VIDEO_CALL_SHARED_HOST'

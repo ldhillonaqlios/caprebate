@@ -38,10 +38,10 @@ import { randomUUID } from 'node:crypto';
 import { createApp } from '../src/core/server.ts';
 import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
 import { can, NotAuthorised, type Actor, type Obj } from '../src/core/authz.ts';
-import * as I from '../src/web/introducers.ts';
-import * as L from '../src/web/leads.ts';
-import * as P from '../src/web/pipeline.ts';
-import * as T from '../src/web/tasks.ts';
+import * as I from '../src/modules/crm/introducers.ts';
+import * as L from '../src/modules/crm/leads.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
+import * as T from '../src/modules/crm/tasks.ts';
 import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 

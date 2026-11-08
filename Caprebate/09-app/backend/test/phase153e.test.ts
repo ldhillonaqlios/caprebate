@@ -24,7 +24,7 @@ import { packView, savePackValue, saveLine, setLineRemoved, savePackExtra, SHARE
 import { coverageOf, deskFirstVerdict, deskFirstReading, DESK_FIRST_TEST, OPTIONAL_ITEMS, TIER_WORDS, type DeskFirstFacts } from '../src/modules/assessment/desk-first.ts';
 import { linesForSector, taxonomy, SUITE_ROWS, TEST_DEFAULT_WORDS } from '../src/web/pack-lines.ts';
 import { checklistFor } from '../src/web/survey-checklist.ts';
-import { roomsFor } from '../src/web/rooms.ts';
+import { roomsFor } from '../src/modules/crm/rooms.ts';
 import { vatReading } from '../src/web/pack-vat.ts';
 import { findingSeen, FINDING_LABELS } from '../src/shared/finding-source.ts';
 import { PLANNING_ASSUMPTION, REPORT_ASSUMPTIONS } from '../src/modules/assessment/report-assumptions.ts';

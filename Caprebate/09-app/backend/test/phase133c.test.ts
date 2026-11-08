@@ -40,7 +40,7 @@ import { execFileSync } from 'node:child_process';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { SITE_CSS } from '../src/shared/assets.ts';
-import { gateOut } from '../src/web/pipeline.ts';
+import { gateOut } from '../src/modules/crm/pipeline.ts';
 import { PROCEDURE_KEYS } from '../src/shared/stages.ts';
 import { avoidHits } from '../src/shared/voice.ts';
 import { oneDriveOnly, oneDrivePath } from './onedrive-only.ts';

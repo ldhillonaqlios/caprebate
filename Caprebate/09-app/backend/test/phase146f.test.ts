@@ -34,7 +34,7 @@ import {
   smtpProvider, type EmailSending, type SmtpLogin,
 } from '../src/integrations/email/email-provider.ts';
 import { imapLoginFromKeyFile, parseBounceReport } from '../src/integrations/email/email-inbound.ts';
-import { ingest } from '../src/web/inbound-email.ts';
+import { ingest } from '../src/modules/crm/inbound-email.ts';
 import { buildIcs, fold, icsText } from '../src/integrations/email/calendar.ts';
 import { scheduleBooking } from '../src/core/backoffice.ts';
 import { moveOwnBooking, cancelOwnBooking } from '../src/modules/portal/portal.ts';
@@ -268,7 +268,7 @@ describe('4 · a standard .ics on every booked, moved or cancelled call', () => 
     const admin: Actor = { id: w.s.users.find((u) => u.role === 'ADMIN')?.id ?? '', role: 'ADMIN', business_id: null, disabled: false };
     const client: Actor = { id: w.s.users.find((u) => u.role === 'CLIENT')?.id ?? '', role: 'CLIENT', business_id: biz, disabled: false };
     const deps = { db, audit: w.made.app.audit, email: w.made.app.email, now: w.made.app.now, newId: randomUUID };
-    const avail = (await import('../src/web/schedule.ts')).publicSlots(db, T0);
+    const avail = (await import('../src/modules/crm/schedule.ts')).publicSlots(db, T0);
     const slots = avail.available ? avail.slots : [];
     const [a, b] = [slots[slots.length - 12], slots[slots.length - 3]];
     assert.ok(a !== undefined && b !== undefined, 'no free slots in the seed');

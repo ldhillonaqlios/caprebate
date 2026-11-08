@@ -50,8 +50,8 @@ import { ADDRESS_LOOKUP_JS } from '../modules/assessment/address-lookup-script.t
 import { loadLetter } from '../web/letter.ts';
 import * as P from '../modules/portal/portal.ts';
 import { ENGAGEMENT_SIGNING, SIGN_WORDS, letterFacts, letterOptions, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning, type LetterFacts } from '../web/signing.ts';
-import { portalMessagesBody, readPortalSend, sendFromPortal } from '../web/messages-pages.ts';
-import { clientMessage, type ThreadMessage as MessageView } from '../web/messages.ts';
+import { portalMessagesBody, readPortalSend, sendFromPortal } from '../modules/crm/messages-pages.ts';
+import { clientMessage, type ThreadMessage as MessageView } from '../modules/crm/messages.ts';
 import { FsObjectStore } from '../shared/objectstore.ts';
 import { acceptClientBytes, finishUpload, issuedJob, readerFor } from '../web/uploads.ts';
 import { singleFile } from './multipart.ts';
@@ -70,32 +70,32 @@ import { clientStepsCard } from '../web/approvals-pages.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
 import { clientHelp } from './help.ts';
 import { nameSwitches } from './navigation.ts';
-import { publicSlots, isBookable, SLOT_MINUTES } from '../web/schedule.ts';
-import { activeMeeting, booksATime, clientMayJoin, joinPanel, reconcileVideoMeeting, withJoinScripts, VIDEO_PAGE_HEADERS } from '../web/video-calls.ts';
+import { publicSlots, isBookable, SLOT_MINUTES } from '../modules/crm/schedule.ts';
+import { activeMeeting, booksATime, clientMayJoin, joinPanel, reconcileVideoMeeting, withJoinScripts, VIDEO_PAGE_HEADERS } from '../modules/crm/video-calls.ts';
 import { portalDashboard } from '../modules/portal/portal-dashboard.ts';
-import * as IE from '../web/inbound-email.ts';
+import * as IE from '../modules/crm/inbound-email.ts';
 import { joinSignature } from '../integrations/index.ts';
-import { VIDEO_CALL_JS } from '../web/video-call-script.ts';
+import { VIDEO_CALL_JS } from '../modules/crm/video-call-script.ts';
 import { PHOTO_UPLOAD_JS } from '../web/photo-upload-script.ts';
 import { SIGNATURE_PAD_JS } from '../shared/index.ts';
 import { letterState, letterSteps, signedCopy } from '../web/engagement-send.ts';
-import { WHATSAPP_IMPORT_JS } from '../web/whatsapp-import-script.ts';
+import { WHATSAPP_IMPORT_JS } from '../modules/crm/whatsapp-import-script.ts';
 import { REGISTER_IMPORT_JS } from '../web/register-import-script.ts';
 import { sweepUploads } from '../web/photo-upload.ts';
 import { runTimerJob, timerJobOf, timerWordRefusal, TIMER_PATH_PREFIX } from './timers.ts';
 import { sweepVideos } from '../web/survey-video.ts';
-import { receiveWhatsApp } from '../web/whatsapp.ts';
+import { receiveWhatsApp } from '../modules/crm/whatsapp.ts';
 import { webhookChallenge } from '../integrations/index.ts';
 import { EMAIL_SENDING, mailWhere, sendingOn, smtpLoginFromKeyFile } from '../integrations/index.ts';
-import { bookingInviteFile, sendVideoInvite } from '../web/booking-invite.ts';
+import { bookingInviteFile, sendVideoInvite } from '../modules/crm/booking-invite.ts';
 import { ga4MeasurementId, sitePageFor } from '../integrations/index.ts';
 import { localDate, localStamp, localWhen, ukDate, ukDatesIn, zoneNotice } from '../shared/index.ts';
 import { formatPence, formatShownRange, toPence, RANGE_QUALIFIER } from '../shared/index.ts';
-import { linkBookingToLead, SECTORS } from '../web/leads.ts';
-import { fireAutomation } from '../web/automation.ts';
+import { linkBookingToLead, SECTORS } from '../modules/crm/leads.ts';
+import { fireAutomation } from '../modules/crm/automation.ts';
 import {
   PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen, clientShareChoices, recordShareConsentByClient, type ClientShareChoice,
-} from '../web/introducers.ts';
+} from '../modules/crm/introducers.ts';
 import { clientDeliverables, type ClientDeliverable } from '../web/claim-record.ts';
 import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from '../modules/public-site/public-site.ts';
 import { homeEdition, gsapScript, HOME_PAGE_HEADERS, sectorEdition, isSectorSlug, fontFile } from '../modules/public-site/home-site.ts';
@@ -387,7 +387,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assets/site.css' && method === 'GET') {
     res.writeHead(200, CSS_HEADERS); res.end(SITE_CSS); return 'handled';
   }
-  // The join pages' one script (src/web/video-call-script.ts).
+  // The join pages' one script (src/modules/crm/video-call-script.ts).
   if (path === '/assets/video-call.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(VIDEO_CALL_JS); return 'handled';
   }
@@ -658,7 +658,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const r = await handleConfirmLink(d.app, newId, req, res, url, method, form);
     if (r === 'handled') return 'handled';
   }
-  /* WHATSAPP — THE ADDRESS META CALLS (src/web/whatsapp.ts). No login: Meta has none. GET is Meta checking
+  /* WHATSAPP — THE ADDRESS META CALLS (src/modules/crm/whatsapp.ts). No login: Meta has none. GET is Meta checking
      the address with our verify word; POST carries messages and statuses, believed only under Meta's signature. */
   if (path === '/hooks/whatsapp' && method === 'GET') {
     const ok = webhookChallenge(d.app.secrets, url.searchParams.get('hub.mode'), url.searchParams.get('hub.verify_token'), url.searchParams.get('hub.challenge'));
@@ -692,7 +692,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     res.end(r.line);
     return 'handled';
   }
-  /* THE REPLY TIMER (src/web/inbound-email.ts, timerMayRead). No login: an outside timer calls it, with its
+  /* THE REPLY TIMER (src/modules/crm/inbound-email.ts, timerMayRead). No login: an outside timer calls it, with its
      word in the Authorization header. Counts only in the answer. */
   if (path === '/hooks/read-replies' && (method === 'POST' || method === 'GET')) {
     const auth = req.headers['authorization'];

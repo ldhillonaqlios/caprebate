@@ -26,7 +26,7 @@
  *     those two decisions.
  *
  * CHANGING A SWITCH IS A LINE OF CODE, NOT A SETTING, as FEE_TRIGGER in
- * src/web/pipeline.ts and FEE_CLAWBACK in src/web/claim-record.ts are: each is a
+ * src/modules/crm/pipeline.ts and FEE_CLAWBACK in src/web/claim-record.ts are: each is a
  * pricing policy, and a pricing policy that an admin screen could flip on a
  * Tuesday afternoon would be decided by whoever found the screen.
  *

@@ -40,7 +40,7 @@
 
 import type { Db } from './db.ts';
 import { authorise, can, type Actor, type Obj } from './authz.ts';
-import { claimObjFor } from '../web/crm.ts';
+import { claimObjFor } from '../modules/crm/crm.ts';
 import { claimName } from '../shared/index.ts';
 import { anyStageLabel } from '../shared/index.ts';
 import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId } from './data-borrowed.ts';

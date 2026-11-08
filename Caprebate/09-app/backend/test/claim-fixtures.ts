@@ -304,7 +304,7 @@ export function defenceReady(app: FixtureApp, claim: string): void {
 }
 
 /**
- * PHASE 132e — OUR REPORT DELIVERED FOR FILING, which is when our fee is earned (FEE_TRIGGER in src/web/pipeline.ts):
+ * PHASE 132e — OUR REPORT DELIVERED FOR FILING, which is when our fee is earned (FEE_TRIGGER in src/modules/crm/pipeline.ts):
  * the claim's computation pack issued in the deliverables register, dated. It stands for delivery to the client's
  * accountant; `issue(app, claim, 'CLIENT_REPORT')` stands for delivery to the client, and either reaches the trigger.
  */

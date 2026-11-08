@@ -37,11 +37,11 @@ import { seed } from '../src/core/seed.ts';
 import { Db, migrate } from '../src/core/db.ts';
 import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
 import { can, REGISTERED_ACTIONS, NotAuthorised, type Actor, type Obj } from '../src/core/authz.ts';
-import * as C from '../src/web/crm.ts';
-import * as P from '../src/web/pipeline.ts';
-import * as L from '../src/web/leads.ts';
-import * as T from '../src/web/tasks.ts';
-import * as TL from '../src/web/timeline.ts';
+import * as C from '../src/modules/crm/crm.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
+import * as L from '../src/modules/crm/leads.ts';
+import * as T from '../src/modules/crm/tasks.ts';
+import * as TL from '../src/modules/crm/timeline.ts';
 import * as E from '../src/web/engaged.ts';
 import { actor, fixedClock, testApp } from './helpers.ts';
 import { localDate } from '../src/shared/localtime.ts';
@@ -431,7 +431,7 @@ describe('one next action per claim, with an owner and a due date', () => {
         assert.ok(e && r.waiting, r.client);
         assert.deepEqual(r.waiting, { who: e.waiting_on, why: e.waiting_why }, `${r.client}: a second answer to who is waiting`);
       }
-      const src = readFileSync(join(SRC, 'web/tasks.ts'), 'utf8');
+      const src = readFileSync(join(SRC, 'modules/crm/tasks.ts'), 'utf8');
       assert.match(src, /import \{ waitingOn, type WaitingOn \} from '\.\/engaged\.ts'/);
       assert.equal(/whoIsWaiting\(|letter_state/.test(src), false, 'tasks.ts has a waiting ladder of its own');
 
@@ -457,7 +457,7 @@ describe('overdue — stored in UTC, shown in UK time, and no due date is neithe
     const none = T.dueReading(null, '2026-09-10T23:30:00.000Z');
     assert.deepEqual(none, { state: 'NO_DUE_DATE', overdue: false, label: T.NO_DUE_DATE });
 
-    for (const f of ['web/tasks.ts', 'web/timeline.ts', 'web/automation.ts', 'web/templates.ts', 'web/tasks-pages.ts']) {
+    for (const f of ['modules/crm/tasks.ts', 'modules/crm/timeline.ts', 'modules/crm/automation.ts', 'web/templates.ts', 'modules/crm/tasks-pages.ts']) {
       assert.equal(/Europe\/|timeZone|getTimezoneOffset/.test(readFileSync(join(SRC, f), 'utf8')), false, `${f} names a zone`);
     }
 

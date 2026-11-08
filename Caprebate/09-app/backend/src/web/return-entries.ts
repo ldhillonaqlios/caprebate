@@ -27,7 +27,7 @@
 import type { Db } from '../core/index.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { acquisitionDateReading, latestFacts } from './claim-facts.ts';
-import { claimantTypeForGate } from './crm.ts';
+import { claimantTypeForGate } from '../modules/crm/crm.ts';
 import { allowancesFor, isCompanyType, rateWords, RETURN_YEARS, type AllowanceFacts, type PartResult, type PoolName } from '../modules/assessment/allowances.ts';
 import { cashBasis, purchasePeriod } from './claim-route.ts';
 

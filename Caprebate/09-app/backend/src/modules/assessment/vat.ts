@@ -44,7 +44,7 @@
  * THE TASK
  *
  * Inside the margin, over the threshold, or one large expected fee: a staff task,
- * written through `insertTask` in src/web/tasks.ts, waiting with ACCOUNTING,
+ * written through `insertTask` in src/modules/crm/tasks.ts, waiting with ACCOUNTING,
  * about Caprebate itself (`company_subject` VAT_THRESHOLD), due on the last day of
  * the month — the procedure's monthly check — and flagged overdue by `dueReading`
  * like every task. At most one is open at a time: a second check finds it and
@@ -56,7 +56,7 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
-import { insertTask } from '../../web/tasks.ts';
+import { insertTask } from '../crm/tasks.ts';
 import { latestSignOff } from '../../web/claim-record.ts';
 import { computeFee, FEE_CONTROLS, type FeeControls } from '../../web/fee-controls.ts';
 import { feeGate, type FeeGateReading } from '../../shared/index.ts';

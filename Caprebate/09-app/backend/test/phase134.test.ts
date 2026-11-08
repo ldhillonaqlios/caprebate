@@ -33,7 +33,7 @@ import { createUser } from '../src/core/users.ts';
 import * as E from '../src/web/engaged.ts';
 import * as SE from '../src/core/search.ts';
 import { companyFirst } from '../src/web/templates.ts';
-import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from '../src/web/automation.ts';
+import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from '../src/modules/crm/automation.ts';
 import type { Actor } from '../src/core/authz.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;

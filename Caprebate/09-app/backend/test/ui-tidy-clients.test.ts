@@ -1,13 +1,13 @@
 /**
- * UI TIDY PHASE 6 — THE CLIENTS LIST, 2 October 2026 (src/web/client-list.ts).
+ * UI TIDY PHASE 6 — THE CLIENTS LIST, 2 October 2026 (src/modules/crm/client-list.ts).
  * A line of counts and solid boxes, each a filter; search; the status in its colour; each claim beside its company by
  * site and number, its stage in its colour. Counts and claims are read from the same stores at the same moment.
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import { clientList } from '../src/web/client-list.ts';
-import * as C from '../src/web/crm.ts';
+import { clientList } from '../src/modules/crm/client-list.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import { siteOf, stageGroupOf } from '../src/core/look.ts';
 
 let H: Harness;

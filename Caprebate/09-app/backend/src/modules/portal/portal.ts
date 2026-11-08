@@ -17,15 +17,15 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
 import { STUB_NOTICE } from '../../integrations/index.ts';
-import { bookingInviteFile } from '../../web/booking-invite.ts';
+import { bookingInviteFile } from '../crm/booking-invite.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { BOOKING } from '../../shared/index.ts';
-import { booksATime } from '../../web/video-calls.ts';
+import { booksATime } from '../crm/video-calls.ts';
 import { localWhen } from '../../shared/index.ts';
-import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES, isBookable } from '../../web/schedule.ts';
+import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES, isBookable } from '../crm/schedule.ts';
 import { claimStage, progressFor, type Progress } from '../../shared/index.ts';
 // Read inside functions only, so the import loop through pipeline.ts is never touched while the modules load.
-import { clientStageForClaim } from '../../web/pipeline.ts';
+import { clientStageForClaim } from '../crm/pipeline.ts';
 import { RECEIVED_ONLY_BY_UPLOAD, requestsFor, versionObj, type RequestView } from '../../web/documents.ts';
 
 export type Business = {

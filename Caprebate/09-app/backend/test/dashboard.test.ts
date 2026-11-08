@@ -30,8 +30,8 @@ import { seed } from '../src/core/seed.ts';
 import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
 import { can, REGISTERED_ACTIONS, type Actor } from '../src/core/authz.ts';
 import { quarantinedKeysAndValues } from '../src/payload.ts';
-import * as D from '../src/web/dashboard.ts';
-import * as T from '../src/web/tasks.ts';
+import * as D from '../src/modules/crm/dashboard.ts';
+import * as T from '../src/modules/crm/tasks.ts';
 import { actor, testApp, keys, scalars } from './helpers.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
@@ -351,8 +351,8 @@ describe('my work — every question I am waiting on, and my claims with their n
 describe('the reconciliation tiles — the quote gap said not known, the variance tag awaited, a withdrawal kept out of the ratios', () => {
   test('a claim signed off opens a case; the tiles read it through varianceOf and never count the unknown quote gap as nought', async () => {
     const R = await import('../src/web/claim-record.ts');
-    const P = await import('../src/web/pipeline.ts');
-    const C = await import('../src/web/crm.ts');
+    const P = await import('../src/modules/crm/pipeline.ts');
+    const C = await import('../src/modules/crm/crm.ts');
     const CF = await import('./claim-fixtures.ts');
     const app = await testApp();
     for (const role of ['ADMIN', 'SALES', 'ACCOUNTING', 'SURVEYING'] as const) {

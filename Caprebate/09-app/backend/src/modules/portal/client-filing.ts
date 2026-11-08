@@ -5,7 +5,7 @@
  * Lakhbir, answering "Where a client has no accountant or tax adviser, who
  * confirms the claim fits their return ...?": "The client".
  *
- * THE REPORTS GATE (src/web/pipeline.ts) asks `filingRoute` which of two routes a
+ * THE REPORTS GATE (src/modules/crm/pipeline.ts) asks `filingRoute` which of two routes a
  * claim is on, and then asks that route's need:
  *
  *   ACCOUNTANT — as it always was: the accountant's confirmation milestone. Taken

@@ -1,5 +1,5 @@
 /**
- * UI TIDY PHASE 3 — THE PIPELINE AS ONE TABLE, 2 October 2026 (src/web/pipeline-pages.ts, pipelineTable).
+ * UI TIDY PHASE 3 — THE PIPELINE AS ONE TABLE, 2 October 2026 (src/modules/crm/pipeline-pages.ts, pipelineTable).
  * Every claim the board shows is one row, grouped by stage with its colour; the boxes count from the same data; the
  * filters and the search narrow it; each row keeps its Move button; the board of columns is still one click away.
  * Counts are read from the store at the same moment, never written in, so the test does not depend on the date.
@@ -7,10 +7,10 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import { dueReading } from '../src/shared/localtime.ts';
 import { stageGroupOf, STAGE_GROUPS } from '../src/core/look.ts';
-import { siteOf } from '../src/web/pipeline-pages.ts';
+import { siteOf } from '../src/modules/crm/pipeline-pages.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit3'); });

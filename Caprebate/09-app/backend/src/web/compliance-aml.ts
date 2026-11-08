@@ -7,7 +7,7 @@
  * with the accountant and a solicitor.
  *
  * OFF, NOTHING HERE BLOCKS A CLAIM — the register can still be kept. ON, a claim
- * cannot leave ENGAGEMENT without a finished check (src/web/pipeline.ts asks
+ * cannot leave ENGAGEMENT without a finished check (src/modules/crm/pipeline.ts asks
  * `cddGateNeed`).
  *
  * WHAT THE PAPER DOES NOT SAY IS NOT TYPED HERE. It names five claimant types, no

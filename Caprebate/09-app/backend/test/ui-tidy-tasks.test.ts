@@ -1,13 +1,13 @@
 /**
- * UI TIDY PHASE 9 — TASKS, 3 October 2026 (src/web/tasks-pages.ts).
+ * UI TIDY PHASE 9 — TASKS, 3 October 2026 (src/modules/crm/tasks-pages.ts).
  * A line of counts and solid boxes; the tasks first, late in a red label with its date under it, the company said once;
  * the longer lists folded, each with how many it holds. Counts are read from the same store at the same moment.
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import * as T from '../src/web/tasks.ts';
-import { dueCell } from '../src/web/tasks-pages.ts';
+import * as T from '../src/modules/crm/tasks.ts';
+import { dueCell } from '../src/modules/crm/tasks-pages.ts';
 import { SITE_CSS } from '../src/shared/assets.ts';
 import { plainDashText } from '../src/shared/plain-dashes.ts';
 

@@ -54,7 +54,7 @@ import type { Db } from '../core/index.ts';
 import { authorise, type Actor } from '../core/index.ts';
 import { retentionReading, ret7Limbs } from './documents.ts';
 import { BACKUP_CYCLE } from '../shared/upload-handler-port.ts';
-import { MESSAGE_RETENTION_QUESTION } from './message-retention.ts';
+import { MESSAGE_RETENTION_QUESTION } from '../modules/crm/message-retention.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, holdsFor, liveHeldIds, NotFoundAsRefusal, opaqueRef, record, requiredText,
   textField, ukDay, vocabField, words,

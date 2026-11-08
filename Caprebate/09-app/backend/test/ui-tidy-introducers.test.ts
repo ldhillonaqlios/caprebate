@@ -1,5 +1,5 @@
 /**
- * UI TIDY PHASE 14 — INTRODUCERS, 3 October 2026 (src/web/introducers-pages.ts).
+ * UI TIDY PHASE 14 — INTRODUCERS, 3 October 2026 (src/modules/crm/introducers-pages.ts).
  * The list opens with its two buttons and boxes counting the firms and what they sent; the reward model is a label;
  * the firms are one table — owner, contact, what they sent — that stacks on a phone, nobody in amber, a late next contact
  * in red; the two forms fold until a button or a refusal opens them. A firm's page has the way back, a line saying who
@@ -8,9 +8,9 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import * as I from '../src/web/introducers.ts';
+import * as I from '../src/modules/crm/introducers.ts';
 import { ukDatesIn } from '../src/shared/localtime.ts';
-import { firstPart, introducerCounts, rewardBadge, sentUs, RECORD_REFERRAL_HREF, ADD_FIRM_HREF } from '../src/web/introducers-pages.ts';
+import { firstPart, introducerCounts, rewardBadge, sentUs, RECORD_REFERRAL_HREF, ADD_FIRM_HREF } from '../src/modules/crm/introducers-pages.ts';
 import { plainDashes } from '../src/shared/plain-dashes.ts';
 
 let H: Harness;

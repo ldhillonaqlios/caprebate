@@ -635,7 +635,7 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/automation.ts": {
+  "src/modules/crm/automation.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -651,7 +651,7 @@
    "area": "finance",
    "kind": "logic"
   },
-  "src/web/booking-invite.ts": {
+  "src/modules/crm/booking-invite.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -683,7 +683,7 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/client-checks.ts": {
+  "src/modules/crm/client-checks.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -699,15 +699,15 @@
    "area": "portal",
    "kind": "page"
   },
-  "src/web/client-list.ts": {
+  "src/modules/crm/client-list.ts": {
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/client-page.ts": {
+  "src/modules/crm/client-page.ts": {
    "area": "crm",
    "kind": "page"
   },
-  "src/web/communication.ts": {
+  "src/modules/crm/communication.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -759,19 +759,19 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/crm-pages.ts": {
+  "src/modules/crm/crm-pages.ts": {
    "area": "crm",
    "kind": "page"
   },
-  "src/web/crm.ts": {
+  "src/modules/crm/crm.ts": {
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/dashboard-pages.ts": {
+  "src/modules/crm/dashboard-pages.ts": {
    "area": "crm",
    "kind": "page"
   },
-  "src/web/dashboard.ts": {
+  "src/modules/crm/dashboard.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -799,7 +799,7 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/email-chains.ts": {
+  "src/modules/crm/email-chains.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -843,11 +843,11 @@
    "area": "finance",
    "kind": "logic"
   },
-  "src/web/free-email-pages.ts": {
+  "src/modules/crm/free-email-pages.ts": {
    "area": "crm",
    "kind": "page"
   },
-  "src/web/free-email.ts": {
+  "src/modules/crm/free-email.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -883,15 +883,15 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/inbound-email.ts": {
+  "src/modules/crm/inbound-email.ts": {
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/introducers-pages.ts": {
+  "src/modules/crm/introducers-pages.ts": {
    "area": "crm",
    "kind": "page"
   },
-  "src/web/introducers.ts": {
+  "src/modules/crm/introducers.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -899,11 +899,11 @@
    "area": "finance",
    "kind": "logic"
   },
-  "src/web/lead-cards.ts": {
+  "src/modules/crm/lead-cards.ts": {
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/leads.ts": {
+  "src/modules/crm/leads.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -935,15 +935,15 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/message-retention.ts": {
+  "src/modules/crm/message-retention.ts": {
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/messages-pages.ts": {
+  "src/modules/crm/messages-pages.ts": {
    "area": "crm",
    "kind": "page"
   },
-  "src/web/messages.ts": {
+  "src/modules/crm/messages.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -999,11 +999,11 @@
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/pipeline-pages.ts": {
+  "src/modules/crm/pipeline-pages.ts": {
    "area": "crm",
    "kind": "page"
   },
-  "src/web/pipeline.ts": {
+  "src/modules/crm/pipeline.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1019,7 +1019,7 @@
    "area": "portal",
    "kind": "logic"
   },
-  "src/web/premises-import.ts": {
+  "src/modules/crm/premises-import.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1079,11 +1079,11 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/rooms.ts": {
+  "src/modules/crm/rooms.ts": {
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/schedule.ts": {
+  "src/modules/crm/schedule.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1111,11 +1111,11 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/slot-picker.ts": {
+  "src/modules/crm/slot-picker.ts": {
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/staff-dashboard.ts": {
+  "src/modules/crm/staff-dashboard.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1159,15 +1159,15 @@
    "area": "portal",
    "kind": "logic"
   },
-  "src/web/tasks-pages.ts": {
+  "src/modules/crm/tasks-pages.ts": {
    "area": "crm",
    "kind": "page"
   },
-  "src/web/tasks.ts": {
+  "src/modules/crm/tasks.ts": {
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/tell-and-move.ts": {
+  "src/modules/crm/tell-and-move.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1175,11 +1175,11 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/time-blocks.ts": {
+  "src/modules/crm/time-blocks.ts": {
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/timeline.ts": {
+  "src/modules/crm/timeline.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1199,11 +1199,11 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/video-call-script.ts": {
+  "src/modules/crm/video-call-script.ts": {
    "area": "crm",
    "kind": "other"
   },
-  "src/web/video-calls.ts": {
+  "src/modules/crm/video-calls.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1211,23 +1211,23 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/whatsapp-import-pages.ts": {
+  "src/modules/crm/whatsapp-import-pages.ts": {
    "area": "crm",
    "kind": "page"
   },
-  "src/web/whatsapp-import-script.ts": {
+  "src/modules/crm/whatsapp-import-script.ts": {
    "area": "crm",
    "kind": "other"
   },
-  "src/web/whatsapp-import.ts": {
+  "src/modules/crm/whatsapp-import.ts": {
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/whatsapp-page.ts": {
+  "src/modules/crm/whatsapp-page.ts": {
    "area": "crm",
    "kind": "page"
   },
-  "src/web/whatsapp.ts": {
+  "src/modules/crm/whatsapp.ts": {
    "area": "crm",
    "kind": "logic"
   },

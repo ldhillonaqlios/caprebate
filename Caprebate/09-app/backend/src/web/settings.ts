@@ -44,7 +44,7 @@ import {
 import {
   replaceWorkingTimes, workingTimesFor, WorkingTimeError, WEEKDAY_NAMES,
   minutesToClock, type WorkingTime, type WorkingTimeInput,
-} from './schedule.ts';
+} from '../modules/crm/schedule.ts';
 import { photoFor, type PhotoRecord } from '../core/index.ts';
 import { liftSuppression } from '../integrations/index.ts';
 import { listEmailSuppressionsAddressAtByStateId } from '../integrations/index.ts';

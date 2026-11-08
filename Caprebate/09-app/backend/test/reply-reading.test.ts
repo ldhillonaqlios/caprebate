@@ -1,5 +1,5 @@
 /**
- * 30 SEPTEMBER 2026 — READING EMAIL REPLIES, SWITCHED ON FOR TESTING (src/web/inbound-email.ts, migration 064).
+ * 30 SEPTEMBER 2026 — READING EMAIL REPLIES, SWITCHED ON FOR TESTING (src/modules/crm/inbound-email.ts, migration 064).
  *
  * The contact@ inbox already held 23 messages when reading was switched on. The first read only notes where the inbox
  * stands; every read after takes only what arrived since. The test website runs nothing on a timer, so replies are read
@@ -16,7 +16,7 @@ import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import { INBOUND_EMAIL, imapMailbox, type Mailbox, type RawEmail } from '../src/integrations/email/email-inbound.ts';
-import * as IE from '../src/web/inbound-email.ts';
+import * as IE from '../src/modules/crm/inbound-email.ts';
 
 const T = '2026-09-30T12:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';

@@ -23,8 +23,8 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
-import * as L from '../src/web/leads.ts';
-import * as P from '../src/web/pipeline.ts';
+import * as L from '../src/modules/crm/leads.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
 import { actor, testApp } from './helpers.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';

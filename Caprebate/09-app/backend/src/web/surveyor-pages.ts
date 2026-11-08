@@ -42,7 +42,7 @@ import * as S from './surveyor.ts';
 import { registerAttribution } from './research.ts';
 import { formatPence } from '../shared/index.ts';
 import { FUNNEL_CEILING, SURVEY_JOB_WORDS as SO_WORDS } from './survey-open.ts';
-import { surveyorThreadPanel } from './messages-pages.ts';
+import { surveyorThreadPanel } from '../modules/crm/messages-pages.ts';
 import { deskFirstReading } from '../modules/assessment/desk-first.ts';
 import { piecesPage } from '../core/index.ts';
 

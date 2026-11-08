@@ -5,7 +5,7 @@
  * Same shape as every other section: `handleClaimRecord` returns 'not-mine' for
  * anything it does not own, and staff.ts mounts it with one line. Every route
  * here is a POST to a claim; the panels are drawn on the claim page by
- * src/web/crm-pages.ts from what src/web/crm.ts put in the claim's view — the
+ * src/modules/crm/crm-pages.ts from what src/modules/crm/crm.ts put in the claim's view — the
  * same object `view.json` serves, so tools/payload-proof.ts inspects the wire.
  *
  * NOTHING HERE DECIDES ANYTHING. src/web/claim-facts.ts and
@@ -13,7 +13,7 @@
  * derivation. Every staff-supplied value is drawn through `h`, which escapes it.
  */
 
-import * as CK from './client-checks.ts';
+import * as CK from '../modules/crm/client-checks.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS } from './property-events.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../core/app.ts';
@@ -84,7 +84,7 @@ export async function handleClaimRecord(
     const anchor = f.get('from') === 'where' ? '#where' : '';
     return finish(id, F.recordFact(deps, actor, id, posted(f, ['fact_key', 'answer', 'value', 'source_id', 'note'])), 'Fact not recorded', 'saved', anchor);
   }
-  /* PHASE 160j: what the client sent, accepted or asked for again (src/web/client-checks.ts). */
+  /* PHASE 160j: what the client sent, accepted or asked for again (src/modules/crm/client-checks.ts). */
   m = new RegExp(`^/staff/claims/${ID}/sent/${ID}/accept$`).exec(path);
   if (m) {
     const id = m[1] ?? '';

@@ -45,7 +45,7 @@ import { can } from '../core/index.ts';
 import { h, raw, type Safe } from '../shared/index.ts';
 import { localWhen } from '../shared/index.ts';
 import { assertComplianceRead, assertComplianceWrite, complianceObj, record, type ComplianceDeps } from './compliance.ts';
-import { isReachable } from './crm.ts';
+import { isReachable } from '../modules/crm/crm.ts';
 import {
   IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision,
   sentUnderTestingWaiver, startIdentityCheck, type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,

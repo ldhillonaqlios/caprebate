@@ -16,10 +16,10 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import * as C from '../src/web/crm.ts';
-import * as P from '../src/web/pipeline.ts';
+import * as C from '../src/modules/crm/crm.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
 import * as R from '../src/web/claim-record.ts';
-import * as T from '../src/web/tasks.ts';
+import * as T from '../src/modules/crm/tasks.ts';
 import { actor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 

@@ -299,7 +299,7 @@ export const ON_HOLD_STAGE = Object.freeze({ key: 'ON_HOLD' as const, label: 'On
 /**
  * THE OLD SIX KEYS, AS THE PROCEDURE STAGE EACH NAMES — before migration 010
  * places a converted claim no later than its records evidence. The migration's
- * CASE and `backfillClaimFor` in src/web/crm.ts both follow this table.
+ * CASE and `backfillClaimFor` in src/modules/crm/crm.ts both follow this table.
  */
 export const LEGACY_STAGE_TO_PROCEDURE: Readonly<Record<StageKey, ProcedureKey>> = Object.freeze({
   ASSESSMENT_SUBMITTED: 'ASSESSMENT',

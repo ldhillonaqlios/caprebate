@@ -6,7 +6,7 @@
  * member of staff made for them. Now the client reads the version released to them (report-signoff.ts
  * `releasedVersion`: approved by the surveyor, its figure signed off by a tax adviser) at /portal/report, and accepts it
  * there: who, when, and that version's fingerprint, kept for ever (migration 101). The gate reads an acceptance of the
- * ISSUED client report's own fingerprint (src/web/pipeline.ts `clientAcceptedNeed`), so a later version must be
+ * ISSUED client report's own fingerprint (src/modules/crm/pipeline.ts `clientAcceptedNeed`), so a later version must be
  * accepted again.
  */
 import type { Db } from '../../core/index.ts';

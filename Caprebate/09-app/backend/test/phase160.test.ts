@@ -10,9 +10,9 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { testApp, actor } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import * as PE from '../src/web/property-events.ts';
-import * as PL from '../src/web/pipeline.ts';
+import * as PL from '../src/modules/crm/pipeline.ts';
 import * as R from '../src/web/claim-record.ts';
 import { figuresBlock } from '../src/web/claim-record-pages.ts';
 

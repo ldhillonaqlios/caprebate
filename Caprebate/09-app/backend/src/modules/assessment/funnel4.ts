@@ -41,13 +41,13 @@
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { FUNNEL, FRONTDOOR } from '../../shared/index.ts';
 import { OPTIONS, addressFrom, submit, type Draft, type FunnelState } from './assessment.ts';
-import { openLeadForGatedExit } from '../../web/leads.ts';
+import { openLeadForGatedExit } from '../crm/leads.ts';
 import type { Db } from '../../core/index.ts';
 import { normalisePostcode } from '../../integrations/index.ts';
 import { entityFromCompanyType, accountsTypeWords, type CompanyCandidate } from '../../integrations/index.ts';
 import { isDormant } from '../../integrations/index.ts';
 import type { FoundAddress } from '../../integrations/index.ts';
-import { slotPicker, slotDayProblem } from '../../web/slot-picker.ts';
+import { slotPicker, slotDayProblem } from '../crm/slot-picker.ts';
 
 export const F4_SCREENS = ['buildings', 'spend-on', 'amounts', 'tax', 'claims', 'works', 'details'] as const;
 export type F4Screen = (typeof F4_SCREENS)[number];
@@ -785,7 +785,7 @@ export function applyReach(s: S, f: URLSearchParams, roles: readonly (readonly [
   c['sms_variant'] = null;
   c['slot'] = channel.books ? (f.get('slot') ?? null) : null;
   c['day'] = channel.books ? (f.get('day') ?? null) : null;
-  // 30 Sep 2026: a date, then a time on it (src/web/slot-picker.ts). A time hidden under another date is refused.
+  // 30 Sep 2026: a date, then a time on it (src/modules/crm/slot-picker.ts). A time hidden under another date is refused.
   if (channel.books) {
     const wrongDay = slotDayProblem(f.get('day'), f.get('slot'));
     if (wrongDay !== undefined) return wrongDay;

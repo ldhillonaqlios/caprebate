@@ -22,7 +22,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { testApp, actor } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import * as F from '../src/web/claim-facts.ts';
 import * as RT from '../src/web/claim-route.ts';
 import * as PE from '../src/web/property-events.ts';

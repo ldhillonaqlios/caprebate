@@ -16,7 +16,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { testApp } from './helpers.ts';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import { assessLegal, legalAllows, legalQuestions, LEGAL_READINGS } from '../src/web/pack-legal.ts';
 import { stillOwned } from '../src/web/claim-route.ts';
 

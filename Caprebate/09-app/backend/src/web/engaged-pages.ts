@@ -1,6 +1,6 @@
 /**
  * THE CLIENTS LIST'S ROUTE AND THE BUSINESS PAGE'S PANELS — routes and rendering. PHASE 135: the list itself is drawn by
- * src/web/client-list.ts, the one list that replaced "Engaged clients" and "Organisations".
+ * src/modules/crm/client-list.ts, the one list that replaced "Engaged clients" and "Organisations".
  *
  * Same shape as `handleStaff` and `portalRoutes`: it returns 'not-mine' for
  * anything it does not own, so nothing is shadowed by accident and the mounting
@@ -21,7 +21,7 @@
  * screen omitting a field, which is presentation and not a control.
  */
 
-import { tellAndMoveOn } from './tell-and-move.ts';
+import { tellAndMoveOn } from '../modules/crm/tell-and-move.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../core/app.ts';
 import type { Actor } from '../core/index.ts';
@@ -35,7 +35,7 @@ import { sendEngagementLetter, signedCopy } from './engagement-send.ts';
 import { setRequiredSigners, type EngagementSigning } from './signing.ts';
 import * as A from './approvals.ts';
 import { STEP_ANCHOR } from './approvals-pages.ts';
-import { clientList, clientListPage, type ClientSort } from './client-list.ts';
+import { clientList, clientListPage, type ClientSort } from '../modules/crm/client-list.ts';
 import * as MR from './match-review.ts';
 import { pickPage } from './match-review-pages.ts';
 import { piecesPage } from '../core/index.ts';
@@ -79,7 +79,7 @@ export async function handleEngaged(
   const db = d.app.db;
   const deps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
 
-  /* PHASE 135: THE ONE CLIENTS LIST (src/web/client-list.ts), gated as the organisations list was, so the view-only login
+  /* PHASE 135: THE ONE CLIENTS LIST (src/modules/crm/client-list.ts), gated as the organisations list was, so the view-only login
      can read it. The engaged-client list it replaced is no longer drawn; `engagedClients` still serves its other readers. */
   if (path === '/staff/clients' && method === 'GET') {
     const sort: ClientSort = url.searchParams.get('sort') === 'name' ? 'name' : 'waiting';
@@ -88,7 +88,7 @@ export async function handleEngaged(
     return 'handled';
   }
 
-  /* PHASE 134: GET /staff/clients/:id is the ONE client page, drawn by src/web/client-page.ts, which is mounted first. */
+  /* PHASE 134: GET /staff/clients/:id is the ONE client page, drawn by src/modules/crm/client-page.ts, which is mounted first. */
 
   /* PHASE 157c (the Friary House run, F21): prepare and send the engagement letter; and the signed copy. */
   const sendLetter = /^\/staff\/clients\/([A-Za-z0-9-]+)\/engagement\/send$/.exec(path);
@@ -483,7 +483,7 @@ const BLOCKS_WORDS: Readonly<Record<E.Blocks, string>> = Object.freeze({
 
 /**
  * PHASE 138 — THE WHOLE MISSING LIST, for the Questions section's "More detail". Each fact is ALSO a WE NEED line in the
- * section it belongs to (src/web/client-page.ts); this is where a fact can be answered from a telephone call.
+ * section it belongs to (src/modules/crm/client-page.ts); this is where a fact can be answered from a telephone call.
  */
 export function panel3(p: E.BusinessPage, claims: readonly { readonly id: string; readonly name: string }[] = []): Safe {
   if (p.missing.length === 0) {

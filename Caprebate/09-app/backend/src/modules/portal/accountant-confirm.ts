@@ -27,7 +27,7 @@ import type { EmailTransport } from '../../integrations/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localDate, ukDate } from '../../shared/index.ts';
 // Read inside functions only: pipeline.ts reads this module's need the same way, so the loop is never touched at load.
-import { raiseBusinessStage } from '../../web/pipeline.ts';
+import { raiseBusinessStage } from '../crm/pipeline.ts';
 import { claimReturns, claimRoutes, type ClaimReturn } from '../../web/claim-route.ts';
 import { getOutboxRById } from '../../integrations/index.ts';
 

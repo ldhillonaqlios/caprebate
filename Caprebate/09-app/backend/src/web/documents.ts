@@ -53,8 +53,8 @@ import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { localDate, localStamp, ukDate } from '../shared/index.ts';
 import { READ_AND_DELETED } from '../shared/index.ts';
 import { RET7, type DocType, type UploadJob } from '../shared/upload-handler-port.ts';
-import { dueReading, type DueReading } from './tasks.ts';
-import { fireAutomation, type RunOutcome } from './automation.ts';
+import { dueReading, type DueReading } from '../modules/crm/tasks.ts';
+import { fireAutomation, type RunOutcome } from '../modules/crm/automation.ts';
 import { beginUpload } from './uploads.ts';
 import { eventLabel, eventOfBusiness, eventsOfProperty } from './property-events.ts';
 import {
@@ -171,7 +171,7 @@ const REPORT_NOT_DELIVERED =
  */
 /**
  * PHASE 142a — ONE CLAIM'S TWO FILE DATES, as `ret7Limbs` reads them for a document and as the message clean-up job
- * (src/web/message-retention.ts) reads them for a company's messages: the accounting period end (the latest
+ * (src/modules/crm/message-retention.ts) reads them for a company's messages: the accounting period end (the latest
  * ACCOUNTING_PERIOD_END fact, a VALUE only — UNKNOWN reads null, as no row does, N4) and the EARLIEST issue of the client
  * report. Each YYYY-MM-DD, or null where not known. One reader, so the two can never disagree about a claim.
  */

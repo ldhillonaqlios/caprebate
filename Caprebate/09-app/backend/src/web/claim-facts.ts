@@ -44,7 +44,7 @@ import { TAXONOMY_SECTOR, taxonomy } from './pack-lines.ts';
 import type { PackGrant } from './pack-grants.ts';
 import {
   CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, claimObjFor, claimantTypeForGate, isCompanyOrRoleToken, propertyJurisdiction,
-} from './crm.ts';
+} from '../modules/crm/crm.ts';
 import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from '../modules/assessment/funnel-session.ts';
 import { localStamp, ukDate } from '../shared/index.ts';
 import { formatPence, toPence } from '../shared/index.ts';
@@ -435,7 +435,7 @@ export function breakevenSwitch(): { readonly name: string; readonly on: boolean
 }
 
 /* ================================================================== *
- * 5 · THE GATE READINGS — asked by src/web/pipeline.ts on every move
+ * 5 · THE GATE READINGS — asked by src/modules/crm/pipeline.ts on every move
  * ================================================================== */
 
 export type WindowState = 'OPEN' | 'CLOSED' | 'UNKNOWN';

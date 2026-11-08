@@ -17,8 +17,8 @@ import type { Deps } from '../../core/index.ts';
 import { rateLimit } from '../../core/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { hashToken } from '../../core/index.ts';
-import type { CrmDeps } from '../../web/crm.ts';
-import { createLead } from '../../web/leads.ts';
+import type { CrmDeps } from '../crm/crm.ts';
+import { createLead } from '../crm/leads.ts';
 
 /** The site's property types, as the form offers them, and the sector each is in the leads' own list. */
 export const PROPERTY_TYPES: Readonly<Record<string, string | null>> = Object.freeze({

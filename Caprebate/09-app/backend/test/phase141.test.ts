@@ -28,8 +28,8 @@ import {
   EMAIL_SENDING, EMAIL_PROVIDER_QUESTION, buildMessage, dispatchOutbox, sendingMissing, sendingOn, smtpProvider,
   type EmailSending, type SmtpLogin,
 } from '../src/integrations/email/email-provider.ts';
-import * as F from '../src/web/free-email.ts';
-import { timelineFor } from '../src/web/timeline.ts';
+import * as F from '../src/modules/crm/free-email.ts';
+import { timelineFor } from '../src/modules/crm/timeline.ts';
 import { backendSwitchReadings } from '../src/web/case-stamp.ts';
 import { receiveFile } from '../src/modules/portal/client-files-pages.ts';
 import { KEEP_ORIGINALS_QUESTION } from '../src/shared/originals.ts';

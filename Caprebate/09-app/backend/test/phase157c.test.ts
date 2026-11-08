@@ -32,7 +32,7 @@ import { acquisitionDateReading, clientSaidPurchaseDate } from '../src/web/claim
 import * as D from '../src/web/documents.ts';
 import { FsObjectStore } from '../src/shared/objectstore.ts';
 import { singleFile } from '../src/core/multipart.ts';
-import { newClientDocuments, NEW_DOCUMENT_DAYS } from '../src/web/staff-dashboard.ts';
+import { newClientDocuments, NEW_DOCUMENT_DAYS } from '../src/modules/crm/staff-dashboard.ts';
 import { letterState, letterSteps, sendEngagementLetter, signedCopy, SEND_WORDS } from '../src/web/engagement-send.ts';
 import { markViewed } from '../src/modules/portal/portal.ts';
 import {
@@ -42,13 +42,13 @@ import {
 import { buildPdf, flow } from '../src/shared/pdf.ts';
 import { SIGNATURE_PAD_JS } from '../src/shared/signature-pad-script.ts';
 import { LETTER_PAGE_CSP } from '../src/core/router.ts';
-import { reconcileVideoMeeting } from '../src/web/video-calls.ts';
+import { reconcileVideoMeeting } from '../src/modules/crm/video-calls.ts';
 import { plainNeed } from '../src/shared/next-step.ts';
 import { SITE_CSS } from '../src/shared/assets.ts';
 import { can } from '../src/core/authz.ts';
-import * as L from '../src/web/leads.ts';
-import * as P from '../src/web/pipeline.ts';
-import * as I from '../src/web/introducers.ts';
+import * as L from '../src/modules/crm/leads.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
+import * as I from '../src/modules/crm/introducers.ts';
 import { createUser } from '../src/core/users.ts';
 import { docxOf } from './document-fixtures.ts';
 import { actor, testApp } from './helpers.ts';

@@ -32,7 +32,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { liveHeldIds } from '../../web/compliance.ts';
-import { addMonths } from '../../web/message-retention.ts';
+import { addMonths } from '../crm/message-retention.ts';
 import { BACKUP_CYCLE, knownBackupCycleDays } from '../../shared/upload-handler-port.ts';
 import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../assessment/funnel-deletable.ts';
 import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from '../assessment/funnel-edges.ts';

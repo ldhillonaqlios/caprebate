@@ -31,11 +31,11 @@ import { seed } from '../src/core/seed.ts';
 import type { Db } from '../src/core/db.ts';
 import { NotAuthorised, type Actor } from '../src/core/authz.ts';
 import type { AppRole } from '../src/core/roles.ts';
-import * as C from '../src/web/crm.ts';
-import * as P from '../src/web/pipeline.ts';
-import * as L from '../src/web/leads.ts';
-import * as T from '../src/web/tasks.ts';
-import * as A from '../src/web/automation.ts';
+import * as C from '../src/modules/crm/crm.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
+import * as L from '../src/modules/crm/leads.ts';
+import * as T from '../src/modules/crm/tasks.ts';
+import * as A from '../src/modules/crm/automation.ts';
 import * as M from '../src/web/templates.ts';
 import * as E from '../src/web/engaged.ts';
 import { registryGate, feeGuard } from '../src/shared/engine.ts';
@@ -430,14 +430,14 @@ describe('what no rule may do — each refused, and each with a test', () => {
         "SELECT DISTINCT stage FROM automation_runs WHERE claim_id = ? AND trigger_event = 'STAGE_ENTERED'", [c]).map((r) => r.stage)).size, 10,
       'a stage entered was not put to the rules');
 
-      const auto = readFileSync(join(SRC, 'web/automation.ts'), 'utf8');
+      const auto = readFileSync(join(SRC, 'modules/crm/automation.ts'), 'utf8');
       for (const mod of ["from './research.ts'", "from '../stubs/registers.ts'", "from '../stubs/signature.ts'", "from './engine.ts'", "from './pipeline.ts'"]) {
         assert.equal(auto.includes(mod), false, `automation.ts imports ${mod}`);
       }
       for (const name of ['moveClaim', 'recordMilestone', 'recordEnquiryCheck', 'runResearch', 'retryFailedSource', 'ingestRegisterRecord', 'assertSignedEngagement']) {
         assert.equal(new RegExp(`\\b${name}\\b`).test(auto), false, `automation.ts names ${name}`);
       }
-      for (const file of ['web/automation.ts', 'web/templates.ts']) {
+      for (const file of ['modules/crm/automation.ts', 'web/templates.ts']) {
         const src = readFileSync(join(SRC, file), 'utf8');
         assert.equal(/\b(d|app)\.email\b/.test(src), false, `${file} uses the application's transport`);
         assert.match(src, /outboxTransport\(d\.db, d\.newId, d\.now\)/, `${file} does not build its own outbox transport`);

@@ -22,14 +22,14 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { can, type Actor } from '../src/core/authz.ts';
-import * as M from '../src/web/messages.ts';
-import * as IE from '../src/web/inbound-email.ts';
+import * as M from '../src/modules/crm/messages.ts';
+import * as IE from '../src/modules/crm/inbound-email.ts';
 import { addNote } from '../src/web/engaged.ts';
 import { backendSwitchReadings } from '../src/web/case-stamp.ts';
 import {
   MESSAGE_RETENTION, MESSAGE_RETENTION_QUESTION, MESSAGE_RETENTION_RECOMMENDED, addMonths, messagesDue, retentionMissing, sweepMessages,
   type MessageRetention,
-} from '../src/web/message-retention.ts';
+} from '../src/modules/crm/message-retention.ts';
 import type { EmailSending } from '../src/integrations/email/email-provider.ts';
 import { pdfOf } from './document-fixtures.ts';
 import { statementDoors } from './sql-doors.ts';
@@ -144,7 +144,7 @@ describe('1 · the message clean-up job is built and switched off', () => {
     assert.deepEqual(retentionMissing(MESSAGE_RETENTION), []);
     assert.equal(retentionMissing({ ...MESSAGE_RETENTION, enabled: false, with_claim_years: null, without_claim_months: null, approved_by: null }).length, 3);
     assert.deepEqual(backendSwitchReadings().filter((x) => x.switch === 'MESSAGE_RETENTION'),
-      [{ switch: 'MESSAGE_RETENTION', on: true, home: 'src/web/message-retention.ts' }]);
+      [{ switch: 'MESSAGE_RETENTION', on: true, home: 'src/modules/crm/message-retention.ts' }]);
   });
 
   test('PHASE 142b: as shipped, nothing written today is due — a company with no claim keeps everything for seven years', () => {
@@ -405,10 +405,10 @@ describe('2 · the job is the only path that can delete a message', () => {
     };
     walk(root);
     // PHASE 161i1: the inbound email statements live in the outside services' data file; the job is still the only caller.
-    assert.deepEqual(hits, ['integrations/data.ts', 'web/message-retention.ts']);
+    assert.deepEqual(hits, ['integrations/data.ts', 'modules/crm/message-retention.ts']);
     const door = statementDoors(root, /DELETE\s+FROM\s+(client_messages|internal_notes|client_message_files|inbound_email)\b/i);
     assert.ok(door.functions.length > 0);
-    assert.deepEqual(door.callers, ['web/message-retention.ts']);
+    assert.deepEqual(door.callers, ['modules/crm/message-retention.ts']);
   });
 });
 

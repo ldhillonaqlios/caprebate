@@ -4,13 +4,13 @@
  * A gate's needs are written for the record: "The surveyor’s commitment is recorded, on a survey job on this claim".
  * A person new to the system needs the answer first: what is still needed, and the one thing that fixes it. This file
  * holds that translation, in ONE table, and decides nothing. Whether a gate is open is still `gateOut` in
- * src/web/pipeline.ts, read on the request; a move is still refused on the server when the gate is not open, whatever
+ * src/modules/crm/pipeline.ts, read on the request; a move is still refused on the server when the gate is not open, whatever
  * the card shows.
  *
  * A need this table does not know is shown in its own words, so a new gate can never be hidden by a missing row.
  * test/phase133c.test.ts reads every stage's needs on the seed and requires each to have a plain reading.
  *
- * THE ANCHORS are the claim page's own (src/web/crm-pages.ts): #move, #claim-facts, #claim-documents, #claim-tasks,
+ * THE ANCHORS are the claim page's own (src/modules/crm/crm-pages.ts): #move, #claim-facts, #claim-documents, #claim-tasks,
  * #add-task, #claim-deliverables, #claim-figures.
  */
 

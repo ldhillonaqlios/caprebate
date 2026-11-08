@@ -1,12 +1,12 @@
 /**
- * UI TIDY PHASE 7 — A CLIENT'S PAGE, PART 1, 3 October 2026 (src/web/client-page.ts, src/modules/portal/client-layout.ts).
+ * UI TIDY PHASE 7 — A CLIENT'S PAGE, PART 1, 3 October 2026 (src/modules/crm/client-page.ts, src/modules/portal/client-layout.ts).
  * The client's own header; each claim in a box of its own, headed in its stage's colour, named by its site, its next step
  * in a dark box; and the left-hand menu opening out to the client — its claims, then the page's parts.
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import { dueReading } from '../src/shared/localtime.ts';
 import { propertyIn } from '../src/shared/components.ts';
 import { stageGroupOf } from '../src/core/look.ts';

@@ -21,7 +21,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import * as F from '../src/web/claim-facts.ts';
 import * as R from '../src/web/claim-record.ts';
 import { factsBlock } from '../src/web/claim-record-pages.ts';

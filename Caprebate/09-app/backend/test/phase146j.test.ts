@@ -713,10 +713,10 @@ describe('2b · the question asked before the first reading, where the type is c
     assert.equal((pages.match(/earlyQuestions\(p\.early_questions/g) ?? []).length, 2, 'the claim page’s request and upload forms');
     assert.match(readFileSync(join(SRC, 'modules', 'portal', 'client-files-pages.ts'), 'utf8'), /earlyQuestions\(f\.early_questions/);
     // and the form where staff say what a file that came by email is, which hands the answer to the same upload path
-    const msgs = readFileSync(join(SRC, 'web', 'messages-pages.ts'), 'utf8');
+    const msgs = readFileSync(join(SRC, 'modules', 'crm', 'messages-pages.ts'), 'utf8');
     assert.match(msgs, /earlyQuestions\(earlyQuestionsFor\(actor, business_id, types\)/);
     assert.match(msgs, /mailboxFor\(d\),\n\s*earlyVouchesFrom\(\(n\) => f\.get\(n\)\)\)/);
-    assert.match(readFileSync(join(SRC, 'web', 'inbound-email.ts'), 'utf8'), /claim_id: f\.claim_id, early_vouch \}, part\.bytes\)/);
+    assert.match(readFileSync(join(SRC, 'modules', 'crm', 'inbound-email.ts'), 'utf8'), /claim_id: f\.claim_id, early_vouch \}, part\.bytes\)/);
     assert.doesNotMatch(readFileSync(join(SRC, 'core', 'router.ts'), 'utf8'), /vouch_|earlyQuestions/);
     w.close();
   });

@@ -121,7 +121,7 @@ export function claimTiles(tiles: readonly ClaimTile[], empty: string): Safe {
  * THE CLAIM'S STAGE BAR — the operating procedure's ten stages, then Closed.
  *
  * IT DRAWS THE CLAIM VIEW'S OWN READING AND DECIDES NOTHING. `stage` and `steps` are `pipeline.stage` and
- * `pipeline.steps` from the claim's view (src/web/pipeline.ts), which read the claim's stored `stage`: each step is done,
+ * `pipeline.steps` from the claim's view (src/modules/crm/pipeline.ts), which read the claim's stored `stage`: each step is done,
  * current, exited or to do there, and this only draws it. A claim on hold shows the stage it returns to as current and a
  * badge saying it is on hold; a claim that left the procedure marks where it left, with a badge naming the exit; a
  * closed claim has every step done. An unrecognised stage has no steps, and the bar says so (N4: never a

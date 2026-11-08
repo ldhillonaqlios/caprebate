@@ -52,7 +52,7 @@ import { jobSite, setJobMenu } from './surveyor-pages.ts';
 import { lateBadge, siteOf } from '../core/index.ts';
 import { PAYER_CLASSES } from './claim-facts.ts';
 import { deskFirstReading } from '../modules/assessment/desk-first.ts';
-import { roomsFor } from './rooms.ts';
+import { roomsFor } from '../modules/crm/rooms.ts';
 import { REPORT_ASSUMPTIONS } from '../modules/assessment/report-assumptions.ts';
 import { TEST_DEFAULT_WORDS } from './pack-lines.ts';
 import { packSheet, SHEET_CHAPTERS, type SheetRow } from './pack-sheets.ts';

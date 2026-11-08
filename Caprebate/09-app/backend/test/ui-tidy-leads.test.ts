@@ -1,12 +1,12 @@
 /**
- * UI TIDY PHASE 5 — LEADS, 2 October 2026 (src/web/pipeline-pages.ts leadsHead, src/web/lead-cards.ts leadSectionCounts).
+ * UI TIDY PHASE 5 — LEADS, 2 October 2026 (src/modules/crm/pipeline-pages.ts leadsHead, src/modules/crm/lead-cards.ts leadSectionCounts).
  * One heading with one line of counts and one main button; the sections' counts as solid boxes, each a link; every switch
  * on one row; the "Record a lead by hand" form folded until it is asked for, and still recording a lead.
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import { RECORD_LEAD_HREF } from '../src/web/pipeline-pages.ts';
+import { RECORD_LEAD_HREF } from '../src/modules/crm/pipeline-pages.ts';
 import { SITE_CSS } from '../src/shared/assets.ts';
 
 let H: Harness;

@@ -8,7 +8,7 @@
  *                     reads); and three actions — Chat (every message with them, and a box to write), Log a call, Files —
  *                     with the rest under "More".
  *   THE NEXT STEP     the one step that is ready to tell the client, with its checked facts and where each came from, and
- *                     "Tell the client and move on" (src/web/tell-and-move.ts). When none is ready, what the next step is
+ *                     "Tell the client and move on" (src/modules/crm/tell-and-move.ts). When none is ready, what the next step is
  *                     still waiting for. Where a claim could not move on, why.
  *   THE LOOKUPS       every lookup and its state at a glance — done and when, failed, waiting, not switched on, not run.
  *   THE TABS          Chat, Claims, Properties, Questions, People, Checks, Files, Activity: the page's sections, grouped.
@@ -24,10 +24,10 @@ import type { ChecksPanel, StepView } from '../../web/approvals.ts';
 import type { SourcesPanel } from '../../web/research.ts';
 import type { QuickAction, SectionContext, SectionSpec, SectionStatus } from '../../shared/index.ts';
 import { section, SECTION_STATUS_WORDS } from '../../shared/index.ts';
-import { clientProgress, whyNotMoved } from '../../web/tell-and-move.ts';
+import { clientProgress, whyNotMoved } from '../crm/tell-and-move.ts';
 import { filesButton } from './client-files-pages.ts';
 import type { Db } from '../../core/index.ts';
-import type { ClaimSummary } from '../../web/crm.ts';
+import type { ClaimSummary } from '../crm/crm.ts';
 import { claimHref, claimRef, propertyIn } from '../../shared/index.ts';
 import { dueReading } from '../../shared/index.ts';
 import { groupBand, lateBadge, noDateBadge, stageGroupOf } from '../../core/index.ts';

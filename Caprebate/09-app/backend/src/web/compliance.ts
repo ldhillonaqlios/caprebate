@@ -204,7 +204,7 @@ export function settingReading(db: Db, setting: string, today: string): SettingR
  * The phase brief said: switch it on as business policy only if doing so records checks without refusing a claim for
  * want of a risk rating nobody has defined; if switching it on would refuse or block any work, leave it off. Re-derived
  * in code: ON, `cddGateNeed` below refuses every claim's move out of ENGAGEMENT until a FINISHED check is on record for
- * its organisation (src/web/pipeline.ts). Finishing needs what was identified, how it was verified, an evidence
+ * its organisation (src/modules/crm/pipeline.ts). Finishing needs what was identified, how it was verified, an evidence
  * document or register number, the beneficial ownership position (and at least one owner where it is RECORDED), the
  * authority to bind and its evidence, and the date — `missingForCompletion` in compliance-aml.ts. It does NOT need a
  * risk rating (free text or nothing). So it would not refuse for want of a scale, but it WOULD block work at
@@ -237,7 +237,7 @@ export function recordSetting(d: ComplianceDeps, actor: Actor, input: Fields): W
 }
 
 /* ================================================================== *
- * 4 · THE ENGAGEMENT GATE — read by src/web/pipeline.ts
+ * 4 · THE ENGAGEMENT GATE — read by src/modules/crm/pipeline.ts
  * ================================================================== */
 
 export type CddNeed = { readonly what: string; readonly met: boolean; readonly why: string };

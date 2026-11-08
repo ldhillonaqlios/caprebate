@@ -1,5 +1,5 @@
 /**
- * UI TIDY PHASE 4 — HOME IN TWO COLUMNS, 2 October 2026 (src/web/staff-dashboard.ts, src/modules/public-site/home.ts).
+ * UI TIDY PHASE 4 — HOME IN TWO COLUMNS, 2 October 2026 (src/modules/crm/staff-dashboard.ts, src/modules/public-site/home.ts).
  * One line saying what is late; solid number boxes; the work on the left and the pipeline and calendar on the right;
  * the pipeline as five coloured bars. Every part that was on Home is still there for the same logins.
  * Counts are read from the same store at the same moment, never written in, so the test does not depend on the date.

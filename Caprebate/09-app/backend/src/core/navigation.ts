@@ -28,7 +28,7 @@
  * every login's exact menu and every address's answer, so neither a menu nor a permission can drift unseen.
  */
 
-import { unreadCount } from '../web/messages.ts';
+import { unreadCount } from '../modules/crm/messages.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Db } from './db.ts';
 import { NotAuthorised, type Actor } from './authz.ts';
@@ -36,12 +36,12 @@ import type { AppRole } from './roles.ts';
 import { h, raw, Safe } from '../shared/index.ts';
 import { assertBackOffice, assertSection } from './backoffice.ts';
 import { searchGate } from './search.ts';
-import { mayCreateTask, myWork, nextActionsGate } from '../web/tasks.ts';
-import { assertLeadSection } from '../web/leads.ts';
-import { pipelineBoardGate } from '../web/crm.ts';
+import { mayCreateTask, myWork, nextActionsGate } from '../modules/crm/tasks.ts';
+import { assertLeadSection } from '../modules/crm/leads.ts';
+import { pipelineBoardGate } from '../modules/crm/crm.ts';
 import { billingViewFor, clientsAreaGate } from '../web/billing.ts';
 import { claimListGate } from '../shared/lists.ts';
-import { assertIntroducerSection, rewardModelGate } from '../web/introducers.ts';
+import { assertIntroducerSection, rewardModelGate } from '../modules/crm/introducers.ts';
 import { assertSurveySection } from '../web/surveyor.ts';
 import { assertFinanceSection } from '../web/finance.ts';
 import { adminSettingsGate, SETTINGS_TILES } from '../web/admin-tiles.ts';
@@ -367,7 +367,7 @@ function userMenu(name: string, actor: Actor, settingsHref: string): Safe {
 /**
  * ADMIN'S VIEWS IN THE TOP BAR. the owner: "i want the sales, accounting, survayor, admin these tabs to be
  * shifted next to the search box in the white space from logo to search box". Admin's choice of Home dashboard, on every
- * back-office page; the one Home is showing is marked. Nobody else has them (src/web/staff-dashboard.ts, dashView).
+ * back-office page; the one Home is showing is marked. Nobody else has them (src/modules/crm/staff-dashboard.ts, dashView).
  */
 function viewTabs(actor: Actor, current: string | null): Safe {
   if (actor.role !== 'ADMIN') return raw('');

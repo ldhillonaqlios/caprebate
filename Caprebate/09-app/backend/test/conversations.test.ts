@@ -13,7 +13,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
-import * as IE from '../src/web/inbound-email.ts';
+import * as IE from '../src/modules/crm/inbound-email.ts';
 import { INBOUND_EMAIL } from '../src/integrations/email/email-inbound.ts';
 import { buildMessage, smtpProvider } from '../src/integrations/email/email-provider.ts';
 
@@ -47,7 +47,7 @@ async function req(path: string, init: RequestInit = {}) {
   return { status: r.status, body: await r.text(), location: r.headers.get('location') };
 }
 const post = (path: string, form: Record<string, string>) => req(path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(form).toString() });
-// 1 Oct 2026: "Chat" is now "Communication" (src/web/communication.ts).
+// 1 Oct 2026: "Chat" is now "Communication" (src/modules/crm/communication.ts).
 const chatButton = (body: string): string => /<a class="cta chatbtn"[^>]*>Communication[\s\S]*?<\/a>/.exec(body)?.[0] ?? '';
 
 /** A reply as a mail program writes it: answering one of our Message-IDs. */

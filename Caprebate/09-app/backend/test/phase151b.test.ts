@@ -41,7 +41,7 @@ import {
 } from '../src/modules/assessment/address-check.ts';
 import { readFileSync } from 'node:fs';
 import { randomUUID as uuid151b } from 'node:crypto';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import * as R from '../src/web/claim-record.ts';
 import * as CF from './claim-fixtures.ts';
 import { testApp } from './helpers.ts';

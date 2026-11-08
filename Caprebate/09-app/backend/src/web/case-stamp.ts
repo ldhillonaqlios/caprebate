@@ -46,13 +46,13 @@ import { DPO_ROLE_SWITCH } from '../core/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { ctaSwitchReadings, registryGate } from '../shared/index.ts';
 import { DISCLOSURE_LOG } from './disclosure-log.ts';
-import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from './introducers.ts';
+import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../modules/crm/introducers.ts';
 import { CONVEYANCING_STRIP } from '../modules/assessment/conveyancing-strip.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../shared/index.ts';
 import { ENQUIRY_RETENTION } from '../modules/public-site/enquiry-retention.ts';
-import { MESSAGE_RETENTION } from './message-retention.ts';
+import { MESSAGE_RETENTION } from '../modules/crm/message-retention.ts';
 import { EMAIL_SENDING } from '../integrations/index.ts';
 import { ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST } from './signing.ts';
 import { INBOUND_EMAIL } from '../integrations/index.ts';
@@ -140,8 +140,8 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   DISCLOSURE_LOG               the per-disclosure log                          src/web/disclosure-log.ts
  *   DPO_ROLE_SWITCH              a data protection officer role                  src/core/authz.ts
  *   FEE_CLAWBACK                 clause 13 — the fee follows a reduced claim     src/web/claim-record.ts
- *   REFERRAL_FORM                the public referral form                        src/web/introducers.ts
- *   CLIENT_SHARE_GIVE            a client giving the share-progress answer       src/web/introducers.ts
+ *   REFERRAL_FORM                the public referral form                        src/modules/crm/introducers.ts
+ *   CLIENT_SHARE_GIVE            a client giving the share-progress answer       src/modules/crm/introducers.ts
  *   CONVEYANCING_STRIP           company names kept on conveyancing uploads      src/modules/assessment/conveyancing-strip.ts
  *   FEE_CONTROLS.above_benefit   the fee above the benefit                       src/web/fee-controls.ts
  *   FEE_CONTROLS.break_and_abort the break and abort fees                        src/web/fee-controls.ts
@@ -156,7 +156,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   COMPANY_TYPE_FROM_REGISTER   the company type from Companies House (153b)   src/integrations/connectors/company-search.ts
  *   ENGAGEMENT_SIGNING           the built-in letter signature (Phase 146f)      src/web/signing.ts
  *   ENGAGEMENT_SIGNING_TEST      signing on for testing, test copy only (6 Oct)  src/web/signing.ts
- *   MESSAGE_RETENTION            the message clean-up job (Phase 142a)           src/web/message-retention.ts
+ *   MESSAGE_RETENTION            the message clean-up job (Phase 142a)           src/modules/crm/message-retention.ts
  *   ENQUIRY_RETENTION            the closed-enquiry clean-up job (Phase 153c)    src/modules/public-site/enquiry-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/web/defence-pack.ts
  *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/modules/assessment/allowance-profit-comparison.ts
@@ -181,8 +181,8 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'DISCLOSURE_LOG', on: DISCLOSURE_LOG.enabled, home: 'src/web/disclosure-log.ts' },
     { switch: 'DPO_ROLE_SWITCH', on: DPO_ROLE_SWITCH.enabled, home: 'src/core/authz.ts' },
     { switch: 'FEE_CLAWBACK', on: FEE_CLAWBACK.enabled, home: 'src/web/claim-record.ts' },
-    { switch: 'REFERRAL_FORM', on: REFERRAL_FORM.enabled, home: 'src/web/introducers.ts' },
-    { switch: 'CLIENT_SHARE_GIVE', on: CLIENT_SHARE_GIVE.enabled, home: 'src/web/introducers.ts' },
+    { switch: 'REFERRAL_FORM', on: REFERRAL_FORM.enabled, home: 'src/modules/crm/introducers.ts' },
+    { switch: 'CLIENT_SHARE_GIVE', on: CLIENT_SHARE_GIVE.enabled, home: 'src/modules/crm/introducers.ts' },
     { switch: 'CONVEYANCING_STRIP', on: CONVEYANCING_STRIP.enabled, home: 'src/modules/assessment/conveyancing-strip.ts' },
     { switch: 'FEE_CONTROLS.above_benefit', on: FEE_CONTROLS.above_benefit.enabled, home: 'src/web/fee-controls.ts' },
     { switch: 'FEE_CONTROLS.break_and_abort', on: FEE_CONTROLS.break_and_abort.enabled, home: 'src/web/fee-controls.ts' },
@@ -199,7 +199,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'ADDRESS_LOOKUP', on: ADDRESS_LOOKUP.enabled, home: 'src/integrations/connectors/address-lookup.ts' },
     { switch: 'ENGAGEMENT_SIGNING', on: ENGAGEMENT_SIGNING.enabled, home: 'src/web/signing.ts' },
     { switch: 'ENGAGEMENT_SIGNING_TEST', on: ENGAGEMENT_SIGNING_TEST.enabled, home: 'src/web/signing.ts' }, // 6 Oct 2026: the test copy only, test website
-    { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/web/message-retention.ts' },
+    { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/modules/crm/message-retention.ts' },
     { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/modules/public-site/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/web/defence-pack.ts' },
     { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/modules/assessment/allowance-profit-comparison.ts' },

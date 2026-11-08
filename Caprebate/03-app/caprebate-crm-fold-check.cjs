@@ -372,8 +372,8 @@ function checkB(inp) {
 // reference is `file:NN`, or `:NN` after a file in the same cell, or - the prose form §4 uses for
 // phase3 - "`name` at line NN" / "`name` at NN" after a file in the same cell.
 const C_FILE = /^(src\/[^\s:]+\.ts|Caprebate site\.html|\d\d-[^\s:]+\.(?:ts|js|cjs|mjs|html|sql))(?::(\d+))?$/;
-// Phase 152 (28 September 2026): a file with a colon and NO clean line number after it - "`src/web/crm.ts:`",
-// "`src/web/crm.ts:12a`", "`src/web/crm.ts: 12`" - matched neither C_FILE nor the `:NN` form, so the reference
+// Phase 152 (28 September 2026): a file with a colon and NO clean line number after it - "`src/modules/crm/crm.ts:`",
+// "`src/modules/crm/crm.ts:12a`", "`src/modules/crm/crm.ts: 12`" - matched neither C_FILE nor the `:NN` form, so the reference
 // vanished and C passed it silently until a person saw it (Phase 151e line 6). Each is now a failure of its own.
 const C_FILE_BROKEN = /^(src\/[^\s:]+\.ts|Caprebate site\.html|\d\d-[^\s:]+\.(?:ts|js|cjs|mjs|html|sql)):(?!\d+$)/;
 const C_FORMS = ['back end', 'site', 'package', 'phase9', 'phase3', 'other'];

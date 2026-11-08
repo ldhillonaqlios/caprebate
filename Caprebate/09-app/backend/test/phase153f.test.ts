@@ -21,10 +21,10 @@ import { createApp } from '../src/core/server.ts';
 import { fixtureTransport, liveTransport, type Fixture } from '../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import { forgetZoomToken } from '../src/integrations/connectors/zoom.ts';
-import { activeMeeting, meetingHost, reconcileVideoMeeting } from '../src/web/video-calls.ts';
+import { activeMeeting, meetingHost, reconcileVideoMeeting } from '../src/modules/crm/video-calls.ts';
 import { readWebhook } from '../src/integrations/connectors/whatsapp.ts';
 import { raw } from '../src/shared/html.ts';
-import { attachmentOf, fetchWhatsAppAttachment, receiveWhatsApp, whatsAppAttachmentBytes } from '../src/web/whatsapp.ts';
+import { attachmentOf, fetchWhatsAppAttachment, receiveWhatsApp, whatsAppAttachmentBytes } from '../src/modules/crm/whatsapp.ts';
 
 const T = '2026-10-04T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';

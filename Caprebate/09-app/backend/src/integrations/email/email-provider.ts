@@ -46,11 +46,11 @@
  *   · BOUNCES. A refusal while sending is read by its code: 5xx is permanent (HARD) and 4xx is for now (SOFT, tried
  *     again on the next run). A HARD bounce is written to email_bounces and the address to email_suppressions, and
  *     nothing more is sent to it until a member of staff lifts it. A delivery report that arrives later is read by
- *     the mailbox reader (src/web/inbound-email.ts) and recorded the same way — never filed as a reply.
+ *     the mailbox reader (src/modules/crm/inbound-email.ts) and recorded the same way — never filed as a reply.
  *   · CALENDAR INVITES AND THE SIGNED LETTER travel as outbox_inline_files, attached like any other file.
  *   · STILL OFF. The mailbox and its SPF, DKIM and DMARC records, and IONOS named in the privacy notice and in
  *     clause 7 of the engagement letter, are not yet true. The invoice and bank-detail refusals in
- *     src/web/free-email.ts are untouched.
+ *     src/modules/crm/free-email.ts are untouched.
  *
  * THE RULES DO NOT MOVE WHEN IT IS ON. A do-not-contact company is asked again at the moment of sending, not only when
  * the email was saved. From and Reply-To come from the stored row, which was stamped from the one sender setting. An

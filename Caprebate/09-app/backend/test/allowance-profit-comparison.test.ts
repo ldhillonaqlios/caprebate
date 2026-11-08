@@ -20,7 +20,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { testApp } from './helpers.ts';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import { newSession, feeDisplay, estimate, BENEFIT, type Session, type SectorId, type BenefitContext } from '../src/shared/engine.ts';
 import { sessionFromFunnel } from '../src/modules/assessment/funnel-session.ts';
 import {

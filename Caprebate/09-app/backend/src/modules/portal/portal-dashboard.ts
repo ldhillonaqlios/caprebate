@@ -19,10 +19,10 @@
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
-import { clientProgress } from '../../web/tell-and-move.ts';
+import { clientProgress } from '../crm/tell-and-move.ts';
 import { STAGES } from '../../shared/index.ts';
 import { localClock, localDate, localPartsOf, ukDate, ukDatesIn, WEEKDAY_NAMES } from '../../shared/index.ts';
-import { unreadCount } from '../../web/messages.ts';
+import { unreadCount } from '../crm/messages.ts';
 import type { ClientStep } from '../../web/approvals.ts';
 import type { ClientDeliverable } from '../../web/claim-record.ts';
 import { releasedVersion } from '../../web/report-signoff.ts';

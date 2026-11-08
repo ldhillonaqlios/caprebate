@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { testApp, actor } from './helpers.ts';
 import type { App } from '../src/core/app.ts';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import * as CF from './claim-fixtures.ts';
 import { ENGAGEMENT_SIGNING_TEST, letterFacts, shownLetter, signEngagement } from '../src/web/signing.ts';
 import { TEST_LETTER_PATH } from '../src/web/letter.ts';
@@ -126,7 +126,7 @@ describe('F43 — the portal says what the claim knows', () => {
 /* ================================================================== *
  * F44 — "floor area sourced" needs a floor area on record
  * ================================================================== */
-import * as P from '../src/web/pipeline.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
 
 /** A client question put and answered in the portal, and its answer ticked by Sales as checked (or not). */
 function answered(app: App, business: string, fact_id: string, answer: string, approve = true): string {

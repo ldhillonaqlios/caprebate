@@ -93,7 +93,7 @@ const EXEMPT_TEXT = [
   /^1\. Complain to us\. You have a right to complain to us about how we have handled your personal data/,
   /^2\. Complain to the data protection regulator\. You have a right to complain to the Information Commissioner/,
   /^3\. Go to court\. You can also take your own case to court/,
-  /* versioned consent wording (SHARE-PROGRESS-1, src/web/introducers.ts): each recorded answer points at these exact
+  /* versioned consent wording (SHARE-PROGRESS-1, src/modules/crm/introducers.ts): each recorded answer points at these exact
      words, so plainer words are a new version, approved by the data protection officer */
   /^May we tell \u2063? ?how your claim is progressing\?|^May we tell \{firm\} how your claim is progressing\?/,
   /* a question's title in CAPREBATE QUESTIONS, quoted exactly so the two stay one question (src/web/postcode.ts) */

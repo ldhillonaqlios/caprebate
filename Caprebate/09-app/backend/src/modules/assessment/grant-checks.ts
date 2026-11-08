@@ -20,7 +20,7 @@
  * and the existing check, every grant traced (src/web/claim-facts.ts, grantsTraced), still asks whether there are any.
  */
 import type { Db } from '../../core/index.ts';
-import type { Need } from '../../web/pipeline.ts';
+import type { Need } from '../crm/pipeline.ts';
 import { latestFacts, packGrantsFor } from '../../web/claim-facts.ts';
 import { receivedOnClaim } from '../../web/mandatory-documents.ts';
 import { grantRoute, type GrantSwitches } from '../../web/pack-grants.ts';

@@ -11,8 +11,8 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { testApp, actor } from './helpers.ts';
 import type { App } from '../src/core/app.ts';
-import * as C from '../src/web/crm.ts';
-import * as P from '../src/web/pipeline.ts';
+import * as C from '../src/modules/crm/crm.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
 import * as CF from './claim-fixtures.ts';
 
 const T0 = '2026-10-07T09:00:00.000Z';

@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
-import * as IE from '../src/web/inbound-email.ts';
+import * as IE from '../src/modules/crm/inbound-email.ts';
 
 const PASSWORD = 'an-invented-password-155';
 const IMAP_KEYS = { IONOS_IMAP_HOST: 'imap.ionos.co.uk', IONOS_IMAP_PORT: '993', IONOS_IMAP_USER: 'contact@caprebate.co.uk', IONOS_IMAP_PASSWORD: 'not-a-real-password' };

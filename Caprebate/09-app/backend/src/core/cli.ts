@@ -34,8 +34,8 @@ import { sealKeyFromEnv } from '../shared/index.ts';
 import { openKeptOriginal, sweepOriginals } from '../web/uploads.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, emailPlaceRefusal, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { INBOUND_EMAIL, imapLoginFromKeyFile, imapMailbox } from '../integrations/index.ts';
-import { readMailbox } from '../web/inbound-email.ts';
-import { MESSAGE_RETENTION, sweepMessages } from '../web/message-retention.ts';
+import { readMailbox } from '../modules/crm/inbound-email.ts';
+import { MESSAGE_RETENTION, sweepMessages } from '../modules/crm/message-retention.ts';
 import { inspireStoreFromEnv, INSPIRE_KEEP_DAYS } from '../integrations/index.ts';
 import { randomUUID } from 'node:crypto';
 import { liveTransport } from '../integrations/index.ts';
@@ -148,7 +148,7 @@ async function main(): Promise<number> {
     const [source, file] = [process.argv[3], process.argv[4]];
     const byAt = process.argv.indexOf('--by');
     const by = byAt > 0 ? process.argv[byAt + 1] : undefined;
-    const { importPremises, PREMISES_SOURCES } = await import('../web/premises-import.ts');
+    const { importPremises, PREMISES_SOURCES } = await import('../modules/crm/premises-import.ts');
     if (source === undefined || !(source in PREMISES_SOURCES) || file === undefined || by === undefined) {
       console.error(`Usage: node src/core/cli.ts import-premises <${Object.keys(PREMISES_SOURCES).join('|')}> <file> --by <user id>`);
       return 1;

@@ -27,7 +27,7 @@ import { CB, getSector, newSession } from '../shared/index.ts';
 import { packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
 import { poundsWords } from './pack-sums.ts';
-import { claimantTypeForGate } from './crm.ts';
+import { claimantTypeForGate } from '../modules/crm/crm.ts';
 import { valuationLock } from './valuation-lock.ts';
 import { claimantRole, type ClaimantRole } from '../modules/assessment/who-claims.ts';
 import { LEGAL_ENGINE_SWITCHES } from '../shared/index.ts';

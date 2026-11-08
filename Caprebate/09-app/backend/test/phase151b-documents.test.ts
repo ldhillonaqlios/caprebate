@@ -28,7 +28,7 @@ import type { AuditLog } from '../src/core/audit.ts';
 import { Db, migrate } from '../src/core/db.ts';
 import { MIGRATIONS_DIR } from '../src/core/app.ts';
 import * as D from '../src/web/documents.ts';
-import * as P from '../src/web/pipeline.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
 import * as F from '../src/web/claim-facts.ts';
 import * as MD from '../src/web/mandatory-documents.ts';
 import * as RR from '../src/web/receipt-recommendations.ts';

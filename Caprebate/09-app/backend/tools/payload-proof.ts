@@ -59,11 +59,11 @@ import { seed } from '../src/core/seed.ts';
 import { quarantinedKeysAndValues } from '../src/payload.ts';
 import { randomUUID } from 'node:crypto';
 import * as D from '../src/web/documents.ts';
-import * as I from '../src/web/introducers.ts';
+import * as I from '../src/modules/crm/introducers.ts';
 import { acceptClientBytes, finishUpload, issuedJob } from '../src/web/uploads.ts';
 import * as F from '../src/web/claim-facts.ts';
 import { RELEASED_FACTS_TO_SURVEYOR } from '../src/payload.ts';
-import * as DB from '../src/web/dashboard.ts';
+import * as DB from '../src/modules/crm/dashboard.ts';
 import { can as canForProof } from '../src/core/authz.ts';
 import { addNote } from '../src/web/engaged.ts';
 

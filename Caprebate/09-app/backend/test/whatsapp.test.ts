@@ -1,5 +1,5 @@
 /**
- * 30 SEPTEMBER 2026 — WHATSAPP WITH EACH CLIENT, AND "EVERYTHING" ON THE CLIENT PAGE (src/web/whatsapp.ts).
+ * 30 SEPTEMBER 2026 — WHATSAPP WITH EACH CLIENT, AND "EVERYTHING" ON THE CLIENT PAGE (src/modules/crm/whatsapp.ts).
  *
  * Lakhbir: "the ability to use whats app directly using our back end portal the idea is each client when we view back
  * end has full communication via email or whats app". Recorded answers only; invented keys; the transfer approved only

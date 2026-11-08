@@ -41,8 +41,8 @@ import { answerLegal, legalView } from '../src/web/pack-legal.ts';
 import { approvePack, approvedVersion, saveDetails } from '../src/web/pack-approve.ts';
 import { chaptersToRead } from '../src/web/pack-chapters.ts';
 import { setBasis } from '../src/web/survey-evidence.ts';
-import * as CRM from '../src/web/crm.ts';
-import * as PL from '../src/web/pipeline.ts';
+import * as CRM from '../src/modules/crm/crm.ts';
+import * as PL from '../src/modules/crm/pipeline.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const fx = (name: string): Fixture => ({ status: 200, body: readFileSync(join(HERE, 'fixtures', 'phase146c', name), 'utf8') });

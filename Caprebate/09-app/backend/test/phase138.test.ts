@@ -23,7 +23,7 @@
 
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
    twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
-import * as C151e4 from '../src/web/crm.ts';
+import * as C151e4 from '../src/modules/crm/crm.ts';
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';

@@ -12,7 +12,7 @@
  *     at an exit, its valuation is fixed: no pack approval and no legal-check answer is taken (src/web/pack-approve.ts,
  *     src/web/pack-legal.ts). A claim on hold is judged by the stage it returns to.
  *   · REOPENED, ON PURPOSE. The only way to change the figures then is "Reopen the valuation": an admin moves the claim
- *     back to Valuation, with a reason (the claim's own REOPEN move, src/web/pipeline.ts). A reopen to any stage up to
+ *     back to Valuation, with a reason (the claim's own REOPEN move, src/modules/crm/pipeline.ts). A reopen to any stage up to
  *     and including the tax adviser's sign-off SETS ASIDE what was released on the old figures, and the claim page says
  *     each one: the tax adviser's sign-off, the client report and the accountant's pack as issued (marked superseded),
  *     the client's acceptance of that report, and any defence pack. Nothing is deleted: every record stays, and the

@@ -39,8 +39,8 @@ import type { Db } from '../core/index.ts';
 import { _canonical, type AuditLog } from '../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../core/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
-import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from './crm.ts';
-import { enteredAt, raiseBusinessStage, type Need } from './pipeline.ts';
+import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from '../modules/crm/crm.ts';
+import { enteredAt, raiseBusinessStage, type Need } from '../modules/crm/pipeline.ts';
 import { filingRoute } from '../modules/portal/client-filing.ts';
 import { latestAnswer, returnFilings, returnsOf, type ReturnFiling } from '../modules/portal/accountant-confirm.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
@@ -49,7 +49,7 @@ import { packSwitchReadings } from '../shared/index.ts';
 import { amendmentWindowReading, dateValue, penceValue } from './claim-facts.ts';
 import { funnelStateFor } from '../modules/assessment/funnel-session.ts';
 import { loadLetter, type OpenTerm } from './letter.ts';
-import { insertTask } from './tasks.ts';
+import { insertTask } from '../modules/crm/tasks.ts';
 import { NO_RECEIPT_POLICY } from './documents.ts';
 import { formatPence, formatShownRange } from '../shared/index.ts';
 import { localDate, localStamp, ukDate } from '../shared/index.ts';
@@ -1324,7 +1324,7 @@ export function closeEnquiry(
  * NOTE: the election on a future sale is irrevocable, notified within two years
  * of completion, with a s.203 notice to follow. Waiting with Sales, due on no
  * date. One open task per property: a second change raises nothing more.
- * Called by `updateProperty` in src/web/crm.ts after its write.
+ * Called by `updateProperty` in src/modules/crm/crm.ts after its write.
  */
 export function raiseDisposalTask(
   d: RecordDeps, actor: Actor, property: { id: string; business_id: string }, trigger: 'DISPOSAL_DATE' | 'SALE_IN_PROSPECT',

@@ -33,7 +33,7 @@ import {
 } from '../src/shared/localtime.ts';
 import {
   SLOT_MINUTES, isBookable, slotsBetween, startOfLocalDay, addLocalDays,
-} from '../src/web/schedule.ts';
+} from '../src/modules/crm/schedule.ts';
 
 /* The two 2026 transitions. Real dates, looked up rather than assumed. */
 const CLOCKS_GO_FORWARD = '2026-03-29';

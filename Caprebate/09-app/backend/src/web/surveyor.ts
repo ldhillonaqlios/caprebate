@@ -63,7 +63,7 @@ import {
   CrmError, type Context, type PrefillEvent, type Proposal, type Sector,
 } from '../modules/survey/surveyor-crm.ts';
 import { DbAnchorLog, hydrateQuarantine, storeCommitment, type StoredJob } from './anchor-store.ts';
-import { roomsFor, SOURCE_DOCUMENT, type RoomType, type SectorRooms } from './rooms.ts';
+import { roomsFor, SOURCE_DOCUMENT, type RoomType, type SectorRooms } from '../modules/crm/rooms.ts';
 import { missingFacts, NotFoundAsRefusal, type MissingFact } from './engaged.ts';
 import { versionObj } from './documents.ts';
 import { anyStageLabel, stage as stageOf } from '../shared/index.ts';

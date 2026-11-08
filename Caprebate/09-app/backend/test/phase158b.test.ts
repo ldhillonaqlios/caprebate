@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
 import { testApp, actor } from './helpers.ts';
 import type { App } from '../src/core/app.ts';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import * as SO from '../src/web/survey-open.ts';
 import { commitFigures, workspace } from '../src/web/surveyor.ts';
 
@@ -320,7 +320,7 @@ describe('F28 — the client said they bought it, and the claim reads that', () 
  * F27 — the claim page quotes the client's step as the portal shows it, numbered, so a later step never reads as an earlier one
  * ================================================================== */
 import { portalStepLine } from '../src/modules/portal/portal-steps.ts';
-import * as P from '../src/web/pipeline.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
 
 describe('F27 — "the client’s page shows" is the portal’s own line', () => {
   test('numbered, in the portal’s words under either name switch', () => {

@@ -17,7 +17,7 @@
  *      owed, what is overdue and every chase. Nothing else, and nothing it may not already read on the finance page.
  *   2. THE CHASE. Nowhere to record one. `recordChase` records a chase a person made — the day, how, a short note —
  *      authorised as recording money received is (`invoice.record_received`). IT SENDS NOTHING: no rule may chase an
- *      invoice by email while the invoice-fraud procedure is unwritten (src/web/automation.ts, INVOICE_REMINDER).
+ *      invoice by email while the invoice-fraud procedure is unwritten (src/modules/crm/automation.ts, INVOICE_REMINDER).
  *
  * A LOGIN THAT HOLDS THE WHOLE RECORD (Admin, Sales) SEES THE CLIENT PAGE AS BEFORE. This view is drawn only for a
  * login that holds `client_billing.read` and not `organisation.read` — today, Accounting.

@@ -1,7 +1,7 @@
 /**
  * PHASE 160d — NO LONG DASHES IN THE EMAILS, THE LETTER AND REPORTS GOING FORWARD, THE TEXT THE SYSTEM WRITES, AND THE
- * EXPORT'S COLUMN NAMES, 19 October 2026 (src/integrations/email/email.ts, src/web/letter.ts, src/web/claim-record.ts, src/web/leads.ts,
- * src/shared/lists.ts, src/web/booking-invite.ts, src/web/templates.ts, migration 117; the report's versions are in
+ * EXPORT'S COLUMN NAMES, 19 October 2026 (src/integrations/email/email.ts, src/web/letter.ts, src/web/claim-record.ts, src/modules/crm/leads.ts,
+ * src/shared/lists.ts, src/modules/crm/booking-invite.ts, src/web/templates.ts, migration 117; the report's versions are in
  * test/survey-report.test.ts).
  */
 import { test, describe, before, after } from 'node:test';
@@ -105,7 +105,7 @@ describe('Phase 160d: the export and the calendar file', () => {
   });
 
   test('the video call’s calendar entry says "or in the Zoom app" with a comma', () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'booking-invite.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'crm', 'booking-invite.ts'), 'utf8');
     assert.match(src, /`, or in the Zoom app: \$\{m\.join_url\}`/);
   });
 });

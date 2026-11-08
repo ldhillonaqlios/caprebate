@@ -10,7 +10,7 @@
  * AN INVOICE BELONGS TO A CLAIM, AND ITS AMOUNT IS NEVER TYPED
  *
  * Our fee is raised on a claim at the invoice stage, once the fee trigger is
- * reached — FEE_TRIGGER in src/web/pipeline.ts, read and never re-decided — and
+ * reached — FEE_TRIGGER in src/modules/crm/pipeline.ts, read and never re-decided — and
  * inside the amendment window. Its figure is the tax adviser's signed-off figure;
  * its fee derives from that through CB_FEE and the fee controls; its VAT from the
  * recorded VAT position. A claim that has exited is refused, and a claim that left
@@ -40,11 +40,11 @@ import { authorise, can, type Actor } from '../core/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { localDate, localStamp } from '../shared/index.ts';
 import { formatPence, toPence } from '../shared/index.ts';
-import { addDaysToDate, dueReading, taskObj, type DueReading } from './tasks.ts';
+import { addDaysToDate, dueReading, taskObj, type DueReading } from '../modules/crm/tasks.ts';
 import { claimStage } from '../shared/index.ts';
-import { enteredAt, feeTriggerReached, liveFeeInvoiceCount, loadPipelineClaim, reportDeliveredOn, type FeeTrigger } from './pipeline.ts';
+import { enteredAt, feeTriggerReached, liveFeeInvoiceCount, loadPipelineClaim, reportDeliveredOn, type FeeTrigger } from '../modules/crm/pipeline.ts';
 import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from './claim-record.ts';
-import { claimantTypeForGate, claimObjFor } from './crm.ts';
+import { claimantTypeForGate, claimObjFor } from '../modules/crm/crm.ts';
 import {
   computeFee, controlsView, letterFee, letterFees, FEE_CONTROLS, PAYMENT_TERMS_QUESTION,
   type ControlsView, type FeeControls,
@@ -54,7 +54,7 @@ import {
   type SettingsView, type VatReading,
 } from '../modules/assessment/vat.ts';
 import { assertFinanceSection, feeVersusBenefit, financeSectionObj, type FeeVersusBenefit } from './finance.ts';
-import { feeList, onClause13Credit, onFeeInvoiced, type FeeView } from './introducers.ts';
+import { feeList, onClause13Credit, onFeeInvoiced, type FeeView } from '../modules/crm/introducers.ts';
 import type { Letter } from './letter.ts';
 
 export type InvoiceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };

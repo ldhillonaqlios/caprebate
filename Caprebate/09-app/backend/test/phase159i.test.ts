@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { testApp, actor } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
-import * as C from '../src/web/crm.ts';
+import * as C from '../src/modules/crm/crm.ts';
 import * as SP from '../src/web/survey-pack.ts';
 import * as F from '../src/web/claim-facts.ts';
 import { packSums, type PackInputs, type PackLine, type Pool, type Valued, type WorksSums } from '../src/web/pack-sums.ts';

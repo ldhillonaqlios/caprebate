@@ -16,9 +16,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
 import { parseChat } from '../src/integrations/connectors/whatsapp-export.ts';
-import { safeEntryName, fileKind } from '../src/web/whatsapp-import.ts';
-import { unreadWhatsApp } from '../src/web/messages.ts';
-import { windowOpenUntil } from '../src/web/whatsapp.ts';
+import { safeEntryName, fileKind } from '../src/modules/crm/whatsapp-import.ts';
+import { unreadWhatsApp } from '../src/modules/crm/messages.ts';
+import { windowOpenUntil } from '../src/modules/crm/whatsapp.ts';
 
 const L = '\u200e';
 /** An iPhone export's text, invented, with every quirk the real one showed. */
@@ -323,7 +323,7 @@ describe('156c · refusals', () => {
  * THE PAGE'S SCRIPT, RUN IN A STAND-IN BROWSER (node:vm with Node's own Blob, File, FormData, DecompressionStream).
  * ================================================================== */
 import { runInNewContext } from 'node:vm';
-import { WHATSAPP_IMPORT_JS } from '../src/web/whatsapp-import-script.ts';
+import { WHATSAPP_IMPORT_JS } from '../src/modules/crm/whatsapp-import-script.ts';
 
 function fakePage(els: Record<string, Record<string, unknown>>, fetchImpl: (url: string, init?: RequestInit) => Promise<unknown>) {
   const handlers: Record<string, (ev: { preventDefault: () => void }) => void> = {};

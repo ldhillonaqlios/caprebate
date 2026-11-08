@@ -30,7 +30,7 @@ import { companiesHouseOfficers } from '../src/integrations/connectors/companies
 import { cqcNamedPeople } from '../src/integrations/connectors/cqc.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import * as R from '../src/web/research.ts';
-import { claimantTypeForGate } from '../src/web/crm.ts';
+import { claimantTypeForGate } from '../src/modules/crm/crm.ts';
 import { seed } from '../src/core/seed.ts';
 import { newId } from '../src/core/users.ts';
 import { testApp, actor } from './helpers.ts';

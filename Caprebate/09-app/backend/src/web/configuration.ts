@@ -42,9 +42,9 @@ import { VOCAB_LISTS, isVocabList, vocabularyValues, type VocabList, type VocabV
 import { PROCEDURE_KEYS, anyStageLabel } from '../shared/index.ts';
 import { ctaSwitchReadings } from '../shared/index.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
-import { RECIPROCITY_ACTIVITY_TYPES } from './tasks.ts';
+import { RECIPROCITY_ACTIVITY_TYPES } from '../modules/crm/tasks.ts';
 import { typeList, type TypeView } from './documents.ts';
-import { rulesPage, type RuleView } from './automation.ts';
+import { rulesPage, type RuleView } from '../modules/crm/automation.ts';
 import { templatesPage } from './templates.ts';
 import { settingsView, type SettingsView } from '../modules/assessment/vat.ts';
 import { settingReading, type SettingReading } from './compliance.ts';

@@ -2,7 +2,7 @@
  * EMAIL TEMPLATES, MERGED INTO THE OUTBOX. CRM 3 of 10, 11 September 2026.
  *
  * The table is migration 012's `email_templates`; the pages are
- * src/web/tasks-pages.ts. ADMIN writes a template; ADMIN and SALES merge one for
+ * src/modules/crm/tasks-pages.ts. ADMIN writes a template; ADMIN and SALES merge one for
  * a claim's contact and queue it.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ import { outboxTransport } from '../integrations/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { escapeHtml } from '../shared/index.ts';
 import { localStamp, ukDate } from '../shared/index.ts';
-import { claimObjFor, type Fields } from './crm.ts';
+import { claimObjFor, type Fields } from '../modules/crm/crm.ts';
 
 export type TemplateDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 
