@@ -225,7 +225,7 @@ function runNodeTest(dir) {
    behind but a pass-count one short: on 12 September CRM 8 of 10 saw the back end
    count 611 where 612 exist, and nobody could name the test, because the output
    that named it was parsed for two numbers and discarded. It was a raw-text
-   search in test/crm.test.ts matching a seeded 0.3 inside a timestamp's
+   search in test/crm/crm.test.ts matching a seeded 0.3 inside a timestamp's
    milliseconds, about one run in eighty-five. `node --test` marks a failing test
    with a cross and its duration; every such line is kept, once. */
 function failingTestNames(out) {

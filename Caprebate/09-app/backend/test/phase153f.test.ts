@@ -131,7 +131,7 @@ describe('line 4 — each video call hosted on Zoom by its own member of staff',
   });
 
   // PHASE 156d (5 Oct 2026) restated this: Lakhbir added the two permissions, and zoomPastCall now asks the past-meeting
-  // endpoints - only it, read only (test/phase156d.test.ts proves what it keeps).
+  // endpoints - only it, read only (test/crm/zoom-free-plan.test.ts proves what it keeps).
   test('line 4(b): the two Zoom permissions a call\'s length and attendees need are named, and only zoomPastCall asks for them', () => {
     const z = readFileSync(join(import.meta.dirname, '..', 'src', 'integrations', 'connectors', 'zoom.ts'), 'utf8');
     assert.match(z, /meeting:read:past_meeting:admin/);

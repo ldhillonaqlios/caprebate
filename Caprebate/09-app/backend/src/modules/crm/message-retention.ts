@@ -40,7 +40,7 @@
  * Migration 038 lets a message (and the rows hanging off it) be deleted ONLY where the deletion log already holds an entry
  * for that very record under the rule MSG-RETENTION. This job writes that entry first, then deletes, in one transaction —
  * one entry per record, naming its kind and id, never a word of it, never a person. Nothing else in src/ deletes from
- * either thread; test/phase142a.test.ts greps for it.
+ * either thread; test/crm/chat-cleanup-job.test.ts greps for it.
  *
  * A FILE SENT WITH A MESSAGE IS NOT DELETED HERE. It is a document, it keeps its own document rules, and it stays in the
  * company's Files — only the row saying which message brought it goes, with the message.

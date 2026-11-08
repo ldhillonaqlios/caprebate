@@ -160,7 +160,7 @@ export function progressFor(storedStage: string): Progress {
  * transcribed from 08-monday-doc-exports/12552682457__Item-2-Standard-
  * Operating-Procedures-enquiry-to-defence-pack.md. `label` is the words of that
  * stage's SOP heading before its parenthesis; `gate` is the process map's own
- * GATE line; the exit words are the map's own EXIT lines. test/pipeline.test.ts
+ * GATE line; the exit words are the map's own EXIT lines. test/crm/pipeline.test.ts
  * reads the export and checks every one of them is in it.
  *
  * Where a board reference sat inside a transcribed line it is left out and the

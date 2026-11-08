@@ -463,7 +463,7 @@ export function setShownToClient(d: DocDeps, actor: Actor, logical_id: string, s
  * tax adviser's sign-off record made since the claim last entered that stage.
  * `clientDocument` in src/core/authz.ts reads it; nothing else does. Today no CA_REPORT
  * can be uploaded — its type has no receipt policy — so this is false on every
- * real document, and test/claim-record.test.ts proves it both ways.
+ * real document, and test/claims/claim-record.test.ts proves it both ways.
  */
 function releasedToClient(db: Db, logical_id: string): boolean {
   const r = getClaimDeliverablesCountByLogicalDocumentIdTypeCode<{ n: number }>(db, [logical_id]);

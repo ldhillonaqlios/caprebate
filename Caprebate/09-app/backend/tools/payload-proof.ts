@@ -123,7 +123,7 @@ walk(parsed, seen);
 const failures: string[] = [];
 /**
  * A VALUE FOUND AS A NUMBER IN THE TEXT, never as part of a longer one. CRM 9 of 10, 12 September 2026: this proof and
- * test/crm.test.ts both searched with `includes`, and a seeded 0.3 matched the milliseconds of a real-clock timestamp
+ * test/crm/crm.test.ts both searched with `includes`, and a seeded 0.3 matched the milliseconds of a real-clock timestamp
  * about one run in eighty-five — the intermittent 611 in 612. A digit or a point either side is a different number.
  */
 const inText = (body: string, v: unknown): boolean =>

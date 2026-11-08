@@ -127,7 +127,7 @@ export function signOffSinceEntry(db: Db, c: { id: string; created_at: string })
 
 /**
  * THE SIGN-OFF NEED. OPEN ONLY ON THE RECORD. No confirmation, no setting, no
- * column and no other record stands in for it — test/claim-record.test.ts writes
+ * column and no other record stands in for it — test/claims/claim-record.test.ts writes
  * each of those and asserts the gate stays shut, then writes the record.
  */
 export function signOffRecordNeed(db: Db, c: { id: string; created_at: string }): Need {

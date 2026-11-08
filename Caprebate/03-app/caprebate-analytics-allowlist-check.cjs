@@ -55,7 +55,7 @@
         READS its answer from the cb-cookie-choice meta tag, which the back end
         fills with "all" only after a click on "Accept all" (sitePageFor in
         src/analytics.ts). The back end's half is tested in
-        09-app/backend/test/phase161g.test.ts.
+        09-app/backend/test/public-site/cookie-and-privacy-pages.test.ts.
         D1 the file carries no measurement id and no answer - both are
            configuration, filled in by the back end - and with neither nothing
            loads;

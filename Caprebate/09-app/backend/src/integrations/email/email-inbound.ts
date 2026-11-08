@@ -26,7 +26,7 @@
  * The filing rule lives in src/modules/crm/inbound-email.ts: matched by the Message-ID we sent, from one of the company's
  * contacts, or else to a staff queue. Never by the sender's address alone.
  *
- * A small, dependency-free IMAP client over `node:tls`, tested against a fake server in test/phase142.test.ts, in the
+ * A small, dependency-free IMAP client over `node:tls`, tested against a fake server in test/crm/client-chat.test.ts, in the
  * same way Phase 141's SMTP client is.
  */
 

@@ -885,7 +885,7 @@ If a line had been changed outside the system, it would say:
 **Without the server**, a developer can check it too. They run `npm run verify-audit` in
 `09-app/backend`, against the database file. It checks every line again and writes nothing. If all is well, it prints
 "audit log intact", with the number of lines. If not, it prints "AUDIT LOG BROKEN at entry …", and fails.
-`test/audit.test.ts` and `test/follow-on.test.ts` prove both answers.
+`test/audit.test.ts` and `test/crm/introducer-source-claim-team.test.ts` prove both answers.
 
 ---
 

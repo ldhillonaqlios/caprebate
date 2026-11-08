@@ -4,7 +4,7 @@
  *
  * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 15, and the decisions
  * this file takes are that table's Part E from E119. The page is
- * src/modules/crm/dashboard-pages.ts; the proof is test/dashboard.test.ts and
+ * src/modules/crm/dashboard-pages.ts; the proof is test/crm/management-dashboard.test.ts and
  * tools/payload-proof.ts.
  *
  * ───────────────────────────────────────────────────────────────────────────

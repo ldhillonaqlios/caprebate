@@ -6,7 +6,7 @@
  * runs green on the tree and catches planted faults, and that the carried screens (items 6 to 10 of the phase) now read
  * in plain words while every rule under them holds: an unknown is still said, never shown as a date or £0; the portal
  * document page gives counts, never the file's words; the client still sees only what is theirs.
- * (Helpers copied from test/phase140.test.ts, which exports none.)
+ * (Helpers copied from test/portal/client-files.test.ts, which exports none.)
  */
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
    twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */

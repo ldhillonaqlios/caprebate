@@ -311,7 +311,7 @@ const MAX_GRADE = 9;
 
 /* Values code compares or stores, which no screen shows. Exact strings only. */
 const CODE_VALUES = new Set([
-  'cash gate', // engaged.ts: the `origin` of a missing fact, a type-literal value compared in test/engaged.test.ts
+  'cash gate', // engaged.ts: the `origin` of a missing fact, a type-literal value compared in test/claims/engaged-clients.test.ts
 ]);
 
 function exemptText(t) { return CODE_VALUES.has(t) || EXEMPT_TEXT.some((re) => re.test(t)); }

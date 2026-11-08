@@ -385,7 +385,7 @@ export function matchCompanyName<T>(
 
 /**
  * THE MEASUREMENT HOOK. An address connector's query may carry `measure`, and the connector hands it each match it
- * scores. ONLY tools/match-measure.ts sets it; the research flow never does (test/phase146c.test.ts checks that no query
+ * scores. ONLY tools/match-measure.ts sets it; the research flow never does (test/claims/register-research-sources.test.ts checks that no query
  * FREE_CONNECTORS builds carries one). What it sees stays in memory in that tool, run only with the data protection
  * officer's permission.
  */

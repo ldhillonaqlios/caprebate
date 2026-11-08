@@ -5,7 +5,7 @@
  *
  * The foreign keys from these tables' rows are written out as literal statements in src/modules/assessment/funnel-edges.ts, which
  * tools/gen-funnel-edges.ts generates from the database's own schema (no SQL is ever built from a string at run time;
- * tools/lint-sql.cjs). test/phase157.test.ts fails when the schema gains an edge that file lacks.
+ * tools/lint-sql.cjs). test/assessment/lost-enquiry-deletion.test.ts fails when the schema gains an edge that file lacks.
  */
 export const FUNNEL_DELETABLE_TABLES: readonly string[] = Object.freeze([
   'leads', 'contacts', 'consent_answers', 'bookings', 'booking_changes', 'video_meetings', 'outbox', 'outbox_attachments',

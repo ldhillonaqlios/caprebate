@@ -16,7 +16,7 @@
  * THE PORTAL CANNOT REACH THE TEAM THREAD BY CONSTRUCTION. Nothing the portal calls reads `internal_notes`: `clientThread`
  * and `clientMessage` below select from `client_messages` alone, a client asking for any other id is answered exactly as
  * for an id that does not exist (404), and the rule table refuses a client `internal_note.read` whatever the route.
- * test/phase142.test.ts proves it on the wire: every portal response body is searched for a team message's words.
+ * test/crm/client-chat.test.ts proves it on the wire: every portal response body is searched for a team message's words.
  *
  * THE SURVEYOR SEES NEITHER THREAD. the owner decides otherwise or not — the question is in CAPREBATE QUESTIONS.
  *

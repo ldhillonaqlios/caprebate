@@ -11,7 +11,7 @@
  * removed, the figures and the company details are kept and individuals' names, addresses and tax references removed.
  * The one thing still missing was buildable, and Phase 151b built it: a receipt policy for each tax document in the
  * upload handler, bound by migration 049. So each of the four can now be received, and a claim is never held at the
- * gate by a document nobody can upload — test/phase151b-documents.test.ts proves that for each of the four.
+ * gate by a document nobody can upload — test/claims/tax-documents-and-retention.test.ts proves that for each of the four.
  *
  * What did NOT change: a fact not known and a fact never recorded still excuse nothing (N4). Whether the client bought
  * the building must be recorded as YES or NO before the sale contract and the CPSE replies are excused.
@@ -31,7 +31,7 @@
  *   "Which of the Stage 2 documents are mandatory, and at which stage?"
  *
  * OFF IS EXACTLY TODAY. With `enabled: false`, `mandatoryDocumentNeeds` returns no need at all, so the gate out of
- * DATA_GATHERING reads what it read before this file existed — test/follow-on.test.ts compares the two.
+ * DATA_GATHERING reads what it read before this file existed — test/crm/introducer-source-claim-team.test.ts compares the two.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * ON, A NEED PER DOCUMENT, AND A CONDITION IS READ, NEVER ASKED

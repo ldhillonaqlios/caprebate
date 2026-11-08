@@ -101,7 +101,7 @@ function portalClaim(db: Db, r: PortalClaimRow): PortalClaim {
   // The same step the rest of the portal reads — signed at Engagement, and "Claim filed" only once filed.
   const stored = clientStageForClaim(db, r.id, kind === 'ON_HOLD' ? r.hold_return_stage : r.stage);
   // A claim at Engagement whose letter is signed is "2 Engagement letter signed" (F43): signing is the step. Read here,
-  // not in pipeline.ts, which reads the letter only through assertSignedEngagement - the one gate (test/pipeline.test.ts).
+  // not in pipeline.ts, which reads the letter only through assertSignedEngagement - the one gate (test/crm/pipeline.test.ts).
   const signed = getEngagementsSByBusinessId<{ s: string }>(db, [r.business_id])?.s === 'SIGNED';
   const key = stored === 'ASSESSMENT_SUBMITTED' && r.stage === 'ENGAGEMENT' && signed ? 'ENGAGEMENT_SIGNED' : stored;
   if (key === null) return { ...base, state: 'UNKNOWN', progress: { known: false, steps: [] } };

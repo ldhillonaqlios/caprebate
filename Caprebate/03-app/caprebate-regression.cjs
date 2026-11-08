@@ -2441,7 +2441,7 @@ if (startSuite("J", "Phase 13 — document_property_match")) {
    §10) at the mechanism level — SALE_CONTRACT is the type that will use it,
    but the mechanism itself does not depend on that type existing.
 
-   This suite does not duplicate phase3/caprebate-document-pipeline.test.ts
+   This suite does not duplicate phase3/claims/document-pipeline.test.ts
    (P27-P32, F1-F2) or the T5 addition to
    phase3/caprebate-document-property-match.test.ts; it asserts the same
    handful of things from OUTSIDE phase3/, the way Suites I and J do.

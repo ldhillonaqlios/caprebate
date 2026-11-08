@@ -197,7 +197,7 @@ const PROFIT: Readonly<Record<string, string>> = Object.freeze({
  *
  * OFF, as shipped: "breakeven" is not in PROFIT and sets nothing, so a
  * break-even client, a "not sure" client and a client who was never asked
- * produce THE SAME SESSION. That is N4, and engaged.test.ts asserts it three
+ * produce THE SAME SESSION. That is N4, and claims/engaged-clients.test.ts asserts it three
  * ways across all five sectors.
  *
  * ON: "breakeven" sets `sufficient_profit` to "no" and NOTHING ELSE MOVES. "no"

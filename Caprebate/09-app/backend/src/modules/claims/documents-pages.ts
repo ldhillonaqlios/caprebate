@@ -10,7 +10,7 @@
  * request, no route maps a path onto the filesystem, and every response is built
  * with the `h` tagged template. A request's "why" and "what it holds up" and a
  * type's label are STAFF-SUPPLIED TEXT RENDERED IN A STAFF PAGE AND IN THE
- * PORTAL, and test/documents.test.ts posts a script tag into them.
+ * PORTAL, and test/claims/documents.test.ts posts a script tag into them.
  *
  * NOTHING HERE DECIDES ANYTHING. src/modules/claims/documents.ts does every authorisation and
  * every derivation; this file draws what it returns. THERE IS NO ROUTE THAT MARKS A

@@ -592,7 +592,7 @@ const RULES: RuleTable = {
   /* --- the CRM backbone. CRM 1 of 10 ---------------------
    *
    * EVERY ROW BELOW IS NEW, AND EVERY ROLE NOT NAMED ON A ROW IS REFUSED IT —
-   * test/crm.test.ts asserts the refusal for each one, per action, rather than
+   * test/crm/crm.test.ts asserts the refusal for each one, per action, rather than
    * trusting that an absent key means what it should.
    *
    * THE ORGANISATION IS THE `business` OBJECT. It is the same row, extended;
@@ -660,7 +660,7 @@ const RULES: RuleTable = {
   /* --- leads and the pipeline. CRM 2 of 10 --------------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * pipeline.test.ts asserts the refusal for each one, per action.
+   * crm/pipeline.test.ts asserts the refusal for each one, per action.
    *
    * LEADS ARE ADMIN AND SALES. A lead is a prospect being worked, with the
    * estimate the client was shown beside it; nothing about it is money or
@@ -685,7 +685,7 @@ const RULES: RuleTable = {
   /* --- tasks, the timeline, automation and templates. CRM 3 of 10 ----------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * tasks.test.ts asserts the refusal for each one, per action.
+   * crm/tasks.test.ts asserts the refusal for each one, per action.
    *
    * A TASK IS READ AND WORKED BY WHOEVER IT BELONGS TO. ADMIN and SALES read and
    * change every task. ACCOUNTING reads and progresses its own tasks and the ones
@@ -730,7 +730,7 @@ const RULES: RuleTable = {
   /* --- documents on the claim. CRM 4 of 10 ---------------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * documents.test.ts asserts the refusal for each one, per action, and
+   * claims/documents.test.ts asserts the refusal for each one, per action, and
    * `document.read` per role PER READER CLASS.
    *
    * `document.read` IS ASKED OF THE DOCUMENT ITSELF, never of its organisation:
@@ -780,7 +780,7 @@ const RULES: RuleTable = {
   /* --- introducers and the referral channel. CRM 5 of 10 ---
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * introducers.test.ts asserts the refusal for each one, per action.
+   * crm/introducers.test.ts asserts the refusal for each one, per action.
    *
    * AN INTRODUCER IS A FIRM AND NEVER A USER. No row here, and no row anywhere,
    * gives a firm or a person at it a way in: CLIENT and SURVEYING are on none.
@@ -821,7 +821,7 @@ const RULES: RuleTable = {
   /* --- the claim's facts, figures, sign-off, deliverables and aftercare. CRM 6 of 10 ---
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * claim-record.test.ts asserts the refusal for each one, per action.
+   * claims/claim-record.test.ts asserts the refusal for each one, per action.
    *
    * THE FACTS ARE ADMIN'S AND SALES'S. ACCOUNTING IS ON NONE OF THESE ROWS: a
    * fact about the tax position, an election or a grant is not money.
@@ -847,7 +847,7 @@ const RULES: RuleTable = {
   'deliverable.record': { ADMIN: always, SALES: always },
   'hmrc_enquiry.record': { ADMIN: always, SALES: always },
   /* Recording the client's own written filing confirmation, where the client has no accountant — the
-     people who hold the claim's papers, as a deliverable is. Nobody else; test/phase132e.test.ts asserts it per role. */
+     people who hold the claim's papers, as a deliverable is. Nobody else; test/claims/engagement-terms-and-fees.test.ts asserts it per role. */
   'client_filing.record': { ADMIN: always, SALES: always },
   /* A multi-site discount is proposed by the people who agree terms with a client, and read by them and by
      finance. It is a record and is never applied: see src/modules/claims/fee-discounts.ts. */
@@ -901,7 +901,7 @@ const RULES: RuleTable = {
 
   /* --- the defence pack generator. ---------------
    *
-   * NEW, AND EVERY ROLE NOT NAMED IS REFUSED — test/phase132-records.test.ts asserts
+   * NEW, AND EVERY ROLE NOT NAMED IS REFUSED — test/claims/defence-pack-and-case-stamp.test.ts asserts
    * the refusal for each one. The generator is switched off (`DEFENCE_PACK_GENERATOR`
    * in src/modules/claims/defence-pack.ts), so today this row admits a person to a refusal that
    * says so. Switched on it builds a manifest from the claim's sealed records and
@@ -912,7 +912,7 @@ const RULES: RuleTable = {
 
   /* --- dashboards, search, saved views, export and admin settings. CRM 9 of 10 ---
    *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/dashboard.test.ts
+   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/crm/management-dashboard.test.ts
    * asserts the refusal for each one, per action.
    *
    * `dashboard.enter` OPENS THE MANAGEMENT DASHBOARD AND NOTHING INSIDE IT. Every tile
@@ -949,7 +949,7 @@ const RULES: RuleTable = {
 
   /* --- the CRM follow-on ------------------------------------
    *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/follow-on.test.ts
+   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/crm/introducer-source-claim-team.test.ts
    * asserts the refusal for each one, per action.
    *
    * THE CLAIM TEAM. Reading the team is the actions its parts already need — `contact.read` for the organisation's

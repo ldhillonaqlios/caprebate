@@ -3,7 +3,7 @@
 Every file here is an answer shaped from the supplier's own published documentation, read on 23 September 2026
 (the pages are listed in `SUPPLIER_DOCS` in `09-app/backend/src/registers/caprebate-source-register.ts`). The values are
 INVENTED: `ZZ` postcodes, `INVENTED` ids, made-up names. No file here was fetched from a live service, and no key was
-used to make any of them. `test/phase146c.test.ts` replays them through `fixtureTransport`, so the suite needs no key
+used to make any of them. `test/claims/register-research-sources.test.ts` replays them through `fixtureTransport`, so the suite needs no key
 and no network.
 
 Named people appear only where the supplier's own answer carries a person (a PSC, a CQC contact, an EPC assessor,

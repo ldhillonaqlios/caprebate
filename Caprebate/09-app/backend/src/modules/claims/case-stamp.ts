@@ -32,7 +32,7 @@
  * THE COUNTS ARE DERIVED, NEVER QUOTED
  *
  * The CTA switches are `ctaSwitchReadings()`, which reads every boolean on CB_CTA.
- * The back-end switches are listed by name below, and test/phase132-records.test.ts
+ * The back-end switches are listed by name below, and test/claims/defence-pack-and-case-stamp.test.ts
  * greps src/ for every frozen `enabled:` switch and fails if one is not listed
  * here — so a switch added later is either stamped or a red test.
  */
@@ -215,10 +215,10 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
  * THE CONNECTOR SWITCHES — ONE PER LOOKUP, THE DOCUMENT READER'S TWO, AND THE PICK'S.;
  * the pick's added.
  *
- * They are frozen maps of booleans, not `enabled:` flags, so the grep test in test/phase132-records.test.ts cannot see
+ * They are frozen maps of booleans, not `enabled:` flags, so the grep test in test/claims/defence-pack-and-case-stamp.test.ts cannot see
  * them — the same reason FUNNEL_SWITCHES is stamped by its own key. Every key of REGISTER_SWITCHES
  * (src/integrations/connectors/registers.ts) and of CLAUDE_SWITCHES (src/integrations/connectors/claude.ts) is read here, so a lookup added to
- * either map is stamped the day it is added, and test/phase146c.test.ts counts them against the maps.
+ * either map is stamped the day it is added, and test/claims/register-research-sources.test.ts counts them against the maps.
  *
  * A switch says whether a connector is turned on at all. It is not a gate: the free gate is stamped beside it as
  * `registry_free_enabled`, and both are needed to know whether a figure on this claim could have come from a register.
@@ -285,7 +285,7 @@ export function caseStamp(db: Db, claim_id: string): CaseStamp {
   };
 }
 
-/** The row's own fields, as the hash covers them. test/phase132-records.test.ts recomputes it from the stored row. */
+/** The row's own fields, as the hash covers them. test/claims/defence-pack-and-case-stamp.test.ts recomputes it from the stored row. */
 export function stampHashInput(r: {
   id: string; claim_id: string; deliverable_id: string; engine_version: string | null; rulebook_modules: unknown;
   switch_readings: unknown; signoff_refs: unknown; estimate_hash: string | null; anchor_log_head_hash: string | null;

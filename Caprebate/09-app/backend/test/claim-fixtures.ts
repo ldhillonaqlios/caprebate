@@ -11,7 +11,7 @@
  * both still pass the database's own triggers.
  *
  * NONE OF THESE IS A STAND-IN FOR A RECORD: the database refuses the retired
- * sign-off column, and test/claim-record.test.ts proves each gate stays shut
+ * sign-off column, and test/claims/claim-record.test.ts proves each gate stays shut
  * without the record these write.
  */
 
@@ -369,7 +369,7 @@ export function claimInvoiceRow(
  * contract and CPSE replies too where the client bought the building. A test that is about something else walks its
  * claim past the gate with this: the client did not buy the building (recorded NO, which excuses those two), and a
  * received tax return and tax computation linked to the claim — rows as the one handler leaves them: stripped,
- * discharged, not failed. test/phase151b-documents.test.ts proves the real uploads open the gate; this only stands in.
+ * discharged, not failed. test/claims/tax-documents-and-retention.test.ts proves the real uploads open the gate; this only stands in.
  */
 export function mustArriveDocuments(app: FixtureApp, business: string, claim: string, who = 'u-SALES'): void {
   fact(app, claim, 'BOUGHT_THE_BUILDING', 'NO', 'CLIENT_ANSWER');

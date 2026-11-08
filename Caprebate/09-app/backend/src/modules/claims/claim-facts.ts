@@ -23,7 +23,7 @@
  *
  * 3 · N4. A fact recorded as not known and a fact nobody asked read the same —
  *     `known: false`, `value: null`, the same words — and neither opens a gate.
- *     Every gate reading below is asserted in test/claim-record.test.ts on the
+ *     Every gate reading below is asserted in test/claims/claim-record.test.ts on the
  *     recorded UNKNOWN AND on the absent row.
  *
  * 4 · READERS. The panel is ADMIN's and SALES's (`claim_facts.read`). ACCOUNTING

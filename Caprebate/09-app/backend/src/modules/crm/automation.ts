@@ -36,7 +36,7 @@
  *
  * Each is also a NAMED refusal in `FORBIDDEN_EFFECTS`, refused by the rule store
  * with its reason and by the table's CHECK, and each has a test in
- * test/automation.test.ts.
+ * test/crm/automation.test.ts.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * A RULE THAT DOES NOT RUN SAYS SO
@@ -631,7 +631,7 @@ function informationRequests(d: AutomationDeps, actor: Actor | null, rule: RuleD
  * CAPREBATE QUESTIONS, "Should an email to our own staff name the client company in its subject line?". Until then:
  *   OFF  the subject says what happened and ends with the reference: "A claim is now at Survey (CR-2026-0004)".
  *   ON   the subject leads with the company: "Dunmarrow Medical Practice Limited — a claim is now at Survey (CR-2026-0004)".
- * Turning it on is this one line. test/phase134.test.ts proves both readings.
+ * Turning it on is this one line. test/crm/client-is-the-company.test.ts proves both readings.
  *
  * 24 September 2026: ANSWERED AND ON. the owner, Word answer 71 (closed that day): yes, staff emails name the
  * client company in the subject. Nothing is sent while EMAIL_SENDING is off, so today it changes the words of what is

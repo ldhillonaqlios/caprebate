@@ -143,7 +143,7 @@ export const NOT_BUILT: Readonly<Record<string, string>> = Object.freeze({
  * `register_records` keeps each register's fields under the SOURCE REGISTER's names (epc_total_floor_area_m2 …);
  * CB_REGISTRY.derive() reads its own (floor_area_m2 …). This is the one table between them, and it maps ONLY a field
  * both sides permit: the left side is on the source's `permitted_fields` (and the name exclusion register keeps it),
- * the right side is on CB_REGISTRY.SOURCES[…].fields. test/phase146c.test.ts checks both, for every row.
+ * the right side is on CB_REGISTRY.SOURCES[…].fields. test/claims/register-research-sources.test.ts checks both, for every row.
  *
  * NOT MAPPED, ON PURPOSE: "what kind of business are you" (entity_type). Companies House says a company's type, but the
  * source register keeps no company-type field, so it stays asked. And a PSC's name feeds nothing here.

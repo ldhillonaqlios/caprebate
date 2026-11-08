@@ -24,7 +24,7 @@
  *   "Contains HM Land Registry data © Crown copyright and database right 2021. This data is licensed under the Open
  *    Government Licence v3.0."
  * It is the HMLR_PPD licence's `attribution_text` in the source register, and `PRICE_PAID_ATTRIBUTION` below reads it
- * from there. Every screen that shows a price paid carries it (test/phase146c.test.ts checks each one).
+ * from there. Every screen that shows a price paid carries it (test/claims/register-research-sources.test.ts checks each one).
  */
 
 import type { CallResult } from './http.ts';

@@ -176,7 +176,7 @@ export function saveDraft(db: Db, d: Draft, now: () => string): void {
  * which the engine has never returned, and the declaration beside the generated
  * package named `stop` too, so the compiler agreed. The engine's field is
  * `gated`; the declaration now names every field `gateQ1b` returns; and
- * test/gated-exit.test.ts holds the reproduction that was red before this changed.
+ * test/assessment/gated-exit.test.ts holds the reproduction that was red before this changed.
  */
 export function nextScreen(state: FunnelState, from: ScreenId): ScreenId | 'figure' | 'gated_exit' {
   if (from === 'Q1b' && isGatedExit(state)) return 'gated_exit';

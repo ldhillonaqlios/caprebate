@@ -24,7 +24,7 @@
  * `optionalAllowed` is the only gate, and the site page is given its measurement id only when it says yes
  * (src/core/router.ts, the home route). The site page's own question (SITE_CONSENT) no longer asks: it reads the answer.
  *
- * THE COOKIE LIST IS TESTED, NOT TYPED: test/phase161g.test.ts collects every cookie name the app can set and every
+ * THE COOKIE LIST IS TESTED, NOT TYPED: test/public-site/cookie-and-privacy-pages.test.ts collects every cookie name the app can set and every
  * browser storage key a page it serves writes, and fails unless COOKIE_LIST has each, and on a line for one that is gone.
  */
 import type { IncomingMessage } from 'node:http';

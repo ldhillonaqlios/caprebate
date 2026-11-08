@@ -124,7 +124,7 @@ describe('WhatsApp', () => {
     const page = (await s.req('/staff/clients/b-wa-1/whatsapp')).body;
     assert.match(page, /<section class="convo-write" id="compose"[\s\S]*<section class="convo-chain"/);
     // PHASE 156c (5 Oct 2026, Lakhbir: manual upload): with the live connection off there is no reply box here at all —
-    // staff reply on the WhatsApp phone and add the chat (test/phase156c.test.ts). The sending code below is unchanged.
+    // staff reply on the WhatsApp phone and add the chat (test/crm/whatsapp-upload.test.ts). The sending code below is unchanged.
     assert.doesNotMatch(page, /id="wa-to"/);
     assert.match(page, /Reply to Ada on the WhatsApp phone/);
     const waForm = page.slice(page.indexOf('<select class="fi" id="wa-imp-to"'), page.indexOf('</select>', page.indexOf('id="wa-imp-to"')));

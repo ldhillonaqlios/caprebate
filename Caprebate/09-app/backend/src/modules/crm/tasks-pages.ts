@@ -10,7 +10,7 @@
  * request, no route maps a path onto the filesystem, and every response is built
  * with the `h` tagged template. A task's title and description, a note, a rule's
  * label and a template's body are STAFF-SUPPLIED TEXT RENDERED IN A STAFF PAGE,
- * and test/tasks.test.ts posts a script tag into them.
+ * and test/crm/tasks.test.ts posts a script tag into them.
  *
  * NOTHING HERE DECIDES ANYTHING. src/modules/crm/tasks.ts, automation.ts, templates.ts
  * and timeline.ts do every authorisation and every derivation.

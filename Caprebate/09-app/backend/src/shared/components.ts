@@ -48,7 +48,7 @@ export function highlights(kind: string, title: Safe | string, fields: readonly 
  *
  * A claim is named for a person by its COMPANY, then its PROPERTY. The claim reference (CR-2026-0001) is a small grey
  * label beside it: never a heading, never the first column, never the words of a link. Every screen that names a claim
- * draws it through these, and test/phase134.test.ts reads every staff screen's HTML to hold that.
+ * draws it through these, and test/crm/client-is-the-company.test.ts reads every staff screen's HTML to hold that.
  * ================================================================== */
 
 /** The claim reference, as a small grey label. */
@@ -273,7 +273,7 @@ export function fields(rows: readonly (Field | null)[], add?: { href: string; la
 
 /**
  * THE NAME A PERSON READS, IN WORDS QUOTED FROM A PROJECT DOCUMENT. src/shared/stages.ts quotes the operating procedure
- * verbatim, and test/pipeline.test.ts proves it against the procedure's file, so the words stay "Caprebate" there. Where
+ * verbatim, and test/crm/pipeline.test.ts proves it against the procedure's file, so the words stay "Caprebate" there. Where
  * a screen shows them, they are shown with the brand's name, "Cap Rebate" (brand book slide 1). A file name is left alone.
  */
 export function brandName(text: string): string {

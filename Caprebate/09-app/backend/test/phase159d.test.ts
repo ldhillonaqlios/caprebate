@@ -72,7 +72,7 @@ function claimWith(app: App, tag: string, o: { acquired?: string; events?: Ev[];
   if (period !== null) { CF.fact(app, claim.id, 'ACCOUNTING_PERIOD_START', period[0]); CF.fact(app, claim.id, 'ACCOUNTING_PERIOD_END', period[1]); }
   return { b, p, as, claim: claim.id, ref: { id: claim.id, business_id: b, property_id: p } };
 }
-/** The client's year end, answered in the portal and ticked as checked by Sales (as test/phase158d.test.ts records one). */
+/** The client's year end, answered in the portal and ticked as checked by Sales (as test/portal/portal-claim-knowledge.test.ts records one). */
 function yearEnd(app: App, business: string, answer = '31 December'): void {
   const id = `ct-${randomUUID()}`;
   app.db.run('INSERT INTO client_tasks (id, business_id, asked_by, question, why, holds_up, state, answer_state, answer, answered_at, answered_by, answered_by_role, created_at, fact_id, sent_to_portal_at) ' +

@@ -202,7 +202,7 @@ export function priorClaimPosition(v: string | null): Reading {
  * THE ONLY READING A GATE MAY USE. A prior claim restricts what can be claimed
  * now, so "there was none" is the favourable answer — and it is true on a
  * recorded NO and on NOTHING ELSE. Never-asked is not a pass; UNKNOWN is not a
- * pass. test/crm.test.ts asserts both, and asserts that NO alone passes.
+ * pass. test/crm/crm.test.ts asserts both, and asserts that NO alone passes.
  */
 export function priorClaimRuledOut(v: string | null): boolean {
   return priorClaimPosition(v).value === 'NO';

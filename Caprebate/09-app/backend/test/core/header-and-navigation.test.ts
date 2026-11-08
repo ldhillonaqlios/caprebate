@@ -132,7 +132,7 @@ async function crawl(c: Client, start: string): Promise<Map<string, Res>> {
       const href = (x[1] ?? '').replace(/&amp;/g, '&');
       if (!href.startsWith('/') || href.startsWith('//')) continue;
       // 29 Sep 2026: `/` is the public home page, under its own policy and with its own script, and is held to its own
-      // rules in test/home-page.test.ts. The notices page's "Back to the home page" link made it reachable from here.
+      // rules in test/public-site/home-page.test.ts. The notices page's "Back to the home page" link made it reachable from here.
       if (href === '/') continue;
       if (/^\/(assets|logout)|\.csv(\?|$)|\/upload\//.test(href)) continue;
       const shape = href.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, '{id}').replace(/=[^&]*/g, '=');
@@ -348,7 +348,7 @@ describe('every page works with JavaScript switched off', () => {
     const lead = h.made.app.db.get<{ id: string }>('SELECT id FROM leads LIMIT 1');
     assert.ok(lead);
     // Phase 134: the organisation's page is the one client page, whose tabs test/phase133b.test.ts reads.
-    // Phase 138: the claim page is coloured sections that open and close, not tabs — test/phase138.test.ts reads them;
+    // Phase 138: the claim page is coloured sections that open and close, not tabs — test/crm/client-page-sections.test.ts reads them;
     // here it is enough that each is a <details> with its own id, which needs no script.
     const claimPage = await as('sales').get(`/staff/claims/${claim.id}`);
     for (const id of ['move', 'claim-documents', 'activity']) {

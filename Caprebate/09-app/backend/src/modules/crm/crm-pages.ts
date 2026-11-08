@@ -11,7 +11,7 @@
  * is built with the `h` tagged template. The third matters on every page here —
  * a contact's notes, a property's construction notes and a claim's next action
  * are all STAFF-SUPPLIED TEXT RENDERED IN A STAFF PAGE, which is where stored
- * cross-site scripting lives. test/crm.test.ts posts a script tag into each and
+ * cross-site scripting lives. test/crm/crm.test.ts posts a script tag into each and
  * asserts what comes back is escaped. A website is shown as TEXT, never as a
  * link, so a hostile href has nowhere to go.
  *

@@ -32,7 +32,7 @@
  * THE ADAPTER BUILT IS SMTP OVER TLS, because the recommendation is to send through the mailbox's own host — IONOS,
  * which the privacy notice already names as "our email" — so condition 2 needs no new processor and every reply lands
  * in the same mailbox. It is a small, dependency-free client (EHLO, AUTH PLAIN, MAIL, RCPT, DATA, QUIT) over
- * `node:tls`, tested against a fake server in test/phase141.test.ts. If the owner picks a service with its own web API
+ * `node:tls`, tested against a fake server in test/crm/free-typed-email.test.ts. If the owner picks a service with its own web API
  * instead, that is a second `EmailProvider` beside this one; nothing else changes.
  *
  * POINTED AT IONOS, AND STILL OFF.

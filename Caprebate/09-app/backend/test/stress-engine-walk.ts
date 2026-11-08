@@ -5,7 +5,7 @@
  * in OneDrive), moved here so it runs on every check. It drives the four-stage funnel through its real screen parser and
  * the engine itself over fixed grids (every sector x trigger x spend x date; every answer at a fixed spend; the engine's
  * triggers x bases x facts) and 3,000 multi-building funnels drawn from a fixed seed, so the same run is made every time.
- * Each broken property is a violation CLASS with a count and its smallest reproducer; test/phase159j.test.ts fails on any
+ * Each broken property is a violation CLASS with a count and its smallest reproducer; test/claims/stress-suite.test.ts fails on any
  * class that is not one of the readings kept on purpose (each named there with the Word question that asks about it).
  * Every "Phase 159x" note below is the harness's own: each marks where a later phase moved an expectation, and why.
  */
