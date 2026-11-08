@@ -34,12 +34,15 @@
  */
 
 import { USE_TO_ROLE } from './who-claims.ts';
-import { writeAssessmentEvents } from '../claims/property-events.ts';
+import { writeAssessmentEvents } from '../claims/index.ts';
 import { normalisePostcode } from '../../integrations/index.ts';
 import { randomUUID } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import { FUNNEL, FRONTDOOR } from '../../shared/index.ts';
-import { openLeadForGatedExit, openLeadForSubmission } from '../crm/leads.ts';
+import { openLeadForGatedExit, openLeadForSubmission } from '../crm/index.ts';
+import { getAssessmentDraftsStateJsonScreenByToken, insertAssessmentAnswers, insertAssessmentDrafts, insertAssessments, updateAssessmentDraftsClosedLeadIdUpdatedAtByToken, updateAssessmentDraftsStateJsonScreenByToken, updateAssessmentDraftsSubmittedAssessmentIdByToken } from './data.ts';
+import { insertProperties } from '../claims/index.ts';
+import { insertBusinesses } from '../crm/index.ts';
 
 export const SCREEN_IDS = ['Q1', 'Q1a', 'Q1b', 'Q1c', 'Q2', 'Q3'] as const;
 export type ScreenId = (typeof SCREEN_IDS)[number];
@@ -132,18 +135,13 @@ export type Draft = { token: string; state: FunnelState; screen: ScreenId };
 export function newDraft(db: Db, now: () => string, id: () => string = randomUUID): Draft {
   const token = id();
   const state = FUNNEL.blankState() as FunnelState;
-  db.run(
-    'INSERT INTO assessment_drafts (token, state_json, screen, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
-    [token, JSON.stringify(state), 'Q1', now(), now()],
-  );
+  insertAssessmentDrafts(db, [token, JSON.stringify(state), 'Q1', now(), now()]);
   return { token, state, screen: 'Q1' };
 }
 
 export function loadDraft(db: Db, token: string | undefined): Draft | undefined {
   if (token === undefined) return undefined;
-  const row = db.get<{ state_json: string; screen: string; submitted_assessment_id: string | null; closed_lead_id: string | null }>(
-    'SELECT state_json, screen, submitted_assessment_id, closed_lead_id FROM assessment_drafts WHERE token = ?', [token],
-  );
+  const row = getAssessmentDraftsStateJsonScreenByToken<{ state_json: string; screen: string; submitted_assessment_id: string | null; closed_lead_id: string | null }>(db, [token]);
   if (row === undefined) return undefined;
   // A submitted draft is finished. Replaying its token must not re-submit it —
   // and a draft closed at the reasoned negative is finished in the same way, on
@@ -157,8 +155,7 @@ export function loadDraft(db: Db, token: string | undefined): Draft | undefined 
 }
 
 export function saveDraft(db: Db, d: Draft, now: () => string): void {
-  db.run('UPDATE assessment_drafts SET state_json = ?, screen = ?, updated_at = ? WHERE token = ?',
-    [JSON.stringify(d.state), d.screen, now(), d.token]);
+  updateAssessmentDraftsStateJsonScreenByToken(db, [JSON.stringify(d.state), d.screen, now(), d.token]);
 }
 
 /* ------------------------------------------------------------------ *
@@ -252,7 +249,7 @@ export function closeGatedExit<T>(
   return db.tx(() => {
     const lead_id = openLeadForGatedExit(db, id, { prospect_organisation: businessName(d.state), at });
     const written = withLead(lead_id);
-    db.run('UPDATE assessment_drafts SET closed_lead_id = ?, updated_at = ? WHERE token = ?', [lead_id, at, d.token]);
+    updateAssessmentDraftsClosedLeadIdUpdatedAtByToken(db, [lead_id, at, d.token]);
     return { lead_id, written };
   });
 }
@@ -308,12 +305,8 @@ export function submit(
     // 29 Sep 2026: the company number, when the person chose their company from the first screen's search.
     const cn = (s as unknown as { company_number?: unknown }).company_number;
     const chosenNumber = typeof cn === 'string' && /^(\d{8}|[A-Z]{2}\d{6})$/.test(cn) ? cn : null;
-    db.run(
-      'INSERT INTO businesses (id, name, sector, stage, contact_email, contact_phone, created_at, source, updated_at, company_number) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [business_id, businessName(s), sector, 'ASSESSMENT_SUBMITTED',
-       contactEmail(s), contactPhone(s), at, 'WEBSITE', at, chosenNumber],
-    );
+    insertBusinesses(db, [business_id, businessName(s), sector, 'ASSESSMENT_SUBMITTED',
+       contactEmail(s), contactPhone(s), at, 'WEBSITE', at, chosenNumber]);
     // 29 Sep 2026: the first screen's postcode goes on the first property, when that property's address still carries it.
     const start = (s as unknown as { start?: StartAnswers }).start;
     const startPostcode = start?.postcode !== undefined && start.postcode !== null ? normalisePostcode(start.postcode) : null;
@@ -338,8 +331,7 @@ export function submit(
       const role = typeof pr['use'] === 'string' ? USE_TO_ROLE[pr['use']] ?? null : null;
       const pcc = pr['postcode_check'] as { council_area?: unknown } | undefined;
       const council = pcc !== undefined && typeof pcc.council_area === 'string' && pcc.council_area.trim() !== '' ? pcc.council_area.trim().slice(0, 100) : null;
-      db.run('INSERT INTO properties (id, business_id, label, postcode, address_line_1, town, uprn, created_at, updated_at, claimant_role, claimant_role_source, council_area, council_area_source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [property_id, business_id, p.address ?? 'Unnamed property', pc, text(p.line1, 200), text(p.town, 100), uprn, at, at,
+      insertProperties(db, [property_id, business_id, p.address ?? 'Unnamed property', pc, text(p.line1, 200), text(p.town, 100), uprn, at, at,
           role, role === null ? null : 'the client’s own answer in the assessment', council, council === null ? null : 'the postcode check at the assessment (postcodes.io)']);
     }
     /* PHASE 159l (L13): what the company search read of the company picked — its status and its latest accounts' type —
@@ -348,11 +340,7 @@ export function submit(
       .flatMap((p) => (Array.isArray(p.company_results) ? p.company_results as { number?: unknown; status?: unknown; accounts_type?: unknown }[] : []))
       .find((c) => c.number === chosenNumber);
     const read = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, 60) : null);
-    db.run(
-      'INSERT INTO assessments (id, business_id, sector, submitted_at, shown_low_pence, shown_high_pence, created_at, company_number, company_status, company_accounts_type) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [assessment_id, business_id, sector, at, low, high, at, chosenNumber, read(picked?.status), read(picked?.accounts_type)],
-    );
+    insertAssessments(db, [assessment_id, business_id, sector, at, low, high, at, chosenNumber, read(picked?.status), read(picked?.accounts_type)]);
     /* PHASE 159c: WHAT HAPPENED TO EACH BUILDING, IN ORDER — its first event, then each piece of work since, each with its
        own date and cost (CB_FUNNEL.eventsOf), kept on the property (migration 105) for the lead, the claim and the pack. */
     const eventsOf = (FUNNEL as unknown as { eventsOf: (p: Record<string, unknown>) => { type: unknown; cost: unknown; cost_unknown: unknown; date: unknown; date_unknown: unknown }[] }).eventsOf;
@@ -367,14 +355,9 @@ export function submit(
     lead_id = openLeadForSubmission(db, id, { business_id, assessment_id, at });
     let ord = 0;
     for (const a of answerRows(s)) {
-      db.run(
-        'INSERT INTO assessment_answers (id, assessment_id, ord, question_id, question_text, state, value) ' +
-          'VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [id(), assessment_id, ord++, a.question_id, a.question_text, a.state, a.value],
-      );
+      insertAssessmentAnswers(db, [id(), assessment_id, ord++, a.question_id, a.question_text, a.state, a.value]);
     }
-    db.run('UPDATE assessment_drafts SET submitted_assessment_id = ? WHERE token = ?',
-      [assessment_id, d.token]);
+    updateAssessmentDraftsSubmittedAssessmentIdByToken(db, [assessment_id, d.token]);
   });
 
   return { business_id, assessment_id, low_pence: low, high_pence: high, lead_id };

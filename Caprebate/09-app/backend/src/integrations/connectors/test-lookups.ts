@@ -60,7 +60,7 @@ import {
 } from './boundary-test-lookup.ts';
 import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
 import { readPayloadWithClaude, SERVICE_ID as CLAUDE_SERVICE_ID } from './claude.ts';
-import { sanitise, type Segment } from '../../modules/claims/documents/document-pipeline.ts';
+import { sanitise, type Segment } from '../../modules/claims/index.ts';
 import { listBusinessesNameLegalName, listLeadsProspectOrganisationProspectPostcode, listPropertiesPostcode } from '../data-borrowed.ts';
 
 /** The Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */

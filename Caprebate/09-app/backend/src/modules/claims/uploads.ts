@@ -44,6 +44,7 @@ import {
   type AuditEvent, type AuditSink, type DocType, type DocTypeClassifier,
   type TextExtractor, type UploadHandlerDeps, type UploadJob,
 } from '../../shared/upload-handler-port.ts';
+import { getDocumentEventsJobIdAtByDocIdContractStep, getDocumentsCreatedAtByBusinessIdContentSha256, getDocumentsIdBusinessIdById2, getDocumentsOriginalKeptAtOriginalDeletedAtById, getDocumentsTypeCodeById, insertDocumentEvents, insertDocuments, listDocumentEventsContractStepActionByDocId, listDocumentsIdLogicalDocumentIdByOriginalKeptAtOriginalDele, updateDocumentsByteSizeSniffedAsById, updateDocumentsFailureCodeById, updateDocumentsOriginalDeletedAtByIdOriginalDeletedAt, updateDocumentsOriginalKeptAtOriginalDeleteAfterByIdOriginal, updateDocumentsStateDocTypeById } from './data.ts';
 
 /**
  * THE AUDIT SINK ADAPTER.
@@ -61,11 +62,7 @@ import {
 export function dbAuditSink(db: Db, id: () => string = randomUUID): AuditSink {
   return {
     async write(e: AuditEvent): Promise<void> {
-      db.run(
-        'INSERT INTO document_events (id, job_id, doc_id, contract_step, action, outcome, detail_json, at) ' +
-          'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [id(), e.job_id, e.doc_id, e.contract_step, e.action, e.outcome, JSON.stringify(e.detail), e.at],
-      );
+      insertDocumentEvents(db, [id(), e.job_id, e.doc_id, e.contract_step, e.action, e.outcome, JSON.stringify(e.detail), e.at]);
     },
   };
 }
@@ -281,7 +278,7 @@ function scanReaderFrom(d: UploadDeps): UploadDeps['scan_reader'] {
   if (ctx === null) return undefined;
   // Phase 153c: the document's kind travels with it, and only the kinds on SCANNED_PAGE_KINDS are sent (Word question 193).
   return async (doc_id, images) => {
-    const kind = d.db.get<{ type_code: string | null }>('SELECT type_code FROM documents WHERE id = ?', [doc_id])?.type_code ?? null;
+    const kind = getDocumentsTypeCodeById<{ type_code: string | null }>(d.db, [doc_id])?.type_code ?? null;
     return (await readScannedPages(ctx, doc_id, images, kind)).pages;
   };
 }
@@ -333,13 +330,9 @@ export async function beginUpload(
 
   d.db.tx(() => {
     const v = args.version === undefined ? null : args.version();
-    d.db.run(
-      'INSERT INTO documents (id, business_id, uploaded_by, filename, declared_type, state, created_at, ' +
-        'logical_document_id, version_no, type_code, retention_ref, request_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [doc_id, args.business_id, args.uploaded_by, v?.filename ?? args.filename,
+    insertDocuments(d.db, [doc_id, args.business_id, args.uploaded_by, v?.filename ?? args.filename,
        args.declared_type, job.state, d.now(),
-       v?.logical_document_id ?? null, v?.version_no ?? null, v?.type_code ?? null, v?.retention_ref ?? null, v?.request_id ?? null],
-    );
+       v?.logical_document_id ?? null, v?.version_no ?? null, v?.type_code ?? null, v?.retention_ref ?? null, v?.request_id ?? null]);
   });
 
   // The URL is returned to the caller and NOT stored. It is a bearer capability.
@@ -388,11 +381,8 @@ export async function acceptClientBytes(
   /* PHASE 157d (F18): the fingerprint of the bytes as they arrived, and whether this business sent the very same bytes
      before. The copy is kept either way, as a version; the client is told when they sent it, not refused. */
   const sha = createHash('sha256').update(args.bytes).digest('hex');
-  const before = d.db.get<{ created_at: string }>(
-    'SELECT e.created_at FROM documents e JOIN documents me ON me.id = ? WHERE e.business_id = me.business_id AND e.content_sha256 = ? AND e.id <> me.id ORDER BY e.created_at ASC LIMIT 1',
-    [args.doc_id, sha]);
-  d.db.run('UPDATE documents SET byte_size = ?, sniffed_as = ?, content_sha256 = ? WHERE id = ?',
-    [args.bytes.length, sniffAccepted(args.bytes), sha, args.doc_id]);
+  const before = getDocumentsCreatedAtByBusinessIdContentSha256<{ created_at: string }>(d.db, [args.doc_id, sha]);
+  updateDocumentsByteSizeSniffedAsById(d.db, [args.bytes.length, sniffAccepted(args.bytes), sha, args.doc_id]);
   return { ok: true, written_at, sent_before: before?.created_at ?? null };
 }
 
@@ -438,7 +428,7 @@ export async function finishUpload(
     // left to do is record the refusal where a person can see it.
     persist(d, received, received.quarantine.deleted_at !== undefined);
     if (e instanceof UploadHandlerError) {
-      d.db.run('UPDATE documents SET failure_code = ? WHERE id = ?', [e.code, received.doc_id]);
+      updateDocumentsFailureCodeById(d.db, [e.code, received.doc_id]);
       return { job: received, discharged: false, error: e };
     }
     throw e;
@@ -659,11 +649,9 @@ function writeEgressRow(audit: AuditLog, d: UploadDeps, job: UploadJob, egress: 
  * a quarantine that had already been discharged.
  */
 export function issuedJob(db: Db, doc_id: string): UploadJob | null {
-  const row = db.get<{ id: string; business_id: string; declared_type: string | null; state: string }>(
-    'SELECT id, business_id, declared_type, state FROM documents WHERE id = ?', [doc_id]);
+  const row = getDocumentsIdBusinessIdById2<{ id: string; business_id: string; declared_type: string | null; state: string }>(db, [doc_id]);
   if (row === undefined || row.state !== 'ISSUED') return null;
-  const issued = db.get<{ job_id: string; at: string }>(
-    'SELECT job_id, at FROM document_events WHERE doc_id = ? AND contract_step = 1 ORDER BY at ASC LIMIT 1', [doc_id]);
+  const issued = getDocumentEventsJobIdAtByDocIdContractStep<{ job_id: string; at: string }>(db, [doc_id]);
   if (issued === undefined) return null;
   return {
     job_id: issued.job_id, doc_id: row.id, entity_id: row.business_id, state: 'ISSUED',
@@ -673,20 +661,16 @@ export function issuedJob(db: Db, doc_id: string): UploadJob | null {
 }
 
 function persist(d: UploadDeps, job: UploadJob, discharged: boolean): void {
-  d.db.run(
-    'UPDATE documents SET state = ?, doc_type = ?, strip_recorded_at = ?, quarantine_discharged_at = ? WHERE id = ?',
-    [job.state, job.doc_type ?? null,
+  updateDocumentsStateDocTypeById(d.db, [job.state, job.doc_type ?? null,
      job.quarantine.strip_completed_at ?? null,
      discharged ? (job.quarantine.deleted_at ?? d.now()) : null,
-     job.doc_id],
-  );
+     job.doc_id]);
   // PHASE 140: WHERE THE HANDLER KEPT THE ORIGINAL, SAY SO AND SAY UNTIL WHEN. Only on a job that finished, only where
   // the handler itself wrote the durable copy, and only while KEEP_ORIGINALS is on — so with it off this never runs.
   const kept = job.quarantine.durable_written_at;
   if (kept !== undefined && job.state !== 'FAILED' && d.store.keptDays !== null) {
     const until = new Date(new Date(kept).getTime() + d.store.keptDays * 86_400_000).toISOString();
-    d.db.run('UPDATE documents SET original_kept_at = ?, original_delete_after = ? WHERE id = ? AND original_kept_at IS NULL',
-      [kept, until, job.doc_id]);
+    updateDocumentsOriginalKeptAtOriginalDeleteAfterByIdOriginal(d.db, [kept, until, job.doc_id]);
   }
 }
 
@@ -700,8 +684,7 @@ export async function openKeptOriginal(
   actor: { id: string; role: string }, doc_id: string,
 ): Promise<{ bytes: Buffer; sniffed_as: string | null; filename: string } | null> {
   await sweepOriginals(d, actor);
-  const r = d.db.get<{ original_kept_at: string | null; original_deleted_at: string | null; sniffed_as: string | null; filename: string; logical_document_id: string | null }>(
-    'SELECT original_kept_at, original_deleted_at, sniffed_as, filename, logical_document_id FROM documents WHERE id = ?', [doc_id]);
+  const r = getDocumentsOriginalKeptAtOriginalDeletedAtById<{ original_kept_at: string | null; original_deleted_at: string | null; sniffed_as: string | null; filename: string; logical_document_id: string | null }>(d.db, [doc_id]);
   if (r === undefined || r.original_kept_at === null || r.original_deleted_at !== null) return null;
   const bytes = await d.store.openOriginal(durableKeyFor(doc_id));
   d.audit.append({
@@ -722,11 +705,10 @@ export async function sweepOriginals(
   actor: { id: string; role: string } | null,
 ): Promise<number> {
   const at = d.now();
-  const due = d.db.all<{ id: string; logical_document_id: string | null }>(
-    'SELECT id, logical_document_id FROM documents WHERE original_kept_at IS NOT NULL AND original_deleted_at IS NULL AND original_delete_after <= ?', [at]);
+  const due = listDocumentsIdLogicalDocumentIdByOriginalKeptAtOriginalDele<{ id: string; logical_document_id: string | null }>(d.db, [at]);
   for (const r of due) {
     try { await d.store.delete(durableKeyFor(r.id)); } catch { /* already gone: recorded below all the same */ }
-    d.db.run('UPDATE documents SET original_deleted_at = ? WHERE id = ? AND original_deleted_at IS NULL', [at, r.id]);
+    updateDocumentsOriginalDeletedAtByIdOriginalDeletedAt(d.db, [at, r.id]);
     d.audit.append({
       at, kind: 'DOCUMENT_ORIGINAL_DELETED', outcome: 'ALLOWED', actor_id: actor?.id ?? null, actor_role: actor?.role ?? null,
       object_type: 'document', object_id: r.logical_document_id ?? r.id, detail: { version: r.id, why: 'its time was up' },
@@ -745,12 +727,7 @@ export async function sweepOriginals(
 export function eventsFor(db: Db, doc_id: string): {
   contract_step: number; action: string; outcome: string; detail: unknown; at: string;
 }[] {
-  return db
-    .all<{ contract_step: number; action: string; outcome: string; detail_json: string; at: string }>(
-      'SELECT contract_step, action, outcome, detail_json, at FROM document_events ' +
-        'WHERE doc_id = ? ORDER BY at ASC, contract_step ASC',
-      [doc_id],
-    )
+  return listDocumentEventsContractStepActionByDocId<{ contract_step: number; action: string; outcome: string; detail_json: string; at: string }>(db, [doc_id])
     .map((r) => ({
       contract_step: r.contract_step, action: r.action, outcome: r.outcome, at: r.at,
       detail: JSON.parse(r.detail_json) as unknown,

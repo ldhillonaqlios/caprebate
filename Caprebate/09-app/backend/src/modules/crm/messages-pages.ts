@@ -31,16 +31,18 @@ import * as IE from './inbound-email.ts';
 import { page } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { imapLoginFromKeyFile, imapMailbox, readingMissing, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../../integrations/index.ts';
-import { earlyQuestions, receiveFile } from '../portal/client-files-pages.ts';
+import { earlyQuestions, receiveFile } from '../portal/index.ts';
 import * as W from './whatsapp.ts';
 import { whatsappPage } from './whatsapp-page.ts';
 import { communicate, composer } from './communication.ts';
 import { boundaryOf, parseMultipart, piecedFields, type Part } from '../../core/index.ts';
 import { UPLOAD_LIMITS } from '../../shared/upload-handler-port.ts';
-import { earlyQuestionsFor, receivableTypes } from '../claims/documents.ts';
-import { earlyVouchesFrom } from '../claims/document-reading.ts';
+import { earlyQuestionsFor, receivableTypes } from '../claims/index.ts';
+import { earlyVouchesFrom } from '../claims/index.ts';
 import { cleanField } from '../../core/index.ts';
 import { piecesPage } from '../../core/index.ts';
+import { getBusinessesNameById, getClientMessagesExistsByBusinessId, getInternalNotesExistsByBusinessId, listBusinessesIdName2 } from './data.ts';
+import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from './data-borrowed.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -85,7 +87,7 @@ function bubble(m: M.ThreadMessage, team: boolean, extra: Safe = raw('')): Safe 
  */
 export function surveyorThreadPanel(db: Db, actor: Actor, business_id: string): Safe | null {
   if (!can(actor, 'client_message.read', { type: 'client_message', id: business_id, business_id,
-    assigned_surveyor_ids: db.all<{ surveyor_id: string }>('SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', [business_id]).map((r) => r.surveyor_id) })) return null;
+    assigned_surveyor_ids: listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3<{ surveyor_id: string }>(db, [business_id]).map((r) => r.surveyor_id) })) return null;
   const t = M.clientThread(db, actor, business_id);
   return h`<h2>Messages with the client</h2>
     <p class="help">What the client and our team have written to each other. You can read it, not reply. Ask Sales to pass on a question.</p>
@@ -142,8 +144,8 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
   const top = tabs(business_id, tab, teamN, clientN);
   const unread = (teamN ?? 0) + (clientN ?? 0);
   // Whether either thread this login may read has anything in it — for the section's chip.
-  const started = (mayTeam && db.get('SELECT 1 FROM internal_notes WHERE business_id = ? LIMIT 1', [business_id]) !== undefined)
-    || (mayClient && db.get('SELECT 1 FROM client_messages WHERE business_id = ? LIMIT 1', [business_id]) !== undefined);
+  const started = (mayTeam && getInternalNotesExistsByBusinessId(db, [business_id]) !== undefined)
+    || (mayClient && getClientMessagesExistsByBusinessId(db, [business_id]) !== undefined);
   // A thread is marked read only when the person opened its tab — never because the page was drawn with it folded away.
   const opened = asked !== null;
   if (tab === 'team') {
@@ -268,7 +270,7 @@ export async function handleStaffMessages(
     const id = cm[1] ?? '';
     const r = await communicate({ app: d.app, store: d.store, newId: d.newId, origin: d.publicOrigin ?? 'http://localhost:8103' }, actor, id, await form(req));
     if (r.ok) { redirect(res, r.to); return 'handled'; }
-    const company = db.get<{ name: string }>('SELECT name FROM businesses WHERE id = ?', [id])?.name ?? 'this client';
+    const company = getBusinessesNameById<{ name: string }>(db, [id])?.name ?? 'this client';
     html(res, 400, page({ title: `Not sent · ${company}`, nav: d.nav(actor), body: h`<h1>Not sent</h1>
       <p><a href="/staff/clients/${id}?chat=all#chat">Back to ${company}</a></p>
       <div class="pane">${composer({ app: d.app, actor, business_id: id, now: d.app.now() }, r.prefill, r.why)}</div>` }));
@@ -310,7 +312,7 @@ export async function handleStaffMessages(
     if (!can(actor, 'client_message.write', { type: 'client_message', id: 'queue', business_id: 'queue' })) return d.problem(res, actor, 'Not available', 'Only the people who write to clients file WhatsApp messages.', '/staff');
     const now = d.app.now();
     const q = W.unfiledWhatsApp(db, actor, now);
-    const companies = db.all<{ id: string; name: string }>('SELECT id, name FROM businesses ORDER BY name');
+    const companies = listBusinessesIdName2<{ id: string; name: string }>(db);
     const done = url.searchParams.get('done');
     html(res, 200, page({ title: 'WhatsApp to file', nav: d.nav(actor), body: h`
       <h1>WhatsApp messages to file</h1>
@@ -370,7 +372,7 @@ export async function handleStaffMessages(
   if (path === '/staff/replies' && method === 'GET') {
     if (IE.mayReadQueue(actor)) await IE.readRepliesIfDue(d.app);
     const q = IE.replyQueue(db, actor);
-    const companies = db.all<{ id: string; name: string }>('SELECT id, name FROM businesses ORDER BY name');
+    const companies = listBusinessesIdName2<{ id: string; name: string }>(db);
     const inbound = d.inbound ?? INBOUND_EMAIL;
     const done = url.searchParams.get('done');
     html(res, 200, page({

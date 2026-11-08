@@ -13,8 +13,10 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { claimObjFor, loadClaimRow } from './crm.ts';
-import { sendTaskToPortal } from '../claims/engaged.ts';
-import { createDocumentRequest } from '../claims/documents.ts';
+import { sendTaskToPortal } from '../claims/index.ts';
+import { createDocumentRequest } from '../claims/index.ts';
+import { getClientTaskChecksIdByTaskId, getClientTasksIdKindById, insertClientTaskChecks, insertClientTaskChecks2 } from './data.ts';
+import { getClientTaskChecksOutcomeWhoByTaskId, listClientTasksIdKindByBusinessIdClaimId } from './data-borrowed.ts';
 
 export type CheckDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 
@@ -35,17 +37,10 @@ export type ToCheck = {
 
 /** What the client sent on this claim, or the whole company, that nobody has checked yet. Oldest first. */
 export function waitingForCheck(db: Db, business_id: string, claim_id: string): ToCheck[] {
-  return db.all<{
+  return listClientTasksIdKindByBusinessIdClaimId<{
     id: string; kind: string; question: string; answer: string | null; answer_state: string; received_document_id: string | null;
     logical: string | null; who: string | null; answered_at: string;
-  }>(
-    'SELECT t.id, t.kind, t.question, t.answer, t.answer_state, t.received_document_id, d.logical_document_id AS logical, ' +
-      'u.display_name AS who, t.answered_at FROM client_tasks t LEFT JOIN client_task_checks k ON k.task_id = t.id ' +
-      'LEFT JOIN users u ON u.id = t.answered_by LEFT JOIN documents d ON d.id = t.received_document_id ' +
-      "WHERE t.business_id = ? AND (t.claim_id = ? OR t.claim_id IS NULL) AND t.state = 'ANSWERED' AND t.answered_by_role = 'CLIENT' " +
-      'AND k.id IS NULL ORDER BY t.answered_at ASC, t.rowid ASC',
-    [business_id, claim_id],
-  ).map((t) => ({
+  }>(db, [business_id, claim_id]).map((t) => ({
     task_id: t.id, kind: t.kind === 'DOCUMENT' ? 'DOCUMENT' : 'QUESTION', question: t.question,
     sent: t.kind === 'DOCUMENT' ? 'A file, uploaded in their portal' : t.answer_state === 'DONT_KNOW' ? 'They do not know' : (t.answer ?? ''),
     document_id: t.received_document_id, logical_document_id: t.logical, by: t.who ?? 'the client', at: t.answered_at,
@@ -56,9 +51,7 @@ export type CheckReading = { readonly outcome: 'ACCEPTED' | 'ASKED_AGAIN'; reado
 
 /** The check on one thing the client sent, if it has one. */
 export function checkOf(db: Db, task_id: string): CheckReading | null {
-  const r = db.get<{ outcome: string; who: string | null; checked_at: string; reason: string | null }>(
-    'SELECT k.outcome, u.display_name AS who, k.checked_at, k.reason FROM client_task_checks k LEFT JOIN users u ON u.id = k.checked_by WHERE k.task_id = ?',
-    [task_id]);
+  const r = getClientTaskChecksOutcomeWhoByTaskId<{ outcome: string; who: string | null; checked_at: string; reason: string | null }>(db, [task_id]);
   return r === undefined ? null : { outcome: r.outcome === 'ASKED_AGAIN' ? 'ASKED_AGAIN' : 'ACCEPTED', by: r.who ?? 'a former user', at: r.checked_at, reason: r.reason };
 }
 
@@ -69,11 +62,10 @@ function waitingTask(d: CheckDeps, actor: Actor, claim_id: string, task_id: stri
   { biz: string; task: { id: string; kind: string; question: string; why: string; holds_up: string; fact_id: string | null; requested_type: string | null; event_id: string | null } } | { why: string } {
   const row = loadClaimRow(d.db, claim_id);
   authorise(actor, 'claim.write', claimObjFor(d.db, row));
-  const t = d.db.get<{ id: string; kind: string; question: string; why: string; holds_up: string; fact_id: string | null; requested_type: string | null; event_id: string | null; state: string; role: string | null; claim_id: string | null; business_id: string }>(
-    'SELECT id, kind, question, why, holds_up, fact_id, requested_type, event_id, state, answered_by_role AS role, claim_id, business_id FROM client_tasks WHERE id = ?', [task_id]);
+  const t = getClientTasksIdKindById<{ id: string; kind: string; question: string; why: string; holds_up: string; fact_id: string | null; requested_type: string | null; event_id: string | null; state: string; role: string | null; claim_id: string | null; business_id: string }>(d.db, [task_id]);
   if (t === undefined || t.business_id !== row.business_id || (t.claim_id !== null && t.claim_id !== claim_id)) return { why: 'That is not something this client sent on this claim.' };
   if (t.state !== 'ANSWERED' || t.role !== 'CLIENT') return { why: 'Only what the client sent is checked here.' };
-  if (d.db.get<{ id: string }>('SELECT id FROM client_task_checks WHERE task_id = ?', [task_id]) !== undefined) return { why: 'Someone has already checked this.' };
+  if (getClientTaskChecksIdByTaskId<{ id: string }>(d.db, [task_id]) !== undefined) return { why: 'Someone has already checked this.' };
   return { biz: row.business_id, task: t };
 }
 
@@ -83,8 +75,7 @@ export function acceptSent(d: CheckDeps, actor: Actor, claim_id: string, task_id
   if ('why' in w) return { ok: false, why: w.why };
   const at = d.now();
   d.db.tx(() => {
-    d.db.run("INSERT INTO client_task_checks (id, task_id, outcome, reason, asked_again_task_id, checked_by, checked_at) VALUES (?, ?, 'ACCEPTED', NULL, NULL, ?, ?)",
-      [d.newId(), task_id, actor.id, at]);
+    insertClientTaskChecks(d.db, [d.newId(), task_id, actor.id, at]);
     d.audit.append({ at, kind: 'CLIENT_SENT_ACCEPTED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'client_task', object_id: task_id, detail: { business: w.biz, claim: claim_id } });
   });
@@ -108,8 +99,7 @@ export function askAgain(d: CheckDeps, actor: Actor, claim_id: string, task_id: 
       : sendTaskToPortal(d, actor, w.biz, { fact_id: t.fact_id, question: t.question, why: reason, holds_up: t.holds_up, due_on: due, claim_id });
     if (!again.ok) { refused = again.why; return; }
     const againId = 'id' in again ? again.id : again.task_id;
-    d.db.run("INSERT INTO client_task_checks (id, task_id, outcome, reason, asked_again_task_id, checked_by, checked_at) VALUES (?, ?, 'ASKED_AGAIN', ?, ?, ?, ?)",
-      [d.newId(), task_id, reason, againId, actor.id, at]);
+    insertClientTaskChecks2(d.db, [d.newId(), task_id, reason, againId, actor.id, at]);
     d.audit.append({ at, kind: 'CLIENT_SENT_ASKED_AGAIN', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'client_task', object_id: task_id, detail: { business: w.biz, claim: claim_id, again: againId } });
   });

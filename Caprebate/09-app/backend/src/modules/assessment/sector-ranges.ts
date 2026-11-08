@@ -14,6 +14,7 @@
 import type { Db } from '../../core/index.ts';
 import { BAND } from '../../shared/index.ts';
 import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
+import { listSurveyPackApprovalsSnapshotJsonAssessmentIdByVersionPack } from './data-borrowed.ts';
 
 export const MIN_CLAIMS = 5;
 
@@ -42,9 +43,7 @@ function slKey(trigger: unknown): string {
 }
 
 export function proposeRanges(db: Db, min = MIN_CLAIMS): { proposals: RangeProposal[]; left_out: number } {
-  const rows = db.all<{ snapshot_json: string; assessment_id: string | null }>(
-    'SELECT a.snapshot_json, j.assessment_id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
-      'WHERE a.version = (SELECT MAX(x.version) FROM survey_pack_approvals x WHERE x.pack_id = a.pack_id)');
+  const rows = listSurveyPackApprovalsSnapshotJsonAssessmentIdByVersionPack<{ snapshot_json: string; assessment_id: string | null }>(db);
   const buckets = new Map<string, { sector: string; trigger: string | null; shares: number[] }>();
   let left_out = 0;
   for (const r of rows) {

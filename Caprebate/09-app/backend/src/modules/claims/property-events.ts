@@ -18,6 +18,8 @@
  */
 import type { Db } from '../../core/index.ts';
 import { BAND } from '../../shared/index.ts';
+import { getLogicalDocumentsCountByBusinessIdTypeCode2, getLogicalDocumentsCountByBusinessIdTypeCode3, getPropertyEventsIdByIdPropertyId, getPropertyEventsIdPropertyIdByIdBusinessId, insertPropertyEvents, insertPropertyEvents2, listPropertyEventsIdPropertyIdByPropertyId, updatePropertyEventsVatVatPenceById } from './data.ts';
+import { getDocumentTypesLabelByCode, getSurveyPackApprovalsVersionSnapshotJsonByClaimId } from './data-borrowed.ts';
 
 export const EVENT_KINDS = ['PURCHASE', 'NEW_BUILD', 'EXTENSION', 'REFURBISHMENT', 'FIT_OUT', 'CONVERSION', 'REPAIRS', 'OTHER'] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
@@ -74,17 +76,13 @@ export function eventLabel(e: Pick<PropertyEvent, 'kind' | 'event_date'>): strin
 /** PHASE 159j (item 5): an event on one of this business's buildings, or null — the check before a document or a
  *  request names it. */
 export function eventOfBusiness(db: Db, business_id: string, event_id: string): PropertyEvent | null {
-  return db.get<PropertyEvent>(
-    'SELECT id, property_id, business_id, ord, kind, event_date, cost_pence, vat, source, created_at, vat_pence FROM property_events WHERE id = ? AND business_id = ?',
-    [event_id, business_id]) ?? null;
+  return getPropertyEventsIdPropertyIdByIdBusinessId<PropertyEvent>(db, [event_id, business_id]) ?? null;
 }
 
 /** One building's events, first first. */
 export function eventsOfProperty(db: Db, property_id: string | null): PropertyEvent[] {
   if (property_id === null) return [];
-  return db.all<PropertyEvent>(
-    'SELECT id, property_id, business_id, ord, kind, event_date, cost_pence, vat, source, created_at, vat_pence FROM property_events WHERE property_id = ? ORDER BY ord ASC',
-    [property_id]);
+  return listPropertyEventsIdPropertyIdByPropertyId<PropertyEvent>(db, [property_id]);
 }
 
 /** Does the purchase method (section 562, from the price) apply? Yes where a purchase is recorded, and on a building with
@@ -111,9 +109,7 @@ export function writeAssessmentEvents(
     const cost = e.cost_unknown === true || typeof e.cost !== 'number' || !Number.isFinite(e.cost) || e.cost < 0 ? null : Math.round(e.cost * 100);
     const date = e.date_unknown === true ? null : eventDate(e.date);
     ord += 1;
-    db.run('INSERT INTO property_events (id, property_id, business_id, ord, kind, event_date, cost_pence, vat, source, assessment_id, created_at, created_by) ' +
-      "VALUES (?, ?, ?, ?, ?, ?, ?, NULL, 'ASSESSMENT', ?, ?, NULL)",
-      [newId(), p.property_id, p.business_id, ord, kind, date, cost, p.assessment_id, p.at]);
+    insertPropertyEvents(db, [newId(), p.property_id, p.business_id, ord, kind, date, cost, p.assessment_id, p.at]);
   }
   return ord;
 }
@@ -141,9 +137,7 @@ export function addStaffEvent(
   }
   const id = newId();
   const ord = (events.reduce((a, e) => Math.max(a, e.ord), 0)) + 1;
-  db.run('INSERT INTO property_events (id, property_id, business_id, ord, kind, event_date, cost_pence, vat, source, assessment_id, created_at, created_by) ' +
-    "VALUES (?, ?, ?, ?, ?, ?, ?, NULL, 'STAFF', NULL, ?, ?)",
-    [id, p.property_id, p.business_id, ord, kind, date, cost, at, by]);
+  insertPropertyEvents2(db, [id, p.property_id, p.business_id, ord, kind, date, cost, at, by]);
   return { ok: true, id };
 }
 
@@ -192,9 +186,7 @@ export type ApprovedEventFigure = { readonly version: number; readonly qualifyin
  * version with no work since holds the purchase as the whole figure. An event added after the version is not in it.
  */
 export function approvedEventFigures(db: Db, claim_id: string): ReadonlyMap<string, ApprovedEventFigure> {
-  const a = db.get<{ version: number; snapshot_json: string }>(
-    'SELECT a.version, a.snapshot_json FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
-      'WHERE j.claim_id = ? ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [claim_id]);
+  const a = getSurveyPackApprovalsVersionSnapshotJsonByClaimId<{ version: number; snapshot_json: string }>(db, [claim_id]);
   const out = new Map<string, ApprovedEventFigure>();
   if (a === undefined) return out;
   type Snap = { sums?: { qualifying_pence?: unknown }; events?: { purchase_w3?: unknown; purchase?: { qualifying_pence?: unknown } | null; works?: { event_id?: unknown; qualifying_pence?: unknown }[] } };
@@ -212,11 +204,9 @@ export function approvedEventFigures(db: Db, claim_id: string): ReadonlyMap<stri
 
 /** Each event on a claim's building, with its own figure and its own documents. */
 export function eventsOnClaim(db: Db, c: { property_id: string | null; business_id: string; sector: string | null }): EventOnClaim[] {
-  const label = (code: string): string => db.get<{ label: string }>('SELECT label FROM document_types WHERE code = ?', [code])?.label ?? code;
-  const own = (code: string, event_id: string): number => db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM logical_documents WHERE business_id = ? AND type_code = ? AND event_id = ?', [c.business_id, code, event_id])?.n ?? 0;
-  const untied = (code: string): number => db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM logical_documents WHERE business_id = ? AND type_code = ? AND event_id IS NULL', [c.business_id, code])?.n ?? 0;
+  const label = (code: string): string => getDocumentTypesLabelByCode<{ label: string }>(db, [code])?.label ?? code;
+  const own = (code: string, event_id: string): number => getLogicalDocumentsCountByBusinessIdTypeCode2<{ n: number }>(db, [c.business_id, code, event_id])?.n ?? 0;
+  const untied = (code: string): number => getLogicalDocumentsCountByBusinessIdTypeCode3<{ n: number }>(db, [c.business_id, code])?.n ?? 0;
   const evs = eventsOfProperty(db, c.property_id);
   const one = evs.length === 1;
   return evs.map((e) => {
@@ -234,13 +224,13 @@ export function eventsOnClaim(db: Db, c: { property_id: string | null; business_
  *  reclaim it, the amount (migration 110), added to that event's cost in the survey pack. Staff record it on the claim. */
 export function setEventVat(db: Db, at: string, property_id: string, event_id: string, f: { position: string | null; amount_pence: number | null }):
   { ok: true } | { ok: false; why: string } {
-  const e = db.get<{ id: string }>('SELECT id FROM property_events WHERE id = ? AND property_id = ?', [event_id, property_id]);
+  const e = getPropertyEventsIdByIdPropertyId<{ id: string }>(db, [event_id, property_id]);
   if (e === undefined) return { ok: false, why: 'That is not an event on this claim’s building.' };
   const pos = f.position === null || f.position === '' ? null : f.position;
   if (pos !== null && pos !== 'INCLUDED_NOT_RECLAIMABLE' && pos !== 'EXCLUDED_OR_RECLAIMED' && pos !== 'NOT_KNOWN') return { ok: false, why: 'Choose what happened to the VAT.' };
   if (pos !== 'INCLUDED_NOT_RECLAIMABLE' && f.amount_pence !== null) return { ok: false, why: 'Give an amount only for VAT the client could not reclaim.' };
   if (f.amount_pence !== null && (!Number.isSafeInteger(f.amount_pence) || f.amount_pence <= 0)) return { ok: false, why: 'Give the VAT in pounds, more than £0.' };
-  db.run('UPDATE property_events SET vat = ?, vat_pence = ? WHERE id = ?', [pos, f.amount_pence, event_id]);
+  updatePropertyEventsVatVatPenceById(db, [pos, f.amount_pence, event_id]);
   void at;
   return { ok: true };
 }

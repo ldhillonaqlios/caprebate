@@ -14,7 +14,8 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { badge } from '../../shared/index.ts';
 import { localDate, localStamp, ukDate } from '../../shared/index.ts';
 import * as A from './accountant-confirm.ts';
-import { accountantFiles } from '../claims/claim-record.ts';
+import { accountantFiles } from '../claims/index.ts';
+import { getClaimsBusinessIdStageById } from '../claims/index.ts';
 
 const KIND_WORDS: Readonly<Record<A.ConfirmKind, string>> = Object.freeze({
   RETURN_FIT: 'The claim fits the return and the amendment window',
@@ -23,7 +24,7 @@ const KIND_WORDS: Readonly<Record<A.ConfirmKind, string>> = Object.freeze({
 
 /** The claim page's block. Empty where the client has no accountant (the client-filing route) and nothing was sent. */
 export function accountantConfirmBlock(db: Db, actor: Actor, claim_id: string): Safe {
-  const c = db.get<{ business_id: string; stage: string | null }>('SELECT business_id, stage FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsBusinessIdStageById<{ business_id: string; stage: string | null }>(db, [claim_id]);
   if (c === undefined) return raw('');
   const rows = A.confirmRequestsOf(db, claim_id);
   const kind = (Object.keys(A.CONFIRM_ASKS) as A.ConfirmKind[]).find((k) => A.CONFIRM_ASKS[k].stages.includes(c.stage ?? ''));

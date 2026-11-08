@@ -20,6 +20,8 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { multiSiteDiscount } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
+import { insertFeeDiscounts, listFeeDiscountsIdDiscountBpByClaimId } from './data-borrowed.ts';
+import { getClaimsIdBusinessIdById } from './data.ts';
 
 export type FeeDiscountDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 
@@ -52,7 +54,7 @@ export function discountState(): { state: FeeDiscountView['state']; says: string
 export function recordFeeDiscount(
   d: FeeDiscountDeps, actor: Actor, claim_id: string, input: Readonly<Record<string, string | null | undefined>>,
 ): { ok: true; id: string } | { ok: false; why: string } {
-  const c = d.db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdBusinessIdById<{ id: string; business_id: string }>(d.db, [claim_id]);
   if (c === undefined) {
     authorise(actor, 'fee_discount.record', claimObj({ id: claim_id, business_id: '' }));
     return { ok: false, why: 'not found' };
@@ -69,8 +71,7 @@ export function recordFeeDiscount(
   if (reason.length < 2 || reason.length > 2000) return { ok: false, why: 'Say why — which sites or which opportunity — in up to 2,000 characters.' };
   const id = d.newId();
   const at = d.now();
-  d.db.run('INSERT INTO fee_discounts (id, claim_id, business_id, discount_bp, reason, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, c.id, c.business_id, bp, reason, actor.id, at]);
+  insertFeeDiscounts(d.db, [id, c.id, c.business_id, bp, reason, actor.id, at]);
   d.audit.append({
     at, kind: 'FEE_DISCOUNT_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'claim', object_id: c.id,
@@ -81,13 +82,10 @@ export function recordFeeDiscount(
 }
 
 export function discountsFor(db: Db, actor: Actor, claim_id: string): readonly FeeDiscountView[] {
-  const c = db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdBusinessIdById<{ id: string; business_id: string }>(db, [claim_id]);
   if (c === undefined || !can(actor, 'fee_discount.read', claimObj(c))) return [];
   const st = discountState();
-  return db.all<{ id: string; discount_bp: number; reason: string; recorded_at: string; who: string | null }>(
-    'SELECT f.id, f.discount_bp, f.reason, f.recorded_at, u.display_name AS who FROM fee_discounts f LEFT JOIN users u ON u.id = f.recorded_by ' +
-      'WHERE f.claim_id = ? ORDER BY f.recorded_at DESC, f.rowid DESC', [c.id],
-  ).map((r) => ({
+  return listFeeDiscountsIdDiscountBpByClaimId<{ id: string; discount_bp: number; reason: string; recorded_at: string; who: string | null }>(db, [c.id]).map((r) => ({
     id: r.id, discount: `${r.discount_bp / 100}% of our fee`, reason: r.reason,
     recorded: `${localStamp(r.recorded_at)}${r.who === null ? '' : ` by ${r.who}`}`,
     state: st.state, applied: false, says: st.says,

@@ -48,13 +48,17 @@ import type { AuditLog } from '../../core/audit.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { loadLetter } from './letter.ts';
-import { engagement, readBusiness } from '../portal/portal.ts';
+import { engagement, readBusiness } from '../portal/index.ts';
 import { localWhen, ukDate } from '../../shared/index.ts';
 import { formatPence } from '../../shared/index.ts';
-import { claimantTypeForGate } from '../crm/crm.ts';
+import { claimantTypeForGate } from '../crm/index.ts';
 import { buildPdf, flow, type PdfLine } from '../../shared/index.ts';
 import { stageIndex } from '../../shared/index.ts';
 import { getAuditLogCountByKindObjectId, getUsersCountByIdBusinessId, getUsersEmailById } from '../../core/index.ts';
+import { deleteEngagementRequiredSignersByEngagementId, getEngagementSignaturesCountByEngagementId, getEngagementsIdByBusinessId, getEngagementsIdCreatedAtByBusinessId, getEngagementsIdSignedAtByBusinessId, getEngagementsSentAtByBusinessId, insertEngagementRequiredSigners, insertEngagementSignLinks, insertEngagementSignatures, listEngagementSignaturesIdEngagementIdByEngagementId, listPropertiesLabelByBusinessId, updateEngagementSignLinksUsedAtByIdUsedAt, updateEngagementsLetterStateSignedAtById } from './data.ts';
+import { getBusinessesNameCompanyNumberById, getBusinessesStageById, updateBusinessesStageUpdatedAtById } from '../crm/index.ts';
+import { getEngagementSignLinksIdEngagementIdByTokenSha256, listEngagementRequiredSignersUserIdSeqByEngagementId } from './data-borrowed.ts';
+import { getAssessmentsShownHighPenceByBusinessId } from '../assessment/index.ts';
 
 export type EngagementSigning = {
   readonly enabled: boolean;
@@ -143,11 +147,10 @@ export type LetterFacts = {
 };
 
 export function letterFacts(db: Db, business_id: string): LetterFacts {
-  const props = db.all<{ label: string }>('SELECT label FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC', [business_id])
+  const props = listPropertiesLabelByBusinessId<{ label: string }>(db, [business_id])
     .map((p) => p.label.trim()).filter((l) => l !== '');
-  const sent = db.get<{ sent_at: string | null }>('SELECT sent_at FROM engagements WHERE business_id = ?', [business_id])?.sent_at ?? null;
-  const high = db.get<{ shown_high_pence: number | null }>(
-    'SELECT shown_high_pence FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [business_id])?.shown_high_pence ?? null;
+  const sent = getEngagementsSentAtByBusinessId<{ sent_at: string | null }>(db, [business_id])?.sent_at ?? null;
+  const high = getAssessmentsShownHighPenceByBusinessId<{ shown_high_pence: number | null }>(db, [business_id])?.shown_high_pence ?? null;
   return {
     // The client's own entity answer at the assessment, else what staff recorded on the organisation (crm.ts).
     claimant_type: claimantTypeForGate(db, business_id).value,
@@ -414,9 +417,7 @@ type Deps = { db: Db; audit: AuditLog; email: EmailTransport; now: () => string;
  */
 export type RequiredSigner = { readonly user_id: string; readonly seq: 1 | 2; readonly name: string; readonly email: string };
 export function requiredSigners(db: Db, engagement_id: string): RequiredSigner[] {
-  return db.all<RequiredSigner>(
-    'SELECT r.user_id, r.seq, u.display_name AS name, u.email FROM engagement_required_signers r JOIN users u ON u.id = r.user_id ' +
-      'WHERE r.engagement_id = ? ORDER BY r.seq ASC', [engagement_id]);
+  return listEngagementRequiredSignersUserIdSeqByEngagementId<RequiredSigner>(db, [engagement_id]);
 }
 /** How many signatures the letter needs: one, or the number staff named (at most two). */
 export function signaturesNeeded(db: Db, engagement_id: string): number {
@@ -425,11 +426,7 @@ export function signaturesNeeded(db: Db, engagement_id: string): number {
 
 type StoredSignature = SignatureFields & { letter_text: string; pdf: Uint8Array; record_sha256: string };
 function storedSignatures(db: Db, engagement_id: string): StoredSignature[] {
-  return db.all<StoredSignature>(
-    'SELECT id, engagement_id, business_id, origin, user_id, session_id, signer_name, signer_role, business_name, signed_at, ip, ' +
-      'letter_text, letter_sha256, pdf, pdf_sha256, record_sha256, record_version, signature_method, signature_ink, signer_email, ' +
-      'letter_prepared_at, letter_sent_at, letter_viewed_at, signer_seq, link_id FROM engagement_signatures WHERE engagement_id = ? ORDER BY signer_seq ASC',
-    [engagement_id]);
+  return listEngagementSignaturesIdEngagementIdByEngagementId<StoredSignature>(db, [engagement_id]);
 }
 
 /**
@@ -448,25 +445,20 @@ function writeSignature(
   const record_sha256 = recordHash(full);
   const complete = (f.signer_seq ?? 1) >= needed;
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO engagement_signatures (id, engagement_id, business_id, origin, user_id, session_id, signer_name, signer_role, business_name, ' +
-        'authority_confirmed, signed_at, ip, letter_text, letter_sha256, pdf, pdf_sha256, record_sha256, ' +
-        'record_version, signature_method, signature_ink, signer_email, letter_prepared_at, letter_sent_at, letter_viewed_at, signer_seq, link_id) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [full.id, engagement_id, full.business_id, full.origin, full.user_id, full.session_id, full.signer_name, full.signer_role, full.business_name,
+    insertEngagementSignatures(d.db, [full.id, engagement_id, full.business_id, full.origin, full.user_id, full.session_id, full.signer_name, full.signer_role, full.business_name,
         full.signed_at, full.ip, letter.text, full.letter_sha256, pdf, full.pdf_sha256, record_sha256,
         full.record_version ?? 1, full.signature_method ?? null, full.signature_ink ?? null, full.signer_email ?? null,
         full.letter_prepared_at ?? null, full.letter_sent_at ?? null, full.letter_viewed_at ?? null, full.signer_seq ?? 1, full.link_id ?? null]);
     if (full.link_id !== null && full.link_id !== undefined) {
-      d.db.run('UPDATE engagement_sign_links SET used_at = ? WHERE id = ? AND used_at IS NULL', [full.signed_at, full.link_id]);
+      updateEngagementSignLinksUsedAtByIdUsedAt(d.db, [full.signed_at, full.link_id]);
     }
     if (complete) {
-      d.db.run("UPDATE engagements SET letter_state = 'SIGNED', signed_at = ? WHERE id = ?", [full.signed_at, engagement_id]);
+      updateEngagementsLetterStateSignedAtById(d.db, [full.signed_at, engagement_id]);
       // PHASE 158d (F43, the second Friary House run): the client signed and their portal still said "Step 1 of 6: Your
       // estimate" until staff moved the claim. Signing is the step: it raises the client to it, and never lowers one past it.
-      const now = d.db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [full.business_id])?.stage ?? '';
+      const now = getBusinessesStageById<{ stage: string }>(d.db, [full.business_id])?.stage ?? '';
       if (stageIndex(now) < stageIndex('ENGAGEMENT_SIGNED')) {
-        d.db.run('UPDATE businesses SET stage = ?, updated_at = ? WHERE id = ?', ['ENGAGEMENT_SIGNED', full.signed_at, full.business_id]);
+        updateBusinessesStageUpdatedAtById(d.db, ['ENGAGEMENT_SIGNED', full.signed_at, full.business_id]);
       }
     }
     d.audit.append({
@@ -547,8 +539,7 @@ function signAs(
     return { ok: false, why: SIGN_WORDS.signature };
   }
 
-  const eng = d.db.get<{ id: string; created_at: string; sent_at: string | null; viewed_at: string | null }>(
-    'SELECT id, created_at, sent_at, viewed_at FROM engagements WHERE business_id = ?', [b.id]);
+  const eng = getEngagementsIdCreatedAtByBusinessId<{ id: string; created_at: string; sent_at: string | null; viewed_at: string | null }>(d.db, [b.id]);
   if (eng === undefined) return { ok: false, why: SIGN_WORDS.none };
   /* PHASE 157d: who must sign, and whether this login has. */
   const named = requiredSigners(d.db, eng.id);
@@ -618,8 +609,7 @@ export function createSignLink(
   const token = randomBytes(32).toString('hex');
   const at = d.now();
   const expires = new Date(Date.parse(at) + SIGN_LINK_DAYS * 86_400_000).toISOString();
-  d.db.run('INSERT INTO engagement_sign_links (id, engagement_id, user_id, token_sha256, sent_to, created_by, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [d.newId(), engagement_id, user.id, sha256Hex(token), user.email, created_by, at, expires]);
+  insertEngagementSignLinks(d.db, [d.newId(), engagement_id, user.id, sha256Hex(token), user.email, created_by, at, expires]);
   return token;
 }
 
@@ -630,10 +620,7 @@ export type SignLink = {
 /** The link behind a token, if it still works: known, not used, not out of date, its login still active. */
 export function signLinkFor(db: Db, token: string, nowIso: string): SignLink | null {
   if (!/^[0-9a-f]{64}$/.test(token)) return null;
-  const l = db.get<SignLink & { used_at: string | null; expires_at: string; disabled_at: string | null }>(
-    'SELECT k.id, k.engagement_id, k.user_id, k.sent_to, k.used_at, k.expires_at, e.business_id, e.letter_state, b.name AS business_name, ' +
-      'b.company_number, u.disabled_at FROM engagement_sign_links k JOIN engagements e ON e.id = k.engagement_id ' +
-      'JOIN businesses b ON b.id = e.business_id JOIN users u ON u.id = k.user_id WHERE k.token_sha256 = ?', [sha256Hex(token)]);
+  const l = getEngagementSignLinksIdEngagementIdByTokenSha256<SignLink & { used_at: string | null; expires_at: string; disabled_at: string | null }>(db, [sha256Hex(token)]);
   if (l === undefined || l.used_at !== null || l.expires_at <= nowIso || l.disabled_at !== null) return null;
   return { id: l.id, engagement_id: l.engagement_id, user_id: l.user_id, sent_to: l.sent_to, business_id: l.business_id,
     business_name: l.business_name, company_number: l.company_number, letter_state: l.letter_state };
@@ -661,7 +648,7 @@ export function setRequiredSigners(
   d: Pick<Deps, 'db' | 'audit' | 'now' | 'newId'>, actor: Actor, business_id: string, user_ids: readonly string[],
 ): { ok: true } | { ok: false; why: string } {
   authorise(actor, 'engagement.send', { type: 'engagement', id: business_id, business_id });
-  const eng = d.db.get<{ id: string }>('SELECT id FROM engagements WHERE business_id = ?', [business_id]);
+  const eng = getEngagementsIdByBusinessId<{ id: string }>(d.db, [business_id]);
   if (eng === undefined) return { ok: false, why: 'Prepare and send the letter first, then say who must sign it.' };
   const ids = [...new Set(user_ids.filter((x) => x.trim() !== ''))];
   if (ids.length > 2) return { ok: false, why: 'At most two people sign the letter.' };
@@ -669,14 +656,13 @@ export function setRequiredSigners(
     const u = getUsersCountByIdBusinessId<{ n: number }>(d.db, [id, business_id])?.n ?? 0;
     if (u === 0) return { ok: false, why: 'Choose people who have a login for this client.' };
   }
-  if ((d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM engagement_signatures WHERE engagement_id = ?', [eng.id])?.n ?? 0) > 0) {
+  if ((getEngagementSignaturesCountByEngagementId<{ n: number }>(d.db, [eng.id])?.n ?? 0) > 0) {
     return { ok: false, why: 'Somebody has already signed, so who must sign cannot change now.' };
   }
   const at = d.now();
   d.db.tx(() => {
-    d.db.run('DELETE FROM engagement_required_signers WHERE engagement_id = ?', [eng.id]);
-    ids.forEach((u, i) => d.db.run('INSERT INTO engagement_required_signers (id, engagement_id, user_id, seq, set_by, set_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [d.newId(), eng.id, u, i + 1, actor.id, at]));
+    deleteEngagementRequiredSignersByEngagementId(d.db, [eng.id]);
+    ids.forEach((u, i) => insertEngagementRequiredSigners(d.db, [d.newId(), eng.id, u, i + 1, actor.id, at]));
     d.audit.append({ at, kind: 'ENGAGEMENT_SIGNERS_SET', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'engagement', object_id: eng.id, detail: { signers: ids.length } });
   });
@@ -690,8 +676,8 @@ export function setRequiredSigners(
 export function seedSignatureRecord(
   d: Pick<Deps, 'db' | 'audit' | 'now' | 'newId'>, business_id: string, signed_at?: string,
 ): string {
-  const b = d.db.get<{ name: string; company_number: string | null }>('SELECT name, company_number FROM businesses WHERE id = ?', [business_id]);
-  const eng = d.db.get<{ id: string; signed_at: string | null }>('SELECT id, signed_at FROM engagements WHERE business_id = ?', [business_id]);
+  const b = getBusinessesNameCompanyNumberById<{ name: string; company_number: string | null }>(d.db, [business_id]);
+  const eng = getEngagementsIdSignedAtByBusinessId<{ id: string; signed_at: string | null }>(d.db, [business_id]);
   if (b === undefined || eng === undefined) throw new Error('seedSignatureRecord: no such business or engagement');
   const at = signed_at ?? eng.signed_at ?? d.now();
   const id = d.newId();

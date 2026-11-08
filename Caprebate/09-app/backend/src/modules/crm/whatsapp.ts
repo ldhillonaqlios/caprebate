@@ -35,6 +35,8 @@ import {
 } from '../../integrations/index.ts';
 import { WHATSAPP_PREFIX, type FsObjectStore } from '../../shared/objectstore.ts';
 import { getWhatsappMediaMediaIdByMessageId, getWhatsappMediaMessageIdBusinessIdByMessageId, getWhatsappMessagesAtByPhoneDirection, getWhatsappMessagesIdStatusByWaIdDirection, insertWhatsappMedia2, insertWhatsappMessages, insertWhatsappMessages3, listOutboxCreatedAtToEmailByBusinessId, listWhatsappMessagesIdPhoneByBusinessIdDirection, updateWhatsappMediaObjectKeyBytesByMessageIdFetchedAt, updateWhatsappMessagesBusinessIdFiledByByIdBusinessId, updateWhatsappMessagesStatusStatusAtById } from '../../integrations/index.ts';
+import { listWhatsappMessagesCreatedAtDirectionByBusinessId } from './data-borrowed.ts';
+import { getBusinessesXById, listContactsEByBusinessIdEmail, listContactsIdBusinessIdByBusinessIdPhone, listContactsIdFullNameByBusinessIdPhone } from './data.ts';
 
 export function whatsappDeps(app: App): WhatsAppDeps {
   return { audit: app.audit, now: app.now, transport: app.outside, secrets: app.secrets,
@@ -58,8 +60,7 @@ export function windowOpenUntil(db: Db, number: string, nowIso: string): string 
 /** The company's contacts WhatsApp can reach: those with a telephone number we can read. */
 export function phoneContacts(db: Db, business_id: string, nowIso: string): PhoneContact[] {
   const out: PhoneContact[] = [];
-  for (const c of db.all<{ id: string; full_name: string; phone: string | null; whatsapp_optin: number }>(
-    "SELECT id, full_name, phone, whatsapp_optin FROM contacts WHERE business_id = ? AND phone IS NOT NULL AND trim(phone) <> '' ORDER BY full_name", [business_id])) {
+  for (const c of listContactsIdFullNameByBusinessIdPhone<{ id: string; full_name: string; phone: string | null; whatsapp_optin: number }>(db, [business_id])) {
     const n = waNumber(c.phone);
     if (n === null) continue;
     out.push({ id: c.id, name: c.full_name, first: c.full_name.trim().split(/\s+/)[0] ?? '', number: n, shown: c.phone ?? '', open_until: windowOpenUntil(db, n, nowIso), agreed: c.whatsapp_optin === 1 });
@@ -110,7 +111,7 @@ export function receiveWhatsApp(app: App, raw: string, signature: string | null)
   let kept = 0, unfiled = 0;
   // Every contact's number, as WhatsApp writes it — read once per body.
   const byNumber = new Map<string, { contact: string; business: string }[]>();
-  for (const c of app.db.all<{ id: string; business_id: string; phone: string }>("SELECT id, business_id, phone FROM contacts WHERE business_id IS NOT NULL AND phone IS NOT NULL AND trim(phone) <> ''")) {
+  for (const c of listContactsIdBusinessIdByBusinessIdPhone<{ id: string; business_id: string; phone: string }>(app.db)) {
     const n = waNumber(c.phone);
     if (n !== null) byNumber.set(n, [...(byNumber.get(n) ?? []), { contact: c.id, business: c.business_id }]);
   }
@@ -151,7 +152,7 @@ export function unfiledWhatsApp(db: Db, actor: Actor, nowIso: string): Unfiled[]
 /** File one such message under a company, by hand. */
 export function fileWhatsApp(app: App, actor: Actor, id: string, business_id: string): { ok: true } | { ok: false; why: string } {
   authorise(actor, 'client_message.write', obj(app.db, business_id));
-  if (app.db.get('SELECT 1 AS x FROM businesses WHERE id = ?', [business_id]) === undefined) return { ok: false, why: 'Choose a company.' };
+  if (getBusinessesXById(app.db, [business_id]) === undefined) return { ok: false, why: 'Choose a company.' };
   const r = updateWhatsappMessagesBusinessIdFiledByByIdBusinessId(app.db, [business_id, actor.id, id]);
   if (r.changes !== 1) return { ok: false, why: 'That message is already filed.' };
   app.audit.append({ at: app.now(), kind: 'WHATSAPP_FILED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'whatsapp_message', object_id: id, detail: { business: business_id } });
@@ -175,9 +176,7 @@ export function conversation(db: Db, actor: Actor, business_id: string, nowIso: 
     at: m.at, when: m.when, channel: m.by_email ? 'Email' : 'Portal', ours: !m.from_client, who: m.who, subject: null, body: m.body, state: null,
   }));
   // The emails WE sent THE CLIENT: to the company's address or one of its contacts' — not an alert to a colleague.
-  const theirs = new Set(db.all<{ e: string }>(
-    "SELECT lower(email) AS e FROM contacts WHERE business_id = ? AND email IS NOT NULL UNION SELECT lower(contact_email) FROM businesses WHERE id = ? AND contact_email IS NOT NULL",
-    [business_id, business_id]).map((r) => r.e));
+  const theirs = new Set(listContactsEByBusinessIdEmail<{ e: string }>(db, [business_id, business_id]).map((r) => r.e));
   for (const e of listOutboxCreatedAtToEmailByBusinessId<{ created_at: string; to_email: string; subject: string; body: string; sent_at: string | null; kind: string }>(db, [business_id])) {
     if (SENT_SECRET_KINDS.includes(e.kind)) continue; // a sign-in code or one-use link is never shown
     // 1 Oct 2026: an email staff wrote themselves is the client's, whatever address they typed in To.
@@ -185,9 +184,7 @@ export function conversation(db: Db, actor: Actor, business_id: string, nowIso: 
     items.push({ at: e.created_at, when: localStamp(e.created_at, nowIso), channel: 'Email', ours: true, who: `Cap Rebate, to ${e.to_email}`,
       subject: e.subject, body: e.body, state: e.sent_at === null ? 'Not sent' : 'Sent' });
   }
-  for (const w of db.all<{ created_at: string; direction: string; body: string; status: string; error: string | null; contact: string | null; writer: string | null; phone: string }>(
-    'SELECT w.created_at, w.direction, w.body, w.status, w.error, c.full_name AS contact, u.display_name AS writer, w.phone FROM whatsapp_messages w ' +
-    'LEFT JOIN contacts c ON c.id = w.contact_id LEFT JOIN users u ON u.id = w.written_by WHERE w.business_id = ? ORDER BY w.created_at', [business_id])) {
+  for (const w of listWhatsappMessagesCreatedAtDirectionByBusinessId<{ created_at: string; direction: string; body: string; status: string; error: string | null; contact: string | null; writer: string | null; phone: string }>(db, [business_id])) {
     const ours = w.direction === 'OUT';
     items.push({ at: w.created_at, when: localStamp(w.created_at, nowIso), channel: 'WhatsApp', ours,
       who: ours ? `${w.writer ?? 'Cap Rebate'}, to ${w.contact ?? `+${w.phone}`}` : (w.contact ?? `+${w.phone}`),

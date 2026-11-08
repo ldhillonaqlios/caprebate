@@ -39,23 +39,28 @@ import type { Db } from '../../core/index.ts';
 import { _canonical, type AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
-import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from '../crm/crm.ts';
-import { enteredAt, raiseBusinessStage, type Need } from '../crm/pipeline.ts';
-import { filingRoute } from '../portal/client-filing.ts';
-import { latestAnswer, returnFilings, returnsOf, type ReturnFiling } from '../portal/accountant-confirm.ts';
+import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from '../crm/index.ts';
+import { enteredAt, raiseBusinessStage, type Need } from '../crm/index.ts';
+import { filingRoute } from '../portal/index.ts';
+import { latestAnswer, returnFilings, returnsOf, type ReturnFiling } from '../portal/index.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from '../../shared/index.ts';
 import { packSwitchReadings } from '../../shared/index.ts';
 import { amendmentWindowReading, dateValue, penceValue } from './claim-facts.ts';
-import { funnelStateFor } from '../assessment/funnel-session.ts';
+import { funnelStateFor } from '../assessment/index.ts';
 import { loadLetter, type OpenTerm } from './letter.ts';
-import { insertTask } from '../crm/tasks.ts';
+import { insertTask } from '../crm/index.ts';
 import { NO_RECEIPT_POLICY } from './documents.ts';
 import { formatPence, formatShownRange } from '../../shared/index.ts';
 import { localDate, localStamp, ukDate } from '../../shared/index.ts';
 import { readEngineVersion, writeCaseStamp } from './case-stamp.ts';
 import { latestApprovalOnClaim, laterOf, voidLine } from './valuation-lock.ts';
 import { freezeReturnContext, returnContext } from './return-entries.ts';
+import { getClaimDeliverablesByClaimIdKind, getClaimDeliverablesCountByClaimIdKind, getClaimDeliverablesIdByClaimIdKind, getClaimDeliverablesIssuedOnVersionByClaimIdKind, getClaimDeliverablesNByClaimIdKind, getClaimDeliverablesVersionIssuedOnByClaimIdKind, getClaimReconciliationsByClaimId, getClaimReconciliationsFiledOnByClaimId, getClaimReconciliationsFiledOnSnapshotHashByClaimId, getClaimReconciliationsIdByClaimId, getClaimsClaimRefById, getClaimsIdBusinessIdById4, getClaimsIdClaimRefById2, getClaimsIdCreatedAtById, getHmrcEnquiriesClosedOnOutcomeByClaimIdClosedOn, getHmrcEnquiriesIdByClaimIdClosedOn, getHmrcEnquiriesIdOpenedOnByIdClaimId, getTaxAdviserSignoffsIdRecordHashByClaimIdRecordedAt, insertClaimDeliverables, insertClaimReconciliations, insertClaimReturnFilings, insertDefencePackManifests, insertHmrcEnquiries, insertTaxAdviserSignoffs, listClaimDeliverablesByBusinessIdState, listClaimDeliverablesByClaimId, listClaimReturnFilingsPeriodEndFiledOnByClaimId, updateClaimDeliverablesStateIssuedOnById, updateClaimDeliverablesStateUpdatedByByClaimIdKind, updateClaimReconciliationsDValuePenceDDateCapturedById, updateClaimReconciliationsFiledOnFiledRecordedByById, updateClaimReconciliationsVarianceCategoryVarianceNotesById, updateHmrcEnquiriesClosedOnOutcomeById } from './data.ts';
+import { getBusinessesSectorById, getStaffTasksIdByPropertyIdTitle, listStaffTasksIdTitleByPropertyIdTitle } from '../crm/index.ts';
+import { getInvoiceNumbersSeqByInvoiceIdKind, getSurveyPackApprovalsJsonExtractSnapshotJsonFById, getSurveyorCommitmentsIdJobIdByClaimId, listDocumentTypesCodeLabel, listHmrcEnquiriesIdOpenedOnByClaimId, listSurveyPackApprovalsFingerprintSnapshotJsonByClaimId } from './data-borrowed.ts';
+import { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing } from '../portal/index.ts';
+import { getAssessmentsShownLowPenceShownHighPenceById, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm2, getEstimatesQualifyingExpenditurePenceSealedAtByAssessmentId } from '../assessment/index.ts';
 
 export type RecordDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type RecordResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string };
@@ -84,7 +89,7 @@ type ClaimRow = {
 };
 
 function loadClaim(db: Db, id: string): ClaimRow {
-  const c = db.get<ClaimRow>('SELECT id, claim_ref, business_id, property_id, assessment_id, stage, created_at FROM claims WHERE id = ?', [id]);
+  const c = getClaimsIdClaimRefById2<ClaimRow>(db, [id]);
   if (c === undefined) throw new NotFoundAsRefusal();
   return c;
 }
@@ -172,11 +177,7 @@ type CommitmentRow = {
 };
 
 export function commitmentOnClaim(db: Db, claim_id: string): CommitmentRow | undefined {
-  return db.get<CommitmentRow>(
-    'SELECT sc.id, sc.job_id, sc.a_qualifying_plant_pence, sc.b_building_pence, sc.c_bare_land_pence, sc.qualifying_pct, ' +
-      'sc.method_note, sc.committed_at, sc.figures_hash FROM surveyor_commitments sc JOIN surveyor_jobs j ON j.id = sc.job_id ' +
-      'WHERE j.claim_id = ? ORDER BY sc.committed_at DESC LIMIT 1',
-    [claim_id]);
+  return getSurveyorCommitmentsIdJobIdByClaimId<CommitmentRow>(db, [claim_id]);
 }
 
 export type SignoffView = {
@@ -266,12 +267,8 @@ export type FiguresPanel = {
 export function figuresPanel(db: Db, actor: Actor, claim_id: string, todayIso: string): FiguresPanel {
   const c = loadClaim(db, claim_id);
   authorise(actor, 'claim_figures.read', figuresObj(c));
-  const est = c.assessment_id === null ? undefined : db.get<Record<string, number> & { sealed_at: string; estimate_hash: string }>(
-    'SELECT qualifying_expenditure_pence, qualifying_pct, pool_split_main_pence, pool_split_special_pence, bare_land_pence, multiplier, ' +
-      'indicative_lifetime_saving_pence, sealed_at, estimate_hash FROM estimates WHERE assessment_id = ?',
-    [c.assessment_id]);
-  const range = c.assessment_id === null ? undefined : db.get<{ shown_low_pence: number | null; shown_high_pence: number | null }>(
-    'SELECT shown_low_pence, shown_high_pence FROM assessments WHERE id = ?', [c.assessment_id]);
+  const est = c.assessment_id === null ? undefined : getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm2<Record<string, number> & { sealed_at: string; estimate_hash: string }>(db, [c.assessment_id]);
+  const range = c.assessment_id === null ? undefined : getAssessmentsShownLowPenceShownHighPenceById<{ shown_low_pence: number | null; shown_high_pence: number | null }>(db, [c.assessment_id]);
   const k = commitmentOnClaim(db, c.id);
   const s = latestSignOff(db, c.id);
   const released = signOffSinceEntry(db, c);
@@ -326,7 +323,7 @@ export function figuresPanel(db: Db, actor: Actor, claim_id: string, todayIso: s
 function signoffVersion(db: Db, claim_id: string): { id: string; version: number; figure: string } | null {
   const v = latestApprovalOnClaim(db, claim_id);
   if (v === null) return null;
-  const f = db.get<{ f: number | null }>("SELECT json_extract(snapshot_json, '$.sums.qualifying_pence') AS f FROM survey_pack_approvals WHERE id = ?", [v.id])?.f ?? null;
+  const f = getSurveyPackApprovalsJsonExtractSnapshotJsonFById<{ f: number | null }>(db, [v.id])?.f ?? null;
   return { id: v.id, version: v.version, figure: formatPence(f) };
 }
 
@@ -403,7 +400,7 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
   }
   // PHASE 159a (C4): the figure is the version's own. A different figure is a different version: the surveyor approves it first.
   if (approval_id !== null) {
-    const vf = d.db.get<{ f: number | null }>("SELECT json_extract(snapshot_json, '$.sums.qualifying_pence') AS f FROM survey_pack_approvals WHERE id = ?", [approval_id])?.f ?? null;
+    const vf = getSurveyPackApprovalsJsonExtractSnapshotJsonFById<{ f: number | null }>(d.db, [approval_id])?.f ?? null;
     if (vf !== null && vf !== figure) {
       return { ok: false, why: `The figure signed must be the approved version’s own: ${formatPence(vf)} (version ${String(latest?.version ?? 0)}). A different figure needs the surveyor to approve a new version first.` };
     }
@@ -426,12 +423,8 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
   };
   const hash = sha256(record);
   const opened = d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO tax_adviser_signoffs (id, claim_id, adviser, credential, signed_on, scope, method_note, switch_readings_json, ' +
-        'figure_pence, commitment_id, kind, record_hash, recorded_by, recorded_at, approval_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, c.id, adviser.value, credential.value, signedOn, scope.value, method.value, JSON.stringify(readings), figure, k.id,
-        'RECORD_NOT_A_SIGNATURE', hash, actor.id, at, approval_id],
-    );
+    insertTaxAdviserSignoffs(d.db, [id, c.id, adviser.value, credential.value, signedOn, scope.value, method.value, JSON.stringify(readings), figure, k.id,
+        'RECORD_NOT_A_SIGNATURE', hash, actor.id, at, approval_id]);
     // PHASE 159a (C29): the signed version's return entries are fixed from here, on the facts as they stand now.
     if (approval_id !== null) freezeReturnContext(d.db, approval_id, returnContext(d.db, c.id, c.business_id), 'SIGNOFF_RECORDED', at);
     return openReconciliation(d, c, { id, figure_pence: figure, signed_on: signedOn, adviser: adviser.value ?? '' }, k, at);
@@ -459,12 +452,10 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
 function openReconciliation(
   d: RecordDeps, c: ClaimRow, s: { id: string; figure_pence: number; signed_on: string; adviser: string }, k: CommitmentRow, at: string,
 ): string | null {
-  if (d.db.get<{ id: string }>('SELECT id FROM claim_reconciliations WHERE claim_id = ?', [c.id]) !== undefined) return null;
-  const sector = d.db.get<{ sector: string }>('SELECT sector FROM businesses WHERE id = ?', [c.business_id])?.sector ?? 'not recorded';
-  const est = c.assessment_id === null ? undefined : d.db.get<{ qualifying_expenditure_pence: number; sealed_at: string; estimate_hash: string }>(
-    'SELECT qualifying_expenditure_pence, sealed_at, estimate_hash FROM estimates WHERE assessment_id = ?', [c.assessment_id]);
-  const range = c.assessment_id === null ? undefined : d.db.get<{ shown_low_pence: number | null; shown_high_pence: number | null }>(
-    'SELECT shown_low_pence, shown_high_pence FROM assessments WHERE id = ?', [c.assessment_id]);
+  if (getClaimReconciliationsIdByClaimId<{ id: string }>(d.db, [c.id]) !== undefined) return null;
+  const sector = getBusinessesSectorById<{ sector: string }>(d.db, [c.business_id])?.sector ?? 'not recorded';
+  const est = c.assessment_id === null ? undefined : getEstimatesQualifyingExpenditurePenceSealedAtByAssessmentId<{ qualifying_expenditure_pence: number; sealed_at: string; estimate_hash: string }>(d.db, [c.assessment_id]);
+  const range = c.assessment_id === null ? undefined : getAssessmentsShownLowPenceShownHighPenceById<{ shown_low_pence: number | null; shown_high_pence: number | null }>(d.db, [c.assessment_id]);
   const letter = assertSignedEngagement(d.db, c.business_id);
   const snap = {
     claim_id: c.id, case_id: c.claim_ref, client_sector: sector, transaction_type: transactionType(d.db, c.assessment_id),
@@ -481,17 +472,10 @@ function openReconciliation(
     c_value_pence: s.figure_pence, c_date_captured: s.signed_on, c_cta_reviewer: s.adviser, c_signoff_id: s.id, opened_at: at,
   };
   const id = d.newId();
-  d.db.run(
-    'INSERT INTO claim_reconciliations (id, claim_id, case_id, client_sector, transaction_type, a_value_pence, a_range_low_pence, ' +
-      'a_range_high_pence, a_date_captured, a_estimate_hash, a_engine_version, b_value_pence, b_range_low_pence, b_range_high_pence, ' +
-      'b_date_captured, b_basis, surveyor_value_pence, surveyor_commitment_id, surveyor_figures_hash, c_value_pence, c_date_captured, ' +
-      'c_cta_reviewer, c_signoff_id, opened_at, snapshot_hash, status) ' +
-      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN_OUTCOME_PENDING')",
-    [id, c.id, snap.case_id, snap.client_sector, snap.transaction_type, snap.a_value_pence, snap.a_range_low_pence, snap.a_range_high_pence,
+  insertClaimReconciliations(d.db, [id, c.id, snap.case_id, snap.client_sector, snap.transaction_type, snap.a_value_pence, snap.a_range_low_pence, snap.a_range_high_pence,
       snap.a_date_captured, snap.a_estimate_hash, snap.a_engine_version, snap.b_range_low_pence, snap.b_range_high_pence,
       snap.b_date_captured, snap.b_basis, snap.surveyor_value_pence, snap.surveyor_commitment_id, snap.surveyor_figures_hash,
-      snap.c_value_pence, snap.c_date_captured, snap.c_cta_reviewer, snap.c_signoff_id, snap.opened_at, sha256(snap)],
-  );
+      snap.c_value_pence, snap.c_date_captured, snap.c_cta_reviewer, snap.c_signoff_id, snap.opened_at, sha256(snap)]);
   return id;
 }
 
@@ -589,7 +573,7 @@ export function varianceOf(r: {
 }
 
 export function reconciliationView(db: Db, claim_id: string, _todayIso: string): ReconciliationView | null {
-  const r = db.get<ReconRow>('SELECT * FROM claim_reconciliations WHERE claim_id = ?', [claim_id]);
+  const r = getClaimReconciliationsByClaimId<ReconRow>(db, [claim_id]);
   if (r === undefined) return null;
   const v = varianceOf(r);
   const money = (p: number | null): string => (p === null ? 'not known' : formatPence(p));
@@ -628,7 +612,7 @@ export function reconciliationView(db: Db, claim_id: string, _todayIso: string):
 function reconFor(d: RecordDeps, actor: Actor, claim_id: string): { c: ClaimRow; r: ReconRow } {
   const c = loadClaim(d.db, claim_id);
   authorise(actor, 'reconciliation.record', figuresObj(c));
-  const r = d.db.get<ReconRow>('SELECT * FROM claim_reconciliations WHERE claim_id = ?', [c.id]);
+  const r = getClaimReconciliationsByClaimId<ReconRow>(d.db, [c.id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return { c, r };
 }
@@ -645,7 +629,7 @@ function reconAudit(d: RecordDeps, actor: Actor, c: ClaimRow, step: string, at: 
  * ACCOUNTANT. Then the filing date is theirs to give, through their own link (src/modules/portal/accountant-confirm.ts).
  */
 export function accountantFiles(db: Db, claim_id: string): boolean {
-  const c = db.get<{ id: string; business_id: string; created_at: string }>('SELECT id, business_id, created_at FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdBusinessIdById4<{ id: string; business_id: string; created_at: string }>(db, [claim_id]);
   return c !== undefined && filingRoute(db, c, enteredAt(db, c, 'REPORTS')).route === 'ACCOUNTANT';
 }
 
@@ -661,9 +645,9 @@ export function staffReturnFilings(db: Db, claim_id: string, todayIso: string): 
   const returns = returnsOf(db, claim_id, todayIso);
   if (returns === null || returns.length <= 1) return null;
   const today = localDate(todayIso);
-  const rows = new Map(db.all<{ period_end: string; filed_on: string }>('SELECT period_end, filed_on FROM claim_return_filings WHERE claim_id = ?', [claim_id])
+  const rows = new Map(listClaimReturnFilingsPeriodEndFiledOnByClaimId<{ period_end: string; filed_on: string }>(db, [claim_id])
     .map((x) => [x.period_end, x.filed_on] as const));
-  const whole = rows.size === 0 ? db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [claim_id])?.filed_on ?? null : null;
+  const whole = rows.size === 0 ? getClaimReconciliationsFiledOnByClaimId<{ filed_on: string | null }>(db, [claim_id])?.filed_on ?? null : null;
   return returns.map((r, i): ReturnFiling => {
     const filed = rows.get(r.period_end) ?? (i === 0 ? whole : null);
     const name = `The return for the period ending ${ukDate(r.period_end)} (${r.parts.join('; ')})`;
@@ -694,16 +678,16 @@ export function recordFiling(d: RecordDeps, actor: Actor, claim_id: string, inpu
     if (ret.state === 'FILED') return { ok: false, why: `That return's filing is already recorded, on ${ret.filed_on ?? ''}, and does not change.` };
     const id = d.newId();
     d.db.tx(() => {
-      d.db.run('INSERT INTO claim_return_filings (id, claim_id, period_end, filed_on, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?)', [id, c.id, ret.period_end, filed, actor.id, at]);
+      insertClaimReturnFilings(d.db, [id, c.id, ret.period_end, filed, actor.id, at]);
       // The first return recorded also writes the claim's filing date, so every reader of it finds one.
-      if (r.filed_on === null) d.db.run('UPDATE claim_reconciliations SET filed_on = ?, filed_recorded_by = ?, filed_recorded_at = ? WHERE id = ?', [filed, actor.id, at, r.id]);
+      if (r.filed_on === null) updateClaimReconciliationsFiledOnFiledRecordedByById(d.db, [filed, actor.id, at, r.id]);
       reconAudit(d, actor, c, `FILED ${ret.period_end}`, at);
       raiseBusinessStage(d.db, c.business_id, at);
     });
     return { ok: true, id };
   }
   d.db.tx(() => {
-    d.db.run('UPDATE claim_reconciliations SET filed_on = ?, filed_recorded_by = ?, filed_recorded_at = ? WHERE id = ?', [filed, actor.id, at, r.id]);
+    updateClaimReconciliationsFiledOnFiledRecordedByById(d.db, [filed, actor.id, at, r.id]);
     reconAudit(d, actor, c, 'FILED', at);
     // PHASE 158c (F42): the client's "5 Claim filed" waits for this record; a claim already past Invoice now shows it.
     raiseBusinessStage(d.db, c.business_id, at);
@@ -734,7 +718,7 @@ export function filingRecordedNeed(db: Db, claim_id: string, todayIso: string = 
       ? { what, met: true, why: `filed on ${a.filed_on ?? ''}, confirmed by ${a.signer_name} of ${a.signer_firm ?? ''}` }
       : { what, met: false, why: `${a.signer_name} said it is not filed: “${a.reason ?? ''}”` };
   }
-  const r = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [claim_id]);
+  const r = getClaimReconciliationsFiledOnByClaimId<{ filed_on: string | null }>(db, [claim_id]);
   if (r === undefined) return { what, met: false, why: 'no figure is signed off on this claim, so there is nothing to record the filing against' };
   // PHASE 160 (job B): where staff record it, each return already due, as on the accountant's route.
   const each = staffReturnFilings(db, claim_id, todayIso);
@@ -756,8 +740,7 @@ export function recordVariance(d: RecordDeps, actor: Actor, claim_id: string, in
   const notes = text(input['variance_notes'], 4000, 'The variance notes');
   if (!notes.ok) return notes;
   const at = d.now();
-  d.db.run('UPDATE claim_reconciliations SET variance_category = ?, variance_notes = ?, variance_recorded_by = ?, variance_recorded_at = ? WHERE id = ?',
-    [cat, notes.value, actor.id, at, r.id]);
+  updateClaimReconciliationsVarianceCategoryVarianceNotesById(d.db, [cat, notes.value, actor.id, at, r.id]);
   reconAudit(d, actor, c, 'VARIANCE_TAGGED', at);
   return { ok: true, id: r.id };
 }
@@ -798,10 +781,8 @@ export function recordOutcome(d: RecordDeps, actor: Actor, claim_id: string, inp
   const realised = rawRealised === null || rawRealised.trim() === '' ? null : penceValue(rawRealised);
   if (rawRealised !== null && rawRealised.trim() !== '' && realised === null) return { ok: false, why: 'Write the amount realised in pounds, more than £0 — or leave it blank if it is not known.' };
   const today = localDate(d.now());
-  const open = d.db.get<{ id: string }>('SELECT id FROM hmrc_enquiries WHERE claim_id = ? AND closed_on IS NULL', [c.id]);
-  const closed = d.db.get<{ closed_on: string; outcome: string; amended_figure_pence: number | null }>(
-    'SELECT closed_on, outcome, amended_figure_pence FROM hmrc_enquiries WHERE claim_id = ? AND closed_on IS NOT NULL ORDER BY closed_on DESC, rowid DESC LIMIT 1',
-    [c.id]);
+  const open = getHmrcEnquiriesIdByClaimIdClosedOn<{ id: string }>(d.db, [c.id]);
+  const closed = getHmrcEnquiriesClosedOnOutcomeByClaimIdClosedOn<{ closed_on: string; outcome: string; amended_figure_pence: number | null }>(d.db, [c.id]);
   let path: string, dValue: number | null, dDate: string | null, enquiry: number;
   if (input['withdrawn'] === 'yes') {
     if (open !== undefined) return { ok: false, why: 'An HMRC enquiry is open on this claim. The outcome is how it closes.' };
@@ -820,10 +801,7 @@ export function recordOutcome(d: RecordDeps, actor: Actor, claim_id: string, inp
     path = 'NO_ENQUIRY_WINDOW_LAPSED'; dValue = r.c_value_pence; dDate = lapses; enquiry = 0;
   }
   const at = d.now();
-  d.db.run(
-    "UPDATE claim_reconciliations SET d_value_pence = ?, d_date_captured = ?, resolution_path = ?, hmrc_enquiry_opened = ?, amount_realised_pence = ?, " +
-      "outcome_recorded_by = ?, outcome_recorded_at = ?, status = 'RECONCILED' WHERE id = ?",
-    [dValue, dDate, path, enquiry, realised, actor.id, at, r.id]);
+  updateClaimReconciliationsDValuePenceDDateCapturedById(d.db, [dValue, dDate, path, enquiry, realised, actor.id, at, r.id]);
   reconAudit(d, actor, c, 'RECONCILED', at);
   return { ok: true, id: r.id };
 }
@@ -859,14 +837,11 @@ type DeliverableRow = {
 
 /** PHASE 159a: an issued deliverable counts only if it was issued after the valuation was last reopened (a defence pack). */
 export function deliverableIssued(db: Db, claim_id: string, kind: DeliverableKind): boolean {
-  return db.get<{ n: number }>("SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED' AND updated_at >= ?",
-    [claim_id, kind, voidLine(db, claim_id) ?? ''])?.n !== 0;
+  return getClaimDeliverablesCountByClaimIdKind<{ n: number }>(db, [claim_id, kind, voidLine(db, claim_id) ?? ''])?.n !== 0;
 }
 
 export function deliverableIssuedNeed(db: Db, claim_id: string, kind: DeliverableKind): Need {
-  const issued = db.get<{ issued_on: string; version: number }>(
-    "SELECT issued_on, version FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED' AND updated_at >= ? ORDER BY version DESC LIMIT 1",
-    [claim_id, kind, voidLine(db, claim_id) ?? '']);
+  const issued = getClaimDeliverablesIssuedOnVersionByClaimIdKind<{ issued_on: string; version: number }>(db, [claim_id, kind, voidLine(db, claim_id) ?? '']);
   const def = DELIVERABLES[kind];
   return {
     what: `${def.label} is issued`,
@@ -876,7 +851,7 @@ export function deliverableIssuedNeed(db: Db, claim_id: string, kind: Deliverabl
 }
 
 export function deliverableObj(db: Db, r: { id: string; claim_id: string; kind: string; state: string }, business_id: string): Extract<Obj, { type: 'deliverable' }> {
-  const claim = db.get<{ id: string; created_at: string }>('SELECT id, created_at FROM claims WHERE id = ?', [r.claim_id]);
+  const claim = getClaimsIdCreatedAtById<{ id: string; created_at: string }>(db, [r.claim_id]);
   return {
     type: 'deliverable', id: r.id, business_id, kind: r.kind, state: r.state,
     figure_released: claim !== undefined && signOffSinceEntry(db, claim) !== undefined,
@@ -910,8 +885,8 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
   authorise(actor, 'deliverable.read', { type: 'deliverable', id: c.id, business_id: c.business_id, kind: 'REGISTER', state: 'REGISTER', figure_released: false });
   const mayRecord = can(actor, 'deliverable.record', { type: 'deliverable', id: c.id, business_id: c.business_id, kind: 'REGISTER', state: 'DRAFT', figure_released: false });
   const signed = signOffSinceEntry(db, c) !== undefined;
-  const rows = db.all<DeliverableRow>('SELECT * FROM claim_deliverables WHERE claim_id = ? ORDER BY kind ASC, version DESC', [c.id]);
-  const types = new Map(db.all<{ code: string; label: string }>('SELECT code, label FROM document_types').map((t) => [t.code, t.label] as const));
+  const rows = listClaimDeliverablesByClaimId<DeliverableRow>(db, [c.id]);
+  const types = new Map(listDocumentTypesCodeLabel<{ code: string; label: string }>(db).map((t) => [t.code, t.label] as const));
   return {
     // PHASE 158c (F36, F38): what is true of each line, not one sentence for all of them.
     generation: 'The client report, the accountant’s pack and the defence pack are made here, from the claim’s own records. The others are documents on the claim, tracked here.',
@@ -969,27 +944,22 @@ export const MADE_HERE: ReadonlySet<DeliverableKind> = new Set<DeliverableKind>(
  */
 export function defencePackRecords(db: Db, claim_id: string): { ok: true; manifest: Record<string, unknown>; fingerprint: string } | { ok: false; missing: string[] } {
   const missing: string[] = [];
-  const c = db.get<{ claim_ref: string }>('SELECT claim_ref FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsClaimRefById<{ claim_ref: string }>(db, [claim_id]);
   const report = releasedReportFingerprint(db, claim_id);
   if (report === null) missing.push('the survey report the surveyor approved, with its sign-off');
   const since = voidLine(db, claim_id) ?? '';
-  const signoff = db.get<{ id: string; record_hash: string; figure_pence: number; signed_on: string }>(
-    'SELECT id, record_hash, figure_pence, signed_on FROM tax_adviser_signoffs WHERE claim_id = ? AND recorded_at >= ? ORDER BY recorded_at DESC, rowid DESC LIMIT 1', [claim_id, since]);
+  const signoff = getTaxAdviserSignoffsIdRecordHashByClaimIdRecordedAt<{ id: string; record_hash: string; figure_pence: number; signed_on: string }>(db, [claim_id, since]);
   if (signoff === undefined) missing.push('the tax adviser’s sign-off');
-  const issued = (kind: string) => db.get<{ version: number; issued_on: string; content_hash: string | null }>(
-    "SELECT version, issued_on, content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED' ORDER BY version DESC LIMIT 1", [claim_id, kind]);
+  const issued = (kind: string) => getClaimDeliverablesVersionIssuedOnByClaimIdKind<{ version: number; issued_on: string; content_hash: string | null }>(db, [claim_id, kind]);
   const clientReport = issued('CLIENT_REPORT');
   if (clientReport === undefined) missing.push('the client report, issued');
   const pack = issued('ACCOUNTANT_COMPUTATION_PACK');
   if (pack === undefined) missing.push('the accountant’s computation pack, issued');
-  const accepted = clientReport?.content_hash == null ? undefined : db.get<{ accepted_at: string; fingerprint: string }>(
-    'SELECT accepted_at, fingerprint FROM client_report_acceptances WHERE claim_id = ? AND fingerprint = ? AND accepted_at >= ? ORDER BY accepted_at LIMIT 1', [claim_id, clientReport.content_hash, since]);
+  const accepted = clientReport?.content_hash == null ? undefined : getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing<{ accepted_at: string; fingerprint: string }>(db, [claim_id, clientReport.content_hash, since]);
   if (accepted === undefined) missing.push('the client’s acceptance of the report');
-  const invoice = db.get<{ seq: number | null; sent_on: string | null; fee_pence: number | null }>(
-    "SELECT (SELECT n.seq FROM invoice_numbers n WHERE n.invoice_id = i.id AND n.kind = 'INVOICE') AS seq, i.sent_on, i.fee_pence FROM invoices i " +
-      "WHERE i.claim_id = ? AND i.kind = 'FEE' AND i.invoice_status = 'SENT' ORDER BY i.sent_on DESC LIMIT 1", [claim_id]);
+  const invoice = getInvoiceNumbersSeqByInvoiceIdKind<{ seq: number | null; sent_on: string | null; fee_pence: number | null }>(db, [claim_id]);
   if (invoice === undefined) missing.push('our fee invoice, sent');
-  const filed = db.get<{ filed_on: string | null; snapshot_hash: string }>('SELECT filed_on, snapshot_hash FROM claim_reconciliations WHERE claim_id = ?', [claim_id]);
+  const filed = getClaimReconciliationsFiledOnSnapshotHashByClaimId<{ filed_on: string | null; snapshot_hash: string }>(db, [claim_id]);
   if (filed?.filed_on == null) missing.push('the filing date');
   if (missing.length > 0 || c === undefined) return { ok: false, missing };
   const manifest: Record<string, unknown> = {
@@ -1006,11 +976,7 @@ export function defencePackRecords(db: Db, claim_id: string): { ok: true; manife
 
 /** PHASE 159a (C4): the version a sign-off NAMES, recorded since the valuation was last reopened — never one matched by its total. */
 export function releasedReportFingerprint(db: Db, claim_id: string): string | null {
-  const rows = db.all<{ fingerprint: string; snapshot_json: string }>(
-    'SELECT a.fingerprint, a.snapshot_json FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
-      'WHERE j.claim_id = ? AND EXISTS (SELECT 1 FROM tax_adviser_signoffs s WHERE s.claim_id = j.claim_id ' +
-      "AND s.approval_id = a.id AND s.figure_pence = json_extract(a.snapshot_json, '$.sums.qualifying_pence') AND s.recorded_at >= ?) " +
-      'ORDER BY a.approved_at DESC, a.version DESC', [claim_id, voidLine(db, claim_id) ?? '']);
+  const rows = listSurveyPackApprovalsFingerprintSnapshotJsonByClaimId<{ fingerprint: string; snapshot_json: string }>(db, [claim_id, voidLine(db, claim_id) ?? '']);
   for (const r of rows) {
     if (createHash('sha256').update(r.snapshot_json, 'utf8').digest('hex') === r.fingerprint) return r.fingerprint;
   }
@@ -1029,15 +995,12 @@ export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string,
     if (def.needs_signoff && signOffSinceEntry(d.db, c) === undefined) {
       return { ok: false, why: `${def.label} gives a figure. It cannot be drafted until the tax adviser’s sign-off is recorded.` };
     }
-    if (d.db.get<{ id: string }>("SELECT id FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'DRAFT'", [c.id, kind]) !== undefined) {
+    if (getClaimDeliverablesIdByClaimIdKind<{ id: string }>(d.db, [c.id, kind]) !== undefined) {
       return { ok: false, why: `${def.label} already has a draft in progress. Issue it before starting another version.` };
     }
-    const next = (d.db.get<{ n: number | null }>('SELECT MAX(version) AS n FROM claim_deliverables WHERE claim_id = ? AND kind = ?', [c.id, kind])?.n ?? 0) + 1;
+    const next = (getClaimDeliverablesNByClaimIdKind<{ n: number | null }>(d.db, [c.id, kind])?.n ?? 0) + 1;
     const id = d.newId();
-    d.db.run(
-      'INSERT INTO claim_deliverables (id, claim_id, kind, version, document_type, state, created_by, created_at, updated_by, updated_at) ' +
-        "VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?)",
-      [id, c.id, kind, next, def.document_type, actor.id, at, actor.id, at]);
+    insertClaimDeliverables(d.db, [id, c.id, kind, next, def.document_type, actor.id, at, actor.id, at]);
     d.audit.append({
       at, kind: 'DELIVERABLE_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'claim', object_id: c.id, detail: { deliverable: id, deliverable_kind: kind, version: next, state: 'DRAFT', business: c.business_id },
@@ -1045,7 +1008,7 @@ export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string,
     return { ok: true, id };
   }
   if (action === 'ISSUE') {
-    const draft = d.db.get<DeliverableRow>("SELECT * FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'DRAFT'", [c.id, kind]);
+    const draft = getClaimDeliverablesByClaimIdKind<DeliverableRow>(d.db, [c.id, kind]);
     if (draft === undefined) return { ok: false, why: `${def.label} has no draft to issue.` };
     const issuedOn = dateValue(input['issued_on']);
     if (issuedOn === null) return { ok: false, why: 'Write the issue date, like 2026-03-31.' };
@@ -1077,14 +1040,11 @@ export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string,
      */
     const stamp = d.db.tx(() => {
       if (!def.immutable_when_issued) {
-        d.db.run("UPDATE claim_deliverables SET state = 'SUPERSEDED', updated_by = ?, updated_at = ? WHERE claim_id = ? AND kind = ? AND state = 'ISSUED'",
-          [actor.id, at, c.id, kind]);
+        updateClaimDeliverablesStateUpdatedByByClaimIdKind(d.db, [actor.id, at, c.id, kind]);
       }
-      d.db.run("UPDATE claim_deliverables SET state = 'ISSUED', issued_on = ?, content_hash = ?, updated_by = ?, updated_at = ? WHERE id = ?",
-        [issuedOn, rawHash === '' ? null : rawHash, actor.id, at, draft.id]);
+      updateClaimDeliverablesStateIssuedOnById(d.db, [issuedOn, rawHash === '' ? null : rawHash, actor.id, at, draft.id]);
       if (defence?.ok === true) {
-        d.db.run('INSERT INTO defence_pack_manifests (deliverable_id, claim_id, manifest_json, fingerprint, made_at) VALUES (?, ?, ?, ?, ?)',
-          [draft.id, c.id, _canonical(defence.manifest), defence.fingerprint, at]);
+        insertDefencePackManifests(d.db, [draft.id, c.id, _canonical(defence.manifest), defence.fingerprint, at]);
       }
       return writeCaseStamp(d.db, { id: d.newId(), claim_id: c.id, deliverable_id: draft.id, stamped_by: actor.id, stamped_at: at });
     });
@@ -1116,9 +1076,7 @@ export type ClientDeliverable = { readonly label: string; readonly version: numb
  * carried: the client report is listed only once its figure is released.
  */
 export function clientDeliverables(db: Db, actor: Actor, business_id: string): ClientDeliverable[] {
-  return db.all<DeliverableRow>(
-    "SELECT cd.* FROM claim_deliverables cd JOIN claims c ON c.id = cd.claim_id WHERE c.business_id = ? AND cd.state = 'ISSUED' ORDER BY cd.issued_on ASC, cd.kind ASC",
-    [business_id])
+  return listClaimDeliverablesByBusinessIdState<DeliverableRow>(db, [business_id])
     .filter((r) => can(actor, 'deliverable.read', deliverableObj(db, r, business_id)))
     .map((r) => ({
       label: DELIVERABLES[r.kind as DeliverableKind]?.label ?? r.kind, version: r.version, issued_on: r.issued_on ?? '',
@@ -1224,17 +1182,13 @@ export const DISPOSAL_FEE: DisposalFee = (createRequire(import.meta.url)('../sur
 export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { openTerms?: readonly OpenTerm[]; today?: string } = {}): AftercarePanel {
   const c = loadClaim(db, claim_id);
   authorise(actor, 'claim_facts.read', { type: 'claim_facts', id: c.id, business_id: c.business_id, assigned_surveyor_ids: [] });
-  const enquiries = db.all<EnquiryRow>(
-    'SELECT e.id, e.opened_on, e.note, e.closed_on, e.outcome, e.amended_figure_pence, e.opened_recorded_at, u.display_name AS opener ' +
-      'FROM hmrc_enquiries e LEFT JOIN users u ON u.id = e.opened_by WHERE e.claim_id = ? ORDER BY e.opened_on DESC, e.rowid DESC',
-    [c.id]).map((e) => ({
+  const enquiries = listHmrcEnquiriesIdOpenedOnByClaimId<EnquiryRow>(db, [c.id]).map((e) => ({
     id: e.id, opened_on: e.opened_on, note: e.note, open: e.closed_on === null, closed_on: e.closed_on,
     outcome: e.outcome === null ? null : (ENQUIRY_OUTCOMES[e.outcome] ?? e.outcome),
     amended_figure: e.amended_figure_pence === null ? null : formatPence(e.amended_figure_pence),
     recorded: `${localStamp(e.opened_recorded_at)} by ${e.opener ?? 'a former user'}`,
   }));
-  const tasks = c.property_id === null ? [] : db.all<{ id: string; title: string; status: string }>(
-    'SELECT id, title, status FROM staff_tasks WHERE property_id = ? AND title IN (?, ?) ORDER BY created_at DESC', [c.property_id, DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE]);
+  const tasks = c.property_id === null ? [] : listStaffTasksIdTitleByPropertyIdTitle<{ id: string; title: string; status: string }>(db, [c.property_id, DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE]);
   return {
     enquiries, enquiry_open: enquiries.some((e) => e.open),
     correspondence: `Letters with HMRC are stored as Correspondence. ${NO_RECEIPT_POLICY} Still to decide: ${RECEIPT_QUESTION}`,
@@ -1254,15 +1208,14 @@ export function openEnquiry(d: RecordDeps, actor: Actor, claim_id: string, input
   const opened = dateValue(input['opened_on']);
   if (opened === null) return { ok: false, why: 'Write the date HMRC opened the enquiry, like 2026-03-31.' };
   if (opened > localDate(d.now())) return { ok: false, why: 'The date the enquiry opened cannot be after today.' };
-  if (d.db.get<{ id: string }>('SELECT id FROM hmrc_enquiries WHERE claim_id = ? AND closed_on IS NULL', [c.id]) !== undefined) {
+  if (getHmrcEnquiriesIdByClaimIdClosedOn<{ id: string }>(d.db, [c.id]) !== undefined) {
     return { ok: false, why: 'An enquiry is already open on this claim. Close it first.' };
   }
   const note = text(input['note'], 2000, 'The note');
   if (!note.ok) return note;
   const id = d.newId();
   const at = d.now();
-  d.db.run('INSERT INTO hmrc_enquiries (id, claim_id, opened_on, note, opened_by, opened_recorded_at) VALUES (?, ?, ?, ?, ?, ?)',
-    [id, c.id, opened, note.value, actor.id, at]);
+  insertHmrcEnquiries(d.db, [id, c.id, opened, note.value, actor.id, at]);
   d.audit.append({
     at, kind: 'HMRC_ENQUIRY_OPENED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'claim', object_id: c.id, detail: { enquiry: id, business: c.business_id },
@@ -1281,7 +1234,7 @@ export function closeEnquiry(
 ): RecordResult {
   const c = loadClaim(d.db, claim_id);
   authorise(actor, 'hmrc_enquiry.record', { type: 'hmrc_enquiry', id: c.id, business_id: c.business_id });
-  const e = d.db.get<{ id: string; opened_on: string; closed_on: string | null }>('SELECT id, opened_on, closed_on FROM hmrc_enquiries WHERE id = ? AND claim_id = ?', [enquiry_id, c.id]);
+  const e = getHmrcEnquiriesIdOpenedOnByIdClaimId<{ id: string; opened_on: string; closed_on: string | null }>(d.db, [enquiry_id, c.id]);
   if (e === undefined) throw new NotFoundAsRefusal();
   if (e.closed_on !== null) return { ok: false, why: 'That enquiry is already closed, and its outcome does not change.' };
   const closedOn = dateValue(input['closed_on']);
@@ -1292,8 +1245,7 @@ export function closeEnquiry(
   const amended = outcome === 'NO_CHANGE' ? null : penceValue(input['amended_figure']);
   if (outcome !== 'NO_CHANGE' && amended === null) return { ok: false, why: 'Write the allowances HMRC agreed, in pounds.' };
   const at = d.now();
-  d.db.run('UPDATE hmrc_enquiries SET closed_on = ?, outcome = ?, amended_figure_pence = ?, closed_by = ?, closed_recorded_at = ? WHERE id = ?',
-    [closedOn, outcome, amended, actor.id, at, e.id]);
+  updateHmrcEnquiriesClosedOnOutcomeById(d.db, [closedOn, outcome, amended, actor.id, at, e.id]);
   d.audit.append({
     at, kind: 'HMRC_ENQUIRY_CLOSED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'claim', object_id: c.id, detail: { enquiry: e.id, enquiry_outcome: outcome, business: c.business_id },
@@ -1329,8 +1281,7 @@ export function closeEnquiry(
 export function raiseDisposalTask(
   d: RecordDeps, actor: Actor, property: { id: string; business_id: string }, trigger: 'DISPOSAL_DATE' | 'SALE_IN_PROSPECT',
 ): string | null {
-  const open = d.db.get<{ id: string }>(
-    "SELECT id FROM staff_tasks WHERE property_id = ? AND title IN (?, ?) AND status IN ('OPEN','IN_PROGRESS')", [property.id, DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE]);
+  const open = getStaffTasksIdByPropertyIdTitle<{ id: string }>(d.db, [property.id, DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE]);
   if (open !== undefined) return null;
   const why = trigger === 'DISPOSAL_DATE' ? 'The property’s sale date was set.' : 'A sale of the property is expected.';
   const id = insertTask(d.db, d.now, d.newId, {
@@ -1377,7 +1328,7 @@ export function reportsWindowNeed(db: Db, c: { id: string; business_id: string; 
  */
 export function invoiceWindowNeed(db: Db, c: { id: string; business_id: string; property_id: string | null }, todayIso: string): Need {
   const routes = claimRoutes(db, c, todayIso);
-  const filed = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [c.id])?.filed_on ?? null;
+  const filed = getClaimReconciliationsFiledOnByClaimId<{ filed_on: string | null }>(db, [c.id])?.filed_on ?? null;
   const what = 'The claim is within the amendment window';
   const live = routes.filter((r) => r.route !== 'W3');
   if (live.length === 0) return { what, met: false, why: `nothing is left to claim: ${routesWhy(routes)}` };

@@ -21,8 +21,8 @@
  * than run as a second server.
  */
 
-import { TEST_LETTER_PATH } from '../modules/claims/letter.ts';
-import { ENGAGEMENT_SIGNING_TEST } from '../modules/claims/signing.ts';
+import { TEST_LETTER_PATH } from '../modules/claims/index.ts';
+import { ENGAGEMENT_SIGNING_TEST } from '../modules/claims/index.ts';
 import { turnstileWhy } from '../integrations/index.ts';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
@@ -42,7 +42,7 @@ import { sealKeyFromEnv, type KeepOriginals } from '../shared/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { isInventedAddress } from '../integrations/index.ts';
 import { refreshSavedKeys } from './saved-keys.ts';
-import { openKeptOriginal } from '../modules/claims/uploads.ts';
+import { openKeptOriginal } from '../modules/claims/index.ts';
 import { formToken, formTokensMode, onceToken, type FormTokens } from './form-token.ts';
 import { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';
 import { listOutboxIdToEmailBySendRequestedSentAt2, updateOutboxLastErrorByIdLastError2, updateOutboxLastErrorByIdLastError3, updateOutboxLastErrorByIdLastError4 } from '../integrations/index.ts';

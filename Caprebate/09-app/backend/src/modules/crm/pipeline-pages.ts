@@ -39,7 +39,7 @@ import { taskChoices, vocabulary } from '../../web/vocabularies.ts';
 import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from '../../shared/lists-pages.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';
-import * as E from '../public-site/enquiries.ts';
+import { enquiriesModule as E } from '../public-site/index.ts';
 import * as SO from '../../web/survey-open.ts';
 import { leadSectionCounts, leadSections, type CardDeps } from './lead-cards.ts';
 import { piecesPage } from '../../core/index.ts';

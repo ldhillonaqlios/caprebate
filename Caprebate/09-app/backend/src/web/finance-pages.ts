@@ -27,7 +27,7 @@ import { kpiRow, lateBadge, noDateBadge } from '../core/index.ts';
 import { setSubMenu } from '../core/navigation.ts';
 import * as F from './finance.ts';
 import * as I from './invoices.ts';
-import * as V from '../modules/assessment/vat.ts';
+import { vatModule as V } from '../modules/assessment/index.ts';
 import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';

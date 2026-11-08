@@ -31,7 +31,7 @@
  * WHAT NEVER APPEARS HERE: the polygon, a map of it, or any coordinate from it. A line carries a number, a grade, the
  * councils read and a reason.
  */
-import { siteAreaFlag, floorAreaForSite } from '../assessment/who-claims.ts';
+import { siteAreaFlag, floorAreaForSite } from '../assessment/index.ts';
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
@@ -45,10 +45,11 @@ import { TITLE_BOUNDARY_LABEL, TITLE_BOUNDARY_SOURCE_ID } from '../../integratio
 import { inspireStoreFromEnv, type InspireFileStore } from '../../integrations/index.ts';
 import { referenceOstn15Grid } from '../../integrations/index.ts';
 import type { RateLimiter, Transport } from '../../integrations/index.ts';
-import { DECLINED_LINE } from '../assessment/address-check.ts';
+import { DECLINED_LINE } from '../assessment/index.ts';
 import { postcodeStore } from '../../integrations/postcodes/postcode.ts';
 import type { PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
 import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId, getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId2 } from '../../integrations/index.ts';
+import { getSiteAreaInputsCountByPropertyIdEnteredAt, getSiteAreaInputsEastingNorthingByPropertyIdKind, getSiteAreaRunsStateWhyByPropertyId, insertSiteAreaRuns, listPropertiesIdLabelByBusinessId2, listSiteAreaInputsLadCodeEnteredByByPropertyIdKind } from './data.ts';
 
 /** Every state a site area line can be in: the function's own seven, and two that belong to the click. */
 export type SiteAreaLineState = SiteAreaState | 'WAITING' | 'READY';
@@ -103,20 +104,12 @@ export type EnteredCouncil = { readonly lad_code: string; readonly entered_by: s
 
 /** The latest point a person entered for this property, or null. */
 export function enteredPoint(db: Db, property_id: string): EnteredPoint | null {
-  return db.get<EnteredPoint>(
-    "SELECT easting, northing, entered_by, entered_at FROM site_area_inputs WHERE property_id = ? AND kind = 'POINT' " +
-      'ORDER BY entered_at DESC, rowid DESC LIMIT 1',
-    [property_id],
-  ) ?? null;
+  return getSiteAreaInputsEastingNorthingByPropertyIdKind<EnteredPoint>(db, [property_id]) ?? null;
 }
 
 /** Every neighbouring council a person added for this property, first added first. */
 export function enteredCouncils(db: Db, property_id: string): EnteredCouncil[] {
-  return db.all<EnteredCouncil>(
-    "SELECT lad_code, entered_by, entered_at FROM site_area_inputs WHERE property_id = ? AND kind = 'NEIGHBOUR_COUNCIL' " +
-      'ORDER BY entered_at ASC, rowid ASC',
-    [property_id],
-  );
+  return listSiteAreaInputsLadCodeEnteredByByPropertyIdKind<EnteredCouncil>(db, [property_id]);
 }
 
 /* ------------------------------------------------------------------ the input for one property */
@@ -194,7 +187,7 @@ function lineOf(p: PropertyRow, o: SiteAreaOutcome, prep: Prepared, at: string |
 }
 
 function properties(db: Db, business_id: string): PropertyRow[] {
-  return db.all<PropertyRow>('SELECT id, label, postcode FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC', [business_id]);
+  return listPropertiesIdLabelByBusinessId2<PropertyRow>(db, [business_id]);
 }
 
 /**
@@ -270,9 +263,8 @@ export function siteAreaLines(db: Db, business_id: string, gates: SiteAreaGates,
   return properties(db, business_id).map((p) => {
     const kept = held(db, business_id, p);
     if (kept !== null) return kept;
-    const last = db.get<{ state: string; why: string; run_at: string }>(
-      'SELECT state, why, run_at FROM site_area_runs WHERE property_id = ? ORDER BY run_at DESC, rowid DESC LIMIT 1', [p.id]);
-    const since = db.get<{ n: number }>('SELECT COUNT(*) AS n FROM site_area_inputs WHERE property_id = ? AND entered_at > ?', [p.id, last?.run_at ?? '']);
+    const last = getSiteAreaRunsStateWhyByPropertyId<{ state: string; why: string; run_at: string }>(db, [p.id]);
+    const since = getSiteAreaInputsCountByPropertyIdEnteredAt<{ n: number }>(db, [p.id, last?.run_at ?? '']);
     if (last !== undefined && (since?.n ?? 0) === 0) {
       return { property_id: p.id, property: p.label, state: last.state as SiteAreaLineState, words: last.why, site_area_m2: null, grade: null, at: last.run_at };
     }
@@ -330,9 +322,6 @@ export function storeSiteAreaRuns(
 ): void {
   for (const l of lines) {
     if (!l.kept) continue;
-    d.db.run(
-      'INSERT INTO site_area_runs (id, business_id, property_id, state, why, run_at, run_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [d.newId(), business_id, l.property_id, l.state, l.words, at, actor.id],
-    );
+    insertSiteAreaRuns(d.db, [d.newId(), business_id, l.property_id, l.state, l.words, at, actor.id]);
   }
 }

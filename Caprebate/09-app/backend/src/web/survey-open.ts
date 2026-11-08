@@ -27,6 +27,8 @@ import type { AuditLog } from '../core/audit.ts';
 import { authorise, can, type Actor } from '../core/index.ts';
 import { stageLabel } from '../core/index.ts';
 import { getUsersIdByIdRole2, listUsersIdNameByRoleDisabledAt2 } from '../core/index.ts';
+import { getAssessmentsShownHighPenceById, getEstimatesBasisByAssessmentId, getEstimatesIdByAssessmentId, insertEstimates, listAssessmentAnswersValueByAssessmentIdState } from '../modules/assessment/index.ts';
+import { getClaimsIdBusinessIdById2 } from '../modules/claims/index.ts';
 
 export const FUNNEL_CEILING = 'FUNNEL_CEILING';
 
@@ -61,7 +63,7 @@ export type SurveyJobPanel = {
 
 /** What the claim page shows about the claim's survey job. null for a login that may not see claims' survey jobs. */
 export function surveyJobPanel(db: Db, actor: Actor, claim_id: string): SurveyJobPanel | null {
-  const c = db.get<ClaimRow>('SELECT id, business_id, assessment_id, stage FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdBusinessIdById2<ClaimRow>(db, [claim_id]);
   if (c === undefined) return null;
   const job = db.get<{ id: string; surveyor: string | null; created_at: string; state: string }>(
     'SELECT j.id, u.display_name AS surveyor, j.created_at, j.state FROM surveyor_jobs j LEFT JOIN users u ON u.id = j.surveyor_id ' +
@@ -79,16 +81,15 @@ export function surveyJobPanel(db: Db, actor: Actor, claim_id: string): SurveyJo
 /** What the client said was spent on the buildings (the funnel's `Q2-N-spend` answers, and since Phase 159c each piece of
  *  work's `Q3-N-wJ-spend`, which the figure now counts too), in pounds; null if none. */
 function spendSaid(db: Db, assessment_id: string): number | null {
-  const rows = db.all<{ value: string | null }>(
-    "SELECT value FROM assessment_answers WHERE assessment_id = ? AND state = 'ANSWERED' AND (question_id GLOB 'Q2-[0-9]*-spend' OR question_id GLOB 'Q3-[0-9]*-w[0-9]*-spend')", [assessment_id]);
+  const rows = listAssessmentAnswersValueByAssessmentIdState<{ value: string | null }>(db, [assessment_id]);
   const total = rows.reduce((s, r) => { const v = Number(r.value); return Number.isFinite(v) && v > 0 ? s + v : s; }, 0);
   return total > 0 ? total : null;
 }
 
 /** Seal the funnel's figure as the assessment's estimate, unless one is sealed already. Inside the caller's transaction. */
 function sealFunnelEstimate(d: OpenDeps, business_id: string, assessment_id: string, at: string): { ok: true; sealed: boolean } | { ok: false; why: string } {
-  if (d.db.get<{ id: string }>('SELECT id FROM estimates WHERE assessment_id = ?', [assessment_id]) !== undefined) return { ok: true, sealed: false };
-  const a = d.db.get<{ shown_high_pence: number | null }>('SELECT shown_high_pence FROM assessments WHERE id = ?', [assessment_id]);
+  if (getEstimatesIdByAssessmentId<{ id: string }>(d.db, [assessment_id]) !== undefined) return { ok: true, sealed: false };
+  const a = getAssessmentsShownHighPenceById<{ shown_high_pence: number | null }>(d.db, [assessment_id]);
   const high = a?.shown_high_pence ?? null;
   if (high === null || !(high > 0)) return { ok: false, why: SURVEY_JOB_WORDS.no_figure };
   const spent = spendSaid(d.db, assessment_id);
@@ -98,11 +99,7 @@ function sealFunnelEstimate(d: OpenDeps, business_id: string, assessment_id: str
     bare_land_pence: 0, multiplier: 0, indicative_lifetime_saving_pence: 0, basis: FUNNEL_CEILING,
   };
   const hash = createHash('sha256').update(JSON.stringify({ assessment_id, sealed_at: at, ...values })).digest('hex');
-  d.db.run(
-    'INSERT INTO estimates (id, assessment_id, business_id, qualifying_expenditure_pence, qualifying_pct, pool_split_main_pence, ' +
-      'pool_split_special_pence, bare_land_pence, multiplier, indicative_lifetime_saving_pence, sealed_at, estimate_hash, basis) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [d.newId(), assessment_id, business_id, values.qualifying_expenditure_pence, values.qualifying_pct, 0, 0, 0, 0, 0, at, hash, FUNNEL_CEILING]);
+  insertEstimates(d.db, [d.newId(), assessment_id, business_id, values.qualifying_expenditure_pence, values.qualifying_pct, 0, 0, 0, 0, 0, at, hash, FUNNEL_CEILING]);
   return { ok: true, sealed: true };
 }
 
@@ -110,7 +107,7 @@ function sealFunnelEstimate(d: OpenDeps, business_id: string, assessment_id: str
 export function openSurveyJob(
   d: OpenDeps, actor: Actor, claim_id: string, surveyor_id: string | null,
 ): { ok: true; job_id: string; sealed: boolean } | { ok: false; why: string; field?: string } {
-  const c = d.db.get<ClaimRow>('SELECT id, business_id, assessment_id, stage FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdBusinessIdById2<ClaimRow>(d.db, [claim_id]);
   if (c === undefined) return { ok: false, why: SURVEY_JOB_WORDS.none };
   authorise(actor, 'surveyor_job.assign', objFor(c, surveyor_id));
   if (c.stage !== 'SURVEY') return { ok: false, why: SURVEY_JOB_WORDS.stage(stageLabel(c.stage)) };
@@ -143,5 +140,5 @@ export function openSurveyJob(
 
 /** The basis a sealed estimate was built from (migration 100); null for one written before it, or none. */
 export function estimateBasis(db: Db, assessment_id: string): string | null {
-  return db.get<{ basis: string | null }>('SELECT basis FROM estimates WHERE assessment_id = ?', [assessment_id])?.basis ?? null;
+  return getEstimatesBasisByAssessmentId<{ basis: string | null }>(db, [assessment_id])?.basis ?? null;
 }

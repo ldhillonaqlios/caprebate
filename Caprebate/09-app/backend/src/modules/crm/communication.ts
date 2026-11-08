@@ -41,7 +41,7 @@ import * as M from './messages.ts';
 import * as W from './whatsapp.ts';
 import * as F from './free-email.ts';
 import { emailChains, reSubject } from './email-chains.ts';
-import { addNote } from '../claims/engaged.ts';
+import { addNote } from '../claims/index.ts';
 import { createTask } from './tasks.ts';
 import { mayArrangeCalls } from '../../core/backoffice.ts';
 import { addLocalDays, isBookable, SLOT_MINUTES, staffSlots, startOfLocalDay } from './schedule.ts';
@@ -53,8 +53,11 @@ import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../../integrat
 import type { FsObjectStore } from '../../shared/objectstore.ts';
 import * as IE from './inbound-email.ts';
 import { emailedFiles } from './messages-pages.ts';
-import { receivableTypes } from '../claims/documents.ts';
+import { receivableTypes } from '../claims/index.ts';
 import { getWhatsappMessagesCByBusinessIdContactId } from '../../integrations/index.ts';
+import { getBusinessesEById, getBusinessesSById, getContactsXByBusinessId, getContactsXByIdBusinessId, insertBookings3, insertCallLogs, listContactsIdFullNameByBusinessId2 } from './data.ts';
+import { listClaimsIdClaimRefByBusinessId3 } from '../claims/index.ts';
+import { getVideoMeetingsHostOpenedAtOpenerByBookingId, listBookingsIdChannelByBusinessIdChannel, listCallLogsIdLoggedAtByBusinessId, listWhatsappMessagesIdCreatedAtByBusinessId } from './data-borrowed.ts';
 
 export type Via = 'email' | 'whatsapp' | 'portal' | 'team' | 'zoom' | 'call';
 export type Kind = Via;
@@ -110,10 +113,7 @@ export function feed(c: Ctx): FeedItem[] {
     // WhatsApp, both ways. PHASE 156c: a message added from the phone's export says so, is never "new", and our side is
     // named as the phone named it. While the live connection is off, a click opens the WhatsApp page, not a reply here.
     const waLive = whatsappMissing(c.app.secrets, c.app.whatsappPolicy, { outside: c.app.outside }).length === 0;
-    for (const w of db.all<{ id: string; created_at: string; direction: string; body: string; status: string; error: string | null; contact_id: string | null; contact: string | null; writer: string | null; phone: string; sender: string | null }>(
-      'SELECT w.id, w.created_at, w.direction, w.body, w.status, w.error, w.contact_id, c.full_name AS contact, u.display_name AS writer, w.phone, l.sender FROM whatsapp_messages w ' +
-      'LEFT JOIN contacts c ON c.id = w.contact_id LEFT JOIN users u ON u.id = w.written_by LEFT JOIN whatsapp_import_lines l ON l.message_id = w.id ' +
-      'WHERE w.business_id = ? ORDER BY w.created_at, w.id', [business_id])) {
+    for (const w of listWhatsappMessagesIdCreatedAtByBusinessId<{ id: string; created_at: string; direction: string; body: string; status: string; error: string | null; contact_id: string | null; contact: string | null; writer: string | null; phone: string; sender: string | null }>(db, [business_id])) {
       const ours = w.direction === 'OUT';
       const imported = w.sender !== null;
       const them = w.contact ?? `+${w.phone}`;
@@ -126,20 +126,15 @@ export function feed(c: Ctx): FeedItem[] {
         hint: waLive ? 'Click to reply' : 'Open the WhatsApp chat' });
     }
     // Calls logged.
-    for (const k of db.all<{ id: string; logged_at: string; outcome: string; notes: string; contact_id: string | null; contact: string | null; writer: string | null }>(
-      'SELECT k.id, k.logged_at, k.outcome, k.notes, k.contact_id, c.full_name AS contact, u.display_name AS writer FROM call_logs k LEFT JOIN contacts c ON c.id = k.contact_id ' +
-      'LEFT JOIN users u ON u.id = k.logged_by WHERE k.business_id = ? ORDER BY k.logged_at, k.id', [business_id])) {
+    for (const k of listCallLogsIdLoggedAtByBusinessId<{ id: string; logged_at: string; outcome: string; notes: string; contact_id: string | null; contact: string | null; writer: string | null }>(db, [business_id])) {
       out.push({ id: `k-${k.id}`, at: k.logged_at, kind: 'call', ours: true, who: `${k.writer ?? 'Cap Rebate'} called ${k.contact ?? 'them'}`, subject: null,
         body: k.notes === '' ? '(no notes)' : k.notes, meta: OUTCOME[k.outcome] ?? k.outcome, isNew: false,
         href: replyHref(c, k.contact_id === null ? 'via=call' : `via=call&contact=${encodeURIComponent(k.contact_id)}`), hint: 'Click to log another call' });
     }
     // Calls booked: Zoom (booked, and started when its host first opened it) and telephone.
-    for (const b of db.all<{ id: string; channel: string; starts_at: string | null; ends_at: string | null; created_at: string; cancelled_at: string | null; who: string | null }>(
-      "SELECT b.id, b.channel, b.starts_at, b.ends_at, b.created_at, b.cancelled_at, u.display_name AS who FROM bookings b LEFT JOIN users u ON u.id = b.assigned_to " +
-      "WHERE b.business_id = ? AND b.channel IN ('video','phone') ORDER BY b.created_at, b.id", [business_id])) {
+    for (const b of listBookingsIdChannelByBusinessIdChannel<{ id: string; channel: string; starts_at: string | null; ends_at: string | null; created_at: string; cancelled_at: string | null; who: string | null }>(db, [business_id])) {
       const video = b.channel === 'video';
-      const m = video ? db.get<{ host_opened_at: string | null; opener: string | null; meeting: number }>(
-        'SELECT v.host_opened_at, u.display_name AS opener, 1 AS meeting FROM video_meetings v LEFT JOIN users u ON u.id = v.host_opened_by WHERE v.booking_id = ? ORDER BY v.created_at DESC LIMIT 1', [b.id]) : undefined;
+      const m = video ? getVideoMeetingsHostOpenedAtOpenerByBookingId<{ host_opened_at: string | null; opener: string | null; meeting: number }>(db, [b.id]) : undefined;
       const open = video && b.cancelled_at === null && b.starts_at !== null && b.ends_at !== null && activeMeeting(db, b.id) !== undefined
         && Date.parse(now) >= Date.parse(b.starts_at) - 10 * 60_000 && Date.parse(now) <= Date.parse(b.ends_at);
       out.push({ id: `b-${b.id}`, at: b.created_at, kind: video ? 'zoom' : 'call', ours: true,
@@ -211,8 +206,7 @@ export type Prefill = {
 type Choice = { id: string; name: string; email: string | null; phone: string | null };
 
 function people(c: Ctx): Choice[] {
-  return c.app.db.all<{ id: string; full_name: string; email: string | null; phone: string | null }>(
-    'SELECT id, full_name, email, phone FROM contacts WHERE business_id = ? ORDER BY full_name, id', [c.business_id])
+  return listContactsIdFullNameByBusinessId2<{ id: string; full_name: string; email: string | null; phone: string | null }>(c.app.db, [c.business_id])
     .map((p) => ({ id: p.id, name: p.full_name, email: p.email === null || p.email.trim() === '' ? null : p.email.trim(), phone: p.phone === null || p.phone.trim() === '' ? null : p.phone.trim() }));
 }
 
@@ -263,7 +257,7 @@ export function prefill(c: Ctx, ask: { via: string | null; thread: string | null
   const ppl = people(c);
   const allowed = mayVia(c);
   const via = (allowed.includes(ask.via as Via) ? ask.via : allowed[0] ?? 'email') as Via;
-  const mainEmail = db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [c.business_id])?.e ?? null;
+  const mainEmail = getBusinessesEById<{ e: string | null }>(db, [c.business_id])?.e ?? null;
   const p: Prefill = {
     via, to_email: mainEmail ?? ppl.find((x) => x.email !== null)?.email ?? '', subject: '', thread: '', contact_id: '', body: '', claim_id: '',
     outcome: 'SPOKE', next_title: '', next_on: '', slot: '', replying: null,
@@ -297,10 +291,9 @@ export function composer(c: Ctx, p: Prefill, refused?: string): Safe {
   const allowed = mayVia(c);
   if (allowed.length === 0) return h`<p class="help">You can read this conversation, not write to it.</p>`;
   const db = c.app.db;
-  const dnc = db.get<{ s: string | null }>('SELECT client_status AS s FROM businesses WHERE id = ?', [c.business_id])?.s === 'DO_NOT_CONTACT';
+  const dnc = getBusinessesSById<{ s: string | null }>(db, [c.business_id])?.s === 'DO_NOT_CONTACT';
   const ppl = people(c);
-  const claims = db.all<{ id: string; claim_ref: string; label: string | null }>(
-    'SELECT c.id, c.claim_ref, p.label FROM claims c LEFT JOIN properties p ON p.id = c.property_id WHERE c.business_id = ? ORDER BY c.claim_ref', [c.business_id]);
+  const claims = listClaimsIdClaimRefByBusinessId3<{ id: string; claim_ref: string; label: string | null }>(db, [c.business_id]);
   const wa = W.phoneContacts(db, c.business_id, c.now);
   const waMissing = whatsappMissing(c.app.secrets, c.app.whatsappPolicy, { outside: c.app.outside });
   const sendingNow = sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(c.app.secrets), mailWhere(c.app));
@@ -512,7 +505,7 @@ export async function communicate(d: SendDeps, actor: Actor, business_id: string
   }
   if (via === 'call') {
     const contact = (f.get('call_contact_id') ?? '').trim();
-    if (contact !== '' && db.get('SELECT 1 AS x FROM contacts WHERE id = ? AND business_id = ?', [contact, business_id]) === undefined) return keep('Choose one of their contacts.');
+    if (contact !== '' && getContactsXByIdBusinessId(db, [contact, business_id]) === undefined) return keep('Choose one of their contacts.');
     const outcome = f.get('outcome') ?? '';
     if (OUTCOME[outcome] === undefined) return keep('Say how the call went.');
     const notes = (f.get('notes') ?? '').trim();
@@ -525,15 +518,14 @@ export async function communicate(d: SendDeps, actor: Actor, business_id: string
       task = t.id;
     }
     const id = d.newId();
-    db.run('INSERT INTO call_logs (id, business_id, claim_id, contact_id, outcome, notes, logged_by, logged_at, task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, business_id, claim === '' ? null : claim, contact === '' ? null : contact, outcome, notes, actor.id, d.app.now(), task]);
+    insertCallLogs(db, [id, business_id, claim === '' ? null : claim, contact === '' ? null : contact, outcome, notes, actor.id, d.app.now(), task]);
     d.app.audit.append({ at: d.app.now(), kind: 'CALL_LOGGED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'call_log', object_id: id,
       detail: { business: business_id, outcome, follow_up: task !== null } });
     return { ok: true, to: back('logged-call') };
   }
   // via === 'zoom'
   const to = (f.get('zoom_to') ?? '').trim();
-  if (to === '' || db.get("SELECT 1 AS x FROM contacts WHERE business_id = ? AND lower(email) = lower(?)", [business_id, to]) === undefined) return keep('Choose who the call is with: one of their contacts with an email address.');
+  if (to === '' || getContactsXByBusinessId(db, [business_id, to]) === undefined) return keep('Choose who the call is with: one of their contacts with an email address.');
   const now = d.app.now();
   let starts: string;
   if (go === 'zoom-book') {
@@ -545,8 +537,7 @@ export async function communicate(d: SendDeps, actor: Actor, business_id: string
   }
   const ends = new Date(Date.parse(starts) + SLOT_MINUTES * 60_000).toISOString();
   const id = d.newId();
-  db.run("INSERT INTO bookings (id, business_id, lead_id, assigned_to, channel, sms_variant, entry_point, starts_at, ends_at, created_at) VALUES (?, ?, NULL, ?, 'video', NULL, 'staff', ?, ?, ?)",
-    [id, business_id, actor.id, starts, ends, now]);
+  insertBookings3(db, [id, business_id, actor.id, starts, ends, now]);
   d.app.audit.append({ at: now, kind: 'BOOKING_CREATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'booking', object_id: id,
     detail: { business: business_id, channel: 'video', now: go !== 'zoom-book' } });
   const zoomed = await reconcileVideoMeeting(d.app, id);

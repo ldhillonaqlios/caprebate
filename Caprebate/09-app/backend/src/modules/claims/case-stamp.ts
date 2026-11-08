@@ -46,13 +46,13 @@ import { DPO_ROLE_SWITCH } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { ctaSwitchReadings, registryGate } from '../../shared/index.ts';
 import { DISCLOSURE_LOG } from '../../web/disclosure-log.ts';
-import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../crm/introducers.ts';
-import { CONVEYANCING_STRIP } from '../assessment/conveyancing-strip.ts';
+import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../crm/index.ts';
+import { CONVEYANCING_STRIP } from '../assessment/index.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../../shared/index.ts';
-import { ENQUIRY_RETENTION } from '../public-site/enquiry-retention.ts';
-import { MESSAGE_RETENTION } from '../crm/message-retention.ts';
+import { ENQUIRY_RETENTION } from '../public-site/index.ts';
+import { MESSAGE_RETENTION } from '../crm/index.ts';
 import { EMAIL_SENDING } from '../../integrations/index.ts';
 import { ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST } from './signing.ts';
 import { INBOUND_EMAIL } from '../../integrations/index.ts';
@@ -62,12 +62,15 @@ import { COMPANY_SEARCH, COMPANY_TYPE_FROM_REGISTER } from '../../integrations/i
 import { ADDRESS_LOOKUP } from '../../integrations/index.ts';
 import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
-import { ALLOWANCE_PROFIT_COMPARISON } from '../assessment/allowance-profit-comparison.ts';
-import { FUNNEL_SWITCHES } from '../assessment/funnel-session.ts';
+import { ALLOWANCE_PROFIT_COMPARISON } from '../assessment/index.ts';
+import { FUNNEL_SWITCHES } from '../assessment/index.ts';
 import { HOMEDATA_DIMENSIONS } from '../../integrations/index.ts';
 import { REGISTER_SWITCHES } from '../../integrations/index.ts';
 import { CLAUDE_SWITCHES } from '../../integrations/connectors/claude.ts';
 import { PICK_SWITCHES } from './match-review.ts';
+import { getClaimsIdAssessmentIdById, insertClaimVersionStamps, listTaxAdviserSignoffsIdRecordHashByClaimId } from './data.ts';
+import { getAnchorLogHash } from './data-borrowed.ts';
+import { getEstimatesEstimateHashByAssessmentId } from '../assessment/index.ts';
 
 function sha256(v: unknown): string {
   return createHash('sha256').update(_canonical(v)).digest('hex');
@@ -262,11 +265,11 @@ export type CaseStamp = {
  * the moment of the stamp, not one job's: it fixes everything written before it.
  */
 export function caseStamp(db: Db, claim_id: string): CaseStamp {
-  const c = db.get<{ id: string; assessment_id: string | null }>('SELECT id, assessment_id FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdAssessmentIdById<{ id: string; assessment_id: string | null }>(db, [claim_id]);
   if (c === undefined) throw new NotFoundAsRefusal();
   const engine = readEngineVersion();
   const estimate = c.assessment_id === null ? undefined
-    : db.get<{ estimate_hash: string }>('SELECT estimate_hash FROM estimates WHERE assessment_id = ?', [c.assessment_id]);
+    : getEstimatesEstimateHashByAssessmentId<{ estimate_hash: string }>(db, [c.assessment_id]);
   return {
     claim_id: c.id,
     engine_version: engine,
@@ -276,10 +279,9 @@ export function caseStamp(db: Db, claim_id: string): CaseStamp {
     registry_free_enabled: registryGate().enabled,
     backend_switches: backendSwitchReadings(),
     connector_switches: connectorSwitchReadings(),
-    signoffs: db.all<{ id: string; record_hash: string }>(
-      'SELECT id, record_hash FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at ASC, rowid ASC', [c.id]),
+    signoffs: listTaxAdviserSignoffsIdRecordHashByClaimId<{ id: string; record_hash: string }>(db, [c.id]),
     estimate_hash: estimate?.estimate_hash ?? null,
-    anchor_log_head_hash: db.get<{ hash: string }>('SELECT hash FROM anchor_log ORDER BY seq DESC LIMIT 1')?.hash ?? null,
+    anchor_log_head_hash: getAnchorLogHash<{ hash: string }>(db)?.hash ?? null,
   };
 }
 
@@ -315,11 +317,7 @@ export function writeCaseStamp(
     signoff_refs: stamp.signoffs, estimate_hash: stamp.estimate_hash, anchor_log_head_hash: stamp.anchor_log_head_hash,
   };
   const stamp_hash = sha256(stampHashInput(row));
-  db.run(
-    'INSERT INTO claim_version_stamps (id, claim_id, deliverable_id, engine_version, rulebook_modules_json, switch_readings_json, ' +
-      'signoff_refs_json, estimate_hash, anchor_log_head_hash, stamp_hash, stamped_by, stamped_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [input.id, input.claim_id, input.deliverable_id, stamp.engine_version, JSON.stringify(stamp.rulebook_modules), JSON.stringify(switch_readings),
-      JSON.stringify(stamp.signoffs), stamp.estimate_hash, stamp.anchor_log_head_hash, stamp_hash, input.stamped_by, input.stamped_at],
-  );
+  insertClaimVersionStamps(db, [input.id, input.claim_id, input.deliverable_id, stamp.engine_version, JSON.stringify(stamp.rulebook_modules), JSON.stringify(switch_readings),
+      JSON.stringify(stamp.signoffs), stamp.estimate_hash, stamp.anchor_log_head_hash, stamp_hash, input.stamped_by, input.stamped_at]);
   return { id: input.id, stamp_hash, stamp };
 }

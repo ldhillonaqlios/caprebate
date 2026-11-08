@@ -30,13 +30,14 @@ import * as T from './tasks.ts';
 import * as A from './automation.ts';
 import * as M from '../../web/templates.ts';
 import { emailButton } from './free-email-pages.ts';
-import { addNote } from '../claims/engaged.ts';
+import { addNote } from '../claims/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import type { Fields } from './crm.ts';
 import { taskChoices, type TaskChoices } from '../../web/vocabularies.ts';
 import { EXITS, PROCEDURE_STAGES } from '../../shared/index.ts';
 import type { Timeline } from './timeline.ts';
 import { piecesPage } from '../../core/index.ts';
+import { getClaimsBusinessIdById, getPropertiesBusinessIdById } from '../claims/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -164,7 +165,7 @@ export async function handleTasks(
   const claimNote = /^\/staff\/claims\/([A-Za-z0-9-]+)\/notes$/.exec(path);
   if (claimNote && method === 'POST') {
     const id = claimNote[1] ?? '';
-    const c = db.get<{ business_id: string }>('SELECT business_id FROM claims WHERE id = ?', [id]);
+    const c = getClaimsBusinessIdById<{ business_id: string }>(db, [id]);
     if (c === undefined) throw new NotFoundAsRefusal();
     const r = addNote(deps, actor, c.business_id, (await form(req)).get('body') ?? '', { claim_id: id });
     if (!r.ok) return d.problem(res, actor, 'Note not saved', r.why, `/staff/claims/${id}`);
@@ -176,7 +177,7 @@ export async function handleTasks(
   const propertyNote = /^\/staff\/properties\/([A-Za-z0-9-]+)\/notes$/.exec(path);
   if (propertyNote && method === 'POST') {
     const id = propertyNote[1] ?? '';
-    const p = db.get<{ business_id: string }>('SELECT business_id FROM properties WHERE id = ?', [id]);
+    const p = getPropertiesBusinessIdById<{ business_id: string }>(db, [id]);
     if (p === undefined) throw new NotFoundAsRefusal();
     const r = addNote(deps, actor, p.business_id, (await form(req)).get('body') ?? '', { property_id: id });
     if (!r.ok) return d.problem(res, actor, 'Note not saved', r.why, `/staff/properties/${id}`);

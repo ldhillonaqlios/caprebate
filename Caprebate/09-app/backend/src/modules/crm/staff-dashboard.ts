@@ -42,14 +42,16 @@ import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES 
 import { addLocalDays, startOfLocalDay, startOfLocalWeek } from './schedule.ts';
 import * as B from '../../core/backoffice.ts';
 import * as M from './messages.ts';
-import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from '../public-site/home.ts';
+import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from '../public-site/index.ts';
 import { kpiRow, type Kpi } from '../../core/index.ts';
 import { blocksFor, mayBlockTime } from './time-blocks.ts';
-import { newDot } from '../portal/client-layout.ts';
+import { newDot } from '../portal/index.ts';
 import { keysView } from '../../core/saved-keys.ts';
 import { repliesStale } from './inbound-email.ts';
 import { listsToImport } from '../../web/connections.ts';
 import { listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole } from '../../core/index.ts';
+import { getDocumentsCountByBusinessIdRole, getOutboxXByKindLeadId } from './data-borrowed.ts';
+import { getContactsFullNamePhoneByBusinessId } from './data.ts';
 
 export type DashView = 'sales' | 'accounting' | 'surveying' | 'admin';
 
@@ -90,9 +92,7 @@ export function callsBetween(app: App, actor: Actor, fromIso: string, toIso: str
     .filter((b) => b.starts_at !== null && b.starts_at >= fromIso && b.starts_at < toIso && b.cancelled_at === null)
     .filter((b) => b.assigned_to === null || b.assigned_to === actor.id || actor.role === 'READ_ONLY')
     .map((b) => {
-      const person = app.db.get<{ full_name: string; phone: string | null }>(
-        "SELECT full_name, phone FROM contacts WHERE ((business_id IS NOT NULL AND business_id = ?) OR (lead_id IS NOT NULL AND lead_id = ?)) ORDER BY phone IS NULL OR trim(phone) = '', created_at LIMIT 1",
-        [b.business_id ?? '', b.lead_id ?? '']);
+      const person = getContactsFullNamePhoneByBusinessId<{ full_name: string; phone: string | null }>(app.db, [b.business_id ?? '', b.lead_id ?? '']);
       const video = b.channel === 'video';
       return {
         id: b.id, at: b.starts_at ?? '', channel: video ? 'Zoom call' : 'Telephone call', company: b.business_name, mine: b.assigned_to === actor.id,
@@ -113,9 +113,7 @@ export function firstEmails(app: App, actor: Actor): FirstEmail[] {
   const now = app.now();
   return leadsList(app.db, actor, { filters: {}, sort: 'age' }).rows
     .filter((l) => l.claim === null && l.status.key === 'NEW')
-    .filter((l) => app.db.get(
-      "SELECT 1 AS x FROM outbox o WHERE o.kind IN ('FREE_TYPED','TEMPLATE') AND (o.lead_id = ? OR o.business_id = (SELECT business_id FROM leads WHERE id = ?)) LIMIT 1",
-      [l.id, l.id]) === undefined)
+    .filter((l) => getOutboxXByKindLeadId(app.db, [l.id, l.id]) === undefined)
     .map((l) => ({ lead_id: l.id, company: l.organisation, from: l.source, late: isLateNewLead(l.lead_at, now) }));
 }
 
@@ -216,9 +214,7 @@ export const NEW_DOCUMENT_DAYS = 14;
 export function newClientDocuments(app: App, actor: Actor, now: string): { id: string; name: string; n: number }[] {
   const since = new Date(Date.parse(now) - NEW_DOCUMENT_DAYS * 86_400_000).toISOString();
   return organisationList(app.db, actor)
-    .map((o) => ({ id: o.id, name: o.trading_name, n: app.db.get<{ n: number }>(
-      "SELECT COUNT(*) AS n FROM documents d JOIN users u ON u.id = d.uploaded_by WHERE d.business_id = ? AND u.role = 'CLIENT' AND d.created_at >= ?",
-      [o.id, since])?.n ?? 0 }))
+    .map((o) => ({ id: o.id, name: o.trading_name, n: getDocumentsCountByBusinessIdRole<{ n: number }>(app.db, [o.id, since])?.n ?? 0 }))
     .filter((x) => x.n > 0)
     .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
 }

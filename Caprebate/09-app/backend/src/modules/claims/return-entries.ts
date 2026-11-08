@@ -27,9 +27,12 @@
 import type { Db } from '../../core/index.ts';
 import type { Snapshot } from '../../web/pack-approve.ts';
 import { acquisitionDateReading, latestFacts } from './claim-facts.ts';
-import { claimantTypeForGate } from '../crm/crm.ts';
-import { allowancesFor, isCompanyType, rateWords, RETURN_YEARS, type AllowanceFacts, type PartResult, type PoolName } from '../assessment/allowances.ts';
+import { claimantTypeForGate } from '../crm/index.ts';
+import { allowancesFor, isCompanyType, rateWords, RETURN_YEARS, type AllowanceFacts, type PartResult, type PoolName } from '../assessment/index.ts';
 import { cashBasis, purchasePeriod } from './claim-route.ts';
+import { getSurveyPackApprovalsClaimIdBusinessIdById } from './data-borrowed.ts';
+import { getClaimsPropertyIdById, getReturnEntryContextsPeriodStartIsCompanyByApprovalId, insertReturnEntryContexts } from './data.ts';
+import { getBusinessesSectorById } from '../crm/index.ts';
 
 export { RETURN_YEARS };
 
@@ -168,7 +171,7 @@ export function returnContext(db: Db, claim_id: string | null, business_id: stri
   const t = claimantTypeForGate(db, business_id).value;
   const is_company = isCompanyType(t);
   if (claim_id === null) return { period_start: null, is_company, facts: { ...NO_FACTS_ON, claimant: t } };
-  const c = db.get<{ property_id: string | null }>('SELECT property_id FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsPropertyIdById<{ property_id: string | null }>(db, [claim_id]);
   const property_id = c?.property_id ?? null;
   const p = purchasePeriod(db, { id: claim_id, business_id, property_id });
   const facts = latestFacts(db, claim_id);
@@ -179,7 +182,7 @@ export function returnContext(db: Db, claim_id: string | null, business_id: stri
   const member = choice('PARTNERSHIP_HAS_COMPANY_MEMBER');
   const cash = cashBasis(db, { id: claim_id, business_id }).recorded;
   const acq = acquisitionDateReading(db, property_id);
-  const sector = db.get<{ sector: string | null }>('SELECT sector FROM businesses WHERE id = ?', [business_id])?.sector ?? null;
+  const sector = getBusinessesSectorById<{ sector: string | null }>(db, [business_id])?.sector ?? null;
   return {
     period_start: p?.start ?? null, is_company,
     facts: {
@@ -208,8 +211,7 @@ export const csvName = (company: string, version: number) =>
 
 /** PHASE 159a (C29): the facts a version's spreadsheet was first sent on, or null if it has not been sent. */
 export function frozenReturnContext(db: Db, approval_id: string): ReturnContext | null {
-  const r = db.get<{ period_start: string | null; is_company: number | null; facts_json: string | null }>(
-    'SELECT period_start, is_company, facts_json FROM return_entry_contexts WHERE approval_id = ?', [approval_id]);
+  const r = getReturnEntryContextsPeriodStartIsCompanyByApprovalId<{ period_start: string | null; is_company: number | null; facts_json: string | null }>(db, [approval_id]);
   if (r === undefined) return null;
   let facts: AllowanceFacts | null = null;
   try { facts = r.facts_json === null ? null : (JSON.parse(r.facts_json) as AllowanceFacts); } catch { facts = null; }
@@ -219,8 +221,7 @@ export function frozenReturnContext(db: Db, approval_id: string): ReturnContext 
 /** Keep the facts a version's spreadsheet is sent on — once. A later call for the same version changes nothing. */
 export function freezeReturnContext(db: Db, approval_id: string, ctx: ReturnContext, by: 'SENT_FOR_SIGNOFF' | 'SIGNOFF_RECORDED', at: string): ReturnContext {
   const start = ctx.period_start !== null && ISO.test(ctx.period_start) ? ctx.period_start : null;
-  db.run('INSERT OR IGNORE INTO return_entry_contexts (approval_id, period_start, is_company, frozen_by, frozen_at, facts_json) VALUES (?, ?, ?, ?, ?, ?)',
-    [approval_id, start, ctx.is_company === null ? null : ctx.is_company ? 1 : 0, by, at, ctx.facts === undefined || ctx.facts === null ? null : JSON.stringify(ctx.facts)]);
+  insertReturnEntryContexts(db, [approval_id, start, ctx.is_company === null ? null : ctx.is_company ? 1 : 0, by, at, ctx.facts === undefined || ctx.facts === null ? null : JSON.stringify(ctx.facts)]);
   return frozenReturnContext(db, approval_id) ?? ctx;
 }
 
@@ -232,7 +233,6 @@ export function returnContextFor(db: Db, approval_id: string, claim_id: string |
 /** PHASE 159e: the facts a version's figures are made from, found from the version alone (the report and the portal
  *  have the approval, not the claim): as first sent, or the claim as it stands. */
 export function contextForApproval(db: Db, approval_id: string): ReturnContext {
-  const j = db.get<{ claim_id: string | null; business_id: string }>(
-    'SELECT j.claim_id, j.business_id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id WHERE a.id = ?', [approval_id]);
+  const j = getSurveyPackApprovalsClaimIdBusinessIdById<{ claim_id: string | null; business_id: string }>(db, [approval_id]);
   return j === undefined ? { period_start: null, is_company: null, facts: null } : returnContextFor(db, approval_id, j.claim_id, j.business_id);
 }

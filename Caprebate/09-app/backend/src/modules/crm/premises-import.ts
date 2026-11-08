@@ -22,6 +22,7 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { parseCsv } from '../../web/pack-lines.ts';
 import { normalisePostcode } from '../../integrations/index.ts';
+import { getHealthcarePremisesXBySourceIdSourceRef, insertHealthcarePremises } from './data.ts';
 
 export type PremisesSector = 'care_homes' | 'dental' | 'supported_living' | 'gp' | 'private_hospital';
 
@@ -112,9 +113,8 @@ export function importPremises(
       if (name.length < 2 || address.length < 2 || postcode === null || ref === '') { unreadable++; continue; }
       if (sector === null) { notOurs++; continue; }
       if (mayNameAPerson(name)) { personal++; continue; }
-      if (d.db.get('SELECT 1 AS x FROM healthcare_premises WHERE source_id = ? AND source_ref = ?', [src.source_id, ref]) !== undefined) { already++; continue; }
-      d.db.run('INSERT INTO healthcare_premises (id, business_name, address, postcode, sector, source_id, source_ref, licence, imported_by, imported_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [d.newId(), name.slice(0, 200), address.slice(0, 300), postcode, sector, src.source_id, ref.slice(0, 40), src.licence, actor.id, at]);
+      if (getHealthcarePremisesXBySourceIdSourceRef(d.db, [src.source_id, ref]) !== undefined) { already++; continue; }
+      insertHealthcarePremises(d.db, [d.newId(), name.slice(0, 200), address.slice(0, 300), postcode, sector, src.source_id, ref.slice(0, 40), src.licence, actor.id, at]);
       kept++;
     }
   });

@@ -24,8 +24,8 @@
  * claim in a footer.
  */
 
-import type { EngagementSigning } from '../modules/claims/signing.ts';
-import { handleWhatsAppImport } from '../modules/crm/whatsapp-import-pages.ts';
+import type { EngagementSigning } from '../modules/claims/index.ts';
+import { handleWhatsAppImport } from '../modules/crm/index.ts';
 import { handleConnections } from '../web/connections.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import * as SI from './sign-in.ts';
@@ -42,11 +42,11 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import { staffShell, portalShell, opens, navContext, filterBar, LEAD_FILTERS, setSubMenu } from './navigation.ts';
 import { kpiRow, lateBadge, nobodyBadge } from './look.ts';
 import { settingsBody, settingsTiles } from '../web/admin-tiles.ts';
-import { homeRows } from '../modules/public-site/home.ts';
-import { dashboard, dashView } from '../modules/crm/staff-dashboard.ts';
-import { addBlock, removeBlock } from '../modules/crm/time-blocks.ts';
+import { homeRows } from '../modules/public-site/index.ts';
+import { dashboard, dashView } from '../modules/crm/index.ts';
+import { addBlock, removeBlock } from '../modules/crm/index.ts';
 import { saveKey } from './saved-keys.ts';
-import { mayReadQueue, readRepliesIfDue } from '../modules/crm/inbound-email.ts';
+import { mayReadQueue, readRepliesIfDue } from '../modules/crm/index.ts';
 import { refillForm, typedValues } from './refill.ts';
 import { welcomeCard, why } from '../shared/index.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
@@ -54,44 +54,42 @@ import { keepSectionChoice } from './sections.ts';
 import { staffHelp } from './help.ts';
 import * as S from '../web/settings.ts';
 import * as B from './backoffice.ts';
-import { handleEngaged } from '../modules/claims/engaged-pages.ts';
-import { handleClientPage } from '../modules/crm/client-page.ts';
-import { handleClientFiles } from '../modules/portal/client-files-pages.ts';
-import { handleFreeEmail } from '../modules/crm/free-email-pages.ts';
-import { handleStaffMessages } from '../modules/crm/messages-pages.ts';
+import { handleEngaged } from '../modules/claims/index.ts';
+import { handleClientPage } from '../modules/crm/index.ts';
+import { handleClientFiles } from '../modules/portal/index.ts';
+import { handleFreeEmail } from '../modules/crm/index.ts';
+import { handleStaffMessages } from '../modules/crm/index.ts';
 import { handleSurveyor } from '../web/surveyor-pages.ts';
 import { handleSurveyPack } from '../web/survey-pack-pages.ts';
-import { handleReportStaff } from '../modules/claims/report-pages.ts';
-import { handleAccountantConfirmStaff } from '../modules/portal/accountant-confirm-pages.ts';
+import { handleReportStaff } from '../modules/claims/index.ts';
+import { handleAccountantConfirmStaff } from '../modules/portal/index.ts';
 import { handleStaffEvidence } from '../web/evidence-pages.ts';
 import { handleFinance } from '../web/finance-pages.ts';
-import { handleCrm } from '../modules/crm/crm-pages.ts';
-import { handlePipeline } from '../modules/crm/pipeline-pages.ts';
-import { handleTasks } from '../modules/crm/tasks-pages.ts';
-import { handleDocuments } from '../modules/claims/documents-pages.ts';
-import { handleIntroducers } from '../modules/crm/introducers-pages.ts';
-import { handleClaimRecord } from '../modules/claims/claim-record-pages.ts';
+import { handleCrm } from '../modules/crm/index.ts';
+import { handlePipeline } from '../modules/crm/index.ts';
+import { handleTasks } from '../modules/crm/index.ts';
+import { handleDocuments } from '../modules/claims/index.ts';
+import { handleIntroducers } from '../modules/crm/index.ts';
+import { handleClaimRecord } from '../modules/claims/index.ts';
 import { handleCompliance } from '../web/compliance-pages.ts';
-import { handleDashboard } from '../modules/crm/dashboard-pages.ts';
+import { handleDashboard } from '../modules/crm/index.ts';
 import { handleLists } from '../shared/lists-pages.ts';
 import { handleConfiguration } from '../web/configuration-pages.ts';
 import { setPhoto, clearPhoto, readPhoto, photoFor, PHOTO_HEADERS, IMAGE_LIMITS } from './avatar.ts';
-import {
-  HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments,
-  startOfLocalDay, staffSlots, type Availability, type WorkingTimeInput,
-} from '../modules/crm/schedule.ts';
+import { HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments, startOfLocalDay, staffSlots, type Availability, type WorkingTimeInput } from '../modules/crm/index.ts';
 import {
   localClock, localDate, localPartsOf, localStamp, localWhen, zoneNotice,
 } from '../shared/index.ts';
 import { singleFile } from './multipart.ts';
 import { RANGE_QUALIFIER } from '../shared/index.ts';
 import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from '../web/audit-log.ts';
-import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine, SAME_TIME_WORDS, VIDEO_PAGE_HEADERS } from '../modules/crm/video-calls.ts';
-import { sendVideoInvite } from '../modules/crm/booking-invite.ts';
+import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine, SAME_TIME_WORDS, VIDEO_PAGE_HEADERS } from '../modules/crm/index.ts';
+import { sendVideoInvite } from '../modules/crm/index.ts';
 import { hostZak, joinSignature } from '../integrations/index.ts';
 import { piecesPage } from './upload-pieces.ts';
 import { listOutboxCreatedAtToEmailByOutboxId, updateVideoMeetingsHostOpenedAtHostOpenedByByIdHostOpenedAt } from '../integrations/index.ts';
 import { getSessionsIdByTokenHashRevokedAt, getUsersNById } from './data.ts';
+import { getBookingsSById } from '../modules/crm/index.ts';
 
 export type StaffDeps = {
   app: App;
@@ -332,7 +330,7 @@ export async function handleStaff(
     if (starts === '') {
       return problem(res, actor, 'Not scheduled', 'Pick a time.', '/staff/calendar');
     }
-    const hadTime = db.get<{ s: string | null }>('SELECT starts_at AS s FROM bookings WHERE id = ?', [id])?.s ?? null;
+    const hadTime = getBookingsSById<{ s: string | null }>(db, [id])?.s ?? null;
     const r = B.scheduleBooking(
       { db, audit: d.app.audit, email: d.app.email, now, newId: d.newId },
       actor,

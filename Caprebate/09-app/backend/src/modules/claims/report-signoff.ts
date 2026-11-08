@@ -34,10 +34,13 @@ import { reportModel, reportPdf, longDate, REPORT_TITLE } from '../../web/survey
 import { freezeReturnContext, returnContext, returnContextFor, returnEntriesCsv } from './return-entries.ts';
 import { voidLine } from './valuation-lock.ts';
 import { recordSignOff } from './claim-record.ts';
-import { postClientMessage } from '../crm/messages.ts';
+import { postClientMessage } from '../crm/index.ts';
 import { localDate } from '../../shared/index.ts';
 import { poundsWords } from '../../web/pack-sums.ts';
 import { getOutboxRById } from '../../integrations/index.ts';
+import { getPackClientNoticesToldAtToldByNameByApprovalId, getPackSignoffRequestsIdApprovalIdByTokenSha256, insertPackClientNotices, insertPackSignoffAnswers, insertPackSignoffRecorded, insertPackSignoffRequests, listPackSignoffRequestsIdApprovalIdByJobId, listSurveyPackApprovalsIdVersionByBusinessIdClaimId } from './data-borrowed.ts';
+import { getTaxAdviserSignoffsCountByApprovalIdRecordedAt } from './data.ts';
+import { listContactsIdNameByBusinessIdContactType2 } from '../crm/index.ts';
 
 export type SignoffDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };
 export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -51,9 +54,7 @@ export const hashToken = (token: string): string => createHash('sha256').update(
 /** The company's accountants and advisers who can be emailed. */
 export type Accountant = { readonly id: string; readonly name: string; readonly email: string; readonly type: string };
 export function accountantsOf(db: Db, business_id: string): Accountant[] {
-  return db.all<Accountant>(
-    "SELECT id, full_name AS name, email, contact_type AS type FROM contacts WHERE business_id = ? AND contact_type IN ('ACCOUNTANT', 'ADVISER') " +
-      "AND email IS NOT NULL AND trim(email) <> '' ORDER BY full_name", [business_id]);
+  return listContactsIdNameByBusinessIdContactType2<Accountant>(db, [business_id]);
 }
 
 export type RequestRow = {
@@ -68,15 +69,7 @@ export type RequestRow = {
 export function requestsOf(db: Db, job_id: string): RequestRow[] {
   type Raw = Omit<RequestRow, 'answer' | 'sent'> & { sent_at_outbox: string | null; a_id: string | null; outcome: 'SIGNED' | 'SENT_BACK' | null; signer_name: string | null;
     signer_firm: string | null; signer_credential: string | null; reason: string | null; answered_at: string | null; recorded_signoff: string | null };
-  return db.all<Raw>(
-    'SELECT r.id, r.approval_id, a.version, c.full_name AS contact_name, r.to_email, r.permission_note, u.display_name AS sent_by_name, r.sent_at, r.expires_at, ' +
-      'o.sent_at AS sent_at_outbox, o.last_error AS send_error, x.id AS a_id, x.outcome, x.signer_name, x.signer_firm, x.signer_credential, x.reason, x.answered_at, ' +
-      'k.signoff_id AS recorded_signoff ' +
-      'FROM pack_signoff_requests r JOIN survey_pack_approvals a ON a.id = r.approval_id JOIN survey_packs p ON p.id = a.pack_id ' +
-      'JOIN contacts c ON c.id = r.contact_id JOIN users u ON u.id = r.sent_by JOIN outbox o ON o.id = r.outbox_id ' +
-      'LEFT JOIN pack_signoff_answers x ON x.request_id = r.id LEFT JOIN pack_signoff_recorded k ON k.answer_id = x.id ' +
-      'WHERE p.job_id = ? ORDER BY r.sent_at DESC, r.rowid DESC', [job_id],
-  ).map((r) => ({
+  return listPackSignoffRequestsIdApprovalIdByJobId<Raw>(db, [job_id]).map((r) => ({
     id: r.id, approval_id: r.approval_id, version: r.version, contact_name: r.contact_name, to_email: r.to_email, permission_note: r.permission_note,
     sent_by_name: r.sent_by_name, sent_at: r.sent_at, expires_at: r.expires_at, sent: r.sent_at_outbox !== null, send_error: r.send_error,
     answer: r.a_id === null || r.outcome === null ? null : {
@@ -134,8 +127,7 @@ export function sendForSignoff(
     });
     if (sent.id === null) return { ok: false as const, why: 'This company asked us not to contact them. Nothing was sent.' };
     const id = d.newId();
-    d.db.run('INSERT INTO pack_signoff_requests (id, approval_id, contact_id, to_email, token_sha256, permission_note, outbox_id, sent_by, sent_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, kept.row.id, who.id, who.email.trim(), hashToken(token), permission, sent.id, actor.id, at, expires]);
+    insertPackSignoffRequests(d.db, [id, kept.row.id, who.id, who.email.trim(), hashToken(token), permission, sent.id, actor.id, at, expires]);
     const requested = getOutboxRById<{ r: number }>(d.db, [sent.id])?.r === 1;
     d.audit.append({ at, kind: 'REPORT_SENT_FOR_SIGNOFF', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'surveyor_job', object_id: job_id, detail: { request: id, version, contact: who.id, sending: requested } });
@@ -161,12 +153,8 @@ export type LinkView =
 /** What a sign-off link opens, by the link alone. Unknown, used and out-of-date links are told apart only in words. */
 export function linkView(db: Db, now: string, token: string): LinkView {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return { state: 'NONE' };
-  const r = db.get<{ id: string; expires_at: string; name: string; company: string; snapshot_json: string; fingerprint: string;
-    outcome: 'SIGNED' | 'SENT_BACK' | null; answered_at: string | null; claim_id: string | null; business_id: string; approval_id: string }>(
-    'SELECT r.id, r.approval_id, r.expires_at, c.full_name AS name, b.name AS company, a.snapshot_json, a.fingerprint, x.outcome, x.answered_at, j.claim_id, j.business_id ' +
-      'FROM pack_signoff_requests r JOIN survey_pack_approvals a ON a.id = r.approval_id JOIN contacts c ON c.id = r.contact_id ' +
-      'JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id JOIN businesses b ON b.id = j.business_id ' +
-      'LEFT JOIN pack_signoff_answers x ON x.request_id = r.id WHERE r.token_sha256 = ?', [hashToken(token)]);
+  const r = getPackSignoffRequestsIdApprovalIdByTokenSha256<{ id: string; expires_at: string; name: string; company: string; snapshot_json: string; fingerprint: string;
+    outcome: 'SIGNED' | 'SENT_BACK' | null; answered_at: string | null; claim_id: string | null; business_id: string; approval_id: string }>(db, [hashToken(token)]);
   if (r === undefined) return { state: 'NONE' };
   if (r.outcome !== null) return { state: 'ANSWERED', outcome: r.outcome, answered_at: r.answered_at ?? '' };
   if (now >= r.expires_at) return { state: 'EXPIRED' };
@@ -206,8 +194,7 @@ export function answerLink(
       return { ok: false, why: 'Choose to sign off, or to send it back.' };
     }
     const id = d.newId();
-    d.db.run('INSERT INTO pack_signoff_answers (id, request_id, outcome, signer_name, signer_firm, signer_credential, reason, answered_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, v.request_id, row[0], name, row[1], row[2], row[3], at]);
+    insertPackSignoffAnswers(d.db, [id, v.request_id, row[0], name, row[1], row[2], row[3], at]);
     d.audit.append({ at, kind: 'REPORT_SIGNOFF_ANSWERED', outcome: 'ALLOWED', actor_id: null, actor_role: null,
       object_type: 'pack_signoff_request', object_id: v.request_id, detail: { answer: id, outcome: row[0] } });
     return { ok: true, id };
@@ -244,7 +231,7 @@ export function recordAnswer(d: Omit<SignoffDeps, 'email'>, actor: Actor, job_id
       approval_id: kept.row.id,
     });
     if (!r.ok) return r;
-    d.db.run('INSERT INTO pack_signoff_recorded (answer_id, signoff_id, recorded_by, recorded_at) VALUES (?, ?, ?, ?)', [ans.id, r.id, actor.id, d.now()]);
+    insertPackSignoffRecorded(d.db, [ans.id, r.id, actor.id, d.now()]);
     return { ok: true, id: r.id };
   });
 }
@@ -255,15 +242,10 @@ export function recordAnswer(d: Omit<SignoffDeps, 'email'>, actor: Actor, job_id
  * last reopened (src/modules/claims/valuation-lock.ts) — and only while its fingerprint holds.
  */
 export function releasedVersion(db: Db, business_id: string): { row: ApprovalRow & { job_id: string; claim_id: string }; snapshot: Snapshot } | null {
-  const rows = db.all<ApprovalRow & { job_id: string; claim_id: string; snapshot_json: string }>(
-    'SELECT a.id, a.version, a.pack_seq, a.legal_seq, a.fingerprint, a.approved_by, u.display_name AS approver_name, a.approved_at, a.snapshot_json, j.id AS job_id, j.claim_id ' +
-      'FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id JOIN users u ON u.id = a.approved_by ' +
-      'WHERE j.business_id = ? AND j.claim_id IS NOT NULL AND EXISTS (SELECT 1 FROM tax_adviser_signoffs s WHERE s.claim_id = j.claim_id ' +
-      "AND s.approval_id = a.id AND s.figure_pence = json_extract(a.snapshot_json, '$.sums.qualifying_pence')) " +
-      'ORDER BY a.approved_at DESC, a.version DESC', [business_id]);
+  const rows = listSurveyPackApprovalsIdVersionByBusinessIdClaimId<ApprovalRow & { job_id: string; claim_id: string; snapshot_json: string }>(db, [business_id]);
   for (const r of rows) {
     const since = voidLine(db, r.claim_id);
-    if (since !== null && db.get<{ n: number }>('SELECT COUNT(*) AS n FROM tax_adviser_signoffs WHERE approval_id = ? AND recorded_at >= ?', [r.id, since])?.n === 0) continue;
+    if (since !== null && getTaxAdviserSignoffsCountByApprovalIdRecordedAt<{ n: number }>(db, [r.id, since])?.n === 0) continue;
     if (createHash('sha256').update(r.snapshot_json, 'utf8').digest('hex') !== r.fingerprint) continue;
     const { snapshot_json, ...row } = r;
     return { row, snapshot: JSON.parse(snapshot_json) as Snapshot };
@@ -272,8 +254,7 @@ export function releasedVersion(db: Db, business_id: string): { row: ApprovalRow
 }
 
 export function toldOf(db: Db, approval_id: string): { told_at: string; told_by_name: string } | null {
-  return db.get<{ told_at: string; told_by_name: string }>(
-    'SELECT n.told_at, u.display_name AS told_by_name FROM pack_client_notices n JOIN users u ON u.id = n.told_by WHERE n.approval_id = ?', [approval_id]) ?? null;
+  return getPackClientNoticesToldAtToldByNameByApprovalId<{ told_at: string; told_by_name: string }>(db, [approval_id]) ?? null;
 }
 
 export const TELL_CLIENT_WORDS = 'Your capital allowances survey report is ready. Your surveyor approved it, and a tax adviser has signed off its figures. ' +
@@ -290,7 +271,7 @@ export function tellClient(d: Omit<SignoffDeps, 'email'>, actor: Actor, job_id: 
   return d.db.tx((): Result => {
     const m = postClientMessage(d, actor, job.business_id, { body: TELL_CLIENT_WORDS, claim_id: released.row.claim_id });
     if (!m.ok) return m;
-    d.db.run('INSERT INTO pack_client_notices (approval_id, message_id, told_by, told_at) VALUES (?, ?, ?, ?)', [released.row.id, m.id, actor.id, d.now()]);
+    insertPackClientNotices(d.db, [released.row.id, m.id, actor.id, d.now()]);
     return { ok: true, id: m.id };
   });
 }

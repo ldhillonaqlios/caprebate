@@ -17,8 +17,10 @@ import type { Deps } from '../../core/index.ts';
 import { rateLimit } from '../../core/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { hashToken } from '../../core/index.ts';
-import type { CrmDeps } from '../crm/crm.ts';
-import { createLead } from '../crm/leads.ts';
+import type { CrmDeps } from '../crm/index.ts';
+import { createLead } from '../crm/index.ts';
+import { getWebsiteEnquiriesCountByStatus, getWebsiteEnquiriesIdCreatedAtById, insertWebsiteEnquiries, listWebsiteEnquiriesIdCreatedAtByStatus, updateWebsiteEnquiriesStatusHandledByByIdStatus, updateWebsiteEnquiriesStatusLeadIdById } from './data.ts';
+import { insertContacts3 } from '../crm/index.ts';
 
 /** The site's property types, as the form offers them, and the sector each is in the leads' own list. */
 export const PROPERTY_TYPES: Readonly<Record<string, string | null>> = Object.freeze({
@@ -74,11 +76,7 @@ export function receiveEnquiry(auth: Deps, newId: () => string, f: URLSearchPara
   }
   const id = newId();
   const at = auth.now();
-  auth.db.run(
-    'INSERT INTO website_enquiries (id, created_at, full_name, firm, email, phone, property_type, message, contact_consent, status) ' +
-      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 'NEW')",
-    [id, at, name, firm, email, phone, ptype, message],
-  );
+  insertWebsiteEnquiries(auth.db, [id, at, name, firm, email, phone, ptype, message]);
   auth.audit.append({
     at, kind: 'WEBSITE_ENQUIRY_RECEIVED', outcome: 'ALLOWED', actor_id: null, actor_role: null,
     object_type: 'website_enquiry', object_id: id, detail: { sector: PROPERTY_TYPES[ptype] ?? null, security_check: check },
@@ -93,22 +91,18 @@ function mayHandle(actor: Actor): void {
 
 export function openEnquiries(d: CrmDeps, actor: Actor): EnquiryRow[] {
   mayHandle(actor);
-  return d.db.all<EnquiryRow>(
-    'SELECT id, created_at, full_name, firm, email, phone, property_type, message, status, lead_id FROM website_enquiries ' +
-      "WHERE status = 'NEW' ORDER BY created_at DESC",
-  );
+  return listWebsiteEnquiriesIdCreatedAtByStatus<EnquiryRow>(d.db);
 }
 
 export function openEnquiryCount(d: CrmDeps, actor: Actor): number {
   mayHandle(actor);
-  return d.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM website_enquiries WHERE status = 'NEW'")?.n ?? 0;
+  return getWebsiteEnquiriesCountByStatus<{ n: number }>(d.db)?.n ?? 0;
 }
 
 /** Open an enquiry as a lead, with a contact holding the person. Refused once it has been handled. */
 export function enquiryToLead(d: CrmDeps, actor: Actor, id: string): { ok: true; lead_id: string } | { ok: false; why: string } {
   mayHandle(actor);
-  const e = d.db.get<EnquiryRow>(
-    'SELECT id, created_at, full_name, firm, email, phone, property_type, message, status, lead_id FROM website_enquiries WHERE id = ?', [id]);
+  const e = getWebsiteEnquiriesIdCreatedAtById<EnquiryRow>(d.db, [id]);
   if (e === undefined || e.status !== 'NEW') return { ok: false, why: 'That enquiry has already been dealt with.' };
   const made = createLead(d, actor, {
     business_id: null,
@@ -120,13 +114,8 @@ export function enquiryToLead(d: CrmDeps, actor: Actor, id: string): { ok: true;
   if (!made.ok) return { ok: false, why: made.why };
   const at = d.now();
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO contacts (id, business_id, lead_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, email, phone, created_at) ' +
-        'VALUES (?, NULL, ?, ?, NULL, NULL, 1, 0, ?, ?, ?)',
-      [d.newId(), made.id, e.full_name, e.email, e.phone, at],
-    );
-    d.db.run("UPDATE website_enquiries SET status = 'LEAD', lead_id = ?, handled_by = ?, handled_at = ? WHERE id = ?",
-      [made.id, actor.id, at, id]);
+    insertContacts3(d.db, [d.newId(), made.id, e.full_name, e.email, e.phone, at]);
+    updateWebsiteEnquiriesStatusLeadIdById(d.db, [made.id, actor.id, at, id]);
   });
   d.audit.append({
     at, kind: 'WEBSITE_ENQUIRY_HANDLED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -138,8 +127,7 @@ export function enquiryToLead(d: CrmDeps, actor: Actor, id: string): { ok: true;
 export function closeEnquiry(d: CrmDeps, actor: Actor, id: string): { ok: true } | { ok: false; why: string } {
   mayHandle(actor);
   const at = d.now();
-  const r = d.db.run("UPDATE website_enquiries SET status = 'CLOSED', handled_by = ?, handled_at = ? WHERE id = ? AND status = 'NEW'",
-    [actor.id, at, id]);
+  const r = updateWebsiteEnquiriesStatusHandledByByIdStatus(d.db, [actor.id, at, id]);
   if (r.changes === 0) return { ok: false, why: 'That enquiry has already been dealt with.' };
   d.audit.append({
     at, kind: 'WEBSITE_ENQUIRY_HANDLED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,

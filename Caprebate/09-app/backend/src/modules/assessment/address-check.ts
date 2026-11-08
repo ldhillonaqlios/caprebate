@@ -26,6 +26,7 @@ import type { App } from '../../core/app.ts';
 import { checkPostcode, normalisePostcode, POSTCODE_CHECK, type PostcodeCheck, type PostcodeCheckConfig } from '../../integrations/index.ts';
 import { gateStatus, type GateStatus } from '../../integrations/index.ts';
 import { registryGate } from '../../shared/index.ts';
+import { getLookupsDeclinedBusinessIdByBusinessId, insertLookupsDeclined } from './data.ts';
 
 /** The free-tier gate, as the research panel reads it. */
 export function freeGate(): GateStatus {
@@ -80,14 +81,14 @@ export function checkedLine(k: KeptCheck): string {
 
 /** Keep the client's choice with their organisation when the assessment is sent. Once; a later one changes nothing. */
 export function recordLookupsDeclined(d: { db: Db; audit: App['audit']; now: () => string }, business_id: string): void {
-  if (d.db.get('SELECT business_id FROM lookups_declined WHERE business_id = ?', [business_id]) !== undefined) return;
-  d.db.run("INSERT INTO lookups_declined (business_id, declined_at, how) VALUES (?, ?, 'ASSESSMENT')", [business_id, d.now()]);
+  if (getLookupsDeclinedBusinessIdByBusinessId(d.db, [business_id]) !== undefined) return;
+  insertLookupsDeclined(d.db, [business_id, d.now()]);
   d.audit.append({ at: d.now(), kind: 'LOOKUPS_DECLINED', outcome: 'ALLOWED', actor_id: null, actor_role: null, object_type: 'business', object_id: business_id, detail: { how: 'ASSESSMENT' } });
 }
 
 /** Whether a client chose to answer the property questions themselves. */
 export function lookupsDeclined(db: Db, business_id: string): boolean {
-  return db.get('SELECT business_id FROM lookups_declined WHERE business_id = ?', [business_id]) !== undefined;
+  return getLookupsDeclinedBusinessIdByBusinessId(db, [business_id]) !== undefined;
 }
 
 /** The research panel's line for a free lookup the client asked us not to run. */

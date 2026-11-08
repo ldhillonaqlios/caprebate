@@ -37,9 +37,7 @@ import { dueReading, isTerminalStage, nextActionBreakers } from './tasks.ts';
 import { localDate } from '../../shared/index.ts';
 import { formatPence } from '../../shared/index.ts';
 import { financeDashboard, type FinanceDashboard } from '../../web/invoices.ts';
-import {
-  DELIVERABLES, QUOTE_GAP_REVIEW_PCT, VARIANCE_CATEGORIES, deliverableIssued, latestSignOff, varianceOf,
-} from '../claims/claim-record.ts';
+import { DELIVERABLES, QUOTE_GAP_REVIEW_PCT, VARIANCE_CATEGORIES, deliverableIssued, latestSignOff, varianceOf } from '../claims/index.ts';
 import { pipelineFigures } from './introducers.ts';
 import { reasonLabel } from './pipeline.ts';
 import { rightsRegister, complaintsLog } from '../../web/compliance-rights.ts';
@@ -47,6 +45,9 @@ import { breachRegister } from '../../web/compliance-breach.ts';
 import { claimObjFor, claimWords } from './crm.ts';
 import { vocabLabel } from '../../web/vocabularies.ts';
 import { SECTORS } from './leads.ts';
+import { listClaimsIdCompletedAtByStage, listEstimatesIdClaimRefByAssessmentIdJO, listSurveyorJobsIdBusinessIdBySurveyorId } from './data-borrowed.ts';
+import { listClientTasksIdBusinessIdByStateDueOn, listIntroducersIdFirmName, listLeadsIdBusinessId, listLeadsIdBusinessIdByStatus, listStaffTasksIdBusinessIdByStatus } from './data.ts';
+import { getClaimStageMovesAtByClaimIdKind, getClaimStageMovesReasonCodeByClaimIdKind, listClaimReconciliationsClaimIdBusinessId, listClaimStageMovesClaimIdAt, listClaimsIdClaimRefByStage } from '../claims/index.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -287,12 +288,7 @@ type ClaimLine = {
  * role without it has nothing to leak even by accident.
  */
 function readableClaims(c: Ctx): ClaimLine[] {
-  return c.db.all<ClaimLine>(
-    'SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, c.owner_id, u.display_name AS owner_name, ' +
-      'c.assessment_id, c.expected_completion, c.completed_at, c.created_at, ' +
-      '(SELECT e.qualifying_expenditure_pence FROM estimates e WHERE e.assessment_id = c.assessment_id ORDER BY e.rowid DESC LIMIT 1) AS q ' +
-      'FROM claims c LEFT JOIN users u ON u.id = c.owner_id ORDER BY c.claim_ref ASC',
-  ).filter((r) => can(c.actor, 'claim.read', claimObjFor(c.db, r)));
+  return listEstimatesIdClaimRefByAssessmentIdJO<ClaimLine>(c.db).filter((r) => can(c.actor, 'claim.read', claimObjFor(c.db, r)));
 }
 
 /** The estimate for one claim, or null where it is not readable or not sealed. Unreadable is never a zero. */
@@ -439,7 +435,7 @@ function claimsByOwner(c: Ctx): Built {
 }
 
 function claimsByIntroducer(c: Ctx): Built {
-  const firms = c.db.all<{ id: string; firm_name: string }>('SELECT id, firm_name FROM introducers ORDER BY firm_name ASC, id ASC LIMIT 500')
+  const firms = listIntroducersIdFirmName<{ id: string; firm_name: string }>(c.db)
     .filter((f) => can(c.actor, 'introducer.read', { type: 'introducer', id: f.id }));
   const read = firms.map((f) => ({ f, p: pipelineFigures(c.db, f.id) }));
   const referred = read.filter((x) => x.p.leads_referred > 0);
@@ -455,9 +451,7 @@ function claimsByIntroducer(c: Ctx): Built {
 }
 
 function leadsBySource(c: Ctx): Built {
-  const rows = c.db.all<{ id: string; business_id: string | null; source: string; status: string; lead_date: string }>(
-    'SELECT id, business_id, source, status, lead_date FROM leads ORDER BY source ASC',
-  ).filter((r) => can(c.actor, 'lead.read', { type: 'lead', id: r.id, business_id: r.business_id }))
+  const rows = listLeadsIdBusinessId<{ id: string; business_id: string | null; source: string; status: string; lead_date: string }>(c.db).filter((r) => can(c.actor, 'lead.read', { type: 'lead', id: r.id, business_id: r.business_id }))
     // THE CRM FOLLOW-ON: a lead is counted in the period its lead date falls in, by the UK date.
     .filter((r) => inPeriod(c.period, localDate(r.lead_date)));
   const by = new Map<string, { total: number; converted: number; lost: number }>();
@@ -484,9 +478,7 @@ type Move = { claim_id: string; at: string; to_stage: string | null };
 
 function daysToCompletion(c: Ctx): Built {
   const readable = new Set(readableClaims(c).map((r) => r.id));
-  const closedAll = c.db.all<{ id: string; completed_at: string | null; lead_date: string | null }>(
-    "SELECT c.id, c.completed_at, l.lead_date FROM claims c LEFT JOIN leads l ON l.claim_id = c.id WHERE c.stage = 'CLOSED'",
-  ).filter((r) => readable.has(r.id));
+  const closedAll = listClaimsIdCompletedAtByStage<{ id: string; completed_at: string | null; lead_date: string | null }>(c.db).filter((r) => readable.has(r.id));
   // THE CRM FOLLOW-ON: the claims closed inside the period, by the UK date of their completion.
   const completed = c.period.key === 'NONE' ? closedAll : closedAll.filter((r) => inPeriod(c.period, r.completed_at === null ? null : localDate(r.completed_at)));
   const spans = completed.filter((r) => r.completed_at !== null && r.lead_date !== null)
@@ -494,7 +486,7 @@ function daysToCompletion(c: Ctx): Built {
 
   /* THE BOTTLENECK VIEW. A stay in a stage runs from the move into it to the next move of any kind; the last
      stay is still running, and is counted apart as "there now". Read from `claim_stage_moves`, which is append-only. */
-  const moves = c.db.all<Move>('SELECT claim_id, at, to_stage FROM claim_stage_moves ORDER BY claim_id ASC, at ASC, rowid ASC')
+  const moves = listClaimStageMovesClaimIdAt<Move>(c.db)
     .filter((m) => readable.has(m.claim_id));
   const finished = new Map<string, number[]>();
   const current = new Map<string, number[]>();
@@ -563,13 +555,11 @@ function expectedCompletion(c: Ctx): Built {
 function exitsAndLost(c: Ctx): Built {
   const all = readableClaims(c);
   // THE CRM FOLLOW-ON: a claim is counted in the period its exit was recorded in — the move that took it there.
-  const exitAt = (id: string): string | null => c.db.get<{ at: string }>(
-    "SELECT at FROM claim_stage_moves WHERE claim_id = ? AND kind = 'EXIT' ORDER BY at DESC, rowid DESC LIMIT 1", [id])?.at ?? null;
+  const exitAt = (id: string): string | null => getClaimStageMovesAtByClaimIdKind<{ at: string }>(c.db, [id])?.at ?? null;
   const exited = all.filter((r) => claimStage(r.stage).kind === 'EXIT')
     .filter((r) => { if (c.period.key === 'NONE') return true; const at = exitAt(r.id); return at !== null && inPeriod(c.period, localDate(at)); });
   const reasonOf = (id: string): string => {
-    const m = c.db.get<{ reason_code: string | null }>(
-      "SELECT reason_code FROM claim_stage_moves WHERE claim_id = ? AND kind = 'EXIT' ORDER BY at DESC, rowid DESC LIMIT 1", [id]);
+    const m = getClaimStageMovesReasonCodeByClaimIdKind<{ reason_code: string | null }>(c.db, [id]);
     return reasonLabel(c.db, 'CLAIM_EXIT', m?.reason_code ?? null) ?? 'no reason recorded';
   };
   const lostExits = EXITS.filter((e) => e.key !== 'REASONED_NEGATIVE').map((e) => {
@@ -578,9 +568,7 @@ function exitsAndLost(c: Ctx): Built {
     for (const r of rows) { const w = reasonOf(r.id); reasons.set(w, (reasons.get(w) ?? 0) + 1); }
     return { label: e.label, n: rows.length, reasons: [...reasons.entries()].map(([w, n]) => `${w} ${n}`).join(', ') };
   }).filter((x) => x.n > 0);
-  const leads = c.db.all<{ id: string; business_id: string | null; lost_reason: string | null }>(
-    "SELECT id, business_id, lost_reason FROM leads WHERE status = 'LOST'",
-  ).filter((r) => can(c.actor, 'lead.read', { type: 'lead', id: r.id, business_id: r.business_id }));
+  const leads = listLeadsIdBusinessIdByStatus<{ id: string; business_id: string | null; lost_reason: string | null }>(c.db).filter((r) => can(c.actor, 'lead.read', { type: 'lead', id: r.id, business_id: r.business_id }));
   const leadReasons = new Map<string, number>();
   // A LOST LEAD CARRIES NO DATE IT WAS LOST, so with a period chosen none can be placed inside it: counted apart, never in.
   for (const l of c.period.key === 'NONE' ? leads : []) {
@@ -647,10 +635,7 @@ type ReconRow = {
 };
 
 function reconRows(c: Ctx): ReconRow[] {
-  return c.db.all<ReconRow>(
-    'SELECT r.claim_id, cl.business_id, cl.claim_ref, r.client_sector, r.b_value_pence, r.c_value_pence, r.d_value_pence, ' +
-      'r.resolution_path, r.variance_category, r.status FROM claim_reconciliations r JOIN claims cl ON cl.id = r.claim_id ORDER BY cl.claim_ref ASC',
-  ).filter((r) => can(c.actor, 'claim_figures.read', { type: 'claim_figures', id: r.claim_id, business_id: r.business_id }));
+  return listClaimReconciliationsClaimIdBusinessId<ReconRow>(c.db).filter((r) => can(c.actor, 'claim_figures.read', { type: 'claim_figures', id: r.claim_id, business_id: r.business_id }));
 }
 
 function reconciliationCases(c: Ctx): Built {
@@ -707,9 +692,7 @@ function reconciliationGaps(c: Ctx): Built {
 }
 
 function deliverables(c: Ctx): Built {
-  const atReports = c.db.all<{ id: string; claim_ref: string; business_id: string }>(
-    "SELECT id, claim_ref, business_id FROM claims WHERE stage = 'REPORTS' ORDER BY claim_ref ASC",
-  ).filter((r) => can(c.actor, 'claim.read', claimObjFor(c.db, r))
+  const atReports = listClaimsIdClaimRefByStage<{ id: string; claim_ref: string; business_id: string }>(c.db).filter((r) => can(c.actor, 'claim.read', claimObjFor(c.db, r))
     && can(c.actor, 'deliverable.read', { type: 'deliverable', id: r.id, business_id: r.business_id, kind: 'CLIENT_REPORT', state: '', figure_released: false }));
   const kinds = ['CLIENT_REPORT', 'ACCOUNTANT_COMPUTATION_PACK'] as const;
   const missing = atReports.map((r) => ({ r, not: kinds.filter((k) => !deliverableIssued(c.db, r.id, k)) })).filter((x) => x.not.length > 0);
@@ -727,9 +710,7 @@ function deliverables(c: Ctx): Built {
 }
 
 function overdueTasks(c: Ctx): Built {
-  const rows = c.db.all<{ id: string; business_id: string | null; owner_id: string | null; owner_role: string | null; due_on: string | null; status: string }>(
-    "SELECT id, business_id, owner_id, owner_role, due_on, status FROM staff_tasks WHERE status IN ('OPEN','IN_PROGRESS')",
-  ).filter((t) => can(c.actor, 'staff_task.read', {
+  const rows = listStaffTasksIdBusinessIdByStatus<{ id: string; business_id: string | null; owner_id: string | null; owner_role: string | null; due_on: string | null; status: string }>(c.db).filter((t) => can(c.actor, 'staff_task.read', {
     type: 'staff_task', id: t.id, business_id: t.business_id, owner_id: t.owner_id, owner_role: t.owner_role, assigned_surveyor_ids: [],
   }));
   const states = rows.map((t) => dueReading(t.due_on, c.nowIso).state);
@@ -748,9 +729,7 @@ function overdueTasks(c: Ctx): Built {
 }
 
 function outstandingClientRequests(c: Ctx): Built {
-  const rows = c.db.all<{ id: string; business_id: string; kind: string; due_on: string | null; sent_to_portal_at: string | null }>(
-    "SELECT id, business_id, kind, due_on, sent_to_portal_at FROM client_tasks WHERE state = 'OPEN' ORDER BY due_on IS NULL, due_on ASC",
-  );
+  const rows = listClientTasksIdBusinessIdByStateDueOn<{ id: string; business_id: string; kind: string; due_on: string | null; sent_to_portal_at: string | null }>(c.db);
   const questions = rows.filter((r) => r.kind === 'QUESTION' && can(c.actor, 'organisation.read', { type: 'business', id: r.business_id }));
   const requests = rows.filter((r) => r.kind === 'DOCUMENT'
     && can(c.actor, 'document_request.read', { type: 'document_request', id: r.id, business_id: r.business_id }));
@@ -796,11 +775,7 @@ function compliance(c: Ctx): Built {
 }
 
 function myJobs(c: Ctx): Built {
-  const jobs = c.db.all<{ id: string; business_id: string; surveyor_id: string | null; state: string; claim_id: string | null; claim_ref: string | null; stage: string | null }>(
-    'SELECT j.id, j.business_id, j.surveyor_id, j.state, cl.id AS claim_id, cl.claim_ref, cl.stage FROM surveyor_jobs j ' +
-      'LEFT JOIN claims cl ON cl.id = j.claim_id WHERE j.surveyor_id = ? ORDER BY j.created_at ASC, j.id ASC',
-    [c.actor.id],
-  ).filter((j) => can(c.actor, 'surveyor_job.read', { type: 'surveyor_job', id: j.id, business_id: j.business_id, surveyor_id: j.surveyor_id }));
+  const jobs = listSurveyorJobsIdBusinessIdBySurveyorId<{ id: string; business_id: string; surveyor_id: string | null; state: string; claim_id: string | null; claim_ref: string | null; stage: string | null }>(c.db, [c.actor.id]).filter((j) => can(c.actor, 'surveyor_job.read', { type: 'surveyor_job', id: j.id, business_id: j.business_id, surveyor_id: j.surveyor_id }));
   return {
     lines: jobs.length === 0 ? [{ label: 'Survey jobs', value: 'No survey job is assigned to you.' }] : jobs.map((j) => ({
       label: j.claim_id === null ? 'a job not yet on a claim' : claimWords(c.db, j.claim_id),

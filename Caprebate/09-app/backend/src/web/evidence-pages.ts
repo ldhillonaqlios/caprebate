@@ -28,13 +28,14 @@ import * as E from './survey-evidence.ts';
 import { GROUPS, NOBODY_IN_SHOT } from './survey-checklist.ts';
 import { manyFiles, singleFile } from '../core/index.ts';
 import { packJob } from './surveyor.ts';
-import { staffSlots, addLocalDays, startOfLocalDay } from '../modules/crm/schedule.ts';
+import { staffSlots, addLocalDays, startOfLocalDay } from '../modules/crm/index.ts';
 import { localDate, localClock, ukDate } from '../shared/index.ts';
-import { activeMeeting, clientJoinUrl } from '../modules/crm/video-calls.ts';
+import { activeMeeting, clientJoinUrl } from '../modules/crm/index.ts';
 import { zoomPlanIsFree } from '../integrations/index.ts';
 import * as U from './photo-upload.ts';
 import * as SV from './survey-video.ts';
-import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from '../modules/assessment/desk-first.ts';
+import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from '../modules/assessment/index.ts';
+import { listContactsEmailNameByBusinessIdEmail } from '../modules/crm/index.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
@@ -650,7 +651,7 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
     const s = staffSlots(app.db, app.now(), addLocalDays(startOfLocalDay(app.now()), 14), { onlyUser: actor.id, now: app.now() });
     return s.available ? s.slots.slice(0, 60) : [];
   })();
-  const emails = app.db.all<{ email: string; name: string }>("SELECT email, full_name AS name FROM contacts WHERE business_id = ? AND email IS NOT NULL AND trim(email) <> '' ORDER BY full_name", [job.business_id]);
+  const emails = listContactsEmailNameByBusinessIdEmail<{ email: string; name: string }>(app.db, [job.business_id]);
   return h`<div id="inspection">
     ${done !== null && notes[done] !== undefined ? h`<div class="gate" role="status">${notes[done]!}</div>` : raw('')}
     <p class="lede">What the client sent so you can see inside the building, ${words.staffLede}, and how you inspected. How you inspected goes in the report.</p>

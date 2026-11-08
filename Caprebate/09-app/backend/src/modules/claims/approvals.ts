@@ -41,6 +41,10 @@ import { FACTS, captured, factsPanel, latestFacts, recordFact, type FactReading 
 import type { ProcedureKey } from '../../shared/index.ts';
 import { preferHomedataPlanning, supersededPlanning } from '../../integrations/index.ts';
 import { listRegisterRecordsIdSourceIdByBusinessId } from '../../integrations/index.ts';
+import { insertClientStepNotices, insertClientStepNotices2, listClientStepNoticesClaimIdStepByBusinessId2 } from '../portal/index.ts';
+import { insertFactApprovals, insertFactApprovals2, listClaimDeliverablesIdVersionByClaimIdKind, listClaimsIdClaimRefByBusinessId, listTaxAdviserSignoffsIdSignedOnByClaimId } from './data.ts';
+import { getBusinessesIdNameById, listClientTasksIdFactIdByBusinessIdKind } from '../crm/index.ts';
+import { listClientStepNoticesClaimIdStepByBusinessId, listFactApprovalsFactRefActionByBusinessId, listSurveyorJobsIdSurveyorIdByClaimId } from './data-borrowed.ts';
 
 export type ApprovalDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -196,10 +200,7 @@ type ApprovalRow = { fact_ref: string; action: string; reason: string | null; at
 
 function approvalsFor(db: Db, business_id: string): Map<string, ApprovalRow> {
   const out = new Map<string, ApprovalRow>();
-  for (const r of db.all<ApprovalRow>(
-    'SELECT a.fact_ref, a.action, a.reason, a.at, u.display_name AS who FROM fact_approvals a ' +
-      'LEFT JOIN users u ON u.id = a.actor_id WHERE a.business_id = ? ORDER BY a.at ASC, a.rowid ASC',
-    [business_id])) out.set(r.fact_ref, r);
+  for (const r of listFactApprovalsFactRefActionByBusinessId<ApprovalRow>(db, [business_id])) out.set(r.fact_ref, r);
   return out;
 }
 
@@ -207,10 +208,7 @@ type StepEventRow = { claim_id: string | null; step: string; action: string; rea
 
 function stepEventsFor(db: Db, business_id: string): Map<string, { last: StepEventRow; told: StepEventRow | null }> {
   const out = new Map<string, { last: StepEventRow; told: StepEventRow | null }>();
-  for (const r of db.all<StepEventRow>(
-    'SELECT e.claim_id, e.step, e.action, e.reason, e.at, u.display_name AS who FROM client_step_notices e ' +
-      'LEFT JOIN users u ON u.id = e.actor_id WHERE e.business_id = ? ORDER BY e.at ASC, e.rowid ASC',
-    [business_id])) {
+  for (const r of listClientStepNoticesClaimIdStepByBusinessId<StepEventRow>(db, [business_id])) {
     const k = `${r.claim_id ?? ''}:${r.step}`;
     const was = out.get(k);
     out.set(k, { last: r, told: r.action === 'TOLD' ? r : (was?.told ?? null) });
@@ -221,9 +219,7 @@ function stepEventsFor(db: Db, business_id: string): Map<string, { last: StepEve
 type ClaimRow = { id: string; claim_ref: string; property_id: string | null; label: string | null };
 
 function claimsOf(db: Db, business_id: string): ClaimRow[] {
-  return db.all<ClaimRow>(
-    'SELECT c.id, c.claim_ref, c.property_id, p.label FROM claims c LEFT JOIN properties p ON p.id = c.property_id ' +
-      'WHERE c.business_id = ? ORDER BY c.created_at ASC, c.claim_ref ASC', [business_id]);
+  return listClaimsIdClaimRefByBusinessId<ClaimRow>(db, [business_id]);
 }
 
 /** Every fact of a company, before its tick is read. Built from the rows themselves, never typed per fact. */
@@ -269,10 +265,7 @@ type TaskRow = {
  */
 function answerFacts(db: Db, business_id: string, claims: readonly ClaimRow[]): RawFact[] {
   const out: RawFact[] = [];
-  for (const t of db.all<TaskRow>(
-    "SELECT id, fact_id, claim_id, question, answer_state, answer, answered_at FROM client_tasks " +
-      "WHERE business_id = ? AND kind = 'QUESTION' AND state = 'ANSWERED' AND answered_by_role = 'CLIENT' ORDER BY answered_at ASC, id ASC",
-    [business_id])) {
+  for (const t of listClientTasksIdFactIdByBusinessIdKind<TaskRow>(db, [business_id])) {
     const fact = t.fact_id ?? '';
     const claimFact = fact.startsWith('claim_fact.') ? fact.slice('claim_fact.'.length) : null;
     const section = claimFact !== null ? 'facts' : fact.startsWith('property.') ? 'property' : sectionOfFact(fact);
@@ -318,10 +311,7 @@ function claimFactFacts(db: Db, claim: ClaimRow): RawFact[] {
 /** The survey, the tax adviser and the report: each is one fact, and it is the record itself. No figure is carried. */
 function milestoneFacts(db: Db, claim: ClaimRow): RawFact[] {
   const out: RawFact[] = [];
-  for (const j of db.all<{ id: string; surveyor_id: string | null; created_at: string; committed_at: string | null; commitment: string | null }>(
-    'SELECT j.id, j.surveyor_id, j.created_at, sc.committed_at, sc.id AS commitment FROM surveyor_jobs j ' +
-      'LEFT JOIN surveyor_commitments sc ON sc.job_id = j.id WHERE j.claim_id = ? ORDER BY j.created_at ASC',
-    [claim.id])) {
+  for (const j of listSurveyorJobsIdSurveyorIdByClaimId<{ id: string; surveyor_id: string | null; created_at: string; committed_at: string | null; commitment: string | null }>(db, [claim.id])) {
     if (j.surveyor_id !== null) {
       out.push({ ref: `job.${j.id}`, step: 'SURVEY_BOOKED', claim_id: claim.id, label: 'A surveyor has the job',
         value: 'Assigned to our surveyor', chip: 'Surveyor', arrived: j.created_at, known: true });
@@ -331,14 +321,11 @@ function milestoneFacts(db: Db, claim: ClaimRow): RawFact[] {
         value: 'Sent — see Figures on the claim', chip: 'Surveyor', arrived: j.committed_at, known: true });
     }
   }
-  for (const s of db.all<{ id: string; signed_on: string; recorded_at: string }>(
-    'SELECT id, signed_on, recorded_at FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at ASC', [claim.id])) {
+  for (const s of listTaxAdviserSignoffsIdSignedOnByClaimId<{ id: string; signed_on: string; recorded_at: string }>(db, [claim.id])) {
     out.push({ ref: `signoff.${s.id}`, step: 'TAX_ADVISER', claim_id: claim.id, label: 'The tax adviser signed the figures off',
       value: `Signed on ${s.signed_on}`, chip: 'Tax adviser', arrived: s.recorded_at, known: true });
   }
-  for (const r of db.all<{ id: string; version: number; issued_on: string | null; updated_at: string }>(
-    "SELECT id, version, issued_on, updated_at FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' AND state = 'ISSUED' " +
-      'ORDER BY version ASC', [claim.id])) {
+  for (const r of listClaimDeliverablesIdVersionByClaimIdKind<{ id: string; version: number; issued_on: string | null; updated_at: string }>(db, [claim.id])) {
     out.push({ ref: `report.${r.id}`, step: 'REPORT', claim_id: claim.id, label: 'The client report was issued',
       value: `Version ${r.version}${r.issued_on === null ? '' : `, issued ${r.issued_on}`}`, chip: 'Cap Rebate', arrived: r.updated_at, known: true });
   }
@@ -384,7 +371,7 @@ function stepView(
  * pages do not draw the section at all. Asked of the company object on this request.
  */
 export function checksPanel(db: Db, actor: Actor, business_id: string, todayIso: string): ChecksPanel {
-  const b = db.get<{ id: string; name: string }>('SELECT id, name FROM businesses WHERE id = ?', [business_id]);
+  const b = getBusinessesIdNameById<{ id: string; name: string }>(db, [business_id]);
   if (b === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'fact.approve', stepsObj(b.id));
   const claims = claimsOf(db, b.id);
@@ -460,8 +447,7 @@ export function approveFact(
   try {
     return d.db.tx((): Result => {
     const tick = (ref: string): void => {
-      d.db.run('INSERT INTO fact_approvals (id, business_id, fact_ref, action, reason, actor_id, at) VALUES (?, ?, ?, ?, NULL, ?, ?)',
-        [d.newId(), business_id, ref, 'APPROVED', actor.id, at]);
+      insertFactApprovals2(d.db, [d.newId(), business_id, ref, 'APPROVED', actor.id, at]);
       d.audit.append({
         at, kind: 'FACT_APPROVED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
         object_type: 'business', object_id: business_id, detail: { fact: ref, step: f.step ?? '(none)', claim: f.claim_id ?? '(none)' },
@@ -501,8 +487,7 @@ export function unapproveFact(
   if (reason === null) return { ok: false, field: 'reason', why: 'Say why you are taking the tick off.' };
   const at = d.now();
   d.db.tx(() => {
-    d.db.run('INSERT INTO fact_approvals (id, business_id, fact_ref, action, reason, actor_id, at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [d.newId(), business_id, f.ref, 'UNAPPROVED', reason, actor.id, at]);
+    insertFactApprovals(d.db, [d.newId(), business_id, f.ref, 'UNAPPROVED', reason, actor.id, at]);
     d.audit.append({
       at, kind: 'FACT_UNAPPROVED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'business', object_id: business_id, detail: { fact: f.ref, step: f.step ?? '(none)', claim: f.claim_id ?? '(none)' },
@@ -533,8 +518,7 @@ export function tellClient(
   }
   const at = d.now();
   d.db.tx(() => {
-    d.db.run('INSERT INTO client_step_notices (id, business_id, claim_id, step, action, reason, actor_id, at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?)',
-      [d.newId(), business_id, claim_id, s.key, 'TOLD', actor.id, at]);
+    insertClientStepNotices2(d.db, [d.newId(), business_id, claim_id, s.key, 'TOLD', actor.id, at]);
     d.audit.append({
       at, kind: 'CLIENT_STEP_TOLD', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'business', object_id: business_id, detail: { step: s.key, claim: claim_id ?? '(none)' },
@@ -557,8 +541,7 @@ export function takeStepBack(
   if (reason === null) return { ok: false, field: 'reason', why: 'Say why you are taking this step back.' };
   const at = d.now();
   d.db.tx(() => {
-    d.db.run('INSERT INTO client_step_notices (id, business_id, claim_id, step, action, reason, actor_id, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [d.newId(), business_id, claim_id, s.key, 'TAKEN_BACK', reason, actor.id, at]);
+    insertClientStepNotices(d.db, [d.newId(), business_id, claim_id, s.key, 'TAKEN_BACK', reason, actor.id, at]);
     d.audit.append({
       at, kind: 'CLIENT_STEP_TAKEN_BACK', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'business', object_id: business_id, detail: { step: s.key, claim: claim_id ?? '(none)' },
@@ -588,8 +571,7 @@ export type ClientStep = {
 export function clientSteps(db: Db, actor: Actor, business_id: string): ClientStep[] {
   authorise(actor, 'client_step.read', stepsObj(business_id));
   const last = new Map<string, { claim_id: string | null; step: string; action: string; at: string }>();
-  for (const r of db.all<{ claim_id: string | null; step: string; action: string; at: string }>(
-    'SELECT claim_id, step, action, at FROM client_step_notices WHERE business_id = ? ORDER BY at ASC, rowid ASC', [business_id])) {
+  for (const r of listClientStepNoticesClaimIdStepByBusinessId2<{ claim_id: string | null; step: string; action: string; at: string }>(db, [business_id])) {
     last.set(`${r.claim_id ?? ''}:${r.step}`, r);
   }
   const order = (k: string): number => STEPS.findIndex((s) => s.key === k);

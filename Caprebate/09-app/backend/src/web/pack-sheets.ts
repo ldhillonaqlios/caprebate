@@ -17,13 +17,13 @@
 import type { Db } from '../core/index.ts';
 import type { PackView, ViewLine } from './survey-pack.ts';
 import { packWords, WORD_FIELDS, type WordField } from './pack-words.ts';
-import { claimantTypeReading, captured, latestFacts } from '../modules/claims/claim-facts.ts';
-import { funnelStateFor, sessionFromFunnel } from '../modules/assessment/funnel-session.ts';
-import { proposeRanges } from '../modules/assessment/sector-ranges.ts';
-import { deskFirstReading } from '../modules/assessment/desk-first.ts';
+import { claimantTypeReading, captured, latestFacts } from '../modules/claims/index.ts';
+import { funnelStateFor, sessionFromFunnel } from '../modules/assessment/index.ts';
+import { proposeRanges } from '../modules/assessment/index.ts';
+import { deskFirstReading } from '../modules/assessment/index.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
 import { findingSeen, FINDING_LABELS } from '../shared/index.ts';
-import { REPORT_ASSUMPTIONS } from '../modules/assessment/report-assumptions.ts';
+import { REPORT_ASSUMPTIONS } from '../modules/assessment/index.ts';
 import { RATES } from '../shared/index.ts';
 import { ESTIMATED_AREA_LABEL } from '../integrations/index.ts';
 import { BAND, FUNNEL } from '../shared/index.ts';
@@ -35,6 +35,7 @@ import { indexReading, insuranceReading, prelimsReading, rateFlagReading, shareF
 import { packDateIso, propertyLine } from './survey-pack.ts';
 import type { Env } from '../integrations/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId } from '../integrations/index.ts';
+import { getLogicalDocumentsCountByBusinessIdTypeCode } from '../modules/claims/index.ts';
 
 /** Where a row's value comes from — shown beside it, so nothing reads as more certain than it is. */
 export type RowFrom = 'the pack' | 'the claim' | 'Land Registry' | 'the energy certificate' | 'Homedata (estimate)' | 'the client'
@@ -84,7 +85,7 @@ function record(db: Db, business_id: string, property_id: string | null, source:
 const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim() : typeof v === 'number' && Number.isFinite(v) ? String(v) : null);
 
 function docsHeld(db: Db, business_id: string, type_code: string): number {
-  return db.get<{ n: number }>('SELECT COUNT(*) AS n FROM logical_documents WHERE business_id = ? AND type_code = ?', [business_id, type_code])?.n ?? 0;
+  return getLogicalDocumentsCountByBusinessIdTypeCode<{ n: number }>(db, [business_id, type_code])?.n ?? 0;
 }
 
 /** The job's own facts the sheets need, read once. */

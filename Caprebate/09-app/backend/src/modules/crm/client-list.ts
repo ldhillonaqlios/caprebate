@@ -20,11 +20,11 @@ import type { Actor } from '../../core/index.ts';
 import { organisationList, assertOrganisationSection, NOT_RECORDED, CLIENT_STATUSES, pipelineBoard, pipelineBoardGate } from './crm.ts';
 import { opens } from '../../core/navigation.ts';
 import { kpiRow, nobodyBadge, siteOf, stageBadge } from '../../core/index.ts';
-import { waitingOn, type WaitingOn } from '../claims/engaged.ts';
+import { waitingOn, type WaitingOn } from '../claims/index.ts';
 import { h, raw, page, type Safe } from '../../shared/index.ts';
 import { badge, claimHref } from '../../shared/index.ts';
 import { newFromClient } from './messages.ts';
-import { newDot } from '../portal/client-layout.ts';
+import { newDot } from '../portal/index.ts';
 
 export type ClientListRow = {
   readonly id: string;

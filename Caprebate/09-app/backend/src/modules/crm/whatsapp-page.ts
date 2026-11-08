@@ -25,6 +25,8 @@ import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../../integrat
 import { isDoNotContact } from '../../integrations/index.ts';
 import { importsFor } from './whatsapp-import.ts';
 import { listWhatsappImportLinesPhoneLastAtByBusinessId } from '../../integrations/index.ts';
+import { getBusinessesNameById } from './data.ts';
+import { listWhatsappMessagesIdCreatedAtByBusinessIdPhone } from './data-borrowed.ts';
 
 /** One person (or one number we filed under the company) we have a WhatsApp conversation with, or could. */
 export type WaPerson = {
@@ -53,11 +55,7 @@ export function waPeople(db: Db, actor: Actor, business_id: string, nowIso: stri
 
 /** The conversation with one number, oldest first. */
 export function waLines(db: Db, business_id: string, number: string, nowIso: string): WaLine[] {
-  return db.all<{ id: string; created_at: string; direction: string; body: string; status: string; error: string | null; contact: string | null; writer: string | null; sender: string | null }>(
-    'SELECT w.id, w.created_at, w.direction, w.body, w.status, w.error, c.full_name AS contact, u.display_name AS writer, l.sender FROM whatsapp_messages w ' +
-    'LEFT JOIN contacts c ON c.id = w.contact_id LEFT JOIN users u ON u.id = w.written_by LEFT JOIN whatsapp_import_lines l ON l.message_id = w.id ' +
-    'WHERE w.business_id = ? AND w.phone = ? ORDER BY w.created_at, w.id',
-    [business_id, number]).map((w) => {
+  return listWhatsappMessagesIdCreatedAtByBusinessIdPhone<{ id: string; created_at: string; direction: string; body: string; status: string; error: string | null; contact: string | null; writer: string | null; sender: string | null }>(db, [business_id, number]).map((w) => {
     const ours = w.direction === 'OUT';
     const imported = w.sender !== null;
     return {
@@ -96,7 +94,7 @@ const DONE: Readonly<Record<string, string>> = {
 export function whatsappPage(app: App, actor: Actor, business_id: string, asked: string | null, done: string | null, nav: Safe): string {
   const db = app.db;
   authorise(actor, 'client_message.read', { type: 'client_message', id: business_id, business_id });
-  const company = db.get<{ name: string }>('SELECT name FROM businesses WHERE id = ?', [business_id])?.name ?? 'This company';
+  const company = getBusinessesNameById<{ name: string }>(db, [business_id])?.name ?? 'This company';
   const now = app.now();
   const people = waPeople(db, actor, business_id, now);
   const chosen = people.find((p) => p.key === asked) ?? people[0] ?? null;

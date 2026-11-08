@@ -23,11 +23,12 @@ import { approvedVersion, type Readiness } from '../../web/pack-approve.ts';
 import type { PackView } from '../../web/survey-pack.ts';
 import { reportHtml, reportModel, reportPdf, longDate, REPORT_TITLE } from '../../web/survey-report.ts';
 import * as S from './report-signoff.ts';
-import { ACCEPT_WORDS, myAcceptance } from '../portal/report-accept.ts';
+import { ACCEPT_WORDS, myAcceptance } from '../portal/index.ts';
 import { ukDate } from '../../shared/index.ts';
 import { poundsWords } from '../../web/pack-sums.ts';
 import { contextForApproval, csvName, returnContextFor, returnEntriesCsv } from './return-entries.ts';
 import { packJob } from '../../web/surveyor.ts';
+import { getSurveyPackApprovalsJsonExtractSnapshotJsonQById } from './data-borrowed.ts';
 
 export type ReportPageDeps = {
   app: App;
@@ -135,7 +136,7 @@ export function sendPanel(d: { app: App; stamp: (iso: string) => string }, actor
   const mine = released !== null && released.row.job_id === v.job.id ? released : null;
   const told = mine === null ? null : S.toldOf(db, mine.row.id);
   const mayEmail = can(actor, 'email.queue', { type: 'email', id: v.job.business_id, business_id: v.job.business_id });
-  const qualifying = db.get<{ q: number | null }>("SELECT json_extract(snapshot_json, '$.sums.qualifying_pence') AS q FROM survey_pack_approvals WHERE id = ?", [latest.id])?.q ?? null;
+  const qualifying = getSurveyPackApprovalsJsonExtractSnapshotJsonQById<{ q: number | null }>(db, [latest.id])?.q ?? null;
   const done = q.get('done');
   const notes: Record<string, string> = {
     emailed: 'Emailed to the accountant, with the PDF and their private sign-off link.',

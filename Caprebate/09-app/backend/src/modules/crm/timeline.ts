@@ -60,9 +60,12 @@ import { CREDIT_BASES, INVOICE_KINDS, formatInvoiceNumber } from '../../web/invo
 import { RECIPROCITY_ACTIVITY_TYPES, TASK_ORIGINS, taskObj } from './tasks.ts';
 import { vocabLabel } from '../../web/vocabularies.ts';
 import { RUN_REASONS } from './automation.ts';
-import { documentObj, versionObj } from '../claims/documents.ts';
+import { documentObj, versionObj } from '../claims/index.ts';
 import { getOutboxAtBySentAt2 } from '../../integrations/index.ts';
 import { listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, listAuditLogAtKindByOutcomeKind3, listAuditLogAtKindByOutcomeKind4, listAuditLogAtWhoByKindObjectId } from '../../core/index.ts';
+import { getBusinessesIdById, getLeadsIdBusinessIdById, getStaffTasksAtByContactIdStatus, listBookingsIdBusinessIdByBusinessIdLeadId, listBookingsIdBusinessIdByLeadIdId, listContactsIdCreatedAtByLeadId, listLeadsIdByBusinessId, listLeadsIdByClaimId } from './data.ts';
+import { listAuditLogAtDetailByKindBusinessId, listBookingChangesAtFromStartsAtByBookingId, listClaimMilestonesRecordedAtMilestoneByClaimId, listClaimStageMovesAtKindByClaimId3, listClientTasksQuestionCreatedAtByBusinessId, listDocumentLinksLogicalDocumentIdBusinessIdByBusinessId, listDocumentsIdDeclaredTypeByBusinessId, listEnquiryChecksRecordedAtCheckKeyByClaimId, listEnquiryChecksRecordedAtCheckKeyByLeadId, listInvoiceCreditNotesRecordedAtBasisByInvoiceId, listInvoicePaymentsRecordedAtVoidedAtByInvoiceId, listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId, listInvoicesIdKindByClaimId, listResearchRunsAtKindByBusinessId, listSurveyorCommitmentsCommittedAtJobIdByClaimId, listSurveyorJobsIdBusinessIdByClaimId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from './data-borrowed.ts';
+import { getEngagementsLetterStateSignedAtByBusinessId2, getPropertiesIdBusinessIdById, listClaimStageMovesAtKindByClaimId, listDocumentEventsAtContractStepByDocId } from '../claims/index.ts';
 
 export type TimelineSubject = { readonly kind: 'organisation' | 'property' | 'claim' | 'lead'; readonly id: string };
 
@@ -173,28 +176,27 @@ function resolve(db: Db, actor: Actor, subject: TimelineSubject): { scope: Scope
     const co = claimObjFor(db, c);
     authorise(actor, 'claim.read', co);
     return {
-      scope: { business_id: c.business_id, claims: [c], leads: db.all<{ id: string }>('SELECT id FROM leads WHERE claim_id = ?', [c.id]).map((r) => r.id) },
+      scope: { business_id: c.business_id, claims: [c], leads: listLeadsIdByClaimId<{ id: string }>(db, [c.id]).map((r) => r.id) },
       obj: { type: 'timeline', id: c.id, business_id: c.business_id, assigned_surveyor_ids: co.assigned_surveyor_ids },
     };
   }
   if (subject.kind === 'organisation') {
-    const b = db.get<{ id: string }>('SELECT id FROM businesses WHERE id = ?', [subject.id]);
+    const b = getBusinessesIdById<{ id: string }>(db, [subject.id]);
     if (b === undefined) throw new NotFoundAsRefusal();
     authorise(actor, 'organisation.read', { type: 'business', id: b.id });
     return {
       scope: {
         business_id: b.id,
         claims: db.all<{ id: string; claim_ref: string; business_id: string; property_label: string | null }>(`${CLAIM_SCOPE_SELECT}WHERE c.business_id = ? ORDER BY c.claim_ref`, [b.id]),
-        leads: db.all<{ id: string }>('SELECT id FROM leads WHERE business_id = ?', [b.id]).map((r) => r.id),
+        leads: listLeadsIdByBusinessId<{ id: string }>(db, [b.id]).map((r) => r.id),
       },
       obj: { type: 'timeline', id: b.id, business_id: b.id, assigned_surveyor_ids: [] },
     };
   }
   if (subject.kind === 'property') {
-    const p = db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM properties WHERE id = ?', [subject.id]);
+    const p = getPropertiesIdBusinessIdById<{ id: string; business_id: string }>(db, [subject.id]);
     if (p === undefined) throw new NotFoundAsRefusal();
-    const surveyors = db.all<{ surveyor_id: string }>(
-      'SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', [p.business_id]).map((r) => r.surveyor_id);
+    const surveyors = listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3<{ surveyor_id: string }>(db, [p.business_id]).map((r) => r.surveyor_id);
     authorise(actor, 'property.read', { type: 'property', id: p.id, business_id: p.business_id, assigned_surveyor_ids: surveyors });
     return {
       scope: {
@@ -206,7 +208,7 @@ function resolve(db: Db, actor: Actor, subject: TimelineSubject): { scope: Scope
       obj: { type: 'timeline', id: p.id, business_id: p.business_id, assigned_surveyor_ids: [] },
     };
   }
-  const l = db.get<{ id: string; business_id: string | null }>('SELECT id, business_id FROM leads WHERE id = ?', [subject.id]);
+  const l = getLeadsIdBusinessIdById<{ id: string; business_id: string | null }>(db, [subject.id]);
   if (l === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'lead.read', { type: 'lead', id: l.id, business_id: l.business_id });
   return {
@@ -235,8 +237,7 @@ export function timelineFor(db: Db, actor: Actor, subject: TimelineSubject): Tim
   const pipelineFull = can(actor, 'pipeline.read', { type: 'pipeline', id: subject.id });
   const jobs: { id: string; claim_id: string }[] = [];
   for (const c of scope.claims) {
-    for (const j of db.all<{ id: string; business_id: string; surveyor_id: string | null }>(
-      'SELECT id, business_id, surveyor_id FROM surveyor_jobs WHERE claim_id = ?', [c.id])) {
+    for (const j of listSurveyorJobsIdBusinessIdByClaimId<{ id: string; business_id: string; surveyor_id: string | null }>(db, [c.id])) {
       if (can(actor, 'surveyor_job.read', { type: 'surveyor_job', id: j.id, business_id: j.business_id, surveyor_id: j.surveyor_id })) {
         jobs.push({ id: j.id, claim_id: c.id });
       }
@@ -264,7 +265,7 @@ export function timelineFor(db: Db, actor: Actor, subject: TimelineSubject): Tim
     automation(db, subject, scope, add, claimScope, leadScope);
     if (subject.kind === 'lead') {
       leadOutbox(db, subject.id, add, leadScope);
-      for (const r of db.all<{ id: string; created_at: string }>('SELECT id, created_at FROM contacts WHERE lead_id = ?', [subject.id])) {
+      for (const r of listContactsIdCreatedAtByLeadId<{ id: string; created_at: string }>(db, [subject.id])) {
         if (!can(actor, 'contact.read', { type: 'contact', id: r.id, business_id: null })) continue;
         add({ at: r.created_at, category: 'CONTACT', audience: 'STAFF_ONLY', who: null, scope: leadScope,
           what: 'The person who asked was recorded, with the channel they chose and their consent for it' });
@@ -272,9 +273,7 @@ export function timelineFor(db: Db, actor: Actor, subject: TimelineSubject): Tim
     }
   }
   if (research && biz !== null) {
-    for (const r of db.all<{ at: string; kind: string; considered: number; fired: number; not_permitted: number; failed: number; who: string | null }>(
-      'SELECT r.at, r.kind, r.considered, r.fired, r.not_permitted, r.failed, u.display_name AS who FROM research_runs r ' +
-        'LEFT JOIN users u ON u.id = r.actor_id WHERE r.business_id = ? ORDER BY r.at', [biz])) {
+    for (const r of listResearchRunsAtKindByBusinessId<{ at: string; kind: string; considered: number; fired: number; not_permitted: number; failed: number; who: string | null }>(db, [biz])) {
       add({ at: r.at, category: 'RESEARCH', audience: 'STAFF_ONLY', who: r.who, scope: orgScope,
         what: `${r.kind === 'RETRY' ? 'A failed source was retried' : 'The research was run'}: ${r.considered} sources in all, ${r.fired} looked up, ${r.not_permitted} waiting for a go-ahead, ${r.failed} failed` });
     }
@@ -288,30 +287,23 @@ export function timelineFor(db: Db, actor: Actor, subject: TimelineSubject): Tim
 
   for (const c of scope.claims) {
     if (pipelineFull) {
-      for (const m of db.all<{ at: string; kind: string; from_stage: string | null; to_stage: string | null; reason_code: string | null; reason_text: string | null; who: string | null }>(
-        'SELECT m.at, m.kind, m.from_stage, m.to_stage, m.reason_code, m.reason_text, u.display_name AS who ' +
-          'FROM claim_stage_moves m LEFT JOIN users u ON u.id = m.actor_id WHERE m.claim_id = ? ORDER BY m.at, m.rowid', [c.id])) {
+      for (const m of listClaimStageMovesAtKindByClaimId3<{ at: string; kind: string; from_stage: string | null; to_stage: string | null; reason_code: string | null; reason_text: string | null; who: string | null }>(db, [c.id])) {
         const reason = reasonLabel(db, 'CLAIM_EXIT', m.reason_code);
         add({ at: m.at, category: 'STAGE', audience: 'STAFF_ONLY', who: m.who, scope: claimScope(c.claim_ref),
           what: `${w(MOVE_WORDS, m.kind, m.kind)}: ${anyStageLabel(m.from_stage)} → ${anyStageLabel(m.to_stage)}${reason === null ? '' : ` — ${reason}`}${m.reason_text === null ? '' : ` — “${m.reason_text}”`}` });
       }
-      for (const m of db.all<{ recorded_at: string; milestone: string; who: string | null }>(
-        'SELECT cm.recorded_at, cm.milestone, u.display_name AS who FROM claim_milestones cm LEFT JOIN users u ON u.id = cm.recorded_by ' +
-          'WHERE cm.claim_id = ? ORDER BY cm.recorded_at', [c.id])) {
+      for (const m of listClaimMilestonesRecordedAtMilestoneByClaimId<{ recorded_at: string; milestone: string; who: string | null }>(db, [c.id])) {
         const label = Object.hasOwn(MILESTONES, m.milestone) ? MILESTONES[m.milestone as keyof typeof MILESTONES].label : m.milestone;
         add({ at: m.recorded_at, category: 'CONFIRMATION', audience: 'STAFF_ONLY', who: m.who, scope: claimScope(c.claim_ref), what: `Confirmed: ${label}` });
       }
       enquiry(db, 'claim_id', c.id, add, claimScope(c.claim_ref));
     } else if (surveyReach && jobs.some((j) => j.claim_id === c.id)) {
-      for (const m of db.all<{ at: string; kind: string; to_stage: string | null }>(
-        'SELECT at, kind, to_stage FROM claim_stage_moves WHERE claim_id = ? ORDER BY at, rowid', [c.id])) {
+      for (const m of listClaimStageMovesAtKindByClaimId<{ at: string; kind: string; to_stage: string | null }>(db, [c.id])) {
         add({ at: m.at, category: 'STAGE', audience: 'STAFF_ONLY', who: null, scope: claimScope(c.claim_ref),
           what: `${w(MOVE_WORDS, m.kind, m.kind)}: now at ${anyStageLabel(m.to_stage)}` });
       }
     }
-    for (const k of db.all<{ committed_at: string; job_id: string; who: string | null }>(
-      'SELECT sc.committed_at, sc.job_id, u.display_name AS who FROM surveyor_commitments sc JOIN surveyor_jobs j ON j.id = sc.job_id ' +
-        'LEFT JOIN users u ON u.id = sc.surveyor_id WHERE j.claim_id = ? ORDER BY sc.committed_at', [c.id])) {
+    for (const k of listSurveyorCommitmentsCommittedAtJobIdByClaimId<{ committed_at: string; job_id: string; who: string | null }>(db, [c.id])) {
       if (!staff && !jobs.some((j) => j.id === k.job_id)) continue;
       add({ at: k.committed_at, category: 'SURVEY', audience: 'STAFF_ONLY', who: k.who, scope: claimScope(c.claim_ref),
         what: 'The surveyor committed their own figures, and our estimate was released to them' });
@@ -346,21 +338,15 @@ type Add = (e: Omit<TimelineEvent, 'when'>) => void;
 
 function bookings(db: Db, actor: Actor, subject: TimelineSubject, biz: string | null, add: Add, orgScope: string, leadScope: string): void {
   const rows = subject.kind === 'lead'
-    ? db.all<{ id: string; business_id: string | null; lead_id: string | null; channel: string; entry_point: string; created_at: string }>(
-      'SELECT k.id, k.business_id, k.lead_id, k.channel, k.entry_point, k.created_at FROM bookings k ' +
-        'WHERE k.lead_id = ? OR k.id = (SELECT l.booking_id FROM leads l WHERE l.id = ?) ORDER BY k.created_at', [subject.id, subject.id])
+    ? listBookingsIdBusinessIdByLeadIdId<{ id: string; business_id: string | null; lead_id: string | null; channel: string; entry_point: string; created_at: string }>(db, [subject.id, subject.id])
     : subject.kind === 'property' || biz === null ? []
-      : db.all<{ id: string; business_id: string | null; lead_id: string | null; channel: string; entry_point: string; created_at: string }>(
-        'SELECT k.id, k.business_id, k.lead_id, k.channel, k.entry_point, k.created_at FROM bookings k ' +
-          'WHERE k.business_id = ? OR k.lead_id IN (SELECT l.id FROM leads l WHERE l.business_id = ?) ORDER BY k.created_at', [biz, biz]);
+      : listBookingsIdBusinessIdByBusinessIdLeadId<{ id: string; business_id: string | null; lead_id: string | null; channel: string; entry_point: string; created_at: string }>(db, [biz, biz]);
   for (const k of rows) {
     if (!can(actor, 'booking.read', { type: 'booking', id: k.id, business_id: k.business_id })) continue;
     const scope = subject.kind === 'lead' ? leadScope : orgScope;
     add({ at: k.created_at, category: 'BOOKING', audience: 'CLIENT_SEES', who: null, scope,
       what: `The client asked for ${w(CHANNEL_WORDS, k.channel, k.channel)} — asked at ${k.entry_point.replace(/_/g, ' ')}` });
-    for (const ch of db.all<{ at: string; from_starts_at: string | null; to_starts_at: string | null; who: string | null; cancelled: number }>(
-      'SELECT c.at, c.from_starts_at, c.to_starts_at, u.display_name AS who, c.cancelled FROM booking_changes c LEFT JOIN users u ON u.id = c.changed_by ' +
-        'WHERE c.booking_id = ? ORDER BY c.at', [k.id])) {
+    for (const ch of listBookingChangesAtFromStartsAtByBookingId<{ at: string; from_starts_at: string | null; to_starts_at: string | null; who: string | null; cancelled: number }>(db, [k.id])) {
       add({ at: ch.at, category: 'BOOKING', audience: 'CLIENT_SEES', who: ch.who, scope,
         what: ch.cancelled === 1 ? 'The call was cancelled'
           : ch.to_starts_at === null ? 'The call was released back to us with no time'
@@ -371,19 +357,12 @@ function bookings(db: Db, actor: Actor, subject: TimelineSubject, biz: string | 
 }
 
 function clientQuestions(db: Db, biz: string, add: Add, scope: string, subject: TimelineSubject, claimScope: (ref: string) => string): void {
-  for (const q of db.all<{
+  for (const q of listClientTasksQuestionCreatedAtByBusinessId<{
     question: string; created_at: string; sent_to_portal_at: string | null; answered_at: string | null; answer_state: string | null;
     answered_by_role: string | null; withdrawn_at: string | null; due_on: string | null; asked_by: string | null; answered_by: string | null;
     withdrawn_by: string | null; kind: string; type_label: string | null; claim_id: string | null; claim_ref: string | null;
     received_version: number | null; received_seq: number | null;
-  }>(
-    'SELECT ct.question, ct.created_at, ct.sent_to_portal_at, ct.answered_at, ct.answer_state, ct.answered_by_role, ct.withdrawn_at, ' +
-      'ct.due_on, ab.display_name AS asked_by, an.display_name AS answered_by, wb.display_name AS withdrawn_by, ct.kind, ' +
-      't.label AS type_label, ct.claim_id, c.claim_ref, d.version_no AS received_version, l.seq AS received_seq FROM client_tasks ct ' +
-      'LEFT JOIN users ab ON ab.id = ct.asked_by LEFT JOIN users an ON an.id = ct.answered_by LEFT JOIN users wb ON wb.id = ct.withdrawn_by ' +
-      'LEFT JOIN document_types t ON t.code = ct.requested_type LEFT JOIN claims c ON c.id = ct.claim_id ' +
-      'LEFT JOIN documents d ON d.id = ct.received_document_id LEFT JOIN logical_documents l ON l.id = d.logical_document_id ' +
-      'WHERE ct.business_id = ? ORDER BY ct.created_at', [biz])) {
+  }>(db, [biz])) {
     const due = q.due_on === null ? '' : `, due ${q.due_on}`;
     /* CRM 4 of 10 — A DOCUMENT REQUEST, drawn from the same row as a question and
        in its own words: requested, received by an upload, or withdrawn. */
@@ -426,13 +405,10 @@ function clientQuestions(db: Db, biz: string, add: Add, scope: string, subject: 
 }
 
 function documents(db: Db, actor: Actor, biz: string, add: Add, scope: string): void {
-  for (const doc of db.all<{
+  for (const doc of listDocumentsIdDeclaredTypeByBusinessId<{
     id: string; declared_type: string | null; doc_type: string | null; state: string; created_at: string;
     type_label: string | null; seq: number | null; version_no: number | null;
-  }>(
-    'SELECT d.id, d.declared_type, d.doc_type, d.state, d.created_at, t.label AS type_label, l.seq, d.version_no FROM documents d ' +
-      'LEFT JOIN document_types t ON t.code = d.type_code LEFT JOIN logical_documents l ON l.id = d.logical_document_id ' +
-      'WHERE d.business_id = ? ORDER BY d.created_at', [biz])) {
+  }>(db, [biz])) {
     // CRM 4 of 10: A DOCUMENT IS ON THE TIMELINE ONLY FOR A READER OF THAT DOCUMENT —
     // Sales does not learn from here that a fee invoice exists.
     const o = versionObj(db, doc.id);
@@ -441,8 +417,7 @@ function documents(db: Db, actor: Actor, biz: string, add: Add, scope: string): 
       ? `${doc.type_label} ${doc.seq}, version ${doc.version_no ?? ''}`
       : (doc.doc_type ?? doc.declared_type ?? 'type not given').replace(/_/g, ' ');
     add({ at: doc.created_at, category: 'DOCUMENT', audience: 'CLIENT_SEES', who: null, scope, what: `A document was uploaded — ${type}` });
-    for (const e of db.all<{ at: string; contract_step: number; action: string; outcome: string }>(
-      'SELECT at, contract_step, action, outcome FROM document_events WHERE doc_id = ? ORDER BY contract_step, at', [doc.id])) {
+    for (const e of listDocumentEventsAtContractStepByDocId<{ at: string; contract_step: number; action: string; outcome: string }>(db, [doc.id])) {
       add({ at: e.at, category: 'DOCUMENT', audience: 'STAFF_ONLY', who: null, scope,
         what: `Upload step ${e.contract_step} for the ${type}: ${e.action.replace(/_/g, ' ')} — ${e.outcome}` });
     }
@@ -451,16 +426,11 @@ function documents(db: Db, actor: Actor, biz: string, add: Add, scope: string): 
 
 /** CRM 4 of 10 — a document linked to a claim or a property, and the link ended. Read off `document_links`. */
 function documentLinks(db: Db, actor: Actor, subject: TimelineSubject, biz: string, add: Add, scope: string, claimScope: (ref: string) => string): void {
-  for (const k of db.all<{
+  for (const k of listDocumentLinksLogicalDocumentIdBusinessIdByBusinessId<{
     logical_document_id: string; business_id: string; readers: string; carries_value: number; label: string; seq: number;
     claim_id: string | null; claim_ref: string | null; property_label: string | null; linked_at: string; unlinked_at: string | null;
     linked_by: string | null; unlinked_by: string | null;
-  }>(
-    'SELECT k.logical_document_id, l.business_id, t.readers, t.carries_value, t.label, l.seq, k.claim_id, c.claim_ref, p.label AS property_label, ' +
-      'k.linked_at, k.unlinked_at, lb.display_name AS linked_by, ub.display_name AS unlinked_by FROM document_links k ' +
-      'JOIN logical_documents l ON l.id = k.logical_document_id JOIN document_types t ON t.code = l.type_code ' +
-      'LEFT JOIN claims c ON c.id = k.claim_id LEFT JOIN properties p ON p.id = k.property_id ' +
-      'LEFT JOIN users lb ON lb.id = k.linked_by LEFT JOIN users ub ON ub.id = k.unlinked_by WHERE l.business_id = ? ORDER BY k.linked_at', [biz])) {
+  }>(db, [biz])) {
     if (!can(actor, 'document.read', documentObj(db, { id: k.logical_document_id, business_id: k.business_id, readers: k.readers, carries_value: k.carries_value }))) continue;
     const target = k.claim_id !== null ? (subject.kind === 'claim' && subject.id === k.claim_id ? 'this claim' : (k.claim_ref === null ? 'a claim' : `the claim on ${claimScope(k.claim_ref)}`)) : `the property ${k.property_label ?? ''}`.trim();
     add({ at: k.linked_at, category: 'DOCUMENT', audience: 'STAFF_ONLY', who: k.linked_by, scope, what: `${k.label} ${k.seq} was linked to ${target}` });
@@ -471,8 +441,7 @@ function documentLinks(db: Db, actor: Actor, subject: TimelineSubject, biz: stri
 }
 
 function engagement(db: Db, biz: string, add: Add, scope: string): void {
-  const e = db.get<{ letter_state: string; signed_at: string | null; created_at: string }>(
-    'SELECT letter_state, signed_at, created_at FROM engagements WHERE business_id = ?', [biz]);
+  const e = getEngagementsLetterStateSignedAtByBusinessId2<{ letter_state: string; signed_at: string | null; created_at: string }>(db, [biz]);
   if (e === undefined) return;
   add({ at: e.created_at, category: 'ENGAGEMENT', audience: 'STAFF_ONLY', who: null, scope, what: 'The engagement letter was raised' });
   if (e.signed_at !== null) add({ at: e.signed_at, category: 'ENGAGEMENT', audience: 'CLIENT_SEES', who: null, scope, what: 'The engagement letter was signed' });
@@ -537,10 +506,7 @@ function invoices(
 ): void {
   for (const c of claims) {
     const scope = claimScope(c.claim_ref);
-    for (const i of db.all<{ id: string; kind: string; created_at: string; cancelled_at: string | null; seq: number | null; raiser: string | null; canceller: string | null }>(
-      'SELECT i.id, i.kind, i.created_at, i.cancelled_at, n.seq, u.display_name AS raiser, x.display_name AS canceller FROM invoices i ' +
-        "LEFT JOIN invoice_numbers n ON n.invoice_id = i.id AND n.kind = 'INVOICE' LEFT JOIN users u ON u.id = i.raised_by " +
-        'LEFT JOIN users x ON x.id = i.cancelled_by WHERE i.claim_id = ? ORDER BY i.created_at', [c.id])) {
+    for (const i of listInvoicesIdKindByClaimId<{ id: string; kind: string; created_at: string; cancelled_at: string | null; seq: number | null; raiser: string | null; canceller: string | null }>(db, [c.id])) {
       const number = formatInvoiceNumber(i.seq) ?? 'an unnumbered invoice';
       add({ at: i.created_at, category: 'FINANCE', audience: 'STAFF_ONLY', who: i.raiser, scope,
         what: `Invoice ${number} was raised — ${w(INVOICE_KINDS, i.kind, i.kind)}` });
@@ -551,15 +517,11 @@ function invoices(
       for (const a of listAuditLogAtWhoByKindObjectId<{ at: string; who: string | null }>(db, [i.id])) {
         add({ at: a.at, category: 'FINANCE', audience: 'STAFF_ONLY', who: a.who, scope, what: `Invoice ${number} was recorded as sent` });
       }
-      for (const n of db.all<{ recorded_at: string; basis: string; seq: number | null; who: string | null }>(
-        'SELECT c.recorded_at, c.basis, n.seq, u.display_name AS who FROM invoice_credit_notes c LEFT JOIN invoice_numbers n ON n.credit_note_id = c.id ' +
-          'LEFT JOIN users u ON u.id = c.recorded_by WHERE c.invoice_id = ? ORDER BY c.recorded_at', [i.id])) {
+      for (const n of listInvoiceCreditNotesRecordedAtBasisByInvoiceId<{ recorded_at: string; basis: string; seq: number | null; who: string | null }>(db, [i.id])) {
         add({ at: n.recorded_at, category: 'FINANCE', audience: 'STAFF_ONLY', who: n.who, scope,
           what: `Credit note ${formatInvoiceNumber(n.seq) ?? ''} was issued against invoice ${number} — ${w(CREDIT_BASES, n.basis, n.basis)}` });
       }
-      for (const p of db.all<{ recorded_at: string; voided_at: string | null; who: string | null; voider: string | null }>(
-        'SELECT p.recorded_at, p.voided_at, u.display_name AS who, v.display_name AS voider FROM invoice_payments p ' +
-          'LEFT JOIN users u ON u.id = p.recorded_by LEFT JOIN users v ON v.id = p.voided_by WHERE p.invoice_id = ? ORDER BY p.recorded_at', [i.id])) {
+      for (const p of listInvoicePaymentsRecordedAtVoidedAtByInvoiceId<{ recorded_at: string; voided_at: string | null; who: string | null; voider: string | null }>(db, [i.id])) {
         add({ at: p.recorded_at, category: 'FINANCE', audience: 'STAFF_ONLY', who: p.who, scope,
           what: `Money was recorded as received against invoice ${number} — recorded, not collected` });
         if (p.voided_at !== null) {
@@ -573,14 +535,11 @@ function invoices(
   const scope = orgScope;
   const inv = INVOICE_WORDS as Readonly<Record<string, string>>;
   const pay = PAYMENT_WORDS as Readonly<Record<string, string>>;
-  for (const i of db.all<{ created_at: string; invoice_status: string; payment_status: string }>(
-    'SELECT created_at, invoice_status, payment_status FROM invoices WHERE business_id = ? AND claim_id IS NULL ORDER BY created_at', [biz])) {
+  for (const i of listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId<{ created_at: string; invoice_status: string; payment_status: string }>(db, [biz])) {
     add({ at: i.created_at, category: 'FINANCE', audience: 'STAFF_ONLY', who: null, scope,
       what: `An invoice record was opened — ${w(inv, i.invoice_status, i.invoice_status)}, ${w(pay, i.payment_status, i.payment_status)}` });
   }
-  for (const a of db.all<{ at: string; detail: string; who: string | null }>(
-    'SELECT a.at, a.detail, u.display_name AS who FROM audit_log a JOIN invoices i ON i.id = a.object_id ' +
-      "LEFT JOIN users u ON u.id = a.actor_id WHERE a.kind = 'INVOICE_UPDATED' AND i.business_id = ? AND i.claim_id IS NULL ORDER BY a.seq", [biz])) {
+  for (const a of listAuditLogAtDetailByKindBusinessId<{ at: string; detail: string; who: string | null }>(db, [biz])) {
     const d = JSON.parse(a.detail) as Record<string, unknown>;
     add({ at: a.at, category: 'FINANCE', audience: 'STAFF_ONLY', who: a.who, scope,
       what: `The invoice was marked ${w(inv, String(d['invoice_status'] ?? ''), 'a state not recorded')}, ${w(pay, String(d['payment_status'] ?? ''), 'a payment state not recorded')}` });
@@ -589,10 +548,8 @@ function invoices(
 
 function enquiry(db: Db, column: 'claim_id' | 'lead_id', id: string, add: Add, scope: string): void {
   const rows = column === 'claim_id'
-    ? db.all<{ recorded_at: string; check_key: string; answer: string; who: string | null }>(
-      'SELECT e.recorded_at, e.check_key, e.answer, u.display_name AS who FROM enquiry_checks e LEFT JOIN users u ON u.id = e.recorded_by WHERE e.claim_id = ? ORDER BY e.recorded_at', [id])
-    : db.all<{ recorded_at: string; check_key: string; answer: string; who: string | null }>(
-      'SELECT e.recorded_at, e.check_key, e.answer, u.display_name AS who FROM enquiry_checks e LEFT JOIN users u ON u.id = e.recorded_by WHERE e.lead_id = ? ORDER BY e.recorded_at', [id]);
+    ? listEnquiryChecksRecordedAtCheckKeyByClaimId<{ recorded_at: string; check_key: string; answer: string; who: string | null }>(db, [id])
+    : listEnquiryChecksRecordedAtCheckKeyByLeadId<{ recorded_at: string; check_key: string; answer: string; who: string | null }>(db, [id]);
   for (const e of rows) {
     add({ at: e.recorded_at, category: 'ENQUIRY', audience: 'STAFF_ONLY', who: e.who, scope,
       what: `Enquiry check: ${w(ENQUIRY_CHECKS, e.check_key, e.check_key)} — ${e.answer === 'UNKNOWN' ? 'not known, which does not pass' : e.answer.toLowerCase()}` });
@@ -708,9 +665,7 @@ export const NO_CONTACT_RECORDED = 'no contact recorded — nothing on the timel
  * all read identically: no contact recorded.
  */
 export function lastContactFor(db: Db, c: { id: string; email: string | null; last_contact_at: string | null }): LastContact {
-  const task = db.get<{ at: string | null }>(
-    "SELECT MAX(completed_at) AS at FROM staff_tasks WHERE contact_id = ? AND status = 'COMPLETED' AND activity_type IN ('CALL','EMAIL','MEETING')",
-    [c.id])?.at ?? null;
+  const task = getStaffTasksAtByContactIdStatus<{ at: string | null }>(db, [c.id])?.at ?? null;
   const sent = c.email === null ? null : getOutboxAtBySentAt2<{ at: string | null }>(db, [c.email])?.at ?? null;
   const candidates = [
     { at: task, source: 'a completed call, email or meeting task' },

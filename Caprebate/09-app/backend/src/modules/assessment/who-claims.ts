@@ -26,6 +26,9 @@
 import type { Db } from '../../core/index.ts';
 import { isDormant, DORMANT_WORDS } from '../../integrations/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId11, getRegisterRecordsFieldsJsonByBusinessIdSourceId2, getRegisterRecordsFieldsJsonByBusinessIdSourceId5, getRegisterRecordsFieldsJsonByBusinessIdSourceId6, getRegisterRecordsFieldsJsonByBusinessIdSourceId7, getRegisterRecordsFieldsJsonByBusinessIdSourceId9, getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId3 } from '../../integrations/index.ts';
+import { getPropertiesBusinessIdTenureById, getPropertiesClaimantRoleClaimantRoleSourceById, getPropertiesCouncilAreaById, getPropertiesCouncilAreaCouncilAreaSourceById, getPropertiesTenureTenureSourceById, listPropertiesIdLabelByBusinessId, updatePropertiesCouncilAreaCouncilAreaSourceById, updatePropertiesTenureTenureSourceById } from '../claims/index.ts';
+import { getBusinessesClaimantTypeById, listContactsFullNameByBusinessId } from '../crm/index.ts';
+import { getAssessmentsCompanyNumberCompanyStatusByBusinessIdCompanyN } from './data.ts';
 
 const json = (s: string | null | undefined): Record<string, unknown> => {
   if (typeof s !== 'string') return {};
@@ -109,9 +112,7 @@ export type SearchedCompany = { readonly number: string; readonly status: string
  * research writes is newer and wins wherever it exists; this is what is known before it. A type not read is not known.
  */
 export function companyAtAssessment(db: Db, business_id: string): SearchedCompany | null {
-  const r = db.get<{ company_number: string; company_status: string | null; company_accounts_type: string | null }>(
-    'SELECT company_number, company_status, company_accounts_type FROM assessments WHERE business_id = ? AND company_number IS NOT NULL ORDER BY submitted_at DESC, id DESC LIMIT 1',
-    [business_id]);
+  const r = getAssessmentsCompanyNumberCompanyStatusByBusinessIdCompanyN<{ company_number: string; company_status: string | null; company_accounts_type: string | null }>(db, [business_id]);
   if (r === undefined) return null;
   return { number: r.company_number, status: r.company_status, accounts_type: r.company_accounts_type, dormant: isDormant(r.company_accounts_type) };
 }
@@ -149,7 +150,7 @@ export type RoleReading = { readonly role: ClaimantRole | null; readonly source:
 /** How the client holds this building, with where that came from. */
 export function claimantRole(db: Db, property_id: string | null): RoleReading {
   if (property_id === null) return { role: null, source: null, words: 'Not known: no property is recorded.' };
-  const p = db.get<{ claimant_role: string | null; claimant_role_source: string | null }>('SELECT claimant_role, claimant_role_source FROM properties WHERE id = ?', [property_id]);
+  const p = getPropertiesClaimantRoleClaimantRoleSourceById<{ claimant_role: string | null; claimant_role_source: string | null }>(db, [property_id]);
   const role = p?.claimant_role === 'OWNER_OCCUPIER' || p?.claimant_role === 'LANDLORD' || p?.claimant_role === 'TENANT' ? p.claimant_role : null;
   if (role === null) return { role: null, source: null, words: 'Not known: ask who owns the building and who uses it.' };
   return { role, source: p?.claimant_role_source ?? null, words: ROLE_WORDS[role] };
@@ -175,7 +176,7 @@ export function qualifyingActivityEvidence(db: Db, business_id: string): string[
       if (a.dormant) out.push(DORMANT_WORDS);
     }
   }
-  for (const p of db.all<{ id: string; label: string }>('SELECT id, label FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC', [business_id])) {
+  for (const p of listPropertiesIdLabelByBusinessId<{ id: string; label: string }>(db, [business_id])) {
     const r = claimantRole(db, p.id);
     out.push(`${p.label}: ${r.role === null ? r.words : `${ROLE_LABELS[r.role]}. ${r.words}`}${r.source === null ? '' : ` (${r.source})`}`);
   }
@@ -242,8 +243,7 @@ export type TenureReading = {
 /** The property's tenure, lease and how the client holds it — read by the route (159d) and the legal check (159h). */
 export function propertyTenure(db: Db, property_id: string | null): TenureReading {
   const role = claimantRole(db, property_id);
-  const p = property_id === null ? undefined : db.get<{ tenure: string | null; tenure_source: string | null; lease_end_date: string | null; landlord: string | null }>(
-    'SELECT tenure, tenure_source, lease_end_date, landlord FROM properties WHERE id = ?', [property_id]);
+  const p = property_id === null ? undefined : getPropertiesTenureTenureSourceById<{ tenure: string | null; tenure_source: string | null; lease_end_date: string | null; landlord: string | null }>(db, [property_id]);
   const tenure = p?.tenure === 'FREEHOLD' || p?.tenure === 'LEASEHOLD' ? p.tenure : null;
   const parts = [tenure === null ? 'Tenure not known' : `${tenure === 'FREEHOLD' ? 'Freehold' : 'Leasehold'}${p?.tenure_source ? ` (${p.tenure_source})` : ''}`];
   if (tenure === 'LEASEHOLD') parts.push(p?.lease_end_date ? `the lease ends on ${p.lease_end_date}` : 'when the lease ends is not known');
@@ -256,14 +256,14 @@ export function propertyTenure(db: Db, property_id: string | null): TenureReadin
  * copy of the register), then Price Paid's sale. Never over a tenure already recorded. Returns what it wrote, or null.
  */
 export function fillTenureFromRegisters(db: Db, property_id: string, now: string): { tenure: 'FREEHOLD' | 'LEASEHOLD'; source: string } | null {
-  const p = db.get<{ business_id: string; tenure: string | null }>('SELECT business_id, tenure FROM properties WHERE id = ?', [property_id]);
+  const p = getPropertiesBusinessIdTenureById<{ business_id: string; tenure: string | null }>(db, [property_id]);
   if (p === undefined || p.tenure === 'FREEHOLD' || p.tenure === 'LEASEHOLD') return null;
   for (const [source, words] of [['HMLR_TITLE', 'from the title register'], ['HMLR_PPD', 'from HM Land Registry’s Price Paid']] as const) {
     const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId2<{ fields_json: string }>(db, [p.business_id, source, property_id]);
     const t = text(json(r?.fields_json)['tenure'])?.toLowerCase();
     if (t === 'freehold' || t === 'leasehold') {
       const tenure = t === 'freehold' ? 'FREEHOLD' : 'LEASEHOLD';
-      db.run('UPDATE properties SET tenure = ?, tenure_source = ?, updated_at = ? WHERE id = ?', [tenure, words, now, property_id]);
+      updatePropertiesTenureTenureSourceById(db, [tenure, words, now, property_id]);
       return { tenure, source: words };
     }
   }
@@ -327,7 +327,7 @@ export function sameName(a: string, b: string): boolean {
  * themselves, so the company number cannot match it (src/modules/claims/claim-route.ts stillOwned).
  */
 export function personIsClients(db: Db, business_id: string, registerName: string): boolean {
-  return db.all<{ full_name: string }>('SELECT full_name FROM contacts WHERE business_id = ?', [business_id]).some((c) => sameName(c.full_name, registerName));
+  return listContactsFullNameByBusinessId<{ full_name: string }>(db, [business_id]).some((c) => sameName(c.full_name, registerName));
 }
 
 /**
@@ -336,7 +336,7 @@ export function personIsClients(db: Db, business_id: string, registerName: strin
  * exception 2 (`proprietor_name_personal`), compared now. Only for a claimant who holds property personally.
  */
 export function registerNamesClientPerson(db: Db, business_id: string, property_id: string): boolean {
-  const t = db.get<{ claimant_type: string | null }>('SELECT claimant_type FROM businesses WHERE id = ?', [business_id])?.claimant_type ?? null;
+  const t = getBusinessesClaimantTypeById<{ claimant_type: string | null }>(db, [business_id])?.claimant_type ?? null;
   if (t === null || !PERSONAL_CLAIMANTS.includes(t)) return false;
   const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId9<{ fields_json: string }>(db, [business_id, property_id]);
   if (r === undefined) return false;
@@ -354,15 +354,15 @@ export function registerNamesClientPerson(db: Db, business_id: string, property_
 export function keepCouncilArea(db: Db, property_id: string, area: string | null, source: string, now: string): boolean {
   const a = text(area);
   if (a === null || a.length > 100) return false;
-  const p = db.get<{ council_area: string | null }>('SELECT council_area FROM properties WHERE id = ?', [property_id]);
+  const p = getPropertiesCouncilAreaById<{ council_area: string | null }>(db, [property_id]);
   if (p === undefined || p.council_area !== null) return false;
-  db.run('UPDATE properties SET council_area = ?, council_area_source = ?, updated_at = ? WHERE id = ?', [a, source, now, property_id]);
+  updatePropertiesCouncilAreaCouncilAreaSourceById(db, [a, source, now, property_id]);
   return true;
 }
 
 /** The council area kept on a property, or null. */
 export function councilAreaOf(db: Db, property_id: string | null): { area: string; source: string | null } | null {
   if (property_id === null) return null;
-  const p = db.get<{ council_area: string | null; council_area_source: string | null }>('SELECT council_area, council_area_source FROM properties WHERE id = ?', [property_id]);
+  const p = getPropertiesCouncilAreaCouncilAreaSourceById<{ council_area: string | null; council_area_source: string | null }>(db, [property_id]);
   return p?.council_area ? { area: p.council_area, source: p.council_area_source } : null;
 }

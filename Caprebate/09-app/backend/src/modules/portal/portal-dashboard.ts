@@ -19,15 +19,17 @@
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
-import { clientProgress } from '../crm/tell-and-move.ts';
+import { clientProgress } from '../crm/index.ts';
 import { STAGES } from '../../shared/index.ts';
 import { localClock, localDate, localPartsOf, ukDate, ukDatesIn, WEEKDAY_NAMES } from '../../shared/index.ts';
-import { unreadCount } from '../crm/messages.ts';
-import type { ClientStep } from '../claims/approvals.ts';
-import type { ClientDeliverable } from '../claims/claim-record.ts';
-import { releasedVersion } from '../claims/report-signoff.ts';
+import { unreadCount } from '../crm/index.ts';
+import type { ClientStep } from '../claims/index.ts';
+import type { ClientDeliverable } from '../claims/index.ts';
+import { releasedVersion } from '../claims/index.ts';
 import { myAcceptance } from './report-accept.ts';
-import { missingDocuments } from '../claims/mandatory-documents.ts';
+import { missingDocuments } from '../claims/index.ts';
+import { getDocumentTypesLabelByCode2 } from './data-borrowed.ts';
+import { getEngagementsAtByBusinessIdLetterState, listClaimsIdPropertyIdByBusinessIdStage } from '../claims/index.ts';
 
 export type PortalDashInput = {
   readonly db: Db; readonly actor: Actor; readonly business_id: string; readonly nowIso: string;
@@ -122,7 +124,7 @@ export function workingWords(db: PortalDashInput['db'], actor: PortalDashInput['
 
 /** PHASE 158d (F43): the day the client signed their engagement letter, if it was on or after `since`. */
 function signedSince(db: Db, business_id: string, since: string): string[] {
-  const on = db.get<{ at: string | null }>("SELECT signed_at AS at FROM engagements WHERE business_id = ? AND letter_state = 'SIGNED'", [business_id])?.at ?? null;
+  const on = getEngagementsAtByBusinessIdLetterState<{ at: string | null }>(db, [business_id])?.at ?? null;
   return on !== null && localDate(on) >= since ? [localDate(on)] : [];
 }
 
@@ -139,10 +141,9 @@ export type AlsoNeeded = { readonly words: string; readonly kind: string; readon
 export function alsoNeeded(db: Db, actor: Actor, business_id: string, askedLabels: readonly string[]): AlsoNeeded[] {
   const out: AlsoNeeded[] = [];
   const seen = new Set(askedLabels.map((l) => l.toLowerCase()));
-  for (const c of db.all<{ id: string; property_id: string | null }>(
-    "SELECT id, property_id FROM claims WHERE business_id = ? AND stage = 'DATA_GATHERING' ORDER BY rowid", [business_id])) {
+  for (const c of listClaimsIdPropertyIdByBusinessIdStage<{ id: string; property_id: string | null }>(db, [business_id])) {
     for (const code of missingDocuments(db, c)) {
-      const label = db.get<{ label: string }>('SELECT label FROM document_types WHERE code = ?', [code])?.label ?? code;
+      const label = getDocumentTypesLabelByCode2<{ label: string }>(db, [code])?.label ?? code;
       if (seen.has(label.toLowerCase())) continue;
       seen.add(label.toLowerCase());
       out.push({ words: label, kind: 'a document we need', href: '#documents', cta: 'Send it' });

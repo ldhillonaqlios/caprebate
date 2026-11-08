@@ -24,7 +24,7 @@ import { ART33, ART34, DISCOVERY_ROUTES, FACT_VALUES, INCIDENT_KINDS, OCCURRED_S
 import type { ConsentHistory, PersonView, RetentionLine } from './compliance-identity.ts';
 import { CONSENT_DECISIONS, CONSENT_KINDS, NOTICE_ROUTES, PERSON_ROLES, ROUTE_KINDS, S2_REFUSALS } from './compliance-identity.ts';
 import { HOLD_KINDS, HOLD_REASONS, LINK_KINDS, SETTING_VALUES, SETTINGS, TWO_PERSON_LIMITATION, type HoldRow, type LinkLine, type SettingReading, type Vocab } from './compliance.ts';
-import type { WaitingForm } from '../modules/public-site/notices-site.ts';
+import type { WaitingForm } from '../modules/public-site/index.ts';
 
 type Nav = Safe;
 

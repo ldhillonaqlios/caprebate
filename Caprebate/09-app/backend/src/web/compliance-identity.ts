@@ -52,14 +52,17 @@
 
 import type { Db } from '../core/index.ts';
 import { authorise, type Actor } from '../core/index.ts';
-import { retentionReading, ret7Limbs } from '../modules/claims/documents.ts';
+import { retentionReading, ret7Limbs } from '../modules/claims/index.ts';
 import { BACKUP_CYCLE } from '../shared/upload-handler-port.ts';
-import { MESSAGE_RETENTION_QUESTION } from '../modules/crm/message-retention.ts';
+import { MESSAGE_RETENTION_QUESTION } from '../modules/crm/index.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, holdsFor, liveHeldIds, NotFoundAsRefusal, opaqueRef, record, requiredText,
   textField, ukDay, vocabField, words,
   type Check, type ComplianceDeps, type Fields, type HoldRow, type Vocab, type WriteResult,
 } from './compliance.ts';
+import { getDocumentsIdById, listLogicalDocumentsId } from '../modules/claims/index.ts';
+import { getContactsIdById, getContactsIdFullNameById, listIntroducerShareConsentsRecordedAtDecisionByBusinessId, updateContactsContactConsentUpdatedAtById, updateContactsMarketingOptinUpdatedAtById } from '../modules/crm/index.ts';
+import { insertConsentAnswers, listConsentAnswersRecordedAtKindByContactId } from '../modules/assessment/index.ts';
 
 class Refusal extends Error {}
 
@@ -121,7 +124,7 @@ export function recordPerson(d: ComplianceDeps, actor: Actor, input: Fields): Wr
   assertIdentityWrite(actor);
   return guarded(() => {
     const doc_id = (input['doc_id'] ?? '').trim();
-    if (d.db.get<{ id: string }>('SELECT id FROM documents WHERE id = ?', [doc_id]) === undefined) return { ok: false, why: 'Name the document the person is printed on.' };
+    if (getDocumentsIdById<{ id: string }>(d.db, [doc_id]) === undefined) return { ok: false, why: 'Name the document the person is printed on.' };
     const name = check(requiredText(input['name'], 200, 'The name, as it appears on the document'));
     const role = input['role'] ?? null;
     if (!has(PERSON_ROLES, role)) return { ok: false, why: 'Choose the person’s role on the document. Someone only mentioned in the text is not recorded here.' };
@@ -269,25 +272,17 @@ export type ConsentHistory = {
 
 export function consentHistory(db: Db, actor: Actor, contact_id: string): ConsentHistory {
   assertComplianceRead(actor);
-  const c = db.get<{ id: string; full_name: string; business_id: string | null; lead_id: string | null; contact_consent: number; marketing_optin: number; created_at: string; org: string | null }>(
-    'SELECT c.id, c.full_name, c.business_id, c.lead_id, c.contact_consent, c.marketing_optin, c.created_at, COALESCE(b.name, l.prospect_organisation, i.firm_name) AS org ' +
-      'FROM contacts c LEFT JOIN businesses b ON b.id = c.business_id LEFT JOIN leads l ON l.id = c.lead_id LEFT JOIN introducers i ON i.id = c.introducer_id WHERE c.id = ?',
-    [contact_id]);
+  const c = getContactsIdFullNameById<{ id: string; full_name: string; business_id: string | null; lead_id: string | null; contact_consent: number; marketing_optin: number; created_at: string; org: string | null }>(db, [contact_id]);
   if (c === undefined) throw new NotFoundAsRefusal();
   const capture = 'The words they were first asked were not recorded';
   const lines: ConsentLine[] = [
     { at: c.created_at, kind: 'CONTACT', decision: c.contact_consent === 1 ? 'GIVEN' : 'NOT GIVEN', wording: capture, route: 'CAPTURE', source: 'When the contact was added' },
     { at: c.created_at, kind: 'MARKETING', decision: c.marketing_optin === 1 ? 'GIVEN' : 'NOT GIVEN — the box is never ticked for anyone', wording: capture, route: 'CAPTURE', source: 'When the contact was added' },
   ];
-  for (const e of db.all<{ recorded_at: string; kind: string; decision: string; wording_version: string; route: string }>(
-    'SELECT recorded_at, kind, decision, wording_version, route FROM consent_answers WHERE contact_id = ? ORDER BY rowid', [contact_id])) {
+  for (const e of listConsentAnswersRecordedAtKindByContactId<{ recorded_at: string; kind: string; decision: string; wording_version: string; route: string }>(db, [contact_id])) {
     lines.push({ at: e.recorded_at, kind: e.kind, decision: e.decision, wording: e.wording_version, route: e.route, source: 'A recorded answer' });
   }
-  const share = db.all<{ recorded_at: string; decision: string; wording_version: string; route: string; firm: string }>(
-    'SELECT s.recorded_at, s.decision, s.wording_version, s.route, i.firm_name AS firm FROM introducer_share_consents s JOIN introducers i ON i.id = s.introducer_id ' +
-      'WHERE (s.business_id IS NOT NULL AND s.business_id = ?) OR (s.lead_id IS NOT NULL AND s.lead_id = ?) ' +
-      'OR (s.lead_id IN (SELECT l.id FROM leads l WHERE l.business_id IS NOT NULL AND l.business_id = ?)) ORDER BY s.rowid',
-    [c.business_id, c.lead_id, c.business_id]);
+  const share = listIntroducerShareConsentsRecordedAtDecisionByBusinessId<{ recorded_at: string; decision: string; wording_version: string; route: string; firm: string }>(db, [c.business_id, c.lead_id, c.business_id]);
   for (const s of share) {
     lines.push({ at: s.recorded_at, kind: `SHARE_WITH ${s.firm}`, decision: s.decision, wording: s.wording_version, route: s.route, source: 'The referral’s share-progress answer' });
   }
@@ -312,7 +307,7 @@ export function consentHistory(db: Db, actor: Actor, contact_id: string): Consen
 export function recordConsent(d: ComplianceDeps, actor: Actor, contact_id: string, input: Fields): WriteResult {
   assertComplianceWrite(actor);
   return guarded(() => {
-    if (d.db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ?', [contact_id]) === undefined) throw new NotFoundAsRefusal();
+    if (getContactsIdById<{ id: string }>(d.db, [contact_id]) === undefined) throw new NotFoundAsRefusal();
     const kind = input['kind'] ?? null;
     if (!has(CONSENT_KINDS, kind)) return { ok: false, why: 'Choose which answer this is. Sharing progress with a firm is recorded on the lead, where it lives.' };
     const decision = input['decision'] ?? null;
@@ -321,11 +316,10 @@ export function recordConsent(d: ComplianceDeps, actor: Actor, contact_id: strin
     const id = d.newId();
     const at = d.now();
     d.db.tx(() => {
-      d.db.run('INSERT INTO consent_answers (id, contact_id, kind, decision, wording_version, route, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [id, contact_id, kind, decision, wording, 'STAFF_RECORDED', actor.id, at]);
+      insertConsentAnswers(d.db, [id, contact_id, kind, decision, wording, 'STAFF_RECORDED', actor.id, at]);
       const flag = decision === 'GIVEN' ? 1 : 0;
-      if (kind === 'CONTACT') d.db.run('UPDATE contacts SET contact_consent = ?, updated_at = ? WHERE id = ?', [flag, at, contact_id]);
-      else d.db.run('UPDATE contacts SET marketing_optin = ?, updated_at = ? WHERE id = ?', [flag, at, contact_id]);
+      if (kind === 'CONTACT') updateContactsContactConsentUpdatedAtById(d.db, [flag, at, contact_id]);
+      else updateContactsMarketingOptinUpdatedAtById(d.db, [flag, at, contact_id]);
     });
     record(d, actor, 'CONSENT_RECORDED', 'ALLOWED', 'contact', contact_id, { consent: id, kind, decision, wording_version: wording });
     return { ok: true, id };
@@ -424,7 +418,7 @@ export type DocumentLimbs = {
 
 /** Every document's RET-7 dates, as `ret7Limbs` reads them. Shown, never used to compute a date: RET-7 is not approved. */
 function documentLimbs(db: Db): DocumentLimbs[] {
-  return db.all<{ id: string }>('SELECT id FROM logical_documents ORDER BY created_at ASC, id ASC').map((l) => {
+  return listLogicalDocumentsId<{ id: string }>(db).map((l) => {
     const r = ret7Limbs(db, l.id);
     return {
       logical_document_id: l.id, claim_period_end: r.claim_period_end, report_delivered_at: r.report_delivered_at, why: r.why,

@@ -15,12 +15,13 @@ import { SLOT_MINUTES } from './schedule.ts';
 import { inviteFile, type InviteMethod } from '../../integrations/index.ts';
 import { activeMeeting, clientJoinUrl, videoJoinWords } from './video-calls.ts';
 import { zoomPlanIsFree } from '../../integrations/index.ts';
+import { getBookingChangesCountByBookingId, getBookingsBusinessIdLeadIdById, getBookingsChannelById, getBusinessesEById, getContactsEByLeadId } from './data.ts';
 
 export const CALL_SUMMARY = 'Your call with Cap Rebate';
 
 /** How many times this booking has changed. The first invitation is 0; every change after it counts one more. */
 export function inviteSequence(db: Db, booking_id: string): number {
-  return db.get<{ n: number }>('SELECT COUNT(*) AS n FROM booking_changes WHERE booking_id = ?', [booking_id])?.n ?? 0;
+  return getBookingChangesCountByBookingId<{ n: number }>(db, [booking_id])?.n ?? 0;
 }
 
 export function bookingInviteFile(
@@ -55,7 +56,7 @@ function placeAndWords(db: Db, booking_id: string, method: InviteMethod, origin:
   if (method === 'CANCEL') {
     return { description: 'This call is cancelled. Your enquiry is still open. Reply to this email if you would like another time.', location: 'Cancelled' };
   }
-  const channel = db.get<{ channel: string }>('SELECT channel FROM bookings WHERE id = ?', [booking_id])?.channel;
+  const channel = getBookingsChannelById<{ channel: string }>(db, [booking_id])?.channel;
   if (channel !== 'video') {
     return { description: 'We will ring you at this time. Reply to this email if you need to change it.', location: 'By telephone. We will ring you.' };
   }
@@ -78,13 +79,12 @@ function placeAndWords(db: Db, booking_id: string, method: InviteMethod, origin:
  * The funnel's close sends it after the meeting is made, and so does the staff calendar when it gives or moves a time.
  */
 export function sendVideoInvite(app: App, origin: string, booking_id: string, what: 'arranged' | 'moved', toAddress?: string): void {
-  const b = app.db.get<{ business_id: string | null; lead_id: string | null; starts_at: string | null; ends_at: string | null; channel: string }>(
-    'SELECT business_id, lead_id, starts_at, ends_at, channel FROM bookings WHERE id = ?', [booking_id]);
+  const b = getBookingsBusinessIdLeadIdById<{ business_id: string | null; lead_id: string | null; starts_at: string | null; ends_at: string | null; channel: string }>(app.db, [booking_id]);
   if (b === undefined || b.channel !== 'video' || b.starts_at === null || b.ends_at === null) return;
   // 1 Oct 2026: the Communication tab names who the call is with; otherwise the company's own address, as before.
   const to = toAddress !== undefined && toAddress.trim() !== '' ? toAddress.trim() : b.business_id !== null
-    ? app.db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [b.business_id])?.e ?? null
-    : app.db.get<{ e: string | null }>('SELECT email AS e FROM contacts WHERE lead_id = ? ORDER BY created_at ASC, id ASC LIMIT 1', [b.lead_id])?.e ?? null;
+    ? getBusinessesEById<{ e: string | null }>(app.db, [b.business_id])?.e ?? null
+    : getContactsEByLeadId<{ e: string | null }>(app.db, [b.lead_id])?.e ?? null;
   if (to === null) return;
   const words = videoJoinWords(app.db, booking_id, origin, zoomPlanIsFree(app.secrets));
   const invite = bookingInviteFile(app.db, app.now, { booking_id, method: 'REQUEST', starts_at: b.starts_at, ends_at: b.ends_at, to, origin });

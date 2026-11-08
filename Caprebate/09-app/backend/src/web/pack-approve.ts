@@ -22,9 +22,9 @@
  * own stages read them exactly as before. If any of that is refused, nothing is kept. The form carries both counters,
  * so a page drawn before a change cannot approve the changed pack, and a second click on the same state is refused.
  */
-import { claimRoutes } from '../modules/claims/claim-route.ts';
-import { yearEndKnown } from '../modules/claims/claim-facts.ts';
-import { REPORT_ASSUMPTIONS } from '../modules/assessment/report-assumptions.ts';
+import { claimRoutes } from '../modules/claims/index.ts';
+import { yearEndKnown } from '../modules/claims/index.ts';
+import { REPORT_ASSUMPTIONS } from '../modules/assessment/index.ts';
 import { sheetsForVersion } from './pack-sheets.ts';
 import { createHash } from 'node:crypto';
 import { authorise, can, type Actor } from '../core/index.ts';
@@ -35,8 +35,8 @@ import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { basisOf, checklistView, evidenceByLine, walkthroughsOf } from './survey-evidence.ts';
 import { findingSeen } from '../shared/index.ts';
 import { videosOf } from './survey-video.ts';
-import { sitePlanOf, type SitePlan } from '../modules/claims/site-plan.ts';
-import { valuationLock } from '../modules/claims/valuation-lock.ts';
+import { sitePlanOf, type SitePlan } from '../modules/claims/index.ts';
+import { valuationLock } from '../modules/claims/index.ts';
 import { getUsersNById } from '../core/index.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([

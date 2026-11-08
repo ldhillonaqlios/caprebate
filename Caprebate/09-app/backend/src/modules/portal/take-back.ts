@@ -26,6 +26,9 @@
 import type { Db } from '../../core/index.ts';
 import { screenDetail } from '../../core/audit.ts';
 import { countRegisterRecordsSince } from '../../integrations/index.ts';
+import { getClaimDeliverablesCountByBusinessIdState, getClaimGrantsCountByBusinessIdSourceId, listFactApprovalsFactRefActionByBusinessId2 } from '../claims/index.ts';
+import { getSignatoryChecksCountByBusinessIdSource, getSurveyorJobsCountByBusinessIdState } from './data-borrowed.ts';
+import { listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep } from './data.ts';
 
 /* ================================================================== *
  * 1 · WHO HAS ALREADY APPROVED IT
@@ -38,10 +41,7 @@ import { countRegisterRecordsSince } from '../../integrations/index.ts';
 export function approvedFieldsOf(db: Db, business_id: string, record_id: string, field?: string): string[] {
   const prefix = `reg.${record_id}.`;
   const latest = new Map<string, string>();
-  for (const r of db.all<{ fact_ref: string; action: string }>(
-    'SELECT fact_ref, action FROM fact_approvals WHERE business_id = ? AND substr(fact_ref, 1, ?) = ? ORDER BY at ASC, rowid ASC',
-    [business_id, prefix.length, prefix],
-  )) latest.set(r.fact_ref.slice(prefix.length), r.action);
+  for (const r of listFactApprovalsFactRefActionByBusinessId2<{ fact_ref: string; action: string }>(db, [business_id, prefix.length, prefix])) latest.set(r.fact_ref.slice(prefix.length), r.action);
   return [...latest].filter(([f, a]) => a === 'APPROVED' && (field === undefined || f === field)).map(([f]) => f).sort();
 }
 
@@ -110,41 +110,29 @@ export function lookAgainAfter(db: Db, business_id: string, rec: RecordAsItStood
 
   const signatory = SIGNATORY_READS[rec.source_id];
   if (signatory !== undefined && field === undefined) {
-    const n = db.get<{ n: number }>(
-      'SELECT COUNT(*) AS n FROM signatory_checks WHERE business_id = ? AND source = ? AND checked_at >= ?',
-      [business_id, signatory, since])?.n ?? 0;
+    const n = getSignatoryChecksCountByBusinessIdSource<{ n: number }>(db, [business_id, signatory, since])?.n ?? 0;
     add('SIGNATORY_CHECK', n, `The check of who signed was made against ${signatory === 'CQC' ? 'the care regulator' : 'Companies House'} ` +
       'using this entry. Look at that result again: it may have been made against the wrong one.');
   }
 
   const step = COMPANY_REGISTERS.includes(rec.source_id) ? 'COMPANY' : 'PROPERTY';
-  const told = db.all<{ k: string; action: string; at: string }>(
-    "SELECT COALESCE(claim_id, '') AS k, action, at FROM client_step_notices WHERE business_id = ? AND step = ? ORDER BY at ASC, rowid ASC",
-    [business_id, step]);
+  const told = listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep<{ k: string; action: string; at: string }>(db, [business_id, step]);
   const last = new Map<string, { action: string; at: string }>();
   for (const r of told) last.set(r.k, r);
   add('CLIENT_TOLD', [...last.values()].filter((r) => r.action === 'TOLD' && r.at >= since).length,
     `The client was told their ${step === 'COMPANY' ? 'company' : 'property'} details were checked after this arrived. ` +
       'If that rested on this entry, take the step back on the checks panel.');
 
-  const issued = db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM claim_deliverables cd JOIN claims c ON c.id = cd.claim_id WHERE c.business_id = ? " +
-      "AND cd.state IN ('ISSUED','SUPERSEDED') AND cd.issued_on >= ?",
-    [business_id, since.slice(0, 10)])?.n ?? 0;
+  const issued = getClaimDeliverablesCountByBusinessIdState<{ n: number }>(db, [business_id, since.slice(0, 10)])?.n ?? 0;
   add('REPORT_ISSUED', issued, 'A report or pack for this client was issued while it stood. Check whether it used this entry.');
 
   if (field === undefined) {
-    const jobs = db.get<{ n: number }>(
-      "SELECT COUNT(*) AS n FROM surveyor_jobs WHERE business_id = ? AND (state = 'SEALED' OR committed_at >= ?)",
-      [business_id, since])?.n ?? 0;
+    const jobs = getSurveyorJobsCountByBusinessIdState<{ n: number }>(db, [business_id, since])?.n ?? 0;
     add('SURVEYOR_JOB', jobs, 'A surveyor’s job for this client could see this entry. Tell the surveyor it has been taken out.');
   }
 
   if (field === 'grant_funder_name') {
-    const n = db.get<{ n: number }>(
-      "SELECT COUNT(*) AS n FROM claim_grants g JOIN claims c ON c.id = g.claim_id WHERE c.business_id = ? " +
-        "AND g.source_id = 'CLIENT_DOC' AND g.recorded_at >= ? AND g.withdrawn_at IS NULL",
-      [business_id, since])?.n ?? 0;
+    const n = getClaimGrantsCountByBusinessIdSourceId<{ n: number }>(db, [business_id, since])?.n ?? 0;
     add('GRANT_RECORDED', n, 'A grant was recorded from a client document after this arrived. Check that who paid it is still right.');
   }
   return out;

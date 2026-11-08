@@ -35,9 +35,9 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { breadcrumb, claimName, moreDetail, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, type Need, type QuickAction, type SectionContext, type SectionSpec } from '../../shared/index.ts';
 import { sectionPrefs } from '../../core/index.ts';
 import * as C from './crm.ts';
-import * as E from '../claims/engaged.ts';
-import * as R from '../claims/research.ts';
-import { assertClientsSection } from '../claims/engaged.ts';
+import { engagedModule as E } from '../claims/index.ts';
+import { researchModule as R } from '../claims/index.ts';
+import { assertClientsSection } from '../claims/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { opens } from '../../core/navigation.ts';
 import { timelineIfPermitted } from './timeline.ts';
@@ -46,19 +46,20 @@ import { timelineBlock } from './tasks-pages.ts';
 import { communicationPanel } from './communication.ts';
 import * as M from './messages.ts';
 import { organisationSections, renderClaim, type CrmPageDeps } from './crm-pages.ts';
-import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from '../claims/engaged-pages.ts';
-import { checksPanelIfPermitted } from '../claims/approvals.ts';
-import { checksBlock, checksSummary, STEP_ANCHOR } from '../claims/approvals-pages.ts';
-import { clientFolder } from '../claims/documents.ts';
-import { letterState, letterSteps } from '../claims/engagement-send.ts';
-import { filesButton, folderTiles } from '../portal/client-files-pages.ts';
+import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from '../claims/index.ts';
+import { checksPanelIfPermitted } from '../claims/index.ts';
+import { checksBlock, checksSummary, STEP_ANCHOR } from '../claims/index.ts';
+import { clientFolder } from '../claims/index.ts';
+import { letterState, letterSteps } from '../claims/index.ts';
+import { filesButton, folderTiles } from '../portal/index.ts';
 import { emailButton } from './free-email-pages.ts';
 import { identityChecks, identityPanel } from '../../web/identity-checks.ts';
 import { IDENTITY_PROVIDER_NAME } from '../../integrations/index.ts';
 import { complianceObj } from '../../web/compliance.ts';
-import { claimBoxes, headerActions, lookupsCard, nextStepCard, presentTabs, progressBar, setClientMenu, tabbed, TAB_OF_SECTION, type TabKey } from '../portal/client-layout.ts';
+import { claimBoxes, headerActions, lookupsCard, nextStepCard, presentTabs, progressBar, setClientMenu, tabbed, TAB_OF_SECTION, type TabKey } from '../portal/index.ts';
 import { piecesPage } from '../../core/index.ts';
 import { listUsersIdNameByBusinessIdRole } from '../../core/index.ts';
+import { listContactsIdFullNameByBusinessId } from './data.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -289,7 +290,7 @@ function clientPage(
       working: passed ? 'Nothing right now.' : idLines.length > 0 ? 'Waiting for the result.' : 'No identity check has been sent.',
       need: [], from: [IDENTITY_PROVIDER_NAME],
       body: identityPanel(d.app, actor, { business_id: org.id },
-        db.all<{ id: string; full_name: string }>('SELECT id, full_name FROM contacts WHERE business_id = ? ORDER BY full_name', [org.id])),
+        listContactsIdFullNameByBusinessId<{ id: string; full_name: string }>(db, [org.id])),
     });
   }
 

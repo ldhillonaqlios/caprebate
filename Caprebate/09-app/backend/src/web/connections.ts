@@ -37,7 +37,7 @@ import { SECRET_KEYS, type SecretOwner } from '../core/index.ts';
 import { serviceOn } from '../core/saved-keys.ts';
 import { switchedOn, switchesHere, TEST_WEBSITE_LOOKUPS, lookupsWaivedHere } from '../integrations/index.ts';
 import { POSTCODE_CHECK } from '../integrations/index.ts';
-import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from '../modules/claims/register-files.ts';
+import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from '../modules/claims/index.ts';
 import { singleFile } from '../core/index.ts';
 import { localStamp, localPartsOf } from '../shared/index.ts';
 import { ADDRESS_SEARCH_CAP, searchesToday } from '../integrations/index.ts';

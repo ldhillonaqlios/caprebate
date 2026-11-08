@@ -86,8 +86,8 @@ describe('Phase 160d: the text the system writes', () => {
   });
 
   test('no task title the code writes, and no seeded task, holds a long dash', () => {
-    for (const f of ['claim-record.ts', 'leads.ts']) {
-      const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', f), 'utf8');
+    for (const f of ['claims/claim-record.ts', 'crm/leads.ts']) {
+      const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', f), 'utf8');
       for (const m of src.matchAll(/^\s*title: (['`])([^'`]*)\1/gm)) assert.doesNotMatch(m[2] ?? '', DASH, `${f}: ${m[2]}`);
     }
     const titles = made.app.db.all<{ title: string }>('SELECT title FROM staff_tasks');

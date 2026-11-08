@@ -35,12 +35,15 @@ import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { localStamp } from '../../shared/index.ts';
 import { propertyIn } from '../../shared/index.ts';
 import { workingDaysSince, LATE_AFTER_WORKING_DAYS } from '../../shared/index.ts';
-import { documentObj } from '../claims/documents.ts';
+import { documentObj } from '../claims/index.ts';
 import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type EmailSending, type MailWhere, type SmtpLogin } from '../../integrations/index.ts';
 import { outboxTransport } from '../../integrations/index.ts';
 import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from './automation.ts';
 import { getUsersIdEmailByIdDisabledAt, listUsersIdEmailByRoleBusinessId, listUsersIdEmailByRoleDisabledAt } from '../../core/index.ts';
 import { getWhatsappMessagesCountByBusinessIdDirection } from '../../integrations/index.ts';
+import { getBusinessesIdNameById2, getChannelReadsAtByUserIdBusinessId, getClientMessageFilesIdBusinessIdByLogicalDocumentId, getClientMessagesBusinessIdDirectionById, getClientMessagesCountByBusinessIdDirection, getClientMessagesCountByBusinessIdDirection2, getInternalNotesCountByBusinessIdAuthorId, getThreadReadsAtByUserIdBusinessId, insertChannelReads, insertClientMessageFiles, insertClientMessages, insertThreadReads, listClientMessagesBusinessIdNameByDirectionCreatedAt } from './data.ts';
+import { listDocumentsIdBusinessIdByLogicalDocumentIdJO, listInternalNotesIdAuthorIdByBusinessId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from './data-borrowed.ts';
+import { getClaimsIdByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel } from '../claims/index.ts';
 
 export type MessageDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -97,22 +100,18 @@ export type TeamThreadView = {
 /** The thread's object, carrying the surveyors with an assigned survey job on the company — the only surveyors it admits. */
 const clientObj = (db: Db, business_id: string) => ({
   type: 'client_message' as const, id: business_id, business_id,
-  assigned_surveyor_ids: db.all<{ surveyor_id: string }>(
-    'SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', [business_id]).map((r) => r.surveyor_id),
+  assigned_surveyor_ids: listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3<{ surveyor_id: string }>(db, [business_id]).map((r) => r.surveyor_id),
 });
 const noteObj = (business_id: string) => ({ type: 'internal_note' as const, id: business_id, business_id });
 
 function company(db: Db, business_id: string): { id: string; name: string; dnc: boolean } {
-  const b = db.get<{ id: string; name: string; client_status: string | null }>(
-    'SELECT id, name, client_status FROM businesses WHERE id = ?', [business_id]);
+  const b = getBusinessesIdNameById2<{ id: string; name: string; client_status: string | null }>(db, [business_id]);
   if (b === undefined) throw new NotFoundAsRefusal();
   return { id: b.id, name: b.name, dnc: b.client_status === 'DO_NOT_CONTACT' };
 }
 
 function claimsOf(db: Db, business_id: string, name: string): ClaimChoice[] {
-  return db.all<{ id: string; claim_ref: string; label: string | null }>(
-    'SELECT c.id, c.claim_ref, p.label FROM claims c LEFT JOIN properties p ON p.id = c.property_id WHERE c.business_id = ? ' +
-      'ORDER BY p.label IS NULL, p.label ASC, c.claim_ref ASC', [business_id])
+  return listClaimsIdClaimRefByBusinessIdLabel<{ id: string; claim_ref: string; label: string | null }>(db, [business_id])
     .map((c) => ({ id: c.id, name: propertyIn(name, c.label) ?? c.label ?? 'A claim', ref: c.claim_ref }));
 }
 
@@ -121,8 +120,7 @@ function claimsOf(db: Db, business_id: string, name: string): ClaimChoice[] {
  * ================================================================== */
 
 function lastRead(db: Db, user_id: string, business_id: string, thread: Thread): string {
-  return db.get<{ at: string | null }>(
-    'SELECT MAX(read_at) AS at FROM thread_reads WHERE user_id = ? AND business_id = ? AND thread = ?', [user_id, business_id, thread])?.at ?? '';
+  return getThreadReadsAtByUserIdBusinessId<{ at: string | null }>(db, [user_id, business_id, thread])?.at ?? '';
 }
 
 /**
@@ -132,8 +130,7 @@ function lastRead(db: Db, user_id: string, business_id: string, thread: Thread):
 export type Channel = 'EMAIL' | 'WHATSAPP';
 
 export function lastChannelRead(db: Db, user_id: string, business_id: string, channel: Channel): string {
-  return db.get<{ at: string | null }>(
-    'SELECT MAX(read_at) AS at FROM channel_reads WHERE user_id = ? AND business_id = ? AND channel = ?', [user_id, business_id, channel])?.at ?? '';
+  return getChannelReadsAtByUserIdBusinessId<{ at: string | null }>(db, [user_id, business_id, channel])?.at ?? '';
 }
 
 /** 1 Oct 2026: when this person last read each way the company writes — for "New since you last looked". */
@@ -159,9 +156,7 @@ export function emailsReadUntil(db: Db, user_id: string, business_id: string): s
 /** Emailed replies this person has not read. Staff only: the client wrote them. */
 export function unreadEmails(db: Db, actor: Actor, business_id: string): number {
   if (actor.role === 'CLIENT' || !can(actor, 'client_message.read', clientObj(db, business_id))) return 0;
-  return db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM client_messages WHERE business_id = ? AND direction = 'FROM_CLIENT' AND source = 'EMAIL' AND created_at > ?",
-    [business_id, emailsReadUntil(db, actor.id, business_id)])?.n ?? 0;
+  return getClientMessagesCountByBusinessIdDirection2<{ n: number }>(db, [business_id, emailsReadUntil(db, actor.id, business_id)])?.n ?? 0;
 }
 
 /** WhatsApp messages from the company this person has not read. */
@@ -173,8 +168,7 @@ export function unreadWhatsApp(db: Db, actor: Actor, business_id: string): numbe
 /** Record that this person has read the company's emails, or its WhatsApp, now — only when something was unread. */
 export function markChannelRead(d: MessageDeps, actor: Actor, business_id: string, channel: Channel): void {
   if ((channel === 'EMAIL' ? unreadEmails(d.db, actor, business_id) : unreadWhatsApp(d.db, actor, business_id)) === 0) return;
-  d.db.run('INSERT INTO channel_reads (id, user_id, business_id, channel, read_at) VALUES (?, ?, ?, ?, ?)',
-    [d.newId(), actor.id, business_id, channel, d.now()]);
+  insertChannelReads(d.db, [d.newId(), actor.id, business_id, channel, d.now()]);
 }
 
 /**
@@ -197,21 +191,17 @@ export function unreadCount(db: Db, actor: Actor, business_id: string, thread: T
     const direction = actor.role === 'CLIENT' ? 'TO_CLIENT' : 'FROM_CLIENT';
     // 1 Oct 2026: an emailed reply read on the email page is read here too.
     const emails = actor.role === 'CLIENT' ? since : later(since, lastChannelRead(db, actor.id, business_id, 'EMAIL'));
-    return db.get<{ n: number }>(
-      "SELECT COUNT(*) AS n FROM client_messages WHERE business_id = ? AND direction = ? AND created_at > ? AND (source <> 'EMAIL' OR created_at > ?)",
-      [business_id, direction, since, emails])?.n ?? 0;
+    return getClientMessagesCountByBusinessIdDirection<{ n: number }>(db, [business_id, direction, since, emails])?.n ?? 0;
   }
   if (!can(actor, 'internal_note.read', noteObj(business_id))) return 0;
   const since = lastRead(db, actor.id, business_id, 'TEAM');
-  return db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM internal_notes WHERE business_id = ? AND author_id <> ? AND created_at > ?', [business_id, actor.id, since])?.n ?? 0;
+  return getInternalNotesCountByBusinessIdAuthorId<{ n: number }>(db, [business_id, actor.id, since])?.n ?? 0;
 }
 
 /** Record that this person has read the thread now — only when there was something unread, so a view is not a row. */
 export function markRead(d: MessageDeps, actor: Actor, business_id: string, thread: Thread): void {
   if (unreadCount(d.db, actor, business_id, thread) === 0) return;
-  d.db.run('INSERT INTO thread_reads (id, user_id, business_id, thread, read_at) VALUES (?, ?, ?, ?, ?)',
-    [d.newId(), actor.id, business_id, thread, d.now()]);
+  insertThreadReads(d.db, [d.newId(), actor.id, business_id, thread, d.now()]);
 }
 
 /* ================================================================== *
@@ -233,11 +223,7 @@ const MESSAGE_SELECT =
 /** A message's files, each asked of `document.read` for this reader: a file the reader may not open is not listed. */
 function filesOf(db: Db, actor: Actor, message_id: string): MessageFile[] {
   const out: MessageFile[] = [];
-  for (const l of db.all<{ id: string; business_id: string; readers: string; carries_value: number; label: string; seq: number; version: string | null }>(
-    'SELECT l.id, l.business_id, t.readers, t.carries_value, t.label, l.seq, ' +
-      '(SELECT d.id FROM documents d WHERE d.logical_document_id = l.id ORDER BY d.version_no DESC LIMIT 1) AS version ' +
-      'FROM client_message_files f JOIN logical_documents l ON l.id = f.logical_document_id ' +
-      'JOIN document_types t ON t.code = l.type_code WHERE f.message_id = ? ORDER BY f.linked_at', [message_id])) {
+  for (const l of listDocumentsIdBusinessIdByLogicalDocumentIdJO<{ id: string; business_id: string; readers: string; carries_value: number; label: string; seq: number; version: string | null }>(db, [message_id])) {
     if (!can(actor, 'document.read', documentObj(db, l))) continue;
     const name = `${l.label} ${l.seq}`;
     if (actor.role === 'CLIENT') {
@@ -310,7 +296,7 @@ export function messageRefusal(db: Db, actor: Actor, business_id: string, input:
   if (text.length === 0) return 'Write a message first.';
   if (text.length > MAX_MESSAGE) return `That message is too long. The most is ${MAX_MESSAGE.toLocaleString('en-GB')} characters.`;
   if (input.claim_id !== null && input.claim_id !== ''
-    && db.get('SELECT id FROM claims WHERE id = ? AND business_id = ?', [input.claim_id, b.id]) === undefined) {
+    && getClaimsIdByIdBusinessId(db, [input.claim_id, b.id]) === undefined) {
     return 'Choose one of this company’s claims.';
   }
   // A client writing to us is always taken; we do not write to a company that asked us not to.
@@ -334,14 +320,12 @@ export function postClientMessage(
   const id = d.newId();
   const at = d.now();
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?)',
-      [id, business_id, claim_id, fromClient ? 'FROM_CLIENT' : 'TO_CLIENT', fromClient ? 'PORTAL' : 'STAFF', actor.id, input.body.trim(), at]);
+    insertClientMessages(d.db, [id, business_id, claim_id, fromClient ? 'FROM_CLIENT' : 'TO_CLIENT', fromClient ? 'PORTAL' : 'STAFF', actor.id, input.body.trim(), at]);
     for (const f of files) {
-      d.db.run('INSERT INTO client_message_files (id, message_id, logical_document_id, linked_at) VALUES (?, ?, ?, ?)', [d.newId(), id, f, at]);
+      insertClientMessageFiles(d.db, [d.newId(), id, f, at]);
     }
     // Writing is reading: the person's own thread is read up to their own message.
-    d.db.run('INSERT INTO thread_reads (id, user_id, business_id, thread, read_at) VALUES (?, ?, ?, ?, ?)', [d.newId(), actor.id, business_id, 'CLIENT', at]);
+    insertThreadReads(d.db, [d.newId(), actor.id, business_id, 'CLIENT', at]);
   });
   d.audit.append({
     at, kind: 'CLIENT_MESSAGE_WRITTEN', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -390,8 +374,7 @@ export function alertNewMessage(d: MessageDeps, message_id: string): AlertResult
   const cfg = d.sending ?? EMAIL_SENDING;
   const login = d.login === undefined ? smtpLoginFromKeyFile() : d.login;
   if (!sendingOn(cfg, login, d.where ?? (d.login === undefined ? { live: true } : undefined))) return { state: 'OFF' };
-  const m = d.db.get<{ business_id: string; direction: string; name: string; owner_id: string | null }>(
-    'SELECT m.business_id, m.direction, b.name, b.owner_id FROM client_messages m JOIN businesses b ON b.id = m.business_id WHERE m.id = ?', [message_id]);
+  const m = getClientMessagesBusinessIdDirectionById<{ business_id: string; direction: string; name: string; owner_id: string | null }>(d.db, [message_id]);
   if (m === undefined) return { state: 'NOT_QUEUED', why: 'NOBODY_TO_TELL' };
   const to: 'STAFF' | 'CLIENT' = m.direction === 'FROM_CLIENT' ? 'STAFF' : 'CLIENT';
   type Person = { id: string; email: string };
@@ -432,11 +415,7 @@ export function alertNewMessage(d: MessageDeps, message_id: string): AlertResult
 export function teamThread(db: Db, actor: Actor, business_id: string): TeamThreadView {
   const b = company(db, business_id);
   authorise(actor, 'internal_note.read', noteObj(b.id));
-  const rows = db.all<{ id: string; author_id: string; created_at: string; body: string; who: string | null; claim_ref: string | null; claim_property: string | null; property_label: string | null }>(
-    'SELECT n.id, n.author_id, n.created_at, n.body, u.display_name AS who, c.claim_ref, cp.label AS claim_property, p.label AS property_label ' +
-      'FROM internal_notes n LEFT JOIN users u ON u.id = n.author_id LEFT JOIN claims c ON c.id = n.claim_id ' +
-      'LEFT JOIN properties cp ON cp.id = c.property_id LEFT JOIN properties p ON p.id = n.property_id ' +
-      'WHERE n.business_id = ? ORDER BY n.created_at ASC, n.rowid ASC', [b.id]);
+  const rows = listInternalNotesIdAuthorIdByBusinessId<{ id: string; author_id: string; created_at: string; body: string; who: string | null; claim_ref: string | null; claim_property: string | null; property_label: string | null }>(db, [b.id]);
   return {
     business_id: b.id,
     messages: rows.map((n) => ({
@@ -472,10 +451,7 @@ export type WaitingMessage = {
  * is not told it has a message waiting.
  */
 export function clientMessagesWaiting(db: Db, actor: Actor, nowIso: string): WaitingMessage[] {
-  const rows = db.all<{ business_id: string; name: string; since: string; n: number }>(
-    'SELECT m.business_id, b.name, MIN(m.created_at) AS since, COUNT(*) AS n FROM client_messages m JOIN businesses b ON b.id = m.business_id ' +
-      "WHERE m.direction = 'FROM_CLIENT' AND m.created_at > COALESCE((SELECT MAX(r.created_at) FROM client_messages r " +
-      "WHERE r.business_id = m.business_id AND r.direction = 'TO_CLIENT'), '') GROUP BY m.business_id, b.name ORDER BY since ASC");
+  const rows = listClientMessagesBusinessIdNameByDirectionCreatedAt<{ business_id: string; name: string; since: string; n: number }>(db);
   return rows
     // A surveyor reads the thread but never answers it, so nothing on it waits for them.
     .filter((r) => actor.role !== 'SURVEYING' && can(actor, 'client_message.read', clientObj(db, r.business_id)))
@@ -487,8 +463,6 @@ export function clientMessagesWaiting(db: Db, actor: Actor, nowIso: string): Wai
 
 /** WHICH MESSAGE BROUGHT A FILE, where one did — for the file's card in Files. Null for a file sent any other way. */
 export function messageOfFile(db: Db, logical_document_id: string): { id: string; business_id: string; from_client: boolean } | null {
-  const r = db.get<{ id: string; business_id: string; direction: string }>(
-    'SELECT m.id, m.business_id, m.direction FROM client_message_files f JOIN client_messages m ON m.id = f.message_id WHERE f.logical_document_id = ?',
-    [logical_document_id]);
+  const r = getClientMessageFilesIdBusinessIdByLogicalDocumentId<{ id: string; business_id: string; direction: string }>(db, [logical_document_id]);
   return r === undefined ? null : { id: r.id, business_id: r.business_id, from_client: r.direction === 'FROM_CLIENT' };
 }

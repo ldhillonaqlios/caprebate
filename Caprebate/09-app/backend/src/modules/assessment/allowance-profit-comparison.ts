@@ -71,6 +71,9 @@ import {
   type SectorId, type Session, type BenefitContext, type EngineResult,
 } from '../../shared/index.ts';
 import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
+import { getAssessmentsSectorById } from './data.ts';
+import { getClaimFactsAnswerByClaimIdFactKey, listClaimsIdBusinessId } from '../claims/index.ts';
+import { listClientTasksAnswerStateByBusinessIdFactId } from '../crm/index.ts';
 
 /* ================================================================== *
  * THE SWITCH
@@ -322,20 +325,13 @@ export function classifyFact(db: Db, claim: ClaimLink, fact: FactName): FactStat
 
   // 1 · the claim record. The LATEST row per key is the answer (migration 015).
   for (const key of CLAIM_FACT_KEYS[fact]) {
-    const row = db.get<{ answer: string }>(
-      'SELECT answer FROM claim_facts WHERE claim_id = ? AND fact_key = ? ORDER BY recorded_at DESC, rowid DESC LIMIT 1',
-      [claim.id, key],
-    );
+    const row = getClaimFactsAnswerByClaimIdFactKey<{ answer: string }>(db, [claim.id, key]);
     if (row?.answer === 'VALUE') answered = true;
     else if (row?.answer === 'UNKNOWN') dontKnow = true;
   }
 
   // 2 · the portal. Only an ANSWERED task says anything; OPEN and WITHDRAWN are not answers.
-  for (const t of db.all<{ answer_state: string | null }>(
-    "SELECT answer_state FROM client_tasks WHERE business_id = ? AND fact_id = ? AND state = 'ANSWERED' " +
-      'AND (claim_id IS NULL OR claim_id = ?)',
-    [claim.business_id, TASK_FACT_IDS[fact], claim.id],
-  )) {
+  for (const t of listClientTasksAnswerStateByBusinessIdFactId<{ answer_state: string | null }>(db, [claim.business_id, TASK_FACT_IDS[fact], claim.id])) {
     if (t.answer_state === 'ANSWERED') answered = true;
     else if (t.answer_state === 'DONT_KNOW') dontKnow = true;
   }
@@ -439,13 +435,13 @@ export function runComparison(
   if (switches.enabled !== true) {
     return { ran: false, why: `switched off: waits on ${ALLOWANCE_PROFIT_COMPARISON.waits_on}` };
   }
-  const claims = db.all<ClaimLink>('SELECT id, business_id, assessment_id FROM claims ORDER BY created_at, id');
+  const claims = listClaimsIdBusinessId<ClaimLink>(db);
   const by_fact = { sufficient_profit: zero(), aia_headroom: zero() };
 
   for (const claim of claims) {
     const a = claim.assessment_id === null
       ? undefined
-      : db.get<{ sector: string }>('SELECT sector FROM assessments WHERE id = ?', [claim.assessment_id]);
+      : getAssessmentsSectorById<{ sector: string }>(db, [claim.assessment_id]);
     const session = a === undefined || claim.assessment_id === null
       ? null
       : sessionFromFunnel(a.sector as SectorId, funnelStateFor(db, claim.assessment_id)).session;

@@ -21,7 +21,7 @@
  * screen omitting a field, which is presentation and not a control.
  */
 
-import { tellAndMoveOn } from '../crm/tell-and-move.ts';
+import { tellAndMoveOn } from '../crm/index.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
 import type { Actor } from '../../core/index.ts';
@@ -35,10 +35,11 @@ import { sendEngagementLetter, signedCopy } from './engagement-send.ts';
 import { setRequiredSigners, type EngagementSigning } from './signing.ts';
 import * as A from './approvals.ts';
 import { STEP_ANCHOR } from './approvals-pages.ts';
-import { clientList, clientListPage, type ClientSort } from '../crm/client-list.ts';
+import { clientList, clientListPage, type ClientSort } from '../crm/index.ts';
 import * as MR from './match-review.ts';
 import { pickPage } from './match-review-pages.ts';
 import { piecesPage } from '../../core/index.ts';
+import { getClaimsIdByIdBusinessId } from './data.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -188,7 +189,7 @@ export async function handleEngaged(
     const f = await form(req);
     // Back to the page the form was on. A claim is named by id and must be this company's; anything else is the client page.
     const backClaim = /^claim:([A-Za-z0-9-]+)$/.exec(f.get('back') ?? '')?.[1] ?? null;
-    const onClaim = backClaim !== null && db.get<{ id: string }>('SELECT id FROM claims WHERE id = ? AND business_id = ?', [backClaim, id]) !== undefined;
+    const onClaim = backClaim !== null && getClaimsIdByIdBusinessId<{ id: string }>(db, [backClaim, id]) !== undefined;
     const page = onClaim ? `/staff/clients/${id}/claims/${backClaim ?? ''}` : `/staff/clients/${id}`;
     // Back to the step the form was in, when it names one in the only shape a step's anchor has. Ids only.
     const at = STEP_ANCHOR.test(f.get('at') ?? '') ? (f.get('at') ?? '') : null;

@@ -76,10 +76,7 @@ import type { SecretStore } from '../../core/index.ts';
 import { fetchThroughCallOutside, OutsideCallFailed, type CallDeps, type CallResult, type GateSnapshot } from './http.ts';
 import { CALL_POLICIES } from './sources.ts';
 import type { ExtractedPage, PageImage } from '../../shared/index.ts';
-import {
-  sanitise, callModel, specFor, PipelineError, PERSON_NAME_PATTERNS,
-  type DocType, type ModelFn, type ModelPayload, type RawExtraction, type Segment,
-} from '../../modules/claims/documents/document-pipeline.ts';
+import { sanitise, callModel, specFor, PipelineError, PERSON_NAME_PATTERNS, type DocType, type ModelFn, type ModelPayload, type RawExtraction, type Segment } from '../../modules/claims/index.ts';
 
 /** The model, from the claude-api skill. Never from memory. */
 export const CLAUDE_MODEL = 'claude-opus-5';

@@ -39,11 +39,11 @@ import { breadcrumb, claimRef, dataLink, highlights, recordLayout, recordTabs, s
 import { kpiRow, nobodyBadge, siteOf, stageBadge } from '../core/index.ts';
 import { setSubMenu } from '../core/navigation.ts';
 import * as S from './surveyor.ts';
-import { registerAttribution } from '../modules/claims/research.ts';
+import { registerAttribution } from '../modules/claims/index.ts';
 import { formatPence } from '../shared/index.ts';
 import { FUNNEL_CEILING, SURVEY_JOB_WORDS as SO_WORDS } from './survey-open.ts';
-import { surveyorThreadPanel } from '../modules/crm/messages-pages.ts';
-import { deskFirstReading } from '../modules/assessment/desk-first.ts';
+import { surveyorThreadPanel } from '../modules/crm/index.ts';
+import { deskFirstReading } from '../modules/assessment/index.ts';
 import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';

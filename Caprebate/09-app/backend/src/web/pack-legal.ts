@@ -27,10 +27,11 @@ import { CB, getSector, newSession } from '../shared/index.ts';
 import { packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
 import { poundsWords } from './pack-sums.ts';
-import { claimantTypeForGate } from '../modules/crm/crm.ts';
-import { valuationLock } from '../modules/claims/valuation-lock.ts';
-import { claimantRole, type ClaimantRole } from '../modules/assessment/who-claims.ts';
+import { claimantTypeForGate } from '../modules/crm/index.ts';
+import { valuationLock } from '../modules/claims/index.ts';
+import { claimantRole, type ClaimantRole } from '../modules/assessment/index.ts';
 import { LEGAL_ENGINE_SWITCHES } from '../shared/index.ts';
+import { getBusinessesSectorById } from '../modules/crm/index.ts';
 
 export type EngineQuestion = {
   readonly id: string;
@@ -400,7 +401,7 @@ export function legalVerdictForJob(db: Db, job_id: string, nowIso: string): Lega
   if (job === undefined) return null;
   const pack = db.get<{ id: string }>('SELECT id FROM survey_packs WHERE job_id = ?', [job.id]);
   if (pack === undefined) return null;
-  const sector = db.get<{ sector: string }>('SELECT sector FROM businesses WHERE id = ?', [job.business_id])?.sector ?? '';
+  const sector = getBusinessesSectorById<{ sector: string }>(db, [job.business_id])?.sector ?? '';
   const values = new Map<string, unknown>();
   for (const r of db.all<{ question_id: string; value_json: string }>('SELECT question_id, value_json FROM survey_pack_legal_answers WHERE pack_id = ? ORDER BY seq ASC', [pack.id])) {
     values.set(r.question_id, JSON.parse(r.value_json) as unknown);

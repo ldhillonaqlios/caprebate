@@ -41,7 +41,7 @@ import {
   EXITS, LEGACY_STAGE_TO_PROCEDURE, anyStageLabel, claimStage, nextProcedureKey, procedureIndex, stage as stageOf,
   type ProcedureKey,
 } from '../../shared/index.ts';
-import { assertSignedEngagement } from '../claims/research.ts';
+import { assertSignedEngagement } from '../claims/index.ts';
 import {
   BOARD_COLUMNS, FEE_TRIGGER, FEE_TRIGGERS, liveFeeInvoiceCount, loadPipelineClaim, pipelinePanel, recordOpened, type PipelinePanel,
 } from './pipeline.ts';
@@ -53,22 +53,23 @@ import { claimMoneyLines, type ClaimMoneyLine } from '../../web/invoices.ts';
 import { claimTaskPanel, followUpsFor, type ClaimTaskPanel } from './tasks.ts';
 import { lastContactFor, timelineIfPermitted, type Timeline } from './timeline.ts';
 import { fireAutomation } from './automation.ts';
-import { claimDocumentsPanel, type ClaimDocumentsPanel, organisationDocumentsPanel, propertyDocumentsPanel, type PlaceDocumentsPanel } from '../claims/documents.ts';
-import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from '../claims/claim-facts.ts';
-import { propertyTenure, ROLE_LABELS } from '../assessment/who-claims.ts';
-import {
-  aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask,
-  type AftercarePanel, type DeliverablesPanel, type FiguresPanel,
-} from '../claims/claim-record.ts';
+import { claimDocumentsPanel, type ClaimDocumentsPanel, organisationDocumentsPanel, propertyDocumentsPanel, type PlaceDocumentsPanel } from '../claims/index.ts';
+import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from '../claims/index.ts';
+import { propertyTenure, ROLE_LABELS } from '../assessment/index.ts';
+import { aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask, type AftercarePanel, type DeliverablesPanel, type FiguresPanel } from '../claims/index.ts';
 import { assembleReleasedFacts, type ReleasedFacts } from '../../payload.ts';
 import { vocabChoice, vocabLabel } from '../../web/vocabularies.ts';
-import { funnelStateFor } from '../assessment/funnel-session.ts';
-import { expectedFeeFor } from '../assessment/vat.ts';
-import { latestSignOff } from '../claims/claim-record.ts';
+import { funnelStateFor } from '../assessment/index.ts';
+import { expectedFeeFor } from '../assessment/index.ts';
+import { latestSignOff } from '../claims/index.ts';
 import { LEAD_ORIGINS } from './leads.ts';
-import { discountsFor, type FeeDiscountView } from '../claims/fee-discounts.ts';
+import { discountsFor, type FeeDiscountView } from '../claims/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId4 } from '../../integrations/index.ts';
 import { listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleDisabledAt } from '../../core/index.ts';
+import { getClaimContactsIdByClaimIdContactId, getClaimContactsIdClaimIdById, getClaimStageMovesAtByClaimId, getClaimsBusinessIdById, getClaimsCountByBusinessId, getPropertiesCountByBusinessId, getPropertiesIdByBusinessId2, getPropertiesPostcodeJurisdictionById, insertClaimContacts, insertClaimRefSeries, insertClaimStageMoves4, insertClaims, insertProperties4, listClaimsIdBusinessIdByPropertyId, listPropertiesIdByBusinessId, listPropertiesIdLabelByBusinessId, updateClaimContactsUnlinkedAtUnlinkedByByIdUnlinkedAt, updateClaimsOwnerIdSurveyorIdById, updatePropertiesClaimantRoleClaimantRoleSourceById, updatePropertiesLabelPostcodeById, updatePropertiesLandlordUpdatedAtById, updatePropertiesLeaseEndDateUpdatedAtById, updatePropertiesSaleInProspectUpdatedAtById, updatePropertiesTenureSourceById } from '../claims/index.ts';
+import { getBusinessesClaimantTypeById, getBusinessesSectorById, getBusinessesSourceById, getBusinessesStageById, getContactsCountByBusinessIdId, getContactsIdBusinessIdById, getLeadsIdBusinessIdByClaimId, insertContacts, listContactsIdFullNameByBusinessIdContactType, listLeadsIdFirmNameByBusinessId, updateBusinessesLegalNameCompanyNumberById, updateContactsFullNameJobRoleOtherById } from './data.ts';
+import { getClaimsBusinessIdCompanyById, getSurveyorCommitmentsNByAssessmentId, getSurveyorJobsSurveyorIdByBusinessIdSurveyorId, listClaimContactsIdContactIdByClaimIdUnlinkedAt, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3, listSurveyorJobsSurveyorIdByClaimIdSurveyorId2, updateSurveyorJobsClaimIdByBusinessIdAssessmentId } from './data-borrowed.ts';
+import { getAssessmentsIdByBusinessId2, getAssessmentsShownLowPenceShownHighPenceById, getEstimatesCountByBusinessId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId, listAssessmentAnswersStateValueByAssessmentIdQuestionId } from '../assessment/index.ts';
 
 export { NotFoundAsRefusal };
 
@@ -233,8 +234,7 @@ export const PRIOR_CLAIM_SOURCE = 'the client’s own answer in the assessment';
  *     question), so a seeded or imported assessment derives nothing.
  */
 export function derivedPriorClaim(db: Db, p: { business_id: string; label: string }): { value: 'YES'; source: string } | null {
-  const latest = db.get<{ id: string }>(
-    'SELECT id FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [p.business_id]);
+  const latest = getAssessmentsIdByBusinessId2<{ id: string }>(db, [p.business_id]);
   if (latest === undefined) return null;
   const state = funnelStateFor(db, latest.id);
   if (state === undefined) return null;
@@ -446,9 +446,7 @@ function companiesHouse(db: Db, actor: Actor, business_id: string): { name: stri
  * then, staff may record it.
  */
 function claimantFromAssessment(db: Db, actor: Actor, business_id: string): string | null {
-  const latest = db.get<{ id: string }>(
-    'SELECT id FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [business_id],
-  );
+  const latest = getAssessmentsIdByBusinessId2<{ id: string }>(db, [business_id]);
   if (latest === undefined) return null;
   if (!can(actor, 'answer.read', { type: 'answer', id: latest.id, business_id })) return null;
   return claimantFromAnswers(db, latest.id);
@@ -462,12 +460,10 @@ function claimantFromAssessment(db: Db, actor: Actor, business_id: string): stri
  * UNKNOWN recorded and never recorded both come back null.
  */
 export function claimantTypeForGate(db: Db, business_id: string): { value: string | null; source: string | null } {
-  const latest = db.get<{ id: string }>(
-    'SELECT id FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [business_id],
-  );
+  const latest = getAssessmentsIdByBusinessId2<{ id: string }>(db, [business_id]);
   const derived = latest === undefined ? null : claimantFromAnswers(db, latest.id);
   if (derived !== null) return { value: derived, source: 'the client’s own answer in the assessment' };
-  const b = db.get<{ claimant_type: string | null }>('SELECT claimant_type FROM businesses WHERE id = ?', [business_id]);
+  const b = getBusinessesClaimantTypeById<{ claimant_type: string | null }>(db, [business_id]);
   const recorded = b?.claimant_type ?? null;
   return recorded === null || recorded === 'UNKNOWN' ? { value: null, source: null } : { value: recorded, source: 'recorded on the organisation by staff' };
 }
@@ -477,17 +473,14 @@ export function propertyJurisdiction(
   db: Db, property_id: string | null, store?: PostcodeStore | null,
 ): { value: string | null; label: string; derived: boolean; why: string } {
   if (property_id === null) return { value: null, label: 'not known — no property is recorded on this claim', derived: false, why: 'no property' };
-  const p = db.get<{ postcode: string | null; jurisdiction: string | null }>('SELECT postcode, jurisdiction FROM properties WHERE id = ?', [property_id]);
+  const p = getPropertiesPostcodeJurisdictionById<{ postcode: string | null; jurisdiction: string | null }>(db, [property_id]);
   if (p === undefined) return { value: null, label: 'not known', derived: false, why: 'no property' };
   return jurisdictionOf(p, store);
 }
 
 function claimantFromAnswers(db: Db, assessment_id: string): string | null {
   const latest = { id: assessment_id };
-  const rows = db.all<{ state: string; value: string | null }>(
-    "SELECT state, value FROM assessment_answers WHERE assessment_id = ? AND question_id LIKE 'Q2-%-entity'",
-    [latest.id],
-  );
+  const rows = listAssessmentAnswersStateValueByAssessmentIdQuestionId<{ state: string; value: string | null }>(db, [latest.id]);
   if (rows.length === 0) return null;
   const mapped = rows.map((r) => (r.state === 'ANSWERED' && has(FUNNEL_ENTITY, r.value) ? FUNNEL_ENTITY[r.value] : undefined));
   const first = mapped[0];
@@ -532,11 +525,7 @@ export function derivedJurisdiction(postcode: string | null, store: PostcodeStor
  */
 export function nextClaimRef(db: Db, atIso: string): string {
   const year = Number(atIso.slice(0, 4));
-  const r = db.get<{ last_n: number }>(
-    'INSERT INTO claim_ref_series (year, last_n) VALUES (?, 1) ' +
-      'ON CONFLICT(year) DO UPDATE SET last_n = last_n + 1 RETURNING last_n',
-    [year],
-  );
+  const r = insertClaimRefSeries<{ last_n: number }>(db, [year]);
   if (r === undefined) throw new Error('the claim reference series did not advance');
   return `CR-${String(year)}-${String(r.last_n).padStart(4, '0')}`;
 }
@@ -556,12 +545,8 @@ export function insertClaim(db: Db, now: () => string, newId: () => string, c: C
   const at = now();
   const claim_ref = nextClaimRef(db, at);
   const id = newId();
-  db.run(
-    'INSERT INTO claims (id, claim_ref, business_id, property_id, assessment_id, workstream, stage, ' +
-      'owner_id, surveyor_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, claim_ref, c.business_id, c.property_id, c.assessment_id, c.workstream, c.stage,
-      c.owner_id, c.surveyor_id, at, at],
-  );
+  insertClaims(db, [id, claim_ref, c.business_id, c.property_id, c.assessment_id, c.workstream, c.stage,
+      c.owner_id, c.surveyor_id, at, at]);
   return { id, claim_ref };
 }
 
@@ -571,16 +556,12 @@ export function insertClaim(db: Db, now: () => string, newId: () => string, c: C
  * the migration found. Read the comment above that INSERT for why each is so.
  */
 export function backfillClaimFor(db: Db, now: () => string, newId: () => string, business_id: string): { id: string; claim_ref: string } {
-  const b = db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [business_id]);
+  const b = getBusinessesStageById<{ stage: string }>(db, [business_id]);
   if (b === undefined) throw new Error('backfillClaimFor: no such business');
-  const property = db.get<{ id: string }>(
-    'SELECT id FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC LIMIT 1', [business_id]);
-  const assessment = db.get<{ id: string }>(
-    'SELECT id FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [business_id]);
-  const sealed = db.get<{ n: number }>('SELECT COUNT(*) AS n FROM estimates WHERE business_id = ?', [business_id]);
-  const job = db.get<{ surveyor_id: string }>(
-    'SELECT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL ' +
-      'ORDER BY created_at DESC LIMIT 1', [business_id]);
+  const property = getPropertiesIdByBusinessId2<{ id: string }>(db, [business_id]);
+  const assessment = getAssessmentsIdByBusinessId2<{ id: string }>(db, [business_id]);
+  const sealed = getEstimatesCountByBusinessId<{ n: number }>(db, [business_id]);
+  const job = getSurveyorJobsSurveyorIdByBusinessIdSurveyorId<{ surveyor_id: string }>(db, [business_id]);
   // CRM 2 of 10: the business's six-key stage, as the procedure stage it names,
   // placed no later than its records evidence — migration 010's conversion.
   const legacy = stageOf(b.stage)?.key ?? null;
@@ -596,16 +577,11 @@ export function backfillClaimFor(db: Db, now: () => string, newId: () => string,
     surveyor_id: job?.surveyor_id ?? null,
   });
   if (assessment !== undefined) {
-    db.run('UPDATE surveyor_jobs SET claim_id = ? WHERE business_id = ? AND assessment_id = ? AND claim_id IS NULL',
-      [made.id, business_id, assessment.id]);
+    updateSurveyorJobsClaimIdByBusinessIdAssessmentId(db, [made.id, business_id, assessment.id]);
   }
   if (placed !== null) {
-    db.run(
-      'INSERT INTO claim_stage_moves (id, claim_id, at, actor_id, actor_role, kind, from_stage, to_stage, reason_code, reason_text) ' +
-        "VALUES (?, ?, ?, NULL, NULL, 'CONVERTED', ?, ?, NULL, ?)",
-      [newId(), made.id, now(), legacy, placed,
-        'moved over from the old stage list, at the step its records show'],
-    );
+    insertClaimStageMoves4(db, [newId(), made.id, now(), legacy, placed,
+        'moved over from the old stage list, at the step its records show']);
   }
   return made;
 }
@@ -623,9 +599,7 @@ export function placeLegacyStage(
   const beyond = (k: ProcedureKey): boolean => procedureIndex(named) > procedureIndex(k);
   if (beyond('ENGAGEMENT') && !assertSignedEngagement(db, business_id).signed) return 'ENGAGEMENT';
   if (beyond('SURVEY')) {
-    const committed = assessment_id !== null && db.get<{ n: number }>(
-      'SELECT 1 AS n FROM surveyor_commitments sc JOIN surveyor_jobs j ON j.id = sc.job_id WHERE j.assessment_id = ? LIMIT 1',
-      [assessment_id]) !== undefined;
+    const committed = assessment_id !== null && getSurveyorCommitmentsNByAssessmentId<{ n: number }>(db, [assessment_id]) !== undefined;
     if (!committed) return 'SURVEY';
   }
   if (beyond('TAX_ADVISER_SIGNOFF')) return 'TAX_ADVISER_SIGNOFF';
@@ -671,10 +645,7 @@ const CLAIM_SELECT =
  * and its page says so. `claims.surveyor_id` is not read here.
  */
 function claimSurveyors(db: Db, claim_id: string): string[] {
-  return db.all<{ surveyor_id: string }>(
-    'SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE claim_id = ? AND surveyor_id IS NOT NULL',
-    [claim_id],
-  ).map((r) => r.surveyor_id);
+  return listSurveyorJobsSurveyorIdByClaimIdSurveyorId2<{ surveyor_id: string }>(db, [claim_id]).map((r) => r.surveyor_id);
 }
 
 /** The claim as `can()` is asked about it. Exported for src/modules/crm/pipeline.ts, which moves it. */
@@ -712,14 +683,9 @@ function claimValue(db: Db, assessment_id: string | null): ClaimValue {
   if (assessment_id === null) {
     return { established: false, why: 'this claim carries no assessment, so there is no indicative estimate for it yet' };
   }
-  const e = db.get<SealedEstimate>(
-    'SELECT qualifying_expenditure_pence, qualifying_pct, pool_split_main_pence, pool_split_special_pence, ' +
-      'bare_land_pence, multiplier, indicative_lifetime_saving_pence FROM estimates WHERE assessment_id = ?',
-    [assessment_id],
-  );
+  const e = getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm<SealedEstimate>(db, [assessment_id]);
   if (e === undefined) return { established: false, why: 'no estimate has been locked for this claim’s assessment' };
-  const a = db.get<{ shown_low_pence: number | null; shown_high_pence: number | null }>(
-    'SELECT shown_low_pence, shown_high_pence FROM assessments WHERE id = ?', [assessment_id]);
+  const a = getAssessmentsShownLowPenceShownHighPenceById<{ shown_low_pence: number | null; shown_high_pence: number | null }>(db, [assessment_id]);
   return {
     established: true,
     shown_range: formatShownRange({ low_pence: a?.shown_low_pence ?? null, high_pence: a?.shown_high_pence ?? null }),
@@ -823,8 +789,8 @@ export function organisationList(db: Db, actor: Actor, limit = 200): Organisatio
         client_status: words(CLIENT_STATUSES, b.client_status, b.client_status),
         do_not_contact: b.client_status === 'DO_NOT_CONTACT',
         owner: b.owner_name,
-        properties: db.get<{ n: number }>('SELECT COUNT(*) AS n FROM properties WHERE business_id = ?', [b.id])?.n ?? 0,
-        claims: db.get<{ n: number }>('SELECT COUNT(*) AS n FROM claims WHERE business_id = ?', [b.id])?.n ?? 0,
+        properties: getPropertiesCountByBusinessId<{ n: number }>(db, [b.id])?.n ?? 0,
+        claims: getClaimsCountByBusinessId<{ n: number }>(db, [b.id])?.n ?? 0,
       };
     });
 }
@@ -930,11 +896,7 @@ export function organisationView(db: Db, actor: Actor, id: string): Organisation
 /** The firms whose referrals became this organisation's leads, each asked of `introducer.read`. Derived, never recorded. */
 function referredBy(db: Db, actor: Actor, business_id: string): { referred_by?: NonNullable<OrganisationView['referred_by']> } {
   if (!can(actor, 'introducer.read', { type: 'introducer', id: '__organisation__' })) return {};
-  const firms = db.all<{ id: string; firm_name: string; n: number }>(
-    'SELECT i.id, i.firm_name, COUNT(l.id) AS n FROM leads l JOIN introducers i ON i.id = l.introducer_id ' +
-      'WHERE l.business_id = ? GROUP BY i.id, i.firm_name ORDER BY i.firm_name ASC, i.id ASC',
-    [business_id],
-  ).filter((f) => can(actor, 'introducer.read', { type: 'introducer', id: f.id }))
+  const firms = listLeadsIdFirmNameByBusinessId<{ id: string; firm_name: string; n: number }>(db, [business_id]).filter((f) => can(actor, 'introducer.read', { type: 'introducer', id: f.id }))
     .map((f) => ({ id: f.id, firm_name: f.firm_name, leads: f.n, href: `/staff/introducers/${f.id}` }));
   return { referred_by: firms };
 }
@@ -991,12 +953,8 @@ export function updateOrganisation(d: CrmDeps, actor: Actor, id: string, input: 
   };
   const changed = changedKeys(before, after);
   if (changed.length === 0) return { ok: true, id: b.id };
-  d.db.run(
-    'UPDATE businesses SET legal_name = ?, company_number = ?, claimant_type = ?, registered_address = ?, ' +
-      'trading_address = ?, website = ?, client_status = ?, source = ?, owner_id = ?, updated_at = ? WHERE id = ?',
-    [after.legal_name, after.company_number, after.claimant_type, after.registered_address, after.trading_address,
-      after.website, after.client_status, after.source, after.owner_id, d.now(), b.id],
-  );
+  updateBusinessesLegalNameCompanyNumberById(d.db, [after.legal_name, after.company_number, after.claimant_type, after.registered_address, after.trading_address,
+      after.website, after.client_status, after.source, after.owner_id, d.now(), b.id]);
   // WHICH fields changed, never what they now say. The status itself is a
   // control, not personal data, so it is named when it moves.
   record(d, actor, 'ORGANISATION_UPDATED', 'business', b.id, {
@@ -1109,9 +1067,7 @@ export function isReachable(c: { readonly email: string | null; readonly phone: 
 
 /** How many of a client's contacts we can reach, leaving out one contact when asked (the one being changed). */
 export function reachableContacts(db: CrmDeps['db'], business_id: string, leaving_out: string | null = null): number {
-  return db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM contacts WHERE business_id = ? AND id IS NOT ? AND (TRIM(COALESCE(email, '')) <> '' OR TRIM(COALESCE(phone, '')) <> '')",
-    [business_id, leaving_out])?.n ?? 0;
+  return getContactsCountByBusinessIdId<{ n: number }>(db, [business_id, leaving_out])?.n ?? 0;
 }
 
 /**
@@ -1132,13 +1088,8 @@ export function addContact(d: CrmDeps, actor: Actor, business_id: string, input:
   if (!v.ok) return v;
   const id = d.newId();
   const at = d.now();
-  d.db.run(
-    'INSERT INTO contacts (id, business_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, ' +
-      'created_at, contact_type, is_decision_maker, email, phone, notes, updated_at) ' +
-      'VALUES (?, ?, ?, NULL, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?)',
-    [id, b.id, v.value.full_name, v.value.job_role_other, at, v.value.contact_type, v.value.is_decision_maker,
-      v.value.email, v.value.phone, v.value.notes, at],
-  );
+  insertContacts(d.db, [id, b.id, v.value.full_name, v.value.job_role_other, at, v.value.contact_type, v.value.is_decision_maker,
+      v.value.email, v.value.phone, v.value.notes, at]);
   record(d, actor, 'CONTACT_CREATED', 'contact', id, { business: b.id, contact_type: v.value.contact_type });
   return { ok: true, id };
 }
@@ -1159,12 +1110,8 @@ export function updateContact(d: CrmDeps, actor: Actor, contact_id: string, inpu
   if (r.business_id !== null && isReachable(stored) && !isReachable(v.value) && reachableContacts(d.db, r.business_id, r.id) === 0) {
     return { ok: false, why: LAST_WAY_TO_REACH_WORDS, field: 'email' };
   }
-  d.db.run(
-    'UPDATE contacts SET full_name = ?, job_role_other = ?, contact_type = ?, is_decision_maker = ?, email = ?, ' +
-      'phone = ?, notes = ?, updated_at = ? WHERE id = ?',
-    [v.value.full_name, v.value.job_role_other, v.value.contact_type, v.value.is_decision_maker, v.value.email,
-      v.value.phone, v.value.notes, d.now(), r.id],
-  );
+  updateContactsFullNameJobRoleOtherById(d.db, [v.value.full_name, v.value.job_role_other, v.value.contact_type, v.value.is_decision_maker, v.value.email,
+      v.value.phone, v.value.notes, d.now(), r.id]);
   record(d, actor, 'CONTACT_UPDATED', 'contact', r.id, { business: r.business_id, fields: changed });
   return { ok: true, id: r.id };
 }
@@ -1199,10 +1146,7 @@ const PROPERTY_SELECT =
  * of that organisation's properties — so this is the same reach, not a wider one.
  */
 function propertySurveyors(db: Db, business_id: string): string[] {
-  return db.all<{ surveyor_id: string }>(
-    'SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL',
-    [business_id],
-  ).map((r) => r.surveyor_id);
+  return listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3<{ surveyor_id: string }>(db, [business_id]).map((r) => r.surveyor_id);
 }
 
 function propertyObj(db: Db, r: { id: string; business_id: string }): Extract<Obj, { type: 'property' }> {
@@ -1229,9 +1173,7 @@ function propertyRowsFor(db: Db, actor: Actor, business_id: string): PropertyRow
 }
 
 function propertyRow(db: Db, actor: Actor, r: PropertyDbRow): PropertyRow {
-  const claims = db.all<{ id: string; business_id: string; assessment_id: string | null }>(
-    'SELECT id, business_id, assessment_id FROM claims WHERE property_id = ?', [r.id],
-  ).filter((c) => can(actor, 'claim.read', claimObjFor(db,c))).length;
+  const claims = listClaimsIdBusinessIdByPropertyId<{ id: string; business_id: string; assessment_id: string | null }>(db, [r.id]).filter((c) => can(actor, 'claim.read', claimObjFor(db,c))).length;
   return {
     id: r.id, label: r.label, postcode: r.postcode, business_id: r.business_id, business_name: r.business_name,
     jurisdiction: jurisdictionOf(r).label, claims,
@@ -1259,14 +1201,10 @@ export type AssessmentLine = { readonly question: string; readonly answer: strin
  * as its label; a property added by staff has none, and shows none.
  */
 function fromTheAssessment(db: Db, actor: Actor, r: PropertyDbRow): AssessmentLine[] {
-  const latest = db.get<{ id: string }>(
-    'SELECT id FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [r.business_id]);
+  const latest = getAssessmentsIdByBusinessId2<{ id: string }>(db, [r.business_id]);
   if (latest === undefined) return [];
   if (!can(actor, 'answer.read', { type: 'answer', id: latest.id, business_id: r.business_id })) return [];
-  const rows = db.all<{ question_id: string; question_text: string; state: string; value: string | null }>(
-    'SELECT question_id, question_text, state, value FROM assessment_answers WHERE assessment_id = ? ORDER BY ord ASC',
-    [latest.id],
-  );
+  const rows = listAssessmentAnswersQuestionIdQuestionTextByAssessmentId<{ question_id: string; question_text: string; state: string; value: string | null }>(db, [latest.id]);
   const address = rows.find((a) => /^Q2-\d+-address$/.test(a.question_id) && a.value === r.label);
   const n = address === undefined ? null : /^Q2-(\d+)-address$/.exec(address.question_id)?.[1] ?? null;
   const wanted = (id: string): boolean =>
@@ -1368,10 +1306,7 @@ export function addProperty(d: CrmDeps, actor: Actor, business_id: string, input
   if (label.value === null) return { ok: false, why: 'Give the property a name a person would recognise — the site or the building.', field: 'label' };
   const id = d.newId();
   const at = d.now();
-  d.db.run(
-    'INSERT INTO properties (id, business_id, label, postcode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-    [id, b.id, label.value, postcode.value === null ? null : postcode.value.toUpperCase(), at, at],
-  );
+  insertProperties4(d.db, [id, b.id, label.value, postcode.value === null ? null : postcode.value.toUpperCase(), at, at]);
   record(d, actor, 'PROPERTY_CREATED', 'property', id, { business: b.id });
   return { ok: true, id };
 }
@@ -1501,25 +1436,19 @@ export function updateProperty(
     .filter(([k, v, was]) => Object.hasOwn(input, k) && (v ?? null) !== was).map(([k]) => k);
   const changed = [...changedKeys(stored, after), ...(saleChanged ? ['sale_in_prospect'] : []), ...holdingChanged];
   if (changed.length === 0) return { ok: true, id: r.id };
-  if (saleChanged) d.db.run('UPDATE properties SET sale_in_prospect = ?, updated_at = ? WHERE id = ?', [sale.value ?? null, d.now(), r.id]);
-  if (holdingChanged.includes('claimant_role')) d.db.run('UPDATE properties SET claimant_role = ?, claimant_role_source = ?, updated_at = ? WHERE id = ?', [role.value ?? null, role.value === null ? null : 'recorded by staff', d.now(), r.id]);
-  if (holdingChanged.includes('lease_end_date')) d.db.run('UPDATE properties SET lease_end_date = ?, updated_at = ? WHERE id = ?', [leaseEnd.value ?? null, d.now(), r.id]);
-  if (holdingChanged.includes('landlord')) d.db.run('UPDATE properties SET landlord = ?, updated_at = ? WHERE id = ?', [landlord.value ?? null, d.now(), r.id]);
-  if (changed.includes('tenure')) d.db.run('UPDATE properties SET tenure_source = ? WHERE id = ?', [after.tenure === null || after.tenure === 'UNKNOWN' ? null : 'recorded by staff', r.id]);
+  if (saleChanged) updatePropertiesSaleInProspectUpdatedAtById(d.db, [sale.value ?? null, d.now(), r.id]);
+  if (holdingChanged.includes('claimant_role')) updatePropertiesClaimantRoleClaimantRoleSourceById(d.db, [role.value ?? null, role.value === null ? null : 'recorded by staff', d.now(), r.id]);
+  if (holdingChanged.includes('lease_end_date')) updatePropertiesLeaseEndDateUpdatedAtById(d.db, [leaseEnd.value ?? null, d.now(), r.id]);
+  if (holdingChanged.includes('landlord')) updatePropertiesLandlordUpdatedAtById(d.db, [landlord.value ?? null, d.now(), r.id]);
+  if (changed.includes('tenure')) updatePropertiesTenureSourceById(d.db, [after.tenure === null || after.tenure === 'UNKNOWN' ? null : 'recorded by staff', r.id]);
   /* CRM 6 of 10: a disposal date newly set, or a sale newly in prospect, raises the task pointing at the Disposal Note —
      after the write, and once per property while one is open. Never asked and not known raise nothing. */
   const disposalSet = changed.includes('disposal_date') && after.disposal_date !== null;
   const saleComing = saleChanged && sale.value === 'YES';
-  d.db.run(
-    'UPDATE properties SET label = ?, postcode = ?, address_line_1 = ?, address_line_2 = ?, town = ?, jurisdiction = ?, ' +
-      'property_type = ?, property_use = ?, tenure = ?, occupier = ?, acquisition_date = ?, acquisition_price_pence = ?, ' +
-      'completion_date = ?, disposal_date = ?, previous_owner = ?, construction_notes = ?, existing_ca_claimed = ?, ' +
-      'prior_claim_notes = ?, updated_at = ? WHERE id = ?',
-    [after.label, after.postcode, after.address_line_1, after.address_line_2, after.town, after.jurisdiction,
+  updatePropertiesLabelPostcodeById(d.db, [after.label, after.postcode, after.address_line_1, after.address_line_2, after.town, after.jurisdiction,
       after.property_type, after.property_use, after.tenure, after.occupier, after.acquisition_date,
       after.acquisition_price_pence, after.completion_date, after.disposal_date, after.previous_owner,
-      after.construction_notes, after.existing_ca_claimed, after.prior_claim_notes, d.now(), r.id],
-  );
+      after.construction_notes, after.existing_ca_claimed, after.prior_claim_notes, d.now(), r.id]);
   record(d, actor, 'PROPERTY_UPDATED', 'property', r.id, { business: r.business_id, fields: changed });
   if (disposalSet || saleComing) {
     raiseDisposalTask(d, actor, { id: r.id, business_id: r.business_id }, disposalSet ? 'DISPOSAL_DATE' : 'SALE_IN_PROSPECT');
@@ -1646,9 +1575,7 @@ function loadClaim(db: Db, id: string): ClaimDbRow {
  * No authorisation: the caller has already asked `claim.read` of the claim it is naming.
  */
 export function claimNaming(db: Db, claim_id: string): { readonly business_id: string; readonly company: string; readonly property: string | null; readonly ref: string } | null {
-  const r = db.get<{ business_id: string; company: string; property: string | null; ref: string }>(
-    'SELECT c.business_id, b.name AS company, p.label AS property, c.claim_ref AS ref FROM claims c JOIN businesses b ON b.id = c.business_id ' +
-      'LEFT JOIN properties p ON p.id = c.property_id WHERE c.id = ?', [claim_id]);
+  const r = getClaimsBusinessIdCompanyById<{ business_id: string; company: string; property: string | null; ref: string }>(db, [claim_id]);
   return r ?? null;
 }
 
@@ -1741,8 +1668,7 @@ export function claimView(db: Db, actor: Actor, id: string, opts: { store?: Post
         edit: {
           owners: ownerChoices(db),
           surveyors: surveyorChoices(db),
-          properties: db.all<{ id: string; label: string }>(
-            'SELECT id, label FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC', [r.business_id]),
+          properties: listPropertiesIdLabelByBusinessId<{ id: string; label: string }>(db, [r.business_id]),
           current: {
             owner_id: r.owner_id, surveyor_id: r.surveyor_id, priority: r.priority, workstream: r.workstream,
             property_id: r.property_id, next_action: r.next_action, next_action_due: r.next_action_due,
@@ -1830,7 +1756,7 @@ export function updateClaim(d: CrmDeps, actor: Actor, id: string, input: Fields)
     property_id: r.property_id,
     hold_reason: r.hold_reason, lost_reason: r.lost_reason, expected_completion: r.expected_completion,
   };
-  const properties = d.db.all<{ id: string }>('SELECT id FROM properties WHERE business_id = ?', [r.business_id]);
+  const properties = listPropertiesIdByBusinessId<{ id: string }>(d.db, [r.business_id]);
   const owner = take(input, 'owner_id', stored.owner_id, (v) => personField(v, ownerChoices(d.db), 'The claim owner'));
   const surveyor = take(input, 'surveyor_id', stored.surveyor_id, (v) => personField(v, surveyorChoices(d.db), 'The surveyor'));
   const priority = take(input, 'priority', stored.priority, (v) => vocabChoice(d.db, 'PRIORITY', v, stored.priority, 'The priority'));
@@ -1859,12 +1785,8 @@ export function updateClaim(d: CrmDeps, actor: Actor, id: string, input: Fields)
   };
   const changed = changedKeys(stored, after);
   if (changed.length === 0) return { ok: true, id: r.id };
-  d.db.run(
-    'UPDATE claims SET owner_id = ?, surveyor_id = ?, priority = ?, workstream = ?, property_id = ?, ' +
-      'hold_reason = ?, lost_reason = ?, expected_completion = ?, updated_at = ? WHERE id = ?',
-    [after.owner_id, after.surveyor_id, after.priority, after.workstream, after.property_id,
-      after.hold_reason, after.lost_reason, after.expected_completion, d.now(), r.id],
-  );
+  updateClaimsOwnerIdSurveyorIdById(d.db, [after.owner_id, after.surveyor_id, after.priority, after.workstream, after.property_id,
+      after.hold_reason, after.lost_reason, after.expected_completion, d.now(), r.id]);
   record(d, actor, 'CLAIM_UPDATED', 'claim', r.id, { business: r.business_id, fields: changed });
   // CRM 3 of 10: owner changed → notify (the seeded rule).
   if (changed.includes('owner_id') && after.owner_id !== null) fireAutomation(d, actor, { trigger: 'OWNER_CHANGED', claim_id: r.id });
@@ -1892,12 +1814,9 @@ export type ClaimOrigin = {
  */
 export function claimOrigin(db: Db, actor: Actor, r: { id: string; business_id: string }): { origin?: ClaimOrigin } {
   if (!can(actor, 'lead.read', { type: 'lead', id: '__claim_origin__', business_id: r.business_id })) return {};
-  const l = db.get<{ id: string; business_id: string | null; origin: string; source: string; introducer_id: string | null; firm_name: string | null }>(
-    'SELECT l.id, l.business_id, l.origin, l.source, l.introducer_id, i.firm_name FROM leads l ' +
-      'LEFT JOIN introducers i ON i.id = l.introducer_id WHERE l.claim_id = ?',
-    [r.id]);
+  const l = getLeadsIdBusinessIdByClaimId<{ id: string; business_id: string | null; origin: string; source: string; introducer_id: string | null; firm_name: string | null }>(db, [r.id]);
   const lead = l !== undefined && can(actor, 'lead.read', { type: 'lead', id: l.id, business_id: l.business_id }) ? l : undefined;
-  const orgSource = db.get<{ source: string | null }>('SELECT source FROM businesses WHERE id = ?', [r.business_id])?.source ?? null;
+  const orgSource = getBusinessesSourceById<{ source: string | null }>(db, [r.business_id])?.source ?? null;
   const value = lead?.source ?? orgSource;
   const source = {
     value,
@@ -1956,23 +1875,14 @@ export function claimTeam(db: Db, actor: Actor, r: ClaimDbRow, obj: Extract<Obj,
   const mayLink = can(actor, 'claim_team.write', obj);
   const typeWords = (t: string | null): string => words(CONTACT_TYPES, t, 'not recorded');
   const contacts = can(actor, 'contact.read', contactObj)
-    ? db.all<{ id: string; contact_id: string; linked_at: string; full_name: string; contact_type: string | null; linked_by: string | null }>(
-      'SELECT k.id, k.contact_id, k.linked_at, ct.full_name, ct.contact_type, u.display_name AS linked_by FROM claim_contacts k ' +
-        'JOIN contacts ct ON ct.id = k.contact_id LEFT JOIN users u ON u.id = k.linked_by ' +
-        'WHERE k.claim_id = ? AND k.unlinked_at IS NULL ORDER BY ct.full_name ASC, k.id ASC',
-      [r.id],
-    ).map((k) => ({
+    ? listClaimContactsIdContactIdByClaimIdUnlinkedAt<{ id: string; contact_id: string; linked_at: string; full_name: string; contact_type: string | null; linked_by: string | null }>(db, [r.id]).map((k) => ({
       link_id: k.id, contact_id: k.contact_id, name: k.full_name, type: typeWords(k.contact_type),
       since: localStamp(k.linked_at), linked_by: k.linked_by ?? 'a former user',
     }))
     : undefined;
   const linked = new Set((contacts ?? []).map((c) => c.contact_id));
   const candidates = mayLink && contacts !== undefined
-    ? db.all<{ id: string; full_name: string; contact_type: string | null }>(
-      "SELECT id, full_name, contact_type FROM contacts WHERE business_id = ? AND contact_type IN ('ACCOUNTANT','ADVISER') " +
-        'ORDER BY full_name ASC, id ASC',
-      [r.business_id],
-    ).filter((c) => !linked.has(c.id)).map((c) => ({ id: c.id, name: c.full_name, type: typeWords(c.contact_type) }))
+    ? listContactsIdFullNameByBusinessIdContactType<{ id: string; full_name: string; contact_type: string | null }>(db, [r.business_id]).filter((c) => !linked.has(c.id)).map((c) => ({ id: c.id, name: c.full_name, type: typeWords(c.contact_type) }))
     : undefined;
   let taxAdviser: ClaimTeam['tax_adviser'];
   if (can(actor, 'claim_figures.read', { type: 'claim_figures', id: r.id, business_id: r.business_id })) {
@@ -2000,21 +1910,20 @@ export function claimTeam(db: Db, actor: Actor, r: ClaimDbRow, obj: Extract<Obj,
 export function linkClaimContact(d: CrmDeps, actor: Actor, claim_id: string, contact_id: string | null): WriteResult {
   const r = loadClaim(d.db, claim_id);
   authorise(actor, 'claim_team.write', claimObjFor(d.db, r));
-  const c = d.db.get<{ id: string; business_id: string | null; contact_type: string | null }>(
-    'SELECT id, business_id, contact_type FROM contacts WHERE id = ?', [contact_id ?? '']);
+  const c = getContactsIdBusinessIdById<{ id: string; business_id: string | null; contact_type: string | null }>(d.db, [contact_id ?? '']);
   if (c === undefined || c.business_id !== r.business_id) {
     return { ok: false, why: 'Choose one of this organisation’s own contacts — a claim’s team is drawn from the client’s contacts.' };
   }
   if (!TEAM_TYPES.includes(c.contact_type as typeof TEAM_TYPES[number])) {
     return { ok: false, why: 'Only an accountant or adviser contact can join a claim’s team. If that is who they are, change the contact’s type first.' };
   }
-  if (d.db.get<{ id: string }>('SELECT id FROM claim_contacts WHERE claim_id = ? AND contact_id = ? AND unlinked_at IS NULL', [r.id, c.id]) !== undefined) {
+  if (getClaimContactsIdByClaimIdContactId<{ id: string }>(d.db, [r.id, c.id]) !== undefined) {
     return { ok: false, why: 'That contact is already on this claim’s team.' };
   }
   const id = d.newId();
   const at = d.now();
   d.db.tx(() => {
-    d.db.run('INSERT INTO claim_contacts (id, claim_id, contact_id, linked_by, linked_at) VALUES (?, ?, ?, ?, ?)', [id, r.id, c.id, actor.id, at]);
+    insertClaimContacts(d.db, [id, r.id, c.id, actor.id, at]);
     record(d, actor, 'CLAIM_TEAM_LINKED', 'claim', r.id, { link: id, contact: c.id, business: r.business_id });
   });
   return { ok: true, id };
@@ -2022,14 +1931,13 @@ export function linkClaimContact(d: CrmDeps, actor: Actor, claim_id: string, con
 
 /** END A CLAIM TEAM LINK, WITH WHO AND WHEN. That the contact was on the team stays on the record. */
 export function unlinkClaimContact(d: CrmDeps, actor: Actor, link_id: string): WriteResult & { claim_id?: string } {
-  const k = d.db.get<{ id: string; claim_id: string; contact_id: string; unlinked_at: string | null }>(
-    'SELECT id, claim_id, contact_id, unlinked_at FROM claim_contacts WHERE id = ?', [link_id]);
+  const k = getClaimContactsIdClaimIdById<{ id: string; claim_id: string; contact_id: string; unlinked_at: string | null }>(d.db, [link_id]);
   if (k === undefined) throw new NotFoundAsRefusal();
   const r = loadClaim(d.db, k.claim_id);
   authorise(actor, 'claim_team.write', claimObjFor(d.db, r));
   if (k.unlinked_at !== null) return { ok: false, why: 'That contact has already been taken off this claim’s team.' };
   d.db.tx(() => {
-    d.db.run('UPDATE claim_contacts SET unlinked_at = ?, unlinked_by = ? WHERE id = ? AND unlinked_at IS NULL', [d.now(), actor.id, k.id]);
+    updateClaimContactsUnlinkedAtUnlinkedByByIdUnlinkedAt(d.db, [d.now(), actor.id, k.id]);
     record(d, actor, 'CLAIM_TEAM_UNLINKED', 'claim', r.id, { link: k.id, contact: k.contact_id, business: r.business_id });
   });
   return { ok: true, id: k.id, claim_id: r.id };
@@ -2067,7 +1975,7 @@ export type EstimatedFee = {
 function estimatedFee(db: Db, actor: Actor, r: { id: string; claim_ref: string; business_id: string; stage: string | null }): { estimated_fee?: EstimatedFee } {
   if (!can(actor, 'invoice.read', { type: 'invoice', id: r.business_id, business_id: r.business_id })) return {};
   if (liveFeeInvoiceCount(db, r.id) > 0) return {};
-  const sector = db.get<{ sector: string | null }>('SELECT sector FROM businesses WHERE id = ?', [r.business_id])?.sector ?? null;
+  const sector = getBusinessesSectorById<{ sector: string | null }>(db, [r.business_id])?.sector ?? null;
   const e = expectedFeeFor(db, { id: r.id, claim_ref: r.claim_ref, business_id: r.business_id, sector });
   const counted = r.stage === 'INVOICE';
   const basis = 'Our fee is worked out from the tax adviser’s signed-off figure, using our fee rules. Nobody types it in. It is not agreed anywhere else.';
@@ -2137,7 +2045,7 @@ export type Board = {
  */
 export function boardCard(db: Db, actor: Actor, r: ClaimDbRow, nowIso: string): BoardCard {
   const obj = claimObjFor(db, r);
-  const last = db.get<{ at: string | null }>('SELECT MAX(at) AS at FROM claim_stage_moves WHERE claim_id = ?', [r.id])?.at ?? r.created_at;
+  const last = getClaimStageMovesAtByClaimId<{ at: string | null }>(db, [r.id])?.at ?? r.created_at;
   const age = Math.max(0, Math.floor((Date.parse(nowIso) - Date.parse(last)) / 86_400_000));
   const s = claimStage(r.stage);
   const next = s.kind === 'PROCEDURE' && can(actor, 'claim.move', obj) ? nextProcedureKey(s.key) : null;
@@ -2175,7 +2083,7 @@ export function pipelineBoard(db: Db, actor: Actor, nowIso: string, limit = 500)
 
 /** Phase 132e: the multi-site discounts proposed on a claim's fee, for a reader of `fee_discount.read` — absent otherwise. */
 function feeDiscountsOn(db: Db, actor: Actor, claim_id: string): { fee_discounts?: readonly FeeDiscountView[] } {
-  const c = db.get<{ business_id: string }>('SELECT business_id FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsBusinessIdById<{ business_id: string }>(db, [claim_id]);
   if (c === undefined || !can(actor, 'fee_discount.read', { type: 'claim', id: claim_id, business_id: c.business_id, assigned_surveyor_ids: [] })) return {};
   return { fee_discounts: discountsFor(db, actor, claim_id) };
 }

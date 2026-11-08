@@ -82,12 +82,12 @@
  * any call outside. The land boundary's own row in the table points at those lines.
  */
 
-import { keepCouncilArea, fillTenureFromRegisters } from '../assessment/who-claims.ts';
+import { keepCouncilArea, fillTenureFromRegisters } from '../assessment/index.ts';
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { registryGate, REGISTRY } from '../../shared/index.ts';
-import { DECLINED_LINE, lookupsDeclined } from '../assessment/address-check.ts';
+import { DECLINED_LINE, lookupsDeclined } from '../assessment/index.ts';
 import { SOURCES as REGISTER_SOURCES, LICENCES } from '../../integrations/index.ts';
 import { switchedOn, runConnector, REGISTER_SWITCHES, PLANNING_ROUTE, switchesHere, freeGateWaived, gateStatus, type Bundle, type ConnectorContext } from '../../integrations/index.ts';
 import type { Env } from '../../integrations/index.ts';
@@ -99,7 +99,7 @@ import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../../int
 import type { PickQuery } from '../../integrations/index.ts';
 import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds, uprnFrom } from '../../integrations/index.ts';
 import { ingestRegisterRecord } from '../../integrations/index.ts';
-import { lookAgainShort } from '../portal/take-back.ts';
+import { lookAgainShort } from '../portal/index.ts';
 import { postcodeStore } from '../../integrations/postcodes/postcode.ts';
 import type { PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
 import { checkSignature } from './signing.ts';
@@ -108,9 +108,11 @@ import {
   type SignatoryGates, type SignatoryOutcome, type SignatoryReason, type SignatoryResult, type SignatorySource,
 } from '../../integrations/index.ts';
 import { runSiteAreas, siteAreaLines, storeSiteAreaRuns, type SiteAreaLine, type SiteAreaSetup } from './site-area-run.ts';
-import { raiseToResearch } from '../crm/pipeline.ts';
+import { raiseToResearch } from '../crm/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId3, getRegisterRecordsIdByBusinessIdSourceId, getRegisterRecordsObtainedAtByBusinessIdSourceId, getResearchRunsCostPenceAtByBusinessId, getResearchRunsCountByBusinessIdKind, getResearchSourcesIdAttemptsByBusinessIdSourceId, insertResearchRuns, insertResearchRuns2, insertResearchSources, listRegisterMatchPicksSourceIdByBusinessIdTakenBackAt, listRegisterMatchPicksSourceIdTakenBackAtByBusinessIdTakenBa, listResearchSourcesSourceIdStateByBusinessId } from '../../integrations/index.ts';
 import { updateResearchSourcesAfterRun } from '../../integrations/index.ts';
+import { getSignatoryChecksResultReasonByBusinessIdSource, insertSignatoryChecks, listSignatoryChecksSourceByEngagementIdResult } from './data-borrowed.ts';
+import { getEngagementSignaturesEngagementIdSignerNameByBusinessId, getEngagementsIdByBusinessId, getEngagementsLetterStateSignedAtByBusinessId, listPropertiesIdByBusinessId } from './data.ts';
 
 export type Tier = 'FREE' | 'PAID';
 export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
@@ -393,10 +395,7 @@ export type SignedEngagement = {
  * edited afterwards, is NOT SIGNED — and says why.
  */
 export function assertSignedEngagement(db: Db, business_id: string): SignedEngagement {
-  const row = db.get<{ letter_state: string; signed_at: string | null }>(
-    'SELECT letter_state, signed_at FROM engagements WHERE business_id = ?',
-    [business_id],
-  );
+  const row = getEngagementsLetterStateSignedAtByBusinessId<{ letter_state: string; signed_at: string | null }>(db, [business_id]);
   if (row === undefined) {
     return {
       signed: false, letter_state: 'NONE', signed_at: null,
@@ -410,7 +409,7 @@ export function assertSignedEngagement(db: Db, business_id: string): SignedEngag
       why: `the engagement letter is ${LETTER_WORDS[state] ?? state.toLowerCase()} and is not signed`,
     };
   }
-  const eng = db.get<{ id: string }>('SELECT id FROM engagements WHERE business_id = ?', [business_id]);
+  const eng = getEngagementsIdByBusinessId<{ id: string }>(db, [business_id]);
   const record = eng === undefined ? { ok: false as const, why: 'no engagement letter has been raised for this client yet' } : checkSignature(db, eng.id);
   if (!record.ok) {
     return { signed: false, letter_state: 'SIGNED', signed_at: null, why: record.why };
@@ -1117,7 +1116,7 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
     /* PHASE 159g (items 4 and 7): what this click read, kept on the property where nothing is kept yet — the council
        area the postcode check gave, and the tenure from the title check or Price Paid. Never over a recorded value. */
     if (found.council !== undefined) keepCouncilArea(d.db, found.council.property_id, found.council.area, 'the postcode check in the research (postcodes.io)', at);
-    for (const p of d.db.all<{ id: string }>('SELECT id FROM properties WHERE business_id = ?', [business_id])) fillTenureFromRegisters(d.db, p.id, at);
+    for (const p of listPropertiesIdByBusinessId<{ id: string }>(d.db, [business_id])) fillTenureFromRegisters(d.db, p.id, at);
   });
   auditSignatoryChecks(d, actor, business_id, checked, at);
   // PHASE 158b (F30): a signed client's step becomes "We research your property" once a register has answered.
@@ -1187,13 +1186,10 @@ export async function runSignatoryCheck(
   d: RunDeps, actor: Actor, business_id: string, gates: SignatoryGates, outcomes: readonly SourceOutcome[] = [],
 ): Promise<SignatoryRun> {
   const signed = gates.engagement_signed === true
-    ? d.db.get<{ engagement_id: string; signer_name: string }>(
-      'SELECT s.engagement_id, s.signer_name FROM engagement_signatures s JOIN engagements e ON e.id = s.engagement_id WHERE e.business_id = ? ORDER BY s.signer_seq ASC',
-      [business_id])
+    ? getEngagementSignaturesEngagementIdSignerNameByBusinessId<{ engagement_id: string; signer_name: string }>(d.db, [business_id])
     : undefined;
   const engagement_id = signed?.engagement_id ?? null;
-  const answered = new Set(engagement_id === null ? [] : d.db.all<{ source: string }>(
-    "SELECT DISTINCT source FROM signatory_checks WHERE engagement_id = ? AND result IN ('YES','NO')", [engagement_id]).map((r) => r.source));
+  const answered = new Set(engagement_id === null ? [] : listSignatoryChecksSourceByEngagementIdResult<{ source: string }>(d.db, [engagement_id]).map((r) => r.source));
   const todo = SIGNATORY_SOURCES.filter((s) => !answered.has(s));
   if (d.outside === undefined) {
     // No way out was handed in, so nothing can be contacted: the same as switched off, and nothing is kept.
@@ -1207,7 +1203,7 @@ export async function runSignatoryCheck(
   const cqcHeld = found('CQC');
   /* Loaded when the check runs, not when this file loads: crm.ts imports this file, and a load-time import back would
      be a cycle that leaves the navigation's gates unset while the app starts. */
-  const { claimantTypeForGate } = await import('../crm/crm.ts');
+  const { claimantTypeForGate } = await import('../crm/index.ts');
   const checked = await checkSignatory(
     {
       deps: {
@@ -1238,11 +1234,7 @@ export function storeSignatoryChecks(d: RunDeps, actor: Actor, business_id: stri
   if (run.engagement_id === null) return [];
   const kept = run.outcomes.filter((o) => o.kept);
   for (const o of kept) {
-    d.db.run(
-      'INSERT INTO signatory_checks (id, business_id, engagement_id, source, result, reason, checked_at, checked_by) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [d.newId(), business_id, run.engagement_id, o.source, o.result, o.reason, at, actor.id],
-    );
+    insertSignatoryChecks(d.db, [d.newId(), business_id, run.engagement_id, o.source, o.result, o.reason, at, actor.id]);
   }
   return kept;
 }
@@ -1263,9 +1255,7 @@ export function auditSignatoryChecks(d: RunDeps, actor: Actor, business_id: stri
  */
 export function signatoryLines(db: Db, business_id: string, gates: SignatoryGates): SignatoryLine[] {
   return SIGNATORY_SOURCES.map((source) => {
-    const row = db.get<{ result: string; reason: string; checked_at: string }>(
-      'SELECT result, reason, checked_at FROM signatory_checks WHERE business_id = ? AND source = ? ORDER BY checked_at DESC, rowid DESC LIMIT 1',
-      [business_id, source]);
+    const row = getSignatoryChecksResultReasonByBusinessIdSource<{ result: string; reason: string; checked_at: string }>(db, [business_id, source]);
     if (row !== undefined) {
       return { source, result: row.result as SignatoryResult, words: signatoryWords(source, row.reason as SignatoryReason), checked_at: row.checked_at };
     }

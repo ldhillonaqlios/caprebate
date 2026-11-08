@@ -32,15 +32,19 @@ import type { Db } from './db.ts';
 import type { PasswordHasher } from './password.ts';
 import { createUser, newId } from './users.ts';
 import { AuditLog } from './audit.ts';
-import { seedSignatureRecord } from '../modules/claims/signing.ts';
+import { seedSignatureRecord } from '../modules/claims/index.ts';
 import { ingestRegisterRecord, insertResearchSourcesNotPermittedYet } from '../integrations/index.ts';
 import type { AppRole } from './roles.ts';
-import { catalogue } from '../modules/claims/research.ts';
-import { backfillClaimFor, insertClaim } from '../modules/crm/crm.ts';
+import { catalogue } from '../modules/claims/index.ts';
+import { backfillClaimFor, insertClaim } from '../modules/crm/index.ts';
 import { allocateNumber } from '../web/invoices.ts';
-import { backfillLeadFor } from '../modules/crm/leads.ts';
-import { recordOpened } from '../modules/crm/pipeline.ts';
-import { insertTask, type TaskInsert } from '../modules/crm/tasks.ts';
+import { backfillLeadFor } from '../modules/crm/index.ts';
+import { recordOpened } from '../modules/crm/index.ts';
+import { insertTask, type TaskInsert } from '../modules/crm/index.ts';
+import { insertEnquiryChecks2 } from '../modules/public-site/index.ts';
+import { getContactsCountByBusinessId, getContactsIdByBusinessIdContactType, getLeadsIdByOriginStatus, insertBookings, insertBusinesses2, insertContacts2, insertLeads3, insertStaffTasks2, insertWorkingTimes, updateBusinessesClaimantTypeById, updateBusinessesClientStatusById, updateBusinessesLegalNameCompanyNumberById2, updateBusinessesSourceUpdatedAt } from '../modules/crm/index.ts';
+import { getClaimsIdByBusinessIdAssessmentId, getClaimsIdByBusinessIdLabel, getPropertiesIdByBusinessId, getPropertiesIdByBusinessId3, insertClaimDeliverables2, insertClaimFacts2, insertClaimMilestones2, insertClaimStageMoves3, insertEngagements2, insertProperties2, insertProperties3, insertProperties5, insertTaxAdviserSignoffs2, updateClaimDeliverablesStateIssuedOnById2, updateClaimsOwnerIdPriorityByBusinessId, updatePropertiesAddressLine1TownByBusinessId, updatePropertiesTenureTownById } from '../modules/claims/index.ts';
+import { getAssessmentsIdByBusinessId, insertAssessmentAnswers, insertAssessments2, insertEstimates2 } from '../modules/assessment/index.ts';
 
 /**
  * Development credentials. Printed by `npm run seed`, never a default in any
@@ -115,17 +119,10 @@ export async function seed(db: Db, hasher: PasswordHasher, now: () => string): P
   for (const b of BUSINESSES) {
     const id = newId();
     idOf.set(b.key, id);
-    db.run(
-      'INSERT INTO businesses (id, name, sector, stage, contact_email, contact_phone, created_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, b.name, b.sector, b.stage,
+    insertBusinesses2(db, [id, b.name, b.sector, b.stage,
         // A CHANNEL, not a person. No mailbox is named for an individual.
-        `enquiries@${b.key}.example.invalid`, '01632 960000', t],
-    );
-    db.run(
-      'INSERT INTO properties (id, business_id, label, postcode, created_at) VALUES (?, ?, ?, ?, ?)',
-      [newId(), id, `${b.name} — main site`, b.postcode, t],
-    );
+        `enquiries@${b.key}.example.invalid`, '01632 960000', t]);
+    insertProperties5(db, [newId(), id, `${b.name} — main site`, b.postcode, t]);
     out.businesses.push({ id, key: b.key, name: b.name });
   }
 
@@ -165,13 +162,8 @@ function seedAContactForEveryClient(db: Db, now: () => string, idOf: Map<string,
   for (const b of BUSINESSES) {
     const id = idOf.get(b.key);
     if (id === undefined) throw new Error(`seed: ${b.key} missing`);
-    if ((db.get<{ n: number }>('SELECT COUNT(*) AS n FROM contacts WHERE business_id = ?', [id])?.n ?? 0) > 0) continue;
-    db.run(
-      'INSERT INTO contacts (id, business_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, ' +
-        'created_at, contact_type, is_decision_maker, email, phone, updated_at) ' +
-        'VALUES (?, ?, ?, NULL, NULL, 0, 0, ?, ?, ?, ?, ?, ?)',
-      [newId(), id, 'Main Contact', t, 'DECISION_MAKER', 1, `contact@${b.key}.example.invalid`, '01632 960001', t],
-    );
+    if ((getContactsCountByBusinessId<{ n: number }>(db, [id])?.n ?? 0) > 0) continue;
+    insertContacts2(db, [newId(), id, 'Main Contact', t, 'DECISION_MAKER', 1, `contact@${b.key}.example.invalid`, '01632 960001', t]);
   }
 }
 
@@ -203,15 +195,13 @@ function seedClaimAtInvoice(
   const accounting = users.find((u) => u.role === 'ACCOUNTING')?.id;
   const surveying = users.find((u) => u.role === 'SURVEYING')?.id;
   if (b4 === undefined || sales === undefined || accounting === undefined || surveying === undefined) throw new Error('seed: the claim at INVOICE is missing a record it needs');
-  const assessment = db.get<{ id: string }>('SELECT id FROM assessments WHERE business_id = ? LIMIT 1', [b4]);
+  const assessment = getAssessmentsIdByBusinessId<{ id: string }>(db, [b4]);
   if (assessment === undefined) throw new Error('seed: Dunmarrow has no assessment');
 
   // Dunmarrow is already a company, with its claimant type recorded; the branch surgery is its second property.
   const t = now();
   const branch = newId();
-  db.run(
-    'INSERT INTO properties (id, business_id, label, postcode, created_at, tenure, acquisition_date, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [branch, b4, 'Dunmarrow Medical Practice Limited — branch surgery', 'ZZ4 4DE', t, 'LEASEHOLD', '2025-06-30', t]);
+  insertProperties2(db, [branch, b4, 'Dunmarrow Medical Practice Limited — branch surgery', 'ZZ4 4DE', t, 'LEASEHOLD', '2025-06-30', t]);
   const claim = insertClaim(db, now, newId, {
     business_id: b4, property_id: branch, assessment_id: null, workstream: 'PLANT_AND_MACHINERY',
     stage: 'INVOICE', owner_id: sales, surveyor_id: surveying,
@@ -219,16 +209,10 @@ function seedClaimAtInvoice(
   recordOpened({ db, now, newId }, null, claim.id, 'ENQUIRY', 'opened by staff on a property; its enquiry checks are recorded on the claim');
 
   const move = (from: string, to: string): void => {
-    db.run(
-      'INSERT INTO claim_stage_moves (id, claim_id, at, actor_id, actor_role, kind, from_stage, to_stage, reason_code, reason_text) ' +
-        "VALUES (?, ?, ?, ?, 'SALES', 'FORWARD', ?, ?, NULL, NULL)",
-      [newId(), claim.id, now(), sales, from, to]);
+    insertClaimStageMoves3(db, [newId(), claim.id, now(), sales, from, to]);
   };
   const fact = (key: string, value: string, kind: 'text' | 'date'): void => {
-    db.run(
-      'INSERT INTO claim_facts (id, claim_id, fact_key, answer, value_text, value_pence, value_date, source_id, note, recorded_by, recorded_at) ' +
-        "VALUES (?, ?, ?, 'VALUE', ?, NULL, ?, 'CLIENT_DOC', NULL, ?, ?)",
-      [newId(), claim.id, key, kind === 'text' ? value : null, kind === 'date' ? value : null, sales, now()]);
+    insertClaimFacts2(db, [newId(), claim.id, key, kind === 'text' ? value : null, kind === 'date' ? value : null, sales, now()]);
   };
 
   let at = 'ENQUIRY';
@@ -250,28 +234,18 @@ function seedClaimAtInvoice(
   fact('GRANTS_EXIST', 'NO', 'text');
   move(at, 'TAX_ADVISER_SIGNOFF'); at = 'TAX_ADVISER_SIGNOFF';
   const signoff = newId();
-  db.run(
-    'INSERT INTO tax_adviser_signoffs (id, claim_id, adviser, credential, signed_on, scope, method_note, switch_readings_json, ' +
-      "figure_pence, commitment_id, kind, record_hash, recorded_by, recorded_at) VALUES (?, ?, 'CAPREBATE_CTA', 'Chartered Tax Adviser', " +
-      "'2026-09-01', 'The branch surgery: plant and machinery allowances on the fit-out, invented for the seed.', " +
-      "'The surveyor''s figures, checked against our rules. No setting changed.', '[]', ?, ?, 'RECORD_NOT_A_SIGNATURE', ?, ?, ?)",
-    [signoff, claim.id, 16_450_000, commitment, 'd'.repeat(64), sales, now()]);
+  insertTaxAdviserSignoffs2(db, [signoff, claim.id, 16_450_000, commitment, 'd'.repeat(64), sales, now()]);
   move(at, 'REPORTS'); at = 'REPORTS';
   for (const [kind, type] of [['CLIENT_REPORT', 'CA_REPORT'], ['ACCOUNTANT_COMPUTATION_PACK', 'TAX_COMPUTATION']] as const) {
     const d = newId();
     const drafted = now();
-    db.run(
-      'INSERT INTO claim_deliverables (id, claim_id, kind, version, document_type, state, issued_on, content_hash, logical_document_id, ' +
-        "created_by, created_at, updated_by, updated_at) VALUES (?, ?, ?, 1, ?, 'DRAFT', NULL, NULL, NULL, ?, ?, ?, ?)",
-      [d, claim.id, kind, type, sales, drafted, sales, drafted]);
-    db.run("UPDATE claim_deliverables SET state = 'ISSUED', issued_on = '2026-09-02', updated_by = ?, updated_at = ? WHERE id = ?", [sales, now(), d]);
+    insertClaimDeliverables2(db, [d, claim.id, kind, type, sales, drafted, sales, drafted]);
+    updateClaimDeliverablesStateIssuedOnById2(db, [sales, now(), d]);
   }
   fact('ACCOUNTING_PERIOD_START', '2025-04-01', 'date');
   fact('ACCOUNTING_PERIOD_END', '2026-03-31', 'date');
   move(at, 'INVOICE');
-  db.run(
-    "INSERT INTO claim_milestones (id, claim_id, milestone, stage_at, note, recorded_by, recorded_at) VALUES (?, ?, 'HMRC_PROCESSED_RELIEF', 'INVOICE', ?, ?, ?)",
-    [newId(), claim.id, 'Invented for the seed: the accountant confirmed HMRC processed the amended return.', sales, now()]);
+  insertClaimMilestones2(db, [newId(), claim.id, 'Invented for the seed: the accountant confirmed HMRC processed the amended return.', sales, now()]);
   insertTask(db, now, newId, {
     title: 'Raise our fee: the claim is at the invoice stage and HMRC has processed the relief', description: null,
     owner_id: accounting, owner_role: null, due_on: '2026-09-30', priority: null, activity_type: 'TASK',
@@ -312,10 +286,7 @@ function seedWorkingTimesAndBookings(
   const bookable = users.filter((u) => u.role === 'ADMIN' || u.role === 'SALES' || u.role === 'ACCOUNTING');
   for (const u of bookable) {
     for (const weekday of [1, 2, 3, 4, 5]) {
-      db.run(
-        'INSERT INTO working_times (id, user_id, weekday, start_min, end_min) VALUES (?, ?, ?, ?, ?)',
-        [newId(), u.id, weekday, 9 * 60, 17 * 60],
-      );
+      insertWorkingTimes(db, [newId(), u.id, weekday, 9 * 60, 17 * 60]);
     }
   }
 
@@ -332,12 +303,8 @@ function seedWorkingTimesAndBookings(
   for (const b of BUSINESSES) {
     const business = idOf.get(b.key);
     if (business === undefined) throw new Error(`seed: business ${b.key} missing`);
-    db.run(
-      'INSERT INTO bookings (id, business_id, assigned_to, channel, sms_variant, entry_point, ' +
-        'starts_at, ends_at, created_at) VALUES (?, ?, NULL, ?, ?, ?, NULL, NULL, ?)',
-      [newId(), business, b.preferred_contact,
-       b.preferred_contact === 'sms_whatsapp' ? 'sms' : null, b.entry_point, t],
-    );
+    insertBookings(db, [newId(), business, b.preferred_contact,
+       b.preferred_contact === 'sms_whatsapp' ? 'sms' : null, b.entry_point, t]);
   }
 }
 
@@ -357,10 +324,7 @@ function seedPipeline(
     ['b4', 'SIGNED'], ['b5', 'SIGNED'], ['b6', 'SIGNED'],
   ];
   for (const [k, state] of engagement) {
-    db.run(
-      'INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at) VALUES (?, ?, ?, ?, ?)',
-      [newId(), get(k), state, state === 'SIGNED' ? t : null, t],
-    );
+    insertEngagements2(db, [newId(), get(k), state, state === 'SIGNED' ? t : null, t]);
     // AssertSignedEngagement reads the signature record, so a seeded signed letter carries one — marked SEED.
     if (state === 'SIGNED') seedSignatureRecord({ db, audit: new AuditLog(db), now: () => t, newId }, get(k), t);
   }
@@ -372,11 +336,7 @@ function seedPipeline(
   for (const b of BUSINESSES) {
     const businessId = get(b.key);
     const aId = newId();
-    db.run(
-      'INSERT INTO assessments (id, business_id, sector, submitted_at, shown_low_pence, shown_high_pence, created_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [aId, businessId, b.sector, t, 20_000_000, 40_000_000, t],
-    );
+    insertAssessments2(db, [aId, businessId, b.sector, t, 20_000_000, 40_000_000, t]);
     const answers: readonly [string, string, 'ANSWERED' | 'DONT_KNOW' | 'SKIPPED', string | null][] = [
       ['Q0', 'What kind of property is this assessment for?', 'ANSWERED', b.sector],
       ['Q1', 'How is the business set up?', 'ANSWERED', 'company'],
@@ -385,21 +345,11 @@ function seedPipeline(
       ['Q9', 'Was a section 198 election made on purchase?', 'SKIPPED', null],
     ];
     answers.forEach(([qid, text, state, value], i) => {
-      db.run(
-        'INSERT INTO assessment_answers (id, assessment_id, ord, question_id, question_text, state, value) ' +
-          'VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [newId(), aId, i, qid, text, state, value],
-      );
+      insertAssessmentAnswers(db, [newId(), aId, i, qid, text, state, value]);
     });
 
-    db.run(
-      'INSERT INTO estimates (id, assessment_id, business_id, qualifying_expenditure_pence, qualifying_pct, ' +
-        'pool_split_main_pence, pool_split_special_pence, bare_land_pence, multiplier, ' +
-        'indicative_lifetime_saving_pence, sealed_at, estimate_hash) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [newId(), aId, businessId, 30_000_000, 0.3, 18_000_000, 12_000_000, 5_000_000, 0.25,
-        7_500_000, t, 'seed-not-a-real-hash'],
-    );
+    insertEstimates2(db, [newId(), aId, businessId, 30_000_000, 0.3, 18_000_000, 12_000_000, 5_000_000, 0.25,
+        7_500_000, t, 'seed-not-a-real-hash']);
 
     // Both tiers, and both gates shut. NOT_PERMITTED_YET is the honest state
     // today: the privacy notice is not published and no connector exists.
@@ -501,7 +451,7 @@ function seedRegisterRecords(db: Db, now: () => string, idOf: Map<string, string
   const b4 = idOf.get('b4');
   if (b2 === undefined || b4 === undefined) throw new Error('seed: businesses missing');
   // A property register's record says which property it is about — Dunmarrow's main site, the one it describes.
-  const site = db.get<{ id: string }>('SELECT id FROM properties WHERE business_id = ? ORDER BY created_at ASC, rowid ASC LIMIT 1', [b4])?.id ?? null;
+  const site = getPropertiesIdByBusinessId3<{ id: string }>(db, [b4])?.id ?? null;
 
   ingestRegisterRecord(db, newId, now, b4, {
     sourceId: 'CQC', entityId: 'INVENTED-LOC-0001',
@@ -600,8 +550,7 @@ function seedCrm(
     { key: 'b6', sent_on: '2026-09-03', split: [18_000_000, 12_000_000], received: [{ on: '2026-09-04', pence: 900_000, confirmed: 'OTHER_CHANNEL' }] },
   ];
   for (const inv of seededInvoices) {
-    const claim = db.get<{ id: string }>(
-      'SELECT id FROM claims WHERE business_id = ? AND assessment_id IS NOT NULL ORDER BY claim_ref LIMIT 1', [get(inv.key)]);
+    const claim = getClaimsIdByBusinessIdAssessmentId<{ id: string }>(db, [get(inv.key)]);
     if (claim === undefined) throw new Error(`seed: no assessed claim for ${inv.key} to invoice`);
     const invoiceId = newId();
     db.run(
@@ -626,53 +575,36 @@ function seedCrm(
   }
 
   // Derived as migration 009 derives them: signed is ACTIVE, the funnel is WEBSITE.
-  db.run("UPDATE businesses SET source = 'WEBSITE', updated_at = ?", [t]);
+  updateBusinessesSourceUpdatedAt(db, [t]);
   db.run(
     "UPDATE businesses SET client_status = 'ACTIVE' WHERE id IN " +
       "(SELECT business_id FROM engagements WHERE letter_state = 'SIGNED')",
   );
-  db.run("UPDATE businesses SET client_status = 'DO_NOT_CONTACT' WHERE id = ?", [get('b6')]);
-  db.run("UPDATE businesses SET claimant_type = 'LLP' WHERE id = ?", [get('b2')]);
+  updateBusinessesClientStatusById(db, [get('b6')]);
+  updateBusinessesClaimantTypeById(db, [get('b2')]);
 
   const b4 = get('b4');
-  db.run(
-    'UPDATE businesses SET legal_name = ?, company_number = ?, claimant_type = ?, registered_address = ?, ' +
-      'trading_address = ?, website = ?, owner_id = ? WHERE id = ?',
-    ['Dunmarrow Medical Practice Limited', 'INVENTED-CO-0004', 'COMPANY',
+  updateBusinessesLegalNameCompanyNumberById2(db, ['Dunmarrow Medical Practice Limited', 'INVENTED-CO-0004', 'COMPANY',
       'Unit 4, Invented Business Park, Nowhere Town, ZZ4 4DD',
       'Unit 4, Invented Business Park, Nowhere Town, ZZ4 4DD',
-      'https://dunmarrow.example.invalid', sales, b4],
-  );
+      'https://dunmarrow.example.invalid', sales, b4]);
   for (const c of [
     { name: 'Decision Maker Contact', type: 'DECISION_MAKER', dm: 1, mailbox: 'decisions' },
     { name: 'Finance Contact', type: 'FINANCE', dm: 0, mailbox: 'finance' },
   ]) {
-    db.run(
-      'INSERT INTO contacts (id, business_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, ' +
-        'created_at, contact_type, is_decision_maker, email, phone, updated_at) ' +
-        'VALUES (?, ?, ?, NULL, NULL, 0, 0, ?, ?, ?, ?, ?, ?)',
-      [newId(), b4, c.name, t, c.type, c.dm, `${c.mailbox}@b4.example.invalid`, '01632 960000', t],
-    );
+    insertContacts2(db, [newId(), b4, c.name, t, c.type, c.dm, `${c.mailbox}@b4.example.invalid`, '01632 960000', t]);
   }
-  db.run(
-    'UPDATE properties SET address_line_1 = ?, town = ?, property_type = ?, property_use = ?, tenure = ?, ' +
-      'occupier = ?, acquisition_date = ?, acquisition_price_pence = ?, completion_date = ?, previous_owner = ?, ' +
-      'existing_ca_claimed = ?, updated_at = ? WHERE business_id = ?',
-    ['Unit 4, Invented Business Park', 'Nowhere Town', 'GP_SURGERY', 'Primary care', 'FREEHOLD',
-      'Dunmarrow Medical Practice Limited', '2019-03-15', 64_250_000, '2019-04-01', 'DEVELOPER', 'UNKNOWN', t, b4],
-  );
+  updatePropertiesAddressLine1TownByBusinessId(db, ['Unit 4, Invented Business Park', 'Nowhere Town', 'GP_SURGERY', 'Primary care', 'FREEHOLD',
+      'Dunmarrow Medical Practice Limited', '2019-03-15', 64_250_000, '2019-04-01', 'DEVELOPER', 'UNKNOWN', t, b4]);
   // CRM 3 of 10: the next action this seeded as free text is a task now — `seedTasks` below.
-  db.run('UPDATE claims SET owner_id = ?, priority = ? WHERE business_id = ?', [sales, 'NORMAL', b4]);
+  updateClaimsOwnerIdPriorityByBusinessId(db, [sales, 'NORMAL', b4]);
 
   const b5 = get('b5');
-  const main = db.get<{ id: string }>('SELECT id FROM properties WHERE business_id = ? LIMIT 1', [b5]);
+  const main = getPropertiesIdByBusinessId<{ id: string }>(db, [b5]);
   if (main === undefined) throw new Error('seed: b5 has no property');
-  db.run('UPDATE properties SET tenure = ?, town = ? WHERE id = ?', ['LEASEHOLD', 'Nowhere Town', main.id]);
+  updatePropertiesTenureTownById(db, ['LEASEHOLD', 'Nowhere Town', main.id]);
   const annexe = newId();
-  db.run(
-    'INSERT INTO properties (id, business_id, label, postcode, created_at, tenure, updated_at, town) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [annexe, b5, 'Elverton Private Hospital Limited — outpatient annexe', 'ZZ5 5EF', t, 'FREEHOLD', t, 'Nowhere Town'],
-  );
+  insertProperties3(db, [annexe, b5, 'Elverton Private Hospital Limited — outpatient annexe', 'ZZ5 5EF', t, 'FREEHOLD', t, 'Nowhere Town']);
   // CRM 2 of 10: a claim a person opens starts at the enquiry, with its checks not yet recorded.
   const second = insertClaim(db, now, newId, {
     business_id: b5, property_id: main.id, assessment_id: null, workstream: 'STRUCTURES_AND_BUILDINGS',
@@ -744,8 +676,7 @@ function seedTasks(
   nextAction('b3', true, { title: 'Chase the documents the signed letter asks for', activity_type: 'DOCUMENT_REQUEST' });
   nextAction('b5', true, { title: 'Ask the surveyor when they can review the annexe drawings', due_on: '2026-09-25' });
   nextAction('b5', false, { title: 'Record the enquiry checks for the structures claim', due_on: '2026-09-19' });
-  const annexeClaim = db.get<{ id: string }>(
-    "SELECT c.id FROM claims c JOIN properties p ON p.id = c.property_id WHERE c.business_id = ? AND p.label LIKE '%outpatient annexe'", [get('b5')]);
+  const annexeClaim = getClaimsIdByBusinessIdLabel<{ id: string }>(db, [get('b5')]);
   if (annexeClaim === undefined) throw new Error('seed: no annexe claim for b5');
   task({ title: 'Ask for the annexe’s fit-out invoices', business_id: get('b5'), claim_id: annexeClaim.id, is_next_action: true, due_on: '2026-09-29' });
   nextAction('b6', true, { title: 'Record why this client asked not to be contacted', owner_id: admin, due_on: '2026-09-22' });
@@ -758,14 +689,14 @@ function seedTasks(
     title: 'Record the part payment against the invoice when it arrives', owner_id: null, owner_role: 'ACCOUNTING',
     business_id: get('b5'), claim_id: claim('b5', true),
   });
-  const finance = db.get<{ id: string }>("SELECT id FROM contacts WHERE business_id = ? AND contact_type = 'FINANCE'", [get('b4')]);
+  const finance = getContactsIdByBusinessIdContactType<{ id: string }>(db, [get('b4')]);
   if (finance !== undefined) {
     task({
       title: 'Follow up about the fixed asset register', activity_type: 'CALL', business_id: get('b4'), contact_id: finance.id,
       due_on: '2026-09-15',
     });
   }
-  const referral = db.get<{ id: string }>("SELECT id FROM leads WHERE origin = 'REFERRAL' AND status <> 'CONVERTED' LIMIT 1");
+  const referral = getLeadsIdByOriginStatus<{ id: string }>(db);
   if (referral !== undefined) {
     task({ title: 'First follow-up on the referral', activity_type: 'CALL', lead_id: referral.id, due_on: '2026-09-24' });
   }
@@ -794,27 +725,12 @@ function seedLeads(db: Db, now: () => string, idOf: Map<string, string>, sales: 
   }
   const t = now();
   const referral = newId();
-  db.run(
-    'INSERT INTO leads (id, business_id, assessment_id, booking_id, claim_id, origin, source, introducer_id, ' +
-      'prospect_organisation, prospect_sector, lead_date, owner_id, priority, next_action, next_action_due, status, ' +
-      'lost_reason, lost_note, converted_at, created_at, updated_at) ' +
-      'VALUES (?, NULL, NULL, NULL, NULL, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, NULL, ?, NULL, NULL, NULL, ?, ?)',
-    [referral, 'REFERRAL', 'REFERRAL', 'Gorsebrook Invented Care Homes Limited', 'care_homes', t, sales, 'NORMAL', 'CONTACTED', t, t],
-  );
+  insertLeads3(db, [referral, 'REFERRAL', 'REFERRAL', 'Gorsebrook Invented Care Homes Limited', 'care_homes', t, sales, 'NORMAL', 'CONTACTED', t, t]);
   // CRM 9 of 10: the lead's next action is a task on the lead (migration 018), no longer a column.
-  db.run(
-    'INSERT INTO staff_tasks (id, title, description, owner_id, owner_role, due_on, priority, status, activity_type, business_id, ' +
-      'property_id, claim_id, lead_id, contact_id, fact_id, recurrence, recurred_from_id, is_next_action, origin, automation_run_id, ' +
-      'created_by, created_at, updated_at) VALUES (?, ?, NULL, ?, NULL, ?, NULL, ?, ?, NULL, NULL, NULL, ?, NULL, NULL, NULL, NULL, 0, ?, NULL, ?, ?, ?)',
-    [newId(), 'Confirm who owns the building, and that we would be acting for them', sales, '2026-09-24', 'OPEN', 'CALL', referral, 'STAFF', sales, t, t],
-  );
+  insertStaffTasks2(db, [newId(), 'Confirm who owns the building, and that we would be acting for them', sales, '2026-09-24', 'OPEN', 'CALL', referral, 'STAFF', sales, t, t]);
   for (const [check, answer] of [
     ['UK_HEALTHCARE_PROPERTY', 'YES'], ['TRADING_CLIENT', 'YES'], ['OWNER_OR_AUTHORISED', 'UNKNOWN'],
   ] as const) {
-    db.run(
-      'INSERT INTO enquiry_checks (id, lead_id, claim_id, check_key, answer, note, recorded_by, recorded_at) ' +
-        'VALUES (?, ?, NULL, ?, ?, NULL, ?, ?)',
-      [newId(), referral, check, answer, sales, now()],
-    );
+    insertEnquiryChecks2(db, [newId(), referral, check, answer, sales, now()]);
   }
 }

@@ -31,7 +31,7 @@
  * 011, disposition row E22). Still one table a person lives in; never a column here.
  */
 
-import { dateWords, KIND_WORDS, type EventKind } from '../claims/property-events.ts';
+import { dateWords, KIND_WORDS, type EventKind } from '../claims/index.ts';
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
 import { NotFoundAsRefusal, answerLabel, contactFor, contactForLead } from '../../core/backoffice.ts';
@@ -51,6 +51,10 @@ import { mayTake, vocabLabel } from '../../web/vocabularies.ts';
 import {
   PROSPECT_EVENTS, REFERRAL_SOURCES, introducerChoices, introducerExists, leadReferral, onLeadConverted, type LeadReferral,
 } from './introducers.ts';
+import { getAssessmentsIdLeadIdByBusinessId, insertLeadsByBusinessIdId } from './data-borrowed.ts';
+import { getBookingsIdByLeadIdBusinessId, getBusinessesIdById, getBusinessesIdSourceById, getContactsIdFullNameByLeadId, getLeadsEnquiryIdById, getStaffTasksTitleOwnerIdByLeadIdStatus, insertLeads, insertLeads2, insertLeads4, listBusinessesIdName3, listLeadsLeadIdNameByEnquiryIdId, updateBookingsBusinessIdByLeadIdBusinessId, updateBusinessesSourceUpdatedAtById, updateContactsBusinessIdUpdatedAtByLeadIdBusinessId, updateLeadsBookingIdUpdatedAtByBusinessIdBookingId, updateLeadsOwnerIdPriorityById, updateLeadsStatusConvertedAtById } from './data.ts';
+import { getAssessmentsLowHighById, getEstimatesCountByAssessmentId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId } from '../assessment/index.ts';
+import { listPropertiesIdByBusinessId2, listPropertiesIdLabelByBusinessId, listPropertyEventsLabelKindByAssessmentId } from '../claims/index.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -160,8 +164,7 @@ function loadLead(db: Db, id: string): LeadDbRow {
 function shownRangeFor(db: Db, actor: Actor, r: { business_id: string | null; assessment_id: string | null }): string | undefined {
   if (r.business_id === null || r.assessment_id === null) return undefined;
   if (!can(actor, 'estimate.read', { type: 'estimate', id: r.assessment_id, business_id: r.business_id })) return undefined;
-  const a = db.get<{ low: number | null; high: number | null }>(
-    'SELECT shown_low_pence AS low, shown_high_pence AS high FROM assessments WHERE id = ?', [r.assessment_id]);
+  const a = getAssessmentsLowHighById<{ low: number | null; high: number | null }>(db, [r.assessment_id]);
   return a === undefined ? undefined : formatShownRange({ low_pence: a.low, high_pence: a.high });
 }
 
@@ -287,18 +290,13 @@ export function leadView(db: Db, actor: Actor, id: string): LeadView {
   const answers = r.assessment_id === null || r.business_id === null
     || !can(actor, 'answer.read', { type: 'answer', id: r.assessment_id, business_id: r.business_id })
     ? []
-    : db.all<{ question_id: string; question_text: string; state: string; value: string | null }>(
-      'SELECT question_id, question_text, state, value FROM assessment_answers WHERE assessment_id = ? ORDER BY ord ASC',
-      [r.assessment_id]);
+    : listAssessmentAnswersQuestionIdQuestionTextByAssessmentId<{ question_id: string; question_text: string; state: string; value: string | null }>(db, [r.assessment_id]);
   const spend = answers.filter((a) => /^Q2-\d+-spend$/.test(a.question_id) || /^Q3-\d+-works-spend$/.test(a.question_id) || /^Q3-\d+-w\d+-spend$/.test(a.question_id))   // PHASE 159c: each piece of work
     .map((a) => ({ question: a.question_text, answer: answerLabel(a.state, a.value) }));
 
   const range = shownRangeFor(db, actor, r);
   const estimate = range === undefined || r.assessment_id === null ? null
-    : db.get<Record<string, number>>(
-      'SELECT qualifying_expenditure_pence, qualifying_pct, pool_split_main_pence, pool_split_special_pence, ' +
-        'bare_land_pence, multiplier, indicative_lifetime_saving_pence FROM estimates WHERE assessment_id = ?',
-      [r.assessment_id]) ?? null;
+    : getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm<Record<string, number>>(db, [r.assessment_id]) ?? null;
 
   const mayWrite = can(actor, 'lead.write', leadObj(r)) && r.status !== 'CONVERTED';
   const mayConvert = can(actor, 'lead.convert', leadObj(r)) && r.status === 'QUALIFIED';
@@ -307,9 +305,7 @@ export function leadView(db: Db, actor: Actor, id: string): LeadView {
      (migration 011, row E22). A lead on an organisation shows no person here —
      its contacts are on the organisation's page, one place a person lives. */
   const who = r.business_id === null
-    ? db.get<{ id: string; full_name: string; job_role: string | null; job_role_other: string | null; email: string | null; phone: string | null }>(
-      'SELECT id, full_name, job_role, job_role_other, email, phone FROM contacts WHERE lead_id = ? ORDER BY created_at ASC, id ASC LIMIT 1',
-      [r.id])
+    ? getContactsIdFullNameByLeadId<{ id: string; full_name: string; job_role: string | null; job_role_other: string | null; email: string | null; phone: string | null }>(db, [r.id])
     : undefined;
   const person = who === undefined || !can(actor, 'contact.read', { type: 'contact', id: who.id, business_id: null })
     ? undefined
@@ -320,10 +316,8 @@ export function leadView(db: Db, actor: Actor, id: string): LeadView {
       reach: who.phone ?? who.email,
     };
 
-  const enquiry = db.get<{ enquiry_id: string | null }>('SELECT enquiry_id FROM leads WHERE id = ?', [r.id])?.enquiry_id ?? null;
-  const same_enquiry = enquiry === null ? [] : db.all<{ lead_id: string; name: string }>(
-    'SELECT l.id AS lead_id, COALESCE(b.name, l.prospect_organisation) AS name FROM leads l LEFT JOIN businesses b ON b.id = l.business_id ' +
-      'WHERE l.enquiry_id = ? AND l.id <> ? ORDER BY l.created_at, l.id', [enquiry, r.id]);
+  const enquiry = getLeadsEnquiryIdById<{ enquiry_id: string | null }>(db, [r.id])?.enquiry_id ?? null;
+  const same_enquiry = enquiry === null ? [] : listLeadsLeadIdNameByEnquiryIdId<{ lead_id: string; name: string }>(db, [enquiry, r.id]);
   return {
     same_enquiry,
     id: r.id,
@@ -356,9 +350,7 @@ export function leadView(db: Db, actor: Actor, id: string): LeadView {
     contact_channel: r.business_id !== null || contact.channel !== null ? contact.label : null,
     ...(person === undefined ? {} : { person }),
     initial_property_value: spend,
-    events: answers.length === 0 || r.assessment_id === null ? [] : db.all<{ label: string; kind: EventKind; event_date: string | null; cost_pence: number | null }>(
-      'SELECT p.label, e.kind, e.event_date, e.cost_pence FROM property_events e JOIN properties p ON p.id = e.property_id ' +
-        'WHERE e.assessment_id = ? ORDER BY p.created_at ASC, p.id ASC, e.ord ASC', [r.assessment_id])
+    events: answers.length === 0 || r.assessment_id === null ? [] : listPropertyEventsLabelKindByAssessmentId<{ label: string; kind: EventKind; event_date: string | null; cost_pence: number | null }>(db, [r.assessment_id])
       .map((e) => ({ property: e.label, what: KIND_WORDS[e.kind], when: dateWords(e.event_date), cost: e.cost_pence === null ? 'cost not known' : `£${(e.cost_pence / 100).toLocaleString('en-GB')}` })),
     ...(range === undefined ? {} : { opportunity_value: { shown_range: range, estimate } }),
     enquiry: { ...enquiryGate(db, { lead_id: r.id }), evidence: enquiryEvidence(db, actor, r.business_id, r.prospect_sector) },
@@ -368,10 +360,8 @@ export function leadView(db: Db, actor: Actor, id: string): LeadView {
       edit: {
         owners: ownerChoices(db),
         lost_reasons: reasonList(db, 'LEAD_LOST'),
-        properties: r.business_id === null ? [] : db.all<{ id: string; label: string }>(
-          'SELECT id, label FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC', [r.business_id]),
-        organisations: r.business_id !== null ? [] : db.all<{ id: string; name: string }>(
-          'SELECT id, name FROM businesses ORDER BY name ASC LIMIT 500')
+        properties: r.business_id === null ? [] : listPropertiesIdLabelByBusinessId<{ id: string; label: string }>(db, [r.business_id]),
+        organisations: r.business_id !== null ? [] : listBusinessesIdName3<{ id: string; name: string }>(db)
           .filter((b) => can(actor, 'organisation.read', { type: 'business', id: b.id })),
         introducers: introducerChoices(db, actor),
         check_answers: CHECK_ANSWERS,
@@ -402,7 +392,7 @@ export function createLead(d: CrmDeps, actor: Actor, input: Fields): WriteResult
   if (!business_id.ok) return business_id;
   authorise(actor, 'lead.write', { type: 'lead', id: SECTION, business_id: business_id.value });
   if (business_id.value !== null) {
-    const b = d.db.get<{ id: string }>('SELECT id FROM businesses WHERE id = ?', [business_id.value]);
+    const b = getBusinessesIdById<{ id: string }>(d.db, [business_id.value]);
     if (b === undefined) throw new NotFoundAsRefusal();
     authorise(actor, 'organisation.read', { type: 'business', id: b.id });
   }
@@ -427,14 +417,8 @@ export function createLead(d: CrmDeps, actor: Actor, input: Fields): WriteResult
   // CRM 9 of 10: THE NEXT ACTION TYPED AT INTAKE IS A TASK ON THE LEAD, owned by the person recording it, written in the
   // same transaction as the lead so neither is ever recorded without the other — never a column (migration 018).
   const taskId = d.db.tx(() => {
-  d.db.run(
-    'INSERT INTO leads (id, business_id, assessment_id, booking_id, claim_id, origin, source, introducer_id, ' +
-      'prospect_organisation, prospect_sector, lead_date, owner_id, priority, next_action, next_action_due, status, ' +
-      'lost_reason, lost_note, converted_at, created_at, updated_at) ' +
-      'VALUES (?, ?, NULL, NULL, NULL, ?, ?, NULL, ?, ?, ?, ?, NULL, NULL, NULL, ?, NULL, NULL, NULL, ?, ?)',
-    [id, business_id.value, origin, source.value, business_id.value === null ? org.value : null,
-      business_id.value === null ? sector.value : null, at, actor.id, 'NEW', at, at],
-  );
+  insertLeads2(d.db, [id, business_id.value, origin, source.value, business_id.value === null ? org.value : null,
+      business_id.value === null ? sector.value : null, at, actor.id, 'NEW', at, at]);
   return next.value === null ? null : insertTask(d.db, d.now, d.newId, {
     title: next.value, description: null, owner_id: actor.id, owner_role: null, due_on: due.value, priority: null, activity_type: 'TASK',
     business_id: business_id.value, property_id: null, claim_id: null, lead_id: id, contact_id: null, fact_id: null, recurrence: null,
@@ -543,12 +527,8 @@ export function updateLead(d: CrmDeps, actor: Actor, id: string, input: Fields):
   };
   const changed = (Object.keys(after) as (keyof typeof after)[]).filter((k) => before[k] !== after[k]);
   if (changed.length === 0) return { ok: true, id: r.id };
-  d.db.run(
-    'UPDATE leads SET owner_id = ?, priority = ?, source = ?, status = ?, ' +
-      'lost_reason = ?, lost_note = ?, prospect_organisation = ?, prospect_sector = ?, introducer_id = ?, updated_at = ? WHERE id = ?',
-    [after.owner_id, after.priority, after.source, after.status,
-      after.lost_reason, after.lost_note, after.prospect_organisation, after.prospect_sector, after.introducer_id, d.now(), r.id],
-  );
+  updateLeadsOwnerIdPriorityById(d.db, [after.owner_id, after.priority, after.source, after.status,
+      after.lost_reason, after.lost_note, after.prospect_organisation, after.prospect_sector, after.introducer_id, d.now(), r.id]);
   audit(d, actor, 'LEAD_UPDATED', r.id, {
     business: r.business_id, fields: changed, ...(changed.includes('status') ? { status: after.status } : {}),
   });
@@ -626,7 +606,7 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
         'then link this lead to the organisation it creates.',
     };
   }
-  const b = d.db.get<{ id: string; source: string | null }>('SELECT id, source FROM businesses WHERE id = ?', [business_id]);
+  const b = getBusinessesIdSourceById<{ id: string; source: string | null }>(d.db, [business_id]);
   if (b === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'organisation.read', { type: 'business', id: b.id });
   authorise(actor, 'claim.create', { type: 'claim', id: r.id, business_id: b.id, assigned_surveyor_ids: [] });
@@ -636,10 +616,7 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
      one to convert, or it has converted already and this is a second claim. */
   let assessment_id = r.assessment_id;
   if (assessment_id === null) {
-    const latest = d.db.get<{ id: string; lead_id: string | null; lead_status: string | null }>(
-      'SELECT a.id, l.id AS lead_id, l.status AS lead_status FROM assessments a LEFT JOIN leads l ON l.assessment_id = a.id ' +
-        'WHERE a.business_id = ? ORDER BY a.submitted_at DESC, a.id DESC LIMIT 1',
-      [b.id]);
+    const latest = getAssessmentsIdLeadIdByBusinessId<{ id: string; lead_id: string | null; lead_status: string | null }>(d.db, [b.id]);
     if (latest !== undefined && latest.lead_id !== null && latest.lead_id !== r.id && latest.lead_status !== 'CONVERTED') {
       return {
         ok: false,
@@ -649,8 +626,7 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
     if (latest !== undefined && latest.lead_id === null) assessment_id = latest.id;
   }
 
-  const properties = d.db.all<{ id: string }>(
-    'SELECT id FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC', [b.id]);
+  const properties = listPropertiesIdByBusinessId2<{ id: string }>(d.db, [b.id]);
   const asked = textField(input['property_id'], 64, 'The property');
   if (!asked.ok) return asked;
   if (asked.value !== null && !properties.some((p) => p.id === asked.value)) {
@@ -658,7 +634,7 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
   }
   const property_id = asked.value ?? properties[0]?.id ?? null;
   const sealed = assessment_id === null ? 0
-    : d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM estimates WHERE assessment_id = ?', [assessment_id])?.n ?? 0;
+    : getEstimatesCountByAssessmentId<{ n: number }>(d.db, [assessment_id])?.n ?? 0;
   const workstream = sealed > 0 ? 'PLANT_AND_MACHINERY' : 'UNKNOWN';
 
   const at = d.now();
@@ -673,20 +649,13 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
        E22). They move to the organisation now: the same rows, nothing re-keyed,
        and the lead takes its booking as a funnel-close lead does. */
     if (r.business_id === null) {
-      d.db.run('UPDATE contacts SET business_id = ?, updated_at = ? WHERE lead_id = ? AND business_id IS NULL', [b.id, at, r.id]);
-      d.db.run('UPDATE bookings SET business_id = ? WHERE lead_id = ? AND business_id IS NULL', [b.id, r.id]);
+      updateContactsBusinessIdUpdatedAtByLeadIdBusinessId(d.db, [b.id, at, r.id]);
+      updateBookingsBusinessIdByLeadIdBusinessId(d.db, [b.id, r.id]);
     }
-    const booking_id = r.booking_id ?? d.db.get<{ id: string }>(
-      'SELECT id FROM bookings WHERE lead_id = ? AND business_id = ? ORDER BY created_at ASC, id ASC LIMIT 1',
-      [r.id, b.id])?.id ?? null;
-    d.db.run(
-      'UPDATE leads SET status = ?, converted_at = ?, claim_id = ?, business_id = ?, assessment_id = ?, booking_id = ?, ' +
-        'prospect_organisation = NULL, prospect_sector = NULL, prospect_postcode = NULL, prospect_event = NULL, ' +
-        'prospect_event_year = NULL, updated_at = ? WHERE id = ?',
-      ['CONVERTED', at, claim.id, b.id, assessment_id, booking_id, at, r.id],
-    );
+    const booking_id = r.booking_id ?? getBookingsIdByLeadIdBusinessId<{ id: string }>(d.db, [r.id, b.id])?.id ?? null;
+    updateLeadsStatusConvertedAtById(d.db, ['CONVERTED', at, claim.id, b.id, assessment_id, booking_id, at, r.id]);
     // DERIVED: the organisation's source is where its first converted lead came from.
-    if (b.source === null) d.db.run('UPDATE businesses SET source = ?, updated_at = ? WHERE id = ?', [r.source, at, b.id]);
+    if (b.source === null) updateBusinessesSourceUpdatedAtById(d.db, [r.source, at, b.id]);
     raiseBusinessStage(d.db, b.id, at);
     return claim;
   });
@@ -704,9 +673,7 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
      none, so its first move was refused ("This claim has no next action") while the page said "Ready". The lead's
      earliest open task, with a due date, is carried over as the claim's next action: its own owner, else the lead's
      owner. With no due date, or nobody to own it, nothing is invented and the claim asks for one, as before. */
-  const follow = d.db.get<{ title: string; owner_id: string | null; due_on: string | null; activity_type: string | null }>(
-    "SELECT title, owner_id, due_on, activity_type FROM staff_tasks WHERE lead_id = ? AND status IN ('OPEN','IN_PROGRESS') AND due_on IS NOT NULL ORDER BY due_on ASC, created_at ASC, id ASC LIMIT 1",
-    [r.id]);
+  const follow = getStaffTasksTitleOwnerIdByLeadIdStatus<{ title: string; owner_id: string | null; due_on: string | null; activity_type: string | null }>(d.db, [r.id]);
   const followOwner = follow?.owner_id ?? r.owner_id;
   if (follow !== undefined && follow.due_on !== null && followOwner !== null) {
     try {
@@ -729,14 +696,7 @@ export function openLeadForSubmission(
   db: Db, newId: () => string, v: { business_id: string; assessment_id: string; at: string },
 ): string {
   const id = newId();
-  db.run(
-    'INSERT INTO leads (id, business_id, assessment_id, booking_id, claim_id, origin, source, introducer_id, ' +
-      'prospect_organisation, prospect_sector, lead_date, owner_id, priority, next_action, next_action_due, status, ' +
-      'lost_reason, lost_note, converted_at, created_at, updated_at) ' +
-      "VALUES (?, ?, ?, NULL, NULL, 'ASSESSMENT', 'WEBSITE', NULL, NULL, NULL, ?, NULL, NULL, NULL, NULL, 'NEW', " +
-      'NULL, NULL, NULL, ?, ?)',
-    [id, v.business_id, v.assessment_id, v.at, v.at, v.at],
-  );
+  insertLeads(db, [id, v.business_id, v.assessment_id, v.at, v.at, v.at]);
   return id;
 }
 
@@ -758,21 +718,13 @@ export function openLeadForGatedExit(
   db: Db, newId: () => string, v: { prospect_organisation: string; at: string },
 ): string {
   const id = newId();
-  db.run(
-    'INSERT INTO leads (id, business_id, assessment_id, booking_id, claim_id, origin, source, introducer_id, ' +
-      'prospect_organisation, prospect_sector, lead_date, owner_id, priority, next_action, next_action_due, status, ' +
-      'lost_reason, lost_note, converted_at, created_at, updated_at) ' +
-      "VALUES (?, NULL, NULL, NULL, NULL, 'GATED_EXIT', 'WEBSITE', NULL, ?, NULL, ?, NULL, NULL, NULL, NULL, 'NEW', " +
-      'NULL, NULL, NULL, ?, ?)',
-    [id, v.prospect_organisation, v.at, v.at, v.at],
-  );
+  insertLeads4(db, [id, v.prospect_organisation, v.at, v.at, v.at]);
   return id;
 }
 
 /** The funnel close's booking, tied to the lead it belongs to. */
 export function linkBookingToLead(db: Db, business_id: string, booking_id: string, at: string): void {
-  db.run('UPDATE leads SET booking_id = ?, updated_at = ? WHERE business_id = ? AND booking_id IS NULL',
-    [booking_id, at, business_id]);
+  updateLeadsBookingIdUpdatedAtByBusinessIdBookingId(db, [booking_id, at, business_id]);
 }
 
 /**
@@ -782,27 +734,6 @@ export function linkBookingToLead(db: Db, business_id: string, booking_id: strin
  */
 export function backfillLeadFor(db: Db, newId: () => string, business_id: string): string {
   const id = newId();
-  db.run(
-    'INSERT INTO leads (id, business_id, assessment_id, booking_id, claim_id, origin, source, introducer_id, ' +
-      'prospect_organisation, prospect_sector, lead_date, owner_id, priority, next_action, next_action_due, status, ' +
-      'lost_reason, lost_note, converted_at, created_at, updated_at) ' +
-      'SELECT ?, b.id, a.id, k.id, cl.id, ' +
-      "CASE WHEN a.id IS NOT NULL THEN 'ASSESSMENT' WHEN k.entry_point = 'gated_exit' THEN 'GATED_EXIT' " +
-      "WHEN k.id IS NOT NULL THEN 'BOOKING' ELSE 'STAFF' END, " +
-      "COALESCE(b.source, CASE WHEN a.id IS NOT NULL THEN 'WEBSITE' ELSE 'OTHER' END), NULL, NULL, NULL, " +
-      'COALESCE((SELECT MIN(x.submitted_at) FROM assessments x WHERE x.business_id = b.id), k.created_at, b.created_at), ' +
-      "b.owner_id, NULL, NULL, NULL, CASE WHEN cl.id IS NOT NULL THEN 'CONVERTED' ELSE 'NEW' END, NULL, NULL, " +
-      'cl.created_at, b.created_at, b.created_at ' +
-      'FROM businesses b ' +
-      'LEFT JOIN assessments a ON a.id = (SELECT x.id FROM assessments x WHERE x.business_id = b.id ' +
-      'ORDER BY x.submitted_at DESC, x.id DESC LIMIT 1) ' +
-      'LEFT JOIN bookings k ON k.id = (SELECT y.id FROM bookings y WHERE y.business_id = b.id ' +
-      'ORDER BY y.created_at ASC, y.id ASC LIMIT 1) ' +
-      'LEFT JOIN claims cl ON cl.id = COALESCE(' +
-      '(SELECT z.id FROM claims z WHERE z.business_id = b.id AND z.assessment_id = a.id ORDER BY z.created_at, z.id LIMIT 1), ' +
-      '(SELECT z.id FROM claims z WHERE z.business_id = b.id ORDER BY z.created_at, z.id LIMIT 1)) ' +
-      'WHERE b.id = ?',
-    [id, business_id],
-  );
+  insertLeadsByBusinessIdId(db, [id, business_id]);
   return id;
 }

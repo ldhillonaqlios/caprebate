@@ -25,9 +25,13 @@ import type { Db } from '../../core/index.ts';
 import { acquisitionDateReading, amendmentWindowReading, latestFacts, periodFromYearEnd, windowForPeriod, type WindowReading } from './claim-facts.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, type EventKind, type PropertyEvent } from './property-events.ts';
 import { legalVerdictForClaim } from '../../web/pack-legal.ts';
-import { propertyTenure, registerNamesClientPerson } from '../assessment/who-claims.ts';
+import { propertyTenure, registerNamesClientPerson } from '../assessment/index.ts';
 import { localDate } from '../../shared/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId8 } from '../../integrations/index.ts';
+import { getSurveyPackApprovalsSnapshotJsonByClaimId } from './data-borrowed.ts';
+import { getBusinessesClaimantTypeById, getBusinessesCompanyNumberById } from '../crm/index.ts';
+import { getAssessmentAnswersValueByBusinessIdQuestionId } from '../assessment/index.ts';
+import { getPropertiesDisposalDateById } from './data.ts';
 
 export type Route = 'W1' | 'W2' | 'W3' | 'NOT_KNOWN';
 
@@ -63,7 +67,7 @@ export type EventRoute = {
 /** Whether the client still owns the building — YES only on evidence, never with a sale date on the property. */
 export function stillOwned(db: Db, c: { id: string; business_id: string; property_id: string | null }, todayIso: string = new Date().toISOString()): Owned {
   if (c.property_id === null) return { value: null, why: 'no property is recorded on this claim' };
-  const p = db.get<{ disposal_date: string | null }>('SELECT disposal_date FROM properties WHERE id = ?', [c.property_id]);
+  const p = getPropertiesDisposalDateById<{ disposal_date: string | null }>(db, [c.property_id]);
   if (p?.disposal_date !== null && p?.disposal_date !== undefined) return { value: 'NO', why: `the property record has a sale date, ${p.disposal_date}` };
   /* PHASE 159h (item 7): A LEASE THAT HAS ENDED. The end of the lessee's interest is a disposal of its fixtures (s.188):
      a leasehold whose recorded end date has passed is not still owned. */
@@ -76,7 +80,7 @@ export function stillOwned(db: Db, c: { id: string; business_id: string; propert
     return { value: f.value_text, why: f.value_text === 'YES' ? 'the client still owns it, as recorded on the claim with its source' : 'the client no longer owns it, as recorded on the claim' };
   }
   // The current title register naming the client's company is evidence too.
-  const co = db.get<{ company_number: string | null }>('SELECT company_number FROM businesses WHERE id = ?', [c.business_id])?.company_number ?? null;
+  const co = getBusinessesCompanyNumberById<{ company_number: string | null }>(db, [c.business_id])?.company_number ?? null;
   if (co !== null) {
     const t = getRegisterRecordsFieldsJsonByBusinessIdSourceId8<{ fields_json: string }>(db, [c.business_id, c.property_id]);
     let n: unknown = null;
@@ -196,11 +200,9 @@ export function cashBasis(db: Db, c: { id: string; business_id: string }): { on:
   const recorded = f !== undefined && f.answer === 'VALUE' && (f.value_text === 'CASH' || f.value_text === 'ACCRUALS') ? f.value_text : null;
   // Where nobody has recorded it, the client's own assessment answer (Q3, asked of an unincorporated care home); a fact
   // staff record always wins, as with BOUGHT_THE_BUILDING. "Not sure" is not an answer either way (N4).
-  const said = recorded !== null ? null : db.get<{ value: string | null }>(
-    "SELECT x.value FROM assessment_answers x JOIN assessments a ON a.id = x.assessment_id WHERE a.business_id = ? AND x.question_id = 'Q3' AND x.state = 'ANSWERED' ORDER BY a.submitted_at DESC, a.id DESC LIMIT 1",
-    [c.business_id])?.value ?? null;
+  const said = recorded !== null ? null : getAssessmentAnswersValueByBusinessIdQuestionId<{ value: string | null }>(db, [c.business_id])?.value ?? null;
   const v = recorded ?? (said === 'cash' ? 'CASH' : said === 'accruals' ? 'ACCRUALS' : null);
-  const t = db.get<{ claimant_type: string | null }>('SELECT claimant_type FROM businesses WHERE id = ?', [c.business_id])?.claimant_type ?? null;
+  const t = getBusinessesClaimantTypeById<{ claimant_type: string | null }>(db, [c.business_id])?.claimant_type ?? null;
   const company = t === 'COMPANY' || t === 'CHARITY_COMPANY';
   if (v === 'CASH' && !company) {
     return { on: true, recorded: v, why: 'the accounts for the period are on the cash basis, as recorded: there is no claim on the fixtures while they are. Once the accounts move to accruals, the spend not yet relieved can be claimed' };
@@ -267,9 +269,7 @@ export function routesWhy(routes: readonly EventRoute[]): string {
  */
 export function legalDeadlineNeed(db: Db, c: { id: string }, todayIso: string): { what: string; met: boolean; why: string } {
   const what = 'A legal check that was clear only until a deadline is still clear';
-  const a = db.get<{ snapshot_json: string }>(
-    'SELECT a.snapshot_json FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
-      'WHERE j.claim_id = ? ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [c.id]);
+  const a = getSurveyPackApprovalsSnapshotJsonByClaimId<{ snapshot_json: string }>(db, [c.id]);
   let v: { level?: string; deadline?: string | null } | undefined;
   try { v = a === undefined ? undefined : (JSON.parse(a.snapshot_json) as { legal?: { verdict?: { level?: string; deadline?: string | null } } }).legal?.verdict; } catch { v = undefined; }
   if (v?.level !== 'URGENT' || typeof v.deadline !== 'string') return { what, met: true, why: 'the approved legal check carries no deadline' };

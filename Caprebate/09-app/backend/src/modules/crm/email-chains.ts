@@ -26,6 +26,8 @@ import { SENT_SECRET_KINDS } from '../../integrations/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { emailsReadUntil } from './messages.ts';
 import { getOutboxCOALESCEThreadKeyKById } from '../../integrations/index.ts';
+import { listInboundEmailIdReceivedAt, listOutboxIdCreatedAtByBusinessId, listOutboxIdCreatedAtByLeadIdBusinessId } from './data-borrowed.ts';
+import { listContactsEByBusinessIdEmail } from './data.ts';
 
 export type ChainEmail = {
   readonly id: string; readonly at: string; readonly when: string; readonly ours: boolean;
@@ -72,14 +74,10 @@ type In = {
 /** The company's chains (or a lead's, where it has no company yet), the one with the newest email first. */
 export function emailChains(db: Db, actor: Actor, who: { business_id: string | null; lead_id: string | null }, nowIso: string): EmailChain[] {
   const outs = who.business_id !== null
-    ? db.all<Out>('SELECT o.id, o.created_at, o.to_email, o.subject, o.body, o.sent_at, o.send_requested, o.last_error, o.kind, o.provider_ref, o.thread_key, o.claim_id, ' +
-      'u.display_name AS writer FROM outbox o LEFT JOIN users u ON u.id = o.written_by WHERE o.business_id = ? ORDER BY o.created_at, o.id', [who.business_id])
-    : db.all<Out>('SELECT o.id, o.created_at, o.to_email, o.subject, o.body, o.sent_at, o.send_requested, o.last_error, o.kind, o.provider_ref, o.thread_key, o.claim_id, ' +
-      'u.display_name AS writer FROM outbox o LEFT JOIN users u ON u.id = o.written_by WHERE o.lead_id = ? AND o.business_id IS NULL ORDER BY o.created_at, o.id', [who.lead_id ?? '']);
+    ? listOutboxIdCreatedAtByBusinessId<Out>(db, [who.business_id])
+    : listOutboxIdCreatedAtByLeadIdBusinessId<Out>(db, [who.lead_id ?? '']);
   // The company's own addresses: an email to anyone else is the client's only where staff typed it.
-  const theirs = new Set(who.business_id === null ? [] : db.all<{ e: string }>(
-    'SELECT lower(email) AS e FROM contacts WHERE business_id = ? AND email IS NOT NULL UNION SELECT lower(contact_email) FROM businesses WHERE id = ? AND contact_email IS NOT NULL',
-    [who.business_id, who.business_id]).map((r) => r.e));
+  const theirs = new Set(who.business_id === null ? [] : listContactsEByBusinessIdEmail<{ e: string }>(db, [who.business_id, who.business_id]).map((r) => r.e));
   const keyOf = new Map<string, string>(); // outbox id -> chain key
   type Item = ChainEmail & { key: string; address: string; message_id: string | null; claim_id: string | null };
   const items: Item[] = [];
@@ -98,11 +96,7 @@ export function emailChains(db: Db, actor: Actor, who: { business_id: string | n
   const mayRead = who.business_id !== null && can(actor, 'client_message.read', { type: 'client_message', id: who.business_id, business_id: who.business_id });
   if (mayRead) {
     const readUntil = emailsReadUntil(db, actor.id, who.business_id ?? '');
-    for (const e of db.all<In>(
-      'SELECT e.id, e.received_at, e.from_address, e.subject, e.text_body, e.message_id, e.matched_outbox_id, e.claim_id, c.full_name AS contact, m.created_at AS read_at ' +
-      'FROM inbound_email e LEFT JOIN inbound_email_filings g ON g.inbound_email_id = e.id LEFT JOIN contacts c ON c.id = e.contact_id ' +
-      'LEFT JOIN client_messages m ON m.id = COALESCE(e.client_message_id, g.client_message_id) ' +
-      'WHERE COALESCE(e.business_id, g.business_id) = ? ORDER BY e.received_at, e.id', [who.business_id])) {
+    for (const e of listInboundEmailIdReceivedAt<In>(db, [who.business_id])) {
       let key = e.id;
       if (e.matched_outbox_id !== null) {
         key = keyOf.get(e.matched_outbox_id)

@@ -43,11 +43,12 @@ import { authorise, can, NotAuthorised, type Actor } from '../core/index.ts';
 import type { FsObjectStore } from '../shared/objectstore.ts';
 import { packJob } from './surveyor.ts';
 import { checklistFor, type ChecklistItem } from './survey-checklist.ts';
-import { postClientMessage } from '../modules/crm/messages.ts';
-import { isBookable, SLOT_MINUTES } from '../modules/crm/schedule.ts';
-import { reconcileVideoMeeting, zoomDeps } from '../modules/crm/video-calls.ts';
-import { sendVideoInvite } from '../modules/crm/booking-invite.ts';
+import { postClientMessage } from '../modules/crm/index.ts';
+import { isBookable, SLOT_MINUTES } from '../modules/crm/index.ts';
+import { reconcileVideoMeeting, zoomDeps } from '../modules/crm/index.ts';
+import { sendVideoInvite } from '../modules/crm/index.ts';
 import { zoomRecording } from '../integrations/index.ts';
+import { getContactsXByBusinessId, insertBookings3 } from '../modules/crm/index.ts';
 
 export type EvidenceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -453,7 +454,7 @@ export async function bookWalkthrough(app: App, newId: () => string, actor: Acto
   authorise(actor, 'surveyor_job.read', obj);
   authorise(actor, 'booking.write', { type: 'booking', id: 'walkthrough', business_id: job.business_id });
   const to = f.to.trim();
-  if (to === '' || app.db.get('SELECT 1 AS x FROM contacts WHERE business_id = ? AND lower(email) = lower(?)', [job.business_id, to]) === undefined) {
+  if (to === '' || getContactsXByBusinessId(app.db, [job.business_id, to]) === undefined) {
     return { ok: false, field: 'to', why: 'Choose who the call is with: one of their contacts with an email address.' };
   }
   const now = app.now();
@@ -464,8 +465,7 @@ export async function bookWalkthrough(app: App, newId: () => string, actor: Acto
   const booking = newId();
   const id = newId();
   app.db.tx(() => {
-    app.db.run("INSERT INTO bookings (id, business_id, lead_id, assigned_to, channel, sms_variant, entry_point, starts_at, ends_at, created_at) VALUES (?, ?, NULL, ?, 'video', NULL, 'staff', ?, ?, ?)",
-      [booking, job.business_id, actor.id, starts, ends, now]);
+    insertBookings3(app.db, [booking, job.business_id, actor.id, starts, ends, now]);
     app.db.run('INSERT INTO survey_walkthroughs (id, job_id, booking_id, booked_by, booked_at) VALUES (?, ?, ?, ?, ?)', [id, job_id, booking, actor.id, now]);
     app.audit.append({ at: now, kind: 'BOOKING_CREATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'booking', object_id: booking,
       detail: { business: job.business_id, channel: 'video', walkthrough: true } });

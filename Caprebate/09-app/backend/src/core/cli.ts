@@ -31,11 +31,11 @@ import { AuditLog } from './audit.ts';
 import { join } from 'node:path';
 import { FsObjectStore } from '../shared/objectstore.ts';
 import { sealKeyFromEnv } from '../shared/index.ts';
-import { openKeptOriginal, sweepOriginals } from '../modules/claims/uploads.ts';
+import { openKeptOriginal, sweepOriginals } from '../modules/claims/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, emailPlaceRefusal, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { INBOUND_EMAIL, imapLoginFromKeyFile, imapMailbox } from '../integrations/index.ts';
-import { readMailbox } from '../modules/crm/inbound-email.ts';
-import { MESSAGE_RETENTION, sweepMessages } from '../modules/crm/message-retention.ts';
+import { readMailbox } from '../modules/crm/index.ts';
+import { MESSAGE_RETENTION, sweepMessages } from '../modules/crm/index.ts';
 import { inspireStoreFromEnv, INSPIRE_KEEP_DAYS } from '../integrations/index.ts';
 import { randomUUID } from 'node:crypto';
 import { liveTransport } from '../integrations/index.ts';
@@ -132,7 +132,7 @@ async function main(): Promise<number> {
     /* ENQUIRY_RETENTION is off, so this deletes nothing and says why. */
     const db = new Db(DEFAULT_DB);
     try {
-      const { sweepEnquiries, ENQUIRY_RETENTION } = await import('../modules/public-site/enquiry-retention.ts');
+      const { sweepEnquiries, ENQUIRY_RETENTION } = await import('../modules/public-site/index.ts');
       const r = sweepEnquiries({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() }, ENQUIRY_RETENTION, null);
       console.log(r.state === 'OFF' ? `Closed enquiries are not being cleaned up yet:\n  ${r.missing.join('\n  ')}`
         : `${r.deleted} closed website enquir${r.deleted === 1 ? 'y' : 'ies'} deleted because their time was up; ${r.funnel_leads_deleted} lost funnel lead${r.funnel_leads_deleted === 1 ? '' : 's'} deleted with ${r.funnel_leads_deleted === 1 ? 'its' : 'their'} own rows; ${r.funnel_leads_kept.length} kept (${r.funnel_leads_kept.map((k) => k.why).filter((w, i, a) => a.indexOf(w) === i).join('; ') || 'none'}).`);
@@ -148,7 +148,7 @@ async function main(): Promise<number> {
     const [source, file] = [process.argv[3], process.argv[4]];
     const byAt = process.argv.indexOf('--by');
     const by = byAt > 0 ? process.argv[byAt + 1] : undefined;
-    const { importPremises, PREMISES_SOURCES } = await import('../modules/crm/premises-import.ts');
+    const { importPremises, PREMISES_SOURCES } = await import('../modules/crm/index.ts');
     if (source === undefined || !(source in PREMISES_SOURCES) || file === undefined || by === undefined) {
       console.error(`Usage: node src/core/cli.ts import-premises <${Object.keys(PREMISES_SOURCES).join('|')}> <file> --by <user id>`);
       return 1;
@@ -173,7 +173,7 @@ async function main(): Promise<number> {
     const [source, file] = [process.argv[3], process.argv[4]];
     const byAt = process.argv.indexOf('--by');
     const by = byAt > 0 ? process.argv[byAt + 1] : undefined;
-    const { importRegisterFile, decodeRegisterFile, FILE_SOURCES } = await import('../modules/claims/register-files.ts');
+    const { importRegisterFile, decodeRegisterFile, FILE_SOURCES } = await import('../modules/claims/index.ts');
     if (source === undefined || !(source in FILE_SOURCES) || file === undefined || by === undefined) {
       console.error(`Usage: node src/core/cli.ts import-register <${Object.keys(FILE_SOURCES).join('|')}> <file> --by <user id>`);
       for (const f of Object.values(FILE_SOURCES)) console.error(`  ${f.source_id}: ${f.download}`);
@@ -236,7 +236,7 @@ async function main(): Promise<number> {
        per trigger. It changes no band: a person changes the engine, with the surveyor's agreement. */
     const db = new Db(DEFAULT_DB);
     try {
-      const { proposeRanges } = await import('../modules/assessment/sector-ranges.ts');
+      const { proposeRanges } = await import('../modules/assessment/index.ts');
       const r = proposeRanges(db);
       if (r.proposals.length === 0) console.log('No approved survey pack yet, so there is nothing to propose.');
       for (const p of r.proposals) console.log(`${p.sector}${p.trigger === null ? '' : ` (${p.trigger})`}: ${p.words}`);

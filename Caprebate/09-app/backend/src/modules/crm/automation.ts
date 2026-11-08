@@ -56,12 +56,15 @@ import { outboxTransport, STUB_NOTICE } from '../../integrations/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
 import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
-import { missingFacts } from '../claims/engaged.ts';
+import { missingFacts } from '../claims/index.ts';
 import { POOL_ROLES, addDaysToDate, insertTask } from './tasks.ts';
 import { claimWords, type Fields } from './crm.ts';
 import { mayTake, vocabLabel } from '../../web/vocabularies.ts';
-import { createDocumentRequest, NO_RECEIPT_POLICY } from '../claims/documents.ts';
+import { createDocumentRequest, NO_RECEIPT_POLICY } from '../claims/index.ts';
 import { getUsersEmailRoleById, getUsersRoleDisabledAtById } from '../../core/index.ts';
+import { getAutomationRulesN, getBusinessesClientStatusById, getBusinessesIdOwnerIdById, getBusinessesNameById, getLeadsIdBusinessIdById3, insertAutomationRules, insertAutomationRuns, listStaffTasksFactIdByBusinessIdFactId, updateAutomationRulesLabelTriggerEventById } from './data.ts';
+import { getDocumentTypesHandlerTypeActiveByCode, getStaffTasksIdBusinessIdById, getVocabulariesCountByListCode, listAutomationRunsAtTriggerEvent, listDocumentTypesCodeLabelByActiveHandlerType2 } from './data-borrowed.ts';
+import { getClaimsIdClaimRefById3 } from '../claims/index.ts';
 
 export type AutomationDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
@@ -282,22 +285,16 @@ export function rulesPage(db: Db, actor: Actor): RulesPage {
     runs: recentRuns(db, actor),
     may_write: can(actor, 'automation_rule.write', RULES_SECTION),
     forbidden: Object.entries(FORBIDDEN_EFFECTS).map(([key, why]) => ({ key, why })),
-    request_types: Object.fromEntries(db.all<{ code: string; label: string }>(
-      'SELECT code, label FROM document_types WHERE active = 1 AND handler_type IS NOT NULL ORDER BY ord ASC, code ASC').map((t) => [t.code, t.label])),
+    request_types: Object.fromEntries(listDocumentTypesCodeLabelByActiveHandlerType2<{ code: string; label: string }>(db).map((t) => [t.code, t.label])),
   };
 }
 
 export function recentRuns(db: Db, actor: Actor, limit = 100): RunView[] {
   authorise(actor, 'automation_rule.read', RULES_SECTION);
-  return db.all<{
+  return listAutomationRunsAtTriggerEvent<{
     at: string; trigger_event: string; outcome: string; reason: string | null; tasks_created: number; outbox_id: string | null;
     claim_id: string | null; lead_id: string | null; task_id: string | null; label: string;
-  }>(
-    'SELECT r.at, r.trigger_event, r.outcome, r.reason, r.tasks_created, r.outbox_id, c.id AS claim_id, r.lead_id, r.task_id, ' +
-      'ar.label FROM automation_runs r JOIN automation_rules ar ON ar.id = r.rule_id LEFT JOIN claims c ON c.id = r.claim_id ' +
-      'ORDER BY r.at DESC, r.rowid DESC LIMIT ?',
-    [limit],
-  ).map((r) => ({
+  }>(db, [limit]).map((r) => ({
     at: localStamp(r.at), rule: r.label, trigger: words(TRIGGERS, r.trigger_event, r.trigger_event),
     ran: r.outcome === 'RAN', reason: r.reason === null ? null : words(RUN_REASONS, r.reason, r.reason),
     tasks_created: r.tasks_created, outbox: r.outbox_id !== null,
@@ -336,7 +333,7 @@ function ruleValues(db: Db, input: Fields, stored: RuleDbRow | null = null): Che
   const activity = clean(input['trigger_activity']);
   if (activity !== null && trigger !== 'TASK_COMPLETED') return { ok: false, why: 'Only a “task completed” rule listens for an activity.', field: 'trigger_activity' };
   if (activity !== null && activity !== stored?.trigger_activity
-    && db.get<{ n: number }>("SELECT COUNT(*) AS n FROM vocabularies WHERE list = 'ACTIVITY_TYPE' AND code = ?", [activity])?.n === 0) {
+    && getVocabulariesCountByListCode<{ n: number }>(db, [activity])?.n === 0) {
     return { ok: false, why: 'The activity is not one on the list.', field: 'trigger_activity' };
   }
   const attach = clean(input['attach_to']) ?? 'SUBJECT';
@@ -361,7 +358,7 @@ function ruleValues(db: Db, input: Fields, stored: RuleDbRow | null = null): Che
     if (attach !== 'SUBJECT') return { ok: false, why: 'A document request is raised on what the event is about.', field: 'attach_to' };
     const type = clean(input['request_type']);
     if (type === null) return { ok: false, why: 'Choose the document the rule asks the client for.', field: 'request_type' };
-    const t = db.get<{ handler_type: string | null; active: number }>('SELECT handler_type, active FROM document_types WHERE code = ?', [type]);
+    const t = getDocumentTypesHandlerTypeActiveByCode<{ handler_type: string | null; active: number }>(db, [type]);
     if (t === undefined || t.active !== 1) return { ok: false, why: 'That document type is not an active one.', field: 'request_type' };
     if (t.handler_type === null) return { ok: false, why: `A rule may ask only for a document something could receive. ${NO_RECEIPT_POLICY}`, field: 'request_type' };
     const why = clean(input['task_title']);
@@ -412,15 +409,10 @@ export function createRule(d: AutomationDeps, actor: Actor, input: Fields): Rule
   if (!v.ok) return v;
   const id = d.newId();
   const at = d.now();
-  const ord = (d.db.get<{ n: number | null }>('SELECT MAX(ord) AS n FROM automation_rules')?.n ?? 0) + 10;
-  d.db.run(
-    'INSERT INTO automation_rules (id, label, trigger_event, trigger_stage, trigger_activity, effect, task_title, ' +
-      'task_description, task_activity_type, task_priority, due_in_days, assign_to, assign_role, attach_to, active, ord, ' +
-      'source, created_at, updated_at, request_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, v.value.label, v.value.trigger_event, v.value.trigger_stage, v.value.trigger_activity, v.value.effect,
+  const ord = (getAutomationRulesN<{ n: number | null }>(d.db)?.n ?? 0) + 10;
+  insertAutomationRules(d.db, [id, v.value.label, v.value.trigger_event, v.value.trigger_stage, v.value.trigger_activity, v.value.effect,
       v.value.task_title, v.value.task_description, v.value.task_activity_type, v.value.task_priority, v.value.due_in_days,
-      v.value.assign_to, v.value.assign_role, v.value.attach_to, v.value.active, ord, 'Added by an admin', at, at, v.value.request_type],
-  );
+      v.value.assign_to, v.value.assign_role, v.value.attach_to, v.value.active, ord, 'Added by an admin', at, at, v.value.request_type]);
   d.audit.append({
     at, kind: 'AUTOMATION_RULE_CREATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'automation_rule', object_id: id, detail: { rule: id, trigger: v.value.trigger_event, effect: v.value.effect },
@@ -438,14 +430,9 @@ export function updateRule(d: AutomationDeps, actor: Actor, id: string, input: F
   const before: Record<string, unknown> = { ...r };
   const changed = (Object.keys(v.value) as (keyof RuleValues)[]).filter((k) => before[k] !== v.value[k]);
   if (changed.length === 0) return { ok: true, id };
-  d.db.run(
-    'UPDATE automation_rules SET label = ?, trigger_event = ?, trigger_stage = ?, trigger_activity = ?, effect = ?, ' +
-      'task_title = ?, task_description = ?, task_activity_type = ?, task_priority = ?, due_in_days = ?, assign_to = ?, ' +
-      'assign_role = ?, attach_to = ?, active = ?, request_type = ?, updated_at = ? WHERE id = ?',
-    [v.value.label, v.value.trigger_event, v.value.trigger_stage, v.value.trigger_activity, v.value.effect,
+  updateAutomationRulesLabelTriggerEventById(d.db, [v.value.label, v.value.trigger_event, v.value.trigger_stage, v.value.trigger_activity, v.value.effect,
       v.value.task_title, v.value.task_description, v.value.task_activity_type, v.value.task_priority, v.value.due_in_days,
-      v.value.assign_to, v.value.assign_role, v.value.attach_to, v.value.active, v.value.request_type, d.now(), id],
-  );
+      v.value.assign_to, v.value.assign_role, v.value.attach_to, v.value.active, v.value.request_type, d.now(), id]);
   d.audit.append({
     at: d.now(), kind: 'AUTOMATION_RULE_UPDATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'automation_rule', object_id: id, detail: { rule: id, fields: changed },
@@ -481,8 +468,7 @@ type Subject = {
 };
 
 function claimSubject(db: Db, claim_id: string): Subject | null {
-  const c = db.get<{ id: string; claim_ref: string; business_id: string; property_id: string | null; owner_id: string | null }>(
-    'SELECT id, claim_ref, business_id, property_id, owner_id FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdClaimRefById3<{ id: string; claim_ref: string; business_id: string; property_id: string | null; owner_id: string | null }>(db, [claim_id]);
   if (c === undefined) return null;
   return {
     kind: 'claim', claim_id: c.id, lead_id: null, task_id: null, business_id: c.business_id, property_id: c.property_id,
@@ -493,7 +479,7 @@ function claimSubject(db: Db, claim_id: string): Subject | null {
 function subjectOf(db: Db, e: AutomationEvent): Subject | null {
   if (e.trigger === 'DOCUMENT_REQUESTED') {
     if (e.claim_id !== null) return claimSubject(db, e.claim_id);
-    const b = db.get<{ id: string; owner_id: string | null }>('SELECT id, owner_id FROM businesses WHERE id = ?', [e.business_id]);
+    const b = getBusinessesIdOwnerIdById<{ id: string; owner_id: string | null }>(db, [e.business_id]);
     if (b === undefined) return null;
     return {
       kind: 'organisation', claim_id: null, lead_id: null, task_id: null, business_id: b.id, property_id: null,
@@ -501,13 +487,10 @@ function subjectOf(db: Db, e: AutomationEvent): Subject | null {
     };
   }
   if ('task_id' in e) {
-    const t = db.get<{
+    const t = getStaffTasksIdBusinessIdById<{
       id: string; business_id: string | null; property_id: string | null; claim_id: string | null; lead_id: string | null;
       owner_id: string | null; activity_type: string; claim_ref: string | null;
-    }>(
-      'SELECT t.id, t.business_id, t.property_id, t.claim_id, t.lead_id, t.owner_id, t.activity_type, c.claim_ref ' +
-        'FROM staff_tasks t LEFT JOIN claims c ON c.id = t.claim_id WHERE t.id = ?',
-      [e.task_id]);
+    }>(db, [e.task_id]);
     if (t === undefined) return null;
     return {
       kind: 'task', claim_id: t.claim_id, lead_id: t.lead_id, task_id: t.id, business_id: t.business_id,
@@ -515,8 +498,7 @@ function subjectOf(db: Db, e: AutomationEvent): Subject | null {
     };
   }
   if ('lead_id' in e) {
-    const l = db.get<{ id: string; business_id: string | null; owner_id: string | null }>(
-      'SELECT id, business_id, owner_id FROM leads WHERE id = ?', [e.lead_id]);
+    const l = getLeadsIdBusinessIdById3<{ id: string; business_id: string | null; owner_id: string | null }>(db, [e.lead_id]);
     if (l === undefined) return null;
     return {
       kind: 'lead', claim_id: null, lead_id: l.id, task_id: null, business_id: l.business_id, property_id: null,
@@ -545,12 +527,8 @@ type Result = { outcome: 'RAN' | 'NOT_RUN'; reason: string | null; tasks: number
 
 function writeRun(d: AutomationDeps, actor: Actor | null, rule: RuleDbRow, e: AutomationEvent, s: Subject, o: Result): string {
   const id = d.newId();
-  d.db.run(
-    'INSERT INTO automation_runs (id, rule_id, at, trigger_event, stage, claim_id, lead_id, task_id, business_id, actor_id, ' +
-      'outcome, reason, tasks_created, outbox_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, rule.id, d.now(), e.trigger, e.trigger === 'STAGE_ENTERED' ? e.stage : null, s.claim_id, s.lead_id, s.task_id,
-      s.business_id, actor?.id ?? null, o.outcome, o.reason, o.tasks, o.outbox_id],
-  );
+  insertAutomationRuns(d.db, [id, rule.id, d.now(), e.trigger, e.trigger === 'STAGE_ENTERED' ? e.stage : null, s.claim_id, s.lead_id, s.task_id,
+      s.business_id, actor?.id ?? null, o.outcome, o.reason, o.tasks, o.outbox_id]);
   return id;
 }
 
@@ -573,7 +551,7 @@ function notRun(d: AutomationDeps, actor: Actor | null, rule: RuleDbRow, e: Auto
 }
 
 function isDoNotContactOrganisation(db: Db, business_id: string): boolean {
-  return db.get<{ client_status: string }>('SELECT client_status FROM businesses WHERE id = ?', [business_id])?.client_status === 'DO_NOT_CONTACT';
+  return getBusinessesClientStatusById<{ client_status: string }>(db, [business_id])?.client_status === 'DO_NOT_CONTACT';
 }
 
 function activeStaff(db: Db, user_id: string): boolean {
@@ -628,9 +606,7 @@ function informationRequests(d: AutomationDeps, actor: Actor | null, rule: RuleD
   }
   const owner = ownerFor(d.db, rule, s);
   if (owner === null) return notRun(d, actor, rule, e, s, 'NOBODY_TO_OWN_IT');
-  const asked = new Set(d.db.all<{ fact_id: string }>(
-    "SELECT fact_id FROM staff_tasks WHERE business_id = ? AND fact_id IS NOT NULL AND status IN ('OPEN','IN_PROGRESS')",
-    [business]).map((r) => r.fact_id));
+  const asked = new Set(listStaffTasksFactIdByBusinessIdFactId<{ fact_id: string }>(d.db, [business]).map((r) => r.fact_id));
   const facts = missingFacts(d.db, actor, business).filter((m) => !m.has_task && !asked.has(m.fact_id));
   const due = addDaysToDate(localDate(d.now()), rule.due_in_days ?? 0);
   const o: Result = { outcome: 'RAN', reason: facts.length === 0 ? 'NOTHING_MISSING' : null, tasks: facts.length, outbox_id: null };
@@ -707,7 +683,7 @@ function notifyOwner(d: AutomationDeps, actor: Actor | null, rule: RuleDbRow, e:
   if (u === undefined || u.disabled_at !== null) return notRun(d, actor, rule, e, s, 'NO_OWNER');
   if (u.role === 'CLIENT') return notRun(d, actor, rule, e, s, 'OWNER_IS_NOT_STAFF');
   const company = !NOTICE_SUBJECT_LEADS_WITH_COMPANY || s.business_id === null ? null
-    : d.db.get<{ name: string }>('SELECT name FROM businesses WHERE id = ?', [s.business_id])?.name ?? null;
+    : getBusinessesNameById<{ name: string }>(d.db, [s.business_id])?.name ?? null;
   const w = noticeWords(rule, e, s, company);
   const transport = outboxTransport(d.db, d.newId, d.now);
   const done = d.db.tx(() => {

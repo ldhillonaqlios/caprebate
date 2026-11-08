@@ -13,7 +13,7 @@
  * derivation. Every staff-supplied value is drawn through `h`, which escapes it.
  */
 
-import * as CK from '../crm/client-checks.ts';
+import { clientChecksModule as CK } from '../crm/index.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS } from './property-events.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
@@ -26,9 +26,10 @@ import { formatPence } from '../../shared/index.ts';
 import { ukDate } from '../../shared/index.ts';
 import * as F from './claim-facts.ts';
 import * as R from './claim-record.ts';
-import { recordClientFilingConfirmation } from '../portal/client-filing.ts';
+import { recordClientFilingConfirmation } from '../portal/index.ts';
 import { recordFeeDiscount } from './fee-discounts.ts';
 import type { ReleasedFacts } from '../../payload.ts';
+import { getClaimsBusinessIdById, getClaimsPById } from './data.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -564,7 +565,7 @@ function answerGrantsQuestion(
     'Answer not saved', 'grants', GRANTS_ANCHOR);
   if (a === 'NOT_SURE') {
     // NOT SURE PUTS THE QUESTION TO THE CLIENT — once, and only for a login that may ask (the same check "Ask the client" makes).
-    const biz = d.app.db.get<{ business_id: string }>('SELECT business_id FROM claims WHERE id = ?', [id])?.business_id ?? '';
+    const biz = getClaimsBusinessIdById<{ business_id: string }>(d.app.db, [id])?.business_id ?? '';
     if (can(actor, 'internal_note.write', { type: 'internal_note', id: biz, business_id: biz }) && !openClaimQuestions(d.app.db, actor, biz, id).has(GRANTS_FACT_ID)) {
       const sent = sendTaskToPortal(deps, actor, biz, {
         fact_id: GRANTS_FACT_ID, claim_id: id,
@@ -654,7 +655,7 @@ function grantStepPage(d: ClaimRecordPageDeps, res: ServerResponse, actor: Actor
   let body: Safe;
   if (step === 1) {
     // PHASE 159i (items 1 and 4): who received it, and which spend on the building it paid for.
-    const evs = eventsOfProperty(d.app.db, d.app.db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [c.id])?.p ?? null).filter((e) => e.kind !== 'REPAIRS');
+    const evs = eventsOfProperty(d.app.db, getClaimsPById<{ p: string | null }>(d.app.db, [c.id])?.p ?? null).filter((e) => e.kind !== 'REPAIRS');
     body = h`<form method="post" action="${self}" class="gstep"><input type="hidden" name="step" value="1">${carry(x, ['payer_class', 'kind', 'paid_to', 'event_id'])}
       <fieldset><legend><h2>Who paid?</h2></legend>${choice('payer_class', F.PAYER_CLASSES, x.payer_class, { individual: 'A private person — we do not write their name' })}</fieldset>
       <fieldset><legend><h2>Was it a grant?</h2></legend>${choice('kind', { GRANT: 'A grant', CONTRIBUTION: 'Another payment towards the work' }, x.kind)}</fieldset>

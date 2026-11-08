@@ -23,11 +23,13 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import type { Actor } from '../../core/index.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
-import { checksPanel, stepDef, tellClient, type ChecksPanel, type StepView } from '../claims/approvals.ts';
+import { checksPanel, stepDef, tellClient, type ChecksPanel, type StepView } from '../claims/index.ts';
 import { gateOut, loadPipelineClaim, moveClaim } from './pipeline.ts';
 import { claimStage, clientStageFor, nextProcedureKey, STAGES, type ProcedureKey } from '../../shared/index.ts';
-import { PROPOSED_STEP_NAMES } from '../portal/portal-steps.ts';
+import { PROPOSED_STEP_NAMES } from '../portal/index.ts';
 import { localStamp } from '../../shared/index.ts';
+import { getBusinessesEById, getBusinessesSById2, getContactsEByBusinessIdEmail } from './data.ts';
+import { listClaimsIdByBusinessId2 } from '../claims/index.ts';
 
 export type TellDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };
 
@@ -59,7 +61,7 @@ export function tellAndMoveOn(
   const today = d.now().slice(0, 10);
   const p = checksPanel(d.db, actor, business_id, today);
   const claims = input.claim_id !== null && input.claim_id !== undefined ? [input.claim_id]
-    : d.db.all<{ id: string }>('SELECT id FROM claims WHERE business_id = ? ORDER BY created_at, id', [business_id]).map((r) => r.id);
+    : listClaimsIdByBusinessId2<{ id: string }>(d.db, [business_id]).map((r) => r.id);
   const moved: Moved[] = [];
   const stayed: Stayed[] = [];
   for (const id of claims) {
@@ -81,8 +83,8 @@ export function tellAndMoveOn(
     }
   }
   // The email: what we did, and where a claim moved, what comes next. Only to an address the company gave us.
-  const to = d.db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [business_id])?.e
-    ?? d.db.get<{ e: string | null }>("SELECT email AS e FROM contacts WHERE business_id = ? AND email IS NOT NULL AND trim(email) <> '' ORDER BY created_at, id LIMIT 1", [business_id])?.e
+  const to = getBusinessesEById<{ e: string | null }>(d.db, [business_id])?.e
+    ?? getContactsEByBusinessIdEmail<{ e: string | null }>(d.db, [business_id])?.e
     ?? null;
   let emailed = false;
   if (to !== null && def !== undefined) {
@@ -118,7 +120,7 @@ export function whyNotMoved(db: Db, p: ChecksPanel, claim_id: string, todayIso: 
 
 /** The six steps as the client reads them, and which one the company is at. */
 export function clientProgress(db: Db, business_id: string): { readonly steps: readonly string[]; readonly at: number } {
-  const stage = db.get<{ s: string | null }>('SELECT stage AS s FROM businesses WHERE id = ?', [business_id])?.s ?? null;
+  const stage = getBusinessesSById2<{ s: string | null }>(db, [business_id])?.s ?? null;
   return {
     steps: STAGES.map((s) => PROPOSED_STEP_NAMES[s.key].replace(/^\d+\s+/, '')),
     at: Math.max(0, STAGES.findIndex((s) => s.key === stage)),

@@ -31,6 +31,9 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localStamp } from '../../shared/index.ts';
+import { getClientFilingConfirmationsByClaimIdRecordedAt, insertClientFilingConfirmations } from './data.ts';
+import { getClaimsIdBusinessIdById } from '../claims/index.ts';
+import { getContactsIdByBusinessIdContactType2 } from '../crm/index.ts';
 
 export type Answer = 'YES' | 'NO' | 'UNSURE';
 const ANSWERS: readonly string[] = ['YES', 'NO', 'UNSURE'];
@@ -60,15 +63,12 @@ export type Need = { readonly what: string; readonly met: boolean; readonly why:
 
 /** The latest confirmation recorded for this claim at or after `since` — the instant the claim last entered REPORTS. */
 export function latestConfirmation(db: Db, claim_id: string, since: string): ClientFilingRow | undefined {
-  return db.get<ClientFilingRow>(
-    'SELECT * FROM client_filing_confirmations WHERE claim_id = ? AND recorded_at >= ? ORDER BY recorded_at DESC, rowid DESC LIMIT 1',
-    [claim_id, since]);
+  return getClientFilingConfirmationsByClaimIdRecordedAt<ClientFilingRow>(db, [claim_id, since]);
 }
 
 /** Whether the organisation has an accountant or adviser on record as a contact. */
 export function adviserOnRecord(db: Db, business_id: string): boolean {
-  return db.get<{ id: string }>(
-    "SELECT id FROM contacts WHERE business_id = ? AND contact_type IN ('ACCOUNTANT','ADVISER') LIMIT 1", [business_id]) !== undefined;
+  return getContactsIdByBusinessIdContactType2<{ id: string }>(db, [business_id]) !== undefined;
 }
 
 export type FilingRoute = { readonly route: 'ACCOUNTANT' | 'CLIENT'; readonly why: string };
@@ -128,7 +128,7 @@ function answer(v: string | null | undefined): Answer | null | 'BAD' {
 export function recordClientFilingConfirmation(
   d: ClientFilingDeps, actor: Actor, claim_id: string, input: Fields,
 ): { ok: true; id: string } | { ok: false; why: string } {
-  const c = d.db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdBusinessIdById<{ id: string; business_id: string }>(d.db, [claim_id]);
   if (c === undefined) {
     authorise(actor, 'client_filing.record', { type: 'claim', id: claim_id, business_id: '', assigned_surveyor_ids: [] });
     return { ok: false, why: 'not found' };
@@ -149,11 +149,7 @@ export function recordClientFilingConfirmation(
   }
   const id = d.newId();
   const at = d.now();
-  d.db.run(
-    'INSERT INTO client_filing_confirmations (id, claim_id, business_id, confirmed_by_party, no_accountant_or_adviser, will_file_amendment, ' +
-      'last_day_acknowledged, last_day_stated, remains_responsible, written_evidence, recorded_by, recorded_at) ' +
-      "VALUES (?, ?, ?, 'CLIENT', ?, ?, ?, ?, ?, ?, ?, ?)",
-    [id, c.id, c.business_id, values['no_accountant_or_adviser'] ?? null, values['will_file_amendment'] ?? null,
+  insertClientFilingConfirmations(d.db, [id, c.id, c.business_id, values['no_accountant_or_adviser'] ?? null, values['will_file_amendment'] ?? null,
      values['last_day_acknowledged'] ?? null, lastDay === '' ? null : lastDay, values['remains_responsible'] ?? null,
      evidence, actor.id, at]);
   d.audit.append({

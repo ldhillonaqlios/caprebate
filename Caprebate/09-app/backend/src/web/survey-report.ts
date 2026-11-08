@@ -26,11 +26,11 @@ import { percentWords, poundsWords, quantityWords, type Source, type Valued } fr
 import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { BASIS_WORDS, baseWords } from './bcis-data.ts';
-import { allowancesFor, allowanceWords, type AllowanceWords } from '../modules/assessment/allowances.ts';
-import type { ReturnContext } from '../modules/claims/return-entries.ts';
+import { allowancesFor, allowanceWords, type AllowanceWords } from '../modules/assessment/index.ts';
+import type { ReturnContext } from '../modules/claims/index.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from '../shared/index.ts';
 import { minutesWords } from './survey-video.ts';
-import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from '../modules/claims/site-plan.ts';
+import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from '../modules/claims/index.ts';
 import { ukDatesIn } from '../shared/index.ts';
 import { plainDashLines } from '../shared/index.ts';
 

@@ -41,6 +41,8 @@ import { h, type Safe } from '../../shared/index.ts';
 import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, zoomPastCall, zoomPlanIsFree, FREE_PLAN_LINE, NOT_ON_PLAN_WORDS, ZOOM_SDK_BASE, type MadeMeeting, type PastCall, type ZoomDeps } from '../../integrations/index.ts';
 import { getVideoMeetingsCallMinutesCallPeopleByBookingIdCancelledAt, getVideoMeetingsIdBookingIdByBookingIdCancelledAt, insertVideoMeetings, updateVideoMeetingsCallCheckStateCallCheckedAtById, updateVideoMeetingsCallMinutesCallPeopleById, updateVideoMeetingsCancelledAtById } from '../../integrations/index.ts';
 import { getUsersEmailDisplayNameById } from '../../core/index.ts';
+import { getBookingsChannelById, getBookingsChannelStartsAtById, getBookingsStartsAtEndsAtById } from './data.ts';
+import { getBookingsCountByIdChannel, getBookingsIdEmailByIdDisabledAt, getSurveyWalkthroughsXByBookingId } from './data-borrowed.ts';
 
 /** A call that holds a moment: a telephone call (CB_BOOKING) or, since 30 Sep 2026, a video call. */
 export function booksATime(channel: string): boolean {
@@ -64,9 +66,7 @@ export function activeMeeting(db: Db, booking_id: string): Meeting | undefined {
  * be a user on our Zoom account. A call with nobody assigned, or assigned to someone disabled, uses the shared host.
  */
 export function callHost(db: Db, booking_id: string): { readonly user_id: string; readonly email: string; readonly name: string } | null {
-  const u = db.get<{ id: string; email: string; display_name: string }>(
-    `SELECT u.id, u.email, u.display_name FROM bookings b JOIN users u ON u.id = b.assigned_to
-      WHERE b.id = ? AND u.disabled_at IS NULL AND u.role <> 'CLIENT'`, [booking_id]);
+  const u = getBookingsIdEmailByIdDisabledAt<{ id: string; email: string; display_name: string }>(db, [booking_id]);
   return u === undefined ? null : { user_id: u.id, email: u.email, name: u.display_name };
 }
 
@@ -104,16 +104,10 @@ export const SAME_TIME_WORDS = 'Another video call is booked at this time. Only 
  * where it would go. Two calls under different members of staff's own Zoom users do not clash.
  */
 export function videoCallsAtSameTime(db: Db, booking_id: string): number {
-  const b = db.get<{ starts_at: string | null; ends_at: string | null; channel: string; cancelled_at: string | null }>(
-    'SELECT starts_at, ends_at, channel, cancelled_at FROM bookings WHERE id = ?', [booking_id]);
+  const b = getBookingsStartsAtEndsAtById<{ starts_at: string | null; ends_at: string | null; channel: string; cancelled_at: string | null }>(db, [booking_id]);
   if (b === undefined || b.channel !== 'video' || b.cancelled_at !== null || b.starts_at === null || b.ends_at === null) return 0;
   const host = activeMeeting(db, booking_id)?.host_user_id ?? '';
-  return db.get<{ n: number }>(
-    `SELECT count(*) AS n FROM bookings o
-      WHERE o.id <> ? AND o.channel = 'video' AND o.cancelled_at IS NULL AND o.starts_at IS NOT NULL AND o.ends_at IS NOT NULL
-        AND o.starts_at < ? AND o.ends_at > ?
-        AND coalesce((SELECT m.host_user_id FROM video_meetings m WHERE m.booking_id = o.id AND m.cancelled_at IS NULL), '') = ?`,
-    [booking_id, b.ends_at, b.starts_at, host])?.n ?? 0;
+  return getBookingsCountByIdChannel<{ n: number }>(db, [booking_id, b.ends_at, b.starts_at, host])?.n ?? 0;
 }
 
 /** PHASE 156d: what is kept of a call's length (migration 091). */
@@ -155,8 +149,7 @@ export type Reconciled = 'MADE' | 'MOVED' | 'CANCELLED' | 'NONE' | { readonly no
 
 /** Bring the call's Zoom meeting into line with the call. Never throws; at most two calls to Zoom. */
 export async function reconcileVideoMeeting(app: App, booking_id: string): Promise<Reconciled> {
-  const b = app.db.get<{ channel: string; starts_at: string | null; cancelled_at: string | null }>(
-    'SELECT channel, starts_at, cancelled_at FROM bookings WHERE id = ?', [booking_id]);
+  const b = getBookingsChannelStartsAtById<{ channel: string; starts_at: string | null; cancelled_at: string | null }>(app.db, [booking_id]);
   if (b === undefined || b.channel !== 'video') return 'NONE';
   const m = activeMeeting(app.db, booking_id);
   const zd = zoomDeps(app);
@@ -172,7 +165,7 @@ export async function reconcileVideoMeeting(app: App, booking_id: string): Promi
     return ok ? 'MOVED' : { not_made: 'Zoom did not take the new time. The link still works; the host starts the call at the new time.' };
   }
   // 2 Oct 2026: a survey walkthrough call (src/web/survey-evidence.ts) is recorded, so the surveyor can watch it.
-  const record = app.db.get('SELECT 1 AS x FROM survey_walkthroughs WHERE booking_id = ?', [booking_id]) !== undefined;
+  const record = getSurveyWalkthroughsXByBookingId(app.db, [booking_id]) !== undefined;
   // PHASE 153f: made under the assigned member of staff, so two calls at once can both run; if they have no Zoom user
   // on our account, under the shared host instead, and the audit line says so.
   /* PHASE 157c (the Friary House run, F5): on the free plan every call is the shared host's (Phase 156d: "contact@caprebate
@@ -203,7 +196,7 @@ export function clientJoinUrl(origin: string, token: string): string {
  * With a meeting: our page, then Zoom's link and passcode. Without: that the link will follow.
  */
 export function videoJoinWords(db: Db, booking_id: string, origin: string, freePlan = false): { location: string; lines: string } | null {
-  const b = db.get<{ channel: string }>('SELECT channel FROM bookings WHERE id = ?', [booking_id]);
+  const b = getBookingsChannelById<{ channel: string }>(db, [booking_id]);
   if (b === undefined || b.channel !== 'video') return null;
   const m = activeMeeting(db, booking_id);
   if (m === undefined) {

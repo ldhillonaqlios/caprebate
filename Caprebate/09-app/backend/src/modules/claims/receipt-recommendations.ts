@@ -37,6 +37,7 @@
 import type { Db } from '../../core/index.ts';
 import { authorise, type Actor, type Obj } from '../../core/index.ts';
 import { stripReading, NO_RECEIPT_POLICY, type StripReading } from './documents.ts';
+import { getDocumentTypesHandlerTypeByCode } from './data-borrowed.ts';
 
 export type RecommendedStrip = 'KEEP_WHOLE' | 'STRIP_INDIVIDUALS_KEEP_FIGURES' | 'REFUSE_AS_UPLOAD';
 
@@ -127,7 +128,7 @@ const TYPES_OBJ: Obj = { type: 'document_type', id: '__document_types__' };
  */
 export function recommendationReading(db: Db, actor: Actor, type_code: string, rec: ReceiptRecommendations = RECEIPT_RECOMMENDATIONS): RecommendationReading {
   authorise(actor, 'document_type.read', TYPES_OBJ);
-  const t = db.get<{ handler_type: string | null }>('SELECT handler_type FROM document_types WHERE code = ?', [type_code]);
+  const t = getDocumentTypesHandlerTypeByCode<{ handler_type: string | null }>(db, [type_code]);
   const strip_now = stripReading(t === undefined ? null : t.handler_type);
   const found = rec.types.find((x) => x.type_code === type_code);
   if (found === undefined) {

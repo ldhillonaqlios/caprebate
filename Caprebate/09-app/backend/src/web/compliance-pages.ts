@@ -20,8 +20,9 @@ import * as S from './compliance-identity.ts';
 import * as N from './breach-names.ts';
 import * as V from './compliance-views.ts';
 import { identityPanel, sendIdentityCheck } from './identity-checks.ts';
-import { logFormComplaint, waitingForms } from '../modules/public-site/notices-site.ts';
+import { logFormComplaint, waitingForms } from '../modules/public-site/index.ts';
 import { listUsersIdNameByRoleDisabledAt } from '../core/index.ts';
+import { listBusinessesIdName4 } from '../modules/crm/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -116,7 +117,7 @@ export async function handleCompliance(
   /* ------------------------------------------------ due diligence */
   if (path === '/staff/compliance/aml' && method === 'GET') {
     const v = A.amlView(db, actor, now());
-    return html(res, V.amlPage(nav, v, db.all<{ id: string; name: string }>('SELECT id, name FROM businesses ORDER BY name LIMIT 1000'),
+    return html(res, V.amlPage(nav, v, listBusinessesIdName4<{ id: string; name: string }>(db),
       listUsersIdNameByRoleDisabledAt<{ id: string; name: string }>(db), msg));
   }
   if (path === '/staff/compliance/aml/officers' && method === 'POST') return back(A.recordOfficer(deps, actor, posted(await form(req))), 'Not recorded', '/staff/compliance/aml?done=saved', '/staff/compliance/aml');

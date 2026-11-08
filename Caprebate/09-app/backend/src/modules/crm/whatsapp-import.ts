@@ -29,6 +29,8 @@ import { WHATSAPP_IMPORT_PREFIX, WHATSAPP_PREFIX, type FsObjectStore } from '../
 import { phoneContacts } from './whatsapp.ts';
 import { listZipEntries, readZipEntryFromBuffer } from '../../shared/index.ts';
 import { getWhatsappImportLinesExistsByFingerprint, getWhatsappImportsByIdBusinessId, insertWhatsappImportLines, insertWhatsappImports, insertWhatsappMedia, insertWhatsappMessages2, listWhatsappImportLinesAttachmentByImportIdAttachment, listWhatsappImportLinesMessageIdByImportIdAttachment, updateWhatsappImportsStatusById, updateWhatsappImportsStatusUsNameById } from '../../integrations/index.ts';
+import { getWhatsappImportLinesImportIdUploadedAtByMessageId, listWhatsappImportsIdContactByBusinessIdStatus } from './data-borrowed.ts';
+import { getContactsFullNameWhatsappOptinById } from './data.ts';
 
 /** Where an upload's text and .zip are kept, sealed. */
 export const IMPORT_PREFIX = WHATSAPP_IMPORT_PREFIX;
@@ -187,7 +189,7 @@ export async function importCheck(app: App, store: FsObjectStore, actor: Actor, 
   const row = importRow(app, business_id, id);
   if (row === undefined) return null;
   const p = await parsedOf(store, row);
-  const contact = app.db.get<{ full_name: string; whatsapp_optin: number }>('SELECT full_name, whatsapp_optin FROM contacts WHERE id = ?', [row.contact_id]);
+  const contact = getContactsFullNameWhatsappOptinById<{ full_name: string; whatsapp_optin: number }>(app.db, [row.contact_id]);
   const cname = (contact?.full_name ?? '').trim().toLowerCase();
   const cfirst = cname.split(/\s+/)[0] ?? '';
   // Our side is the name that is not the client's, where the client's name is recognisable; otherwise the person chooses.
@@ -311,15 +313,10 @@ export type ImportListed = { readonly id: string; readonly contact: string; read
 
 /** This company's uploads, newest first. */
 export function importsFor(app: App, business_id: string): ImportListed[] {
-  return app.db.all<{ id: string; contact: string; status: string; uploaded_at: string; by: string; added: number | null }>(
-    'SELECT i.id, c.full_name AS contact, i.status, i.uploaded_at, u.display_name AS by, i.added FROM whatsapp_imports i ' +
-    'JOIN contacts c ON c.id = i.contact_id JOIN users u ON u.id = i.uploaded_by WHERE i.business_id = ? AND i.status <> ? ORDER BY i.uploaded_at DESC, i.id',
-    [business_id, 'CANCELLED']).map((r) => ({ ...r, files_waiting: r.status === 'SAVED' ? filesWaiting(app, r.id).length : 0 }));
+  return listWhatsappImportsIdContactByBusinessIdStatus<{ id: string; contact: string; status: string; uploaded_at: string; by: string; added: number | null }>(app.db, [business_id, 'CANCELLED']).map((r) => ({ ...r, files_waiting: r.status === 'SAVED' ? filesWaiting(app, r.id).length : 0 }));
 }
 
 /** Whether a message came from an export, and which. */
 export function importedFrom(app: App, message_id: string): { import_id: string; uploaded_at: string; by: string } | null {
-  return app.db.get<{ import_id: string; uploaded_at: string; by: string }>(
-    'SELECT l.import_id, i.uploaded_at, u.display_name AS by FROM whatsapp_import_lines l JOIN whatsapp_imports i ON i.id = l.import_id ' +
-    'JOIN users u ON u.id = i.uploaded_by WHERE l.message_id = ?', [message_id]) ?? null;
+  return getWhatsappImportLinesImportIdUploadedAtByMessageId<{ import_id: string; uploaded_at: string; by: string }>(app.db, [message_id]) ?? null;
 }

@@ -26,7 +26,7 @@ import { badge, claimRef, dataLink, savedMessage, sectionList, why, type RecordT
 import type { FsObjectStore } from '../../shared/objectstore.ts';
 import { openKeptOriginal, sweepOriginals } from './uploads.ts';
 import { ANSWER_WORDS, LEFT_OUT_NOTE, VOUCH_ANSWERS, earlyVouchesFrom } from './document-reading.ts';
-import { earlyQuestions, readUpload, receiveFile } from '../portal/client-files-pages.ts';
+import { earlyQuestions, readUpload, receiveFile } from '../portal/index.ts';
 import { piecesOf, piecesPage } from '../../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';

@@ -53,8 +53,8 @@ import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { REGISTRY, estimate, type SectorId } from '../../shared/index.ts';
-import { funnelStateFor, sessionFromFunnel } from '../assessment/funnel-session.ts';
-import { SCREENS, type ScreenId } from '../assessment/assessment.ts';
+import { funnelStateFor, sessionFromFunnel } from '../assessment/index.ts';
+import { SCREENS, type ScreenId } from '../assessment/index.ts';
 import { formatShownRange } from '../../shared/index.ts';
 import { stage as stageOf } from '../../shared/index.ts';
 import { answerLabel, NotFoundAsRefusal } from '../../core/backoffice.ts';
@@ -64,6 +64,10 @@ import {
   assertSignedEngagement, catalogue, LETTER_WORDS, REGISTRY_ID_OF, type SignedEngagement,
 } from './research.ts';
 import { getResearchSourcesCountByBusinessIdState, listRegisterRecordsSourceIdFieldsJsonByBusinessId } from '../../integrations/index.ts';
+import { getBusinessesIdNameById4, getClientTasksIdBusinessIdById3, getClientTasksIdBusinessIdById4, getClientTasksOpenSentByBusinessId, insertClientTasks, insertClientTasks3, insertInternalNotes, listClientTasksFactIdByBusinessIdClaimId, listClientTasksFactIdStateByBusinessIdFactId, updateClientTasksStateAnswerStateById, updateClientTasksStateWithdrawnAtByIdState } from '../crm/index.ts';
+import { getAssessmentsAtByBusinessId, getAssessmentsIdSectorByBusinessId, listAssessmentAnswersOrdQuestionIdByAssessmentId2, listAssessmentAnswersQuestionIdQuestionTextByAssessmentIdSta } from '../assessment/index.ts';
+import { getClaimsIdByIdBusinessId, getPropertiesIdByIdBusinessId2 } from './data.ts';
+import { getAssessmentsBusinessIdNameByBusinessIdId, listAssessmentsBusinessIdNameByBusinessId, listInternalNotesIdBodyByBusinessId } from './data-borrowed.ts';
 
 export { NotFoundAsRefusal };
 
@@ -164,14 +168,9 @@ export function researchProgress(db: Db, business_id: string): ResearchProgress 
 export function engagedClients(db: Db, actor: Actor, limit = 200): ClientRow[] {
   assertClientsSection(actor);
 
-  const rows = db.all<{
+  const rows = listAssessmentsBusinessIdNameByBusinessId<{
     business_id: string; name: string; sector: string; stage: string; submitted_at: string | null;
-  }>(
-    'SELECT b.id AS business_id, b.name, b.sector, b.stage, ' +
-      '(SELECT MAX(a.submitted_at) FROM assessments a WHERE a.business_id = b.id) AS submitted_at ' +
-      'FROM businesses b ORDER BY b.created_at DESC, b.name ASC LIMIT ?',
-    [limit],
-  );
+  }>(db, [limit]);
 
   const out: ClientRow[] = [];
   for (const b of rows) {
@@ -228,12 +227,7 @@ function clientRow(
  */
 export function waitingOn(db: Db, actor: Actor, business_id: string): { who: WaitingOn; why: string } | null {
   if (!can(actor, 'research.read', { type: 'research', id: business_id, business_id })) return null;
-  const b = db.get<{ business_id: string; name: string; sector: string; stage: string; submitted_at: string | null }>(
-    'SELECT b.id AS business_id, b.name, b.sector, b.stage, ' +
-      '(SELECT MAX(a.submitted_at) FROM assessments a WHERE a.business_id = b.id) AS submitted_at ' +
-      'FROM businesses b WHERE b.id = ?',
-    [business_id],
-  );
+  const b = getAssessmentsBusinessIdNameByBusinessIdId<{ business_id: string; name: string; sector: string; stage: string; submitted_at: string | null }>(db, [business_id]);
   if (b === undefined || !can(actor, 'business.read', { type: 'business', id: b.business_id })) return null;
   const row = clientRow(db, actor, b);
   return { who: row.waiting_on, why: row.waiting_why };
@@ -242,14 +236,7 @@ export function waitingOn(db: Db, actor: Actor, business_id: string): { who: Wai
 export type TaskCounts = { readonly open: number; readonly sent: number; readonly answered: number };
 
 export function taskCounts(db: Db, business_id: string): TaskCounts {
-  const r = db.get<{ open: number; sent: number; answered: number }>(
-    'SELECT ' +
-      "SUM(CASE WHEN state = 'OPEN' THEN 1 ELSE 0 END) AS open, " +
-      "SUM(CASE WHEN state = 'OPEN' AND sent_to_portal_at IS NOT NULL THEN 1 ELSE 0 END) AS sent, " +
-      "SUM(CASE WHEN state = 'ANSWERED' THEN 1 ELSE 0 END) AS answered " +
-      'FROM client_tasks WHERE business_id = ?',
-    [business_id],
-  );
+  const r = getClientTasksOpenSentByBusinessId<{ open: number; sent: number; answered: number }>(db, [business_id]);
   return { open: r?.open ?? 0, sent: r?.sent ?? 0, answered: r?.answered ?? 0 };
 }
 
@@ -353,13 +340,9 @@ export function questionsAndAnswers(db: Db, actor: Actor, business_id: string): 
   }
   authorise(actor, 'assessment.read', { type: 'assessment', id: a.id, business_id });
 
-  const rows = db.all<{
+  const rows = listAssessmentAnswersOrdQuestionIdByAssessmentId2<{
     ord: number; question_id: string; question_text: string; state: string; value: string | null;
-  }>(
-    'SELECT ord, question_id, question_text, state, value FROM assessment_answers ' +
-      'WHERE assessment_id = ? ORDER BY ord ASC',
-    [a.id],
-  );
+  }>(db, [a.id]);
   for (const r of rows) {
     authorise(actor, 'answer.read', { type: 'answer', id: `${a.id}:${r.ord}`, business_id });
   }
@@ -393,11 +376,7 @@ type AssessmentRow = {
 };
 
 function latestAssessment(db: Db, business_id: string): AssessmentRow | undefined {
-  return db.get<AssessmentRow>(
-    'SELECT id, sector, submitted_at, shown_low_pence, shown_high_pence FROM assessments ' +
-      'WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1',
-    [business_id],
-  );
+  return getAssessmentsIdSectorByBusinessId<AssessmentRow>(db, [business_id]);
 }
 
 /* ================================================================== *
@@ -560,10 +539,7 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
   const out: MissingFact[] = [];
 
   const tasks = new Map(
-    db.all<{ fact_id: string | null; state: string; answer_state: string | null }>(
-      'SELECT fact_id, state, answer_state FROM client_tasks WHERE business_id = ? AND fact_id IS NOT NULL',
-      [business_id],
-    ).map((t) => [t.fact_id ?? '', t] as const),
+    listClientTasksFactIdStateByBusinessIdFactId<{ fact_id: string | null; state: string; answer_state: string | null }>(db, [business_id]).map((t) => [t.fact_id ?? '', t] as const),
   );
 
   /**
@@ -634,11 +610,7 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
 
   /* ---- 2. what the client was asked and did not give ---- */
   if (a !== undefined) {
-    const rows = db.all<{ question_id: string; question_text: string; state: string }>(
-      'SELECT question_id, question_text, state FROM assessment_answers ' +
-        "WHERE assessment_id = ? AND state <> 'ANSWERED' ORDER BY ord ASC",
-      [a.id],
-    );
+    const rows = listAssessmentAnswersQuestionIdQuestionTextByAssessmentIdSta<{ question_id: string; question_text: string; state: string }>(db, [a.id]);
     for (const r of rows) {
       const t = taskFor(r.question_id);
       if (t.settled) continue;
@@ -931,7 +903,7 @@ export function sendTaskToPortal(
 
   // PHASE 134: a question belongs to the company, and may say which of its claims it is about — only one of its own.
   const claim_id = args.claim_id ?? null;
-  if (claim_id !== null && d.db.get<{ id: string }>('SELECT id FROM claims WHERE id = ? AND business_id = ?', [claim_id, business_id]) === undefined) {
+  if (claim_id !== null && getClaimsIdByIdBusinessId<{ id: string }>(d.db, [claim_id, business_id]) === undefined) {
     return { ok: false, why: 'that claim is not this company’s.' };
   }
 
@@ -951,11 +923,7 @@ export function sendTaskToPortal(
 
   const id = d.newId();
   const at = d.now();
-  d.db.run(
-    'INSERT INTO client_tasks (id, business_id, asked_by, question, why, holds_up, state, ' +
-      'created_at, fact_id, sent_to_portal_at, due_on, claim_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, business_id, actor.id, question, why, holds, 'OPEN', at, args.fact_id, at, due === '' ? null : due, claim_id],
-  );
+  insertClientTasks(d.db, [id, business_id, actor.id, question, why, holds, 'OPEN', at, args.fact_id, at, due === '' ? null : due, claim_id]);
   d.audit.append({
     at, kind: 'USER_UPDATED', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role,
@@ -1007,9 +975,7 @@ export function answerTaskHere(
 
   let taskId: string;
   if (args.task_id !== undefined && args.task_id !== '') {
-    const row = d.db.get<{ id: string; business_id: string; state: string; kind: string }>(
-      'SELECT id, business_id, state, kind FROM client_tasks WHERE id = ?', [args.task_id],
-    );
+    const row = getClientTasksIdBusinessIdById4<{ id: string; business_id: string; state: string; kind: string }>(d.db, [args.task_id]);
     // A row belonging to another business is not found, and is not named.
     if (row === undefined || row.business_id !== business_id) return { ok: false, why: 'not found' };
     // CRM 4 of 10: RECEIVED IS NOT A CLICK, and a member of staff typing "they sent it" is a click.
@@ -1020,22 +986,14 @@ export function answerTaskHere(
     const question = (args.question ?? '').trim();
     if (question.length === 0) return { ok: false, why: 'name the fact you are recording an answer for.' };
     taskId = d.newId();
-    d.db.run(
-      'INSERT INTO client_tasks (id, business_id, asked_by, question, why, holds_up, state, ' +
-        'created_at, fact_id, sent_to_portal_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)',
-      [taskId, business_id, actor.id, question,
+    insertClientTasks3(d.db, [taskId, business_id, actor.id, question,
        (args.why ?? '').trim() || 'Recorded from a conversation with the client.',
        (args.holds_up ?? '').trim() || 'Not stated.',
-       'OPEN', at, args.fact_id ?? null],
-    );
+       'OPEN', at, args.fact_id ?? null]);
   }
 
-  d.db.run(
-    'UPDATE client_tasks SET state = ?, answer_state = ?, answer = ?, answered_at = ?, ' +
-      'answered_by = ?, answered_by_role = ? WHERE id = ?',
-    ['ANSWERED', args.dont_know ? 'DONT_KNOW' : 'ANSWERED', args.dont_know ? null : text,
-     at, actor.id, 'STAFF', taskId],
-  );
+  updateClientTasksStateAnswerStateById(d.db, ['ANSWERED', args.dont_know ? 'DONT_KNOW' : 'ANSWERED', args.dont_know ? null : text,
+     at, actor.id, 'STAFF', taskId]);
 
   d.audit.append({
     at, kind: 'USER_UPDATED', outcome: 'ALLOWED',
@@ -1088,9 +1046,7 @@ export function withdrawTask(
   const id = task_id.trim();
   if (id === '') return { ok: false, why: 'name the question you are withdrawing.' };
 
-  const row = d.db.get<{ id: string; business_id: string; state: string; fact_id: string | null; kind: string }>(
-    'SELECT id, business_id, state, fact_id, kind FROM client_tasks WHERE id = ?', [id],
-  );
+  const row = getClientTasksIdBusinessIdById3<{ id: string; business_id: string; state: string; fact_id: string | null; kind: string }>(d.db, [id]);
   // A row belonging to another business is not found, and is not named.
   if (row === undefined || row.business_id !== business_id) return { ok: false, why: 'not found' };
   if (row.kind === 'DOCUMENT') {
@@ -1108,11 +1064,7 @@ export function withdrawTask(
   }
 
   const at = d.now();
-  const changed = d.db.run(
-    "UPDATE client_tasks SET state = 'WITHDRAWN', withdrawn_at = ?, withdrawn_by = ? " +
-      "WHERE id = ? AND state = 'OPEN'",
-    [at, actor.id, row.id],
-  ).changes;
+  const changed = updateClientTasksStateWithdrawnAtByIdState(d.db, [at, actor.id, row.id]).changes;
   if (changed !== 1) return { ok: false, why: 'that question changed while you were looking at it. Open the client again.' };
 
   d.audit.append({
@@ -1153,12 +1105,7 @@ export type NoteView = {
  */
 export function notesFor(db: Db, actor: Actor, business_id: string): NoteView[] {
   authorise(actor, 'internal_note.read', { type: 'internal_note', id: business_id, business_id });
-  return db.all<NoteView>(
-    'SELECT n.id, n.body, n.created_at, u.display_name AS author_name ' +
-      'FROM internal_notes n LEFT JOIN users u ON u.id = n.author_id ' +
-      'WHERE n.business_id = ? ORDER BY n.created_at DESC',
-    [business_id],
-  );
+  return listInternalNotesIdBodyByBusinessId<NoteView>(db, [business_id]);
 }
 
 /**
@@ -1177,17 +1124,14 @@ export function addNote(
   if (text.length > 8000) return { ok: false, why: 'that note is longer than we store — 8,000 characters is the limit.' };
   const claim_id = link.claim_id ?? null;
   const property_id = link.property_id ?? null;
-  if (claim_id !== null && d.db.get<{ id: string }>('SELECT id FROM claims WHERE id = ? AND business_id = ?', [claim_id, business_id]) === undefined) {
+  if (claim_id !== null && getClaimsIdByIdBusinessId<{ id: string }>(d.db, [claim_id, business_id]) === undefined) {
     return { ok: false, why: 'that claim is not this organisation’s.' };
   }
-  if (property_id !== null && d.db.get<{ id: string }>('SELECT id FROM properties WHERE id = ? AND business_id = ?', [property_id, business_id]) === undefined) {
+  if (property_id !== null && getPropertiesIdByIdBusinessId2<{ id: string }>(d.db, [property_id, business_id]) === undefined) {
     return { ok: false, why: 'that property is not this organisation’s.' };
   }
   const id = d.newId();
-  d.db.run(
-    'INSERT INTO internal_notes (id, business_id, author_id, body, created_at, claim_id, property_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, business_id, actor.id, text, d.now(), claim_id, property_id],
-  );
+  insertInternalNotes(d.db, [id, business_id, actor.id, text, d.now(), claim_id, property_id]);
   d.audit.append({
     at: d.now(), kind: 'INTERNAL_NOTE_ADDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'internal_note', object_id: id, detail: { business: business_id, claim: claim_id, property: property_id },
@@ -1213,9 +1157,7 @@ export type BusinessPage = {
 
 export function businessPage(db: Db, actor: Actor, business_id: string): BusinessPage {
   assertClientsSection(actor);
-  const b = db.get<{ id: string; name: string; sector: string; stage: string; created_at: string }>(
-    'SELECT id, name, sector, stage, created_at FROM businesses WHERE id = ?', [business_id],
-  );
+  const b = getBusinessesIdNameById4<{ id: string; name: string; sector: string; stage: string; created_at: string }>(db, [business_id]);
   // A missing row and a forbidden row look the same from outside.
   if (b === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'business.read', { type: 'business', id: b.id });
@@ -1224,9 +1166,7 @@ export function businessPage(db: Db, actor: Actor, business_id: string): Busines
   const mayReadNotes = can(actor, 'internal_note.read', noteObj);
   const mayWrite = can(actor, 'internal_note.write', noteObj);
 
-  const submitted = db.get<{ at: string | null }>(
-    'SELECT MAX(submitted_at) AS at FROM assessments WHERE business_id = ?', [b.id],
-  );
+  const submitted = getAssessmentsAtByBusinessId<{ at: string | null }>(db, [b.id]);
 
   return {
     business: {
@@ -1265,8 +1205,5 @@ export function businessPage(db: Db, actor: Actor, business_id: string): Busines
 export function openClaimQuestions(db: Db, actor: Actor, business_id: string, claim_id: string): ReadonlySet<string> {
   if (!can(actor, 'business.read', { type: 'business', id: business_id })
     || !can(actor, 'internal_note.write', { type: 'internal_note', id: business_id, business_id })) return new Set();
-  return new Set(db.all<{ fact_id: string }>(
-    "SELECT fact_id FROM client_tasks WHERE business_id = ? AND claim_id = ? AND state = 'OPEN' AND fact_id IS NOT NULL",
-    [business_id, claim_id],
-  ).map((r) => r.fact_id));
+  return new Set(listClientTasksFactIdByBusinessIdClaimId<{ fact_id: string }>(db, [business_id, claim_id]).map((r) => r.fact_id));
 }

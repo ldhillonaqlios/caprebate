@@ -21,19 +21,21 @@
 import type { Db } from '../../core/index.ts';
 import { can, type Actor } from '../../core/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
-import { gateOut, loadPipelineClaim, type Need, type PipelineClaim } from '../crm/pipeline.ts';
+import { gateOut, loadPipelineClaim, type Need, type PipelineClaim } from '../crm/index.ts';
 import { CLOSED_STAGE, PROCEDURE_STAGES, claimStage, type ProcedureKey } from '../../shared/index.ts';
 import { plainNeed } from '../../shared/index.ts';
 import { CAPTURE_SOURCES, FACTS, captured, latestFacts, type FactReading, type FactsPanel } from './claim-facts.ts';
-import { waitingForCheck, type ToCheck } from '../crm/client-checks.ts';
+import { waitingForCheck, type ToCheck } from '../crm/index.ts';
 import { plainDashText } from '../../shared/index.ts';
-import { claimObjFor, loadClaimRow } from '../crm/crm.ts';
+import { claimObjFor, loadClaimRow } from '../crm/index.ts';
 import type { ClaimDocumentsPanel } from './documents.ts';
 import { chaptersToRead, CHAPTERS } from '../../web/pack-chapters.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
 import { clientAuditCount } from '../../web/audit-log.ts';
 import { SOURCES as REGISTER_SOURCES } from '../../integrations/index.ts';
 import { listRegisterRecordsSourceIdEntityIdByBusinessIdPropertyId } from '../../integrations/index.ts';
+import { getResearchRunsWhoAtByBusinessIdAt, getSurveyPackApprovalsCountByPackId, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyPacksIdByJobId, getSurveyorJobsIdSurveyorIdByClaimId, listClaimFactsIdFactKeyByClaimIdFactKey, listClientTasksQuestionAnswerByBusinessIdState, listSurveyPackReadsChapterSeqByJobIdUserId } from './data-borrowed.ts';
+import { listClientTasksFactIdByBusinessIdState, listClientTasksQuestionKindByBusinessIdState } from '../crm/index.ts';
 
 /* ================================================================== *
  * 1 · THE STAGES, IN PLAIN WORDS
@@ -166,9 +168,7 @@ export function lookups(db: Db, business_id: string, property_id: string | null)
       const keys = (SUMMARY_FIELDS[r.source_id] ?? []).filter((k) => o[k] !== undefined && o[k] !== null && o[k] !== '');
       summary = keys.length > 0 ? keys.slice(0, 2).map((k) => `${fieldValue(k, o[k])}${k.endsWith('_m2') ? ' m²' : ''}`).join(', ') : (fields[0]?.[1] ?? '');
     } catch { fields = [['What came back', 'could not be read']]; }
-    const run = db.get<{ who: string | null; at: string }>(
-      'SELECT u.display_name AS who, r.at FROM research_runs r LEFT JOIN users u ON u.id = r.actor_id ' +
-        'WHERE r.business_id = ? AND r.at <= ? ORDER BY r.at DESC LIMIT 1', [business_id, r.obtained_at]);
+    const run = getResearchRunsWhoAtByBusinessIdAt<{ who: string | null; at: string }>(db, [business_id, r.obtained_at]);
     const byHand = r.entity_id.startsWith('by-hand:');
     const name = sourceName(r.source_id);
     return {
@@ -189,10 +189,7 @@ type FactRowOf = ReturnType<typeof latestFacts> extends Map<string, infer R> ? R
 
 /** Every value recorded for one fact on this claim, newest first, each read as the facts panel reads it. */
 export function factHistory(db: Db, claim_id: string, key: string): HistoryLine[] {
-  const rows = db.all<FactRowOf>(
-    'SELECT f.id, f.fact_key, f.answer, f.value_text, f.value_pence, f.value_date, f.source_id, f.note, f.recorded_at, ' +
-      'u.display_name AS recorder FROM claim_facts f LEFT JOIN users u ON u.id = f.recorded_by ' +
-      'WHERE f.claim_id = ? AND f.fact_key = ? ORDER BY f.recorded_at DESC, f.rowid DESC', [claim_id, key]);
+  const rows = listClaimFactsIdFactKeyByClaimIdFactKey<FactRowOf>(db, [claim_id, key]);
   return rows.map((r) => {
     const read = captured(new Map([[key, r]]), key);
     return {
@@ -246,13 +243,7 @@ export function factsGathered(db: Db, claim_id: string, f: FactsPanel): Gathered
 /** What the client answered in their portal, or what our team recorded for them, on this claim or the company. */
 export function answersGathered(db: Db, business_id: string, claim_id: string): Gathered[] {
   // PHASE 160j: what the client sent counts once a member of staff has accepted it; what staff recorded needs no check.
-  return db.all<{ question: string; answer: string | null; answer_state: string; answered_at: string; role: string; who: string | null; checker: string | null; checked_at: string | null }>(
-    "SELECT t.question, t.answer, t.answer_state, t.answered_at, t.answered_by_role AS role, u.display_name AS who, " +
-      'c.display_name AS checker, k.checked_at FROM client_tasks t LEFT JOIN users u ON u.id = t.answered_by ' +
-      'LEFT JOIN client_task_checks k ON k.task_id = t.id LEFT JOIN users c ON c.id = k.checked_by ' +
-      "WHERE t.business_id = ? AND t.state = 'ANSWERED' AND t.kind = 'QUESTION' AND (t.claim_id = ? OR t.claim_id IS NULL) " +
-      "AND (t.answered_by_role = 'STAFF' OR k.outcome = 'ACCEPTED') ORDER BY t.answered_at DESC", [business_id, claim_id],
-  ).map((t) => ({
+  return listClientTasksQuestionAnswerByBusinessIdState<{ question: string; answer: string | null; answer_state: string; answered_at: string; role: string; who: string | null; checker: string | null; checked_at: string | null }>(db, [business_id, claim_id]).map((t) => ({
     group: t.role === 'CLIENT' ? 'CLIENT' : 'TEAM', name: t.question,
     value: t.answer_state === 'DONT_KNOW' ? 'They do not know' : (t.answer ?? ''),
     badge: t.role === 'CLIENT' ? 'Answered in the client portal' : `Recorded by ${t.who ?? 'our team'}`,
@@ -301,18 +292,14 @@ function askable(f: FactsPanel): readonly FactReading[] {
 
 /** The facts still to find, each one we may type in, and not already asked of the client. */
 export function factsToFind(db: Db, business_id: string, f: FactsPanel): StillNeeded[] {
-  const asked = new Set(db.all<{ fact_id: string }>(
-    "SELECT fact_id FROM client_tasks WHERE business_id = ? AND state = 'OPEN' AND fact_id IS NOT NULL", [business_id]).map((r) => r.fact_id));
+  const asked = new Set(listClientTasksFactIdByBusinessIdState<{ fact_id: string }>(db, [business_id]).map((r) => r.fact_id));
   return askable(f).filter((r) => !r.known && r.capturable && FACTS[r.key] !== undefined && !asked.has(`claim_fact.${r.key}`))
     .map((r) => ({ name: plainDashText(r.label), state: 'NEEDED', meta: 'A fact the claim needs. Type it in, or ask the client.', fix: null, fact: { key: r.key, label: plainDashText(r.label) } }));
 }
 
 /** What was asked of the client and is not back yet, on this claim or the whole company: by due date, so late first. */
 export function openAsks(db: Db, business_id: string, claim_id: string, today: string): StillNeeded[] {
-  return db.all<{ question: string; kind: string; due_on: string | null; created_at: string; sent: string | null }>(
-    "SELECT question, kind, due_on, created_at, sent_to_portal_at AS sent FROM client_tasks WHERE business_id = ? AND state = 'OPEN' " +
-      'AND (claim_id = ? OR claim_id IS NULL) ORDER BY due_on IS NULL, due_on ASC, created_at ASC', [business_id, claim_id],
-  ).map((t) => {
+  return listClientTasksQuestionKindByBusinessIdState<{ question: string; kind: string; due_on: string | null; created_at: string; sent: string | null }>(db, [business_id, claim_id]).map((t) => {
     const late = t.due_on !== null && t.due_on < today;
     return {
       name: t.question, state: late ? 'LATE' : 'ASKED',
@@ -337,16 +324,12 @@ export type PackProgress = {
 /** How far the surveyor has gone through the survey pack: each built chapter they have opened (the legal check again
  *  since anyone else last answered it, as readiness() reads it), and chapter 23, the signature, once it is approved. */
 export function packProgress(db: Db, claim_id: string): PackProgress | null {
-  const job = db.get<{ id: string; surveyor_id: string | null; who: string | null }>(
-    'SELECT j.id, j.surveyor_id, u.display_name AS who FROM surveyor_jobs j LEFT JOIN users u ON u.id = j.surveyor_id ' +
-      'WHERE j.claim_id = ? ORDER BY j.created_at DESC LIMIT 1', [claim_id]);
+  const job = getSurveyorJobsIdSurveyorIdByClaimId<{ id: string; surveyor_id: string | null; who: string | null }>(db, [claim_id]);
   if (job === undefined) return null;
-  const pack = db.get<{ id: string }>('SELECT id FROM survey_packs WHERE job_id = ?', [job.id]);
-  const approved = pack !== undefined && db.get<{ n: number }>('SELECT COUNT(*) AS n FROM survey_pack_approvals WHERE pack_id = ?', [pack.id])?.n !== 0;
-  const reads = job.surveyor_id === null ? [] : db.all<{ chapter: number; seq: number }>(
-    'SELECT chapter, MAX(legal_seq) AS seq FROM survey_pack_reads WHERE job_id = ? AND user_id = ? GROUP BY chapter', [job.id, job.surveyor_id]);
-  const othersLegal = pack === undefined || job.surveyor_id === null ? 0 : db.get<{ s: number | null }>(
-    'SELECT MAX(seq) AS s FROM survey_pack_legal_answers WHERE pack_id = ? AND by_user <> ?', [pack.id, job.surveyor_id])?.s ?? 0;
+  const pack = getSurveyPacksIdByJobId<{ id: string }>(db, [job.id]);
+  const approved = pack !== undefined && getSurveyPackApprovalsCountByPackId<{ n: number }>(db, [pack.id])?.n !== 0;
+  const reads = job.surveyor_id === null ? [] : listSurveyPackReadsChapterSeqByJobIdUserId<{ chapter: number; seq: number }>(db, [job.id, job.surveyor_id]);
+  const othersLegal = pack === undefined || job.surveyor_id === null ? 0 : getSurveyPackLegalAnswersSByPackIdByUser<{ s: number | null }>(db, [pack.id, job.surveyor_id])?.s ?? 0;
   const readAt = new Map(reads.map((r) => [r.chapter, r.seq] as const));
   const done = approved ? CHAPTERS.map((c) => c.n)
     : chaptersToRead().filter((c) => readAt.has(c) && !(c === 7 && (readAt.get(c) ?? -1) < othersLegal));

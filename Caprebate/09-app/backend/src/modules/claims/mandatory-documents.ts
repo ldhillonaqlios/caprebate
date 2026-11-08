@@ -50,8 +50,10 @@
  */
 
 import type { Db } from '../../core/index.ts';
-import type { Need } from '../crm/pipeline.ts';
+import type { Need } from '../crm/index.ts';
 import { acquisitionDateReading, clientSaidBought, latestFacts } from './claim-facts.ts';
+import { getDocumentTypesLabelByCode } from './data-borrowed.ts';
+import { getDocumentsAtByTypeCodeStripRecordedAt, getPropertiesTenureById } from './data.ts';
 
 export type DocumentCondition = 'ALWAYS' | 'GRANT_FUNDED' | 'ELECTION_MADE' | 'LEASEHOLD' | 'BOUGHT' | 'SBA_ON_PURCHASE';
 
@@ -164,7 +166,7 @@ function applies(db: Db, c: { id: string; property_id: string | null }, conditio
     };
   }
   const tenure = c.property_id === null ? null
-    : db.get<{ tenure: string | null }>('SELECT tenure FROM properties WHERE id = ?', [c.property_id])?.tenure ?? null;
+    : getPropertiesTenureById<{ tenure: string | null }>(db, [c.property_id])?.tenure ?? null;
   if (tenure === 'LEASEHOLD') return { applies: true };
   if (tenure === 'FREEHOLD') return { applies: false, known: true, why: 'the property is freehold, as recorded' };
   return { applies: false, known: false, why: 'the property’s tenure is not known — record it on the property; not known does not pass' };
@@ -172,12 +174,7 @@ function applies(db: Db, c: { id: string; property_id: string | null }, conditio
 
 /** Exported for Phase 153a's grant check (src/modules/assessment/grant-checks.ts): the grant papers, received on the claim. */
 export function receivedOnClaim(db: Db, c: { id: string }, type_code: string): { at: string } | undefined {
-  const r = db.get<{ at: string | null }>(
-    'SELECT MAX(d.created_at) AS at FROM documents d JOIN logical_documents l ON l.id = d.logical_document_id ' +
-      'WHERE l.type_code = ? AND d.strip_recorded_at IS NOT NULL AND d.quarantine_discharged_at IS NOT NULL AND d.failure_code IS NULL ' +
-      'AND l.id IN (SELECT k.logical_document_id FROM document_links k LEFT JOIN claims x ON x.property_id = k.property_id ' +
-      'WHERE k.unlinked_at IS NULL AND (k.claim_id = ? OR x.id = ?))',
-    [type_code, c.id, c.id]);
+  const r = getDocumentsAtByTypeCodeStripRecordedAt<{ at: string | null }>(db, [type_code, c.id, c.id]);
   return r === undefined || r.at === null ? undefined : { at: r.at };
 }
 
@@ -190,7 +187,7 @@ export function mandatoryDocumentNeeds(
 ): Need[] {
   if (!m.enabled) return [];
   return m.requires.map((req) => {
-    const label = db.get<{ label: string }>('SELECT label FROM document_types WHERE code = ?', [req.type_code])?.label ?? req.type_code;
+    const label = getDocumentTypesLabelByCode<{ label: string }>(db, [req.type_code])?.label ?? req.type_code;
     const what = `${label} is received — ${CONDITION_WORDS[req.condition]}`;
     const a = applies(db, c, req.condition);
     if (!a.applies) return { what, met: a.known, why: a.why };

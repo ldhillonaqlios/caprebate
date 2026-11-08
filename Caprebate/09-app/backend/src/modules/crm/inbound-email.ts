@@ -35,9 +35,9 @@ import { authorise, can, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { localPartsOf, localStamp } from '../../shared/index.ts';
 import type { FsObjectStore } from '../../shared/objectstore.ts';
-import { receiveFile } from '../portal/client-files-pages.ts';
-import { setShownToClient } from '../claims/documents.ts';
-import type { VouchAnswer } from '../claims/document-reading.ts';
+import { receiveFile } from '../portal/index.ts';
+import { setShownToClient } from '../claims/index.ts';
+import type { VouchAnswer } from '../claims/index.ts';
 import { alertNewMessage } from './messages.ts';
 import type { EmailSending, SmtpLogin } from '../../integrations/index.ts';
 import { recordBounce } from '../../integrations/index.ts';
@@ -51,6 +51,8 @@ import type { SecretStore } from '../../core/index.ts';
 import { redactSecrets } from '../../core/index.ts';
 import { STATE_WORDS } from './email-chains.ts';
 import { getInboundBounceNoticesIdByMailboxUid, getInboundEmailFileSavesIdByInboundEmailFileId, getInboundEmailFilesIdPartNoById, getInboundEmailIdByMailboxUid, getInboundEmailIdFromAddressByIdOutcome, getInboundEmailN, getInboundEmailXByMailboxUid, getMailboxReadsLastOkAtLastFailedById, getMailboxWatermarkUidById, getOutboxIdBusinessIdByProviderRefSentAt, getOutboxIdByProviderRefSentAt, insertInboundBounceNotices, insertInboundEmail, insertInboundEmailFileSaves, insertInboundEmailFiles, insertInboundEmailFilings, insertInboundEmailFilings2, insertMailboxReads, insertMailboxWatermark, insertMailboxWatermarkByUid, listInboundEmailFilesIdPartNoByClientMessageId, listInboundEmailFilesIdReceivedAtByInboundEmailIdOutcome, listInboundEmailIdFromAddressByOutcomeBusinessId } from '../../integrations/index.ts';
+import { getEmailSenderA, listInboundEmailUidAt, listOutboxAtToEmailByKind } from './data-borrowed.ts';
+import { getBusinessesIdById, getBusinessesSById, getContactsIdByBusinessId, insertClientMessageFiles, insertClientMessages2, insertClientMessages3 } from './data.ts';
 
 export type InboundDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -77,8 +79,7 @@ function plainAddress(a: string): string {
 /** One of this company's contacts with this address, or null. Asked of the company, never across companies. */
 function contactOf(db: Db, business_id: string, address: string): string | null {
   if (address === '') return null;
-  return db.get<{ id: string }>(
-    'SELECT id FROM contacts WHERE business_id = ? AND lower(trim(email)) = lower(?) ORDER BY created_at LIMIT 1', [business_id, address])?.id ?? null;
+  return getContactsIdByBusinessId<{ id: string }>(db, [business_id, address])?.id ?? null;
 }
 
 /**
@@ -120,12 +121,10 @@ export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = par
   let message: string | null = null;
   d.db.tx(() => {
     if (ours !== null && (contact !== null || toWhomWeWrote)) {
-      const dnc = d.db.get<{ s: string | null }>('SELECT client_status AS s FROM businesses WHERE id = ?', [ours.business_id])?.s === 'DO_NOT_CONTACT';
+      const dnc = getBusinessesSById<{ s: string | null }>(d.db, [ours.business_id])?.s === 'DO_NOT_CONTACT';
       outcome = dnc ? 'DO_NOT_CONTACT' : 'FILED';
       message = d.newId();
-      d.db.run(
-        'INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)',
-        [message, ours.business_id, ours.claim_id, 'FROM_CLIENT', 'EMAIL', contact, text.slice(0, 8000), at]);
+      insertClientMessages2(d.db, [message, ours.business_id, ours.claim_id, 'FROM_CLIENT', 'EMAIL', contact, text.slice(0, 8000), at]);
     } else {
       outcome = 'QUEUED';
     }
@@ -228,12 +227,11 @@ export function fileByRule(d: InboundDeps): number {
   for (const w of waiting) {
     const contact = contactOf(d.db, w.business_id, plainAddress(w.from_address));
     if (contact === null && plainAddress(w.to_email) !== plainAddress(w.from_address)) continue;
-    if (d.db.get<{ s: string | null }>('SELECT client_status AS s FROM businesses WHERE id = ?', [w.business_id])?.s === 'DO_NOT_CONTACT') continue;
+    if (getBusinessesSById<{ s: string | null }>(d.db, [w.business_id])?.s === 'DO_NOT_CONTACT') continue;
     const message = d.newId();
     const at = d.now();
     d.db.tx(() => {
-      d.db.run('INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)',
-        [message, w.business_id, w.claim_id, 'FROM_CLIENT', 'EMAIL', contact, w.text_body.slice(0, 8000), at]);
+      insertClientMessages2(d.db, [message, w.business_id, w.claim_id, 'FROM_CLIENT', 'EMAIL', contact, w.text_body.slice(0, 8000), at]);
       insertInboundEmailFilings2(d.db, [d.newId(), w.id, w.business_id, w.claim_id, message, 'ANSWERS_OUR_EMAIL', at]);
     });
     d.audit.append({ at, kind: 'INBOUND_EMAIL_FILED', outcome: 'ALLOWED', actor_id: null, actor_role: null, object_type: 'inbound_email', object_id: w.id,
@@ -245,7 +243,7 @@ export function fileByRule(d: InboundDeps): number {
 }
 
 function currentSenderDomain(db: Db): string | null {
-  return db.get<{ a: string }>('SELECT address AS a FROM email_sender ORDER BY rowid DESC LIMIT 1')?.a.split('@')[1] ?? null;
+  return getEmailSenderA<{ a: string }>(db)?.a.split('@')[1] ?? null;
 }
 
 /* ================================================================== *
@@ -290,15 +288,13 @@ export function fileQueued(d: InboundDeps, actor: Actor, inbound_id: string, bus
   authorise(actor, 'inbound_email.file', { type: 'inbound_email', id: inbound_id });
   const e = getInboundEmailIdFromAddressByIdOutcome<{ id: string; from_address: string; text_body: string }>(d.db, [inbound_id]);
   if (e === undefined) throw new NotFoundAsRefusal();
-  if (d.db.get('SELECT id FROM businesses WHERE id = ?', [business_id]) === undefined) return { ok: false, why: 'Choose a company.' };
+  if (getBusinessesIdById(d.db, [business_id]) === undefined) return { ok: false, why: 'Choose a company.' };
   authorise(actor, 'client_message.write', { type: 'client_message', id: business_id, business_id });
   const contact = contactOf(d.db, business_id, e.from_address);
   const message = d.newId();
   const at = d.now();
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, ?, NULL, ?, ?, NULL, ?, ?, ?)',
-      [message, business_id, 'FROM_CLIENT', 'EMAIL', contact, e.text_body.slice(0, 8000), at]);
+    insertClientMessages3(d.db, [message, business_id, 'FROM_CLIENT', 'EMAIL', contact, e.text_body.slice(0, 8000), at]);
     insertInboundEmailFilings(d.db, [d.newId(), e.id, business_id, message, actor.id, at]);
   });
   d.audit.append({
@@ -357,7 +353,7 @@ export async function saveEmailedFile(
   if (!r.ok) return r;
   const at = d.app.now();
   db.tx(() => {
-    db.run('INSERT INTO client_message_files (id, message_id, logical_document_id, linked_at) VALUES (?, ?, ?, ?)', [d.newId(), f.message, r.logical_document_id, at]);
+    insertClientMessageFiles(db, [d.newId(), f.message, r.logical_document_id, at]);
     insertInboundEmailFileSaves(db, [d.newId(), f.id, r.logical_document_id, actor.id, at]);
   });
   // The client sent it, so the client may see it — said as a row, as every change of who may see a file is.
@@ -397,21 +393,13 @@ export type ReadingState = {
 export function readingState(db: Db, actor: Actor, nowIso: string): ReadingState {
   authorise(actor, 'inbound_email.read', queueObj);
   const mark = getMailboxWatermarkUidById<{ uid: number }>(db)?.uid ?? null;
-  const received = db.all<{ uid: string; at: string; from_address: string; subject: string; outcome: string; queue_reason: string | null; matched: string | null; ours_company: string | null; filed_on: string | null; by: string | null; rule: string | null; direct: string | null }>(
-    'SELECT e.mailbox_uid AS uid, e.received_at AS at, e.from_address, e.subject, e.outcome, e.queue_reason, e.matched_outbox_id AS matched, ' +
-    'ob.name AS ours_company, COALESCE(fb.name, gb.name) AS filed_on, u.display_name AS by, g.rule, fb.name AS direct ' +
-    'FROM inbound_email e LEFT JOIN outbox o ON o.id = e.matched_outbox_id LEFT JOIN businesses ob ON ob.id = o.business_id ' +
-    'LEFT JOIN businesses fb ON fb.id = e.business_id LEFT JOIN inbound_email_filings g ON g.inbound_email_id = e.id ' +
-    'LEFT JOIN businesses gb ON gb.id = g.business_id LEFT JOIN users u ON u.id = g.filed_by ' +
-    'ORDER BY CAST(e.mailbox_uid AS INTEGER) DESC LIMIT 12').map((r) => ({
+  const received = listInboundEmailUidAt<{ uid: string; at: string; from_address: string; subject: string; outcome: string; queue_reason: string | null; matched: string | null; ours_company: string | null; filed_on: string | null; by: string | null; rule: string | null; direct: string | null }>(db).map((r) => ({
       uid: r.uid, when: localStamp(r.at, nowIso), from: r.from_address, subject: r.subject === '' ? '(no subject)' : r.subject,
       outcome: r.outcome === 'FILED' ? 'Filed' : r.outcome === 'DO_NOT_CONTACT' ? 'Filed (do not contact)' : r.filed_on !== null ? 'Filed later, from Email replies to sort' : `Waiting to sort: ${QUEUE_WORDS[r.queue_reason ?? ''] ?? r.queue_reason ?? ''}`,
       answers_ours: r.matched !== null, ours_company: r.ours_company, filed_on: r.filed_on,
       how: r.direct !== null ? 'when it came in' : r.rule !== null ? 'by the rule (it answers our email)' : r.by !== null ? `by ${r.by}` : null,
     }));
-  const sent = db.all<{ at: string; to_email: string; company: string | null; subject: string; sent_at: string | null; send_requested: number; last_error: string | null; provider_ref: string | null }>(
-    "SELECT o.created_at AS at, o.to_email, b.name AS company, o.subject, o.sent_at, o.send_requested, o.last_error, o.provider_ref FROM outbox o LEFT JOIN businesses b ON b.id = o.business_id " +
-    "WHERE o.kind IN ('FREE_TYPED','TEMPLATE','NOTIFICATION') ORDER BY o.created_at DESC LIMIT 8").map((r) => ({
+  const sent = listOutboxAtToEmailByKind<{ at: string; to_email: string; company: string | null; subject: string; sent_at: string | null; send_requested: number; last_error: string | null; provider_ref: string | null }>(db).map((r) => ({
       when: localStamp(r.at, nowIso), to: r.to_email, company: r.company, subject: r.subject,
       state: STATE_WORDS(r.sent_at, r.send_requested, r.last_error, nowIso), id_kept: r.provider_ref !== null,
     }));

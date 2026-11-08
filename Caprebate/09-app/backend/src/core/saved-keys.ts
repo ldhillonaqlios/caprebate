@@ -30,7 +30,7 @@ import { IDENTITY_CHECK } from '../integrations/index.ts';
 import { COMPANY_SEARCH } from '../integrations/index.ts';
 import { lookupsWaivedHere, switchedOn, switchesHere } from '../integrations/index.ts';
 import { CLAUDE_SWITCHES } from '../integrations/connectors/claude.ts';
-import { zoomBlockers } from '../modules/crm/video-calls.ts';
+import { zoomBlockers } from '../modules/crm/index.ts';
 import { whatsappMissing } from '../integrations/index.ts';
 import { turnstileWhy } from '../integrations/index.ts';
 import { ga4MeasurementId } from '../integrations/index.ts';

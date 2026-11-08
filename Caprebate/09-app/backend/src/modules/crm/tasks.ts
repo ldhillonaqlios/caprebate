@@ -44,10 +44,13 @@ import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { localDate, localStamp, ukDate, dueWords } from '../../shared/index.ts';
 import { claimNaming, claimObjFor, claimWords, PRIORITIES, type Fields } from './crm.ts';
 import { anyStageLabel, claimStage } from '../../shared/index.ts';
-import { waitingOn, type WaitingOn } from '../claims/engaged.ts';
+import { waitingOn, type WaitingOn } from '../claims/index.ts';
 import { fireAutomation } from './automation.ts';
 import { mayTake, vocabLabel } from '../../web/vocabularies.ts';
 import { listUsersIdDisplayNameByRoleADM2 } from '../../core/index.ts';
+import { getBusinessesIdById, getContactsIdBusinessIdById3, getLeadsBusinessIdById, getLeadsIdBusinessIdById, getStaffTasksDueOnNByContactIdStatus, getStaffTasksIdByCreatedByOrigin, insertStaffTasks, listClientTasksQuestionDueOnByAskedByState, listClientTasksQuestionDueOnByAskedByState2, listClientTasksQuestionDueOnByBusinessIdState, updateStaffTasksIsNextActionUpdatedAtByClaimIdIsNextAction, updateStaffTasksIsNextActionUpdatedAtById, updateStaffTasksStatusCancelledAtById, updateStaffTasksStatusCompletedAtById, updateStaffTasksStatusStartedAtById, updateStaffTasksStatusUpdatedAtById, updateStaffTasksTitleDescriptionById } from './data.ts';
+import { getStaffTasksIdTitleByClaimIdIsNextAction, listClaimsIdClaimRef, listClaimsIdClaimRefByOwnerId2, listClientTasksIdTypeLabelByAskedByKind } from './data-borrowed.ts';
+import { getClaimsIdBusinessIdById7, getClaimsIdStageById, getClaimsStageById, getPropertiesIdBusinessIdById, listClaimsIdClaimRefByOwnerId } from '../claims/index.ts';
 
 export type TaskDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type TaskResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -337,7 +340,7 @@ function viewOf(db: Db, actor: Actor, r: TaskDbRow, nowIso: string): TaskView {
     });
   }
   if (r.lead_id !== null) {
-    const lead = db.get<{ business_id: string | null }>('SELECT business_id FROM leads WHERE id = ?', [r.lead_id]);
+    const lead = getLeadsBusinessIdById<{ business_id: string | null }>(db, [r.lead_id]);
     if (lead !== undefined && can(actor, 'lead.read', { type: 'lead', id: r.lead_id, business_id: lead.business_id })) {
       about.push({ kind: 'lead', id: r.lead_id, label: r.lead_label ?? 'a lead', href: `/staff/leads/${r.lead_id}` });
     }
@@ -424,14 +427,8 @@ function sameTaskJustMade(
   asNext: boolean,
 ): string | null {
   const since = new Date(Date.parse(d.now()) - DOUBLE_CLICK_MS).toISOString();
-  return d.db.get<{ id: string }>(
-    "SELECT id FROM staff_tasks WHERE created_by = ? AND origin = 'STAFF' AND status = 'OPEN' AND created_at >= ? AND title = ? " +
-      'AND description IS ? AND owner_id IS ? AND owner_role IS ? AND due_on IS ? AND priority IS ? AND activity_type IS ? ' +
-      'AND recurrence IS ? AND is_next_action = ? AND business_id IS ? AND property_id IS ? AND claim_id IS ? AND lead_id IS ? ' +
-      'AND contact_id IS ? ORDER BY created_at DESC, id LIMIT 1',
-    [actor.id, since, v.title ?? '', v.description, v.owner_id, v.owner_id === null ? v.owner_role : null, v.due_on, v.priority,
-      v.activity_type ?? 'TASK', v.recurrence, asNext ? 1 : 0, s.business_id, s.property_id, s.claim_id, s.lead_id, s.contact_id],
-  )?.id ?? null;
+  return getStaffTasksIdByCreatedByOrigin<{ id: string }>(d.db, [actor.id, since, v.title ?? '', v.description, v.owner_id, v.owner_id === null ? v.owner_role : null, v.due_on, v.priority,
+      v.activity_type ?? 'TASK', v.recurrence, asNext ? 1 : 0, s.business_id, s.property_id, s.claim_id, s.lead_id, s.contact_id])?.id ?? null;
 }
 
 /**
@@ -444,16 +441,10 @@ function sameTaskJustMade(
 export function insertTask(db: Db, now: () => string, newId: () => string, t: TaskInsert): string {
   const id = newId();
   const at = now();
-  db.run(
-    'INSERT INTO staff_tasks (id, title, description, owner_id, owner_role, due_on, priority, status, activity_type, ' +
-      'business_id, property_id, claim_id, lead_id, contact_id, fact_id, recurrence, recurred_from_id, is_next_action, ' +
-      'origin, automation_run_id, created_by, created_at, updated_at, introducer_id, company_subject) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, t.title, t.description, t.owner_id, t.owner_id === null ? t.owner_role : null, t.due_on, t.priority, 'OPEN',
+  insertStaffTasks(db, [id, t.title, t.description, t.owner_id, t.owner_id === null ? t.owner_role : null, t.due_on, t.priority, 'OPEN',
       t.activity_type, t.business_id, t.property_id, t.claim_id, t.lead_id, t.contact_id, t.fact_id, t.recurrence,
       t.recurred_from_id, t.is_next_action ? 1 : 0, t.origin, t.automation_run_id, t.created_by, at, at, t.introducer_id ?? null,
-      t.company_subject ?? null],
-  );
+      t.company_subject ?? null]);
   return id;
 }
 
@@ -482,13 +473,13 @@ function resolveSubject(db: Db, actor: Actor, input: Fields): Check<Subject> {
   const contactId = clean(input['contact_id']);
 
   if (claimId !== null) {
-    const c = db.get<{ id: string; business_id: string; stage: string | null }>('SELECT id, business_id, stage FROM claims WHERE id = ?', [claimId]);
+    const c = getClaimsIdBusinessIdById7<{ id: string; business_id: string; stage: string | null }>(db, [claimId]);
     if (c === undefined) throw new NotFoundAsRefusal();
     authorise(actor, 'claim.read', claimObjFor(db, c));
     out.claim_id = c.id; out.business_id = c.business_id; out.claim_stage = c.stage;
   }
   if (propertyId !== null) {
-    const p = db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM properties WHERE id = ?', [propertyId]);
+    const p = getPropertiesIdBusinessIdById<{ id: string; business_id: string }>(db, [propertyId]);
     if (p === undefined) throw new NotFoundAsRefusal();
     authorise(actor, 'property.read', { type: 'property', id: p.id, business_id: p.business_id, assigned_surveyor_ids: [] });
     if (out.business_id !== null && out.business_id !== p.business_id) {
@@ -497,7 +488,7 @@ function resolveSubject(db: Db, actor: Actor, input: Fields): Check<Subject> {
     out.property_id = p.id; out.business_id = p.business_id;
   }
   if (businessId !== null) {
-    const b = db.get<{ id: string }>('SELECT id FROM businesses WHERE id = ?', [businessId]);
+    const b = getBusinessesIdById<{ id: string }>(db, [businessId]);
     if (b === undefined) throw new NotFoundAsRefusal();
     authorise(actor, 'organisation.read', { type: 'business', id: b.id });
     if (out.business_id !== null && out.business_id !== b.id) {
@@ -506,7 +497,7 @@ function resolveSubject(db: Db, actor: Actor, input: Fields): Check<Subject> {
     out.business_id = b.id;
   }
   if (leadId !== null) {
-    const l = db.get<{ id: string; business_id: string | null }>('SELECT id, business_id FROM leads WHERE id = ?', [leadId]);
+    const l = getLeadsIdBusinessIdById<{ id: string; business_id: string | null }>(db, [leadId]);
     if (l === undefined) throw new NotFoundAsRefusal();
     authorise(actor, 'lead.read', { type: 'lead', id: l.id, business_id: l.business_id });
     if (out.business_id !== null && l.business_id !== null && l.business_id !== out.business_id) {
@@ -515,8 +506,7 @@ function resolveSubject(db: Db, actor: Actor, input: Fields): Check<Subject> {
     out.lead_id = l.id;
   }
   if (contactId !== null) {
-    const ct = db.get<{ id: string; business_id: string | null; lead_id: string | null }>(
-      'SELECT id, business_id, lead_id FROM contacts WHERE id = ?', [contactId]);
+    const ct = getContactsIdBusinessIdById3<{ id: string; business_id: string | null; lead_id: string | null }>(db, [contactId]);
     if (ct === undefined) throw new NotFoundAsRefusal();
     authorise(actor, 'contact.read', { type: 'contact', id: ct.id, business_id: ct.business_id });
     if (out.business_id === null && out.lead_id === null) {
@@ -583,10 +573,7 @@ function taskValues(db: Db, input: Fields, stored: TaskValues): Check<TaskValues
 
 /** Clear the claim's current next-action flag, inside the caller's transaction. */
 function clearNextAction(db: Db, claim_id: string, at: string): void {
-  db.run(
-    "UPDATE staff_tasks SET is_next_action = 0, updated_at = ? WHERE claim_id = ? AND is_next_action = 1 AND status IN ('OPEN','IN_PROGRESS')",
-    [at, claim_id],
-  );
+  updateStaffTasksIsNextActionUpdatedAtByClaimIdIsNextAction(db, [at, claim_id]);
 }
 
 /**
@@ -657,12 +644,8 @@ export function updateTask(d: TaskDeps, actor: Actor, id: string, input: Fields)
   }
   const changed = (Object.keys(v.value) as (keyof TaskValues)[]).filter((k) => stored[k] !== v.value[k]);
   if (changed.length === 0) return { ok: true, id: r.id };
-  d.db.run(
-    'UPDATE staff_tasks SET title = ?, description = ?, owner_id = ?, owner_role = ?, due_on = ?, priority = ?, ' +
-      'activity_type = ?, recurrence = ?, updated_at = ? WHERE id = ?',
-    [v.value.title, v.value.description, v.value.owner_id, v.value.owner_role, v.value.due_on, v.value.priority,
-      v.value.activity_type, v.value.recurrence, d.now(), r.id],
-  );
+  updateStaffTasksTitleDescriptionById(d.db, [v.value.title, v.value.description, v.value.owner_id, v.value.owner_role, v.value.due_on, v.value.priority,
+      v.value.activity_type, v.value.recurrence, d.now(), r.id]);
   audit(d, actor, 'STAFF_TASK_UPDATED', 'staff_task', r.id, {
     task: r.id, business: r.business_id, claim: r.claim_id, lead: r.lead_id, fields: changed,
   });
@@ -699,21 +682,17 @@ export function setTaskStatus(d: TaskDeps, actor: Actor, id: string, to: string 
     const reason = textField(reasonIn, 1000, 'The reason');
     if (!reason.ok) return reason;
     if (reason.value === null) return { ok: false, why: 'A task is cancelled with its reason, because it is never deleted.' };
-    d.db.run(
-      "UPDATE staff_tasks SET status = 'CANCELLED', cancelled_at = ?, cancelled_by = ?, cancel_reason = ?, updated_at = ? WHERE id = ?",
-      [at, actor.id, reason.value, at, r.id],
-    );
+    updateStaffTasksStatusCancelledAtById(d.db, [at, actor.id, reason.value, at, r.id]);
   } else if (to === 'IN_PROGRESS') {
-    d.db.run("UPDATE staff_tasks SET status = 'IN_PROGRESS', started_at = COALESCE(started_at, ?), updated_at = ? WHERE id = ?", [at, at, r.id]);
+    updateStaffTasksStatusStartedAtById(d.db, [at, at, r.id]);
   } else if (to === 'OPEN') {
-    d.db.run("UPDATE staff_tasks SET status = 'OPEN', updated_at = ? WHERE id = ?", [at, r.id]);
+    updateStaffTasksStatusUpdatedAtById(d.db, [at, r.id]);
   } else {
     successor = d.db.tx(() => {
-      d.db.run("UPDATE staff_tasks SET status = 'COMPLETED', completed_at = ?, completed_by = ?, updated_at = ? WHERE id = ?",
-        [at, actor.id, at, r.id]);
+      updateStaffTasksStatusCompletedAtById(d.db, [at, actor.id, at, r.id]);
       if (r.recurrence === null) return null;
       const claim = r.claim_id === null ? undefined
-        : d.db.get<{ stage: string | null }>('SELECT stage FROM claims WHERE id = ?', [r.claim_id]);
+        : getClaimsStageById<{ stage: string | null }>(d.db, [r.claim_id]);
       const carries = r.is_next_action === 1 && claim !== undefined && !isTerminalStage(claim.stage);
       return insertTask(d.db, d.now, d.newId, {
         title: r.title, description: r.description, owner_id: r.owner_id, owner_role: r.owner_role,
@@ -753,11 +732,7 @@ export function nextActionReading(db: Db, claim: { id: string; stage: string | n
   if (isTerminalStage(claim.stage)) {
     return { required: false, task: null, breaks: null, sentence: 'This claim has closed or left the procedure, and keeps no next action.' };
   }
-  const t = db.get<{ id: string; title: string; owner_id: string | null; owner_role: string | null; owner_name: string | null; due_on: string | null }>(
-    'SELECT t.id, t.title, t.owner_id, t.owner_role, u.display_name AS owner_name, t.due_on FROM staff_tasks t ' +
-      "LEFT JOIN users u ON u.id = t.owner_id WHERE t.claim_id = ? AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')",
-    [claim.id],
-  );
+  const t = getStaffTasksIdTitleByClaimIdIsNextAction<{ id: string; title: string; owner_id: string | null; owner_role: string | null; owner_name: string | null; due_on: string | null }>(db, [claim.id]);
   if (t === undefined) {
     return {
       required: true, task: null, breaks: 'NONE',
@@ -782,7 +757,7 @@ export function nextActionReading(db: Db, claim: { id: string; stage: string | n
  */
 export function nextActionRefusal(db: Db, claim_id: string, to: string): string | null {
   if (isTerminalStage(to)) return null;
-  const c = db.get<{ id: string; stage: string | null }>('SELECT id, stage FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdStageById<{ id: string; stage: string | null }>(db, [claim_id]);
   if (c === undefined) return null;
   // The claim is not yet at `to`; its next action is asked about as it stands.
   const r = nextActionReading(db, { id: c.id, stage: null }, '1970-01-01T00:00:00.000Z');
@@ -797,8 +772,7 @@ export function nextActionRefusal(db: Db, claim_id: string, to: string): string 
  * being the next action in the same transaction; it stays a task.
  */
 export function setNextAction(d: TaskDeps, actor: Actor, claim_id: string, input: Fields): TaskResult {
-  const c = d.db.get<{ id: string; business_id: string; stage: string | null }>(
-    'SELECT id, business_id, stage FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdBusinessIdById7<{ id: string; business_id: string; stage: string | null }>(d.db, [claim_id]);
   if (c === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'claim.write', claimObjFor(d.db, c));
   if (isTerminalStage(c.stage)) {
@@ -815,7 +789,7 @@ export function setNextAction(d: TaskDeps, actor: Actor, claim_id: string, input
     }
     d.db.tx(() => {
       clearNextAction(d.db, c.id, at);
-      d.db.run('UPDATE staff_tasks SET is_next_action = 1, updated_at = ? WHERE id = ?', [at, t.id]);
+      updateStaffTasksIsNextActionUpdatedAtById(d.db, [at, t.id]);
     });
     audit(d, actor, 'NEXT_ACTION_SET', 'staff_task', t.id, { task: t.id, business: c.business_id, claim: c.id, route: 'promoted' });
     return { ok: true, id: t.id };
@@ -884,10 +858,7 @@ export type Breakers = { readonly breaking: readonly BreakerRow[]; readonly over
  */
 export function nextActionBreakers(db: Db, actor: Actor, nowIso: string): Breakers {
   authorise(actor, 'pipeline.read', { type: 'pipeline', id: '__next_actions__' });
-  const rows = db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string; owner_name: string | null }>(
-    'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name, u.display_name AS owner_name ' +
-      'FROM claims c JOIN businesses b ON b.id = c.business_id LEFT JOIN users u ON u.id = c.owner_id ORDER BY c.claim_ref ASC',
-  ).filter((r) => can(actor, 'claim.read', claimObjFor(db, r)) && !isTerminalStage(r.stage));
+  const rows = listClaimsIdClaimRef<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string; owner_name: string | null }>(db).filter((r) => can(actor, 'claim.read', claimObjFor(db, r)) && !isTerminalStage(r.stage));
   const waiting = new Map<string, { who: WaitingOn; why: string } | null>();
   const breaking: BreakerRow[] = [];
   const overdue: BreakerRow[] = [];
@@ -935,11 +906,7 @@ export function claimTaskPanel(db: Db, actor: Actor, claim: { id: string; busine
   const w = staff ? waitingOn(db, actor, claim.business_id) : null;
   // CRM 4 of 10: document requests are the documents panel's, flagged OVERDUE there by the same reading.
   const questions = staff
-    ? db.all<{ question: string; due_on: string; sent_to_portal_at: string | null }>(
-      "SELECT question, due_on, sent_to_portal_at FROM client_tasks WHERE business_id = ? AND state = 'OPEN' AND kind = 'QUESTION' " +
-        'AND due_on IS NOT NULL AND due_on < ? ORDER BY due_on ASC',
-      [claim.business_id, localDate(nowIso)],
-    ).map((q) => ({ question: q.question, due_on: q.due_on, sent: q.sent_to_portal_at !== null }))
+    ? listClientTasksQuestionDueOnByBusinessIdState<{ question: string; due_on: string; sent_to_portal_at: string | null }>(db, [claim.business_id, localDate(nowIso)]).map((q) => ({ question: q.question, due_on: q.due_on, sent: q.sent_to_portal_at !== null }))
     : null;
   const mayAdd = can(actor, 'staff_task.create', sectionObj());
   const maySet = can(actor, 'claim.write', claimObjFor(db, claim)) && !isTerminalStage(claim.stage);
@@ -1005,48 +972,28 @@ export function myWork(db: Db, actor: Actor, nowIso: string): MyWork {
     [actor.id, actor.role],
   ).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
   const ordered = [...tasks.filter((t) => t.due.overdue), ...tasks.filter((t) => !t.due.overdue)];
-  const questions = db.all<{ question: string; due_on: string; business_id: string; business_name: string }>(
-    'SELECT ct.question, ct.due_on, ct.business_id, b.name AS business_name FROM client_tasks ct ' +
-      "JOIN businesses b ON b.id = ct.business_id WHERE ct.asked_by = ? AND ct.state = 'OPEN' AND ct.kind = 'QUESTION' " +
-      'AND ct.due_on IS NOT NULL AND ct.due_on < ? ORDER BY ct.due_on ASC',
-    [actor.id, localDate(nowIso)],
-  ).filter((q) => can(actor, 'organisation.read', { type: 'business', id: q.business_id }))
+  const questions = listClientTasksQuestionDueOnByAskedByState<{ question: string; due_on: string; business_id: string; business_name: string }>(db, [actor.id, localDate(nowIso)]).filter((q) => can(actor, 'organisation.read', { type: 'business', id: q.business_id }))
     .map((q) => ({ question: q.question, due_on: q.due_on, business_id: q.business_id, client: q.business_name }));
-  const requests = db.all<{
+  const requests = listClientTasksIdTypeLabelByAskedByKind<{
     id: string; type_label: string; due_on: string | null; business_id: string; business_name: string; claim_id: string | null; claim_ref: string | null;
-  }>(
-    'SELECT ct.id, t.label AS type_label, ct.due_on, ct.business_id, b.name AS business_name, ct.claim_id, c.claim_ref FROM client_tasks ct ' +
-      'JOIN document_types t ON t.code = ct.requested_type JOIN businesses b ON b.id = ct.business_id LEFT JOIN claims c ON c.id = ct.claim_id ' +
-      "WHERE ct.asked_by = ? AND ct.kind = 'DOCUMENT' AND ct.state = 'OPEN' ORDER BY ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC",
-    [actor.id],
-  ).filter((q) => can(actor, 'document_request.read', { type: 'document_request', id: q.id, business_id: q.business_id }))
+  }>(db, [actor.id]).filter((q) => can(actor, 'document_request.read', { type: 'document_request', id: q.id, business_id: q.business_id }))
     .map((q) => ({
       id: q.id, type_label: q.type_label, due: dueReading(q.due_on, nowIso), business_id: q.business_id, client: q.business_name,
       claim: q.claim_id === null || q.claim_ref === null ? null : { id: q.claim_id, claim_ref: q.claim_ref, name: claimWords(db, q.claim_id) },
     }));
-  const owned = db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null }>(
-    'SELECT id, claim_ref, business_id, stage FROM claims WHERE owner_id = ? ORDER BY claim_ref ASC', [actor.id],
-  ).filter((c) => !isTerminalStage(c.stage) && can(actor, 'claim.read', claimObjFor(db, c)))
+  const owned = listClaimsIdClaimRefByOwnerId<{ id: string; claim_ref: string; business_id: string; stage: string | null }>(db, [actor.id]).filter((c) => !isTerminalStage(c.stage) && can(actor, 'claim.read', claimObjFor(db, c)))
     .map((c) => ({ c, reading: nextActionReading(db, c, nowIso) }));
   const mine = owned.filter((x) => x.reading.breaks !== null)
     .map((x) => ({ id: x.c.id, claim_ref: x.c.claim_ref, name: claimWords(db, x.c.id), sentence: x.reading.sentence }));
   // THE CRM FOLLOW-ON: nobody's claims breaking the rule, for the people who give a claim its owner. Each asked of `claim.read`.
   const unowned = can(actor, 'pipeline.read', { type: 'pipeline', id: '__my_work__' })
-    ? db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string }>(
-      'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name FROM claims c JOIN businesses b ON b.id = c.business_id ' +
-        'WHERE c.owner_id IS NULL ORDER BY c.claim_ref ASC',
-    ).filter((c) => !isTerminalStage(c.stage) && can(actor, 'claim.read', claimObjFor(db, c)))
+    ? listClaimsIdClaimRefByOwnerId2<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string }>(db).filter((c) => !isTerminalStage(c.stage) && can(actor, 'claim.read', claimObjFor(db, c)))
       .map((c) => ({ c, reading: nextActionReading(db, c, nowIso) }))
       .filter((x) => x.reading.breaks !== null)
       .map((x) => ({ id: x.c.id, claim_ref: x.c.claim_ref, name: claimWords(db, x.c.id), client: x.c.business_name, sentence: x.reading.sentence }))
     : [];
   // CRM 9 of 10: every open question I asked, overdue first, then by due date, never-dated last.
-  const waitingQuestions = db.all<{ question: string; due_on: string | null; business_id: string; business_name: string; sent_to_portal_at: string | null }>(
-    'SELECT ct.question, ct.due_on, ct.business_id, b.name AS business_name, ct.sent_to_portal_at FROM client_tasks ct ' +
-      "JOIN businesses b ON b.id = ct.business_id WHERE ct.asked_by = ? AND ct.state = 'OPEN' AND ct.kind = 'QUESTION' " +
-      'ORDER BY ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC',
-    [actor.id],
-  ).filter((q) => can(actor, 'organisation.read', { type: 'business', id: q.business_id }))
+  const waitingQuestions = listClientTasksQuestionDueOnByAskedByState2<{ question: string; due_on: string | null; business_id: string; business_name: string; sent_to_portal_at: string | null }>(db, [actor.id]).filter((q) => can(actor, 'organisation.read', { type: 'business', id: q.business_id }))
     .map((q) => ({ question: q.question, due: dueReading(q.due_on, nowIso), business_id: q.business_id, client: q.business_name, sent: q.sent_to_portal_at !== null }));
   const myClaims = owned.map((x) => ({
     id: x.c.id, claim_ref: x.c.claim_ref, name: claimWords(db, x.c.id), stage: anyStageLabel(x.c.stage),
@@ -1100,10 +1047,7 @@ export function taskPage(db: Db, actor: Actor, id: string, nowIso: string): Task
 
 /** The open follow-ups naming a contact, earliest first — what `next_follow_up_at` became (row 5.12). */
 export function followUpsFor(db: Db, contact_id: string): { due_on: string | null; count: number } {
-  const r = db.get<{ due_on: string | null; n: number }>(
-    "SELECT MIN(due_on) AS due_on, COUNT(*) AS n FROM staff_tasks WHERE contact_id = ? AND status IN ('OPEN','IN_PROGRESS')",
-    [contact_id],
-  );
+  const r = getStaffTasksDueOnNByContactIdStatus<{ due_on: string | null; n: number }>(db, [contact_id]);
   return { due_on: r?.due_on ?? null, count: r?.n ?? 0 };
 }
 

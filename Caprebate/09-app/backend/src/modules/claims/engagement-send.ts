@@ -22,6 +22,9 @@ import { authorise, can, type Actor } from '../../core/index.ts';
 import { localWhen } from '../../shared/index.ts';
 import { checkSignature, createSignLink, requiredSigners, ENGAGEMENT_SIGNING, SIGN_LINK_DAYS, type EngagementSigning } from './signing.ts';
 import { getUsersCountByBusinessIdRole, listUsersIdEmailByBusinessIdRole } from '../../core/index.ts';
+import { getEngagementSignaturesPdfSignedAtByEngagementId, getEngagementsIdByBusinessId, getEngagementsIdLetterStateByBusinessId2, insertEngagements, listEngagementSignaturesUserIdNameByEngagementId, updateEngagementsLetterStateSentAtByBusinessIdLetterState } from './data.ts';
+import { getBusinessesIdNameById } from '../crm/index.ts';
+import { getEngagementsIdLetterStateByBusinessId } from './data-borrowed.ts';
 
 export type SendDeps = {
   db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string; origin?: string;
@@ -51,14 +54,11 @@ export type LetterState = {
 };
 
 export function letterState(db: Db, business_id: string): LetterState {
-  const e = db.get<{ id: string; letter_state: string; created_at: string; sent_at: string | null; sent_by: string | null; viewed_at: string | null; signed_at: string | null }>(
-    'SELECT e.id, e.letter_state, e.created_at, e.sent_at, u.display_name AS sent_by, e.viewed_at, e.signed_at FROM engagements e LEFT JOIN users u ON u.id = e.sent_by WHERE e.business_id = ?',
-    [business_id]);
+  const e = getEngagementsIdLetterStateByBusinessId<{ id: string; letter_state: string; created_at: string; sent_at: string | null; sent_by: string | null; viewed_at: string | null; signed_at: string | null }>(db, [business_id]);
   const logins = getUsersCountByBusinessIdRole<{ n: number }>(db, [business_id])?.n ?? 0;
   if (e === undefined) return { state: 'NONE', prepared_at: null, sent_at: null, sent_by: null, viewed_at: null, signed_at: null, copy: false, logins, named: [], signed_by: [] };
   const state = e.letter_state as LetterState['state'];
-  const signed_by = db.all<{ user_id: string | null; name: string; signed_at: string; origin: string }>(
-    'SELECT user_id, signer_name AS name, signed_at, origin FROM engagement_signatures WHERE engagement_id = ? ORDER BY signer_seq ASC', [e.id])
+  const signed_by = listEngagementSignaturesUserIdNameByEngagementId<{ user_id: string | null; name: string; signed_at: string; origin: string }>(db, [e.id])
     .map((x) => ({ user_id: x.user_id, name: x.name, signed_at: x.signed_at, by_link: x.origin === 'EMAIL_LINK' }));
   return {
     state, prepared_at: e.created_at, sent_at: e.sent_at, sent_by: e.sent_by, viewed_at: e.viewed_at, signed_at: e.signed_at,
@@ -69,7 +69,7 @@ export function letterState(db: Db, business_id: string): LetterState {
 
 /** Raise the letter if need be, mark it sent, and email every client login of the business the link to it. */
 export function sendEngagementLetter(d: SendDeps, actor: Actor, business_id: string): { ok: true; resent: boolean; emailed: number } | { ok: false; why: string } {
-  const b = d.db.get<{ id: string; name: string }>('SELECT id, name FROM businesses WHERE id = ?', [business_id]);
+  const b = getBusinessesIdNameById<{ id: string; name: string }>(d.db, [business_id]);
   if (b === undefined) return { ok: false, why: SEND_WORDS.none };
   authorise(actor, 'engagement.send', { type: 'engagement', id: business_id, business_id });
   const now = letterState(d.db, business_id);
@@ -80,10 +80,9 @@ export function sendEngagementLetter(d: SendDeps, actor: Actor, business_id: str
   const resent = now.state === 'SENT' || now.state === 'VIEWED';
   d.db.tx(() => {
     if (now.state === 'NONE') {
-      d.db.run("INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at, sent_at, sent_by) VALUES (?, ?, 'SENT', NULL, ?, ?, ?)",
-        [d.newId(), business_id, at, at, actor.id]);
+      insertEngagements(d.db, [d.newId(), business_id, at, at, actor.id]);
     } else if (now.state === 'NOT_SENT') {
-      d.db.run("UPDATE engagements SET letter_state = 'SENT', sent_at = ?, sent_by = ? WHERE business_id = ? AND letter_state = 'NOT_SENT'", [at, actor.id, business_id]);
+      updateEngagementsLetterStateSentAtByBusinessIdLetterState(d.db, [at, actor.id, business_id]);
     }
     d.audit.append({
       at, kind: 'ENGAGEMENT_LETTER_SENT', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -94,7 +93,7 @@ export function sendEngagementLetter(d: SendDeps, actor: Actor, business_id: str
   /* PHASE 157d: where signing links are on, each login is also sent its own single-use link that opens the letter for
      signing without signing in. Where staff named who must sign, only they are sent one. */
   const cfg = d.signing ?? ENGAGEMENT_SIGNING;
-  const eng = d.db.get<{ id: string }>('SELECT id FROM engagements WHERE business_id = ?', [business_id]);
+  const eng = getEngagementsIdByBusinessId<{ id: string }>(d.db, [business_id]);
   const named = eng === undefined ? [] : requiredSigners(d.db, eng.id).map((n) => n.user_id);
   for (const u of logins) {
     const signLink = cfg.links === true && eng !== undefined && (named.length === 0 || named.includes(u.id))
@@ -116,10 +115,10 @@ export function sendEngagementLetter(d: SendDeps, actor: Actor, business_id: str
 /** The signed copy, for a login that may read the letter: the PDF, checked against its fingerprint first. */
 export function signedCopy(db: Db, actor: Actor, business_id: string): { pdf: Uint8Array; filename: string } | null {
   if (!can(actor, 'engagement.read', { type: 'engagement', id: business_id, business_id })) return null;
-  const e = db.get<{ id: string; letter_state: string }>('SELECT id, letter_state FROM engagements WHERE business_id = ?', [business_id]);
+  const e = getEngagementsIdLetterStateByBusinessId2<{ id: string; letter_state: string }>(db, [business_id]);
   if (e === undefined || e.letter_state !== 'SIGNED' || !checkSignature(db, e.id).ok) return null;
   // PHASE 157d: the latest signature's PDF carries every signature on the letter.
-  const r = db.get<{ pdf: Uint8Array; signed_at: string }>('SELECT pdf, signed_at FROM engagement_signatures WHERE engagement_id = ? ORDER BY signer_seq DESC LIMIT 1', [e.id]);
+  const r = getEngagementSignaturesPdfSignedAtByEngagementId<{ pdf: Uint8Array; signed_at: string }>(db, [e.id]);
   if (r === undefined) return null;
   return { pdf: new Uint8Array(r.pdf), filename: `engagement-letter-signed-${r.signed_at.slice(0, 10)}.pdf` };
 }

@@ -15,6 +15,7 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import type { Actor } from '../../core/index.ts';
 import { instantsForLocalMinute } from '../../shared/index.ts';
+import { getBookingsIdByAssignedToCancelledAt, getTimeBlocksUserIdRemovedAtById, insertTimeBlocks, listTimeBlocksIdUserIdByUserIdRemovedAt, updateTimeBlocksRemovedAtRemovedByByIdRemovedAt } from './data.ts';
 
 export type BlockDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 
@@ -42,9 +43,7 @@ export function localInstant(date: string, clock: string): string | null {
 
 /** One person's blocks that touch [from, to), oldest first. Taken-off blocks are not in it. */
 export function blocksFor(db: Db, user_id: string, fromIso: string, toIso: string): TimeBlock[] {
-  return db.all<TimeBlock>(
-    'SELECT id, user_id, starts_at, ends_at, reason FROM time_blocks WHERE user_id = ? AND removed_at IS NULL AND starts_at < ? AND ends_at > ? ORDER BY starts_at, id',
-    [user_id, toIso, fromIso]);
+  return listTimeBlocksIdUserIdByUserIdRemovedAt<TimeBlock>(db, [user_id, toIso, fromIso]);
 }
 
 export type BlockResult = { ok: true; id: string } | { ok: false; why: string };
@@ -60,23 +59,20 @@ export function addBlock(d: BlockDeps, actor: Actor, input: { date: string; from
   const reason = input.reason.replace(/\s+/g, ' ').trim();
   if (reason.length > 120) return { ok: false, why: 'Keep the reason under 120 characters.' };
   // A call already in this diary at that time: move it first, so no client is left without the call they booked.
-  const clash = d.db.get<{ id: string }>(
-    'SELECT id FROM bookings WHERE assigned_to = ? AND cancelled_at IS NULL AND starts_at IS NOT NULL AND starts_at < ? AND ends_at > ? LIMIT 1',
-    [actor.id, end, start]);
+  const clash = getBookingsIdByAssignedToCancelledAt<{ id: string }>(d.db, [actor.id, end, start]);
   if (clash !== undefined) return { ok: false, why: 'You have a call booked in that time. Move the call first, then block the time.' };
   const id = d.newId();
-  d.db.run('INSERT INTO time_blocks (id, user_id, starts_at, ends_at, reason, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, actor.id, start, end, reason, actor.id, d.now()]);
+  insertTimeBlocks(d.db, [id, actor.id, start, end, reason, actor.id, d.now()]);
   d.audit.append({ at: d.now(), kind: 'TIME_BLOCKED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'time_block', object_id: id,
     detail: { hours: Math.round((Date.parse(end) - Date.parse(start)) / 3_600_000 * 10) / 10 } });
   return { ok: true, id };
 }
 
 export function removeBlock(d: BlockDeps, actor: Actor, id: string): { ok: true } | { ok: false; why: string } {
-  const b = d.db.get<{ user_id: string; removed_at: string | null }>('SELECT user_id, removed_at FROM time_blocks WHERE id = ?', [id]);
+  const b = getTimeBlocksUserIdRemovedAtById<{ user_id: string; removed_at: string | null }>(d.db, [id]);
   if (b === undefined || b.removed_at !== null) return { ok: false, why: 'That time is not blocked.' };
   if (b.user_id !== actor.id && actor.role !== 'ADMIN') return { ok: false, why: 'You can only free your own time.' };
-  d.db.run('UPDATE time_blocks SET removed_at = ?, removed_by = ? WHERE id = ? AND removed_at IS NULL', [d.now(), actor.id, id]);
+  updateTimeBlocksRemovedAtRemovedByByIdRemovedAt(d.db, [d.now(), actor.id, id]);
   d.audit.append({ at: d.now(), kind: 'TIME_FREED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'time_block', object_id: id, detail: {} });
   return { ok: true };
 }

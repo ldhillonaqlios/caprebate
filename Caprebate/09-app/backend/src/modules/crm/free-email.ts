@@ -42,7 +42,7 @@ import { currentSender, outboxTransport, type Sender } from '../../integrations/
 import { EMAIL_SENDING, sendingMissing, sendingOn, type EmailSending, type MailWhere, type SmtpLogin } from '../../integrations/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import * as C from './crm.ts';
-import * as D from '../claims/documents.ts';
+import { documentsModule as D } from '../claims/index.ts';
 import { assertLeadSection } from './leads.ts';
 import { activeTemplates, freeTextRefusal, mergePlain, mergeValues, templateRefusal } from '../../web/templates.ts';
 import { propertyIn } from '../../shared/index.ts';
@@ -50,6 +50,8 @@ import { localStamp } from '../../shared/index.ts';
 import { KEEP_ORIGINALS } from '../../shared/index.ts';
 import { emailChains, reSubject, STATE_WORDS, type EmailChain } from './email-chains.ts';
 import { getOutboxAttachmentsCountByOutboxId, listOutboxIdCreatedAtByBusinessIdKind, listOutboxIdCreatedAtByLeadIdKind } from '../../integrations/index.ts';
+import { getEmailTemplatesLabelSubjectByIdActive, insertEmailSender } from './data-borrowed.ts';
+import { getBusinessesEById, getContactsCountByClientStatus2, getLeadsIdBusinessIdById6, listContactsIdFullNameByLeadIdBusinessId } from './data.ts';
 
 export type EmailDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -150,7 +152,7 @@ function companyBase(d: EmailDeps, actor: Actor, business_id: string): Base {
   authorise(actor, 'email.queue', { type: 'email', id: org.id, business_id: org.id });
   const people = companyContacts(d.db, actor, org.id);
   const files = attachableFiles(d, actor, org);
-  const main = d.db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [org.id])?.e ?? null;
+  const main = getBusinessesEById<{ e: string | null }>(d.db, [org.id])?.e ?? null;
   return {
     company: org.trading_name, business_id: org.id, lead_id: null, claims: claimsOf(org), ...people, barred: [],
     main_email: main === null || main.trim() === '' ? null : main.trim(),
@@ -162,9 +164,7 @@ function companyBase(d: EmailDeps, actor: Actor, business_id: string): Base {
 
 function leadBase(d: EmailDeps, actor: Actor, lead_id: string): Base {
   assertLeadSection(actor);
-  const l = d.db.get<{ id: string; business_id: string | null; organisation_name: string | null }>(
-    'SELECT l.id, l.business_id, b.name AS organisation_name FROM leads l LEFT JOIN businesses b ON b.id = l.business_id WHERE l.id = ?',
-    [lead_id]);
+  const l = getLeadsIdBusinessIdById6<{ id: string; business_id: string | null; organisation_name: string | null }>(d.db, [lead_id]);
   if (l === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'lead.read', { type: 'lead', id: l.id, business_id: l.business_id });
   authorise(actor, 'email.queue', { type: 'email', id: l.id, business_id: l.business_id ?? '' });
@@ -178,8 +178,7 @@ function leadBase(d: EmailDeps, actor: Actor, lead_id: string): Base {
   const contacts: ContactChoice[] = [];
   const not_offered: Base['not_offered'] = [];
   const barred: string[] = [];
-  const rows = d.db.all<{ id: string; full_name: string; email: string | null; contact_consent: number }>(
-    'SELECT id, full_name, email, contact_consent FROM contacts WHERE lead_id = ? AND business_id IS NULL ORDER BY full_name ASC, id ASC', [l.id]);
+  const rows = listContactsIdFullNameByLeadIdBusinessId<{ id: string; full_name: string; email: string | null; contact_consent: number }>(d.db, [l.id]);
   for (const c of rows) {
     if (!can(actor, 'contact.read', { type: 'contact', id: c.id, business_id: null })) continue;
     const email = (c.email ?? '').trim();
@@ -199,9 +198,7 @@ function leadBase(d: EmailDeps, actor: Actor, lead_id: string): Base {
 }
 
 function isDoNotContactAddress(db: Db, email: string): boolean {
-  return (db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM contacts c JOIN businesses b ON b.id = c.business_id WHERE b.client_status = 'DO_NOT_CONTACT' AND lower(c.email) = lower(?)",
-    [email])?.n ?? 0) > 0;
+  return (getContactsCountByClientStatus2<{ n: number }>(db, [email])?.n ?? 0) > 0;
 }
 
 function baseFor(d: EmailDeps, actor: Actor, s: EmailSubject): Base {
@@ -246,7 +243,7 @@ export function emailForm(d: EmailDeps, actor: Actor, s: EmailSubject, ask: Read
   let subject = replying === null ? '' : reSubject(replying.subject), body = '', template_id = '';
   const t = templates.find((x) => x.id === ask['template']);
   if (t !== undefined) {
-    const row = d.db.get<{ label: string; subject: string; body: string }>('SELECT label, subject, body FROM email_templates WHERE id = ? AND active = 1', [t.id]);
+    const row = getEmailTemplatesLabelSubjectByIdActive<{ label: string; subject: string; body: string }>(d.db, [t.id]);
     if (row !== undefined && templateRefusal(row) === null) {
       const v = claim_id !== '' ? mergeValues(d.db, claim_id, contact_id === '' ? null : contact_id)
         : {
@@ -356,8 +353,7 @@ export function setSender(d: EmailDeps, actor: Actor, input: Readonly<Record<str
   const now = currentSender(d.db);
   if (now.display_name === name && now.address === address && now.reply_to === reply) return { ok: true };
   const id = d.newId();
-  d.db.run('INSERT INTO email_sender (id, display_name, address, reply_to, set_by, set_at) VALUES (?, ?, ?, ?, ?, ?)',
-    [id, name, address, reply, actor.id, d.now()]);
+  insertEmailSender(d.db, [id, name, address, reply, actor.id, d.now()]);
   d.audit.append({
     at: d.now(), kind: 'EMAIL_SENDER_SET', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'configuration', object_id: 'email_sender', detail: { row: id },

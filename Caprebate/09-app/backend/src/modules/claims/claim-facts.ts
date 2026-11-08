@@ -32,7 +32,7 @@
  *     which can read nothing that is not on that list.
  */
 
-import { registerCompany, yearEndFrom, dormantWarning, propertyTenure, ROLE_LABELS, type YearEndReading } from '../assessment/who-claims.ts';
+import { registerCompany, yearEndFrom, dormantWarning, propertyTenure, ROLE_LABELS, type YearEndReading } from '../assessment/index.ts';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
@@ -42,15 +42,17 @@ import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type Engine
 import { packSwitchReadings } from '../../shared/index.ts';
 import { TAXONOMY_SECTOR, taxonomy } from '../../web/pack-lines.ts';
 import type { PackGrant } from '../../web/pack-grants.ts';
-import {
-  CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, claimObjFor, claimantTypeForGate, isCompanyOrRoleToken, propertyJurisdiction,
-} from '../crm/crm.ts';
-import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from '../assessment/funnel-session.ts';
+import { CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, claimObjFor, claimantTypeForGate, isCompanyOrRoleToken, propertyJurisdiction } from '../crm/index.ts';
+import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from '../assessment/index.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
 import { VOIDING_REOPEN_STAGES } from './valuation-lock.ts';
 import type { PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
 import { listRegisterRecordsSourceIdFieldsJsonByBusinessIdSourceId } from '../../integrations/index.ts';
+import { getClaimGrantsIdWithdrawnAtByIdClaimId, getClaimOwnerChainIdByClaimIdPosition, getClaimOwnerChainIdWithdrawnAtByIdClaimId, getClaimsIdBusinessIdById6, getClaimsPById, getFactApprovalsActionByBusinessIdFactRef, getPropertiesAcquisitionDateById, getPropertiesBusinessIdById, getPropertiesBusinessIdLabelById, getPropertiesCountByBusinessId, getPropertyEventsIdByIdPropertyId, insertClaimFacts, insertClaimFacts3, insertClaimGrantElements, insertClaimGrants, insertClaimOwnerChain, listClaimGrantElementsGrantIdElementIdByClaimId, listDocumentLinksIdBusinessIdByLogicalDocumentIdUnlinkedAt, updateClaimGrantsWithdrawnByWithdrawnAtById, updateClaimOwnerChainWithdrawnByWithdrawnAtById } from './data.ts';
+import { getDocumentsLogicalDocumentIdUploadedByByIdTypeCode, getSurveyPackApprovalsSnapshotJsonVersionByPropertyId, getSurveyPackLegalAnswersValueJsonAtByQuestionIdPropertyId, listClaimFactsSeqIdByClaimId, listClaimGrantsIdKindByClaimId, listClaimOwnerChainIdPositionByClaimIdWithdrawnAt } from './data-borrowed.ts';
+import { getBusinessesNameSectorById, listClientTasksIdAnswerByBusinessIdFactId } from '../crm/index.ts';
+import { getAssessmentAnswersQuestionIdByAssessmentIdQuestionId, getAssessmentAnswersValueByAssessmentIdQuestionId, getAssessmentsIdByBusinessId2, getAssessmentsSectorById, listAssessmentAnswersQuestionIdValueByAssessmentIdState } from '../assessment/index.ts';
 
 export type FactDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. A refusal
@@ -234,7 +236,7 @@ type ClaimRow = {
 };
 
 export function loadFactClaim(db: Db, id: string): ClaimRow {
-  const c = db.get<ClaimRow>('SELECT id, business_id, property_id, assessment_id, workstream, stage FROM claims WHERE id = ?', [id]);
+  const c = getClaimsIdBusinessIdById6<ClaimRow>(db, [id]);
   if (c === undefined) throw new NotFoundAsRefusal();
   return c;
 }
@@ -250,11 +252,7 @@ type FactRow = {
 
 /** The latest recorded answer per key — by time, then by insertion. */
 export function latestFacts(db: Db, claim_id: string): Map<string, FactRow> {
-  const rows = db.all<FactRow & { seq: number }>(
-    'SELECT f.rowid AS seq, f.id, f.fact_key, f.answer, f.value_text, f.value_pence, f.value_date, f.source_id, f.note, f.recorded_at, ' +
-      'u.display_name AS recorder FROM claim_facts f LEFT JOIN users u ON u.id = f.recorded_by WHERE f.claim_id = ? ' +
-      'ORDER BY f.recorded_at ASC, f.rowid ASC',
-    [claim_id]);
+  const rows = listClaimFactsSeqIdByClaimId<FactRow & { seq: number }>(db, [claim_id]);
   const out = new Map<string, FactRow>();
   for (const r of rows) out.set(r.fact_key, r);
   return out;
@@ -313,18 +311,16 @@ export function jurisdictionReading(db: Db, property_id: string | null, store?: 
  * acquisition date, never stored as it: the client gave a month and a rough figure, not a completion date (N4).
  */
 export function clientSaidPurchaseDate(db: Db, property_id: string): string | null {
-  const p = db.get<{ business_id: string; label: string }>('SELECT business_id, label FROM properties WHERE id = ?', [property_id]);
+  const p = getPropertiesBusinessIdLabelById<{ business_id: string; label: string }>(db, [property_id]);
   if (p === undefined) return null;
-  const a = db.get<{ id: string }>('SELECT id FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [p.business_id]);
+  const a = getAssessmentsIdByBusinessId2<{ id: string }>(db, [p.business_id]);
   if (a === undefined) return null;
-  const at = db.get<{ question_id: string }>(
-    "SELECT question_id FROM assessment_answers WHERE assessment_id = ? AND question_id LIKE 'Q2-%-address' AND state = 'ANSWERED' AND value = ?",
-    [a.id, p.label]);
+  const at = getAssessmentAnswersQuestionIdByAssessmentIdQuestionId<{ question_id: string }>(db, [a.id, p.label]);
   const n = at === undefined ? null : /^Q2-(\d+)-address$/.exec(at.question_id)?.[1] ?? null;
   if (n === null) return null;
-  const trigger = db.get<{ value: string | null }>("SELECT value FROM assessment_answers WHERE assessment_id = ? AND question_id = ? AND state = 'ANSWERED'", [a.id, `Q2-${n}-trigger`])?.value;
+  const trigger = getAssessmentAnswersValueByAssessmentIdQuestionId<{ value: string | null }>(db, [a.id, `Q2-${n}-trigger`])?.value;
   if (trigger !== 'purchase') return null;
-  return db.get<{ value: string | null }>("SELECT value FROM assessment_answers WHERE assessment_id = ? AND question_id = ? AND state = 'ANSWERED'", [a.id, `Q2-${n}-date`])?.value ?? null;
+  return getAssessmentAnswersValueByAssessmentIdQuestionId<{ value: string | null }>(db, [a.id, `Q2-${n}-date`])?.value ?? null;
 }
 
 /**
@@ -335,15 +331,14 @@ export function clientSaidPurchaseDate(db: Db, property_id: string): string | nu
  */
 export function clientSaidBought(db: Db, property_id: string | null): 'YES' | 'NO' | null {
   if (property_id === null) return null;
-  const p = db.get<{ business_id: string; label: string }>('SELECT business_id, label FROM properties WHERE id = ?', [property_id]);
+  const p = getPropertiesBusinessIdLabelById<{ business_id: string; label: string }>(db, [property_id]);
   if (p === undefined) return null;
-  const a = db.get<{ id: string }>('SELECT id FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [p.business_id]);
+  const a = getAssessmentsIdByBusinessId2<{ id: string }>(db, [p.business_id]);
   if (a === undefined) return null;
-  const answers = db.all<{ question_id: string; value: string | null }>(
-    "SELECT question_id, value FROM assessment_answers WHERE assessment_id = ? AND state = 'ANSWERED' AND (question_id LIKE 'Q2-%-address' OR question_id LIKE 'Q2-%-trigger')", [a.id]);
+  const answers = listAssessmentAnswersQuestionIdValueByAssessmentIdState<{ question_id: string; value: string | null }>(db, [a.id]);
   const at = answers.find((x) => /^Q2-\d+-address$/.test(x.question_id) && x.value === p.label);
   const triggers = answers.filter((x) => /^Q2-\d+-trigger$/.test(x.question_id));
-  const props = db.get<{ n: number }>('SELECT COUNT(*) AS n FROM properties WHERE business_id = ?', [p.business_id])?.n ?? 0;
+  const props = getPropertiesCountByBusinessId<{ n: number }>(db, [p.business_id])?.n ?? 0;
   const n = at !== undefined ? /^Q2-(\d+)-address$/.exec(at.question_id)?.[1] ?? null
     : triggers.length === 1 && props === 1 ? /^Q2-(\d+)-trigger$/.exec(triggers[0]?.question_id ?? '')?.[1] ?? null : null;
   if (n === null) return null;
@@ -386,7 +381,7 @@ export function earlyWindowWarning(db: Db, c: { readonly stage: string | null; r
 export function acquisitionDateReading(db: Db, property_id: string | null): FactReading {
   const label = 'The acquisition date';
   if (property_id === null) return unknown('ACQUISITION_DATE', label, false, null);
-  const p = db.get<{ acquisition_date: string | null }>('SELECT acquisition_date FROM properties WHERE id = ?', [property_id]);
+  const p = getPropertiesAcquisitionDateById<{ acquisition_date: string | null }>(db, [property_id]);
   if (p?.acquisition_date === null || p?.acquisition_date === undefined) {
     // PHASE 158d (F45): with nothing on the property record, the surveyor's legal-check date or the client's checked answer.
     const given = acquisitionGiven(db, property_id);
@@ -409,7 +404,7 @@ export function acquisitionDateReading(db: Db, property_id: string | null): Fact
 export function sufficientProfitReading(db: Db, c: ClaimRow, facts: Map<string, FactRow>): FactReading {
   const def = FACTS['SUFFICIENT_PROFIT'];
   if (c.assessment_id !== null) {
-    const a = db.get<{ sector: string }>('SELECT sector FROM assessments WHERE id = ?', [c.assessment_id]);
+    const a = getAssessmentsSectorById<{ sector: string }>(db, [c.assessment_id]);
     if (a !== undefined) {
       const mapped = sessionFromFunnel(a.sector as SectorId, funnelStateFor(db, c.assessment_id));
       const v = (mapped.session as Record<string, unknown>)['sufficient_profit'];
@@ -602,13 +597,8 @@ type GrantRow = {
 };
 
 function grantRows(db: Db, claim_id: string, activeOnly: boolean): GrantRow[] {
-  const rows = db.all<Omit<GrantRow, 'element_ids'>>(
-    'SELECT g.id, g.kind, g.payer_class, g.amount_pence, g.amount_basis, g.traced, g.traced_elements, g.source_id, g.note, ' +
-      'g.recorded_at, u.display_name AS recorder, g.withdrawn_at, g.withdraw_reason, g.paid_to, g.event_id FROM claim_grants g ' +
-      'LEFT JOIN users u ON u.id = g.recorded_by WHERE g.claim_id = ? ORDER BY g.recorded_at ASC, g.rowid ASC',
-    [claim_id]).filter((g) => !activeOnly || g.withdrawn_at === null);
-  const links = db.all<{ grant_id: string; element_id: string }>(
-    'SELECT e.grant_id, e.element_id FROM claim_grant_elements e JOIN claim_grants g ON g.id = e.grant_id WHERE g.claim_id = ?', [claim_id]);
+  const rows = listClaimGrantsIdKindByClaimId<Omit<GrantRow, 'element_ids'>>(db, [claim_id]).filter((g) => !activeOnly || g.withdrawn_at === null);
+  const links = listClaimGrantElementsGrantIdElementIdByClaimId<{ grant_id: string; element_id: string }>(db, [claim_id]);
   const order = new Map(taxonomy().map((r, i) => [r['element_id'] ?? '', i] as const));
   return rows.map((g) => ({
     ...g,
@@ -726,10 +716,7 @@ function switchLine(name: string, saysOff: string, saysOn: string): SwitchLine {
 }
 
 function ownerRows(db: Db, claim_id: string): OwnerLine[] {
-  return db.all<{ id: string; position: number; owner: string; acquired_on: string | null; ceased_on: string | null; claimed: string; source_id: string; recorded_at: string; recorder: string | null }>(
-    'SELECT o.id, o.position, o.owner, o.acquired_on, o.ceased_on, o.claimed, o.source_id, o.recorded_at, u.display_name AS recorder ' +
-      'FROM claim_owner_chain o LEFT JOIN users u ON u.id = o.recorded_by WHERE o.claim_id = ? AND o.withdrawn_at IS NULL ORDER BY o.position ASC',
-    [claim_id]).map((o) => ({
+  return listClaimOwnerChainIdPositionByClaimIdWithdrawnAt<{ id: string; position: number; owner: string; acquired_on: string | null; ceased_on: string | null; claimed: string; source_id: string; recorded_at: string; recorder: string | null }>(db, [claim_id]).map((o) => ({
     id: o.id, position: o.position, owner: OWNER_ROLE_TOKENS[o.owner] ?? o.owner, acquired_on: o.acquired_on, ceased_on: o.ceased_on,
     claimed: o.claimed === 'YES' ? 'claimed allowances' : o.claimed === 'NO' ? 'did not claim' : 'whether they claimed is not known',
     source: registerSource(o.source_id, false, `record ${o.id}`, o.recorded_at, o.recorder ?? 'a former user'),
@@ -920,11 +907,7 @@ export function recordFact(d: FactDeps, actor: Actor, claim_id: string, input: F
   }
   const id = d.newId();
   const at = d.now();
-  d.db.run(
-    'INSERT INTO claim_facts (id, claim_id, fact_key, answer, value_text, value_pence, value_date, source_id, note, recorded_by, recorded_at) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, c.id, key, answer, vText, vPence, vDate, source, note.value, actor.id, at],
-  );
+  insertClaimFacts(d.db, [id, c.id, key, answer, vText, vPence, vDate, source, note.value, actor.id, at]);
   d.audit.append({
     at, kind: 'CLAIM_FACT_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'claim', object_id: c.id, detail: { fact: key, answer, source, business: c.business_id },
@@ -943,23 +926,15 @@ export function recordFact(d: FactDeps, actor: Actor, claim_id: string, input: F
 export const SBA_STATEMENT_TYPE = 'SBA_ALLOWANCE_STATEMENT';
 
 export function recordSbaStatementHeld(d: { db: Db; audit: AuditLog; now: () => string; newId: () => string }, doc_id: string): string[] {
-  const v = d.db.get<{ logical_document_id: string; uploaded_by: string; role: string | null; version_no: number | null }>(
-    'SELECT d.logical_document_id, d.uploaded_by, u.role, d.version_no FROM documents d JOIN logical_documents l ON l.id = d.logical_document_id ' +
-      'LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.id = ? AND l.type_code = ? AND d.strip_recorded_at IS NOT NULL ' +
-      'AND d.quarantine_discharged_at IS NOT NULL AND d.failure_code IS NULL', [doc_id, SBA_STATEMENT_TYPE]);
+  const v = getDocumentsLogicalDocumentIdUploadedByByIdTypeCode<{ logical_document_id: string; uploaded_by: string; role: string | null; version_no: number | null }>(d.db, [doc_id, SBA_STATEMENT_TYPE]);
   if (v === undefined) return [];
-  const claims = d.db.all<{ id: string; business_id: string }>(
-    'SELECT DISTINCT c.id, c.business_id FROM document_links k JOIN claims c ON c.id = k.claim_id OR (k.property_id IS NOT NULL AND c.property_id = k.property_id) ' +
-      'WHERE k.logical_document_id = ? AND k.unlinked_at IS NULL ORDER BY c.id', [v.logical_document_id]);
+  const claims = listDocumentLinksIdBusinessIdByLogicalDocumentIdUnlinkedAt<{ id: string; business_id: string }>(d.db, [v.logical_document_id]);
   const done: string[] = [];
   for (const c of claims) {
     const was = latestFacts(d.db, c.id).get('SBA_STATEMENT_HELD');
     if (was?.answer === 'VALUE' && was.value_text === 'YES') continue;
     const at = d.now();
-    d.db.run(
-      'INSERT INTO claim_facts (id, claim_id, fact_key, answer, value_text, value_pence, value_date, source_id, note, recorded_by, recorded_at) ' +
-        "VALUES (?, ?, 'SBA_STATEMENT_HELD', 'VALUE', 'YES', NULL, NULL, 'CLIENT_DOC', ?, ?, ?)",
-      [d.newId(), c.id, `The seller’s allowance statement was received (version ${String(v.version_no ?? 1)}).`, v.uploaded_by, at]);
+    insertClaimFacts3(d.db, [d.newId(), c.id, `The seller’s allowance statement was received (version ${String(v.version_no ?? 1)}).`, v.uploaded_by, at]);
     d.audit.append({
       at, kind: 'CLAIM_FACT_RECORDED', outcome: 'ALLOWED', actor_id: v.uploaded_by, actor_role: v.role,
       object_type: 'claim', object_id: c.id, detail: { fact: 'SBA_STATEMENT_HELD', answer: 'VALUE', source: 'CLIENT_DOC', business: c.business_id, document: v.logical_document_id },
@@ -983,7 +958,7 @@ export const PUBLIC_PAYERS: readonly string[] = Object.freeze(['nhs', 'local_aut
 export function grantFormClaim(db: Db, actor: Actor, claim_id: string): { readonly id: string; readonly business_id: string; readonly company: string; readonly sector: string | null } {
   const c = loadFactClaim(db, claim_id);
   authorise(actor, 'claim_facts.record', factsObj(db, c));
-  const b = db.get<{ name: string; sector: string | null }>('SELECT name, sector FROM businesses WHERE id = ?', [c.business_id]);
+  const b = getBusinessesNameSectorById<{ name: string; sector: string | null }>(db, [c.business_id]);
   // Phase 153a: the sector, so the step that matches a grant offers that sector's rows of the fixture list.
   return { id: c.id, business_id: c.business_id, company: b?.name ?? 'This company', sector: b?.sector ?? null };
 }
@@ -1049,8 +1024,8 @@ export function recordGrant(d: FactDeps, actor: Actor, claim_id: string, input: 
   if (paidTo !== 'CLIENT' && paidTo !== 'PAST_OWNER') return { ok: false, field: 'paid_to', why: 'Say who received it: the client, or an earlier owner.' };
   const ev = (input['event_id'] ?? '').trim() === '' ? null : (input['event_id'] ?? '').trim();
   if (ev !== null) {
-    const pid = d.db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [c.id])?.p ?? null;
-    if (pid === null || d.db.get('SELECT id FROM property_events WHERE id = ? AND property_id = ?', [ev, pid]) === undefined) {
+    const pid = getClaimsPById<{ p: string | null }>(d.db, [c.id])?.p ?? null;
+    if (pid === null || getPropertyEventsIdByIdPropertyId(d.db, [ev, pid]) === undefined) {
       return { ok: false, field: 'event_id', why: 'Choose the purchase or a piece of work on this claim’s building.' };
     }
     if (paidTo === 'PAST_OWNER') return { ok: false, field: 'event_id', why: 'A grant paid to an earlier owner did not pay for the client’s spend. Leave the event empty.' };
@@ -1058,12 +1033,8 @@ export function recordGrant(d: FactDeps, actor: Actor, claim_id: string, input: 
   const id = d.newId();
   const at = d.now();
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO claim_grants (id, claim_id, kind, payer_class, amount_pence, amount_basis, traced, traced_elements, source_id, note, recorded_by, recorded_at, paid_to, event_id) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, c.id, kind, payer, amount, basis, traced, elements.value, source, note.value, actor.id, at, paidTo, ev],
-    );
-    for (const e of ids.value) d.db.run('INSERT INTO claim_grant_elements (grant_id, element_id) VALUES (?, ?)', [id, e]);
+    insertClaimGrants(d.db, [id, c.id, kind, payer, amount, basis, traced, elements.value, source, note.value, actor.id, at, paidTo, ev]);
+    for (const e of ids.value) insertClaimGrantElements(d.db, [id, e]);
     d.audit.append({
       at, kind: 'CLAIM_GRANT_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'claim', object_id: c.id, detail: { grant: id, grant_kind: kind, traced, business: c.business_id, items: ids.value.length },
@@ -1074,14 +1045,14 @@ export function recordGrant(d: FactDeps, actor: Actor, claim_id: string, input: 
 
 export function withdrawGrant(d: FactDeps, actor: Actor, claim_id: string, grant_id: string, reasonIn: string | null): FactResult {
   const c = factClaimFor(d, actor, claim_id);
-  const g = d.db.get<{ id: string; withdrawn_at: string | null }>('SELECT id, withdrawn_at FROM claim_grants WHERE id = ? AND claim_id = ?', [grant_id, c.id]);
+  const g = getClaimGrantsIdWithdrawnAtByIdClaimId<{ id: string; withdrawn_at: string | null }>(d.db, [grant_id, c.id]);
   if (g === undefined) throw new NotFoundAsRefusal();
   if (g.withdrawn_at !== null) return { ok: false, why: 'That grant is already removed. Its record is kept.' };
   const reason = text(reasonIn, 1000, 'The reason');
   if (!reason.ok) return reason;
   if (reason.value === null) return { ok: false, field: 'reason', why: 'Say why you are removing the grant. Its record is kept.' };
   const at = d.now();
-  d.db.run('UPDATE claim_grants SET withdrawn_by = ?, withdrawn_at = ?, withdraw_reason = ? WHERE id = ?', [actor.id, at, reason.value, g.id]);
+  updateClaimGrantsWithdrawnByWithdrawnAtById(d.db, [actor.id, at, reason.value, g.id]);
   d.audit.append({
     at, kind: 'CLAIM_GRANT_WITHDRAWN', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'claim', object_id: c.id, detail: { grant: g.id, business: c.business_id },
@@ -1114,15 +1085,11 @@ export function recordOwner(d: FactDeps, actor: Actor, claim_id: string, input: 
   if (claimed !== 'YES' && claimed !== 'NO' && claimed !== 'UNKNOWN') return { ok: false, field: 'claimed', why: 'Say if that owner claimed allowances — yes, no or not known.' };
   const source = input['source_id'] ?? null;
   if (!has(CAPTURE_SOURCES, source)) return { ok: false, field: 'source_id', why: 'Say where this came from.' };
-  const taken = d.db.get<{ id: string }>('SELECT id FROM claim_owner_chain WHERE claim_id = ? AND position = ? AND withdrawn_at IS NULL', [c.id, position]);
+  const taken = getClaimOwnerChainIdByClaimIdPosition<{ id: string }>(d.db, [c.id, position]);
   if (taken !== undefined) return { ok: false, why: 'An owner is already recorded at that position. Withdraw it first. Its record is kept.' };
   const id = d.newId();
   const at = d.now();
-  d.db.run(
-    'INSERT INTO claim_owner_chain (id, claim_id, position, owner, acquired_on, ceased_on, claimed, source_id, recorded_by, recorded_at) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, c.id, position, owner.value, acquired, ceased, claimed, source, actor.id, at],
-  );
+  insertClaimOwnerChain(d.db, [id, c.id, position, owner.value, acquired, ceased, claimed, source, actor.id, at]);
   d.audit.append({
     at, kind: 'CLAIM_OWNER_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'claim', object_id: c.id, detail: { owner_row: id, position, claimed, business: c.business_id },
@@ -1132,11 +1099,11 @@ export function recordOwner(d: FactDeps, actor: Actor, claim_id: string, input: 
 
 export function withdrawOwner(d: FactDeps, actor: Actor, claim_id: string, owner_id: string): FactResult {
   const c = factClaimFor(d, actor, claim_id);
-  const o = d.db.get<{ id: string; withdrawn_at: string | null }>('SELECT id, withdrawn_at FROM claim_owner_chain WHERE id = ? AND claim_id = ?', [owner_id, c.id]);
+  const o = getClaimOwnerChainIdWithdrawnAtByIdClaimId<{ id: string; withdrawn_at: string | null }>(d.db, [owner_id, c.id]);
   if (o === undefined) throw new NotFoundAsRefusal();
   if (o.withdrawn_at !== null) return { ok: false, why: 'That owner is already withdrawn. Its record is kept.' };
   const at = d.now();
-  d.db.run('UPDATE claim_owner_chain SET withdrawn_by = ?, withdrawn_at = ? WHERE id = ?', [actor.id, at, o.id]);
+  updateClaimOwnerChainWithdrawnByWithdrawnAtById(d.db, [actor.id, at, o.id]);
   d.audit.append({
     at, kind: 'CLAIM_OWNER_WITHDRAWN', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'claim', object_id: c.id, detail: { owner_row: o.id, business: c.business_id },
@@ -1150,11 +1117,8 @@ export function withdrawOwner(d: FactDeps, actor: Actor, claim_id: string, owner
  * one whose tick was taken off are not read.
  */
 export function approvedClientAnswer(db: Db, business_id: string, fact_id: string): { readonly answer: string; readonly at: string; readonly task_id: string } | null {
-  for (const t of db.all<{ id: string; answer: string | null; answered_at: string | null }>(
-    "SELECT id, answer, answered_at FROM client_tasks WHERE business_id = ? AND fact_id = ? AND state = 'ANSWERED' AND answer_state = 'ANSWERED' " +
-      'ORDER BY answered_at DESC, rowid DESC', [business_id, fact_id])) {
-    const tick = db.get<{ action: string }>('SELECT action FROM fact_approvals WHERE business_id = ? AND fact_ref = ? ORDER BY at DESC, rowid DESC LIMIT 1',
-      [business_id, `ans.${t.id}`]);
+  for (const t of listClientTasksIdAnswerByBusinessIdFactId<{ id: string; answer: string | null; answered_at: string | null }>(db, [business_id, fact_id])) {
+    const tick = getFactApprovalsActionByBusinessIdFactRef<{ action: string }>(db, [business_id, `ans.${t.id}`]);
     if (tick?.action === 'APPROVED' && t.answer !== null && t.answered_at !== null) return { answer: t.answer, at: t.answered_at, task_id: t.id };
   }
   return null;
@@ -1234,14 +1198,7 @@ function acquisitionGiven(db: Db, property_id: string): { value: string; words: 
   /* PHASE 159a (C3, L3): ONCE A VERSION IS SIGNED, ITS PURCHASE DATE IS THE ONE READ. The newest version a tax adviser's
      sign-off names, on a pack for this property, since the valuation was last reopened: its legal check's G9d as it was
      approved. A newer working answer in the pack is never read in its place. */
-  const signed = db.get<{ snapshot_json: string; version: number; approved_at: string; claim_id: string }>(
-    'SELECT a.snapshot_json, a.version, a.approved_at, j.claim_id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
-      'JOIN surveyor_jobs j ON j.id = p.job_id LEFT JOIN claims c ON c.id = j.claim_id ' +
-      'JOIN tax_adviser_signoffs s ON s.approval_id = a.id AND s.claim_id = j.claim_id ' +
-      'WHERE (p.property_id = ? OR (p.property_id IS NULL AND c.property_id = ?)) ' +
-      "AND s.recorded_at >= COALESCE((SELECT MAX(m.at) FROM claim_stage_moves m WHERE m.claim_id = j.claim_id AND m.kind = 'REOPEN' " +
-      "AND m.to_stage IN (SELECT value FROM json_each(?))), '') " +
-      'ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [property_id, property_id, JSON.stringify(VOIDING_REOPEN_STAGES)]);
+  const signed = getSurveyPackApprovalsSnapshotJsonVersionByPropertyId<{ snapshot_json: string; version: number; approved_at: string; claim_id: string }>(db, [property_id, property_id, JSON.stringify(VOIDING_REOPEN_STAGES)]);
   if (signed !== undefined) {
     let snap: { legal?: { answers?: { question_id: string; value: unknown }[] } } = {};
     try { snap = JSON.parse(signed.snapshot_json) as typeof snap; } catch { snap = {}; }
@@ -1252,17 +1209,14 @@ function acquisitionGiven(db: Db, property_id: string): { value: string; words: 
         locator: `the signed survey report, version ${String(signed.version)}, legal check question G9d`, at: signed.approved_at };
     }
   }
-  const g = signed !== undefined ? undefined : db.get<{ value_json: string; at: string }>(
-    'SELECT a.value_json, a.at FROM survey_pack_legal_answers a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
-      "LEFT JOIN claims c ON c.id = j.claim_id WHERE a.question_id = 'G9d' AND (p.property_id = ? OR (p.property_id IS NULL AND c.property_id = ?)) " +
-      'ORDER BY a.at DESC, a.seq DESC LIMIT 1', [property_id, property_id]);
+  const g = signed !== undefined ? undefined : getSurveyPackLegalAnswersValueJsonAtByQuestionIdPropertyId<{ value_json: string; at: string }>(db, [property_id, property_id]);
   if (g !== undefined) {
     let v: unknown = null;
     try { v = JSON.parse(g.value_json); } catch { v = null; }
     const d = typeof v === 'string' ? clientDate(v) : null;
     if (d !== null) return { value: d, words: 'the surveyor’s legal check', publisher: 'The surveyor', locator: 'the survey pack’s legal check, question G9d', at: g.at };
   }
-  const biz = db.get<{ business_id: string }>('SELECT business_id FROM properties WHERE id = ?', [property_id])?.business_id;
+  const biz = getPropertiesBusinessIdById<{ business_id: string }>(db, [property_id])?.business_id;
   const said = biz === undefined ? null : approvedClientAnswer(db, biz, 'completion_date');
   const d = said === null ? null : clientDate(said.answer);
   return said !== null && d !== null

@@ -57,7 +57,7 @@ import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { outboxTransport } from '../../integrations/index.ts';
-import { loadLetter, type OpenTerm } from '../claims/letter.ts';
+import { loadLetter, type OpenTerm } from '../claims/index.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
 import { PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
@@ -66,6 +66,9 @@ import { ownerChoices } from './crm.ts';
 import { SECTORS } from './leads.ts';
 import { ACTIVITY_TYPES, RECIPROCITY_ACTIVITY_TYPES, dueReading, insertTask } from './tasks.ts';
 import { vocabChoice, vocabLabel, vocabulary } from '../../web/vocabularies.ts';
+import { getContactsIdByIdIntroducerId, getContactsIdFullNameByIdIntroducerId, getIntroducerFeesCountByIntroducerId, getIntroducerFeesIdByClaimId, getIntroducerNoticesIdByLeadIdNotice, getIntroducerPercentageEntriesIdByInvoiceIdEntryKind, getIntroducerPercentageEntriesIntroducerIdClaimIdByInvoiceId, getIntroducerPercentageEntriesTByInvoiceId, getIntroducerTermsSignaturesTermsVersionSignedOnByIntroducer, getIntroducersFirmNameById, getIntroducersIdById, getIntroducersIdIntroducerTypeById, getIntroducersIdMergedIntoIdById, getLeadsClaimIdById, getLeadsIdBusinessIdByBusinessIdIntroducerId, getLeadsIdBusinessIdById2, getLeadsIdBusinessIdById7, getLeadsIdByClaimIdIntroducerId, getLeadsIntroducerIdByClaimIdIntroducerType, getLeadsIntroducerIdById, getStaffTasksCompletedAtActivityTypeByIntroducerIdStatus, getStaffTasksCountByIntroducerId, getStaffTasksDueOnTitleByIntroducerIdStatus, insertContacts5, insertIntroducerFees, insertIntroducerMerges, insertIntroducerNotices, insertIntroducerPercentageEntries, insertIntroducerPercentageEntries2, insertIntroducerShareConsents, insertIntroducerShareConsents2, insertIntroducerTermsSignatures, insertIntroducers, insertIntroducers2, insertLeads5, listContactsIdFullNameByIntroducerId, listIntroducerNoticesAtNoticeByLeadId, listIntroducersIdName, listIntroducersIdNameByIdMergedIntoId, listLeadsLeadIdIntroducerIdByBusinessId, updateContactsFullNameJobRoleOtherById2, updateContactsIntroducerIdUpdatedAtByIntroducerId, updateIntroducerFeesDisclosureGivenAtDisclosureRecordedByByI, updateIntroducerFeesStatePaidAtById, updateIntroducerMergesCompletedAtLeadsMovedById, updateIntroducerRewardSettingModelFeePenceById, updateIntroducersFirmNameIntroducerTypeById, updateIntroducersMergedIntoIdMergedAtById, updateIntroducersNoticeContactIdUpdatedAtByIdNoticeContactId, updateLeadsIntroducerIdUpdatedAtByIntroducerId, updateStaffTasksIntroducerIdUpdatedAtByIntroducerIdStatus, updateStaffTasksStatusCompletedAtById } from './data.ts';
+import { getClaimStageMovesLabelByClaimIdToStage, getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getInvoiceCreditNotesIdInvoiceIdById, getInvoiceCreditNotesNByInvoiceId, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesIdClaimIdById, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence, getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO, listInvoicesIdFeeByClaimIdIntroducerId, listLeadsIdBusinessIdByIntroducerId, listStaffTasksIdTitleByIntroducerIdStatus } from './data-borrowed.ts';
+import { getClaimsStageHoldReturnStageById, listClaimStageMovesToStageByClaimId } from '../claims/index.ts';
 
 export type IntroducerDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -146,9 +149,7 @@ export type TermsSignature = { readonly version: string; readonly signed_on: str
 
 /** The firm's latest signature of the terms, or null: not registered. */
 export function termsSignature(db: Db, introducer_id: string): TermsSignature | null {
-  const r = db.get<{ terms_version: string; signed_on: string; recorded_at: string }>(
-    'SELECT terms_version, signed_on, recorded_at FROM introducer_terms_signatures WHERE introducer_id = ? ORDER BY signed_on DESC, recorded_at DESC, rowid DESC LIMIT 1',
-    [introducer_id]);
+  const r = getIntroducerTermsSignaturesTermsVersionSignedOnByIntroducer<{ terms_version: string; signed_on: string; recorded_at: string }>(db, [introducer_id]);
   return r === undefined ? null : { version: r.terms_version, signed_on: r.signed_on, recorded: localStamp(r.recorded_at) };
 }
 
@@ -165,8 +166,7 @@ export function recordTermsSigned(d: IntroducerDeps, actor: Actor, introducer_id
   if (firm.length < 2) return { ok: false, why: 'Give the name that signed for the firm, as on the signed copy.', field: 'firm_signatory' };
   if (ours.length < 2) return { ok: false, why: 'Give the director who signed for us, as on the signed copy.', field: 'our_signatory' };
   const id = d.newId();
-  d.db.run('INSERT INTO introducer_terms_signatures (id, introducer_id, terms_version, signed_on, firm_signatory, our_signatory, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, r.id, INTRODUCER_TERMS.version, signed_on, firm, ours, actor.id, d.now()]);
+  insertIntroducerTermsSignatures(d.db, [id, r.id, INTRODUCER_TERMS.version, signed_on, firm, ours, actor.id, d.now()]);
   // Ids and the version only: the names are on the row.
   record(d, actor, 'INTRODUCER_TERMS_SIGNED', 'ALLOWED', 'introducer', r.id, { signature: id, terms_version: INTRODUCER_TERMS.version });
   return { ok: true, id };
@@ -360,13 +360,13 @@ function loadIntroducer(db: Db, id: string): IntroducerDbRow {
 }
 
 export function introducerExists(db: Db, id: string): boolean {
-  return db.get<{ id: string }>('SELECT id FROM introducers WHERE id = ?', [id]) !== undefined;
+  return getIntroducersIdById<{ id: string }>(db, [id]) !== undefined;
 }
 
 /** The firms a lead may be attributed to — for a reader of introducers only. */
 export function introducerChoices(db: Db, actor: Actor): { id: string; name: string }[] {
   if (!can(actor, 'introducer.read', introducerObj(SECTION))) return [];
-  return db.all<{ id: string; name: string }>('SELECT id, firm_name AS name FROM introducers ORDER BY firm_name ASC, id ASC LIMIT 500');
+  return listIntroducersIdName<{ id: string; name: string }>(db);
 }
 
 /* ------------------------------------------------ the figures, derived */
@@ -380,12 +380,7 @@ export type PipelineFigures = {
 
 /** Exported for CRM 9 of 10's claims-by-introducer tile, which reads these queries and never a second count. */
 export function pipelineFigures(db: Db, id: string): PipelineFigures {
-  const r = db.get<{ referred: number; opened: number; won: number; negatives: number }>(
-    'SELECT (SELECT COUNT(*) FROM leads WHERE introducer_id = ?) AS referred, ' +
-      '(SELECT COUNT(*) FROM leads WHERE introducer_id = ? AND claim_id IS NOT NULL) AS opened, ' +
-      "(SELECT COUNT(*) FROM leads l JOIN claims c ON c.id = l.claim_id WHERE l.introducer_id = ? AND c.stage = 'CLOSED') AS won, " +
-      "(SELECT COUNT(*) FROM leads l JOIN claims c ON c.id = l.claim_id WHERE l.introducer_id = ? AND c.stage = 'REASONED_NEGATIVE') AS negatives",
-    [id, id, id, id]);
+  const r = getLeadsCOUNTByIntroducerId<{ referred: number; opened: number; won: number; negatives: number }>(db, [id, id, id, id]);
   return {
     leads_referred: r?.referred ?? 0, claims_opened: r?.opened ?? 0, claims_won: r?.won ?? 0, reasoned_negatives: r?.negatives ?? 0,
   };
@@ -407,10 +402,7 @@ const EXITS_SQL = ['DECLINED_AT_ENQUIRY', 'CLIENT_DID_NOT_PROCEED', 'CLIENT_DECL
  * no sealed estimate is COUNTED AS HAVING NONE, and never added in as nought.
  */
 function valueReading(db: Db, id: string): ValueReading {
-  const rows = db.all<{ stage: string | null; q: number | null }>(
-    'SELECT c.stage AS stage, (SELECT e.qualifying_expenditure_pence FROM estimates e WHERE e.assessment_id = c.assessment_id ' +
-      'ORDER BY e.rowid DESC LIMIT 1) AS q FROM leads l JOIN claims c ON c.id = l.claim_id WHERE l.introducer_id = ?',
-    [id]);
+  const rows = listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO<{ stage: string | null; q: number | null }>(db, [id]);
   const live = rows.filter((r) => r.stage === null || !EXITS_SQL.includes(r.stage));
   const known = live.filter((r) => r.q !== null);
   const sum = known.reduce((a, r) => a + (r.q ?? 0), 0);
@@ -440,15 +432,10 @@ export type MoneyReading = {
  * organisation is not the firm's referral, and is not counted.
  */
 function moneyReading(db: Db, id: string): MoneyReading {
-  const rows = db.all<{ id: string; fee: number | null }>(
-    'SELECT i.id, i.fee_pence AS fee FROM invoices i WHERE i.claim_id IN ' +
-      "(SELECT l.claim_id FROM leads l WHERE l.introducer_id = ? AND l.claim_id IS NOT NULL) AND i.invoice_status IN ('RAISED','SENT')",
-    [id]);
+  const rows = listInvoicesIdFeeByClaimIdIntroducerId<{ id: string; fee: number | null }>(db, [id]);
   const withFee = rows.filter((r) => r.fee !== null);
-  const credited = rows.reduce((a, r) => a + (db.get<{ n: number | null }>(
-    'SELECT SUM(amount_pence) AS n FROM invoice_credit_notes WHERE invoice_id = ?', [r.id])?.n ?? 0), 0);
-  const received = rows.reduce((a, r) => a + (db.get<{ n: number | null }>(
-    'SELECT SUM(amount_pence) AS n FROM invoice_payments WHERE invoice_id = ? AND voided_at IS NULL', [r.id])?.n ?? 0), 0);
+  const credited = rows.reduce((a, r) => a + (getInvoiceCreditNotesNByInvoiceId<{ n: number | null }>(db, [r.id])?.n ?? 0), 0);
+  const received = rows.reduce((a, r) => a + (getInvoicePaymentsNByInvoiceIdVoidedAt<{ n: number | null }>(db, [r.id])?.n ?? 0), 0);
   return {
     fees_invoiced: rows.length === 0 ? formatPence(0)
       : withFee.length === 0 ? 'not known — no fee is recorded on those invoices'
@@ -463,10 +450,7 @@ function moneyReading(db: Db, id: string): MoneyReading {
 
 /** THE LAST CONTACT — the latest completed call, email, meeting or reciprocity task on the firm. Never typed. */
 function lastContact(db: Db, id: string): { readonly at: string | null; readonly label: string } {
-  const t = db.get<{ completed_at: string; activity_type: string }>(
-    "SELECT completed_at, activity_type FROM staff_tasks WHERE introducer_id = ? AND status = 'COMPLETED' " +
-      "AND activity_type IN ('CALL','EMAIL','MEETING','CPD_SESSION','CO_BRANDED_ONE_PAGER','PRIORITY_TURNAROUND') " +
-      'ORDER BY completed_at DESC, rowid DESC LIMIT 1', [id]);
+  const t = getStaffTasksCompletedAtActivityTypeByIntroducerIdStatus<{ completed_at: string; activity_type: string }>(db, [id]);
   void CONTACT_THAT_COUNTS;
   if (t === undefined) return { at: null, label: 'none recorded — no call, email, meeting or reciprocity with this firm is logged' };
   const kind = RECIPROCITY_ACTIVITY_TYPES[t.activity_type] ?? vocabLabel(db, 'ACTIVITY_TYPE', t.activity_type, t.activity_type);
@@ -475,10 +459,7 @@ function lastContact(db: Db, id: string): { readonly at: string | null; readonly
 
 /** THE NEXT CONTACT — the earliest open task on the firm, overdue by the UK date. */
 function nextContact(db: Db, id: string, nowIso: string): { readonly label: string; readonly overdue: boolean; readonly open: number } {
-  const t = db.get<{ due_on: string | null; title: string; n: number }>(
-    "SELECT due_on, title, (SELECT COUNT(*) FROM staff_tasks x WHERE x.introducer_id = ? AND x.status IN ('OPEN','IN_PROGRESS')) AS n " +
-      "FROM staff_tasks WHERE introducer_id = ? AND status IN ('OPEN','IN_PROGRESS') ORDER BY due_on IS NULL, due_on ASC, created_at ASC LIMIT 1",
-    [id, id]);
+  const t = getStaffTasksDueOnTitleByIntroducerIdStatus<{ due_on: string | null; title: string; n: number }>(db, [id, id]);
   if (t === undefined) return { label: 'not planned — no open task on the firm', overdue: false, open: 0 };
   const due = dueReading(t.due_on, nowIso);
   return { label: `${t.due_on ?? 'no due date'} — ${t.title}${due.overdue ? ' — overdue' : ''}`, overdue: due.overdue, open: t.n };
@@ -577,16 +558,11 @@ export type IntroducerView = {
 };
 
 function contactLog(db: Db, actor: Actor, id: string, nowIso: string): ContactLine[] {
-  return db.all<{
+  return listStaffTasksIdTitleByIntroducerIdStatus<{
     id: string; title: string; description: string | null; activity_type: string; status: string; due_on: string | null;
     completed_at: string | null; cancelled_at: string | null; owner_id: string | null; owner_role: string | null;
     owner: string | null; completer: string | null; person: string | null;
-  }>(
-    'SELECT t.id, t.title, t.description, t.activity_type, t.status, t.due_on, t.completed_at, t.cancelled_at, t.owner_id, ' +
-      't.owner_role, o.display_name AS owner, cu.display_name AS completer, c.full_name AS person FROM staff_tasks t ' +
-      'LEFT JOIN users o ON o.id = t.owner_id LEFT JOIN users cu ON cu.id = t.completed_by LEFT JOIN contacts c ON c.id = t.contact_id ' +
-      "WHERE t.introducer_id = ? ORDER BY t.status IN ('COMPLETED','CANCELLED'), t.due_on IS NULL, t.due_on ASC, " +
-      't.completed_at DESC, t.created_at DESC', [id])
+  }>(db, [id])
     .filter((t) => can(actor, 'staff_task.read', {
       type: 'staff_task', id: t.id, business_id: null, owner_id: t.owner_id, owner_role: t.owner_role, assigned_surveyor_ids: [],
     }))
@@ -611,18 +587,14 @@ export function introducerView(db: Db, actor: Actor, id: string, nowIso: string)
   const setting = rewardSetting(db);
   const mayWrite = can(actor, 'introducer.write', introducerObj(r.id)) && can(actor, 'staff_task.create', TASK_SECTION);
 
-  const contacts = full ? db.all<{ id: string; full_name: string; job_role_other: string | null; email: string | null; phone: string | null; notes: string | null }>(
-    'SELECT id, full_name, job_role_other, email, phone, notes FROM contacts WHERE introducer_id = ? ORDER BY full_name ASC, id ASC', [r.id])
+  const contacts = full ? listContactsIdFullNameByIntroducerId<{ id: string; full_name: string; job_role_other: string | null; email: string | null; phone: string | null; notes: string | null }>(db, [r.id])
     .filter((c) => can(actor, 'contact.read', { type: 'contact', id: c.id, business_id: null }))
     .map((c) => ({
       id: c.id, full_name: c.full_name, job_title: c.job_role_other, email: c.email, phone: c.phone, notes: c.notes,
       receives_notices: c.id === r.notice_contact_id,
     })) : undefined;
 
-  const referrals = full ? db.all<{ id: string; business_id: string | null; organisation: string; lead_date: string; status: string; claim_id: string | null; claim_ref: string | null; stage: string | null }>(
-    'SELECT l.id, l.business_id, COALESCE(b.name, l.prospect_organisation) AS organisation, l.lead_date, l.status, l.claim_id, ' +
-      'c.claim_ref, c.stage FROM leads l LEFT JOIN businesses b ON b.id = l.business_id LEFT JOIN claims c ON c.id = l.claim_id ' +
-      'WHERE l.introducer_id = ? ORDER BY l.lead_date DESC, l.id ASC', [r.id])
+  const referrals = full ? listLeadsIdBusinessIdByIntroducerId<{ id: string; business_id: string | null; organisation: string; lead_date: string; status: string; claim_id: string | null; claim_ref: string | null; stage: string | null }>(db, [r.id])
     .filter((l) => can(actor, 'lead.read', { type: 'lead', id: l.id, business_id: l.business_id }))
     .map((l) => {
       const share = can(actor, 'share_consent.read', { type: 'share_consent', id: l.id, business_id: l.business_id })
@@ -666,8 +638,7 @@ export function introducerView(db: Db, actor: Actor, id: string, nowIso: string)
     // and ADMIN is offered the merge for a firm still recorded.
     ...(full ? { merged_into: r.merged_into_id === null ? null : { id: r.merged_into_id, name: r.merged_into_name ?? 'a firm', at: localStamp(r.merged_at ?? r.updated_at) } } : {}),
     ...(r.merged_into_id === null && can(actor, 'introducer.merge', introducerObj(r.id)) ? {
-      merge: { choices: db.all<{ id: string; name: string }>(
-        'SELECT id, firm_name AS name FROM introducers WHERE id <> ? AND merged_into_id IS NULL ORDER BY firm_name ASC, id ASC LIMIT 500', [r.id]) },
+      merge: { choices: listIntroducersIdNameByIdMergedIntoId<{ id: string; name: string }>(db, [r.id]) },
     } : {}),
     may_write: mayWrite,
     ...(mayWrite ? {
@@ -701,7 +672,7 @@ function firmValues(db: Db, input: Fields, stored: FirmValues, firmId: string | 
   const notice = take(input, 'notice_contact_id', stored.notice_contact_id, (v): Check<string | null> => {
     if (v === null || v === '') return { ok: true, value: null };
     if (firmId === null) return { ok: false, why: 'Name who receives notices once the firm has people recorded.' };
-    return db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ? AND introducer_id = ?', [v, firmId]) === undefined
+    return getContactsIdByIdIntroducerId<{ id: string }>(db, [v, firmId]) === undefined
       ? { ok: false, why: 'The person who receives notices must be one of this firm’s own people.' } : { ok: true, value: v };
   });
   for (const c of [name, type, owner, started, notes, notice]) if (!c.ok) return c;
@@ -738,30 +709,26 @@ export function mergeIntroducer(d: IntroducerDeps, actor: Actor, from_id: string
   authorise(actor, 'introducer.merge', introducerObj(from_id));
   const from = loadIntroducer(d.db, from_id);
   const intoId = (input['into_id'] ?? '').trim();
-  const into = d.db.get<{ id: string; merged_into_id: string | null }>('SELECT id, merged_into_id FROM introducers WHERE id = ?', [intoId]);
+  const into = getIntroducersIdMergedIntoIdById<{ id: string; merged_into_id: string | null }>(d.db, [intoId]);
   if (into === undefined) return { ok: false, why: 'Choose the firm this one really is, from the firms recorded.' };
   if (into.id === from.id) return { ok: false, why: 'A firm is not merged onto itself.' };
   if (from.merged_into_id !== null) return { ok: false, why: 'This firm has already been merged onto another.' };
   if (into.merged_into_id !== null) return { ok: false, why: 'That firm was itself merged away. Choose the firm it was merged onto.' };
   const reason = (input['reason'] ?? '').trim();
   if (reason.length < 2 || reason.length > 1000) return { ok: false, why: 'Say why these are the same firm — up to 1,000 characters.' };
-  if ((d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM introducer_fees WHERE introducer_id = ?', [from.id])?.n ?? 0) > 0) {
+  if ((getIntroducerFeesCountByIntroducerId<{ n: number }>(d.db, [from.id])?.n ?? 0) > 0) {
     return { ok: false, why: 'This firm has a fee recorded against it. Money is never moved by a merge: settle or record it on the firm it was accrued to first.' };
   }
   const id = d.newId();
   const at = d.now();
   const moved = d.db.tx(() => {
-    d.db.run('INSERT INTO introducer_merges (id, from_id, into_id, reason, merged_by, started_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, from.id, into.id, reason, actor.id, at]);
-    const people = d.db.run('UPDATE contacts SET introducer_id = ?, updated_at = ? WHERE introducer_id = ?', [into.id, at, from.id]).changes;
-    const leads = d.db.run('UPDATE leads SET introducer_id = ?, updated_at = ? WHERE introducer_id = ?', [into.id, at, from.id]).changes;
-    const tasks = d.db.run("UPDATE staff_tasks SET introducer_id = ?, updated_at = ? WHERE introducer_id = ? AND status IN ('OPEN','IN_PROGRESS')",
-      [into.id, at, from.id]).changes;
-    const closed = d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM staff_tasks WHERE introducer_id = ?', [from.id])?.n ?? 0;
-    d.db.run('UPDATE introducers SET merged_into_id = ?, merged_at = ?, merged_by = ?, notice_contact_id = NULL, updated_at = ? WHERE id = ?',
-      [into.id, at, actor.id, at, from.id]);
-    d.db.run('UPDATE introducer_merges SET completed_at = ?, leads_moved = ?, people_moved = ?, tasks_moved = ? WHERE id = ?',
-      [at, leads, people, tasks, id]);
+    insertIntroducerMerges(d.db, [id, from.id, into.id, reason, actor.id, at]);
+    const people = updateContactsIntroducerIdUpdatedAtByIntroducerId(d.db, [into.id, at, from.id]).changes;
+    const leads = updateLeadsIntroducerIdUpdatedAtByIntroducerId(d.db, [into.id, at, from.id]).changes;
+    const tasks = updateStaffTasksIntroducerIdUpdatedAtByIntroducerIdStatus(d.db, [into.id, at, from.id]).changes;
+    const closed = getStaffTasksCountByIntroducerId<{ n: number }>(d.db, [from.id])?.n ?? 0;
+    updateIntroducersMergedIntoIdMergedAtById(d.db, [into.id, at, actor.id, at, from.id]);
+    updateIntroducerMergesCompletedAtLeadsMovedById(d.db, [at, leads, people, tasks, id]);
     return { people, leads, tasks, closed };
   });
   record(d, actor, 'INTRODUCER_MERGED', 'ALLOWED', 'introducer', from.id, {
@@ -778,10 +745,7 @@ export function createIntroducer(d: IntroducerDeps, actor: Actor, input: Fields)
   if (!v.ok) return v;
   const id = d.newId();
   const at = d.now();
-  d.db.run(
-    'INSERT INTO introducers (id, firm_name, introducer_type, owner_id, relationship_started_on, ' +
-      "notice_contact_id, notes, created_via, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, ?, 'STAFF', ?, ?)",
-    [id, v.value.firm_name, v.value.introducer_type, v.value.owner_id, v.value.relationship_started_on, v.value.notes, at, at]);
+  insertIntroducers(d.db, [id, v.value.firm_name, v.value.introducer_type, v.value.owner_id, v.value.relationship_started_on, v.value.notes, at, at]);
   // WHICH route and kind, never what the notes say: a note can hold a name, and this log cannot be deleted.
   record(d, actor, 'INTRODUCER_CREATED', 'ALLOWED', 'introducer', id, { created_via: 'STAFF', introducer_type: v.value.introducer_type });
   return { ok: true, id };
@@ -798,10 +762,7 @@ export function updateIntroducer(d: IntroducerDeps, actor: Actor, id: string, in
   if (!v.ok) return v;
   const changed = (Object.keys(stored) as (keyof FirmValues)[]).filter((k) => stored[k] !== v.value[k]);
   if (changed.length === 0) return { ok: true, id: r.id };
-  d.db.run(
-    'UPDATE introducers SET firm_name = ?, introducer_type = ?, owner_id = ?, relationship_started_on = ?, ' +
-      'notes = ?, notice_contact_id = ?, updated_at = ? WHERE id = ?',
-    [v.value.firm_name, v.value.introducer_type, v.value.owner_id, v.value.relationship_started_on,
+  updateIntroducersFirmNameIntroducerTypeById(d.db, [v.value.firm_name, v.value.introducer_type, v.value.owner_id, v.value.relationship_started_on,
       v.value.notes, v.value.notice_contact_id, d.now(), r.id]);
   record(d, actor, 'INTRODUCER_UPDATED', 'ALLOWED', 'introducer', r.id, { fields: changed });
   return { ok: true, id: r.id };
@@ -830,13 +791,10 @@ function personValues(input: Fields, stored: PersonValues): Check<PersonValues> 
 /** Inside a caller's transaction. NO CONSENT IS INVENTED: a person typed in has ticked nothing. */
 function insertPerson(d: IntroducerDeps, introducer_id: string, v: PersonValues, at: string): string {
   const id = d.newId();
-  d.db.run(
-    'INSERT INTO contacts (id, business_id, lead_id, introducer_id, full_name, job_role, job_role_other, contact_consent, ' +
-      "marketing_optin, created_at, contact_type, email, phone, notes, updated_at) VALUES (?, NULL, NULL, ?, ?, NULL, ?, 0, 0, ?, 'INTRODUCER', ?, ?, ?, ?)",
-    [id, introducer_id, v.full_name, v.job_role_other, at, v.email, v.phone, v.notes, at]);
+  insertContacts5(d.db, [id, introducer_id, v.full_name, v.job_role_other, at, v.email, v.phone, v.notes, at]);
   // THE FIRST PERSON WITH AN ADDRESS RECEIVES NOTICES, until somebody names another (row E49).
   if (v.email !== null) {
-    d.db.run('UPDATE introducers SET notice_contact_id = ?, updated_at = ? WHERE id = ? AND notice_contact_id IS NULL', [id, at, introducer_id]);
+    updateIntroducersNoticeContactIdUpdatedAtByIdNoticeContactId(d.db, [id, at, introducer_id]);
   }
   return id;
 }
@@ -854,8 +812,7 @@ export function addIntroducerContact(d: IntroducerDeps, actor: Actor, introducer
 
 export function updateIntroducerContact(d: IntroducerDeps, actor: Actor, introducer_id: string, contact_id: string, input: Fields): WriteResult {
   const r = loadIntroducer(d.db, introducer_id);
-  const c = d.db.get<{ id: string; full_name: string; job_role_other: string | null; email: string | null; phone: string | null; notes: string | null }>(
-    'SELECT id, full_name, job_role_other, email, phone, notes FROM contacts WHERE id = ? AND introducer_id = ?', [contact_id, r.id]);
+  const c = getContactsIdFullNameByIdIntroducerId<{ id: string; full_name: string; job_role_other: string | null; email: string | null; phone: string | null; notes: string | null }>(d.db, [contact_id, r.id]);
   if (c === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'introducer.write', introducerObj(r.id));
   authorise(actor, 'contact.write', { type: 'contact', id: c.id, business_id: null });
@@ -864,8 +821,7 @@ export function updateIntroducerContact(d: IntroducerDeps, actor: Actor, introdu
   if (!v.ok) return v;
   const changed = (Object.keys(stored) as (keyof PersonValues)[]).filter((k) => stored[k] !== v.value[k]);
   if (changed.length === 0) return { ok: true, id: c.id };
-  d.db.run('UPDATE contacts SET full_name = ?, job_role_other = ?, email = ?, phone = ?, notes = ?, updated_at = ? WHERE id = ?',
-    [v.value.full_name, v.value.job_role_other, v.value.email, v.value.phone, v.value.notes, d.now(), c.id]);
+  updateContactsFullNameJobRoleOtherById2(d.db, [v.value.full_name, v.value.job_role_other, v.value.email, v.value.phone, v.value.notes, d.now(), c.id]);
   record(d, actor, 'CONTACT_UPDATED', 'ALLOWED', 'contact', c.id, { business: null, introducer: r.id, fields: changed });
   return { ok: true, id: c.id };
 }
@@ -894,7 +850,7 @@ function contactTaskValues(d: IntroducerDeps, firmId: string, input: Fields): Ch
   const contact = textField(input['contact_id'], 64, 'The person');
   if (!contact.ok) return contact;
   if (contact.value !== null
-    && d.db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ? AND introducer_id = ?', [contact.value, firmId]) === undefined) {
+    && getContactsIdByIdIntroducerId<{ id: string }>(d.db, [contact.value, firmId]) === undefined) {
     return { ok: false, why: 'The person must be one of this firm’s own people.' };
   }
   return { ok: true, value: { kind, title: title.value, note: note.value, contact_id: contact.value } };
@@ -915,7 +871,7 @@ export function logContact(d: IntroducerDeps, actor: Actor, introducer_id: strin
       contact_id: v.value.contact_id, fact_id: null, recurrence: null, recurred_from_id: null, is_next_action: false,
       origin: 'STAFF', automation_run_id: null, created_by: actor.id,
     });
-    d.db.run("UPDATE staff_tasks SET status = 'COMPLETED', completed_at = ?, completed_by = ?, updated_at = ? WHERE id = ?", [at, actor.id, at, task]);
+    updateStaffTasksStatusCompletedAtById(d.db, [at, actor.id, at, task]);
     return task;
   });
   record(d, actor, 'STAFF_TASK_CREATED', 'ALLOWED', 'staff_task', id, { task: id, introducer: r.id, activity: v.value.kind, route: 'introducer_contact_logged' });
@@ -991,7 +947,7 @@ export function intakeReferral(d: IntroducerDeps, actor: Actor | null, input: Fi
   let firm: { id: string; type: string | null } | null = null;
   let newFirm: FirmValues | null = null;
   if (existingFirm.value !== null) {
-    const r = d.db.get<{ id: string; introducer_type: string | null }>('SELECT id, introducer_type FROM introducers WHERE id = ?', [existingFirm.value]);
+    const r = getIntroducersIdIntroducerTypeById<{ id: string; introducer_type: string | null }>(d.db, [existingFirm.value]);
     if (r === undefined) return { ok: false, why: 'Choose one of the introducers offered, or name a new firm.' };
     firm = { id: r.id, type: r.introducer_type };
   } else {
@@ -1010,7 +966,7 @@ export function intakeReferral(d: IntroducerDeps, actor: Actor | null, input: Fi
   const existingPerson = route === 'STAFF' ? textField(input['contact_id'], 64, 'The person') : { ok: true as const, value: null };
   if (!existingPerson.ok) return existingPerson;
   if (existingPerson.value !== null && (firm === null
-    || d.db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ? AND introducer_id = ?', [existingPerson.value, firm.id]) === undefined)) {
+    || getContactsIdByIdIntroducerId<{ id: string }>(d.db, [existingPerson.value, firm.id]) === undefined)) {
     return { ok: false, why: 'The person referring must be one of that firm’s own people.' };
   }
   const named = [input['contact_name'], input['contact_email'], input['contact_phone']].some((x) => x !== null && x !== undefined && x.trim() !== '');
@@ -1034,20 +990,12 @@ export function intakeReferral(d: IntroducerDeps, actor: Actor | null, input: Fi
       const v = newFirm as FirmValues;
       firmId = d.newId();
       firmType = v.introducer_type;
-      d.db.run(
-        'INSERT INTO introducers (id, firm_name, introducer_type, owner_id, relationship_started_on, ' +
-          'notice_contact_id, notes, created_via, created_at, updated_at) VALUES (?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?)',
-        [firmId, v.firm_name, v.introducer_type, route === 'STAFF' && actor !== null ? actor.id : null, route, at, at]);
+      insertIntroducers2(d.db, [firmId, v.firm_name, v.introducer_type, route === 'STAFF' && actor !== null ? actor.id : null, route, at, at]);
     }
     const personId = person === null ? null : insertPerson(d, firmId, person, at);
     const source = firmType === null ? 'REFERRAL' : (SOURCE_FOR_TYPE[firmType] ?? 'REFERRAL');
     const leadId = d.newId();
-    d.db.run(
-      'INSERT INTO leads (id, business_id, assessment_id, booking_id, claim_id, origin, source, introducer_id, ' +
-        'prospect_organisation, prospect_sector, prospect_postcode, prospect_event, prospect_event_year, lead_date, owner_id, ' +
-        'priority, next_action, next_action_due, status, lost_reason, lost_note, converted_at, created_at, updated_at) ' +
-        "VALUES (?, NULL, NULL, NULL, NULL, 'REFERRAL', ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, 'NEW', NULL, NULL, NULL, ?, ?)",
-      [leadId, source, firmId, client.value, sector.value, postcode.value, event.value, year.value, at,
+    insertLeads5(d.db, [leadId, source, firmId, client.value, sector.value, postcode.value, event.value, year.value, at,
         route === 'STAFF' && actor !== null ? actor.id : null, at, at]);
     return { firmId, personId, leadId, source };
   });
@@ -1094,11 +1042,7 @@ export function shareReading(db: Db, lead: LeadForReferral): ShareReading {
     consent_id: null, wording_version: null, recorded: null,
   };
   if (lead.introducer_id === null) return none;
-  const s = db.get<{ id: string; decision: string; wording_version: string; recorded_at: string; who: string | null }>(
-    'SELECT s.id, s.decision, s.wording_version, s.recorded_at, u.display_name AS who FROM introducer_share_consents s ' +
-      'LEFT JOIN users u ON u.id = s.recorded_by WHERE s.introducer_id = ? AND (s.lead_id = ? OR s.business_id = ? ' +
-      'OR s.lead_id IN (SELECT l.id FROM leads l WHERE l.business_id = ?)) ORDER BY s.rowid DESC LIMIT 1',
-    [lead.introducer_id, lead.id, lead.business_id, lead.business_id]);
+  const s = getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId<{ id: string; decision: string; wording_version: string; recorded_at: string; who: string | null }>(db, [lead.introducer_id, lead.id, lead.business_id, lead.business_id]);
   if (s === undefined) return none;
   const state = s.decision === 'GIVEN' || s.decision === 'DECLINED' || s.decision === 'WITHDRAWN' ? s.decision : 'NEVER_ASKED';
   const when = `${localStamp(s.recorded_at)}${s.who === null ? '' : `, recorded by ${s.who}`}, wording ${s.wording_version}`;
@@ -1115,7 +1059,7 @@ function wordingFor(version: string, firm: string): string {
 }
 
 export function recordShareConsent(d: IntroducerDeps, actor: Actor, lead_id: string, input: Fields): WriteResult {
-  const lead = d.db.get<LeadForReferral>('SELECT id, business_id, introducer_id FROM leads WHERE id = ?', [lead_id]);
+  const lead = getLeadsIdBusinessIdById2<LeadForReferral>(d.db, [lead_id]);
   if (lead === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'share_consent.record', { type: 'share_consent', id: lead.id, business_id: lead.business_id });
   if (lead.introducer_id === null) {
@@ -1129,10 +1073,7 @@ export function recordShareConsent(d: IntroducerDeps, actor: Actor, lead_id: str
     return { ok: false, why: 'The words the client was asked have changed since this page was drawn. Read them again, then record the answer.' };
   }
   const id = d.newId();
-  d.db.run(
-    'INSERT INTO introducer_share_consents (id, introducer_id, business_id, lead_id, decision, wording_version, route, recorded_by, recorded_at) ' +
-      "VALUES (?, ?, ?, ?, ?, ?, 'STAFF_RECORDED', ?, ?)",
-    [id, lead.introducer_id, lead.business_id, lead.business_id === null ? lead.id : null, decision, CURRENT_SHARE_WORDING, actor.id, d.now()]);
+  insertIntroducerShareConsents(d.db, [id, lead.introducer_id, lead.business_id, lead.business_id === null ? lead.id : null, decision, CURRENT_SHARE_WORDING, actor.id, d.now()]);
   record(d, actor, 'SHARE_CONSENT_RECORDED', 'ALLOWED', 'share_consent', id, {
     decision, wording_version: CURRENT_SHARE_WORDING, introducer: lead.introducer_id, lead: lead.id, business: lead.business_id,
   });
@@ -1179,9 +1120,7 @@ export function clientShareChoices(
   authorise(actor, 'share_consent.client_record', { type: 'share_consent', id: business_id, business_id });
   const seen = new Set<string>();
   const out: ClientShareChoice[] = [];
-  for (const f of db.all<{ lead_id: string; introducer_id: string; firm_name: string }>(
-    'SELECT l.id AS lead_id, l.introducer_id, i.firm_name FROM leads l JOIN introducers i ON i.id = l.introducer_id ' +
-      'WHERE l.business_id = ? ORDER BY l.rowid', [business_id])) {
+  for (const f of listLeadsLeadIdIntroducerIdByBusinessId<{ lead_id: string; introducer_id: string; firm_name: string }>(db, [business_id])) {
     if (seen.has(f.introducer_id)) continue;
     seen.add(f.introducer_id);
     const r = shareReading(db, { id: f.lead_id, business_id, introducer_id: f.introducer_id });
@@ -1200,8 +1139,7 @@ export function recordShareConsentByClient(
 ): WriteResult {
   authorise(actor, 'share_consent.client_record', { type: 'share_consent', id: business_id, business_id });
   const introducer_id = input['introducer_id'] ?? null;
-  const lead = introducer_id === null ? undefined : d.db.get<LeadForReferral>(
-    'SELECT id, business_id, introducer_id FROM leads WHERE business_id = ? AND introducer_id = ? ORDER BY rowid LIMIT 1', [business_id, introducer_id]);
+  const lead = introducer_id === null ? undefined : getLeadsIdBusinessIdByBusinessIdIntroducerId<LeadForReferral>(d.db, [business_id, introducer_id]);
   if (lead === undefined || lead.introducer_id === null) return { ok: false, why: 'That firm did not refer you, so there is nothing to share with it.' };
   const decision = input['decision'] ?? null;
   if (decision !== 'GIVEN' && decision !== 'WITHDRAWN') return { ok: false, why: 'Choose whether to share your claim’s progress with the firm, or to stop.' };
@@ -1216,10 +1154,7 @@ export function recordShareConsentByClient(
     return { ok: false, why: 'The words on this page have changed since you opened it. Read them again, then choose.' };
   }
   const id = d.newId();
-  d.db.run(
-    'INSERT INTO introducer_share_consents (id, introducer_id, business_id, lead_id, decision, wording_version, route, recorded_by, recorded_at) ' +
-      "VALUES (?, ?, ?, NULL, ?, ?, 'CLIENT_PORTAL', ?, ?)",
-    [id, lead.introducer_id, business_id, decision, CURRENT_SHARE_WORDING, actor.id, d.now()]);
+  insertIntroducerShareConsents2(d.db, [id, lead.introducer_id, business_id, decision, CURRENT_SHARE_WORDING, actor.id, d.now()]);
   record(d, actor, 'SHARE_CONSENT_RECORDED', 'ALLOWED', 'share_consent', id, {
     decision, wording_version: CURRENT_SHARE_WORDING, introducer: lead.introducer_id, lead: lead.id, business: business_id, route: 'CLIENT_PORTAL',
   });
@@ -1229,10 +1164,10 @@ export function recordShareConsentByClient(
 
 /** Where a lead's claim stands, as the one notice that describes it — for the first notice after a yes. */
 function standing(db: Db, lead_id: string): NoticeKey | null {
-  const l = db.get<{ claim_id: string | null }>('SELECT claim_id FROM leads WHERE id = ?', [lead_id]);
+  const l = getLeadsClaimIdById<{ claim_id: string | null }>(db, [lead_id]);
   if (l === undefined) return null;
   if (l.claim_id === null) return 'REFERRED';
-  const c = db.get<{ stage: string | null; hold_return_stage: string | null }>('SELECT stage, hold_return_stage FROM claims WHERE id = ?', [l.claim_id]);
+  const c = getClaimsStageHoldReturnStageById<{ stage: string | null; hold_return_stage: string | null }>(db, [l.claim_id]);
   if (c === undefined) return null;
   if (c.stage === 'REASONED_NEGATIVE') return 'REASONED_NEGATIVE';
   if (c.stage === 'CLOSED') return 'FEE_SETTLED';
@@ -1240,7 +1175,7 @@ function standing(db: Db, lead_id: string): NoticeKey | null {
   const current = c.stage === 'ON_HOLD' ? c.hold_return_stage : c.stage;
   // Any other exit, or a stage nobody recognises: nothing the paper names describes it, so nothing is said.
   if (current === null || !procedure.includes(current)) return null;
-  const moves = db.all<{ to_stage: string | null }>('SELECT to_stage FROM claim_stage_moves WHERE claim_id = ?', [l.claim_id]);
+  const moves = listClaimStageMovesToStageByClaimId<{ to_stage: string | null }>(db, [l.claim_id]);
   const furthest = Math.max(procedure.indexOf(current), ...moves.map((m) => procedure.indexOf(m.to_stage ?? '')));
   if (furthest >= procedure.indexOf('DEFENCE_PACK')) return 'FEE_SETTLED';
   if (furthest >= procedure.indexOf('INVOICE')) return 'REPORT_DELIVERED';
@@ -1251,14 +1186,12 @@ function standing(db: Db, lead_id: string): NoticeKey | null {
 function catchUp(d: IntroducerDeps, actor: Actor | null, lead_id: string): void {
   const n = standing(d.db, lead_id);
   if (n === null) return;
-  const claim = d.db.get<{ claim_id: string | null }>('SELECT claim_id FROM leads WHERE id = ?', [lead_id])?.claim_id ?? null;
+  const claim = getLeadsClaimIdById<{ claim_id: string | null }>(d.db, [lead_id])?.claim_id ?? null;
   evaluateNotice(d, actor, lead_id, n, claim);
 }
 
 function rangeShown(db: Db, lead_id: string): boolean {
-  return db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM leads l JOIN assessments a ON a.id = l.assessment_id ' +
-      'WHERE l.id = ? AND (a.shown_low_pence IS NOT NULL OR a.shown_high_pence IS NOT NULL)', [lead_id])?.n === 1;
+  return getLeadsCountByIdShownLowPence<{ n: number }>(db, [lead_id])?.n === 1;
 }
 
 /** The stage whose entry is a notice's event, and nothing else is. */
@@ -1280,24 +1213,17 @@ export function noticeForStage(stage: string): NoticeKey | null {
 export function evaluateNotice(
   d: IntroducerDeps, actor: Actor | null, lead_id: string, notice: NoticeKey, claim_id: string | null,
 ): 'QUEUED' | 'NO_OPT_IN' | 'NO_ADDRESS' | 'DO_NOT_CONTACT' | 'ALREADY_QUEUED' | 'NOT_REFERRED' {
-  const lead = d.db.get<LeadForReferral & { organisation: string; firm_name: string | null; to_email: string | null }>(
-    "SELECT l.id, l.business_id, l.introducer_id, COALESCE(b.name, l.prospect_organisation, 'the client') AS organisation, " +
-      'i.firm_name, c.email AS to_email FROM leads l LEFT JOIN businesses b ON b.id = l.business_id ' +
-      'LEFT JOIN introducers i ON i.id = l.introducer_id LEFT JOIN contacts c ON c.id = i.notice_contact_id WHERE l.id = ?',
-    [lead_id]);
+  const lead = getLeadsIdBusinessIdById7<LeadForReferral & { organisation: string; firm_name: string | null; to_email: string | null }>(d.db, [lead_id]);
   if (lead === undefined || lead.introducer_id === null || lead.firm_name === null) return 'NOT_REFERRED';
   const introducer_id = lead.introducer_id;
-  if (d.db.get<{ id: string }>("SELECT id FROM introducer_notices WHERE lead_id = ? AND notice = ? AND outcome = 'QUEUED'", [lead.id, notice]) !== undefined) {
+  if (getIntroducerNoticesIdByLeadIdNotice<{ id: string }>(d.db, [lead.id, notice]) !== undefined) {
     return 'ALREADY_QUEUED';
   }
   const share = shareReading(d.db, lead);
   const at = d.now();
   const keep = (outcome: 'QUEUED' | 'NOT_QUEUED', reason: string | null, consent: string | null, outbox: string | null): string => {
     const id = d.newId();
-    d.db.run(
-      'INSERT INTO introducer_notices (id, introducer_id, lead_id, claim_id, notice, outcome, reason, consent_id, outbox_id, at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, introducer_id, lead.id, claim_id, notice, outcome, reason, consent, outbox, at]);
+    insertIntroducerNotices(d.db, [id, introducer_id, lead.id, claim_id, notice, outcome, reason, consent, outbox, at]);
     return id;
   };
 
@@ -1312,9 +1238,7 @@ export function evaluateNotice(
   } else {
     const consent = share.consent_id;
     const to = lead.to_email;
-    const reason = notice !== 'REASONED_NEGATIVE' || claim_id === null ? null : d.db.get<{ label: string }>(
-      "SELECT r.label FROM claim_stage_moves m JOIN reason_lists r ON r.list = 'CLAIM_EXIT' AND r.code = m.reason_code " +
-        "WHERE m.claim_id = ? AND m.to_stage = 'REASONED_NEGATIVE' ORDER BY m.at DESC, m.rowid DESC LIMIT 1", [claim_id])?.label ?? null;
+    const reason = notice !== 'REASONED_NEGATIVE' || claim_id === null ? null : getClaimStageMovesLabelByClaimIdToStage<{ label: string }>(d.db, [claim_id])?.label ?? null;
     const n = NOTICES[notice];
     const body = [
       `To ${lead.firm_name},`,
@@ -1349,7 +1273,7 @@ export function evaluateNotice(
 
 /** A claim entered a stage (src/modules/crm/pipeline.ts, after the move has committed). */
 export function onClaimStageEntered(d: IntroducerDeps, actor: Actor | null, claim_id: string, stage: string): void {
-  const lead = d.db.get<{ id: string }>('SELECT id FROM leads WHERE claim_id = ? AND introducer_id IS NOT NULL', [claim_id]);
+  const lead = getLeadsIdByClaimIdIntroducerId<{ id: string }>(d.db, [claim_id]);
   if (lead === undefined) return;
   const n = noticeForStage(stage);
   if (n !== null && !(n === 'RANGE_ISSUED' && !rangeShown(d.db, lead.id))) evaluateNotice(d, actor, lead.id, n, claim_id);
@@ -1358,7 +1282,7 @@ export function onClaimStageEntered(d: IntroducerDeps, actor: Actor | null, clai
 
 /** A referred lead converted, and its claim opened at ASSESSMENT (src/modules/crm/leads.ts, after it committed). */
 export function onLeadConverted(d: IntroducerDeps, actor: Actor | null, lead_id: string, claim_id: string): void {
-  const lead = d.db.get<{ introducer_id: string | null }>('SELECT introducer_id FROM leads WHERE id = ?', [lead_id]);
+  const lead = getLeadsIntroducerIdById<{ introducer_id: string | null }>(d.db, [lead_id]);
   if (lead === undefined || lead.introducer_id === null) return;
   if (rangeShown(d.db, lead_id)) evaluateNotice(d, actor, lead_id, 'RANGE_ISSUED', claim_id);
 }
@@ -1379,7 +1303,7 @@ export type LeadReferral = {
 
 export function leadReferral(db: Db, actor: Actor, lead: LeadForReferral): LeadReferral | null {
   if (lead.introducer_id === null) return null;
-  const firm = db.get<{ firm_name: string }>('SELECT firm_name FROM introducers WHERE id = ?', [lead.introducer_id]);
+  const firm = getIntroducersFirmNameById<{ firm_name: string }>(db, [lead.introducer_id]);
   if (firm === undefined) return null;
   const obj = { type: 'share_consent' as const, id: lead.id, business_id: lead.business_id };
   const mayRead = can(actor, 'share_consent.read', obj);
@@ -1393,8 +1317,7 @@ export function leadReferral(db: Db, actor: Actor, lead: LeadForReferral): LeadR
         current_wording: { version: CURRENT_SHARE_WORDING, words: wordingFor(CURRENT_SHARE_WORDING, firm.firm_name) },
         decisions: SHARE_DECISIONS,
       },
-      notices: db.all<{ at: string; notice: string; outcome: string; reason: string | null }>(
-        'SELECT at, notice, outcome, reason FROM introducer_notices WHERE lead_id = ? ORDER BY rowid ASC', [lead.id])
+      notices: listIntroducerNoticesAtNoticeByLeadId<{ at: string; notice: string; outcome: string; reason: string | null }>(db, [lead.id])
         .map((n) => ({
           at: localStamp(n.at),
           notice: words(labels, n.notice, n.notice),
@@ -1411,9 +1334,7 @@ export function leadReferral(db: Db, actor: Actor, lead: LeadForReferral): LeadR
 type SettingRow = { model: string; fee_pence: number | null; percent_bp: number | null; changed_at: string | null; who: string | null };
 
 export function rewardSetting(db: Db): SettingRow {
-  return db.get<SettingRow>(
-    'SELECT s.model, s.fee_pence, s.percent_bp, s.changed_at, u.display_name AS who FROM introducer_reward_setting s ' +
-      'LEFT JOIN users u ON u.id = s.changed_by WHERE s.id = 1') ?? { model: 'OFF', fee_pence: null, percent_bp: null, changed_at: null, who: null };
+  return getIntroducerRewardSettingModelFeePenceById<SettingRow>(db) ?? { model: 'OFF', fee_pence: null, percent_bp: null, changed_at: null, who: null };
 }
 
 /**
@@ -1494,8 +1415,7 @@ export function setRewardModel(
   }
   // Model C takes its percentage from REFERRAL_PERCENTAGE — the decided 10% — and nothing typed.
   const percent = model === 'C_PERCENT_OF_INVOICED_FEE' ? REFERRAL_PERCENTAGE.percent_bp : null;
-  d.db.run('UPDATE introducer_reward_setting SET model = ?, fee_pence = ?, percent_bp = ?, changed_by = ?, changed_at = ? WHERE id = 1',
-    [model, fee, percent, actor.id, d.now()]);
+  updateIntroducerRewardSettingModelFeePenceById(d.db, [model, fee, percent, actor.id, d.now()]);
   // The amount is on the row and not in the log — as an invoice's is.
   record(d, actor, 'INTRODUCER_REWARD_SWITCHED', 'ALLOWED', 'introducer_reward', 'the-setting', { from: before.model, to: model });
   return { ok: true, id: 'the-setting' };
@@ -1557,17 +1477,12 @@ export function feeList(db: Db, actor: Actor, introducer_id?: string): FeeView[]
 function accrueFee(d: IntroducerDeps, actor: Actor | null, claim_id: string): void {
   const s = rewardSetting(d.db);
   if (s.model !== 'B_DISCLOSED_FEE' || s.fee_pence === null) return;
-  const l = d.db.get<{ introducer_id: string; business_id: string }>(
-    'SELECT l.introducer_id, c.business_id FROM leads l JOIN claims c ON c.id = l.claim_id WHERE l.claim_id = ? AND l.introducer_id IS NOT NULL',
-    [claim_id]);
+  const l = getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId<{ introducer_id: string; business_id: string }>(d.db, [claim_id]);
   if (l === undefined) return;
-  if (d.db.get<{ id: string }>('SELECT id FROM introducer_fees WHERE claim_id = ?', [claim_id]) !== undefined) return;
+  if (getIntroducerFeesIdByClaimId<{ id: string }>(d.db, [claim_id]) !== undefined) return;
   const id = d.newId();
   const at = d.now();
-  d.db.run(
-    'INSERT INTO introducer_fees (id, introducer_id, claim_id, business_id, amount_pence, disclosure_given_at, disclosure_recorded_by, ' +
-      "state, paid_at, paid_recorded_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, 'ACCRUED', NULL, NULL, ?, ?)",
-    [id, l.introducer_id, claim_id, l.business_id, s.fee_pence, at, at]);
+  insertIntroducerFees(d.db, [id, l.introducer_id, claim_id, l.business_id, s.fee_pence, at, at]);
   record(d, actor, 'INTRODUCER_FEE_ACCRUED', 'ALLOWED', 'introducer_fee', id, { introducer: l.introducer_id, claim: claim_id, business: l.business_id });
 }
 
@@ -1582,7 +1497,7 @@ export function recordFeeDisclosure(d: IntroducerDeps, actor: Actor, fee_id: str
   authorise(actor, 'introducer_fee.disclose', feeObj(r));
   if (r.disclosure_given_at !== null) return { ok: false, why: 'The disclosure is already recorded, and it stays recorded.' };
   const at = d.now();
-  d.db.run('UPDATE introducer_fees SET disclosure_given_at = ?, disclosure_recorded_by = ?, updated_at = ? WHERE id = ?', [at, actor.id, at, r.id]);
+  updateIntroducerFeesDisclosureGivenAtDisclosureRecordedByByI(d.db, [at, actor.id, at, r.id]);
   record(d, actor, 'INTRODUCER_FEE_DISCLOSED', 'ALLOWED', 'introducer_fee', r.id, { introducer: r.introducer_id, claim: r.claim_id, business: r.business_id });
   return { ok: true, id: r.id };
 }
@@ -1603,7 +1518,7 @@ export function recordFeeSettled(d: IntroducerDeps, actor: Actor, fee_id: string
     return { ok: false, why: 'Nothing can be paid to an introducer until we record that the client was told about the fee.' };
   }
   const at = d.now();
-  d.db.run("UPDATE introducer_fees SET state = 'PAID', paid_at = ?, paid_recorded_by = ?, updated_at = ? WHERE id = ?", [at, actor.id, at, r.id]);
+  updateIntroducerFeesStatePaidAtById(d.db, [at, actor.id, at, r.id]);
   record(d, actor, 'INTRODUCER_FEE_PAID', 'ALLOWED', 'introducer_fee', r.id, { introducer: r.introducer_id, claim: r.claim_id, business: r.business_id });
   return { ok: true, id: r.id };
 }
@@ -1643,44 +1558,31 @@ function percentOf(basis_pence: number, bp: number): number {
 export function onFeeInvoiced(d: IntroducerDeps, actor: Actor | null, invoice_id: string): void {
   const s = rewardSetting(d.db);
   if (s.model !== 'C_PERCENT_OF_INVOICED_FEE' || s.percent_bp === null) return;
-  const v = d.db.get<{ id: string; claim_id: string | null; business_id: string; kind: string; fee_pence: number }>(
-    'SELECT id, claim_id, business_id, kind, fee_pence FROM invoices WHERE id = ?', [invoice_id]);
+  const v = getInvoicesIdClaimIdById<{ id: string; claim_id: string | null; business_id: string; kind: string; fee_pence: number }>(d.db, [invoice_id]);
   if (v === undefined || v.claim_id === null || v.kind !== 'FEE' || v.fee_pence <= 0) return;
   /* PHASE 157: a REGISTERED accountancy firm — one that has signed our introducer terms (migration 094), as their
      clause 1 says. Marked as an accountancy firm is not enough. */
-  const l = d.db.get<{ introducer_id: string }>(
-    "SELECT l.introducer_id FROM leads l JOIN introducers i ON i.id = l.introducer_id WHERE l.claim_id = ? AND i.introducer_type = 'ACCOUNTANT_FIRM' " +
-      'AND EXISTS (SELECT 1 FROM introducer_terms_signatures s WHERE s.introducer_id = i.id)',
-    [v.claim_id]);
+  const l = getLeadsIntroducerIdByClaimIdIntroducerType<{ introducer_id: string }>(d.db, [v.claim_id]);
   if (l === undefined) return;
-  if (d.db.get<{ id: string }>("SELECT id FROM introducer_percentage_entries WHERE invoice_id = ? AND entry_kind = 'ACCRUAL'", [v.id]) !== undefined) return;
+  if (getIntroducerPercentageEntriesIdByInvoiceIdEntryKind<{ id: string }>(d.db, [v.id]) !== undefined) return;
   const amount = percentOf(v.fee_pence, s.percent_bp);
   if (amount <= 0) return;
   const id = d.newId();
-  d.db.run(
-    'INSERT INTO introducer_percentage_entries (id, introducer_id, claim_id, business_id, invoice_id, credit_note_id, entry_kind, basis_pence, percent_bp, amount_pence, recorded_by, created_at) ' +
-      "VALUES (?, ?, ?, ?, ?, NULL, 'ACCRUAL', ?, ?, ?, ?, ?)",
-    [id, l.introducer_id, v.claim_id, v.business_id, v.id, v.fee_pence, s.percent_bp, amount, actor?.id ?? null, d.now()]);
+  insertIntroducerPercentageEntries2(d.db, [id, l.introducer_id, v.claim_id, v.business_id, v.id, v.fee_pence, s.percent_bp, amount, actor?.id ?? null, d.now()]);
   // Ids only — the amount is on the row, as an invoice's is.
   record(d, actor, 'INTRODUCER_PERCENTAGE_ACCRUED', 'ALLOWED', 'introducer_fee', id, { introducer: l.introducer_id, claim: v.claim_id, invoice: v.id });
 }
 
 export function onClause13Credit(d: IntroducerDeps, actor: Actor | null, credit_note_id: string): void {
-  const n = d.db.get<{ id: string; invoice_id: string; basis: string; amount_pence: number }>(
-    'SELECT id, invoice_id, basis, amount_pence FROM invoice_credit_notes WHERE id = ?', [credit_note_id]);
+  const n = getInvoiceCreditNotesIdInvoiceIdById<{ id: string; invoice_id: string; basis: string; amount_pence: number }>(d.db, [credit_note_id]);
   if (n === undefined || n.basis !== 'CLAUSE_13_REDUCTION') return;
-  const a = d.db.get<{ introducer_id: string; claim_id: string; business_id: string; percent_bp: number }>(
-    "SELECT introducer_id, claim_id, business_id, percent_bp FROM introducer_percentage_entries WHERE invoice_id = ? AND entry_kind = 'ACCRUAL'",
-    [n.invoice_id]);
+  const a = getIntroducerPercentageEntriesIntroducerIdClaimIdByInvoiceId<{ introducer_id: string; claim_id: string; business_id: string; percent_bp: number }>(d.db, [n.invoice_id]);
   if (a === undefined) return;
-  const left = d.db.get<{ t: number }>('SELECT SUM(amount_pence) AS t FROM introducer_percentage_entries WHERE invoice_id = ?', [n.invoice_id])?.t ?? 0;
+  const left = getIntroducerPercentageEntriesTByInvoiceId<{ t: number }>(d.db, [n.invoice_id])?.t ?? 0;
   const amount = Math.min(percentOf(n.amount_pence, a.percent_bp), left);
   if (amount <= 0) return;
   const id = d.newId();
-  d.db.run(
-    'INSERT INTO introducer_percentage_entries (id, introducer_id, claim_id, business_id, invoice_id, credit_note_id, entry_kind, basis_pence, percent_bp, amount_pence, recorded_by, created_at) ' +
-      "VALUES (?, ?, ?, ?, ?, ?, 'REVERSAL', ?, ?, ?, ?, ?)",
-    [id, a.introducer_id, a.claim_id, a.business_id, n.invoice_id, n.id, n.amount_pence, a.percent_bp, -amount, actor?.id ?? null, d.now()]);
+  insertIntroducerPercentageEntries(d.db, [id, a.introducer_id, a.claim_id, a.business_id, n.invoice_id, n.id, n.amount_pence, a.percent_bp, -amount, actor?.id ?? null, d.now()]);
   record(d, actor, 'INTRODUCER_PERCENTAGE_REVERSED', 'ALLOWED', 'introducer_fee', id, { introducer: a.introducer_id, claim: a.claim_id, invoice: n.invoice_id, credit_note: n.id });
 }
 

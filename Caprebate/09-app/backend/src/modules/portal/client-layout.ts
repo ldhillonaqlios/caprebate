@@ -20,14 +20,14 @@
 
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import type { ChecksPanel, StepView } from '../claims/approvals.ts';
-import type { SourcesPanel } from '../claims/research.ts';
+import type { ChecksPanel, StepView } from '../claims/index.ts';
+import type { SourcesPanel } from '../claims/index.ts';
 import type { QuickAction, SectionContext, SectionSpec, SectionStatus } from '../../shared/index.ts';
 import { section, SECTION_STATUS_WORDS } from '../../shared/index.ts';
-import { clientProgress, whyNotMoved } from '../crm/tell-and-move.ts';
+import { clientProgress, whyNotMoved } from '../crm/index.ts';
 import { filesButton } from './client-files-pages.ts';
 import type { Db } from '../../core/index.ts';
-import type { ClaimSummary } from '../crm/crm.ts';
+import type { ClaimSummary } from '../crm/index.ts';
 import { claimHref, claimRef, propertyIn } from '../../shared/index.ts';
 import { dueReading } from '../../shared/index.ts';
 import { groupBand, lateBadge, noDateBadge, stageGroupOf } from '../../core/index.ts';

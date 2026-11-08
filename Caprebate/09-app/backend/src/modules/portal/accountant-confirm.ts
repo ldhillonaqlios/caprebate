@@ -27,9 +27,13 @@ import type { EmailTransport } from '../../integrations/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localDate, ukDate } from '../../shared/index.ts';
 // Read inside functions only: pipeline.ts reads this module's need the same way, so the loop is never touched at load.
-import { raiseBusinessStage } from '../crm/pipeline.ts';
-import { claimReturns, claimRoutes, type ClaimReturn } from '../claims/claim-route.ts';
+import { raiseBusinessStage } from '../crm/index.ts';
+import { claimReturns, claimRoutes, type ClaimReturn } from '../claims/index.ts';
 import { getOutboxRById } from '../../integrations/index.ts';
+import { getAccountantConfirmRequestsIdKindByTokenSha256, getClaimsIdBusinessIdById8, listAccountantConfirmRequestsIdKindByClaimId } from './data-borrowed.ts';
+import { getClaimReconciliationsIdFiledOnByClaimId, getClaimsBusinessIdById, getClaimsIdBusinessIdById5, updateClaimReconciliationsFiledOnFiledRecordedByById } from '../claims/index.ts';
+import { getAccountantConfirmRequestsClaimIdSentByById, insertAccountantConfirmAnswers, insertAccountantConfirmRequests } from './data.ts';
+import { listContactsIdNameByBusinessIdContactType } from '../crm/index.ts';
 
 export type ConfirmKind = 'RETURN_FIT' | 'FILED';
 export type ConfirmDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };
@@ -64,7 +68,7 @@ export function askFor(kind: ConfirmKind, period_end: string | null): string {
 
 /** The returns this claim goes into, from its parts' routes (src/modules/claims/claim-route.ts), or null where they are not settled. */
 export function returnsOf(db: Db, claim_id: string, todayIso: string): ClaimReturn[] | null {
-  const c = db.get<{ id: string; business_id: string; property_id: string | null }>('SELECT id, business_id, property_id FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdBusinessIdById5<{ id: string; business_id: string; property_id: string | null }>(db, [claim_id]);
   return c === undefined ? null : claimReturns(claimRoutes(db, c, todayIso));
 }
 
@@ -72,14 +76,12 @@ export const RETURN_FIT_NEED = 'The client’s accountant confirmed, through the
 
 type ClaimRow = { id: string; business_id: string; stage: string | null; claim_ref: string; company: string };
 function claimOf(db: Db, claim_id: string): ClaimRow | undefined {
-  return db.get<ClaimRow>('SELECT c.id, c.business_id, c.stage, c.claim_ref, b.name AS company FROM claims c JOIN businesses b ON b.id = c.business_id WHERE c.id = ?', [claim_id]);
+  return getClaimsIdBusinessIdById8<ClaimRow>(db, [claim_id]);
 }
 
 /** The company's accountants and advisers with an email address (as the sign-off link reads them). */
 export function accountantContacts(db: Db, business_id: string): { id: string; name: string; email: string }[] {
-  return db.all<{ id: string; name: string; email: string }>(
-    "SELECT id, full_name AS name, email FROM contacts WHERE business_id = ? AND contact_type IN ('ACCOUNTANT', 'ADVISER') " +
-      "AND email IS NOT NULL AND trim(email) <> '' ORDER BY full_name", [business_id]);
+  return listContactsIdNameByBusinessIdContactType<{ id: string; name: string; email: string }>(db, [business_id]);
 }
 
 function emailBody(name: string, company: string, ref: string, kind: ConfirmKind, link: string, expires: string, period_end: string | null): string {
@@ -141,8 +143,7 @@ export function sendConfirmRequest(
     });
     if (sent.id === null) return { ok: false as const, why: 'This company asked us not to contact them. Nothing was sent.' };
     const id = d.newId();
-    d.db.run('INSERT INTO accountant_confirm_requests (id, claim_id, kind, contact_id, to_email, token_sha256, outbox_id, sent_by, sent_at, expires_at, period_end) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, c.id, kind, who.id, who.email.trim(), sha(token), sent.id, actor.id, at, expires, period_end]);
+    insertAccountantConfirmRequests(d.db, [id, c.id, kind, who.id, who.email.trim(), sha(token), sent.id, actor.id, at, expires, period_end]);
     const requested = getOutboxRById<{ r: number }>(d.db, [sent.id])?.r === 1;
     d.audit.append({ at, kind: 'ACCOUNTANT_CONFIRM_SENT', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'claim', object_id: c.id, detail: { request: id, confirm: kind, contact: who.id, sending: requested, period_end } });
@@ -160,11 +161,8 @@ export type ConfirmLinkView =
 /** What a confirmation link opens, by the link alone. */
 export function confirmLinkView(db: Db, now: string, token: string): ConfirmLinkView {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return { state: 'NONE' };
-  const r = db.get<{ id: string; kind: ConfirmKind; expires_at: string; name: string; company: string; claim_ref: string;
-    outcome: 'CONFIRMED' | 'NOT_CONFIRMED' | null; answered_at: string | null; period_end: string | null }>(
-    'SELECT r.id, r.kind, r.expires_at, r.period_end, k.full_name AS name, b.name AS company, c.claim_ref, x.outcome, x.answered_at ' +
-      'FROM accountant_confirm_requests r JOIN contacts k ON k.id = r.contact_id JOIN claims c ON c.id = r.claim_id JOIN businesses b ON b.id = c.business_id ' +
-      'LEFT JOIN accountant_confirm_answers x ON x.request_id = r.id WHERE r.token_sha256 = ?', [sha(token)]);
+  const r = getAccountantConfirmRequestsIdKindByTokenSha256<{ id: string; kind: ConfirmKind; expires_at: string; name: string; company: string; claim_ref: string;
+    outcome: 'CONFIRMED' | 'NOT_CONFIRMED' | null; answered_at: string | null; period_end: string | null }>(db, [sha(token)]);
   if (r === undefined) return { state: 'NONE' };
   if (r.outcome !== null) return { state: 'ANSWERED', outcome: r.outcome, answered_at: r.answered_at ?? '' };
   if (now >= r.expires_at) return { state: 'EXPIRED' };
@@ -185,7 +183,7 @@ export function answerConfirmLink(
     if (v.state === 'NONE') return { ok: false, why: 'This link is not one of ours. Ask Cap Rebate for a new one.' };
     if (v.state === 'EXPIRED') return { ok: false, why: 'This link has run out. Ask Cap Rebate for a new one.' };
     if (v.state === 'ANSWERED') return { ok: false, why: 'This link has already been answered. Thank you.' };
-    const req = d.db.get<{ claim_id: string; sent_by: string }>('SELECT claim_id, sent_by FROM accountant_confirm_requests WHERE id = ?', [v.request_id]);
+    const req = getAccountantConfirmRequestsClaimIdSentByById<{ claim_id: string; sent_by: string }>(d.db, [v.request_id]);
     if (req === undefined) return { ok: false, why: 'This link is not one of ours. Ask Cap Rebate for a new one.' };
     let row: [string, string | null, string | null, string | null];
     if (f.outcome === 'CONFIRMED') {
@@ -207,16 +205,15 @@ export function answerConfirmLink(
       return { ok: false, why: 'Choose to confirm it, or to say it is not so.' };
     }
     const id = d.newId();
-    d.db.run('INSERT INTO accountant_confirm_answers (id, request_id, outcome, signer_name, signer_firm, filed_on, reason, answered_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, v.request_id, row[0], name, row[1], row[2], row[3], at]);
+    insertAccountantConfirmAnswers(d.db, [id, v.request_id, row[0], name, row[1], row[2], row[3], at]);
     let wrote = false;
     if (row[0] === 'CONFIRMED' && row[2] !== null) {
-      const r = d.db.get<{ id: string; filed_on: string | null }>('SELECT id, filed_on FROM claim_reconciliations WHERE claim_id = ?', [req.claim_id]);
+      const r = getClaimReconciliationsIdFiledOnByClaimId<{ id: string; filed_on: string | null }>(d.db, [req.claim_id]);
       if (r !== undefined && r.filed_on === null) {
-        d.db.run('UPDATE claim_reconciliations SET filed_on = ?, filed_recorded_by = ?, filed_recorded_at = ? WHERE id = ?', [row[2], req.sent_by, at, r.id]);
+        updateClaimReconciliationsFiledOnFiledRecordedByById(d.db, [row[2], req.sent_by, at, r.id]);
         wrote = true;
         // As a filing staff record does (src/modules/claims/claim-record.ts recordFiling): the client's "5 Claim filed" waited for it.
-        const b = d.db.get<{ business_id: string }>('SELECT business_id FROM claims WHERE id = ?', [req.claim_id]);
+        const b = getClaimsBusinessIdById<{ business_id: string }>(d.db, [req.claim_id]);
         if (b !== undefined) raiseBusinessStage(d.db, b.business_id, at);
       }
     }
@@ -237,12 +234,8 @@ export type ConfirmRow = {
 
 /** Every confirmation link sent on the claim, newest first, with its answer. */
 export function confirmRequestsOf(db: Db, claim_id: string): ConfirmRow[] {
-  return db.all<{ id: string; kind: ConfirmKind; contact_name: string; to_email: string; sent_by_name: string; sent_at: string; expires_at: string; period_end: string | null;
-    outcome: 'CONFIRMED' | 'NOT_CONFIRMED' | null; signer_name: string | null; signer_firm: string | null; filed_on: string | null; reason: string | null; answered_at: string | null }>(
-    'SELECT r.id, r.kind, k.full_name AS contact_name, r.to_email, u.display_name AS sent_by_name, r.sent_at, r.expires_at, r.period_end, ' +
-      'x.outcome, x.signer_name, x.signer_firm, x.filed_on, x.reason, x.answered_at FROM accountant_confirm_requests r ' +
-      'JOIN contacts k ON k.id = r.contact_id JOIN users u ON u.id = r.sent_by LEFT JOIN accountant_confirm_answers x ON x.request_id = r.id ' +
-      'WHERE r.claim_id = ? ORDER BY r.sent_at DESC, r.rowid DESC', [claim_id])
+  return listAccountantConfirmRequestsIdKindByClaimId<{ id: string; kind: ConfirmKind; contact_name: string; to_email: string; sent_by_name: string; sent_at: string; expires_at: string; period_end: string | null;
+    outcome: 'CONFIRMED' | 'NOT_CONFIRMED' | null; signer_name: string | null; signer_firm: string | null; filed_on: string | null; reason: string | null; answered_at: string | null }>(db, [claim_id])
     .map((r) => ({ id: r.id, kind: r.kind, contact_name: r.contact_name, to_email: r.to_email, sent_by_name: r.sent_by_name, sent_at: r.sent_at, expires_at: r.expires_at, period_end: r.period_end,
       answer: r.outcome === null ? null : { outcome: r.outcome, signer_name: r.signer_name ?? '', signer_firm: r.signer_firm, filed_on: r.filed_on, reason: r.reason, answered_at: r.answered_at ?? '' } }));
 }

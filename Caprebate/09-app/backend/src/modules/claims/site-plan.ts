@@ -31,6 +31,7 @@ import { packJob } from '../../web/surveyor.ts';
 import { packView } from '../../web/survey-pack.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import type { Op, Rgb } from '../../shared/index.ts';
+import { getSitePlansPostcodeHalfMByJobId, insertSitePlans } from './data-borrowed.ts';
 
 /** A site plan as kept and as drawn. Rings are [east, north] in DECIMETRES from the postcode's point. */
 export type SitePlan = {
@@ -58,7 +59,7 @@ type Row = { postcode: string; half_m: number; buildings_json: string; chosen: n
 
 /** The newest site plan for a survey job, or null. Read as the pack is: whoever may read the job. */
 export function sitePlanOf(db: Db, job_id: string): SitePlan | null {
-  const r = db.get<Row>('SELECT postcode, half_m, buildings_json, chosen, how, metres, attribution, fetched_at FROM site_plans WHERE job_id = ? ORDER BY fetched_at DESC, rowid DESC LIMIT 1', [job_id]);
+  const r = getSitePlansPostcodeHalfMByJobId<Row>(db, [job_id]);
   if (r === undefined) return null;
   return {
     postcode: r.postcode, half_m: r.half_m, buildings: JSON.parse(r.buildings_json) as SitePlan['buildings'],
@@ -88,8 +89,7 @@ export async function fetchSitePlan(d: SitePlanDeps, actor: Actor, job_id: strin
   const dm = (v: number, o: number): number => Math.round((v - o) * 10);
   const buildings = outlines.map((o) => o.map((ring) => ring.map(([e, n]) => [dm(e, at.value.easting), dm(n, at.value.northing)] as const)));
   const now = d.now();
-  d.db.run('INSERT INTO site_plans (id, job_id, postcode, easting, northing, half_m, buildings_json, chosen, how, metres, attribution, fetched_by, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [d.newId(), job_id, v.property.postcode.trim().toUpperCase(), Math.round(at.value.easting), Math.round(at.value.northing), PLAN_HALF_M,
+  insertSitePlans(d.db, [d.newId(), job_id, v.property.postcode.trim().toUpperCase(), Math.round(at.value.easting), Math.round(at.value.northing), PLAN_HALF_M,
       JSON.stringify(buildings), pick?.index ?? null, pick?.how ?? null, pick?.metres ?? null, OS_ATTRIBUTION, actor.id, now]);
   d.audit.append({ at: now, kind: 'SITE_PLAN_FETCHED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'surveyor_job', object_id: job_id,
     detail: { buildings: buildings.length, picked: pick?.how ?? 'NONE' } });

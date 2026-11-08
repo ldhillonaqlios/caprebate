@@ -96,6 +96,7 @@ import {
 export { WEEKDAY_NAMES } from '../../shared/index.ts';
 import { WEEKDAY_NAMES } from '../../shared/index.ts';
 import { listUsersIdRoleByDisabledAt } from '../../core/index.ts';
+import { deleteWorkingTimesByUserId, insertWorkingTimes, listBookingsAssignedToStartsAtByStartsAtEndsAt, listBookingsIdAssignedToByStartsAtEndsAt, listTimeBlocksIdAssignedToByRemovedAtStartsAt, listTimeBlocksUserIdStartsAtByRemovedAtStartsAt, listWorkingTimesIdUserId, listWorkingTimesIdUserIdByUserIdStartM } from './data.ts';
 
 /**
  * WHOSE DIARY CAN HOLD A CLIENT CALL — and it is asked of the rule table
@@ -216,18 +217,11 @@ export function clockToMinutes(v: string): number | null {
  * ------------------------------------------------------------------ */
 
 export function workingTimesFor(db: Db, user_id: string): WorkingTime[] {
-  return db.all<WorkingTime>(
-    'SELECT id, user_id, weekday, start_min, end_min FROM working_times WHERE user_id = ? ' +
-      'ORDER BY weekday ASC, start_min ASC',
-    [user_id],
-  );
+  return listWorkingTimesIdUserIdByUserIdStartM<WorkingTime>(db, [user_id]);
 }
 
 export function allWorkingTimes(db: Db): WorkingTime[] {
-  return db.all<WorkingTime>(
-    'SELECT id, user_id, weekday, start_min, end_min FROM working_times ' +
-      'ORDER BY user_id ASC, weekday ASC, start_min ASC',
-  );
+  return listWorkingTimesIdUserId<WorkingTime>(db);
 }
 
 export type WorkingTimeInput = { weekday: number; start_min: number; end_min: number };
@@ -283,12 +277,9 @@ export function replaceWorkingTimes(
   }
 
   db.tx(() => {
-    db.run('DELETE FROM working_times WHERE user_id = ?', [user_id]);
+    deleteWorkingTimesByUserId(db, [user_id]);
     for (const r of rows) {
-      db.run(
-        'INSERT INTO working_times (id, user_id, weekday, start_min, end_min) VALUES (?, ?, ?, ?, ?)',
-        [newId(), user_id, r.weekday, r.start_min, r.end_min],
-      );
+      insertWorkingTimes(db, [newId(), user_id, r.weekday, r.start_min, r.end_min]);
     }
   });
 }
@@ -367,17 +358,10 @@ export function addLocalDays(iso: string, n: number): string {
 type BookedSpan = { user_id: string | null; from: number; to: number };
 
 function bookedSpans(db: Db, fromIso: string, toIso: string): BookedSpan[] {
-  return db
-    .all<{ assigned_to: string | null; starts_at: string; ends_at: string }>(
-      // Phase 132e: A CANCELLED CALL HOLDS NO SLOT. Its row survives with its time, for the record.
-      'SELECT assigned_to, starts_at, ends_at FROM bookings ' +
-        'WHERE starts_at IS NOT NULL AND ends_at IS NOT NULL AND cancelled_at IS NULL AND starts_at < ? AND ends_at > ?',
-      [toIso, fromIso],
-    )
+  return listBookingsAssignedToStartsAtByStartsAtEndsAt<{ assigned_to: string | null; starts_at: string; ends_at: string }>(db, [toIso, fromIso])
     .map((r) => ({ user_id: r.assigned_to, from: Date.parse(r.starts_at), to: Date.parse(r.ends_at) }))
     // 1 Oct 2026: time a person blocked off holds their diary exactly as a call does (migration 066).
-    .concat(db.all<{ user_id: string; starts_at: string; ends_at: string }>(
-      'SELECT user_id, starts_at, ends_at FROM time_blocks WHERE removed_at IS NULL AND starts_at < ? AND ends_at > ?', [toIso, fromIso])
+    .concat(listTimeBlocksUserIdStartsAtByRemovedAtStartsAt<{ user_id: string; starts_at: string; ends_at: string }>(db, [toIso, fromIso])
       .map((b) => ({ user_id: b.user_id, from: Date.parse(b.starts_at), to: Date.parse(b.ends_at) })));
 }
 
@@ -610,16 +594,10 @@ export function isBookable(
     return { ok: false, why: 'that time is outside the working hours anybody has set' };
   }
   const active = bookableUserIds(db);
-  const spans = db
-    .all<{ id: string; assigned_to: string | null; starts_at: string; ends_at: string }>(
-      'SELECT id, assigned_to, starts_at, ends_at FROM bookings ' +
-        'WHERE starts_at IS NOT NULL AND ends_at IS NOT NULL AND cancelled_at IS NULL AND starts_at < ? AND ends_at > ?',
-      [end, start],
-    )
+  const spans = listBookingsIdAssignedToByStartsAtEndsAt<{ id: string; assigned_to: string | null; starts_at: string; ends_at: string }>(db, [end, start])
     .filter((b) => b.id !== opts.ignoreBooking)
     // 1 Oct 2026: a person's blocked-off time is taken, as a call is (migration 066).
-    .concat(db.all<{ id: string; assigned_to: string; starts_at: string; ends_at: string }>(
-      'SELECT id, user_id AS assigned_to, starts_at, ends_at FROM time_blocks WHERE removed_at IS NULL AND starts_at < ? AND ends_at > ?', [end, start]));
+    .concat(listTimeBlocksIdAssignedToByRemovedAtStartsAt<{ id: string; assigned_to: string; starts_at: string; ends_at: string }>(db, [end, start]));
 
   for (const w of covering) {
     if (!active.has(w.user_id)) continue;

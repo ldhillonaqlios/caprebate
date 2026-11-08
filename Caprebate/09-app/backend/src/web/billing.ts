@@ -32,6 +32,8 @@ import { dateField, textField, words, type Fields, type Vocab } from './complian
 import { claimInvoices, financeDashboard, type ClaimInvoiceView, type ExpectedClaim } from './invoices.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { formatPence } from '../shared/index.ts';
+import { getBusinessesIdNameById, getBusinessesNameById, listContactsFullNameJobRoleByBusinessId } from '../modules/crm/index.ts';
+import { getClaimsBById, listClaimsIdByBusinessId } from '../modules/claims/index.ts';
 
 export const CHASE_WAYS: Vocab = Object.freeze({
   PHONE: 'A phone call', EMAIL: 'An email', LETTER: 'A letter', IN_PERSON: 'In person',
@@ -82,14 +84,14 @@ export type BillingClient = {
 export function billingClients(db: App['db'], actor: Actor, nowIso: string): { id: string; name: string; to_invoice: number; open: number; outstanding: string; overdue: number; last_chased: string | null }[] {
   authorise(actor, 'client_billing.read', billingObj());
   const fd = financeDashboard(db, actor, nowIso);
-  const bizOfClaim = (claim_id: string): string | undefined => db.get<{ b: string }>('SELECT business_id AS b FROM claims WHERE id = ?', [claim_id])?.b;
+  const bizOfClaim = (claim_id: string): string | undefined => getClaimsBById<{ b: string }>(db, [claim_id])?.b;
   const ids = new Set<string>([...fd.expected.claims.map((e) => bizOfClaim(e.claim_id) ?? ''), ...fd.invoices.map((i) => bizOfClaim(i.claim.id) ?? '')].filter((x) => x !== ''));
   return [...ids].filter((id) => can(actor, 'client_billing.read', billingObj(id))).map((id) => {
     const inv = fd.invoices.filter((i) => bizOfClaim(i.claim.id) === id && i.state.key !== 'CANCELLED');
     const open = inv.filter((i) => OPEN_STATES.has(i.money.state));
     const last = open.map((i) => chasesOf(db, i.id)[0]?.chased_on ?? null).filter((x): x is string => x !== null).sort().at(-1) ?? null;
     return {
-      id, name: db.get<{ name: string }>('SELECT name FROM businesses WHERE id = ?', [id])?.name ?? '',
+      id, name: getBusinessesNameById<{ name: string }>(db, [id])?.name ?? '',
       to_invoice: fd.expected.claims.filter((e) => bizOfClaim(e.claim_id) === id).length,
       open: open.length, outstanding: formatPence(open.reduce((a, i) => a + i.money.outstanding_pence, 0)),
       overdue: open.filter((i) => i.money.overdue).length, last_chased: last,
@@ -99,11 +101,11 @@ export function billingClients(db: App['db'], actor: Actor, nowIso: string): { i
 
 /** One client, as Accounting reads it. A client this login may not read is not found, exactly as a missing one. */
 export function billingClient(db: App['db'], actor: Actor, id: string, nowIso: string): BillingClient {
-  const b = db.get<{ id: string; name: string }>('SELECT id, name FROM businesses WHERE id = ?', [id]);
+  const b = getBusinessesIdNameById<{ id: string; name: string }>(db, [id]);
   if (b === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'client_billing.read', billingObj(id));
   const fd = financeDashboard(db, actor, nowIso);
-  const claims = new Set(db.all<{ id: string }>('SELECT id FROM claims WHERE business_id = ?', [id]).map((c) => c.id));
+  const claims = new Set(listClaimsIdByBusinessId<{ id: string }>(db, [id]).map((c) => c.id));
   const invoices = claimInvoices(db, actor, nowIso).filter((i) => claims.has(i.claim.id)).map((i): BillingInvoice => {
     const open = i.state.key !== 'CANCELLED' && OPEN_STATES.has(i.money.state);
     return { ...i, chases: chasesOf(db, i.id), open, may_chase: open && i.may.record_received };
@@ -111,8 +113,7 @@ export function billingClient(db: App['db'], actor: Actor, id: string, nowIso: s
   const open = invoices.filter((i) => i.open);
   return {
     id: b.id, name: b.name,
-    contacts: db.all<{ full_name: string; job_role: string | null; email: string | null; phone: string | null }>(
-      'SELECT full_name, job_role, email, phone FROM contacts WHERE business_id = ? ORDER BY is_decision_maker DESC, full_name', [id])
+    contacts: listContactsFullNameJobRoleByBusinessId<{ full_name: string; job_role: string | null; email: string | null; phone: string | null }>(db, [id])
       .map((c) => ({ name: c.full_name, role: c.job_role, email: c.email, phone: c.phone })),
     to_invoice: fd.expected.claims.filter((e) => claims.has(e.claim_id)),
     invoices, outstanding: formatPence(open.reduce((a, i) => a + i.money.outstanding_pence, 0)),

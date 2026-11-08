@@ -37,34 +37,39 @@
  * and this file owns how it moves.
  */
 
-import { qualifyingActivityEvidence } from '../assessment/who-claims.ts';
-import { claimRoutes, legalDeadlineNeed, routesWhy } from '../claims/claim-route.ts';
+import { qualifyingActivityEvidence } from '../assessment/index.ts';
+import { claimRoutes, legalDeadlineNeed, routesWhy } from '../claims/index.ts';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal, answerLabel } from '../../core/backoffice.ts';
-import { assertSignedEngagement } from '../claims/research.ts';
+import { assertSignedEngagement } from '../claims/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { claimObjFor, priorClaimFor } from './crm.ts';
-import { MANDATORY_DOCUMENTS, mandatoryDocumentNeeds, type MandatoryDocuments } from '../claims/mandatory-documents.ts';
+import { MANDATORY_DOCUMENTS, mandatoryDocumentNeeds, type MandatoryDocuments } from '../claims/index.ts';
 import {
   isTerminalStage, nextActionRefusal, validNextAction, writeNextAction, type NextActionInput, type NextActionWrite,
 } from './tasks.ts';
 import { fireAutomation } from './automation.ts';
 import { onClaimStageEntered } from './introducers.ts';
 import { cddGateNeed } from '../../web/compliance.ts';
-import { amendmentWindowReading, electionResolved, floorAreaOnRecord, grantsTraced } from '../claims/claim-facts.ts';
-import { grantProviderNeed, grantSplitNeed } from '../assessment/grant-checks.ts';
-import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from '../claims/claim-record.ts';
-import { clientConfirmationNeed, filingRoute } from '../portal/client-filing.ts';
-import { accountantFitNeed } from '../portal/accountant-confirm.ts';
+import { amendmentWindowReading, electionResolved, floorAreaOnRecord, grantsTraced } from '../claims/index.ts';
+import { grantProviderNeed, grantSplitNeed } from '../assessment/index.ts';
+import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from '../claims/index.ts';
+import { clientConfirmationNeed, filingRoute } from '../portal/index.ts';
+import { accountantFitNeed } from '../portal/index.ts';
 import {
   EXITS, PROCEDURE_KEYS, PROCEDURE_STAGES, anyStageLabel, claimStage, clientStageFor, exitStage,
   nextProcedureKey, procedureIndex, procedureStage, stage as clientStage, stageIndex,
   type ExitKey, type ProcedureKey, type StageKey,
 } from '../../shared/index.ts';
-import { portalStepLine } from '../portal/portal-steps.ts';
-import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../claims/valuation-lock.ts';
+import { portalStepLine } from '../portal/index.ts';
+import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../claims/index.ts';
+import { getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint, getInvoicesCountByClaimIdKind, getInvoicesSentOnByClaimIdKind, getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyPackApprovalsVersionApprovedAtByClaimId, getSurveyorCommitmentsCommittedAtByClaimId, listClaimStageMovesAtKindByClaimId2, listReasonListsCodeLabelByList } from './data-borrowed.ts';
+import { getBusinessesSectorById, getBusinessesStageById, getLeadsIdBusinessIdById4, getLeadsIdByClaimId, updateBusinessesStageUpdatedAtById, updateLeadsUpdatedAtById } from './data.ts';
+import { insertEnquiryChecks } from '../public-site/index.ts';
+import { getClaimDeliverablesIssuedOnKindByClaimIdState, getClaimMilestonesAtByClaimIdMilestone, getClaimReconciliationsFiledOnByClaimId, getClaimStageMovesAtByClaimIdToStage, getClaimsCountByBusinessIdStage, getClaimsIdBusinessIdById3, insertClaimMilestones, insertClaimStageMoves, insertClaimStageMoves2, listClaimStageMovesFromStageToStageByClaimId, listClaimsIdStageByBusinessId, listPropertiesBusinessIdLabelByBusinessId, updateClaimsStageHoldReturnStageById } from '../claims/index.ts';
+import { getAssessmentsIdByBusinessId2, getAssessmentsSubmittedAtByBusinessId, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId } from '../assessment/index.ts';
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
@@ -138,9 +143,7 @@ export const FEE_TRIGGER: {
  * unknown delivery is null, never today). Read by the fee trigger and by the finance view's expected-fee date.
  */
 export function reportDeliveredOn(db: Db, claim_id: string): { readonly on: string; readonly kind: string } | null {
-  const r = db.get<{ issued_on: string; kind: string }>(
-    "SELECT issued_on, kind FROM claim_deliverables WHERE claim_id = ? AND state = 'ISSUED' AND issued_on IS NOT NULL " +
-      "AND kind IN ('CLIENT_REPORT','ACCOUNTANT_COMPUTATION_PACK') ORDER BY issued_on ASC, kind ASC LIMIT 1", [claim_id]);
+  const r = getClaimDeliverablesIssuedOnKindByClaimIdState<{ issued_on: string; kind: string }>(db, [claim_id]);
   return r === undefined ? null : { on: r.issued_on, kind: r.kind };
 }
 
@@ -214,11 +217,7 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
  * this claim of the fingerprint the issued client report carries. A later version issued needs accepting again.
  */
 export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
-  const a = db.get<{ accepted_at: string; name: string | null }>(
-    'SELECT x.accepted_at, u.display_name AS name FROM client_report_acceptances x LEFT JOIN users u ON u.id = x.user_id ' +
-      "WHERE x.claim_id = ? AND x.fingerprint = (SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' " +
-      // PHASE 159a: an acceptance from before the valuation was last reopened is set aside (src/modules/claims/valuation-lock.ts).
-      "AND state = 'ISSUED' ORDER BY version DESC LIMIT 1) AND x.accepted_at >= ? ORDER BY x.accepted_at ASC LIMIT 1", [c.id, c.id, voidLine(db, c.id) ?? '']);
+  const a = getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint<{ accepted_at: string; name: string | null }>(db, [c.id, c.id, voidLine(db, c.id) ?? '']);
   return {
     what: 'The client accepted the report, in their portal',
     met: a !== undefined,
@@ -234,10 +233,7 @@ export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
  * the inspection basis and a RICS number, so no tick can stand in for it.
  */
 export function packApprovedNeed(db: Db, c: { readonly id: string }): Need {
-  const a = db.get<{ version: number; approved_at: string; name: string | null }>(
-    'SELECT a.version, a.approved_at, u.display_name AS name FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
-      'JOIN surveyor_jobs j ON j.id = p.job_id LEFT JOIN users u ON u.id = a.approved_by WHERE j.claim_id = ? ' +
-      'ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [c.id]);
+  const a = getSurveyPackApprovalsVersionApprovedAtByClaimId<{ version: number; approved_at: string; name: string | null }>(db, [c.id]);
   return {
     what: 'The surveyor approved and signed the survey pack',
     met: a !== undefined,
@@ -255,9 +251,7 @@ export function packApprovedNeed(db: Db, c: { readonly id: string }): Need {
  */
 export function ratesSourcedNeed(db: Db, c: { readonly id: string }): Need {
   const what = 'Every rate in the survey pack names its source';
-  const a = db.get<{ snapshot_json: string; version: number }>(
-    'SELECT a.snapshot_json, a.version FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
-      'WHERE j.claim_id = ? ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [c.id]);
+  const a = getSurveyPackApprovalsSnapshotJsonVersionByClaimId<{ snapshot_json: string; version: number }>(db, [c.id]);
   if (a === undefined) return { what, met: false, why: 'no survey pack is approved on this claim yet' };
   type V = { value?: number | null; source?: { basis?: unknown } | null };
   let s: { inputs?: { building_rate_pence?: V }; lines?: { label?: string; removed?: boolean; qty_milli?: V; rate_pence?: V }[] };
@@ -349,7 +343,7 @@ export function enquiryGate(db: Db, subject: EnquirySubject): EnquiryReading {
     rows.push(...db.all<CheckDbRow>(`${CHECK_SELECT}WHERE e.lead_id = ?`, [subject.lead_id]));
   } else {
     rows.push(...db.all<CheckDbRow>(`${CHECK_SELECT}WHERE e.claim_id = ?`, [subject.claim_id]));
-    const lead = db.get<{ id: string }>('SELECT id FROM leads WHERE claim_id = ?', [subject.claim_id]);
+    const lead = getLeadsIdByClaimId<{ id: string }>(db, [subject.claim_id]);
     if (lead !== undefined) rows.push(...db.all<CheckDbRow>(`${CHECK_SELECT}WHERE e.lead_id = ?`, [lead.id]));
   }
   const latest = new Map<string, CheckDbRow>();
@@ -397,14 +391,11 @@ export function enquiryEvidence(
     if (prospect_sector !== null) out.UK_HEALTHCARE_PROPERTY.push(`Sector: ${prospect_sector.replace(/_/g, ' ')} — as recorded on the lead`);
     return out;
   }
-  const b = db.get<{ sector: string }>('SELECT sector FROM businesses WHERE id = ?', [business_id]);
+  const b = getBusinessesSectorById<{ sector: string }>(db, [business_id]);
   if (b !== undefined) out.UK_HEALTHCARE_PROPERTY.push(`Sector: ${b.sector.replace(/_/g, ' ')} — from the assessment`);
-  const latest = db.get<{ id: string }>(
-    'SELECT id FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [business_id]);
+  const latest = getAssessmentsIdByBusinessId2<{ id: string }>(db, [business_id]);
   if (latest !== undefined && can(actor, 'answer.read', { type: 'answer', id: latest.id, business_id })) {
-    const answers = db.all<{ question_id: string; question_text: string; state: string; value: string | null }>(
-      'SELECT question_id, question_text, state, value FROM assessment_answers WHERE assessment_id = ? ORDER BY ord ASC',
-      [latest.id]);
+    const answers = listAssessmentAnswersQuestionIdQuestionTextByAssessmentId<{ question_id: string; question_text: string; state: string; value: string | null }>(db, [latest.id]);
     for (const a of answers) {
       const line = `${a.question_text} — ${answerLabel(a.state, a.value)} (the client’s own answer)`;
       if (a.question_id === 'Q1b' || a.question_id === 'Q1b-profit' || /^Q2-\d+-use$/.test(a.question_id)) out.TRADING_CLIENT.push(line);
@@ -415,16 +406,11 @@ export function enquiryEvidence(
   }
   // PHASE 159g (L2, item 2): the register's company — a dormant one flagged — and how the client holds each building.
   out.TRADING_CLIENT.push(...qualifyingActivityEvidence(db, business_id));
-  for (const p of db.all<{ business_id: string; label: string; existing_ca_claimed: string | null }>(
-    'SELECT business_id, label, existing_ca_claimed FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC', [business_id])) {
+  for (const p of listPropertiesBusinessIdLabelByBusinessId<{ business_id: string; label: string; existing_ca_claimed: string | null }>(db, [business_id])) {
     // The CRM follow-on: derived from the client's own answer where it settles it, and said where it came from.
     out.NO_CLAIM_CONFLICT.push(`${p.label}: allowances claimed before? ${priorClaimFor(db, p).label}`);
   }
-  const open = db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM claims WHERE business_id = ? AND stage IS NOT NULL AND stage NOT IN " +
-      "('CLOSED','DECLINED_AT_ENQUIRY','CLIENT_DID_NOT_PROCEED','CLIENT_DECLINED_TO_SIGN','REASONED_NEGATIVE'," +
-      "'CLIENT_WITHDREW','OUTSIDE_AMENDMENT_WINDOW','CANCELLED','LOST')",
-    [business_id])?.n ?? 0;
+  const open = getClaimsCountByBusinessIdStage<{ n: number }>(db, [business_id])?.n ?? 0;
   out.NO_CLAIM_CONFLICT.push(`Open claims for this organisation already in our own pipeline: ${open}`);
   return out;
 }
@@ -444,10 +430,7 @@ export type PipelineClaim = {
 };
 
 export function loadPipelineClaim(db: Db, id: string): PipelineClaim {
-  const c = db.get<PipelineClaim>(
-    'SELECT id, business_id, assessment_id, stage, hold_return_stage, hold_reason, tax_adviser_signoff_at, created_at, property_id ' +
-      'FROM claims WHERE id = ?',
-    [id]);
+  const c = getClaimsIdBusinessIdById3<PipelineClaim>(db, [id]);
   // A missing row and a forbidden row look the same from outside.
   if (c === undefined) throw new NotFoundAsRefusal();
   return c;
@@ -459,17 +442,12 @@ export function loadPipelineClaim(db: Db, id: string): PipelineClaim {
  * a hold is a pause, and what was confirmed before it still stands.
  */
 export function enteredAt(db: Db, c: { id: string; created_at: string }, stageKey: string): string {
-  const r = db.get<{ at: string | null }>(
-    "SELECT MAX(at) AS at FROM claim_stage_moves WHERE claim_id = ? AND to_stage = ? AND kind IN ('FORWARD','REOPEN','OPENED','CONVERTED')",
-    [c.id, stageKey]);
+  const r = getClaimStageMovesAtByClaimIdToStage<{ at: string | null }>(db, [c.id, stageKey]);
   return r?.at ?? c.created_at;
 }
 
 function milestoneSince(db: Db, claim_id: string, m: MilestoneKey, since: string): { at: string } | undefined {
-  return db.get<{ at: string }>(
-    'SELECT recorded_at AS at FROM claim_milestones WHERE claim_id = ? AND milestone = ? AND recorded_at >= ? ' +
-      'ORDER BY recorded_at DESC LIMIT 1',
-    [claim_id, m, since]);
+  return getClaimMilestonesAtByClaimIdMilestone<{ at: string }>(db, [claim_id, m, since]);
 }
 
 export type Need = { readonly what: string; readonly met: boolean; readonly why: string };
@@ -527,10 +505,7 @@ export function feeTriggerReached(db: Db, c: PipelineClaim, trigger: FeeTrigger 
  * and one credited in full are none of them this claim's fee.
  */
 export function liveFeeInvoiceCount(db: Db, claim_id: string): number {
-  return db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM invoices i WHERE i.claim_id = ? AND i.kind = 'FEE' AND i.invoice_status IN ('RAISED','SENT') " +
-      'AND i.fee_pence > COALESCE((SELECT SUM(n.amount_pence) FROM invoice_credit_notes n WHERE n.invoice_id = i.id), 0)',
-    [claim_id])?.n ?? 0;
+  return getInvoicesCountByClaimIdKind<{ n: number }>(db, [claim_id])?.n ?? 0;
 }
 
 /**
@@ -571,8 +546,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       break;
     }
     case 'ASSESSMENT': {
-      const a = db.get<{ submitted_at: string }>(
-        'SELECT submitted_at FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC LIMIT 1', [c.business_id]);
+      const a = getAssessmentsSubmittedAtByBusinessId<{ submitted_at: string }>(db, [c.business_id]);
       needs.push({
         what: 'An assessment is on record for the organisation',
         met: a !== undefined,
@@ -600,10 +574,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       break;
     }
     case 'SURVEY': {
-      const k = db.get<{ committed_at: string }>(
-        'SELECT sc.committed_at FROM surveyor_commitments sc JOIN surveyor_jobs j ON j.id = sc.job_id ' +
-          'WHERE j.claim_id = ? ORDER BY sc.committed_at ASC LIMIT 1',
-        [c.id]);
+      const k = getSurveyorCommitmentsCommittedAtByClaimId<{ committed_at: string }>(db, [c.id]);
       needs.push({
         what: 'The surveyor’s commitment is recorded, on a survey job on this claim',
         met: k !== undefined,
@@ -664,10 +635,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       const live = liveFeeInvoiceCount(db, c.id);
       /* PHASE 158c (F41, the Friary House run): the claim moved on with the fee "raised, not sent" - the client had not been
          invoiced. A live fee invoice must be recorded as SENT (finance's "sent", src/web/invoices.ts markSent). */
-      const sent = db.get<{ sent_on: string | null }>(
-        "SELECT i.sent_on FROM invoices i WHERE i.claim_id = ? AND i.kind = 'FEE' AND i.invoice_status = 'SENT' " +
-          'AND i.fee_pence > COALESCE((SELECT SUM(n.amount_pence) FROM invoice_credit_notes n WHERE n.invoice_id = i.id), 0) ORDER BY i.sent_on DESC LIMIT 1',
-        [c.id]);
+      const sent = getInvoicesSentOnByClaimIdKind<{ sent_on: string | null }>(db, [c.id]);
       needs.push({
         what: 'Our fee invoice is sent to the client on this claim',
         met: sent !== undefined,
@@ -724,21 +692,20 @@ export type MoveResult =
 type ReasonRow = { code: string; label: string; active: number };
 
 export function reasonList(db: Db, list: 'LEAD_LOST' | 'CLAIM_EXIT', activeOnly = true): { code: string; label: string }[] {
-  return db.all<ReasonRow>('SELECT code, label, active FROM reason_lists WHERE list = ? ORDER BY ord ASC, code ASC', [list])
+  return listReasonListsCodeLabelByList<ReasonRow>(db, [list])
     .filter((r) => !activeOnly || r.active === 1)
     .map((r) => ({ code: r.code, label: r.label }));
 }
 
 export function reasonLabel(db: Db, list: 'LEAD_LOST' | 'CLAIM_EXIT', code: string | null): string | null {
   if (code === null) return null;
-  return db.get<{ label: string }>('SELECT label FROM reason_lists WHERE list = ? AND code = ?', [list, code])?.label ?? code;
+  return getReasonListsLabelByListCode<{ label: string }>(db, [list, code])?.label ?? code;
 }
 
 /** THE FURTHEST OF THE TEN, OR CLOSED, THIS CLAIM HAS EVER BEEN AT — from its history and its present. */
 export function furthestReached(db: Db, c: PipelineClaim): number {
   let best = Math.max(procedureIndex(c.stage), procedureIndex(c.hold_return_stage));
-  for (const m of db.all<{ from_stage: string | null; to_stage: string | null }>(
-    'SELECT from_stage, to_stage FROM claim_stage_moves WHERE claim_id = ?', [c.id])) {
+  for (const m of listClaimStageMovesFromStageToStageByClaimId<{ from_stage: string | null; to_stage: string | null }>(db, [c.id])) {
     best = Math.max(best, procedureIndex(m.from_stage), procedureIndex(m.to_stage));
   }
   return best;
@@ -754,16 +721,15 @@ export function furthestReached(db: Db, c: PipelineClaim): number {
  * a stored stage. Returns the key it was raised to, or null.
  */
 export function raiseBusinessStage(db: Db, business_id: string, at: string): StageKey | null {
-  const b = db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [business_id]);
+  const b = getBusinessesStageById<{ stage: string }>(db, [business_id]);
   if (b === undefined) return null;
   let best: StageKey | null = null;
-  for (const c of db.all<{ id: string; stage: string | null; hold_return_stage: string | null }>(
-    'SELECT id, stage, hold_return_stage FROM claims WHERE business_id = ?', [business_id])) {
+  for (const c of listClaimsIdStageByBusinessId<{ id: string; stage: string | null; hold_return_stage: string | null }>(db, [business_id])) {
     const k = clientStageForClaim(db, c.id, c.stage === 'ON_HOLD' ? c.hold_return_stage : c.stage);
     if (k !== null && (best === null || stageIndex(k) > stageIndex(best))) best = k;
   }
   if (best === null || stageIndex(b.stage) >= stageIndex(best)) return null;
-  db.run('UPDATE businesses SET stage = ?, updated_at = ? WHERE id = ?', [best, at, business_id]);
+  updateBusinessesStageUpdatedAtById(db, [best, at, business_id]);
   return best;
 }
 
@@ -775,7 +741,7 @@ export function raiseBusinessStage(db: Db, business_id: string, at: string): Sta
 export function clientStageForClaim(db: Db, claim_id: string, key: string | null): StageKey | null {
   const k = clientStageFor(key);
   if (k !== 'INVOICED') return k;
-  const filed = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [claim_id])?.filed_on ?? null;
+  const filed = getClaimReconciliationsFiledOnByClaimId<{ filed_on: string | null }>(db, [claim_id])?.filed_on ?? null;
   return filed === null ? 'AT_SURVEY' : k;
 }
 
@@ -787,9 +753,9 @@ export function clientStageForClaim(db: Db, claim_id: string, key: string | null
  */
 export function raiseToResearch(db: Db, business_id: string, at: string, run: { readonly signed: boolean; readonly fired: number }): boolean {
   if (!run.signed || run.fired === 0) return false;
-  const b = db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [business_id]);
+  const b = getBusinessesStageById<{ stage: string }>(db, [business_id]);
   if (b === undefined || stageIndex(b.stage) >= stageIndex('RESEARCH_PART_RUN')) return false;
-  db.run('UPDATE businesses SET stage = ?, updated_at = ? WHERE id = ?', ['RESEARCH_PART_RUN', at, business_id]);
+  updateBusinessesStageUpdatedAtById(db, ['RESEARCH_PART_RUN', at, business_id]);
   return true;
 }
 
@@ -802,11 +768,7 @@ export function recordOpened(
   d: { readonly db: Db; readonly now: () => string; readonly newId: () => string },
   actor: Actor | null, claim_id: string, stageKey: string, why: string,
 ): void {
-  d.db.run(
-    'INSERT INTO claim_stage_moves (id, claim_id, at, actor_id, actor_role, kind, from_stage, to_stage, reason_code, reason_text) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, NULL, ?, NULL, ?)',
-    [d.newId(), claim_id, d.now(), actor?.id ?? null, actor?.role ?? null, 'OPENED', stageKey, why],
-  );
+  insertClaimStageMoves2(d.db, [d.newId(), claim_id, d.now(), actor?.id ?? null, actor?.role ?? null, 'OPENED', stageKey, why]);
 }
 
 function refuse(d: PipelineDeps, actor: Actor, c: PipelineClaim, kind: string, to: string | null, why: string, field?: string): MoveResult {
@@ -830,15 +792,8 @@ function apply(d: PipelineDeps, actor: Actor, c: PipelineClaim, m: Apply, next: 
   const aside: { set: SetAside | null } = { set: null };
   const { raised, nextTask } = d.db.tx(() => {
     if (m.kind === 'REOPEN' && VOIDING_REOPEN_STAGES.includes(m.to)) aside.set = setAsideOnReopen(d.db, c.id, at, actor.id);
-    d.db.run(
-      'UPDATE claims SET stage = ?, hold_return_stage = ?, hold_reason = ?, completed_at = ?, updated_at = ? WHERE id = ?',
-      [m.to, m.hold_return_stage, m.hold_reason, m.to === 'CLOSED' ? at : null, at, c.id],
-    );
-    d.db.run(
-      'INSERT INTO claim_stage_moves (id, claim_id, at, actor_id, actor_role, kind, from_stage, to_stage, reason_code, reason_text) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, c.id, at, actor.id, actor.role, m.kind, c.stage, m.to, m.reason_code, m.reason_text],
-    );
+    updateClaimsStageHoldReturnStageById(d.db, [m.to, m.hold_return_stage, m.hold_reason, m.to === 'CLOSED' ? at : null, at, c.id]);
+    insertClaimStageMoves(d.db, [id, c.id, at, actor.id, actor.role, m.kind, c.stage, m.to, m.reason_code, m.reason_text]);
     const task = next === null ? null : writeNextAction(d.db, d.now, d.newId, actor, c, next);
     return { raised: raiseBusinessStage(d.db, c.business_id, at), nextTask: task };
   });
@@ -953,8 +908,7 @@ export function moveClaim(d: PipelineDeps, actor: Actor, claim_id: string, req: 
       return refuse(d, actor, c, kind, to,
         `${exit.label} can only be used from ${exit.from.map((k) => stageLabel(k)).join(', ')}, and this claim is at ${stageLabel(at)}.`);
     }
-    const reason = d.db.get<ReasonRow>(
-      "SELECT code, label, active FROM reason_lists WHERE list = 'CLAIM_EXIT' AND code = ?", [req.reason_code ?? '']);
+    const reason = getReasonListsCodeLabelByListCode<ReasonRow>(d.db, [req.reason_code ?? '']);
     if (reason === undefined || reason.active !== 1) {
       return refuse(d, actor, c, kind, to, 'Choose a reason from the list.', 'reason_code');
     }
@@ -1083,10 +1037,7 @@ export function recordMilestone(
   if (!note.ok) return note;
   const id = d.newId();
   const at = d.now();
-  d.db.run(
-    'INSERT INTO claim_milestones (id, claim_id, milestone, stage_at, note, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, c.id, milestone, m.stage, note.value, actor.id, at],
-  );
+  insertClaimMilestones(d.db, [id, c.id, milestone, m.stage, note.value, actor.id, at]);
   d.audit.append({
     at, kind: 'CLAIM_MILESTONE_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'claim', object_id: c.id, detail: { milestone, stage: m.stage, business: c.business_id },
@@ -1106,8 +1057,7 @@ export function recordEnquiryCheck(
 ): Result {
   let target: { lead_id: string | null; claim_id: string | null; business: string | null };
   if ('lead_id' in subject) {
-    const l = d.db.get<{ id: string; business_id: string | null; status: string }>(
-      'SELECT id, business_id, status FROM leads WHERE id = ?', [subject.lead_id]);
+    const l = getLeadsIdBusinessIdById4<{ id: string; business_id: string | null; status: string }>(d.db, [subject.lead_id]);
     if (l === undefined) throw new NotFoundAsRefusal();
     authorise(actor, 'lead.write', { type: 'lead', id: l.id, business_id: l.business_id });
     if (l.status === 'CONVERTED') {
@@ -1132,11 +1082,8 @@ export function recordEnquiryCheck(
   const id = d.newId();
   const at = d.now();
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO enquiry_checks (id, lead_id, claim_id, check_key, answer, note, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, target.lead_id, target.claim_id, input.check_key, input.answer, note.value, actor.id, at],
-    );
-    if (target.lead_id !== null) d.db.run('UPDATE leads SET updated_at = ? WHERE id = ?', [at, target.lead_id]);
+    insertEnquiryChecks(d.db, [id, target.lead_id, target.claim_id, input.check_key, input.answer, note.value, actor.id, at]);
+    if (target.lead_id !== null) updateLeadsUpdatedAtById(d.db, [at, target.lead_id]);
   });
   d.audit.append({
     at, kind: 'ENQUIRY_CHECK_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -1222,17 +1169,13 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
   const base = { stage: { key: s.key, kind: s.kind, label: s.label }, steps: stepsFor(db, c) };
   if (!can(actor, 'pipeline.read', { type: 'pipeline', id: c.id })) return base;
 
-  const business = db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [c.business_id]);
+  const business = getBusinessesStageById<{ stage: string }>(db, [c.business_id]);
   const effective = s.kind === 'ON_HOLD' ? c.hold_return_stage : c.stage;
   const evidences = clientStageForClaim(db, c.id, effective);
-  const history = db.all<{
+  const history = listClaimStageMovesAtKindByClaimId2<{
     at: string; kind: string; from_stage: string | null; to_stage: string | null; reason_code: string | null;
     reason_text: string | null; who: string | null;
-  }>(
-    'SELECT m.at, m.kind, m.from_stage, m.to_stage, m.reason_code, m.reason_text, u.display_name AS who ' +
-      'FROM claim_stage_moves m LEFT JOIN users u ON u.id = m.actor_id WHERE m.claim_id = ? ORDER BY m.at DESC, m.rowid DESC',
-    [c.id],
-  ).map((m) => ({
+  }>(db, [c.id]).map((m) => ({
     at: localStamp(m.at), what: MOVE_WORDS[m.kind] ?? m.kind,
     from: anyStageLabel(m.from_stage), to: anyStageLabel(m.to_stage),
     who: m.who ?? (m.kind === 'CONVERTED' || m.kind === 'OPENED' ? 'the system' : 'a former user'),

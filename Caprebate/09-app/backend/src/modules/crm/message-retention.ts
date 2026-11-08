@@ -52,10 +52,13 @@
 
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
-import { claimFileDays } from '../claims/documents.ts';
+import { claimFileDays } from '../claims/index.ts';
 import { liveHeldIds } from '../../web/compliance.ts';
 import { BACKUP_CYCLE, RET7, knownBackupCycleDays } from '../../shared/upload-handler-port.ts';
 import { deleteInboundEmailById, deleteInboundEmailFileSavesByInboundEmailFileIdInboundEmailI, deleteInboundEmailFilesByInboundEmailId, deleteInboundEmailFilingsByInboundEmailId, listInboundEmailIdByClientMessageId, listInboundEmailIdReceivedAtByOutcomeInboundEmailId } from '../../integrations/index.ts';
+import { deleteClientMessageFilesByMessageId, deleteClientMessagesById, deleteInternalNotesById, listClientMessagesBusinessId, listClientMessagesIdCreatedAtByBusinessId, listInternalNotesIdCreatedAtByBusinessId } from './data.ts';
+import { insertDeletionLog } from './data-borrowed.ts';
+import { listClaimsIdByBusinessId } from '../claims/index.ts';
 
 export type MessageRetention = {
   readonly enabled: boolean;
@@ -131,9 +134,9 @@ export function addMonths(day: string, months: number): string {
 type Msg = { id: string; created_at: string; kind: 'CLIENT_MESSAGE' | 'TEAM_MESSAGE' };
 
 function messagesOf(db: Db, business_id: string): Msg[] {
-  const c = db.all<{ id: string; created_at: string }>('SELECT id, created_at FROM client_messages WHERE business_id = ?', [business_id])
+  const c = listClientMessagesIdCreatedAtByBusinessId<{ id: string; created_at: string }>(db, [business_id])
     .map((r): Msg => ({ ...r, kind: 'CLIENT_MESSAGE' }));
-  const t = db.all<{ id: string; created_at: string }>('SELECT id, created_at FROM internal_notes WHERE business_id = ?', [business_id])
+  const t = listInternalNotesIdCreatedAtByBusinessId<{ id: string; created_at: string }>(db, [business_id])
     .map((r): Msg => ({ ...r, kind: 'TEAM_MESSAGE' }));
   return [...c, ...t];
 }
@@ -143,7 +146,7 @@ function messagesOf(db: Db, business_id: string): Msg[] {
  * has not started — its period end or its report not known — makes the whole company not known.
  */
 function claimFilesStart(db: Db, business_id: string): { has_claims: boolean; start: string | null } {
-  const claims = db.all<{ id: string }>('SELECT id FROM claims WHERE business_id = ?', [business_id]);
+  const claims = listClaimsIdByBusinessId<{ id: string }>(db, [business_id]);
   if (claims.length === 0) return { has_claims: false, start: null };
   let latest = '';
   for (const c of claims) {
@@ -169,8 +172,7 @@ export function messagesDue(db: Db, cfg: MessageRetention, nowIso: string): DueR
     CLIENT_MESSAGE: liveHeldIds(db, 'CLIENT_MESSAGE'), TEAM_MESSAGE: liveHeldIds(db, 'TEAM_MESSAGE'), INBOUND_EMAIL: liveHeldIds(db, 'INBOUND_EMAIL'),
   };
   const out: DueRecord[] = [];
-  const companies = db.all<{ business_id: string }>(
-    'SELECT business_id FROM client_messages UNION SELECT business_id FROM internal_notes ORDER BY business_id');
+  const companies = listClientMessagesBusinessId<{ business_id: string }>(db);
   for (const { business_id } of companies) {
     if (heldCompanies.has(business_id)) continue;
     const msgs = messagesOf(db, business_id);
@@ -230,10 +232,7 @@ export function sweepMessages(d: RetentionDeps, cfg: MessageRetention = MESSAGE_
   const removed = { CLIENT_MESSAGE: [] as string[], TEAM_MESSAGE: [] as string[], INBOUND_EMAIL: [] as string[] };
 
   const logEntry = (kind: DueRecord['kind'], id: string, due_on: string): void => {
-    d.db.run(
-      'INSERT INTO deletion_log (deletion_ref, record_kind, record_id, category, basis_rule, basis_due_on, approved_by, review_ref, executed_by, ' +
-        'executed_at, stores_json, backups_pending, backup_cycle_days, backup_copies_expire_at, verified_by, verified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)',
-      [`DEL-MSG-${d.newId()}`, kind, id, CATEGORY[kind], MSG_RETENTION_RULE, due_on, approved_by, review_ref, executed_by, at, '["database"]',
+    insertDeletionLog(d.db, [`DEL-MSG-${d.newId()}`, kind, id, CATEGORY[kind], MSG_RETENTION_RULE, due_on, approved_by, review_ref, executed_by, at, '["database"]',
         // A backup cycle nobody stated is pending, with no expiry: not known never reads as "no copies" (migration 022).
         cycle === null || cycle > 0 ? 1 : 0, cycle,
         cycle === null || cycle === 0 ? null : new Date(new Date(at).getTime() + cycle * 86_400_000).toISOString()]);
@@ -252,7 +251,7 @@ export function sweepMessages(d: RetentionDeps, cfg: MessageRetention = MESSAGE_
       if (r.kind === 'INBOUND_EMAIL') { deleteEmail(r.id, r.due_on); continue; }
       if (r.kind === 'TEAM_MESSAGE') {
         logEntry('TEAM_MESSAGE', r.id, r.due_on);
-        d.db.run('DELETE FROM internal_notes WHERE id = ?', [r.id]);
+        deleteInternalNotesById(d.db, [r.id]);
         removed.TEAM_MESSAGE.push(r.id);
         continue;
       }
@@ -260,8 +259,8 @@ export function sweepMessages(d: RetentionDeps, cfg: MessageRetention = MESSAGE_
       // An emailed reply holds the same words as the message it became, so it goes with it.
       for (const e of listInboundEmailIdByClientMessageId<{ id: string }>(d.db, [r.id, r.id])) deleteEmail(e.id, r.due_on);
       // The file stays a document in the company's Files. Only the row saying which message brought it goes.
-      d.db.run('DELETE FROM client_message_files WHERE message_id = ?', [r.id]);
-      d.db.run('DELETE FROM client_messages WHERE id = ?', [r.id]);
+      deleteClientMessageFilesByMessageId(d.db, [r.id]);
+      deleteClientMessagesById(d.db, [r.id]);
       removed.CLIENT_MESSAGE.push(r.id);
     }
   });

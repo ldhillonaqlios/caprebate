@@ -24,9 +24,11 @@
 import { isPricePaidLead } from './who-claims.ts';
 import type { Db } from '../../core/index.ts';
 import { checklistView, type ChecklistView } from '../../web/survey-evidence.ts';
-import { mandatoryDocumentNeeds } from '../claims/mandatory-documents.ts';
-import { latestFacts } from '../claims/claim-facts.ts';
+import { mandatoryDocumentNeeds } from '../claims/index.ts';
+import { latestFacts } from '../claims/index.ts';
 import { listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId } from '../../integrations/index.ts';
+import { getClaimsPById } from '../claims/index.ts';
+import { getSurveyorJobsBusinessIdClaimIdById } from './data-borrowed.ts';
 
 export const DESK_FIRST_TEST = Object.freeze({
   status: 'TEST_ONLY_PLACEHOLDERS' as const,
@@ -108,7 +110,7 @@ function band(x: number, limits: readonly number[], inclusive: boolean): 1 | 2 |
 
 /** The price paid from the title register, or the price paid data: the claim's property, else the business's only one. */
 function pricePaidPence(db: Db, job: JobRow): number | null {
-  const pid = job.claim_id === null ? null : db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [job.claim_id])?.p ?? null;
+  const pid = job.claim_id === null ? null : getClaimsPById<{ p: string | null }>(db, [job.claim_id])?.p ?? null;
   for (const source of ['HMLR_TITLE', 'HMLR_PPD']) {
     const rows = listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId<{ fields_json: string; property_id: string | null }>(db, [job.business_id, source]);
     const r = pid === null ? (rows.length === 1 ? rows[0] : undefined) : rows.find((x) => x.property_id === pid);
@@ -174,12 +176,12 @@ export function deskFirstVerdict(f: DeskFirstFacts, cfg = DESK_FIRST_TEST): Desk
 
 /** The rule on a job's records. */
 export function deskFirstReading(db: Db, job_id: string, cfg = DESK_FIRST_TEST): DeskFirstReading | null {
-  const job = db.get<JobRow>('SELECT j.business_id, j.claim_id, b.sector FROM surveyor_jobs j JOIN businesses b ON b.id = j.business_id WHERE j.id = ?', [job_id]);
+  const job = getSurveyorJobsBusinessIdClaimIdById<JobRow>(db, [job_id]);
   if (job === undefined) return null;
   const facts = job.claim_id === null ? new Map() : latestFacts(db, job.claim_id);
   const fact = (k: string) => facts.get(k) as { answer: string; value_text: string | null } | undefined;
   const bought = fact('BOUGHT_THE_BUILDING');
-  const property_id = job.claim_id === null ? null : db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [job.claim_id])?.p ?? null;
+  const property_id = job.claim_id === null ? null : getClaimsPById<{ p: string | null }>(db, [job.claim_id])?.p ?? null;
   const needs = job.claim_id === null ? [] : mandatoryDocumentNeeds(db, { id: job.claim_id, property_id });
   const election = fact('ELECTION_EXISTS');
   return deskFirstVerdict({

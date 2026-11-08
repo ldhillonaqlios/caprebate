@@ -12,7 +12,8 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
-import { releasedVersion } from '../claims/report-signoff.ts';
+import { releasedVersion } from '../claims/index.ts';
+import { getClientReportAcceptancesAcceptedAtByApprovalIdUserId, insertClientReportAcceptances } from './data.ts';
 
 export type AcceptDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 
@@ -26,8 +27,7 @@ export const ACCEPT_WORDS = {
 export function myAcceptance(db: Db, actor: Actor, business_id: string): { accepted_at: string } | null {
   const r = releasedVersion(db, business_id);
   if (r === null) return null;
-  return db.get<{ accepted_at: string }>(
-    'SELECT accepted_at FROM client_report_acceptances WHERE approval_id = ? AND user_id = ?', [r.row.id, actor.id]) ?? null;
+  return getClientReportAcceptancesAcceptedAtByApprovalIdUserId<{ accepted_at: string }>(db, [r.row.id, actor.id]) ?? null;
 }
 
 /** Accept the version released to the business, as a client login of it. */
@@ -39,8 +39,7 @@ export function acceptReport(d: AcceptDeps, actor: Actor, business_id: string): 
   const id = d.newId();
   const at = d.now();
   d.db.tx(() => {
-    d.db.run('INSERT INTO client_report_acceptances (id, claim_id, approval_id, fingerprint, user_id, accepted_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, r.row.claim_id, r.row.id, r.row.fingerprint, actor.id, at]);
+    insertClientReportAcceptances(d.db, [id, r.row.claim_id, r.row.id, r.row.fingerprint, actor.id, at]);
     d.audit.append({
       at, kind: 'CLIENT_REPORT_ACCEPTED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'claim', object_id: r.row.claim_id, detail: { approval: r.row.id, version: r.row.version },

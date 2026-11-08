@@ -53,6 +53,7 @@
 
 import type { Db } from '../../core/index.ts';
 import { newSession, FUNNEL, type SectorId, type Session } from '../../shared/index.ts';
+import { getAssessmentDraftsStateJsonBySubmittedAssessmentId } from './data.ts';
 
 /* ------------------------------------------------------------------ *
  * READING THE STATE
@@ -68,9 +69,7 @@ export type FunnelStateRow = Record<string, unknown>;
  * it to the assessment `submit()` created from it. One row per assessment.
  */
 export function funnelStateFor(db: Db, assessment_id: string): FunnelStateRow | undefined {
-  const row = db.get<{ state_json: string }>(
-    'SELECT state_json FROM assessment_drafts WHERE submitted_assessment_id = ?', [assessment_id],
-  );
+  const row = getAssessmentDraftsStateJsonBySubmittedAssessmentId<{ state_json: string }>(db, [assessment_id]);
   if (row === undefined) return undefined;
   try {
     const parsed: unknown = JSON.parse(row.state_json);

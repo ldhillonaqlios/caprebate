@@ -36,6 +36,8 @@ import {
 import { identityPassed } from './identity-checks.ts';
 import { getResearchSourcesIdStateByBusinessIdSourceId } from '../integrations/index.ts';
 import { getUsersIdByIdRole } from '../core/index.ts';
+import { getClaimsIdByIdBusinessId, getDocumentsIdByIdBusinessId, listDocumentsIdTypeCodeByBusinessId } from '../modules/claims/index.ts';
+import { getBusinessesIdById, getBusinessesNameById, getContactsIdByIdBusinessId, listContactsIdFullNameByBusinessId } from '../modules/crm/index.ts';
 
 /* ================================================================== *
  * 1 · THE VOCABULARIES — the paper's own, section 5
@@ -256,9 +258,9 @@ export function openCheck(d: ComplianceDeps, actor: Actor, input: Fields): Write
   assertComplianceWrite(actor);
   return guarded(() => {
     const business_id = (input['business_id'] ?? '').trim();
-    if (d.db.get<{ id: string }>('SELECT id FROM businesses WHERE id = ?', [business_id]) === undefined) return { ok: false, why: 'Choose the organisation.' };
+    if (getBusinessesIdById<{ id: string }>(d.db, [business_id]) === undefined) return { ok: false, why: 'Choose the organisation.' };
     const claim_id = (input['claim_id'] ?? '').trim() || null;
-    if (claim_id !== null && d.db.get<{ id: string }>('SELECT id FROM claims WHERE id = ? AND business_id = ?', [claim_id, business_id]) === undefined) {
+    if (claim_id !== null && getClaimsIdByIdBusinessId<{ id: string }>(d.db, [claim_id, business_id]) === undefined) {
       return { ok: false, why: 'That claim is not one of this organisation’s.' };
     }
     const type = input['claimant_type'] ?? null;
@@ -305,11 +307,11 @@ export function updateCheck(d: ComplianceDeps, actor: Actor, id: string, input: 
       checked_on: take('checked_on', (v) => dateField(v, 'The date of the check')),
     };
     if (next.evidence_document_id !== null
-      && d.db.get<{ id: string }>('SELECT id FROM documents WHERE id = ? AND business_id = ?', [next.evidence_document_id, c.business_id]) === undefined) {
+      && getDocumentsIdByIdBusinessId<{ id: string }>(d.db, [next.evidence_document_id, c.business_id]) === undefined) {
       return { ok: false, why: 'The evidence document must be a document on the same organisation.' };
     }
     if (next.authority_contact_id !== null
-      && d.db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ? AND business_id = ?', [next.authority_contact_id, c.business_id]) === undefined) {
+      && getContactsIdByIdBusinessId<{ id: string }>(d.db, [next.authority_contact_id, c.business_id]) === undefined) {
       return { ok: false, why: 'The person with authority must be a contact of this organisation.' };
     }
     if (next.sanctions_screen !== null && next.sanctions_screened_on === null) return { ok: false, why: 'Give the date of the sanctions screen.' };
@@ -375,7 +377,7 @@ export function recordOwner(d: ComplianceDeps, actor: Actor, check_id: string, i
     const c = loadCheck(d.db, check_id);
     if (c.state !== 'IN_PROGRESS') return { ok: false, why: 'An owner is recorded on an open check.' };
     const contact_id = (input['contact_id'] ?? '').trim();
-    if (d.db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ? AND business_id = ?', [contact_id, c.business_id]) === undefined) {
+    if (getContactsIdByIdBusinessId<{ id: string }>(d.db, [contact_id, c.business_id]) === undefined) {
       return { ok: false, why: 'A beneficial owner must be a contact of this organisation. Add them as a contact first, so we hold one record of them.' };
     }
     const basis = check(requiredText(input['basis_of_control'], 1000, 'The ownership or control, as the evidence shows it'));
@@ -384,7 +386,7 @@ export function recordOwner(d: ComplianceDeps, actor: Actor, check_id: string, i
     const doc = check(textField(input['evidence_document_id'], 100, 'The evidence document'));
     let decision: string | null = null;
     if (from === 'EVIDENCE_DOCUMENT') {
-      if (doc === null || d.db.get<{ id: string }>('SELECT id FROM documents WHERE id = ? AND business_id = ?', [doc, c.business_id]) === undefined) {
+      if (doc === null || getDocumentsIdByIdBusinessId<{ id: string }>(d.db, [doc, c.business_id]) === undefined) {
         return { ok: false, why: 'Name the evidence document, on this organisation.' };
       }
     } else {
@@ -455,7 +457,7 @@ export function addMonitoringNote(d: ComplianceDeps, actor: Actor, input: Fields
   assertComplianceWrite(actor);
   return guarded(() => {
     const business_id = (input['business_id'] ?? '').trim();
-    if (d.db.get<{ id: string }>('SELECT id FROM businesses WHERE id = ?', [business_id]) === undefined) return { ok: false, why: 'Choose the organisation.' };
+    if (getBusinessesIdById<{ id: string }>(d.db, [business_id]) === undefined) return { ok: false, why: 'Choose the organisation.' };
     const check_id = check(textField(input['check_id'], 100, 'The check'));
     if (check_id !== null && d.db.get<{ id: string }>('SELECT id FROM cdd_checks WHERE id = ? AND business_id = ?', [check_id, business_id]) === undefined) {
       return { ok: false, why: 'That check is not one of this organisation’s.' };
@@ -539,7 +541,7 @@ export type CheckView = {
 export function checkView(db: Db, actor: Actor, id: string): CheckView {
   assertComplianceRead(actor);
   const c = loadCheck(db, id);
-  const org = db.get<{ name: string }>('SELECT name FROM businesses WHERE id = ?', [c.business_id])?.name ?? '';
+  const org = getBusinessesNameById<{ name: string }>(db, [c.business_id])?.name ?? '';
   return {
     check: { ...c, organisation: org, claimant_label: words(CLAIMANT_TYPES, c.claimant_type, c.claimant_type) },
     guide: CLAIMANT_GUIDE[c.claimant_type] ?? (CLAIMANT_GUIDE['OTHER'] as ClaimantGuide),
@@ -551,10 +553,8 @@ export function checkView(db: Db, actor: Actor, id: string): CheckView {
       'SELECT id, decision, reasoning, decided_on, pull_retrieved_at FROM cdd_psc_decisions WHERE check_id = ? ORDER BY rowid', [id]),
     notes: db.all<{ noted_on: string; note: string }>('SELECT noted_on, note FROM cdd_monitoring_notes WHERE business_id = ? ORDER BY noted_on DESC', [c.business_id]),
     missing: c.state === 'IN_PROGRESS' ? missingForCompletion(db, c) : [],
-    contacts: db.all<{ id: string; full_name: string }>('SELECT id, full_name FROM contacts WHERE business_id = ? ORDER BY full_name', [c.business_id]),
-    documents: db.all<{ id: string; label: string }>(
-      "SELECT d.id, COALESCE(d.type_code, 'document') || ' v' || COALESCE(d.version_no, 1) AS label FROM documents d WHERE d.business_id = ? ORDER BY d.created_at DESC",
-      [c.business_id]),
+    contacts: listContactsIdFullNameByBusinessId<{ id: string; full_name: string }>(db, [c.business_id]),
+    documents: listDocumentsIdTypeCodeByBusinessId<{ id: string; label: string }>(db, [c.business_id]),
     limitation: TWO_PERSON_LIMITATION,
   };
 }

@@ -23,21 +23,21 @@
  * every derivation; this file draws what it returns.
  */
 
-import { checksPanelIfPermitted } from '../claims/approvals.ts';
-import { checksSummary, claimChecksBlock, STEP_ANCHOR } from '../claims/approvals-pages.ts';
+import { checksPanelIfPermitted } from '../claims/index.ts';
+import { checksSummary, claimChecksBlock, STEP_ANCHOR } from '../claims/index.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
 import type { Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { piecesPage } from '../../core/index.ts';
 import * as C from './crm.ts';
-import type * as F from '../claims/claim-facts.ts';
+import type { claimFactsModule as F } from '../claims/index.ts';
 import type { PipelinePanel } from './pipeline.ts';
 import { enquiryBlock } from './pipeline-pages.ts';
 import { authorise, can } from '../../core/index.ts';
-import { addStaffEvent, approvedEventFigures, eventsOnClaim, setEventVat, EVENT_KINDS, KIND_WORDS, type ApprovedEventFigure, type EventOnClaim } from '../claims/property-events.ts';
-import { requestWorkDocuments } from '../claims/documents.ts';
-import { claimRoutes } from '../claims/claim-route.ts';
+import { addStaffEvent, approvedEventFigures, eventsOnClaim, setEventVat, EVENT_KINDS, KIND_WORDS, type ApprovedEventFigure, type EventOnClaim } from '../claims/index.ts';
+import { requestWorkDocuments } from '../claims/index.ts';
+import { claimRoutes } from '../claims/index.ts';
 
 /** PHASE 159i: an event's VAT position, in words (migration 105's three). */
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({ INCLUDED_NOT_RECLAIMABLE: 'The client could not reclaim it', EXCLUDED_OR_RECLAIMED: 'The client reclaimed it, or none was charged', NOT_KNOWN: 'Not known' });
@@ -46,28 +46,30 @@ import { claimTasksBlock, emailBlock, newTaskForm, notesBlock, timelineBlock } f
 import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { timelineIfPermitted, type Timeline } from './timeline.ts';
 import { activeTemplates } from '../../web/templates.ts';
-import { claimDocumentsBlock, placeDocumentsBlock } from '../claims/documents-pages.ts';
+import { claimDocumentsBlock, placeDocumentsBlock } from '../claims/index.ts';
 import * as LI from '../../shared/lists.ts';
 import { taskChoices, vocabulary } from '../../web/vocabularies.ts';
 import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from '../../shared/lists-pages.ts';
-import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock } from '../claims/claim-record-pages.ts';
+import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock } from '../claims/index.ts';
 import { addUnderCurrent, opens } from '../../core/navigation.ts';
 import { nobodyBadge, stageBadge } from '../../core/index.ts';
-import { assertClientsSection } from '../claims/engaged.ts';
+import { assertClientsSection } from '../claims/index.ts';
 import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, moreDetail, nextStepCard, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, why, type Need, type QuickAction, type SectionContext, type SectionSpec } from '../../shared/index.ts';
 import { sectionPrefs } from '../../core/index.ts';
 import { plainNeed } from '../../shared/index.ts';
-import { openClaimQuestions } from '../claims/engaged.ts';
+import { openClaimQuestions } from '../claims/index.ts';
 import { claimNextStep } from '../../shared/index.ts';
 import { dueWords, localStamp, ukDate } from '../../shared/index.ts';
 import { nameSwitches, navContext } from '../../core/navigation.ts';
-import * as SI from '../claims/site-area-inputs.ts';
-import * as TH from '../claims/title-by-hand.ts';
+import { siteAreaInputsModule as SI } from '../claims/index.ts';
+import { titleByHandModule as TH } from '../claims/index.ts';
 import * as SO from '../../web/survey-open.ts';
-import { earlyWindowWarning } from '../claims/claim-facts.ts';
-import { portalStepLine } from '../portal/portal-steps.ts';
-import { accountantConfirmBlock } from '../portal/accountant-confirm-pages.ts';
-import { claimOverview, overviewBlock } from '../claims/claim-overview.ts';
+import { earlyWindowWarning } from '../claims/index.ts';
+import { portalStepLine } from '../portal/index.ts';
+import { accountantConfirmBlock } from '../portal/index.ts';
+import { claimOverview, overviewBlock } from '../claims/index.ts';
+import { getBusinessesSectorById, getContactsBusinessIdLeadIdById } from './data.ts';
+import { getClaimsStageBusinessIdById } from '../claims/index.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };
 
@@ -139,8 +141,7 @@ const CLAIM_FIELDS = ['owner_id', 'surveyor_id', 'priority', 'workstream', 'prop
  * /staff/clients/?done=contact, a 404 (the 3 October sweep), and a wrong one went to somebody else's page.
  */
 function contactHome(db: CrmPageDeps['app']['db'], contact_id: string): string {
-  const c = db.get<{ business_id: string | null; lead_id: string | null; introducer_id: string | null }>(
-    'SELECT business_id, lead_id, introducer_id FROM contacts WHERE id = ?', [contact_id]);
+  const c = getContactsBusinessIdLeadIdById<{ business_id: string | null; lead_id: string | null; introducer_id: string | null }>(db, [contact_id]);
   if (c?.business_id) return `/staff/clients/${c.business_id}`;
   if (c?.lead_id) return `/staff/leads/${c.lead_id}`;
   if (c?.introducer_id) return `/staff/introducers/${c.introducer_id}`;
@@ -1111,7 +1112,7 @@ function claimPage(
   const pipe = pipelineBlock(v.id, v.pipeline, v.tasks?.may_set_next_action === true ? (v.tasks.owner_choices ?? []) : []);
   const surveyJob = surveyJobBlock(v.id, SO.surveyJobPanel(db, actor, v.id), v.edit?.current.surveyor_id ?? null);
   // PHASE 158c (F37): the amendment window, warned from the client's own date, from Engagement until Reports.
-  const windowRow = db.get<{ stage: string | null; business_id: string; property_id: string | null }>('SELECT stage, business_id, property_id FROM claims WHERE id = ?', [v.id]);
+  const windowRow = getClaimsStageBusinessIdById<{ stage: string | null; business_id: string; property_id: string | null }>(db, [v.id]);
   /* PHASE 159j (Lockwood L16): the warning is for before the dates are checked. Once every part of the claim has its
      route on the recorded dates (W1, W2 or W3), it has said what it was for, so it goes. */
   const routesDecided = windowRow !== undefined && (() => { const r = claimRoutes(db, { id: v.id, business_id: windowRow.business_id, property_id: windowRow.property_id }, nowIso()); return r.length > 0 && r.every((x) => x.route !== 'NOT_KNOWN'); })();
@@ -1294,7 +1295,7 @@ function claimPage(
   {
     const row = C.loadClaimRow(db, v.id);
     const obj = C.claimObjFor(db, row);
-    const sector = db.get<{ sector: string | null }>('SELECT sector FROM businesses WHERE id = ?', [row.business_id])?.sector ?? null;
+    const sector = getBusinessesSectorById<{ sector: string | null }>(db, [row.business_id])?.sector ?? null;
     const evs = eventsOnClaim(db, { property_id: row.property_id, business_id: row.business_id, sector });
     const value = can(actor, 'claim.read_value', obj);
     const mayAdd = can(actor, 'claim.write', obj) && row.property_id !== null;

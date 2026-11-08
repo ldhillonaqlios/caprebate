@@ -30,11 +30,11 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import * as P from './survey-pack.ts';
 import * as L from './pack-legal.ts';
 import * as A from './pack-approve.ts';
-import { sendPanel } from '../modules/claims/report-pages.ts';
+import { sendPanel } from '../modules/claims/index.ts';
 import { inspectionChapter, lineEvidence } from './evidence-pages.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
 import { findingSeen } from '../shared/index.ts';
-import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from '../modules/claims/site-plan.ts';
+import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from '../modules/claims/index.ts';
 import { percentWords, poundsWords, quantityWords, WORKS_FIELDS, WORKS_WORDS, WORKS_PART_FIELDS, WORKS_PART_WORDS, type Source, type Valued, type WorksField, type WorksPartField } from './pack-sums.ts';
 
 export type PackPageDeps = {
@@ -50,10 +50,10 @@ import { CHAPTERS } from './pack-chapters.ts';
 import * as S from './surveyor.ts';
 import { jobSite, setJobMenu } from './surveyor-pages.ts';
 import { lateBadge, siteOf } from '../core/index.ts';
-import { PAYER_CLASSES } from '../modules/claims/claim-facts.ts';
-import { deskFirstReading } from '../modules/assessment/desk-first.ts';
-import { roomsFor } from '../modules/crm/rooms.ts';
-import { REPORT_ASSUMPTIONS } from '../modules/assessment/report-assumptions.ts';
+import { PAYER_CLASSES } from '../modules/claims/index.ts';
+import { deskFirstReading } from '../modules/assessment/index.ts';
+import { roomsFor } from '../modules/crm/index.ts';
+import { REPORT_ASSUMPTIONS } from '../modules/assessment/index.ts';
 import { TEST_DEFAULT_WORDS } from './pack-lines.ts';
 import { packSheet, SHEET_CHAPTERS, type SheetRow } from './pack-sheets.ts';
 import { INCLUDES_WORDS } from './pack-cost-model.ts';

@@ -45,11 +45,12 @@ import { can } from '../core/index.ts';
 import { h, raw, type Safe } from '../shared/index.ts';
 import { localWhen } from '../shared/index.ts';
 import { assertComplianceRead, assertComplianceWrite, complianceObj, record, type ComplianceDeps } from './compliance.ts';
-import { isReachable } from '../modules/crm/crm.ts';
+import { isReachable } from '../modules/crm/index.ts';
 import {
   IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision,
   sentUnderTestingWaiver, startIdentityCheck, type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,
 } from '../integrations/index.ts';
+import { getBusinessesIdById, getContactsIdEmailByIdBusinessId, listContactsIdByBusinessId } from '../modules/crm/index.ts';
 
 /** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/core/router.ts, outside the login. */
 export const IDENTITY_HOOK_PATH = '/hooks/identity-check';
@@ -92,10 +93,9 @@ export async function sendIdentityCheck(
   assertComplianceWrite(actor);
   const db = d.app.db;
   const cd: ComplianceDeps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
-  const business = db.get<{ id: string }>('SELECT id FROM businesses WHERE id = ?', [input.business_id]);
+  const business = getBusinessesIdById<{ id: string }>(db, [input.business_id]);
   if (business === undefined) return { ok: false, why: 'Choose the organisation.' };
-  const contact = db.get<{ id: string; email: string | null; phone: string | null }>(
-    'SELECT id, email, phone FROM contacts WHERE id = ? AND business_id = ?', [input.contact_id, input.business_id]);
+  const contact = getContactsIdEmailByIdBusinessId<{ id: string; email: string | null; phone: string | null }>(db, [input.contact_id, input.business_id]);
   if (contact === undefined) return { ok: false, why: 'Choose the person to be checked. They must be a contact of this organisation.' };
   // PHASE 151e (line 6): we send the link to the person, so we must be able to reach them (Lakhbir, 28 Sep 2026)
   if (!isReachable(contact)) return { ok: false, why: UNREACHABLE_CONTACT_WORDS };
@@ -272,8 +272,7 @@ export function identityPanel(app: App, actor: Actor, where: { readonly business
   const forgetful = forgetfulDatabaseWarning(app);
   const mayWrite = can(actor, 'compliance.write', complianceObj());
   // PHASE 151e (line 6): only a contact we can reach is offered; the rest are named, with what to add
-  const reachableIds = new Set(app.db.all<{ id: string }>(
-    "SELECT id FROM contacts WHERE business_id = ? AND (TRIM(COALESCE(email, '')) <> '' OR TRIM(COALESCE(phone, '')) <> '')", [where.business_id]).map((r) => r.id));
+  const reachableIds = new Set(listContactsIdByBusinessId<{ id: string }>(app.db, [where.business_id]).map((r) => r.id));
   const offered = contacts.filter((c) => reachableIds.has(c.id));
   const unreachable = contacts.filter((c) => !reachableIds.has(c.id));
   const action = where.cdd_check_id !== undefined ? `/staff/compliance/aml/checks/${where.cdd_check_id}/identity` : '/staff/compliance/identity-checks';

@@ -41,13 +41,15 @@
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { FUNNEL, FRONTDOOR } from '../../shared/index.ts';
 import { OPTIONS, addressFrom, submit, type Draft, type FunnelState } from './assessment.ts';
-import { openLeadForGatedExit } from '../crm/leads.ts';
+import { openLeadForGatedExit } from '../crm/index.ts';
 import type { Db } from '../../core/index.ts';
 import { normalisePostcode } from '../../integrations/index.ts';
 import { entityFromCompanyType, accountsTypeWords, type CompanyCandidate } from '../../integrations/index.ts';
 import { isDormant } from '../../integrations/index.ts';
 import type { FoundAddress } from '../../integrations/index.ts';
-import { slotPicker, slotDayProblem } from '../crm/slot-picker.ts';
+import { slotPicker, slotDayProblem } from '../crm/index.ts';
+import { updateAssessmentDraftsSubmittedAssessmentIdByToken } from './data.ts';
+import { updateLeadsEnquiryIdById } from '../crm/index.ts';
 
 export const F4_SCREENS = ['buildings', 'spend-on', 'amounts', 'tax', 'claims', 'works', 'details'] as const;
 export type F4Screen = (typeof F4_SCREENS)[number];
@@ -849,9 +851,9 @@ export function submitEnquiry(db: Db, d: Draft, now: () => string, id: () => str
     parts.push({ name: g.name, business_id: out.business_id, assessment_id: out.assessment_id, lead_id: out.lead_id, low_pence: out.low_pence, high_pence: out.high_pence });
   }
   db.tx(() => {
-    for (const p of parts) db.run('UPDATE leads SET enquiry_id = ? WHERE id = ?', [enquiry_id, p.lead_id]);
+    for (const p of parts) updateLeadsEnquiryIdById(db, [enquiry_id, p.lead_id]);
     const first = parts.find((p) => p.assessment_id !== null);
-    if (first !== undefined) db.run('UPDATE assessment_drafts SET submitted_assessment_id = ? WHERE token = ?', [first.assessment_id, d.token]);
+    if (first !== undefined) updateAssessmentDraftsSubmittedAssessmentIdByToken(db, [first.assessment_id, d.token]);
   });
   return { enquiry_id, parts };
 }

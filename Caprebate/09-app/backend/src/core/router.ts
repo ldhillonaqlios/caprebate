@@ -23,7 +23,7 @@
  *    string concatenation of markup anywhere in this file.
  */
 
-import { claimRoutes } from '../modules/claims/claim-route.ts';
+import { claimRoutes } from '../modules/claims/index.ts';
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { cleanForm } from './typed.ts';
@@ -39,80 +39,78 @@ import { SITE_CSS, CSS_HEADERS, PNG_HEADERS } from '../shared/index.ts';
 import { LOGO_INK_PNG } from '../shared/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import { FUNNEL, FRONTDOOR, BOOKING, registryGate } from '../shared/index.ts';
-import {
-  isGatedExit, newDraft, loadDraft, saveDraft, submit, closeGatedExit, type Draft,
-} from '../modules/assessment/assessment.ts';
-import { F4_ROUTE, F4_SCREENS, F4_TEXT, applyF4, applyReach, allGated, buildings, figureBody, firstIncomplete, isFunnel4, screenBody, stageBar, stageOf, submitEnquiry, type F4Screen } from '../modules/assessment/funnel4.ts';
+import { isGatedExit, newDraft, loadDraft, saveDraft, submit, closeGatedExit, type Draft } from '../modules/assessment/index.ts';
+import { F4_ROUTE, F4_SCREENS, F4_TEXT, applyF4, applyReach, allGated, buildings, figureBody, firstIncomplete, isFunnel4, screenBody, stageBar, stageOf, submitEnquiry, type F4Screen } from '../modules/assessment/index.ts';
 import { searchCompanies, companySearchOffered, COMPANY_SEARCH } from '../integrations/index.ts';
 import { checkPostcode, normalisePostcode, postcodeCheckMissing, POSTCODE_CHECK } from '../integrations/index.ts';
 import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses, searchesToday } from '../integrations/index.ts';
-import { ADDRESS_LOOKUP_JS } from '../modules/assessment/address-lookup-script.ts';
-import { loadLetter } from '../modules/claims/letter.ts';
-import * as P from '../modules/portal/portal.ts';
-import { ENGAGEMENT_SIGNING, SIGN_WORDS, letterFacts, letterOptions, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning, type LetterFacts } from '../modules/claims/signing.ts';
-import { portalMessagesBody, readPortalSend, sendFromPortal } from '../modules/crm/messages-pages.ts';
-import { clientMessage, type ThreadMessage as MessageView } from '../modules/crm/messages.ts';
+import { ADDRESS_LOOKUP_JS } from '../modules/assessment/index.ts';
+import { loadLetter } from '../modules/claims/index.ts';
+import { portalModule as P } from '../modules/portal/index.ts';
+import { ENGAGEMENT_SIGNING, SIGN_WORDS, letterFacts, letterOptions, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning, type LetterFacts } from '../modules/claims/index.ts';
+import { portalMessagesBody, readPortalSend, sendFromPortal } from '../modules/crm/index.ts';
+import { clientMessage, type ThreadMessage as MessageView } from '../modules/crm/index.ts';
 import { FsObjectStore } from '../shared/objectstore.ts';
-import { acceptClientBytes, finishUpload, issuedJob, readerFor } from '../modules/claims/uploads.ts';
+import { acceptClientBytes, finishUpload, issuedJob, readerFor } from '../modules/claims/index.ts';
 import { singleFile } from './multipart.ts';
-import { readUpload, receiveFile } from '../modules/portal/client-files-pages.ts';
+import { readUpload, receiveFile } from '../modules/portal/index.ts';
 import { piecesOf, piecesPage, putPiece, startPieces, sweepPieces, PIECE_BYTES } from './upload-pieces.ts';
 import { UPLOAD_PIECES_JS } from './upload-pieces-script.ts';
 import { READ_AND_DELETED } from '../shared/index.ts';
-import { receivableTypes, startDocumentUpload, readLines, type RequestView } from '../modules/claims/documents.ts';
+import { receivableTypes, startDocumentUpload, readLines, type RequestView } from '../modules/claims/index.ts';
 import { handleStaff, handlePortalSettings } from './staff.ts';
 import { mayEnterBackOffice, NotFoundAsRefusal } from './backoffice.ts';
 import { navContext, staffShell, portalShell, setSubMenu, type NameSwitches, type NavContext } from './navigation.ts';
 import { badge, breadcrumb, card, claimRef, clientStageBar, noticeAtAddress, propertyIn, savedMessage, welcomeCard, why } from '../shared/index.ts';
-import { stepName } from '../modules/portal/portal-steps.ts';
-import { clientSteps, type ClientStep } from '../modules/claims/approvals.ts';
-import { clientStepsCard } from '../modules/claims/approvals-pages.ts';
+import { stepName } from '../modules/portal/index.ts';
+import { clientSteps, type ClientStep } from '../modules/claims/index.ts';
+import { clientStepsCard } from '../modules/claims/index.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
 import { clientHelp } from './help.ts';
 import { nameSwitches } from './navigation.ts';
-import { publicSlots, isBookable, SLOT_MINUTES } from '../modules/crm/schedule.ts';
-import { activeMeeting, booksATime, clientMayJoin, joinPanel, reconcileVideoMeeting, withJoinScripts, VIDEO_PAGE_HEADERS } from '../modules/crm/video-calls.ts';
-import { portalDashboard } from '../modules/portal/portal-dashboard.ts';
-import * as IE from '../modules/crm/inbound-email.ts';
+import { publicSlots, isBookable, SLOT_MINUTES } from '../modules/crm/index.ts';
+import { activeMeeting, booksATime, clientMayJoin, joinPanel, reconcileVideoMeeting, withJoinScripts, VIDEO_PAGE_HEADERS } from '../modules/crm/index.ts';
+import { portalDashboard } from '../modules/portal/index.ts';
+import { inboundEmailModule as IE } from '../modules/crm/index.ts';
 import { joinSignature } from '../integrations/index.ts';
-import { VIDEO_CALL_JS } from '../modules/crm/video-call-script.ts';
+import { VIDEO_CALL_JS } from '../modules/crm/index.ts';
 import { PHOTO_UPLOAD_JS } from '../web/photo-upload-script.ts';
 import { SIGNATURE_PAD_JS } from '../shared/index.ts';
-import { letterState, letterSteps, signedCopy } from '../modules/claims/engagement-send.ts';
-import { WHATSAPP_IMPORT_JS } from '../modules/crm/whatsapp-import-script.ts';
-import { REGISTER_IMPORT_JS } from '../modules/claims/register-import-script.ts';
+import { letterState, letterSteps, signedCopy } from '../modules/claims/index.ts';
+import { WHATSAPP_IMPORT_JS } from '../modules/crm/index.ts';
+import { REGISTER_IMPORT_JS } from '../modules/claims/index.ts';
 import { sweepUploads } from '../web/photo-upload.ts';
 import { runTimerJob, timerJobOf, timerWordRefusal, TIMER_PATH_PREFIX } from './timers.ts';
 import { sweepVideos } from '../web/survey-video.ts';
-import { receiveWhatsApp } from '../modules/crm/whatsapp.ts';
+import { receiveWhatsApp } from '../modules/crm/index.ts';
 import { webhookChallenge } from '../integrations/index.ts';
 import { EMAIL_SENDING, mailWhere, sendingOn, smtpLoginFromKeyFile } from '../integrations/index.ts';
-import { bookingInviteFile, sendVideoInvite } from '../modules/crm/booking-invite.ts';
+import { bookingInviteFile, sendVideoInvite } from '../modules/crm/index.ts';
 import { ga4MeasurementId, sitePageFor } from '../integrations/index.ts';
 import { localDate, localStamp, localWhen, ukDate, ukDatesIn, zoneNotice } from '../shared/index.ts';
 import { formatPence, formatShownRange, toPence, RANGE_QUALIFIER } from '../shared/index.ts';
-import { linkBookingToLead, SECTORS } from '../modules/crm/leads.ts';
-import { fireAutomation } from '../modules/crm/automation.ts';
-import {
-  PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen, clientShareChoices, recordShareConsentByClient, type ClientShareChoice,
-} from '../modules/crm/introducers.ts';
-import { clientDeliverables, type ClientDeliverable } from '../modules/claims/claim-record.ts';
-import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from '../modules/public-site/public-site.ts';
-import { homeEdition, gsapScript, HOME_PAGE_HEADERS, sectorEdition, isSectorSlug, fontFile } from '../modules/public-site/home-site.ts';
+import { linkBookingToLead, SECTORS } from '../modules/crm/index.ts';
+import { fireAutomation } from '../modules/crm/index.ts';
+import { PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen, clientShareChoices, recordShareConsentByClient, type ClientShareChoice } from '../modules/crm/index.ts';
+import { clientDeliverables, type ClientDeliverable } from '../modules/claims/index.ts';
+import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from '../modules/public-site/index.ts';
+import { homeEdition, gsapScript, HOME_PAGE_HEADERS, sectorEdition, isSectorSlug, fontFile } from '../modules/public-site/index.ts';
 import { checkTurnstile, refusalWords, turnstileSiteKey, withSiteKey, TURNSTILE_FIELD } from '../integrations/index.ts';
-import { receiveEnquiry } from '../modules/public-site/enquiries.ts';
+import { receiveEnquiry } from '../modules/public-site/index.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
-import { freeGate, recordLookupsDeclined } from '../modules/assessment/address-check.ts';
+import { freeGate, recordLookupsDeclined } from '../modules/assessment/index.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from '../web/identity-checks.ts';
-import { handleSignoffLink, portalReport, portalReportCard } from '../modules/claims/report-pages.ts';
-import { handleConfirmLink } from '../modules/portal/accountant-confirm-pages.ts';
-import { acceptReport } from '../modules/portal/report-accept.ts';
+import { handleSignoffLink, portalReport, portalReportCard } from '../modules/claims/index.ts';
+import { handleConfirmLink } from '../modules/portal/index.ts';
+import { acceptReport } from '../modules/portal/index.ts';
 import { handlePortalEvidence, portalEvidenceCard } from '../web/evidence-pages.ts';
-import { noticesEdition, noticesForLiveSite, receiveComplaintForm } from '../modules/public-site/notices-site.ts';
-import { CONSENT_COOKIE, COOKIE_BANNER_CSS, agreementLinks, consentChoice, consentSetCookie, cookieBanner, draftLine, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../modules/public-site/legal-pages.ts';
+import { noticesEdition, noticesForLiveSite, receiveComplaintForm } from '../modules/public-site/index.ts';
+import { CONSENT_COOKIE, COOKIE_BANNER_CSS, agreementLinks, consentChoice, consentSetCookie, cookieBanner, draftLine, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../modules/public-site/index.ts';
 import { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from '../web/legal-approvals.ts';
 import { nav as staffNav } from './staff.ts';
 import { getResearchSourcesCountByBusinessIdState2 } from '../integrations/index.ts';
+import { getBusinessesEById, getContactsNByBusinessIdLeadId, insertBookings2, insertContacts4 } from '../modules/crm/index.ts';
+import { getClaimsPropertyIdByIdBusinessId, getEngagementsStateSignedAtById, updateEngagementsLetterStateViewedAtByIdLetterState } from '../modules/claims/index.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -445,11 +443,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     if (cfg.links !== true) return nope(404, 'Signing link not available', SIGN_WORDS.links_off);
     if (link === null) return nope(404, 'This link does not work', SIGN_WORDS.link);
     const business = { id: link.business_id, name: link.business_name, company_number: link.company_number };
-    const engOf = (): P.EngagementView | null => d.app.db.get<P.EngagementView>(
-      'SELECT letter_state AS state, signed_at FROM engagements WHERE id = ?', [link.engagement_id]) ?? null;
+    const engOf = (): P.EngagementView | null => getEngagementsStateSignedAtById<P.EngagementView>(d.app.db, [link.engagement_id]) ?? null;
     const extra = { ...letterExtra(d.app.db, link.business_id, link.user_id), action: `/sign/${token}`, byLink: true };
     if (method === 'GET') {
-      d.app.db.run("UPDATE engagements SET letter_state = 'VIEWED', viewed_at = COALESCE(viewed_at, ?) WHERE id = ? AND letter_state = 'SENT'", [now(), link.engagement_id]);
+      updateEngagementsLetterStateViewedAtByIdLetterState(d.app.db, [now(), link.engagement_id]);
       letterHtml(res, 200, letterPage(actor, business, engOf(), undefined, undefined, d.letterPath, cfg, extra, d.notices === true || d.legal === true));
       return 'handled';
     }
@@ -481,8 +478,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       return 'handled';
     }
     const when = clientMayJoin(m.starts_at, m.ends_at, now());
-    const who = d.app.db.get<{ n: string }>(
-      'SELECT full_name AS n FROM contacts WHERE (business_id = ? OR lead_id = ?) ORDER BY created_at ASC, id ASC LIMIT 1', [m.business_id, m.lead_id])?.n ?? 'Guest';
+    const who = getContactsNByBusinessIdLeadId<{ n: string }>(d.app.db, [m.business_id, m.lead_id])?.n ?? 'Guest';
     const sig = when === 'open' ? joinSignature(d.app.secrets, m.meeting_id, 0, now()) : null;
     const head = h`<h1>Your video call with Cap Rebate</h1><p><strong>${clockOf(m.starts_at)}</strong>, for an hour.</p>`;
     const zoomApp = h`<p class="help">Rather use the Zoom app, or on a phone? <a href="${m.join_url}" rel="noopener noreferrer">Open the call in Zoom</a>${m.passcode === null ? '' : ` (passcode ${m.passcode})`}.</p>`;
@@ -1434,7 +1430,7 @@ async function portalRoutes(
       return 'handled';
     }
     // Which way each part of the claim goes in — the claim the portal has already authorised.
-    const row = db.get<{ property_id: string | null }>('SELECT property_id FROM claims WHERE id = ? AND business_id = ?', [c.id, business_id]);
+    const row = getClaimsPropertyIdByIdBusinessId<{ property_id: string | null }>(db, [c.id, business_id]);
     const routes = row === undefined || c.state !== 'OPEN' ? [] : claimRoutes(db, { id: c.id, business_id, property_id: row.property_id }, new Date().toISOString())
       .map((r) => ({ label: r.label === 'The claim' ? 'Your claim' : r.label, words: r.words }));
     html(res, 200, portalClaimPage(actor, business, c, nameSwitches().portalSteps, portalSteps(db, actor, business_id), routes));
@@ -1688,16 +1684,11 @@ function writeBookingAndContact(
   // The person's own contact holds the address they typed, at the funnel close too. It was
   // kept only on the organisation there, which left every website client with a contact nobody could reach.
   const typed = typeof c.contact_value === 'string' && c.contact_value.trim() !== '' ? c.contact_value.trim() : null;
-  d.app.db.run(
-    // The funnel's optional "you may also message me on WhatsApp" box, kept on the contact.
-    'INSERT INTO contacts (id, business_id, lead_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, whatsapp_optin, ' +
-      'email, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [newId(), business_id, lead_id, String(c.full_name ?? ''), c.job_role as string | null,
+  insertContacts4(d.app.db, [newId(), business_id, lead_id, String(c.full_name ?? ''), c.job_role as string | null,
      c.job_role_other as string | null, c.contact_consent === true ? 1 : 0,
      c.marketing_optin === true ? 1 : 0, c.whatsapp_optin === true ? 1 : 0,
      c.channel === 'email' || c.channel === 'video' ? typed : null,
-     c.channel === 'phone' || c.channel === 'sms_whatsapp' ? typed : null, at],
-  );
+     c.channel === 'phone' || c.channel === 'sms_whatsapp' ? typed : null, at]);
   if (!withBooking) return { booked_at: null, booking_id: null };
 
   /* THE SLOT IS RE-CHECKED HERE AGAINST THE WORKING TIMES, NOT TRUSTED.
@@ -1724,12 +1715,8 @@ function writeBookingAndContact(
   }
 
   const booking_id = newId();
-  d.app.db.run(
-    'INSERT INTO bookings (id, business_id, lead_id, assigned_to, channel, sms_variant, entry_point, ' +
-      'starts_at, ends_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [booking_id, business_id, lead_id, owner, String(c.channel), c.sms_variant as string | null,
-     entry_point, starts, ends, at],
-  );
+  insertBookings2(d.app.db, [booking_id, business_id, lead_id, owner, String(c.channel), c.sms_variant as string | null,
+     entry_point, starts, ends, at]);
   // CRM 2 of 10: the booking belongs to the lead the submission just opened. A
   // lead with no organisation cannot carry `booking_id` — the leads table refuses
   // it without one — so its booking points at the lead instead, and conversion
@@ -1741,7 +1728,7 @@ function writeBookingAndContact(
   // A VIDEO call's invitation waits for its meeting, so it carries the link (sendVideoInvite, below).
   if (starts !== null && ends !== null && c.channel !== 'video') {
     const to = business_id !== null
-      ? d.app.db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [business_id])?.e ?? null
+      ? getBusinessesEById<{ e: string | null }>(d.app.db, [business_id])?.e ?? null
       : null;
     const invite = bookingInviteFile(d.app.db, d.app.now, { booking_id, method: 'REQUEST', starts_at: starts, ends_at: ends, to });
     if (invite !== null && to !== null) {

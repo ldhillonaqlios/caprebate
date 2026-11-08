@@ -43,7 +43,9 @@ import { outboxTransport } from '../integrations/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { escapeHtml } from '../shared/index.ts';
 import { localStamp, ukDate } from '../shared/index.ts';
-import { claimObjFor, type Fields } from '../modules/crm/crm.ts';
+import { claimObjFor, type Fields } from '../modules/crm/index.ts';
+import { getContactsFullNameById, getContactsIdBusinessIdById2, getStaffTasksTitleDueOnByClaimIdIsNextAction } from '../modules/crm/index.ts';
+import { getClaimsIdBusinessIdById, getPropertiesAddressLine1AddressLine2ById } from '../modules/claims/index.ts';
 
 export type TemplateDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 
@@ -256,14 +258,12 @@ export function mergeValues(db: Db, claim_id: string, contact_id: string | null)
     'SELECT c.claim_ref, b.name AS business_name, c.property_id FROM claims c JOIN businesses b ON b.id = c.business_id WHERE c.id = ?',
     [claim_id]);
   const p = c?.property_id === null || c?.property_id === undefined ? undefined
-    : db.get<{ address_line_1: string | null; address_line_2: string | null; town: string | null; postcode: string | null }>(
-      'SELECT address_line_1, address_line_2, town, postcode FROM properties WHERE id = ?', [c.property_id]);
+    : getPropertiesAddressLine1AddressLine2ById<{ address_line_1: string | null; address_line_2: string | null; town: string | null; postcode: string | null }>(db, [c.property_id]);
   const address = p === undefined ? ''
     : [p.address_line_1, p.address_line_2, p.town, p.postcode].map((x) => (x ?? '').trim()).filter((x) => x !== '').join(', ');
   const contact = contact_id === null ? undefined
-    : db.get<{ full_name: string }>('SELECT full_name FROM contacts WHERE id = ?', [contact_id]);
-  const next = db.get<{ title: string; due_on: string | null }>(
-    "SELECT title, due_on FROM staff_tasks WHERE claim_id = ? AND is_next_action = 1 AND status IN ('OPEN','IN_PROGRESS')", [claim_id]);
+    : getContactsFullNameById<{ full_name: string }>(db, [contact_id]);
+  const next = getStaffTasksTitleDueOnByClaimIdIsNextAction<{ title: string; due_on: string | null }>(db, [claim_id]);
   const blank = (v: string | null | undefined): string | null => (v === null || v === undefined || v.trim() === '' ? null : v.trim());
   return {
     contact_name: blank(contact?.full_name),
@@ -314,7 +314,7 @@ export type QueueResult =
  * to the outbox, unsent, with the organisation named so DO_NOT_CONTACT refuses it.
  */
 export function queueTemplate(d: TemplateDeps, actor: Actor, claim_id: string, input: Fields): QueueResult {
-  const c = d.db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdBusinessIdById<{ id: string; business_id: string }>(d.db, [claim_id]);
   if (c === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'claim.read', claimObjFor(d.db, c));
   authorise(actor, 'email.queue', { type: 'email', id: c.id, business_id: c.business_id });
@@ -324,8 +324,7 @@ export function queueTemplate(d: TemplateDeps, actor: Actor, claim_id: string, i
   if (t === undefined) return { ok: false, why: 'Choose one of the templates offered.', field: 'template_id' };
   const refusal = templateRefusal(t);
   if (refusal !== null) return { ok: false, why: refusal };
-  const ct = d.db.get<{ id: string; business_id: string | null; email: string | null }>(
-    'SELECT id, business_id, email FROM contacts WHERE id = ?', [(input['contact_id'] ?? '').trim()]);
+  const ct = getContactsIdBusinessIdById2<{ id: string; business_id: string | null; email: string | null }>(d.db, [(input['contact_id'] ?? '').trim()]);
   if (ct === undefined || ct.business_id !== c.business_id) return { ok: false, why: 'Choose one of this organisation’s own contacts.', field: 'contact_id' };
   authorise(actor, 'contact.read', { type: 'contact', id: ct.id, business_id: ct.business_id });
   if (ct.email === null || ct.email.trim() === '') {

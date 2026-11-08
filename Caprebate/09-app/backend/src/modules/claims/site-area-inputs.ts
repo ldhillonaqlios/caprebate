@@ -29,6 +29,7 @@ import { enteredCouncils, enteredPoint } from './site-area-run.ts';
 import { postcodeStore } from '../../integrations/postcodes/postcode.ts';
 import type { PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
 import { getUsersDisplayNameById } from '../../core/index.ts';
+import { getPropertiesIdBusinessIdById3, insertSiteAreaInputs, insertSiteAreaInputs2 } from './data.ts';
 
 export type SiteInputDeps = { readonly db: Db; readonly audit: AuditLog; readonly now: () => string; readonly newId: () => string };
 export type SiteInputResult = { readonly ok: true } | { readonly ok: false; readonly why: string };
@@ -36,7 +37,7 @@ export type SiteInputResult = { readonly ok: true } | { readonly ok: false; read
 type PropertyRef = { readonly id: string; readonly business_id: string; readonly postcode: string | null };
 
 function propertyOf(db: Db, property_id: string): PropertyRef | null {
-  return db.get<PropertyRef>('SELECT id, business_id, postcode FROM properties WHERE id = ?', [property_id]) ?? null;
+  return getPropertiesIdBusinessIdById3<PropertyRef>(db, [property_id]) ?? null;
 }
 
 const writeObj = (p: PropertyRef) => ({ type: 'property' as const, id: p.id, business_id: p.business_id, assigned_surveyor_ids: [] as string[] });
@@ -72,10 +73,7 @@ export function enterSitePoint(d: SiteInputDeps, actor: Actor, property_id: stri
   if (!check.ok) return { ok: false, why: `${check.why} Nothing was saved.` };
   const at = d.now();
   d.db.tx(() => {
-    d.db.run(
-      "INSERT INTO site_area_inputs (id, business_id, property_id, kind, easting, northing, lad_code, entered_by, entered_at) VALUES (?, ?, ?, 'POINT', ?, ?, NULL, ?, ?)",
-      [d.newId(), p.business_id, p.id, easting, northing, actor.id, at],
-    );
+    insertSiteAreaInputs2(d.db, [d.newId(), p.business_id, p.id, easting, northing, actor.id, at]);
   });
   d.audit.append({
     at, kind: 'SITE_POINT_ENTERED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -99,10 +97,7 @@ export function addNeighbourCouncil(
   if (enteredCouncils(d.db, p.id).some((x) => x.lad_code === c.lad_code)) return { ok: false, why: `${c.council} is already added. Nothing was saved.` };
   const at = d.now();
   d.db.tx(() => {
-    d.db.run(
-      "INSERT INTO site_area_inputs (id, business_id, property_id, kind, easting, northing, lad_code, entered_by, entered_at) VALUES (?, ?, ?, 'NEIGHBOUR_COUNCIL', NULL, NULL, ?, ?, ?)",
-      [d.newId(), p.business_id, p.id, c.lad_code, actor.id, at],
-    );
+    insertSiteAreaInputs(d.db, [d.newId(), p.business_id, p.id, c.lad_code, actor.id, at]);
   });
   d.audit.append({
     at, kind: 'SITE_COUNCIL_ADDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,

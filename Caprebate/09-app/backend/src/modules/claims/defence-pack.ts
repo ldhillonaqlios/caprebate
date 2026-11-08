@@ -37,6 +37,8 @@ import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { latestFacts } from './claim-facts.ts';
 import { commitmentOnClaim, deliverableIssued, latestSignOff, type RecordDeps } from './claim-record.ts';
 import { caseStamp, type CaseStamp } from './case-stamp.ts';
+import { getClaimReconciliationsIdSnapshotHashByClaimId, getClaimsIdClaimRefById, listClaimDeliverablesIdKindByClaimIdState } from './data.ts';
+import { getAnchorLogCountByJobIdClaimId, getAnchorLogSeqHashByJobIdClaimId } from './data-borrowed.ts';
 
 export type DefencePackSwitch = { readonly enabled: boolean; readonly waits_on: string };
 
@@ -113,7 +115,7 @@ function sha256(v: unknown): string {
  * off. On, it reads the sealed records, writes one audit line and nothing else.
  */
 export function generateDefencePack(d: RecordDeps, actor: Actor, claim_id: string, sw: DefencePackSwitch = DEFENCE_PACK_GENERATOR): DefencePackResult {
-  const c = d.db.get<{ id: string; claim_ref: string; business_id: string }>('SELECT id, claim_ref, business_id FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsIdClaimRefById<{ id: string; claim_ref: string; business_id: string }>(d.db, [claim_id]);
   if (c === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'defence_pack.generate', { type: 'claim_figures', id: c.id, business_id: c.business_id });
   if (!sw.enabled) return { ok: false, why: DEFENCE_PACK_OFF };
@@ -139,7 +141,7 @@ export function generateDefencePack(d: RecordDeps, actor: Actor, claim_id: strin
     : section('SOURCES', false, `Not known yet. Not known and never asked count the same: ${notKnown.join(', ')}`,
       notKnown.map((key) => ({ fact_key: key, fact: null, source_id: null }))));
 
-  const recon = d.db.get<{ id: string; snapshot_hash: string }>('SELECT id, snapshot_hash FROM claim_reconciliations WHERE claim_id = ?', [c.id]);
+  const recon = getClaimReconciliationsIdSnapshotHashByClaimId<{ id: string; snapshot_hash: string }>(d.db, [c.id]);
   sections.push(recon === undefined
     ? section('RECONCILIATION', false, 'No reconciliation yet. It starts when the first sign-off is recorded.')
     : section('RECONCILIATION', true, 'the reconciliation snapshot, fixed when it opened', [{ reconciliation: recon.id, snapshot_hash: recon.snapshot_hash }]));
@@ -164,18 +166,14 @@ export function generateDefencePack(d: RecordDeps, actor: Actor, claim_id: strin
       'We do not know if an election covers the property. Not known and never asked count the same. So we cannot say where s.203 stands.'));
   }
 
-  const anchorCount = d.db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM anchor_log WHERE job_id IN (SELECT id FROM surveyor_jobs WHERE claim_id = ?)', [c.id])?.n ?? 0;
-  const anchorLast = d.db.get<{ seq: number; hash: string }>(
-    'SELECT seq, hash FROM anchor_log WHERE job_id IN (SELECT id FROM surveyor_jobs WHERE claim_id = ?) ORDER BY seq DESC LIMIT 1', [c.id]);
+  const anchorCount = getAnchorLogCountByJobIdClaimId<{ n: number }>(d.db, [c.id])?.n ?? 0;
+  const anchorLast = getAnchorLogSeqHashByJobIdClaimId<{ seq: number; hash: string }>(d.db, [c.id]);
   sections.push(anchorLast === undefined
     ? section('ANCHOR_LOG', false, 'No anchor log entry yet for a survey job on this claim.')
     : section('ANCHOR_LOG', true, `${anchorCount} anchor log ${anchorCount === 1 ? 'entry' : 'entries'} for the claim’s survey jobs, the latest added to the audit log`,
       [{ entries: anchorCount, last_seq: anchorLast.seq, last_hash: anchorLast.hash }]));
 
-  const delivered = d.db.all<{ id: string; kind: string; version: number; state: string; content_hash: string | null }>(
-    "SELECT id, kind, version, state, content_hash FROM claim_deliverables WHERE claim_id = ? AND state IN ('ISSUED','SUPERSEDED') ORDER BY kind ASC, version ASC",
-    [c.id]);
+  const delivered = listClaimDeliverablesIdKindByClaimIdState<{ id: string; kind: string; version: number; state: string; content_hash: string | null }>(d.db, [c.id]);
   const unhashed = delivered.filter((x) => x.content_hash === null);
   const reportIssued = delivered.some((x) => x.kind === 'CLIENT_REPORT');
   const refs = delivered.map((x) => ({ deliverable: x.id, deliverable_kind: x.kind, version: x.version, content_hash: x.content_hash }));

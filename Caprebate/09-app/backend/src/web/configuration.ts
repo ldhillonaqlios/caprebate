@@ -41,13 +41,14 @@ import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { VOCAB_LISTS, isVocabList, vocabularyValues, type VocabList, type VocabValue } from './vocabularies.ts';
 import { PROCEDURE_KEYS, anyStageLabel } from '../shared/index.ts';
 import { ctaSwitchReadings } from '../shared/index.ts';
-import { FEE_CONTROLS } from '../modules/claims/fee-controls.ts';
-import { RECIPROCITY_ACTIVITY_TYPES } from '../modules/crm/tasks.ts';
-import { typeList, type TypeView } from '../modules/claims/documents.ts';
-import { rulesPage, type RuleView } from '../modules/crm/automation.ts';
+import { FEE_CONTROLS } from '../modules/claims/index.ts';
+import { RECIPROCITY_ACTIVITY_TYPES } from '../modules/crm/index.ts';
+import { typeList, type TypeView } from '../modules/claims/index.ts';
+import { rulesPage, type RuleView } from '../modules/crm/index.ts';
 import { templatesPage } from './templates.ts';
-import { settingsView, type SettingsView } from '../modules/assessment/vat.ts';
+import { settingsView, type SettingsView } from '../modules/assessment/index.ts';
 import { settingReading, type SettingReading } from './compliance.ts';
+import { getAutomationRulesCOUNTByActiveTaskPriority } from '../modules/crm/index.ts';
 
 export type ConfigDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
@@ -256,10 +257,7 @@ export function addValue(d: ConfigDeps, actor: Actor, input: Fields): ConfigResu
 
 /** A priority an active rule gives its tasks, or an open recurring task carries, is not retired — the next one would be refused. */
 function priorityInUse(db: Db, code: string): boolean {
-  return db.get<{ n: number }>(
-    "SELECT (SELECT COUNT(*) FROM automation_rules WHERE active = 1 AND task_priority = ?) + " +
-      "(SELECT COUNT(*) FROM staff_tasks WHERE status IN ('OPEN','IN_PROGRESS') AND recurrence IS NOT NULL AND priority = ?) AS n",
-    [code, code])?.n !== 0;
+  return getAutomationRulesCOUNTByActiveTaskPriority<{ n: number }>(db, [code, code])?.n !== 0;
 }
 
 export function changeValue(d: ConfigDeps, actor: Actor, listRaw: string, code: string, input: Fields): ConfigResult {

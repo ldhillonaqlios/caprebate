@@ -38,6 +38,9 @@ import {
   type Check, type ComplianceDeps, type Fields, type HoldRow, type LinkLine, type Vocab, type WriteResult,
 } from './compliance.ts';
 import { listUsersIdDisplayNameByRoleEmailCanonical } from '../core/index.ts';
+import { listConsentAnswersIdKindByContactId } from '../modules/assessment/index.ts';
+import { getBusinessesIdById, getContactsIdById, getLeadsIdById, listClientTasksIdRequestedTypeByBusinessIdKind, listContactsIdFullName, listIntroducerShareConsentsIdDecisionByBusinessId, listStaffTasksIdTitleByContactId } from '../modules/crm/index.ts';
+import { getClaimsIdByIdBusinessId } from '../modules/claims/index.ts';
 
 class Refusal extends Error {}
 
@@ -324,9 +327,9 @@ export function logRequest(d: ComplianceDeps, actor: Actor, input: Fields): Writ
     const verbatim = check(requiredText(input['request_verbatim'], 20000, 'What was asked, in their own words'));
     const limbs = check(limbList(input['limbs']));
     const contact_id = check(textField(input['contact_id'], 100, 'The contact'));
-    if (contact_id !== null && d.db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ?', [contact_id]) === undefined) return { ok: false, why: 'That contact was not found.' };
+    if (contact_id !== null && getContactsIdById<{ id: string }>(d.db, [contact_id]) === undefined) return { ok: false, why: 'That contact was not found.' };
     const lead_id = check(textField(input['lead_id'], 100, 'The lead'));
-    if (lead_id !== null && d.db.get<{ id: string }>('SELECT id FROM leads WHERE id = ?', [lead_id]) === undefined) return { ok: false, why: 'That lead was not found.' };
+    if (lead_id !== null && getLeadsIdById<{ id: string }>(d.db, [lead_id]) === undefined) return { ok: false, why: 'That lead was not found.' };
     const forwarded = check(momentField(input['forwarded_at'], 'When it was forwarded'));
     const id = d.newId();
     const at = d.now();
@@ -576,12 +579,12 @@ export function logComplaint(d: ComplianceDeps, actor: Actor, input: Fields): Wr
     const verbatim = check(requiredText(input['complaint_verbatim'], 20000, 'What they said, in their own words'));
     const business_id = check(textField(input['business_id'], 100, 'The organisation'));
     const claim_id = check(textField(input['claim_id'], 100, 'The claim'));
-    if (business_id !== null && d.db.get<{ id: string }>('SELECT id FROM businesses WHERE id = ?', [business_id]) === undefined) return { ok: false, why: 'That organisation was not found.' };
-    if (claim_id !== null && (business_id === null || d.db.get<{ id: string }>('SELECT id FROM claims WHERE id = ? AND business_id = ?', [claim_id, business_id]) === undefined)) {
+    if (business_id !== null && getBusinessesIdById<{ id: string }>(d.db, [business_id]) === undefined) return { ok: false, why: 'That organisation was not found.' };
+    if (claim_id !== null && (business_id === null || getClaimsIdByIdBusinessId<{ id: string }>(d.db, [claim_id, business_id]) === undefined)) {
       return { ok: false, why: 'The claim must be one of the organisation’s.' };
     }
     const contact_id = check(textField(input['contact_id'], 100, 'The contact'));
-    if (contact_id !== null && d.db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ?', [contact_id]) === undefined) return { ok: false, why: 'That contact was not found.' };
+    if (contact_id !== null && getContactsIdById<{ id: string }>(d.db, [contact_id]) === undefined) return { ok: false, why: 'That contact was not found.' };
     const cls = check(classify(input));
     const id = d.newId();
     const at = d.now();
@@ -792,27 +795,22 @@ export function searchPerson(d: ComplianceDeps, actor: Actor, term: string): Sea
   const pattern = ['%', escaped, '%'].join('');
   const db = d.db;
   const hits: SearchHit[] = [];
-  const contacts = db.all<{ id: string; full_name: string; business_id: string | null; lead_id: string | null; introducer_id: string | null; org: string | null }>(
-    "SELECT c.id, c.full_name, c.business_id, c.lead_id, c.introducer_id, COALESCE(b.name, l.prospect_organisation, i.firm_name) AS org FROM contacts c " +
-      'LEFT JOIN businesses b ON b.id = c.business_id LEFT JOIN leads l ON l.id = c.lead_id LEFT JOIN introducers i ON i.id = c.introducer_id ' +
-      "WHERE lower(c.full_name) LIKE ? ESCAPE '\\' OR lower(COALESCE(c.email, '')) LIKE ? ESCAPE '\\' OR lower(COALESCE(c.phone, '')) LIKE ? ESCAPE '\\' LIMIT 200",
-    [pattern, pattern, pattern]);
+  const contacts = listContactsIdFullName<{ id: string; full_name: string; business_id: string | null; lead_id: string | null; introducer_id: string | null; org: string | null }>(db, [pattern, pattern, pattern]);
   for (const c of contacts) {
     const how = c.introducer_id !== null ? 'at an introducing firm' : c.business_id !== null ? 'through an organisation' : 'through a lead with no organisation';
     hits.push({ store: 'contacts', how, id: c.id, label: `${c.full_name} — ${c.org ?? ''}`, link: `/staff/compliance/consent/${c.id}` });
-    for (const task of db.all<{ id: string; title: string }>('SELECT id, title FROM staff_tasks WHERE contact_id = ?', [c.id])) {
+    for (const task of listStaffTasksIdTitleByContactId<{ id: string; title: string }>(db, [c.id])) {
       hits.push({ store: 'staff_tasks', how: 'a task naming them', id: task.id, label: task.title, link: `/staff/tasks/${task.id}` });
     }
     if (c.business_id !== null) {
-      for (const r of db.all<{ id: string; requested_type: string | null }>("SELECT id, requested_type FROM client_tasks WHERE business_id = ? AND kind = 'DOCUMENT'", [c.business_id])) {
+      for (const r of listClientTasksIdRequestedTypeByBusinessIdKind<{ id: string; requested_type: string | null }>(db, [c.business_id])) {
         hits.push({ store: 'client_tasks', how: 'a document request to their organisation', id: r.id, label: r.requested_type ?? 'a document', link: null });
       }
     }
-    for (const s of db.all<{ id: string; decision: string }>(
-      'SELECT id, decision FROM introducer_share_consents WHERE (business_id IS NOT NULL AND business_id = ?) OR (lead_id IS NOT NULL AND lead_id = ?)', [c.business_id, c.lead_id])) {
+    for (const s of listIntroducerShareConsentsIdDecisionByBusinessId<{ id: string; decision: string }>(db, [c.business_id, c.lead_id])) {
       hits.push({ store: 'introducer_share_consents', how: 'a share-progress answer for their organisation or lead', id: s.id, label: s.decision, link: null });
     }
-    for (const e of db.all<{ id: string; kind: string; decision: string }>('SELECT id, kind, decision FROM consent_answers WHERE contact_id = ?', [c.id])) {
+    for (const e of listConsentAnswersIdKindByContactId<{ id: string; kind: string; decision: string }>(db, [c.id])) {
       hits.push({ store: 'consent_answers', how: 'a consent answer', id: e.id, label: `${e.kind} ${e.decision}`, link: `/staff/compliance/consent/${c.id}` });
     }
   }

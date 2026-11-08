@@ -32,11 +32,14 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { liveHeldIds } from '../../web/compliance.ts';
-import { addMonths } from '../crm/message-retention.ts';
+import { addMonths } from '../crm/index.ts';
 import { BACKUP_CYCLE, knownBackupCycleDays } from '../../shared/upload-handler-port.ts';
-import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../assessment/funnel-deletable.ts';
-import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from '../assessment/funnel-edges.ts';
+import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../assessment/index.ts';
+import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from '../assessment/index.ts';
 import { getUsersCountByBusinessId } from '../../core/index.ts';
+import { deleteWebsiteEnquiriesById, listWebsiteEnquiriesIdHandledAtByStatus } from './data.ts';
+import { insertDeletionLog2 } from './data-borrowed.ts';
+import { getBusinessesIdByRowid, getBusinessesRowidById, getLeadsIdBusinessIdById5, getLeadsIdByRowid, getLeadsRowidById, listLeadsIdStatusByBusinessId, listLeadsIdUpdatedAtByEnquiryIdStatus, listLeadsUpdatedAtByEnquiryIdStatus } from '../crm/index.ts';
 
 export type EnquiryRetention = {
   readonly enabled: boolean;
@@ -76,7 +79,7 @@ export function enquiriesDue(db: Db, cfg: EnquiryRetention, nowIso: string): Due
   if (enquiryRetentionMissing(cfg).length > 0 || cfg.closed_months === null) return [];
   const today = nowIso.slice(0, 10);
   const held = liveHeldIds(db, 'WEBSITE_ENQUIRY');
-  return db.all<{ id: string; handled_at: string | null }>("SELECT id, handled_at FROM website_enquiries WHERE status = 'CLOSED'")
+  return listWebsiteEnquiriesIdHandledAtByStatus<{ id: string; handled_at: string | null }>(db)
     .filter((r) => typeof r.handled_at === 'string' && /^\d{4}-\d{2}-\d{2}/.test(r.handled_at) && !held.has(r.id))
     .map((r) => { const closed_on = (r.handled_at as string).slice(0, 10); return { id: r.id, closed_on, due_on: addMonths(closed_on, cfg.closed_months as number) }; })
     .filter((r) => r.due_on < today);
@@ -86,7 +89,7 @@ export function enquiriesDue(db: Db, cfg: EnquiryRetention, nowIso: string): Due
 export function funnelLeadsDue(db: Db, cfg: EnquiryRetention, nowIso: string): number {
   if (cfg.closed_months === null) return 0;
   const today = nowIso.slice(0, 10);
-  return db.all<{ updated_at: string }>("SELECT updated_at FROM leads WHERE enquiry_id IS NOT NULL AND status = 'LOST'")
+  return listLeadsUpdatedAtByEnquiryIdStatus<{ updated_at: string }>(db)
     .filter((r) => addMonths(r.updated_at.slice(0, 10), cfg.closed_months as number) < today).length;
 }
 
@@ -129,8 +132,7 @@ export type LeadDeletionPlan =
  * (FUNNEL_DELETABLE), its row keeps the lot.
  */
 export function leadDeletionPlan(db: Db, lead_id: string, due: (lead_id: string) => boolean): LeadDeletionPlan {
-  const lead = db.get<{ id: string; business_id: string | null; status: string; enquiry_id: string | null }>(
-    'SELECT id, business_id, status, enquiry_id FROM leads WHERE id = ?', [lead_id]);
+  const lead = getLeadsIdBusinessIdById5<{ id: string; business_id: string | null; status: string; enquiry_id: string | null }>(db, [lead_id]);
   if (lead === undefined) return { delete: false, why: 'no such lead' };
   if (lead.enquiry_id === null || lead.status !== 'LOST') return { delete: false, why: 'not a lost funnel enquiry' };
   if (!due(lead.id)) return { delete: false, why: 'its period is not over' };
@@ -139,7 +141,7 @@ export function leadDeletionPlan(db: Db, lead_id: string, due: (lead_id: string)
   let wholeBusiness = false;
   if (business !== null) {
     if (liveHeldIds(db, 'COMPANY').has(business)) return { delete: false, why: 'a legal hold is on the organisation' };
-    const others = db.all<{ id: string; status: string; enquiry_id: string | null }>('SELECT id, status, enquiry_id FROM leads WHERE business_id = ?', [business]);
+    const others = listLeadsIdStatusByBusinessId<{ id: string; status: string; enquiry_id: string | null }>(db, [business]);
     wholeBusiness = others.every((o) => o.status === 'LOST' && o.enquiry_id !== null && due(o.id) && !liveHeldIds(db, 'LEAD').has(o.id));
     /* A portal login is tied to its organisation by `users.business_id`, which carries no foreign key, so the walk
        below would not see it. A client who made a login keeps their organisation: that is theirs to close. */
@@ -156,9 +158,9 @@ export function leadDeletionPlan(db: Db, lead_id: string, due: (lead_id: string)
     const r = { table, rowid };
     seen.set(key, r); order.push(r); queue.push(r);
   };
-  const leadRow = db.get<{ rowid: number }>('SELECT rowid FROM leads WHERE id = ?', [lead.id])!;
+  const leadRow = getLeadsRowidById<{ rowid: number }>(db, [lead.id])!;
   add('leads', leadRow.rowid);
-  if (wholeBusiness && business !== null) add('businesses', db.get<{ rowid: number }>('SELECT rowid FROM businesses WHERE id = ?', [business])!.rowid);
+  if (wholeBusiness && business !== null) add('businesses', getBusinessesRowidById<{ rowid: number }>(db, [business])!.rowid);
   while (queue.length > 0) {
     const r = queue.shift()!;
     for (const e of EDGES_FROM.get(r.table) ?? []) {
@@ -172,8 +174,8 @@ export function leadDeletionPlan(db: Db, lead_id: string, due: (lead_id: string)
       }
     }
   }
-  const lead_ids = order.filter((r) => r.table === 'leads').map((r) => db.get<{ id: string }>('SELECT id FROM leads WHERE rowid = ?', [r.rowid])!.id);
-  const business_ids = order.filter((r) => r.table === 'businesses').map((r) => db.get<{ id: string }>('SELECT id FROM businesses WHERE rowid = ?', [r.rowid])!.id);
+  const lead_ids = order.filter((r) => r.table === 'leads').map((r) => getLeadsIdByRowid<{ id: string }>(db, [r.rowid])!.id);
+  const business_ids = order.filter((r) => r.table === 'businesses').map((r) => getBusinessesIdByRowid<{ id: string }>(db, [r.rowid])!.id);
   if (lead_ids.some((id) => id !== lead.id && !due(id))) return { delete: false, why: 'another lead of the organisation is not due' };
   const tables: Record<string, number> = {};
   for (const r of order) tables[r.table] = (tables[r.table] ?? 0) + 1;
@@ -190,17 +192,14 @@ export function sweepEnquiries(
   const due = enquiriesDue(d.db, cfg, at);
   const cycle = knownBackupCycleDays(BACKUP_CYCLE);
   const logEntry = (record_kind: string, record_id: string, category: string, due_on: string | null): void => {
-    d.db.run(
-      'INSERT INTO deletion_log (deletion_ref, record_kind, record_id, category, basis_rule, basis_due_on, approved_by, review_ref, executed_by, ' +
-        'executed_at, stores_json, backups_pending, backup_cycle_days, backup_copies_expire_at, verified_by, verified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)',
-      [`DEL-ENQ-${d.newId()}`, record_kind, record_id, category, ENQUIRY_RETENTION_RULE, due_on,
+    insertDeletionLog2(d.db, [`DEL-ENQ-${d.newId()}`, record_kind, record_id, category, ENQUIRY_RETENTION_RULE, due_on,
         textOrNull(cfg.approved_by) ?? '', textOrNull(cfg.review_ref) ?? '', actor?.id ?? 'the enquiry clean-up job', at, '["database"]',
         cycle === null || cycle > 0 ? 1 : 0, cycle,
         cycle === null || cycle === 0 ? null : new Date(new Date(at).getTime() + cycle * 86_400_000).toISOString()]);
   };
   /* PHASE 157: the funnel leads past the period, each deleted with its own rows, or kept with the reason. */
   const today = at.slice(0, 10);
-  const lostOn = new Map(d.db.all<{ id: string; updated_at: string }>("SELECT id, updated_at FROM leads WHERE enquiry_id IS NOT NULL AND status = 'LOST'")
+  const lostOn = new Map(listLeadsIdUpdatedAtByEnquiryIdStatus<{ id: string; updated_at: string }>(d.db)
     .map((r) => [r.id, r.updated_at.slice(0, 10)] as const));
   const isDue = (id: string): boolean => { const on = lostOn.get(id); return on !== undefined && addMonths(on, cfg.closed_months as number) < today; };
   const kept: { lead_id: string; why: string }[] = [];
@@ -208,14 +207,11 @@ export function sweepEnquiries(
   const funnelDeleted: string[] = [];
   d.db.tx(() => {
     for (const r of due) {
-      d.db.run(
-        'INSERT INTO deletion_log (deletion_ref, record_kind, record_id, category, basis_rule, basis_due_on, approved_by, review_ref, executed_by, ' +
-          'executed_at, stores_json, backups_pending, backup_cycle_days, backup_copies_expire_at, verified_by, verified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)',
-        [`DEL-ENQ-${d.newId()}`, 'WEBSITE_ENQUIRY', r.id, 'A closed website enquiry', ENQUIRY_RETENTION_RULE, r.due_on,
+      insertDeletionLog2(d.db, [`DEL-ENQ-${d.newId()}`, 'WEBSITE_ENQUIRY', r.id, 'A closed website enquiry', ENQUIRY_RETENTION_RULE, r.due_on,
           textOrNull(cfg.approved_by) ?? '', textOrNull(cfg.review_ref) ?? '', actor?.id ?? 'the enquiry clean-up job', at, '["database"]',
           cycle === null || cycle > 0 ? 1 : 0, cycle,
           cycle === null || cycle === 0 ? null : new Date(new Date(at).getTime() + cycle * 86_400_000).toISOString()]);
-      d.db.run('DELETE FROM website_enquiries WHERE id = ?', [r.id]);
+      deleteWebsiteEnquiriesById(d.db, [r.id]);
     }
     for (const id of [...lostOn.keys()].filter(isDue).sort()) {
       if (goneLeads.has(id)) continue;

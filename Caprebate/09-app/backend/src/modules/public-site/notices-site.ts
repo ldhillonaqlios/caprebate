@@ -26,6 +26,7 @@ import type { Db } from '../../core/index.ts';
 import { logComplaint } from '../../web/compliance-rights.ts';
 import { assertComplianceWrite, type ComplianceDeps } from '../../web/compliance.ts';
 import { plainDashes } from '../../shared/index.ts';
+import { getComplaintFormsIdReceivedAtById, insertComplaintForms, listComplaintFormsIdReceivedAtByLoggedComplaintId, updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl } from './data-borrowed.ts';
 
 /** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 03-app/caprebate-notices-page.html, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const NOTICES_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'caprebate-notices-page.html');
@@ -117,12 +118,8 @@ export function receiveComplaintForm(app: App, f: URLSearchParams, source: strin
   const rights = f.getAll('rights[]').filter((r) => RIGHTS.has(r));
   const id = newId();
   const at = app.now();
-  app.db.run(
-    'INSERT INTO complaint_forms (id, received_at, name, reply_to, on_behalf, authority_detail, matching_info, about, complaint_verbatim, remedy_sought, rights) '
-      + 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, at, name, reply_to, on === 'self' || on === 'other' ? on : null, clean(f.get('authority_detail'), 2000), clean(f.get('matching_info'), 2000),
-      about !== null && ABOUT.has(about) ? about : null, verbatim, clean(f.get('remedy_sought'), 5000), JSON.stringify(rights)],
-  );
+  insertComplaintForms(app.db, [id, at, name, reply_to, on === 'self' || on === 'other' ? on : null, clean(f.get('authority_detail'), 2000), clean(f.get('matching_info'), 2000),
+      about !== null && ABOUT.has(about) ? about : null, verbatim, clean(f.get('remedy_sought'), 5000), JSON.stringify(rights)]);
   const ref = refOf(id);
   app.email.send({
     to_email: DP_MAIL, kind: 'NOTIFICATION',
@@ -146,17 +143,14 @@ export type WaitingForm = { id: string; ref: string; received_at: string; name: 
 
 /** The complaints sent through the form and not yet logged, oldest first. */
 export function waitingForms(db: Db): WaitingForm[] {
-  return db.all<{ id: string; received_at: string; name: string; reply_to: string; complaint_verbatim: string }>(
-    'SELECT id, received_at, name, reply_to, complaint_verbatim FROM complaint_forms WHERE logged_complaint_id IS NULL ORDER BY received_at',
-  ).map((r) => ({ ...r, ref: refOf(r.id) }));
+  return listComplaintFormsIdReceivedAtByLoggedComplaintId<{ id: string; received_at: string; name: string; reply_to: string; complaint_verbatim: string }>(db).map((r) => ({ ...r, ref: refOf(r.id) }));
 }
 
 /** Log a form complaint into the complaints log, received when it arrived, and mark it logged. */
 export function logFormComplaint(d: ComplianceDeps, actor: Actor, id: string): { ok: true; id: string } | { ok: false; why: string } {
   assertComplianceWrite(actor);
-  const f = d.db.get<{ id: string; received_at: string; name: string; reply_to: string; on_behalf: string | null; authority_detail: string | null;
-    matching_info: string | null; complaint_verbatim: string; remedy_sought: string | null; rights: string; logged_complaint_id: string | null }>(
-    'SELECT id, received_at, name, reply_to, on_behalf, authority_detail, matching_info, complaint_verbatim, remedy_sought, rights, logged_complaint_id FROM complaint_forms WHERE id = ?', [id]);
+  const f = getComplaintFormsIdReceivedAtById<{ id: string; received_at: string; name: string; reply_to: string; on_behalf: string | null; authority_detail: string | null;
+    matching_info: string | null; complaint_verbatim: string; remedy_sought: string | null; rights: string; logged_complaint_id: string | null }>(d.db, [id]);
   if (f === undefined) return { ok: false, why: 'That complaint was not found.' };
   if (f.logged_complaint_id !== null) return { ok: false, why: 'That complaint is already in the log.' };
   const rights = JSON.parse(f.rights) as string[];
@@ -171,6 +165,6 @@ export function logFormComplaint(d: ComplianceDeps, actor: Actor, id: string): {
     complainant_as_described: described.slice(0, 2000), complaint_verbatim: verbatim.slice(0, 20000),
   });
   if (!r.ok) return { ok: false, why: r.why ?? 'It could not be logged.' };
-  d.db.run('UPDATE complaint_forms SET logged_complaint_id = ?, logged_at = ?, logged_by = ? WHERE id = ? AND logged_complaint_id IS NULL', [r.id, d.now(), actor.id, id]);
+  updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl(d.db, [r.id, d.now(), actor.id, id]);
   return { ok: true, id: r.id };
 }

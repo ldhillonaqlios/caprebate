@@ -23,6 +23,8 @@
  */
 import type { Db } from '../../core/index.ts';
 import { PROCEDURE_KEYS, anyStageLabel, claimStage } from '../../shared/index.ts';
+import { getClaimStageMovesAtWhoByClaimIdKind, getSurveyPackApprovalsIdVersionByClaimId } from './data-borrowed.ts';
+import { getClaimStageMovesAtByClaimIdKind2, getClaimsStageHoldReturnStageById, updateClaimDeliverablesStateUpdatedByByClaimIdKind2 } from './data.ts';
 
 /** Stages at or after which the figures are fixed, in the procedure's order. */
 const SIGNOFF_INDEX = PROCEDURE_KEYS.indexOf('TAX_ADVISER_SIGNOFF');
@@ -37,9 +39,7 @@ export const REOPEN_VOIDS_WORDS =
 
 /** The moment of the latest reopen that set aside what was released, or null. */
 export function voidLine(db: Db, claim_id: string): string | null {
-  return db.get<{ at: string | null }>(
-    "SELECT MAX(at) AS at FROM claim_stage_moves WHERE claim_id = ? AND kind = 'REOPEN' AND to_stage IN (SELECT value FROM json_each(?))",
-    [claim_id, JSON.stringify(VOIDING_REOPEN_STAGES)])?.at ?? null;
+  return getClaimStageMovesAtByClaimIdKind2<{ at: string | null }>(db, [claim_id, JSON.stringify(VOIDING_REOPEN_STAGES)])?.at ?? null;
 }
 
 /** The later of two moments, either of which may be missing. */
@@ -52,7 +52,7 @@ export type ValuationLock = { readonly locked: false } | { readonly locked: true
 /** Whether a claim's valuation is fixed, and why, in words a surveyor reads on the pack. A job with no claim is not. */
 export function valuationLock(db: Db, claim_id: string | null): ValuationLock {
   if (claim_id === null) return { locked: false };
-  const c = db.get<{ stage: string | null; hold_return_stage: string | null }>('SELECT stage, hold_return_stage FROM claims WHERE id = ?', [claim_id]);
+  const c = getClaimsStageHoldReturnStageById<{ stage: string | null; hold_return_stage: string | null }>(db, [claim_id]);
   if (c === undefined) return { locked: false };
   const s = claimStage(c.stage);
   if (s.kind === 'EXIT') {
@@ -83,22 +83,16 @@ export function setAsideOnReopen(db: Db, claim_id: string, at: string, actor_id:
   const acceptances = count('SELECT COUNT(*) AS n FROM client_report_acceptances WHERE claim_id = ?');
   const defence_packs = count("SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind = 'DEFENCE_PACK' AND state = 'ISSUED'");
   const deliverables_superseded = count("SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind IN ('CLIENT_REPORT', 'ACCOUNTANT_COMPUTATION_PACK') AND state = 'ISSUED'");
-  db.run("UPDATE claim_deliverables SET state = 'SUPERSEDED', updated_by = ?, updated_at = ? WHERE claim_id = ? AND kind IN ('CLIENT_REPORT', 'ACCOUNTANT_COMPUTATION_PACK') AND state = 'ISSUED'",
-    [actor_id, at, claim_id]);
+  updateClaimDeliverablesStateUpdatedByByClaimIdKind2(db, [actor_id, at, claim_id]);
   return { deliverables_superseded, signoffs, acceptances, defence_packs };
 }
 
 /** What the latest valuation reopen set aside, for the claim page: when, who, why. */
 export function lastReopen(db: Db, claim_id: string): { readonly at: string; readonly who: string | null; readonly reason: string | null; readonly to: string } | null {
-  return db.get<{ at: string; who: string | null; reason: string | null; to: string }>(
-    'SELECT m.at, u.display_name AS who, m.reason_text AS reason, m.to_stage AS "to" FROM claim_stage_moves m LEFT JOIN users u ON u.id = m.actor_id ' +
-      "WHERE m.claim_id = ? AND m.kind = 'REOPEN' AND m.to_stage IN (SELECT value FROM json_each(?)) ORDER BY m.at DESC, m.rowid DESC LIMIT 1",
-    [claim_id, JSON.stringify(VOIDING_REOPEN_STAGES)]) ?? null;
+  return getClaimStageMovesAtWhoByClaimIdKind<{ at: string; who: string | null; reason: string | null; to: string }>(db, [claim_id, JSON.stringify(VOIDING_REOPEN_STAGES)]) ?? null;
 }
 
 /** The newest approved version of a survey pack on a job on this claim: the one a sign-off must name. */
 export function latestApprovalOnClaim(db: Db, claim_id: string): { readonly id: string; readonly version: number } | null {
-  return db.get<{ id: string; version: number }>(
-    'SELECT a.id, a.version FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
-      'WHERE j.claim_id = ? ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [claim_id]) ?? null;
+  return getSurveyPackApprovalsIdVersionByClaimId<{ id: string; version: number }>(db, [claim_id]) ?? null;
 }

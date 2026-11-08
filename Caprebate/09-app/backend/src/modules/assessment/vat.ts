@@ -56,11 +56,13 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
-import { insertTask } from '../crm/tasks.ts';
-import { latestSignOff } from '../claims/claim-record.ts';
-import { computeFee, FEE_CONTROLS, type FeeControls } from '../claims/fee-controls.ts';
+import { insertTask } from '../crm/index.ts';
+import { latestSignOff } from '../claims/index.ts';
+import { computeFee, FEE_CONTROLS, type FeeControls } from '../claims/index.ts';
 import { feeGate, type FeeGateReading } from '../../shared/index.ts';
 import { assertFinanceSection, financeSectionObj } from '../../web/finance.ts';
+import { getStaffTasksIdByCompanySubjectStatus } from '../crm/index.ts';
+import { getInvoiceCreditNotesNByIssuedOn, getInvoicesCountByClaimIdInvoiceStatus, getInvoicesNByClaimIdInvoiceStatus, insertFinanceSettings, listClaimsIdClaimRefByStageClaimId } from './data-borrowed.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -177,9 +179,7 @@ export function recordSetting(d: VatDeps, actor: Actor, input: Readonly<Record<s
   const id = d.newId();
   const at = d.now();
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO finance_settings (id, setting, value, effective_from, source, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, setting, value, effective, source, actor.id, at]);
+    insertFinanceSettings(d.db, [id, setting, value, effective, source, actor.id, at]);
     // The setting's key, never its value or its source.
     d.audit.append({
       at, kind: 'FINANCE_SETTING_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -252,12 +252,7 @@ export type ExpectedFee = {
  * computed is listed with the reason and counted apart, never as nought.
  */
 export function expectedFees(db: Db, opts: { controls?: FeeControls } = {}): ExpectedFee[] {
-  return db.all<{ id: string; claim_ref: string; business_id: string; sector: string | null }>(
-    'SELECT c.id, c.claim_ref, c.business_id, b.sector FROM claims c JOIN businesses b ON b.id = c.business_id ' +
-      "WHERE c.stage = 'INVOICE' AND NOT EXISTS (SELECT 1 FROM invoices i WHERE i.claim_id = c.id AND i.kind = 'FEE' " +
-      "AND i.invoice_status IN ('RAISED','SENT') AND i.fee_pence > COALESCE((SELECT SUM(n.amount_pence) FROM invoice_credit_notes n WHERE n.invoice_id = i.id), 0)) " +
-      'ORDER BY c.claim_ref ASC',
-  ).map((c) => expectedFeeFor(db, c, opts));
+  return listClaimsIdClaimRefByStageClaimId<{ id: string; claim_ref: string; business_id: string; sector: string | null }>(db).map((c) => expectedFeeFor(db, c, opts));
 }
 
 /**
@@ -340,16 +335,9 @@ export function vatReading(db: Db, nowIso: string, opts: { controls?: FeeControl
   const from = monthStart(today, 11);
   // THE TAX POINT, AS THE PROCEDURE'S REGISTER STATES IT (section 4.1): the invoice date, or the client report's
   // delivery if earlier — read from the deliverables register's first issued client report, for our fee only.
-  const invoiced = db.get<{ n: number | null }>(
-    "SELECT SUM(i.fee_pence) AS n FROM invoices i WHERE i.claim_id IS NOT NULL AND i.invoice_status IN ('RAISED','SENT') " +
-      "AND MIN(i.invoice_date, CASE WHEN i.kind = 'FEE' THEN COALESCE((SELECT MIN(d.issued_on) FROM claim_deliverables d " +
-      "WHERE d.claim_id = i.claim_id AND d.kind = 'CLIENT_REPORT' AND d.issued_on IS NOT NULL), i.invoice_date) ELSE i.invoice_date END) " +
-      'BETWEEN ? AND ?',
-    [from, today])?.n ?? 0;
-  const credited = db.get<{ n: number | null }>(
-    'SELECT SUM(amount_pence) AS n FROM invoice_credit_notes WHERE issued_on >= ? AND issued_on <= ?', [from, today])?.n ?? 0;
-  const undated = db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM invoices WHERE claim_id IS NULL AND invoice_status IN ('RAISED','SENT')")?.n ?? 0;
+  const invoiced = getInvoicesNByClaimIdInvoiceStatus<{ n: number | null }>(db, [from, today])?.n ?? 0;
+  const credited = getInvoiceCreditNotesNByIssuedOn<{ n: number | null }>(db, [from, today])?.n ?? 0;
+  const undated = getInvoicesCountByClaimIdInvoiceStatus<{ n: number }>(db)?.n ?? 0;
   const turnover = invoiced - credited;
   const rollingBand = band(turnover, threshold, fraction);
 
@@ -413,8 +401,7 @@ export function ensureVatTask(
   db: Db, now: () => string, newId: () => string, reading: VatReading, created_by: string | null,
 ): { readonly state: VatTaskState; readonly id: string | null } {
   if (!reading.needs_task) return { state: 'NOT_NEEDED', id: null };
-  const open = db.get<{ id: string }>(
-    "SELECT id FROM staff_tasks WHERE company_subject = 'VAT_THRESHOLD' AND status IN ('OPEN','IN_PROGRESS') LIMIT 1");
+  const open = getStaffTasksIdByCompanySubjectStatus<{ id: string }>(db);
   if (open !== undefined) return { state: 'ALREADY_OPEN', id: open.id };
   const id = insertTask(db, now, newId, {
     title: VAT_TASK_TITLE, description: VAT_TASK_DESCRIPTION, owner_id: null, owner_role: 'ACCOUNTING',

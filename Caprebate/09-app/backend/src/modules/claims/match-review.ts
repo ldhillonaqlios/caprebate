@@ -107,9 +107,7 @@ import { switchedOn, REGISTER_SWITCHES } from '../../integrations/index.ts';
 import { UNMEASURED_MATCH_GRADE_CAP, type ReviewCandidate } from '../../integrations/index.ts';
 import { SOURCES as REGISTER_SOURCES, worstGrade, type Grade } from '../../integrations/index.ts';
 import { removeRegisterRecord } from '../../integrations/index.ts';
-import {
-  approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain,
-} from '../portal/take-back.ts';
+import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from '../portal/index.ts';
 import { deleteRegisterMatchPicksByBusinessIdSourceId, getRegisterMatchPicksChosenKeyReasonByBusinessIdSourceId, getRegisterMatchPicksChosenKeyScoreByBusinessIdSourceId, getRegisterMatchPicksIdChosenKeyByBusinessIdSourceId, getRegisterRecordsIdByBusinessIdSourceId, getRegisterRecordsIdSourceIdByIdBusinessId, getResearchSourcesStateFailureCodeByBusinessIdSourceId, insertRegisterMatchPicks, listRegisterMatchPicksChosenKeyTakenBackAtByBusinessIdSource, updateRegisterMatchPicksRecordIdRemovedRecordIdById, updateResearchSourcesDetailByBusinessIdSourceId, updateResearchSourcesStateFailureCodeByBusinessIdSourceId } from '../../integrations/index.ts';
 
 /* ================================================================== *

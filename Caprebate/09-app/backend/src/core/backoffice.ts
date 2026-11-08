@@ -36,15 +36,12 @@ import type { Db } from './db.ts';
 import { authorise, can, type Actor } from './authz.ts';
 import { formatShownRange, type ShownRange } from '../shared/index.ts';
 import { BOOKING } from '../shared/index.ts';
-import { booksATime } from '../modules/crm/video-calls.ts';
-import {
-  SLOT_MINUTES, addLocalDays, isBookable, startOfLocalDay, startOfLocalWeek, staffSlots,
-  type Availability,
-} from '../modules/crm/schedule.ts';
+import { booksATime } from '../modules/crm/index.ts';
+import { SLOT_MINUTES, addLocalDays, isBookable, startOfLocalDay, startOfLocalWeek, staffSlots, type Availability } from '../modules/crm/index.ts';
 import { localWhen } from '../shared/index.ts';
 import type { AuditLog } from './audit.ts';
 import type { EmailTransport } from '../integrations/index.ts';
-import { bookingInviteFile } from '../modules/crm/booking-invite.ts';
+import { bookingInviteFile } from '../modules/crm/index.ts';
 import { getAssessmentsIdBusinessIdById, getBookingsChannelSmsVariantByBusinessId, getBookingsChannelSmsVariantByLeadId, getBusinessesContactEmailNameById, getContactsContactEmailNameByLeadId, insertBookingChanges, listAssessmentAnswersOrdQuestionIdByAssessmentId, listAssessmentsIdBusinessId, listBookingChangesFromStartsAtToStartsAtByBookingId, listPropertiesLabelPostcodeByBusinessId, listUsersIdDisplayNameByDisabledAt, updateBookingsStartsAtEndsAtById } from './data-borrowed.ts';
 import { getBookingById, listBookingsCancelled, listBookingsScheduled, listBookingsWithNoTime } from './data-borrowed.ts';
 

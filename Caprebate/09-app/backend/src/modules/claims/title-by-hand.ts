@@ -28,18 +28,17 @@
  * out from it while it stood (src/modules/portal/take-back.ts), and keeps the entry with who took it back and why.
  */
 
-import { personIsClients, fillTenureFromRegisters } from '../assessment/who-claims.ts';
+import { personIsClients, fillTenureFromRegisters } from '../assessment/index.ts';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { assertSignedEngagement } from './research.ts';
 import { ingestRegisterRecord, removeRegisterRecord } from '../../integrations/index.ts';
 import { amount } from '../../integrations/index.ts';
-import {
-  approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain,
-} from '../portal/take-back.ts';
+import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from '../portal/index.ts';
 import { getRegisterRecordsFieldsJsonById, getRegisterRecordsIdByBusinessIdSourceId, getRegisterRecordsIdSourceIdByIdBusinessId } from '../../integrations/index.ts';
 import { getUsersDisplayNameById } from '../../core/index.ts';
+import { getPropertiesIdBusinessIdById2, getTitleByHandIdRecordIdByPropertyIdTakenBackAt, getTitleByHandRecordedByById, insertTitleByHand, listLogicalDocumentsIdSeqByBusinessIdTypeCode, listTitleByHandTitleNumberTakenBackByByPropertyIdTakenBackAt, updateTitleByHandRecordIdRemovedRecordIdById } from './data.ts';
 
 export type TitleDeps = { readonly db: Db; readonly audit: AuditLog; readonly now: () => string; readonly newId: () => string };
 export type TitleResult =
@@ -53,7 +52,7 @@ export const BY_HAND_PREFIX = 'by-hand:';
 type PropertyRef = { readonly id: string; readonly business_id: string; readonly jurisdiction: string | null };
 
 function propertyOf(db: Db, property_id: string): PropertyRef | null {
-  return db.get<PropertyRef>('SELECT id, business_id, jurisdiction FROM properties WHERE id = ?', [property_id]) ?? null;
+  return getPropertiesIdBusinessIdById2<PropertyRef>(db, [property_id]) ?? null;
 }
 
 const writeObj = (p: PropertyRef) => ({ type: 'property' as const, id: p.id, business_id: p.business_id, assigned_surveyor_ids: [] as string[] });
@@ -143,8 +142,7 @@ export function titleFields(f: TitleForm): { ok: true; fields: Record<string, un
 type Standing = { id: string; record_id: string; title_number: string; recorded_at: string };
 
 function standing(db: Db, property_id: string): Standing | undefined {
-  return db.get<Standing>(
-    'SELECT id, record_id, title_number, recorded_at FROM title_by_hand WHERE property_id = ? AND taken_back_at IS NULL', [property_id]);
+  return getTitleByHandIdRecordIdByPropertyIdTakenBackAt<Standing>(db, [property_id]);
 }
 
 /** RECORD WHAT THE OFFICIAL COPY SAYS. One entry stands per property; a wrong one is taken back first, with a reason. */
@@ -179,9 +177,7 @@ export function recordTitleByHand(d: TitleDeps, actor: Actor, property_id: strin
   d.db.tx(() => {
     const record_id = ingestRegisterRecord(d.db, d.newId, d.now, p.business_id,
       { sourceId: TITLE_SOURCE, entityId: entity, fields: read.fields }, { property_id: p.id });
-    d.db.run(
-      'INSERT INTO title_by_hand (id, business_id, property_id, record_id, title_number, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [d.newId(), p.business_id, p.id, record_id, read.title, actor.id, at]);
+    insertTitleByHand(d.db, [d.newId(), p.business_id, p.id, record_id, read.title, actor.id, at]);
     // PHASE 159g (item 4): the tenure the register gives, on the property, where none is recorded yet.
     fillTenureFromRegisters(d.db, p.id, at);
     d.audit.append({
@@ -216,9 +212,7 @@ export function takeBackTitleByHand(d: TitleDeps, actor: Actor, property_id: str
   const look = lookAgainAfter(d.db, p.business_id, rec);
   const at = d.now();
   d.db.tx(() => {
-    d.db.run(
-      'UPDATE title_by_hand SET record_id = NULL, removed_record_id = ?, taken_back_at = ?, taken_back_by = ?, taken_back_reason = ?, look_again_json = ? WHERE id = ?',
-      [rec.id, at, actor.id, why.reason, lookAgainJson(look), s.id]);
+    updateTitleByHandRecordIdRemovedRecordIdById(d.db, [rec.id, at, actor.id, why.reason, lookAgainJson(look), s.id]);
     if (!removeRegisterRecord(d.db, p.business_id, rec.id)) throw new Error('the record this entry wrote was not removed');
     d.audit.append({
       at, kind: 'TITLE_BY_HAND_TAKEN_BACK', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -292,17 +286,13 @@ export function titleByHandView(db: Db, actor: Actor, property_id: string): Titl
       const f = JSON.parse(r?.fields_json ?? '{}') as Record<string, unknown>;
       lines = Object.keys(LABELS).filter((k) => f[k] !== undefined).map((k) => ({ label: LABELS[k] ?? k, value: valueWords(k, f[k]) }));
     } catch { lines = []; }
-    const row = db.get<{ recorded_by: string }>('SELECT recorded_by FROM title_by_hand WHERE id = ?', [s.id]);
+    const row = getTitleByHandRecordedByById<{ recorded_by: string }>(db, [s.id]);
     by = nameOf(db, row?.recorded_by ?? null); at = s.recorded_at;
   }
-  const taken = db.all<{ title_number: string; taken_back_by: string; taken_back_at: string; taken_back_reason: string }>(
-    'SELECT title_number, taken_back_by, taken_back_at, taken_back_reason FROM title_by_hand WHERE property_id = ? AND taken_back_at IS NOT NULL ORDER BY taken_back_at DESC',
-    [p.id]).map((t) => ({ title_number: t.title_number, by: nameOf(db, t.taken_back_by), at: t.taken_back_at, reason: t.taken_back_reason }));
+  const taken = listTitleByHandTitleNumberTakenBackByByPropertyIdTakenBackAt<{ title_number: string; taken_back_by: string; taken_back_at: string; taken_back_reason: string }>(db, [p.id]).map((t) => ({ title_number: t.title_number, by: nameOf(db, t.taken_back_by), at: t.taken_back_at, reason: t.taken_back_reason }));
   const mayWrite = can(actor, 'property.write', writeObj(p));
   const signed = assertSignedEngagement(db, p.business_id);
-  const copies = db.all<{ id: string; seq: number; created_at: string }>(
-    'SELECT id, seq, created_at FROM logical_documents WHERE business_id = ? AND type_code = ? ORDER BY created_at DESC, seq DESC',
-    [p.business_id, OFFICIAL_COPY_TYPE]).map((c) => ({ id: c.id, label: `Official copy ${c.seq}`, at: c.created_at }));
+  const copies = listLogicalDocumentsIdSeqByBusinessIdTypeCode<{ id: string; seq: number; created_at: string }>(db, [p.business_id, OFFICIAL_COPY_TYPE]).map((c) => ({ id: c.id, label: `Official copy ${c.seq}`, at: c.created_at }));
   return {
     copies,
     may_upload: can(actor, 'document.upload', { type: 'business', id: p.business_id }),

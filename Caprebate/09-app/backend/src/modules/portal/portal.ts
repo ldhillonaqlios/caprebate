@@ -17,16 +17,19 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
 import { STUB_NOTICE } from '../../integrations/index.ts';
-import { bookingInviteFile } from '../crm/booking-invite.ts';
+import { bookingInviteFile } from '../crm/index.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { BOOKING } from '../../shared/index.ts';
-import { booksATime } from '../crm/video-calls.ts';
+import { booksATime } from '../crm/index.ts';
 import { localWhen } from '../../shared/index.ts';
-import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES, isBookable } from '../crm/schedule.ts';
+import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES, isBookable } from '../crm/index.ts';
 import { claimStage, progressFor, type Progress } from '../../shared/index.ts';
 // Read inside functions only, so the import loop through pipeline.ts is never touched while the modules load.
-import { clientStageForClaim } from '../crm/pipeline.ts';
-import { RECEIVED_ONLY_BY_UPLOAD, requestsFor, versionObj, type RequestView } from '../claims/documents.ts';
+import { clientStageForClaim } from '../crm/index.ts';
+import { RECEIVED_ONLY_BY_UPLOAD, requestsFor, versionObj, type RequestView } from '../claims/index.ts';
+import { getBookingsIdBusinessIdById, getBusinessesContactEmailNameById2, getBusinessesIdNameById3, getClientTasksIdBusinessIdById4, insertBookingChanges2, insertBookingChanges3, insertBookingChanges4, listBookingsIdChannelByBusinessId, listClientTasksIdQuestionByBusinessIdState, updateBookingsCancelledAtCancelledByById, updateBookingsStartsAtEndsAtById2, updateBookingsStartsAtEndsAtById3, updateClientTasksStateAnswerStateById } from '../crm/index.ts';
+import { getEngagementsIdLetterStateByBusinessId3, getEngagementsSByBusinessId, updateEngagementsLetterStateViewedAtByBusinessIdLetterState } from '../claims/index.ts';
+import { getAssessmentsAssessmentIdSubmittedAtByBusinessId } from '../assessment/index.ts';
 
 export type Business = {
   id: string; name: string; sector: string; stage: string;
@@ -44,10 +47,7 @@ export type Business = {
  * had looked up.
  */
 export function readBusiness(db: Db, actor: Actor, business_id: string): Business {
-  const row = db.get<Business>(
-    'SELECT id, name, sector, stage, contact_email, contact_phone, company_number FROM businesses WHERE id = ?',
-    [business_id],
-  );
+  const row = getBusinessesIdNameById3<Business>(db, [business_id]);
   // A MISSING ROW AND A FORBIDDEN ROW MUST LOOK THE SAME FROM OUTSIDE. Telling
   // a caller "no such business" for one id and "not authorised" for another is
   // an enumeration oracle: it confirms which ids exist.
@@ -103,7 +103,7 @@ function portalClaim(db: Db, r: PortalClaimRow): PortalClaim {
   const stored = clientStageForClaim(db, r.id, kind === 'ON_HOLD' ? r.hold_return_stage : r.stage);
   // A claim at Engagement whose letter is signed is "2 Engagement letter signed" (F43): signing is the step. Read here,
   // not in pipeline.ts, which reads the letter only through assertSignedEngagement - the one gate (test/pipeline.test.ts).
-  const signed = db.get<{ s: string }>('SELECT letter_state AS s FROM engagements WHERE business_id = ?', [r.business_id])?.s === 'SIGNED';
+  const signed = getEngagementsSByBusinessId<{ s: string }>(db, [r.business_id])?.s === 'SIGNED';
   const key = stored === 'ASSESSMENT_SUBMITTED' && r.stage === 'ENGAGEMENT' && signed ? 'ENGAGEMENT_SIGNED' : stored;
   if (key === null) return { ...base, state: 'UNKNOWN', progress: { known: false, steps: [] } };
   return { ...base, state: kind === 'CLOSED' ? 'FINISHED' : 'OPEN', progress: progressFor(key) };
@@ -162,12 +162,7 @@ export type ShownRangeView = {
  */
 export function shownRange(db: Db, actor: Actor, business_id: string): ShownRangeView | null {
   const b = readBusiness(db, actor, business_id);
-  const row = db.get<ShownRangeView>(
-    'SELECT id AS assessment_id, submitted_at, shown_low_pence AS low_pence, ' +
-      'shown_high_pence AS high_pence FROM assessments WHERE business_id = ? ' +
-      'ORDER BY submitted_at DESC LIMIT 1',
-    [b.id],
-  );
+  const row = getAssessmentsAssessmentIdSubmittedAtByBusinessId<ShownRangeView>(db, [b.id]);
   if (row === undefined) return null;
   authorise(actor, 'estimate.read', { type: 'estimate', id: row.assessment_id, business_id: b.id });
   return row;
@@ -182,9 +177,7 @@ export type EngagementView = {
 
 export function engagement(db: Db, actor: Actor, business_id: string): EngagementView | null {
   const b = readBusiness(db, actor, business_id);
-  const row = db.get<{ id: string; letter_state: string; signed_at: string | null }>(
-    'SELECT id, letter_state, signed_at FROM engagements WHERE business_id = ?', [b.id],
-  );
+  const row = getEngagementsIdLetterStateByBusinessId3<{ id: string; letter_state: string; signed_at: string | null }>(db, [b.id]);
   if (row === undefined) return null;
   authorise(actor, 'engagement.read', { type: 'engagement', id: row.id, business_id: b.id });
   return { state: row.letter_state as EngagementView['state'], signed_at: row.signed_at };
@@ -201,8 +194,7 @@ export function markViewed(db: Db, actor: Actor, business_id: string, now: () =>
   const e = engagement(db, actor, business_id);
   if (e === null || e.state !== 'SENT') return;
   // PHASE 157c: the moment the client first opened it is kept, for the certificate of completion.
-  db.run('UPDATE engagements SET letter_state = ?, viewed_at = COALESCE(viewed_at, ?) WHERE business_id = ? AND letter_state = ?',
-    ['VIEWED', now(), business_id, 'SENT']);
+  updateEngagementsLetterStateViewedAtByBusinessIdLetterState(db, ['VIEWED', now(), business_id, 'SENT']);
 }
 
 /* ------------------------------------------------------ 3 · THE APPOINTMENT */
@@ -221,10 +213,7 @@ export type BookingView = {
  */
 export function bookings(db: Db, actor: Actor, business_id: string): BookingView[] {
   const b = readBusiness(db, actor, business_id);
-  const rows = db.all<BookingView>(
-    'SELECT id, channel, sms_variant, entry_point, starts_at, ends_at, cancelled_at FROM bookings ' +
-      'WHERE business_id = ? ORDER BY created_at DESC', [b.id],
-  );
+  const rows = listBookingsIdChannelByBusinessId<BookingView>(db, [b.id]);
   for (const r of rows) {
     authorise(actor, 'booking.read', { type: 'booking', id: r.id, business_id: b.id });
   }
@@ -243,11 +232,7 @@ export function tasks(db: Db, actor: Actor, business_id: string): TaskView[] {
   const b = readBusiness(db, actor, business_id);
   // CRM 4 of 10: a document request is a question the client answers by
   // uploading, and the portal draws it beside the upload, not here.
-  return db.all<TaskView>(
-    'SELECT id, question, why, holds_up, state, answer_state, answer, answered_at, answered_by_role ' +
-      "FROM client_tasks WHERE business_id = ? AND state <> ? AND kind = 'QUESTION' ORDER BY created_at ASC",
-    [b.id, 'WITHDRAWN'],
-  );
+  return listClientTasksIdQuestionByBusinessIdState<TaskView>(db, [b.id, 'WITHDRAWN']);
 }
 
 /** CRM 4 of 10. The client's own document requests, outstanding first. */
@@ -278,9 +263,7 @@ export function answerTask(
   now: () => string,
 ): { ok: boolean; why?: string } {
   const b = readBusiness(db, actor, business_id);
-  const row = db.get<{ id: string; business_id: string; state: string; kind: string }>(
-    'SELECT id, business_id, state, kind FROM client_tasks WHERE id = ?', [args.task_id],
-  );
+  const row = getClientTasksIdBusinessIdById4<{ id: string; business_id: string; state: string; kind: string }>(db, [args.task_id]);
   if (row === undefined || row.business_id !== b.id) return { ok: false, why: 'not found' };
   // The task belongs to the business; the answer is an answer ABOUT the
   // assessment, so that is the object the rule is asked about.
@@ -293,12 +276,8 @@ export function answerTask(
   if (!args.dont_know && text.length === 0) {
     return { ok: false, why: 'write an answer, or tick “I don’t know”' };
   }
-  db.run(
-    'UPDATE client_tasks SET state = ?, answer_state = ?, answer = ?, answered_at = ?, ' +
-      'answered_by = ?, answered_by_role = ? WHERE id = ?',
-    ['ANSWERED', args.dont_know ? 'DONT_KNOW' : 'ANSWERED', args.dont_know ? null : text,
-     now(), actor.id, 'CLIENT', row.id],
-  );
+  updateClientTasksStateAnswerStateById(db, ['ANSWERED', args.dont_know ? 'DONT_KNOW' : 'ANSWERED', args.dont_know ? null : text,
+     now(), actor.id, 'CLIENT', row.id]);
   return { ok: true };
 }
 
@@ -444,13 +423,10 @@ function ownBooking(db: Db, actor: Actor, business_id: string, booking_id: strin
   assigned_to: string | null; cancelled_at: string | null;
 } {
   const b = readBusiness(db, actor, business_id);
-  const row = db.get<{
+  const row = getBookingsIdBusinessIdById<{
     id: string; business_id: string; channel: string; starts_at: string | null;
     assigned_to: string | null; cancelled_at: string | null;
-  }>(
-    'SELECT id, business_id, channel, starts_at, assigned_to, cancelled_at FROM bookings WHERE id = ?',
-    [booking_id],
-  );
+  }>(db, [booking_id]);
   if (row === undefined || row.business_id !== b.id) throw new NotFoundAsRefusal();
   authorise(actor, 'booking.move_own', { type: 'booking', id: row.id, business_id: b.id });
   return row;
@@ -531,14 +507,9 @@ export function moveOwnBooking(
 
   const ends = new Date(Date.parse(args.starts_at) + SLOT_MINUTES * 60_000).toISOString();
   d.db.tx(() => {
-    d.db.run('UPDATE bookings SET starts_at = ?, ends_at = ?, assigned_to = ? WHERE id = ?',
-      [args.starts_at, ends, check.user_id, before.id]);
-    d.db.run(
-      'INSERT INTO booking_changes (id, booking_id, changed_by, from_starts_at, to_starts_at, ' +
-        'from_assigned, to_assigned, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [d.newId(), before.id, actor.id, before.starts_at, args.starts_at,
-       before.assigned_to, check.user_id, now],
-    );
+    updateBookingsStartsAtEndsAtById2(d.db, [args.starts_at, ends, check.user_id, before.id]);
+    insertBookingChanges3(d.db, [d.newId(), before.id, actor.id, before.starts_at, args.starts_at,
+       before.assigned_to, check.user_id, now]);
   });
 
   notify(d, before.business_id, args.starts_at, 'moved',
@@ -571,13 +542,8 @@ export function releaseOwnBooking(
   // Phase 132e: no notice period for giving a time back — at any time.
 
   d.db.tx(() => {
-    d.db.run('UPDATE bookings SET starts_at = NULL, ends_at = NULL, assigned_to = NULL WHERE id = ?',
-      [before.id]);
-    d.db.run(
-      'INSERT INTO booking_changes (id, booking_id, changed_by, from_starts_at, to_starts_at, ' +
-        'from_assigned, to_assigned, at) VALUES (?, ?, ?, ?, NULL, ?, NULL, ?)',
-      [d.newId(), before.id, actor.id, before.starts_at, before.assigned_to, now],
-    );
+    updateBookingsStartsAtEndsAtById3(d.db, [before.id]);
+    insertBookingChanges4(d.db, [d.newId(), before.id, actor.id, before.starts_at, before.assigned_to, now]);
   });
 
   notify(d, before.business_id, null, 'released',
@@ -612,13 +578,8 @@ export function cancelOwnBooking(
   if (before.cancelled_at !== null) return { ok: false, why: ALREADY_CANCELLED };
 
   d.db.tx(() => {
-    d.db.run('UPDATE bookings SET cancelled_at = ?, cancelled_by = ? WHERE id = ?',
-      [now, actor.id, before.id]);
-    d.db.run(
-      'INSERT INTO booking_changes (id, booking_id, changed_by, from_starts_at, to_starts_at, ' +
-        'from_assigned, to_assigned, at, cancelled) VALUES (?, ?, ?, ?, NULL, ?, NULL, ?, 1)',
-      [d.newId(), before.id, actor.id, before.starts_at, before.assigned_to, now],
-    );
+    updateBookingsCancelledAtCancelledByById(d.db, [now, actor.id, before.id]);
+    insertBookingChanges2(d.db, [d.newId(), before.id, actor.id, before.starts_at, before.assigned_to, now]);
   });
 
   notify(d, before.business_id, null, 'cancelled',
@@ -645,9 +606,7 @@ function notify(
   d: MoveDeps, business_id: string, startsAt: string | null, what: 'moved' | 'released' | 'cancelled',
   call?: { booking_id: string; was_starts_at: string | null; was_ends_at: string | null },
 ): void {
-  const business = d.db.get<{ contact_email: string | null; name: string }>(
-    'SELECT contact_email, name FROM businesses WHERE id = ?', [business_id],
-  );
+  const business = getBusinessesContactEmailNameById2<{ contact_email: string | null; name: string }>(d.db, [business_id]);
   const readable = startsAt === null ? null : localWhen(startsAt);
   /* PHASE 146f: THE INVITATION. Moved: a new REQUEST, the same UID, a higher SEQUENCE, so it replaces the old one in
      the client's calendar. Given back or cancelled: a CANCEL for the time they held. No time held, no invitation. */

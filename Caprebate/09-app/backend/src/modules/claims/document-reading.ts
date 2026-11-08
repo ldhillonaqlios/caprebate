@@ -64,6 +64,7 @@
 import type { Db } from '../../core/index.ts';
 import type { ReadingState } from './uploads.ts';
 import type { ClientDocDiscriminants } from './documents/client-doc-ingestion.ts';
+import { getDocumentFieldVouchesAnswerByRequestIdFieldId, getDocumentFieldVouchesFieldIdAnswerByRequestId, getDocumentsLogicalDocumentIdById, insertDocumentFieldVouches, insertDocumentFieldVouches2, insertDocumentReadings, listDocumentFieldVouchesFieldIdAnswerByLogicalDocumentId, listDocumentReadingsVersionNoAtByLogicalDocumentId, updateDocumentFieldVouchesLogicalDocumentIdByRequestIdFieldI } from './data.ts';
 
 /* ================================================================== *
  * 1 · THE TWO FIELDS, AND THE QUESTION EACH ONE ASKS
@@ -137,11 +138,7 @@ export type VouchRow = {
 
 /** Every answer recorded against one logical document. Usually none or one: no type carries two of these fields. */
 export function vouchesFor(db: Db, logical_document_id: string): readonly VouchRow[] {
-  return db.all<VouchRow>(
-    'SELECT field_id, answer, answered_by, answered_at, asked_on, withdrawn_at, withdrawn_by, withdrawn_reason ' +
-      'FROM document_field_vouches WHERE logical_document_id = ? ORDER BY field_id',
-    [logical_document_id],
-  );
+  return listDocumentFieldVouchesFieldIdAnswerByLogicalDocumentId<VouchRow>(db, [logical_document_id]);
 }
 
 /** PHASE 146j: ONLY A YES THAT STANDS KEEPS ANYTHING. A withdrawn yes is left out exactly as a 'no' is (N4). */
@@ -155,8 +152,7 @@ export function vouchKeeps(v: Pick<VouchRow, 'answer' | 'withdrawn_at'> | null |
  * what the ingestion module reads as "do not keep this field".
  */
 export function discriminantsFor(db: Db, doc_id: string): ClientDocDiscriminants {
-  const row = db.get<{ logical_document_id: string | null }>(
-    'SELECT logical_document_id FROM documents WHERE id = ?', [doc_id]);
+  const row = getDocumentsLogicalDocumentIdById<{ logical_document_id: string | null }>(db, [doc_id]);
   const logical = row?.logical_document_id;
   if (logical === null || logical === undefined) return {};
   const out: { -readonly [K in keyof ClientDocDiscriminants]: boolean } = {};
@@ -179,13 +175,7 @@ export function writeVouch(
   logical_document_id: string, field_id: string, answer: VouchAnswer, answered_by: string,
   asked_on: Exclude<AskedOn, 'REQUEST'> = 'PAGE',
 ): void {
-  db.run(
-    'INSERT INTO document_field_vouches (id, logical_document_id, field_id, answer, answered_by, answered_at, asked_on) '
-      + 'VALUES (?,?,?,?,?,?,?) ON CONFLICT (logical_document_id, field_id) DO UPDATE SET '
-      + 'answer = excluded.answer, answered_by = excluded.answered_by, answered_at = excluded.answered_at, '
-      + 'asked_on = excluded.asked_on, withdrawn_at = NULL, withdrawn_by = NULL, withdrawn_reason = NULL',
-    [newId(), logical_document_id, field_id, answer, answered_by, at, asked_on],
-  );
+  insertDocumentFieldVouches(db, [newId(), logical_document_id, field_id, answer, answered_by, at, asked_on]);
 }
 
 /* ================================================================== *
@@ -216,12 +206,7 @@ export function earlyVouchesFrom(
 export function writeRequestVouch(
   db: Db, newId: () => string, at: string, request_id: string, field_id: string, answer: VouchAnswer, answered_by: string,
 ): void {
-  db.run(
-    'INSERT INTO document_field_vouches (id, request_id, field_id, answer, answered_by, answered_at, asked_on) '
-      + "VALUES (?,?,?,?,?,?,'REQUEST') ON CONFLICT (request_id, field_id) DO UPDATE SET "
-      + 'answer = excluded.answer, answered_by = excluded.answered_by, answered_at = excluded.answered_at',
-    [newId(), request_id, field_id, answer, answered_by, at],
-  );
+  insertDocumentFieldVouches2(db, [newId(), request_id, field_id, answer, answered_by, at]);
 }
 
 /**
@@ -232,20 +217,14 @@ export function writeRequestVouch(
 export function adoptRequestVouch(
   db: Db, request_id: string, logical_document_id: string, field_id: string,
 ): VouchAnswer | null {
-  const n = db.run(
-    'UPDATE document_field_vouches SET logical_document_id = ? WHERE request_id = ? AND field_id = ? AND logical_document_id IS NULL '
-      + 'AND NOT EXISTS (SELECT 1 FROM document_field_vouches v WHERE v.logical_document_id = ? AND v.field_id = ?)',
-    [logical_document_id, request_id, field_id, logical_document_id, field_id],
-  ).changes;
+  const n = updateDocumentFieldVouchesLogicalDocumentIdByRequestIdFieldI(db, [logical_document_id, request_id, field_id, logical_document_id, field_id]).changes;
   if (n !== 1) return null;
-  return db.get<{ answer: VouchAnswer }>(
-    'SELECT answer FROM document_field_vouches WHERE request_id = ? AND field_id = ?', [request_id, field_id])?.answer ?? null;
+  return getDocumentFieldVouchesAnswerByRequestIdFieldId<{ answer: VouchAnswer }>(db, [request_id, field_id])?.answer ?? null;
 }
 
 /** A request's early answer, where one was given — for the request's own line. Null where none was. */
 export function requestVouch(db: Db, request_id: string): { readonly field_id: string; readonly answer: VouchAnswer } | null {
-  return db.get<{ field_id: string; answer: VouchAnswer }>(
-    'SELECT field_id, answer FROM document_field_vouches WHERE request_id = ? ORDER BY field_id LIMIT 1', [request_id]) ?? null;
+  return getDocumentFieldVouchesFieldIdAnswerByRequestId<{ field_id: string; answer: VouchAnswer }>(db, [request_id]) ?? null;
 }
 
 /**
@@ -298,10 +277,7 @@ export function recordReading(
   db: Db, newId: () => string, at: string, document_id: string, r: ReadingRecord,
 ): void {
   if (!readingIsWorthRecording(r.state)) return;
-  db.run(
-    'INSERT INTO document_readings (id, document_id, at, state, why, fields, not_found, left_out) VALUES (?,?,?,?,?,?,?,?)',
-    [newId(), document_id, at, r.state, r.why, r.fields, r.not_found, r.left_out],
-  );
+  insertDocumentReadings(db, [newId(), document_id, at, r.state, r.why, r.fields, r.not_found, r.left_out]);
 }
 
 export type ReadingView = {
@@ -322,12 +298,7 @@ type ReadingRow = {
  * itself rather than dropped: a row nobody can explain is still a row somebody should see.
  */
 export function readingsFor(db: Db, logical_document_id: string, stamp: (iso: string) => string): readonly ReadingView[] {
-  return db.all<ReadingRow>(
-    'SELECT d.version_no AS version_no, r.at AS at, r.state AS state, r.why AS why '
-      + 'FROM document_readings r JOIN documents d ON d.id = r.document_id '
-      + 'WHERE d.logical_document_id = ? ORDER BY r.at DESC',
-    [logical_document_id],
-  ).map((r) => ({
+  return listDocumentReadingsVersionNoAtByLogicalDocumentId<ReadingRow>(db, [logical_document_id]).map((r) => ({
     version_no: r.version_no,
     at: stamp(r.at),
     label: READING_WORDS[r.state as ReadingState] ?? r.state,
