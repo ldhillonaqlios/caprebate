@@ -5,7 +5,7 @@
  * page shows the 'Draft' line until an approval is recorded (who approved it, and the date, kept in the database and
  * the audit log). With no approval nothing goes live." An admin records each approval in the back office at
  * /staff/legal: the page, who approved it, as solicitor or as data protection officer, and the date. A page is in force
- * when both have approved its CURRENT version (LEGAL_PAGES in src/web/legal-pages.ts); a new version starts again.
+ * when both have approved its CURRENT version (LEGAL_PAGES in src/modules/public-site/legal-pages.ts); a new version starts again.
  * An approval is never changed or deleted (migration 121's triggers).
  *
  * AGREEMENTS. Lakhbir, 5 Nov 2026: "the sign-up asks the person to tick that they have read them (the tick, its date
@@ -18,7 +18,7 @@ import type { App } from '../core/app.ts';
 import type { Actor } from '../core/index.ts';
 import type { Db } from '../core/index.ts';
 import { h, raw, page, type Safe } from '../shared/index.ts';
-import { LEGAL_PAGES, NOTICES_VERSION, agreementLinks, inForce, versionOf, type Approvals, type LegalPageKey, type PageApproval } from './legal-pages.ts';
+import { LEGAL_PAGES, NOTICES_VERSION, agreementLinks, inForce, versionOf, type Approvals, type LegalPageKey, type PageApproval } from '../modules/public-site/legal-pages.ts';
 
 /** Every page an approval can be recorded for, with its title. */
 export const APPROVABLE: readonly (readonly [key: LegalPageKey, title: string])[] = Object.freeze([

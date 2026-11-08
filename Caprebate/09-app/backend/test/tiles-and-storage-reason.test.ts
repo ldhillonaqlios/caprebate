@@ -14,7 +14,7 @@ import { join } from 'node:path';
 
 import { createApp } from '../src/core/server.ts';
 import { seed, SEED_PASSWORD } from '../src/core/seed.ts';
-import { short } from '../src/web/home.ts';
+import { short } from '../src/modules/public-site/home.ts';
 import { forgetfulDatabaseWarning, FORGETFUL_DATABASE_WORDS, storageReason } from '../src/web/identity-checks.ts';
 import { stepGoneWhy, STEP_LOST_ON_MEMORY } from '../src/core/router.ts';
 import { SITE_CSS } from '../src/shared/assets.ts';
@@ -24,7 +24,7 @@ describe('Home tiles show their whole text', () => {
     const long = 'Confirm who owns the building, and that we would be acting for them';
     assert.equal(short(long), long);
     assert.equal(short('  two   spaces\n and a line  '), 'two spaces and a line');
-    assert.doesNotMatch(readFileSync(new URL('../src/web/home.ts', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, ''), /…/);
+    assert.doesNotMatch(readFileSync(new URL('../src/modules/public-site/home.ts', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, ''), /…/);
   });
 
   test('the seeded next action reaches Sales\'s Home whole, with no "…" on any tile', async () => {

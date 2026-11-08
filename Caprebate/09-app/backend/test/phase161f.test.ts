@@ -8,7 +8,7 @@
  * (`npm run page` in 09-app/engine: tools/build.cjs, then tools/page-from-engine.cjs). extract.cjs is gone.
  *
  * WHAT THE TEST WEBSITE RUNS. The page's own copy of the calculator sits inside the in-page assessment
- * (`<template id="assessTpl">`), which the served edition leaves out (src/web/public-site.ts). So the website's
+ * (`<template id="assessTpl">`), which the served edition leaves out (src/modules/public-site/public-site.ts). So the website's
  * eligibility check runs the engine package, on the server, through src/shared/engine.ts: these tests hold both halves.
  */
 import { test } from 'node:test';
@@ -17,7 +17,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { buildSiteEdition, SITE_PATH } from '../src/web/public-site.ts';
+import { buildSiteEdition, SITE_PATH } from '../src/modules/public-site/public-site.ts';
 import { CB } from '../src/shared/engine.ts';
 
 const ENGINE = join(import.meta.dirname, '..', '..', 'engine');

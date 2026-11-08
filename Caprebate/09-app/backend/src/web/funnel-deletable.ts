@@ -1,6 +1,6 @@
 /**
  * PHASE 157 (the sweep), 6 October 2026 — THE FUNNEL'S OWN TABLES: the only tables a lost funnel enquiry's deletion may
- * reach (src/web/enquiry-retention.ts, leadDeletionPlan). A row in any other table that hangs off the lead or its
+ * reach (src/modules/public-site/enquiry-retention.ts, leadDeletionPlan). A row in any other table that hangs off the lead or its
  * organisation is a reason to keep everything: it has a retention rule of its own, or it is evidence.
  *
  * The foreign keys from these tables' rows are written out as literal statements in src/web/funnel-edges.ts, which

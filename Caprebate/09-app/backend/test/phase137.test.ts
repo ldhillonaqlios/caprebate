@@ -32,7 +32,7 @@ import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { BANK_HOLIDAYS_EW, BANK_HOLIDAYS_KNOWN_TO, isWorkingDay, workingDaysSince } from '../src/shared/working-days.ts';
-import * as Home from '../src/web/home.ts';
+import * as Home from '../src/modules/public-site/home.ts';
 import { SITE_CSS as CSS } from '../src/shared/assets.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;

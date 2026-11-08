@@ -38,9 +38,9 @@ const path = require('path');
 /** Each original (from the repository root, Development/) and the app's copy (in backend/copies/, the same name). */
 const COPIES = [
   { original: 'Caprebate site.html',
-    why: 'the public website (src/web/public-site.ts); its calculator is built from 09-app/engine/src/calculator (npm run page)' },
+    why: 'the public website (src/modules/public-site/public-site.ts); its calculator is built from 09-app/engine/src/calculator (npm run page)' },
   { original: 'Caprebate/03-app/caprebate-notices-page.html',
-    why: 'the privacy and cookie notices (src/web/notices-site.ts); four 03-app checks read the original' },
+    why: 'the privacy and cookie notices (src/modules/public-site/notices-site.ts); four 03-app checks read the original' },
   { original: 'Caprebate/02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv',
     why: "the fixture list a claim's survey pack is drafted from (src/web/pack-lines.ts)" },
   { original: 'Caprebate/06-commercial-and-governance/Caprebate Engagement Letter.docx',

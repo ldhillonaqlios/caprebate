@@ -20,7 +20,7 @@ import * as S from './compliance-identity.ts';
 import * as N from './breach-names.ts';
 import * as V from './compliance-views.ts';
 import { identityPanel, sendIdentityCheck } from './identity-checks.ts';
-import { logFormComplaint, waitingForms } from './notices-site.ts';
+import { logFormComplaint, waitingForms } from '../modules/public-site/notices-site.ts';
 import { listUsersIdNameByRoleDisabledAt } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';

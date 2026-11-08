@@ -51,7 +51,7 @@
      D  THE COOKIE CHOICE, run in a sandbox from the site's own SITE_CONSENT
         and CB_TRACK text. PHASE 161g, 5 Nov 2026 (Lakhbir: "Google Analytics
         only after a click"): the website has ONE cookie choice, the banner the
-        back end adds (cb_cookies; src/web/legal-pages.ts), and the page only
+        back end adds (cb_cookies; src/modules/public-site/legal-pages.ts), and the page only
         READS its answer from the cb-cookie-choice meta tag, which the back end
         fills with "all" only after a click on "Accept all" (sitePageFor in
         src/analytics.ts). The back end's half is tested in
@@ -142,7 +142,7 @@ function readTree(sitePath) {
   let ts = [];
   try {
     /* PHASE 161i, 7 Nov 2026: views and page parts also live in src/core/ and src/shared/ now; all three are read */
-    ts = ["web", "core", "shared"].flatMap(d => fs.readdirSync(path.join(WEB, "..", d)).filter(f => /\.ts$/.test(f))
+    ts = ["web", "core", "shared", "modules/public-site", "modules/assessment", "modules/portal", "modules/crm", "modules/claims"].filter(d => fs.existsSync(path.join(WEB, "..", d))).flatMap(d => fs.readdirSync(path.join(WEB, "..", d)).filter(f => /\.ts$/.test(f))
       .map(f => ({ name: "09-app/backend/src/" + d + "/" + f, text: fs.readFileSync(path.join(WEB, "..", d, f), "utf8") })));
   } catch (e) { cannot("cannot read " + WEB + " - " + e.message); }
   if (!ts.length) cannot("no portal views found under " + WEB);

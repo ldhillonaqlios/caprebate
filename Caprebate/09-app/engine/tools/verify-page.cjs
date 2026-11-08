@@ -16,7 +16,7 @@
    WHERE THE PAGE'S CALCULATOR RUNS, SO NOBODY IS SURPRISED (found 5 Nov 2026)
      In "Caprebate site.html" the calculator's script sits inside the in-page
      assessment (<template id="assessTpl">), which the served website leaves out
-     (src/web/public-site.ts). So the test website's eligibility check does not
+     (src/modules/public-site/public-site.ts). So the test website's eligibility check does not
      run the page's copy at all: it runs THIS PACKAGE, on the server
      (backend/src/web/engine.ts imports src/index.ts). The page's copy is what
      the file preview, the regression harness (its default mode) and the 03-app

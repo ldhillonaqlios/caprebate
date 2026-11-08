@@ -42,7 +42,7 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import { staffShell, portalShell, opens, navContext, filterBar, LEAD_FILTERS, setSubMenu } from './navigation.ts';
 import { kpiRow, lateBadge, nobodyBadge } from './look.ts';
 import { settingsBody, settingsTiles } from '../web/admin-tiles.ts';
-import { homeRows } from '../web/home.ts';
+import { homeRows } from '../modules/public-site/home.ts';
 import { dashboard, dashView } from '../web/staff-dashboard.ts';
 import { addBlock, removeBlock } from '../web/time-blocks.ts';
 import { saveKey } from './saved-keys.ts';
@@ -864,7 +864,7 @@ function currentSessionId(d: StaffDeps, req: IncomingMessage): string {
  * ================================================================== */
 
 /* ------------------------------------------------------------------ *
- * HOME: ROWS OF TILES, IN THE OWNER'S ORDER (src/web/home.ts)
+ * HOME: ROWS OF TILES, IN THE OWNER'S ORDER (src/modules/public-site/home.ts)
  * ------------------------------------------------------------------ */
 
 /**

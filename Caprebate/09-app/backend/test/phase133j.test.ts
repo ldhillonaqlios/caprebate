@@ -16,7 +16,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
-import { buildSiteEdition, SITE_PATH } from '../src/web/public-site.ts';
+import { buildSiteEdition, SITE_PATH } from '../src/modules/public-site/public-site.ts';
 
 const PASSWORD = 'a-very-long-development-password';
 const T = '2026-09-08T00:00:00.000Z';
@@ -98,7 +98,7 @@ function outbox(kind: string): { to_email: string; body: string }[] {
 /* ================================================================== */
 
 describe('the website is served at / by the back end', () => {
-  /* 29 SEPTEMBER 2026: `/` is the new home page (src/web/home-site.ts, tested in test/home-page.test.ts). What this
+  /* 29 SEPTEMBER 2026: `/` is the new home page (src/modules/public-site/home-site.ts, tested in test/home-page.test.ts). What this
      phase asked of the website still holds there: Log in top right, every assessment link to the back end, and the
      enquiry form to /enquiry with the same fields. `Caprebate site.html`'s edition is still built and tested below. */
   test('/ is the home page, with Log in in the top bar and every assessment link going to the back end', async () => {

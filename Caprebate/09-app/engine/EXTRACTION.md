@@ -115,7 +115,7 @@ test.
 
 The engine script in `Caprebate site.html` sits inside the in-page assessment
 (`<template id="assessTpl">`). The served website leaves that template out
-(`backend/src/web/public-site.ts`), so **the served page carries no calculator**.
+(`backend/src/modules/public-site/public-site.ts`), so **the served page carries no calculator**.
 The test website's eligibility check runs **this package**, on the server
 (`backend/src/web/engine.ts` imports `src/index.ts`). The back end's
 `test/phase161f.test.ts` checks both: the served page has no calculator, and the

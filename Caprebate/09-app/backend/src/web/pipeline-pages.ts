@@ -39,7 +39,7 @@ import { taskChoices, vocabulary } from './vocabularies.ts';
 import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from '../shared/lists-pages.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';
-import * as E from './enquiries.ts';
+import * as E from '../modules/public-site/enquiries.ts';
 import * as SO from './survey-open.ts';
 import { leadSectionCounts, leadSections, type CardDeps } from './lead-cards.ts';
 import { piecesPage } from '../core/index.ts';
@@ -317,7 +317,7 @@ function orNot(v: string | null | undefined, none: string): Safe {
 
 /**
  * THE WEBSITE'S ENQUIRY FORM, WAITING FOR SALES — PHASE 133j. Each enquiry is opened as a lead (with a contact
- * holding the person) or closed. Nothing here decides anything: src/web/enquiries.ts authorises and writes.
+ * holding the person) or closed. Nothing here decides anything: src/modules/public-site/enquiries.ts authorises and writes.
  */
 function enquiriesPage(d: PipelinePageDeps, actor: Actor, rows: readonly E.EnquiryRow[], msg: string | undefined): string {
   return page({

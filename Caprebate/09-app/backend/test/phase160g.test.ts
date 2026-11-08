@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync, mkdtempSync, copyFileSync } from 'node:fs'
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { NOTICES_PATH } from '../src/web/notices-site.ts';
+import { NOTICES_PATH } from '../src/modules/public-site/notices-site.ts';
 import { privacyNoticeForCheck } from './onedrive-only.ts';
 
 const CHECK = join(import.meta.dirname, '..', '..', '..', '03-app', 'caprebate-notices-acceptance.cjs');

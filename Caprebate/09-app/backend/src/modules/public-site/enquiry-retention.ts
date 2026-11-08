@@ -29,14 +29,14 @@
  * enquiry with no closing day is never due.
  */
 
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { liveHeldIds } from './compliance.ts';
-import { addMonths } from './message-retention.ts';
-import { BACKUP_CYCLE, knownBackupCycleDays } from '../shared/upload-handler-port.ts';
-import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from './funnel-deletable.ts';
-import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from './funnel-edges.ts';
-import { getUsersCountByBusinessId } from '../core/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { liveHeldIds } from '../../web/compliance.ts';
+import { addMonths } from '../../web/message-retention.ts';
+import { BACKUP_CYCLE, knownBackupCycleDays } from '../../shared/upload-handler-port.ts';
+import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../../web/funnel-deletable.ts';
+import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from '../../web/funnel-edges.ts';
+import { getUsersCountByBusinessId } from '../../core/index.ts';
 
 export type EnquiryRetention = {
   readonly enabled: boolean;

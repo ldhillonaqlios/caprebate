@@ -125,7 +125,7 @@ export type ServerOptions = {
   keepOriginals?: KeepOriginals;
   /** Show the TEST-ONLY engagement letter (test defaults, never signed). Absent is the real letter. api/index.mjs alone passes it. */
   testLetter?: boolean;
-  /** The public notices page and its complaint form (src/web/notices-site.ts). api/index.mjs passes it; nothing else does. */
+  /** The public notices page and its complaint form (src/modules/public-site/notices-site.ts). api/index.mjs passes it; nothing else does. */
   testNotices?: boolean;
   /** The legal pages for the live website, each a Draft until approved (src/web/legal-approvals.ts). Off unless CAPREBATE_LEGAL_PAGES=on. */
   legal?: boolean;

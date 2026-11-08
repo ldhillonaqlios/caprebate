@@ -2,7 +2,7 @@
  * 29 SEPTEMBER 2026 — THE NEW HOME PAGE ON THE TEST WEBSITE, AND THE ASSESSMENT IN ITS COLOURS.
  *
  * Lakhbir: "this look good, push it to vercel", and "make sure when someone clicks am i eligble it matches the colours
- * of the new home page". The page is Caprebate/09-app/site/home.html, served at `/` by src/web/home-site.ts.
+ * of the new home page". The page is Caprebate/09-app/site/home.html, served at `/` by src/modules/public-site/home-site.ts.
  */
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,7 +10,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
-import { buildHomeEdition, HOME_PATH, HOME_PAGE_CSP } from '../src/web/home-site.ts';
+import { buildHomeEdition, HOME_PATH, HOME_PAGE_CSP } from '../src/modules/public-site/home-site.ts';
 import { SITE_CSS } from '../src/shared/assets.ts';
 import { avoidHits } from '../src/shared/voice.ts';
 

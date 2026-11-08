@@ -3,7 +3,7 @@
  *
  * Lakhbir: "push it live" (the test site). The home page (site/home.html) and five sector pages
  * (site/capital-allowances/<sector>.html) are written from their design files by tools/site-from-design.mjs and served
- * by src/web/home-site.ts: /capital-allowances/<sector>/, each under the home page's policy, nothing inline, its style
+ * by src/modules/public-site/home-site.ts: /capital-allowances/<sector>/, each under the home page's policy, nothing inline, its style
  * and scripts as /assets/ca-<sector>.css, -head.js and .js, and the fonts from /assets/fonts/.
  */
 import { describe, test, before, after } from 'node:test';
@@ -12,7 +12,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
-import { HOME_PAGE_CSP, SECTOR_SLUGS, sectorPath, FONT_FILES, buildEdition } from '../src/web/home-site.ts';
+import { HOME_PAGE_CSP, SECTOR_SLUGS, sectorPath, FONT_FILES, buildEdition } from '../src/modules/public-site/home-site.ts';
 import { avoidHits } from '../src/shared/voice.ts';
 // @ts-expect-error the tool is plain JavaScript (an .mjs file with no type declarations)
 import { convert } from '../tools/site-from-design.mjs';

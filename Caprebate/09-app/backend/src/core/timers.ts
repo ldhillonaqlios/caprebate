@@ -34,7 +34,7 @@ import { sweepVideos } from '../web/survey-video.ts';
 import { sweepPieces } from './upload-pieces.ts';
 import { sweepOriginals, openKeptOriginal } from '../web/uploads.ts';
 import { MESSAGE_RETENTION, sweepMessages } from '../web/message-retention.ts';
-import { ENQUIRY_RETENTION, sweepEnquiries } from '../web/enquiry-retention.ts';
+import { ENQUIRY_RETENTION, sweepEnquiries } from '../modules/public-site/enquiry-retention.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { isInventedAddress } from '../integrations/index.ts';
 import { runNightlyBackup } from './backup.ts';

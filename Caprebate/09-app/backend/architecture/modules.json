@@ -815,11 +815,11 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/enquiries.ts": {
+  "src/modules/public-site/enquiries.ts": {
    "area": "public-site",
    "kind": "logic"
   },
-  "src/web/enquiry-retention.ts": {
+  "src/modules/public-site/enquiry-retention.ts": {
    "area": "public-site",
    "kind": "logic"
   },
@@ -871,11 +871,11 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/home-site.ts": {
+  "src/modules/public-site/home-site.ts": {
    "area": "public-site",
    "kind": "page"
   },
-  "src/web/home.ts": {
+  "src/modules/public-site/home.ts": {
    "area": "public-site",
    "kind": "page"
   },
@@ -911,7 +911,7 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/legal-pages.ts": {
+  "src/modules/public-site/legal-pages.ts": {
    "area": "public-site",
    "kind": "page"
   },
@@ -947,7 +947,7 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/notices-site.ts": {
+  "src/modules/public-site/notices-site.ts": {
    "area": "public-site",
    "kind": "page"
   },
@@ -1023,7 +1023,7 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/privacy-policy.ts": {
+  "src/modules/public-site/privacy-policy.ts": {
    "area": "public-site",
    "kind": "page"
   },
@@ -1031,7 +1031,7 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/public-site.ts": {
+  "src/modules/public-site/public-site.ts": {
    "area": "public-site",
    "kind": "page"
   },

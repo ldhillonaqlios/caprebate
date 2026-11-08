@@ -2,9 +2,9 @@
  * THE WEBSITE'S LEGAL PAGES, AND THE COOKIE BANNER — PHASE 160h, 20 October 2026; PHASE 161g, 5 November 2026.
  *
  * Lakhbir, 20 Oct 2026: "draft up some T&C, Policy docs, Cookies (add a cookie consent banner), Privacy policy, all the
- * usual things you see on the website". The public notices are Phases 160f and 160g (src/web/notices-site.ts). This
+ * usual things you see on the website". The public notices are Phases 160f and 160g (src/modules/public-site/notices-site.ts). This
  * file holds everything else: the website terms of use, the client's portal terms and the privacy policy (Phase 161g,
- * src/web/privacy-policy.ts), the cookie policy, acceptable use, the accessibility statement and the disclaimer, each a
+ * src/modules/public-site/privacy-policy.ts), the cookie policy, acceptable use, the accessibility statement and the disclaimer, each a
  * DRAFT for our solicitor and our data protection officer (FOR THE SOLICITOR, DPO AND DEVELOPER), and the banner.
  *
  * WHERE THEY ARE SERVED (Phase 161g). On the test website (the `notices` switch, which api/index.mjs alone passes), and
@@ -28,7 +28,7 @@
  * browser storage key a page it serves writes, and fails unless COOKIE_LIST has each, and on a line for one that is gone.
  */
 import type { IncomingMessage } from 'node:http';
-import { h, raw, page, type Safe } from '../shared/index.ts';
+import { h, raw, page, type Safe } from '../../shared/index.ts';
 import { COMPANY, COMPANY_NUMBER, OFFICE, CONTACT, DP_MAIL, SECURITY, mail, LATER, privacyPolicyBody, portalTermsBody } from './privacy-policy.ts';
 
 /** The cookie that keeps the visitor's answer, and how long it is kept. */
@@ -57,7 +57,7 @@ export const LEGAL_PAGES: readonly (readonly [path: string, title: string, key: 
   ['/disclaimer/', 'Disclaimer', 'disclaimer', '2026-10-20'],
 ]);
 export type LegalPageKey = 'terms' | 'portal-terms' | 'privacy-policy' | 'cookies' | 'acceptable-use' | 'accessibility' | 'disclaimer' | 'notices';
-/** The public notices page's version (src/web/notices-site.ts serves it; 03-app/caprebate-notices-page.html is its text). */
+/** The public notices page's version (src/modules/public-site/notices-site.ts serves it; 03-app/caprebate-notices-page.html is its text). */
 export const NOTICES_VERSION = '2026-11-05';
 export const versionOf = (key: LegalPageKey): string => key === 'notices' ? NOTICES_VERSION : LEGAL_PAGES.find((p) => p[2] === key)?.[3] ?? '';
 

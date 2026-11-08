@@ -2,7 +2,7 @@
  * THE PRIVACY POLICY AND THE CLIENT'S PORTAL TERMS — PHASE 161g, 5 November 2026. Both DRAFTS.
  *
  * Lakhbir, 5 Nov 2026: "draft the privacy policy" (from the Phase 160f notice, for the live website and the client
- * portal) and "draft the client's terms and their links". src/web/legal-pages.ts serves them with the other legal
+ * portal) and "draft the client's terms and their links". src/modules/public-site/legal-pages.ts serves them with the other legal
  * pages, each with its Draft line until an approval is recorded (src/web/legal-approvals.ts).
  *
  * NOTHING HERE IS INVENTED. Every fact nobody has given us (the ICO number, the data protection officer's name and
@@ -14,10 +14,10 @@
  *
  * The engagement letter's own clauses are not touched here: it governs the work, and these terms say so.
  */
-import { h, raw, type Safe } from '../shared/index.ts';
-import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../integrations/index.ts';
-import { BACKUP_KEEP_DAYS } from '../core/index.ts';
-import { RETENTION_PARAMETERS } from './compliance-identity.ts';
+import { h, raw, type Safe } from '../../shared/index.ts';
+import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../../integrations/index.ts';
+import { BACKUP_KEEP_DAYS } from '../../core/index.ts';
+import { RETENTION_PARAMETERS } from '../../web/compliance-identity.ts';
 
 export const COMPANY = 'CAP REBATE LTD';
 export const COMPANY_NUMBER = '17307313';

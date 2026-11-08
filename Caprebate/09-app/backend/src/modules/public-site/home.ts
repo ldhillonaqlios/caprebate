@@ -18,25 +18,25 @@
  * so empty is never mistaken for broken. No tile carries a claim's value, and no tile carries more than three lines.
  */
 
-import type { App } from '../core/app.ts';
-import { can, type Actor } from '../core/index.ts';
+import type { App } from '../../core/app.ts';
+import { can, type Actor } from '../../core/index.ts';
 import { openEnquiries } from './enquiries.ts';
-import { h, raw, type Safe } from '../shared/index.ts';
-import { opens } from '../core/navigation.ts';
-import { assertDashboard } from './dashboard.ts';
-import { assertLeadSection } from './leads.ts';
-import { leadsList, type LeadListRow } from '../shared/lists.ts';
-import { pipelineBoard, pipelineBoardGate } from './crm.ts';
-import { financeDashboard } from './invoices.ts';
-import { assertFinanceSection } from './finance.ts';
-import { assertSurveySection, surveyorJobs } from './surveyor.ts';
-import { auditLogView } from './audit-log.ts';
-import { isLateNewLead, waitedWords, workingDaysSince } from '../shared/index.ts';
-import * as T from './tasks.ts';
-import * as M from './messages.ts';
-import * as IE from './inbound-email.ts';
-import * as S from './settings.ts';
-import { STAGE_GROUPS } from '../core/index.ts';
+import { h, raw, type Safe } from '../../shared/index.ts';
+import { opens } from '../../core/navigation.ts';
+import { assertDashboard } from '../../web/dashboard.ts';
+import { assertLeadSection } from '../../web/leads.ts';
+import { leadsList, type LeadListRow } from '../../shared/lists.ts';
+import { pipelineBoard, pipelineBoardGate } from '../../web/crm.ts';
+import { financeDashboard } from '../../web/invoices.ts';
+import { assertFinanceSection } from '../../web/finance.ts';
+import { assertSurveySection, surveyorJobs } from '../../web/surveyor.ts';
+import { auditLogView } from '../../web/audit-log.ts';
+import { isLateNewLead, waitedWords, workingDaysSince } from '../../shared/index.ts';
+import * as T from '../../web/tasks.ts';
+import * as M from '../../web/messages.ts';
+import * as IE from '../../web/inbound-email.ts';
+import * as S from '../../web/settings.ts';
+import { STAGE_GROUPS } from '../../core/index.ts';
 
 /** One tile: a name and at most two more lines. `late` draws it red. */
 export type HomeTile = {
@@ -70,7 +70,7 @@ function plural(n: number, one: string, many: string): string {
  * England and Wales bank holidays, so Home and Leads read one function.
  * ================================================================== */
 
-export { workingDaysSince, waitedWords } from '../shared/index.ts';
+export { workingDaysSince, waitedWords } from '../../shared/index.ts';
 
 /* ================================================================== *
  * DRAWING

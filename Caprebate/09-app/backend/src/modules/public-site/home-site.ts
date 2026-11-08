@@ -3,7 +3,7 @@
  *
  * Lakhbir: "this look good, push it to vercel". The page designed in Website Content/landing-page is copied, as one
  * file, to Caprebate/09-app/site/home.html, and this module serves an edition of it at `/`. When that file is not
- * beside the build, `/` falls back to `Caprebate site.html` (src/web/public-site.ts), and then to the back end's own
+ * beside the build, `/` falls back to `Caprebate site.html` (src/modules/public-site/public-site.ts), and then to the back end's own
  * home page, as before.
  *
  * THE SAME RULE AS EVERY OTHER PAGE: NOTHING INLINE. The file's one `<style>` block is served as /assets/home.css and

@@ -2,7 +2,7 @@
  * PHASE 161g — THE LEGAL PAGES READY FOR THE LIVE WEBSITE, 5 November 2026.
  *
  * 1. ONE cookie choice, and Google Analytics only after a click (src/integrations/analytics.ts sitePageFor; the site page's
- *    SITE_CONSENT; src/web/legal-pages.ts).
+ *    SITE_CONSENT; src/modules/public-site/legal-pages.ts).
  * 2. The cookie list is tested, not typed: every cookie the app can set and every storage key a page it serves writes.
  * 3. The privacy policy, with every outside service tied to SECRET_KEYS (src/integrations/outside-services.ts).
  * 4. The client's portal terms, the links, and the sign-up's tick kept with its versions (src/web/legal-approvals.ts).
@@ -24,10 +24,10 @@ import { seed } from '../src/core/seed.ts';
 import { SECRET_KEYS } from '../src/core/secrets.ts';
 import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../src/integrations/outside-services.ts';
 import { sitePageFor } from '../src/integrations/analytics.ts';
-import { siteEdition, SITE_PAGE_CSP } from '../src/web/public-site.ts';
+import { siteEdition, SITE_PAGE_CSP } from '../src/modules/public-site/public-site.ts';
 import {
   CONSENT_COOKIE, CONSENT_MAX_AGE, COOKIE_LIST, LEGAL_GAPS, LEGAL_PAGES, cookieBanner, legalPageHtml, optionalAllowed, versionOf,
-} from '../src/web/legal-pages.ts';
+} from '../src/modules/public-site/legal-pages.ts';
 import { currentApprovals, currentTermsVersions, hasAgreedCurrent } from '../src/web/legal-approvals.ts';
 import { offerSignup, requestSignup, confirmSignup } from '../src/core/signup.ts';
 import { STEP_TTL_MS } from '../src/core/sign-in.ts';

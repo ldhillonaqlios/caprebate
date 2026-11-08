@@ -254,7 +254,7 @@ export type AuditKind =
   | 'RIGHTS_SEARCH_RUN' | 'COMPLIANCE_LETTER_QUEUED'
   | 'LEGAL_HOLD_SET' | 'LEGAL_HOLD_LIFTED' | 'COMPLIANCE_LINKED'
   | 'COMPLAINT_LOGGED' | 'COMPLAINT_CLASSIFIED' | 'COMPLAINT_PROGRESS_RECORDED' | 'COMPLAINT_UPDATED' | 'COMPLAINT_CLOSED'
-  // A complaint sent through the public notices page's form (src/web/notices-site.ts).
+  // A complaint sent through the public notices page's form (src/modules/public-site/notices-site.ts).
   | 'COMPLAINT_FORM_RECEIVED'
   // Staff checked what a client sent through their portal (src/web/client-checks.ts): accepted, or asked
   // again with a reason. The ids only.

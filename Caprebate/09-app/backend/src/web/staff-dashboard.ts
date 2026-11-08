@@ -42,7 +42,7 @@ import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES 
 import { addLocalDays, startOfLocalDay, startOfLocalWeek } from './schedule.ts';
 import * as B from '../core/backoffice.ts';
 import * as M from './messages.ts';
-import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from './home.ts';
+import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from '../modules/public-site/home.ts';
 import { kpiRow, type Kpi } from '../core/index.ts';
 import { blocksFor, mayBlockTime } from './time-blocks.ts';
 import { newDot } from './client-layout.ts';

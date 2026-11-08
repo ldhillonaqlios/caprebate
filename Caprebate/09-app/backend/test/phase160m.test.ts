@@ -14,7 +14,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
-import { SECTOR_SLUGS } from '../src/web/home-site.ts';
+import { SECTOR_SLUGS } from '../src/modules/public-site/home-site.ts';
 
 let made: Awaited<ReturnType<typeof createApp>>;
 let base = '';

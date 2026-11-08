@@ -34,7 +34,7 @@ import { GRANT_AMOUNTS_TO_SURVEYOR, type PackView } from '../src/web/survey-pack
 import { F4_STEP_LABELS } from '../src/web/funnel4.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../src/shared/originals.ts';
 import { clientOwners } from '../src/web/documents.ts';
-import { ENQUIRY_RETENTION, enquiryRetentionMissing, sweepEnquiries, type EnquiryRetention } from '../src/web/enquiry-retention.ts';
+import { ENQUIRY_RETENTION, enquiryRetentionMissing, sweepEnquiries, type EnquiryRetention } from '../src/modules/public-site/enquiry-retention.ts';
 import { ADDRESS_KEEP_UNTIL } from '../src/integrations/connectors/address-lookup.ts';
 import { IDENTITY_CHECK } from '../src/integrations/connectors/identity-check.ts';
 import { LICENCES, SOURCES } from '../src/integrations/registers/source-register.ts';
@@ -353,7 +353,7 @@ describe('line 17 — Word question 222: closed website enquiries deleted twelve
 
   // PHASE 157 (the sweep) built the funnel leads' deletion path, under the same switch; test/phase157.test.ts proves it.
   test('funnel leads are deleted only through their own plan and deletion-log entries, never by a plain statement', async () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'enquiry-retention.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'public-site', 'enquiry-retention.ts'), 'utf8');
     assert.ok(!/DELETE FROM leads/i.test(src), 'the enquiry clean-up deletes leads in bulk');
     assert.match(src, /FROM leads WHERE enquiry_id IS NOT NULL AND status = 'LOST'/);
     assert.match(src, /leadDeletionPlan/);

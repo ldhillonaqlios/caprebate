@@ -97,10 +97,10 @@ import {
   PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen, clientShareChoices, recordShareConsentByClient, type ClientShareChoice,
 } from '../web/introducers.ts';
 import { clientDeliverables, type ClientDeliverable } from '../web/claim-record.ts';
-import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from '../web/public-site.ts';
-import { homeEdition, gsapScript, HOME_PAGE_HEADERS, sectorEdition, isSectorSlug, fontFile } from '../web/home-site.ts';
+import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from '../modules/public-site/public-site.ts';
+import { homeEdition, gsapScript, HOME_PAGE_HEADERS, sectorEdition, isSectorSlug, fontFile } from '../modules/public-site/home-site.ts';
 import { checkTurnstile, refusalWords, turnstileSiteKey, withSiteKey, TURNSTILE_FIELD } from '../integrations/index.ts';
-import { receiveEnquiry } from '../web/enquiries.ts';
+import { receiveEnquiry } from '../modules/public-site/enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
 import { freeGate, recordLookupsDeclined } from '../web/address-check.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from '../web/identity-checks.ts';
@@ -108,8 +108,8 @@ import { handleSignoffLink, portalReport, portalReportCard } from '../web/report
 import { handleConfirmLink } from '../web/accountant-confirm-pages.ts';
 import { acceptReport } from '../web/report-accept.ts';
 import { handlePortalEvidence, portalEvidenceCard } from '../web/evidence-pages.ts';
-import { noticesEdition, noticesForLiveSite, receiveComplaintForm } from '../web/notices-site.ts';
-import { CONSENT_COOKIE, COOKIE_BANNER_CSS, agreementLinks, consentChoice, consentSetCookie, cookieBanner, draftLine, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../web/legal-pages.ts';
+import { noticesEdition, noticesForLiveSite, receiveComplaintForm } from '../modules/public-site/notices-site.ts';
+import { CONSENT_COOKIE, COOKIE_BANNER_CSS, agreementLinks, consentChoice, consentSetCookie, cookieBanner, draftLine, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../modules/public-site/legal-pages.ts';
 import { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from '../web/legal-approvals.ts';
 import { nav as staffNav } from './staff.ts';
 import { getResearchSourcesCountByBusinessIdState2 } from '../integrations/index.ts';
@@ -133,7 +133,7 @@ export type WebDeps = {
   letterPath?: string;
   /** Signing on for testing (ENGAGEMENT_SIGNING_TEST, the test copy only). Absent is ENGAGEMENT_SIGNING, off. */
   signing?: EngagementSigning;
-  /** The public notices page and its complaint form (src/web/notices-site.ts). Only the test website passes it. */
+  /** The public notices page and its complaint form (src/modules/public-site/notices-site.ts). Only the test website passes it. */
   notices?: boolean;
   /**
    * THE LEGAL SETTING, for the live website. The legal pages, the notices page, the cookie
@@ -366,7 +366,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   const session = authenticate(d.app.deps, cookie(req, SESSION_COOKIE_NAME));
   const actor: Actor | undefined = session ? toActor(session.user) : undefined;
 
-  /* THE COOKIE BANNER (src/web/legal-pages.ts), on the test website with the notices. A
+  /* THE COOKIE BANNER (src/modules/public-site/legal-pages.ts), on the test website with the notices. A
      visitor who is not signed in and has not answered gets it at the foot of any page of ours: two buttons of the same
      size, no script. It is added as the page leaves, so every page writer (page, the home page, the notices page)
      carries it without knowing about it. */
@@ -504,10 +504,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* STRESS TEST: THE PRIVACY NOTICE AND THE PUBLIC NOTICES ARE NOT PUBLISHED YET (03-app's notices page is a
      draft with facts not set, and the privacy notice waits on the data protection officer), but every page links to them
      and the links answered 401. Until they are published, a page that says so and how to reach us - nothing more. */
-  /* ON THE TEST WEBSITE, THE NOTICES PAGE ITSELF (src/web/notices-site.ts) - a draft,
+  /* ON THE TEST WEBSITE, THE NOTICES PAGE ITSELF (src/modules/public-site/notices-site.ts) - a draft,
      its proposed facts marked - with its style as a file and its complaint form working. Anywhere else, as before. */
   if (legalServed) {
-    /* The website's other legal pages, the banner's styles, and the answer (src/web/legal-pages.ts).
+    /* The website's other legal pages, the banner's styles, and the answer (src/modules/public-site/legal-pages.ts).
        Also wherever the `legal` setting is on; each page says Draft until both approvals are recorded. */
     if (path === '/assets/cookie-banner.css' && method === 'GET') { res.writeHead(200, CSS_HEADERS); res.end(COOKIE_BANNER_CSS); return 'handled'; }
     if (path === '/cookies/choice' && method === 'POST') {
@@ -569,7 +569,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/enquiry' && method === 'GET') { redirect(res, '/#contact'); return 'handled'; }
 
   /* ------------------------------------------------------ public site */
-  /* THE WEBSITE IS `Caprebate site.html`, served from the one file (src/web/public-site.ts) with its style
+  /* THE WEBSITE IS `Caprebate site.html`, served from the one file (src/modules/public-site/public-site.ts) with its style
      and script as two fixed assets. Its "Start your assessment" links come here, to /assessment, and its enquiry form
      to /enquiry. With no site file beside the build, `/` is the back end's own home page, as before. */
   if (path === '/assets/site-page.css' && method === 'GET') {
@@ -580,7 +580,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const site = siteEdition();
     if (site !== undefined) { res.writeHead(200, SITE_JS_HEADERS); res.end(site.js); return 'handled'; }
   }
-  /* THE NEW HOME PAGE (src/web/home-site.ts), its style, its script and GSAP, when the file is beside
+  /* THE NEW HOME PAGE (src/modules/public-site/home-site.ts), its style, its script and GSAP, when the file is beside
      the build. Without it, `/` is `Caprebate site.html` as below. */
   if (path === '/assets/home.css' && method === 'GET') {
     const edition = homeEdition();

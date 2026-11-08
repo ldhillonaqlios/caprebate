@@ -1,7 +1,7 @@
 /**
  * PHASE 157 (THE SWEEP), 6 OCTOBER 2026 — THE LOOSE ENDS PARKED IN THE SWEEP, BUILT.
  *
- * 1 · From Phase 153c: the deletion path for a lost four-stage-funnel enquiry (src/web/enquiry-retention.ts,
+ * 1 · From Phase 153c: the deletion path for a lost four-stage-funnel enquiry (src/modules/public-site/enquiry-retention.ts,
  *     leadDeletionPlan; migration 093), under ENQUIRY_RETENTION, which ships OFF (Word question 222, the officer's).
  *
  * Everything here is invented; nothing goes out.
@@ -20,7 +20,7 @@ import { FUNNEL_EDGES } from '../src/web/funnel-edges.ts';
 import { funnelEdges, render } from '../tools/gen-funnel-edges.ts';
 import {
   ENQUIRY_RETENTION, FUNNEL_DELETABLE, leadDeletionPlan, sweepEnquiries, type EnquiryRetention,
-} from '../src/web/enquiry-retention.ts';
+} from '../src/modules/public-site/enquiry-retention.ts';
 
 const ON: EnquiryRetention = { ...ENQUIRY_RETENTION, enabled: true, approved_by: 'Invented officer (test only)', review_ref: 'TEST-REVIEW-157' };
 const NOW = '2026-10-06T09:00:00.000Z';

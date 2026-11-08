@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import type { IncomingMessage } from 'node:http';
 import { createApp } from '../src/core/server.ts';
 import { clientIp } from '../src/core/router.ts';
-import { HOME_PATH } from '../src/web/home-site.ts';
+import { HOME_PATH } from '../src/modules/public-site/home-site.ts';
 
 let made: Awaited<ReturnType<typeof createApp>>;
 let base = '';

@@ -43,7 +43,7 @@ import {
 } from '../src/web/signing.ts';
 import { assertSignedEngagement } from '../src/web/research.ts';
 import { ANALYTICS_CSP, ga4MeasurementId, sitePolicy, withMeasurementId } from '../src/integrations/analytics.ts';
-import { SITE_PAGE_CSP } from '../src/web/public-site.ts';
+import { SITE_PAGE_CSP } from '../src/modules/public-site/public-site.ts';
 import { STUBS } from '../src/core/app.ts';
 import { backendSwitchReadings } from '../src/web/case-stamp.ts';
 import { docxOf } from './document-fixtures.ts';

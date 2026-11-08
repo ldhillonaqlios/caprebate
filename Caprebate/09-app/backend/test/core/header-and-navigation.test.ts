@@ -247,7 +247,7 @@ describe('no page carries inline script or style, and the CSP is unchanged', () 
       if (r.status !== 200) continue;
       /* PHASE 133j: `/` IS THE WEBSITE, and it carries exactly one script: its own, from this origin, as a file. Its CSP
          is the back end's with `script-src 'self'` added and nothing else loosened. Every other rule still holds. */
-      /* 29 SEPTEMBER 2026: `/` IS THE NEW HOME PAGE (src/web/home-site.ts). Its policy is the back end's with its own
+      /* 29 SEPTEMBER 2026: `/` IS THE NEW HOME PAGE (src/modules/public-site/home-site.ts). Its policy is the back end's with its own
          script and Cloudflare's security check (scripts and frames from that one origin) added, nothing else loosened.
          Its scripts are files from this origin, and the search engines' structured data, which a browser never runs. */
       if (path === '/') {

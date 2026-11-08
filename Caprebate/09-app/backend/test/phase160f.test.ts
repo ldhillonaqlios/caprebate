@@ -21,7 +21,7 @@ import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { HTML_HEADERS } from '../src/shared/html.ts';
 import { privacyNoticeForCheck } from './onedrive-only.ts';
-import { buildNoticesEdition, COMPLAINT_SOURCE_LIMIT, DP_MAIL, NOTICES_PATH, refOf } from '../src/web/notices-site.ts';
+import { buildNoticesEdition, COMPLAINT_SOURCE_LIMIT, DP_MAIL, NOTICES_PATH, refOf } from '../src/modules/public-site/notices-site.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const CHECK = join(ROOT, '03-app', 'caprebate-notices-acceptance.cjs');
@@ -122,7 +122,7 @@ describe('3 · on the test website only', () => {
       assert.match(css.headers.get('content-type') ?? '', /text\/css/);
       const p = await fetch(`${b.base}/privacy`, { redirect: 'manual' });
       assert.equal(p.status, 303);
-      // PHASE 161g, 5 Nov 2026: the privacy policy is its own page now (src/web/privacy-policy.ts).
+      // PHASE 161g, 5 Nov 2026: the privacy policy is its own page now (src/modules/public-site/privacy-policy.ts).
       assert.equal(p.headers.get('location'), '/privacy-policy/');
     } finally { b.close(); }
   });

@@ -1,5 +1,5 @@
 /**
- * PHASE 160h — THE WEBSITE'S OTHER LEGAL PAGES AND THE COOKIE BANNER, 20 October 2026 (src/web/legal-pages.ts; the routes
+ * PHASE 160h — THE WEBSITE'S OTHER LEGAL PAGES AND THE COOKIE BANNER, 20 October 2026 (src/modules/public-site/legal-pages.ts; the routes
  * and the banner in src/core/router.ts; the footers in src/shared/html.ts and 09-app/site/home.html).
  */
 import { test, describe, before, after } from 'node:test';
@@ -10,8 +10,8 @@ import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import type { IncomingMessage } from 'node:http';
-import { CONSENT_COOKIE, LEGAL_GAPS, LEGAL_PAGES, consentSetCookie, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../src/web/legal-pages.ts';
-import { HOME_PATH } from '../src/web/home-site.ts';
+import { CONSENT_COOKIE, LEGAL_GAPS, LEGAL_PAGES, consentSetCookie, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../src/modules/public-site/legal-pages.ts';
+import { HOME_PATH } from '../src/modules/public-site/home-site.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; body: string; headers: Headers };
