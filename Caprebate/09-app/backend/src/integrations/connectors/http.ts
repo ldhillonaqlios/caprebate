@@ -1,5 +1,5 @@
 /**
- * THE ONE WAY THIS BACK END CALLS OUTSIDE. Phase 146b, 22 September 2026.
+ * THE ONE WAY THIS BACK END CALLS OUTSIDE.
  *
  * Every connector — the registers, the paid lookups, the document reader — makes its calls through `callOutside`,
  * and THIS IS THE ONLY FILE UNDER src/ THAT MAY CALL `fetch`. A test walks src/ and fails on any other. So the rules
@@ -14,7 +14,7 @@
  *     time-out or a broken connection is not retried either: it is reported, and the source can be tried again from
  *     the research panel, which is where a person decides.
  *   · OUR OWN RATE LIMIT per service, below the publisher's (Companies House: 600 in 5 minutes). Over it, the call
- *     is not made and says so. Phase 146c: two rows can share one window (`rate_bucket` — Companies House's two APIs
+ *     is not made and says so. Two rows can share one window (`rate_bucket` — Companies House's two APIs
  *     share the key's limit), and a row can carry a daily cap as well (`daily_limit` — PlanIt asks for about 300 a day).
  *   · A SIZE CAP on every answer. A larger one is dropped unread past the cap.
  *   · ONE AUDIT ROW PER CALL, whatever happened: the service, the endpoint AS A TEMPLATE ("/company/{number}", never
@@ -39,10 +39,10 @@ import { CALL_POLICIES, type CallPolicy } from './sources.ts';
 export type Transport = (url: string, init: {
   readonly method: string;
   readonly headers: Record<string, string>;
-  /** PHASE 161h: bytes too - the nightly backup's locked file (src/integrations/connectors/s3-backup.ts). */
+  /** Bytes too - the nightly backup's locked file (src/integrations/connectors/s3-backup.ts). */
   readonly body?: string | Uint8Array;
   readonly signal: AbortSignal;
-  /** PHASE 159a: 'manual' hands a redirect back unfollowed, for callOutside to judge; absent, every redirect is refused. */
+  /** 'manual' hands a redirect back unfollowed, for callOutside to judge; absent, every redirect is refused. */
   readonly redirect?: 'manual';
 }) => Promise<Response>;
 
@@ -55,7 +55,7 @@ export const liveTransport: Transport = Object.assign(
 );
 
 /**
- * 1 OCT 2026: WHETHER A TRANSPORT REALLY REACHES OUTSIDE — the platform's fetch, or the certificate one. A test's
+ * WHETHER A TRANSPORT REALLY REACHES OUTSIDE — the platform's fetch, or the certificate one. A test's
  * recorded answers (fixtureTransport) reach nobody, so a guard that keeps a local copy from calling a real service
  * (Zoom: src/integrations/connectors/zoom.ts, zoomPlaceRefusal) leaves them alone.
  */
@@ -66,7 +66,7 @@ export function isLiveTransport(t: Transport): boolean {
 /* ------------------------------------------------------------------ the certificate-carrying transport */
 
 /**
- * A TRANSPORT THAT PRESENTS A CLIENT CERTIFICATE. Phase 146d, 23 September 2026.
+ * A TRANSPORT THAT PRESENTS A CLIENT CERTIFICATE.
  *
  * WHY IT HAS TO EXIST. HM Land Registry's Business Gateway will not talk to us over an ordinary connection: it needs
  * the client certificate HM Land Registry issues under the network access agreement, presented when the connection is
@@ -146,7 +146,7 @@ export function certificateTransport(
 export type Fixture = {
   readonly status: number;
   readonly body: string;
-  /** PHASE 150: answer these bytes instead of `body` — a recorded file, which is not text. */
+  /** Answer these bytes instead of `body` — a recorded file, which is not text. */
   readonly bytes?: Uint8Array;
   readonly headers?: Record<string, string>;
   /** Wait this long before answering; with a short time limit this is how a time-out is tested. */
@@ -164,8 +164,8 @@ export function fixtureTransport(fixtures: Record<string, Fixture | readonly Fix
   const used = new Map<string, number>();
   const seen: { url: string; method: string; headers: Record<string, string>; body?: string }[] = [];
   const t = async (url: string, init: Parameters<Transport>[1]): Promise<Response> => {
-    /* Phase 146e: the body too, so a test can prove what a model was sent — and what it was not. */
-    // PHASE 161h: a body of bytes (a backup file) is kept as base64, so `seen` stays text for every other test.
+    /* The body too, so a test can prove what a model was sent — and what it was not. */
+    // A body of bytes (a backup file) is kept as base64, so `seen` stays text for every other test.
     seen.push({ url, method: init.method, headers: init.headers,
       ...(init.body === undefined ? {} : { body: typeof init.body === 'string' ? init.body : Buffer.from(init.body).toString('base64') }) });
     const key = `${init.method} ${new URL(url).pathname}`;
@@ -182,7 +182,7 @@ export function fixtureTransport(fixtures: Record<string, Fixture | readonly Fix
       });
     }
     if (f.network_error === true) throw new TypeError('fetch failed: connection reset');
-    // 30 Sep 2026: a 204 (Zoom's answer to a move or a cancel) carries no body at all; a Response refuses one.
+    // A 204 (Zoom's answer to a move or a cancel) carries no body at all; a Response refuses one.
     const bodiless = f.status === 204 || f.status === 205 || f.status === 304;
     return new Response(bodiless ? null : f.bytes !== undefined ? new Uint8Array(f.bytes) : f.body, { status: f.status, headers: f.headers ?? { 'content-type': 'application/json' } });
   };
@@ -196,7 +196,7 @@ export class RateLimiter {
   readonly #calls = new Map<string, number[]>();
   readonly #clock: () => number;
   constructor(clock: () => number = Date.now) { this.#clock = clock; }
-  /** Phase 146c: whether a slot is free, without taking it. */
+  /** Whether a slot is free, without taking it. */
   peek(key: string, limit: number, window_ms: number): boolean {
     const now = this.#clock();
     return (this.#calls.get(key) ?? []).filter((t) => now - t < window_ms).length < limit;
@@ -232,12 +232,12 @@ export type CallRequest = {
   readonly params?: Record<string, string>;
   /** Query values. Their NAMES are recorded; their values never are. */
   readonly query?: Record<string, string>;
-  /** 30 Sep 2026: PATCH and DELETE for Zoom, to move and cancel a video call's meeting (src/integrations/connectors/zoom.ts). */
+  /** PATCH and DELETE for Zoom, to move and cancel a video call's meeting (src/integrations/connectors/zoom.ts). */
   readonly method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   readonly headers?: Record<string, string>;
   readonly body?: string;
   /**
-   * PHASE 150: KEEP THE ANSWER AS BYTES. A file (HM Land Registry's INSPIRE .zip) is not text, and turning it into a
+   * KEEP THE ANSWER AS BYTES. A file (HM Land Registry's INSPIRE .zip) is not text, and turning it into a
    * string would corrupt it. With this set, a successful answer comes back in `bytes` and `body` is '' — never null,
    * because null is how every caller recognises a call that got no answer. Every other rule is unchanged.
    */
@@ -256,14 +256,14 @@ export type CallResult = {
   readonly status: number | null;
   readonly body: string | null;
   readonly headers: Record<string, string>;
-  /** PHASE 150: the answer's bytes, only when the request asked `as_bytes` and the answer was read. */
+  /** The answer's bytes, only when the request asked `as_bytes` and the answer was read. */
   readonly bytes?: Buffer;
   readonly latency_ms: number;
   readonly attempts: number;
   /** In plain words; no key, no value from the query. */
   readonly why: string;
   /**
-   * PHASE 146d: WHAT THIS ONE CALL COST, AND WHETHER ANYBODY CHARGED US FOR IT.
+   * WHAT THIS ONE CALL COST, AND WHETHER ANYBODY CHARGED US FOR IT.
    *
    * `charged` is the boolean item 11 of this phase asks for, and it is there because without it a cost report counts
    * failures and overstates what we spent. A call that was refused before it left, was over our own limit, timed out,
@@ -354,7 +354,7 @@ function retryAfterMs(h: string | null): number | null {
 }
 
 /**
- * WHAT A RESPONSE SAYS IT COST. Phase 146d.
+ * WHAT A RESPONSE SAYS IT COST.
  *
  * Homedata's authentication page, read 23 September 2026: "Wallet keys receive the X-Tokens-* pair and no rate-limit
  * headers at all; quota keys receive the X-RateLimit-* family instead. You will not see both." SO THE CHARGE HEADER
@@ -386,7 +386,7 @@ function cookiesFrom(h: Headers): string[] {
 }
 
 /**
- * PHASE 159a (the Lockwood run, L1): ONE REQUEST, FOLLOWING AT MOST `max` REDIRECTS — to the same host, carrying back
+ * ONE REQUEST, FOLLOWING AT MOST `max` REDIRECTS — to the same host, carrying back
  * the cookies it set, or to a host the service's row names (`redirect_hosts`), carrying none. With `max` 0 the
  * transport refuses every redirect itself, exactly as before this phase. A redirect anywhere else, to http, or past
  * the limit is refused in words and nothing more is sent. The headers the caller set (a key, say) go to the same host
@@ -435,7 +435,7 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
   const queryKeys = Object.keys(req.query ?? {}).sort();
 
   const finish = (raw: Omit<CallResult, 'latency_ms' | 'charged' | 'cost_pence' | 'cost_basis' | 'balance_pence'>): CallResult => {
-    /* PHASE 146d: WHAT IT COST, WORKED OUT ONCE, HERE, FOR EVERY CALL — so no connector can forget to record it and
+    /* WHAT IT COST, WORKED OUT ONCE, HERE, FOR EVERY CALL — so no connector can forget to record it and
        no two connectors can disagree about how. The supplier's own figure wins wherever it sends one. */
     const said = chargeFromHeaders(raw.headers);
     const listed = policy?.cost_pence;
@@ -462,7 +462,7 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
           service: req.service_id, endpoint: req.endpoint, method, query_keys: queryKeys,
           result: r.outcome, status: r.status, latency_ms: result.latency_ms, attempts: r.attempts,
           region: policy?.region ?? null,
-          /* Phase 146d, item 11: the charge and the boolean beside it. A cost report reads `charged` first and adds
+          /* Item 11: the charge and the boolean beside it. A cost report reads `charged` first and adds
              `cost_pence` only where it is true, so a run of failures reports nothing spent, which is the truth. */
           charged: r.charged, cost_pence: r.cost_pence, cost_basis: r.cost_basis,
           free_gate_open: req.gate.free_gate_open, engagement_signed: req.gate.engagement_signed, switched_on: req.gate.switched_on,
@@ -487,7 +487,7 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
   if (path === null || !path.startsWith('/')) return refuse('REFUSED', 'the lookup is missing something it needs, so it was not made');
   const limiter = deps.limiter ?? PROCESS_LIMITER;
   const bucket = policy.rate_bucket ?? policy.service_id;
-  // Phase 146c: the daily cap first, so a call refused by the short window does not use a day's slot.
+  // The daily cap first, so a call refused by the short window does not use a day's slot.
   if (policy.daily_limit !== undefined && !limiter.peek(`${bucket}:day`, policy.daily_limit, DAY_MS)) {
     return refuse('RATE_LIMITED', 'we have made as many calls to this service today as its publisher asks; try again tomorrow');
   }
@@ -569,7 +569,7 @@ function headerRecord(h: RequestInit['headers'] | undefined): Record<string, str
 }
 
 /**
- * A `fetch` FOR A SUPPLIER'S LIBRARY THAT GOES THROUGH `callOutside`. Phase 146e, 22 September 2026.
+ * A `fetch` FOR A SUPPLIER'S LIBRARY THAT GOES THROUGH `callOutside`.
  *
  * The Anthropic SDK makes its own HTTP calls. Handed this in place of the platform's `fetch`, every one of them
  * becomes an ordinary `callOutside` call: the address from src/integrations/connectors/sources.ts (the host the library asked for is

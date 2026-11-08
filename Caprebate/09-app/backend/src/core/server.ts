@@ -58,7 +58,7 @@ function readCookie(req: IncomingMessage, name: string): string | undefined {
 }
 
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
-  // a cap is a control. PHASE 154a1 (line 3): the web half's reader, so a body over it is a 413 that closes its
+  // a cap is a control. The web half's reader, so a body over it is a 413 that closes its
   // connection - it was a plain Error, answered 500, with the rest of the body left in a kept-alive connection.
   const body = await readBody(req, 1_000_000);
   if (body.length === 0) return {};
@@ -83,15 +83,15 @@ function send(res: ServerResponse, status: number, body: unknown): void {
 }
 
 export type ServerOptions = {
-  /** PHASE 151e (line 4): the token of a remote database named by `location` (src/core/db.ts). Absent for memory and file. */
+  /** The token of a remote database named by `location` (src/core/db.ts). Absent for memory and file. */
   dbAuthToken?: string;
   /** Tests only: see BuildOptions.dbEngine. */
   dbEngine?: 'node:sqlite' | 'libsql';
   /** Faster clicks, part 2: see BuildOptions.dbLocalCopy. */
   dbLocalCopy?: string;
-  /** PHASE 151j: see BuildOptions.twoFactor. Absent is 'staff'. */
+  /** See BuildOptions.twoFactor. Absent is 'staff'. */
   twoFactor?: 'staff' | 'off' | 'staff-except-invented';
-  /** PHASE 151i follow-up 5: see BuildOptions.schema. Absent builds the tables, as always. */
+  /** See BuildOptions.schema. Absent builds the tables, as always. */
   schema?: 'apply' | 'require-built';
   /**
    * Where client documents live. OUTSIDE THE WEB ROOT — which is trivially
@@ -100,7 +100,7 @@ export type ServerOptions = {
    */
   documentRoot?: string;
   /**
-   * PHASE 151i: ONE PRIVATE STORE FOR EVERY COPY, instead of `documentRoot`. Absent is the folder, as before. Only
+   * ONE PRIVATE STORE FOR EVERY COPY, instead of `documentRoot`. Absent is the folder, as before. Only
    * api/index.mjs passes it, and only when the lasting database is in use and a Blob store is connected
    * (src/shared/shared-objectstore.ts says why and how it stays private).
    */
@@ -111,36 +111,36 @@ export type ServerOptions = {
    * an open gate to prove the form works; nothing that runs outside a test does.
    */
   referralForm?: { readonly enabled: boolean; readonly requires: string };
-  /** PHASE 133c: the portal name switch (B9; the menu switch went in Phase 135). Absent is `NAME_SWITCHES`, off. A test passes both positions. */
+  /** The portal name switch. Absent is `NAME_SWITCHES`, off. A test passes both positions. */
   names?: { readonly portalSteps: boolean };
   /**
-   * THE CLOCK — Phase 132, 15 September 2026. Absent means the real one, as before. A test whose seed or fixtures
+   * THE CLOCK. Absent means the real one, as before. A test whose seed or fixtures
    * carry fixed calendar dates passes a fixed clock, so it reads the same on any day it runs: four tests read the
-   * wall clock through here and went red before September 2026, and one again from 31 December 2027.
+   * wall clock through here and went red before, and one again from 31 December 2027.
    */
   now?: () => string;
-  /** PHASE 133j: the site's own address, for links sent by email. Absent is CAPREBATE_PUBLIC_ORIGIN, then http://localhost:8103. */
+  /** The site's own address, for links sent by email. Absent is CAPREBATE_PUBLIC_ORIGIN, then http://localhost:8103. */
   publicOrigin?: string;
-  /** PHASE 140: the KEEP_ORIGINALS switch. Absent is `KEEP_ORIGINALS` in src/shared/originals.ts, off. A test passes it on. */
+  /** The KEEP_ORIGINALS switch. Absent is `KEEP_ORIGINALS` in src/shared/originals.ts, off. A test passes it on. */
   keepOriginals?: KeepOriginals;
-  /** PHASE 153d: show the TEST-ONLY engagement letter (test defaults, never signed). Absent is the real letter. api/index.mjs alone passes it. */
+  /** Show the TEST-ONLY engagement letter (test defaults, never signed). Absent is the real letter. api/index.mjs alone passes it. */
   testLetter?: boolean;
-  /** PHASE 160f: the public notices page and its complaint form (src/web/notices-site.ts). api/index.mjs passes it; nothing else does. */
+  /** The public notices page and its complaint form (src/web/notices-site.ts). api/index.mjs passes it; nothing else does. */
   testNotices?: boolean;
-  /** PHASE 161g: the legal pages for the live website, each a Draft until approved (src/web/legal-approvals.ts). Off unless CAPREBATE_LEGAL_PAGES=on. */
+  /** The legal pages for the live website, each a Draft until approved (src/web/legal-approvals.ts). Off unless CAPREBATE_LEGAL_PAGES=on. */
   legal?: boolean;
-  /** 6 Oct 2026: signing on for testing — the test copy of the letter only (ENGAGEMENT_SIGNING_TEST). Needs testLetter. api/index.mjs passes it; locally CAPREBATE_SIGNING_TEST=1. */
+  /** Signing on for testing — the test copy of the letter only (ENGAGEMENT_SIGNING_TEST). Needs testLetter. api/index.mjs passes it; locally CAPREBATE_SIGNING_TEST=1. */
   testSigning?: boolean;
-  /** PHASE 140: the key a kept original is encrypted with. Absent is CAPREBATE_ORIGINALS_KEY; with neither, nothing is kept. */
+  /** The key a kept original is encrypted with. Absent is CAPREBATE_ORIGINALS_KEY; with neither, nothing is kept. */
   sealKey?: Buffer | null;
   /**
-   * PHASE 161b, 4 Nov 2026: the form tokens (src/core/form-token.ts). Every real start says 'on'. With no word, they
+   * The form tokens (src/core/form-token.ts). Every real start says 'on'. With no word, they
    * are on, except inside Node's test runner, where the existing tests post forms without them.
    */
   formTokens?: FormTokens;
 };
 
-/** PHASE 161g: the `legal` setting, read from CAPREBATE_LEGAL_PAGES. Only the word "on" switches it on. */
+/** The `legal` setting, read from CAPREBATE_LEGAL_PAGES. Only the word "on" switches it on. */
 export function legalPagesSetting(env: NodeJS.ProcessEnv = process.env): boolean {
   return (env.CAPREBATE_LEGAL_PAGES ?? '').trim() === 'on';
 }
@@ -165,7 +165,7 @@ export async function createApp(
     ? new FsObjectStore({ root: opts.documentRoot ?? process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '..', '.documents'), ...kept })
     : new SharedObjectStore({ ...kept, client: opts.sharedDocuments.client, linkSecret: opts.sharedDocuments.linkSecret });
 
-  /* 30 SEPTEMBER 2026: EMAILS SAVED TO BE SENT ARE SENT BEFORE THE ANSWER FINISHES. Sending is on for testing
+  /* EMAILS SAVED TO BE SENT ARE SENT BEFORE THE ANSWER FINISHES. Sending is on for testing
      (EMAIL_SENDING); before, only `node src/core/cli.ts send-outbox` could send, and nothing ran it. The answer's end is held
      until every email this request saved to be sent - by any part of the site: an invitation, a staff email, a message
      alert - has been tried once through IONOS, then released; so the test website's copy, frozen once it has answered,
@@ -195,7 +195,7 @@ export async function createApp(
     }
   };
 
-  // FASTER CLICKS, 3 Oct 2026: each request remembers its own reads until anything is written (src/core/db.ts withReadMemo).
+  // FASTER CLICKS: each request remembers its own reads until anything is written (src/core/db.ts withReadMemo).
   const server = createServer((req, res) => withReadMemo(() => {
     bindResponse(req, res);
     // Faster clicks, part 2: with a local copy of the lasting database, first bring in what any copy wrote since — one
@@ -221,7 +221,7 @@ export async function createApp(
       }
       if (e instanceof AuthError) return send(res, 401, { error: e.message });
       if (e instanceof PayloadTooLarge) return send(res, 413, { error: 'body too large' });
-      /* STRESS TEST, 29 SEP 2026: SAID IN THE LOG, which no 500 was before, so a fault on the test website can be found.
+      /* STRESS TEST: SAID IN THE LOG, which no 500 was before, so a fault on the test website can be found.
          The kind of error and the line of code only: never its message, which could carry what a person typed. */
       const where = e instanceof Error ? (e.stack ?? '').split('\n').find((l) => l.includes('/src/'))?.trim() ?? '' : '';
       console.error(`500 on ${req.method ?? '?'} ${new URL(req.url ?? '/', 'http://localhost').pathname}: ${e instanceof Error ? e.name : typeof e} ${where}`);
@@ -233,7 +233,7 @@ export async function createApp(
     const url = new URL(req.url ?? '/', 'http://localhost');
     const path = url.pathname;
 
-    /* PHASE 161c, 4 November 2026 (the ITRoadway audit, section 4 row 4): THE STATUS PAGE SAYS ONLY "OK". It answers
+    /* THE STATUS PAGE SAYS ONLY "OK". It answers
        {"ok":true} when the database answers, and 503 {"ok":false} when it does not - nothing else, so it tells nobody
        which parts are built or switched on. It is answered first, before any sign-in is read, so an uptime check sees
        the database and nothing in front of it. The list of what is built and switched off (STUBS) is for Admin only,
@@ -246,7 +246,7 @@ export async function createApp(
     const session = authenticate(app.deps, raw);
     const actor: Actor | undefined = session ? toActor(session.user) : undefined;
 
-    /* PHASE 161b, 4 November 2026 (the ITRoadway audit): A SIGNED-IN PERSON'S FORM CARRIES OUR TOKEN, checked here,
+    /* 4 November 2026 (the ITRoadway audit): A SIGNED-IN PERSON'S FORM CARRIES OUR TOKEN, checked here,
        before any route, for every request that would change something (src/core/form-token.ts says what and why). And
        every page this request answers with gets the tokens put into its forms as it leaves. */
     if (formTokensOn) {
@@ -265,7 +265,7 @@ export async function createApp(
       const publicOrigin = opts.publicOrigin ?? process.env.CAPREBATE_PUBLIC_ORIGIN;
       if (await handleWeb({ app, store, ...(opts.referralForm === undefined ? {} : { referralForm: opts.referralForm }), ...(opts.names === undefined ? {} : { names: opts.names }), ...(publicOrigin === undefined ? {} : { publicOrigin }), ...(opts.testLetter === true ? { letterPath: TEST_LETTER_PATH } : {}), ...(opts.testNotices === true ? { notices: true } : {}), ...(opts.legal === true ? { legal: true } : {}), ...(opts.testLetter === true && opts.testSigning === true ? { signing: ENGAGEMENT_SIGNING_TEST } : {}) }, req, res) === 'handled') return;
     } catch (e) {
-      // PHASE 133a: A REFUSED SCREEN IS STILL REFUSED — 403 — BUT AS A PAGE. A person who follows an address they may not
+      // A REFUSED SCREEN IS STILL REFUSED — 403 — BUT AS A PAGE. A person who follows an address they may not
       // open gets the application's header and a sentence, not a line of JSON. The page names no object, so a refusal
       // and a missing row still look the same from outside. Data addresses (.json, .csv) and the API keep the JSON answer.
       if ((e instanceof NotAuthorised || (e as { code?: string }).code === 'E_NOT_AUTHORISED') && !res.headersSent && refusalAsPage(path)) {
@@ -274,13 +274,13 @@ export async function createApp(
       throw e;
     }
 
-    /* PHASE 151k — THE JSON API WALKS THE SAME STEPS AS THE WEBSITE, through the same functions (src/core/sign-in.ts).
+    /* THE JSON API WALKS THE SAME STEPS AS THE WEBSITE, through the same functions (src/core/sign-in.ts).
        The password answers 202 with what is still to do and a step token, NEVER a session; each step is a POST to
        /api/login/step/<new-password | method | code | resend> carrying that token in the body (never the address);
        POST /api/login/step with only the token says where the step stands. A session - the cookie and 200 - comes only
        when the last step is done. The limits are the website's, because they are the same rows: 15 minutes a sign-in,
        5 wrong codes, a code once.
-       PHASE 151m — RECOVERY CODES, on the same functions. The answer to the step that sets a second step up carries
+       RECOVERY CODES, on the same functions. The answer to the step that sets a second step up carries
        `recovery_codes` ONCE (ten; nothing keeps them as text, so they cannot be asked for again); a session's answer
        carries `recovery_codes_left` for a person with a second step. At the VERIFY step a recovery code goes to its own
        route, POST /api/login/step/recovery with `step_token` and `code` - not /code, so a six-digit code and a recovery
@@ -343,11 +343,11 @@ export async function createApp(
     }
 
     if (path === '/api/account/recovery-codes' && req.method === 'POST') {
-      const r = SI.makeNewRecoveryCodes(app, actor); // PHASE 151m: the same function as the website's button
+      const r = SI.makeNewRecoveryCodes(app, actor); // The same function as the website's button
       return r.ok ? send(res, 200, { recovery_codes: r.codes }) : send(res, 400, { error: r.why });
     }
 
-    /* PHASE 161b: a single-use token for the JSON API's sensitive actions (x-cb-once), one per ask. */
+    /* A single-use token for the JSON API's sensitive actions (x-cb-once), one per ask. */
     if (path === '/api/once-token' && req.method === 'GET' && raw !== undefined) {
       return send(res, 200, { once_token: onceToken(raw, Date.parse(app.now())) });
     }
@@ -355,7 +355,7 @@ export async function createApp(
     if (path === '/api/whoami' && req.method === 'GET') {
       return send(res, 200, {
         user: session.user,
-        // PHASE 161b: the form token the JSON API sends in x-cb-form (src/core/form-token.ts).
+        // The form token the JSON API sends in x-cb-form (src/core/form-token.ts).
         ...(raw === undefined ? {} : { form_token: formToken(raw) }),
         // What THIS actor may do, computed rather than hard-coded per role.
         actions: REGISTERED_ACTIONS.filter((a) =>
@@ -387,7 +387,7 @@ export async function createApp(
       authorise(actor, 'surveyor_job.read', {
         type: 'surveyor_job', id: job.id, business_id: job.business_id, surveyor_id: job.surveyor_id,
       });
-      /* CORRECTED 9 SEPTEMBER 2026 (Phase 108). THIS RETURNED 501 AND SAID
+      /* CORRECTED. THIS RETURNED 501 AND SAID
          "the surveyor workspace is Phase 107". Phase 107 built it on
          9 September, and a route that still announces the feature as future
          work is a stub that lies about the state of the system — which is
@@ -415,20 +415,20 @@ export async function createApp(
 if (import.meta.filename === process.argv[1]) {
   const port = Number(process.env.PORT ?? 8103);
   const location = process.env.CAPREBATE_DB ?? 'caprebate.db';
-  // 6 Oct 2026: CAPREBATE_SIGNING_TEST=1 runs this copy with the test letter and signing on for testing (the test copy only).
+  // CAPREBATE_SIGNING_TEST=1 runs this copy with the test letter and signing on for testing (the test copy only).
   const signingTest = (process.env.CAPREBATE_SIGNING_TEST ?? '').trim() === '1';
-  /* PHASE 161c: a key file others could open stops a live start (CAPREBATE_PRODUCTION=1) and is a warning anywhere
+  /* A key file others could open stops a live start (CAPREBATE_PRODUCTION=1) and is a warning anywhere
      else. The words name the file and its permissions, never a key. */
-  /* PHASE 161g: CAPREBATE_LEGAL_PAGES=on serves the legal pages (each a Draft until approved). Anything else: off. */
+  /* CAPREBATE_LEGAL_PAGES=on serves the legal pages (each a Draft until approved). Anything else: off. */
   const legal = legalPagesSetting();
   const keyCheck = keyFileStartCheck();
   for (const line of keyCheck.lines) console.error(line);
   if (keyCheck.stop) process.exitCode = 1;
-  // PHASE 161b: a real start says the form tokens are on, in so many words.
+  // A real start says the form tokens are on, in so many words.
   else void createApp(location, { ...(signingTest ? { testLetter: true, testSigning: true } : {}), ...(legal ? { legal: true } : {}), formTokens: 'on' }).then(({ server, app }) => {
     server.listen(port, () => {
       console.log(`caprebate back end on http://localhost:${port}`);
-      console.log(`  ${turnstileWhy(app.secrets)}`); // 29 Sep 2026: the contact form's security check, said at start-up
+      console.log(`  ${turnstileWhy(app.secrets)}`); // The contact form's security check, said at start-up
       if (signingTest) console.log('  signing ON FOR TESTING: the test copy of the engagement letter only');
       console.log(legal ? '  legal pages ON (CAPREBATE_LEGAL_PAGES=on): each shows its Draft line until approved' : '  legal pages off (CAPREBATE_LEGAL_PAGES is not on)');
     });

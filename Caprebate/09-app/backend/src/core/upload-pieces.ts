@@ -1,7 +1,7 @@
 /**
- * A FILE SENT IN PIECES — PHASE 160e, 19 October 2026.
+ * A FILE SENT IN PIECES.
  *
- * The stress test of 19 October 2026 sent a 6 MB document to the test website: Vercel refused it before the website saw
+ * The stress test sent a 6 MB document to the test website: Vercel refused it before the website saw
  * it, with its own page ("Request Entity Too Large"). Vercel takes at most 4.5 MB a request, and every document form
  * sent its file whole, while the portal says "The most we take is 50 MB". Photos and videos already go round the limit
  * (src/web/photo-upload.ts, src/web/survey-video.ts); documents did not.
@@ -30,7 +30,7 @@ export const PIECE_BYTES = 3 * 1024 * 1024;
 /** A file at or under this goes whole, as before; above it the page's script sends it in pieces. */
 export const PIECED_ABOVE = 4 * 1000 * 1000;
 /** The most a file sent in pieces may be: the same as any document. */
-export const maxPiecedBytes = (): number => UPLOAD_LIMITS.max_bytes; // Read when used, not while this file loads (Phase 161i: the code still loops between areas until Phase 161l).
+export const maxPiecedBytes = (): number => UPLOAD_LIMITS.max_bytes; // Read when used, not while this file loads.
 /** A send not taken within this many hours is removed. */
 export const ABANDON_HOURS = 24;
 

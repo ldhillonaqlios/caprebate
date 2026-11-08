@@ -1,5 +1,5 @@
 /**
- * THE ONE DOOR REGISTER DATA ENTERS THE DATABASE BY — and, since Phase 146b (22 September 2026), only that.
+ * THE ONE DOOR REGISTER DATA ENTERS THE DATABASE BY — and only that.
  *
  * The connector shape, the per-source switches, `gateStatus` and `planResearch` moved to
  * src/integrations/connectors/registers.ts, and the one way to call outside is src/integrations/connectors/http.ts. They are re-exported
@@ -43,7 +43,7 @@ export function ingestRegisterRecord(
   now: () => string,
   business_id: string,
   rec: IngestedRecord,
-  /** Phase 139: the company's property a property register's record is about, where the lookup was keyed on one. */
+  /** The company's property a property register's record is about, where the lookup was keyed on one. */
   opts: { readonly property_id?: string | null } = {},
 ): string {
   assertNoUnauthorisedName(rec); // N2. Fails closed on an unknown source.
@@ -54,10 +54,10 @@ export function ingestRegisterRecord(
 }
 
 /* ------------------------------------------------------------------ *
- * AND THE ONE DOOR OUT — Phase 146j, 25 September 2026.
+ * AND THE ONE DOOR OUT.
  *
- * Two decisions a person makes put register data in: choosing one entry from a close-match list (Phase 146h) and
- * saying a name on a client document belongs to an organisation (Phase 146i). Both can now be taken back, and taking
+ * Two decisions a person makes put register data in: choosing one entry from a close-match list and
+ * saying a name on a client document belongs to an organisation. Both can now be taken back, and taking
  * one back takes out what it put in — so, like the way in, the way out is in this file and nowhere else, and
  * test/phase146j.test.ts asserts it. Neither function decides WHETHER something may be removed: that is the caller's,
  * who has already checked that nobody approved it and that this decision is what wrote it. These only do it, and

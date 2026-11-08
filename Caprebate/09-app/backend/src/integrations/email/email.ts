@@ -40,14 +40,14 @@ export type OutboundMessage = {
    * COMPLIANCE_LETTER — CRM 8 of 10: a letter the compliance registers draft for a
    * rights request or a complaint. It reaches the outbox and nowhere else.
    */
-  /** ACCOUNT_VERIFY — Phase 133j: the link that confirms a client's own sign-up. It carries a single-use token. */
-  /** FREE_TYPED — Phase 141: an email a member of staff typed themselves, to one of the company's contacts. */
-  /** SIGNED_LETTER — Phase 146f: the client's own copy of the engagement letter they signed, as a PDF. */
-  /** SIGN_IN_CODE — Phase 151k: a six-digit sign-in code (src/core/sign-in.ts). With PASSWORD_RESET, its words are taken
+  /** ACCOUNT_VERIFY: the link that confirms a client's own sign-up. It carries a single-use token. */
+  /** FREE_TYPED: an email a member of staff typed themselves, to one of the company's contacts. */
+  /** SIGNED_LETTER: the client's own copy of the engagement letter they signed, as a PDF. */
+  /** SIGN_IN_CODE: a six-digit sign-in code (src/core/sign-in.ts). With PASSWORD_RESET, its words are taken
    *  out of the outbox once it has really been sent (src/integrations/email/email-provider.ts, blankSentSecrets). */
-  /** REPORT_FOR_SIGNOFF — 2 Oct 2026: the client's survey report sent to their accountant, the PDF attached, with a
+  /** REPORT_FOR_SIGNOFF —: the client's survey report sent to their accountant, the PDF attached, with a
    *  private link that works once (src/web/report-signoff.ts). Its words leave the outbox once sent, like a sign-in code's. */
-  /** RECOVERY_CODE_USED — Phase 151m: a recovery code was used to sign in, and how many are left. It carries NO code, so
+  /** RECOVERY_CODE_USED: a recovery code was used to sign in, and how many are left. It carries NO code, so
    *  it is not one of the kinds blankSentSecrets empties: its words stay, as every other email's do. */
   kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY' | 'FREE_TYPED' | 'SIGNED_LETTER' | 'SIGN_IN_CODE' | 'RECOVERY_CODE_USED' | 'REPORT_FOR_SIGNOFF';
   /**
@@ -58,7 +58,7 @@ export type OutboundMessage = {
    */
   business_id?: string | null;
   /**
-   * PHASE 141 — what a free-typed email also records: the claim it is about (one of the company's own — a trigger holds
+   * What a free-typed email also records: the claim it is about (one of the company's own — a trigger holds
    * it), the lead it was written from, the contact it went to, who wrote it, and the company's files it carries.
    */
   claim_id?: string | null;
@@ -67,14 +67,14 @@ export type OutboundMessage = {
   written_by?: string | null;
   attachments?: readonly { readonly logical_document_id: string; readonly document_id: string }[];
   /**
-   * 1 OCT 2026 — A REPLY JOINS ITS CHAIN (migration 065): the chain's key, and the Message-IDs it answers (without the
+   * A REPLY JOINS ITS CHAIN (migration 065): the chain's key, and the Message-IDs it answers (without the
    * angle brackets), sent as In-Reply-To and References. A new email has none.
    */
   thread_key?: string | null;
   in_reply_to?: string | null;
   references?: readonly string[];
   /**
-   * PHASE 146f — a file made for this email that is not one of the company's documents: the calendar invitation
+   * A file made for this email that is not one of the company's documents: the calendar invitation
    * (.ics, src/integrations/email/calendar.ts) or the signed engagement letter (.pdf). Stored with the email, sent with it.
    */
   inline_files?: readonly InlineFile[];
@@ -82,7 +82,7 @@ export type OutboundMessage = {
 
 export type InlineFile = {
   readonly filename: string;
-  /** Phase 153b (migration 079): the return-entries spreadsheet beside a survey report's PDF. */
+  /** The return-entries spreadsheet beside a survey report's PDF. */
   readonly content_type: 'text/calendar; method=REQUEST; charset=utf-8' | 'text/calendar; method=CANCEL; charset=utf-8' | 'application/pdf' | 'text/csv; charset=utf-8';
   readonly bytes: Uint8Array;
 };
@@ -100,7 +100,7 @@ export type EmailTransport = {
 };
 
 /**
- * DO_NOT_CONTACT IS A CONTROL, NOT A LABEL. CRM 1 of 10, 10 September 2026.
+ * DO_NOT_CONTACT IS A CONTROL, NOT A LABEL. CRM 1 of 10.
  *
  * AN ORGANISATION MARKED DO_NOT_CONTACT RECEIVES NOTHING THROUGH THIS BUILD —
  * not a calendar invitation, not a notification, not a password reset for a
@@ -129,14 +129,14 @@ export function isDoNotContact(db: Db, to_email: string, business_id: string | n
 }
 
 /**
- * PHASE 141 — WHO EVERY EMAIL COMES FROM, AS ONE SETTING. The latest row of `email_sender` (migration 036), which Admin
+ * WHO EVERY EMAIL COMES FROM, AS ONE SETTING. The latest row of `email_sender` (migration 036), which Admin
  * changes on the admin settings screen. Migration 036 writes the first: "Cap Rebate", contact@caprebate.co.uk. No
  * address is written in code; a database with no row at all is refused rather than given a default.
  */
 export type Sender = { readonly display_name: string; readonly address: string; readonly reply_to: string; readonly from_header: string };
 
 export function currentSender(db: Db): Sender {
-  /* PHASE 151: THE NEWEST ROW WINS, BY WHEN IT WAS WRITTEN, NOT BY THE DATE IT CARRIES. A change is a new row and the
+  /* THE NEWEST ROW WINS, BY WHEN IT WAS WRITTEN, NOT BY THE DATE IT CARRIES. A change is a new row and the
      table is never edited, so the last row written is the last decision. Ordering on set_at let a migration's dated row
      (044, 24 September 2026) outrank a change an administrator made later on a server whose clock read earlier. */
   const r = getEmailSenderDisplayNameAddress<{ display_name: string; address: string; reply_to: string }>(db);
@@ -163,7 +163,7 @@ export function outboxTransport(
       const requested = sending() ? 1 : 0;
       // An email that really goes does not tell its reader it has not been sent.
       if (requested === 1) m = { ...m, body: withoutNotSentWords(m.body) };
-      // PHASE 160d, 19 October 2026: no long dash in the words we send (src/shared/plain-dashes.ts, line by line), in the
+      // No long dash in the words we send (src/shared/plain-dashes.ts, line by line), in the
       // subject or the body. Not in an email a member of staff typed themselves (FREE_TYPED): those are their words, as a
       // text box on a screen is left alone. The attached files (the signed letter, a report, a calendar file) are not
       // touched here.
@@ -184,7 +184,7 @@ export function outboxTransport(
 }
 
 /**
- * 30 Sep 2026: THE SENTENCES THAT SAY AN EMAIL WAS NOT SENT, written into bodies while sending was off. Taken out of an
+ * THE SENTENCES THAT SAY AN EMAIL WAS NOT SENT, written into bodies while sending was off. Taken out of an
  * email that is going, so nobody receives "Not sent yet".
  */
 export const NOT_SENT_WORDS: readonly string[] = Object.freeze([
@@ -198,7 +198,7 @@ export function withoutNotSentWords(body: string): string {
   return out.replace(/\n{3,}/g, '\n\n').trimEnd();
 }
 
-/** 30 Sep 2026: an address nobody can receive at — the reserved test names (RFC 2606 and 6761). */
+/** An address nobody can receive at — the reserved test names (RFC 2606 and 6761). */
 export function isInventedAddress(address: string): boolean {
   const d = (address.split('@').pop() ?? '').trim().toLowerCase().replace(/\.$/, '');
   return /(^|\.)(invalid|test|example|localhost)$/.test(d) || /(^|\.)example\.(com|net|org)$/.test(d);
@@ -208,5 +208,5 @@ export function isInventedAddress(address: string): boolean {
 export const STUB_NOTICE =
   'Not sent yet — sending email is not switched on. It is saved in the emails waiting to send.';
 
-/** PHASE 141 — what a person reads after saving an email while sending is off. Lakhbir's words. */
+/** What a person reads after saving an email while sending is off. the owner's words. */
 export const SAVED_NOT_SENT = 'Saved — emails are not being sent yet.';

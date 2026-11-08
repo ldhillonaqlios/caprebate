@@ -1,6 +1,6 @@
 /**
  * Caprebate — Name Exclusion Register & Automated Assertion
- * Board item 12818313893. Phase 5, item 7.
+ * Board item 12818313893. Item 7.
  *
  * The rule, in one sentence: no register ingestion may write a natural
  * person's name to storage except the two documented exceptions (Companies
@@ -177,7 +177,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     keptFields: [
       'company_number', 'company_status', 'sic_codes', 'accounts_year_end',
       'incorporation_date', 'group_link_*', 'company_name',
-      // PHASE 159g, 10 October 2026 (the Lockwood run, L2): the latest accounts' type and their date. Facts about the
+      // The latest accounts' type and their date. Facts about the
       // company, not a person: a dormant company has no tax for allowances to relieve.
       'accounts_type', 'accounts_made_up_to',
     ],
@@ -232,7 +232,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     publisher: 'HM Land Registry',
     datasetLabel: 'Title register (official copy)',
     riskLevel: 'standard',
-    /* PHASE 146d, 23 September 2026 — `price_paid`, `transaction_date` AND `prior_owner_count` ADDED, and their
+    /* `price_paid`, `transaction_date` AND `prior_owner_count` ADDED, and their
        absence was a real defect rather than a tightening. The whole reason this £7 lookup exists is that HM Land
        Registry's FREE sale-price data is residential only, so for a care home, a dental practice, a surgery or a
        hospital the official copy of the register is the only source of a price paid there is. The register row
@@ -243,7 +243,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     keptFields: [
       'title_number', 'tenure', 'proprietor_company_number', 'proprietor_name_company',
       'lease_term_*', 'restriction_*', 'price_paid', 'transaction_date', 'prior_owner_count',
-      /* PHASE 159g, 10 October 2026 (item 6): YES or NO — the person the register names as owner is one of the
+      /* YES or NO — the person the register names as owner is one of the
          client's own people (a sole trader, or a partner). Asked when a person types the official copy in, against the
          client's contacts, in memory; THE NAME ITSELF IS NEVER KEPT (title-by-hand.ts has no box that keeps one), as
          the officers check keeps only its answer (Word answer 156). A yes or no is not a name. */
@@ -279,7 +279,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     publisher: 'HM Land Registry',
     datasetLabel: 'Price Paid Data',
     riskLevel: 'standard',
-    // PHASE 159g (L11): and the sale's category, A or B. A category B sale is a lead for the surveyor, never the price.
+    // And the sale's category, A or B. A category B sale is a lead for the surveyor, never the price.
     keptFields: ['price_paid', 'transaction_date', 'tenure', 'property_type_ppd', 'new_build_flag', 'ppd_category'],
     excludedNameFields: [],
     nameExceptions: [],
@@ -316,7 +316,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'planning_reference', 'planning_decision', 'planning_decision_date',
       'planning_received_date', 'planning_description', 'planning_uprn',
     ],
-    /* Phase 146d, 23 September 2026 — see the note. The patterns end in a bare '*' rather than '_*' BECAUSE THE
+    /* See the note. The patterns end in a bare '*' rather than '_*' BECAUSE THE
        FIELD PlanIt ACTUALLY SENDS IS `case_officer`, with nothing after it: 'case_officer_*' would have matched
        every spelling except the real one. A glob is only as good as the name it was written against. */
     excludedNameFields: [
@@ -386,7 +386,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
   },
   {
     /**
-     * Board item 13003875907. ADDED BY PHASE 146d, 23 September 2026 — and until it was added, nothing from the paid
+     * Board item 13003875907. ADDED BY PHASE 146d — and until it was added, nothing from the paid
      * address lookup could be written at all: `findPolicy` fails closed on a source it does not know, so the one
      * door would have refused every record with E_UNKNOWN_SOURCE. That is the register working as designed, and it
      * is why the entry comes with the connector rather than after it.
@@ -409,7 +409,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     publisher: 'Homedata (supplier); underlying data Ordnance Survey AddressBase and Royal Mail PAF',
     datasetLabel: 'Paid address lookup — identifier, address line, postcode, coordinates',
     riskLevel: 'standard',
-    // Phase 151a: easting and northing, the supplier's British National Grid point for the same building.
+    // Easting and northing, the supplier's British National Grid point for the same building.
     keptFields: ['uprn', 'address_line', 'postcode', 'latitude', 'longitude', 'easting', 'northing'],
     excludedNameFields: ['*_name', 'occupier_*', 'resident_*', 'owner_*', 'proprietor_*'],
     nameExceptions: [],
@@ -422,7 +422,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
   },
   {
     /*
-     * PHASE 151a, 24 September 2026 — HM LAND REGISTRY'S LAND BOUNDARY (INSPIRE Index Polygons). Without an entry the
+     * HM LAND REGISTRY'S LAND BOUNDARY (INSPIRE Index Polygons). Without an entry the
      * one door would refuse the site area with E_UNKNOWN_SOURCE, so the entry comes with the function that writes it
      * (09-app/backend/src/connectors/site-area.ts), as HOMEDATA_ADDRESS's did.
      *
@@ -446,7 +446,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
   },
   {
     /*
-     * Subitem 18. PHASE 156f, 6 October 2026 — THE SITE AREA FROM HOMEDATA'S TITLE OUTLINE (Lakhbir: "site boundary - use
+     * Subitem 18. THE SITE AREA FROM HOMEDATA'S TITLE OUTLINE (the owner: "site boundary - use
      * home data"). Without an entry the one door would refuse the area with E_UNKNOWN_SOURCE, so the entry comes with the
      * code that writes it (09-app/backend/src/connectors/title-boundary.ts), as HMLR_INSPIRE's did.
      *
@@ -468,7 +468,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
   },
   {
     /**
-     * Subitem 16. PHASE 155 (line 1), 4 October 2026 — Care Inspectorate Wales, BUILT AT LAST, so it needs its own
+     * Subitem 16. — Care Inspectorate Wales, BUILT AT LAST, so it needs its own
      * entry: the one door writes under the SOURCE REGISTER's id, CIW, and subitem 2 (CARE_REGULATORS_DEVOLVED) is a
      * policy written before any of the three devolved regulators had a connector, under an id nothing writes. It stays,
      * for RQIA (Northern Ireland), which has none still. CIW's directory download (SUPPLIER_DOCS, CIW) names each
@@ -492,7 +492,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
   },
   {
     /**
-     * Subitem 17. PHASE 155 (line 2), 4 October 2026 — the Care Inspectorate (Scotland), built the same way. Its
+     * Subitem 17. — the Care Inspectorate (Scotland), built the same way. Its
      * datastore names a manager and gives a telephone number and an email for each service, and names the provider:
      * none is read.
      */
@@ -510,12 +510,12 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'service\'s telephone number and email, are in the file and are never read.',
   },
   {
-    // Subitem 13. Added by Phase 41 (board item 12928074627). Subitem 12 is
+    // Subitem 13. Added (board item 12928074627). Subitem 12 is
     // the test suite and is deliberately skipped rather than reused.
     //
     // NOT A REGISTER. Every other entry above describes a public register
     // Caprebate goes and fetches from. This one describes documents a
-    // CLIENT SENDS IN, and it is here for a reason stated in Phase 40 (item
+    // CLIENT SENDS IN, and it is here for a reason stated (item
     // 12927987812) §5.2: caprebate-document-pipeline.ts already writes its
     // claims with source_id: 'CLIENT_DOC', a source id this policy did not
     // contain — so findPolicy's fail-closed default would have thrown
@@ -579,8 +579,8 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'cpse_ca_reply_text', 'cpse_election_reference', 'cpse_replies_date',
       // SALE_CONTRACT — human capture only
       'contract_date', 'contract_consideration_pence', 'contract_schedule_index',
-      // PHASE 151b, 25 September 2026 — THE TAX RETURN AND THE TAX COMPUTATION. The data protection officer said yes to
-      // both as uploads (Word question 223, 24 September 2026), and until the officer says otherwise they are treated
+      // THE TAX RETURN AND THE TAX COMPUTATION. The data protection officer said yes to
+      // both as uploads, and until the officer says otherwise they are treated
       // like the other financial documents: the figures and the company's details are kept; individuals' names,
       // addresses and tax references are removed on receipt (caprebate-client-doc-ingestion.ts). Every field below is
       // a date, a company number, a sum of money or a set of figures by pool — none a name, none a tax reference.
@@ -590,13 +590,13 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       // TAX_COMPUTATION
       'taxcomp_period_start', 'taxcomp_period_end', 'taxcomp_taxable_profit_pence', 'taxcomp_capital_allowances_by_pool',
       'taxcomp_main_pool_balance_pence', 'taxcomp_special_rate_pool_balance_pence', 'taxcomp_aia_claimed_pence',
-      // PHASE 146l, 27 September 2026 — THE OFFICIAL COPY OF THE TITLE REGISTER, read by a person (HUMAN_CAPTURE_SPECS).
+      // 27 September 2026 — THE OFFICIAL COPY OF THE TITLE REGISTER, read by a person (HUMAN_CAPTURE_SPECS).
       // A title number, a tenure, a price and its date, and three counts or a company number. No name: a personal
       // owner's name is never captured from an uploaded copy, and CLIENT_DOC still takes no name exception.
       // TITLE_REGISTER
       'oc_title_number', 'oc_tenure', 'oc_price_paid_pence', 'oc_price_paid_date', 'oc_restriction_count',
       'oc_proprietor_company_number', 'oc_prior_owner_count',
-      // PHASE 157d, 6 October 2026 — four more types (the Friary House run, F16). Dates, sums, lists of figures and room
+      // Four more types (the Friary House run, F16). Dates, sums, lists of figures and room
       // labels; no field holds a party's, a contractor's or anybody's name.
       // COMPLETION_STATEMENT
       'cs_completion_date', 'cs_purchase_price_pence', 'cs_price_apportionment', 'cs_stamp_duty_pence',
@@ -607,7 +607,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'inv_lines', 'inv_total_net_pence', 'inv_vat_pence', 'inv_date',
       // PLANS
       'plans_rooms', 'plans_gia_m2', 'plans_drawing_date',
-      // PHASE 159k, 10 October 2026 — the seller's structures allowance statement: two dates and a sum, no name.
+      // The seller's structures allowance statement: two dates and a sum, no name.
       // SBA_ALLOWANCE_STATEMENT
       'sba_earliest_contract_date', 'sba_first_use_date', 'sba_qualifying_expenditure_pence',
     ],
@@ -623,7 +623,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'party_*', 'seller_*', 'buyer_*', 'landlord_name', 'landlord_name_*',
       'tenant_name', 'tenant_name_*', 'guarantor_*', 'surety_*',
       'attorney_*', 'personal_representative_*', 'insured_name', 'duty_holder_name',
-      // The three that are ALWAYS natural persons — Phase 40 §4.3
+      // The three that are ALWAYS natural persons §4.3
       'witness_*', 'attesting_*',
       'signatory_*', 'signed_by_*', 'executed_by_*',
       'assessor_*', 'surveyor_*', 'analyst_*', 'valuer_*', 'certifier_*',
@@ -857,8 +857,7 @@ export function assertNoUnauthorisedName(rec: IngestedRecord): void {
 /* ------------------------------------------------------------------ *
  * 6. THE ARTICLE 14 TRANSPARENCY RECORD — the RP-E1 and RP-E2 stores
  *
- * Board item 12927936989, specified 29 August 2026 (Phase 39), built
- * 8 September 2026 (Phase 98).
+ * Board item 12927936989, specified, built
  *
  * WHY IT IS HERE AND NOT IN A MODULE OF ITS OWN. This file is what decides
  * which records retain a natural person's name — the two documented
@@ -880,7 +879,7 @@ export function assertNoUnauthorisedName(rec: IngestedRecord): void {
  * field to" — implying the register population had one. It did not. THIS is
  * the store, and the gap was real; it was just not the gap the grep described.
  *
- * ROUTE 2 IS A DECISION, NOT A RECOMMENDATION. Item 5 §8.5, 28 August 2026:
+ * ROUTE 2 IS A DECISION, NOT A RECOMMENDATION. Item 5 §8.5:
  * publish under Article 14(5)(e) with 14(7) as the baseline, AND notify the
  * individual directly wherever a route to them exists. So "we published" is
  * not an answer on its own for a person we could have reached.

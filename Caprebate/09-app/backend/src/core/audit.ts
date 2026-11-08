@@ -32,28 +32,28 @@ export type AuditKind =
   | 'LOGIN_SUCCEEDED' | 'LOGIN_FAILED' | 'LOGOUT'
   | 'SESSION_ROTATED' | 'SESSION_REVOKED'
   | 'PASSWORD_CHANGED' | 'PASSWORD_RESET_REQUESTED' | 'PASSWORD_RESET_COMPLETED'
-  /** Phase 151j: the steps between a right password and a session (src/core/sign-in.ts), and the super user's part. */
+  /** The steps between a right password and a session (src/core/sign-in.ts), and the super user's part. */
   | 'SIGN_IN_STEP_STARTED' | 'SIGN_IN_STEP_REFUSED' | 'SIGN_IN_CODE_SENT'
   | 'TWO_FACTOR_SET_UP' | 'TWO_FACTOR_REMOVED' | 'TEMPORARY_PASSWORD_ISSUED'
-  /* PHASE 151k: `node src/core/cli.ts seal-app-secrets` sealed the app secrets still kept as text - a count, never a secret. */
+  /* `node src/core/cli.ts seal-app-secrets` sealed the app secrets still kept as text - a count, never a secret. */
   | 'APP_SECRETS_SEALED'
-  /* PHASE 151m: recovery codes made (a count and why, never a code), and one used (how many are left, never the code). */
+  /* Recovery codes made (a count and why, never a code), and one used (how many are left, never the code). */
   | 'RECOVERY_CODES_MADE' | 'RECOVERY_CODE_USED'
   | 'RATE_LIMITED'
   | 'USER_CREATED' | 'USER_UPDATED' | 'USER_DISABLED' | 'ROLE_ASSIGNED'
-  /** Phase 151: a role the super admin made, changed, or tried to make and was refused (src/web/role-editor.ts). */
+  /** A role the super admin made, changed, or tried to make and was refused (src/web/role-editor.ts). */
   | 'ROLE_CREATED' | 'ROLE_CHANGED' | 'ROLE_REFUSED'
   | 'DOCUMENT_ACCESSED'
   | 'RESEARCH_FIRED'
   /**
-   * Phase 146b, 22 September 2026: one call to an outside service, made through src/integrations/connectors/http.ts — the only
+   * One call to an outside service, made through src/integrations/connectors/http.ts — the only
    * way out. The service, the endpoint as a template, the NAMES of the query parameters (never their values), the
    * result, the time taken, the tries, and both gates and the source's switch as they stood. Never a key, never a
    * value typed into a search.
    */
   | 'CONNECTOR_CALLED'
   /**
-   * Phase 146e, 22 September 2026: one reading of a client document by the Claude API (src/integrations/connectors/claude.ts),
+   * One reading of a client document by the Claude API (src/integrations/connectors/claude.ts),
    * beside the CONNECTOR_CALLED row of the call itself. The document type, which segments were sent (kind and page,
    * never their words), the model that answered, how much it read and wrote, and how many fields came back.
    * NEVER THE TEXT — not what was sent and not what came back. DOCUMENT_PAGES_READ_BY_MODEL is the same for a scanned
@@ -61,7 +61,7 @@ export type AuditKind =
    */
   | 'DOCUMENT_READ_BY_MODEL' | 'DOCUMENT_PAGES_READ_BY_MODEL'
   /**
-   * Phase 146g, 23 September 2026: WHAT LEFT THE BUILDING, once per document, written by the upload flow
+   * WHAT LEFT THE BUILDING, once per document, written by the upload flow
    * (src/web/uploads.ts) from the pipeline's own egress record when steps 9 and 10 run. The payload's fingerprint,
    * the KIND and PAGE of each segment sent and each segment the strip dropped with its reason, and the fields asked
    * for. NEVER A WORD OF THE DOCUMENT. It is the answer to "what exactly did you send", and it is the pipeline's
@@ -69,7 +69,7 @@ export type AuditKind =
    */
   | 'DOCUMENT_SENT_TO_MODEL'
   /**
-   * Phase 146f, 22 September 2026. MAIL_SERVER_CONNECTED is one conversation with the IONOS mail server, sending or
+   * MAIL_SERVER_CONNECTED is one conversation with the IONOS mail server, sending or
    * reading: the service, what for, the outcome, the reply code, how many messages, how long. Never a password, an
    * address or the server's words. EMAIL_BOUNCED is one email the server would not deliver: HARD or SOFT, and the
    * code. ENGAGEMENT_SIGNED is the built-in signature (src/web/signing.ts): the signature record's own SHA-256, the
@@ -78,24 +78,24 @@ export type AuditKind =
    * line carries a name (the rule at the top of this file).
    */
   | 'MAIL_SERVER_CONNECTED' | 'EMAIL_BOUNCED' | 'ENGAGEMENT_SIGNED'
-  /** PHASE 157c: the engagement letter sent (or sent again) to the client's logins; whether it was a re-send, and how many. */
+  /** The engagement letter sent (or sent again) to the client's logins; whether it was a re-send, and how many. */
   | 'ENGAGEMENT_LETTER_SENT'
-  // PHASE 157d: staff recorded who must sign the letter
+  // Staff recorded who must sign the letter
   | 'ENGAGEMENT_SIGNERS_SET'
-  // PHASE 158b: staff opened a survey job on a claim (src/web/survey-open.ts); whether an estimate was sealed with it. No figure.
+  // Staff opened a survey job on a claim (src/web/survey-open.ts); whether an estimate was sealed with it. No figure.
   | 'SURVEY_JOB_OPENED'
-  // PHASE 158c: a client accepted the survey report released to them (src/web/report-accept.ts). The version, never a figure.
+  // A client accepted the survey report released to them (src/web/report-accept.ts). The version, never a figure.
   | 'CLIENT_REPORT_ACCEPTED'
   | 'ACCOUNTANT_CONFIRM_SENT'
   | 'ACCOUNTANT_CONFIRM_ANSWERED'
   /**
-   * Phase 146g, 23 September 2026. A member of staff said an address that bounced for good works again
+   * A member of staff said an address that bounced for good works again
    * (src/web/settings.ts). Whether a lift happened, and nothing else: the address itself is the new row in
    * email_suppressions, which carries who lifted it and when. No log line carries an address.
    */
   | 'EMAIL_ADDRESS_LIFTED'
   /**
-   * Phase 107. Two events that had no honest kind before it, and were nearly
+   * Two events that had no honest kind before it, and were nearly
    * logged as DOCUMENT_ACCESSED for want of one — which would have made the
    * document-access record, the one requirement DB-W1-T6 is about, unreadable.
    *
@@ -112,7 +112,7 @@ export type AuditKind =
   | 'SURVEYOR_COMMITTED'
   | 'INVOICE_UPDATED'
   /**
-   * Phase 113a. A call being given a time, moved to another, or released back
+   * A call being given a time, moved to another, or released back
    * to us with no time at all. It was being logged as USER_UPDATED, which was
    * the nearest honest kind available and was not honest enough: nothing about
    * a user changes, and an audit whose kinds do not name what happened is read
@@ -126,14 +126,14 @@ export type AuditKind =
    */
   | 'BOOKING_MOVED'
   /**
-   * Phase 132e. A call cancelled outright — by the client in the portal. The
+   * A call cancelled outright — by the client in the portal. The
    * booking row survives with `cancelled_at` and `cancelled_by` set; the detail
    * says who (CLIENT or STAFF) and never the time.
    */
   | 'BOOKING_CANCELLED'
-  /** Phase 132e. The client's own written filing confirmation, where there is no accountant — which answers were a yes, never the text. */
+  /** The client's own written filing confirmation, where there is no accountant — which answers were a yes, never the text. */
   | 'CLIENT_FILING_CONFIRMED'
-  /** Phase 132e. A multi-site discount proposed on a claim's fee — recorded, never applied; the share and state, never the reason. */
+  /** A multi-site discount proposed on a claim's fee — recorded, never applied; the share and state, never the reason. */
   | 'FEE_DISCOUNT_RECORDED'
   /**
    * CRM 1 of 10. One kind per record and per verb, so the audit names what
@@ -199,7 +199,7 @@ export type AuditKind =
    */
   | 'INTRODUCER_CREATED' | 'INTRODUCER_UPDATED'
   | 'SHARE_CONSENT_RECORDED' | 'INTRODUCER_NOTICE'
-  /** Phase 157: a firm's signature of our introducer terms recorded (migration 094). */
+  /** A firm's signature of our introducer terms recorded (migration 094). */
   | 'INTRODUCER_TERMS_SIGNED'
   | 'INTRODUCER_REWARD_SWITCHED' | 'INTRODUCER_FEE_ACCRUED' | 'INTRODUCER_PERCENTAGE_ACCRUED' | 'INTRODUCER_PERCENTAGE_REVERSED' | 'INTRODUCER_FEE_DISCLOSED' | 'INTRODUCER_FEE_PAID'
   /**
@@ -254,15 +254,15 @@ export type AuditKind =
   | 'RIGHTS_SEARCH_RUN' | 'COMPLIANCE_LETTER_QUEUED'
   | 'LEGAL_HOLD_SET' | 'LEGAL_HOLD_LIFTED' | 'COMPLIANCE_LINKED'
   | 'COMPLAINT_LOGGED' | 'COMPLAINT_CLASSIFIED' | 'COMPLAINT_PROGRESS_RECORDED' | 'COMPLAINT_UPDATED' | 'COMPLAINT_CLOSED'
-  // PHASE 160f: a complaint sent through the public notices page's form (src/web/notices-site.ts).
+  // A complaint sent through the public notices page's form (src/web/notices-site.ts).
   | 'COMPLAINT_FORM_RECEIVED'
-  // PHASE 160j: staff checked what a client sent through their portal (src/web/client-checks.ts): accepted, or asked
+  // Staff checked what a client sent through their portal (src/web/client-checks.ts): accepted, or asked
   // again with a reason. The ids only.
   | 'CLIENT_SENT_ACCEPTED'
   | 'CLIENT_SENT_ASKED_AGAIN'
   | 'BREACH_OPENED' | 'BREACH_UPDATED' | 'BREACH_AWARENESS_CORRECTED' | 'BREACH_DECISION_RECORDED'
   | 'BREACH_PHASE_RECORDED' | 'BREACH_NOTIFICATION_RECORDED' | 'BREACH_CLOSED'
-  /** Phase 153c (Word question 181): the restricted names list — a name added, the list read, a read refused. */
+  /** The restricted names list — a name added, the list read, a read refused. */
   | 'BREACH_NAME_ADDED' | 'BREACH_NAMES_READ' | 'BREACH_NAMES_REFUSED' | 'PREMISES_IMPORTED' | 'REGISTER_FILE_IMPORTED'
   | 'IDENTITY_RECORDED' | 'IDENTITY_READ' | 'IDENTITY_SEARCHED' | 'IDENTITY_UPDATED'
   | 'CONSENT_RECORDED' | 'RETENTION_LIST_READ'
@@ -285,57 +285,57 @@ export type AuditKind =
    */
   | 'CLAIM_TEAM_LINKED' | 'CLAIM_TEAM_UNLINKED' | 'AUDIT_LOG_READ'
   /**
-   * Phase 129: a disclosure of a client's personal data to a recipient, recorded in the per-disclosure log — which is
+   * A disclosure of a client's personal data to a recipient, recorded in the per-disclosure log — which is
    * switched off, so nothing writes this line yet. Codes and a count only: never a recipient's or a client's name.
    */
   | 'DISCLOSURE_RECORDED'
   /**
-   * Phase 132, 14 September 2026: a sealed case stamped as a deliverable is issued — the engine version, the rulebook
+   * A sealed case stamped as a deliverable is issued — the engine version, the rulebook
    * versions, every switch and the sign-off references, in `claim_version_stamps` — and a defence pack manifest built,
    * which the generator's switch keeps from happening today. Ids, kinds, counts and hashes only.
    */
   | 'CASE_STAMPED' | 'DEFENCE_PACK_GENERATED'
-  /** Phase 133c, 17 September 2026: a person hid the welcome card on their home page. The user's id only. */
+  /** A person hid the welcome card on their home page. The user's id only. */
   | 'WELCOME_DISMISSED'
-  /** Phase 138, 21 September 2026: a person kept a page section open or closed for themselves. The section's key only. */
+  /** A person kept a page section open or closed for themselves. The section's key only. */
   | 'SECTION_PREFERENCE_SET'
   /**
-   * Phase 139, 21 September 2026: a fact ticked as checked or the tick taken off; a step told to the client, or taken back
+   * 21 September 2026: a fact ticked as checked or the tick taken off; a step told to the client, or taken back
    * by Admin. The fact's reference, the step's key and the claim's id only — never a value, and never the reason, which
    * is in the row the event names.
    */
   | 'FACT_APPROVED' | 'FACT_UNAPPROVED' | 'CLIENT_STEP_TOLD' | 'CLIENT_STEP_TAKEN_BACK'
   /**
-   * Phase 140, 21 September 2026: staff said whether the client can see one of the company's files; a kept original
+   * Staff said whether the client can see one of the company's files; a kept original
    * opened by a member of staff; a kept original deleted when its time was up. The document's id and the version's
    * only — never a file name, never what the file says.
    */
   | 'DOCUMENT_SHOWN_TO_CLIENT' | 'DOCUMENT_HIDDEN_FROM_CLIENT' | 'DOCUMENT_ORIGINAL_OPENED' | 'DOCUMENT_ORIGINAL_DELETED'
   /**
-   * Phase 141, 21 September 2026: a member of staff saved a free-typed email to a company's contact, and Admin changed who
+   * A member of staff saved a free-typed email to a company's contact, and Admin changed who
    * every email comes from. Ids, a count of files and whether sending was on — never the subject, the body or an address.
    */
   | 'EMAIL_WRITTEN' | 'EMAIL_SENDER_SET'
   /**
-   * Phase 142, 22 September 2026: a message written on a company's "With the client" thread — by staff or by the client —
+   * A message written on a company's "With the client" thread — by staff or by the client —
    * and a reply to contact@caprebate.co.uk read in by the mailbox reader, filed by staff from the queue, or one of its
    * files saved to the company's Files. Ids, the direction, a count of files and the outcome — never the words, never an
    * address. (A "Team only" message is an internal note and keeps its own kind, INTERNAL_NOTE_ADDED.)
    */
   | 'CLIENT_MESSAGE_WRITTEN' | 'INBOUND_EMAIL_RECEIVED' | 'INBOUND_EMAIL_FILED' | 'INBOUND_EMAIL_FILE_SAVED'
   /**
-   * Phase 142a, 22 September 2026: a run of the message clean-up job (MESSAGE_RETENTION, off) — every id it removed and
+   * A run of the message clean-up job (MESSAGE_RETENTION, off) — every id it removed and
    * the counts, never the words; and a new-message alert queued (EMAIL_SENDING, off) — the message, the outbox rows and
    * who was told, by user id, never an address and never the words.
    */
   | 'MESSAGES_DELETED' | 'CLIENT_MESSAGE_ALERT'
   /**
-   * Phase 133j, 18 September 2026: the website's enquiry form received, and Sales opening an enquiry as a lead or
+   * The website's enquiry form received, and Sales opening an enquiry as a lead or
    * closing it; a person asking for their own client login after the assessment, and confirming it from the email.
    * Ids, the sector code and the decision only — never the name, the address or what the person wrote.
    */
   /**
-   * Phase 146h, 23 September 2026: one person resolving one close-but-not-certain register match
+   * One person resolving one close-but-not-certain register match
    * (src/web/match-review.ts). The lookup, whether anything was chosen, what the matcher scored it, the confidence
    * grade the choice mints, and whether a record was stored. NEVER THE CANDIDATE, NEVER ITS LABEL: what a person
    * read on the way to the decision is the register's own address line, and A.8 point 8 says it is neither stored
@@ -343,7 +343,7 @@ export type AuditKind =
    */
   | 'REGISTER_MATCH_PICKED'
   /**
-   * Phase 146i, 23 September 2026: one person answering, for one document, whether a name belongs to an
+   * One person answering, for one document, whether a name belongs to an
    * organisation rather than to somebody (src/web/document-reading.ts). Two CLIENT_DOC fields are kept on that
    * footing alone and the register cannot check it, because it classifies by field name and never sees a value.
    * The row carries the field, the answer and what it replaced. NEVER THE NAME ITSELF: the answer is about a value
@@ -351,12 +351,12 @@ export type AuditKind =
    */
   | 'DOCUMENT_FIELD_VOUCHED'
   /**
-   * Phase 159j (item 5), 10 October 2026: a document tied to the piece of work on a building it proves, or untied —
+   *: a document tied to the piece of work on a building it proves, or untied —
    * the event it now names and the one it named before (ids only), so each event counts its own documents.
    */
   | 'DOCUMENT_EVENT_SET'
   /**
-   * Phase 146j, 25 September 2026: the two one-way doors of Phases 146h and 146i, given a way back, each with its own
+   * The two one-way doors given a way back, each with its own
    * kind beside the one that opened it. REGISTER_MATCH_TAKEN_BACK: a person's pick for a close match taken back — the
    * lookup, the reason in their own words, that the one record the pick wrote was removed, and what must be looked at
    * again as kinds and counts. DOCUMENT_FIELD_VOUCH_WITHDRAWN: a 'yes' about a name on a client document taken back —
@@ -365,85 +365,85 @@ export type AuditKind =
    */
   | 'REGISTER_MATCH_TAKEN_BACK' | 'DOCUMENT_FIELD_VOUCH_WITHDRAWN'
   /**
-   * Phase 146k, 25 September 2026: HM Land Registry's title register is looked up by hand (src/web/title-by-hand.ts).
+   * HM Land Registry's title register is looked up by hand (src/web/title-by-hand.ts).
    * TITLE_RECORDED_BY_HAND: a person recorded what the official copy says — the property, and WHICH facts were given,
    * never their values. TITLE_BY_HAND_TAKEN_BACK: that entry taken back, with the reason and what to look at again.
    */
   | 'TITLE_RECORDED_BY_HAND' | 'TITLE_BY_HAND_TAKEN_BACK'
   /**
-   * Phase 151b, 25 September 2026: the online identity check (src/web/identity-checks.ts). A check sent, or not sent and
+   * The online identity check (src/web/identity-checks.ts). A check sent, or not sent and
    * why in words; the outside service's signed result received, or refused because its signature did not hold or it
    * named no check we sent. Ids, the outcome and the service's status word only — NEVER a name, a document number, a
    * date of birth or an image. What the service tells us is kept in the check's own row, not here.
    */
   | 'IDENTITY_CHECK_SENT' | 'IDENTITY_CHECK_NOT_SENT' | 'IDENTITY_RESULT_RECEIVED' | 'IDENTITY_RESULT_REFUSED'
   /**
-   * 30 Sep 2026: WhatsApp with each client (src/web/whatsapp.ts). Sent, or not sent and why; received and filed (or left
+   * WhatsApp with each client (src/web/whatsapp.ts). Sent, or not sent and why; received and filed (or left
    * for a person to file); a webhook body refused because Meta's signature did not hold; filed by hand. Ids, counts and
    * outcomes only — NEVER a number or the words.
    */
   | 'WHATSAPP_SENT' | 'WHATSAPP_NOT_SENT' | 'WHATSAPP_RECEIVED' | 'WHATSAPP_REFUSED' | 'WHATSAPP_FILED'
-  // 1 Oct 2026: a person blocking off, or freeing, time in their own diary (src/web/time-blocks.ts).
+  // A person blocking off, or freeing, time in their own diary (src/web/time-blocks.ts).
   | 'TIME_BLOCKED' | 'TIME_FREED'
-  // 1 Oct 2026: Admin saved a key's new value (sealed), or went back to the key file's (src/core/saved-keys.ts). The name only.
+  // Admin saved a key's new value (sealed), or went back to the key file's (src/core/saved-keys.ts). The name only.
   | 'KEY_SAVED' | 'KEY_UNSAVED'
-  // 1 Oct 2026: the Communication tab — a Zoom call staff started or booked, a telephone call staff logged, a video call
+  // The Communication tab — a Zoom call staff started or booked, a telephone call staff logged, a video call
   // first opened by its host (src/web/communication.ts). Ids and outcomes only.
   | 'BOOKING_CREATED' | 'CALL_LOGGED' | 'VIDEO_CALL_OPENED'
-  // PHASE 153f: a video call made under the shared Zoom host because its member of staff has no Zoom user.
+  // A video call made under the shared Zoom host because its member of staff has no Zoom user.
   | 'VIDEO_CALL_SHARED_HOST'
-  // PHASE 156d: how long a video call lasted, asked of Zoom by a member of staff. The state only, never Zoom's answer.
+  // How long a video call lasted, asked of Zoom by a member of staff. The state only, never Zoom's answer.
   | 'VIDEO_CALL_LENGTH_CHECKED'
-  // PHASE 153f: a file someone sent us on WhatsApp, fetched from Meta and kept sealed (or not, and why in words on the page).
+  // A file someone sent us on WhatsApp, fetched from Meta and kept sealed (or not, and why in words on the page).
   | 'WHATSAPP_MEDIA_FETCHED' | 'WHATSAPP_MEDIA_NOT_FETCHED'
-  // PHASE 156c: a chat exported on the WhatsApp phone, uploaded for checking, then saved to the record (counts only).
+  // A chat exported on the WhatsApp phone, uploaded for checking, then saved to the record (counts only).
   | 'WHATSAPP_EXPORT_UPLOADED' | 'WHATSAPP_EXPORT_SAVED'
-  /** PHASE 159c: a person added an event to a building on its claim (src/web/property-events.ts): ids and the kind — never a cost. */
+  /** A person added an event to a building on its claim (src/web/property-events.ts): ids and the kind — never a cost. */
   | 'PROPERTY_EVENT_ADDED'
-  /** PHASE 159i: a person recorded an event's VAT on its claim: the event and the field — never an amount. */
+  /** A person recorded an event's VAT on its claim: the event and the field — never an amount. */
   | 'PROPERTY_EVENT_CHANGED'
-  /** 1 Oct 2026: a surveyor changed the survey pack (src/web/survey-pack.ts): what, which line, which fields — never a value. */
+  /** A surveyor changed the survey pack (src/web/survey-pack.ts): what, which line, which fields — never a value. */
   | 'SURVEY_PACK_CHANGED'
   /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/web/pack-approve.ts): the version and its fingerprint. */
   | 'SURVEY_PACK_APPROVED'
-  /** 2 Oct 2026: the survey report emailed to the client's accountant for sign-off; their answer by the private link
+  /** The survey report emailed to the client's accountant for sign-off; their answer by the private link
    *  (src/web/report-signoff.ts). Ids, the version and the outcome — never the link, never a figure. */
   | 'REPORT_SENT_FOR_SIGNOFF' | 'REPORT_SIGNOFF_ANSWERED'
-  /** 2 Oct 2026: a client's photo for the survey checklist (src/web/survey-evidence.ts). The photo's id and item only. */
+  /** A client's photo for the survey checklist (src/web/survey-evidence.ts). The photo's id and item only. */
   | 'SURVEY_EVIDENCE_ADDED'
-  /** 2 Oct 2026: photos sent in one go put under checklist items by Admin or Sales, or taken back. Counts only. */
+  /** Photos sent in one go put under checklist items by Admin or Sales, or taken back. Counts only. */
   | 'SURVEY_PHOTOS_SORTED'
-  /** 2 Oct 2026: a site plan fetched for a survey job's report (src/web/site-plan.ts): how many buildings, and how the
+  /** A site plan fetched for a survey job's report (src/web/site-plan.ts): how many buildings, and how the
    *  client's was picked. Never the postcode, never a coordinate. */
   | 'SITE_PLAN_FETCHED'
-  /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
+  /** A signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'
-  /** Phase 151b: Accounting recording that it chased an unpaid invoice — the invoice, the day and how. Never the words. */
+  /** Accounting recording that it chased an unpaid invoice — the invoice, the day and how. Never the words. */
   | 'INVOICE_CHASED'
   /**
-   * Phase 151b (Word answer 156): whether the person who signed the engagement letter appears on a public register as
+   * Whether the person who signed the engagement letter appears on a public register as
    * able to act for the client. The source and YES, NO or NOT_CHECKED only — never a name read from the register.
    */
   | 'SIGNATORY_CHECKED'
-  /** Phase 151b (Word answer 180): a person chose to answer the property questions themselves instead of the lookups. */
+  /** A person chose to answer the property questions themselves instead of the lookups. */
   | 'LOOKUPS_DECLINED'
   /**
-   * Phase 151c: a person entering, on the property page, the point the site area is looked for at (a British National
+   * A person entering, on the property page, the point the site area is looked for at (a British National
    * Grid easting and northing), or a neighbouring council whose land boundary file must also be read. The property,
    * the kind, and for a council its ONS code. The point's figures are kept in site_area_inputs, not here.
    */
   | 'SITE_POINT_ENTERED' | 'SITE_COUNCIL_ADDED'
   | 'WEBSITE_ENQUIRY_RECEIVED' | 'WEBSITE_ENQUIRY_HANDLED'
-  /** 29 Sep 2026: an enquiry refused by the contact form's security check (src/integrations/connectors/turnstile.ts). Nothing kept. */
+  /** An enquiry refused by the contact form's security check (src/integrations/connectors/turnstile.ts). Nothing kept. */
   | 'WEBSITE_ENQUIRY_REFUSED'
   | 'CLIENT_SIGNUP_REQUESTED' | 'CLIENT_SIGNUP_VERIFIED'
   | 'AUTHORISATION_REFUSED'
-  /** PHASE 161b, 4 Nov 2026: a signed-in person's form refused for a missing, wrong or used token (src/core/form-token.ts). */
+  /** A signed-in person's form refused for a missing, wrong or used token (src/core/form-token.ts). */
   | 'FORM_TOKEN_REFUSED'
-  /** PHASE 161g, 5 Nov 2026: an admin recorded a solicitor's or the DPO's approval of a legal page's version (src/web/legal-approvals.ts). */
+  /** An admin recorded a solicitor's or the DPO's approval of a legal page's version (src/web/legal-approvals.ts). */
   | 'LEGAL_PAGE_APPROVED'
-  /** PHASE 161g: a client ticked that they have read the portal terms, the website terms and the privacy policy; the versions are kept. */
+  /** A client ticked that they have read the portal terms, the website terms and the privacy policy; the versions are kept. */
   | 'TERMS_AGREED';
 
 export type Outcome = 'ALLOWED' | 'REFUSED' | 'ERROR';
@@ -504,7 +504,7 @@ export function screenDetail(detail: Record<string, unknown>): void {
       }
     }
     const v = detail[key];
-    /* Phase 146b: a supplier key loaded from the key file (src/core/secrets.ts) never reaches the chain, under any key. */
+    /* A supplier key loaded from the key file (src/core/secrets.ts) never reaches the chain, under any key. */
     if (v !== undefined && carriesSecret(typeof v === 'string' ? v : JSON.stringify(v) ?? '')) {
       throw new AuditError(`audit detail '${key}' carries a supplier key — refused. Log that a key was used, never the key.`);
     }
@@ -517,7 +517,7 @@ export function screenDetail(detail: Record<string, unknown>): void {
   }
 }
 
-/** PHASE 151i: how many times an append reads the chain again after another copy took its number. */
+/** How many times an append reads the chain again after another copy took its number. */
 export const APPEND_ATTEMPTS = 20;
 
 /** Another writer took this row's place: SQLite's and libSQL's words for a clash on audit_log's key. */
@@ -543,8 +543,8 @@ export class AuditLog {
     const detail = e.detail ?? {};
     screenDetail(detail);
 
-    /* PHASE 151i, 28 September 2026 — TWO COPIES ON ONE DATABASE. The test website's copies share one lasting database
-       (Phase 151e), so two can append at once. Until today this read the last hash and then, in a SECOND statement,
+    /* TWO COPIES ON ONE DATABASE. The test website's copies share one lasting database
+      , so two can append at once. Until today this read the last hash and then, in a SECOND statement,
        the next number: a row written between the two gave a new row the right number and the wrong previous hash (a
        broken chain), and a row written between the reads and the write took this row's number, so the insert hit
        seq's key and the request was lost. Now ONE statement reads both from the same row, and a clash on seq —

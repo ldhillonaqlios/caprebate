@@ -1,13 +1,13 @@
 /**
- * "FIND MY ADDRESS" — A POSTCODE TO THE ADDRESSES THERE, THROUGH HOMEDATA. Phase 156f, 6 October 2026.
+ * "FIND MY ADDRESS" — A POSTCODE TO THE ADDRESSES THERE, THROUGH HOMEDATA.
  *
- * Lakhbir, 6 October 2026: "one address box on Homedata, with GoAddress removed - yes". Until then the box used
- * GoAddress (30 Sep 2026), whose answer carried no UPRN and listed one hospital five times under different spellings;
+ * The owner: "one address box on Homedata, with GoAddress removed - yes". Until then the box used
+ * GoAddress, whose answer carried no UPRN and listed one hospital five times under different spellings;
  * its free 100 lookups were used up and its paid plan was never taken. Homedata gives every address at a postcode with
  * its UPRN — Ordnance Survey's number for one addressable property — so the address the client picks is the exact key
  * the paid research step after signing starts from (src/integrations/connectors/homedata.ts checks it still belongs to the address
  * and postcode the client gave, and goes back to the postcode search when it does not). GoAddress is removed: its
- * connector, its key, its outside-call row, its tests and its Connections row (PHASE-HISTORY, Phase 156f).
+ * connector, its key, its outside-call row, its tests and its Connections row.
  *
  * THE CALL: GET https://api.homedata.co.uk/address/postcode/{postcode}/ with "authorization: Api-Key <key>"
  * (HOMEDATA_API_KEY, never Bearer). 2 tokens = 2p. WHAT IS SENT: THE POSTCODE, AND NOTHING ELSE. The person picks their
@@ -16,10 +16,10 @@
  * building_number, sub_building, street and town. Anything unreadable is "not found", never a guess.
  *
  * WHAT IS NOT A BUILDING IS NOT SHOWN (`NOT_A_BUILDING`): a postcode's list holds advertising rights, moored vessels and
- * development sites beside the buildings (St Thomas' Hospital's postcode, 6 Oct 2026). "My address is not in the list"
+ * development sites beside the buildings. "My address is not in the list"
  * is always offered.
  *
- * THE CAP — £1 A DAY (Lakhbir, 6 Oct 2026: "yes please"). The assessment is public, so a robot can press the box. At
+ * THE CAP — £1 A DAY. The assessment is public, so a robot can press the box. At
  * most 50 postcode searches a calendar day, UK time (50 × 2p = £1), counted from the audit log's CONNECTOR_CALLED rows
  * for this service, and at most 5 for one visitor (one assessment). Past either, the box says to type the address and
  * nothing is sent. A postcode already searched in the same assessment is not searched again: narrowing the list is free.
@@ -49,7 +49,7 @@ export type AddressLookupConfig = {
 };
 
 /**
- * PHASE 153c, 4 October 2026 — HOW LONG THE PICKED ADDRESS IS KEPT (Word question 37). Built on our recommendation, for
+ * HOW LONG THE PICKED ADDRESS IS KEPT (Word question 37). Built on our recommendation, for
  * the officer to check: seven years with the claim file, in the test system. Homedata publishes no period, so this is
  * OUR TEST READING, awaiting its written answer; and nothing from it reaches a client, accountant or HMRC report (the
  * source register keeps those channels closed: HOMEDATA_TERMS).
@@ -69,7 +69,7 @@ export const ADDRESS_LOOKUP: AddressLookupConfig = Object.freeze({
 });
 
 /**
- * THE CAP, ONE NAMED CONSTANT. 50 searches a UK calendar day at 2p each is £1 (Lakhbir, 6 Oct 2026); 5 for one visitor,
+ * THE CAP, ONE NAMED CONSTANT. 50 searches a UK calendar day at 2p each is £1; 5 for one visitor,
  * which is one assessment (a draft).
  */
 export const ADDRESS_SEARCH_CAP = Object.freeze({ per_day: 50, per_visitor: 5, pence_each: 2 } as const);

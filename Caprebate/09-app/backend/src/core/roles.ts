@@ -3,9 +3,9 @@
  * constantly confused with. This file is the only place the three meet.
  *
  * 1. THESE FIVE: Admin, Sales, Accounting, Surveying, Client. Settled
- *    6 September 2026. Who can use the two applications.
+ *   . Who can use the two applications.
  *
- * 2. THE SIX BOARD OWNER TYPES: Claude, CTA, Lakhbir, Surveyor, Solicitor/DPO,
+ * 2. THE SIX BOARD OWNER TYPES: Claude, CTA, the owner, Surveyor, Solicitor/DPO,
  *    Developer. Who owns a task on the Monday board. NOT modelled here at all —
  *    they describe the project, not the product.
  *
@@ -23,8 +23,8 @@ import type { Role as QuarantineRole } from '../modules/survey/anchor-quarantine
 import { canSurvey, customRoleOf, isCustomRoleKey } from './custom-roles.ts';
 
 /**
- * PHASE 132e, 16 September 2026: A SIXTH ROLE, READ_ONLY — "One main log in for
- * admin/manager/owner, and another log for view only" (Lakhbir). What it may do
+ * A SIXTH ROLE, READ_ONLY — "One main log in for
+ * admin/manager/owner, and another log for view only". What it may do
  * is an explicit yes or no per action in `READ_ONLY_RULES` (src/core/authz.ts), and
  * it is assigned to nobody. The five below it are unchanged.
  */
@@ -56,7 +56,7 @@ const TO_QUARANTINE: Readonly<Record<AppRole, QuarantineRole>> = {
   ACCOUNTING: 'CLIENT_MANAGER',
   SURVEYING: 'SURVEYOR',
   CLIENT: 'CLIENT',
-  /* Phase 132e: THE CONSERVATIVE MAPPING. READ_ONLY never reaches the quarantine — it is on neither
+  /* THE CONSERVATIVE MAPPING. READ_ONLY never reaches the quarantine — it is on neither
      `estimate.read` nor `surveyor_job.read` — but if a future route ever handed it a survey payload, the
      quarantine would withhold the sealed estimate from it as it does from the surveyor. */
   READ_ONLY: 'SURVEYOR',
@@ -64,7 +64,7 @@ const TO_QUARANTINE: Readonly<Record<AppRole, QuarantineRole>> = {
 
 export function toQuarantineRole(role: AppRole): QuarantineRole {
   if (Object.prototype.hasOwnProperty.call(TO_QUARANTINE, role)) return TO_QUARANTINE[role];
-  /* PHASE 151: A ROLE THE SUPER ADMIN MADE (src/core/custom-roles.ts). It is sent to the quarantine as the SURVEYOR — the
+  /* A ROLE THE SUPER ADMIN MADE (src/core/custom-roles.ts). It is sent to the quarantine as the SURVEYOR — the
      sealed estimate withheld — unless it holds `estimate.read` itself, which a role that can survey never may. So a
      made role cannot reach the estimate through the survey workspace's payload that it could not read directly. And a
      role nobody knows is the surveyor too: the conservative mapping, as READ_ONLY's is. */
@@ -74,10 +74,10 @@ export function toQuarantineRole(role: AppRole): QuarantineRole {
 }
 
 /**
- * A DATA PROTECTION OFFICER ROLE — DEFINED, AND NOT ENABLED. Phase 129, 12 September 2026.
+ * A DATA PROTECTION OFFICER ROLE — DEFINED, AND NOT ENABLED.
  *
  * It is NOT one of the five and it is not in APP_ROLES, on purpose: whether compliance needs a role separate from Admin is
- * Lakhbir's question — "Do we need a compliance role separate from Admin?" — and the five-role model is a decision. So:
+ * the owner's question — "Do we need a compliance role separate from Admin?" — and the five-role model is a decision. So:
  *   · `isAppRole('DPO')` is false, and `assignRole` refuses it exactly as it refuses any other word;
  *   · the `roles` table (migration 001) has no DPO row, so the database refuses a user holding it;
  *   · what it WOULD reach — the compliance registers and nothing else — is `DPO_RULES` in src/core/authz.ts, and while
@@ -91,6 +91,6 @@ export const DPO_ROLE = 'DPO' as const;
 export const STAFF_ROLES: readonly AppRole[] = ['ADMIN', 'SALES', 'ACCOUNTING', 'SURVEYING', 'READ_ONLY'];
 
 export function isStaff(role: AppRole): boolean {
-  // Phase 151: a role the super admin made is a staff role; it can never borrow a client's rule.
+  // A role the super admin made is a staff role; it can never borrow a client's rule.
   return STAFF_ROLES.includes(role) || isCustomRoleKey(role as string);
 }

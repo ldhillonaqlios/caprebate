@@ -1,9 +1,9 @@
 /**
- * THE TEST LOOKUPS LAKHBIR ALLOWED, AND THE FIVE CONDITIONS HE ALLOWED THEM ON. Phase 151g, 28 September 2026.
+ * THE TEST LOOKUPS THE OWNER ALLOWED, AND THE FIVE CONDITIONS HE ALLOWED THEM ON.
  *
  * Word question 170, "Can we make a few small, logged test lookups to check a data connector works?", was answered
- * on 25 September 2026 by Lakhbir Dhillon, Head of Business Development (the director is Jalil Ahmed; corrected
- * 4 October 2026, Phase 153c): yes, on five conditions, in his words —
+ * by the owner, Head of Business Development (not the director, who is named in the company records): yes, on five
+ * conditions, in his words —
  *
  *   1. no more than three lookups per connector each time it is switched on;
  *   2. never a client's property;
@@ -11,7 +11,7 @@
  *   4. log who ran it and why;
  *   5. never use it to show the product to clients.
  *
- * Until this file the smoke test (src/integrations/connectors/smoke.ts, Phase 146g) enforced none of them: it printed a warning,
+ * Until this file the smoke test enforced none of them: it printed a warning,
  * kept its audit row in a database in memory that vanished with the run, and would take a client's postcode if one
  * were typed. This file is what the `smoke` command now runs, and each condition is a REFUSAL, not a sentence:
  *
@@ -34,7 +34,7 @@
  * cannot be read line for line (so the count cannot be known) refuses, because an unknown count is not a count under
  * three. A lookup that throws is still logged, as NO, before the error goes on.
  *
- * PHASE 151l, 28 SEPTEMBER 2026: THE LAND BOUNDARY IS A SOURCE HERE TOO. `smoke HMLR_INSPIRE` downloads one council's
+ * THE LAND BOUNDARY IS A SOURCE HERE TOO. `smoke HMLR_INSPIRE` downloads one council's
  * file under the same five conditions, on the same log, through the same refusals below — only the values asked about
  * (a point and a council, not a company and a postcode) and the call itself are src/integrations/connectors/boundary-test-lookup.ts's.
  * `smoke-switched-on HMLR_INSPIRE` starts its count of three like any other connector's.
@@ -63,11 +63,11 @@ import { readPayloadWithClaude, SERVICE_ID as CLAUDE_SERVICE_ID } from './claude
 import { sanitise, type Segment } from '../../modules/claims/documents/document-pipeline.ts';
 import { listBusinessesNameLegalName, listLeadsProspectOrganisationProspectPostcode, listPropertiesPostcode } from '../data-borrowed.ts';
 
-/** PHASE 156a: the Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */
+/** The Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */
 export const OS_TEST_SOURCE = OS_SERVICE_ID;
 
 /**
- * PHASE 156e, 5 October 2026 (B1): THE DOCUMENT READER, ONE READ OF ONE INVENTED PAGE. Anthropic was approved for
+ * 5 October 2026 (B1): THE DOCUMENT READER, ONE READ OF ONE INVENTED PAGE. Anthropic was approved for
  * testing that day (src/integrations/connectors/sources.ts, CLAUDE_DOCUMENTS). The page is a contractor's cost breakdown made up
  * here, with no name, address or number of anyone: it goes through the pipeline's own strip (`sanitise`) and its guard,
  * exactly as a client's would. The reading switch is turned on FOR THIS ONE CALL ONLY, in this process; the switch that
@@ -83,13 +83,13 @@ export const CLAUDE_TEST_PAGE: readonly Segment[] = Object.freeze([
 ]) as readonly Segment[];
 
 /**
- * EVERY CONNECTOR A TEST LOOKUP CAN BE RUN FOR: the registers the smoke test knows, and (Phase 151l) the land boundary
+ * EVERY CONNECTOR A TEST LOOKUP CAN BE RUN FOR: the registers the smoke test knows, and the land boundary
  * download. One list, so `smoke` and `smoke-switched-on` can never disagree about what a connector is.
  */
 export const TEST_LOOKUP_SOURCES: readonly string[] = Object.freeze([...Object.keys(SMOKE_SOURCES), BOUNDARY_TEST_SOURCE, OS_TEST_SOURCE, CLAUDE_TEST_SOURCE]);
 const isTestLookupSource = (s: string): boolean => TEST_LOOKUP_SOURCES.includes(s);
 
-/** Condition 1, in Lakhbir's number. */
+/** Condition 1, in the owner's number. */
 export const TEST_LOOKUPS_PER_SWITCH_ON = 3;
 
 export const DEFAULT_TEST_LOOKUP_LOG = '~/.caprebate-test-lookups.jsonl';
@@ -194,7 +194,7 @@ export function lookupsSinceSwitchOn(lines: readonly TestLookupLine[], connector
   return since === null ? { switched_on: false } : { switched_on: true, since, used };
 }
 
-/** A lookup line, built from the fields Lakhbir named and from nothing else. */
+/** A lookup line, built from the fields the owner named and from nothing else. */
 export function lookupLine(connector: string, at: string, result: 'PASS' | 'NO', who: string, why: string, not_a_client: boolean): LookupLine {
   return not_a_client
     ? { kind: 'lookup', connector, at, result, who, why, not_a_client: true }
@@ -281,7 +281,7 @@ export function notTheDefaults(v: SmokeValues): string[] {
   if (normaliseCompanyName(v.address_line_1) !== normaliseCompanyName(d.address_line_1)) out.push('address');
   if (normaliseCompanyName(v.town) !== normaliseCompanyName(d.town)) out.push('town');
   if (normalisePostcode(v.postcode) !== normalisePostcode(d.postcode)) out.push('postcode');
-  // PHASE 156f: a property number is never a default, so it always needs --not-a-client.
+  // A property number is never a default, so it always needs --not-a-client.
   if (v.uprn != null) out.push('property number');
   return out;
 }
@@ -331,7 +331,7 @@ export type SmokeCommandDeps = CommandDeps & {
 };
 
 /**
- * PHASE 156f: a transport that also writes each answer's body to a file in `dir` (one per call, numbered, named by the
+ * A transport that also writes each answer's body to a file in `dir` (one per call, numbered, named by the
  * path without its query). The key is in a header and is never written; the path and the body are.
  */
 export function savingTransport(t: Transport, dir: string, out: (line: string) => void): Transport {
@@ -467,7 +467,7 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
       return result;
     };
   } else if (source_id === OS_TEST_SOURCE) {
-    /* PHASE 156a: ONE square of map round the public test point (70 Whitehall, Historic England's grid reference, the
+    /* ONE square of map round the public test point (70 Whitehall, Historic England's grid reference, the
        same point the land boundary test uses). No point, postcode or address may be typed, so no client's can be. */
     if (['easting', 'northing', 'postcode', 'address', 'council'].some((f) => flag(argv, f) !== null)) {
       d.err('refused: the Ordnance Survey test looks only at the public test point (70 Whitehall); it takes no point, postcode or address.');
@@ -505,7 +505,7 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
       return result;
     };
   } else {
-    /* PHASE 156f: --save-answers <folder> keeps each answer's body, as the service sent it, in a folder OUTSIDE the
+    /* --save-answers <folder> keeps each answer's body, as the service sent it, in a folder OUTSIDE the
        repository, so a person can make a recorded answer (a test fixture) from a real one. Public values only, as every
        smoke test; the log line is the same. The folder is the person's to read and then delete. */
     const saveTo = flag(argv, 'save-answers');
@@ -520,14 +520,14 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
       town: flag(argv, 'town') ?? SMOKE_DEFAULTS.town,
       postcode: flag(argv, 'postcode') ?? SMOKE_DEFAULTS.postcode,
     };
-    // PHASE 156a: the person running it may say which part of the UK the address is in. Never assumed.
+    // The person running it may say which part of the UK the address is in. Never assumed.
     const nationSaid = flag(argv, 'nation');
     if (nationSaid !== null) {
       const n = nationSaid.trim().toLowerCase();
       if (!SMOKE_NATIONS.includes(n)) { d.err('refused: --nation must be england, wales, scotland or northern_ireland.'); return 1; }
       values.nation = n as Nation;
     }
-    // PHASE 156f: --uprn, for Homedata planning, which is keyed on the property's number. A public property's only.
+    // --uprn, for Homedata planning, which is keyed on the property's number. A public property's only.
     const uprnSaid = flag(argv, 'uprn');
     if (uprnSaid !== null) {
       if (!/^\d{1,14}$/.test(uprnSaid.trim())) { d.err('refused: --uprn must be a property number (digits only).'); return 1; }

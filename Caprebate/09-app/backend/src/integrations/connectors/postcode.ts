@@ -1,10 +1,10 @@
 /**
  * THE ONS POSTCODE TABLE — A PROPERTY'S COUNCIL AREA (ITS BILLING AUTHORITY) AND WHICH PART OF THE UK IT IS IN.
- * Phase 146c, 23 September 2026. Switched off: REGISTER_SWITCHES.ONS_POSTCODE is false.
+ * Switched off: REGISTER_SWITCHES.ONS_POSTCODE is false.
  *
  * NO CALL OUTSIDE. The ONS Postcode Directory is a free quarterly download (August 2026 is the current release,
  * checked 23 September 2026; the address is in the source register's SUPPLIER_DOCS) that the developer loads into a
- * table on this server (Phase 110: src/integrations/postcodes/postcode.ts, CAPREBATE_POSTCODE_DB). This connector reads that table through
+ * table on this server. This connector reads that table through
  * `resolveProperty`, the one reader, and re-implements nothing: NORTHERN IRELAND IS REFUSED there (a BT postcode needs a
  * separate commercial licence from Land and Property Services), a postcode we do not serve is refused there, and a
  * terminated postcode is refused there. With no table set up, the lookup is not made and says so.

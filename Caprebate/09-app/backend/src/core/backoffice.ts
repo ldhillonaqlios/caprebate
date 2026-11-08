@@ -141,7 +141,7 @@ const CHANNEL_LABEL: Readonly<Record<string, string>> = Object.freeze({
 /**
  * How they asked to be reached.
  *
- * THE BOOKING IS THE AUTHORITY, AND SINCE PHASE 113a IT IS THE ONLY SOURCE.
+ * THE BOOKING IS THE AUTHORITY, IT IS THE ONLY SOURCE.
  * It is the record CB_BOOKING produces at the funnel close and it carries the
  * entry point and the variant as well as the channel.
  *
@@ -170,7 +170,7 @@ export function contactForLead(db: Db, lead_id: string): ContactView {
 }
 
 /**
- * PHASE 144: WHERE IN THE ASSESSMENT A CALL WAS ASKED FOR, IN WORDS. The stored value is a code (bookings.entry_point);
+ * WHERE IN THE ASSESSMENT A CALL WAS ASKED FOR, IN WORDS. The stored value is a code (bookings.entry_point);
  * a screen shows these words, never the code with its underscores swapped for spaces ("gated exit").
  */
 export const ENTRY_POINT_WORDS: Readonly<Record<string, string>> = Object.freeze({
@@ -320,7 +320,7 @@ export type BookingRow = {
   readonly assigned_to: string | null;
   readonly assigned_name: string | null;
   readonly created_at: string;
-  /** Phase 132e: when the call was cancelled, and by whom. Both null on a call still held. */
+  /** When the call was cancelled, and by whom. Both null on a call still held. */
   readonly cancelled_at: string | null;
   readonly cancelled_by_name: string | null;
   /** The role of whoever cancelled — CLIENT for a portal cancellation. */
@@ -362,7 +362,7 @@ export type CalendarView = {
    */
   readonly capture_only: readonly BookingRow[];
   /**
-   * Phase 132e. CALLS THAT WERE CANCELLED — by the client in the portal — newest
+   * CALLS THAT WERE CANCELLED — by the client in the portal — newest
    * first, with who and when. Not filtered by the window, like the queue above:
    * a cancellation is something the person who owned the call needs to see. The
    * enquiry behind each one is still open; nothing here closes it.
@@ -446,11 +446,11 @@ export function scheduleBooking(
     type: 'booking', id: before.id, business_id: before.business_id,
   });
 
-  // Phase 132e: a cancelled call is final on its row (migration 025) — say so rather than let the trigger throw.
+  // A cancelled call is final on its row (migration 025) — say so rather than let the trigger throw.
   if (before.cancelled_at !== null) {
     return { ok: false, why: 'This call was cancelled, so it cannot be given a time. The enquiry is still open; arrange a new call with the client.' };
   }
-  // 30 Sep 2026: a video call holds a time too (booksATime), so one where no time suited can be given one.
+  // A video call holds a time too (booksATime), so one where no time suited can be given one.
   if (!booksATime(before.channel)) {
     return {
       ok: false,
@@ -489,16 +489,16 @@ export function scheduleBooking(
   // as everything in this schema does; this is a rendering of it, and printing
   // the raw stamp in something addressed to a client would be a small rudeness
   // with no reason behind it.
-  // AND SINCE PHASE 113a IT IS UK TIME, NOT UTC. This message is addressed to
+  // IT IS UK TIME, NOT UTC. This message is addressed to
   // the client: an invitation reading "09:00 UTC" for a call at ten in the
   // morning is the exact defect that phase went looking for, and slicing the
   // ISO string was how it survived here after the screens were fixed.
   const readable = localWhen(args.starts_at);
-  // PHASE 146f: the invitation itself, a standard .ics, carried by the same email (src/integrations/email/calendar.ts).
+  // The invitation itself, a standard .ics, carried by the same email (src/integrations/email/calendar.ts).
   const invite = bookingInviteFile(d.db, d.now, {
     booking_id: before.id, method: 'REQUEST', starts_at: args.starts_at, ends_at: ends, to: business?.contact_email,
   });
-  // 30 Sep 2026: a VIDEO call's invitation is sent by the route once its Zoom meeting is made, so it carries the link.
+  // A VIDEO call's invitation is sent by the route once its Zoom meeting is made, so it carries the link.
   if (before.channel !== 'video') d.email.send({
     to_email: business?.contact_email ?? 'no-address-recorded@example.invalid',
     subject: `Your call with Cap Rebate — ${readable}`,
@@ -537,7 +537,7 @@ export function bookingHistory(db: Db, actor: Actor, booking_id: string): readon
 }
 
 /**
- * Phase 132e: the assign control's list for a reader who may arrange calls, and an empty list for one who may only
+ * The assign control's list for a reader who may arrange calls, and an empty list for one who may only
  * read the calendar — the view-only login opens the calendar and is never shown the control, instead of being refused
  * the whole page because the control's list asks `booking.write`.
  */

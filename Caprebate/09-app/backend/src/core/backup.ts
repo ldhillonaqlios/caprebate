@@ -1,5 +1,5 @@
 /**
- * THE NIGHTLY BACKUP, AND ITS RESTORE. Phase 161h, 7 November 2026 (the developer question pack, D8; Word question 155).
+ * THE NIGHTLY BACKUP, AND ITS RESTORE.
  *
  * WHAT IT COPIES, EVERY NIGHT (the live website's "backup" timer, src/core/timers.ts, 02:00 UTC):
  *   - THE DATABASE, whole, as one SQLite file (VACUUM INTO, which writes a clean, complete copy while the website keeps
@@ -41,7 +41,7 @@ import { INCOMING_PREFIX } from '../shared/objectstore.ts';
 /** How long a night's copy, and the copy of a deleted document, is kept. A question for the data protection officer. */
 export const BACKUP_KEEP_DAYS = 35;
 /** Never copied (see the header): the upload holding place and where locked uploads wait. */
-export function backupLeavesOut(): readonly string[] { return ['quarantine/', INCOMING_PREFIX]; } // Read when used, not while this file loads (Phase 161i: the areas' front doors load whole, and the code still loops between areas until Phase 161l).
+export function backupLeavesOut(): readonly string[] { return ['quarantine/', INCOMING_PREFIX]; } // Read when used, not while this file loads.
 /** A night's run stops starting new copies after this long, so it ends inside Vercel's 300-second limit; the rest goes the next night. */
 export const BACKUP_TIME_BUDGET_MS = 200_000;
 

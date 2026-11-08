@@ -1,8 +1,7 @@
 /**
  * Caprebate — COUNCIL AREA TO REGION, in the price book's own vocabulary.
  *
- * Board item 13004035199 job 3, deferred out of Phase 107a into Phase 110.
- * 9 September 2026.
+ * Board item 13004035199 job 3, deferred out into Phase 110.
  *
  * ─────────────────────────────────────────────────────────────────────────
  * THE DEFECT
@@ -33,7 +32,7 @@
  *
  * NOT TAKEN: the factors. Not one of the thirteen numbers is in this file or
  * anywhere else in the engine. The three price-book PDFs are under a
- * provenance quarantine — FOR THE SURVEYOR, note of 6 September 2026: every
+ * provenance quarantine — FOR THE SURVEYOR, note: every
  * page of one of them prints a path inside the publisher's own corporate
  * storage, nobody has recorded how we came by it, and until that is explained
  * "no figure from any of these three files may reach a claim, a report or the
@@ -69,13 +68,13 @@
  * Outer London would be the cheaper of the two and would look exactly like an
  * answer.
  *
- * Corrected 16 September 2026 (Phase 132e): "adds Haringey and Newham" was
+ * Corrected: "adds Haringey and Newham" was
  * half of the difference. The ONS list also LEAVES OUT Greenwich, which the
  * 1963 Act counts as Inner London. Both lists have fourteen names counting
  * the City; they share twelve. See section 2a.
  *
  * ─────────────────────────────────────────────────────────────────────────
- * PHASE 132e, 16 SEPTEMBER 2026 — THE ONS FOURTEEN, BUILT AND SWITCHED OFF
+ * THE ONS FOURTEEN, BUILT AND SWITCHED OFF
  *
  * Someone typed an answer into the surveyor's answer box: use the ONS list of
  * fourteen. NOBODY SIGNED IT, and it was not written by a professional, so it
@@ -183,7 +182,7 @@ export const COUNTRY_TO_PRICE_BOOK: Readonly<Record<string, PriceBookRegion>> = 
 
 /* ------------------------------------------------------------------ *
  * 2a. Inner and Outer London — the ONS list, behind a surveyor switch
- *     (Phase 132e, 16 September 2026). OFF.
+ *    . OFF.
  * ------------------------------------------------------------------ */
 
 /**

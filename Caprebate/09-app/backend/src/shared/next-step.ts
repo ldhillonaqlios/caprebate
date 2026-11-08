@@ -1,5 +1,5 @@
 /**
- * THE NEXT STEP, IN PLAIN WORDS — PHASE 133c, 17 September 2026.
+ * THE NEXT STEP, IN PLAIN WORDS.
  *
  * A gate's needs are written for the record: "The surveyor’s commitment is recorded, on a survey job on this claim".
  * A person new to the system needs the answer first: what is still needed, and the one thing that fixes it. This file
@@ -29,25 +29,25 @@ const TABLE: readonly (readonly [RegExp, PlainNeed])[] = [
   [/ is received — /, { words: 'A required document from the client', fix: { href: '#claim-documents', label: 'Request a document' } }],
   [/^The surveyor’s commitment is recorded/, { words: 'The surveyor’s figures', fix: { href: '#add-task', label: 'Ask the surveyor' } }],
   [/^Every grant or contribution traced/, { words: 'Trace every grant to the costs it paid for', fix: { href: '#claim-facts', label: 'Record the fact' } }],
-  // Phase 153a (src/web/grant-checks.ts): the grant papers or the tax adviser's view; the client's check with the payer.
+  // The grant papers or the tax adviser's view; the client's check with the payer.
   [/^No grant is split in equal share/, { words: 'The grant papers, or the tax adviser’s view on splitting a grant', fix: { href: '#claim-grants', label: 'Open the grants' } }],
   [/^The client has checked with whoever paid/, { words: 'The client’s confirmation that they checked with whoever paid the grant', fix: { href: '#claim-grants', label: 'Record it' } }],
-  // Phase 158c: the surveyor's own approval of the survey pack (F34, F35), the client's acceptance in their portal (F39),
+  // The surveyor's own approval of the survey pack (F34, F35), the client's acceptance in their portal (F39),
   // the invoice sent (F41) and the filing recorded (F42). Staff ticks no longer stand in for any of them.
   [/^The surveyor approved and signed the survey pack/, { words: 'The surveyor’s approval of the survey pack', fix: { href: '#add-task', label: 'Ask the surveyor' } }],
-  // PHASE 159f (item 3): every rate sourced, read from the approved version.
+  // Every rate sourced, read from the approved version.
   [/^Every rate in the survey pack names its source/, { words: 'Every rate in the survey pack needs its source: BCIS, a QS schedule, an invoice or a price book', fix: { href: '#add-task', label: 'Ask the surveyor' } }],
   [/^The tax adviser’s sign-off is on record/, { words: 'The tax adviser’s sign-off', fix: { href: '#claim-figures', label: 'Record the sign-off' } }],
   [/^The client report is issued/, { words: 'Issue the client report', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],
   [/^The accountant’s computation pack is issued/, { words: 'Issue the accountant’s computation pack', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],
   [/^The defence pack is issued/, { words: 'Issue the defence pack', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],
   [/^The client accepted the report/, { words: 'The client’s acceptance of the report, in their portal', fix: { href: '#add-task', label: 'Ask the client' } }],
-  // Phase 158d (F46): the accountant answers through their own link; nobody here ticks it.
+  // The accountant answers through their own link; nobody here ticks it.
   [/^The client’s accountant confirmed/, { words: 'The accountant’s own confirmation that the claim fits the return', fix: { href: '#accountant-confirm', label: 'Send them the link' } }],
   [/^The client confirmed in writing/, { words: 'The client’s written confirmation that they will file the amendment', fix: { href: '#claim-facts', label: 'Record it' } }],
   [/^The claim is within the amendment window/, { words: 'The claim must go in inside the amendment window', fix: { href: '#claim-facts', label: 'Check the dates' } }],
   [/^The amendment window is open/, { words: 'The amendment window must still be open', fix: { href: '#claim-facts', label: 'Check the dates' } }],
-  // PHASE 159d: the route each part of the claim takes (src/web/claim-route.ts), and a legal deadline read again.
+  // The route each part of the claim takes (src/web/claim-route.ts), and a legal deadline read again.
   [/^Each part of the claim has a route/, { words: 'Each part of the claim needs its route: the year it goes in, or this year’s pool if the client still owns the building', fix: { href: '#claim-facts', label: 'Check the dates and ownership' } }],
   [/^A legal check that was clear only until a deadline/, { words: 'The deadline to fix the value must not have passed, or the election made in time must be recorded', fix: { href: '#claim-facts', label: 'Check the election' } }],
   [/^The fee trigger is reached/, { words: 'The point at which our fee is due', fix: { href: '#move', label: 'Confirm it' } }],

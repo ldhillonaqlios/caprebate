@@ -1,5 +1,5 @@
 /**
- * ONE FILE A COUNCIL A MONTH — KEEPING HM LAND REGISTRY'S LAND BOUNDARY FILES ON OUR OWN SERVER. Phase 151a.
+ * ONE FILE A COUNCIL A MONTH — KEEPING HM LAND REGISTRY'S LAND BOUNDARY FILES ON OUR OWN SERVER.
  *
  * HM Land Registry republishes the INSPIRE Index Polygons "on the first Sunday of each month" (SUPPLIER_DOCS,
  * HMLR_INSPIRE), one file per council. So one download serves every property in that council until the next

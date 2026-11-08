@@ -1,7 +1,7 @@
 /**
- * WHATSAPP THROUGH META'S WHATSAPP CLOUD API. 30 September 2026.
+ * WHATSAPP THROUGH META'S WHATSAPP CLOUD API..
  *
- * Lakhbir: "the ability to use whats app directly using our back end portal the idea is each client when we view back
+ * the owner: "the ability to use whats app directly using our back end portal the idea is each client when we view back
  * end has full communication via email or whats app".
  *
  * WHAT IT NEEDS (developers.facebook.com, WhatsApp Cloud API, read 30 Sep 2026; Graph API v25.0):
@@ -23,7 +23,7 @@
  * storage region is set up), so the row is US and NOT APPROVED until the data protection officer approves it
  * (sources.ts, WHATSAPP_CLOUD). Until then nothing is sent, and the back office says so. Receiving needs no call.
  *
- * 2 OCT 2026 — ONLY THE TEST WEBSITE SENDS (Lakhbir: "yes for now"), as Zoom: a copy on a computer, reading the real
+ * ONLY THE TEST WEBSITE SENDS, as Zoom: a copy on a computer, reading the real
  * key file, would message a real person from our number. It sends only on the deployed test website, or when started
  * with CAPREBATE_LOCAL_WHATSAPP=1 (src/integrations/connectors/place.ts). Receiving is not touched.
  *
@@ -54,11 +54,11 @@ export type WhatsAppDeps = {
   readonly env?: Env;
 };
 
-/** 2 Oct 2026: the setting that lets a copy that is not the test website send WhatsApp messages. Off unless exactly "1". */
+/** The setting that lets a copy that is not the test website send WhatsApp messages. Off unless exactly "1". */
 export const WHATSAPP_LOCAL_OPT_IN = 'CAPREBATE_LOCAL_WHATSAPP';
 
 /**
- * 2 Oct 2026 (Lakhbir: "yes for now"): why THIS copy may not send WhatsApp messages, in words, or null when it may —
+ * Why THIS copy may not send WhatsApp messages, in words, or null when it may —
  * as Zoom (src/integrations/connectors/place.ts). Only a live transport is ever refused.
  */
 export function whatsappPlaceRefusal(outside: Transport, env?: Env): string | null {
@@ -156,7 +156,7 @@ export function signatureHolds(store: SecretStore, raw: string, header: string |
   return got.length === want.length && timingSafeEqual(got, want);
 }
 
-/** PHASE 153f: what Meta's webhook says about an attachment. The file itself is fetched later, by a person (fetchWhatsAppMedia). */
+/** What Meta's webhook says about an attachment. The file itself is fetched later, by a person (fetchWhatsAppMedia). */
 export type IncomingMedia = { readonly id: string; readonly type: 'image' | 'video' | 'audio' | 'document' | 'sticker'; readonly mime: string | null; readonly sha256: string | null; readonly filename: string | null };
 export type Incoming = { readonly from: string; readonly wa_id: string; readonly at: string; readonly kind: 'text' | 'media' | 'other'; readonly body: string; readonly name: string | null; readonly media: IncomingMedia | null };
 export type StatusChange = { readonly wa_id: string; readonly status: 'SENT' | 'DELIVERED' | 'READ' | 'FAILED'; readonly at: string; readonly error: string | null };
@@ -187,7 +187,7 @@ export function readWebhook(raw: string): { incoming: Incoming[]; statuses: Stat
         const text = obj(o['text'])['body'];
         const caption = obj(o[type])['caption'];
         const kind: Incoming['kind'] = type === 'text' ? 'text' : MEDIA[type] !== undefined ? 'media' : 'other';
-        // PHASE 153f: a file Meta holds for us (a photo, video, voice note, document or sticker) can be fetched here.
+        // A file Meta holds for us (a photo, video, voice note, document or sticker) can be fetched here.
         const mo = obj(o[type]);
         const str = (v: unknown, n: number): string | null => (typeof v === 'string' && v !== '' ? v.slice(0, n) : null);
         const fileType = (['image', 'video', 'audio', 'document', 'sticker'] as const).find((t) => t === type);
@@ -220,7 +220,7 @@ export type FetchedMedia = { readonly state: 'FETCHED'; readonly bytes: Buffer; 
   | { readonly state: 'NOT_FETCHED'; readonly why: string };
 
 /**
- * PHASE 153f, 4 October 2026 — FETCH A FILE SOMEONE SENT US (developers.facebook.com, WhatsApp Cloud API, "Media",
+ * FETCH A FILE SOMEONE SENT US (developers.facebook.com, WhatsApp Cloud API, "Media",
  * read 4 Oct 2026). Two calls, both with our token: GET /v25.0/{media-id} answers the file's address on Meta's file host
  * (lookaside.fbsbx.com, valid for a few minutes), its type, size and SHA-256; then GET that address answers the bytes.
  * Refused, in words, when WhatsApp is not on here, when the address is not Meta's file host, when it is larger than

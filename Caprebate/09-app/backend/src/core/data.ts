@@ -1,5 +1,5 @@
 /**
- * THE CORE'S DATA FILE (Phase 161i1, 8 Nov 2026; 09-app/ARCHITECTURE.md rule 3). The only file that runs SQL on the
+ * THE CORE'S DATA FILE. The only file that runs SQL on the
  * tables architecture/tables.json gives the core (users, sessions, the audit log, roles and the rest). Every other file
  * asks through these functions: inside the core from here, from another area through the core's front door.
  * Each statement is the one its caller ran before, moved here with its text unchanged; a caller's row type stays with

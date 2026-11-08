@@ -1,9 +1,9 @@
 /**
- * THE LAND BOUNDARY'S TEST LOOKUP — ONE COUNCIL'S FILE, UNDER LAKHBIR'S FIVE CONDITIONS. Phase 151l, 28 September 2026.
+ * THE LAND BOUNDARY'S TEST LOOKUP — ONE COUNCIL'S FILE, UNDER THE OWNER'S FIVE CONDITIONS.
  *
- * WHY IT EXISTS. The land boundary fetcher (src/integrations/connectors/inspire.ts, Phase 150) is built and switched off, and HM Land
+ * WHY IT EXISTS. The land boundary fetcher is built and switched off, and HM Land
  * Registry does not publish the element names inside its GML, so its reader was written tolerantly and the one page
- * says "the first allowed download must confirm the shape". Word question 170 was answered on 25 September 2026 (yes,
+ * says "the first allowed download must confirm the shape". Word question 170 was answered (yes,
  * on five conditions), and Phase 151g built the conditions into the smoke command, which did not cover a download. This
  * file is the download, as a test lookup: `smoke HMLR_INSPIRE`.
  *

@@ -1,6 +1,6 @@
 /**
  * THE UPLOAD FORMS' ONE SCRIPT — served at /assets/upload-pieces.js, and named only by a page with a form marked
- * `data-pieces` (`piecesPage` in src/core/upload-pieces.ts). PHASE 160e, 19 October 2026.
+ * `data-pieces` (`piecesPage` in src/core/upload-pieces.ts).
  *
  * A chosen file at or under the size Vercel takes in one request goes with the form, whole, as it always did. A bigger
  * one is sent in pieces first (`startPieces`, `putPiece`), and the form is then sent as before with the file box

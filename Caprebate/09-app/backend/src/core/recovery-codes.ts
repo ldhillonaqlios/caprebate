@@ -1,7 +1,7 @@
 /**
- * RECOVERY CODES: TEN ONE-USE CODES, SO A PERSON WHO LOSES THEIR PHONE CAN STILL SIGN IN. Phase 151m, 28 September 2026.
+ * RECOVERY CODES: TEN ONE-USE CODES, SO A PERSON WHO LOSES THEIR PHONE CAN STILL SIGN IN.
  *
- * Lakhbir, 28 September 2026 (Word question 232, closed): yes. Until now a person who lost their phone had to ask the
+ * The owner (Word question 232, closed): yes. Until now a person who lost their phone had to ask the
  * super user to reset their second step.
  *
  * WHAT A CODE IS. Ten characters from a set of 32 with no look-alikes (no 0/O, no 1/I/L, one case only, so it can be

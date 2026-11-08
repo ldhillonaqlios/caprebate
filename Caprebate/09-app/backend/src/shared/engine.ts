@@ -65,7 +65,7 @@ export function registryGate(): { readonly enabled: boolean; readonly requires: 
  * at each call site is four places for the shape to be described differently.
  *
  * NOTHING BELOW COMPUTES ANYTHING. Each function narrows a type and calls the
- * module. The 3% rate (5% until Phase 132e, 16 September 2026), the basis, the disclosure, the benefit schedule, the
+ * module. The 3% rate, the basis, the disclosure, the benefit schedule, the
  * three-valued comparison and both switch positions are the engine's, and
  * this file may not "correct" any of them.
  * ================================================================== */
@@ -112,7 +112,7 @@ export type FeeComparison = {
   readonly unknowns: readonly string[];
   readonly assumptions: readonly string[];
   /**
-   * PHASE 153b (Word question 59) — present ONLY where CB_FEEGUARD.fee_comparison_counts_vat is on AND we are
+   * Present ONLY where CB_FEEGUARD.fee_comparison_counts_vat is on AND we are
    * VAT-registered: how VAT on our fee was treated, and the fee the verdicts were taken on. Absent today.
    */
   readonly fee_vat?: NoClaimVatReading;
@@ -128,9 +128,9 @@ export type FeeDisplay = {
   readonly warning: string | null;
   readonly capped: boolean;
   readonly uncapped_amount: number | null;
-  /** Phase 113d, read by the back end from Phase 132f: the engagement gate, assessed on every call. */
+  /** Read by the back end: the engagement gate, assessed on every call. */
   readonly gate: GateDecision;
-  /** Phase 132e, read by the back end from Phase 132f: the £1,000 no-claim threshold. */
+  /** Read by the back end: the £1,000 no-claim threshold. */
   readonly recommendation_threshold: RecommendationThreshold;
 };
 
@@ -138,7 +138,7 @@ export type FeeDisplay = {
 export type GateDecision = ReturnType<typeof CB.CB_GATE.assess>;
 
 /**
- * CB_FEE.recommendationThreshold's answer — Phase 132e. Transcribed from the module; every field is present on
+ * CB_FEE.recommendationThreshold's answer. Transcribed from the module; every field is present on
  * every path. It refuses no work, withholds no quote and moves no figure, and it is AWAITING THE TAX ADVISER'S
  * REVIEW (its own metadata says so).
  */
@@ -152,9 +152,9 @@ export type RecommendationThreshold = {
   readonly relief_basis: string;
   readonly horizon_years: number | null;
   readonly fee: number | null;
-  /** Phase 151b — what the test took off the relief: the fee, plus VAT only where VAT is counted. Null where not known. */
+  /** What the test took off the relief: the fee, plus VAT only where VAT is counted. Null where not known. */
   readonly fee_counted: number | null;
-  /** Phase 151b — how VAT on our fee was treated in this reading, and why. */
+  /** How VAT on our fee was treated in this reading, and why. */
   readonly vat: NoClaimVatReading;
   readonly relief_after_fee: number | null;
   readonly message: string | null;
@@ -166,7 +166,7 @@ export type RecommendationThreshold = {
 };
 
 /**
- * PHASE 151b, 25 September 2026 — VAT IN THE NO-CLAIM TEST (Word question 61, Lakhbir, closed 24 September 2026:
+ * VAT IN THE NO-CLAIM TEST (Word question 61, the owner, closed:
  * "The relief is calculated over the 5 years – and must include VAT"). Transcribed from CB_FEE's `vat` report.
  * VAT is on OUR fee and exists only once we are VAT-registered; it is counted only where the client cannot reclaim
  * it; a client whose position is not known ("not sure" and absent alike) is UNDETERMINED, never told not to claim.
@@ -190,7 +190,7 @@ export type BenefitContext = {
   is_company?: boolean;
   profits?: number | null;
   /**
-   * PHASE 151b — the client's VAT position ON OUR FEE: 'can_reclaim' or 'cannot_reclaim'. Anything else, absent
+   * The client's VAT position ON OUR FEE: 'can_reclaim' or 'cannot_reclaim'. Anything else, absent
    * included, is not known, and the engine treats them all alike (N4). Data the caller passes, not a question.
    */
   client_vat?: string | null;
@@ -212,7 +212,7 @@ export function feeDisplay(
 }
 
 /* ================================================================== *
- * THE ENGAGEMENT GATE, WITH ITS COSTING INJECTED — PHASE 132f, 16 September 2026
+ * THE ENGAGEMENT GATE, WITH ITS COSTING INJECTED
  *
  * Phase 132e switched CB_GATE_CONFIG on (120 jobs this year), and nothing handed it costs: `costing` ships null, so
  * every assessment came back UNDETERMINED naming "costing" and the gate stopped nothing. The engine says the costing
@@ -310,7 +310,7 @@ export function feeQuote(
 /**
  * CB_FEE.NO_CLAIM_THRESHOLD's line, read. NaN where the engine does not carry it — never a default.
  *
- * PHASE 151b — and CB_FEE.NO_CLAIM_VAT, read the same way: registered only where the engine says `true` (an absent
+ * And CB_FEE.NO_CLAIM_VAT, read the same way: registered only where the engine says `true` (an absent
  * setting is not a registration), the rate only where it is a positive number (null otherwise, never 0). Read, not
  * decided: whether VAT is counted for a given client is the engine's, on each reading.
  */
@@ -332,7 +332,7 @@ export function noClaimThreshold(): {
 }
 
 /**
- * PHASE 153b (Word question 226) — what a session's works-VAT answer tells us about the client's VAT on OUR fee:
+ * What a session's works-VAT answer tells us about the client's VAT on OUR fee:
  * 'can_reclaim' or 'cannot_reclaim' only for the same business with nothing changed, and null (not known) otherwise.
  * The engine's rule (CB_FEE.clientVatFromWorks), narrowed here; null where the engine does not carry it.
  */
@@ -367,7 +367,7 @@ export const CTA = CB.CB_CTA;
 
 /**
  * The engine's claimant readings for the window: a company, anyone filing self assessment, or — Phase 132,
- * 14 September 2026 — a partnership or LLP, whose date turns on whether a partner or member is a company.
+ * A partnership or LLP, whose date turns on whether a partner or member is a company.
  */
 export type WindowClaimant = 'company' | 'self_assessment' | 'partnership';
 
@@ -406,7 +406,7 @@ export function amendmentWindow(periodEnd: string, claimant: WindowClaimant, tod
     claimant_type: claimant === 'company' ? 'company' : claimant === 'partnership' ? 'partnership' : 'individual',
   };
   if (claimant === 'partnership' && companyMember !== null) s['partnership_has_company_member'] = companyMember;
-  /* PHASE 159a (C2): THE LAST DAY IS A WHOLE UK DAY. The engine compares the moment it is handed with the deadline's
+  /* THE LAST DAY IS A WHOLE UK DAY. The engine compares the moment it is handed with the deadline's
      midnight, so at 09:00 on the last day it read the window as closed. Handed the start of today's UK date, its
      comparison is a comparison of UK dates: open all of the last day, closed from the next one. */
   const r = fn(s, new Date(`${localDate(todayIso)}T00:00:00.000Z`));
@@ -451,8 +451,8 @@ export function ctaSwitchReadings(): readonly { readonly switch: string; readonl
 }
 
 /**
- * CB_FEE.RATE — 3% of the allowances identified. Phase 132e, 16 September 2026: Lakhbir, "yes, flat fee of 3% of the
- * allowances for 1 or more properties", no bands and no minimum. It was 5% (Q55, 3 September 2026). Read, never typed.
+ * CB_FEE.RATE — 3% of the allowances identified. the owner, "yes, flat fee of 3% of the
+ * allowances for 1 or more properties", no bands and no minimum. It was 5%. Read, never typed.
  */
 export function feeRate(): number {
   const r = (FEE as { RATE?: unknown }).RATE;
@@ -462,16 +462,16 @@ export function feeRate(): number {
 export type MultiSiteDiscount = {
   readonly discretionary: boolean;
   readonly fixed_tiers: null;
-  /** NOT DECIDED — a named null until Lakhbir answers. */
+  /** NOT DECIDED — a named null until the owner answers. */
   readonly largest_discount: number | null;
-  /** NOT DECIDED — a named null until Lakhbir answers. */
+  /** NOT DECIDED — a named null until the owner answers. */
   readonly approved_by: string | null;
   readonly asked: string;
   readonly applied_automatically: false;
 };
 
 /**
- * CB_FEE.MULTI_SITE_DISCOUNT — Phase 132e. "A further multi-site discount can be applied depending on
+ * CB_FEE.MULTI_SITE_DISCOUNT. "A further multi-site discount can be applied depending on
  * site/opportunities": discretionary, no fixed tiers, never applied automatically, and the largest discount and who
  * approves it are asked, not invented. Narrowed here and nowhere else; a missing object reads as undecided.
  */

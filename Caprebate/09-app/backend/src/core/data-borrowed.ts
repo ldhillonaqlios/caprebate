@@ -1,5 +1,5 @@
 /**
- * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CORE (Phase 161i1, 8 Nov 2026; 09-app/ARCHITECTURE.md rules 3
+ * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CORE (Phase 161i1; 09-app/ARCHITECTURE.md rules 3
  * and 4). These statements were in core's page and logic files, which may not run SQL (rule 4). They read or write
  * tables a business area owns, so they still go against rule 3 (each counted against the table's owner), and Phase
  * 161l (the tangle undone) moves each one to its owner's data file, reached through that owner's front door or an
@@ -147,7 +147,7 @@ const PROPERTIES_ASSIGNED =
   "OR lower(COALESCE(p.address_line_2, '')) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.town, '')) LIKE ? ESCAPE '\\' " +
   "OR replace(lower(COALESCE(p.postcode, '')), ' ', '') LIKE ? ESCAPE '\\') ORDER BY p.label ASC, p.id ASC LIMIT 25";
 
-// PHASE 134: a claim is found by its reference AND by its company's name, and is named by its company and property.
+// A claim is found by its reference AND by its company's name, and is named by its company and property.
 const CLAIMS_ALL =
   'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name, p.label AS property_label FROM claims c ' +
   'JOIN businesses b ON b.id = c.business_id LEFT JOIN properties p ON p.id = c.property_id ' +

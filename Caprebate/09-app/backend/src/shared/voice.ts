@@ -1,5 +1,5 @@
 /**
- * THE BRAND BOOK'S AVOID LIST, IN ONE PLACE — PHASE 133d, 17 September 2026.
+ * THE BRAND BOOK'S AVOID LIST, IN ONE PLACE.
  *
  * Phase 133c wrote this list inside test/phase133c.test.ts. Phase 133d needs the same rules for the public site, the
  * notices page and the complaint form (03-app/caprebate-brand-check.cjs), and for the engagement letter now that the
@@ -43,9 +43,9 @@ export function avoidHits(text: string): { word: string; at: number; context: st
 }
 
 /**
- * THE PLAIN-WORDS LIST — PHASE 144, 22 September 2026.
+ * THE PLAIN-WORDS LIST.
  *
- * Lakhbir, 18 September 2026: the back office "needs to be readable at a 12-year-old level and to the point". These
+ * The owner: the back office "needs to be readable at a 12-year-old level and to the point". These
  * are words our own design notes used that a person on a screen should never have to read. Each row is
  * [the pattern, the word, what to say instead]. 03-app/caprebate-plain-words-check.cjs reads this list (by parsing
  * this file, so keep each row on the one-line shape below) and fails on any of these words in anything a person reads

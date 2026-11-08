@@ -1,7 +1,7 @@
 /**
- * SIGNING IN: THE STEPS BETWEEN A RIGHT PASSWORD AND A SESSION. Phase 151j, 28 September 2026.
+ * SIGNING IN: THE STEPS BETWEEN A RIGHT PASSWORD AND A SESSION.
  *
- * WHAT LAKHBIR DECIDED, 28 September 2026:
+ * WHAT THE OWNER DECIDED:
  *   - the super user creates a person's account with a TEMPORARY password, shown once, good for seven days; at the
  *     first sign-in the person chooses their own password and sets up a second factor;
  *   - EVERY STAFF LOGIN gives a second factor at every sign-in; a client may choose to;
@@ -19,7 +19,7 @@
  * emailed code is kept only as a hash, for ten minutes. The app's secret is shown to the person once, as a QR code
  * and as text, while they set it up.
  *
- * PHASE 151k, 28 September 2026:
+ *
  *   - THE JSON API WALKS THE SAME STEPS. `/api/login` and `/api/login/step/...` (src/core/server.ts) call these same
  *     functions, with the step's token in the request body instead of the `cb_step` cookie; `describeStep` says what a
  *     step needs, for the page and for the API alike. There is no second implementation.
@@ -29,7 +29,7 @@
  *   - A SIGN-IN CODE'S EMAIL HAS ITS OWN KIND, SIGN_IN_CODE, so that once it has really been sent its words can be
  *     taken out of the outbox (src/integrations/email/email-provider.ts, blankSentSecrets).
  *
- * PHASE 151m, 28 September 2026 — RECOVERY CODES (src/core/recovery-codes.ts; Lakhbir, Word question 232, closed):
+ * RECOVERY CODES:
  *   - TEN ARE MADE WHEN A SECOND STEP IS SET UP, and the answer to that step carries them ONCE (`recovery_codes` on
  *     SESSION or ACCOUNT_DONE), for the page and the API to show. "Make new recovery codes" (`makeNewRecoveryCodes`)
  *     makes ten more and throws every old one away. Only a hash of each is kept.
@@ -74,7 +74,7 @@ type StepRow = {
 type Security = { mfa_method: Method | null; mfa_secret: string | null; mfa_last_step: number | null; password_hash: string };
 
 /**
- * PHASE 151m: `recovery_codes` is set ONCE, on the answer to the step that set a second step up - the only time they
+ * `recovery_codes` is set ONCE, on the answer to the step that set a second step up - the only time they
  * exist as text. `recovery_left` is how many unused codes a person with a second step has, after a sign-in.
  */
 export type StepResult =
@@ -142,13 +142,13 @@ function sendCode(app: App, row: StepRow, user: User): StepResult {
 /** THE START: the password, then either a session or the first step. */
 export async function beginSignIn(app: App, email: string, password: string, source?: string): Promise<
   { readonly kind: 'SESSION'; readonly login: LoginResult } | { readonly kind: 'STEP'; readonly token: string }> {
-  const user = await verifyPassword(app.deps, email, password, source); // PHASE 160e: and from one network address
+  const user = await verifyPassword(app.deps, email, password, source); // And from one network address
   const step = nextSignInStep(app.deps, user.id); // may throw E_TEMPORARY_EXPIRED
   if (step === null) return { kind: 'SESSION', login: startSession(app.deps, user, {}) };
   return { kind: 'STEP', token: openStep(app, user, 'SIGN_IN', step) };
 }
 
-/** After a step: the next one, or the end. PHASE 151m: `codes` are the recovery codes a SETUP just made, passed on once. */
+/** After a step: the next one, or the end. `codes` are the recovery codes a SETUP just made, passed on once. */
 function advance(app: App, row: StepRow, user: User, how: Record<string, unknown>, codes?: readonly string[]): StepResult {
   const next = row.purpose === 'SIGN_IN' ? nextSignInStep(app.deps, user.id) : null;
   if (next === null || (next === 'VERIFY' && (row.step === 'SETUP' || row.step === 'VERIFY'))) {
@@ -190,7 +190,7 @@ export function chooseMethod(app: App, raw0: string | undefined, method: string)
   const { row, user } = open;
   if (row.step !== 'SETUP') return { kind: 'STEP' };
   if (method !== 'EMAIL' && method !== 'APP') return { kind: 'ERROR', why: 'Choose how you would like to get your code.' };
-  // PHASE 151k: the new secret is sealed before it is written, where a key is set; a key that is set and not right refuses.
+  // The new secret is sealed before it is written, where a key is set; a key that is set and not right refuses.
   let pending: string | null = null;
   if (method === 'APP') {
     const sealed = sealSecret(mfaKeyFrom(app.secrets), user.id, newSecret());
@@ -211,7 +211,7 @@ export function resendCode(app: App, raw0: string | undefined): StepResult {
 }
 
 /**
- * ONE TRY AT A CODE, COUNTED - an app or email code, or (Phase 151m) a recovery code: they share the five. Past the
+ * ONE TRY AT A CODE, COUNTED - an app or email code, or a recovery code: they share the five. Past the
  * fifth, the sign-in ends and the answer is GONE.
  */
 function countTry(app: App, row: StepRow, user: User): StepResult | null {
@@ -232,7 +232,7 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
   const s = security(app, user.id);
   const method = row.step === 'SETUP' ? row.pending_method : s?.mfa_method ?? null;
   if (method === null || s === undefined) return { kind: 'ERROR', why: 'Choose how you would like to get your code.' };
-  // PHASE 151k: the app's secret, opened BEFORE a code is counted - a server that cannot open it is not the person's
+  // The app's secret, opened BEFORE a code is counted - a server that cannot open it is not the person's
   // wrong code. A sealed secret with no key, or the wrong key, refuses in words.
   const key = mfaKeyFrom(app.secrets);
   const stored = method === 'APP' ? (row.step === 'SETUP' ? row.pending_secret : s.mfa_secret) : null;
@@ -263,14 +263,14 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
     updateUsersMfaMethodMfaSecretById(app.db, [method, method === 'APP' ? row.pending_secret : null, appStep, app.now(), user.id]);
     app.audit.append({ at: app.now(), kind: 'TWO_FACTOR_SET_UP', outcome: 'ALLOWED', actor_id: user.id, actor_role: user.role,
       object_type: 'user', object_id: user.id, detail: { method, purpose: row.purpose } });
-    // PHASE 151m: a new second step, new recovery codes - every old one goes, and the ten new ones are shown once.
+    // A new second step, new recovery codes - every old one goes, and the ten new ones are shown once.
     const made = replaceRecoveryCodes(app, user.id);
     app.audit.append({ at: app.now(), kind: 'RECOVERY_CODES_MADE', outcome: 'ALLOWED', actor_id: user.id, actor_role: user.role,
       object_type: 'user', object_id: user.id, detail: { because: 'SECOND_STEP_SET_UP', made: made.codes.length, unused_thrown_away: made.voided } });
     return advance(app, row, user, { second_factor: method }, made.codes);
   } else if (appStep !== null) {
     updateUsersMfaLastStepById(app.db, [appStep, user.id]);
-    // PHASE 151k: a secret kept as text from before a key was set is sealed now, on the one occasion it is in hand.
+    // A secret kept as text from before a key was set is sealed now, on the one occasion it is in hand.
     if (key.state === 'KEY' && stored !== null && !isSealed(stored) && secret !== null) {
       const sealed = sealSecret(key, user.id, secret);
       if (sealed.ok) updateUsersMfaSecretById(app.db, [sealed.stored, user.id]);
@@ -280,7 +280,7 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
 }
 
 /**
- * PHASE 151m — A RECOVERY CODE, IN PLACE OF THE APP OR EMAIL CODE, at the VERIFY step only (setting a step up needs the
+ * A RECOVERY CODE, IN PLACE OF THE APP OR EMAIL CODE, at the VERIFY step only (setting a step up needs the
  * step itself). It counts toward the same five wrong codes and works once. The audit row and the email say how many
  * are left, and never the code.
  */
@@ -322,14 +322,14 @@ export function removeOwnTwoFactor(app: App, actor: Actor): { ok: true } | { ok:
   authorise(actor, 'user.change_own_password', { type: 'user', id: actor.id, role: actor.role });
   if (actor.role !== 'CLIENT') return { ok: false, why: 'Every staff login needs a second step. You can change it, but not turn it off.' };
   updateUsersMfaMethodMfaSecretById2(app.db, [app.now(), actor.id]);
-  const cleared = clearRecoveryCodes(app, actor.id); // PHASE 151m: no second step, no recovery codes
+  const cleared = clearRecoveryCodes(app, actor.id); // No second step, no recovery codes
   app.audit.append({ at: app.now(), kind: 'TWO_FACTOR_REMOVED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'user', object_id: actor.id, detail: { by: 'self', recovery_codes_cleared: cleared } });
   return { ok: true };
 }
 
 /**
- * PHASE 151m — "MAKE NEW RECOVERY CODES", from the person's own account: ten new ones, shown once, and every unused old
+ * "MAKE NEW RECOVERY CODES", from the person's own account: ten new ones, shown once, and every unused old
  * one thrown away. Only for a person who has a second step.
  */
 export function makeNewRecoveryCodes(app: App, actor: Actor): { ok: true; codes: readonly string[] } | { ok: false; why: string } {
@@ -341,7 +341,7 @@ export function makeNewRecoveryCodes(app: App, actor: Actor): { ok: true; codes:
   return { ok: true, codes: made.codes };
 }
 
-/** PHASE 151m: how many unused recovery codes this person has. */
+/** How many unused recovery codes this person has. */
 export function ownRecoveryCodesLeft(app: App, actor: Actor): number {
   return recoveryCodesLeft(app, actor.id);
 }
@@ -392,7 +392,7 @@ export function resetTwoFactor(app: App, actor: Actor, user_id: string): User {
   if (user === undefined) throw new AuthError('E_NO_USER', 'no such user');
   authorise(actor, 'user.update', { type: 'user', id: user.id, role: user.role });
   updateUsersMfaMethodMfaSecretById2(app.db, [app.now(), user.id]);
-  const cleared = clearRecoveryCodes(app, user.id); // PHASE 151m: the reset takes the recovery codes with it
+  const cleared = clearRecoveryCodes(app, user.id); // The reset takes the recovery codes with it
   revokeAllSessions(app.deps, user.id, 'TWO_FACTOR_RESET');
   app.audit.append({ at: app.now(), kind: 'TWO_FACTOR_REMOVED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'user', object_id: user.id, detail: { by: 'administrator', recovery_codes_cleared: cleared } });
@@ -407,14 +407,14 @@ function masked(email: string): string {
 }
 
 /**
- * PHASE 151k — WHAT A STEP NEEDS NEXT, ONCE, for the page below and for the JSON API (src/core/server.ts). Undefined when the
+ * WHAT A STEP NEEDS NEXT, ONCE, for the page below and for the JSON API (src/core/server.ts). Undefined when the
  * token opens no step. `needs` is what the person does now:
  *   CHOOSE_PASSWORD   type a password of their own, twice
  *   CHOOSE_METHOD     choose EMAIL or APP
  *   ADD_APP           add the key to their app (shown here, once, while they set it up), then give a code from it
  *   GIVE_CODE         give the code from their email or their app
  * `refused` is set when the app's secret cannot be opened on this server (src/core/mfa-seal.ts); it is said in words.
- * PHASE 151m: `recovery_code` is true where a recovery code may be given instead (the VERIFY step): the page's "Use a
+ * `recovery_code` is true where a recovery code may be given instead (the VERIFY step): the page's "Use a
  * recovery code instead", the API's /api/login/step/recovery.
  */
 export type StepView = {
@@ -450,7 +450,7 @@ export function describeStep(app: App, raw0: string | undefined): StepView | und
   return { ...base, needs: 'GIVE_CODE', method, sent_to: method === 'EMAIL' ? masked(user.email) : null };
 }
 
-/** PHASE 151m: `use` 'recovery' draws the VERIFY step as the recovery-code form ("Use a recovery code instead"). */
+/** `use` 'recovery' draws the VERIFY step as the recovery-code form ("Use a recovery code instead"). */
 export function stepPage(app: App, raw0: string | undefined, error?: string, note?: string, use?: 'recovery'): string | undefined {
   const v = describeStep(app, raw0);
   if (v === undefined) return undefined;
@@ -518,7 +518,7 @@ export function stepPage(app: App, raw0: string | undefined, error?: string, not
 }
 
 /**
- * PHASE 151m — THE RECOVERY CODES, SHOWN ONCE: on the page after a second step is set up, and after "Make new recovery
+ * THE RECOVERY CODES, SHOWN ONCE: on the page after a second step is set up, and after "Make new recovery
  * codes". Nothing keeps them as text, so this page cannot be drawn again: the person saves or prints it now.
  */
 export function recoveryCodesPage(codes: readonly string[], onward: { href: string; label: string }, nav?: Safe): string {
@@ -538,7 +538,7 @@ export function recoveryCodesPage(codes: readonly string[], onward: { href: stri
   });
 }
 
-/** PHASE 151m: how many recovery codes are left, in words, for "Your second step" and the page after sign-in. */
+/** How many recovery codes are left, in words, for "Your second step" and the page after sign-in. */
 export function recoveryCodesWords(left: number): { text: string; low: boolean } {
   const low = left <= RECOVERY_CODES_LOW;
   if (left === 0) return { text: 'You have no recovery codes left. Make new ones now, so you can still sign in if you lose your phone.', low };

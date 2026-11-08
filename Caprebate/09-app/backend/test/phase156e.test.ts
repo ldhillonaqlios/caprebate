@@ -38,7 +38,8 @@ describe('the records of what Lakhbir said', () => {
     assert.equal(CALL_POLICIES['CLAUDE_DOCUMENTS']?.international_transfer_approved, true);
     assert.deepEqual(CLAUDE_SWITCHES, { DOCUMENT_READING: false, SCANNED_PAGES: false });
     const src = readFileSync(join(import.meta.dirname, '..', 'src', 'integrations', 'connectors', 'sources.ts'), 'utf8');
-    assert.match(src, /Approved FOR TESTING on 5 October 2026 - Sadique Maskeen/);
+    // PHASE 161i1: the approver by role, not by name (names of people are out of the code's comments).
+    assert.match(src, /Approved FOR TESTING on 5 October 2026 - the data protection officer/);
     assert.match(src, /"Yes, for testing"/);
     // The key never reaches the test website: it is not one of the names the website reads.
     const api = readFileSync(join(import.meta.dirname, '..', '..', '..', '..', 'api', 'index.mjs'), 'utf8');

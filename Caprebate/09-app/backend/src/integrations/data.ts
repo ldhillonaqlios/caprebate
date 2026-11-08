@@ -1,5 +1,5 @@
 /**
- * THE OUTSIDE SERVICES' DATA FILE (Phase 161i1, 8 Nov 2026; 09-app/ARCHITECTURE.md rule 3). The only file that runs
+ * THE OUTSIDE SERVICES' DATA FILE. The only file that runs
  * SQL on the tables architecture/tables.json gives the outside services: the outbox and the mailbox, the register
  * records and research runs, WhatsApp and video meetings. Every other file asks through these functions, from another
  * area through the outside services' front door. Each statement is the one its caller ran before, text unchanged.

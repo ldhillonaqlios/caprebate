@@ -11,10 +11,10 @@
  *     user" — the second is an account-enumeration oracle, and so is a login
  *     that returns faster for an unknown address than for a wrong password.
  *   A reset token is single-use and expiring, and only its HASH is stored.
- *   PHASE 151j: A PASSWORD ALONE NEVER OPENS A STAFF ACCOUNT. `login` issues a session only when nothing is left to
+ *   A PASSWORD ALONE NEVER OPENS A STAFF ACCOUNT. `login` issues a session only when nothing is left to
  *     do; a temporary password, or a second factor to set up or give, is a step, and `login` refuses with
  *     E_SECOND_STEP rather than skip it. The steps are walked only by src/core/sign-in.ts - by the website and, since
- *     Phase 151k, by the JSON API's /api/login and /api/login/step routes (src/core/server.ts), on the same functions.
+ *     By the JSON API's /api/login and /api/login/step routes (src/core/server.ts), on the same functions.
  */
 
 import { randomBytes } from 'node:crypto';
@@ -52,12 +52,12 @@ const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const RESET_TTL_MS = 30 * 60 * 1000;
 
 /**
- * PHASE 151j — WHO MUST GIVE A SECOND FACTOR. Lakhbir, 28 September 2026: every staff login; a client may choose to.
+ * WHO MUST GIVE A SECOND FACTOR. The owner: every staff login; a client may choose to.
  *   STAFF   the rule, and the default: a staff login with no second factor set up must set one up at sign-in.
  *   OFF     no second step for anyone, and a temporary password is not asked to change - the setting the older
  *           test files pass, each saying so, because they test other things through a password sign-in. Never set
  *           in src/, api/ or a tool a person runs to use the system.
- *   STAFF_EXCEPT_INVENTED   (29 September 2026, Lakhbir: "stop it for the @example.invalid emails") STAFF for every
+ *   STAFF_EXCEPT_INVENTED   STAFF for every
  *           login, except that one whose address is at the reserved domain example.invalid asks for no second step.
  *           That domain can never receive mail (RFC 2606), so only the invented seed logins carry it. Set by the test
  *           website ONLY (api/index.mjs), never by default and never for production. A temporary password is still
@@ -77,7 +77,7 @@ export type Deps = {
   audit: AuditLog;
   hasher: PasswordHasher;
   now: () => string;
-  /** PHASE 151j. Absent is STAFF: the safe reading of a Deps built by hand. */
+  /** Absent is STAFF: the safe reading of a Deps built by hand. */
   twoFactor?: TwoFactorPolicy;
   /** Injected so a test can make a token predictable without weakening the real one. */
   randomToken?: () => string;
@@ -102,7 +102,7 @@ function cookieFor(value: string, expires: string): SessionCookie {
 export const LOGIN_LIMIT = 5;
 export const RESET_LIMIT = 3;
 /**
- * PHASE 160e, 19 October 2026: FROM ONE NETWORK ADDRESS, as well as per email. The stress test sent 100 wrong sign-ins
+ * FROM ONE NETWORK ADDRESS, as well as per email. The stress test sent 100 wrong sign-ins
  * on 100 different addresses from one machine and none was slowed (one password tried on many logins). These count
  * every try from one address in the window, whatever the email; an office of a dozen people signing in is far below.
  */
@@ -130,7 +130,7 @@ export type LoginResult = { user: User; cookie: SessionCookie; session_id: strin
 
 export async function login(d: Deps, email: string, password: string): Promise<LoginResult> {
   const found = await verifyPassword(d, email, password);
-  // PHASE 151j: a password alone never skips a step. Only src/core/sign-in.ts walks them (the website and the JSON API).
+  // A password alone never skips a step. Only src/core/sign-in.ts walks them (the website and the JSON API).
   const step = nextSignInStep(d, found.id);
   if (step !== null) {
     d.audit.append({
@@ -160,7 +160,7 @@ export function startSession(d: Deps, user: User, detail: Record<string, unknown
 }
 
 /**
- * PHASE 151j — WHAT IS STILL TO DO BEFORE A SESSION, for a person whose password was right.
+ * WHAT IS STILL TO DO BEFORE A SESSION, for a person whose password was right.
  *   NEW_PASSWORD   their password is a temporary one the super user gave them
  *   SETUP          they must give a second factor and have none set up (every staff login, under STAFF)
  *   VERIFY         they have one: an emailed code, or their authenticator app
@@ -191,7 +191,7 @@ export function nextSignInStep(d: Deps, user_id: string): SignInStep | null {
  * stored hash upgraded. It issues NOTHING — a session comes from `login` or from the steps.
  */
 export async function verifyPassword(d: Deps, email: string, password: string, source?: string): Promise<User> {
-  // PHASE 160e: the network address first, hashed like the email (it too is personal data). Absent: not counted.
+  // The network address first, hashed like the email (it too is personal data). Absent: not counted.
   if (source !== undefined && !rateLimit(d, 'login-from:' + hashToken(source), LOGIN_SOURCE_LIMIT)) {
     d.audit.append({ at: d.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'login_from_one_address' } });
     throw new AuthError('E_RATE_LIMITED', GENERIC_AUTH_FAILURE);
@@ -271,7 +271,7 @@ export function authenticate(d: Deps, rawToken: string | undefined): Authenticat
   const user = findById(d.db, row.user_id);
   if (user === undefined || user.disabled) return undefined;
 
-  // FASTER CLICKS 2, 3 October 2026: "last seen" is written at most once a minute, not twice a click (the server and the
+  // FASTER CLICKS 2: "last seen" is written at most once a minute, not twice a click (the server and the
   // page router each check the session). On the test website a write is a trip to the lasting database's primary, and
   // it made the click forget every read it had (src/core/db.ts withReadMemo). Only Admin's Home reads it — "working now" is
   // seen in the last 30 minutes, "last signed in" is to the minute — so a minute's grain changes nothing shown. Expiry
@@ -345,7 +345,7 @@ export async function changeOwnPassword(
 export function requestPasswordReset(
   d: Deps, email: string, source?: string,
 ): { accepted: true; user?: User; plaintextToken?: string } {
-  // PHASE 160e: many addresses' resets asked from one network address are slowed too, so nobody can fill inboxes.
+  // Many addresses' resets asked from one network address are slowed too, so nobody can fill inboxes.
   if (source !== undefined && !rateLimit(d, 'reset-from:' + hashToken(source), RESET_SOURCE_LIMIT)) {
     d.audit.append({ at: d.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'password_reset_from_one_address' } });
     return { accepted: true }; // still generic
@@ -387,7 +387,7 @@ export async function completePasswordReset(d: Deps, rawToken: string, next: str
   d.db.tx(() => {
     updatePasswordResetTokensUsedAtById(d.db, [d.now(), row.id]);
     setPasswordHash(d.db, d.now, row.user_id, hash);
-    // PHASE 151j: a password the person chose replaces a temporary one. The second factor stays as it was.
+    // A password the person chose replaces a temporary one. The second factor stays as it was.
     updateUsersPasswordTemporaryUntilById2(d.db, [row.user_id]);
   });
   revokeAllSessions(d, row.user_id, 'PASSWORD_RESET');

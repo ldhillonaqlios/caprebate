@@ -1,5 +1,5 @@
 /**
- * GOOGLE ANALYTICS ON THE PUBLIC WEBSITE — THE CONFIGURATION SIDE. Phase 146f, 22 September 2026.
+ * GOOGLE ANALYTICS ON THE PUBLIC WEBSITE — THE CONFIGURATION SIDE.
  *
  * The wrapper, the ten call sites and the cookie choice are in `Caprebate site.html` (CB_TRACK and SITE_CONSENT).
  * This file is the back end's half: it reads the measurement id from the key file (GA4_MEASUREMENT_ID, owner
@@ -44,7 +44,7 @@ export function withMeasurementId(html: string, id: string | null): string {
 }
 
 /**
- * PHASE 161g, 5 November 2026 — GOOGLE ANALYTICS ONLY AFTER A CLICK (Lakhbir: "Google Analytics only after a click").
+ * GOOGLE ANALYTICS ONLY AFTER A CLICK.
  *
  * The served site page, for one visitor. `accepted` is `optionalAllowed` (src/web/legal-pages.ts): true only when the
  * visitor's `cb_cookies` answer is "all", which only a click on "Accept all" sets. Until then the page is given NO

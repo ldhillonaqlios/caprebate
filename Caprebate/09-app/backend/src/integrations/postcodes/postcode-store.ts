@@ -1,7 +1,7 @@
 /**
  * Caprebate — WHERE THE POSTCODE TABLE LIVES AT RUNTIME.
  *
- * Board item 12993800139, Phase 110, 9 September 2026.
+ * Board item 12993800139, Phase 110.
  *
  * ─────────────────────────────────────────────────────────────────────────
  * THE PROBLEM THIS FILE IS THE ANSWER TO
@@ -26,7 +26,7 @@
  *
  * Measured by `caprebate-postcode-store-costing.cjs`, on synthetic data at
  * the real shape and scale (2,657,599 postcodes, 352 authorities), macOS
- * arm64, node v24.20.0, 9 September 2026. RE-RUN IT RATHER THAN QUOTING IT.
+ * arm64, node v24.20.0. RE-RUN IT RATHER THAN QUOTING IT.
  *
  *   (a) JSON IN MEMORY
  *         serialised file          290.3 MB
@@ -90,7 +90,7 @@
  * having whatever the storage is — so it lives in the resolver, driven by
  * the served set, in `caprebate-location-key.ts`. Buying it by deleting rows
  * would have made the served set a property of a data file: flipping
- * CB_JURIS.SERVED to include Scotland — one boolean, Lakhbir's to flip —
+ * CB_JURIS.SERVED to include Scotland — one boolean, the owner's to flip —
  * would then silently require a re-ingest, and until somebody ran one every
  * Scottish client would be refused by a table that no longer meant to
  * refuse them. The decision belongs in CB_JURIS and nowhere else.

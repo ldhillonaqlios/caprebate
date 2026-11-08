@@ -61,7 +61,7 @@ const USERS: readonly { email: string; display_name: string; role: AppRole }[] =
  * THE CONTACT CHANNEL IS CB_BOOKING'S, AND IT USED NOT TO BE.
  *
  * Until Phase 105 this list carried 'virtual' and 'post'. 'virtual' is VIDEO,
- * which CB_BOOKING deliberately removed on 3 September 2026 and whose own
+ * which CB_BOOKING deliberately removed and whose own
  * comment says "do not quietly re-add it here"; 'post' was never a channel at
  * all. Neither is a thing a client can choose, so the seed was demonstrating a
  * shape the funnel cannot produce — and a developer reads the seed as the
@@ -155,8 +155,8 @@ export async function seed(db: Db, hasher: PasswordHasher, now: () => string): P
 }
 
 /**
- * PHASE 151e (line 7), 28 September 2026 — EVERY INVENTED CLIENT HAS A CONTACT WE CAN REACH. Contact details are not
- * optional (line 6), so a client with none is flagged; Lakhbir asked for one invented contact on each seeded client
+ * — EVERY INVENTED CLIENT HAS A CONTACT WE CAN REACH. Contact details are not
+ * optional (line 6), so a client with none is flagged; the owner asked for one invented contact on each seeded client
  * that had none, so the demo and the test website show clients as they should be. Dunmarrow keeps its two. A CHANNEL,
  * not a person, as everywhere in this file: a role name and a role mailbox, and a number in Ofcom's drama range.
  */
@@ -176,7 +176,7 @@ function seedAContactForEveryClient(db: Db, now: () => string, idOf: Map<string,
 }
 
 /**
- * A CLAIM AT THE INVOICE STAGE, READY FOR OUR FEE — the CRM follow-on, 12 September 2026. Invented, like everything here.
+ * A CLAIM AT THE INVOICE STAGE, READY FOR OUR FEE — the CRM follow-on. Invented, like everything here.
  *
  * WHY IT EXISTS. No seeded claim stood at INVOICE, so "Raise our fee" could not be shown in training, and the guide's
  * exercise for it could not be run. This is a second property of Dunmarrow's — a branch surgery, on the organisation whose
@@ -361,7 +361,7 @@ function seedPipeline(
       'INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at) VALUES (?, ?, ?, ?, ?)',
       [newId(), get(k), state, state === 'SIGNED' ? t : null, t],
     );
-    // PHASE 146f: assertSignedEngagement reads the signature record, so a seeded signed letter carries one — marked SEED.
+    // AssertSignedEngagement reads the signature record, so a seeded signed letter carries one — marked SEED.
     if (state === 'SIGNED') seedSignatureRecord({ db, audit: new AuditLog(db), now: () => t, newId }, get(k), t);
   }
 
@@ -432,9 +432,9 @@ function seedPipeline(
    * Caprebate's own finance. Not VAT registered — confirmed, not assumed.
    *
    * THE FEE IS 3% OF THE CLAIM VALUE AND IS WRITTEN OUT RATHER THAN INHERITED.
-   * £300,000 of allowances identified, £9,000 of fee. Phase 132e, 16 September
+   * £300,000 of allowances identified, £9,000 of fee. 16 September
    * 2026: a flat 3%, no bands and no minimum (it was 5% and £15,000 from Q55,
-   * 3 September 2026). The rate is on the ALLOWANCES, not on the tax saved — a fourfold difference
+   *). The rate is on the ALLOWANCES, not on the tax saved — a fourfold difference
    * for the same job, and a seed that got it wrong would teach the wrong basis
    * to the first developer who read it.
    *
@@ -500,7 +500,7 @@ function seedRegisterRecords(db: Db, now: () => string, idOf: Map<string, string
   const b2 = idOf.get('b2');
   const b4 = idOf.get('b4');
   if (b2 === undefined || b4 === undefined) throw new Error('seed: businesses missing');
-  // Phase 139: a property register's record says which property it is about — Dunmarrow's main site, the one it describes.
+  // A property register's record says which property it is about — Dunmarrow's main site, the one it describes.
   const site = db.get<{ id: string }>('SELECT id FROM properties WHERE business_id = ? ORDER BY created_at ASC, rowid ASC LIMIT 1', [b4])?.id ?? null;
 
   ingestRegisterRecord(db, newId, now, b4, {
@@ -533,7 +533,7 @@ function seedRegisterRecords(db: Db, now: () => string, idOf: Map<string, string
 }
 
 /**
- * THE CRM BACKBONE — CRM 1 of 10, 10 September 2026. Invented, like everything
+ * THE CRM BACKBONE — CRM 1 of 10. Invented, like everything
  * above, and it carries NO PERSONAL NAMES: a contact is named for its role, the
  * way the users are, and every address is a ZZ postcode.
  *
@@ -581,7 +581,7 @@ function seedCrm(
    * received, and the bank-details confirmation NEVER ASKED; sent and received in
    * full, confirmed on another channel. £300,000 of allowances, £9,000 of fee —
    * 3% on the allowances, as the reasoning above says. No VAT: the recorded
-   * position is not registered. DUE 14 DAYS AFTER THE INVOICE DATE: clause 4's payment terms, completed by Phase 132e.
+   * position is not registered. DUE 14 DAYS AFTER THE INVOICE DATE: clause 4's payment terms, completed.
    *
    * WRITTEN AS ROWS, as every seeded row is — the claims are not at the invoice
    * stage, so the store would rightly refuse to raise them. The numbers come from
@@ -611,7 +611,7 @@ function seedCrm(
         'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [invoiceId, get(inv.key), claim.id, 'FEE', 30_000_000, 900_000, 0.03, inv.sent_on === null ? 'RAISED' : 'SENT', 'UNPAID',
         'Cap Rebate is not VAT registered; no VAT is charged on this fee', 'finance-setting-vat-position-2026-08-28', 0,
-        // Phase 132e: clause 4 now states the payment terms — within 14 days of the date of the invoice.
+        // Clause 4 now states the payment terms — within 14 days of the date of the invoice.
         '2026-09-02', '2026-09-16', 'due within 14 days of the invoice, as clause 4 states',
         inv.sent_on, '3% of the allowances identified, £300,000.00 — £9,000.00 (the seed); every fee control off', null, raisedBy, t,
         'company', null, inv.split === null ? null : inv.split[0], inv.split === null ? null : inv.split[1], null],
@@ -680,8 +680,8 @@ function seedCrm(
   });
   recordOpened({ db, now, newId }, null, second.id, 'ENQUIRY',
     'opened by staff on a property; its enquiry checks are recorded on the claim');
-  /* PHASE 134 — ONE COMPANY, TWO PROPERTIES, THREE CLAIMS. The annexe gets a claim of its own, so Elverton shows the shape
-     Lakhbir asked about: one client page, three claim tiles, one timeline, and one portal listing three claims. */
+  /* ONE COMPANY, TWO PROPERTIES, THREE CLAIMS. The annexe gets a claim of its own, so Elverton shows the shape
+     the owner asked about: one client page, three claim tiles, one timeline, and one portal listing three claims. */
   const third = insertClaim(db, now, newId, {
     business_id: b5, property_id: annexe, assessment_id: null, workstream: 'PLANT_AND_MACHINERY',
     stage: 'ENQUIRY', owner_id: sales, surveyor_id: null,
@@ -693,7 +693,7 @@ function seedCrm(
 }
 
 /**
- * STAFF TASKS AND NEXT ACTIONS — CRM 3 of 10, 11 September 2026. Invented, and
+ * STAFF TASKS AND NEXT ACTIONS — CRM 3 of 10. Invented, and
  * naming nobody: every task is about a claim, an organisation, a contact's role
  * or a lead, and is owned by a role's user.
  *
@@ -772,7 +772,7 @@ function seedTasks(
 }
 
 /**
- * LEADS — CRM 2 of 10, 10 September 2026. Invented, and carrying no person.
+ * LEADS — CRM 2 of 10. Invented, and carrying no person.
  *
  * EVERY ORGANISATION'S LEAD FIRST, derived exactly as migration 010 backfills an
  * existing database — `backfillLeadFor` is that INSERT — so all six are

@@ -50,6 +50,6 @@ test('161i: core, shared and integrations each have a front door, and other area
   const m = JSON.parse(readFileSync(join(BACKEND, 'architecture', 'modules.json'), 'utf8')) as { doors: Record<string, string> };
   for (const a of ['core', 'shared', 'integrations']) {
     assert.equal(m.doors[a], `src/${a}/index.ts`);
-    assert.match(readFileSync(join(BACKEND, m.doors[a] as string), 'utf8'), /FRONT DOOR \(Phase 161i/);
+    assert.match(readFileSync(join(BACKEND, m.doors[a] as string), 'utf8'), /FRONT DOOR/);
   }
 });

@@ -1,8 +1,8 @@
 /**
- * THE BUILDING OUTLINES FOR THE REPORT'S SITE PLAN — Ordnance Survey's free maps. 2 October 2026, the survey pack, stage 6.
+ * THE BUILDING OUTLINES FOR THE REPORT'S SITE PLAN — Ordnance Survey's free maps., the survey pack, stage 6.
  *
- * Lakhbir, 1 Oct 2026: the report's cover shows the building from Ordnance Survey's free building outlines, and never the
- * site boundary (INSPIRE, src/integrations/connectors/inspire.ts, which stays on our own sums only). 2 Oct 2026, asked how the
+ * The owner: the report's cover shows the building from Ordnance Survey's free building outlines, and never the
+ * site boundary (INSPIRE, src/integrations/connectors/inspire.ts, which stays on our own sums only)., asked how the
  * client's building is chosen: "Automatic" — the building the postcode's point falls in, else the nearest one.
  *
  * TWO CALLS, AND WHAT EACH SENDS:

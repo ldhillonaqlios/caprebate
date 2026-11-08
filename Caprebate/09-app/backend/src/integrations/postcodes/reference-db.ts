@@ -1,6 +1,6 @@
 /**
  * THE REFERENCE DATABASE — the ONS postcode table and Ordnance Survey's OSTN15 grid, where the live website can read
- * them. Phase 161h, 7 November 2026 (the live website on Vercel; the developer question pack, D12).
+ * them.
  *
  * WHY A DATABASE OF ITS OWN. A Vercel function has no disk that lasts and cannot carry a 75 MB table in its bundle, so
  * the two big files that used to sit on a server's disk (CAPREBATE_POSTCODE_DB and CAPREBATE_OSTN15_FILE) live in ONE

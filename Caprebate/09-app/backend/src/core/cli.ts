@@ -9,15 +9,15 @@
  *   node src/core/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
  *   node src/core/cli.ts read-mailbox      read new replies to contact@caprebate.co.uk, read-only (INBOUND_EMAIL; off, so none)
  *   node src/core/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
- *   node src/core/cli.ts sweep-enquiries   delete every closed website enquiry past its period (ENQUIRY_RETENTION, Phase 153c; off, so none)
- *   node src/core/cli.ts import-premises <CQC_CARE_DIRECTORY|NHS_ODS_DENTAL|NHS_ODS_GP> <file> --by <user id>   healthcare premises, no names (Phase 153c)
- *   node src/core/cli.ts sector-ranges     propose each sector's range from approved survey packs; changes nothing (Phase 153e)
+ *   node src/core/cli.ts sweep-enquiries   delete every closed website enquiry past its period
+ *   node src/core/cli.ts import-premises <CQC_CARE_DIRECTORY|NHS_ODS_DENTAL|NHS_ODS_GP> <file> --by <user id>   healthcare premises, no names
+ *   node src/core/cli.ts sector-ranges     propose each sector's range from approved survey packs; changes nothing
  *   node src/core/cli.ts sweep-land-boundaries   delete every kept land boundary file past the licence's 35 days
- *   node src/core/cli.ts seal-app-secrets  seal every authenticator app secret still kept as text (CAPREBATE_MFA_KEY, Phase 151k)
- *   CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup (Phase 151g)
+ *   node src/core/cli.ts seal-app-secrets  seal every authenticator app secret still kept as text
+ *   CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup
  *   node src/core/cli.ts smoke-switched-on <SOURCE> --who W --why Y   record a switch-on; the count of three starts again
- *   CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke HMLR_INSPIRE --who W --why Y   one council's land boundary file, the same way (Phase 151l)
- *   CAPREBATE_LOCAL_ZOOM=1 node src/core/cli.ts zoom-call-length <meeting id>   ask Zoom how long one call lasted (Phase 156d)
+ *   CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke HMLR_INSPIRE --who W --why Y   one council's land boundary file, the same way
+ *   CAPREBATE_LOCAL_ZOOM=1 node src/core/cli.ts zoom-call-length <meeting id>   ask Zoom how long one call lasted
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */
@@ -51,7 +51,7 @@ const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
 async function main(): Promise<number> {
   const cmd = process.argv[2];
 
-  /* PHASE 161c: the same start-up check as the server, so a command run by a timer on the live server will not read a
+  /* The same start-up check as the server, so a command run by a timer on the live server will not read a
      key file others could open either. A warning anywhere else. */
   const keyCheck = keyFileStartCheck();
   for (const line of keyCheck.lines) console.error(line);
@@ -101,7 +101,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'sweep-originals') {
-    /* PHASE 140. KEEP_ORIGINALS is off, so no original is ever kept and this deletes nothing. It is here so the day the
+    /* KEEP_ORIGINALS is off, so no original is ever kept and this deletes nothing. It is here so the day the
        switch goes on, a scheduled run of this one line is all the hosting needs to add. */
     const db = new Db(DEFAULT_DB);
     try {
@@ -115,7 +115,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'sweep-messages') {
-    /* PHASE 142a. MESSAGE_RETENTION is off, so this deletes nothing and says why. The day the data protection officer
+    /* MESSAGE_RETENTION is off, so this deletes nothing and says why. The day the data protection officer
        sets the periods and it is switched on, a scheduled run of this one line applies them. */
     const db = new Db(DEFAULT_DB);
     try {
@@ -129,7 +129,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'sweep-enquiries') {
-    /* PHASE 153c (Word question 222). ENQUIRY_RETENTION is off, so this deletes nothing and says why. */
+    /* ENQUIRY_RETENTION is off, so this deletes nothing and says why. */
     const db = new Db(DEFAULT_DB);
     try {
       const { sweepEnquiries, ENQUIRY_RETENTION } = await import('../web/enquiry-retention.ts');
@@ -143,7 +143,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'import-premises') {
-    /* PHASE 153c (Word question 183). Business name, address, sector and source only; a name that may be a person's is
+    /* Business name, address, sector and source only; a name that may be a person's is
        held back. Nothing reads the list to contact anyone. */
     const [source, file] = [process.argv[3], process.argv[4]];
     const byAt = process.argv.indexOf('--by');
@@ -168,7 +168,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'import-register') {
-    /* PHASE 155 (lines 1-2). The Welsh or Scottish care regulator's downloaded list into a table on this server
+    /* The Welsh or Scottish care regulator's downloaded list into a table on this server
        (src/web/register-files.ts). Importing switches nothing on: each lookup stays behind its own switch, off. */
     const [source, file] = [process.argv[3], process.argv[4]];
     const byAt = process.argv.indexOf('--by');
@@ -198,8 +198,8 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'import-bcis-index') {
-    /* PHASE 155 (line 4). The BCIS index from a file Lakhbir downloads, kept OUTSIDE the repository (src/web/bcis-index.ts). */
-    /* PHASE 159f: --tpi names it BCIS's All-in Tender Price Index, the series the pack's drafts are indexed by. */
+    /* The BCIS index from a file the owner downloads, kept OUTSIDE the repository (src/web/bcis-index.ts). */
+    /* --tpi names it BCIS's All-in Tender Price Index, the series the pack's drafts are indexed by. */
     const args = process.argv.slice(3);
     const tpi = args.includes('--tpi');
     const file = args.find((x) => !x.startsWith('--'));
@@ -214,7 +214,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'import-bcis-data') {
-    /* PHASE 159f. BCIS's exports — the average prices by building function (required), the elemental analyses and the
+    /* BCIS's exports — the average prices by building function (required), the elemental analyses and the
        location factors — kept OUTSIDE the repository (src/web/bcis-data.ts). The pack drafts its rates from them. */
     const args = process.argv.slice(3);
     const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
@@ -232,7 +232,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'sector-ranges') {
-    /* PHASE 153e (Word question 138). Reads the approved survey packs and proposes a range per sector, supported living
+    /* Reads the approved survey packs and proposes a range per sector, supported living
        per trigger. It changes no band: a person changes the engine, with the surveyor's agreement. */
     const db = new Db(DEFAULT_DB);
     try {
@@ -248,7 +248,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'seal-app-secrets') {
-    /* PHASE 151k. The key comes from the key file (src/core/secrets.ts), never from this command line. With no key set nothing
+    /* The key comes from the key file (src/core/secrets.ts), never from this command line. With no key set nothing
        changes; a key that is not right changes nothing and says so. Never prints a secret or the key. */
     const k = mfaKeyFrom(processSecrets());
     const db = new Db(DEFAULT_DB);
@@ -265,7 +265,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'reseal-app-secrets') {
-    /* PHASE 161h: changing CAPREBATE_MFA_KEY. The OLD key in CAPREBATE_MFA_KEY_OLD and the NEW one in CAPREBATE_MFA_KEY,
+    /* Changing CAPREBATE_MFA_KEY. The OLD key in CAPREBATE_MFA_KEY_OLD and the NEW one in CAPREBATE_MFA_KEY,
        each 32 bytes as base64, both from the environment of this one command; the database from CAPREBATE_DB (with
        CAPREBATE_DB_TOKEN for the live Turso database). All or nothing. Never prints a secret or a key. */
     const { resealSecrets } = await import('./mfa-seal.ts');
@@ -286,7 +286,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'sweep-land-boundaries') {
-    /* PHASE 151a. A kept council file is deleted when it is next asked for after its time; this deletes the ones
+    /* A kept council file is deleted when it is next asked for after its time; this deletes the ones
        nobody asks for again, so none outlives the licence's days. With no store set up, nothing is kept and nothing is
        deleted. A daily scheduled run of this one line is all the hosting needs to add. */
     const store = inspireStoreFromEnv();
@@ -300,12 +300,12 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'send-outbox') {
-    /* PHASE 141. EMAIL_SENDING is off, so this sends nothing and says why. The day it is on, a scheduled run of this line
+    /* EMAIL_SENDING is off, so this sends nothing and says why. The day it is on, a scheduled run of this line
        retries anything that could not be sent at the moment it was saved. */
     const db = new Db(DEFAULT_DB);
     try {
       const login = smtpLoginFromKeyFile();
-      // 2 Oct 2026: only the test website sends (src/integrations/connectors/place.ts), unless started with CAPREBATE_LOCAL_EMAIL=1.
+      // Only the test website sends (src/integrations/connectors/place.ts), unless started with CAPREBATE_LOCAL_EMAIL=1.
       const place = emailPlaceRefusal({ live: true });
       if (place !== null) { console.log(`Emails are not being sent: ${place}`); return 0; }
       const store = new FsObjectStore({ root: process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '..', '.documents'), sealKey: sealKeyFromEnv() });
@@ -323,7 +323,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'read-mailbox') {
-    /* PHASE 142. INBOUND_EMAIL is off, so this reads nothing and says why. The day it is on, a scheduled run of this line
+    /* INBOUND_EMAIL is off, so this reads nothing and says why. The day it is on, a scheduled run of this line
        files each reply that answers one of our emails onto its company's chat, and queues the rest for staff. */
     const db = new Db(DEFAULT_DB);
     try {
@@ -341,7 +341,7 @@ async function main(): Promise<number> {
   }
 
   /* ------------------------------------------------------------------ *
-   * PHASE 146g — THE LIVE SMOKE TEST. Does this account, this key and this address actually work?
+   * THE LIVE SMOKE TEST. Does this account, this key and this address actually work?
    *
    * Every suite runs on recorded answers with no key and no network, which proves the code and proves nothing about
    * an account somebody has just opened. This makes ONE real call to ONE service and says whether the service took
@@ -350,7 +350,7 @@ async function main(): Promise<number> {
    * IT NEEDS CAPREBATE_LIVE_SMOKE=1, the same shape as the seed's own confirmation: a live call is not something to
    * make by mistyping a command. It opens no gate and changes no switch that ships.
    *
-   * PHASE 151g, 28 September 2026: IT NOW KEEPS LAKHBIR'S FIVE CONDITIONS (Word question 170, answered 25 September
+   * IT NOW KEEPS THE OWNER'S FIVE CONDITIONS (Word question 170, answered 25 September
    * 2026) as refusals, not as a printed warning — who and why required, a log outside the repository that keeps only
    * the connector, the time, PASS or NO, who and why, three lookups per connector each time it is switched on, never
    * a client's values, and never a demonstration. src/integrations/connectors/test-lookups.ts does all of it; this hands it the
@@ -363,7 +363,7 @@ async function main(): Promise<number> {
     });
   }
 
-  /* PHASE 151g. A person records that a connector has been switched on: one line in the test lookup log, and the only
+  /* A person records that a connector has been switched on: one line in the test lookup log, and the only
      way that connector's count of three test lookups starts again. It makes no call and changes no switch. */
   if (cmd === 'smoke-switched-on') {
     return runSwitchedOnCommand(process.argv.slice(3), process.env, {
@@ -371,7 +371,7 @@ async function main(): Promise<number> {
     });
   }
 
-  /* PHASE 156d, 5 October 2026. Ask Zoom how long ONE call lasted and how many joined: Phase 156d's step B1, to learn
+  /* Ask Zoom how long ONE call lasted and how many joined: Phase 156d's step B1, to learn
      whether our free Zoom plan gives it. Read only; it makes, moves and keeps nothing, and prints two numbers or Zoom's
      own code and words, never a name or an email. Like every Zoom call from a copy that is not the test website, it
      needs CAPREBATE_LOCAL_ZOOM=1 (src/integrations/connectors/zoom.ts, zoomPlaceRefusal). The audit line goes to a scratch log. */

@@ -1,5 +1,5 @@
 /**
- * A REFUSED FORM KEEPS WHAT WAS TYPED — PHASE 133c, 17 September 2026 (B6).
+ * A REFUSED FORM KEEPS WHAT WAS TYPED.
  *
  * Until this phase a refusal landed on a separate "Not saved" page with a "Go back" link, and whatever the person had
  * typed was gone. `problem()` in src/core/staff.ts now redraws the page the form was on — the ordinary GET, under the
@@ -10,7 +10,7 @@
  * back. When the form cannot be found on the page (the refusal came from somewhere else), it returns null and the caller
  * shows the plain refusal with the typed values listed, so nothing typed is lost either way.
  *
- * THE MESSAGE SITS BESIDE THE FIELD IT IS ABOUT — PHASE 133d (D4). Phase 133c put it at the top of the form, because the
+ * THE MESSAGE SITS BESIDE THE FIELD IT IS ABOUT. Phase 133c put it at the top of the form, because the
  * stores refused with a sentence and no field name. The ten most-used forms' stores now name the posted field a refusal
  * is about (`field` on the refusal: the task, the next action, a lead, an enquiry check, a claim move, the claim, the
  * organisation, a contact, a property, a document request). Where the form holds that field, the message is drawn

@@ -1,19 +1,19 @@
 /**
- * EMAIL_SENDING — ACTUALLY SENDING AN EMAIL. BUILT, AND SWITCHED OFF. Phase 141, 21 September 2026.
+ * EMAIL_SENDING — ACTUALLY SENDING AN EMAIL. BUILT, AND SWITCHED OFF.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHY IT IS OFF
  *
- * Every email this build writes goes to the outbox (src/integrations/email/email.ts), and nothing leaves. Lakhbir wants staff to
+ * Every email this build writes goes to the outbox (src/integrations/email/email.ts), and nothing leaves. the owner wants staff to
  * free-type emails from contact@caprebate.co.uk. Sending them for real needs three things this build cannot decide:
  *
- *   1. an email provider chosen — a supplier, so Lakhbir's decision;
+ *   1. an email provider chosen — a supplier, so the owner's decision;
  *   2. that provider named as a processor in the privacy notice AND in clause 7 of the engagement letter — the Phase 115
  *      rule: nothing carries client data through a processor the client was not told about;
  *   3. the contact@caprebate.co.uk mailbox existing, with SPF, DKIM and DMARC set on caprebate.co.uk — without them the
  *      mail is marked as spam or refused, and anyone could send mail that looks like ours.
  *
- * PHASE 151, 24 September 2026: the provider question (Word question 186) is answered and closed - IONOS - and the
+ * The provider question (Word question 186) is answered and closed - IONOS - and the
  * mailbox exists: contact@caprebate.co.uk, on IONOS, with SPF, DKIM (s1-ionos, s2-ionos) and DMARC (p=none, so reports
  * only) published on caprebate.co.uk, read by DNS that day. What is left before sending is who reads the mailbox (Word
  * question 216) and one test email (Word question 217), whose title is quoted exactly here:
@@ -32,10 +32,10 @@
  * THE ADAPTER BUILT IS SMTP OVER TLS, because the recommendation is to send through the mailbox's own host — IONOS,
  * which the privacy notice already names as "our email" — so condition 2 needs no new processor and every reply lands
  * in the same mailbox. It is a small, dependency-free client (EHLO, AUTH PLAIN, MAIL, RCPT, DATA, QUIT) over
- * `node:tls`, tested against a fake server in test/phase141.test.ts. If Lakhbir picks a service with its own web API
+ * `node:tls`, tested against a fake server in test/phase141.test.ts. If the owner picks a service with its own web API
  * instead, that is a second `EmailProvider` beside this one; nothing else changes.
  *
- * PHASE 146f, 22 SEPTEMBER 2026 — POINTED AT IONOS, AND STILL OFF.
+ * POINTED AT IONOS, AND STILL OFF.
  *
  *   · THE LOGIN COMES FROM THE KEY FILE (src/core/secrets.ts), never the environment: IONOS_SMTP_HOST, _PORT, _USER and
  *     _PASSWORD, read only through `loadSecrets().forOwner('IONOS_EMAIL')`. A host that is not an IONOS server is
@@ -57,7 +57,7 @@
  * attachment is sent only while its original is still kept; one that is gone stops the email, which is left unsent
  * with the reason.
  *
- * 2 OCT 2026 — ONLY THE TEST WEBSITE SENDS (Lakhbir: "yes for now"), as Zoom and WhatsApp: a copy on a computer, reading
+ * ONLY THE TEST WEBSITE SENDS, as Zoom and WhatsApp: a copy on a computer, reading
  * the real key file, would email real people from contact@caprebate.co.uk. Sending is on only on the deployed test
  * website, or when the copy was started with CAPREBATE_LOCAL_EMAIL=1 (src/integrations/connectors/place.ts). Every screen that asks
  * whether sending is on passes where it runs (`MailWhere`), so it says so in words; and the provider itself refuses to
@@ -78,36 +78,36 @@ import { getEmailSuppressionsStateByAddressCanonical, getOutboxToEmailById, inse
 
 export type EmailSending = {
   readonly enabled: boolean;
-  /** The provider chosen, by the id of its adapter. Null until Lakhbir chooses. */
+  /** The provider chosen, by the id of its adapter. Null until the owner chooses. */
   readonly provider: 'SMTP' | null;
   /** The provider is named as a processor in the privacy notice. */
   readonly named_in_privacy_notice: boolean;
   /** The provider is named as a processor in clause 7 of the engagement letter. */
   readonly named_in_engagement_letter: boolean;
-  /** contact@caprebate.co.uk exists and SPF, DKIM and DMARC are set (both true, Phase 151), AND somebody reads it and a test
+  /** contact@caprebate.co.uk exists and SPF, DKIM and DMARC are set, AND somebody reads it and a test
    *  email has arrived (Word questions 216 and 217). False until all four are. */
   readonly mailbox_and_dns_ready: boolean;
   readonly question: string;
   /**
-   * TESTING ONLY, as the identity check's (Phase 151h): a person's decision to send before the privacy notice and the
+   * TESTING ONLY, as the identity check's: a person's decision to send before the privacy notice and the
    * engagement letter name IONOS. It never makes either `named_in_*` true. Absent is false.
    */
   readonly papers_waived_for_testing?: boolean;
   readonly waiver_record?: string | null;
 };
 
-/** The title of the open question under Lakhbir in the Word questions document (217). Quoted, not paraphrased. The provider
- *  question it replaced (186) was answered - IONOS - and closed on 24 September 2026. */
+/** The title of the open question under the owner in the Word questions document (217). Quoted, not paraphrased. The provider
+ *  question it replaced (186) was answered - IONOS - and closed. */
 export const EMAIL_PROVIDER_QUESTION = 'May we send you one test email from contact@caprebate.co.uk before email sending is switched on?';
 
 /**
- * PHASE 142b: Lakhbir answered the question on 22 September 2026 — IONOS, from the contact@caprebate.co.uk mailbox — so the
+ * the owner answered the question — IONOS, from the contact@caprebate.co.uk mailbox — so the
  * provider is SMTP through IONOS's own host. Still off: the mailbox and its email security records, and IONOS named in
  * clause 7 of the engagement letter, are not yet true. IONOS is already "our email" in the privacy notice, but that
  * notice is a draft nobody has approved, so `named_in_privacy_notice` stays false until it is published.
  */
 /*
- * SWITCHED ON FOR TESTING, 30 September 2026 (Lakhbir: "swithc on sending emails", and "again remeber this is all a test
+ * SWITCHED ON FOR TESTING (the owner: "swithc on sending emails", and "again remeber this is all a test
  * and not the final version - the idea is we build what we can and then ask for approval"). Under a recorded waiver:
  * the privacy notice and clause 7 are still drafts that do not name IONOS, so both `named_in_*` stay FALSE. Sending
  * also needs the IONOS login: in the key file locally, and on the test website its settings (behind the test password).
@@ -118,9 +118,9 @@ export const EMAIL_SENDING: EmailSending = Object.freeze({
   provider: 'SMTP',
   named_in_privacy_notice: false,
   named_in_engagement_letter: false,
-  /* TRUE SINCE 24 SEPTEMBER 2026 (the afternoon): the mailbox exists, its SPF, DKIM and DMARC records are published,
-     Sadique Maskeen reads it (Word question 216, closed), and the one test email (Word question 217, closed) was sent
-     by smtpProvider to Lakhbir and arrived. It landed in junk at first: a new domain, and whether IONOS signs with DKIM
+  /* TRUE SINCE (the afternoon): the mailbox exists, its SPF, DKIM and DMARC records are published,
+     the data protection officer reads it (Word question 216, closed), and the one test email (Word question 217, closed) was sent
+     by smtpProvider to the owner and arrived. It landed in junk at first: a new domain, and whether IONOS signs with DKIM
      is still to be checked in its control panel. Sending stays OFF: the privacy notice and the engagement letter must
      name IONOS first, and then the switch. */
   mailbox_and_dns_ready: true,
@@ -152,7 +152,7 @@ export function mailLogin(
   return { host, port, user, password };
 }
 
-/** PHASE 146f: the sending login, from the key file's IONOS_SMTP_* names. Port 465 (TLS from the start) by default. */
+/** The sending login, from the key file's IONOS_SMTP_* names. Port 465 (TLS from the start) by default. */
 export function smtpLoginFromKeyFile(store: SecretStore = processSecrets()): SmtpLogin | null {
   const mine = store.forOwner('IONOS_EMAIL');
   return mailLogin((n) => mine.get(n), 'IONOS_SMTP', 465);
@@ -186,7 +186,7 @@ export function auditMailConnections(audit: AuditLog, now: () => string): Connec
   };
 }
 
-/** 2 Oct 2026: the setting that lets a copy that is not the test website send email. Off unless exactly "1". */
+/** The setting that lets a copy that is not the test website send email. Off unless exactly "1". */
 export const EMAIL_LOCAL_OPT_IN = 'CAPREBATE_LOCAL_EMAIL';
 
 /**
@@ -200,7 +200,7 @@ export function mailWhere(app: { readonly smtpConnect?: Connector | undefined })
   return { live: app.smtpConnect === undefined };
 }
 
-/** 2 Oct 2026: why THIS copy may not send email, in words, or null when it may. */
+/** Why THIS copy may not send email, in words, or null when it may. */
 export function emailPlaceRefusal(where: MailWhere): string | null {
   return placeRefusal({ live: where.live, ...(where.env === undefined ? {} : { env: where.env }), optIn: EMAIL_LOCAL_OPT_IN, service: 'email sending',
     harm: 'An email from here would reach a real person from contact@caprebate.co.uk.' });
@@ -243,7 +243,7 @@ export type Envelope = {
   readonly body: string;
   readonly attachments: readonly Attachment[];
   readonly date: Date;
-  /** 1 Oct 2026: a reply's In-Reply-To and References — Message-IDs without the angle brackets. */
+  /** A reply's In-Reply-To and References — Message-IDs without the angle brackets. */
   readonly in_reply_to?: string | null;
   readonly references?: readonly string[];
 };
@@ -346,7 +346,7 @@ function replyReader(sock: Duplex): () => Promise<{ code: number; text: string }
   const end = (): void => { ended = true; while (waiting.length > 0) waiting.shift()?.(null); };
   sock.on('end', end);
   sock.on('close', end);
-  // 1 Oct 2026: say WHY it closed — "wrong version number" is how a secure connection to the wrong port shows itself.
+  // Say WHY it closed — "wrong version number" is how a secure connection to the wrong port shows itself.
   sock.on('error', (e: Error) => { reason = e.message.replace(/\s+/g, ' ').slice(0, 120); end(); });
   const nextLine = (): Promise<string | null> => {
     const l = lines.shift();
@@ -366,7 +366,7 @@ function replyReader(sock: Duplex): () => Promise<{ code: number; text: string }
 }
 
 /**
- * 1 OCT 2026 — PORT 587 SPEAKS PLAIN FIRST. IONOS takes mail on 465, secure from the first byte, and on 587, where the
+ * PORT 587 SPEAKS PLAIN FIRST. IONOS takes mail on 465, secure from the first byte, and on 587, where the
  * conversation starts in plain text and becomes secure with STARTTLS before anything private is said. Until today the
  * adapter opened every port as 465, so a key file saying 587 met a server that hung up before its greeting ("0 the
  * connection closed"). Now 465 is secure from the start, and any other port says EHLO, STARTTLS, and only then — on the
@@ -402,7 +402,7 @@ export function smtpProvider(
 ): EmailProvider & { check(): Promise<{ ok: true } | { ok: false; why: string }> } {
   return {
     id: 'SMTP',
-    /** 1 Oct 2026: sign in and out again, sending nothing — "does our login work?". */
+    /** Sign in and out again, sending nothing — "does our login work?". */
     async check() {
       const domain = addressOf(login.user).split('@')[1] ?? 'localhost';
       let opened: Opened | null = null;
@@ -426,10 +426,10 @@ export function smtpProvider(
       const from = addressOf(e.from_header);
       const to = addressOf(e.to);
       if (/[\r\n<>\s]/.test(from) || /[\r\n<>\s]/.test(to)) return { ok: false, why: 'An address is not a plain email address.' };
-      // 1 Oct 2026: an invented address (example.invalid, example.com …) never reaches the real mail server, whichever
+      // An invented address (example.invalid, example.com …) never reaches the real mail server, whichever
       // page or command sent it. Found when a local copy, sending on, tried one from the Write an email page.
       if (connect === tlsConnector && isInventedAddress(to)) return { ok: false, why: 'An invented address, so it was not sent.' };
-      // 2 Oct 2026: never a real delivery from a copy that is not the test website (unless started to on purpose).
+      // Never a real delivery from a copy that is not the test website (unless started to on purpose).
       const place = connect === tlsConnector ? emailPlaceRefusal({ live: true }) : null;
       if (place !== null) return { ok: false, why: place };
       const domain = from.split('@')[1] ?? 'localhost';
@@ -547,7 +547,7 @@ type Waiting = {
 };
 
 /**
- * PHASE 151k — A SIGN-IN CODE OR A RESET LINK IS NOT KEPT ONCE IT HAS GONE. Until it is sent its body is the email; once
+ * A SIGN-IN CODE OR A RESET LINK IS NOT KEPT ONCE IT HAS GONE. Until it is sent its body is the email; once
  * it has really been sent (this file, `dispatchOutbox`, which only runs while EMAIL_SENDING is on) the code or the link
  * in it would otherwise sit in `outbox.body` for good, readable by anybody who can read the database. So the body of a
  * SENT email of these kinds is replaced by this one sentence, and who it went to, when, the subject and the kind stay.
@@ -555,11 +555,11 @@ type Waiting = {
  * WHILE SENDING IS OFF NOTHING HERE RUNS: a row saved then is never sent, and on the test website it is the only way to
  * read a sign-in code or a reset link (api/index.mjs prints the outbox to the function log). The Developer Spec says so.
  */
-/* Phase 152 (the sweep, 28 September 2026): ACCOUNT_VERIFY too. The email that confirms a new client login carries a
+/* ACCOUNT_VERIFY too. The email that confirms a new client login carries a
    link that works once and for 24 hours (src/core/signup.ts), the same sort of secret; only its hash is kept in
    client_signups, so the link still works after its words leave the outbox. The sentence now names all three.
    Migration 060 lets this sentence through for the three kinds; a row 058 blanked keeps 058's sentence for good. */
-/* 2 Oct 2026: REPORT_FOR_SIGNOFF too — the accountant's one-use sign-off link (src/web/report-signoff.ts); migration 073. */
+/* REPORT_FOR_SIGNOFF too — the accountant's one-use sign-off link (src/web/report-signoff.ts); migration 073. */
 export const SENT_SECRET_KINDS: readonly string[] = Object.freeze(['SIGN_IN_CODE', 'PASSWORD_RESET', 'ACCOUNT_VERIFY', 'REPORT_FOR_SIGNOFF']);
 export const SENT_SECRET_BODY = 'This email held a sign-in code or a one-use link. It was sent, and then its words were removed so the code or link is not kept.';
 

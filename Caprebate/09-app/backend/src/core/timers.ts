@@ -1,5 +1,5 @@
 /**
- * THE LIVE WEBSITE'S OWN TIMERS — every scheduled job, woken by Vercel Cron. Phase 161h, 7 November 2026 (the developer
+ * THE LIVE WEBSITE'S OWN TIMERS — every scheduled job, woken by Vercel Cron. (the developer
  * question pack, D11: "Vercel Cron on the Pro plan for the live website, each call carrying its own secret word and
  * writing a log line").
  *

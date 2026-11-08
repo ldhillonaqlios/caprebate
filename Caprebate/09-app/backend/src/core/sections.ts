@@ -1,5 +1,5 @@
 /**
- * WHICH SECTIONS A PERSON KEEPS OPEN — PHASE 138, 21 September 2026. "Clean-up 5 of 11."
+ * WHICH SECTIONS A PERSON KEEPS OPEN. "Clean-up 5 of 11."
  *
  * The client page and the claim page draw every section with `section` (src/shared/components.ts). A section opens by
  * itself when it is being worked on and closes when it is Done. Under each one a person may press "keep this open for
@@ -22,24 +22,24 @@ export const SECTION_KEYS: readonly string[] = Object.freeze([
   // the client page
   'client.claims', 'client.questions', 'client.activity', 'client.company', 'client.contacts', 'client.properties',
   'client.sources', 'client.answers', 'client.documents',
-  // PHASE 142: the two chat threads, as one section with two tabs
+  // The two chat threads, as one section with two tabs
   'client.chat',
   // the claim page
   'claim.stage', 'claim.facts', 'claim.figures', 'claim.property', 'claim.team', 'claim.documents', 'claim.money',
   'claim.aftercare', 'claim.activity',
-  // PHASE 139: checking facts and telling the client, on both pages; and the property page and a lead's page as sections
+  // Checking facts and telling the client, on both pages; and the property page and a lead's page as sections
   'client.checks', 'claim.checks',
   'property.details', 'property.claims', 'property.activity',
   'lead.details', 'lead.related', 'lead.activity',
-  // PHASE 143: grants and contributions, out of the claim's facts into a section of its own
+  // Grants and contributions, out of the claim's facts into a section of its own
   'claim.grants',
-  // PHASE 159c: what happened to the building, event by event, each with its own figure and documents
+  // What happened to the building, event by event, each with its own figure and documents
   'claim.events',
-  // PHASE 151b: the online identity check, on the client page (Admin, who keeps the registers)
+  // The online identity check, on the client page (Admin, who keeps the registers)
   'client.identity',
 ]);
 
-/** The page shapes a person is sent back to — the client, a claim, and since Phase 139 a property and a lead. Ids only. */
+/** The page shapes a person is sent back to — the client, a claim, and a property and a lead. Ids only. */
 const BACK = /^\/staff\/(clients\/[A-Za-z0-9-]+(\/claims\/[A-Za-z0-9-]+)?|claims\/[A-Za-z0-9-]+|properties\/[A-Za-z0-9-]+|leads\/[A-Za-z0-9-]+)$/;
 const ANCHOR = /^[a-z][a-z0-9-]{0,39}$/;
 

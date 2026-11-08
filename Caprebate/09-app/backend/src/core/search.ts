@@ -1,6 +1,6 @@
 /**
- * GLOBAL SEARCH — LIMITED BY can() INSIDE THE QUERY, NEVER FILTERED AFTERWARDS.
- * CRM 9 of 10, 12 September 2026.
+ * GLOBAL SEARCH — LIMITED BY can INSIDE THE QUERY, NEVER FILTERED AFTERWARDS.
+ * CRM 9 of 10.
  *
  * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, row 16.1, and the decisions
  * this file takes are that table's Part E from E119. The page is
@@ -53,7 +53,7 @@ export type SearchHit = {
   readonly label: string;
   readonly detail: string;
   readonly href: string;
-  /** Phase 134: the company the hit belongs to, where it has one — a hit whose company's name matches ranks first. */
+  /** The company the hit belongs to, where it has one — a hit whose company's name matches ranks first. */
   readonly company?: string;
 };
 
@@ -205,7 +205,7 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
     }
   }
 
-  // PHASE 134: A COMPANY-NAME MATCH RANKS FIRST — the company itself, then anything whose company's name matches, then the
+  // A COMPANY-NAME MATCH RANKS FIRST — the company itself, then anything whose company's name matches, then the
   // rest, each group in the order it was found. The order only; nothing is added or dropped.
   const t = term.toLowerCase();
   const rank = (x: SearchHit): number =>
@@ -224,7 +224,7 @@ export const RESULT_LIMIT = LIMIT;
 export const STATEMENTS: readonly string[] = SEARCH_STATEMENTS;
 
 /**
- * PHASE 133a — THE GATE OF THE SEARCH SECTION, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF THE SEARCH SECTION, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */

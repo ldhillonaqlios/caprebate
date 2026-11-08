@@ -1,7 +1,7 @@
 /**
- * PHASE 156c, 5 October 2026 — READING A CHAT EXPORTED FROM THE WHATSAPP PHONE. No network, no Meta.
+ * READING A CHAT EXPORTED FROM THE WHATSAPP PHONE. No network, no Meta.
  *
- * Lakhbir chose a manual upload (5 Oct 2026: "go with manual upload, keep photos"): staff talk to clients on the
+ * the owner chose a manual upload: staff talk to clients on the
  * WhatsApp phone, and to keep a conversation they export that one chat (Export chat > Attach media) and upload the
  * .zip on the client's WhatsApp page. This file turns the export's text into messages; src/web/whatsapp-import.ts
  * checks them with a person and saves them.

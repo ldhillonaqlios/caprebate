@@ -491,7 +491,7 @@ function decodeTextBytes(b: Buffer): string {
 }
 
 /* ================================================================== *
- * SCANNED PDFS — THE PAGE PICTURES, FOR THE VISION PATH. Phase 146e.
+ * SCANNED PDFS — THE PAGE PICTURES, FOR THE VISION PATH.
  *
  * A scanned PDF is a picture per page and no text, so `extractPdf` returns the
  * scan marker for it. The vision path (src/integrations/connectors/claude.ts, switched off on

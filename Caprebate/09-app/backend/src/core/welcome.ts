@@ -1,5 +1,5 @@
 /**
- * THE WELCOME CARD — PHASE 133c, 17 September 2026 (B5).
+ * THE WELCOME CARD.
  *
  * A person who has never seen the system is shown, on Home, the three jobs their login does most — taken from the
  * Phase 133a audit of each login's five most frequent jobs (04-phase-work/phase133a/ui-audit.md) — as buttons, until

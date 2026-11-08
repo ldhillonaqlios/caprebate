@@ -1,6 +1,6 @@
 /**
  * THE CARE QUALITY COMMISSION — A PROPERTY'S REGISTERED LOCATION, AND ITS PROVIDER. ENGLAND ONLY.
- * Phase 146c, 23 September 2026. Switched off: REGISTER_SWITCHES.CQC is false.
+ * Switched off: REGISTER_SWITCHES.CQC is false.
  *
  * Built against CQC's developer portal (api-portal.service.cqc.org.uk, its published API definition read 23 September
  * 2026; the address and date are in the source register's SUPPLIER_DOCS). Base https://api.service.cqc.org.uk/public/v1.
@@ -31,15 +31,15 @@
  * NOT ENGLAND, NOT ASKED. Wales is Care Inspectorate Wales's and Scotland the Care Inspectorate's; neither has a
  * connector in this build, and the research panel says so (`NOT_BUILT` in src/integrations/connectors/free-registers.ts).
  *
- * THE NAMED PEOPLE — READ IN MEMORY, NEVER KEPT. Phase 151b, 25 September 2026. Word question 156, for the data
+ * THE NAMED PEOPLE — READ IN MEMORY, NEVER KEPT. 25 September 2026. Word question 156, for the data
  * protection officer: "May we briefly check two public register names without saving them?" Answer, closed
- * 24 September 2026: "Yes – best to check who signs and if they have authority". `cqcNamedPeople` below reads a
+ * "Yes – best to check who signs and if they have authority". `cqcNamedPeople` below reads a
  * location's registered manager and a provider's nominated individual for ONE question, asked by
  * src/integrations/connectors/signatory-check.ts: is the person who signed our engagement letter one of them? It keeps only YES or
  * NO and a reason code — its bundle has no records, so nothing reaches the one door. It is CQC's own switch that turns
  * it on, so it is off with the lookup above. The lookup above still never reads either name.
  *
- * THE CACHE WINDOW: 30 DAYS IN THE TEST SYSTEM (Phase 153c, 4 October 2026, Word question 201). CQC's licence entry
+ * THE CACHE WINDOW: 30 DAYS IN THE TEST SYSTEM. CQC's licence entry
  * (CQC_SYNDICATION in the source register) held 0 days until the solicitor answered how current CQC data must be when we
  * use it; it now holds 30, on our recommendation, with "Source: Care Quality Commission, Open Government Licence" shown
  * beside each fact, until the terms that come with the key say otherwise.
@@ -170,7 +170,7 @@ export const cqc = defineSteppedConnector<CqcQuery>({
     const typed = addressFromLines([q.property.address_line_1, q.property.address_line_2], q.property.postcode, q.property.town);
     const m = matchAddress(typed, candidates, MATCH_THRESHOLDS.CQC, 'the care regulator');
     q.measure?.({ profile: 'CQC', match: m, top_address: m.top?.candidate.address ?? null });
-    /* PHASE 146h: a REVIEW's ranked list goes to the back office, or a person's choice comes back in it, keyed on
+    /* A REVIEW's ranked list goes to the back office, or a person's choice comes back in it, keyed on
        the location id — the key this lookup reads a registration BY. Outside the REVIEW band this does nothing. */
     const pick = applyPick(m, q, {
       profile: 'CQC', register: 'the care regulator',
@@ -206,7 +206,7 @@ export const cqc = defineSteppedConnector<CqcQuery>({
   },
 });
 
-/* ------------------------------------------------------------------ the named people, read in memory only (Phase 151b) */
+/* ------------------------------------------------------------------ the named people, read in memory only */
 
 export type CqcPeopleQuery = {
   readonly location_id: string | null;

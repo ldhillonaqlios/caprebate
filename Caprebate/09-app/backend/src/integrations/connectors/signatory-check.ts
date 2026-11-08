@@ -1,6 +1,6 @@
 /**
  * WHO SIGNED, AND WHETHER THE PUBLIC REGISTER SAYS THEY MAY SIGN — CHECKED IN MEMORY, KEPT AS YES OR NO.
- * Phase 151b, 25 September 2026. Switched off WITH THE LOOKUPS: no switch of its own.
+ * Switched off WITH THE LOOKUPS: no switch of its own.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * THE DECISION
@@ -12,7 +12,7 @@
  * compare them in memory and throw them away, keeping a yes or no and the source; never to store an officer's name;
  * to record "not found" as just that, never as a risk; and never to show it to the client.
  *
- * ANSWER, closed 24 September 2026: "Yes – best to check who signs and if they have authority". The action plan:
+ * ANSWER, closed: "Yes – best to check who signs and if they have authority". The action plan:
  * "check who signs and whether they have authority against the public register, reading names in memory and keeping
  * only yes or no; switched off with the lookups."
  *

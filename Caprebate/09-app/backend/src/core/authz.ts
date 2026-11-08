@@ -35,7 +35,7 @@ export type Actor = {
  */
 export type Obj =
   | { readonly type: 'user'; readonly id: string; readonly role: AppRole }
-  /** Phase 151: a role the super admin made, or 'new' before it exists. */
+  /** A role the super admin made, or 'new' before it exists. */
   | { readonly type: 'role'; readonly id: string }
   | { readonly type: 'business'; readonly id: string }
   | { readonly type: 'assessment'; readonly id: string; readonly business_id: string }
@@ -45,7 +45,7 @@ export type Obj =
   | { readonly type: 'internal_note'; readonly id: string; readonly business_id: string }
   | { readonly type: 'register_record'; readonly id: string; readonly business_id: string }
   | { readonly type: 'research'; readonly id: string; readonly business_id: string }
-  /** Phase 139: what staff have checked for a company and told its client — the approvals and the steps. */
+  /** What staff have checked for a company and told its client — the approvals and the steps. */
   | { readonly type: 'client_steps'; readonly id: string; readonly business_id: string }
   /**
    * A booking's organisation is null only while it belongs to a lead that has
@@ -146,11 +146,11 @@ export type Obj =
       /** CRM 6 of 10: an issued client report whose figure is released — see `clientDocument`. Absent is not true. */
       readonly released_to_client?: boolean;
       /**
-       * PHASE 140: whether the client may see this file at all — theirs if they sent it, ours only once staff say so. Read by
+       * Whether the client may see this file at all — theirs if they sent it, ours only once staff say so. Read by
        * src/web/documents.ts (`shownToClient`). Absent is not true: a client is refused a document that does not say.
        */
       readonly shown_to_client?: boolean;
-      /** PHASE 153c: the client's owners — read by `document.read_original` for Sales. Absent is nobody. */
+      /** The client's owners — read by `document.read_original` for Sales. Absent is nobody. */
       readonly owner_ids?: readonly string[];
     }
   | { readonly type: 'document_type'; readonly id: string }
@@ -207,7 +207,7 @@ export type Obj =
   /** CRM 9 of 10. The admin settings screen: the configurable lists and the reasons. Nothing on it reaches a rule. */
   | { readonly type: 'configuration'; readonly id: string }
   /**
-   * PHASE 142. A message on a company's "With the client" thread — the portal's Messages — and a reply that reached
+   * A message on a company's "With the client" thread — the portal's Messages — and a reply that reached
    * contact@caprebate.co.uk. The "Team only" thread is the company's internal notes and stays `internal_note`: a
    * DIFFERENT object type in a DIFFERENT table, so no rule written for one can reach the other.
    */
@@ -291,10 +291,10 @@ type DocumentFacts = {
    * src/web/documents.ts. Absent on every other document, and absent is not true.
    */
   released_to_client?: boolean;
-  /** PHASE 140: see the `document` object. Absent is not true. */
+  /** See the `document` object. Absent is not true. */
   shown_to_client?: boolean;
   /**
-   * PHASE 153c, 4 October 2026 (Word question 219): the staff who own this client — the organisation's owner and the
+   * The staff who own this client — the organisation's owner and the
    * owner of each of its claims. Read only by `document.read_original` for Sales. Absent is nobody (N4).
    */
   owner_ids?: readonly string[];
@@ -319,7 +319,7 @@ const surveyorDocument = (a: Actor, o: DocumentFacts): boolean =>
  */
 const clientDocument = (a: Actor, o: DocumentFacts & { business_id: string }): boolean =>
   ownBusiness(a, o) && (
-    // PHASE 140: and never a file staff have not chosen to show them. A file the client sent is shown to them by rule.
+    // And never a file staff have not chosen to show them. A file the client sent is shown to them by rule.
     (o.shown_to_client === true && (o.carries_value === false || o.readers === 'FINANCE' || o.readers === 'ENGAGEMENT_LETTER'))
     // CRM 6 of 10: the issued client report, once the tax adviser's sign-off record exists, and nothing else. The release IS
     // the decision to show it, so it is not asked a second time.
@@ -357,7 +357,7 @@ const clientDeliverable = (
  *
  *   ACCOUNTING sees invoices and the business they belong to. It does NOT
  *   appear on assessment.*, answer.*, register_record.*, internal_note.* or
- *   surveyor_job.*. That was settled on 6 September 2026 and it is enforced
+ *   surveyor_job.*. That was settled and it is enforced
  *   twice — here, and in the shape of the finance tables, which carry no join
  *   to any of them.
  *
@@ -370,7 +370,7 @@ const clientDeliverable = (
  * ------------------------------------------------------------------ */
 
 /**
- * THE FIVE ROLES' TABLE. READ_ONLY is excluded from its type on purpose (Phase 132e):
+ * THE FIVE ROLES' TABLE. READ_ONLY is excluded from its type on purpose:
  * the view-only role is decided by `READ_ONLY_RULES` below, one explicit yes or no per
  * action, and never by a key here — so it cannot be given an action by being added to a row.
  */
@@ -385,7 +385,7 @@ const RULES: RuleTable = {
   'user.disable': { ADMIN: always },
   'user.assign_role': { ADMIN: always },
   'user.list': { ADMIN: always },
-  /* Phase 151: making and changing roles (src/core/custom-roles.ts). The super admin's alone, and never grantable. */
+  /* Making and changing roles (src/core/custom-roles.ts). The super admin's alone, and never grantable. */
   'role.manage': { ADMIN: always },
 
   /* --- every user may read and edit THEMSELVES, and nobody else. --- */
@@ -455,7 +455,7 @@ const RULES: RuleTable = {
    * sections it cannot open rather than a page it should not have.
    *
    * ACCOUNTING HAS SOMETHING TO OPEN SINCE 9 SEPTEMBER 2026. This comment read
-   * "has nothing to open yet. Its view is Phase 107" until Phase 108; Phase 107
+   * "has nothing to open yet. Its view is Phase 107"; Phase 107
    * built /staff/finance the same week, so the note outlived its own fact. The
    * row is unchanged and was always right — what changed is only that the
    * landing page now leads somewhere.
@@ -487,7 +487,7 @@ const RULES: RuleTable = {
   },
   'booking.write': { ADMIN: always, SALES: always },
   /**
-   * A CLIENT MOVES THEIR OWN CALL. Phase 113a, 9 September 2026, and it is a
+   * A CLIENT MOVES THEIR OWN CALL. And it is a
    * DECISION rather than a gap being filled — so it is written here as its own
    * row with its own reasoning, which is the whole reason it did not become
    * `CLIENT: ownBusiness` bolted onto `booking.write` above.
@@ -509,18 +509,18 @@ const RULES: RuleTable = {
    * writing exactly as the staff path does.
    */
   'booking.move_own': { CLIENT: ownBusiness as Rule<ObjType> },
-  /* PHASE 158c (F39): the client accepts the survey report released to them, in their portal (src/web/report-accept.ts). Their own act. */
+  /* The client accepts the survey report released to them, in their portal (src/web/report-accept.ts). Their own act. */
   'client_report.accept': { CLIENT: ownBusiness as Rule<ObjType> },
   'engagement.read': {
     ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>,
   },
-  /* PHASE 157c: prepare the engagement letter and send it to the client's logins (src/web/engagement-send.ts). */
+  /* Prepare the engagement letter and send it to the client's logins (src/web/engagement-send.ts). */
   'engagement.send': { ADMIN: always, SALES: always },
   'research.run': { ADMIN: always, SALES: always },
   'research.read': { ADMIN: always, SALES: always },
   'register_record.read': { ADMIN: always, SALES: always, SURVEYING: always },
   /*
-   * PHASE 139 — CHECKED AND APPROVED, AND TELLING THE CLIENT. Ticking a fact as checked, and pressing "Tell the client" on
+   * CHECKED AND APPROVED, AND TELLING THE CLIENT. Ticking a fact as checked, and pressing "Tell the client" on
    * a step, are ADMIN's and SALES's — the people who work the client. TAKING A STEP BACK, after the client has been told,
    * is ADMIN's alone. The client reads what it was told, on its own company, and nothing else: the view model
    * (src/web/approvals.ts, `clientSteps`) carries a step's words and a date, never a fact, a value or a reason.
@@ -532,11 +532,11 @@ const RULES: RuleTable = {
   'internal_note.read': { ADMIN: always, SALES: always },
   'internal_note.write': { ADMIN: always, SALES: always },
   /*
-   * PHASE 142 — THE THREAD WITH THE CLIENT. Admin and Sales, who work the client, and the client on its own company. The
+   * THE THREAD WITH THE CLIENT. Admin and Sales, who work the client, and the client on its own company. The
    * TEAM thread is `internal_note.*` above, and the client is on neither of its rows. THE SURVEYOR READS THE THREAD
-   * WITH THE CLIENT, AND NOTHING MORE: Lakhbir answered "Should the surveyor see a client's chat?" on 22 September 2026 —
+   * WITH THE CLIENT, AND NOTHING MORE: the owner answered "Should the surveyor see a client's chat?" —
    * "With the client" only. A surveyor reads it on a company where they hold an assigned survey job (`throughAssignedJob`,
-   * failing closed on an object without the list), never writes on it, and is on no row of the TEAM thread. Accounting is not on them either: its view is invoices, settled 6 September 2026.
+   * failing closed on an object without the list), never writes on it, and is on no row of the TEAM thread. Accounting is not on them either: its view is invoices, settled.
    * A REPLY BY EMAIL waits for Admin or Sales, who read the queue and file what the mailbox reader could not.
    */
   'client_message.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>, SURVEYING: throughAssignedJob as Rule<ObjType> },
@@ -589,7 +589,7 @@ const RULES: RuleTable = {
   'surveyor_job.commit': { SURVEYING: assignedSurveyor as Rule<ObjType> },
   'surveyor_job.assign': { ADMIN: always, SALES: always },
 
-  /* --- the CRM backbone. CRM 1 of 10, 10 September 2026 ---------------------
+  /* --- the CRM backbone. CRM 1 of 10 ---------------------
    *
    * EVERY ROW BELOW IS NEW, AND EVERY ROLE NOT NAMED ON A ROW IS REFUSED IT —
    * test/crm.test.ts asserts the refusal for each one, per action, rather than
@@ -623,7 +623,7 @@ const RULES: RuleTable = {
    * ------------------------------------------------------------------------ */
   'organisation.read': { ADMIN: always, SALES: always },
   /**
-   * PHASE 151b — THE CLIENTS AREA, AS ACCOUNTING READS IT. Word answer 40 (closed 24 September 2026): Accounting should
+   * THE CLIENTS AREA, AS ACCOUNTING READS IT. Word answer 40: Accounting should
    * see the clients area, so it is told to raise the invoice, chases it and records payment. NOT `organisation.read`:
    * the whole record carries the notes, the research, the answers and where the client came from, and opening it to
    * Accounting failed fifteen tests that guard those boundaries. This is the billing view of the same area
@@ -650,14 +650,14 @@ const RULES: RuleTable = {
   'claim.create': { ADMIN: always, SALES: always },
   'claim.write': { ADMIN: always, SALES: always },
   /*
-   * PHASE 134 — A CLIENT SEES THEIR OWN COMPANY'S CLAIMS: each one's property and how far it has got, in the portal's six
+   * A CLIENT SEES THEIR OWN COMPANY'S CLAIMS: each one's property and how far it has got, in the portal's six
    * client words (src/web/portal.ts). `ownBusiness` on the claim itself, asked of every claim on every request. Nothing
    * else about a claim reaches a client through it: not the ten staff stages, a hold reason, an exit note, a value, a
    * next action or a person. ADMIN and SALES may look at a client's portal, as they may today.
    */
   'claim.progress_read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
 
-  /* --- leads and the pipeline. CRM 2 of 10, 10 September 2026 --------------
+  /* --- leads and the pipeline. CRM 2 of 10 --------------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
    * pipeline.test.ts asserts the refusal for each one, per action.
@@ -727,7 +727,7 @@ const RULES: RuleTable = {
   'email_template.write': { ADMIN: always },
   'email.queue': { ADMIN: always, SALES: always },
 
-  /* --- documents on the claim. CRM 4 of 10, 11 September 2026 ---------------
+  /* --- documents on the claim. CRM 4 of 10 ---------------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
    * documents.test.ts asserts the refusal for each one, per action, and
@@ -754,18 +754,18 @@ const RULES: RuleTable = {
     SURVEYING: surveyorDocument as Rule<ObjType>,
     CLIENT: clientDocument as Rule<ObjType>,
   },
-  /* 24 September 2026, Word question 219: Sales, Admin and the data protection officer may open a kept original. Sales
+  /* Sales, Admin and the data protection officer may open a kept original. Sales
      on the same documents it may read, never the fee invoice. Kept originals exist only while KEEP_ORIGINALS is on. */
-  /* PHASE 153c, 4 October 2026 (Word question 219, "only Sales on their own clients"): Sales opens a kept original only
+  /* Sales opens a kept original only
      on a client it owns — the organisation's owner, or the owner of one of its claims. Another salesperson's client is
      refused, and an owner not recorded admits nobody (N4). Reading the document itself (`document.read`) is unchanged. */
   'document.read_original': { ADMIN: always, SALES: ((a: Actor, o: DocumentFacts) => salesDocument(a, o) && Array.isArray(o.owner_ids) && o.owner_ids.includes(a.id)) as Rule<ObjType>, CLIENT: clientDocument as Rule<ObjType> },
   'document.upload': { ADMIN: always, SALES: always, CLIENT: isOwnBusiness as Rule<ObjType> },
   'document.link': { ADMIN: always, SALES: always },
-  /** PHASE 140: whether the client can see a file — the two roles that upload one. Never the client, never a surveyor. */
+  /** Whether the client can see a file — the two roles that upload one. Never the client, never a surveyor. */
   'document.show_to_client': { ADMIN: always, SALES: always },
   /**
-   * PHASE 146i: saying whether a name on a document belongs to an organisation rather than to somebody. Two
+   * Saying whether a name on a document belongs to an organisation rather than to somebody. Two
    * CLIENT_DOC fields are kept on that footing alone and it cannot be inferred from the document, so it is a
    * person's answer. THE TWO ROLES THAT WORK THE CLIENT AND NOBODY ELSE — not a surveyor, not Accounting, and
    * never the client, who would be vouching for their own document.
@@ -777,7 +777,7 @@ const RULES: RuleTable = {
   'document_request.create': { ADMIN: always, SALES: always },
   'document_request.withdraw': { ADMIN: always, SALES: always },
 
-  /* --- introducers and the referral channel. CRM 5 of 10, 11 September 2026 ---
+  /* --- introducers and the referral channel. CRM 5 of 10 ---
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
    * introducers.test.ts asserts the refusal for each one, per action.
@@ -846,15 +846,15 @@ const RULES: RuleTable = {
   'deliverable.read': { ADMIN: always, SALES: always, CLIENT: clientDeliverable as Rule<ObjType> },
   'deliverable.record': { ADMIN: always, SALES: always },
   'hmrc_enquiry.record': { ADMIN: always, SALES: always },
-  /* Phase 132e: recording the client's own written filing confirmation, where the client has no accountant — the
+  /* Recording the client's own written filing confirmation, where the client has no accountant — the
      people who hold the claim's papers, as a deliverable is. Nobody else; test/phase132e.test.ts asserts it per role. */
   'client_filing.record': { ADMIN: always, SALES: always },
-  /* Phase 132e: a multi-site discount is proposed by the people who agree terms with a client, and read by them and by
+  /* A multi-site discount is proposed by the people who agree terms with a client, and read by them and by
      finance. It is a record and is never applied: see src/web/fee-discounts.ts. */
   'fee_discount.record': { ADMIN: always, SALES: always },
   'fee_discount.read': { ADMIN: always, SALES: always, ACCOUNTING: always },
 
-  /* --- the compliance registers. CRM 8 of 10, 12 September 2026 ---------------
+  /* --- the compliance registers. CRM 8 of 10 ---------------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
    * compliance.test.ts asserts the refusal for each one, per action.
@@ -862,7 +862,7 @@ const RULES: RuleTable = {
    * NONE OF THIS IS FOR SALES, ACCOUNTING OR SURVEYING, and ADMIN holds it TODAY
    * ONLY because nobody else can. There is no data protection officer role and
    * ADMIN is a super user, not an officer: whether compliance needs a role of its
-   * own is Lakhbir's question, "Do we need a compliance role separate from Admin?",
+   * own is the owner's question, "Do we need a compliance role separate from Admin?",
    * and a sixth role is not ENABLED here. Phase 129 DEFINED one and switched it off —
    * `DPO_RULES` and `canAsDpo` below — and while `DPO_ROLE_SWITCH` is off it reaches nothing.
    *
@@ -879,12 +879,12 @@ const RULES: RuleTable = {
   'compliance.write': { ADMIN: always },
   'compliance.identity_read': { ADMIN: always },
   'compliance.identity_write': { ADMIN: always },
-  /* Phase 153c (Word question 181): the restricted breach names list. ADMIN here only as the door: src/web/breach-names.ts
+  /* The restricted breach names list. ADMIN here only as the door: src/web/breach-names.ts
      lets an Admin through only when they are the deputy named in breach_names_deputies (migration 080). */
   'compliance.breach_names': { ADMIN: always },
   'share_consent.client_record': { CLIENT: ownBusiness as Rule<ObjType> },
 
-  /* --- the per-disclosure log. Phase 129, 12 September 2026 -------------------
+  /* --- the per-disclosure log. -------------------
    *
    * BOTH ROWS ARE NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/phase129.test.ts
    * asserts the refusal for each one, per action. The log is switched off
@@ -899,7 +899,7 @@ const RULES: RuleTable = {
   'disclosure.read': { ADMIN: always },
   'disclosure.record': { ADMIN: always, SALES: always },
 
-  /* --- the defence pack generator. Phase 132, 14 September 2026 ---------------
+  /* --- the defence pack generator. ---------------
    *
    * NEW, AND EVERY ROLE NOT NAMED IS REFUSED — test/phase132-records.test.ts asserts
    * the refusal for each one. The generator is switched off (`DEFENCE_PACK_GENERATOR`
@@ -910,7 +910,7 @@ const RULES: RuleTable = {
    * ------------------------------------------------------------------------ */
   'defence_pack.generate': { ADMIN: always, SALES: always },
 
-  /* --- dashboards, search, saved views, export and admin settings. CRM 9 of 10, 12 September 2026 ---
+  /* --- dashboards, search, saved views, export and admin settings. CRM 9 of 10 ---
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/dashboard.test.ts
    * asserts the refusal for each one, per action.
@@ -947,7 +947,7 @@ const RULES: RuleTable = {
    */
   'introducer.merge': { ADMIN: always },
 
-  /* --- the CRM follow-on, 12 September 2026 ------------------------------------
+  /* --- the CRM follow-on ------------------------------------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/follow-on.test.ts
    * asserts the refusal for each one, per action.
@@ -977,9 +977,9 @@ export const REGISTERED_ACTIONS: readonly string[] = Object.freeze(Object.keys(R
 
 /* ------------------------------------------------------------------ *
  * THE READ-ONLY ROLE — AN EXPLICIT YES OR NO ON EVERY ACTION.
- * Phase 132e, 16 September 2026.
  *
- * Lakhbir: "One main log in for admin/manager/owner, and another log for view
+ *
+ * the owner: "One main log in for admin/manager/owner, and another log for view
  * only". ADMIN is the main login. READ_ONLY is the view-only one, and it is
  * assigned to nobody (no seed user).
  *
@@ -1173,7 +1173,7 @@ export function canAsReadOnly(actor: Actor, action: string, object: Obj): boolea
 
 /* ------------------------------------------------------------------ *
  * A DATA PROTECTION OFFICER ROLE — DEFINED, SCOPED, AND SWITCHED OFF.
- * Phase 129, 12 September 2026.
+ *
  *
  * WHAT IS BUILT. The rows a DPO would hold: the compliance registers, S2, the
  * per-disclosure log's reading, the back office's front door and their own
@@ -1182,7 +1182,7 @@ export function canAsReadOnly(actor: Actor, action: string, object: Obj): boolea
  * keep the registers without being able to add a salesperson or read the whole
  * audit log, which is what the question sets out.
  *
- * WHY IT IS OFF. Whether there is a sixth role at all is Lakhbir's question —
+ * WHY IT IS OFF. Whether there is a sixth role at all is the owner's question —
  * "Do we need a compliance role separate from Admin?" — and the five-role model
  * is a decision (src/core/roles.ts). So `DPO_ROLE_SWITCH` ships `enabled: false`, the
  * role is not in APP_ROLES, the roles table has no row for it, and `can()` below
@@ -1208,7 +1208,7 @@ const DPO_RULES: Readonly<Record<string, Rule<ObjType>>> = Object.freeze({
   'compliance.identity_write': always,
   'compliance.breach_names': always,
   'disclosure.read': always,
-  // 24 September 2026, Word question 219: the officer may open a kept original.
+  // The officer may open a kept original.
   'document.read_original': always,
 });
 
@@ -1242,11 +1242,11 @@ export function canAsDpo(
 export function can(actor: Actor, action: string, object: Obj): boolean {
   if (actor.disabled) return false;
 
-  // Phase 129: a DPO actor is decided by its own switched-off table and by nothing below. Off, that is a refusal.
+  // A DPO actor is decided by its own switched-off table and by nothing below. Off, that is a refusal.
   if ((actor.role as string) === DPO_ROLE) return canAsDpo(actor, action, object);
-  // Phase 132e: the view-only role is decided by its own explicit table and by nothing below.
+  // The view-only role is decided by its own explicit table and by nothing below.
   if (actor.role === 'READ_ONLY') return canAsReadOnly(actor, action, object);
-  // Phase 151: a role the super admin made borrows each rule from a built-in staff role, and is decided by it here.
+  // A role the super admin made borrows each rule from a built-in staff role, and is decided by it here.
   const made = customRoleOf(actor.role as string);
   if (made !== undefined) return canAsCustomRole(actor, action, object, made.grants);
 
@@ -1262,7 +1262,7 @@ export function can(actor: Actor, action: string, object: Obj): boolean {
 }
 
 /**
- * PHASE 151: WHETHER A BUILT-IN STAFF ROLE HOLDS AN ACTION. The one fact about this table the role editor needs, so
+ * WHETHER A BUILT-IN STAFF ROLE HOLDS AN ACTION. The one fact about this table the role editor needs, so
  * that a made role can only borrow a rule that exists (src/core/custom-roles.ts, roleRefusal).
  */
 export function builtInHolds(action: string, role: BorrowableRole): boolean {

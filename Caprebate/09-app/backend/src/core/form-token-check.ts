@@ -1,5 +1,5 @@
 /**
- * PHASE 161b, 4 November 2026 — THE FORM-TOKEN CHECK, RUN BEFORE ANY ROUTE (src/core/server.ts), AND THE PAGE STEP THAT
+ * THE FORM-TOKEN CHECK, RUN BEFORE ANY ROUTE (src/core/server.ts), AND THE PAGE STEP THAT
  * PUTS THE TOKENS IN. What the tokens are, and why, is in src/core/form-token.ts.
  */
 

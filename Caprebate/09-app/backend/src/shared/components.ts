@@ -1,5 +1,5 @@
 /**
- * ONE SET OF COMPONENTS — PHASE 133a, 17 September 2026.
+ * ONE SET OF COMPONENTS.
  *
  * The building blocks every redesigned screen draws with: a card, a badge, an empty state, a highlights panel, the
  * stage bar, record tabs, the record layout with its right-hand panel, and the pipeline board. Every one is built with
@@ -35,7 +35,7 @@ export type Highlight = { readonly label: string; readonly value: Safe | string 
 
 /**
  * THE HIGHLIGHTS PANEL: the record type, its name, and the key fields — only those the caller's view carries.
- * PHASE 134: `sub` is one small line under the name — a company's legal name, a claim's property and reference.
+ * `sub` is one small line under the name — a company's legal name, a claim's property and reference.
  */
 export function highlights(kind: string, title: Safe | string, fields: readonly (Highlight | null)[], after: Safe = raw(''), sub: Safe = raw('')): Safe {
   const shown = fields.filter((f): f is Highlight => f !== null);
@@ -44,7 +44,7 @@ export function highlights(kind: string, title: Safe | string, fields: readonly 
 }
 
 /* ================================================================== *
- * PHASE 134 — THE CLIENT IS THE COMPANY. 18 September 2026.
+ * THE CLIENT IS THE COMPANY..
  *
  * A claim is named for a person by its COMPANY, then its PROPERTY. The claim reference (CR-2026-0001) is a small grey
  * label beside it: never a heading, never the first column, never the words of a link. Every screen that names a claim
@@ -140,7 +140,7 @@ export function claimStageBar(
       : stage.kind === 'CLOSED' ? badge('Closed', 'ok')
         : stage.kind === 'UNKNOWN' ? badge('Stage not known — nobody has given this claim a stage', 'warn') : raw('');
   const missing = gate?.needs.find((n) => !n.met);
-  // PHASE 133c — "A STOP IS INFORMATION, NOT A FAILURE" (brand book slide 49). A gate that is not yet open reads "Not ready
+  // "A STOP IS INFORMATION, NOT A FAILURE" (brand book slide 49). A gate that is not yet open reads "Not ready
   // yet" in a neutral badge, never "shut" in red; the first thing still needed is said in plain words (src/shared/next-step.ts).
   const plain = missing === undefined ? undefined : plainNeed(missing.what).words;
   return h`<nav class="stagebar" aria-label="The claim's stage in the operating procedure">${steps.length === 0 ? raw('') : h`<ol>${steps.map((s) =>
@@ -181,12 +181,12 @@ export function recordTabs(tabs: readonly RecordTab[]): Safe {
   return h`<div class="tabset"><ul class="rtabs">${tabs.map((t) => h`<li><a href="#${t.id}">${t.label}${
     t.count === undefined ? raw('') : h`<span class="count">${t.count}</span>`}</a></li>`)}</ul>
     ${tabs.map((t) => h`<section class="tabpanel" id="${t.id}" aria-label="${t.label}">${t.body}</section>`)}</div>`;
-  // PHASE 138: no hidden heading any more. Each panel carried a visually hidden <h2> with the tab's name AND the panel's own
+  // No hidden heading any more. Each panel carried a visually hidden <h2> with the tab's name AND the panel's own
   // heading, so a screen reader heard every name twice. The panel is named by aria-label instead.
 }
 
 /**
- * A SETTINGS SCREEN'S LEFT-HAND SECTION LIST — PHASE 133b. The same mechanism as the record tabs, drawn as a list down the
+ * A SETTINGS SCREEN'S LEFT-HAND SECTION LIST. The same mechanism as the record tabs, drawn as a list down the
  * left: each entry links to its section's anchor, the stylesheet shows the targeted section and the first when none is.
  * Without CSS, or without `:has()`, every section shows one after the other under its own heading, so a browser's find
  * still reaches every row. Below 960 px the list sits above the sections.
@@ -217,7 +217,7 @@ export function recordLayout(main: Safe, side: Safe): Safe {
 }
 
 /* ================================================================== *
- * PHASE 133c — A NEW USER CAN USE IT. 17 September 2026.
+ * A NEW USER CAN USE IT..
  * ================================================================== */
 
 /**
@@ -226,7 +226,7 @@ export function recordLayout(main: Safe, side: Safe): Safe {
  * the sentence it always was. Nothing is removed: the words are still on the page.
  */
 /**
- * PHASE 153 (28 September 2026) - THE PRIVACY NOTICE AT THE ADDRESS QUESTION, BUILT AND SWITCHED OFF.
+ * THE PRIVACY NOTICE AT THE ADDRESS QUESTION, BUILT AND SWITCHED OFF.
  * The free register lookups rest on legitimate interests, and CB_REGISTRY.precondition says they wait on "a published
  * privacy notice reachable from the address question". This is that link. It is drawn only while that same switch is
  * on - there is no second gate - and it informs; it asks nothing (no tick box: the basis is legitimate interests, not
@@ -338,9 +338,9 @@ export function welcomeCard(jobs: readonly Job[], dismissAction: string): Safe {
 }
 
 /* ================================================================== *
- * PHASE 138 — ONE SECTION, COLOURED, THAT OPENS AND CLOSES. 21 September 2026. "Clean-up 5 of 11."
+ * ONE SECTION, COLOURED, THAT OPENS AND CLOSES.. "Clean-up 5 of 11."
  *
- * Lakhbir, after using the test site: "The sections within the portal when looking at the clients all seem to blur into
+ * the owner, after using the test site: "The sections within the portal when looking at the clients all seem to blur into
  * one. The different sections should be coloured, in collapsible boxes, and when we are working on a particular section
  * it should show what we are working on, what data is needed and where the data is coming from."
  *
@@ -405,7 +405,7 @@ export type SectionSpec = {
 /** What a page passes to every section: the person's own choices, and the page's address for coming back after one. */
 export type SectionContext = {
   readonly prefs: ReadonlyMap<string, boolean>; readonly back: string | null;
-  /** UI TIDY PHASE 18: where given, only these sections open by their status; the rest start closed (a change just made,
+  /** Where given, only these sections open by their status; the rest start closed (a change just made,
    *  or the person's own choice, still opens one). The claim page passes its stage, so it no longer opens 10,000 px. */
   readonly autoOpen?: readonly string[];
 };

@@ -1,10 +1,10 @@
 /**
- * PHASE 161b, 4 November 2026 — A SECURITY TOKEN ON EVERY FORM THAT CHANGES SOMETHING, AS WELL AS THE BROWSER CHECK.
+ * A SECURITY TOKEN ON EVERY FORM THAT CHANGES SOMETHING, AS WELL AS THE BROWSER CHECK.
  *
- * The ITRoadway technical audit (2 Nov 2026), section 4, row 3 (Medium): "Forms are protected by browser settings only,
+ * The ITRoadway technical audit, section 4, row 3 (Medium): "Forms are protected by browser settings only,
  * with no extra check on sensitive actions such as payments and admin changes. Add a one-time security token to those
  * forms." Until today a form sent from another website was stopped by two browser settings only: the session cookie's
- * SameSite, and the browser's Sec-Fetch-Site mark (Phase 160e, src/core/router.ts). A browser that sends neither got
+ * SameSite, and the browser's Sec-Fetch-Site mark. A browser that sends neither got
  * through. Now every request that would change something for a signed-in person must also carry a token of ours.
  *
  * THE FORM TOKEN. One per session, worked out from the session cookie (HMAC-SHA256, keyed by the cookie), so:
@@ -130,7 +130,7 @@ export const SENSITIVE: readonly { readonly match: RegExp; readonly why: string 
   { match: /^\/(staff|portal)\/two-factor(\/(change|off|recovery-codes))?$/, why: 'your own second sign-in step' },
   { match: /^\/(staff|portal)\/settings\/(password|username)$/, why: 'your own password or sign-in name' },
   { match: /^\/api\/account\/recovery-codes$/, why: 'your own recovery codes' },
-  // PHASE 161g: an approval of a legal page is never changed or deleted once recorded, so it is sent once.
+  // An approval of a legal page is never changed or deleted once recorded, so it is sent once.
   { match: /^\/staff\/legal\/approve$/, why: 'a legal page\'s approval by our solicitor or our data protection officer' },
 ]);
 

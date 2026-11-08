@@ -1,7 +1,7 @@
 /**
  * Caprebate — Land Boundary Import Connector
  * Board item 12830205914: "Pull in land boundary maps to get site size
- * (waiting on the licence)". Phase 9, item 1.
+ * (waiting on the licence)". Item 1.
  *
  * STATUS: PREPARED, NOT SHIPPED. No live data has ever been pulled through
  * this module. See caprebate-boundary-import.md for the full specification,
@@ -20,8 +20,8 @@
  *   (b) INTERNAL_CALCULATION_ONLY — compute the numbers, never reproduce the
  *                                   map/geometry in an outgoing report
  *   (c) FULL_REPRODUCTION         — geometry may appear in reports too
- * PHASE 132e (16 September 2026): (b) is now DECIDED, not assumed — by
- * Lakhbir Dhillon, Head of Business Development, answer read 15 September 2026. Fetching is still
+ * (b) is now DECIDED, not assumed — by
+ * the owner, Head of Business Development, answer read 15 September 2026. Fetching is still
  * OFF (§7, §10). Both attribution statements are in the sources note (§12).
  * This module is built so that moving between (a)/(b)/(c) is a change to
  * CURRENT_LICENCE_PERMISSION alone (§7) — no other line changes. The split is
@@ -93,15 +93,15 @@ export type BoundaryImportErrorCode =
   | 'E_WRONG_SCALAR_FIELD'
   | 'E_NOT_AN_ARTEFACT'
   | 'E_NO_INPUTS'
-  // Phase 133 (17 September 2026): translation from the published INSPIRE shape (§13).
+  // Translation from the published INSPIRE shape (§13).
   | 'E_MISSING_INSPIRE_ID'
   | 'E_MIXED_CRS'
   | 'E_CONFLICTING_DUPLICATE_POLYGON'
-  // Phase 133 (17 September 2026): spatial join, point -> INSPIRE polygon (§14).
+  // Spatial join, point -> INSPIRE polygon (§14).
   | 'E_INVALID_POINT'
   | 'E_NO_FREEHOLD_POLYGON'
   | 'E_AMBIGUOUS_POLYGON'
-  // Phase 150 (24 September 2026): the real fetcher, 09-app/backend/src/connectors/inspire.ts, built and switched off.
+  // The real fetcher, 09-app/backend/src/connectors/inspire.ts, built and switched off.
   | 'E_FETCHING_SWITCHED_OFF'
   | 'E_FETCH_REFUSED'
   | 'E_FETCH_FAILED'
@@ -418,13 +418,13 @@ export type LicencePermission = {
   decided_by: string | null;
   decided_at: string | null;
   /**
-   * Phase 132e. Where the decision was recorded, in plain words, so a reader
+   * Where the decision was recorded, in plain words, so a reader
    * can go and check it. Optional: the hand-built permissions in the tests
    * (and any older caller) have no record, and that is fine — nothing in this
    * module reads this field to decide anything.
    */
   decision_record?: string | null;
-  /** Phase 132e. The date the decision was built into this file (ISO date). Record only, never read to decide anything. */
+  /** The date the decision was built into this file (ISO date). Record only, never read to decide anything. */
   built_at?: string | null;
   notes: string;
 };
@@ -448,12 +448,12 @@ function permissionFor(
  * nothing else in this file. Every function that needs a permission defaults
  * to reading it here.
  *
- * DECIDED, Phase 132e (built 16 September 2026). Until this phase the value
+ * DECIDED, Phase 132e. Until this phase the value
  * below was the same outcome, but only as an unconfirmed default. It is now a
  * recorded decision:
- *   - Decided by Lakhbir Dhillon, Head of Business Development. His answer "Yes" to "Switch on
+ *   - Decided by the owner, Head of Business Development. His answer "Yes" to "Switch on
  *     automatic site area from the land boundaries, without waiting for
- *     Ordnance Survey?" was read on 15 September 2026 (Phase 132c): internal
+ *     Ordnance Survey?" was read on 15 September 2026: internal
  *     calculation only, and boundary maps stay out of client reports.
  *   - Internal calculation: PERMITTED (allow_internal_calculation: true).
  *   - Showing the boundary, a map or its coordinates in a client report:
@@ -470,13 +470,13 @@ function permissionFor(
  * WHAT THIS DOES NOT DO. It does not switch fetching on. Nothing in this file
  * fetches: DEFAULT_FETCHER still always refuses, and BOUNDARY_FETCHING_SWITCHED_ON
  * (§10) is still false. The real fetcher of HM Land Registry's INSPIRE Index
- * Polygons was built, and left switched off, by Phase 150 (24 September 2026)
+ * Polygons was built, and left switched off
  * at 09-app/backend/src/connectors/inspire.ts. The data protection officer's
- * question on small, logged test lookups was answered by Lakhbir on 25
- * September 2026 (yes, on five conditions), and Phase 151l (28 September 2026)
+ * question on small, logged test lookups was answered by the owner on 25
+ * (yes, on five conditions), and Phase 151l
  * built the first download as a test lookup under them: `smoke HMLR_INSPIRE`
  * in the back end, which switches the fetcher on for its one call and never
- * touches this module. Switching fetching on for the application is Lakhbir's
+ * touches this module. Switching fetching on for the application is the owner's
  * decision; a PASS from that test lookup, which proves the file's shape, comes
  * first. Building footprints still wait on Ordnance Survey.
  */
@@ -516,7 +516,7 @@ export const CURRENT_LICENCE_PERMISSION: LicencePermission = {
 }
 
 /**
- * Phase 132e. What someone is asking to do with land boundary data. Only these
+ * What someone is asking to do with land boundary data. Only these
  * three exact values are recognised. Anything else — "not sure", undefined,
  * null, an empty string, a misspelling — is treated as unrecognised and
  * REFUSED, identically (rule N4: "not sure" and absent behave the same).
@@ -534,12 +534,12 @@ export type BoundaryUseDecision = {
 const RECOGNISED_PURPOSES: ReadonlySet<string> = new Set(['INTERNAL_CALCULATION', 'CLIENT_REPORT_DISPLAY', 'FETCH']);
 
 /**
- * Phase 132e. Answers "may we use land boundary data for this?" without
+ * Answers "may we use land boundary data for this?" without
  * throwing, so a screen or a back-end route can show the reason to a person.
  * It only reads the permission; it never fetches, stores or changes anything.
  *
  *   - INTERNAL_CALCULATION: permitted when the permission allows internal
- *     calculation (it does, as decided on 15 September 2026).
+ *     calculation.
  *   - CLIENT_REPORT_DISPLAY: permitted only when the permission allows report
  *     reproduction (it does not).
  *   - FETCH: always refused while BOUNDARY_FETCHING_SWITCHED_ON is false,
@@ -580,9 +580,9 @@ export function checkBoundaryUse(
       : {
           permitted: false,
           purpose,
-          /* PHASE 151c, 25 September 2026. This said "a site area worked out from it may be reported", while the
+          /* This said "a site area worked out from it may be reported", while the
              source register's HMLR_INSPIRE licence row says client_report false for everything from this source,
-             the site area included. Lakhbir's decision of 15 September 2026 (decision_record above) settles the
+             the site area included. the owner's decision (decision_record above) settles the
              map — it stays out — and "internal calculation only"; it does not say whether the NUMBER may go in a
              client report. So both now say the same, the safe way round, and the number waits on his answer to the
              Word question "May the site area we work out from a land boundary go in a client's report?". */
@@ -794,7 +794,7 @@ export type BoundaryFetchPlan = {
  * Contains no I/O of any kind. Two calls with the same input always produce
  * the same output.
  *
- * PHASE 133 (17 September 2026) — THE `/title/` LOCATOR BELOW DOES NOT MATCH
+ * THE `/title/` LOCATOR BELOW DOES NOT MATCH
  * THE PUBLISHED DATA. HM Land Registry's INSPIRE Index Polygons carry no title
  * number: each polygon has its own Land Registry-INSPIRE ID, and one title can
  * have several polygons (findings: 04-phase-work/phase133/inspire-format-findings.md).
@@ -825,18 +825,18 @@ export type RawBoundaryPayload = {
 export type BoundaryFetcher = (item: BoundaryFetchPlanItem) => Promise<RawBoundaryPayload>;
 
 /**
- * Phase 132e. A named, readable statement that fetching is OFF, read by
+ * A named, readable statement that fetching is OFF, read by
  * checkBoundaryUse's reason.
  *
- * PHASE 150 (24 September 2026) MADE IT A REAL SWITCH. The real fetcher,
+ * MADE IT A REAL SWITCH. The real fetcher,
  * 09-app/backend/src/connectors/inspire.ts, reads this constant before it does
  * anything, and while it is false it refuses (E_FETCHING_SWITCHED_OFF) with
  * nothing sent. DEFAULT_FETCHER below is unchanged and still always throws, so
  * with no fetcher injected, setting this true would still fetch nothing.
  * Turning fetching on is this one word plus injecting that fetcher. "Can we
  * make a few small, logged test lookups to check a data connector works?" was
- * answered on 25 September 2026; the first download runs as a test lookup
- * (Phase 151l, `smoke HMLR_INSPIRE`), and turning this on is Lakhbir's.
+ * answered; the first download runs as a test lookup
+ *, and turning this on is the owner's.
  */
 export const BOUNDARY_FETCHING_SWITCHED_ON = false as const;
 
@@ -911,7 +911,7 @@ export const OS_MASTERMAP_BUILDING_FOOTPRINT_TABLE: ReferenceTableStub<unknown> 
 );
 
 /* ------------------------------------------------------------------ *
- * 12. Sources note — the two attribution statements (Phase 132e)
+ * 12. Sources note — the two attribution statements
  * ------------------------------------------------------------------ */
 
 /**
@@ -919,7 +919,7 @@ export const OS_MASTERMAP_BUILDING_FOOTPRINT_TABLE: ReferenceTableStub<unknown> 
  * statements are copied word for word from HM Land Registry's conditions of
  * use, read on 16 September 2026 at
  * https://use-land-property-data.service.gov.uk/datasets/inspire (the wording
- * matches the reading of 13 and 15 September 2026 in the board item exports).
+ * matches the reading of 13 and in the board item exports).
  *
  * HM Land Registry's statement is needed whenever the data is reused — which
  * includes a site area worked out from a polygon. The Ordnance Survey
@@ -948,7 +948,7 @@ export const INSPIRE_INDEX_POLYGON_SOURCES_NOTE = Object.freeze({
 
 /* ------------------------------------------------------------------ *
  * 13. Translation from the PUBLISHED INSPIRE Index Polygon shape
- *     (Phase 133, 17 September 2026)
+ *
  *
  * HM Land Registry's own pages were read on 17 September 2026 (findings in
  * 04-phase-work/phase133/inspire-format-findings.md). Three things they say
@@ -1129,7 +1129,7 @@ export function inspirePolygonsToRawBoundaryGeometry(records: readonly InspireIn
 
 /* ------------------------------------------------------------------ *
  * 14. Spatial join: a point -> the INSPIRE polygon containing it
- *     (Phase 133, 17 September 2026). BUILT AND SWITCHED OFF.
+ *    . BUILT AND SWITCHED OFF.
  *
  * The published INSPIRE data carries no title number (§13), so a property can
  * only be matched to its polygon spatially: take a British National Grid

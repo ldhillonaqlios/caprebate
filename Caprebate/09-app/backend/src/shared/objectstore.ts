@@ -51,9 +51,9 @@ import { join, dirname, normalize, sep } from 'node:path';
 import { durableKeyFor, retainedTextKeyFor, type ObjectStore, type PresignedUpload } from './upload-handler-port.ts';
 import { KEEP_ORIGINALS, keptDays, seal, unseal, type KeepOriginals } from './originals.ts';
 
-/** PHASE 140: where a kept original lives — the handler's durable prefix. The retained text beside it is not an original. */
+/** Where a kept original lives — the handler's durable prefix. The retained text beside it is not an original. */
 function isOriginalKey(key: string): boolean {
-  const DURABLE_PREFIX = durableKeyFor(''); // Read when used, not while this file loads (Phase 161i: the areas' front doors load whole, and the code still loops between areas until Phase 161l).
+  const DURABLE_PREFIX = durableKeyFor(''); // Read when used, not while this file loads.
   return key.startsWith(DURABLE_PREFIX) && !key.endsWith(retainedTextKeyFor('').slice(DURABLE_PREFIX.length));
 }
 
@@ -86,16 +86,16 @@ function assertIncomingKey(key: string): void {
   if (!key.startsWith(INCOMING_PREFIX)) throw new Error('not an incoming key');
 }
 
-/** 2 Oct 2026: where survey photos are kept, each sealed (`putSealed`). */
+/** Where survey photos are kept, each sealed (`putSealed`). */
 export const SEALED_PREFIX = 'survey-photos/';
-/** 2 Oct 2026: where a photo LOCKED ON THE PHONE waits (src/web/photo-upload.ts) until the server opens, cleans and seals
+/** Where a photo LOCKED ON THE PHONE waits (src/web/photo-upload.ts) until the server opens, cleans and seals
  *  it. Only locked bytes are ever here, and each is removed once it is dealt with. */
 export const INCOMING_PREFIX = 'survey-incoming/';
-/** 2 Oct 2026: where a client's video is kept, in pieces, each sealed (src/web/survey-video.ts). */
+/** Where a client's video is kept, in pieces, each sealed (src/web/survey-video.ts). */
 export const VIDEO_PREFIX = 'survey-videos/';
-/** PHASE 153f, 4 Oct 2026: a file someone sent us on WhatsApp, fetched from Meta and kept sealed (src/web/whatsapp.ts). */
+/** A file someone sent us on WhatsApp, fetched from Meta and kept sealed (src/web/whatsapp.ts). */
 export const WHATSAPP_PREFIX = 'whatsapp-files/';
-/** PHASE 156c, 5 Oct 2026: a WhatsApp chat exported on the phone and uploaded for checking — its text, and a small .zip
+/** A WhatsApp chat exported on the phone and uploaded for checking — its text, and a small .zip
  *  whole (src/web/whatsapp-import.ts). Kept sealed, like the files themselves. */
 export const WHATSAPP_IMPORT_PREFIX = 'whatsapp-imports/';
 const isSealedKey = (key: string): boolean => key.startsWith(SEALED_PREFIX) || key.startsWith(VIDEO_PREFIX) || key.startsWith(WHATSAPP_PREFIX) || key.startsWith(WHATSAPP_IMPORT_PREFIX);
@@ -112,9 +112,9 @@ export type FsObjectStoreOptions = {
   /** Injected so a test is deterministic; defaults to a fresh random secret. */
   secret?: Buffer;
   now?: () => string;
-  /** PHASE 140: the KEEP_ORIGINALS switch. Absent is the shipped switch, off. A test passes it on. */
+  /** The KEEP_ORIGINALS switch. Absent is the shipped switch, off. A test passes it on. */
   originals?: KeepOriginals;
-  /** PHASE 140: the 32-byte key a kept original is encrypted with. Absent or wrong length: no original is ever kept. */
+  /** The 32-byte key a kept original is encrypted with. Absent or wrong length: no original is ever kept. */
   sealKey?: Buffer | null;
 };
 
@@ -133,7 +133,7 @@ export class FsObjectStore implements ObjectStore {
   readonly #secret: Buffer;
   readonly #now: () => string;
   readonly #sealKey: Buffer | null;
-  /** PHASE 140: days a kept original lives, or null — KEEP_ORIGINALS is off in one of its three ways. Read by uploads.ts. */
+  /** Days a kept original lives, or null — KEEP_ORIGINALS is off in one of its three ways. Read by uploads.ts. */
   readonly keptDays: number | null;
 
   constructor(opts: FsObjectStoreOptions) {
@@ -168,7 +168,7 @@ export class FsObjectStore implements ObjectStore {
   }
 
   /**
-   * The handler's only use of `copy` is promoting an original to durable storage (PROMOTION_RULE). PHASE 140: AN ORIGINAL
+   * The handler's only use of `copy` is promoting an original to durable storage (PROMOTION_RULE). AN ORIGINAL
    * IS NEVER WRITTEN THERE IN THE CLEAR. It is encrypted on the way, and with no key the copy is refused — the handler's
    * own catch path then deletes the quarantined file, so a missing key can only ever mean less is kept, never more.
    */
@@ -183,7 +183,7 @@ export class FsObjectStore implements ObjectStore {
     }
   }
 
-  /** PHASE 140: a kept original, decrypted. Only src/web/uploads.ts calls this, after `document.read_original`. */
+  /** A kept original, decrypted. Only src/web/uploads.ts calls this, after `document.read_original`. */
   async openOriginal(key: string): Promise<Buffer> {
     if (!isOriginalKey(key)) throw new Error('not an original');
     if (this.#sealKey === null) throw new Error('no key to open a kept original');
@@ -208,7 +208,7 @@ export class FsObjectStore implements ObjectStore {
   }
 
   /**
-   * 2 OCT 2026: A SURVEY PHOTO (src/web/survey-evidence.ts) — kept ENCRYPTED with the same key as a kept original, under
+   * A SURVEY PHOTO (src/web/survey-evidence.ts) — kept ENCRYPTED with the same key as a kept original, under
    * its own prefix, and refused with no key: a photo of the inside of a client's building is never written in the clear.
    */
   get canSeal(): boolean { return this.#sealKey !== null; }
@@ -220,7 +220,7 @@ export class FsObjectStore implements ObjectStore {
     await this.writeBytes(key, seal(this.#sealKey, bytes));
   }
 
-  /** 2 Oct 2026: a small secret encrypted with the same key, to keep in the database (a one-time lock's private half). */
+  /** A small secret encrypted with the same key, to keep in the database (a one-time lock's private half). */
   sealBytes(plain: Uint8Array): Buffer {
     if (this.#sealKey === null) throw new Error('refusing to keep a secret with no encryption key');
     return seal(this.#sealKey, plain);
@@ -238,7 +238,7 @@ export class FsObjectStore implements ObjectStore {
     return unseal(this.#sealKey, await this.readBytes(key));
   }
 
-  /* ------------------------------------- 2 Oct 2026: photos sent straight here */
+  /* -------------------------------------: photos sent straight here */
 
   /**
    * The other site the phone sends a locked photo to, for the page's security policy; null when it is sent to this
@@ -253,7 +253,7 @@ export class FsObjectStore implements ObjectStore {
     return null;
   }
 
-  /** 2 Oct 2026: a piece of a video that was never kept (refused or abandoned) is removed. Only under survey-videos/. */
+  /** A piece of a video that was never kept (refused or abandoned) is removed. Only under survey-videos/. */
   async dropVideoPiece(key: string): Promise<void> {
     assertSafeKey(key);
     if (!key.startsWith(VIDEO_PREFIX)) throw new Error('not a video piece');
@@ -334,14 +334,14 @@ export class FsObjectStore implements ObjectStore {
   }
 
   /* ------------------------------------------------ where the bytes go
-   * PHASE 151i, 28 September 2026. Everything above decides WHAT happens to a document: the key checked, an original
+   * 28 September 2026. Everything above decides WHAT happens to a document: the key checked, an original
    * sealed before it is kept and refused without a key, a deletion proved, a write capability scoped to one key. The
    * four steps below are only WHERE the bytes go, and they are all a store may change. Here it is a folder on this
    * machine, exactly as before; src/shared/shared-objectstore.ts puts them in a private Vercel Blob store every copy of the
    * test website reaches, and inherits every rule above unchanged. Each step is given a key the public method above
    * has already checked. */
 
-  /* ---------------------------------------------------------------- PHASE 161h: for the backup only (src/core/backup.ts) */
+  /* ---------------------------------------------------------------- for the backup only (src/core/backup.ts) */
 
   /**
    * Every object's key and when it was last written, oldest first. The backup reads this to copy what is new or changed

@@ -1,16 +1,16 @@
 /**
- * KEEP_ORIGINALS — KEEPING THE FILE A CLIENT SENT. BUILT, AND SWITCHED OFF. Phase 140, 21 September 2026.
+ * KEEP_ORIGINALS — KEEPING THE FILE A CLIENT SENT. BUILT, AND SWITCHED OFF.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHY IT IS OFF
  *
- * Lakhbir wants staff to "see what the customer has uploaded". Today nobody can: the upload handler reads each file,
+ * the owner wants staff to "see what the customer has uploaded". Today nobody can: the upload handler reads each file,
  * keeps what it took from it, and deletes the original. That deletion is our data-minimisation promise — the privacy
  * notice and the retention determinations are written on it. Keeping originals is what staff expect, and it changes
- * both documents. That is Lakhbir's decision with the data protection officer, not a build choice, so it is put to him
+ * both documents. That is the owner's decision with the data protection officer, not a build choice, so it is put to him
  * in CAPREBATE QUESTIONS under exactly this title:
  *   "Should we keep the files clients upload, or keep deleting them once read?"
- * PHASE 151, 24 September 2026: ANSWERED — KEEP THEM (Word answer 48, closed). The switch STAYS OFF: keeping needs a
+ * ANSWERED — KEEP THEM (Word answer 48, closed). The switch STAYS OFF: keeping needs a
  * keep-until period and a list of who may open them, and the privacy notice must say both first. That is the follow-up,
  * quoted below as KEEP_ORIGINALS_QUESTION: "How long do we keep the files clients upload, and who may open them?"
  *
@@ -48,10 +48,10 @@ export type KeepOriginals = {
   readonly question: string;
 };
 
-/** The title of the question under Lakhbir in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
+/** The title of the question under the owner in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
 export const KEEP_ORIGINALS_QUESTION = 'How long do we keep the files clients upload, and who may open them?';
 
-/* 24 September 2026, Lakhbir in chat (Word question 219, recorded; still open for the data protection officer to
+/*, the owner in chat (Word question 219, recorded; still open for the data protection officer to
    approve): keep them 7 years, and Sales, Admin and the data protection officer may open them. 7 years from the day
    the file was read is 2,557 days (two leap days in any seven years from 2026). THE SWITCH STAYS OFF until the officer
    approves and the privacy notice says both; `keptDays` reads no period while it is off. */
@@ -62,7 +62,7 @@ export const KEEP_ORIGINALS: KeepOriginals = Object.freeze({
 });
 
 /**
- * PHASE 153c, 4 October 2026 — ON FOR THE TEST WEBSITE ONLY (Word question 219, built on Lakhbir's recorded answer of
+ * ON FOR THE TEST WEBSITE ONLY (Word question 219, built on the owner's recorded answer of
  * 24 September and his "Keep them, test only" of 2 October for the survey photos, for the data protection officer to
  * check). Only api/index.mjs passes this, and only the test website runs that file; `KEEP_ORIGINALS` above, the default
  * everywhere else, stays off. The test website holds invented files only. A kept original still needs its key

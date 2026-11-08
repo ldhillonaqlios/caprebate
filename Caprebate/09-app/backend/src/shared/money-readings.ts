@@ -1,7 +1,7 @@
 /**
- * THE MONEY READINGS, SWITCHED ON IN TEST — PHASE 159i, 10 October 2026.
+ * THE MONEY READINGS, SWITCHED ON IN TEST.
  *
- * Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask ... if its viable" — and 9 October
+ * The owner: "anything you need signing off we build it, we then ask ... if its viable" — and 9 October
  * 2026, the target: "the highest figure we can defend". Each reading below is built in the survey pack, ON on the test
  * system (the test website, or a copy started with CAPREBATE_COST_MODEL_TEST=1, as the BCIS test figures are) and OFF
  * everywhere else, and each is a viability question to the tax adviser in the Word questions document (273-277):
@@ -24,13 +24,13 @@ export type MoneyReadings = {
   readonly legal_fees_in_base: boolean;
   readonly s185_plus_own_s25: boolean;
   readonly vat_shared_with_land: boolean;
-  /** PHASE 159k (item 2): plant with an expected life of 25 years or more goes to the special rate pool where a year's
+  /** Plant with an expected life of 25 years or more goes to the special rate pool where a year's
    *  long-life spend passes £100,000 (s.90-104; src/web/allowances.ts). */
   readonly long_life_test: boolean;
-  /** PHASE 159k (item 2): removing asbestos that was there when a company acquired the land is land remediation relief, a
+  /** Removing asbestos that was there when a company acquired the land is land remediation relief, a
    *  150% deduction (CTA 2009 Part 14), shown in the return entries — never an allowance. */
   readonly asbestos_lrr: boolean;
-  /** PHASE 159k (item 2, #20): repairs to an integral feature that pass half its replacement cost in twelve months are
+  /** Repairs to an integral feature that pass half its replacement cost in twelve months are
    *  capital (s.33B), read across the building's pieces of work (src/web/survey-pack.ts). */
   readonly s33b_aggregation: boolean;
 };
@@ -51,7 +51,7 @@ export function moneyReadingsHere(env: Env = process.env): MoneyReadings {
 }
 
 /**
- * PHASE 159j (Lockwood finding L14), 10 October 2026: THE TAX ADVISER'S SWITCHES AS THE SURVEY PACK READS THEM. The pack
+ *: THE TAX ADVISER'S SWITCHES AS THE SURVEY PACK READS THEM. The pack
  * applies the readings above on the test system, but the claim page's facts panel and the sign-off form read the public
  * estimate's own switches (CB_CTA), which stay off, so a person signing off read "Off ... not added" beside a figure that
  * had added the stamp duty. Each CB_CTA switch the pack honours from these readings reads ON here when the pack applies
@@ -63,7 +63,7 @@ export const PACK_SWITCH_OF: Readonly<Record<string, keyof MoneyReadings>> = Obj
   s33b_aggregation: 's33b_aggregation',   // PHASE 159k
 });
 
-/** PHASE 159l (item 8): the engine's switches the pack's legal check holds on for itself (pack-legal.ts
+/** The engine's switches the pack's legal check holds on for itself (pack-legal.ts
  *  withLegalEngineReadings, LEGAL_READINGS #9 and #10). They read ON here, as the pack the adviser signs reads them. */
 export const LEGAL_ENGINE_SWITCHES = Object.freeze(['s187a_6b_statements_route', 'fvr_requires_past_owner_claim'] as const);
 

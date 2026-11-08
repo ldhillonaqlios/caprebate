@@ -1,6 +1,6 @@
 /**
  * Caprebate — Source Register & Provenance Cells
- * Board item 12830181420. Phase 3, item 1.
+ * Board item 12830181420. Item 1.
  *
  * Every field written anywhere in the system carries three things with it:
  *   publisher, licence, retrieval timestamp.
@@ -202,7 +202,7 @@ export const LICENCES: readonly Licence[] = [
     name: 'HM Land Registry Price Paid Data licence',
     publisher_of_licence: 'HM Land Registry',
     attribution_required: true,
-    /* Phase 146c, 23 September 2026: HM Land Registry's prescribed words, read that day from GOV.UK's "Price Paid Data"
+    /* 23 September 2026: HM Land Registry's prescribed words, read that day from GOV.UK's "Price Paid Data"
        guidance — the year is a fixed 2021, not a placeholder, and the line before this phase left it out. */
     attribution_text:
       'Contains HM Land Registry data © Crown copyright and database right 2021. ' +
@@ -215,11 +215,11 @@ export const LICENCES: readonly Licence[] = [
       'residential property price information services" — we use them to match an address and keep none of them.',
   },
   {
-    /* PHASE 150, 24 September 2026: HM Land Registry's INSPIRE Index Polygons. Both statements are word for word from
+    /* HM Land Registry's INSPIRE Index Polygons. Both statements are word for word from
        its conditions of use, read that day at https://use-land-property-data.service.gov.uk/datasets/inspire (the
        same words 09-app/backend/src/registers/caprebate-boundary-import.ts has carried since 16 September). The
        "[year of supply or date of publication]" placeholder is HM Land Registry's own. client_report is FALSE
-       although the licence would allow it with both statements: Lakhbir's decision of 15 September 2026 keeps
+       although the licence would allow it with both statements: the owner's decision keeps
        boundary maps out of client reports, and the boundary module's CURRENT_LICENCE_PERMISSION holds it there. */
     licence_id: 'HMLR_INSPIRE',
     name: 'Open Government Licence v3.0, with HM Land Registry and Ordnance Survey attribution (INSPIRE Index Polygons)',
@@ -233,8 +233,8 @@ export const LICENCES: readonly Licence[] = [
     redistribution: { client_report: false, accountant_report: false, hmrc_pack: false, internal: true },
     cache_max_age_days: 35,
     legal_review_required: false,
-    /* PHASE 151c, 25 September 2026: the boundary module's checkBoundaryUse said the site AREA "may be reported"
-       while this row says client_report false for the whole source. Lakhbir's decision of 15 September settles the
+    /* The boundary module's checkBoundaryUse said the site AREA "may be reported"
+       while this row says client_report false for the whole source. the owner's decision of 15 September settles the
        map, not the number, so the number stays in with everything else here — for our own checks — until he answers
        the Word question "May the site area we work out from a land boundary go in a client's report?". Both now say so. */
     notes: 'Free under the OGL. Republished on the first Sunday of each month, showing the previous month, so a copy ' +
@@ -262,13 +262,13 @@ export const LICENCES: readonly Licence[] = [
     name: 'CQC syndication / API terms of use',
     publisher_of_licence: 'Care Quality Commission',
     attribution_required: true,
-    /* PHASE 153c, 4 October 2026 (Word question 201): the words shown beside each CQC fact. CQC's "Using CQC data"
+    /* The words shown beside each CQC fact. CQC's "Using CQC data"
        page puts the data under the Open Government Licence and asks users to acknowledge they use CQC information. */
     attribution_text: 'Source: Care Quality Commission, Open Government Licence',
     redistribution: { client_report: true, accountant_report: true, hmrc_pack: true, internal: true },
-    /* 0 WAS OUR REFUSAL, NOT CQC'S FIGURE (Phase 146c, 23 September 2026), until the solicitor answered how current CQC
+    /* 0 WAS OUR REFUSAL, NOT CQC'S FIGURE, until the solicitor answered how current CQC
        data must be when we use it.
-       PHASE 153c, 4 October 2026 — 30 DAYS IN THE TEST SYSTEM, on our recommendation (Word question 201, the director's,
+       30 DAYS IN THE TEST SYSTEM, on our recommendation (Word question 201, the director's,
        for the solicitor): a fact held up to 30 days, always with its source beside it, unless the terms that come with
        the key say otherwise. Test data only. Null would still mean "no limit" and is never used (N4). */
     cache_max_age_days: 30,
@@ -290,7 +290,7 @@ export const LICENCES: readonly Licence[] = [
     notes: 'Registration via GOV.UK One Login and acceptance of terms required before bulk access. England & Wales only (Phase 64).',
   },
   {
-    /* PHASE 155 (line 3), 4 October 2026 — READ, AND IT DOES NOT ALLOW OUR USE. This row said "VOA_OPEN" and the Open
+    /* 4 October 2026 — READ, AND IT DOES NOT ALLOW OUR USE. This row said "VOA_OPEN" and the Open
        Government Licence; neither was ever true. The VOA's bulk rating list download page
        (voaratinglists.blob.core.windows.net/html/rlidata.htm, read 4 October 2026, an "I Agree" before any file) says
        "An open government licence does not apply", and its terms (tax.service.gov.uk/view-my-valuation/terms-and-
@@ -299,7 +299,7 @@ export const LICENCES: readonly Licence[] = [
        same purposes, deleted when no longer needed for them. A capital allowances claim is not a rating purpose. So
        every channel is FALSE — internal too — and nothing is imported (Phase 155 line 3; the phase9 importer
        04-phase-work/phase9/caprebate-voa-import.ts stays unshipped). Only the VOA could permit our use.
-       SCRAPPED, the same day: Lakhbir, "scrap the VOA rating". Not to be reopened (ACTION-PLAN COORDINATES,
+       SCRAPPED, the same day: the owner, "scrap the VOA rating". Not to be reopened (ACTION-PLAN COORDINATES,
        "DECIDED - DO NOT REOPEN"). The row stays so the panel can say why it is not used. */
     licence_id: 'VOA_RATING_LIST',
     name: 'VOA rating list data — restricted to Non Domestic Rating purposes; NOT the Open Government Licence',
@@ -316,9 +316,9 @@ export const LICENCES: readonly Licence[] = [
   },
   {
     /**
-     * BCIS — THE COST SOURCE, INSTEAD OF SPON'S. Lakhbir chose BCIS over the Spon's price books (Word answers 6 and 8,
-     * closed 24 September 2026); no Spon's book is bought, and the three Spon's PDFs in
-     * 07-reference-and-benchmarks/price-books stay where they are, unused. Rewritten 24 September 2026 by Phase 151
+     * BCIS — THE COST SOURCE, INSTEAD OF SPON'S. the owner chose BCIS over the Spon's price books (Word answers 6 and 8,
+     * closed); no Spon's book is bought, and the three Spon's PDFs in
+     * 07-reference-and-benchmarks/price-books stay where they are, unused. Rewritten
      * in the shape of CIBSE_KNOWLEDGE below. The research is 04-phase-work/phase3/caprebate-bcis-source-register-row.md.
      *
      * WHAT IT WOULD FEED. The LEG-E4 tables in 09-app/backend/src/modules/survey/costing/cost-model.cjs - CB_LOCATION_FACTORS,
@@ -372,9 +372,9 @@ export const LICENCES: readonly Licence[] = [
       'NOT PUBLISHED BY BCIS — its licence (Annex One, cl. 7.3) requires a credit to BCIS wherever feasible but gives no ' +
       'wording. Ours: every rate drawn from BCIS names "BCIS" and the series it came from, in the report\'s "Where each rate ' +
       'comes from" (src/web/survey-report.ts).',
-    /* PHASE 160 (the sweep), 10 October 2026: OPENED ON BCIS'S OWN ANSWER. Lakhbir, 9 Oct 2026: "we spoke to BCIS and they
+    /*: OPENED ON BCIS'S OWN ANSWER. The owner: "we spoke to BCIS and they
        said its fine for us to do what we are doing" — loading BCIS's data, drafting the pack's rates from it and showing
-       them in our reports (Word question 218, closed 10 Oct 2026). Those reports go to the client, into the accountant's
+       them in our reports. Those reports go to the client, into the accountant's
        pack and into the defence pack, so all three are opened, as the solicitor's answer opened HMLR_TITLE's. The rate
        TABLE itself is still never reproduced (cl. 2.2), and the data is still never committed (src/web/bcis-index.ts). */
     redistribution: { client_report: true, accountant_report: true, hmrc_pack: true, internal: true },
@@ -419,7 +419,7 @@ export const LICENCES: readonly Licence[] = [
      * NORTHERN IRELAND IS NOT COVERED. Commercial use of BT postcodes needs a
      * separate licence from Land and Property Services. Enforced in code at
      * ingest and again at lookup — phase9/caprebate-postcode-authority.ts.
-     * Established 7 September 2026 from the publisher's own licence page.
+     * Established from the publisher's own licence page.
      */
     licence_id: 'ONS_POSTCODE_OGL',
     name: 'Open Government Licence v3.0 — ONS postcode products',
@@ -440,7 +440,7 @@ export const LICENCES: readonly Licence[] = [
   },
   {
     /**
-     * THE ADDRESS LOOKUP. Board item 13003875907. Written 12 September 2026 by
+     * THE ADDRESS LOOKUP. Board item 13003875907. Written by
      * Phase 129 from the supplier's OWN PUBLISHED PAGES, read that day:
      *   https://homedata.co.uk/terms            (Terms of Service, "Last updated: November 2024")
      *   https://homedata.co.uk/about            ("Sourced from ... OS AddressBase ...";
@@ -468,7 +468,7 @@ export const LICENCES: readonly Licence[] = [
      *     HMRC pack: none beyond §4's prohibition.
      * The supplier's own contact for these is legal@homedata.co.uk (§13).
      *
-     * PHASE 153c, 4 October 2026 — THE KEEP-UNTIL PERIOD IS SEVEN YEARS IN THE TEST SYSTEM (Word question 37). Built
+     * THE KEEP-UNTIL PERIOD IS SEVEN YEARS IN THE TEST SYSTEM (Word question 37). Built
      * on our recommendation, for the officer and Homedata to check: an address and its property number are kept with
      * the claim file for seven years (2,557 days), like the rest of it, so a claim checked years later can still say
      * which building every figure was matched on. It is OUR TEST READING, NOT HOMEDATA'S FIGURE, and it stands only
@@ -503,16 +503,16 @@ export const LICENCES: readonly Licence[] = [
   },
   {
     /**
-     * CIBSE PLANT LIVES — the source nobody owned. Board item "CIBSE plant lives"; written 24 September 2026
-     * by Phase 147. The research is 04-phase-work/phase3/caprebate-cibse-plant-lives-source-register-row.md.
+     * CIBSE PLANT LIVES — the source nobody owned. Board item "CIBSE plant lives"; written
+     *. The research is 04-phase-work/phase3/caprebate-cibse-plant-lives-source-register-row.md.
      *
      * WHAT IT WOULD FEED. CB_CIBSE_PLANT_LIVES in 09-app/backend/src/modules/survey/costing/cost-model.cjs: the expected
      * life of each plant element, read by LEG-E5 (per-element depreciation) and by ATP-F-3 (the crosswalk
      * completeness gate). THAT TABLE STAYS EMPTY AND BOTH GATES STAY OFF. This entry records the terms, not data.
      *
-     * WHAT CIBSE PUBLISHES, read 24 September 2026 from its own pages as archived in June and July 2026 (the
+     * WHAT CIBSE PUBLISHES, read 24 September 2026 from its own pages as archived in June and (the
      * live site answered 503 and then "HTTP Error 500.30 - ASP.NET Core app failed to start" that morning):
-     *   - The tables are "Indicative Economic Life Expectancy (2026)", published June 2026: a zip holding
+     *   - The tables are "Indicative Economic Life Expectancy (2026)", published: a zip holding
      *     Guide M11 Appendix 11.A1 (economic life expectancy tables, PDF), Appendix 11.A2 (worked examples,
      *     PDF) and an Excel tool. Standard rate FREE, member rate FREE. It supersedes the January 2020
      *     supplement (Appendix 12.A1 of Guide M 2014), which NBS lists as withdrawn. Lives are "Reference
@@ -578,7 +578,7 @@ export const LICENCES: readonly Licence[] = [
   },
   {
     /**
-     * POSTCODES.IO — THE FREE CHECK AT THE ADDRESS QUESTION. Phase 151, 24 September 2026 (Word answers 16, 17, 35 and
+     * POSTCODES.IO — THE FREE CHECK AT THE ADDRESS QUESTION. (Word answers 16, 17, 35 and
      * 36). The research is 04-phase-work/phase151/free-address-lookup.md.
      *
      * NO FREE ADDRESS LIST EXISTS FOR A COMMERCIAL SERVICE. Read that day: getAddress.io ceased on 4 February 2026 after
@@ -643,12 +643,12 @@ export const SOURCES: readonly Source[] = [
     permitted_fields: [
       'company_number', 'company_status', 'sic_codes', 'accounts_year_end',
       'incorporation_date', 'registered_office_postcode', 'group_link_*',
-      // PHASE 153b, 4 October 2026 (Word question 198): the company's TYPE ("ltd", "plc", "llp" ...), a fact about the
-      // company and not about a person. PROPOSED, for the data protection officer (Sadique Maskeen) to agree — the
-      // corrections of 3 October said "change the permitted fields first (and ask Sadique), then map". Nothing reads
+      // The company's TYPE ("ltd", "plc", "llp" ...), a fact about the
+      // company and not about a person. PROPOSED, for the data protection officer to agree — the
+      // corrections of 3 October said "change the permitted fields first (and ask the data protection officer), then map". Nothing reads
       // it until COMPANY_TYPE_FROM_REGISTER (09-app/backend/src/connectors/company-search.ts) is switched on, and it is off.
       'company_type',
-      // PHASE 159g, 10 October 2026 (the Lockwood run, L2): the type of the latest accounts ("dormant", "micro-entity",
+      // The type of the latest accounts ("dormant", "micro-entity",
       // "full" ...) and the day they were made up to — facts about the company, not about a person. A dormant company
       // has no trade or property business, so no tax for allowances to relieve; until now the type was read and dropped.
       'accounts_type', 'accounts_made_up_to',
@@ -679,7 +679,7 @@ export const SOURCES: readonly Source[] = [
     licence_id: 'HMLR_PPD',
     default_prov: 'API',
     max_grade: 'A',
-    /* PHASE 159g, 10 October 2026 (the Lockwood run, L11): `ppd_category` — A, a standard sale at full market value, or
+    /* `ppd_category` — A, a standard sale at full market value, or
        B, "additional price paid" (a sale to a company, a buy-to-let, a repossession, a transfer). A category B sale, or
        one of type "Other", is a lead for the surveyor to confirm and never the price. Price Paid is now asked for every
        sector: a surgery that was once a house, or was bought by a company, can be in it. */
@@ -698,7 +698,7 @@ export const SOURCES: readonly Source[] = [
     licence_id: 'HMLR_TITLE',
     default_prov: 'API',
     max_grade: 'A',
-    /* PHASE 146d, 23 September 2026 — `price_paid`, `transaction_date` and `prior_owner_count` added. THE ROW
+    /* `price_paid`, `transaction_date` and `prior_owner_count` added. THE ROW
        DESCRIBED THIS LOOKUP WITHOUT PERMITTING THE FIELD IT IS BOUGHT FOR. An official copy of the register records
        the price paid, or the value stated where no price was paid, for every disposition since April 2000 —
        commercial included — and that is the ONLY source of a price paid for four of our five sectors, because HM
@@ -709,19 +709,19 @@ export const SOURCES: readonly Source[] = [
     permitted_fields: [
       'title_number', 'tenure', 'proprietor_name_personal', 'proprietor_company_number',
       'lease_term_*', 'restriction_*', 'price_paid', 'transaction_date', 'prior_owner_count',
-      // PHASE 159g (item 6): YES or NO, the owner named is one of the client's own people; the name is never kept.
+      // YES or NO, the owner named is one of the client's own people; the name is never kept.
       'proprietor_personal_match',
     ],
     excluded_fields: ['charge_holder_individual_*', 'former_proprietor_*'],
     personal_name_exceptions: ['proprietor_name_personal'],
-    /* PHASE 146d: the Business Gateway's published live address, from HM Land Registry's own developer pack (read
-       23 September 2026). The vendor test environment is https://bgtest.landregistry.gov.uk. Reaching either needs
+    /* The Business Gateway's published live address, from HM Land Registry's own developer pack (read
+      ). The vendor test environment is https://bgtest.landregistry.gov.uk. Reaching either needs
        a Business Gateway account AND the client certificate HM Land Registry issues under the network access
        agreement, both of which are the developer's to obtain. */
     endpoint: 'https://businessgateway.landregistry.gov.uk',
   },
   {
-    /* PHASE 150, 24 September 2026: the land boundary. One GML file per local authority, downloaded whole, and the
+    /* The land boundary. One GML file per local authority, downloaded whole, and the
        polygon found by a point inside it (findInspirePolygonForPoint in 04-phase-work/phase9/caprebate-boundary-
        import.ts). The polygons carry no title number and no name, so nothing personal can arrive from this source.
        B, not A: HM Land Registry says the extent of a title "cannot be established" from these polygons. The
@@ -732,7 +732,7 @@ export const SOURCES: readonly Source[] = [
     licence_id: 'HMLR_INSPIRE',
     default_prov: 'API',
     max_grade: 'B',
-    /* Phase 151a: site_area_m2_grade — the area's confidence grade, stored beside it, never better than max_grade. */
+    /* Site_area_m2_grade — the area's confidence grade, stored beside it, never better than max_grade. */
     permitted_fields: ['site_area_m2', 'site_area_m2_grade', 'inspire_id'],
     excluded_fields: ['*_name', 'title_number'],
     personal_name_exceptions: NO_NAMES,
@@ -754,7 +754,7 @@ export const SOURCES: readonly Source[] = [
     endpoint: 'https://api.service.cqc.org.uk',
   },
   {
-    /* PHASE 155 (line 1), 4 October 2026: built — a downloaded file, imported on this server (09-app/backend/src/web/
+    /*: built — a downloaded file, imported on this server (09-app/backend/src/web/
        register-files.ts), never a call per client. CIW publishes its whole directory as one CSV; there is no API. Its
        file has no registration status and no service registration date (only the provider's), so neither is kept.
        BULK, not API: the file is downloaded by a person. The named Responsible Individuals and Registered Persons are
@@ -772,7 +772,7 @@ export const SOURCES: readonly Source[] = [
     endpoint: 'https://digital.careinspectorate.wales',
   },
   {
-    /* PHASE 155 (line 2), 4 October 2026: the Care Inspectorate, Scotland's care regulator — new. Its datastore is a
+    /*: the Care Inspectorate, Scotland's care regulator — new. Its datastore is a
        monthly CSV of every registered care service, under the Open Government Licence; there is no API. Imported on
        this server like CIW's. Its file names a manager and gives a telephone number and an email for each service:
        none is ever read. */
@@ -801,11 +801,11 @@ export const SOURCES: readonly Source[] = [
     ],
     excluded_fields: ['assessor_*'],
     personal_name_exceptions: NO_NAMES,
-    // Phase 64: the service moved from epc.opendatacommunities.org on 30 May 2026;
+    // The service moved from epc.opendatacommunities.org;
     // the old host now 301s here. Coverage is England & Wales ONLY — the service
     // itself directs Scotland to the Scottish EPC Register, and Northern Ireland
     // is on the separate EPB NI register. Neither is in this register yet.
-    // Phase 146c, 23 September 2026: this was the service's WEBSITE. The API is
+    // This was the service's WEBSITE. The API is
     // its own host, and the register carries the address a call goes to — as it
     // does for Companies House and CQC. The website is in SUPPLIER_DOCS below.
     endpoint: 'https://api.get-energy-performance-data.communities.gov.uk',
@@ -826,7 +826,7 @@ export const SOURCES: readonly Source[] = [
     /**
      * HIGHEST RISK SOURCE (subitem 12818304906). The whitelist is deliberately tiny.
      *
-     * WHAT THIS COMMENT USED TO SAY, AND WHY IT WAS WRONG (corrected by Phase 146d, 23 September 2026). It said the
+     * WHAT THIS COMMENT USED TO SAY, AND WHY IT WAS WRONG. It said the
      * whitelist "contains no free-text field that could carry a third party's name". IT DOES: `planning_description`
      * is free text, and a planning description routinely carries a surname — "Erection of a rear extension for Mr
      * Smith" is an ordinary way for an authority to write one. A comment that says a risk is absent is worse than no
@@ -847,7 +847,7 @@ export const SOURCES: readonly Source[] = [
      * asked to confirm that reading rather than being left to discover it. No best-effort name filter is built, and
      * none should be — that is the one thing the register's own rule forbids outright.
      *
-     * `officer*` AND `case_officer*` ARE EXCLUDED (Phase 146d). A case officer is a named council employee who is
+     * `officer*` AND `case_officer*` ARE EXCLUDED. A case officer is a named council employee who is
      * not our client and has no connection to the claim. Nothing we call today returns one into a kept field, but
      * BOTH candidate suppliers publish one: Homedata's /planning/search/ documents that it returns "case officer
      * details", and PlanIt's own answer carries `case_officer`, `applicant_name`, `agent_name` and `agent_address`
@@ -868,7 +868,7 @@ export const SOURCES: readonly Source[] = [
     ],
     excluded_fields: [
       'applicant_*', 'agent_*', 'objector_*', 'neighbour_*', 'comment_*', 'consultee_*', 'correspondence_*',
-      // Phase 146d: a bare '*', because the field PlanIt sends is `case_officer` with nothing after it.
+      // A bare '*', because the field PlanIt sends is `case_officer` with nothing after it.
       'officer*', 'case_officer*',
     ],
     personal_name_exceptions: NO_NAMES,
@@ -889,7 +889,7 @@ export const SOURCES: readonly Source[] = [
   {
     /**
      * Board item 12991298199. The thing that produces LEG-E4's `location_key`,
-     * which nothing in this system produced until 8 September 2026 — and that,
+     * which nothing in this system produced — and that,
      * not the price-book purchase, was why LEG-E4 could not ship.
      *
      * NO PERSONAL DATA REACHES THIS SOURCE AT ALL. It maps a postcode to a
@@ -929,7 +929,7 @@ export const SOURCES: readonly Source[] = [
     default_prov: 'API',
     max_grade: 'B',
     /**
-     * PHASE 146d, 23 September 2026 — LATITUDE AND LONGITUDE ADDED, and it is a fix rather than an extension.
+     * LATITUDE AND LONGITUDE ADDED, and it is a fix rather than an extension.
      *
      * The spatial screen (board item 12830181761 — the check that two records are about the same building) is
      * geometry-keyed, and its own specification says the coordinates come from THIS lookup. NOTHING ELSE IN THIS
@@ -948,13 +948,13 @@ export const SOURCES: readonly Source[] = [
      * held for no purpose, and the supplier publishes no permission to hold its identifiers at all. If something
      * later needs one, it is added here with the reason, which is the point of naming them now.
      */
-    /* Phase 151a: easting and northing, published in Homedata's own schema (property_lite, read 24 September 2026). They
+    /* Easting and northing, published in Homedata's own schema (property_lite, read 24 September 2026). They
        are the British National Grid point the land boundary lookup needs, with no conversion — Homedata labels its
        latitude and longitude WGS84, which the exact conversion (OSTN15, from ETRS89) does not take. */
     permitted_fields: ['uprn', 'address_line', 'postcode', 'latitude', 'longitude', 'easting', 'northing'],
     excluded_fields: ['*_name', 'occupier_*', 'resident_*', 'owner_*', 'proprietor_*', 'usrn', 'toid', 'udprn'],
     personal_name_exceptions: NO_NAMES,
-    /* PHASE 146d: CORRECTED FROM https://api.homedata.co.uk/api/address/ ON A LIVE RESPONSE, 23 September 2026. The
+    /* CORRECTED FROM https://api.homedata.co.uk/api/address/ ON A LIVE RESPONSE. The
        supplier's endpoint reference states "Base URL: https://api.homedata.co.uk/api" while every worked example on
        the same page omits the /api, so the documentation could not settle it. The open, unauthenticated /ping did:
        GET https://api.homedata.co.uk/ping answered 200 and /api/ping answered 404, and the supplier's public
@@ -964,7 +964,7 @@ export const SOURCES: readonly Source[] = [
   },
   {
     /**
-     * PHASE 156f (B4), 6 October 2026 — THE SITE AREA FROM THE TITLE OUTLINE, VIA HOMEDATA. Lakhbir: "site boundary - use
+     * — THE SITE AREA FROM THE TITLE OUTLINE, VIA HOMEDATA. the owner: "site boundary - use
      * home data". Homedata's `title_boundary` slug (5 tokens) on the paid address lookup's own property call; the outline
      * is turned into one area by the boundary module (09-app/backend/src/connectors/title-boundary.ts) and THE OUTLINE IS
      * NEVER KEPT. Its own source, so nobody reads the area as HM Land Registry's own file (HMLR_INSPIRE) or as an address
@@ -1044,7 +1044,7 @@ export const SOURCES: readonly Source[] = [
     endpoint: null,
   },
   {
-    /** Phase 151, 24 September 2026. The free postcode check at the address question. See POSTCODES_IO_OPEN. */
+    /** The free postcode check at the address question. See POSTCODES_IO_OPEN. */
     source_id: 'POSTCODES_IO',
     publisher: 'Postcodes.io',
     dataset: 'Postcode lookup (ONS Postcode Directory and OS Code-Point Open)',
@@ -1060,9 +1060,9 @@ export const SOURCES: readonly Source[] = [
 ];
 
 /* ------------------------------------------------------------------ *
- * 3a. What each supplier publishes, and when we read it — Phase 146c.
+ * 3a. What each supplier publishes, and when we read it.
  *
- *     Every connector built in Phase 146c (09-app/backend/src/connectors/)
+ *     Every connector built (09-app/backend/src/connectors/)
  *     was built against the documentation below, read on the date given.
  *     A connector's fields, paths and limits come from these pages and from
  *     nowhere else; when a supplier changes them, this is the list to re-read
@@ -1090,7 +1090,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/search/search-companies',
       'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/company-profile/company-profile',
       'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/filing-history/list',
-      'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/officers/list', // Phase 151b (Word answer 156, read 25 September 2026): names read in memory for the signatory check, never kept
+      'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/officers/list', // Names read in memory for the signatory check, never kept
       'https://developer-specs.company-information.service.gov.uk/document-api/resources/documentmetadata',
       'https://developer-specs.company-information.service.gov.uk/guides/rateLimiting',
       'https://developer.company-information.service.gov.uk/authentication',
@@ -1112,7 +1112,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'items_per_page, start_index, register_view. A super-secure entry carries no name.',
   },
   {
-    /* PHASE 155, 4 October 2026 — three sources read for their terms before any code (the phase's own rule). */
+    /* 4 October 2026 — three sources read for their terms before any code (the phase's own rule). */
     source_id: 'CIW',
     api_base: ['https://digital.careinspectorate.wales'],
     docs: [
@@ -1181,7 +1181,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'https://get-energy-performance-data.communities.gov.uk/api-technical-documentation',
       'https://get-energy-performance-data.communities.gov.uk/making-a-request',
       'https://raw.githubusercontent.com/communitiesuk/epb-data-warehouse/main/api/api.yml',
-      /* PHASE 146h, 23 September 2026 — THE TWO CODE ENDPOINTS, read the same day, which are how the domestic age
+      /* 23 September 2026 — THE TWO CODE ENDPOINTS, read the same day, which are how the domestic age
          band and tenure stop being letters and numbers and become facts. */
       'https://get-energy-performance-data.communities.gov.uk/api-technical-documentation/codes',
       'https://get-energy-performance-data.communities.gov.uk/api-technical-documentation/codes-info',
@@ -1224,7 +1224,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
     /* PHASE 146d adds api.homedata.co.uk as a THIRD address this source can be asked at — built, switched off, and
        not chosen. PlanIt remains the source of record; see src/integrations/connectors/homedata-planning.ts for why the choice is
        not a build decision. An address listed here is how a service row stays tied to its register source when the
-       source has more than one publisher, which planning has had since Phase 146c. */
+       source has more than one publisher, which planning has had. */
     api_base: ['https://www.planning.data.gov.uk', 'https://www.planit.org.uk', 'https://api.homedata.co.uk'],
     docs: [
       'https://www.planning.data.gov.uk/docs',
@@ -1249,7 +1249,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'NOT used because its own documentation says that one returns "case officer details".',
   },
   {
-    /* PHASE 146d, 23 September 2026. `api_base` is the host alone: settled on a LIVE response rather than on the
+    /* `api_base` is the host alone: settled on a LIVE response rather than on the
        prose, because the prose contradicts itself. */
     source_id: 'HOMEDATA_ADDRESS',
     api_base: ['https://api.homedata.co.uk'],
@@ -1307,7 +1307,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'spent on it); its shape is still the prose\'s and the first signed client\'s click confirms it.',
   },
   {
-    /* PHASE 146d, 23 September 2026. Nothing here can be called without the network access agreement, so every
+    /* Nothing here can be called without the network access agreement, so every
        line below is from HM Land Registry's own public developer pack rather than from a response. */
     source_id: 'HMLR_TITLE',
     api_base: ['https://businessgateway.landregistry.gov.uk', 'https://bgtest.landregistry.gov.uk'],
@@ -1336,7 +1336,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'the developer. Nothing turns on the guess while the switch is off and no certificate is installed.',
   },
   {
-    /* PHASE 150, 24 September 2026. Pages only: no polygon file, no map and no service was downloaded or called. */
+    /* Pages only: no polygon file, no map and no service was downloaded or called. */
     source_id: 'HMLR_INSPIRE',
     api_base: ['https://use-land-property-data.service.gov.uk'],
     docs: [
@@ -1344,7 +1344,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'https://use-land-property-data.service.gov.uk/datasets/inspire/download',
       'https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance',
       'https://use-land-property-data.service.gov.uk/api-information',
-      /* Phase 151a, the same day: the two lists the council table is derived from, and Ordnance Survey's conversion. */
+      /* The same day: the two lists the council table is derived from, and Ordnance Survey's conversion. */
       'https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/LAD_APR_2025_UK_NC_v2/FeatureServer/0',
       'https://docs.os.uk/more-than-maps/a-guide-to-coordinate-systems-in-great-britain/from-one-coordinate-system-to-another-geodetic-transformations/national-grid-transformation-ostn15-etrs89-osgb36',
     ],

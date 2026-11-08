@@ -1,5 +1,5 @@
 /**
- * THE CORE'S FRONT DOOR (Phase 161i, 7 Nov 2026; 09-app/ARCHITECTURE.md rule 1): the server and router shell, the database gate, sign-in, permissions, the audit log and the keys. Another area imports the core only from this file; what it may use is listed here, and nothing else of the core is reachable from outside.
+ * THE CORE'S FRONT DOOR: the server and router shell, the database gate, sign-in, permissions, the audit log and the keys. Another area imports the core only from this file; what it may use is listed here, and nothing else of the core is reachable from outside.
  * Generated from the imports other areas made on that day, and kept by hand since: add a name here when another area
  * needs it, never a whole file.
  */

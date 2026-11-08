@@ -1,5 +1,5 @@
 /**
- * PHASE 151i, 28 September 2026 — THE DOCUMENT STORE EVERY COPY OF THE TEST WEBSITE REACHES. BUILT AND SWITCHED OFF.
+ * THE DOCUMENT STORE EVERY COPY OF THE TEST WEBSITE REACHES. BUILT AND SWITCHED OFF.
  *
  * Phase 151e gave the test website one lasting database (Turso) for every copy of it. Its uploaded documents still went
  * to a folder on each copy's temporary disk, so a document uploaded through one copy was missing from the next while its
@@ -13,7 +13,7 @@
  * steps that say where the bytes go (`readBytes`, `writeBytes`, `copyBytes`, `removeProven`). The port
  * (`ObjectStore` in the upload handler) already answers with promises, so no caller changed to suit a store.
  *
- * PRIVATE, NEVER A PUBLIC ADDRESS. Read from Vercel's docs, 28 Sep 2026 (vercel.com/docs/vercel-blob/private-storage):
+ * PRIVATE, NEVER A PUBLIC ADDRESS. Read from Vercel's docs (vercel.com/docs/vercel-blob/private-storage):
  * a private store's objects "require authentication for all read and write operations"; its address,
  * https://<store>.private.blob.vercel-storage.com/<path>, "is not publicly accessible". And here:
  *   - every call says access: 'private' — a PUBLIC store refuses it, so a store created public by mistake fails closed;
@@ -33,7 +33,7 @@
  *
  * THE BLOB CLIENT IS A PORT, LIKE THE STORE. `BlobClient` is the four things this store asks of Blob, in our words.
  * `vercelBlobClient` is the real one: @vercel/blob, loaded only when the store is switched on, so the memory and folder
- * modes never load it. PHASE 161a, 4 Nov 2026 (the ITRoadway audit): the back end lists @vercel/blob for the tests only,
+ * modes never load it. The back end lists @vercel/blob for the tests only,
  * so the live install (npm ci --omit=dev) does not contain it; the root package.json, which builds only the test
  * website, keeps it; and api/index.mjs keeps the folder, and says why, if a store is set but the package is missing. The tests hand in a client that answers as Blob's documented SDK does, with no network.
  */
@@ -61,10 +61,10 @@ export interface BlobClient {
   exists(pathname: string): Promise<boolean>;
   /** Delete one object. Deleting one that is not there is not an error (Blob's `del`). */
   remove(pathname: string): Promise<void>;
-  /** PHASE 161h: every object under `prefix`, with when it was written, a page at a time. For the backup only. */
+  /** Every object under `prefix`, with when it was written, a page at a time. For the backup only. */
   list?(prefix: string, cursor?: string): Promise<{ objects: { pathname: string; written_at: string }[]; cursor: string | null }>;
   /**
-   * 2 Oct 2026: a one-time address the PHONE sends one object to, straight to the store (a presigned PUT): only this
+   * A one-time address the PHONE sends one object to, straight to the store (a presigned PUT): only this
    * pathname, only until `validUntil`, at most `maximumSizeInBytes`, private. With the headers it must send.
    */
   presignPut?(pathname: string, opts: { readonly maximumSizeInBytes: number; readonly validUntil: number }): Promise<IncomingTarget>;
@@ -125,7 +125,7 @@ export class SharedObjectStore extends FsObjectStore {
     await this.writeBytes(to_key, await this.readBytes(from_key));
   }
 
-  /* 2 Oct 2026: a photo locked on the phone is sent straight to the store, never through a copy of the website. */
+  /* A photo locked on the phone is sent straight to the store, never through a copy of the website. */
   override get incomingOrigin(): string | null { return this.#client.presignPut === undefined ? null : BLOB_UPLOAD_ORIGIN; }
 
   override async incomingTarget(key: string, maxBytes: number, validUntilMs: number): Promise<IncomingTarget | null> {
@@ -144,7 +144,7 @@ export class SharedObjectStore extends FsObjectStore {
     await this.#client.remove(SHARED_PREFIX + key);
   }
 
-  /** PHASE 161h: every object of ours in the Blob store, for the backup. A client that cannot list lists nothing, and the backup says so. */
+  /** Every object of ours in the Blob store, for the backup. A client that cannot list lists nothing, and the backup says so. */
   override async listObjects(): Promise<{ key: string; written_at: string }[]> {
     if (this.#client.list === undefined) throw new Error('this document store cannot list its objects');
     const out: { key: string; written_at: string }[] = [];
@@ -173,10 +173,10 @@ export type VercelBlobSdk = {
   get(pathname: string, opts: Record<string, unknown>): Promise<{ statusCode: number; stream: ReadableStream<Uint8Array> | null } | null>;
   head(pathname: string, opts: Record<string, unknown>): Promise<unknown>;
   del(pathname: string, opts: Record<string, unknown>): Promise<void>;
-  /** PHASE 161h, for the backup: @vercel/blob's list (prefix, cursor, limit; private stores too). */
+  /** For the backup: @vercel/blob's list (prefix, cursor, limit; private stores too). */
   list?(opts: Record<string, unknown>): Promise<{ blobs: { pathname: string; uploadedAt: Date | string }[]; cursor?: string; hasMore: boolean }>;
   BlobNotFoundError: new (...a: never[]) => Error;
-  /** 2 Oct 2026, for a presigned PUT (@vercel/blob 2.8). Absent in an older SDK: then photos go through our own route. */
+  /**, for a presigned PUT (@vercel/blob 2.8). Absent in an older SDK: then photos go through our own route. */
   issueSignedToken?(opts: Record<string, unknown>): Promise<{ clientSigningToken: string; delegationToken: string }>;
   presignUrl?(token: { clientSigningToken: string; delegationToken: string }, opts: Record<string, unknown>): Promise<{ presignedUrl: string }>;
   parseStoreIdFromPresignedUrl?(url: string): string;

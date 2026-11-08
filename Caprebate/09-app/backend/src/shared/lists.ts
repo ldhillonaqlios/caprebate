@@ -1,5 +1,5 @@
 /**
- * THE LISTS — FILTERS, SORTS, SAVED VIEWS AND EXPORT. CRM 9 of 10, 12 September 2026.
+ * THE LISTS — FILTERS, SORTS, SAVED VIEWS AND EXPORT. CRM 9 of 10.
  *
  * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, rows 16.2 to 16.6, and the
  * decisions this file takes are that table's Part E from E119. The pages are the
@@ -80,7 +80,7 @@ export const CLAIM_FILTERS: readonly FilterDef[] = Object.freeze([
 ] as FilterDef[]);
 
 export const CLAIM_SORTS: Vocab = Object.freeze({
-  // PHASE 134: the client is the company, so the list reads by company first; the reference is one sort among the rest.
+  // The client is the company, so the list reads by company first; the reference is one sort among the rest.
   company: 'Company, A to Z',
   reference: 'Reference, newest first',
   next_action: 'Next action due, soonest first',
@@ -357,12 +357,12 @@ export function claimsList(db: Db, actor: Actor, p: ListParams, ignored: readonl
  * 3 · THE LEADS LIST
  * ================================================================== */
 
-/** PHASE 136: `lead_at` is the lead's own instant, so Home can say how long a new lead has waited. */
+/** `lead_at` is the lead's own instant, so Home can say how long a new lead has waited. */
 export type LeadListRow = LeadRow & {
   readonly priority: string; readonly lead_at: string;
-  /** PHASE 137: the sector, in words, for the lead's card — the organisation's own, or the one recorded on the lead. */
+  /** The sector, in words, for the lead's card — the organisation's own, or the one recorded on the lead. */
   readonly sector: string;
-  /** PHASE 137: the lead's owner by id, so the cards can offer "take it" only where there is nobody. */
+  /** The lead's owner by id, so the cards can offer "take it" only where there is nobody. */
   readonly owner_id: string | null;
 };
 
@@ -549,7 +549,7 @@ export function csvCell(v: string | number | null | undefined): string {
 }
 
 const CLAIM_COLUMNS: Readonly<Record<ListShape, readonly (readonly [keyof ClaimListRow, string])[]>> = Object.freeze({
-  // PHASE 134: the company first, the reference last.
+  // The company first, the reference last.
   MONEY: [['client', 'Company'], ['opened', 'Opened'], ['claim_ref', 'Reference']],
   WORKING: [['client', 'Company'], ['property', 'Property'], ['workstream', 'Workstream'], ['stage', 'Stage'],
     ['owner', 'Owner'], ['priority', 'Priority'], ['next_action', 'Next action'], ['next_action_due', 'Next action due'],
@@ -609,7 +609,7 @@ export function exportList(d: ListDeps, actor: Actor, list: ListKey, q: URLSearc
 }
 
 /**
- * PHASE 133a — THE GATE OF THE CLAIMS LIST, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF THE CLAIMS LIST, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */

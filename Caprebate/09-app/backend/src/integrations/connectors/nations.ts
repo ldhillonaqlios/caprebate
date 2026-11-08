@@ -1,5 +1,5 @@
 /**
- * WHAT A FREE LOOKUP IS ASKED ABOUT, AND WHICH PART OF THE UK A PROPERTY IS IN. Phase 146c, 23 September 2026.
+ * WHAT A FREE LOOKUP IS ASKED ABOUT, AND WHICH PART OF THE UK A PROPERTY IS IN.
  *
  * Its own small file so each connector can read it without importing src/integrations/connectors/free-registers.ts, which imports
  * every connector: one direction only, and no cycle to trip over.
@@ -22,7 +22,7 @@ export type TypedProperty = {
   /** As recorded; null when nobody has said. Never assumed to be England. */
   readonly jurisdiction: Nation | null;
   /**
-   * PHASE 156f: the UPRN the client picked from the Homedata list at the assessment (migration 092), or null. A
+   * The UPRN the client picked from the Homedata list at the assessment (migration 092), or null. A
    * client's pick, not a register fact: the paid address lookup checks it belongs to this address before it uses it.
    */
   readonly uprn?: string | null;
@@ -72,7 +72,7 @@ export function nationOf(subject: ResearchSubject, earlier: ReadonlyMap<string, 
 }
 
 /**
- * PHASE 157c: the nation from the postcode check's country (postcodes.io: "England", "Wales", "Scotland", "Northern
+ * The nation from the postcode check's country (postcodes.io: "England", "Wales", "Scotland", "Northern
  * Ireland"). Anything else - the Channel Islands, the Isle of Man, a blank - is not a nation we cover, so null (N4).
  */
 export function nationFromCountry(country: string | null | undefined): Nation | null {

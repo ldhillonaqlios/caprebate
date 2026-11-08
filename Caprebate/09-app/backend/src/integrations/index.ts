@@ -1,5 +1,5 @@
 /**
- * THE OUTSIDE SERVICES' FRONT DOOR (Phase 161i, 7 Nov 2026; 09-app/ARCHITECTURE.md rule 1): every connector, the email sender and reader, the register intake, the postcode and grid lookups, and the outside services list. Another area imports them only from this file; only connectors/http.ts calls the network.
+ * THE OUTSIDE SERVICES' FRONT DOOR: every connector, the email sender and reader, the register intake, the postcode and grid lookups, and the outside services list. Another area imports them only from this file; only connectors/http.ts calls the network.
  * Generated from the imports other areas made on that day, and kept by hand since: add a name here when another area
  * needs it, never a whole file.
  */

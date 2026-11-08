@@ -1,5 +1,5 @@
 /**
- * "(REQUIRED)" IN WORDS BESIDE EVERY REQUIRED FIELD — PHASE 133d, 17 September 2026 (D1).
+ * "(REQUIRED)" IN WORDS BESIDE EVERY REQUIRED FIELD.
  *
  * Phase 133c wrote "(required)" by hand into three forms (the task, the lead and the enquiry check). Every other form
  * that carries `required` showed nothing a person could read: the browser's own marker only appears after a failed
@@ -96,7 +96,7 @@ export function requiredWithoutWords(html: string): string[] {
 }
 
 /**
- * PHASE 133e (D5) — LABELLED BY POSITION IS NOT LABELLED.
+ * LABELLED BY POSITION IS NOT LABELLED.
  *
  * `requiredWordsInMarkup` above will put "(required)" into a bare `<label>` that merely SITS before a control
  * (route 3), because that is how several of these forms are drawn and the words are worth having either way.

@@ -1,5 +1,5 @@
 /**
- * MATCHING A TYPED ADDRESS, OR A TYPED NAME, TO WHAT A REGISTER HOLDS. Phase 146c, 23 September 2026.
+ * MATCHING A TYPED ADDRESS, OR A TYPED NAME, TO WHAT A REGISTER HOLDS.
  *
  * Built from the S10 Address Matching Spec (08-monday-doc-exports/12819677135__S10-Address-Matching-Spec.md): its
  * normaliser, its Jaro-Winkler and token-set Dice scores, its weights, its two thresholds and its tie rule (Part A.2,
@@ -97,7 +97,7 @@ function stripPunctuation(s: string): string {
 function expandTokens(s: string): string {
   const toks = s.split(' ').filter(Boolean);
   return toks.map((tok, i) => {
-    /* PHASE 158b (F29, the Friary House run): "St Judes" read as STREET JUDES. A street word comes after the name, so an
+    /* "St Judes" read as STREET JUDES. A street word comes after the name, so an
        ST that opens a name of more than one word is a saint, whether or not the saint is on the list. */
     if (tok === 'ST') return SAINT_NAMES.has(toks[i + 1] ?? '') || (i === 0 && toks.length > 1) ? 'ST' : 'STREET';
     return STREET_SUFFIX_EXPANSIONS[tok] ?? tok;
@@ -266,7 +266,7 @@ export type Candidate<T> = {
   readonly address: RawAddress;
   readonly payload: T;
   /**
-   * PHASE 146h: what a person reads to tell this candidate from the next one, where the register's own address lines
+   * What a person reads to tell this candidate from the next one, where the register's own address lines
    * are not what distinguishes them — a company name, for instance. Absent, `candidateLabel` writes the address out.
    * IT IS NEVER STORED AND NEVER LOGGED: it exists for the back-office pick, which holds it for one request (A.8
    * point 8), and for nothing else.
@@ -286,7 +286,7 @@ export type MatchResult<T> = {
    */
   readonly top: Scored<T> | null;
   /**
-   * PHASE 146h: EVERY SCORED CANDIDATE, BEST FIRST. IN MEMORY ONLY, exactly as `top` is, and for one more reader:
+   * EVERY SCORED CANDIDATE, BEST FIRST. IN MEMORY ONLY, exactly as `top` is, and for one more reader:
    * the back-office pick (src/web/match-review.ts), where a person chooses one of them or none. No connector keeps
    * it, nothing writes it to the database, and no audit row carries it — a candidate's address lines are the
    * register's, under its own notice, and A.8 point 8 says they are not stored or logged.
@@ -400,7 +400,7 @@ export type MeasureHook = (seen: {
 /* ================================================================== *
  * 6 · A PERSON'S PICK FOR A CLOSE MATCH — the S10 spec, A.2 step 4 and A.8 point 7
  *
- * Phase 146h, 23 September 2026.
+ *
  *
  * A.2 step 4 says of the REVIEW band: "never auto-selected. Full candidate list (all postcode-blocked candidates,
  * ranked) is surfaced to ops/surveyor for manual pick. Nothing is written until a human resolves it." Until this

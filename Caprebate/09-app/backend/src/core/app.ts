@@ -36,14 +36,14 @@ export type App = {
   email: EmailTransport;
   signature: SignatureProvider;
   /**
-   * PHASE 146c: THE KEY FILE, READ ONCE, AT START-UP. `processSecrets()` — the file outside the repository, or the
+   * THE KEY FILE, READ ONCE, AT START-UP. `processSecrets()` — the file outside the repository, or the
    * empty store under the test runner — so every connector reads the same store for the life of the process and no
    * request reads the disk. A key changed in the file takes effect on the next start. Nothing prints it: the store
    * prints as names only (src/core/secrets.ts).
    */
   secrets: SecretStore;
   /**
-   * PHASE 146c: HOW A CONNECTOR REACHES OUTSIDE — the platform's fetch, through src/integrations/connectors/http.ts, which refuses a
+   * HOW A CONNECTOR REACHES OUTSIDE — the platform's fetch, through src/integrations/connectors/http.ts, which refuses a
    * live call under the test runner. A test passes recorded answers (fixtureTransport) instead.
    */
   outside: Transport;
@@ -51,13 +51,13 @@ export type App = {
   deps: Deps;
   close(): void;
   /**
-   * 29 SEPTEMBER 2026: why this server keeps its records where it does, when the caller knows - the test website sets
+   * Why this server keeps its records where it does, when the caller knows - the test website sets
    * it from its database choice (api/index.mjs, openLasting's `why`). Never an address and never a token. Absent, the
    * pages say only that the records are in memory.
    */
   storageWhy?: string;
   /**
-   * 29 SEPTEMBER 2026: TESTS ONLY - the contact form security check's call policy with some values changed (the
+   * TESTS ONLY - the contact form security check's call policy with some values changed (the
    * transfer to Cloudflare approved), so a test can reach the recorded answers. Never set by a running server.
    */
   turnstilePolicy?: Partial<CallPolicy>;
@@ -68,15 +68,15 @@ export type App = {
   zoomPolicy?: Partial<CallPolicy>;
   /** 30 SEPTEMBER 2026: TESTS ONLY - WhatsApp's call policy with the transfer approved (src/integrations/connectors/whatsapp.ts). */
   whatsappPolicy?: Partial<CallPolicy>;
-  /** 30 SEPTEMBER 2026: TESTS ONLY - a recorded inbox and the reading switch, for reading replies when staff look. */
+  /** TESTS ONLY - a recorded inbox and the reading switch, for reading replies when staff look. */
   mailbox?: Mailbox;
   inboundEmail?: InboundEmail;
   /** 30 SEPTEMBER 2026: TESTS ONLY - "Find my address" switched and approved as a test needs (src/integrations/connectors/address-lookup.ts). */
   addressLookup?: { readonly config: AddressLookupConfig; readonly policy?: Partial<CallPolicy> };
-  /** 30 SEPTEMBER 2026: TESTS ONLY - how the server reaches the mail server (a fake one). Never set by a running server. */
+  /** TESTS ONLY - how the server reaches the mail server (a fake one). Never set by a running server. */
   smtpConnect?: Connector;
   /**
-   * 29 SEPTEMBER 2026: TESTS ONLY - the assessment's first screen's two lookups (Companies House, Postcodes.io) with
+   * TESTS ONLY - the assessment's first screen's two lookups (Companies House, Postcodes.io) with
    * their gate and switches set, so a test can reach the recorded answers. Never set by a running server.
    */
   startLookups?: { readonly gate: GateStatus; readonly company: CompanySearchConfig; readonly postcode: PostcodeCheckConfig };
@@ -84,20 +84,20 @@ export type App = {
 
 export type BuildOptions = {
   location?: string;
-  /** PHASE 151e (line 4): a remote database's token (src/core/db.ts). The caller reads it from settings; absent for memory and file. */
+  /** A remote database's token (src/core/db.ts). The caller reads it from settings; absent for memory and file. */
   dbAuthToken?: string;
   /** Tests only: open a memory or file database through libsql, to prove the application runs on it (src/core/db.ts). */
   dbEngine?: 'node:sqlite' | 'libsql';
   /** Faster clicks, part 2: a local file that keeps a copy of the remote database `location` names (src/core/db.ts localCopy). */
   dbLocalCopy?: string;
-  /** PHASE 151j: who must give a second factor. Absent is 'staff', the rule. 'off' is for the older tests only.
-   *  'staff-except-invented' (29 Sep 2026) is for the test website only: see TwoFactorPolicy in src/core/auth.ts. */
+  /** Who must give a second factor. Absent is 'staff', the rule. 'off' is for the older tests only.
+   *  'staff-except-invented' is for the test website only: see TwoFactorPolicy in src/core/auth.ts. */
   twoFactor?: 'staff' | 'off' | 'staff-except-invented';
   hasher?: PasswordHasher;
   now?: () => string;
   migrationsDir?: string;
   /**
-   * PHASE 151i follow-up 5: 'apply' (absent) builds the tables, as always. 'require-built' builds nothing and refuses a
+   * 'apply' (absent) builds the tables, as always. 'require-built' builds nothing and refuses a
    * database with a migration left (code E_NOT_BUILT): how a copy of the test website opens its lasting database, which
    * only the deploy's build step builds (api/index.mjs, prepareLasting).
    */
@@ -122,7 +122,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
   } else {
     migrate(db, opts.migrationsDir ?? MIGRATIONS_DIR);
   }
-  loadCustomRoles(db); // Phase 151: the roles the super admin made, for can()
+  loadCustomRoles(db); // The roles the super admin made, for can
 
   const now = opts.now ?? ((): string => new Date().toISOString());
   const hasher = opts.hasher ?? (await defaultHasher());
@@ -148,7 +148,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
  * THE STUBS, in one list, so "what is not real here" is a question with an
  * answer rather than a search. Everything else is real.
  *
- * IT WAS THREE UNTIL 9 SEPTEMBER 2026 AND IT WAS WRONG, and the way it was
+ * IT WAS THREE UNTIL AND IT WAS WRONG, and the way it was
  * wrong is the reason this list exists. The text extractor in
  * src/web/uploads.ts opened with the words "and it is a STUB, declared as one"
  * — it was declared in its own file, in `src/stubs/` in spirit, and named
@@ -167,7 +167,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
  * is: WOULD A DEVELOPER WHO RAN THIS BUILD BELIEVE THIS PART WORKS? FIVE things
  * fail that test today, and one of them is smaller than it was.
  *
- * AND THE FIFTH WAS ADDED BY PHASE 146g ON 23 SEPTEMBER 2026, for exactly the reason
+ * AND THE FIFTH WAS ADDED BY PHASE 146g ON, for exactly the reason
  * this list exists. Phase 146e built the real reader for a client document and left it
  * with no caller in src/ at all: the upload flow ended at DISCHARGED and never ran steps
  * 8, 9 or 10 of the receipt contract. So a developer who ran this build and watched an

@@ -1,5 +1,5 @@
 /**
- * THE CONTACT FORM'S SECURITY CHECK, ON THE SERVER — Cloudflare Turnstile. 29 September 2026.
+ * THE CONTACT FORM'S SECURITY CHECK, ON THE SERVER — Cloudflare Turnstile.
  *
  * The home page (Caprebate/09-app/site/home.html) runs Cloudflare's check in the visitor's browser and posts its answer
  * with the enquiry as `cf-turnstile-response`. A check that runs only in the browser stops nothing: a script posts to
@@ -12,7 +12,7 @@
  *   · A KEY, BUT THE TRANSFER IS NOT APPROVED. Cloudflare is a US company, and src/integrations/connectors/sources.ts refuses a call
  *     outside the UK and EU until the data protection officer approves it (`international_transfer_approved`). Until
  *     then nothing is sent, nothing is checked, the enquiry is kept, and the log and the audit line say why. Approving
- *     it is one word in sources.ts, and it is Sadique's decision, not a build one.
+ *     it is one word in sources.ts, and it is the data protection officer's decision, not a build one.
  *   · A KEY AND APPROVAL: the answer is checked. No answer, an answer Cloudflare rejects, or no reply from Cloudflare
  *     each REFUSES the enquiry: nothing is kept, the audit says which, and the person is told in plain words.
  *

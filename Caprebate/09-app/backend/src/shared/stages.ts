@@ -5,7 +5,7 @@
  * vocabularies already existed when this phase started and neither was a list
  * a screen could read:
  *
- *   · `businesses.stage` (migration 002, Phase 103) carries MACHINE KEYS —
+ *   · `businesses.stage` carries MACHINE KEYS —
  *     ASSESSMENT_SUBMITTED, RESEARCH_PART_RUN, ENGAGEMENT_SIGNED, AT_SURVEY,
  *     INVOICED, PAID. Phase 106 sorts the engaged-client list on them.
  *
@@ -149,7 +149,7 @@ export function progressFor(storedStage: string): Progress {
 
 /* ================================================================== *
  * THE OPERATING PROCEDURE'S STAGES — THE CLAIM'S VOCABULARY.
- * CRM 2 of 10, 10 September 2026.
+ * CRM 2 of 10.
  * ================================================================== */
 
 /**

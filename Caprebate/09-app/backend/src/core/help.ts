@@ -1,5 +1,5 @@
 /**
- * HELP, INSIDE THE APP — PHASE 133c, 17 September 2026 (B5).
+ * HELP, INSIDE THE APP.
  *
  * The "Help" link in every header opens the user guide's training section for the screen it was pressed on. The words
  * are the guide's own, copied in by tools/build-help.cjs (src/core/help-content.ts), so the page and the guide cannot

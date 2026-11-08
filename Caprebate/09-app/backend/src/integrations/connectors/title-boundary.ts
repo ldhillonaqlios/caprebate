@@ -1,5 +1,5 @@
 /**
- * PHASE 156f, 6 October 2026 — THE SITE AREA FROM HOMEDATA'S TITLE OUTLINE (B4). Lakhbir: "site boundary - use home data".
+ * THE SITE AREA FROM HOMEDATA'S TITLE OUTLINE (B4). the owner: "site boundary - use home data".
  *
  * Homedata sells the outline of the property's registered title as the `title_boundary` slug (5 tokens, 5p), on the same
  * /property/{uprn}/ call the paid address lookup already makes after signing (src/integrations/connectors/homedata.ts). This file

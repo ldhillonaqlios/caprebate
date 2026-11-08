@@ -1,5 +1,5 @@
 /**
- * AUTHENTICATOR-APP CODES — RFC 6238 (TOTP) over RFC 4226 (HOTP). Phase 151j, 28 September 2026.
+ * AUTHENTICATOR-APP CODES — RFC 6238 (TOTP) over RFC 4226 (HOTP).
  *
  * The standard every authenticator app speaks (Google Authenticator, Microsoft Authenticator, 1Password and the rest):
  * a shared secret, HMAC-SHA1, a 30-second step, six digits. Written here on node:crypto rather than taken from a

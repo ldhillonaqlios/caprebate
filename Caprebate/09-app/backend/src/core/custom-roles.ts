@@ -1,7 +1,7 @@
 /**
- * ROLES A SUPER ADMIN CAN MAKE. Phase 151, 24 September 2026.
+ * ROLES A SUPER ADMIN CAN MAKE.
  *
- * WHAT LAKHBIR DECIDED (Word answers 39 and 40, closed 24 September 2026). The super admin must be able to create
+ * WHAT THE OWNER DECIDED. The super admin must be able to create
  * roles, choose what each can see and do, and give people roles.
  *
  * HOW A ROLE IS MADE, AND WHY THIS SHAPE. A role the super admin makes is a NAME and a LIST OF GRANTS. Each grant is one

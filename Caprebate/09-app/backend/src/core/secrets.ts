@@ -1,6 +1,5 @@
 /**
- * THE KEY FILE — every supplier key this build can use, read from ONE file OUTSIDE the repository. Phase 146b,
- * 22 September 2026.
+ * THE KEY FILE — every supplier key this build can use, read from ONE file OUTSIDE the repository.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHERE THE KEYS LIVE, AND WHERE THEY NEVER DO
@@ -41,23 +40,23 @@ import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
 export type SecretOwner =
   | 'CLAUDE_DOCUMENTS' | 'COMPANIES_HOUSE' | 'CQC' | 'EPC' | 'HOMEDATA_ADDRESS' | 'HMLR_TITLE'
   | 'IONOS_EMAIL' | 'IONOS_MAILBOX' | 'GOOGLE_ANALYTICS' | 'DIDIT_IDV'
-  /** PHASE 151k: not a connector - the sign-in's own key, which seals each person's authenticator app secret. */
+  /** Not a connector - the sign-in's own key, which seals each person's authenticator app secret. */
   | 'SIGN_IN'
-  /** 29 Sep 2026: the contact form's security check (src/integrations/connectors/turnstile.ts). */
+  /** The contact form's security check (src/integrations/connectors/turnstile.ts). */
   | 'CLOUDFLARE_TURNSTILE'
-  /** 30 Sep 2026: video calls - a meeting made for each, and joined inside the back office (src/integrations/connectors/zoom.ts). */
+  /** Video calls - a meeting made for each, and joined inside the back office (src/integrations/connectors/zoom.ts). */
   | 'ZOOM'
-  /** 30 Sep 2026: WhatsApp with each client from the back office (src/integrations/connectors/whatsapp.ts). */
+  /** WhatsApp with each client from the back office (src/integrations/connectors/whatsapp.ts). */
   | 'WHATSAPP'
-  /** 2 Oct 2026: the building outlines for the report's site plan, from Ordnance Survey's free maps (src/integrations/connectors/os-buildings.ts). */
+  /** The building outlines for the report's site plan, from Ordnance Survey's free maps (src/integrations/connectors/os-buildings.ts). */
   | 'OS_MAPS'
   /** 1 Oct 2026: the outside timer that wakes the website to read email replies (POST /hooks/read-replies). */
   | 'REPLY_TIMER'
-  /** PHASE 161h, 7 Nov 2026: the live website's own timers (Vercel Cron), GET /hooks/timer/<job> (src/core/timers.ts). */
+  /** The live website's own timers (Vercel Cron), GET /hooks/timer/<job> (src/core/timers.ts). */
   | 'TIMERS'
-  /** PHASE 161h: the nightly backup - its encryption key and the second place it is copied to (src/core/backup.ts). */
+  /** The nightly backup - its encryption key and the second place it is copied to (src/core/backup.ts). */
   | 'BACKUPS'
-  /** PHASE 161h: the reference database - the ONS postcode table and Ordnance Survey's OSTN15 grid (src/integrations/postcodes/reference-db.ts). */
+  /** The reference database - the ONS postcode table and Ordnance Survey's OSTN15 grid (src/integrations/postcodes/reference-db.ts). */
   | 'REFERENCE_DB';
 
 export type SecretKey = {
@@ -70,7 +69,7 @@ export type SecretKey = {
   /** In plain words, what it is and where it comes from. */
   readonly what: string;
   /**
-   * PHASE 146d: OTHER NAMES THE SAME KEY IS WRITTEN UNDER IN A KEY FILE THAT ALREADY EXISTS.
+   * OTHER NAMES THE SAME KEY IS WRITTEN UNDER IN A KEY FILE THAT ALREADY EXISTS.
    *
    * A key file line whose name no connector owns is IGNORED — deliberately, so that a stray line cannot be read as a
    * key — and the ignoring is silent, which is the right behaviour for a stray line and the wrong one for a key
@@ -84,7 +83,7 @@ export type SecretKey = {
    */
   readonly aliases?: readonly string[];
   /**
-   * PHASE 146k: THE PHASE THAT RETIRED THIS KEY, where one did. A retired key is not asked for — secrets.example.env
+   * THE PHASE THAT RETIRED THIS KEY, where one did. A retired key is not asked for — secrets.example.env
    * leaves it out, and a test holds that — because nothing a click runs reads it. It stays in this list only so that
    * the retired connector that owned it (PAID_RETIRED in src/integrations/connectors/paid-registers.ts) still reads its own key in
    * its recorded-answer tests, and so reversing the decision is deleting this one word, not re-typing four keys.
@@ -103,7 +102,7 @@ export type SecretKey = {
  *     get-energy-performance-data.communities.gov.uk. Its API is api.get-energy-performance-data.communities.gov.uk
  *     and takes ONE bearer token, "found on your my account page when you are logged in to the service" (GOV.UK One
  *     Login). The old service's e-mail-plus-key pair is not needed, so there is one EPC name, not two.
- *   · HM Land Registry Business Gateway — RETIRED BY PHASE 146k (25 September 2026). Lakhbir decided the title register
+ *   · HM Land Registry Business Gateway — RETIRED BY PHASE 146k. the owner decided the title register
  *     is looked up by hand, and took its four details out of the key file. Its four names (HMLR_BG_USERNAME,
  *     HMLR_BG_PASSWORD, HMLR_BG_CERT_PATH with the alias HMLR_BG_CERTIFICATE_PATH, HMLR_BG_CERT_PASSPHRASE) are marked
  *     `retired` below and are no longer in secrets.example.env. Nothing a click runs reads them: the connector that
@@ -115,7 +114,7 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'COMPANIES_HOUSE_API_KEY', owner: 'COMPANIES_HOUSE', secret: true, phase: '146c', what: 'the Companies House public data API key' },
   { name: 'CQC_SUBSCRIPTION_KEY', owner: 'CQC', secret: true, phase: '146c', what: 'the CQC API subscription key' },
   { name: 'EPC_API_TOKEN', owner: 'EPC', secret: true, phase: '146c', what: 'the energy certificate service’s bearer token, from its account page' },
-  // Phase 156f: the same key answers "Find my address" at the assessment (src/integrations/connectors/address-lookup.ts), since GoAddress was removed.
+  // The same key answers "Find my address" at the assessment (src/integrations/connectors/address-lookup.ts), since GoAddress was removed.
   { name: 'HOMEDATA_API_KEY', owner: 'HOMEDATA_ADDRESS', secret: true, phase: '146d', what: 'the Homedata key: the address box at the assessment, and the paid lookups after signing' },
   { name: 'HMLR_BG_USERNAME', owner: 'HMLR_TITLE', secret: true, phase: '146d', retired: '146k', what: 'the Land Registry Business Gateway user name' },
   { name: 'HMLR_BG_PASSWORD', owner: 'HMLR_TITLE', secret: true, phase: '146d', retired: '146k', what: 'the Land Registry Business Gateway password' },
@@ -151,7 +150,7 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'WHATSAPP_TEMPLATE_LANGUAGE', owner: 'WHATSAPP', secret: false, phase: 'whatsapp', what: 'the language code of that template; en_GB if empty' },
   { name: 'OS_DATA_HUB_API_KEY', owner: 'OS_MAPS', secret: true, phase: 'site-plan', what: 'the Ordnance Survey Data Hub project key (the free OS OpenData plan, with the OS Features API added). It fetches the building outlines for the report’s site plan.' },
   { name: 'REPLY_TIMER_TOKEN', owner: 'REPLY_TIMER', secret: true, phase: 'reply-timer', what: 'a long random word, 32 characters or more. Only the outside timer sends it. It wakes the website to read email replies.' },
-  // PHASE 161h, 7 November 2026: the live website on Vercel (its runbook: 09-app/deploy/LIVE-RUNBOOK.md).
+  // The live website on Vercel (its runbook: 09-app/deploy/LIVE-RUNBOOK.md).
   { name: 'CRON_SECRET', owner: 'TIMERS', secret: true, phase: '161h', what: 'a long random word, 32 characters or more. Vercel Cron sends it with every call to the live website\u2019s timers (/hooks/timer/...); without it every call is refused' },
   { name: 'CAPREBATE_BACKUP_KEY', owner: 'BACKUPS', secret: true, phase: '161h', what: 'the key every backup is locked with before it leaves the website: 32 random bytes, as base64 (openssl rand -base64 32). Keep a copy in the password manager: without it no backup can be opened' },
   { name: 'BACKUP_S3_BUCKET', owner: 'BACKUPS', secret: false, phase: '161h', what: 'the name of the bucket the nightly backup goes to, at the second firm (not secret)' },
@@ -239,7 +238,7 @@ export function isInside(file: string, root: string): boolean {
 export const DEFAULT_SECRETS_FILE = '~/.caprebate-secrets.env';
 
 /**
- * PHASE 161c, 4 November 2026 (the ITRoadway audit, section 4 row 2): THE LIVE SERVER'S KEY STORE IS SYSTEMD'S.
+ * THE LIVE SERVER'S KEY STORE IS SYSTEMD'S.
  *
  * On the live server the unit file says `LoadCredential=caprebate-secrets:/etc/caprebate/caprebate-secrets` (the
  * runbook has the steps). systemd then reads that root-only file when the service starts, puts a copy in a folder of
@@ -331,7 +330,7 @@ function makeStore(state: SecretsState, why: string, values: Map<string, string>
 }
 
 /**
- * 1 OCT 2026: THE SAME KEYS, WITH SOME REPLACED — the keys Admin saved on Home's Admin tab (src/core/saved-keys.ts), over
+ * THE SAME KEYS, WITH SOME REPLACED — the keys Admin saved on Home's Admin tab (src/core/saved-keys.ts), over
  * the key file or the website's settings. Every key is read from `base` by its own owner, so nothing crosses owners.
  */
 export function overlaySecrets(base: SecretStore, over: ReadonlyMap<string, string>, why: string): SecretStore {
@@ -350,7 +349,7 @@ export function emptySecrets(why = 'no key file is in use'): SecretStore {
 }
 
 /**
- * PHASE 151e (line 3), 25 September 2026: THE TEST WEBSITE'S KEYS, FROM ITS OWN SETTINGS. The test deployment on
+ *: THE TEST WEBSITE'S KEYS, FROM ITS OWN SETTINGS. The test deployment on
  * Vercel has no key file and cannot have one; its settings arrive as environment variables. This reads ONLY the names
  * it is given, from those variables, and nothing else in the environment. It is called by the test deployment's entry
  * point (api/index.mjs), and only when that deployment has a password of its own; a live server reads the key file.
@@ -395,7 +394,7 @@ export function loadSecrets(opts: { env?: Record<string, string | undefined>; re
 }
 
 /**
- * PHASE 146f: THE STORE A RUNNING PROCESS USES — the key file, except under the test runner. `node --test` sets
+ * THE STORE A RUNNING PROCESS USES — the key file, except under the test runner. `node --test` sets
  * NODE_TEST_CONTEXT, and there the answer is the empty store, so no suite ever reads this machine's key file and every
  * suite passes the same with no key and no network (the integration phases' rule 3). CAPREBATE_LIVE_SMOKE=1 is the
  * one way past it, as it is for http.ts.
@@ -415,10 +414,10 @@ export function processSecrets(env: Record<string, string | undefined> = process
 let useInstead: SecretStore | null = null;
 export function useProcessSecrets(store: SecretStore): void { useInstead = store; }
 
-/* ------------------------------------------------------------------ PHASE 161c: the start-up check */
+/* ------------------------------------------------------------------ the start-up check */
 
 /**
- * PHASE 161c, 4 November 2026 (the ITRoadway audit, section 4 row 2): A KEY FILE OTHERS CAN OPEN STOPS A LIVE START.
+ * A KEY FILE OTHERS CAN OPEN STOPS A LIVE START.
  *
  * THE PRODUCTION SETTING is CAPREBATE_PRODUCTION=1, set by the live server's unit file and by nothing else (the Mac and
  * the test website never set it). On a start with it set, a key file that anyone but the app's own user could read or

@@ -1,7 +1,7 @@
 /**
- * CLIENT DOCUMENTS READ BY THE CLAUDE API — BUILT REAL, AND SWITCHED OFF. Phase 146e, 22 September 2026.
+ * CLIENT DOCUMENTS READ BY THE CLAUDE API — BUILT REAL, AND SWITCHED OFF. 22 September 2026.
  *
- * Lakhbir chose the Claude API on 22 September 2026 to read client documents. The document pipeline
+ * the owner chose the Claude API on 22 September 2026 to read client documents. The document pipeline
  * (09-app/backend/src/modules/claims/documents/document-pipeline.ts) already decides what may leave: `sanitise()` keeps only the
  * segments a document type permits, after the receipt strip and the name exclusion register, and `callModel()`
  * re-checks them at the boundary and records what left. It hands that payload to ONE function, the `ModelFn`, and
@@ -59,12 +59,12 @@
  *     what terms?" — the data protection officer approving the provider and its terms, and a director signing.
  *   · Both switches below are false.
  *   · The key, ANTHROPIC_API_KEY, is read only from the key file (~/.caprebate-secrets.env), through
- *     loadSecrets().forOwner('CLAUDE_DOCUMENTS'). Nothing else here holds it, and no record carries it.
- *   · Lakhbir said on 22 September 2026 "data is stored for 7 years". Whether that means our copy or the provider's is
+ *     loadSecrets.forOwner('CLAUDE_DOCUMENTS'). Nothing else here holds it, and no record carries it.
+ *   · the owner said "data is stored for 7 years". Whether that means our copy or the provider's is
  *     not confirmed, and the privacy notice still promises uploads are deleted after reading. NO RETENTION SETTING WAS
- *     CHANGED ON THAT SENTENCE; it is a question for Lakhbir in the Word questions document.
+ *     CHANGED ON THAT SENTENCE; it is a question for the owner in the Word questions document.
  *
- * THE MODEL AND THE SDK USAGE come from the claude-api skill (22 September 2026): `claude-opus-5`, the beta Messages
+ * THE MODEL AND THE SDK USAGE come from the claude-api skill: `claude-opus-5`, the beta Messages
  * endpoint with the server-side fallback on by default (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`,
  * so a request the model's safety checks decline is re-run by the provider on its recommended model rather than lost;
  * the audit row records which model actually answered), and structured output through `output_config.format`.
@@ -120,8 +120,8 @@ export type ClaudeContext = {
 export type ReadState = 'READ' | 'SWITCHED_OFF' | 'NOT_CONFIGURED' | 'NOTHING_TO_SEND' | 'FAILED' | 'KIND_NOT_ALLOWED';
 
 /**
- * PHASE 153c, 4 October 2026 — WHICH KINDS OF DOCUMENT MAY HAVE THEIR SCANNED PAGES SENT WHOLE (Word question 193,
- * Sadique's: "Can a scanned page be sent to the AI company whole, before we remove anyone's details?"). Built on our
+ * WHICH KINDS OF DOCUMENT MAY HAVE THEIR SCANNED PAGES SENT WHOLE (Word question 193,
+ * the data protection officer's: "Can a scanned page be sent to the AI company whole, before we remove anyone's details?"). Built on our
  * recommendation for him to check: only kinds that rarely hold anyone's personal details — a contractor's cost
  * breakdown, an operation and maintenance manual, a building regulations completion certificate. EVERY OTHER KIND IS
  * REFUSED, a fire risk assessment, a lease and planning papers among them, and so is a document whose kind is not
@@ -416,7 +416,7 @@ export async function readScannedPages(
 ): Promise<{ pages: ExtractedPage[] | null; state: ReadState; why: string }> {
   const at = ctx.deps.now();
   const numbers = images.map((i) => i.page);
-  // Phase 153c: the kind decides first. A kind not on the list never reaches the switch or the key.
+  // The kind decides first. A kind not on the list never reaches the switch or the key.
   if (!scannedPagesAllowedFor(type_code)) {
     writePagesRow(ctx, at, doc_id, numbers, 'KIND_NOT_ALLOWED', null, null, 0);
     return { pages: null, state: 'KIND_NOT_ALLOWED', why: 'nothing was sent: this kind of document is never sent to the reader as page pictures' };

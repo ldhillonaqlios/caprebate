@@ -58,7 +58,7 @@ export function offerSignup(app: App, newId: () => string, business_id: string, 
 export type Asked = { ok: true } | { ok: false; why: string };
 
 /**
- * Step 2. PHASE 161g: `terms` is the version of each document the person must tick that they have read (the portal
+ * Step 2. `terms` is the version of each document the person must tick that they have read (the portal
  * terms, the website terms, the privacy policy), where the legal pages are served; null where they are not. The tick
  * is kept with the request, with its date, and copied to the login when it is made (step 3).
  */

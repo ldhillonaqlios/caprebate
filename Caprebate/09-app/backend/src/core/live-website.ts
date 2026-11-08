@@ -1,5 +1,5 @@
 /**
- * THE LIVE WEBSITE ON VERCEL — how it starts. Phase 161h, 7 November 2026 (Lakhbir, 6 Nov 2026: "lets keep it as
+ * THE LIVE WEBSITE ON VERCEL — how it starts. "lets keep it as
  * vercel"; the runbook is 09-app/deploy/LIVE-RUNBOOK.md).
  *
  * ONE ENTRY, TWO PROJECTS. Vercel runs api/index.mjs for both the test website (project caprebate-test) and the live one

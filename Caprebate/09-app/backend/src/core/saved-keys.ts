@@ -1,7 +1,7 @@
 /**
- * API KEYS, CHANGED FROM HOME'S ADMIN TAB. 1 October 2026 (migration 067).
+ * API KEYS, CHANGED FROM HOME'S ADMIN TAB. (migration 067).
  *
- * Lakhbir: Admin's tab is "back end access … update the API keys and save them". Until now a key could only be changed
+ * the owner: Admin's tab is "back end access … update the API keys and save them". Until now a key could only be changed
  * in the key file on the server, or in the test website's settings on Vercel.
  *
  * WHAT IS SHOWN: each key's name, what it is for, and where its value comes from — saved here (when, and by whom), the
@@ -104,7 +104,7 @@ export function refreshSavedKeys(app: App): void {
 }
 
 /**
- * 1 OCT 2026 — IS THE SERVICE THAT USES THIS KEY SWITCHED ON? Lakhbir: "not set = red, active = green, set but not
+ * IS THE SERVICE THAT USES THIS KEY SWITCHED ON? the owner: "not set = red, active = green, set but not
  * active = amber". Each service's own switch or readiness check, read as it stands now; the words say what is off.
  */
 export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: string } {
@@ -115,7 +115,7 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
     case 'COMPANIES_HOUSE': return COMPANY_SEARCH.enabled || switchedOn('CH_COMPANY') ? { on: true, why: '' } : off('The Companies House search is not switched on.');
     case 'CQC': return switchedOn('CQC', switchesHere()) ? { on: true, why: '' } : off('The care regulator lookup is not switched on.');
     case 'EPC': return switchedOn('EPC', switchesHere()) ? { on: true, why: '' } : off('The energy certificate lookup is not switched on.');
-    // Phase 156f: the same key answers "Find my address" at the assessment (ADDRESS_LOOKUP), in place of GoAddress.
+    // The same key answers "Find my address" at the assessment (ADDRESS_LOOKUP), in place of GoAddress.
     case 'HOMEDATA_ADDRESS': return ADDRESS_LOOKUP.enabled || switchedOn('HOMEDATA_ADDRESS', switchesHere()) ? { on: true, why: '' } : off('Neither the address box nor the Homedata lookups are switched on.');
     case 'IONOS_EMAIL': return EMAIL_SENDING.enabled ? { on: true, why: '' } : off('Sending email is not switched on.');
     case 'IONOS_MAILBOX': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
@@ -128,7 +128,7 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
     case 'ZOOM': { const m = zoomBlockers(app); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'WHATSAPP': { const m = whatsappMissing(st, app.whatsappPolicy, { outside: app.outside }); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'REPLY_TIMER': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
-    // 2 Oct 2026: the report's site plan (src/web/site-plan.ts), fetched on the test website only, for now.
+    // The report's site plan (src/web/site-plan.ts), fetched on the test website only, for now.
     case 'OS_MAPS': return lookupsWaivedHere() ? { on: true, why: '' } : off('Site plans are fetched on the test website only, for now.');
     default: return off('Nothing uses this key yet.');
   }

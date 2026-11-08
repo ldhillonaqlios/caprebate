@@ -1,7 +1,7 @@
 /**
  * POSTCODE LOOKUP, AS THIS APPLICATION CONFIGURES IT.
  *
- * Phase 110, 9 September 2026. Board item 12993800139.
+ * Board item 12993800139.
  *
  * The port next door re-exports the phase 9 modules unchanged. This file is
  * the small amount of wiring that is genuinely THIS APPLICATION'S: where the
@@ -28,7 +28,7 @@
  * THE SERVED SET IS READ FROM CB_JURIS AND IS NOT RESTATED
  *
  * `CB_JURIS.SERVED` in the engine is the one place our operational coverage
- * is decided — England and Wales today, Phase 64 — and it is Lakhbir's to
+ * is decided — England and Wales today, Phase 64 — and it is the owner's to
  * flip rather than the tax adviser's. A copy here would be a second place to
  * change and the two would disagree on the day it moved.
  */
@@ -98,7 +98,7 @@ export function postcodeStore(
     cached = sqlitePostcodeStore(open, path);
     return cached;
   }
-  /* PHASE 161h, 7 November 2026: THE LIVE WEBSITE READS THE TABLE FROM THE REFERENCE DATABASE (src/integrations/postcodes/reference-db.ts),
+  /* THE LIVE WEBSITE READS THE TABLE FROM THE REFERENCE DATABASE (src/integrations/postcodes/reference-db.ts),
      because a Vercel function has no disk to keep a 75 MB file on. Unset, null as before. If it cannot be opened just
      now, this lookup has no store and says why (N4), and the next one tries again: a failure is not remembered. */
   try {
@@ -206,7 +206,7 @@ export function resolveProperty(
       store, served: servedSet(),
       ...(opts.asAt === undefined ? {} : { asAt: opts.asAt }),
     });
-    /* PHASE 132f — THE REGION SWITCHES ARE PASSED, NOT DEFAULTED BY OMISSION. Phase 132e gave regionOf a switches
+    /* THE REGION SWITCHES ARE PASSED, NOT DEFAULTED BY OMISSION. Phase 132e gave regionOf a switches
        argument (SURVEYOR_INNER_LONDON_ONS_FOURTEEN). This application passes the module's own REGION_SWITCHES,
        which ship it OFF: London still refuses, with the same code, message and detail as before. Only the boolean
        `true` turns it on, and turning it on is the surveyor's answer, not this file's; `opts.regionSwitches` exists

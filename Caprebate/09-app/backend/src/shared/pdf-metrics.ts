@@ -1,9 +1,9 @@
 /**
  * THE WIDTH OF EVERY CHARACTER IN THE THREE PDF FONTS THE REPORT USES — so a line can be wrapped, and a figure set flush
- * right, exactly. 2 October 2026, for src/shared/pdf-canvas.ts.
+ * right, exactly., for src/shared/pdf-canvas.ts.
  *
  * Helvetica, Helvetica-Bold and Times-Bold are three of the fourteen fonts every PDF reader has, so nothing is embedded.
- * Their widths, in thousandths of the font size, for WinAnsi codes 32 to 255 (index 0 is the space). Read on 2 Oct 2026
+ * Their widths, in thousandths of the font size, for WinAnsi codes 32 to 255 (index 0 is the space). Read
  * from Liberation Sans, Liberation Sans Bold and Liberation Serif Bold, which are made to the same widths as Helvetica
  * (Arial) and Times, character for character; the first ones were checked against Adobe's published figures (space 278,
  * quotation mark 355, apostrophe 191 in Helvetica; space 250 in Times-Bold). A code WinAnsi does not use is 0.

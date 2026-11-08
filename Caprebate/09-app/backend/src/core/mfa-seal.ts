@@ -1,5 +1,5 @@
 /**
- * THE AUTHENTICATOR APP'S SECRET, SEALED AT REST. Phase 151k, 28 September 2026.
+ * THE AUTHENTICATOR APP'S SECRET, SEALED AT REST.
  *
  * Phase 151j kept the shared secret of a person's authenticator app as text: `users.mfa_secret`, and while they set it
  * up `sign_in_steps.pending_secret`. Anybody who could read the database could then make that person's codes. So the
@@ -95,7 +95,7 @@ export function sealTextSecrets(db: Db, k: MfaKey): { state: MfaKey['state']; se
 }
 
 /**
- * PHASE 161h, 7 November 2026: CHANGING THE KEY (LIVE-RUNBOOK.md, "Rotate a key"). Every sealed secret is opened with the
+ * CHANGING THE KEY (LIVE-RUNBOOK.md, "Rotate a key"). Every sealed secret is opened with the
  * old key and sealed again with the new one, ALL OR NOTHING: if any one will not open with the old key, nothing changes
  * and it says how many would not, so nobody is locked out of their app by a half-done change. Text secrets are sealed
  * with the new key on the way. Never prints a secret or a key.

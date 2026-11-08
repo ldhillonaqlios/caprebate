@@ -1,6 +1,6 @@
 /**
  * THE BACKUP'S SECOND PLACE — a storage bucket at another provider, reached the way S3 is (AWS's Signature Version 4).
- * Phase 161h, 7 November 2026 (the developer question pack, D8: "a nightly encrypted copy ... to a second provider in
+ * (the developer question pack, D8: "a nightly encrypted copy ... to a second provider in
  * the UK").
  *
  * OUR RECOMMENDATION is an Amazon S3 bucket in London (eu-west-2): in the UK, a different company from Vercel and Turso,
