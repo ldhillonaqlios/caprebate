@@ -32,7 +32,8 @@ export const MAX_VIDEO_BYTES = 1024 * 1024 * 1024;
 export const MAX_VIDEO_MS = 10 * 60_000;
 /** A phone's ten minutes can read a few seconds over. */
 const GRACE_MS = 5_000;
-export const MAX_LOCKED_PIECE = VIDEO_PIECE_BYTES + LOCK_OVERHEAD;
+// A function, not a constant: worked out when asked, so this file never reads photo-upload.ts's value while files load.
+export function maxLockedPiece(): number { return VIDEO_PIECE_BYTES + LOCK_OVERHEAD; }
 export const VIDEO_SEND_HOURS = 12;
 export const VIDEO_SLOT_MINUTES = 30;
 export const VIDEO_ABANDON_HOURS = 24;

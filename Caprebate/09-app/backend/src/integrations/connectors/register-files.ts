@@ -22,7 +22,8 @@ import type { Db } from '../../core/index.ts';
 import { defineSteppedConnector, type LookupResult } from './registers.ts';
 import { addressFromLines, matchAddress, applyPick, pickedNote, PICK_GONE_WHY, MATCH_THRESHOLDS, postcodeKey, type Candidate, type PickQuery } from './matching.ts';
 import { jurisSource, type Nation, type TypedProperty } from './nations.ts';
-import { rowsAtPostcode, type FileRow, type FileSourceId } from '../../modules/claims/index.ts';
+// Straight from the claims file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { rowsAtPostcode, type FileRow, type FileSourceId } from '../../modules/claims/register-files.ts';
 
 export type FileRegisterQuery = {
   readonly property: TypedProperty | null;

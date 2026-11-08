@@ -400,7 +400,7 @@ export async function handlePortalEvidence(
   const vPut = /^\/portal\/building\/video\/([A-Za-z0-9-]+)\/slot\/([A-Za-z0-9-]+)$/.exec(path);
   if (vPut !== null && method === 'PUT') {
     let body: Buffer;
-    try { body = await d.readBody(req, SV.MAX_LOCKED_PIECE); } catch (e) { if (e instanceof Error && e.name === 'PayloadTooLarge') return json(res, { ok: false, why: 'That piece is too big.' }, 413); throw e; }
+    try { body = await d.readBody(req, SV.maxLockedPiece()); } catch (e) { if (e instanceof Error && e.name === 'PayloadTooLarge') return json(res, { ok: false, why: 'That piece is too big.' }, 413); throw e; }
     return answer(res, 'A piece of the video could not be kept on the way', () => SV.putVideoLocal(deps, d.store, actor, vPut[1] ?? '', vPut[2] ?? '', new Uint8Array(body)));
   }
   const vDone = /^\/portal\/building\/video\/([A-Za-z0-9-]+)\/slot\/([A-Za-z0-9-]+)\/done$/.exec(path);
