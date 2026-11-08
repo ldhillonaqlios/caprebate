@@ -14063,3 +14063,56 @@ NOT DONE      The 75 rule-3 breaks left against core (49) and integrations (26),
               question pack, D16 (our recommendation is built meanwhile).
 NOTHING LEFT  beyond those lines.
 ```
+
+## Phase 161j — Regroup 2: the public site, assessment, portal, CRM and claims as modules, and the router split — 8 November 2026
+
+**ACTIONS AND OUTCOMES.** Phase 161j, 8 Nov 2026: The public site, assessment, portal, CRM and claims now live in their own folders under src/modules/, each behind one front door, with one data file that alone reads and writes its tables, and its own routes file; router.ts went from 2,670 lines to a 663-line shell that asks each module in the same order as before. No screen or rule of the five runs SQL. 1,079 dated notes went to the changelog; 93 tests moved into folders by feature. Breaks counted by the boundary check: 1,454 to 606. Every suite passes with the same pass list, plus one new test that loads every file on its own. Joins across owners, the lower layers' direct imports and the parts the router lends are carried to 161l; leftover phase-named comments and 18 cross-area tests to 161k. PR on GitHub; Lakhbir merges.
+
+- **Read first.** PR #89 (Phase 161i1) merged by Lakhbir's yes in the chat ("Yes, merge it"), main pulled, the claim taken (CLAIM.md, the board item Working on it, the tracker). The four suites were run first for the pass list to compare against: site 1,428 / 0 / 3 in both modes, phase3 71, phase9 29, back end 3,955.
+- **Built 1, the moves.** The 111 files the module map gives the five areas moved from `src/web/` into `src/modules/<area>/` (git mv), one commit per area; every import, path and document that names them followed (not the migrations, the phase history, the changelog or the calculator's source, which the page copies byte for byte). Files that build paths from their own folder went one level deeper. The plain-words and analytics checks now read the module folders (the same 238 files as before).
+- **Built 2, front doors and data files.** A script (TypeScript's own reader, from 161i1's) moved every statement on one of the five areas' tables, from every area, into that module's `data.ts` (text unchanged), and the five modules' other statements into their `data-borrowed.ts`: 683 and 237 functions. Statements built from a constant and a WHERE were written out whole (the same text); constants nothing used any more went, section banners and notes kept. 26 functions in the lower layers' borrowed files moved to their owners (item 4c). Every import into the five from another area goes through the module's `index.ts`.
+- **Load order, found and fixed.** A front door loads every file it names, so routing imports through the doors closed loops that left values unset while files loaded ("Cannot access ROLE_TOKENS before initialization"; 201 test files failed to load). Fixed by keeping 161i's rule that the core's, shared parts' and outside services' doors load no business module (the shared upload port and the lower layers that need a module's statements name the claims document files or the module's `data.ts` directly: 12 counted rule-1 breaks, for 161l), by having each door load first the files that reach no other module, and by reading four values when asked rather than while files load (the compliance tables' RET-7 state and message rows, the navigation's Settings list, the video piece limit: the same values). New test `test/core/load-alone.test.ts` loads every file under src/ first, in its own process; it fails on the first door commit (912766d). Four connectors that never loaded alone (the same on main before) are listed in it for the sweep.
+- **Built 3, the router.** Run in a separate copy of the code by a helper agent and merged here: each module has `routes.ts`; `src/core/router.ts` keeps the request, the session, sign-in, logout, the /staff dispatch, the core's own files, uploads, timers and webhooks, and asks each module at the point its blocks used to sit; the shared plumbing is in `src/core/http.ts` and `nav-context.ts`. Parts of the core and of compliance that load business code are lent to the routes files by router.ts at start (`lendShellParts`), which the boundary check cannot count: carried to 161l. The /confirm/ link went to the portal, where its handler lives. `tools/route-list.cjs` follows the shell into each routes file; the route list is byte-identical to its snapshot.
+- **Built 4, the big files.** Also by a helper agent in its own copy: `crm.ts` and `documents.ts` already held no HTML or SQL; their route handlers (in the pages files) went to `crm.routes.ts` and `documents.routes.ts`, their gates to `crm.permissions.ts` and `documents.permissions.ts`; the repo is each module's `data.ts`.
+- **Built 5, notes and tests.** 1,079 dated notes in the five modules' files to `backend/docs/CHANGELOG.md` word for word (2,155 now with 161i1's), the code keeping the reasons without phase labels, dates or names; the generated funnel list left as its tool writes it. 93 tests into `test/public-site/` (16), `assessment/` (8), `portal/` (3), `crm/` (30) and `claims/` (36), named by feature from a helper agent's reading of each file, their old names in `docs/TEST-NAMES.md` (136 rows); 18 that span areas stay for 161k. The tests that read where a statement lives follow it into the data files with the same callers.
+- **Built 6, the baseline.** Rebased once, the reason logged: 1,454 to 606.
+
+```
+area           rule1 rule2 rule3 rule4 total
+core              51    11    23     0    85
+shared            27     6     0     0    33
+integrations      17     5    15     0    37
+public-site        0     9     1     0    10
+assessment         1     8     9     0    18
+portal             1     8     2     0    11
+crm                4    11    40     0    55
+claims             6     9    32     0    47
+survey            39     6    73    13   131
+finance           14     6    22     3    45
+compliance        22     8    44    10    84
+admin             25     7    14     4    50
+all              207    94   275    30   606
+```
+
+- **The checks that read paths and line numbers.** The CRM fold check: 75 Developer Spec line references re-derived; its route control read only `src/web/` and so had dropped to 93 routes, which its self-test caught; it reads the five module folders now (266). The disposition names where the lead's select went. The figure drift checker green after the spec's totals.
+- **Documents.** The Developer Spec (a 161j entry, the two totals, line references), ARCHITECTURE.md (the ratchet), the README's folders.
+- **Accept, the figures.** Before (main at 68bc3dd): site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,955, project 5,483. After: site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,956 across 222 files (137 in folders by feature), project 5,484. The back end's pass list is the same name for name, plus the new load-alone test and two test titles that name a moved file's path. The route list unchanged. Fold check (and self-test), drift, register, plain words, brand, analytics and tracker checks green. Not done here: signing in on the preview as staff and as a client (the brief's ACCEPT); the suites drive both through the app.
+- **Not done as the block said, and why.** "Breaks of rules 1, 3 and 4 to zero": rule 4 is 0 for the five; rule 1 is 0 but for the 12 lower-layer imports kept for load order; rule 3 is 84 (from 466), nearly all joins across two owners, which no move clears. "Moves, not rewrites": four values are now read when asked (above), and the router lends parts it cannot import safely; the code text otherwise moved as it was.
+- **Board and plan.** 161k (item 6), 161l (item 6, and its "what is there now") and the sweep (a new paragraph) carry the rest in terms, in ACTION-PLAN.md and on the run sheet.
+
+```
+DONE          The five areas in src/modules/ behind front doors, with their data files and routes files; router.ts a
+              663-line shell; crm.ts and documents.ts split into routes and permissions; no screen or rule of the five
+              runs SQL; 1,079 notes in the changelog; 93 tests by feature; every file loads on its own (new test);
+              the baseline 1,454 -> 606; every suite green, the pass list the same plus one test.
+NOT DONE      84 rule-3 joins against the five, 12 lower-layer imports of module data files, the parts router.ts
+              lends, the four load-order workarounds, misleading generated function names - BUILDABLE - Phase 161l
+              (item 6).
+              About 130 comments in the five modules naming a phase, 18 tests that span areas, two comments naming
+              old places (one in the calculator, rebuilt with npm run page) - BUILDABLE - Phase 161k (item 6).
+              Four connectors that do not load alone - BUILDABLE - the sweep (Phase 162).
+              Signing in on the preview as staff and as a client - BUILDABLE - after the merge, on the test website.
+              The developer's answer to D16 (how far the notes come out) - BLOCKED on the developer - the developer
+              question pack, D16 (our recommendation is built meanwhile).
+NOTHING LEFT  beyond those lines.
+```
