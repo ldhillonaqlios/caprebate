@@ -21,7 +21,7 @@
      (backend/src/web/engine.ts imports src/index.ts). The page's copy is what
      the file preview, the regression harness (its default mode) and the 03-app
      proofs read. Both are the same text, and this check is what keeps them so.
-     The back end's test/phase161f.test.ts checks the served edition too.
+     The back end's test/public-site/claim-calculator-source.test.ts checks the served edition too.
 
    IT ALSO CHECKS WHAT PHASE 102 PROMISED, now of the source
      no fetch(, no DOM, no storage, no secrets; every CTA switch still false;
