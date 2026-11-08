@@ -1172,135 +1172,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161j — Regroup 2: the public site, assessment, portal, CRM and claims as modules, and the router split
-
- **Model: Opus.** Board item 13462572169. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the second of three moves, and the one that splits src/core/router.ts (about 2,500 lines, every page address). **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-RULES FOR ALL THREE REGROUP PHASES (161i, 161j, 161k), from the audit's
-section 6.2 ("each module holds its own routes, page files, permissions and
-database queries", for example crm/leads.routes.ts, leads.pages.ts,
-leads.repo.ts and leads.permissions.ts):
-- Moves, not rewrites. git mv to keep history; nothing a person sees
-  changes. The full suites give the same pass list before and after.
-- A test lists every route (method and path, in matching order) before the
-  first move; after each move the list must be identical.
-- The dated notes in the comments of every file you move go to
-  docs/CHANGELOG.md (date, phase, what was decided and why), leaving short
-  comments that say why the code is as it is. Names of people stay out of
-  the code.
-- Tests move with their code and are named by feature; docs/TEST-NAMES.md
-  maps each old name to the new one, so PHASE-HISTORY's references still
-  resolve. The drift checker and the register checks that count test files
-  still pass.
-- One area at a time, one commit per area, so any move can be undone alone.
-
-BUILD (in Caprebate/09-app/backend/src/modules/)
-1. public-site/ (home, sector pages, enquiry form), assessment/ (eligibility
-   check, sign-up), portal/ (client dashboard, letter signing, uploads,
-   booking), crm/ (organisations, leads, pipeline, tasks, automation,
-   templates, introducers), claims/ (claim record, claim facts, documents,
-   research), from the files now in src/web/.
-2. Each module has its own routes file; router.ts keeps only the shell
-   that asks each module in the same order as today.
-3. Big files split by what they do as they move (crm.ts about 2,200 lines,
-   documents.ts about 2,000), into the routes / pages / repo / permissions
-   pattern.
-4. ADDED 8 NOV 2026 BY PHASE 161i1, the way it did core, shared and
-   integrations: (a) the dated notes in the comments of every file this
-   phase moves go to 09-app/backend/docs/CHANGELOG.md word for word (date,
-   phase, file), and the code keeps the reasons without phase labels, dates
-   or people's names (names become roles); a date that records when a source
-   was read or something approved, and a worked example, stays. (b) The
-   module's tests go to test/<module>/, named by feature, with their old
-   names added to docs/TEST-NAMES.md (npm test, the drift checker and the
-   CRM fold check already read one folder down). (c) The SQL on this
-   phase's tables that waits in src/core/data-borrowed.ts,
-   src/shared/data-borrowed.ts and src/integrations/data-borrowed.ts
-   (search, the claim and lead lists, the calendar's bookings, the
-   connectors' business reads) moves into the owning module's data.ts; the
-   caller reaches it through that module's front door (an upward import,
-   counted, for 161l).
-
-THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
-Phase 161h1): each module this phase moves gets its front door (index.ts),
-its data.ts (the only file running SQL on the tables it owns), pages with
-no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
-zero and the baseline is lowered to match; no new break anywhere.
-
-THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
-what can be run before going live, restructure them"): every phase from
-161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
-161k, 161l, 161m. None of them waits on a person. Going live waits on
-people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
-the code is regrouped while they work, with no real client on it. After
-161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
-its gate is open, then the sweep again before the first client. If the gate
-opens before 161m has run, finish the phase in progress, run the sweep, then
-161n; the phases left run after go-live, in the same order. Every phase
-leaves the website working, so stopping between two is safe.
-NEXT: Phase 161k.
-
-ACCEPT
-- The route list and the pass list are unchanged; sign in on the preview as
-  staff and as a client and use each module once.
-```
-
-
 ## PHASE 161k — Regroup 3: survey, finance, compliance and admin as modules, tests by feature, and the specs out of the code
 
  **Model: Opus.** Board item 13462572225. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the last of three moves. After it, src/web/ is empty and the folder map in the audit's section 6.2 is true. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
@@ -1411,6 +1282,26 @@ BUILD
    (client-redesign, phase133b, phase133i, phase144-crm, phase151a,
    phase139, phase153, phase160e, phase160p, whatsapp) into their modules'
    folders, named by feature.
+6. ADDED 8 NOV 2026 BY PHASE 161j, what it left for this phase: (a) about
+   130 comments in the five modules it moved (src/modules/public-site,
+   assessment, portal, crm, claims) whose sentence names a phase as its
+   subject: grep -nE '(PHASE|Phase) [0-9]{2,3}' there, and reword each to
+   say why, with no phase; (b) 18 tests that span areas stayed in test/
+   (configuration, settings, ui-tidy-settings, finance-claim, lists,
+   localtime, extract-text, phase129, phase133c, phase144, phase144a,
+   phase146f, phase151b, phase151e5, phase155, phase160d, staff, web): move
+   each to the folder of what it mostly tests once this phase's modules
+   exist, or split it, named by feature, with its old name added to
+   docs/TEST-NAMES.md; (c) two comments name old places: 03-app/
+   caprebate-gated-exit-renderer-proof.cjs says closePage is in router.ts
+   (it is in src/modules/assessment/routes.ts), and the calculator's source
+   (09-app/engine/src/calculator/shared.js) names src/web/sector-ranges.ts
+   (now src/modules/assessment/): the calculator is copied into the page
+   byte for byte, so change it and run npm run page in 09-app/engine, never
+   the page by hand; (d) this phase's modules follow 161j's rule for load
+   order: the core's, shared parts' and outside services' front doors never
+   load a business module (a lower layer that needs a module's statements
+   names its data.ts), and test/core/load-alone.test.ts must stay green.
 
 THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
 Phase 161h1): each module this phase moves gets its front door (index.ts),
@@ -1497,7 +1388,7 @@ right register.
 
 WHAT IS THERE NOW: after 161h1 to 161k, every module is behind its front
 door and the boundary check's counts for rules 1, 3 and 4 are zero, except
-the rule-3 breaks below (item 5), which no move can clear. What is left is
+what items 5 and 6 list, which no move can clear. What is left is
 rule 2: modules still depend on each other in both directions
 (CRM and the portal, claims and survey were the worst on 6 Nov 2026), and
 authz.ts holds all 130 actions in one table.
@@ -1532,6 +1423,35 @@ BUILD
    data-borrowed.ts files (161j and 161k move most of them; what is left
    here is a bottom-layer file reading a business table, which becomes an
    event or a front-door call). The check then reads zero for rule 3.
+6. ADDED 8 NOV 2026 BY PHASE 161j: what moving the public site,
+   assessment, portal, CRM and claims could not clear. (a) THE JOINS: 84
+   rule-3 breaks against those five (crm 40, claims 32, assessment 9,
+   portal 2, public-site 1; node tools/boundaries.cjs --counts), almost all
+   statements in their data-borrowed.ts files that join one module's
+   tables to another's (a claim's reference beside a lead, a property's
+   label beside a task); split each as in item 5. (b) 12 imports where the
+   core or the outside services name a module's data.ts directly
+   (core/backoffice.ts, core/signup.ts, integrations/connectors/nations.ts,
+   test-lookups.ts, boundary-test-lookup.ts, site-area.ts,
+   register-files.ts, integrations/email/email.ts), and the shared upload
+   port naming the claims document files: counted rule-1 breaks, kept
+   because a front door would load the whole module into the lower layers;
+   each becomes an event or a port the lower layer owns. (c) THE LENT
+   PARTS: router.ts hands the routes files the parts of the core and of
+   compliance that load business code (the signed-in header, the sign-up
+   functions and MIN_PASSWORD, handlePortalSettings, NotFoundAsRefusal, and
+   the legal pages' approval functions from src/web/legal-approvals.ts) at
+   start (lendShellParts in router.ts, shellParts() in src/core/http.ts);
+   the boundary check cannot count those links, so replace each with a
+   front-door import once the loops are gone. (d) Four load-order
+   workarounds to take out when the loops go, each the same value read
+   later: the getters in src/web/compliance-identity.ts (RET-7's state, the
+   message rows' why_unset) and src/core/navigation.ts (Settings' under),
+   and maxLockedPiece() in src/web/survey-video.ts (was MAX_LOCKED_PIECE).
+   (e) The generated names of some data functions describe the first table
+   their statement names, not what it reads (for example
+   getStaffTasksIdBusinessIdByLeadIdStatus reads a lead): rename them by
+   what they return as each is touched.
 
 THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
 what can be run before going live, restructure them"): every phase from
@@ -1797,6 +1717,8 @@ ACCEPT
  **Added 5 November 2026 by Phase 161e, for this sweep to do.** Ten untracked leftovers sit in the back end; git does not hold them and no check names them: four `.mutsave` copies in `src/connectors/` and `src/web/` (from a mutation run), `tools/_159l-legal-moves.ts`, `_159l-pick.ts`, `_159l-red.ts` and `_159l-red2.ts`, `_trg.ts` and the folder `.demo156/`. Ask Lakhbir in the chat, then zip them into `Caprebate/_archive/` and delete them, as Phase 161e did with the .bak copies; commit any that turn out to be real tools.
 
  **Added 5 November 2026 by Phase 161f, for this sweep to do.** Once pull request 80 (Phase 161f) is merged and the test website has redeployed, check its eligibility check still gives the same answers: `node 04-phase-work/stress-2026-10-09/engine/site-cases.mjs https://caprebate-test.vercel.app <a file in your scratch folder>` drives the same 26 invented cases through it (it stops at the figure page and sends no enquiry), then compare each case's pages and figures with `site-cases-live-main-161f.json` beside it (main, before the change). Phase 161f found them identical on main live and on its own code run locally, because Vercel refused the session access to the branch preview. A difference is a finding for Lakhbir, not something to adjust.
+
+ **Added 8 November 2026 by Phase 161j, for this sweep to do.** Four outside-service connectors do not load when they are the first file loaded (`src/integrations/connectors/hmlr-title.ts`, `homedata-planning.ts`, `homedata.ts`, `title-boundary.ts`): each meets the paid connectors' list while it is still loading ("Cannot access ... before initialization"). It was so on main before Phase 161j; nothing loads them first, so nothing breaks, and `test/core/load-alone.test.ts` lists them as known. Make each load alone (for example, the list built when first asked), then take them off the test's list.
 
  **Added 5 November 2026 by Phase 161g, for this sweep to do.** Once pull request 82 (Phase 161g) is merged and the test website has redeployed, check it in the browser pane: on a fresh visit the cookie banner shows "Accept all" and "Reject non-essential" the same size; the network shows no request to Google before a click, after "Reject non-essential", or after "Accept all" (the test website has no Analytics id, so nothing of Google's should ever load there); /privacy-policy/ and /portal-terms/ open with their Draft line, and /privacy goes to /privacy-policy/; signing in as the invented client asks once for the tick ("Before you go on") and then opens the portal. Phase 161g proved the click rule on a local copy with an invented id (no Google before the click or after Reject; the tag requested after Accept). A difference is a finding for Lakhbir.
 

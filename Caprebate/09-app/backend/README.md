@@ -15,7 +15,9 @@ Nothing visible came out of it — it decides whether the two applications are
 shippable or a demonstration wearing a suit.
 
 Phase 104 put the public half on top of it: the site, the six-screen assessment,
-the customer login and the client portal (`src/web/`).
+the customer login and the client portal (`src/web/` then; since Phase 161j each in its module under
+`src/modules/`: `public-site/`, `assessment/`, `portal/`, `crm/` and `claims/`, each with its front door `index.ts`,
+its `data.ts` and its `routes.ts`; `src/core/router.ts` is the shell that asks each module in turn).
 
 Phases 106 and 107 finished the back office — the engaged-client list and the
 five-panel business page, then the surveyor's review-and-sign workspace and the
