@@ -2,8 +2,9 @@
  * THE CRM BACKBONE — ORGANISATIONS, CONTACTS, PROPERTIES AND THE CLAIM RECORD.
  * CRM 1 of 10.
  *
- * VIEW MODELS AND WRITES. The routes and the rendering are src/modules/crm/crm-pages.ts,
- * which draws what these return and decides nothing. The scope — every field
+ * VIEW MODELS AND WRITES. The routes are src/modules/crm/crm.routes.ts and the
+ * rendering src/modules/crm/crm-pages.ts, which draws what these return and
+ * decides nothing. The section gates are src/modules/crm/crm.permissions.ts. The scope — every field
  * and why it is shaped the way it is — is 09-app/CAPREBATE-CRM-DISPOSITION.md,
  * and the schema is migration 009.
  *
@@ -72,6 +73,7 @@ import { getClaimsBusinessIdCompanyById, getSurveyorCommitmentsNByAssessmentId, 
 import { getAssessmentsIdByBusinessId2, getAssessmentsShownLowPenceShownHighPenceById, getEstimatesCountByBusinessId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId, listAssessmentAnswersStateValueByAssessmentIdQuestionId } from '../assessment/index.ts';
 import { getBusinessesIdNameById5, getPropertiesIdBusinessIdById4, getStaffTasksIdClaimRefByClaimIdIsNextAction, listBusinessesIdName5, listPropertiesIdBusinessId, listPropertiesIdBusinessIdByBusinessId, listStaffTasksIdClaimRefByClaimIdIsNextAction, listStaffTasksIdClaimRefByClaimIdIsNextAction2, listStaffTasksIdClaimRefByClaimIdIsNextAction3, listStaffTasksIdClaimRefByClaimIdIsNextAction4 } from './data-borrowed.ts';
 import { getContactsIdBusinessIdById4, listContactsIdBusinessIdByBusinessId } from './data.ts';
+import { assertClaimSection, assertOrganisationSection, assertPropertySection } from './crm.permissions.ts';
 
 export { NotFoundAsRefusal };
 
@@ -385,26 +387,7 @@ function personField(v: string | null, choices: readonly Person[], what: string)
   return choices.some((p) => p.id === v) ? { ok: true, value: v } : { ok: false, why: `${what} must be one of the people offered.` };
 }
 
-/* ================================================================== *
- * 4 · THE SECTION GATES
- * ================================================================== */
-
-const SECTION = '__crm_section__';
-
-/** Organisations: ADMIN and SALES. A sentinel business, refused to everyone else by the table. */
-export function assertOrganisationSection(actor: Actor): void {
-  authorise(actor, 'organisation.read', { type: 'business', id: SECTION });
-}
-
-/** Properties: its own action, because SURVEYING reaches a property through a job. */
-export function assertPropertySection(actor: Actor): void {
-  authorise(actor, 'property.enter', { type: 'property', id: SECTION, business_id: SECTION, assigned_surveyor_ids: [] });
-}
-
-/** Claims: its own action, for the same reason, and ACCOUNTING is on it. */
-export function assertClaimSection(actor: Actor): void {
-  authorise(actor, 'claim.enter', { type: 'claim', id: SECTION, business_id: SECTION, assigned_surveyor_ids: [] });
-}
+/* 4 · THE SECTION GATES are in src/modules/crm/crm.permissions.ts. */
 
 /* ================================================================== *
  * 5 · DERIVED FACTS
@@ -2062,13 +2045,4 @@ function feeDiscountsOn(db: Db, actor: Actor, claim_id: string): { fee_discounts
   const c = getClaimsBusinessIdById<{ business_id: string }>(db, [claim_id]);
   if (c === undefined || !can(actor, 'fee_discount.read', { type: 'claim', id: claim_id, business_id: c.business_id, assigned_surveyor_ids: [] })) return {};
   return { fee_discounts: discountsFor(db, actor, claim_id) };
-}
-
-/**
- * THE GATE OF THE PIPELINE BOARD, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
- * every menu link for every login, so a gate that drifted from its route fails there.
- */
-export function pipelineBoardGate(actor: Actor): void {
-  authorise(actor, 'pipeline.read', { type: 'pipeline', id: '__pipeline__' });
 }

@@ -711,6 +711,14 @@
    "area": "crm",
    "kind": "page"
   },
+  "src/modules/crm/crm.permissions.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/modules/crm/crm.routes.ts": {
+   "area": "crm",
+   "kind": "routes"
+  },
   "src/modules/crm/crm.ts": {
    "area": "crm",
    "kind": "logic"

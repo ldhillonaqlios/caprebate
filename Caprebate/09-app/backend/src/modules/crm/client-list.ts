@@ -17,7 +17,8 @@
 
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
-import { organisationList, assertOrganisationSection, NOT_RECORDED, CLIENT_STATUSES, pipelineBoard, pipelineBoardGate } from './crm.ts';
+import { organisationList, NOT_RECORDED, CLIENT_STATUSES, pipelineBoard } from './crm.ts';
+import { assertOrganisationSection, pipelineBoardGate } from './crm.permissions.ts';
 import { opens } from '../../core/navigation.ts';
 import { kpiRow, nobodyBadge, siteOf, stageBadge } from '../../core/index.ts';
 import { waitingOn, type WaitingOn } from '../claims/index.ts';

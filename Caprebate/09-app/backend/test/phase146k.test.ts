@@ -275,7 +275,7 @@ describe('3 · a wrong entry is taken back, with a reason, and the entry is kept
   });
 
   test('K12 — THE ROUTES ARE POSTS ON THE PROPERTY PAGE, AND CARRY THE FORM AND NOTHING ELSE', () => {
-    const pages = readFileSync(join(SRC, 'modules', 'crm', 'crm-pages.ts'), 'utf8');
+    const pages = readFileSync(join(SRC, 'modules', 'crm', 'crm.routes.ts'), 'utf8');
     assert.match(pages, /title-register\(\\\/take-back\)\?\$\/\.exec\(path\);\n\s*if \(titleHand && method === 'POST'\)/);
     assert.match(pages, /TH\.takeBackTitleByHand\(deps, actor, id, f\.get\('reason'\)\)/);
     assert.match(pages, /title: TH\.titleByHandView\(db, actor, v\.id\)/);
