@@ -23,7 +23,7 @@ import type { IncomingMessage } from 'node:http';
 import { createApp } from '../../src/core/server.ts';
 import { seed } from '../../src/core/seed.ts';
 import { SESSION_COOKIE_NAME } from '../../src/core/auth.ts';
-import { readBody } from '../../src/core/router.ts';
+import { readBody } from '../../src/core/http.ts';
 import {
   EXEMPT, EXPIRED_TITLE, EXPIRED_WORDS, FORM_FIELD, FORM_HEADER, ONCE_FIELD, ONCE_HEADER, SENSITIVE,
   exemptFor, formToken, formTokensMode, isSensitive, onceToken, withFormTokens,

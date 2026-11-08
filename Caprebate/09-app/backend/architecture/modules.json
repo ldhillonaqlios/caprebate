@@ -79,6 +79,10 @@
    "area": "core",
    "kind": "page"
   },
+  "src/core/http.ts": {
+   "area": "core",
+   "kind": "other"
+  },
   "src/core/index.ts": {
    "area": "core",
    "kind": "other"
@@ -98,6 +102,10 @@
   "src/core/multipart.ts": {
    "area": "core",
    "kind": "logic"
+  },
+  "src/core/nav-context.ts": {
+   "area": "core",
+   "kind": "other"
   },
   "src/core/navigation.ts": {
    "area": "core",
@@ -503,6 +511,10 @@
    "area": "assessment",
    "kind": "logic"
   },
+  "src/modules/assessment/routes.ts": {
+   "area": "assessment",
+   "kind": "routes"
+  },
   "src/modules/assessment/sector-ranges.ts": {
    "area": "assessment",
    "kind": "logic"
@@ -655,6 +667,10 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/routes.ts": {
+   "area": "claims",
+   "kind": "routes"
+  },
   "src/modules/claims/signing.ts": {
    "area": "claims",
    "kind": "logic"
@@ -795,6 +811,10 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/crm/routes.ts": {
+   "area": "crm",
+   "kind": "routes"
+  },
   "src/modules/crm/schedule.ts": {
    "area": "crm",
    "kind": "logic"
@@ -903,6 +923,10 @@
    "area": "portal",
    "kind": "logic"
   },
+  "src/modules/portal/routes.ts": {
+   "area": "portal",
+   "kind": "routes"
+  },
   "src/modules/portal/take-back.ts": {
    "area": "portal",
    "kind": "logic"
@@ -950,6 +974,10 @@
   "src/modules/public-site/public-site.ts": {
    "area": "public-site",
    "kind": "page"
+  },
+  "src/modules/public-site/routes.ts": {
+   "area": "public-site",
+   "kind": "routes"
   },
   "src/modules/survey/anchor-quarantine.ts": {
    "area": "survey",

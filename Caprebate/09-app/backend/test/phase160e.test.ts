@@ -24,7 +24,7 @@ import { PIECED_ABOVE, PIECE_BYTES, maxPiecedBytes, PIECES_PAGE_CSP, piecesPage,
 import { UPLOAD_PIECES_JS } from '../src/core/upload-pieces-script.ts';
 import type { Actor } from '../src/core/authz.ts';
 import { LOGIN_SOURCE_LIMIT, RESET_LIMIT, RESET_SOURCE_LIMIT } from '../src/core/auth.ts';
-import { clientIp } from '../src/core/router.ts';
+import { clientIp } from '../src/core/http.ts';
 
 const MIGRATIONS = join(import.meta.dirname, '..', 'migrations');
 /** A PDF of about `mb` megabytes that the upload checks accept: a header, invented words, and an end. */

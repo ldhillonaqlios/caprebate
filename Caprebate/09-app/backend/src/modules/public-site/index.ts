@@ -16,3 +16,5 @@ export { logFormComplaint, noticesEdition, noticesForLiveSite, receiveComplaintF
 export type { Approvals, LegalPageKey, PageApproval } from './legal-pages.ts';
 export type { EnquiryRow } from './enquiries.ts';
 export type { WaitingForm } from './notices-site.ts';
+// Its addresses, asked by the router shell; they reach other modules, so they load last.
+export { publicSiteEnquiry, publicSiteRoutes } from './routes.ts';

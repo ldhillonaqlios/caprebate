@@ -7,7 +7,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Db } from './db.ts';
 import type { AuditLog } from './audit.ts';
 import { boundaryOf, parseMultipart } from './multipart.ts';
-import { keepBody, readBody } from './router.ts';
+import { keepBody, readBody } from './http.ts';
 import { h, page } from '../shared/index.ts';
 import {
   EXPIRED_TITLE, EXPIRED_WORDS, FORM_FIELD, FORM_HEADER, ONCE_FIELD, ONCE_HEADER, ONCE_MAX_AGE_MS,

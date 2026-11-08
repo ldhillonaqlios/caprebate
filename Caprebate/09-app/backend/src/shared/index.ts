@@ -29,6 +29,7 @@ export type { BenefitContext, EngineResult, EngineWindow, EntityKey, FeeComparis
 export type { ExtractedPage, PageImage } from './extract-text.ts';
 export type { MoneyReadings } from './money-readings.ts';
 export type { KeepOriginals } from './originals.ts';
+export type { FsObjectStore } from './objectstore.ts';
 export type { Op, PdfFont, Rgb } from './pdf-canvas.ts';
 export type { PdfLine } from './pdf.ts';
 export type { ShownRange } from './shown-range.ts';

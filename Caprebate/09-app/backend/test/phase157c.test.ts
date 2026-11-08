@@ -41,7 +41,7 @@ import {
 } from '../src/modules/claims/signing.ts';
 import { buildPdf, flow } from '../src/shared/pdf.ts';
 import { SIGNATURE_PAD_JS } from '../src/shared/signature-pad-script.ts';
-import { LETTER_PAGE_CSP } from '../src/core/router.ts';
+import { LETTER_PAGE_CSP } from '../src/modules/portal/index.ts';
 import { reconcileVideoMeeting } from '../src/modules/crm/video-calls.ts';
 import { plainNeed } from '../src/shared/next-step.ts';
 import { SITE_CSS } from '../src/shared/assets.ts';
