@@ -36,8 +36,8 @@
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const HOME_PATH = join(import.meta.dirname, '..', '..', '..', 'site', 'home.html');
-export const SITE_DIR = join(import.meta.dirname, '..', '..', '..', 'site');
+export const HOME_PATH = join(import.meta.dirname, '..', '..', '..', '..', 'site', 'home.html');
+export const SITE_DIR = join(import.meta.dirname, '..', '..', '..', '..', 'site');
 
 /** The sector landing pages (Phase 160k): their addresses, in the order the site lists them. */
 export const SECTOR_SLUGS = ['care-homes', 'dental-practices', 'gp-surgeries', 'supported-living', 'private-hospitals-and-clinics'] as const;
@@ -54,7 +54,7 @@ export const FONT_FILES = [
   // Phase 160n: the X-ray home page's two (SIL Open Font License, site/fonts/OFL-INTER-TIGHT.txt, OFL-JETBRAINS-MONO.txt)
   'inter-tight-latin-wght-normal.woff2', 'jetbrains-mono-latin-500-normal.woff2',
 ] as const;
-export const GSAP_PATH = join(import.meta.dirname, '..', '..', '..', '..', '..', 'node_modules', 'gsap', 'dist', 'gsap.min.js');
+export const GSAP_PATH = join(import.meta.dirname, '..', '..', '..', '..', '..', '..', 'node_modules', 'gsap', 'dist', 'gsap.min.js');
 
 /** Where the page's script tag for GSAP points in the source file, and where it points when served. */
 const GSAP_CDN = /<script src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/gsap\/[0-9.]+\/gsap\.min\.js" defer><\/script>/;

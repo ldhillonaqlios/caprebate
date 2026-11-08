@@ -28,7 +28,7 @@ import { assertComplianceWrite, type ComplianceDeps } from '../../web/compliance
 import { plainDashes } from '../../shared/index.ts';
 
 /** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 03-app/caprebate-notices-page.html, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
-export const NOTICES_PATH = join(import.meta.dirname, '..', '..', 'copies', 'caprebate-notices-page.html');
+export const NOTICES_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'caprebate-notices-page.html');
 /** Where the page sends people about their data, and where a complaint from its form is emailed. */
 export const DP_MAIL = 'data.protection@caprebate.co.uk';
 /** Complaints from one network address in the 15-minute window, before the form says to wait. */
