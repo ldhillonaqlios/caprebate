@@ -717,7 +717,10 @@ describe('2b · the question asked before the first reading, where the type is c
     assert.match(msgs, /earlyQuestions\(earlyQuestionsFor\(actor, business_id, types\)/);
     assert.match(msgs, /mailboxFor\(d\),\n\s*earlyVouchesFrom\(\(n\) => f\.get\(n\)\)\)/);
     assert.match(readFileSync(join(SRC, 'modules', 'crm', 'inbound-email.ts'), 'utf8'), /claim_id: f\.claim_id, early_vouch \}, part\.bytes\)/);
-    assert.doesNotMatch(readFileSync(join(SRC, 'core', 'router.ts'), 'utf8'), /vouch_|earlyQuestions/);
+    // The router shell and the module routes files it asks.
+    for (const f of ['core/router.ts', ...['public-site', 'assessment', 'portal', 'crm', 'claims'].map((m) => `modules/${m}/routes.ts`)]) {
+      assert.doesNotMatch(readFileSync(join(SRC, f), 'utf8'), /vouch_|earlyQuestions/, f);
+    }
     w.close();
   });
 });

@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import * as F4 from '../../src/modules/assessment/funnel4.ts';
 import { sessionFromFunnel } from '../../src/modules/assessment/funnel-session.ts';
 import { estimate, newSession, BAND } from '../../src/shared/engine.ts';
-import { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH } from '../../src/core/router.ts';
+import { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH } from '../../src/modules/portal/index.ts';
 
 type S = Record<string, unknown>;
 const form = (o: Record<string, string>) => new URLSearchParams(o);

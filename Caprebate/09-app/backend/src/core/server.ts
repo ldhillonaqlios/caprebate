@@ -35,7 +35,8 @@ import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAIL
 import * as SI from './sign-in.ts';
 import { toActor } from './users.ts';
 import { payloadFor, assertSurveySection } from '../web/surveyor.ts';
-import { bindResponse, clientIp, handleWeb, PayloadTooLarge, readBody, refusalAsPage, sendRefusalPage } from './router.ts';
+import { handleWeb, refusalAsPage, sendRefusalPage } from './router.ts';
+import { bindResponse, clientIp, PayloadTooLarge, readBody } from './http.ts';
 import { FsObjectStore } from '../shared/objectstore.ts';
 import { SharedObjectStore, type BlobClient } from '../shared/shared-objectstore.ts';
 import { sealKeyFromEnv, type KeepOriginals } from '../shared/index.ts';

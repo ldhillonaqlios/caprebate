@@ -188,7 +188,7 @@ describe('4 · the six small things, and the breadcrumb', () => {
     assert.equal(P.stageInWords(null), 'No step is recorded yet.');
     assert.equal(P.stageInWords('NOT_A_STAGE'), 'Our records show a step we do not recognise.');
     for (const k of ['ENQUIRY', 'INVOICE', 'ON_HOLD', 'CLOSED']) assert.equal(/[A-Z]{2,}_|<code>/.test(P.stageInWords(k)), false, k);
-    const router = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'router.ts'), 'utf8');
+    const router = ['core', 'modules/portal'].map((d) => readFileSync(join(import.meta.dirname, '..', 'src', d, d === 'core' ? 'router.ts' : 'routes.ts'), 'utf8')).join('\n');
     assert.equal(router.includes('(Step: <code>${business.stage}</code>)'), false);
   });
 

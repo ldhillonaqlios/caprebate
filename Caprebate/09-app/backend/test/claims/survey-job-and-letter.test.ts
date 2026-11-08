@@ -351,7 +351,7 @@ describe('F27 — "the client’s page shows" is the portal’s own line', () =>
 /* ================================================================== *
  * F30 — after the research ran, the portal says registers were checked, and the client's step is "We research your property"
  * ================================================================== */
-import { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH, rangeBasisFor } from '../../src/core/router.ts';
+import { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH, rangeBasisFor } from '../../src/modules/portal/index.ts';
 
 describe('F30 — what the client is shown once the research has run', () => {
   test('the note under the figure says the checks have started once any register answered', async () => {

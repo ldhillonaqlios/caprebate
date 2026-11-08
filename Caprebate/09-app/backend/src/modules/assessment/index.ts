@@ -29,3 +29,5 @@ export type { Coverage } from './desk-first.ts';
 export type { F4Screen } from './funnel4.ts';
 export type { SettingsView, VatReading } from './vat.ts';
 export type { ClaimantRole, YearEndReading } from './who-claims.ts';
+// Its addresses, asked by the router shell; they reach other modules, so they load last.
+export { ADDRESS_PAGE_CSP, assessmentAssets, assessmentRoutes, contactValueProblem } from './routes.ts';

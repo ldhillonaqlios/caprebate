@@ -37,7 +37,8 @@ describe('Phase 153 — the privacy notice link at the address question', () => 
   // PHASE 153f, 4 October 2026: the old address screen (Q2) is retired; the four-stage funnel's address screen
   // ("details", stage 3) draws the same link, from the same switch.
   test('the served address question reads CB_REGISTRY.precondition through registryGate, and nothing else', () => {
-    const src = readFileSync(new URL('../src/core/router.ts', import.meta.url), 'utf8');
+    // The assessment's pages moved with its routes, out of the router shell.
+    const src = readFileSync(new URL('../src/modules/assessment/routes.ts', import.meta.url), 'utf8');
     const f4 = src.slice(src.indexOf('function f4Page('), src.indexOf('function f4FigurePage('));
     assert.ok(f4.length > 0, 'the four-stage screen was not found');
     assert.match(f4, /id === 'details' \? noticeAtAddress\(registryGate\(\)\)/);

@@ -80,7 +80,7 @@ describe('Phase 160h: the legal pages', () => {
     const c = legalPageHtml('/cookies/', null) ?? '';
     for (const name of ['cb_session', 'cb_step', 'cb_draft', CONSENT_COOKIE]) assert.match(c, new RegExp(`<td><code>${name}</code></td>`), name);
     // The cookies the code sets are exactly these (and the answer's own cookie).
-    const src = ['core/auth.ts', 'core/sign-in.ts', 'core/router.ts'].map((f) => readFileSync(join(import.meta.dirname, '..', '..', 'src', f), 'utf8')).join('\n');
+    const src = ['core/auth.ts', 'core/sign-in.ts', 'core/router.ts', 'modules/assessment/routes.ts'].map((f) => readFileSync(join(import.meta.dirname, '..', 'src', f), 'utf8')).join('\n');
     for (const name of ['cb_session', 'cb_step', 'cb_draft']) assert.match(src, new RegExp(name), `${name} is no longer set: update the cookie policy`);
     assert.match(c, /Cloudflare/);
     assert.match(c, /Zoom/);

@@ -229,7 +229,7 @@ describe('Phase 161g item 2: the cookie list is tested, not typed', () => {
     assert.equal(CONSENT_MAX_AGE, 365 * 24 * 60 * 60); assert.equal(line(CONSENT_COOKIE), '12 months');
     assert.equal(STEP_TTL_MS, 15 * 60 * 1000); assert.equal(line('cb_step'), '15 minutes');
     assert.match(readFileSync(join(SRC, 'core', 'auth.ts'), 'utf8'), /const SESSION_TTL_MS = 8 \* 60 \* 60 \* 1000;/); assert.match(line('cb_session'), /^Up to 8 hours/);
-    assert.match(readFileSync(join(SRC, 'core', 'router.ts'), 'utf8'), /setCookie\(res, DRAFT_COOKIE, draft\.token, 60 \* 60 \* 6\)/); assert.equal(line('cb_draft'), '6 hours');
+    assert.match(readFileSync(join(SRC, 'modules', 'assessment', 'routes.ts'), 'utf8'), /setCookie\(res, DRAFT_COOKIE, draft\.token, 60 \* 60 \* 6\)/); assert.equal(line('cb_draft'), '6 hours');
   });
 
   test('the collector itself fails a new cookie and a new storage key (a planted fault)', () => {
@@ -326,7 +326,7 @@ describe('Phase 161g item 4: the client\'s terms, the links and the sign-up\'s t
   });
 
   test('the engagement letter signing screen links the three documents where the pages are served', () => {
-    const router = readFileSync(join(SRC, 'core', 'router.ts'), 'utf8');
+    const router = readFileSync(join(SRC, 'modules', 'portal', 'routes.ts'), 'utf8');
     assert.match(router, /\$\{legalLinks \? h`<p class="help">Please also read \$\{agreementLinks\(\)\}\./);
   });
 
