@@ -567,6 +567,14 @@
    "area": "claims",
    "kind": "page"
   },
+  "src/modules/claims/documents.permissions.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/documents.routes.ts": {
+   "area": "claims",
+   "kind": "routes"
+  },
   "src/modules/claims/documents.ts": {
    "area": "claims",
    "kind": "logic"
@@ -710,6 +718,14 @@
   "src/modules/crm/crm-pages.ts": {
    "area": "crm",
    "kind": "page"
+  },
+  "src/modules/crm/crm.permissions.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/modules/crm/crm.routes.ts": {
+   "area": "crm",
+   "kind": "routes"
   },
   "src/modules/crm/crm.ts": {
    "area": "crm",

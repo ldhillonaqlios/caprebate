@@ -785,8 +785,10 @@ describe('3 · one door out, the tables that keep both facts, and the routes', (
     assert.match(engaged, /MR\.takeBackPick\(deps, actor, id, f\.get\('source_id'\) \?\? '', f\.get\('reason'\)\)/);
     assert.match(engaged, /x\.picked && s\.engagement\.signed \? h`/);
     const docs = readFileSync(join(SRC, 'modules', 'claims', 'documents-pages.ts'), 'utf8');
-    assert.match(docs, /vouch\\\/withdraw\$\/\.exec\(path\);\n\s*if \(docWithdraw && method === 'POST'\)/);
-    assert.match(docs, /D\.withdrawVouch\(deps, actor, id, f\.get\('field_id'\) \?\? '', f\.get\('reason'\)\)/);
+    // The route is in the routes file, the button on the page.
+    const docRoutes = readFileSync(join(SRC, 'modules', 'claims', 'documents.routes.ts'), 'utf8');
+    assert.match(docRoutes, /vouch\\\/withdraw\$\/\.exec\(path\);\n\s*if \(docWithdraw && method === 'POST'\)/);
+    assert.match(docRoutes, /D\.withdrawVouch\(deps, actor, id, f\.get\('field_id'\) \?\? '', f\.get\('reason'\)\)/);
     assert.match(docs, /v\.may_withdraw \? h`/);
   });
 

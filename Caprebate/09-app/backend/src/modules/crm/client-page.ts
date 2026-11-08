@@ -35,6 +35,7 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { breadcrumb, claimName, moreDetail, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, type Need, type QuickAction, type SectionContext, type SectionSpec } from '../../shared/index.ts';
 import { sectionPrefs } from '../../core/index.ts';
 import * as C from './crm.ts';
+import { assertOrganisationSection } from './crm.permissions.ts';
 import { engagedModule as E } from '../claims/index.ts';
 import { researchModule as R } from '../claims/index.ts';
 import { assertClientsSection } from '../claims/index.ts';
@@ -84,7 +85,7 @@ export async function handleClientPage(
     // A claim addressed under a company that is not its own is not found, exactly as a claim that does not exist.
     if (v.client.business_id !== (inside[1] ?? '')) throw new NotFoundAsRefusal();
     // UI tidy phase 7: the client's own menu, with this claim marked — for a login that may read the company.
-    if (opens(actor, C.assertOrganisationSection) && can(actor, 'organisation.read', { type: 'business', id: v.client.business_id })) {
+    if (opens(actor, assertOrganisationSection) && can(actor, 'organisation.read', { type: 'business', id: v.client.business_id })) {
       const org = C.organisationView(db, actor, v.client.business_id);
       setClientMenu(org.id, org.trading_name, org.claims, [], v.id, d.app.now());
     }
@@ -96,7 +97,7 @@ export async function handleClientPage(
   const one = /^\/staff\/clients\/([A-Za-z0-9-]+)$/.exec(path);
   if (!one) return 'not-mine';
   const id = one[1] ?? '';
-  const mayOrg = opens(actor, C.assertOrganisationSection) && can(actor, 'organisation.read', { type: 'business', id });
+  const mayOrg = opens(actor, assertOrganisationSection) && can(actor, 'organisation.read', { type: 'business', id });
   const mayWork = opens(actor, assertClientsSection);
   const done = url.searchParams.get('done') ?? undefined;
   const note = url.searchParams.get('note') ?? undefined;
