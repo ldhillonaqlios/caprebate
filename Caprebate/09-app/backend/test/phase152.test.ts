@@ -2,7 +2,7 @@
  * PHASE 152 (the sweep, 28 September 2026) — THE SIGN-UP CONFIRMATION LINK LEAVES THE OUTBOX ONCE IT HAS GONE.
  *
  * Phase 151k took a SENT sign-in code and a SENT password reset link out of the outbox (SENT_SECRET_KINDS, migration
- * 058), as it was asked. The email that confirms a new client login (kind ACCOUNT_VERIFY, src/web/signup.ts) carries a
+ * 058), as it was asked. The email that confirms a new client login (kind ACCOUNT_VERIFY, src/core/signup.ts) carries a
  * link of the same sort: it works once (client_signups.verified_at) and for 24 hours (VERIFY_TTL_MS), and anybody who
  * can read the outbox could open it first. Only its hash is kept in client_signups, so taking the words out of the
  * outbox does not stop the link working for the person it was sent to.
@@ -11,7 +11,7 @@
  *   2. the never-edited rule lets exactly that edit through for ACCOUNT_VERIFY, and nothing else;
  *   3. end to end: a real sign-up request, sent, blanked - and the link from the email still makes the login, once;
  *   4. while sending is off the email keeps its words (the only copy);
- *   (and, below, A MIGRATION AND ITS RECORD AS ONE STEP: src/db.ts, migrate - cut off part way on a file database,
+ *   (and, below, A MIGRATION AND ITS RECORD AS ONE STEP: src/core/db.ts, migrate - cut off part way on a file database,
  *   the next start finishes it; a file in a shape the runner does not know is refused with a sentence)
  *   5. the two kinds 058 named are still blanked, every other email keeps its words, and 058's sentence is no
  *      longer a way through the rule (migration 060 changes the trigger only: a row 058 blanked is not touched).
@@ -24,14 +24,14 @@ import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { outboxTransport } from '../src/stubs/email.ts';
-import * as EP from '../src/stubs/email-provider.ts';
-import { offerSignup, requestSignup, confirmSignup } from '../src/web/signup.ts';
-import type { EmailSending, SmtpLogin } from '../src/stubs/email-provider.ts';
-import { Db as TheDb, migrate, pendingMigrations } from '../src/db.ts';
-import type { Db } from '../src/db.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { outboxTransport } from '../src/integrations/email/email.ts';
+import * as EP from '../src/integrations/email/email-provider.ts';
+import { offerSignup, requestSignup, confirmSignup } from '../src/core/signup.ts';
+import type { EmailSending, SmtpLogin } from '../src/integrations/email/email-provider.ts';
+import { Db as TheDb, migrate, pendingMigrations } from '../src/core/db.ts';
+import type { Db } from '../src/core/db.ts';
 
 const NOW = '2026-09-28T16:00:00.000Z';
 const ON: EmailSending = Object.freeze({
@@ -151,7 +151,7 @@ describe('Phase 152 · the sign-up confirmation link is not kept in the outbox o
 /* ================================================================== a migration and its record, as one step */
 
 const MIGRATIONS = join(import.meta.dirname, '..', 'migrations');
-const DB_TS = pathToFileURL(join(import.meta.dirname, '..', 'src', 'db.ts')).href;
+const DB_TS = pathToFileURL(join(import.meta.dirname, '..', 'src', 'core', 'db.ts')).href;
 
 /**
  * Start a migration run on a FILE database in a child process and kill it (SIGKILL, no clean-up of any kind) the

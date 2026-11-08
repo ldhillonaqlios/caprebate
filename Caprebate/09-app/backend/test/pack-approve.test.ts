@@ -22,7 +22,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { choosePackProperty, packView, savePackValue, saveLine, setLineRemoved } from '../src/web/survey-pack.ts';
 import { answerLegal, legalView } from '../src/web/pack-legal.ts';
 import { approvePack, approvedVersion, canonical, fingerprintOf, readiness, saveDetails, DECLARATION } from '../src/web/pack-approve.ts';

@@ -34,15 +34,15 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { BOOKING, FRONTDOOR, FUNNEL } from '../src/web/engine.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { BOOKING, FRONTDOOR, FUNNEL } from '../src/shared/engine.ts';
 import { nextScreen, type FunnelState } from '../src/web/assessment.ts';
 import { isBookable } from '../src/web/schedule.ts';
 import * as L from '../src/web/leads.ts';
 import * as P from '../src/web/pipeline.ts';
 import { actor, testApp } from './helpers.ts';
-import { plainDashText } from '../src/web/plain-dashes.ts';
+import { plainDashText } from '../src/shared/plain-dashes.ts';
 
 /* ------------------------------------------------------------- fixtures */
 

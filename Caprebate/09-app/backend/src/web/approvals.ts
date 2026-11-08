@@ -30,16 +30,16 @@
  * connectors are still stubs, so the facts a register gives are the seeded records in `register_records`.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { claimName } from './components.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { claimName } from '../shared/index.ts';
 import { missingFacts, sectionOfFact } from './engaged.ts';
 import { registerAttribution } from './research.ts';
 import { FACTS, captured, factsPanel, latestFacts, recordFact, type FactReading } from './claim-facts.ts';
-import type { ProcedureKey } from './stages.ts';
-import { preferHomedataPlanning, supersededPlanning } from '../connectors/homedata-planning.ts';
+import type { ProcedureKey } from '../shared/index.ts';
+import { preferHomedataPlanning, supersededPlanning } from '../integrations/index.ts';
 
 export type ApprovalDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true } | { readonly ok: false; readonly why: string; readonly field?: string };

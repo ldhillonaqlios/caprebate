@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { buildSiteEdition, SITE_PATH } from '../src/web/public-site.ts';
 
 const PASSWORD = 'a-very-long-development-password';
@@ -168,7 +168,7 @@ describe('the website enquiry form', () => {
       'SELECT full_name, email, property_type, status, contact_consent FROM website_enquiries WHERE email = ?', [good.email]);
     assert.deepEqual({ ...row }, { full_name: good.name, email: good.email, property_type: 'Dental practice', status: 'NEW', contact_consent: 1 });
     const line = made.app.db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'WEBSITE_ENQUIRY_RECEIVED' ORDER BY seq DESC LIMIT 1");
-    // 29 Sep 2026: the line also says whether the security check ran (src/connectors/turnstile.ts); no key here, so not.
+    // 29 Sep 2026: the line also says whether the security check ran (src/integrations/connectors/turnstile.ts); no key here, so not.
     assert.deepEqual(JSON.parse(line?.detail ?? '{}'), { sector: 'dental', security_check: 'not_checked:no_secret' });
   });
 

@@ -19,14 +19,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { Db, migrate } from '../src/db.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { Db, migrate } from '../src/core/db.ts';
 import { SCREENS, COSMETIC_NOTE } from '../src/web/assessment.ts';
 import { FORBIDDEN_SETTINGS, settingLabel } from '../src/web/configuration.ts';
 import { feeSwitchesBox } from '../src/web/finance-pages.ts';
 import * as P from '../src/web/portal.ts';
-import { PLAIN_SWAPS } from '../src/web/voice.ts';
+import { PLAIN_SWAPS } from '../src/shared/voice.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const CHECK = join(ROOT, '03-app', 'caprebate-plain-words-check.cjs');
@@ -88,7 +88,7 @@ describe('1 · the check reads the guide, the Help pages and the assessment', ()
     assert.match(r.stdout, /\(2 read from their \.before-phase144a copy\)/, 'the check did not read the two pre-change copies');
     assert.equal(r.status, 1);
     assert.match(r.stdout, /FAIL 09-app\/CAPREBATE-ADMIN-AND-USER-GUIDE\.md:/);
-    assert.match(r.stdout, /FAIL src\/web\/help-content\.ts:/);
+    assert.match(r.stdout, /FAIL src\/core\/help-content\.ts:/);
   });
 });
 
@@ -188,7 +188,7 @@ describe('4 · the six small things, and the breadcrumb', () => {
     assert.equal(P.stageInWords(null), 'No step is recorded yet.');
     assert.equal(P.stageInWords('NOT_A_STAGE'), 'Our records show a step we do not recognise.');
     for (const k of ['ENQUIRY', 'INVOICE', 'ON_HOLD', 'CLOSED']) assert.equal(/[A-Z]{2,}_|<code>/.test(P.stageInWords(k)), false, k);
-    const router = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'router.ts'), 'utf8');
+    const router = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'router.ts'), 'utf8');
     assert.equal(router.includes('(Step: <code>${business.stage}</code>)'), false);
   });
 

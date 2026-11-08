@@ -19,7 +19,7 @@
  *
  * THE HASH IS NOT RE-INVENTED HERE, AND THIS IS THE LOAD-BEARING PART. The
  * scheme is sha256 over the canonical form of the entry plus the previous
- * hash, and `_canonical` in src/audit.ts is that canonicaliser — audit.ts
+ * hash, and `_canonical` in src/core/audit.ts is that canonicaliser — audit.ts
  * imports GENESIS from the quarantine module and there is already a test that
  * the two logs agree on a hash rather than merely looking alike. So this file
  * uses the same function, and then the module's OWN exported `verifyChain`
@@ -45,8 +45,8 @@
  */
 
 import { createHash } from 'node:crypto';
-import type { Db } from '../db.ts';
-import { _canonical } from '../audit.ts';
+import type { Db } from '../core/index.ts';
+import { _canonical } from '../core/audit.ts';
 import {
   AnchorLog, AnchorQuarantine, GENESIS, verifyChain,
   type Commitment, type EstimateOutputs, type LogEntry, type LogKind, type SurveyorFigures,

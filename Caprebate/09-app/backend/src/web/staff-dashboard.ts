@@ -27,26 +27,26 @@
  * each row. A view of another role's work for Admin is Admin's own permissions, drawn in that role's shape.
  */
 
-import type { App } from '../app.ts';
-import { can, type Actor } from '../authz.ts';
-import { h, raw, type Safe } from './html.ts';
-import { opens } from './navigation.ts';
+import type { App } from '../core/app.ts';
+import { can, type Actor } from '../core/index.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
+import { opens } from '../core/navigation.ts';
 import { assertLeadSection } from './leads.ts';
-import { leadsList } from './lists.ts';
+import { leadsList } from '../shared/lists.ts';
 import { pipelineBoard, pipelineBoardGate, organisationList } from './crm.ts';
 import { financeDashboard } from './invoices.ts';
 import { assertFinanceSection } from './finance.ts';
 import { assertSurveySection, surveyorJobs } from './surveyor.ts';
-import { isLateNewLead } from './working-days.ts';
-import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES } from './localtime.ts';
+import { isLateNewLead } from '../shared/index.ts';
+import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES } from '../shared/index.ts';
 import { addLocalDays, startOfLocalDay, startOfLocalWeek } from './schedule.ts';
-import * as B from './backoffice.ts';
+import * as B from '../core/backoffice.ts';
 import * as M from './messages.ts';
 import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from './home.ts';
-import { kpiRow, type Kpi } from './look.ts';
+import { kpiRow, type Kpi } from '../core/index.ts';
 import { blocksFor, mayBlockTime } from './time-blocks.ts';
 import { newDot } from './client-layout.ts';
-import { keysView } from './saved-keys.ts';
+import { keysView } from '../core/saved-keys.ts';
 import { repliesStale } from './inbound-email.ts';
 import { listsToImport } from './connections.ts';
 

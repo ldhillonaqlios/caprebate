@@ -49,17 +49,17 @@
  * an unrecognised fact comes back BOTH.
  */
 
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import type { AuditLog } from '../audit.ts';
-import { REGISTRY, estimate, type SectorId } from './engine.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { REGISTRY, estimate, type SectorId } from '../shared/index.ts';
 import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
 import { SCREENS, type ScreenId } from './assessment.ts';
-import { formatShownRange } from './shown-range.ts';
-import { stage as stageOf } from './stages.ts';
-import { answerLabel, NotFoundAsRefusal } from './backoffice.ts';
+import { formatShownRange } from '../shared/index.ts';
+import { stage as stageOf } from '../shared/index.ts';
+import { answerLabel, NotFoundAsRefusal } from '../core/backoffice.ts';
 import { RECEIVED_ONLY_BY_UPLOAD } from './documents.ts';
-import { DERIVE_FIELD_OF } from '../connectors/free-registers.ts';
+import { DERIVE_FIELD_OF } from '../integrations/connectors/free-registers.ts';
 import {
   assertSignedEngagement, catalogue, LETTER_WORDS, REGISTRY_ID_OF, type SignedEngagement,
 } from './research.ts';
@@ -728,7 +728,7 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
  * they were merged as they stood — so a stored `epc_total_floor_area_m2` never
  * reached derive()'s `floor_area_m2`, and only `incorporation_date`, the one name
  * the two share, would have. Each field now goes through DERIVE_FIELD_OF
- * (src/connectors/free-registers.ts), which maps only a field both sides permit;
+ * (src/integrations/connectors/free-registers.ts), which maps only a field both sides permit;
  * a field it does not list reaches derive() under no name at all. derive() is
  * still switched off (CB_REGISTRY.precondition), so what the screen shows today
  * does not change.

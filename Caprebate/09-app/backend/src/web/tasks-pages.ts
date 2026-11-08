@@ -20,23 +20,23 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { filterBar, opens, TASK_FILTERS } from './navigation.ts';
-import { kpiRow, lateBadge, noDateBadge, type KpiTone } from './look.ts';
-import { claimRef, savedMessage, why } from './components.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { filterBar, opens, TASK_FILTERS } from '../core/navigation.ts';
+import { kpiRow, lateBadge, noDateBadge, type KpiTone } from '../core/index.ts';
+import { claimRef, savedMessage, why } from '../shared/index.ts';
 import * as T from './tasks.ts';
 import * as A from './automation.ts';
 import * as M from './templates.ts';
 import { emailButton } from './free-email-pages.ts';
 import { addNote } from './engaged.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import type { Fields } from './crm.ts';
 import { taskChoices, type TaskChoices } from './vocabularies.ts';
-import { EXITS, PROCEDURE_STAGES } from './stages.ts';
+import { EXITS, PROCEDURE_STAGES } from '../shared/index.ts';
 import type { Timeline } from './timeline.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -273,7 +273,7 @@ function saved(msg: string | undefined): Safe {
 
 /** A due reading, drawn. OVERDUE is loud; no due date says so in words. */
 export function dueCell(due: T.DueReading): Safe {
-  // UI tidy phase 9: late is a solid red label, no due date a grey one (src/web/look.ts), wherever a task list is drawn.
+  // UI tidy phase 9: late is a solid red label, no due date a grey one (src/core/look.ts), wherever a task list is drawn.
   // The label is "31 days overdue (1 Sep 2026)": the words in the label, the date under it, so the column stays narrow.
   const m = /^(.*?) \((.+)\)$/.exec(due.label);
   if (due.overdue) return m === null ? lateBadge(due.label) : h`${lateBadge(m[1] ?? '')}<br><span class="help">${m[2] ?? ''}</span>`;

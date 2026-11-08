@@ -11,9 +11,9 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { fixtureTransport } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
+import { createApp } from '../src/core/server.ts';
+import { fixtureTransport } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
 
 // Thursday 1 October 2026, 10:00 in the UK.
 const T = '2026-10-01T09:00:00.000Z';

@@ -22,7 +22,7 @@
  * never receives it; tools/payload-proof.ts searches for it.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * THE SIGN-OFF IS A RECORD, NOT A SIGNATURE. src/stubs/signature.ts executes
+ * THE SIGN-OFF IS A RECORD, NOT A SIGNATURE. src/integrations/signature.ts executes
  * nothing, and the record says so in its own `kind`. The TAX_ADVISER_SIGNOFF gate
  * and the REPORTS gate read it — only one recorded since the claim last entered
  * TAX_ADVISER_SIGNOFF — and `claims.tax_adviser_signoff_at` is retired: the
@@ -35,24 +35,24 @@
 import { claimAlive, claimRoutes, legalDeadlineNeed, routesWhy } from './claim-route.ts';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
-import type { Db } from '../db.ts';
-import { _canonical, type AuditLog } from '../audit.ts';
-import { authorise, can, type Actor, type Obj } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
+import type { Db } from '../core/index.ts';
+import { _canonical, type AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor, type Obj } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from './crm.ts';
 import { enteredAt, raiseBusinessStage, type Need } from './pipeline.ts';
 import { filingRoute } from './client-filing.ts';
 import { latestAnswer, returnFilings, returnsOf, type ReturnFiling } from './accountant-confirm.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
-import { ctaSwitchReadings } from './engine.ts';
-import { packSwitchReadings } from './money-readings.ts';
+import { ctaSwitchReadings } from '../shared/index.ts';
+import { packSwitchReadings } from '../shared/index.ts';
 import { amendmentWindowReading, dateValue, penceValue } from './claim-facts.ts';
 import { funnelStateFor } from './funnel-session.ts';
 import { loadLetter, type OpenTerm } from './letter.ts';
 import { insertTask } from './tasks.ts';
 import { NO_RECEIPT_POLICY } from './documents.ts';
-import { formatPence, formatShownRange } from './shown-range.ts';
-import { localDate, localStamp, ukDate } from './localtime.ts';
+import { formatPence, formatShownRange } from '../shared/index.ts';
+import { localDate, localStamp, ukDate } from '../shared/index.ts';
 import { readEngineVersion, writeCaseStamp } from './case-stamp.ts';
 import { latestApprovalOnClaim, laterOf, voidLine } from './valuation-lock.ts';
 import { freezeReturnContext, returnContext } from './return-entries.ts';

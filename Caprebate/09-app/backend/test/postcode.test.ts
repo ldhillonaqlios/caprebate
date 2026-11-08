@@ -20,13 +20,13 @@ import assert from 'node:assert/strict';
 import {
   servedSet, postcodeStore, setPostcodeStore, resetPostcodeStore,
   resolveProperty, explainLocationFor, POSTCODE_GATE,
-} from '../src/web/postcode.ts';
+} from '../src/integrations/postcodes/postcode.ts';
 import {
   inMemoryPostcodeStore, REGION_NOT_CAPTURED,
-} from '../src/web/postcode-port.ts';
-import type { PostcodeAuthorityTable } from '../src/web/postcode-port.ts';
+} from '../src/integrations/postcodes/postcode-port.ts';
+import type { PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-port.ts';
 import { contextFor, regionContextFor } from '../src/web/surveyor.ts';
-import { CB } from '../src/web/engine.ts';
+import { CB } from '../src/shared/engine.ts';
 
 const TABLE: PostcodeAuthorityTable = {
   table_id: 'CB_ONS_POSTCODE_AUTHORITY',

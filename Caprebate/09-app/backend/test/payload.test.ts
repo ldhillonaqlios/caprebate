@@ -19,7 +19,7 @@ import {
   AnchorLog, AnchorQuarantine, type EstimateOutputs,
 } from '../src/survey/caprebate-anchor-quarantine.ts';
 import { assembleSurveyorPayload, quarantinedKeysAndValues, isQuarantinedRole } from '../src/payload.ts';
-import { APP_ROLES } from '../src/roles.ts';
+import { APP_ROLES } from '../src/core/roles.ts';
 import { actor, scalars, keys } from './helpers.ts';
 
 const ESTIMATE: EstimateOutputs = {

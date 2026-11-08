@@ -24,7 +24,7 @@
  * that version is made from them (`returnContextFor`). Before then it reads the claim as it stands. Every cell is quoted
  * where it must be, and a cell that a spreadsheet would read as a formula is made plain text.
  */
-import type { Db } from '../db.ts';
+import type { Db } from '../core/index.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { acquisitionDateReading, latestFacts } from './claim-facts.ts';
 import { claimantTypeForGate } from './crm.ts';

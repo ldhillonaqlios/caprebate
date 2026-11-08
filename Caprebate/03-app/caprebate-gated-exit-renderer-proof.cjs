@@ -21,7 +21,7 @@
      person at the close with the reason. K1-K4 MUST FAIL against
      "Caprebate site.html.bak-phase151e4".
      The back end departs from the site on purpose here - gatedExitPage,
-     closePage and gatedThankYouPage in 09-app/backend/src/web/router.ts - and
+     closePage and gatedThankYouPage in 09-app/backend/src/core/router.ts - and
      this is the check that the site now matches it.
 
    WHY A SEPARATE FILE

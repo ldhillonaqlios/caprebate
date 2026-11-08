@@ -19,9 +19,9 @@ import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { can, type Actor } from '../src/authz.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { can, type Actor } from '../src/core/authz.ts';
 import * as M from '../src/web/messages.ts';
 import * as IE from '../src/web/inbound-email.ts';
 import { addNote } from '../src/web/engaged.ts';
@@ -30,7 +30,7 @@ import {
   MESSAGE_RETENTION, MESSAGE_RETENTION_QUESTION, MESSAGE_RETENTION_RECOMMENDED, addMonths, messagesDue, retentionMissing, sweepMessages,
   type MessageRetention,
 } from '../src/web/message-retention.ts';
-import type { EmailSending } from '../src/stubs/email-provider.ts';
+import type { EmailSending } from '../src/integrations/email/email-provider.ts';
 import { pdfOf } from './document-fixtures.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;

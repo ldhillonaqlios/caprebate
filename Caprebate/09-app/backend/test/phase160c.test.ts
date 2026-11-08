@@ -1,16 +1,16 @@
 /**
  * PHASE 160c — THE HOME PAGE'S BRANDING IN THE BACK OFFICE AND THE PORTAL, THE TEXT TIDIED, AND NO EM DASHES ON SCREEN,
- * 19 October 2026 (src/web/plain-dashes.ts run by page() in src/web/html.ts; the shared block in src/web/assets.ts).
+ * 19 October 2026 (src/shared/plain-dashes.ts run by page() in src/shared/html.ts; the shared block in src/shared/assets.ts).
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { BRAND_TOKENS, SITE_CSS } from '../src/web/assets.ts';
-import { plainDashText, plainDashes } from '../src/web/plain-dashes.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { BRAND_TOKENS, SITE_CSS } from '../src/shared/assets.ts';
+import { plainDashText, plainDashes } from '../src/shared/plain-dashes.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 const WHO = ['admin', 'sales', 'accounting', 'surveying', 'readonly', 'client'] as const;
@@ -54,7 +54,7 @@ before(async () => {
 after(() => made.close());
 
 describe('Phase 160c: the rules for a long dash', () => {
-  test('a colon, a comma, or None, by the rules in src/web/plain-dashes.ts', () => {
+  test('a colon, a comma, or None, by the rules in src/shared/plain-dashes.ts', () => {
     const cases: readonly (readonly [string, string])[] = [
       ['Tax return — a document we need', 'Tax return: a document we need'],
       ['Monday 19 October. 11 jobs are late — start at the top.', 'Monday 19 October. 11 jobs are late: start at the top.'],

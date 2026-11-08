@@ -20,11 +20,11 @@
  *       list is kept with the take-back and shown to the person who took it back.
  *
  * NOTHING HERE WRITES. It reads and it says. Removing is `removeRegisterRecord` and `removeRegisterField` in
- * src/stubs/registers.ts — the one door in is the one door out.
+ * src/integrations/register-ingest.ts — the one door in is the one door out.
  */
 
-import type { Db } from '../db.ts';
-import { screenDetail } from '../audit.ts';
+import type { Db } from '../core/index.ts';
+import { screenDetail } from '../core/audit.ts';
 
 /* ================================================================== *
  * 1 · WHO HAS ALREADY APPROVED IT
@@ -70,7 +70,7 @@ export type RecordAsItStood = {
 /** The registers whose facts sit on the COMPANY step of the checks panel. The same list approvals.ts draws from. */
 const COMPANY_REGISTERS: readonly string[] = ['CH_COMPANY', 'CH_PSC'];
 
-/** Where the site area from HM Land Registry's land boundary is kept (src/connectors/site-area.ts, SITE_AREA_SOURCE_ID). */
+/** Where the site area from HM Land Registry's land boundary is kept (src/integrations/connectors/site-area.ts, SITE_AREA_SOURCE_ID). */
 const SITE_AREA_SOURCE = 'HMLR_INSPIRE';
 
 /** The register a signatory check reads its company number or care registration from, by the check's own name. */
@@ -82,7 +82,7 @@ const SIGNATORY_READS: Readonly<Record<string, string>> = Object.freeze({ CH_COM
  *
  * Each line is a thing that was written at or after the record arrived by something that READ it, and that removing
  * the record does not change:
- *   · SITE_AREA — src/connectors/site-area.ts reads the property's point from Homedata's address record
+ *   · SITE_AREA — src/integrations/connectors/site-area.ts reads the property's point from Homedata's address record
  *     (`homedataPointOf`) and keeps the site area it works out from it, as a record of its own.
  *   · SIGNATORY_CHECK — `runSignatoryCheck` (src/web/research.ts) reads the company number from Companies House's
  *     record and the care registration from the care regulator's, and keeps YES or NO. It does not ask again once it

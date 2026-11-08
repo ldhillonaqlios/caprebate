@@ -7,7 +7,7 @@ _Phase 161h, 7 November 2026. This is the gate of Phase 161n ("Go live"). Tick a
 1. [ ] **Vercel Pro bought** for the team `ldhillonaqlios` (board item "Buy Vercel Pro", Lakhbir). The free plan is for non-commercial use only, and allows timers only once a day.
 2. [ ] **The ICO registration number** received and written into the privacy policy (Word question 287).
 3. [ ] **Every legal page approved** by both the solicitor and the data protection officer, recorded at `/staff/legal` (board item "Legal pages approved"). Only then `CAPREBATE_LEGAL_PAGES=on` in the live project.
-4. [ ] **Where the live website keeps data agreed** by the developer and the data protection officer: Vercel in London, Turso in Ireland (or London), the document store in London, the backup bucket in London (Word question 291). The privacy policy's lines match (`src/outside-services.ts`).
+4. [ ] **Where the live website keeps data agreed** by the developer and the data protection officer: Vercel in London, Turso in Ireland (or London), the document store in London, the backup bucket in London (Word question 291). The privacy policy's lines match (`src/integrations/outside-services.ts`).
 5. [ ] **The backup store chosen and set up** (Amazon S3 in London recommended), its lifecycle rule set to 35 days, its four settings in the live project (Word question 155 answered: the holding place is left out).
 6. [ ] **Everyone who can change the live website named** (Word question 157), each with two-step sign-in on Vercel and GitHub. LIVE-RUNBOOK.md section 8 lists them.
 

@@ -1,5 +1,5 @@
 /**
- * 1 OCTOBER 2026 — ONLY THE TEST WEBSITE CALLS ZOOM (src/connectors/zoom.ts, zoomPlaceRefusal).
+ * 1 OCTOBER 2026 — ONLY THE TEST WEBSITE CALLS ZOOM (src/integrations/connectors/zoom.ts, zoomPlaceRefusal).
  *
  * A copy on Lakhbir's Mac (a demo server reading the real key file) booked a test call from the Communication tab and
  * made a REAL meeting on our Zoom account. Now a copy calls Zoom only when it is the deployed test website, or when it
@@ -7,7 +7,7 @@
  * API keys card. A test's recorded answers reach nobody, so they are never refused.
  *
  * Nothing here reaches Zoom: the keys are invented, and a live transport under the test runner is refused by
- * src/connectors/http.ts as well — which is how the tests below tell the two refusals apart.
+ * src/integrations/connectors/http.ts as well — which is how the tests below tell the two refusals apart.
  */
 import { describe, test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,12 +15,12 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { fixtureTransport, isLiveTransport, liveTransport, type Fixture } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
-import { cancelZoomMeeting, forgetZoomToken, hostZak, makeZoomMeeting, moveZoomMeeting, onTestWebsite, zoomMissing, zoomPlaceRefusal, zoomWhy, ZOOM_LOCAL_OPT_IN } from '../src/connectors/zoom.ts';
+import { createApp } from '../src/core/server.ts';
+import { fixtureTransport, isLiveTransport, liveTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
+import { cancelZoomMeeting, forgetZoomToken, hostZak, makeZoomMeeting, moveZoomMeeting, onTestWebsite, zoomMissing, zoomPlaceRefusal, zoomWhy, ZOOM_LOCAL_OPT_IN } from '../src/integrations/connectors/zoom.ts';
 import { zoomBlockers, zoomDeps } from '../src/web/video-calls.ts';
-import { serviceOn } from '../src/web/saved-keys.ts';
+import { serviceOn } from '../src/core/saved-keys.ts';
 
 const T = '2026-10-01T09:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
@@ -108,7 +108,7 @@ describe('where a copy may call Zoom from', () => {
 
   test('every screen in src/ asks with the place: no zoomMissing call without it, outside the connector itself', () => {
     const dir = new URL('../src/', import.meta.url);
-    const files = readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.ts') && !f.endsWith('connectors/zoom.ts'));
+    const files = readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.ts') && !f.endsWith('integrations/connectors/zoom.ts'));
     const asked: string[] = [];
     for (const f of files) {
       const s = readFileSync(new URL(f, dir), 'utf8');

@@ -3,7 +3,7 @@
  *
  * The free register lookups rest on legitimate interests, and CB_REGISTRY.precondition says they wait on "a published
  * privacy notice reachable from the address question". The site file's funnel drew that link in Phase 153 (harness
- * Suite Q7); the served assessment is this back end's own (src/web/router.ts, screen Q2), so it needs it too.
+ * Suite Q7); the served assessment is this back end's own (src/core/router.ts, screen Q2), so it needs it too.
  *
  *   1. the switch is off, so nothing is drawn;
  *   2. with the switch on, the link to /notices/ is drawn, and it asks nothing (no tick box);
@@ -16,9 +16,9 @@ import { readFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../src/server.ts';
-import { noticeAtAddress } from '../src/web/components.ts';
-import { registryGate } from '../src/web/engine.ts';
+import { createApp } from '../src/core/server.ts';
+import { noticeAtAddress } from '../src/shared/components.ts';
+import { registryGate } from '../src/shared/engine.ts';
 
 describe('Phase 153 — the privacy notice link at the address question', () => {
   test('the switch ships off, so the address question draws no link to /notices/', () => {
@@ -37,7 +37,7 @@ describe('Phase 153 — the privacy notice link at the address question', () => 
   // PHASE 153f, 4 October 2026: the old address screen (Q2) is retired; the four-stage funnel's address screen
   // ("details", stage 3) draws the same link, from the same switch.
   test('the served address question reads CB_REGISTRY.precondition through registryGate, and nothing else', () => {
-    const src = readFileSync(new URL('../src/web/router.ts', import.meta.url), 'utf8');
+    const src = readFileSync(new URL('../src/core/router.ts', import.meta.url), 'utf8');
     const f4 = src.slice(src.indexOf('function f4Page('), src.indexOf('function f4FigurePage('));
     assert.ok(f4.length > 0, 'the four-stage screen was not found');
     assert.match(f4, /id === 'details' \? noticeAtAddress\(registryGate\(\)\)/);

@@ -9,10 +9,10 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { buildHomeEdition, HOME_PATH, HOME_PAGE_CSP } from '../src/web/home-site.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
-import { avoidHits } from '../src/web/voice.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
+import { avoidHits } from '../src/shared/voice.ts';
 
 let made: Awaited<ReturnType<typeof createApp>>;
 let base = '';

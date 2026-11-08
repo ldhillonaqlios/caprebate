@@ -94,19 +94,19 @@
  * and a switch turned off after a wrong choice must not lock that choice into the file.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, type Actor } from '../authz.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, type Actor } from '../core/index.ts';
 import {
   assertResearchSection, assertSignedEngagement, catalogue, consultAllowed, freeGate, stateUnderGates,
   storeResearchOutcomes, type CatalogueEntry, type RunDeps, type SourceOutcome,
 } from './research.ts';
-import { FREE_CONNECTORS } from '../connectors/free-registers.ts';
-import { PAID_CONNECTORS } from '../connectors/paid-registers.ts';
-import { switchedOn, REGISTER_SWITCHES } from '../connectors/registers.ts';
-import { UNMEASURED_MATCH_GRADE_CAP, type ReviewCandidate } from '../connectors/matching.ts';
-import { SOURCES as REGISTER_SOURCES, worstGrade, type Grade } from '../registers/caprebate-source-register.ts';
-import { removeRegisterRecord } from '../stubs/registers.ts';
+import { FREE_CONNECTORS } from '../integrations/connectors/free-registers.ts';
+import { PAID_CONNECTORS } from '../integrations/index.ts';
+import { switchedOn, REGISTER_SWITCHES } from '../integrations/index.ts';
+import { UNMEASURED_MATCH_GRADE_CAP, type ReviewCandidate } from '../integrations/index.ts';
+import { SOURCES as REGISTER_SOURCES, worstGrade, type Grade } from '../integrations/index.ts';
+import { removeRegisterRecord } from '../integrations/index.ts';
 import {
   approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain,
 } from './take-back.ts';

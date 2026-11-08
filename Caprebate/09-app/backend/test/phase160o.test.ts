@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { SECTOR_SLUGS, sectorPath } from '../src/web/home-site.ts';
 // @ts-expect-error the tool is plain JavaScript
 import { convertXray } from '../tools/site-from-design.mjs';

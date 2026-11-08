@@ -30,11 +30,11 @@ import * as EV from '../src/web/survey-evidence.ts';
 import * as CH from '../src/web/pack-chapters.ts';
 import * as RS from '../src/web/report-signoff.ts';
 import * as RE from '../src/web/return-entries.ts';
-import * as E from '../src/web/engine.ts';
+import * as E from '../src/shared/engine.ts';
 import * as PS from '../src/web/pack-sums.ts';
 import * as CM from '../src/web/pack-cost-model.ts';
-import { formatShownRange } from '../src/web/shown-range.ts';
-import { callOutside, RateLimiter, type CallDeps, type Transport } from '../src/connectors/http.ts';
+import { formatShownRange } from '../src/shared/shown-range.ts';
+import { callOutside, RateLimiter, type CallDeps, type Transport } from '../src/integrations/connectors/http.ts';
 
 const T = '2026-09-08T00:00:00.000Z';
 type App = Awaited<ReturnType<typeof testApp>>;

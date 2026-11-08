@@ -15,15 +15,15 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { APP_ROLES, DPO_ROLE, isAppRole } from '../src/roles.ts';
-import { can, canAsDpo, DPO_ROLE_SWITCH, DPO_SCOPE, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj } from '../src/authz.ts';
+import { APP_ROLES, DPO_ROLE, isAppRole } from '../src/core/roles.ts';
+import { can, canAsDpo, DPO_ROLE_SWITCH, DPO_SCOPE, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj } from '../src/core/authz.ts';
 import { assignRole } from '../src/web/settings.ts';
 import * as CS from '../src/web/conveyancing-strip.ts';
 import * as DL from '../src/web/disclosure-log.ts';
 import * as RR from '../src/web/receipt-recommendations.ts';
 import * as D from '../src/web/documents.ts';
-import { assertHumanCaptureClean, ROLE_TOKENS } from '../src/web/upload-handler-port.ts';
-import type { FsObjectStore } from '../src/web/objectstore.ts';
+import { assertHumanCaptureClean, ROLE_TOKENS } from '../src/shared/upload-handler-port.ts';
+import type { FsObjectStore } from '../src/shared/objectstore.ts';
 import { actor, scalars, testApp } from './helpers.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;

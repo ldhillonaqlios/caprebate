@@ -25,7 +25,7 @@ import * as C from '../src/web/crm.ts';
 import * as F from '../src/web/claim-facts.ts';
 import * as R from '../src/web/claim-record.ts';
 import { factsBlock } from '../src/web/claim-record-pages.ts';
-import { amendmentWindow, type EngineWindow } from '../src/web/engine.ts';
+import { amendmentWindow, type EngineWindow } from '../src/shared/engine.ts';
 import { actor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 

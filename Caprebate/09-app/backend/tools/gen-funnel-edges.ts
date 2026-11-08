@@ -11,8 +11,8 @@
 import { writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Db, migrate } from '../src/db.ts';
-import { MIGRATIONS_DIR } from '../src/app.ts';
+import { Db, migrate } from '../src/core/db.ts';
+import { MIGRATIONS_DIR } from '../src/core/app.ts';
 import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../src/web/funnel-deletable.ts';
 
 export function funnelEdges(db: Db): FunnelEdge[] {

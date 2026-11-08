@@ -18,20 +18,20 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, randomBytes } from 'node:crypto';
 
-import { fixtureTransport } from '../src/connectors/http.ts';
-import * as C from '../src/connectors/registers.ts';
-import { PAID_CONNECTORS, PAID_RETIRED, totalBeforePence } from '../src/connectors/paid-registers.ts';
-import { SECRET_KEYS, secretsFromValues, forgetRegisteredSecretsForTest } from '../src/secrets.ts';
+import { fixtureTransport } from '../src/integrations/connectors/http.ts';
+import * as C from '../src/integrations/connectors/registers.ts';
+import { PAID_CONNECTORS, PAID_RETIRED, totalBeforePence } from '../src/integrations/connectors/paid-registers.ts';
+import { SECRET_KEYS, secretsFromValues, forgetRegisteredSecretsForTest } from '../src/core/secrets.ts';
 import * as R from '../src/web/research.ts';
 import * as TH from '../src/web/title-by-hand.ts';
 import { checksPanel } from '../src/web/approvals.ts';
 import { REGISTER_AMOUNTS_WITHHELD } from '../src/web/surveyor.ts';
 import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../src/web/signing.ts';
-import { seed } from '../src/seed.ts';
-import { createUser, newId } from '../src/users.ts';
+import { seed } from '../src/core/seed.ts';
+import { createUser, newId } from '../src/core/users.ts';
 import { docxOf } from './document-fixtures.ts';
 import { testApp, actor } from './helpers.ts';
-import type { Actor } from '../src/authz.ts';
+import type { Actor } from '../src/core/authz.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const SRC = join(HERE, '..', 'src');

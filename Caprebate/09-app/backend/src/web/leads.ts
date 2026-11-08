@@ -32,12 +32,12 @@
  */
 
 import { dateWords, KIND_WORDS, type EventKind } from './property-events.ts';
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor, type Obj } from '../authz.ts';
-import { NotFoundAsRefusal, answerLabel, contactFor, contactForLead } from './backoffice.ts';
-import { FUNNEL } from './engine.ts';
-import { formatShownRange } from './shown-range.ts';
-import { localStamp } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor, type Obj } from '../core/index.ts';
+import { NotFoundAsRefusal, answerLabel, contactFor, contactForLead } from '../core/backoffice.ts';
+import { FUNNEL } from '../shared/index.ts';
+import { formatShownRange } from '../shared/index.ts';
+import { localStamp } from '../shared/index.ts';
 import {
   PRIORITIES, SOURCES, insertClaim, ownerChoices, type CrmDeps, type Fields, type WriteResult,
 } from './crm.ts';

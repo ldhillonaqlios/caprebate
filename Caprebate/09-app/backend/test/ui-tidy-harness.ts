@@ -7,9 +7,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import type { Actor } from '../src/authz.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import type { Actor } from '../src/core/authz.ts';
 
 export const LOGINS = ['admin', 'sales', 'accounting', 'surveying', 'readonly', 'client'] as const;
 export type Login = (typeof LOGINS)[number];

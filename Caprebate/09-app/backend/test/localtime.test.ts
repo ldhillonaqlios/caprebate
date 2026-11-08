@@ -25,12 +25,12 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { Db, migrate } from '../src/db.ts';
-import { MIGRATIONS_DIR } from '../src/app.ts';
+import { Db, migrate } from '../src/core/db.ts';
+import { MIGRATIONS_DIR } from '../src/core/app.ts';
 import {
   DISPLAY_ZONE, instantsForLocalMinute, localClock, localDate, localPartsOf,
   localStamp, localWhen, offsetMinutesAt, startOfLocalDayMs, zoneNotice,
-} from '../src/web/localtime.ts';
+} from '../src/shared/localtime.ts';
 import {
   SLOT_MINUTES, isBookable, slotsBetween, startOfLocalDay, addLocalDays,
 } from '../src/web/schedule.ts';

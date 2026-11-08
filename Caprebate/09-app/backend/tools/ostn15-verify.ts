@@ -5,7 +5,7 @@
  *
  * The OSTN15 developer pack carries test files: ETRS89 latitudes and longitudes in, and the National Grid eastings
  * and northings Ordnance Survey's own software gives for them. This reads both, converts every input point with
- * src/connectors/ostn15.ts and the grid file, and exits 1 unless every point Ordnance Survey converted agrees to
+ * src/integrations/connectors/ostn15.ts and the grid file, and exits 1 unless every point Ordnance Survey converted agrees to
  * the millimetre, and every point it did not convert is refused here too. Columns are found by their headings
  * (a point id, a latitude and a longitude; a point id, an easting and a northing); a file it cannot read that way is
  * refused (exit 2) rather than guessed at. All three files stay OUTSIDE the repository. No network.
@@ -24,7 +24,7 @@
  *      point was wrong" when no point was ever compared. It is now a plain sentence and exit 2.
  */
 import { readFileSync } from 'node:fs';
-import { loadOstn15File, etrs89ToBritishNationalGrid, Ostn15Error, type Ostn15Grid } from '../src/connectors/ostn15.ts';
+import { loadOstn15File, etrs89ToBritishNationalGrid, Ostn15Error, type Ostn15Grid } from '../src/integrations/connectors/ostn15.ts';
 
 const [gridPath, inPath, outPath] = process.argv.slice(2);
 if (gridPath === undefined || inPath === undefined || outPath === undefined) {

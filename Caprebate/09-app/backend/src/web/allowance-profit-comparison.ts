@@ -65,11 +65,11 @@
  * NO ROUTE IMPORTS THIS FILE. A test scans src/ for that.
  */
 
-import type { Db } from '../db.ts';
+import type { Db } from '../core/index.ts';
 import {
   estimate, feeDisplay, BENEFIT, clientVatFromWorks,
   type SectorId, type Session, type BenefitContext, type EngineResult,
-} from './engine.ts';
+} from '../shared/index.ts';
 import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
 
 /* ================================================================== *

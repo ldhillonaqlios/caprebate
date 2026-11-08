@@ -21,8 +21,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { Agent, request } from 'node:http';
 import { startHarness, LOGINS, type Harness, type Login } from './ui-tidy-harness.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
-import { SEED_PASSWORD } from '../src/seed.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
+import { SEED_PASSWORD } from '../src/core/seed.ts';
 
 let H: Harness;
 let base = '';
@@ -315,7 +315,7 @@ describe('line 9: invisible characters are taken out on the way in', () => {
   });
 
   test('a password is never altered on the way in', async () => {
-    const { cleanTyped } = await import('../src/web/typed.ts');
+    const { cleanTyped } = await import('../src/core/typed.ts');
     assert.equal(cleanTyped('a\u0000b‮c\n'), 'abc\n');
     assert.equal(cleanTyped('plain words — with a dash, émigré'), 'plain words — with a dash, émigré');
   });
@@ -357,7 +357,7 @@ describe('line 13: the pooling requirement (s.187A(4)) in the survey pack, as in
   const seller = (extra: Record<string, unknown>) => new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2019-06-01', G12: 'taxpaying', G14s: 'sale',
     G14: 'no', G14po: 'sold_market', G14pod: '2019-06-01', G14iv: 'no', G14t: 'none', G15: 'no', G14fvr: 'yes', ...extra }));
   const legal = async () => (await import('../src/web/pack-legal.ts')).assessLegal;
-  const cta = async () => (await import('../src/web/engine.ts')).CB.CB_CTA as unknown as Record<string, unknown>;
+  const cta = async () => (await import('../src/shared/engine.ts')).CB.CB_CTA as unknown as Record<string, unknown>;
 
   test('a tax-paying seller who never claimed, sold in 2019: RED, naming the pooling requirement and what would meet it', async () => {
     const v = (await legal())('gp', seller({ G11: 'no' }), NOW, 'company').verdict;

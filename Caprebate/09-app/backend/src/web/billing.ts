@@ -10,7 +10,7 @@
  * stage, rule-invoice-finance-task gives Accounting a task (migration 012), and the finance page lists every claim
  * waiting to be invoiced. Recording payment was built (recordReceived, src/web/invoices.ts). Two things were missing:
  *   1. THE CLIENTS AREA. The Clients tab was gated on `organisation.read` — the WHOLE client record — which Accounting
- *      does not hold, on purpose (src/authz.ts): the record carries internal notes, the research, the answers the
+ *      does not hold, on purpose (src/core/authz.ts): the record carries internal notes, the research, the answers the
  *      client gave, and where the client came from. Opening it to Accounting failed fifteen tests that guard exactly
  *      those boundaries. So Accounting gets its own view of the same area, `client_billing.read`: each client's name,
  *      the people to chase and how to reach them, the claims waiting for an invoice, and the invoices with what is
@@ -24,14 +24,14 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { h, page, raw, HTML_HEADERS, type Safe } from './html.ts';
-import { localDate } from './localtime.ts';
+import type { App } from '../core/app.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { h, page, raw, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { localDate } from '../shared/index.ts';
 import { dateField, textField, words, type Fields, type Vocab } from './compliance.ts';
 import { claimInvoices, financeDashboard, type ClaimInvoiceView, type ExpectedClaim } from './invoices.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { formatPence } from './shown-range.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { formatPence } from '../shared/index.ts';
 
 export const CHASE_WAYS: Vocab = Object.freeze({
   PHONE: 'A phone call', EMAIL: 'An email', LETTER: 'A letter', IN_PERSON: 'In person',

@@ -17,9 +17,9 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { HTML_HEADERS } from '../src/web/html.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { HTML_HEADERS } from '../src/shared/html.ts';
 import { privacyNoticeForCheck } from './onedrive-only.ts';
 import { buildNoticesEdition, COMPLAINT_SOURCE_LIMIT, DP_MAIL, NOTICES_PATH, refOf } from '../src/web/notices-site.ts';
 

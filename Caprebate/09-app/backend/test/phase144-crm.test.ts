@@ -3,7 +3,7 @@
  *
  * The property page's browser tab named the company twice: a property recorded as "Dunmarrow Medical Practice
  * Limited — main site" gave the tab "Dunmarrow Medical Practice Limited — Dunmarrow Medical Practice Limited — main
- * site". The company is said once, then the property ("main site"), through propertyIn in src/web/components.ts.
+ * site". The company is said once, then the property ("main site"), through propertyIn in src/shared/components.ts.
  */
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
    twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
@@ -13,8 +13,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; body: string };

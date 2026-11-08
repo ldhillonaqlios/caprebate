@@ -10,7 +10,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import {
   ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST, checkSignature, shownLetter, signEngagement, signingHere, signingMissing,
   letterFacts,
@@ -159,7 +159,7 @@ describe('signing on for testing: the test copy only', () => {
   test('only the test website’s file and the local start-up switch ask for it', () => {
     const api = readFileSync(join(import.meta.dirname, '..', '..', '..', '..', 'api', 'index.mjs'), 'utf8');
     assert.match(api, /^\s*testSigning: true,$/m);
-    const server = readFileSync(join(import.meta.dirname, '..', 'src', 'server.ts'), 'utf8');
+    const server = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'server.ts'), 'utf8');
     assert.match(server, /process\.env\.CAPREBATE_SIGNING_TEST/);
     assert.match(server, /opts\.testLetter === true && opts\.testSigning === true \? \{ signing: ENGAGEMENT_SIGNING_TEST \}/);
   });

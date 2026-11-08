@@ -78,12 +78,12 @@
  *    quarter-hour, and a comparison on start times alone would let them.
  */
 
-import type { Db } from '../db.ts';
-import { can } from '../authz.ts';
-import { isAppRole } from '../roles.ts';
+import type { Db } from '../core/index.ts';
+import { can } from '../core/index.ts';
+import { isAppRole } from '../core/index.ts';
 import {
   addLocalDaysMs, instantsForLocalMinute, localPartsOf, startOfLocalDayMs,
-} from './localtime.ts';
+} from '../shared/index.ts';
 
 /**
  * ONE LIST OF WEEKDAY NAMES, RE-EXPORTED RATHER THAN COPIED.
@@ -93,8 +93,8 @@ import {
  * `working_times.weekday` is in, and every caller already imports it from here.
  * A second copy would be one edit away from disagreeing with the first.
  */
-export { WEEKDAY_NAMES } from './localtime.ts';
-import { WEEKDAY_NAMES } from './localtime.ts';
+export { WEEKDAY_NAMES } from '../shared/index.ts';
+import { WEEKDAY_NAMES } from '../shared/index.ts';
 
 /**
  * WHOSE DIARY CAN HOLD A CLIENT CALL — and it is asked of the rule table

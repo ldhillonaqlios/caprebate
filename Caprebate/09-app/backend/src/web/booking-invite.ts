@@ -7,14 +7,14 @@
  * there is no address to invite — the email is still saved, it just carries no invitation.
  */
 
-import type { Db } from '../db.ts';
-import { currentSender, type InlineFile } from '../stubs/email.ts';
-import type { App } from '../app.ts';
-import { localWhen } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import { currentSender, type InlineFile } from '../integrations/index.ts';
+import type { App } from '../core/app.ts';
+import { localWhen } from '../shared/index.ts';
 import { SLOT_MINUTES } from './schedule.ts';
-import { inviteFile, type InviteMethod } from '../stubs/calendar.ts';
+import { inviteFile, type InviteMethod } from '../integrations/index.ts';
 import { activeMeeting, clientJoinUrl, videoJoinWords } from './video-calls.ts';
-import { zoomPlanIsFree } from '../connectors/zoom.ts';
+import { zoomPlanIsFree } from '../integrations/index.ts';
 
 export const CALL_SUMMARY = 'Your call with Cap Rebate';
 

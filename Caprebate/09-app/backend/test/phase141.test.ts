@@ -20,19 +20,19 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { createServer, connect as netConnect, type Server } from 'node:net';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { NotAuthorised, type Actor } from '../src/authz.ts';
-import { currentSender, outboxTransport } from '../src/stubs/email.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { NotAuthorised, type Actor } from '../src/core/authz.ts';
+import { currentSender, outboxTransport } from '../src/integrations/email/email.ts';
 import {
   EMAIL_SENDING, EMAIL_PROVIDER_QUESTION, buildMessage, dispatchOutbox, sendingMissing, sendingOn, smtpProvider,
   type EmailSending, type SmtpLogin,
-} from '../src/stubs/email-provider.ts';
+} from '../src/integrations/email/email-provider.ts';
 import * as F from '../src/web/free-email.ts';
 import { timelineFor } from '../src/web/timeline.ts';
 import { backendSwitchReadings } from '../src/web/case-stamp.ts';
 import { receiveFile } from '../src/web/client-files-pages.ts';
-import { KEEP_ORIGINALS_QUESTION } from '../src/web/originals.ts';
+import { KEEP_ORIGINALS_QUESTION } from '../src/shared/originals.ts';
 import { pdfOf } from './document-fixtures.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
@@ -456,7 +456,7 @@ describe('4 · EMAIL_SENDING — built, and off', () => {
     // 24 Sep 2026: the mailbox is read (216) and the test email arrived (217). Sending stays off.
     assert.equal(EMAIL_SENDING.mailbox_and_dns_ready, true);
     assert.equal(EMAIL_SENDING.question, 'May we send you one test email from contact@caprebate.co.uk before email sending is switched on?');
-    assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'EMAIL_SENDING'), { switch: 'EMAIL_SENDING', on: true, home: 'src/stubs/email-provider.ts' });
+    assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'EMAIL_SENDING'), { switch: 'EMAIL_SENDING', on: true, home: 'src/integrations/email/email-provider.ts' });
     assert.equal(sendingOn(EMAIL_SENDING, LOGIN), true);
     assert.deepEqual(sendingMissing(EMAIL_SENDING, null), ['Add the email service’s login to the server.']);
     // Without the waiver, and with the switch off, each missing thing is still said in plain words.

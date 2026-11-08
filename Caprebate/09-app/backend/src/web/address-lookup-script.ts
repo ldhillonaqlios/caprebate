@@ -1,6 +1,6 @@
 /**
  * THE ADDRESS BOX'S ONE SCRIPT — served at /assets/address-lookup.js, and named only by the assessment's "Your details"
- * screen while "Find my address" is on (src/web/router.ts, f4Html). Phase 156f, 6 October 2026.
+ * screen while "Find my address" is on (src/core/router.ts, f4Html). Phase 156f, 6 October 2026.
  *
  * Lakhbir: "one address box on Homedata". As soon as the postcode typed is a complete UK postcode, the list of addresses
  * there fills (one 2p search, POST /assessment/details/addresses, which keeps the £1 a day cap); typing in the box above
@@ -14,7 +14,7 @@
 export const ADDRESS_LOOKUP_JS = `(function () {
   'use strict';
   var root = typeof globalThis !== 'undefined' ? globalThis : window;
-  // PHASE 161b: our form token, from the page, for the x-cb-form header (src/web/form-token.ts).
+  // PHASE 161b: our form token, from the page, for the x-cb-form header (src/core/form-token.ts).
   function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
   if (typeof document === 'undefined' || !root.fetch || !root.URLSearchParams) return;
   var FULL = /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/;

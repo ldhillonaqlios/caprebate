@@ -34,14 +34,14 @@
  * decided for its five facts, and nothing of it is returned but that figure.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditKind, AuditLog, Outcome } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { localDate, localStamp } from './localtime.ts';
-import { formatPence, toPence } from './shown-range.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditKind, AuditLog, Outcome } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { localDate, localStamp } from '../shared/index.ts';
+import { formatPence, toPence } from '../shared/index.ts';
 import { addDaysToDate, dueReading, taskObj, type DueReading } from './tasks.ts';
-import { claimStage } from './stages.ts';
+import { claimStage } from '../shared/index.ts';
 import { enteredAt, feeTriggerReached, liveFeeInvoiceCount, loadPipelineClaim, reportDeliveredOn, type FeeTrigger } from './pipeline.ts';
 import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from './claim-record.ts';
 import { claimantTypeForGate, claimObjFor } from './crm.ts';

@@ -40,7 +40,7 @@
  *
  * NOTHING HERE STATES A RATE. Every rate and date comes from the engine (Rulebook I rule 7.1).
  */
-import { BENEFIT, RATES } from './engine.ts';
+import { BENEFIT, RATES } from '../shared/index.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { longLifeLimitFor, LONG_LIFE_YEARS, LRR_ADDITIONAL } from './long-life-and-remediation.ts';
 

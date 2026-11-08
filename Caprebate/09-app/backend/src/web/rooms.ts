@@ -38,7 +38,7 @@
  * this file is not starting one.
  */
 
-import type { SectorId } from './engine.ts';
+import type { SectorId } from '../shared/index.ts';
 
 /** The source document's own four drivers, in its own words. */
 export type CountDriver = 'per room' | 'per building' | 'per square metre' | 'from the paperwork';

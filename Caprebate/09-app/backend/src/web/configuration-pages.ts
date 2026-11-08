@@ -9,14 +9,14 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import * as CF from './configuration.ts';
-import { savedMessage, sectionList, why, type RecordTab } from './components.ts';
+import { savedMessage, sectionList, why, type RecordTab } from '../shared/index.ts';
 import { senderSetting, setSender } from './free-email.ts';
-import { EMAIL_SENDING, sendingMissing, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { EMAIL_SENDING, sendingMissing, smtpLoginFromKeyFile } from '../integrations/index.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

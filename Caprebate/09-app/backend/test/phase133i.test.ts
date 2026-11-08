@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 
 const PASSWORD = 'a-very-long-development-password';
 const T = '2026-09-08T00:00:00.000Z';

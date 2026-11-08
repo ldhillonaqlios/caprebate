@@ -6,7 +6,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { AuditError, screenDetail, _canonical } from '../src/audit.ts';
+import { AuditError, screenDetail, _canonical } from '../src/core/audit.ts';
 import { AnchorLog, GENESIS, verifyChain } from '../src/survey/caprebate-anchor-quarantine.ts';
 import { testApp, scalars } from './helpers.ts';
 
@@ -115,8 +115,8 @@ describe('NO PERSONAL DATA IN LOG LINES — refused, not redacted', () => {
   });
 
   test('a real login writes no email address into the log', async () => {
-    const { seed } = await import('../src/seed.ts');
-    const { login } = await import('../src/auth.ts');
+    const { seed } = await import('../src/core/seed.ts');
+    const { login } = await import('../src/core/auth.ts');
     const app = await testApp();
     const r = await seed(app.db, app.hasher, app.now);
     await login(app.deps, 'sales@example.invalid', r.password);

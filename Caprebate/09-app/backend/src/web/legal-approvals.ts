@@ -10,14 +10,14 @@
  *
  * AGREEMENTS. Lakhbir, 5 Nov 2026: "the sign-up asks the person to tick that they have read them (the tick, its date
  * and the version are kept, and the audit log records it)". The sign-up offered after the free assessment carries the
- * tick (src/web/signup.ts keeps it until the login is made); a client who has not agreed to the current versions is
+ * tick (src/core/signup.ts keeps it until the login is made); a client who has not agreed to the current versions is
  * asked once at /portal/agree before the portal opens. Both only where the legal pages are served (the test website's
  * `notices`, or the `legal` setting), so a link never leads to "being prepared".
  */
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import type { Db } from '../db.ts';
-import { h, raw, page, type Safe } from './html.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import type { Db } from '../core/index.ts';
+import { h, raw, page, type Safe } from '../shared/index.ts';
 import { LEGAL_PAGES, NOTICES_VERSION, agreementLinks, inForce, versionOf, type Approvals, type LegalPageKey, type PageApproval } from './legal-pages.ts';
 
 /** Every page an approval can be recorded for, with its title. */

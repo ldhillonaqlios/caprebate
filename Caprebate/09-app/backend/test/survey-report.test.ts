@@ -27,8 +27,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { buildCanvasPdf, textWidth, wrapText } from '../src/web/pdf-canvas.ts';
+import { createApp } from '../src/core/server.ts';
+import { buildCanvasPdf, textWidth, wrapText } from '../src/shared/pdf-canvas.ts';
 import { reportHtml, reportModel, reportPdf } from '../src/web/survey-report.ts';
 import { packView, savePackValue, saveLine, setLineRemoved } from '../src/web/survey-pack.ts';
 import { answerLegal, legalView } from '../src/web/pack-legal.ts';
@@ -36,12 +36,12 @@ import { approvePack, approvedVersion, saveDetails } from '../src/web/pack-appro
 import { chaptersToRead } from '../src/web/pack-chapters.ts';
 import * as S from '../src/web/report-signoff.ts';
 import { setBasis } from '../src/web/survey-evidence.ts';
-import { blankSentSecrets, SENT_SECRET_BODY } from '../src/stubs/email-provider.ts';
+import { blankSentSecrets, SENT_SECRET_BODY } from '../src/integrations/email/email-provider.ts';
 import * as C from '../src/web/crm.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as R from '../src/web/claim-record.ts';
 import { actor } from './helpers.ts';
-import { plainDashes } from '../src/web/plain-dashes.ts';
+import { plainDashes } from '../src/shared/plain-dashes.ts';
 
 /** Every piece of text the PDF draws, decoded from its hexadecimal strings. */
 function pdfText(bytes: Uint8Array): string {

@@ -22,9 +22,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { _canonical } from '../src/audit.ts';
-import { APP_ROLES } from '../src/roles.ts';
-import { can, NotAuthorised, REGISTERED_ACTIONS, type Obj } from '../src/authz.ts';
+import { _canonical } from '../src/core/audit.ts';
+import { APP_ROLES } from '../src/core/roles.ts';
+import { can, NotAuthorised, REGISTERED_ACTIONS, type Obj } from '../src/core/authz.ts';
 import * as C from '../src/web/crm.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as T from '../src/web/tasks.ts';
@@ -33,12 +33,12 @@ import * as D from '../src/web/documents.ts';
 import * as S from '../src/web/compliance-identity.ts';
 import * as CS from '../src/web/case-stamp.ts';
 import * as DP from '../src/web/defence-pack.ts';
-import { CTA, ctaSwitchReadings } from '../src/web/engine.ts';
+import { CTA, ctaSwitchReadings } from '../src/shared/engine.ts';
 import { FEE_CONTROLS } from '../src/web/fee-controls.ts';
 import { FUNNEL_SWITCHES } from '../src/web/funnel-session.ts';
 import {
   BACKUP_CYCLE, FAIL_CLOSED_SETTINGS, RET7, deletionDueAt, type IngestionSettings, type RawFileRecord,
-} from '../src/web/upload-handler-port.ts';
+} from '../src/shared/upload-handler-port.ts';
 import { actor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 import { oneDriveOnly } from './onedrive-only.ts';

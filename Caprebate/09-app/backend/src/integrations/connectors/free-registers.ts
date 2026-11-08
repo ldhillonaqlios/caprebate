@@ -1,0 +1,164 @@
+/**
+ * THE FREE REGISTERS — WHICH CONNECTOR ANSWERS WHICH LOOKUP, WHAT IT IS ASKED, AND WHAT ITS ANSWER MEANS TO THE
+ * ESTIMATE. Phase 146c, 23 September 2026.
+ *
+ * Six connectors, each built against the supplier's own published documentation (the dates and addresses are in the
+ * source register, 09-app/backend/src/registers/caprebate-source-register.ts, `SUPPLIER_DOCS`), each tested on recorded
+ * answers, and EVERY ONE SWITCHED OFF (REGISTER_SWITCHES in src/integrations/connectors/registers.ts):
+ *
+ *   CH_COMPANY    Companies House: search, company profile, filing history      src/integrations/connectors/companies-house.ts
+ *   CH_PSC        Companies House: people with significant control — ONLY after a signed engagement (CA2)
+ *   CQC           the Care Quality Commission: locations and providers (England) src/integrations/connectors/cqc.ts
+ *   EPC           energy certificates: non-domestic and display, and domestic for supported living   src/integrations/connectors/epc.ts
+ *   HMLR_PPD      HM Land Registry sale prices — residential only, so supported living only          src/integrations/connectors/price-paid.ts
+ *   PLANNING      planning.data.gov.uk and PlanIt                                 src/integrations/connectors/planning.ts
+ *   ONS_POSTCODE  the ONS postcode table, read on this server — no call outside  src/integrations/connectors/postcode.ts
+ *   CIW           Care Inspectorate Wales's directory, imported on this server — no call outside (Phase 155)
+ *   CARE_INSPECTORATE  the Care Inspectorate's datastore (Scotland), the same way   src/integrations/connectors/register-files.ts
+ *
+ * THE GATES ARE NOT HERE. `consultAllowed` in src/web/research.ts hands a connector a lookup only after
+ * `stateUnderGates` has allowed it; while CB_REGISTRY.precondition is false that is never. A connector then checks its
+ * own switch and its key (`runConnector`), and a typed address or name must MATCH (src/integrations/connectors/matching.ts) before
+ * anything is kept. Anything short of that leaves the question asked (N4).
+ *
+ * NOT BUILT, AND SAYING SO: the valuation office — `NOT_BUILT` below. Its licence restricts its rating list to business
+ * rates purposes (read 4 October 2026, Phase 155 line 3). The Welsh and Scottish care regulators were here until
+ * Phase 155 built them.
+ *
+ * THE PAID LOOKUPS ARE NOW BUILT, and they live in their own map: PAID_CONNECTORS in src/integrations/connectors/paid-registers.ts
+ * (Phase 146d). `consultAllowed` reads both maps. They are separate because the two tiers are gated differently — a
+ * free lookup waits on a published privacy notice, a paid one on a signed engagement and an operator's click — and
+ * putting them in one map would make the two look like one kind of thing with a flag on it.
+ */
+
+import type { RegisterConnector, Bundle } from './registers.ts';
+import type { PostcodeStore } from '../postcodes/postcode-port.ts';
+import { nationOf, type ResearchSubject } from './nations.ts';
+import { companiesHouse, companiesHousePsc, type CompanyQuery, type PscQuery } from './companies-house.ts';
+import { cqc, type CqcQuery } from './cqc.ts';
+import { epc, type EpcQuery } from './epc.ts';
+import { pricePaid, type PricePaidQuery } from './price-paid.ts';
+import { planning, type PlanningQuery } from './planning.ts';
+import { onsPostcode, type PostcodeQuery } from './postcode.ts';
+import { ciw, careInspectorate, type FileRegisterQuery } from './register-files.ts';
+import type { Db } from '../../core/index.ts';
+
+/* ================================================================== *
+ * 1 · WHAT A LOOKUP IS ASKED ABOUT
+ * ================================================================== */
+
+export { researchSubject, nationOf, jurisSource, type Nation, type TypedProperty, type ResearchSubject } from './nations.ts';
+
+/* ================================================================== *
+ * 2 · THE CONNECTOR FOR EACH LOOKUP, AND ITS QUERY
+ * ================================================================== */
+
+type Built<Q> = {
+  readonly connector: RegisterConnector<Q>;
+  /** What to ask, from the client's record and what earlier lookups on this click found. Phase 155: and the database,
+   *  for the registers imported on this server. */
+  readonly query: (subject: ResearchSubject, earlier: ReadonlyMap<string, Bundle>, store: PostcodeStore | null, db?: Db | null) => Q;
+};
+
+function built<Q>(b: Built<Q>): Built<unknown> { return b as unknown as Built<unknown>; }
+
+/**
+ * EVERY FREE LOOKUP WITH A CONNECTOR, IN THE ORDER A CLICK RUNS THEM: the postcode table first, because its answer says
+ * which part of the UK a property is in when nobody recorded it; Companies House's company before its people with
+ * significant control, because the second needs the first's company number.
+ */
+export const FREE_CONNECTORS: Readonly<Record<string, Built<unknown>>> = Object.freeze({
+  ONS_POSTCODE: built<PostcodeQuery>({ connector: onsPostcode, query: (s, _e, store) => ({ postcode: s.property?.postcode ?? null, store }) }),
+  CH_COMPANY: built<CompanyQuery>({ connector: companiesHouse, query: (s) => ({ name: s.name, company_number: s.company_number }) }),
+  CH_PSC: built<PscQuery>({
+    connector: companiesHousePsc,
+    query: (s, e) => {
+      const found = e.get('CH_COMPANY')?.facts['company_number'];
+      return { company_number: s.company_number ?? (typeof found === 'string' ? found : null) };
+    },
+  }),
+  CQC: built<CqcQuery>({
+    connector: cqc,
+    query: (s, e) => {
+      const council = e.get('ONS_POSTCODE')?.facts['ons_lad_name'];
+      const found = e.get('CH_COMPANY')?.facts['company_number'];
+      return {
+        property: s.property, nation: nationOf(s, e), sector: s.sector,
+        council: typeof council === 'string' ? council : null,
+        company_number: s.company_number ?? (typeof found === 'string' ? found : null),
+      };
+    },
+  }),
+  /* PHASE 146d, item 9: `uprn` is the paid address lookup's, where it ran first on this click and matched — it
+     turns this lookup's address match into an exact one. It is absent on every click today, because that lookup is
+     off and waits on a signed engagement in any case. */
+  EPC: built<EpcQuery>({
+    connector: epc,
+    query: (s, e) => {
+      const found = e.get('HOMEDATA_ADDRESS')?.facts['uprn'];
+      return { property: s.property, nation: nationOf(s, e), sector: s.sector, uprn: typeof found === 'string' ? found : null };
+    },
+  }),
+  HMLR_PPD: built<PricePaidQuery>({ connector: pricePaid, query: (s, e) => ({ property: s.property, nation: nationOf(s, e), sector: s.sector }) }),
+  PLANNING: built<PlanningQuery>({ connector: planning, query: (s, e) => ({ property: s.property, nation: nationOf(s, e) }) }),
+  /* PHASE 155: the Welsh and Scottish care regulators, read from their imported lists on this server. */
+  CIW: built<FileRegisterQuery>({ connector: ciw, query: (s, e, _store, db) => ({ property: s.property, nation: nationOf(s, e), db: db ?? null }) }),
+  CARE_INSPECTORATE: built<FileRegisterQuery>({ connector: careInspectorate, query: (s, e, _store, db) => ({ property: s.property, nation: nationOf(s, e), db: db ?? null }) }),
+});
+
+/**
+ * The order a click runs the lookups in: the postcode table, then (PHASE 156f) the paid address lookup and the site
+ * boundary read off it — so a click after signing hands the property's UPRN to the energy certificates and to Homedata
+ * planning — then FREE_CONNECTORS's order, then everything else as the catalogue lists it.
+ */
+export function runOrder(source_ids: readonly string[]): string[] {
+  const first = ['ONS_POSTCODE', 'HOMEDATA_ADDRESS', 'HOMEDATA_BOUNDARY', ...Object.keys(FREE_CONNECTORS).filter((k) => k !== 'ONS_POSTCODE')];
+  return [...source_ids].sort((a, b) => {
+    const ia = first.indexOf(a); const ib = first.indexOf(b);
+    return (ia === -1 ? first.length : ia) - (ib === -1 ? first.length : ib);
+  });
+}
+
+/**
+ * WHAT THE RESEARCH PANEL SAYS FOR AN ALLOWED LOOKUP WITH NO CONNECTOR IN THIS BUILD. In plain words, because they
+ * reach the panel. The paid lookups are not listed: their gate shuts first, and Phase 146d builds them.
+ */
+export const NOT_BUILT: Readonly<Record<string, string>> = Object.freeze({
+  /* PHASE 155 (line 3): read at last. Not "we do not hold it" — the licence itself does not allow our use. */
+  VOA: 'not built. The valuation office’s licence lets its rating list be used for business rates only. ' +
+    'A capital allowances claim is not that. Nothing was contacted',
+  /* PHASE 150: the land boundary has its own connector, src/integrations/connectors/inspire.ts, which reads a whole council's file
+     for one point. PHASE 151c: this button now runs it, as its own step for each property (src/web/site-area-run.ts),
+     not as one lookup for the client — so this row points at the site area lines, which say what happened. */
+  HMLR_INSPIRE: 'allowed. The land boundary is read for each property by its own step of this button, and the site area ' +
+    'lines above say what happened. It is switched off. Nothing was contacted',
+  /* PHASE 151: the free postcode check belongs to the address question the client answers, not to this button. */
+  POSTCODES_IO: 'allowed, but the postcode check is made at the address question, when the client types their postcode, ' +
+    'not by this button. It is switched off. Nothing was contacted',
+});
+
+/* ================================================================== *
+ * 3 · WHAT A REGISTER'S FIELDS MEAN TO derive()
+ *
+ * `register_records` keeps each register's fields under the SOURCE REGISTER's names (epc_total_floor_area_m2 …);
+ * CB_REGISTRY.derive() reads its own (floor_area_m2 …). This is the one table between them, and it maps ONLY a field
+ * both sides permit: the left side is on the source's `permitted_fields` (and the name exclusion register keeps it),
+ * the right side is on CB_REGISTRY.SOURCES[…].fields. test/phase146c.test.ts checks both, for every row.
+ *
+ * NOT MAPPED, ON PURPOSE: "what kind of business are you" (entity_type). Companies House says a company's type, but the
+ * source register keeps no company-type field, so it stays asked. And a PSC's name feeds nothing here.
+ * ================================================================== */
+
+export const DERIVE_FIELD_OF: Readonly<Record<string, Readonly<Record<string, string>>>> = Object.freeze({
+  EPC: Object.freeze({
+    epc_total_floor_area_m2: 'floor_area_m2', epc_construction_age_band: 'construction_age_band', epc_property_type: 'building_type',
+  }),
+  CQC: Object.freeze({ service_types: 'service_type', beds_registered: 'bed_count' }),
+  CH_COMPANY: Object.freeze({ incorporation_date: 'incorporation_date', accounts_year_end: 'year_end' }),
+  HMLR_PPD: Object.freeze({ price_paid: 'price_paid', transaction_date: 'completion_date', tenure: 'tenure' }),
+  /* PHASE 155: the Scottish datastore's beds, where it states them, are the same fact as CQC's registered beds. Its
+     "Registered_Places" and CIW's "Maximum no. of places" are NOT mapped: a place is not always a bed (a day service, a
+     care at home service), and the derivation layer reads a bed count. Its service words are each regulator's own
+     vocabulary, which derive() does not read either, so they are kept and not mapped. */
+  CARE_INSPECTORATE: Object.freeze({ total_beds: 'bed_count' }),
+});

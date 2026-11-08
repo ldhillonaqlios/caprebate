@@ -10,7 +10,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { testApp, actor } from './helpers.ts';
-import type { App } from '../src/app.ts';
+import type { App } from '../src/core/app.ts';
 import * as C from '../src/web/crm.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as CF from './claim-fixtures.ts';
@@ -234,7 +234,7 @@ describe('F39 — the portal’s accept box and its route', () => {
   });
 
   test('POST /portal/report/accept as the client records it; a second press is refused in plain words', async () => {
-    const { createApp } = await import('../src/server.ts');
+    const { createApp } = await import('../src/core/server.ts');
     const { mkdtempSync } = await import('node:fs');
     const { tmpdir } = await import('node:os');
     const { join } = await import('node:path');
@@ -329,7 +329,7 @@ describe('F37 — a window the client’s own date already puts out of reach is 
 
 /** The real server, Sales signed in. */
 async function salesWeb() {
-  const { createApp } = await import('../src/server.ts');
+  const { createApp } = await import('../src/core/server.ts');
   const { mkdtempSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');

@@ -45,9 +45,9 @@
  * which fact is missing, rather than picking a number out of the range.
  */
 
-import { feeDisplay, feeRate, marginalRateRange, multiSiteDiscount, type EntityKey, type FeeComparison } from './engine.ts';
+import { feeDisplay, feeRate, marginalRateRange, multiSiteDiscount, type EntityKey, type FeeComparison } from '../shared/index.ts';
 import { loadLetter, type Letter } from './letter.ts';
-import { formatPence, toPence } from './shown-range.ts';
+import { formatPence, toPence } from '../shared/index.ts';
 
 /* ================================================================== *
  * 1 · THE QUESTIONS, QUOTED BY TITLE

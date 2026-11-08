@@ -19,21 +19,21 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../src/server.ts';
-import { seed, SEED_PASSWORD } from '../src/seed.ts';
-import type { Actor } from '../src/authz.ts';
-import { fixtureTransport } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
-import { IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, type IdentityCheckConfig } from '../src/connectors/identity-check.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed, SEED_PASSWORD } from '../src/core/seed.ts';
+import type { Actor } from '../src/core/authz.ts';
+import { fixtureTransport } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
+import { IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, type IdentityCheckConfig } from '../src/integrations/connectors/identity-check.ts';
 import { identityPanel, sendIdentityCheck, UNREACHABLE_CONTACT_WORDS } from '../src/web/identity-checks.ts';
 import * as C from '../src/web/crm.ts';
-import { contactValueProblem } from '../src/web/router.ts';
+import { contactValueProblem } from '../src/core/router.ts';
 
 /**
  * A CLIENT WITH NO CONTACT, INVENTED FOR THE TEST. Since Phase 151e line 7 every seeded client has a contact, so the
  * state a real client can still be in (one made before line 6, say) is made here, the way the seed writes a client.
  */
-function bareClient(db: Pick<import('../src/db.ts').Db, 'run'>): { id: string } {
+function bareClient(db: Pick<import('../src/core/db.ts').Db, 'run'>): { id: string } {
   const id = `b-bare-${Math.random().toString(36).slice(2)}`;
   db.run('INSERT INTO businesses (id, name, sector, stage, contact_email, contact_phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
     [id, 'Invented Bare Client Limited', 'care_homes', 'ASSESSMENT_SUBMITTED', null, null, '2026-09-28T09:00:00.000Z']);

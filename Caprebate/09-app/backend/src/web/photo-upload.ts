@@ -23,9 +23,9 @@
  * (migration 076). Admin or Sales sort the photos as before (survey-evidence.ts `sortPhotos`).
  */
 import { constants, createDecipheriv, generateKeyPairSync, privateDecrypt } from 'node:crypto';
-import type { Actor } from '../authz.ts';
-import { NotAuthorised } from '../authz.ts';
-import { INCOMING_PREFIX, type FsObjectStore, type IncomingTarget } from './objectstore.ts';
+import type { Actor } from '../core/index.ts';
+import { NotAuthorised } from '../core/index.ts';
+import { INCOMING_PREFIX, type FsObjectStore, type IncomingTarget } from '../shared/objectstore.ts';
 import { cleaned, clientOf, keep, NO_KEY, UNSORTED, type EvidenceDeps } from './survey-evidence.ts';
 
 /** The most photos in one send, and the most one photo may be (Lakhbir, 2 Oct 2026). */

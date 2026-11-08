@@ -21,18 +21,18 @@
  * (Lakhbir's rule, 1 Oct 2026).
  */
 import { propertyLine } from './survey-pack.ts';
-import { h, raw, type Safe } from './html.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { BASIS_WORDS, baseWords } from './bcis-data.ts';
 import { allowancesFor, allowanceWords, type AllowanceWords } from './allowances.ts';
 import type { ReturnContext } from './return-entries.ts';
-import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from './pdf-canvas.ts';
+import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from '../shared/index.ts';
 import { minutesWords } from './survey-video.ts';
 import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from './site-plan.ts';
-import { ukDatesIn } from './localtime.ts';
-import { plainDashLines } from './plain-dashes.ts';
+import { ukDatesIn } from '../shared/index.ts';
+import { plainDashLines } from '../shared/index.ts';
 
 export const REPORT_TITLE = 'Capital allowances survey report';
 
@@ -195,7 +195,7 @@ function inspectionWords(i: Snapshot['inspection'] | undefined): string | null {
  * PHASE 160d, 19 October 2026 — A REPORT IS DRAWN IN THE WORDS ITS VERSION WAS MADE IN. The report is drawn again from its
  * approved version every time it is opened, so changing the words here would change how an approved or signed-off
  * version reads. A version approved from now on carries `words: 'plain'` and is drawn without long dashes (each becomes
- * a colon or a comma, src/web/plain-dashes.ts); one approved before carries nothing and is drawn exactly as it was, here,
+ * a colon or a comma, src/shared/plain-dashes.ts); one approved before carries nothing and is drawn exactly as it was, here,
  * in the PDF and on screen (`data-as-made`, which the page's own dash rule leaves alone).
  */
 export function reportModel(x: Snapshot, fingerprint: string, ctx: ReturnContext = { period_start: null, is_company: null, facts: null }): ReportModel {

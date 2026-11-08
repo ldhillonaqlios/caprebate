@@ -15,8 +15,8 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
 import { loadLetter, LETTER_PATH, TEST_LETTER_PATH, TEST_COPY_MARK, TEST_DEFAULT_MARK } from '../src/web/letter.ts';
 import { letterFees } from '../src/web/fee-controls.ts';
 import { clawbackReading, DISPOSAL_FEE } from '../src/web/claim-record.ts';
@@ -24,7 +24,7 @@ import { shownLetter, signingMissing, signEngagement } from '../src/web/signing.
 import * as A from '../src/web/compliance-aml.ts';
 import type * as C from '../src/web/compliance.ts';
 import { actor, testApp } from './helpers.ts';
-import { plainDashText } from '../src/web/plain-dashes.ts';
+import { plainDashText } from '../src/shared/plain-dashes.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const T0 = '2026-10-04T09:00:00.000Z';
@@ -127,7 +127,7 @@ describe('lines 2, 3 and 7 — Word questions 33, 34 and 196: the test-only enga
     }
     const api = readFileSync(join(ROOT, 'api', 'index.mjs'), 'utf8');
     assert.match(api, /^\s*testLetter: true,$/m);
-    const server = readFileSync(join(import.meta.dirname, '..', 'src', 'server.ts'), 'utf8');
+    const server = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'server.ts'), 'utf8');
     assert.match(server, /opts\.testLetter === true \? \{ letterPath: TEST_LETTER_PATH \} : \{\}/);
   });
 });

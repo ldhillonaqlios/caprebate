@@ -14,9 +14,9 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { testApp, actor } from './helpers.ts';
-import type { App } from '../src/app.ts';
+import type { App } from '../src/core/app.ts';
 import * as C from '../src/web/crm.ts';
 import * as SO from '../src/web/survey-open.ts';
 import { commitFigures, workspace } from '../src/web/surveyor.ts';
@@ -351,7 +351,7 @@ describe('F27 — "the client’s page shows" is the portal’s own line', () =>
 /* ================================================================== *
  * F30 — after the research ran, the portal says registers were checked, and the client's step is "We research your property"
  * ================================================================== */
-import { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH, rangeBasisFor } from '../src/web/router.ts';
+import { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH, rangeBasisFor } from '../src/core/router.ts';
 
 describe('F30 — what the client is shown once the research has run', () => {
   test('the note under the figure says the checks have started once any register answered', async () => {
@@ -387,7 +387,7 @@ describe('F30 — what the client is shown once the research has run', () => {
  * F23, F24, F32 — the wording
  * ================================================================== */
 import { lookupsCard } from '../src/web/client-layout.ts';
-import { STAFF_FOOTER } from '../src/web/html.ts';
+import { STAFF_FOOTER } from '../src/shared/html.ts';
 
 describe('F23, F24, F32 — words that said something no longer true', () => {
   test('F24: the Valuation Office rating list (scrapped 4 Oct 2026) reads "Not used", never "Waiting"', () => {
@@ -405,7 +405,7 @@ describe('F23, F24, F32 — words that said something no longer true', () => {
 });
 
 /* F29 (minor): "St Judes" is a saint's name, not a street */
-import { normalizeAddress } from '../src/connectors/matching.ts';
+import { normalizeAddress } from '../src/integrations/connectors/matching.ts';
 
 describe('F29 — ST at the start of a name is a saint', () => {
   test('"St Judes" stays ST; "High St" is still HIGH STREET; "St Marys Road" stays as it was', () => {

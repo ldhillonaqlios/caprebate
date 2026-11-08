@@ -6,9 +6,9 @@
  * client's own view and nothing else. The pages run no script, so every tick is a small form with one button.
  */
 
-import { h, raw, type Safe } from './html.ts';
-import { badge, claimRef, why, type Tone } from './components.ts';
-import { localStamp, ukDate } from './localtime.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
+import { badge, claimRef, why, type Tone } from '../shared/index.ts';
+import { localStamp, ukDate } from '../shared/index.ts';
 import type { ChecksPanel, CheckFact, ClientStep, StepState, StepView } from './approvals.ts';
 
 const STATE_WORDS: Readonly<Record<StepState, readonly [string, Tone]>> = Object.freeze({

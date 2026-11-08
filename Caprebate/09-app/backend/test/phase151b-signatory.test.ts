@@ -20,19 +20,19 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 
-import { fixtureTransport, RateLimiter, type Fixture } from '../src/connectors/http.ts';
-import * as C from '../src/connectors/registers.ts';
+import { fixtureTransport, RateLimiter, type Fixture } from '../src/integrations/connectors/http.ts';
+import * as C from '../src/integrations/connectors/registers.ts';
 import {
   sameName, signatoryWords, SIGNATORY_SOURCES, YES_REASONS, NO_REASONS, NOT_CHECKED_KEPT, NOT_CHECKED_LIVE,
   type SignatoryReason,
-} from '../src/connectors/signatory-check.ts';
-import { companiesHouseOfficers } from '../src/connectors/companies-house.ts';
-import { cqcNamedPeople } from '../src/connectors/cqc.ts';
-import { secretsFromValues } from '../src/secrets.ts';
+} from '../src/integrations/connectors/signatory-check.ts';
+import { companiesHouseOfficers } from '../src/integrations/connectors/companies-house.ts';
+import { cqcNamedPeople } from '../src/integrations/connectors/cqc.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
 import * as R from '../src/web/research.ts';
 import { claimantTypeForGate } from '../src/web/crm.ts';
-import { seed } from '../src/seed.ts';
-import { newId } from '../src/users.ts';
+import { seed } from '../src/core/seed.ts';
+import { newId } from '../src/core/users.ts';
 import { testApp, actor } from './helpers.ts';
 
 const KEYS = secretsFromValues({ COMPANIES_HOUSE_API_KEY: 'ch-fixture-key-151b', CQC_SUBSCRIPTION_KEY: 'cqc-fixture-key-151b' });
@@ -403,7 +403,7 @@ describe('the research panel’s line for every outcome is plain words', () => {
     const check = require(join(ROOT, '03-app', 'caprebate-plain-words-check.cjs')) as {
       loadSwaps(f: string): unknown; checkStrings(s: { text: string; file: string; line: number }[], sw: unknown): { why: string; text: string }[];
     };
-    const swaps = check.loadSwaps(join(import.meta.dirname, '..', 'src', 'web', 'voice.ts'));
+    const swaps = check.loadSwaps(join(import.meta.dirname, '..', 'src', 'shared', 'voice.ts'));
     const all: SignatoryReason[] = [...YES_REASONS, ...NO_REASONS, ...NOT_CHECKED_KEPT, ...NOT_CHECKED_LIVE];
     const strings = SIGNATORY_SOURCES.flatMap((s) => all.map((r, i) => ({ text: signatoryWords(s, r), file: `${s}:${r}`, line: i + 1 })));
     for (const s of strings) assert.ok(s.text.length > 10 && !/undefined|null|_/.test(s.text), s.file);

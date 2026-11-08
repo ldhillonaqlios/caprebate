@@ -17,18 +17,18 @@ import { fileURLToPath } from 'node:url';
 import {
   SECRET_KEYS, loadSecrets, secretsFromValues, emptySecrets, redactSecrets, forgetRegisteredSecretsForTest,
   parseSecretsFile, secretsPath, repositoryRoot, isInside,
-} from '../src/secrets.ts';
-import { callOutside, fixtureTransport, liveTransport, RateLimiter, policyRefusal, type CallDeps, type GateSnapshot } from '../src/connectors/http.ts';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
-import * as C from '../src/connectors/registers.ts';
-import * as S from '../src/stubs/registers.ts';
-import { AuditLog, AuditError } from '../src/audit.ts';
-import { SOURCES as REGISTER_SOURCES, SUPPLIER_DOCS } from '../src/registers/caprebate-source-register.ts';
+} from '../src/core/secrets.ts';
+import { callOutside, fixtureTransport, liveTransport, RateLimiter, policyRefusal, type CallDeps, type GateSnapshot } from '../src/integrations/connectors/http.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
+import * as C from '../src/integrations/connectors/registers.ts';
+import * as S from '../src/integrations/register-ingest.ts';
+import { AuditLog, AuditError } from '../src/core/audit.ts';
+import { SOURCES as REGISTER_SOURCES, SUPPLIER_DOCS } from '../src/integrations/registers/source-register.ts';
 import * as R from '../src/web/research.ts';
 import * as E from '../src/web/engaged.ts';
 import { panel2 } from '../src/web/engaged-pages.ts';
-import { seed } from '../src/seed.ts';
-import { newId } from '../src/users.ts';
+import { seed } from '../src/core/seed.ts';
+import { newId } from '../src/core/users.ts';
 import { testApp, actor } from './helpers.ts';
 
 const BACKEND = fileURLToPath(new URL('../', import.meta.url));
@@ -195,7 +195,7 @@ describe('the key file is read from outside the repository, and each key goes on
  * ================================================================== */
 
 describe('one way to call outside, and every call is written down', () => {
-  test('NO FILE UNDER src/ BUT src/connectors/http.ts CALLS fetch', () => {
+  test('NO FILE UNDER src/ BUT src/integrations/connectors/http.ts CALLS fetch', () => {
     const hits: string[] = [];
     for (const f of readdirSync(SRC, { recursive: true }) as string[]) {
       if (!f.endsWith('.ts')) continue;
@@ -203,7 +203,7 @@ describe('one way to call outside, and every call is written down', () => {
       // A call of the global `fetch`, not a method of that name being declared (`fetch(ctx, query) {` / `): Promise<…>;`).
       if (/(?<![\w.])fetch\s*\((?![^)]*\)\s*[:{])|globalThis\.fetch|\bundici\b|\bhttps?\.(request|get)\s*\(/.test(text)) hits.push(f);
     }
-    assert.deepEqual(hits, ['connectors/http.ts']);
+    assert.deepEqual(hits, ['integrations/connectors/http.ts']);
   });
 
   test('a good call: the address from the register, one audit row, the endpoint as a template, query NAMES but never values', async () => {
@@ -339,7 +339,7 @@ describe('one way to call outside, and every call is written down', () => {
       // PHASE 153f, 4 Oct 2026: WHATSAPP_MEDIA is Meta's file host for the same WhatsApp Cloud API — the same processor and
       // the same approval for testing (OUR reading, put to the data protection officer with the WhatsApp retention reading).
       // PHASE 156e, 5 Oct 2026: CLAUDE_DOCUMENTS, approved for testing by Sadique and signed by the director (relayed by
-      // Lakhbir); its reading switches still ship off (src/connectors/claude.ts).
+      // Lakhbir); its reading switches still ship off (src/integrations/connectors/claude.ts).
       // 5 Oct 2026: CLOUDFLARE_TURNSTILE, the contact form's check, approved for testing by Sadique (relayed by Lakhbir).
       // PHASE 156f, 6 Oct 2026: GOADDRESS removed (Homedata, in the UK, answers the address box instead).
       const APPROVED_TRANSFERS = ['ZOOM_OAUTH', 'ZOOM_API', 'WHATSAPP_CLOUD', 'WHATSAPP_MEDIA', 'CLAUDE_DOCUMENTS', 'CLOUDFLARE_TURNSTILE'];

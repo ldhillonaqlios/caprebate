@@ -19,21 +19,21 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { FsObjectStore } from './objectstore.ts';
-import { extractPages, isScanMarker, pdfPageImages, type ExtractedPage, type PageImage } from './extract-text.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { FsObjectStore } from '../shared/objectstore.ts';
+import { extractPages, isScanMarker, pdfPageImages, type ExtractedPage, type PageImage } from '../shared/index.ts';
 import { receiveByUpload } from './documents.ts';
 import { recordSbaStatementHeld } from './claim-facts.ts';
-import { ingestRegisterRecord } from '../stubs/registers.ts';
+import { ingestRegisterRecord } from '../integrations/index.ts';
 import { freeGate, assertSignedEngagement } from './research.ts';
-import type { RateLimiter, Transport, GateSnapshot } from '../connectors/http.ts';
+import type { RateLimiter, Transport, GateSnapshot } from '../integrations/index.ts';
 import { createHash } from 'node:crypto';
-import type { SecretStore } from '../secrets.ts';
+import type { SecretStore } from '../core/index.ts';
 import {
   CLAUDE_SWITCHES, claudeReadiness, prepareClaudeModel, readScannedPages,
   type ClaudeContext, type ClaudeSwitches, type ModelRead,
-} from '../connectors/claude.ts';
+} from '../integrations/connectors/claude.ts';
 import type { EgressEntry } from '../documents/caprebate-document-pipeline.ts';
 import type { ClientDocDiscriminants } from '../documents/caprebate-client-doc-ingestion.ts';
 import { discriminantsFor, recordReading, VOUCHED_FIELDS } from './document-reading.ts';
@@ -43,7 +43,7 @@ import {
   assertContractCovered, FAIL_CLOSED_SETTINGS, DOC_SPECS, HUMAN_READ_ONLY_TYPES, durableKeyFor,
   type AuditEvent, type AuditSink, type DocType, type DocTypeClassifier,
   type TextExtractor, type UploadHandlerDeps, type UploadJob,
-} from './upload-handler-port.ts';
+} from '../shared/upload-handler-port.ts';
 
 /**
  * THE AUDIT SINK ADAPTER.
@@ -95,7 +95,7 @@ export function dbAuditSink(db: Db, id: () => string = randomUUID): AuditSink {
  * record a strip that never touched a real name. An empty page is the same
  * falsehood more quietly, because downstream zero segments reads as "we looked
  * and there was nothing to redact". That is N4 applied to extraction, and
- * `src/web/extract-text.ts` is written so that every failure funnels into
+ * `src/shared/extract-text.ts` is written so that every failure funnels into
  * `markerPages()`.
  *
  * The name is `documentTextExtractor` rather than `plainTextExtractor` because
@@ -157,7 +157,7 @@ export type UploadDeps = {
    */
   audit?: AuditLog;
   /**
-   * PHASE 146e. What reads a scanned PDF's page pictures as text — `readScannedPages` in src/connectors/claude.ts,
+   * PHASE 146e. What reads a scanned PDF's page pictures as text — `readScannedPages` in src/integrations/connectors/claude.ts,
    * behind its own switch. Absent, as shipped: a scan keeps its marker.
    *
    * PHASE 146g: A CALLER NO LONGER HAS TO BUILD THIS. Given `reading` below, it is derived from it — and ONLY while
@@ -172,7 +172,7 @@ export type UploadDeps = {
    *
    * It opens no gate. Reading a client's own document is not a register lookup and neither gate governs it; what
    * governs it is the switch, the key, and the data protection officer's approval of the provider and the transfer —
-   * which src/connectors/sources.ts still refuses (CLAUDE_DOCUMENTS is region US, `international_transfer_approved`
+   * which src/integrations/connectors/sources.ts still refuses (CLAUDE_DOCUMENTS is region US, `international_transfer_approved`
    * false). The snapshot below is recorded on the call's audit row and decides nothing.
    */
   reading?: UploadReading;
@@ -208,7 +208,7 @@ export type UploadReading = {
   readonly switches?: ClaudeSwitches;
   readonly limiter?: RateLimiter;
   readonly sleep?: (ms: number) => Promise<void>;
-  /** Tests only: a service's policy with some values changed. Passed through to src/connectors/http.ts. */
+  /** Tests only: a service's policy with some values changed. Passed through to src/integrations/connectors/http.ts. */
   readonly policy_override?: ClaudeContext['deps']['policy_override'];
   /** Who is running this, for the audit row. The upload's own actor id is `UploadDeps.actor`. */
   readonly actor_role?: string | null;
@@ -299,7 +299,7 @@ function handlerDeps(d: UploadDeps, doc_id?: string): UploadHandlerDeps {
     // (raw-file retention) and Q40 (the ingestion boundary) are both OPEN and
     // a build that quietly chose the permissive setting would be answering
     // them. Under these settings the raw file NEVER reaches the durable prefix.
-    // PHASE 140: KEEP_ORIGINALS (src/web/originals.ts), OFF. Only when it is on
+    // PHASE 140: KEEP_ORIGINALS (src/shared/originals.ts), OFF. Only when it is on
     // in all three of its ways does the handler get a period to keep a file
     // for — and then it is the handler's own promotion rule that keeps it.
     settings: d.store.keptDays === null ? FAIL_CLOSED_SETTINGS
@@ -466,7 +466,7 @@ export async function finishUpload(
  *   · NOTHING THROWS OUT OF HERE. A refused claim — an uncatalogued field, a conditional field with no
  *     discriminant — is an outcome, recorded and reported, not a failed upload. The file has already been read and
  *     deleted by then; failing the request would tell the client to send it again for no reason.
- *   · THE CLAIMS ENTER BY THE ONE DOOR. `ingestRegisterRecord` (src/stubs/registers.ts), where the name exclusion
+ *   · THE CLAIMS ENTER BY THE ONE DOOR. `ingestRegisterRecord` (src/integrations/register-ingest.ts), where the name exclusion
  *     register is checked, as every register record does. There is no second way in for a document's facts.
  * ------------------------------------------------------------------ */
 
@@ -713,7 +713,7 @@ export async function openKeptOriginal(
 
 /**
  * PHASE 140 — DELETE EVERY KEPT ORIGINAL WHOSE TIME IS UP. Runs whenever a folder or an original is opened, and from
- * `node src/cli.ts sweep-originals`. It deletes, then records — a record written first would claim a deletion that had
+ * `node src/core/cli.ts sweep-originals`. It deletes, then records — a record written first would claim a deletion that had
  * not happened. A file already gone is recorded as deleted: the time is up either way, and nothing is left to serve.
  * Returns how many it deleted.
  */

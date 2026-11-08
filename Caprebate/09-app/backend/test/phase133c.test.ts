@@ -26,8 +26,8 @@ type NextStepModule = {
   claimNextStep: (id: string, gate: { open: boolean; needs: { what: string; met: boolean }[] } | undefined, moves: { forward: { to: string; label: string; open: boolean } | null } | undefined, hold: undefined) => unknown;
   hasPlainReading: (what: string) => boolean;
 };
-const assets = async (): Promise<AssetsModule> => (await import('../src/web/assets.ts')) as unknown as AssetsModule;
-const nextStep = async (): Promise<NextStepModule> => (await import(`../src/web/${'next-step'}.ts`)) as unknown as NextStepModule;
+const assets = async (): Promise<AssetsModule> => (await import('../src/shared/assets.ts')) as unknown as AssetsModule;
+const nextStep = async (): Promise<NextStepModule> => (await import(`../src/shared/${'next-step'}.ts`)) as unknown as NextStepModule;
 
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
    twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
@@ -37,12 +37,12 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
 import { gateOut } from '../src/web/pipeline.ts';
-import { PROCEDURE_KEYS } from '../src/web/stages.ts';
-import { avoidHits } from '../src/web/voice.ts';
+import { PROCEDURE_KEYS } from '../src/shared/stages.ts';
+import { avoidHits } from '../src/shared/voice.ts';
 import { oneDriveOnly, oneDrivePath } from './onedrive-only.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
@@ -127,7 +127,7 @@ function visible(body: string): string {
 }
 
 /**
- * The brand book's avoid list (slide 15, and slides 14 and 52). PHASE 133d moved it to src/web/voice.ts, so the public
+ * The brand book's avoid list (slide 15, and slides 14 and 52). PHASE 133d moved it to src/shared/voice.ts, so the public
  * site's brand check (03-app/caprebate-brand-check.cjs) reads the same list; `avoidHits` allows "capital gains" only
  * where the text distinguishes it ("not against capital gains tax", as the letter says), and "guaranteed-use".
  */
@@ -314,7 +314,7 @@ describe('what a person reads', () => {
 
 describe('UK dates', () => {
   test('the helper reads the UK day, never UTC, and words a due date', async () => {
-    const L = await import('../src/web/localtime.ts');
+    const L = await import('../src/shared/localtime.ts');
     assert.equal(L.ukDate('2026-09-24'), '24 Sep 2026');
     assert.equal(L.ukDate('2026-09-16T23:30:00.000Z'), '17 Sep 2026', 'a late-evening instant in BST is the next UK day');
     assert.equal(L.localStamp('2026-09-17T11:32:00.000Z'), '17 Sep 2026, 12:32');

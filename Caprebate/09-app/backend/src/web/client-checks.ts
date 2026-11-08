@@ -9,9 +9,9 @@
  * portal. Each check is kept for good (the table refuses an edit or a deletion) and written to the audit log. What staff
  * recorded themselves needs no check: they are the check.
  */
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, type Actor } from '../authz.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, type Actor } from '../core/index.ts';
 import { claimObjFor, loadClaimRow } from './crm.ts';
 import { sendTaskToPortal } from './engaged.ts';
 import { createDocumentRequest } from './documents.ts';

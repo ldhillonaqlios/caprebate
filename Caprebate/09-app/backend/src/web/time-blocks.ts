@@ -11,10 +11,10 @@
  * The reason is the person's own words, for staff only, and never in the audit line.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import type { Actor } from '../authz.ts';
-import { instantsForLocalMinute } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import type { Actor } from '../core/index.ts';
+import { instantsForLocalMinute } from '../shared/index.ts';
 
 export type BlockDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 

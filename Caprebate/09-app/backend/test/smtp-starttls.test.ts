@@ -1,5 +1,5 @@
 /**
- * 1 OCTOBER 2026 — PORT 587 SPEAKS PLAIN FIRST (src/stubs/email-provider.ts, openSession).
+ * 1 OCTOBER 2026 — PORT 587 SPEAKS PLAIN FIRST (src/integrations/email/email-provider.ts, openSession).
  *
  * Lakhbir: "check why i cant sent and receive emails". Every email from the test website said "Not sent: The mail server
  * refused it: 0 the connection closed". The key file names IONOS's port 587, where the conversation starts in plain text
@@ -10,7 +10,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:net';
 import { connect as tlsConnect } from 'node:tls';
-import { smtpProvider } from '../src/stubs/email-provider.ts';
+import { smtpProvider } from '../src/integrations/email/email-provider.ts';
 
 /** A plain-text mail server that says what we tell it to, and records every line it is sent. */
 async function fakeServer(answers: Record<string, string>): Promise<{ server: Server; port: number; heard: string[] }> {

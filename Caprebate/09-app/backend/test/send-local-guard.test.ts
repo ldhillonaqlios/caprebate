@@ -1,5 +1,5 @@
 /**
- * 2 OCTOBER 2026 — ONLY THE TEST WEBSITE SENDS WHATSAPP MESSAGES AND IONOS EMAILS, as Zoom (src/connectors/place.ts).
+ * 2 OCTOBER 2026 — ONLY THE TEST WEBSITE SENDS WHATSAPP MESSAGES AND IONOS EMAILS, as Zoom (src/integrations/connectors/place.ts).
  *
  * Lakhbir, asked whether WhatsApp and IONOS sending should get Zoom's guard: "yes for now". A copy on a computer that
  * reads the real key file would otherwise message and email real people. Now it sends only on the deployed test
@@ -14,14 +14,14 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { connect as netConnect } from 'node:net';
-import { createApp } from '../src/server.ts';
-import { fixtureTransport, liveTransport } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
-import { onTestWebsite, placeRefusal } from '../src/connectors/place.ts';
-import { onTestWebsite as zoomOnTestWebsite } from '../src/connectors/zoom.ts';
-import { sendWhatsAppText, whatsappMissing, whatsappPlaceRefusal, WHATSAPP_LOCAL_OPT_IN } from '../src/connectors/whatsapp.ts';
-import { EMAIL_LOCAL_OPT_IN, EMAIL_SENDING, emailPlaceRefusal, mailWhere, sendingMissing, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../src/stubs/email-provider.ts';
-import { serviceOn } from '../src/web/saved-keys.ts';
+import { createApp } from '../src/core/server.ts';
+import { fixtureTransport, liveTransport } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
+import { onTestWebsite, placeRefusal } from '../src/integrations/connectors/place.ts';
+import { onTestWebsite as zoomOnTestWebsite } from '../src/integrations/connectors/zoom.ts';
+import { sendWhatsAppText, whatsappMissing, whatsappPlaceRefusal, WHATSAPP_LOCAL_OPT_IN } from '../src/integrations/connectors/whatsapp.ts';
+import { EMAIL_LOCAL_OPT_IN, EMAIL_SENDING, emailPlaceRefusal, mailWhere, sendingMissing, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../src/integrations/email/email-provider.ts';
+import { serviceOn } from '../src/core/saved-keys.ts';
 
 const T = '2026-10-02T09:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';

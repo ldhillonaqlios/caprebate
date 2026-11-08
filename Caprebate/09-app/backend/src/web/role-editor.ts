@@ -1,7 +1,7 @@
 /**
  * THE ROLE EDITOR — MAKE, CHANGE AND RETIRE A ROLE. Phase 151, 24 September 2026.
  *
- * The design and the hard limits are src/custom-roles.ts. This file is the only place a made role is written, and
+ * The design and the hard limits are src/core/custom-roles.ts. This file is the only place a made role is written, and
  * every write is on the server, for the super admin alone (`role.manage`, which no made role can be given):
  *
  *   makeRole     a new role: its name and what it can see and do, each borrowed from a built-in staff role;
@@ -16,10 +16,10 @@
  * A REFUSAL IS ONE PLAIN SENTENCE and nothing is saved, in part or at all.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, builtInHolds, REGISTERED_ACTIONS, type Actor } from '../authz.ts';
-import { customRoleKey, loadCustomRoles, roleRefusal, type Grant } from '../custom-roles.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, builtInHolds, REGISTERED_ACTIONS, type Actor } from '../core/index.ts';
+import { customRoleKey, loadCustomRoles, roleRefusal, type Grant } from '../core/index.ts';
 
 /** All or nothing: a role is never saved in part. */
 function tx(db: Db, fn: () => void): void {
@@ -84,7 +84,7 @@ export function changeRole(d: RoleEditorDeps, actor: Actor, key: string, input: 
     d.db.run('UPDATE custom_roles SET updated_at = ? WHERE role = ?', [at, key]);
   });
   // A role change is a privilege change: everybody holding it signs in again under the new rules.
-  // The same revocation src/auth.ts's revokeAllSessions makes, with its own audit row per person.
+  // The same revocation src/core/auth.ts's revokeAllSessions makes, with its own audit row per person.
   for (const id of holders) {
     const r = d.db.run('UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE user_id = ? AND revoked_at IS NULL', [at, 'PRIVILEGE_CHANGE', id]);
     d.audit.append({ at, kind: 'SESSION_REVOKED', outcome: 'ALLOWED', actor_id: id, object_type: 'session', detail: { reason: 'PRIVILEGE_CHANGE', count: r.changes } });

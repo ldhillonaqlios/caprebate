@@ -34,13 +34,13 @@
  * action, and this screen links there.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor, type Obj } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor, type Obj } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { VOCAB_LISTS, isVocabList, vocabularyValues, type VocabList, type VocabValue } from './vocabularies.ts';
-import { PROCEDURE_KEYS, anyStageLabel } from './stages.ts';
-import { ctaSwitchReadings } from './engine.ts';
+import { PROCEDURE_KEYS, anyStageLabel } from '../shared/index.ts';
+import { ctaSwitchReadings } from '../shared/index.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { RECIPROCITY_ACTIVITY_TYPES } from './tasks.ts';
 import { typeList, type TypeView } from './documents.ts';

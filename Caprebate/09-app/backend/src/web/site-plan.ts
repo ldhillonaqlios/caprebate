@@ -1,36 +1,36 @@
 /**
  * THE REPORT'S SITE PLAN — the client's building, and the buildings round it, from Ordnance Survey's free maps.
- * 2 October 2026, the survey pack, stage 6. Migration 083 (written as 078; renumbered by Phase 153f); the calls are src/connectors/os-buildings.ts.
+ * 2 October 2026, the survey pack, stage 6. Migration 083 (written as 078; renumbered by Phase 153f); the calls are src/integrations/connectors/os-buildings.ts.
  *
  * Lakhbir, 1 Oct 2026: the report's cover shows the building from Ordnance Survey's free building outlines; the site
  * boundary (INSPIRE) is never in a report. 2 Oct 2026: the client's building is picked automatically.
  *
  * WHO, AND WHERE. Whoever may change the pack (`surveyor_job.commit`: the assigned surveyor) fetches it, in
  * chapter 9, with one button. Like the free lookups, it is fetched on the test website only for now
- * (src/connectors/registers.ts, `lookupsWaivedHere`), and only with the Ordnance Survey key.
+ * (src/integrations/connectors/registers.ts, `lookupsWaivedHere`), and only with the Ordnance Survey key.
  *
  * WHAT IS KEPT. Each fetch is a new row; the newest is shown. Outlines are kept in decimetres from the postcode's point,
  * so the plan draws the same every time. An approved version copies the plan into its own JSON (src/web/pack-approve.ts),
  * so the report it makes never changes after approval, whatever is fetched later.
  *
  * HOW IT IS DRAWN. One model, two drawings, as the report: an SVG in the page (presentation attributes only, so the
- * page's style policy holds) and boxes of paths in the PDF (src/web/pdf-canvas.ts, `poly`). The client's building is
+ * page's style policy holds) and boxes of paths in the PDF (src/shared/pdf-canvas.ts, `poly`). The client's building is
  * dark, the others light grey. North is up. A 20 m scale bar. The credit line Ordnance Survey's licence asks for.
  */
-import type { Actor } from '../authz.ts';
-import { authorise } from '../authz.ts';
-import type { AuditLog } from '../audit.ts';
-import type { Db } from '../db.ts';
-import type { Transport } from '../connectors/http.ts';
-import type { RateLimiter } from '../connectors/http.ts';
-import type { SecretStore } from '../secrets.ts';
-import type { Env } from '../connectors/place.ts';
-import { lookupsWaivedHere } from '../connectors/registers.ts';
-import { buildingsAround, OS_ATTRIBUTION, PLAN_HALF_M, PLAN_MAX_BUILDINGS, pickBuilding, pointOfPostcode, type Asker } from '../connectors/os-buildings.ts';
+import type { Actor } from '../core/index.ts';
+import { authorise } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import type { Db } from '../core/index.ts';
+import type { Transport } from '../integrations/index.ts';
+import type { RateLimiter } from '../integrations/index.ts';
+import type { SecretStore } from '../core/index.ts';
+import type { Env } from '../integrations/index.ts';
+import { lookupsWaivedHere } from '../integrations/index.ts';
+import { buildingsAround, OS_ATTRIBUTION, PLAN_HALF_M, PLAN_MAX_BUILDINGS, pickBuilding, pointOfPostcode, type Asker } from '../integrations/index.ts';
 import { packJob } from './surveyor.ts';
 import { packView } from './survey-pack.ts';
-import { h, raw, type Safe } from './html.ts';
-import type { Op, Rgb } from './pdf-canvas.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
+import type { Op, Rgb } from '../shared/index.ts';
 
 /** A site plan as kept and as drawn. Rings are [east, north] in DECIMETRES from the postcode's point. */
 export type SitePlan = {

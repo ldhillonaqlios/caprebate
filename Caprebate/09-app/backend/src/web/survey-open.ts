@@ -22,10 +22,10 @@
  * ONE JOB PER CLAIM. A claim with a job already on it is refused, in words that say whose it is.
  */
 import { createHash } from 'node:crypto';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { stageLabel } from './look.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { stageLabel } from '../core/index.ts';
 
 export const FUNNEL_CEILING = 'FUNNEL_CEILING';
 

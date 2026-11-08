@@ -1,6 +1,6 @@
 /**
  * REPLIES TO contact@caprebate.co.uk, ONTO THE COMPANY'S CHAT AND TIMELINE. Phase 142, 22 September 2026 — carried from
- * Phase 141, whose Developer Spec B48 set out where a reply would land. The mailbox reader is src/stubs/email-inbound.ts,
+ * Phase 141, whose Developer Spec B48 set out where a reply would land. The mailbox reader is src/integrations/email/email-inbound.ts,
  * switched off (INBOUND_EMAIL) until the mailbox exists.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -28,27 +28,27 @@
  * ───────────────────────────────────────────────────────────────────────────
  */
 
-import type { App } from '../app.ts';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { localPartsOf, localStamp } from './localtime.ts';
-import type { FsObjectStore } from './objectstore.ts';
+import type { App } from '../core/app.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { localPartsOf, localStamp } from '../shared/index.ts';
+import type { FsObjectStore } from '../shared/objectstore.ts';
 import { receiveFile } from './client-files-pages.ts';
 import { setShownToClient } from './documents.ts';
 import type { VouchAnswer } from './document-reading.ts';
 import { alertNewMessage } from './messages.ts';
-import type { EmailSending, SmtpLogin } from '../stubs/email-provider.ts';
-import { recordBounce } from '../stubs/email-provider.ts';
+import type { EmailSending, SmtpLogin } from '../integrations/index.ts';
+import { recordBounce } from '../integrations/index.ts';
 import {
   INBOUND_EMAIL, imapLoginFromKeyFile, imapMailbox, parseBounceReport, parseEmail, readingMissing, readingOn,
   type ImapLogin, type InboundEmail, type Mailbox, type ParsedEmail, type RawEmail,
-} from '../stubs/email-inbound.ts';
-import { auditMailConnections } from '../stubs/email-provider.ts';
+} from '../integrations/index.ts';
+import { auditMailConnections } from '../integrations/index.ts';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
-import type { SecretStore } from '../secrets.ts';
-import { redactSecrets } from '../secrets.ts';
+import type { SecretStore } from '../core/index.ts';
+import { redactSecrets } from '../core/index.ts';
 import { STATE_WORDS } from './email-chains.ts';
 
 export type InboundDeps = {

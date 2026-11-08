@@ -23,9 +23,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { SITE_CSS as CSS } from '../src/web/assets.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { SITE_CSS as CSS } from '../src/shared/assets.ts';
 import { grantsTraced } from '../src/web/claim-facts.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;

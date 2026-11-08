@@ -19,8 +19,8 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { APP_ROLES, type AppRole } from '../src/roles.ts';
-import { can, NotAuthorised, type Obj } from '../src/authz.ts';
+import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
+import { can, NotAuthorised, type Obj } from '../src/core/authz.ts';
 import * as C from '../src/web/compliance.ts';
 import * as A from '../src/web/compliance-aml.ts';
 import * as R from '../src/web/compliance-rights.ts';

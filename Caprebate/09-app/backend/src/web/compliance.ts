@@ -28,11 +28,11 @@
  */
 
 import { randomBytes } from 'node:crypto';
-import type { Db } from '../db.ts';
-import type { AuditLog, AuditKind, Outcome } from '../audit.ts';
-import { authorise, type Actor } from '../authz.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
-import { instantsForLocalMinute, localDate } from './localtime.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog, AuditKind, Outcome } from '../core/audit.ts';
+import { authorise, type Actor } from '../core/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import { instantsForLocalMinute, localDate } from '../shared/index.ts';
 
 export type ComplianceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;

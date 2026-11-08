@@ -30,23 +30,23 @@
  * three a user would notice.
  */
 
-import { isCustomRoleKey } from '../custom-roles.ts';
-import type { Db } from '../db.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { APP_ROLES, isAppRole, type AppRole } from '../roles.ts';
-import type { AuditLog } from '../audit.ts';
-import type { Deps } from '../auth.ts';
-import { rateLimit, revokeAllSessions } from '../auth.ts';
+import { isCustomRoleKey } from '../core/index.ts';
+import type { Db } from '../core/index.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { APP_ROLES, isAppRole, type AppRole } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import type { Deps } from '../core/index.ts';
+import { rateLimit, revokeAllSessions } from '../core/index.ts';
 import {
   canonicalEmail, createUser, disableUser as storeDisable, findById, listUsers,
   assignRole as storeAssignRole, newId, type User,
-} from '../users.ts';
+} from '../core/index.ts';
 import {
   replaceWorkingTimes, workingTimesFor, WorkingTimeError, WEEKDAY_NAMES,
   minutesToClock, type WorkingTime, type WorkingTimeInput,
 } from './schedule.ts';
-import { photoFor, type PhotoRecord } from './avatar.ts';
-import { liftSuppression } from '../stubs/email-provider.ts';
+import { photoFor, type PhotoRecord } from '../core/index.ts';
+import { liftSuppression } from '../integrations/index.ts';
 
 export class SettingsError extends Error {
   readonly code: string;
@@ -375,7 +375,7 @@ export function assignRole(d: Deps, actor: Actor, target_id: string, role: strin
   if (target === undefined) throw new SettingsError('E_NO_USER', 'no such user');
   authorise(actor, 'user.assign_role', { type: 'user', id: target.id, role: target.role });
 
-  // Phase 151: or a role the super admin made (src/custom-roles.ts) — a staff role, so never on a client account.
+  // Phase 151: or a role the super admin made (src/core/custom-roles.ts) — a staff role, so never on a client account.
   const made = isCustomRoleKey(role);
   if (!isAppRole(role) && !made) {
     throw new SettingsError('E_BAD_ROLE', `a role is one of ${APP_ROLES.join(', ')}, or one the super admin made`);
@@ -452,7 +452,7 @@ export function disableUser(d: Deps, actor: Actor, target_id: string): User {
 
 /**
  * PHASE 133a — THE GATE OF USERS AND ROLES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/web/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function usersGate(actor: Actor): void {
@@ -463,7 +463,7 @@ export function usersGate(actor: Actor): void {
  * ADDRESSES WE CANNOT EMAIL — PHASE 146g, 23 September 2026
  *
  * Phase 146f recorded bounces and stopped sending to an address that bounced
- * for good, and `liftSuppression` (src/stubs/email-provider.ts) was written for
+ * for good, and `liftSuppression` (src/integrations/email/email-provider.ts) was written for
  * a member of staff to say the address works again — with no screen to say it
  * from. So an address stopped for good was stopped for ever, and the only way
  * back was somebody with the database file.

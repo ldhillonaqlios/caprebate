@@ -32,13 +32,13 @@
  */
 
 import { randomBytes } from 'node:crypto';
-import type { App } from '../app.ts';
-import type { Db } from '../db.ts';
-import { BOOKING } from './engine.ts';
+import type { App } from '../core/app.ts';
+import type { Db } from '../core/index.ts';
+import { BOOKING } from '../shared/index.ts';
 import { SLOT_MINUTES } from './schedule.ts';
-import { localWhen } from './localtime.ts';
-import { h, type Safe } from './html.ts';
-import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, zoomPastCall, zoomPlanIsFree, FREE_PLAN_LINE, NOT_ON_PLAN_WORDS, ZOOM_SDK_BASE, type MadeMeeting, type PastCall, type ZoomDeps } from '../connectors/zoom.ts';
+import { localWhen } from '../shared/index.ts';
+import { h, type Safe } from '../shared/index.ts';
+import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, zoomPastCall, zoomPlanIsFree, FREE_PLAN_LINE, NOT_ON_PLAN_WORDS, ZOOM_SDK_BASE, type MadeMeeting, type PastCall, type ZoomDeps } from '../integrations/index.ts';
 
 /** A call that holds a moment: a telephone call (CB_BOOKING) or, since 30 Sep 2026, a video call. */
 export function booksATime(channel: string): boolean {
@@ -256,7 +256,8 @@ export const VIDEO_PAGE_HEADERS: Readonly<Record<string, string>> = Object.freez
 });
 
 /** Zoom's own files, in the order its component view needs them (developers.zoom.us, read 30 Sep 2026). */
-export const ZOOM_SCRIPTS: readonly string[] = Object.freeze([
+// Read when used, not while this file loads (Phase 161i: the areas' front doors load whole, and the code still loops between areas until Phase 161l).
+export const zoomScripts = (): readonly string[] => Object.freeze([
   `${ZOOM_SDK_BASE}/lib/vendor/react.min.js`, `${ZOOM_SDK_BASE}/lib/vendor/react-dom.min.js`,
   `${ZOOM_SDK_BASE}/lib/vendor/redux.min.js`, `${ZOOM_SDK_BASE}/lib/vendor/redux-thunk.min.js`,
   `${ZOOM_SDK_BASE}/lib/vendor/lodash.min.js`, `${ZOOM_SDK_BASE}/zoom-meeting-embedded-${ZOOM_SDK_BASE.split('/').pop()}.min.js`,
@@ -279,7 +280,7 @@ export function joinPanel(j: JoinData, who: 'host' | 'client'): Safe {
 
 /** The scripts at the foot of a join page: Zoom's, then ours. */
 export function joinScripts(): Safe {
-  return h`${ZOOM_SCRIPTS.map((src) => h`<script src="${src}" crossorigin="anonymous"></script>`)}<script src="/assets/video-call.js"></script>`;
+  return h`${zoomScripts().map((src) => h`<script src="${src}" crossorigin="anonymous"></script>`)}<script src="/assets/video-call.js"></script>`;
 }
 
 /** A join page: the ordinary page (so staff keep the back office's header), with Zoom's scripts and ours at the foot. */

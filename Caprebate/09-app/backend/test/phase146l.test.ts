@@ -18,17 +18,17 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { docxOf } from './document-fixtures.ts';
-import { secretsFromValues, forgetRegisteredSecretsForTest } from '../src/secrets.ts';
-import { fixtureTransport, RateLimiter } from '../src/connectors/http.ts';
+import { secretsFromValues, forgetRegisteredSecretsForTest } from '../src/core/secrets.ts';
+import { fixtureTransport, RateLimiter } from '../src/integrations/connectors/http.ts';
 import { acceptClientBytes, finishUpload, issuedJob, type UploadDeps } from '../src/web/uploads.ts';
 import * as D from '../src/web/documents.ts';
 import * as TH from '../src/web/title-by-hand.ts';
 import { HUMAN_READ_ONLY_TYPES } from '../src/documents/caprebate-document-pipeline.ts';
 import { receiptPolicyFor } from '../src/documents/caprebate-client-doc-ingestion.ts';
 import { actor } from './helpers.ts';
-import { can } from '../src/authz.ts';
+import { can } from '../src/core/authz.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const SRC = join(HERE, '..', 'src');

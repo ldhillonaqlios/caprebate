@@ -29,26 +29,26 @@
  * 4 · DERIVE, DO NOT RE-KEY. The legal name and company number come from a
  *     Companies House register record where one is held; the claimant type from
  *     the funnel's own entity answer; the jurisdiction from the postcode through
- *     src/web/postcode.ts. WHERE A FACT IS DERIVED, THE STORE REFUSES A RECORDED
+ *     src/integrations/postcodes/postcode.ts. WHERE A FACT IS DERIVED, THE STORE REFUSES A RECORDED
  *     ONE — "never asked twice" is a rule here, not a form that hides a field.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog, AuditKind } from '../audit.ts';
-import { authorise, can, type Actor, type Obj } from '../authz.ts';
-import { NotFoundAsRefusal, answerLabel } from './backoffice.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog, AuditKind } from '../core/audit.ts';
+import { authorise, can, type Actor, type Obj } from '../core/index.ts';
+import { NotFoundAsRefusal, answerLabel } from '../core/backoffice.ts';
 import {
   EXITS, LEGACY_STAGE_TO_PROCEDURE, anyStageLabel, claimStage, nextProcedureKey, procedureIndex, stage as stageOf,
   type ProcedureKey,
-} from './stages.ts';
+} from '../shared/index.ts';
 import { assertSignedEngagement } from './research.ts';
 import {
   BOARD_COLUMNS, FEE_TRIGGER, FEE_TRIGGERS, liveFeeInvoiceCount, loadPipelineClaim, pipelinePanel, recordOpened, type PipelinePanel,
 } from './pipeline.ts';
-import { postcodeStore, POSTCODE_GATE } from './postcode.ts';
-import { resolveServedAuthority, type PostcodeStore } from './postcode-port.ts';
-import { formatPence, formatShownRange, toPence } from './shown-range.ts';
-import { localStamp } from './localtime.ts';
+import { postcodeStore, POSTCODE_GATE } from '../integrations/postcodes/postcode.ts';
+import { resolveServedAuthority, type PostcodeStore } from '../integrations/postcodes/postcode-port.ts';
+import { formatPence, formatShownRange, toPence } from '../shared/index.ts';
+import { localStamp } from '../shared/index.ts';
 import { claimMoneyLines, type ClaimMoneyLine } from './invoices.ts';
 import { claimTaskPanel, followUpsFor, type ClaimTaskPanel } from './tasks.ts';
 import { lastContactFor, timelineIfPermitted, type Timeline } from './timeline.ts';
@@ -1100,7 +1100,7 @@ function contactValues(input: Fields, stored: ContactValues): Check<ContactValue
 /**
  * PHASE 151e (line 6), 28 September 2026 — CONTACT DETAILS ARE NOT OPTIONAL. Lakhbir: "we must get contact details, it
  * is a non negotiable". A client must have at least one contact with an email address or a telephone number:
- *   - a client saved from the website cannot be saved without one (the funnel's close, src/web/router.ts);
+ *   - a client saved from the website cannot be saved without one (the funnel's close, src/core/router.ts);
  *   - a change here that would leave a client with no contact we can reach is refused (`updateContact`);
  *   - a client that has none is flagged on its page until it does (src/web/client-page.ts); and
  *   - an identity check goes only to a contact who has one (src/web/identity-checks.ts).
@@ -1894,7 +1894,7 @@ export type ClaimOrigin = {
 
 /**
  * ROWS 8.5 AND 8.6 — READ THROUGH THE LEAD, NEVER A COLUMN ON THE CLAIM. The join is the one `CLAIMS_WORKING` in
- * src/web/lists.ts makes (`leads.claim_id`, then `introducers`), and a claim with no lead reads its organisation's source,
+ * src/shared/lists.ts makes (`leads.claim_id`, then `introducers`), and a claim with no lead reads its organisation's source,
  * exactly as that list's source filter does. `lead.read` builds the block; `introducer.read` adds the firm. SURVEYING and
  * ACCOUNTING hold neither, so their claim view carries no origin at all.
  */
@@ -2190,7 +2190,7 @@ function feeDiscountsOn(db: Db, actor: Actor, claim_id: string): { fee_discounts
 
 /**
  * PHASE 133a — THE GATE OF THE PIPELINE BOARD, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/web/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function pipelineBoardGate(actor: Actor): void {

@@ -3,7 +3,7 @@
  *
  * BCIS is the chosen cost source (Word answers 6 and 8) but publishes no API licence, so nothing here calls BCIS (our
  * use is confirmed: Word question 218, closed 10 Oct 2026). Once the export arrives, Lakhbir downloads the index series as a
- * spreadsheet saved as CSV and runs `node src/cli.ts import-bcis-index <file>`. The cost model's own reader
+ * spreadsheet saved as CSV and runs `node src/core/cli.ts import-bcis-index <file>`. The cost model's own reader
  * (09-app/backend/src/costing/caprebate-cost-model.cjs, parseIndexTable) turns it into a table of exactly CB_BCIS_INDEX's
  * shape, and this file writes it to CAPREBATE_BCIS_INDEX_FILE, or ~/.caprebate-bcis-index.json — NEVER inside the
  * repository, which is refused: BCIS's licence lets named users use the rates and does not let the table be reproduced
@@ -18,7 +18,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { basename, isAbsolute, join, resolve } from 'node:path';
-import { isInside, repositoryRoot } from '../secrets.ts';
+import { isInside, repositoryRoot } from '../core/index.ts';
 
 type IndexTable = { loaded: true; source: string; licence: string; verified_at: string | null; points: readonly (readonly [string, number])[] };
 const costModel = createRequire(import.meta.url)('../costing/caprebate-cost-model.cjs') as {

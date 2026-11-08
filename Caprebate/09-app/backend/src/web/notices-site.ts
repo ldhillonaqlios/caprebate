@@ -18,14 +18,14 @@
  */
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { rateLimit } from '../auth.ts';
-import { hashToken } from '../users.ts';
-import type { Db } from '../db.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { rateLimit } from '../core/index.ts';
+import { hashToken } from '../core/index.ts';
+import type { Db } from '../core/index.ts';
 import { logComplaint } from './compliance-rights.ts';
 import { assertComplianceWrite, type ComplianceDeps } from './compliance.ts';
-import { plainDashes } from './plain-dashes.ts';
+import { plainDashes } from '../shared/index.ts';
 
 /** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 03-app/caprebate-notices-page.html, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const NOTICES_PATH = join(import.meta.dirname, '..', '..', 'copies', 'caprebate-notices-page.html');
@@ -60,7 +60,7 @@ export function buildNoticesEdition(source: string): NoticesEdition {
   let html = text.replace(style[0], '<link rel="stylesheet" href="/assets/notices.css">');
   for (const [re, what] of INLINE) if (re.test(html)) throw new Error(`the notices page carries ${what}`);
   html = html.replace(/<div class="wrap">/, `<div class="wrap">\n${BANNER}`);
-  // No long dash in the words a person reads (the house rule; src/web/plain-dashes.ts, as every page page() draws).
+  // No long dash in the words a person reads (the house rule; src/shared/plain-dashes.ts, as every page page() draws).
   html = plainDashes(html);
   if (!html.includes('draft-banner')) throw new Error('the notices page has no place for the draft banner');
   return { html, css: (style[1] ?? '') + BANNER_CSS };

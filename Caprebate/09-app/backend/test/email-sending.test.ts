@@ -1,5 +1,5 @@
 /**
- * 30 SEPTEMBER 2026 — EMAIL SENDING SWITCHED ON FOR TESTING (src/stubs/email-provider.ts, src/server.ts).
+ * 30 SEPTEMBER 2026 — EMAIL SENDING SWITCHED ON FOR TESTING (src/integrations/email/email-provider.ts, src/core/server.ts).
  *
  * Lakhbir: "swithc on sending emails" — "again remeber this is all a test and not the final version". Every email a
  * request saves to be sent is tried once before the answer finishes. A fake mail server only: nothing leaves the Mac.
@@ -10,9 +10,9 @@ import { createServer as createTcp, connect as netConnect, type Server } from 'n
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { secretsFromValues } from '../src/secrets.ts';
-import { isInventedAddress, withoutNotSentWords, NOT_SENT_WORDS } from '../src/stubs/email.ts';
+import { createApp } from '../src/core/server.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
+import { isInventedAddress, withoutNotSentWords, NOT_SENT_WORDS } from '../src/integrations/email/email.ts';
 
 const T = '2026-09-08T00:00:00.000Z';
 const LOGIN_KEYS = { IONOS_SMTP_HOST: 'smtp.ionos.co.uk', IONOS_SMTP_PORT: '465', IONOS_SMTP_USER: 'contact@caprebate.co.uk', IONOS_SMTP_PASSWORD: 'not-a-real-password' };

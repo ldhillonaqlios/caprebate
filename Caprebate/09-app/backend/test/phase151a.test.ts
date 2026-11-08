@@ -4,15 +4,15 @@
  * With NO NETWORK and on INVENTED data only (HM Land Registry's files, Ordnance Survey's grid and the councils' points
  * below are all made up; nothing was downloaded), these tests prove:
  *
- *   1. THE COUNCIL'S FILE — src/connectors/inspire-councils.ts pairs all 318 ONS council codes with HM Land Registry's
+ *   1. THE COUNCIL'S FILE — src/integrations/connectors/inspire-councils.ts pairs all 318 ONS council codes with HM Land Registry's
  *      318 files, each row re-derived here from the rule and the eight named pairs, and a code with no row is refused;
- *   2. THE POINT — src/connectors/ostn15.ts reproduces Ordnance Survey's own worked example of the projection, adds
+ *   2. THE POINT — src/integrations/connectors/ostn15.ts reproduces Ordnance Survey's own worked example of the projection, adds
  *      the grid's shifts by bilinear interpolation, and refuses (no grid, a datum not stated as ETRS89, outside the
  *      grid) rather than approximating. No point, no lookup: absent and "not sure" behave the same (N4);
- *   3. THE SITE AREA — src/connectors/site-area.ts, switched off as shipped, does nothing at all; switched on for a
+ *   3. THE SITE AREA — src/integrations/connectors/site-area.ts, switched off as shipped, does nothing at all; switched on for a
  *      test it reads the council's file (or both councils' files), stores site_area_m2 through the one door under
  *      HMLR_INSPIRE at grade B, and gives back no polygon and no coordinate;
- *   4. ONE FILE A COUNCIL A MONTH — src/connectors/inspire-store.ts keeps a council's file by council and release, for
+ *   4. ONE FILE A COUNCIL A MONTH — src/integrations/connectors/inspire-store.ts keeps a council's file by council and release, for
  *      no more than the licence row's 35 days, refuses a folder inside the repository, and one download serves two
  *      properties in the same council.
  */
@@ -24,24 +24,24 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { fixtureTransport, RateLimiter, type CallDeps, type Fixture } from '../src/connectors/http.ts';
-import { INSPIRE_AUTHORITY_FILES } from '../src/connectors/inspire-authorities.ts';
-import { INSPIRE_COUNCILS, NAMED_PAIRS, fileForOnsName, inspireFileForLad } from '../src/connectors/inspire-councils.ts';
+import { fixtureTransport, RateLimiter, type CallDeps, type Fixture } from '../src/integrations/connectors/http.ts';
+import { INSPIRE_AUTHORITY_FILES } from '../src/integrations/connectors/inspire-authorities.ts';
+import { INSPIRE_COUNCILS, NAMED_PAIRS, fileForOnsName, inspireFileForLad } from '../src/integrations/connectors/inspire-councils.ts';
 import {
   projectNationalGrid, etrs89ToBritishNationalGrid, ostn15GridFromRows, loadOstn15File, ostn15Grid, AIRY_1830, GRS80,
   type Ostn15Row, type Ostn15Grid,
-} from '../src/connectors/ostn15.ts';
-import { inspireFileStore, inspireReleaseOf, inspireStoreFromEnv, INSPIRE_KEEP_DAYS } from '../src/connectors/inspire-store.ts';
+} from '../src/integrations/connectors/ostn15.ts';
+import { inspireFileStore, inspireReleaseOf, inspireStoreFromEnv, INSPIRE_KEEP_DAYS } from '../src/integrations/connectors/inspire-store.ts';
 import {
   siteAreaFromLandBoundary, pointInBritishNationalGrid, homedataPointOf, HOMEDATA_COORDINATE_DATUM, SITE_AREA_GRADE_CEILING,
   type SiteAreaInput,
-} from '../src/connectors/site-area.ts';
-import { ingestRegisterRecord } from '../src/stubs/registers.ts';
-import { addressFields } from '../src/connectors/homedata.ts';
-import { assertNoUnauthorisedName } from '../src/registers/caprebate-name-exclusion.ts';
-import { newId } from '../src/users.ts';
-import * as B from '../src/registers/caprebate-boundary-import.ts';
-import { LICENCES } from '../src/registers/caprebate-source-register.ts';
+} from '../src/integrations/connectors/site-area.ts';
+import { ingestRegisterRecord } from '../src/integrations/register-ingest.ts';
+import { addressFields } from '../src/integrations/connectors/homedata.ts';
+import { assertNoUnauthorisedName } from '../src/integrations/registers/name-exclusion.ts';
+import { newId } from '../src/core/users.ts';
+import * as B from '../src/integrations/registers/boundary-import.ts';
+import { LICENCES } from '../src/integrations/registers/source-register.ts';
 import { zipOf } from './document-fixtures.ts';
 import { testApp, scalars, keys } from './helpers.ts';
 
@@ -395,7 +395,7 @@ describe('Phase 151a: one file a council a month, kept outside the repository fo
   });
 
   test('the daily sweep is one command: none set up deletes nothing, and a file past its days is deleted', () => {
-    const run = (env: Record<string, string>) => spawnSync(process.execPath, ['src/cli.ts', 'sweep-land-boundaries'],
+    const run = (env: Record<string, string>) => spawnSync(process.execPath, ['src/core/cli.ts', 'sweep-land-boundaries'],
       { cwd: join(HERE, '..'), env: { PATH: process.env['PATH'] ?? '', ...env }, encoding: 'utf8' });
     const none = run({});
     assert.equal(none.status, 0);

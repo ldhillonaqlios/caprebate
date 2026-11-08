@@ -7,7 +7,7 @@
  *     Connections page links it;
  *   - the key file in systemd's credentials folder ($CREDENTIALS_DIRECTORY/caprebate-secrets) is read first;
  *   - a key file with mode 644, or one another user owns, stops a start with CAPREBATE_PRODUCTION=1 and is only a
- *     warning without it - checked on the function and on a real start of src/server.ts;
+ *     warning without it - checked on the function and on a real start of src/core/server.ts;
  *   - no key is printed by any of it.
  * Every key value here is invented and every file is in a temporary folder outside the repository.
  */
@@ -17,13 +17,13 @@ import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { STUBS } from '../src/app.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { STUBS } from '../src/core/app.ts';
 import {
   CREDENTIAL_NAME, credentialsFile, forgetRegisteredSecretsForTest, isProduction, keyFileLooseness, keyFileStartCheck,
   loadSecrets, secretsPath,
-} from '../src/secrets.ts';
+} from '../src/core/secrets.ts';
 
 const BACKEND = join(import.meta.dirname, '..');
 /** Invented, long enough to be registered for redaction, and easy to search for in any output. */
@@ -197,7 +197,7 @@ function runServer(env: Record<string, string>, stopWhen: RegExp | null): Promis
   for (const [k, v] of Object.entries(process.env)) if (v !== undefined && k !== 'NODE_TEST_CONTEXT' && !k.startsWith('CAPREBATE_') && k !== 'CREDENTIALS_DIRECTORY') childEnv[k] = v;
   Object.assign(childEnv, { PORT: '0', CAPREBATE_DB: ':memory:', CAPREBATE_DOCS: mkdtempSync(join(tmpdir(), 'cb-161c-run-')) }, env);
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ['src/server.ts'], { cwd: BACKEND, env: childEnv, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, ['src/core/server.ts'], { cwd: BACKEND, env: childEnv, stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '';
     const timer = setTimeout(() => { child.kill('SIGKILL'); reject(new Error(`the server did not finish or start in time:\n${out}`)); }, 60_000);
     const seen = (b: Buffer) => {

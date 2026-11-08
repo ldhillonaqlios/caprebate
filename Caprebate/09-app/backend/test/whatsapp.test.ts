@@ -11,11 +11,11 @@ import { createHmac } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { fixtureTransport, liveTransport, type Fixture } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
-import { waNumber, whatsappMissing } from '../src/connectors/whatsapp.ts';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
+import { createApp } from '../src/core/server.ts';
+import { fixtureTransport, liveTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
+import { waNumber, whatsappMissing } from '../src/integrations/connectors/whatsapp.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
 
 const T = '2026-09-08T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';

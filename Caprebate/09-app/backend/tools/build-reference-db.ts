@@ -1,6 +1,6 @@
 /**
  * BUILD THE REFERENCE DATABASE — the quarterly refresh of the ONS postcode table and the OSTN15 grid. Phase 161h,
- * 7 November 2026 (src/web/reference-db.ts says why it is a database of its own).
+ * 7 November 2026 (src/integrations/postcodes/reference-db.ts says why it is a database of its own).
  *
  * RUN ON A COMPUTER, NEVER BY THE WEBSITE, in three steps (09-app/deploy/LIVE-RUNBOOK.md, "Refresh the postcode table"):
  *
@@ -22,9 +22,9 @@
 import { copyFileSync, existsSync, realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { loadOstn15File, OSTN15_POINTS } from '../src/connectors/ostn15.ts';
-import { OSTN15_SCHEMA } from '../src/web/reference-db.ts';
-import { isInside, repositoryRoot } from '../src/secrets.ts';
+import { loadOstn15File, OSTN15_POINTS } from '../src/integrations/connectors/ostn15.ts';
+import { OSTN15_SCHEMA } from '../src/integrations/postcodes/reference-db.ts';
+import { isInside, repositoryRoot } from '../src/core/secrets.ts';
 
 export type BuildResult = { readonly postcodes: number; readonly grid_points: number; readonly why: string };
 

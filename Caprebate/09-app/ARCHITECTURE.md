@@ -11,14 +11,14 @@ structure to allow us to make a change on one thing without breaking others". Th
 | Code | 289 TypeScript files, 114,559 lines in `09-app/backend/src`; 214 files (84,000 lines) in one folder, `src/web` |
 | The tangle | 43 business files (CRM, claims, portal, survey, finance, assessment and more) all reach each other through imports; 25 pairs import each other |
 | Crossings | 385 of 1,925 imports cross from one business area to another; CRM and the portal depend on each other both ways, and so do claims and survey |
-| Database calls | One gate (`src/db.ts`), but SQL is written in 105 files; the `claims` table is touched from 52 files, `users` from 69 |
+| Database calls | One gate (`src/core/db.ts`), but SQL is written in 105 files; the `claims` table is touched from 52 files, `users` from 69 |
 | Database | SQLite (Node's built-in driver locally, libsql/Turso on the website): 122 migrations, 197 tables, 441 triggers that guard the workflow rules |
 | Central files | `router.ts` (2,663 lines, 79 imports), `staff.ts` (60), `authz.ts` (130 actions in one table), `assets.ts` (all the CSS, the most edited file) |
 | Rules | Tax "readings" and switches are constants in code; a rulebook's version is only a filename; the engine package has never left version 0.1.0 |
 | Tests | 218 files, about 137 build the whole app on a real in-memory database; 120 are named by build phase, not by feature |
 
 What already works and stays: the claim calculator is its own package, reached through one file
-(`src/web/engine.ts`), and the website's copy is built from it and checked. `db.ts` is the only place SQL runs, and
+(`src/shared/engine.ts`), and the website's copy is built from it and checked. `db.ts` is the only place SQL runs, and
 `lint-sql` refuses SQL built from strings. `connectors/http.ts` is the only file that calls the network. `app.ts` builds
 everything from what it is given, so the whole app runs in memory in a test. `authorise()` is the one permission check.
 
@@ -99,7 +99,7 @@ business area is a module with a front door, and a check refuses any route round
 and kind, and each area's front door), the table owners (`tables.json`) and the baseline (`baseline.json`).
 `node tools/boundaries.cjs` (in `npm run check`) measured **2,162 breaks** on the day it started: rule 1, 1,030; rule 2,
 92 (all twelve areas sit in one cycle); rule 3, 868; rule 4, 172. `--counts` prints them by area; `--lower` takes off
-the ones a phase has removed.
+the ones a phase has removed. **Phase 161i (7 Nov 2026)** moved core, shared and integrations behind their doors: **1,612** (`--rebase`, logged in the baseline's history; rule 1 against those three from 656 to 96).
 
 The boundary check starts by **counting** today's breaks of rules 1 to 4 and writing them to a baseline file. From then
 on, any **new** break fails the build at once, and the count may only go down. Each regroup phase moves one group of

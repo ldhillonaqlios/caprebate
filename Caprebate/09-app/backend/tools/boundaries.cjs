@@ -33,6 +33,9 @@
  *   node tools/boundaries.cjs --counts    the breaks by area and rule
  *   node tools/boundaries.cjs --lower     take the breaks that are gone off the baseline
  *   node tools/boundaries.cjs --moved <old> <new>   a file that moved keeps its breaks under its new name (renames only)
+ *   node tools/boundaries.cjs --moved-map <file.json>   the same for many files at once
+ *   node tools/boundaries.cjs --rebase "<why>"   after a reviewed re-map: today's breaks become the baseline, only if the
+ *                                         total does not go up; logged in the baseline's history
  *   node tools/boundaries.cjs --self-test plant a break of each rule, a file with no area and a table with no owner;
  *                                         each must fail, and a clean tree must pass
  */
@@ -55,13 +58,14 @@ function loadTs(backendDir) {
 
 /**
  * The tables the migrations leave, in order: CREATE TABLE, DROP TABLE and ALTER TABLE ... RENAME TO. Then the one table
- * the database gate makes itself before any migration runs (schema_migrations, in src/db.ts), read from that file.
+ * the database gate makes itself before any migration runs (schema_migrations, in the database gate, src/core/db.ts), read from that file.
  */
 function tablesFromMigrations(dir) {
   const live = new Set();
-  const gate = path.join(dir, '..', 'src', 'db.ts');
+  // src/core/db.ts since Phase 161i (src/db.ts before it)
+  const gate = [path.join(dir, '..', 'src', 'core', 'db.ts'), path.join(dir, '..', 'src', 'core', 'db.ts')].find((g) => fs.existsSync(g)) ?? '';
   const texts = fs.readdirSync(dir).filter((n) => n.endsWith('.sql')).sort().map((f) => fs.readFileSync(path.join(dir, f), 'utf8'));
-  if (fs.existsSync(gate)) texts.unshift((fs.readFileSync(gate, 'utf8').match(/CREATE TABLE IF NOT EXISTS [a-z_]+/g) ?? []).join(';\n'));
+  if (gate !== '') texts.unshift((fs.readFileSync(gate, 'utf8').match(/CREATE TABLE IF NOT EXISTS [a-z_]+/g) ?? []).join(';\n'));
   for (const text of texts) {
     const sql = text.replace(/--[^\n]*/g, '');
     const re = /\bCREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z0-9_]*)|\bDROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?([a-z_][a-z0-9_]*)|\bALTER\s+TABLE\s+([a-z_][a-z0-9_]*)\s+RENAME\s+TO\s+([a-z_][a-z0-9_]*)/gi;
@@ -167,8 +171,8 @@ function measure({ backend, files, modules, tables, tableList, ts }) {
       if (!(hasDoor(b) && t === doorOf(b))) add(1, b, `${f} -> ${t}`);
     }
     if (e.kind === 'page' || e.kind === 'logic') {
-      if (imports.includes('src/db.ts')) add(4, e.area, `${f} : ${e.kind} imports the database gate (db.ts)`);
-      if (e.kind === 'logic' && (imports.includes('src/web/html.ts') || imports.includes('src/web/components.ts'))) add(4, e.area, `${f} : logic builds HTML`);
+      if (imports.includes('src/db.ts') || imports.includes('src/core/db.ts')) add(4, e.area, `${f} : ${e.kind} imports the database gate (db.ts)`);
+      if (e.kind === 'logic' && ['src/web/html.ts', 'src/web/components.ts', 'src/shared/html.ts', 'src/shared/components.ts'].some((h) => imports.includes(h))) add(4, e.area, `${f} : logic builds HTML`);
     }
     if (!/\.(ts|cjs|mjs|js)$/.test(f) || f.endsWith('.d.cts')) continue;
     let sql = false;
@@ -192,12 +196,17 @@ function measure({ backend, files, modules, tables, tableList, ts }) {
   return { breaks: out, problems, groups };
 }
 
-function flat(breaks) { const s = new Set(); for (const r of Object.keys(breaks)) for (const a of Object.keys(breaks[r])) for (const k of breaks[r][a]) s.add(`${r}|${a}|${k}`); return s; }
+/* PHASE 161i, 7 Nov 2026: A BREAK IS WHAT IT IS, NOT WHICH AREA IT IS COUNTED AGAINST. Its identity is its rule and its
+   key; the area is how it is counted. So placing a file in another area in modules.json (a reviewed change) moves its
+   breaks from one area's count to another's and adds none, and --lower regroups the baseline by today's areas. */
+function flat(breaks) { const m = new Map(); for (const r of Object.keys(breaks)) for (const a of Object.keys(breaks[r])) for (const k of breaks[r][a]) m.set(`${r}|${k}`, a); return m; }
 
-/** Compares a measure with the baseline: what is new (fails), what is gone (lower the baseline). */
+/** Compares a measure with the baseline: what is new (fails), what is gone (lower the baseline). Shown as rule|area|key. */
 function compare(now, baseline) {
   const a = flat(now.breaks), b = flat(baseline.breaks ?? {});
-  return { added: [...a].filter((k) => !b.has(k)).sort(), gone: [...b].filter((k) => !a.has(k)).sort() };
+  const show = (id, area) => { const i = id.indexOf('|'); return `${id.slice(0, i)}|${area}|${id.slice(i + 1)}`; };
+  return { added: [...a].filter(([id]) => !b.has(id)).map(([id, ar]) => show(id, ar)).sort(),
+    gone: [...b].filter(([id]) => !a.has(id)).map(([id, ar]) => show(id, ar)).sort() };
 }
 
 function counts(breaks) {
@@ -267,11 +276,24 @@ function run({ backend, files, write = null }) {
   if (!hasBase) return { now, problems: [...now.problems, 'there is no baseline (architecture/baseline.json)'], added: [], gone: [] };
   const base = readJson(basePath);
   const { added, gone } = compare(now, base);
+  if (typeof write === 'object' && write !== null && write.rebase !== undefined) {
+    /* PHASE 161i: A REVIEWED RE-MAP. When a phase places files in other areas or moves them behind front doors, some
+       breaks change their names or areas although nothing new was written. --rebase "<why>" takes today's breaks as the
+       baseline ONLY when the maps are clean and the TOTAL does not go up, and logs the date, the reason and both totals
+       in the baseline's history, so every rebase is in git and in the pull request. It is not for a new break in code. */
+    const before = flat(base.breaks).size, after = flat(now.breaks).size;
+    if (now.problems.length > 0) return { now, problems: [...now.problems, 'not rebased: fix the map problems first'], added, gone };
+    if (String(write.rebase).trim().length < 10) return { now, problems: ['not rebased: give the reason (--rebase "<why>")'], added, gone };
+    if (after > before) return { now, problems: [`not rebased: the total would go up, from ${before} to ${after}`], added, gone };
+    const history = [...(base.history ?? []), { date: new Date().toISOString().slice(0, 10), why: String(write.rebase).trim(), before, after, renamed_or_new: added.length, gone: gone.length }];
+    fs.writeFileSync(basePath, `${JSON.stringify({ ...base, history, breaks: now.breaks }, null, 1)}\n`);
+    return { now, problems: [], added: [], gone: [], rebased: { before, after } };
+  }
   if (write === 'lower') {
     if (added.length > 0 || now.problems.length > 0) return { now, problems: [...now.problems, 'not lowered: there are new breaks or map problems; fix them first'], added, gone };
-    const keep = flat(now.breaks);
+    /* Today's breaks, every one of which is in the baseline (there is no new one), grouped by today's areas. */
     const lowered = {};
-    for (const r of Object.keys(base.breaks)) { lowered[r] = {}; for (const a of Object.keys(base.breaks[r])) { const ks = base.breaks[r][a].filter((k) => keep.has(`${r}|${a}|${k}`)); if (ks.length) lowered[r][a] = ks; } }
+    for (const r of Object.keys(now.breaks)) { lowered[r] = {}; for (const a of Object.keys(now.breaks[r])) if (now.breaks[r][a].length) lowered[r][a] = [...now.breaks[r][a]]; }
     fs.writeFileSync(basePath, `${JSON.stringify({ ...base, breaks: lowered }, null, 1)}\n`);
     return { now, problems: [], added: [], gone: [], lowered: gone.length };
   }
@@ -290,9 +312,9 @@ function selfTest() {
   const backend = path.join(__dirname, '..');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-boundaries-'));
   const put = (rel, body) => { fs.mkdirSync(path.dirname(path.join(tmp, rel)), { recursive: true }); fs.writeFileSync(path.join(tmp, rel), body); };
-  const doors = { ...Object.fromEntries(AREAS.map((a) => [a, ['core', 'shared', 'integrations'].includes(a) ? `src/${a}/index.ts` : `src/modules/${a}/index.ts`])), shared: 'src/web/html.ts' };
+  const doors = { ...Object.fromEntries(AREAS.map((a) => [a, ['core', 'shared', 'integrations'].includes(a) ? `src/${a}/index.ts` : `src/modules/${a}/index.ts`])), shared: 'src/shared/html.ts' };
   const files = {
-    'src/db.ts': { area: 'core', kind: 'data' }, 'src/web/html.ts': { area: 'shared', kind: 'other' },
+    'src/core/db.ts': { area: 'core', kind: 'data' }, 'src/shared/html.ts': { area: 'shared', kind: 'other' },
     'src/modules/claims/index.ts': { area: 'claims', kind: 'other' }, 'src/modules/claims/data.ts': { area: 'claims', kind: 'data' },
     'src/modules/claims/logic.ts': { area: 'claims', kind: 'logic' }, 'src/modules/crm/page.ts': { area: 'crm', kind: 'page' },
     'src/core/index.ts': { area: 'core', kind: 'other' },
@@ -300,13 +322,13 @@ function selfTest() {
   const write = (m, extra = {}) => { put('architecture/modules.json', JSON.stringify({ doors, files: { ...files, ...extra } })); };
   put('migrations/001.sql', 'CREATE TABLE claims (id TEXT);\nCREATE TABLE leads (id TEXT);\nCREATE TABLE old (id TEXT);\nALTER TABLE old RENAME TO kept;\n');
   put('architecture/tables.json', JSON.stringify({ tables: { claims: 'claims', leads: 'crm', kept: 'core' } }));
-  put('src/db.ts', 'export class Db {}\n');
-  put('src/web/html.ts', 'export const h = 1;\n');
+  put('src/core/db.ts', 'export class Db {}\n');
+  put('src/shared/html.ts', 'export const h = 1;\n');
   put('src/core/index.ts', "export { Db } from '../db.ts';\n");
   put('src/modules/claims/index.ts', "export { one } from './data.ts';\n");
-  put('src/modules/claims/data.ts', "import type { Db } from '../../db.ts';\nexport const one = (db: Db) => db.get('SELECT id FROM claims WHERE id = ?');\n");
+  put('src/modules/claims/data.ts', "import type { Db } from '../../core/db.ts';\nexport const one = (db: Db) => db.get('SELECT id FROM claims WHERE id = ?');\n");
   put('src/modules/claims/logic.ts', "import { one } from './data.ts';\nexport const two = one;\n");
-  put('src/modules/crm/page.ts', "import { one } from '../claims/index.ts';\nimport { h } from '../../web/html.ts';\nexport const p = [one, h];\n");
+  put('src/modules/crm/page.ts', "import { one } from '../claims/index.ts';\nimport { h } from '../../shared/html.ts';\nexport const p = [one, h];\n");
   write();
   const list = () => listSrc(tmp);
   const cases = [];
@@ -336,10 +358,10 @@ function selfTest() {
   }
   check('rule 3: SQL on a table from a file that is not its owner\'s data file fails', true, ...plant('src/modules/claims/logic.ts', "export const two = (db: any) => db.get('SELECT id FROM leads');\n"));
   check('rule 4: a page that runs SQL fails', true, ...plant('src/modules/crm/page.ts', "export const p = (db: any) => db.all('SELECT id FROM leads');\n"));
-  check('rule 4: logic that builds HTML fails (shared\'s door is not gone round: it imports the door)', 4, ...plant('src/modules/claims/logic.ts', "import { h } from '../../web/html.ts';\nexport const two = h;\n"));
+  check('rule 4: logic that builds HTML fails (shared\'s door is not gone round: it imports the door)', 4, ...plant('src/modules/claims/logic.ts', "import { h } from '../../shared/html.ts';\nexport const two = h;\n"));
   check('rule 3: a statement wrapped across lines is read whole', true, ...plant('src/modules/claims/logic.ts', "export const two = (db: any) => db.get('SELECT id ' +\n  'FROM leads');\n"));
   check('a file with no area fails', true, ...plant('src/modules/crm/new.ts', 'export const x = 1;\n'));
-  check('an import type is not an import', false, ...plant('src/modules/claims/logic.ts', "import type { Db } from '../../db.ts';\nexport const two = (d: Db) => d;\n"));
+  check('an import type is not an import', false, ...plant('src/modules/claims/logic.ts', "import type { Db } from '../../core/db.ts';\nexport const two = (d: Db) => d;\n"));
   check('prose that says select and from is not SQL', false, ...plant('src/modules/claims/logic.ts', "export const two = 'select the claims from the list';\n"));
   {
     const mig = keep('migrations/001.sql');
@@ -370,10 +392,23 @@ function selfTest() {
   {
     const b0 = { breaks: { 1: { claims: ['src/a.ts -> src/b.ts'] }, 3: { crm: ['src/a.ts : leads'] } } };
     const m1 = renameInBaseline(b0, 'src/a.ts', 'src/modules/x/a.ts');
-    const flatKeys = (b) => [...flat(b.breaks)].length;
+    const flatKeys = (b) => flat(b.breaks).size;
     cases.push(['--moved renames a file in every key, and adds and removes none', m1.renamed === 2 && flatKeys(m1.base) === flatKeys(b0)
       && JSON.stringify(m1.base).includes('src/modules/x/a.ts -> src/b.ts') && !JSON.stringify(m1.base).includes('"src/a.ts'), [m1]]);
     cases.push(['--moved refuses a name already in the baseline', renameInBaseline(b0, 'src/a.ts', 'src/b.ts').renamed === 0, []]);
+  }
+  {
+    // --rebase: refused when the total would go up; allowed (and logged) when it does not
+    const base = path.join(tmp, 'architecture', 'baseline.json');
+    fs.rmSync(base); run({ backend: tmp, files: list(), write: 'first' });
+    const [m, u] = plant('src/modules/crm/page.ts', "import { one } from '../claims/data.ts';\nexport const p = one;\n");
+    m();
+    const up = run({ backend: tmp, files: list(), write: { rebase: 'a planted break, which must not be taken' } });
+    cases.push(['--rebase refuses when the total would go up', up.problems.length > 0 && up.rebased === undefined, up.problems]);
+    fs.rmSync(base); run({ backend: tmp, files: list(), write: 'first' });
+    u();
+    const down = run({ backend: tmp, files: list(), write: { rebase: 'the planted break was taken out again' } });
+    cases.push(['--rebase takes a lower total and logs it in the history', down.rebased !== undefined && readJson(base).history?.length === 1, down.problems]);
   }
   fs.rmSync(tmp, { recursive: true, force: true });
   let ok = true;
@@ -387,6 +422,20 @@ module.exports = { AREAS, KINDS, RULES, measure, compare, counts, tablesFromMigr
 if (require.main === module) {
   const backend = path.join(__dirname, '..');
   if (process.argv.includes('--self-test')) process.exit(selfTest() ? 0 : 1);
+  const mm = process.argv.indexOf('--moved-map');
+  if (mm > -1) {
+    /* PHASE 161i: many moves at once - a JSON file of { "src/old.ts": "src/new.ts", ... }. Renames only, all or none. */
+    const basePath = path.join(backend, 'architecture', 'baseline.json');
+    let base = readJson(basePath); let n = 0;
+    for (const [from, to] of Object.entries(readJson(process.argv[mm + 1]))) {
+      const r = renameInBaseline(base, from, to);
+      if (r.renamed === 0 && !r.why.startsWith('the baseline names no break')) { console.error(`not renamed (nothing written): ${from} -> ${to}: ${r.why}`); process.exit(1); }
+      base = r.base; n += r.renamed;
+    }
+    fs.writeFileSync(basePath, `${JSON.stringify(base, null, 1)}\n`);
+    console.log(`boundaries — ${n} break names moved with their files; none added, none removed.`);
+    process.exit(0);
+  }
   const mv = process.argv.indexOf('--moved');
   if (mv > -1) {
     const from = process.argv[mv + 1], to = process.argv[mv + 2];
@@ -398,7 +447,8 @@ if (require.main === module) {
     console.log(`boundaries — ${r.renamed} break${r.renamed === 1 ? '' : 's'} of ${from} now named ${to}; none added, none removed.`);
     process.exit(0);
   }
-  const write = process.argv.includes('--write-baseline') ? 'first' : process.argv.includes('--lower') ? 'lower' : null;
+  const rb = process.argv.indexOf('--rebase');
+  const write = rb > -1 ? { rebase: process.argv[rb + 1] ?? '' } : process.argv.includes('--write-baseline') ? 'first' : process.argv.includes('--lower') ? 'lower' : null;
   const r = run({ backend, write });
   const rows = counts(r.now.breaks);
   if (process.argv.includes('--counts')) {
@@ -409,6 +459,7 @@ if (require.main === module) {
     console.log(`cycles between areas: ${r.now.groups.map((g) => g.join(' + ')).join('; ') || 'none'}`);
   }
   const lines = say(r);
+  if (r.rebased !== undefined) { console.log(`boundaries — rebased: ${r.rebased.before} breaks before, ${r.rebased.after} now (logged in the baseline's history).`); process.exit(0); }
   if (write === 'lower' && r.lowered !== undefined) { console.log(`boundaries — the baseline lowered by ${r.lowered}.`); process.exit(0); }
   if (lines.length) { console.error(`boundaries FAILED (09-app/ARCHITECTURE.md, rules 1 to 4):\n${lines.join('\n')}`); process.exit(1); }
   const total = rows.reduce((s, x) => s + x.total, 0);

@@ -5,7 +5,7 @@
  * Lakhbir, 18 September 2026: "When on a client page there needs to be the ability to free-type emails, which should
  * come from contact@caprebate.co.uk."
  *
- * The pages are src/web/free-email-pages.ts. The sending switch and the mail adapter are src/stubs/email-provider.ts.
+ * The pages are src/web/free-email-pages.ts. The sending switch and the mail adapter are src/integrations/email/email-provider.ts.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHAT THIS HOLDS, AND IT IS ASKED ON THE SERVER EVERY TIME
@@ -27,7 +27,7 @@
  *   page says so.
  *   "DO NOT CONTACT" IS REFUSED, as it always has been — by this store before anything is written, by the transport, and
  *   by the outbox's trigger.
- *   FROM AND REPLY-TO are the one sender setting (src/stubs/email.ts `currentSender`), stamped on every row.
+ *   FROM AND REPLY-TO are the one sender setting (src/integrations/email/email.ts `currentSender`), stamped on every row.
  *   EVERY EMAIL IS ON THE COMPANY'S TIMELINE (src/web/timeline.ts reads the outbox), tagged to the claim if one was
  *   picked; a lead's is on the lead's.
  *
@@ -35,26 +35,26 @@
  * The audit line names ids only — never the subject, the body or an address.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
-import { currentSender, outboxTransport, type Sender } from '../stubs/email.ts';
-import { EMAIL_SENDING, sendingMissing, sendingOn, type EmailSending, type MailWhere, type SmtpLogin } from '../stubs/email-provider.ts';
-import { NotFoundAsRefusal } from './backoffice.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
+import { currentSender, outboxTransport, type Sender } from '../integrations/index.ts';
+import { EMAIL_SENDING, sendingMissing, sendingOn, type EmailSending, type MailWhere, type SmtpLogin } from '../integrations/index.ts';
+import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import * as C from './crm.ts';
 import * as D from './documents.ts';
 import { assertLeadSection } from './leads.ts';
 import { activeTemplates, freeTextRefusal, mergePlain, mergeValues, templateRefusal } from './templates.ts';
-import { propertyIn } from './components.ts';
-import { localStamp } from './localtime.ts';
-import { KEEP_ORIGINALS } from './originals.ts';
+import { propertyIn } from '../shared/index.ts';
+import { localStamp } from '../shared/index.ts';
+import { KEEP_ORIGINALS } from '../shared/index.ts';
 import { emailChains, reSubject, STATE_WORDS, type EmailChain } from './email-chains.ts';
 
 export type EmailDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
   /** The sending switch and the provider's login. Tests pass their own; the application passes EMAIL_SENDING. */
   sending?: EmailSending; login?: SmtpLogin | null;
-  /** 2 Oct 2026: where the app runs (src/connectors/place.ts). The application passes it; absent, not asked. */
+  /** 2 Oct 2026: where the app runs (src/integrations/connectors/place.ts). The application passes it; absent, not asked. */
   where?: MailWhere;
 };
 

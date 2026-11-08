@@ -15,15 +15,15 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import type { Actor } from '../src/authz.ts';
-import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import type { Actor } from '../src/core/authz.ts';
+import { fixtureTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
 import {
   IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, identityCheckMissing, identityTestingWarning, sentUnderTestingWaiver,
   type IdentityCheckConfig,
-} from '../src/connectors/identity-check.ts';
+} from '../src/integrations/connectors/identity-check.ts';
 import { identityPanel, sendIdentityCheck } from '../src/web/identity-checks.ts';
 
 const KEYS = { DIDIT_API_KEY: 'test-didit-key-not-real-151h', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-151h', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151h00000001' };

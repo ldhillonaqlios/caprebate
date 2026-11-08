@@ -18,20 +18,20 @@
  * no target, the tab the server chose shows.
  */
 
-import { h, raw, type Safe } from './html.ts';
-import { localStamp } from './localtime.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
+import { localStamp } from '../shared/index.ts';
 import type { ChecksPanel, StepView } from './approvals.ts';
 import type { SourcesPanel } from './research.ts';
-import type { QuickAction, SectionContext, SectionSpec, SectionStatus } from './components.ts';
-import { section, SECTION_STATUS_WORDS } from './components.ts';
+import type { QuickAction, SectionContext, SectionSpec, SectionStatus } from '../shared/index.ts';
+import { section, SECTION_STATUS_WORDS } from '../shared/index.ts';
 import { clientProgress, whyNotMoved } from './tell-and-move.ts';
 import { filesButton } from './client-files-pages.ts';
-import type { Db } from '../db.ts';
+import type { Db } from '../core/index.ts';
 import type { ClaimSummary } from './crm.ts';
-import { claimHref, claimRef, propertyIn } from './components.ts';
-import { dueReading } from './localtime.ts';
-import { groupBand, lateBadge, noDateBadge, stageGroupOf } from './look.ts';
-import { setSubMenu } from './navigation.ts';
+import { claimHref, claimRef, propertyIn } from '../shared/index.ts';
+import { dueReading } from '../shared/index.ts';
+import { groupBand, lateBadge, noDateBadge, stageGroupOf } from '../core/index.ts';
+import { setSubMenu } from '../core/navigation.ts';
 
 export type TabKey = 'chat' | 'claims' | 'properties' | 'questions' | 'people' | 'checks' | 'files' | 'activity';
 
@@ -211,7 +211,7 @@ export function presentTabs(sections: readonly { readonly id: string }[]): (read
 }
 
 /**
- * THE CLIENT'S OWN MENU, opening out under Clients in the left-hand menu (src/web/navigation.ts, `setSubMenu`): the
+ * THE CLIENT'S OWN MENU, opening out under Clients in the left-hand menu (src/core/navigation.ts, `setSubMenu`): the
  * client's name; Overview; each claim by its site and stage (never its number, which is never a link's words — Phase
  * 134) with its next step's lateness; then the page's parts. `current` is the claim open, or null on the company's page.
  */

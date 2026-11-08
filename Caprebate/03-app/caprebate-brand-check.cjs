@@ -63,7 +63,8 @@ const vm = require("vm");
 const { pathToFileURL } = require("url");
 
 const ROOT = path.join(__dirname, "..");
-const BACKEND = path.join(ROOT, "09-app", "backend", "src", "web");
+// PHASE 161i, 7 Nov 2026: assets.ts and voice.ts moved from src/web/ to src/shared/ (the CSS itself is src/styles/site.css, read by assets.ts)
+const BACKEND = path.join(ROOT, "09-app", "backend", "src", "shared");
 const LOGO_INK = path.join(ROOT, "04-phase-work", "phase133c", "brand-assets", "caprebate_logo_monoink_924.png");
 const arg = (k) => { const i = process.argv.indexOf(k); return i >= 0 ? process.argv[i + 1] : null; };
 

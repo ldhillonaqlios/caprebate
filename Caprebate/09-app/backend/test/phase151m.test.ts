@@ -15,11 +15,11 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../src/server.ts';
-import { seed, SEED_PASSWORD } from '../src/seed.ts';
-import { codeAt, stepAt } from '../src/totp.ts';
-import * as SI from '../src/web/sign-in.ts';
-import * as EP from '../src/stubs/email-provider.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed, SEED_PASSWORD } from '../src/core/seed.ts';
+import { codeAt, stepAt } from '../src/core/totp.ts';
+import * as SI from '../src/core/sign-in.ts';
+import * as EP from '../src/integrations/email/email-provider.ts';
 
 const NOW = '2026-09-28T10:00:00.000Z';
 const NOW_MS = Date.parse(NOW);
@@ -407,8 +407,8 @@ describe('151m · 4 · the JSON API walks the same path, on the same functions',
       assert.equal((await w.api('/api/login/step/recovery', { step_token: t4, code: codes[2] })).status, 400, 'an old code still works');
       assert.equal((await w.api('/api/login/step/recovery', { step_token: t4, code: next[0] })).status, 200);
       assert.equal((await w.api('/api/account/recovery-codes', {})).status, 401, 'new codes without a session');
-      // one implementation: server.ts calls the functions of src/web/sign-in.ts and hashes nothing itself
-      const src = readFileSync(join(import.meta.dirname, '..', 'src', 'server.ts'), 'utf8');
+      // one implementation: server.ts calls the functions of src/core/sign-in.ts and hashes nothing itself
+      const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'server.ts'), 'utf8');
       assert.match(src, /SI\.submitRecoveryCode\(/);
       assert.match(src, /SI\.makeNewRecoveryCodes\(/);
       assert.doesNotMatch(src, /scrypt|recovery_codes WHERE/);
@@ -433,7 +433,7 @@ describe('151m · 4 · the JSON API walks the same path, on the same functions',
 
 describe('151m · 5 · the words: the step page, Help and the guide name recovery codes', () => {
   test('Help and the guide say what they are, where to keep them, and what to do when they run out', () => {
-    const help = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'help-content.ts'), 'utf8');
+    const help = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'help-content.ts'), 'utf8');
     const guide = readFileSync(join(import.meta.dirname, '..', '..', 'CAPREBATE-ADMIN-AND-USER-GUIDE.md'), 'utf8');
     for (const [name, text] of [['Help', help], ['the guide', guide]] as const) {
       assert.match(text, /recovery code/i, `${name} does not mention recovery codes`);

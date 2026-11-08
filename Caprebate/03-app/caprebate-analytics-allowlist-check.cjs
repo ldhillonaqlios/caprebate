@@ -141,8 +141,9 @@ function readTree(sitePath) {
     .map(f => ({ name: "03-app/" + f, text: fs.readFileSync(path.join(APP, f), "utf8") }));
   let ts = [];
   try {
-    ts = fs.readdirSync(WEB).filter(f => /\.ts$/.test(f))
-      .map(f => ({ name: "09-app/backend/src/web/" + f, text: fs.readFileSync(path.join(WEB, f), "utf8") }));
+    /* PHASE 161i, 7 Nov 2026: views and page parts also live in src/core/ and src/shared/ now; all three are read */
+    ts = ["web", "core", "shared"].flatMap(d => fs.readdirSync(path.join(WEB, "..", d)).filter(f => /\.ts$/.test(f))
+      .map(f => ({ name: "09-app/backend/src/" + d + "/" + f, text: fs.readFileSync(path.join(WEB, "..", d, f), "utf8") })));
   } catch (e) { cannot("cannot read " + WEB + " - " + e.message); }
   if (!ts.length) cannot("no portal views found under " + WEB);
   return { siteName: path.basename(sitePath), site, html, ts };

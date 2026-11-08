@@ -7,16 +7,16 @@
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { seed } from '../src/seed.ts';
-import { ingestRegisterRecord, planResearch, gateStatus } from '../src/stubs/registers.ts';
-import { NameExclusionError, assertNoUnauthorisedName } from '../src/registers/caprebate-name-exclusion.ts';
+import { seed } from '../src/core/seed.ts';
+import { ingestRegisterRecord, planResearch, gateStatus } from '../src/integrations/register-ingest.ts';
+import { NameExclusionError, assertNoUnauthorisedName } from '../src/integrations/registers/name-exclusion.ts';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { STUBS } from '../src/app.ts';
-import { APP_ROLES } from '../src/roles.ts';
+import { STUBS } from '../src/core/app.ts';
+import { APP_ROLES } from '../src/core/roles.ts';
 import { testApp, scalars } from './helpers.ts';
-import { newId } from '../src/users.ts';
+import { newId } from '../src/core/users.ts';
 
 describe('the seed', () => {
   test('covers all five sectors, at different stages', async () => {
@@ -189,7 +189,7 @@ describe('N2 — the name exclusion register is WIRED IN, not restated', () => {
 
   /* AND THERE IS ONE DOOR. If a second file could write register_records, the
      assertion in registers.ts would guard one path and not the other. */
-  test('src/stubs/registers.ts is the only file under src containing INSERT INTO register_records', () => {
+  test('src/integrations/register-ingest.ts is the only file under src containing INSERT INTO register_records', () => {
     // fileURLToPath, not `.pathname`: this tree's path has spaces, and `.pathname` keeps them as %20.
     const SRC = fileURLToPath(new URL('../src/', import.meta.url));
     const hits: string[] = [];
@@ -202,7 +202,7 @@ describe('N2 — the name exclusion register is WIRED IN, not restated', () => {
       }
     };
     walk(SRC);
-    assert.deepEqual(hits, ['stubs/registers.ts']);
+    assert.deepEqual(hits, ['integrations/register-ingest.ts']);
   });
 
   test('an unknown SOURCE fails closed', async () => {

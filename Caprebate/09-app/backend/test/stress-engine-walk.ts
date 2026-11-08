@@ -13,7 +13,7 @@
 import * as ENGINE from '../../engine/src/index.ts';
 import * as FUNNEL4 from '../src/web/funnel4.ts';
 import * as SESSION from '../src/web/funnel-session.ts';
-import * as SR from '../src/web/shown-range.ts';
+import * as SR from '../src/shared/shown-range.ts';
 
 // Walked as untyped, as the harness walked them: the grids feed every string a person could type, typed or not.
 const E: any = ENGINE, F4: any = FUNNEL4, FS: any = SESSION;

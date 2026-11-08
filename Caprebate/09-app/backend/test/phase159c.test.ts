@@ -36,9 +36,9 @@ import * as PS from '../src/web/pack-sums.ts';
 import * as SH from '../src/web/pack-sheets.ts';
 import * as PE from '../src/web/property-events.ts';
 import { sessionFromFunnel } from '../src/web/funnel-session.ts';
-import { estimate } from '../src/web/engine.ts';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
+import { estimate } from '../src/shared/engine.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
 
 type S = Record<string, unknown>;
 type App = Awaited<ReturnType<typeof testApp>>;

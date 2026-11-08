@@ -26,8 +26,8 @@
  * write is `compliance.read` or `compliance.write`, which no CLIENT holds.
  */
 
-import type { Db } from '../db.ts';
-import type { Actor } from '../authz.ts';
+import type { Db } from '../core/index.ts';
+import type { Actor } from '../core/index.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, NotFoundAsRefusal, record, requiredText, textField,
   TWO_PERSON_LIMITATION, settingReading, ukDay, vocabField, words,

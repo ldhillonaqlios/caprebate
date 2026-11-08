@@ -24,9 +24,9 @@
  * follows Lakhbir's decision of 1 October 2026 that the surveyor works from a pre-filled pack and approves it.
  */
 import { vatReading, VAT_POSITION_CODES, type VatReading } from './pack-vat.ts';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, type Actor } from '../authz.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, type Actor } from '../core/index.ts';
 import { packJob, type PackJob } from './surveyor.ts';
 import { linesForSector, type LineTemplate } from './pack-lines.ts';
 import {
@@ -36,7 +36,7 @@ import {
 import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from './property-events.ts';
 import { legalVerdictForJob } from './pack-legal.ts';
 import { applyGrants, payerReduces, type GrantReading, type GrantSwitches } from './pack-grants.ts';
-import { moneyReadingsHere, type MoneyReadings } from './money-readings.ts';
+import { moneyReadingsHere, type MoneyReadings } from '../shared/index.ts';
 import { acquisitionDateReading, elementName, latestFacts, packGrantsFor } from './claim-facts.ts';
 import { bcisDataHere, bcisDrafts, bcisLocationNamed, indexBetween, type BcisDraft, type RateBasis } from './bcis-data.ts';
 import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from './who-claims.ts';

@@ -12,8 +12,8 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
-import { Db, migrate } from '../src/db.ts';
-import { MIGRATIONS_DIR } from '../src/app.ts';
+import { Db, migrate } from '../src/core/db.ts';
+import { MIGRATIONS_DIR } from '../src/core/app.ts';
 
 const BACKEND = join(import.meta.dirname, '..');
 const REPO = join(BACKEND, '..', '..', '..');

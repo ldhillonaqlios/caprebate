@@ -2341,7 +2341,7 @@ if (startSuite("J", "Phase 13 — document_property_match")) {
   try {
     DPM = require(P3 + "/caprebate-document-property-match.ts");
     RECON = require(P3 + "/caprebate-reconciliation.ts");
-    REG = require(path.join(APP_SRC, "registers", "caprebate-source-register.ts"));
+    REG = require(path.join(APP_SRC, "integrations", "registers", "source-register.ts"));
   } catch (e) {
     dpmError = e;
   }
@@ -3065,7 +3065,7 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
        still requires it on disk, at its new path, because it is the only
        record of the screen sequence as it was first drawn. */
     ["journey wireframe (archived by Phase 104)", "_archive/superseded/caprebate-journey-wireframe.html"],
-    ["the application that replaced it", "09-app/backend/src/web/router.ts"],
+    ["the application that replaced it", "09-app/backend/src/core/router.ts"],
     ["CTA switch table", "01-rulebooks/Caprebate-Phase-51-CTA-Switch-Table-v1.md"],
     ["upload handler", "09-app/backend/src/documents/caprebate-upload-handler.ts"],
   ];
@@ -3129,7 +3129,8 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
      "N3 · RECEIPT_CONTRACT", "N4 · Unknown never routes to the favourable branch"]
       .filter(n => spec.indexOf(n) < 0), []);
   check("M4a — and a stub table naming every stub's file",
-    ["src/stubs/email.ts", "src/stubs/signature.ts", "src/stubs/registers.ts",
+    /* PHASE 161i, 7 Nov 2026: the stubs moved into src/integrations/ */
+    ["src/integrations/email/email.ts", "src/integrations/signature.ts", "src/integrations/register-ingest.ts",
      "src/web/uploads.ts"].filter(f => spec.indexOf(f) < 0), []);
 
   /* THE ONE THAT CATCHES THE FAILURE THIS DOCUMENT EXISTS TO PREVENT.
@@ -3138,7 +3139,7 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
      shorter list than the code's and a reader would trust the shorter one.
      Phase 108 found exactly that: the text extractor was a stub in prose, in
      neither list. */
-  const appTs = fs.readFileSync(path.join(ROOT, "09-app/backend/src/app.ts"), "utf8");
+  const appTs = fs.readFileSync(path.join(ROOT, "09-app/backend/src/core/app.ts"), "utf8");
   const stubModules = (appTs.slice(appTs.indexOf("export const STUBS"))
     .match(/module: '([^']+)'/g) || []).map(m => m.slice(10, -1));
   check("M4a — every module in the code's own STUBS list appears in the spec's stub table",
@@ -6621,7 +6622,7 @@ if (startSuite("X", "Phase 132 — s.33B, the company rate, the taper band, part
    ============================================================================= */
 if (startSuite("Y", "Phase 132 — N2, the engine registry against the name-exclusion policy")) {
   let NX = null, nxError = null;
-  try { NX = require(path.join(APP_SRC, "registers", "caprebate-name-exclusion.ts")); } catch (e) { nxError = e; }
+  try { NX = require(path.join(APP_SRC, "integrations", "registers", "name-exclusion.ts")); } catch (e) { nxError = e; }
   if (!NX || typeof NX.assertNoUnauthorisedName !== "function") {
     check("Y0 — the Phase 3 name-exclusion module loads", String(nxError || "no assertNoUnauthorisedName export"), "no error");
   } else {

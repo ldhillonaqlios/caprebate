@@ -1,5 +1,5 @@
 /**
- * 29 SEPTEMBER 2026 — THE CONTACT FORM'S SECURITY CHECK, ON THE SERVER (src/connectors/turnstile.ts).
+ * 29 SEPTEMBER 2026 — THE CONTACT FORM'S SECURITY CHECK, ON THE SERVER (src/integrations/connectors/turnstile.ts).
  *
  * The home page runs Cloudflare Turnstile in the browser; this proves the server now asks Cloudflare whether the
  * answer is real before an enquiry is kept, and refuses it when not. Recorded answers only: nothing here reaches
@@ -12,14 +12,14 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
-import { secretsFromValues, SECRET_KEYS } from '../src/secrets.ts';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
+import { createApp } from '../src/core/server.ts';
+import { fixtureTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues, SECRET_KEYS } from '../src/core/secrets.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
 import {
   checkTurnstile, turnstileSiteKey, turnstileWhy, withSiteKey, refusalWords,
   TURNSTILE_ENDPOINT, TURNSTILE_TEST_SITE_KEY,
-} from '../src/connectors/turnstile.ts';
+} from '../src/integrations/connectors/turnstile.ts';
 
 const TEST_SECRET_PASSES = '1x0000000000000000000000000000000AA';
 const TEST_SECRET_FAILS = '2x0000000000000000000000000000000AA';

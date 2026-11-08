@@ -1,5 +1,5 @@
 /**
- * 1 OCTOBER 2026 — A CONNECTION TURSO DROPPED IS OPENED AGAIN (src/db.ts, droppedConnection).
+ * 1 OCTOBER 2026 — A CONNECTION TURSO DROPPED IS OPENED AGAIN (src/core/db.ts, droppedConnection).
  *
  * The test website's build stopped part way through refilling its lasting database, every time, with Turso's
  * "stream not found" — so the database stayed half filled, every copy of the website ran on its own memory, and replies
@@ -12,7 +12,7 @@ import { createRequire } from 'node:module';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Db, droppedConnection, type Engine } from '../src/db.ts';
+import { Db, droppedConnection, type Engine } from '../src/core/db.ts';
 
 const DROPPED = 'Hrana(Api("status=404 Not Found, body={\\"error\\":\\"stream not found: b66b9865:5418346\\"}"))';
 

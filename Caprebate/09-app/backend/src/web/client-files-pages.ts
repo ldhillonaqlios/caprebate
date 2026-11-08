@@ -22,21 +22,21 @@
  * dropped onto it, so the drop area is the picker, drawn large.
  *
  * NOTHING HERE DECIDES WHO SEES WHAT. src/web/documents.ts builds the folder and asks `document.read` of every file;
- * src/authz.ts decides whether a client may see a file.
+ * src/core/authz.ts decides whether a client may see a file.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import { authorise, type Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { badge, breadcrumb, claimRef, highlights, propertyIn, savedMessage, why } from './components.ts';
+import type { App } from '../core/app.ts';
+import { authorise, type Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { badge, breadcrumb, claimRef, highlights, propertyIn, savedMessage, why } from '../shared/index.ts';
 import * as C from './crm.ts';
 import * as D from './documents.ts';
-import type { FsObjectStore } from './objectstore.ts';
-import { piecedFields, singleFile } from './multipart.ts';
-import { piecesOf, piecesPage } from './upload-pieces.ts';
+import type { FsObjectStore } from '../shared/objectstore.ts';
+import { piecedFields, singleFile } from '../core/index.ts';
+import { piecesOf, piecesPage } from '../core/index.ts';
 import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals, readerFor, DAMAGED_PDF } from './uploads.ts';
-import { UPLOAD_LIMITS, pdfLooksComplete, sniffAccepted } from './upload-handler-port.ts';
+import { UPLOAD_LIMITS, pdfLooksComplete, sniffAccepted } from '../shared/upload-handler-port.ts';
 import { NO_DUE_DATE } from './tasks.ts';
 import { ANSWER_WORDS, EARLY_VOUCH_PREFIX, VOUCH_ANSWERS, earlyVouchesFrom } from './document-reading.ts';
 
@@ -111,7 +111,7 @@ export async function readUpload(
 ): Promise<{ ok: true; bytes: Uint8Array; fields: Record<string, string> } | { ok: false; why: string }> {
   let raw0: Buffer;
   try { raw0 = await body(req, MAX_BODY); } catch { return { ok: false, why: TOO_BIG }; }
-  // PHASE 160e: a file over Vercel's 4.5 MB a request was sent first in pieces (src/web/upload-pieces.ts); the form
+  // PHASE 160e: a file over Vercel's 4.5 MB a request was sent first in pieces (src/core/upload-pieces.ts); the form
   // comes with its file box empty and the send's id in `pieces`. Everything after this reads the bytes as before.
   const sent = pieces === undefined ? null : piecedFields(new Uint8Array(raw0), req.headers['content-type']);
   if (sent !== null && pieces !== undefined) {

@@ -19,15 +19,15 @@
  * Nothing here moves a claim that its own checks would not let a person move.
  */
 
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import type { Actor } from '../authz.ts';
-import type { EmailTransport } from '../stubs/email.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import type { Actor } from '../core/index.ts';
+import type { EmailTransport } from '../integrations/index.ts';
 import { checksPanel, stepDef, tellClient, type ChecksPanel, type StepView } from './approvals.ts';
 import { gateOut, loadPipelineClaim, moveClaim } from './pipeline.ts';
-import { claimStage, clientStageFor, nextProcedureKey, STAGES, type ProcedureKey } from './stages.ts';
+import { claimStage, clientStageFor, nextProcedureKey, STAGES, type ProcedureKey } from '../shared/index.ts';
 import { PROPOSED_STEP_NAMES } from './portal-steps.ts';
-import { localStamp } from './localtime.ts';
+import { localStamp } from '../shared/index.ts';
 
 export type TellDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };
 

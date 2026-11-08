@@ -21,7 +21,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { packView, type PackDeps } from '../src/web/survey-pack.ts';
 import { packSums } from '../src/web/pack-sums.ts';
 import { linesForSector, parseCsv, taxonomy } from '../src/web/pack-lines.ts';

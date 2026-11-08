@@ -17,13 +17,13 @@ import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { fixtureTransport, liveTransport, type Fixture } from '../src/connectors/http.ts';
-import { secretsFromValues } from '../src/secrets.ts';
-import { forgetZoomToken } from '../src/connectors/zoom.ts';
+import { createApp } from '../src/core/server.ts';
+import { fixtureTransport, liveTransport, type Fixture } from '../src/integrations/connectors/http.ts';
+import { secretsFromValues } from '../src/core/secrets.ts';
+import { forgetZoomToken } from '../src/integrations/connectors/zoom.ts';
 import { activeMeeting, meetingHost, reconcileVideoMeeting } from '../src/web/video-calls.ts';
-import { readWebhook } from '../src/connectors/whatsapp.ts';
-import { raw } from '../src/web/html.ts';
+import { readWebhook } from '../src/integrations/connectors/whatsapp.ts';
+import { raw } from '../src/shared/html.ts';
 import { attachmentOf, fetchWhatsAppAttachment, receiveWhatsApp, whatsAppAttachmentBytes } from '../src/web/whatsapp.ts';
 
 const T = '2026-10-04T00:00:00.000Z';
@@ -133,7 +133,7 @@ describe('line 4 — each video call hosted on Zoom by its own member of staff',
   // PHASE 156d (5 Oct 2026) restated this: Lakhbir added the two permissions, and zoomPastCall now asks the past-meeting
   // endpoints - only it, read only (test/phase156d.test.ts proves what it keeps).
   test('line 4(b): the two Zoom permissions a call\'s length and attendees need are named, and only zoomPastCall asks for them', () => {
-    const z = readFileSync(join(import.meta.dirname, '..', 'src', 'connectors', 'zoom.ts'), 'utf8');
+    const z = readFileSync(join(import.meta.dirname, '..', 'src', 'integrations', 'connectors', 'zoom.ts'), 'utf8');
     assert.match(z, /meeting:read:past_meeting:admin/);
     assert.match(z, /meeting:read:list_past_participants:admin/);
     const code = z.replace(/^\s*\*.*$/gm, '');

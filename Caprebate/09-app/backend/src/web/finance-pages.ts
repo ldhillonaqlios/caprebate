@@ -19,16 +19,16 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { claimRef, recordTabs } from './components.ts';
-import { kpiRow, lateBadge, noDateBadge } from './look.ts';
-import { setSubMenu } from './navigation.ts';
+import type { App } from '../core/app.ts';
+import type { Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import { claimRef, recordTabs } from '../shared/index.ts';
+import { kpiRow, lateBadge, noDateBadge } from '../core/index.ts';
+import { setSubMenu } from '../core/navigation.ts';
 import * as F from './finance.ts';
 import * as I from './invoices.ts';
 import * as V from './vat.ts';
-import { piecesPage } from './upload-pieces.ts';
+import { piecesPage } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

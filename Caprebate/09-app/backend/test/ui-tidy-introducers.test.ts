@@ -9,9 +9,9 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import * as I from '../src/web/introducers.ts';
-import { ukDatesIn } from '../src/web/localtime.ts';
+import { ukDatesIn } from '../src/shared/localtime.ts';
 import { firstPart, introducerCounts, rewardBadge, sentUs, RECORD_REFERRAL_HREF, ADD_FIRM_HREF } from '../src/web/introducers-pages.ts';
-import { plainDashes } from '../src/web/plain-dashes.ts';
+import { plainDashes } from '../src/shared/plain-dashes.ts';
 
 let H: Harness;
 let referred = '';

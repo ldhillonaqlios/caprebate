@@ -15,7 +15,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { boundaryOf, parseMultipart, singleFile, MultipartError } from '../src/web/multipart.ts';
+import { boundaryOf, parseMultipart, singleFile, MultipartError } from '../src/core/multipart.ts';
 
 const B = '----cbBoundary';
 

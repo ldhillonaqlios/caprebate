@@ -31,9 +31,9 @@ const path = require('path');
 /** The paths that still lead outside Caprebate/09-app on purpose. File is from the repository root (Development/);
  * target is where the path leads, from the repository root. */
 const KNOWN = [
-  { file: 'Caprebate/09-app/backend/src/secrets.ts', target: '.',
+  { file: 'Caprebate/09-app/backend/src/core/secrets.ts', target: '.',
     why: 'the repository folder, so a key file inside it is refused; nothing in it is read' },
-  { file: 'Caprebate/09-app/backend/src/connectors/inspire-store.ts', target: '.',
+  { file: 'Caprebate/09-app/backend/src/integrations/connectors/inspire-store.ts', target: '.',
     why: 'the repository folder, so the INSPIRE file store is refused inside it; nothing in it is read' },
   // Phase 161d1 (5 Nov 2026) took the five reads carried here off this list: the site file, the notices page, the
   // fixture list and the two engagement letters are now read from the app's own copies in backend/copies/, kept the

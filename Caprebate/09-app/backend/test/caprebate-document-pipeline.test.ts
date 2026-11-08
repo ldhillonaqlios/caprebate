@@ -10,7 +10,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SourceRegister, record, type AnyCell } from '../src/registers/caprebate-source-register.ts';
+import { SourceRegister, record, type AnyCell } from '../src/integrations/registers/source-register.ts';
 import {
   segment, classifyHeading, sanitise, callModel, extract, toClaims, specFor, findCandidates,
   captureHumanRead,

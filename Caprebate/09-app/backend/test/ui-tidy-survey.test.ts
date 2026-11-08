@@ -8,8 +8,8 @@ import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import * as S from '../src/web/surveyor.ts';
 import { jobSite } from '../src/web/surveyor-pages.ts';
-import { stageGroupOf } from '../src/web/look.ts';
-import { plainDashText } from '../src/web/plain-dashes.ts';
+import { stageGroupOf } from '../src/core/look.ts';
+import { plainDashText } from '../src/shared/plain-dashes.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit10'); });

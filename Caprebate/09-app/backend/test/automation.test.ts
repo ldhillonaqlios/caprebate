@@ -27,10 +27,10 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
-import { seed } from '../src/seed.ts';
-import type { Db } from '../src/db.ts';
-import { NotAuthorised, type Actor } from '../src/authz.ts';
-import type { AppRole } from '../src/roles.ts';
+import { seed } from '../src/core/seed.ts';
+import type { Db } from '../src/core/db.ts';
+import { NotAuthorised, type Actor } from '../src/core/authz.ts';
+import type { AppRole } from '../src/core/roles.ts';
 import * as C from '../src/web/crm.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as L from '../src/web/leads.ts';
@@ -38,8 +38,8 @@ import * as T from '../src/web/tasks.ts';
 import * as A from '../src/web/automation.ts';
 import * as M from '../src/web/templates.ts';
 import * as E from '../src/web/engaged.ts';
-import { registryGate, feeGuard } from '../src/web/engine.ts';
-import { localDate } from '../src/web/localtime.ts';
+import { registryGate, feeGuard } from '../src/shared/engine.ts';
+import { localDate } from '../src/shared/localtime.ts';
 import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 import * as R from '../src/web/claim-record.ts';
@@ -215,7 +215,7 @@ describe('lead created → an owner and a first follow-up', () => {
         plain(app.db.get<{ business_id: string | null; owner_id: string | null; owner_role: string | null }>(
           'SELECT business_id, owner_id, owner_role FROM staff_tasks WHERE lead_id = ?', [gated])),
         { business_id: null, owner_id: null, owner_role: 'SALES' });
-      const router = readFileSync(join(SRC, 'web/router.ts'), 'utf8');
+      const router = readFileSync(join(SRC, 'core/router.ts'), 'utf8');
       // 30 Sep 2026: the four-stage funnel's close is the third (one per lead it makes).
       assert.equal([...router.matchAll(/fireAutomation\(\{[^}]*\}, null, \{ trigger: 'LEAD_CREATED'/g)].length, 3, 'the funnel close, the four-stage close and the gated exit do not each fire lead created');
     } finally { app.close(); }

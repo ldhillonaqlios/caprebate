@@ -20,18 +20,18 @@
  *   GET  /staff/survey/{job}/pack/recording/{id}    open it (recorded), on Zoom
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import { can, NotAuthorised, type Actor } from '../authz.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import type { FsObjectStore } from './objectstore.ts';
+import type { App } from '../core/app.ts';
+import { can, NotAuthorised, type Actor } from '../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import type { FsObjectStore } from '../shared/objectstore.ts';
 import * as E from './survey-evidence.ts';
 import { GROUPS, NOBODY_IN_SHOT } from './survey-checklist.ts';
-import { manyFiles, singleFile } from './multipart.ts';
+import { manyFiles, singleFile } from '../core/index.ts';
 import { packJob } from './surveyor.ts';
 import { staffSlots, addLocalDays, startOfLocalDay } from './schedule.ts';
-import { localDate, localClock, ukDate } from './localtime.ts';
+import { localDate, localClock, ukDate } from '../shared/index.ts';
 import { activeMeeting, clientJoinUrl } from './video-calls.ts';
-import { zoomPlanIsFree } from '../connectors/zoom.ts';
+import { zoomPlanIsFree } from '../integrations/index.ts';
 import * as U from './photo-upload.ts';
 import * as SV from './survey-video.ts';
 import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from './desk-first.ts';

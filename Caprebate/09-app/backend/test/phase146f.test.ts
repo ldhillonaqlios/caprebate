@@ -23,28 +23,28 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { createServer, connect as netConnect, type Server } from 'node:net';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import type { Actor } from '../src/authz.ts';
-import { createUser } from '../src/users.ts';
-import { secretsFromValues, processSecrets } from '../src/secrets.ts';
-import { outboxTransport } from '../src/stubs/email.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import type { Actor } from '../src/core/authz.ts';
+import { createUser } from '../src/core/users.ts';
+import { secretsFromValues, processSecrets } from '../src/core/secrets.ts';
+import { outboxTransport } from '../src/integrations/email/email.ts';
 import {
   EMAIL_SENDING, EMAIL_PROVIDER_QUESTION, auditMailConnections, dispatchOutbox, isSuppressed, liftSuppression, smtpLoginFromKeyFile,
   smtpProvider, type EmailSending, type SmtpLogin,
-} from '../src/stubs/email-provider.ts';
-import { imapLoginFromKeyFile, parseBounceReport } from '../src/stubs/email-inbound.ts';
+} from '../src/integrations/email/email-provider.ts';
+import { imapLoginFromKeyFile, parseBounceReport } from '../src/integrations/email/email-inbound.ts';
 import { ingest } from '../src/web/inbound-email.ts';
-import { buildIcs, fold, icsText } from '../src/stubs/calendar.ts';
-import { scheduleBooking } from '../src/web/backoffice.ts';
+import { buildIcs, fold, icsText } from '../src/integrations/email/calendar.ts';
+import { scheduleBooking } from '../src/core/backoffice.ts';
 import { moveOwnBooking, cancelOwnBooking } from '../src/web/portal.ts';
 import {
   ENGAGEMENT_SIGNING, SIGNING_QUESTION, checkSignature, shownLetter, signEngagement, signingMissing, type EngagementSigning,
 } from '../src/web/signing.ts';
 import { assertSignedEngagement } from '../src/web/research.ts';
-import { ANALYTICS_CSP, ga4MeasurementId, sitePolicy, withMeasurementId } from '../src/analytics.ts';
+import { ANALYTICS_CSP, ga4MeasurementId, sitePolicy, withMeasurementId } from '../src/integrations/analytics.ts';
 import { SITE_PAGE_CSP } from '../src/web/public-site.ts';
-import { STUBS } from '../src/app.ts';
+import { STUBS } from '../src/core/app.ts';
 import { backendSwitchReadings } from '../src/web/case-stamp.ts';
 import { docxOf } from './document-fixtures.ts';
 

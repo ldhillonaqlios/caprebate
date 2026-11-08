@@ -2,7 +2,7 @@
  * PHASE 160e, 19 OCTOBER 2026 — THE STRESS TEST'S FIXES.
  *
  *   1  a document over Vercel's 4.5 MB a request arrives in pieces and is received as any document is: the portal's
- *      form, a message's file and the staff upload forms (src/web/upload-pieces.ts)
+ *      form, a message's file and the staff upload forms (src/core/upload-pieces.ts)
  *   2  a send in pieces is one person's, used once, every piece the size it said, and swept after a day
  *
  * The stress test sent a 6 MB document to the test website and Vercel refused it with its own page ("Request Entity Too
@@ -16,15 +16,15 @@ import type { IncomingMessage } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { Db, migrate } from '../src/db.ts';
-import { FsObjectStore } from '../src/web/objectstore.ts';
-import { PIECED_ABOVE, PIECE_BYTES, MAX_PIECED_BYTES, PIECES_PAGE_CSP, piecesPage, putPiece, startPieces, sweepPieces, takePieces } from '../src/web/upload-pieces.ts';
-import { UPLOAD_PIECES_JS } from '../src/web/upload-pieces-script.ts';
-import type { Actor } from '../src/authz.ts';
-import { LOGIN_SOURCE_LIMIT, RESET_LIMIT, RESET_SOURCE_LIMIT } from '../src/auth.ts';
-import { clientIp } from '../src/web/router.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { Db, migrate } from '../src/core/db.ts';
+import { FsObjectStore } from '../src/shared/objectstore.ts';
+import { PIECED_ABOVE, PIECE_BYTES, maxPiecedBytes, PIECES_PAGE_CSP, piecesPage, putPiece, startPieces, sweepPieces, takePieces } from '../src/core/upload-pieces.ts';
+import { UPLOAD_PIECES_JS } from '../src/core/upload-pieces-script.ts';
+import type { Actor } from '../src/core/authz.ts';
+import { LOGIN_SOURCE_LIMIT, RESET_LIMIT, RESET_SOURCE_LIMIT } from '../src/core/auth.ts';
+import { clientIp } from '../src/core/router.ts';
 
 const MIGRATIONS = join(import.meta.dirname, '..', 'migrations');
 /** A PDF of about `mb` megabytes that the upload checks accept: a header, invented words, and an end. */
@@ -206,7 +206,7 @@ describe('2 · a send in pieces is one person\'s, used once, the size it said, a
     const w = world();
     const r = startPieces(w.d, w.A, String(PIECE_BYTES * 2 + 5));
     assert.ok(r.ok && r.pieces === 3 && r.piece_bytes === PIECE_BYTES);
-    for (const bad of ['0', '', '-1', 'abc', String(MAX_PIECED_BYTES + 1)]) assert.equal(startPieces(w.d, w.A, bad).ok, false, bad);
+    for (const bad of ['0', '', '-1', 'abc', String(maxPiecedBytes() + 1)]) assert.equal(startPieces(w.d, w.A, bad).ok, false, bad);
   });
 
   test('another login cannot add to it or take it; a piece of the wrong size is refused; it is kept sealed', async () => {

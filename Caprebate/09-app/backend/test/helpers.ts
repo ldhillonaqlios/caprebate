@@ -1,11 +1,11 @@
 /** Shared fixtures. A fake hasher keeps the suite fast; the real one is exercised in auth.test.ts. */
-import { buildApp, type App } from '../src/app.ts';
-import type { PasswordHasher } from '../src/password.ts';
-import type { Actor } from '../src/authz.ts';
-import type { AppRole } from '../src/roles.ts';
+import { buildApp, type App } from '../src/core/app.ts';
+import type { PasswordHasher } from '../src/core/password.ts';
+import type { Actor } from '../src/core/authz.ts';
+import type { AppRole } from '../src/core/roles.ts';
 import { randomUUID } from 'node:crypto';
-import type { Db } from '../src/db.ts';
-import { AuditLog } from '../src/audit.ts';
+import type { Db } from '../src/core/db.ts';
+import { AuditLog } from '../src/core/audit.ts';
 import { seedSignatureRecord } from '../src/web/signing.ts';
 
 /**

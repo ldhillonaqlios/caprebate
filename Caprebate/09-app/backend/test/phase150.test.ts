@@ -1,8 +1,8 @@
 /**
  * PHASE 150, 24 September 2026 — THE LAND BOUNDARY FETCHER, BUILT FOR REAL AND SWITCHED OFF.
  *
- * src/connectors/inspire.ts downloads one council's INSPIRE Index Polygons file from HM Land Registry, through
- * src/connectors/http.ts, and finds the polygon holding a property's point with the boundary module's own spatial join.
+ * src/integrations/connectors/inspire.ts downloads one council's INSPIRE Index Polygons file from HM Land Registry, through
+ * src/integrations/connectors/http.ts, and finds the polygon holding a property's point with the boundary module's own spatial join.
  * These tests prove, with NO NETWORK (every answer is a recorded fixture in test/fixtures/phase150, INVENTED, because
  * no real file may be downloaded until the data protection officer allows a test lookup):
  *
@@ -20,12 +20,12 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { fixtureTransport, RateLimiter, type CallDeps, type Fixture } from '../src/connectors/http.ts';
-import { CALL_POLICIES } from '../src/connectors/sources.ts';
-import { inspireBoundaryFetcher, unzipOneGml, readInspireGml, INSPIRE_ENDPOINT, type InspireFetchInput } from '../src/connectors/inspire.ts';
-import { INSPIRE_AUTHORITY_FILES } from '../src/connectors/inspire-authorities.ts';
-import * as B from '../src/registers/caprebate-boundary-import.ts';
-import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/registers/caprebate-source-register.ts';
+import { fixtureTransport, RateLimiter, type CallDeps, type Fixture } from '../src/integrations/connectors/http.ts';
+import { CALL_POLICIES } from '../src/integrations/connectors/sources.ts';
+import { inspireBoundaryFetcher, unzipOneGml, readInspireGml, INSPIRE_ENDPOINT, type InspireFetchInput } from '../src/integrations/connectors/inspire.ts';
+import { INSPIRE_AUTHORITY_FILES } from '../src/integrations/connectors/inspire-authorities.ts';
+import * as B from '../src/integrations/registers/boundary-import.ts';
+import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/integrations/registers/source-register.ts';
 import { testApp } from './helpers.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -81,25 +81,25 @@ describe('Phase 150: the land boundary fetcher cannot fire while the switch is o
   });
 
   test('no file under src/ except the fetcher\'s own names it, so nothing can pass the tests-only switch', () => {
-    /* PHASE 151a: ONE CALLER, BY NAME. src/connectors/site-area.ts injects the fetcher into fetchAndImportBoundary —
+    /* PHASE 151a: ONE CALLER, BY NAME. src/integrations/connectors/site-area.ts injects the fetcher into fetchAndImportBoundary —
        that is its job — and it may pass the switch on only as its own tests-only input, never as a literal true. */
     const naming = walk(SRC).filter((p) => p.endsWith('.ts') && !p.endsWith('/connectors/inspire.ts'))
       .filter((p) => /inspireBoundaryFetcher|switched_on\s*:\s*true[\s\S]{0,200}local_authority_file/.test(readFileSync(p, 'utf8')));
-    /* PHASE 151l: AND ONE MORE, BY NAME. src/connectors/boundary-test-lookup.ts is the land boundary's test lookup, and it
+    /* PHASE 151l: AND ONE MORE, BY NAME. src/integrations/connectors/boundary-test-lookup.ts is the land boundary's test lookup, and it
        switches the fetcher on for ONE call in a command a person typed (`smoke HMLR_INSPIRE`), the way smokeOne turns one
        register on. It may do that in exactly one place, and only the smoke command may reach it. */
-    assert.deepEqual(naming.map((p) => p.slice(SRC.length + 1)).sort(), ['connectors/boundary-test-lookup.ts', 'connectors/site-area.ts']);
-    const caller = readFileSync(join(SRC, 'connectors', 'site-area.ts'), 'utf8');
+    assert.deepEqual(naming.map((p) => p.slice(SRC.length + 1)).sort(), ['integrations/connectors/boundary-test-lookup.ts', 'integrations/connectors/site-area.ts']);
+    const caller = readFileSync(join(SRC, 'integrations', 'connectors', 'site-area.ts'), 'utf8');
     assert.doesNotMatch(caller, /switched_on\s*:\s*true/, 'the site area function switches the fetcher on itself');
     assert.match(caller, /input\.switched_on \?\? BOUNDARY_FETCHING_SWITCHED_ON/, 'the site area function does not read the switch');
-    const test = readFileSync(join(SRC, 'connectors', 'boundary-test-lookup.ts'), 'utf8');
+    const test = readFileSync(join(SRC, 'integrations', 'connectors', 'boundary-test-lookup.ts'), 'utf8');
     assert.equal(test.match(/switched_on\s*:\s*true/g)?.length, 1, 'the test lookup switches the fetcher on in more than one place');
     const one = test.slice(test.indexOf('export async function boundaryTestOne'));
     assert.match(one, /switched_on\s*:\s*true/, 'the test lookup switches the fetcher on outside boundaryTestOne');
     assert.doesNotMatch(test, /import\s*\{[^}]*BOUNDARY_FETCHING_SWITCHED_ON/, 'the test lookup imports the shipped switch');
     const reaching = walk(SRC).filter((p) => p.endsWith('.ts') && !p.endsWith('/connectors/boundary-test-lookup.ts'))
       .filter((p) => /from\s*['"][^'"]*boundary-test-lookup(?:\.ts)?['"]|import\(\s*['"][^'"]*boundary-test-lookup/.test(readFileSync(p, 'utf8')));
-    assert.deepEqual(reaching.map((p) => p.slice(SRC.length + 1)), ['connectors/test-lookups.ts'], 'something other than the smoke command reaches the test lookup');
+    assert.deepEqual(reaching.map((p) => p.slice(SRC.length + 1)), ['integrations/connectors/test-lookups.ts'], 'something other than the smoke command reaches the test lookup');
   });
 });
 

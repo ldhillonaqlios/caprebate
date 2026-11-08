@@ -20,9 +20,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { assessLegal, legalAllows, legalQuestions, legalView, parseAnswer } from '../src/web/pack-legal.ts';
-import { SECTOR_IDS } from '../src/web/engine.ts';
+import { SECTOR_IDS } from '../src/shared/engine.ts';
 import { actor } from './helpers.ts';
 
 const T = '2026-10-01T09:00:00.000Z';

@@ -29,11 +29,11 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { BANK_HOLIDAYS_EW, BANK_HOLIDAYS_KNOWN_TO, isWorkingDay, workingDaysSince } from '../src/web/working-days.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { BANK_HOLIDAYS_EW, BANK_HOLIDAYS_KNOWN_TO, isWorkingDay, workingDaysSince } from '../src/shared/working-days.ts';
 import * as Home from '../src/web/home.ts';
-import { SITE_CSS as CSS } from '../src/web/assets.ts';
+import { SITE_CSS as CSS } from '../src/shared/assets.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string };
@@ -142,7 +142,7 @@ describe('working days and bank holidays — one rule for Home and Leads', () =>
     // DELIBERATELY READS THE REAL CLOCK: this is the reminder that the list runs out.
     const in90 = new Date(Date.now() + 90 * 86_400_000).toISOString().slice(0, 10);
     assert.ok(in90 <= BANK_HOLIDAYS_KNOWN_TO,
-      `The England and Wales bank holiday list in src/web/working-days.ts runs out on ${BANK_HOLIDAYS_KNOWN_TO}. Copy the next year in from https://www.gov.uk/bank-holidays.json.`);
+      `The England and Wales bank holiday list in src/shared/working-days.ts runs out on ${BANK_HOLIDAYS_KNOWN_TO}. Copy the next year in from https://www.gov.uk/bank-holidays.json.`);
   });
 });
 

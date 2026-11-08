@@ -19,7 +19,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { packSums, type PackInputs, type PackLine, type Pool, type Valued } from '../src/web/pack-sums.ts';
 import { applyGrants, grantRoute, PAYER_CLASS_KEYS, type GrantSwitches, type PackGrant } from '../src/web/pack-grants.ts';
-import { CTA } from '../src/web/engine.ts';
+import { CTA } from '../src/shared/engine.ts';
 
 const ev = (value: number | null): Valued => ({ value, source: value === null ? null : { kind: 'EVIDENCE', text: 'test' } });
 const L = (id: string, element_id: string | null, qty: number | null, rate: number | null, qpct: number | null, pool: Pool | null, removed = false): PackLine => ({

@@ -19,13 +19,13 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { isAppRole } from '../src/roles.ts';
-import { can, type Actor } from '../src/authz.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { isAppRole } from '../src/core/roles.ts';
+import { can, type Actor } from '../src/core/authz.ts';
 import { createStaffUser } from '../src/web/settings.ts';
 import { actor, fixedClock, testApp } from './helpers.ts';
-import { APP_ROLES } from '../src/roles.ts';
+import { APP_ROLES } from '../src/core/roles.ts';
 import * as C from '../src/web/crm.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as F from '../src/web/claim-facts.ts';
@@ -38,7 +38,7 @@ import * as R from '../src/web/claim-record.ts';
 import { loadLetter, unresolvedTerms } from '../src/web/letter.ts';
 import * as FC from '../src/web/fee-controls.ts';
 import * as FD from '../src/web/fee-discounts.ts';
-import { feeRate } from '../src/web/engine.ts';
+import { feeRate } from '../src/shared/engine.ts';
 import * as AC from '../src/web/accountant-confirm.ts';
 
 type Res = { status: number; body: string; location: string | null };
@@ -661,7 +661,7 @@ describe('line 2 — the engagement letter’s commercial terms, as the back end
 
 describe('line 3 (back end) — the engagement gate is on in the engine and withholds no earned fee here', () => {
   test('the engine’s gate is on, undetermined with no costing injected, and computeFee raises the plain 3% on every sector and size', async () => {
-    const { feeDisplay } = await import('../src/web/engine.ts');
+    const { feeDisplay } = await import('../src/shared/engine.ts');
     const d = feeDisplay(10_000, null, {}) as unknown as { render: boolean; gate: { enabled: boolean; outcome: string; withholds_quote: boolean; missing: string[] } };
     assert.equal(d.gate.enabled, true, 'the engine’s engagement gate is not on — the engine workstream’s premise moved');
     assert.equal(d.gate.withholds_quote, false);

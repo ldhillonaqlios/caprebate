@@ -9,15 +9,15 @@
  * every call already held, one entry per moment however many people are free at it. Nothing here invents a time.
  *
  * NO JAVASCRIPT. Public pages carry none (the security policy allows none inline). The date is a radio button; the
- * times for day N sit in `.f4-t<N>` and are shown by `:has(.f4-d<N> input:checked)` (src/web/assets.ts, one rule per
+ * times for day N sit in `.f4-t<N>` and are shown by `:has(.f4-d<N> input:checked)` (src/shared/assets.ts, one rule per
  * index up to MAX_DAYS). A browser without `:has` shows every day's times under its own heading, which still works.
  *
  * A HIDDEN TIME CAN STILL BE CHECKED: choose Thursday at 10:00, then Friday, and Thursday's 10:00 stays selected out of
  * sight. So the date is sent too, and `slotDayProblem` refuses a time that is not on the date showing.
  */
 
-import { h, raw, type Safe } from './html.ts';
-import { localClock, localDate, localPartsOf, zoneNotice } from './localtime.ts';
+import { h, raw, type Safe } from '../shared/index.ts';
+import { localClock, localDate, localPartsOf, zoneNotice } from '../shared/index.ts';
 import { SLOT_MINUTES } from './schedule.ts';
 
 /** A fortnight ahead plus today: the most distinct dates `publicSlots` can return. The CSS has a rule for each. */

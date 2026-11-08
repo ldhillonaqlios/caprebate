@@ -11,8 +11,8 @@
  * A range is proposed only once a sector (or trigger) has MIN_CLAIMS finished claims: a placeholder for the surveyor.
  * A claim with no price, or no qualifying figure, is left out and counted (N4).
  */
-import type { Db } from '../db.ts';
-import { BAND } from './engine.ts';
+import type { Db } from '../core/index.ts';
+import { BAND } from '../shared/index.ts';
 import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
 
 export const MIN_CLAIMS = 5;

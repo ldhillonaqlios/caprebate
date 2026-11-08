@@ -1,6 +1,6 @@
 /**
  * PHASE 160a — THE BACK OFFICE IN THE LAYOUT LAKHBIR CHOSE, 19 October 2026 (the Cap Rebate Simple CRM design;
- * src/web/navigation.ts staffShell and Shell.bar, src/web/html.ts page(), the PHASE 160a block in src/web/assets.ts).
+ * src/core/navigation.ts staffShell and Shell.bar, src/shared/html.ts page(), the PHASE 160a block in src/shared/assets.ts).
  * A navy menu down the left holding only the login's own sections; a white top bar over the page with where you are,
  * Admin's views, the search, Help and the user menu; a page's own trail moved up into it. Staff only: the client portal
  * and the public pages keep their look. Which sections each login may open is still test/phase135.test.ts's.
@@ -10,12 +10,12 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { BRAND_TOKENS, SITE_CSS, TEXT_PAIRINGS } from '../src/web/assets.ts';
-import { SECTIONS, tabsFor } from '../src/web/navigation.ts';
-import type { Actor } from '../src/authz.ts';
-import type { AppRole } from '../src/roles.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { BRAND_TOKENS, SITE_CSS, TEXT_PAIRINGS } from '../src/shared/assets.ts';
+import { SECTIONS, tabsFor } from '../src/core/navigation.ts';
+import type { Actor } from '../src/core/authz.ts';
+import type { AppRole } from '../src/core/roles.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; body: string };

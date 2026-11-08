@@ -23,9 +23,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
-import { APP_ROLES, type AppRole } from '../src/roles.ts';
-import { encodePng } from '../src/web/images.ts';
+import { createApp } from '../src/core/server.ts';
+import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
+import { encodePng } from '../src/shared/images.ts';
 import { clockToMinutes, minutesToClock, workingTimesFor } from '../src/web/schedule.ts';
 
 const PASSWORD = 'a-very-long-development-password';

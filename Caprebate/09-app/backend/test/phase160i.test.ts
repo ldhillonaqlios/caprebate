@@ -1,6 +1,6 @@
 /**
  * PHASE 160i — WHERE THIS CLAIM STANDS, 20 October 2026 (src/web/claim-overview.ts, drawn on the claim page by
- * src/web/crm-pages.ts; the one-client audit log in src/web/audit-log.ts and src/web/staff.ts; the fact form's source in
+ * src/web/crm-pages.ts; the one-client audit log in src/web/audit-log.ts and src/core/staff.ts; the fact form's source in
  * src/web/claim-record-pages.ts). Every stage with its needs, still needed and gathered from the claim's own records,
  * where each fact came from, every value before, the survey pack's progress and the client's audit log.
  */
@@ -10,15 +10,15 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { createApp } from '../src/server.ts';
-import { seed } from '../src/seed.ts';
-import { SITE_CSS } from '../src/web/assets.ts';
+import { createApp } from '../src/core/server.ts';
+import { seed } from '../src/core/seed.ts';
+import { SITE_CSS } from '../src/shared/assets.ts';
 import { claimOverview, fieldWords, packProgress, sentence, sourceName, STAGE_WORDS } from '../src/web/claim-overview.ts';
 import * as C from '../src/web/crm.ts';
-import type { Actor } from '../src/authz.ts';
+import type { Actor } from '../src/core/authz.ts';
 import type { FactsPanel } from '../src/web/claim-facts.ts';
 import { kindWords } from '../src/web/audit-log.ts';
-import { PROCEDURE_STAGES } from '../src/web/stages.ts';
+import { PROCEDURE_STAGES } from '../src/shared/stages.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; body: string };

@@ -12,10 +12,10 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import * as IE from '../src/web/inbound-email.ts';
-import { INBOUND_EMAIL } from '../src/stubs/email-inbound.ts';
-import { buildMessage, smtpProvider } from '../src/stubs/email-provider.ts';
+import { INBOUND_EMAIL } from '../src/integrations/email/email-inbound.ts';
+import { buildMessage, smtpProvider } from '../src/integrations/email/email-provider.ts';
 
 const T = '2026-10-01T09:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';

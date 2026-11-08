@@ -2,7 +2,7 @@
  * THE ROLE EDITOR'S SCREENS — /staff/admin/roles. Phase 151b, 25 September 2026.
  *
  * Phase 151 built the role editor itself (src/web/role-editor.ts: makeRole, changeRole, retireRole, every step in the
- * audit log) and its hard limits (src/custom-roles.ts, roleRefusal), and left them with no screen. This is the screen.
+ * audit log) and its hard limits (src/core/custom-roles.ts, roleRefusal), and left them with no screen. This is the screen.
  * NOTHING HERE DECIDES ANYTHING: every write goes through the editor, which authorises `role.manage` (the super admin's
  * alone, and never given to a made role) and refuses with roleRefusal's own sentence, shown here word for word.
  *
@@ -15,7 +15,7 @@
  *
  * EACH CHOICE IS ONE THING THE BACK OFFICE DOES, IN WORDS, GROUPED BY AREA, AND EACH IS BORROWED FROM A BUILT-IN ROLE:
  * "Record a payment received — like Accounting". A made role can only ever do what a built-in role already does, with
- * that role's own test on each object (src/custom-roles.ts). So for each thing the screen offers only the built-in
+ * that role's own test on each object (src/core/custom-roles.ts). So for each thing the screen offers only the built-in
  * roles that do it, and "No". Things no staff role does, and the things only the super admin may do, are not offered.
  *
  * EVERY REGISTERED ACTION HAS WORDS HERE, OR IS NAMED AS NEVER OFFERED. test/phase151b.test.ts fails on a new action with
@@ -23,10 +23,10 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../app.ts';
-import { builtInHolds, type Actor } from '../authz.ts';
-import { BORROWABLE_ROLES, NEVER_GRANTED, type BorrowableRole } from '../custom-roles.ts';
-import { h, page, raw, type Safe, HTML_HEADERS } from './html.ts';
+import type { App } from '../core/app.ts';
+import { builtInHolds, type Actor } from '../core/index.ts';
+import { BORROWABLE_ROLES, NEVER_GRANTED, type BorrowableRole } from '../core/index.ts';
+import { h, page, raw, type Safe, HTML_HEADERS } from '../shared/index.ts';
 import { changeRole, listMadeRoles, makeRole, retireRole } from './role-editor.ts';
 
 export type RoleEditorPageDeps = {

@@ -6,7 +6,7 @@
  * in-memory application, seeds it, and listens — so a person can open the
  * screens without leaving a caprebate.db behind or having to remember to seed.
  *
- * IT REFUSES TO RUN WITHOUT CAPREBATE_ALLOW_SEED, for the same reason src/cli.ts
+ * IT REFUSES TO RUN WITHOUT CAPREBATE_ALLOW_SEED, for the same reason src/core/cli.ts
  * does: invented data with a known password must not arrive in a deployment
  * because somebody forgot a flag.
  */
@@ -18,7 +18,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 
 /* PHASE 151c: ORDNANCE SURVEY'S OSTN15 GRID, WHERE THE RESEARCH RUN STARTS. The site area's point may be a latitude and
-   longitude, which is converted only by OS's exact method, and that needs the grid file (src/connectors/ostn15.ts).
+   longitude, which is converted only by OS's exact method, and that needs the grid file (src/integrations/connectors/ostn15.ts).
    On the Mac it is ~/caprebate-data/ostn15/, outside the repository, checked against OS's forty test points on
    24 September 2026. Named here when it is there and nothing else is named; absent, nothing changes and a latitude and
    longitude is refused. The live server names its own copy in CAPREBATE_OSTN15_FILE (the Developer Spec says where). */

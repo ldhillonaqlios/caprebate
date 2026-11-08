@@ -12,10 +12,10 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../src/server.ts';
+import { createApp } from '../src/core/server.ts';
 import { readFileSync } from 'node:fs';
-import { Db, migrate } from '../src/db.ts';
-import { MIGRATIONS_DIR } from '../src/app.ts';
+import { Db, migrate } from '../src/core/db.ts';
+import { MIGRATIONS_DIR } from '../src/core/app.ts';
 import { FUNNEL_EDGES } from '../src/web/funnel-edges.ts';
 import { funnelEdges, render } from '../tools/gen-funnel-edges.ts';
 import {

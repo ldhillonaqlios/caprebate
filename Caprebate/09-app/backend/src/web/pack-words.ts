@@ -6,8 +6,8 @@
  * with a reason, under the surveyor's name, never edited (migration 087). The newest row for a field is shown; an empty
  * box clears it. Nothing here is ever drafted for the surveyor: a field nobody wrote reads "not written yet".
  */
-import type { Db } from '../db.ts';
-import type { Actor } from '../authz.ts';
+import type { Db } from '../core/index.ts';
+import type { Actor } from '../core/index.ts';
 import { beginPackChange, type PackDeps, type PackResult } from './survey-pack.ts';
 
 export type WordField = 'construction_type' | 'build_year' | 'building_other' | 'dwelling_method' | 'dwelling_segregation'

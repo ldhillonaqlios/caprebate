@@ -28,26 +28,26 @@
  *
  * THE WALKTHROUGH CALL. The client asks for one in their portal (a message to us). Admin or Sales books it as a video
  * call at one of their free times — they own client calls in the diary, and a surveyor is kept out of the diary on
- * purpose (src/authz.ts, booking.read). It is marked as this job's walkthrough, so its Zoom meeting is made to RECORD TO
- * ZOOM'S CLOUD (src/connectors/zoom.ts). After the call, the assigned surveyor, Admin or Sales fetches the recording's
+ * purpose (src/core/authz.ts, booking.read). It is marked as this job's walkthrough, so its Zoom meeting is made to RECORD TO
+ * ZOOM'S CLOUD (src/integrations/connectors/zoom.ts). After the call, the assigned surveyor, Admin or Sales fetches the recording's
  * link, passcode and length from Zoom, and they are kept; the video stays with Zoom. Opening it is recorded.
  *
  * HOW THE SURVEYOR INSPECTED — desktop with the client's evidence, a live video survey, or a site visit — is said by
  * the assigned surveyor in chapter 2, and goes in the approved report.
  */
 import { createHash } from 'node:crypto';
-import type { App } from '../app.ts';
-import type { Db } from '../db.ts';
-import type { AuditLog } from '../audit.ts';
-import { authorise, can, NotAuthorised, type Actor } from '../authz.ts';
-import type { FsObjectStore } from './objectstore.ts';
+import type { App } from '../core/app.ts';
+import type { Db } from '../core/index.ts';
+import type { AuditLog } from '../core/audit.ts';
+import { authorise, can, NotAuthorised, type Actor } from '../core/index.ts';
+import type { FsObjectStore } from '../shared/objectstore.ts';
 import { packJob } from './surveyor.ts';
 import { checklistFor, type ChecklistItem } from './survey-checklist.ts';
 import { postClientMessage } from './messages.ts';
 import { isBookable, SLOT_MINUTES } from './schedule.ts';
 import { reconcileVideoMeeting, zoomDeps } from './video-calls.ts';
 import { sendVideoInvite } from './booking-invite.ts';
-import { zoomRecording } from '../connectors/zoom.ts';
+import { zoomRecording } from '../integrations/index.ts';
 
 export type EvidenceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -371,7 +371,7 @@ export function sortPhotos(d: EvidenceDeps, actor: Actor, job_id: string, choice
 export const ASK_WORDS = 'I would like a recorded video call to show you around the building for the survey.';
 
 /**
- * PHASE 156d, 5 October 2026 — THE WALKTHROUGH CALL'S WORDS, BY ZOOM PLAN. On the free plan (src/connectors/zoom.ts,
+ * PHASE 156d, 5 October 2026 — THE WALKTHROUGH CALL'S WORDS, BY ZOOM PLAN. On the free plan (src/integrations/connectors/zoom.ts,
  * zoomPlanIsFree) Zoom keeps no recording and a call stops at 40 minutes, so nothing promises a recording: the person
  * who leads the call writes down what they see on the job, and the client can still send photos and a video.
  * The paid words are the ones Lakhbir approved on 2 Oct 2026 ("Recorded Zoom call"); they come back with ZOOM_PLAN=pro.

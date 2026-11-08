@@ -1,9 +1,9 @@
 /**
  * THE CLIENT'S STEP NAMES — BUILT, SWITCHED OFF, AND ASKED. PHASE 133c, 17 September 2026 (B9).
  *
- * The portal names its six steps with the business flow's own labels (src/web/stages.ts), which were written for us and
+ * The portal names its six steps with the business flow's own labels (src/shared/stages.ts), which were written for us and
  * read like a build note to a client: "The engine runs → a narrowed estimate". The proposed names below are a second
- * label set, shown only while the portal-steps switch is on (NAME_SWITCHES in src/web/navigation.ts, shipped OFF). Which
+ * label set, shown only while the portal-steps switch is on (NAME_SWITCHES in src/core/navigation.ts, shipped OFF). Which
  * set to use is a question for Lakhbir in CAPREBATE QUESTIONS, "The new names and the client's step names - which do we
  * switch on?".
  *
@@ -16,7 +16,7 @@
  * A STEP'S NAME CHANGES; ITS MEANING DOES NOT. The key, the order and what counts as done are stages.ts's, unchanged.
  */
 
-import { STAGES, type StageKey } from './stages.ts';
+import { STAGES, type StageKey } from '../shared/index.ts';
 
 export const PROPOSED_STEP_NAMES: Readonly<Record<StageKey, string>> = Object.freeze({
   ASSESSMENT_SUBMITTED: '1 Your estimate',

@@ -2,7 +2,7 @@
  * PHASE 159i, 10 October 2026 — THE MONEY ADJUSTMENTS: GRANTS, VAT, ACQUISITION COSTS AND THE BUYER'S OWN WORK.
  *
  * From the stress test of 9 October 2026 (C12, C23; Rulebook F, F-R12; coverage matrix section 13) and the item carried
- * from Phase 159c. Each test fails on the code before this phase (src/web/money-readings.ts did not exist, so this file
+ * from Phase 159c. Each test fails on the code before this phase (src/shared/money-readings.ts did not exist, so this file
  * does not load on it; and each behaviour below was absent):
  *   1  item 1: a grant not traced to its items comes off in full (not as an equal share); an earlier owner's grant takes
  *      nothing off the buyer's sums and lowers the cap from the earlier sale; C23: every route's rows add up
@@ -22,7 +22,7 @@ import * as F from '../src/web/claim-facts.ts';
 import { packSums, type PackInputs, type PackLine, type Pool, type Valued, type WorksSums } from '../src/web/pack-sums.ts';
 import { applyGrants, type GrantSwitches, type PackGrant } from '../src/web/pack-grants.ts';
 import { capped, withPastOwnerGrants, type LegalVerdict } from '../src/web/pack-legal.ts';
-import { moneyReadingsHere, MONEY_READINGS_OFF, MONEY_READINGS_ON } from '../src/web/money-readings.ts';
+import { moneyReadingsHere, MONEY_READINGS_OFF, MONEY_READINGS_ON } from '../src/shared/money-readings.ts';
 import { setEventVat } from '../src/web/property-events.ts';
 
 const gbp = (p: number) => p * 100;
