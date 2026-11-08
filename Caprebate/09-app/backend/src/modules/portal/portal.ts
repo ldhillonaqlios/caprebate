@@ -30,6 +30,8 @@ import { RECEIVED_ONLY_BY_UPLOAD, requestsFor, versionObj, type RequestView } fr
 import { getBookingsIdBusinessIdById, getBusinessesContactEmailNameById2, getBusinessesIdNameById3, getClientTasksIdBusinessIdById4, insertBookingChanges2, insertBookingChanges3, insertBookingChanges4, listBookingsIdChannelByBusinessId, listClientTasksIdQuestionByBusinessIdState, updateBookingsCancelledAtCancelledByById, updateBookingsStartsAtEndsAtById2, updateBookingsStartsAtEndsAtById3, updateClientTasksStateAnswerStateById } from '../crm/index.ts';
 import { getEngagementsIdLetterStateByBusinessId3, getEngagementsSByBusinessId, updateEngagementsLetterStateViewedAtByBusinessIdLetterState } from '../claims/index.ts';
 import { getAssessmentsAssessmentIdSubmittedAtByBusinessId } from '../assessment/index.ts';
+import { getDocumentsIdBusinessIdById4, listDocumentsIdBusinessIdByBusinessId } from './data-borrowed.ts';
+import { getClaimsIdClaimRefByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel2 } from '../claims/index.ts';
 
 export type Business = {
   id: string; name: string; sector: string; stage: string;
@@ -91,9 +93,6 @@ type PortalClaimRow = {
   property: string | null; town: string | null;
 };
 
-const PORTAL_CLAIM_SELECT =
-  'SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, p.label AS property, p.town FROM claims c ' +
-  'LEFT JOIN properties p ON p.id = c.property_id ';
 
 function portalClaim(db: Db, r: PortalClaimRow): PortalClaim {
   const kind = claimStage(r.stage).kind;
@@ -112,7 +111,7 @@ function portalClaim(db: Db, r: PortalClaimRow): PortalClaim {
 /** Every claim of this company, each asked of `claim.progress_read` — a CLIENT only ever their own company's. */
 export function claims(db: Db, actor: Actor, business_id: string): PortalClaim[] {
   const b = readBusiness(db, actor, business_id);
-  return db.all<PortalClaimRow>(`${PORTAL_CLAIM_SELECT}WHERE c.business_id = ? ORDER BY p.label IS NULL, p.label ASC, c.claim_ref ASC`, [b.id])
+  return listClaimsIdClaimRefByBusinessIdLabel2<PortalClaimRow>(db, [b.id])
     .filter((r) => can(actor, 'claim.progress_read', { type: 'claim', id: r.id, business_id: r.business_id, assigned_surveyor_ids: [] }))
     .map((r) => portalClaim(db, r));
 }
@@ -123,7 +122,7 @@ export function claims(db: Db, actor: Actor, business_id: string): PortalClaim[]
  */
 export function claim(db: Db, actor: Actor, business_id: string, claim_id: string): PortalClaim | null {
   const b = readBusiness(db, actor, business_id);
-  const r = db.get<PortalClaimRow>(`${PORTAL_CLAIM_SELECT}WHERE c.id = ? AND c.business_id = ?`, [claim_id, b.id]);
+  const r = getClaimsIdClaimRefByIdBusinessId<PortalClaimRow>(db, [claim_id, b.id]);
   if (r === undefined) return null;
   authorise(actor, 'claim.progress_read', { type: 'claim', id: r.id, business_id: r.business_id, assigned_surveyor_ids: [] });
   return portalClaim(db, r);
@@ -294,18 +293,11 @@ export type DocumentView = {
   original_kept_at: string | null; original_deleted_at: string | null;
 };
 
-const DOCUMENT_SELECT =
-  'SELECT d.id, d.business_id, d.filename, d.declared_type, d.doc_type, d.byte_size, d.sniffed_as, d.state, ' +
-  'd.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.logical_document_id, d.version_no, ' +
-  'd.original_kept_at, d.original_deleted_at, t.label AS type_label, l.seq FROM documents d LEFT JOIN document_types t ON t.code = d.type_code ' +
-  'LEFT JOIN logical_documents l ON l.id = d.logical_document_id ';
 
 export function documents(db: Db, actor: Actor, business_id: string): DocumentView[] {
   const b = readBusiness(db, actor, business_id);
   // CRM 4 of 10: every row is asked of `document.read` on its own document.
-  return db.all<DocumentView & { business_id: string }>(
-    `${DOCUMENT_SELECT}WHERE d.business_id = ? ORDER BY d.created_at DESC`, [b.id],
-  ).filter((r) => { const o = versionObj(db, r.id); return o !== undefined && can(actor, 'document.read', o); });
+  return listDocumentsIdBusinessIdByBusinessId<DocumentView & { business_id: string }>(db, [b.id]).filter((r) => { const o = versionObj(db, r.id); return o !== undefined && can(actor, 'document.read', o); });
 }
 
 /**
@@ -318,7 +310,7 @@ export function documents(db: Db, actor: Actor, business_id: string): DocumentVi
  * `documents()` above rather than being a filter over it.
  */
 export function document(db: Db, actor: Actor, doc_id: string): DocumentView {
-  const row = db.get<DocumentView & { business_id: string }>(`${DOCUMENT_SELECT}WHERE d.id = ?`, [doc_id]);
+  const row = getDocumentsIdBusinessIdById4<DocumentView & { business_id: string }>(db, [doc_id]);
   if (row === undefined) throw new NotFoundAsRefusal();
   // CRM 4 of 10: ASKED OF THE DOCUMENT, NOT OF ITS ORGANISATION. Until today
   // entitlement to the business was entitlement to its papers — which admitted

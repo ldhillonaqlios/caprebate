@@ -82,7 +82,7 @@ describe('Phase 160d: the text the system writes', () => {
     assert.doesNotMatch(DISPOSAL_TASK_TITLE, DASH);
     assert.match(DISPOSAL_TASK_TITLE_BEFORE, DASH);
     const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'claims', 'claim-record.ts'), 'utf8');
-    const calls = [...src.matchAll(/(\w+)<[^>]*>\([^\n]*DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE/g)].map((m) => m[1]);
+    const calls = [...src.matchAll(/(\w+)<[^>]*>\([^\n]*DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE/g)].map((m) => m[1] ?? '');
     assert.equal(calls.length, 2, 'both lookups read the old title too');
     // Each asks the CRM's data file, whose statement reads both titles.
     const data = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'crm', 'data.ts'), 'utf8');

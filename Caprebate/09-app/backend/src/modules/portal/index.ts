@@ -19,3 +19,4 @@ export { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainShort, lookAg
 export type { ReturnFiling } from './accountant-confirm.ts';
 export type { TabKey } from './client-layout.ts';
 export type { LookAgain } from './take-back.ts';
+export { getClientReportAcceptancesCountByClaimId } from './data.ts';

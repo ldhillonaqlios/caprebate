@@ -65,6 +65,7 @@ import { getUsersEmailRoleById, getUsersRoleDisabledAtById } from '../../core/in
 import { getAutomationRulesN, getBusinessesClientStatusById, getBusinessesIdOwnerIdById, getBusinessesNameById, getLeadsIdBusinessIdById3, insertAutomationRules, insertAutomationRuns, listStaffTasksFactIdByBusinessIdFactId, updateAutomationRulesLabelTriggerEventById } from './data.ts';
 import { getDocumentTypesHandlerTypeActiveByCode, getStaffTasksIdBusinessIdById, getVocabulariesCountByListCode, listAutomationRunsAtTriggerEvent, listDocumentTypesCodeLabelByActiveHandlerType2 } from './data-borrowed.ts';
 import { getClaimsIdClaimRefById3 } from '../claims/index.ts';
+import { getAutomationRulesIdLabelById, listAutomationRulesIdLabel, listAutomationRulesIdLabelByActiveTriggerEvent } from './data.ts';
 
 export type AutomationDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
@@ -187,10 +188,6 @@ type RuleDbRow = {
   request_type: string | null;
 };
 
-const RULE_SELECT =
-  'SELECT id, label, trigger_event, trigger_stage, trigger_activity, effect, task_title, task_description, ' +
-  'task_activity_type, task_priority, due_in_days, assign_to, assign_role, attach_to, active, ord, source, ' +
-  'created_at, updated_at, request_type FROM automation_rules ';
 
 export type RuleView = {
   readonly id: string;
@@ -281,7 +278,7 @@ const RULES_SECTION = { type: 'automation_rule' as const, id: '__rules__' };
 export function rulesPage(db: Db, actor: Actor): RulesPage {
   authorise(actor, 'automation_rule.read', RULES_SECTION);
   return {
-    rules: db.all<RuleDbRow>(`${RULE_SELECT}ORDER BY ord ASC, id ASC`).map((r) => ruleView(db, r)),
+    rules: listAutomationRulesIdLabel<RuleDbRow>(db).map((r) => ruleView(db, r)),
     runs: recentRuns(db, actor),
     may_write: can(actor, 'automation_rule.write', RULES_SECTION),
     forbidden: Object.entries(FORBIDDEN_EFFECTS).map(([key, why]) => ({ key, why })),
@@ -423,7 +420,7 @@ export function createRule(d: AutomationDeps, actor: Actor, input: Fields): Rule
 /** CHANGE A RULE, OR RETIRE IT. A rule is never deleted: its runs still name it. */
 export function updateRule(d: AutomationDeps, actor: Actor, id: string, input: Fields): RuleResult {
   authorise(actor, 'automation_rule.write', { type: 'automation_rule', id });
-  const r = d.db.get<RuleDbRow>(`${RULE_SELECT}WHERE id = ?`, [id]);
+  const r = getAutomationRulesIdLabelById<RuleDbRow>(d.db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   const v = ruleValues(d.db, input, r);
   if (!v.ok) return v;
@@ -738,7 +735,7 @@ function runRule(d: AutomationDeps, actor: Actor | null, rule: RuleDbRow, e: Aut
 export function fireAutomation(d: AutomationDeps, actor: Actor | null, event: AutomationEvent): RunOutcome[] {
   const s = subjectOf(d.db, event);
   if (s === null) return [];
-  const rules = d.db.all<RuleDbRow>(`${RULE_SELECT}WHERE active = 1 AND trigger_event = ? ORDER BY ord ASC, id ASC`, [event.trigger])
+  const rules = listAutomationRulesIdLabelByActiveTriggerEvent<RuleDbRow>(d.db, [event.trigger])
     .filter((r) => matches(r, event, s));
   const out: RunOutcome[] = [];
   for (const rule of rules) {

@@ -1017,3 +1017,24 @@ export function listTitleByHandTitleNumberTakenBackByByPropertyIdTakenBackAt<T e
 export function updateTitleByHandRecordIdRemovedRecordIdById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE title_by_hand SET record_id = NULL, removed_record_id = ?, taken_back_at = ?, taken_back_by = ?, taken_back_reason = ?, look_again_json = ? WHERE id = ?', params);
 }
+
+// claims
+export function getClaimsIdClaimRefByIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, p.label AS property, p.town FROM claims c LEFT JOIN properties p ON p.id = c.property_id WHERE c.id = ? AND c.business_id = ?', params);
+}
+export function listClaimsIdClaimRefByBusinessIdLabel2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, p.label AS property, p.town FROM claims c LEFT JOIN properties p ON p.id = c.property_id WHERE c.business_id = ? ORDER BY p.label IS NULL, p.label ASC, c.claim_ref ASC', params);
+}
+
+// claim_deliverables
+export function getClaimDeliverablesCountByClaimIdKind3<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind = 'DEFENCE_PACK' AND state = 'ISSUED'", params);
+}
+export function getClaimDeliverablesCountByClaimIdKind4<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind IN ('CLIENT_REPORT', 'ACCOUNTANT_COMPUTATION_PACK') AND state = 'ISSUED'", params);
+}
+
+// tax_adviser_signoffs
+export function getTaxAdviserSignoffsCountByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM tax_adviser_signoffs WHERE claim_id = ?', params);
+}

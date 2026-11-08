@@ -53,3 +53,8 @@ export function listClientStepNoticesClaimIdStepByBusinessId2<T extends Row = Ro
 export function listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>("SELECT COALESCE(claim_id, '') AS k, action, at FROM client_step_notices WHERE business_id = ? AND step = ? ORDER BY at ASC, rowid ASC", params);
 }
+
+// client_report_acceptances
+export function getClientReportAcceptancesCountByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM client_report_acceptances WHERE claim_id = ?', params);
+}

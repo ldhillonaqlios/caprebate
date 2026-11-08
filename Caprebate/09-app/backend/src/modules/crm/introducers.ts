@@ -69,6 +69,8 @@ import { vocabChoice, vocabLabel, vocabulary } from '../../web/vocabularies.ts';
 import { getContactsIdByIdIntroducerId, getContactsIdFullNameByIdIntroducerId, getIntroducerFeesCountByIntroducerId, getIntroducerFeesIdByClaimId, getIntroducerNoticesIdByLeadIdNotice, getIntroducerPercentageEntriesIdByInvoiceIdEntryKind, getIntroducerPercentageEntriesIntroducerIdClaimIdByInvoiceId, getIntroducerPercentageEntriesTByInvoiceId, getIntroducerTermsSignaturesTermsVersionSignedOnByIntroducer, getIntroducersFirmNameById, getIntroducersIdById, getIntroducersIdIntroducerTypeById, getIntroducersIdMergedIntoIdById, getLeadsClaimIdById, getLeadsIdBusinessIdByBusinessIdIntroducerId, getLeadsIdBusinessIdById2, getLeadsIdBusinessIdById7, getLeadsIdByClaimIdIntroducerId, getLeadsIntroducerIdByClaimIdIntroducerType, getLeadsIntroducerIdById, getStaffTasksCompletedAtActivityTypeByIntroducerIdStatus, getStaffTasksCountByIntroducerId, getStaffTasksDueOnTitleByIntroducerIdStatus, insertContacts5, insertIntroducerFees, insertIntroducerMerges, insertIntroducerNotices, insertIntroducerPercentageEntries, insertIntroducerPercentageEntries2, insertIntroducerShareConsents, insertIntroducerShareConsents2, insertIntroducerTermsSignatures, insertIntroducers, insertIntroducers2, insertLeads5, listContactsIdFullNameByIntroducerId, listIntroducerNoticesAtNoticeByLeadId, listIntroducersIdName, listIntroducersIdNameByIdMergedIntoId, listLeadsLeadIdIntroducerIdByBusinessId, updateContactsFullNameJobRoleOtherById2, updateContactsIntroducerIdUpdatedAtByIntroducerId, updateIntroducerFeesDisclosureGivenAtDisclosureRecordedByByI, updateIntroducerFeesStatePaidAtById, updateIntroducerMergesCompletedAtLeadsMovedById, updateIntroducerRewardSettingModelFeePenceById, updateIntroducersFirmNameIntroducerTypeById, updateIntroducersMergedIntoIdMergedAtById, updateIntroducersNoticeContactIdUpdatedAtByIdNoticeContactId, updateLeadsIntroducerIdUpdatedAtByIntroducerId, updateStaffTasksIntroducerIdUpdatedAtByIntroducerIdStatus, updateStaffTasksStatusCompletedAtById } from './data.ts';
 import { getClaimStageMovesLabelByClaimIdToStage, getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getInvoiceCreditNotesIdInvoiceIdById, getInvoiceCreditNotesNByInvoiceId, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesIdClaimIdById, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence, getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO, listInvoicesIdFeeByClaimIdIntroducerId, listLeadsIdBusinessIdByIntroducerId, listStaffTasksIdTitleByIntroducerIdStatus } from './data-borrowed.ts';
 import { getClaimsStageHoldReturnStageById, listClaimStageMovesToStageByClaimId } from '../claims/index.ts';
+import { getIntroducerFeesIdIntroducerIdById, getIntroducersIdFirmNameById, listIntroducerFeesIdIntroducerId, listIntroducerFeesIdIntroducerIdByIntroducerId, listIntroducersIdFirmName2 } from './data-borrowed.ts';
+import { listIntroducerPercentageEntriesIdIntroducerId, listIntroducerPercentageEntriesIdIntroducerIdByIntroducerId } from './data-borrowed.ts';
 
 export type IntroducerDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -347,14 +349,9 @@ type IntroducerDbRow = {
   merged_into_id: string | null; merged_into_name: string | null; merged_at: string | null;
 };
 
-const INTRODUCER_SELECT =
-  'SELECT i.id, i.firm_name, i.introducer_type, i.owner_id, i.relationship_started_on, ' +
-  'i.notice_contact_id, i.notes, i.created_via, i.created_at, i.updated_at, u.display_name AS owner_name, ' +
-  'i.merged_into_id, m.firm_name AS merged_into_name, i.merged_at ' +
-  'FROM introducers i LEFT JOIN users u ON u.id = i.owner_id LEFT JOIN introducers m ON m.id = i.merged_into_id ';
 
 function loadIntroducer(db: Db, id: string): IntroducerDbRow {
-  const r = db.get<IntroducerDbRow>(`${INTRODUCER_SELECT}WHERE i.id = ?`, [id]);
+  const r = getIntroducersIdFirmNameById<IntroducerDbRow>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
 }
@@ -480,7 +477,7 @@ export type IntroducerRow = {
 
 export function introducerList(db: Db, actor: Actor, nowIso: string, limit = 500): IntroducerRow[] {
   assertIntroducerSection(actor);
-  return db.all<IntroducerDbRow>(`${INTRODUCER_SELECT}ORDER BY i.firm_name ASC, i.id ASC LIMIT ?`, [limit])
+  return listIntroducersIdFirmName2<IntroducerDbRow>(db, [limit])
     .filter((r) => can(actor, 'introducer.read', introducerObj(r.id)) || can(actor, 'introducer.read_money', introducerObj(r.id)))
     .map((r) => {
       const full = can(actor, 'introducer.read', introducerObj(r.id));
@@ -1441,11 +1438,6 @@ type FeeDbRow = {
   disclosure_given_at: string | null; discloser: string | null; state: string; paid_at: string | null; payer: string | null;
 };
 
-const FEE_SELECT =
-  'SELECT f.id, f.introducer_id, i.firm_name, f.claim_id, c.claim_ref, f.business_id, f.amount_pence, f.disclosure_given_at, ' +
-  'du.display_name AS discloser, f.state, f.paid_at, pu.display_name AS payer FROM introducer_fees f ' +
-  'JOIN introducers i ON i.id = f.introducer_id JOIN claims c ON c.id = f.claim_id ' +
-  'LEFT JOIN users du ON du.id = f.disclosure_recorded_by LEFT JOIN users pu ON pu.id = f.paid_recorded_by ';
 
 function feeObj(r: { id: string; business_id: string }): { type: 'introducer_fee'; id: string; business_id: string } {
   return { type: 'introducer_fee', id: r.id, business_id: r.business_id };
@@ -1453,8 +1445,8 @@ function feeObj(r: { id: string; business_id: string }): { type: 'introducer_fee
 
 export function feeList(db: Db, actor: Actor, introducer_id?: string): FeeView[] {
   const rows = introducer_id === undefined
-    ? db.all<FeeDbRow>(`${FEE_SELECT}ORDER BY f.created_at DESC, f.id ASC`)
-    : db.all<FeeDbRow>(`${FEE_SELECT}WHERE f.introducer_id = ? ORDER BY f.created_at DESC, f.id ASC`, [introducer_id]);
+    ? listIntroducerFeesIdIntroducerId<FeeDbRow>(db)
+    : listIntroducerFeesIdIntroducerIdByIntroducerId<FeeDbRow>(db, [introducer_id]);
   return rows.filter((r) => can(actor, 'introducer_fee.read', feeObj(r))).map((r) => ({
     id: r.id,
     firm: { id: r.introducer_id, name: r.firm_name },
@@ -1487,7 +1479,7 @@ function accrueFee(d: IntroducerDeps, actor: Actor | null, claim_id: string): vo
 }
 
 function loadFee(db: Db, id: string): FeeDbRow {
-  const r = db.get<FeeDbRow>(`${FEE_SELECT}WHERE f.id = ?`, [id]);
+  const r = getIntroducerFeesIdIntroducerIdById<FeeDbRow>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
 }
@@ -1588,14 +1580,11 @@ export function onClause13Credit(d: IntroducerDeps, actor: Actor | null, credit_
 
 /** The ledger, newest first, each entry asked of `introducer_fee.read` on its own organisation. */
 export function percentageLedger(db: Db, actor: Actor, introducer_id?: string): PercentageEntryView[] {
-  const sql = 'SELECT e.id, e.introducer_id, i.firm_name, e.claim_id, c.claim_ref, e.business_id, e.entry_kind, e.basis_pence, e.percent_bp, ' +
-    'e.amount_pence, e.created_at FROM introducer_percentage_entries e JOIN introducers i ON i.id = e.introducer_id ' +
-    'JOIN claims c ON c.id = e.claim_id ';
-  type Row = { id: string; introducer_id: string; firm_name: string; claim_id: string; claim_ref: string; business_id: string;
+    type Row = { id: string; introducer_id: string; firm_name: string; claim_id: string; claim_ref: string; business_id: string;
     entry_kind: 'ACCRUAL' | 'REVERSAL'; basis_pence: number; percent_bp: number; amount_pence: number; created_at: string };
   const rows = introducer_id === undefined
-    ? db.all<Row>(`${sql}ORDER BY e.created_at DESC, e.rowid DESC`)
-    : db.all<Row>(`${sql}WHERE e.introducer_id = ? ORDER BY e.created_at DESC, e.rowid DESC`, [introducer_id]);
+    ? listIntroducerPercentageEntriesIdIntroducerId<Row>(db)
+    : listIntroducerPercentageEntriesIdIntroducerIdByIntroducerId<Row>(db, [introducer_id]);
   return rows.filter((r) => can(actor, 'introducer_fee.read', { type: 'introducer_fee', id: r.id, business_id: r.business_id })).map((r) => ({
     id: r.id, firm: { id: r.introducer_id, name: r.firm_name }, claim: { id: r.claim_id, claim_ref: r.claim_ref },
     kind: r.entry_kind, basis: formatPence(r.basis_pence), percent: `${r.percent_bp / 100}%`,

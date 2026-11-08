@@ -68,6 +68,8 @@ import { getUsersRoleById } from '../../core/index.ts';
 import { getClaimDeliverablesCountByClaimIdKind2, getClaimDeliverablesCountByLogicalDocumentIdTypeCode, getClaimDeliverablesFirstByClaimIdKind, getClaimFactsAnswerValueDateByClaimIdFactKey, getClaimsBusinessIdById, getClaimsBusinessIdPropertyIdById, getClaimsIdBusinessIdById, getClaimsPById, getDocumentFieldVouchesAnsweredByByRequestIdFieldId, getDocumentLinksCountByLogicalDocumentIdUnlinkedAt, getDocumentLinksIdByLogicalDocumentIdClaimId, getDocumentLinksIdByLogicalDocumentIdPropertyId, getDocumentLinksIdLogicalDocumentIdById, getDocumentVisibilityShownToClientByLogicalDocumentId, getDocumentsIdBusinessIdById3, getDocumentsIdByLogicalDocumentIdOriginalKeptAt, getDocumentsMByLogicalDocumentId, getEngagementsCountByBusinessIdSignedAt, getLogicalDocumentsCountByBusinessIdTypeCode2, getLogicalDocumentsEById, getLogicalDocumentsIdKindById, getLogicalDocumentsMByBusinessIdTypeCode, getPropertiesBusinessIdById, insertDocumentLinks, insertDocumentLinks2, insertDocumentVisibility, insertLogicalDocuments, listClaimsIdByBusinessIdStage, listClaimsIdClaimRefByBusinessId2, listDocumentEventsContractStepDetailJsonByDocIdContractStep, listDocumentLinksClaimIdByLogicalDocumentIdUnlinkedAt, listDocumentLinksClaimIdByLogicalDocumentIdUnlinkedAt2, listDocumentLinksIdClaimIdByLogicalDocumentId, listDocumentLinksIdClaimRefByLogicalDocumentIdUnlinkedAt, listDocumentsIdVersionNoByLogicalDocumentId, listPropertyEventsIdKindByBusinessId, updateDocumentFieldVouchesWithdrawnAtWithdrawnByByLogicalDoc, updateDocumentLinksUnlinkedAtUnlinkedByByIdUnlinkedAt, updateLogicalDocumentsEventIdById } from './data.ts';
 import { getBusinessesIdById, getClientMessageFilesIdDirectionByLogicalDocumentId, getClientTasksCountByKindState, getClientTasksIdBusinessIdById, getClientTasksIdBusinessIdById2, getClientTasksIdClaimIdByBusinessIdKind, getClientTasksIdClaimIdByIdKind, insertClientTasks2, listBusinessesIdName, updateClientTasksStateAnswerStateByIdState, updateClientTasksStateWithdrawnAtByIdState } from '../crm/index.ts';
 import { getDocumentTypesCodeByCode, getDocumentTypesM, getDocumentTypesOrdByCode, getDocumentsIdBusinessIdById, getDocumentsRoleById, getLogicalDocumentsRoleById, getUsersRoleById2, insertDocumentTypes, listBusinessesOByIdBusinessId, listDocumentTypesCodeLabelByActiveHandlerType, listLogicalDocumentsIdBusinessIdByBusinessId, listRegisterRecordsIdSourceIdBySourceIdBusinessId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2, listSurveyorJobsSurveyorIdByClaimIdSurveyorId, listSurveyorJobsSurveyorIdBySurveyorIdClaimId, updateDocumentTypesLabelReadersByCode } from './data-borrowed.ts';
+import { getDocumentTypesCodeLabelByCode, getLogicalDocumentsIdBusinessIdById, listDocumentTypesCodeLabel2, listDocumentsIdLogicalDocumentIdByLogicalDocumentId, listLogicalDocumentsIdBusinessId, listLogicalDocumentsIdBusinessIdByBusinessId2, listLogicalDocumentsIdBusinessIdByBusinessId3, listLogicalDocumentsIdBusinessIdByIdJO, listLogicalDocumentsIdBusinessIdByIdUnlinkedAt } from './data-borrowed.ts';
+import { listDocumentFieldVouchesIdBusinessIdByRequestIdJO, listDocumentFieldVouchesIdBusinessIdByRequestIdJO2 } from './data-borrowed.ts';
 
 export type DocDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -235,8 +237,6 @@ export function stripReading(handler_type: string | null): StripReading {
  * 2 · TYPES — configurable by ADMIN
  * ================================================================== */
 
-const TYPE_SELECT =
-  'SELECT code, label, source, handler_type, readers, carries_value, retention_ref, active, ord, note, created_at, updated_at FROM document_types ';
 
 type TypeRow = {
   code: string; label: string; source: string; handler_type: string | null; readers: string; carries_value: number;
@@ -268,7 +268,7 @@ function typeView(t: TypeRow): TypeView {
 
 export function typeList(db: Db, actor: Actor): TypeView[] {
   authorise(actor, 'document_type.read', TYPES_OBJ);
-  return db.all<TypeRow>(`${TYPE_SELECT}ORDER BY ord ASC, code ASC`).map(typeView);
+  return listDocumentTypesCodeLabel2<TypeRow>(db).map(typeView);
 }
 
 export function mayWriteTypes(actor: Actor): boolean {
@@ -349,7 +349,7 @@ export function createType(d: DocDeps, actor: Actor, input: Fields): DocResult {
 /** ADMIN CHANGES A TYPE — its label, who may read it, its clock, whether it is active; never its code or its policy. */
 export function updateType(d: DocDeps, actor: Actor, code: string, input: Fields): DocResult {
   authorise(actor, 'document_type.write', TYPES_OBJ);
-  const t = d.db.get<TypeRow>(`${TYPE_SELECT}WHERE code = ?`, [code]);
+  const t = getDocumentTypesCodeLabelByCode<TypeRow>(d.db, [code]);
   if (t === undefined) throw new NotFoundAsRefusal();
   const f = readTypeFields(input, t);
   if (!f.ok) return f;
@@ -374,9 +374,6 @@ export function updateType(d: DocDeps, actor: Actor, code: string, input: Fields
  * 3 · THE DOCUMENT AS AN OBJECT can() IS ASKED ABOUT
  * ================================================================== */
 
-const LOGICAL_SELECT =
-  'SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, ' +
-  't.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code ';
 
 type LogicalRow = {
   id: string; business_id: string; type_code: string; seq: number; created_at: string; label: string; readers: string;
@@ -389,7 +386,7 @@ export function documentLabel(typeLabel: string, seq: number): string {
 }
 
 function loadLogical(db: Db, id: string): LogicalRow {
-  const l = db.get<LogicalRow>(`${LOGICAL_SELECT}WHERE l.id = ?`, [id]);
+  const l = getLogicalDocumentsIdBusinessIdById<LogicalRow>(db, [id]);
   if (l === undefined) throw new NotFoundAsRefusal();
   return l;
 }
@@ -493,11 +490,6 @@ export function versionObj(db: Db, doc_id: string): DocObj | undefined {
  * 4 · VERSIONS
  * ================================================================== */
 
-const VERSION_SELECT =
-  'SELECT d.id, d.logical_document_id, d.version_no, d.type_code, d.retention_ref, d.request_id, d.state, d.doc_type, ' +
-  'd.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, u.role AS uploader_role, ' +
-  'd.original_kept_at, d.original_delete_after, d.original_deleted_at FROM documents d ' +
-  'LEFT JOIN users u ON u.id = d.uploaded_by ';
 
 type VersionRow = {
   id: string; logical_document_id: string | null; version_no: number | null; type_code: string | null; retention_ref: string | null;
@@ -602,14 +594,14 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
 
   let logical: LogicalRow | null = null;
   if (a.logical_document_id !== null && a.logical_document_id !== '') {
-    const l = d.db.get<LogicalRow>(`${LOGICAL_SELECT}WHERE l.id = ?`, [a.logical_document_id]);
+    const l = getLogicalDocumentsIdBusinessIdById<LogicalRow>(d.db, [a.logical_document_id]);
     if (l === undefined || l.business_id !== biz.id) return { ok: false, why: 'not found' };
     authorise(actor, 'document.read', documentObj(d.db, l));
     logical = l;
   }
 
   const code = (a.type_code ?? '').trim() !== '' ? (a.type_code ?? '').trim() : (logical?.type_code ?? request?.requested_type ?? '');
-  const t = d.db.get<TypeRow>(`${TYPE_SELECT}WHERE code = ?`, [code]);
+  const t = getDocumentTypesCodeLabelByCode<TypeRow>(d.db, [code]);
   if (t === undefined) return { ok: false, why: 'say what kind of document it is.' };
   if (logical !== null && logical.type_code !== t.code) return { ok: false, why: `a new version of ${documentLabel(logical.label, logical.seq)} must be of the same type.` };
   if (request !== null && request.requested_type !== t.code) return { ok: false, why: 'that request asks for a different kind of document; upload one of those against it.' };
@@ -883,7 +875,7 @@ export function createDocumentRequest(
   if (evId !== '' && (ev === null || (claim !== null && getClaimsPById<{ p: string | null }>(d.db, [claim])?.p !== ev.property_id))) {
     return { ok: false, why: 'that piece of work is not on this claim’s building.', field: 'event_id' };
   }
-  const t = d.db.get<TypeRow>(`${TYPE_SELECT}WHERE code = ?`, [(i.type_code ?? '').trim()]);
+  const t = getDocumentTypesCodeLabelByCode<TypeRow>(d.db, [(i.type_code ?? '').trim()]);
   // PHASE 133d (D4): each refusal about one field names it, so the form draws it beside that field.
   if (t === undefined) return { ok: false, why: 'choose the kind of document you are asking for.', field: 'type_code' };
   if (t.active !== 1) return { ok: false, why: 'that document type has been retired.', field: 'type_code' };
@@ -946,14 +938,6 @@ export function withdrawDocumentRequest(d: DocDeps, actor: Actor, id: string): D
   return { ok: true, id: r.id, business_id: r.business_id, claim_id: r.claim_id };
 }
 
-const REQUEST_SELECT =
-  'SELECT ct.id, ct.business_id, ct.claim_id, c.claim_ref, ct.requested_type, t.label AS type_label, ct.state, ct.why, ct.holds_up, ' +
-  'ct.due_on, ct.created_at, ct.withdrawn_at, ct.answered_at, ab.display_name AS asked_by, d.logical_document_id AS received_document, ' +
-  'd.version_no AS received_version, (SELECT v.answer FROM document_field_vouches v WHERE v.request_id = ct.id LIMIT 1) AS early_answer, ' +
-  'ct.event_id, pe.kind AS event_kind, pe.event_date AS event_date ' +
-  'FROM client_tasks ct JOIN document_types t ON t.code = ct.requested_type ' +
-  'LEFT JOIN claims c ON c.id = ct.claim_id LEFT JOIN users ab ON ab.id = ct.asked_by LEFT JOIN documents d ON d.id = ct.received_document_id ' +
-  'LEFT JOIN property_events pe ON pe.id = ct.event_id ';
 
 type RequestRow = {
   id: string; business_id: string; claim_id: string | null; claim_ref: string | null; requested_type: string; type_label: string;
@@ -1004,8 +988,8 @@ export function requestsFor(db: Db, actor: Actor, scope: { business_id: string; 
   authorise(actor, 'document_request.read', { type: 'document_request', id: scope.business_id, business_id: scope.business_id });
   const order = "ORDER BY CASE WHEN ct.state = 'OPEN' THEN 0 ELSE 1 END, ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC";
   const rows = scope.claim_id === undefined
-    ? db.all<RequestRow>(`${REQUEST_SELECT}WHERE ct.kind = 'DOCUMENT' AND ct.business_id = ? ${order}`, [scope.business_id])
-    : db.all<RequestRow>(`${REQUEST_SELECT}WHERE ct.kind = 'DOCUMENT' AND ct.business_id = ? AND ct.claim_id = ? ${order}`, [scope.business_id, scope.claim_id]);
+    ? listDocumentFieldVouchesIdBusinessIdByRequestIdJO2<RequestRow>(db, [scope.business_id])
+    : listDocumentFieldVouchesIdBusinessIdByRequestIdJO<RequestRow>(db, [scope.business_id, scope.claim_id]);
   return rows.map((r) => requestView(r, nowIso));
 }
 
@@ -1079,7 +1063,7 @@ export type DocumentSummary = {
 };
 
 function summaryOf(db: Db, l: LogicalRow): DocumentSummary {
-  const versions = db.all<VersionRow>(`${VERSION_SELECT}WHERE d.logical_document_id = ? ORDER BY d.version_no DESC`, [l.id]).map(versionView);
+  const versions = listDocumentsIdLogicalDocumentIdByLogicalDocumentId<VersionRow>(db, [l.id]).map(versionView);
   return {
     id: l.id, label: documentLabel(l.label, l.seq), type: { code: l.type_code, label: l.label },
     readers: words(READERS, l.readers, l.readers), versions: versions.length,
@@ -1111,11 +1095,7 @@ export type ClaimDocumentsPanel = {
  * `document_request.read`; nothing here names a person or computes a figure.
  */
 export function claimDocumentsPanel(db: Db, actor: Actor, claim: { id: string; business_id: string }, nowIso: string): ClaimDocumentsPanel {
-  const docs = db.all<LogicalRow>(
-    `${LOGICAL_SELECT}WHERE l.id IN (SELECT k.logical_document_id FROM document_links k LEFT JOIN claims c ON c.property_id = k.property_id ` +
-      'WHERE k.unlinked_at IS NULL AND (k.claim_id = ? OR c.id = ?)) ORDER BY t.ord ASC, l.seq ASC',
-    [claim.id, claim.id],
-  ).filter((l) => can(actor, 'document.read', documentObj(db, l))).map((l) => summaryOf(db, l));
+  const docs = listLogicalDocumentsIdBusinessIdByIdJO<LogicalRow>(db, [claim.id, claim.id]).filter((l) => can(actor, 'document.read', documentObj(db, l))).map((l) => summaryOf(db, l));
   const reqObj = { type: 'document_request' as const, id: claim.business_id, business_id: claim.business_id };
   const requests = can(actor, 'document_request.read', reqObj) ? requestsFor(db, actor, { business_id: claim.business_id, claim_id: claim.id }, nowIso) : null;
   const mayRequest = can(actor, 'document_request.create', reqObj);
@@ -1125,7 +1105,7 @@ export function claimDocumentsPanel(db: Db, actor: Actor, claim: { id: string; b
   const mayUpload = actor.role !== 'CLIENT' && can(actor, 'document.upload', { type: 'business', id: claim.business_id });
   const linkedIds = new Set(docs.map((x) => x.id));
   const linkable = mayLink
-    ? db.all<LogicalRow>(`${LOGICAL_SELECT}WHERE l.business_id = ? ORDER BY t.ord ASC, l.seq ASC`, [claim.business_id])
+    ? listLogicalDocumentsIdBusinessIdByBusinessId3<LogicalRow>(db, [claim.business_id])
       .filter((l) => !linkedIds.has(l.id) && can(actor, 'document.read', documentObj(db, l)))
       .map((l) => ({ id: l.id, label: documentLabel(l.label, l.seq) }))
     : null;
@@ -1237,7 +1217,7 @@ export function documentPage(d: { db: Db; audit: AuditLog; now: () => string }, 
     type: { code: l.type_code, label: l.label, readers: words(READERS, l.readers, l.readers), strip: stripReading(l.handler_type), clock_now: retentionReading(l.type_retention) },
     // A link's target is drawn as a link only where the reader may open it; its reference is shown either way.
     links: links.map((k) => ({ ...k, href: k.href !== null && staffMayOpen(d.db, actor, k) ? k.href : null })),
-    versions: d.db.all<VersionRow>(`${VERSION_SELECT}WHERE d.logical_document_id = ? ORDER BY d.version_no DESC`, [l.id]).map(versionView),
+    versions: listDocumentsIdLogicalDocumentIdByLogicalDocumentId<VersionRow>(d.db, [l.id]).map(versionView),
     history: HISTORY_NOTE, original: ORIGINALS_NOTE,
     may_link: mayLink, may_upload_version: mayUpload,
     ...(keptVersionOf(d.db, l.id, d.now()) !== null && can(actor, 'document.read_original', obj) ? { original_href: `/staff/documents/${l.id}/download` } : {}),
@@ -1532,11 +1512,7 @@ export function organisationDocumentsPanel(db: Db, actor: Actor, business_id: st
 }
 
 export function propertyDocumentsPanel(db: Db, actor: Actor, property: { id: string; business_id: string }): PlaceDocumentsPanel {
-  const docs = db.all<LogicalRow>(
-    `${LOGICAL_SELECT}WHERE l.id IN (SELECT k.logical_document_id FROM document_links k WHERE k.unlinked_at IS NULL AND k.property_id = ?) ` +
-      'ORDER BY t.ord ASC, l.seq ASC',
-    [property.id],
-  ).filter((l) => can(actor, 'document.read', documentObj(db, l))).map((l) => summaryOf(db, l));
+  const docs = listLogicalDocumentsIdBusinessIdByIdUnlinkedAt<LogicalRow>(db, [property.id]).filter((l) => can(actor, 'document.read', documentObj(db, l))).map((l) => summaryOf(db, l));
   const mayLink = can(actor, 'document.link', {
     type: 'document', id: property.id, business_id: property.business_id, readers: 'CLAIM_TEAM', carries_value: false, letter_signed: false,
     assigned_surveyor_ids: [],
@@ -1551,7 +1527,7 @@ export function propertyDocumentsPanel(db: Db, actor: Actor, property: { id: str
 
 /** An organisation's documents the reader may read — the portal's list, and a surveyor's evidence. */
 export function documentsOf(db: Db, actor: Actor, business_id: string): DocumentSummary[] {
-  return db.all<LogicalRow>(`${LOGICAL_SELECT}WHERE l.business_id = ? ORDER BY t.ord ASC, l.seq ASC`, [business_id])
+  return listLogicalDocumentsIdBusinessIdByBusinessId3<LogicalRow>(db, [business_id])
     .filter((l) => can(actor, 'document.read', documentObj(db, l)))
     .map((l) => summaryOf(db, l));
 }
@@ -1632,10 +1608,10 @@ export function documentCentre(db: Db, actor: Actor, q: URLSearchParams): Docume
   authorise(actor, 'document_centre.enter', CENTRE_OBJ);
   const said: string[] = [];
   const businesses = new Map(listBusinessesIdName<{ id: string; name: string }>(db).map((b) => [b.id, b.name]));
-  const readable = db.all<LogicalRow & { created_at: string }>(`${LOGICAL_SELECT}ORDER BY l.created_at DESC, l.id ASC LIMIT 2000`)
+  const readable = listLogicalDocumentsIdBusinessId<LogicalRow & { created_at: string }>(db)
     .filter((l) => can(actor, 'document.read', documentObj(db, l)))
     .map((l): CentreRow & { newest_at: string; ord: number } => {
-      const versions = db.all<VersionRow>(`${VERSION_SELECT}WHERE d.logical_document_id = ? ORDER BY d.version_no DESC`, [l.id]);
+      const versions = listDocumentsIdLogicalDocumentIdByLogicalDocumentId<VersionRow>(db, [l.id]);
       const newest = versions[0];
       const newestView = newest === undefined ? null : versionView(newest);
       const anyReceived = versions.some((v) => v.strip_recorded_at !== null && v.quarantine_discharged_at !== null && v.failure_code === null);
@@ -1883,7 +1859,7 @@ export function clientFolder(
 
 /** How many files a reader may open on a company — the number beside the folder icon. The same rule as the folder. */
 export function clientFileCount(db: Db, actor: Actor, business_id: string): number {
-  return db.all<LogicalRow>(`${LOGICAL_SELECT}WHERE l.business_id = ?`, [business_id])
+  return listLogicalDocumentsIdBusinessIdByBusinessId2<LogicalRow>(db, [business_id])
     .filter((l) => can(actor, 'document.read', documentObj(db, l))).length;
 }
 

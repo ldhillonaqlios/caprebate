@@ -46,3 +46,11 @@ export function listSurveyPackApprovalsSnapshotJsonAssessmentIdByVersionPack<T e
 export function getSurveyorJobsBusinessIdClaimIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT j.business_id, j.claim_id, b.sector FROM surveyor_jobs j JOIN businesses b ON b.id = j.business_id WHERE j.id = ?', params);
 }
+
+// finance_settings
+export function getFinanceSettingsIdSettingBySettingEffectiveFrom<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by WHERE s.setting = ? AND s.effective_from <= ? ORDER BY s.effective_from DESC, s.recorded_at DESC, s.rowid DESC LIMIT 1', params);
+}
+export function listFinanceSettingsIdSetting<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by ORDER BY s.setting ASC, s.effective_from DESC, s.rowid DESC', params);
+}

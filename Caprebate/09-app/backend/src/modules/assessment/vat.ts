@@ -63,6 +63,7 @@ import { feeGate, type FeeGateReading } from '../../shared/index.ts';
 import { assertFinanceSection, financeSectionObj } from '../../web/finance.ts';
 import { getStaffTasksIdByCompanySubjectStatus } from '../crm/index.ts';
 import { getInvoiceCreditNotesNByIssuedOn, getInvoicesCountByClaimIdInvoiceStatus, getInvoicesNByClaimIdInvoiceStatus, insertFinanceSettings, listClaimsIdClaimRefByStageClaimId } from './data-borrowed.ts';
+import { getFinanceSettingsIdSettingBySettingEffectiveFrom, listFinanceSettingsIdSetting } from './data-borrowed.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -90,15 +91,10 @@ type SettingRow = {
   id: string; setting: string; value: string; effective_from: string; source: string; recorded_at: string; recorder: string | null;
 };
 
-const SETTING_SELECT =
-  'SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder ' +
-  'FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by ';
 
 /** The value in effect on `today`: the latest row whose date has arrived. None is not known. */
 export function currentSetting(db: Db, setting: string, today: string): SettingRow | undefined {
-  return db.get<SettingRow>(
-    `${SETTING_SELECT}WHERE s.setting = ? AND s.effective_from <= ? ORDER BY s.effective_from DESC, s.recorded_at DESC, s.rowid DESC LIMIT 1`,
-    [setting, today]);
+  return getFinanceSettingsIdSettingBySettingEffectiveFrom<SettingRow>(db, [setting, today]);
 }
 
 function shown(setting: string, value: string): string {
@@ -131,7 +127,7 @@ export function settingsView(db: Db, actor: Actor, today: string): SettingsView 
       const r = currentSetting(db, key, today);
       return { key, label: SETTINGS[key] ?? key, setting: r === undefined ? null : viewOf(r) };
     }),
-    history: db.all<SettingRow>(`${SETTING_SELECT}ORDER BY s.setting ASC, s.effective_from DESC, s.rowid DESC`).map(viewOf),
+    history: listFinanceSettingsIdSetting<SettingRow>(db).map(viewOf),
   };
 }
 

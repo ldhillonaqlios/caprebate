@@ -68,6 +68,7 @@ import { getBusinessesIdNameById4, getClientTasksIdBusinessIdById3, getClientTas
 import { getAssessmentsAtByBusinessId, getAssessmentsIdSectorByBusinessId, listAssessmentAnswersOrdQuestionIdByAssessmentId2, listAssessmentAnswersQuestionIdQuestionTextByAssessmentIdSta } from '../assessment/index.ts';
 import { getClaimsIdByIdBusinessId, getPropertiesIdByIdBusinessId2 } from './data.ts';
 import { getAssessmentsBusinessIdNameByBusinessIdId, listAssessmentsBusinessIdNameByBusinessId, listInternalNotesIdBodyByBusinessId } from './data-borrowed.ts';
+import { listClientTasksIdFactIdByBusinessIdKind2 } from './data-borrowed.ts';
 
 export { NotFoundAsRefusal };
 
@@ -813,21 +814,10 @@ export type TaskView = {
   readonly provenance: string;
 };
 
-const TASK_SELECT =
-  'SELECT t.id, t.fact_id, t.question, t.why, t.holds_up, t.state, t.answer_state, t.answer, ' +
-  't.answered_at, t.answered_by_role, t.sent_to_portal_at, t.created_at, t.withdrawn_at, t.due_on, ' +
-  'ab.display_name AS asked_by_name, an.display_name AS answered_by_name, ' +
-  'wb.display_name AS withdrawn_by_name ' +
-  'FROM client_tasks t LEFT JOIN users ab ON ab.id = t.asked_by ' +
-  'LEFT JOIN users an ON an.id = t.answered_by ' +
-  'LEFT JOIN users wb ON wb.id = t.withdrawn_by ';
 
 export function tasksFor(db: Db, actor: Actor, business_id: string): TaskView[] {
   authorise(actor, 'business.read', { type: 'business', id: business_id });
-  const rows = db.all<Omit<TaskView, 'provenance'>>(
-    // CRM 4 of 10: a document request is answered by an upload, not on this panel.
-    TASK_SELECT + "WHERE t.business_id = ? AND t.kind = 'QUESTION' ORDER BY t.created_at ASC", [business_id],
-  );
+  const rows = listClientTasksIdFactIdByBusinessIdKind2<Omit<TaskView, 'provenance'>>(db, [business_id]);
   return rows.map((r) => ({ ...r, provenance: provenanceLine(r) }));
 }
 

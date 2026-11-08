@@ -477,7 +477,7 @@
   },
   "src/modules/assessment/funnel-edges.ts": {
    "area": "assessment",
-   "kind": "logic"
+   "kind": "data"
   },
   "src/modules/assessment/funnel-session.ts": {
    "area": "assessment",

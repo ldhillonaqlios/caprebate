@@ -55,6 +55,7 @@ import { getAssessmentsIdLeadIdByBusinessId, insertLeadsByBusinessIdId } from '.
 import { getBookingsIdByLeadIdBusinessId, getBusinessesIdById, getBusinessesIdSourceById, getContactsIdFullNameByLeadId, getLeadsEnquiryIdById, getStaffTasksTitleOwnerIdByLeadIdStatus, insertLeads, insertLeads2, insertLeads4, listBusinessesIdName3, listLeadsLeadIdNameByEnquiryIdId, updateBookingsBusinessIdByLeadIdBusinessId, updateBusinessesSourceUpdatedAtById, updateContactsBusinessIdUpdatedAtByLeadIdBusinessId, updateLeadsBookingIdUpdatedAtByBusinessIdBookingId, updateLeadsOwnerIdPriorityById, updateLeadsStatusConvertedAtById } from './data.ts';
 import { getAssessmentsLowHighById, getEstimatesCountByAssessmentId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId } from '../assessment/index.ts';
 import { listPropertiesIdByBusinessId2, listPropertiesIdLabelByBusinessId, listPropertyEventsLabelKindByAssessmentId } from '../claims/index.ts';
+import { getStaffTasksIdBusinessIdByLeadIdStatus, listStaffTasksIdBusinessIdByLeadIdStatus } from './data-borrowed.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -127,19 +128,6 @@ type LeadDbRow = {
   prospect_postcode: string | null; prospect_event: string | null; prospect_event_year: number | null;
 };
 
-const LEAD_SELECT =
-  'SELECT l.id, l.business_id, l.assessment_id, l.booking_id, l.claim_id, l.origin, l.source, l.introducer_id, ' +
-  'l.prospect_postcode, l.prospect_event, l.prospect_event_year, ' +
-  'l.prospect_organisation, l.prospect_sector, l.lead_date, l.owner_id, l.priority, ' +
-  // CRM 9 of 10: a lead's next action is its earliest open task — migration 018 retired the free text.
-  "(SELECT t.title FROM staff_tasks t WHERE t.lead_id = l.id AND t.status IN ('OPEN','IN_PROGRESS') " +
-  'ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC, t.id ASC LIMIT 1) AS next_action, ' +
-  "(SELECT t.due_on FROM staff_tasks t WHERE t.lead_id = l.id AND t.status IN ('OPEN','IN_PROGRESS') " +
-  'ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC, t.id ASC LIMIT 1) AS next_action_due, ' +
-  'l.status, l.lost_reason, l.lost_note, l.converted_at, l.created_at, l.updated_at, b.name AS business_name, ' +
-  'b.sector AS business_sector, u.display_name AS owner_name, c.claim_ref AS claim_ref ' +
-  'FROM leads l LEFT JOIN businesses b ON b.id = l.business_id LEFT JOIN users u ON u.id = l.owner_id ' +
-  'LEFT JOIN claims c ON c.id = l.claim_id ';
 
 const SECTION = '__lead_section__';
 
@@ -152,7 +140,7 @@ function leadObj(r: { id: string; business_id: string | null }): Extract<Obj, { 
 }
 
 function loadLead(db: Db, id: string): LeadDbRow {
-  const r = db.get<LeadDbRow>(`${LEAD_SELECT}WHERE l.id = ?`, [id]);
+  const r = getStaffTasksIdBusinessIdByLeadIdStatus<LeadDbRow>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
 }
@@ -197,7 +185,7 @@ export const RANGE_NOT_SHOWN = 'not shown to this role';
 
 export function leadList(db: Db, actor: Actor, limit = 200): LeadRow[] {
   assertLeadSection(actor);
-  return db.all<LeadDbRow>(`${LEAD_SELECT}ORDER BY l.lead_date DESC, l.id ASC LIMIT ?`, [limit])
+  return listStaffTasksIdBusinessIdByLeadIdStatus<LeadDbRow>(db, [limit])
     .filter((r) => can(actor, 'lead.read', leadObj(r)))
     .map((r) => {
       const range = shownRangeFor(db, actor, r);

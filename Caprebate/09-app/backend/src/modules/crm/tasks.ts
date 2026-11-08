@@ -51,6 +51,7 @@ import { listUsersIdDisplayNameByRoleADM2 } from '../../core/index.ts';
 import { getBusinessesIdById, getContactsIdBusinessIdById3, getLeadsBusinessIdById, getLeadsIdBusinessIdById, getStaffTasksDueOnNByContactIdStatus, getStaffTasksIdByCreatedByOrigin, insertStaffTasks, listClientTasksQuestionDueOnByAskedByState, listClientTasksQuestionDueOnByAskedByState2, listClientTasksQuestionDueOnByBusinessIdState, updateStaffTasksIsNextActionUpdatedAtByClaimIdIsNextAction, updateStaffTasksIsNextActionUpdatedAtById, updateStaffTasksStatusCancelledAtById, updateStaffTasksStatusCompletedAtById, updateStaffTasksStatusStartedAtById, updateStaffTasksStatusUpdatedAtById, updateStaffTasksTitleDescriptionById } from './data.ts';
 import { getStaffTasksIdTitleByClaimIdIsNextAction, listClaimsIdClaimRef, listClaimsIdClaimRefByOwnerId2, listClientTasksIdTypeLabelByAskedByKind } from './data-borrowed.ts';
 import { getClaimsIdBusinessIdById7, getClaimsIdStageById, getClaimsStageById, getPropertiesIdBusinessIdById, listClaimsIdClaimRefByOwnerId } from '../claims/index.ts';
+import { getIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO2, listIntroducersIdTitleByIdJO3, listIntroducersIdTitleByIdJO4 } from './data-borrowed.ts';
 
 export type TaskDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type TaskResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -224,24 +225,9 @@ type TaskDbRow = {
   company_subject: string | null;
 };
 
-const TASK_SELECT =
-  'SELECT t.id, t.title, t.description, t.owner_id, t.owner_role, t.due_on, t.priority, t.status, t.activity_type, ' +
-  't.business_id, t.property_id, t.claim_id, t.lead_id, t.contact_id, t.fact_id, t.recurrence, t.recurred_from_id, ' +
-  't.is_next_action, t.origin, t.automation_run_id, t.created_by, t.created_at, t.updated_at, t.started_at, ' +
-  't.completed_at, t.completed_by, t.cancelled_at, t.cancelled_by, t.cancel_reason, t.introducer_id, t.company_subject, ' +
-  'o.display_name AS owner_name, cb.display_name AS created_by_name, co.display_name AS completed_by_name, ' +
-  'ca.display_name AS cancelled_by_name, c.claim_ref, b.name AS business_name, ' +
-  'COALESCE(lb.name, l.prospect_organisation) AS lead_label, ct.full_name AS contact_label, p.label AS property_label, ' +
-  'ar.label AS rule_label, (SELECT i.firm_name FROM introducers i WHERE i.id = t.introducer_id) AS introducer_label ' +
-  'FROM staff_tasks t LEFT JOIN users o ON o.id = t.owner_id LEFT JOIN users cb ON cb.id = t.created_by ' +
-  'LEFT JOIN users co ON co.id = t.completed_by LEFT JOIN users ca ON ca.id = t.cancelled_by ' +
-  'LEFT JOIN claims c ON c.id = t.claim_id LEFT JOIN businesses b ON b.id = t.business_id ' +
-  'LEFT JOIN leads l ON l.id = t.lead_id LEFT JOIN businesses lb ON lb.id = l.business_id ' +
-  'LEFT JOIN contacts ct ON ct.id = t.contact_id LEFT JOIN properties p ON p.id = t.property_id ' +
-  'LEFT JOIN automation_runs run ON run.id = t.automation_run_id LEFT JOIN automation_rules ar ON ar.id = run.rule_id ';
 
 function loadTask(db: Db, id: string): TaskDbRow {
-  const r = db.get<TaskDbRow>(`${TASK_SELECT}WHERE t.id = ?`, [id]);
+  const r = getIntroducersIdTitleByIdJO<TaskDbRow>(db, [id]);
   // A missing row and a forbidden row look the same from outside.
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
@@ -897,11 +883,7 @@ export type ClaimTaskPanel = {
  * their own tasks on the claim and nothing else.
  */
 export function claimTaskPanel(db: Db, actor: Actor, claim: { id: string; business_id: string; stage: string | null }, nowIso: string): ClaimTaskPanel {
-  const tasks = db.all<TaskDbRow>(
-    `${TASK_SELECT}WHERE t.claim_id = ? ORDER BY CASE WHEN t.status IN ('OPEN','IN_PROGRESS') THEN 0 ELSE 1 END, ` +
-      't.due_on IS NULL, t.due_on ASC, t.created_at DESC',
-    [claim.id],
-  ).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
+  const tasks = listIntroducersIdTitleByIdJO<TaskDbRow>(db, [claim.id]).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
   const staff = can(actor, 'organisation.read', { type: 'business', id: claim.business_id });
   const w = staff ? waitingOn(db, actor, claim.business_id) : null;
   // CRM 4 of 10: document requests are the documents panel's, flagged OVERDUE there by the same reading.
@@ -966,11 +948,7 @@ export type MyWork = {
  * nobody has taken it; overdue first. The caller has asked `backoffice.enter`.
  */
 export function myWork(db: Db, actor: Actor, nowIso: string): MyWork {
-  const tasks = db.all<TaskDbRow>(
-    `${TASK_SELECT}WHERE t.status IN ('OPEN','IN_PROGRESS') AND (t.owner_id = ? OR (t.owner_id IS NULL AND t.owner_role = ?)) ` +
-      'ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC',
-    [actor.id, actor.role],
-  ).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
+  const tasks = listIntroducersIdTitleByIdJO2<TaskDbRow>(db, [actor.id, actor.role]).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
   const ordered = [...tasks.filter((t) => t.due.overdue), ...tasks.filter((t) => !t.due.overdue)];
   const questions = listClientTasksQuestionDueOnByAskedByState<{ question: string; due_on: string; business_id: string; business_name: string }>(db, [actor.id, localDate(nowIso)]).filter((q) => can(actor, 'organisation.read', { type: 'business', id: q.business_id }))
     .map((q) => ({ question: q.question, due_on: q.due_on, business_id: q.business_id, client: q.business_name }));
@@ -1016,10 +994,7 @@ export function myWork(db: Db, actor: Actor, nowIso: string): MyWork {
 /** Every open task the reader may read — the whole team's list, for those who hand work out. */
 export function openTasks(db: Db, actor: Actor, nowIso: string, limit = 500): TaskView[] {
   authorise(actor, 'staff_task.create', sectionObj());
-  return db.all<TaskDbRow>(
-    `${TASK_SELECT}WHERE t.status IN ('OPEN','IN_PROGRESS') ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC LIMIT ?`,
-    [limit],
-  ).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
+  return listIntroducersIdTitleByIdJO4<TaskDbRow>(db, [limit]).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
 }
 
 /**
@@ -1027,10 +1002,7 @@ export function openTasks(db: Db, actor: Actor, nowIso: string, limit = 500): Ta
  * gate beyond the back office: each row is asked `staff_task.read`, so a login sees exactly the tasks it could open.
  */
 export function tasksDueByToday(db: Db, actor: Actor, nowIso: string, limit = 200): TaskView[] {
-  return db.all<TaskDbRow>(
-    `${TASK_SELECT}WHERE t.status IN ('OPEN','IN_PROGRESS') AND t.due_on IS NOT NULL AND t.due_on <= ? ORDER BY t.due_on ASC, t.created_at ASC LIMIT ?`,
-    [localDate(nowIso), limit],
-  ).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
+  return listIntroducersIdTitleByIdJO3<TaskDbRow>(db, [localDate(nowIso), limit]).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
 }
 
 export type TaskPage = {

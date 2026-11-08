@@ -1029,3 +1029,33 @@ export function listWorkingTimesIdUserIdByUserIdStartM<T extends Row = Row>(db: 
 export function listWorkingTimesUserIdN<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT user_id, COUNT(*) AS n FROM working_times GROUP BY user_id', params);
 }
+
+// automation_rules
+export function getAutomationRulesIdLabelById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, label, trigger_event, trigger_stage, trigger_activity, effect, task_title, task_description, task_activity_type, task_priority, due_in_days, assign_to, assign_role, attach_to, active, ord, source, created_at, updated_at, request_type FROM automation_rules WHERE id = ?', params);
+}
+export function listAutomationRulesIdLabel<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, label, trigger_event, trigger_stage, trigger_activity, effect, task_title, task_description, task_activity_type, task_priority, due_in_days, assign_to, assign_role, attach_to, active, ord, source, created_at, updated_at, request_type FROM automation_rules ORDER BY ord ASC, id ASC', params);
+}
+export function listAutomationRulesIdLabelByActiveTriggerEvent<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, label, trigger_event, trigger_stage, trigger_activity, effect, task_title, task_description, task_activity_type, task_priority, due_in_days, assign_to, assign_role, attach_to, active, ord, source, created_at, updated_at, request_type FROM automation_rules WHERE active = 1 AND trigger_event = ? ORDER BY ord ASC, id ASC', params);
+}
+
+// contacts
+export function getContactsIdBusinessIdById4<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, business_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, contact_type, is_decision_maker, email, phone, last_contact_at, next_follow_up_at, notes FROM contacts WHERE id = ?', params);
+}
+export function listContactsIdBusinessIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, business_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, contact_type, is_decision_maker, email, phone, last_contact_at, next_follow_up_at, notes FROM contacts WHERE business_id = ? ORDER BY full_name ASC, id ASC', params);
+}
+
+// automation_runs
+export function listAutomationRunsAtOutcomeByBusinessIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT r.at, r.outcome, r.reason, r.tasks_created, r.outbox_id, ar.label, r.claim_id, r.lead_id FROM automation_runs r JOIN automation_rules ar ON ar.id = r.rule_id WHERE r.business_id = ? AND r.claim_id IS NULL AND r.lead_id IS NULL ORDER BY r.at', params);
+}
+export function listAutomationRunsAtOutcomeByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT r.at, r.outcome, r.reason, r.tasks_created, r.outbox_id, ar.label, r.claim_id, r.lead_id FROM automation_runs r JOIN automation_rules ar ON ar.id = r.rule_id WHERE r.claim_id = ? ORDER BY r.at', params);
+}
+export function listAutomationRunsAtOutcomeByLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT r.at, r.outcome, r.reason, r.tasks_created, r.outbox_id, ar.label, r.claim_id, r.lead_id FROM automation_runs r JOIN automation_rules ar ON ar.id = r.rule_id WHERE r.lead_id = ? ORDER BY r.at', params);
+}

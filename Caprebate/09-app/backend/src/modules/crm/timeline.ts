@@ -66,6 +66,9 @@ import { listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, list
 import { getBusinessesIdById, getLeadsIdBusinessIdById, getStaffTasksAtByContactIdStatus, listBookingsIdBusinessIdByBusinessIdLeadId, listBookingsIdBusinessIdByLeadIdId, listContactsIdCreatedAtByLeadId, listLeadsIdByBusinessId, listLeadsIdByClaimId } from './data.ts';
 import { listAuditLogAtDetailByKindBusinessId, listBookingChangesAtFromStartsAtByBookingId, listClaimMilestonesRecordedAtMilestoneByClaimId, listClaimStageMovesAtKindByClaimId3, listClientTasksQuestionCreatedAtByBusinessId, listDocumentLinksLogicalDocumentIdBusinessIdByBusinessId, listDocumentsIdDeclaredTypeByBusinessId, listEnquiryChecksRecordedAtCheckKeyByClaimId, listEnquiryChecksRecordedAtCheckKeyByLeadId, listInvoiceCreditNotesRecordedAtBasisByInvoiceId, listInvoicePaymentsRecordedAtVoidedAtByInvoiceId, listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId, listInvoicesIdKindByClaimId, listResearchRunsAtKindByBusinessId, listSurveyorCommitmentsCommittedAtJobIdByClaimId, listSurveyorJobsIdBusinessIdByClaimId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from './data-borrowed.ts';
 import { getEngagementsLetterStateSignedAtByBusinessId2, getPropertiesIdBusinessIdById, listClaimStageMovesAtKindByClaimId, listDocumentEventsAtContractStepByDocId } from '../claims/index.ts';
+import { getClaimsIdClaimRefById4, listClaimsIdClaimRefByBusinessId4, listClaimsIdClaimRefByPropertyId, listOutboxCreatedAtKindByBusinessId, listOutboxCreatedAtKindByLeadIdBusinessId } from './data-borrowed.ts';
+import { listClientMessageFilesCreatedAtDirectionByMessageIdJO, listClientMessageFilesCreatedAtDirectionByMessageIdJO2, listInternalNotesCreatedAtBodyByBusinessId, listInternalNotesCreatedAtBodyByBusinessIdClaimId, listInternalNotesCreatedAtBodyByPropertyIdClaimId, listStaffTasksIdTitleByBusinessIdLeadId, listStaffTasksIdTitleByClaimId, listStaffTasksIdTitleByLeadId, listStaffTasksIdTitleByPropertyIdClaimId } from './data-borrowed.ts';
+import { listAutomationRunsAtOutcomeByBusinessIdClaimId, listAutomationRunsAtOutcomeByClaimId, listAutomationRunsAtOutcomeByLeadId } from './data.ts';
 
 export type TimelineSubject = { readonly kind: 'organisation' | 'property' | 'claim' | 'lead'; readonly id: string };
 
@@ -156,10 +159,6 @@ type Scope = {
   readonly leads: readonly string[];
 };
 
-// Phase 134: a property recorded as "Company — main site" is named "main site" here, where the company is the frame.
-const CLAIM_SCOPE_SELECT = "SELECT c.id, c.claim_ref, c.business_id, CASE WHEN p.label LIKE b.name || ' — %' THEN substr(p.label, length(b.name) + 4) " +
-  'ELSE p.label END AS property_label FROM claims c JOIN businesses b ON b.id = c.business_id LEFT JOIN properties p ON p.id = c.property_id ';
-
 /**
  * PHASE 134 — A CLAIM IN THE TIMELINE IS NAMED BY ITS PROPERTY. The words a person reads are "Outpatient annexe", and the
  * reference follows as ` · CR-2026-0007` so two claims on one property still read apart; `timelineBlock` draws that tail
@@ -171,7 +170,7 @@ export function claimScopeWords(property_label: string | null, claim_ref: string
 
 function resolve(db: Db, actor: Actor, subject: TimelineSubject): { scope: Scope; obj: Extract<Obj, { type: 'timeline' }> } {
   if (subject.kind === 'claim') {
-    const c = db.get<{ id: string; claim_ref: string; business_id: string; property_label: string | null }>(`${CLAIM_SCOPE_SELECT}WHERE c.id = ?`, [subject.id]);
+    const c = getClaimsIdClaimRefById4<{ id: string; claim_ref: string; business_id: string; property_label: string | null }>(db, [subject.id]);
     if (c === undefined) throw new NotFoundAsRefusal();
     const co = claimObjFor(db, c);
     authorise(actor, 'claim.read', co);
@@ -187,7 +186,7 @@ function resolve(db: Db, actor: Actor, subject: TimelineSubject): { scope: Scope
     return {
       scope: {
         business_id: b.id,
-        claims: db.all<{ id: string; claim_ref: string; business_id: string; property_label: string | null }>(`${CLAIM_SCOPE_SELECT}WHERE c.business_id = ? ORDER BY c.claim_ref`, [b.id]),
+        claims: listClaimsIdClaimRefByBusinessId4<{ id: string; claim_ref: string; business_id: string; property_label: string | null }>(db, [b.id]),
         leads: listLeadsIdByBusinessId<{ id: string }>(db, [b.id]).map((r) => r.id),
       },
       obj: { type: 'timeline', id: b.id, business_id: b.id, assigned_surveyor_ids: [] },
@@ -201,7 +200,7 @@ function resolve(db: Db, actor: Actor, subject: TimelineSubject): { scope: Scope
     return {
       scope: {
         business_id: p.business_id,
-        claims: db.all<{ id: string; claim_ref: string; business_id: string; property_label: string | null }>(`${CLAIM_SCOPE_SELECT}WHERE c.property_id = ? ORDER BY c.claim_ref`, [p.id]),
+        claims: listClaimsIdClaimRefByPropertyId<{ id: string; claim_ref: string; business_id: string; property_label: string | null }>(db, [p.id]),
         leads: [],
       },
       // A property's timeline reaches beyond any one survey job: an empty list reaches no surveyor.
@@ -452,8 +451,6 @@ function engagement(db: Db, biz: string, add: Add, scope: string): void {
  * who it went to. A lead's emails are on the lead's timeline (`leadOutbox`). An email that was not sent says so.
  */
 type OutboxRow = { created_at: string; kind: string; subject: string; sent_at: string | null; claim_ref: string | null; who: string | null; to_name: string | null };
-const OUTBOX_SELECT = 'SELECT o.created_at, o.kind, o.subject, o.sent_at, c.claim_ref, u.display_name AS who, ct.full_name AS to_name FROM outbox o ' +
-  'LEFT JOIN claims c ON c.id = o.claim_id LEFT JOIN users u ON u.id = o.written_by LEFT JOIN contacts ct ON ct.id = o.contact_id ';
 
 function outboxWhat(o: OutboxRow): string {
   return `${w(OUTBOX_WORDS, o.kind, 'A message')}${o.to_name === null ? '' : ` to ${o.to_name}`}: “${o.subject}” — ${
@@ -461,7 +458,7 @@ function outboxWhat(o: OutboxRow): string {
 }
 
 function outbox(db: Db, biz: string, add: Add, scope: string, claimScope: (ref: string) => string): void {
-  for (const o of db.all<OutboxRow>(`${OUTBOX_SELECT}WHERE o.business_id = ? ORDER BY o.created_at`, [biz])) {
+  for (const o of listOutboxCreatedAtKindByBusinessId<OutboxRow>(db, [biz])) {
     add({ at: o.created_at, category: 'OUTBOX', audience: o.sent_at === null ? 'STAFF_ONLY' : 'CLIENT_SEES', who: o.who,
       scope: o.claim_ref === null ? scope : claimScope(o.claim_ref), what: outboxWhat(o) });
   }
@@ -473,12 +470,9 @@ function outbox(db: Db, biz: string, add: Add, scope: string, claimScope: (ref: 
  */
 function clientMessages(db: Db, subject: TimelineSubject, biz: string, add: Add, scope: string, claimScope: (ref: string) => string): void {
   type Row = { created_at: string; direction: string; source: string; who: string | null; contact: string | null; claim_ref: string | null; files: number };
-  const select = 'SELECT m.created_at, m.direction, m.source, u.display_name AS who, ct.full_name AS contact, c.claim_ref, ' +
-    '(SELECT COUNT(*) FROM client_message_files f WHERE f.message_id = m.id) AS files FROM client_messages m ' +
-    'LEFT JOIN users u ON u.id = m.author_id LEFT JOIN contacts ct ON ct.id = m.contact_id LEFT JOIN claims c ON c.id = m.claim_id ';
-  const rows = subject.kind === 'claim'
-    ? db.all<Row>(`${select}WHERE m.business_id = ? AND (m.claim_id = ? OR m.claim_id IS NULL) ORDER BY m.created_at`, [biz, subject.id])
-    : db.all<Row>(`${select}WHERE m.business_id = ? ORDER BY m.created_at`, [biz]);
+    const rows = subject.kind === 'claim'
+    ? listClientMessageFilesCreatedAtDirectionByMessageIdJO<Row>(db, [biz, subject.id])
+    : listClientMessageFilesCreatedAtDirectionByMessageIdJO2<Row>(db, [biz]);
   for (const m of rows) {
     const files = m.files === 0 ? '' : ` — with ${m.files} ${m.files === 1 ? 'file' : 'files'}`;
     const what = m.source === 'EMAIL' ? `A reply from ${m.contact ?? 'the client'}, by email${files}`
@@ -489,7 +483,7 @@ function clientMessages(db: Db, subject: TimelineSubject, biz: string, add: Add,
 }
 
 function leadOutbox(db: Db, lead_id: string, add: Add, scope: string): void {
-  for (const o of db.all<OutboxRow>(`${OUTBOX_SELECT}WHERE o.lead_id = ? AND o.business_id IS NULL ORDER BY o.created_at`, [lead_id])) {
+  for (const o of listOutboxCreatedAtKindByLeadIdBusinessId<OutboxRow>(db, [lead_id])) {
     add({ at: o.created_at, category: 'OUTBOX', audience: o.sent_at === null ? 'STAFF_ONLY' : 'CLIENT_SEES', who: o.who, scope, what: outboxWhat(o) });
   }
 }
@@ -577,13 +571,11 @@ function automation(
   db: Db, subject: TimelineSubject, scope: Scope, add: Add, claimScope: (ref: string) => string, leadScope: string,
 ): void {
   type Row = { at: string; outcome: string; reason: string | null; tasks_created: number; outbox_id: string | null; label: string; claim_id: string | null; lead_id: string | null };
-  const select = 'SELECT r.at, r.outcome, r.reason, r.tasks_created, r.outbox_id, ar.label, r.claim_id, r.lead_id FROM automation_runs r ' +
-    'JOIN automation_rules ar ON ar.id = r.rule_id ';
-  const rows: Row[] = [];
-  for (const c of scope.claims) rows.push(...db.all<Row>(`${select}WHERE r.claim_id = ? ORDER BY r.at`, [c.id]));
-  for (const l of scope.leads) rows.push(...db.all<Row>(`${select}WHERE r.lead_id = ? ORDER BY r.at`, [l]));
+    const rows: Row[] = [];
+  for (const c of scope.claims) rows.push(...listAutomationRunsAtOutcomeByClaimId<Row>(db, [c.id]));
+  for (const l of scope.leads) rows.push(...listAutomationRunsAtOutcomeByLeadId<Row>(db, [l]));
   if (subject.kind === 'organisation') {
-    rows.push(...db.all<Row>(`${select}WHERE r.business_id = ? AND r.claim_id IS NULL AND r.lead_id IS NULL ORDER BY r.at`, [subject.id]));
+    rows.push(...listAutomationRunsAtOutcomeByBusinessIdClaimId<Row>(db, [subject.id]));
   }
   const refs = new Map(scope.claims.map((c) => [c.id, c.claim_ref]));
   for (const r of rows) {
@@ -606,17 +598,13 @@ function tasks(
     completed_at: string | null; cancelled_at: string | null; cancel_reason: string | null;
     created_by: string | null; completed_by: string | null; cancelled_by: string | null;
   };
-  const select = 'SELECT t.id, t.title, t.activity_type, t.origin, t.status, t.owner_id, t.owner_role, t.business_id, t.claim_id, t.lead_id, ' +
-    't.created_at, t.started_at, t.completed_at, t.cancelled_at, t.cancel_reason, cb.display_name AS created_by, ' +
-    'co.display_name AS completed_by, ca.display_name AS cancelled_by FROM staff_tasks t LEFT JOIN users cb ON cb.id = t.created_by ' +
-    'LEFT JOIN users co ON co.id = t.completed_by LEFT JOIN users ca ON ca.id = t.cancelled_by ';
-  const rows = subject.kind === 'organisation'
-    ? db.all<Row>(`${select}WHERE t.business_id = ? OR t.lead_id IN (SELECT l.id FROM leads l WHERE l.business_id = ?) ORDER BY t.created_at`, [subject.id, subject.id])
+    const rows = subject.kind === 'organisation'
+    ? listStaffTasksIdTitleByBusinessIdLeadId<Row>(db, [subject.id, subject.id])
     : subject.kind === 'claim'
-      ? db.all<Row>(`${select}WHERE t.claim_id = ? ORDER BY t.created_at`, [subject.id])
+      ? listStaffTasksIdTitleByClaimId<Row>(db, [subject.id])
       : subject.kind === 'property'
-        ? db.all<Row>(`${select}WHERE t.property_id = ? OR t.claim_id IN (SELECT c.id FROM claims c WHERE c.property_id = ?) ORDER BY t.created_at`, [subject.id, subject.id])
-        : db.all<Row>(`${select}WHERE t.lead_id = ? ORDER BY t.created_at`, [subject.id]);
+        ? listStaffTasksIdTitleByPropertyIdClaimId<Row>(db, [subject.id, subject.id])
+        : listStaffTasksIdTitleByLeadId<Row>(db, [subject.id]);
   const refs = new Map(scope.claims.map((c) => [c.id, c.claim_ref]));
   for (const t of rows) {
     if (!can(actor, 'staff_task.read', taskObj(db, t))) continue;
@@ -632,16 +620,11 @@ function tasks(
 
 function notesOf(db: Db, subject: TimelineSubject, biz: string): TimelineNote[] {
   type Row = { created_at: string; body: string; who: string | null; claim_ref: string | null; claim_property: string | null; property_label: string | null };
-  const select = 'SELECT n.created_at, n.body, u.display_name AS who, c.claim_ref, ' +
-    "CASE WHEN cp.label LIKE nb.name || ' — %' THEN substr(cp.label, length(nb.name) + 4) ELSE cp.label END AS claim_property, " +
-    'p.label AS property_label FROM internal_notes n JOIN businesses nb ON nb.id = n.business_id ' +
-    'LEFT JOIN users u ON u.id = n.author_id LEFT JOIN claims c ON c.id = n.claim_id LEFT JOIN properties cp ON cp.id = c.property_id ' +
-    'LEFT JOIN properties p ON p.id = n.property_id ';
-  const rows = subject.kind === 'claim'
-    ? db.all<Row>(`${select}WHERE n.business_id = ? AND (n.claim_id = ? OR (n.claim_id IS NULL AND n.property_id IS NULL)) ORDER BY n.created_at DESC`, [biz, subject.id])
+    const rows = subject.kind === 'claim'
+    ? listInternalNotesCreatedAtBodyByBusinessIdClaimId<Row>(db, [biz, subject.id])
     : subject.kind === 'property'
-      ? db.all<Row>(`${select}WHERE n.property_id = ? OR n.claim_id IN (SELECT x.id FROM claims x WHERE x.property_id = ?) ORDER BY n.created_at DESC`, [subject.id, subject.id])
-      : db.all<Row>(`${select}WHERE n.business_id = ? ORDER BY n.created_at DESC`, [biz]);
+      ? listInternalNotesCreatedAtBodyByPropertyIdClaimId<Row>(db, [subject.id, subject.id])
+      : listInternalNotesCreatedAtBodyByBusinessId<Row>(db, [biz]);
   return rows.map((n) => ({
     at: n.created_at, when: localStamp(n.created_at), body: n.body, who: n.who,
     about: n.claim_ref !== null ? claimScopeWords(n.claim_property, n.claim_ref) : n.property_label !== null ? n.property_label : 'the company in general',

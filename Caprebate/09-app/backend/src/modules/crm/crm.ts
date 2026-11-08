@@ -70,6 +70,8 @@ import { getClaimContactsIdByClaimIdContactId, getClaimContactsIdClaimIdById, ge
 import { getBusinessesClaimantTypeById, getBusinessesSectorById, getBusinessesSourceById, getBusinessesStageById, getContactsCountByBusinessIdId, getContactsIdBusinessIdById, getLeadsIdBusinessIdByClaimId, insertContacts, listContactsIdFullNameByBusinessIdContactType, listLeadsIdFirmNameByBusinessId, updateBusinessesLegalNameCompanyNumberById, updateContactsFullNameJobRoleOtherById } from './data.ts';
 import { getClaimsBusinessIdCompanyById, getSurveyorCommitmentsNByAssessmentId, getSurveyorJobsSurveyorIdByBusinessIdSurveyorId, listClaimContactsIdContactIdByClaimIdUnlinkedAt, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3, listSurveyorJobsSurveyorIdByClaimIdSurveyorId2, updateSurveyorJobsClaimIdByBusinessIdAssessmentId } from './data-borrowed.ts';
 import { getAssessmentsIdByBusinessId2, getAssessmentsShownLowPenceShownHighPenceById, getEstimatesCountByBusinessId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId, listAssessmentAnswersStateValueByAssessmentIdQuestionId } from '../assessment/index.ts';
+import { getBusinessesIdNameById5, getPropertiesIdBusinessIdById4, getStaffTasksIdClaimRefByClaimIdIsNextAction, listBusinessesIdName5, listPropertiesIdBusinessId, listPropertiesIdBusinessIdByBusinessId, listStaffTasksIdClaimRefByClaimIdIsNextAction, listStaffTasksIdClaimRefByClaimIdIsNextAction2, listStaffTasksIdClaimRefByClaimIdIsNextAction3, listStaffTasksIdClaimRefByClaimIdIsNextAction4 } from './data-borrowed.ts';
+import { getContactsIdBusinessIdById4, listContactsIdBusinessIdByBusinessId } from './data.ts';
 
 export { NotFoundAsRefusal };
 
@@ -622,19 +624,6 @@ export type ClaimDbRow = {
   property_town: string | null;
 };
 
-const CLAIM_SELECT =
-  'SELECT c.id, c.claim_ref, c.business_id, c.property_id, c.assessment_id, c.workstream, c.stage, ' +
-  'c.owner_id, c.surveyor_id, c.priority, ' +
-  // CRM 3 of 10: a claim's next action is its flagged open staff task (migration 012). The retired columns are never read.
-  "(SELECT t.title FROM staff_tasks t WHERE t.claim_id = c.id AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')) AS next_action, " +
-  "(SELECT t.due_on FROM staff_tasks t WHERE t.claim_id = c.id AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')) AS next_action_due, " +
-  'c.hold_reason, c.lost_reason, ' +
-  'c.expected_completion, c.created_at, c.updated_at, c.hold_return_stage, c.tax_adviser_signoff_at, ' +
-  'b.name AS business_name, ' +
-  'o.display_name AS owner_name, s.display_name AS surveyor_name, p.label AS property_label, p.town AS property_town ' +
-  'FROM claims c JOIN businesses b ON b.id = c.business_id ' +
-  'LEFT JOIN users o ON o.id = c.owner_id LEFT JOIN users s ON s.id = c.surveyor_id ' +
-  'LEFT JOIN properties p ON p.id = c.property_id ';
 
 /**
  * WHO REACHES A CLAIM THROUGH A SURVEY JOB: the surveyors assigned to a job ON
@@ -748,10 +737,6 @@ type BusinessDbRow = {
   owner_name: string | null;
 };
 
-const BUSINESS_SELECT =
-  'SELECT b.id, b.name, b.sector, b.stage, b.created_at, b.legal_name, b.company_number, b.claimant_type, ' +
-  'b.registered_address, b.trading_address, b.website, b.client_status, b.source, b.owner_id, b.updated_at, ' +
-  'u.display_name AS owner_name FROM businesses b LEFT JOIN users u ON u.id = b.owner_id ';
 
 function organisationFacts(db: Db, actor: Actor, b: BusinessDbRow): { legal_name: Fact; company_number: Fact; claimant_type: Fact } {
   const ch = companiesHouse(db, actor, b.id);
@@ -779,7 +764,7 @@ export type OrganisationRow = {
 
 export function organisationList(db: Db, actor: Actor, limit = 200): OrganisationRow[] {
   assertOrganisationSection(actor);
-  return db.all<BusinessDbRow>(`${BUSINESS_SELECT}ORDER BY b.name ASC LIMIT ?`, [limit])
+  return listBusinessesIdName5<BusinessDbRow>(db, [limit])
     .filter((b) => can(actor, 'organisation.read', { type: 'business', id: b.id }))
     .map((b) => {
       const f = organisationFacts(db, actor, b);
@@ -857,7 +842,7 @@ export type OrganisationView = {
 };
 
 function loadBusiness(db: Db, id: string): BusinessDbRow {
-  const b = db.get<BusinessDbRow>(`${BUSINESS_SELECT}WHERE b.id = ?`, [id]);
+  const b = getBusinessesIdNameById5<BusinessDbRow>(db, [id]);
   // A missing row and a forbidden row look the same from outside.
   if (b === undefined) throw new NotFoundAsRefusal();
   return b;
@@ -883,7 +868,7 @@ export function organisationView(db: Db, actor: Actor, id: string): Organisation
     updated: stamp(b.updated_at),
     contacts: can(actor, 'contact.read', contactObj) ? contactsFor(db, actor, b.id) : null,
     properties: propertyRowsFor(db, actor, b.id),
-    claims: db.all<ClaimDbRow>(`${CLAIM_SELECT}WHERE c.business_id = ? ORDER BY c.claim_ref ASC`, [b.id])
+    claims: listStaffTasksIdClaimRefByClaimIdIsNextAction3<ClaimDbRow>(db, [b.id])
       .filter((r) => can(actor, 'claim.read', claimObjFor(db,r)))
       .map((r) => summaryOf(db, actor, r)),
     documents: organisationDocumentsPanel(db, actor, b.id),
@@ -974,9 +959,6 @@ type ContactDbRow = {
   notes: string | null;
 };
 
-const CONTACT_SELECT =
-  'SELECT id, business_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, contact_type, ' +
-  'is_decision_maker, email, phone, last_contact_at, next_follow_up_at, notes FROM contacts ';
 
 function lastAndNext(db: Db, r: ContactDbRow): {
   last_contact_at: string | null; last_contact: string; next_follow_up_at: string | null; follow_ups_open: number;
@@ -1003,7 +985,7 @@ function contactView(db: Db, r: ContactDbRow): ContactView {
 
 export function contactsFor(db: Db, actor: Actor, business_id: string): ContactView[] {
   authorise(actor, 'contact.read', { type: 'contact', id: business_id, business_id });
-  return db.all<ContactDbRow>(`${CONTACT_SELECT}WHERE business_id = ? ORDER BY full_name ASC, id ASC`, [business_id])
+  return listContactsIdBusinessIdByBusinessId<ContactDbRow>(db, [business_id])
     .map((r) => contactView(db, r));
 }
 
@@ -1095,7 +1077,7 @@ export function addContact(d: CrmDeps, actor: Actor, business_id: string, input:
 }
 
 export function updateContact(d: CrmDeps, actor: Actor, contact_id: string, input: Fields): WriteResult {
-  const r = d.db.get<ContactDbRow>(`${CONTACT_SELECT}WHERE id = ?`, [contact_id]);
+  const r = getContactsIdBusinessIdById4<ContactDbRow>(d.db, [contact_id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'contact.write', { type: 'contact', id: r.id, business_id: r.business_id });
   const stored: ContactValues = {
@@ -1132,12 +1114,6 @@ type PropertyDbRow = {
   business_name: string;
 };
 
-const PROPERTY_SELECT =
-  'SELECT p.id, p.business_id, p.label, p.postcode, p.created_at, p.address_line_1, p.address_line_2, p.town, ' +
-  'p.jurisdiction, p.property_type, p.property_use, p.tenure, p.occupier, p.acquisition_date, ' +
-  'p.acquisition_price_pence, p.completion_date, p.disposal_date, p.previous_owner, p.construction_notes, ' +
-  'p.existing_ca_claimed, p.prior_claim_notes, p.updated_at, p.sale_in_prospect, p.claimant_role, p.lease_end_date, p.landlord, b.name AS business_name ' +
-  'FROM properties p JOIN businesses b ON b.id = p.business_id ';
 
 /**
  * WHO REACHES A PROPERTY THROUGH A SURVEY JOB: the surveyors assigned to a job
@@ -1167,7 +1143,7 @@ function jurisdictionOf(r: { postcode: string | null; jurisdiction: string | nul
 }
 
 function propertyRowsFor(db: Db, actor: Actor, business_id: string): PropertyRow[] {
-  return db.all<PropertyDbRow>(`${PROPERTY_SELECT}WHERE p.business_id = ? ORDER BY p.created_at ASC, p.id ASC`, [business_id])
+  return listPropertiesIdBusinessIdByBusinessId<PropertyDbRow>(db, [business_id])
     .filter((r) => can(actor, 'property.read', propertyObj(db, r)))
     .map((r) => propertyRow(db, actor, r));
 }
@@ -1182,7 +1158,7 @@ function propertyRow(db: Db, actor: Actor, r: PropertyDbRow): PropertyRow {
 
 export function propertyList(db: Db, actor: Actor, limit = 200): PropertyRow[] {
   assertPropertySection(actor);
-  return db.all<PropertyDbRow>(`${PROPERTY_SELECT}ORDER BY b.name ASC, p.label ASC LIMIT ?`, [limit])
+  return listPropertiesIdBusinessId<PropertyDbRow>(db, [limit])
     .filter((r) => can(actor, 'property.read', propertyObj(db, r)))
     .map((r) => propertyRow(db, actor, r));
 }
@@ -1256,7 +1232,7 @@ function ownerWords(v: string | null): string | null {
 }
 
 function loadProperty(db: Db, id: string): PropertyDbRow {
-  const r = db.get<PropertyDbRow>(`${PROPERTY_SELECT}WHERE p.id = ?`, [id]);
+  const r = getPropertiesIdBusinessIdById4<PropertyDbRow>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
 }
@@ -1287,7 +1263,7 @@ export function propertyView(db: Db, actor: Actor, id: string, opts: { store?: P
     sale_in_prospect: r.sale_in_prospect === 'YES' ? { known: true, value: 'YES', label: 'Yes — a sale is coming' }
       : r.sale_in_prospect === 'NO' ? { known: true, value: 'NO', label: 'No' } : { known: false, value: null, label: 'not known' },
     from_the_assessment: fromTheAssessment(db, actor, r),
-    claims: db.all<ClaimDbRow>(`${CLAIM_SELECT}WHERE c.property_id = ? ORDER BY c.claim_ref ASC`, [r.id])
+    claims: listStaffTasksIdClaimRefByClaimIdIsNextAction4<ClaimDbRow>(db, [r.id])
       .filter((c) => can(actor, 'claim.read', claimObjFor(db,c)))
       .map((c) => summaryOf(db, actor, c)),
     documents: propertyDocumentsPanel(db, actor, { id: r.id, business_id: r.business_id }),
@@ -1480,7 +1456,7 @@ export type ClaimRow = {
  */
 export function claimList(db: Db, actor: Actor, limit = 200): ClaimRow[] {
   assertClaimSection(actor);
-  return db.all<ClaimDbRow>(`${CLAIM_SELECT}ORDER BY c.claim_ref DESC LIMIT ?`, [limit])
+  return listStaffTasksIdClaimRefByClaimIdIsNextAction2<ClaimDbRow>(db, [limit])
     .filter((r) => can(actor, 'claim.read', claimObjFor(db,r)))
     .map((r) => {
       const base = { id: r.id, claim_ref: r.claim_ref, business_id: r.business_id, client: r.business_name };
@@ -1565,7 +1541,7 @@ export type ClaimView = {
 };
 
 function loadClaim(db: Db, id: string): ClaimDbRow {
-  const r = db.get<ClaimDbRow>(`${CLAIM_SELECT}WHERE c.id = ?`, [id]);
+  const r = getStaffTasksIdClaimRefByClaimIdIsNextAction<ClaimDbRow>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
 }
@@ -1631,7 +1607,7 @@ export function claimView(db: Db, actor: Actor, id: string, opts: { store?: Post
     return { ...base, ...withMoney, ...estimatedFee(db, actor, r), ...feeDiscountsOn(db, actor, r.id), documents, ...(timeline === undefined ? {} : { timeline }), may_write: false };
   }
 
-  const p = r.property_id === null ? undefined : db.get<PropertyDbRow>(`${PROPERTY_SELECT}WHERE p.id = ?`, [r.property_id]);
+  const p = r.property_id === null ? undefined : getPropertiesIdBusinessIdById4<PropertyDbRow>(db, [r.property_id]);
   const assigned = obj.assigned_surveyor_ids.length;
   const header = {
     property: p === undefined ? null : {
@@ -2068,7 +2044,7 @@ export function boardCard(db: Db, actor: Actor, r: ClaimDbRow, nowIso: string): 
  */
 export function pipelineBoard(db: Db, actor: Actor, nowIso: string, limit = 500): Board {
   authorise(actor, 'pipeline.read', { type: 'pipeline', id: '__pipeline__' });
-  const cards = db.all<ClaimDbRow>(`${CLAIM_SELECT}ORDER BY c.claim_ref ASC LIMIT ?`, [limit])
+  const cards = listStaffTasksIdClaimRefByClaimIdIsNextAction<ClaimDbRow>(db, [limit])
     .filter((r) => can(actor, 'claim.read', claimObjFor(db, r)))
     .map((r) => ({ r, card: boardCard(db, actor, r, nowIso) }));
   const at = (key: string): BoardCard[] => cards.filter((x) => x.r.stage === key).map((x) => x.card);

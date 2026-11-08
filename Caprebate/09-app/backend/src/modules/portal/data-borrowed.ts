@@ -39,3 +39,11 @@ export function getSignatoryChecksCountByBusinessIdSource<T extends Row = Row>(d
 export function getSurveyorJobsCountByBusinessIdState<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>("SELECT COUNT(*) AS n FROM surveyor_jobs WHERE business_id = ? AND (state = 'SEALED' OR committed_at >= ?)", params);
 }
+
+// documents
+export function getDocumentsIdBusinessIdById4<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT d.id, d.business_id, d.filename, d.declared_type, d.doc_type, d.byte_size, d.sniffed_as, d.state, d.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.logical_document_id, d.version_no, d.original_kept_at, d.original_deleted_at, t.label AS type_label, l.seq FROM documents d LEFT JOIN document_types t ON t.code = d.type_code LEFT JOIN logical_documents l ON l.id = d.logical_document_id WHERE d.id = ?', params);
+}
+export function listDocumentsIdBusinessIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT d.id, d.business_id, d.filename, d.declared_type, d.doc_type, d.byte_size, d.sniffed_as, d.state, d.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.logical_document_id, d.version_no, d.original_kept_at, d.original_deleted_at, t.label AS type_label, l.seq FROM documents d LEFT JOIN document_types t ON t.code = d.type_code LEFT JOIN logical_documents l ON l.id = d.logical_document_id WHERE d.business_id = ? ORDER BY d.created_at DESC', params);
+}

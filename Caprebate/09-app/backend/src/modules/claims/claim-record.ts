@@ -61,6 +61,7 @@ import { getBusinessesSectorById, getStaffTasksIdByPropertyIdTitle, listStaffTas
 import { getInvoiceNumbersSeqByInvoiceIdKind, getSurveyPackApprovalsJsonExtractSnapshotJsonFById, getSurveyorCommitmentsIdJobIdByClaimId, listDocumentTypesCodeLabel, listHmrcEnquiriesIdOpenedOnByClaimId, listSurveyPackApprovalsFingerprintSnapshotJsonByClaimId } from './data-borrowed.ts';
 import { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing } from '../portal/index.ts';
 import { getAssessmentsShownLowPenceShownHighPenceById, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm2, getEstimatesQualifyingExpenditurePenceSealedAtByAssessmentId } from '../assessment/index.ts';
+import { getTaxAdviserSignoffsIdClaimIdByClaimId, getTaxAdviserSignoffsIdClaimIdByClaimIdRecordedAt } from './data-borrowed.ts';
 
 export type RecordDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type RecordResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string };
@@ -110,12 +111,9 @@ type SignoffRow = {
   approval_id: string | null;
 };
 
-const SIGNOFF_SELECT =
-  'SELECT s.id, s.claim_id, s.adviser, s.credential, s.signed_on, s.scope, s.method_note, s.switch_readings_json, s.figure_pence, ' +
-  's.commitment_id, s.record_hash, s.recorded_at, u.display_name AS recorder, s.approval_id FROM tax_adviser_signoffs s LEFT JOIN users u ON u.id = s.recorded_by ';
 
 export function latestSignOff(db: Db, claim_id: string): SignoffRow | undefined {
-  return db.get<SignoffRow>(`${SIGNOFF_SELECT}WHERE s.claim_id = ? ORDER BY s.recorded_at DESC, s.rowid DESC LIMIT 1`, [claim_id]);
+  return getTaxAdviserSignoffsIdClaimIdByClaimId<SignoffRow>(db, [claim_id]);
 }
 
 /**
@@ -124,8 +122,7 @@ export function latestSignOff(db: Db, claim_id: string): SignoffRow | undefined 
  */
 export function signOffSinceEntry(db: Db, c: { id: string; created_at: string }): SignoffRow | undefined {
   const since = laterOf(enteredAt(db, c, 'TAX_ADVISER_SIGNOFF'), voidLine(db, c.id));
-  return db.get<SignoffRow>(
-    `${SIGNOFF_SELECT}WHERE s.claim_id = ? AND s.recorded_at >= ? ORDER BY s.recorded_at DESC, s.rowid DESC LIMIT 1`, [c.id, since]);
+  return getTaxAdviserSignoffsIdClaimIdByClaimIdRecordedAt<SignoffRow>(db, [c.id, since]);
 }
 
 /**

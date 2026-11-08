@@ -70,6 +70,7 @@ import { getBusinessesSectorById, getBusinessesStageById, getLeadsIdBusinessIdBy
 import { insertEnquiryChecks } from '../public-site/index.ts';
 import { getClaimDeliverablesIssuedOnKindByClaimIdState, getClaimMilestonesAtByClaimIdMilestone, getClaimReconciliationsFiledOnByClaimId, getClaimStageMovesAtByClaimIdToStage, getClaimsCountByBusinessIdStage, getClaimsIdBusinessIdById3, insertClaimMilestones, insertClaimStageMoves, insertClaimStageMoves2, listClaimStageMovesFromStageToStageByClaimId, listClaimsIdStageByBusinessId, listPropertiesBusinessIdLabelByBusinessId, updateClaimsStageHoldReturnStageById } from '../claims/index.ts';
 import { getAssessmentsIdByBusinessId2, getAssessmentsSubmittedAtByBusinessId, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId } from '../assessment/index.ts';
+import { listEnquiryChecksSeqCheckKeyByClaimId, listEnquiryChecksSeqCheckKeyByLeadId } from './data-borrowed.ts';
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
@@ -326,9 +327,6 @@ type CheckDbRow = {
   seq: number; check_key: string; answer: string; note: string | null; recorded_at: string; recorder: string | null;
 };
 
-const CHECK_SELECT =
-  'SELECT e.rowid AS seq, e.check_key, e.answer, e.note, e.recorded_at, u.display_name AS recorder ' +
-  'FROM enquiry_checks e LEFT JOIN users u ON u.id = e.recorded_by ';
 
 /**
  * THE ENQUIRY GATE, READ. For a claim, its own checks and its lead's together —
@@ -340,11 +338,11 @@ const CHECK_SELECT =
 export function enquiryGate(db: Db, subject: EnquirySubject): EnquiryReading {
   const rows: CheckDbRow[] = [];
   if ('lead_id' in subject) {
-    rows.push(...db.all<CheckDbRow>(`${CHECK_SELECT}WHERE e.lead_id = ?`, [subject.lead_id]));
+    rows.push(...listEnquiryChecksSeqCheckKeyByLeadId<CheckDbRow>(db, [subject.lead_id]));
   } else {
-    rows.push(...db.all<CheckDbRow>(`${CHECK_SELECT}WHERE e.claim_id = ?`, [subject.claim_id]));
+    rows.push(...listEnquiryChecksSeqCheckKeyByClaimId<CheckDbRow>(db, [subject.claim_id]));
     const lead = getLeadsIdByClaimId<{ id: string }>(db, [subject.claim_id]);
-    if (lead !== undefined) rows.push(...db.all<CheckDbRow>(`${CHECK_SELECT}WHERE e.lead_id = ?`, [lead.id]));
+    if (lead !== undefined) rows.push(...listEnquiryChecksSeqCheckKeyByLeadId<CheckDbRow>(db, [lead.id]));
   }
   const latest = new Map<string, CheckDbRow>();
   for (const r of rows) {

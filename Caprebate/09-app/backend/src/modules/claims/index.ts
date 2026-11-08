@@ -62,3 +62,4 @@ export type { SourcesPanel } from './research.ts';
 export type { ReturnContext } from './return-entries.ts';
 export type { EngagementSigning, LetterFacts } from './signing.ts';
 export type { SitePlan } from './site-plan.ts';
+export { getClaimsIdClaimRefByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel2 } from './data.ts';

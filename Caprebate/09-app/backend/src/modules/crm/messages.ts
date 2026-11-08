@@ -44,6 +44,7 @@ import { getWhatsappMessagesCountByBusinessIdDirection } from '../../integration
 import { getBusinessesIdNameById2, getChannelReadsAtByUserIdBusinessId, getClientMessageFilesIdBusinessIdByLogicalDocumentId, getClientMessagesBusinessIdDirectionById, getClientMessagesCountByBusinessIdDirection, getClientMessagesCountByBusinessIdDirection2, getInternalNotesCountByBusinessIdAuthorId, getThreadReadsAtByUserIdBusinessId, insertChannelReads, insertClientMessageFiles, insertClientMessages, insertThreadReads, listClientMessagesBusinessIdNameByDirectionCreatedAt } from './data.ts';
 import { listDocumentsIdBusinessIdByLogicalDocumentIdJO, listInternalNotesIdAuthorIdByBusinessId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from './data-borrowed.ts';
 import { getClaimsIdByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel } from '../claims/index.ts';
+import { getClientMessagesIdBusinessIdByIdBusinessId, listClientMessagesIdBusinessIdByBusinessId } from './data-borrowed.ts';
 
 export type MessageDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -214,11 +215,6 @@ type MessageRow = {
   claim_ref: string | null; claim_property: string | null;
 };
 
-const MESSAGE_SELECT =
-  'SELECT m.id, m.business_id, m.claim_id, m.direction, m.source, m.author_id, m.created_at, m.body, ' +
-  'u.display_name AS author, u.role AS author_role, ct.full_name AS contact, c.claim_ref, p.label AS claim_property ' +
-  'FROM client_messages m LEFT JOIN users u ON u.id = m.author_id LEFT JOIN contacts ct ON ct.id = m.contact_id ' +
-  'LEFT JOIN claims c ON c.id = m.claim_id LEFT JOIN properties p ON p.id = c.property_id ';
 
 /** A message's files, each asked of `document.read` for this reader: a file the reader may not open is not listed. */
 function filesOf(db: Db, actor: Actor, message_id: string): MessageFile[] {
@@ -260,7 +256,7 @@ function toMessage(db: Db, actor: Actor, company: string, r: MessageRow): Thread
 export function clientThread(db: Db, actor: Actor, business_id: string): ClientThreadView {
   const b = company(db, business_id);
   authorise(actor, 'client_message.read', clientObj(db, b.id));
-  const rows = db.all<MessageRow>(`${MESSAGE_SELECT}WHERE m.business_id = ? ORDER BY m.created_at ASC, m.rowid ASC`, [b.id]);
+  const rows = listClientMessagesIdBusinessIdByBusinessId<MessageRow>(db, [b.id]);
   return {
     business_id: b.id, company: b.name,
     messages: rows.map((r) => toMessage(db, actor, b.name, r)),
@@ -279,7 +275,7 @@ export function clientThread(db: Db, actor: Actor, business_id: string): ClientT
 export function clientMessage(db: Db, actor: Actor, business_id: string, message_id: string): ThreadMessage {
   const b = company(db, business_id);
   authorise(actor, 'client_message.read', clientObj(db, b.id));
-  const r = db.get<MessageRow>(`${MESSAGE_SELECT}WHERE m.id = ? AND m.business_id = ?`, [message_id, b.id]);
+  const r = getClientMessagesIdBusinessIdByIdBusinessId<MessageRow>(db, [message_id, b.id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return toMessage(db, actor, b.name, r);
 }

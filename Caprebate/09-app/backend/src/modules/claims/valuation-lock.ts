@@ -25,6 +25,8 @@ import type { Db } from '../../core/index.ts';
 import { PROCEDURE_KEYS, anyStageLabel, claimStage } from '../../shared/index.ts';
 import { getClaimStageMovesAtWhoByClaimIdKind, getSurveyPackApprovalsIdVersionByClaimId } from './data-borrowed.ts';
 import { getClaimStageMovesAtByClaimIdKind2, getClaimsStageHoldReturnStageById, updateClaimDeliverablesStateUpdatedByByClaimIdKind2 } from './data.ts';
+import { getClaimDeliverablesCountByClaimIdKind3, getClaimDeliverablesCountByClaimIdKind4, getTaxAdviserSignoffsCountByClaimId } from './data.ts';
+import { getClientReportAcceptancesCountByClaimId } from '../portal/index.ts';
 
 /** Stages at or after which the figures are fixed, in the procedure's order. */
 const SIGNOFF_INDEX = PROCEDURE_KEYS.indexOf('TAX_ADVISER_SIGNOFF');
@@ -78,11 +80,10 @@ export type SetAside = { readonly deliverables_superseded: number; readonly sign
  * changes (migration 015), so it is set aside by the readers, which look only past `voidLine`.
  */
 export function setAsideOnReopen(db: Db, claim_id: string, at: string, actor_id: string): SetAside {
-  const count = (sql: string) => db.get<{ n: number }>(sql, [claim_id])?.n ?? 0;
-  const signoffs = count('SELECT COUNT(*) AS n FROM tax_adviser_signoffs WHERE claim_id = ?');
-  const acceptances = count('SELECT COUNT(*) AS n FROM client_report_acceptances WHERE claim_id = ?');
-  const defence_packs = count("SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind = 'DEFENCE_PACK' AND state = 'ISSUED'");
-  const deliverables_superseded = count("SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind IN ('CLIENT_REPORT', 'ACCOUNTANT_COMPUTATION_PACK') AND state = 'ISSUED'");
+  const signoffs = getTaxAdviserSignoffsCountByClaimId<{ n: number }>(db, [claim_id])?.n ?? 0;
+  const acceptances = getClientReportAcceptancesCountByClaimId<{ n: number }>(db, [claim_id])?.n ?? 0;
+  const defence_packs = getClaimDeliverablesCountByClaimIdKind3<{ n: number }>(db, [claim_id])?.n ?? 0;
+  const deliverables_superseded = getClaimDeliverablesCountByClaimIdKind4<{ n: number }>(db, [claim_id])?.n ?? 0;
   updateClaimDeliverablesStateUpdatedByByClaimIdKind2(db, [actor_id, at, claim_id]);
   return { deliverables_superseded, signoffs, acceptances, defence_packs };
 }
