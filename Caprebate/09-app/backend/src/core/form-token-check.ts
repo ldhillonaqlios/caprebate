@@ -13,6 +13,7 @@ import {
   EXPIRED_TITLE, EXPIRED_WORDS, FORM_FIELD, FORM_HEADER, ONCE_FIELD, ONCE_HEADER, ONCE_MAX_AGE_MS,
   exemptFor, formToken, formTokenOk, isSensitive, onceToken, onceTokenCheck, withFormTokens,
 } from './form-token.ts';
+import { deleteFormTokensUsedByUsedAt, insertFormTokensUsed } from './data.ts';
 
 /** The largest body any route accepts (a big file in one request, src/core/router.ts), so the check never refuses first. */
 const MOST = 64 * 1024 * 1024 + 64 * 1024;
@@ -77,8 +78,8 @@ export async function formTokenRefusal(d: TokenDeps, req: IncomingMessage, path:
   const at = d.now();
   const once = onceTokenCheck(who.cookie, got.once, Date.parse(at));
   if (!once.ok) return once.why;
-  d.db.run('DELETE FROM form_tokens_used WHERE used_at < ?', [new Date(Date.parse(at) - ONCE_MAX_AGE_MS - 60_000).toISOString()]);
-  const kept = d.db.run('INSERT OR IGNORE INTO form_tokens_used (nonce, user_id, used_at) VALUES (?, ?, ?)', [once.nonce, who.user_id, at]);
+  deleteFormTokensUsedByUsedAt(d.db, [new Date(Date.parse(at) - ONCE_MAX_AGE_MS - 60_000).toISOString()]);
+  const kept = insertFormTokensUsed(d.db, [once.nonce, who.user_id, at]);
   return kept.changes === 1 ? null : 'a single-use token used before';
 }
 

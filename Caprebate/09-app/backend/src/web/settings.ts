@@ -47,6 +47,8 @@ import {
 } from './schedule.ts';
 import { photoFor, type PhotoRecord } from '../core/index.ts';
 import { liftSuppression } from '../integrations/index.ts';
+import { listEmailSuppressionsAddressAtByStateId } from '../integrations/index.ts';
+import { getSessionsCountByUserIdRevokedReason, getUsersCountByRoleDisabledAt, getUsersIdByEmailCanonical, getUsersIdByEmailCanonicalId, listUserPhotosUserId, updateUsersDisplayNameUpdatedAtById, updateUsersEmailEmailCanonicalById, updateUsersPasswordTemporaryUntilById } from '../core/index.ts';
 
 export class SettingsError extends Error {
   readonly code: string;
@@ -128,7 +130,7 @@ export function setDisplayName(
   if (trimmed.length < 2 || trimmed.length > 80) {
     throw new SettingsError('E_BAD_NAME', 'a display name is between 2 and 80 characters', 'display_name');
   }
-  db.run('UPDATE users SET display_name = ?, updated_at = ? WHERE id = ?', [trimmed, now(), actor.id]);
+  updateUsersDisplayNameUpdatedAtById(db, [trimmed, now(), actor.id]);
   // THE NEW NAME IS NOT IN THE LOG LINE. `screenDetail` would refuse the key,
   // and it is right to: an audit log that accumulates display names is a
   // directory of staff nobody decided to build.
@@ -195,9 +197,7 @@ export function setUsername(
     throw new SettingsError('E_BAD_USERNAME', 'that does not look like an email address', 'username');
   }
   const canonical = canonicalEmail(wanted);
-  const clash = d.db.get<{ id: string }>(
-    'SELECT id FROM users WHERE email_canonical = ? AND id <> ?', [canonical, actor.id],
-  );
+  const clash = getUsersIdByEmailCanonicalId<{ id: string }>(d.db, [canonical, actor.id]);
   if (clash !== undefined) {
     d.audit.append({
       at: d.now(), kind: 'USER_UPDATED', outcome: 'REFUSED',
@@ -206,8 +206,7 @@ export function setUsername(
     });
     throw new SettingsError('E_USERNAME_TAKEN', 'that username is not available', 'username');
   }
-  d.db.run('UPDATE users SET email = ?, email_canonical = ?, updated_at = ? WHERE id = ?',
-    [wanted, canonical, d.now(), actor.id]);
+  updateUsersEmailEmailCanonicalById(d.db, [wanted, canonical, d.now(), actor.id]);
   d.audit.append({
     at: d.now(), kind: 'USER_UPDATED', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role, object_type: 'user', object_id: actor.id,
@@ -282,7 +281,7 @@ export function staffList(db: Db, actor: Actor): StaffRow[] {
     'SELECT user_id, COUNT(*) AS n FROM working_times GROUP BY user_id',
   )) counts.set(w.user_id, w.n);
   const photos = new Set(
-    db.all<{ user_id: string }>('SELECT user_id FROM user_photos').map((r) => r.user_id),
+    listUserPhotosUserId<{ user_id: string }>(db).map((r) => r.user_id),
   );
   return listUsers(db).map((u) => ({
     user: u,
@@ -338,7 +337,7 @@ export async function createStaffUser(
   if (args.password.length < 12) {
     throw new SettingsError('E_WEAK_PASSWORD', 'a password is at least 12 characters', 'password');
   }
-  if (d.db.get('SELECT id FROM users WHERE email_canonical = ?', [canonicalEmail(email)]) !== undefined) {
+  if (getUsersIdByEmailCanonical(d.db, [canonicalEmail(email)]) !== undefined) {
     throw new SettingsError('E_USERNAME_TAKEN', 'that username is not available', 'email');
   }
 
@@ -349,7 +348,7 @@ export async function createStaffUser(
     business_id: args.role === 'CLIENT' ? (args.business_id ?? null) : null,
   });
   if (args.temporary_until !== undefined) {
-    d.db.run('UPDATE users SET password_temporary_until = ? WHERE id = ?', [args.temporary_until, created.id]);
+    updateUsersPasswordTemporaryUntilById(d.db, [args.temporary_until, created.id]);
   }
   d.audit.append({
     at: d.now(), kind: 'USER_CREATED', outcome: 'ALLOWED',
@@ -425,20 +424,14 @@ export function disableUser(d: Deps, actor: Actor, target_id: string): User {
     throw new SettingsError('E_SELF_DISABLE', 'you cannot disable your own account');
   }
   if (target.role === 'ADMIN') {
-    const others = d.db.get<{ n: number }>(
-      'SELECT COUNT(*) AS n FROM users WHERE role = ? AND disabled_at IS NULL AND id <> ?',
-      ['ADMIN', target.id],
-    );
+    const others = getUsersCountByRoleDisabledAt<{ n: number }>(d.db, ['ADMIN', target.id]);
     if ((others?.n ?? 0) === 0) {
       throw new SettingsError('E_LAST_ADMIN',
         'that is the last administrator — create another before disabling this one');
     }
   }
   storeDisable(d.db, d.now, target.id);
-  const revoked = d.db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND revoked_reason = ?',
-    [target.id, 'USER_DISABLED'],
-  );
+  const revoked = getSessionsCountByUserIdRevokedReason<{ n: number }>(d.db, [target.id, 'USER_DISABLED']);
   d.audit.append({
     at: d.now(), kind: 'USER_DISABLED', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role,
@@ -488,16 +481,7 @@ export type StoppedAddress = {
 /** Every address nothing more is sent to, newest first. The state is the address's NEWEST row. */
 export function stoppedAddresses(db: Db, actor: Actor): StoppedAddress[] {
   authorise(actor, 'user.list', { type: 'user', id: actor.id, role: actor.role });
-  return db.all<{ address: string; at: string; status: string | null; subject: string | null }>(
-    'SELECT s.address_canonical AS address, s.at AS at, b.status AS status, o.subject AS subject ' +
-      'FROM email_suppressions s ' +
-      'LEFT JOIN email_bounces b ON b.id = s.bounce_id ' +
-      'LEFT JOIN outbox o ON o.id = b.outbox_id ' +
-      'WHERE s.state = ? AND s.id = (SELECT id FROM email_suppressions x ' +
-      'WHERE x.address_canonical = s.address_canonical ORDER BY x.at DESC, x.rowid DESC LIMIT 1) ' +
-      'ORDER BY s.at DESC',
-    ['BOUNCED'],
-  ).map((r) => ({ address: r.address, at: r.at, status: r.status ?? 'not recorded', subject: r.subject }));
+  return listEmailSuppressionsAddressAtByStateId<{ address: string; at: string; status: string | null; subject: string | null }>(db, ['BOUNCED']).map((r) => ({ address: r.address, at: r.at, status: r.status ?? 'not recorded', subject: r.subject }));
 }
 
 /**

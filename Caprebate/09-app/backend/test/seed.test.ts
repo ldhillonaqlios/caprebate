@@ -17,6 +17,7 @@ import { STUBS } from '../src/core/app.ts';
 import { APP_ROLES } from '../src/core/roles.ts';
 import { testApp, scalars } from './helpers.ts';
 import { newId } from '../src/core/users.ts';
+import { statementDoors } from './sql-doors.ts';
 
 describe('the seed', () => {
   test('covers all five sectors, at different stages', async () => {
@@ -202,7 +203,11 @@ describe('N2 — the name exclusion register is WIRED IN, not restated', () => {
       }
     };
     walk(SRC);
-    assert.deepEqual(hits, ['integrations/register-ingest.ts']);
+    // PHASE 161i1: the statement lives in the outside services' data file; register-ingest.ts is still the only caller.
+    assert.deepEqual(hits, ['integrations/data.ts']);
+    const door = statementDoors(SRC.replace(/[\\/]$/, ''), /INSERT\s+INTO\s+register_records/i);
+    assert.equal(door.functions.length, 1);
+    assert.deepEqual(door.callers, ['integrations/register-ingest.ts']);
   });
 
   test('an unknown SOURCE fails closed', async () => {

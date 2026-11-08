@@ -25,6 +25,7 @@
  */
 import type { Db } from '../core/index.ts';
 import { isDormant, DORMANT_WORDS } from '../integrations/index.ts';
+import { getRegisterRecordsFieldsJsonByBusinessIdSourceId11, getRegisterRecordsFieldsJsonByBusinessIdSourceId2, getRegisterRecordsFieldsJsonByBusinessIdSourceId5, getRegisterRecordsFieldsJsonByBusinessIdSourceId6, getRegisterRecordsFieldsJsonByBusinessIdSourceId7, getRegisterRecordsFieldsJsonByBusinessIdSourceId9, getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId3 } from '../integrations/index.ts';
 
 const json = (s: string | null | undefined): Record<string, unknown> => {
   if (typeof s !== 'string') return {};
@@ -49,9 +50,7 @@ export type RegisterCompany = {
 
 /** The newest Companies House record held for this client, or null. */
 export function registerCompany(db: Db, business_id: string): RegisterCompany | null {
-  const r = db.get<{ fields_json: string; obtained_at: string }>(
-    "SELECT fields_json, obtained_at FROM register_records WHERE business_id = ? AND source_id = 'CH_COMPANY' ORDER BY obtained_at DESC, id DESC LIMIT 1",
-    [business_id]);
+  const r = getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId3<{ fields_json: string; obtained_at: string }>(db, [business_id]);
   if (r === undefined) return null;
   const f = json(r.fields_json);
   const ye = text(f['accounts_year_end']);
@@ -208,9 +207,7 @@ export function isPricePaidLead(f: Record<string, unknown>): boolean {
 
 /** Price Paid's sale held for this property, read as a lead or a price. Null when none is held. */
 export function pricePaidSale(db: Db, business_id: string, property_id: string): PricePaidSale | null {
-  const r = db.get<{ fields_json: string }>(
-    "SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = 'HMLR_PPD' AND property_id = ? ORDER BY obtained_at DESC, id DESC LIMIT 1",
-    [business_id, property_id]);
+  const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId7<{ fields_json: string }>(db, [business_id, property_id]);
   if (r === undefined) return null;
   const f = json(r.fields_json);
   const price = typeof f['price_paid'] === 'number' && Number.isFinite(f['price_paid']) && (f['price_paid'] as number) > 0 ? f['price_paid'] as number : null;
@@ -262,9 +259,7 @@ export function fillTenureFromRegisters(db: Db, property_id: string, now: string
   const p = db.get<{ business_id: string; tenure: string | null }>('SELECT business_id, tenure FROM properties WHERE id = ?', [property_id]);
   if (p === undefined || p.tenure === 'FREEHOLD' || p.tenure === 'LEASEHOLD') return null;
   for (const [source, words] of [['HMLR_TITLE', 'from the title register'], ['HMLR_PPD', 'from HM Land Registry’s Price Paid']] as const) {
-    const r = db.get<{ fields_json: string }>(
-      'SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = ? AND property_id = ? ORDER BY obtained_at DESC, id DESC LIMIT 1',
-      [p.business_id, source, property_id]);
+    const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId2<{ fields_json: string }>(db, [p.business_id, source, property_id]);
     const t = text(json(r?.fields_json)['tenure'])?.toLowerCase();
     if (t === 'freehold' || t === 'leasehold') {
       const tenure = t === 'freehold' ? 'FREEHOLD' : 'LEASEHOLD';
@@ -284,20 +279,15 @@ export const SITE_AREA_FLAG_RATIO = 10;
 
 /** The building's floor area for the comparison: the energy certificate's, else the client's checked answer. */
 export function floorAreaForSite(db: Db, business_id: string, property_id: string): number | null {
-  const e = db.get<{ fields_json: string }>(
-    "SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = 'EPC' AND property_id = ? ORDER BY obtained_at DESC, id DESC LIMIT 1",
-    [business_id, property_id]);
+  const e = getRegisterRecordsFieldsJsonByBusinessIdSourceId5<{ fields_json: string }>(db, [business_id, property_id]);
   const a = json(e?.fields_json)['epc_total_floor_area_m2'];
   return typeof a === 'number' && Number.isFinite(a) && a > 0 ? a : null;
 }
 
 /** The site area held for a property: HM Land Registry's land boundary first, else Homedata's title outline. */
 export function siteAreaOf(db: Db, business_id: string, property_id: string): number | null {
-  const r = db.get<{ fields_json: string }>(
-    "SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = 'HMLR_INSPIRE' AND entity_id = ?", [business_id, `property:${property_id}`])
-    ?? db.get<{ fields_json: string }>(
-      "SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = 'HOMEDATA_BOUNDARY' AND property_id = ? ORDER BY obtained_at DESC, id DESC LIMIT 1",
-      [business_id, property_id]);
+  const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId6<{ fields_json: string }>(db, [business_id, `property:${property_id}`])
+    ?? getRegisterRecordsFieldsJsonByBusinessIdSourceId11<{ fields_json: string }>(db, [business_id, property_id]);
   const a = json(r?.fields_json)['site_area_m2'];
   return typeof a === 'number' && Number.isFinite(a) && a > 0 ? a : null;
 }
@@ -348,9 +338,7 @@ export function personIsClients(db: Db, business_id: string, registerName: strin
 export function registerNamesClientPerson(db: Db, business_id: string, property_id: string): boolean {
   const t = db.get<{ claimant_type: string | null }>('SELECT claimant_type FROM businesses WHERE id = ?', [business_id])?.claimant_type ?? null;
   if (t === null || !PERSONAL_CLAIMANTS.includes(t)) return false;
-  const r = db.get<{ fields_json: string }>(
-    "SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = 'HMLR_TITLE' AND property_id = ? ORDER BY obtained_at DESC, id DESC LIMIT 1",
-    [business_id, property_id]);
+  const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId9<{ fields_json: string }>(db, [business_id, property_id]);
   if (r === undefined) return false;
   const f = json(r.fields_json);
   if (f['proprietor_personal_match'] === 'YES') return true;

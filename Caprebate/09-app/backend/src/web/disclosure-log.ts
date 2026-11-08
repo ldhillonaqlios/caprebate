@@ -33,6 +33,7 @@ import type { Db } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
 import { authorise, type Actor, type Obj } from '../core/index.ts';
 import { localStamp } from '../shared/index.ts';
+import { getUsersRoleById } from '../core/index.ts';
 
 export type DisclosureDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -184,7 +185,7 @@ export function recordDisclosure(d: DisclosureDeps, actor: Actor, input: Fields,
     return { ok: false, why: 'the contact named is not one of this organisation’s.' };
   }
   if (recipient_user_id !== null
-    && (recipient !== 'R1_SURVEYOR' || d.db.get<{ role: string }>('SELECT role FROM users WHERE id = ?', [recipient_user_id])?.role !== 'SURVEYING')) {
+    && (recipient !== 'R1_SURVEYOR' || getUsersRoleById<{ role: string }>(d.db, [recipient_user_id])?.role !== 'SURVEYING')) {
     return { ok: false, why: 'only the surveyor is named by a login, and the login must be a surveyor’s.' };
   }
 

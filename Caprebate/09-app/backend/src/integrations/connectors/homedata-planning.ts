@@ -50,6 +50,7 @@ import type { CallResult } from './http.ts';
 import { defineSteppedConnector, type Bundle, type LookupResult } from './registers.ts';
 import { jurisSource, type Nation } from './nations.ts';
 import type { Db } from '../../core/index.ts';
+import { getResearchSourcesCountByBusinessIdSourceId } from '../data.ts';
 
 export type HomedataPlanningQuery = {
   readonly nation: Nation | null;
@@ -73,9 +74,7 @@ export const HOMEDATA_PLANNING_ENTITY = 'homedata:';
  * Then a screen that lists register records leaves out the free route's planning records (kept, not shown).
  */
 export function preferHomedataPlanning(db: Db, business_id: string): boolean {
-  return db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM research_sources WHERE business_id = ? AND source_id = 'PLANNING' AND route = 'HOMEDATA_PLANNING'",
-    [business_id])?.n === 1;
+  return getResearchSourcesCountByBusinessIdSourceId<{ n: number }>(db, [business_id])?.n === 1;
 }
 
 /** Whether a register record is one the screens leave out: a free-route planning record once Homedata has answered. */

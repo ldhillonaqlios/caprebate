@@ -90,6 +90,8 @@ import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJo
 import { sendVideoInvite } from '../web/booking-invite.ts';
 import { hostZak, joinSignature } from '../integrations/index.ts';
 import { piecesPage } from './upload-pieces.ts';
+import { listOutboxCreatedAtToEmailByOutboxId, updateVideoMeetingsHostOpenedAtHostOpenedByByIdHostOpenedAt } from '../integrations/index.ts';
+import { getSessionsIdByTokenHashRevokedAt, getUsersNById } from './data.ts';
 
 export type StaffDeps = {
   app: App;
@@ -362,7 +364,7 @@ export async function handleStaff(
     }
     const host = B.mayArrangeCalls(actor);
     // 1 Oct 2026: the first time a host opens the call, it is marked started — the Communication tab shows it.
-    if (host && db.run('UPDATE video_meetings SET host_opened_at = ?, host_opened_by = ? WHERE id = ? AND host_opened_at IS NULL', [now(), actor.id, m.id]).changes === 1) {
+    if (host && updateVideoMeetingsHostOpenedAtHostOpenedByByIdHostOpenedAt(db, [now(), actor.id, m.id]).changes === 1) {
       d.app.audit.append({ at: now(), kind: 'VIDEO_CALL_OPENED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'booking', object_id: id, detail: {} });
     }
     // PHASE 153f: the start token of the Zoom user the meeting was made under (the assigned member of staff, else the shared host).
@@ -370,7 +372,7 @@ export async function handleStaff(
     const zak = host ? await hostZak(zoomDeps(d.app), zhost?.email) : null;
     const sig = joinSignature(d.app.secrets, m.meeting_id, host && zak !== null ? 1 : 0, now());
     if (sig === null) return problem(res, actor, 'No video call to join', zoomBlockers(d.app).join(' '), `/staff/calendar/${id}`);
-    const name = db.get<{ n: string }>('SELECT display_name AS n FROM users WHERE id = ?', [actor.id])?.n ?? 'Cap Rebate';
+    const name = getUsersNById<{ n: string }>(db, [actor.id])?.n ?? 'Cap Rebate';
     const out = page({ title: `Video call · ${bk.business_name}`, nav: nav(actor), wide: true, body: h`
       <h1>Video call with ${bk.business_name}</h1>
       ${videoCallsAtSameTime(db, id) > 0 ? h`<div class="flag" role="note">${SAME_TIME_WORDS}</div>` : raw('')}
@@ -850,10 +852,7 @@ function currentSessionId(d: StaffDeps, req: IncomingMessage): string {
   for (const part of raw0.split(';')) {
     const [k, ...v] = part.trim().split('=');
     if (k === SESSION_COOKIE_NAME) {
-      const s = d.app.db.get<{ id: string }>(
-        'SELECT id FROM sessions WHERE token_hash = ? AND revoked_at IS NULL',
-        [hashToken(decodeURIComponent(v.join('=')))],
-      );
+      const s = getSessionsIdByTokenHashRevokedAt<{ id: string }>(d.app.db, [hashToken(decodeURIComponent(v.join('=')))]);
       return s?.id ?? '';
     }
   }
@@ -1250,12 +1249,8 @@ function settingsPage(
      server would not deliver looked exactly like one that had not been sent yet. The newest bounce for each
      message, its kind and the server's CODE — never the server's words. */
   const outbox = inBackOffice
-    ? d.app.db.all<{ created_at: string; to_email: string; subject: string; kind: string; sent_at: string | null;
-      business_id: string | null; bounce_kind: string | null; bounce_status: string | null }>(
-      'SELECT o.created_at, o.to_email, o.subject, o.kind, o.sent_at, o.business_id, ' +
-        'b.kind AS bounce_kind, b.status AS bounce_status FROM outbox o ' +
-        'LEFT JOIN email_bounces b ON b.id = (SELECT id FROM email_bounces x WHERE x.outbox_id = o.id ' +
-        'ORDER BY x.at DESC, x.rowid DESC LIMIT 1) ORDER BY o.created_at DESC LIMIT 20')
+    ? listOutboxCreatedAtToEmailByOutboxId<{ created_at: string; to_email: string; subject: string; kind: string; sent_at: string | null;
+      business_id: string | null; bounce_kind: string | null; bounce_status: string | null }>(d.app.db)
     : [];
   const stopped = inBackOffice && S.canAdminister(actor) ? S.stoppedAddresses(d.app.db, actor).length : 0;
   return page({

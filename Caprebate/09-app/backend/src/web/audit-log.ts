@@ -27,6 +27,7 @@ import type { Db } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
 import { authorise, type Actor } from '../core/index.ts';
 import { localStamp } from '../shared/index.ts';
+import { getAuditLogCount, listAuditLogKind } from '../core/index.ts';
 
 export type AuditLogDeps = { db: Db; audit: AuditLog; now: () => string };
 
@@ -56,7 +57,7 @@ export type AuditLogView = {
 export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams): AuditLogView {
   authorise(actor, 'audit.read', { type: 'audit', id: 'audit_log' });
   const said: string[] = [];
-  const kinds = d.db.all<{ kind: string }>('SELECT DISTINCT kind FROM audit_log ORDER BY kind ASC').map((r) => r.kind);
+  const kinds = listAuditLogKind<{ kind: string }>(d.db).map((r) => r.kind);
   const askedKind = (q.get('kind') ?? '').trim();
   const kind = askedKind === '' ? null : kinds.includes(askedKind) ? askedKind : null;
   if (askedKind !== '' && kind === null) said.push('Kind: not a kind in this log, so it was not used');
@@ -70,7 +71,7 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
   if (askedClient !== '' && client === null) said.push('Client: not a client in this system, so it was not used');
   for (const k of new Set(q.keys())) if (k !== 'kind' && k !== 'outcome' && k !== 'client') said.push(`${k.slice(0, 40)}: not a filter on this page, so it was not used`);
 
-  const entries = d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM audit_log')?.n ?? 0;
+  const entries = getAuditLogCount<{ n: number }>(d.db)?.n ?? 0;
   const v = d.audit.verify();
   const lines = d.db.all<{
     seq: number; at: string; kind: string; actor_role: string | null; actor_id: string | null; object_type: string | null; object_id: string | null; outcome: string;

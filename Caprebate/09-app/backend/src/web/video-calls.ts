@@ -39,6 +39,8 @@ import { SLOT_MINUTES } from './schedule.ts';
 import { localWhen } from '../shared/index.ts';
 import { h, type Safe } from '../shared/index.ts';
 import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, zoomPastCall, zoomPlanIsFree, FREE_PLAN_LINE, NOT_ON_PLAN_WORDS, ZOOM_SDK_BASE, type MadeMeeting, type PastCall, type ZoomDeps } from '../integrations/index.ts';
+import { getVideoMeetingsCallMinutesCallPeopleByBookingIdCancelledAt, getVideoMeetingsIdBookingIdByBookingIdCancelledAt, insertVideoMeetings, updateVideoMeetingsCallCheckStateCallCheckedAtById, updateVideoMeetingsCallMinutesCallPeopleById, updateVideoMeetingsCancelledAtById } from '../integrations/index.ts';
+import { getUsersEmailDisplayNameById } from '../core/index.ts';
 
 /** A call that holds a moment: a telephone call (CB_BOOKING) or, since 30 Sep 2026, a video call. */
 export function booksATime(channel: string): boolean {
@@ -53,9 +55,7 @@ export type Meeting = {
 };
 
 export function activeMeeting(db: Db, booking_id: string): Meeting | undefined {
-  return db.get<Meeting>(
-    'SELECT id, booking_id, meeting_id, join_url, passcode, client_token, created_at, host_user_id FROM video_meetings WHERE booking_id = ? AND cancelled_at IS NULL',
-    [booking_id]);
+  return getVideoMeetingsIdBookingIdByBookingIdCancelledAt<Meeting>(db, [booking_id]);
 }
 
 /**
@@ -73,7 +73,7 @@ export function callHost(db: Db, booking_id: string): { readonly user_id: string
 /** PHASE 153f: the meeting's host, for the start token and the call's page. Null, the shared host. */
 export function meetingHost(db: Db, m: Meeting): { readonly email: string; readonly name: string } | null {
   if (m.host_user_id === null) return null;
-  const u = db.get<{ email: string; display_name: string }>('SELECT email, display_name FROM users WHERE id = ?', [m.host_user_id]);
+  const u = getUsersEmailDisplayNameById<{ email: string; display_name: string }>(db, [m.host_user_id]);
   return u === undefined ? null : { email: u.email, name: u.display_name };
 }
 
@@ -120,7 +120,7 @@ export function videoCallsAtSameTime(db: Db, booking_id: string): number {
 export type CallLength = { readonly call_minutes: number | null; readonly call_people: number | null; readonly call_check_state: string | null; readonly call_checked_at: string | null };
 
 export function callLengthOf(db: Db, booking_id: string): CallLength | undefined {
-  return db.get<CallLength>('SELECT call_minutes, call_people, call_check_state, call_checked_at FROM video_meetings WHERE booking_id = ? AND cancelled_at IS NULL', [booking_id]);
+  return getVideoMeetingsCallMinutesCallPeopleByBookingIdCancelledAt<CallLength>(db, [booking_id]);
 }
 
 /** PHASE 156d: a call's length in words, or null when nothing has been learned yet. */
@@ -142,9 +142,9 @@ export async function checkCallLength(app: App, actor: { id: string; role: strin
   const r: PastCall = await zoomPastCall(zoomDeps(app), m.meeting_id).catch((): PastCall => ({ state: 'NOT_FOUND', why: 'Zoom could not be reached.' }));
   const now = app.now();
   if (r.state === 'FOUND') {
-    app.db.run('UPDATE video_meetings SET call_minutes = ?, call_people = ?, call_check_state = ?, call_checked_at = ? WHERE id = ?', [r.minutes, r.people, 'FOUND', now, m.id]);
+    updateVideoMeetingsCallMinutesCallPeopleById(app.db, [r.minutes, r.people, 'FOUND', now, m.id]);
   } else {
-    app.db.run("UPDATE video_meetings SET call_check_state = CASE WHEN call_minutes IS NULL THEN ? ELSE 'FOUND' END, call_checked_at = ? WHERE id = ?", [r.state, now, m.id]);
+    updateVideoMeetingsCallCheckStateCallCheckedAtById(app.db, [r.state, now, m.id]);
   }
   app.audit.append({ at: now, kind: 'VIDEO_CALL_LENGTH_CHECKED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'booking', object_id: booking_id, detail: { state: r.state } });
@@ -164,7 +164,7 @@ export async function reconcileVideoMeeting(app: App, booking_id: string): Promi
     if (m === undefined) return 'NONE';
     // Closed here whatever Zoom says: a link to a call that is not happening is never offered again.
     try { await cancelZoomMeeting(zd, m.meeting_id); } catch { /* the row still closes */ }
-    app.db.run('UPDATE video_meetings SET cancelled_at = ? WHERE id = ?', [app.now(), m.id]);
+    updateVideoMeetingsCancelledAtById(app.db, [app.now(), m.id]);
     return 'CANCELLED';
   }
   if (m !== undefined) {
@@ -189,9 +189,7 @@ export async function reconcileVideoMeeting(app: App, booking_id: string): Promi
     hostId = null;
   }
   if (made.state !== 'MADE') return { not_made: made.why };
-  app.db.run(
-    'INSERT INTO video_meetings (id, booking_id, provider, meeting_id, join_url, passcode, client_token, created_at, host_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [randomBytes(16).toString('hex'), booking_id, 'zoom', made.meeting_id, made.join_url, made.passcode, randomBytes(32).toString('hex'), app.now(), hostId]);
+  insertVideoMeetings(app.db, [randomBytes(16).toString('hex'), booking_id, 'zoom', made.meeting_id, made.join_url, made.passcode, randomBytes(32).toString('hex'), app.now(), hostId]);
   return 'MADE';
 }
 

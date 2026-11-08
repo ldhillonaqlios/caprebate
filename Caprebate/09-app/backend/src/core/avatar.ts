@@ -50,6 +50,7 @@ import { createHash } from 'node:crypto';
 import type { Db } from './db.ts';
 import type { FsObjectStore } from '../shared/objectstore.ts';
 import { reEncodeAvatar, ImageError, IMAGE_LIMITS } from '../shared/index.ts';
+import { deleteUserPhotosByUserId, getUserPhotosUserIdStorageKeyByUserId, insertUserPhotos } from './data.ts';
 
 export { ImageError, IMAGE_LIMITS };
 
@@ -80,11 +81,7 @@ export function photoKeyFor(user_id: string): string {
 }
 
 export function photoFor(db: Db, user_id: string): PhotoRecord | undefined {
-  return db.get<PhotoRecord>(
-    'SELECT user_id, storage_key, sniffed_as, byte_size, width, height, source_format, ' +
-      'source_bytes, updated_at FROM user_photos WHERE user_id = ?',
-    [user_id],
-  );
+  return getUserPhotosUserIdStorageKeyByUserId<PhotoRecord>(db, [user_id]);
 }
 
 export type PhotoResult =
@@ -125,17 +122,8 @@ export async function setPhoto(
   await d.store.putClientBytes(key, out.png);
 
   const at = d.now();
-  d.db.run(
-    'INSERT INTO user_photos (user_id, storage_key, sniffed_as, byte_size, width, height, ' +
-      'source_format, source_bytes, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ' +
-      'ON CONFLICT(user_id) DO UPDATE SET storage_key = excluded.storage_key, ' +
-      'sniffed_as = excluded.sniffed_as, byte_size = excluded.byte_size, ' +
-      'width = excluded.width, height = excluded.height, ' +
-      'source_format = excluded.source_format, source_bytes = excluded.source_bytes, ' +
-      'updated_at = excluded.updated_at',
-    [user_id, key, 'png', out.png.length, out.width, out.height,
-     out.source_format, out.source_bytes, at],
-  );
+  insertUserPhotos(d.db, [user_id, key, 'png', out.png.length, out.width, out.height,
+     out.source_format, out.source_bytes, at]);
 
   const record = photoFor(d.db, user_id);
   if (record === undefined) throw new Error('photo insert did not read back');
@@ -158,7 +146,7 @@ export async function clearPhoto(
 ): Promise<void> {
   const row = photoFor(d.db, user_id);
   if (row === undefined) return;
-  d.db.run('DELETE FROM user_photos WHERE user_id = ?', [user_id]);
+  deleteUserPhotosByUserId(d.db, [user_id]);
   try {
     await d.store.delete(row.storage_key);
   } catch (e) {

@@ -25,6 +25,7 @@
 
 import type { Db } from '../core/index.ts';
 import { screenDetail } from '../core/audit.ts';
+import { countRegisterRecordsSince } from '../integrations/index.ts';
 
 /* ================================================================== *
  * 1 · WHO HAS ALREADY APPROVED IT
@@ -100,9 +101,7 @@ export function lookAgainAfter(db: Db, business_id: string, rec: RecordAsItStood
   const add = (kind: LookAgainKind, count: number, words: string): void => { if (count > 0) out.push({ kind, count, words }); };
 
   if (rec.source_id === 'HOMEDATA_ADDRESS' && field === undefined) {
-    const n = db.get<{ n: number }>(
-      'SELECT COUNT(*) AS n FROM register_records WHERE business_id = ? AND source_id = ? AND obtained_at >= ?' +
-        (rec.property_id === null ? '' : ' AND entity_id = ?'),
+    const n = countRegisterRecordsSince<{ n: number }>(db, rec.property_id !== null,
       rec.property_id === null ? [business_id, SITE_AREA_SOURCE, since] : [business_id, SITE_AREA_SOURCE, since, `property:${rec.property_id}`],
     )?.n ?? 0;
     add('SITE_AREA', n, 'A site area was worked out from this building’s point while it stood, and it is still held. ' +

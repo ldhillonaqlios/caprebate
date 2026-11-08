@@ -23,6 +23,7 @@ import {
   assertNoUnauthorisedName,
   type IngestedRecord,
 } from './registers/name-exclusion.ts';
+import { deleteRegisterRecordsByIdBusinessId, getRegisterRecordsFieldsJsonByIdBusinessId, insertRegisterRecords, updateRegisterRecordsFieldsJsonByIdBusinessId } from './data.ts';
 
 export {
   gateStatus, planResearch, STUB_NOTICE, REGISTER_SWITCHES, switchedOn,
@@ -48,11 +49,7 @@ export function ingestRegisterRecord(
   assertNoUnauthorisedName(rec); // N2. Fails closed on an unknown source.
 
   const id = ids();
-  db.run(
-    'INSERT INTO register_records (id, business_id, source_id, entity_id, fields_json, obtained_at, property_id) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, business_id, rec.sourceId, rec.entityId, JSON.stringify(rec.fields), now(), opts.property_id ?? null],
-  );
+  insertRegisterRecords(db, [id, business_id, rec.sourceId, rec.entityId, JSON.stringify(rec.fields), now(), opts.property_id ?? null]);
   return id;
 }
 
@@ -72,7 +69,7 @@ export function ingestRegisterRecord(
  * by what it says — the caller names the row a decision recorded, never one it re-derived.
  */
 export function removeRegisterRecord(db: Db, business_id: string, record_id: string): boolean {
-  return db.run('DELETE FROM register_records WHERE id = ? AND business_id = ?', [record_id, business_id]).changes === 1;
+  return deleteRegisterRecordsByIdBusinessId(db, [record_id, business_id]).changes === 1;
 }
 
 /**
@@ -81,8 +78,7 @@ export function removeRegisterRecord(db: Db, business_id: string, record_id: str
  * the field. Taking a field out can add no name, so N2 has nothing to check on the way out.
  */
 export function removeRegisterField(db: Db, business_id: string, record_id: string, field_id: string): boolean {
-  const r = db.get<{ fields_json: string }>(
-    'SELECT fields_json FROM register_records WHERE id = ? AND business_id = ?', [record_id, business_id]);
+  const r = getRegisterRecordsFieldsJsonByIdBusinessId<{ fields_json: string }>(db, [record_id, business_id]);
   if (r === undefined) return false;
   let fields: Record<string, unknown>;
   try {
@@ -92,7 +88,6 @@ export function removeRegisterField(db: Db, business_id: string, record_id: stri
   } catch { return false; }
   if (!Object.prototype.hasOwnProperty.call(fields, field_id)) return false;
   const { [field_id]: _gone, ...rest } = fields;
-  db.run('UPDATE register_records SET fields_json = ? WHERE id = ? AND business_id = ?',
-    [JSON.stringify(rest), record_id, business_id]);
+  updateRegisterRecordsFieldsJsonByIdBusinessId(db, [JSON.stringify(rest), record_id, business_id]);
   return true;
 }

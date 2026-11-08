@@ -23,6 +23,7 @@ import type { AuditLog } from './audit.ts';
 import type { PasswordHasher } from './password.ts';
 import type { User } from './users.ts';
 import { findByEmailWithSecret, findById, hashToken, newId, setPasswordHash, toActor } from './users.ts';
+import { getPasswordResetTokensIdUserIdByTokenHash, getRateLimitHitsHitsByBucketWindowStart, getSessionsIdUserIdByTokenHash, getUsersRolePasswordTemporaryUntilById, insertPasswordResetTokens, insertRateLimitHits, insertSessions, updatePasswordResetTokensUsedAtById, updateSessionsLastSeenAtById, updateSessionsRevokedAtRevokedReasonByIdRevokedAt, updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt, updateUsersPasswordTemporaryUntilById2 } from './data.ts';
 
 /** The ONE message every authentication failure returns. */
 export const GENERIC_AUTH_FAILURE = 'those details did not match';
@@ -116,14 +117,8 @@ function windowStart(nowIso: string): string {
 
 export function rateLimit(d: Deps, bucket: string, limit: number): boolean {
   const w = windowStart(d.now());
-  d.db.run(
-    'INSERT INTO rate_limit_hits (bucket, window_start, hits) VALUES (?, ?, 1) ' +
-      'ON CONFLICT(bucket, window_start) DO UPDATE SET hits = hits + 1',
-    [bucket, w],
-  );
-  const row = d.db.get<{ hits: number }>(
-    'SELECT hits FROM rate_limit_hits WHERE bucket = ? AND window_start = ?', [bucket, w],
-  );
+  insertRateLimitHits(d.db, [bucket, w]);
+  const row = getRateLimitHitsHitsByBucketWindowStart<{ hits: number }>(d.db, [bucket, w]);
   return (row?.hits ?? 0) <= limit;
 }
 
@@ -177,8 +172,7 @@ export type SignInStep = 'NEW_PASSWORD' | 'SETUP' | 'VERIFY';
 export const TEMPORARY_PASSWORD_EXPIRED = 'Your temporary password has expired. Ask your administrator for a new one.';
 
 export function nextSignInStep(d: Deps, user_id: string): SignInStep | null {
-  const r = d.db.get<{ role: string; password_temporary_until: string | null; mfa_method: string | null; email: string }>(
-    'SELECT role, password_temporary_until, mfa_method, email FROM users WHERE id = ?', [user_id]);
+  const r = getUsersRolePasswordTemporaryUntilById<{ role: string; password_temporary_until: string | null; mfa_method: string | null; email: string }>(d.db, [user_id]);
   if (r === undefined) throw new AuthError('E_AUTH_FAILED', GENERIC_AUTH_FAILURE);
   if ((d.twoFactor ?? 'STAFF') === 'OFF') return null;
   if (r.password_temporary_until !== null) {
@@ -253,11 +247,7 @@ function issueSession(d: Deps, user_id: string, rotated_from?: string): { cookie
   const id = newId();
   const created = d.now();
   const expires = new Date(Date.parse(created) + SESSION_TTL_MS).toISOString();
-  d.db.run(
-    'INSERT INTO sessions (id, user_id, token_hash, created_at, expires_at, last_seen_at, revoked_at, revoked_reason, rotated_from) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, ?)',
-    [id, user_id, hashToken(raw), created, expires, created, rotated_from ?? null],
-  );
+  insertSessions(d.db, [id, user_id, hashToken(raw), created, expires, created, rotated_from ?? null]);
   return { cookie: cookieFor(raw, expires), session_id: id };
 }
 
@@ -273,10 +263,7 @@ export const LAST_SEEN_EVERY_MS = 60_000;
 /** Returns undefined for absent, unknown, expired, revoked, or disabled-owner. */
 export function authenticate(d: Deps, rawToken: string | undefined): Authenticated | undefined {
   if (rawToken === undefined || rawToken === '') return undefined;
-  const row = d.db.get<{ id: string; user_id: string; expires_at: string; revoked_at: string | null; last_seen_at: string | null }>(
-    'SELECT id, user_id, expires_at, revoked_at, last_seen_at FROM sessions WHERE token_hash = ?',
-    [hashToken(rawToken)],
-  );
+  const row = getSessionsIdUserIdByTokenHash<{ id: string; user_id: string; expires_at: string; revoked_at: string | null; last_seen_at: string | null }>(d.db, [hashToken(rawToken)]);
   if (row === undefined) return undefined;
   if (row.revoked_at !== null) return undefined;
   if (Date.parse(row.expires_at) <= Date.parse(d.now())) return undefined;
@@ -291,16 +278,13 @@ export function authenticate(d: Deps, rawToken: string | undefined): Authenticat
   // never reads it: a session ends at `expires_at` or when revoked, as before.
   const now = d.now();
   if (row.last_seen_at === null || Date.parse(now) - Date.parse(row.last_seen_at) >= LAST_SEEN_EVERY_MS) {
-    d.db.run('UPDATE sessions SET last_seen_at = ? WHERE id = ?', [now, row.id]);
+    updateSessionsLastSeenAtById(d.db, [now, row.id]);
   }
   return { user, session_id: row.id };
 }
 
 export function logout(d: Deps, session_id: string, actor: User): void {
-  d.db.run(
-    'UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE id = ? AND revoked_at IS NULL',
-    [d.now(), 'LOGOUT', session_id],
-  );
+  updateSessionsRevokedAtRevokedReasonByIdRevokedAt(d.db, [d.now(), 'LOGOUT', session_id]);
   d.audit.append({
     at: d.now(), kind: 'LOGOUT', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role, object_type: 'session', object_id: session_id, detail: {},
@@ -308,10 +292,7 @@ export function logout(d: Deps, session_id: string, actor: User): void {
 }
 
 export function revokeAllSessions(d: Deps, user_id: string, reason: string): number {
-  const r = d.db.run(
-    'UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE user_id = ? AND revoked_at IS NULL',
-    [d.now(), reason, user_id],
-  );
+  const r = updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt(d.db, [d.now(), reason, user_id]);
   d.audit.append({
     at: d.now(), kind: 'SESSION_REVOKED', outcome: 'ALLOWED',
     actor_id: user_id, object_type: 'session', detail: { reason, count: r.changes },
@@ -325,10 +306,7 @@ export function revokeAllSessions(d: Deps, user_id: string, reason: string): num
  * in a comment. Call this whenever a role changes or a password changes.
  */
 export function rotateSession(d: Deps, old_session_id: string, user_id: string): { cookie: SessionCookie; session_id: string } {
-  d.db.run(
-    'UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE id = ? AND revoked_at IS NULL',
-    [d.now(), 'PRIVILEGE_CHANGE', old_session_id],
-  );
+  updateSessionsRevokedAtRevokedReasonByIdRevokedAt(d.db, [d.now(), 'PRIVILEGE_CHANGE', old_session_id]);
   const issued = issueSession(d, user_id, old_session_id);
   d.audit.append({
     at: d.now(), kind: 'SESSION_ROTATED', outcome: 'ALLOWED',
@@ -389,11 +367,7 @@ export function requestPasswordReset(
 
   const raw = token(d);
   const created = d.now();
-  d.db.run(
-    'INSERT INTO password_reset_tokens (id, user_id, token_hash, created_at, expires_at, used_at) ' +
-      'VALUES (?, ?, ?, ?, ?, NULL)',
-    [newId(), found.id, hashToken(raw), created, new Date(Date.parse(created) + RESET_TTL_MS).toISOString()],
-  );
+  insertPasswordResetTokens(d.db, [newId(), found.id, hashToken(raw), created, new Date(Date.parse(created) + RESET_TTL_MS).toISOString()]);
   d.audit.append({
     at: d.now(), kind: 'PASSWORD_RESET_REQUESTED', outcome: 'ALLOWED',
     actor_id: found.id, actor_role: found.role, detail: {},
@@ -405,19 +379,16 @@ export function requestPasswordReset(
 
 /** Single-use and expiring. Consuming it revokes every session the user held. */
 export async function completePasswordReset(d: Deps, rawToken: string, next: string): Promise<void> {
-  const row = d.db.get<{ id: string; user_id: string; expires_at: string; used_at: string | null }>(
-    'SELECT id, user_id, expires_at, used_at FROM password_reset_tokens WHERE token_hash = ?',
-    [hashToken(rawToken)],
-  );
+  const row = getPasswordResetTokensIdUserIdByTokenHash<{ id: string; user_id: string; expires_at: string; used_at: string | null }>(d.db, [hashToken(rawToken)]);
   if (row === undefined || row.used_at !== null || Date.parse(row.expires_at) <= Date.parse(d.now())) {
     throw new AuthError('E_BAD_TOKEN', 'that reset link is no longer valid');
   }
   const hash = await d.hasher.hash(next);
   d.db.tx(() => {
-    d.db.run('UPDATE password_reset_tokens SET used_at = ? WHERE id = ?', [d.now(), row.id]);
+    updatePasswordResetTokensUsedAtById(d.db, [d.now(), row.id]);
     setPasswordHash(d.db, d.now, row.user_id, hash);
     // PHASE 151j: a password the person chose replaces a temporary one. The second factor stays as it was.
-    d.db.run('UPDATE users SET password_temporary_until = NULL WHERE id = ?', [row.user_id]);
+    updateUsersPasswordTemporaryUntilById2(d.db, [row.user_id]);
   });
   revokeAllSessions(d, row.user_id, 'PASSWORD_RESET');
   d.audit.append({

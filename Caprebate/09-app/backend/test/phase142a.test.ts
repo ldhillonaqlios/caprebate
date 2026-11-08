@@ -32,6 +32,7 @@ import {
 } from '../src/web/message-retention.ts';
 import type { EmailSending } from '../src/integrations/email/email-provider.ts';
 import { pdfOf } from './document-fixtures.ts';
+import { statementDoors } from './sql-doors.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string };
@@ -403,7 +404,11 @@ describe('2 · the job is the only path that can delete a message', () => {
       }
     };
     walk(root);
-    assert.deepEqual(hits, ['web/message-retention.ts']);
+    // PHASE 161i1: the inbound email statements live in the outside services' data file; the job is still the only caller.
+    assert.deepEqual(hits, ['integrations/data.ts', 'web/message-retention.ts']);
+    const door = statementDoors(root, /DELETE\s+FROM\s+(client_messages|internal_notes|client_message_files|inbound_email)\b/i);
+    assert.ok(door.functions.length > 0);
+    assert.deepEqual(door.callers, ['web/message-retention.ts']);
   });
 });
 

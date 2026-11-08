@@ -49,6 +49,7 @@ import { newDot } from './client-layout.ts';
 import { keysView } from '../core/saved-keys.ts';
 import { repliesStale } from './inbound-email.ts';
 import { listsToImport } from './connections.ts';
+import { listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole } from '../core/index.ts';
 
 export type DashView = 'sales' | 'accounting' | 'surveying' | 'admin';
 
@@ -240,20 +241,13 @@ export function staffWorking(app: App, actor: Actor): WorkingRow[] {
   const now = app.now();
   const dayStart = startOfLocalDay(now);
   const recent = new Date(Date.parse(now) - 30 * 60_000).toISOString();
-  return app.db.all<{ display_name: string; role: string; first: string | null; last: string | null; live: number }>(
-    'SELECT u.display_name, u.role, ' +
-    '(SELECT min(s.created_at) FROM sessions s WHERE s.user_id = u.id AND s.last_seen_at >= ?) AS first, ' +
-    '(SELECT max(s.last_seen_at) FROM sessions s WHERE s.user_id = u.id AND s.last_seen_at >= ?) AS last, ' +
-    '(SELECT count(*) FROM sessions s WHERE s.user_id = u.id AND s.revoked_at IS NULL AND s.expires_at > ? AND s.last_seen_at >= ?) AS live ' +
-    "FROM users u WHERE u.disabled_at IS NULL AND u.role <> 'CLIENT' ORDER BY u.display_name",
-    [dayStart, dayStart, now, recent])
+  return listSessionsDisplayNameRoleByUserIdLastSeenAt<{ display_name: string; role: string; first: string | null; last: string | null; live: number }>(app.db, [dayStart, dayStart, now, recent])
     .map((r) => ({ name: r.display_name, role: r.role, now: r.live > 0, first: r.first === null ? null : (r.first < dayStart ? dayStart : r.first), last: r.last }));
 }
 
 /** People who can sign in, and those archived: Admin's tools for each, on the Admin tab. */
 function peopleCard(app: App, actor: Actor): Safe {
-  const people = app.db.all<{ id: string; display_name: string; role: string; disabled_at: string | null; last: string | null }>(
-    "SELECT u.id, u.display_name, u.role, u.disabled_at, (SELECT max(s.last_seen_at) FROM sessions s WHERE s.user_id = u.id) AS last FROM users u WHERE u.role <> 'CLIENT' ORDER BY u.display_name");
+  const people = listSessionsIdDisplayNameByUserIdRole<{ id: string; display_name: string; role: string; disabled_at: string | null; last: string | null }>(app.db);
   const now = app.now();
   const active = people.filter((p) => p.disabled_at === null);
   const archived = people.filter((p) => p.disabled_at !== null);

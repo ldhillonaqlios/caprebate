@@ -11,6 +11,8 @@
 import { createHash } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import { plainDashLines } from '../../shared/index.ts';
+import { insertOutbox, insertOutboxAttachments, insertOutboxInlineFiles } from '../data.ts';
+import { getBusinessesCountByClientStatus, getBusinessesCountByIdClientStatus, getContactsCountByClientStatus, getEmailSenderDisplayNameAddress, getUsersCountByClientStatusEmailCanonical } from '../data-borrowed.ts';
 
 /**
  * CALENDAR_INVITE IS THE SECOND STUBBED TRANSPORT AND IT IS NOT A SECOND STUB.
@@ -115,27 +117,14 @@ export type EmailTransport = {
  */
 export function isDoNotContact(db: Db, to_email: string, business_id: string | null | undefined): boolean {
   if (business_id !== null && business_id !== undefined) {
-    const b = db.get<{ n: number }>(
-      "SELECT COUNT(*) AS n FROM businesses WHERE id = ? AND client_status = 'DO_NOT_CONTACT'", [business_id],
-    );
+    const b = getBusinessesCountByIdClientStatus<{ n: number }>(db, [business_id]);
     if ((b?.n ?? 0) > 0) return true;
   }
-  const byChannel = db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM businesses WHERE client_status = 'DO_NOT_CONTACT' AND lower(contact_email) = lower(?)",
-    [to_email],
-  );
+  const byChannel = getBusinessesCountByClientStatus<{ n: number }>(db, [to_email]);
   if ((byChannel?.n ?? 0) > 0) return true;
-  const byContact = db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM contacts c JOIN businesses b ON b.id = c.business_id ' +
-      "WHERE b.client_status = 'DO_NOT_CONTACT' AND lower(c.email) = lower(?)",
-    [to_email],
-  );
+  const byContact = getContactsCountByClientStatus<{ n: number }>(db, [to_email]);
   if ((byContact?.n ?? 0) > 0) return true;
-  const byLogin = db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM users u JOIN businesses b ON b.id = u.business_id ' +
-      "WHERE b.client_status = 'DO_NOT_CONTACT' AND u.email_canonical = lower(?)",
-    [to_email],
-  );
+  const byLogin = getUsersCountByClientStatusEmailCanonical<{ n: number }>(db, [to_email]);
   return (byLogin?.n ?? 0) > 0;
 }
 
@@ -150,8 +139,7 @@ export function currentSender(db: Db): Sender {
   /* PHASE 151: THE NEWEST ROW WINS, BY WHEN IT WAS WRITTEN, NOT BY THE DATE IT CARRIES. A change is a new row and the
      table is never edited, so the last row written is the last decision. Ordering on set_at let a migration's dated row
      (044, 24 September 2026) outrank a change an administrator made later on a server whose clock read earlier. */
-  const r = db.get<{ display_name: string; address: string; reply_to: string }>(
-    'SELECT display_name, address, reply_to FROM email_sender ORDER BY rowid DESC LIMIT 1');
+  const r = getEmailSenderDisplayNameAddress<{ display_name: string; address: string; reply_to: string }>(db);
   if (r === undefined) throw new Error('no sender is set for email: migration 036 writes one');
   return { ...r, from_header: `${r.display_name} <${r.address}>` };
 }
@@ -180,20 +168,14 @@ export function outboxTransport(
       // text box on a screen is left alone. The attached files (the signed letter, a report, a calendar file) are not
       // touched here.
       if (m.kind !== 'FREE_TYPED') m = { ...m, subject: plainDashLines(m.subject), body: plainDashLines(m.body) };
-      db.run(
-        'INSERT INTO outbox (id, created_at, to_email, subject, body, kind, sent_at, transport, business_id, from_header, reply_to, ' +
-          'claim_id, lead_id, contact_id, written_by, send_requested, thread_key, in_reply_to, references_ids) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [id, now(), m.to_email, m.subject, m.body, m.kind, 'STUB', m.business_id ?? null, from.from_header, from.reply_to,
+      insertOutbox(db, [id, now(), m.to_email, m.subject, m.body, m.kind, 'STUB', m.business_id ?? null, from.from_header, from.reply_to,
           m.claim_id ?? null, m.lead_id ?? null, m.contact_id ?? null, m.written_by ?? null, requested,
-          m.thread_key ?? null, m.in_reply_to ?? null, (m.references ?? []).length === 0 ? null : (m.references ?? []).join(' ')],
-      );
+          m.thread_key ?? null, m.in_reply_to ?? null, (m.references ?? []).length === 0 ? null : (m.references ?? []).join(' ')]);
       for (const a of m.attachments ?? []) {
-        db.run('INSERT INTO outbox_attachments (id, outbox_id, logical_document_id, document_id) VALUES (?, ?, ?, ?)',
-          [ids(), id, a.logical_document_id, a.document_id]);
+        insertOutboxAttachments(db, [ids(), id, a.logical_document_id, a.document_id]);
       }
       (m.inline_files ?? []).forEach((f, i) => {
-        db.run('INSERT INTO outbox_inline_files (id, outbox_id, part_no, filename, content_type, bytes, sha256) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [ids(), id, i + 1, f.filename, f.content_type, f.bytes, createHash('sha256').update(f.bytes).digest('hex')]);
+        insertOutboxInlineFiles(db, [ids(), id, i + 1, f.filename, f.content_type, f.bytes, createHash('sha256').update(f.bytes).digest('hex')]);
       });
       // sent_at stays NULL. Nothing left the building, and the row says so.
       return { id, delivered: false, refused: null };

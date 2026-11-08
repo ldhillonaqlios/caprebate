@@ -95,6 +95,7 @@ import {
  */
 export { WEEKDAY_NAMES } from '../shared/index.ts';
 import { WEEKDAY_NAMES } from '../shared/index.ts';
+import { listUsersIdRoleByDisabledAt } from '../core/index.ts';
 
 /**
  * WHOSE DIARY CAN HOLD A CLIENT CALL — and it is asked of the rule table
@@ -114,9 +115,7 @@ import { WEEKDAY_NAMES } from '../shared/index.ts';
  */
 function bookableUserIds(db: Db): Set<string> {
   const out = new Set<string>();
-  for (const u of db.all<{ id: string; role: string }>(
-    'SELECT id, role FROM users WHERE disabled_at IS NULL',
-  )) {
+  for (const u of listUsersIdRoleByDisabledAt<{ id: string; role: string }>(db)) {
     if (!isAppRole(u.role)) continue;
     const mayOwnACall = can(
       { id: u.id, role: u.role, business_id: null, disabled: false },

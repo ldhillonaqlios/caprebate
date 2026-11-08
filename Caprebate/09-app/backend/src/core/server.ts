@@ -45,6 +45,7 @@ import { refreshSavedKeys } from './saved-keys.ts';
 import { openKeptOriginal } from '../web/uploads.ts';
 import { formToken, formTokensMode, onceToken, type FormTokens } from './form-token.ts';
 import { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';
+import { listOutboxIdToEmailBySendRequestedSentAt2, updateOutboxLastErrorByIdLastError2, updateOutboxLastErrorByIdLastError3, updateOutboxLastErrorByIdLastError4 } from '../integrations/index.ts';
 
 function readCookie(req: IncomingMessage, name: string): string | undefined {
   const raw = req.headers.cookie;
@@ -174,23 +175,22 @@ export async function createApp(
   const sendSaved = async (since: string): Promise<void> => {
     const login = smtpLoginFromKeyFile(app.secrets);
     if (!sendingOn(EMAIL_SENDING, login, mailWhere(app)) || login === null) return;
-    const rows = app.db.all<{ id: string; to_email: string }>(
-      'SELECT id, to_email FROM outbox WHERE send_requested = 1 AND sent_at IS NULL AND last_error IS NULL AND created_at >= ? ORDER BY created_at', [since]);
+    const rows = listOutboxIdToEmailBySendRequestedSentAt2<{ id: string; to_email: string }>(app.db, [since]);
     if (rows.length === 0) return;
     const provider = smtpProvider(login, app.smtpConnect, 15_000, auditMailConnections(app.audit, app.now));
     for (const r of rows) {
       if (isInventedAddress(r.to_email)) {
-        app.db.run('UPDATE outbox SET last_error = ? WHERE id = ? AND last_error IS NULL', ['An invented address, so it was not sent.', r.id]);
+        updateOutboxLastErrorByIdLastError3(app.db, ['An invented address, so it was not sent.', r.id]);
         continue;
       }
-      if (app.db.run('UPDATE outbox SET last_error = ? WHERE id = ? AND last_error IS NULL AND sent_at IS NULL', ['Being sent.', r.id]).changes !== 1) continue;
+      if (updateOutboxLastErrorByIdLastError4(app.db, ['Being sent.', r.id]).changes !== 1) continue;
       try {
         await dispatchOutbox({ db: app.db, now: app.now }, EMAIL_SENDING, login, provider, async (doc) => {
           const k = await openKeptOriginal({ db: app.db, store, now: app.now, audit: app.audit }, { id: 'system', role: 'SYSTEM' }, doc);
           return k === null ? null : { filename: k.filename, content_type: 'application/octet-stream', bytes: k.bytes };
         }, r.id);
       } catch {
-        app.db.run("UPDATE outbox SET last_error = ? WHERE id = ? AND last_error = 'Being sent.'", ['It could not be sent just now.', r.id]);
+        updateOutboxLastErrorByIdLastError2(app.db, ['It could not be sent just now.', r.id]);
       }
     }
   };

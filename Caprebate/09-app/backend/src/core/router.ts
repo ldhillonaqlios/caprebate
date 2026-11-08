@@ -112,6 +112,7 @@ import { noticesEdition, noticesForLiveSite, receiveComplaintForm } from '../web
 import { CONSENT_COOKIE, COOKIE_BANNER_CSS, agreementLinks, consentChoice, consentSetCookie, cookieBanner, draftLine, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../web/legal-pages.ts';
 import { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from '../web/legal-approvals.ts';
 import { nav as staffNav } from './staff.ts';
+import { getResearchSourcesCountByBusinessIdState2 } from '../integrations/index.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -2290,7 +2291,7 @@ export const CLIENT_RANGE_BASIS_AFTER_RESEARCH =
   'can move it down. Work you have done since, measured by our surveyor, can add to it. We worked it out before checking any property records. We have now started checking the property records.';
 
 export function rangeBasisFor(db: Db, business_id: string): string {
-  const fired = db.get<{ n: number }>("SELECT COUNT(*) AS n FROM research_sources WHERE business_id = ? AND state = 'FIRED'", [business_id])?.n ?? 0;
+  const fired = getResearchSourcesCountByBusinessIdState2<{ n: number }>(db, [business_id])?.n ?? 0;
   return fired > 0 ? CLIENT_RANGE_BASIS_AFTER_RESEARCH : CLIENT_RANGE_BASIS;
 }
 

@@ -110,6 +110,7 @@ import { removeRegisterRecord } from '../integrations/index.ts';
 import {
   approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain,
 } from './take-back.ts';
+import { deleteRegisterMatchPicksByBusinessIdSourceId, getRegisterMatchPicksChosenKeyReasonByBusinessIdSourceId, getRegisterMatchPicksChosenKeyScoreByBusinessIdSourceId, getRegisterMatchPicksIdChosenKeyByBusinessIdSourceId, getRegisterRecordsIdByBusinessIdSourceId, getRegisterRecordsIdSourceIdByIdBusinessId, getResearchSourcesStateFailureCodeByBusinessIdSourceId, insertRegisterMatchPicks, listRegisterMatchPicksChosenKeyTakenBackAtByBusinessIdSource, updateRegisterMatchPicksRecordIdRemovedRecordIdById, updateResearchSourcesDetailByBusinessIdSourceId, updateResearchSourcesStateFailureCodeByBusinessIdSourceId } from '../integrations/index.ts';
 
 /* ================================================================== *
  * 1 · THE SWITCH
@@ -181,10 +182,7 @@ export function pickState(
   if (FREE_CONNECTORS[source_id] === undefined && PAID_CONNECTORS[source_id] === undefined) {
     return { ok: false, why: 'There is no connector for that lookup in this build, so there is no list to show.' };
   }
-  const row = d.db.get<{ state: string; failure_code: string | null }>(
-    'SELECT state, failure_code FROM research_sources WHERE business_id = ? AND source_id = ?',
-    [business_id, source_id],
-  );
+  const row = getResearchSourcesStateFailureCodeByBusinessIdSourceId<{ state: string; failure_code: string | null }>(d.db, [business_id, source_id]);
   if (row?.state !== 'FAILED' || row.failure_code !== PICKABLE_FAILURE_CODE) {
     return {
       ok: false,
@@ -232,20 +230,12 @@ export type PickRecord = {
 
 /** The pick that STANDS on this lookup. A pick taken back is kept, and is not this. */
 export function lastPick(db: Db, business_id: string, source_id: string): PickRecord | null {
-  return db.get<PickRecord>(
-    'SELECT chosen_key, score, grade, picked_at, picked_by FROM register_match_picks ' +
-      'WHERE business_id = ? AND source_id = ? AND taken_back_at IS NULL',
-    [business_id, source_id],
-  ) ?? null;
+  return getRegisterMatchPicksChosenKeyScoreByBusinessIdSourceId<PickRecord>(db, [business_id, source_id]) ?? null;
 }
 
 /** PHASE 146j: the choice on this lookup most recently taken back, with why. */
 export function lastTakenBack(db: Db, business_id: string, source_id: string): TakenBackRecord | null {
-  return db.get<TakenBackRecord>(
-    'SELECT chosen_key, taken_back_reason AS reason, taken_back_at FROM register_match_picks ' +
-      'WHERE business_id = ? AND source_id = ? AND taken_back_at IS NOT NULL ORDER BY taken_back_at DESC, rowid DESC LIMIT 1',
-    [business_id, source_id],
-  ) ?? null;
+  return getRegisterMatchPicksChosenKeyReasonByBusinessIdSourceId<TakenBackRecord>(db, [business_id, source_id]) ?? null;
 }
 
 /**
@@ -342,11 +332,8 @@ export async function takePick(
   if (key === null) {
     d.db.tx(() => {
       writePick(d, business_id, source_id, { chosen_key: null, score: null, grade: null, record_id: null, actor, at });
-      d.db.run(
-        'UPDATE research_sources SET detail = ? WHERE business_id = ? AND source_id = ?',
-        ['A person looked at the close entries. None of them is this building. ' +
-          'So nothing was kept, and the questions stay asked.', business_id, source_id],
-      );
+      updateResearchSourcesDetailByBusinessIdSourceId(d.db, ['A person looked at the close entries. None of them is this building. ' +
+          'So nothing was kept, and the questions stay asked.', business_id, source_id]);
     });
     d.audit.append({
       at, kind: 'REGISTER_MATCH_PICKED', outcome: 'ALLOWED',
@@ -391,15 +378,9 @@ export async function takePick(
        as it was, and until Phase 146j the pick then named that older record as its own — so taking the pick back would
        have removed a record an earlier lookup wrote. Migration 042 always said NULL "where the register held the record
        already and it was left as it was"; now it is. */
-    const heldBefore = entityId === null ? undefined : d.db.get<{ id: string }>(
-      'SELECT id FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id = ?',
-      [business_id, source_id, entityId],
-    );
+    const heldBefore = entityId === null ? undefined : getRegisterRecordsIdByBusinessIdSourceId<{ id: string }>(d.db, [business_id, source_id, entityId]);
     storeResearchOutcomes(d, business_id, [got], at);
-    record_id = entityId === null || heldBefore !== undefined ? null : (d.db.get<{ id: string }>(
-      'SELECT id FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id = ?',
-      [business_id, source_id, entityId],
-    )?.id ?? null);
+    record_id = entityId === null || heldBefore !== undefined ? null : (getRegisterRecordsIdByBusinessIdSourceId<{ id: string }>(d.db, [business_id, source_id, entityId])?.id ?? null);
     writePick(d, business_id, source_id, { chosen_key: key, score, grade, record_id, actor, at });
   });
 
@@ -429,12 +410,8 @@ function writePick(
     readonly record_id: string | null; readonly actor: Actor; readonly at: string;
   },
 ): void {
-  d.db.run('DELETE FROM register_match_picks WHERE business_id = ? AND source_id = ? AND taken_back_at IS NULL', [business_id, source_id]);
-  d.db.run(
-    'INSERT INTO register_match_picks (id, business_id, source_id, chosen_key, score, grade, record_id, picked_by, picked_at) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [d.newId(), business_id, source_id, p.chosen_key, p.score, p.grade, p.record_id, p.actor.id, p.at],
-  );
+  deleteRegisterMatchPicksByBusinessIdSourceId(d.db, [business_id, source_id]);
+  insertRegisterMatchPicks(d.db, [d.newId(), business_id, source_id, p.chosen_key, p.score, p.grade, p.record_id, p.actor.id, p.at]);
 }
 
 /* ================================================================== *
@@ -477,10 +454,7 @@ export function takeBackPick(
     return refused('Taking back a choice is done while the engagement letter is signed — ' + engagement.why + '.');
   }
 
-  const pick = d.db.get<StandingPick>(
-    'SELECT id, chosen_key, record_id, picked_at FROM register_match_picks WHERE business_id = ? AND source_id = ? AND taken_back_at IS NULL',
-    [business_id, source_id],
-  );
+  const pick = getRegisterMatchPicksIdChosenKeyByBusinessIdSourceId<StandingPick>(d.db, [business_id, source_id]);
   if (pick === undefined || pick.chosen_key === null) {
     return refused('There is no choice to take back on that lookup. Nobody has chosen one of its entries, or the choice was “none of them”.');
   }
@@ -488,10 +462,7 @@ export function takeBackPick(
     return refused('That choice kept nothing of its own. We already held that entry from an earlier lookup, so it was left as it was, ' +
       'and there is nothing of the choice’s to take out. Nothing was changed.');
   }
-  const rec = d.db.get<{ id: string; source_id: string; obtained_at: string; property_id: string | null }>(
-    'SELECT id, source_id, obtained_at, property_id FROM register_records WHERE id = ? AND business_id = ?',
-    [pick.record_id, business_id],
-  );
+  const rec = getRegisterRecordsIdSourceIdByIdBusinessId<{ id: string; source_id: string; obtained_at: string; property_id: string | null }>(d.db, [pick.record_id, business_id]);
   if (rec === undefined || rec.source_id !== source_id) {
     return refused('The entry that choice kept is not where the choice says it is, so nothing was taken out. Nothing was changed.');
   }
@@ -514,20 +485,11 @@ export function takeBackPick(
   const at = d.now();
   d.db.tx(() => {
     /* The pick lets go of the record FIRST: its record_id is a foreign key, and a key to a deleted row is a violation. */
-    d.db.run(
-      'UPDATE register_match_picks SET record_id = NULL, removed_record_id = ?, taken_back_at = ?, taken_back_by = ?, ' +
-        'taken_back_reason = ?, look_again_json = ? WHERE id = ?',
-      [rec.id, at, actor.id, why.reason, lookAgainJson(look), pick.id],
-    );
+    updateRegisterMatchPicksRecordIdRemovedRecordIdById(d.db, [rec.id, at, actor.id, why.reason, lookAgainJson(look), pick.id]);
     if (!removeRegisterRecord(d.db, business_id, rec.id)) throw new Error('the record the pick wrote was not removed');
-    d.db.run(
-      "UPDATE research_sources SET state = 'FAILED', failure_code = ?, retrieved_at = NULL, detail = ? WHERE business_id = ? AND source_id = ?",
-      /* The lookup's own line on the panel says what to look at again, so it is in front of whoever opens the panel
-         next and not only of the person who took it back. The same list is kept on the pick row, as kinds and counts. */
-      [PICKABLE_FAILURE_CODE, 'A person took back the entry chosen here. Nothing from it is kept, its questions are asked again, ' +
+    updateResearchSourcesStateFailureCodeByBusinessIdSourceId(d.db, [PICKABLE_FAILURE_CODE, 'A person took back the entry chosen here. Nothing from it is kept, its questions are asked again, ' +
         'and the close entries can be looked at again.' +
-        (look.length === 0 ? '' : ` ${lookAgainSummary(look)} ${look.map((l) => l.words).join(' ')}`), business_id, source_id],
-    );
+        (look.length === 0 ? '' : ` ${lookAgainSummary(look)} ${look.map((l) => l.words).join(' ')}`), business_id, source_id]);
     d.audit.append({
       at, kind: 'REGISTER_MATCH_TAKEN_BACK', outcome: 'ALLOWED',
       actor_id: actor.id, actor_role: actor.role,
@@ -548,9 +510,5 @@ export function takenBackPicks(db: Db, business_id: string, source_id: string): 
   readonly chosen_key: string; readonly taken_back_at: string; readonly taken_back_by: string; readonly reason: string;
   readonly removed_record_id: string | null; readonly look_again: readonly { kind: string; count: number }[];
 }[] {
-  return db.all<{ chosen_key: string; taken_back_at: string; taken_back_by: string; reason: string; removed_record_id: string | null; look_again_json: string | null }>(
-    'SELECT chosen_key, taken_back_at, taken_back_by, taken_back_reason AS reason, removed_record_id, look_again_json FROM register_match_picks ' +
-      'WHERE business_id = ? AND source_id = ? AND taken_back_at IS NOT NULL ORDER BY taken_back_at DESC, rowid DESC',
-    [business_id, source_id],
-  ).map(({ look_again_json, ...r }) => ({ ...r, look_again: JSON.parse(look_again_json ?? '[]') as { kind: string; count: number }[] }));
+  return listRegisterMatchPicksChosenKeyTakenBackAtByBusinessIdSource<{ chosen_key: string; taken_back_at: string; taken_back_by: string; reason: string; removed_record_id: string | null; look_again_json: string | null }>(db, [business_id, source_id]).map(({ look_again_json, ...r }) => ({ ...r, look_again: JSON.parse(look_again_json ?? '[]') as { kind: string; count: number }[] }));
 }

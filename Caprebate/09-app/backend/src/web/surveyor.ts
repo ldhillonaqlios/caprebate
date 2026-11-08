@@ -72,6 +72,7 @@ import { anyStageLabel, stage as stageOf } from '../shared/index.ts';
 import { resolveProperty } from '../integrations/postcodes/postcode.ts';
 import { preferHomedataPlanning, supersededPlanning } from '../integrations/index.ts';
 import { estimateBasis } from './survey-open.ts';
+import { listRegisterRecordsSourceIdEntityIdByBusinessId } from '../integrations/index.ts';
 
 export { NotFoundAsRefusal };
 
@@ -260,10 +261,7 @@ function inputsFor(db: Db, r: JobDbRow): JobInputs {
         'WHERE assessment_id = ? ORDER BY ord ASC', [r.assessment_id],
     ),
     // PHASE 156f (B3): once Homedata has answered planning, the free route's planning records are kept, not shown.
-    register_records: db.all<{ source_id: string; entity_id: string; fields_json: string }>(
-      'SELECT source_id, entity_id, fields_json FROM register_records WHERE business_id = ? ORDER BY source_id ASC',
-      [r.business_id],
-    ).filter((x) => !supersededPlanning(x, preferHomedataPlanning(db, r.business_id))).map((x) => ({ source_id: x.source_id, fields: withoutAmounts(x.source_id, safeParse(x.fields_json)) })),
+    register_records: listRegisterRecordsSourceIdEntityIdByBusinessId<{ source_id: string; entity_id: string; fields_json: string }>(db, [r.business_id]).filter((x) => !supersededPlanning(x, preferHomedataPlanning(db, r.business_id))).map((x) => ({ source_id: x.source_id, fields: withoutAmounts(x.source_id, safeParse(x.fields_json)) })),
     properties: db.all<{ label: string; postcode: string | null }>(
       'SELECT label, postcode FROM properties WHERE business_id = ? ORDER BY label ASC', [r.business_id],
     ),

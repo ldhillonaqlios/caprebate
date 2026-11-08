@@ -54,6 +54,7 @@ import type { FsObjectStore } from '../shared/objectstore.ts';
 import * as IE from './inbound-email.ts';
 import { emailedFiles } from './messages-pages.ts';
 import { receivableTypes } from './documents.ts';
+import { getWhatsappMessagesCByBusinessIdContactId } from '../integrations/index.ts';
 
 export type Via = 'email' | 'whatsapp' | 'portal' | 'team' | 'zoom' | 'call';
 export type Kind = Via;
@@ -235,7 +236,7 @@ function whatsappAdd(c: Ctx): Safe {
 
 /** The contact this company last spoke with on WhatsApp, if any: the one a new chat is most likely with. */
 function lastOnWhatsApp(c: Ctx): string | null {
-  return c.app.db.get<{ c: string | null }>("SELECT contact_id AS c FROM whatsapp_messages WHERE business_id = ? AND contact_id IS NOT NULL ORDER BY created_at DESC LIMIT 1", [c.business_id])?.c ?? null;
+  return getWhatsappMessagesCByBusinessIdContactId<{ c: string | null }>(c.app.db, [c.business_id])?.c ?? null;
 }
 
 function whatsappLive(c: Ctx): boolean {
@@ -268,7 +269,7 @@ export function prefill(c: Ctx, ask: { via: string | null; thread: string | null
     outcome: 'SPOKE', next_title: '', next_on: '', slot: '', replying: null,
   };
   // The person: the one asked for, else whoever last wrote on WhatsApp, else the first with a number.
-  const lastWa = db.get<{ c: string | null }>("SELECT contact_id AS c FROM whatsapp_messages WHERE business_id = ? AND contact_id IS NOT NULL ORDER BY created_at DESC LIMIT 1", [c.business_id])?.c ?? null;
+  const lastWa = getWhatsappMessagesCByBusinessIdContactId<{ c: string | null }>(db, [c.business_id])?.c ?? null;
   const person = ppl.find((x) => x.id === ask.contact) ?? ppl.find((x) => x.id === lastWa && x.phone !== null) ?? ppl.find((x) => x.phone !== null) ?? ppl[0];
   p.contact_id = person?.id ?? '';
   if (via === 'email' && ask.thread !== null) {

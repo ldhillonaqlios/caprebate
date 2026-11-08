@@ -36,6 +36,7 @@ import type { Db } from '../../core/index.ts';
 import { normalisePostcode } from './postcode-check.ts';
 import { uprnOf } from './homedata.ts';
 import { startOfLocalDayMs } from '../../shared/index.ts';
+import { getAuditLogCountByKindAt } from '../../core/index.ts';
 
 /** The row in src/integrations/connectors/sources.ts: Homedata's postcode search, at the assessment. */
 export const ADDRESS_SERVICE = 'HOMEDATA_POSTCODE';
@@ -94,10 +95,7 @@ export function addressLookupMissing(cfg: AddressLookupConfig, secrets: SecretSt
  */
 export function searchesToday(db: Db, nowIso: string): number {
   const start = new Date(startOfLocalDayMs(Date.parse(nowIso))).toISOString();
-  return db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'CONNECTOR_CALLED' AND at >= ? " +
-      "AND json_extract(detail, '$.service') = ? AND outcome <> 'REFUSED'",
-    [start, ADDRESS_SERVICE])?.n ?? 0;
+  return getAuditLogCountByKindAt<{ n: number }>(db, [start, ADDRESS_SERVICE])?.n ?? 0;
 }
 
 /**

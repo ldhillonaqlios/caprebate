@@ -45,6 +45,7 @@ import { assertIntroducerSection, rewardModelGate } from '../web/introducers.ts'
 import { assertSurveySection } from '../web/surveyor.ts';
 import { assertFinanceSection } from '../web/finance.ts';
 import { adminSettingsGate, SETTINGS_TILES } from '../web/admin-tiles.ts';
+import { getUsersDisplayNameById } from './data.ts';
 
 /* ------------------------------------------------------------------ *
  * THE REQUEST'S CONTEXT
@@ -348,7 +349,7 @@ const ROLE_WORDS: Readonly<Record<AppRole, string>> = Object.freeze({
 
 function displayName(db: Db | undefined, actor: Actor): string {
   if (db === undefined) return ROLE_WORDS[actor.role];
-  const u = db.get<{ display_name: string | null }>('SELECT display_name FROM users WHERE id = ?', [actor.id]);
+  const u = getUsersDisplayNameById<{ display_name: string | null }>(db, [actor.id]);
   return u?.display_name ?? ROLE_WORDS[actor.role];
 }
 

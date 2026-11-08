@@ -63,6 +63,7 @@ import { DERIVE_FIELD_OF } from '../integrations/connectors/free-registers.ts';
 import {
   assertSignedEngagement, catalogue, LETTER_WORDS, REGISTRY_ID_OF, type SignedEngagement,
 } from './research.ts';
+import { getResearchSourcesCountByBusinessIdState, listRegisterRecordsSourceIdFieldsJsonByBusinessId } from '../integrations/index.ts';
 
 export { NotFoundAsRefusal };
 
@@ -147,10 +148,7 @@ const RESEARCH_WORDS: Readonly<Record<ResearchProgress, string>> = Object.freeze
  */
 export function researchProgress(db: Db, business_id: string): ResearchProgress {
   const total = catalogue().length;
-  const row = db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM research_sources WHERE business_id = ? AND state = ?',
-    [business_id, 'FIRED'],
-  );
+  const row = getResearchSourcesCountByBusinessIdState<{ n: number }>(db, [business_id, 'FIRED']);
   const fired = row?.n ?? 0;
   if (fired === 0) return 'NOT_RUN';
   return fired >= total ? 'COMPLETE' : 'PART_RUN';
@@ -739,9 +737,7 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
  */
 export function registerBundle(db: Db, business_id: string): Record<string, Record<string, unknown>> {
   const bundle: Record<string, Record<string, unknown>> = {};
-  for (const r of db.all<{ source_id: string; fields_json: string }>(
-    'SELECT source_id, fields_json FROM register_records WHERE business_id = ? ORDER BY obtained_at ASC, id ASC', [business_id],
-  )) {
+  for (const r of listRegisterRecordsSourceIdFieldsJsonByBusinessId<{ source_id: string; fields_json: string }>(db, [business_id])) {
     const key = REGISTRY_ID_OF[r.source_id];
     const names = DERIVE_FIELD_OF[r.source_id];
     if (key === undefined || names === undefined) continue; // a source the derivation layer does not read

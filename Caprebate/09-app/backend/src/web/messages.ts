@@ -39,6 +39,8 @@ import { documentObj } from './documents.ts';
 import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type EmailSending, type MailWhere, type SmtpLogin } from '../integrations/index.ts';
 import { outboxTransport } from '../integrations/index.ts';
 import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from './automation.ts';
+import { getUsersIdEmailByIdDisabledAt, listUsersIdEmailByRoleBusinessId, listUsersIdEmailByRoleDisabledAt } from '../core/index.ts';
+import { getWhatsappMessagesCountByBusinessIdDirection } from '../integrations/index.ts';
 
 export type MessageDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -165,10 +167,7 @@ export function unreadEmails(db: Db, actor: Actor, business_id: string): number 
 /** WhatsApp messages from the company this person has not read. */
 export function unreadWhatsApp(db: Db, actor: Actor, business_id: string): number {
   if (actor.role === 'CLIENT' || !can(actor, 'client_message.read', clientObj(db, business_id))) return 0;
-  return db.get<{ n: number }>(
-    // PHASE 156c: a chat added from the phone's export is history someone already read on the phone, never "new".
-    "SELECT COUNT(*) AS n FROM whatsapp_messages WHERE business_id = ? AND direction = 'IN' AND created_at > ? AND id NOT IN (SELECT message_id FROM whatsapp_import_lines)",
-    [business_id, lastChannelRead(db, actor.id, business_id, 'WHATSAPP')])?.n ?? 0;
+  return getWhatsappMessagesCountByBusinessIdDirection<{ n: number }>(db, [business_id, lastChannelRead(db, actor.id, business_id, 'WHATSAPP')])?.n ?? 0;
 }
 
 /** Record that this person has read the company's emails, or its WhatsApp, now — only when something was unread. */
@@ -398,12 +397,11 @@ export function alertNewMessage(d: MessageDeps, message_id: string): AlertResult
   type Person = { id: string; email: string };
   let people: Person[];
   if (to === 'STAFF') {
-    const owner = m.owner_id === null ? undefined : d.db.get<Person>(
-      "SELECT id, email FROM users WHERE id = ? AND disabled_at IS NULL AND role IN ('ADMIN','SALES')", [m.owner_id]);
+    const owner = m.owner_id === null ? undefined : getUsersIdEmailByIdDisabledAt<Person>(d.db, [m.owner_id]);
     people = owner !== undefined ? [owner]
-      : d.db.all<Person>("SELECT id, email FROM users WHERE role = 'SALES' AND disabled_at IS NULL ORDER BY id");
+      : listUsersIdEmailByRoleDisabledAt<Person>(d.db);
   } else {
-    people = d.db.all<Person>("SELECT id, email FROM users WHERE role = 'CLIENT' AND business_id = ? AND disabled_at IS NULL ORDER BY id", [m.business_id]);
+    people = listUsersIdEmailByRoleBusinessId<Person>(d.db, [m.business_id]);
   }
   if (people.length === 0) return { state: 'NOT_QUEUED', why: 'NOBODY_TO_TELL' };
   const origin = d.origin ?? process.env.CAPREBATE_PUBLIC_ORIGIN ?? null;

@@ -38,6 +38,8 @@ import { RateLimiter, type CallDeps } from './http.ts';
 import { inspireBoundaryFetcher } from './inspire.ts';
 import { INSPIRE_COUNCILS, inspireFileForLad } from './inspire-councils.ts';
 import { pointInBritishNationalGrid } from './site-area.ts';
+import { listRegisterRecordsFieldsJsonBySourceId } from '../data.ts';
+import { listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../data-borrowed.ts';
 
 /** The connector's name in the test lookup log and on the command line: the source register's own. */
 export const BOUNDARY_TEST_SOURCE = 'HMLR_INSPIRE';
@@ -115,9 +117,9 @@ export function boundaryClientMatchIn(db: Db, v: BoundaryTestValues): { readonly
   let councils: { lad_code: string | null }[];
   let supplier: { fields_json: string }[];
   try {
-    entered = db.all("SELECT easting, northing FROM site_area_inputs WHERE kind = 'POINT'");
-    councils = db.all("SELECT lad_code FROM site_area_inputs WHERE kind = 'NEIGHBOUR_COUNCIL'");
-    supplier = db.all("SELECT fields_json FROM register_records WHERE source_id = 'HOMEDATA_ADDRESS'");
+    entered = listSiteAreaInputsEastingNorthingByKind(db);
+    councils = listSiteAreaInputsLadCodeByKind(db);
+    supplier = listRegisterRecordsFieldsJsonBySourceId(db);
   } catch (e: unknown) {
     return { ok: false, why: `the clients in CAPREBATE_DB could not be read (${e instanceof Error ? e.message : String(e)}), so it is not known that these values are nobody's` };
   }

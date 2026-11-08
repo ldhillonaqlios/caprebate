@@ -15,6 +15,7 @@
 import type { Db } from './db.ts';
 import type { AuditLog } from './audit.ts';
 import type { Actor } from './authz.ts';
+import { deleteSectionPrefsByUserIdSection, insertSectionPrefs, listSectionPrefsSectionOpenByUserId } from './data.ts';
 
 /** Every section a choice may be kept for. A key not here is refused before it reaches the table. */
 export const SECTION_KEYS: readonly string[] = Object.freeze([
@@ -43,7 +44,7 @@ const BACK = /^\/staff\/(clients\/[A-Za-z0-9-]+(\/claims\/[A-Za-z0-9-]+)?|claims
 const ANCHOR = /^[a-z][a-z0-9-]{0,39}$/;
 
 export function sectionPrefs(db: Db, actor: Actor): ReadonlyMap<string, boolean> {
-  const rows = db.all<{ section: string; open: number }>('SELECT section, open FROM section_prefs WHERE user_id = ?', [actor.id]);
+  const rows = listSectionPrefsSectionOpenByUserId<{ section: string; open: number }>(db, [actor.id]);
   return new Map(rows.map((r) => [r.section, r.open === 1] as const));
 }
 
@@ -59,13 +60,9 @@ export function keepSectionChoice(
   if (!SECTION_KEYS.includes(c.section) || !['yes', 'no', 'auto'].includes(c.open) || !BACK.test(c.back)) return { ok: false };
   const at = d.now();
   d.db.tx(() => {
-    if (c.open === 'auto') d.db.run('DELETE FROM section_prefs WHERE user_id = ? AND section = ?', [actor.id, c.section]);
+    if (c.open === 'auto') deleteSectionPrefsByUserIdSection(d.db, [actor.id, c.section]);
     else {
-      d.db.run(
-        'INSERT INTO section_prefs (user_id, section, open, updated_at) VALUES (?, ?, ?, ?) ' +
-          'ON CONFLICT (user_id, section) DO UPDATE SET open = excluded.open, updated_at = excluded.updated_at',
-        [actor.id, c.section, c.open === 'yes' ? 1 : 0, at],
-      );
+      insertSectionPrefs(d.db, [actor.id, c.section, c.open === 'yes' ? 1 : 0, at]);
     }
     d.audit.append({
       at, kind: 'SECTION_PREFERENCE_SET', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,

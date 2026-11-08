@@ -58,6 +58,7 @@ import { IDENTITY_PROVIDER_NAME } from '../integrations/index.ts';
 import { complianceObj } from './compliance.ts';
 import { claimBoxes, headerActions, lookupsCard, nextStepCard, presentTabs, progressBar, setClientMenu, tabbed, TAB_OF_SECTION, type TabKey } from './client-layout.ts';
 import { piecesPage } from '../core/index.ts';
+import { listUsersIdNameByBusinessIdRole } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -330,7 +331,7 @@ function clientPage(
   if (can(actor, 'engagement.read', { type: 'engagement', id: org.id, business_id: org.id })) {
     const ls = letterState(db, org.id);
     // PHASE 157d: the client's logins, for "Who must sign".
-    const clientLogins = db.all<{ id: string; name: string; email: string }>("SELECT id, display_name AS name, email FROM users WHERE business_id = ? AND role = 'CLIENT' AND disabled_at IS NULL ORDER BY created_at ASC, id ASC", [org.id]);
+    const clientLogins = listUsersIdNameByBusinessIdRole<{ id: string; name: string; email: string }>(db, [org.id]);
     const maySend = can(actor, 'engagement.send', { type: 'engagement', id: org.id, business_id: org.id }) && ls.state !== 'SIGNED';
     sections.push({
       key: 'client.letter', id: 'letter', kind: 'documents', heading: 'Engagement letter',

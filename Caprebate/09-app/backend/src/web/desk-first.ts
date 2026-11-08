@@ -26,6 +26,7 @@ import type { Db } from '../core/index.ts';
 import { checklistView, type ChecklistView } from './survey-evidence.ts';
 import { mandatoryDocumentNeeds } from './mandatory-documents.ts';
 import { latestFacts } from './claim-facts.ts';
+import { listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId } from '../integrations/index.ts';
 
 export const DESK_FIRST_TEST = Object.freeze({
   status: 'TEST_ONLY_PLACEHOLDERS' as const,
@@ -109,8 +110,7 @@ function band(x: number, limits: readonly number[], inclusive: boolean): 1 | 2 |
 function pricePaidPence(db: Db, job: JobRow): number | null {
   const pid = job.claim_id === null ? null : db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [job.claim_id])?.p ?? null;
   for (const source of ['HMLR_TITLE', 'HMLR_PPD']) {
-    const rows = db.all<{ fields_json: string; property_id: string | null }>(
-      'SELECT fields_json, property_id FROM register_records WHERE business_id = ? AND source_id = ? ORDER BY obtained_at DESC', [job.business_id, source]);
+    const rows = listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId<{ fields_json: string; property_id: string | null }>(db, [job.business_id, source]);
     const r = pid === null ? (rows.length === 1 ? rows[0] : undefined) : rows.find((x) => x.property_id === pid);
     if (r === undefined) continue;
     try {

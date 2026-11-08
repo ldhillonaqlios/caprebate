@@ -47,6 +47,7 @@ import { earlyQuestions } from '../src/web/client-files-pages.ts';
 import { docxOf } from './document-fixtures.ts';
 import { testApp, actor } from './helpers.ts';
 import type { Actor } from '../src/core/authz.ts';
+import { statementDoors } from './sql-doors.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const SRC = join(HERE, '..', 'src');
@@ -742,7 +743,11 @@ describe('3 · one door out, the tables that keep both facts, and the routes', (
       // "UPDAT[E]" so the SQL linter does not read this pattern as a statement being built.
       if (/(DELETE\s+FROM|UPDAT[E])\s+register_records/i.test(readFileSync(p, 'utf8'))) hits.push(p.slice(SRC.length));
     }
-    assert.deepEqual(hits, ['/integrations/register-ingest.ts']);
+    // PHASE 161i1: the statements live in the outside services' data file; register-ingest.ts is still the only caller.
+    assert.deepEqual(hits, ['/integrations/data.ts']);
+    const door = statementDoors(SRC.replace(/[\\/]$/, ''), /(DELETE\s+FROM|UPDAT[E])\s+register_records/i);
+    assert.ok(door.functions.length > 0);
+    assert.deepEqual(door.callers, ['integrations/register-ingest.ts']);
   });
 
   test('S2 — THE DOORS DO ONLY WHAT THEY ARE ASKED: another client’s record, or a field it does not carry, changes nothing', async () => {

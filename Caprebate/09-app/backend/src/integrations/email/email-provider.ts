@@ -74,6 +74,7 @@ import type { AuditLog } from '../../core/audit.ts';
 import { processSecrets, type SecretStore } from '../../core/index.ts';
 import { isDoNotContact, isInventedAddress } from './email.ts';
 import { placeRefusal, type Env } from '../connectors/place.ts';
+import { getEmailSuppressionsStateByAddressCanonical, getOutboxToEmailById, insertEmailBounces, insertEmailSuppressions, insertEmailSuppressions2, listOutboxAttachmentsDocumentIdByOutboxId, listOutboxIdToEmailBySentAtSendRequested, listOutboxIdToEmailBySentAtSendRequested2, listOutboxInlineFilesFilenameContentTypeByOutboxId, updateOutboxBodyByIdSentAt, updateOutboxLastErrorById, updateOutboxSentAtTransportById } from '../data.ts';
 
 export type EmailSending = {
   readonly enabled: boolean;
@@ -495,9 +496,7 @@ export function smtpProvider(
 
 /** True when this address bounced HARD and nobody has lifted it since. Asked at the moment of sending. */
 export function isSuppressed(db: Db, address: string): boolean {
-  const last = db.get<{ state: string }>(
-    'SELECT state FROM email_suppressions WHERE address_canonical = ? ORDER BY at DESC, rowid DESC LIMIT 1',
-    [addressOf(address).trim().toLowerCase()]);
+  const last = getEmailSuppressionsStateByAddressCanonical<{ state: string }>(db, [addressOf(address).trim().toLowerCase()]);
   return last?.state === 'BOUNCED';
 }
 
@@ -509,13 +508,12 @@ export function recordBounce(
   const id = randomUUID();
   const at = now();
   const status = /^[0-9.]{3,12}$/.test(b.status) ? b.status : b.kind === 'HARD' ? '5.0.0' : '4.0.0';
-  db.run('INSERT INTO email_bounces (id, outbox_id, kind, source, status, at) VALUES (?, ?, ?, ?, ?, ?)', [id, outbox_id, b.kind, b.source, status, at]);
+  insertEmailBounces(db, [id, outbox_id, b.kind, b.source, status, at]);
   if (b.kind === 'HARD') {
-    const to = db.get<{ to_email: string }>('SELECT to_email FROM outbox WHERE id = ?', [outbox_id])?.to_email;
+    const to = getOutboxToEmailById<{ to_email: string }>(db, [outbox_id])?.to_email;
     const canonical = to === undefined ? '' : addressOf(to).trim().toLowerCase();
     if (/^[^@\s]+@[^@\s]+$/.test(canonical) && !isSuppressed(db, canonical)) {
-      db.run('INSERT INTO email_suppressions (id, address_canonical, state, bounce_id, set_by, at) VALUES (?, ?, ?, ?, NULL, ?)',
-        [randomUUID(), canonical, 'BOUNCED', id, at]);
+      insertEmailSuppressions(db, [randomUUID(), canonical, 'BOUNCED', id, at]);
     }
   }
   return id;
@@ -525,15 +523,13 @@ export function recordBounce(
 export function liftSuppression(db: Db, now: () => string, address: string, by_user_id: string): boolean {
   const canonical = addressOf(address).trim().toLowerCase();
   if (!isSuppressed(db, canonical)) return false;
-  db.run('INSERT INTO email_suppressions (id, address_canonical, state, bounce_id, set_by, at) VALUES (?, ?, ?, NULL, ?, ?)',
-    [randomUUID(), canonical, 'LIFTED', by_user_id, now()]);
+  insertEmailSuppressions2(db, [randomUUID(), canonical, 'LIFTED', by_user_id, now()]);
   return true;
 }
 
 /** The calendar invitations and signed letters an email carries, in order. */
 export function inlineFilesOf(db: Db, outbox_id: string): Attachment[] {
-  return db.all<{ filename: string; content_type: string; bytes: Uint8Array }>(
-    'SELECT filename, content_type, bytes FROM outbox_inline_files WHERE outbox_id = ? ORDER BY part_no', [outbox_id])
+  return listOutboxInlineFilesFilenameContentTypeByOutboxId<{ filename: string; content_type: string; bytes: Uint8Array }>(db, [outbox_id])
     .map((f) => ({ filename: f.filename, content_type: f.content_type, bytes: new Uint8Array(f.bytes) }));
 }
 
@@ -568,9 +564,7 @@ export const SENT_SECRET_KINDS: readonly string[] = Object.freeze(['SIGN_IN_CODE
 export const SENT_SECRET_BODY = 'This email held a sign-in code or a one-use link. It was sent, and then its words were removed so the code or link is not kept.';
 
 export function blankSentSecrets(db: Db, outbox_id: string): boolean {
-  const r = db.run(
-    "UPDATE outbox SET body = ? WHERE id = ? AND sent_at IS NOT NULL AND kind IN ('SIGN_IN_CODE', 'PASSWORD_RESET', 'ACCOUNT_VERIFY', 'REPORT_FOR_SIGNOFF') AND body <> ?",
-    [SENT_SECRET_BODY, outbox_id, SENT_SECRET_BODY]);
+  const r = updateOutboxBodyByIdSentAt(db, [SENT_SECRET_BODY, outbox_id, SENT_SECRET_BODY]);
   return r.changes > 0;
 }
 
@@ -586,17 +580,17 @@ export async function dispatchOutbox(
 ): Promise<DispatchResult> {
   if (!sendingOn(cfg, login) || provider === null) return { state: 'OFF', missing: sendingMissing(cfg, login) };
   const rows = only === undefined
-    ? d.db.all<Waiting>('SELECT id, to_email, subject, body, business_id, from_header, reply_to, in_reply_to, references_ids FROM outbox WHERE sent_at IS NULL AND send_requested = 1 ORDER BY created_at')
-    : d.db.all<Waiting>('SELECT id, to_email, subject, body, business_id, from_header, reply_to, in_reply_to, references_ids FROM outbox WHERE sent_at IS NULL AND send_requested = 1 AND id = ?', [only]);
+    ? listOutboxIdToEmailBySentAtSendRequested2<Waiting>(d.db)
+    : listOutboxIdToEmailBySentAtSendRequested<Waiting>(d.db, [only]);
   let sent = 0, failed = 0, refused = 0;
   for (const r of rows) {
-    const fail = (why: string): void => { d.db.run('UPDATE outbox SET last_error = ? WHERE id = ?', [why, r.id]); };
+    const fail = (why: string): void => { updateOutboxLastErrorById(d.db, [why, r.id]); };
     if (isDoNotContact(d.db, r.to_email, r.business_id)) { refused++; fail('This company is marked do not contact. It was not sent.'); continue; }
     if (isSuppressed(d.db, r.to_email)) { refused++; fail('An earlier email to this address bounced, so it was not sent.'); continue; }
     if (r.from_header === null || r.reply_to === null) { failed++; fail('It has no sender recorded, so it was not sent.'); continue; }
     const files: Attachment[] = [];
     let missing = false;
-    for (const a of d.db.all<{ document_id: string }>('SELECT document_id FROM outbox_attachments WHERE outbox_id = ?', [r.id])) {
+    for (const a of listOutboxAttachmentsDocumentIdByOutboxId<{ document_id: string }>(d.db, [r.id])) {
       const f = await open(a.document_id);
       if (f === null) { missing = true; break; }
       files.push(f);
@@ -609,7 +603,7 @@ export async function dispatchOutbox(
       in_reply_to: r.in_reply_to, references: r.references_ids === null ? [] : r.references_ids.split(' '),
     });
     if (out.ok) {
-      d.db.run('UPDATE outbox SET sent_at = ?, transport = ?, provider_ref = ?, last_error = NULL WHERE id = ?', [d.now(), provider.id, out.ref, r.id]);
+      updateOutboxSentAtTransportById(d.db, [d.now(), provider.id, out.ref, r.id]);
       blankSentSecrets(d.db, r.id);
       sent++;
     } else {

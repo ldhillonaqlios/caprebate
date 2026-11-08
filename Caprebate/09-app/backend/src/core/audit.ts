@@ -26,6 +26,7 @@ import { createHash } from 'node:crypto';
 import type { Db } from './db.ts';
 import { carriesSecret } from './secrets.ts';
 import { GENESIS } from '../survey/caprebate-anchor-quarantine.ts';
+import { getAuditLogSeqHash, insertAuditLog, listAuditLog } from './data.ts';
 
 export type AuditKind =
   | 'LOGIN_SUCCEEDED' | 'LOGIN_FAILED' | 'LOGOUT'
@@ -550,9 +551,7 @@ export class AuditLog {
        another copy got there first — is read again and retried. The key on seq is what keeps the chain from forking:
        two rows can never claim the same place. What a hash covers is unchanged. */
     for (let attempt = 1; ; attempt++) {
-      const last = this.#db.get<{ seq: number; hash: string }>(
-        'SELECT seq, hash FROM audit_log ORDER BY seq DESC LIMIT 1',
-      );
+      const last = getAuditLogSeqHash<{ seq: number; hash: string }>(this.#db);
       const prev_hash = last ? last.hash : GENESIS;
       const seq = last ? Number(last.seq) + 1 : 1;
 
@@ -571,12 +570,8 @@ export class AuditLog {
       const hash = createHash('sha256').update(canonical(body)).digest('hex');
 
       try {
-        this.#db.run(
-          'INSERT INTO audit_log (seq, at, kind, actor_id, actor_role, object_type, object_id, outcome, detail, prev_hash, hash) ' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [seq, body.at, body.kind, body.actor_id, body.actor_role, body.object_type, body.object_id,
-            body.outcome, JSON.stringify(detail), prev_hash, hash],
-        );
+        insertAuditLog(this.#db, [seq, body.at, body.kind, body.actor_id, body.actor_role, body.object_type, body.object_id,
+            body.outcome, JSON.stringify(detail), prev_hash, hash]);
       } catch (err) {
         if (attempt < APPEND_ATTEMPTS && isSeqClash(err)) continue;
         throw err;
@@ -586,12 +581,11 @@ export class AuditLog {
   }
 
   entries(): AuditEntry[] {
-    return this.#db
-      .all<{
+    return listAuditLog<{
         seq: number; at: string; kind: string; actor_id: string | null; actor_role: string | null;
         object_type: string | null; object_id: string | null; outcome: string; detail: string;
         prev_hash: string; hash: string;
-      }>('SELECT * FROM audit_log ORDER BY seq ASC')
+      }>(this.#db)
       .map((r) => ({
         seq: r.seq, at: r.at, kind: r.kind as AuditKind,
         actor_id: r.actor_id, actor_role: r.actor_role,

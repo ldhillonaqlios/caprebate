@@ -23,6 +23,7 @@ import type { Actor } from './authz.ts';
 import type { Db } from './db.ts';
 import { INCOMING_PREFIX, type FsObjectStore } from '../shared/objectstore.ts';
 import { UPLOAD_LIMITS } from '../shared/upload-handler-port.ts';
+import { getUploadPiecesIdUserIdById, insertUploadPieces, listUploadPiecesIdPiecesByEndedAtStartedAt, updateUploadPiecesEndedAtEndedHowByIdEndedAt, updateUploadPiecesEndedAtEndedHowByIdEndedAt2, updateUploadPiecesSealedById } from './data.ts';
 
 /** Each piece the page sends: well under Vercel's 4.5 MB a request. */
 export const PIECE_BYTES = 3 * 1024 * 1024;
@@ -48,7 +49,7 @@ type Reader = { readonly db: Db; readonly now: () => string };
 
 function own(d: Reader, actor: Actor, id: string): Row | null {
   if (!ID.test(id)) return null;
-  const r = d.db.get<Row>('SELECT id, user_id, size, pieces, sealed, started_at, ended_at FROM upload_pieces WHERE id = ?', [id]);
+  const r = getUploadPiecesIdUserIdById<Row>(d.db, [id]);
   if (r === undefined || r.user_id !== actor.id || r.ended_at !== null) return null;
   if (Date.parse(d.now()) - Date.parse(r.started_at) > ABANDON_HOURS * 3600 * 1000) return null;
   return r;
@@ -62,7 +63,7 @@ export function startPieces(d: PiecesDeps, actor: Actor, sizeText: string): Piec
   if (size > maxPiecedBytes()) return { ok: false, why: tooBig() };
   const pieces = Math.ceil(size / PIECE_BYTES);
   const id = d.newId();
-  d.db.run('INSERT INTO upload_pieces (id, user_id, size, pieces, sealed, started_at) VALUES (?, ?, ?, ?, 0, ?)', [id, actor.id, size, pieces, d.now()]);
+  insertUploadPieces(d.db, [id, actor.id, size, pieces, d.now()]);
   return { ok: true, id, piece_bytes: PIECE_BYTES, pieces };
 }
 
@@ -76,7 +77,7 @@ export async function putPiece(d: PiecesDeps, store: FsObjectStore, actor: Actor
   if (bytes.length !== want) return { ok: false, why: GONE };
   if (store.canSeal) {
     await store.putIncoming(keyOf(id, n), store.sealBytes(bytes));
-    d.db.run('UPDATE upload_pieces SET sealed = 1 WHERE id = ?', [id]);
+    updateUploadPiecesSealedById(d.db, [id]);
   } else {
     await store.putIncoming(keyOf(id, n), bytes);
   }
@@ -88,7 +89,7 @@ export async function takePieces(d: Reader, store: FsObjectStore, actor: Actor, 
   const r = own(d, actor, id);
   if (r === null) return { ok: false, why: GONE };
   // Taken first, so two forms sent at once cannot both use it.
-  const claimed = d.db.run("UPDATE upload_pieces SET ended_at = ?, ended_how = 'TAKEN' WHERE id = ? AND ended_at IS NULL", [d.now(), id]);
+  const claimed = updateUploadPiecesEndedAtEndedHowByIdEndedAt2(d.db, [d.now(), id]);
   if (claimed.changes !== 1) return { ok: false, why: GONE };
   const parts: Uint8Array[] = [];
   let missing = false;
@@ -129,10 +130,10 @@ export function piecesPage(headers: Readonly<Record<string, string>>, body: stri
 /** Remove every send not taken within `ABANDON_HOURS`, and its pieces. Returns how many. */
 export async function sweepPieces(d: Reader, store: FsObjectStore): Promise<number> {
   const before = new Date(Date.parse(d.now()) - ABANDON_HOURS * 3600 * 1000).toISOString();
-  const old = d.db.all<{ id: string; pieces: number }>('SELECT id, pieces FROM upload_pieces WHERE ended_at IS NULL AND started_at < ?', [before]);
+  const old = listUploadPiecesIdPiecesByEndedAtStartedAt<{ id: string; pieces: number }>(d.db, [before]);
   for (const o of old) {
     await dropAll(store, o.id, o.pieces);
-    d.db.run("UPDATE upload_pieces SET ended_at = ?, ended_how = 'SWEPT' WHERE id = ? AND ended_at IS NULL", [d.now(), o.id]);
+    updateUploadPiecesEndedAtEndedHowByIdEndedAt(d.db, [d.now(), o.id]);
   }
   return old.length;
 }

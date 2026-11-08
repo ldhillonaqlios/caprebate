@@ -54,6 +54,8 @@ import type { InspireFileStore } from './inspire-store.ts';
 import { etrs89ToBritishNationalGrid, type Ostn15Grid } from './ostn15.ts';
 import { resolveProperty } from '../postcodes/postcode.ts';
 import type { PostcodeStore } from '../postcodes/postcode-port.ts';
+import { getRegisterRecordsFieldsJsonByBusinessIdSourceId10, getRegisterRecordsIdFieldsJsonByBusinessIdSourceId } from '../data.ts';
+import { getPropertiesIdByIdBusinessId } from '../data-borrowed.ts';
 
 export const SITE_AREA_SOURCE_ID = 'HMLR_INSPIRE';
 
@@ -217,7 +219,7 @@ export function planSiteArea(d: Pick<SiteAreaDeps, 'db' | 'grid'>, input: SiteAr
   const use = checkBoundaryUse('INTERNAL_CALCULATION');
   if (!use.permitted) return stop(outcome('NOT_PERMITTED', use.reason));
 
-  const property = d.db.get<{ id: string }>('SELECT id FROM properties WHERE id = ? AND business_id = ?', [input.property_id, input.business_id]);
+  const property = getPropertiesIdByIdBusinessId<{ id: string }>(d.db, [input.property_id, input.business_id]);
   if (property === undefined) return stop(outcome('NOT_PERMITTED', 'That property is not one of this company\'s, so nothing was looked up.'));
 
   const point = pointInBritishNationalGrid(input.point, d.grid);
@@ -238,10 +240,7 @@ export function planSiteArea(d: Pick<SiteAreaDeps, 'db' | 'grid'>, input: SiteAr
     : ` We read the files of ${names.join(' and ')}.`;
 
   const entity_id = `property:${input.property_id}`;
-  const held = d.db.get<{ id: string; fields_json: string }>(
-    'SELECT id, fields_json FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id = ?',
-    [input.business_id, SITE_AREA_SOURCE_ID, entity_id],
-  );
+  const held = getRegisterRecordsIdFieldsJsonByBusinessIdSourceId<{ id: string; fields_json: string }>(d.db, [input.business_id, SITE_AREA_SOURCE_ID, entity_id]);
   if (held !== undefined) {
     return stop(outcome('ALREADY_HELD', 'We already hold a site area from the land boundary for this property, so it was kept as it was and nothing was read.', { record_id: held.id }));
   }
@@ -314,10 +313,7 @@ export function councilOfPostcode(postcode: string | null, store: PostcodeStore 
  */
 export function homedataPointOf(db: Db, business_id: string, property_id: string):
   { easting: unknown; northing: unknown } | { latitude: unknown; longitude: unknown; datum: 'ETRS89' | null } | null {
-  const r = db.get<{ fields_json: string }>(
-    "SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = 'HOMEDATA_ADDRESS' AND property_id = ? ORDER BY obtained_at DESC, id DESC LIMIT 1",
-    [business_id, property_id],
-  );
+  const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId10<{ fields_json: string }>(db, [business_id, property_id]);
   if (r === undefined) return null;
   try {
     const f = JSON.parse(r.fields_json) as Record<string, unknown>;

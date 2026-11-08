@@ -8,6 +8,7 @@
 import type { Db } from '../../core/index.ts';
 import type { Bundle } from './registers.ts';
 import { CB } from '../../shared/index.ts';
+import { getBusinessesNameLegalNameById, getPropertiesIdAddressLine1ByBusinessId } from '../data-borrowed.ts';
 
 export type Nation = 'england' | 'wales' | 'scotland' | 'northern_ireland';
 
@@ -40,11 +41,8 @@ export type ResearchSubject = {
 const NATIONS: readonly Nation[] = ['england', 'wales', 'scotland', 'northern_ireland'];
 
 export function researchSubject(db: Db, business_id: string): ResearchSubject {
-  const b = db.get<{ name: string; legal_name: string | null; company_number: string | null; sector: string | null }>(
-    'SELECT name, legal_name, company_number, sector FROM businesses WHERE id = ?', [business_id]);
-  const p = db.get<{ id: string; address_line_1: string | null; address_line_2: string | null; town: string | null; postcode: string | null; jurisdiction: string | null; uprn: string | null }>(
-    'SELECT id, address_line_1, address_line_2, town, postcode, jurisdiction, uprn FROM properties WHERE business_id = ? ' +
-      'ORDER BY created_at ASC, id ASC LIMIT 1', [business_id]);
+  const b = getBusinessesNameLegalNameById<{ name: string; legal_name: string | null; company_number: string | null; sector: string | null }>(db, [business_id]);
+  const p = getPropertiesIdAddressLine1ByBusinessId<{ id: string; address_line_1: string | null; address_line_2: string | null; town: string | null; postcode: string | null; jurisdiction: string | null; uprn: string | null }>(db, [business_id]);
   const legal = b?.legal_name?.trim() ?? '';
   const number = b?.company_number?.trim() ?? '';
   return {

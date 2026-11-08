@@ -44,6 +44,7 @@ import { processSecrets } from './secrets.ts';
 import { mfaKeyFrom, MFA_KEY_NAME, sealTextSecrets } from './mfa-seal.ts';
 import { postcodeStore } from '../integrations/postcodes/postcode.ts';
 import { zoomPastCall } from '../integrations/index.ts';
+import { getUsersRoleByIdDisabledAt } from './data.ts';
 
 const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
 
@@ -155,7 +156,7 @@ async function main(): Promise<number> {
     const { readFileSync } = await import('node:fs');
     const db = new Db(DEFAULT_DB);
     try {
-      const user = db.get<{ role: string }>('SELECT role FROM users WHERE id = ? AND disabled_at IS NULL', [by]);
+      const user = getUsersRoleByIdDisabledAt<{ role: string }>(db, [by]);
       if (user === undefined || user.role !== 'ADMIN') { console.error('Only an active Admin may import premises.'); return 1; }
       const r = importPremises({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() },
         source as keyof typeof PREMISES_SOURCES, readFileSync(file, 'utf8'), { id: by, role: user.role });
@@ -181,7 +182,7 @@ async function main(): Promise<number> {
     const { readFileSync } = await import('node:fs');
     const db = new Db(DEFAULT_DB);
     try {
-      const user = db.get<{ role: string }>('SELECT role FROM users WHERE id = ? AND disabled_at IS NULL', [by]);
+      const user = getUsersRoleByIdDisabledAt<{ role: string }>(db, [by]);
       if (user === undefined || user.role !== 'ADMIN') { console.error('Only an active Admin may import a register file.'); return 1; }
       const id = source as keyof typeof FILE_SOURCES;
       const r = importRegisterFile({ db, audit: new AuditLog(db), now: () => new Date().toISOString() },

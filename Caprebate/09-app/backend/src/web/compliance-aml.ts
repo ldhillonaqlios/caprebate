@@ -34,6 +34,8 @@ import {
   type Check, type ComplianceDeps, type Fields, type SettingReading, type Vocab, type WriteResult,
 } from './compliance.ts';
 import { identityPassed } from './identity-checks.ts';
+import { getResearchSourcesIdStateByBusinessIdSourceId } from '../integrations/index.ts';
+import { getUsersIdByIdRole } from '../core/index.ts';
 
 /* ================================================================== *
  * 1 · THE VOCABULARIES — the paper's own, section 5
@@ -181,7 +183,7 @@ export function recordOfficer(d: ComplianceDeps, actor: Actor, input: Fields): W
     const office = input['office'] ?? null;
     if (!has(OFFICES, office)) return { ok: false, why: 'Choose the office.' };
     const user_id = (input['user_id'] ?? '').trim();
-    if (d.db.get<{ id: string }>("SELECT id FROM users WHERE id = ? AND role <> 'CLIENT' AND disabled_at IS NULL", [user_id]) === undefined) {
+    if (getUsersIdByIdRole<{ id: string }>(d.db, [user_id]) === undefined) {
       return { ok: false, why: 'The officer is a member of staff with a working login.' };
     }
     const on = check(dateField(input['appointed_on'], 'The date of appointment'));
@@ -334,8 +336,7 @@ export type PscPullReading = {
 };
 
 export function pscPullReading(db: Db, business_id: string): PscPullReading {
-  const r = db.get<{ id: string; state: string; retrieved_at: string | null; fired_at: string | null }>(
-    "SELECT id, state, retrieved_at, fired_at FROM research_sources WHERE business_id = ? AND source_id = 'CH_PSC'", [business_id]);
+  const r = getResearchSourcesIdStateByBusinessIdSourceId<{ id: string; state: string; retrieved_at: string | null; fired_at: string | null }>(db, [business_id]);
   if (r === undefined) {
     return { source_row_id: null, state: 'NOT_RUN', retrieved_at: null, reading: `No PSC pull is recorded for this organisation. ${PSC_SEPARATION}` };
   }

@@ -45,6 +45,8 @@ import { localWhen } from '../shared/index.ts';
 import type { AuditLog } from './audit.ts';
 import type { EmailTransport } from '../integrations/index.ts';
 import { bookingInviteFile } from '../web/booking-invite.ts';
+import { getAssessmentsIdBusinessIdById, getBookingsChannelSmsVariantByBusinessId, getBookingsChannelSmsVariantByLeadId, getBusinessesContactEmailNameById, getContactsContactEmailNameByLeadId, insertBookingChanges, listAssessmentAnswersOrdQuestionIdByAssessmentId, listAssessmentsIdBusinessId, listBookingChangesFromStartsAtToStartsAtByBookingId, listPropertiesLabelPostcodeByBusinessId, listUsersIdDisplayNameByDisabledAt, updateBookingsStartsAtEndsAtById } from './data-borrowed.ts';
+import { getBookingById, listBookingsCancelled, listBookingsScheduled, listBookingsWithNoTime } from './data-borrowed.ts';
 
 export class BackOfficeError extends Error {
   readonly code: string;
@@ -155,11 +157,7 @@ const CHANNEL_LABEL: Readonly<Record<string, string>> = Object.freeze({
  * N4 in miniature: an absent fact stays absent and does not acquire a default.
  */
 export function contactFor(db: Db, business_id: string): ContactView {
-  return contactOf(db.get<BookingChannelRow>(
-    'SELECT channel, sms_variant, entry_point FROM bookings WHERE business_id = ? ' +
-      'ORDER BY created_at ASC LIMIT 1',
-    [business_id],
-  ));
+  return contactOf(getBookingsChannelSmsVariantByBusinessId<BookingChannelRow>(db, [business_id]));
 }
 
 /**
@@ -168,11 +166,7 @@ export function contactFor(db: Db, business_id: string): ContactView {
  * to an organisation (migration 011, disposition row E22). Same row, same words.
  */
 export function contactForLead(db: Db, lead_id: string): ContactView {
-  return contactOf(db.get<BookingChannelRow>(
-    'SELECT channel, sms_variant, entry_point FROM bookings WHERE lead_id = ? ' +
-      'ORDER BY created_at ASC LIMIT 1',
-    [lead_id],
-  ));
+  return contactOf(getBookingsChannelSmsVariantByLeadId<BookingChannelRow>(db, [lead_id]));
 }
 
 /**
@@ -213,10 +207,7 @@ type AssessmentRowSource = {
 };
 
 function buildRow(db: Db, actor: Actor, a: AssessmentRowSource): AssessmentRow {
-  const properties = db.all<PropertyView>(
-    'SELECT label, postcode FROM properties WHERE business_id = ? ORDER BY created_at ASC, label ASC',
-    [a.business_id],
-  );
+  const properties = listPropertiesLabelPostcodeByBusinessId<PropertyView>(db, [a.business_id]);
   // BUILT FORWARDS. `range` is added, never removed.
   const base = {
     id: a.id, business_id: a.business_id, business_name: a.business_name,
@@ -240,13 +231,7 @@ function buildRow(db: Db, actor: Actor, a: AssessmentRowSource): AssessmentRow {
  */
 export function filedAssessments(db: Db, actor: Actor, limit = 200): AssessmentRow[] {
   assertSection(actor, 'assessment.read');
-  const rows = db.all<AssessmentRowSource>(
-    'SELECT a.id, a.business_id, b.name AS business_name, a.sector, a.submitted_at, ' +
-      'a.shown_low_pence, a.shown_high_pence ' +
-      'FROM assessments a JOIN businesses b ON b.id = a.business_id ' +
-      'ORDER BY a.submitted_at DESC, a.id DESC LIMIT ?',
-    [limit],
-  );
+  const rows = listAssessmentsIdBusinessId<AssessmentRowSource>(db, [limit]);
   const out: AssessmentRow[] = [];
   for (const a of rows) {
     if (!can(actor, 'assessment.read', { type: 'assessment', id: a.id, business_id: a.business_id })) {
@@ -289,23 +274,14 @@ export type AssessmentDetail = AssessmentRow & {
 };
 
 export function assessmentDetail(db: Db, actor: Actor, assessment_id: string): AssessmentDetail {
-  const a = db.get<AssessmentRowSource>(
-    'SELECT a.id, a.business_id, b.name AS business_name, a.sector, a.submitted_at, ' +
-      'a.shown_low_pence, a.shown_high_pence ' +
-      'FROM assessments a JOIN businesses b ON b.id = a.business_id WHERE a.id = ?',
-    [assessment_id],
-  );
+  const a = getAssessmentsIdBusinessIdById<AssessmentRowSource>(db, [assessment_id]);
   assertSection(actor, 'assessment.read');
   if (a === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'assessment.read', { type: 'assessment', id: a.id, business_id: a.business_id });
 
-  const rows = db.all<{
+  const rows = listAssessmentAnswersOrdQuestionIdByAssessmentId<{
     ord: number; question_id: string; question_text: string; state: string; value: string | null;
-  }>(
-    'SELECT ord, question_id, question_text, state, value FROM assessment_answers ' +
-      'WHERE assessment_id = ? ORDER BY ord ASC',
-    [a.id],
-  );
+  }>(db, [a.id]);
   for (const r of rows) {
     authorise(actor, 'answer.read', { type: 'answer', id: `${a.id}:${r.ord}`, business_id: a.business_id });
   }
@@ -351,19 +327,6 @@ export type BookingRow = {
   readonly cancelled_by_role: string | null;
 };
 
-/*
- * LEFT JOINS, AND THAT IS PART OF THE GATED-EXIT REPAIR. This was an inner join
- * onto `businesses`, so a booking with no organisation — a call asked for at the
- * reasoned negative (migration 011) — would have been recorded and then vanished
- * from the calendar's queue, invisible to the people who have to make the call.
- */
-const BOOKING_SELECT =
-  'SELECT k.id, k.business_id, k.lead_id, COALESCE(b.name, l.prospect_organisation) AS business_name, k.channel, ' +
-  'k.sms_variant, k.entry_point, k.starts_at, k.ends_at, k.assigned_to, u.display_name AS assigned_name, ' +
-  'k.created_at, k.cancelled_at, cu.display_name AS cancelled_by_name, cu.role AS cancelled_by_role ' +
-  'FROM bookings k LEFT JOIN businesses b ON b.id = k.business_id ' +
-  'LEFT JOIN leads l ON l.id = k.lead_id LEFT JOIN users u ON u.id = k.assigned_to ' +
-  'LEFT JOIN users cu ON cu.id = k.cancelled_by ';
 
 type BookingSource = Omit<BookingRow, 'channel_label' | 'business_name'> & { readonly business_name: string | null };
 
@@ -418,22 +381,15 @@ export function calendar(
   const from = opts.view === 'week' ? startOfLocalWeek(opts.date) : startOfLocalDay(opts.date);
   const to = addLocalDays(from, opts.view === 'week' ? 7 : 1);
 
-  const scheduled = db
-    .all<BookingSource>(
-      BOOKING_SELECT + 'WHERE k.starts_at IS NOT NULL AND k.starts_at >= ? AND k.starts_at < ? ' +
-        'ORDER BY k.starts_at ASC',
-      [from, to],
-    )
+  const scheduled = listBookingsScheduled<BookingSource>(db, [from, to])
     .filter((r) => can(actor, 'booking.read', { type: 'booking', id: r.id, business_id: r.business_id }))
     .map(decorate);
 
-  const noTime = db
-    .all<BookingSource>(BOOKING_SELECT + 'WHERE k.starts_at IS NULL AND k.cancelled_at IS NULL ORDER BY k.created_at ASC')
+  const noTime = listBookingsWithNoTime<BookingSource>(db)
     .filter((r) => can(actor, 'booking.read', { type: 'booking', id: r.id, business_id: r.business_id }))
     .map(decorate);
 
-  const cancelled = db
-    .all<BookingSource>(BOOKING_SELECT + 'WHERE k.cancelled_at IS NOT NULL ORDER BY k.cancelled_at DESC LIMIT 100')
+  const cancelled = listBookingsCancelled<BookingSource>(db)
     .filter((r) => can(actor, 'booking.read', { type: 'booking', id: r.id, business_id: r.business_id }))
     .map(decorate);
 
@@ -458,7 +414,7 @@ export function calendar(
 
 export function bookingById(db: Db, actor: Actor, id: string): BookingRow {
   assertSection(actor, 'booking.read');
-  const r = db.get<BookingSource>(BOOKING_SELECT + 'WHERE k.id = ?', [id]);
+  const r = getBookingById<BookingSource>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'booking.read', { type: 'booking', id: r.id, business_id: r.business_id });
   return decorate(r);
@@ -516,27 +472,19 @@ export function scheduleBooking(
   const ends = new Date(Date.parse(args.starts_at) + SLOT_MINUTES * 60_000).toISOString();
 
   d.db.tx(() => {
-    d.db.run('UPDATE bookings SET starts_at = ?, ends_at = ?, assigned_to = ? WHERE id = ?',
-      [args.starts_at, ends, owner, before.id]);
-    d.db.run(
-      'INSERT INTO booking_changes (id, booking_id, changed_by, from_starts_at, to_starts_at, ' +
-        'from_assigned, to_assigned, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [d.newId(), before.id, actor.id, before.starts_at, args.starts_at,
-       before.assigned_to, owner, d.now()],
-    );
+    updateBookingsStartsAtEndsAtById(d.db, [args.starts_at, ends, owner, before.id]);
+    insertBookingChanges(d.db, [d.newId(), before.id, actor.id, before.starts_at, args.starts_at,
+       before.assigned_to, owner, d.now()]);
   });
 
   // STUBBED, AND THE ROW SAYS SO. `sent_at` stays NULL and the screen labels it.
   // A lead's booking has no organisation to address: the address is the one the
   // prospect gave, on their own contact (migration 011).
   const business = before.business_id !== null
-    ? d.db.get<{ contact_email: string | null; name: string }>(
-      'SELECT contact_email, name FROM businesses WHERE id = ?', [before.business_id])
+    ? getBusinessesContactEmailNameById<{ contact_email: string | null; name: string }>(d.db, [before.business_id])
     : before.lead_id === null
       ? undefined
-      : d.db.get<{ contact_email: string | null; name: string }>(
-        'SELECT email AS contact_email, full_name AS name FROM contacts WHERE lead_id = ? ORDER BY created_at ASC, id ASC LIMIT 1',
-        [before.lead_id]);
+      : getContactsContactEmailNameByLeadId<{ contact_email: string | null; name: string }>(d.db, [before.lead_id]);
   // A SUBJECT LINE IS READ BY A PERSON. The stored value stays ISO-8601 UTC,
   // as everything in this schema does; this is a rendering of it, and printing
   // the raw stamp in something addressed to a client would be a small rudeness
@@ -582,15 +530,10 @@ export function bookingHistory(db: Db, actor: Actor, booking_id: string): readon
   changed_by_name: string | null; at: string; cancelled: number;
 }[] {
   bookingById(db, actor, booking_id);
-  return db.all<{
+  return listBookingChangesFromStartsAtToStartsAtByBookingId<{
     from_starts_at: string | null; to_starts_at: string | null;
     changed_by_name: string | null; at: string; cancelled: number;
-  }>(
-    'SELECT c.from_starts_at, c.to_starts_at, u.display_name AS changed_by_name, c.at, c.cancelled ' +
-      'FROM booking_changes c LEFT JOIN users u ON u.id = c.changed_by ' +
-      'WHERE c.booking_id = ? ORDER BY c.at ASC',
-    [booking_id],
-  );
+  }>(db, [booking_id]);
 }
 
 /**
@@ -610,8 +553,5 @@ export function mayArrangeCalls(actor: Actor): boolean {
 /** Staff who could take a call, for the assign control. */
 export function assignableStaff(db: Db, actor: Actor): readonly { id: string; display_name: string }[] {
   assertSection(actor, 'booking.write');
-  return db.all<{ id: string; display_name: string }>(
-    'SELECT DISTINCT u.id, u.display_name FROM users u JOIN working_times w ON w.user_id = u.id ' +
-      'WHERE u.disabled_at IS NULL ORDER BY u.display_name ASC',
-  );
+  return listUsersIdDisplayNameByDisabledAt<{ id: string; display_name: string }>(db);
 }

@@ -67,6 +67,8 @@ import { expectedFeeFor } from './vat.ts';
 import { latestSignOff } from './claim-record.ts';
 import { LEAD_ORIGINS } from './leads.ts';
 import { discountsFor, type FeeDiscountView } from './fee-discounts.ts';
+import { getRegisterRecordsFieldsJsonByBusinessIdSourceId4 } from '../integrations/index.ts';
+import { listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleDisabledAt } from '../core/index.ts';
 
 export { NotFoundAsRefusal };
 
@@ -368,18 +370,12 @@ type Person = { readonly id: string; readonly name: string };
 
 /** Who may own an organisation or a claim: an active ADMIN or SALES user. */
 export function ownerChoices(db: Db): Person[] {
-  return db.all<{ id: string; display_name: string }>(
-    "SELECT id, display_name FROM users WHERE role IN ('ADMIN','SALES') AND disabled_at IS NULL " +
-      'ORDER BY display_name ASC',
-  ).map((r) => ({ id: r.id, name: r.display_name }));
+  return listUsersIdDisplayNameByRoleADM<{ id: string; display_name: string }>(db).map((r) => ({ id: r.id, name: r.display_name }));
 }
 
 /** Who may be named as a claim's surveyor: an active SURVEYING user. */
 export function surveyorChoices(db: Db): Person[] {
-  return db.all<{ id: string; display_name: string }>(
-    "SELECT id, display_name FROM users WHERE role = 'SURVEYING' AND disabled_at IS NULL " +
-      'ORDER BY display_name ASC',
-  ).map((r) => ({ id: r.id, name: r.display_name }));
+  return listUsersIdDisplayNameByRoleDisabledAt<{ id: string; display_name: string }>(db).map((r) => ({ id: r.id, name: r.display_name }));
 }
 
 function personField(v: string | null, choices: readonly Person[], what: string): Check<string | null> {
@@ -430,11 +426,7 @@ function fact(recorded: string | null, derived: { value: string; source: string 
 /** The Companies House register record, where one is held and this actor may read register data. */
 function companiesHouse(db: Db, actor: Actor, business_id: string): { name: string | null; number: string | null } | null {
   if (!can(actor, 'register_record.read', { type: 'register_record', id: business_id, business_id })) return null;
-  const r = db.get<{ fields_json: string }>(
-    "SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = 'CH_COMPANY' " +
-      'ORDER BY obtained_at DESC LIMIT 1',
-    [business_id],
-  );
+  const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId4<{ fields_json: string }>(db, [business_id]);
   if (r === undefined) return null;
   try {
     const f = JSON.parse(r.fields_json) as Record<string, unknown>;

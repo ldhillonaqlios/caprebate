@@ -33,7 +33,7 @@ import type { PasswordHasher } from './password.ts';
 import { createUser, newId } from './users.ts';
 import { AuditLog } from './audit.ts';
 import { seedSignatureRecord } from '../web/signing.ts';
-import { ingestRegisterRecord } from '../integrations/index.ts';
+import { ingestRegisterRecord, insertResearchSourcesNotPermittedYet } from '../integrations/index.ts';
 import type { AppRole } from './roles.ts';
 import { catalogue } from '../web/research.ts';
 import { backfillClaimFor, insertClaim } from '../web/crm.ts';
@@ -414,9 +414,7 @@ function seedPipeline(
     // caprebate-source-register.ts and tiered from those two documents, so this
     // now agrees with the panel by construction rather than by remembering.
     for (const entry of catalogue()) {
-      db.run(
-        'INSERT INTO research_sources (id, business_id, source_id, tier, state, fired_at, detail, ' +
-          'publisher, licence_id) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)',
+      insertResearchSourcesNotPermittedYet(db,
         [newId(), businessId, entry.source_id, entry.tier, 'NOT_PERMITTED_YET',
           entry.tier === 'FREE'
             ? 'free lookups wait until our privacy notice is published'

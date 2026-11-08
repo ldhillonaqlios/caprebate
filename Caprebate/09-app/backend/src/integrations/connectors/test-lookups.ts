@@ -61,6 +61,7 @@ import {
 import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
 import { readPayloadWithClaude, SERVICE_ID as CLAUDE_SERVICE_ID } from './claude.ts';
 import { sanitise, type Segment } from '../../documents/caprebate-document-pipeline.ts';
+import { listBusinessesNameLegalName, listLeadsProspectOrganisationProspectPostcode, listPropertiesPostcode } from '../data-borrowed.ts';
 
 /** PHASE 156a: the Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */
 export const OS_TEST_SOURCE = OS_SERVICE_ID;
@@ -248,9 +249,9 @@ export function clientMatchIn(db: Db, v: SmokeValues): ClientCheck {
   let properties: { postcode: string | null }[];
   let leads: { prospect_organisation: string | null; prospect_postcode: string | null }[];
   try {
-    businesses = db.all('SELECT name, legal_name, company_number FROM businesses');
-    properties = db.all('SELECT postcode FROM properties');
-    leads = db.all('SELECT prospect_organisation, prospect_postcode FROM leads');
+    businesses = listBusinessesNameLegalName(db);
+    properties = listPropertiesPostcode(db);
+    leads = listLeadsProspectOrganisationProspectPostcode(db);
   } catch (e: unknown) {
     return { ok: false, why: `the clients in CAPREBATE_DB could not be read (${e instanceof Error ? e.message : String(e)}), so it is not known that these values are nobody's` };
   }

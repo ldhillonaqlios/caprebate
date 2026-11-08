@@ -18,6 +18,7 @@ import type { Db } from '../core/index.ts';
 import { can, type Actor } from '../core/index.ts';
 import { DPO_ROLE } from '../core/index.ts';
 import { complianceObj, record, requiredText, textField, type ComplianceDeps, type Fields, type WriteResult } from './compliance.ts';
+import { getUsersRoleDisabledAtById } from '../core/index.ts';
 
 export type NameLine = { readonly annex_ref: string; readonly name: string; readonly how_involved: string; readonly note: string | null; readonly recorded_at: string };
 
@@ -44,7 +45,7 @@ function refuse(d: ComplianceDeps, actor: Actor, incident_id: string): { ok: fal
 export function nameDeputy(d: ComplianceDeps, actor: Actor, input: Fields): WriteResult {
   if (!can(actor, 'compliance.write', complianceObj())) return { ok: false, why: 'Only an Admin may name the deputy.' };
   const user_id = (input['user_id'] ?? '').trim();
-  const u = d.db.get<{ role: string; disabled_at: string | null }>('SELECT role, disabled_at FROM users WHERE id = ?', [user_id]);
+  const u = getUsersRoleDisabledAtById<{ role: string; disabled_at: string | null }>(d.db, [user_id]);
   if (u === undefined || u.role !== 'ADMIN' || u.disabled_at !== null) return { ok: false, why: 'The deputy must be an active Admin login.' };
   const source = requiredText(input['source'], 500, 'The paper that names them, such as the signed letter of authority');
   if (!source.ok) return source;

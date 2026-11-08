@@ -47,6 +47,7 @@ import { anyStageLabel, claimStage } from '../shared/index.ts';
 import { waitingOn, type WaitingOn } from './engaged.ts';
 import { fireAutomation } from './automation.ts';
 import { mayTake, vocabLabel } from './vocabularies.ts';
+import { listUsersIdDisplayNameByRoleADM2 } from '../core/index.ts';
 
 export type TaskDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type TaskResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -374,10 +375,7 @@ function viewOf(db: Db, actor: Actor, r: TaskDbRow, nowIso: string): TaskView {
 
 /** Who may own a task: any active member of staff. A client never owns one. */
 export function taskOwnerChoices(db: Db): { id: string; name: string; role: string }[] {
-  return db.all<{ id: string; display_name: string; role: string }>(
-    "SELECT id, display_name, role FROM users WHERE role IN ('ADMIN','SALES','ACCOUNTING','SURVEYING') " +
-      'AND disabled_at IS NULL ORDER BY display_name ASC',
-  ).map((u) => ({ id: u.id, name: u.display_name, role: u.role }));
+  return listUsersIdDisplayNameByRoleADM2<{ id: string; display_name: string; role: string }>(db).map((u) => ({ id: u.id, name: u.display_name, role: u.role }));
 }
 
 /* ================================================================== *

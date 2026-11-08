@@ -28,6 +28,7 @@ import { localDate } from '../shared/index.ts';
 import { WHATSAPP_IMPORT_PREFIX, WHATSAPP_PREFIX, type FsObjectStore } from '../shared/objectstore.ts';
 import { phoneContacts } from './whatsapp.ts';
 import { listZipEntries, readZipEntryFromBuffer } from '../shared/index.ts';
+import { getWhatsappImportLinesExistsByFingerprint, getWhatsappImportsByIdBusinessId, insertWhatsappImportLines, insertWhatsappImports, insertWhatsappMedia, insertWhatsappMessages2, listWhatsappImportLinesAttachmentByImportIdAttachment, listWhatsappImportLinesMessageIdByImportIdAttachment, updateWhatsappImportsStatusById, updateWhatsappImportsStatusUsNameById } from '../integrations/index.ts';
 
 /** Where an upload's text and .zip are kept, sealed. */
 export const IMPORT_PREFIX = WHATSAPP_IMPORT_PREFIX;
@@ -133,9 +134,7 @@ export async function startImport(app: App, store: FsObjectStore, actor: Actor, 
   let zipKey: string | null = null;
   if (zip !== null) { zipKey = `${IMPORT_PREFIX}${id}/export.zip`; await store.putSealed(zipKey, zip); }
   const now = app.now();
-  app.db.run(
-    'INSERT INTO whatsapp_imports (id, business_id, contact_id, phone, status, filename, layout, chat_key, zip_key, file_names, uploaded_by, uploaded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, business_id, c.id, c.number, 'CHECKING', filename, parsed.layout, chatKey, zipKey, JSON.stringify(names.map(base)), actor.id, now]);
+  insertWhatsappImports(app.db, [id, business_id, c.id, c.number, 'CHECKING', filename, parsed.layout, chatKey, zipKey, JSON.stringify(names.map(base)), actor.id, now]);
   app.audit.append({ at: now, kind: 'WHATSAPP_EXPORT_UPLOADED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'whatsapp_import', object_id: id, detail: { business: business_id, contact: c.id, messages: parsed.messages.length, files: names.length, whole: zip !== null } });
   return { ok: true, id };
@@ -148,7 +147,7 @@ type ImportRow = {
 };
 
 function importRow(app: App, business_id: string, id: string): ImportRow | undefined {
-  return app.db.get<ImportRow>('SELECT * FROM whatsapp_imports WHERE id = ? AND business_id = ?', [id, business_id]);
+  return getWhatsappImportsByIdBusinessId<ImportRow>(app.db, [id, business_id]);
 }
 
 async function parsedOf(store: FsObjectStore, row: ImportRow): Promise<ParsedChat> {
@@ -204,7 +203,7 @@ export async function importCheck(app: App, store: FsObjectStore, actor: Actor, 
   for (const m of chosen) {
     if (us === null) break;
     const dir = m.sender === us ? 'OUT' : 'IN';
-    if (app.db.get('SELECT 1 FROM whatsapp_import_lines WHERE fingerprint = ?', [fingerprint(row.contact_id, m, dir, bodyOf(m).body)]) !== undefined) already += 1;
+    if (getWhatsappImportLinesExistsByFingerprint(app.db, [fingerprint(row.contact_id, m, dir, bodyOf(m).body)]) !== undefined) already += 1;
   }
   const withFiles = chosen.filter((m) => m.attachment !== null);
   return {
@@ -238,19 +237,15 @@ export async function saveImport(app: App, store: FsObjectStore, actor: Actor, b
       const direction = m.sender === choice.us ? 'OUT' : 'IN';
       const { kind, body } = bodyOf(m);
       const fp = fingerprint(row.contact_id, m, direction, body);
-      if (app.db.get('SELECT 1 FROM whatsapp_import_lines WHERE fingerprint = ?', [fp]) !== undefined) continue;
+      if (getWhatsappImportLinesExistsByFingerprint(app.db, [fp]) !== undefined) continue;
       const mid = randomUUID();
-      app.db.run(
-        'INSERT INTO whatsapp_messages (id, business_id, contact_id, direction, phone, kind, body, wa_id, status, error, written_by, filed_by, created_at, status_at) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, NULL, ?, ?, ?, ?)',
-        [mid, business_id, row.contact_id, direction, row.phone, kind, body, direction === 'IN' ? 'RECEIVED' : 'SENT',
+      insertWhatsappMessages2(app.db, [mid, business_id, row.contact_id, direction, row.phone, kind, body, direction === 'IN' ? 'RECEIVED' : 'SENT',
           direction === 'OUT' ? actor.id : null, actor.id, m.at, m.at]);
-      app.db.run('INSERT INTO whatsapp_import_lines (message_id, import_id, contact_id, sender, attachment, fingerprint) VALUES (?, ?, ?, ?, ?, ?)',
-        [mid, row.id, row.contact_id, m.sender, m.attachment, fp]);
+      insertWhatsappImportLines(app.db, [mid, row.id, row.contact_id, m.sender, m.attachment, fp]);
       if (m.attachment !== null && fileKind(m.attachment) !== null) filesToAttach.push({ message_id: mid, name: m.attachment });
       added += 1;
     }
-    app.db.run("UPDATE whatsapp_imports SET status = 'SAVED', us_name = ?, from_date = ?, saved_by = ?, saved_at = ?, added = ? WHERE id = ?",
-      [choice.us, choice.from, actor.id, now, added, row.id]);
+    updateWhatsappImportsStatusUsNameById(app.db, [choice.us, choice.from, actor.id, now, added, row.id]);
   });
   // A .zip that came whole gives its files now; a big one's files are sent by the page, one at a time.
   if (row.zip_key !== null) {
@@ -272,15 +267,13 @@ export function cancelImport(app: App, actor: Actor, business_id: string, id: st
   authorise(actor, 'client_message.write', obj(business_id));
   const row = importRow(app, business_id, id);
   if (row === undefined || row.status !== 'CHECKING') return { ok: false, why: 'That upload cannot be cancelled now.' };
-  app.db.run("UPDATE whatsapp_imports SET status = 'CANCELLED' WHERE id = ?", [id]);
+  updateWhatsappImportsStatusById(app.db, [id]);
   return { ok: true };
 }
 
 /** The file names this saved upload still needs from the export (each a kept kind, not yet added). */
 export function filesWaiting(app: App, import_id: string): string[] {
-  return app.db.all<{ attachment: string }>(
-    'SELECT l.attachment FROM whatsapp_import_lines l LEFT JOIN whatsapp_media m ON m.message_id = l.message_id ' +
-    'WHERE l.import_id = ? AND l.attachment IS NOT NULL AND m.message_id IS NULL ORDER BY l.attachment', [import_id])
+  return listWhatsappImportLinesAttachmentByImportIdAttachment<{ attachment: string }>(app.db, [import_id])
     .map((r) => r.attachment).filter((n) => fileKind(n) !== null);
 }
 
@@ -299,9 +292,7 @@ export async function addImportFile(app: App, store: FsObjectStore, actor: Actor
   const clean = base(name);
   if (fileKind(clean) === null) return { ok: false, why: 'That kind of file is not kept.' };
   if (bytes.length === 0 || bytes.length > IMPORT_MAX_FILE) return { ok: false, why: 'That file is empty or too big.' };
-  const waiting = app.db.all<{ message_id: string }>(
-    'SELECT l.message_id FROM whatsapp_import_lines l LEFT JOIN whatsapp_media m ON m.message_id = l.message_id ' +
-    'WHERE l.import_id = ? AND l.attachment = ? AND m.message_id IS NULL', [id, clean]);
+  const waiting = listWhatsappImportLinesMessageIdByImportIdAttachment<{ message_id: string }>(app.db, [id, clean]);
   if (waiting.length === 0) return { ok: false, why: 'This chat is not waiting for that file.' };
   for (const w of waiting) await attach(app, store, actor, w.message_id, clean, bytes);
   return { ok: true };
@@ -313,9 +304,7 @@ async function attach(app: App, store: FsObjectStore, actor: Actor, message_id: 
   if (k === null) return;
   const objectKey = `${WHATSAPP_PREFIX}${message_id}`;
   await store.putSealed(objectKey, bytes);
-  app.db.run(
-    'INSERT INTO whatsapp_media (message_id, media_id, media_type, mime, sha256, filename, object_key, bytes, fetched_by, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [message_id, `export:${name}`.slice(0, 200), k.type, k.mime, createHash('sha256').update(bytes).digest('hex'), name.slice(0, 200), objectKey, bytes.length, actor.id, app.now()]);
+  insertWhatsappMedia(app.db, [message_id, `export:${name}`.slice(0, 200), k.type, k.mime, createHash('sha256').update(bytes).digest('hex'), name.slice(0, 200), objectKey, bytes.length, actor.id, app.now()]);
 }
 
 export type ImportListed = { readonly id: string; readonly contact: string; readonly status: string; readonly uploaded_at: string; readonly by: string; readonly added: number | null; readonly files_waiting: number };

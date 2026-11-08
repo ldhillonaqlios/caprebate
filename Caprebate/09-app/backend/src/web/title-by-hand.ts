@@ -38,6 +38,8 @@ import { amount } from '../integrations/index.ts';
 import {
   approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain,
 } from './take-back.ts';
+import { getRegisterRecordsFieldsJsonById, getRegisterRecordsIdByBusinessIdSourceId, getRegisterRecordsIdSourceIdByIdBusinessId } from '../integrations/index.ts';
+import { getUsersDisplayNameById } from '../core/index.ts';
 
 export type TitleDeps = { readonly db: Db; readonly audit: AuditLog; readonly now: () => string; readonly newId: () => string };
 export type TitleResult =
@@ -170,7 +172,7 @@ export function recordTitleByHand(d: TitleDeps, actor: Actor, property_id: strin
     read.fields['proprietor_personal_match'] = personIsClients(d.db, p.business_id, person) ? 'YES' : 'NO';
   }
   const entity = `${BY_HAND_PREFIX}${read.title}`;
-  if (d.db.get('SELECT id FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id = ?', [p.business_id, TITLE_SOURCE, entity]) !== undefined) {
+  if (getRegisterRecordsIdByBusinessIdSourceId(d.db, [p.business_id, TITLE_SOURCE, entity]) !== undefined) {
     return { ok: false, why: 'That title is already recorded for this client, on another of its properties. Nothing was saved.' };
   }
   const at = d.now();
@@ -203,8 +205,7 @@ export function takeBackTitleByHand(d: TitleDeps, actor: Actor, property_id: str
   authorise(actor, 'property.write', writeObj(p));
   const s = standing(d.db, p.id);
   if (s === undefined) return { ok: false, why: 'There is no title register recorded on this property, so there is nothing to take back.' };
-  const rec = d.db.get<{ id: string; source_id: string; obtained_at: string; property_id: string | null }>(
-    'SELECT id, source_id, obtained_at, property_id FROM register_records WHERE id = ? AND business_id = ?', [s.record_id, p.business_id]);
+  const rec = getRegisterRecordsIdSourceIdByIdBusinessId<{ id: string; source_id: string; obtained_at: string; property_id: string | null }>(d.db, [s.record_id, p.business_id]);
   if (rec === undefined) return { ok: false, why: 'The record this entry wrote is not where it says it is, so nothing was taken out.' };
   if (approvedFieldsOf(d.db, p.business_id, rec.id).length > 0) {
     return { ok: false, why: 'A person has checked and approved a fact from this title register. We do not take it out from under them. ' +
@@ -263,7 +264,7 @@ const LABELS: Readonly<Record<string, string>> = Object.freeze({
 
 function nameOf(db: Db, user_id: string | null): string {
   if (user_id === null) return 'a member of staff';
-  return db.get<{ display_name: string | null }>('SELECT display_name FROM users WHERE id = ?', [user_id])?.display_name ?? 'a member of staff';
+  return getUsersDisplayNameById<{ display_name: string | null }>(db, [user_id])?.display_name ?? 'a member of staff';
 }
 
 function valueWords(k: string, v: unknown): string {
@@ -286,7 +287,7 @@ export function titleByHandView(db: Db, actor: Actor, property_id: string): Titl
   let lines: { label: string; value: string }[] = [];
   let by = ''; let at = '';
   if (s !== undefined) {
-    const r = db.get<{ fields_json: string }>('SELECT fields_json FROM register_records WHERE id = ?', [s.record_id]);
+    const r = getRegisterRecordsFieldsJsonById<{ fields_json: string }>(db, [s.record_id]);
     try {
       const f = JSON.parse(r?.fields_json ?? '{}') as Record<string, unknown>;
       lines = Object.keys(LABELS).filter((k) => f[k] !== undefined).map((k) => ({ label: LABELS[k] ?? k, value: valueWords(k, f[k]) }));

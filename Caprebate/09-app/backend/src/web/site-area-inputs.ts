@@ -28,6 +28,7 @@ import { assertSignedEngagement } from './research.ts';
 import { enteredCouncils, enteredPoint } from './site-area-run.ts';
 import { postcodeStore } from '../integrations/postcodes/postcode.ts';
 import type { PostcodeStore } from '../integrations/postcodes/postcode-port.ts';
+import { getUsersDisplayNameById } from '../core/index.ts';
 
 export type SiteInputDeps = { readonly db: Db; readonly audit: AuditLog; readonly now: () => string; readonly newId: () => string };
 export type SiteInputResult = { readonly ok: true } | { readonly ok: false; readonly why: string };
@@ -129,7 +130,7 @@ export type SitePointView = {
 };
 
 function nameOf(db: Db, user_id: string): string {
-  return db.get<{ display_name: string | null }>('SELECT display_name FROM users WHERE id = ?', [user_id])?.display_name ?? 'a member of staff';
+  return getUsersDisplayNameById<{ display_name: string | null }>(db, [user_id])?.display_name ?? 'a member of staff';
 }
 
 /** The block's view. Anyone who may read the property reads it; only Admin or Sales, after signing, gets the forms. */

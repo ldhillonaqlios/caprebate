@@ -37,6 +37,7 @@ import { findingSeen } from '../shared/index.ts';
 import { videosOf } from './survey-video.ts';
 import { sitePlanOf, type SitePlan } from './site-plan.ts';
 import { valuationLock } from './valuation-lock.ts';
+import { getUsersNById } from '../core/index.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',
@@ -356,7 +357,7 @@ export function approvePack(d: PackDeps, actor: Actor, job_id: string, f: { seq:
       const pack_id = v.pack_id as string;
       const version = (r.approvals[0]?.version ?? 0) + 1;
       const at = d.now();
-      const name = d.db.get<{ n: string }>('SELECT display_name AS n FROM users WHERE id = ?', [actor.id])?.n ?? actor.id;
+      const name = getUsersNById<{ n: string }>(d.db, [actor.id])?.n ?? actor.id;
       const json = canonical(snapshotOf(v, lv, { version, at, by: { id: actor.id, name }, details }, d));
       const fingerprint = fingerprintOf(json);
       d.db.run('INSERT INTO survey_pack_approvals (id, pack_id, version, pack_seq, legal_seq, snapshot_json, fingerprint, approved_by, approved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',

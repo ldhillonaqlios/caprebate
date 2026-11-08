@@ -21,6 +21,7 @@ import type { EmailTransport } from '../integrations/index.ts';
 import { authorise, can, type Actor } from '../core/index.ts';
 import { localWhen } from '../shared/index.ts';
 import { checkSignature, createSignLink, requiredSigners, ENGAGEMENT_SIGNING, SIGN_LINK_DAYS, type EngagementSigning } from './signing.ts';
+import { getUsersCountByBusinessIdRole, listUsersIdEmailByBusinessIdRole } from '../core/index.ts';
 
 export type SendDeps = {
   db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string; origin?: string;
@@ -53,7 +54,7 @@ export function letterState(db: Db, business_id: string): LetterState {
   const e = db.get<{ id: string; letter_state: string; created_at: string; sent_at: string | null; sent_by: string | null; viewed_at: string | null; signed_at: string | null }>(
     'SELECT e.id, e.letter_state, e.created_at, e.sent_at, u.display_name AS sent_by, e.viewed_at, e.signed_at FROM engagements e LEFT JOIN users u ON u.id = e.sent_by WHERE e.business_id = ?',
     [business_id]);
-  const logins = db.get<{ n: number }>("SELECT COUNT(*) AS n FROM users WHERE business_id = ? AND role = 'CLIENT' AND disabled_at IS NULL", [business_id])?.n ?? 0;
+  const logins = getUsersCountByBusinessIdRole<{ n: number }>(db, [business_id])?.n ?? 0;
   if (e === undefined) return { state: 'NONE', prepared_at: null, sent_at: null, sent_by: null, viewed_at: null, signed_at: null, copy: false, logins, named: [], signed_by: [] };
   const state = e.letter_state as LetterState['state'];
   const signed_by = db.all<{ user_id: string | null; name: string; signed_at: string; origin: string }>(
@@ -73,8 +74,7 @@ export function sendEngagementLetter(d: SendDeps, actor: Actor, business_id: str
   authorise(actor, 'engagement.send', { type: 'engagement', id: business_id, business_id });
   const now = letterState(d.db, business_id);
   if (now.state === 'SIGNED') return { ok: false, why: SEND_WORDS.signed };
-  const logins = d.db.all<{ id: string; email: string }>(
-    "SELECT id, email FROM users WHERE business_id = ? AND role = 'CLIENT' AND disabled_at IS NULL ORDER BY created_at ASC, id ASC", [business_id]);
+  const logins = listUsersIdEmailByBusinessIdRole<{ id: string; email: string }>(d.db, [business_id]);
   if (logins.length === 0) return { ok: false, why: SEND_WORDS.no_login };
   const at = d.now();
   const resent = now.state === 'SENT' || now.state === 'VIEWED';

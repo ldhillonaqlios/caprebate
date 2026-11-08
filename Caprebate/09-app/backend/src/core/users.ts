@@ -7,6 +7,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { Db } from './db.ts';
 import type { AppRole } from './roles.ts';
 import type { Actor } from './authz.ts';
+import { getUsersIdEmailByEmailCanonical, getUsersIdEmailById, insertUsers, listUsersIdEmail, updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt, updateUsersDisabledAtUpdatedAtById, updateUsersPasswordHashUpdatedAtById, updateUsersRoleUpdatedAtById } from './data.ts';
 
 /** What the rest of the application may see. THERE IS NO password_hash HERE. */
 export type User = {
@@ -54,53 +55,35 @@ export function createUser(
 ): User {
   const id = newId();
   const t = now();
-  db.run(
-    'INSERT INTO users (id, email, email_canonical, display_name, role, password_hash, disabled_at, created_at, updated_at, business_id) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)',
-    [id, u.email, canonicalEmail(u.email), u.display_name, u.role, u.password_hash, t, t, u.business_id ?? null],
-  );
-  const row = db.get<UserRow>(
-    'SELECT id, email, display_name, role, disabled_at, business_id, created_at FROM users WHERE id = ?',
-    [id],
-  );
+  insertUsers(db, [id, u.email, canonicalEmail(u.email), u.display_name, u.role, u.password_hash, t, t, u.business_id ?? null]);
+  const row = getUsersIdEmailById<UserRow>(db, [id]);
   if (row === undefined) throw new Error('user insert did not read back');
   return toUser(row);
 }
 
 export function findById(db: Db, id: string): User | undefined {
-  const r = db.get<UserRow>(
-    'SELECT id, email, display_name, role, disabled_at, business_id, created_at FROM users WHERE id = ?',
-    [id],
-  );
+  const r = getUsersIdEmailById<UserRow>(db, [id]);
   return r === undefined ? undefined : toUser(r);
 }
 
 /** auth.ts only. The name says what it hands back so nothing uses it by accident. */
 export function findByEmailWithSecret(db: Db, email: string): UserWithSecret | undefined {
-  const r = db.get<UserRow>(
-    'SELECT id, email, display_name, role, disabled_at, business_id, created_at, password_hash ' +
-      'FROM users WHERE email_canonical = ?',
-    [canonicalEmail(email)],
-  );
+  const r = getUsersIdEmailByEmailCanonical<UserRow>(db, [canonicalEmail(email)]);
   if (r === undefined || r.password_hash === undefined) return undefined;
   return { ...toUser(r), password_hash: r.password_hash };
 }
 
 export function listUsers(db: Db): User[] {
-  return db
-    .all<UserRow>(
-      'SELECT id, email, display_name, role, disabled_at, business_id, created_at ' +
-        'FROM users ORDER BY created_at ASC',
-    )
+  return listUsersIdEmail<UserRow>(db)
     .map(toUser);
 }
 
 export function setPasswordHash(db: Db, now: () => string, user_id: string, hash: string): void {
-  db.run('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?', [hash, now(), user_id]);
+  updateUsersPasswordHashUpdatedAtById(db, [hash, now(), user_id]);
 }
 
 export function assignRole(db: Db, now: () => string, user_id: string, role: AppRole): void {
-  db.run('UPDATE users SET role = ?, updated_at = ? WHERE id = ?', [role, now(), user_id]);
+  updateUsersRoleUpdatedAtById(db, [role, now(), user_id]);
 }
 
 /**
@@ -110,11 +93,8 @@ export function assignRole(db: Db, now: () => string, user_id: string, role: App
 export function disableUser(db: Db, now: () => string, user_id: string): void {
   const t = now();
   db.tx(() => {
-    db.run('UPDATE users SET disabled_at = ?, updated_at = ? WHERE id = ?', [t, t, user_id]);
-    db.run(
-      'UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE user_id = ? AND revoked_at IS NULL',
-      [t, 'USER_DISABLED', user_id],
-    );
+    updateUsersDisabledAtUpdatedAtById(db, [t, t, user_id]);
+    updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt(db, [t, 'USER_DISABLED', user_id]);
   });
 }
 

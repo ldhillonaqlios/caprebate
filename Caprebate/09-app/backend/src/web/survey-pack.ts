@@ -41,6 +41,7 @@ import { acquisitionDateReading, elementName, latestFacts, packGrantsFor } from 
 import { bcisDataHere, bcisDrafts, bcisLocationNamed, indexBetween, type BcisDraft, type RateBasis } from './bcis-data.ts';
 import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from './who-claims.ts';
 import { shippedGrantSwitches } from './grant-checks.ts';
+import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId4, listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId2 } from '../integrations/index.ts';
 
 /**
  * `grantSwitches` (Phase 153a) is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be
@@ -284,17 +285,13 @@ function evidenceInputs(db: Db, business_id: string, property: PropertyChoice | 
   const none: Valued = { value: null, source: null };
   let price = none;
   if (property !== null) {
-    const t = db.get<{ fields_json: string; obtained_at: string }>(
-      "SELECT fields_json, obtained_at FROM register_records WHERE business_id = ? AND source_id = 'HMLR_TITLE' AND property_id = ? ORDER BY obtained_at DESC LIMIT 1",
-      [business_id, property.id]);
+    const t = getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId4<{ fields_json: string; obtained_at: string }>(db, [business_id, property.id]);
     const p = t === undefined ? undefined : safeJson(t.fields_json)['price_paid'];
     if (typeof p === 'number' && Number.isFinite(p) && p > 0) {
       price = { value: Math.round(p * 100), source: { kind: 'EVIDENCE', text: 'HM Land Registry title register', at: t?.obtained_at ?? null } };
     }
   }
-  const epcs = db.all<{ fields_json: string; property_id: string | null; obtained_at: string }>(
-    "SELECT fields_json, property_id, obtained_at FROM register_records WHERE business_id = ? AND source_id = 'EPC' ORDER BY obtained_at DESC",
-    [business_id]);
+  const epcs = listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId2<{ fields_json: string; property_id: string | null; obtained_at: string }>(db, [business_id]);
   const mine = property === null ? [] : epcs.filter((e) => e.property_id === property.id);
   const pick = mine[0] ?? (epcs.length === 1 && epcs[0]?.property_id === null ? epcs[0] : undefined);
   let gia = none;

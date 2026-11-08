@@ -49,6 +49,7 @@ import { propertyIn } from '../shared/index.ts';
 import { localStamp } from '../shared/index.ts';
 import { KEEP_ORIGINALS } from '../shared/index.ts';
 import { emailChains, reSubject, STATE_WORDS, type EmailChain } from './email-chains.ts';
+import { getOutboxAttachmentsCountByOutboxId, listOutboxIdCreatedAtByBusinessIdKind, listOutboxIdCreatedAtByLeadIdKind } from '../integrations/index.ts';
 
 export type EmailDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -211,11 +212,11 @@ function baseFor(d: EmailDeps, actor: Actor, s: EmailSubject): Base {
 function sentRows(db: Db, b: Base): SentRow[] {
   type Row = { created_at: string; to_email: string; subject: string; sent_at: string | null; send_requested: number; last_error: string | null; claim_id: string | null; id: string };
   const rows = b.business_id !== null
-    ? db.all<Row>("SELECT id, created_at, to_email, subject, sent_at, send_requested, last_error, claim_id FROM outbox WHERE business_id = ? AND kind IN ('FREE_TYPED','TEMPLATE') ORDER BY created_at DESC LIMIT 20", [b.business_id])
-    : db.all<Row>("SELECT id, created_at, to_email, subject, sent_at, send_requested, last_error, claim_id FROM outbox WHERE lead_id = ? AND kind IN ('FREE_TYPED','TEMPLATE') ORDER BY created_at DESC LIMIT 20", [b.lead_id]);
+    ? listOutboxIdCreatedAtByBusinessIdKind<Row>(db, [b.business_id])
+    : listOutboxIdCreatedAtByLeadIdKind<Row>(db, [b.lead_id]);
   return rows.map((r) => {
     const claim = r.claim_id === null ? undefined : b.claims.find((c) => c.id === r.claim_id);
-    const files = db.get<{ n: number }>('SELECT COUNT(*) AS n FROM outbox_attachments WHERE outbox_id = ?', [r.id])?.n ?? 0;
+    const files = getOutboxAttachmentsCountByOutboxId<{ n: number }>(db, [r.id])?.n ?? 0;
     return {
       when: localStamp(r.created_at), to: r.to_email, subject: r.subject,
       state: STATE_WORDS(r.sent_at, r.send_requested, r.last_error),

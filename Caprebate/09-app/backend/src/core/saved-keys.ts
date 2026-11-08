@@ -34,6 +34,8 @@ import { zoomBlockers } from '../web/video-calls.ts';
 import { whatsappMissing } from '../integrations/index.ts';
 import { turnstileWhy } from '../integrations/index.ts';
 import { ga4MeasurementId } from '../integrations/index.ts';
+import { getSavedKeysCoalesceMaxRowidM, insertSavedKeys, listSavedKeysNameSealedByRowidName } from './data-borrowed.ts';
+import { getUsersHByIdDisabledAt } from './data.ts';
 
 const PREFIX = 'cbkey1:';
 
@@ -71,9 +73,7 @@ function open(key: Buffer, name: string, sealed: string): string | null {
 type Latest = { name: string; sealed: string | null; set_at: string; who: string | null };
 
 function latestRows(app: App): Latest[] {
-  return app.db.all<Latest>(
-    'SELECT k.name, k.sealed, k.set_at, u.display_name AS who FROM saved_keys k LEFT JOIN users u ON u.id = k.set_by ' +
-    'WHERE k.rowid = (SELECT max(x.rowid) FROM saved_keys x WHERE x.name = k.name) ORDER BY k.name');
+  return listSavedKeysNameSealedByRowidName<Latest>(app.db);
 }
 
 /** The base keys (file or settings), whatever the overlay has done since. Kept from the first time a saved key was
@@ -88,7 +88,7 @@ function baseOf(app: Holder): SecretStore {
  */
 export function refreshSavedKeys(app: App): void {
   const h = app as Holder;
-  const mark = app.db.get<{ m: number }>('SELECT coalesce(max(rowid), 0) AS m FROM saved_keys')?.m ?? 0;
+  const mark = getSavedKeysCoalesceMaxRowidM<{ m: number }>(app.db)?.m ?? 0;
   if (mark === (h.savedKeysMark ?? 0)) return;
   if (h.baseSecrets === undefined) h.baseSecrets = app.secrets;
   const base = h.baseSecrets;
@@ -174,7 +174,7 @@ export function keysView(app: App, actor: Actor): KeysView {
 }
 
 async function passwordHolds(app: App, actor: Actor, password: string): Promise<boolean> {
-  const row = app.db.get<{ h: string }>('SELECT password_hash AS h FROM users WHERE id = ? AND disabled_at IS NULL', [actor.id]);
+  const row = getUsersHByIdDisabledAt<{ h: string }>(app.db, [actor.id]);
   return row !== undefined && password !== '' && await app.hasher.verify(row.h, password);
 }
 
@@ -198,7 +198,7 @@ export async function saveKey(app: App, actor: Actor, name: string, value: strin
   }
   const now = app.now();
   const id = randomUUID();
-  app.db.run('INSERT INTO saved_keys (id, name, sealed, set_by, set_at) VALUES (?, ?, ?, ?, ?)', [id, name, sealed, actor.id, now]);
+  insertSavedKeys(app.db, [id, name, sealed, actor.id, now]);
   app.audit.append({ at: now, kind: value === null ? 'KEY_UNSAVED' : 'KEY_SAVED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'saved_key', object_id: id, detail: { key: name } });
   refreshSavedKeys(app);

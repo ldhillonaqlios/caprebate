@@ -34,6 +34,7 @@ import {
   type WhatsAppDeps,
 } from '../integrations/index.ts';
 import { WHATSAPP_PREFIX, type FsObjectStore } from '../shared/objectstore.ts';
+import { getWhatsappMediaMediaIdByMessageId, getWhatsappMediaMessageIdBusinessIdByMessageId, getWhatsappMessagesAtByPhoneDirection, getWhatsappMessagesIdStatusByWaIdDirection, insertWhatsappMedia2, insertWhatsappMessages, insertWhatsappMessages3, listOutboxCreatedAtToEmailByBusinessId, listWhatsappMessagesIdPhoneByBusinessIdDirection, updateWhatsappMediaObjectKeyBytesByMessageIdFetchedAt, updateWhatsappMessagesBusinessIdFiledByByIdBusinessId, updateWhatsappMessagesStatusStatusAtById } from '../integrations/index.ts';
 
 export function whatsappDeps(app: App): WhatsAppDeps {
   return { audit: app.audit, now: app.now, transport: app.outside, secrets: app.secrets,
@@ -48,7 +49,7 @@ export type PhoneContact = { readonly id: string; readonly name: string; readonl
 /** When the 24-hour window with this number closes, or null when it is closed. */
 export function windowOpenUntil(db: Db, number: string, nowIso: string): string | null {
   // PHASE 156c: a message added from the phone's export never opens WhatsApp's window: only one Meta delivered does.
-  const last = db.get<{ at: string | null }>("SELECT max(created_at) AS at FROM whatsapp_messages WHERE phone = ? AND direction = 'IN' AND id NOT IN (SELECT message_id FROM whatsapp_import_lines)", [number])?.at ?? null;
+  const last = getWhatsappMessagesAtByPhoneDirection<{ at: string | null }>(db, [number])?.at ?? null;
   if (last === null) return null;
   const until = Date.parse(last) + WINDOW_HOURS * 3_600_000;
   return until > Date.parse(nowIso) ? new Date(until).toISOString() : null;
@@ -85,9 +86,7 @@ export async function sendWhatsApp(app: App, actor: Actor, business_id: string, 
   const r = input.opening ? await sendWhatsAppOpening(d, c.number, c.first) : await sendWhatsAppText(d, c.number, words);
   const id = randomUUID();
   const body = input.opening ? `Our opening message, asking ${c.first} to reply.` : words;
-  app.db.run(
-    'INSERT INTO whatsapp_messages (id, business_id, contact_id, direction, phone, kind, body, wa_id, status, error, written_by, created_at, status_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, business_id, c.id, 'OUT', c.number, input.opening ? 'opening' : 'text', body, r.state === 'SENT' ? r.wa_id : null,
+  insertWhatsappMessages(app.db, [id, business_id, c.id, 'OUT', c.number, input.opening ? 'opening' : 'text', body, r.state === 'SENT' ? r.wa_id : null,
       r.state === 'SENT' ? 'SENT' : 'NOT_SENT', r.state === 'SENT' ? null : r.why, actor.id, now, now]);
   app.audit.append({
     at: now, kind: r.state === 'SENT' ? 'WHATSAPP_SENT' : 'WHATSAPP_NOT_SENT', outcome: r.state === 'SENT' ? 'ALLOWED' : 'REFUSED',
@@ -121,14 +120,11 @@ export function receiveWhatsApp(app: App, raw: string, signature: string | null)
     const business = businesses.length === 1 ? businesses[0]! : null;
     const contacts = business === null ? [] : who.filter((x) => x.business === business);
     const id = randomUUID();
-    const r = app.db.run(
-      'INSERT OR IGNORE INTO whatsapp_messages (id, business_id, contact_id, direction, phone, kind, body, wa_id, status, created_at, status_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, business, contacts.length === 1 ? contacts[0]!.contact : null, 'IN', m.from, m.kind, m.body, m.wa_id, 'RECEIVED', m.at, now]);
+    const r = insertWhatsappMessages3(app.db, [id, business, contacts.length === 1 ? contacts[0]!.contact : null, 'IN', m.from, m.kind, m.body, m.wa_id, 'RECEIVED', m.at, now]);
     if (r.changes !== 1) continue; // the same message delivered again
     // PHASE 153f: an attachment's id is kept with the message; a person fetches the file (fetchWhatsAppAttachment).
     if (m.media !== null) {
-      app.db.run('INSERT INTO whatsapp_media (message_id, media_id, media_type, mime, sha256, filename) VALUES (?, ?, ?, ?, ?, ?)',
-        [id, m.media.id, m.media.type, m.media.mime, m.media.sha256, m.media.filename]);
+      insertWhatsappMedia2(app.db, [id, m.media.id, m.media.type, m.media.mime, m.media.sha256, m.media.filename]);
     }
     kept++;
     if (business === null) unfiled++;
@@ -136,9 +132,9 @@ export function receiveWhatsApp(app: App, raw: string, signature: string | null)
       detail: { filed: business !== null, ...(business === null ? { why: businesses.length === 0 ? 'no contact has that number' : 'more than one company has a contact with that number' } : { business }) } });
   }
   for (const s of w.statuses) {
-    const row = app.db.get<{ id: string; status: string }>("SELECT id, status FROM whatsapp_messages WHERE wa_id = ? AND direction = 'OUT'", [s.wa_id]);
+    const row = getWhatsappMessagesIdStatusByWaIdDirection<{ id: string; status: string }>(app.db, [s.wa_id]);
     if (row === undefined || (RANK[s.status] ?? 0) <= (RANK[row.status] ?? 0)) continue;
-    app.db.run('UPDATE whatsapp_messages SET status = ?, status_at = ?, error = ? WHERE id = ?', [s.status, s.at, s.error, row.id]);
+    updateWhatsappMessagesStatusStatusAtById(app.db, [s.status, s.at, s.error, row.id]);
   }
   return { status: 200, kept, unfiled };
 }
@@ -148,8 +144,7 @@ export type Unfiled = { readonly id: string; readonly shown: string; readonly wh
 /** WhatsApp messages from a number no single company has. Admin and Sales, who may write to clients. */
 export function unfiledWhatsApp(db: Db, actor: Actor, nowIso: string): Unfiled[] {
   if (!can(actor, 'client_message.write', { type: 'client_message', id: 'queue', business_id: 'queue' })) return [];
-  return db.all<{ id: string; phone: string; created_at: string; body: string }>(
-    "SELECT id, phone, created_at, body FROM whatsapp_messages WHERE business_id IS NULL AND direction = 'IN' ORDER BY created_at DESC")
+  return listWhatsappMessagesIdPhoneByBusinessIdDirection<{ id: string; phone: string; created_at: string; body: string }>(db)
     .map((r) => ({ id: r.id, shown: `+${r.phone}`, when: localStamp(r.created_at, nowIso), body: r.body }));
 }
 
@@ -157,7 +152,7 @@ export function unfiledWhatsApp(db: Db, actor: Actor, nowIso: string): Unfiled[]
 export function fileWhatsApp(app: App, actor: Actor, id: string, business_id: string): { ok: true } | { ok: false; why: string } {
   authorise(actor, 'client_message.write', obj(app.db, business_id));
   if (app.db.get('SELECT 1 AS x FROM businesses WHERE id = ?', [business_id]) === undefined) return { ok: false, why: 'Choose a company.' };
-  const r = app.db.run("UPDATE whatsapp_messages SET business_id = ?, filed_by = ? WHERE id = ? AND business_id IS NULL AND direction = 'IN'", [business_id, actor.id, id]);
+  const r = updateWhatsappMessagesBusinessIdFiledByByIdBusinessId(app.db, [business_id, actor.id, id]);
   if (r.changes !== 1) return { ok: false, why: 'That message is already filed.' };
   app.audit.append({ at: app.now(), kind: 'WHATSAPP_FILED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'whatsapp_message', object_id: id, detail: { business: business_id } });
   return { ok: true };
@@ -183,8 +178,7 @@ export function conversation(db: Db, actor: Actor, business_id: string, nowIso: 
   const theirs = new Set(db.all<{ e: string }>(
     "SELECT lower(email) AS e FROM contacts WHERE business_id = ? AND email IS NOT NULL UNION SELECT lower(contact_email) FROM businesses WHERE id = ? AND contact_email IS NOT NULL",
     [business_id, business_id]).map((r) => r.e));
-  for (const e of db.all<{ created_at: string; to_email: string; subject: string; body: string; sent_at: string | null; kind: string }>(
-    'SELECT created_at, to_email, subject, body, sent_at, kind FROM outbox WHERE business_id = ? ORDER BY created_at', [business_id])) {
+  for (const e of listOutboxCreatedAtToEmailByBusinessId<{ created_at: string; to_email: string; subject: string; body: string; sent_at: string | null; kind: string }>(db, [business_id])) {
     if (SENT_SECRET_KINDS.includes(e.kind)) continue; // a sign-in code or one-use link is never shown
     // 1 Oct 2026: an email staff wrote themselves is the client's, whatever address they typed in To.
     if (!theirs.has(e.to_email.toLowerCase()) && e.kind !== 'FREE_TYPED' && e.kind !== 'TEMPLATE') continue;
@@ -212,9 +206,7 @@ export type Attachment = {
 };
 
 export function attachmentOf(db: Db, message_id: string): Attachment | undefined {
-  return db.get<Attachment>(
-    'SELECT m.message_id, w.business_id, m.media_type, m.mime, m.filename, m.object_key, m.bytes, m.fetched_at FROM whatsapp_media m ' +
-    'JOIN whatsapp_messages w ON w.id = m.message_id WHERE m.message_id = ?', [message_id]);
+  return getWhatsappMediaMessageIdBusinessIdByMessageId<Attachment>(db, [message_id]);
 }
 
 /** The words for an attachment on the WhatsApp page. */
@@ -231,7 +223,7 @@ export async function fetchWhatsAppAttachment(app: App, store: FsObjectStore, ac
   authorise(actor, 'client_message.write', obj(app.db, a.business_id));
   if (a.fetched_at !== null) return { ok: true };
   if (!store.canSeal) return { ok: false, why: 'We cannot keep files yet: the key that encrypts them is not set.' };
-  const media = app.db.get<{ media_id: string }>('SELECT media_id FROM whatsapp_media WHERE message_id = ?', [message_id])!.media_id;
+  const media = getWhatsappMediaMediaIdByMessageId<{ media_id: string }>(app.db, [message_id])!.media_id;
   const got = await fetchWhatsAppMedia(whatsappDeps(app), media);
   if (got.state !== 'FETCHED') {
     app.audit.append({ at: app.now(), kind: 'WHATSAPP_MEDIA_NOT_FETCHED', outcome: 'REFUSED', actor_id: actor.id, actor_role: actor.role, object_type: 'whatsapp_message', object_id: message_id, detail: {} });
@@ -239,8 +231,7 @@ export async function fetchWhatsAppAttachment(app: App, store: FsObjectStore, ac
   }
   const objectKey = `${WHATSAPP_PREFIX}${message_id}`;
   await store.putSealed(objectKey, got.bytes);
-  app.db.run('UPDATE whatsapp_media SET object_key = ?, bytes = ?, mime = ?, sha256 = ?, fetched_by = ?, fetched_at = ? WHERE message_id = ? AND fetched_at IS NULL',
-    [objectKey, got.bytes.length, got.mime, got.sha256, actor.id, app.now(), message_id]);
+  updateWhatsappMediaObjectKeyBytesByMessageIdFetchedAt(app.db, [objectKey, got.bytes.length, got.mime, got.sha256, actor.id, app.now(), message_id]);
   app.audit.append({ at: app.now(), kind: 'WHATSAPP_MEDIA_FETCHED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'whatsapp_message', object_id: message_id,
     detail: { bytes: got.bytes.length } });
   return { ok: true };

@@ -61,6 +61,7 @@ import { POOL_ROLES, addDaysToDate, insertTask } from './tasks.ts';
 import { claimWords, type Fields } from './crm.ts';
 import { mayTake, vocabLabel } from './vocabularies.ts';
 import { createDocumentRequest, NO_RECEIPT_POLICY } from './documents.ts';
+import { getUsersEmailRoleById, getUsersRoleDisabledAtById } from '../core/index.ts';
 
 export type AutomationDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
@@ -576,7 +577,7 @@ function isDoNotContactOrganisation(db: Db, business_id: string): boolean {
 }
 
 function activeStaff(db: Db, user_id: string): boolean {
-  const u = db.get<{ role: string; disabled_at: string | null }>('SELECT role, disabled_at FROM users WHERE id = ?', [user_id]);
+  const u = getUsersRoleDisabledAtById<{ role: string; disabled_at: string | null }>(db, [user_id]);
   // Phase 132e: a READ_ONLY login owns no work — it may not progress a task — so it is not an owner either.
   return u !== undefined && u.disabled_at === null && u.role !== 'CLIENT' && u.role !== 'READ_ONLY';
 }
@@ -702,8 +703,7 @@ function noticeWords(rule: RuleDbRow, e: AutomationEvent, s: Subject, company: s
 function notifyOwner(d: AutomationDeps, actor: Actor | null, rule: RuleDbRow, e: AutomationEvent, s: Subject): RunOutcome {
   if (s.owner_id === null) return notRun(d, actor, rule, e, s, 'NO_OWNER');
   if (actor !== null && actor.id === s.owner_id) return notRun(d, actor, rule, e, s, 'OWNER_MADE_THE_CHANGE');
-  const u = d.db.get<{ email: string; role: string; disabled_at: string | null }>(
-    'SELECT email, role, disabled_at FROM users WHERE id = ?', [s.owner_id]);
+  const u = getUsersEmailRoleById<{ email: string; role: string; disabled_at: string | null }>(d.db, [s.owner_id]);
   if (u === undefined || u.disabled_at !== null) return notRun(d, actor, rule, e, s, 'NO_OWNER');
   if (u.role === 'CLIENT') return notRun(d, actor, rule, e, s, 'OWNER_IS_NOT_STAFF');
   const company = !NOTICE_SUBJECT_LEADS_WITH_COMPANY || s.business_id === null ? null

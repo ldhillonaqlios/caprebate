@@ -54,6 +54,7 @@ import { formatPence } from '../shared/index.ts';
 import { claimantTypeForGate } from './crm.ts';
 import { buildPdf, flow, type PdfLine } from '../shared/index.ts';
 import { stageIndex } from '../shared/index.ts';
+import { getAuditLogCountByKindObjectId, getUsersCountByIdBusinessId, getUsersEmailById } from '../core/index.ts';
 
 export type EngagementSigning = {
   readonly enabled: boolean;
@@ -561,7 +562,7 @@ function signAs(
   const id = d.newId();
   const signed_at = d.now();
   const cleanIp = ip.replace(/[^0-9A-Fa-f.:]/g, '').slice(0, 64) || 'unknown';
-  const signer_email = who.email ?? d.db.get<{ email: string }>('SELECT email FROM users WHERE id = ?', [who.user_id])?.email ?? null;
+  const signer_email = who.email ?? getUsersEmailById<{ email: string }>(d.db, [who.user_id])?.email ?? null;
   const { record_sha256, pdf, complete } = writeSignature(d, eng.id, letter, {
     id, engagement_id: eng.id, business_id: b.id, origin: who.origin, user_id: who.user_id, session_id: who.session_id,
     signer_name: name, signer_role: role, business_name: b.name, signed_at, ip: cleanIp,
@@ -665,7 +666,7 @@ export function setRequiredSigners(
   const ids = [...new Set(user_ids.filter((x) => x.trim() !== ''))];
   if (ids.length > 2) return { ok: false, why: 'At most two people sign the letter.' };
   for (const id of ids) {
-    const u = d.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM users WHERE id = ? AND business_id = ? AND role = 'CLIENT' AND disabled_at IS NULL", [id, business_id])?.n ?? 0;
+    const u = getUsersCountByIdBusinessId<{ n: number }>(d.db, [id, business_id])?.n ?? 0;
     if (u === 0) return { ok: false, why: 'Choose people who have a login for this client.' };
   }
   if ((d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM engagement_signatures WHERE engagement_id = ?', [eng.id])?.n ?? 0) > 0) {
@@ -721,9 +722,7 @@ export function checkSignature(db: Db, engagement_id: string): SignatureCheck {
     if (sha256(r.letter_text) !== r.letter_sha256 || sha256(new Uint8Array(r.pdf)) !== r.pdf_sha256 || recordHash(r) !== r.record_sha256) {
       return { ok: false, why: 'the signature record does not match its own fingerprint' };
     }
-    const chained = db.get<{ n: number }>(
-      "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'ENGAGEMENT_SIGNED' AND object_id = ? AND json_extract(detail, '$.record') = ?",
-      [engagement_id, r.record_sha256])?.n ?? 0;
+    const chained = getAuditLogCountByKindObjectId<{ n: number }>(db, [engagement_id, r.record_sha256])?.n ?? 0;
     if (chained === 0) return { ok: false, why: 'the signature record is not in the audit log' };
   }
   if (rows.length < signaturesNeeded(db, engagement_id)) return { ok: false, why: 'the letter is waiting for another signature' };

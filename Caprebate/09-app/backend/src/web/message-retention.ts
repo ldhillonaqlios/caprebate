@@ -55,6 +55,7 @@ import type { AuditLog } from '../core/audit.ts';
 import { claimFileDays } from './documents.ts';
 import { liveHeldIds } from './compliance.ts';
 import { BACKUP_CYCLE, RET7, knownBackupCycleDays } from '../shared/upload-handler-port.ts';
+import { deleteInboundEmailById, deleteInboundEmailFileSavesByInboundEmailFileIdInboundEmailI, deleteInboundEmailFilesByInboundEmailId, deleteInboundEmailFilingsByInboundEmailId, listInboundEmailIdByClientMessageId, listInboundEmailIdReceivedAtByOutcomeInboundEmailId } from '../integrations/index.ts';
 
 export type MessageRetention = {
   readonly enabled: boolean;
@@ -193,8 +194,7 @@ export function messagesDue(db: Db, cfg: MessageRetention, nowIso: string): DueR
     }
   }
   if (months !== null) {
-    for (const e of db.all<{ id: string; received_at: string }>(
-      "SELECT id, received_at FROM inbound_email WHERE outcome = 'QUEUED' AND NOT EXISTS (SELECT 1 FROM inbound_email_filings g WHERE g.inbound_email_id = inbound_email.id)")) {
+    for (const e of listInboundEmailIdReceivedAtByOutcomeInboundEmailId<{ id: string; received_at: string }>(db)) {
       const due_on = addMonths(e.received_at.slice(0, 10), months);
       if (due_on < today && !held.INBOUND_EMAIL.has(e.id)) out.push({ kind: 'INBOUND_EMAIL', id: e.id, business_id: null, rule: 'UNFILED_EMAIL', due_on });
     }
@@ -240,10 +240,10 @@ export function sweepMessages(d: RetentionDeps, cfg: MessageRetention = MESSAGE_
   };
   const deleteEmail = (id: string, due_on: string): void => {
     logEntry('INBOUND_EMAIL', id, due_on);
-    d.db.run('DELETE FROM inbound_email_file_saves WHERE inbound_email_file_id IN (SELECT id FROM inbound_email_files WHERE inbound_email_id = ?)', [id]);
-    d.db.run('DELETE FROM inbound_email_files WHERE inbound_email_id = ?', [id]);
-    d.db.run('DELETE FROM inbound_email_filings WHERE inbound_email_id = ?', [id]);
-    d.db.run('DELETE FROM inbound_email WHERE id = ?', [id]);
+    deleteInboundEmailFileSavesByInboundEmailFileIdInboundEmailI(d.db, [id]);
+    deleteInboundEmailFilesByInboundEmailId(d.db, [id]);
+    deleteInboundEmailFilingsByInboundEmailId(d.db, [id]);
+    deleteInboundEmailById(d.db, [id]);
     removed.INBOUND_EMAIL.push(id);
   };
 
@@ -258,9 +258,7 @@ export function sweepMessages(d: RetentionDeps, cfg: MessageRetention = MESSAGE_
       }
       logEntry('CLIENT_MESSAGE', r.id, r.due_on);
       // An emailed reply holds the same words as the message it became, so it goes with it.
-      for (const e of d.db.all<{ id: string }>(
-        'SELECT id FROM inbound_email WHERE client_message_id = ? UNION SELECT inbound_email_id AS id FROM inbound_email_filings WHERE client_message_id = ?',
-        [r.id, r.id])) deleteEmail(e.id, r.due_on);
+      for (const e of listInboundEmailIdByClientMessageId<{ id: string }>(d.db, [r.id, r.id])) deleteEmail(e.id, r.due_on);
       // The file stays a document in the company's Files. Only the row saying which message brought it goes.
       d.db.run('DELETE FROM client_message_files WHERE message_id = ?', [r.id]);
       d.db.run('DELETE FROM client_messages WHERE id = ?', [r.id]);

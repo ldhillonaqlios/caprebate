@@ -25,6 +25,7 @@ import { SECRET_KEYS, secretsFromEnvironment, useProcessSecrets, isProduction } 
 import { mfaKeyFrom } from './mfa-seal.ts';
 import { referenceLocation } from '../integrations/index.ts';
 import { CRON_SECRET_MIN_LENGTH } from './timers.ts';
+import { getUsersIdByIdEmailCanonical } from './data.ts';
 
 export type Env = Readonly<Record<string, string | undefined>>;
 type Listener = (req: IncomingMessage, res: ServerResponse) => void;
@@ -87,7 +88,7 @@ export function liveDatabase(env: Env): { location: string; authToken: string } 
 
 /** A database the test website seeded holds invented people. The live website refuses to run on one. */
 export function holdsInventedSeed(db: { get(sql: string, p?: readonly unknown[]): unknown }): boolean {
-  return db.get("SELECT id FROM users WHERE id = 'u-demo-readonly' OR email_canonical LIKE '%@example.invalid' LIMIT 1") !== undefined;
+  return getUsersIdByIdEmailCanonical(db) !== undefined;
 }
 
 /** Every request answered 503, with a plain page: what a live website that may not start shows. /api/health says so too. */

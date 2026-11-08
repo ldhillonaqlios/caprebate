@@ -50,6 +50,7 @@ import { localStamp, ukDate } from '../shared/index.ts';
 import { formatPence, toPence } from '../shared/index.ts';
 import { VOIDING_REOPEN_STAGES } from './valuation-lock.ts';
 import type { PostcodeStore } from '../integrations/postcodes/postcode-port.ts';
+import { listRegisterRecordsSourceIdFieldsJsonByBusinessIdSourceId } from '../integrations/index.ts';
 
 export type FactDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. A refusal
@@ -1166,9 +1167,7 @@ export function approvedClientAnswer(db: Db, business_id: string, fact_id: strin
  * or the client's own answer to "how big is the building", checked, with a number in it.
  */
 export function floorAreaOnRecord(db: Db, business_id: string, property_id: string | null): { readonly known: boolean; readonly why: string } {
-  const rows = db.all<{ source_id: string; fields_json: string; property_id: string | null }>(
-    "SELECT source_id, fields_json, property_id FROM register_records WHERE business_id = ? AND source_id IN ('EPC', 'HOMEDATA_ADDRESS') ORDER BY obtained_at DESC",
-    [business_id]);
+  const rows = listRegisterRecordsSourceIdFieldsJsonByBusinessIdSourceId<{ source_id: string; fields_json: string; property_id: string | null }>(db, [business_id]);
   const read = (j: string): Record<string, unknown> => { try { return JSON.parse(j) as Record<string, unknown>; } catch { return {}; } };
   const epcs = rows.filter((r) => r.source_id === 'EPC');
   const epc = epcs.find((r) => r.property_id !== null && r.property_id === property_id) ?? (epcs.length === 1 && epcs[0]?.property_id === null ? epcs[0] : undefined);
