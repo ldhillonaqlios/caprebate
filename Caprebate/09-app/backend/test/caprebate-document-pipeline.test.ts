@@ -18,7 +18,7 @@ import {
   HUMAN_READ_ONLY_TYPES, HUMAN_CAPTURE_SPECS, PERSON_REVIEW_BY_DOC_TYPE,
   type Segment, type ModelFn, type EgressEntry, type RawExtraction, type ModelPayload,
   type FinderSpec, type FinderCandidate, type HumanCaptureInput,
-} from '../src/documents/caprebate-document-pipeline.ts';
+} from '../src/modules/claims/documents/document-pipeline.ts';
 
 const AT = '2026-08-26T12:00:00Z';
 

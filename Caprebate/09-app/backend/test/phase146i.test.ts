@@ -39,7 +39,7 @@ import {
   ANSWER_WORDS, READING_WORDS, VOUCHED_FIELDS, VOUCH_ANSWERS, discriminantsFor, readingIsWorthRecording,
   vouchedFieldFor, vouchesFor,
 } from '../src/web/document-reading.ts';
-import { assertClaimsWritable } from '../src/documents/caprebate-client-doc-ingestion.ts';
+import { assertClaimsWritable } from '../src/modules/claims/documents/client-doc-ingestion.ts';
 import { actor } from './helpers.ts';
 import type { Actor } from '../src/core/authz.ts';
 
@@ -285,7 +285,7 @@ describe('the two fields nobody can vouch for', () => {
   });
 
   test('I6 — the question list and the control list name the SAME two fields and the same two flags', () => {
-    const src = readFileSync(join(import.meta.dirname, '../src/documents/caprebate-client-doc-ingestion.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '../src/modules/claims/documents/client-doc-ingestion.ts'), 'utf8');
     const block = /const CONDITIONAL_FIELDS[\s\S]*?\n\];/.exec(src)?.[0] ?? '';
     assert.notEqual(block, '', 'CONDITIONAL_FIELDS must still be the control');
     const fields = [...block.matchAll(/field:\s*'([a-z_]+)'/g)].map((m) => m[1]).sort();

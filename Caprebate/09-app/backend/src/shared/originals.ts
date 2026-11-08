@@ -22,7 +22,7 @@
  *
  * The handler already has the rule for keeping a file: it promotes the original to durable storage, after the strip and
  * never before, where the retention rule outlives the reading of it (PROMOTION_RULE in
- * 09-app/backend/src/documents/caprebate-upload-handler.ts). This switch only gives it a retention period to read — a number of
+ * 09-app/backend/src/modules/claims/documents/upload-handler.ts). This switch only gives it a retention period to read — a number of
  * days after reading — so the handler's own order, its own refusal to promote before the strip and its own quarantine
  * discharge all still run. There is no second path that keeps a file.
  *

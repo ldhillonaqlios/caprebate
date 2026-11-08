@@ -68,7 +68,7 @@ import {
   DOC_SPECS, HUMAN_READ_ONLY_TYPES, segment, extract, captureHumanRead, toClaims,
   type DocType, type Segment, type ModelFn, type EgressEntry,
   type ExtractionResult, type HumanCaptureInput, type HumanCaptureResult,
-} from './caprebate-document-pipeline.ts';
+} from './document-pipeline.ts';
 import {
   INGESTION_BOUNDARY, QUARANTINE_TTL_MINUTES, RECEIPT_CONTRACT,
   assertQuarantineKey, quarantineDischargeDueAt, recordQuarantineDischarge,
@@ -81,7 +81,7 @@ import {
   type QuarantineObject, type ReceiptResult, type RawFileRecord,
   type IngestionSettings, type TransparencyRecord, type ClientDocDiscriminants,
   type IdentifiedPerson,
-} from './caprebate-client-doc-ingestion.ts';
+} from './client-doc-ingestion.ts';
 
 /* ------------------------------------------------------------------ *
  * 0. Errors

@@ -56,12 +56,12 @@ import { assembleSurveyorPayload, QUARANTINE_NOTICE, type JobInputs, type Survey
 import {
   assureProcess, driftReport, QuarantineError, RELEASED_TO_SURVEYOR_ALWAYS,
   type EstimateOutputs, type ProcessAssurance, type SurveyorFigures,
-} from '../survey/caprebate-anchor-quarantine.ts';
+} from '../modules/survey/anchor-quarantine.ts';
 import {
   fieldSpec, propose, OverrideStore, RateLibrary, RATE_FIELDS,
   isBlankControl, ControlStore,
   CrmError, type Context, type PrefillEvent, type Proposal, type Sector,
-} from '../survey/caprebate-surveyor-crm.ts';
+} from '../modules/survey/surveyor-crm.ts';
 import { DbAnchorLog, hydrateQuarantine, storeCommitment, type StoredJob } from './anchor-store.ts';
 import { roomsFor, SOURCE_DOCUMENT, type RoomType, type SectorRooms } from './rooms.ts';
 import { missingFacts, NotFoundAsRefusal, type MissingFact } from './engaged.ts';

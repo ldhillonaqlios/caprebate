@@ -321,7 +321,7 @@ export const LICENCES: readonly Licence[] = [
      * 07-reference-and-benchmarks/price-books stay where they are, unused. Rewritten 24 September 2026 by Phase 151
      * in the shape of CIBSE_KNOWLEDGE below. The research is 04-phase-work/phase3/caprebate-bcis-source-register-row.md.
      *
-     * WHAT IT WOULD FEED. The LEG-E4 tables in 09-app/backend/src/costing/caprebate-cost-model.cjs - CB_LOCATION_FACTORS,
+     * WHAT IT WOULD FEED. The LEG-E4 tables in 09-app/backend/src/modules/survey/costing/cost-model.cjs - CB_LOCATION_FACTORS,
      * CB_CONTRACT_SIZE_ADJUSTMENT, CB_PRICE_SOURCES - and the bcis_* fields of the BCIS source row. ALL STAY EMPTY AND
      * THE GATE STAYS OFF until Word question 218 ("Which BCIS product did you agree to, and does its licence let our
      * software use its rates?") is answered with the product and its order form. This entry records the terms.
@@ -506,7 +506,7 @@ export const LICENCES: readonly Licence[] = [
      * CIBSE PLANT LIVES — the source nobody owned. Board item "CIBSE plant lives"; written 24 September 2026
      * by Phase 147. The research is 04-phase-work/phase3/caprebate-cibse-plant-lives-source-register-row.md.
      *
-     * WHAT IT WOULD FEED. CB_CIBSE_PLANT_LIVES in 09-app/backend/src/costing/caprebate-cost-model.cjs: the expected
+     * WHAT IT WOULD FEED. CB_CIBSE_PLANT_LIVES in 09-app/backend/src/modules/survey/costing/cost-model.cjs: the expected
      * life of each plant element, read by LEG-E5 (per-element depreciation) and by ATP-F-3 (the crosswalk
      * completeness gate). THAT TABLE STAYS EMPTY AND BOTH GATES STAY OFF. This entry records the terms, not data.
      *

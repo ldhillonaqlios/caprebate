@@ -39,7 +39,7 @@ import {
 import { estimate } from '../src/shared/engine.ts';
 import { registryGate, REGISTRY } from '../src/shared/engine.ts';
 import { assembleSurveyorPayload } from '../src/payload.ts';
-import { AnchorLog, AnchorQuarantine } from '../src/survey/caprebate-anchor-quarantine.ts';
+import { AnchorLog, AnchorQuarantine } from '../src/modules/survey/anchor-quarantine.ts';
 
 const PASSWORD = 'a-very-long-development-password';
 const T = '2026-09-08T00:00:00.000Z';

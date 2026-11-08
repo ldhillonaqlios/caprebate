@@ -308,7 +308,7 @@ export function bcisLocationNamed(area: string, env: Env = process.env): string 
 /* ------------------------------------------------------------------ the drafts */
 
 type IndexTable = { loaded: boolean; source: string; points: readonly (readonly [string, number])[] };
-const CM = createRequire(import.meta.url)('../costing/caprebate-cost-model.cjs') as {
+const CM = createRequire(import.meta.url)('../modules/survey/costing/cost-model.cjs') as {
   CB_BCIS_INDEX_PLACEHOLDER: IndexTable;
   indexFactorFromTable: (t: IndexTable, purchase: string, valuation: string) => { factor: number; index_at_purchase: number; index_at_valuation: number };
 };

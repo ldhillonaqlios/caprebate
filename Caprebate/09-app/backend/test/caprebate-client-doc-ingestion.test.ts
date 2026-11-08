@@ -44,7 +44,7 @@ import {
   DOC_SPECS, HUMAN_CAPTURE_SPECS, HUMAN_READ_ONLY_TYPES, NEVER_TO_MODEL,
   segment, classifyHeading, sanitise,
   type DocType, type Segment,
-} from '../src/documents/caprebate-document-pipeline.ts';
+} from '../src/modules/claims/documents/document-pipeline.ts';
 import { NameExclusionError } from '../src/integrations/registers/name-exclusion.ts';
 import {
   CLIENT_DOC_RECEIPT_POLICY, NEVER_RETAINED_ON_RECEIPT, ALWAYS_NATURAL_PERSON_ROLES,
@@ -71,7 +71,7 @@ import {
   // Phase 132 — the backup cycle, the restore guard and RET-3
   BACKUP_CYCLE, assertRestoreApproved, ret3DueAt, knownBackupCycleDays,
   type BackupCycle,
-} from '../src/documents/caprebate-client-doc-ingestion.ts';
+} from '../src/modules/claims/documents/client-doc-ingestion.ts';
 
 const ALL_TYPES: readonly DocType[] = [
   'PLANNING', 'FIRE_RISK_ASSESSMENT', 'OM_MANUAL', 'ASBESTOS_REGISTER',
@@ -998,7 +998,7 @@ test('B15 NO SURVIVING SENTENCE claims the strip removes content from the FILE o
   // This is the regression that matters most: the defect was prose, three times
   // running, and prose has no type system. Read the module and refuse the two
   // exact overstatements — outside the passages that quote them to correct them.
-  const src = readFileSync(new URL('../src/documents/caprebate-client-doc-ingestion.ts', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../src/modules/claims/documents/client-doc-ingestion.ts', import.meta.url), 'utf8');
 
   // The module must be able to QUOTE the old wording in order to correct it,
   // and it does so in three places. Double quotation marks are the marker that

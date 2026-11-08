@@ -191,27 +191,27 @@
    "area": "core",
    "kind": "page"
   },
-  "src/costing/caprebate-cost-model.cjs": {
+  "src/modules/survey/costing/cost-model.cjs": {
    "area": "survey",
    "kind": "other"
   },
-  "src/costing/caprebate-cost-model.d.cts": {
+  "src/modules/survey/costing/cost-model.d.cts": {
    "area": "survey",
    "kind": "other"
   },
-  "src/costing/caprebate-job-economics.cjs": {
+  "src/modules/survey/costing/job-economics.cjs": {
    "area": "survey",
    "kind": "other"
   },
-  "src/documents/caprebate-client-doc-ingestion.ts": {
+  "src/modules/claims/documents/client-doc-ingestion.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/documents/caprebate-document-pipeline.ts": {
+  "src/modules/claims/documents/document-pipeline.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/documents/caprebate-upload-handler.ts": {
+  "src/modules/claims/documents/upload-handler.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -579,11 +579,11 @@
    "area": "shared",
    "kind": "logic"
   },
-  "src/survey/caprebate-anchor-quarantine.ts": {
+  "src/modules/survey/anchor-quarantine.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/survey/caprebate-surveyor-crm.ts": {
+  "src/modules/survey/surveyor-crm.ts": {
    "area": "survey",
    "kind": "logic"
   },

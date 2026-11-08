@@ -1,7 +1,7 @@
 /**
  * THE ONE PLACE THIS APPLICATION NAMES THE UPLOAD HANDLER.
  *
- * `09-app/backend/src/documents/caprebate-upload-handler.ts` is 945 lines, has 38
+ * `09-app/backend/src/modules/claims/documents/upload-handler.ts` is 945 lines, has 38
  * tests, obeys the twelve-step RECEIPT_CONTRACT order — and until Phase 104
  * NOTHING HAD EVER CALLED IT. Its own header is blunt about what that means:
  * every control on client documents was dormant "in the precise sense that no
@@ -45,7 +45,7 @@ export {
   INGESTION_BOUNDARY,
   FAIL_CLOSED_SETTINGS,
   receiptPolicyFor,
-} from '../documents/caprebate-upload-handler.ts';
+} from '../modules/claims/documents/upload-handler.ts';
 
 export type {
   ObjectStore,
@@ -60,10 +60,10 @@ export type {
   ProcessResult,
   Clock,
   UploadHandlerErrorCode,
-} from '../documents/caprebate-upload-handler.ts';
+} from '../modules/claims/documents/upload-handler.ts';
 
-export type { DocType } from '../documents/caprebate-document-pipeline.ts';
-export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../documents/caprebate-document-pipeline.ts';
+export type { DocType } from '../modules/claims/documents/document-pipeline.ts';
+export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../modules/claims/documents/document-pipeline.ts';
 
 /**
  * CRM 4 of 10. The one deletion clock the Retention Procedure gives a client
@@ -72,7 +72,7 @@ export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../documents/caprebate-documen
  * than writing "not approved" into a screen, so the day the data protection
  * officer approves it the reading changes with no second edit.
  */
-export { RET7 } from '../documents/caprebate-client-doc-ingestion.ts';
+export { RET7 } from '../modules/claims/documents/client-doc-ingestion.ts';
 
 /**
  * Phase 132, 14 September 2026. The host's backup cycle — NOT SET, a named blank on every deletion — the guard that
@@ -81,8 +81,8 @@ export { RET7 } from '../documents/caprebate-client-doc-ingestion.ts';
  */
 export {
   BACKUP_CYCLE, knownBackupCycleDays, assertRestoreApproved, ret3DueAt,
-} from '../documents/caprebate-client-doc-ingestion.ts';
-export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryClock } from '../documents/caprebate-client-doc-ingestion.ts';
+} from '../modules/claims/documents/client-doc-ingestion.ts';
+export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryClock } from '../modules/claims/documents/client-doc-ingestion.ts';
 
 /**
  * Phase 132. The deletion clock itself — and its rule that where two clocks are known the LATER governs (Word answer
@@ -90,8 +90,8 @@ export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryCl
  * dates src/web/documents.ts reads can be proved against the one function that
  * would turn them into a date. Nothing in src/ calls it: RET-7 is not approved.
  */
-export { deletionDueAt } from '../documents/caprebate-client-doc-ingestion.ts';
-export type { IngestionSettings, RawFileRecord } from '../documents/caprebate-client-doc-ingestion.ts';
+export { deletionDueAt } from '../modules/claims/documents/client-doc-ingestion.ts';
+export type { IngestionSettings, RawFileRecord } from '../modules/claims/documents/client-doc-ingestion.ts';
 
 /**
  * Phase 129. The legal-form test, the roles that are always a person, and the human-capture rule's role tokens and
@@ -99,5 +99,5 @@ export type { IngestionSettings, RawFileRecord } from '../documents/caprebate-cl
  */
 export {
   classifyPartyReference, ALWAYS_NATURAL_PERSON_ROLES, ROLE_TOKENS, CAPTURE_NAME_PATTERNS, assertHumanCaptureClean,
-} from '../documents/caprebate-client-doc-ingestion.ts';
-export type { PartyLegalForm, PersonRole } from '../documents/caprebate-client-doc-ingestion.ts';
+} from '../modules/claims/documents/client-doc-ingestion.ts';
+export type { PartyLegalForm, PersonRole } from '../modules/claims/documents/client-doc-ingestion.ts';

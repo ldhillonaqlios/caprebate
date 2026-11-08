@@ -13,7 +13,7 @@ import {
   isBlankControl, ControlStore, blankControlComparison, BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2,
   calibrationInstrument, CALIBRATION_MODE,
   type Context, type RecordInput, type PlatformDefaults,
-} from '../src/survey/caprebate-surveyor-crm.ts';
+} from '../src/modules/survey/surveyor-crm.ts';
 
 const CTX: Context = { sector: 'CARE_HOMES', region: 'Wales' };
 const AT = (d: number) => `2026-0${Math.min(9, Math.floor(d / 28) + 1)}-${String((d % 28) + 1).padStart(2, '0')}T09:00:00Z`;

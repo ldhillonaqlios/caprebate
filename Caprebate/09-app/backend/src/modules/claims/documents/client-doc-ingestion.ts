@@ -78,11 +78,11 @@
 import {
   DOC_SPECS, HUMAN_CAPTURE_SPECS, HUMAN_READ_ONLY_TYPES, NEVER_TO_MODEL,
   type DocType, type Segment, type SegmentKind,
-} from './caprebate-document-pipeline.ts';
+} from './document-pipeline.ts';
 import {
   assertNoUnauthorisedName, NameExclusionError,
   type IngestedRecord,
-} from '../integrations/index.ts';
+} from '../../../integrations/index.ts';
 
 /* ------------------------------------------------------------------ *
  * 0. Errors
