@@ -1172,105 +1172,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161i1 — Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left
-
- **Model: Opus.** Board item 13496571315. **Written 7 November 2026 by Phase 161i**, for what it could not finish (one of the regroup phases: 161i, 161i1, 161j, 161k; run in order, one chat each). **Why:** Phase 161i moved core, shared and integrations into their folders behind front doors and brought their rule-1 count from 656 to 96 (09-app/ARCHITECTURE.md). Rules 3 and 4 for those three areas, the dated notes of the files it moved, and the tests by feature are this phase. **Order:** after 161i, before 161j.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-WHAT IS THERE NOW (7 Nov 2026, at 161i's close): src/core/, src/shared/ and
-src/integrations/ hold 126 files, each area with its front door (index.ts),
-which lists only the files that load no business code. 31 bottom-layer files
-still load business code (for example src/core/audit.ts reads survey's anchor
-quarantine; src/shared/upload-handler-port.ts re-exports the claims document
-handler; src/core/router.ts, staff.ts and backoffice.ts load every screen);
-importing them stays direct and counted, and Phase 161l undoes that tangle.
-The boundary check's baseline is 1,612 (node tools/boundaries.cjs --counts).
-Five values are read on first use instead of at load (search "Read when used,
-not while this file loads"): put them back once 161l has removed the loops.
-The developer question pack's D16 (how far the notes come out) is not yet
-answered: build our recommendation (keep one-line "why" comments; move every
-dated note) and say so.
-
-BUILD
-1. RULE 3 TO ZERO FOR core AND integrations: src/core/data.ts and
-   src/integrations/data.ts are the only files that run SQL on the tables
-   architecture/tables.json gives them (users, sessions, audit_log, roles and
-   the rest; the outbox, the mailbox, the register records, research runs,
-   WhatsApp and video meetings). Every other file asks through the area's
-   front door. Moves, not rewrites: each statement keeps its exact SQL text,
-   and the route list (test/fixtures/route-list.txt) and the pass list stay
-   identical.
-2. RULE 4 TO ZERO FOR core, shared AND integrations: no page or logic file in
-   them runs SQL or imports db.ts; no logic file builds HTML (split the
-   file's page part out where it does).
-3. THE NOTES: the dated notes in the comments of every file 161i moved go to
-   docs/CHANGELOG.md (date, phase, what was decided and why), leaving short
-   comments that say why the code is as it is; names of people stay out of
-   the code.
-4. TESTS BY FEATURE for core, shared and integrations: backend/test/core/,
-   test/shared/, test/integrations/, named by feature; docs/TEST-NAMES.md
-   maps each old name to the new one. The drift checker and the register
-   checks that count test files still pass.
-5. THE THREE 161d FOLDERS LEFT, their caprebate- prefix dropped: documents/
-   into src/modules/claims/documents/ (claims, Phase 161j's module), survey/
-   into src/modules/survey/ and costing/ into src/modules/survey/costing/
-   (survey, Phase 161k's), with node tools/boundaries.cjs --moved-map, the
-   notes at their old paths in 04-phase-work/phase3 and phase9, and the site
-   harness (APP_SRC in 03-app/caprebate-regression.cjs) following.
-6. Lower the baseline (node tools/boundaries.cjs --lower; --rebase only for a
-   reviewed re-map, with its reason), and print the counts in the record.
-
-THE ORDER: 161h, 161h1, 161i, 161i1, 161j, 161k, 161l, 161m, all before
-go-live; then the sweep (Phase 162), then Phase 161n once its gate is open.
-Every phase leaves the website working, so stopping between two is safe.
-NEXT: Phase 161j.
-
-ACCEPT
-- Rules 3 and 4 at zero for core, shared and integrations; no new break.
-- The route list and the pass list unchanged; the served CSS the same.
-- docs/CHANGELOG.md and docs/TEST-NAMES.md written; PHASE-HISTORY's test
-  references still resolve.
-```
-
 ## PHASE 161j — Regroup 2: the public site, assessment, portal, CRM and claims as modules, and the router split
 
  **Model: Opus.** Board item 13462572169. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the second of three moves, and the one that splits src/core/router.ts (about 2,500 lines, every page address). **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
@@ -1359,6 +1260,21 @@ BUILD (in Caprebate/09-app/backend/src/modules/)
 3. Big files split by what they do as they move (crm.ts about 2,200 lines,
    documents.ts about 2,000), into the routes / pages / repo / permissions
    pattern.
+4. ADDED 8 NOV 2026 BY PHASE 161i1, the way it did core, shared and
+   integrations: (a) the dated notes in the comments of every file this
+   phase moves go to 09-app/backend/docs/CHANGELOG.md word for word (date,
+   phase, file), and the code keeps the reasons without phase labels, dates
+   or people's names (names become roles); a date that records when a source
+   was read or something approved, and a worked example, stays. (b) The
+   module's tests go to test/<module>/, named by feature, with their old
+   names added to docs/TEST-NAMES.md (npm test, the drift checker and the
+   CRM fold check already read one folder down). (c) The SQL on this
+   phase's tables that waits in src/core/data-borrowed.ts,
+   src/shared/data-borrowed.ts and src/integrations/data-borrowed.ts
+   (search, the claim and lead lists, the calendar's bookings, the
+   connectors' business reads) moves into the owning module's data.ts; the
+   caller reaches it through that module's front door (an upward import,
+   counted, for 161l).
 
 THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
 Phase 161h1): each module this phase moves gets its front door (index.ts),
@@ -1473,6 +1389,28 @@ BUILD
    in backend/ maps every folder in a line each.
 4. Tell the developer (ITRoadway) the new map: add it to the 161h runbook
    and the 146g handover.
+5. ADDED 8 NOV 2026 BY PHASE 161i1: 161j's item 4 (notes to the
+   changelog, tests by feature, the borrowed SQL) for this phase's modules;
+   and what 161i1 left in core, shared and integrations: (a) about 84
+   comments whose sentence names a phase as its subject ("Phase 108 found
+   it...", "the Phase 133a test opens"), listed by grep -nE
+   '(PHASE|Phase) [0-9]{2,3}' in src/core, src/shared and
+   src/integrations: reword each to say why, with no phase; (b) people's
+   names in screen text and records there: the Help pages
+   (src/core/help-content.ts is built from the guide by tools/build-help.cjs,
+   so change the guide and rebuild), the strings in core/app.ts,
+   shared/engine.ts, shared/originals.ts, email/email-provider.ts, the
+   connectors (address-lookup, company-search, identity-check, inspire,
+   postcode-check, registers, site-area, test-lookups), registers/
+   boundary-import.ts and registers/source-register.ts: a role in place of
+   each name, and the tests that read them (test/phase153c.test.ts reads the
+   identity check's waiver record) changed with them; src/styles/site.css
+   names a person in two comments, and its bytes are held by
+   test/core/front-doors.test.ts, so change the file and its hash together;
+   (c) the 10 tests that reach business screens through the app
+   (client-redesign, phase133b, phase133i, phase144-crm, phase151a,
+   phase139, phase153, phase160e, phase160p, whatsapp) into their modules'
+   folders, named by feature.
 
 THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
 Phase 161h1): each module this phase moves gets its front door (index.ts),
@@ -1558,8 +1496,9 @@ needs a person goes in the Word questions document (AMENDMENT 2) and the
 right register.
 
 WHAT IS THERE NOW: after 161h1 to 161k, every module is behind its front
-door and the boundary check's counts for rules 1, 3 and 4 are zero. What
-is left is rule 2: modules still depend on each other in both directions
+door and the boundary check's counts for rules 1, 3 and 4 are zero, except
+the rule-3 breaks below (item 5), which no move can clear. What is left is
+rule 2: modules still depend on each other in both directions
 (CRM and the portal, claims and survey were the worst on 6 Nov 2026), and
 authz.ts holds all 130 actions in one table.
 
@@ -1578,6 +1517,21 @@ BUILD
    unchanged and every existing permission test still passes.
 4. No cycle between modules: the check's rule 2 count is zero and the
    baseline goes to zero for every rule.
+5. ADDED 8 NOV 2026 BY PHASE 161i1: THE JOINS ACROSS OWNERS. 75 breaks
+   of rule 3 were left against core (49) and integrations (26) on 8 Nov
+   2026 (node tools/boundaries.cjs --counts), every one a statement that
+   joins a business table to a core or outside-service table (most often
+   users, for a person's name; also the outbox, register records, research
+   runs and WhatsApp lines). Split each into the owner's own query and a
+   call through the other area's front door, keeping what the screen shows
+   the same (a test per screen first). Two by hand: the audit log page
+   (src/web/audit-log.ts) chooses between a core-only statement and one
+   that also reads claims and properties; the retention page
+   (src/web/compliance-identity.ts) runs count statements held as strings
+   in a table, two of them on outside-service tables. And empty the three
+   data-borrowed.ts files (161j and 161k move most of them; what is left
+   here is a bottom-layer file reading a business table, which becomes an
+   event or a front-door call). The check then reads zero for rule 3.
 
 THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
 what can be run before going live, restructure them"): every phase from

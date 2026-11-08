@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 357 |
-| Working on it | 1 |
+| Done | 358 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1265,7 +1265,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-45 items.
+44 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1501,6 +1501,7 @@
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
 - Note 2026-11-06 (Planning): 6 Nov 2026: each module this phase moves gets its front door, its own data file and the boundary check's count to zero (09-app/ARCHITECTURE.md; Phase 161h1 builds the check first). Same text in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-06 (Planning): Order changed 6 Nov 2026 (Lakhbir: "review all the phases see exactly what can be run before going live, restructure them"): 161h, 161h1, 161i, 161j, 161k, 161l and 161m all run before go-live, none waits on a person; then the sweep (162) out of order, then 161n goes live once its gate is open (board 13488910486), then the sweep again before the first client. Same text in ACTION-PLAN.md and on the run sheet.
+- Note 2026-11-08 (Phase 161i1): Amended by Phase 161i1 (item 4): this phase's notes to docs/CHANGELOG.md, its tests by feature in test/<module>/ and docs/TEST-NAMES.md, and the borrowed SQL on its tables into its data.ts.
 
 ### Phase 161k - Regroup 3: survey, finance, compliance and admin as modules, tests by feature, and the specs out of the code (audit 2 Nov 2026, before go-live)
 
@@ -1510,6 +1511,7 @@
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
 - Note 2026-11-06 (Planning): 6 Nov 2026: each module this phase moves gets its front door, its own data file and the boundary check's count to zero (09-app/ARCHITECTURE.md; Phase 161h1 builds the check first). Same text in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-06 (Planning): Order changed 6 Nov 2026 (Lakhbir: "review all the phases see exactly what can be run before going live, restructure them"): 161h, 161h1, 161i, 161j, 161k, 161l and 161m all run before go-live, none waits on a person; then the sweep (162) out of order, then 161n goes live once its gate is open (board 13488910486), then the sweep again before the first client. Same text in ACTION-PLAN.md and on the run sheet.
+- Note 2026-11-08 (Phase 161i1): Amended by Phase 161i1 (item 5): the same for its modules; plus about 84 phase-named sentences in core/shared/integrations comments, people's names in screen text there and in site.css, and the 10 business tests still at test/.
 
 ### Replace the home-made PDF, ZIP, email and page tools with well-known packages (audit 2 Nov 2026, section 5) - parked on purpose: fewer outside packages, fewer flaws
 
@@ -1559,6 +1561,7 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-06 (Planning, 6 Nov 2026): Lakhbir asked for a structure that lets one thing change without breaking others. The target structure, its seven rules and the measurements are in 09-app/ARCHITECTURE.md; the phase is in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-06 (Planning): Order changed 6 Nov 2026 (Lakhbir: "review all the phases see exactly what can be run before going live, restructure them"): 161h, 161h1, 161i, 161j, 161k, 161l and 161m all run before go-live, none waits on a person; then the sweep (162) out of order, then 161n goes live once its gate is open (board 13488910486), then the sweep again before the first client. Same text in ACTION-PLAN.md and on the run sheet.
+- Note 2026-11-08 (Phase 161i1): Amended by Phase 161i1 (item 5): the 75 rule-3 breaks left against core (49) and integrations (26), each a join across owners, and the three data-borrowed.ts files.
 
 ### Phase 161m - Rules as versioned data: rules registers, the engine's version, and versions on every sealed result (Lakhbir, 6 Nov 2026)
 
@@ -1576,18 +1579,11 @@
 - Note 2026-11-06 (Planning): Written 6 Nov 2026 when Lakhbir asked to review every phase for what can run before going live. It waits for its gate: Vercel Pro (13486923814), the ICO number, a solicitor and a DPO with every legal page approved (13475983553), the DPO appointment, the telephone decision, the outside services' safeguards and the retention periods, the engagement letter agreed, the register sign-offs marked before go-live, the live keys, the developer's answers (13486597256), and a sweep since the last change. Then it switches the live website on and proves it. Status is Lakhbir action because the gate is people's work; it becomes Claude's once the gate is open.
 - Note 2026-11-07 (Phase 161h): Gate line 12 added (GO-LIVE-CHECKLIST.md); BUILD item 1 proves the live project on a real Vercel preview first, with the three paths only real services show. Same in ACTION-PLAN.md and the run sheet.
 
-### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
-
-`13496571315` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local (the Mac copy)**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-07 (Phase 161i): Written by Phase 161i for what it could not finish: rules 3 and 4 to zero for core, shared and integrations (data files), the dated notes of the moved files to docs/CHANGELOG.md, tests by feature with docs/TEST-NAMES.md, and the documents/, survey/ and costing/ folders. Runs after 161i, before 161j.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-357 items.
+358 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3775,4 +3771,12 @@
 - Note 2026-11-06 (Planning, 6 Nov 2026): Lakhbir asked for a structure that lets one thing change without breaking others. The target structure, its seven rules and the measurements are in 09-app/ARCHITECTURE.md; the phase is in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-06 (Planning): Order changed 6 Nov 2026 (Lakhbir: "review all the phases see exactly what can be run before going live, restructure them"): 161h, 161h1, 161i, 161j, 161k, 161l and 161m all run before go-live, none waits on a person; then the sweep (162) out of order, then 161n goes live once its gate is open (board 13488910486), then the sweep again before the first client. Same text in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-07 (Phase 161h1): Done 7 Nov 2026: modules.json (297 files), tables.json (197 tables), tools/boundaries.cjs in npm run check and GitHub's check; 2,162 breaks in the baseline (rule 1 1,030; rule 2 92; rule 3 868; rule 4 172); 20 controls; no file moved; project 5,479.
+
+### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
+
+`13496571315` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-07 (Phase 161i): Written by Phase 161i for what it could not finish: rules 3 and 4 to zero for core, shared and integrations (data files), the dated notes of the moved files to docs/CHANGELOG.md, tests by feature with docs/TEST-NAMES.md, and the documents/, survey/ and costing/ folders. Runs after 161i, before 161j.
+- Note 2026-11-08 (Phase 161i1): Done 8 Nov 2026: core and integrations have their data files (320 statements moved word for word); no SQL in the three areas' pages and logic (rule 4 at 0); 1,076 dated notes in docs/CHANGELOG.md, names as roles; 43 tests by feature (docs/TEST-NAMES.md); documents/, survey/, costing/ in their modules; baseline 1,612 -> 1,454. Joins across owners to 161l; phase-named sentences, names in screen text and 10 tests to 161k.
 

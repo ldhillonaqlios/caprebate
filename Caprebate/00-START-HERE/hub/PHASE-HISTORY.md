@@ -14009,3 +14009,57 @@ NOT DONE      Rules 3 and 4 to zero for core, shared and integrations (data file
               use - BUILDABLE - Phase 161l (the tangle undone).
 NOTHING LEFT  beyond those lines.
 ```
+
+## Phase 161i1 — Regroup 1, part 2: the data files of the core and the outside services, the notes out of their code, tests by feature, and the three folders left — 8 November 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 161i1, 8 Nov 2026: The core and the outside services each have one data file, and only it reads and writes their tables (users, sessions, the audit log, the outbox, register records and the rest); 320 database statements moved there, each word for word. No screen or rule file of the core, the shared parts or the outside services runs a database statement any more. The dated notes in their code (1,076) are in a changelog, word for word; the code keeps the reasons, and people are named by their role. 43 tests are grouped and named by what they test, with a list of old and new names. The last three old folders are in their modules. The structure check's count of breaks fell from 1,612 to 1,454; nothing a person sees changed. Site 1,428, phase3 71, phase9 29, back end 3,955, project 5,483, 0 failures. Branch claude/phase-161i1; Lakhbir merges it. Next: Phase 161j.
+
+- **Read first, and the premise re-derived.** PR #88 (Phase 161i) merged by Lakhbir's yes in the chat ("Yes, merge it"), main pulled, the claim taken. The block asked for rules 3 and 4 "to zero" for core and integrations by "moves, not rewrites". Measured before building: 362 statements touched those areas' tables from outside their data files; 322 touched only them and could be moved; 40 join a business table (a lead with its owner's name from users, for example). The check counts a break per file and table against the table's owner, so a join moved anywhere stays a break against one owner or the other: those need splitting into two queries, a rewrite. So rule 4 went to zero and rule 3 went as far as moves can take it; the joins went to Phase 161l in terms.
+- **Built 1 and 2, the data files.** A script (TypeScript's own reader) moved every `db.get/all/run` whose statement touches only core or only outside-service tables into `src/core/data.ts` (125 functions) or `src/integrations/data.ts` (158), each a named function holding the statement as it was (with its line wrapping) and the caller's row type kept at the call; 347 calls in 83 files, and 5 more by hand (search's nine fixed statements, the claim and lead lists, the calendar's bookings, a research row whose text depends on one switch, a take-back count). Other areas reach them through the front doors. SQL that the core's, shared parts' and outside services' page and logic files ran on business tables is in each area's `data-borrowed.ts` (core 36, integrations 13, shared 6 functions), headed as only getting shorter. `seed.ts` (example data) and the two postcode store files (their own reference database) are now data files and `app.ts` (which builds everything) is "other", in `architecture/modules.json`. One function takes the database as the live start check opens it (`holdsInventedSeed`). The three one-door tests (only the register intake writes register records; only the take-back rewrites one; only the retention job deletes messages) now ask through `test/sql-doors.ts` which files hold the statement and which call its function; a planted second caller turned the take-back test red, and it was taken out.
+- **Built 5, the three folders.** `documents/` into `src/modules/claims/documents/`, `survey/` into `src/modules/survey/`, `costing/` into `src/modules/survey/costing/`, the caprebate- prefix dropped (8 files, git mv); imports, the notes at their old paths in 04-phase-work, the site harness's paths, the 161d test's map and the README follow; `--moved-map` renamed their 6 breaks.
+- **Built 3, the notes.** Recommendation for the developer's question D16 built until they answer (keep short "why" comments; move every dated note and every name). A script read every comment of the 129 files under `src/core/`, `src/shared/` and `src/integrations/`: 1,076 that named a phase, a date or a person were copied word for word into `09-app/backend/docs/CHANGELOG.md` (by date, then phase, under their file and line); in the code their phase labels, dates and names were taken out and the reasons kept. Names became roles (the owner, the data protection officer, the director). Kept on purpose: a date that records when a source was read or a transfer approved (evidence), and the worked examples in the date code (the clock changes). Three tests that read those records now read the role (the identity waiver's lookups note, the Claude API transfer) and the front doors' heading. Strings (screen text) were not touched.
+- **Built 4, tests by feature.** 43 test files into `test/core/` (26), `test/shared/` (2) and `test/integrations/` (15), each named by what it tests (git mv; for example phase151j to core/sign-in-steps, caprebate-region to integrations/region); paths inside them re-pointed (one level deeper), and every live document and code comment naming them follows. `docs/TEST-NAMES.md` maps all 43 old names to the new; older records keep the old names. `npm test`, the drift checker (`backendTestFiles`) and the CRM fold check (A5's test titles) read one folder down. The 10 tests that reach business screens through the app stay for 161j and 161k.
+- **Built 6, the baseline.** Rebased once (logged in the baseline's history, the reason given; the total down, 1,612 to 1,454): 33 breaks renamed into the borrowed data files, and one new area edge in the allowed direction (portal reads outbox rows through the outside services' door; counted only because all twelve areas still sit in one cycle). `--lower` after: nothing more to take off.
+
+```
+area           rule1 rule2 rule3 rule4 total
+core              51    11    49     0   111
+shared            28     6     0     0    34
+integrations      17     4    26     0    47
+public-site       13     9     5     3    30
+assessment        44     6    44    10   104
+portal            30     5    10     7    52
+crm              113    11   211    29   364
+claims           116     9   196    28   349
+survey            39     6   109    14   168
+finance           14     6    27     3    50
+compliance        22     7    44    11    84
+admin             25     7    24     5    61
+all              512    87   745   110  1454
+```
+
+- **The checks that read paths and line numbers.** The CRM fold check's §4 found 54 line references in the Developer Spec moved by the shorter files; each was re-derived from where the function now is (53 by script, 1 by hand). Green, and its self-test holds.
+- **Documents.** The Developer Spec (a 161i1 entry, the two totals' dates, the line references, test paths), ARCHITECTURE.md (the ratchet's figure and the phase table), the backend README (the folders), the CRM disposition, the runbook and key-file pages, 04-phase-work notes and this plan's live blocks use the new names. PHASE-HISTORY, the tracker and the changelog keep the old ones.
+- **Found and fixed on the way.** Mutation-test leftovers had been committed by Phase 161i (`src/web/staff.ts.mutsave`, `src/web/evidence-pages.ts.mutsave`) and by this phase's first commit (two in `src/connectors/`); all are out of git and `*.mutsave` is ignored. A history rewrite to drop them from the branch was refused by the permission check, so they stay in the branch's history (old copies of code, nothing private).
+- **Accept, the figures.** Before (main at b0c9418): site 1,428 / 0 / 3, phase3 71, phase9 29, back end 3,955 across 221 files, project 5,483. After: the same in every suite (no test added or removed; three test files changed what they read, one helper added). Route list identical; CSS bytes identical; drift checker, fold check, register check, plain words, brand and analytics checks green; typecheck 0 errors.
+- **Not done as the block said, and why.** "Rule 3 to zero" for core and integrations: 49 and 26 left, each a join across owners (above), carried to 161l. "Moves, not rewrites": four hand moves wrap a statement whose caller chose between statements (`listClaimsRows`, the research row, the take-back count) so the choice moved with the text; the text itself is unchanged. "Short comments": the reasons were kept as they were, minus labels, dates and names; about 84 comments still have a sentence whose subject is a phase, carried to 161k to reword. The preview: GitHub builds one for the pull request.
+- **Board and plan.** 161j (item 4), 161k (item 5) and 161l (item 5, and its "what is there now") carry the rest in terms, in ACTION-PLAN.md and on the run sheet. 4B: the build queue is 161j to 161m, each a phase; no orphans.
+
+```
+DONE          The core and the outside services read and write their tables only through src/core/data.ts and
+              src/integrations/data.ts (320 statements moved word for word); no page or logic file of core, shared
+              or integrations runs SQL (rule 4 at 0 for all three); 1,076 dated notes in docs/CHANGELOG.md and out
+              of the code, names as roles; 43 tests by feature with docs/TEST-NAMES.md; documents/, survey/ and
+              costing/ in their modules; the baseline 1,612 -> 1,454; every suite green, figures unchanged.
+NOT DONE      The 75 rule-3 breaks left against core (49) and integrations (26), each a join across owners, and the
+              three data-borrowed.ts files - BUILDABLE - Phase 161l (item 5).
+              About 84 comments in core, shared and integrations whose sentence names a phase - BUILDABLE - Phase
+              161k (item 5a).
+              People's names in screen text and records in the three areas, and in site.css's comments - BUILDABLE -
+              Phase 161k (item 5b).
+              The 10 tests that reach business screens through the app, by feature - BUILDABLE - Phase 161k (5c).
+              The business modules' notes, tests and borrowed SQL - BUILDABLE - Phases 161j (item 4) and 161k (5).
+              The developer's answer to D16 (how far the notes come out) - BLOCKED on the developer - the developer
+              question pack, D16 (our recommendation is built meanwhile).
+NOTHING LEFT  beyond those lines.
+```
