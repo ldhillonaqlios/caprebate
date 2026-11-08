@@ -58,3 +58,29 @@ export function listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep<T extends 
 export function getClientReportAcceptancesCountByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT COUNT(*) AS n FROM client_report_acceptances WHERE claim_id = ?', params);
 }
+
+// Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+export function getClientSignupsIdBusinessIdByOfferHash<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, business_id, offer_expires_at, email_canonical, display_name, password_hash, verify_expires_at, verified_at ' +
+    'FROM client_signups WHERE offer_hash = ?', params);
+}
+export function getClientSignupsIdBusinessIdByVerifyHash<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, business_id, offer_expires_at, email_canonical, display_name, password_hash, verify_expires_at, verified_at ' +
+    'FROM client_signups WHERE verify_hash = ?', params);
+}
+export function getClientSignupsTermsAgreedAtTermsVersionsById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT terms_agreed_at, terms_versions FROM client_signups WHERE id = ?', params);
+}
+export function getClientSignupsVerifyExpiresAtVerifiedAtByVerifyHash<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT verify_expires_at, verified_at FROM client_signups WHERE verify_hash = ?', params);
+}
+export function insertClientSignups(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO client_signups (id, business_id, assessment_id, offer_hash, created_at, offer_expires_at) VALUES (?, ?, ?, ?, ?, ?)', params);
+}
+export function updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('UPDATE client_signups SET email_canonical = ?, display_name = ?, password_hash = ?, verify_hash = ?, verify_expires_at = ?, requested_at = ?, ' +
+    'terms_agreed_at = ?, terms_versions = ? WHERE id = ? AND verified_at IS NULL', params);
+}
+export function updateClientSignupsVerifiedAtUserIdById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('UPDATE client_signups SET verified_at = ?, user_id = ?, password_hash = NULL WHERE id = ?', params);
+}

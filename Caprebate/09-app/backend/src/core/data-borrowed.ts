@@ -7,12 +7,6 @@
  */
 import type { Db, Param, Row } from './db.ts';
 
-// assessment_answers
-export function listAssessmentAnswersOrdQuestionIdByAssessmentId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT ord, question_id, question_text, state, value FROM assessment_answers ' +
-    'WHERE assessment_id = ? ORDER BY ord ASC', params);
-}
-
 // assessments
 export function getAssessmentsIdBusinessIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT a.id, a.business_id, b.name AS business_name, a.sector, a.submitted_at, ' +
@@ -25,70 +19,10 @@ export function listAssessmentsIdBusinessId<T extends Row = Row>(db: Db, params:
     'FROM assessments a JOIN businesses b ON b.id = a.business_id ' +
     'ORDER BY a.submitted_at DESC, a.id DESC LIMIT ?', params);
 }
-
-// booking_changes
-export function insertBookingChanges(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO booking_changes (id, booking_id, changed_by, from_starts_at, to_starts_at, ' +
-    'from_assigned, to_assigned, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
-}
 export function listBookingChangesFromStartsAtToStartsAtByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT c.from_starts_at, c.to_starts_at, u.display_name AS changed_by_name, c.at, c.cancelled ' +
     'FROM booking_changes c LEFT JOIN users u ON u.id = c.changed_by ' +
     'WHERE c.booking_id = ? ORDER BY c.at ASC', params);
-}
-
-// bookings
-export function getBookingsChannelSmsVariantByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT channel, sms_variant, entry_point FROM bookings WHERE business_id = ? ' +
-    'ORDER BY created_at ASC LIMIT 1', params);
-}
-export function getBookingsChannelSmsVariantByLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT channel, sms_variant, entry_point FROM bookings WHERE lead_id = ? ' +
-    'ORDER BY created_at ASC LIMIT 1', params);
-}
-export function updateBookingsStartsAtEndsAtById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('UPDATE bookings SET starts_at = ?, ends_at = ?, assigned_to = ? WHERE id = ?', params);
-}
-
-// businesses
-export function getBusinessesContactEmailNameById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT contact_email, name FROM businesses WHERE id = ?', params);
-}
-
-// client_signups
-export function getClientSignupsIdBusinessIdByOfferHash<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT id, business_id, offer_expires_at, email_canonical, display_name, password_hash, verify_expires_at, verified_at ' +
-    'FROM client_signups WHERE offer_hash = ?', params);
-}
-export function getClientSignupsIdBusinessIdByVerifyHash<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT id, business_id, offer_expires_at, email_canonical, display_name, password_hash, verify_expires_at, verified_at ' +
-    'FROM client_signups WHERE verify_hash = ?', params);
-}
-export function getClientSignupsTermsAgreedAtTermsVersionsById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT terms_agreed_at, terms_versions FROM client_signups WHERE id = ?', params);
-}
-export function getClientSignupsVerifyExpiresAtVerifiedAtByVerifyHash<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT verify_expires_at, verified_at FROM client_signups WHERE verify_hash = ?', params);
-}
-export function insertClientSignups(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO client_signups (id, business_id, assessment_id, offer_hash, created_at, offer_expires_at) VALUES (?, ?, ?, ?, ?, ?)', params);
-}
-export function updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('UPDATE client_signups SET email_canonical = ?, display_name = ?, password_hash = ?, verify_hash = ?, verify_expires_at = ?, requested_at = ?, ' +
-    'terms_agreed_at = ?, terms_versions = ? WHERE id = ? AND verified_at IS NULL', params);
-}
-export function updateClientSignupsVerifiedAtUserIdById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('UPDATE client_signups SET verified_at = ?, user_id = ?, password_hash = NULL WHERE id = ?', params);
-}
-
-// contacts
-export function getContactsContactEmailNameByLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT email AS contact_email, full_name AS name FROM contacts WHERE lead_id = ? ORDER BY created_at ASC, id ASC LIMIT 1', params);
-}
-
-// properties
-export function listPropertiesLabelPostcodeByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT label, postcode FROM properties WHERE business_id = ? ORDER BY created_at ASC, label ASC', params);
 }
 
 // saved_keys

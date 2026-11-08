@@ -12,7 +12,9 @@ import { createHash } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import { plainDashLines } from '../../shared/index.ts';
 import { insertOutbox, insertOutboxAttachments, insertOutboxInlineFiles } from '../data.ts';
-import { getBusinessesCountByClientStatus, getBusinessesCountByIdClientStatus, getContactsCountByClientStatus, getEmailSenderDisplayNameAddress, getUsersCountByClientStatusEmailCanonical } from '../data-borrowed.ts';
+import { getEmailSenderDisplayNameAddress, getUsersCountByClientStatusEmailCanonical } from '../data-borrowed.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { getBusinessesCountByClientStatus, getBusinessesCountByIdClientStatus, getContactsCountByClientStatus } from '../../modules/crm/data.ts';
 
 /**
  * CALENDAR_INVITE IS THE SECOND STUBBED TRANSPORT AND IT IS NOT A SECOND STUB.

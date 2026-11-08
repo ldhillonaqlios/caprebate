@@ -1038,3 +1038,24 @@ export function getClaimDeliverablesCountByClaimIdKind4<T extends Row = Row>(db:
 export function getTaxAdviserSignoffsCountByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT COUNT(*) AS n FROM tax_adviser_signoffs WHERE claim_id = ?', params);
 }
+
+// Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+export function getPropertiesIdAddressLine1ByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, address_line_1, address_line_2, town, postcode, jurisdiction, uprn FROM properties WHERE business_id = ? ' +
+    'ORDER BY created_at ASC, id ASC LIMIT 1', params);
+}
+export function getPropertiesIdByIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id FROM properties WHERE id = ? AND business_id = ?', params);
+}
+export function listPropertiesLabelPostcodeByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT label, postcode FROM properties WHERE business_id = ? ORDER BY created_at ASC, label ASC', params);
+}
+export function listPropertiesPostcode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT postcode FROM properties', params);
+}
+export function listSiteAreaInputsEastingNorthingByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT easting, northing FROM site_area_inputs WHERE kind = 'POINT'", params);
+}
+export function listSiteAreaInputsLadCodeByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT lad_code FROM site_area_inputs WHERE kind = 'NEIGHBOUR_COUNCIL'", params);
+}

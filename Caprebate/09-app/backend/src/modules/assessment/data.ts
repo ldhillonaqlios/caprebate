@@ -170,3 +170,9 @@ export function getLookupsDeclinedBusinessIdByBusinessId<T extends Row = Row>(db
 export function insertLookupsDeclined(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run("INSERT INTO lookups_declined (business_id, declined_at, how) VALUES (?, ?, 'ASSESSMENT')", params);
 }
+
+// Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+export function listAssessmentAnswersOrdQuestionIdByAssessmentId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT ord, question_id, question_text, state, value FROM assessment_answers ' +
+    'WHERE assessment_id = ? ORDER BY ord ASC', params);
+}

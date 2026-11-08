@@ -42,7 +42,13 @@ import { localWhen } from '../shared/index.ts';
 import type { AuditLog } from './audit.ts';
 import type { EmailTransport } from '../integrations/index.ts';
 import { bookingInviteFile } from '../modules/crm/index.ts';
-import { getAssessmentsIdBusinessIdById, getBookingsChannelSmsVariantByBusinessId, getBookingsChannelSmsVariantByLeadId, getBusinessesContactEmailNameById, getContactsContactEmailNameByLeadId, insertBookingChanges, listAssessmentAnswersOrdQuestionIdByAssessmentId, listAssessmentsIdBusinessId, listBookingChangesFromStartsAtToStartsAtByBookingId, listPropertiesLabelPostcodeByBusinessId, listUsersIdDisplayNameByDisabledAt, updateBookingsStartsAtEndsAtById } from './data-borrowed.ts';
+import { getAssessmentsIdBusinessIdById, listAssessmentsIdBusinessId, listBookingChangesFromStartsAtToStartsAtByBookingId, listUsersIdDisplayNameByDisabledAt } from './data-borrowed.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { getBookingsChannelSmsVariantByBusinessId, getBookingsChannelSmsVariantByLeadId, getBusinessesContactEmailNameById, getContactsContactEmailNameByLeadId, insertBookingChanges, updateBookingsStartsAtEndsAtById } from '../modules/crm/data.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { listAssessmentAnswersOrdQuestionIdByAssessmentId } from '../modules/assessment/data.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { listPropertiesLabelPostcodeByBusinessId } from '../modules/claims/data.ts';
 import { getBookingById, listBookingsCancelled, listBookingsScheduled, listBookingsWithNoTime } from './data-borrowed.ts';
 
 export class BackOfficeError extends Error {
@@ -323,7 +329,6 @@ export type BookingRow = {
   /** The role of whoever cancelled — CLIENT for a portal cancellation. */
   readonly cancelled_by_role: string | null;
 };
-
 
 type BookingSource = Omit<BookingRow, 'channel_label' | 'business_name'> & { readonly business_name: string | null };
 

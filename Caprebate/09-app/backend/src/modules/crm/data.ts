@@ -1059,3 +1059,45 @@ export function listAutomationRunsAtOutcomeByClaimId<T extends Row = Row>(db: Db
 export function listAutomationRunsAtOutcomeByLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT r.at, r.outcome, r.reason, r.tasks_created, r.outbox_id, ar.label, r.claim_id, r.lead_id FROM automation_runs r JOIN automation_rules ar ON ar.id = r.rule_id WHERE r.lead_id = ? ORDER BY r.at', params);
 }
+
+// Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+export function getBookingsChannelSmsVariantByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT channel, sms_variant, entry_point FROM bookings WHERE business_id = ? ' +
+    'ORDER BY created_at ASC LIMIT 1', params);
+}
+export function getBookingsChannelSmsVariantByLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT channel, sms_variant, entry_point FROM bookings WHERE lead_id = ? ' +
+    'ORDER BY created_at ASC LIMIT 1', params);
+}
+export function getBusinessesContactEmailNameById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT contact_email, name FROM businesses WHERE id = ?', params);
+}
+export function getBusinessesCountByClientStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM businesses WHERE client_status = 'DO_NOT_CONTACT' AND lower(contact_email) = lower(?)", params);
+}
+export function getBusinessesCountByIdClientStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM businesses WHERE id = ? AND client_status = 'DO_NOT_CONTACT'", params);
+}
+export function getBusinessesNameLegalNameById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT name, legal_name, company_number, sector FROM businesses WHERE id = ?', params);
+}
+export function getContactsContactEmailNameByLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT email AS contact_email, full_name AS name FROM contacts WHERE lead_id = ? ORDER BY created_at ASC, id ASC LIMIT 1', params);
+}
+export function getContactsCountByClientStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM contacts c JOIN businesses b ON b.id = c.business_id ' +
+    "WHERE b.client_status = 'DO_NOT_CONTACT' AND lower(c.email) = lower(?)", params);
+}
+export function insertBookingChanges(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO booking_changes (id, booking_id, changed_by, from_starts_at, to_starts_at, ' +
+    'from_assigned, to_assigned, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function listBusinessesNameLegalName<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT name, legal_name, company_number FROM businesses', params);
+}
+export function listLeadsProspectOrganisationProspectPostcode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT prospect_organisation, prospect_postcode FROM leads', params);
+}
+export function updateBookingsStartsAtEndsAtById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('UPDATE bookings SET starts_at = ?, ends_at = ?, assigned_to = ? WHERE id = ?', params);
+}

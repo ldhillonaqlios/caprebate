@@ -54,7 +54,8 @@ import { etrs89ToBritishNationalGrid, type Ostn15Grid } from './ostn15.ts';
 import { resolveProperty } from '../postcodes/postcode.ts';
 import type { PostcodeStore } from '../postcodes/postcode-port.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId10, getRegisterRecordsIdFieldsJsonByBusinessIdSourceId } from '../data.ts';
-import { getPropertiesIdByIdBusinessId } from '../data-borrowed.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { getPropertiesIdByIdBusinessId } from '../../modules/claims/data.ts';
 
 export const SITE_AREA_SOURCE_ID = 'HMLR_INSPIRE';
 

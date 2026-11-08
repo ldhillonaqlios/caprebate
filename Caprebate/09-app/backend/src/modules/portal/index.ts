@@ -4,7 +4,7 @@
  * another area needs it, never a whole file.
  */
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
-export { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing, insertClientStepNotices, insertClientStepNotices2, listClientStepNoticesClaimIdStepByBusinessId2 } from './data.ts';
+export { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing, getClientSignupsIdBusinessIdByOfferHash, getClientSignupsIdBusinessIdByVerifyHash, getClientSignupsTermsAgreedAtTermsVersionsById, getClientSignupsVerifyExpiresAtVerifiedAtByVerifyHash, insertClientSignups, insertClientStepNotices, insertClientStepNotices2, listClientStepNoticesClaimIdStepByBusinessId2, updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt, updateClientSignupsVerifiedAtUserIdById } from './data.ts';
 export { portalStepLine, PROPOSED_STEP_NAMES, stepName } from './portal-steps.ts';
 export { accountantConfirmBlock, handleAccountantConfirmStaff, handleConfirmLink } from './accountant-confirm-pages.ts';
 export { accountantFitNeed, latestAnswer, returnFilings, returnsOf } from './accountant-confirm.ts';
