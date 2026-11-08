@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 5 |
+| Ready - Claude can build | 4 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 357 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1578,7 +1578,7 @@
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 
-`13496571315` · **Ready - Claude can build** · owner Claude
+`13496571315` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local (the Mac copy)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-07 (Phase 161i): Written by Phase 161i for what it could not finish: rules 3 and 4 to zero for core, shared and integrations (data files), the dated notes of the moved files to docs/CHANGELOG.md, tests by feature with docs/TEST-NAMES.md, and the documents/, survey/ and costing/ folders. Runs after 161i, before 161j.
