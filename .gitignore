@@ -45,6 +45,7 @@
 
 # never, anywhere
 *.bak*
+*.mutsave
 *.orig-fragmented
 *.pre-132b
 .DS_Store
