@@ -1,8 +1,8 @@
 /**
- * THE REPORT'S ASSUMPTIONS — PHASE 153e, 4 October 2026 (Word question 145, the surveyor's).
+ * THE REPORT'S ASSUMPTIONS (Word question 145, the surveyor's).
  *
  * The planning assumption moves the land value, and a higher land value means a smaller claim, so it is stated on the
- * face of every report. Built on our recommendation, for the surveyor to approve or reword: Lakhbir's wording (recorded
+ * face of every report. Built on our recommendation, for the surveyor to approve or reword: the owner's wording (recorded
  * 25 September) and the draft in the answer box agree. A TEST READING: until the surveyor approves it, each approved
  * version carries these words (frozen into the snapshot at approval, so a version approved before shows none), and the
  * surveyor-facing template carries the same (04-phase-work/phase9/surveyor-valuation-report-template-v2.md, sections 11

@@ -11,15 +11,15 @@
  *
  * TERMS IN THAT LETTER ARE STILL BLANK, AND HOW MANY IS DERIVED, NOT WRITTEN
  * HERE — `unresolvedTerms()` counts them from the document itself. This
- * sentence said FIVE until Phase 108 re-derived EIGHT on 9 September 2026 (the
+ * sentence said FIVE re-derived EIGHT (the
  * prose had counted the clauses clause 13 names, not the placeholders), and it
- * said EIGHT until Phase 115 redrafted clause 7 on 10 September 2026 with three
+ * said EIGHT redrafted clause 7 with three
  * more choices in square brackets. That is the point: the number moves when the
  * letter does. Run `unresolvedTerms()`. They are shown as blank, loudly.
  * A prototype that filled in a plausible break fee would be handing the next
  * reader a number with no decision behind it, and a number in a prototype
  * becomes a number in a contract. Board item 12984553034 is the question, it
- * is under Lakhbir, and it is not this build's to answer.
+ * is under the owner, and it is not this build's to answer.
  *
  * The letter says so itself at clause 13: "These three terms are not yet
  * settled and are marked for completion before issue, in the same way as the
@@ -30,14 +30,14 @@
  *
  * The .docx is a SPECIMEN. It names "Quenmoor Care Group" and quotes an
  * indicative range of £27,788–£73,125 — an invented client and an illustrative
- * figure. (Until Phase 153, 28 September 2026, the specimen was "Oakfield Care
+ * figure. (Until Phase 153, the specimen was "Oakfield Care
  * Group", company number 09183422, and that number is a real, dissolved
  * company's. Name and number were both replaced in the .docx itself.) Rendering it unchanged into a real client's portal would show them
  * somebody else's name in their own contract. So the specimen values are
  * substituted where the record supplies a real one, and MARKED where it does
  * not. Neither is silent.
  *
- * SIGNING IS BUILT IN SINCE PHASE 146f, AND SWITCHED OFF: src/modules/claims/signing.ts.
+ * SIGNING IS BUILT IN AND SWITCHED OFF: src/modules/claims/signing.ts.
  * The state machine (NOT_SENT → SENT → VIEWED → SIGNED) lives in the
  * `engagements` table, and SIGNED counts only with its signature record
  * (engagement_signatures). A letter with a term still in square brackets is
@@ -49,11 +49,11 @@ import { join } from 'node:path';
 import { readZipEntry, DOCX_DOCUMENT_ENTRIES, docxParagraphTexts } from '../../shared/index.ts';
 import { plainDashText } from '../../shared/index.ts';
 
-/** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 06-commercial-and-governance/Caprebate Engagement Letter.docx, the director's and the solicitor's, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
+/** the app's own copy: edit the original, 06-commercial-and-governance/Caprebate Engagement Letter.docx, the director's and the solicitor's, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const LETTER_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'Caprebate Engagement Letter.docx');
 
 /**
- * THE TEST-ONLY COPY — Phase 153d, 4 October 2026 (Word questions 33, 34 and 196, the director's). Built on our
+ * THE TEST-ONLY COPY (Word questions 33, 34 and 196, the director's). Built on our
  * recommendation, for the director and the solicitor to check: the same letter with clause 5 (£995 a property plus the
  * charges of a surveyor already booked, at cost), clause 7(d) ("named in our privacy notice") and clause 13 (any
  * reduction; a settlement the client accepts counts) filled, each marked "test default, not agreed", and a TEST COPY
@@ -63,7 +63,7 @@ export const LETTER_PATH = join(import.meta.dirname, '..', '..', '..', 'copies',
  */
 export const TEST_LETTER_PATH = join(
   import.meta.dirname, '..', '..', '..', 'copies', 'Caprebate Engagement Letter - TEST DEFAULTS, not agreed.docx',
-); // the app's copy, as LETTER_PATH (Phase 161d1); the original is beside the real letter in 06-commercial-and-governance
+); // the app's copy, as LETTER_PATH; the original is beside the real letter in 06-commercial-and-governance
 export const TEST_COPY_MARK = 'TEST COPY — for the test system only.';
 export const TEST_DEFAULT_MARK = '(test default, not agreed)';
 
@@ -82,7 +82,7 @@ export type Letter = {
   readonly openTerms: readonly OpenTerm[];
   /** Specimen values still in the rendered text, named so the screen can flag them. */
   readonly specimens: readonly string[];
-  /** Phase 153d: true for the test-only copy (its TEST COPY line). Never signed. */
+  /** True for the test-only copy (its TEST COPY line). Never signed. */
   readonly test_copy: boolean;
 };
 
@@ -95,11 +95,11 @@ const SPECIMEN_CLIENT = 'Quenmoor Care Group';
  */
 const SPECIMEN_CLIENT_WITH_SUFFIX = 'Quenmoor Care Group Ltd';
 /**
- * THE SPECIMEN COMPANY NUMBER. Invented since Phase 153 (28 September 2026):
+ * THE SPECIMEN COMPANY NUMBER. Invented:
  * 98604417 is not on the Companies House register (its page answered 404 that
  * day), and the register's numbers run nowhere near 98 million. The number it
  * replaced, 09183422, was not fictional: it is BEYOND BEAUTY (BIGGLESWADE)
- * LIMITED, dissolved 14 May 2019 (checked 12 September 2026, Phase 129). Until
+ * LIMITED, dissolved 14 May 2019. Until
  * this constant existed the portal replaced the specimen NAME and left the
  * number standing, so a real client's letter named them "under company number
  * 09183422". Substituted where the record supplies a number; FLAGGED where it
@@ -132,7 +132,7 @@ function readDocumentXml(path: string): string {
 const CLAUSE_RE = /^(\d{1,2})\.\s+(.+)$/;
 
 /**
- * PHASE 158b (F22, the Friary House run): the letter named a partnership "a company registered in England and Wales
+ * The letter named a partnership "a company registered in England and Wales
  * under company number 98604417" - the specimen - and left "Date:" and "Subject property:" blank. The client's own
  * kind of business now decides how the letter describes them: a partnership, a sole trader or an individual has no
  * company number to give, so the company words and the specimen number go; an LLP is called one. A company with no
@@ -147,7 +147,7 @@ const PARTY_WORDS: Readonly<Record<string, string>> = Object.freeze({
 export function loadLetter(
   opts: {
     path?: string; clientName?: string; companyNumber?: string; range?: string;
-    /** PHASE 158b: businesses.claimant_type, the property or properties, and the letter's date, as words. */
+    /** Businesses.claimant_type, the property or properties, and the letter's date, as words. */
     claimantType?: string | null; property?: string | null; date?: string | null;
   } = {},
 ): Letter {
@@ -157,7 +157,7 @@ export function loadLetter(
 
   const paragraphs: { text: string; heading: boolean }[] = [];
   for (let text of docxParagraphTexts(xml)) {
-    // PHASE 158b: who the client is, before the specimen number is replaced or flagged.
+    // Who the client is, before the specimen number is replaced or flagged.
     const words = kind === null ? undefined : PARTY_WORDS[kind];
     if (words !== undefined) {
       text = text.split(SPECIMEN_PARTY).join(words).split(SPECIMEN_SIGNATURE_NUMBER).join('');
@@ -184,7 +184,7 @@ export function loadLetter(
   }
 
   const rendered = paragraphs.map((p) => p.text).join('\n');
-  /* PHASE 160d, 19 October 2026: THE LETTER WITHOUT LONG DASHES, as the client reads it on screen since Phase 160c and so
+  /* THE LETTER WITHOUT LONG DASHES, as the client reads it on screen and so
      in the PDF they sign. The Word document itself is not changed (it is with the solicitor, FOR THE SOLICITOR SDP-L3); its
      words are read as they are and each long dash becomes a colon or a comma here (src/shared/plain-dashes.ts). Whether it is
      the test copy, and which specimens it still holds, are read from the document's own words, before that. A letter
@@ -216,7 +216,7 @@ export function unresolvedTerms(
   for (const p of paragraphs) {
     const m = CLAUSE_RE.exec(p.text);
     // Kept with its long dash: it is a key other code matches (fee-controls.ts, claim-record.ts, introducers.ts), and it
-    // reaches a person only through a screen or an email, which drop the dash themselves (Phase 160c, 160d).
+    // reaches a person only through a screen or an email, which drop the dash themselves.
     if (m) clause = `clause ${m[1]} — ${m[2]}`;
     for (const term of bracketed(p.text)) out.push({ clause, text: term });
   }

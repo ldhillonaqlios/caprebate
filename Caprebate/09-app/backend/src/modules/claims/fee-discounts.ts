@@ -1,9 +1,9 @@
 /**
  * A MULTI-SITE DISCOUNT — ENTERED, RECORDED, AND NEVER APPLIED AUTOMATICALLY.
- *                                                  Phase 132e, 16 September 2026
+ *
  *
  * The fee is a flat 3% of the allowances identified, and "A further multi-site
- * discount can be applied depending on site/opportunities" (Lakhbir). The engine
+ * discount can be applied depending on site/opportunities". The engine
  * holds the discount as discretionary with two named nulls — the largest
  * discount and who approves it — and they are asked, never invented here.
  *

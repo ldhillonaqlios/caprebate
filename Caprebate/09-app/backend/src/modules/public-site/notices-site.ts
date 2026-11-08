@@ -1,9 +1,9 @@
 /**
- * THE PUBLIC NOTICES PAGE ON THE TEST WEBSITE, AND ITS COMPLAINT FORM — PHASE 160f, 20 October 2026.
+ * THE PUBLIC NOTICES PAGE ON THE TEST WEBSITE, AND ITS COMPLAINT FORM.
  *
- * The stress test of 19 October 2026 found /privacy and /notices saying the notices "are being prepared" while the
+ * The stress test found /privacy and /notices saying the notices "are being prepared" while the
  * contact form and the assessment already took names, emails and phone numbers. The page is drafted in full
- * (03-app/caprebate-notices-page.html, Phase 99 onwards); Lakhbir: "Build and publish on test". Its four facts nobody
+ *; the owner: "Build and publish on test". Its four facts nobody
  * had supplied are filled with our recommendation and each is marked "Proposed, awaiting our data protection officer".
  *
  * SERVED ON THE TEST WEBSITE ONLY. createApp's `testNotices`, passed by api/index.mjs alone, serves the page at
@@ -28,15 +28,15 @@ import { assertComplianceWrite, type ComplianceDeps } from '../../web/compliance
 import { plainDashes } from '../../shared/index.ts';
 import { getComplaintFormsIdReceivedAtById, insertComplaintForms, listComplaintFormsIdReceivedAtByLoggedComplaintId, updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl } from './data-borrowed.ts';
 
-/** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 03-app/caprebate-notices-page.html, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
+/** the app's own copy: edit the original, 03-app/caprebate-notices-page.html, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const NOTICES_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'caprebate-notices-page.html');
 /** Where the page sends people about their data, and where a complaint from its form is emailed. */
 export const DP_MAIL = 'data.protection@caprebate.co.uk';
 /** Complaints from one network address in the 15-minute window, before the form says to wait. */
 export const COMPLAINT_SOURCE_LIMIT = 10;
 
-/* PHASE 160g, 20 October 2026: the eight facts Phase 160f proposed are confirmed by the data protection officer
-   (relayed by Lakhbir, for testing), so the page is no longer a draft; the banner says only where it is. */
+/* The eight facts Phase 160f proposed are confirmed by the data protection officer
+  , so the page is no longer a draft; the banner says only where it is. */
 const BANNER = '<p class="draft-banner" role="note"><strong>Our test website.</strong> It holds invented information '
   + 'only. Our public website will carry this page too.</p>';
 
@@ -68,7 +68,7 @@ export function buildNoticesEdition(source: string): NoticesEdition {
 }
 
 /**
- * PHASE 161g: THE SAME PAGE ON THE LIVE WEBSITE (the `legal` setting). The test website's banner ("Our test website")
+ * THE SAME PAGE ON THE LIVE WEBSITE (the `legal` setting). The test website's banner ("Our test website")
  * is replaced by the page's own Draft line, which goes once our solicitor and our data protection officer have both
  * approved its version (src/web/legal-approvals.ts).
  */

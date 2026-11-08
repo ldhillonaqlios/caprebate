@@ -1,6 +1,6 @@
 /**
  * THE WITH-AND-WITHOUT COMPARISON FOR THE ALLOWANCE AND PROFIT ANSWERS — built,
- * run empty, and switched off. Phase 132, 14 September 2026.
+ * run empty, and switched off.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHAT IT IS FOR
@@ -31,7 +31,7 @@
  * asked of real clients and a determined figure exists.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * SO THE CASH READING IS COMPARED TOO. Phase 132, later the same day.
+ * SO THE CASH READING IS COMPARED TOO. Later the same day.
  *
  * A comparison of the benefit alone would report "unchanged" for every answer
  * and mislead the measurement. What the two answers move is CB_CASH's reading,
@@ -231,7 +231,7 @@ function benefitOf(result: EngineResult | null, session: Session, basis: Benefit
     is_company: s['claimant_type'] === 'company',
     profits: basis.profits ?? null,
     first_year: reliefs(s, dom),
-    /* PHASE 153b (Word question 226): what the works-VAT answer tells us about VAT on our fee — not known unless the
+    /* What the works-VAT answer tells us about VAT on our fee — not known unless the
        same business, unchanged, answered "reclaimed in full" or "exempt". Counts for nothing while we are not VAT-registered. */
     client_vat: clientVatFromWorks(s),
   } as unknown as BenefitContext;

@@ -1,8 +1,8 @@
 /**
  * THE CLIENT'S OWN FILING CONFIRMATION, WHERE THERE IS NO ACCOUNTANT.
- *                                                  Phase 132e, 16 September 2026
  *
- * Lakhbir, answering "Where a client has no accountant or tax adviser, who
+ *
+ * the owner, answering "Where a client has no accountant or tax adviser, who
  * confirms the claim fits their return ...?": "The client".
  *
  * THE REPORTS GATE (src/modules/crm/pipeline.ts) asks `filingRoute` which of two routes a

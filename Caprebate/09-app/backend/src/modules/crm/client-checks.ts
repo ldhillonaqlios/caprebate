@@ -1,5 +1,5 @@
 /**
- * PHASE 160j — WHAT THE CLIENT SENT, CHECKED, 20 October 2026. Lakhbir, of the claim page mock-up he approved: whatever
+ * WHAT THE CLIENT SENT, CHECKED, 20 October 2026. the owner, of the claim page mock-up he approved: whatever
  * the client sends waits for staff to check it, then is accepted or asked for again with a reason.
  *
  * A client's answer in their portal (portal.ts answerTask) and a file uploaded against a request (documents.ts

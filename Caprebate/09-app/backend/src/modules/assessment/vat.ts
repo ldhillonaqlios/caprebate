@@ -1,6 +1,6 @@
 /**
  * VAT MONITORING — THE ROLLING TWELVE MONTHS, THE THIRTY-DAY TEST, THE DATED
- * THRESHOLD, AND A TASK INSIDE THE MARGIN. CRM 7 of 10, 11 September 2026.
+ * THRESHOLD, AND A TASK INSIDE THE MARGIN. CRM 7 of 10.
  *
  * The procedure is 08-monday-doc-exports/12552682452, the VAT threshold
  * monitoring procedure. Its decision is made — wait until the threshold, do not
@@ -232,7 +232,7 @@ export type ExpectedFee = {
   readonly claim_id: string; readonly claim_ref: string; readonly business_id: string;
   readonly expected_pence: number | null; readonly why: string | null;
   /**
-   * PHASE 132f — THE ENGAGEMENT GATE ON THIS FEE, with phase9's costing injected (engine.ts `feeGate`). A READING,
+   * THE ENGAGEMENT GATE ON THIS FEE, with phase9's costing injected (engine.ts `feeGate`). A READING,
    * NOT A WITHHOLDING: this fee is earned on a signed-off figure, and the VAT forward look counts what will be
    * invoiced, so `expected_pence` is never moved by it. Where it fires, `routes_to` is the engine's "we will come
    * back to you with a price". An unknown fee or sector, and supported living, are UNDETERMINED. The placeholder

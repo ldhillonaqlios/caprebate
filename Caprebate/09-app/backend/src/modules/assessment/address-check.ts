@@ -1,5 +1,5 @@
 /**
- * THE POSTCODE CHECK AT THE ADDRESS QUESTION, AND "ANSWER IT MYSELF". Phase 151b, 25 September 2026.
+ * THE POSTCODE CHECK AT THE ADDRESS QUESTION, AND "ANSWER IT MYSELF".
  *
  * 1 · THE POSTCODE CHECK, WIRED INTO THE BACK END'S OWN ASSESSMENT AS A SERVER-SIDE STEP. Phase 151 built the check
  *     (src/integrations/connectors/postcode-check.ts: Postcodes.io, the postcode only, switched off behind the free-tier gate and

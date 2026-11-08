@@ -1,7 +1,7 @@
 /**
- * THE CLIENT'S FILES — Phase 140, 21 September 2026. "Back office and portal clean-up, 7 of 11."
+ * THE CLIENT'S FILES. "Back office and portal clean-up, 7 of 11."
  *
- * Lakhbir: "There is no folder icon which allows the user to see what the customer has uploaded, but also the ability to
+ * the owner: "There is no folder icon which allows the user to see what the customer has uploaded, but also the ability to
  * upload and save documents ourselves within the portal."
  *
  *   GET  /staff/clients/:id/files          the company's files, in folders — From the client, From Cap Rebate, Asked
@@ -78,7 +78,7 @@ export async function receiveFile(
   if (bytes.length === 0) return { ok: false, why: 'That file is empty. Choose it again.' };
   if (bytes.length > UPLOAD_LIMITS.max_bytes) return { ok: false, why: TOO_BIG };
   if (sniffAccepted(bytes) === null) return { ok: false, why: NOT_ACCEPTED };
-  // PHASE 157d (F19): a PDF with no end is damaged. acceptClientBytes refuses it too; this only says so first.
+  // A PDF with no end is damaged. acceptClientBytes refuses it too; this only says so first.
   if (sniffAccepted(bytes) === 'pdf' && !pdfLooksComplete(bytes)) return { ok: false, why: 'That PDF is damaged or incomplete: it stops part-way. Save or export it again, then send it.' };
   const db = d.app.db;
   const now = d.app.now;
@@ -88,7 +88,7 @@ export async function receiveFile(
   const token = new URL(b.url, 'http://localhost').searchParams.get('token') ?? '';
   const job = issuedJob(db, b.doc_id);
   if (job === null) return { ok: false, why: 'Something went wrong. Try again.' };
-  /* PHASE 146g: `reading` carries the process's key store and transport to steps 9 and 10 of the receipt contract.
+  /* `reading` carries the process's key store and transport to steps 9 and 10 of the receipt contract.
      It switches nothing on — CLAUDE_SWITCHES.DOCUMENT_READING is false — and with it off a finished upload behaves
      exactly as it did before. args.business_id is the client whose gates are recorded on the reading's audit row. */
   const deps = { db, store: d.store, now, actor: actor.id, newId: d.newId, audit: d.app.audit,
@@ -111,7 +111,7 @@ export async function readUpload(
 ): Promise<{ ok: true; bytes: Uint8Array; fields: Record<string, string> } | { ok: false; why: string }> {
   let raw0: Buffer;
   try { raw0 = await body(req, MAX_BODY); } catch { return { ok: false, why: TOO_BIG }; }
-  // PHASE 160e: a file over Vercel's 4.5 MB a request was sent first in pieces (src/core/upload-pieces.ts); the form
+  // A file over Vercel's 4.5 MB a request was sent first in pieces (src/core/upload-pieces.ts); the form
   // comes with its file box empty and the send's id in `pieces`. Everything after this reads the bytes as before.
   const sent = pieces === undefined ? null : piecedFields(new Uint8Array(raw0), req.headers['content-type']);
   if (sent !== null && pieces !== undefined) {
@@ -125,7 +125,7 @@ export async function readUpload(
 }
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+  // An upload form's page also gets the script that sends a big file in pieces.
   const p = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, p.headers);
   res.end(p.body);
@@ -177,7 +177,7 @@ export async function handleClientFiles(
     const r = await receiveFile(d, actor, {
       business_id: org.id, type_code: up.fields.type_code ?? null, logical_document_id: null, request_id: null,
       claim_id: claim === '' ? null : claim, shown_to_client: up.fields.shown_to_client === 'yes',
-      // PHASE 146j: the question about a name, answered on this form so the first reading can keep it.
+      // The question about a name, answered on this form so the first reading can keep it.
       early_vouch: earlyVouchesFrom((n) => up.fields[n]),
     }, up.bytes);
     if (!r.ok) return d.problem(res, actor, 'Not uploaded', r.why, back);
@@ -274,7 +274,7 @@ function folderPage(d: ClientFilesDeps, actor: Actor, f: D.ClientFolder, key: st
 }
 
 /**
- * PHASE 146j — THE QUESTION ABOUT A NAME, ASKED WHERE THE TYPE IS CHOSEN. The upload forms and the request form draw
+ * THE QUESTION ABOUT A NAME, ASKED WHERE THE TYPE IS CHOSEN. The upload forms and the request form draw
  * this; each question says which kinds of file it is about, because the form runs no script and cannot hide it until a
  * type is picked. Only the answer that belongs to the type chosen is kept. "Leave it for now" sends nothing, and the
  * question is then asked on the file's own page, as before — it is never read as a no.

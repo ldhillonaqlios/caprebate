@@ -1,6 +1,5 @@
 /**
- * THE SITE AREA'S SCREEN: A POINT AND A NEIGHBOURING COUNCIL, ENTERED BY A PERSON ON THE PROPERTY PAGE. Phase 151c,
- * 25 September 2026.
+ * THE SITE AREA'S SCREEN: A POINT AND A NEIGHBOURING COUNCIL, ENTERED BY A PERSON ON THE PROPERTY PAGE.
  *
  * The site area is worked out from HM Land Registry's land boundary at one point on the site (src/connectors/
  * site-area.ts). The point can come from the paid address lookup (Homedata's own easting and northing). Where it did

@@ -1,7 +1,7 @@
 /**
  * THE ROUTES AND PAGES FOR STAFF TASKS, THE ONE-NEXT-ACTION RULE, AUTOMATION
  * RULES AND EMAIL TEMPLATES — and the panels the claim, organisation, property,
- * lead and landing pages draw from them. CRM 3 of 10, 11 September 2026.
+ * lead and landing pages draw from them. CRM 3 of 10.
  *
  * Same shape as `handleCrm` and `handlePipeline`: it returns 'not-mine' for
  * anything it does not own, so the mounting in staff.ts is one line.
@@ -57,7 +57,7 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -370,7 +370,7 @@ export function claimTasksBlock(claim_id: string, p: T.ClaimTaskPanel | undefine
 }
 
 /** THE TIMELINE — events only. Internal notes are drawn by `notesBlock`, never here. */
-/** PHASE 134: a scope that names a claim ends " · CR-2026-0007"; the reference is drawn as the small grey label. */
+/** A scope that names a claim ends " · CR-2026-0007"; the reference is drawn as the small grey label. */
 function scopeCell(scope: string): Safe {
   const m = / · (CR-[0-9A-Za-z-]+)$/.exec(scope);
   return m === null ? h`${scope}` : h`${scope.slice(0, m.index)} ${claimRef(m[1] ?? '')}`;
@@ -378,7 +378,7 @@ function scopeCell(scope: string): Safe {
 
 export function timelineBlock(t: Timeline | undefined, heading = 'Activity timeline'): Safe {
   if (t === undefined) return raw('');
-  // PHASE 138: the sentence about what the timeline is read from sits behind "Why?".
+  // The sentence about what the timeline is read from sits behind "Why?".
   return h`<div class="pblock"><div class="pnum">${heading}</div>
     <div class="help">${why(`${t.read_not_log} Every time is UK time.`)}</div>
     ${t.limited_to === undefined ? raw('') : h`<p class="help"><strong>${t.limited_to}</strong></p>`}
@@ -392,10 +392,10 @@ export function timelineBlock(t: Timeline | undefined, heading = 'Activity timel
 
 /**
  * INTERNAL NOTES, APART FROM THE TIMELINE — present only where `internal_note.read` put them in.
- * PHASE 142a: ONE NAME FOR THE NOTES. They are the "Team only" thread of the company's Chat (Phase 142), so the claim page
+ * ONE NAME FOR THE NOTES. They are the "Team only" thread of the company's Chat, so the claim page
  * and the property page call them that too, with a link to the whole conversation. Each page still shows its own notes —
  * a claim's, or a property's. `chat` is the company's id; with none, the link is not drawn.
- * PHASE 134: a note belongs to the COMPANY. On the company's page it may say which claim it is about — `claims` is the
+ * A note belongs to the COMPANY. On the company's page it may say which claim it is about — `claims` is the
  * choice, and "The company in general" is the default. The server checks the claim is the company's (`addNote`).
  */
 export function notesBlock(
@@ -418,7 +418,7 @@ export function notesBlock(
 }
 
 /**
- * PHASE 141 — EMAIL FROM A CLAIM. The claim page no longer merges a template in place: it opens the company's Email page
+ * EMAIL FROM A CLAIM. The claim page no longer merges a template in place: it opens the company's Email page
  * with this claim already chosen, where the email is typed freely and "Start from a template" fills the boxes. `contacts`
  * is undefined for a login that may not write to the company, and then nothing is drawn.
  */
@@ -434,7 +434,7 @@ export function emailBlock(
 
 /** MY TASKS — on the landing page, for every staff role. */
 /**
- * UI TIDY PHASE 9, 3 October 2026: the tasks first; then what a client owes us and is late with, open; then the longer
+ * The tasks first; then what a client owes us and is late with, open; then the longer
  * lists folded, each saying how many it holds — the claims with no next step (Tasks' own filter has them too), my claims
  * and who each waits on, and the other questions waiting on a client. Every list is still here.
  */
@@ -593,7 +593,7 @@ export function distinctReasons(list: readonly { readonly key: string; readonly 
 }
 
 /**
- * UI TIDY PHASE 15 (3 October 2026): the rules page opens with what it is, Add a rule, and four boxes; the thirteen
+ * The rules page opens with what it is, Add a rule, and four boxes; the thirteen
  * things no rule may do fold away with their count (each still said once, and still refused by the store); Add a rule
  * opens from its button. The templates page: Add a template folds until its button opens it.
  */

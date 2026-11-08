@@ -1,7 +1,7 @@
 /**
- * WHATSAPP WITH EACH CLIENT, AND THE WHOLE CONVERSATION IN ONE PLACE. 30 September 2026.
+ * WHATSAPP WITH EACH CLIENT, AND THE WHOLE CONVERSATION IN ONE PLACE..
  *
- * Lakhbir: "the ability to use whats app directly using our back end portal the idea is each client when we view back
+ * the owner: "the ability to use whats app directly using our back end portal the idea is each client when we view back
  * end has full communication via email or whats app".
  *
  * ON THE CLIENT PAGE, under Chat, a third tab, "Everything": every message with the company in the order it happened —
@@ -46,11 +46,11 @@ export function whatsappDeps(app: App): WhatsAppDeps {
 const obj = (db: Db, business_id: string) => ({ type: 'client_message' as const, id: business_id, business_id });
 
 export type PhoneContact = { readonly id: string; readonly name: string; readonly first: string; readonly number: string; readonly shown: string; readonly open_until: string | null;
-  /** PHASE 153f (migration 086): whether they agreed to WhatsApp, on the funnel's optional box. */ readonly agreed: boolean };
+  /** Whether they agreed to WhatsApp, on the funnel's optional box. */ readonly agreed: boolean };
 
 /** When the 24-hour window with this number closes, or null when it is closed. */
 export function windowOpenUntil(db: Db, number: string, nowIso: string): string | null {
-  // PHASE 156c: a message added from the phone's export never opens WhatsApp's window: only one Meta delivered does.
+  // A message added from the phone's export never opens WhatsApp's window: only one Meta delivered does.
   const last = getWhatsappMessagesAtByPhoneDirection<{ at: string | null }>(db, [number])?.at ?? null;
   if (last === null) return null;
   const until = Date.parse(last) + WINDOW_HOURS * 3_600_000;
@@ -123,7 +123,7 @@ export function receiveWhatsApp(app: App, raw: string, signature: string | null)
     const id = randomUUID();
     const r = insertWhatsappMessages3(app.db, [id, business, contacts.length === 1 ? contacts[0]!.contact : null, 'IN', m.from, m.kind, m.body, m.wa_id, 'RECEIVED', m.at, now]);
     if (r.changes !== 1) continue; // the same message delivered again
-    // PHASE 153f: an attachment's id is kept with the message; a person fetches the file (fetchWhatsAppAttachment).
+    // An attachment's id is kept with the message; a person fetches the file (fetchWhatsAppAttachment).
     if (m.media !== null) {
       insertWhatsappMedia2(app.db, [id, m.media.id, m.media.type, m.media.mime, m.media.sha256, m.media.filename]);
     }
@@ -179,7 +179,7 @@ export function conversation(db: Db, actor: Actor, business_id: string, nowIso: 
   const theirs = new Set(listContactsEByBusinessIdEmail<{ e: string }>(db, [business_id, business_id]).map((r) => r.e));
   for (const e of listOutboxCreatedAtToEmailByBusinessId<{ created_at: string; to_email: string; subject: string; body: string; sent_at: string | null; kind: string }>(db, [business_id])) {
     if (SENT_SECRET_KINDS.includes(e.kind)) continue; // a sign-in code or one-use link is never shown
-    // 1 Oct 2026: an email staff wrote themselves is the client's, whatever address they typed in To.
+    // An email staff wrote themselves is the client's, whatever address they typed in To.
     if (!theirs.has(e.to_email.toLowerCase()) && e.kind !== 'FREE_TYPED' && e.kind !== 'TEMPLATE') continue;
     items.push({ at: e.created_at, when: localStamp(e.created_at, nowIso), channel: 'Email', ours: true, who: `Cap Rebate, to ${e.to_email}`,
       subject: e.subject, body: e.body, state: e.sent_at === null ? 'Not sent' : 'Sent' });
@@ -194,7 +194,7 @@ export function conversation(db: Db, actor: Actor, business_id: string, nowIso: 
 }
 
 /* ================================================================== *
- * PHASE 153f, 4 OCTOBER 2026 — A FILE SOMEONE SENT US ON WHATSAPP, KEPT HERE
+ * A FILE SOMEONE SENT US ON WHATSAPP, KEPT HERE
  * ================================================================== */
 
 export type Attachment = {

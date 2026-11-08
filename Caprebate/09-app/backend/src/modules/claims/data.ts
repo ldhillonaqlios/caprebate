@@ -1039,7 +1039,7 @@ export function getTaxAdviserSignoffsCountByClaimId<T extends Row = Row>(db: Db,
   return db.get<T>('SELECT COUNT(*) AS n FROM tax_adviser_signoffs WHERE claim_id = ?', params);
 }
 
-// Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+// Moved here from the lower layers' borrowed files: their statements are on this module's tables.
 export function getPropertiesIdAddressLine1ByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT id, address_line_1, address_line_2, town, postcode, jurisdiction, uprn FROM properties WHERE business_id = ? ' +
     'ORDER BY created_at ASC, id ASC LIMIT 1', params);

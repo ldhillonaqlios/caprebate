@@ -1,5 +1,5 @@
 /**
- * THE FEE CONTROLS — BUILT, SHIPPED OFF, ONE SWITCH EACH. CRM 7 of 10, 11 September 2026.
+ * THE FEE CONTROLS — BUILT, SHIPPED OFF, ONE SWITCH EACH. CRM 7 of 10.
  *
  * Commercial decisions that are open may not be guessed into a screen. So each
  * is BUILT, carries ONE SWITCH, and SHIPS OFF — and test/finance-claim.test.ts
@@ -8,17 +8,17 @@
  * invoice stage.
  *
  *   the fee above the client's first-year benefit   CAP, WARN or ADJUST_RATE
- *     “Do we cap the fee, warn about it, or adjust the percentage?” — Lakhbir's
+ *     “Do we cap the fee, warn about it, or adjust the percentage?” — the owner's
  *   the break fee and the abort fee                 read from the engagement letter
- *     “What is the break fee, and is there ever an abort fee or a fixed fee?” — Lakhbir's
+ *     “What is the break fee, and is there ever an abort fee or a fixed fee?” — the owner's
  *
- * PHASE 132e, 16 SEPTEMBER 2026 — THE FEE IS A FLAT 3%, AND TWO THINGS ARE NO LONGER SWITCHES.
- *   A MINIMUM FEE — RETIRED AS DECIDED: NONE. Lakhbir, answering "Is our fee now a
+ * THE FEE IS A FLAT 3%, AND TWO THINGS ARE NO LONGER SWITCHES.
+ *   A MINIMUM FEE — RETIRED AS DECIDED: NONE. the owner, answering "Is our fee now a
  *     flat 3% of the allowances identified — with no minimum and no bands?": "yes,
  *     flat fee of 3% of the allowances for 1 or more properties". The switched-off
  *     per-sector control that stood here is removed, and the decision is recorded
  *     in MINIMUM_FEE_DECISION below, so the retirement is on the record and not a
- *     silent deletion. A minimum JOB SIZE was already decided none (1 September 2026).
+ *     silent deletion. A minimum JOB SIZE was already decided none.
  *   A MULTI-SITE DISCOUNT — DISCRETIONARY, NEVER AUTOMATIC. The 5/10/15% table is
  *     gone. The engine's CB_FEE.MULTI_SITE_DISCOUNT holds the largest discount and
  *     who approves it as named nulls; computeFee never reads a discount, and one a
@@ -60,7 +60,7 @@ export const MINIMUM_FEE_QUESTION = 'Is the small end of the market worth servin
 export const FLAT_FEE_QUESTION = 'Is our fee now a flat 3% of the allowances identified — with no minimum and no bands?';
 
 /**
- * A MINIMUM FEE — DECIDED: NONE. Phase 132e, 16 September 2026. The switched-off control that stood here from CRM 7 of
+ * A MINIMUM FEE — DECIDED: NONE. The switched-off control that stood here from CRM 7 of
  * 10 (one amount per sector, every one unset) is retired rather than left for somebody to switch on. The £5,000 and
  * £7,500 in the minimum-fee paper were a recommendation, never a decision, and are not a floor anywhere.
  */
@@ -72,7 +72,7 @@ export const MINIMUM_FEE_DECISION = Object.freeze({
   retired: 'the old minimum fee for each sector. It was never switched on, and was removed on 16 September 2026',
 });
 export const BREAK_FEE_QUESTION = 'What is the break fee, and is there ever an abort fee or a fixed fee?';
-/** Added to CAPREBATE QUESTIONS under Lakhbir by CRM 7 of 10: clause 4's payment terms are blank. */
+/** Added to CAPREBATE QUESTIONS under the owner by CRM 7 of 10: clause 4's payment terms are blank. */
 export const PAYMENT_TERMS_QUESTION = 'How long does a client have to pay our invoice?';
 
 export const NO_MINIMUM_JOB_SIZE =
@@ -94,7 +94,7 @@ export const ABOVE_BENEFIT_MODES: Readonly<Record<AboveBenefitMode, string>> = O
 export type FeeControls = {
   readonly above_benefit: { readonly enabled: boolean; readonly mode: AboveBenefitMode | null };
   readonly break_and_abort: { readonly enabled: boolean };
-  /** PHASE 157b: the old rate card's extra charges, at their test defaults (RATE_CARD_UPLIFTS). Absent is off. */
+  /** The old rate card's extra charges, at their test defaults (RATE_CARD_UPLIFTS). Absent is off. */
   readonly uplifts?: { readonly enabled: boolean };
 };
 
@@ -106,10 +106,10 @@ export const FEE_CONTROLS: FeeControls = Object.freeze({
 });
 
 /* ================================================================== *
- * 2a · THE OLD EXTRA CHARGES — PHASE 157b, 6 OCTOBER 2026 (Word question 235)
+ * 2a · THE OLD EXTRA CHARGES OCTOBER 2026 (Word question 235)
  * ================================================================== */
 
-/** Word question 235, quoted. Lakhbir's. Open. */
+/** Word question 235, quoted. the owner's. Open. */
 export const UPLIFTS_QUESTION = 'Do the old extra charges stay: the add-on for complicated jobs and the £1,500 manual-handling charge?';
 
 /** One thing that made the old card add points for a complicated job. */
@@ -118,7 +118,7 @@ export type UpliftFactor = 'ENTITLEMENT_CHAIN' | 'PRIOR_ELECTION' | 'GRANT_FUNDI
 /**
  * THE OLD RATE CARD'S EXTRA CHARGES, AS TEST DEFAULTS — NOT AGREED. Built the way Phase 153d built Word questions 33
  * and 34: the figures the old banded card used (the rate card paper, board item 12804368154, §3 Step 3, before Phase
- * 132e suspended them), each marked "test default, not agreed", behind a switch that ships OFF, so Lakhbir can see
+ * 132e suspended them), each marked "test default, not agreed", behind a switch that ships OFF, so the owner can see
  * what they would do to real-looking fees before deciding (the viability check, Word question 235). Nothing here is a
  * decision: the flat 3% stands, and with the switch off no fee anywhere moves.
  *   · a complicated job: +0.5 percentage points for each factor below, at most +1.5 points however many apply
@@ -300,9 +300,9 @@ export type FeeFacts = {
   readonly pool_split_main_pence: number | null;
   readonly pool_split_special_pence: number | null;
   readonly period_start: string | null;
-  /** PHASE 157b: what made the job complicated, as the old rate card counted it. Absent is none known. */
+  /** What made the job complicated, as the old rate card counted it. Absent is none known. */
   readonly uplift_factors?: readonly UpliftFactor[];
-  /** PHASE 157b: the client declined the automated register lookups. Absent is no. */
+  /** The client declined the automated register lookups. Absent is no. */
   readonly manual_handling?: boolean;
 };
 
@@ -383,7 +383,7 @@ function agree(vs: readonly (boolean | null)[]): boolean | null {
  * THE FEE. PLAIN FIRST — CB_FEE's own display, 3% of the allowances identified —
  * then the first-year control, if it is on. With every control off, as shipped,
  * this returns the plain fee and no warning, and nothing else about it moves.
- * THERE IS NO MINIMUM (decided none, Phase 132e) AND NO DISCOUNT IS EVER READ HERE:
+ * THERE IS NO MINIMUM AND NO DISCOUNT IS EVER READ HERE:
  * a multi-site discount is discretionary and is never applied automatically.
  *
  * A REFUSAL IS NOT A NUMBER. Where a control that is on cannot be applied on the
@@ -443,7 +443,7 @@ export function computeFee(f: FeeFacts, controls: FeeControls = FEE_CONTROLS): F
     }
   }
 
-  /* PHASE 157b: the old extra charges, only with their switch on. Not on top of a fee the first-year control has just
+  /* The old extra charges, only with their switch on. Not on top of a fee the first-year control has just
      lowered: that control is a ceiling, and adding to it would undo it. */
   if (controls.uplifts?.enabled === true) {
     const u = upliftReading(f);

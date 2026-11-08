@@ -59,7 +59,7 @@ export function getClientReportAcceptancesCountByClaimId<T extends Row = Row>(db
   return db.get<T>('SELECT COUNT(*) AS n FROM client_report_acceptances WHERE claim_id = ?', params);
 }
 
-// Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+// Moved here from the lower layers' borrowed files: their statements are on this module's tables.
 export function getClientSignupsIdBusinessIdByOfferHash<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT id, business_id, offer_expires_at, email_canonical, display_name, password_hash, verify_expires_at, verified_at ' +
     'FROM client_signups WHERE offer_hash = ?', params);

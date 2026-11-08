@@ -1,8 +1,8 @@
 /**
- * FREE-TYPED EMAIL TO A CLIENT, FROM contact@caprebate.co.uk — THE STORE. Phase 141, 21 September 2026.
+ * FREE-TYPED EMAIL TO A CLIENT, FROM contact@caprebate.co.uk — THE STORE.
  * "Back office and portal clean-up, 8 of 11."
  *
- * Lakhbir, 18 September 2026: "When on a client page there needs to be the ability to free-type emails, which should
+ * The owner: "When on a client page there needs to be the ability to free-type emails, which should
  * come from contact@caprebate.co.uk."
  *
  * The pages are src/modules/crm/free-email-pages.ts. The sending switch and the mail adapter are src/integrations/email/email-provider.ts.
@@ -10,7 +10,7 @@
  * ───────────────────────────────────────────────────────────────────────────
  * WHAT THIS HOLDS, AND IT IS ASKED ON THE SERVER EVERY TIME
  *
- *   TO IS FILLED IN WITH THE COMPANY'S MAIN CONTACT, AND STAFF MAY TYPE OVER IT (1 October 2026 — Lakhbir: "the To:
+ *   TO IS FILLED IN WITH THE COMPANY'S MAIN CONTACT, AND STAFF MAY TYPE OVER IT (1 — the owner: "the To:
  *   field needs to be auto populated with the emails address, however it needs to allow users to overide the email if
  *   needed"; until then it was a list of contacts only). An address that is one of the company's contacts is recorded as
  *   that contact; any other is recorded with no contact, and a reply from it waits under "Email replies to sort" (the
@@ -57,7 +57,7 @@ export type EmailDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
   /** The sending switch and the provider's login. Tests pass their own; the application passes EMAIL_SENDING. */
   sending?: EmailSending; login?: SmtpLogin | null;
-  /** 2 Oct 2026: where the app runs (src/integrations/connectors/place.ts). The application passes it; absent, not asked. */
+  /** Where the app runs (src/integrations/connectors/place.ts). The application passes it; absent, not asked. */
   where?: MailWhere;
 };
 
@@ -84,7 +84,7 @@ export type EmailForm = {
   /** Why nothing can be attached, where nothing can. */
   readonly attach_words: string | null;
   readonly sent: readonly SentRow[];
-  /** 1 Oct 2026: every chain of emails with them, newest first; and the one being replied to, if any. */
+  /** Every chain of emails with them, newest first; and the one being replied to, if any. */
   readonly chains: readonly EmailChain[];
   readonly replying: EmailChain | null;
   readonly prefill: {

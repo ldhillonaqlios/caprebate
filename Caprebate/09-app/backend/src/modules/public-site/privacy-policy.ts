@@ -1,7 +1,7 @@
 /**
- * THE PRIVACY POLICY AND THE CLIENT'S PORTAL TERMS — PHASE 161g, 5 November 2026. Both DRAFTS.
+ * THE PRIVACY POLICY AND THE CLIENT'S PORTAL TERMS. Both DRAFTS.
  *
- * Lakhbir, 5 Nov 2026: "draft the privacy policy" (from the Phase 160f notice, for the live website and the client
+ * The owner: "draft the privacy policy" (from the Phase 160f notice, for the live website and the client
  * portal) and "draft the client's terms and their links". src/modules/public-site/legal-pages.ts serves them with the other legal
  * pages, each with its Draft line until an approval is recorded (src/web/legal-approvals.ts).
  *
@@ -48,7 +48,7 @@ function retentionRows(): Safe {
     ['A record of a data breach', ret('RET-5')],
     ['An enquiry from our website that does not become a claim', { says: 'Twelve months after we close it.', approved: false }],
     ['Messages with a client who has no claim with us', { says: 'Twelve months.', approved: false }],
-    // PHASE 161h, 7 Nov 2026: the live website's nightly backup (src/core/backup.ts, BACKUP_KEEP_DAYS); Word question 292.
+    // The live website's nightly backup (src/core/backup.ts, BACKUP_KEEP_DAYS); Word question 292.
     ['A copy in our nightly backup', { says: `${BACKUP_KEEP_DAYS} days. Something we delete leaves the backup ${BACKUP_KEEP_DAYS} days later.`, approved: false }],
   ];
   return h`${rows.map(([what, r]) => h`<tr><td>${what}</td><td>${r.says}</td><td>${r.approved ? 'Approved' : 'Proposed. Not yet approved by our data protection officer.'}</td></tr>`)}`;

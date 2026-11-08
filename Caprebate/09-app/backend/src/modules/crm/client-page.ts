@@ -1,7 +1,7 @@
 /**
- * THE ONE CLIENT PAGE — Phase 134, 18 September 2026. "Back office and portal clean-up, 1 of 11."
+ * THE ONE CLIENT PAGE. "Back office and portal clean-up, 1 of 11."
  *
- * Lakhbir, after using the test site: "There is too much of an emphasis on the CR number - the main focus point should
+ * the owner, after using the test site: "There is too much of an emphasis on the CR number - the main focus point should
  * be the company name", and "think about one business with multiple claims - all communication needs to be under one
  * client's portal and dashboard".
  *
@@ -64,7 +64,7 @@ import { listContactsIdFullNameByBusinessId } from './data.ts';
 export type WebResult = 'handled' | 'not-mine';
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -110,7 +110,7 @@ export async function handleClientPage(
   const org = C.organisationView(db, actor, id);
   const work = mayWork ? { page: E.businessPage(db, actor, id), sources: R.sourcesFor(db, actor, id) } : null;
   // 30 Sep 2026: "Everything" reads new email replies first (at most every two minutes), for those who may read them.
-  // 1 Oct 2026: every visit to a client's page does, so a reply is there (and its red dot) wherever staff look.
+  // Every visit to a client's page does, so a reply is there (and its red dot) wherever staff look.
   if (mayReadQueue(actor)) await readRepliesIfDue(d.app);
   html(res, 200, clientPage(d, actor, org, work, done, note, url.searchParams.get('step') ?? undefined, url.searchParams.get('chat'), {
     via: url.searchParams.get('via'), thread: url.searchParams.get('thread'), contact: url.searchParams.get('contact'),
@@ -136,12 +136,12 @@ const SAVED: Readonly<Record<string, string>> = Object.freeze({
 });
 
 /**
- * PHASE 138 — WHICH SECTION A CHANGE WAS MADE IN. After a save the page is drawn again with `?done=`; the section the
+ * WHICH SECTION A CHANGE WAS MADE IN. After a save the page is drawn again with `?done=`; the section the
  * change was made in opens, whatever the person keeps, so they see what they just did.
  */
 const OPEN_AFTER: Readonly<Record<string, string>> = Object.freeze({
   saved: 'details', contact: 'contacts', task: 'activity', research: 'sources', retry: 'sources',
-  // PHASE 157c (the Friary House run, F11): the "Run the research" links open the Lookups section; "#sources" alone
+  // The "Run the research" links open the Lookups section; "#sources" alone
   // pointed into a closed tab and showed nothing.
   lookups: 'sources',
   'letter-sent': 'letter', 'letter-resent': 'letter', 'letter-signers': 'letter', letter: 'letter',
@@ -175,9 +175,9 @@ function clientPage(
   const p = work?.page ?? null;
   const waiting = p === null ? null : p.row.waiting_on === 'US' ? 'Us' : p.row.waiting_on === 'CLIENT' ? 'The client' : 'Nobody';
   const ctx: SectionContext = { prefs: sectionPrefs(db, actor), back: `/staff/clients/${org.id}` };
-  // PHASE 141: THE EMAIL BUTTON, beside Files, for a login that may write to the company — Admin and Sales.
+  // THE EMAIL BUTTON, beside Files, for a login that may write to the company — Admin and Sales.
   const mayEmail = can(actor, 'email.queue', { type: 'email', id: org.id, business_id: org.id });
-  // PHASE 142: a note saved, a message sent, or a chat tab pressed opens the Chat section.
+  // A note saved, a message sent, or a chat tab pressed opens the Chat section.
   const openNow = note === 'saved' || done === 'message' || done === 'saved-file' || chat !== null ? 'chat'
     : done === undefined ? undefined : done.startsWith('told') ? 'checks' : OPEN_AFTER[done];
 
@@ -189,9 +189,9 @@ function clientPage(
   const fromFor = (where: E.MissingFact['section']): string[] => (p === null ? [] : p.missing.filter((m) => m.section === where).map((m) => m.from));
 
   const sections: SectionSpec[] = [];
-  // UI TIDY PHASE 7: the claims are boxes at the top of the page (claimBoxes), no longer a section in a tab.
+  // The claims are boxes at the top of the page (claimBoxes), no longer a section in a tab.
 
-  /* PHASE 139: WHERE EACH FACT CAME FROM, THE APPROVE BOX, AND TELLING THE CLIENT. Only for a login that checks facts. */
+  /* WHERE EACH FACT CAME FROM, THE APPROVE BOX, AND TELLING THE CLIENT. Only for a login that checks facts. */
   const checks = checksPanelIfPermitted(db, actor, org.id, d.app.now().slice(0, 10));
   if (checks !== null) {
     const all = [checks.company, ...checks.claims.flatMap((c) => c.steps)];
@@ -220,9 +220,9 @@ function clientPage(
     });
   }
 
-  /* PHASE 142: CHAT — "Team only" (the company's notes, as a conversation) and "With the client" (the portal's Messages),
+  /* CHAT — "Team only" (the company's notes, as a conversation) and "With the client" (the portal's Messages),
      two tabs, each with its unread number. Drawn only for a login that may read one of the two. */
-  /* 1 OCT 2026: CHAT BECOMES COMMUNICATION (src/modules/crm/communication.ts) — one form to write any way, beside the whole
+  /* CHAT BECOMES COMMUNICATION (src/modules/crm/communication.ts) — one form to write any way, beside the whole
      conversation. The routes that wrote before still do, and say what they did here. */
   const oldDone: Readonly<Record<string, string>> = { message: 'sent-portal', whatsapp: 'sent-whatsapp', 'whatsapp-opening': 'sent-opening' };
   const chatNow = communicationPanel({ app: d.app }, actor, org.id, {
@@ -264,8 +264,8 @@ function clientPage(
     need: companyNeed, from: unique(['Companies House', 'the client', ...fromFor('company')]), body: s.details,
   });
 
-  /* PHASE 151e (line 6): a client with no contact we can reach is flagged here until it has one. "We must get contact
-     details, it is a non negotiable" (Lakhbir, 28 September 2026). */
+  /* A client with no contact we can reach is flagged here until it has one. "We must get contact
+     details, it is a non negotiable". */
   const reachable = C.reachableContacts(db, org.id);
   const contactNeed: Need[] = reachable > 0 ? [] : [{ label: 'An email address or a telephone number for someone at this client' }];
   sections.push({
@@ -279,7 +279,7 @@ function clientPage(
       : h`<p class="err" id="no-way-to-reach"><strong>Required.</strong> ${C.NO_WAY_TO_REACH_WORDS}</p>${s.contacts}`,
   });
 
-  /* PHASE 151b: THE ONLINE IDENTITY CHECK, for a login that keeps the registers (compliance.read; sending is
+  /* THE ONLINE IDENTITY CHECK, for a login that keeps the registers (compliance.read; sending is
      compliance.write). Sent from here or from an open due diligence check, and switched off with IDENTITY_CHECK. */
   if (can(actor, 'compliance.read', complianceObj())) {
     const idLines = identityChecks(db, { business_id: org.id });
@@ -327,11 +327,11 @@ function clientPage(
     });
   }
 
-  /* PHASE 157c (the Friary House run, F21): THE ENGAGEMENT LETTER — its steps, the button that sends it, and the signed
+  /* THE ENGAGEMENT LETTER — its steps, the button that sends it, and the signed
      copy once there is one. Only for a login that may read the letter (Admin, Sales). */
   if (can(actor, 'engagement.read', { type: 'engagement', id: org.id, business_id: org.id })) {
     const ls = letterState(db, org.id);
-    // PHASE 157d: the client's logins, for "Who must sign".
+    // The client's logins, for "Who must sign".
     const clientLogins = listUsersIdNameByBusinessIdRole<{ id: string; name: string; email: string }>(db, [org.id]);
     const maySend = can(actor, 'engagement.send', { type: 'engagement', id: org.id, business_id: org.id }) && ls.state !== 'SIGNED';
     sections.push({
@@ -354,7 +354,7 @@ function clientPage(
     });
   }
 
-  /* PHASE 140: THE COMPANY'S FILES, AS FOLDERS. The same folders the Files page draws, each a tile that opens it there. */
+  /* THE COMPANY'S FILES, AS FOLDERS. The same folders the Files page draws, each a tile that opens it there. */
   const folder = clientFolder({ db, now: d.app.now }, actor, org);
   const waitingFiles = folder.asked?.length ?? 0;
   sections.push({
@@ -366,7 +366,7 @@ function clientPage(
     need: [], from: ['the client', 'Cap Rebate'], body: folderTiles(folder),
   });
 
-  // 30 Sep 2026: "Email the client" became Chat, in the header — every message with them, and a box to write.
+  // "Email the client" became Chat, in the header — every message with them, and a box to write.
   const quick: QuickAction[] = [
     ...s.quick,
     ...(mayEmail ? [{ href: `/staff/clients/${org.id}/email`, label: 'Write an email' }] : []),

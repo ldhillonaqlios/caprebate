@@ -1,5 +1,5 @@
 /**
- * LEADS AND THE PIPELINE — THE ROUTES AND THE PAGES. CRM 2 of 10, 10 September 2026.
+ * LEADS AND THE PIPELINE — THE ROUTES AND THE PAGES. CRM 2 of 10.
  *
  * Same shape as src/modules/crm/crm-pages.ts: it returns 'not-mine' for anything it does
  * not own, so the mounting in staff.ts is one line.
@@ -62,7 +62,7 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -111,7 +111,7 @@ export async function handlePipeline(
   const deps: C.CrmDeps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
   const done = url.searchParams.get('done') ?? undefined;
 
-  /* ------------------------------------------- website enquiries (PHASE 133j) */
+  /* ------------------------------------------- website enquiries */
   if (path === '/staff/enquiries' && method === 'GET') {
     html(res, 200, enquiriesPage(d, actor, E.openEnquiries(deps, actor), done));
     return 'handled';
@@ -128,7 +128,7 @@ export async function handlePipeline(
     }
     const r = E.closeEnquiry(deps, actor, id);
     if (!r.ok) return d.problem(res, actor, 'Not closed', r.why, '/staff/enquiries');
-    // PHASE 137: closed from its card in the leads' New section, it returns there.
+    // Closed from its card in the leads' New section, it returns there.
     redirect(res, fromCards ? '/staff/leads?done=closed#leads-new' : '/staff/enquiries?done=closed');
     return 'handled';
   }
@@ -136,13 +136,13 @@ export async function handlePipeline(
   /* ------------------------------------------------------------ leads */
   if (path === '/staff/leads' && method === 'GET') {
     // CRM 9 of 10: filtered, sorted and saved through src/shared/lists.ts, each row still asked of `lead.read`.
-    // PHASE 137: cards in four sections by default; `layout=list` is the table, for anyone who prefers it. Neither
+    // Cards in four sections by default; `layout=list` is the table, for anyone who prefers it. Neither
     // `layout` nor `done` is a filter, so neither is handed to the list to be reported as one it did not apply.
     const asList = url.searchParams.get('layout') === 'list';
     const q = new URLSearchParams(url.searchParams);
     q.delete('layout');
     q.delete('done');
-    // UI TIDY PHASE 5: `record=1` opens the folded "Record a lead by hand" form; like `layout`, it is not a filter.
+    // `record=1` opens the folded "Record a lead by hand" form; like `layout`, it is not a filter.
     const openForm = q.get('record') === '1';
     q.delete('record');
     const asked = requestParams(d.app, actor, 'LEADS', q);
@@ -189,7 +189,7 @@ export async function handlePipeline(
     return 'handled';
   }
 
-  // PHASE 137: "Log a call" from a lead's card.
+  // "Log a call" from a lead's card.
   const leadCall = /^\/staff\/leads\/([A-Za-z0-9-]+)\/call$/.exec(path);
   if (leadCall && method === 'POST') {
     const id = leadCall[1] ?? '';
@@ -214,7 +214,7 @@ export async function handlePipeline(
   if (lead && method === 'POST') {
     const id = lead[1] ?? '';
     const f = await form(req);
-    // PHASE 137: "take it" and "Mark as lost" post from a card and return to the cards; `back` is one fixed word, never a path.
+    // "take it" and "Mark as lost" post from a card and return to the cards; `back` is one fixed word, never a path.
     const fromCards = f.get('back') === 'leads';
     const r = L.updateLead(deps, actor, id, posted(f, LEAD_FIELDS));
     if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, fromCards ? '/staff/leads' : `/staff/leads/${id}`);
@@ -228,7 +228,7 @@ export async function handlePipeline(
     return 'handled';
   }
   if (path === '/staff/pipeline' && method === 'GET') {
-    // UI TIDY PHASE 3: one table, grouped by stage, by default; `layout=board` is the board of columns, as it was.
+    // One table, grouped by stage, by default; `layout=board` is the board of columns, as it was.
     const b = C.pipelineBoard(db, actor, d.app.now());
     html(res, 200, url.searchParams.get('layout') === 'board' ? boardPage(d, actor, b, done)
       : pipelineTable(d, actor, b, done, d.app.now(), { q: url.searchParams.get('q') ?? '', show: url.searchParams.get('show') ?? '' }));
@@ -256,7 +256,7 @@ export async function handlePipeline(
     return 'handled';
   }
 
-  /* PHASE 158b (F31): open the claim's survey job for the surveyor chosen; it seals the estimate (src/web/survey-open.ts). */
+  /* Open the claim's survey job for the surveyor chosen; it seals the estimate (src/web/survey-open.ts). */
   const surveyJob = /^\/staff\/claims\/([A-Za-z0-9-]+)\/survey-job$/.exec(path);
   if (surveyJob && method === 'POST') {
     const id = surveyJob[1] ?? '';
@@ -316,7 +316,7 @@ function orNot(v: string | null | undefined, none: string): Safe {
 }
 
 /**
- * THE WEBSITE'S ENQUIRY FORM, WAITING FOR SALES — PHASE 133j. Each enquiry is opened as a lead (with a contact
+ * THE WEBSITE'S ENQUIRY FORM, WAITING FOR SALES. Each enquiry is opened as a lead (with a contact
  * holding the person) or closed. Nothing here decides anything: src/modules/public-site/enquiries.ts authorises and writes.
  */
 function enquiriesPage(d: PipelinePageDeps, actor: Actor, rows: readonly E.EnquiryRow[], msg: string | undefined): string {
@@ -352,7 +352,7 @@ function nowIso(): string {
 export function enquiryBlock(
   e: P.EnquiryReading & { readonly evidence: Readonly<Record<P.CheckKey, readonly string[]>> }, action: string | null,
 ): Safe {
-  // PHASE 133c: each check reads as one short answer. "Not known" is an answer that decides the gate, so every check is
+  // Each check reads as one short answer. "Not known" is an answer that decides the gate, so every check is
   // always shown — a check nobody has recorded reads "Not known" too, because it does not pass either.
   return h`${e.open
     ? h`<p>${badge('Ready', 'ok')} Every check is a yes.</p>`
@@ -379,8 +379,8 @@ export function enquiryBlock(
  * ------------------------------------------------------------------ */
 
 /**
- * PHASE 137: the top of both leads layouts — the heading, the two lists, the saved message and the Cards / List view switch.
- * UI TIDY PHASE 5, 2 October 2026: one heading with one line of counts and one main button, Record a lead; then the
+ * The top of both leads layouts — the heading, the two lists, the saved message and the Cards / List view switch.
+ * One heading with one line of counts and one main button, Record a lead; then the
  * sections' counts as solid boxes (cards only, each a link to its section); then every switch on one row — the two lists,
  * the two layouts, Website enquiries with its count, and Filter. The record form is folded until it is asked for.
  */
@@ -424,7 +424,7 @@ function recordLeadForm(d: PipelinePageDeps, orgs: readonly { id: string; name: 
 }
 
 /**
- * PHASE 137 — THE LEADS AS CARDS, IN FOUR SECTIONS (src/modules/crm/lead-cards.ts draws them). New is first and never folded;
+ * THE LEADS AS CARDS, IN FOUR SECTIONS (src/modules/crm/lead-cards.ts draws them). New is first and never folded;
  * Closed is folded. Each card opens in place. The filters are behind one button, and the table is "List view".
  */
 function leadCardsPage(
@@ -477,7 +477,7 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
     ? h`<a href="/staff/clients/${v.organisation.id}">${v.organisation.name}</a>` : h`${v.organisation.name}`;
   const step = leadNextStep({ open: v.enquiry.open, needs: v.enquiry.checks.map((c) => ({ what: c.label, met: c.passes })) },
     v.edit !== undefined && v.may_convert, v.may_write);
-  /* PHASE 139 (carried from 138): A LEAD'S PAGE AS SECTIONS. WE NEED is the enquiry checks not yet passed; the old tab ids
+  /* A LEAD'S PAGE AS SECTIONS. WE NEED is the enquiry checks not yet passed; the old tab ids
      stay the anchors. */
   const ctx: SectionContext = { prefs: sectionPrefs(d.app.db, actor), back: `/staff/leads/${v.id}` };
   const leadNeed: Need[] = v.enquiry.checks.filter((c) => !c.passes).map((c) => ({ label: c.label }));
@@ -497,7 +497,7 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
         { key: 'lead.details', id: 'details', kind: 'company', heading: 'The lead',
           status: converted ? 'DONE' : 'WORKING',
           working: converted ? 'Nothing — this lead is now a claim.' : leadNeed.length === 0
-            // PHASE 157c (the Friary House run, F7): the Convert button shows only once the lead is Qualified; say so.
+            // The Convert button shows only once the lead is Qualified; say so.
             ? (v.status.key === 'QUALIFIED' ? 'Every check is a yes. Convert it to open the claim.' : 'Every check is a yes. Set the status to Qualified (Change the lead, below), then convert it to open the claim.')
             : 'Checking whether this is a claim we can take on.',
           need: converted ? [] : leadNeed, from: ['the client', v.source.label], body: h`
@@ -588,12 +588,12 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
  * ------------------------------------------------------------------ */
 
 /**
- * PHASE 133a: THE BOARD AS COLUMNS OF CARDS. The markup is an ordered list of stages, each holding a list of cards, so
+ * THE BOARD AS COLUMNS OF CARDS. The markup is an ordered list of stages, each holding a list of cards, so
  * without the stylesheet — or on a phone — it reads as a plain list, stage by stage. Nothing about a move changed: the
  * button posts the same form, and the server asks the gate again.
  */
 function card(c: C.BoardCard): Safe {
-  // PHASE 134: a card leads with the company; the property under it; the reference a small grey label.
+  // A card leads with the company; the property under it; the reference a small grey label.
   return h`<li class="cardlet"><p class="ref"><a href="/staff/claims/${c.id}">${c.client}</a></p>
     <p class="help">${c.property ?? 'no property recorded'} ${claimRef(c.claim_ref)}<br>owner: ${c.owner ?? 'nobody yet'} ·
     ${c.age_days} day${c.age_days === 1 ? '' : 's'} since its last move</p>
@@ -614,11 +614,11 @@ function column(id: string, label: string, list: readonly C.BoardCard[], about: 
 }
 
 /* ------------------------------------------------------------------ *
- * THE PIPELINE AS ONE TABLE — UI TIDY PHASE 3, 2 October 2026
+ * THE PIPELINE AS ONE TABLE
  * ------------------------------------------------------------------ */
 
 /**
- * Lakhbir chose "design 2" (00-START-HERE/hub/UI-TIDY-PLAN.md): the pipeline as one table, grouped by stage, with colours
+ * the owner chose "design 2" (00-START-HERE/hub/UI-TIDY-PLAN.md): the pipeline as one table, grouped by stage, with colours
  * and darker boxes "to make this easier to read". At laptop width the board of columns ran off the right edge. Every
  * claim the board showed is a row here, in the same groups of stages (src/core/look.ts), the latest next step first; the
  * row keeps the card's Move button, under its next step, and the board itself is one click away (`layout=board`). Search and the four

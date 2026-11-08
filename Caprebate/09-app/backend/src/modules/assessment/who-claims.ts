@@ -1,7 +1,7 @@
 /**
- * WHO CLAIMS, AND WHAT THE REGISTERS ALREADY SAY — PHASE 159g, 10 October 2026.
+ * WHO CLAIMS, AND WHAT THE REGISTERS ALREADY SAY.
  *
- * The stress test of 9 October 2026 (the Lockwood Surgery live run, L2, L8 and L11; the coverage matrix 2.4, 2.5, 3.1
+ * The stress test (the Lockwood Surgery live run, L2, L8 and L11; the coverage matrix 2.4, 2.5, 3.1
  * and 3.6). The live run picked a dormant company as the owner, and the registers held a real sale price and tenure
  * that nobody read. This file reads what the registers already hold, and says it where a person decides:
  *
@@ -107,7 +107,7 @@ export function yearEndFrom(client: { month: number; day: number } | null, reg: 
 export type SearchedCompany = { readonly number: string; readonly status: string | null; readonly accounts_type: string | null; readonly dormant: boolean };
 
 /**
- * PHASE 159l (L13): WHAT THE COMPANY SEARCH READ AT THE ASSESSMENT — the company the person picked, its status and its
+ * WHAT THE COMPANY SEARCH READ AT THE ASSESSMENT — the company the person picked, its status and its
  * latest accounts' type (migration 114), from the newest assessment that picked one. The register record the paid
  * research writes is newer and wins wherever it exists; this is what is known before it. A type not read is not known.
  */
@@ -159,7 +159,7 @@ export function claimantRole(db: Db, property_id: string | null): RoleReading {
 /**
  * THE QUALIFYING-ACTIVITY CHECK, IN WORDS — what the records say, for the person answering the enquiry check (it is
  * still a person who answers it). A dormant company is said first — the register's, or before the research the company
- * search's at the assessment (Phase 159l, L13); then how the client holds each building.
+ * search's at the assessment; then how the client holds each building.
  */
 export function qualifyingActivityEvidence(db: Db, business_id: string): string[] {
   const out: string[] = [];

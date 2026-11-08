@@ -1,7 +1,7 @@
 /**
- * CHAT BECOMES COMMUNICATION — 1 October 2026 (mock-up approved by Lakhbir: "approved").
+ * CHAT BECOMES COMMUNICATION — 1 October 2026.
  *
- * Lakhbir: "When i click on chat … it should be a chat window, drop down box choosing whats app, email, or portal or
+ * the owner: "When i click on chat … it should be a chat window, drop down box choosing whats app, email, or portal or
  * internal team only. it should then have a message box (and subject line if needed) … on the right hand side it should
  * be a whole conversation flow, emails, whats app messages, portal messages and internal team chat … log a call can be on
  * here as well. and the chat word turns in to communication". Then: "click on the boxes on the right, clicking
@@ -110,7 +110,7 @@ export function feed(c: Ctx): FeedItem[] {
           meta: e.state, isNew: e.unread, href: replyHref(c, `via=email&thread=${encodeURIComponent(ch.key)}`), hint: 'Click to reply' });
       }
     }
-    // WhatsApp, both ways. PHASE 156c: a message added from the phone's export says so, is never "new", and our side is
+    // WhatsApp, both ways. A message added from the phone's export says so, is never "new", and our side is
     // named as the phone named it. While the live connection is off, a click opens the WhatsApp page, not a reply here.
     const waLive = whatsappMissing(c.app.secrets, c.app.whatsappPolicy, { outside: c.app.outside }).length === 0;
     for (const w of listWhatsappMessagesIdCreatedAtByBusinessId<{ id: string; created_at: string; direction: string; body: string; status: string; error: string | null; contact_id: string | null; contact: string | null; writer: string | null; phone: string; sender: string | null }>(db, [business_id])) {
@@ -141,7 +141,7 @@ export function feed(c: Ctx): FeedItem[] {
         who: `${video ? 'Zoom call' : 'Telephone call'} ${b.cancelled_at === null ? 'booked' : 'cancelled'}${b.who === null ? '' : ` with ${b.who}`}`,
         subject: b.starts_at === null ? 'No time yet' : `${dayWords(b.starts_at, now)}, ${localClock(b.starts_at)}${b.ends_at === null ? '' : `–${localClock(b.ends_at)}`}`,
         body: b.cancelled_at !== null ? 'Cancelled.' : video ? (m === undefined ? 'The Zoom link follows by email once the meeting is made.' : open ? 'It is time: click to start the call.'
-          // PHASE 156d: once Zoom has said how long it lasted (or that our plan does not say), that is shown instead.
+          // Once Zoom has said how long it lasted (or that our plan does not say), that is shown instead.
           : callLengthWords(callLengthOf(db, b.id)) ?? 'The invite and its join link were emailed.') : 'We ring them at that time.',
         meta: null, isNew: false,
         href: open ? `/staff/calendar/${b.id}/video` : replyHref(c, video ? 'via=zoom' : 'via=call'), hint: open ? 'Start the call' : video ? 'Click to book another' : 'Click to log a call' });
@@ -160,7 +160,7 @@ export function feed(c: Ctx): FeedItem[] {
   return out.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : a.id < b.id ? -1 : 1));
 }
 
-/** A claim in words, without its reference: a box is a link, and no link's text is a claim reference (Phase 134). */
+/** A claim in words, without its reference: a box is a link, and no link's text is a claim reference. */
 function withoutRef(about: string): string {
   return about.replace(/\s*\(CR-[0-9A-Z-]+\)\s*$/, '');
 }
@@ -211,8 +211,8 @@ function people(c: Ctx): Choice[] {
 }
 
 /**
- * PHASE 156c: while WhatsApp is not connected live, the way in for a chat from the phone (src/modules/crm/whatsapp-import.ts).
- * Lakhbir, 5 Oct 2026: "doesnt it make sense to have the upload option on the companies conversation". The upload itself
+ * While WhatsApp is not connected live, the way in for a chat from the phone (src/modules/crm/whatsapp-import.ts).
+ * The owner: "doesnt it make sense to have the upload option on the companies conversation". The upload itself
  * opens on the WhatsApp page, with the person last on WhatsApp chosen: a real export is far bigger than the test website
  * takes at once, so that page runs a script that opens it on the person's computer — and this page carries no script
  * (test/phase133a: every page reached from home works without one).
@@ -242,7 +242,7 @@ function mayVia(c: Ctx): Via[] {
   const obj = { type: 'client_message' as const, id: business_id, business_id };
   const out: Via[] = [];
   if (can(actor, 'email.queue', { type: 'email', id: business_id, business_id })) out.push('email');
-  // PHASE 156c: WhatsApp is offered here only while the live connection is on; otherwise the box says to use the phone
+  // WhatsApp is offered here only while the live connection is on; otherwise the box says to use the phone
   // and add the chat (see `composer`).
   if (can(actor, 'client_message.write', obj)) out.push(...(whatsappLive(c) ? ['whatsapp' as const] : []), 'portal');
   if (can(actor, 'internal_note.write', { type: 'internal_note', id: business_id, business_id })) out.push('team');
@@ -297,7 +297,7 @@ export function composer(c: Ctx, p: Prefill, refused?: string): Safe {
   const wa = W.phoneContacts(db, c.business_id, c.now);
   const waMissing = whatsappMissing(c.app.secrets, c.app.whatsappPolicy, { outside: c.app.outside });
   const sendingNow = sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(c.app.secrets), mailWhere(c.app));
-  // 1 Oct 2026: why Zoom makes no meeting from here, if it does not (the keys, the transfer, or not the test website).
+  // Why Zoom makes no meeting from here, if it does not (the keys, the transfer, or not the test website).
   const zoomOff = zoomBlockers(c.app);
   // Zoom: this person's own free hours, the next fortnight.
   const slots = (() => {
@@ -384,7 +384,7 @@ const DONE: Readonly<Record<string, string>> = {
   'sent-portal': 'Sent. They will see it in their portal.', 'sent-team': 'Saved. Only your team can see it.',
   'logged-call': 'The call is logged.', 'booked-zoom': 'Booked. The invite with the join link is on its way to them.',
   'booked-no-zoom': 'Booked, but Zoom made no meeting, so the invite has no join link. Choose Zoom call to see why.',
-  // PHASE 156d: booked over another video call on the same Zoom user. A warning: the booking stands.
+  // Booked over another video call on the same Zoom user. A warning: the booking stands.
   'booked-zoom-same-time': `Booked, and the invite is on its way. ${SAME_TIME_WORDS}`,
 };
 

@@ -1,5 +1,5 @@
 /**
- * THE ACCOUNTANT'S CONFIRMATIONS, ON SCREEN — Phase 158d, 9 October 2026 (F46). src/modules/portal/accountant-confirm.ts holds the rules.
+ * THE ACCOUNTANT'S CONFIRMATIONS, ON SCREEN. src/modules/portal/accountant-confirm.ts holds the rules.
  *
  *   On the claim page   "The accountant's confirmations": what was sent and what came back, and (Admin and Sales, at the
  *                       right stage, on the accountant route) a form to send the link.
@@ -32,7 +32,7 @@ export function accountantConfirmBlock(db: Db, actor: Actor, claim_id: string): 
   if (rows.length === 0 && !mayAsk) return raw('');
   const people = mayAsk ? A.accountantContacts(db, c.business_id) : [];
   const returns = mayAsk && kind === 'FILED' ? A.returnsOf(db, claim_id, new Date().toISOString()) ?? [] : [];
-  // A closed claim asks only about a return held in aftercare (PHASE 159l).
+  // A closed claim asks only about a return held in aftercare.
   if (c.stage === 'CLOSED' && returns.length <= 1 && rows.length === 0) return raw('');
   const asking = mayAsk && !(c.stage === 'CLOSED' && returns.length <= 1);
   return h`<div class="pblock" id="accountant-confirm"><h3>The accountant’s confirmations</h3>

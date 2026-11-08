@@ -1,7 +1,7 @@
 /**
- * VIDEO CALLS: THE MEETING, THE LINK, AND THE TWO JOIN PAGES. 30 September 2026.
+ * VIDEO CALLS: THE MEETING, THE LINK, AND THE TWO JOIN PAGES..
  *
- * Lakhbir: "with the video call link this should be sent automatically, and i feel zoom would be best for this as we
+ * the owner: "with the video call link this should be sent automatically, and i feel zoom would be best for this as we
  * can run it via our platform, is there a way to have zoom embeded on our back end so its done though there?"
  *
  * WHEN A VIDEO CALL CHANGES, ITS MEETING FOLLOWS (`reconcileVideoMeeting`, called after every write that changes a
@@ -20,7 +20,7 @@
  * WITHOUT ZOOM (no keys yet, or the transfer not approved) nothing here makes a meeting; the call still stands, the
  * email says the link will follow, and the back office says to send one — exactly as before.
  *
- * PHASE 156d, 5 October 2026 — THE FREE ZOOM PLAN AND ONE SHARED HOST (Lakhbir: "yes change 156d so i dont pay";
+ * THE FREE ZOOM PLAN AND ONE SHARED HOST (the owner: "yes change 156d so i dont pay";
  * "contact@caprebate is enough"). Three things follow, all here:
  *   · THE 40 MINUTES, SAID PLAINLY (`zoomPlanLine`): where staff book a video call, on the call's pages, and in the
  *     invitation (`videoJoinWords`). Gone once ZOOM_PLAN says a paid plan.
@@ -44,7 +44,7 @@ import { getUsersEmailDisplayNameById } from '../../core/index.ts';
 import { getBookingsChannelById, getBookingsChannelStartsAtById, getBookingsStartsAtEndsAtById } from './data.ts';
 import { getBookingsCountByIdChannel, getBookingsIdEmailByIdDisabledAt, getSurveyWalkthroughsXByBookingId } from './data-borrowed.ts';
 
-/** A call that holds a moment: a telephone call (CB_BOOKING) or, since 30 Sep 2026, a video call. */
+/** A call that holds a moment: a telephone call (CB_BOOKING) or, a video call. */
 export function booksATime(channel: string): boolean {
   return BOOKING.booksASlot(channel) || channel === 'video';
 }
@@ -52,7 +52,7 @@ export function booksATime(channel: string): boolean {
 export type Meeting = {
   readonly id: string; readonly booking_id: string; readonly meeting_id: string; readonly join_url: string;
   readonly passcode: string | null; readonly client_token: string; readonly created_at: string;
-  /** PHASE 153f (migration 084): whose Zoom user the meeting was made under; null, the shared host. */
+  /** Whose Zoom user the meeting was made under; null, the shared host. */
   readonly host_user_id: string | null;
 };
 
@@ -61,8 +61,8 @@ export function activeMeeting(db: Db, booking_id: string): Meeting | undefined {
 }
 
 /**
- * PHASE 153f, 4 October 2026 — WHO HOSTS A CALL. One Zoom user hosts one meeting at a time (learned on the first live
- * calls, 30 Sep 2026), so each call is made under the member of staff it is assigned to: their sign-in email, which must
+ * WHO HOSTS A CALL. One Zoom user hosts one meeting at a time (learned on the first live
+ * calls), so each call is made under the member of staff it is assigned to: their sign-in email, which must
  * be a user on our Zoom account. A call with nobody assigned, or assigned to someone disabled, uses the shared host.
  */
 export function callHost(db: Db, booking_id: string): { readonly user_id: string; readonly email: string; readonly name: string } | null {
@@ -70,7 +70,7 @@ export function callHost(db: Db, booking_id: string): { readonly user_id: string
   return u === undefined ? null : { user_id: u.id, email: u.email, name: u.display_name };
 }
 
-/** PHASE 153f: the meeting's host, for the start token and the call's page. Null, the shared host. */
+/** The meeting's host, for the start token and the call's page. Null, the shared host. */
 export function meetingHost(db: Db, m: Meeting): { readonly email: string; readonly name: string } | null {
   if (m.host_user_id === null) return null;
   const u = getUsersEmailDisplayNameById<{ email: string; display_name: string }>(db, [m.host_user_id]);
@@ -83,23 +83,23 @@ export function zoomDeps(app: App): ZoomDeps {
 }
 
 /**
- * 1 Oct 2026: everything that stops THIS app calling Zoom, in words: the keys, the transfer, and whether this copy is
+ * Everything that stops THIS app calling Zoom, in words: the keys, the transfer, and whether this copy is
  * the test website (or was started with CAPREBATE_LOCAL_ZOOM=1). Empty means Zoom is on. Every screen asks this.
  */
 export function zoomBlockers(app: App): string[] {
   return zoomMissing(app.secrets, app.zoomPolicy, { outside: app.outside });
 }
 
-/** PHASE 156d: the free plan's 40-minute line, or null on a paid plan. */
+/** The free plan's 40-minute line, or null on a paid plan. */
 export function zoomPlanLine(app: App): string | null {
   return zoomPlanIsFree(app.secrets) ? FREE_PLAN_LINE : null;
 }
 
-/** PHASE 156d: said wherever a video call is booked or moved over another with the same Zoom host. */
+/** Said wherever a video call is booked or moved over another with the same Zoom host. */
 export const SAME_TIME_WORDS = 'Another video call is booked at this time. Only one can run at once on our Zoom account.';
 
 /**
- * PHASE 156d: how many OTHER live video calls overlap this one and would run under the same Zoom user. A call's host is
+ * How many OTHER live video calls overlap this one and would run under the same Zoom user. A call's host is
  * its meeting's (host_user_id; null is the shared host); a call with no meeting yet counts as the shared host, which is
  * where it would go. Two calls under different members of staff's own Zoom users do not clash.
  */
@@ -110,14 +110,14 @@ export function videoCallsAtSameTime(db: Db, booking_id: string): number {
   return getBookingsCountByIdChannel<{ n: number }>(db, [booking_id, b.ends_at, b.starts_at, host])?.n ?? 0;
 }
 
-/** PHASE 156d: what is kept of a call's length (migration 091). */
+/** What is kept of a call's length (migration 091). */
 export type CallLength = { readonly call_minutes: number | null; readonly call_people: number | null; readonly call_check_state: string | null; readonly call_checked_at: string | null };
 
 export function callLengthOf(db: Db, booking_id: string): CallLength | undefined {
   return getVideoMeetingsCallMinutesCallPeopleByBookingIdCancelledAt<CallLength>(db, [booking_id]);
 }
 
-/** PHASE 156d: a call's length in words, or null when nothing has been learned yet. */
+/** A call's length in words, or null when nothing has been learned yet. */
 export function callLengthWords(c: CallLength | undefined): string | null {
   if (c === undefined) return null;
   if (c.call_check_state === 'NOT_ON_PLAN') return NOT_ON_PLAN_WORDS;
@@ -127,7 +127,7 @@ export function callLengthWords(c: CallLength | undefined): string | null {
 }
 
 /**
- * PHASE 156d: ask Zoom how long the call lasted and how many joined, and keep the two numbers. A later answer that is
+ * Ask Zoom how long the call lasted and how many joined, and keep the two numbers. A later answer that is
  * not FOUND keeps any numbers already kept. Never throws; one or two calls to Zoom.
  */
 export async function checkCallLength(app: App, actor: { id: string; role: string }, booking_id: string): Promise<PastCall> {
@@ -164,11 +164,11 @@ export async function reconcileVideoMeeting(app: App, booking_id: string): Promi
     const ok = await moveZoomMeeting(zd, m.meeting_id, b.starts_at, SLOT_MINUTES).catch(() => false);
     return ok ? 'MOVED' : { not_made: 'Zoom did not take the new time. The link still works; the host starts the call at the new time.' };
   }
-  // 2 Oct 2026: a survey walkthrough call (src/web/survey-evidence.ts) is recorded, so the surveyor can watch it.
+  // A survey walkthrough call (src/web/survey-evidence.ts) is recorded, so the surveyor can watch it.
   const record = getSurveyWalkthroughsXByBookingId(app.db, [booking_id]) !== undefined;
-  // PHASE 153f: made under the assigned member of staff, so two calls at once can both run; if they have no Zoom user
+  // Made under the assigned member of staff, so two calls at once can both run; if they have no Zoom user
   // on our account, under the shared host instead, and the audit line says so.
-  /* PHASE 157c (the Friary House run, F5): on the free plan every call is the shared host's (Phase 156d: "contact@caprebate
+  /* On the free plan every call is the shared host's (Phase 156d: "contact@caprebate
      is enough"), so it goes straight there - asking under the assigned member of staff first cost a refused call and an
      error row on every booking. On a paid plan, as Phase 153f built it: the assigned member of staff, else the shared host. */
   const host = zoomPlanIsFree(app.secrets) ? null : callHost(app.db, booking_id);
@@ -210,7 +210,7 @@ export function videoJoinWords(db: Db, booking_id: string, origin: string, freeP
       `Or open it in the Zoom app: ${m.join_url}`,
       `Meeting ID: ${m.meeting_id.replace(/(\d{3})(\d{3,4})(\d{4})$/, '$1 $2 $3')}${m.passcode === null ? '' : `, passcode: ${m.passcode}`}`,
       'You will wait in a waiting room until we let you in.',
-      // PHASE 156d: the free plan's limit, said in the invitation too.
+      // The free plan's limit, said in the invitation too.
       ...(freePlan ? [FREE_PLAN_LINE] : []),
     ].join('\n'),
   };
@@ -225,7 +225,7 @@ export function videoJoinWords(db: Db, booking_id: string, origin: string, freeP
  */
 export const VIDEO_PAGE_CSP =
   "default-src 'none'; " +
-  // blob: — the first real call (30 Sep 2026) showed Zoom's SDK loads part of its video screen as a blob: script;
+  // blob: — the first real call showed Zoom's SDK loads part of its video screen as a blob: script;
   // refused, the call started but its picture did not (ChunkLoadError). Still no inline script and no other origin.
   "script-src 'self' blob: https://source.zoom.us 'wasm-unsafe-eval' 'unsafe-eval'; " +
   "style-src 'self' 'unsafe-inline' https://source.zoom.us; " +
@@ -247,7 +247,7 @@ export const VIDEO_PAGE_HEADERS: Readonly<Record<string, string>> = Object.freez
 });
 
 /** Zoom's own files, in the order its component view needs them (developers.zoom.us, read 30 Sep 2026). */
-// Read when used, not while this file loads (Phase 161i: the areas' front doors load whole, and the code still loops between areas until Phase 161l).
+// Read when used, not while this file loads.
 export const zoomScripts = (): readonly string[] => Object.freeze([
   `${ZOOM_SDK_BASE}/lib/vendor/react.min.js`, `${ZOOM_SDK_BASE}/lib/vendor/react-dom.min.js`,
   `${ZOOM_SDK_BASE}/lib/vendor/redux.min.js`, `${ZOOM_SDK_BASE}/lib/vendor/redux-thunk.min.js`,

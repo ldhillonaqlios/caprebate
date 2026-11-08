@@ -1,7 +1,7 @@
 /**
- * THE NEW HOME PAGE, SERVED BY THE BACK END — 29 September 2026.
+ * THE NEW HOME PAGE, SERVED BY THE BACK END —.
  *
- * Lakhbir: "this look good, push it to vercel". The page designed in Website Content/landing-page is copied, as one
+ * the owner: "this look good, push it to vercel". The page designed in Website Content/landing-page is copied, as one
  * file, to Caprebate/09-app/site/home.html, and this module serves an edition of it at `/`. When that file is not
  * beside the build, `/` falls back to `Caprebate site.html` (src/modules/public-site/public-site.ts), and then to the back end's own
  * home page, as before.
@@ -20,7 +20,7 @@
  *
  * THE PATHS ARE CONSTANTS. No request path is ever mapped onto the disk.
  *
- * PHASE 160k, 21 OCTOBER 2026: THE NEW PUBLIC WEBSITE. Lakhbir: "push it live". The home page is now the
+ * THE NEW PUBLIC WEBSITE. the owner: "push it live". The home page is now the
  * "Kurbelwerk" design, and five sector landing pages join it at /capital-allowances/<sector>/ (site/capital-allowances/
  * <sector>.html). Both come from their design files through tools/site-from-design.mjs, which turns every style
  * attribute into a class and self-hosts the fonts. Every page is built the same way here (buildEdition): its <style>
@@ -28,7 +28,7 @@
  * scripts in its body become /assets/<name>.js, placed where the LAST of them stood, so they run after the page is
  * read. The page policy gains font-src 'self' for the fonts (/assets/fonts/, site/fonts/), and nothing else.
  *
- * PHASE 160n, 28 OCTOBER 2026: THE X-RAY HOME PAGE. The home page is now the X-ray (a clinic whose walls turn
+ * THE X-RAY HOME PAGE. The home page is now the X-ray (a clinic whose walls turn
  * see-through on a twelve-second scan, ending on the figure), written by the same tool from its own design file. It is
  * served exactly as before; its two fonts join the list below. The sector pages are unchanged.
  */
@@ -39,7 +39,7 @@ import { join } from 'node:path';
 export const HOME_PATH = join(import.meta.dirname, '..', '..', '..', '..', 'site', 'home.html');
 export const SITE_DIR = join(import.meta.dirname, '..', '..', '..', '..', 'site');
 
-/** The sector landing pages (Phase 160k): their addresses, in the order the site lists them. */
+/** The sector landing pages: their addresses, in the order the site lists them. */
 export const SECTOR_SLUGS = ['care-homes', 'dental-practices', 'gp-surgeries', 'supported-living', 'private-hospitals-and-clinics'] as const;
 export type SectorSlug = (typeof SECTOR_SLUGS)[number];
 export function isSectorSlug(x: string): x is SectorSlug { return (SECTOR_SLUGS as readonly string[]).includes(x); }
@@ -51,7 +51,7 @@ export const FONT_FILES = [
   'ibm-plex-sans-latin-400-normal.woff2', 'ibm-plex-sans-latin-500-normal.woff2', 'ibm-plex-sans-latin-600-normal.woff2',
   'ibm-plex-sans-condensed-latin-500-normal.woff2', 'ibm-plex-sans-condensed-latin-600-normal.woff2', 'ibm-plex-sans-condensed-latin-700-normal.woff2',
   'ibm-plex-mono-latin-400-normal.woff2', 'ibm-plex-mono-latin-500-normal.woff2', 'ibm-plex-mono-latin-600-normal.woff2',
-  // Phase 160n: the X-ray home page's two (SIL Open Font License, site/fonts/OFL-INTER-TIGHT.txt, OFL-JETBRAINS-MONO.txt)
+  // The X-ray home page's two (SIL Open Font License, site/fonts/OFL-INTER-TIGHT.txt, OFL-JETBRAINS-MONO.txt)
   'inter-tight-latin-wght-normal.woff2', 'jetbrains-mono-latin-500-normal.woff2',
 ] as const;
 export const GSAP_PATH = join(import.meta.dirname, '..', '..', '..', '..', '..', '..', 'node_modules', 'gsap', 'dist', 'gsap.min.js');
@@ -86,7 +86,7 @@ const INLINE: readonly [RegExp, string][] = [
   [/href\s*=\s*["']?\s*javascript:/i, 'a javascript: link'],
 ];
 
-/** Build a page's served edition from its text (Phase 160k: any page, by name). Pure, so a test can hand it a string.
+/** Build a page's served edition from its text. Pure, so a test can hand it a string.
  *  The <style> block becomes /assets/<name>.css. Scripts in the <head> become /assets/<name>-head.js where the first
  *  of them stood; scripts in the body become /assets/<name>.js where the LAST of them stood, so they run once the
  *  page is read. The structured data (ld+json) stays as it is; anything else inline is refused. */

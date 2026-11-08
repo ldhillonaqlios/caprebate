@@ -1,6 +1,6 @@
 /**
  * DOCUMENTS ON THE CLAIM — TYPES, VERSIONS, LINKS, REQUESTS, AND WHO MAY READ
- * WHICH. CRM 4 of 10, 11 September 2026.
+ * WHICH. CRM 4 of 10.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * THERE IS STILL ONE UPLOAD HANDLER
@@ -73,7 +73,7 @@ import { listDocumentFieldVouchesIdBusinessIdByRequestIdJO, listDocumentFieldVou
 
 export type DocDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
-/** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
+/** `field` is the posted name a refusal is about, where it is about one. */
 export type DocResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
 type Vocab = Readonly<Record<string, string>>;
 type DocObj = Extract<Obj, { type: 'document' }>;
@@ -153,7 +153,7 @@ const REPORT_NOT_DELIVERED =
   'we have not sent the client report yet, so that date is not known — a draft does not count';
 
 /**
- * RET-7'S TWO DATES, READ FROM THE CLAIM — DERIVED, NOT STORED. Phase 132, 14 September 2026.
+ * RET-7'S TWO DATES, READ FROM THE CLAIM — DERIVED, NOT STORED. 14 September 2026.
  *
  * The ingestion module's RawFileRecord declares `claim_period_end` and `report_delivered_at` and nothing ever filled
  * them. Both are already on record, so neither gets a column (the house rule READ, NOT STORED — migration 017 and
@@ -172,10 +172,10 @@ const REPORT_NOT_DELIVERED =
  * (which claim's dates govern is not decided here), or where a date is not known. NOTHING HERE COMPUTES A DELETION DATE:
  * RET-7 is not approved, and `deletionDueAt` in the ingestion module is where a date would come from. Its rule where two
  * clocks are known is that the LATER governs — the file is kept until both periods have ended (Word answer 173, closed
- * 24 September 2026; until Phase 151b it took the earlier).
+ *; it took the earlier).
  */
 /**
- * PHASE 142a — ONE CLAIM'S TWO FILE DATES, as `ret7Limbs` reads them for a document and as the message clean-up job
+ * ONE CLAIM'S TWO FILE DATES, as `ret7Limbs` reads them for a document and as the message clean-up job
  * (src/modules/crm/message-retention.ts) reads them for a company's messages: the accounting period end (the latest
  * ACCOUNTING_PERIOD_END fact, a VALUE only — UNKNOWN reads null, as no row does, N4) and the EARLIEST issue of the client
  * report. Each YYYY-MM-DD, or null where not known. One reader, so the two can never disagree about a claim.
@@ -277,12 +277,12 @@ export function mayWriteTypes(actor: Actor): boolean {
 
 /** What an upload may be, and what may be asked for: active, with a receipt policy. A vocabulary, not a record. */
 export function receivableTypes(db: Db): { code: string; label: string; handler_type: string | null }[] {
-  // PHASE 146j: with the kind of document each type is read as, so a form can ask the question that type needs.
+  // With the kind of document each type is read as, so a form can ask the question that type needs.
   return listDocumentTypesCodeLabelByActiveHandlerType<{ code: string; label: string; handler_type: string | null }>(db);
 }
 
 /**
- * PHASE 146j: THE QUESTIONS A TYPE-CHOOSING FORM ASKS, for a login that may answer them — and none for anybody else,
+ * THE QUESTIONS A TYPE-CHOOSING FORM ASKS, for a login that may answer them — and none for anybody else,
  * the client included. The client never vouches for their own document.
  */
 export function earlyQuestionsFor(
@@ -418,15 +418,15 @@ export function documentObj(db: Db, l: { id: string; business_id: string; reader
   };
 }
 
-/** PHASE 153c: who owns this client — the organisation's owner and each of its claims' owners. Read by `document.read_original`. */
+/** Who owns this client — the organisation's owner and each of its claims' owners. Read by `document.read_original`. */
 export function clientOwners(db: Db, business_id: string): string[] {
   const rows = listBusinessesOByIdBusinessId<{ o: string | null }>(db, [business_id, business_id]);
   return rows.map((r) => r.o).filter((x): x is string => typeof x === 'string' && x !== '');
 }
 
 /**
- * PHASE 140 — CAN THE CLIENT SEE THIS FILE AT ALL? The latest row of `document_visibility` (migration 035) says, where
- * there is one. Where there is none, a file the client sent is theirs to see, and a file staff sent is not — Lakhbir's
+ * CAN THE CLIENT SEE THIS FILE AT ALL? The latest row of `document_visibility` (migration 035) says, where
+ * there is one. Where there is none, a file the client sent is theirs to see, and a file staff sent is not — the owner's
  * default, "no". `clientDocument` in src/core/authz.ts reads this, and still applies every other rule on top of it.
  */
 export function shownToClient(db: Db, logical_id: string): boolean {
@@ -437,7 +437,7 @@ export function shownToClient(db: Db, logical_id: string): boolean {
 }
 
 /**
- * PHASE 140 — SHOW A FILE TO THE CLIENT, OR STOP SHOWING IT. Admin and Sales (`document.show_to_client`), on a document
+ * SHOW A FILE TO THE CLIENT, OR STOP SHOWING IT. Admin and Sales (`document.show_to_client`), on a document
  * they may read. A new row each time, audited; nothing about the document itself changes.
  */
 export function setShownToClient(d: DocDeps, actor: Actor, logical_id: string, shown: boolean): DocResult & { business_id?: string } {
@@ -519,7 +519,7 @@ function versionView(r: VersionRow): VersionView {
     id: r.id, version_no: r.version_no, uploaded: localStamp(r.created_at),
     by: r.uploader_role === 'CLIENT' ? 'the client' : r.uploader_role === null ? 'nobody recorded' : `staff (${r.uploader_role.toLowerCase()})`,
     received,
-    // PHASE 140: in words a person reads. The codes are still on the row and in the handler's own record.
+    // In words a person reads. The codes are still on the row and in the handler's own record.
     state: r.failure_code !== null ? (FAILURE_WORDS[r.failure_code] ?? 'We could not use it.')
       : received ? 'Read — we kept what we need'
         : 'Not read yet',
@@ -547,17 +547,17 @@ export type StartArgs = {
   readonly request_id: string | null;
   /** Staff only: link a new document to this claim. */
   readonly claim_id: string | null;
-  /** PHASE 159j (item 5), staff only: the event on the building this NEW document proves (property_events). Absent or
+  /** Staff only: the event on the building this NEW document proves (property_events). Absent or
    *  empty: the request's event, where it answers one that names an event; otherwise none. A new version keeps its
    *  document's. */
   readonly event_id?: string | null;
   /**
-   * PHASE 140, staff only: whether the client can see a NEW document. Absent is no — Lakhbir's default. A client's own
+   * Staff only: whether the client can see a NEW document. Absent is no — the owner's default. A client's own
    * upload is theirs to see by rule, and a new version keeps its document's answer.
    */
   readonly shown_to_client?: boolean;
   /**
-   * PHASE 146j, staff only: the answer to the one question a person must answer about a name on this kind of document,
+   * Staff only: the answer to the one question a person must answer about a name on this kind of document,
    * given on the upload form where the type is chosen — so the FIRST reading can keep the name. Written as the new
    * document's answer, the same row the page shows and changes. Ignored for a type that asks no question, for a login
    * that may not answer it, and where the document already has an answer: the page's answer governs.
@@ -608,7 +608,7 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
   if (t.active !== 1) return { ok: false, why: 'that document type has been retired.' };
   if (t.handler_type === null) return { ok: false, why: NO_RECEIPT_POLICY };
 
-  /* PHASE 159j (item 5): WHICH PIECE OF WORK A NEW DOCUMENT PROVES. Chosen by staff on the upload form, or taken from the
+  /* WHICH PIECE OF WORK A NEW DOCUMENT PROVES. Chosen by staff on the upload form, or taken from the
      request it answers; checked to be an event on one of this client's buildings. */
   let eventId: string | null = null;
   if (logical === null) {
@@ -639,7 +639,7 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
     claimToLink = request.claim_id;
     linkVia = 'REQUEST';
   } else if (logical === null && actor.role === 'CLIENT') {
-    /* PHASE 157c (the Friary House run, F20): a file the client sends from the portal, with no request, sat on the
+    /* A file the client sends from the portal, with no request, sat on the
        business and never reached the claim ("Documents 0" while six files were in). Where the client has exactly one
        open claim, it goes on that claim; with two or more, staff choose, as before. */
     const open = listClaimsIdByBusinessIdStage<{ id: string }>(d.db, [biz.id]);
@@ -662,7 +662,7 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
           lid = d.newId();
           seq = (getLogicalDocumentsMByBusinessIdTypeCode<{ m: number | null }>(d.db, [biz.id, t.code])?.m ?? 0) + 1;
           insertLogicalDocuments(d.db, [lid, biz.id, t.code, seq, actor.id, at, eventId]);
-          // PHASE 140: staff say, on every new document, whether the client can see it. The default is no.
+          // Staff say, on every new document, whether the client can see it. The default is no.
           if (actor.role !== 'CLIENT') {
             insertDocumentVisibility(d.db, [d.newId(), lid, a.shown_to_client === true ? 1 : 0, actor.id, at]);
           }
@@ -671,7 +671,7 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
             insertDocumentLinks2(d.db, [linkId, lid, claimToLink, actor.id, at]);
           }
         }
-        /* PHASE 146j: THE QUESTION, ANSWERED BEFORE THE FIRST READING — in the same transaction as the row, so the reading
+        /* THE QUESTION, ANSWERED BEFORE THE FIRST READING — in the same transaction as the row, so the reading
            this upload is about to start reads it. The upload form's own answer first; failing that, the request's, adopted
            by this document. Neither where the document already has an answer: the page's answer governs. */
         early = recordEarlyVouch(d, actor, lid, handlerType, biz.id, t, a.early_vouch ?? [],
@@ -716,7 +716,7 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
 }
 
 /* ------------------------------------------------------------------ *
- * PHASE 146j — THE EARLY ANSWER, WRITTEN OR ADOPTED
+ * THE EARLY ANSWER, WRITTEN OR ADOPTED
  * ------------------------------------------------------------------ */
 
 type EarlyVouch = {
@@ -835,7 +835,7 @@ export const REQUEST_WORDS: Readonly<Record<RequestState, string>> = Object.free
 export type RequestInput = {
   readonly business_id: string;
   readonly claim_id: string | null;
-  /** PHASE 159j (item 5): the event on the building the document is for ("the final account for the 2025 refit").
+  /** The event on the building the document is for ("the final account for the 2025 refit").
    *  Absent or empty: none. On a claim, it must be an event on the claim's building. */
   readonly event_id?: string | null;
   readonly type_code: string | null;
@@ -843,7 +843,7 @@ export type RequestInput = {
   readonly holds_up: string | null;
   readonly due_on: string | null;
   /**
-   * PHASE 146j: the answer to the question about a name, where the type asks one — given here, where the type is
+   * The answer to the question about a name, where the type asks one — given here, where the type is
    * chosen, so the first reading of what the client sends can keep it. Written against the request and adopted by the
    * document that answers it. Ignored for a type that asks none, and for a login that may not answer it.
    */
@@ -869,14 +869,14 @@ export function createDocumentRequest(
     if (c === undefined || c.business_id !== biz.id) return { ok: false, why: 'not found' };
     claim = c.id;
   }
-  /* PHASE 159j (item 5): the piece of work the document is for, on this client's buildings (the claim's, on a claim). */
+  /* The piece of work the document is for, on this client's buildings (the claim's, on a claim). */
   const evId = (i.event_id ?? '').trim();
   const ev = evId === '' ? null : eventOfBusiness(d.db, biz.id, evId);
   if (evId !== '' && (ev === null || (claim !== null && getClaimsPById<{ p: string | null }>(d.db, [claim])?.p !== ev.property_id))) {
     return { ok: false, why: 'that piece of work is not on this claim’s building.', field: 'event_id' };
   }
   const t = getDocumentTypesCodeLabelByCode<TypeRow>(d.db, [(i.type_code ?? '').trim()]);
-  // PHASE 133d (D4): each refusal about one field names it, so the form draws it beside that field.
+  // Each refusal about one field names it, so the form draws it beside that field.
   if (t === undefined) return { ok: false, why: 'choose the kind of document you are asking for.', field: 'type_code' };
   if (t.active !== 1) return { ok: false, why: 'that document type has been retired.', field: 'type_code' };
   if (t.handler_type === null) return { ok: false, why: `nothing could ever receive it. ${NO_RECEIPT_POLICY}`, field: 'type_code' };
@@ -898,7 +898,7 @@ export function createDocumentRequest(
       object_type: 'client_task', object_id: id,
       detail: { business: biz.id, claim: claim ?? '(none)', type: t.code, due: due === '' ? '(none)' : due, ...(ev === null ? {} : { event: ev.id }) },
     });
-    /* PHASE 146j: the question about a name, answered where the type is chosen. */
+    /* The question about a name, answered where the type is chosen. */
     const f = t.handler_type === null ? null : vouchedFieldFor(t.handler_type);
     const given = f === null ? null : (i.early_vouch ?? []).find((x) => x.field_id === f.field_id) ?? null;
     if (f !== null && given !== null && isVouchAnswer(given.answer) && mayVouchFor(actor, biz.id, t)) {
@@ -959,9 +959,9 @@ export type RequestView = {
   readonly asked: string;
   readonly asked_by: string | null;
   readonly received: { readonly document_id: string; readonly version_no: number | null; readonly at: string } | null;
-  /** PHASE 146j: the answer given on the request to the question about a name, where there was one. */
+  /** The answer given on the request to the question about a name, where there was one. */
   readonly early_answer: VouchAnswer | null;
-  /** PHASE 159j (item 5): the piece of work it is for, where the request names one. `type.label` then ends "— for …",
+  /** The piece of work it is for, where the request names one. `type.label` then ends "— for …",
    *  so every list that names the request says which work. */
   readonly event: { readonly id: string; readonly label: string } | null;
 };
@@ -1082,9 +1082,9 @@ export type ClaimDocumentsPanel = {
   readonly may_upload: boolean;
   readonly request_types?: readonly { readonly code: string; readonly label: string; readonly handler_type: string | null }[];
   readonly linkable?: readonly { readonly id: string; readonly label: string }[];
-  /** PHASE 146j: the question about a name, asked on the request and upload forms where the type is chosen. */
+  /** The question about a name, asked on the request and upload forms where the type is chosen. */
   readonly early_questions?: readonly { readonly field_id: string; readonly question: string; readonly types: readonly string[] }[];
-  /** PHASE 159j (item 5): the events on the claim's building, offered on the request and upload forms ("Which piece of
+  /** The events on the claim's building, offered on the request and upload forms ("Which piece of
    *  work is it for?"). Absent where the reader may do neither, or the building has none. */
   readonly events?: readonly { readonly id: string; readonly label: string }[];
 };
@@ -1130,7 +1130,7 @@ export type LinkView = {
   readonly id: string;
   readonly to: 'claim' | 'property';
   readonly label: string;
-  /** Phase 134: a claim's reference, drawn as a small grey label beside its name. */
+  /** A claim's reference, drawn as a small grey label beside its name. */
   readonly ref?: string;
   readonly href: string | null;
   readonly linked: string;
@@ -1151,23 +1151,23 @@ export type DocumentPage = {
   readonly original: string;
   readonly may_link: boolean;
   readonly may_upload_version: boolean;
-  /** PHASE 140: the newest kept original, where one is kept and this reader may open it. */
+  /** The newest kept original, where one is kept and this reader may open it. */
   readonly original_href?: string;
-  /** PHASE 140: whether the client can see this file, and whether this reader may change that. */
+  /** Whether the client can see this file, and whether this reader may change that. */
   readonly shown_to_client: boolean;
   readonly may_show: boolean;
   readonly from_client: boolean;
   readonly linkable_claims?: readonly { readonly id: string; readonly claim_ref: string; readonly property: string | null }[];
-  /** PHASE 159j (item 5): the piece of work this document proves, if it names one; staff only. */
+  /** The piece of work this document proves, if it names one; staff only. */
   readonly event: { readonly id: string; readonly label: string } | null;
-  /** PHASE 159j (item 5): the events on the client's buildings it may be tied to, for a reader who may link it. */
+  /** The events on the client's buildings it may be tied to, for a reader who may link it. */
   readonly event_choices?: readonly { readonly id: string; readonly label: string }[];
   /**
-   * PHASE 146i. The question a person must answer before one of the two conditional fields can be kept, where this
+   * The question a person must answer before one of the two conditional fields can be kept, where this
    * kind of document has one. Null on every other type, and null for the client, who never sees this page.
    */
   readonly vouch: VouchView | null;
-  /** PHASE 146i. What happened each time we read a version of this document, newest first. Staff only, and empty
+  /** What happened each time we read a version of this document, newest first. Staff only, and empty
    *  until reading documents is switched on — which is a reading that never started, and not a reading. */
   readonly readings: readonly ReadingView[];
 };
@@ -1176,7 +1176,7 @@ export const HISTORY_NOTE =
   'Nothing is overwritten. Each upload is its own version. Each keeps the deletion rule its type had when it arrived. ' +
   'Uploads we could not use are listed too.';
 
-/** PHASE 140: in words a person reads. `READ_AND_DELETED` (src/shared/originals.ts) is the short form a folder shows. */
+/** In words a person reads. `READ_AND_DELETED` (src/shared/originals.ts) is the short form a folder shows. */
 export const ORIGINALS_NOTE =
   'We read each file and then delete it. We keep what we took from it, not the file. That is on purpose, to keep as little as we can.';
 
@@ -1208,7 +1208,7 @@ export function documentPage(d: { db: Db; audit: AuditLog; now: () => string }, 
     : { id: k.id, to: 'property', label: k.property_label ?? 'a property', href: `/staff/properties/${k.property_id ?? ''}`, linked: localStamp(k.linked_at), ended: k.unlinked_at === null ? null : localStamp(k.unlinked_at) });
   const mayLink = can(actor, 'document.link', obj);
   const mayUpload = actor.role !== 'CLIENT' && can(actor, 'document.upload', { type: 'business', id: l.business_id }) && l.handler_type !== null;
-  /* PHASE 146i. Both are staff's. The client's own page says what we did with their file in the words it already
+  /* Both are staff's. The client's own page says what we did with their file in the words it already
      used; the question about a name, and why our reader could not read something, are ours. */
   const staff = actor.role !== 'CLIENT';
   const linkedClaims = new Set(links.filter((k) => k.to === 'claim' && k.ended === null).map((k) => k.href));
@@ -1238,13 +1238,13 @@ export function documentPage(d: { db: Db; audit: AuditLog; now: () => string }, 
   };
 }
 
-/** PHASE 159j (item 5): the event a document names, in words, or null. */
+/** The event a document names, in words, or null. */
 function documentEvent(db: Db, logical_id: string): { id: string; label: string } | null {
   const e = getLogicalDocumentsIdKindById<{ id: string; kind: string; event_date: string | null }>(db, [logical_id]);
   return e === undefined ? null : { id: e.id, label: eventLabel({ kind: e.kind as never, event_date: e.event_date }) };
 }
 
-/** PHASE 159j (item 5): every event on a business's buildings, with the building where it has more than one. */
+/** Every event on a business's buildings, with the building where it has more than one. */
 function businessEvents(db: Db, business_id: string): { id: string; label: string }[] {
   const rows = listPropertyEventsIdKindByBusinessId<{ id: string; kind: string; event_date: string | null; property: string | null; property_id: string }>(db, [business_id]);
   const many = new Set(rows.map((r) => r.property_id)).size > 1;
@@ -1252,7 +1252,7 @@ function businessEvents(db: Db, business_id: string): { id: string; label: strin
 }
 
 /**
- * PHASE 159j (item 5) — TIE A DOCUMENT TO THE PIECE OF WORK IT PROVES, or untie it (empty). Staff who may link a
+ * TIE A DOCUMENT TO THE PIECE OF WORK IT PROVES, or untie it (empty). Staff who may link a
  * document may do this; the event must be on one of the same client's buildings. Each change is in the audit log.
  */
 export function setDocumentEvent(d: DocDeps, actor: Actor, logical_id: string, event_id: string | null): DocResult {
@@ -1273,11 +1273,11 @@ export function setDocumentEvent(d: DocDeps, actor: Actor, logical_id: string, e
   return { ok: true, id: l.id };
 }
 
-/** PHASE 159j (item 5): the documents that prove a piece of work, asked of the client on the claim. */
+/** The documents that prove a piece of work, asked of the client on the claim. */
 export const WORK_DOCUMENTS: readonly string[] = Object.freeze(['CONTRACTOR_COST_BREAKDOWN', 'CONTRACTOR_INVOICE']);
 
 /**
- * PHASE 159j (item 5) — ASK FOR ONE PIECE OF WORK'S FINAL ACCOUNT AND INVOICES. One request for each of the two, naming
+ * ASK FOR ONE PIECE OF WORK'S FINAL ACCOUNT AND INVOICES. One request for each of the two, naming
  * the work, so the client's "What we need from you" lists them for that work. A type already asked for that work and
  * still open, or already held for it, is not asked again. A purchase is not a piece of work: its documents are the
  * completion statement and the contract, asked as before.
@@ -1307,7 +1307,7 @@ export function requestWorkDocuments(d: DocDeps, actor: Actor, claim_id: string,
 }
 
 /**
- * PHASE 146i — WHO ANSWERED, IN THE SAME WORDS A VERSION'S ROW USES. A role, never a name: the back office does not
+ * WHO ANSWERED, IN THE SAME WORDS A VERSION'S ROW USES. A role, never a name: the back office does not
  * show one person's name to another in a record like this, and the audit log already carries who it was.
  */
 function personWords(db: Db, user_id: string): string {
@@ -1316,7 +1316,7 @@ function personWords(db: Db, user_id: string): string {
 }
 
 /**
- * PHASE 146i — A PERSON SAYS WHETHER A NAME BELONGS TO AN ORGANISATION.
+ * A PERSON SAYS WHETHER A NAME BELONGS TO AN ORGANISATION.
  *
  * Two CLIENT_DOC fields are kept on that footing alone, and `assertClaimsWritable` refuses both unless a caller
  * asserts it. It cannot be read off the document — that is what the control is for — so it is asked here, of the
@@ -1341,7 +1341,7 @@ export function vouchDocumentField(
   if (!isVouchAnswer(answer)) return { ok: false, why: 'Choose yes, no, or not sure.' };
   const row = vouchesFor(d.db, l.id).find((v) => v.field_id === field_id);
   const was = row?.answer ?? null;
-  /* PHASE 146j: A YES THAT HAS KEPT A NAME IS NOT TURNED INTO A NO BY A BUTTON. Changing the answer changes nothing
+  /* A YES THAT HAS KEPT A NAME IS NOT TURNED INTO A NO BY A BUTTON. Changing the answer changes nothing
      already written, so a plain "No" here would leave the name in the file with nothing saying it was withdrawn.
      Taking the yes back is its own act, which asks why and takes the name out (`withdrawVouch`). */
   if (vouchKeeps(row) && answer !== 'yes' && keptIn(d.db, l.id, l.business_id, field_id).length > 0) {
@@ -1359,7 +1359,7 @@ export function vouchDocumentField(
 }
 
 /* ------------------------------------------------------------------ *
- * PHASE 146j — TAKING A YES BACK
+ * TAKING A YES BACK
  * ------------------------------------------------------------------ */
 
 type KeptRecord = { id: string; source_id: string; obtained_at: string; property_id: string | null };
@@ -1385,7 +1385,7 @@ export type WithdrawResult =
  *
  *   · it takes THAT FIELD, AND NO OTHER, out of every record the yes let it into (`removeRegisterField`, the one door
  *     out), and leaves every other fact the reading kept exactly as it was;
- *   · it refuses, and says so, where a person has checked and approved that fact (Phase 139) — the tick comes off
+ *   · it refuses, and says so, where a person has checked and approved that fact — the tick comes off
  *     first, by its own act and with its own reason;
  *   · it keeps the answer, marked withdrawn, with who, when and why — so the next reading leaves the field out, and
  *     the row still says it was a yes;
@@ -1679,7 +1679,7 @@ export function documentCentre(db: Db, actor: Actor, q: URLSearchParams): Docume
 }
 
 /**
- * PHASE 133a — THE GATE OF THE DOCUMENT CENTRE, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF THE DOCUMENT CENTRE, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
@@ -1688,7 +1688,7 @@ export function documentCentreGate(actor: Actor): void {
 }
 
 /**
- * PHASE 133a — THE GATE OF THE DOCUMENT TYPES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF THE DOCUMENT TYPES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
@@ -1697,9 +1697,9 @@ export function documentTypesGate(actor: Actor): void {
 }
 
 /* ================================================================== *
- * 10 · THE CLIENT'S FILES — PHASE 140, 21 September 2026
+ * 10 · THE CLIENT'S FILES
  *
- * Lakhbir: "There is no folder icon which allows the user to see what the customer has uploaded, but also the ability to
+ * the owner: "There is no folder icon which allows the user to see what the customer has uploaded, but also the ability to
  * upload and save documents ourselves within the portal."
  *
  * ONE PLACE FOR A COMPANY'S FILES, IN FOLDERS: From the client, From Cap Rebate, Asked for (still waiting), and one folder
@@ -1733,7 +1733,7 @@ export type FolderFile = {
   /** A kept original this reader may open, or the words that say there is none. Never a broken link. */
   readonly original: { readonly kept: true; readonly href: string | null } | { readonly kept: false; readonly words: string };
   readonly claim_ids: readonly string[];
-  /** PHASE 142: the message this file came with, on the thread with the client — a link back to it. Absent otherwise. */
+  /** The message this file came with, on the thread with the client — a link back to it. Absent otherwise. */
   readonly message_href?: string;
 };
 
@@ -1750,7 +1750,7 @@ export type ClientFolder = {
   readonly may_upload: boolean;
   readonly may_show: boolean;
   readonly upload_types: readonly { readonly code: string; readonly label: string; readonly handler_type: string | null }[];
-  /** PHASE 146j: the question about a name, asked on the upload form where the type is chosen. */
+  /** The question about a name, asked on the upload form where the type is chosen. */
   readonly early_questions: readonly { readonly field_id: string; readonly question: string; readonly types: readonly string[] }[];
 };
 
@@ -1771,7 +1771,7 @@ function plural(n: number, one: string, many: string): string {
 
 /**
  * What the handler recorded reading, in counts. Steps 4 and 5 of the receipt contract, as the handler wrote them.
- * PHASE 144: exported so the portal's own document page says the same counts as the staff Files folder. It reads only
+ * Exported so the portal's own document page says the same counts as the staff Files folder. It reads only
  * the version's failure code, its two receipt times and the handler's page and part COUNTS — no words from the file, no
  * note, no figure — so it is safe for the client who sent the file.
  */
@@ -1818,7 +1818,7 @@ export function clientFolder(
       && shown.original_delete_after !== null && shown.original_delete_after > nowIso;
     const linked = listDocumentLinksClaimIdByLogicalDocumentIdUnlinkedAt2<{ claim_id: string }>(db, [l.id, l.id])
       .map((r) => r.claim_id).filter((id) => claimIds.has(id));
-    // PHASE 142: a file that came with a message from the client is the client's, whoever pressed the button that saved it
+    // A file that came with a message from the client is the client's, whoever pressed the button that saved it
     // (a reply by email is saved by a member of staff, once they have said what the file is).
     const msg = getClientMessageFilesIdDirectionByLogicalDocumentId<{ id: string; direction: string }>(db, [l.id]);
     const fromClient = l.created_role === 'CLIENT' || msg?.direction === 'FROM_CLIENT';

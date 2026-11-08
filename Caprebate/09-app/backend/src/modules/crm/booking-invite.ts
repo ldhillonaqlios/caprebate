@@ -1,5 +1,5 @@
 /**
- * THE INVITATION FOR ONE BOOKING — Phase 146f, 22 September 2026.
+ * THE INVITATION FOR ONE BOOKING.
  *
  * One place builds the .ics for a call, for all three routes that change one: the funnel's close (a time chosen), the
  * staff calendar (a time given or moved) and the client's portal (moved, given back or cancelled). It reads the
@@ -27,7 +27,7 @@ export function inviteSequence(db: Db, booking_id: string): number {
 export function bookingInviteFile(
   db: Db, now: () => string,
   a: { booking_id: string; method: InviteMethod; starts_at: string; ends_at: string; to: string | null | undefined;
-    /** 30 Sep 2026: the site's address, for a video call's join page. Absent, the invitation carries Zoom's own link. */
+    /** The site's address, for a video call's join page. Absent, the invitation carries Zoom's own link. */
     origin?: string },
 ): InlineFile | null {
   const to = (a.to ?? '').trim();
@@ -48,7 +48,7 @@ export function bookingInviteFile(
 }
 
 /**
- * 30 Sep 2026: WHERE THE CALL IS, AND WHAT TO DO. A telephone call: we ring. A video call with its Zoom meeting: our
+ * WHERE THE CALL IS, AND WHAT TO DO. A telephone call: we ring. A video call with its Zoom meeting: our
  * join page (or, where the site's address is not to hand, Zoom's own link) and the passcode. A video call without one
  * yet: the link will follow.
  */
@@ -73,7 +73,7 @@ function placeAndWords(db: Db, booking_id: string, method: InviteMethod, origin:
 }
 
 /**
- * 30 SEP 2026: A VIDEO CALL'S INVITATION, SENT ONCE ITS MEETING IS MADE — the time, OUR join page, Zoom's link and
+ * A VIDEO CALL'S INVITATION, SENT ONCE ITS MEETING IS MADE — the time, OUR join page, Zoom's link and
  * passcode, and the calendar file with our page as its place. Without a meeting (Zoom not set up, or it failed), the
  * same email says the link will follow. Saved to the outbox like every other; it leaves when email sending is on.
  * The funnel's close sends it after the meeting is made, and so does the staff calendar when it gives or moves a time.
@@ -81,7 +81,7 @@ function placeAndWords(db: Db, booking_id: string, method: InviteMethod, origin:
 export function sendVideoInvite(app: App, origin: string, booking_id: string, what: 'arranged' | 'moved', toAddress?: string): void {
   const b = getBookingsBusinessIdLeadIdById<{ business_id: string | null; lead_id: string | null; starts_at: string | null; ends_at: string | null; channel: string }>(app.db, [booking_id]);
   if (b === undefined || b.channel !== 'video' || b.starts_at === null || b.ends_at === null) return;
-  // 1 Oct 2026: the Communication tab names who the call is with; otherwise the company's own address, as before.
+  // The Communication tab names who the call is with; otherwise the company's own address, as before.
   const to = toAddress !== undefined && toAddress.trim() !== '' ? toAddress.trim() : b.business_id !== null
     ? getBusinessesEById<{ e: string | null }>(app.db, [b.business_id])?.e ?? null
     : getContactsEByLeadId<{ e: string | null }>(app.db, [b.lead_id])?.e ?? null;

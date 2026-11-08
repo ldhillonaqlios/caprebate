@@ -3,7 +3,7 @@
  *
  * TRANSCRIBED, NOT WRITTEN. Every room type below comes from
  * `04-phase-work/phase9/room-list-plain-english-v1.md` — "What we think is in
- * each room", version 1.0, 2 September 2026 — which is the authoritative
+ * each room", version 1.0 — which is the authoritative
  * source and which this phase does not touch. Nothing here is a new judgement
  * about what is in a healthcare building.
  *
@@ -178,7 +178,7 @@ const PRIVATE_HOSPITAL: SectorRooms = {
   rooms: [
     { room_id: 'PH-R1', label: 'Consulting room (outpatient)', driver: 'per room' },
     { room_id: 'PH-R2', label: 'Operating theatre', driver: 'per room' },
-    /* PHASE 153e, 4 October 2026 (Word question 148): each space in a theatre suite is counted, not the suite. Lakhbir
+    /* Each space in a theatre suite is counted, not the suite. the owner
        answered "Several"; the draft in the box agrees. A TEST DEFAULT for the surveyor to confirm which spaces carry
        which equipment (src/web/pack-lines.ts, SUITE_ROWS). */
     { room_id: 'PH-R2A', label: 'Anaesthetic room (theatre suite)', driver: 'per room' },

@@ -1,5 +1,5 @@
 /**
- * ONE VERSION AFTER SIGN-OFF. PHASE 159a, 9 October 2026, from the stress test of that day (C3, C5, and L3 in the
+ * ONE VERSION AFTER SIGN-OFF. 9 October 2026, from the stress test of that day (C3, C5, and L3 in the
  * Lockwood Surgery run).
  *
  * What went wrong: a surveyor could approve a new version of the survey pack, and answer the legal check again, after

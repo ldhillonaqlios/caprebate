@@ -1,7 +1,7 @@
 /**
- * THE LEADS PAGE AS CARDS, IN FOUR SECTIONS — PHASE 137, 21 September 2026.
+ * THE LEADS PAGE AS CARDS, IN FOUR SECTIONS.
  *
- * Lakhbir, 18 September 2026: "these should be CTA cards which the user can click on to display the information
+ * The owner: "these should be CTA cards which the user can click on to display the information
  * underneath. A new lead can easily slip out of this whole pile, so it needs to be split up."
  *
  *   New — not contacted yet   status NEW, and the website enquiries nobody has answered. Always first, never folded.

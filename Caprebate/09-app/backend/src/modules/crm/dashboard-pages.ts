@@ -1,5 +1,5 @@
 /**
- * THE MANAGEMENT DASHBOARD'S ROUTES AND PAGE. CRM 9 of 10, 12 September 2026.
+ * THE MANAGEMENT DASHBOARD'S ROUTES AND PAGE. CRM 9 of 10.
  *
  * Same shape as `handleCrm` and `handleCompliance`: it returns 'not-mine' for
  * anything it does not own, so the mounting in staff.ts is one line.
@@ -34,7 +34,7 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -54,7 +54,7 @@ export async function handleDashboard(
   // THE CRM FOLLOW-ON: the period, read through the fixed table — and the gate asked first, so a refused reader is refused
   // before anything about their request is read.
   D.assertDashboard(actor);
-  // PHASE 136: THE DASHBOARD FOLDED INTO HOME. Its figures are the Reports tile's page; the old address sends a person
+  // THE DASHBOARD FOLDED INTO HOME. Its figures are the Reports tile's page; the old address sends a person
   // Home, and one that carried a period (a bookmarked report) to the same report. view.json answers exactly as before.
   if (path === '/staff/dashboard') {
     res.writeHead(303, { location: url.search === '' ? '/staff' : `/staff/reports${url.search}`, 'cache-control': 'no-store' });
@@ -99,7 +99,7 @@ function periodForm(v: D.Dashboard): Safe {
   </form>`;
 }
 
-/** PHASE 136: the dashboard's page, reached from Home's Reports tile. The same figures, under the same gate. */
+/** The dashboard's page, reached from Home's Reports tile. The same figures, under the same gate. */
 function reportsPage(d: DashboardPageDeps, actor: Actor, v: D.Dashboard): string {
   const groups = (Object.keys(D.GROUP_TITLES) as D.TileGroup[]).filter((g) => v.tiles.some((t) => t.group === g));
   const q = D.periodQuery(v.period);

@@ -45,7 +45,7 @@
  * they would have supplied stays asked. That is the honest state and it is what
  * the screen shows.
  *
- * CA2 — PHASE 132f, 16 September 2026. A source whose fields CB_REGISTRY lists
+ * CA2. A source whose fields CB_REGISTRY lists
  * as `postSignature` waits on the signed engagement too, whatever its tier:
  * the list of persons with significant control (CH_PSC) is free of charge and
  * stays tiered FREE, and it is still not consulted before signature. Read off
@@ -54,7 +54,7 @@
  * HMLR_PPD — are untouched.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * WHO SIGNED, AND WHETHER THE REGISTER SAYS THEY MAY — PHASE 151b, 25 September 2026
+ * WHO SIGNED, AND WHETHER THE REGISTER SAYS THEY MAY
  *
  * Word question 156, for the data protection officer: "May we briefly check two public register names without saving
  * them?" Answer, closed 24 September 2026: "Yes – best to check who signs and if they have authority". So "Run the
@@ -72,7 +72,7 @@
  * words per register (`signatory` on SourcesPanel); it is a staff page, and nothing here reaches the client.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * THE SITE AREA FROM THE LAND BOUNDARY — PHASE 151c, 25 September 2026
+ * THE SITE AREA FROM THE LAND BOUNDARY
  *
  * "Run the research" is now the one caller of `siteAreaFromLandBoundary` (src/integrations/connectors/site-area.ts), through
  * src/modules/claims/site-area-run.ts: ONE MORE STEP after the check of who signed, for each of the client's properties, with the
@@ -122,7 +122,7 @@ export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
  *
  * "Caprebate — Developer Build Order.md", the two-tier table, and the same
  * table in "Caprebate — API & Data Provenance Map.html" §6, both recording
- * Lakhbir's decision of 4 September 2026:
+ * the owner's decision:
  *
  *   TIER 1 — FREE: "EPC · care regulators · Ofsted · RSH · Charity Commission ·
  *   OSCR · Companies House · HMLR Price Paid · VOA open data · OS · planning"
@@ -140,7 +140,7 @@ const TIER_BY_SOURCE: Readonly<Record<string, Tier>> = Object.freeze({
   EPC: 'FREE',
   CQC: 'FREE',
   CIW: 'FREE',
-  /* Phase 155: the Scottish care regulator, free open data like the Welsh one. */
+  /* The Scottish care regulator, free open data like the Welsh one. */
   CARE_INSPECTORATE: 'FREE',
   CH_COMPANY: 'FREE',
   CH_PSC: 'FREE',
@@ -148,18 +148,18 @@ const TIER_BY_SOURCE: Readonly<Record<string, Tier>> = Object.freeze({
   VOA: 'FREE',
   PLANNING: 'FREE',
   ONS_POSTCODE: 'FREE',
-  /* PHASE 150, 24 September 2026: HM Land Registry's INSPIRE Index Polygons, free open data under the OGL like its
+  /* HM Land Registry's INSPIRE Index Polygons, free open data under the OGL like its
      Price Paid Data, and the land-boundary counterpart of "OS" in the documents' tier 1. Only a council's name is
      sent, never anything about the client. */
   HMLR_INSPIRE: 'FREE',
-  /* Phase 151: the free postcode check at the address question (src/integrations/connectors/postcode-check.ts). Not run by the button. */
+  /* The free postcode check at the address question (src/integrations/connectors/postcode-check.ts). Not run by the button. */
   POSTCODES_IO: 'FREE',
   /* Tier 2 — paid, gated on a signed engagement. */
   HMLR_TITLE: 'PAID',
   BCIS: 'PAID',
   /* "Homedata address lookup" is the first entry in the documents' tier 2. */
   HOMEDATA_ADDRESS: 'PAID',
-  /* PHASE 156f (B4): the site area from Homedata's title outline, bought on the address lookup's own call. */
+  /* The site area from Homedata's title outline, bought on the address lookup's own call. */
   HOMEDATA_BOUNDARY: 'PAID',
 });
 
@@ -204,10 +204,10 @@ export type CatalogueEntry = {
    * an operator waiting for the wrong thing.
    */
   readonly licence_gate: string | null;
-  /** PHASE 153b (Word question 202): the chosen route where a source has two, in plain words; null elsewhere. */
+  /** The chosen route where a source has two, in plain words; null elsewhere. */
   readonly chosen_route: string | null;
   /**
-   * PHASE 132f, 16 September 2026 — CONDITION CA2, READ OFF THE ENGINE.
+   * 16 September 2026 — CONDITION CA2, READ OFF THE ENGINE.
    *
    * The fields this source retrieves that CB_REGISTRY.SOURCES[].postSignature
    * lists: retrieved only after a signed engagement, checked on the server.
@@ -234,7 +234,7 @@ export type CatalogueEntry = {
 export const REGISTRY_ID_OF: Readonly<Record<string, string>> = Object.freeze({
   CQC: 'cqc',
   CIW: 'cqc', // the Welsh regulator answers the same fields as the English one
-  CARE_INSPECTORATE: 'cqc', // and so does the Scottish one (Phase 155)
+  CARE_INSPECTORATE: 'cqc', // and so does the Scottish one
   EPC: 'epc',
   CH_COMPANY: 'companies_house',
   CH_PSC: 'companies_house',
@@ -359,7 +359,7 @@ export function freeGate(): FreeGate {
 }
 
 /**
- * 2 Oct 2026: the free gate as it stands for ONE source here — open for a source the test website's waiver names
+ * The free gate as it stands for ONE source here — open for a source the test website's waiver names
  * (src/integrations/connectors/registers.ts, TEST_WEBSITE_LOOKUPS), and otherwise the free gate itself.
  */
 export function freeGateFor(free: FreeGate, source_id: string, env: Env = process.env): FreeGate {
@@ -388,7 +388,7 @@ export type SignedEngagement = {
  * function should be able to tell a caller apart from "that client has not
  * signed".
  *
- * PHASE 146f: IT READS THE SIGNATURE RECORD, NOT ONLY THE STATE. A letter marked
+ * IT READS THE SIGNATURE RECORD, NOT ONLY THE STATE. A letter marked
  * SIGNED counts only when engagement_signatures holds its record, the record
  * matches its own fingerprint, and the audit chain carries that fingerprint
  * (checkSignature, src/modules/claims/signing.ts). A state flipped by hand, or a record
@@ -450,32 +450,32 @@ export type SourceRow = CatalogueEntry & {
    */
   readonly may_retry: boolean;
   /**
-   * PHASE 146b: the source's own connector switch (REGISTER_SWITCHES in src/integrations/connectors/registers.ts). Every one is off.
+   * The source's own connector switch (REGISTER_SWITCHES in src/integrations/connectors/registers.ts). Every one is off.
    * NOT A THIRD GATE: the gates say whether we may consult a source for this client; this says whether its connector
    * is turned on at all. Shown on the panel in plain words ("not switched on").
    */
   readonly switched_on: boolean;
   /**
-   * PHASE 146j: TRUE WHERE A PERSON CHOSE THIS LOOKUP'S ENTRY FROM A CLOSE-MATCH LIST AND THAT CHOICE STILL STANDS, with
+   * TRUE WHERE A PERSON CHOSE THIS LOOKUP'S ENTRY FROM A CLOSE-MATCH LIST AND THAT CHOICE STILL STANDS, with
    * the record it wrote still held. Read off `register_match_picks`, never off the request. It is what lets the panel
    * offer "Take this choice back" on this row and no other — and src/modules/claims/match-review.ts asserts every condition again
    * on the request that button makes.
    */
   readonly picked: boolean;
   /**
-   * PHASE 146j: the latest choice on this lookup that was TAKEN BACK — when, why, and what to look at again — read off
+   * The latest choice on this lookup that was TAKEN BACK — when, why, and what to look at again — read off
    * the pick row, so it stays on the panel after the next run rewrites the lookup's own line. Null where none was.
    */
   readonly taken_back: { readonly at: string; readonly reason: string; readonly look_again: readonly string[] } | null;
   /**
-   * PHASE 146k: TRUE FOR A SOURCE A PERSON LOOKS UP BY HAND, which "Run the research" never consults — today the title
+   * TRUE FOR A SOURCE A PERSON LOOKS UP BY HAND, which "Run the research" never consults — today the title
    * register only (`BY_HAND`). It shows as "Looked up" once a person has recorded it, and as still to do until then.
    */
   readonly by_hand: boolean;
 };
 
 /**
- * PHASE 146k — THE SOURCES A PERSON LOOKS UP BY HAND, AND WHERE THEY RECORD WHAT THEY FOUND. Lakhbir, 25 September
+ * THE SOURCES A PERSON LOOKS UP BY HAND, AND WHERE THEY RECORD WHAT THEY FOUND. the owner, 25 September
  * 2026: HM Land Registry's title register "will be done manually and not via API". The Business Gateway connector
  * (src/integrations/connectors/hmlr-title.ts) is retired from the click; a person buys the official copy and records it on the
  * property page (src/modules/claims/title-by-hand.ts). The row stays on the panel — it is still a source of the claim's facts,
@@ -503,7 +503,7 @@ export type SourcesPanel = {
    */
   readonly known_gaps: readonly string[];
   /**
-   * PHASE 146d, ITEM 3 — WHAT THIS CLICK WOULD COST, SHOWN BEFORE IT IS CLICKED.
+   * ITEM 3 — WHAT THIS CLICK WOULD COST, SHOWN BEFORE IT IS CLICKED.
    *
    * Every paid lookup that is outstanding AND switched on, at its supplier's published price. It is a PRICE LIST and
    * the words say so, because the figure shown afterwards is a different thing: that one comes off the suppliers'
@@ -520,12 +520,12 @@ export type SourcesPanel = {
   readonly cost_last_pence: number | null;
   readonly cost_last_words: string | null;
   /**
-   * PHASE 151b (Word answer 156): whether the person who signed the engagement letter appears on each public register
+   * Whether the person who signed the engagement letter appears on each public register
    * in a role that can sign — one line in words per register. Staff only. Never a name.
    */
   readonly signatory: readonly SignatoryLine[];
   /**
-   * PHASE 151c: the site area from HM Land Registry's land boundary — one line in words per property, for every state
+   * The site area from HM Land Registry's land boundary — one line in words per property, for every state
    * it can be in (src/modules/claims/site-area-run.ts). Never a polygon or a coordinate.
    */
   readonly site_area: readonly SiteAreaLine[];
@@ -544,7 +544,7 @@ export type SignatoryLine = {
  *
  * The Provenance Map's tier-2 list opens with "Homedata address lookup", and
  * CB_REGISTRY models it as the source `homedata` which keys every other lookup.
- * Since 12 September 2026 (Phase 129) it IS in caprebate-source-register.ts, as
+ * it IS in caprebate-source-register.ts, as
  * HOMEDATA_ADDRESS under the licence HOMEDATA_TERMS, written from the supplier's
  * own published terms. So it now draws a row like every other source. What is
  * still a gap is what those terms do not publish: a licence name, attribution
@@ -561,7 +561,7 @@ export const KNOWN_GAPS: readonly string[] = Object.freeze([
 ]);
 
 /**
- * PHASE 146c: THE ATTRIBUTION THAT GOES WITH A REGISTER'S DATA, WORD FOR WORD, WHEREVER A SCREEN SHOWS IT.
+ * THE ATTRIBUTION THAT GOES WITH A REGISTER'S DATA, WORD FOR WORD, WHEREVER A SCREEN SHOWS IT.
  *
  * HM Land Registry prescribes the words for Price Paid Data and says they "must appear verbatim"; they are read from
  * the licence register, never retyped. Only the sources listed here carry a line on a screen today. The rest of the
@@ -569,7 +569,7 @@ export const KNOWN_GAPS: readonly string[] = Object.freeze([
  * already printed.
  */
 /*
- * PHASE 146d ADDS THE TITLE REGISTER. Its licence in the register requires attribution and prescribes the words
+ * ADDS THE TITLE REGISTER. Its licence in the register requires attribution and prescribes the words
  * ("Contains HM Land Registry data © Crown copyright and database right."), and a bought official copy draws on a
  * screen exactly as a sale price does — so the words go with it there, read from the licence register and never
  * retyped, for the same reason Price Paid's are.
@@ -599,10 +599,10 @@ export function assertResearchSection(actor: Actor, action: 'research.read' | 'r
  */
 export function stateUnderGates(
   entry: CatalogueEntry, current: SourceState, free: FreeGate, engagement: SignedEngagement | null | undefined,
-  /** PHASE 151b (Word answer 180): the client chose to answer the property questions themselves. Absent is not a no. */
+  /** The client chose to answer the property questions themselves. Absent is not a no. */
   declined = false,
 ): { state: SourceState; detail: string } {
-  /* N4 (Phase 132f). Only a record saying `signed === true` is a signed
+  /* N4. Only a record saying `signed === true` is a signed
      engagement. This used to read `!engagement.signed`, under which a truthy
      non-boolean — a "not sure" typed anywhere — would have opened the paid
      tier; and an absent record would have thrown. Both now read as unsigned. */
@@ -624,12 +624,12 @@ export function stateUnderGates(
         '— publishing the privacy notice would not change that',
     };
   }
-  // CA2 (Phase 132f): a source carrying a post-signature field waits on the
+  // CA2: a source carrying a post-signature field waits on the
   // signed engagement as well as its own tier's gate. Asked of the engine.
   const ca2Shut = !postSignatureOpen(entry, engagement);
   const ca2Words = `we look up ${entry.post_signature_fields.map((f) => FIELD_WORDS[f] ?? f).join(' and ')} ` +
     'only once the engagement letter is signed. Until then this lookup is not made — ' + engagementWhy;
-  // PHASE 151b: a client who asked us to leave the lookups alone is not looked up in the free registers. A person asks
+  // A client who asked us to leave the lookups alone is not looked up in the free registers. A person asks
   // them instead. (The paid lookups after signing are the engagement's own, and are not what the choice was about.)
   if (entry.tier === 'FREE' && declined) {
     return { state: 'NOT_PERMITTED_YET', detail: DECLINED_LINE };
@@ -651,7 +651,7 @@ export function stateUnderGates(
         (entry.tier_settled ? '' : ' (not sure if free or paid, so it is treated as paid and waits for both)'),
     };
   }
-  // Permitted. Whether its connector runs is the switch's and the key's to say (Phase 146c: `consultAllowed`); until
+  // Permitted. Whether its connector runs is the switch's and the key's to say; until
   // one does, it is NOT_RUN with this as the reason.
   return {
     state: 'NOT_RUN',
@@ -659,11 +659,11 @@ export function stateUnderGates(
   };
 }
 
-/** PHASE 156f (B3): what the PLANNING row says while Homedata planning is due after signing. */
+/** What the PLANNING row says while Homedata planning is due after signing. */
 export const HOMEDATA_PLANNING_DUE = 'the free planning route answered before the letter was signed. Now it is signed. ' +
   'On the next click Homedata will read the planning history by the property\'s own number. We use its answer';
 
-/** PHASE 156f (B3): whether the PLANNING row should be asked again, so Homedata answers it. */
+/** Whether the PLANNING row should be asked again, so Homedata answers it. */
 export function homedataPlanningDue(row: { readonly state: string; readonly route: string | null } | undefined, signed: boolean, env?: Env): boolean {
   return signed && switchedOn('HOMEDATA_PLANNING', switchesHere(env)) && row?.state === 'FIRED' && row.route !== 'HOMEDATA_PLANNING';
 }
@@ -679,8 +679,8 @@ export function homedataPlanningDue(row: { readonly state: string; readonly rout
  */
 export function sourcesFor(
   db: Db, actor: Actor, business_id: string,
-  /** PHASE 151c: where the site area's grid, store and postcode table come from. Absent: the server's own settings. */
-  opts: { readonly site?: SiteAreaSetup; /** 2 Oct 2026: where this copy runs, for the test website's waiver. Absent: the process's. */ readonly env?: Env } = {},
+  /** Where the site area's grid, store and postcode table come from. Absent: the server's own settings. */
+  opts: { readonly site?: SiteAreaSetup; /** Where this copy runs, for the test website's waiver. Absent: the process's. */ readonly env?: Env } = {},
 ): SourcesPanel {
   assertResearchSection(actor, 'research.read');
   authorise(actor, 'research.read', { type: 'research', id: business_id, business_id });
@@ -695,20 +695,20 @@ export function sourcesFor(
     }>(db, [business_id]).map((r) => [r.source_id, r] as const),
   );
 
-  /* PHASE 146j: the lookups whose entry a person chose, where that choice stands and its record is still held. */
+  /* The lookups whose entry a person chose, where that choice stands and its record is still held. */
   const picked = new Set(listRegisterMatchPicksSourceIdByBusinessIdTakenBackAt<{ source_id: string }>(db, [business_id]).map((r) => r.source_id));
   const takenBack = new Map<string, { at: string; reason: string; look_again: string[] }>();
   for (const r of listRegisterMatchPicksSourceIdTakenBackAtByBusinessIdTakenBa<{ source_id: string; taken_back_at: string; taken_back_reason: string; look_again_json: string | null }>(db, [business_id])) takenBack.set(r.source_id, { at: r.taken_back_at, reason: r.taken_back_reason, look_again: lookAgainShort(r.look_again_json) });
 
   const sources = catalogue().map((entry) => {
     const row = stored.get(entry.source_id);
-    /* PHASE 156f (B3): the free planning route answered before signing; now the letter is signed and Homedata planning is
+    /* The free planning route answered before signing; now the letter is signed and Homedata planning is
        on, the row is asked again, and Homedata answers it by the property's own number. */
     const due = entry.source_id === 'PLANNING' && homedataPlanningDue(row, engagement.signed === true, opts.env);
     const current = (due ? 'NOT_RUN' : row?.state ?? 'NOT_RUN') as SourceState;
     const gated = stateUnderGates(entry, current, freeGateFor(free, entry.source_id, opts.env), engagement, lookupsDeclined(db, business_id));
     const resolved = due && gated.state === 'NOT_RUN' ? { ...gated, detail: HOMEDATA_PLANNING_DUE } : gated;
-    /* PHASE 146k: a source looked up by hand is "looked up" once a person has recorded it, and still to do until then —
+    /* A source looked up by hand is "looked up" once a person has recorded it, and still to do until then —
        read off what is held, never off a row a click wrote. Before signing it waits like any paid source. */
     const hand = BY_HAND[entry.source_id];
     if (hand !== undefined) {
@@ -727,7 +727,7 @@ export function sourcesFor(
       retrieved_at: row?.retrieved_at ?? null,
       attempts: row?.attempts ?? 0,
       failure_code: row?.failure_code ?? null,
-      /* PHASE 157c (F12b): a row the last click left NOT_RUN keeps the reason that click wrote (the nation not known,
+      /* A row the last click left NOT_RUN keeps the reason that click wrote (the nation not known,
          say), rather than the fixed "not switched on yet", which is wrong for a lookup that is switched on. */
       detail: (resolved.state === 'FAILED' || (resolved.state === 'NOT_RUN' && row?.state === 'NOT_RUN' && (row.attempts ?? 0) > 0 && !due)) && row?.detail
         ? row.detail : resolved.detail,
@@ -813,7 +813,7 @@ export type RunDeps = {
   now: () => string;
   newId: () => string;
   /**
-   * PHASE 146c: HOW A PERMITTED, SWITCHED-ON LOOKUP REACHES OUTSIDE — the transport (the live one, or recorded answers
+   * HOW A PERMITTED, SWITCHED-ON LOOKUP REACHES OUTSIDE — the transport (the live one, or recorded answers
    * in a test), the key file read at start-up, and the switches. ABSENT, NOTHING IS CONTACTED: every permitted lookup
    * stays NOT_RUN, exactly as before this phase. It opens no gate — the gates are decided above it, by
    * `stateUnderGates`, and a lookup the gates do not allow is never handed to a connector.
@@ -826,14 +826,14 @@ export type ResearchOutside = {
   readonly secrets: SecretStore;
   /** REGISTER_SWITCHES (with the test website's waiver, where it holds) unless a test passes its own. */
   readonly switches?: Readonly<Record<string, boolean>>;
-  /** 2 Oct 2026: where this copy runs, for the test website's waiver (src/integrations/connectors/registers.ts). Absent: the process's. */
+  /** Where this copy runs, for the test website's waiver (src/integrations/connectors/registers.ts). Absent: the process's. */
   readonly env?: Env;
   readonly limiter?: RateLimiter;
   readonly sleep?: (ms: number) => Promise<void>;
   /** The ONS postcode table; `postcodeStore()` unless a test passes one. */
   readonly postcodeStore?: PostcodeStore | null;
   /**
-   * PHASE 151c: the site area's grid, store and — TESTS ONLY — the boundary switch. Absent: CAPREBATE_OSTN15_FILE,
+   * The site area's grid, store and — TESTS ONLY — the boundary switch. Absent: CAPREBATE_OSTN15_FILE,
    * CAPREBATE_INSPIRE_STORE_DIR and BOUNDARY_FETCHING_SWITCHED_ON, which is false.
    */
   readonly site?: SiteAreaSetup;
@@ -847,19 +847,19 @@ export type RunOutcome = {
   readonly not_permitted: number;
   readonly failed: number;
   /**
-   * PHASE 146d, ITEM 3 — WHAT IT ACTUALLY COST, IN PENCE, AND IT IS THE SUPPLIERS' FIGURE RATHER THAN OURS.
+   * ITEM 3 — WHAT IT ACTUALLY COST, IN PENCE, AND IT IS THE SUPPLIERS' FIGURE RATHER THAN OURS.
    * Added up from the calls, counting only those that came back saying they were charged. The price list shown
    * before the click is NOT carried forward into it: if the two differ, the difference is the thing worth seeing.
    */
   readonly cost_pence: number;
   readonly cost_words: string;
-  /** PHASE 151b: what the check of who signed came to on this click, one line per register asked. Never a name. */
+  /** What the check of who signed came to on this click, one line per register asked. Never a name. */
   readonly signatory?: readonly SignatoryLine[];
-  /** PHASE 151c: what the site area came to on this click, one line per property. */
+  /** What the site area came to on this click, one line per property. */
   readonly site_area?: readonly SiteAreaLine[];
 };
 
-/** One source's decision under the gates, and — Phase 146c — what its connector did, if it was allowed to run. */
+/** One source's decision under the gates, and — what its connector did, if it was allowed to run. */
 export type SourceOutcome = {
   readonly entry: CatalogueEntry;
   readonly state: SourceState;
@@ -867,20 +867,20 @@ export type SourceOutcome = {
   readonly retrieved_at: string | null;
   readonly failure_code: string | null;
   readonly bundle: Bundle | null;
-  /** PHASE 146d: what this lookup spent, in pence, from the calls it made. 0 for a free one and for one that failed. */
+  /** What this lookup spent, in pence, from the calls it made. 0 for a free one and for one that failed. */
   readonly cost_pence: number;
-  /** PHASE 156f (B3): the connector that answered when it was not the source's own (HOMEDATA_PLANNING for PLANNING). */
+  /** The connector that answered when it was not the source's own (HOMEDATA_PLANNING for PLANNING). */
   readonly route?: string | null;
 };
 
 /**
- * THE CONNECTORS, RUN ONLY FOR WHAT THE GATES ALLOWED. Phase 146c, 23 September 2026.
+ * THE CONNECTORS, RUN ONLY FOR WHAT THE GATES ALLOWED.
  *
  * `decided` is what `stateUnderGates` said for each source on this click. A source the gates did not allow is passed
  * through untouched — no connector is asked, nothing is sent. A source they allowed (NOT_RUN) is handed to its
  * connector through `runConnector`, which checks the switch, then the key, then makes the calls, then reads them:
  * FIRED with the time the answer was read, FAILED with a reason, or still NOT_RUN and saying why. A source with no
- * connector in this build (the Welsh care regulator, the valuation office, the paid lookups until Phase 146d) stays
+ * connector in this build stays
  * NOT_RUN and says so.
  *
  * Exported so a test can hand it an allowed decision directly. It does not decide a gate and cannot open one: while
@@ -893,7 +893,7 @@ export async function consultAllowed(
   decided: readonly { readonly entry: CatalogueEntry; readonly state: SourceState; readonly detail: string }[],
   gates: { readonly free_gate_open: boolean; readonly engagement_signed: boolean },
   /**
-   * PHASE 146h — THE BACK-OFFICE PICK, AND IT IS THE ONLY THING THAT MAY SET THIS. One entry per source, carrying
+   * THE BACK-OFFICE PICK, AND IT IS THE ONLY THING THAT MAY SET THIS. One entry per source, carrying
    * either a `review` hook (hand me the ranked list) or a `chosen` key (a person picked this one). Absent — which is
    * every ordinary click — the query a connector is handed is exactly the query it was handed before this phase, and
    * there is a test that walks every builder and asserts neither key is on it.
@@ -903,7 +903,7 @@ export async function consultAllowed(
    * condition on top — a signed engagement, whatever the source's tier — and it asserts that itself.
    */
   picks?: Readonly<Record<string, PickQuery>>,
-  /** PHASE 159g (item 7): where the postcode check answers on this click, its council area is handed back here, for
+  /** Where the postcode check answers on this click, its council area is handed back here, for
    *  the caller to keep on the property inside its own transaction. Nothing is written in this function. */
   found?: { council?: { property_id: string; area: string } },
 ): Promise<SourceOutcome[]> {
@@ -911,7 +911,7 @@ export async function consultAllowed(
   let subject = researchSubject(d.db, business_id);
   const earlier = new Map<string, Bundle>();
   const order = runOrder(decided.map((x) => x.entry.source_id));
-  /* PHASE 157c, 6 October 2026 (the Friary House run, finding F12). Every waived free lookup (CQC, EPC, planning, price
+  /* Every waived free lookup (CQC, EPC, planning, price
      paid) needs to know which part of the UK the property is in, and that came only from a recorded nation or the ONS
      table, which this copy of the website does not have. So on a click where the waiver holds and a waived lookup is
      about to run, the postcode check (postcodes.io: the postcode only) is asked ONCE, its country is used for every
@@ -932,14 +932,14 @@ export async function consultAllowed(
   }
   for (const x of [...decided].sort((a, b) => order.indexOf(a.entry.source_id) - order.indexOf(b.entry.source_id))) {
     const keep: SourceOutcome = { entry: x.entry, state: x.state, detail: x.detail, retrieved_at: null, failure_code: null, bundle: null, cost_pence: 0 };
-    /* PHASE 146d: THE PAID LOOKUPS SIT BESIDE THE FREE ONES HERE AND NOWHERE ELSE. One map or the other answers for a
+    /* THE PAID LOOKUPS SIT BESIDE THE FREE ONES HERE AND NOWHERE ELSE. One map or the other answers for a
        source; a source in neither has no connector in this build and says so. The gate has already been decided
        above — a paid source reaches this line only when the engagement letter is signed, and that is not re-decided
        here any more than the free gate is. */
     if (x.state !== 'NOT_RUN' || d.outside === undefined) { out.push(keep); continue; }
     const o = d.outside;
     const switches = o.switches ?? switchesHere(o.env);
-    /* PHASE 156f (B3): PLANNING HAS TWO ROUTES. After signing, with Homedata planning on and the property's number found
+    /* PLANNING HAS TWO ROUTES. After signing, with Homedata planning on and the property's number found
        by the paid address lookup on this click, Homedata answers (paid, about 5p); otherwise the free route, as before. */
     const route = x.entry.source_id === 'PLANNING' && gates.engagement_signed && switchedOn('HOMEDATA_PLANNING', switches) && uprnFrom(earlier) !== null
       ? 'HOMEDATA_PLANNING' : null;
@@ -959,9 +959,9 @@ export async function consultAllowed(
       secrets: null,
     };
     let query = built.query(subject, earlier, o.postcodeStore === undefined ? postcodeStore() : o.postcodeStore, d.db);
-    /* PHASE 156f (B4): the title outline is asked for on the address lookup's call by THIS click's switches. */
+    /* The title outline is asked for on the address lookup's call by THIS click's switches. */
     if (x.entry.source_id === 'HOMEDATA_ADDRESS') query = { ...(query as Record<string, unknown>), boundary: switchedOn('HOMEDATA_BOUNDARY', switches) };
-    /* 2 Oct 2026: THE CARE REGULATOR'S COUNCIL AREA ON THE TEST WEBSITE. The care regulator is searched by council area,
+    /* THE CARE REGULATOR'S COUNCIL AREA ON THE TEST WEBSITE. The care regulator is searched by council area,
        which the ONS postcode table gives; the test website has no such table. Where the waiver holds, and only then,
        the council area comes from postcodes.io, which the postcode check already uses (only the postcode is sent). */
     if (x.entry.source_id === 'CQC' && freeGateWaived('CQC', o.env) && (query as { council?: unknown }).council === null && subject.property?.postcode) {
@@ -987,7 +987,7 @@ export async function consultAllowed(
       retrieved_at: run.state === 'FIRED' ? (run.retrieved_at ?? null) : null,
       failure_code: run.state === 'FAILED' ? (run.failure_code ?? 'ERROR') : null,
       bundle: run.state === 'FIRED' ? run.bundle : null,
-      /* PHASE 146d, ITEM 11: WHAT THIS LOOKUP ACTUALLY COST, ADDED UP FROM THE CALLS IT MADE — and only from calls
+      /* ITEM 11: WHAT THIS LOOKUP ACTUALLY COST, ADDED UP FROM THE CALLS IT MADE — and only from calls
          that say they were charged. A call that was refused, timed out or came back an error has `charged: false`
          and adds nothing, so a lookup that failed three times reports nothing spent, which is the truth and is what
          the supplier's own terms say ("any 4xx other than a 402 and any 5xx is never billed"). A charge we could
@@ -995,7 +995,7 @@ export async function consultAllowed(
       cost_pence: run.cost_pence,
     });
   }
-  /* PHASE 159l (item 3, L18): THE POSTCODES.IO ROW SAYS WHAT HAPPENED. On the Lockwood run the panel said postcodes.io
+  /* THE POSTCODES.IO ROW SAYS WHAT HAPPENED. On the Lockwood run the panel said postcodes.io
      was "Waiting" for the privacy notice while the research's own postcode check had called it and kept the council
      area. They are two things: the row is the postcode check at the address question (its own gate, the notice); the
      call is the research's country check above. The row now says so, and what that check did on this click. */
@@ -1019,7 +1019,7 @@ export async function consultAllowed(
  * Every record goes through `ingestRegisterRecord`, the one door, where N2 is checked: a field the name exclusion
  * register does not keep throws, and the transaction takes everything back with it, the state rows included. A record
  * already held for the same entity is not written twice and not overwritten: a fact somebody has checked and approved
- * (Phase 139) does not change under them because the register was asked again.
+ * does not change under them because the register was asked again.
  */
 export function storeResearchOutcomes(d: RunDeps, business_id: string, outcomes: readonly SourceOutcome[], at: string): void {
   const property_id = researchSubject(d.db, business_id).property?.id ?? null;
@@ -1050,7 +1050,7 @@ export function storeResearchOutcomes(d: RunDeps, business_id: string, outcomes:
  *   · it does not throw when a gate is shut. A source that may not be consulted
  *     is recorded NOT_PERMITTED_YET with the reason and the run continues.
  *
- * PHASE 146c: A PERMITTED LOOKUP NOW RUNS ITS CONNECTOR — through `consultAllowed`, and only when it is switched on and
+ * A PERMITTED LOOKUP NOW RUNS ITS CONNECTOR — through `consultAllowed`, and only when it is switched on and
  * its key is in the key file. FIRED is written only for a lookup that was actually made and read, with the time it was
  * read; FAILED with the reason. WHAT HAPPENS TODAY IS STILL NOTHING: the free gate is shut (CB_REGISTRY.precondition),
  * every switch is off and the key file holds no register key, so every lookup is NOT_PERMITTED_YET or NOT_RUN, `fired`
@@ -1077,17 +1077,17 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
   const env = d.outside?.env;
   const panel = sourcesFor(d.db, actor, business_id, env === undefined ? {} : { env });
 
-  // PHASE 146k: a source looked up by hand is never consulted by the click.
+  // A source looked up by hand is never consulted by the click.
   const decided = panel.sources.filter((s) => s.state !== 'FIRED' && !s.by_hand).map((s) => ({
     entry: s, ...stateUnderGates(s, s.state === 'FAILED' ? 'NOT_RUN' : s.state, freeGateFor(free, s.source_id, env), engagement, lookupsDeclined(d.db, business_id)),
   }));
   const found: { council?: { property_id: string; area: string } } = {};
   const outcomes = await consultAllowed(d, actor, business_id, decided,
     { free_gate_open: free.open, engagement_signed: engagement.signed === true }, undefined, found);
-  /* PHASE 151b: ONE MORE STEP — who signed, checked against the registers, under the same gates and switches. */
+  /* ONE MORE STEP — who signed, checked against the registers, under the same gates and switches. */
   const signatory = await runSignatoryCheck(d, actor, business_id,
     { free_gate_open: free.open, engagement_signed: engagement.signed === true }, outcomes);
-  /* PHASE 151c: AND ONE MORE — the site area from the land boundary, for each property, under the same gates, after
+  /* AND ONE MORE — the site area from the land boundary, for each property, under the same gates, after
      signing, and switched off. Nothing refuses and nothing throws: every outcome is a line in words. */
   const o = d.outside;
   const site = await runSiteAreas(d, actor, business_id,
@@ -1113,13 +1113,13 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
     insertResearchRuns(d.db, [d.newId(), business_id, actor.id, at, panel.sources.length, fired, notPermitted, failed, 'RUN', spent]);
     checked = storeSignatoryChecks(d, actor, business_id, signatory, at);
     storeSiteAreaRuns(d, actor, business_id, site, at);
-    /* PHASE 159g (items 4 and 7): what this click read, kept on the property where nothing is kept yet — the council
+    /* What this click read, kept on the property where nothing is kept yet — the council
        area the postcode check gave, and the tenure from the title check or Price Paid. Never over a recorded value. */
     if (found.council !== undefined) keepCouncilArea(d.db, found.council.property_id, found.council.area, 'the postcode check in the research (postcodes.io)', at);
     for (const p of listPropertiesIdByBusinessId<{ id: string }>(d.db, [business_id])) fillTenureFromRegisters(d.db, p.id, at);
   });
   auditSignatoryChecks(d, actor, business_id, checked, at);
-  // PHASE 158b (F30): a signed client's step becomes "We research your property" once a register has answered.
+  // A signed client's step becomes "We research your property" once a register has answered.
   raiseToResearch(d.db, business_id, at, { signed: engagement.signed, fired });
 
   d.audit.append({
@@ -1142,7 +1142,7 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
           'No fact was guessed to fill a gap.')
       : (fired === 0 ? '' : `${fired} lookup${fired === 1 ? '' : 's'} made.`) +
         (failed === 0 ? '' : ` ${failed} did not work, and you can try each of them again.`) +
-        /* PHASE 151c: a site area worked out on this click is said beside the lookups. */
+        /* A site area worked out on this click is said beside the lookups. */
         (areas === 0 ? '' : ` ${areas === 1 ? 'One site area was' : `${areas} site areas were`} worked out from the land boundary.`)).trim(),
     considered: panel.sources.length, fired, not_permitted: notPermitted, failed,
     cost_pence: spent,
@@ -1272,7 +1272,7 @@ export function signatoryLines(db: Db, business_id: string, gates: SignatoryGate
  * So the exception cannot be widened by calling this function with a different
  * argument: the state is checked against the record, not taken from the request.
  *
- * PHASE 146c: the retry runs the source's connector again, through the same `consultAllowed`, under the same gates.
+ * The retry runs the source's connector again, through the same `consultAllowed`, under the same gates.
  */
 export async function retryFailedSource(
   d: RunDeps, actor: Actor, business_id: string, source_id: string,
@@ -1332,7 +1332,7 @@ export async function retryFailedSource(
  * PUBLISHER AND LICENCE ARE WRITTEN ON EVERY UPDATE, not only on a fire, so
  * that a row always says which publisher it is about.
  *
- * PHASE 146c: `fired_at` and `retrieved_at` are written for a FIRED lookup only — `fired_at` the moment of this click,
+ * `fired_at` and `retrieved_at` are written for a FIRED lookup only — `fired_at` the moment of this click,
  * `retrieved_at` the moment the connector read the publisher's answer, which `runConnector` took from the clock when
  * it read it. For any other state both are left as they were: nothing has read a value, and filling them with `now()`
  * would invent a retrieval, which is the one thing the source register exists to prevent. `failure_code` is written
@@ -1344,7 +1344,7 @@ function upsertSource(
   read: { readonly retrieved_at: string | null; readonly failure_code: string | null; readonly route?: string | null } = { retrieved_at: null, failure_code: null },
 ): void {
   const fired = state === 'FIRED' && read.retrieved_at !== null;
-  /* PHASE 156f (B3): which route answered a FIRED row (HOMEDATA_PLANNING, or null for the source's own). Kept only on a
+  /* Which route answered a FIRED row (HOMEDATA_PLANNING, or null for the source's own). Kept only on a
      fire, so a later refusal does not forget that Homedata already answered. */
   const route = read.route ?? null;
   const existing = getResearchSourcesIdAttemptsByBusinessIdSourceId<{ id: string; attempts: number }>(d.db, [business_id, entry.source_id]);

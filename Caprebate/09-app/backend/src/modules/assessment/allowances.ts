@@ -1,10 +1,10 @@
 /**
- * THE ALLOWANCES ON EACH EVENT — PHASE 159e, 10 October 2026.
+ * THE ALLOWANCES ON EACH EVENT.
  *
- * The stress test of 9 October 2026 (C13, C15, C17, C18; the Lockwood run, L4): the return entries showed writing-down
+ * The stress test (C13, C15, C17, C18; the Lockwood run, L4): the return entries showed writing-down
  * allowances only, every spend in one period, the special rate pool at 6% in every year, no small-pools write-off and no
- * structures allowance. A recent refit can take 100% in year one. Lakhbir's target, 9 October 2026: "the highest figure
- * we can defend". So each PART of a claim — the purchase, and each piece of work since (Phase 159c) — is worked out on
+ * structures allowance. A recent refit can take 100% in year one. the owner's target: "the highest figure
+ * we can defend". So each PART of a claim — the purchase, and each piece of work since — is worked out on
  * its own, from the approved version alone:
  *
  *   ITS PERIOD (items 4, 7, 8). The route Phase 159d gave it, frozen with the version: W1 goes into the period its own
@@ -17,7 +17,7 @@
  *   where this period's headroom is RECORDED — not for a partnership with a company partner (s.38A(3)), and not where
  *   that is not known; it goes on the special rate pool first (Rulebook I section 2, CA23084). Then, on NEW AND UNUSED
  *   plant only: a company's full expensing on the main pool and 50% first-year allowance on the special rate pool, spent
- *   from 1 April 2023 (CA23174AA); the 40% allowance on the main pool spent from 1 January 2026 (s.45U) for anyone who
+ *   from 1 April 2023 (CA23174AA); the 40% allowance on the main pool spent (s.45U) for anyone who
  *   does not have full expensing. Work the client paid for is new plant (OUR READING); a purchase is second-hand, unless
  *   the building was bought new and never used from its developer (OUR READING; BOUGHT_NEW_FROM_DEVELOPER). The
  *   super-deduction (2021 to 2023) needs a contract signed after 3 March 2021, which nothing records, so it is named and
@@ -35,7 +35,7 @@
  *   first open period; the years before are lost, not carried. Word question 259.
  *
  *   THE POOLS (item 3). The writing-down rates are the engine's dated table (CB_RATES: 8% special rate before April
- *   2019, 20% main before April 2012, 14% from April 2026, blended across a change), and a pool of £1,000 or less is
+ *   2019, 20% main before April 2012, 14%, blended across a change), and a pool of £1,000 or less is
  *   written off in full (s.56A). Worked in whole pence: every row adds up.
  *
  * NOTHING HERE STATES A RATE. Every rate and date comes from the engine (Rulebook I rule 7.1).
@@ -48,7 +48,7 @@ export const RETURN_YEARS = 5;
 /** The longest run of returns a version can show — a guard, not a rule. */
 const MAX_RETURNS = 40;
 
-/** What the claim records that the allowances turn on, as it stood when the spreadsheet was sent (Phase 159a, C29). */
+/** What the claim records that the allowances turn on, as it stood when the spreadsheet was sent. */
 export type AllowanceFacts = {
   /** The claimant type as recorded (COMPANY, SOLE_TRADER, ...), or null. */
   readonly claimant: string | null;
@@ -64,7 +64,7 @@ export type AllowanceFacts = {
   readonly purchase_date: string | null;
   /** True for a building of homes (supported living), false otherwise; null where the sector is not known. */
   readonly residential: boolean | null;
-  /** PHASE 159k: the asbestos was there when the client acquired the land (CTA 2009 s.1145); absent on a version sent before. */
+  /** The asbestos was there when the client acquired the land (CTA 2009 s.1145); absent on a version sent before. */
   readonly asbestos_at_acquisition?: boolean | null;
 };
 
@@ -97,10 +97,10 @@ export type PartResult = {
   readonly to_pool_now: { readonly main: number; readonly special: number };
   readonly to_pool_next: { readonly main: number; readonly special: number };
   readonly sba: { readonly base_pence: number | null; readonly from: string | null; readonly applies: boolean | null; readonly why: string; readonly by_return: readonly (number | null)[] };
-  /** PHASE 159k (item 2): the long-life test on this part — its long-life part, whether it went to the special rate pool
+  /** The long-life test on this part — its long-life part, whether it went to the special rate pool
    *  (null: could not be decided), and why. Null where no long-life part is given or the reading is off. */
   readonly long_life: { readonly pence: number; readonly moved: boolean | null; readonly why: string } | null;
-  /** PHASE 159k (item 2): land remediation relief on this part's asbestos removal — a deduction, never an allowance.
+  /** Land remediation relief on this part's asbestos removal — a deduction, never an allowance.
    *  Null where no asbestos part is given or the reading is off. */
   readonly lrr: { readonly applies: boolean | null; readonly base_pence: number; readonly deduction_pence: number; readonly additional_pence: number; readonly why: string } | null;
 };
@@ -114,7 +114,7 @@ export type PeriodResult = {
   readonly sba_pence: number | null;
   /** Every allowance in this return: first-year reliefs, both writing-down allowances and the structures allowance. */
   readonly total_pence: number | null;
-  /** PHASE 159k: land remediation relief in this return (the deduction and the additional 50%): not an allowance, so not
+  /** Land remediation relief in this return (the deduction and the additional 50%): not an allowance, so not
    *  in total_pence. */
   readonly lrr_pence: number;
 };
@@ -194,7 +194,7 @@ export function allowancesFor(s: Snapshot, ctx: { period_start: string | null; i
   type Raw = { what: string | null; kind: string; event_id: string | null; date: string | null; main: number | null; special: number | null;
     sba_base: number | null; sba_inputs_known: boolean; long_life: number | null; asbestos: number | null };
   const raws: Raw[] = [];
-  // PHASE 159k (item 2): the readings' parts as approved (pack-approve.ts readingsOf); a version without them has none.
+  // The readings' parts as approved (pack-approve.ts readingsOf); a version without them has none.
   const rd = (s as { readings_159k?: { long_life_test?: boolean; asbestos_lrr?: boolean; purchase_long_life_pence?: number | null;
     works?: { event_id: string; long_life_pence: number | null; asbestos_pence: number | null }[] } }).readings_159k;
   const rdWork = (id: string | null | undefined) => rd?.works?.find((x) => x.event_id === id);
@@ -212,7 +212,7 @@ export function allowancesFor(s: Snapshot, ctx: { period_start: string | null; i
     for (const w of ev.works) {
       const total = w.inputs?.['works_total'] ?? null;
       const known = typeof total === 'number' && typeof w.qualifying_pence === 'number' && typeof w.repairs_pence === 'number';
-      // PHASE 159k: asbestos removal is remediation of the land, not construction: never in the structures allowance's base.
+      // Asbestos removal is remediation of the land, not construction: never in the structures allowance's base.
       const asb = rdWork(w.event_id)?.asbestos_pence ?? null;
       raws.push({ what: w.label, kind: w.kind ?? 'OTHER', event_id: w.event_id ?? null, date: w.event_date ?? null,
         main: w.main_pool_pence, special: w.special_pool_pence,
@@ -348,7 +348,7 @@ export function allowancesFor(s: Snapshot, ctx: { period_start: string | null; i
       }
     }
     const sba = sbaOf(r, route, claimed, idx, entry, facts, residential, isCo, periods);
-    /* PHASE 159k (item 2, OUR READING, on in test) — LAND REMEDIATION RELIEF on asbestos removal (CTA 2009 Part 14): a
+    /* LAND REMEDIATION RELIEF on asbestos removal (CTA 2009 Part 14): a
        company's deduction of the spend and an additional 50%, where the asbestos was there when it acquired the land, in
        the return for the year of the work (W1). Never an allowance, and never in the structures allowance's base. */
     const lrr: PartResult['lrr'] = rd?.asbestos_lrr !== true || r.asbestos === null || r.asbestos <= 0 ? null : (() => {
@@ -471,7 +471,7 @@ function sbaOf(r: { kind: string; date: string | null; sba_base: number | null; 
 /** Plain words for a rate, for the "how" cells. */
 export const rateWords = pct;
 
-/** PHASE 159e (item 6): the allowances in words, for the report — per part, its route, its year, each allowance in that
+/** The allowances in words, for the report — per part, its route, its year, each allowance in that
  *  year and what it adds to the pool; and per year, every allowance and the pools carried on. Amounts not known say so. */
 export type AllowanceWords = {
   readonly parts: readonly { readonly part: string; readonly route: string; readonly year: string; readonly reliefs: string; readonly to_pool: string; readonly sba: string }[];

@@ -1,6 +1,6 @@
 /**
  * THE CLAIM PIPELINE — THE OPERATING PROCEDURE'S TEN STAGES, THEIR GATES AND
- * THEIR EXITS. CRM 2 of 10, 10 September 2026.
+ * THEIR EXITS. CRM 2 of 10.
  *
  * The stages' words are src/shared/stages.ts; the schema is migration 010; the
  * scope is 09-app/CAPREBATE-CRM-DISPOSITION.md. The routes and pages are
@@ -73,7 +73,7 @@ import { getAssessmentsIdByBusinessId2, getAssessmentsSubmittedAtByBusinessId, l
 import { listEnquiryChecksSeqCheckKeyByClaimId, listEnquiryChecksSeqCheckKeyByLeadId } from './data-borrowed.ts';
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
-/** PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
+/** `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
 export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
 
 type Vocab = Readonly<Record<string, string>>;
@@ -98,7 +98,7 @@ function stageLabel(key: ProcedureKey | 'CLOSED'): string {
  * 1 · THE FEE TRIGGER — AN OPEN DECISION, READ AT ITS MOST CAUTIOUS
  * ================================================================== */
 
-/** The title of the question under Lakhbir in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
+/** The title of the question under the owner in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
 export const FEE_TRIGGER_QUESTION =
   'When is our fee earned — when the client accepts the report, when their accountant files the amended return, or when HMRC processes the relief?';
 
@@ -112,10 +112,10 @@ export const FEE_TRIGGERS: Readonly<Record<FeeTrigger, string>> = Object.freeze(
 });
 
 /**
- * WHAT MOVES A CLAIM PAST INVOICE — DECIDED ON 15 SEPTEMBER 2026, BUILT BY PHASE 132e.
+ * WHAT MOVES A CLAIM PAST INVOICE — DECIDED ON, BUILT BY PHASE 132e.
  *
  * Until Phase 132e the procedure left it open and it shipped at the most
- * cautious of three readings, HMRC processing the relief. Lakhbir's answer to
+ * cautious of three readings, HMRC processing the relief. the owner's answer to
  * "When is our fee earned ...?": due when we complete the report and either
  * submit it for the client or send it to them to submit; we will not get
  * confirmation, so delivery is deemed the trigger. So the reading is
@@ -184,25 +184,25 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
   DATA_GATHERING_COMPLETE: {
     stage: 'DATA_GATHERING',
     // CRM 6 of 10: the election is a fact on the facts panel now, and the gate reads it; this confirms what nothing derives.
-    // PHASE 158b (F24): "no unresolved VOA licence block" left out - the rating list was scrapped on 4 Oct 2026, so no source needs one.
+    // "no unresolved VOA licence block" left out - the rating list was scrapped, so no source needs one.
     label: 'Data gathering complete — floor area sourced',
   },
   VALUATION_SIGNED: {
     stage: 'VALUATION',
     // CRM 6 of 10: every grant traced is a fact on the facts panel now, and the gate reads it; this confirms what nothing derives.
     label: 'Valuation signed by the surveyor — every rate sourced',
-    /* PHASE 158c (F34, F35, the Friary House run): Sales could tick "signed by the surveyor" - the surveyor could not -
+    /* Sales could tick "signed by the surveyor" - the surveyor could not -
        while the survey pack had no approved version. The gate reads the surveyor's own approval of the pack now. */
     retired: 'The surveyor’s own approval of the survey pack now counts. This tick is no longer used.',
   },
   CLIENT_ACCEPTED_REPORT: {
     stage: 'REPORTS', label: 'The client accepted the report',
-    // PHASE 158c (F39): staff ticked this for the client. The client accepts the report in their portal now.
+    // Staff ticked this for the client. The client accepts the report in their portal now.
     retired: 'The client now accepts the report in their portal. This tick is no longer used.',
   },
   ACCOUNTANT_CONFIRMED_RETURN: {
     stage: 'REPORTS', label: 'The client’s accountant confirmed the claim fits the return and the amendment window',
-    // PHASE 158d (F46): Sales ticked this for the accountant. The accountant answers through their own link now.
+    // Sales ticked this for the accountant. The accountant answers through their own link now.
     retired: 'The client’s accountant now confirms this through their own link. This tick is no longer used.',
   },
   AMENDED_RETURN_FILED: { stage: 'INVOICE', label: 'The amended return has been filed' },
@@ -214,7 +214,7 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
 });
 
 /**
- * PHASE 158c (F39): THE CLIENT ACCEPTED THE ISSUED REPORT, IN THEIR PORTAL (src/modules/portal/report-accept.ts) - an acceptance on
+ * THE CLIENT ACCEPTED THE ISSUED REPORT, IN THEIR PORTAL (src/modules/portal/report-accept.ts) - an acceptance on
  * this claim of the fingerprint the issued client report carries. A later version issued needs accepting again.
  */
 export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
@@ -229,7 +229,7 @@ export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
 }
 
 /**
- * PHASE 158c (F35): THE SURVEYOR'S VALUATION IS THE SURVEYOR'S APPROVAL OF THE PACK (src/web/pack-approve.ts) - a version
+ * THE SURVEYOR'S VALUATION IS THE SURVEYOR'S APPROVAL OF THE PACK (src/web/pack-approve.ts) - a version
  * approved on a survey job on THIS claim. Approving needs every value, the legal check settled, every chapter opened,
  * the inspection basis and a RICS number, so no tick can stand in for it.
  */
@@ -245,10 +245,10 @@ export function packApprovedNeed(db: Db, c: { readonly id: string }): Need {
 }
 
 /**
- * PHASE 159f (item 3): "EVERY RATE SOURCED" — the SOP's Valuation gate (src/shared/stages.ts), a test now and not the
+ * "EVERY RATE SOURCED" — the SOP's Valuation gate (src/shared/stages.ts), a test now and not the
  * surveyor's word. Read from the newest approved version: the whole-building rate and every counted line's rate carry a
  * structured source (BCIS's draft, or the surveyor's QS schedule, invoice or price book, with a reference and a day). A
- * version approved before Phase 159f has none, and is not met: approve the pack again with the sources.
+ * version approved has none, and is not met: approve the pack again with the sources.
  */
 export function ratesSourcedNeed(db: Db, c: { readonly id: string }): Need {
   const what = 'Every rate in the survey pack names its source';
@@ -285,7 +285,7 @@ export type CheckKey = 'UK_HEALTHCARE_PROPERTY' | 'TRADING_CLIENT' | 'OWNER_OR_A
  * acquired"; rule 13(a) settles that commercial means the CLIENT, not the
  * building, so the check is that the client trades — and supported living is in.
  *
- * PHASE 159g (item 2, the coverage matrix 2.5): A QUALIFYING ACTIVITY, NOT ONLY A
+ * A QUALIFYING ACTIVITY, NOT ONLY A
  * TRADE. CAA 2001 s.15(1): a trade, a profession or vocation, and an ordinary UK
  * property business are all qualifying activities. A landlord or a property
  * company that lets a surgery or a care home to another business can claim on the
@@ -402,7 +402,7 @@ export function enquiryEvidence(
       if (a.question_id === 'Q1' || a.question_id === 'Q1a') out.NO_CLAIM_CONFLICT.push(line);
     }
   }
-  // PHASE 159g (L2, item 2): the register's company — a dormant one flagged — and how the client holds each building.
+  // The register's company — a dormant one flagged — and how the client holds each building.
   out.TRADING_CLIENT.push(...qualifyingActivityEvidence(db, business_id));
   for (const p of listPropertiesBusinessIdLabelByBusinessId<{ business_id: string; label: string; existing_ca_claimed: string | null }>(db, [business_id])) {
     // The CRM follow-on: derived from the client's own answer where it settles it, and said where it came from.
@@ -489,7 +489,7 @@ export function feeTriggerReached(db: Db, c: PipelineClaim, trigger: FeeTrigger 
         : `${d.kind === 'CLIENT_REPORT' ? 'the client report' : 'the computation pack'} was issued on ${d.on}`,
     };
   }
-  // PHASE 158c (F39): the client's own acceptance, in the portal, of the issued report; no longer a tick.
+  // The client's own acceptance, in the portal, of the issued report; no longer a tick.
   const t = trigger === 'CLIENT_ACCEPTED_REPORT' ? clientAcceptedNeed(db, c) : confirmation(db, c, trigger);
   return {
     what: `The fee trigger is reached — ${FEE_TRIGGERS[trigger]}${trigger === FEE_TRIGGER.reading && !FEE_TRIGGER.decided ? ' (the most cautious reading, while the fee trigger is undecided)' : ''}`,
@@ -583,26 +583,25 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       break;
     }
     case 'VALUATION': {
-      // CRM 6 of 10: every grant traced is a fact now. PHASE 159f: every rate sourced is a fact too (ratesSourcedNeed).
+      // CRM 6 of 10: every grant traced is a fact now. Every rate sourced is a fact too (ratesSourcedNeed).
       const g = grantsTraced(db, c.id);
       needs.push({ what: 'Every grant or contribution traced to the items it paid for', met: g.met, why: g.why });
-      // PHASE 153a (Phase 153b lines 12 and 13): no grant split in equal share without its papers or the tax adviser's
+      // No grant split in equal share without its papers or the tax adviser's
       // view; the client has checked with whoever paid. Both met where no grant is left on the claim.
       needs.push(grantSplitNeed(db, c), grantProviderNeed(db, c), packApprovedNeed(db, c));
-      // PHASE 159f (item 3): every rate sourced — the stage's own gate, now a test of the approved version.
+      // Every rate sourced — the stage's own gate, now a test of the approved version.
       needs.push(ratesSourcedNeed(db, c));
       break;
     }
     case 'TAX_ADVISER_SIGNOFF':
       needs.push(signOffNeed(db, c));
-      // PHASE 159d (C9): a legal check clear only until a deadline is read again.
+      // A legal check clear only until a deadline is read again.
       needs.push(legalDeadlineNeed(db, c, opts.today ?? new Date().toISOString()));
       break;
     case 'REPORTS':
       // "No tax adviser sign-off (carried forward from SOP 7): no report is drafted stating a figure to the client."
-      // (SOP 8's words since Phase 132, 14 September 2026; they said "No CTA sign-off" — clause 1: any tax adviser signs off.)
       // CRM 6 of 10: the reports are issued (the deliverables register), and the amendment window is open — UNKNOWN does not pass.
-      // PHASE 132e: WHO CONFIRMS THE CLAIM FITS THE RETURN. Where the client has no accountant or tax adviser — a
+      // WHO CONFIRMS THE CLAIM FITS THE RETURN. Where the client has no accountant or tax adviser — a
       // recorded yes from the client, and no such contact on the organisation — the client's own written confirmation
       // (src/modules/portal/client-filing.ts) stands where the accountant's does, and is never recorded as the accountant's. The
       // computation pack is still issued: whoever files needs the computation. Otherwise, exactly as before.
@@ -615,10 +614,10 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
           deliverableIssuedNeed(db, c.id, 'CLIENT_REPORT'), clientAcceptedNeed(db, c),
           deliverableIssuedNeed(db, c.id, 'ACCOUNTANT_COMPUTATION_PACK'),
           route.route === 'CLIENT'
-            // PHASE 159d: the deadline of the return the route names — under W2 the first open year's, not the closed one.
+            // The deadline of the return the route names — under W2 the first open year's, not the closed one.
             ? clientConfirmationNeed(db, c, since, claimRoutes(db, c, today).filter((r) => r.route === 'W1' || r.route === 'W2')
               .map((r) => r.deadline).filter((x): x is string => x !== null).sort()[0] ?? amendmentWindowReading(db, c, today).deadline)
-            : accountantFitNeed(db, c.id, since), // PHASE 158d (F46): the accountant's own answer, not a staff tick
+            : accountantFitNeed(db, c.id, since), // The accountant's own answer, not a staff tick
           reportsWindowNeed(db, c, today),
           legalDeadlineNeed(db, c, today),   // PHASE 159d (C9)
         );
@@ -631,7 +630,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // CRM 7 of 10: THE CLAIM'S OWN INVOICE. Until invoices sat on the claim this read any invoice raised for the
       // organisation, so one claim's invoice opened every claim of the same client.
       const live = liveFeeInvoiceCount(db, c.id);
-      /* PHASE 158c (F41, the Friary House run): the claim moved on with the fee "raised, not sent" - the client had not been
+      /* The claim moved on with the fee "raised, not sent" - the client had not been
          invoiced. A live fee invoice must be recorded as SENT (finance's "sent", src/web/invoices.ts markSent). */
       const sent = getInvoicesSentOnByClaimIdKind<{ sent_on: string | null }>(db, [c.id]);
       needs.push({
@@ -732,7 +731,7 @@ export function raiseBusinessStage(db: Db, business_id: string, at: string): Sta
 }
 
 /**
- * PHASE 158c (F42, the Friary House run): the client's step a claim evidences. The defence pack and Closed are the
+ * The client's step a claim evidences. The defence pack and Closed are the
  * client's "5 Claim filed", and the portal said so with no record that the claim was filed. Until the filing date is on
  * the claim's reconciliation, such a claim evidences "4 Expert sign-off"; recording it raises the client's step.
  */
@@ -744,7 +743,7 @@ export function clientStageForClaim(db: Db, claim_id: string, key: string | null
 }
 
 /**
- * PHASE 158b (F30, the Friary House run): no claim stage maps to the client's step 3, "We research your property", so a
+ * No claim stage maps to the client's step 3, "We research your property", so a
  * client went from step 2 to step 4 while we researched. A research run that got an answer from at least one register,
  * on a client whose letter is signed, raises the client's step to it. Raise only, as raiseBusinessStage: a business
  * already past it stays where it is, and one whose letter is not signed is never shown a step it has not reached.
@@ -786,7 +785,7 @@ type Apply = {
 function apply(d: PipelineDeps, actor: Actor, c: PipelineClaim, m: Apply, next: NextActionWrite | null = null): MoveResult {
   const at = d.now();
   const id = d.newId();
-  // PHASE 159a: a reopen to the tax adviser's sign-off or earlier sets aside what was released (src/modules/claims/valuation-lock.ts).
+  // A reopen to the tax adviser's sign-off or earlier sets aside what was released (src/modules/claims/valuation-lock.ts).
   const aside: { set: SetAside | null } = { set: null };
   const { raised, nextTask } = d.db.tx(() => {
     if (m.kind === 'REOPEN' && VOIDING_REOPEN_STAGES.includes(m.to)) aside.set = setAsideOnReopen(d.db, c.id, at, actor.id);
@@ -913,7 +912,7 @@ export function moveClaim(d: PipelineDeps, actor: Actor, claim_id: string, req: 
     if (reason.code === 'OTHER' && note.value === null) {
       return refuse(d, actor, c, kind, to, '“Another reason” needs the reason written in the note.', 'reason');
     }
-    /* PHASE 159d: "OUTSIDE THE AMENDMENT WINDOW" ENDS A CLAIM ONLY WHERE NOTHING IS LEFT TO CLAIM — every part W3 (not
+    /* "OUTSIDE THE AMENDMENT WINDOW" ENDS A CLAIM ONLY WHERE NOTHING IS LEFT TO CLAIM — every part W3 (not
        owned, or the purchase fails the legal check). A closed window with the building still owned is W2, through this
        year's pool, and a part with no route yet is not settled: neither stops the job. */
     if (exit.key === 'OUTSIDE_AMENDMENT_WINDOW') {
@@ -1026,7 +1025,7 @@ export function recordMilestone(
       why: `“${m.label}” is confirmed while the claim is at ${stageLabel(m.stage)}; this claim is at ${claimStage(c.stage).label}.`,
     };
   }
-  // PHASE 158d (F44): "floor area sourced" is the analyst's own tick, and it now needs a floor area on record to tick.
+  // "floor area sourced" is the analyst's own tick, and it now needs a floor area on record to tick.
   if (milestone === 'DATA_GATHERING_COMPLETE') {
     const area = floorAreaOnRecord(d.db, c.business_id, c.property_id);
     if (!area.known) return { ok: false, why: area.why };
@@ -1110,7 +1109,7 @@ export type PipelinePanel = {
   readonly hold?: { readonly reason: string | null; readonly returns_to: string };
   readonly portal?: {
     readonly shows: string; readonly this_claim_evidences: string | null;
-    /** PHASE 158b (F27): the client steps, so a page can draw the line under the request's own name switch. */
+    /** The client steps, so a page can draw the line under the request's own name switch. */
     readonly shows_key: StageKey | null; readonly evidences_key: StageKey | null;
   };
   readonly gate?: GateReading;
@@ -1127,10 +1126,10 @@ export type PipelinePanel = {
     readonly resume: { readonly to: string; readonly label: string } | null;
     readonly reopen: readonly { readonly key: string; readonly label: string }[];
     readonly may_record: boolean;
-    /** PHASE 159a: "Reopen the valuation" — offered to an admin once the figures are fixed, with what it sets aside. */
+    /** "Reopen the valuation" — offered to an admin once the figures are fixed, with what it sets aside. */
     readonly reopen_valuation: { readonly words: string } | null;
   };
-  /** PHASE 159a: whether the figures are fixed, and the latest valuation reopen with what it set aside. */
+  /** Whether the figures are fixed, and the latest valuation reopen with what it set aside. */
   readonly valuation?: {
     readonly locked: string | null;
     readonly reopened: { readonly at: string; readonly who: string; readonly reason: string; readonly to: string } | null;
@@ -1197,7 +1196,7 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
     ...base,
     ...(s.kind === 'ON_HOLD' ? { hold: { reason: c.hold_reason, returns_to: anyStageLabel(c.hold_return_stage) } } : {}),
     portal: {
-      /* PHASE 158b (F27): the portal's own line, numbered, in the shipped step names (NAME_SWITCHES.portalSteps is on).
+      /* The portal's own line, numbered, in the shipped step names (NAME_SWITCHES.portalSteps is on).
          The claim page redraws it from the keys under the request's own switch (crm-pages.ts); this module does not
          import navigation.ts, which reads the settings tiles as it loads (an import loop broke phase156e). */
       shows: clientStage(business?.stage ?? '') === undefined ? 'a step the client’s page does not show'
@@ -1233,7 +1232,7 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
   };
 }
 
-/** PHASE 159a: the valuation's state for the claim page — fixed or not, and the latest reopen that set things aside. */
+/** The valuation's state for the claim page — fixed or not, and the latest reopen that set things aside. */
 function valuationPanel(db: Db, c: PipelineClaim): NonNullable<PipelinePanel['valuation']> {
   const lock = valuationLock(db, c.id);
   const r = lastReopen(db, c.id);

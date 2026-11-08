@@ -1,13 +1,13 @@
 /**
- * REPLIES TO contact@caprebate.co.uk, ONTO THE COMPANY'S CHAT AND TIMELINE. Phase 142, 22 September 2026 — carried from
- * Phase 141, whose Developer Spec B48 set out where a reply would land. The mailbox reader is src/integrations/email/email-inbound.ts,
+ * REPLIES TO contact@caprebate.co.uk, ONTO THE COMPANY'S CHAT AND TIMELINE. Carried from
+ * Whose Developer Spec B48 set out where a reply would land. The mailbox reader is src/integrations/email/email-inbound.ts,
  * switched off (INBOUND_EMAIL) until the mailbox exists.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * THE FILING RULE, AND IT IS STRICT
  *
  *   MATCHED    the reply's In-Reply-To or References names the Message-ID of an email we sent (outbox.provider_ref), AND
- *              it comes from one of THAT email's company's contacts — or (1 October 2026, now that staff may type any
+ *              it comes from one of THAT email's company's contacts — or (1, now that staff may type any
  *              address in To) from THE VERY ADDRESS THAT EMAIL WENT TO: it answers our own random Message-ID, from the
  *              address we wrote to, which nobody else could know to fake. Then it is a message FROM the client on the company's
  *              "With the client" thread, tagged to the same claim as our email, and on the timeline as "A reply from
@@ -56,7 +56,7 @@ import { getBusinessesIdById, getBusinessesSById, getContactsIdByBusinessId, ins
 
 export type InboundDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
-  /** PHASE 142a: for the new-message alert a filed reply raises — off unless EMAIL_SENDING is on. */
+  /** For the new-message alert a filed reply raises — off unless EMAIL_SENDING is on. */
   sending?: EmailSending; login?: SmtpLogin | null; origin?: string;
 };
 
@@ -90,7 +90,7 @@ export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = par
   const uid = String(mail.uid);
   if (getInboundEmailIdByMailboxUid(d.db, [uid]) !== undefined) return null;
   if (getInboundBounceNoticesIdByMailboxUid(d.db, [uid]) !== undefined) return null;
-  /* PHASE 146f: A DELIVERY REPORT IS NOT A REPLY. It is matched to the email of ours it names, recorded as a bounce, and
+  /* A DELIVERY REPORT IS NOT A REPLY. It is matched to the email of ours it names, recorded as a bounce, and
      never filed on a chat or queued for staff. A HARD one stops further email to that address. */
   const report = parseBounceReport(mail.raw);
   if (report !== null) {
@@ -112,7 +112,7 @@ export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = par
   }
   const ours = ourEmail(d.db, parsed.answers);
   const contact = ours === null ? null : contactOf(d.db, ours.business_id, parsed.from_address);
-  // 1 Oct 2026: from the very address our email went to (typed in To, not a contact) — it answers our own Message-ID.
+  // From the very address our email went to (typed in To, not a contact) — it answers our own Message-ID.
   const toWhomWeWrote = ours !== null && contact === null && parsed.from_address.trim() !== '' && plainAddress(ours.to_email) === plainAddress(parsed.from_address);
   const id = d.newId();
   const at = d.now();
@@ -141,7 +141,7 @@ export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = par
     object_type: 'inbound_email', object_id: id,
     detail: { outcome: o, business: o === 'QUEUED' ? null : ours?.business_id ?? null, message, files: parsed.files.length },
   });
-  // PHASE 142a: a reply filed on a company's chat tells its owner, as a portal message does. Off unless sending is on.
+  // A reply filed on a company's chat tells its owner, as a portal message does. Off unless sending is on.
   if (o === 'FILED' && message !== null) alertNewMessage(d, message);
   return o;
 }
@@ -174,10 +174,10 @@ export async function readMailbox(d: InboundDeps, cfg: InboundEmail, login: Imap
     read++;
     if (o === 'FILED') filed++; else if (o === 'QUEUED') queued++; else if (o === 'BOUNCE') bounced++; else dnc++;
   }
-  // 1 Oct 2026: a reply to one of OUR emails is never "mail that was already there", whenever it arrived.
+  // A reply to one of OUR emails is never "mail that was already there", whenever it arrived.
   const late = await repliesToOurs(d, mailbox, last);
   read += late; filed += late;
-  // 1 Oct 2026: and one set aside before today's rule existed is filed by it now (migration 068).
+  // And one set aside before today's rule existed is filed by it now (migration 068).
   filed += fileByRule(d);
   // Move the mark past everything looked at, so a message this reader passes over is not fetched again next time.
   if (top > (mark ?? 0)) {
@@ -189,7 +189,7 @@ export async function readMailbox(d: InboundDeps, cfg: InboundEmail, login: Imap
 /**
  * 1 OCT 2026 — A REPLY TO ONE OF OUR EMAILS IS NEVER SKIPPED. The first read notes where the inbox stands and reads
  * nothing before it, so the mail that was there at switch-on never comes in. But on the test website the first read
- * happened only when somebody first looked — after Lakhbir's replies to the site's own emails had arrived — so they
+ * happened only when somebody first looked — after the owner's replies to the site's own emails had arrived — so they
  * were passed over with the rest. Now every read also asks the inbox (read-only, one header) for messages answering a
  * Message-ID of our domain at or below the mark, and takes in each one not already read that answers an email this
  * site really sent — and only those: nothing else from before the mark comes in. Returns how many it filed.
@@ -215,7 +215,7 @@ async function repliesToOurs(d: InboundDeps, mailbox: Mailbox, upTo: number): Pr
 }
 
 /**
- * 1 OCT 2026 — A REPLY WAITING TO BE SORTED THAT THE RULES NOW FILE. A reply that answers one of our emails waits in
+ * A REPLY WAITING TO BE SORTED THAT THE RULES NOW FILE. A reply that answers one of our emails waits in
  * "Email replies to sort" when it came from an address that is not one of that company's contacts. Since today a reply
  * from the very address our email went to is filed (see `ingest`), and the company may since have added the sender as a
  * contact. Each such reply still waiting is filed on that company's conversation, tagged to our email's claim, with the
@@ -334,7 +334,7 @@ export function unsavedFiles(db: Db, actor: Actor, message_id: string): EmailedF
  */
 export async function saveEmailedFile(
   d: { app: App; store: FsObjectStore; newId: () => string }, actor: Actor, file_id: string, type_code: string, mailbox: Mailbox | null,
-  /** PHASE 146j: the answer to the question about a name, given where staff say what the file is. */
+  /** The answer to the question about a name, given where staff say what the file is. */
   early_vouch: readonly { readonly field_id: string; readonly answer: VouchAnswer }[] = [],
 ): Promise<{ ok: true; business_id: string } | { ok: false; why: string }> {
   authorise(actor, 'inbound_email.file', { type: 'inbound_email', id: file_id });
@@ -379,7 +379,7 @@ const lastRead = new WeakMap<object, number>();
 export const READ_EVERY_MS = 2 * 60_000;
 
 /**
- * 1 OCT 2026 — HOW EMAIL READING STANDS, for staff to see (and to send to whoever is looking into it). Lakhbir's replies
+ * HOW EMAIL READING STANDS, for staff to see (and to send to whoever is looking into it). the owner's replies
  * reached the inbox but not the site, and the site's own records were the one thing that could not be seen from outside:
  * the mark, the emails received and what became of each, and the emails sent and whether each kept the Message-ID a
  * reply is matched on. Admin and Sales (`inbound_email.read`). Addresses and subjects, never an email's words.
@@ -407,7 +407,7 @@ export function readingState(db: Db, actor: Actor, nowIso: string): ReadingState
 }
 
 /**
- * 1 OCTOBER 2026 — THE REPLY TIMER. Lakhbir chose a free outside timer (cron-job.org) to wake the website every few
+ * THE REPLY TIMER. the owner chose a free outside timer (cron-job.org) to wake the website every few
  * minutes, so replies come in with nobody on the site: POST (or GET) /hooks/read-replies with the header
  * "Authorization: Bearer <REPLY_TIMER_TOKEN>". Without that word, or with a short one set, it is refused and nothing is
  * read; compared in constant time. It reads at most once every two minutes however often it is called. Its answer is
@@ -439,8 +439,8 @@ export function lastReadWords(app: App): { at: string; words: string; ok: boolea
 }
 
 /**
- * PHASE 155 (line 5), 4 October 2026 — IF THE TIMER STOPS, ADMIN IS TOLD. The outside timer (cron-job.org, set up by hand:
- * Phase 156 A3; COORDINATES and the continuity plan say who owns it and where its history is) is the only thing that
+ * — IF THE TIMER STOPS, ADMIN IS TOLD. The outside timer (cron-job.org, set up by hand:
+ * A3; COORDINATES and the continuity plan say who owns it and where its history is) is the only thing that
  * reads replies while nobody is on the site. Each copy of the website kept its last read in memory, so a stopped timer
  * was silent. Every read now writes one shared row (migration 088, `mailbox_reads`: times only), and Admin's home page
  * warns when no read has worked for more than REPLY_WATCH.stale_minutes during REPLY_WATCH's hours.

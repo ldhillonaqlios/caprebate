@@ -1,7 +1,7 @@
 /**
- * BLOCKING OFF TIME IN YOUR OWN DIARY. 1 October 2026 (migration 066).
+ * BLOCKING OFF TIME IN YOUR OWN DIARY. (migration 066).
  *
- * Lakhbir: "a calendar allowing users to block off time look what what they have booked in the future".
+ * the owner: "a calendar allowing users to block off time look what what they have booked in the future".
  *
  * WHO: any member of staff who can work (not the view-only login, not a client) blocks and frees their OWN time; Admin
  * may free anyone's. A block holds its span exactly as a call does: `bookedSpans` and `isBookable` (src/modules/crm/schedule.ts)

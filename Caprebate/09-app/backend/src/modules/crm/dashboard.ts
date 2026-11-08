@@ -1,6 +1,6 @@
 /**
- * THE MANAGEMENT DASHBOARD — EVERY TILE A QUERY, EVERY TILE ASKED OF can().
- * CRM 9 of 10, 12 September 2026.
+ * THE MANAGEMENT DASHBOARD — EVERY TILE A QUERY, EVERY TILE ASKED OF can.
+ * CRM 9 of 10.
  *
  * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 15, and the decisions
  * this file takes are that table's Part E from E119. The page is

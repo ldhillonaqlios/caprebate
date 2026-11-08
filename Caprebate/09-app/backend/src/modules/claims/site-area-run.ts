@@ -1,6 +1,5 @@
 /**
- * THE SITE AREA'S CALLER: "RUN THE RESEARCH", AFTER SIGNING — AND ITS LINE ON THE RESEARCH PANEL. Phase 151c,
- * 25 September 2026.
+ * THE SITE AREA'S CALLER: "RUN THE RESEARCH", AFTER SIGNING — AND ITS LINE ON THE RESEARCH PANEL.
  *
  * Phase 151a built `siteAreaFromLandBoundary` (src/integrations/connectors/site-area.ts) and left it with nothing calling it. This
  * file is the one caller. It runs on the operator's one click, the same way the paid lookups do (src/modules/claims/research.ts):
@@ -120,7 +119,7 @@ const isDegrees = (p: unknown): boolean => p !== null && typeof p === 'object' &
 function gridFor(point: unknown, setup: SiteAreaSetup): Ostn15Grid | null {
   if (!isDegrees(point)) return null;
   if (setup.grid !== undefined) return setup.grid;
-  // PHASE 161h: a file named by CAPREBATE_OSTN15_FILE first (a server's disk), else the reference database (the live
+  // A file named by CAPREBATE_OSTN15_FILE first (a server's disk), else the reference database (the live
   // website on Vercel, src/integrations/postcodes/reference-db.ts). Either one that cannot be read is the same as none: a latitude is refused.
   try { return ostn15Grid(setup.env) ?? referenceOstn15Grid(setup.env); } catch { return null; }
 }
@@ -209,7 +208,7 @@ function preview(db: Db, business_id: string, p: PropertyRow, gates: SiteAreaGat
 }
 
 /** The site area held for a property, as a line, or null when none is held. HM Land Registry's land boundary first;
- *  PHASE 156f (B4): else the area from the title outline Homedata sold on the paid address lookup. */
+ *  Else the area from the title outline Homedata sold on the paid address lookup. */
 function held(db: Db, business_id: string, p: PropertyRow): SiteAreaLine | null {
   const r = getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId<{ fields_json: string; obtained_at: string }>(db, [business_id, SITE_AREA_SOURCE_ID, `property:${p.id}`]);
   if (r === undefined) return heldFromTitleOutline(db, business_id, p);
@@ -229,13 +228,13 @@ function held(db: Db, business_id: string, p: PropertyRow): SiteAreaLine | null 
   };
 }
 
-/** PHASE 159g (item 5): a site area far larger than the building is flagged for the surveyor, never used as the plot. */
+/** A site area far larger than the building is flagged for the surveyor, never used as the plot. */
 function flagFor(db: Db, business_id: string, property_id: string, area: number | null): string {
   const f = siteAreaFlag(area, floorAreaForSite(db, business_id, property_id));
   return f === null ? '' : ` ${f}`;
 }
 
-/** PHASE 156f (B4): the area from Homedata's title outline for this property, as a line, or null. */
+/** The area from Homedata's title outline for this property, as a line, or null. */
 function heldFromTitleOutline(db: Db, business_id: string, p: PropertyRow): SiteAreaLine | null {
   const r = getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId2<{ fields_json: string; obtained_at: string }>(db, [business_id, TITLE_BOUNDARY_SOURCE_ID, p.id]);
   if (r === undefined) return null;

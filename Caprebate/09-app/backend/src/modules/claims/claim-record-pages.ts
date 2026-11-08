@@ -1,6 +1,6 @@
 /**
  * THE CLAIM'S FACTS, FIGURES, SIGN-OFF, DELIVERABLES AND AFTERCARE — ROUTES AND
- * PANELS. CRM 6 of 10, 11 September 2026.
+ * PANELS. CRM 6 of 10.
  *
  * Same shape as every other section: `handleClaimRecord` returns 'not-mine' for
  * anything it does not own, and staff.ts mounts it with one line. Every route
@@ -71,7 +71,7 @@ export async function handleClaimRecord(
   const deps = { db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId };
   const back = (id: string): string => `/staff/claims/${id}`;
   const finish = (id: string, r: { ok: true } | { ok: false; why: string; field?: string }, title: string, done: string, anchor = ''): 'handled' => {
-    // PHASE 133e (D4, continued): where the store named the posted field, the refusal is drawn beside it.
+    // Where the store named the posted field, the refusal is drawn beside it.
     if (!r.ok) return d.problem(res, actor, title, r.why, `${back(id)}${anchor}`, r.field);
     redirect(res, `${back(id)}?done=${done}${anchor}`);
     return 'handled';
@@ -81,11 +81,11 @@ export async function handleClaimRecord(
   if (m) {
     const id = m[1] ?? '';
     const f = await form(req);
-    // PHASE 160j: a fact typed from a "still needed" line goes back to "Where this claim stands".
+    // A fact typed from a "still needed" line goes back to "Where this claim stands".
     const anchor = f.get('from') === 'where' ? '#where' : '';
     return finish(id, F.recordFact(deps, actor, id, posted(f, ['fact_key', 'answer', 'value', 'source_id', 'note'])), 'Fact not recorded', 'saved', anchor);
   }
-  /* PHASE 160j: what the client sent, accepted or asked for again (src/modules/crm/client-checks.ts). */
+  /* What the client sent, accepted or asked for again (src/modules/crm/client-checks.ts). */
   m = new RegExp(`^/staff/claims/${ID}/sent/${ID}/accept$`).exec(path);
   if (m) {
     const id = m[1] ?? '';
@@ -97,14 +97,14 @@ export async function handleClaimRecord(
     const f = await form(req);
     return finish(id, CK.askAgain(deps, actor, id, m[2] ?? '', f.get('reason')), 'Not asked again', 'asked-again', '#where');
   }
-  // PHASE 143: the grants routes send a person back to the grants section, which opens because it was just changed.
+  // The grants routes send a person back to the grants section, which opens because it was just changed.
   m = new RegExp(`^/staff/claims/${ID}/grants$`).exec(path);
   if (m) {
     const id = m[1] ?? '';
     return finish(id, F.recordGrant(deps, actor, id, posted(await form(req),
       ['kind', 'payer_class', 'amount', 'amount_basis', 'traced', 'traced_elements', 'element_ids', 'source_id', 'note', 'paid_to', 'event_id'])), 'Grant not saved', 'grants', GRANTS_ANCHOR);
   }
-  // PHASE 153a: the two grant facts the gate out of valuation reads (src/modules/assessment/grant-checks.ts), from the grants section,
+  // The two grant facts the gate out of valuation reads (src/modules/assessment/grant-checks.ts), from the grants section,
   // and back to it. Only those two keys: every other fact is recorded on the facts panel, as before.
   m = new RegExp(`^/staff/claims/${ID}/grants/fact$`).exec(path);
   if (m) {
@@ -121,13 +121,13 @@ export async function handleClaimRecord(
     const f = await form(req);
     return finish(id, F.withdrawGrant(deps, actor, id, m[2] ?? '', f.get('reason')), 'Grant not removed', 'grants', GRANTS_ANCHOR);
   }
-  // PHASE 143: "Did anyone else pay for any of this work?" — Yes, No or Not sure, recorded as the same fact as before.
+  // "Did anyone else pay for any of this work?" — Yes, No or Not sure, recorded as the same fact as before.
   m = new RegExp(`^/staff/claims/${ID}/grants/answer$`).exec(path);
   if (m) {
     const id = m[1] ?? '';
     return answerGrantsQuestion(d, deps, res, actor, id, await form(req), finish);
   }
-  // PHASE 143: the step-by-step "Add a grant" pages. Every step is a POST, so nothing typed is ever in the address.
+  // The step-by-step "Add a grant" pages. Every step is a POST, so nothing typed is ever in the address.
   m = new RegExp(`^/staff/claims/${ID}/grants/new$`).exec(path);
   if (m) {
     const id = m[1] ?? '';
@@ -177,7 +177,7 @@ export async function handleClaimRecord(
     return finish(id, R.closeEnquiry(deps, actor, id, m[2] ?? '', posted(await form(req), ['closed_on', 'outcome', 'amended_figure'])),
       'Enquiry not closed', 'saved');
   }
-  // Phase 132e: the client's own written filing confirmation, where the client has no accountant (src/modules/portal/client-filing.ts).
+  // The client's own written filing confirmation, where the client has no accountant (src/modules/portal/client-filing.ts).
   m = new RegExp(`^/staff/claims/${ID}/client-filing-confirmation$`).exec(path);
   if (m) {
     const id = m[1] ?? '';
@@ -185,7 +185,7 @@ export async function handleClaimRecord(
       ['no_accountant_or_adviser', 'will_file_amendment', 'last_day_acknowledged', 'last_day_stated', 'remains_responsible', 'written_evidence'])),
       'Client filing confirmation not recorded', 'saved');
   }
-  // Phase 132e: a multi-site discount proposed on this claim's fee — recorded, never applied (src/modules/claims/fee-discounts.ts).
+  // A multi-site discount proposed on this claim's fee — recorded, never applied (src/modules/claims/fee-discounts.ts).
   m = new RegExp(`^/staff/claims/${ID}/fee-discount$`).exec(path);
   if (m) {
     const id = m[1] ?? '';
@@ -198,7 +198,7 @@ export async function handleClaimRecord(
  * THE PANELS
  * ------------------------------------------------------------------ */
 
-/* A ROW MAY CARRY A SENTENCE SAYING WHAT THE FACT DOES — Phase 132, 15 September 2026. Without one it is drawn as before. */
+/* A ROW MAY CARRY A SENTENCE SAYING WHAT THE FACT DOES. Without one it is drawn as before. */
 function reading(r: F.FactReading, says?: string): Safe {
   const src = r.source === null ? h`<span class="help">never recorded</span>`
     : h`<span class="help">${r.source.publisher}${r.source.derived ? ' · worked out' : ''} · ${r.source.locator}${
@@ -224,7 +224,7 @@ const RELEASED_FACT_LABELS: Readonly<Record<string, string>> = Object.freeze({
 /** One released value, in words: a reading's display, a list of rows, or not known — never a raw object. */
 function releasedValue(v: unknown): Safe {
   if (Array.isArray(v)) {
-    if (v.length === 0) return h`<span class="help">not known</span>`; // PHASE 133c: a deciding fact with nothing recorded is not known, and says so
+    if (v.length === 0) return h`<span class="help">not known</span>`; // A deciding fact with nothing recorded is not known, and says so
     return h`<ul>${v.map((row) => h`<li>${Object.values(row as Record<string, unknown>).filter((x) => x !== null && x !== undefined && x !== '').map(String).join(' · ')}</li>`)}</ul>`;
   }
   if (v !== null && typeof v === 'object' && 'display' in v) {
@@ -243,7 +243,7 @@ export function factsBlock(claim_id: string, facts: F.FactsPanel | ReleasedFacts
   }
   const p = facts;
   const w = p.amendment_window;
-  // PHASE 138: inside the claim page's "The claim's facts" section, which names it; the sentence behind "Why?"; the
+  // Inside the claim page's "The claim's facts" section, which names it; the sentence behind "Why?"; the
   // recording forms behind one fold. PHASE 143 moved grants and contributions out to a section of their own (grantsBlock).
   return h`<div class="pblock">
     <div class="help">${why('We work a fact out from a public record first, and only type it in where nothing gives it. Every value says where it came from. “Not known” and “never recorded” are treated the same, and neither counts in the client’s favour.')}</div>
@@ -384,9 +384,9 @@ export function aftercareBlock(claim_id: string, p: R.AftercarePanel | undefined
 }
 
 /* ================================================================== *
- * GRANTS AND CONTRIBUTIONS — PHASE 143, 22 September 2026. "Clean-up 10 of 11."
+ * GRANTS AND CONTRIBUTIONS. "Clean-up 10 of 11."
  *
- * Lakhbir, 18 September 2026: "Grants and contributions — this section is a mess, and although great and it works, the
+ * The owner: "Grants and contributions — this section is a mess, and although great and it works, the
  * UI is terrible." THE SCREEN CHANGED AND NOTHING UNDER IT DID. The same table (claim_grants), the same fact
  * (GRANTS_EXIST), the same two stores (F.recordGrant, F.withdrawGrant) and the same valuation check (F.grantsTraced).
  *
@@ -440,7 +440,7 @@ function matchedChip(traced_key: string): Safe {
 type CardLine = {
   readonly kind: string; readonly payer: string; readonly payer_key: string; readonly amount_pence: number | null;
   readonly amount_basis_key: string; readonly traced_key: string; readonly traced_elements: string | null; readonly told_by: string;
-  /** Phase 153a: the fixture-list rows it paid for, by name. */
+  /** The fixture-list rows it paid for, by name. */
   readonly element_names: readonly string[];
 };
 
@@ -526,7 +526,7 @@ export function grantsBlock(claim_id: string, p: F.FactsPanel, asked: boolean): 
 }
 
 /**
- * PHASE 153a — BEFORE THE CLAIM MOVES ON FROM VALUATION (src/modules/assessment/grant-checks.ts; Phase 153b lines 12 and 13). Two
+ * BEFORE THE CLAIM MOVES ON FROM VALUATION. Two
  * answers, each Yes or No with who told us: the client has checked with whoever paid; and, where a grant is split in
  * equal share with no papers received, the tax adviser's view on the split — which counts only from the tax adviser.
  */
@@ -587,7 +587,7 @@ const STEP_NAMES = ['Who paid', 'How much', 'What it paid for', 'Matched'] as co
 function draftFrom(f: URLSearchParams): Draft {
   const out = {} as Draft;
   for (const k of DRAFT_KEYS) out[k] = (f.get(k) ?? '').trim();
-  // Phase 153a: on the step that asks it, the items ticked; on every other step, the list carried from it.
+  // On the step that asks it, the items ticked; on every other step, the list carried from it.
   if (f.get('step') === '3' && f.get('go') !== 'edit') out.element_ids = f.getAll('element_pick').map((x) => x.trim()).filter((x) => x !== '').join(',');
   return out;
 }
@@ -654,7 +654,7 @@ function grantStepPage(d: ClaimRecordPageDeps, res: ServerResponse, actor: Actor
     <a href="${claimHref(c.business_id, c.id)}${GRANTS_ANCHOR}">Cancel</a></p>`;
   let body: Safe;
   if (step === 1) {
-    // PHASE 159i (items 1 and 4): who received it, and which spend on the building it paid for.
+    // Who received it, and which spend on the building it paid for.
     const evs = eventsOfProperty(d.app.db, getClaimsPById<{ p: string | null }>(d.app.db, [c.id])?.p ?? null).filter((e) => e.kind !== 'REPAIRS');
     body = h`<form method="post" action="${self}" class="gstep"><input type="hidden" name="step" value="1">${carry(x, ['payer_class', 'kind', 'paid_to', 'event_id'])}
       <fieldset><legend><h2>Who paid?</h2></legend>${choice('payer_class', F.PAYER_CLASSES, x.payer_class, { individual: 'A private person — we do not write their name' })}</fieldset>

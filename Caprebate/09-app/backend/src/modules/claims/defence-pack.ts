@@ -1,5 +1,5 @@
 /**
- * THE DEFENCE PACK GENERATOR — BUILT, AND SWITCHED OFF. Phase 132, 14 September 2026.
+ * THE DEFENCE PACK GENERATOR — BUILT, AND SWITCHED OFF.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHAT IT DOES, SWITCHED ON

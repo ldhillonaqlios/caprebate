@@ -1,5 +1,5 @@
 /**
- * FREE-TYPED EMAIL — THE PAGES. Phase 141, 21 September 2026. "Back office and portal clean-up, 8 of 11."
+ * FREE-TYPED EMAIL — THE PAGES. "Back office and portal clean-up, 8 of 11."
  *
  *   GET  /staff/clients/:id/email    write an email to one of the company's contacts; ?claim= tags a claim, and
  *                                    ?template= with ?contact= starts it from a template
@@ -14,7 +14,7 @@
  * NO SCRIPT, as everywhere (the content security policy allows none): "Start from a template" is a small form that
  * reloads this page with the template's words in the boxes; staff then edit them.
  *
- * 1 OCTOBER 2026 — TWO HALVES. Lakhbir: "the right hand side should show the chain of emails allowing a user to click on
+ * TWO HALVES. the owner: "the right hand side should show the chain of emails allowing a user to click on
  * reply making them apart of the chain so essentially the left becomes a send message, if no current email chain (on the
  * right) is selected then it fires as a new email." On the left, the email being written: To is filled in (the main
  * contact, or the chain's correspondent) and can be typed over, with the company's contacts offered as suggestions. On
@@ -65,7 +65,7 @@ export function emailButton(href: string): Safe {
 }
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -119,7 +119,7 @@ export async function handleFreeEmail(
 }
 
 /**
- * Send one email that was just saved while sending is on. A failure leaves it saved, with the reason. 1 Oct 2026: shared
+ * Send one email that was just saved while sending is on. A failure leaves it saved, with the reason.: shared
  * by this page and the Communication tab (src/modules/crm/communication.ts).
  */
 export async function sendSavedEmailNow(
@@ -219,7 +219,7 @@ function chainsPanel(f: F.EmailForm): Safe {
   return h`${f.chains.map((c, i) => chainBlock(f, c, f.replying === null ? i === 0 : f.replying.key === c.key))}`;
 }
 
-/** 1 Oct 2026: "Check for new email replies" here too, and what the last check found — never a silent failure. */
+/** "Check for new email replies" here too, and what the last check found — never a silent failure. */
 function checkReplies(d: EmailPageDeps, actor: Actor, f: F.EmailForm): Safe {
   if (f.subject.kind !== 'company' || !mayReadQueue(actor)) return raw('');
   const last = lastReadWords(d.app);

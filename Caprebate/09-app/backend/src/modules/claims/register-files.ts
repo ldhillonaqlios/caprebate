@@ -1,6 +1,5 @@
 /**
  * REGISTERS PUBLISHED AS A FILE, NOT AN API — IMPORTED INTO A TABLE ON THIS SERVER, AND LOOKED UP THERE.
- * Phase 155 (lines 1–2), 4 October 2026.
  *
  * The two care regulators outside England publish a downloadable list instead of an API:
  *   CIW                Care Inspectorate Wales's list of registered care services (Wales)

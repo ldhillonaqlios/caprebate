@@ -1,13 +1,13 @@
 /**
- * MANDATORY DOCUMENTS AT A STAGE — BUILT, AND SWITCHED ON IN PHASE 151b. The CRM follow-on, 12 September 2026.
+ * MANDATORY DOCUMENTS AT A STAGE — BUILT, AND SWITCHED ON IN PHASE 151b. The CRM follow-on.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * SWITCHED ON, 25 SEPTEMBER 2026 (Phase 151b)
+ * SWITCHED ON
  *
- * Lakhbir's four documents (Word answer 47) must now arrive before a claim leaves DATA_GATHERING. Everything the switch
+ * the owner's four documents (Word answer 47) must now arrive before a claim leaves DATA_GATHERING. Everything the switch
  * waited on is settled. Word question 220 is closed: yes, the sale contract and the CPSE replies are asked only when the
  * client bought the building, as built. Word question 223 was answered yes by the data protection officer on
- * 24 September 2026: clients may upload tax returns and tax computations, and until the officer says what must be
+ * Clients may upload tax returns and tax computations, and until the officer says what must be
  * removed, the figures and the company details are kept and individuals' names, addresses and tax references removed.
  * The one thing still missing was buildable, and Phase 151b built it: a receipt policy for each tax document in the
  * upload handler, bound by migration 049. So each of the four can now be received, and a claim is never held at the
@@ -27,7 +27,7 @@
  * Which of the Stage 2 upload list's ten documents must have arrived before a claim leaves data gathering is a business
  * decision, and nobody has made it. The list itself marks several as conditional — "where any spend was grant-funded" —
  * and says nothing about the rest. So the table below is OUR RECOMMENDATION, built so the answer is a one-line change,
- * and the switch ships off. The question is Lakhbir's, in CAPREBATE QUESTIONS, under exactly this title:
+ * and the switch ships off. The question is the owner's, in CAPREBATE QUESTIONS, under exactly this title:
  *   "Which of the Stage 2 documents are mandatory, and at which stage?"
  *
  * OFF IS EXACTLY TODAY. With `enabled: false`, `mandatoryDocumentNeeds` returns no need at all, so the gate out of
@@ -65,25 +65,25 @@ export type MandatoryDocuments = {
 };
 
 /**
- * PHASE 151, 24 September 2026: the question this switch waited on was answered — Word answer 47, "the sale contract,
+ * The question this switch waited on was answered — Word answer 47, "the sale contract,
  * the CPSE replies, the tax returns and the tax computations" — and closed. It now waits on the two follow-ups, quoted
  * by their titles: 220 below, and 223 in MANDATORY_DOCUMENTS_ALSO_WAITS_ON.
  */
 export const MANDATORY_DOCUMENTS_QUESTION = 'May we accept tax returns and tax computations as uploads, and what must be removed from them?';
-/* 24 September 2026: question 220 was answered yes (the sale contract and CPSE only when the client bought the building,
+/* Question 220 was answered yes (the sale contract and CPSE only when the client bought the building,
    as built) and closed; the data protection officer said yes to the uploads under 223, which stays open for what must be
    removed. WHAT STILL KEEPS THIS OFF is buildable: neither tax document has a receipt policy in the upload handler, so
-   neither can be received, and switching this on now would stop every claim at the gate (Phase 151b). */
-/* 25 September 2026, Phase 151b: built — a receipt policy for each tax document, bound by migration 049 — so the switch is
+   neither can be received, and switching this on now would stop every claim at the gate. */
+/* Built — a receipt policy for each tax document, bound by migration 049 — so the switch is
    on and waits on nothing. Question 223 stays open only for what must be removed; until the officer answers that, the
    rule quoted in the header above applies, and changing it is a change to the receipt policies, not to this switch. */
 export const MANDATORY_DOCUMENTS_ALSO_WAITS_ON = 'nothing now: the receipt policy for the tax return and the tax computation in the upload handler was built in Phase 151b';
 
 /**
- * LAKHBIR'S LIST (Word answer 47, Phase 151), SWITCHED ON IN PHASE 151b. Four documents: the sale contract and the CPSE
+ * THE OWNER'S LIST, SWITCHED ON IN PHASE 151b. Four documents: the sale contract and the CPSE
  * replies ONLY WHEN THE CLIENT BOUGHT THE BUILDING — the claim's own fact BOUGHT_THE_BUILDING (migration 045), because a
  * client who built or refitted has neither (Word question 220, closed yes) — and the tax return and the tax computation
- * on every claim. It shipped off in Phase 151 because neither tax document could be received; Phase 151b gave each a
+ * on every claim. It shipped off because neither tax document could be received; Phase 151b gave each a
  * receipt policy (migration 049), so it is on. Until Phase 151 the list was our own recommendation: the fire risk
  * assessment always, the grant funding agreement where grant-funded, the sale contract where an election was made, and
  * the lease where leasehold (caprebate's .bak-phase151 copy keeps it).
@@ -97,7 +97,7 @@ export const MANDATORY_DOCUMENTS: MandatoryDocuments = Object.freeze({
     Object.freeze({ type_code: 'CPSE_REPLIES', condition: 'BOUGHT' as const }),
     Object.freeze({ type_code: 'TAX_RETURN', condition: 'ALWAYS' as const }),
     Object.freeze({ type_code: 'TAX_COMPUTATION', condition: 'ALWAYS' as const }),
-    /* PHASE 159k (item 1): the seller's structures allowance statement, where the claim takes the structures allowance on
+    /* The seller's structures allowance statement, where the claim takes the structures allowance on
        a purchase from 29 October 2018 — s.270IA gives the buyer no allowance without it. */
     Object.freeze({ type_code: 'SBA_ALLOWANCE_STATEMENT', condition: 'SBA_ON_PURCHASE' as const }),
   ]),
@@ -112,7 +112,7 @@ export const CONDITION_WORDS: Readonly<Record<DocumentCondition, string>> = Obje
   SBA_ON_PURCHASE: 'where the claim takes the structures allowance on a purchase from 29 October 2018 — the claim’s own fact',
 });
 
-/** PHASE 159k: the day the structures and buildings allowance began (CAA 2001 s.270AA). */
+/** The day the structures and buildings allowance began (CAA 2001 s.270AA). */
 export const SBA_START = '2018-10-29';
 
 type Applies = { readonly applies: true } | { readonly applies: false; readonly known: boolean; readonly why: string };
@@ -124,7 +124,7 @@ function choiceFact(db: Db, claim_id: string, key: string): string | null {
 
 function applies(db: Db, c: { id: string; property_id: string | null }, condition: DocumentCondition): Applies {
   if (condition === 'ALWAYS') return { applies: true };
-  /* PHASE 159k (item 1). The phase asked for the statement on every purchase from 29 October 2018. Most healthcare
+  /* The phase asked for the statement on every purchase from 29 October 2018. Most healthcare
      buildings were built before then and their sellers have no statement to give, so that would stop at this gate a claim
      that takes no structures allowance at all. The law needs the statement only where the buyer takes the allowance
      (s.270IA), which on a claim is SBA_QUALIFYING_EXPENDITURE recorded as a figure. Not taking it is the cautious way, so
@@ -142,7 +142,7 @@ function applies(db: Db, c: { id: string; property_id: string | null }, conditio
   if (condition === 'GRANT_FUNDED' || condition === 'ELECTION_MADE' || condition === 'BOUGHT') {
     const key = condition === 'GRANT_FUNDED' ? 'GRANTS_EXIST' : condition === 'ELECTION_MADE' ? 'ELECTION_EXISTS' : 'BOUGHT_THE_BUILDING';
     const recorded = choiceFact(db, c.id, key);
-    // PHASE 158b (F28): where nobody has recorded whether the client bought it, the client's own assessment answer.
+    // Where nobody has recorded whether the client bought it, the client's own assessment answer.
     const said = recorded === null && condition === 'BOUGHT' ? clientSaidBought(db, c.property_id) : null;
     const v = recorded ?? said;
     if (said === 'YES') return { applies: true };
@@ -172,7 +172,7 @@ function applies(db: Db, c: { id: string; property_id: string | null }, conditio
   return { applies: false, known: false, why: 'the property’s tenure is not known — record it on the property; not known does not pass' };
 }
 
-/** Exported for Phase 153a's grant check (src/modules/assessment/grant-checks.ts): the grant papers, received on the claim. */
+/** Exported's grant check (src/modules/assessment/grant-checks.ts): the grant papers, received on the claim. */
 export function receivedOnClaim(db: Db, c: { id: string }, type_code: string): { at: string } | undefined {
   const r = getDocumentsAtByTypeCodeStripRecordedAt<{ at: string | null }>(db, [type_code, c.id, c.id]);
   return r === undefined || r.at === null ? undefined : { at: r.at };
@@ -199,7 +199,7 @@ export function mandatoryDocumentNeeds(
 }
 
 /**
- * PHASE 158d (F43): the documents the gate is waiting on from the client — the type codes that apply to this claim and
+ * The documents the gate is waiting on from the client — the type codes that apply to this claim and
  * have not been received. One whose condition is not known is left out: that fact is ours to establish first.
  */
 export function missingDocuments(db: Db, c: { id: string; property_id: string | null }, m: MandatoryDocuments = MANDATORY_DOCUMENTS): string[] {

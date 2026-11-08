@@ -1,6 +1,6 @@
 /**
- * TWO MORE THINGS THE GATE OUT OF VALUATION ASKS ABOUT GRANTS — Phase 153a, 4 October 2026.
- * (Phase 153b lines 12 and 13, done with Phase 153a line 1 because they read the same grant data.)
+ * TWO MORE THINGS THE GATE OUT OF VALUATION ASKS ABOUT GRANTS.
+ *
  *
  *   NO GRANT SPLIT IN EQUAL SHARE WITHOUT ITS PAPERS OR THE TAX ADVISER'S VIEW. Word question 109, "How should we split
  *   a grant when we cannot tell what it paid for?": our recommendation is to keep the equal share only as a labelled

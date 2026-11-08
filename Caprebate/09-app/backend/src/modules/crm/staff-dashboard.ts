@@ -1,7 +1,7 @@
 /**
- * HOME AS A DASHBOARD — 1 October 2026.
+ * HOME AS A DASHBOARD —.
  *
- * Lakhbir: "the users (both client and also works) home page should behave more like a dashboard … this needs to be
+ * the owner: "the users (both client and also works) home page should behave more like a dashboard … this needs to be
  * focused … for workers, it should be client driven whos a new lead (where did the lead come from) whats in the pipeline
  * at which stage, any new messages received, a calendar allowing users to block off time look what what they have booked
  * in the future, and below it should be activities for today if its a telephone call, teams call and if they need to
@@ -208,7 +208,7 @@ function messagesCard(app: App, actor: Actor): Safe | null {
 
 /* ------------------------------------------------------------------ new documents from clients */
 
-/** PHASE 157c (the Friary House run, F20): files a client sent from the portal in the last 14 days. Nobody was told. */
+/** Files a client sent from the portal in the last 14 days. Nobody was told. */
 export const NEW_DOCUMENT_DAYS = 14;
 
 export function newClientDocuments(app: App, actor: Actor, now: string): { id: string; name: string; n: number }[] {
@@ -259,7 +259,7 @@ function peopleCard(app: App, actor: Actor): Safe {
 }
 
 const FROM_WORDS: Readonly<Record<string, string>> = { SAVED: 'Saved here', FILE: 'From the key file or the website’s settings', NOT_SET: 'Not set', UNREADABLE: 'Saved here, but this server cannot open it' };
-/** 1 Oct 2026, Lakhbir: "not set = red, active = green, set but not active = amber". Colour is never the only sign. */
+/** "not set = red, active = green, set but not active = amber". Colour is never the only sign. */
 const STATE_CHIP: Readonly<Record<string, { cls: string; words: string }>> = {
   ACTIVE: { cls: 'key-on', words: 'In use' },
   SET_OFF: { cls: 'key-idle', words: 'Set, not in use' },
@@ -311,7 +311,7 @@ function adminView(app: App, actor: Actor, done: string | null = null): Safe[] {
  * ================================================================== */
 
 /**
- * UI TIDY PHASE 4, 2 October 2026 — HOME IN TWO COLUMNS. Lakhbir chose design 2 (00-START-HERE/hub/UI-TIDY-PLAN.md): one
+ * HOME IN TWO COLUMNS. the owner chose design 2 (00-START-HERE/hub/UI-TIDY-PLAN.md): one
  * line saying what is late, solid number boxes, then the work on the left — "Do these first", today's calls and emails,
  * new leads and messages, leads' next steps — and the pipeline and the calendar on the right. Every part that was on
  * Home is still here, for the same logins; only where it sits and how it is drawn changed.
@@ -328,14 +328,14 @@ function columns(main: readonly Safe[], side: readonly Safe[]): Safe {
   return h`<div class="home-cols"><div class="home-main">${main}</div><div class="home-side">${side}</div></div>`;
 }
 
-/** PHASE 155 (line 5): Admin is told, on whichever home view, when email replies have not been read for over an hour in working hours. */
+/** Admin is told, on whichever home view, when email replies have not been read for over an hour in working hours. */
 function repliesWarning(app: App, actor: Actor, now: string): Safe {
   if (actor.role !== 'ADMIN') return raw('');
   const why = repliesStale(app, now);
   return why === null ? raw('') : h`<div class="flag" role="alert" id="replies-stale"><strong>Email replies are not being read.</strong> ${why}</div>`;
 }
 
-/** PHASE 156e (B4): Admin is reminded, on whichever home view, to import each care regulator's new monthly list. */
+/** Admin is reminded, on whichever home view, to import each care regulator's new monthly list. */
 function listsWarning(app: App, actor: Actor): Safe {
   if (actor.role !== 'ADMIN') return raw('');
   const why = listsToImport(app);

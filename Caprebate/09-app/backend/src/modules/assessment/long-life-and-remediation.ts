@@ -1,9 +1,9 @@
 /**
- * PHASE 159k (item 2), 10 October 2026 — TWO STATUTORY FIGURES THE ENGINE DOES NOT HOLD.
+ * — TWO STATUTORY FIGURES THE ENGINE DOES NOT HOLD.
  *
  * src/modules/assessment/allowances.ts states no rate: every rate and date comes from the engine (Rulebook I rule 7.1). These two are
  * not in the engine (CB_RATES has neither), so they are kept here, each with its section, read by allowances.ts alone,
- * and put to the tax adviser with the readings that use them (money-readings.ts; Word questions under Phase 159k).
+ * and put to the tax adviser with the readings that use them.
  *
  *   LONG_LIFE_DE_MINIMIS_PENCE   CAA 2001 s.99: expenditure is not long-life asset expenditure where a chargeable
  *                                period's long-life spend is not more than £100,000, reduced in proportion for a period

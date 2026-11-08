@@ -1,6 +1,6 @@
 /**
  * INTRODUCERS, THE REFERRAL CHANNEL AND THE REWARD MODEL — THE ROUTES AND THE
- * PAGES. CRM 5 of 10, 11 September 2026.
+ * PAGES. CRM 5 of 10.
  *
  * Same shape as src/modules/crm/pipeline-pages.ts: it returns 'not-mine' for anything it
  * does not own, so the mounting in staff.ts is one line.
@@ -44,7 +44,7 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -138,7 +138,7 @@ export async function handleIntroducers(
     redirect(res, `/staff/introducers/${id}?done=saved`);
     return 'handled';
   }
-  // Phase 157: record that the firm signed our introducer terms (migration 094), so it is registered.
+  // Record that the firm signed our introducer terms (migration 094), so it is registered.
   const signed = /^\/staff\/introducers\/([A-Za-z0-9-]+)\/terms-signed$/.exec(path);
   if (signed && method === 'POST') {
     const id = signed[1] ?? '';
@@ -262,27 +262,27 @@ function clientFields(): Safe {
  * THE LIST
  * ------------------------------------------------------------------ */
 
-/** UI TIDY PHASE 14: where the top's buttons open each form, folded until asked for. */
+/** Where the top's buttons open each form, folded until asked for. */
 export const RECORD_REFERRAL_HREF = '/staff/introducers?record=referral#record-referral';
 export const ADD_FIRM_HREF = '/staff/introducers?add=firm#add-firm';
 
-/** UI TIDY PHASE 14: the reward model in a word or two, grey while it is off. The full words are on its own page. */
+/** The reward model in a word or two, grey while it is off. The full words are on its own page. */
 export function rewardBadge(model: string): Safe {
   return model === 'OFF' ? h`<span class="badge b-nodate">Off</span>` : h`<span class="badge b-info">Model ${model.charAt(0)}</span>`;
 }
 
-/** UI TIDY PHASE 14: a reading's first part, "none recorded", where the list has no room for why; the firm's page keeps it all. */
+/** A reading's first part, "none recorded", where the list has no room for why; the firm's page keeps it all. */
 export function firstPart(label: string): string {
   return label.split(' — ')[0] ?? label;
 }
 
-/** UI TIDY PHASE 14: what a firm sent us, in one cell: "2 leads, 1 claim opened, 0 won", then its reasoned negatives. */
+/** What a firm sent us, in one cell: "2 leads, 1 claim opened, 0 won", then its reasoned negatives. */
 export function sentUs(p: { leads_referred: number; claims_opened: number; claims_won: number; reasoned_negatives: number }): Safe {
   const many = (n: number, one: string, more: string): string => `${String(n)} ${n === 1 ? one : more}`;
   return h`${many(p.leads_referred, 'lead', 'leads')}, ${many(p.claims_opened, 'claim', 'claims')} opened, ${String(p.claims_won)} won<br><span class="help">${many(p.reasoned_negatives, 'reasoned negative', 'reasoned negatives')}</span>`;
 }
 
-/** UI TIDY PHASE 14: the counts over the firms a login may read in full. */
+/** The counts over the firms a login may read in full. */
 export function introducerCounts(rows: readonly I.IntroducerRow[]): { firms: number; leads: number; claims: number; won: number; late: number } {
   const full = rows.filter((r) => r.pipeline !== undefined);
   return {
@@ -295,7 +295,7 @@ export function introducerCounts(rows: readonly I.IntroducerRow[]): { firms: num
 }
 
 /**
- * UI TIDY PHASE 14 — INTRODUCERS, 3 October 2026. The page opens with what it is, its two buttons (Record a referral,
+ * INTRODUCERS. The page opens with what it is, its two buttons (Record a referral,
  * Add a firm) and the reward model as a label; boxes count the firms, what they sent and the firms whose next contact is
  * late. The firms are one table — the contact's last and next in one cell, what the firm sent us in one, the fees
  * invoiced and paid in one — that stacks on a phone; a firm with nobody on it says so in amber, and a late next contact is red. The two forms
@@ -384,7 +384,7 @@ function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg:
   const e = v.edit;
   const contacts = v.contacts ?? [];
   const firmPeople = contacts.map((c) => ({ id: c.id, name: c.full_name }));
-  // UI TIDY PHASE 14: the firm's sections open out under Introducers in the left-hand menu.
+  // The firm's sections open out under Introducers in the left-hand menu.
   setSubMenu({ title: v.firm_name, items: [
     ...(v.details === undefined ? [] : [{ href: '#firm', label: 'The firm' }]),
     { href: '#sent', label: 'What it has sent us' },

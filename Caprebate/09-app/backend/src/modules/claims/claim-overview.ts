@@ -1,5 +1,5 @@
 /**
- * PHASE 160i — WHERE THIS CLAIM STANDS, 20 October 2026. Lakhbir: "i want the back end CRM to be more human friendly ...
+ * WHERE THIS CLAIM STANDS. the owner: "i want the back end CRM to be more human friendly ...
  * a list of all the stages, which stage we are on, what data we need, what data has been gathered and by where, and what
  * % the survayor pack has been completed ... anyone with no background of capital tax allowances can pick it up", then,
  * of the mock-up he chose (04-phase-work/mockups/claim-page-redesign.html): "we should be able to click on what API's or
@@ -242,7 +242,7 @@ export function factsGathered(db: Db, claim_id: string, f: FactsPanel): Gathered
 
 /** What the client answered in their portal, or what our team recorded for them, on this claim or the company. */
 export function answersGathered(db: Db, business_id: string, claim_id: string): Gathered[] {
-  // PHASE 160j: what the client sent counts once a member of staff has accepted it; what staff recorded needs no check.
+  // What the client sent counts once a member of staff has accepted it; what staff recorded needs no check.
   return listClientTasksQuestionAnswerByBusinessIdState<{ question: string; answer: string | null; answer_state: string; answered_at: string; role: string; who: string | null; checker: string | null; checked_at: string | null }>(db, [business_id, claim_id]).map((t) => ({
     group: t.role === 'CLIENT' ? 'CLIENT' : 'TEAM', name: t.question,
     value: t.answer_state === 'DONT_KNOW' ? 'They do not know' : (t.answer ?? ''),
@@ -278,9 +278,9 @@ export type StillNeeded = {
   readonly state: 'TOCHECK' | 'LATE' | 'ASKED' | 'NEEDED';
   readonly meta: string;
   readonly fix: { readonly href: string; readonly label: string } | null;
-  /** PHASE 160j: something the client sent, waiting for a member of staff to check it. */
+  /** Something the client sent, waiting for a member of staff to check it. */
   readonly check?: ToCheck;
-  /** PHASE 160j: a fact the claim still needs, which can be typed in or asked of the client where it stands. */
+  /** A fact the claim still needs, which can be typed in or asked of the client where it stands. */
   readonly fact?: { readonly key: string; readonly label: string };
 };
 
@@ -357,7 +357,7 @@ export type ClaimOverview = {
   readonly pack: PackProgress | null;
   readonly may_read_audit: boolean;
   readonly audit_entries: number;
-  /** PHASE 160j: whether this login may check what the client sent and type facts in (claim.write). */
+  /** Whether this login may check what the client sent and type facts in (claim.write). */
   readonly may_write: boolean;
   readonly claim_id: string;
   readonly business_id: string;
@@ -444,7 +444,7 @@ function gatheredLine(g: Gathered): Safe {
     </div></details>`;
 }
 
-/** PHASE 160j: what the client sent, with the two things a member of staff may do with it. No script: two forms. */
+/** What the client sent, with the two things a member of staff may do with it. No script: two forms. */
 function checkPanel(o: ClaimOverview, t: ToCheck): Safe {
   const base = `/staff/claims/${o.claim_id}/sent/${t.task_id}`;
   return h`<details class="cov-act" open><summary>Check it</summary>
@@ -456,7 +456,7 @@ function checkPanel(o: ClaimOverview, t: ToCheck): Safe {
   </details>`;
 }
 
-/** PHASE 160j: a fact still to find, typed in where it stands, or asked of the client in their portal. */
+/** A fact still to find, typed in where it stands, or asked of the client in their portal. */
 function factPanel(o: ClaimOverview, f: { readonly key: string; readonly label: string }): Safe {
   const def = FACTS[f.key];
   const box = def?.kind === 'date' ? h`<input name="value" type="date" required>`

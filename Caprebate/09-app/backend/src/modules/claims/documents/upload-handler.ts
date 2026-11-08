@@ -1,6 +1,6 @@
 /**
  * Caprebate — CLIENT DOCUMENT UPLOAD HANDLER
- * Board item 12929369585. Phase 53, 31 August 2026.
+ * Board item 12929369585.
  *
  * WHY THIS FILE EXISTS.
  *
@@ -39,7 +39,7 @@
  * WHAT IT DOES NOT DECIDE.
  *
  * Q34 (raw-file retention), Q40 (the ingestion boundary) and Q51/Q52/Q53 (the
- * WordPress control questions raised by Phase 53 in Developer Brief §3.0) are
+ * WordPress control questions raised in Developer Brief §3.0) are
  * all OPEN and none is decided here. This handler runs against
  * `FAIL_CLOSED_SETTINGS` by default and against the `ObjectStore` PORT rather
  * than any concrete store, precisely so that answering them is a configuration
@@ -53,7 +53,7 @@
  * WHY A PORT AND NOT S3.
  *
  * The Developer Brief's §3 table said S3 with pre-signed URLs. On 29 August
- * Lakhbir decided the CRM is a custom WordPress back end, which has no object
+ * the owner decided the CRM is a custom WordPress back end, which has no object
  * store at all — `wp-content/uploads/` sits inside the webroot and is served
  * with no authorisation check. Whether client documents may live there is Q51
  * and it is not answered. So this handler takes five methods and does not care
@@ -222,7 +222,7 @@ export const UPLOAD_LIMITS = {
 } as const;
 
 /**
- * PHASE 157d, 6 OCTOBER 2026 (the Friary House run, finding F19): A PDF THAT STOPS PART-WAY IS REFUSED AS DAMAGED.
+ * A PDF THAT STOPS PART-WAY IS REFUSED AS DAMAGED.
  * Every complete PDF ends with an end-of-file marker, `%%EOF`, in its last few hundred bytes (a later saved edit adds
  * another, later on). One cut off in the middle of sending, or truncated by the program that made it, has none: it
  * passes the `%PDF` check above and then reads as nothing. The marker is looked for in the last 1,024 bytes, which
@@ -262,10 +262,10 @@ export function sniffAccepted(bytes: Uint8Array): string | null {
  * and is deleted. That is strictly less exposure than promoting it and then
  * deleting it, and it is the fail-closed reading of an open question.
  *
- * It is NOT a decision. If Lakhbir answers Q34 with RETAIN_FOR_DEFENCE_PERIOD,
+ * It is NOT a decision. If the owner answers Q34 with RETAIN_FOR_DEFENCE_PERIOD,
  * or with a non-zero grace period, promotion switches on with no code change.
  *
- * PHASE 65, 2 SEPTEMBER 2026 — Q34's retention limb was answered that way, and
+ * Q34's retention limb was answered that way, and
  * switching promotion on found a gap between this rule and its implementation.
  * The rule is stated per RETENTION RULE; the retention clock is per DOCUMENT.
  * deletionDueAt refuses the long clock to a document whose strip removed
@@ -284,7 +284,7 @@ export const PROMOTION_RULE = {
   is_a_decision: false,
   decision_ref: 'Q34 (raw-file retention) — UNANSWERED as at 2026-08-31',
   under_fail_closed_settings: 'the raw file never reaches the durable prefix',
-  /** Phase 65. Per-document, because the clock is per-document. */
+  /** Per-document, because the clock is per-document. */
   d4_carve_out:
     'a document whose receipt strip removed NO_LAWFUL_BASIS content is NOT promoted even under the long ' +
     'rule, because deletionDueAt gives that document the extraction clock and the rule above promotes ' +

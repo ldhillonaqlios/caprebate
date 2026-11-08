@@ -70,7 +70,7 @@ export class NotFoundAsRefusal extends Error {
 /* ------------------------------------------------- 0 · YOUR CLAIMS */
 
 /**
- * PHASE 134 — ONE COMPANY, MANY CLAIMS, ONE PORTAL. A claim as its client sees it: which property, and how far it has
+ * ONE COMPANY, MANY CLAIMS, ONE PORTAL. A claim as its client sees it: which property, and how far it has
  * got in the portal's own six steps. NEVER the ten staff stages, a hold reason, an exit note, a value, a next action or
  * a person — a hold shows the step the claim returns to, and an exit says only that the claim is closed.
  *
@@ -98,7 +98,7 @@ function portalClaim(db: Db, r: PortalClaimRow): PortalClaim {
   const kind = claimStage(r.stage).kind;
   const base = { id: r.id, ref: r.claim_ref, property: r.property, town: r.town };
   if (kind === 'EXIT') return { ...base, state: 'CLOSED', progress: { known: false, steps: [] } };
-  // PHASE 158d (F48): the same step the rest of the portal reads — signed at Engagement, and "Claim filed" only once filed.
+  // The same step the rest of the portal reads — signed at Engagement, and "Claim filed" only once filed.
   const stored = clientStageForClaim(db, r.id, kind === 'ON_HOLD' ? r.hold_return_stage : r.stage);
   // A claim at Engagement whose letter is signed is "2 Engagement letter signed" (F43): signing is the step. Read here,
   // not in pipeline.ts, which reads the letter only through assertSignedEngagement - the one gate (test/pipeline.test.ts).
@@ -192,7 +192,7 @@ export function engagement(db: Db, actor: Actor, business_id: string): Engagemen
 export function markViewed(db: Db, actor: Actor, business_id: string, now: () => string): void {
   const e = engagement(db, actor, business_id);
   if (e === null || e.state !== 'SENT') return;
-  // PHASE 157c: the moment the client first opened it is kept, for the certificate of completion.
+  // The moment the client first opened it is kept, for the certificate of completion.
   updateEngagementsLetterStateViewedAtByBusinessIdLetterState(db, ['VIEWED', now(), business_id, 'SENT']);
 }
 
@@ -201,12 +201,12 @@ export function markViewed(db: Db, actor: Actor, business_id: string, now: () =>
 export type BookingView = {
   id: string; channel: string; sms_variant: string | null; entry_point: string;
   starts_at: string | null; ends_at: string | null;
-  /** Phase 132e: set once the call is cancelled. The row survives; null on every call still held. */
+  /** Set once the call is cancelled. The row survives; null on every call still held. */
   cancelled_at: string | null;
 };
 
 /**
- * Read from THE SAME booking record the staff calendar reads (Phase 105).
+ * Read from THE SAME booking record the staff calendar reads.
  * One table, one model, no second copy — the phase brief is explicit that a
  * second booking model must not be written and CB_BOOKING is the first one.
  */
@@ -289,7 +289,7 @@ export type DocumentView = {
   failure_code: string | null; created_at: string;
   /** CRM 4 of 10: what this upload is a version of, and its number. Null for an upload no policy matched. */
   logical_document_id: string | null; version_no: number | null; type_label: string | null; seq: number | null;
-  /** PHASE 140: whether the original was kept (KEEP_ORIGINALS, off), and whether it has since been deleted. */
+  /** Whether the original was kept (KEEP_ORIGINALS, off), and whether it has since been deleted. */
   original_kept_at: string | null; original_deleted_at: string | null;
 };
 
@@ -322,7 +322,7 @@ export function document(db: Db, actor: Actor, doc_id: string): DocumentView {
 }
 
 /**
- * PHASE 144a — THE STEP IN WORDS, where the portal cannot place a claim. It showed the stored step code in a code
+ * THE STEP IN WORDS, where the portal cannot place a claim. It showed the stored step code in a code
  * box; a client reads a sentence instead, and never the code.
  */
 export function stageInWords(key: string | null): string {
@@ -335,7 +335,7 @@ export function stageInWords(key: string | null): string {
 }
 
 /* ============================================================================ *
- * 3b · THE CLIENT MOVES THEIR OWN CALL          Phase 113a, 9 September 2026
+ * 3b · THE CLIENT MOVES THEIR OWN CALL          Phase 113a
  *
  * WHY THIS EXISTS. Phase 105 built the picker at the funnel close and the staff
  * side of moving a booking. The portal showed a client their appointment and
@@ -367,7 +367,7 @@ export function stageInWords(key: string | null): string {
  * ───────────────────────────────────────────────────────────────────────────
  * TWO DECISIONS THIS JOB HAD TO MAKE — BOTH REVISED BY PHASE 132e
  *
- * Lakhbir, 16 September 2026, answering "How late may a client move their own
+ * The owner, answering "How late may a client move their own
  * call, and may they cancel it outright?": "Give the client full control to
  * cancel at any time, and rebook at a time that suits them".
  *
@@ -430,10 +430,10 @@ function minutesUntil(nowIso: string, iso: string): number {
 }
 
 /**
- * IS THIS NEW TIME TOO SOON FOR THE CLIENT TO CHOOSE IT THEMSELVES? Phase 132e.
+ * IS THIS NEW TIME TOO SOON FOR THE CLIENT TO CHOOSE IT THEMSELVES?
  *
  * It replaced `tooLateToMove`, which asked the same arithmetic of the call the
- * client ALREADY held — a refusal Lakhbir lifted on 16 September 2026. Only the
+ * client ALREADY held — a refusal the owner lifted. Only the
  * new time is asked now. Exported because the SCREEN draws only the times the
  * store would accept.
  */
@@ -468,12 +468,12 @@ export function moveOwnBooking(
 
   // CB_BOOKING decides which channels hold a moment, and it is asked rather
   // than second-guessed. A client who asked for an email has nothing to move.
-  // 30 Sep 2026: a video call holds a time too; its Zoom meeting follows the move (the route reconciles it).
+  // A video call holds a time too; its Zoom meeting follows the move (the route reconciles it).
   if (!booksATime(before.channel)) {
     return { ok: false, why: 'Only a telephone or video call holds a specific time, so there is none to move.' };
   }
   if (before.cancelled_at !== null) return { ok: false, why: ALREADY_CANCELLED };
-  // Phase 132e: THE CALL THEY HOLD MAY BE MOVED AT ANY TIME, however close or past.
+  // THE CALL THEY HOLD MAY BE MOVED AT ANY TIME, however close or past.
   // THE NEW TIME MAY NOT BE INSIDE THE NOTICE PERIOD. Without this a rebooking
   // could land a call on somebody with no warning at all.
   const t = Date.parse(args.starts_at);
@@ -531,7 +531,7 @@ export function releaseOwnBooking(
   const now = d.now();
   if (before.cancelled_at !== null) return { ok: false, why: ALREADY_CANCELLED };
   if (before.starts_at === null) return { ok: false, why: 'There is no time held for this call.' };
-  // Phase 132e: no notice period for giving a time back — at any time.
+  // No notice period for giving a time back — at any time.
 
   d.db.tx(() => {
     updateBookingsStartsAtEndsAtById3(d.db, [before.id]);
@@ -550,7 +550,7 @@ export function releaseOwnBooking(
 }
 
 /**
- * CANCEL THE CALL OUTRIGHT. Phase 132e, 16 September 2026 — decision 2 above.
+ * CANCEL THE CALL OUTRIGHT. Decision 2 above.
  *
  * AT ANY TIME, whether the call is days away, minutes away, already passed, or
  * still waiting for a time. It is the last of the three things the screen offers,
@@ -600,7 +600,7 @@ function notify(
 ): void {
   const business = getBusinessesContactEmailNameById2<{ contact_email: string | null; name: string }>(d.db, [business_id]);
   const readable = startsAt === null ? null : localWhen(startsAt);
-  /* PHASE 146f: THE INVITATION. Moved: a new REQUEST, the same UID, a higher SEQUENCE, so it replaces the old one in
+  /* THE INVITATION. Moved: a new REQUEST, the same UID, a higher SEQUENCE, so it replaces the old one in
      the client's calendar. Given back or cancelled: a CANCEL for the time they held. No time held, no invitation. */
   const invite = call === undefined ? null
     : what === 'moved' && startsAt !== null

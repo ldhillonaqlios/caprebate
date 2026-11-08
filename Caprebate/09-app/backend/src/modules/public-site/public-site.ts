@@ -1,5 +1,5 @@
 /**
- * THE PUBLIC WEBSITE, SERVED BY THE BACK END — PHASE 133j, 18 September 2026.
+ * THE PUBLIC WEBSITE, SERVED BY THE BACK END.
  *
  * `Caprebate site.html` is the website. It is not re-typed here: this module reads that one file and serves an
  * edition of it at `/`, so the front end and the back end are one site on one address.
@@ -14,7 +14,7 @@
  * 2. NOTHING INLINE. Every back-end page is served under a Content-Security-Policy with no `unsafe-inline`. The
  *    site's one `<style>` block is served as `/assets/site-page.css` and its one `<script>` as
  *    `/assets/site-page.js`, and the page is refused — `buildSiteEdition` throws — if any inline style, style
- *    attribute, event handler or `javascript:` link is left. The site file itself carries none since Phase 133j.
+ *    attribute, event handler or `javascript:` link is left. The site file itself carries none.
  *
  * THE PATH IS A CONSTANT, like the engagement letter's (letter.ts). No request path is ever mapped onto the disk:
  * the three routes that use this module each serve one fixed string.
@@ -23,7 +23,7 @@
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-/** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, `Caprebate site.html` in Development/, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
+/** the app's own copy: edit the original, `Caprebate site.html` in Development/, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const SITE_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'Caprebate site.html');
 
 /** The page's policy: the back end's, plus its own script from its own origin. Nothing else is loosened. */

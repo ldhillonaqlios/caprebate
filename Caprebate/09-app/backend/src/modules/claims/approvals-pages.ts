@@ -1,5 +1,5 @@
 /**
- * THE APPROVE BOX AND THE CLIENT'S STEPS, DRAWN — PHASE 139, 21 September 2026. "Clean-up 6 of 11."
+ * THE APPROVE BOX AND THE CLIENT'S STEPS, DRAWN. "Clean-up 6 of 11."
  *
  * Draws what src/modules/claims/approvals.ts returns and decides nothing. Staff see it on the client page (the company's step and
  * every claim's) and on a claim's page (that claim's steps); the client sees `clientStepsCard`, which is handed the

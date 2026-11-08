@@ -1,5 +1,5 @@
 /**
- * INTRODUCERS AND THE ACCOUNTANT REFERRAL CHANNEL. CRM 5 of 10, 11 September 2026.
+ * INTRODUCERS AND THE ACCOUNTANT REFERRAL CHANNEL. CRM 5 of 10.
  *
  * The schema is migration 014; the routes are src/modules/crm/introducers-pages.ts and,
  * for the public referral form, src/core/router.ts. The mechanics are the
@@ -41,7 +41,7 @@
  * disclosed fee per successful claim, paid to the firm, never payable before the
  * disclosure is recorded. The one setting refuses to leave OFF while clause 1 of
  * the engagement letter is blank — read from the .docx the way the portal reads
- * its blanks — and whether anything is paid is Lakhbir's question.
+ * its blanks — and whether anything is paid is the owner's question.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * NOTHING ON THE DASHBOARD IS STORED
@@ -74,7 +74,7 @@ import { listIntroducerPercentageEntriesIdIntroducerId, listIntroducerPercentage
 
 export type IntroducerDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
-/** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
+/** `field` is the posted name a refusal is about, where it is about one. */
 export type WriteResult = { ok: true; id: string } | { ok: false; why: string; field?: string };
 type Vocab = Readonly<Record<string, string>>;
 type Check<T> = { ok: true; value: T } | { ok: false; why: string; field?: string };
@@ -114,13 +114,13 @@ export const REWARD_MODELS: Vocab = Object.freeze({
   OFF: 'Off — nothing is offered to an introducer',
   A_RECIPROCITY: 'A — no cash. We give the firm something back: a CPD session, a joint one-pager, or faster work',
   B_DISCLOSED_FEE: 'B — a fixed, disclosed fee per successful claim, paid to the firm',
-  // Phase 132e: Lakhbir's answer. Built and switched off; refused while clause 1 of the letter is blank, as A and B are.
+  // the owner's answer. Built and switched off; refused while clause 1 of the letter is blank, as A and B are.
   C_PERCENT_OF_INVOICED_FEE: 'C — a share of the fee we actually invoice, paid to a registered accountancy firm that referred the claim. Taken back if clause 13 cuts the fee',
 });
 
 /**
- * MODEL C'S PERCENTAGE — Lakhbir's answer to "Is anything paid to the accountant?", read in Phase 132c on
- * 15 September 2026: an accountant registered as an introducer may be offered 10% of our fee. It is the only
+ * MODEL C'S PERCENTAGE — the owner's answer to "Is anything paid to the accountant?", read on
+ * An accountant registered as an introducer may be offered 10% of our fee. It is the only
  * percentage C takes, so it is a constant with its source rather than a number anybody types. 1000 basis points.
  * WHAT IT IS COMPUTED ON: our fee as invoiced, net of VAT — never the quoted or estimated fee.
  * THE CLIENT-DISCLOSURE POINT is the solicitor's (FOR THE SOLICITOR, THE DPO AND THE DEVELOPER): whether and how a
@@ -134,7 +134,7 @@ export const REFERRAL_PERCENTAGE = Object.freeze({
 export const REWARD_QUESTION = 'Is anything paid to the accountant?';
 
 /**
- * PHASE 157 (the sweep), 6 October 2026 — THE INTRODUCER TERMS A FIRM SIGNS (Phase 153d's draft, Word question 42). A firm
+ * — THE INTRODUCER TERMS A FIRM SIGNS. A firm
  * is a REGISTERED introducer only once it is on our list and has signed them (their clause 1). The signature is a dated,
  * append-only row (migration 094); model C accrues only for a firm with one. The terms are a draft: the director agrees
  * them and the solicitor checks them. Until then model C stays off, and a signature can be recorded only in the test
@@ -298,7 +298,7 @@ function vocabField(v: string | null | undefined, vocab: Vocab, what: string): C
 function take<T>(input: Fields, key: string, stored: T, check: (v: string | null) => Check<T>): Check<T> {
   if (!Object.hasOwn(input, key)) return { ok: true, value: stored };
   const r = check(input[key] ?? null);
-  // PHASE 133e (D4, continued): a refusal names the field it is about, so the form can draw it beside that field.
+  // A refusal names the field it is about, so the form can draw it beside that field.
   return r.ok ? r : { ...r, field: r.field ?? key };
 }
 
@@ -533,7 +533,7 @@ export type IntroducerView = {
     readonly next_contact: { readonly label: string; readonly overdue: boolean; readonly open: number };
     readonly notes: string | null;
     readonly from_public_form: boolean;
-    /** Phase 157: the firm's signature of our introducer terms; null: not registered, so model C pays it nothing. */
+    /** The firm's signature of our introducer terms; null: not registered, so model C pays it nothing. */
     readonly terms: TermsSignature | null;
   };
   readonly contacts?: readonly IntroducerContactView[];
@@ -619,7 +619,7 @@ export function introducerView(db: Db, actor: Actor, id: string, nowIso: string)
         next_contact: nextContact(db, r.id, nowIso),
         notes: r.notes,
         from_public_form: r.created_via === 'PUBLIC_FORM',
-        // Phase 157: whether the firm has signed our introducer terms, so is registered (migration 094).
+        // Whether the firm has signed our introducer terms, so is registered (migration 094).
         terms: termsSignature(db, r.id),
       },
       pipeline: pipelineFigures(db, r.id),
@@ -674,7 +674,7 @@ function firmValues(db: Db, input: Fields, stored: FirmValues, firmId: string | 
   });
   for (const c of [name, type, owner, started, notes, notice]) if (!c.ok) return c;
   if (!name.ok || !type.ok || !owner.ok || !started.ok || !notes.ok || !notice.ok) return { ok: false, why: 'That was not saved, because one of the values is not one this form accepts. Check each field and send it again.' };
-  // PHASE 154a1 (line 2): as a contact's name (src/modules/crm/crm.ts) - a new firm starts from '', so blank is no name.
+  // As a contact's name (src/modules/crm/crm.ts) - a new firm starts from '', so blank is no name.
   if (name.value === null || name.value.trim() === '') return { ok: false, why: 'An introducer is a firm, and needs its name.', field: 'firm_name' };
   return {
     ok: true,
@@ -686,7 +686,7 @@ function firmValues(db: Db, input: Fields, stored: FirmValues, firmId: string | 
 }
 
 /**
- * MERGE A FIRM ONTO ONE ALREADY RECORDED — CRM 9 of 10, 12 September 2026.
+ * MERGE A FIRM ONTO ONE ALREADY RECORDED — CRM 9 of 10.
  *
  * The public referral form, once it is on, makes a new firm row for every referral and never matches one already
  * recorded (`created_via` PUBLIC_FORM). This moves that firm's LEADS, PEOPLE and OPEN TASKS onto the firm it really
@@ -780,7 +780,7 @@ function personValues(input: Fields, stored: PersonValues): Check<PersonValues> 
   const notes = take(input, 'notes', stored.notes, (v) => textField(v, 8000, 'The notes'));
   for (const c of [name, title, email, phone, notes]) if (!c.ok) return c;
   if (!name.ok || !title.ok || !email.ok || !phone.ok || !notes.ok) return { ok: false, why: 'That was not saved, because one of the values is not one this form accepts. Check each field and send it again.' };
-  // PHASE 154a1 (line 2): as above - a new person starts from '', so blank is no name.
+  // As above - a new person starts from '', so blank is no name.
   if (name.value === null || name.value.trim() === '') return { ok: false, why: 'A contact is a person, and needs a name.', field: 'full_name' };
   return { ok: true, value: { full_name: name.value, job_role_other: title.value, email: email.value, phone: phone.value, notes: notes.value } };
 }
@@ -1092,7 +1092,7 @@ export function recordShareConsent(d: IntroducerDeps, actor: Actor, lead_id: str
  * GIVING FROM THE PORTAL IS BUILT AND SHIPS OFF. The words a referred client must be
  * told are not agreed; until they are, a yes is still recorded by staff, who ask.
  */
-/* PHASE 151, 24 September 2026: ANSWERED AND ON. Lakhbir, Word answer 168 (closed that day): ask the client's
+/* 24 September 2026: ANSWERED AND ON. the owner, Word answer 168 (closed that day): ask the client's
    permission before updating the firm that referred them, with a request from the client's own portal. So giving from
    the portal is switched on; a staff-recorded yes still works beside it, and nothing is shared without a yes. */
 export const CLIENT_SHARE_GIVE: { readonly enabled: boolean; readonly requires: string } = Object.freeze({
@@ -1342,7 +1342,7 @@ export function rewardSetting(db: Db): SettingRow {
  * WHAT CLAUSE 1'S BLANK IS, READ ON 11 SEPTEMBER 2026, AND IT IS NOT A REFERRAL
  * FEE: the fee for Caprebate's own chartered tax adviser, introduced to sign the
  * filing position for a client who has no adviser (row E51). The switch reads it
- * as the phase asked; the question under Lakhbir says what it does and does not settle.
+ * as the phase asked; the question under the owner says what it does and does not settle.
  */
 export function clauseOneBlanks(openTerms?: readonly OpenTerm[]): readonly OpenTerm[] {
   const terms = openTerms ?? loadLetter().openTerms;
@@ -1358,7 +1358,7 @@ export type RewardView = {
   readonly may_switch: boolean;
   readonly models: Vocab;
   readonly fees?: readonly FeeView[];
-  /** Phase 132e: model C's ledger — accruals and reversing entries — for a reader of `introducer_fee.read`. */
+  /** Model C's ledger — accruals and reversing entries — for a reader of `introducer_fee.read`. */
   readonly percentage_entries?: readonly PercentageEntryView[];
 };
 
@@ -1552,7 +1552,7 @@ export function onFeeInvoiced(d: IntroducerDeps, actor: Actor | null, invoice_id
   if (s.model !== 'C_PERCENT_OF_INVOICED_FEE' || s.percent_bp === null) return;
   const v = getInvoicesIdClaimIdById<{ id: string; claim_id: string | null; business_id: string; kind: string; fee_pence: number }>(d.db, [invoice_id]);
   if (v === undefined || v.claim_id === null || v.kind !== 'FEE' || v.fee_pence <= 0) return;
-  /* PHASE 157: a REGISTERED accountancy firm — one that has signed our introducer terms (migration 094), as their
+  /* A REGISTERED accountancy firm — one that has signed our introducer terms (migration 094), as their
      clause 1 says. Marked as an accountancy firm is not enough. */
   const l = getLeadsIntroducerIdByClaimIdIntroducerType<{ introducer_id: string }>(d.db, [v.claim_id]);
   if (l === undefined) return;
@@ -1594,7 +1594,7 @@ export function percentageLedger(db: Db, actor: Actor, introducer_id?: string): 
 }
 
 /**
- * PHASE 133a — THE GATE OF THE REWARD MODEL, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF THE REWARD MODEL, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */

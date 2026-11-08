@@ -1,5 +1,5 @@
 /**
- * STAFF TASKS, AND ONE NEXT ACTION PER CLAIM. CRM 3 of 10, 11 September 2026.
+ * STAFF TASKS, AND ONE NEXT ACTION PER CLAIM. CRM 3 of 10.
  *
  * The schema is migration 012; the routes and pages are src/modules/crm/tasks-pages.ts;
  * the scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 10 and Part E from
@@ -112,7 +112,7 @@ function words(vocab: Vocab, v: string | null | undefined, none: string): string
   return has(vocab, v) ? (vocab[v] ?? v) : none;
 }
 
-/** PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one. */
+/** `field` is the posted name a refusal is about, where it is about one. */
 type Check<T> = { ok: true; value: T } | { ok: false; why: string; field?: string };
 
 function clean(v: string | null | undefined): string | null {
@@ -139,7 +139,7 @@ function dateField(v: string | null | undefined, what: string): Check<string | n
 
 function take<T>(input: Fields, key: string, stored: T, check: (v: string | null) => Check<T>): Check<T> {
   if (!Object.hasOwn(input, key)) return { ok: true, value: stored };
-  // PHASE 133d (D4): a refusal names the field it is about, so the form can draw it beside that field.
+  // A refusal names the field it is about, so the form can draw it beside that field.
   const r = check(input[key] ?? null);
   return r.ok ? r : { ...r, field: r.field ?? key };
 }
@@ -188,8 +188,8 @@ export type DueReading = { readonly state: DueState; readonly overdue: boolean; 
 export const NO_DUE_DATE = 'no due date — so it is not overdue, and it is not on time either';
 
 export function dueReading(due_on: string | null, nowIso: string, closed = false): DueReading {
-  // PHASE 133c: THE WORDS ARE THE ONE UK-DATE HELPER'S — "3 days overdue (14 Sep 2026)", "Due today (17 Sep 2026)", "Due in
-  // 3 days (20 Sep 2026)". The STATES are unchanged, and still decided here, on the UK date.
+  // THE WORDS ARE THE ONE UK-DATE HELPER'S — "3 days overdue (14 Sep 2026)", "Due today (17 Sep 2026)", "Due in
+  // 3 days". The STATES are unchanged, and still decided here, on the UK date.
   if (closed) {
     return { state: 'CLOSED', overdue: false, label: due_on === null ? 'Closed. It had no due date.' : `Closed. It was due ${ukDate(due_on)}.` };
   }
@@ -303,7 +303,7 @@ function viewOf(db: Db, actor: Actor, r: TaskDbRow, nowIso: string): TaskView {
   const about: TaskAbout[] = [];
   if (r.claim_id !== null && r.business_id !== null
     && can(actor, 'claim.read', claimObjFor(db, { id: r.claim_id, business_id: r.business_id }))) {
-    // PHASE 134: a claim is named by its property, never by its reference — the company follows as its own line.
+    // A claim is named by its property, never by its reference — the company follows as its own line.
     const n = claimNaming(db, r.claim_id);
     about.push({ kind: 'claim', id: r.claim_id, label: n === null || n.property === null ? 'the claim' : `the claim on ${n.property}`, href: `/staff/claims/${r.claim_id}` });
   }
@@ -398,7 +398,7 @@ export type TaskInsert = {
 };
 
 /**
- * PHASE 154a1 (line 7), 4 October 2026 — A DOUBLE CLICK MAKES ONE TASK. The 3 October sweep posted the same task twice
+ * — A DOUBLE CLICK MAKES ONE TASK. The 3 October sweep posted the same task twice
  * at once and got two. The same person adding the same task - every field the form sets, about the same things - within
  * DOUBLE_CLICK_MS of the first is taken as the same click: the task already made is the answer, and nothing is written
  * or audited twice. A different person, a different field, or a later click is a new task. Read inside the write's own
@@ -998,7 +998,7 @@ export function openTasks(db: Db, actor: Actor, nowIso: string, limit = 500): Ta
 }
 
 /**
- * PHASE 136 — EVERY OPEN TASK DUE TODAY OR LATE THAT THE READER MAY READ, for Home's "Today and overdue" row. No section
+ * EVERY OPEN TASK DUE TODAY OR LATE THAT THE READER MAY READ, for Home's "Today and overdue" row. No section
  * gate beyond the back office: each row is asked `staff_task.read`, so a login sees exactly the tasks it could open.
  */
 export function tasksDueByToday(db: Db, actor: Actor, nowIso: string, limit = 200): TaskView[] {
@@ -1024,7 +1024,7 @@ export function followUpsFor(db: Db, contact_id: string): { due_on: string | nul
 }
 
 /**
- * PHASE 133a — THE GATE OF THE ONE-NEXT-ACTION LIST, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF THE ONE-NEXT-ACTION LIST, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */

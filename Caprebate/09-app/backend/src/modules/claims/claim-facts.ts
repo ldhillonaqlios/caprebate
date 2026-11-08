@@ -1,5 +1,5 @@
 /**
- * THE CLAIM'S CAPITAL ALLOWANCES FACTS — CRM 6 of 10, 11 September 2026.
+ * THE CLAIM'S CAPITAL ALLOWANCES FACTS — CRM 6 of 10.
  *
  * The schema is migration 015; the scope is 09-app/CAPREBATE-CRM-DISPOSITION.md
  * Part B2; the figures, the sign-off, the deliverables and aftercare are
@@ -55,7 +55,7 @@ import { getBusinessesNameSectorById, listClientTasksIdAnswerByBusinessIdFactId 
 import { getAssessmentAnswersQuestionIdByAssessmentIdQuestionId, getAssessmentAnswersValueByAssessmentIdQuestionId, getAssessmentsIdByBusinessId2, getAssessmentsSectorById, listAssessmentAnswersQuestionIdValueByAssessmentIdState } from '../assessment/index.ts';
 
 export type FactDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
-/** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. A refusal
+/** `field` is the posted name a refusal is about, where it is about one. A refusal
  *  about the record's own state — a grant already withdrawn, a position already taken — carries none. */
 export type FactResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -140,19 +140,19 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
   BUYER_ALTERATIONS: { label: 'The buyer made their own alterations to install plant', kind: 'choice', choices: YES_NO },
   BUYER_ALTERATIONS_AMOUNT: { label: 'What the buyer’s own alterations cost', kind: 'pence' },
   SCOTTISH_TAXPAYER: { label: 'The claimant is a Scottish taxpayer — where they live, not where the property is', kind: 'choice', choices: YES_NO },
-  /* Phase 132 — TMA 1970 s.12ABA(4)(b) and s.12AA(5B): a company partner puts the partnership return on the company
+  /* TMA 1970 s.12ABA(4)(b) and s.12AA(5B): a company partner puts the partnership return on the company
      filing date. Read by amendmentWindowReading for an LLP or a partnership only; migration 024 adds the key. */
   PARTNERSHIP_HAS_COMPANY_MEMBER: {
     label: 'A partner or LLP member is a company — which puts the partnership return on the company filing date', kind: 'choice', choices: YES_NO,
   },
-  /* Phase 151 — whether the sale contract and the CPSE replies must arrive (Word answer 47, question 220). Migration
+  /* Whether the sale contract and the CPSE replies must arrive (Word answer 47, question 220). Migration
      045 adds the key. */
   BOUGHT_THE_BUILDING: { label: 'The client bought the building, rather than built or refitted it', kind: 'choice', choices: YES_NO },
-  /* Phase 159d — "do you still own it": W2 (the window closed, the spend pooled in the first open period) needs it. YES
+  /* "do you still own it": W2 (the window closed, the spend pooled in the first open period) needs it. YES
      only on evidence — the client's checked answer, or the title register — and never with a sale date on the
      property. Migration 106 adds the key. Read by src/modules/claims/claim-route.ts. */
   STILL_OWNED: { label: 'The client still owns the building today', kind: 'choice', choices: YES_NO },
-  /* Phase 159e — the allowances on each event (src/modules/assessment/allowances.ts). Migration 107 adds the three keys. N4: not recorded
+  /* The allowances on each event (src/modules/assessment/allowances.ts). Migration 107 adds the three keys. N4: not recorded
      grants nothing. CASH_BASIS: on the cash basis there is no claim on fixtures for the period (OUR READING, Word
      question 260). BOUGHT_NEW_FROM_DEVELOPER: a building bought new and unused from its developer is not second-hand, so
      full expensing and the first-year allowances are open to it (OUR READING, Word question 258). SBA_STATEMENT_HELD: the
@@ -164,13 +164,13 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
   },
   BOUGHT_NEW_FROM_DEVELOPER: { label: 'The building was bought new and never used, from the developer who built it', kind: 'choice', choices: YES_NO },
   SBA_STATEMENT_HELD: { label: 'The seller’s structures and buildings allowance statement is on file', kind: 'choice', choices: YES_NO },
-  /* PHASE 159i (item 2, migration 110): a VAT capital goods scheme adjustment on the building, in pounds. A fact and a note: the
+  /* A VAT capital goods scheme adjustment on the building, in pounds. A fact and a note: the
      survey pack shows it beside the VAT that counts and does not change the figure; the tax adviser says how it reaches the claim. */
   VAT_CGS_ADJUSTMENT: { label: 'A VAT capital goods scheme adjustment on the building (a note, not counted)', kind: 'pence' },
-  /* PHASE 159k (item 2, migration 113): the asbestos was there when the client acquired the land (CTA 2009 s.1145).
+  /* The asbestos was there when the client acquired the land (CTA 2009 s.1145).
      Land remediation relief on its removal needs it; not known, none is given. */
   ASBESTOS_AT_ACQUISITION: { label: 'Asbestos was in the building when the client acquired the land', kind: 'choice', choices: YES_NO },
-  /* Phase 153a, 4 October 2026 (Phase 153b lines 12 and 13, with the same grant data). Migration 078 adds both keys.
+  /* Migration 078 adds both keys.
      Read by src/modules/assessment/grant-checks.ts, the gate out of valuation. */
   GRANT_PROVIDER_CHECKED: {
     label: 'The client has checked with whoever paid the grant that claiming will not make them pay it back', kind: 'choice', choices: YES_NO,
@@ -263,7 +263,7 @@ function rowValue(r: FactRow): string | null {
   return r.value_date ?? r.value_text ?? (r.value_pence === null ? null : String(r.value_pence));
 }
 
-/** Phase 139: exported so the Approve box reads a recorded fact exactly as the facts panel does. */
+/** Exported so the Approve box reads a recorded fact exactly as the facts panel does. */
 export function captured(facts: Map<string, FactRow>, key: string): FactReading {
   const def = FACTS[key];
   const label = def?.label ?? key;
@@ -306,7 +306,7 @@ export function jurisdictionReading(db: Db, property_id: string | null, store?: 
 }
 
 /**
- * PHASE 157c (the Friary House run, F14): what the client said at the assessment about this property's purchase - its
+ * What the client said at the assessment about this property's purchase - its
  * rough date ("06/2019") - found by the property's own address among the assessment's answers. Shown beside an unknown
  * acquisition date, never stored as it: the client gave a month and a rough figure, not a completion date (N4).
  */
@@ -324,7 +324,7 @@ export function clientSaidPurchaseDate(db: Db, property_id: string): string | nu
 }
 
 /**
- * PHASE 158b (the Friary House run, F28): whether the client said at the assessment that they bought this property -
+ * Whether the client said at the assessment that they bought this property -
  * its own "how did you come by this one?" answer, found by the property's address (or, with one building on both
  * sides, the only one). 'YES' for a purchase, 'NO' for a build, a refurbishment or a fit-out, null where it cannot be
  * told. Read where the claim's own fact BOUGHT_THE_BUILDING is not recorded; a fact staff record always wins.
@@ -347,7 +347,7 @@ export function clientSaidBought(db: Db, property_id: string | null): 'YES' | 'N
 }
 
 /**
- * PHASE 158c (F37, the Friary House run): THE WINDOW, WARNED EARLY. The amendment window was first tested at Reports, so a
+ * THE WINDOW, WARNED EARLY. The amendment window was first tested at Reports, so a
  * client who said "06/2019" at the assessment went through the letter, the paid research and the survey first. From
  * Engagement until Reports, where the client's own date (and nothing recorded yet settles it) puts the window out of reach
  * even on the most generous reading - the latest accounting period the spend could fall in, twelve months on, and the
@@ -367,11 +367,11 @@ export function earlyWindowWarning(db: Db, c: { readonly stage: string | null; r
   const t = claimantTypeForGate(db, c.business_id).value;
   const kinds: readonly ('company' | 'partnership' | 'self_assessment')[] = t === 'COMPANY' ? ['company']
     : t === 'PARTNERSHIP' || t === 'LLP' ? ['partnership'] : t === null || t === 'CHARITY' ? ['company', 'self_assessment']
-    : t === 'CHARITY_COMPANY' ? ['company'] : ['self_assessment'];   // PHASE 159d (C24): a charitable trust is self assessment
+    : t === 'CHARITY_COMPANY' ? ['company'] : ['self_assessment'];   // A charitable trust is self assessment
   const windows = kinds.map((k) => amendmentWindow(end, k, todayIso, null));
   if (windows.some((w) => !w.known || w.in_time)) return null;
   const latest = windows.map((w) => (w.known ? w.deadline : '')).sort().at(-1) ?? '';
-  /* PHASE 159d: a closed old return is not the end. While the client owns the building the spend goes into this year's
+  /* A closed old return is not the end. While the client owns the building the spend goes into this year's
      pool (W2), written down over the years ahead, with no refund of past tax (src/modules/claims/claim-route.ts). */
   return `On the client’s own date (${said}) the return for that year has most likely closed. Even on the latest accounting period the spend could fall in, it closed on ${ukDate(latest)}. ` +
     'The old return is closed; the relief comes through this year’s pool instead, while the client still owns the building. It is written down over the years ahead, with no refund of past tax. ' +
@@ -383,7 +383,7 @@ export function acquisitionDateReading(db: Db, property_id: string | null): Fact
   if (property_id === null) return unknown('ACQUISITION_DATE', label, false, null);
   const p = getPropertiesAcquisitionDateById<{ acquisition_date: string | null }>(db, [property_id]);
   if (p?.acquisition_date === null || p?.acquisition_date === undefined) {
-    // PHASE 158d (F45): with nothing on the property record, the surveyor's legal-check date or the client's checked answer.
+    // With nothing on the property record, the surveyor's legal-check date or the client's checked answer.
     const given = acquisitionGiven(db, property_id);
     if (given !== null) {
       return { key: 'ACQUISITION_DATE', label, known: true, value: given.value, display: `${ukDate(given.value)} — from ${given.words}`, capturable: false,
@@ -461,7 +461,7 @@ export function amendmentWindowReading(db: Db, c: { business_id: string; propert
   let startV = start === undefined ? null : rowValue(start);
   let endV = end === undefined ? null : rowValue(end);
   const acq = acquisitionDateReading(db, c.property_id);
-  // PHASE 158d (F45): say which date the window read when it is not the property record's, and fill the accounting
+  // Say which date the window read when it is not the property record's, and fill the accounting
   // period from the client's checked year end where no period is recorded.
   const readFrom: string[] = [];
   const given = c.property_id === null ? null : acquisitionGiven(db, c.property_id);
@@ -490,7 +490,7 @@ export function amendmentWindowReading(db: Db, c: { business_id: string; propert
 }
 
 /**
- * PHASE 159d: THE WINDOW FOR ONE ACCOUNTING PERIOD, by its last day — the claimant's rule and the engine's date. Read by
+ * THE WINDOW FOR ONE ACCOUNTING PERIOD, by its last day — the claimant's rule and the engine's date. Read by
  * the window above, by each piece of work's own period, and by the search for the first open period (W2;
  * src/modules/claims/claim-route.ts). C24: a charitable company files a company return, a charitable trust a trust return under
  * self assessment; a charity recorded without saying which is not known, and says so.
@@ -506,7 +506,7 @@ export function windowForPeriod(db: Db, c: { business_id: string; id: string }, 
   if (claimant !== 'COMPANY' && !SELF_ASSESSMENT_CLAIMANTS.includes(claimant)) {
     return { state: 'UNKNOWN', deadline: null, assumption: null, why: `Not known — we have no window rule for a claimant recorded as ${raw.toLowerCase().replace(/_/g, ' ')}.` };
   }
-  // PHASE 132 — a partnership or LLP reads whether a partner or member is a company. A row recorded as NOT KNOWN
+  // A partnership or LLP reads whether a partner or member is a company. A row recorded as NOT KNOWN
   // and no row read the same: null, which the engine receives as no answer (N4).
   const partnership = claimant === 'LLP' || claimant === 'PARTNERSHIP';
   const memberRow = partnership ? facts.get('PARTNERSHIP_HAS_COMPANY_MEMBER') : undefined;
@@ -529,7 +529,7 @@ export function windowForPeriod(db: Db, c: { business_id: string; id: string }, 
   };
 }
 
-/** The sentence beside a known window: which rule gave the date, and what it rests on. Phase 132. */
+/** The sentence beside a known window: which rule gave the date, and what it rests on. */
 function windowAssumption(claimant: string | null, w: Extract<EngineWindow, { known: true }>): string {
   if (claimant === 'COMPANY') return 'The usual company rule: twelve months after the filing date. Check the real filing date with the accountant.';
   if (claimant !== 'LLP' && claimant !== 'PARTNERSHIP') {
@@ -590,9 +590,9 @@ type GrantRow = {
   id: string; kind: string; payer_class: string; amount_pence: number | null; amount_basis: string; traced: string;
   traced_elements: string | null; source_id: string; note: string | null; recorded_at: string; recorder: string | null;
   withdrawn_at: string | null; withdraw_reason: string | null;
-  /** Phase 159i (migration 110): who received it, and the event on the building it paid for. */
+  /** Who received it, and the event on the building it paid for. */
   paid_to: string; event_id: string | null;
-  /** Phase 153a: the fixture-list rows it paid for (migration 078), in the list's order. Empty: matched in words only, or not at all. */
+  /** The fixture-list rows it paid for (migration 078), in the list's order. Empty: matched in words only, or not at all. */
   element_ids: readonly string[];
 };
 
@@ -616,7 +616,7 @@ export function elementName(element_id: string): string {
 }
 
 /**
- * PHASE 153a — THE CLAIM'S GRANTS AS THE SURVEY PACK TAKES THEM (src/web/pack-grants.ts, chapter 15): every grant not
+ * THE CLAIM'S GRANTS AS THE SURVEY PACK TAKES THEM (src/web/pack-grants.ts, chapter 15): every grant not
  * withdrawn, with its payer class, its amount and the fixture-list rows it paid for.
  */
 export function packGrantsFor(db: Db, claim_id: string): (PackGrant & { readonly kind: string; readonly traced: string })[] {
@@ -659,10 +659,10 @@ export function grantsTraced(db: Db, claim_id: string): { readonly met: boolean;
 export type GrantLine = {
   readonly id: string; readonly kind: string; readonly payer: string; readonly amount: string; readonly amount_basis: string;
   readonly traced: string; readonly traced_elements: string | null; readonly source: FactSource; readonly withdrawn: string | null;
-  /* PHASE 143, 22 September 2026 — the same row's stored keys, so the grants section can total and word it. Read only;
+  /* The same row's stored keys, so the grants section can total and word it. Read only;
      nothing here is written, and the surveyor's released list never reaches this type. */
   readonly payer_key: string; readonly amount_pence: number | null; readonly traced_key: string; readonly note: string | null;
-  /** Phase 153a: the fixture-list rows it paid for, and their names. */
+  /** The fixture-list rows it paid for, and their names. */
   readonly element_ids: readonly string[]; readonly element_names: readonly string[];
 };
 
@@ -679,12 +679,12 @@ export type FactsPanel = {
   readonly jurisdiction: FactReading;
   readonly acquisition_date: FactReading;
   readonly accounting_period: { readonly start: FactReading; readonly end: FactReading };
-  /** Phase 132, 15 September 2026 — recordable since 14 September and shown nowhere until now. */
+  /** Recordable since 14 September and shown nowhere until now. */
   readonly partnership_company_member: FactReading;
   readonly amendment_window: WindowReading;
-  /** PHASE 159g (L8): the claim's year end — the register's, else the client's — and whether the two differ. */
+  /** The claim's year end — the register's, else the client's — and whether the two differ. */
   readonly year_end: YearEndReading;
-  /** PHASE 159g (L2, item 2, item 4): who claims — a dormant company flagged, how the client holds the building, its tenure. */
+  /** Who claims — a dormant company flagged, how the client holds the building, its tenure. */
   readonly who_claims: { readonly dormant: string | null; readonly role: string; readonly tenure: string };
   readonly taxable_profit: {
     readonly sufficient_profit: FactReading;
@@ -701,7 +701,7 @@ export type FactsPanel = {
   };
   readonly grants: {
     readonly exist: FactReading; readonly lines: readonly GrantLine[]; readonly traced: { readonly met: boolean; readonly why: string };
-    /* Phase 153a: the two grant facts the valuation gate reads (src/modules/assessment/grant-checks.ts), and the switch the pack reads. */
+    /* The two grant facts the valuation gate reads (src/modules/assessment/grant-checks.ts), and the switch the pack reads. */
     readonly provider_checked: FactReading; readonly split_view: FactReading; readonly switch: SwitchLine;
   };
   readonly acquisition_costs: { readonly costs: FactReading; readonly transaction_tax: FactReading; readonly switch: SwitchLine };
@@ -709,7 +709,7 @@ export type FactsPanel = {
   readonly may_record: boolean;
 };
 
-/** PHASE 159j (L14): read as the survey pack reads it (`packSwitchReadings`), and said in the words for that state. */
+/** Read as the survey pack reads it (`packSwitchReadings`), and said in the words for that state. */
 function switchLine(name: string, saysOff: string, saysOn: string): SwitchLine {
   const s = packSwitchReadings(ctaSwitchReadings()).find((x) => x.switch === name);
   return { name, on: s?.on === true, says: s?.on === true ? saysOn : saysOff };
@@ -916,7 +916,7 @@ export function recordFact(d: FactDeps, actor: Actor, claim_id: string, input: F
 }
 
 /**
- * PHASE 159k (item 1) — THE SELLER'S STRUCTURES ALLOWANCE STATEMENT, RECEIVED, IS ON FILE. When a version of an
+ * THE SELLER'S STRUCTURES ALLOWANCE STATEMENT, RECEIVED, IS ON FILE. When a version of an
  * SBA_ALLOWANCE_STATEMENT is received by the upload handler (its strip recorded, its quarantine discharged, no refusal),
  * every claim it is linked to — directly, or through its property — records SBA_STATEMENT_HELD as YES, from the client's
  * document, by whoever sent it. A claim that already says YES records nothing again. It never records NO and never
@@ -952,19 +952,19 @@ export function recordSbaStatementHeld(d: { db: Db; audit: AuditLog; now: () => 
 export const PUBLIC_PAYERS: readonly string[] = Object.freeze(['nhs', 'local_authority', 'homes_england_gla', 'other_public']);
 
 /**
- * PHASE 143 — the step-by-step "Add a grant" pages draw nothing a login may not record. The same authorisation
+ * The step-by-step "Add a grant" pages draw nothing a login may not record. The same authorisation
  * recordGrant runs, asked before a step is drawn; the company's name is for the heading (the client is the company).
  */
 export function grantFormClaim(db: Db, actor: Actor, claim_id: string): { readonly id: string; readonly business_id: string; readonly company: string; readonly sector: string | null } {
   const c = loadFactClaim(db, claim_id);
   authorise(actor, 'claim_facts.record', factsObj(db, c));
   const b = getBusinessesNameSectorById<{ name: string; sector: string | null }>(db, [c.business_id]);
-  // Phase 153a: the sector, so the step that matches a grant offers that sector's rows of the fixture list.
+  // The sector, so the step that matches a grant offers that sector's rows of the fixture list.
   return { id: c.id, business_id: c.business_id, company: b?.name ?? 'This company', sector: b?.sector ?? null };
 }
 
 /**
- * PHASE 153a — the fixture-list rows a grant may be matched to on this claim: the sector's own and the rows every sector
+ * The fixture-list rows a grant may be matched to on this claim: the sector's own and the rows every sector
  * shares, in the list's order, with their names. Every row, whatever its pool: a grant that paid only for items that
  * never qualify is matched to those, and then takes nothing off (Word question 79). A sector the list does not know
  * is offered the shared rows.
@@ -976,7 +976,7 @@ export function grantElementChoices(sector: string | null): readonly { readonly 
 }
 
 /**
- * PHASE 153a — the fixture-list rows a grant paid for, as posted: ids separated by commas, spaces or new lines. Every id
+ * The fixture-list rows a grant paid for, as posted: ids separated by commas, spaces or new lines. Every id
  * must be a row of 02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv; repeats are taken once; at most 60.
  */
 export function parseElementIds(raw: string | null): { ok: true; value: string[] } | { ok: false; why: string } {
@@ -1005,7 +1005,7 @@ export function recordGrant(d: FactDeps, actor: Actor, claim_id: string, input: 
   if (!has(TRACED, traced)) return { ok: false, field: 'traced', why: 'Say if it is matched to the items it paid for — yes, no or not sure.' };
   const elements = text(input['traced_elements'], 4000, 'The list of items it paid for');
   if (!elements.ok) return elements;
-  // PHASE 153a: the fixture-list rows it paid for (migration 078), each checked against the list itself. Matched to rows
+  // The fixture-list rows it paid for (migration 078), each checked against the list itself. Matched to rows
   // only when it is marked matched; the words then default to the rows' names, so a reader never sees a bare code.
   const ids = parseElementIds(input['element_ids'] ?? null);
   if (!ids.ok) return { ok: false, field: 'element_ids', why: ids.why };
@@ -1019,7 +1019,7 @@ export function recordGrant(d: FactDeps, actor: Actor, claim_id: string, input: 
   if (!has(CAPTURE_SOURCES, source)) return { ok: false, field: 'source_id', why: 'Say where this came from.' };
   const note = text(input['note'], 2000, 'The note');
   if (!note.ok) return note;
-  // PHASE 159i (items 1 and 4): who received it — the client, or an earlier owner — and which event on the building it paid for.
+  // Who received it — the client, or an earlier owner — and which event on the building it paid for.
   const paidTo = (input['paid_to'] ?? '').trim() === '' ? 'CLIENT' : input['paid_to'];
   if (paidTo !== 'CLIENT' && paidTo !== 'PAST_OWNER') return { ok: false, field: 'paid_to', why: 'Say who received it: the client, or an earlier owner.' };
   const ev = (input['event_id'] ?? '').trim() === '' ? null : (input['event_id'] ?? '').trim();
@@ -1112,7 +1112,7 @@ export function withdrawOwner(d: FactDeps, actor: Actor, claim_id: string, owner
 }
 
 /**
- * PHASE 158d: the client's own answer to one of our questions, once a member of staff has checked it — the newest
+ * The client's own answer to one of our questions, once a member of staff has checked it — the newest
  * answered question for `fact_id` whose latest tick is APPROVED. "I don't know" is not an answer; an unchecked answer and
  * one whose tick was taken off are not read.
  */
@@ -1125,7 +1125,7 @@ export function approvedClientAnswer(db: Db, business_id: string, fact_id: strin
 }
 
 /**
- * PHASE 158d (F44, the second Friary House run): "Data gathering complete — floor area sourced" passed with no floor area
+ * "Data gathering complete — floor area sourced" passed with no floor area
  * recorded anywhere. A floor area is on record when one of these holds it: the property's energy certificate (a register
  * record of this property, or the business's only one where it names no property), Homedata's estimate for the address,
  * or the client's own answer to "how big is the building", checked, with a number in it.
@@ -1160,7 +1160,7 @@ const iso = (y: number, m: number, d: number): string | null => {
 };
 
 /**
- * PHASE 158d (F45): a whole date in the words a client types — "2024-06-14", "14/06/2024", "14 June 2024", "June 14 2024".
+ * A whole date in the words a client types — "2024-06-14", "14/06/2024", "14 June 2024", "June 14 2024".
  * A month alone ("June 2024", "06/2024") is not a date, and is not read as one.
  */
 export function clientDate(text: string): string | null {
@@ -1176,7 +1176,7 @@ export function clientDate(text: string): string | null {
   return null;
 }
 
-/** PHASE 158d (F45): a year end in a client's words — "5 April", "April 5", "31/03" — as month and day, or null. */
+/** A year end in a client's words — "5 April", "April 5", "31/03" — as month and day, or null. */
 export function clientYearEnd(text: string): { readonly month: number; readonly day: number } | null {
   const t = text.trim().replace(/(\d)(st|nd|rd|th)\b/gi, '$1').replace(/\s+/g, ' ');
   let m = /^(\d{1,2}) ([A-Za-z]+)$/.exec(t);
@@ -1189,13 +1189,13 @@ export function clientYearEnd(text: string): { readonly month: number; readonly 
 }
 
 /**
- * PHASE 158d (F45, the second Friary House run): the purchase date was asked in four places and the window read only the
+ * The purchase date was asked in four places and the window read only the
  * one staff type on the property record. Where that is empty, this is the date someone else gave: the surveyor's answer
  * to the legal check's G9d on a pack for this property, or else the client's own answer to "the completion date",
  * checked by staff and a whole date. Never written over the property record; read, with where it came from.
  */
 function acquisitionGiven(db: Db, property_id: string): { value: string; words: string; publisher: string; locator: string; at: string } | null {
-  /* PHASE 159a (C3, L3): ONCE A VERSION IS SIGNED, ITS PURCHASE DATE IS THE ONE READ. The newest version a tax adviser's
+  /* ONCE A VERSION IS SIGNED, ITS PURCHASE DATE IS THE ONE READ. The newest version a tax adviser's
      sign-off names, on a pack for this property, since the valuation was last reopened: its legal check's G9d as it was
      approved. A newer working answer in the pack is never read in its place. */
   const signed = getSurveyPackApprovalsSnapshotJsonVersionByPropertyId<{ snapshot_json: string; version: number; approved_at: string; claim_id: string }>(db, [property_id, property_id, JSON.stringify(VOIDING_REOPEN_STAGES)]);
@@ -1224,7 +1224,7 @@ function acquisitionGiven(db: Db, property_id: string): { value: string; words: 
     : null;
 }
 
-/** PHASE 159e (C15, L4): is the claim's accounting period known — recorded in full, or the client's checked year end —
+/** Is the claim's accounting period known — recorded in full, or the client's checked year end —
  *  so each part's period can be worked out? Read at approval: the year end is asked at data gathering and a version is
  *  not approved without it, because the return entries are made from the version and never ask for it afterwards. */
 export function yearEndKnown(db: Db, c: { id: string; business_id: string }): boolean {
@@ -1234,14 +1234,14 @@ export function yearEndKnown(db: Db, c: { id: string; business_id: string }): bo
   return s !== undefined && e !== undefined && rowValue(s) !== null && rowValue(e) !== null;
 }
 
-/** PHASE 159g (L8): the claim's year end — Companies House's accounting reference date for a company that has one, else
+/** The claim's year end — Companies House's accounting reference date for a company that has one, else
  *  the client's checked answer — with the two compared (src/modules/assessment/who-claims.ts yearEndFrom). */
 export function yearEndReading(db: Db, business_id: string): YearEndReading {
   const said = approvedClientAnswer(db, business_id, 'year_end');
   return yearEndFrom(said === null ? null : clientYearEnd(said.answer), registerCompany(db, business_id));
 }
 
-/** PHASE 158d (F45): the accounting period the purchase falls in, from the claim's year end (Phase 159g: the register's,
+/** The accounting period the purchase falls in, from the claim's year end (Phase 159g: the register's,
  *  else the client's checked answer), or null. */
 export function periodFromYearEnd(db: Db, business_id: string, acquired: string): { start: string; end: string } | null {
   const ye = yearEndReading(db, business_id).used;

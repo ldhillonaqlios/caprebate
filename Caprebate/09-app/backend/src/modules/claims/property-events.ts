@@ -1,7 +1,7 @@
 /**
- * SEVERAL EVENTS ON ONE BUILDING — PHASE 159c, 9 October 2026 (migration 105).
+ * SEVERAL EVENTS ON ONE BUILDING.
  *
- * The stress test of 9 October 2026 (E1; the Lockwood Surgery run, L5) and Lakhbir: "that's a design gap - this is
+ * The stress test (E1; the Lockwood Surgery run, L5) and the owner: "that's a design gap - this is
  * needed". A building is bought and then refitted, or built and then extended. Each is its own spend, with its own date,
  * its own band and its own route (CAA 2001 ss.11, 58), and on a bought-then-refitted surgery the works are often worth
  * more than the purchase.
@@ -44,7 +44,7 @@ export type PropertyEvent = {
   readonly id: string; readonly property_id: string; readonly business_id: string; readonly ord: number;
   readonly kind: EventKind; readonly event_date: string | null; readonly cost_pence: number | null;
   readonly vat: string | null; readonly source: 'ASSESSMENT' | 'STAFF'; readonly created_at: string;
-  /** PHASE 159i (migration 110): the VAT on its cost the client could not reclaim, in pence; null: none recorded. */
+  /** The VAT on its cost the client could not reclaim, in pence; null: none recorded. */
   readonly vat_pence: number | null;
 };
 
@@ -67,13 +67,13 @@ export function dateWords(d: string | null): string {
   return m === null ? d : `${MONTHS[Number(m[2]) - 1] ?? ''} ${m[1] ?? ''}`;
 }
 
-/** PHASE 159j (item 5): an event named inside a sentence — "a refurbishment or refit (June 2025)". */
+/** An event named inside a sentence — "a refurbishment or refit (June 2025)". */
 export function eventLabel(e: Pick<PropertyEvent, 'kind' | 'event_date'>): string {
   const w = KIND_WORDS[e.kind];
   return `${w.charAt(0).toLowerCase()}${w.slice(1)} (${dateWords(e.event_date)})`;
 }
 
-/** PHASE 159j (item 5): an event on one of this business's buildings, or null — the check before a document or a
+/** An event on one of this business's buildings, or null — the check before a document or a
  *  request names it. */
 export function eventOfBusiness(db: Db, business_id: string, event_id: string): PropertyEvent | null {
   return getPropertyEventsIdPropertyIdByIdBusinessId<PropertyEvent>(db, [event_id, business_id]) ?? null;
@@ -86,7 +86,7 @@ export function eventsOfProperty(db: Db, property_id: string | null): PropertyEv
 }
 
 /** Does the purchase method (section 562, from the price) apply? Yes where a purchase is recorded, and on a building with
- *  no events recorded at all — every claim from before Phase 159c, which was priced that way. */
+ *  no events recorded at all — every claim from which was priced that way. */
 export function purchaseApplies(events: readonly PropertyEvent[]): boolean {
   return events.length === 0 || events.some((e) => e.kind === 'PURCHASE');
 }
@@ -150,13 +150,13 @@ export function eventCeiling(sector: string | null, e: Pick<PropertyEvent, 'kind
   return r === null ? { high_pence: null, why: 'We could not size this one from what is recorded.' } : { high_pence: Math.round(r.high * 100), why: null };
 }
 
-/** PHASE 159k: an event date ("2019-06" or "2019") known to be before the structures allowance began (29 October 2018). */
+/** An event date ("2019-06" or "2019") known to be before the structures allowance began (29 October 2018). */
 function beforeSba(d: string | null): boolean {
   if (d === null) return false;
   return d.length === 4 ? d < '2018' : d < '2018-10';
 }
 
-/** The documents that prove each kind of event. Every one is on the upload lists (it has a receipt policy). PHASE 159k:
+/** The documents that prove each kind of event. Every one is on the upload lists (it has a receipt policy).
  *  a purchase's include the seller's structures allowance statement, from 29 October 2018. */
 export const DOCUMENTS_FOR: Readonly<Record<EventKind, readonly string[]>> = Object.freeze({
   PURCHASE: Object.freeze(['COMPLETION_STATEMENT', 'SALE_CONTRACT', 'CPSE_REPLIES', 'ACCOUNTS', 'SBA_ALLOWANCE_STATEMENT']),
@@ -173,7 +173,7 @@ export type EventOnClaim = PropertyEvent & {
   readonly words: string; readonly when: string;
   /** The engine's band for this event on its own cost, until a survey prices it. */
   readonly ceiling_pence: number | null; readonly ceiling_why: string | null;
-  /** PHASE 159j (item 5): `held` counts the documents that name THIS event. On a building with one event, a document
+  /** `held` counts the documents that name THIS event. On a building with one event, a document
    *  that names none is its, as before; with several, it is counted apart, as `untied`, until a person ties it. */
   readonly documents: readonly { readonly code: string; readonly label: string; readonly held: number; readonly untied: number }[];
 };
@@ -181,7 +181,7 @@ export type EventOnClaim = PropertyEvent & {
 export type ApprovedEventFigure = { readonly version: number; readonly qualifying_pence: number | null; readonly not_claimed: boolean };
 
 /**
- * PHASE 159l (item 4, L19): EACH EVENT'S FIGURE AS THE SURVEY APPROVED IT — from the newest approved version on the
+ * EACH EVENT'S FIGURE AS THE SURVEY APPROVED IT — from the newest approved version on the
  * claim (pack-approve.ts snapshotOf): the purchase's own qualifying amount and each piece of work's, by its event. A
  * version with no work since holds the purchase as the whole figure. An event added after the version is not in it.
  */
@@ -212,7 +212,7 @@ export function eventsOnClaim(db: Db, c: { property_id: string | null; business_
   return evs.map((e) => {
     const f = eventCeiling(c.sector, e);
     return { ...e, words: KIND_WORDS[e.kind], when: dateWords(e.event_date), ceiling_pence: f.high_pence, ceiling_why: f.why,
-      // PHASE 159k: no structures allowance statement exists for a purchase known to be before 29 October 2018.
+      // No structures allowance statement exists for a purchase known to be before 29 October 2018.
       documents: DOCUMENTS_FOR[e.kind].filter((code) => code !== 'SBA_ALLOWANCE_STATEMENT' || !beforeSba(e.event_date)).map((code) => {
         const loose = untied(code);
         return { code, label: label(code), held: own(code, e.id) + (one ? loose : 0), untied: one ? 0 : loose };
@@ -220,7 +220,7 @@ export function eventsOnClaim(db: Db, c: { property_id: string | null; business_
   });
 }
 
-/** PHASE 159i (item 4): THE VAT ON ONE EVENT'S COST — its position (migration 105) and, where the client could not
+/** THE VAT ON ONE EVENT'S COST — its position (migration 105) and, where the client could not
  *  reclaim it, the amount (migration 110), added to that event's cost in the survey pack. Staff record it on the claim. */
 export function setEventVat(db: Db, at: string, property_id: string, event_id: string, f: { position: string | null; amount_pence: number | null }):
   { ok: true } | { ok: false; why: string } {

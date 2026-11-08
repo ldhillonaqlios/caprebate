@@ -1,7 +1,7 @@
 /**
  * THE ROUTES AND PAGES FOR DOCUMENTS ON THE CLAIM — a document and its versions,
  * the document types, links, staff uploads and document requests — and the panel
- * the claim page draws. CRM 4 of 10, 11 September 2026.
+ * the claim page draws. CRM 4 of 10.
  *
  * Same shape as `handleCrm` and `handleTasks`: it returns 'not-mine' for anything
  * it does not own, so the mounting in staff.ts is one line.
@@ -48,7 +48,7 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+  // An upload form's page also gets the script that sends a big file in pieces.
   const p = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, p.headers);
   res.end(p.body);
@@ -132,7 +132,7 @@ export async function handleDocuments(
 
   /* ------------------------------------------- the document centre (the CRM follow-on) */
   if (path === '/staff/documents' && method === 'GET') {
-    // PHASE 140: A COMPANY'S DOCUMENTS ARE IN ITS FILES. Asked for one company and nothing else, the reader is sent to that
+    // A COMPANY'S DOCUMENTS ARE IN ITS FILES. Asked for one company and nothing else, the reader is sent to that
     // company's folder, which asks its own rules again. Anything else stays this list, reached from search — never a menu.
     const only = [...url.searchParams.keys()];
     const org = url.searchParams.get('organisation') ?? '';
@@ -190,7 +190,7 @@ export async function handleDocuments(
   if (docDownload && method === 'GET') {
     const id = docDownload[1] ?? '';
     const r = D.requestOriginal(deps, actor, id);
-    // PHASE 140: WHERE KEEP_ORIGINALS KEPT ONE, the newest kept original, decrypted, as a download — never shown in the
+    // WHERE KEEP_ORIGINALS KEPT ONE, the newest kept original, decrypted, as a download — never shown in the
     // page, never cached. Otherwise the plain answer, and a way back to what we took from it: never a broken link.
     // Whatever has run out of time is deleted first, so an expired original is gone before anything is looked for.
     await sweepOriginals({ db, store: d.store, now, audit: d.app.audit }, actor);
@@ -214,7 +214,7 @@ export async function handleDocuments(
     return 'handled';
   }
   /**
-   * PHASE 146i — A PERSON SAYS WHETHER A NAME BELONGS TO AN ORGANISATION. One button per answer, so there is no
+   * A PERSON SAYS WHETHER A NAME BELONGS TO AN ORGANISATION. One button per answer, so there is no
    * drop-down to leave on its first value and no script. `vouchDocumentField` authorises it and decides everything
    * about it; this route carries the posted answer and nothing else.
    */
@@ -228,7 +228,7 @@ export async function handleDocuments(
     return 'handled';
   }
   /**
-   * PHASE 146j — TAKING A YES BACK. Its own act, with a reason, like taking a tick off. `withdrawVouch` authorises it,
+   * TAKING A YES BACK. Its own act, with a reason, like taking a tick off. `withdrawVouch` authorises it,
    * finds what the yes let in and takes that one field out; this route carries the field and the reason, nothing else.
    * The result page says what to look at again, because a redirect would lose it.
    */
@@ -246,7 +246,7 @@ export async function handleDocuments(
     }));
     return 'handled';
   }
-  // PHASE 159j (item 5): tie a document to the piece of work it proves, or untie it.
+  // Tie a document to the piece of work it proves, or untie it.
   const docEvent = /^\/staff\/documents\/([A-Za-z0-9-]+)\/event$/.exec(path);
   if (docEvent && method === 'POST') {
     const id = docEvent[1] ?? '';
@@ -282,7 +282,7 @@ export async function handleDocuments(
     redirect(res, `/staff/documents/${r.document_id ?? ''}?done=unlinked`);
     return 'handled';
   }
-  // PHASE 140: A NEW VERSION, THE FILE WITH THE FORM — through `receiveFile`, the client's own path. No upload address.
+  // A NEW VERSION, THE FILE WITH THE FORM — through `receiveFile`, the client's own path. No upload address.
   const docVersion = /^\/staff\/documents\/([A-Za-z0-9-]+)\/versions$/.exec(path);
   if (docVersion && method === 'POST') {
     const id = docVersion[1] ?? '';
@@ -298,7 +298,7 @@ export async function handleDocuments(
   }
 
   /* ------------------------------------------------- on the claim page */
-  // PHASE 140: AN UPLOAD FROM THE CLAIM PAGE, THE FILE WITH THE FORM. Lands in the claim's own folder of the company's files.
+  // AN UPLOAD FROM THE CLAIM PAGE, THE FILE WITH THE FORM. Lands in the claim's own folder of the company's files.
   const claimUpload = /^\/staff\/claims\/([A-Za-z0-9-]+)\/documents$/.exec(path);
   if (claimUpload && method === 'POST') {
     const id = claimUpload[1] ?? '';
@@ -309,7 +309,7 @@ export async function handleDocuments(
     const r = await receiveFile(d, actor, {
       business_id, type_code: up.fields.type_code ?? null, logical_document_id: null, request_id: null, claim_id: id,
       shown_to_client: up.fields.shown_to_client === 'yes', event_id: up.fields.event_id ?? null,
-      // PHASE 146j: the question about a name, answered where the type is chosen.
+      // The question about a name, answered where the type is chosen.
       early_vouch: earlyVouchesFrom((n) => up.fields[n]),
     }, up.bytes);
     if (!r.ok) return d.problem(res, actor, 'Not uploaded', r.why, `/staff/claims/${id}`);
@@ -332,7 +332,7 @@ export async function handleDocuments(
     const r = D.createDocumentRequest(deps, actor, {
       business_id: D.businessOfClaim(db, id), claim_id: id, type_code: f.get('type_code'), event_id: f.get('event_id'),
       why: f.get('why'), holds_up: f.get('holds_up'), due_on: f.get('due_on'),
-      // PHASE 146j: the question about a name, answered where the type is chosen — kept with the request, and taken
+      // The question about a name, answered where the type is chosen — kept with the request, and taken
       // up by the file that answers it before that file is read.
       early_vouch: earlyVouchesFrom((n) => f.get(n)),
     });
@@ -371,7 +371,7 @@ function dueCell(r: D.RequestView): Safe {
  */
 export function placeDocumentsBlock(p: D.PlaceDocumentsPanel | undefined, property_id: string | null, heading = true): Safe {
   if (p === undefined) return raw('');
-  // PHASE 138: inside a coloured section the section's own heading names it, so the block's heading is left out; the
+  // Inside a coloured section the section's own heading names it, so the block's heading is left out; the
   // sentence that explained it sits behind "Why?".
   return h`<div class="pblock">${heading ? h`<div class="pnum">Documents</div>` : raw('')}
     <div class="help">${why(property_id === null
@@ -389,7 +389,7 @@ export function placeDocumentsBlock(p: D.PlaceDocumentsPanel | undefined, proper
   </div>`;
 }
 
-/** PHASE 159j (item 5): "Which piece of work is it for?" — offered where the building has more than one event. With one,
+/** "Which piece of work is it for?" — offered where the building has more than one event. With one,
  *  a document that names none is counted to it anyway, so the question would only be noise. */
 function eventChoice(evs: readonly { readonly id: string; readonly label: string }[] | undefined, chosen: string | null = null): Safe {
   if (evs === undefined || evs.length < 2) return raw('');
@@ -510,9 +510,9 @@ function documentPageHtml(d: DocumentPageDeps, actor: Actor, p: D.DocumentPage, 
 }
 
 /**
- * PHASE 146i — WHAT HAPPENED WHEN WE READ IT, ON A SCREEN AT LAST.
+ * WHAT HAPPENED WHEN WE READ IT, ON A SCREEN AT LAST.
  *
- * `finishUpload` has reported this since Phase 146g and nothing drew it, so a file that came back unreadable looked
+ * `finishUpload` has reported this and nothing drew it, so a file that came back unreadable looked
  * exactly like one nobody had asked about. THE EMPTY CASE IS DRAWN TOO, and that is the point: "we have not tried"
  * and "we tried and could not" are different facts and a blank space says neither.
  *
@@ -529,7 +529,7 @@ function readingBlock(p: D.DocumentPage): Safe {
 }
 
 /**
- * PHASE 146i — THE ONE THING ONLY A PERSON CAN SAY, on the two kinds of file that need it. Every other kind draws
+ * THE ONE THING ONLY A PERSON CAN SAY, on the two kinds of file that need it. Every other kind draws
  * nothing, because there is nothing about it anybody could be asked.
  */
 function vouchBlock(p: D.DocumentPage): Safe {
@@ -546,7 +546,7 @@ function vouchBlock(p: D.DocumentPage): Safe {
       <input type="hidden" name="field_id" value="${v.field_id}">
       ${VOUCH_ANSWERS.map((a) => h`<button type="submit" name="answer" value="${a}">${ANSWER_WORDS[a]}</button>`)}
     </form>` : raw('')}
-    ${/* PHASE 146j: a yes that stands is taken back by its own act, with a reason — and that takes the name out of
+    ${/* A yes that stands is taken back by its own act, with a reason — and that takes the name out of
           what we kept. The plain No button will not do it once a name has been kept. */
       v.may_withdraw ? h`<details class="undo"><summary>Take the yes back</summary>
       <form method="post" action="/staff/documents/${p.id}/vouch/withdraw">
@@ -555,13 +555,13 @@ function vouchBlock(p: D.DocumentPage): Safe {
         <span class="help"> We take ${v.what} out of what we kept from this file, and nothing else. Your reason is kept.</span></form></details>` : raw('')}</div>`;
 }
 
-/** PHASE 133b — after a save, land on the section the type now sits in; a value the vocabulary does not list lands at the top. */
+/** After a save, land on the section the type now sits in; a value the vocabulary does not list lands at the top. */
 function readersAnchor(v: string | null): string {
   return v !== null && Object.prototype.hasOwnProperty.call(D.READERS, v) ? `#readers-${v.toLowerCase().replace(/_/g, '-')}` : '';
 }
 
 /**
- * PHASE 133b — DOCUMENT TYPES AS A LEFT-HAND SECTION LIST. The one long table is drawn as one table per reader group, in
+ * DOCUMENT TYPES AS A LEFT-HAND SECTION LIST. The one long table is drawn as one table per reader group, in
  * the order the vocabulary lists the groups, each with the same columns, the same row and the same inline form; adding a
  * type is the last section. A type whose reader value is not in the vocabulary is never dropped: it gets a section of its
  * own, named by its value. Every type is on the page whichever section is showing.

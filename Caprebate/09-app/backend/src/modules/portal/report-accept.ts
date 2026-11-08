@@ -1,5 +1,5 @@
 /**
- * THE CLIENT ACCEPTS THE SURVEY REPORT — Phase 158c, 7 October 2026.
+ * THE CLIENT ACCEPTS THE SURVEY REPORT.
  *
  * The Friary House run (04-phase-work/sim-2026-10-06, finding F39): the portal said "We issued your client report" and
  * gave the client nothing to open or accept, and the Reports gate passed on "The client accepted the report", a tick a

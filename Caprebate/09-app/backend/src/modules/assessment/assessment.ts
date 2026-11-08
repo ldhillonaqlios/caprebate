@@ -9,7 +9,7 @@
  * character it stands for is used, because this file escapes on output. That
  * is the only difference, and it renders identically.
  *
- * PHASE 144a, 22 September 2026 — PLAIN WORDS, CHANGED IN BOTH PLACES AT ONCE.
+ * PLAIN WORDS, CHANGED IN BOTH PLACES AT ONCE.
  * Three help lines (Q1, Q1a and the cosmetic-work note) were split into shorter
  * sentences, the same words in this file and in the site's renderer; nothing
  * they say changed. Q1's question itself is NOT changed: its wording could
@@ -189,7 +189,7 @@ export function nextScreen(state: FunnelState, from: ScreenId): ScreenId | 'figu
  * Whether the engine stops this draft at the reasoned negative.
  *
  * ONLY `gated`. "Not sure" and never-asked both read `gated: false` — the
- * engine's reversal of 3 September 2026: an unknown tax position continues, and
+ * engine's reversal: an unknown tax position continues, and
  * the figure carries the condition on its face (N4). Nothing here widens that.
  */
 export function isGatedExit(state: FunnelState): boolean {
@@ -201,11 +201,11 @@ export function isGatedExit(state: FunnelState): boolean {
  * and no figure. Navigation is a courtesy; the router asks `isGatedExit` again on
  * every request, so a client who types an address does not walk round the gate.
  */
-// Retired with the six screens (Phase 153f); kept for the record of what they asked.
+// Retired with the six screens; kept for the record of what they asked.
 export const PAST_THE_GATE: readonly ScreenId[] = Object.freeze(['Q1c', 'Q2', 'Q3'] as const);
 
 /** Whether Q1b's profit follow-up renders. CB_FRONTDOOR decides; we ask. */
-// Retired with the six screens (Phase 153f); kept for the record of what they asked.
+// Retired with the six screens; kept for the record of what they asked.
 export function asksProfit(state: FunnelState): boolean {
   return FRONTDOOR.gateQ1b(state).askProfit === true;
 }
@@ -225,7 +225,7 @@ export type Submission = {
 };
 
 /**
- * THE CLOSE AT A REASONED NEGATIVE — the gated-exit repair, 11 September 2026.
+ * THE CLOSE AT A REASONED NEGATIVE — the gated-exit repair.
  *
  * `submit()` cannot run here and must not. It takes the sector from the first
  * property, and a prospect stopped at Q1b has none; it would create an
@@ -291,7 +291,7 @@ export function submit(
   // The ceiling the client was shown, in integer pence. `total` is a ceiling,
   // so it is the HIGH end; the low end comes from the same breakdown.
   const high = typeof figure.total === 'number' ? Math.round(figure.total * 100) : null;
-  /* PHASE 159c (line 8, E3): NO LOW END IS STORED. Since Phase 159a the client is shown "up to £X" alone, and the band's
+  /* NO LOW END IS STORED. Since Phase 159a the client is shown "up to £X" alone, and the band's
      low end was above the engine's own low on a purchase (where an unknown seller can leave nothing). Storing it made a
      low end nobody was shown, and the reconciliation's "range shown" read it. The client saw the ceiling only, so that
      is what is kept; the reconciliation says so. */
@@ -302,12 +302,12 @@ export function submit(
   db.tx(() => {
     // CRM 1 of 10: `source` is DERIVED — a business that arrived through the
     // funnel arrived through the website — and `updated_at` starts at creation.
-    // 29 Sep 2026: the company number, when the person chose their company from the first screen's search.
+    // The company number, when the person chose their company from the first screen's search.
     const cn = (s as unknown as { company_number?: unknown }).company_number;
     const chosenNumber = typeof cn === 'string' && /^(\d{8}|[A-Z]{2}\d{6})$/.test(cn) ? cn : null;
     insertBusinesses(db, [business_id, businessName(s), sector, 'ASSESSMENT_SUBMITTED',
        contactEmail(s), contactPhone(s), at, 'WEBSITE', at, chosenNumber]);
-    // 29 Sep 2026: the first screen's postcode goes on the first property, when that property's address still carries it.
+    // The first screen's postcode goes on the first property, when that property's address still carries it.
     const start = (s as unknown as { start?: StartAnswers }).start;
     const startPostcode = start?.postcode !== undefined && start.postcode !== null ? normalisePostcode(start.postcode) : null;
     let firstProperty: string | null = null;
@@ -317,7 +317,7 @@ export function submit(
       written.push({ property_id, p: p as Record<string, unknown> });
       const first = firstProperty === null;
       firstProperty ??= property_id;
-      /* PHASE 156f: the four-stage funnel asks each building's own postcode, street and town (and, picked from the
+      /* The four-stage funnel asks each building's own postcode, street and town (and, picked from the
          Homedata list, its UPRN). They go on the property, so the paid research after signing can check the UPRN
          against them and start from it. The old funnel's first-screen postcode stands where a building has none. */
       const own = typeof p.postcode === 'string' ? normalisePostcode(p.postcode) : null;
@@ -325,7 +325,7 @@ export function submit(
         && p.address.toUpperCase().replace(/\s+/g, '').includes(startPostcode.replace(' ', '')) ? startPostcode : null);
       const text = (v: unknown, max: number): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, max) : null);
       const uprn = typeof p.uprn === 'string' && /^\d{1,14}$/.test(p.uprn) ? p.uprn : null;
-      /* PHASE 159g: how the client holds the building (owner, landlord, tenant), and the council area the postcode check
+      /* How the client holds the building (owner, landlord, tenant), and the council area the postcode check
          found, each with where it came from. Neither is guessed: no answer, or "Not sure", leaves it empty (N4). */
       const pr = p as Record<string, unknown>;
       const role = typeof pr['use'] === 'string' ? USE_TO_ROLE[pr['use']] ?? null : null;
@@ -334,14 +334,14 @@ export function submit(
       insertProperties(db, [property_id, business_id, p.address ?? 'Unnamed property', pc, text(p.line1, 200), text(p.town, 100), uprn, at, at,
           role, role === null ? null : 'the client’s own answer in the assessment', council, council === null ? null : 'the postcode check at the assessment (postcodes.io)']);
     }
-    /* PHASE 159l (L13): what the company search read of the company picked — its status and its latest accounts' type —
+    /* What the company search read of the company picked — its status and its latest accounts' type —
        kept with the assessment, so a dormant company shows on the lead before the letter, not only after the research. */
     const picked = chosenNumber === null ? undefined : ((s.properties ?? []) as { company_results?: unknown }[])
       .flatMap((p) => (Array.isArray(p.company_results) ? p.company_results as { number?: unknown; status?: unknown; accounts_type?: unknown }[] : []))
       .find((c) => c.number === chosenNumber);
     const read = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, 60) : null);
     insertAssessments(db, [assessment_id, business_id, sector, at, low, high, at, chosenNumber, read(picked?.status), read(picked?.accounts_type)]);
-    /* PHASE 159c: WHAT HAPPENED TO EACH BUILDING, IN ORDER — its first event, then each piece of work since, each with its
+    /* WHAT HAPPENED TO EACH BUILDING, IN ORDER — its first event, then each piece of work since, each with its
        own date and cost (CB_FUNNEL.eventsOf), kept on the property (migration 105) for the lead, the claim and the pack. */
     const eventsOf = (FUNNEL as unknown as { eventsOf: (p: Record<string, unknown>) => { type: unknown; cost: unknown; cost_unknown: unknown; date: unknown; date_unknown: unknown }[] }).eventsOf;
     for (const w of written) writeAssessmentEvents(db, id, { property_id: w.property_id, business_id, assessment_id, at }, eventsOf(w.p));
@@ -372,7 +372,7 @@ function lowOf(figure: { readonly breakdown?: readonly { low?: number }[] }): nu
   return any ? Math.round(total * 100) : null;
 }
 
-/** 29 Sep 2026: an address in parts, as the four-stage funnel's stage 3 asks it (building and street, town, postcode). */
+/** An address in parts, as the four-stage funnel's stage 3 asks it (building and street, town, postcode). */
 export type StartAnswers = { line1: string | null; town: string | null; postcode: string | null };
 
 /** The first property's address, as the first screen writes it: the parts given, in order, with commas. */
@@ -392,7 +392,7 @@ function businessName(s: FunnelState): string {
 
 function contactEmail(s: FunnelState): string | null {
   const c = s.contact as { channel?: string | null; contact_value?: string | null } | undefined;
-  // 30 Sep 2026: a video call is reached by email too.
+  // A video call is reached by email too.
   return c?.channel === 'email' || c?.channel === 'video' ? (c.contact_value ?? null) : null;
 }
 function contactPhone(s: FunnelState): string | null {
@@ -406,10 +406,10 @@ function contactPhone(s: FunnelState): string | null {
  * `businesses.preferred_contact`, whose vocabulary was email / telephone /
  * virtual / post — and its own comment called that "a FOURTH vocabulary". It
  * was right, and mapping between the two is what kept both alive: 'virtual' is
- * VIDEO, removed on 3 September 2026, and 'post' was never a channel, so the
+ * VIDEO, removed, and 'post' was never a channel, so the
  * column could hold two things no client can choose. The seed held both.
  *
- * Migration 004 retired the column and migration 007 REMOVED it (Phase 113a),
+ * Migration 004 retired the column and migration 007 REMOVED it,
  * so there is no longer a second place for this fact to be wrong in. The
  * channel is written to the BOOKING row, in CB_BOOKING's own words, by
  * `writeBookingAndContact` in router.ts — one place, one vocabulary — and the
@@ -455,12 +455,12 @@ export function answerRows(s: FunnelState): AnswerRow[] {
     q(`Q2-${n}-sector`, `Property ${n}: what kind of business operates here?`, pr.sector);
     q(`Q2-${n}-entity`, `Property ${n}: which kind of legal entity holds it?`, pr.entity_type);
     q(`Q2-${n}-trigger`, `Property ${n}: how did you come by this one?`, pr.trigger);
-    /* PHASE 159g (item 2): owner, landlord or tenant. Only where it was asked: an assessment from before has no row. */
+    /* Owner, landlord or tenant. Only where it was asked: an assessment from before has no row. */
     if (pr.use !== undefined && pr.use !== null) q(`Q2-${n}-use`, `Property ${n}: who uses the building?`, pr.use === 'unsure' ? null : pr.use, pr.use === 'unsure');
     q(`Q2-${n}-spend`, `Property ${n}: roughly what was spent?`, pr.spend, pr.spend_unknown === true);
     q(`Q2-${n}-date`, `Property ${n}: roughly when?`, pr.date, pr.date_unknown === true);
     q(`Q3-${n}-works`, `Property ${n}: any other work done?`, pr.works);
-    /* PHASE 159c: each piece of work since is its own event, so each is its own three rows (Q3-n-wJ-...). An assessment
+    /* Each piece of work since is its own event, so each is its own three rows (Q3-n-wJ-...). An assessment
        from before keeps its one Q3-n-works-... set; the lead's spend total reads both. */
     if (pr.works === 'yes') {
       (FUNNEL as unknown as { eventsOf: (p: Record<string, unknown>) => { type: string | null; cost: number | null; cost_unknown: boolean; date: string | null; date_unknown: boolean }[] })

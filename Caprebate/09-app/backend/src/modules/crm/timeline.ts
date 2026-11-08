@@ -1,6 +1,6 @@
 /**
  * THE ACTIVITY TIMELINE — A READ OVER WHAT IS ALREADY RECORDED, AND NOT A SECOND
- * LOG. CRM 3 of 10, 11 September 2026.
+ * LOG. CRM 3 of 10.
  *
  * For an organisation, a property, a claim and a lead, the timeline is assembled
  * on this request from the tables that already hold each event:
@@ -77,7 +77,7 @@ export type Audience = 'CLIENT_SEES' | 'STAFF_ONLY';
 export type Category =
   | 'BOOKING' | 'CLIENT_QUESTION' | 'DOCUMENT' | 'ENGAGEMENT' | 'RESEARCH' | 'STAGE' | 'CONFIRMATION' | 'ENQUIRY'
   | 'TASK' | 'SURVEY' | 'FINANCE' | 'OUTBOX' | 'RECORD' | 'AUTOMATION' | 'CONTACT'
-  /** PHASE 142: a message on the thread with the client. Never a team message — those are the notes, kept apart. */
+  /** A message on the thread with the client. Never a team message — those are the notes, kept apart. */
   | 'MESSAGE';
 
 export type TimelineEvent = {
@@ -154,13 +154,13 @@ function fieldWords(detail: Record<string, unknown>): string {
 
 type Scope = {
   readonly business_id: string | null;
-  /** Phase 134: `property_label` names the claim for a person; the reference is only its grey label. */
+  /** `property_label` names the claim for a person; the reference is only its grey label. */
   readonly claims: readonly { readonly id: string; readonly claim_ref: string; readonly business_id: string; readonly property_label: string | null }[];
   readonly leads: readonly string[];
 };
 
 /**
- * PHASE 134 — A CLAIM IN THE TIMELINE IS NAMED BY ITS PROPERTY. The words a person reads are "Outpatient annexe", and the
+ * A CLAIM IN THE TIMELINE IS NAMED BY ITS PROPERTY. The words a person reads are "Outpatient annexe", and the
  * reference follows as ` · CR-2026-0007` so two claims on one property still read apart; `timelineBlock` draws that tail
  * as a small grey label (src/modules/crm/tasks-pages.ts). A claim with no property is "a claim with no property".
  */
@@ -277,7 +277,7 @@ export function timelineFor(db: Db, actor: Actor, subject: TimelineSubject): Tim
         what: `${r.kind === 'RETRY' ? 'A failed source was retried' : 'The research was run'}: ${r.considered} sources in all, ${r.fired} looked up, ${r.not_permitted} waiting for a go-ahead, ${r.failed} failed` });
     }
   }
-  // PHASE 142: THE THREAD WITH THE CLIENT, one line per message — who wrote, and which claim — never the words, which are
+  // THE THREAD WITH THE CLIENT, one line per message — who wrote, and which claim — never the words, which are
   // on the Chat tab. Only for a login that may read that thread.
   if (orgLevel && biz !== null && can(actor, 'client_message.read', { type: 'client_message', id: biz, business_id: biz })) {
     clientMessages(db, subject, biz, add, orgScope, claimScope);
@@ -447,7 +447,7 @@ function engagement(db: Db, biz: string, add: Add, scope: string): void {
 }
 
 /**
- * PHASE 141 — EVERY EMAIL IS ON THE COMPANY'S TIMELINE, tagged to its claim where one was picked, with who wrote it and
+ * EVERY EMAIL IS ON THE COMPANY'S TIMELINE, tagged to its claim where one was picked, with who wrote it and
  * who it went to. A lead's emails are on the lead's timeline (`leadOutbox`). An email that was not sent says so.
  */
 type OutboxRow = { created_at: string; kind: string; subject: string; sent_at: string | null; claim_ref: string | null; who: string | null; to_name: string | null };
@@ -465,7 +465,7 @@ function outbox(db: Db, biz: string, add: Add, scope: string, claimScope: (ref: 
 }
 
 /**
- * PHASE 142 — EVERY MESSAGE ON THE THREAD WITH THE CLIENT IS ON THE COMPANY'S TIMELINE, tagged to its claim where it was.
+ * EVERY MESSAGE ON THE THREAD WITH THE CLIENT IS ON THE COMPANY'S TIMELINE, tagged to its claim where it was.
  * A reply that came by email reads "A reply from <contact>", as the Developer Spec's B48 set it.
  */
 function clientMessages(db: Db, subject: TimelineSubject, biz: string, add: Add, scope: string, claimScope: (ref: string) => string): void {

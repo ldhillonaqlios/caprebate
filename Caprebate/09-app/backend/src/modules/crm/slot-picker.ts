@@ -1,7 +1,7 @@
 /**
- * CHOOSE A DATE, THEN A TIME — 30 September 2026.
+ * CHOOSE A DATE, THEN A TIME —.
  *
- * Lakhbir: "with the time and date selector - make it easier for the user 1) choose date this should pull from the back
+ * the owner: "with the time and date selector - make it easier for the user 1) choose date this should pull from the back
  * end calendar for telephone calls and virtual 2) choose time (again pull form back end)". It was one long list of up
  * to 24 moments. Now the dates with a free call come first, as a row of day cards; choosing one shows that day's times.
  *

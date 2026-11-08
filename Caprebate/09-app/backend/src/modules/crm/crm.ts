@@ -1,6 +1,6 @@
 /**
  * THE CRM BACKBONE — ORGANISATIONS, CONTACTS, PROPERTIES AND THE CLAIM RECORD.
- * CRM 1 of 10, 10 September 2026.
+ * CRM 1 of 10.
  *
  * VIEW MODELS AND WRITES. The routes and the rendering are src/modules/crm/crm-pages.ts,
  * which draws what these return and decides nothing. The scope — every field
@@ -94,7 +94,7 @@ export const CLAIMANT_TYPES: Vocab = Object.freeze({
   SOLE_TRADER: 'Sole trader',
   INDIVIDUAL: 'An individual holding the property personally',
   CHARITY: 'Charity',
-  // PHASE 159d (C24): which kind of charity decides which tax return it files, and so its deadline.
+  // Which kind of charity decides which tax return it files, and so its deadline.
   CHARITY_COMPANY: 'Charitable company (files a company tax return)',
   CHARITABLE_TRUST: 'Charitable trust (files a trust tax return)',
   UNKNOWN: 'Not known',
@@ -120,7 +120,7 @@ export const CONTACT_TYPES: Vocab = Object.freeze({
 });
 
 export const TENURES: Vocab = Object.freeze({ FREEHOLD: 'Freehold', LEASEHOLD: 'Leasehold', UNKNOWN: 'Not known' });
-/** PHASE 159g: how the client holds the building — whose claim it is (src/modules/assessment/who-claims.ts ROLE_LABELS, the same words). */
+/** How the client holds the building — whose claim it is (src/modules/assessment/who-claims.ts ROLE_LABELS, the same words). */
 export const CLAIMANT_ROLES: Vocab = Object.freeze({ OWNER_OCCUPIER: 'Owner who uses it', LANDLORD: 'Landlord (lets it out)', TENANT: 'Tenant (rents it)' });
 
 export const PRIOR_CLAIM: Vocab = Object.freeze({ YES: 'Yes', NO: 'No', UNKNOWN: 'Not known' });
@@ -293,7 +293,7 @@ export function isCompanyOrRoleToken(raw: string): boolean {
  * 3 · SMALL VALIDATORS — each returns a sentence, never throws
  * ================================================================== */
 
-/** PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one. */
+/** `field` is the posted name a refusal is about, where it is about one. */
 type Check<T> = { ok: true; value: T } | { ok: false; why: string; field?: string };
 
 function textField(v: string | null, max: number, what: string): Check<string | null> {
@@ -345,7 +345,7 @@ function websiteField(v: string | null): Check<string | null> {
 /** Takes the posted value where the form carried the field, the stored one where it did not. */
 function take<T>(input: Fields, key: string, stored: T, check: (v: string | null) => Check<T>): Check<T> {
   if (!Object.hasOwn(input, key)) return { ok: true, value: stored };
-  // PHASE 133d (D4): a refusal names the field it is about, so the form can draw it beside that field.
+  // A refusal names the field it is about, so the form can draw it beside that field.
   const r = check(input[key] ?? null);
   return r.ok ? r : { ...r, field: r.field ?? key };
 }
@@ -620,7 +620,7 @@ export type ClaimDbRow = {
   created_at: string; updated_at: string;
   hold_return_stage: string | null; tax_adviser_signoff_at: string | null;
   business_name: string; owner_name: string | null; surveyor_name: string | null; property_label: string | null;
-  /** Phase 134: a claim is named by its company and its property, and a tile shows the property's town. */
+  /** A claim is named by its company and its property, and a tile shows the property's town. */
   property_town: string | null;
 };
 
@@ -702,7 +702,7 @@ function stageReading(key: string | null): { readonly key: string | null; readon
 export type ClaimSummary = {
   readonly id: string;
   readonly claim_ref: string;
-  /** Phase 134: the company the claim belongs to, and its property — a claim is named by these, never by its reference. */
+  /** The company the claim belongs to, and its property — a claim is named by these, never by its reference. */
   readonly business_id: string;
   readonly property: string | null;
   readonly town: string | null;
@@ -1016,7 +1016,7 @@ function contactValues(input: Fields, stored: ContactValues): Check<ContactValue
   if (!name.ok || !title.ok || !type.ok || !dm.ok || !email.ok || !phone.ok || !notes.ok) {
     return { ok: false, why: 'That was not saved, because one of the values is not one this form accepts. Check each field and send it again.' };
   }
-  // PHASE 154a1 (line 2): a NEW contact starts from a stored name of '', so a post with no full_name field at all kept
+  // A NEW contact starts from a stored name of '', so a post with no full_name field at all kept
   // that '' and passed a check for null alone - the 3 October sweep added a nameless contact that way. Blank is no name.
   if (name.value === null || name.value.trim() === '') return { ok: false, why: 'A contact is a person, and needs a name.', field: 'full_name' };
   return {
@@ -1030,7 +1030,7 @@ function contactValues(input: Fields, stored: ContactValues): Check<ContactValue
 }
 
 /**
- * PHASE 151e (line 6), 28 September 2026 — CONTACT DETAILS ARE NOT OPTIONAL. Lakhbir: "we must get contact details, it
+ * — CONTACT DETAILS ARE NOT OPTIONAL. the owner: "we must get contact details, it
  * is a non negotiable". A client must have at least one contact with an email address or a telephone number:
  *   - a client saved from the website cannot be saved without one (the funnel's close, src/core/router.ts);
  *   - a change here that would leave a client with no contact we can reach is refused (`updateContact`);
@@ -1088,7 +1088,7 @@ export function updateContact(d: CrmDeps, actor: Actor, contact_id: string, inpu
   if (!v.ok) return v;
   const changed = changedKeys(stored, v.value);
   if (changed.length === 0) return { ok: true, id: r.id };
-  // PHASE 151e (line 6): never the change that leaves a client with no contact we can reach
+  // Never the change that leaves a client with no contact we can reach
   if (r.business_id !== null && isReachable(stored) && !isReachable(v.value) && reachableContacts(d.db, r.business_id, r.id) === 0) {
     return { ok: false, why: LAST_WAY_TO_REACH_WORDS, field: 'email' };
   }
@@ -1217,7 +1217,7 @@ export type PropertyView = {
   readonly prior_claim_notes: string | null;
   /** CRM 6 of 10: a sale that is coming. YES raises a task pointing at the Disposal Note; NULL reads as UNKNOWN does. */
   readonly sale_in_prospect: Reading;
-  /** PHASE 159g (item 4): how the client holds the building, and its tenure, lease and landlord in words, with sources. */
+  /** How the client holds the building, and its tenure, lease and landlord in words, with sources. */
   readonly holding: { readonly role: string | null; readonly role_words: string; readonly tenure_words: string; readonly lease_end_date: string | null; readonly landlord: string | null };
   readonly from_the_assessment: readonly AssessmentLine[];
   readonly claims: readonly ClaimSummary[];
@@ -1335,7 +1335,7 @@ export function updateProperty(
   // CRM 6 of 10: a sale that is coming — yes, no or not known. It sits outside the list below and is written on its own.
   const sale = take(input, 'sale_in_prospect', stored.sale_in_prospect, (v) => vocabField(v, PRIOR_CLAIM, 'Whether a sale is in prospect'));
   if (!sale.ok) return sale;
-  /* PHASE 159g (item 4): how the client holds the building, the day a lease ends and the landlord — each written on its
+  /* How the client holds the building, the day a lease ends and the landlord — each written on its
      own, as the sale is, with "recorded by staff" as its source. A landlord is a company or a role, never a person. */
   const role = take(input, 'claimant_role', r.claimant_role, (v) => vocabField(v, CLAIMANT_ROLES, 'How the client holds the building'));
   if (!role.ok) return role;
@@ -1524,7 +1524,7 @@ export type ClaimView = {
   readonly team?: ClaimTeam;
   /** The CRM follow-on, row 23.8: the fee the finance view expects, before any fee invoice exists — `invoice.read` alone. */
   readonly estimated_fee?: EstimatedFee;
-  /** Phase 132e: multi-site discounts proposed on this claim's fee — recorded, never applied — for `fee_discount.read`. */
+  /** Multi-site discounts proposed on this claim's fee — recorded, never applied — for `fee_discount.read`. */
   readonly fee_discounts?: readonly FeeDiscountView[];
   readonly may_write: boolean;
   readonly edit?: {
@@ -1547,7 +1547,7 @@ function loadClaim(db: Db, id: string): ClaimDbRow {
 }
 
 /**
- * PHASE 134 — A CLAIM'S NAME FOR A PERSON: its company, its property, and its reference for the small grey label.
+ * A CLAIM'S NAME FOR A PERSON: its company, its property, and its reference for the small grey label.
  * No authorisation: the caller has already asked `claim.read` of the claim it is naming.
  */
 export function claimNaming(db: Db, claim_id: string): { readonly business_id: string; readonly company: string; readonly property: string | null; readonly ref: string } | null {
@@ -1928,7 +1928,7 @@ export type EstimatedFee = {
   readonly counted_by_finance: boolean;
   readonly basis: string;
   /**
-   * PHASE 132f — THE ENGAGEMENT GATE, read off `expectedFeeFor` (engine.ts `feeGate`, phase9's costing injected).
+   * THE ENGAGEMENT GATE, read off `expectedFeeFor` (engine.ts `feeGate`, phase9's costing injected).
    * `outcome` FIRE routes this fee to the engine's own words, "we will come back to you with a price": nothing is
    * quoted automatically, and the figures stay for the person pricing it by hand. UNDETERMINED — an unknown fee, an
    * unknown sector, supported living — is neither. The placeholder caveat is carried on every reading.
@@ -2057,7 +2057,7 @@ export function pipelineBoard(db: Db, actor: Actor, nowIso: string, limit = 500)
   };
 }
 
-/** Phase 132e: the multi-site discounts proposed on a claim's fee, for a reader of `fee_discount.read` — absent otherwise. */
+/** The multi-site discounts proposed on a claim's fee, for a reader of `fee_discount.read` — absent otherwise. */
 function feeDiscountsOn(db: Db, actor: Actor, claim_id: string): { fee_discounts?: readonly FeeDiscountView[] } {
   const c = getClaimsBusinessIdById<{ business_id: string }>(db, [claim_id]);
   if (c === undefined || !can(actor, 'fee_discount.read', { type: 'claim', id: claim_id, business_id: c.business_id, assigned_surveyor_ids: [] })) return {};
@@ -2065,7 +2065,7 @@ function feeDiscountsOn(db: Db, actor: Actor, claim_id: string): { fee_discounts
 }
 
 /**
- * PHASE 133a — THE GATE OF THE PIPELINE BOARD, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF THE PIPELINE BOARD, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */

@@ -1,6 +1,6 @@
 /**
  * THE CLAIM'S FOUR FIGURES, THE TAX ADVISER'S SIGN-OFF, THE RECONCILIATION LOG,
- * THE DELIVERABLES REGISTER AND AFTERCARE — CRM 6 of 10, 11 September 2026.
+ * THE DELIVERABLES REGISTER AND AFTERCARE — CRM 6 of 10.
  *
  * The schema is migration 015; the facts these rest on are src/modules/claims/claim-facts.ts;
  * the pages are src/modules/claims/claim-record-pages.ts, which decides nothing.
@@ -107,7 +107,7 @@ type SignoffRow = {
   id: string; claim_id: string; adviser: string; credential: string; signed_on: string; scope: string; method_note: string;
   switch_readings_json: string; figure_pence: number; commitment_id: string; record_hash: string; recorded_at: string;
   recorder: string | null;
-  /** PHASE 159a (C4): the approved version the adviser signed; null on a claim with no approved survey pack. */
+  /** The approved version the adviser signed; null on a claim with no approved survey pack. */
   approval_id: string | null;
 };
 
@@ -132,7 +132,7 @@ export function signOffSinceEntry(db: Db, c: { id: string; created_at: string })
  */
 export function signOffRecordNeed(db: Db, c: { id: string; created_at: string }): Need {
   const s = signOffSinceEntry(db, c);
-  // PHASE 159a (C4): where the claim has an approved survey pack, the sign-off must be of its NEWEST version.
+  // Where the claim has an approved survey pack, the sign-off must be of its NEWEST version.
   const latest = latestApprovalOnClaim(db, c.id);
   const stale = s !== undefined && latest !== null && s.approval_id !== latest.id;
   return {
@@ -196,8 +196,8 @@ export const SIGNATURE_NOTICE =
   'Signing online is not switched on yet — this is a record, not a signature. Nothing was signed here.';
 
 /**
- * THE THREE ROLES A SIGN-OFF COULD NAME UNTIL 25 SEPTEMBER 2026 — KEPT ONLY TO READ OLDER RECORDS. Phase 151b: Word
- * answer 169, "May we keep the tax adviser's own name on a claim's sign-off record?", closed 24 September 2026 by the
+ * THE THREE ROLES A SIGN-OFF COULD NAME UNTIL 25 SEPTEMBER 2026 — KEPT ONLY TO READ OLDER RECORDS. Word
+ * answer 169, "May we keep the tax adviser's own name on a claim's sign-off record?", closed by the
  * data protection officer's side: "Company name i think is best". So the record keeps the adviser's FIRM — its name as
  * registered, ending Limited, LLP or plc — and neither the person's name nor a role in place of the firm.
  * `recordSignOff` accepts a firm only; a record already written with one of these roles still reads in words.
@@ -208,7 +208,7 @@ export const ADVISER_TOKENS: Vocab = Object.freeze({
   CLIENT_ACCOUNTANT: 'The client’s own accountant',
 });
 
-/** Shown beside the form. Was the open question's title until Word answer 169 closed it (Phase 151b). */
+/** Shown beside the form. Was the open question's title until Word answer 169 closed it. */
 export const ADVISER_NAME_QUESTION =
   'We keep the adviser’s firm on this record, not the person’s name. Write the firm as registered, ending Limited, LLP or plc.';
 
@@ -248,7 +248,7 @@ export type FiguresPanel = {
   readonly reconciliation: ReconciliationView | null;
   readonly may_record_signoff: boolean;
   readonly may_reconcile: boolean;
-  /** PHASE 160 (job B): where staff record the filing and the claim goes into more than one return, each return. */
+  /** Where staff record the filing and the claim goes into more than one return, each return. */
   readonly filing_returns: readonly ReturnFiling[] | null;
   readonly signoff_form?: {
     readonly open: boolean;
@@ -256,7 +256,7 @@ export type FiguresPanel = {
     readonly switches: readonly { readonly switch: string; readonly on: boolean }[];
     readonly adviser_tokens: Vocab;
     readonly adviser_question: string;
-    /** PHASE 159a (C4): the version this form records a sign-off of — the newest approved one — or null where there is none. */
+    /** The version this form records a sign-off of — the newest approved one — or null where there is none. */
     readonly version: { readonly id: string; readonly version: number; readonly figure: string } | null;
   };
 };
@@ -316,7 +316,7 @@ export function figuresPanel(db: Db, actor: Actor, claim_id: string, todayIso: s
   };
 }
 
-/** PHASE 159a (C4): the newest approved version on the claim, with its figure, for the sign-off form to name. */
+/** The newest approved version on the claim, with its figure, for the sign-off form to name. */
 function signoffVersion(db: Db, claim_id: string): { id: string; version: number; figure: string } | null {
   const v = latestApprovalOnClaim(db, claim_id);
   if (v === null) return null;
@@ -357,7 +357,7 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
   }
   const k = commitmentOnClaim(d.db, c.id);
   if (k === undefined) return { ok: false, why: 'The surveyor has not committed figures on this claim, so there is nothing to sign off.' };
-  /* PHASE 159a (C4): THE SIGN-OFF NAMES THE VERSION IT SIGNED — the newest approved version on the claim. One sent for
+  /* THE SIGN-OFF NAMES THE VERSION IT SIGNED — the newest approved version on the claim. One sent for
      sign-off names its own (report-signoff.ts recordAnswer), and is refused if the surveyor has approved a newer one. */
   const latest = latestApprovalOnClaim(d.db, c.id);
   const asked = input['approval_id'] ?? null;
@@ -367,12 +367,12 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
       : `The surveyor approved version ${String(latest.version)} after the version this adviser signed. Send version ${String(latest.version)} for sign-off.` };
   }
   const approval_id = latest?.id ?? null;
-  // PHASE 159d (C9): a legal check clear only until a deadline that has passed is not signed off.
+  // A legal check clear only until a deadline that has passed is not signed off.
   const lapse = legalDeadlineNeed(d.db, c, d.now());
   if (!lapse.met) return { ok: false, why: `Not signed off: ${lapse.why}.` };
   const adviser = text(input['adviser'], 300, 'The adviser');
   if (!adviser.ok) return adviser;
-  // PHASE 151b, Word answer 169: the FIRM, and only the firm — not a role in its place, and never a person's name.
+  // Word answer 169: the FIRM, and only the firm — not a role in its place, and never a person's name.
   if (adviser.value === null || has(ADVISER_TOKENS, adviser.value) || !isCompanyOrRoleToken(adviser.value) || has(OWNER_ROLE_TOKENS, adviser.value)) {
     return {
       ok: false,
@@ -395,14 +395,14 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
   if (figure === null) {
     return { ok: false, why: 'Write the figure the adviser signed, in pounds, more than £0. A £0 result is a reasoned negative, not a sign-off.' };
   }
-  // PHASE 159a (C4): the figure is the version's own. A different figure is a different version: the surveyor approves it first.
+  // The figure is the version's own. A different figure is a different version: the surveyor approves it first.
   if (approval_id !== null) {
     const vf = getSurveyPackApprovalsJsonExtractSnapshotJsonFById<{ f: number | null }>(d.db, [approval_id])?.f ?? null;
     if (vf !== null && vf !== figure) {
       return { ok: false, why: `The figure signed must be the approved version’s own: ${formatPence(vf)} (version ${String(latest?.version ?? 0)}). A different figure needs the surveyor to approve a new version first.` };
     }
   }
-  const known = packSwitchReadings(ctaSwitchReadings()); // PHASE 159j (L14): as the pack the adviser signed read them
+  const known = packSwitchReadings(ctaSwitchReadings()); // As the pack the adviser signed read them
   const confirmed = (input['confirmed_switches'] ?? '').split(',').map((x) => x.trim()).filter((x) => x !== '');
   const readings: { switch: string; on: boolean }[] = [];
   for (const name of [...new Set(confirmed)]) {
@@ -422,7 +422,7 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
   const opened = d.db.tx(() => {
     insertTaxAdviserSignoffs(d.db, [id, c.id, adviser.value, credential.value, signedOn, scope.value, method.value, JSON.stringify(readings), figure, k.id,
         'RECORD_NOT_A_SIGNATURE', hash, actor.id, at, approval_id]);
-    // PHASE 159a (C29): the signed version's return entries are fixed from here, on the facts as they stand now.
+    // The signed version's return entries are fixed from here, on the facts as they stand now.
     if (approval_id !== null) freezeReturnContext(d.db, approval_id, returnContext(d.db, c.id, c.business_id), 'SIGNOFF_RECORDED', at);
     return openReconciliation(d, c, { id, figure_pence: figure, signed_on: signedOn, adviser: adviser.value ?? '' }, k, at);
   });
@@ -461,7 +461,7 @@ function openReconciliation(
     a_estimate_hash: est?.estimate_hash ?? null, a_engine_version: readEngineVersion(),
     b_range_low_pence: range?.shown_low_pence ?? null, b_range_high_pence: range?.shown_high_pence ?? null,
     b_date_captured: letter.signed_at,
-    // PHASE 159c (line 8): an assessment from 9 October 2026 stores no low end, because the client saw only "up to £X".
+    // An assessment stores no low end, because the client saw only "up to £X".
     b_basis: range?.shown_low_pence === null || range?.shown_low_pence === undefined
       ? 'Desk only. The client was shown "up to" this figure before signing the engagement letter, and no low end, so none is kept. The letter gives no figure, so there is no quoted figure, and we do not make up a midpoint'
       : 'Desk only. This is the range the client saw before signing the engagement letter. The letter gives no figure, so there is no quoted figure, and we do not make up a midpoint',
@@ -622,7 +622,7 @@ function reconAudit(d: RecordDeps, actor: Actor, c: ClaimRow, step: string, at: 
 }
 
 /**
- * PHASE 158d (F46): whether the client's accountant files this claim — the Reports route (src/modules/portal/client-filing.ts) is
+ * Whether the client's accountant files this claim — the Reports route (src/modules/portal/client-filing.ts) is
  * ACCOUNTANT. Then the filing date is theirs to give, through their own link (src/modules/portal/accountant-confirm.ts).
  */
 export function accountantFiles(db: Db, claim_id: string): boolean {
@@ -631,7 +631,7 @@ export function accountantFiles(db: Db, claim_id: string): boolean {
 }
 
 /**
- * PHASE 160 (the sweep; job B carried by Phase 159l): EACH RETURN, WHERE STAFF RECORD THE FILING. The client has no
+ * EACH RETURN, WHERE STAFF RECORD THE FILING. The client has no
  * accountant (src/modules/portal/client-filing.ts route CLIENT), so staff record each return's filing (migration 116), as the
  * accountant confirms each by its own link on the other route (accountant-confirm.ts returnFilings). The same reading
  * (Word question 283): a return already due must be recorded as filed; one not yet due is held in aftercare with its
@@ -686,21 +686,21 @@ export function recordFiling(d: RecordDeps, actor: Actor, claim_id: string, inpu
   d.db.tx(() => {
     updateClaimReconciliationsFiledOnFiledRecordedByById(d.db, [filed, actor.id, at, r.id]);
     reconAudit(d, actor, c, 'FILED', at);
-    // PHASE 158c (F42): the client's "5 Claim filed" waits for this record; a claim already past Invoice now shows it.
+    // The client's "5 Claim filed" waits for this record; a claim already past Invoice now shows it.
     raiseBusinessStage(d.db, c.business_id, at);
   });
   return { ok: true, id: r.id };
 }
 
 /**
- * PHASE 158c (F42, the Friary House run): the claim closed, and the portal said "Claim filed", with no record that the
+ * The claim closed, and the portal said "Claim filed", with no record that the
  * claim was filed. Closing a claim that reached the defence pack needs the filing date on its reconciliation.
  */
 export function filingRecordedNeed(db: Db, claim_id: string, todayIso: string = new Date().toISOString()): Need {
   const what = 'The claim’s filing is recorded, with its date';
-  // PHASE 158d (F46): where the client's accountant files, the filing is their own answer through their link.
+  // Where the client's accountant files, the filing is their own answer through their link.
   if (accountantFiles(db, claim_id)) {
-    /* PHASE 159l (item 2, L15): a claim whose parts go into more than one return needs each return that is already due
+    /* A claim whose parts go into more than one return needs each return that is already due
        confirmed filed, by its own link; a return not yet due is held in aftercare with its due date. */
     const each = returnFilings(db, claim_id, todayIso);
     if (each !== null) {
@@ -717,7 +717,7 @@ export function filingRecordedNeed(db: Db, claim_id: string, todayIso: string = 
   }
   const r = getClaimReconciliationsFiledOnByClaimId<{ filed_on: string | null }>(db, [claim_id]);
   if (r === undefined) return { what, met: false, why: 'no figure is signed off on this claim, so there is nothing to record the filing against' };
-  // PHASE 160 (job B): where staff record it, each return already due, as on the accountant's route.
+  // Where staff record it, each return already due, as on the accountant's route.
   const each = staffReturnFilings(db, claim_id, todayIso);
   if (each !== null) {
     const due = each.filter((x) => x.state !== 'NOT_DUE');
@@ -743,7 +743,7 @@ export function recordVariance(d: RecordDeps, actor: Actor, claim_id: string, in
 }
 
 /**
- * A DAY THE TARGET MONTH DOES NOT HAVE IS THAT MONTH'S LAST DAY. Phase 132, 15 September 2026.
+ * A DAY THE TARGET MONTH DOES NOT HAVE IS THAT MONTH'S LAST DAY.
  * It rolled over into the next month: 29 February 2024 plus twelve months read 1 March 2025, and 31 January plus one
  * read 3 March, holding the enquiry window open a day or more too long. The engine's CB_CASH.addMonths was clamped the
  * same way on 14 September. A day the target month has reads exactly as before. Exported for its test alone.
@@ -832,7 +832,7 @@ type DeliverableRow = {
   content_hash: string | null; logical_document_id: string | null; created_at: string; updated_at: string;
 };
 
-/** PHASE 159a: an issued deliverable counts only if it was issued after the valuation was last reopened (a defence pack). */
+/** An issued deliverable counts only if it was issued after the valuation was last reopened (a defence pack). */
 export function deliverableIssued(db: Db, claim_id: string, kind: DeliverableKind): boolean {
   return getClaimDeliverablesCountByClaimIdKind<{ n: number }>(db, [claim_id, kind, voidLine(db, claim_id) ?? ''])?.n !== 0;
 }
@@ -885,7 +885,7 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
   const rows = listClaimDeliverablesByClaimId<DeliverableRow>(db, [c.id]);
   const types = new Map(listDocumentTypesCodeLabel<{ code: string; label: string }>(db).map((t) => [t.code, t.label] as const));
   return {
-    // PHASE 158c (F36, F38): what is true of each line, not one sentence for all of them.
+    // What is true of each line, not one sentence for all of them.
     generation: 'The client report, the accountant’s pack and the defence pack are made here, from the claim’s own records. The others are documents on the claim, tracked here.',
     may_record: mayRecord,
     lines: KINDS.map((kind) => {
@@ -920,7 +920,7 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
  * whose every issued version stays exactly as issued, with its hash.
  */
 /**
- * PHASE 158c (F38, the Friary House run): THE CLIENT REPORT AND THE ACCOUNTANT'S PACK ARE THE APPLICATION'S OWN REPORT.
+ * THE CLIENT REPORT AND THE ACCOUNTANT'S PACK ARE THE APPLICATION'S OWN REPORT.
  * They were issued with a fingerprint staff typed, while the report built from the survey pack (src/modules/claims/report-pages.ts)
  * went unread. Now each is issued from the version the client may see - the newest approved version of a survey pack on a
  * job on THIS claim, with a tax adviser's sign-off of that version's figure recorded after it was approved, and its
@@ -929,11 +929,11 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
  */
 export const MADE_FROM_REPORT: ReadonlySet<DeliverableKind> = new Set<DeliverableKind>(['CLIENT_REPORT', 'ACCOUNTANT_COMPUTATION_PACK']);
 
-/** PHASE 158d (F47): every deliverable the application makes itself; none takes a typed fingerprint. */
+/** Every deliverable the application makes itself; none takes a typed fingerprint. */
 export const MADE_HERE: ReadonlySet<DeliverableKind> = new Set<DeliverableKind>([...MADE_FROM_REPORT, 'DEFENCE_PACK']);
 
 /**
- * PHASE 158d (F47, the second Friary House run): THE DEFENCE PACK, MADE FROM THE CLAIM'S OWN RECORDS. It was the last
+ * THE DEFENCE PACK, MADE FROM THE CLAIM'S OWN RECORDS. It was the last
  * deliverable issued on a SHA-256 staff typed. Now it is the list of what defends the claim, read from rows that never
  * change: the survey report the surveyor approved (released to the client), the tax adviser's sign-off, the client report
  * and the accountant's pack as issued, the client's acceptance of that report, our fee invoice as sent, and the filing.
@@ -971,7 +971,7 @@ export function defencePackRecords(db: Db, claim_id: string): { ok: true; manife
   return { ok: true, manifest, fingerprint: createHash('sha256').update(_canonical(manifest), 'utf8').digest('hex') };
 }
 
-/** PHASE 159a (C4): the version a sign-off NAMES, recorded since the valuation was last reopened — never one matched by its total. */
+/** The version a sign-off NAMES, recorded since the valuation was last reopened — never one matched by its total. */
 export function releasedReportFingerprint(db: Db, claim_id: string): string | null {
   const rows = listSurveyPackApprovalsFingerprintSnapshotJsonByClaimId<{ fingerprint: string; snapshot_json: string }>(db, [claim_id, voidLine(db, claim_id) ?? '']);
   for (const r of rows) {
@@ -1010,12 +1010,12 @@ export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string,
     const issuedOn = dateValue(input['issued_on']);
     if (issuedOn === null) return { ok: false, why: 'Write the issue date, like 2026-03-31.' };
     if (issuedOn > localDate(at)) return { ok: false, why: 'The issue date cannot be after today.' };
-    // PHASE 158c (F38): the report and the accountant's pack carry the released version's own fingerprint, never one typed.
+    // The report and the accountant's pack carry the released version's own fingerprint, never one typed.
     const made = MADE_FROM_REPORT.has(kind as DeliverableKind) ? releasedReportFingerprint(d.db, c.id) : undefined;
     if (made === null) {
       return { ok: false, why: `${def.label} is issued from the survey report the surveyor approved, once a tax adviser has signed off its figure. There is no such version on this claim yet.` };
     }
-    // PHASE 158d (F47): the defence pack is made here too, from the claim's own records; its fingerprint is worked out.
+    // The defence pack is made here too, from the claim's own records; its fingerprint is worked out.
     const defence = kind === 'DEFENCE_PACK' ? defencePackRecords(d.db, c.id) : undefined;
     if (defence !== undefined && !defence.ok) {
       return { ok: false, why: `The defence pack is made here from the claim’s own records. Still missing: ${defence.missing.join('; ')}.` };
@@ -1029,7 +1029,7 @@ export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string,
       return { ok: false, why: `${def.label} gives a figure. It cannot be issued until the tax adviser’s sign-off is recorded.` };
     }
     /*
-     * THE CASE STAMP — PHASE 132, 14 SEPTEMBER 2026. EVERY ISSUE, OF EVERY KIND, SEALS WHAT DECIDED THE CASE: the engine
+     * THE CASE STAMP SEPTEMBER 2026. EVERY ISSUE, OF EVERY KIND, SEALS WHAT DECIDED THE CASE: the engine
      * version, the rulebook versions, every switch and its position, and the sign-off records with their hashes
      * (src/modules/claims/case-stamp.ts). IN THE SAME TRANSACTION, AFTER THE ISSUE, so a stamp that cannot be written takes the issue
      * back with it and an issued deliverable never stands without one. ALWAYS ON: it relieves nothing. A refusal above
@@ -1106,7 +1106,7 @@ export const CLAWBACK_QUESTION = 'If a claim is reduced after we have been paid,
  */
 export type FeeClawbackSwitch = {
   readonly enabled: boolean; readonly clause: string; readonly question: string;
-  /** Phase 132e: what Lakhbir decided, recorded. It moves no switch: the trigger and settlement terms are still blank. */
+  /** What the owner decided, recorded. It moves no switch: the trigger and settlement terms are still blank. */
   readonly decided: { readonly refund: 'YES'; readonly time_limit: string; readonly still_open: readonly string[]; readonly source: string };
 };
 
@@ -1157,18 +1157,18 @@ export type AftercarePanel = {
   readonly correspondence: string;
   readonly clawback: ClawbackReading;
   readonly disposal: { readonly note: string; readonly tasks: readonly { readonly id: string; readonly title: string; readonly status: string }[] };
-  /** PHASE 159l (L15): a return the claim goes into that is not due yet, held here with its due date. */
+  /** A return the claim goes into that is not due yet, held here with its due date. */
   readonly returns_to_file: readonly ReturnFiling[];
   readonly may_record: boolean;
 };
 
 export const DISPOSAL_NOTE_PATH = '08-monday-doc-exports/12830181411__Disposal-note-the-election-the-client-signs-on-a-future-sale.md';
 export const DISPOSAL_TASK_TITLE = 'The election on a future sale: read the Disposal Note';
-/** PHASE 160d: the title tasks were raised under before the long dash went. Still found, so no second task is raised. */
+/** The title tasks were raised under before the long dash went. Still found, so no second task is raised. */
 export const DISPOSAL_TASK_TITLE_BEFORE = 'The election on a future sale — read the Disposal Note';
 
 /**
- * PHASE 153d, 4 October 2026 (Word question 23, the director's): THE FIXED DISPOSAL FEE, read from the job cost model
+ * 4 October 2026 (Word question 23, the director's): THE FIXED DISPOSAL FEE, read from the job cost model
  * (09-app/backend/src/modules/survey/costing/job-economics.cjs, `disposalFee`), never restated here. Built on our recommendation:
  * a fixed fee for the review and the drafted election, never a percentage of the sale or the election figure. A TEST
  * DEFAULT, NOT AGREED, and every place it is shown says so. The director decides the figure.
@@ -1302,7 +1302,7 @@ export function raiseDisposalTask(
  * ================================================================== */
 
 /**
- * REPORTS — PHASE 159d (C1, L9): EVERY PART OF THE CLAIM HAS A ROUTE, AND ONE IS CLAIMED. It read "the amendment window
+ * REPORTS: EVERY PART OF THE CLAIM HAS A ROUTE, AND ONE IS CLAIMED. It read "the amendment window
  * is open today", so a building bought in 2019 and still owned was turned away, though its spend goes into this year's
  * pool (W2). Now each event on the building takes its route (src/modules/claims/claim-route.ts): W1 the window for its own period
  * is open, W2 it is closed but the building is still owned, W3 not owned, or the purchase fails the legal check. The
@@ -1318,7 +1318,7 @@ export function reportsWindowNeed(db: Db, c: { id: string; business_id: string; 
 }
 
 /**
- * INVOICE — PHASE 159d: THE RETURN EACH ROUTE NAMES WENT IN, OR CAN STILL GO IN. W1 names the return for the event's own
+ * INVOICE: THE RETURN EACH ROUTE NAMES WENT IN, OR CAN STILL GO IN. W1 names the return for the event's own
  * period; W2 names the return of the first open period. Where the filing is recorded, it must fall on or before that
  * return's deadline — a window that closed after the return went in does not stop the fee. Where it is not, that window
  * must be open today. A part with no route passes nothing; a part that is W3 is not claimed and asks nothing.

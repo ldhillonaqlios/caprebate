@@ -1,5 +1,5 @@
 /**
- * RE-SETTING THE SECTOR RANGES FROM FINISHED CLAIMS — PHASE 153e, 4 October 2026 (Word question 138, the surveyor's).
+ * RE-SETTING THE SECTOR RANGES FROM FINISHED CLAIMS (Word question 138, the surveyor's).
  *
  * The first figure a client sees comes from our sector ranges (CB_BAND in the engine), which we set ourselves and
  * have never checked against a finished job. The answer typed under the question: build the ranges from completed

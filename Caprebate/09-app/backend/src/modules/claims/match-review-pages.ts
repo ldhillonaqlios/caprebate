@@ -1,5 +1,5 @@
 /**
- * THE CLOSE-MATCH LIST, DRAWN — Phase 146h, 23 September 2026.
+ * THE CLOSE-MATCH LIST, DRAWN.
  *
  * Draws what src/modules/claims/match-review.ts returns and decides nothing: which lookup may be picked from, whether the
  * engagement is signed, whether the switch is on and what the register said are all settled there, on the server,
@@ -28,7 +28,7 @@ function candidateRow(
   business_id: string, source_id: string, c: { key: string; score: number; label: string; register: string | null },
   takenBack: PickOffer['taken_back'],
 ): Safe {
-  /* PHASE 146j: the entry chosen before and taken back is marked, with why — so it is not chosen again by mistake. It is
+  /* The entry chosen before and taken back is marked, with why — so it is not chosen again by mistake. It is
      still offered: the reason may have been wrong, and marking is not deciding. */
   const was = takenBack !== null && takenBack.chosen_key === c.key;
   return h`<tr>

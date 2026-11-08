@@ -1,5 +1,5 @@
 /**
- * THE CLIENTS LIST'S ROUTE AND THE BUSINESS PAGE'S PANELS — routes and rendering. PHASE 135: the list itself is drawn by
+ * THE CLIENTS LIST'S ROUTE AND THE BUSINESS PAGE'S PANELS — routes and rendering. The list itself is drawn by
  * src/modules/crm/client-list.ts, the one list that replaced "Engaged clients" and "Organisations".
  *
  * Same shape as `handleStaff` and `portalRoutes`: it returns 'not-mine' for
@@ -49,14 +49,14 @@ export type EngagedDeps = {
   nav: (actor: Actor) => Safe;
   stamp: (iso: string) => string;
   problem: (res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string) => 'handled';
-  /** 30 Sep 2026: the site's address, for the portal link in the "Tell the client and move on" email. */
+  /** The site's address, for the portal link in the "Tell the client and move on" email. */
   publicOrigin?: string;
-  /** PHASE 157d: the signing setting this copy runs under, for the letter's links. */
+  /** The signing setting this copy runs under, for the letter's links. */
   signing?: EngagementSigning;
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -80,7 +80,7 @@ export async function handleEngaged(
   const db = d.app.db;
   const deps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
 
-  /* PHASE 135: THE ONE CLIENTS LIST (src/modules/crm/client-list.ts), gated as the organisations list was, so the view-only login
+  /* THE ONE CLIENTS LIST (src/modules/crm/client-list.ts), gated as the organisations list was, so the view-only login
      can read it. The engaged-client list it replaced is no longer drawn; `engagedClients` still serves its other readers. */
   if (path === '/staff/clients' && method === 'GET') {
     const sort: ClientSort = url.searchParams.get('sort') === 'name' ? 'name' : 'waiting';
@@ -89,9 +89,9 @@ export async function handleEngaged(
     return 'handled';
   }
 
-  /* PHASE 134: GET /staff/clients/:id is the ONE client page, drawn by src/modules/crm/client-page.ts, which is mounted first. */
+  /* GET /staff/clients/:id is the ONE client page, drawn by src/modules/crm/client-page.ts, which is mounted first. */
 
-  /* PHASE 157c (the Friary House run, F21): prepare and send the engagement letter; and the signed copy. */
+  /* Prepare and send the engagement letter; and the signed copy. */
   const sendLetter = /^\/staff\/clients\/([A-Za-z0-9-]+)\/engagement\/send$/.exec(path);
   if (sendLetter && method === 'POST') {
     const id = sendLetter[1] ?? '';
@@ -100,7 +100,7 @@ export async function handleEngaged(
     redirect(res, `/staff/clients/${id}?done=${r.resent ? 'letter-resent' : 'letter-sent'}#letter`);
     return 'handled';
   }
-  /* PHASE 157d: who must sign — one or two of the client's logins, or any one (none ticked). */
+  /* Who must sign — one or two of the client's logins, or any one (none ticked). */
   const signers = /^\/staff\/clients\/([A-Za-z0-9-]+)\/engagement\/signers$/.exec(path);
   if (signers && method === 'POST') {
     const id = signers[1] ?? '';
@@ -139,7 +139,7 @@ export async function handleEngaged(
     return 'handled';
   }
 
-  /* ---- PHASE 146h · a person's pick for a close match ----
+  /* ---- · a person's pick for a close match ----
      BOTH ARE POSTS, AND THE FIRST ONE IS A POST ON PURPOSE. Showing the list fetches it from the register again —
      that is a call outside, an audit row and, on a paid lookup, money. A GET that did all three would be a page a
      crawler, a preloading browser or a back button could spend money on. */
@@ -165,7 +165,7 @@ export async function handleEngaged(
     return 'handled';
   }
 
-  /* ---- PHASE 146j · taking a pick back ----
+  /* ---- · taking a pick back ----
      A separate act on the lookup's own row, with a reason — not a second pick screen. The form carries the lookup and
      the reason and nothing else: which record goes is read from the pick, on the server. It calls nothing outside. */
   const takeBack = /^\/staff\/clients\/([A-Za-z0-9-]+)\/research\/pick\/take-back$/.exec(path);
@@ -178,11 +178,11 @@ export async function handleEngaged(
     return 'handled';
   }
 
-  /* 30 Sep 2026: which "told" message: whether a claim moved on, and whether the email went. */
+  /* Which "told" message: whether a claim moved on, and whether the email went. */
   const tellWords = (r: { moved?: readonly unknown[]; emailed?: boolean }): string =>
     `${(r.moved?.length ?? 0) > 0 ? 'told-moved' : 'told'}${r.emailed === true ? '-emailed' : ''}`;
 
-  /* ---- PHASE 139 · checked and approved, and telling the client ---- */
+  /* ---- · checked and approved, and telling the client ---- */
   const checks = /^\/staff\/clients\/([A-Za-z0-9-]+)\/(checks\/approve|checks\/unapprove|steps\/tell|steps\/take-back)$/.exec(path);
   if (checks && method === 'POST') {
     const id = checks[1] ?? '';
@@ -203,7 +203,7 @@ export async function handleEngaged(
     const title = which === 'checks/approve' ? 'Not ticked' : which === 'checks/unapprove' ? 'Tick not taken off'
       : which === 'steps/tell' ? 'The client was not told' : 'Not taken back';
     if (!r.ok) return d.problem(res, actor, title, r.why, `${page}${anchor}`, r.field);
-    // 30 Sep 2026: "Tell the client and move on" says whether the email went and whether a claim moved on.
+    // "Tell the client and move on" says whether the email went and whether a claim moved on.
     const saved = which === 'checks/approve' ? 'checked' : which === 'checks/unapprove' ? 'unchecked'
       : which === 'steps/tell' ? tellWords(r as { moved?: readonly unknown[]; emailed?: boolean }) : 'takenback';
     redirect(res, `${page}?done=${saved}${at === null ? '' : `&step=${at}`}${anchor}`);
@@ -224,7 +224,7 @@ export async function handleEngaged(
       claim_id: emptyToNull(f.get('claim_id')),
     });
     if (!r.ok) return d.problem(res, actor, 'Not sent', r.why, `/staff/clients/${id}`);
-    // PHASE 160j: asked from a claim's "Where this claim stands", the person goes back there.
+    // Asked from a claim's "Where this claim stands", the person goes back there.
     const claimBack = emptyToNull(f.get('claim_id'));
     redirect(res, f.get('from') === 'where' && claimBack !== null && /^[A-Za-z0-9-]+$/.test(claimBack)
       ? `/staff/claims/${claimBack}?done=sent#where` : `/staff/clients/${id}?done=sent#tasks`);
@@ -264,10 +264,10 @@ export async function handleEngaged(
   if (note && method === 'POST') {
     const id = note[1] ?? '';
     const f = await form(req);
-    // PHASE 134: a note belongs to the company, and may say which of its claims it is about.
+    // A note belongs to the company, and may say which of its claims it is about.
     const r = E.addNote(deps, actor, id, f.get('body') ?? '', { claim_id: emptyToNull(f.get('claim_id')) });
     if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/clients/${id}`);
-    // PHASE 142: back to the "Team only" chat, where the note now reads as the newest message.
+    // Back to the "Team only" chat, where the note now reads as the newest message.
     redirect(res, `/staff/clients/${id}?chat=team&note=saved#chat`);
     return 'handled';
   }
@@ -295,7 +295,7 @@ export const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
   checked: 'Saved. The tick is recorded with your name and the time.',
   unchecked: 'The tick is off. Your reason is kept with it.',
   told: 'Done. The client’s portal now shows this step, with today’s date.',
-  // 30 Sep 2026: "Tell the client and move on".
+  // "Tell the client and move on".
   'told-emailed': 'Done. The client’s portal shows this step, with today’s date, and we have emailed them.',
   'told-moved': 'Done. The client’s portal shows this step, and the claim has moved on to its next stage.',
   'told-moved-emailed': 'Done. The client’s portal shows this step, we have emailed them, and the claim has moved on to its next stage.',
@@ -303,7 +303,7 @@ export const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 /**
- * PHASE 133b — THE BUSINESS PAGE ON THE RECORD LAYOUT. The highlights carry what the "Waiting on" block always said; the
+ * THE BUSINESS PAGE ON THE RECORD LAYOUT. The highlights carry what the "Waiting on" block always said; the
  * five numbered panels become five tabs, drawn by the same panel functions from the same two views; the right-hand panel
  * holds "Waiting on" itself and the quick actions. Nothing is read that this page did not read before, and nothing is
  * left out: every panel is on the page, in its tab, whichever tab is showing.
@@ -354,7 +354,7 @@ export function businessPageHtml(
 }
 
 /* ------------------------------------------ what the client told us
- * PHASE 138: no numbered heading — the section around it names it. The sentences that explained the table sit behind
+ * No numbered heading — the section around it names it. The sentences that explained the table sit behind
  * "Why?"; every word of them is still on the page. */
 
 export function panel1(p: E.BusinessPage): Safe {
@@ -378,7 +378,7 @@ export function panel1(p: E.BusinessPage): Safe {
 
 /* ------------------------------------------------------- the lookups */
 
-/** PHASE 138: the state of a lookup in plain words. "Fired" and "tier" are gone from what a person reads. */
+/** The state of a lookup in plain words. "Fired" and "tier" are gone from what a person reads. */
 const STATE_WORDS: Readonly<Record<R.SourceState, string>> = Object.freeze({
   FIRED: 'Looked up',
   NOT_RUN: 'Not run yet',
@@ -386,7 +386,7 @@ const STATE_WORDS: Readonly<Record<R.SourceState, string>> = Object.freeze({
   NOT_PERMITTED_YET: 'Not allowed yet',
 });
 
-/** PHASE 146b: the lookups' own switches, in words. Every one is off today. */
+/** The lookups' own switches, in words. Every one is off today. */
 function switchWords(rows: readonly R.SourceRow[]): string {
   const on = rows.filter((x) => x.switched_on).length;
   if (on === 0) return 'none is switched on yet, so no lookup is made.';
@@ -394,7 +394,7 @@ function switchWords(rows: readonly R.SourceRow[]): string {
 }
 
 /**
- * PHASE 146h: MAY THIS ROW OFFER A LIST? The three conditions this page can see, and the page decides none of them —
+ * MAY THIS ROW OFFER A LIST? The three conditions this page can see, and the page decides none of them —
  * src/modules/claims/match-review.ts asserts every one again, server-side, on the request the button makes. A button drawn by
  * mistake would be refused there; a button NOT drawn is simply a control a person cannot see, which is why the test
  * for this asserts the server's refusal and not the button's absence.
@@ -415,7 +415,7 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
           s.engagement.signed ? raw('') : h`Paid lookups: ${s.engagement.why}. We check the signed letter on our system, not on this page.`}`)}</li>
       <li>Each lookup's own switch: ${switchWords(s.sources)}${why(h`A lookup runs only when it is allowed and its own switch is on. The switches are set in the code, not on this page.`)}</li>
       ${s.signatory.map((l) => h`<li>Who signed, checked with ${l.source === 'CQC' ? 'the care regulator' : 'Companies House'}: ${l.words}</li>`)}
-      ${/* PHASE 151c: the site area from HM Land Registry's land boundary, one line per property. A person can enter the
+      ${/* The site area from HM Land Registry's land boundary, one line per property. A person can enter the
             point, or add a neighbouring council, on the property page. */
         s.site_area.map((l) => h`<li>Site area, <a href="/staff/properties/${l.property_id}#site-point">${l.property}</a>: ${l.words}</li>`)}
     </ul>
@@ -428,14 +428,14 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
           ? h` <form method="post" action="/staff/clients/${p.business.id}/research/retry" class="inline">
                <input type="hidden" name="source_id" value="${x.source_id}">
                <button class="linkish" type="submit">Try this one again</button></form>`
-          : raw('')}${/* PHASE 146h: a close match is the one failure a person can resolve rather than retry —
+          : raw('')}${/* A close match is the one failure a person can resolve rather than retry —
                          retrying it would only find the same entries and score them the same way again. The
                          button shows only where the lookup itself said the band was REVIEW, only once the
                          engagement letter is signed, and only while the pick is switched on. */
           mayPick(x, s) ? h` <form method="post" action="/staff/clients/${p.business.id}/research/pick" class="inline">
                <input type="hidden" name="source_id" value="${x.source_id}">
                <button class="linkish" type="submit">Choose which one it is</button></form>`
-          : raw('')}${/* PHASE 146j: a person's choice that stands can be taken back, with a reason. Drawn only where the
+          : raw('')}${/* A person's choice that stands can be taken back, with a reason. Drawn only where the
                          choice kept a record and the letter is signed; src/modules/claims/match-review.ts asserts both again. */
           x.taken_back === null ? raw('') : h`<br><span class="help">A choice here was taken back ${localStamp(x.taken_back.at)}: ${x.taken_back.reason}${
             x.taken_back.look_again.length === 0 ? '' : `. Still to look at again: ${x.taken_back.look_again.join(', ')}`}.</span>`}${
@@ -456,7 +456,7 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
            <span class="help"> Runs everything still to do. Used ${s.rate.used} of ${s.rate.limit} times this hour.</span></form>`
       : h`<div class="stop"><strong>You cannot run it right now.</strong> ${s.rate.why}.</div>`}
 
-    ${/* PHASE 146d: what it will cost, before the button is pressed, and what the last press did cost. The first is
+    ${/* What it will cost, before the button is pressed, and what the last press did cost. The first is
           our reading of the suppliers' price lists and says so; the second is their own figure off their own
           answers. They sit together on purpose: if they ever differ, that difference is the thing worth seeing. */
       h`<p class="help"><strong>What it costs.</strong> ${s.cost_before_words}${s.cost_last_words === null
@@ -483,7 +483,7 @@ const BLOCKS_WORDS: Readonly<Record<E.Blocks, string>> = Object.freeze({
 });
 
 /**
- * PHASE 138 — THE WHOLE MISSING LIST, for the Questions section's "More detail". Each fact is ALSO a WE NEED line in the
+ * THE WHOLE MISSING LIST, for the Questions section's "More detail". Each fact is ALSO a WE NEED line in the
  * section it belongs to (src/modules/crm/client-page.ts); this is where a fact can be answered from a telephone call.
  */
 export function panel3(p: E.BusinessPage, claims: readonly { readonly id: string; readonly name: string }[] = []): Safe {
@@ -507,7 +507,7 @@ export function panel3(p: E.BusinessPage, claims: readonly { readonly id: string
     </tr>`)}</tbody></table>`;
 }
 
-/** PHASE 138 — THE ONE-PRESS "ASK THE CLIENT" beside a WE NEED line. The same route and the same fields as the full form. */
+/** THE ONE-PRESS "ASK THE CLIENT" beside a WE NEED line. The same route and the same fields as the full form. */
 export function askButton(business_id: string, m: E.MissingFact): Safe {
   return h`<form method="post" action="/staff/clients/${business_id}/tasks/send" class="inline">
       <input type="hidden" name="fact_id" value="${m.fact_id}">

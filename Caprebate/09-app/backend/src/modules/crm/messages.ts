@@ -1,7 +1,7 @@
 /**
- * CHAT ON EVERY CLIENT — THE STORE. Phase 142, 22 September 2026. "Back office and portal clean-up, 9 of 11."
+ * CHAT ON EVERY CLIENT — THE STORE. "Back office and portal clean-up, 9 of 11."
  *
- * Lakhbir, 18 September 2026: "There needs to be a chat feature internally and externally for all clients. Clients
+ * The owner: "There needs to be a chat feature internally and externally for all clients. Clients
  * should not see internal chats, however they should be able to send and receive communication, also with the ability to
  * upload documentation which automatically saves within their client portfolio."
  *
@@ -18,7 +18,7 @@
  * for an id that does not exist (404), and the rule table refuses a client `internal_note.read` whatever the route.
  * test/phase142.test.ts proves it on the wire: every portal response body is searched for a team message's words.
  *
- * THE SURVEYOR SEES NEITHER THREAD. Lakhbir decides otherwise or not — the question is in CAPREBATE QUESTIONS.
+ * THE SURVEYOR SEES NEITHER THREAD. the owner decides otherwise or not — the question is in CAPREBATE QUESTIONS.
  *
  * A FILE SENT WITH A MESSAGE is received through exactly the path every file takes (`receiveFile`, then the upload
  * handler's receipt contract), so it lands in the company's Files under "From the client" with a link back to its message.
@@ -48,9 +48,9 @@ import { getClientMessagesIdBusinessIdByIdBusinessId, listClientMessagesIdBusine
 
 export type MessageDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
-  /** PHASE 142a: the EMAIL_SENDING switch and the provider's login, for the new-message alert. Absent is the shipped switch, off. */
+  /** The EMAIL_SENDING switch and the provider's login, for the new-message alert. Absent is the shipped switch, off. */
   sending?: EmailSending; login?: SmtpLogin | null;
-  /** 2 Oct 2026: where the app runs (src/integrations/connectors/place.ts). Absent with the key file's login: a real connection. */
+  /** Where the app runs (src/integrations/connectors/place.ts). Absent with the key file's login: a real connection. */
   where?: MailWhere;
   /** Where the site is, for the link in an alert. Absent: CAPREBATE_PUBLIC_ORIGIN, and with neither the email carries no link. */
   origin?: string;
@@ -333,7 +333,7 @@ export function postClientMessage(
 }
 
 /* ================================================================== *
- * PHASE 142a — A NEW-MESSAGE ALERT. BUILT BEHIND EMAIL_SENDING, WHICH IS OFF.
+ * A NEW-MESSAGE ALERT. BUILT BEHIND EMAIL_SENDING, WHICH IS OFF.
  * ================================================================== */
 
 export type AlertResult =
@@ -384,7 +384,7 @@ export function alertNewMessage(d: MessageDeps, message_id: string): AlertResult
   }
   if (people.length === 0) return { state: 'NOT_QUEUED', why: 'NOBODY_TO_TELL' };
   const origin = d.origin ?? process.env.CAPREBATE_PUBLIC_ORIGIN ?? null;
-  // Phase 151: the company leads the subject of an email to OUR STAFF only (Word answer 71), never one to a client.
+  // The company leads the subject of an email to OUR STAFF only (Word answer 71), never one to a client.
   const w = alertWords(to, to === 'STAFF' && NOTICE_SUBJECT_LEADS_WITH_COMPANY ? m.name : null, m.business_id, origin);
   const transport = outboxTransport(d.db, d.newId, d.now, () => true);
   const queued: string[] = [];

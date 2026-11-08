@@ -102,7 +102,7 @@ export function listClaimsIdCompletedAtByStage<T extends Row = Row>(db: Db, para
 export function getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT x.accepted_at, u.display_name AS name FROM client_report_acceptances x LEFT JOIN users u ON u.id = x.user_id ' +
     "WHERE x.claim_id = ? AND x.fingerprint = (SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' " +
-    // PHASE 159a: an acceptance from before the valuation was last reopened is set aside (src/modules/claims/valuation-lock.ts).
+    // An acceptance from before the valuation was last reopened is set aside (src/modules/claims/valuation-lock.ts).
     "AND state = 'ISSUED' ORDER BY version DESC LIMIT 1) AND x.accepted_at >= ? ORDER BY x.accepted_at ASC LIMIT 1", params);
 }
 
@@ -479,7 +479,7 @@ export function listBusinessesIdName5<T extends Row = Row>(db: Db, params: reado
 }
 
 // claims
-// Phase 134: a property recorded as "Company — main site" is named "main site" here, where the company is the frame.
+// A property recorded as "Company — main site" is named "main site" here, where the company is the frame.
 export function getClaimsIdClaimRefById4<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT c.id, c.claim_ref, c.business_id, CASE WHEN p.label LIKE b.name || \' — %\' THEN substr(p.label, length(b.name) + 4) ELSE p.label END AS property_label FROM claims c JOIN businesses b ON b.id = c.business_id LEFT JOIN properties p ON p.id = c.property_id WHERE c.id = ?', params);
 }

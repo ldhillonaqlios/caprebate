@@ -31,7 +31,7 @@
  *
  * 3. WORKING TIMES ARE LOCAL HOURS. STORED TIMES ARE UTC INSTANTS. THE TWO ARE
  *    DIFFERENT KINDS OF THING AND THIS DECISION IS THE HEART OF THE FILE.
- *    (Phase 113a, 9 September 2026. Until then everything here was UTC and said
+ *    (Phase 113a. Until then everything here was UTC and said
  *    so, which was honest and wrong for eight months of the year — see below.)
  *
  *    `bookings.starts_at` is an INSTANT: a specific moment that happened or
@@ -129,17 +129,17 @@ function bookableUserIds(db: Db): Set<string> {
 }
 
 /** How long a booked call is. One number, quoted by every screen that shows one.
- * 30 September 2026, Lakhbir: "make the call times 1 hour for both virtual and telephone". It was 30. Calls start on the hour. */
+ * "make the call times 1 hour for both virtual and telephone". It was 30. Calls start on the hour. */
 export const SLOT_MINUTES = 60;
 
 /** How far ahead the pickers look. A fortnight is long enough to find a time. */
 export const HORIZON_DAYS = 14;
 
 /**
- * HOW SOON A NEW TIME CHOSEN BY A CLIENT MAY BE — two hours. Phase 113a,
- * NARROWED BY PHASE 132e ON 16 SEPTEMBER 2026.
+ * HOW SOON A NEW TIME CHOSEN BY A CLIENT MAY BE — two hours.
+ * NARROWED BY PHASE 132e ON.
  *
- * WHAT CHANGED, AND WHY. Lakhbir, answering "How late may a client move their
+ * WHAT CHANGED, AND WHY. the owner, answering "How late may a client move their
  * own call, and may they cancel it outright?": "Give the client full control to
  * cancel at any time, and rebook at a time that suits them". So a call the
  * client ALREADY HOLDS may now be moved, released or cancelled at any time,
@@ -360,7 +360,7 @@ type BookedSpan = { user_id: string | null; from: number; to: number };
 function bookedSpans(db: Db, fromIso: string, toIso: string): BookedSpan[] {
   return listBookingsAssignedToStartsAtByStartsAtEndsAt<{ assigned_to: string | null; starts_at: string; ends_at: string }>(db, [toIso, fromIso])
     .map((r) => ({ user_id: r.assigned_to, from: Date.parse(r.starts_at), to: Date.parse(r.ends_at) }))
-    // 1 Oct 2026: time a person blocked off holds their diary exactly as a call does (migration 066).
+    // Time a person blocked off holds their diary exactly as a call does (migration 066).
     .concat(listTimeBlocksUserIdStartsAtByRemovedAtStartsAt<{ user_id: string; starts_at: string; ends_at: string }>(db, [toIso, fromIso])
       .map((b) => ({ user_id: b.user_id, from: Date.parse(b.starts_at), to: Date.parse(b.ends_at) })));
 }
@@ -596,7 +596,7 @@ export function isBookable(
   const active = bookableUserIds(db);
   const spans = listBookingsIdAssignedToByStartsAtEndsAt<{ id: string; assigned_to: string | null; starts_at: string; ends_at: string }>(db, [end, start])
     .filter((b) => b.id !== opts.ignoreBooking)
-    // 1 Oct 2026: a person's blocked-off time is taken, as a call is (migration 066).
+    // A person's blocked-off time is taken, as a call is (migration 066).
     .concat(listTimeBlocksIdAssignedToByRemovedAtStartsAt<{ id: string; assigned_to: string; starts_at: string; ends_at: string }>(db, [end, start]));
 
   for (const w of covering) {

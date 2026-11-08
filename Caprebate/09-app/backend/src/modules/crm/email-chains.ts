@@ -1,7 +1,7 @@
 /**
- * EMAIL CHAINS WITH A CLIENT. 1 October 2026.
+ * EMAIL CHAINS WITH A CLIENT..
  *
- * Lakhbir: "the right hand side should show the chain of emails allowing a user to click on reply making them apart of
+ * the owner: "the right hand side should show the chain of emails allowing a user to click on reply making them apart of
  * the chain so essentially the left becomes a send message, if no current email chain (on the right) is selected then it
  * fires as a new email."
  *

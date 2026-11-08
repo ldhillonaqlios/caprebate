@@ -1,5 +1,5 @@
 /**
- * CHAT ON EVERY CLIENT — THE PAGES. Phase 142, 22 September 2026. "Back office and portal clean-up, 9 of 11."
+ * CHAT ON EVERY CLIENT — THE PAGES. "Back office and portal clean-up, 9 of 11."
  *
  * ON THE CLIENT PAGE (staff) a section called "Chat" with two tabs, which are plain links (no script):
  *   ?chat=team     "Team only"        the company's internal notes, as a conversation. Written through the note route,
@@ -46,7 +46,7 @@ import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from './data-borrow
 
 export type WebResult = 'handled' | 'not-mine';
 
-/** 30 Sep 2026: 'all' — "Everything": portal, email and WhatsApp with the company, in one list (src/modules/crm/whatsapp.ts). */
+/** 'all' — "Everything": portal, email and WhatsApp with the company, in one list (src/modules/crm/whatsapp.ts). */
 export type ChatTab = 'team' | 'client' | 'all';
 
 /**
@@ -81,8 +81,8 @@ function bubble(m: M.ThreadMessage, team: boolean, extra: Safe = raw('')): Safe 
 }
 
 /**
- * PHASE 142b — THE THREAD WITH THE CLIENT, FOR THE SURVEYOR ON AN ASSIGNED JOB. Read only: no form, and nothing marked
- * read. Lakhbir, 22 September 2026: the surveyor sees "With the client", never "Team only". Null for a login the rule
+ * THE THREAD WITH THE CLIENT, FOR THE SURVEYOR ON AN ASSIGNED JOB. Read only: no form, and nothing marked
+ * read. the owner, 22 September 2026: the surveyor sees "With the client", never "Team only". Null for a login the rule
  * does not admit, so the tab is not drawn at all.
  */
 export function surveyorThreadPanel(db: Db, actor: Actor, business_id: string): Safe | null {
@@ -95,7 +95,7 @@ export function surveyorThreadPanel(db: Db, actor: Actor, business_id: string): 
 }
 
 /**
- * PHASE 142 — THE FILES OF AN EMAILED REPLY THAT NOBODY HAS SAVED YET. One small form each: say what it is, and it is
+ * THE FILES OF AN EMAILED REPLY THAT NOBODY HAS SAVED YET. One small form each: say what it is, and it is
  * fetched from the mailbox and saved to Files through the upload path. Only for Admin and Sales (`inbound_email.file`).
  */
 export function emailedFiles(
@@ -109,7 +109,7 @@ export function emailedFiles(
       <span>${f.label}</span>
       <label class="vh" for="ef-${f.id}">What is it?</label>
       <select class="fi" id="ef-${f.id}" name="type_code" required><option value="">What is it?</option>${types.map((t) => h`<option value="${t.code}">${t.label}</option>`)}</select>
-      ${/* PHASE 146j: the question about a name, asked where staff say what the file is, so the first reading can keep it. */
+      ${/* The question about a name, asked where staff say what the file is, so the first reading can keep it. */
         earlyQuestions(earlyQuestionsFor(actor, business_id, types), `ef-${f.id}`)}
       <button type="submit">Save to Files</button></form>`)}</div>`;
 }
@@ -187,8 +187,8 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
 }
 
 /**
- * 30 SEP 2026 — "EVERYTHING": every message with the company, however it travelled, oldest first; then WhatsApp to one
- * of its contacts, and the ways to write an email or a portal message. Lakhbir: "each client when we view back end has
+ * "EVERYTHING": every message with the company, however it travelled, oldest first; then WhatsApp to one
+ * of its contacts, and the ways to write an email or a portal message. the owner: "each client when we view back end has
  * full communication via email or whats app".
  */
 function everything(app: App, actor: Actor, business_id: string, done: string | undefined, opened: boolean): Safe {
@@ -204,7 +204,7 @@ function everything(app: App, actor: Actor, business_id: string, done: string | 
   const items = W.conversation(db, actor, business_id, now);
   const c = M.clientThread(db, actor, business_id);
   const unfiled = W.unfiledWhatsApp(db, actor, now).length;
-  // 1 Oct 2026: each way of writing has its own page, with the conversation beside the box.
+  // Each way of writing has its own page, with the conversation beside the box.
   const write = !c.may_write ? raw('')
     : c.do_not_contact ? h`<div class="gate" role="note"><strong>You cannot write to this company.</strong> They asked us not to contact them.</div>`
     : h`<div class="pblock chatform chatways" id="whatsapp">
@@ -237,12 +237,12 @@ export type StaffMessageDeps = {
   problem: (res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string) => 'handled';
   /** Tests pass their own; the application reads INBOUND_EMAIL and the environment. */
   inbound?: InboundEmail; mailbox?: Mailbox | null;
-  /** 1 Oct 2026: where the client's join page is, for a Zoom invite from the Communication tab. */
+  /** Where the client's join page is, for a Zoom invite from the Communication tab. */
   publicOrigin?: string;
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+  // An upload form's page also gets the script that sends a big file in pieces.
   const p = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, p.headers);
   res.end(p.body);
@@ -264,7 +264,7 @@ export async function handleStaffMessages(
   const db = d.app.db;
   const deps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
 
-  /* 1 OCT 2026: THE COMMUNICATION TAB'S ONE FORM (src/modules/crm/communication.ts). A refusal draws the form again, filled. */
+  /* THE COMMUNICATION TAB'S ONE FORM (src/modules/crm/communication.ts). A refusal draws the form again, filled. */
   const cm = /^\/staff\/clients\/([A-Za-z0-9-]+)\/communicate$/.exec(path);
   if (cm && method === 'POST') {
     const id = cm[1] ?? '';
@@ -287,11 +287,11 @@ export async function handleStaffMessages(
     return 'handled';
   }
 
-  /* ---- 30 SEP 2026: WHATSAPP TO ONE OF THE COMPANY'S CONTACTS ---- */
+  /* ----: WHATSAPP TO ONE OF THE COMPANY'S CONTACTS ---- */
   const wa = /^\/staff\/clients\/([A-Za-z0-9-]+)\/whatsapp$/.exec(path);
   if (wa && method === 'GET') {
-    // 1 Oct 2026: the conversation on the right, the message on the left (src/modules/crm/whatsapp-page.ts).
-    // PHASE 156c: the page runs the export reader's script, so it carries its own policy (src/modules/crm/whatsapp-page.ts).
+    // The conversation on the right, the message on the left (src/modules/crm/whatsapp-page.ts).
+    // The page runs the export reader's script, so it carries its own policy (src/modules/crm/whatsapp-page.ts).
     res.writeHead(200, WHATSAPP_PAGE_HEADERS);
     res.end(withImportScript(whatsappPage(d.app, actor, wa[1] ?? '', url.searchParams.get('contact'), url.searchParams.get('done'), d.nav(actor))));
     return 'handled';
@@ -307,7 +307,7 @@ export async function handleStaffMessages(
     return 'handled';
   }
 
-  /* ---- 30 SEP 2026: WHATSAPP FROM A NUMBER NO SINGLE COMPANY HAS, FILED BY A PERSON ---- */
+  /* ----: WHATSAPP FROM A NUMBER NO SINGLE COMPANY HAS, FILED BY A PERSON ---- */
   if (path === '/staff/whatsapp' && method === 'GET') {
     if (!can(actor, 'client_message.write', { type: 'client_message', id: 'queue', business_id: 'queue' })) return d.problem(res, actor, 'Not available', 'Only the people who write to clients file WhatsApp messages.', '/staff');
     const now = d.app.now();
@@ -327,7 +327,7 @@ export async function handleStaffMessages(
           <button type="submit">File it</button></form></li>`)}</ol>`}` }));
     return 'handled';
   }
-  /* ---- PHASE 153f, 4 OCT 2026: A FILE SOMEONE SENT US ON WHATSAPP — got from Meta and kept sealed, then opened here ---- */
+  /* ---- OCT 2026: A FILE SOMEONE SENT US ON WHATSAPP — got from Meta and kept sealed, then opened here ---- */
   const waAtt = /^\/staff\/whatsapp\/([A-Za-z0-9-]+)\/attachment$/.exec(path);
   if (waAtt && method === 'POST') {
     const mid = waAtt[1] ?? '';
@@ -356,7 +356,7 @@ export async function handleStaffMessages(
     return 'handled';
   }
 
-  /* ---- PHASE 142: EMAIL REPLIES THE MAILBOX READER COULD NOT FILE ---- */
+  /* ---- EMAIL REPLIES THE MAILBOX READER COULD NOT FILE ---- */
   /* 30 SEP 2026: "CHECK FOR NEW EMAIL REPLIES" — read the inbox now, then go back where the person was. */
   if (path === '/staff/replies/check' && method === 'POST') {
     if (!IE.mayReadQueue(actor)) return d.problem(res, actor, 'Not available', 'Only the people who sort email replies can check for them.', '/staff');
@@ -385,7 +385,7 @@ export async function handleStaffMessages(
         ${(() => { const last = IE.lastReadWords(d.app); return last === null ? raw('') : h`<p class="help">Last checked ${localStamp(last.at, d.app.now())}: ${last.words}</p>`; })()}
         <p class="help">We could not tell which company sent these. Read each one, then choose the company.</p>
         ${readingPanel(IE.readingState(db, actor, d.app.now()), readingOn(d.app.inboundEmail ?? inbound, imapLoginFromKeyFile(d.app.secrets)) || d.app.mailbox !== undefined,
-          // 1 Oct 2026: a copy on memory cannot match a reply to an email another copy sent — say which this copy is on.
+          // A copy on memory cannot match a reply to an email another copy sent — say which this copy is on.
           db.kind === 'remote' ? 'Records: the lasting database, which every copy of the site shares.'
             : d.app.storageWhy === undefined ? 'Records: this copy’s own memory, which no other copy sees.'
               : `Records: this copy’s own memory, which no other copy sees. Why: ${d.app.storageWhy}.`)}
@@ -422,7 +422,7 @@ export async function handleStaffMessages(
   return 'not-mine';
 }
 
-/** 1 Oct 2026: how email reading stands — the mark, what came in and what became of it, what went out. */
+/** How email reading stands — the mark, what came in and what became of it, what went out. */
 function readingPanel(r: IE.ReadingState, on: boolean, where: string): Safe {
   return h`<details class="readstate" id="how-reading-stands"><summary>How email reading stands</summary>
     <p class="help">${where}</p>
@@ -500,7 +500,7 @@ export async function readPortalSend(
     if (boundary === null) return { ok: false, why: 'Something went wrong. Try again.' };
     let raw0: Buffer;
     try { raw0 = await body(req, UPLOAD_LIMITS.max_bytes + 64 * 1024); } catch { return { ok: false, why: `That file is too big. The most we take is ${Math.round(UPLOAD_LIMITS.max_bytes / 1024 / 1024)} MB.` }; }
-    // PHASE 160e: a file over Vercel's 4.5 MB a request came first in pieces (src/core/upload-pieces.ts).
+    // A file over Vercel's 4.5 MB a request came first in pieces (src/core/upload-pieces.ts).
     const sent = pieces === undefined ? null : piecedFields(new Uint8Array(raw0), type);
     if (sent !== null && pieces !== undefined) {
       const got = await pieces(sent.id);

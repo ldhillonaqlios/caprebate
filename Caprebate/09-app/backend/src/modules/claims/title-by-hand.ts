@@ -1,7 +1,7 @@
 /**
- * THE TITLE REGISTER, BY HAND — Phase 146k, 25 September 2026.
+ * THE TITLE REGISTER, BY HAND.
  *
- * Lakhbir, 25 September 2026: HM Land Registry's title register "will be done manually and not via API". The
+ * The owner: HM Land Registry's title register "will be done manually and not via API". The
  * Business Gateway details were taken out of the key file the same day. So the paid lookup Phase 146d built
  * (src/integrations/connectors/hmlr-title.ts) no longer runs on "Run the research" — it is retired, not deleted — and a person who
  * has bought the official copy of the register (HM Land Registry's own portal, about £7 a title) records what it says
@@ -77,7 +77,7 @@ export type TitleForm = {
   readonly restriction_count?: string | null;
   readonly proprietor_company_number?: string | null;
   readonly prior_owner_count?: string | null;
-  /** PHASE 159g (item 6): where the owner is a PERSON, their name as the register shows it — compared with the client's
+  /** Where the owner is a PERSON, their name as the register shows it — compared with the client's
    *  own people when it is saved, and only the answer kept. The name itself is never stored. */
   readonly owner_person_name?: string | null;
 };
@@ -159,7 +159,7 @@ export function recordTitleByHand(d: TitleDeps, actor: Actor, property_id: strin
   }
   const read = titleFields(form);
   if (!read.ok) return { ok: false, why: `${read.why} Nothing was saved.`, field: read.field };
-  /* PHASE 159g (item 6): A PERSON NAMED AS OWNER. A sole trader's or a partnership's building is registered to the people
+  /* A PERSON NAMED AS OWNER. A sole trader's or a partnership's building is registered to the people
      themselves, so no company number can match it and "do you still own it" waited on a recorded answer. The name typed
      here is compared with the client's own people now, in memory, and only YES or NO is kept — as the officers check
      keeps only its answer (Word answer 156). */
@@ -178,7 +178,7 @@ export function recordTitleByHand(d: TitleDeps, actor: Actor, property_id: strin
     const record_id = ingestRegisterRecord(d.db, d.newId, d.now, p.business_id,
       { sourceId: TITLE_SOURCE, entityId: entity, fields: read.fields }, { property_id: p.id });
     insertTitleByHand(d.db, [d.newId(), p.business_id, p.id, record_id, read.title, actor.id, at]);
-    // PHASE 159g (item 4): the tenure the register gives, on the property, where none is recorded yet.
+    // The tenure the register gives, on the property, where none is recorded yet.
     fillTenureFromRegisters(d.db, p.id, at);
     d.audit.append({
       at, kind: 'TITLE_RECORDED_BY_HAND', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -236,18 +236,18 @@ export type TitleByHandView = {
   /** Why not, for somebody who holds the right while the letter is unsigned. Null otherwise. */
   readonly why_not: string | null;
   /**
-   * PHASE 146l: the official copies and title plans uploaded for this client (document type TITLE_REGISTER), newest
+   * The official copies and title plans uploaded for this client (document type TITLE_REGISTER), newest
    * first — the paperwork the typed facts come from. Uploading one is the ordinary upload path, and it is read by a
    * person, never a model.
    */
   readonly copies: readonly { readonly id: string; readonly label: string; readonly at: string }[];
-  /** PHASE 146l: whether this login may upload one, which is the ordinary `document.upload` right. */
+  /** Whether this login may upload one, which is the ordinary `document.upload` right. */
   readonly may_upload: boolean;
   /** The client the property belongs to, for the upload box. */
   readonly business_id: string;
 };
 
-/** PHASE 146l: the document type an official copy is uploaded as (migration 056). */
+/** The document type an official copy is uploaded as (migration 056). */
 export const OFFICIAL_COPY_TYPE = 'TITLE_REGISTER';
 
 const LABELS: Readonly<Record<string, string>> = Object.freeze({

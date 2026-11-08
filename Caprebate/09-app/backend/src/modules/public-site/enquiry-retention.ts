@@ -1,7 +1,7 @@
 /**
- * ENQUIRY_RETENTION — THE CLEAN-UP JOB FOR CLOSED WEBSITE ENQUIRIES. BUILT, AND SWITCHED OFF. Phase 153c, 4 October 2026.
+ * ENQUIRY_RETENTION — THE CLEAN-UP JOB FOR CLOSED WEBSITE ENQUIRIES. BUILT, AND SWITCHED OFF.
  *
- * Word question 222, Sadique's: "How long do we keep a closed website enquiry before it is deleted?" Built on our
+ * Word question 222, the data protection officer's: "How long do we keep a closed website enquiry before it is deleted?" Built on our
  * recommendation for him to check: twelve months after it was closed. A deletion cannot be undone, so — like the
  * message clean-up before it was answered — the job ships OFF and deletes nothing until the officer approves the period
  * and that approval is recorded; then a scheduled run of `node src/core/cli.ts sweep-enquiries` applies it.
@@ -12,7 +12,7 @@
  *      FIRST, then deletes the row, in one transaction — one entry per enquiry, naming its kind and id, never a word of
  *      it and never the person. An enquiry that became a lead (status LEAD) is a lead now, and is not this job's.
  *  *   2. THE FOUR-STAGE FUNNEL (`leads` with an `enquiry_id`, migration 061). A funnel enquiry is a CRM lead, tied to its
- *      organisation, its contacts and any booking. PHASE 157 (the sweep, 6 October 2026) BUILT ITS DELETION PATH, under
+ *      organisation, its contacts and any booking. PHASE 157 BUILT ITS DELETION PATH, under
  *      the same switch and the same period: a lead LOST more than the period ago (its `updated_at`, the day it was
  *      marked lost) is deleted with the funnel's own rows that hang off it — `leadDeletionPlan` says exactly which.
  *        WHAT GOES: the lead; its contacts and what they answered about consent; its bookings, their changes and video
@@ -85,7 +85,7 @@ export function enquiriesDue(db: Db, cfg: EnquiryRetention, nowIso: string): Due
     .filter((r) => r.due_on < today);
 }
 
-/** The funnel leads lost more than the period ago. Phase 157: `sweepEnquiries` now deletes those `leadDeletionPlan` allows. */
+/** The funnel leads lost more than the period ago. `sweepEnquiries` now deletes those `leadDeletionPlan` allows. */
 export function funnelLeadsDue(db: Db, cfg: EnquiryRetention, nowIso: string): number {
   if (cfg.closed_months === null) return 0;
   const today = nowIso.slice(0, 10);
@@ -97,7 +97,7 @@ export type EnquirySweep =
   | { readonly state: 'OFF'; readonly missing: readonly string[] }
   | {
     readonly state: 'DONE'; readonly deleted: number;
-    /** Phase 157: funnel leads deleted, with the funnel's own rows that hung off them. */
+    /** Funnel leads deleted, with the funnel's own rows that hung off them. */
     readonly funnel_leads_deleted: number;
     /** Funnel leads past the period and NOT deleted, each with the reason (a claim, a hold …). */
     readonly funnel_leads_kept: readonly { readonly lead_id: string; readonly why: string }[];
@@ -105,7 +105,7 @@ export type EnquirySweep =
   };
 
 /* ================================================================== *
- * PHASE 157 — THE DELETION PATH FOR A LOST FUNNEL ENQUIRY
+ * THE DELETION PATH FOR A LOST FUNNEL ENQUIRY
  * ================================================================== */
 
 /** THE FUNNEL'S OWN TABLES (src/modules/assessment/funnel-deletable.ts): the only tables a funnel lead's deletion may reach. */
@@ -197,7 +197,7 @@ export function sweepEnquiries(
         cycle === null || cycle > 0 ? 1 : 0, cycle,
         cycle === null || cycle === 0 ? null : new Date(new Date(at).getTime() + cycle * 86_400_000).toISOString()]);
   };
-  /* PHASE 157: the funnel leads past the period, each deleted with its own rows, or kept with the reason. */
+  /* The funnel leads past the period, each deleted with its own rows, or kept with the reason. */
   const today = at.slice(0, 10);
   const lostOn = new Map(listLeadsIdUpdatedAtByEnquiryIdStatus<{ id: string; updated_at: string }>(d.db)
     .map((r) => [r.id, r.updated_at.slice(0, 10)] as const));

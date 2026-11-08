@@ -1,12 +1,12 @@
 /**
- * EACH EVENT'S ROUTE — PHASE 159d, 9 October 2026.
+ * EACH EVENT'S ROUTE.
  *
- * The stress test of 9 October 2026 (C1) and the Lockwood run (L9): the amendment-window gate turned away claims the law
+ * The stress test (C1) and the Lockwood run (L9): the amendment-window gate turned away claims the law
  * allows. A company that bought in 2019, still owns the building and never claimed cannot amend its 2019 return — but
  * the spend is not lost: it goes into the pool of the FIRST period whose return is still open, and is written down from
  * there for as long as the client owns the building (CAA 2001 s.58(3)-(4); Rulebook A v2 sections 3, 4 and 4b).
- * Lakhbir, 9 October 2026: "but then remember refurbishment and also tax allowances" — so the route is decided PER EVENT
- * on the building (Phase 159c's property_events), not once per claim:
+ * The owner: "but then remember refurbishment and also tax allowances" — so the route is decided PER EVENT
+ * on the building, not once per claim:
  *
  *   W1  the amendment window for the event's own period is open: amend that return (first-year allowances possible,
  *       and a refund);
@@ -51,7 +51,7 @@ export type EventRoute = {
   readonly route: Route;
   /** The window for the event's own period. */
   readonly window: WindowReading;
-  /** PHASE 159e: the event's own date ("2025-06", "2025", or the purchase's day), and the accounting period it falls in,
+  /** The event's own date ("2025-06", "2025", or the purchase's day), and the accounting period it falls in,
    *  where known — the period a W1 part goes into (src/modules/assessment/allowances.ts). */
   readonly event_date: string | null;
   readonly period: { readonly start: string; readonly end: string } | null;
@@ -69,7 +69,7 @@ export function stillOwned(db: Db, c: { id: string; business_id: string; propert
   if (c.property_id === null) return { value: null, why: 'no property is recorded on this claim' };
   const p = getPropertiesDisposalDateById<{ disposal_date: string | null }>(db, [c.property_id]);
   if (p?.disposal_date !== null && p?.disposal_date !== undefined) return { value: 'NO', why: `the property record has a sale date, ${p.disposal_date}` };
-  /* PHASE 159h (item 7): A LEASE THAT HAS ENDED. The end of the lessee's interest is a disposal of its fixtures (s.188):
+  /* A LEASE THAT HAS ENDED. The end of the lessee's interest is a disposal of its fixtures (s.188):
      a leasehold whose recorded end date has passed is not still owned. */
   const t = propertyTenure(db, c.property_id);
   if (t.tenure === 'LEASEHOLD' && t.lease_end_date !== null && t.lease_end_date < localDate(todayIso)) {
@@ -87,7 +87,7 @@ export function stillOwned(db: Db, c: { id: string; business_id: string; propert
     try { n = t === undefined ? null : (JSON.parse(t.fields_json) as Record<string, unknown>)['proprietor_company_number']; } catch { n = null; }
     if (typeof n === 'string' && n.trim().toUpperCase() === co.trim().toUpperCase()) return { value: 'YES', why: 'the current title register names the client’s company as the owner' };
   }
-  /* PHASE 159g (item 6, carried from 159d): A SOLE TRADER OR A PARTNERSHIP is named on the register as the people
+  /* A SOLE TRADER OR A PARTNERSHIP is named on the register as the people
      themselves. Where the register names one of the client's own people (the title check's yes, or a name kept under
      name exception 2, compared now), that is evidence too, so W2 does not wait on a recorded answer. */
   if (registerNamesClientPerson(db, c.business_id, c.property_id)) return { value: 'YES', why: 'the current title register names one of the client’s own people as the owner' };
@@ -176,12 +176,12 @@ export function claimRoutes(db: Db, c: { id: string; business_id: string; proper
       words: route === 'W2' && first_open !== null
         ? `${ROUTE_WORDS.W2} The first year still open ends on ${first_open.end}.` : ROUTE_WORDS[route],
     });
-    // W3: the purchase fails the legal check (item 8 of Phase 159d), or the building is no longer owned.
+    // W3: the purchase fails the legal check, or the building is no longer owned.
     if (isPurchase && legal !== null && legal.level === 'RED') return make('W3', `the purchase fails the legal check: ${legal.headline}`);
-    // PHASE 159h (item 7): a tenant's claim is on its own fit-out, never a share of the purchase price.
+    // A tenant's claim is on its own fit-out, never a share of the purchase price.
     if (isPurchase && legal !== null && legal.tenant_purchase === true) return make('W3', 'the client rents the building: a tenant claims the fixtures it paid for itself, not a share of a purchase price');
     if (owned.value === 'NO') return make('W3', `${owned.why}, so there is no claim for this`);
-    // PHASE 159e (item 5, OUR READING): accounts on the cash basis claim no allowances on fixtures for the period.
+    // Accounts on the cash basis claim no allowances on fixtures for the period.
     if (cash.on) return make('W3', cash.why);
     if (window.state === 'OPEN') return make('W1', `the window for its own period is ${window.why}`);
     if (window.state === 'UNKNOWN') return make('NOT_KNOWN', window.why);
@@ -192,7 +192,7 @@ export function claimRoutes(db: Db, c: { id: string; business_id: string; proper
   });
 }
 
-/** PHASE 159e (item 5): the claim's accounts are on the cash basis — a recorded CASH, for a claimant that may use it (a
+/** The claim's accounts are on the cash basis — a recorded CASH, for a claimant that may use it (a
  *  company may not, so for a company the fact is read as not applying). Not recorded is not the cash basis (N4: it
  *  never takes a claim away on a guess either way; the question is asked at data gathering). */
 export function cashBasis(db: Db, c: { id: string; business_id: string }): { on: boolean; recorded: 'CASH' | 'ACCRUALS' | null; why: string } {
@@ -236,9 +236,9 @@ export type ClaimReturn = {
 };
 
 /**
- * PHASE 159l (item 2, L15): THE RETURNS A CLAIM GOES INTO, one per accounting period, from each claimed part's route —
+ * THE RETURNS A CLAIM GOES INTO, one per accounting period, from each claimed part's route —
  * W1 its own period's return, W2 the first open period's. On Lockwood the purchase (W2) went into the return for the
- * year to 31 May 2025 and the 2025 refit (W1) into the year to 31 May 2026: two returns, filed a year apart. Null where a
+ * year to and the 2025 refit (W1) into the year to: two returns, filed a year apart. Null where a
  * claimed part does not name its period yet (N4: not known is not one return); empty where nothing is claimed.
  */
 export function claimReturns(routes: readonly EventRoute[]): ClaimReturn[] | null {
@@ -261,7 +261,7 @@ export function routesWhy(routes: readonly EventRoute[]): string {
 }
 
 /**
- * PHASE 159d (C9): A "CLEAR, WITH A DEADLINE" LEGAL RESULT IS READ AGAIN. The pack can be approved while there is still
+ * A "CLEAR, WITH A DEADLINE" LEGAL RESULT IS READ AGAIN. The pack can be approved while there is still
  * time to fix the value (URGENT, with a deadline); nothing read it again, so a claim went on after the deadline passed
  * with nothing fixing the value. At the tax adviser's sign-off and at Reports: where the approved version was URGENT and
  * its deadline has passed (UK date), the legal check is read again on today's answers; unless it is now clear (an

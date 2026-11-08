@@ -71,7 +71,7 @@ export function dbAuditSink(db: Db, id: () => string = randomUUID): AuditSink {
  * THE TEXT EXTRACTOR — and it is a STUB, declared as one, FOR WHAT IT STILL
  * CANNOT READ. That sentence used to have no second half.
  *
- * WHAT CHANGED ON 9 SEPTEMBER 2026 (PHASE 113c). Until then this returned one
+ * WHAT CHANGED ON. Until then this returned one
  * marker line for every binary upload, so on a PDF or a .docx the receipt
  * strip ran over a marker rather than over the document — the pipeline was
  * end-to-end but the control was not exercised on real content. It now reads
@@ -102,7 +102,7 @@ export function documentTextExtractor(readScan?: (images: PageImage[]) => Promis
   return {
     async toPages(bytes: Uint8Array) {
       const pages = extractPages(bytes);
-      /* PHASE 146e — A SCAN, READ BY THE VISION PATH, WHEN THERE IS ONE. Only for the scan marker: an encrypted PDF,
+      /* A SCAN, READ BY THE VISION PATH, WHEN THERE IS ONE. Only for the scan marker: an encrypted PDF,
          an unreadable filter, a damaged .docx and every other format keep their marker whatever is passed here. The
          pictures must all be liftable and the reading must come back whole, or the marker stands. What the reading
          gives goes on to the SAME strip as any other text. With no reader — as shipped — this is exactly the
@@ -154,15 +154,15 @@ export type UploadDeps = {
    */
   audit?: AuditLog;
   /**
-   * PHASE 146e. What reads a scanned PDF's page pictures as text — `readScannedPages` in src/integrations/connectors/claude.ts,
+   * What reads a scanned PDF's page pictures as text — `readScannedPages` in src/integrations/connectors/claude.ts,
    * behind its own switch. Absent, as shipped: a scan keeps its marker.
    *
-   * PHASE 146g: A CALLER NO LONGER HAS TO BUILD THIS. Given `reading` below, it is derived from it — and ONLY while
+   * A CALLER NO LONGER HAS TO BUILD THIS. Given `reading` below, it is derived from it — and ONLY while
    * SCANNED_PAGES is on, which is the whole of the rule. Passing one here still wins, so a test can supply its own.
    */
   scan_reader?: (doc_id: string, images: PageImage[]) => Promise<ExtractedPage[] | null>;
   /**
-   * PHASE 146g. HOW A FINISHED UPLOAD REACHES THE DOCUMENT READER — the transport (the live one, or recorded answers
+   * HOW A FINISHED UPLOAD REACHES THE DOCUMENT READER — the transport (the live one, or recorded answers
    * in a test), the key file read at start-up, and the switches. ABSENT, OR WITH DOCUMENT_READING OFF, A FINISHED
    * UPLOAD BEHAVES EXACTLY AS IT DID BEFORE THIS PHASE: steps 9 and 10 of the receipt contract do not run, nothing is
    * sent anywhere, and every field the document would have answered stays ASKED of the client (N4).
@@ -176,7 +176,7 @@ export type UploadDeps = {
 };
 
 /**
- * PHASE 146g. THE ONE PLACE A ROUTE BUILDS A READER, so the two upload routes cannot drift apart. It is handed the
+ * THE ONE PLACE A ROUTE BUILDS A READER, so the two upload routes cannot drift apart. It is handed the
  * process's own key store and transport and reads the gates as they stand, for the audit row and for nothing else.
  *
  * Passing this does NOT switch reading on. `CLAUDE_SWITCHES.DOCUMENT_READING` is false, so every upload that goes
@@ -197,7 +197,7 @@ export function readerFor(
   };
 }
 
-/** PHASE 146g. See `UploadDeps.reading`. The same shape as `ResearchOutside` (src/modules/claims/research.ts), for the same reason. */
+/** See `UploadDeps.reading`. The same shape as `ResearchOutside` (src/modules/claims/research.ts), for the same reason. */
 export type UploadReading = {
   readonly transport: Transport;
   readonly secrets: SecretStore;
@@ -214,7 +214,7 @@ export type UploadReading = {
   /**
    * Whether the two conditional CLIENT_DOC fields name an organisation. Neither is ever inferred from a document.
    *
-   * PHASE 146i: A CALLER NO LONGER HAS TO SUPPLY THIS EITHER, and no route does. Left out, the answers a person
+   * A CALLER NO LONGER HAS TO SUPPLY THIS EITHER, and no route does. Left out, the answers a person
    * recorded on the document's own page are read instead (`discriminantsFor`, src/modules/claims/document-reading.ts).
    * Passing one here still wins, so a test can say what a person said without writing a row.
    */
@@ -236,7 +236,7 @@ export type VersionColumns = {
 };
 
 /**
- * PHASE 146g. THE CONTEXT EVERY READING CALL RUNS IN, or null where there is nothing to read with. Built once, from
+ * THE CONTEXT EVERY READING CALL RUNS IN, or null where there is nothing to read with. Built once, from
  * `UploadDeps.reading`, so the page reader and the field reader cannot end up on two different key stores.
  */
 function readingContext(d: UploadDeps): ClaudeContext | null {
@@ -268,7 +268,7 @@ function audit_of(d: UploadDeps): AuditLog {
   return d.audit;
 }
 
-/** PHASE 146g. The page reader, and ONLY while SCANNED_PAGES is on. Off, a scan keeps its marker, exactly as before. */
+/** The page reader, and ONLY while SCANNED_PAGES is on. Off, a scan keeps its marker, exactly as before. */
 function scanReaderFrom(d: UploadDeps): UploadDeps['scan_reader'] {
   if (d.scan_reader !== undefined) return d.scan_reader;
   if (d.reading === undefined || d.audit === undefined) return undefined;
@@ -276,7 +276,7 @@ function scanReaderFrom(d: UploadDeps): UploadDeps['scan_reader'] {
   if (switches.SCANNED_PAGES !== true) return undefined;
   const ctx = readingContext(d);
   if (ctx === null) return undefined;
-  // Phase 153c: the document's kind travels with it, and only the kinds on SCANNED_PAGE_KINDS are sent (Word question 193).
+  // The document's kind travels with it, and only the kinds on SCANNED_PAGE_KINDS are sent (Word question 193).
   return async (doc_id, images) => {
     const kind = getDocumentsTypeCodeById<{ type_code: string | null }>(d.db, [doc_id])?.type_code ?? null;
     return (await readScannedPages(ctx, doc_id, images, kind)).pages;
@@ -296,7 +296,7 @@ function handlerDeps(d: UploadDeps, doc_id?: string): UploadHandlerDeps {
     // (raw-file retention) and Q40 (the ingestion boundary) are both OPEN and
     // a build that quietly chose the permissive setting would be answering
     // them. Under these settings the raw file NEVER reaches the durable prefix.
-    // PHASE 140: KEEP_ORIGINALS (src/shared/originals.ts), OFF. Only when it is on
+    // KEEP_ORIGINALS (src/shared/originals.ts), OFF. Only when it is on
     // in all three of its ways does the handler get a period to keep a file
     // for — and then it is the handler's own promotion rule that keeps it.
     settings: d.store.keptDays === null ? FAIL_CLOSED_SETTINGS
@@ -350,7 +350,7 @@ export async function beginUpload(
  * bytes. Removing either one would be wrong for a different reason.
  * ------------------------------------------------------------------ */
 
-/** PHASE 157d (F19): the words for a PDF with no end. */
+/** The words for a PDF with no end. */
 export const DAMAGED_PDF = 'that PDF is damaged or incomplete: it stops part-way. Save or export it again, then send it.';
 
 export async function acceptClientBytes(
@@ -371,14 +371,14 @@ export async function acceptClientBytes(
   if (sniffAccepted(args.bytes) === null) {
     return { ok: false, status: 415, why: 'that file type is not one we accept' };
   }
-  // PHASE 157d (F19): a PDF with no end is damaged — cut off, or saved wrongly — and is refused before it is written.
+  // A PDF with no end is damaged — cut off, or saved wrongly — and is refused before it is written.
   if (sniffAccepted(args.bytes) === 'pdf' && !pdfLooksComplete(args.bytes)) {
     return { ok: false, status: 400, why: DAMAGED_PDF };
   }
 
   await d.store.putClientBytes(key, args.bytes);
   const written_at = d.now();
-  /* PHASE 157d (F18): the fingerprint of the bytes as they arrived, and whether this business sent the very same bytes
+  /* The fingerprint of the bytes as they arrived, and whether this business sent the very same bytes
      before. The copy is kept either way, as a version; the client is told when they sent it, not refused. */
   const sha = createHash('sha256').update(args.bytes).digest('hex');
   const before = getDocumentsCreatedAtByBusinessIdContentSha256<{ created_at: string }>(d.db, [args.doc_id, sha]);
@@ -396,20 +396,20 @@ export async function finishUpload(
   written_at: string,
 ): Promise<{
   job: UploadJob; discharged: boolean; error?: UploadHandlerError; received_request?: string | null;
-  /** PHASE 146g: what steps 9 and 10 did, or the reason they did not run. Never absent, so a caller cannot read silence as success. */
+  /** What steps 9 and 10 did, or the reason they did not run. Never absent, so a caller cannot read silence as success. */
   reading?: ReadingOutcome;
 }> {
   const deps = handlerDeps(d, job.doc_id);
   const received = await recordUploadComplete(deps, job, written_at);
   try {
     const r = await processUpload(deps, received);
-    // PHASE 146g: STEPS 9 AND 10, ON THIS REQUEST, AND ONLY BEHIND THE SWITCH. Before the row is written, so the
+    // STEPS 9 AND 10, ON THIS REQUEST, AND ONLY BEHIND THE SWITCH. Before the row is written, so the
     // state the screen reads is the state the job actually reached. Switched off it returns at once and changes
     // nothing — not the row, not the audit log, and not one byte sent anywhere.
     const reading = await readAndClaim(d, deps, r.job);
-    /* PHASE 146i: AND NOW SOMEBODY CAN SEE WHAT IT DID. One row per reading that actually started — never for a
+    /* AND NOW SOMEBODY CAN SEE WHAT IT DID. One row per reading that actually started — never for a
        reading that was switched off or was never wired in, because with the switch off a finished upload must
-       behave exactly as it did before Phase 146g, and a row is a difference. */
+       behave exactly as it did and a row is a difference. */
     recordReading(d.db, d.newId ?? randomUUID, d.now(), r.job.doc_id, {
       state: reading.state, why: reading.why,
       fields: reading.fields, not_found: reading.not_found, left_out: reading.left_out.length,
@@ -419,7 +419,7 @@ export async function finishUpload(
     // document request be received — and `receiveByUpload` reads both off the row
     // rather than taking this function's word for them.
     const request = d.audit === undefined ? null : receiveByUpload({ db: d.db, audit: d.audit, now: d.now }, r.job.doc_id);
-    // PHASE 159k (item 1): a seller's structures allowance statement, received, puts SBA_STATEMENT_HELD on its claims.
+    // A seller's structures allowance statement, received, puts SBA_STATEMENT_HELD on its claims.
     if (d.audit !== undefined) recordSbaStatementHeld({ db: d.db, audit: d.audit, now: d.now, newId: d.newId ?? randomUUID }, r.job.doc_id);
     return { job: r.job, discharged: r.discharged, received_request: request, reading };
   } catch (e) {
@@ -436,7 +436,7 @@ export async function finishUpload(
 }
 
 /* ------------------------------------------------------------------ *
- * STEPS 9 AND 10 — PHASE 146g, 23 September 2026.
+ * STEPS 9 AND 10.
  *
  * THE UPLOAD FLOW NEVER RAN STEP 9. `runExtraction` and `writeClaims` were exported by the port and called from
  * nowhere in src/: every upload stopped at TRIAGED, with the strip done and nothing read. Phase 146e built the real
@@ -478,7 +478,7 @@ export type ReadingOutcome = {
   readonly not_found: number;
   readonly claims: number;
   /**
-   * PHASE 146i. The field ids the document DID answer and that were still not kept, because nobody has vouched
+   * The field ids the document DID answer and that were still not kept, because nobody has vouched
    * that the value names an organisation. Each one stays asked of the client, exactly as an absent one does (N4).
    */
   readonly left_out: readonly string[];
@@ -490,7 +490,7 @@ const NOTHING = (state: ReadingState, why: string, read: ModelRead | null = null
   ({ state, why, fields: 0, not_found: 0, claims: 0, left_out: [], read });
 
 /* ------------------------------------------------------------------ *
- * PHASE 146i — ONE UNVOUCHED FIELD NO LONGER DISCARDS THE OTHERS.
+ * ONE UNVOUCHED FIELD NO LONGER DISCARDS THE OTHERS.
  *
  * `assertClaimsWritable` throws on a conditional field whose discriminant is not true, and it throws BEFORE the
  * write, which is right: it is one refusal for one set of claims, and half a write is worse than none. The
@@ -566,7 +566,7 @@ async function readAndClaim(d: UploadDeps, deps: UploadHandlerDeps, job: UploadJ
     return NOTHING('NOT_READ', `nothing was kept from this document: ${whyRefused(e)}`);
   }
 
-  /* PHASE 146i. What a person said about the two fields nobody can vouch for, from the document's own page — or
+  /* What a person said about the two fields nobody can vouch for, from the document's own page — or
      what a caller said instead, which is how a test says it without writing a row. An unvouched field comes out of
      the extraction here so that the rest of the document's claims survive. */
   const vouched = d.reading.discriminants ?? discriminantsFor(d.db, job.doc_id);
@@ -593,7 +593,7 @@ async function readAndClaim(d: UploadDeps, deps: UploadHandlerDeps, job: UploadJ
   };
 }
 
-/** PHASE 146i. What was left out for want of a person's answer, said in the same sentence and in the same words. */
+/** What was left out for want of a person's answer, said in the same sentence and in the same words. */
 function leftOutWords(left_out: readonly string[]): string {
   if (left_out.length === 0) return '';
   const what = left_out.map((id) => VOUCHED_FIELDS.find((f) => f.field_id === id)?.what ?? id).join(', ');
@@ -629,7 +629,7 @@ function writeEgressRow(audit: AuditLog, d: UploadDeps, job: UploadJob, egress: 
 
 /**
  * THE JOB STEP 1 ISSUED, READ BACK FROM WHAT THE HANDLER ITSELF WROTE.
- * CRM 4 of 10, 11 September 2026.
+ * CRM 4 of 10.
  *
  * UNTIL THIS FUNCTION, THE RUNNING APPLICATION NEVER FINISHED AN UPLOAD. The job
  * `issueUploadUrl` returns lived only in the request that issued the link, so
@@ -665,7 +665,7 @@ function persist(d: UploadDeps, job: UploadJob, discharged: boolean): void {
      job.quarantine.strip_completed_at ?? null,
      discharged ? (job.quarantine.deleted_at ?? d.now()) : null,
      job.doc_id]);
-  // PHASE 140: WHERE THE HANDLER KEPT THE ORIGINAL, SAY SO AND SAY UNTIL WHEN. Only on a job that finished, only where
+  // WHERE THE HANDLER KEPT THE ORIGINAL, SAY SO AND SAY UNTIL WHEN. Only on a job that finished, only where
   // the handler itself wrote the durable copy, and only while KEEP_ORIGINALS is on — so with it off this never runs.
   const kept = job.quarantine.durable_written_at;
   if (kept !== undefined && job.state !== 'FAILED' && d.store.keptDays !== null) {
@@ -675,7 +675,7 @@ function persist(d: UploadDeps, job: UploadJob, discharged: boolean): void {
 }
 
 /**
- * PHASE 140 — A KEPT ORIGINAL, OPENED. The caller has already asked `document.read_original` of the document. Returns the
+ * A KEPT ORIGINAL, OPENED. The caller has already asked `document.read_original` of the document. Returns the
  * bytes and what they are, or null where nothing is kept: the switch was off when it arrived, it has been deleted, or its
  * time is up (and then it is deleted now, before anything is served).
  */
@@ -695,7 +695,7 @@ export async function openKeptOriginal(
 }
 
 /**
- * PHASE 140 — DELETE EVERY KEPT ORIGINAL WHOSE TIME IS UP. Runs whenever a folder or an original is opened, and from
+ * DELETE EVERY KEPT ORIGINAL WHOSE TIME IS UP. Runs whenever a folder or an original is opened, and from
  * `node src/core/cli.ts sweep-originals`. It deletes, then records — a record written first would claim a deletion that had
  * not happened. A file already gone is recorded as deleted: the time is up either way, and nothing is left to serve.
  * Returns how many it deleted.

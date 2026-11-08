@@ -1,6 +1,6 @@
 /**
  * THE CRM BACKBONE'S ROUTES AND PAGES — organisations, properties, and the
- * claim page's header and overview. CRM 1 of 10, 10 September 2026.
+ * claim page's header and overview. CRM 1 of 10.
  *
  * Same shape as `handleEngaged` and `handleSurveyor`: it returns 'not-mine' for
  * anything it does not own, so the mounting in staff.ts is one line and nothing
@@ -39,7 +39,7 @@ import { addStaffEvent, approvedEventFigures, eventsOnClaim, setEventVat, EVENT_
 import { requestWorkDocuments } from '../claims/index.ts';
 import { claimRoutes } from '../claims/index.ts';
 
-/** PHASE 159i: an event's VAT position, in words (migration 105's three). */
+/** An event's VAT position, in words (migration 105's three). */
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({ INCLUDED_NOT_RECLAIMABLE: 'The client could not reclaim it', EXCLUDED_OR_RECLAIMED: 'The client reclaimed it, or none was charged', NOT_KNOWN: 'Not known' });
 import { poundsWords } from '../../web/pack-sums.ts';
 import { claimTasksBlock, emailBlock, newTaskForm, notesBlock, timelineBlock } from './tasks-pages.ts';
@@ -91,7 +91,7 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+  // An upload form's page also gets the script that sends a big file in pieces.
   const p = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, p.headers);
   res.end(p.body);
@@ -136,7 +136,7 @@ const CLAIM_FIELDS = ['owner_id', 'surveyor_id', 'priority', 'workstream', 'prop
  * ------------------------------------------------------------------ */
 
 /**
- * PHASE 154a1 (line 5), 4 October 2026 — WHERE A SAVED CONTACT GOES BACK TO: the page of whoever the contact belongs to,
+ * — WHERE A SAVED CONTACT GOES BACK TO: the page of whoever the contact belongs to,
  * read from the contact itself. It was the business_id the form posted, so a post without one went to
  * /staff/clients/?done=contact, a 404 (the 3 October sweep), and a wrong one went to somebody else's page.
  */
@@ -159,7 +159,7 @@ export async function handleCrm(
   const done = url.searchParams.get('done') ?? undefined;
 
   /* ---------------------------------------------------- organisations */
-  /* PHASE 135: the organisations list is the one Clients list now. The address stays alive and asks the gate it always
+  /* The organisations list is the one Clients list now. The address stays alive and asks the gate it always
      asked, so a login refused the list is refused here rather than sent on. */
   if (path === '/staff/organisations' && method === 'GET') {
     C.assertOrganisationSection(actor);
@@ -175,7 +175,7 @@ export async function handleCrm(
     return 'handled';
   }
 
-  /* PHASE 134 — ONE CLIENT PAGE PER COMPANY, at /staff/clients/:id (src/modules/crm/client-page.ts). This address stays alive:
+  /* ONE CLIENT PAGE PER COMPANY, at /staff/clients/:id (src/modules/crm/client-page.ts). This address stays alive:
      it is asked exactly as it always was — a login refused the organisation is refused here, not redirected — and then
      sends the reader to the one page. The query (?done=…) travels with it. */
   const org = /^\/staff\/organisations\/([A-Za-z0-9-]+)$/.exec(path);
@@ -241,7 +241,7 @@ export async function handleCrm(
       owners: mayCreateTask(actor) ? taskOwnerChoices(db) : null,
       // CRM 9 of 10: a note may name a property (migration 012), and the property page now offers it.
       may_note: can(actor, 'internal_note.write', { type: 'internal_note', id: v.business.id, business_id: v.business.id }),
-      // PHASE 151c: the site area's point and councils. Everyone who reads the property reads it; the forms are Admin's or Sales's, after signing.
+      // The site area's point and councils. Everyone who reads the property reads it; the forms are Admin's or Sales's, after signing.
       site: SI.sitePointView(db, actor, v.id),
       title: TH.titleByHandView(db, actor, v.id),
     }));
@@ -255,7 +255,7 @@ export async function handleCrm(
     return 'handled';
   }
 
-  /* PHASE 151c: THE SITE AREA'S POINT AND A NEIGHBOURING COUNCIL (src/modules/claims/site-area-inputs.ts). Admin or Sales, only once
+  /* THE SITE AREA'S POINT AND A NEIGHBOURING COUNCIL (src/modules/claims/site-area-inputs.ts). Admin or Sales, only once
      the engagement letter is signed — both asked there, on the server. Saving sends nothing anywhere. */
   const sitePoint = /^\/staff\/properties\/([A-Za-z0-9-]+)\/site-point$/.exec(path);
   if (sitePoint && method === 'POST') {
@@ -275,7 +275,7 @@ export async function handleCrm(
     return 'handled';
   }
 
-  /* PHASE 146k: THE TITLE REGISTER, BY HAND (src/modules/claims/title-by-hand.ts). Admin or Sales, once the letter is signed —
+  /* THE TITLE REGISTER, BY HAND (src/modules/claims/title-by-hand.ts). Admin or Sales, once the letter is signed —
      both asked there, on the server. Recording it sends nothing anywhere; taking it back asks why. */
   const titleHand = /^\/staff\/properties\/([A-Za-z0-9-]+)\/title-register(\/take-back)?$/.exec(path);
   if (titleHand && method === 'POST') {
@@ -336,7 +336,7 @@ export async function handleCrm(
     return 'handled';
   }
 
-  /* ----------------------------------------------- PHASE 159i (item 4): one event's VAT */
+  /* ----------------------------------------------- (item 4): one event's VAT */
   const eventVat = /^\/staff\/claims\/([A-Za-z0-9-]+)\/events\/([A-Za-z0-9-]+)\/vat$/.exec(path);
   if (eventVat && method === 'POST') {
     const id = eventVat[1] ?? '';
@@ -355,7 +355,7 @@ export async function handleCrm(
     return 'handled';
   }
 
-  /* ----------------------------------------------- PHASE 159j (item 5): ask for one piece of work's documents */
+  /* ----------------------------------------------- (item 5): ask for one piece of work's documents */
   const workDocs = /^\/staff\/claims\/([A-Za-z0-9-]+)\/events\/([A-Za-z0-9-]+)\/ask-documents$/.exec(path);
   if (workDocs && method === 'POST') {
     const id = workDocs[1] ?? '';
@@ -365,7 +365,7 @@ export async function handleCrm(
     return 'handled';
   }
 
-  /* ----------------------------------------------- PHASE 159c: an event on the claim's building */
+  /* ----------------------------------------------- an event on the claim's building */
   const addEvent = /^\/staff\/claims\/([A-Za-z0-9-]+)\/events$/.exec(path);
   if (addEvent && method === 'POST') {
     const id = addEvent[1] ?? '';
@@ -408,10 +408,10 @@ export async function handleCrm(
 }
 
 /**
- * PHASE 159c: each event on the claim's building — what it was, when, what it cost and its own "up to" (for a login that
+ * Each event on the claim's building — what it was, when, what it cost and its own "up to" (for a login that
  * may read the claim's value), and the documents that prove it, each with whether we hold one. Then a form to add one.
  */
-/** PHASE 159l (L19): once the survey has priced an event, its approved figure; until then, the sector's band. */
+/** Once the survey has priced an event, its approved figure; until then, the sector's band. */
 function eventFigure(e: EventOnClaim, approved: ReadonlyMap<string, ApprovedEventFigure>): string {
   const a = approved.get(e.kind === 'PURCHASE' ? 'PURCHASE' : e.id);
   if (a !== undefined) {
@@ -450,7 +450,7 @@ function eventsBlock(claim_id: string, evs: readonly EventOnClaim[], value: bool
 }
 
 /**
- * THE CLAIM PAGE, FOR A VIEW ALREADY AUTHORISED — PHASE 134. The same page is drawn at /staff/claims/:id and inside its
+ * THE CLAIM PAGE, FOR A VIEW ALREADY AUTHORISED. The same page is drawn at /staff/claims/:id and inside its
  * company's page at /staff/clients/:company/claims/:id (src/modules/crm/client-page.ts): the company is the frame either way.
  */
 export function renderClaim(d: CrmPageDeps, actor: Actor, v: C.ClaimView, done: string | undefined, step?: string, stage?: string): string {
@@ -494,7 +494,7 @@ function factCell(f: C.Fact): Safe {
 }
 
 function done(msg: string | undefined): Safe {
-  // PHASE 160j: what was just done to something the client sent, or asked of them, said in its own words.
+  // What was just done to something the client sent, or asked of them, said in its own words.
   const words: Record<string, string> = { accepted: 'Accepted.', 'asked-again': 'Asked again. It is in the client’s portal.', sent: 'Sent to the client’s portal.' };
   return msg === undefined ? raw('') : savedMessage(words[msg] ?? 'Saved.');
 }
@@ -538,7 +538,7 @@ function nextActionFields(owners: readonly Owner[]): Safe {
 }
 
 /**
- * PHASE 159a: ONE VERSION AFTER SIGN-OFF, ON THE CLAIM PAGE. Once the figures are fixed it says so; an admin gets
+ * ONE VERSION AFTER SIGN-OFF, ON THE CLAIM PAGE. Once the figures are fixed it says so; an admin gets
  * "Reopen the valuation", with what that sets aside; and after a reopen, what it set aside and why.
  */
 function valuationBlock(id: string, v: NonNullable<PipelinePanel['valuation']>, reopen: { readonly words: string } | null): Safe {
@@ -558,7 +558,7 @@ function valuationBlock(id: string, v: NonNullable<PipelinePanel['valuation']>, 
 function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonly Owner[] = []): Safe {
   if (p === undefined) return raw('');
   const m = p.moves;
-  // PHASE 133c (B2): the ten stages are drawn once, in the stage bar at the top of the page, so this panel no longer lists
+  // The ten stages are drawn once, in the stage bar at the top of the page, so this panel no longer lists
   // them a second time. Everything the gate reads — the procedure's words, each need and its reading, what the client's
   // portal shows, the fee trigger and the claimable figure — is still here, behind "See everything this stage needs".
   return h`<div class="pblock">
@@ -619,7 +619,7 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
 }
 
 /**
- * PHASE 134 — A COMPANY'S CLAIMS AS TILES: the property and its town, the stage, the next action, and the reference as a
+ * A COMPANY'S CLAIMS AS TILES: the property and its town, the stage, the next action, and the reference as a
  * small grey label. Each opens the claim inside its company's page.
  */
 export function claimTilesFor(claims: readonly C.ClaimSummary[], empty = 'No claim you may open is recorded here.', company = ''): Safe {
@@ -651,7 +651,7 @@ function contactForm(action: string, business_id: string, c: C.ContactView | nul
 }
 
 /**
- * PHASE 134 — THE ORGANISATION'S SECTIONS, FOR THE ONE CLIENT PAGE. Until 18 September 2026 these were a page of their
+ * THE ORGANISATION'S SECTIONS, FOR THE ONE CLIENT PAGE. these were a page of their
  * own at /staff/organisations/:id, beside a second page for the same company at /staff/clients/:id. They are now drawn
  * inside the one client page (src/modules/crm/client-page.ts), from the same view, asked of the same rules: nothing is read that
  * the organisation page did not read before.
@@ -711,7 +711,7 @@ export function organisationSections(
           <button type="submit">Save</button></form></details>` : raw('')}
       </div>`;
 
-  // PHASE 138: ONE CARD PER CONTACT instead of a nine-column table that scrolled sideways on a phone. The card shows what
+  // ONE CARD PER CONTACT instead of a nine-column table that scrolled sideways on a phone. The card shows what
   // is used every week — name, job, email, telephone, next follow-up; the type, decision maker, last contact and notes sit
   // under "More detail" on the card. The same fields, from the same view.
   const contacts = h`
@@ -756,7 +756,7 @@ export function organisationSections(
     quick: [
       ...(x.owners === null ? [] : [{ href: '#add-task', label: 'Log a call or add a follow-up' }]),
       ...(v.may_write ? [{ href: '#contacts', label: 'Add a contact' }, { href: '#properties', label: 'Add a property' }] : []),
-      // PHASE 142: a note is a message on the company's "Team only" chat.
+      // A note is a message on the company's "Team only" chat.
       ...(x.may_note ? [{ href: `/staff/clients/${v.id}?chat=team#chat`, label: 'Message your team' }] : []),
     ],
   };
@@ -780,7 +780,7 @@ function propertiesPage(d: CrmPageDeps, actor: Actor, rows: readonly C.PropertyR
 }
 
 /**
- * PHASE 151c: WHERE THE SITE IS, FOR ITS AREA. The point the land boundary is read at, and the councils whose files are
+ * WHERE THE SITE IS, FOR ITS AREA. The point the land boundary is read at, and the councils whose files are
  * read, with who entered each and when; and, for Admin or Sales once the letter is signed, the two forms.
  */
 function sitePointBlock(id: string, s: SI.SitePointView): Safe {
@@ -808,7 +808,7 @@ function sitePointBlock(id: string, s: SI.SitePointView): Safe {
 }
 
 /**
- * PHASE 146k: THE TITLE REGISTER, BY HAND. What stands, with who typed it and when; entries taken back, with why; and,
+ * THE TITLE REGISTER, BY HAND. What stands, with who typed it and when; entries taken back, with why; and,
  * for Admin or Sales once the letter is signed, the form — or the take-back, where one stands.
  */
 function titleBlock(id: string, t: TH.TitleByHandView): Safe {
@@ -847,7 +847,7 @@ function propertyPage(
   d: CrmPageDeps, actor: Actor, v: C.PropertyView, msg: string | undefined,
   x: { timeline: Timeline | undefined; owners: readonly Owner[] | null; may_note: boolean; site?: SI.SitePointView | null; title?: TH.TitleByHandView | null },
 ): string {
-  /* PHASE 139 (carried from 138): THE PROPERTY PAGE AS SECTIONS, like the client and claim pages. The old tab ids stay
+  /* THE PROPERTY PAGE AS SECTIONS, like the client and claim pages. The old tab ids stay
      the anchors, so every link and redirect to #details, #related and #activity still lands. */
   const ctx: SectionContext = { prefs: sectionPrefs(d.app.db, actor), back: `/staff/properties/${v.id}` };
   const propNeed: Need[] = [
@@ -975,7 +975,7 @@ function propertyPage(
  * ------------------------------------------------------------------ */
 
 /**
- * UI TIDY PHASE 17 (3 October 2026): a column this login may not read on any row is left out, and the page says so,
+ * A column this login may not read on any row is left out, and the page says so,
  * instead of a dash in every row — Accounting reads the company and the reference, so its list is those two. A column
  * read on some rows keeps the dash on the others, as before.
  */
@@ -989,7 +989,7 @@ export function claimColumns(rows: readonly Pick<C.ClaimRow, 'property' | 'stage
 }
 
 function claimsPage(d: CrmPageDeps, actor: Actor, rows: readonly C.ClaimRow[], controls: Safe = raw(''), sortBy: SortBy = (_k, l) => h`${l}`): string {
-  // PHASE 133a: the filters and saved views in a panel beside the list; sortable headings; one table style.
+  // The filters and saved views in a panel beside the list; sortable headings; one table style.
   const col = claimColumns(rows);
   const hidden = !col.property || !col.stage || !col.next_action || !col.owner;
   // Each column's heading and cells from one list, so a heading cannot stand over another column's cells.
@@ -1043,7 +1043,7 @@ function teamBlock(v: C.ClaimView): Safe {
 }
 
 /**
- * PHASE 138 — A CLAIM FACT THE CLIENT CAN BE ASKED FOR, as a one-press ask. It posts to the company's own question route
+ * A CLAIM FACT THE CLIENT CAN BE ASKED FOR, as a one-press ask. It posts to the company's own question route
  * (`sendTaskToPortal`, which asks `business.read` and `internal_note.write` again), naming this claim; the answer comes
  * back on the company page's Questions for the client, where it is recorded as the fact.
  */
@@ -1059,14 +1059,14 @@ function claimAsk(business_id: string, claim_id: string, fact_id: string, label:
 function askableFacts(p: F.FactsPanel): readonly F.FactReading[] {
   return [p.claimant_type, p.acquisition_date, p.accounting_period.start, p.accounting_period.end, p.taxable_profit.sufficient_profit,
     p.allowance_headroom.position, p.election.exists, p.acquisition_costs.costs, p.buyer_alterations.made];
-  // PHASE 143: whether anyone else paid is asked in its own section, "Grants and contributions", and not twice.
+  // Whether anyone else paid is asked in its own section, "Grants and contributions", and not twice.
 }
 
-/** UI TIDY PHASE 18: a claim section's state, short enough for the left-hand menu. Done and not started say nothing. */
+/** A claim section's state, short enough for the left-hand menu. Done and not started say nothing. */
 export const SECTION_STATUS_NOTE: Readonly<Record<'WORKING' | 'WAITING', string>> = Object.freeze({ WORKING: 'to do', WAITING: 'waiting' });
 
 /**
- * PHASE 158b (F31): the claim's survey job. At Survey, with none open, Admin and Sales choose a surveyor and open it,
+ * The claim's survey job. At Survey, with none open, Admin and Sales choose a surveyor and open it,
  * which seals the estimate (src/web/survey-open.ts). Once open, whose it is and whether the figures are in. Never a
  * figure: this page is read by roles the estimate is hidden from.
  */
@@ -1093,17 +1093,17 @@ function claimPage(
     templates: readonly { id: string; label: string }[];
     contacts: readonly { id: string; name: string; email: string | null }[] | undefined;
     may_note: boolean;
-    /** Phase 139: the step just worked in, whose facts open. */
+    /** The step just worked in, whose facts open. */
     step?: string;
-    /** PHASE 160i: the stage opened in "Where this claim stands" (?stage=). */
+    /** The stage opened in "Where this claim stands" (?stage=). */
     stage?: string;
   },
 ): string {
   const db = d.app.db;
   const biz = v.client.business_id;
-  // PHASE 134: THE COMPANY IS THE FRAME. The heading is the company's name; the property and the reference sit under it.
+  // THE COMPANY IS THE FRAME. The heading is the company's name; the property and the reference sit under it.
   const property = v.header?.property ?? null;
-  // PHASE 157c (F8): the town only where the label does not already carry it ("…, Plymouth, PL4 9BH, Plymouth").
+  // The town only where the label does not already carry it ("…, Plymouth, PL4 9BH, Plymouth").
   const where = property === null ? null : [propertyIn(v.client.name, property.label), property.town !== null && property.label.toLowerCase().includes(property.town.trim().toLowerCase()) ? null : property.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
   const tasks = claimTasksBlock(v.id, v.tasks, taskChoices(db));
   const docs = claimDocumentsBlock(v.id, v.documents, false);
@@ -1111,9 +1111,9 @@ function claimPage(
   const notes = notesBlock(v.timeline, x.may_note ? `/staff/claims/${v.id}/notes` : null, [], biz);
   const pipe = pipelineBlock(v.id, v.pipeline, v.tasks?.may_set_next_action === true ? (v.tasks.owner_choices ?? []) : []);
   const surveyJob = surveyJobBlock(v.id, SO.surveyJobPanel(db, actor, v.id), v.edit?.current.surveyor_id ?? null);
-  // PHASE 158c (F37): the amendment window, warned from the client's own date, from Engagement until Reports.
+  // The amendment window, warned from the client's own date, from Engagement until Reports.
   const windowRow = getClaimsStageBusinessIdById<{ stage: string | null; business_id: string; property_id: string | null }>(db, [v.id]);
-  /* PHASE 159j (Lockwood L16): the warning is for before the dates are checked. Once every part of the claim has its
+  /* The warning is for before the dates are checked. Once every part of the claim has its
      route on the recorded dates (W1, W2 or W3), it has said what it was for, so it goes. */
   const routesDecided = windowRow !== undefined && (() => { const r = claimRoutes(db, { id: v.id, business_id: windowRow.business_id, property_id: windowRow.property_id }, nowIso()); return r.length > 0 && r.every((x) => x.route !== 'NOT_KNOWN'); })();
   const windowWarning = windowRow === undefined || routesDecided ? null : earlyWindowWarning(db, windowRow, nowIso());
@@ -1132,9 +1132,9 @@ function claimPage(
         ${v.header.owner === null ? raw('') : h`<p class="help">${v.header.owner}</p>`}`;
   const step = v.pipeline === undefined ? null : claimNextStep(v.id, v.pipeline.gate, v.pipeline.moves, v.pipeline.hold);
 
-  /* PHASE 138: THE CLAIM'S SECTIONS. Each is built only from a part of the view this login was given, and only where the
+  /* THE CLAIM'S SECTIONS. Each is built only from a part of the view this login was given, and only where the
      view carries it — a surveyor's view carries the stage and the released facts, Accounting's the money. */
-  // UI TIDY PHASE 18: only the stage opens by itself (and the checks, when a step was just worked in); every other section
+  // Only the stage opens by itself (and the checks, when a step was just worked in); every other section
   // starts closed, as a one-line summary with its status, unless a change was just made in it or the person keeps it open.
   const ctx: SectionContext = {
     prefs: sectionPrefs(db, actor), back: v.client.linkable ? claimHref(biz, v.id) : `/staff/claims/${v.id}`,
@@ -1145,7 +1145,7 @@ function claimPage(
   const needFor = (fact_id: string, label: string): Need => (asked.has(fact_id) ? { label, asked: true }
     : mayAsk ? { label, ask: claimAsk(biz, v.id, fact_id, label) } : { label });
   const sections: SectionSpec[] = [];
-  // PHASE 160i: where this claim stands, for the logins that read the pipeline and the facts (Admin and Sales).
+  // Where this claim stands, for the logins that read the pipeline and the facts (Admin and Sales).
   const overview = v.facts === undefined || 'released_to_surveyor' in v.facts ? null
     : claimOverview(db, actor, { id: v.id, business_id: biz, property_id: windowRow?.property_id ?? null, facts: v.facts, documents: v.documents },
       x.stage ?? null, d.app.now().slice(0, 10));
@@ -1159,7 +1159,7 @@ function claimPage(
       status: over ? 'DONE' : 'WORKING',
       working: over ? `This claim is closed: ${pl.stage.label}.`
         : pl.gate === undefined ? `Stage: ${pl.stage.label}.`
-          // PHASE 157c (the Friary House run, F9): a move also needs one next action; "Ready" with none was refused.
+          // A move also needs one next action; "Ready" with none was refused.
           : pl.gate.open ? (v.header !== undefined && v.header.next_action === null
             ? `Ready to move on from ${pl.gate.label} once the claim has a next action (Set the next action).`
             : `Ready to move on from ${pl.gate.label}.`) : `Getting ready to move on: ${plainNeed(firstNeed?.what ?? '').words}`,
@@ -1208,7 +1208,7 @@ function claimPage(
     }
   }
 
-  /* PHASE 143: GRANTS AND CONTRIBUTIONS, a section of its own. The same facts panel, so Admin and Sales alone; a
+  /* GRANTS AND CONTRIBUTIONS, a section of its own. The same facts panel, so Admin and Sales alone; a
      surveyor's released list and Accounting's page never build it. Done only when the valuation check it feeds is met. */
   if (v.facts !== undefined && !('released_to_surveyor' in v.facts)) {
     const f = v.facts;
@@ -1233,7 +1233,7 @@ function claimPage(
     });
   }
 
-  /* PHASE 139: this claim's steps — each fact with where it came from and a tick, and "Tell the client". */
+  /* This claim's steps — each fact with where it came from and a tick, and "Tell the client". */
   {
     const checks = checksPanelIfPermitted(db, actor, biz, d.app.now().slice(0, 10));
     const mine = checks?.claims.find((c) => c.id === v.id);
@@ -1289,7 +1289,7 @@ function claimPage(
     });
   }
 
-  /* PHASE 159c: WHAT HAPPENED TO THE BUILDING, EVENT BY EVENT — a purchase, then each piece of work — each with its own
+  /* WHAT HAPPENED TO THE BUILDING, EVENT BY EVENT — a purchase, then each piece of work — each with its own
      figure and the documents that prove it. The figure (the engine's band on that event's own cost, until the survey
      prices it) and the cost are the claim's value: shown only to a login that may read it. */
   {
@@ -1392,7 +1392,7 @@ function claimPage(
       <div id="claim-notes">${notes}</div>`,
   });
 
-  // UI TIDY PHASE 18: the claim's sections, under this claim in the left-hand menu.
+  // The claim's sections, under this claim in the left-hand menu.
   addUnderCurrent(claimName(v.client.name, property?.label), sections.map((sp) => ({
     href: `#${sp.id}`, label: sp.heading, ...(sp.status === 'WORKING' || sp.status === 'WAITING' ? { note: SECTION_STATUS_NOTE[sp.status] } : {}),
   })));
@@ -1400,7 +1400,7 @@ function claimPage(
     title: claimName(v.client.name, property?.label), nav: d.nav(actor), wide: true,
     body: h`${breadcrumb([{ label: v.client.name, href: v.client.linkable ? `/staff/clients/${biz}` : null }, { label: propertyIn(v.client.name, property?.label ?? null) ?? 'Claim' }])}${done(msg)}
       ${highlights('Claim', v.client.name, [
-        // UI TIDY PHASE 18: the stage in its group's colour, and nobody on it in amber, as on every list.
+        // The stage in its group's colour, and nobody on it in amber, as on every list.
         v.header === undefined ? null : { label: 'Stage', value: v.header.stage.key === null ? v.header.stage.label : stageBadge(v.header.stage.key, v.header.stage.label) },
         v.header === undefined ? null : { label: 'Owner', value: v.header.owner === null ? nobodyBadge('Nobody yet') : v.header.owner },
         v.overview === undefined ? null : { label: 'Priority', value: v.overview.priority.label },

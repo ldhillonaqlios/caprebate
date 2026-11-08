@@ -1,5 +1,5 @@
 /**
- * THE JOIN PAGES' ONE SCRIPT — /assets/video-call.js. 30 September 2026 (src/modules/crm/video-calls.ts).
+ * THE JOIN PAGES' ONE SCRIPT — /assets/video-call.js. (src/modules/crm/video-calls.ts).
  *
  * Served from this site, never inline. It reads the meeting's values from the data attributes the server put on
  * #vc-root (the meeting number, the passcode, the join signature signed on the server, the name, and for staff the

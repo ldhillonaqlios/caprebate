@@ -1,23 +1,23 @@
 /**
- * THE WEBSITE'S LEGAL PAGES, AND THE COOKIE BANNER — PHASE 160h, 20 October 2026; PHASE 161g, 5 November 2026.
+ * THE WEBSITE'S LEGAL PAGES, AND THE COOKIE BANNER; PHASE 161g.
  *
- * Lakhbir, 20 Oct 2026: "draft up some T&C, Policy docs, Cookies (add a cookie consent banner), Privacy policy, all the
+ * The owner: "draft up some T&C, Policy docs, Cookies (add a cookie consent banner), Privacy policy, all the
  * usual things you see on the website". The public notices are Phases 160f and 160g (src/modules/public-site/notices-site.ts). This
  * file holds everything else: the website terms of use, the client's portal terms and the privacy policy (Phase 161g,
  * src/modules/public-site/privacy-policy.ts), the cookie policy, acceptable use, the accessibility statement and the disclaimer, each a
  * DRAFT for our solicitor and our data protection officer (FOR THE SOLICITOR, DPO AND DEVELOPER), and the banner.
  *
- * WHERE THEY ARE SERVED (Phase 161g). On the test website (the `notices` switch, which api/index.mjs alone passes), and
+ * WHERE THEY ARE SERVED. On the test website (the `notices` switch, which api/index.mjs alone passes), and
  * wherever the new `legal` setting is on (CAPREBATE_LEGAL_PAGES=on, for the live website once its checklist is done).
  * Anywhere else their addresses say they are being prepared, as before.
  *
- * DRAFT UNTIL APPROVED (Phase 161g). Each page has a VERSION (its date). It carries the Draft line until BOTH our
+ * DRAFT UNTIL APPROVED. Each page has a VERSION (its date). It carries the Draft line until BOTH our
  * solicitor and our data protection officer have an approval of that version recorded (legal_approvals, migration 121;
  * src/web/legal-approvals.ts). A new version is a draft again.
  *
  * A FACT WE DO NOT HAVE IS NEVER MADE UP. It is written as "to be added" and listed in LEGAL_GAPS.
  *
- * ONE COOKIE CHOICE: THIS BANNER (Phase 161g). It needs no script: a form with two buttons of the same size and style,
+ * ONE COOKIE CHOICE: THIS BANNER. It needs no script: a form with two buttons of the same size and style,
  * in the same place, "Accept all" and "Reject non-essential". The answer is kept in one cookie (`cb_cookies`, strictly
  * necessary: it only remembers the answer) for twelve months. No answer is "no". Google Analytics, the only optional
  * thing the website could load, loads only after a CLICK on "Accept all" (here or on the cookie policy page):

@@ -1,5 +1,5 @@
 /**
- * THE WEBSITE'S ENQUIRY FORM — PHASE 133j, 18 September 2026.
+ * THE WEBSITE'S ENQUIRY FORM.
  *
  * The public website's "Request my estimate" form posts to `/enquiry`. Before this phase it posted nowhere: the page
  * said thank you and nothing was kept. Now the form is received here, every field is checked on the server whatever
@@ -66,7 +66,7 @@ export function receiveEnquiry(auth: Deps, newId: () => string, f: URLSearchPara
   if (email === null || email === undefined || !EMAIL.test(email)) return { ok: false, why: 'We need an email address we can reply to.' };
   if (!Object.prototype.hasOwnProperty.call(PROPERTY_TYPES, ptype)) return { ok: false, why: 'Choose the type of property.' };
   if (firm === undefined || phone === undefined || message === undefined) return { ok: false, why: 'One of the answers is longer than the form allows.' };
-  /* PHASE 151 (Word answer 164, closed 24 September 2026): NO TICK. The form's required "you may contact me" box is
+  /* NO TICK. The form's required "you may contact me" box is
      replaced by a statement and a link to the privacy notice: a person who sends an enquiry has asked to be answered, and
      a tick box would misdescribe the basis as consent. `contact_consent` stays 1 — it records that the person asked to be
      contacted about this enquiry, by sending it — and is never marketing consent. */

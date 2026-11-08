@@ -1,10 +1,10 @@
 /**
- * MESSAGE_RETENTION — THE CLEAN-UP JOB FOR BOTH CHAT THREADS. BUILT, AND SWITCHED OFF. Phase 142a, 22 September 2026.
+ * MESSAGE_RETENTION — THE CLEAN-UP JOB FOR BOTH CHAT THREADS. BUILT, AND SWITCHED OFF.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHY IT IS OFF
  *
- * Every client has a Chat with two threads (Phase 142): "With the client" (`client_messages`) and "Team only"
+ * Every client has a Chat with two threads: "With the client" (`client_messages`) and "Team only"
  * (`internal_notes`). Both are free text, so both hold personal data, and no rule in the retention schedule names either.
  * How long each is kept is the data protection officer's decision, put in CAPREBATE QUESTIONS under exactly this title:
  *   "How long do we keep client messages and the team chat?"
@@ -77,7 +77,7 @@ export type MessageRetention = {
 export const MESSAGE_RETENTION_QUESTION = 'How long do we keep client messages and the team chat?';
 
 /**
- * PHASE 142b — ON. Lakhbir answered the question on 22 September 2026: messages are kept for seven years — from the claim
+ * ON. the owner answered the question: messages are kept for seven years — from the claim
  * file's clock on a company with a claim, and from the last message on one without (the recommended clocks, with seven
  * years in place of six and of twelve months) — and asked for the job to be switched on now, before the data protection
  * officer signs. The officer's approval is still asked for on the register FOR THE SOLICITOR, THE DPO AND THE DEVELOPER.

@@ -1060,7 +1060,7 @@ export function listAutomationRunsAtOutcomeByLeadId<T extends Row = Row>(db: Db,
   return db.all<T>('SELECT r.at, r.outcome, r.reason, r.tasks_created, r.outbox_id, ar.label, r.claim_id, r.lead_id FROM automation_runs r JOIN automation_rules ar ON ar.id = r.rule_id WHERE r.lead_id = ? ORDER BY r.at', params);
 }
 
-// Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+// Moved here from the lower layers' borrowed files: their statements are on this module's tables.
 export function getBookingsChannelSmsVariantByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT channel, sms_variant, entry_point FROM bookings WHERE business_id = ? ' +
     'ORDER BY created_at ASC LIMIT 1', params);

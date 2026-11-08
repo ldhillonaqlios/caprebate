@@ -1,5 +1,5 @@
 /**
- * LEADS — NOT A SECOND INTAKE. CRM 2 of 10, 10 September 2026.
+ * LEADS — NOT A SECOND INTAKE. CRM 2 of 10.
  *
  * A filled assessment, a funnel-close booking, a gated exit and a referral are
  * already leads. This file ties them together: what made each one a lead, where
@@ -87,7 +87,7 @@ function words(vocab: Vocab, v: string | null | undefined, none: string): string
   return has(vocab, v) ? (vocab[v] ?? v) : none;
 }
 
-/** PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one. */
+/** `field` is the posted name a refusal is about, where it is about one. */
 type Check<T> = { ok: true; value: T } | { ok: false; why: string; field?: string };
 
 function textField(v: string | null | undefined, max: number, what: string): Check<string | null> {
@@ -109,7 +109,7 @@ function dateField(v: string | null | undefined, what: string): Check<string | n
 
 function take<T>(input: Fields, key: string, stored: T, check: (v: string | null) => Check<T>): Check<T> {
   if (!Object.hasOwn(input, key)) return { ok: true, value: stored };
-  // PHASE 133d (D4): a refusal names the field it is about, so the form can draw it beside that field.
+  // A refusal names the field it is about, so the form can draw it beside that field.
   const r = check(input[key] ?? null);
   return r.ok ? r : { ...r, field: r.field ?? key };
 }
@@ -233,7 +233,7 @@ export type LeadView = {
   readonly lost: { readonly reason: string | null; readonly note: string | null } | null;
   readonly converted: { readonly at: string; readonly claim_id: string; readonly claim_ref: string } | null;
   /**
-   * 30 Sep 2026: the other leads the same assessment made — buildings owned by different businesses, one organisation
+   * The other leads the same assessment made — buildings owned by different businesses, one organisation
    * and one lead each (migration 061, `enquiry_id`). Empty for a lead that is the only one of its enquiry.
    */
   readonly same_enquiry: readonly { readonly lead_id: string; readonly name: string }[];
@@ -247,7 +247,7 @@ export type LeadView = {
   readonly person?: { readonly name: string; readonly role: string | null; readonly reach: string | null };
   /** 7.5 — the client's own spend answers, with the question, never parsed into a value. */
   readonly initial_property_value: readonly { readonly question: string; readonly answer: string }[];
-  /** PHASE 159c: each building's events from the assessment — the purchase, then each piece of work — in order. Read under
+  /** Each building's events from the assessment — the purchase, then each piece of work — in order. Read under
    *  the same rule as the answers. */
   readonly events: readonly { readonly property: string; readonly what: string; readonly when: string; readonly cost: string }[];
   /** 7.6 — the range they were shown and the sealed estimate, for `estimate.read` alone. */
@@ -279,7 +279,7 @@ export function leadView(db: Db, actor: Actor, id: string): LeadView {
     || !can(actor, 'answer.read', { type: 'answer', id: r.assessment_id, business_id: r.business_id })
     ? []
     : listAssessmentAnswersQuestionIdQuestionTextByAssessmentId<{ question_id: string; question_text: string; state: string; value: string | null }>(db, [r.assessment_id]);
-  const spend = answers.filter((a) => /^Q2-\d+-spend$/.test(a.question_id) || /^Q3-\d+-works-spend$/.test(a.question_id) || /^Q3-\d+-w\d+-spend$/.test(a.question_id))   // PHASE 159c: each piece of work
+  const spend = answers.filter((a) => /^Q2-\d+-spend$/.test(a.question_id) || /^Q3-\d+-works-spend$/.test(a.question_id) || /^Q3-\d+-w\d+-spend$/.test(a.question_id))   // Each piece of work
     .map((a) => ({ question: a.question_text, answer: answerLabel(a.state, a.value) }));
 
   const range = shownRangeFor(db, actor, r);
@@ -657,7 +657,7 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
   onLeadConverted(d, actor, r.id, made.id);
   // CRM 3 of 10: the claim comes into being at ASSESSMENT, which is a stage entered.
   fireAutomation(d, actor, { trigger: 'STAGE_ENTERED', claim_id: made.id, stage: 'ASSESSMENT' });
-  /* PHASE 157c (the Friary House run, F9): THE LEAD'S FOLLOW-UP BECOMES THE CLAIM'S NEXT ACTION. A converted claim had
+  /* THE LEAD'S FOLLOW-UP BECOMES THE CLAIM'S NEXT ACTION. A converted claim had
      none, so its first move was refused ("This claim has no next action") while the page said "Ready". The lead's
      earliest open task, with a due date, is carried over as the claim's next action: its own owner, else the lead's
      owner. With no due date, or nobody to own it, nothing is invented and the claim asks for one, as before. */
@@ -689,7 +689,7 @@ export function openLeadForSubmission(
 }
 
 /**
- * THE GATED EXIT'S LEAD — the gated-exit repair, 11 September 2026.
+ * THE GATED EXIT'S LEAD — the gated-exit repair.
  *
  * A prospect stopped at Q1b who asks for a call. NEW, from the website, origin
  * GATED_EXIT, and with NO ORGANISATION: they reached the reasoned negative before

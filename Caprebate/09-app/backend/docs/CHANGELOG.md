@@ -1,11 +1,12 @@
 # Changelog: the dated notes that were in the code
 
-Written by Phase 161i1 (8 November 2026). Until then many comments in the code said when something was decided, by
+Written by Phase 161i1 (8 November 2026) and added to by Phase 161j. Until then many comments in the code said when something was decided, by
 which phase and who asked for it. That history now lives here, and the code keeps comments that say why the code is as
 it is. Every note below is the comment as it stood in the code, word for word, under the file it was in and the line
 it started on that day (the file may have changed since). Notes from the files of the core, the shared parts and the
-outside services (`src/core/`, `src/shared/`, `src/integrations/`) are here; Phases 161j and 161k bring the
-business modules' notes here the same way.
+outside services (`src/core/`, `src/shared/`, `src/integrations/`, Phase 161i1) and of the five modules Phase
+161j moved (`src/modules/public-site/`, `assessment/`, `portal/`, `crm/`, `claims/`) are here; Phase 161k brings the
+rest of the business modules' notes the same way.
 
 How far the notes come out was put to the developer (question D16 of the developer question pack). Until they answer,
 this follows our recommendation: keep a short comment that says why; move every dated note, and every name, here.
@@ -13,6 +14,66 @@ A phase's full record is in `00-START-HERE/hub/PHASE-HISTORY.md`.
 
 Dates: the date the note itself gives, otherwise the date of its phase in the phase history; "date not recorded" where
 neither says.
+
+## 31 May 2025: Phase 159l
+
+### `src/modules/claims/claim-route.ts`
+
+- Line 238:
+
+  > PHASE 159l (item 2, L15): THE RETURNS A CLAIM GOES INTO, one per accounting period, from each claimed part's route —
+  > W1 its own period's return, W2 the first open period's. On Lockwood the purchase (W2) went into the return for the
+  > year to 31 May 2025 and the 2025 refit (W1) into the year to 31 May 2026: two returns, filed a year apart. Null where a
+  > claimed part does not name its period yet (N4: not known is not one return); empty where nothing is claimed.
+
+## 5 Feb 2026: Phase 41
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 1483:
+
+  > ------------------------------------------------------------------ *
+  > 6. THE PER-UPLOAD TRANSPARENCY RECORD — conditions A14-D1, A14-D2 and A14-D5
+  >
+  > Phase 40 §11: nothing anywhere records that an Article 14 notice was sent to
+  > a named individual, and this population is worse off than the register
+  > population because it has no store at all to add a field to.
+  >
+  > THE CHAPEAU IS WHY THIS IS PER PERSON. Article 14(5) was substituted on
+  > 5 February 2026 to read "do not apply TO THE EXTENT THAT" (Phase 40 §1.3,
+  > annotation F7, read in the current text on legislation.gov.uk). So reliance
+  > on the exemption is a per-person, per-item assertion, and a position that
+  > cannot be evidenced person by person is not a position.
+  >
+  > THE DESIGN CONSTRAINT THAT SHAPES EVERYTHING BELOW — RESTATED 1 Sep 2026
+  > (Phase 60). This block used to say that Caprebate' structured
+  > records contain no third-party name by design, and that a compliance record
+  > keyed by name would destroy that. Q37 has since been answered — "we can hold
+  > the details in our custom backend" — so a name-bearing identity store IS
+  > being built, deliberately. The old rationale is withdrawn. The RULE it
+  > produced is kept, on better footing:
+  >
+  >   THE CLAIM RECORD STILL HOLDS NO THIRD-PARTY NAME. assertClaimsWritable and
+  >   the empty nameExceptions on the CLIENT_DOC policy entry are unchanged, and
+  >   they are now the load-bearing guarantee rather than one of two.
+  >
+  >   person_ref STAYS OPAQUE BECAUSE IT IS THE JOIN — between the claim record,
+  >   the raw file and the identity store. A name in the join propagates into
+  >   every record that carries it, which is precisely what assertClaimsWritable
+  >   exists to prevent. Not "we hold no names": we hold them in ONE place, and
+  >   the join is what would spread them everywhere else.
+  >
+  > assertTransparencyRecordComplete still refuses a name-shaped ref (test T7,
+  > unchanged and passing). Article 11(2) is NO LONGER AVAILABLE for this
+  > population and must not be claimed — a controller with a name index is in a
+  > position to identify, so Articles 15 to 20 apply in full. Phase 40's L5 is
+  > withdrawn as resolved-by-decision, not answered.
+  >
+  > DO NOT implement the reversal by adding a third nameException to the
+  > CLIENT_DOC entry. The exception is a separate store with its own rule — see
+  > the Dashboard Data Specification (board item 12948738680) and the Phase 41
+  > reconciliation (item 12928074627, Document 2). No behaviour changed here.
+  > ------------------------------------------------------------------
 
 ## 29 Mar 2026: no phase named
 
@@ -53,6 +114,81 @@ neither says.
 - Line 804:
 
   > Phase 64: the service moved from epc.opendatacommunities.org on 30 May 2026;
+
+## 29 Aug 2026: Phase 40
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 130:
+
+  > ------------------------------------------------------------------ *
+  > 1. THE STORAGE FACT — established 29 August 2026, board item 12928031577
+  >
+  > Phase 40 §3.4 proceeded on an INFERENCE that the raw uploaded file is
+  > retained, said so, and created an item to establish it. This is the answer,
+  > and it is not the binary the inference expected. It is recorded here as
+  > data, in the module that depends on it, so that a future reader cannot
+  > re-derive it wrongly.
+  >
+  >   INTENDED — yes, retained. The Developer Brief (00-START-HERE/
+  >   Caprebate-Developer-Brief.md §3, technology stack table) specifies
+  >   "Object storage — AWS S3 (eu-west-2 / London) — Uploads, scans, PDFs,
+  >   signed letters. SSE; pre-signed URLs", and §11 requires "encryption at
+  >   rest (DB+S3)". So the architecture of record retains the raw file, in the
+  >   UK, encrypted.
+  >
+  >   BUILT — no. Not the storage, and not the upload path either. There is no
+  >   file write, no storage adapter, no upload handler and no PDF/OCR text
+  >   extraction anywhere in the codebase. The pipeline library BEGINS at
+  >   segment(pages), which takes text somebody else already extracted, and
+  >   nothing anywhere constructs a doc_id. (Verified by searching every .ts and
+  >   .cjs file under 04-phase-work and 03-app for fs, writeFile,
+  >   createWriteStream, S3, bucket, putObject, blob and storage: the only hits
+  >   are two dev-time chunking scripts and the regression harness reading
+  >   source files.)
+  >
+  >   DELETION — does not exist, in any form. The Developer Brief's own list of
+  >   open decisions carries "12. Retention periods — leads, documents, signed
+  >   engagements, message history" as an UNMADE decision, and §11 lists a
+  >   "retention policy" as a thing still to be produced.
+  >
+  > WHY THIS IS NOT THE "documents are not retained" FINDING that would have
+  > collapsed most of this phase. Phase 40's review trigger 3 anticipated a
+  > finding that documents are not retained, which would have required §7 and
+  > §10 to be re-run. That is NOT what was found. What was found is that the
+  > question is UNDECIDED BECAUSE THE COMPONENT DOES NOT EXIST YET — the
+  > intended design retains, nothing is built, and no deletion mechanism has
+  > ever been specified. Phase 40's working inference was therefore right about
+  > the destination and wrong only about the tense.
+  >
+  > The consequence for this module is the reason it is written the way it is:
+  > every control here is a control on a boundary that has NO IMPLEMENTATION TO
+  > RETROFIT. That is the cheapest possible moment to impose one, and it is why
+  > this file is a specification with a working reference implementation rather
+  > than a patch to a running system. The upload handler, when somebody writes
+  > it, has to call these functions; RECEIPT_CONTRACT below states in what order.
+  > ------------------------------------------------------------------
+
+- Line 582:
+
+  > Partnership Act 1890 s.4, read in the current revised text on
+  > legislation.gov.uk on 29 August 2026:
+  >
+  >   s.4(1) "Persons who have entered into partnership with one another are for
+  >   the purposes of this Act called collectively a firm, and the name under
+  >   which their business is carried on is called the firm-name."
+  >
+  >   s.4(2) "In Scotland a firm is a legal person distinct from the partners of
+  >   whom it is composed, but an individual partner may be charged on a decree
+  >   or diligence directed against the firm, and on payment of the debts is
+  >   entitled to relief pro ratâ from the firm and its other members."
+  >
+  > So separate legal personality is conferred on a firm IN SCOTLAND ONLY. A
+  > lease naming "Dr A, Dr B and Dr C practising as the X Medical Partnership"
+  > in England names three data subjects and no entity. An LLP is a body
+  > corporate and is not affected. This matters for volume, not for engagement:
+  > Phase 40 §4.4 records that a GP partnership's premises is one of the three
+  > ordinary counter-cases to the DPIA's "mostly corporate" reassurance.
 
 ## 29 Aug 2026: Phase 98
 
@@ -101,6 +237,465 @@ neither says.
   > point of assertArt14Complete: four fields that may be left empty are four
   > boxes, not a record.
   > ------------------------------------------------------------------
+
+## 30 Aug 2026: Phase 10
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 191:
+
+  > ------------------------------------------------------------------ *
+  > 1A. WHERE THE INGESTION BOUNDARY ACTUALLY IS — Phase 44, item 12928214881
+  >
+  > THE CORRECTION THIS SECTION EXISTS TO MAKE. Phase 41 wrote, in this file,
+  > that applyReceiptPolicy "runs on receipt, before anything is written to
+  > durable storage" and that what it removes "is never written anywhere". Read
+  > against STORAGE_POSITION above — which records the architecture of record as
+  > pre-signed URL uploads to S3 — that could not be true. A pre-signed URL is a
+  > capability handed to the client's BROWSER, which then writes the bytes
+  > straight into the bucket. Caprebate’s server never holds the file before
+  > the object store does. At the moment applyReceiptPolicy runs, the complete
+  > unredacted document is already in storage, and what the function filters is
+  > the EXTRACTED TEXT. Everything it reports as `removed` stays in the stored
+  > original for the whole retention period.
+  >
+  > That is the third time this shape has been found. Phase 40 found every
+  > control sitting at the model boundary while the duty attaches at the door.
+  > Phase 41 moved the control to "receipt". Phase 42 found that "receipt" was
+  > itself downstream of the first durable write. Each pass was careful and each
+  > reasoned from an incomplete picture of the architecture, which is why the
+  > architecture is now written down HERE, as data, next to the control it
+  > governs, rather than being re-derived from a brief nobody re-reads.
+  >
+  > TWO WAYS TO MAKE THE SENTENCE TRUE AGAIN.
+  >
+  >   (a) QUARANTINE_PREFIX. The pre-signed URL is scoped to a short-lived
+  >       quarantine location. The browser still uploads directly. Caprebate
+  >       strips (and, if a redaction producer is ever built, redacts), writes
+  >       the clean artefact to the durable location, and DELETES the quarantine
+  >       object. Direct upload keeps its speed and cost; "before the first
+  >       DURABLE write" becomes true; and the window in which the unredacted
+  >       file exists is bounded by a TTL and an assertion rather than by a
+  >       retention rule.
+  >
+  >   (b) SERVER_MEDIATED_UPLOAD. The bytes reach Caprebate before any object
+  >       store. Simpler to reason about, and it makes the original sentence
+  >       literally true — at the cost of putting large file transfers through
+  >       application servers, which is slower, dearer and a scaling problem.
+  >
+  > WHICH IS BUILT HERE, AND ON WHOSE AUTHORITY. (a). Q40 puts the choice to
+  > Lakhbir and the developer with a recommendation of (a); as at 30 August 2026
+  > Q40 IS UNANSWERED. So this is a FAIL-CLOSED DEFAULT, NOT A DECISION, and
+  > INGESTION_BOUNDARY.is_a_decision records that in a field rather than in a
+  > paragraph somebody may skim. Fail-closed here means: the shorter the
+  > unredacted file's life, the better, so the model that bounds it with a TTL
+  > is preferred to the model that does not. If Q40 lands on (b), the assertions
+  > below still hold — a server-mediated upload is the quarantine model with a
+  > quarantine residency of zero — and only the key-scoping assertion becomes
+  > moot.
+  >
+  > WHAT THIS SECTION DOES NOT CLAIM. It does not claim quarantine storage is
+  > not storage. It is: it is durable, it is a write, and a controller that
+  > holds a file for an hour has held it. Phase 40 §3.4 settles that obtaining
+  > alone engages Article 14 and that "we looked at it and deleted it" does not
+  > undo it. What the quarantine model buys is not innocence at the door — it is
+  > a bounded, asserted, evidenced holding instead of an unbounded one, which is
+  > §7.7 measure 2 ("hold less") applied to the one file where, per §5.4, the
+  > whole third-party personal data holding lives.
+  >
+  > NAME COLLISION, FLAGGED SO IT IS NOT INHERITED AS CONFUSION. There is an
+  > unrelated caprebate-anchor-quarantine.ts in this directory (Phase 10, the
+  > surveyor walkthrough). It quarantines ANCHOR VALUES pending professional
+  > judgement. It has nothing to do with this and the two must not be wired
+  > together.
+  > ------------------------------------------------------------------
+
+## 30 Aug 2026: Phase 146l
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 1:
+
+  > Caprebate — CLIENT_DOC Ingestion Minimisation Control
+  > Board item 12928074627. Phase 41.
+  > Amended by Phase 44 (board items 12928214881 and 12928215019), 30 Aug 2026.
+  > Amended by Phase 65 (Q56 answered — section 7B), 2 Sep 2026.
+  >
+  > WHAT PHASE 44 CHANGED, READ THIS BEFORE THE PARAGRAPH BELOW. Phase 41 wrote
+  > that the strip runs "before anything is written to durable storage". Under
+  > the architecture recorded in STORAGE_POSITION — pre-signed URL uploads
+  > direct to S3 — that was never true, and the sweep at Phase 42 found it.
+  > Phase 44 (i) records the ingestion boundary this codebase now assumes and
+  > builds the mechanism that bounds it (sections 1A and 1B), (ii) corrects
+  > every sentence that overstated the guarantee rather than weakening the
+  > control to match them, (iii) re-checks condition A14-D4 and records it as PARTLY
+  > MET (section 1C), and (iv) withdraws the retention rule that promised a
+  > redacted copy nothing could produce (section 7A).
+  >
+  > ============================================================================
+  > WHY THIS EXISTS, IN ONE PARAGRAPH.
+  >
+  > caprebate-document-pipeline.ts is an excellent set of controls on what
+  > reaches an extraction model. Phase 40 (board item 12927987812) §3.2 walked
+  > every one of them — the seven NEVER_TO_MODEL segment kinds, the branded
+  > ModelPayload type, the L4 person-name scrubber, the E_PERSON_NAME egress
+  > refusal, Gate A and Gate B — and found that every single row of that table
+  > says "after". They all operate on a document Caprebate already holds. The
+  > transparency duty in Article 14, and the lawful basis question behind it,
+  > attach when the document is OBTAINED, which is the moment the client uploads
+  > it. This module is the control at that boundary. It is additive and it is
+  > upstream: nothing here weakens, replaces or relaxes anything downstream.
+  > ============================================================================
+  >
+  > THE THREE FACTS THAT MAKE IT CHEAP.
+  >
+  >   1. NO FIELD IN ANY OF THE ELEVEN SPECIFICATIONS IS A PERSON'S NAME.
+  >      Re-checked field by field against DOC_SPECS and HUMAN_CAPTURE_SPECS for
+  >      this module — test C7 asserts it mechanically rather than trusting the
+  >      reading. (Thirteen since Phase 151b added the tax return and the tax
+  >      computation, re-checked the same way: still none. Fourteen since Phase 146l
+  >      added the Land Registry official copy, read by a person: still none.) So the parties clause, the execution block and the
+  >      representations are needed by NOTHING downstream, and removing them on
+  >      receipt costs the extraction exactly nothing.
+  >
+  >   2. THE NAME EXCLUSION REGISTER ALREADY IS THIS CONTROL, FOR REGISTERS.
+  >      Its assertion, its fail-closed source lookup and its unclassified-field
+  >      refusal are the right mechanism. Phase 41 adds the CLIENT_DOC entry it
+  >      was missing (subitem 13) and calls the existing assertion rather than
+  >      writing a second one — see assertClaimsWritable().
+  >
+  >   3. THE PIPELINE ALREADY WRITES source_id: 'CLIENT_DOC'.
+  >      A source id the exclusion policy did not contain. Under its own
+  >      fail-closed design that would have thrown E_UNKNOWN_SOURCE the first
+  >      time anybody called the assertion on the upload path. Nobody ever did.
+  >
+  > ----------------------------------------------------------------------------
+  > WHAT IS DECIDED HERE AND WHAT IS DELIBERATELY NOT.
+  >
+  > Gate B, Q34, Q35 and Q36 are NOT decided here and must not be inferred from
+  > anything in this file. Every setting they govern is a parameter on
+  > IngestionSettings with a FAIL-CLOSED default, and FAIL_CLOSED_SETTINGS states
+  > what "fail closed" means for each one and why. A fail-closed default for a
+  > retention rule means DELETE SOONER, not keep longer — a retention rule with
+  > no deletion mechanism is a retention rule that says "forever".
+  >
+  > Q40 is not decided here either. INGESTION_BOUNDARY carries the fail-closed
+  > default this codebase builds against and an is_a_decision field saying, in
+  > data, that no human has chosen it. Two things Phase 44 DOES settle, because
+  > neither is a judgement: an option that cannot be performed is withdrawn
+  > rather than offered (section 7A), and a condition already owned by the
+  > Developer is enforced where it removes an option (CONDITION_D4_STATUS). Both
+  > are put to Lakhbir and the DPO as Q44 and Q45 rather than left in a comment.
+  > ----------------------------------------------------------------------------
+  >
+  > Runs on Node >= 22.6 with type stripping (`node file.ts`). No enums, no
+  > namespaces, no parameter properties — those are not strippable.
+
+## 30 Aug 2026: no phase named
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 1717:
+
+  > Withdrawn 30 August 2026. Kept as a type so the string stays knowable and refusable.
+
+- Line 2081:
+
+  > Whether a redacted copy survives.
+  >
+  > MUST BE FALSE as this codebase stands. The rule that made it true —
+  > RETAIN_REDACTED_DELETE_ORIGINAL — was withdrawn on 30 August 2026
+  > because nothing produces a redacted copy (section 7A), and recordDeletion
+  > refuses a `true` here rather than letting an evidence record assert a
+  > protection that does not exist. The field survives the withdrawal so
+  > that reinstating the rule is one guard to lift, not a schema change.
+
+## 31 Aug 2026: Phase 53
+
+### `src/modules/claims/documents/upload-handler.ts`
+
+- Line 1:
+
+  > Caprebate — CLIENT DOCUMENT UPLOAD HANDLER
+  > Board item 12929369585. Phase 53, 31 August 2026.
+  >
+  > WHY THIS FILE EXISTS.
+  >
+  > `caprebate-client-doc-ingestion.ts` states, as data, the twelve-step call
+  > order any upload handler must obey (`RECEIPT_CONTRACT`). Until today nothing
+  > called it. Eighty-two tests passed against a module with no consumer, which
+  > proves the design is coherent and proves nothing about whether a single
+  > client document is protected. Every control on client documents — the
+  > receipt strip, the quarantine discharge, the deletion clock, the Article 14
+  > transparency record — was DORMANT, in the precise sense that no code path
+  > reached any of them.
+  >
+  > This is the consumer. It is the difference between a specification and a
+  > control.
+  >
+  > WHAT IT GUARANTEES, and these are the two the phase brief names:
+  >
+  >   G1. NOTHING IS PROMOTED TO DURABLE STORAGE BEFORE THE STRIP HAS RUN.
+  >       Enforced three times over, deliberately: by the state machine
+  >       (`promoteRawFile` throws unless `strip_completed_at` is set), by the
+  >       module's own `assertQuarantineDischarged()` (which refuses an
+  >       out-of-order promotion), and by the sweeper that runs on a schedule
+  >       whether or not any handler ran correctly. Three because the failure is
+  >       silent: promoting first and stripping afterwards leaves the unredacted
+  >       file in the retained store and NOTHING ELSE NOTICES.
+  >
+  >   G2. THE QUARANTINE OBJECT IS DELETED AND THE DELETION IS RECORDED.
+  >       In the catch path as well as the success path, so that an upload which
+  >       throws during extraction does not leave an unredacted client file
+  >       sitting in quarantine. Where the store's delete itself fails, the job
+  >       does NOT report success and the QuarantineObject is left undischarged,
+  >       so `assertQuarantineDischarged()` breaks something visible within the
+  >       TTL. A handler that swallowed a failed delete would be worse than no
+  >       handler, because it would look like one.
+  >
+  > WHAT IT DOES NOT DECIDE.
+  >
+  > Q34 (raw-file retention), Q40 (the ingestion boundary) and Q51/Q52/Q53 (the
+  > WordPress control questions raised by Phase 53 in Developer Brief §3.0) are
+  > all OPEN and none is decided here. This handler runs against
+  > `FAIL_CLOSED_SETTINGS` by default and against the `ObjectStore` PORT rather
+  > than any concrete store, precisely so that answering them is a configuration
+  > change and an adapter, not a rewrite.
+  >
+  > The one thing this file decides for itself is `PROMOTION_RULE`, and it is
+  > marked `is_a_decision: false` in the same idiom `INGESTION_BOUNDARY` uses,
+  > for the same reason: a reader who needs to know whether a human chose it
+  > reads the field rather than inferring it from the code.
+  >
+  > WHY A PORT AND NOT S3.
+  >
+  > The Developer Brief's §3 table said S3 with pre-signed URLs. On 29 August
+  > Lakhbir decided the CRM is a custom WordPress back end, which has no object
+  > store at all — `wp-content/uploads/` sits inside the webroot and is served
+  > with no authorisation check. Whether client documents may live there is Q51
+  > and it is not answered. So this handler takes five methods and does not care
+  > which of the three architectures is behind them. Writing it against a
+  > concrete store today would have to be undone.
+  >
+  > Runs on Node >= 22.6 with type stripping (`node file.ts`). No enums, no
+  > decorators, no runtime-typed syntax — same constraints as the rest of phase3.
+
+## 1 Sept 2026: Phase 40
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 1578:
+
+  > Call before the Article 14(3)(a) month expires. Throws unless EVERY
+  > identified person has either a notice or a recorded exemption reason.
+  >
+  > Three separate refusals, and they are different in kind:
+  >
+  >   E_TRANSPARENCY_NO_BASIS_ROLE — a Class D person is in the record at all.
+  >     There is no lawful basis for them, so there is nothing for a notice to
+  >     describe and the exemption is not the answer either. The answer is not to
+  >     hold it, and if one has reached triage then applyReceiptPolicy did not
+  >     run or did not run first. This is the loop between condition A14-D4 and
+  >     condition A14-D1 being closed.
+  >
+  >   E_TRANSPARENCY_REF_IS_NAME — a name is entering the JOIN. person_ref keys
+  >     the claim record and the raw file as well as the identity store, so a
+  >     name here spreads into records that are exported, reported on and handed
+  >     to an accountant. The name belongs in the identity store, keyed by this
+  >     reference. (Restated 1 Sep 2026, Phase 60 — the refusal is unchanged;
+  >     its reason is no longer "we hold no names".)
+  >
+  >   E_TRANSPARENCY_PERSON_UNRESOLVED — the ordinary case: somebody has been
+  >     identified and neither told nor recorded as exempt. Note that an R_A
+  >     person can NEVER be resolved by the exemption: Phase 40 §7.5 concludes
+  >     that one letter to an address printed on the document is not a
+  >     disproportionate effort, it is an argument that fails.
+
+## 1 Sept 2026: Phase 55
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 1879:
+
+  > RET-7 as data. Derived by Phase 55 from the longest window in which somebody
+  > could still act, and NOT approved — the approved flag is the only thing that
+  > lets it compute a date in deletionDueAt.
+
+## 2 Sept 2026: Phase 55
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 1799:
+
+  > ------------------------------------------------------------------ *
+  > 7B. THE ANSWER, AND THE CLOCK IT TURNS OUT TO NEED
+  > Phase 65, board item 12878920167, 2 September 2026
+  >
+  > Q56 asked what Lakhbir meant by "keep it as redacted". Answered on
+  > 2 September 2026: READING B — do not delete the client's document. No
+  > redaction capability is bought or built and no per-document human step is
+  > introduced.
+  >
+  > WHAT THE ANSWER DOES.
+  >
+  >   IT SELECTS AN EXISTING RULE. Reading B is RETAIN_FOR_DEFENCE_PERIOD, which
+  >   section 7 already implements and tests R8 and X8 already hold. Q34's
+  >   retention limb is answered by it.
+  >
+  >   IT DOES NOT REINSTATE RETAIN_REDACTED_DELETE_ORIGINAL. Reading A would
+  >   have. Section 7A stands unchanged, assertRetentionRuleImplementable still
+  >   refuses the withdrawn string, recordDeletion still refuses a retained
+  >   redacted copy, and no producer exists. Worth stating because the two
+  >   readings differ by one word in the answer and by a purchase in the
+  >   consequence.
+  >
+  >   IT DOES NOT, ON ITS OWN, PRODUCE A DELETION DATE — and that is the part a
+  >   one-line configuration change would have missed. RETAIN_FOR_DEFENCE_PERIOD
+  >   reads defence_period_ends_at, which the schema documents as coming from
+  >   the defence-pack clock, RET-1 and RET-2. RET-1 is an unset blank whose
+  >   drafting defect is itself open as Q60. Select the rule, supply nothing,
+  >   and deletionDueAt has no date to give: every retained file lands in
+  >   DeletionSweep.undeletable, which test R9 already refuses to let pass
+  >   quietly. So "keep it" without a clock is not the cheap answer it looks
+  >   like. It is indefinite retention, arrived at by omission.
+  >
+  > SO THE CLOCK IS WIRED HERE. Phase 55 derived RET-7 for this exact file — six
+  > years from the later of claim_period_end and report_delivered_at — and wrote
+  > that a Reading B answer would carry the period, the instrument and the
+  > trigger over to the original unchanged. RET7 below is that derivation as
+  > data and ret7DueAt is the arithmetic.
+  >
+  > AND IT IS WIRED OFF, because a derived period is not an approved one. RET-7
+  > belongs to the DPO and his appointment is not yet signed for, so
+  > settings.ret7_approved defaults to false and the answer does not quietly
+  > create a six-year retention period nobody signed. Fail-closed for an
+  > unapproved clock is undeletable-and-surfaced rather than a date: a plausible
+  > date would make the schedule look finished, which is the failure the
+  > Developer Build Order already warns about in terms.
+  >
+  > THE CARVE-OUT PHASE 55 DID NOT HAVE. Retention Determinations 7.3 says a
+  > Reading B answer changes "one sentence and no arithmetic". Right about the
+  > arithmetic, one sentence short. deletionDueAt refuses the long clock to any
+  > document whose strip removed NO_LAWFUL_BASIS content (condition A14-D4, section
+  > 1C), and those fall back to the extraction clock. The instruction is
+  > therefore honoured WITH A STATED EXCEPTION: some client documents will be
+  > deleted despite an instruction to keep them, the exception is not
+  > discretionary, and it is not a defect. It is condition A14-D4 doing its job.
+  > ------------------------------------------------------------------
+
+## 2 Sept 2026: Phase 65
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 539:
+
+  > PHASE 65, 2 September 2026. Q56 was answered Reading B — do not delete
+  > the client document — which closes the FIRST of the two routes listed in
+  > what_would_make_it_met, by decision rather than by argument. Recorded
+  > here and not in that list because both entries still WOULD make A14-D4 met;
+  > what changed is that one of them is no longer available to be chosen.
+
+- Line 2059:
+
+  > RET-7 limb (a) — the end of the accounting period (CT) or year of
+  > assessment (IT) the claim relates to. Set by the CTA at claim close, and
+  > NOT the same date as claim_closed_at: the discovery windows run from the
+  > end of the period, which is normally earlier and can be a year earlier.
+  > Phase 65.
+
+- Line 2067:
+
+  > RET-7 limb (b) — the date the report went to the client. Set by the system. Phase 65.
+
+### `src/modules/claims/documents/upload-handler.ts`
+
+- Line 251:
+
+  > ------------------------------------------------------------------ *
+  > 3. PROMOTION_RULE — the one thing this file decides, marked as such
+  >
+  > RECEIPT_CONTRACT step 6 says "where the raw file is retained at all (Q34),
+  > promote to the durable prefix". Q34 is open, so "at all" needs a reading,
+  > and the reading has to be written down rather than left inside an `if`.
+  >
+  > The rule: promote the raw file ONLY where the retention rule keeps it past
+  > the moment extraction completes. Under FAIL_CLOSED_SETTINGS
+  > (DELETE_ON_EXTRACTION_COMPLETE, grace 0) the raw file therefore NEVER
+  > REACHES DURABLE STORAGE AT ALL — it lives in quarantine, is extracted from,
+  > and is deleted. That is strictly less exposure than promoting it and then
+  > deleting it, and it is the fail-closed reading of an open question.
+  >
+  > It is NOT a decision. If Lakhbir answers Q34 with RETAIN_FOR_DEFENCE_PERIOD,
+  > or with a non-zero grace period, promotion switches on with no code change.
+  >
+  > PHASE 65, 2 SEPTEMBER 2026 — Q34's retention limb was answered that way, and
+  > switching promotion on found a gap between this rule and its implementation.
+  > The rule is stated per RETENTION RULE; the retention clock is per DOCUMENT.
+  > deletionDueAt refuses the long clock to a document whose strip removed
+  > NO_LAWFUL_BASIS content (condition A14-D4) and falls it back to the extraction
+  > clock — so for that document the retention rule does NOT outlive extraction,
+  > and promoting it writes exactly the content A14-D4 says must not be held into
+  > the durable prefix, to be deleted from it moments later. That is not a new
+  > rule: it is this rule, applied to the record instead of to the settings.
+  > shouldPromoteRawFile now takes the record and says so. Test G1c.
+  > ------------------------------------------------------------------
+
+- Line 287:
+
+  > Phase 65. Per-document, because the clock is per-document.
+
+## 2 Sept 2026: no phase named
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 2012:
+
+  > Q34's retention limb, ANSWERED by Q56 on 2 September 2026 as
+  > RETAIN_FOR_DEFENCE_PERIOD (section 7B). The default below is unchanged and
+  > is still the shorter rule, because a default is what an unconfigured
+  > system does, not what the controller decided.
+
+### `src/modules/crm/rooms.ts`
+
+- Line 1:
+
+  > THE ROOM SCHEDULE — sector by sector, for the surveyor to count.
+  >
+  > TRANSCRIBED, NOT WRITTEN. Every room type below comes from
+  > `04-phase-work/phase9/room-list-plain-english-v1.md` — "What we think is in
+  > each room", version 1.0, 2 September 2026 — which is the authoritative
+  > source and which this phase does not touch. Nothing here is a new judgement
+  > about what is in a healthcare building.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT IS DELIBERATELY NOT HERE, AND IT IS THE MOST IMPORTANT LINE IN THIS FILE
+  >
+  > COUNTS. The source document says it twice and means it: "Nothing below says
+  > 'three sluice rooms' or 'twelve nurse-call points'. A count is a fact about
+  > one specific building and we have not seen one. The count itself is the
+  > survey's job." So this file carries the room TYPES and what a count of each
+  > would be measured against, and the workspace asks the surveyor for the
+  > number. A seeded count would be this system inventing a property fact, which
+  > is the one thing the whole discipline exists to prevent.
+  >
+  > AND THE ITEM-LEVEL SCHEDULE. The source lists roughly 150 individual
+  > fixtures — DN-1 to DN-31, GP-1 onwards, and so on — each with why we think
+  > it is there, what drives its count and how sure we are. That belongs to the
+  > surveyor's own document and is where it already is. Copying 150 rows into
+  > code would create a second copy to keep in step with the first, and the
+  > first is the one a chartered surveyor signs. The workspace names the
+  > document instead.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE FOUR COUNT DRIVERS ARE THE SOURCE'S OWN, verbatim from its own table:
+  > per room, per building, per square metre, and from the paperwork. Which one
+  > applies "is a real decision, not a formality" — so it is carried through
+  > rather than flattened into "how many".
+  >
+  > SECTOR IDS ARE THE ENGINE'S. `care_homes`, `dental`, `supported_living`,
+  > `gp`, `private_hospital` — the same five SECTOR_IDS the assessment and the
+  > estimate use. There is no sixth vocabulary for a sector in this project and
+  > this file is not starting one.
 
 ## 3 Sept 2026: Phase 105
 
@@ -158,6 +753,87 @@ neither says.
   > set on two, so the seeded data shows both shapes: a bounded range where
   > the split is unknown, and a single determined figure where it is not.
 
+## 3 Sept 2026: Phase 113a
+
+### `src/modules/assessment/assessment.ts`
+
+- Line 402:
+
+  > THE CONTACT CHANNEL IS NO LONGER WRITTEN HERE, AND THAT IS THE FIX.
+  >
+  > This function used to map CB_BOOKING's channel ids onto
+  > `businesses.preferred_contact`, whose vocabulary was email / telephone /
+  > virtual / post — and its own comment called that "a FOURTH vocabulary". It
+  > was right, and mapping between the two is what kept both alive: 'virtual' is
+  > VIDEO, removed on 3 September 2026, and 'post' was never a channel, so the
+  > column could hold two things no client can choose. The seed held both.
+  >
+  > Migration 004 retired the column and migration 007 REMOVED it (Phase 113a),
+  > so there is no longer a second place for this fact to be wrong in. The
+  > channel is written to the BOOKING row, in CB_BOOKING's own words, by
+  > `writeBookingAndContact` in router.ts — one place, one vocabulary — and the
+  > back office, the calendar and the client's portal all read that row.
+
+## 3 Sept 2026: no phase named
+
+### `src/modules/assessment/assessment.ts`
+
+- Line 188:
+
+  > Whether the engine stops this draft at the reasoned negative.
+  >
+  > ONLY `gated`. "Not sure" and never-asked both read `gated: false` — the
+  > engine's reversal of 3 September 2026: an unknown tax position continues, and
+  > the figure carries the condition on its face (N4). Nothing here widens that.
+
+## 4 Sept 2026: no phase named
+
+### `src/modules/claims/research.ts`
+
+- Line 120:
+
+  > THE TIERS, TAKEN FROM THE DOCUMENTS THAT DECIDED THEM RATHER THAN INVENTED.
+  >
+  > "Caprebate — Developer Build Order.md", the two-tier table, and the same
+  > table in "Caprebate — API & Data Provenance Map.html" §6, both recording
+  > Lakhbir's decision of 4 September 2026:
+  >
+  >   TIER 1 — FREE: "EPC · care regulators · Ofsted · RSH · Charity Commission ·
+  >   OSCR · Companies House · HMLR Price Paid · VOA open data · OS · planning"
+  >
+  >   TIER 2 — PAID: "Homedata address lookup · HMLR title register · any
+  >   licensed or metered product"
+  >
+  > Mapped onto the source ids in caprebate-source-register.ts, which is the
+  > register of what we actually consult. BCIS is tier 2 under "any licensed or
+  > metered product": its licence in that same module is a RICS subscription and
+  > its own note says the rate table may not be reproduced.
+
+## 6 Sept 2026: Phase 107
+
+### `src/modules/claims/engaged.ts`
+
+- Line 516:
+
+  > GATED ON `assessment.read`, AND IT WAS `business.read` UNTIL PHASE 107.
+  >
+  > That was wrong in both directions, and the surveyor workspace is what
+  > exposed it. This list is derived from three things and nothing else: the
+  > assessment's own answers, the register records, and the engine's cash
+  > gates. `business.read` admits ACCOUNTING — which may read NONE of those
+  > three, by the decision of 6 September 2026 — and refuses SURVEYING, which
+  > may read ALL of them: it is on assessment.read, answer.read and
+  > register_record.read. So the old gate let in the role that must not see
+  > the list and kept out the role whose own pack half of it blocks.
+  >
+  > Nothing that already called this changes: `businessPage` sits behind
+  > `research.read`, which is ADMIN and SALES, and both are on this rule too.
+  >
+  > THE ID IS NOT LOAD-BEARING and the synthetic one says so. The rule turns
+  > on the ROLE and on `business_id`; no rule for this action reads `id`. The
+  > same idiom is three functions above, where an answer's authorisation
+  > object is built as `${assessment}:${ord}`.
+
 ## 6 Sept 2026: no phase named
 
 ### `src/core/authz.ts`
@@ -210,6 +886,32 @@ neither says.
   >
   > ACCOUNTING IS CAPREBATE'S OWN FINANCE. It is not the client's accountant, who
   > has no login at all and receives the computation pack offline.
+
+### `src/modules/claims/engaged.ts`
+
+- Line 75:
+
+  > THE SECTION GATE — asked as an object question, as backoffice.ts explains.
+  >
+  > IT IS `research.read`, AND THE CHOICE MATTERS. The first version of this
+  > gated on `business.read`, which reads like the obvious rule for a page about
+  > businesses and lets in two roles that should not be here:
+  >
+  >   ACCOUNTING is on `business.read` because it needs a client's NAME for an
+  >   invoice, and that is the whole of what it may know about them — settled
+  >   6 September 2026. It is not on assessment.read, answer.read,
+  >   register_record.read or internal_note.read, so it would have entered this
+  >   page and been refused by panel 1 the moment it tried to draw.
+  >
+  >   SURVEYING is not on `business.read` at all, so it was refused — correctly,
+  >   but for a reason that would have been an accident rather than a decision.
+  >   A surveyor's view of a job is the QUARANTINED workspace, which is a
+  >   different screen with a different rule; this page carries our estimate,
+  >   the research and the internal notes, and none of those is theirs.
+  >
+  > `research.read` is ADMIN and SALES, which is exactly who works a claim, and
+  > it is the rule the centre of this page (panel 2) already turns on. One rule,
+  > for the section and for the thing the section is for.
 
 ## 7 Sept 2026: no phase named
 
@@ -722,6 +1424,88 @@ neither says.
   > `booking.read`, and the write path re-checks `isBookable` at the moment of
   > writing exactly as the staff path does.
 
+### `src/modules/crm/schedule.ts`
+
+- Line 1:
+
+  > WORKING TIMES AND BOOKABLE SLOTS — ONE SOURCE, NOT TWO.
+  >
+  > The phase brief is unusually blunt about this and it is the reason the phase
+  > builds settings before the calendar: "Working times are not decoration — they
+  > are the input to the booking system, so a slot outside a user's working hours
+  > must not be offerable."
+  >
+  > SO THERE IS EXACTLY ONE FUNCTION THAT DECIDES WHETHER A MOMENT IS BOOKABLE,
+  > AND EVERYTHING ASKS IT. The staff calendar asks it. The client's own
+  > funnel-close picker asks it. A test asserts that a moment the staff calendar
+  > will not accept is not one the public picker offers, by driving both — not by
+  > reading two lists and comparing them, which is what a second source looks
+  > like on the day it is written and for a fortnight afterwards.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > FOUR DECISIONS, EACH OF WHICH COULD REASONABLY HAVE GONE THE OTHER WAY
+  >
+  > 1. THE PUBLIC PICKER SEES TIMES, NEVER PEOPLE. `publicSlots` returns moments
+  >    and nothing else. A visitor who has given us no name learns that Tuesday
+  >    at ten is free; they do not learn whose diary it is, how many staff there
+  >    are, or who was away on Thursday. The staff view — `staffSlots` — carries
+  >    the owner, because assigning is the whole job there.
+  >
+  > 2. NOBODY AVAILABLE IS AN ANSWER, NOT AN EMPTY LIST. Both functions return a
+  >    REASON alongside the slots — see `Unavailable` for the four and for the
+  >    one that was found by opening the screen rather than by reasoning about
+  >    it. The brief: "If nobody is available, say so honestly rather than
+  >    showing an empty grid." An empty array cannot tell those states apart, and
+  >    a grid drawn from one reads as "we are closed" whichever it was.
+  >
+  > 3. WORKING TIMES ARE LOCAL HOURS. STORED TIMES ARE UTC INSTANTS. THE TWO ARE
+  >    DIFFERENT KINDS OF THING AND THIS DECISION IS THE HEART OF THE FILE.
+  >    (Phase 113a, 9 September 2026. Until then everything here was UTC and said
+  >    so, which was honest and wrong for eight months of the year — see below.)
+  >
+  >    `bookings.starts_at` is an INSTANT: a specific moment that happened or
+  >    will. It stays ISO-8601 UTC, it is compared as UTC, and nothing in this
+  >    file converts it for any purpose other than deciding which local day and
+  >    local minute it falls on.
+  >
+  >    `working_times` is NOT an instant and never was. It holds minutes from
+  >    midnight against a weekday, with no date at all — and "09:00" has no
+  >    single UTC answer across a year, because the same clock time is 09:00Z in
+  >    January and 08:00Z in June. IT HAD TO MEAN ONE OR THE OTHER, AND IT MEANS
+  >    LOCAL, for the plain reason that a person's hours are local hours: staff
+  >    who say they work nine to five mean nine to five in March and in July, and
+  >    a system storing UTC minutes would silently move everybody's day by an
+  >    hour twice a year and make them re-enter it.
+  >
+  >    SO THE CONVERSION HAPPENS WHERE SLOTS ARE GENERATED, once per candidate
+  >    day: `slotsBetween` walks LOCAL days, and for each local wall-clock minute
+  >    a working period covers it asks `instantsForLocalMinute` which UTC instant
+  >    or instants that is. `isBookable` is the mirror — it takes a UTC instant
+  >    and asks which local weekday and local minute it lands on.
+  >
+  >    THAT IS NOT DISPLAY LEAKING INTO LOGIC, AND THE DIFFERENCE MATTERS. No
+  >    comparison here is made in local time, nothing is stored in local time,
+  >    and no local string reaches a caller: every value that goes in or comes
+  >    out of this file is still a UTC instant. What is local is the MEANING OF
+  >    THE RULE — a weekly pattern of human working hours — and a rule expressed
+  >    in local hours can only be applied by converting it per day.
+  >
+  >    TWICE A YEAR THIS IS VISIBLE, AND BOTH CASES ARE HANDLED RATHER THAN
+  >    ROUNDED AWAY. On the March morning the clocks go forward, local 01:00 to
+  >    01:59 does not exist and no slot is offered in it. On the October morning
+  >    they go back, local 01:00 to 01:59 happens twice and both are offerable,
+  >    because they are two different real moments. `instantsForLocalMinute` in
+  >    localtime.ts returns zero, one or two instants for exactly this reason.
+  >
+  >    NOTHING HERE KNOWS THAT BRITAIN IS EVER AN HOUR AHEAD. Every offset comes
+  >    from `Intl` at the instant in question. A hard-coded `+1` is wrong for
+  >    four months, a hard-coded `0` for eight, and both are wrong on the two
+  >    days that matter most.
+  >
+  > 4. A SLOT IS TAKEN BY ANY BOOKING THAT OVERLAPS IT, not merely one that
+  >    starts at the same minute. Two thirty-minute calls cannot share a
+  >    quarter-hour, and a comparison on start times alone would let them.
+
 ### `src/shared/localtime.ts`
 
 - Line 1:
@@ -780,6 +1564,63 @@ neither says.
   > to replace with a lookup, and it is the ONLY thing: no other file names a
   > zone, and none of the functions below reads the host machine's own timezone
   > — a server in Frankfurt must render the same page as a server in Leeds.
+
+## 9 Sept 2026: Phase 113b
+
+### `src/modules/assessment/funnel-session.ts`
+
+- Line 1:
+
+  > THE FUNNEL STATE, MAPPED ONTO AN ENGINE SESSION.        Phase 113b, 9 Sep 2026
+  >
+  > The six screens write a CB_FUNNEL state; the engine takes a Session, which is
+  > a different shape with about 190 named facts. This file is the mapping, and
+  > it is the only one — `unestablishedGates` in engaged.ts used to carry three
+  > `if` statements inline and said in its own header that the rest was missing.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE RULE THIS FILE IS WRITTEN UNDER
+  >
+  > A QUESTION MAPPED ONTO THE WRONG SESSION FACT IS WORSE THAN ONE NOT MAPPED
+  > AT ALL. An unmapped fact stays ABSENT, and absent is the state the engine is
+  > written to expect — every relieving gate in CB_CASH treats absent exactly as
+  > it treats "unsure". A fact mapped wrongly is a tax answer changed by a
+  > screen, and nothing downstream can tell it apart from one the client gave.
+  >
+  > So every mapping below is justified from THE ENGINE'S OWN CODE — the key it
+  > reads, or the question whose `onSet` sets it — and never from two field
+  > names looking alike. Where the evidence did not reach that bar the fact is
+  > LEFT UNMAPPED and the reason is written down, under NOT MAPPED at the foot
+  > of this file. That list is the more useful half of this module.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > N4 IS THE ACCEPTANCE TEST, AND IT IS ENFORCED IN ONE PLACE
+  >
+  > A DONT_KNOW or a SKIPPED answer sets NOTHING. Every value that reaches a
+  > `set` call below has been through `known()`, which returns null for null,
+  > undefined, the empty string and each of the funnel's three "I don't know"
+  > spellings — "not sure" (Q1, Q1b), "dont_know" (Q1a) and "unsure" (the profit
+  > follow-up). Three spellings for one state is not tidy, but they are the
+  > strings the site's own OPTIONS lists use and this file transcribes rather
+  > than renames them.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHY THE DRAFT AND NOT THE ANSWER ROWS
+  >
+  > `assessment_answers` looks like the obvious source and it is the wrong one:
+  > ITS `question_id` IS NOT A SINGLE VOCABULARY. The funnel writes Q1 for
+  > "have you already claimed on the fixtures"; `src/core/seed.ts` writes Q1 for "how
+  > is the business set up" with the value "company". The three-question mapping
+  > this file replaces read the first and got the second, so every seeded
+  > business carried `own_prior_claim: "company"` — a fact nobody stated, on a
+  > key the front door reads. It was inert only because no branch matches that
+  > string.
+  >
+  > `assessment_drafts.state_json` has one writer, `applyScreen` in router.ts,
+  > and one vocabulary, CB_FUNNEL's. Where there is no draft row — a seeded or
+  > imported assessment — NOTHING IS MAPPED, deliberately: an absent fact is the
+  > state the engine expects, and guessing a second undeclared vocabulary is the
+  > error this file exists to avoid.
 
 ## 9 Sept 2026: Phase 132e
 
@@ -874,6 +1715,184 @@ neither says.
   >
   > Runs on Node >= 22.6 with type stripping.
   > Run:  cd phase9 && node --test caprebate-region.test.ts
+
+### `src/modules/portal/portal.ts`
+
+- Line 337:
+
+  > ============================================================================ *
+  > 3b · THE CLIENT MOVES THEIR OWN CALL          Phase 113a, 9 September 2026
+  >
+  > WHY THIS EXISTS. Phase 105 built the picker at the funnel close and the staff
+  > side of moving a booking. The portal showed a client their appointment and
+  > gave them no way to change it, so the only route was to telephone us — which
+  > is the one thing a portal exists to avoid. A client who cannot move a call
+  > does not keep it; they miss it.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > IT IS BUILT ON WHAT WAS ALREADY THERE, AND THERE IS STILL ONE OF EVERYTHING
+  >
+  >   THE SLOTS come from `publicSlots` — moments, with the people taken out. A
+  >   client must not learn whose diary it is, and the client's own funnel-close
+  >   picker already uses that function, so the two cannot drift.
+  >
+  >   THE WRITE goes through `isBookable` at the moment of writing, which is the
+  >   same re-check the staff path makes. The picker is a courtesy; the refusal
+  >   is the control. A client who posts a time nobody offered is refused by the
+  >   working times, not by the absence of a radio button.
+  >
+  >   THE RECORD is `booking_changes`, written exactly as a staff move writes it,
+  >   with `changed_by` naming the client's own user. The staff booking page
+  >   already renders that history and now shows the client's moves in it without
+  >   a line of new code — which is the test that this is one mechanism and not
+  >   two.
+  >
+  >   THE ROW is the same row. Nothing here creates a booking; `UPDATE bookings`
+  >   is the whole of the mutation, and the staff calendar reads it back.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > TWO DECISIONS THIS JOB HAD TO MAKE — BOTH REVISED BY PHASE 132e
+  >
+  > Lakhbir, 16 September 2026, answering "How late may a client move their own
+  > call, and may they cancel it outright?": "Give the client full control to
+  > cancel at any time, and rebook at a time that suits them".
+  >
+  > 1 · HOW LATE MAY THEY MOVE IT — AT ANY TIME. Until Phase 132e a call inside
+  >     two hours could not be moved, released or cancelled here. That refusal is
+  >     gone for the call the client already holds. What stays is the rule for the
+  >     NEW time a client picks: it must be at least two hours away
+  >     (`CLIENT_MOVE_NOTICE_MINUTES` in schedule.ts), so whoever is calling knows
+  >     about it. A call that has already passed may be moved to a new time too —
+  >     a missed call is exactly the one somebody wants to rebook.
+  >
+  > 2 · MAY THEY CANCEL — YES, AT ANY TIME, AND THE TIMES COME FIRST. Phase 113a
+  >     refused a self-service cancellation on the reasoning that it turns a lead
+  >     cold. The decision now belongs to the client. The screen still offers new
+  >     times first, then "ring me instead" (`releaseOwnBooking`), and only then
+  >     `cancelOwnBooking`. A cancellation KEEPS THE ROW — its time, channel and
+  >     entry point — marks it cancelled with who and when, frees the slot, writes
+  >     a `booking_changes` row with `cancelled = 1` and an audit line, and moves
+  >     NOTHING about the enquiry: no lead, claim or organisation status changes.
+  >     The back office's calendar lists it as cancelled. A cancelled call is final
+  >     on its row (migration 025).
+  > ============================================================================
+
+## 9 Sept 2026: Phase 146f
+
+### `src/modules/claims/letter.ts`
+
+- Line 1:
+
+  > THE ENGAGEMENT LETTER, RENDERED FROM THE DOCX THAT ALREADY EXISTS.
+  >
+  > `06-commercial-and-governance/Caprebate Engagement Letter.docx` is the
+  > letter. It is not re-typed here and it is not summarised: this module reads
+  > that file and turns its paragraphs into markup. If the letter changes, the
+  > portal changes, and there is no second copy to forget.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT THIS MODULE REFUSES TO DO, AND IT IS THE POINT OF IT
+  >
+  > TERMS IN THAT LETTER ARE STILL BLANK, AND HOW MANY IS DERIVED, NOT WRITTEN
+  > HERE — `unresolvedTerms()` counts them from the document itself. This
+  > sentence said FIVE until Phase 108 re-derived EIGHT on 9 September 2026 (the
+  > prose had counted the clauses clause 13 names, not the placeholders), and it
+  > said EIGHT until Phase 115 redrafted clause 7 on 10 September 2026 with three
+  > more choices in square brackets. That is the point: the number moves when the
+  > letter does. Run `unresolvedTerms()`. They are shown as blank, loudly.
+  > A prototype that filled in a plausible break fee would be handing the next
+  > reader a number with no decision behind it, and a number in a prototype
+  > becomes a number in a contract. Board item 12984553034 is the question, it
+  > is under Lakhbir, and it is not this build's to answer.
+  >
+  > The letter says so itself at clause 13: "These three terms are not yet
+  > settled and are marked for completion before issue, in the same way as the
+  > fee basis at clause 4 and the Break Fee at clause 5."
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > AND A SECOND THING THE PROTOTYPE MUST NOT DO QUIETLY
+  >
+  > The .docx is a SPECIMEN. It names "Quenmoor Care Group" and quotes an
+  > indicative range of £27,788–£73,125 — an invented client and an illustrative
+  > figure. (Until Phase 153, 28 September 2026, the specimen was "Oakfield Care
+  > Group", company number 09183422, and that number is a real, dissolved
+  > company's. Name and number were both replaced in the .docx itself.) Rendering it unchanged into a real client's portal would show them
+  > somebody else's name in their own contract. So the specimen values are
+  > substituted where the record supplies a real one, and MARKED where it does
+  > not. Neither is silent.
+  >
+  > SIGNING IS BUILT IN SINCE PHASE 146f, AND SWITCHED OFF: src/modules/claims/signing.ts.
+  > The state machine (NOT_SENT → SENT → VIEWED → SIGNED) lives in the
+  > `engagements` table, and SIGNED counts only with its signature record
+  > (engagement_signatures). A letter with a term still in square brackets is
+  > never signed, whatever the switch says.
+
+## 10 Sept 2026: Phase 2
+
+### `src/modules/crm/leads.ts`
+
+- Line 1:
+
+  > LEADS — NOT A SECOND INTAKE. CRM 2 of 10, 10 September 2026.
+  >
+  > A filled assessment, a funnel-close booking, a gated exit and a referral are
+  > already leads. This file ties them together: what made each one a lead, where
+  > it came from, who owns it, what happens next, and — once the enquiry gate is
+  > passed — its conversion into a claim WITHOUT RE-KEYING anything the assessment
+  > captured. The schema is migration 010; the routes are src/modules/crm/pipeline-pages.ts.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > CONVERTING A LEAD NOW OPENS THE CLAIM (disposition Part E, row E3)
+  >
+  > CRM 1 of 10 opened a claim inside the funnel's `submit()`. That put every
+  > prospect straight into the procedure's second stage with the ENQUIRY GATE
+  > never asked — a skipped gate, on every claim, by construction. So `submit()`
+  > now opens a LEAD, and the claim is opened here, when a person has recorded the
+  > enquiry checks and the lead is QUALIFIED. The claim_ref series is unchanged:
+  > the reference is simply taken at conversion instead of at submission.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > NO LEAD SCORE (disposition rows 7.8 and 25.10, REJECTED)
+  >
+  > A score built on the estimate routes unknowns into a number that ranks leads —
+  > N4 — and automated scoring is the CRM documents' own Phase 2. A lead has a
+  > PRIORITY a person sets, and nothing that is computed from the estimate.
+  >
+  > A LEAD CARRIES NO PERSON. The client's own contact is a `contacts` row on the
+  > organisation, where the funnel close already writes it (N2) — or, for a call
+  > asked for at the reasoned negative, a `contacts` row that BELONGS TO THE LEAD
+  > until the lead has an organisation, and moves to it on conversion (migration
+  > 011, disposition row E22). Still one table a person lives in; never a column here.
+
+## 10 Sept 2026: Phase 115
+
+### `src/modules/assessment/funnel-session.ts`
+
+- Line 190:
+
+  > THE BREAK-EVEN SWITCH — SHIPPED OFF.                     Phase 115, 10 Sep 2026
+  >
+  > The reading the engine's own profit question points at, built and left inert
+  > so that the tax adviser's answer to the question above is a one-line change
+  > rather than a build — the standing rule that a thing which can be built
+  > before the person it waits on has answered is built and switched off.
+  >
+  > OFF, as shipped: "breakeven" is not in PROFIT and sets nothing, so a
+  > break-even client, a "not sure" client and a client who was never asked
+  > produce THE SAME SESSION. That is N4, and engaged.test.ts asserts it three
+  > ways across all five sectors.
+  >
+  > ON: "breakeven" sets `sufficient_profit` to "no" and NOTHING ELSE MOVES. "no"
+  > is the cautious branch — CB_CASH gate 1 shuts, no near-term cash figure is
+  > shown, and the loss carry-back route is pointed at; it relieves nobody. The
+  > session is then identical to a loss-making client's. "not sure" and absent
+  > still set nothing with the switch on. What turning it on costs is the thing
+  > the question records: "insufficient taxable profit confirmed" printed about a
+  > business that told us only that it was roughly break-even.
+  >
+  > NOT AN ENGINE SWITCH. It lives at the funnel-to-session boundary in the back
+  > end, not in the calculator (09-app/engine/src/calculator), so the page check's count of the
+  > tax adviser's engine switches (engine/tools/verify-page.cjs) does not include it, and must not be edited to.
 
 ## 10 Sept 2026: no phase named
 
@@ -999,6 +2018,133 @@ neither says.
   > not queued. A REFUSAL IS NOT AN ERROR, AND IT IS NOT A SILENT SUCCESS EITHER —
   > the caller is told `refused`.
 
+### `src/modules/crm/crm-pages.ts`
+
+- Line 1:
+
+  > THE CRM BACKBONE'S ROUTES AND PAGES — organisations, properties, and the
+  > claim page's header and overview. CRM 1 of 10, 10 September 2026.
+  >
+  > Same shape as `handleEngaged` and `handleSurveyor`: it returns 'not-mine' for
+  > anything it does not own, so the mounting in staff.ts is one line and nothing
+  > is shadowed by accident.
+  >
+  > THE THREE RULES FROM router.ts APPLY UNCHANGED: authorise on the object on
+  > every request, no route maps a path onto the filesystem, and every response
+  > is built with the `h` tagged template. The third matters on every page here —
+  > a contact's notes, a property's construction notes and a claim's next action
+  > are all STAFF-SUPPLIED TEXT RENDERED IN A STAFF PAGE, which is where stored
+  > cross-site scripting lives. test/crm.test.ts posts a script tag into each and
+  > asserts what comes back is escaped. A website is shown as TEXT, never as a
+  > link, so a hostile href has nowhere to go.
+  >
+  > `view.json` IS NOT A CONVENIENCE. The property and the claim each serve the
+  > object their page is drawn from, to the same actor under the same rule, so
+  > that N1 can be verified on the wire — tools/payload-proof.ts reads both.
+  >
+  > NOTHING HERE DECIDES ANYTHING. src/modules/crm/crm.ts does every authorisation and
+  > every derivation; this file draws what it returns.
+
+### `src/modules/crm/crm.ts`
+
+- Line 1:
+
+  > THE CRM BACKBONE — ORGANISATIONS, CONTACTS, PROPERTIES AND THE CLAIM RECORD.
+  > CRM 1 of 10, 10 September 2026.
+  >
+  > VIEW MODELS AND WRITES. The routes and the rendering are src/modules/crm/crm-pages.ts,
+  > which draws what these return and decides nothing. The scope — every field
+  > and why it is shaped the way it is — is 09-app/CAPREBATE-CRM-DISPOSITION.md,
+  > and the schema is migration 009.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > FOUR RULES RUN THROUGH EVERY FUNCTION BELOW
+  >
+  > 1 · AUTHORISED ON THE SPECIFIC OBJECT, ON EVERY READ AND EVERY WRITE. A list
+  >     is filtered row by row through `can()`, never by a WHERE clause that
+  >     happens to agree with the rule table today.
+  >
+  > 2 · N1 — BUILT FORWARDS. A claim view for a role that may not read the value
+  >     is assembled without it; nothing is read and then stripped. The claim
+  >     value, the tax benefit and every sealed estimate field arrive only through
+  >     `claim.read_value`, which is ADMIN and SALES and nobody else, and
+  >     tools/payload-proof.ts searches the served object for all seven.
+  >
+  > 3 · N4 — UNKNOWN AND NEVER-ASKED BEHAVE IDENTICALLY. A column nobody recorded
+  >     is NULL; where its vocabulary also carries UNKNOWN the two produce the
+  >     same reading, the same words on the screen, and neither passes anything.
+  >     `priorClaimRuledOut` is the one reading of the prior-claim field a later
+  >     gate may use, and it is true on a recorded NO and on nothing else.
+  >
+  > 4 · DERIVE, DO NOT RE-KEY. The legal name and company number come from a
+  >     Companies House register record where one is held; the claimant type from
+  >     the funnel's own entity answer; the jurisdiction from the postcode through
+  >     src/integrations/postcodes/postcode.ts. WHERE A FACT IS DERIVED, THE STORE REFUSES A RECORDED
+  >     ONE — "never asked twice" is a rule here, not a form that hides a field.
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 1:
+
+  > LEADS AND THE PIPELINE — THE ROUTES AND THE PAGES. CRM 2 of 10, 10 September 2026.
+  >
+  > Same shape as src/modules/crm/crm-pages.ts: it returns 'not-mine' for anything it does
+  > not own, so the mounting in staff.ts is one line.
+  >
+  > NOTHING HERE DECIDES ANYTHING. src/modules/crm/leads.ts and src/modules/crm/pipeline.ts
+  > authorise every read and write on the specific object and ask every gate on
+  > the server; this file draws what they return and posts what a person asked for.
+  >
+  > DRAGGING IS A COURTESY, AND IN THIS BUILD IT IS A BUTTON. The content security
+  > policy forbids script and every page works without JavaScript, so a card on
+  > the board carries a form that asks to move it one stage on. It posts to the
+  > same move the claim page makes, and the server asks the gate again — which is
+  > the whole of what "the write asks the gate again" requires.
+  >
+  > Every staff-supplied value — a next action, a note, a hold reason, an
+  > organisation's name on a referral — goes through `h` and is escaped on output.
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 1:
+
+  > THE CLAIM PIPELINE — THE OPERATING PROCEDURE'S TEN STAGES, THEIR GATES AND
+  > THEIR EXITS. CRM 2 of 10, 10 September 2026.
+  >
+  > The stages' words are src/shared/stages.ts; the schema is migration 010; the
+  > scope is 09-app/CAPREBATE-CRM-DISPOSITION.md. The routes and pages are
+  > src/modules/crm/pipeline-pages.ts, which draws what this returns and decides nothing.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > EVERY GATE IS HERE, ON THE SERVER, AND IS ASKED AGAIN AT EVERY WRITE
+  >
+  > A move is a request. `moveClaim` loads the claim, authorises the person, reads
+  > the gate out of the stage the claim is in — from the records, on this request
+  > — and only then writes. Nothing a browser sent opens a gate: dragging a card
+  > on the board and posting the claim page's form reach the same function, and a
+  > test posts a move past every gate and asserts the refusal.
+  >
+  >   ENQUIRY          the enquiry checks, each YES — UNKNOWN and never-asked do not pass
+  >   ASSESSMENT       an assessment on record for the organisation
+  >   ENGAGEMENT       `assertSignedEngagement` in src/modules/claims/research.ts — reused, never a second one
+  >   DATA_GATHERING   a recorded confirmation, since the claim entered the stage
+  >   SURVEY           a `surveyor_commitments` row on a survey job on THIS claim
+  >   VALUATION        a recorded confirmation
+  >   TAX_ADVISER_SIGNOFF  `claims.tax_adviser_signoff_at`, NULL until CRM 6 of 10 — SHUT
+  >   REPORTS          the sign-off again, and both confirmations the procedure names
+  >   INVOICE          the fee trigger, read at its most cautious reading, and an invoice raised
+  >   DEFENCE_PACK     a recorded confirmation, and the claim closes
+  >
+  > FORWARD ONE STAGE AT A TIME, OR TO AN EXIT. A move that would skip a stage is
+  > refused even when every gate on the way happens to be open: each gate is a
+  > separate act and the history must show each one. ADMIN alone may move a claim
+  > backwards — REOPEN — and must say why.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THIS FILE AND src/modules/crm/crm.ts IMPORT EACH OTHER, and it is safe: neither calls
+  > the other at load. crm.ts owns the claim — its object, its reach and its page —
+  > and this file owns how it moves.
+
 ### `src/shared/localtime.ts`
 
 - Line 182:
@@ -1023,6 +2169,57 @@ neither says.
   > THE OPERATING PROCEDURE'S STAGES — THE CLAIM'S VOCABULARY.
   > CRM 2 of 10, 10 September 2026.
   > ==================================================================
+
+## 11 Sept 2026: Phase 132e
+
+### `src/modules/claims/fee-controls.ts`
+
+- Line 1:
+
+  > THE FEE CONTROLS — BUILT, SHIPPED OFF, ONE SWITCH EACH. CRM 7 of 10, 11 September 2026.
+  >
+  > Commercial decisions that are open may not be guessed into a screen. So each
+  > is BUILT, carries ONE SWITCH, and SHIPS OFF — and test/finance-claim.test.ts
+  > proves that off is exactly today's behaviour: the plain 3% of the allowances
+  > identified, no warning, and nothing but our fee raised on a claim at the
+  > invoice stage.
+  >
+  >   the fee above the client's first-year benefit   CAP, WARN or ADJUST_RATE
+  >     “Do we cap the fee, warn about it, or adjust the percentage?” — Lakhbir's
+  >   the break fee and the abort fee                 read from the engagement letter
+  >     “What is the break fee, and is there ever an abort fee or a fixed fee?” — Lakhbir's
+  >
+  > PHASE 132e, 16 SEPTEMBER 2026 — THE FEE IS A FLAT 3%, AND TWO THINGS ARE NO LONGER SWITCHES.
+  >   A MINIMUM FEE — RETIRED AS DECIDED: NONE. Lakhbir, answering "Is our fee now a
+  >     flat 3% of the allowances identified — with no minimum and no bands?": "yes,
+  >     flat fee of 3% of the allowances for 1 or more properties". The switched-off
+  >     per-sector control that stood here is removed, and the decision is recorded
+  >     in MINIMUM_FEE_DECISION below, so the retirement is on the record and not a
+  >     silent deletion. A minimum JOB SIZE was already decided none (1 September 2026).
+  >   A MULTI-SITE DISCOUNT — DISCRETIONARY, NEVER AUTOMATIC. The 5/10/15% table is
+  >     gone. The engine's CB_FEE.MULTI_SITE_DISCOUNT holds the largest discount and
+  >     who approves it as named nulls; computeFee never reads a discount, and one a
+  >     person enters is recorded (src/modules/claims/fee-discounts.ts) and shown as awaiting
+  >     those two decisions.
+  >
+  > CHANGING A SWITCH IS A LINE OF CODE, NOT A SETTING, as FEE_TRIGGER in
+  > src/modules/crm/pipeline.ts and FEE_CLAWBACK in src/modules/claims/claim-record.ts are: each is a
+  > pricing policy, and a pricing policy that an admin screen could flip on a
+  > Tuesday afternoon would be decided by whoever found the screen.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE LETTER'S BLANKS ARE BLANK ON EVERY SCREEN, LOUDLY
+  >
+  > The break fee, the abort fee and the payment terms are read from the .docx
+  > itself through src/modules/claims/letter.ts, never typed here. While clause 5 reads
+  > “£[X]” the break fee is BLANK, and the screen says so in capitals: a plausible
+  > number in a prototype becomes a number in a contract. Turning the break-and-
+  > abort switch on changes nothing while the letter is blank.
+  >
+  > NOTHING HERE DECIDES A TAX FACT. The cap and the rate adjustment need the
+  > client's first-year benefit, and CB_BENEFIT only DETERMINES one on a recorded
+  > marginal rate; on a bounded range neither control fires — it refuses, and says
+  > which fact is missing, rather than picking a number out of the range.
 
 ## 11 Sept 2026: no phase named
 
@@ -1100,6 +2297,539 @@ neither says.
   > back office: the surveyor's task on the job assigned to them, a finance task
   > waiting with Accounting, a follow-up with Dunmarrow's finance contact, and a
   > follow-up on the referral that has not converted.
+
+### `src/modules/assessment/assessment.ts`
+
+- Line 227:
+
+  > THE CLOSE AT A REASONED NEGATIVE — the gated-exit repair, 11 September 2026.
+  >
+  > `submit()` cannot run here and must not. It takes the sector from the first
+  > property, and a prospect stopped at Q1b has none; it would create an
+  > organisation and an assessment for a funnel that produced no figure. Until
+  > this existed the close answered 500 and lost the one lead a reasoned negative
+  > exists to keep.
+  >
+  > So this records a LEAD — origin GATED_EXIT, from the website, NO organisation,
+  > carrying the business name as the prospect gave it — and hands its id to
+  > `withLead` INSIDE THE SAME TRANSACTION, which writes the person and the channel
+  > onto a contact and a booking that belong to the lead (migration 011,
+  > disposition row E22). The draft is closed on the lead, so a replayed token
+  > writes nothing. Nothing about the tax position is copied anywhere: the lead's
+  > origin says the gate fired, and the gate is the engine's.
+
+### `src/modules/assessment/vat.ts`
+
+- Line 1:
+
+  > VAT MONITORING — THE ROLLING TWELVE MONTHS, THE THIRTY-DAY TEST, THE DATED
+  > THRESHOLD, AND A TASK INSIDE THE MARGIN. CRM 7 of 10, 11 September 2026.
+  >
+  > The procedure is 08-monday-doc-exports/12552682452, the VAT threshold
+  > monitoring procedure. Its decision is made — wait until the threshold, do not
+  > register voluntarily — and this file is the mechanism that notices when it
+  > bites. IT NEVER CHANGES AN INVOICE: it reads them.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE TWO TESTS, AS GOV.UK STATES THEM (procedure, section 2)
+  >
+  >   THE BACKWARD LOOK   taxable turnover for the last 12 months over the threshold.
+  >                       Read here as the twelve calendar months ending with this
+  >                       one, to today — the current month and the eleven before
+  >                       it — from each claim invoice's tax point as section 4.1
+  >                       states it: the invoice date, or the client report's
+  >                       delivery if earlier — net of the credit notes issued in the same
+  >                       window. The procedure's section 4.1 describes the column
+  >                       as "the previous 12 complete months plus the current month
+  >                       to date", which is thirteen months; GOV.UK's "last 12
+  >                       months" is followed, the disposition table's row E83
+  >                       records the difference, and the export now carries a
+  >                       dated correction.
+  >   THE FORWARD LOOK    turnover in the next 30 days alone over the threshold.
+  >                       Read here as the fees expected from claims at the invoice
+  >                       stage not yet invoiced — the forward register of section
+  >                       4.2, derived rather than kept by hand. Nothing records when
+  >                       each will be invoiced (the fee trigger is undecided), so
+  >                       every one is counted as if it could fall inside the thirty
+  >                       days: the cautious reading, and it says so.
+  >   ONE LARGE FEE       section 5, check 3: any single expected fee at or over the
+  >                       trigger is named, the day it is found.
+  >
+  > THE THRESHOLD, THE MARGIN AND THE TRIGGER ARE DATED SETTINGS WITH THEIR SOURCE
+  > (`finance_settings`, migration 016). A setting nobody recorded is not known —
+  > the reading says it cannot say, and raises no task on a guess (N4).
+  >
+  > AN INVOICE THAT CANNOT BE DATED IS COUNTED APART. An organisation's invoice from
+  > before CRM 7 of 10 has no invoice date, so it cannot be placed in a window: the
+  > reading names how many there are, and never counts them as nought.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE TASK
+  >
+  > Inside the margin, over the threshold, or one large expected fee: a staff task,
+  > written through `insertTask` in src/modules/crm/tasks.ts, waiting with ACCOUNTING,
+  > about Caprebate itself (`company_subject` VAT_THRESHOLD), due on the last day of
+  > the month — the procedure's monthly check — and flagged overdue by `dueReading`
+  > like every task. At most one is open at a time: a second check finds it and
+  > writes nothing. The task carries no figure; the finance view carries the reading.
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 1:
+
+  > THE CLAIM'S CAPITAL ALLOWANCES FACTS — CRM 6 of 10, 11 September 2026.
+  >
+  > The schema is migration 015; the scope is 09-app/CAPREBATE-CRM-DISPOSITION.md
+  > Part B2; the figures, the sign-off, the deliverables and aftercare are
+  > src/modules/claims/claim-record.ts. The routes and pages are src/modules/claims/claim-record-pages.ts,
+  > which draws what these return and decides nothing.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > FOUR RULES, AND EVERY FUNCTION BELOW KEEPS ALL OF THEM
+  >
+  > 1 · DERIVED FIRST, CAPTURED ONLY WHERE NOTHING DERIVES IT. The claimant type is
+  >     the organisation's; the jurisdiction is the property's postcode; the
+  >     acquisition date is the property's; taxable profit is the client's own
+  >     answer read through src/modules/assessment/funnel-session.ts and its break-even switch;
+  >     the amendment window is CB_CASH's; the election's notification clock is
+  >     CB_ELECTION's. WHERE A FACT IS DERIVED, THE STORE REFUSES A RECORDED ONE.
+  >
+  > 2 · EVERY VALUE CARRIES ITS SOURCE, in the source register's pattern
+  >     (09-app/backend/src/registers/caprebate-source-register.ts): the register's own
+  >     source id, its publisher and provenance code, whether it was derived, and
+  >     exactly where it was read.
+  >
+  > 3 · N4. A fact recorded as not known and a fact nobody asked read the same —
+  >     `known: false`, `value: null`, the same words — and neither opens a gate.
+  >     Every gate reading below is asserted in test/claim-record.test.ts on the
+  >     recorded UNKNOWN AND on the absent row.
+  >
+  > 4 · READERS. The panel is ADMIN's and SALES's (`claim_facts.read`). ACCOUNTING
+  >     never reaches it. A SURVEYOR on an assigned job receives only the RELEASED
+  >     inputs, assembled forwards by src/payload.ts from `releasedFactReader` —
+  >     which can read nothing that is not on that list.
+
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 1:
+
+  > THE CLAIM'S FACTS, FIGURES, SIGN-OFF, DELIVERABLES AND AFTERCARE — ROUTES AND
+  > PANELS. CRM 6 of 10, 11 September 2026.
+  >
+  > Same shape as every other section: `handleClaimRecord` returns 'not-mine' for
+  > anything it does not own, and staff.ts mounts it with one line. Every route
+  > here is a POST to a claim; the panels are drawn on the claim page by
+  > src/modules/crm/crm-pages.ts from what src/modules/crm/crm.ts put in the claim's view — the
+  > same object `view.json` serves, so tools/payload-proof.ts inspects the wire.
+  >
+  > NOTHING HERE DECIDES ANYTHING. src/modules/claims/claim-facts.ts and
+  > src/modules/claims/claim-record.ts authorise every write on the claim and do every
+  > derivation. Every staff-supplied value is drawn through `h`, which escapes it.
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 1:
+
+  > THE CLAIM'S FOUR FIGURES, THE TAX ADVISER'S SIGN-OFF, THE RECONCILIATION LOG,
+  > THE DELIVERABLES REGISTER AND AFTERCARE — CRM 6 of 10, 11 September 2026.
+  >
+  > The schema is migration 015; the facts these rest on are src/modules/claims/claim-facts.ts;
+  > the pages are src/modules/claims/claim-record-pages.ts, which decides nothing.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE FOUR FIGURES, IN THE ORDER THEY ARE PRODUCED, EACH SEALED AND HASHED WHEN
+  > IT IS SET AND NEVER EDITED
+  >
+  >   A  the indicative estimate      sealed in `estimates` with its hash (002)
+  >   B  the researched estimate      NOT_PERMITTED_YET while the register gates are
+  >                                   shut — and no column anywhere can hold one
+  >   C  the surveyor's committed     sealed in `surveyor_commitments` with its hash
+  >      figure                       (006), released under the anchor quarantine
+  >   D  the figure the tax adviser   sealed in the sign-off record below, hashed
+  >      signed
+  >
+  > None is copied into a fourth table: each is READ from the record that sealed
+  > it. The whole panel is `claim_figures.read` — ADMIN and SALES — and a surveyor
+  > never receives it; tools/payload-proof.ts searches for it.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE SIGN-OFF IS A RECORD, NOT A SIGNATURE. src/integrations/signature.ts executes
+  > nothing, and the record says so in its own `kind`. The TAX_ADVISER_SIGNOFF gate
+  > and the REPORTS gate read it — only one recorded since the claim last entered
+  > TAX_ADVISER_SIGNOFF — and `claims.tax_adviser_signoff_at` is retired: the
+  > database refuses any write to it.
+  >
+  > NO PART OF THIS FILE GENERATES A REPORT (Developer Spec DS-W10). A deliverable is
+  > tracked — its state, version, issue date and the document type it is.
+
+### `src/modules/claims/documents-pages.ts`
+
+- Line 1:
+
+  > THE ROUTES AND PAGES FOR DOCUMENTS ON THE CLAIM — a document and its versions,
+  > the document types, links, staff uploads and document requests — and the panel
+  > the claim page draws. CRM 4 of 10, 11 September 2026.
+  >
+  > Same shape as `handleCrm` and `handleTasks`: it returns 'not-mine' for anything
+  > it does not own, so the mounting in staff.ts is one line.
+  >
+  > THE THREE RULES FROM router.ts APPLY UNCHANGED: authorise on the object on every
+  > request, no route maps a path onto the filesystem, and every response is built
+  > with the `h` tagged template. A request's "why" and "what it holds up" and a
+  > type's label are STAFF-SUPPLIED TEXT RENDERED IN A STAFF PAGE AND IN THE
+  > PORTAL, and test/documents.test.ts posts a script tag into them.
+  >
+  > NOTHING HERE DECIDES ANYTHING. src/modules/claims/documents.ts does every authorisation and
+  > every derivation; this file draws what it returns. THERE IS NO ROUTE THAT MARKS A
+  > REQUEST RECEIVED, because received is not a click.
+
+### `src/modules/claims/documents.ts`
+
+- Line 1:
+
+  > DOCUMENTS ON THE CLAIM — TYPES, VERSIONS, LINKS, REQUESTS, AND WHO MAY READ
+  > WHICH. CRM 4 of 10, 11 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THERE IS STILL ONE UPLOAD HANDLER
+  >
+  > Nothing in this file receives a byte, classifies a file, strips it or deletes
+  > it. `startDocumentUpload` decides what an upload WILL BE — which document it is
+  > a version of, of which type, against which request — and then calls
+  > `beginUpload` in src/modules/claims/uploads.ts, which calls the handler. The receipt strip
+  > runs on every upload of every type exactly as it did, because there is no other
+  > way in. `receiveByUpload` runs only after the handler has recorded the strip
+  > and the quarantine's discharge, and reads both off the row.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > A TYPE WITH NO RECEIPT POLICY CANNOT BE RECEIVED, AND SAYS SO
+  >
+  > The CRM specification's list — engagement letter, accounts, invoices and the
+  > rest — has no receipt policy in the ingestion module, whose own rule is that
+  > "a new document type must earn a policy entry before an upload of it can be
+  > stored". So those types exist, are configurable, and carry who may read them
+  > and their clock; an upload of one is refused BEFORE a link is issued, and a
+  > request for one is refused, because nothing could ever receive it. Writing a
+  > policy is the data protection officer's decision and the question is in
+  > CAPREBATE QUESTIONS. This is build it and switch it off: the day a policy
+  > exists, one migration binds the type and nothing here changes.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > NO NAME IS WRITTEN INTO THE CLAIM RECORD (N2)
+  >
+  > A logical document has no title — it is "Lease 2", its type and its number.
+  > A new version's file name is DERIVED, never the client's, because the
+  > Dashboard Data Specification's S3 row says filenames are opaque:
+  > "smith-lease-2019.pdf is a name in the filesystem". A person named inside a
+  > document is the ingestion module's `person_ref` and nothing in this file
+  > touches one.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > A REQUEST IS A CLIENT QUESTION OF KIND DOCUMENT, AND RECEIVED IS NOT A CLICK
+  >
+  > REQUESTED, RECEIVED and WITHDRAWN are READ off `client_tasks.state` — OPEN,
+  > ANSWERED, WITHDRAWN — never stored beside it. A request reaches ANSWERED only
+  > in `receiveByUpload`, naming the version that received it, and migration 013's
+  > trigger refuses any other way: the portal's answer button and the business
+  > page's "answer here" both refuse a document request before the database does.
+
+### `src/modules/claims/uploads.ts`
+
+- Line 630:
+
+  > THE JOB STEP 1 ISSUED, READ BACK FROM WHAT THE HANDLER ITSELF WROTE.
+  > CRM 4 of 10, 11 September 2026.
+  >
+  > UNTIL THIS FUNCTION, THE RUNNING APPLICATION NEVER FINISHED AN UPLOAD. The job
+  > `issueUploadUrl` returns lived only in the request that issued the link, so
+  > `PUT /upload/put` wrote the bytes to quarantine and stopped: steps 3 to 7 — the
+  > classification, the strip and the discharge — ran in the tests and nowhere
+  > else, and the file sat in quarantine until the sweep. A document request could
+  > never have been received.
+  >
+  > NOTHING HERE IS A RULE OF THE HANDLER'S. The job is exactly the object
+  > `issueUploadUrl` builds — its id and the moment of issue from the handler's own
+  > step-1 row in `document_events`, the key from `quarantineKeyFor`, state ISSUED
+  > — and every step after it still asserts its own order.
+  >
+  > AND A LINK IS USED ONCE. Only a row still at ISSUED gives a job back, so a
+  > second PUT with the same link after the file was processed is refused before a
+  > byte is written — where before it would have put a fresh unredacted copy into
+  > a quarantine that had already been discharged.
+
+### `src/modules/crm/automation.ts`
+
+- Line 1:
+
+  > AUTOMATION RULES — A TRIGGER, AN EFFECT, AND WHAT NO RULE MAY EVER DO.
+  > CRM 3 of 10, 11 September 2026.
+  >
+  > The rules are migration 012's `automation_rules`, which ADMIN edits; what each
+  > one did is `automation_runs`; the page is src/modules/crm/tasks-pages.ts. CRM 9 of 10
+  > builds the settings screen around this store (disposition row 14.10).
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE FULL SPECIFICATION'S LIST, RE-KEYED ONTO THE PROCEDURE
+  >
+  > The rules migration 012 seeds are section 14 of the full specification with
+  > each trigger moved onto something this build actually records. "Moves to
+  > Qualified" is a claim entering DATA_GATHERING, which only the signed letter
+  > opens; "Survey Completed" is a claim entering VALUATION, which only the
+  > surveyor's commitment opens; "Claim Completed" is the INVOICE stage. The
+  > information-request tasks are generated from `missingFacts` — the business
+  > page's DERIVED missing list — one per fact nobody has yet asked for, and never
+  > from a list typed into a rule.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT NO RULE MAY DO, AND WHAT HOLDS EACH ONE
+  >
+  >   open either register gate        no effect can. This file imports neither the engine, the research
+  >                                    button, the register stub nor the signature stub.
+  >   move a claim past a gate         no effect can. Nothing here moves a claim or records a confirmation.
+  >   flip a tax adviser's switch      no effect can. The switches are the engine's constants.
+  >   fire a register call             no effect can, for the reason in the first line.
+  >   send anywhere but the outbox     the one transport here is `outboxTransport`, built in this file from
+  >                                    the database — NOT the application's transport, so a real mailer
+  >                                    swapped in later still carries nothing a rule writes.
+  >   write to a DO_NOT_CONTACT org    every rule on one records NOT_RUN, before its effect; the outbox and
+  >                                    its trigger refuse the notice again behind that.
+  >   create an invoice email          no effect writes to a client at all. A notice goes to a member of
+  >                                    staff, and a template carrying an invoice is refused by its store.
+  >
+  > Each is also a NAMED refusal in `FORBIDDEN_EFFECTS`, refused by the rule store
+  > with its reason and by the table's CHECK, and each has a test in
+  > test/automation.test.ts.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > A RULE THAT DOES NOT RUN SAYS SO
+  >
+  > Every active rule matching an event writes one run: RAN, or NOT_RUN with its
+  > reason. A GATED_EXIT lead has no organisation, and a rule whose effect needs
+  > one records NEEDS_ORGANISATION — the lead is never skipped silently. A rule
+  > that fails writes NOT_RUN ERROR and does not undo the event it followed: the
+  > stage move, the conversion or the completion has already committed, and the
+  > person who made it is not shown a failure that was not theirs.
+
+- Line 116:
+
+  > THE INVOICE-FRAUD PROCEDURE — WHERE IT STANDS. CRM 7 of 10, 11 September 2026.
+  >
+  > The invoice email is not built, and every refusal of it above and in
+  > src/web/templates.ts holds while this says `in_force: false`. The procedure did
+  > not exist in the operating procedure's export; CRM 7 of 10 drafted it into SOP 9
+  > as a FLAGGED DRAFT ADDITION and entered its sign-off in the register for the
+  > solicitor, the data protection officer and the developer. test/finance-claim.test.ts
+  > reads the export and fails if this says in force while the export says draft.
+  >
+  > TURNING IT ON IS NOT THIS FLAG. When the procedure is signed off, building the
+  > invoice email is a piece of work — its template, its channel and its checks —
+  > and the refusals are lifted in that work, deliberately, not by a boolean.
+
+### `src/modules/crm/introducers-pages.ts`
+
+- Line 1:
+
+  > INTRODUCERS, THE REFERRAL CHANNEL AND THE REWARD MODEL — THE ROUTES AND THE
+  > PAGES. CRM 5 of 10, 11 September 2026.
+  >
+  > Same shape as src/modules/crm/pipeline-pages.ts: it returns 'not-mine' for anything it
+  > does not own, so the mounting in staff.ts is one line.
+  >
+  > NOTHING HERE DECIDES ANYTHING. src/modules/crm/introducers.ts authorises every read and
+  > write on the specific object, asks the opt-in before a notice is queued and
+  > reads clause 1 of the letter before the reward model moves; this file draws
+  > what it returns and posts what a person asked for. Every value a person or the
+  > public form supplied — a firm's name, a note, a person's name — goes through
+  > `h` and is escaped on output.
+
+### `src/modules/crm/introducers.ts`
+
+- Line 1:
+
+  > INTRODUCERS AND THE ACCOUNTANT REFERRAL CHANNEL. CRM 5 of 10, 11 September 2026.
+  >
+  > The schema is migration 014; the routes are src/modules/crm/introducers-pages.ts and,
+  > for the public referral form, src/core/router.ts. The mechanics are the
+  > Accountant Referral Network paper, section 5 — 08-monday-doc-exports/
+  > 12552691718__Accountant-Referral-Network.md — and every decision below that is
+  > not obvious is a row of Part E of 09-app/CAPREBATE-CRM-DISPOSITION.md.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > AN INTRODUCER IS A FIRM, AND NEVER A USER
+  >
+  > The firm is the row. The people at it are `contacts` of type INTRODUCER on the
+  > firm — the one table a person lives in — and nothing here creates a login,
+  > reads one, or leads to one. The client's own accountant, where the client has
+  > one, is a different row about a different relationship: a contact on the
+  > client, typed ACCOUNTANT.
+  >
+  > CONTACT WITH A FIRM IS A STAFF TASK ON THE FIRM (row E48). A call, an email or
+  > a meeting that happened is a completed task; the next contact is an open one
+  > with an owner and a due date; model A's reciprocity is logged the same way.
+  > The last contact and the next are read from those tasks, as a client
+  > contact's are — there is no second activity table.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > PROGRESS REACHES THE FIRM ONLY ON THE CLIENT'S SAY-SO (paper, section 5a)
+  >
+  > The client is the data subject. A stage notice — referred, indicative range
+  > issued, engaged, report delivered, fee settled, and a reasoned negative — is
+  > written to the outbox ONLY while the client's opt-in to share progress with
+  > THAT firm is given. Never asked, declined and withdrawn read identically and
+  > share nothing (N4). Every notice that falls due is kept, queued or not, with
+  > the reason; the database refuses a queued one whose opt-in is not the client's
+  > current answer. There is no other route by which anything about a claim is
+  > addressed to an introducer.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE REWARD MODEL IS BUILT BOTH WAYS AND SHIPS OFF (paper, section 5b)
+  >
+  > A: no cash; firm-level reciprocity logged as tasks on the firm. B: a fixed,
+  > disclosed fee per successful claim, paid to the firm, never payable before the
+  > disclosure is recorded. The one setting refuses to leave OFF while clause 1 of
+  > the engagement letter is blank — read from the .docx the way the portal reads
+  > its blanks — and whether anything is paid is Lakhbir's question.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > NOTHING ON THE DASHBOARD IS STORED
+  >
+  > Leads referred, claims opened, claims won, reasoned negatives, the estimated
+  > value (ADMIN and SALES) and the fees invoiced and paid (ADMIN and ACCOUNTING)
+  > are read by query every time. An unknown value is counted as unknown and never
+  > as nought.
+
+### `src/modules/crm/leads.ts`
+
+- Line 691:
+
+  > THE GATED EXIT'S LEAD — the gated-exit repair, 11 September 2026.
+  >
+  > A prospect stopped at Q1b who asks for a call. NEW, from the website, origin
+  > GATED_EXIT, and with NO ORGANISATION: they reached the reasoned negative before
+  > the property question, so there is no sector to give one, and inventing one
+  > would put a fact in the record nobody gave us. The table's CHECK asks for the
+  > organisation's name instead — the business name the prospect typed, or
+  > "Unnamed business", exactly as `submit()` names an organisation nobody named.
+  >
+  > THE PERSON AND THE CHANNEL ARE NOT HERE (row E21). They are a contact and a
+  > booking that BELONG TO THIS LEAD until it is linked to an organisation (row
+  > E22, migration 011), and `convertLead` moves them — the same rows — when it is.
+
+### `src/modules/crm/tasks-pages.ts`
+
+- Line 1:
+
+  > THE ROUTES AND PAGES FOR STAFF TASKS, THE ONE-NEXT-ACTION RULE, AUTOMATION
+  > RULES AND EMAIL TEMPLATES — and the panels the claim, organisation, property,
+  > lead and landing pages draw from them. CRM 3 of 10, 11 September 2026.
+  >
+  > Same shape as `handleCrm` and `handlePipeline`: it returns 'not-mine' for
+  > anything it does not own, so the mounting in staff.ts is one line.
+  >
+  > THE THREE RULES FROM router.ts APPLY UNCHANGED: authorise on the object on every
+  > request, no route maps a path onto the filesystem, and every response is built
+  > with the `h` tagged template. A task's title and description, a note, a rule's
+  > label and a template's body are STAFF-SUPPLIED TEXT RENDERED IN A STAFF PAGE,
+  > and test/tasks.test.ts posts a script tag into them.
+  >
+  > NOTHING HERE DECIDES ANYTHING. src/modules/crm/tasks.ts, automation.ts, templates.ts
+  > and timeline.ts do every authorisation and every derivation.
+  >
+  > A `back` FIELD IS NEVER AN OPEN REDIRECT. It is followed only when it is a
+  > back-office path made of path segments, and ignored otherwise.
+
+### `src/modules/crm/tasks.ts`
+
+- Line 1:
+
+  > STAFF TASKS, AND ONE NEXT ACTION PER CLAIM. CRM 3 of 10, 11 September 2026.
+  >
+  > The schema is migration 012; the routes and pages are src/modules/crm/tasks-pages.ts;
+  > the scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 10 and Part E from
+  > row E23.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > A JOB A COLLEAGUE DOES IS NOT A QUESTION THE CLIENT ANSWERS
+  >
+  > `client_tasks` (migration 003) holds what we ask the client, why, what it holds
+  > up, and how its answer came to be held. `staff_tasks` holds work: an owner, a
+  > due date and a status. Neither table points at the other, and nothing in this
+  > file writes to `client_tasks`.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > ONE NEXT ACTION, WITH AN OWNER AND A DUE DATE
+  >
+  > Every claim that has not closed or left the procedure has exactly one current
+  > next action: an open task flagged on the claim, naming a person and a date.
+  > The database refuses a second — a partial unique index. `nextActionRefusal`
+  > refuses a stage move that would leave a claim without one, and `moveClaim` in
+  > src/modules/crm/pipeline.ts asks it after the gate. `nextActionBreakers` lists every
+  > claim breaking the rule, because a claim can be opened, or have its next
+  > action completed, with none — a state to show, not a row to refuse.
+  >
+  > WHO IS WAITING IS NOT DECIDED HERE. The engaged-client list already answers it
+  > — `whoIsWaiting` in src/modules/claims/engaged.ts, where both sides waiting reads as ours
+  > — and `waitingOn` beside it is how this file asks. There is no second ladder.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > OVERDUE IS A QUESTION ABOUT TODAY'S UK DATE
+  >
+  > A due date is a calendar date (row E26). "Overdue" is `due_on` before
+  > `localDate(now)`, and src/shared/localtime.ts stays the only file naming a zone.
+  > A task with no due date is NOT overdue and NOT on time: it has no due date,
+  > and every screen says so in those words (N4).
+
+### `src/modules/crm/timeline.ts`
+
+- Line 1:
+
+  > THE ACTIVITY TIMELINE — A READ OVER WHAT IS ALREADY RECORDED, AND NOT A SECOND
+  > LOG. CRM 3 of 10, 11 September 2026.
+  >
+  > For an organisation, a property, a claim and a lead, the timeline is assembled
+  > on this request from the tables that already hold each event:
+  >
+  >   bookings, booking_changes          a call asked for, given a time, moved
+  >   client_tasks                       a question drafted, put to the client, answered, withdrawn
+  >   documents, document_events         an upload, and each step of its receipt
+  >   engagements                        the letter raised and signed
+  >   research_runs                      the research button
+  >   claim_stage_moves, claim_milestones, enquiry_checks
+  >   staff_tasks                        created, started, completed, cancelled
+  >   surveyor_commitments               the surveyor committed — never the figures
+  >   invoices, and the audit log's INVOICE_UPDATED lines
+  >   outbox                             what was queued, and that it was not sent
+  >   automation_runs                    what each rule did, or why it did not
+  >   the audit log's record changes     who changed an organisation, a contact, a property, a claim or a lead
+  >   internal_notes                     KEPT APART — see below
+  >
+  > THERE IS NO TIMELINE TABLE. A second event log would be a copy of each of
+  > those that could disagree with it, and a test reads sqlite_master to hold that
+  > none exists.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > INTERNAL NOTES ARE SEPARATE IN STRUCTURE, NOT ONLY ON SCREEN
+  >
+  > `events` never holds a note. Notes are `internal_notes`, a separate array,
+  > present only where `internal_note.read` says yes, and drawn in their own panel.
+  > Every event also says whether it is something the client sees — a question in
+  > their portal, their own call, their upload — or staff-only.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > BUILT FORWARDS, ROLE BY ROLE
+  >
+  >   ADMIN, SALES   everything their rules reach
+  >   ACCOUNTING     a claim's timeline, of FINANCIAL events only — the invoices and their states; `invoice.read`
+  >                  is the one capability it holds here, and nothing else is ever assembled for it
+  >   SURVEYING      a claim's timeline, only through an assigned survey job: the stage (labels, no reasons),
+  >                  their own tasks on it, and their own commitment. No other timeline admits them.
+  >   CLIENT         none
+  >
+  > AND A LEAD IS READ BY ITS OWN ID. A call asked for at the reasoned negative is
+  > a lead with no organisation, and its contact and booking belong to the lead
+  > (migration 011, row E22). A read keyed only on the organisation would drop
+  > them without a sound, so the lead's timeline reads `lead_id`, and an
+  > organisation's reads its leads' rows as well as its own.
 
 ## 12 Sept 2026: Phase 129
 
@@ -1191,12 +2921,153 @@ neither says.
   > Enabling it is three changes, made only once the question is answered: the switch, a migration adding the role row,
   > and the role joining APP_ROLES.
 
+### `src/modules/assessment/conveyancing-strip.ts`
+
+- Line 1:
+
+  > COMPANY NAMES KEPT, INDIVIDUALS STRIPPED, ON THE TWO CONVEYANCING UPLOADS — BUILT, AND SWITCHED OFF. Phase 129,
+  > 12 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT IT DECIDES, AND WHAT IT DOES NOT
+  >
+  > The pre-contract enquiry replies (CPSE_REPLIES) and the sale contract (SALE_CONTRACT) are read by a person, not by the
+  > model: the ingestion module's receipt policy for both is WHOLE_DOCUMENT_PENDING_HUMAN_READ, and its human-capture rule
+  > says every name the reviewer keys in is replaced by a role token — [SELLER], [WITNESS], [FEE EARNER]. So today NOTHING
+  > of the parties clause reaches a structured record except role tokens, companies included, and the one fact these
+  > documents exist to supply — who sold to whom — is not captured at all.
+  >
+  > This file decides what of the PARTIES a person has read off one of those two documents may be written onward. It does
+  > not change the receipt policy, what is kept of the uploaded text, or the quarantine — those are the ingestion module's
+  > and the upload handler's, in 04-phase-work/phase3, and untouched. No screen calls it yet: nothing in this build captures
+  > a human read of a parties clause. It is the mechanism, ready for the answer.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > OFF IS EXACTLY TODAY
+  >
+  > With `enabled: false`, `captureParties` returns `todaysCapture` — every party as its role token, no name and no number —
+  > and a test compares the two, serialised, byte for byte. The question it waits on is the data protection officer's, in
+  > CAPREBATE QUESTIONS under exactly this title:
+  >   "May company names stay on conveyancing uploads if we strip the individuals?"
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > ON, A COMPANY PARTY KEEPS ITS NAME AND ITS REGISTERED NUMBER, AND NOTHING ELSE CHANGES
+  >
+  > A party keeps its name only when ALL of these hold, and is its role token otherwise:
+  >   · it is a party to the transaction — a witness, a signatory, a fee earner or a guarantor is not;
+  >   · its legal form is KNOWN to be a company or an LLP — the name exclusion register's test is legal form, not whether
+  >     the string looks like a name (`classifyPartyReference` in the ingestion module, applied unchanged);
+  >   · the capture backstop's person-name patterns do not match it — a company name that reads as a person's is stripped,
+  >     not kept, and the data protection officer can say otherwise.
+  > A registered number is kept only in Companies House's own shape; anything else is dropped and said.
+  >
+  > N4: A LEGAL FORM NOT KNOWN AND ONE NEVER RECORDED READ IDENTICALLY, AND NEITHER KEEPS A NAME. A sole trader, an English
+  > or Northern Irish partnership, a Scottish partnership and a public body are stripped too: the question asks about
+  > company names, and the switch keeps exactly that.
+  >
+  > WHAT THE SWITCH DOES NOT BUILD: the question's own recommendation that an INDIVIDUAL who is the party — "Dr A Patel" as
+  > freehold proprietor — be kept as a party to our client's transaction. That is a wider permission than the switch, and it
+  > waits on the officer's answer rather than being guessed here.
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 1100:
+
+  > PHASE 157d, 6 OCTOBER 2026 (the Friary House run, finding F16). Four types the claim asks clients for, bound on
+  > Phase 129's recorded recommendation for each: STRIP_INDIVIDUALS_KEEP_FIGURES. Spec-derived, like the tax types:
+  > only the figures' segments are kept; the parties, the people and the bank details land in no permitted segment.
+
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 90:
+
+  > All four are MODEL-EXTRACTABLE on the recommendation recorded by Phase 129 (receipt-recommendations.ts): strip the
+
+- Line 427:
+
+  > PHASE 157d — FOUR MORE TYPES THE CLAIM ASKS FOR (the Friary House run, F16). On Phase 129's recorded
+  > recommendation for each (src/modules/claims/receipt-recommendations.ts): strip the individuals, keep the figures. The
+  > completion statement and the accounts are read by the claim team only, so their figures are GATE, never
+  > APPORTIONMENT (which sends a review to a surveyor). A contractor's invoice and plans are claim evidence, which a
+  > surveyor reads.
+
+### `src/modules/claims/research.ts`
+
+- Line 542:
+
+  > WHAT THIS PANEL CANNOT SHOW, SAID ON THE PANEL.
+  >
+  > The Provenance Map's tier-2 list opens with "Homedata address lookup", and
+  > CB_REGISTRY models it as the source `homedata` which keys every other lookup.
+  > Since 12 September 2026 (Phase 129) it IS in caprebate-source-register.ts, as
+  > HOMEDATA_ADDRESS under the licence HOMEDATA_TERMS, written from the supplier's
+  > own published terms. So it now draws a row like every other source. What is
+  > still a gap is what those terms do not publish: a licence name, attribution
+  > wording, a cache window and permission to reproduce the data outward. The
+  > register holds those as refusals (0 days, every outward channel false), and
+  > this panel says so rather than letting the row look complete.
+
 ### `src/shared/upload-handler-port.ts`
 
 - Line 96:
 
   > Phase 129. The legal-form test, the roles that are always a person, and the human-capture rule's role tokens and
   > backstop patterns, AS THE INGESTION MODULE STATES THEM. src/web/conveyancing-strip.ts reads them here and restates none.
+
+## 12 Sept 2026: Phase 151b
+
+### `src/modules/claims/mandatory-documents.ts`
+
+- Line 1:
+
+  > MANDATORY DOCUMENTS AT A STAGE — BUILT, AND SWITCHED ON IN PHASE 151b. The CRM follow-on, 12 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > SWITCHED ON, 25 SEPTEMBER 2026 (Phase 151b)
+  >
+  > Lakhbir's four documents (Word answer 47) must now arrive before a claim leaves DATA_GATHERING. Everything the switch
+  > waited on is settled. Word question 220 is closed: yes, the sale contract and the CPSE replies are asked only when the
+  > client bought the building, as built. Word question 223 was answered yes by the data protection officer on
+  > 24 September 2026: clients may upload tax returns and tax computations, and until the officer says what must be
+  > removed, the figures and the company details are kept and individuals' names, addresses and tax references removed.
+  > The one thing still missing was buildable, and Phase 151b built it: a receipt policy for each tax document in the
+  > upload handler, bound by migration 049. So each of the four can now be received, and a claim is never held at the
+  > gate by a document nobody can upload — test/phase151b-documents.test.ts proves that for each of the four.
+  >
+  > What did NOT change: a fact not known and a fact never recorded still excuse nothing (N4). Whether the client bought
+  > the building must be recorded as YES or NO before the sale contract and the CPSE replies are excused.
+  >
+  > The rest of this header is as it was written while the switch was off, and says why it was built that way.
+  >
+  > The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, row 29.5, and Part R. The gate that reads it is the gate out of
+  > DATA_GATHERING in src/modules/crm/pipeline.ts.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHY IT IS OFF
+  >
+  > Which of the Stage 2 upload list's ten documents must have arrived before a claim leaves data gathering is a business
+  > decision, and nobody has made it. The list itself marks several as conditional — "where any spend was grant-funded" —
+  > and says nothing about the rest. So the table below is OUR RECOMMENDATION, built so the answer is a one-line change,
+  > and the switch ships off. The question is Lakhbir's, in CAPREBATE QUESTIONS, under exactly this title:
+  >   "Which of the Stage 2 documents are mandatory, and at which stage?"
+  >
+  > OFF IS EXACTLY TODAY. With `enabled: false`, `mandatoryDocumentNeeds` returns no need at all, so the gate out of
+  > DATA_GATHERING reads what it read before this file existed — test/follow-on.test.ts compares the two.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > ON, A NEED PER DOCUMENT, AND A CONDITION IS READ, NEVER ASKED
+  >
+  >   ALWAYS         a received document of the type, on this claim or its property
+  >   GRANT_FUNDED   the claim's own fact GRANTS_EXIST, recorded on the facts panel
+  >   ELECTION_MADE  the claim's own fact ELECTION_EXISTS, recorded on the facts panel
+  >   LEASEHOLD      the property's tenure, recorded on the property
+  >
+  > A condition whose fact is NOT KNOWN — recorded as not known, or never recorded — does not pass and does not excuse the
+  > document: the need is unmet, and it says which fact to establish (N4). Nothing here puts a question to anybody.
+  >
+  > RECEIVED MEANS THE UPLOAD HANDLER RECEIVED IT: a version with its receipt strip recorded, its quarantine discharged and
+  > no refusal, of a document linked to the claim or to its property — the documents the claim's own panel lists. A
+  > request, a click or a document on the organisation linked to nothing is not a received document of the claim.
 
 ## 12 Sept 2026: Phase 153c
 
@@ -1239,6 +3110,46 @@ neither says.
   > until Homedata answers the drafted email in writing. EVERY OUTWARD CHANNEL STAYS CLOSED: nothing from this source
   > reaches a client, accountant or HMRC report. The same reading covers GoAddress ("Find my address",
   > src/integrations/connectors/address-lookup.ts ADDRESS_KEEP_UNTIL), which publishes no period either.
+
+## 12 Sept 2026: Phase 157d
+
+### `src/modules/claims/receipt-recommendations.ts`
+
+- Line 1:
+
+  > THE RECOMMENDED RECEIPT STRIP FOR EACH OF THE FOURTEEN DOCUMENT TYPES THAT HAVE NONE — RECORDED, NOT APPROVED, AND BINDING
+  > NOTHING. Phase 129, 12 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHY THIS EXISTS
+  >
+  > CRM 4 of 10 recorded fourteen document types from the CRM specification's list with no receipt policy (migration 013;
+  > 09-app/CAPREBATE-CRM-DISPOSITION.md row E34). Choosing a strip is the data protection officer's decision, asked in
+  > CAPREBATE QUESTIONS under exactly this title:
+  >   "Which receipt strip should each new document type carry before anyone may upload one?"
+  > Whatever can be built before the person answers is built and switched off, so the officer approves or amends a
+  > recommendation rather than filling a blank page. This file is that recommendation, one line of reason per type.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > NO_RECEIPT_POLICY IS UNCHANGED, AND THIS FILE CANNOT CHANGE IT
+  >
+  > Whether a type can be received is `stripReading(handler_type)` in src/modules/claims/documents.ts, read off
+  > `document_types.handler_type`, and that is NULL for all fourteen. Nothing here writes it and nothing in documents.ts
+  > reads this file. So `approved: true` would still receive nothing: an approved recommendation becomes a policy only
+  > when a migration binds it — see the header of migration 021 for what that takes. The test holds both halves.
+  >
+  > The copy the database keeps is `receipt_strip_recommendations` in migration 021, and a test holds the two identical.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > PHASE 151b, 25 SEPTEMBER 2026: THE TAX COMPUTATION IS BOUND, AND ITS ROW STAYS
+  >
+  > Word question 223. The data protection officer said yes to tax returns and tax computations as uploads on
+  > 24 September 2026, and until they say what must be removed, the figures and the company details are kept and the
+  > individuals removed — this file's own recommendation for the tax computation, in substance. Migration 049 binds it to
+  > a receipt policy of its own name, so it can now be received. Its row below is NOT deleted and NOT changed: it is the
+  > record of what the officer was asked, the table in migration 021 is never edited, and the two must stay identical.
+  > What changes is how it reads: a type that now has its own receipt policy reads BOUND, with the policy's own words,
+  > whatever the recommendation says. Nine of the fourteen are still unbound: Phase 157d (migration 099) bound the completion statement, accounts, contractor's invoices and plans, on these recommendations.
 
 ## 12 Sept 2026: no phase named
 
@@ -1338,6 +3249,74 @@ neither says.
   > WRITTEN AS ROWS, as every seeded row is, and each passes the database's own triggers. THE FIGURES ARE CHOSEN SO THAT NO
   > DIGIT RUN OF THEM IS ONE OF THE SEALED ESTIMATE'S SEVEN VALUES — tools/payload-proof.ts searches for those as raw text.
 
+### `src/modules/crm/dashboard-pages.ts`
+
+- Line 1:
+
+  > THE MANAGEMENT DASHBOARD'S ROUTES AND PAGE. CRM 9 of 10, 12 September 2026.
+  >
+  > Same shape as `handleCrm` and `handleCompliance`: it returns 'not-mine' for
+  > anything it does not own, so the mounting in staff.ts is one line.
+  >
+  > NOTHING HERE DECIDES ANYTHING. src/modules/crm/dashboard.ts asks `can()` for every tile
+  > and every row; this file draws what it returns, with the `h` tagged template.
+  > `view.json` serves the same object to the same actor under the same rule, so
+  > N1 is verified on the wire — tools/payload-proof.ts reads it as SURVEYING.
+
+### `src/modules/crm/dashboard.ts`
+
+- Line 1:
+
+  > THE MANAGEMENT DASHBOARD — EVERY TILE A QUERY, EVERY TILE ASKED OF can().
+  > CRM 9 of 10, 12 September 2026.
+  >
+  > The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 15, and the decisions
+  > this file takes are that table's Part E from E119. The page is
+  > src/modules/crm/dashboard-pages.ts; the proof is test/dashboard.test.ts and
+  > tools/payload-proof.ts.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > NOTHING HERE IS STORED. There is no dashboard table, no cached total and no
+  > column that holds a count: every figure is read from the records the earlier
+  > CRM phases keep, on the request that draws it, and a test asserts the schema
+  > holds nothing named for a dashboard. Where a reading already exists it is
+  > CALLED, never rewritten: the money is `financeDashboard`, a firm's referrals are
+  > `pipelineFigures`, overdue is `dueReading`, the variance is `varianceOf`, a
+  > deliverable is `deliverableIssued`, and the compliance clocks are the three
+  > registers' own lists.
+  >
+  > WHO SEES WHICH TILE IS THE RULE TABLE, NOT A ROLE CHECK. Each tile in `TILES`
+  > names the actions its figures need and is drawn only where `can()` says yes to
+  > every one of them; inside a tile every row is asked again. So ADMIN sees all of
+  > it, SALES the pipeline, ACCOUNTING the money, and SURVEYING — which holds none of
+  > the pipeline, money, figures or register actions — its own survey jobs and
+  > nothing else. N1 is structural: no tile a surveyor can reach reads the estimate.
+  >
+  > UNKNOWN IS COUNTED APART, NEVER AS NOUGHT (N4). A claim with no sealed estimate,
+  > a task with no due date, a completed claim with no sign-off record, a lead not
+  > yet decided, a reconciliation whose quote gap cannot be read — each is a sentence
+  > in the tile's `apart` list, and never a zero added into a sum or a ratio.
+
+### `src/modules/crm/introducers.ts`
+
+- Line 688:
+
+  > MERGE A FIRM ONTO ONE ALREADY RECORDED — CRM 9 of 10, 12 September 2026.
+  >
+  > The public referral form, once it is on, makes a new firm row for every referral and never matches one already
+  > recorded (`created_via` PUBLIC_FORM). This moves that firm's LEADS, PEOPLE and OPEN TASKS onto the firm it really
+  > is, in one transaction, under one `introducer_merges` row — which is the only thing migration 019's
+  > `contacts_introducer_fixed` admits: a person's move from exactly that firm to exactly that one while the merge is
+  > open. ADMIN alone. The merged firm is kept, marked merged, and says onto which.
+  >
+  > WHAT IT DOES NOT MOVE, AND SAYS SO:
+  >   a completed or cancelled task — a closed task keeps its record (staff_tasks_closed_is_final), so it stays on the
+  >     merged firm, whose page still shows it;
+  >   a client's answer on sharing progress, and every notice — those rows are never edited (migration 017). A client
+  >     who said yes to the duplicate firm has not said yes to the recorded one, so no notice goes to it until the
+  >     client is asked again: the safe reading, and the one N4 asks for;
+  >   a fee — money is never moved by a merge. A firm with a fee recorded against it is refused.
+
 ### `src/shared/lists-pages.ts`
 
 - Line 1:
@@ -1412,6 +3391,144 @@ neither says.
   > `claim_figures.read` and `deliverable.record` are. No route asks it yet.
   > ------------------------------------------------------------------------
 
+### `src/modules/assessment/allowance-profit-comparison.ts`
+
+- Line 1:
+
+  > THE WITH-AND-WITHOUT COMPARISON FOR THE ALLOWANCE AND PROFIT ANSWERS — built,
+  > run empty, and switched off. Phase 132, 14 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT IT IS FOR
+  >
+  > Two facts the engine reads and the six screens barely collect: whether the
+  > business has enough taxable profit (`sufficient_profit`, CB_CASH gate 1) and
+  > how much Annual Investment Allowance headroom is left (`aia_headroom` and its
+  > `aia_answer`, CB_CASH gate 2 and CB_BENEFIT.reliefsEstablished). Before anyone
+  > decides those questions are worth asking every client, somebody will want to
+  > know what the answers did to the figures a client is shown. This measures it:
+  > each claim's estimate run as it stands, and again with the two facts removed.
+  >
+  > IT REPORTS COUNTS AND NO VERDICT. There is no "worth asking" and no threshold.
+  > On no real clients it has nothing to say, and it says that — `empty: true`.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT IT FOUND BEFORE ANY CLIENT, MEASURED RATHER THAN ASSUMED
+  >
+  > The engine's two BENEFIT figures — year-one and cumulative, from CB_BENEFIT
+  > through CB_FEE.display — do not read `sufficient_profit` at all, and read
+  > `aia_headroom` only as a NUMBER. "yes", "no", "unsure" and absent profit give
+  > the same benefit; "none", "unsure" and absent headroom give the same benefit;
+  > only the cash gates move. And on a real case the benefit is a RANGE (the pool
+  > split and the period are unknown), so `year_one_benefit` comes back null and
+  > the comparison is NOT_COMPARABLE rather than a zero. So today every claim
+  > would land in `not_comparable` or `unchanged`. That is the true state, and it
+  > is the reason this ships off: it measures nothing until the questions are
+  > asked of real clients and a determined figure exists.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > SO THE CASH READING IS COMPARED TOO. Phase 132, later the same day.
+  >
+  > A comparison of the benefit alone would report "unchanged" for every answer
+  > and mislead the measurement. What the two answers move is CB_CASH's reading,
+  > which reaches the back end the way every other engine reading does — the
+  > `estimate()` result, as `unestablishedGates` in engaged.ts reads its
+  > `cashGates`: `cashRoute` (Rulebook A's W1–W4, or null for none established),
+  > `cashBlocked` (a gate KNOWN to be shut), and `cash` (the [low, high] near-term
+  > figure, null where not established). Nothing here re-computes a gate.
+  >
+  > MEASURED ON THE ENGINE, not assumed: neither answer moves the route (the
+  > route turns on the amendment window and ownership) or the size of the figure
+  > (it is the tax saving). Profit "no" and headroom "none" SHUT a gate, and the
+  > cash figure goes from a range to null on the same route. That is not a null
+  > anybody failed to compute — the engine says `cashBlocked` — so it is counted
+  > as SHUT, apart from NOT_COMPARABLE, and its delta is still null, never 0.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > N4, TWICE
+  >
+  > A NULL ON EITHER SIDE IS NOT_COMPARABLE, NEVER A DELTA OF 0. A zero would say
+  > "the answer made no difference", which a figure nobody could compute cannot
+  > say.
+  >
+  > "I DON'T KNOW" IS COUNTED APART FROM "NEVER ASKED" — AND IT IS READ FROM THE
+  > RAW ROWS, NEVER FROM THE SESSION. `known()` in funnel-session.ts merges the
+  > two on purpose, because the ENGINE must treat them identically; a session
+  > therefore cannot tell them apart and this file does not try to read one out
+  > of it. The classification reads the funnel's stored answer, the claim's
+  > `claim_facts` rows and the portal's `client_tasks` rows directly.
+  >
+  > NO ROUTE IMPORTS THIS FILE. A test scans src/ for that.
+
+### `src/modules/claims/defence-pack.ts`
+
+- Line 1:
+
+  > THE DEFENCE PACK GENERATOR — BUILT, AND SWITCHED OFF. Phase 132, 14 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT IT DOES, SWITCHED ON
+  >
+  > It gathers what a defence pack must carry, from the records that sealed each
+  > part, into one MANIFEST hashed with SHA-256: the case stamp (src/modules/claims/case-stamp.ts),
+  > the surveyor's commitment, the sources of the facts the gates read, the
+  > reconciliation snapshot, the tax adviser's sign-off record, the s.203 position,
+  > the anchor log for the claim's survey jobs, and the issued deliverables with
+  > their hashes. A section with nothing sealed to show is MISSING, named, and the
+  > manifest is INCOMPLETE. THE MANIFEST IS NOT A PACK AND NOTHING IS ISSUED: the
+  > defence pack is still a deliverable recorded in the register, by a person, with
+  > the hash of the pack as issued (Developer Spec DS-W10).
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHY IT IS OFF
+  >
+  > What a defence pack must contain is the Defence Pack Template's to say, and the
+  > chartered tax adviser has not signed it off. `DEFENCE_PACK_GENERATOR` ships
+  > `enabled: false`; while it is off a request is refused BEFORE anything is read
+  > or written, and what it waits on is written in `waits_on`.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > N4 — A FACT RECORDED AS NOT KNOWN AND ONE NEVER RECORDED READ IDENTICALLY
+  >
+  > A section that rests on a claim fact is PRESENT only on a recorded VALUE. An
+  > UNKNOWN answer and no answer give the same MISSING section, word for word and
+  > with no row cited — so a pack can never be called complete on a fact nobody knows.
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 113:
+
+  > --- added by Phase 132, 14 September 2026 ---
+
+- Line 1911:
+
+  > THE HOST'S BACKUP CYCLE — A NAMED BLANK. Phase 132, 14 September 2026.
+  >
+  > Retention Procedure 4.1 point 4: a record leaves the live systems at once and
+  > the backups only when the backup cycle expires, "with no restoration of a
+  > deleted record without the DPO's approval. The cycle length must be stated."
+  > It is NOT SET. Nobody has asked the host in writing whether the client-document
+  > folders can be left out of the nightly whole-site backup, and until somebody
+  > has, a file deleted from disk may still be alive in a copy.
+  >
+  > SO EVERY DELIVERED DELETION CARRIES THE BLANK, NOT A GUESS. recordDeletion
+  > writes the cycle onto the evidence itself — a caller never supplies it — and
+  > while the cycle is not known the evidence says backups are still pending, with
+  > no cycle and no expiry. A cycle recorded as not known and a cycle never set are
+  > the same fact (N4): neither becomes zero, neither becomes "no backups", and
+  > neither lets RET-3 start its clock.
+  >
+  > `days` is the length of the cycle in whole days once it is known; 0 would mean
+  > the folders are excluded and no copy survives. Only a cycle whose state is SET
+  > is read at all. Setting it is the data protection officer's and the
+  > developer's act, and one line here.
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 603:
+
+  > (SOP 8's words since Phase 132, 14 September 2026; they said "No CTA sign-off" — clause 1: any tax adviser signs off.)
+
 ### `src/shared/engine.ts`
 
 - Line 368:
@@ -1427,6 +3544,124 @@ neither says.
   > refuses to restore a deleted record without the data protection officer's approval, and RET-3's clock, AS THE
   > INGESTION MODULE STATES THEM. The deletion log in migration 022 and the retention list read them here and restate none.
 
+## 14 Sept 2026: Phase 133c
+
+### `src/modules/crm/tasks.ts`
+
+- Line 191:
+
+  > PHASE 133c: THE WORDS ARE THE ONE UK-DATE HELPER'S — "3 days overdue (14 Sep 2026)", "Due today (17 Sep 2026)", "Due in
+
+## 14 Sept 2026: Phase 146c
+
+### `src/modules/claims/case-stamp.ts`
+
+- Line 1:
+
+  > THE CASE STAMP — WHAT DECIDED A SEALED CASE, WRITTEN WHEN A DELIVERABLE IS ISSUED.
+  > Phase 132, 14 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHY IT EXISTS
+  >
+  > A claim is defended years after it is filed, by which time the engine, the
+  > rulebooks and the switches will all have moved. Before this phase the engine
+  > version was kept in one place — the reconciliation's `a_engine_version` — the
+  > sign-off kept only the CTA switches its adviser confirmed, and nothing kept the
+  > rulebook versions, the free register gate or a single back-end switch. So a
+  > question from HMRC in 2031 — "on what rules was this computed?" — had no record
+  > to answer it from.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT A STAMP HOLDS, AND WHEN
+  >
+  > One row in `claim_version_stamps` (migration 022) per ISSUED deliverable of
+  > every kind, written by `recordDeliverable` in the same transaction that issues
+  > it: the engine version (NULL reads "not known", never a default), the rulebook
+  > module versions, EVERY CB_CTA switch and its position, the free register gate,
+  > every back-end switch and its position, every connector switch (Phase 146c), each
+  > sign-off record with its hash, the estimate's hash and the head of the anchor log.
+  > Hashed, and never changed.
+  >
+  > ALWAYS ON. It is record-keeping and relieves nothing, so there is no switch to
+  > wait on — a stamp that could be turned off would be a record that could be
+  > missing for no reason anybody wrote down.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE COUNTS ARE DERIVED, NEVER QUOTED
+  >
+  > The CTA switches are `ctaSwitchReadings()`, which reads every boolean on CB_CTA.
+  > The back-end switches are listed by name below, and test/phase132-records.test.ts
+  > greps src/ for every frozen `enabled:` switch and fails if one is not listed
+  > here — so a switch added later is either stamped or a red test.
+
+## 14 Sept 2026: Phase 151b
+
+### `src/modules/claims/documents.ts`
+
+- Line 155:
+
+  > RET-7'S TWO DATES, READ FROM THE CLAIM — DERIVED, NOT STORED. Phase 132, 14 September 2026.
+  >
+  > The ingestion module's RawFileRecord declares `claim_period_end` and `report_delivered_at` and nothing ever filled
+  > them. Both are already on record, so neither gets a column (the house rule READ, NOT STORED — migration 017 and
+  > src/modules/claims/claim-record.ts): a document is followed through its LIVE claim link to ONE claim, and
+  >
+  >   claim_period_end     that claim's ACCOUNTING_PERIOD_END fact — the LATEST row being the answer, as every claim fact
+  >                        is read (src/modules/claims/claim-facts.ts). A VALUE gives the date; UNKNOWN reads null, exactly as no row
+  >                        does (N4).
+  >   report_delivered_at  the EARLIEST issue date of the claim's CLIENT_REPORT, issued or since superseded. AN ASSUMPTION,
+  >                        NAMED: RET-7 runs from "the later of" the two dates, so the earliest delivery is the reading that
+  >                        can only bring a deletion date forward — the fail-closed one for a retention rule. Which delivery
+  >                        the Retention Determinations mean is theirs to say. A draft is not a delivery, and a reasoned
+  >                        negative is not read as the report.
+  >
+  > NULL, WITH ITS REASON, where the document is linked to no claim (a property link names no claim), to more than one
+  > (which claim's dates govern is not decided here), or where a date is not known. NOTHING HERE COMPUTES A DELETION DATE:
+  > RET-7 is not approved, and `deletionDueAt` in the ingestion module is where a date would come from. Its rule where two
+  > clocks are known is that the LATER governs — the file is kept until both periods have ended (Word answer 173, closed
+  > 24 September 2026; until Phase 151b it took the earlier).
+
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 505:
+
+  > MANDATORY PERSON REVIEW, PER DOCUMENT TYPE — BUILT AND SWITCHED OFF.
+  > Phase 132, 14 September 2026.
+  >
+  > WHAT IT CHANGES. Today `extract()` records a value at or above its confidence
+  > threshold with no person looking at it: a 0.96 on an apportionment field
+  > stands at grade B on the model's word. Turning a type ON here puts every field
+  > found on that type in front of a person — `needs_human_review: true` and one
+  > review task each, routed to the same reviewer the consequence already names —
+  > however confident the model was.
+  >
+  > WHAT IT DOES NOT CHANGE. The GRADE. A field a person has been asked to check is
+  > still the model's reading until they check it, so it stays at B or C exactly as
+  > the threshold put it; promoting or demoting it on the switch would be a figure
+  > moving because a setting moved. And a field ALREADY below threshold already has
+  > its one task, so it does not get a second.
+  >
+  > EXHAUSTIVE BY TYPE, AT TYPECHECK. Keyed by every type DOC_SPECS carries — every
+  > DocType but the two human-read-only ones, which never reach extract() at all.
+  > Adding a DocType without a row here fails the typecheck, and a test asserts the
+  > keys equal the DOC_SPECS types at runtime as well.
+  >
+  > AND FAIL CLOSED WHERE A TABLE IS PASSED IN. `extract()` reads a type missing
+  > from the table it is handed as REVIEW REQUIRED. Only an explicit `false` switches
+  > review off: an absent row is not a decision that nobody needs to look.
+  >
+  > ALL FALSE, AS SHIPPED, UNTIL 22 SEPTEMBER 2026. Which types warrant a person on
+  > every field is a decision for whoever owns the extraction's error rate, not a
+  > build step — and Phase 146e was told to take one: FIRE_RISK_ASSESSMENT IS ON. A
+  > fire risk assessment can hold residents' health details (who needs help to leave
+  > the building, and why), so every field read from one is checked by a person
+  > before it stands, however confident the model was. The other eight are as they
+  > were. Recorded in 09-app/CAPREBATE-DEVELOPER-SPEC.md; test M1 holds the table.
+  > Phase 151b added the tax return and the tax computation, OFF: whether a person
+  > checks every figure read from them is the same kind of decision, and nobody has
+  > taken it.
+
 ## 15 Sept 2026: Phase 132
 
 ### `src/core/server.ts`
@@ -1436,6 +3671,102 @@ neither says.
   > THE CLOCK — Phase 132, 15 September 2026. Absent means the real one, as before. A test whose seed or fixtures
   > carry fixed calendar dates passes a fixed clock, so it reads the same on any day it runs: four tests read the
   > wall clock through here and went red before September 2026, and one again from 31 December 2027.
+
+### `src/modules/claims/case-stamp.ts`
+
+- Line 88:
+
+  > The engine package's own `version`, or null where it states none. Moved here from src/modules/claims/claim-record.ts by Phase 132.
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 143:
+
+  > Phase 132 — TMA 1970 s.12ABA(4)(b) and s.12AA(5B): a company partner puts the partnership return on the company
+  >      filing date. Read by amendmentWindowReading for an LLP or a partnership only; migration 024 adds the key.
+
+- Line 509:
+
+  > PHASE 132 — a partnership or LLP reads whether a partner or member is a company. A row recorded as NOT KNOWN
+
+- Line 532:
+
+  > The sentence beside a known window: which rule gave the date, and what it rests on. Phase 132.
+
+- Line 682:
+
+  > Phase 132, 15 September 2026 — recordable since 14 September and shown nowhere until now.
+
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 201:
+
+  > A ROW MAY CARRY A SENTENCE SAYING WHAT THE FACT DOES — Phase 132, 15 September 2026. Without one it is drawn as before.
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 331:
+
+  > The engine package this build ships, and its version. PHASE 132 MOVED BOTH TO src/modules/claims/case-stamp.ts, which stamps the
+  > version on every issued deliverable; the reconciliation still reads it here, from there, and the path is re-exported
+  > so nothing that named it moves.
+
+- Line 745:
+
+  > A DAY THE TARGET MONTH DOES NOT HAVE IS THAT MONTH'S LAST DAY. Phase 132, 15 September 2026.
+  > It rolled over into the next month: 29 February 2024 plus twelve months read 1 March 2025, and 31 January plus one
+  > read 3 March, holding the enquiry window open a day or more too long. The engine's CB_CASH.addMonths was clamped the
+  > same way on 14 September. A day the target month has reads exactly as before. Exported for its test alone.
+
+- Line 1031:
+
+  > THE CASE STAMP — PHASE 132, 14 SEPTEMBER 2026. EVERY ISSUE, OF EVERY KIND, SEALS WHAT DECIDED THE CASE: the engine
+  > version, the rulebook versions, every switch and its position, and the sign-off records with their hashes
+  > (src/modules/claims/case-stamp.ts). IN THE SAME TRANSACTION, AFTER THE ISSUE, so a stamp that cannot be written takes the issue
+  > back with it and an issued deliverable never stands without one. ALWAYS ON: it relieves nothing. A refusal above
+  > returns before this and writes no stamp.
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 2092:
+
+  > Phase 132. WHETHER A COPY MAY STILL BE ALIVE IN THE HOST'S BACKUPS, the
+  > cycle the deletion relied on, and the day the last copy expires — Retention
+  > Procedure 4.3's "whether backups are pending expiry". WRITTEN BY
+  > recordDeletion FROM BACKUP_CYCLE, never by a caller. While the cycle is not
+  > known: pending true, no cycle, no expiry — a blank, never a zero.
+
+- Line 2222:
+
+  > Records a deletion. A deletion with no evidence is indistinguishable from no deletion.
+  >
+  > PHASE 132: THE EVIDENCE CARRIES THE BACKUP CYCLE, AND THIS FUNCTION WRITES IT.
+  > The cycle is read from `cycle` — BACKUP_CYCLE unless a test passes another —
+  > and a caller that states a backup position the cycle does not support is
+  > refused with E_BACKUP_CYCLE_ASSERTED, on the same reasoning that refuses
+  > `redacted_copy_retained: true`: an evidence record that asserts the copies are
+  > gone, when nobody knows, is worse than one that says nothing.
+
+- Line 2292:
+
+  > NO RESTORATION OF A DELETED RECORD WITHOUT THE DPO'S APPROVAL — Retention
+  > Procedure 4.1 point 4. Phase 132. Nothing in this codebase restores a file;
+  > this is the guard any restore path must pass first. A deleted record with no
+  > approval, or an approval missing who gave it or its reference, is refused. A
+  > record that was never deleted has nothing to restore and passes.
+
+## 15 Sept 2026: Phase 132c
+
+### `src/modules/crm/introducers.ts`
+
+- Line 121:
+
+  > MODEL C'S PERCENTAGE — Lakhbir's answer to "Is anything paid to the accountant?", read in Phase 132c on
+  > 15 September 2026: an accountant registered as an introducer may be offered 10% of our fee. It is the only
+  > percentage C takes, so it is a constant with its source rather than a number anybody types. 1000 basis points.
+  > WHAT IT IS COMPUTED ON: our fee as invoiced, net of VAT — never the quoted or estimated fee.
+  > THE CLIENT-DISCLOSURE POINT is the solicitor's (FOR THE SOLICITOR, THE DPO AND THE DEVELOPER): whether and how a
+  > percentage paid to the client's own accountant must be disclosed to the client, and when. Nothing here is payable.
 
 ## 15 Sept 2026: Phase 132e
 
@@ -1456,6 +3787,53 @@ neither says.
   >     with boundary data once we have it; it never switches fetching on.
   >   - anything else, including "not sure" and undefined: refused, with the
   >     same answer every time.
+
+## 16 Sept 2026: Phase 132
+
+### `src/modules/claims/case-stamp.ts`
+
+- Line 140:
+
+  > EVERY BACK-END SWITCH, BY NAME, WITH ITS POSITION AS THIS BUILD SHIPS IT.
+  >
+  >   DISCLOSURE_LOG               the per-disclosure log                          src/web/disclosure-log.ts
+  >   DPO_ROLE_SWITCH              a data protection officer role                  src/core/authz.ts
+  >   FEE_CLAWBACK                 clause 13 — the fee follows a reduced claim     src/modules/claims/claim-record.ts
+  >   REFERRAL_FORM                the public referral form                        src/modules/crm/introducers.ts
+  >   CLIENT_SHARE_GIVE            a client giving the share-progress answer       src/modules/crm/introducers.ts
+  >   CONVEYANCING_STRIP           company names kept on conveyancing uploads      src/modules/assessment/conveyancing-strip.ts
+  >   FEE_CONTROLS.above_benefit   the fee above the benefit                       src/modules/claims/fee-controls.ts
+  >   FEE_CONTROLS.break_and_abort the break and abort fees                        src/modules/claims/fee-controls.ts
+  >   MANDATORY_DOCUMENTS          the documents a gate requires                   src/modules/claims/mandatory-documents.ts
+  >   KEEP_ORIGINALS               keeping the file a client sent (Phase 140)      src/shared/originals.ts
+  >   KEEP_ORIGINALS_TEST_WEBSITE  the same, on the test website only (153c)      src/shared/originals.ts, passed by api/index.mjs
+  >   EMAIL_SENDING                sending email from contact@ (Phase 141)       src/integrations/email/email-provider.ts
+  >   INBOUND_EMAIL                reading replies to contact@ (Phase 142)       src/integrations/email/email-inbound.ts
+  >   IDENTITY_CHECK               the online identity check (Phase 151)          src/integrations/connectors/identity-check.ts
+  >   POSTCODE_CHECK               the free postcode check (Phase 151)            src/integrations/connectors/postcode-check.ts
+  >   ADDRESS_LOOKUP               "Find my address", Homedata since 156f (6 Oct)  src/integrations/connectors/address-lookup.ts
+  >   COMPANY_TYPE_FROM_REGISTER   the company type from Companies House (153b)   src/integrations/connectors/company-search.ts
+  >   ENGAGEMENT_SIGNING           the built-in letter signature (Phase 146f)      src/modules/claims/signing.ts
+  >   ENGAGEMENT_SIGNING_TEST      signing on for testing, test copy only (6 Oct)  src/modules/claims/signing.ts
+  >   MESSAGE_RETENTION            the message clean-up job (Phase 142a)           src/modules/crm/message-retention.ts
+  >   ENQUIRY_RETENTION            the closed-enquiry clean-up job (Phase 153c)    src/modules/public-site/enquiry-retention.ts
+  >   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/modules/claims/defence-pack.ts
+  >   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/modules/assessment/allowance-profit-comparison.ts
+  >   HOMEDATA_DIMENSIONS          Homedata's floor-area estimate (Phase 153e)     src/integrations/connectors/homedata.ts
+  >   FUNNEL_SWITCHES.breakeven_is_insufficient_profit
+  >                                break-even read as insufficient profit          src/modules/assessment/funnel-session.ts
+  >
+  > FEE_CONTROLS.minimum_fee left this list in Phase 132e (16 September 2026): the minimum fee is decided none, and the
+  > control is retired — MINIMUM_FEE_DECISION in src/modules/claims/fee-controls.ts records it.
+  >
+  > ALLOWANCE_PROFIT_COMPARISON was added by another Phase 132 workstream while this
+  > list was being written; the grep test found it the same day, which is what it is for.
+  > The funnel's switch is not an `enabled` flag, so the grep cannot see it: it is
+  > stamped by its own key, and the test counts FUNNEL_SWITCHES's booleans.
+  >
+  > READ WHEN ASKED, NOT WHEN THIS FILE LOADS: src/modules/claims/claim-record.ts and
+  > src/modules/claims/defence-pack.ts import this file, and it imports them, so nothing here
+  > touches their exports until a stamp is taken.
 
 ## 16 Sept 2026: Phase 132e
 
@@ -1726,6 +4104,239 @@ neither says.
   > 12. Sources note — the two attribution statements (Phase 132e)
   > ------------------------------------------------------------------
 
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 180:
+
+  > Phase 132e: the client's own written filing confirmation, where the client has no accountant (src/modules/portal/client-filing.ts).
+
+- Line 188:
+
+  > Phase 132e: a multi-site discount proposed on this claim's fee — recorded, never applied (src/modules/claims/fee-discounts.ts).
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 1109:
+
+  > Phase 132e: what Lakhbir decided, recorded. It moves no switch: the trigger and settlement terms are still blank.
+
+### `src/modules/claims/fee-controls.ts`
+
+- Line 62:
+
+  > A MINIMUM FEE — DECIDED: NONE. Phase 132e, 16 September 2026. The switched-off control that stood here from CRM 7 of
+  > 10 (one amount per sector, every one unset) is retired rather than left for somebody to switch on. The £5,000 and
+  > £7,500 in the minimum-fee paper were a recommendation, never a decision, and are not a floor anywhere.
+
+- Line 382:
+
+  > THE FEE. PLAIN FIRST — CB_FEE's own display, 3% of the allowances identified —
+  > then the first-year control, if it is on. With every control off, as shipped,
+  > this returns the plain fee and no warning, and nothing else about it moves.
+  > THERE IS NO MINIMUM (decided none, Phase 132e) AND NO DISCOUNT IS EVER READ HERE:
+  > a multi-site discount is discretionary and is never applied automatically.
+  >
+  > A REFUSAL IS NOT A NUMBER. Where a control that is on cannot be applied on the
+  > facts held, nothing is raised and the reason names the missing fact — a cap
+  > against a bounded range would be choosing a number out of that range, in
+  > whichever direction suited us.
+
+### `src/modules/claims/fee-discounts.ts`
+
+- Line 1:
+
+  > A MULTI-SITE DISCOUNT — ENTERED, RECORDED, AND NEVER APPLIED AUTOMATICALLY.
+  >                                                  Phase 132e, 16 September 2026
+  >
+  > The fee is a flat 3% of the allowances identified, and "A further multi-site
+  > discount can be applied depending on site/opportunities" (Lakhbir). The engine
+  > holds the discount as discretionary with two named nulls — the largest
+  > discount and who approves it — and they are asked, never invented here.
+  >
+  > SO A DISCOUNT A PERSON ENTERS IS A RECORD AND NOTHING MORE: how much (a share
+  > of our fee), why, who and when, with an audit line that names none of the
+  > reason's words. It is read back as AWAITING the decision on the largest
+  > discount and the approver. No invoice reads this module; `computeFee` in
+  > src/modules/claims/fee-controls.ts never sees it; no ceiling is checked because none is
+  > decided, and nothing is refused for want of one.
+
+### `src/modules/crm/automation.ts`
+
+- Line 556:
+
+  > Phase 132e: a READ_ONLY login owns no work — it may not progress a task — so it is not an owner either.
+
+### `src/modules/crm/crm.ts`
+
+- Line 1527:
+
+  > Phase 132e: multi-site discounts proposed on this claim's fee — recorded, never applied — for `fee_discount.read`.
+
+- Line 2060:
+
+  > Phase 132e: the multi-site discounts proposed on a claim's fee, for a reader of `fee_discount.read` — absent otherwise.
+
+### `src/modules/crm/introducers.ts`
+
+- Line 117:
+
+  > Phase 132e: Lakhbir's answer. Built and switched off; refused while clause 1 of the letter is blank, as A and B are.
+
+- Line 1361:
+
+  > Phase 132e: model C's ledger — accruals and reversing entries — for a reader of `introducer_fee.read`.
+
+- Line 1518:
+
+  > ================================================================== *
+  > 7 · MODEL C — A PERCENTAGE OF OUR FEE ACTUALLY INVOICED   Phase 132e
+  >
+  > Switched off, as the setting ships. Two hooks, both called by src/web/invoices.ts
+  > after its own write has committed, and both silent when there is nothing to do:
+  >   onFeeInvoiced         our fee invoice raised on a referred claim, while C is
+  >                         the setting and the referring firm is a registered
+  >                         accountancy firm: an ACCRUAL of the percentage of the fee
+  >                         as invoiced (net of VAT).
+  >   onClause13Credit      a clause 13 credit note on an invoice that carries an
+  >                         accrual: a REVERSAL of the same percentage of the amount
+  >                         credited — whatever the setting is now, because the
+  >                         accrual exists — never more than is left, and never a
+  >                         delete or an edit of the accrual (migration 028).
+  > ==================================================================
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 114:
+
+  > WHAT MOVES A CLAIM PAST INVOICE — DECIDED ON 15 SEPTEMBER 2026, BUILT BY PHASE 132e.
+  >
+  > Until Phase 132e the procedure left it open and it shipped at the most
+  > cautious of three readings, HMRC processing the relief. Lakhbir's answer to
+  > "When is our fee earned ...?": due when we complete the report and either
+  > submit it for the client or send it to them to submit; we will not get
+  > confirmation, so delivery is deemed the trigger. So the reading is
+  > REPORT_DELIVERED_FOR_FILING, and it is READ FROM THE DELIVERABLES REGISTER, not
+  > clicked: the claim's client report or computation pack ISSUED, on its issue
+  > date. Nothing issued — or an issue with no date, which the table refuses —
+  > leaves it not reached (N4). The other three readings stay built, and a test
+  > runs the gate under each.
+  >
+  > WHAT THIS DOES NOT SAY: that Caprebate files the return or signs the filing
+  > position. Clause 1 of the letter says it does not; "submit it for the client"
+  > against clause 1 is on the solicitor's register.
+
+- Line 605:
+
+  > PHASE 132e: WHO CONFIRMS THE CLAIM FITS THE RETURN. Where the client has no accountant or tax adviser — a
+
+### `src/modules/crm/schedule.ts`
+
+- Line 138:
+
+  > HOW SOON A NEW TIME CHOSEN BY A CLIENT MAY BE — two hours. Phase 113a,
+  > NARROWED BY PHASE 132e ON 16 SEPTEMBER 2026.
+  >
+  > WHAT CHANGED, AND WHY. Lakhbir, answering "How late may a client move their
+  > own call, and may they cancel it outright?": "Give the client full control to
+  > cancel at any time, and rebook at a time that suits them". So a call the
+  > client ALREADY HOLDS may now be moved, released or cancelled at any time,
+  > however close it is — the half of the rule below that refused "a call that is
+  > inside the window" no longer applies. THE OTHER HALF STAYS: a NEW time the
+  > client picks must be at least this far away, so whoever is calling knows about
+  > it. The reasoning below was written for both halves and is kept as the record
+  > of the decision it replaced.
+  >
+  > A DECISION, NOT A DEFAULT, and it is here rather than in the portal because
+  > it is a fact about how this business books calls and the screen has to quote
+  > it. The reasoning, so that changing it is a decision too:
+  >
+  >   A CALL IS AN APPOINTMENT WITH A PERSON, and that person's morning was
+  >   arranged around it. Inside a couple of hours they may be travelling to a
+  >   quiet room, have the file open, or already be dialling. A change that
+  >   arrives at that point is not a rescheduling; it is one party turning up.
+  >
+  >   TWO HOURS IS SHORT ENOUGH TO BE FAIR. It is not a working day's notice —
+  >   somebody who realises at nine that eleven o'clock will not work can still
+  >   move it themselves, which is the case the portal exists for. What it
+  >   refuses is the ten-minutes-before change, and it refuses it with a sentence
+  >   naming the telephone rather than a silent absence of a button.
+  >
+  >   IT APPLIES TO BOTH ENDS. A client may not move a call that is inside the
+  >   window, AND may not move one INTO the window — otherwise the rule buys
+  >   nobody any notice at all, it just moves which call is imminent.
+  >
+  > THE STAFF PATH IS NOT SUBJECT TO IT. A member of staff moving a call to
+  > twenty minutes' time is doing it while talking to the client, which is the
+  > one circumstance in which it is the right thing to do.
+
+### `src/modules/portal/client-filing.ts`
+
+- Line 1:
+
+  > THE CLIENT'S OWN FILING CONFIRMATION, WHERE THERE IS NO ACCOUNTANT.
+  >                                                  Phase 132e, 16 September 2026
+  >
+  > Lakhbir, answering "Where a client has no accountant or tax adviser, who
+  > confirms the claim fits their return ...?": "The client".
+  >
+  > THE REPORTS GATE (src/modules/crm/pipeline.ts) asks `filingRoute` which of two routes a
+  > claim is on, and then asks that route's need:
+  >
+  >   ACCOUNTANT — as it always was: the accountant's confirmation milestone. Taken
+  >     whenever the organisation has a contact typed ACCOUNTANT or ADVISER, and
+  >     whenever the client has not confirmed, as a recorded YES, that they have
+  >     none. "Not sure" and absent choose this route identically (N4): an unknown
+  >     never relieves the gate.
+  >   CLIENT — only where the client has confirmed in writing that they have no
+  >     accountant or tax adviser AND no such contact is on the organisation. The
+  >     gate then needs the client's own written confirmation of the three things
+  >     below, every one a recorded YES, with the last day to amend they confirmed
+  >     equal to the amendment window's deadline as the application reads it now.
+  >     Any of the three NO, UNSURE or absent, or the dates differing, or the window
+  >     not known: shut.
+  >
+  > NEVER AN ACCOUNTANT'S. The record is its own table (migration 027) whose party
+  > can only be CLIENT, and nothing here writes or reads the accountant's
+  > milestone. The operating procedures' stages 8 and 9 are edited by another
+  > workstream; this is the application's half.
+
+### `src/modules/portal/portal.ts`
+
+- Line 204:
+
+  > Phase 132e: set once the call is cancelled. The row survives; null on every call still held.
+
+- Line 432:
+
+  > IS THIS NEW TIME TOO SOON FOR THE CLIENT TO CHOOSE IT THEMSELVES? Phase 132e.
+  >
+  > It replaced `tooLateToMove`, which asked the same arithmetic of the call the
+  > client ALREADY held — a refusal Lakhbir lifted on 16 September 2026. Only the
+  > new time is asked now. Exported because the SCREEN draws only the times the
+  > store would accept.
+
+- Line 476:
+
+  > Phase 132e: THE CALL THEY HOLD MAY BE MOVED AT ANY TIME, however close or past.
+
+- Line 534:
+
+  > Phase 132e: no notice period for giving a time back — at any time.
+
+- Line 552:
+
+  > CANCEL THE CALL OUTRIGHT. Phase 132e, 16 September 2026 — decision 2 above.
+  >
+  > AT ANY TIME, whether the call is days away, minutes away, already passed, or
+  > still waiting for a time. It is the last of the three things the screen offers,
+  > after new times and "ring me instead".
+  >
+  > WHAT IT DOES: one UPDATE setting `cancelled_at` and `cancelled_by` on the SAME
+  > row (the time stays on it, for the record, and no longer holds a slot — see
+  > schedule.ts), one `booking_changes` row with `cancelled = 1`, one outbox line
+  > (not sent) and one audit line. WHAT IT DOES NOT DO: delete anything, or touch
+  > the lead, the claim or the organisation — the enquiry stays open.
+
 ### `src/shared/engine.ts`
 
 - Line 58:
@@ -1786,6 +4397,52 @@ neither says.
 
 ## 16 Sept 2026: Phase 132f
 
+### `src/modules/assessment/vat.ts`
+
+- Line 234:
+
+  > PHASE 132f — THE ENGAGEMENT GATE ON THIS FEE, with phase9's costing injected (engine.ts `feeGate`). A READING,
+  > NOT A WITHHOLDING: this fee is earned on a signed-off figure, and the VAT forward look counts what will be
+  > invoiced, so `expected_pence` is never moved by it. Where it fires, `routes_to` is the engine's "we will come
+  > back to you with a price". An unknown fee or sector, and supported living, are UNDETERMINED. The placeholder
+  > caveat is on every reading.
+
+### `src/modules/claims/research.ts`
+
+- Line 209:
+
+  > PHASE 132f, 16 September 2026 — CONDITION CA2, READ OFF THE ENGINE.
+  >
+  > The fields this source retrieves that CB_REGISTRY.SOURCES[].postSignature
+  > lists: retrieved only after a signed engagement, checked on the server.
+  > Empty for every source whose fields are free. Today it is `psc_name` on
+  > CH_PSC (the list of persons with significant control) and
+  > `proprietor_name_personal` on HMLR_TITLE (the title register, already
+  > PAID). NOT A SECOND LIST: it is derived in `postSignatureFieldsFor` from
+  > the engine's own `postSignature` and the source register's own
+  > `personal_name_exceptions`, so the day the site adds a field the panel
+  > follows it.
+
+- Line 605:
+
+  > N4 (Phase 132f). Only a record saying `signed === true` is a signed
+  >      engagement. This used to read `!engagement.signed`, under which a truthy
+  >      non-boolean — a "not sure" typed anywhere — would have opened the paid
+  >      tier; and an absent record would have thrown. Both now read as unsigned.
+
+- Line 627:
+
+  > CA2 (Phase 132f): a source carrying a post-signature field waits on the
+
+### `src/modules/crm/crm.ts`
+
+- Line 1930:
+
+  > PHASE 132f — THE ENGAGEMENT GATE, read off `expectedFeeFor` (engine.ts `feeGate`, phase9's costing injected).
+  > `outcome` FIRE routes this fee to the engine's own words, "we will come back to you with a price": nothing is
+  > quoted automatically, and the figures stay for the person pricing it by hand. UNDETERMINED — an unknown fee, an
+  > unknown sector, supported living — is neither. The placeholder caveat is carried on every reading.
+
 ### `src/shared/engine.ts`
 
 - Line 131:
@@ -1795,6 +4452,94 @@ neither says.
 - Line 133:
 
   > Phase 132e, read by the back end from Phase 132f: the £1,000 no-claim threshold.
+
+## 16 Sept 2026: Phase 151c
+
+### `src/modules/claims/research.ts`
+
+- Line 1:
+
+  > PANEL 2 — SOURCES: WHAT HAS FIRED AND WHAT HAS NOT.
+  >
+  > And the first place `assertSignedEngagement` takes any form. It is named in
+  > four documents — the Developer Brief, the Build Order, the Provenance Map and
+  > src/integrations/signature.ts's own warning — and, until this file, implemented
+  > nowhere. Every one of those four says the same three things about it, so they
+  > are the specification and they are not restated as opinion:
+  >
+  >   · SERVER-SIDE, on every paid call. Never in the UI, never on a value the
+  >     browser sent, never once per session.
+  >   · The operator picks THE MOMENT, NOT THE CALLS. One button fires everything
+  >     outstanding, and a per-call confirmation is explicitly not to be built.
+  >   · NOTHING REFUSES AND NOTHING THROWS. Before signature a paid source is
+  >     simply not consulted and its facts stay asked, which is what N4 already
+  >     requires of every unknown.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHY A FUNCTION CALLED `assert…` RETURNS A RECORD INSTEAD OF THROWING
+  >
+  > The name is not this phase's to change: four documents and a board item use
+  > it, and renaming it here would make every one of them wrong. But the third
+  > rule above forbids the behaviour the name suggests. The two are reconciled by
+  > reading "assert" as it is used in caprebate-source-register.ts and in
+  > caprebate-name-exclusion.ts — ESTABLISH THE FACT FROM THE RECORD — rather
+  > than as "throw unless". It reads the engagements table on the server, on this
+  > request, and returns what it found. The gate is then applied by NOT
+  > CONSULTING a source, which is a decision and not an error.
+  >
+  > A version that threw would be a build in which a shut gate produces a screen
+  > error, and all four documents name that as the failure mode to avoid.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE TWO GATES ARE READ, NEVER RESTATED, AND NEITHER IS OPENED HERE
+  >
+  > The FREE gate is `CB_REGISTRY.precondition`. It is `enabled:false`, its own
+  > `requires` string says why, and there is no code in this package that can set
+  > it. `registryGate()` in engine.ts is the one reader. DO NOT BUILD A SECOND
+  > GATE — publishing the notice and flipping one boolean is the data protection
+  > decision, and it is not a build step.
+  >
+  > The PAID gate is a signed engagement, asserted below against the record.
+  >
+  > Today BOTH are shut, so every source reports NOT_PERMITTED_YET and every fact
+  > they would have supplied stays asked. That is the honest state and it is what
+  > the screen shows.
+  >
+  > CA2 — PHASE 132f, 16 September 2026. A source whose fields CB_REGISTRY lists
+  > as `postSignature` waits on the signed engagement too, whatever its tier:
+  > the list of persons with significant control (CH_PSC) is free of charge and
+  > stays tiered FREE, and it is still not consulted before signature. Read off
+  > the engine through `postSignatureFieldsFor` / `postSignatureOpen`, never a
+  > second list here. The free facts on the same publishers — CH_COMPANY and
+  > HMLR_PPD — are untouched.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHO SIGNED, AND WHETHER THE REGISTER SAYS THEY MAY — PHASE 151b, 25 September 2026
+  >
+  > Word question 156, for the data protection officer: "May we briefly check two public register names without saving
+  > them?" Answer, closed 24 September 2026: "Yes – best to check who signs and if they have authority". So "Run the
+  > research" makes ONE MORE STEP after the lookups: `runSignatoryCheck` reads the name typed on the signed engagement
+  > letter (engagement_signatures.signer_name, migration 040) on the server, and hands it to `checkSignatory`
+  > (src/integrations/connectors/signatory-check.ts), which compares it in memory with the Companies House officers list and the care
+  > regulator's registered manager and nominated individual. What comes back is a register, YES, NO or NOT_CHECKED, and
+  > a reason code — never a name — and `storeSignatoryChecks` keeps exactly that in signatory_checks (migration 050),
+  > with a SIGNATORY_CHECKED audit row carrying the register and the result.
+  >
+  > IT RUNS UNDER THE LOOKUPS' OWN GATES AND SWITCHES, NOT NEW ONES: the free gate (both registers are free), the signed
+  > engagement asserted here, the source's own switch (CH_COMPANY, CQC) and its key — so it is off today, with them.
+  > An outcome where nothing happened (off, not allowed) is shown on the panel and never stored, so no row and "not
+  > checked" read alike. A YES or NO already kept for this engagement is not asked again. The panel carries one line in
+  > words per register (`signatory` on SourcesPanel); it is a staff page, and nothing here reaches the client.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE SITE AREA FROM THE LAND BOUNDARY — PHASE 151c, 25 September 2026
+  >
+  > "Run the research" is now the one caller of `siteAreaFromLandBoundary` (src/integrations/connectors/site-area.ts), through
+  > src/modules/claims/site-area-run.ts: ONE MORE STEP after the check of who signed, for each of the client's properties, with the
+  > postcode's council, any neighbouring council a person added, and the point a person entered or Homedata's own. It
+  > waits on the signed letter, the free gate and the client's own choice, as read here, and above them on the boundary
+  > switch, which is off. The panel carries one line in words per property (`site_area` on SourcesPanel), drawn without
+  > any call outside. The land boundary's own row in the table points at those lines.
 
 ## 16 Sept 2026: Phase 151l
 
@@ -1912,6 +4657,28 @@ neither says.
   > Text only. Having this note does not permit showing a boundary in a client
   > report (CURRENT_LICENCE_PERMISSION still says no) and does not switch
   > fetching on.
+
+## 17 Sept 2026: Phase 132e
+
+### `src/modules/portal/portal-steps.ts`
+
+- Line 1:
+
+  > THE CLIENT'S STEP NAMES — BUILT, SWITCHED OFF, AND ASKED. PHASE 133c, 17 September 2026 (B9).
+  >
+  > The portal names its six steps with the business flow's own labels (src/shared/stages.ts), which were written for us and
+  > read like a build note to a client: "The engine runs → a narrowed estimate". The proposed names below are a second
+  > label set, shown only while the portal-steps switch is on (NAME_SWITCHES in src/core/navigation.ts, shipped OFF). Which
+  > set to use is a question for Lakhbir in CAPREBATE QUESTIONS, "The new names and the client's step names - which do we
+  > switch on?".
+  >
+  > CHECKED BEFORE WRITING THEM DOWN, on 17 September 2026:
+  >   · against the brand book's avoid list (slide 15): no "guaranteed", "HMRC approved", "we get you", "capital gains",
+  >     and no "rebate" as a refund — test/phase133c.test.ts greps the portal under both switch positions;
+  >   · against the open solicitor point on whether we submit anything on a client's behalf (register SDP, Phase 132e,
+  >     point 1): "5 Claim filed" says the claim is filed and NOT who files it, so it promises neither answer.
+  >
+  > A STEP'S NAME CHANGES; ITS MEANING DOES NOT. The key, the order and what counts as done are stages.ts's, unchanged.
 
 ## 17 Sept 2026: Phase 133
 
@@ -2077,6 +4844,72 @@ neither says.
   > NOTHING HERE WIDENS WHAT A LOGIN MAY OPEN. Every button is an address that login's own menu already offers, and
   > test/phase133c.test.ts opens each one as that login and requires 200.
 
+### `src/modules/claims/documents.ts`
+
+- Line 1681:
+
+  > PHASE 133a — THE GATE OF THE DOCUMENT CENTRE, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+  > src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
+  > every menu link for every login, so a gate that drifted from its route fails there.
+
+- Line 1690:
+
+  > PHASE 133a — THE GATE OF THE DOCUMENT TYPES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+  > src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
+  > every menu link for every login, so a gate that drifted from its route fails there.
+
+### `src/modules/crm/automation.ts`
+
+- Line 752:
+
+  > PHASE 133a — THE GATE OF THE AUTOMATION RULES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+  > src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
+  > every menu link for every login, so a gate that drifted from its route fails there.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 992:
+
+  > PHASE 133a: the filters and saved views in a panel beside the list; sortable headings; one table style.
+
+### `src/modules/crm/crm.ts`
+
+- Line 2067:
+
+  > PHASE 133a — THE GATE OF THE PIPELINE BOARD, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+  > src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
+  > every menu link for every login, so a gate that drifted from its route fails there.
+
+### `src/modules/crm/introducers.ts`
+
+- Line 1596:
+
+  > PHASE 133a — THE GATE OF THE REWARD MODEL, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+  > src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
+  > every menu link for every login, so a gate that drifted from its route fails there.
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 590:
+
+  > PHASE 133a: THE BOARD AS COLUMNS OF CARDS. The markup is an ordered list of stages, each holding a list of cards, so
+  > without the stylesheet — or on a phone — it reads as a plain list, stage by stage. Nothing about a move changed: the
+  > button posts the same form, and the server asks the gate again.
+
+### `src/modules/crm/tasks.ts`
+
+- Line 1026:
+
+  > PHASE 133a — THE GATE OF THE ONE-NEXT-ACTION LIST, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+  > src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
+  > every menu link for every login, so a gate that drifted from its route fails there.
+
+### `src/modules/public-site/public-site.ts`
+
+- Line 50:
+
+  > What must not survive into the served page. The same patterns the Phase 133a test holds every page to.
+
 ### `src/shared/assets.ts`
 
 - Line 22:
@@ -2127,6 +4960,32 @@ neither says.
   > every menu link for every login, so a gate that drifted from its route fails there.
 
 ## 17 Sept 2026: Phase 133b
+
+### `src/modules/claims/documents-pages.ts`
+
+- Line 558:
+
+  > PHASE 133b — after a save, land on the section the type now sits in; a value the vocabulary does not list lands at the top.
+
+- Line 563:
+
+  > PHASE 133b — DOCUMENT TYPES AS A LEFT-HAND SECTION LIST. The one long table is drawn as one table per reader group, in
+  > the order the vocabulary lists the groups, each with the same columns, the same row and the same inline form; adding a
+  > type is the last section. A type whose reader value is not in the vocabulary is never dropped: it gets a section of its
+  > own, named by its value. Every type is on the page whichever section is showing.
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 305:
+
+  > PHASE 133b — THE BUSINESS PAGE ON THE RECORD LAYOUT. The highlights carry what the "Waiting on" block always said; the
+  > five numbered panels become five tabs, drawn by the same panel functions from the same two views; the right-hand panel
+  > holds "Waiting on" itself and the quick actions. Nothing is read that this page did not read before, and nothing is
+  > left out: every panel is on the page, in its tab, whichever tab is showing.
+  >
+  > A QUICK ACTION IS OFFERED ONLY WHERE ITS CONTROL IS ON THE PAGE for this login: Run the research only when the rate
+  > allows it (panel 2 draws the button then), Ask for a missing fact only when something is missing (panel 3 draws the
+  > forms then), Add a note only for a login that may read and write notes (panel 5 draws the form then).
 
 ### `src/shared/components.ts`
 
@@ -2243,6 +5102,24 @@ neither says.
 - Line 277:
 
   > ------------------------------------------ PHASE 133c · the welcome card and Help
+
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 227:
+
+  > PHASE 133c: a deciding fact with nothing recorded is not known, and says so
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 561:
+
+  > PHASE 133c (B2): the ten stages are drawn once, in the stage bar at the top of the page, so this panel no longer lists
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 355:
+
+  > PHASE 133c: each check reads as one short answer. "Not known" is an answer that decides the gate, so every check is
 
 ### `src/shared/assets.ts`
 
@@ -2386,6 +5263,48 @@ neither says.
 
   > PHASE 133d (D4): where the refusal names the field it is about, the message is drawn beside that field instead.
 
+### `src/modules/claims/documents.ts`
+
+- Line 879:
+
+  > PHASE 133d (D4): each refusal about one field names it, so the form draws it beside that field.
+
+### `src/modules/crm/crm.ts`
+
+- Line 296:
+
+  > PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one.
+
+- Line 348:
+
+  > PHASE 133d (D4): a refusal names the field it is about, so the form can draw it beside that field.
+
+### `src/modules/crm/leads.ts`
+
+- Line 90:
+
+  > PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one.
+
+- Line 112:
+
+  > PHASE 133d (D4): a refusal names the field it is about, so the form can draw it beside that field.
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 76:
+
+  > PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none.
+
+### `src/modules/crm/tasks.ts`
+
+- Line 115:
+
+  > PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one.
+
+- Line 142:
+
+  > PHASE 133d (D4): a refusal names the field it is about, so the form can draw it beside that field.
+
 ### `src/shared/html.ts`
 
 - Line 107:
@@ -2467,6 +5386,53 @@ neither says.
 
   > PHASE 133e (D4, continued): the only thing a password change can be refused on here is the current one.
 
+### `src/modules/claims/claim-facts.ts`
+
+- Line 58:
+
+  > PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. A refusal
+  >  about the record's own state — a grant already withdrawn, a position already taken — carries none.
+
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 74:
+
+  > PHASE 133e (D4, continued): where the store named the posted field, the refusal is drawn beside it.
+
+### `src/modules/claims/documents.ts`
+
+- Line 76:
+
+  > PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one.
+
+### `src/modules/crm/automation.ts`
+
+- Line 71:
+
+  > PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one.
+
+### `src/modules/crm/introducers.ts`
+
+- Line 77:
+
+  > PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one.
+
+- Line 301:
+
+  > PHASE 133e (D4, continued): a refusal names the field it is about, so the form can draw it beside that field.
+
+## 18 Sept 2026: Phase 133i
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 2028:
+
+  > Whether the DPO has APPROVED RET-7. Derived is not approved: until this is
+  > true, ret7DueAt's result is not used, and a file held under the long clock
+  > with no supplied defence-pack date stays undeletable and surfaced. Turning
+  > it on is the act of setting a retention period and belongs to the DPO,
+  > Sadique Maskeen (named 18 Sep 2026, Phase 133i; Shafeek Ali had been named for now on 17 Sep).
+
 ## 18 Sept 2026: Phase 133j
 
 ### `src/core/audit.ts`
@@ -2541,6 +5507,58 @@ neither says.
 
   > ACCOUNT_VERIFY — Phase 133j: the link that confirms a client's own sign-up. It carries a single-use token.
 
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 114:
+
+  > ------------------------------------------- website enquiries (PHASE 133j)
+
+- Line 318:
+
+  > THE WEBSITE'S ENQUIRY FORM, WAITING FOR SALES — PHASE 133j. Each enquiry is opened as a lead (with a contact
+  > holding the person) or closed. Nothing here decides anything: src/modules/public-site/enquiries.ts authorises and writes.
+
+### `src/modules/public-site/enquiries.ts`
+
+- Line 1:
+
+  > THE WEBSITE'S ENQUIRY FORM — PHASE 133j, 18 September 2026.
+  >
+  > The public website's "Request my estimate" form posts to `/enquiry`. Before this phase it posted nowhere: the page
+  > said thank you and nothing was kept. Now the form is received here, every field is checked on the server whatever
+  > the page's script already checked, and the enquiry waits in `website_enquiries` (migration 031) for Sales.
+  >
+  > AN ENQUIRY IS NOT A LEAD UNTIL SOMEBODY OPENS IT AS ONE. "Open as a lead" writes the lead through `createLead` —
+  > the same intake a member of staff uses by hand, so the same authorisation, audit and first follow-up apply — and a
+  > contact on that lead holding the person's name and how to reach them. "Close" records that nothing more is needed.
+  >
+  > NOTHING PERSONAL IN THE AUDIT. The lines carry the enquiry's id, the sector code and the decision; the row is the
+  > record of what the person wrote.
+
+### `src/modules/public-site/public-site.ts`
+
+- Line 1:
+
+  > THE PUBLIC WEBSITE, SERVED BY THE BACK END — PHASE 133j, 18 September 2026.
+  >
+  > `Caprebate site.html` is the website. It is not re-typed here: this module reads that one file and serves an
+  > edition of it at `/`, so the front end and the back end are one site on one address.
+  >
+  > WHAT THE SERVED EDITION LEAVES OUT, AND WHY
+  >
+  > 1. THE IN-PAGE ASSESSMENT. The file carries a complete copy of the assessment inside `<template id="assessTpl">`
+  >    (about a megabyte), which the file preview opens in an overlay. Served, that copy is dropped with its overlay, and
+  >    every "Start your assessment" link is an ordinary link to `/assessment` — the back end's own assessment, whose
+  >    answers are recorded. There is one assessment that writes, not two that disagree.
+  >
+  > 2. NOTHING INLINE. Every back-end page is served under a Content-Security-Policy with no `unsafe-inline`. The
+  >    site's one `<style>` block is served as `/assets/site-page.css` and its one `<script>` as
+  >    `/assets/site-page.js`, and the page is refused — `buildSiteEdition` throws — if any inline style, style
+  >    attribute, event handler or `javascript:` link is left. The site file itself carries none since Phase 133j.
+  >
+  > THE PATH IS A CONSTANT, like the engagement letter's (letter.ts). No request path is ever mapped onto the disk:
+  > the three routes that use this module each serve one fixed string.
+
 ## 18 Sept 2026: Phase 134
 
 ### `src/core/authz.ts`
@@ -2607,6 +5625,136 @@ neither says.
 
   > ------------------ SECTION 3 · the one client page, and a claim inside it (Phase 134)
 
+### `src/modules/claims/documents.ts`
+
+- Line 1133:
+
+  > Phase 134: a claim's reference, drawn as a small grey label beside its name.
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 92:
+
+  > PHASE 134: GET /staff/clients/:id is the ONE client page, drawn by src/modules/crm/client-page.ts, which is mounted first.
+
+- Line 267:
+
+  > PHASE 134: a note belongs to the company, and may say which of its claims it is about.
+
+### `src/modules/claims/engaged.ts`
+
+- Line 894:
+
+  > PHASE 134: a question belongs to the company, and may say which of its claims it is about — only one of its own.
+
+### `src/modules/crm/communication.ts`
+
+- Line 163:
+
+  > A claim in words, without its reference: a box is a link, and no link's text is a claim reference (Phase 134).
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 178:
+
+  > PHASE 134 — ONE CLIENT PAGE PER COMPANY, at /staff/clients/:id (src/modules/crm/client-page.ts). This address stays alive:
+  >      it is asked exactly as it always was — a login refused the organisation is refused here, not redirected — and then
+  >      sends the reader to the one page. The query (?done=…) travels with it.
+
+- Line 452:
+
+  > THE CLAIM PAGE, FOR A VIEW ALREADY AUTHORISED — PHASE 134. The same page is drawn at /staff/claims/:id and inside its
+  > company's page at /staff/clients/:company/claims/:id (src/modules/crm/client-page.ts): the company is the frame either way.
+
+- Line 621:
+
+  > PHASE 134 — A COMPANY'S CLAIMS AS TILES: the property and its town, the stage, the next action, and the reference as a
+  > small grey label. Each opens the claim inside its company's page.
+
+- Line 653:
+
+  > PHASE 134 — THE ORGANISATION'S SECTIONS, FOR THE ONE CLIENT PAGE. Until 18 September 2026 these were a page of their
+  > own at /staff/organisations/:id, beside a second page for the same company at /staff/clients/:id. They are now drawn
+  > inside the one client page (src/modules/crm/client-page.ts), from the same view, asked of the same rules: nothing is read that
+  > the organisation page did not read before.
+
+- Line 1104:
+
+  > PHASE 134: THE COMPANY IS THE FRAME. The heading is the company's name; the property and the reference sit under it.
+
+### `src/modules/crm/crm.ts`
+
+- Line 623:
+
+  > Phase 134: a claim is named by its company and its property, and a tile shows the property's town.
+
+- Line 705:
+
+  > Phase 134: the company the claim belongs to, and its property — a claim is named by these, never by its reference.
+
+- Line 1549:
+
+  > PHASE 134 — A CLAIM'S NAME FOR A PERSON: its company, its property, and its reference for the small grey label.
+  > No authorisation: the caller has already asked `claim.read` of the claim it is naming.
+
+### `src/modules/crm/data-borrowed.ts`
+
+- Line 482:
+
+  > Phase 134: a property recorded as "Company — main site" is named "main site" here, where the company is the frame.
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 596:
+
+  > PHASE 134: a card leads with the company; the property under it; the reference a small grey label.
+
+### `src/modules/crm/tasks-pages.ts`
+
+- Line 373:
+
+  > PHASE 134: a scope that names a claim ends " · CR-2026-0007"; the reference is drawn as the small grey label.
+
+- Line 393:
+
+  > INTERNAL NOTES, APART FROM THE TIMELINE — present only where `internal_note.read` put them in.
+  > PHASE 142a: ONE NAME FOR THE NOTES. They are the "Team only" thread of the company's Chat (Phase 142), so the claim page
+  > and the property page call them that too, with a link to the whole conversation. Each page still shows its own notes —
+  > a claim's, or a property's. `chat` is the company's id; with none, the link is not drawn.
+  > PHASE 134: a note belongs to the COMPANY. On the company's page it may say which claim it is about — `claims` is the
+  > choice, and "The company in general" is the default. The server checks the claim is the company's (`addNote`).
+
+### `src/modules/crm/tasks.ts`
+
+- Line 306:
+
+  > PHASE 134: a claim is named by its property, never by its reference — the company follows as its own line.
+
+### `src/modules/crm/timeline.ts`
+
+- Line 157:
+
+  > Phase 134: `property_label` names the claim for a person; the reference is only its grey label.
+
+- Line 162:
+
+  > PHASE 134 — A CLAIM IN THE TIMELINE IS NAMED BY ITS PROPERTY. The words a person reads are "Outpatient annexe", and the
+  > reference follows as ` · CR-2026-0007` so two claims on one property still read apart; `timelineBlock` draws that tail
+  > as a small grey label (src/modules/crm/tasks-pages.ts). A claim with no property is "a claim with no property".
+
+### `src/modules/portal/portal.ts`
+
+- Line 72:
+
+  > PHASE 134 — ONE COMPANY, MANY CLAIMS, ONE PORTAL. A claim as its client sees it: which property, and how far it has
+  > got in the portal's own six steps. NEVER the ten staff stages, a hold reason, an exit note, a value, a next action or
+  > a person — a hold shows the step the claim returns to, and an exit says only that the claim is closed.
+  >
+  >   OPEN      at one of the steps; `progress` is that step's bar
+  >   FINISHED  the procedure has closed it
+  >   CLOSED    it left the procedure by an exit — the client is told by us, in words, why
+  >   UNKNOWN   its stage is not one the portal knows; said so, never guessed (N4)
+
 ### `src/shared/components.ts`
 
 - Line 36:
@@ -2634,6 +5782,60 @@ neither says.
 
   > PHASE 134: the company first, the reference last.
 
+## 18 Sept 2026: Phase 142
+
+### `src/modules/crm/client-page.ts`
+
+- Line 1:
+
+  > THE ONE CLIENT PAGE — Phase 134, 18 September 2026. "Back office and portal clean-up, 1 of 11."
+  >
+  > Lakhbir, after using the test site: "There is too much of an emphasis on the CR number - the main focus point should
+  > be the company name", and "think about one business with multiple claims - all communication needs to be under one
+  > client's portal and dashboard".
+  >
+  > UNTIL TODAY ONE COMPANY HAD TWO PAGES ON THE SAME ID: the engaged-client page at /staff/clients/:id (its questions,
+  > research, missing facts and notes) and the organisation page at /staff/organisations/:id (its contacts, properties,
+  > documents, tasks and timeline). This file draws ONE page at /staff/clients/:id with everything both carried:
+  >
+  >   the heading     the trading name, and the legal name underneath in small text
+  >   Claims          one tile per claim — property and town, stage, next action, the reference as a small grey label —
+  >                   each opening the claim INSIDE this page, at /staff/clients/:id/claims/:claim, under a breadcrumb
+  >   Timeline        ONE timeline for the company, every claim's events in it, each saying which claim it is about
+  >   Chat            PHASE 142: two tabs — "Team only", which is the internal notes as a conversation, each message
+  >                   optionally tagged with a claim, and "With the client", the thread the client reads in the portal
+  >   the rest        contacts, properties, documents, the details; and for a login that works the research, the questions
+  >                   put to the client, what is still missing, their answers and the research
+  >
+  > /staff/organisations/:id is kept alive and redirects here (src/modules/crm/crm-pages.ts), after asking exactly what it asked.
+  >
+  > NOTHING HERE DECIDES WHO SEES WHAT. Each half is built only where its own gate says yes — the organisation's record by
+  > `organisation.read` (src/modules/crm/crm.ts), the research half by the engaged-clients section's `research.read`
+  > (src/modules/claims/engaged.ts) — and each view is authorised on the object inside its own store. A login that passes neither is
+  > refused by the organisation's own read, as /staff/organisations/:id refused it. Internal notes come only through the
+  > timeline's `internal_note.read`, so a client, a surveyor and the view-only login never receive one.
+
+## 18 Sept 2026: Phase 151
+
+### `src/modules/crm/automation.ts`
+
+- Line 625:
+
+  > PHASE 134 — A STAFF NOTICE'S SUBJECT, AND THE COMPANY'S NAME IN IT. BUILT AND SWITCHED OFF.
+  >
+  > Lakhbir, 18 September 2026: every email subject leads with the company name. A notice to a member of staff was built
+  > (CRM 3 of 10) to carry the claim's reference and never an organisation's name, so that a client's name does not travel
+  > in an email subject through a mail provider nobody has chosen yet. Which of the two holds is Lakhbir's to decide —
+  > CAPREBATE QUESTIONS, "Should an email to our own staff name the client company in its subject line?". Until then:
+  >   OFF  the subject says what happened and ends with the reference: "A claim is now at Survey (CR-2026-0004)".
+  >   ON   the subject leads with the company: "Dunmarrow Medical Practice Limited — a claim is now at Survey (CR-2026-0004)".
+  > Turning it on is this one line. test/phase134.test.ts proves both readings.
+  >
+  > PHASE 151, 24 September 2026: ANSWERED AND ON. Lakhbir, Word answer 71 (closed that day): yes, staff emails name the
+  > client company in the subject. Nothing is sent while EMAIL_SENDING is off, so today it changes the words of what is
+  > saved to the outbox and nothing else. It applies to emails to OUR STAFF only: an alert to a client never carries it
+  > (src/modules/crm/messages.ts).
+
 ## 18 Sept 2026: Phase 151g
 
 ### `src/integrations/connectors/smoke.ts`
@@ -2649,6 +5851,35 @@ neither says.
   > `--postcode`, `--company-number` and `--company-name` replace them. A CLIENT'S VALUE IS NEVER PASSED, and since
   > Phase 151g the command refuses one: held in CAPREBATE_DB, or, with no database, anything but these without
   > --not-a-client.
+
+## 20 Sept 2026: no phase named
+
+### `src/modules/crm/tasks.ts`
+
+- Line 192:
+
+  > 3 days (20 Sep 2026)". The STATES are unchanged, and still decided here, on the UK date.
+
+## 21 Sept 2026: Phase 134
+
+### `src/modules/crm/client-list.ts`
+
+- Line 1:
+
+  > THE ONE CLIENTS LIST — PHASE 135, 21 September 2026.
+  >
+  > Phase 134 made one client page per company, but left two lists of the same companies — "Engaged clients" at
+  > /staff/clients and "Organisations" at /staff/organisations — each opening that one page. This is the one list, at
+  > /staff/clients. The old list address sends the reader here, after asking the gate it always asked.
+  >
+  > WHO MAY OPEN IT IS WHO MAY OPEN THE ORGANISATIONS LIST: `organisation.read` — Admin, Sales and Read only. That is the
+  > gate the organisations list used, so the view-only login can read the one list, and nobody gains a screen they could
+  > not open before. Each row is still asked of `organisation.read` on its own company.
+  >
+  > WHAT EACH COLUMN NEEDS IS ASKED PER ROW. "Waiting on" is built from the letter, the questions and the missing facts,
+  > which is the research's rule (`research.read`, Admin and Sales). `waitingOn` in src/modules/claims/engaged.ts answers null for a
+  > login that rule refuses, so the view-only login sees company, status, owner and claims, and no waiting column — the
+  > same as the organisations list showed it before this phase.
 
 ## 21 Sept 2026: Phase 135
 
@@ -2697,6 +5928,49 @@ neither says.
 
   > ------------------------------------------ PHASE 135 · Settings, one page of tiles (Admin)
 
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 1:
+
+  > THE CLIENTS LIST'S ROUTE AND THE BUSINESS PAGE'S PANELS — routes and rendering. PHASE 135: the list itself is drawn by
+  > src/modules/crm/client-list.ts, the one list that replaced "Engaged clients" and "Organisations".
+  >
+  > Same shape as `handleStaff` and `portalRoutes`: it returns 'not-mine' for
+  > anything it does not own, so nothing is shadowed by accident and the mounting
+  > in staff.ts is one line.
+  >
+  > THE THREE RULES FROM router.ts APPLY UNCHANGED and are not restated here:
+  > authorise on the object on every request, no route maps a path onto the
+  > filesystem, and every response is built with the `h` tagged template. The
+  > third matters more on this page than anywhere else in the application:
+  > INTERNAL NOTES ARE STAFF-SUPPLIED TEXT RENDERED IN A STAFF PAGE, which is
+  > exactly where stored cross-site scripting lives. Every note goes through `h`,
+  > which escapes anything that is not already Safe, and there is a test that
+  > posts a script tag and asserts what comes back is escaped.
+  >
+  > NOTHING ON THESE PAGES DECIDES ANYTHING. The view models in engaged.ts and
+  > research.ts do every authorisation and every derivation; this file draws what
+  > they return. A renderer that decided whether to show a figure would be a
+  > screen omitting a field, which is presentation and not a control.
+
+- Line 83:
+
+  > PHASE 135: THE ONE CLIENTS LIST (src/modules/crm/client-list.ts), gated as the organisations list was, so the view-only login
+  >      can read it. The engaged-client list it replaced is no longer drawn; `engagedClients` still serves its other readers.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 162:
+
+  > PHASE 135: the organisations list is the one Clients list now. The address stays alive and asks the gate it always
+  >      asked, so a login refused the list is refused here rather than sent on.
+
+### `src/modules/public-site/home.ts`
+
+- Line 142:
+
+  > ONE PLACE FOR "WHAT NEXT" (Phase 135, carried): the claims with no next step are Tasks' own view — linked, not repeated.
+
 ### `src/shared/assets.ts`
 
 - Line 83:
@@ -2717,6 +5991,45 @@ neither says.
   > HOME — PHASE 136: ROWS OF TILES, IN LAKHBIR'S ORDER (src/web/home.ts)
   > ------------------------------------------------------------------
 
+### `src/modules/crm/dashboard-pages.ts`
+
+- Line 57:
+
+  > PHASE 136: THE DASHBOARD FOLDED INTO HOME. Its figures are the Reports tile's page; the old address sends a person
+
+- Line 102:
+
+  > PHASE 136: the dashboard's page, reached from Home's Reports tile. The same figures, under the same gate.
+
+### `src/modules/crm/tasks.ts`
+
+- Line 1000:
+
+  > PHASE 136 — EVERY OPEN TASK DUE TODAY OR LATE THAT THE READER MAY READ, for Home's "Today and overdue" row. No section
+  > gate beyond the back office: each row is asked `staff_task.read`, so a login sees exactly the tasks it could open.
+
+### `src/modules/public-site/home.ts`
+
+- Line 1:
+
+  > HOME AS TILES — PHASE 136, 21 September 2026.
+  >
+  > Lakhbir, 18 September 2026: "tiles over heavy text, especially on the menu page. The menu page should flow: new leads,
+  > existing leads' next actions, today and overdue, pipeline by stage." This file draws exactly that, as rows of tiles:
+  >
+  >   Sales, Admin, Read only   1 New leads · 2 Existing leads — next actions · 3 Today and overdue · 4 Pipeline by stage
+  >   Admin, then               5 Users, Switches, Audit log, Refused sign-ins
+  >   Accounting                the three money tiles, then Today and overdue
+  >   Surveying                 the two job tiles, then Today and overdue
+  >
+  > The dashboard's figures are behind the "Reports" tile (/staff/reports), which ends the pipeline row, or the money or
+  > job row, for every login the dashboard's own gate admits.
+  >
+  > NOTHING HERE DECIDES WHO SEES WHAT. Every row reads through the store function its own screen reads — the leads list,
+  > the pipeline board, the finance view, the survey jobs, the audit log — each of which asks `can()` on every row. A row
+  > whose section refuses the login is not drawn; a row the login may see but that has nothing in it says so in one line,
+  > so empty is never mistaken for broken. No tile carries a claim's value, and no tile carries more than three lines.
+
 ### `src/shared/lists.ts`
 
 - Line 360:
@@ -2724,6 +6037,77 @@ neither says.
   > PHASE 136: `lead_at` is the lead's own instant, so Home can say how long a new lead has waited.
 
 ## 21 Sept 2026: Phase 137
+
+### `src/modules/crm/lead-cards.ts`
+
+- Line 1:
+
+  > THE LEADS PAGE AS CARDS, IN FOUR SECTIONS — PHASE 137, 21 September 2026.
+  >
+  > Lakhbir, 18 September 2026: "these should be CTA cards which the user can click on to display the information
+  > underneath. A new lead can easily slip out of this whole pile, so it needs to be split up."
+  >
+  >   New — not contacted yet   status NEW, and the website enquiries nobody has answered. Always first, never folded.
+  >                             A card is red once it has waited more than one working day (src/shared/working-days.ts —
+  >                             the same function Home's New leads row reads, so the two never disagree).
+  >   In progress               Contacted and Qualified. Red when the next step is late or there is none — Home's rule.
+  >   Later                     Nurture. Red on the same rule as In progress.
+  >   Closed                    Converted and Lost. Folded until opened.
+  >
+  > ORDER IS WAITING TIME, NEVER VALUE. The longest-waiting lead is first in every open section; there is no lead score,
+  > because a score built on the estimate would rank the unknowns. No card carries a range or a value.
+  >
+  > A CARD IS A <details>. The summary is the card; opening it shows the lead's details underneath, in place. The content
+  > security policy forbids script, so this is the browser's own open-and-close and it works with none.
+  >
+  > NOTHING HERE DECIDES ANYTHING. Every card is a lead the store already let this login read (`lead.read`, per lead), its
+  > details are the store's own `leadView` for that lead, and every button posts to a route that asks the server again.
+
+### `src/modules/crm/leads.ts`
+
+- Line 529:
+
+  > LOG A CALL ON A LEAD — PHASE 137, the leads page's "Log a call" button. A call is a task of the kind Call, owned by the
+  > person who made it and completed as it is written, so it is on the lead's timeline like every other piece of work. A
+  > call where somebody answered is what "contacted" means, so a NEW lead becomes CONTACTED with it — through updateLead,
+  > the same write and the same audit line as choosing it by hand. A call nobody answered leaves the status alone.
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 131:
+
+  > PHASE 137: closed from its card in the leads' New section, it returns there.
+
+- Line 139:
+
+  > PHASE 137: cards in four sections by default; `layout=list` is the table, for anyone who prefers it. Neither
+
+- Line 192:
+
+  > PHASE 137: "Log a call" from a lead's card.
+
+- Line 217:
+
+  > PHASE 137: "take it" and "Mark as lost" post from a card and return to the cards; `back` is one fixed word, never a path.
+
+- Line 426:
+
+  > PHASE 137 — THE LEADS AS CARDS, IN FOUR SECTIONS (src/modules/crm/lead-cards.ts draws them). New is first and never folded;
+  > Closed is folded. Each card opens in place. The filters are behind one button, and the table is "List view".
+
+### `src/modules/public-site/home.ts`
+
+- Line 67:
+
+  > ================================================================== *
+  > WORKING DAYS — a new lead turns red once it has waited more than one.
+  > PHASE 137: the rule moved to src/shared/working-days.ts, which knows the
+  > England and Wales bank holidays, so Home and Leads read one function.
+  > ==================================================================
+
+- Line 112:
+
+  > PHASE 137: an unanswered website enquiry is in the Leads page's New section, so it is here too — for the logins that
 
 ### `src/shared/lists-pages.ts`
 
@@ -2784,6 +6168,105 @@ neither says.
 - Line 282:
 
   > ------------------------------------------ PHASE 138 · a person keeps a page section open or closed
+
+### `src/modules/claims/approvals.ts`
+
+- Line 138:
+
+  > A claim fact the client answered, offered as the fact itself: approving it records the fact (Phase 138's carry).
+
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 246:
+
+  > PHASE 138: inside the claim page's "The claim's facts" section, which names it; the sentence behind "Why?"; the
+
+### `src/modules/claims/documents-pages.ts`
+
+- Line 374:
+
+  > PHASE 138: inside a coloured section the section's own heading names it, so the block's heading is left out; the
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 356:
+
+  > ------------------------------------------ what the client told us
+  > PHASE 138: no numbered heading — the section around it names it. The sentences that explained the table sit behind
+  > "Why?"; every word of them is still on the page.
+
+- Line 381:
+
+  > PHASE 138: the state of a lookup in plain words. "Fired" and "tier" are gone from what a person reads.
+
+- Line 485:
+
+  > PHASE 138 — THE WHOLE MISSING LIST, for the Questions section's "More detail". Each fact is ALSO a WE NEED line in the
+  > section it belongs to (src/modules/crm/client-page.ts); this is where a fact can be answered from a telephone call.
+
+- Line 510:
+
+  > PHASE 138 — THE ONE-PRESS "ASK THE CLIENT" beside a WE NEED line. The same route and the same fields as the full form.
+
+### `src/modules/claims/engaged.ts`
+
+- Line 404:
+
+  > PHASE 138 — WHICH SECTION OF THE CLIENT PAGE ASKS FOR IT, AND WHERE IT COMES FROM, in words. Read from the same
+  > source and screen the pack attribution above reads, never typed per fact: Companies House describes the company;
+  > EPC, the valuation office, the care regulator and the land registry describe the property; the client's own answers
+  > are the property where the screen is the property or the works, and the claim's facts otherwise.
+
+- Line 414:
+
+  > PHASE 138: a register source's section on the client page, and its name in words. A source not here is the claim's facts.
+
+- Line 423:
+
+  > PHASE 138: the screens whose unanswered questions describe the property. Every other screen is the claim's facts.
+
+- Line 1189:
+
+  > PHASE 138 — WHICH OF A CLAIM'S FACTS ARE ALREADY WITH THE CLIENT. The claim page's WE NEED lines ask the client through
+  > the same route as the company page (`sendTaskToPortal`), naming the claim and a fact id `claim_fact.<key>`. This reads
+  > the open questions back, so a fact already asked says "Asked — waiting" instead of offering a second ask. Asked of the
+  > same two rules the ask itself asks; a login refused either reads nothing.
+
+### `src/modules/crm/client-page.ts`
+
+- Line 138:
+
+  > PHASE 138 — WHICH SECTION A CHANGE WAS MADE IN. After a save the page is drawn again with `?done=`; the section the
+  > change was made in opens, whatever the person keeps, so they see what they just did.
+
+- Line 158:
+
+  > THE ONE CLIENT PAGE, PHASE 138: THE COMPANY'S SECTIONS, COLOURED, EACH OPENING AND CLOSING. What every section shows is
+  > the bloat cut in the Developer Spec (B5/B6). Each section is built only from a view this page already asked for, and
+  > only where that view exists — nothing here widens what a login may read.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 714:
+
+  > PHASE 138: ONE CARD PER CONTACT instead of a nine-column table that scrolled sideways on a phone. The card shows what
+
+- Line 1045:
+
+  > PHASE 138 — A CLAIM FACT THE CLIENT CAN BE ASKED FOR, as a one-press ask. It posts to the company's own question route
+  > (`sendTaskToPortal`, which asks `business.read` and `internal_note.write` again), naming this claim; the answer comes
+  > back on the company page's Questions for the client, where it is recorded as the fact.
+
+- Line 1135:
+
+  > PHASE 138: THE CLAIM'S SECTIONS. Each is built only from a part of the view this login was given, and only where the
+  >      view carries it — a surveyor's view carries the stage and the released facts, Accounting's the money.
+
+### `src/modules/crm/tasks-pages.ts`
+
+- Line 381:
+
+  > PHASE 138: the sentence about what the timeline is read from sits behind "Why?".
 
 ### `src/shared/components.ts`
 
@@ -2865,6 +6348,136 @@ neither says.
 
   > Phase 139: the company's property a property register's record is about, where the lookup was keyed on one.
 
+### `src/modules/claims/approvals-pages.ts`
+
+- Line 1:
+
+  > THE APPROVE BOX AND THE CLIENT'S STEPS, DRAWN — PHASE 139, 21 September 2026. "Clean-up 6 of 11."
+  >
+  > Draws what src/modules/claims/approvals.ts returns and decides nothing. Staff see it on the client page (the company's step and
+  > every claim's) and on a claim's page (that claim's steps); the client sees `clientStepsCard`, which is handed the
+  > client's own view and nothing else. The pages run no script, so every tick is a small form with one button.
+
+### `src/modules/claims/approvals.ts`
+
+- Line 1:
+
+  > CHECKED AND APPROVED, AND TELLING THE CLIENT — PHASE 139, 21 September 2026. "Clean-up 6 of 11."
+  >
+  > Lakhbir, 18 September 2026: "When viewing the client's portfolio there needs to be where the information has come from
+  > (API) with a secondary approve box. When a user clicks approve this then pushes the details to say Cap Rebate has
+  > completed this to the client - the idea is that we can then manage the flow to the customer."
+  >
+  > THREE THINGS, IN THIS ORDER, AND STAFF DRIVE EVERY ONE OF THEM:
+  >
+  >   1 · EVERY FACT SAYS WHERE IT CAME FROM. A register record's field, a client's answer, a recorded claim fact, a survey
+  >       job, a tax adviser's sign-off and an issued report each become one line: what it is, a source chip ("Companies
+  >       House", "EPC register", "You told us", "Surveyor"), the date it arrived, and a tick box "Checked and approved".
+  >       Ticking is recorded (migration 034, `fact_approvals`) and audited with who and when. Taking a tick off asks why.
+  >
+  >   2 · FACTS GROUP INTO THE CLIENT'S STEPS (`STEPS`). A step is complete only when it has at least one fact, every fact
+  >       in it is ticked, and nothing it needs is still missing. An empty step is not complete: nothing checked is not the
+  >       same as everything checked (N4). The steps sit ON TOP OF the ten-stage procedure and never move it — the mapping
+  >       is a table in the Developer Spec.
+  >
+  >   3 · A COMPLETE STEP IS TOLD TO THE CLIENT ONLY WHEN SOMEONE PRESSES "Tell the client". Never automatically. The portal
+  >       then says "Cap Rebate has checked your company details" with the date (`clientSteps`). Only Admin can take a
+  >       step back, with a reason; the portal then says "Being re-checked", and never the reason.
+  >
+  > WHAT THE CLIENT'S VIEW CAN NEVER CARRY. `clientSteps` reads `client_step_notices` and nothing else: a step's key, its
+  > claim and a date. It has no path to a fact, a value, a register record, a figure, an estimate, a reason or a name, so
+  > none of them can reach the portal from here — test/phase139.test.ts proves it on the wire.
+  >
+  > THE PAID-RESEARCH RULE STANDS. Approval is on the RESULTS, never on the calls: "Run the research" still runs every call
+  > it may, in one press, with no per-call confirmation (src/modules/claims/research.ts). Nothing here calls a register. The
+  > connectors are still stubs, so the facts a register gives are the seeded records in `register_records`.
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 266:
+
+  > Phase 139: exported so the Approve box reads a recorded fact exactly as the facts panel does.
+
+### `src/modules/claims/documents.ts`
+
+- Line 1382:
+
+  > TAKE A YES BACK, WITH A REASON. The same shape as taking back a pick (src/modules/claims/match-review.ts) and Phase 139's tick:
+  > its own act, asking why, keeping the reason.
+  >
+  >   · it takes THAT FIELD, AND NO OTHER, out of every record the yes let it into (`removeRegisterField`, the one door
+  >     out), and leaves every other fact the reading kept exactly as it was;
+  >   · it refuses, and says so, where a person has checked and approved that fact (Phase 139) — the tick comes off
+  >     first, by its own act and with its own reason;
+  >   · it keeps the answer, marked withdrawn, with who, when and why — so the next reading leaves the field out, and
+  >     the row still says it was a yes;
+  >   · it lists what was worked out from the field while it stood, and does not un-derive it silently;
+  >   · and it writes DOCUMENT_FIELD_VOUCH_WITHDRAWN, carrying the reason and never the name.
+  >
+  > Only Admin and Sales, as for the answer itself (`document.vouch`).
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 185:
+
+  > ---- PHASE 139 · checked and approved, and telling the client ----
+
+### `src/modules/claims/engaged.ts`
+
+- Line 426:
+
+  > PHASE 139 — WHICH SECTION A FACT BELONGS TO, FROM THE FACT ITSELF. The same two readings the missing list makes — a
+  > register field by the source that supplies it, an assessment question by its screen — so an answered fact, which has
+  > left the missing list, is still put in the same place.
+
+### `src/modules/claims/research.ts`
+
+- Line 1015:
+
+  > STORE WHAT THE CONNECTORS CAME BACK WITH — inside the caller's transaction. Exported so a test can store an allowed
+  > lookup's outcome as `runResearch` does; nothing else calls it.
+  >
+  > Every record goes through `ingestRegisterRecord`, the one door, where N2 is checked: a field the name exclusion
+  > register does not keep throws, and the transaction takes everything back with it, the state rows included. A record
+  > already held for the same entity is not written twice and not overwritten: a fact somebody has checked and approved
+  > (Phase 139) does not change under them because the register was asked again.
+
+### `src/modules/crm/client-page.ts`
+
+- Line 194:
+
+  > PHASE 139: WHERE EACH FACT CAME FROM, THE APPROVE BOX, AND TELLING THE CLIENT. Only for a login that checks facts.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 850:
+
+  > PHASE 139 (carried from 138): THE PROPERTY PAGE AS SECTIONS, like the client and claim pages. The old tab ids stay
+  >      the anchors, so every link and redirect to #details, #related and #activity still lands.
+
+- Line 1096:
+
+  > Phase 139: the step just worked in, whose facts open.
+
+- Line 1236:
+
+  > PHASE 139: this claim's steps — each fact with where it came from and a tick, and "Tell the client".
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 480:
+
+  > PHASE 139 (carried from 138): A LEAD'S PAGE AS SECTIONS. WE NEED is the enquiry checks not yet passed; the old tab ids
+  >      stay the anchors.
+
+### `src/modules/portal/take-back.ts`
+
+- Line 178:
+
+  > WHY, IN THE PERSON'S OWN WORDS — or why not. Required, trimmed, at most 2000 characters, as Phase 139's reason is.
+  > It goes on the audit chain as well as on the row, so it must pass the chain's screen: an email address or a
+  > supplier key is refused here, before anything is written, with words that say what to leave out.
+
 ## 21 Sept 2026: Phase 140
 
 ### `src/core/audit.ts`
@@ -2928,6 +6541,144 @@ neither says.
 - Line 446:
 
   > ------------------ SECTION 3 · the company's files, in folders, and a staff upload (Phase 140)
+
+### `src/modules/claims/documents-pages.ts`
+
+- Line 135:
+
+  > PHASE 140: A COMPANY'S DOCUMENTS ARE IN ITS FILES. Asked for one company and nothing else, the reader is sent to that
+
+- Line 193:
+
+  > PHASE 140: WHERE KEEP_ORIGINALS KEPT ONE, the newest kept original, decrypted, as a download — never shown in the
+
+- Line 285:
+
+  > PHASE 140: A NEW VERSION, THE FILE WITH THE FORM — through `receiveFile`, the client's own path. No upload address.
+
+- Line 301:
+
+  > PHASE 140: AN UPLOAD FROM THE CLAIM PAGE, THE FILE WITH THE FORM. Lands in the claim's own folder of the company's files.
+
+### `src/modules/claims/documents.ts`
+
+- Line 427:
+
+  > PHASE 140 — CAN THE CLIENT SEE THIS FILE AT ALL? The latest row of `document_visibility` (migration 035) says, where
+  > there is one. Where there is none, a file the client sent is theirs to see, and a file staff sent is not — Lakhbir's
+  > default, "no". `clientDocument` in src/core/authz.ts reads this, and still applies every other rule on top of it.
+
+- Line 439:
+
+  > PHASE 140 — SHOW A FILE TO THE CLIENT, OR STOP SHOWING IT. Admin and Sales (`document.show_to_client`), on a document
+  > they may read. A new row each time, audited; nothing about the document itself changes.
+
+- Line 522:
+
+  > PHASE 140: in words a person reads. The codes are still on the row and in the handler's own record.
+
+- Line 554:
+
+  > PHASE 140, staff only: whether the client can see a NEW document. Absent is no — Lakhbir's default. A client's own
+  > upload is theirs to see by rule, and a new version keeps its document's answer.
+
+- Line 665:
+
+  > PHASE 140: staff say, on every new document, whether the client can see it. The default is no.
+
+- Line 1154:
+
+  > PHASE 140: the newest kept original, where one is kept and this reader may open it.
+
+- Line 1156:
+
+  > PHASE 140: whether the client can see this file, and whether this reader may change that.
+
+- Line 1179:
+
+  > PHASE 140: in words a person reads. `READ_AND_DELETED` (src/shared/originals.ts) is the short form a folder shows.
+
+- Line 1699:
+
+  > ================================================================== *
+  > 10 · THE CLIENT'S FILES — PHASE 140, 21 September 2026
+  >
+  > Lakhbir: "There is no folder icon which allows the user to see what the customer has uploaded, but also the ability to
+  > upload and save documents ourselves within the portal."
+  >
+  > ONE PLACE FOR A COMPANY'S FILES, IN FOLDERS: From the client, From Cap Rebate, Asked for (still waiting), and one folder
+  > per claim. A folder is a way of looking, not a place a file is put — a lease the client sent for one claim is in "From
+  > the client" and in that claim's folder. EVERY FILE IS STILL ASKED OF `document.read` ON ITS OWN, exactly as the claim
+  > panel asks, so a login sees in a folder only what it could open; the requests are shown only to
+  > `document_request.read`.
+  >
+  > WHAT WE READ FROM A FILE IS SAID IN COUNTS, NEVER IN ITS WORDS: the pages read, the parts kept, the parts taken out —
+  > from the upload handler's own record of each step (`document_events`). No route here reads what a file says.
+  > ==================================================================
+
+### `src/modules/claims/uploads.ts`
+
+- Line 299:
+
+  > PHASE 140: KEEP_ORIGINALS (src/shared/originals.ts), OFF. Only when it is on
+
+- Line 668:
+
+  > PHASE 140: WHERE THE HANDLER KEPT THE ORIGINAL, SAY SO AND SAY UNTIL WHEN. Only on a job that finished, only where
+
+- Line 677:
+
+  > PHASE 140 — A KEPT ORIGINAL, OPENED. The caller has already asked `document.read_original` of the document. Returns the
+  > bytes and what they are, or null where nothing is kept: the switch was off when it arrived, it has been deleted, or its
+  > time is up (and then it is deleted now, before anything is served).
+
+- Line 697:
+
+  > PHASE 140 — DELETE EVERY KEPT ORIGINAL WHOSE TIME IS UP. Runs whenever a folder or an original is opened, and from
+  > `node src/core/cli.ts sweep-originals`. It deletes, then records — a record written first would claim a deletion that had
+  > not happened. A file already gone is recorded as deleted: the time is up either way, and nothing is left to serve.
+  > Returns how many it deleted.
+
+### `src/modules/crm/client-page.ts`
+
+- Line 357:
+
+  > PHASE 140: THE COMPANY'S FILES, AS FOLDERS. The same folders the Files page draws, each a tile that opens it there.
+
+### `src/modules/portal/client-files-pages.ts`
+
+- Line 1:
+
+  > THE CLIENT'S FILES — Phase 140, 21 September 2026. "Back office and portal clean-up, 7 of 11."
+  >
+  > Lakhbir: "There is no folder icon which allows the user to see what the customer has uploaded, but also the ability to
+  > upload and save documents ourselves within the portal."
+  >
+  >   GET  /staff/clients/:id/files          the company's files, in folders — From the client, From Cap Rebate, Asked
+  >                                          for (still waiting), one per claim. `?folder=` names a folder by its key
+  >                                          (ids only, never a name).
+  >   POST /staff/clients/:id/files          a member of staff uploads a file: a file picker that also takes a dropped
+  >                                          file, what it is, which claim, and whether the client can see it (no, unless
+  >                                          ticked).
+  >   POST /staff/documents/:id/shown        show one of our files to the client, or stop showing it.
+  >
+  > ONE WAY IN FOR A FILE. `receiveFile` below is the whole of a staff upload, and it is EXACTLY the path a client's upload
+  > takes through PUT /upload/put: `startDocumentUpload` (which asks `document.upload` and issues a single-use key),
+  > `acceptClientBytes` (the key, the size cap and the content check, on the bytes) and `finishUpload` (the upload
+  > handler's receipt contract — classify, read, strip, write, delete the quarantined copy). It only saves the person a
+  > second page with an address on it: THERE IS NO HTTP PUT ADDRESS ON ANY SCREEN NOW, staff or portal.
+  >
+  > NO SCRIPT. The content security policy allows none, and none is needed: a browser's own file picker takes a file
+  > dropped onto it, so the drop area is the picker, drawn large.
+  >
+  > NOTHING HERE DECIDES WHO SEES WHAT. src/modules/claims/documents.ts builds the folder and asks `document.read` of every file;
+  > src/core/authz.ts decides whether a client may see a file.
+
+### `src/modules/portal/portal.ts`
+
+- Line 292:
+
+  > PHASE 140: whether the original was kept (KEEP_ORIGINALS, off), and whether it has since been deleted.
 
 ### `src/shared/objectstore.ts`
 
@@ -2999,6 +6750,93 @@ neither says.
 - Line 211:
 
   > PHASE 141 — what a person reads after saving an email while sending is off. Lakhbir's words.
+
+### `src/modules/crm/client-page.ts`
+
+- Line 178:
+
+  > PHASE 141: THE EMAIL BUTTON, beside Files, for a login that may write to the company — Admin and Sales.
+
+### `src/modules/crm/free-email-pages.ts`
+
+- Line 1:
+
+  > FREE-TYPED EMAIL — THE PAGES. Phase 141, 21 September 2026. "Back office and portal clean-up, 8 of 11."
+  >
+  >   GET  /staff/clients/:id/email    write an email to one of the company's contacts; ?claim= tags a claim, and
+  >                                    ?template= with ?contact= starts it from a template
+  >   POST /staff/clients/:id/email    save it (and send it, the day sending is on)
+  >   GET  /staff/leads/:id/email      the same, from a lead card
+  >   POST /staff/leads/:id/email
+  >
+  > The "Email" button sits in the client page's header beside Files, on each lead card, and on a claim page (which opens
+  > this page with the claim already chosen). NOTHING HERE DECIDES ANYTHING: src/modules/crm/free-email.ts asks every rule again on
+  > the POST, whatever the form offered.
+  >
+  > NO SCRIPT, as everywhere (the content security policy allows none): "Start from a template" is a small form that
+  > reloads this page with the template's words in the boxes; staff then edit them.
+  >
+  > 1 OCTOBER 2026 — TWO HALVES. Lakhbir: "the right hand side should show the chain of emails allowing a user to click on
+  > reply making them apart of the chain so essentially the left becomes a send message, if no current email chain (on the
+  > right) is selected then it fires as a new email." On the left, the email being written: To is filled in (the main
+  > contact, or the chain's correspondent) and can be typed over, with the company's contacts offered as suggestions. On
+  > the right, every chain of emails with them (src/modules/crm/email-chains.ts), the newest open; "Reply" under a chain opens this
+  > page with ?thread=, and the left becomes a reply in that chain. Opening the page reads their emails (the red dot on
+  > Chat goes).
+
+### `src/modules/crm/free-email.ts`
+
+- Line 1:
+
+  > FREE-TYPED EMAIL TO A CLIENT, FROM contact@caprebate.co.uk — THE STORE. Phase 141, 21 September 2026.
+  > "Back office and portal clean-up, 8 of 11."
+  >
+  > Lakhbir, 18 September 2026: "When on a client page there needs to be the ability to free-type emails, which should
+  > come from contact@caprebate.co.uk."
+  >
+  > The pages are src/modules/crm/free-email-pages.ts. The sending switch and the mail adapter are src/integrations/email/email-provider.ts.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT THIS HOLDS, AND IT IS ASKED ON THE SERVER EVERY TIME
+  >
+  >   TO IS FILLED IN WITH THE COMPANY'S MAIN CONTACT, AND STAFF MAY TYPE OVER IT (1 October 2026 — Lakhbir: "the To:
+  >   field needs to be auto populated with the emails address, however it needs to allow users to overide the email if
+  >   needed"; until then it was a list of contacts only). An address that is one of the company's contacts is recorded as
+  >   that contact; any other is recorded with no contact, and a reply from it waits under "Email replies to sort" (the
+  >   mailbox reader files only replies from the company's contacts). A lead's own contact who did not agree to be
+  >   contacted cannot be written to, typed or not. A do-not-contact address is refused, as always.
+  >   A REPLY JOINS ITS CHAIN (src/modules/crm/email-chains.ts): `thread` names one of this company's chains; the email carries the
+  >   chain's key and the Message-IDs it answers.
+  >   THE SUBJECT AND THE BODY ARE TYPED FREELY. A template is only a place to start: it fills the two boxes and staff
+  >   edit them. The same refusals as a template: no bank details, no invoice, nothing that tips somebody off.
+  >   A CLAIM, IF ONE IS PICKED, IS ONE OF THE COMPANY'S OWN — asked here, and held again by a trigger (migration 036).
+  >   A FILE, IF ONE IS ATTACHED, IS ONE OF THE COMPANY'S FILES THE CLIENT MAY ALREADY SEE, WHOSE ORIGINAL IS STILL KEPT.
+  >   Sending a file is showing it, so a file staff have not let the client see cannot be sent; and a file whose original
+  >   was deleted once read has nothing to send. With KEEP_ORIGINALS off, which it is, no file can be attached, and the
+  >   page says so.
+  >   "DO NOT CONTACT" IS REFUSED, as it always has been — by this store before anything is written, by the transport, and
+  >   by the outbox's trigger.
+  >   FROM AND REPLY-TO are the one sender setting (src/integrations/email/email.ts `currentSender`), stamped on every row.
+  >   EVERY EMAIL IS ON THE COMPANY'S TIMELINE (src/modules/crm/timeline.ts reads the outbox), tagged to the claim if one was
+  >   picked; a lead's is on the lead's.
+  >
+  > WHO: `email.queue` — Admin and Sales. The view-only login, Accounting, the surveyor and the client are refused.
+  > The audit line names ids only — never the subject, the body or an address.
+
+### `src/modules/crm/tasks-pages.ts`
+
+- Line 420:
+
+  > PHASE 141 — EMAIL FROM A CLAIM. The claim page no longer merges a template in place: it opens the company's Email page
+  > with this claim already chosen, where the email is typed freely and "Start from a template" fills the boxes. `contacts`
+  > is undefined for a login that may not write to the company, and then nothing is drawn.
+
+### `src/modules/crm/timeline.ts`
+
+- Line 449:
+
+  > PHASE 141 — EVERY EMAIL IS ON THE COMPANY'S TIMELINE, tagged to its claim where one was picked, with who wrote it and
+  > who it went to. A lead's emails are on the lead's timeline (`leadOutbox`). An email that was not sent says so.
 
 ## 21 Sept 2026: Phase 146f
 
@@ -3177,6 +7015,38 @@ neither says.
   > A small, dependency-free IMAP client over `node:tls`, tested against a fake server in test/phase142.test.ts, in the
   > same way Phase 141's SMTP client is.
 
+### `src/modules/crm/inbound-email.ts`
+
+- Line 1:
+
+  > REPLIES TO contact@caprebate.co.uk, ONTO THE COMPANY'S CHAT AND TIMELINE. Phase 142, 22 September 2026 — carried from
+  > Phase 141, whose Developer Spec B48 set out where a reply would land. The mailbox reader is src/integrations/email/email-inbound.ts,
+  > switched off (INBOUND_EMAIL) until the mailbox exists.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE FILING RULE, AND IT IS STRICT
+  >
+  >   MATCHED    the reply's In-Reply-To or References names the Message-ID of an email we sent (outbox.provider_ref), AND
+  >              it comes from one of THAT email's company's contacts — or (1 October 2026, now that staff may type any
+  >              address in To) from THE VERY ADDRESS THAT EMAIL WENT TO: it answers our own random Message-ID, from the
+  >              address we wrote to, which nobody else could know to fake. Then it is a message FROM the client on the company's
+  >              "With the client" thread, tagged to the same claim as our email, and on the timeline as "A reply from
+  >              <contact>".
+  >   QUEUED     anything else: no Message-ID of ours (NO_MATCH), or one of ours from an address that is not one of that
+  >              company's contacts (NOT_A_CONTACT). It waits for Admin or Sales at /staff/replies, who read it and file it
+  >              under a company themselves — a person's decision, recorded with their name.
+  >   NEVER      filed by the sender's address alone. Two companies can share a contact, and anyone can type any From.
+  >   DO NOT CONTACT   a matched reply from a company marked do not contact is recorded all the same — it is the client
+  >              writing to us — and flagged; NOTHING IS EVER SENT BACK by this code, to anybody.
+  >
+  > THE TEXT PART ONLY is kept. A file in the email is counted — its type and size, never its name — and stays in the
+  > mailbox. On the chat, staff say what each file is; that one file is then read from the mailbox again and received
+  > through the upload path every file takes (`receiveFile`), so it lands in Files under "From the client", linked to its
+  > message, and the client can see it (they sent it).
+  >
+  > Every step is audited: ids, the outcome, counts — never an address, a subject or the words.
+  > ───────────────────────────────────────────────────────────────────────────
+
 ## 22 Sept 2026: Phase 142
 
 ### `src/core/audit.ts`
@@ -3241,6 +7111,179 @@ neither says.
 
   > ------------------ SECTION 3 · writing to the client on the company's chat, and email replies to sort (Phase 142)
 
+### `src/modules/claims/documents.ts`
+
+- Line 1736:
+
+  > PHASE 142: the message this file came with, on the thread with the client — a link back to it. Absent otherwise.
+
+- Line 1821:
+
+  > PHASE 142: a file that came with a message from the client is the client's, whoever pressed the button that saved it
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 270:
+
+  > PHASE 142: back to the "Team only" chat, where the note now reads as the newest message.
+
+### `src/modules/crm/client-page.ts`
+
+- Line 180:
+
+  > PHASE 142: a note saved, a message sent, or a chat tab pressed opens the Chat section.
+
+- Line 223:
+
+  > PHASE 142: CHAT — "Team only" (the company's notes, as a conversation) and "With the client" (the portal's Messages),
+  >      two tabs, each with its unread number. Drawn only for a login that may read one of the two.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 759:
+
+  > PHASE 142: a note is a message on the company's "Team only" chat.
+
+### `src/modules/crm/message-retention.ts`
+
+- Line 1:
+
+  > MESSAGE_RETENTION — THE CLEAN-UP JOB FOR BOTH CHAT THREADS. BUILT, AND SWITCHED OFF. Phase 142a, 22 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHY IT IS OFF
+  >
+  > Every client has a Chat with two threads (Phase 142): "With the client" (`client_messages`) and "Team only"
+  > (`internal_notes`). Both are free text, so both hold personal data, and no rule in the retention schedule names either.
+  > How long each is kept is the data protection officer's decision, put in CAPREBATE QUESTIONS under exactly this title:
+  >   "How long do we keep client messages and the team chat?"
+  > A message deleted early cannot be brought back, so nothing deletes one until that is answered.
+  >
+  > OFF WAS EXACTLY PHASE 142a's STATE. With the setting off, `messagesDue` returns nothing and `sweepMessages` deletes
+  > nothing, writes nothing and returns OFF with what is missing, in plain words.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > ON — THE QUESTION'S RECOMMENDATION, AS TWO NUMBERS
+  >
+  >   A COMPANY WITH A CLAIM. Both threads follow the claim file. Each claim's file clock starts on the LATER of its
+  >     accounting period end and the client report's first issue — RET-7's trigger, read by `claimFileDays`, the same
+  >     reader the document clock uses. The company's messages go `with_claim_years` after the LATEST of those, so no
+  >     message outlives, or dies before, the file it belongs to. IF ANY CLAIM'S DATE IS NOT KNOWN, NOTHING ON THAT COMPANY
+  >     IS DUE: not known is never a pass (N4). A message written after that date is kept `without_claim_months` from its
+  >     own day, and is not due at all while that period is not set.
+  >   A COMPANY WITH NO CLAIM. Everything on it goes `without_claim_months` after its LAST message, on either thread —
+  >     the same as an enquiry that never became a client.
+  >   AN EMAILED REPLY NOBODY FILED (037's queue) has no company, and goes `without_claim_months` after it arrived.
+  >
+  > A LIVE LEGAL HOLD STOPS IT. A hold on the company (record kind COMPANY) keeps every message on it; a hold on one message
+  > (CLIENT_MESSAGE, TEAM_MESSAGE or INBOUND_EMAIL, by its id) keeps that one.
+  >
+  > FOUR THINGS MUST ALL BE TRUE, OR IT IS OFF — each fails closed:
+  >   1. `enabled` is true;
+  >   2. at least one period is set, in whole years or whole months — a period left null is that rule off;
+  >   3. `approved_by` names who approved the periods, and 4. `review_ref` where — both go into every deletion log entry.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE ONLY PATH THAT CAN DELETE A MESSAGE
+  >
+  > Migration 038 lets a message (and the rows hanging off it) be deleted ONLY where the deletion log already holds an entry
+  > for that very record under the rule MSG-RETENTION. This job writes that entry first, then deletes, in one transaction —
+  > one entry per record, naming its kind and id, never a word of it, never a person. Nothing else in src/ deletes from
+  > either thread; test/phase142a.test.ts greps for it.
+  >
+  > A FILE SENT WITH A MESSAGE IS NOT DELETED HERE. It is a document, it keeps its own document rules, and it stays in the
+  > company's Files — only the row saying which message brought it goes, with the message.
+  >
+  > AUDITED WITH IDS AND COUNTS, NEVER THE WORDS: one MESSAGES_DELETED entry per run, naming every id it removed.
+  >
+  > Run by `node src/core/cli.ts sweep-messages`. A scheduled run of that one line is all the hosting needs to add.
+
+### `src/modules/crm/messages-pages.ts`
+
+- Line 1:
+
+  > CHAT ON EVERY CLIENT — THE PAGES. Phase 142, 22 September 2026. "Back office and portal clean-up, 9 of 11."
+  >
+  > ON THE CLIENT PAGE (staff) a section called "Chat" with two tabs, which are plain links (no script):
+  >   ?chat=team     "Team only"        the company's internal notes, as a conversation. Written through the note route,
+  >                                     POST /staff/clients/:id/notes, which is unchanged.
+  >   ?chat=client   "With the client"  the thread the client reads in their portal as "Messages".
+  >   POST /staff/clients/:id/messages  write to the client.
+  >
+  > IN THE PORTAL (the client)
+  >   GET  /portal/messages             the thread, and the box to write in, with a file if they want to send one
+  >   POST /portal/messages             send it; a file goes through the upload path every file takes, into Files under
+  >                                     "From the client", linked to this message
+  >   GET  /portal/messages/:id         one message — looked for only on the client's own thread, so any other id is 404
+  >
+  > NOTHING HERE DECIDES WHO SEES WHAT: src/modules/crm/messages.ts asks every rule on every read and write.
+
+- Line 97:
+
+  > PHASE 142 — THE FILES OF AN EMAILED REPLY THAT NOBODY HAS SAVED YET. One small form each: say what it is, and it is
+  > fetched from the mailbox and saved to Files through the upload path. Only for Admin and Sales (`inbound_email.file`).
+
+- Line 359:
+
+  > ---- PHASE 142: EMAIL REPLIES THE MAILBOX READER COULD NOT FILE ----
+
+### `src/modules/crm/messages.ts`
+
+- Line 1:
+
+  > CHAT ON EVERY CLIENT — THE STORE. Phase 142, 22 September 2026. "Back office and portal clean-up, 9 of 11."
+  >
+  > Lakhbir, 18 September 2026: "There needs to be a chat feature internally and externally for all clients. Clients
+  > should not see internal chats, however they should be able to send and receive communication, also with the ability to
+  > upload documentation which automatically saves within their client portfolio."
+  >
+  > TWO THREADS PER COMPANY, AND THEY LIVE IN TWO TABLES (migration 037):
+  >
+  >   "Team only"        the company's internal notes — `internal_notes`, asked of `internal_note.read` / `.write`, which
+  >                      name Admin and Sales and nobody else. Every note ever written is already a message on it, with its
+  >                      date and its author. `teamThread` below reads it; `addNote` (src/modules/claims/engaged.ts) still writes it.
+  >   "With the client"  `client_messages`, asked of `client_message.read` / `.write`: Admin, Sales, and the client on its
+  >                      own company. It is the portal's "Messages".
+  >
+  > THE PORTAL CANNOT REACH THE TEAM THREAD BY CONSTRUCTION. Nothing the portal calls reads `internal_notes`: `clientThread`
+  > and `clientMessage` below select from `client_messages` alone, a client asking for any other id is answered exactly as
+  > for an id that does not exist (404), and the rule table refuses a client `internal_note.read` whatever the route.
+  > test/phase142.test.ts proves it on the wire: every portal response body is searched for a team message's words.
+  >
+  > THE SURVEYOR SEES NEITHER THREAD. Lakhbir decides otherwise or not — the question is in CAPREBATE QUESTIONS.
+  >
+  > A FILE SENT WITH A MESSAGE is received through exactly the path every file takes (`receiveFile`, then the upload
+  > handler's receipt contract), so it lands in the company's Files under "From the client" with a link back to its message.
+  > This file only records which message brought it.
+  >
+  > Every message written is audited: the line names the message, the company, the claim and a count of files — never the
+  > words. A message is never edited and never deleted (triggers in migration 037).
+
+### `src/modules/crm/timeline.ts`
+
+- Line 80:
+
+  > PHASE 142: a message on the thread with the client. Never a team message — those are the notes, kept apart.
+
+- Line 280:
+
+  > PHASE 142: THE THREAD WITH THE CLIENT, one line per message — who wrote, and which claim — never the words, which are
+
+- Line 467:
+
+  > PHASE 142 — EVERY MESSAGE ON THE THREAD WITH THE CLIENT IS ON THE COMPANY'S TIMELINE, tagged to its claim where it was.
+  > A reply that came by email reads "A reply from <contact>", as the Developer Spec's B48 set it.
+
+### `src/modules/public-site/home.ts`
+
+- Line 197:
+
+  > PHASE 142: A CLIENT WAITING FOR A REPLY on the company's chat for more than one working day. Only for a login that may
+
+- Line 207:
+
+  > PHASE 142: EMAIL REPLIES THE MAILBOX READER COULD NOT FILE, for Admin and Sales. One tile, with the number.
+
 ## 22 Sept 2026: Phase 142a
 
 ### `src/core/audit.ts`
@@ -3257,6 +7300,37 @@ neither says.
 
   > PHASE 142a. MESSAGE_RETENTION is off, so this deletes nothing and says why. The day the data protection officer
   >        sets the periods and it is switched on, a scheduled run of this one line applies them.
+
+### `src/modules/claims/documents.ts`
+
+- Line 177:
+
+  > PHASE 142a — ONE CLAIM'S TWO FILE DATES, as `ret7Limbs` reads them for a document and as the message clean-up job
+  > (src/modules/crm/message-retention.ts) reads them for a company's messages: the accounting period end (the latest
+  > ACCOUNTING_PERIOD_END fact, a VALUE only — UNKNOWN reads null, as no row does, N4) and the EARLIEST issue of the client
+  > report. Each YYYY-MM-DD, or null where not known. One reader, so the two can never disagree about a claim.
+
+### `src/modules/crm/inbound-email.ts`
+
+- Line 59:
+
+  > PHASE 142a: for the new-message alert a filed reply raises — off unless EMAIL_SENDING is on.
+
+- Line 144:
+
+  > PHASE 142a: a reply filed on a company's chat tells its owner, as a portal message does. Off unless sending is on.
+
+### `src/modules/crm/messages.ts`
+
+- Line 51:
+
+  > PHASE 142a: the EMAIL_SENDING switch and the provider's login, for the new-message alert. Absent is the shipped switch, off.
+
+- Line 335:
+
+  > ================================================================== *
+  > PHASE 142a — A NEW-MESSAGE ALERT. BUILT BEHIND EMAIL_SENDING, WHICH IS OFF.
+  > ==================================================================
 
 ## 22 Sept 2026: Phase 142b
 
@@ -3275,6 +7349,23 @@ neither says.
   > clause 7 of the engagement letter, are not yet true. IONOS is already "our email" in the privacy notice, but that
   > notice is a draft nobody has approved, so `named_in_privacy_notice` stays false until it is published.
 
+### `src/modules/crm/message-retention.ts`
+
+- Line 79:
+
+  > PHASE 142b — ON. Lakhbir answered the question on 22 September 2026: messages are kept for seven years — from the claim
+  > file's clock on a company with a claim, and from the last message on one without (the recommended clocks, with seven
+  > years in place of six and of twelve months) — and asked for the job to be switched on now, before the data protection
+  > officer signs. The officer's approval is still asked for on the register FOR THE SOLICITOR, THE DPO AND THE DEVELOPER.
+
+### `src/modules/crm/messages-pages.ts`
+
+- Line 83:
+
+  > PHASE 142b — THE THREAD WITH THE CLIENT, FOR THE SURVEYOR ON AN ASSIGNED JOB. Read only: no form, and nothing marked
+  > read. Lakhbir, 22 September 2026: the surveyor sees "With the client", never "Team only". Null for a login the rule
+  > does not admit, so the tab is not drawn at all.
+
 ## 22 Sept 2026: Phase 143
 
 ### `src/core/sections.ts`
@@ -3282,6 +7373,68 @@ neither says.
 - Line 34:
 
   > PHASE 143: grants and contributions, out of the claim's facts into a section of its own
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 662:
+
+  > PHASE 143, 22 September 2026 — the same row's stored keys, so the grants section can total and word it. Read only;
+  >      nothing here is written, and the surveyor's released list never reaches this type.
+
+- Line 954:
+
+  > PHASE 143 — the step-by-step "Add a grant" pages draw nothing a login may not record. The same authorisation
+  > recordGrant runs, asked before a step is drawn; the company's name is for the heading (the client is the company).
+
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 100:
+
+  > PHASE 143: the grants routes send a person back to the grants section, which opens because it was just changed.
+
+- Line 124:
+
+  > PHASE 143: "Did anyone else pay for any of this work?" — Yes, No or Not sure, recorded as the same fact as before.
+
+- Line 130:
+
+  > PHASE 143: the step-by-step "Add a grant" pages. Every step is a POST, so nothing typed is ever in the address.
+
+- Line 247:
+
+  > recording forms behind one fold. PHASE 143 moved grants and contributions out to a section of their own (grantsBlock).
+
+- Line 386:
+
+  > ================================================================== *
+  > GRANTS AND CONTRIBUTIONS — PHASE 143, 22 September 2026. "Clean-up 10 of 11."
+  >
+  > Lakhbir, 18 September 2026: "Grants and contributions — this section is a mess, and although great and it works, the
+  > UI is terrible." THE SCREEN CHANGED AND NOTHING UNDER IT DID. The same table (claim_grants), the same fact
+  > (GRANTS_EXIST), the same two stores (F.recordGrant, F.withdrawGrant) and the same valuation check (F.grantsTraced).
+  >
+  >   ONE QUESTION FIRST  "Did anyone else pay for any of this work?" — Yes, No or Not sure. Not sure is recorded as not
+  >                       known, which never passes (N4), and puts the question to the client.
+  >   A CARD PER GRANT    who paid, large; how much; one plain line; where the figure came from; matched or not yet.
+  >   TOTALS              in total, matched, not matched yet. An amount not known is counted apart, never as nothing.
+  >   ADD, STEP BY STEP   four questions, one per page, then the effect in plain words before anything is saved.
+  >   REMOVE              asks why in a pop-up (the popover attribute, so no script), and keeps the record in the history.
+  >
+  > THE WORDS FOLLOW RULEBOOK F. Money meets spend "to the extent that" it paid for it (s.532), so a grant is matched to
+  > the items it paid for — never taken as a share of everything (F-R1, F-R12). Only a public body's money always
+  > reduces the claim (F-R8); insurance money after damage does not (F-R7); anyone else's may not (F-R9, F-R10).
+  > ==================================================================
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 1062:
+
+  > PHASE 143: whether anyone else paid is asked in its own section, "Grants and contributions", and not twice.
+
+- Line 1211:
+
+  > PHASE 143: GRANTS AND CONTRIBUTIONS, a section of its own. The same facts panel, so Admin and Sales alone; a
+  >      surveyor's released list and Accounting's page never build it. Done only when the valuation check it feeds is met.
 
 ## 22 Sept 2026: Phase 144
 
@@ -3310,6 +7463,24 @@ neither says.
   > ("We read 3 pages."), from `readLines` — counts only, never the file's words, a note or a figure. Anything not known yet
   > is said as not known, never left out.
 
+### `src/modules/claims/documents.ts`
+
+- Line 1772:
+
+  > What the handler recorded reading, in counts. Steps 4 and 5 of the receipt contract, as the handler wrote them.
+  > PHASE 144: exported so the portal's own document page says the same counts as the staff Files folder. It reads only
+  > the version's failure code, its two receipt times and the handler's page and part COUNTS — no words from the file, no
+  > note, no figure — so it is safe for the client who sent the file.
+
+### `src/modules/crm/automation.ts`
+
+- Line 210:
+
+  > PHASE 144: WHERE EACH SEEDED RULE CAME FROM, IN PLAIN WORDS. Migration 012 stored each seeded rule's `source` in the
+  > words of the design notes ("It fires for…", "the DERIVED missing list", "the engagement gate"). A migration already
+  > run is never edited, so the screen shows these words for the nine seeded rules instead; the stored text is unchanged,
+  > and a rule an Admin adds shows its own.
+
 ### `src/shared/voice.ts`
 
 - Line 45:
@@ -3321,6 +7492,70 @@ neither says.
   > [the pattern, the word, what to say instead]. 03-app/caprebate-plain-words-check.cjs reads this list (by parsing
   > this file, so keep each row on the one-line shape below) and fails on any of these words in anything a person reads
   > in src/web/*.ts. Comments, SQL, ids and audit event names are code, not words on a screen, and may keep them.
+
+## 22 Sept 2026: Phase 144a
+
+### `src/modules/assessment/assessment.ts`
+
+- Line 1:
+
+  > THE ASSESSMENT — CB_FUNNEL's six screens, ported.
+  >
+  > THE CLIENT-FACING COPY, THE QUESTION WORDING AND THE ORDER ARE NOT THIS
+  > PHASE'S TO CHANGE. They are the product of five sector specifications and a
+  > CTA review, and every string in SCREENS below is transcribed from the site's
+  > own renderer (`FN.screenQ1` … `FN.screenQ3` in "Caprebate site.html"), not
+  > rewritten. Where the site writes an HTML entity — `&mdash;`, `’` — the
+  > character it stands for is used, because this file escapes on output. That
+  > is the only difference, and it renders identically.
+  >
+  > PHASE 144a, 22 September 2026 — PLAIN WORDS, CHANGED IN BOTH PLACES AT ONCE.
+  > Three help lines (Q1, Q1a and the cosmetic-work note) were split into shorter
+  > sentences, the same words in this file and in the site's renderer; nothing
+  > they say changed. Q1's question itself is NOT changed: its wording could
+  > change what a client answers, so a plainer version is with the tax adviser
+  > in FOR THE ACCOUNTANT first. The plain-words check now reads this file.
+  >
+  > WHAT IS DIFFERENT, AND WHY IT HAD TO BE
+  >
+  > The site keeps the funnel state in a JavaScript variable and redraws with
+  > inline `onclick` handlers. The security baseline forbids inline script — the
+  > CSP has no `unsafe-inline` — so the same six screens are server-rendered
+  > forms and the state lives in `assessment_drafts`, keyed by an httpOnly
+  > cookie. SAME SCREENS, SAME COPY, SAME ORDER, SAME GATES. The client can also
+  > now complete the whole funnel with JavaScript disabled, which the original
+  > could not.
+  >
+  > EVERY RULE STILL COMES FROM THE ENGINE PACKAGE. The gates are
+  > CB_FRONTDOOR's, the bands are CB_BAND's, the figure and the assumptions are
+  > CB_FUNNEL's, the channels and consents are CB_BOOKING's. Nothing in this
+  > file decides a tax question, and `grep` for a rate or a band here returns
+  > nothing.
+
+### `src/modules/portal/portal.ts`
+
+- Line 324:
+
+  > PHASE 144a — THE STEP IN WORDS, where the portal cannot place a claim. It showed the stored step code in a code
+  > box; a client reads a sentence instead, and never the code.
+
+## 22 Sept 2026: Phase 146
+
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 860:
+
+  > WHO A REVIEW TASK GOES TO (Phase 146, 22 Sep 2026). A GATE field went to 'CTA'
+  >    until then. Caprebate has no tax adviser who could take it: under clause 1 of the
+  >    engagement letter the filing position is signed by the client's own accountant or
+  >    tax adviser, or by the client; the route through a chartered tax adviser of ours
+  >    is bracketed and not available, because none is appointed. The one tax adviser
+  >    the business plans to engage is a one-off, fixed-fee review of the rulebooks — not
+  >    per client, and given no client data (the one-off engagement process, section 3,
+  >    step 5). So a per-document review task has nobody to reach there. Confirming what a
+  >    lease or contract says, against its locator, is reading a document: it is ours,
+  >    done by an analyst, and the rulebooks then apply the law to what was confirmed.
+  >    Test P16b fails on the old routing.
 
 ## 22 Sept 2026: Phase 146b
 
@@ -3421,6 +7656,28 @@ neither says.
   >   PAID sources are gated on a signed engagement asserted SERVER-SIDE, plus one operator click that then fires
   >   everything outstanding. The operator picks the moment, not the calls: there is deliberately no per-source
   >   confirmation.
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 389:
+
+  > PHASE 146b: the lookups' own switches, in words. Every one is off today.
+
+### `src/modules/claims/research.ts`
+
+- Line 452:
+
+  > PHASE 146b: the source's own connector switch (REGISTER_SWITCHES in src/integrations/connectors/registers.ts). Every one is off.
+  > NOT A THIRD GATE: the gates say whether we may consult a source for this client; this says whether its connector
+  > is turned on at all. Shown on the panel in plain words ("not switched on").
+
+### `src/modules/claims/uploads.ts`
+
+- Line 261:
+
+  > The audit log every reading writes to. `UploadDeps.audit` is optional because the handler's own tests run without
+  > one; a reading cannot, because an unlogged call to an outside service is the one thing Phase 146b forbids. So a
+  > caller that supplies `reading` and no `audit` gets no reading at all — see `readAndClaim`.
 
 ## 22 Sept 2026: Phase 146c
 
@@ -3644,6 +7901,26 @@ neither says.
   > never got an answer (refused, over our limit, timed out, cut off, too large) is thrown as OutsideCallFailed, which
   > the library reports as a connection failure. `onResult` sees every CallResult either way.
 
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 546:
+
+  > Phase 146e: residents' health details — a person checks every field
+
+- Line 555:
+
+  > decides otherwise — Phase 146e's rule for this table. Not decided here.
+
+### `src/modules/claims/uploads.ts`
+
+- Line 105:
+
+  > PHASE 146e — A SCAN, READ BY THE VISION PATH, WHEN THERE IS ONE. Only for the scan marker: an encrypted PDF,
+  >          an unreadable filter, a damaged .docx and every other format keep their marker whatever is passed here. The
+  >          pictures must all be liftable and the reading must come back whole, or the marker stands. What the reading
+  >          gives goes on to the SAME strip as any other text. With no reader — as shipped — this is exactly the
+  >          function it was before.
+
 ### `src/shared/extract-text.ts`
 
 - Line 493:
@@ -3802,6 +8079,104 @@ neither says.
   > assertion is SERVER-SIDE. `assertSignedEngagement` (src/web/research.ts) reads the engagements table and the
   > signature record; it must never read a value returned to a browser.
 
+### `src/modules/claims/research.ts`
+
+- Line 377:
+
+  > THE PAID GATE. Server-side, against the record, on this request.
+  >
+  > The `engagements` table is the record. Nothing here reads a form field, a
+  > cookie, a query parameter or anything the stub signature provider returned to
+  > a browser — src/integrations/signature.ts says in terms that it must not, and the
+  > reason is that the stub's `executed` is always false and a build that trusted
+  > it would be trusting a value it had just made up.
+  >
+  > NO BUSINESS AND NO ENGAGEMENT ROW BOTH MEAN NOT SIGNED, and they mean it in
+  > the same words, because "there is no such client" is not a thing this
+  > function should be able to tell a caller apart from "that client has not
+  > signed".
+  >
+  > PHASE 146f: IT READS THE SIGNATURE RECORD, NOT ONLY THE STATE. A letter marked
+  > SIGNED counts only when engagement_signatures holds its record, the record
+  > matches its own fingerprint, and the audit chain carries that fingerprint
+  > (checkSignature, src/modules/claims/signing.ts). A state flipped by hand, or a record
+  > edited afterwards, is NOT SIGNED — and says why.
+
+### `src/modules/claims/signing.ts`
+
+- Line 1:
+
+  > THE BUILT-IN SIGNATURE FOR THE ENGAGEMENT LETTER — BUILT, AND SWITCHED OFF. Phase 146f, 22 September 2026.
+  >
+  > Lakhbir decided on 22 September 2026 that the letter is signed inside the application, not through a bought
+  > service. It replaces the stub provider in src/integrations/signature.ts for the engagement letter. The surveyor's "commit
+  > figures" is a different thing and is untouched.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT THE CLIENT DOES
+  >
+  > Reads the letter in the portal, types their full name, types their role in the business, ticks that they are
+  > authorised to sign for it, and presses Sign. That is all. Nothing is drawn and nothing is uploaded.
+  >
+  > WHAT IS RECORDED — engagement_signatures (migration 040), one row, never edited:
+  >   the name and role typed, the business as it was named on the letter, the moment, the IP address the request came
+  >   from, the session's id (never its token), the login, the EXACT letter text shown and its SHA-256, and a signed PDF
+  >   (the letter, then a signature page) with its SHA-256. A SHA-256 over all of it, in a fixed order, is the record's
+  >   own hash, and it goes into the audit chain as an ENGAGEMENT_SIGNED row. The chain is tamper-evident, so the record
+  >   cannot be changed afterwards without the chain showing it.
+  >
+  > WHY THE NAME IS NOT IN THE AUDIT ROW ITSELF. src/core/audit.ts refuses any name, email or address in a log line, and that
+  > is a data protection officer's determination, not a choice. The row carries the record's hash, which binds the
+  > name, role, business, time, address and session exactly as well — change any of them and the hash no longer matches.
+  >
+  > THE LETTER THEY SIGN IS THE LETTER THEY SAW. The page carries the SHA-256 of the text it drew; the Sign press sends
+  > it back; the server draws the letter again and compares. If the letter file changed in between, nothing is signed
+  > and the client is asked to read it again.
+  >
+  > AND THEY GET A COPY. The signed PDF is emailed to the address of the login that signed, through the outbox — sent
+  > the day EMAIL_SENDING is on, saved until then.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHY IT IS OFF — ENGAGEMENT_SIGNING
+  >
+  >   1. Our solicitor has not yet confirmed that a typed name, with a tick for authority, is a good enough signature for
+  >      this letter. It is asked in the Word questions document under the solicitor, under SIGNING_QUESTION's title.
+  >   2. The letter still has terms in square brackets (clauses 4, 5, 7 and 13) and specimen wording. A letter with a
+  >      blank in it is not signed, whatever the switch says: that refusal is here, not on the page.
+  >   3. Then someone switches it on.
+  >
+  > NOTHING HERE THROWS ON AN ORDINARY REFUSAL. Off, already signed, not sent yet, a blank name, no tick, a changed
+  > letter: each is a sentence the client reads.
+
+- Line 233:
+
+  > PHASE 157c: absent or 1, the record as Phase 146f made it; 2, with the signature and the certificate's times.
+
+### `src/modules/crm/booking-invite.ts`
+
+- Line 1:
+
+  > THE INVITATION FOR ONE BOOKING — Phase 146f, 22 September 2026.
+  >
+  > One place builds the .ics for a call, for all three routes that change one: the funnel's close (a time chosen), the
+  > staff calendar (a time given or moved) and the client's portal (moved, given back or cancelled). It reads the
+  > booking's own change count for the SEQUENCE and the one sender setting for the organiser, and returns null when
+  > there is no address to invite — the email is still saved, it just carries no invitation.
+
+### `src/modules/crm/inbound-email.ts`
+
+- Line 93:
+
+  > PHASE 146f: A DELIVERY REPORT IS NOT A REPLY. It is matched to the email of ours it names, recorded as a bounce, and
+  >      never filed on a chat or queued for staff. A HARD one stops further email to that address.
+
+### `src/modules/portal/portal.ts`
+
+- Line 603:
+
+  > PHASE 146f: THE INVITATION. Moved: a new REQUEST, the same UID, a higher SEQUENCE, so it replaces the old one in
+  >      the client's calendar. Given back or cancelled: a CANCEL for the time they held. No time held, no invitation.
+
 ### `src/shared/pdf.ts`
 
 - Line 1:
@@ -3844,6 +8219,12 @@ neither says.
 
   > What Google's own guidance lists for GA4 under a content security policy (checked 22 September 2026).
 
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 345:
+
+  > it is made under that rulebook, not computed here. (Until 22 Sep 2026 this
+
 ## 23 Sept 2026: Phase 110
 
 ### `src/integrations/connectors/postcode.ts`
@@ -3867,6 +8248,106 @@ neither says.
   > NOTHING IS STORED IN register_records. The name exclusion register has no entry for this source, and the one door
   > refuses a source it does not know; the council area is recomputed from the table whenever a screen needs it
   > (src/integrations/postcodes/postcode.ts). The research panel keeps the council area's name in its words.
+
+## 23 Sept 2026: Phase 139
+
+### `src/modules/claims/match-review.ts`
+
+- Line 1:
+
+  > A PERSON'S PICK FOR A CLOSE MATCH — the back office resolving a REVIEW-band lookup. Phase 146h, 23 September 2026.
+  > Switched off: PICK_SWITCHES.MATCH_REVIEW_PICK is false.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT IT IS FOR
+  >
+  > The S10 Address Matching Spec scores every candidate a register returns and puts the result in one of three bands.
+  > ACCEPT pre-fills. REJECT keeps nothing. In between sits REVIEW, and A.2 step 4 says exactly what should happen
+  > there: "never auto-selected. Full candidate list (all postcode-blocked candidates, ranked) is surfaced to
+  > ops/surveyor for manual pick. Nothing is written until a human resolves it."
+  >
+  > Until this phase there was nowhere to surface it to. A REVIEW was FAILED, code MATCH_REVIEW, and it kept nothing —
+  > which is safe and is a dead end: the lookup had found the building and could not say so.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > AFTER A SIGNED ENGAGEMENT ONLY, AND THAT IS NOT A TIER RULE
+  >
+  > A.8 point 7 rules out showing a PROSPECT the list: "Before an engagement there is no one to hand a candidate list
+  > to. Showing it to the prospect would show them records about other buildings, which safeguard S15 of the
+  > assessment rules out." So the pick waits for a signed engagement — and it waits for one WHATEVER THE SOURCE'S
+  > TIER. The energy certificates are free and gated on a published privacy notice; the pick on them still waits for
+  > the signature, because what the signature buys here is not permission to consult the register (the free gate did
+  > that) but a back office with a client to work on and somebody entitled to look at the list.
+  >
+  > THE GATE IS ASSERTED SERVER-SIDE, AGAINST THE RECORD, ON THIS REQUEST — `assertSignedEngagement` in
+  > src/modules/claims/research.ts, the same function and the same record as the paid tier's, which since Phase 146f reads the
+  > signature record rather than a letter merely marked SIGNED. NOTHING HERE OPENS A GATE and nothing here is a second
+  > one: a source still goes through `stateUnderGates` and its own switch before a connector is handed anything, and
+  > this adds one condition on top of those rather than replacing any of them.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE LIST IS FETCHED AGAIN AND IS NEVER STORED
+  >
+  > A.8 point 8: the candidate list, the register's address lines and the raw responses are not stored or logged. So
+  > there is no table of candidates and no cache of them. Showing the list is a fresh lookup — the same connector, the
+  > same audit row per call, the same cost — whose answer is turned into an offer and then dropped. Choosing is a
+  > second fresh lookup, and the choice names a RECORD (a certificate number, a location id, a transaction id, a
+  > company number, a UPRN) rather than a position in a list, so a list that came back in a different order cannot
+  > move a choice onto another building. Where the register no longer offers the chosen one, NOTHING is kept and the
+  > screen says to look again — taking the nearest instead would be the auto-selection A.2 step 4 forbids.
+  >
+  > That costs two lookups where one would do. It is the right trade: the alternative is a stored list of other
+  > people's addresses, which is the thing the assessment's condition CA5 exists to prevent.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT A PICK WRITES
+  >
+  >   · the chosen record, and only it, through `ingestRegisterRecord` — THE ONE DOOR, where the name exclusion
+  >     register is checked (N2). `storeResearchOutcomes` is what calls it, exactly as an ordinary click does, so
+  >     there is no second way into `register_records` and this file writes none of them itself;
+  >   · AT GRADE B AT MOST. A.6: until the 200-property test has calibrated a real threshold, an address-matched value
+  >     is written at grade B and never A. A person choosing from a list that did NOT reach the threshold is that case
+  >     at its weakest, so the cap binds here if it binds anywhere. It is DERIVED rather than typed —
+  >     `worstGrade([the source's own max_grade, UNMEASURED_MATCH_GRADE_CAP])` — so a source that could only ever mint
+  >     a C still mints a C, and the day the measurement lands and the cap moves, this moves with it;
+  >   · the decision itself, on `register_match_picks`: the key, the score, the grade, who and when;
+  >   · and the decision on THE AUDIT CHAIN, REGISTER_MATCH_PICKED, carrying the score, the grade, whether anything
+  >     was chosen and the actor — never the label a person read, because that is the register's address line.
+  >
+  > CHOOSING NONE IS AN ANSWER AND IS KEPT. A person who looks at four candidates and says none of them is this
+  > building has done real work, and the next person should not have to do it again. It writes a pick row with no key,
+  > an audit row, and a source row that says a person looked. It keeps no fact: every question stays asked (N4).
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > TAKING A PICK BACK — Phase 146j, 25 September 2026
+  >
+  > Once a choice lands, the lookup is FIRED and leaves the REVIEW band, so `pickState` refuses to offer the list again
+  > — and it should, because at that point there is nothing to choose between. Until Phase 146j that made a wrong
+  > choice permanent: another building's floor area, age band or sale price sat in the claim file with no way out.
+  >
+  > `takeBackPick` is the way out, and it is NOT a second pick screen. It is the shape Phase 139 uses for a fact
+  > somebody ticked: a separate act, on the lookup's own row, that ASKS WHY and keeps the reason. It
+  >
+  >   · removes the ONE register record that pick wrote — found through `register_match_picks.record_id`, which the
+  >     pick recorded when it wrote it, and NEVER by re-deriving which record it must have been;
+  >   · puts the lookup back to FAILED, code MATCH_REVIEW, so the list can be offered again — with the earlier choice
+  >     marked on it as taken back, and why, so the next person does not choose the same wrong building;
+  >   · keeps the pick row, with who took it back, when and why, and the list of what to look at again. A decision
+  >     that was made and reversed is two facts, not none;
+  >   · and writes REGISTER_MATCH_TAKEN_BACK on the audit chain, carrying the reason.
+  >
+  > It refuses, and says why, where the record is not the pick's to remove: where we held that entry before the pick
+  > (from an earlier lookup — the pick then wrote nothing, and since Phase 146j records no record_id for it), where the
+  > record is not the one the lookup itself names, or where a person has already checked and approved a fact from it
+  > (Phase 139). The tick comes off first, by its own act and with its own reason.
+  >
+  > And it does not un-derive silently. What was worked out FROM the record while it stood — a site area, the check of
+  > who signed, a step the client was told was done, an issued report, a surveyor's job — is listed
+  > (src/modules/portal/take-back.ts), kept on the pick row, and shown to the person who took it back.
+  >
+  > ONLY A PERSON WHO CAN RUN THE RESEARCH, AND ONLY WHILE THE ENGAGEMENT IS SIGNED — the same conditions as the pick,
+  > asserted the same way. It does NOT need the pick's switch on: taking a choice back shows no list and calls nothing,
+  > and a switch turned off after a wrong choice must not lock that choice into the file.
 
 ## 23 Sept 2026: Phase 146b
 
@@ -4154,6 +8635,112 @@ neither says.
   >        not chosen. PlanIt remains the source of record; see src/integrations/connectors/homedata-planning.ts for why the choice is
   >        not a build decision. An address listed here is how a service row stays tied to its register source when the
   >        source has more than one publisher, which planning has had since Phase 146c.
+
+### `src/modules/claims/approvals.ts`
+
+- Line 156:
+
+  > Phase 146c: the words the register's licence says must go with its data, verbatim (HM Land Registry's sale prices).
+
+### `src/modules/claims/case-stamp.ts`
+
+- Line 255:
+
+  > Phase 146c: every connector switch — each register lookup's, and the document reader's.
+
+### `src/modules/claims/engaged.ts`
+
+- Line 689:
+
+  > The register data we hold, in the shape CB_REGISTRY.derive expects.
+  >
+  > `register_records` is keyed by the SOURCE REGISTER's ids (CQC, EPC,
+  > CH_COMPANY…) and CB_REGISTRY uses its own (cqc, epc, companies_house…).
+  > They are two vocabularies for overlapping sets and this is the one place they
+  > meet — the same pattern as roles.ts, and for the same reason: one tested
+  > mapping beats a cast at every call site.
+  >
+  > PHASE 146c: THE FIELD NAMES ARE TWO VOCABULARIES TOO, and until this phase
+  > they were merged as they stood — so a stored `epc_total_floor_area_m2` never
+  > reached derive()'s `floor_area_m2`, and only `incorporation_date`, the one name
+  > the two share, would have. Each field now goes through DERIVE_FIELD_OF
+  > (src/integrations/connectors/free-registers.ts), which maps only a field both sides permit;
+  > a field it does not list reaches derive() under no name at all. derive() is
+  > still switched off (CB_REGISTRY.precondition), so what the screen shows today
+  > does not change.
+  >
+  > IT IS FILLED ONLY BY WHAT A CONNECTOR READ AND THE ONE DOOR ACCEPTED, or by the
+  > seed's invented records. `derive` handles an empty bundle by asking for
+  > everything, which is the honest answer and not a special case.
+
+### `src/modules/claims/research.ts`
+
+- Line 563:
+
+  > PHASE 146c: THE ATTRIBUTION THAT GOES WITH A REGISTER'S DATA, WORD FOR WORD, WHEREVER A SCREEN SHOWS IT.
+  >
+  > HM Land Registry prescribes the words for Price Paid Data and says they "must appear verbatim"; they are read from
+  > the licence register, never retyped. Only the sources listed here carry a line on a screen today. The rest of the
+  > register's attribution lines are for reports and packs (attributionsFor in the source register), where they are
+  > already printed.
+
+- Line 654:
+
+  > Permitted. Whether its connector runs is the switch's and the key's to say (Phase 146c: `consultAllowed`); until
+
+- Line 815:
+
+  > PHASE 146c: HOW A PERMITTED, SWITCHED-ON LOOKUP REACHES OUTSIDE — the transport (the live one, or recorded answers
+  > in a test), the key file read at start-up, and the switches. ABSENT, NOTHING IS CONTACTED: every permitted lookup
+  > stays NOT_RUN, exactly as before this phase. It opens no gate — the gates are decided above it, by
+  > `stateUnderGates`, and a lookup the gates do not allow is never handed to a connector.
+
+- Line 862:
+
+  > One source's decision under the gates, and — Phase 146c — what its connector did, if it was allowed to run.
+
+- Line 1042:
+
+  > "RUN THE RESEARCH" — one button, everything outstanding.
+  >
+  > WHAT IT DOES NOT DO, and each of these is a rule rather than an omission:
+  >   · it takes no list of sources. The operator picks the moment, not the
+  >     calls, so there is no parameter here that could carry a selection;
+  >   · it does not open a gate. Every source is put through `stateUnderGates`,
+  >     which reads the two gates and does not re-decide them;
+  >   · it does not throw when a gate is shut. A source that may not be consulted
+  >     is recorded NOT_PERMITTED_YET with the reason and the run continues.
+  >
+  > PHASE 146c: A PERMITTED LOOKUP NOW RUNS ITS CONNECTOR — through `consultAllowed`, and only when it is switched on and
+  > its key is in the key file. FIRED is written only for a lookup that was actually made and read, with the time it was
+  > read; FAILED with the reason. WHAT HAPPENS TODAY IS STILL NOTHING: the free gate is shut (CB_REGISTRY.precondition),
+  > every switch is off and the key file holds no register key, so every lookup is NOT_PERMITTED_YET or NOT_RUN, `fired`
+  > comes back 0 and the screen says so. A build that wrote FIRED against a call nobody made would put a false
+  > provenance record into a claim file, which is the worst thing this system could do.
+
+- Line 1267:
+
+  > RETRY ONE FAILED SOURCE. The single exception, and it is narrow.
+  >
+  > It refuses anything that is not in FAILED — including a source that has
+  > simply not run, which is the case the brief forbids a per-source control for.
+  > So the exception cannot be widened by calling this function with a different
+  > argument: the state is checked against the record, not taken from the request.
+  >
+  > PHASE 146c: the retry runs the source's connector again, through the same `consultAllowed`, under the same gates.
+
+- Line 1329:
+
+  > Write a source's state, carrying the provenance shape.
+  >
+  > PUBLISHER AND LICENCE ARE WRITTEN ON EVERY UPDATE, not only on a fire, so
+  > that a row always says which publisher it is about.
+  >
+  > PHASE 146c: `fired_at` and `retrieved_at` are written for a FIRED lookup only — `fired_at` the moment of this click,
+  > `retrieved_at` the moment the connector read the publisher's answer, which `runConnector` took from the clock when
+  > it read it. For any other state both are left as they were: nothing has read a value, and filling them with `now()`
+  > would invent a retrieval, which is the one thing the source register exists to prevent. `failure_code` is written
+  > for a FAILED lookup and cleared for any other.
 
 ## 23 Sept 2026: Phase 146d
 
@@ -4546,6 +9133,104 @@ neither says.
   > PHASE 146d, 23 September 2026. Nothing here can be called without the network access agreement, so every
   >        line below is from HM Land Registry's own public developer pack rather than from a response.
 
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 459:
+
+  > PHASE 146d: what it will cost, before the button is pressed, and what the last press did cost. The first is
+  >           our reading of the suppliers' price lists and says so; the second is their own figure off their own
+  >           answers. They sit together on purpose: if they ever differ, that difference is the thing worth seeing.
+
+### `src/modules/claims/research.ts`
+
+- Line 505:
+
+  > PHASE 146d, ITEM 3 — WHAT THIS CLICK WOULD COST, SHOWN BEFORE IT IS CLICKED.
+  >
+  > Every paid lookup that is outstanding AND switched on, at its supplier's published price. It is a PRICE LIST and
+  > the words say so, because the figure shown afterwards is a different thing: that one comes off the suppliers'
+  > own responses. Today it is 0 and the words say nothing would be spent — every paid switch is off, and a lookup
+  > that cannot run cannot cost anything.
+
+- Line 571:
+
+  > PHASE 146d ADDS THE TITLE REGISTER. Its licence in the register requires attribution and prescribes the words
+  > ("Contains HM Land Registry data © Crown copyright and database right."), and a bought official copy draws on a
+  > screen exactly as a sale price does — so the words go with it there, read from the licence register and never
+  > retyped, for the same reason Price Paid's are.
+
+- Line 849:
+
+  > PHASE 146d, ITEM 3 — WHAT IT ACTUALLY COST, IN PENCE, AND IT IS THE SUPPLIERS' FIGURE RATHER THAN OURS.
+  > Added up from the calls, counting only those that came back saying they were charged. The price list shown
+  > before the click is NOT carried forward into it: if the two differ, the difference is the thing worth seeing.
+
+- Line 870:
+
+  > PHASE 146d: what this lookup spent, in pence, from the calls it made. 0 for a free one and for one that failed.
+
+- Line 876:
+
+  > THE CONNECTORS, RUN ONLY FOR WHAT THE GATES ALLOWED. Phase 146c, 23 September 2026.
+  >
+  > `decided` is what `stateUnderGates` said for each source on this click. A source the gates did not allow is passed
+  > through untouched — no connector is asked, nothing is sent. A source they allowed (NOT_RUN) is handed to its
+  > connector through `runConnector`, which checks the switch, then the key, then makes the calls, then reads them:
+  > FIRED with the time the answer was read, FAILED with a reason, or still NOT_RUN and saying why. A source with no
+  > connector in this build (the Welsh care regulator, the valuation office, the paid lookups until Phase 146d) stays
+  > NOT_RUN and says so.
+  >
+  > Exported so a test can hand it an allowed decision directly. It does not decide a gate and cannot open one: while
+  > CB_REGISTRY.precondition is false, `runResearch` never passes it a free source as allowed.
+  >
+  > Nothing here writes: the calls happen first, outside any transaction, and the caller stores what came back.
+
+- Line 935:
+
+  > PHASE 146d: THE PAID LOOKUPS SIT BESIDE THE FREE ONES HERE AND NOWHERE ELSE. One map or the other answers for a
+  >        source; a source in neither has no connector in this build and says so. The gate has already been decided
+  >        above — a paid source reaches this line only when the engagement letter is signed, and that is not re-decided
+  >        here any more than the free gate is.
+
+- Line 990:
+
+  > PHASE 146d, ITEM 11: WHAT THIS LOOKUP ACTUALLY COST, ADDED UP FROM THE CALLS IT MADE — and only from calls
+  >          that say they were charged. A call that was refused, timed out or came back an error has `charged: false`
+  >          and adds nothing, so a lookup that failed three times reports nothing spent, which is the truth and is what
+  >          the supplier's own terms say ("any 4xx other than a 402 and any 5xx is never billed"). A charge we could
+  >          not read at all is null, never 0, and is left out of the sum rather than counted as free.
+
+## 23 Sept 2026: Phase 146e
+
+### `src/modules/claims/uploads.ts`
+
+- Line 438:
+
+  > ------------------------------------------------------------------ *
+  > STEPS 9 AND 10 — PHASE 146g, 23 September 2026.
+  >
+  > THE UPLOAD FLOW NEVER RAN STEP 9. `runExtraction` and `writeClaims` were exported by the port and called from
+  > nowhere in src/: every upload stopped at TRIAGED, with the strip done and nothing read. Phase 146e built the real
+  > reader and left it with no caller. This is the caller.
+  >
+  > WHAT IT DOES NOT DO, AND THIS IS THE WHOLE OF THE SAFETY OF IT:
+  >
+  >   · SWITCHED OFF, IT DOES NOTHING AT ALL. `CLAUDE_SWITCHES.DOCUMENT_READING` is false, so every upload behaves
+  >     exactly as it did before this phase: the job stays at TRIAGED, no row changes, no audit row is written and
+  >     nothing leaves the building. The switch is read through `claudeReadiness`, which is the same function the
+  >     reader itself reads it through — there is no second reading of the switch.
+  >   · A READING THAT DID NOT HAPPEN CHANGES NOTHING. No key, the transfer unapproved, a refusal, a time-out, an
+  >     answer we cannot read: the job stays at TRIAGED and every field the document would have answered stays ASKED
+  >     of the client. Never a zero, never a guess, never a screen error (N4).
+  >   · A DOCUMENT A PERSON MUST READ IS NOT SENT. `CPSE_REPLIES` and `SALE_CONTRACT` have no model spec;
+  >     `runExtraction` refuses them, and so does this, one step earlier and for the same reason.
+  >   · NOTHING THROWS OUT OF HERE. A refused claim — an uncatalogued field, a conditional field with no
+  >     discriminant — is an outcome, recorded and reported, not a failed upload. The file has already been read and
+  >     deleted by then; failing the request would tell the client to send it again for no reason.
+  >   · THE CLAIMS ENTER BY THE ONE DOOR. `ingestRegisterRecord` (src/integrations/register-ingest.ts), where the name exclusion
+  >     register is checked, as every register record does. There is no second way in for a document's facts.
+  > ------------------------------------------------------------------
+
 ## 23 Sept 2026: Phase 146f
 
 ### `src/integrations/connectors/paid-registers.ts`
@@ -4739,6 +9424,39 @@ neither says.
   > PHASE 146h, 23 September 2026 — THE TWO CODE ENDPOINTS, read the same day, which are how the domestic age
   >          band and tenure stop being letters and numbers and become facts.
 
+### `src/modules/claims/case-stamp.ts`
+
+- Line 214:
+
+  > THE CONNECTOR SWITCHES — ONE PER LOOKUP, THE DOCUMENT READER'S TWO, AND THE PICK'S. Phase 146c, 23 September 2026;
+  > the pick's added by Phase 146h.
+  >
+  > They are frozen maps of booleans, not `enabled:` flags, so the grep test in test/phase132-records.test.ts cannot see
+  > them — the same reason FUNNEL_SWITCHES is stamped by its own key. Every key of REGISTER_SWITCHES
+  > (src/integrations/connectors/registers.ts) and of CLAUDE_SWITCHES (src/integrations/connectors/claude.ts) is read here, so a lookup added to
+  > either map is stamped the day it is added, and test/phase146c.test.ts counts them against the maps.
+  >
+  > A switch says whether a connector is turned on at all. It is not a gate: the free gate is stamped beside it as
+  > `registry_free_enabled`, and both are needed to know whether a figure on this claim could have come from a register.
+
+### `src/modules/claims/match-review-pages.ts`
+
+- Line 1:
+
+  > THE CLOSE-MATCH LIST, DRAWN — Phase 146h, 23 September 2026.
+  >
+  > Draws what src/modules/claims/match-review.ts returns and decides nothing: which lookup may be picked from, whether the
+  > engagement is signed, whether the switch is on and what the register said are all settled there, on the server,
+  > against the record. A renderer that decided whether to show a candidate would be a screen omitting a fact, which
+  > is presentation pretending to be a control.
+  >
+  > THE LIST ON THIS PAGE IS NOT STORED ANYWHERE. It was fetched for this request and it is gone when the response
+  > ends — no cache, no hidden field carrying it forward, no row. Choosing sends back ONE key, which the server looks
+  > for in a list it fetches again (A.8 point 8, and condition CA5).
+  >
+  > THE PAGE RUNS NO SCRIPT, like every other page here, so each choice is its own small form with one button and
+  > "None of these is this building" is a form of its own beside them.
+
 ## 23 Sept 2026: Phase 146i
 
 ### `src/core/audit.ts`
@@ -4759,6 +9477,164 @@ neither says.
   > CLIENT_DOC fields are kept on that footing alone and it cannot be inferred from the document, so it is a
   > person's answer. THE TWO ROLES THAT WORK THE CLIENT AND NOBODY ELSE — not a surveyor, not Accounting, and
   > never the client, who would be vouching for their own document.
+
+### `src/modules/claims/documents-pages.ts`
+
+- Line 216:
+
+  > PHASE 146i — A PERSON SAYS WHETHER A NAME BELONGS TO AN ORGANISATION. One button per answer, so there is no
+  > drop-down to leave on its first value and no script. `vouchDocumentField` authorises it and decides everything
+  > about it; this route carries the posted answer and nothing else.
+
+- Line 531:
+
+  > PHASE 146i — THE ONE THING ONLY A PERSON CAN SAY, on the two kinds of file that need it. Every other kind draws
+  > nothing, because there is nothing about it anybody could be asked.
+
+### `src/modules/claims/documents.ts`
+
+- Line 1165:
+
+  > PHASE 146i. The question a person must answer before one of the two conditional fields can be kept, where this
+  > kind of document has one. Null on every other type, and null for the client, who never sees this page.
+
+- Line 1170:
+
+  > PHASE 146i. What happened each time we read a version of this document, newest first. Staff only, and empty
+  >  until reading documents is switched on — which is a reading that never started, and not a reading.
+
+- Line 1211:
+
+  > PHASE 146i. Both are staff's. The client's own page says what we did with their file in the words it already
+  >      used; the question about a name, and why our reader could not read something, are ours.
+
+- Line 1309:
+
+  > PHASE 146i — WHO ANSWERED, IN THE SAME WORDS A VERSION'S ROW USES. A role, never a name: the back office does not
+  > show one person's name to another in a record like this, and the audit log already carries who it was.
+
+- Line 1318:
+
+  > PHASE 146i — A PERSON SAYS WHETHER A NAME BELONGS TO AN ORGANISATION.
+  >
+  > Two CLIENT_DOC fields are kept on that footing alone, and `assertClaimsWritable` refuses both unless a caller
+  > asserts it. It cannot be read off the document — that is what the control is for — so it is asked here, of the
+  > two roles that work the client, and never of the client, who would be vouching for their own document.
+  >
+  > A LATER ANSWER REPLACES AN EARLIER ONE, and the audit log keeps every one of them with what it replaced. Only
+  > `yes` keeps the field; `no`, `not sure` and an unanswered question are the same decision and none of them
+  > becomes a blank, a guess or a pass (N4).
+  >
+  > IT CHANGES NOTHING ALREADY READ. The file has been read and deleted by the time anybody is looking at this page,
+  > so an answer governs the NEXT reading of this document and never the last one.
+
+### `src/modules/claims/uploads.ts`
+
+- Line 214:
+
+  > Whether the two conditional CLIENT_DOC fields name an organisation. Neither is ever inferred from a document.
+  >
+  > PHASE 146i: A CALLER NO LONGER HAS TO SUPPLY THIS EITHER, and no route does. Left out, the answers a person
+  > recorded on the document's own page are read instead (`discriminantsFor`, src/modules/claims/document-reading.ts).
+  > Passing one here still wins, so a test can say what a person said without writing a row.
+
+- Line 480:
+
+  > PHASE 146i. The field ids the document DID answer and that were still not kept, because nobody has vouched
+  > that the value names an organisation. Each one stays asked of the client, exactly as an absent one does (N4).
+
+- Line 492:
+
+  > ------------------------------------------------------------------ *
+  > PHASE 146i — ONE UNVOUCHED FIELD NO LONGER DISCARDS THE OTHERS.
+  >
+  > `assertClaimsWritable` throws on a conditional field whose discriminant is not true, and it throws BEFORE the
+  > write, which is right: it is one refusal for one set of claims, and half a write is worse than none. The
+  > consequence was that a grant funding agreement — which has six fields, one of them conditional — kept NOTHING
+  > unless somebody had vouched for the funder's name, and until this phase nobody could.
+  >
+  > So the unvouched field is taken out of the extraction HERE, before the claims are built. The ingestion module's
+  > refusal is untouched and still fires on anything that reaches it unvouched; what reaches it is a set of claims
+  > this function has already made writable. The field that came out is reported, not swallowed: it is still ASKED
+  > of the client, like every fact a document did not answer.
+  > ------------------------------------------------------------------
+
+- Line 569:
+
+  > PHASE 146i. What a person said about the two fields nobody can vouch for, from the document's own page — or
+  >      what a caller said instead, which is how a test says it without writing a row. An unvouched field comes out of
+  >      the extraction here so that the rest of the document's claims survive.
+
+- Line 596:
+
+  > PHASE 146i. What was left out for want of a person's answer, said in the same sentence and in the same words.
+
+## 23 Sept 2026: Phase 146j
+
+### `src/modules/claims/document-reading.ts`
+
+- Line 1:
+
+  > THE DOCUMENT READER'S TWO FOLLOW-ONS.   Phase 146i, 23 September 2026.
+  >
+  > Phase 146g wired the reader into the upload flow and left it switched off. Two things about it were true from
+  > that day and neither had anywhere to live. They are here together because they are one story: what a reading can
+  > keep, and what a person is told about a reading that did not work.
+  >
+  > ------------------------------------------------------------------------------------------------------------
+  > 1 · THE TWO FIELDS NOBODY CAN VOUCH FOR
+  >
+  > `assertClaimsWritable` (09-app/backend/src/modules/claims/documents/client-doc-ingestion.ts) keeps two CLIENT_DOC fields only
+  > on the footing that their value names an ORGANISATION: `grant_funder_name` ("the funding body, not an
+  > individual") and `brc_issuing_body` (a local authority rather than an individual approved inspector). The name
+  > exclusion register classifies by field NAME and never sees a value, so it cannot tell one from the other; the
+  > caller must assert it, and an absent assertion fails closed. That refusal is CORRECT AND IS NOT TOUCHED HERE.
+  >
+  > WHAT WAS WRONG IS THAT NOBODY COULD EVER ANSWER IT. `UploadReading.discriminants` defaulted to `{}`, so a grant
+  > funding agreement and a building regulations completion certificate had EVERY one of their claims refused — not
+  > merely the one field — and the upload reported that nothing was kept. A document type that can never be
+  > captured is not a control, it is a hole with a lock on it.
+  >
+  > SO THE ANSWER IS A PERSON'S, AND IT IS RECORDED. It cannot be inferred from the document; inferring it is
+  > exactly what the control exists to prevent. It is asked on the document's own page, of Admin or Sales, and kept
+  > against the LOGICAL document rather than one upload of it: a second version of the same agreement is the same
+  > agreement, and the answer stands until somebody changes it.
+  >
+  > AND "NOT SURE" IS "NOT ANSWERED". Only `yes` lets the field be kept. `no`, `not_sure` and no row at all are the
+  > same decision, and none of them becomes a guess, a blank or a pass — N4. The row exists so that "somebody looked
+  > and was not sure" can be told from "nobody has been asked", which is a fact about the work and not about the
+  > claim.
+  >
+  > ------------------------------------------------------------------------------------------------------------
+  > 2 · WHAT HAPPENED WHEN WE READ IT
+  >
+  > `finishUpload` has returned a `ReadingOutcome` with a reason in plain words since Phase 146g, and nothing drew
+  > it anywhere: a document that was sent and came back unreadable looked exactly like one nobody had asked about.
+  > One row per reading, and the staff document page draws it.
+  >
+  > A READING THAT NEVER STARTED IS NOT A READING. No row is written where no reader was wired in, or where
+  > `CLAUDE_SWITCHES.DOCUMENT_READING` is false — which is how this ships. With the switch off a finished upload
+  > must behave exactly as it did before Phase 146g, and a row is a difference.
+  >
+  > NEVER A WORD OF THE DOCUMENT, on the screen or in the row. What is kept is a state, a count and a reason.
+  >
+  > ------------------------------------------------------------------------------------------------------------
+  > 3 · PHASE 146j, 25 September 2026 — THE TWO ONE-WAY DOORS 146i LEFT, CLOSED THE WAY A PICK IS TAKEN BACK
+  >
+  > (a) A YES CAN BE TAKEN BACK. A 'yes' lets the next reading keep the name, through `ingestRegisterRecord`, as part
+  >     of that version's CLIENT_DOC record. Changing the answer to 'no' afterwards changed nothing already written.
+  >     Now a 'yes' that has kept something is taken back by its own act, which asks why (`withdrawVouch` in
+  >     src/modules/claims/documents.ts): it takes THAT FIELD, AND NO OTHER, out of every record it went into, and leaves the
+  >     answer on its row with who withdrew it, when and why. A withdrawn yes keeps nothing, exactly as a 'no' does, and
+  >     the row still says it was a yes. The plain buttons will not turn a yes that kept something into a 'no'.
+  >
+  > (b) THE QUESTION IS ASKED BEFORE THE FIRST READING. The document's page exists only once the file has been read
+  >     and deleted, so the first reading of a grant funding agreement always left the funder's name out. The staff
+  >     upload forms and the document request now ask it where the type is chosen. IT IS STILL ONE STORE: the upload
+  >     writes the same row against the document it creates, and a request writes it against itself, to be ADOPTED —
+  >     the same row, its document filled in — by the document that answers the request, before that document is
+  >     read. The page's answer governs: where the document already has one, an earlier answer is not adopted and
+  >     does not replace it, and whatever is on the page afterwards is what the next reading reads.
 
 ## 23 Sept 2026: Phase 146k
 
@@ -5186,6 +10062,14 @@ neither says.
 
   > PHASE 150, 24 September 2026. Pages only: no polygon file, no map and no service was downloaded or called.
 
+### `src/modules/claims/research.ts`
+
+- Line 151:
+
+  > PHASE 150, 24 September 2026: HM Land Registry's INSPIRE Index Polygons, free open data under the OGL like its
+  >      Price Paid Data, and the land-boundary counterpart of "OS" in the documents' tier 1. Only a council's name is
+  >      sent, never anything about the client.
+
 ## 24 Sept 2026: Phase 151
 
 ### `src/core/app.ts`
@@ -5417,6 +10301,50 @@ neither says.
 
   > Phase 151, 24 September 2026. The free postcode check at the address question. See POSTCODES_IO_OPEN.
 
+### `src/modules/claims/claim-facts.ts`
+
+- Line 148:
+
+  > Phase 151 — whether the sale contract and the CPSE replies must arrive (Word answer 47, question 220). Migration
+  >      045 adds the key.
+
+### `src/modules/claims/mandatory-documents.ts`
+
+- Line 67:
+
+  > PHASE 151, 24 September 2026: the question this switch waited on was answered — Word answer 47, "the sale contract,
+  > the CPSE replies, the tax returns and the tax computations" — and closed. It now waits on the two follow-ups, quoted
+  > by their titles: 220 below, and 223 in MANDATORY_DOCUMENTS_ALSO_WAITS_ON.
+
+### `src/modules/claims/research.ts`
+
+- Line 155:
+
+  > Phase 151: the free postcode check at the address question (src/integrations/connectors/postcode-check.ts). Not run by the button.
+
+### `src/modules/crm/introducers.ts`
+
+- Line 1095:
+
+  > PHASE 151, 24 September 2026: ANSWERED AND ON. Lakhbir, Word answer 168 (closed that day): ask the client's
+  >    permission before updating the firm that referred them, with a request from the client's own portal. So giving from
+  >    the portal is switched on; a staff-recorded yes still works beside it, and nothing is shared without a yes.
+
+### `src/modules/crm/messages.ts`
+
+- Line 387:
+
+  > Phase 151: the company leads the subject of an email to OUR STAFF only (Word answer 71), never one to a client.
+
+### `src/modules/public-site/enquiries.ts`
+
+- Line 69:
+
+  > PHASE 151 (Word answer 164, closed 24 September 2026): NO TICK. The form's required "you may contact me" box is
+  >      replaced by a statement and a link to the privacy notice: a person who sends an enquiry has asked to be answered, and
+  >      a tick box would misdescribe the basis as consent. `contact_consent` stays 1 — it records that the person asked to be
+  >      contacted about this enquiry, by sending it — and is never marketing consent.
+
 ## 24 Sept 2026: Phase 151a
 
 ### `src/core/cli.ts`
@@ -5556,6 +10484,21 @@ neither says.
 - Line 156:
 
   > PHASE 151b (Word answer 40, closed 24 September 2026): Clients, as the brief asked — Accounting's billing view of it:
+
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 79:
+
+  > Phase 151b (Word question 223, answered yes on 24 September 2026). Both
+
+### `src/modules/claims/mandatory-documents.ts`
+
+- Line 73:
+
+  > 24 September 2026: question 220 was answered yes (the sale contract and CPSE only when the client bought the building,
+  >    as built) and closed; the data protection officer said yes to the uploads under 223, which stays open for what must be
+  >    removed. WHAT STILL KEEPS THIS OFF is buildable: neither tax document has a receipt policy in the upload handler, so
+  >    neither can be received, and switching this on now would stop every claim at the gate (Phase 151b).
 
 ### `src/shared/upload-handler-port.ts`
 
@@ -5811,6 +10754,12 @@ neither says.
 
   > both as uploads (Word question 223, 24 September 2026), and until the officer says otherwise they are treated
 
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 2167:
+
+  > closed 24 September 2026: "Where two retention periods apply to a
+
 ### `src/shared/originals.ts`
 
 - Line 54:
@@ -5819,6 +10768,35 @@ neither says.
   >    approve): keep them 7 years, and Sales, Admin and the data protection officer may open them. 7 years from the day
   >    the file was read is 2,557 days (two leap days in any seven years from 2026). THE SWITCH STAYS OFF until the officer
   >    approves and the privacy notice says both; `keptDays` reads no period while it is off.
+
+## 25 Sept 2026: Phase 139
+
+### `src/modules/portal/take-back.ts`
+
+- Line 1:
+
+  > TAKING SOMETHING BACK OUT OF THE CLAIM FILE — what two take-backs share. Phase 146j, 25 September 2026.
+  >
+  > Two decisions a person makes put register data into a client's file: choosing one entry from a close-match list
+  > (src/modules/claims/match-review.ts, Phase 146h) and saying that a name on a client document belongs to an organisation
+  > (src/modules/claims/document-reading.ts, Phase 146i). Both can now be taken back, in the shape Phase 139 uses for a fact
+  > somebody ticked — a separate act that ASKS WHY and keeps the reason. Before either removes anything it has to answer
+  > the same two questions, and they are answered HERE so the two cannot drift apart:
+  >
+  >   1 · HAS A PERSON ALREADY CHECKED AND APPROVED IT? A fact from a register record is named `reg.<record id>.<field>`
+  >       on the checks panel (src/modules/claims/approvals.ts), and its state is its latest row in `fact_approvals`. Where that is
+  >       APPROVED, somebody has put their name to the value, and it does not vanish from under them: the take-back is
+  >       refused and says so, and the tick comes off first, by its own act, with its own reason.
+  >
+  >   2 · WHAT WAS WORKED OUT FROM IT WHILE IT STOOD? Most readers of a register record read it LIVE — the checks panel,
+  >       the missing-facts list, the surveyor's payload, the company name on the CRM page, the register bundle derive()
+  >       reads — and those change the moment the record does, which is what should happen: the questions it answered
+  >       are asked again (N4). But some things were KEPT on the strength of it, and removing the record does not
+  >       un-keep them. This is not the take-back's to undo silently, so it lists them, as kinds and counts, and the
+  >       list is kept with the take-back and shown to the person who took it back.
+  >
+  > NOTHING HERE WRITES. It reads and it says. Removing is `removeRegisterRecord` and `removeRegisterField` in
+  > src/integrations/register-ingest.ts — the one door in is the one door out.
 
 ## 25 Sept 2026: Phase 146h
 
@@ -5849,6 +10827,270 @@ neither says.
   > who has already checked that nobody approved it and that this decision is what wrote it. These only do it, and
   > refuse to do more than they were asked.
   > ------------------------------------------------------------------
+
+## 25 Sept 2026: Phase 146j
+
+### `src/modules/claims/document-reading.ts`
+
+- Line 123:
+
+  > PHASE 146j: where the answer that stands was given.
+
+- Line 131:
+
+  > PHASE 146j.
+
+- Line 133:
+
+  > PHASE 146j: a yes taken back — who, when and why. All null unless it was.
+
+- Line 144:
+
+  > PHASE 146j: ONLY A YES THAT STANDS KEEPS ANYTHING. A withdrawn yes is left out exactly as a 'no' is (N4).
+
+- Line 167:
+
+  > THE ROW ITSELF, AND NOTHING ELSE. Who may answer, and the note in the audit log, are `vouchDocumentField`'s in
+  > src/modules/claims/documents.ts — the one place that authorises anything about a document. A later answer replaces an
+  > earlier one; the audit log keeps every one of them, in order, with who gave it. PHASE 146j: a new answer clears a
+  > withdrawal — the withdrawal is on the chain, and the answer that stands is the one just given.
+
+- Line 181:
+
+  > ================================================================== *
+  > 2a · ASKED BEFORE THE FIRST READING — Phase 146j
+  > ==================================================================
+
+- Line 324:
+
+  > PHASE 146j: where the answer was given, in words. Null where nobody has answered.
+
+- Line 326:
+
+  > PHASE 146j: a yes taken back — by whom, when and why. Null unless it was.
+
+- Line 328:
+
+  > PHASE 146j: a yes that stands can be taken back, by somebody who may answer.
+
+- Line 343:
+
+  > PHASE 146j: where the answer was given, in words.
+
+### `src/modules/claims/documents-pages.ts`
+
+- Line 230:
+
+  > PHASE 146j — TAKING A YES BACK. Its own act, with a reason, like taking a tick off. `withdrawVouch` authorises it,
+  > finds what the yes let in and takes that one field out; this route carries the field and the reason, nothing else.
+  > The result page says what to look at again, because a redirect would lose it.
+
+- Line 312:
+
+  > PHASE 146j: the question about a name, answered where the type is chosen.
+
+- Line 335:
+
+  > PHASE 146j: the question about a name, answered where the type is chosen — kept with the request, and taken
+
+- Line 549:
+
+  > PHASE 146j: a yes that stands is taken back by its own act, with a reason — and that takes the name out of
+  >           what we kept. The plain No button will not do it once a name has been kept.
+
+### `src/modules/claims/documents.ts`
+
+- Line 280:
+
+  > PHASE 146j: with the kind of document each type is read as, so a form can ask the question that type needs.
+
+- Line 284:
+
+  > PHASE 146j: THE QUESTIONS A TYPE-CHOOSING FORM ASKS, for a login that may answer them — and none for anybody else,
+  > the client included. The client never vouches for their own document.
+
+- Line 559:
+
+  > PHASE 146j, staff only: the answer to the one question a person must answer about a name on this kind of document,
+  > given on the upload form where the type is chosen — so the FIRST reading can keep the name. Written as the new
+  > document's answer, the same row the page shows and changes. Ignored for a type that asks no question, for a login
+  > that may not answer it, and where the document already has an answer: the page's answer governs.
+
+- Line 674:
+
+  > PHASE 146j: THE QUESTION, ANSWERED BEFORE THE FIRST READING — in the same transaction as the row, so the reading
+  >            this upload is about to start reads it. The upload form's own answer first; failing that, the request's, adopted
+  >            by this document. Neither where the document already has an answer: the page's answer governs.
+
+- Line 718:
+
+  > ------------------------------------------------------------------ *
+  > PHASE 146j — THE EARLY ANSWER, WRITTEN OR ADOPTED
+  > ------------------------------------------------------------------
+
+- Line 845:
+
+  > PHASE 146j: the answer to the question about a name, where the type asks one — given here, where the type is
+  > chosen, so the first reading of what the client sends can keep it. Written against the request and adopted by the
+  > document that answers it. Ignored for a type that asks none, and for a login that may not answer it.
+
+- Line 901:
+
+  > PHASE 146j: the question about a name, answered where the type is chosen.
+
+- Line 962:
+
+  > PHASE 146j: the answer given on the request to the question about a name, where there was one.
+
+- Line 1085:
+
+  > PHASE 146j: the question about a name, asked on the request and upload forms where the type is chosen.
+
+- Line 1344:
+
+  > PHASE 146j: A YES THAT HAS KEPT A NAME IS NOT TURNED INTO A NO BY A BUTTON. Changing the answer changes nothing
+  >      already written, so a plain "No" here would leave the name in the file with nothing saying it was withdrawn.
+  >      Taking the yes back is its own act, which asks why and takes the name out (`withdrawVouch`).
+
+- Line 1361:
+
+  > ------------------------------------------------------------------ *
+  > PHASE 146j — TAKING A YES BACK
+  > ------------------------------------------------------------------
+
+- Line 1753:
+
+  > PHASE 146j: the question about a name, asked on the upload form where the type is chosen.
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 168:
+
+  > ---- PHASE 146j · taking a pick back ----
+  >      A separate act on the lookup's own row, with a reason — not a second pick screen. The form carries the lookup and
+  >      the reason and nothing else: which record goes is read from the pick, on the server. It calls nothing outside.
+
+- Line 438:
+
+  > PHASE 146j: a person's choice that stands can be taken back, with a reason. Drawn only where the
+  >                          choice kept a record and the letter is signed; src/modules/claims/match-review.ts asserts both again.
+
+### `src/modules/claims/match-review-pages.ts`
+
+- Line 31:
+
+  > PHASE 146j: the entry chosen before and taken back is marked, with why — so it is not chosen again by mistake. It is
+  >      still offered: the reason may have been wrong, and marking is not deciding.
+
+### `src/modules/claims/match-review.ts`
+
+- Line 208:
+
+  > PHASE 146j: the choice most recently TAKEN BACK on this lookup, and why — so a person looking at the list again
+  > can see which entry was chosen and found wrong. Null where no choice here was ever taken back.
+
+- Line 234:
+
+  > PHASE 146j: the choice on this lookup most recently taken back, with why.
+
+- Line 375:
+
+  > PHASE 146j: RECORD THE RECORD THIS PICK WROTE, AND ONLY THAT. `storeResearchOutcomes` keeps a record already held
+  >        as it was, and until Phase 146j the pick then named that older record as its own — so taking the pick back would
+  >        have removed a record an earlier lookup wrote. Migration 042 always said NULL "where the register held the record
+  >        already and it was left as it was"; now it is.
+
+- Line 399:
+
+  > One pick row, replacing this client's STANDING one for this source. The chain keeps every one of them; this is where
+  > it landed. A pick that was TAKEN BACK is never replaced or deleted (Phase 146j): it is the record that a choice was
+  > made and found wrong, and the next choice on the same lookup must not erase it.
+
+- Line 415:
+
+  > ================================================================== *
+  > 5 · TAKE A PICK BACK — Phase 146j
+  > ==================================================================
+
+- Line 467:
+
+  > A RECORD ANOTHER LOOKUP WROTE IS NOT THE PICK'S TO REMOVE. A pick made before Phase 146j could name a record that
+  >      was already held when it was made; one written before the pick was made is exactly that.
+
+### `src/modules/claims/research.ts`
+
+- Line 458:
+
+  > PHASE 146j: TRUE WHERE A PERSON CHOSE THIS LOOKUP'S ENTRY FROM A CLOSE-MATCH LIST AND THAT CHOICE STILL STANDS, with
+  > the record it wrote still held. Read off `register_match_picks`, never off the request. It is what lets the panel
+  > offer "Take this choice back" on this row and no other — and src/modules/claims/match-review.ts asserts every condition again
+  > on the request that button makes.
+
+- Line 465:
+
+  > PHASE 146j: the latest choice on this lookup that was TAKEN BACK — when, why, and what to look at again — read off
+  > the pick row, so it stays on the panel after the next run rewrites the lookup's own line. Null where none was.
+
+- Line 698:
+
+  > PHASE 146j: the lookups whose entry a person chose, where that choice stands and its record is still held.
+
+### `src/modules/claims/title-by-hand.ts`
+
+- Line 1:
+
+  > THE TITLE REGISTER, BY HAND — Phase 146k, 25 September 2026.
+  >
+  > Lakhbir, 25 September 2026: HM Land Registry's title register "will be done manually and not via API". The
+  > Business Gateway details were taken out of the key file the same day. So the paid lookup Phase 146d built
+  > (src/integrations/connectors/hmlr-title.ts) no longer runs on "Run the research" — it is retired, not deleted — and a person who
+  > has bought the official copy of the register (HM Land Registry's own portal, about £7 a title) records what it says
+  > here, on the property page.
+  >
+  > WHAT IS RECORDED, AND WHAT IS NOT. The same fields the lookup kept, as the name exclusion register lists them for
+  > this source: the title number, freehold or leasehold, the price paid and its date, how many restrictions the
+  > register carries, the owner's company number where the owner is a company, and how many earlier owners it names.
+  > NEVER A PERSON'S NAME. The lookup could keep a private owner's name under Exception 2 of the name exclusion
+  > register, because the register gave it to us in a field we could mark; a name typed into a box by a member of staff
+  > is a different thing, and this form has no box for one. Where the owner is a person, that is simply not recorded.
+  >
+  > THROUGH THE ONE DOOR. The entry is stored by `ingestRegisterRecord` as a register record of source HMLR_TITLE, keyed
+  > "by-hand:<title number>" so it is never mistaken for a lookup's, and so every reader of register records — the checks
+  > panel (where it carries its own chip), the surveyor's payload with the price withheld, the retention clock — reads it
+  > as it read the lookup's. `title_by_hand` (migration 055) records the PERSON's act: who typed it and when.
+  >
+  > WHO, AND WHEN. Admin or Sales (`property.write`), and only once the engagement letter is signed, asserted on the
+  > server against the signature record — the same moment the paid lookup waited for (business rule 13(c)), because the
+  > official copy is a purchase made for a client.
+  >
+  > AND IT CAN BE TAKEN BACK, which Phase 146j learned the hard way is not optional: a separate act, with a reason, that
+  > removes the one record this entry wrote, refuses while a person has approved a fact from it, lists what was worked
+  > out from it while it stood (src/modules/portal/take-back.ts), and keeps the entry with who took it back and why.
+
+### `src/modules/crm/inbound-email.ts`
+
+- Line 337:
+
+  > PHASE 146j: the answer to the question about a name, given where staff say what the file is.
+
+### `src/modules/crm/messages-pages.ts`
+
+- Line 112:
+
+  > PHASE 146j: the question about a name, asked where staff say what the file is, so the first reading can keep it.
+
+### `src/modules/portal/client-files-pages.ts`
+
+- Line 180:
+
+  > PHASE 146j: the question about a name, answered on this form so the first reading can keep it.
+
+- Line 276:
+
+  > PHASE 146j — THE QUESTION ABOUT A NAME, ASKED WHERE THE TYPE IS CHOSEN. The upload forms and the request form draw
+  > this; each question says which kinds of file it is about, because the form runs no script and cannot hide it until a
+  > type is picked. Only the answer that belongs to the type chosen is kept. "Leave it for now" sends nothing, and the
+  > question is then asked on the file's own page, as before — it is never read as a no.
 
 ## 25 Sept 2026: Phase 146k
 
@@ -5886,6 +11128,48 @@ neither says.
   > PHASE 146k: RETIRED. The title register is looked up by hand (src/web/title-by-hand.ts); its connector is in
   >      PAID_RETIRED, in no map a click reads, so this switch turns nothing on. It stays so a case stamp reads as before.
 
+### `src/modules/claims/approvals.ts`
+
+- Line 247:
+
+  > PHASE 146k: a record a person typed from the official copy says so, so nobody ticks it as if a lookup made it.
+
+### `src/modules/claims/research.ts`
+
+- Line 470:
+
+  > PHASE 146k: TRUE FOR A SOURCE A PERSON LOOKS UP BY HAND, which "Run the research" never consults — today the title
+  > register only (`BY_HAND`). It shows as "Looked up" once a person has recorded it, and as still to do until then.
+
+- Line 477:
+
+  > PHASE 146k — THE SOURCES A PERSON LOOKS UP BY HAND, AND WHERE THEY RECORD WHAT THEY FOUND. Lakhbir, 25 September
+  > 2026: HM Land Registry's title register "will be done manually and not via API". The Business Gateway connector
+  > (src/integrations/connectors/hmlr-title.ts) is retired from the click; a person buys the official copy and records it on the
+  > property page (src/modules/claims/title-by-hand.ts). The row stays on the panel — it is still a source of the claim's facts,
+  > still paid, and still after signing — but no button consults it, and it never costs the click anything.
+
+- Line 711:
+
+  > PHASE 146k: a source looked up by hand is "looked up" once a person has recorded it, and still to do until then —
+  >        read off what is held, never off a row a click wrote. Before signing it waits like any paid source.
+
+- Line 1080:
+
+  > PHASE 146k: a source looked up by hand is never consulted by the click.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 278:
+
+  > PHASE 146k: THE TITLE REGISTER, BY HAND (src/modules/claims/title-by-hand.ts). Admin or Sales, once the letter is signed —
+  >      both asked there, on the server. Recording it sends nothing anywhere; taking it back asks why.
+
+- Line 810:
+
+  > PHASE 146k: THE TITLE REGISTER, BY HAND. What stands, with who typed it and when; entries taken back, with why; and,
+  > for Admin or Sales once the letter is signed, the form — or the take-back, where one stands.
+
 ## 25 Sept 2026: Phase 151
 
 ### `src/integrations/connectors/sources.ts`
@@ -5900,6 +11184,69 @@ neither says.
   >        ITS PRICE IS IN US DOLLARS: the first 500 full checks a month are free, then US$0.33 a check
   >        (didit.me/pricing). 33 below is that published figure in US CENTS, not pence, and it is the price AFTER the
   >        free 500: a cost read from here overstates a month under 500, never understates one.
+
+### `src/modules/assessment/address-check.ts`
+
+- Line 1:
+
+  > THE POSTCODE CHECK AT THE ADDRESS QUESTION, AND "ANSWER IT MYSELF". Phase 151b, 25 September 2026.
+  >
+  > 1 · THE POSTCODE CHECK, WIRED INTO THE BACK END'S OWN ASSESSMENT AS A SERVER-SIDE STEP. Phase 151 built the check
+  >     (src/integrations/connectors/postcode-check.ts: Postcodes.io, the postcode only, switched off behind the free-tier gate and
+  >     until the privacy notice names the service). This runs it when a client saves the property screen (Q2), on this
+  >     server, never in the page: THE SITE FILE STILL MAKES NO NETWORK CALL, and neither does the form the back end
+  >     draws. The postcode is found in the address the client typed; nothing else is sent.
+  >     OFF, AND ON ANY FAILURE, THE QUESTION IS EXACTLY TODAY'S TYPED ADDRESS: nothing is added to the property, nothing
+  >     is shown, nothing stops the client. Only a CHECKED postcode adds anything — one line under the address saying
+  >     where the postcode is — and the client's typed address is never changed by it.
+  >
+  > 2 · "ANSWER IT MYSELF" — Word answer 180, "Should people be able to skip the automatic lookups and answer the
+  >     questions themselves?", closed 24 September 2026 by Lakhbir ("I think a manual option is best to have as dont
+  >     want customers to get put off by not able to look up there property"). A choice at the address question: answer
+  >     the property questions yourself instead of the lookups. SWITCHED OFF WITH THE LOOKUPS: it is offered only when
+  >     the free lookups could run at all (the free-tier gate, CB_REGISTRY.precondition, read through registryGate — no
+  >     second gate). Chosen, the postcode check is not run for that client, the choice goes with the claim when the
+  >     assessment is sent (migration 051, lookups_declined, and LOOKUPS_DECLINED in the audit log), and the research run
+  >     leaves the free lookups for that client unrun, with a plain line saying the client chose to answer themselves.
+  >     Not chosen, or never offered, changes nothing (N4: an absent choice is not a refusal).
+
+## 25 Sept 2026: Phase 151a
+
+### `src/modules/claims/site-area-run.ts`
+
+- Line 1:
+
+  > THE SITE AREA'S CALLER: "RUN THE RESEARCH", AFTER SIGNING — AND ITS LINE ON THE RESEARCH PANEL. Phase 151c,
+  > 25 September 2026.
+  >
+  > Phase 151a built `siteAreaFromLandBoundary` (src/integrations/connectors/site-area.ts) and left it with nothing calling it. This
+  > file is the one caller. It runs on the operator's one click, the same way the paid lookups do (src/modules/claims/research.ts):
+  > the operator picks the moment, not the calls, and nothing refuses and nothing throws.
+  >
+  > FOR EACH OF THE CLIENT'S PROPERTIES, ON THE CLICK:
+  >   · the councils — the postcode's own council from the ONS table (`councilOfPostcode`), then every neighbouring
+  >     council a person added on the property page, for a site on a council boundary (migration 052);
+  >   · the point — the latest easting and northing a person entered on the property page, else Homedata's own easting
+  >     and northing after signing (`homedataPointOf`). Homedata's latitude and longitude stay refused while
+  >     HOMEDATA_COORDINATE_DATUM is null;
+  >   · the grid — CAPREBATE_OSTN15_FILE, read only when a point is a latitude and longitude; the store —
+  >     CAPREBATE_INSPIRE_STORE_DIR. Either missing or unreadable is not an error: the grid's absence refuses a latitude
+  >     and longitude, the store's makes every lookup download.
+  >
+  > WHEN IT MAY RUN. The land boundary is a FREE source (TIER_BY_SOURCE), so it waits on the privacy notice like every
+  > free lookup, and on the client's own "answer it myself" choice (Word answer 180). AND IT RUNS AFTER SIGNING: the
+  > point it needs comes from the paid address lookup or from a person working the signed client, so before the letter
+  > is signed nothing is asked. Above all three sits the switch, BOUNDARY_FETCHING_SWITCHED_ON, which is false: switched
+  > off, the line says so and the site area stays asked. This file opens nothing and switches nothing on.
+  >
+  > ONE LINE IN WORDS FOR EVERY OUTCOME STATE, per property: switched off; waiting (the letter, the notice, or the
+  > client's choice); not permitted; no point; no council; ready for the next click; stored; already held; not found.
+  > The panel draws the lines afresh each time, from the switch, the gates and what is held, so no network call is made
+  > to draw a page. Only an outcome where the land boundary was actually asked — stored, already held, not found — is
+  > kept (site_area_runs), so the panel can still say it after the page reloads.
+  >
+  > WHAT NEVER APPEARS HERE: the polygon, a map of it, or any coordinate from it. A line carries a number, a grade, the
+  > councils read and a reason.
 
 ## 25 Sept 2026: Phase 151b
 
@@ -6059,6 +11406,223 @@ neither says.
 
   > Phase 151b (Word answer 156, read 25 September 2026): names read in memory for the signatory check, never kept
 
+### `src/modules/claims/claim-record.ts`
+
+- Line 198:
+
+  > THE THREE ROLES A SIGN-OFF COULD NAME UNTIL 25 SEPTEMBER 2026 — KEPT ONLY TO READ OLDER RECORDS. Phase 151b: Word
+  > answer 169, "May we keep the tax adviser's own name on a claim's sign-off record?", closed 24 September 2026 by the
+  > data protection officer's side: "Company name i think is best". So the record keeps the adviser's FIRM — its name as
+  > registered, ending Limited, LLP or plc — and neither the person's name nor a role in place of the firm.
+  > `recordSignOff` accepts a firm only; a record already written with one of these roles still reads in words.
+
+- Line 211:
+
+  > Shown beside the form. Was the open question's title until Word answer 169 closed it (Phase 151b).
+
+- Line 375:
+
+  > PHASE 151b, Word answer 169: the FIRM, and only the firm — not a role in its place, and never a person's name.
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 955:
+
+  > THE TAX RETURN AND THE TAX COMPUTATION — Phase 151b, 25 September 2026.
+  >
+  > Word question 223. The data protection officer, relayed by Lakhbir on 24
+  > September 2026: "yes, clients may upload tax returns and tax computations.
+  > Still open: what must be removed from them. Until the officer says
+  > otherwise we will treat them like the other financial documents: keep the
+  > figures and the company details, and remove individuals' names, addresses
+  > and tax references." These two entries are that rule, in the same shape as
+  > every other SPEC_DERIVED type: what is kept is exactly the spec's permitted
+  > segments, and everything else is removed on receipt.
+  >
+  > THE COMPANY'S OWN TAX REFERENCE IS A COMPANY DETAIL, AND IS KEPT. Decided
+  > here from the legal-form test in section 2 (classifyPartyReference) and the
+  > name exclusion register it applies unchanged: for a BODY_CORPORATE or an
+  > LLP "the name identifies a legal entity, not a natural person", and the
+  > register already keeps a company's own identifier (company_number on the
+  > Companies House entry). A company's UTR identifies the company in exactly
+  > the way its number does, so it stays with the company details. A sole
+  > trader's UTR is the opposite case, for the reason the register gives for a
+  > sole trader's trading name: there is no legal identity separate from the
+  > individual, so the reference IS the person's. It is removed. Because the
+  > strip reads headings and cannot see legal form, only a heading that names
+  > the COMPANY lands in TAX_ENTITY_DETAILS; a bare "Tax reference" or "UTR"
+  > heading is UNCLASSIFIED and goes, since it cannot say whose it is. No
+  > field extracts any tax reference: nothing a claim computes needs one.
+
+- Line 2176:
+
+  > Phase 151b made the change; tests Y7 and Y9-Y12 hold it.
+
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 1:
+
+  > Caprebate — AI Document Pipeline
+  > Board item 12830166311. Phase 3, item 5.
+  >
+  > Clients upload planning documents, fire risk assessments, O&M manuals,
+  > asbestos registers, insurance reinstatement valuations, leases and contractor
+  > cost breakdowns. This extracts structured fields from each.
+  >
+  > ============================================================================
+  > ABSOLUTE RULE: PLANNING COMMENT TEXT NEVER REACHES A MODEL.
+  >
+  > Planning portals carry objector and neighbour names and addresses — third
+  > party personal data with no lawful basis for us to process. The rule is not
+  > negotiable and is not enforced by remembering it.
+  >
+  > It is enforced structurally, in four layers:
+  >
+  >   L1  NOT ACQUIRED   the planning fetcher never calls a comments endpoint.
+  >                      You cannot leak what you do not hold. (Item 12830181420
+  >                      already refuses to store the fields.)
+  >   L2  DISCARDED      uploaded planning PDFs are segmented, and every segment
+  >                      classified as representations / consultee responses /
+  >                      correspondence is DROPPED BEFORE the payload is built.
+  >                      Dropped, not redacted — it never enters the payload object.
+  >   L3  UNTYPEABLE     the model client accepts only a `ModelPayload`, a branded
+  >                      type produced solely by sanitise(). callModel(rawText)
+  >                      is a compile error, not a code-review question.
+  >   L4  RE-ASSERTED    sanitise() and the client both re-scan for forbidden
+  >                      markers and person-name patterns and throw. Belt and
+  >                      braces for plain-JS callers.
+  >
+  > L1 and L2 are the controls that matter. L4 is pattern matching and pattern
+  > matching is never complete — it is the last line, not the first.
+  > ============================================================================
+  >
+  > PHASE 151b, 25 September 2026 — THE TAX RETURN AND THE TAX COMPUTATION.
+  > Word question 223. The data protection officer, relayed by Lakhbir on 24
+  > September 2026: "yes, clients may upload tax returns and tax computations."
+  > What must be removed from them is still open, and until the officer says
+  > otherwise they are treated like the other financial documents: keep the
+  > figures and the company details, and remove individuals' names, addresses
+  > and tax references. So both types join DocType with a spec of their own
+  > (section 2), three segment kinds that may be kept and two that never are
+  > (section 1), and heading rules that find them (section 3). The receipt
+  > policies that strip them on arrival are in caprebate-client-doc-ingestion.ts.
+
+- Line 120:
+
+  > Phase 151b — the tax return and the tax computation. The company details
+
+- Line 146:
+
+  > Phase 151b. An individual's own details on a tax return: a sole trader's,
+
+- Line 153:
+
+  > Never sent to a model. Not for any document type, not with any flag, not
+  > with any override. UNCLASSIFIED is on the list because "we could not tell
+  > what this section was" must fail closed. Phase 151b added the two kinds a
+  > tax return carries about people: nine kinds, where there had been seven.
+
+- Line 363:
+
+  > THE TAX RETURN AND THE TAX COMPUTATION — Phase 151b, 25 September 2026.
+  > Word question 223: the data protection officer said yes to the uploads on
+  > 24 September 2026; what must be removed stays open, and until the officer
+  > says otherwise the figures and the company details are kept and the
+  > individuals are removed. The fields are ONLY what a claim reads from them:
+  > the period, the taxable profit, what the return already claims by pool,
+  > the annual investment allowance used, and the two pool balances.
+  >
+  > NO FIELD HERE IS A NAME OR A TAX REFERENCE — not the company's name, not
+  > its UTR, not a person's. The company details are KEPT as text on receipt
+  > (the segment TAX_ENTITY_DETAILS), because the officer's rule keeps them;
+  > but nothing a claim computes needs them, so nothing extracts them. The one
+  > identifier extracted is the company number, which ties the return to the
+  > claimant, and which only a company or an LLP has.
+  >
+  > WHY NONE IS 'APPORTIONMENT'. That consequence routes a review task to a
+  > SURVEYOR (REVIEWER, section 6), and a surveyor may not read either type:
+  > both carry value, so their readers are the claim team (migrations 013 and
+  > 045). The figures are GATE fields: they decide whether the allowances can
+  > be used this period and how much of the annual investment allowance is
+  > left, which is a branch, not a surveyed figure. Same threshold, 0.95.
+
+- Line 554:
+
+  > Phase 151b. Off, as every type is until somebody who owns the error rate
+
+- Line 591:
+
+  > Phase 151b. A person's own details on a tax return, and the declaration.
+
+- Line 616:
+
+  > Phase 151b — the tax return and the tax computation. LAST, so that no
+
+### `src/modules/claims/mandatory-documents.ts`
+
+- Line 77:
+
+  > 25 September 2026, Phase 151b: built — a receipt policy for each tax document, bound by migration 049 — so the switch is
+  >    on and waits on nothing. Question 223 stays open only for what must be removed; until the officer answers that, the
+  >    rule quoted in the header above applies, and changing it is a change to the receipt policies, not to this switch.
+
+- Line 82:
+
+  > LAKHBIR'S LIST (Word answer 47, Phase 151), SWITCHED ON IN PHASE 151b. Four documents: the sale contract and the CPSE
+  > replies ONLY WHEN THE CLIENT BOUGHT THE BUILDING — the claim's own fact BOUGHT_THE_BUILDING (migration 045), because a
+  > client who built or refitted has neither (Word question 220, closed yes) — and the tax return and the tax computation
+  > on every claim. It shipped off in Phase 151 because neither tax document could be received; Phase 151b gave each a
+  > receipt policy (migration 049), so it is on. Until Phase 151 the list was our own recommendation: the fire risk
+  > assessment always, the grant funding agreement where grant-funded, the sale contract where an election was made, and
+  > the lease where leasehold (caprebate's .bak-phase151 copy keeps it).
+
+### `src/modules/claims/receipt-recommendations.ts`
+
+- Line 118:
+
+  > BOUND (Phase 151b): the type has a receipt policy of its own now, and the recommendation is only the record.
+
+- Line 138:
+
+  > PHASE 151b. A migration has bound this type to a receipt policy, so what we suggested is history, and the reading
+  >      says what happens now. Approved or not makes no difference to a type that can already be received.
+
+### `src/modules/claims/research.ts`
+
+- Line 522:
+
+  > PHASE 151b (Word answer 156): whether the person who signed the engagement letter appears on each public register
+  > in a role that can sign — one line in words per register. Staff only. Never a name.
+
+- Line 602:
+
+  > PHASE 151b (Word answer 180): the client chose to answer the property questions themselves. Absent is not a no.
+
+- Line 632:
+
+  > PHASE 151b: a client who asked us to leave the lookups alone is not looked up in the free registers. A person asks
+
+- Line 856:
+
+  > PHASE 151b: what the check of who signed came to on this click, one line per register asked. Never a name.
+
+- Line 1087:
+
+  > PHASE 151b: ONE MORE STEP — who signed, checked against the registers, under the same gates and switches.
+
+- Line 1155:
+
+  > ================================================================== *
+  > WHO SIGNED, AND WHETHER THE REGISTER SAYS THEY MAY — Phase 151b, Word answer 156
+  > ==================================================================
+
+### `src/modules/crm/client-page.ts`
+
+- Line 282:
+
+  > PHASE 151b: THE ONLINE IDENTITY CHECK, for a login that keeps the registers (compliance.read; sending is
+  >      compliance.write). Sent from here or from an open due diligence check, and switched off with IDENTITY_CHECK.
+
 ### `src/shared/engine.ts`
 
 - Line 155:
@@ -6144,6 +11708,82 @@ neither says.
   >        map, not the number, so the number stays in with everything else here — for our own checks — until he answers
   >        the Word question "May the site area we work out from a land boundary go in a client's report?". Both now say so.
 
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 418:
+
+  > PHASE 151c: the site area from HM Land Registry's land boundary, one line per property. A person can enter the
+  >             point, or add a neighbouring council, on the property page.
+
+### `src/modules/claims/research.ts`
+
+- Line 527:
+
+  > PHASE 151c: the site area from HM Land Registry's land boundary — one line in words per property, for every state
+  > it can be in (src/modules/claims/site-area-run.ts). Never a polygon or a coordinate.
+
+- Line 682:
+
+  > PHASE 151c: where the site area's grid, store and postcode table come from. Absent: the server's own settings.
+
+- Line 835:
+
+  > PHASE 151c: the site area's grid, store and — TESTS ONLY — the boundary switch. Absent: CAPREBATE_OSTN15_FILE,
+  > CAPREBATE_INSPIRE_STORE_DIR and BOUNDARY_FETCHING_SWITCHED_ON, which is false.
+
+- Line 858:
+
+  > PHASE 151c: what the site area came to on this click, one line per property.
+
+- Line 1090:
+
+  > PHASE 151c: AND ONE MORE — the site area from the land boundary, for each property, under the same gates, after
+  >      signing, and switched off. Nothing refuses and nothing throws: every outcome is a line in words.
+
+- Line 1145:
+
+  > PHASE 151c: a site area worked out on this click is said beside the lookups.
+
+### `src/modules/claims/site-area-inputs.ts`
+
+- Line 1:
+
+  > THE SITE AREA'S SCREEN: A POINT AND A NEIGHBOURING COUNCIL, ENTERED BY A PERSON ON THE PROPERTY PAGE. Phase 151c,
+  > 25 September 2026.
+  >
+  > The site area is worked out from HM Land Registry's land boundary at one point on the site (src/connectors/
+  > site-area.ts). The point can come from the paid address lookup (Homedata's own easting and northing). Where it did
+  > not, or where it is wrong, a person enters it here: a British National Grid easting and northing, in metres, read
+  > off a map. And where a site sits on the line between two councils, HM Land Registry puts its polygon in both
+  > councils' files — so a person can add the neighbouring council, and both files are read.
+  >
+  > WHO. Admin or Sales — `property.write`, the right to change the property — and ONLY ONCE THE ENGAGEMENT LETTER IS
+  > SIGNED, asserted on the server against the signature record (`assertSignedEngagement`), never on anything the page
+  > sent. The research run that uses these is itself after signing.
+  >
+  > KEPT WITH WHO AND WHEN (migration 052, site_area_inputs, append-only) and AUDITED (SITE_POINT_ENTERED,
+  > SITE_COUNCIL_ADDED). The research run passes both on (src/modules/claims/site-area-run.ts): the latest point is used before
+  > Homedata's, and every council added is read beside the postcode's own.
+  >
+  > NOTHING HERE LOOKS ANYTHING UP. Saving a point sends nothing anywhere; the land boundary is read only by "Run the
+  > research", and that is switched off.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 244:
+
+  > PHASE 151c: the site area's point and councils. Everyone who reads the property reads it; the forms are Admin's or Sales's, after signing.
+
+- Line 258:
+
+  > PHASE 151c: THE SITE AREA'S POINT AND A NEIGHBOURING COUNCIL (src/modules/claims/site-area-inputs.ts). Admin or Sales, only once
+  >      the engagement letter is signed — both asked there, on the server. Saving sends nothing anywhere.
+
+- Line 782:
+
+  > PHASE 151c: WHERE THE SITE IS, FOR ITS AREA. The point the land boundary is read at, and the councils whose files are
+  > read, with who entered each and when; and, for Admin or Sales once the letter is signed, the two forms.
+
 ## 25 Sept 2026: Phase 151e
 
 ### `src/core/app.ts`
@@ -6181,6 +11821,12 @@ neither says.
 - Line 86:
 
   > PHASE 151e (line 4): the token of a remote database named by `location` (src/core/db.ts). Absent for memory and file.
+
+### `src/modules/crm/crm.ts`
+
+- Line 1091:
+
+  > PHASE 151e (line 6): never the change that leaves a client with no contact we can reach
 
 ## 25 Sept 2026: Phase 151f
 
@@ -6240,6 +11886,69 @@ neither says.
 
   > PHASE 146l, 27 September 2026 — THE OFFICIAL COPY OF THE TITLE REGISTER, read by a person (HUMAN_CAPTURE_SPECS).
 
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 743:
+
+  > ------------------------------------------------------------------ *
+  > 3. THE RECEIPT POLICY — what may be written to storage, per document type
+  >
+  > Worked from the FIELD SETS, not from a general idea of what is sensitive.
+  > The question asked of every segment kind is: does any field in this
+  > document type's specification come from it? If no field needs it, it goes.
+  >
+  > That question has a mechanical answer for the nine model-extractable types
+  > (eleven since Phase 151b), because DocSpec.permitted_segments already IS the answer, and test C1
+  > asserts the derivation rather than trusting this table. It has no mechanical
+  > answer for the HUMAN_READ_ONLY types (three since Phase 146l), and section 3.2 says so plainly
+  > instead of inventing one.
+  > ------------------------------------------------------------------
+
+- Line 1079:
+
+  > PHASE 146l (Lakhbir, 25 and 27 September 2026): the official copy of HM Land Registry's title register and the
+  >      title plan, bought and uploaded by a person, because the title register is looked up by hand, not by the API.
+
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 84:
+
+  > Phase 146l (Lakhbir, 25 and 27 September 2026): HM Land Registry's title register is looked up BY HAND — a person
+
+- Line 1065:
+
+  > ------------------------------------------------------------------ *
+  > 9. Human-read-only document types — CPSE_REPLIES and SALE_CONTRACT, and since Phase 146l TITLE_REGISTER
+  >
+  > Item 12902240772 §8: neither gate (DPIA, lease-party) is a reason to leave
+  > an upload of one of these two unprocessed. The interim position is that a
+  > person captures the same field set the eventual model spec names, at the
+  > same grade, so toClaims() and everything downstream sees no difference
+  > between a human-captured value and a model-extracted one.
+  >
+  > contract_election_candidates is deliberately absent from SALE_CONTRACT's
+  > field list below. It was never a FieldSpec — section 7's FinderSpec exists
+  > because a candidate is not a value — and human capture does not change
+  > that: a reviewer reading the whole contract finds candidates directly,
+  > with no finder and no confidence in between.
+  > ------------------------------------------------------------------
+
+### `src/modules/claims/title-by-hand.ts`
+
+- Line 238:
+
+  > PHASE 146l: the official copies and title plans uploaded for this client (document type TITLE_REGISTER), newest
+  > first — the paperwork the typed facts come from. Uploading one is the ordinary upload path, and it is read by a
+  > person, never a model.
+
+- Line 244:
+
+  > PHASE 146l: whether this login may upload one, which is the ordinary `document.upload` right.
+
+- Line 250:
+
+  > PHASE 146l: the document type an official copy is uploaded as (migration 056).
+
 ## 27 Sept 2026: Phase 151e
 
 ### `src/core/db.ts`
@@ -6259,6 +11968,22 @@ neither says.
   > `libsql` package answers the same way (better-sqlite3's API, synchronous, the same SQL dialect, STRICT tables
   > included), so nothing above this class changes. A Postgres driver answers later (a promise), and would change
   > every one of those calls. The package is loaded only when it is asked for, so memory and file never touch it.
+
+## 28 Sept 2026: Phase 129
+
+### `src/modules/claims/letter.ts`
+
+- Line 97:
+
+  > THE SPECIMEN COMPANY NUMBER. Invented since Phase 153 (28 September 2026):
+  > 98604417 is not on the Companies House register (its page answered 404 that
+  > day), and the register's numbers run nowhere near 98 million. The number it
+  > replaced, 09183422, was not fictional: it is BEYOND BEAUTY (BIGGLESWADE)
+  > LIMITED, dissolved 14 May 2019 (checked 12 September 2026, Phase 129). Until
+  > this constant existed the portal replaced the specimen NAME and left the
+  > number standing, so a real client's letter named them "under company number
+  > 09183422". Substituted where the record supplies a number; FLAGGED where it
+  > does not — an invented number is still not the client's.
 
 ## 28 Sept 2026: Phase 151e
 
@@ -6306,6 +12031,25 @@ neither says.
   > optional (line 6), so a client with none is flagged; Lakhbir asked for one invented contact on each seeded client
   > that had none, so the demo and the test website show clients as they should be. Dunmarrow keeps its two. A CHANNEL,
   > not a person, as everywhere in this file: a role name and a role mailbox, and a number in Ofcom's drama range.
+
+### `src/modules/crm/client-page.ts`
+
+- Line 267:
+
+  > PHASE 151e (line 6): a client with no contact we can reach is flagged here until it has one. "We must get contact
+  >      details, it is a non negotiable" (Lakhbir, 28 September 2026).
+
+### `src/modules/crm/crm.ts`
+
+- Line 1032:
+
+  > PHASE 151e (line 6), 28 September 2026 — CONTACT DETAILS ARE NOT OPTIONAL. Lakhbir: "we must get contact details, it
+  > is a non negotiable". A client must have at least one contact with an email address or a telephone number:
+  >   - a client saved from the website cannot be saved without one (the funnel's close, src/core/router.ts);
+  >   - a change here that would leave a client with no contact we can reach is refused (`updateContact`);
+  >   - a client that has none is flagged on its page until it does (src/modules/crm/client-page.ts); and
+  >   - an identity check goes only to a contact who has one (src/web/identity-checks.ts).
+  > A contact added here may still lack both: the rule is about the client, and the flag stays until one has them.
 
 ## 28 Sept 2026: Phase 151g
 
@@ -7000,6 +12744,45 @@ neither says.
   > search, before any engagement), and this switch is on. And the key must be in the key file. Until then the screen
   > has no "Find" button and the name is typed; nothing is sent.
 
+## 29 Sept 2026: Phase 160n
+
+### `src/modules/public-site/home-site.ts`
+
+- Line 1:
+
+  > THE NEW HOME PAGE, SERVED BY THE BACK END — 29 September 2026.
+  >
+  > Lakhbir: "this look good, push it to vercel". The page designed in Website Content/landing-page is copied, as one
+  > file, to Caprebate/09-app/site/home.html, and this module serves an edition of it at `/`. When that file is not
+  > beside the build, `/` falls back to `Caprebate site.html` (src/modules/public-site/public-site.ts), and then to the back end's own
+  > home page, as before.
+  >
+  > THE SAME RULE AS EVERY OTHER PAGE: NOTHING INLINE. The file's one `<style>` block is served as /assets/home.css and
+  > its `<script>` blocks, in order, as /assets/home.js. The file carries no style attribute and no event handler (its
+  > page variables are data-vars, set by its script), and the edition is refused if one appears. The one inline
+  > `<script>` kept is the search engines' structured data (`type="application/ld+json"`), which a browser never runs.
+  >
+  > TWO THINGS FROM OUTSIDE, BOTH NAMED:
+  >  - GSAP, the animation library, is served from this site at /assets/gsap.min.js, from the `gsap` package the root
+  >    package.json installs. Missing, the page shows its finished drawings without animation.
+  >  - Cloudflare Turnstile, the contact form's security check, loads from challenges.cloudflare.com. The home page's
+  >    policy allows that one origin for scripts and frames, and nothing else is loosened. Its key is Cloudflare's
+  >    public TEST key, which always passes; /enquiry does not yet check the token (a named job before launch).
+  >
+  > THE PATHS ARE CONSTANTS. No request path is ever mapped onto the disk.
+  >
+  > PHASE 160k, 21 OCTOBER 2026: THE NEW PUBLIC WEBSITE. Lakhbir: "push it live". The home page is now the
+  > "Kurbelwerk" design, and five sector landing pages join it at /capital-allowances/<sector>/ (site/capital-allowances/
+  > <sector>.html). Both come from their design files through tools/site-from-design.mjs, which turns every style
+  > attribute into a class and self-hosts the fonts. Every page is built the same way here (buildEdition): its <style>
+  > block becomes /assets/<name>.css; the scripts in its <head> become /assets/<name>-head.js, kept in the head; the
+  > scripts in its body become /assets/<name>.js, placed where the LAST of them stood, so they run after the page is
+  > read. The page policy gains font-src 'self' for the fonts (/assets/fonts/, site/fonts/), and nothing else.
+  >
+  > PHASE 160n, 28 OCTOBER 2026: THE X-RAY HOME PAGE. The home page is now the X-ray (a clinic whose walls turn
+  > see-through on a twelve-second scan, ending on the figure), written by the same tool from its own design file. It is
+  > served exactly as before; its two fonts join the list below. The sector pages are unchanged.
+
 ## 29 Sept 2026: no phase named
 
 ### `src/core/audit.ts`
@@ -7095,6 +12878,28 @@ neither says.
   > script when it is served (src/web/home-site.ts). Without one, the page keeps Cloudflare's published TEST key.
   > No key is ever printed: the secret goes only into the call's body, which no record keeps.
 
+### `src/modules/assessment/assessment.ts`
+
+- Line 305:
+
+  > 29 Sep 2026: the company number, when the person chose their company from the first screen's search.
+
+- Line 310:
+
+  > 29 Sep 2026: the first screen's postcode goes on the first property, when that property's address still carries it.
+
+- Line 375:
+
+  > 29 Sep 2026: an address in parts, as the four-stage funnel's stage 3 asks it (building and street, town, postcode).
+
+### `src/modules/public-site/home.ts`
+
+- Line 54:
+
+  > Text on a tile, whitespace collapsed and NEVER CUT (29 September 2026, Lakhbir: "too many texts have been cut off").
+  > Until then every tile's text stopped at 48 characters with "…", so a next action read "Confirm who owns the
+  > building, and that we…". A tile now wraps its whole text; the grid gives every tile in a row the same height.
+
 ## 30 Sept 2026: Phase 156
 
 ### `src/integrations/connectors/zoom.ts`
@@ -7145,6 +12950,85 @@ neither says.
   >
   > WHAT IS SENT TO ZOOM: the time, the length and the words "Cap Rebate call". Never the client's name, email or number.
   > No key is ever printed, logged or put in a page; a join signature and a ZAK go only to the one person joining.
+
+### `src/modules/assessment/funnel4.ts`
+
+- Line 1:
+
+  > THE FOUR-STAGE FUNNEL — "Am I eligible?", rebuilt. 30 September 2026.
+  >
+  > Lakhbir, 29-30 September 2026: "we need to think of more of a funnel for this ... building anticipation prior to
+  > asking for their address details"; "if someone answers no why are we then showing the 'what kind' and 'how much'";
+  > a type of business per building with "add another"; "different buildings maybe held by different companies but
+  > same directors, so again this needs to be per property"; "each building may be a different business name and of
+  > course each will have different addresses"; and last "the big reveal around the amount. It should be a climbing
+  > number", with three ways to be reached under it.
+  >
+  >   STAGE 1  YOUR BUILDINGS   buildings (a type of business per building, "add another")
+  >                             spend-on  (what was spent on each)
+  >                             amounts   (roughly how much, and when, each)
+  >   STAGE 2  CHECKS           tax, claims, works — each asked PER BUILDING, with "same as Building 1"
+  >                             works = "add an event": each piece of work since, with its own kind, cost and date
+  >                             (Phase 159c), priced on its own band and added to the building's figure
+  >   STAGE 3  YOUR DETAILS     details   (per building: the business that owns it, its legal form, the address)
+  >   STAGE 4  YOUR FIGURE      the climbing reveal, then how to reach you: telephone, video call or email
+  >
+  > THE FIGURE IS SHOWN ONLY AT STAGE 4 (Lakhbir: "providing the full figure here means no one will give the
+  > details"). Stage 2 ends in words about what their buildings hold, and stage 3 opens on "your figure is ready" with
+  > the amount hidden. The page never carries the number before stage 4, not even hidden in the markup.
+  >
+  > A FOLLOW-UP IS ASKED ONLY WHEN ITS ANSWER CALLS FOR IT: "is it profitable" only after "yes, it pays UK tax"; "did
+  > the seller claim" only for a building that was bought; "what kind, how much, when" only after "yes, there was other
+  > work". The page shows and hides them with CSS (no script), and the SERVER decides: a follow-up that does not apply
+  > is thrown away, and one that does is asked for again, with the screen kept, until it is answered.
+  >
+  > THE SUMS ARE THE ENGINE'S. Each building's ceiling is CB_FUNNEL.figure over that building alone (the sector band,
+  > CB_BAND); a building whose owner pays no UK tax is left out and named; the words under the figure are the engine's
+  > assumptions, with each building's tax condition added under its own name. Nothing here is a new number.
+  >
+  > THE OLD SIX SCREENS (Q1 to Q3) ARE RETIRED (Phase 153f, 4 October 2026): an old link opens stage 1, and nothing
+  > they recorded is changed. `/assessment` opens stage 1.
+  >
+  > NOT YET HERE: the old address screen offered "answer it myself" instead of the lookups (Word answer 180), only where
+  > the free lookups could run, which today they cannot. When the free gate opens, it belongs on the details screen
+  > (Phase 156 B3).
+
+## 30 Sept 2026: Phase 156d
+
+### `src/modules/crm/video-calls.ts`
+
+- Line 1:
+
+  > VIDEO CALLS: THE MEETING, THE LINK, AND THE TWO JOIN PAGES. 30 September 2026.
+  >
+  > Lakhbir: "with the video call link this should be sent automatically, and i feel zoom would be best for this as we
+  > can run it via our platform, is there a way to have zoom embeded on our back end so its done though there?"
+  >
+  > WHEN A VIDEO CALL CHANGES, ITS MEETING FOLLOWS (`reconcileVideoMeeting`, called after every write that changes a
+  > call: the funnel's close, the staff calendar, the client's portal). Given a time and no meeting: Zoom makes one. Moved:
+  > Zoom moves it, and the link stays the same. Cancelled, or its time given back: Zoom deletes it and the row is closed.
+  >
+  > THE LINK GOES OUT WITH THE INVITATION. The email and its calendar file carry OUR join page (/call/<token>), where
+  > the client joins inside our site, and Zoom's own link and passcode for anyone who would rather use the Zoom app.
+  > Emails leave when email sending is switched on (EMAIL_SENDING); until then they wait in the outbox, like every other.
+  >
+  > STAFF JOIN FROM THE BACK OFFICE (/staff/calls/<booking>/video) as the host; the client joins at /call/<token> as a
+  > participant, into the waiting room. Both pages run Zoom's Web SDK (component view) from source.zoom.us, under a
+  > security policy of their own that allows exactly that and nothing else from outside (VIDEO_PAGE_HEADERS). Our script
+  > (/assets/video-call.js) joins only when the person presses "Join", so no camera is asked for on arrival.
+  >
+  > WITHOUT ZOOM (no keys yet, or the transfer not approved) nothing here makes a meeting; the call still stands, the
+  > email says the link will follow, and the back office says to send one — exactly as before.
+  >
+  > PHASE 156d, 5 October 2026 — THE FREE ZOOM PLAN AND ONE SHARED HOST (Lakhbir: "yes change 156d so i dont pay";
+  > "contact@caprebate is enough"). Three things follow, all here:
+  >   · THE 40 MINUTES, SAID PLAINLY (`zoomPlanLine`): where staff book a video call, on the call's pages, and in the
+  >     invitation (`videoJoinWords`). Gone once ZOOM_PLAN says a paid plan.
+  >   · ONE CALL AT A TIME (`videoCallsAtSameTime`, `SAME_TIME_WORDS`): one Zoom user hosts one meeting at a time, so a
+  >     video call booked over another with the same host is warned about wherever it is booked or moved. A warning,
+  >     never a refusal.
+  >   · HOW LONG IT LASTED (`checkCallLength`): a member of staff asks Zoom after the call; two numbers are kept
+  >     (migration 091), or the screen says our plan does not give them.
 
 ## 30 Sept 2026: no phase named
 
@@ -7386,6 +13270,279 @@ neither says.
 
   > 30 Sep 2026: an address nobody can receive at — the reserved test names (RFC 2606 and 6761).
 
+### `src/modules/assessment/assessment.ts`
+
+- Line 395:
+
+  > 30 Sep 2026: a video call is reached by email too.
+
+### `src/modules/assessment/funnel4.ts`
+
+- Line 790:
+
+  > 30 Sep 2026: a date, then a time on it (src/modules/crm/slot-picker.ts). A time hidden under another date is refused.
+
+- Line 798:
+
+  > The buildings grouped by the business that owns each: one organisation per business (Lakhbir, 30 Sep 2026).
+
+- Line 828:
+
+  > ONE ORGANISATION PER BUSINESS THAT OWNS A BUILDING, each through the same `submit` the old funnel used — its own
+  > organisation, properties, assessment, answers and lead — because each company signs and claims in its own name
+  > (Lakhbir, 30 Sep 2026: "One record per company"). A business whose every building has no UK tax to relieve gets the
+  > reasoned negative's lead instead, with its name and no figure. Every lead carries one `enquiry_id` (migration 061).
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 52:
+
+  > 30 Sep 2026: the site's address, for the portal link in the "Tell the client and move on" email.
+
+- Line 181:
+
+  > 30 Sep 2026: which "told" message: whether a claim moved on, and whether the email went.
+
+- Line 206:
+
+  > 30 Sep 2026: "Tell the client and move on" says whether the email went and whether a claim moved on.
+
+- Line 298:
+
+  > 30 Sep 2026: "Tell the client and move on".
+
+### `src/modules/crm/booking-invite.ts`
+
+- Line 30:
+
+  > 30 Sep 2026: the site's address, for a video call's join page. Absent, the invitation carries Zoom's own link.
+
+- Line 50:
+
+  > 30 Sep 2026: WHERE THE CALL IS, AND WHAT TO DO. A telephone call: we ring. A video call with its Zoom meeting: our
+  > join page (or, where the site's address is not to hand, Zoom's own link) and the passcode. A video call without one
+  > yet: the link will follow.
+
+- Line 75:
+
+  > 30 SEP 2026: A VIDEO CALL'S INVITATION, SENT ONCE ITS MEETING IS MADE — the time, OUR join page, Zoom's link and
+  > passcode, and the calendar file with our page as its place. Without a meeting (Zoom not set up, or it failed), the
+  > same email says the link will follow. Saved to the outbox like every other; it leaves when email sending is on.
+  > The funnel's close sends it after the meeting is made, and so does the staff calendar when it gives or moves a time.
+
+### `src/modules/crm/client-page.ts`
+
+- Line 112:
+
+  > 30 Sep 2026: "Everything" reads new email replies first (at most every two minutes), for those who may read them.
+
+- Line 369:
+
+  > 30 Sep 2026: "Email the client" became Chat, in the header — every message with them, and a box to write.
+
+### `src/modules/crm/inbound-email.ts`
+
+- Line 152:
+
+  > 30 Sep 2026: true on the first read, which only noted where the inbox stood and read nothing (migration 064).
+
+- Line 160:
+
+  > 30 Sep 2026: THE FIRST READ ONLY NOTES WHERE THE INBOX STANDS. Nothing read yet and nothing noted: note the highest
+  >      message number and read nothing, so mail that was already there is never brought in (migration 064).
+
+- Line 370:
+
+  > ================================================================== *
+  > 30 SEP 2026 — READ WHEN STAFF LOOK
+  > The test website runs nothing on a timer, so replies are read when a person who may see them looks: opening a
+  > client's "Everything" tab or "Email replies to sort" reads the inbox first — at most once every two minutes per copy
+  > of the site — and "Check for new replies" reads it at once. A read that fails never stops the page: it is audited
+  > as a mail connection, and the page draws with what is already filed.
+  > ==================================================================
+
+### `src/modules/crm/leads.ts`
+
+- Line 235:
+
+  > 30 Sep 2026: the other leads the same assessment made — buildings owned by different businesses, one organisation
+  > and one lead each (migration 061, `enquiry_id`). Empty for a lead that is the only one of its enquiry.
+
+### `src/modules/crm/messages-pages.ts`
+
+- Line 49:
+
+  > 30 Sep 2026: 'all' — "Everything": portal, email and WhatsApp with the company, in one list (src/modules/crm/whatsapp.ts).
+
+- Line 189:
+
+  > 30 SEP 2026 — "EVERYTHING": every message with the company, however it travelled, oldest first; then WhatsApp to one
+  > of its contacts, and the ways to write an email or a portal message. Lakhbir: "each client when we view back end has
+  > full communication via email or whats app".
+
+- Line 290:
+
+  > ---- 30 SEP 2026: WHATSAPP TO ONE OF THE COMPANY'S CONTACTS ----
+
+- Line 310:
+
+  > ---- 30 SEP 2026: WHATSAPP FROM A NUMBER NO SINGLE COMPANY HAS, FILED BY A PERSON ----
+
+- Line 360:
+
+  > 30 SEP 2026: "CHECK FOR NEW EMAIL REPLIES" — read the inbox now, then go back where the person was.
+
+### `src/modules/crm/schedule.ts`
+
+- Line 131:
+
+  > How long a booked call is. One number, quoted by every screen that shows one.
+  > 30 September 2026, Lakhbir: "make the call times 1 hour for both virtual and telephone". It was 30. Calls start on the hour.
+
+### `src/modules/crm/slot-picker.ts`
+
+- Line 1:
+
+  > CHOOSE A DATE, THEN A TIME — 30 September 2026.
+  >
+  > Lakhbir: "with the time and date selector - make it easier for the user 1) choose date this should pull from the back
+  > end calendar for telephone calls and virtual 2) choose time (again pull form back end)". It was one long list of up
+  > to 24 moments. Now the dates with a free call come first, as a row of day cards; choosing one shows that day's times.
+  >
+  > BOTH COME FROM THE DIARIES. The moments are `publicSlots` (src/modules/crm/schedule.ts): the working times staff set, less
+  > every call already held, one entry per moment however many people are free at it. Nothing here invents a time.
+  >
+  > NO JAVASCRIPT. Public pages carry none (the security policy allows none inline). The date is a radio button; the
+  > times for day N sit in `.f4-t<N>` and are shown by `:has(.f4-d<N> input:checked)` (src/shared/assets.ts, one rule per
+  > index up to MAX_DAYS). A browser without `:has` shows every day's times under its own heading, which still works.
+  >
+  > A HIDDEN TIME CAN STILL BE CHECKED: choose Thursday at 10:00, then Friday, and Thursday's 10:00 stays selected out of
+  > sight. So the date is sent too, and `slotDayProblem` refuses a time that is not on the date showing.
+
+### `src/modules/crm/tell-and-move.ts`
+
+- Line 1:
+
+  > "TELL THE CLIENT AND MOVE ON" — 30 September 2026.
+  >
+  > Lakhbir: "we then need a CTA next to where it says 'tell the client' when this is clicked the stage moves along and it
+  > then notifies the client on their portal and email to let them know that Cap rebate has collected this information and
+  > we are moving on to the next phase". Asked how the stage should move, Lakhbir chose "Move it when allowed": through the
+  > usual checks, and if one blocks, the client is still told and staff see what is stopping the move.
+  >
+  > ONE PRESS, THREE THINGS, IN THIS ORDER:
+  >   1 · TOLD. `tellClient` (src/modules/claims/approvals.ts), unchanged: only a complete step, only once. The portal's "What Cap
+  >       Rebate has done" card shows it with the date — never a fact, a value or a figure.
+  >   2 · EMAILED. One email to the company's address (else its first contact with one): what we have done, and, where a
+  >       claim moved, the next phase in the client's own step names; and the portal's address. Sent when email sending is
+  >       on, saved to the outbox either way. Never a fact, a value, a figure or a name of a register.
+  >   3 · MOVED, WHEN ALLOWED. A step sits on one or more of the ten stages (StepDef.procedure). When every step on a
+  >       claim's CURRENT stage has been told, the claim moves forward one stage through `moveClaim` — the same gate, the
+  >       same next-action rule, the same audit as the Move button. A step for an earlier or later stage moves nothing. A
+  >       refusal stops nothing: the client was told, and the refusal's words are kept for the page (`whyNotMoved`).
+  > Nothing here moves a claim that its own checks would not let a person move.
+
+### `src/modules/crm/video-call-script.ts`
+
+- Line 1:
+
+  > THE JOIN PAGES' ONE SCRIPT — /assets/video-call.js. 30 September 2026 (src/modules/crm/video-calls.ts).
+  >
+  > Served from this site, never inline. It reads the meeting's values from the data attributes the server put on
+  > #vc-root (the meeting number, the passcode, the join signature signed on the server, the name, and for staff the
+  > host's start token), and only when the person presses the button does it start Zoom's component view there — so
+  > nobody is asked for their camera just for opening the page. Anything that goes wrong is said in words, with the Zoom
+  > app's link as the way round it.
+
+### `src/modules/crm/video-calls.ts`
+
+- Line 47:
+
+  > A call that holds a moment: a telephone call (CB_BOOKING) or, since 30 Sep 2026, a video call.
+
+- Line 228:
+
+  > blob: — the first real call (30 Sep 2026) showed Zoom's SDK loads part of its video screen as a blob: script;
+
+- Line 249:
+
+  > Zoom's own files, in the order its component view needs them (developers.zoom.us, read 30 Sep 2026).
+
+### `src/modules/crm/whatsapp.ts`
+
+- Line 1:
+
+  > WHATSAPP WITH EACH CLIENT, AND THE WHOLE CONVERSATION IN ONE PLACE. 30 September 2026.
+  >
+  > Lakhbir: "the ability to use whats app directly using our back end portal the idea is each client when we view back
+  > end has full communication via email or whats app".
+  >
+  > ON THE CLIENT PAGE, under Chat, a third tab, "Everything": every message with the company in the order it happened —
+  > portal messages both ways, the emails we sent them and their emailed replies, and WhatsApp both ways — each marked
+  > with how it travelled. Under it, a box to write on WhatsApp to one of the company's contacts, and links to write an
+  > email or a portal message. The same rules as the portal thread: `client_message.read` to see it (Admin, Sales),
+  > `client_message.write` to write (Admin, Sales), and nothing to a company marked do not contact.
+  >
+  > SENDING (`sendWhatsApp`). To a contact of this company with a telephone number. Within 24 hours of their last WhatsApp
+  > to us, the words typed; outside it, WhatsApp allows only our approved opening message (src/integrations/connectors/whatsapp.ts).
+  > Every attempt is a row — SENT with Meta's id, or NOT_SENT with why — and an audit line with no number and no words.
+  >
+  > RECEIVING (`receiveWhatsApp`, POST /hooks/whatsapp). Believed only when Meta's signature over the exact bytes holds;
+  > otherwise refused, audited, nothing written. A message is filed under the company only when exactly ONE company has a
+  > contact with that number; anything else waits at /staff/whatsapp for Admin or Sales to file by hand. Never filed by
+  > guesswork. The same message delivered twice is kept once (Meta's id is unique). A status (sent, delivered, read,
+  > failed) moves our row forward only, never back.
+
+### `src/modules/portal/client-layout.ts`
+
+- Line 1:
+
+  > THE CLIENT PAGE, LAID OUT AGAIN — 30 September 2026.
+  >
+  > Lakhbir: "the whole interfact for a client needs to be designed - theres too much going on and its hard to find
+  > things". Agreed in the chat from a drawn layout ("Yes, build it"). Nothing is removed; everything is regrouped:
+  >
+  >   THE HEADER        the company, its owner and who we wait on; the client's six steps as a bar (the names the portal
+  >                     reads); and three actions — Chat (every message with them, and a box to write), Log a call, Files —
+  >                     with the rest under "More".
+  >   THE NEXT STEP     the one step that is ready to tell the client, with its checked facts and where each came from, and
+  >                     "Tell the client and move on" (src/modules/crm/tell-and-move.ts). When none is ready, what the next step is
+  >                     still waiting for. Where a claim could not move on, why.
+  >   THE LOOKUPS       every lookup and its state at a glance — done and when, failed, waiting, not switched on, not run.
+  >   THE TABS          Chat, Claims, Properties, Questions, People, Checks, Files, Activity: the page's sections, grouped.
+  >
+  > TABS WITHOUT A SCRIPT (the back office's security policy allows none): every section is still in the page, and a tab is
+  > shown by CSS `:target` — a link to a tab, or to anything inside one (#questions, #sources, #chat), opens that tab. With
+  > no target, the tab the server chose shows.
+
+### `src/modules/portal/portal.ts`
+
+- Line 471:
+
+  > 30 Sep 2026: a video call holds a time too; its Zoom meeting follows the move (the route reconciles it).
+
+## 1 Oct 2026: Phase 16
+
+### `src/modules/portal/portal-dashboard.ts`
+
+- Line 1:
+
+  > THE CLIENT'S PORTAL HOME AS A DASHBOARD — 1 October 2026.
+  >
+  > Lakhbir: "for clients, it should show what the progression is, what we are working on, any up coming calls,
+  > notifications from the portal, and what cap rebate needs from them."
+  >
+  > Five cards at the top of /portal, each with its button; everything the portal already drew stays below them.
+  >   WHERE YOUR CLAIM IS      the six steps as a bar (the names the back office's bar reads), and which step this is.
+  >   WHAT WE ARE WORKING ON   this step in plain words, and the last things Cap Rebate has done (the steps staff told them).
+  >   YOUR NEXT CALL           the soonest call with a time: a video call's button joins it; a telephone call says we will
+  >                            ring; a call asked for with no time yet says so; none at all offers "Book a call".
+  >   NEW FOR YOU              our messages they have not read, and what we have done or issued in the last 30 days.
+  >   WHAT WE NEED FROM YOU    every open question and every document asked for, each with its button.
+  > UI TIDY PHASE 16 (3 October 2026): the cards no longer repeat "Send us a message" — the header carries it, once.
+  > Nothing here is new information: each card reads what the portal's own sections read, asked of the same rules. No
+  > figure, no fact and no value is shown — only words, dates and counts.
+
 ## 1 Oct 2026: no phase named
 
 ### `src/core/audit.ts`
@@ -7563,6 +13720,301 @@ neither says.
   > 1 OCT 2026 — A REPLY JOINS ITS CHAIN (migration 065): the chain's key, and the Message-IDs it answers (without the
   > angle brackets), sent as In-Reply-To and References. A new email has none.
 
+### `src/modules/crm/booking-invite.ts`
+
+- Line 84:
+
+  > 1 Oct 2026: the Communication tab names who the call is with; otherwise the company's own address, as before.
+
+### `src/modules/crm/client-list.ts`
+
+- Line 41:
+
+  > 1 Oct 2026: messages from the client — portal, email, WhatsApp — this person has not read (the red dot).
+
+### `src/modules/crm/client-page.ts`
+
+- Line 113:
+
+  > 1 Oct 2026: every visit to a client's page does, so a reply is there (and its red dot) wherever staff look.
+
+- Line 225:
+
+  > 1 OCT 2026: CHAT BECOMES COMMUNICATION (src/modules/crm/communication.ts) — one form to write any way, beside the whole
+  >      conversation. The routes that wrote before still do, and say what they did here.
+
+- Line 232:
+
+  > 1 Oct 2026: the red dot on Chat — counted after the chat was drawn, so what this visit opened is already read.
+
+### `src/modules/crm/communication.ts`
+
+- Line 1:
+
+  > CHAT BECOMES COMMUNICATION — 1 October 2026 (mock-up approved by Lakhbir: "approved").
+  >
+  > Lakhbir: "When i click on chat … it should be a chat window, drop down box choosing whats app, email, or portal or
+  > internal team only. it should then have a message box (and subject line if needed) … on the right hand side it should
+  > be a whole conversation flow, emails, whats app messages, portal messages and internal team chat … log a call can be on
+  > here as well. and the chat word turns in to communication". Then: "click on the boxes on the right, clicking
+  > essentially acts like a reply, with the drop down box automatically changing … the email and also number should auto
+  > populate"; and "zoom calls on here also … starts to call them, or allows us to book it in … see when a zoom call was
+  > held … a search feature".
+  >
+  > LEFT, ONE FORM (POST /staff/clients/:id/communicate). "Send by": Email · WhatsApp · Portal message · Team only ·
+  > Zoom call · Log a call. The boxes for the choice show (CSS :has — the back office allows no script); the server reads
+  > `via` and does exactly what that way of writing always did, with every rule it always had:
+  >   email      F.saveEmail (To filled in and changeable; a reply keeps the conversation's Message-IDs), sent now if on
+  >   whatsapp   W.sendWhatsApp (the contact's number; the 24-hour rule)
+  >   portal     M.postClientMessage
+  >   team       addNote (the team thread; the client never sees it)
+  >   zoom       start now (a meeting at once; the host page opens) or book a free hour from your own diary; the client is
+  >              emailed the time and the link (sendVideoInvite), which then shows in the conversation
+  >   call       a telephone call logged (migration 069, call_logs), with an optional follow-up task
+  > A refusal draws the form again with what was typed (never lost), and why.
+  >
+  > RIGHT, THE WHOLE CONVERSATION, newest at the bottom: portal messages, emails both ways (but never a sign-in code, and
+  > not the "you have a new message" alerts), WhatsApp both ways, team notes, logged calls, and Zoom calls (booked; started
+  > when the host first opened it). Each box is a link that makes the left a reply to it — the way it came, with the
+  > address or number filled in. Filters by kind (?show=) and a search (?q=), the words found marked. A red line marks
+  > what came since this person last looked; opening the tab reads it all (the red dot goes).
+  >
+  > Who: the conversation for a login that may read the client's messages (Admin, Sales; the view-only login reads it and
+  > writes nothing). Team notes only where the login may read them. Each way of writing only where its own rule allows.
+
+- Line 300:
+
+  > 1 Oct 2026: why Zoom makes no meeting from here, if it does not (the keys, the transfer, or not the test website).
+
+### `src/modules/crm/email-chains.ts`
+
+- Line 1:
+
+  > EMAIL CHAINS WITH A CLIENT. 1 October 2026.
+  >
+  > Lakhbir: "the right hand side should show the chain of emails allowing a user to click on reply making them apart of
+  > the chain so essentially the left becomes a send message, if no current email chain (on the right) is selected then it
+  > fires as a new email."
+  >
+  > A CHAIN is the emails we sent the company and the emails they sent back, joined the way mail programs join them:
+  >   · an email of ours begins a chain (its own id is the chain's key), or joins the one it replied to (`thread_key`,
+  >     migration 065);
+  >   · their reply joins the chain of the email of ours it answers — the one the mailbox reader matched by Message-ID
+  >     (src/modules/crm/inbound-email.ts, `matched_outbox_id`); one that answered nothing of ours, filed under the company by a
+  >     person, begins its own chain (its id is the key).
+  > Which emails: every email to the company except a sign-in code or a one-use link; those to an address that is not the
+  > company's or one of its contacts' only where staff typed it themselves (an alert to a colleague is not the client's).
+  > Their replies are shown only to a login that may read the client's messages.
+  >
+  > A REPLY (`replyTo`) goes to whoever wrote last in the chain (else to whom we last wrote), "Re: " the chain's subject,
+  > and names the Message-IDs it answers, so their mail program keeps it in the same conversation and their answer comes
+  > back matched to it.
+
+### `src/modules/crm/free-email-pages.ts`
+
+- Line 95:
+
+  > 1 Oct 2026: their replies are on this page, so the inbox is read first (at most every two minutes).
+
+- Line 121:
+
+  > Send one email that was just saved while sending is on. A failure leaves it saved, with the reason. 1 Oct 2026: shared
+  > by this page and the Communication tab (src/modules/crm/communication.ts).
+
+- Line 222:
+
+  > 1 Oct 2026: "Check for new email replies" here too, and what the last check found — never a silent failure.
+
+### `src/modules/crm/free-email.ts`
+
+- Line 87:
+
+  > 1 Oct 2026: every chain of emails with them, newest first; and the one being replied to, if any.
+
+### `src/modules/crm/inbound-email.ts`
+
+- Line 115:
+
+  > 1 Oct 2026: from the very address our email went to (typed in To, not a contact) — it answers our own Message-ID.
+
+- Line 177:
+
+  > 1 Oct 2026: a reply to one of OUR emails is never "mail that was already there", whenever it arrived.
+
+- Line 180:
+
+  > 1 Oct 2026: and one set aside before today's rule existed is filed by it now (migration 068).
+
+- Line 189:
+
+  > 1 OCT 2026 — A REPLY TO ONE OF OUR EMAILS IS NEVER SKIPPED. The first read notes where the inbox stands and reads
+  > nothing before it, so the mail that was there at switch-on never comes in. But on the test website the first read
+  > happened only when somebody first looked — after Lakhbir's replies to the site's own emails had arrived — so they
+  > were passed over with the rest. Now every read also asks the inbox (read-only, one header) for messages answering a
+  > Message-ID of our domain at or below the mark, and takes in each one not already read that answers an email this
+  > site really sent — and only those: nothing else from before the mark comes in. Returns how many it filed.
+
+- Line 217:
+
+  > 1 OCT 2026 — A REPLY WAITING TO BE SORTED THAT THE RULES NOW FILE. A reply that answers one of our emails waits in
+  > "Email replies to sort" when it came from an address that is not one of that company's contacts. Since today a reply
+  > from the very address our email went to is filed (see `ingest`), and the company may since have added the sender as a
+  > contact. Each such reply still waiting is filed on that company's conversation, tagged to our email's claim, with the
+  > rule recorded in place of a person (migration 068). Nothing else in the queue moves. Returns how many it filed.
+
+- Line 381:
+
+  > 1 OCT 2026 — HOW EMAIL READING STANDS, for staff to see (and to send to whoever is looking into it). Lakhbir's replies
+  > reached the inbox but not the site, and the site's own records were the one thing that could not be seen from outside:
+  > the mark, the emails received and what became of each, and the emails sent and whether each kept the Message-ID a
+  > reply is matched on. Admin and Sales (`inbound_email.read`). Addresses and subjects, never an email's words.
+
+- Line 422:
+
+  > Why the timer was refused, in words it can show (never the word itself), or null when it may read. 1 Oct 2026: the word
+  >  is taken with or without "Bearer " in front, since timers' forms differ.
+
+- Line 434:
+
+  > 1 Oct 2026: what the last read on this copy of the site found, in words — shown beside "Check for new email replies",
+  >  so a read that fails is never silent.
+
+### `src/modules/crm/messages-pages.ts`
+
+- Line 207:
+
+  > 1 Oct 2026: each way of writing has its own page, with the conversation beside the box.
+
+- Line 240:
+
+  > 1 Oct 2026: where the client's join page is, for a Zoom invite from the Communication tab.
+
+- Line 267:
+
+  > 1 OCT 2026: THE COMMUNICATION TAB'S ONE FORM (src/modules/crm/communication.ts). A refusal draws the form again, filled.
+
+- Line 293:
+
+  > 1 Oct 2026: the conversation on the right, the message on the left (src/modules/crm/whatsapp-page.ts).
+
+- Line 388:
+
+  > 1 Oct 2026: a copy on memory cannot match a reply to an email another copy sent — say which this copy is on.
+
+- Line 425:
+
+  > 1 Oct 2026: how email reading stands — the mark, what came in and what became of it, what went out.
+
+### `src/modules/crm/messages.ts`
+
+- Line 127:
+
+  > 1 OCT 2026 — WHEN A PERSON LAST READ A COMPANY'S EMAILS OR ITS WHATSAPP (migration 065, `channel_reads`), for the red
+  > dot on Chat. An emailed reply is also on the portal thread, so reading either place reads it.
+
+- Line 137:
+
+  > 1 Oct 2026: when this person last read each way the company writes — for "New since you last looked".
+
+- Line 193:
+
+  > 1 Oct 2026: an emailed reply read on the email page is read here too.
+
+### `src/modules/crm/schedule.ts`
+
+- Line 363:
+
+  > 1 Oct 2026: time a person blocked off holds their diary exactly as a call does (migration 066).
+
+- Line 599:
+
+  > 1 Oct 2026: a person's blocked-off time is taken, as a call is (migration 066).
+
+### `src/modules/crm/staff-dashboard.ts`
+
+- Line 1:
+
+  > HOME AS A DASHBOARD — 1 October 2026.
+  >
+  > Lakhbir: "the users (both client and also works) home page should behave more like a dashboard … this needs to be
+  > focused … for workers, it should be client driven whos a new lead (where did the lead come from) whats in the pipeline
+  > at which stage, any new messages received, a calendar allowing users to block off time look what what they have booked
+  > in the future, and below it should be activities for today if its a telephone call, teams call and if they need to
+  > send any initial emails. which each of the section for contact there should be a CTA on each, if its a zoom call
+  > clicking the CTA launches zoom and the same goes for email. Phone will be manual." And: "Admin should have a full
+  > overview allowing them to click tabs across the top to see the sales dashboard and essentially only what someone in
+  > sales see, same does for accounting and survayor, admin should then have a special tab which is admin".
+  >
+  > ONE PAGE, FOUR VIEWS — what each role sees; Admin sees every one, as tabs across the top (`?view=`):
+  >   SALES       the figures at a glance · new leads (and where each came from) · new messages · the pipeline by stage ·
+  >               the calendar · today's activities (calls and first emails, each with its button) · today and overdue ·
+  >               leads' next actions
+  >   ACCOUNTING  the figures at a glance · money · the calendar · today's activities · today and overdue
+  >   SURVEYING   the figures at a glance · survey jobs · the calendar · today's activities · today and overdue
+  >   ADMIN       (Admin only) who is working and when · the admin tiles
+  > The view-only login sees the Sales view, with no buttons that change anything.
+  >
+  > THE BUTTONS: a video call's is "Start the Zoom call" (the host's page inside the site, src/modules/crm/video-calls.ts); a
+  > first email's is "Write the first email" (the email page, filled in); a telephone call is made by hand, so its button
+  > opens the call's page to note it, and the number is shown beside it.
+  >
+  > NOTHING HERE DECIDES WHO SEES WHAT: every list reads through the store its own screen reads, which asks `can()` on
+  > each row. A view of another role's work for Admin is Admin's own permissions, drawn in that role's shape.
+
+- Line 262:
+
+  > 1 Oct 2026, Lakhbir: "not set = red, active = green, set but not active = amber". Colour is never the only sign.
+
+### `src/modules/crm/time-blocks.ts`
+
+- Line 1:
+
+  > BLOCKING OFF TIME IN YOUR OWN DIARY. 1 October 2026 (migration 066).
+  >
+  > Lakhbir: "a calendar allowing users to block off time look what what they have booked in the future".
+  >
+  > WHO: any member of staff who can work (not the view-only login, not a client) blocks and frees their OWN time; Admin
+  > may free anyone's. A block holds its span exactly as a call does: `bookedSpans` and `isBookable` (src/modules/crm/schedule.ts)
+  > read both, so no slot is offered and no call is booked into it — by the client's picker or by staff.
+  > REFUSED: a span that is not a span (the end not after the start), longer than 31 days, wholly in the past, or that
+  > overlaps a call already in that person's diary (move the call first — a block must never strand a client).
+  > The reason is the person's own words, for staff only, and never in the audit line.
+
+### `src/modules/crm/video-calls.ts`
+
+- Line 85:
+
+  > 1 Oct 2026: everything that stops THIS app calling Zoom, in words: the keys, the transfer, and whether this copy is
+  > the test website (or was started with CAPREBATE_LOCAL_ZOOM=1). Empty means Zoom is on. Every screen asks this.
+
+### `src/modules/crm/whatsapp-page.ts`
+
+- Line 1:
+
+  > WHATSAPP WITH ONE COMPANY, IN TWO HALVES. 1 October 2026.
+  >
+  >   GET /staff/clients/:id/whatsapp   ?contact= picks whose conversation; the newest otherwise
+  >
+  > Lakhbir: "the same needs to happen for whats app also i know whats app works a bit differently where it is already one
+  > chain, so the chain should be on the right allowing the user to see the full conversation and the left is to type a
+  > message." On the left, the message being written (to the person chosen, with WhatsApp's 24-hour rule in words); on the
+  > right, the whole conversation with that number, oldest first — and, where more than one of the company's people is on
+  > WhatsApp, a link to each. Sending is unchanged (`sendWhatsApp`, src/modules/crm/whatsapp.ts: POST /staff/clients/:id/whatsapp),
+  > and comes back here. Opening the page reads their WhatsApp (the red dot on Chat goes). Who: `client_message.read` to
+  > see it, `client_message.write` to write — Admin and Sales. No number goes in an address: a person is picked by id.
+
+### `src/modules/crm/whatsapp.ts`
+
+- Line 182:
+
+  > 1 Oct 2026: an email staff wrote themselves is the client's, whatever address they typed in To.
+
+### `src/modules/portal/client-layout.ts`
+
+- Line 57:
+
+  > 1 Oct 2026: the red dot — messages from the client this person has not read, in words for a screen reader.
+
 ## 2 Oct 2026: Phase 1
 
 ### `src/core/look.ts`
@@ -7624,6 +14076,18 @@ neither says.
   > Runs on Node >= 22.6 with type stripping (`node file.ts`). No enums, no
   > namespaces, no parameter properties — those are not strippable.
 
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 231:
+
+  > UI TIDY PHASE 3: one table, grouped by stage, by default; `layout=board` is the board of columns, as it was.
+
+- Line 616:
+
+  > ------------------------------------------------------------------ *
+  > THE PIPELINE AS ONE TABLE — UI TIDY PHASE 3, 2 October 2026
+  > ------------------------------------------------------------------
+
 ## 2 Oct 2026: Phase 4
 
 ### `src/core/staff.ts`
@@ -7631,6 +14095,27 @@ neither says.
 - Line 888:
 
   > UI TIDY PHASE 4: a dashboard draws its own heading, with the day and what is late beside it (src/web/staff-dashboard.ts).
+
+### `src/modules/crm/staff-dashboard.ts`
+
+- Line 313:
+
+  > UI TIDY PHASE 4, 2 October 2026 — HOME IN TWO COLUMNS. Lakhbir chose design 2 (00-START-HERE/hub/UI-TIDY-PLAN.md): one
+  > line saying what is late, solid number boxes, then the work on the left — "Do these first", today's calls and emails,
+  > new leads and messages, leads' next steps — and the pipeline and the calendar on the right. Every part that was on
+  > Home is still here, for the same logins; only where it sits and how it is drawn changed.
+
+### `src/modules/public-site/home.ts`
+
+- Line 165:
+
+  > UI TIDY PHASE 4: "Do these first" — the late ones first, then today's; the same items as before.
+
+- Line 219:
+
+  > UI TIDY PHASE 4: THE PIPELINE AS FIVE COLOURED BARS. Lakhbir agreed the eleven stage tiles become one small chart: each
+  > group of stages (src/core/look.ts) with its count, as long as its share, each a link to the Pipeline. On hold, when any,
+  > and Reports follow as links. The numbers are the same board's.
 
 ## 2 Oct 2026: Phase 5
 
@@ -7680,6 +14165,76 @@ neither says.
   >
   > Runs on Node >= 22.6 with type stripping (`node file.ts`). No enums, no
   > namespaces, no parameter properties — those are not strippable.
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 145:
+
+  > UI TIDY PHASE 5: `record=1` opens the folded "Record a lead by hand" form; like `layout`, it is not a filter.
+
+- Line 381:
+
+  > PHASE 137: the top of both leads layouts — the heading, the two lists, the saved message and the Cards / List view switch.
+  > UI TIDY PHASE 5, 2 October 2026: one heading with one line of counts and one main button, Record a lead; then the
+  > sections' counts as solid boxes (cards only, each a link to its section); then every switch on one row — the two lists,
+  > the two layouts, Website enquiries with its count, and Filter. The record form is folded until it is asked for.
+
+## 2 Oct 2026: Phase 6
+
+### `src/modules/crm/client-list.ts`
+
+- Line 89:
+
+  > UI TIDY PHASE 6, 2 October 2026: who to act on first. A line of counts and solid boxes (waiting on us, waiting on the
+  > client, asked not to be contacted, every company), each a link to that filter; one row with the search, the filters and
+  > the two orders; the status in its colour; each claim beside its company, by site and number, its stage in its colour,
+  > so two claims of one company cannot be mixed up. Search and filters are links: nothing needs a script.
+
+## 2 Oct 2026: Phase 153b
+
+### `src/modules/claims/report-pages.ts`
+
+- Line 1:
+
+  > THE SURVEY REPORT'S PAGES — the report and its PDF for staff, the accountant's private link, the client's portal, and
+  > the "Send the report" panel in the pack's chapter 23. 2 October 2026; the mock-up Lakhbir approved that day.
+  >
+  >   GET  /staff/survey/{job}/pack/version/{n}/report       the report as the client will see it (surveyor_job.read)
+  >   GET  /staff/survey/{job}/pack/version/{n}/report.pdf   its PDF
+  >   GET  /staff/survey/{job}/pack/version/{n}/return-entries.csv   beside it, the return entries for each year (Phase 153b)
+  >   POST /staff/survey/{job}/pack/version/{n}/send         email it to the company's accountant to sign off (email.queue)
+  >   POST /staff/survey/{job}/pack/answer/{id}/record       put their signed answer on the claim (tax_signoff.record)
+  >   POST /staff/survey/{job}/pack/version/{n}/tell         tell the client it is in their portal (client_message.write)
+  >   GET  /signoff/{token}  · POST /signoff/{token} · GET /signoff/{token}/report.pdf     the accountant's link, no login
+  >   GET  /signoff/{token}/return-entries.csv                 and its return entries, beside the PDF (Phase 153b)
+  >   GET  /portal/report    · GET /portal/report.pdf          the client's released version (src/modules/claims/report-signoff.ts)
+  >
+  > The report and the PDF are made again from the approved version every time (src/web/survey-report.ts): nothing about
+  > them is stored but the version itself.
+
+## 2 Oct 2026: Phase 153f
+
+### `src/modules/claims/site-plan.ts`
+
+- Line 1:
+
+  > THE REPORT'S SITE PLAN — the client's building, and the buildings round it, from Ordnance Survey's free maps.
+  > 2 October 2026, the survey pack, stage 6. Migration 083 (written as 078; renumbered by Phase 153f); the calls are src/integrations/connectors/os-buildings.ts.
+  >
+  > Lakhbir, 1 Oct 2026: the report's cover shows the building from Ordnance Survey's free building outlines; the site
+  > boundary (INSPIRE) is never in a report. 2 Oct 2026: the client's building is picked automatically.
+  >
+  > WHO, AND WHERE. Whoever may change the pack (`surveyor_job.commit`: the assigned surveyor) fetches it, in
+  > chapter 9, with one button. Like the free lookups, it is fetched on the test website only for now
+  > (src/integrations/connectors/registers.ts, `lookupsWaivedHere`), and only with the Ordnance Survey key.
+  >
+  > WHAT IS KEPT. Each fetch is a new row; the newest is shown. Outlines are kept in decimetres from the postcode's point,
+  > so the plan draws the same every time. An approved version copies the plan into its own JSON (src/web/pack-approve.ts),
+  > so the report it makes never changes after approval, whatever is fetched later.
+  >
+  > HOW IT IS DRAWN. One model, two drawings, as the report: an SVG in the page (presentation attributes only, so the
+  > page's style policy holds) and boxes of paths in the PDF (src/shared/pdf-canvas.ts, `poly`). The client's building is
+  > dark, the others light grey. North is up. A 20 m scale bar. The credit line Ordnance Survey's licence asks for.
 
 ## 2 Oct 2026: no phase named
 
@@ -7851,6 +14406,73 @@ neither says.
   > REPORT_FOR_SIGNOFF — 2 Oct 2026: the client's survey report sent to their accountant, the PDF attached, with a
   >  private link that works once (src/web/report-signoff.ts). Its words leave the outbox once sent, like a sign-in code's.
 
+### `src/modules/claims/report-signoff.ts`
+
+- Line 1:
+
+  > THE SURVEY REPORT, AFTER THE SURVEYOR APPROVES: AN ADVISER SIGNS OFF, THEN THE CLIENT HAS IT. 2 October 2026.
+  >
+  > Lakhbir, asked how the report travels: "Adviser, then client"; our own adviser's sign-off "Staff record it, as today";
+  > the client's accountant by "Email + private sign-off link". The claim's own rule stands: no figure reaches the client
+  > before a tax adviser's sign-off is on record (src/shared/stages.ts, TAX_ADVISER_SIGNOFF).
+  >
+  >   SENT FOR SIGN-OFF   Admin or Sales (`email.queue`) emails an approved version to one of the company's accountants or
+  >                       advisers (a contact of that type, with an email address), saying how the client gave their
+  >                       permission. The email carries the PDF and a private link: 32 random bytes, of which only the
+  >                       SHA-256 is kept. The link works for 30 days, and is answered once. Sending follows the same rules
+  >                       as every email: the switch, the test website only (src/integrations/connectors/place.ts), never to an invented
+  >                       address or a company that asked not to be contacted; once sent, the link leaves the outbox.
+  >   ANSWERED            Whoever holds the link reads the report and either signs off (their name, their firm — a name
+  >                       ending Limited, LLP or plc, as the claim's sign-off requires — and the title they sign under,
+  >                       with a tick that they have read it), or sends it back with a reason. Once.
+  >   RECORDED            A signed answer is put on the claim as the tax adviser's sign-off by Admin or Sales, through the
+  >                       claim's own `recordSignOff` — its rules unchanged (the claim must be with the tax adviser) — so
+  >                       the claim's gates read it exactly as before. Our own adviser's sign-off is recorded there as
+  >                       today. The figure is the approved version's.
+  >   RELEASED            The client sees a version in their portal only once a sign-off FOR THAT VERSION'S FIGURE is on
+  >                       the claim, recorded after the version was approved, and only while its fingerprint holds.
+  >   TOLD                Admin or Sales sends the client a portal message saying it is there (which emails them, where
+  >                       sending is on) — once a version.
+
+### `src/modules/claims/research.ts`
+
+- Line 361:
+
+  > 2 Oct 2026: the free gate as it stands for ONE source here — open for a source the test website's waiver names
+  > (src/integrations/connectors/registers.ts, TEST_WEBSITE_LOOKUPS), and otherwise the free gate itself.
+
+- Line 683:
+
+  > 2 Oct 2026: where this copy runs, for the test website's waiver. Absent: the process's.
+
+- Line 829:
+
+  > 2 Oct 2026: where this copy runs, for the test website's waiver (src/integrations/connectors/registers.ts). Absent: the process's.
+
+- Line 964:
+
+  > 2 Oct 2026: THE CARE REGULATOR'S COUNCIL AREA ON THE TEST WEBSITE. The care regulator is searched by council area,
+  >        which the ONS postcode table gives; the test website has no such table. Where the waiver holds, and only then,
+  >        the council area comes from postcodes.io, which the postcode check already uses (only the postcode is sent).
+
+### `src/modules/crm/free-email.ts`
+
+- Line 60:
+
+  > 2 Oct 2026: where the app runs (src/integrations/connectors/place.ts). The application passes it; absent, not asked.
+
+### `src/modules/crm/messages.ts`
+
+- Line 53:
+
+  > 2 Oct 2026: where the app runs (src/integrations/connectors/place.ts). Absent with the key file's login: a real connection.
+
+### `src/modules/crm/video-calls.ts`
+
+- Line 167:
+
+  > 2 Oct 2026: a survey walkthrough call (src/web/survey-evidence.ts) is recorded, so the surveyor can watch it.
+
 ### `src/shared/objectstore.ts`
 
 - Line 89:
@@ -7932,6 +14554,36 @@ neither says.
 
   > 2 Oct 2026, for a presigned PUT (@vercel/blob 2.8). Absent in an older SDK: then photos go through our own route.
 
+## 3 Oct 2026: Phase 7
+
+### `src/modules/crm/client-page.ts`
+
+- Line 192:
+
+  > UI TIDY PHASE 7: the claims are boxes at the top of the page (claimBoxes), no longer a section in a tab.
+
+### `src/modules/portal/client-layout.ts`
+
+- Line 176:
+
+  > ================================================================== *
+  > UI TIDY PHASE 7, 3 October 2026 — EACH CLAIM IN ITS OWN BOX, AND THE CLIENT'S OWN MENU
+  > ==================================================================
+
+## 3 Oct 2026: Phase 8
+
+### `src/modules/portal/client-layout.ts`
+
+- Line 137:
+
+  > The sections, in their tabs. Inside a tab each keeps its own open-or-closed rule (work open, done folded, the person's
+  >  own choice kept), and the one just changed opens, as it always has.
+  >
+  >  UI TIDY PHASE 8, 3 October 2026 — AN OVERVIEW FIRST. With no tab asked for (`defaultTab` null: a plain visit, no change
+  >  just made), no part is open: the page shows one line per part — its name, where it stands, what is happening, its
+  >  count — each a link that opens it, as the left-hand menu's entries do. A part opened says how to get back to them all.
+  >  After a change, or with a step asked for, the part it was made in opens, as before. Every section is still in the page.
+
 ## 3 Oct 2026: Phase 9
 
 ### `src/integrations/postcodes/postcode-authority.ts`
@@ -7942,6 +14594,14 @@ neither says.
   > it. This is the only empty table in Phase 9 whose licence is already
   > cleared, and it is the cheapest of them all to fill: one 176.5 MB download,
   > no counterparty, no fee.
+
+### `src/modules/crm/tasks-pages.ts`
+
+- Line 436:
+
+  > UI TIDY PHASE 9, 3 October 2026: the tasks first; then what a client owes us and is late with, open; then the longer
+  > lists folded, each saying how many it holds — the claims with no next step (Tasks' own filter has them too), my claims
+  > and who each waits on, and the other questions waiting on a client. Every list is still here.
 
 ## 3 Oct 2026: Phase 13
 
@@ -7956,6 +14616,48 @@ neither says.
   > amber; a cancelled call says so in red. The work queue keeps its words and its order (asked for a call, then
   > cancelled, then another way); each row's link says what it does, "Give it a time" for a login that may arrange calls
   > and "Open" for any other. The cancelled calls fold away, with how many. The sections are in the left-hand menu.
+
+## 3 Oct 2026: Phase 14
+
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 63:
+
+  > Phase 14 (item 12902240772): closes the scoping-inheritance gap on the
+
+### `src/modules/crm/introducers-pages.ts`
+
+- Line 265:
+
+  > UI TIDY PHASE 14: where the top's buttons open each form, folded until asked for.
+
+- Line 269:
+
+  > UI TIDY PHASE 14: the reward model in a word or two, grey while it is off. The full words are on its own page.
+
+- Line 274:
+
+  > UI TIDY PHASE 14: a reading's first part, "none recorded", where the list has no room for why; the firm's page keeps it all.
+
+- Line 279:
+
+  > UI TIDY PHASE 14: what a firm sent us, in one cell: "2 leads, 1 claim opened, 0 won", then its reasoned negatives.
+
+- Line 285:
+
+  > UI TIDY PHASE 14: the counts over the firms a login may read in full.
+
+- Line 297:
+
+  > UI TIDY PHASE 14 — INTRODUCERS, 3 October 2026. The page opens with what it is, its two buttons (Record a referral,
+  > Add a firm) and the reward model as a label; boxes count the firms, what they sent and the firms whose next contact is
+  > late. The firms are one table — the contact's last and next in one cell, what the firm sent us in one, the fees
+  > invoiced and paid in one — that stacks on a phone; a firm with nobody on it says so in amber, and a late next contact is red. The two forms
+  > fold away until a button opens them, or a refusal sends one back with what was typed.
+
+- Line 387:
+
+  > UI TIDY PHASE 14: the firm's sections open out under Introducers in the left-hand menu.
 
 ## 3 Oct 2026: Phase 15
 
@@ -7976,6 +14678,14 @@ neither says.
   > phone — each person's name over their username, their role as a label, Active in green or Turned off in red, and their
   > actions: the three that were there, and Change role, folded in their own row, a list of the roles instead of six
   > buttons. Add a user is folded until its button, a link to it, or a refusal opens it. Nobody's own row offers a role.
+
+### `src/modules/crm/tasks-pages.ts`
+
+- Line 595:
+
+  > UI TIDY PHASE 15 (3 October 2026): the rules page opens with what it is, Add a rule, and four boxes; the thirteen
+  > things no rule may do fold away with their count (each still said once, and still refused by the store); Add a rule
+  > opens from its button. The templates page: Add a template folds until its button opens it.
 
 ## 3 Oct 2026: Phase 16
 
@@ -8000,6 +14710,16 @@ neither says.
   >        for are drawn only when there is one (the "What we need from you" card already says when nothing is); How to
   >        contact us moves to the end, its words unchanged; the parts are listed under Your claims in the left-hand menu.
 
+## 3 Oct 2026: Phase 17
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 977:
+
+  > UI TIDY PHASE 17 (3 October 2026): a column this login may not read on any row is left out, and the page says so,
+  > instead of a dash in every row — Accounting reads the company and the reference, so its list is those two. A column
+  > read on some rows keeps the dash on the others, as before.
+
 ## 3 Oct 2026: Phase 18
 
 ### `src/core/navigation.ts`
@@ -8008,6 +14728,24 @@ neither says.
 
   > UI TIDY PHASE 18: a page inside another's frame adds its own parts under the entry marked current — a claim's sections
   > under that claim, in its client's menu. With no menu set yet, they become the menu, under `title`.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 1065:
+
+  > UI TIDY PHASE 18: a claim section's state, short enough for the left-hand menu. Done and not started say nothing.
+
+- Line 1137:
+
+  > UI TIDY PHASE 18: only the stage opens by itself (and the checks, when a step was just worked in); every other section
+
+- Line 1395:
+
+  > UI TIDY PHASE 18: the claim's sections, under this claim in the left-hand menu.
+
+- Line 1403:
+
+  > UI TIDY PHASE 18: the stage in its group's colour, and nobody on it in amber, as on every list.
 
 ### `src/shared/components.ts`
 
@@ -8053,6 +14791,65 @@ neither says.
 
 ## 4 Oct 2026: Phase 153a
 
+### `src/modules/claims/claim-facts.ts`
+
+- Line 595:
+
+  > Phase 153a: the fixture-list rows it paid for (migration 078), in the list's order. Empty: matched in words only, or not at all.
+
+- Line 618:
+
+  > PHASE 153a — THE CLAIM'S GRANTS AS THE SURVEY PACK TAKES THEM (src/web/pack-grants.ts, chapter 15): every grant not
+  > withdrawn, with its payer class, its amount and the fixture-list rows it paid for.
+
+- Line 665:
+
+  > Phase 153a: the fixture-list rows it paid for, and their names.
+
+- Line 704:
+
+  > Phase 153a: the two grant facts the valuation gate reads (src/modules/assessment/grant-checks.ts), and the switch the pack reads.
+
+- Line 962:
+
+  > Phase 153a: the sector, so the step that matches a grant offers that sector's rows of the fixture list.
+
+- Line 966:
+
+  > PHASE 153a — the fixture-list rows a grant may be matched to on this claim: the sector's own and the rows every sector
+  > shares, in the list's order, with their names. Every row, whatever its pool: a grant that paid only for items that
+  > never qualify is matched to those, and then takes nothing off (Word question 79). A sector the list does not know
+  > is offered the shared rows.
+
+- Line 978:
+
+  > PHASE 153a — the fixture-list rows a grant paid for, as posted: ids separated by commas, spaces or new lines. Every id
+  > must be a row of 02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv; repeats are taken once; at most 60.
+
+- Line 1008:
+
+  > PHASE 153a: the fixture-list rows it paid for (migration 078), each checked against the list itself. Matched to rows
+
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 107:
+
+  > PHASE 153a: the two grant facts the gate out of valuation reads (src/modules/assessment/grant-checks.ts), from the grants section,
+
+- Line 443:
+
+  > Phase 153a: the fixture-list rows it paid for, by name.
+
+- Line 590:
+
+  > Phase 153a: on the step that asks it, the items ticked; on every other step, the list carried from it.
+
+### `src/modules/claims/mandatory-documents.ts`
+
+- Line 175:
+
+  > Exported for Phase 153a's grant check (src/modules/assessment/grant-checks.ts): the grant papers, received on the claim.
+
 ### `src/shared/next-step.ts`
 
 - Line 32:
@@ -8095,6 +14892,84 @@ neither says.
 - Line 646:
 
   > PHASE 153b, 4 October 2026 (Word question 198): the company's TYPE ("ltd", "plc", "llp" ...), a fact about the
+
+### `src/modules/assessment/allowance-profit-comparison.ts`
+
+- Line 234:
+
+  > PHASE 153b (Word question 226): what the works-VAT answer tells us about VAT on our fee — not known unless the
+  >        same business, unchanged, answered "reclaimed in full" or "exempt". Counts for nothing while we are not VAT-registered.
+
+### `src/modules/assessment/funnel4.ts`
+
+- Line 423:
+
+  > PHASE 153b (Word question 198), off: with COMPANY_TYPE_FROM_REGISTER on and no kind of business chosen, a
+  >            company picked from Companies House fills it in — a limited company or a plc as "Limited company"; an LLP
+  >            only when the person confirms it, so the screen is kept and asks; any other type is asked as before.
+
+### `src/modules/assessment/grant-checks.ts`
+
+- Line 1:
+
+  > TWO MORE THINGS THE GATE OUT OF VALUATION ASKS ABOUT GRANTS — Phase 153a, 4 October 2026.
+  > (Phase 153b lines 12 and 13, done with Phase 153a line 1 because they read the same grant data.)
+  >
+  >   NO GRANT SPLIT IN EQUAL SHARE WITHOUT ITS PAPERS OR THE TAX ADVISER'S VIEW. Word question 109, "How should we split
+  >   a grant when we cannot tell what it paid for?": our recommendation is to keep the equal share only as a labelled
+  >   estimate and, before filing, split the grant from its papers or ask the tax adviser. The survey pack takes a grant
+  >   in equal share (src/web/pack-grants.ts) whenever it is not matched to rows of the fixture list — and, while
+  >   CB_CTA.grant_traced_to_elements is off as it ships, always. So while any grant on the claim would be taken that way,
+  >   the gate needs the grant papers received on the claim (a grant or NHS premises funding agreement) or the tax
+  >   adviser's view recorded (GRANT_SPLIT_ADVISER_VIEW, YES, with the tax adviser as its source).
+  >
+  >   THE CLIENT HAS CHECKED WITH WHOEVER PAID. Word question 110, "Is a warning enough when claiming relief might force
+  >   a grant to be repaid?": our recommendation is to flag it, name the grant conditions and get the client's
+  >   confirmation before including the cost. Every sector, every grant or contribution but insurance money:
+  >   GRANT_PROVIDER_CHECKED must be YES.
+  >
+  > N4: a fact not recorded, recorded as not known, or (for the adviser's view) recorded by anyone but the tax adviser
+  > opens nothing. With no grant left on the claim both are met — there is nothing to split and nobody to check with —
+  > and the existing check, every grant traced (src/modules/claims/claim-facts.ts, grantsTraced), still asks whether there are any.
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 173:
+
+  > Phase 153a, 4 October 2026 (Phase 153b lines 12 and 13, with the same grant data). Migration 078 adds both keys.
+  >      Read by src/modules/assessment/grant-checks.ts, the gate out of valuation.
+
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 528:
+
+  > PHASE 153a — BEFORE THE CLAIM MOVES ON FROM VALUATION (src/modules/assessment/grant-checks.ts; Phase 153b lines 12 and 13). Two
+  > answers, each Yes or No with who told us: the client has checked with whoever paid; and, where a grant is split in
+  > equal share with no papers received, the tax adviser's view on the split — which counts only from the tax adviser.
+
+### `src/modules/claims/report-pages.ts`
+
+- Line 54:
+
+  > PHASE 153b (Word question 121): the return entries for each year, as a spreadsheet beside the PDF.
+
+### `src/modules/claims/report-signoff.ts`
+
+- Line 150:
+
+  > Phase 153b: the job's claim and business, for the return-entries spreadsheet.
+
+### `src/modules/claims/research.ts`
+
+- Line 207:
+
+  > PHASE 153b (Word question 202): the chosen route where a source has two, in plain words; null elsewhere.
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 589:
+
+  > PHASE 153a (Phase 153b lines 12 and 13): no grant split in equal share without its papers or the tax adviser's
 
 ### `src/shared/engine.ts`
 
@@ -8181,6 +15056,51 @@ neither says.
   > PHASE 153c, 4 October 2026 (Word question 201): the words shown beside each CQC fact. CQC's "Using CQC data"
   >        page puts the data under the Open Government Licence and asks users to acknowledge they use CQC information.
 
+### `src/modules/assessment/funnel4.ts`
+
+- Line 68:
+
+  > PHASE 153c, 4 October 2026 (Word question 208, Sadique's) — THE NAMES WE COUNT EACH SCREEN BY, on the approved list
+  > (the step names the site's one analytics wrapper accepts). The first four screens of the old estimate were its own earlier claim, the seller's
+  > claim, the kind of business and what brought them here; in this funnel those are asked on "spend-on" (what brought
+  > them here), "claims" (both claim questions) and "details" (the kind of business). Nothing here sends anything: this
+  > page is served by the back end, which loads no analytics, and the map is what a count of these screens must use.
+
+### `src/modules/claims/documents.ts`
+
+- Line 421:
+
+  > PHASE 153c: who owns this client — the organisation's owner and each of its claims' owners. Read by `document.read_original`.
+
+### `src/modules/claims/uploads.ts`
+
+- Line 279:
+
+  > Phase 153c: the document's kind travels with it, and only the kinds on SCANNED_PAGE_KINDS are sent (Word question 193).
+
+### `src/modules/crm/premises-import.ts`
+
+- Line 1:
+
+  > HEALTHCARE PREMISES FROM OPEN-LICENCE REGISTERS — AN IMPORT, AND NOTHING THAT CONTACTS ANYONE. Phase 153c, 4 October 2026.
+  >
+  > Word question 183, Sadique's: "Where will the healthcare property list come from, and can we use it for marketing?"
+  > Built on our recommendation, for him to check: a list of healthcare premises built from registers published under
+  > the Open Government Licence, keeping FOUR THINGS ONLY — the business's name, the address, the sector and the source
+  > (with the register's own reference, so a row can be traced back). Lakhbir wants a list to load into the system; the
+  > officer has not yet said how anyone on it may be contacted, so NOTHING HERE CONTACTS ANYONE: the table holds no
+  > person's name, no email and no telephone number, and no route, job or message reads it to send anything.
+  >
+  > WHAT IS NEVER READ. Each source names the columns we read; every other column in the file — a registered manager,
+  > a nominated individual, a telephone number, a website — is never read at all, as the connectors read only named keys.
+  > A ROW WHOSE BUSINESS NAME MAY BE A PERSON'S is held back and counted, never kept: a practice named after its owner
+  > ("Dr A Patel", "Mrs J Smith Dental Care") names a real person, which is exactly what the officer's question is about.
+  > N4: a row we cannot read (no name, no address, no sector we serve) is skipped and counted, never guessed.
+  >
+  > THE COLUMN NAMES are as each register describes its download (read 4 October 2026, not yet against a real file).
+  > The first real file is checked against them before anything is kept; a file whose columns do not match is refused
+  > whole. In the test system it runs on invented rows only.
+
 ### `src/shared/originals.ts`
 
 - Line 64:
@@ -8204,6 +15124,53 @@ neither says.
 - Line 126:
 
   > PHASE 153d: show the TEST-ONLY engagement letter (test defaults, never signed). Absent is the real letter. api/index.mjs alone passes it.
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 1170:
+
+  > PHASE 153d, 4 October 2026 (Word question 23, the director's): THE FIXED DISPOSAL FEE, read from the job cost model
+  > (09-app/backend/src/modules/survey/costing/job-economics.cjs, `disposalFee`), never restated here. Built on our recommendation:
+  > a fixed fee for the review and the drafted election, never a percentage of the sale or the election figure. A TEST
+  > DEFAULT, NOT AGREED, and every place it is shown says so. The director decides the figure.
+
+### `src/modules/claims/fee-controls.ts`
+
+- Line 118:
+
+  > THE OLD RATE CARD'S EXTRA CHARGES, AS TEST DEFAULTS — NOT AGREED. Built the way Phase 153d built Word questions 33
+  > and 34: the figures the old banded card used (the rate card paper, board item 12804368154, §3 Step 3, before Phase
+  > 132e suspended them), each marked "test default, not agreed", behind a switch that ships OFF, so Lakhbir can see
+  > what they would do to real-looking fees before deciding (the viability check, Word question 235). Nothing here is a
+  > decision: the flat 3% stands, and with the switch off no fee anywhere moves.
+  >   · a complicated job: +0.5 percentage points for each factor below, at most +1.5 points however many apply
+  >   · manual handling: a fixed £1,500 an engagement, where the client declines the automated register lookups
+
+### `src/modules/claims/letter.ts`
+
+- Line 55:
+
+  > THE TEST-ONLY COPY — Phase 153d, 4 October 2026 (Word questions 33, 34 and 196, the director's). Built on our
+  > recommendation, for the director and the solicitor to check: the same letter with clause 5 (£995 a property plus the
+  > charges of a surveyor already booked, at cost), clause 7(d) ("named in our privacy notice") and clause 13 (any
+  > reduction; a settlement the client accepts counts) filled, each marked "test default, not agreed", and a TEST COPY
+  > line under the title. The real letter above keeps its brackets: they are the director's and the solicitor's.
+  > ONLY THE TEST WEBSITE READS THIS COPY: createApp's `testLetter`, passed by api/index.mjs alone. A test copy is never
+  > signed, whatever the switch says (signing.ts), so a real client can never be sent it as a contract.
+
+- Line 85:
+
+  > Phase 153d: true for the test-only copy (its TEST COPY line). Never signed.
+
+### `src/modules/claims/signing.ts`
+
+- Line 132:
+
+  > Phase 153d: the test-only copy, with terms nobody has agreed. Never signed.
+
+- Line 206:
+
+  > Phase 153d: the test-only copy carries terms nobody has agreed. It is shown on the test website and never signed.
 
 ## 4 Oct 2026: Phase 153e
 
@@ -8232,6 +15199,69 @@ neither says.
 - Line 395:
 
   > Phase 153e: only with the dimensions switch on, and never a register fact: labelled as the estimate it is.
+
+### `src/modules/assessment/desk-first.ts`
+
+- Line 1:
+
+  > DESK FIRST — HOW MUCH EVIDENCE A JOB NEEDS, AND WHETHER IT CAN BE VALUED FROM THE DESK. Phase 153e, 4 October 2026.
+  >
+  > Built on our recommendation, for the surveyor to check, in the test system only. Three of the surveyor's questions:
+  >   129 "Can you value a building safely without ever visiting it?" — desk-only when the required documents are all in
+  >       and no warning sign fires; otherwise "site visit needed". Lakhbir's view (25 Sep): most surveys can be done from
+  >       the desk if we have all the information. His input, not the surveyor's sign-off.
+  >   130 "When can a video walkthrough replace a site visit?" — never replace: support. The client's checklist, in the
+  >       filming script's order, is scored for coverage against a PLACEHOLDER pass mark.
+  >   131 "Should the site-visit decision use our hidden estimate or the price paid?" — the price paid (the invoice total
+  >       when we hold one; we do not yet), never our hidden estimate. The surveyor is shown the LEVEL ONLY: never the
+  >       band, the score or the price behind it. (The survey pack's chapter 9 does show the surveyor the title's price,
+  >       because s.562 shares it out; that is the pack's design, recorded for the surveyor with question 131.)
+  >
+  > THE GRID AND THE SIGNS ARE THE DESKTOP-FIRST POLICY'S (04-phase-work/phase9/strawman-desktop-first-policy.md, 2.4 and
+  > 5). Every limit here is a PLACEHOLDER: the policy leaves them all "[SURVEYOR'S CALL]", and nothing is presented to a
+  > surveyor as calibrated. Of the policy's warning signs, the ones the records can read are read; the rest wait on the
+  > surveyor's own review, which may always escalate.
+  >
+  > N4: what is not known never relieves. No price: the value band is the top one. A fact not known is a warning sign.
+  > NOTHING HERE DECIDES: the surveyor records the inspection basis (survey-evidence.ts, chapter 2), and approval waits
+  > for that, as before. This is a reading beside it.
+
+### `src/modules/assessment/report-assumptions.ts`
+
+- Line 1:
+
+  > THE REPORT'S ASSUMPTIONS — PHASE 153e, 4 October 2026 (Word question 145, the surveyor's).
+  >
+  > The planning assumption moves the land value, and a higher land value means a smaller claim, so it is stated on the
+  > face of every report. Built on our recommendation, for the surveyor to approve or reword: Lakhbir's wording (recorded
+  > 25 September) and the draft in the answer box agree. A TEST READING: until the surveyor approves it, each approved
+  > version carries these words (frozen into the snapshot at approval, so a version approved before shows none), and the
+  > surveyor-facing template carries the same (04-phase-work/phase9/surveyor-valuation-report-template-v2.md, sections 11
+  > and 21).
+
+### `src/modules/assessment/sector-ranges.ts`
+
+- Line 1:
+
+  > RE-SETTING THE SECTOR RANGES FROM FINISHED CLAIMS — PHASE 153e, 4 October 2026 (Word question 138, the surveyor's).
+  >
+  > The first figure a client sees comes from our sector ranges (CB_BAND in the engine), which we set ourselves and
+  > have never checked against a finished job. The answer typed under the question: build the ranges from completed
+  > claims and validate them against surveyed results. Built on our recommendation, for the surveyor to check, in the
+  > test system: this reads every survey pack the surveyor has APPROVED (its newest version), takes what qualified as a
+  > share of the price paid, and proposes a range per sector — and for supported living, per trigger. It PROPOSES; it
+  > changes no band. A person changes the engine, with the surveyor's agreement.
+  >
+  > A range is proposed only once a sector (or trigger) has MIN_CLAIMS finished claims: a placeholder for the surveyor.
+  > A claim with no price, or no qualifying figure, is left out and counted (N4).
+
+### `src/modules/crm/rooms.ts`
+
+- Line 181:
+
+  > PHASE 153e, 4 October 2026 (Word question 148): each space in a theatre suite is counted, not the suite. Lakhbir
+  >        answered "Several"; the draft in the box agrees. A TEST DEFAULT for the surveyor to confirm which spaces carry
+  >        which equipment (src/web/pack-lines.ts, SUITE_ROWS).
 
 ### `src/shared/finding-source.ts`
 
@@ -8323,6 +15353,82 @@ neither says.
   > The host's start token (ZAK), so a member of staff starts the call as its host inside our page. Null if refused.
   > PHASE 153f: `host` — the email the meeting was made under (src/web/video-calls.ts, meetingHost); absent, the shared host.
 
+### `src/modules/assessment/assessment.ts`
+
+- Line 204:
+
+  > Retired with the six screens (Phase 153f); kept for the record of what they asked.
+
+- Line 208:
+
+  > Retired with the six screens (Phase 153f); kept for the record of what they asked.
+
+### `src/modules/assessment/funnel4.ts`
+
+- Line 779:
+
+  > PHASE 153f, 4 October 2026 (Word answer 164, closed 24 September 2026): NO TICK. The contact form's required "you may
+  >      contact me" box was replaced by a statement and a link to the privacy notice, because a person who sends an enquiry
+  >      has asked to be answered, and a tick box would misdescribe the basis as consent. The funnel now says the same.
+  >      `contact_consent` stays true — it records that the person asked to be contacted about this enquiry, by sending it —
+  >      and is never marketing consent. WhatsApp is its own, optional box (`whatsapp_optin`): Meta's rules want a person to
+  >      have agreed to WhatsApp, and Sadique's approval for testing (30 Sep 2026) leaned on the old box.
+
+### `src/modules/crm/messages-pages.ts`
+
+- Line 330:
+
+  > ---- PHASE 153f, 4 OCT 2026: A FILE SOMEONE SENT US ON WHATSAPP — got from Meta and kept sealed, then opened here ----
+
+### `src/modules/crm/video-calls.ts`
+
+- Line 55:
+
+  > PHASE 153f (migration 084): whose Zoom user the meeting was made under; null, the shared host.
+
+- Line 63:
+
+  > PHASE 153f, 4 October 2026 — WHO HOSTS A CALL. One Zoom user hosts one meeting at a time (learned on the first live
+  > calls, 30 Sep 2026), so each call is made under the member of staff it is assigned to: their sign-in email, which must
+  > be a user on our Zoom account. A call with nobody assigned, or assigned to someone disabled, uses the shared host.
+
+- Line 73:
+
+  > PHASE 153f: the meeting's host, for the start token and the call's page. Null, the shared host.
+
+- Line 169:
+
+  > PHASE 153f: made under the assigned member of staff, so two calls at once can both run; if they have no Zoom user
+
+- Line 171:
+
+  > PHASE 157c (the Friary House run, F5): on the free plan every call is the shared host's (Phase 156d: "contact@caprebate
+  >      is enough"), so it goes straight there - asking under the assigned member of staff first cost a refused call and an
+  >      error row on every booking. On a paid plan, as Phase 153f built it: the assigned member of staff, else the shared host.
+
+### `src/modules/crm/whatsapp-page.ts`
+
+- Line 70:
+
+  > PHASE 153f: a file someone sent us — "Get it" (fetched from Meta and kept sealed) for those who write to the company,
+  > then "Open it" for those who may read it.
+
+### `src/modules/crm/whatsapp.ts`
+
+- Line 49:
+
+  > PHASE 153f (migration 086): whether they agreed to WhatsApp, on the funnel's optional box.
+
+- Line 126:
+
+  > PHASE 153f: an attachment's id is kept with the message; a person fetches the file (fetchWhatsAppAttachment).
+
+- Line 196:
+
+  > ================================================================== *
+  > PHASE 153f, 4 OCTOBER 2026 — A FILE SOMEONE SENT US ON WHATSAPP, KEPT HERE
+  > ==================================================================
+
 ### `src/shared/objectstore.ts`
 
 - Line 96:
@@ -8366,6 +15472,40 @@ neither says.
   >   - the direction marks, embeddings, overrides and isolates (U+061C, U+200E, U+200F, U+202A-U+202E, U+2066-U+2069).
   > Everything else - accents, dashes, any language's letters, emoji - is kept. Read by every form the web half reads
   > (src/core/router.ts form(), src/core/multipart.ts, src/web/messages-pages.ts); a password is never changed (KEEP_AS_SENT).
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 138:
+
+  > PHASE 154a1 (line 5), 4 October 2026 — WHERE A SAVED CONTACT GOES BACK TO: the page of whoever the contact belongs to,
+  > read from the contact itself. It was the business_id the form posted, so a post without one went to
+  > /staff/clients/?done=contact, a 404 (the 3 October sweep), and a wrong one went to somebody else's page.
+
+### `src/modules/crm/crm.ts`
+
+- Line 1019:
+
+  > PHASE 154a1 (line 2): a NEW contact starts from a stored name of '', so a post with no full_name field at all kept
+
+### `src/modules/crm/introducers.ts`
+
+- Line 677:
+
+  > PHASE 154a1 (line 2): as a contact's name (src/modules/crm/crm.ts) - a new firm starts from '', so blank is no name.
+
+- Line 783:
+
+  > PHASE 154a1 (line 2): as above - a new person starts from '', so blank is no name.
+
+### `src/modules/crm/tasks.ts`
+
+- Line 400:
+
+  > PHASE 154a1 (line 7), 4 October 2026 — A DOUBLE CLICK MAKES ONE TASK. The 3 October sweep posted the same task twice
+  > at once and got two. The same person adding the same task - every field the form sets, about the same things - within
+  > DOUBLE_CLICK_MS of the first is taken as the same click: the task already made is the answer, and nothing is written
+  > or audited twice. A different person, a different field, or a later click is a new task. Read inside the write's own
+  > transaction, so two posts at once cannot both miss each other.
 
 ## 4 Oct 2026: Phase 155
 
@@ -8493,6 +15633,65 @@ neither says.
 
   > PHASE 155, 4 October 2026 — three sources read for their terms before any code (the phase's own rule).
 
+### `src/modules/claims/register-files.ts`
+
+- Line 1:
+
+  > REGISTERS PUBLISHED AS A FILE, NOT AN API — IMPORTED INTO A TABLE ON THIS SERVER, AND LOOKED UP THERE.
+  > Phase 155 (lines 1–2), 4 October 2026.
+  >
+  > The two care regulators outside England publish a downloadable list instead of an API:
+  >   CIW                Care Inspectorate Wales's list of registered care services (Wales)
+  >   CARE_INSPECTORATE  the Care Inspectorate's datastore of registered care services (Scotland)
+  > NOT THE VALUATION OFFICE (line 3). Its rating list is a file too, but its licence restricts it to "Non Domestic Rating
+  > (NDR) purposes only" and says "An open government licence does not apply" (read 4 October 2026; the source register's
+  > VOA_RATING_LIST licence). A capital allowances claim is not a rating purpose, so it is recorded and not imported.
+  >
+  > Each is IMPORTED ON A COMMAND (`node src/core/cli.ts import-register <source> <file> --by <admin>`), never fetched per
+  > client: a person downloads the file from the publisher and the import replaces that source's rows whole, in one
+  > transaction. A lookup then reads this table — NOTHING IS SENT OUTSIDE, as for the ONS postcode table.
+  >
+  > WHAT IS KEPT. For each row: the register's own reference, the postcode (blocking key), the address lines (for the
+  > match), and ONLY the fields the source register permits for that source (04-phase-work/phase3/
+  > caprebate-source-register.ts, `permitted_fields`). Every other column — a manager's or responsible individual's
+  > name, a provider's name (which may be a person's), a telephone number or an email — is never read: only named
+  > columns are.
+  >
+  > A FILE WHOSE COLUMNS DO NOT MATCH IS REFUSED WHOLE (N4): the columns below are as each publisher writes its file
+  > (the source register's SUPPLIER_DOCS, read 4 October 2026). A row we cannot read (no reference, no postcode we can
+  > read) is skipped and counted, never guessed.
+  >
+  > THE SWITCHES ARE NOT HERE. Importing a file switches nothing on: each lookup (src/integrations/connectors/register-files.ts) is
+  > behind its own REGISTER_SWITCHES entry, OFF, and the research panel's free gate, shut.
+
+### `src/modules/claims/research.ts`
+
+- Line 143:
+
+  > Phase 155: the Scottish care regulator, free open data like the Welsh one.
+
+- Line 237:
+
+  > and so does the Scottish one (Phase 155)
+
+### `src/modules/crm/staff-dashboard.ts`
+
+- Line 331:
+
+  > PHASE 155 (line 5): Admin is told, on whichever home view, when email replies have not been read for over an hour in working hours.
+
+## 4 Oct 2026: Phase 156
+
+### `src/modules/crm/inbound-email.ts`
+
+- Line 441:
+
+  > PHASE 155 (line 5), 4 October 2026 — IF THE TIMER STOPS, ADMIN IS TOLD. The outside timer (cron-job.org, set up by hand:
+  > Phase 156 A3; COORDINATES and the continuity plan say who owns it and where its history is) is the only thing that
+  > reads replies while nobody is on the site. Each copy of the website kept its last read in memory, so a stopped timer
+  > was silent. Every read now writes one shared row (migration 088, `mailbox_reads`: times only), and Admin's home page
+  > warns when no read has worked for more than REPLY_WATCH.stale_minutes during REPLY_WATCH's hours.
+
 ## 4 Oct 2026: Phase 156f
 
 ### `src/integrations/connectors/registers.ts`
@@ -8506,6 +15705,99 @@ neither says.
   >      PlanIt kept built as the free fallback. See PLANNING_ROUTE below. STILL OFF until the Homedata account is open.
   >      PHASE 156f, 6 October 2026: the account is open (Lakhbir: "planning history - use homedata"). Still false here, for
   >      real clients; on for the test website only, through TEST_WEBSITE_PAID_LOOKUPS below.
+
+## 4 Oct 2026: Phase 157
+
+### `src/modules/public-site/enquiry-retention.ts`
+
+- Line 1:
+
+  > ENQUIRY_RETENTION — THE CLEAN-UP JOB FOR CLOSED WEBSITE ENQUIRIES. BUILT, AND SWITCHED OFF. Phase 153c, 4 October 2026.
+  >
+  > Word question 222, Sadique's: "How long do we keep a closed website enquiry before it is deleted?" Built on our
+  > recommendation for him to check: twelve months after it was closed. A deletion cannot be undone, so — like the
+  > message clean-up before it was answered — the job ships OFF and deletes nothing until the officer approves the period
+  > and that approval is recorded; then a scheduled run of `node src/core/cli.ts sweep-enquiries` applies it.
+  >
+  > TWO KINDS OF ENQUIRY, NAMED:
+  >   1. THE CONTACT FORM (/enquiry, `website_enquiries`, migration 031). One closed by staff (status CLOSED, its
+  >      `handled_at` the day it was closed) is due twelve months after that day. This job writes the deletion log entry
+  >      FIRST, then deletes the row, in one transaction — one entry per enquiry, naming its kind and id, never a word of
+  >      it and never the person. An enquiry that became a lead (status LEAD) is a lead now, and is not this job's.
+  >  *   2. THE FOUR-STAGE FUNNEL (`leads` with an `enquiry_id`, migration 061). A funnel enquiry is a CRM lead, tied to its
+  >      organisation, its contacts and any booking. PHASE 157 (the sweep, 6 October 2026) BUILT ITS DELETION PATH, under
+  >      the same switch and the same period: a lead LOST more than the period ago (its `updated_at`, the day it was
+  >      marked lost) is deleted with the funnel's own rows that hang off it — `leadDeletionPlan` says exactly which.
+  >        WHAT GOES: the lead; its contacts and what they answered about consent; its bookings, their changes and video
+  >        meetings; the emails written to it; its staff tasks, automation runs and enquiry checks. And, ONLY when every
+  >        lead of its organisation is a lost funnel enquiry past the period, the organisation too: its properties,
+  >        assessment and answers, sealed estimate, research rows and the draft that made it.
+  >        WHAT STAYS: anything with a reason of its own — a claim, an engagement or signature, an invoice, a complaint,
+  >        a rights request, a breach entry, a document, a client message, an identity or due-diligence check, an
+  >        introducer's record, a call log — and if any such row hangs off the lead or its organisation, NOTHING is
+  >        deleted and the job says which table held it. The audit log keeps its rows (ids only, never a word). One
+  >        deletion log entry per lead (FUNNEL_LEAD) and per organisation (FUNNEL_BUSINESS), written FIRST, in the same
+  >        transaction: migration 093's triggers admit a delete only for rows those entries name.
+  > A LIVE LEGAL HOLD STOPS IT (record kind WEBSITE_ENQUIRY, by its id; LEAD and COMPANY for a funnel enquiry). N4: an
+  > enquiry with no closing day is never due.
+
+## 4 Oct 2026: Phase 158b
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 187:
+
+  > PHASE 158b (F24): "no unresolved VOA licence block" left out - the rating list was scrapped on 4 Oct 2026, so no source needs one.
+
+### `src/modules/portal/client-layout.ts`
+
+- Line 109:
+
+  > PHASE 158b (F24, the Friary House run): the Valuation Office rating list was scrapped on 4 October 2026 (Lakhbir,
+  >    "scrap the VOA rating"; DO NOT REOPEN). It stays in the source register, but the card no longer says it is waiting.
+
+## 4 Oct 2026: Phase 159a
+
+### `src/modules/claims/return-entries.ts`
+
+- Line 1:
+
+  > THE RETURN ENTRIES, YEAR BY YEAR, AS A SPREADSHEET BESIDE THE REPORT. PHASE 153b, 4 October 2026.
+  >
+  > Word question 121, "In what format would you like us to send our results?", for the accountant. Lakhbir: "Any
+  > format". Our recommendation, built for the accountant to check: the signed PDF report (built on 2 October,
+  > src/web/survey-report.ts) and BESIDE IT a small spreadsheet of what goes on each year's tax return, so nobody
+  > retypes figures. Change it if the accountant names a format their software imports.
+  >
+  > ONE ROW PER ENTRY. The first return adds the qualifying spend to each pool; then, for five returns, the writing-down
+  > allowance on each pool and the balance carried forward. The figures come from the approved version alone (its two
+  > pools, after grants), and the rates and the year-by-year arithmetic are the engine's (CB_BENEFIT.schedule over
+  > CB_RATES) — nothing is restated here.
+  >
+  > WHAT IT DOES NOT KNOW IT LEAVES BLANK AND SAYS WHY (N4). The main-pool rate turns on the accounting period (18%, or
+  > 14% for periods from April 2026, with the straddle rule) and on whether the client is a company. Where the claim's
+  > accounting period is not recorded, or the claimant type is not known and the two readings differ, the main-pool
+  > rows carry no figure and their "How it is worked out" cell says what is missing. The special-rate pool's 6% is the
+  > same for everyone and always given. No first-year allowance or annual investment allowance is assumed: the
+  > client's accountant chooses those, and the last row says so.
+  >
+  > MADE AGAIN EVERY TIME, LIKE THE PDF — from the same facts once it has been sent. PHASE 159a (C29): the first time a
+  > version's spreadsheet leaves us (emailed for sign-off, or its sign-off recorded) the claim's accounting period and
+  > claimant type are kept with the version (`freezeReturnContext`, table return_entry_contexts), and every later copy of
+  > that version is made from them (`returnContextFor`). Before then it reads the claim as it stands. Every cell is quoted
+  > where it must be, and a cell that a spreadsheet would read as a formula is made plain text.
+
+## 4 Oct 2026: no phase named
+
+### `src/modules/claims/register-files.ts`
+
+- Line 59:
+
+  > THE COLUMNS, EXACTLY AS EACH FILE NAMES THEM — read from each publisher's own file on 4 October 2026 (the source
+  > register's SUPPLIER_DOCS). Only these are read. CIW's file also carries the Responsible Individuals, the Registered
+  > Persons, telephone, email, website and the provider's name and address; the Care Inspectorate's a manager's name,
+  > telephone and email, and the provider's name. None of them is ever read. The Care Inspectorate's year-suffixed
+  > columns (complaints, enforcements, inspections) are renamed as the years roll on, so none of them is read either.
 
 ## 5 Oct 2026: Phase 156a
 
@@ -8590,6 +15882,118 @@ neither says.
   > DATES are read day first (UK). If no day number in the file is above 12, month first would also make sense, and
   > the check step says so. TIMES are UK local time (Europe/London), turned into an exact moment across the clock
   > change; the export carries no time zone.
+
+### `src/modules/crm/communication.ts`
+
+- Line 113:
+
+  > WhatsApp, both ways. PHASE 156c: a message added from the phone's export says so, is never "new", and our side is
+
+- Line 213:
+
+  > PHASE 156c: while WhatsApp is not connected live, the way in for a chat from the phone (src/modules/crm/whatsapp-import.ts).
+  > Lakhbir, 5 Oct 2026: "doesnt it make sense to have the upload option on the companies conversation". The upload itself
+  > opens on the WhatsApp page, with the person last on WhatsApp chosen: a real export is far bigger than the test website
+  > takes at once, so that page runs a script that opens it on the person's computer — and this page carries no script
+  > (test/phase133a: every page reached from home works without one).
+
+- Line 245:
+
+  > PHASE 156c: WhatsApp is offered here only while the live connection is on; otherwise the box says to use the phone
+
+### `src/modules/crm/messages-pages.ts`
+
+- Line 294:
+
+  > PHASE 156c: the page runs the export reader's script, so it carries its own policy (src/modules/crm/whatsapp-page.ts).
+
+### `src/modules/crm/whatsapp-import-pages.ts`
+
+- Line 1:
+
+  > PHASE 156c, 5 October 2026 — THE PAGES AND ROUTES FOR ADDING A CHAT EXPORTED ON THE WHATSAPP PHONE.
+  >
+  >   POST /staff/clients/:id/whatsapp/import                    the upload (multipart): the whole export, or — when the
+  >                                                               page's script opened a big .zip here — its text and names
+  >   GET  /staff/clients/:id/whatsapp/import/:iid               the check (?us= and ?from= recount it)
+  >   POST /staff/clients/:id/whatsapp/import/:iid               save (us, from), or cancel
+  >   GET  /staff/clients/:id/whatsapp/import/:iid/waiting       the file names still to add, as JSON, for the script
+  >   POST /staff/clients/:id/whatsapp/import/:iid/file          one file from the export (multipart), after saving
+  >
+  > Who: `client_message.write` — Admin and Sales (src/modules/crm/whatsapp-import.ts authorises every step). The logic is in
+  > src/modules/crm/whatsapp-import.ts; the reader in src/integrations/connectors/whatsapp-export.ts; the script in whatsapp-import-script.ts.
+
+### `src/modules/crm/whatsapp-import-script.ts`
+
+- Line 1:
+
+  > PHASE 156c, 5 October 2026 — THE WHATSAPP PAGES' ONE SCRIPT: OPEN AN EXPORTED CHAT ON THE PERSON'S OWN COMPUTER.
+  >
+  > Why it exists: the test website takes about 4.5 MB a request, and a real export with its photos is far bigger (the
+  > first one tried was 53 MB, the whole history of the chat). So, for a .zip over 3.5 MB:
+  >   - on the WhatsApp page, it reads the .zip here, and sends only the chat's text and the list of file names; the
+  >     server's check page follows. The file itself is remembered in this browser (IndexedDB) for the next step.
+  >   - on the check page, once saved, it asks the server which files are still needed (only those from the dates kept)
+  >     and sends each one on its own. Without the remembered file, the person chooses the .zip again.
+  > Nothing else leaves the computer. With no script (or an old browser), the forms still work as plain uploads: a small
+  > .zip or the .txt in one go, and the photos one at a time.
+  >
+  > No inline script, no innerHTML: words are set with textContent; a refusal page from the server is shown whole.
+
+### `src/modules/crm/whatsapp-import.ts`
+
+- Line 1:
+
+  > PHASE 156c, 5 October 2026 — A WHATSAPP CHAT EXPORTED ON THE PHONE, ADDED TO THE CLIENT'S RECORD BY HAND.
+  >
+  > Lakhbir chose this over a live connection to Meta (5 Oct 2026: "go with manual upload, keep photos"). Staff talk to
+  > clients on the WhatsApp phone; to keep a conversation they export that one chat and add it here. THREE STEPS:
+  >
+  >   1. UPLOAD (`startImport`). The chat's text, and the list of files in the export. A small export comes through
+  >      the website whole (the .zip, kept sealed); a big one cannot (the test website takes about 4.5 MB a request),
+  >      so the page's script opens it on the person's own computer and sends only the text and the names. Nothing is
+  >      saved to the record at this step. A group chat (more than two names) is refused.
+  >   2. CHECK (`importCheck`). How many messages and files, the first and last date, who is us and who is the client,
+  >      and from which date to keep them — an export always holds the WHOLE history of the chat. Warnings: dates that
+  >      could be read month first; a contact who did not tick the WhatsApp box (their messages are kept: Lakhbir,
+  >      5 Oct 2026, "kept in").
+  >   3. SAVE (`saveImport`). Each message from that date into whatsapp_messages (IN or OUT, the message's own time),
+  >      tied to this upload in whatsapp_import_lines. A newer copy of the same chat adds only what is not there yet.
+  >      Files: from the kept .zip at once; otherwise the script sends each needed one (`addImportFile`), each sealed
+  >      in the file store as a fetched WhatsApp attachment is.
+  >
+  > Nothing here contacts Meta or anyone else. The copies follow the same keep-and-delete rules as other client
+  > messages (Lakhbir, 5 Oct 2026, "yes same rules").
+
+### `src/modules/crm/whatsapp-page.ts`
+
+- Line 38:
+
+  > PHASE 156c: added from a chat exported on the phone.
+
+- Line 108:
+
+  > PHASE 156c (5 Oct 2026, Lakhbir: manual upload): while the live connection to Meta is off, nothing is written from here.
+
+- Line 151:
+
+  > ================================================================== *
+  > PHASE 156c: ADD A CHAT EXPORTED ON THE PHONE (src/modules/crm/whatsapp-import.ts; the script is src/modules/crm/whatsapp-import-script.ts).
+  > ==================================================================
+
+- Line 169:
+
+  > PHASE 156c: the upload form alone — on the WhatsApp page and on the company's conversation (src/modules/crm/communication.ts).
+
+- Line 181:
+
+  > PHASE 156c: the WhatsApp pages run one script of our own (the export reader), so their policy allows it and no more.
+
+### `src/modules/crm/whatsapp.ts`
+
+- Line 53:
+
+  > PHASE 156c: a message added from the phone's export never opens WhatsApp's window: only one Meta delivered does.
 
 ### `src/shared/objectstore.ts`
 
@@ -8691,6 +16095,49 @@ neither says.
   > Only two numbers are kept: never a name, an email or anything else from the answer.
   > Zoom may keep this from a free plan; then the screens say "not shown on our Zoom plan", so nobody thinks it broke.
 
+### `src/modules/crm/communication.ts`
+
+- Line 144:
+
+  > PHASE 156d: once Zoom has said how long it lasted (or that our plan does not say), that is shown instead.
+
+- Line 387:
+
+  > PHASE 156d: booked over another video call on the same Zoom user. A warning: the booking stands.
+
+### `src/modules/crm/video-calls.ts`
+
+- Line 93:
+
+  > PHASE 156d: the free plan's 40-minute line, or null on a paid plan.
+
+- Line 98:
+
+  > PHASE 156d: said wherever a video call is booked or moved over another with the same Zoom host.
+
+- Line 101:
+
+  > PHASE 156d: how many OTHER live video calls overlap this one and would run under the same Zoom user. A call's host is
+  > its meeting's (host_user_id; null is the shared host); a call with no meeting yet counts as the shared host, which is
+  > where it would go. Two calls under different members of staff's own Zoom users do not clash.
+
+- Line 113:
+
+  > PHASE 156d: what is kept of a call's length (migration 091).
+
+- Line 120:
+
+  > PHASE 156d: a call's length in words, or null when nothing has been learned yet.
+
+- Line 129:
+
+  > PHASE 156d: ask Zoom how long the call lasted and how many joined, and keep the two numbers. A later answer that is
+  > not FOUND keeps any numbers already kept. Never throws; one or two calls to Zoom.
+
+- Line 213:
+
+  > PHASE 156d: the free plan's limit, said in the invitation too.
+
 ## 5 Oct 2026: Phase 156e
 
 ### `src/core/router.ts`
@@ -8725,6 +16172,33 @@ neither says.
   > exactly as a client's would. The reading switch is turned on FOR THIS ONE CALL ONLY, in this process; the switch that
   > ships stays off. Nothing is kept: the answer is counted and thrown away.
 
+### `src/modules/claims/register-import-script.ts`
+
+- Line 1:
+
+  > PHASE 156e, 5 October 2026 — THE CONNECTIONS PAGE'S ONE SCRIPT: TRIM A CARE REGULATOR'S LIST ON THE ADMIN'S COMPUTER.
+  >
+  > Why it exists: the Scottish datastore is about 10 MB and the test website takes about 4.5 MB a request. So, when an
+  > import form is sent, this reads the chosen file here, in the publisher's own encoding (the Scottish file is
+  > Windows-1252), keeps only the columns named on the form (`data-columns`: the ones src/modules/claims/register-files.ts reads),
+  > and sends that as UTF-8 with `trimmed=1`. Names, telephone numbers and emails in the file never leave this computer.
+  > A column the file does not have is simply not sent, so the server refuses the import whole and names it (N4).
+  > With no script, the form still works as a plain upload for a file under 4.4 MB.
+  >
+  > No inline script, no innerHTML: words are set with textContent; a refusal page from the server is shown whole.
+
+### `src/modules/crm/staff-dashboard.ts`
+
+- Line 338:
+
+  > PHASE 156e (B4): Admin is reminded, on whichever home view, to import each care regulator's new monthly list.
+
+### `src/modules/public-site/home.ts`
+
+- Line 291:
+
+  > PHASE 156e: the outside services on one page.
+
 ## 5 Oct 2026: no phase named
 
 ### `src/integrations/connectors/sources.ts`
@@ -8739,6 +16213,18 @@ neither says.
 
   > WhatsApp's own words about the chat itself, never a person's: skipped. Kept narrow on purpose (5 Oct 2026: a broad
   >  "… added …" pattern swallowed 212 view-once notices in a real export, because their wording contains "added").
+
+## 6 Oct 2026: Phase 153d
+
+### `src/modules/crm/introducers.ts`
+
+- Line 136:
+
+  > PHASE 157 (the sweep), 6 October 2026 — THE INTRODUCER TERMS A FIRM SIGNS (Phase 153d's draft, Word question 42). A firm
+  > is a REGISTERED introducer only once it is on our list and has signed them (their clause 1). The signature is a dated,
+  > append-only row (migration 094); model C accrues only for a firm with one. The terms are a draft: the director agrees
+  > them and the solicitor checks them. Until then model C stays off, and a signature can be recorded only in the test
+  > system, against the draft's version.
 
 ## 6 Oct 2026: Phase 156f
 
@@ -9037,6 +16523,100 @@ neither says.
   > which "cannot" establish the extent of a title. HOMEDATA_TERMS keeps every report channel closed: internal only,
   > as the INSPIRE area is, until Homedata's terms for title outlines are confirmed.
 
+### `src/modules/assessment/address-lookup-script.ts`
+
+- Line 1:
+
+  > THE ADDRESS BOX'S ONE SCRIPT — served at /assets/address-lookup.js, and named only by the assessment's "Your details"
+  > screen while "Find my address" is on (src/core/router.ts, f4Html). Phase 156f, 6 October 2026.
+  >
+  > Lakhbir: "one address box on Homedata". As soon as the postcode typed is a complete UK postcode, the list of addresses
+  > there fills (one 2p search, POST /assessment/details/addresses, which keeps the £1 a day cap); typing in the box above
+  > the list then narrows it IN THE BROWSER, for nothing. Picking one fills the building and town boxes. "My address is not
+  > in the list" is always there.
+  >
+  > IF IT CANNOT RUN (no script, an old browser), nothing changes: the "Find my address" button posts the page and the
+  > server draws the same list. It sets no style and no HTML from an answer: it builds each line with textContent, and only
+  > sets classes, text and the `hidden` attribute (the page's security policy allows no inline style or script).
+
+### `src/modules/assessment/assessment.ts`
+
+- Line 320:
+
+  > PHASE 156f: the four-stage funnel asks each building's own postcode, street and town (and, picked from the
+  >          Homedata list, its UPRN). They go on the property, so the paid research after signing can check the UPRN
+  >          against them and start from it. The old funnel's first-screen postcode stands where a building has none.
+
+### `src/modules/assessment/funnel4.ts`
+
+- Line 442:
+
+  > An address picked from "Find my address" fills the lines, the town and the postcode. PHASE 156f: the list is
+  >          Homedata's, so the pick carries the property's UPRN, kept on the building and then on the property (submit).
+
+- Line 653:
+
+  > The addresses "Find my address" found, to pick one; or that it is not there, and it is typed below. Phase 156f: each
+  >  carries its line and town, so the page's script can fill the boxes below when one is picked.
+
+### `src/modules/claims/approvals.ts`
+
+- Line 104:
+
+  > PHASE 156f (B4): the site area from the title outline.
+
+- Line 230:
+
+  > PHASE 156f (B3): once Homedata has answered planning, the free route's planning records are kept, not shown.
+
+### `src/modules/claims/research.ts`
+
+- Line 162:
+
+  > PHASE 156f (B4): the site area from Homedata's title outline, bought on the address lookup's own call.
+
+- Line 662:
+
+  > PHASE 156f (B3): what the PLANNING row says while Homedata planning is due after signing.
+
+- Line 666:
+
+  > PHASE 156f (B3): whether the PLANNING row should be asked again, so Homedata answers it.
+
+- Line 705:
+
+  > PHASE 156f (B3): the free planning route answered before signing; now the letter is signed and Homedata planning is
+  >        on, the row is asked again, and Homedata answers it by the property's own number.
+
+- Line 872:
+
+  > PHASE 156f (B3): the connector that answered when it was not the source's own (HOMEDATA_PLANNING for PLANNING).
+
+- Line 942:
+
+  > PHASE 156f (B3): PLANNING HAS TWO ROUTES. After signing, with Homedata planning on and the property's number found
+  >        by the paid address lookup on this click, Homedata answers (paid, about 5p); otherwise the free route, as before.
+
+- Line 962:
+
+  > PHASE 156f (B4): the title outline is asked for on the address lookup's call by THIS click's switches.
+
+- Line 1347:
+
+  > PHASE 156f (B3): which route answered a FIRED row (HOMEDATA_PLANNING, or null for the source's own). Kept only on a
+  >      fire, so a later refusal does not forget that Homedata already answered.
+
+### `src/modules/claims/site-area-run.ts`
+
+- Line 211:
+
+  > The site area held for a property, as a line, or null when none is held. HM Land Registry's land boundary first;
+  >  PHASE 156f (B4): else the area from the title outline Homedata sold on the paid address lookup.
+
+- Line 238:
+
+  > PHASE 156f (B4): the area from Homedata's title outline for this property, as a line, or null.
+
 ## 6 Oct 2026: Phase 157
 
 ### `src/core/audit.ts`
@@ -9044,6 +16624,92 @@ neither says.
 - Line 202:
 
   > Phase 157: a firm's signature of our introducer terms recorded (migration 094).
+
+### `src/modules/assessment/funnel-deletable.ts`
+
+- Line 1:
+
+  > PHASE 157 (the sweep), 6 October 2026 — THE FUNNEL'S OWN TABLES: the only tables a lost funnel enquiry's deletion may
+  > reach (src/modules/public-site/enquiry-retention.ts, leadDeletionPlan). A row in any other table that hangs off the lead or its
+  > organisation is a reason to keep everything: it has a retention rule of its own, or it is evidence.
+  >
+  > The foreign keys from these tables' rows are written out as literal statements in src/modules/assessment/funnel-edges.ts, which
+  > tools/gen-funnel-edges.ts generates from the database's own schema (no SQL is ever built from a string at run time;
+  > tools/lint-sql.cjs). test/phase157.test.ts fails when the schema gains an edge that file lacks.
+
+### `src/modules/crm/introducers-pages.ts`
+
+- Line 141:
+
+  > Phase 157: record that the firm signed our introducer terms (migration 094), so it is registered.
+
+### `src/modules/crm/introducers.ts`
+
+- Line 536:
+
+  > Phase 157: the firm's signature of our introducer terms; null: not registered, so model C pays it nothing.
+
+- Line 622:
+
+  > Phase 157: whether the firm has signed our introducer terms, so is registered (migration 094).
+
+- Line 1555:
+
+  > PHASE 157: a REGISTERED accountancy firm — one that has signed our introducer terms (migration 094), as their
+  >      clause 1 says. Marked as an accountancy firm is not enough.
+
+### `src/modules/public-site/enquiry-retention.ts`
+
+- Line 88:
+
+  > The funnel leads lost more than the period ago. Phase 157: `sweepEnquiries` now deletes those `leadDeletionPlan` allows.
+
+- Line 100:
+
+  > Phase 157: funnel leads deleted, with the funnel's own rows that hung off them.
+
+- Line 107:
+
+  > ================================================================== *
+  > PHASE 157 — THE DELETION PATH FOR A LOST FUNNEL ENQUIRY
+  > ==================================================================
+
+- Line 200:
+
+  > PHASE 157: the funnel leads past the period, each deleted with its own rows, or kept with the reason.
+
+## 6 Oct 2026: Phase 157b
+
+### `src/modules/claims/case-stamp.ts`
+
+- Line 192:
+
+  > Phase 157b, Word question 235
+
+### `src/modules/claims/fee-controls.ts`
+
+- Line 97:
+
+  > PHASE 157b: the old rate card's extra charges, at their test defaults (RATE_CARD_UPLIFTS). Absent is off.
+
+- Line 108:
+
+  > ================================================================== *
+  > 2a · THE OLD EXTRA CHARGES — PHASE 157b, 6 OCTOBER 2026 (Word question 235)
+  > ==================================================================
+
+- Line 303:
+
+  > PHASE 157b: what made the job complicated, as the old rate card counted it. Absent is none known.
+
+- Line 305:
+
+  > PHASE 157b: the client declined the automated register lookups. Absent is no.
+
+- Line 446:
+
+  > PHASE 157b: the old extra charges, only with their switch on. Not on top of a fee the first-year control has just
+  >      lowered: that control is a ceiling, and adding to it would undo it.
 
 ## 6 Oct 2026: Phase 157c
 
@@ -9103,6 +16769,154 @@ neither says.
 
   > PHASE 157c: the nation from the postcode check's country (postcodes.io: "England", "Wales", "Scotland", "Northern
   > Ireland"). Anything else - the Channel Islands, the Isle of Man, a blank - is not a nation we cover, so null (N4).
+
+### `src/modules/assessment/funnel4.ts`
+
+- Line 670:
+
+  > PHASE 157c (the Friary House run, F2): "A GP / primary care holds" read oddly; the sentence names a building.
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 308:
+
+  > PHASE 157c (the Friary House run, F14): what the client said at the assessment about this property's purchase - its
+  > rough date ("06/2019") - found by the property's own address among the assessment's answers. Shown beside an unknown
+  > acquisition date, never stored as it: the client gave a month and a rough figure, not a completion date (N4).
+
+### `src/modules/claims/documents.ts`
+
+- Line 642:
+
+  > PHASE 157c (the Friary House run, F20): a file the client sends from the portal, with no request, sat on the
+  >        business and never reached the claim ("Documents 0" while six files were in). Where the client has exactly one
+  >        open claim, it goes on that claim; with two or more, staff choose, as before.
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 94:
+
+  > PHASE 157c (the Friary House run, F21): prepare and send the engagement letter; and the signed copy.
+
+### `src/modules/claims/engagement-send.ts`
+
+- Line 1:
+
+  > PREPARE AND SEND THE ENGAGEMENT LETTER, AND THE SIGNED COPY — PHASE 157c, 6 October 2026.
+  >
+  > The Friary House run (04-phase-work/sim-2026-10-06, finding F21) found that nothing in the application prepared or
+  > sent an engagement letter: only the seed wrote one. So a new client's portal said "No engagement letter has been
+  > prepared yet" for ever, and the claim's own next action, "Prepare and send the engagement letter", could not be done.
+  >
+  > SENDING (Sales and Admin, `engagement.send`): the letter is raised for the client if it has none, marked SENT with the
+  > moment and who sent it, and every client login of the business is emailed the link to read and sign it in the portal
+  > (through the outbox: sent the day email sending is on). Sending again re-sends the email; the first sent moment stays.
+  > Refused, in plain words, when the letter is already signed, or when the client has no login to read it with.
+  >
+  > THE SIGNED COPY: the signed PDF the signature record holds (src/modules/claims/signing.ts), checked against its fingerprint
+  > before it is handed to anybody, for the client in the portal and for Sales and Admin on the client page.
+  >
+  > Nothing here opens signing: ENGAGEMENT_SIGNING decides that, and is off.
+
+### `src/modules/claims/research.ts`
+
+- Line 730:
+
+  > PHASE 157c (F12b): a row the last click left NOT_RUN keeps the reason that click wrote (the nation not known,
+  >          say), rather than the fixed "not switched on yet", which is wrong for a lookup that is switched on.
+
+- Line 914:
+
+  > PHASE 157c, 6 October 2026 (the Friary House run, finding F12). Every waived free lookup (CQC, EPC, planning, price
+  >      paid) needs to know which part of the UK the property is in, and that came only from a recorded nation or the ONS
+  >      table, which this copy of the website does not have. So on a click where the waiver holds and a waived lookup is
+  >      about to run, the postcode check (postcodes.io: the postcode only) is asked ONCE, its country is used for every
+  >      lookup on this click, and its council area for the care regulator. Nothing is written here; nothing is assumed:
+  >      a country it does not give, or a check that fails, leaves the nation unknown, exactly as before.
+
+### `src/modules/claims/signing.ts`
+
+- Line 254:
+
+  > PHASE 157c: version 2 also binds the signature itself (its method and every stroke) and the certificate's facts.
+
+- Line 264:
+
+  > ================================================================== *
+  > PHASE 157c — THE DRAWN SIGNATURE
+  > ==================================================================
+
+- Line 328:
+
+  > PHASE 157c: the signature page, with the drawn signature (or the typed name, where they chose it).
+
+- Line 344:
+
+  > PHASE 157c: the certificate of completion - every step of the letter, with its time, and the fingerprints.
+
+- Line 476:
+
+  > PHASE 157c: the signing pad's strokes (JSON), or empty.
+
+- Line 478:
+
+  > PHASE 157c: the client chose their typed name as their signature (when they cannot, or would rather not, draw).
+
+- Line 529:
+
+  > PHASE 157c: a signature, drawn or adopted. A drawing wins over the tick; neither is refused, never assumed.
+
+### `src/modules/crm/client-page.ts`
+
+- Line 132:
+
+  > PHASE 157c (F21)
+
+- Line 144:
+
+  > PHASE 157c (the Friary House run, F11): the "Run the research" links open the Lookups section; "#sources" alone
+
+- Line 330:
+
+  > PHASE 157c (the Friary House run, F21): THE ENGAGEMENT LETTER — its steps, the button that sends it, and the signed
+  >      copy once there is one. Only for a login that may read the letter (Admin, Sales).
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 1106:
+
+  > PHASE 157c (F8): the town only where the label does not already carry it ("…, Plymouth, PL4 9BH, Plymouth").
+
+- Line 1162:
+
+  > PHASE 157c (the Friary House run, F9): a move also needs one next action; "Ready" with none was refused.
+
+### `src/modules/crm/leads.ts`
+
+- Line 660:
+
+  > PHASE 157c (the Friary House run, F9): THE LEAD'S FOLLOW-UP BECOMES THE CLAIM'S NEXT ACTION. A converted claim had
+  >      none, so its first move was refused ("This claim has no next action") while the page said "Ready". The lead's
+  >      earliest open task, with a due date, is carried over as the claim's next action: its own owner, else the lead's
+  >      owner. With no due date, or nobody to own it, nothing is invented and the claim asks for one, as before.
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 500:
+
+  > PHASE 157c (the Friary House run, F7): the Convert button shows only once the lead is Qualified; say so.
+
+### `src/modules/crm/staff-dashboard.ts`
+
+- Line 211:
+
+  > PHASE 157c (the Friary House run, F20): files a client sent from the portal in the last 14 days. Nobody was told.
+
+### `src/modules/portal/portal.ts`
+
+- Line 195:
+
+  > PHASE 157c: the moment the client first opened it is kept, for the certificate of completion.
 
 ### `src/shared/pdf.ts`
 
@@ -9168,6 +16982,159 @@ neither says.
 
   > PHASE 157d, 6 October 2026 — four more types (the Friary House run, F16). Dates, sums, lists of figures and room
 
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 89:
+
+  > Phase 157d (the Friary House run, finding F16): four types the claim asks clients for, which nothing could receive.
+
+- Line 127:
+
+  > Phase 157d — the four document types. Each names figures, never a person: the price and its parts on a
+
+- Line 558:
+
+  > Phase 157d. Off, by the same rule.
+
+- Line 632:
+
+  > Phase 157d — the four types. LAST again, so no heading an earlier type used changes kind (test TX2).
+
+### `src/modules/claims/documents/upload-handler.ts`
+
+- Line 224:
+
+  > PHASE 157d, 6 OCTOBER 2026 (the Friary House run, finding F19): A PDF THAT STOPS PART-WAY IS REFUSED AS DAMAGED.
+  > Every complete PDF ends with an end-of-file marker, `%%EOF`, in its last few hundred bytes (a later saved edit adds
+  > another, later on). One cut off in the middle of sending, or truncated by the program that made it, has none: it
+  > passes the `%PDF` check above and then reads as nothing. The marker is looked for in the last 1,024 bytes, which
+  > allows for the trailing spaces and line ends some programs add after it. Only a PDF is checked; the other formats
+  > have no such marker.
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 54:
+
+  > PHASE 157d: the signing setting this copy runs under, for the letter's links.
+
+- Line 103:
+
+  > PHASE 157d: who must sign — one or two of the client's logins, or any one (none ticked).
+
+### `src/modules/claims/engagement-send.ts`
+
+- Line 31:
+
+  > PHASE 157d: the signing setting this copy runs under. Signing links are made only where it says `links`.
+
+- Line 51:
+
+  > PHASE 157d: who must sign (staff's choice; empty is any one login), and who has.
+
+- Line 93:
+
+  > PHASE 157d: where signing links are on, each login is also sent its own single-use link that opens the letter for
+  >      signing without signing in. Where staff named who must sign, only they are sent one.
+
+- Line 120:
+
+  > PHASE 157d: the latest signature's PDF carries every signature on the letter.
+
+### `src/modules/claims/signing.ts`
+
+- Line 76:
+
+  > PHASE 157d: SIGNING FROM A LINK IN THE EMAIL, without a portal login. Off for real clients until the solicitor's
+  > answer covers it (Word question, under the solicitor: SIGNING_LINK_QUESTION); on with ENGAGEMENT_SIGNING_TEST.
+
+- Line 83:
+
+  > PHASE 157d: the solicitor's question for signing from an emailed link. Quoted, not paraphrased.
+
+- Line 87:
+
+  > PHASE 157d: how long a signing link works, from the moment it is sent. A test default, not agreed.
+
+- Line 242:
+
+  > PHASE 157d (version 3): which signature on the letter this is (1 or 2), and the link it was signed through.
+
+- Line 260:
+
+  > PHASE 157d: version 3 also binds which signature on the letter it is, and the link it came through.
+
+- Line 300:
+
+  > PHASE 157d: the signatures already on this letter, first signer first. Version 3 shows them all.
+
+- Line 302:
+
+  > PHASE 157d: how many signatures the letter needs, for the certificate.
+
+- Line 372:
+
+  > PHASE 157d: the certificate of completion for one or two signers, each with how they signed — in the portal, signed
+  > in as their login, or from the link emailed to their address, which is what that link proves.
+
+- Line 414:
+
+  > PHASE 157d: WHO MUST SIGN. The client logins staff recorded (engagement_required_signers), first signer first; none
+  > recorded means any one client login of the business signs, as before.
+
+- Line 544:
+
+  > PHASE 157d: who must sign, and whether this login has.
+
+- Line 583:
+
+  > THE CLIENT SIGNS IN THE PORTAL. The client's own business only (readBusiness refuses any other), the switch on, the
+  > letter complete, sent to them and not yet signed, a full name, a role, the tick, the fingerprint of the letter they
+  > read — and, since Phase 157d, one of the people staff named, if they named any.
+
+- Line 599:
+
+  > ================================================================== *
+  > PHASE 157d — SIGNING FROM A LINK IN THE EMAIL
+  > ==================================================================
+
+- Line 643:
+
+  > PHASE 157d: STAFF RECORD WHO MUST SIGN — one or two of the business's client logins. Refused once anyone has signed,
+  > because the letter's signatures are counted against it. An empty list goes back to "any one client login".
+
+- Line 699:
+
+  > THE RECORDS, CHECKED. Each present; its hash recomputed from its own fields; the letter text and the PDF matching their
+  > fingerprints; and an ENGAGEMENT_SIGNED row in the audit chain carrying that hash. And, since Phase 157d, as many as the
+  > letter needs. Any one wrong is "not signed". The latest signature is the one returned: its PDF carries them all.
+
+### `src/modules/claims/uploads.ts`
+
+- Line 353:
+
+  > PHASE 157d (F19): the words for a PDF with no end.
+
+- Line 374:
+
+  > PHASE 157d (F19): a PDF with no end is damaged — cut off, or saved wrongly — and is refused before it is written.
+
+- Line 381:
+
+  > PHASE 157d (F18): the fingerprint of the bytes as they arrived, and whether this business sent the very same bytes
+  >      before. The copy is kept either way, as a version; the client is told when they sent it, not refused.
+
+### `src/modules/crm/client-page.ts`
+
+- Line 334:
+
+  > PHASE 157d: the client's logins, for "Who must sign".
+
+### `src/modules/portal/client-files-pages.ts`
+
+- Line 81:
+
+  > PHASE 157d (F19): a PDF with no end is damaged. acceptClientBytes refuses it too; this only says so first.
+
 ## 6 Oct 2026: no phase named
 
 ### `src/core/router.ts`
@@ -9192,6 +17159,33 @@ neither says.
 
   > THE CAP, ONE NAMED CONSTANT. 50 searches a UK calendar day at 2p each is £1 (Lakhbir, 6 Oct 2026); 5 for one visitor,
   > which is one assessment (a draft).
+
+### `src/modules/claims/case-stamp.ts`
+
+- Line 204:
+
+  > 6 Oct 2026: the test copy only, test website
+
+### `src/modules/claims/signing.ts`
+
+- Line 68:
+
+  > 6 October 2026 (Lakhbir): ON FOR TESTING. Under this setting the solicitor's answer is waived and the TEST COPY of
+  > the letter may be signed — and nothing else: the real letter is refused, whatever else holds. Only
+  > ENGAGEMENT_SIGNING_TEST sets it, and only the test website (api/index.mjs) or a local copy started with
+  > CAPREBATE_SIGNING_TEST=1 uses that.
+
+- Line 100:
+
+  > SIGNING ON FOR TESTING — 6 October 2026. The test website (and a local copy started with CAPREBATE_SIGNING_TEST=1)
+  > lets an invented client sign the TEST COPY of the letter end to end: the drawn signature, the record, the certificate
+  > of completion and the signed copy. The real letter cannot be signed under it (`signingMissing`), and the switch real
+  > clients would use, ENGAGEMENT_SIGNING above, stays off until the solicitor answers Word question 194.
+
+- Line 198:
+
+  > 6 October 2026: signing on for testing signs the test copy and nothing else. The test copy's open terms carry test
+  >      defaults (each marked "test default, not agreed"); they are what is being tested, so they do not refuse it here.
 
 ## 7 Oct 2026: Phase 158a
 
@@ -9229,6 +17223,109 @@ neither says.
   > PHASE 158b (F29, the Friary House run): "St Judes" read as STREET JUDES. A street word comes after the name, so an
   >        ST that opens a name of more than one word is a saint, whether or not the saint is on the list.
 
+### `src/modules/claims/claim-facts.ts`
+
+- Line 326:
+
+  > PHASE 158b (the Friary House run, F28): whether the client said at the assessment that they bought this property -
+  > its own "how did you come by this one?" answer, found by the property's address (or, with one building on both
+  > sides, the only one). 'YES' for a purchase, 'NO' for a build, a refurbishment or a fit-out, null where it cannot be
+  > told. Read where the claim's own fact BOUGHT_THE_BUILDING is not recorded; a fact staff record always wins.
+
+### `src/modules/claims/letter.ts`
+
+- Line 134:
+
+  > PHASE 158b (F22, the Friary House run): the letter named a partnership "a company registered in England and Wales
+  > under company number 98604417" - the specimen - and left "Date:" and "Subject property:" blank. The client's own
+  > kind of business now decides how the letter describes them: a partnership, a sole trader or an individual has no
+  > company number to give, so the company words and the specimen number go; an LLP is called one. A company with no
+  > number on record keeps the specimen, flagged, as before - and signing refuses it (signing.ts).
+
+- Line 150:
+
+  > PHASE 158b: businesses.claimant_type, the property or properties, and the letter's date, as words.
+
+- Line 160:
+
+  > PHASE 158b: who the client is, before the specimen number is replaced or flagged.
+
+### `src/modules/claims/mandatory-documents.ts`
+
+- Line 145:
+
+  > PHASE 158b (F28): where nobody has recorded whether the client bought it, the client's own assessment answer.
+
+### `src/modules/claims/research.ts`
+
+- Line 1122:
+
+  > PHASE 158b (F30): a signed client's step becomes "We research your property" once a register has answered.
+
+### `src/modules/claims/signing.ts`
+
+- Line 134:
+
+  > PHASE 158b (F22): the letter still names the specimen company number, so it does not say which business is signing.
+
+- Line 138:
+
+  > PHASE 158b (F22): what the letter says about this client beyond their name - from the records, never typed in.
+
+- Line 194:
+
+  > PHASE 158b (F22): a letter that still names the specimen company number does not say which business is signing.
+  >      Refused in every mode, the test copy's included: the Friary House run signed a partnership in as "company number
+  >      98604417". The client's kind of business (or a company's number) on their record clears it.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 1068:
+
+  > PHASE 158b (F31): the claim's survey job. At Survey, with none open, Admin and Sales choose a surveyor and open it,
+  > which seals the estimate (src/web/survey-open.ts). Once open, whose it is and whether the figures are in. Never a
+  > figure: this page is read by roles the estimate is hidden from.
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 259:
+
+  > PHASE 158b (F31): open the claim's survey job for the surveyor chosen; it seals the estimate (src/web/survey-open.ts).
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 746:
+
+  > PHASE 158b (F30, the Friary House run): no claim stage maps to the client's step 3, "We research your property", so a
+  > client went from step 2 to step 4 while we researched. A research run that got an answer from at least one register,
+  > on a client whose letter is signed, raises the client's step to it. Raise only, as raiseBusinessStage: a business
+  > already past it stays where it is, and one whose letter is not signed is never shown a step it has not reached.
+
+- Line 1113:
+
+  > PHASE 158b (F27): the client steps, so a page can draw the line under the request's own name switch.
+
+- Line 1200:
+
+  > PHASE 158b (F27): the portal's own line, numbered, in the shipped step names (NAME_SWITCHES.portalSteps is on).
+  >          The claim page redraws it from the keys under the request's own switch (crm-pages.ts); this module does not
+  >          import navigation.ts, which reads the settings tiles as it loads (an import loop broke phase156e).
+
+### `src/modules/portal/portal-dashboard.ts`
+
+- Line 105:
+
+  > PHASE 158b (F40, the Friary House run): "We issued your The client report". The label's own "The" goes, and it reads in the sentence.
+
+### `src/modules/portal/portal-steps.ts`
+
+- Line 35:
+
+  > PHASE 158b (F27, the Friary House run): the line the client's portal shows for a step - "Step 2 of 6: Engagement
+  > letter signed" - so the claim page can quote it as the client sees it. The claim page quoted the business flow's own
+  > labels with no number, and "Engagement - letter, data & AI consent" read as a step BEFORE "The engine runs" when it is
+  > the one after it.
+
 ### `src/shared/html.ts`
 
 - Line 87:
@@ -9257,6 +17354,120 @@ neither says.
 
   > PHASE 158c (F39): the client accepts the released report (src/web/report-accept.ts).
 
+### `src/modules/claims/claim-facts.ts`
+
+- Line 349:
+
+  > PHASE 158c (F37, the Friary House run): THE WINDOW, WARNED EARLY. The amendment window was first tested at Reports, so a
+  > client who said "06/2019" at the assessment went through the letter, the paid research and the survey first. From
+  > Engagement until Reports, where the client's own date (and nothing recorded yet settles it) puts the window out of reach
+  > even on the most generous reading - the latest accounting period the spend could fall in, twelve months on, and the
+  > later of the rules where the client's kind is not known - the claim page says so. It warns; it never stops a claim.
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 689:
+
+  > PHASE 158c (F42): the client's "5 Claim filed" waits for this record; a claim already past Invoice now shows it.
+
+- Line 695:
+
+  > PHASE 158c (F42, the Friary House run): the claim closed, and the portal said "Claim filed", with no record that the
+  > claim was filed. Closing a claim that reached the defence pack needs the filing date on its reconciliation.
+
+- Line 888:
+
+  > PHASE 158c (F36, F38): what is true of each line, not one sentence for all of them.
+
+- Line 922:
+
+  > PHASE 158c (F38, the Friary House run): THE CLIENT REPORT AND THE ACCOUNTANT'S PACK ARE THE APPLICATION'S OWN REPORT.
+  > They were issued with a fingerprint staff typed, while the report built from the survey pack (src/modules/claims/report-pages.ts)
+  > went unread. Now each is issued from the version the client may see - the newest approved version of a survey pack on a
+  > job on THIS claim, with a tax adviser's sign-off of that version's figure recorded after it was approved, and its
+  > fingerprint holding: report-signoff.ts's `releasedVersion` rule, read here for one claim (an import of that module
+  > would loop back to this one). Its fingerprint is the deliverable's.
+
+- Line 1013:
+
+  > PHASE 158c (F38): the report and the accountant's pack carry the released version's own fingerprint, never one typed.
+
+### `src/modules/claims/report-pages.ts`
+
+- Line 278:
+
+  > PHASE 158c (F39): "I accept this report", on the report page and the home card - or when this login accepted it. A
+  > plain form, no script: the portal's pages stay script-free.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 1114:
+
+  > PHASE 158c (F37): the amendment window, warned from the client's own date, from Engagement until Reports.
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 194:
+
+  > PHASE 158c (F34, F35, the Friary House run): Sales could tick "signed by the surveyor" - the surveyor could not -
+  >        while the survey pack had no approved version. The gate reads the surveyor's own approval of the pack now.
+
+- Line 200:
+
+  > PHASE 158c (F39): staff ticked this for the client. The client accepts the report in their portal now.
+
+- Line 216:
+
+  > PHASE 158c (F39): THE CLIENT ACCEPTED THE ISSUED REPORT, IN THEIR PORTAL (src/modules/portal/report-accept.ts) - an acceptance on
+  > this claim of the fingerprint the issued client report carries. A later version issued needs accepting again.
+
+- Line 231:
+
+  > PHASE 158c (F35): THE SURVEYOR'S VALUATION IS THE SURVEYOR'S APPROVAL OF THE PACK (src/web/pack-approve.ts) - a version
+  > approved on a survey job on THIS claim. Approving needs every value, the legal check settled, every chapter opened,
+  > the inspection basis and a RICS number, so no tick can stand in for it.
+
+- Line 492:
+
+  > PHASE 158c (F39): the client's own acceptance, in the portal, of the issued report; no longer a tick.
+
+- Line 634:
+
+  > PHASE 158c (F41, the Friary House run): the claim moved on with the fee "raised, not sent" - the client had not been
+  >          invoiced. A live fee invoice must be recorded as SENT (finance's "sent", src/web/invoices.ts markSent).
+
+- Line 650:
+
+  > PHASE 158c (F42); per return since 159l
+
+- Line 734:
+
+  > PHASE 158c (F42, the Friary House run): the client's step a claim evidences. The defence pack and Closed are the
+  > client's "5 Claim filed", and the portal said so with no record that the claim was filed. Until the filing date is on
+  > the claim's reconciliation, such a claim evidences "4 Expert sign-off"; recording it raises the client's step.
+
+### `src/modules/portal/portal-dashboard.ts`
+
+- Line 111:
+
+  > PHASE 158c (F39, the Friary House run): with the report issued, the client was still told "A chartered surveyor is
+  > valuing the property". Once a version is released to them the sentence says the report is ready, or that they
+  > accepted it. Otherwise the step's own words, as before.
+
+### `src/modules/portal/report-accept.ts`
+
+- Line 1:
+
+  > THE CLIENT ACCEPTS THE SURVEY REPORT — Phase 158c, 7 October 2026.
+  >
+  > The Friary House run (04-phase-work/sim-2026-10-06, finding F39): the portal said "We issued your client report" and
+  > gave the client nothing to open or accept, and the Reports gate passed on "The client accepted the report", a tick a
+  > member of staff made for them. Now the client reads the version released to them (report-signoff.ts
+  > `releasedVersion`: approved by the surveyor, its figure signed off by a tax adviser) at /portal/report, and accepts it
+  > there: who, when, and that version's fingerprint, kept for ever (migration 101). The gate reads an acceptance of the
+  > ISSUED client report's own fingerprint (src/modules/crm/pipeline.ts `clientAcceptedNeed`), so a later version must be
+  > accepted again.
+
 ### `src/shared/next-step.ts`
 
 - Line 35:
@@ -9276,6 +17487,160 @@ neither says.
 - Line 471:
 
   > PHASE 158d (F46): email the client's accountant a link to confirm for themselves (src/web/accountant-confirm-pages.ts).
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 386:
+
+  > PHASE 158d (F45): with nothing on the property record, the surveyor's legal-check date or the client's checked answer.
+
+- Line 464:
+
+  > PHASE 158d (F45): say which date the window read when it is not the property record's, and fill the accounting
+
+- Line 1114:
+
+  > PHASE 158d: the client's own answer to one of our questions, once a member of staff has checked it — the newest
+  > answered question for `fact_id` whose latest tick is APPROVED. "I don't know" is not an answer; an unchecked answer and
+  > one whose tick was taken off are not read.
+
+- Line 1127:
+
+  > PHASE 158d (F44, the second Friary House run): "Data gathering complete — floor area sourced" passed with no floor area
+  > recorded anywhere. A floor area is on record when one of these holds it: the property's energy certificate (a register
+  > record of this property, or the business's only one where it names no property), Homedata's estimate for the address,
+  > or the client's own answer to "how big is the building", checked, with a number in it.
+
+- Line 1162:
+
+  > PHASE 158d (F45): a whole date in the words a client types — "2024-06-14", "14/06/2024", "14 June 2024", "June 14 2024".
+  > A month alone ("June 2024", "06/2024") is not a date, and is not read as one.
+
+- Line 1179:
+
+  > PHASE 158d (F45): a year end in a client's words — "5 April", "April 5", "31/03" — as month and day, or null.
+
+- Line 1191:
+
+  > PHASE 158d (F45, the second Friary House run): the purchase date was asked in four places and the window read only the
+  > one staff type on the property record. Where that is empty, this is the date someone else gave: the surveyor's answer
+  > to the legal check's G9d on a pack for this property, or else the client's own answer to "the completion date",
+  > checked by staff and a whole date. Never written over the property record; read, with where it came from.
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 624:
+
+  > PHASE 158d (F46): whether the client's accountant files this claim — the Reports route (src/modules/portal/client-filing.ts) is
+  > ACCOUNTANT. Then the filing date is theirs to give, through their own link (src/modules/portal/accountant-confirm.ts).
+
+- Line 701:
+
+  > PHASE 158d (F46): where the client's accountant files, the filing is their own answer through their link.
+
+- Line 905:
+
+  > PHASE 158d (F47)
+
+- Line 932:
+
+  > PHASE 158d (F47): every deliverable the application makes itself; none takes a typed fingerprint.
+
+- Line 935:
+
+  > PHASE 158d (F47, the second Friary House run): THE DEFENCE PACK, MADE FROM THE CLAIM'S OWN RECORDS. It was the last
+  > deliverable issued on a SHA-256 staff typed. Now it is the list of what defends the claim, read from rows that never
+  > change: the survey report the surveyor approved (released to the client), the tax adviser's sign-off, the client report
+  > and the accountant's pack as issued, the client's acceptance of that report, our fee invoice as sent, and the filing.
+  > All must be there; otherwise it says which are missing. Its fingerprint is the SHA-256 of the list as kept.
+
+- Line 1018:
+
+  > PHASE 158d (F47): the defence pack is made here too, from the claim's own records; its fingerprint is worked out.
+
+### `src/modules/claims/mandatory-documents.ts`
+
+- Line 201:
+
+  > PHASE 158d (F43): the documents the gate is waiting on from the client — the type codes that apply to this claim and
+  > have not been received. One whose condition is not known is left out: that fact is ours to establish first.
+
+### `src/modules/claims/signing.ts`
+
+- Line 457:
+
+  > PHASE 158d (F43, the second Friary House run): the client signed and their portal still said "Step 1 of 6: Your
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 205:
+
+  > PHASE 158d (F46): Sales ticked this for the accountant. The accountant answers through their own link now.
+
+- Line 621:
+
+  > PHASE 158d (F46): the accountant's own answer, not a staff tick
+
+- Line 1029:
+
+  > PHASE 158d (F44): "floor area sourced" is the analyst's own tick, and it now needs a floor area on record to tick.
+
+### `src/modules/portal/accountant-confirm-pages.ts`
+
+- Line 1:
+
+  > THE ACCOUNTANT'S CONFIRMATIONS, ON SCREEN — Phase 158d, 9 October 2026 (F46). src/modules/portal/accountant-confirm.ts holds the rules.
+  >
+  >   On the claim page   "The accountant's confirmations": what was sent and what came back, and (Admin and Sales, at the
+  >                       right stage, on the accountant route) a form to send the link.
+  >   POST /staff/claims/{id}/accountant-confirm   send one (`email.queue`).
+  >   /confirm/{token}    the accountant's own page: no login, the link alone. They confirm, or say it is not so.
+
+### `src/modules/portal/accountant-confirm.ts`
+
+- Line 1:
+
+  > THE CLIENT'S ACCOUNTANT CONFIRMS FOR THEMSELVES — Phase 158d, 9 October 2026.
+  >
+  > The second Friary House run (04-phase-work/sim-2026-10-06, finding F46): two steps were still ticked by Sales for the
+  > client's accountant — "The client's accountant confirmed the claim fits the return and the amendment window"
+  > (ACCOUNTANT_CONFIRMED_RETURN) and the filing date on the reconciliation — while the same accountant had just signed off
+  > the figures through their own private link (src/modules/claims/report-signoff.ts). Now each is the accountant's own answer:
+  >
+  >   SENT     Admin or Sales (`email.queue`, as the sign-off link) emails one of the company's accountants or advisers a
+  >            private link: RETURN_FIT at Reports, FILED at Invoice or the defence pack. Only the link's SHA-256 is kept;
+  >            it works for 30 days and is answered once (migration 102). It goes as the sign-off link goes — the outbox
+  >            kind REPORT_FOR_SIGNOFF, whose link is blanked once sent — under every rule every email follows.
+  >   ANSWERED Whoever holds the link answers: confirmed (their name and firm, ending Limited, LLP or plc, and for FILED the
+  >            day the amended return was filed), or not confirmed with why. A FILED confirmation is written to the claim's
+  >            reconciliation as its filing date, in the same transaction — recorded under the member of staff who sent
+  >            the link, and logged as the accountant's answer.
+  >   READ     The Reports gate reads a confirmed RETURN_FIT answered since the claim entered Reports
+  >            (`accountantFitNeed`); closing a claim at the defence pack reads a confirmed FILED answer
+  >            (`filingRecordedNeed` in src/modules/claims/claim-record.ts). The staff tick is retired; typing a filing date is
+  >            refused where the accountant files. Where the client has no accountant (src/modules/portal/client-filing.ts), nothing
+  >            here applies and that route is unchanged.
+
+### `src/modules/portal/portal-dashboard.ts`
+
+- Line 125:
+
+  > PHASE 158d (F43): the day the client signed their engagement letter, if it was on or after `since`.
+
+- Line 133:
+
+  > PHASE 158d (F43, the second Friary House run): "What we need from you" said "Nothing at the moment" while the claim's
+  > gate waited on the client: four documents at Data gathering (they appeared only once staff asked for each), and their
+  > acceptance of the report at Reports. Now it lists what the gate itself is waiting on from them: each required document
+  > not yet received on a claim at Data gathering (one already asked for is listed once, as the request), and the
+  > released report while this login has not accepted it. A document whose need is not known yet is not listed: that is a
+  > fact for us to establish, not something to ask the client for.
+
+### `src/modules/portal/portal.ts`
+
+- Line 101:
+
+  > PHASE 158d (F48): the same step the rest of the portal reads — signed at Engagement, and "Claim filed" only once filed.
 
 ### `src/shared/next-step.ts`
 
@@ -9318,6 +17683,156 @@ neither says.
 
   > PHASE 159a (L1): the download now answers 302 to the same address with an AccessToken cookie, then 302 to a signed
 
+### `src/modules/assessment/allowances.ts`
+
+- Line 51:
+
+  > What the claim records that the allowances turn on, as it stood when the spreadsheet was sent (Phase 159a, C29).
+
+### `src/modules/assessment/assessment.ts`
+
+- Line 294:
+
+  > PHASE 159c (line 8, E3): NO LOW END IS STORED. Since Phase 159a the client is shown "up to £X" alone, and the band's
+  >      low end was above the engine's own low on a purchase (where an unknown seller can leave nothing). Storing it made a
+  >      low end nobody was shown, and the reconciliation's "range shown" read it. The client saw the ceiling only, so that
+  >      is what is kept; the reconciliation says so.
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 1198:
+
+  > PHASE 159a (C3, L3): ONCE A VERSION IS SIGNED, ITS PURCHASE DATE IS THE ONE READ. The newest version a tax adviser's
+  >      sign-off names, on a pack for this property, since the valuation was last reopened: its legal check's G9d as it was
+  >      approved. A newer working answer in the pack is never read in its place.
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 110:
+
+  > PHASE 159a (C4): the approved version the adviser signed; null on a claim with no approved survey pack.
+
+- Line 119:
+
+  > The sign-off record a gate may use: one recorded since the claim last ENTERED TAX_ADVISER_SIGNOFF — and, PHASE 159a,
+  > since the valuation was last reopened (src/modules/claims/valuation-lock.ts), which sets every earlier sign-off aside.
+
+- Line 135:
+
+  > PHASE 159a (C4): where the claim has an approved survey pack, the sign-off must be of its NEWEST version.
+
+- Line 259:
+
+  > PHASE 159a (C4): the version this form records a sign-off of — the newest approved one — or null where there is none.
+
+- Line 319:
+
+  > PHASE 159a (C4): the newest approved version on the claim, with its figure, for the sign-off form to name.
+
+- Line 360:
+
+  > PHASE 159a (C4): THE SIGN-OFF NAMES THE VERSION IT SIGNED — the newest approved version on the claim. One sent for
+  >      sign-off names its own (report-signoff.ts recordAnswer), and is refused if the surveyor has approved a newer one.
+
+- Line 398:
+
+  > PHASE 159a (C4): the figure is the version's own. A different figure is a different version: the surveyor approves it first.
+
+- Line 425:
+
+  > PHASE 159a (C29): the signed version's return entries are fixed from here, on the facts as they stand now.
+
+- Line 835:
+
+  > PHASE 159a: an issued deliverable counts only if it was issued after the valuation was last reopened (a defence pack).
+
+- Line 974:
+
+  > PHASE 159a (C4): the version a sign-off NAMES, recorded since the valuation was last reopened — never one matched by its total.
+
+### `src/modules/claims/report-signoff.ts`
+
+- Line 118:
+
+  > PHASE 153b (Word question 121): the return entries for each year, as a spreadsheet, beside the PDF. PHASE 159a
+
+- Line 148:
+
+  > Phase 159a: the approved version the link is for.
+
+- Line 230:
+
+  > PHASE 159a (C4): the sign-off names this version, and is refused if the surveyor has approved a newer one.
+
+- Line 239:
+
+  > The version the client may see: the newest approved version of any of their survey packs for which a sign-off
+  > NAMING THAT VERSION is on the claim (PHASE 159a, C4: never one matched by its total), recorded since the valuation was
+  > last reopened (src/modules/claims/valuation-lock.ts) — and only while its fingerprint holds.
+
+### `src/modules/claims/return-entries.ts`
+
+- Line 212:
+
+  > PHASE 159a (C29): the facts a version's spreadsheet was first sent on, or null if it has not been sent.
+
+### `src/modules/claims/valuation-lock.ts`
+
+- Line 1:
+
+  > ONE VERSION AFTER SIGN-OFF. PHASE 159a, 9 October 2026, from the stress test of that day (C3, C5, and L3 in the
+  > Lockwood Surgery run).
+  >
+  > What went wrong: a surveyor could approve a new version of the survey pack, and answer the legal check again, after
+  > the tax adviser had signed off and the claim had moved on to Reports, or after the claim had stopped. The client's
+  > report, their acceptance and the defence pack stayed on the signed version, while the amendment-window gate read the
+  > newer version's purchase date. So the claim closed on a report whose purchase date was not the one the gate checked.
+  >
+  > THE RULE NOW:
+  >   · LOCKED. Once a claim is past the tax adviser's sign-off (Reports, Invoice, Defence pack, Closed), or has stopped
+  >     at an exit, its valuation is fixed: no pack approval and no legal-check answer is taken (src/web/pack-approve.ts,
+  >     src/web/pack-legal.ts). A claim on hold is judged by the stage it returns to.
+  >   · REOPENED, ON PURPOSE. The only way to change the figures then is "Reopen the valuation": an admin moves the claim
+  >     back to Valuation, with a reason (the claim's own REOPEN move, src/modules/crm/pipeline.ts). A reopen to any stage up to
+  >     and including the tax adviser's sign-off SETS ASIDE what was released on the old figures, and the claim page says
+  >     each one: the tax adviser's sign-off, the client report and the accountant's pack as issued (marked superseded),
+  >     the client's acceptance of that report, and any defence pack. Nothing is deleted: every record stays, and the
+  >     readers below look only at what came after the reopen.
+  >
+  > `voidLine` is the moment of the latest such reopen. A sign-off, an acceptance or an issued deliverable from before it
+  > no longer counts.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 540:
+
+  > PHASE 159a: ONE VERSION AFTER SIGN-OFF, ON THE CLAIM PAGE. Once the figures are fixed it says so; an admin gets
+  > "Reopen the valuation", with what that sets aside; and after a reopen, what it set aside and why.
+
+### `src/modules/crm/data-borrowed.ts`
+
+- Line 105:
+
+  > PHASE 159a: an acceptance from before the valuation was last reopened is set aside (src/modules/claims/valuation-lock.ts).
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 789:
+
+  > PHASE 159a: a reopen to the tax adviser's sign-off or earlier sets aside what was released (src/modules/claims/valuation-lock.ts).
+
+- Line 1130:
+
+  > PHASE 159a: "Reopen the valuation" — offered to an admin once the figures are fixed, with what it sets aside.
+
+- Line 1133:
+
+  > PHASE 159a: whether the figures are fixed, and the latest valuation reopen with what it set aside.
+
+- Line 1236:
+
+  > PHASE 159a: the valuation's state for the claim page — fixed or not, and the latest reopen that set things aside.
+
 ### `src/shared/engine.ts`
 
 - Line 409:
@@ -9345,6 +17860,65 @@ neither says.
   > low did not support. The stored low stays where it is, an internal reading for
   > the reconciliation; it is not drawn on any screen through here.
 
+## 9 Oct 2026: Phase 159b
+
+### `src/modules/assessment/funnel-session.ts`
+
+- Line 161:
+
+  > PHASE 159b (E11): an extension is new space; the engine sizes it as a new build.
+
+- Line 265:
+
+  > PHASE 159b (E5): THE FOUR-STAGE FUNNEL ASKS THE NARROW QUESTION. Its claims screen asks "Have you, or your business,
+  > already claimed on the fixtures in this building, such as the wiring and heating?" — a fixtures claim of the
+  > client's own, not a van or a repair, which is the objection under NOT MAPPED below. So for a funnel-4 assessment a
+  > "yes" sets `prior_claim_self`, and the engine leaves nothing to claim on that spend (CB_INPUTS.run). "Not sure"
+  > sets nothing. The older six-screen funnel keeps its broader question and is not mapped.
+
+- Line 333:
+
+  > PHASE 159b (E6): THE SELLER'S CLAIM, ON A PURCHASE OF THE BUILDING. The funnel-4 claims screen asks it only of a
+  > building the client says "We bought it" of — buying the building, which is the engine's own "deal: property".
+  > "yes" and "no" reach `prior_owner_claimed`, so the s.187A reading runs; "don't know" sets nothing (N4). The
+  > older funnel asks it of every client on every trigger, and is still not mapped (NOT MAPPED, Q1a).
+
+### `src/modules/assessment/funnel4.ts`
+
+- Line 89:
+
+  > PHASE 159b (E11): an extension is its own answer below — new space, sized like a new build.
+
+- Line 93:
+
+  > PHASE 159b (E5): the first question is about YOUR OWN earlier claim. "Has anyone claimed" mixed it with the seller's,
+
+- Line 155:
+
+  > PHASE 159b (E9): AN AMOUNT AS A PERSON TYPES IT. "£650,000", "650000", "650k", "1.5m", "£1.25 million" are read as
+  > they are meant; "-50000", "1e6", "1,5" and "1.000.000" are refused with a reason rather than read as 50000, 16, 15
+  > or nothing. An amount under £1 is refused. An unparseable figure stays NULL; it never becomes 0.
+
+- Line 175:
+
+  > PHASE 159b (E12): the first month a "MM/YYYY" or "YYYY" answer could mean, as "YYYY-MM", or null.
+
+- Line 307:
+
+  > PHASE 159b (E12): a date that has not happened yet is refused.
+
+- Line 495:
+
+  > PHASE 159b: where the engine will not size a building (an earlier claim, the seller, the date, its size), its words.
+
+- Line 517:
+
+  > PHASE 159b (E19): a business not making a profit still has the allowances; they come as a loss to carry.
+
+- Line 711:
+
+  > PHASE 159b: no building we could size is never "up to £0" — that reads as "you are owed nothing".
+
 ## 9 Oct 2026: Phase 159c
 
 ### `src/core/audit.ts`
@@ -9365,6 +17939,223 @@ neither says.
 
   > PHASE 159c: what happened to the building, event by event, each with its own figure and documents
 
+### `src/modules/assessment/assessment.ts`
+
+- Line 344:
+
+  > PHASE 159c: WHAT HAPPENED TO EACH BUILDING, IN ORDER — its first event, then each piece of work since, each with its
+  >        own date and cost (CB_FUNNEL.eventsOf), kept on the property (migration 105) for the lead, the claim and the pack.
+
+- Line 463:
+
+  > PHASE 159c: each piece of work since is its own event, so each is its own three rows (Q3-n-wJ-...). An assessment
+  >        from before keeps its one Q3-n-works-... set; the lead's spend total reads both.
+
+### `src/modules/assessment/funnel-deletable.ts`
+
+- Line 16:
+
+  > PHASE 159c: each building's events, as the assessment gave them (migration 105) — the funnel's own answers, kept on the property
+
+### `src/modules/assessment/funnel-session.ts`
+
+- Line 342:
+
+  > PHASE 159c (E1): THE WORK DONE SINCE, AS EVENTS — NOT ADDED TO THE AMOUNT. Every event on the building, the first
+  > first, each with its own type and its own cost (CB_FUNNEL.eventsOf), goes on the session as `events`. The
+  > engine prices each costed event on its own band and adds them (CB_INPUTS.run), so the purchase keeps the
+  > purchase band and the s.187A reading on the price, and the works are priced on the works cost only. That is
+  > why the double counting the old note below feared cannot happen: `base_amount` stays the first event's money,
+  > and the works never join it. An event with no cost carries no amount (N4).
+
+- Line 362:
+
+  > ===================================================================== *
+  > NOT MAPPED — every funnel field this file deliberately leaves absent,
+  > and why. This list is part of the mapping.
+  >
+  > Q1 -> `prior_claim_self`   THE ENGINE ITSELF SAYS NOT TO, AND SAYS WHY.
+  >   CB_FRONTDOOR's note above gateQ1: "'A claim' in a client's mouth covers a
+  >   repairs deduction, annual investment allowance on loose equipment,
+  >   allowances on a van, and a genuine fixtures claim. Four different facts,
+  >   one word, and only the fourth would matter." The sector flows ask the
+  >   narrow question separately and set `prior_claim_self = (v === "fixtures")`.
+  >   Reading the funnel's broad answer onto that key would shut CB_CASH gate 4
+  >   — "fixtures already claimed — no further allowance to convert to cash" —
+  >   on a client who once claimed for a van. The funnel already routes this
+  >   answer where it belongs: gateQ1 raises CTA_REVIEW_PRIOR_CLAIM.
+  >
+  > Q1a -> `prior_owner_claimed`   THE ENGINE ASKS IT ON FACTS THE FUNNEL HAS
+  >   NOT ESTABLISHED. The sector question (Q11 in sector-care_homes.js and its
+  >   twins) carries `showIf: s.trigger.includes("purchase") && s.deal ===
+  >   "property"` — it is asked only of someone who bought the PROPERTY, as
+  >   against shares or a partner buy-in. The funnel asks its version of every
+  >   client on every trigger and never asks about the deal at all. The fact
+  >   moves real money: it narrows the qualifying range and it decides whether
+  >   the s.187A machinery runs. Supplying it on facts the engine's own flow
+  >   would not have asked it on is the mapping error this file is written to
+  >   avoid, so it waits for the deep flow that asks it properly.
+  >
+  > Q2 date -> `event_date` / `acquisition_date`   THE FUNNEL CAPTURES A MONTH
+  >   OR A YEAR AND THE ENGINE WANTS A DATE. The renderer's placeholder is
+  >   "MM/YYYY" for a purchase or a build and "YYYY" for works, and nothing
+  >   validates either. `event_date` feeds the acquisition date and sits beside
+  >   the accounting period end that CB_CASH turns into a statutory amendment
+  >   window. A partial date silently parsed is a wrong window in front of a
+  >   client, and the funnel never asks for the accounting period end anyway, so
+  >   the window cannot be derived from what the six screens hold.
+  >
+  > Q3 works -> `base_amount`   (PHASE 159c: the works ARE now mapped, as `events`
+  >   above, each event on its own cost; what follows is why they are never added
+  >   to the one amount.) IT WOULD DOUBLE-COUNT, AND CB_FRONTDOOR HAS A
+  >   FUNCTION WHOSE ONLY JOB IS TO PREVENT THAT. `worksHeadingFor` re-words the
+  >   works question for a refurbishment or a fit-out because "asking 'any work
+  >   done?' against that property invites the client to enter the same money a
+  >   second time, and the figure inflates by exactly the amount they were most
+  >   sure about". The engine has one `base_amount`; adding the works spend to
+  >   it would be that inflation, and putting it anywhere else would be
+  >   inventing a fact.
+  >
+  > `lease_start_year`, `address`, `contact`, `account`   NO ENGINE FACT READS
+  >   THEM, or the one that might is covered above. An address is not a session
+  >   fact; the contact block and the account block are CB_BOOKING's and are
+  >   personal data that has no business on a tax session at all.
+  >
+  > THE AIA HEADROOM AND THE POOL SPLIT ARE NOT ON THIS LIST because there is
+  >   nothing to leave out: THE SIX SCREENS DO NOT ASK ABOUT EITHER, on any
+  >   path. CB_TAXPOS's headroom question and CB_POOL's measured split belong to
+  >   the deep sector flow and to the survey. That is why cash gates 2 and 3
+  >   come back null from every funnel-derived session, and it is a true report
+  >   rather than a gap in this mapping.
+  > =====================================================================
+
+### `src/modules/assessment/funnel4.ts`
+
+- Line 58:
+
+  > PHASE 159c: the most pieces of work after the first event on one building.
+
+- Line 85:
+
+  > PHASE 159c: this is the FIRST event on each building. Work done since is added as its own event, a few screens on,
+
+- Line 182:
+
+  > ------------------------------------------------------------------ PHASE 159c: events
+
+- Line 247:
+
+  > PHASE 159c: each building's events start with its first event, kept in step with its trigger, spend and date.
+
+- Line 341:
+
+  > PHASE 159c — "ADD AN EVENT". Each piece of work since the first event is its own row: what kind, roughly how much,
+  >        and when (a month and year, or a year). "+ Add another piece of work" and "Remove" keep the screen, with what
+  >        was typed kept. A page from before this phase posts the one works answer (b0_works_type, _spend, _year); it is
+  >        read as the first row. The old works_* fields are no longer written: b.events holds the work.
+
+- Line 479:
+
+  > PHASE 159c: each event on the building with its own figure, or why it has none.
+
+- Line 588:
+
+  > PHASE 159c: "add an event" — one row per piece of work, each with its own kind, cost and date.
+
+- Line 748:
+
+  > PHASE 159c: each event on a building, with its own "up to" or the reason it has none.
+
+- Line 847:
+
+  > PHASE 159c: and its work since is counted as nothing too — each event's cost, not only the first.
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 464:
+
+  > PHASE 159c (line 8): an assessment from 9 October 2026 stores no low end, because the client saw only "up to £X".
+
+### `src/modules/claims/claim-route.ts`
+
+- Line 1:
+
+  > EACH EVENT'S ROUTE — PHASE 159d, 9 October 2026.
+  >
+  > The stress test of 9 October 2026 (C1) and the Lockwood run (L9): the amendment-window gate turned away claims the law
+  > allows. A company that bought in 2019, still owns the building and never claimed cannot amend its 2019 return — but
+  > the spend is not lost: it goes into the pool of the FIRST period whose return is still open, and is written down from
+  > there for as long as the client owns the building (CAA 2001 s.58(3)-(4); Rulebook A v2 sections 3, 4 and 4b).
+  > Lakhbir, 9 October 2026: "but then remember refurbishment and also tax allowances" — so the route is decided PER EVENT
+  > on the building (Phase 159c's property_events), not once per claim:
+  >
+  >   W1  the amendment window for the event's own period is open: amend that return (first-year allowances possible,
+  >       and a refund);
+  >   W2  that window is closed, but the client still owns the building: the spend goes into the first open period's pool,
+  >       writing-down allowances only;
+  >   W3  the building is not owned, or the purchase fails the legal check (s.187A): no claim for that event.
+  >
+  > WHETHER A CLAIM IS ALIVE COMES FROM THE LEGAL CHECK AND OWNERSHIP, NOT FROM THE WINDOW. The window only chooses W1 or
+  > W2. N4 throughout: a window not known, or a closed window with ownership not known, is no route (NOT_KNOWN) and passes
+  > no gate. A repair is not a capital allowance and takes no route.
+  >
+  > OUR READING, put to the tax adviser (Word question 253): that a closed window with the building still owned is W2,
+  > read from the client's checked year end for the first open period; and the evidence that counts for ownership.
+
+### `src/modules/claims/property-events.ts`
+
+- Line 1:
+
+  > SEVERAL EVENTS ON ONE BUILDING — PHASE 159c, 9 October 2026 (migration 105).
+  >
+  > The stress test of 9 October 2026 (E1; the Lockwood Surgery run, L5) and Lakhbir: "that's a design gap - this is
+  > needed". A building is bought and then refitted, or built and then extended. Each is its own spend, with its own date,
+  > its own band and its own route (CAA 2001 ss.11, 58), and on a bought-then-refitted surgery the works are often worth
+  > more than the purchase.
+  >
+  > WHAT HAPPENED TO EACH BUILDING, IN ORDER. The first event is how the client came to have it; every later one is work
+  > done since. The assessment writes them (`writeAssessmentEvents`, from CB_FUNNEL.eventsOf); a person may add one on the
+  > claim (`addStaffEvent`). The lead, the claim and the property all read the same rows, by the property.
+  >
+  > EACH EVENT'S OWN FIGURE is the engine's band for that event on its own cost (`eventCeiling`, CB_BAND.rangeFor), until
+  > the survey pack prices it: a purchase by section 562 from the price, any work by its own cost (the pack's cost-led
+  > values, src/web/survey-pack.ts). EACH EVENT'S OWN DOCUMENTS are the ones that prove it (`DOCUMENTS_FOR`).
+  >
+  > N4: a cost not known is NULL and gets no figure; a date not known is NULL. Nothing is ever read as 0.
+
+- Line 88:
+
+  > Does the purchase method (section 562, from the price) apply? Yes where a purchase is recorded, and on a building with
+  >  no events recorded at all — every claim from before Phase 159c, which was priced that way.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 368:
+
+  > ----------------------------------------------- PHASE 159c: an event on the claim's building
+
+- Line 410:
+
+  > PHASE 159c: each event on the claim's building — what it was, when, what it cost and its own "up to" (for a login that
+  > may read the claim's value), and the documents that prove it, each with whether we hold one. Then a form to add one.
+
+- Line 1292:
+
+  > PHASE 159c: WHAT HAPPENED TO THE BUILDING, EVENT BY EVENT — a purchase, then each piece of work — each with its own
+  >      figure and the documents that prove it. The figure (the engine's band on that event's own cost, until the survey
+  >      prices it) and the cost are the claim's value: shown only to a login that may read it.
+
+### `src/modules/crm/leads.ts`
+
+- Line 250:
+
+  > PHASE 159c: each building's events from the assessment — the purchase, then each piece of work — in order. Read under
+  >  the same rule as the answers.
+
+- Line 282:
+
+  > PHASE 159c: each piece of work
+
 ## 9 Oct 2026: Phase 159d
 
 ### `src/core/router.ts`
@@ -9373,11 +18164,216 @@ neither says.
 
   > PHASE 159d (item 6): which way each part of the claim goes in — the claim the portal has already authorised.
 
+### `src/modules/claims/claim-facts.ts`
+
+- Line 151:
+
+  > Phase 159d — "do you still own it": W2 (the window closed, the spend pooled in the first open period) needs it. YES
+  >      only on evidence — the client's checked answer, or the title register — and never with a sale date on the
+  >      property. Migration 106 adds the key. Read by src/modules/claims/claim-route.ts.
+
+- Line 370:
+
+  > PHASE 159d (C24): a charitable trust is self assessment
+
+- Line 374:
+
+  > PHASE 159d: a closed old return is not the end. While the client owns the building the spend goes into this year's
+  >      pool (W2), written down over the years ahead, with no refund of past tax (src/modules/claims/claim-route.ts).
+
+- Line 492:
+
+  > PHASE 159d: THE WINDOW FOR ONE ACCOUNTING PERIOD, by its last day — the claimant's rule and the engine's date. Read by
+  > the window above, by each piece of work's own period, and by the search for the first open period (W2;
+  > src/modules/claims/claim-route.ts). C24: a charitable company files a company return, a charitable trust a trust return under
+  > self assessment; a charity recorded without saying which is not known, and says so.
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 370:
+
+  > PHASE 159d (C9): a legal check clear only until a deadline that has passed is not signed off.
+
+- Line 1304:
+
+  > REPORTS — PHASE 159d (C1, L9): EVERY PART OF THE CLAIM HAS A ROUTE, AND ONE IS CLAIMED. It read "the amendment window
+  > is open today", so a building bought in 2019 and still owned was turned away, though its spend goes into this year's
+  > pool (W2). Now each event on the building takes its route (src/modules/claims/claim-route.ts): W1 the window for its own period
+  > is open, W2 it is closed but the building is still owned, W3 not owned, or the purchase fails the legal check. The
+  > gate passes when every part has a known route and at least one is W1 or W2. NOT_KNOWN passes nothing (N4).
+
+- Line 1320:
+
+  > INVOICE — PHASE 159d: THE RETURN EACH ROUTE NAMES WENT IN, OR CAN STILL GO IN. W1 names the return for the event's own
+  > period; W2 names the return of the first open period. Where the filing is recorded, it must fall on or before that
+  > return's deadline — a window that closed after the return went in does not stop the fee. Where it is not, that window
+  > must be open today. A part with no route passes nothing; a part that is W3 is not claimed and asks nothing.
+
+### `src/modules/claims/claim-route.ts`
+
+- Line 179:
+
+  > W3: the purchase fails the legal check (item 8 of Phase 159d), or the building is no longer owned.
+
+- Line 263:
+
+  > PHASE 159d (C9): A "CLEAR, WITH A DEADLINE" LEGAL RESULT IS READ AGAIN. The pack can be approved while there is still
+  > time to fix the value (URGENT, with a deadline); nothing read it again, so a claim went on after the deadline passed
+  > with nothing fixing the value. At the tax adviser's sign-off and at Reports: where the approved version was URGENT and
+  > its deadline has passed (UK date), the legal check is read again on today's answers; unless it is now clear (an
+  > election or a tribunal application recorded in time), the claim on the fixtures stops here.
+
+### `src/modules/crm/crm.ts`
+
+- Line 97:
+
+  > PHASE 159d (C24): which kind of charity decides which tax return it files, and so its deadline.
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 598:
+
+  > PHASE 159d (C9): a legal check clear only until a deadline is read again.
+
+- Line 618:
+
+  > PHASE 159d: the deadline of the return the route names — under W2 the first open year's, not the closed one.
+
+- Line 623:
+
+  > PHASE 159d (C9)
+
+- Line 916:
+
+  > PHASE 159d: "OUTSIDE THE AMENDMENT WINDOW" ENDS A CLAIM ONLY WHERE NOTHING IS LEFT TO CLAIM — every part W3 (not
+  >        owned, or the purchase fails the legal check). A closed window with the building still owned is W2, through this
+  >        year's pool, and a part with no route yet is not settled: neither stops the job.
+
 ### `src/shared/next-step.ts`
 
 - Line 50:
 
   > PHASE 159d: the route each part of the claim takes (src/web/claim-route.ts), and a legal deadline read again.
+
+## 10 Oct 2026: Phase 159d
+
+### `src/modules/assessment/allowances.ts`
+
+- Line 1:
+
+  > THE ALLOWANCES ON EACH EVENT — PHASE 159e, 10 October 2026.
+  >
+  > The stress test of 9 October 2026 (C13, C15, C17, C18; the Lockwood run, L4): the return entries showed writing-down
+  > allowances only, every spend in one period, the special rate pool at 6% in every year, no small-pools write-off and no
+  > structures allowance. A recent refit can take 100% in year one. Lakhbir's target, 9 October 2026: "the highest figure
+  > we can defend". So each PART of a claim — the purchase, and each piece of work since (Phase 159c) — is worked out on
+  > its own, from the approved version alone:
+  >
+  >   ITS PERIOD (items 4, 7, 8). The route Phase 159d gave it, frozen with the version: W1 goes into the period its own
+  >   date falls in; W2 into the first period whose return is still open; W3 is not claimed. Those are the periods the
+  >   amendment window read, from the client's checked year end — one period source, so the window and the spreadsheet
+  >   cannot disagree (C15).
+  >
+  >   ITS FIRST-YEAR RELIEF (item 1), ON W1 ONLY — W2 is writing-down allowances only, and an unknown route grants nothing
+  >   (N4). The annual investment allowance (s.38A, £1,000,000 a period, shared across a group or related businesses)
+  >   where this period's headroom is RECORDED — not for a partnership with a company partner (s.38A(3)), and not where
+  >   that is not known; it goes on the special rate pool first (Rulebook I section 2, CA23084). Then, on NEW AND UNUSED
+  >   plant only: a company's full expensing on the main pool and 50% first-year allowance on the special rate pool, spent
+  >   from 1 April 2023 (CA23174AA); the 40% allowance on the main pool spent from 1 January 2026 (s.45U) for anyone who
+  >   does not have full expensing. Work the client paid for is new plant (OUR READING); a purchase is second-hand, unless
+  >   the building was bought new and never used from its developer (OUR READING; BOUGHT_NEW_FROM_DEVELOPER). The
+  >   super-deduction (2021 to 2023) needs a contract signed after 3 March 2021, which nothing records, so it is named and
+  >   not taken. A RE-DERIVED PREMISE (standing instruction step 8): the phase prompt said a second-hand purchase takes
+  >   writing-down allowances only. The annual investment allowance is not limited to new plant (Rulebook I section 2:
+  >   "virtually all plant and machinery qualifying expenditure"), so a W1 purchase takes it where headroom is recorded;
+  >   only full expensing and the first-year allowances are barred to it. Put to the tax adviser (Word question 257).
+  >
+  >   THE STRUCTURES AND BUILDINGS ALLOWANCE (item 2). Work: the part of the work that is neither plant nor repair (the
+  >   final account less the plant and the repair part), on work dated wholly from November 2018 — its date standing for
+  >   its contract date, which must be from 29 October 2018 (OUR READING) — from the month after the work, at the engine's
+  >   dated rate (2% before April 2020, 3% after). A purchase from 29 October 2018: from the seller's allowance statement
+  >   (s.270IA; SBA_STATEMENT_HELD and SBA_QUALIFYING_EXPENDITURE), from the purchase date. None on a dwelling — supported
+  >   living homes (s.270CF); care homes, surgeries and hospitals are not residential use (s.270CF(3)). W2: from the
+  >   first open period; the years before are lost, not carried. Word question 259.
+  >
+  >   THE POOLS (item 3). The writing-down rates are the engine's dated table (CB_RATES: 8% special rate before April
+  >   2019, 20% main before April 2012, 14% from April 2026, blended across a change), and a pool of £1,000 or less is
+  >   written off in full (s.56A). Worked in whole pence: every row adds up.
+  >
+  > NOTHING HERE STATES A RATE. Every rate and date comes from the engine (Rulebook I rule 7.1).
+
+## 10 Oct 2026: Phase 159e
+
+### `src/modules/assessment/allowances.ts`
+
+- Line 474:
+
+  > PHASE 159e (item 6): the allowances in words, for the report — per part, its route, its year, each allowance in that
+  >  year and what it adds to the pool; and per year, every allowance and the pools carried on. Amounts not known say so.
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 155:
+
+  > Phase 159e — the allowances on each event (src/modules/assessment/allowances.ts). Migration 107 adds the three keys. N4: not recorded
+  >      grants nothing. CASH_BASIS: on the cash basis there is no claim on fixtures for the period (OUR READING, Word
+  >      question 260). BOUGHT_NEW_FROM_DEVELOPER: a building bought new and unused from its developer is not second-hand, so
+  >      full expensing and the first-year allowances are open to it (OUR READING, Word question 258). SBA_STATEMENT_HELD: the
+  >      seller's structures allowance statement is on file, so SBA_QUALIFYING_EXPENDITURE is the figure the buyer's
+  >      allowance runs on (s.270IA).
+
+- Line 1227:
+
+  > PHASE 159e (C15, L4): is the claim's accounting period known — recorded in full, or the client's checked year end —
+  >  so each part's period can be worked out? Read at approval: the year end is asked at data gathering and a version is
+  >  not approved without it, because the return entries are made from the version and never ask for it afterwards.
+
+### `src/modules/claims/claim-route.ts`
+
+- Line 54:
+
+  > PHASE 159e: the event's own date ("2025-06", "2025", or the purchase's day), and the accounting period it falls in,
+  >  where known — the period a W1 part goes into (src/modules/assessment/allowances.ts).
+
+- Line 139:
+
+  > The period the PURCHASE falls in — the recorded one, else from the client's year end — for the W2 search. PHASE 159e
+  >  (C15, L4): the return entries read this same period, so the window and the spreadsheet can never disagree.
+
+- Line 184:
+
+  > PHASE 159e (item 5, OUR READING): accounts on the cash basis claim no allowances on fixtures for the period.
+
+- Line 195:
+
+  > PHASE 159e (item 5): the claim's accounts are on the cash basis — a recorded CASH, for a claimant that may use it (a
+  >  company may not, so for a company the fact is read as not applying). Not recorded is not the cash basis (N4: it
+  >  never takes a claim away on a guess either way; the question is asked at data gathering).
+
+### `src/modules/claims/return-entries.ts`
+
+- Line 44:
+
+  > PHASE 159e: the facts the allowances turn on (src/modules/assessment/allowances.ts). Absent on a version sent before, which reads
+  >  as it did: no first-year relief is counted on a fact nobody recorded (N4).
+
+- Line 61:
+
+  > The entries for each return, from an approved version and what the claim records about its period and claimant.
+  >  PHASE 159e: worked out part by part by src/modules/assessment/allowances.ts — each part in its own period (W1) or the first open
+  >  one (W2), with its own first-year relief, the structures allowance and the dated rates. Where a part takes no
+  >  first-year relief its row reads exactly as before ("Spend that counts, added to the pool").
+
+- Line 167:
+
+  > What the claim records that the rows need: its accounting period's first day, whether the claimant is a company, and
+  >  (PHASE 159e) the facts the allowances turn on. C15, L4 — ONE PERIOD SOURCE: the period is the one the amendment window
+  >  reads (src/modules/claims/claim-route.ts purchasePeriod): as recorded, or from the client's checked year end.
+
+- Line 233:
+
+  > PHASE 159e: the facts a version's figures are made from, found from the version alone (the report and the portal
+  >  have the approval, not the claim): as first sent, or the claim as it stands.
 
 ## 10 Oct 2026: Phase 159f
 
@@ -9391,6 +18387,23 @@ neither says.
 
   > PHASE 159f. BCIS's exports — the average prices by building function (required), the elemental analyses and the
   >        location factors — kept OUTSIDE the repository (src/web/bcis-data.ts). The pack drafts its rates from them.
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 247:
+
+  > PHASE 159f (item 3): "EVERY RATE SOURCED" — the SOP's Valuation gate (src/shared/stages.ts), a test now and not the
+  > surveyor's word. Read from the newest approved version: the whole-building rate and every counted line's rate carry a
+  > structured source (BCIS's draft, or the surveyor's QS schedule, invoice or price book, with a reference and a day). A
+  > version approved before Phase 159f has none, and is not met: approve the pack again with the sources.
+
+- Line 586:
+
+  > CRM 6 of 10: every grant traced is a fact now. PHASE 159f: every rate sourced is a fact too (ratesSourcedNeed).
+
+- Line 592:
+
+  > PHASE 159f (item 3): every rate sourced — the stage's own gate, now a test of the approved version.
 
 ### `src/shared/next-step.ts`
 
@@ -9480,6 +18493,188 @@ neither says.
 
   > PHASE 159g (item 6): YES or NO, the owner named is one of the client's own people; the name is never kept.
 
+### `src/modules/assessment/assessment.ts`
+
+- Line 328:
+
+  > PHASE 159g: how the client holds the building (owner, landlord, tenant), and the council area the postcode check
+  >          found, each with where it came from. Neither is guessed: no answer, or "Not sure", leaves it empty (N4).
+
+- Line 458:
+
+  > PHASE 159g (item 2): owner, landlord or tenant. Only where it was asked: an assessment from before has no row.
+
+### `src/modules/assessment/desk-first.ts`
+
+- Line 120:
+
+  > PHASE 159g (L11): a Price Paid sale of category B or type "Other" is a lead for the surveyor, never the price.
+
+### `src/modules/assessment/funnel4.ts`
+
+- Line 197:
+
+  > PHASE 159g (item 2): how the business holds the building. Owner, landlord or tenant decides whose claim it is; "Not
+  >  sure", and no answer, are not known (N4) and are asked again at the call. Not required, so nobody is stopped here.
+
+### `src/modules/assessment/who-claims.ts`
+
+- Line 1:
+
+  > WHO CLAIMS, AND WHAT THE REGISTERS ALREADY SAY — PHASE 159g, 10 October 2026.
+  >
+  > The stress test of 9 October 2026 (the Lockwood Surgery live run, L2, L8 and L11; the coverage matrix 2.4, 2.5, 3.1
+  > and 3.6). The live run picked a dormant company as the owner, and the registers held a real sale price and tenure
+  > that nobody read. This file reads what the registers already hold, and says it where a person decides:
+  >
+  >   · the company on the register — its status, its latest accounts' type (a DORMANT company has no tax to relieve:
+  >     no trade and no property business, CAA 2001 ss.11 and 15), and its accounting year end (L8);
+  >   · how the client holds the building — owns and works from it, owns and lets it, or rents it — which decides whose
+  >     claim it is: a landlord's (a property business is a qualifying activity, s.15(1)(b) to (d)) or a tenant's;
+  >   · Price Paid's sale at the address (L11): a category B sale ("additional price paid": a sale to a company, a
+  >     buy-to-let, a repossession) or one of type "Other" is a LEAD for the surveyor to confirm, never the price;
+  >   · the tenure, a lease's end and the landlord, filled from the title check, Price Paid or the client, with the source;
+  >   · a site area far larger than the building, flagged for the surveyor and never used as the plot;
+  >   · a person named as owner on the title register, matched against the client's own people (item 6).
+  >
+  > N4 throughout: a fact not known is not known. Nothing here turns an absent answer into a yes, a no or a figure.
+  > OUR READING, built and put as viability checks in the Word questions document: that a landlord letting a healthcare
+  > building has a qualifying activity and is a client (263, the tax adviser); that the register's accounting year end is
+  > the claim's (264, the accountant); that a category B or "Other" sale is a lead, not a price, and that a site ten times
+  > the building is the warning point (265-266, the surveyor); and the owner-name check that keeps no name (267, the DPO).
+  >
+  > This file imports nothing from claim-facts.ts, which imports from here.
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 685:
+
+  > PHASE 159g (L8): the claim's year end — the register's, else the client's — and whether the two differ.
+
+- Line 687:
+
+  > PHASE 159g (L2, item 2, item 4): who claims — a dormant company flagged, how the client holds the building, its tenure.
+
+- Line 1237:
+
+  > PHASE 159g (L8): the claim's year end — Companies House's accounting reference date for a company that has one, else
+  >  the client's checked answer — with the two compared (src/modules/assessment/who-claims.ts yearEndFrom).
+
+- Line 1244:
+
+  > PHASE 158d (F45): the accounting period the purchase falls in, from the claim's year end (Phase 159g: the register's,
+  >  else the client's checked answer), or null.
+
+### `src/modules/claims/claim-route.ts`
+
+- Line 90:
+
+  > PHASE 159g (item 6, carried from 159d): A SOLE TRADER OR A PARTNERSHIP is named on the register as the people
+  >      themselves. Where the register names one of the client's own people (the title check's yes, or a name kept under
+  >      name exception 2, compared now), that is evidence too, so W2 does not wait on a recorded answer.
+
+### `src/modules/claims/research.ts`
+
+- Line 906:
+
+  > PHASE 159g (item 7): where the postcode check answers on this click, its council area is handed back here, for
+  >  the caller to keep on the property inside its own transaction. Nothing is written in this function.
+
+- Line 1116:
+
+  > PHASE 159g (items 4 and 7): what this click read, kept on the property where nothing is kept yet — the council
+  >        area the postcode check gave, and the tenure from the title check or Price Paid. Never over a recorded value.
+
+### `src/modules/claims/site-area-run.ts`
+
+- Line 232:
+
+  > PHASE 159g (item 5): a site area far larger than the building is flagged for the surveyor, never used as the plot.
+
+### `src/modules/claims/title-by-hand.ts`
+
+- Line 80:
+
+  > PHASE 159g (item 6): where the owner is a PERSON, their name as the register shows it — compared with the client's
+  >  own people when it is saved, and only the answer kept. The name itself is never stored.
+
+- Line 162:
+
+  > PHASE 159g (item 6): A PERSON NAMED AS OWNER. A sole trader's or a partnership's building is registered to the people
+  >      themselves, so no company number can match it and "do you still own it" waited on a recorded answer. The name typed
+  >      here is compared with the client's own people now, in memory, and only YES or NO is kept — as the officers check
+  >      keeps only its answer (Word answer 156).
+
+- Line 181:
+
+  > PHASE 159g (item 4): the tenure the register gives, on the property, where none is recorded yet.
+
+### `src/modules/crm/crm.ts`
+
+- Line 123:
+
+  > PHASE 159g: how the client holds the building — whose claim it is (src/modules/assessment/who-claims.ts ROLE_LABELS, the same words).
+
+- Line 1220:
+
+  > PHASE 159g (item 4): how the client holds the building, and its tenure, lease and landlord in words, with sources.
+
+- Line 1338:
+
+  > PHASE 159g (item 4): how the client holds the building, the day a lease ends and the landlord — each written on its
+  >      own, as the sale is, with "recorded by staff" as its source. A landlord is a company or a role, never a person.
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 278:
+
+  > FROM SOP 1, WITH STANDING RULE 13(a). The brief named three; SOP 1 has a
+  > fourth — "the enquirer is the owner, or acting with the owner's authority",
+  > a stop condition in its own right — so there are four, and the disposition
+  > table records why.
+  >
+  > TRADING, NOT OWNER-OCCUPIED. The map's gate says "owner-occupied or recently
+  > acquired"; rule 13(a) settles that commercial means the CLIENT, not the
+  > building, so the check is that the client trades — and supported living is in.
+  >
+  > PHASE 159g (item 2, the coverage matrix 2.5): A QUALIFYING ACTIVITY, NOT ONLY A
+  > TRADE. CAA 2001 s.15(1): a trade, a profession or vocation, and an ordinary UK
+  > property business are all qualifying activities. A landlord or a property
+  > company that lets a surgery or a care home to another business can claim on the
+  > fixtures it owns; the old wording turned them away, which the law does not. The
+  > check's key stays TRADING_CLIENT, so every answer already recorded still reads.
+  > OUR READING, put to the tax adviser (Word question 263).
+
+- Line 370:
+
+  > WHAT THE BUILD ALREADY HOLDS THAT BEARS ON EACH CHECK — SHOWN, NOT DECIDED.
+  >
+  > DERIVE, DO NOT RE-KEY, and here is why a derived answer does not simply fill
+  > the check in: none of these is the same fact as the check. A healthcare sector
+  > is not a UK property; paying tax is not a qualifying activity (a dormant
+  > company pays nothing, and a holding company that neither trades nor lets has
+  > none — Phase 159g; a landlord that lets the building has one); "how did you come by this one" is
+  > not authority to act; and a client's own "no prior claim" is not the same as no
+  > conflict. So the evidence sits beside the question, with its source, and a
+  > person answers it — which is SOP 1's own owner doing SOP 1's own step.
+
+- Line 405:
+
+  > PHASE 159g (L2, item 2): the register's company — a dormant one flagged — and how the client holds each building.
+
+## 10 Oct 2026: Phase 159h
+
+### `src/modules/claims/claim-route.ts`
+
+- Line 72:
+
+  > PHASE 159h (item 7): A LEASE THAT HAS ENDED. The end of the lessee's interest is a disposal of its fixtures (s.188):
+  >      a leasehold whose recorded end date has passed is not still owned.
+
+- Line 181:
+
+  > PHASE 159h (item 7): a tenant's claim is on its own fit-out, never a share of the purchase price.
+
 ## 10 Oct 2026: Phase 159i
 
 ### `src/core/audit.ts`
@@ -9487,6 +18682,48 @@ neither says.
 - Line 403:
 
   > PHASE 159i: a person recorded an event's VAT on its claim: the event and the field — never an amount.
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 167:
+
+  > PHASE 159i (item 2, migration 110): a VAT capital goods scheme adjustment on the building, in pounds. A fact and a note: the
+  >      survey pack shows it beside the VAT that counts and does not change the figure; the tax adviser says how it reaches the claim.
+
+- Line 593:
+
+  > Phase 159i (migration 110): who received it, and the event on the building it paid for.
+
+- Line 1022:
+
+  > PHASE 159i (items 1 and 4): who received it — the client, or an earlier owner — and which event on the building it paid for.
+
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 657:
+
+  > PHASE 159i (items 1 and 4): who received it, and which spend on the building it paid for.
+
+### `src/modules/claims/property-events.ts`
+
+- Line 47:
+
+  > PHASE 159i (migration 110): the VAT on its cost the client could not reclaim, in pence; null: none recorded.
+
+- Line 223:
+
+  > PHASE 159i (item 4): THE VAT ON ONE EVENT'S COST — its position (migration 105) and, where the client could not
+  >  reclaim it, the amount (migration 110), added to that event's cost in the survey pack. Staff record it on the claim.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 42:
+
+  > PHASE 159i: an event's VAT position, in words (migration 105's three).
+
+- Line 339:
+
+  > ----------------------------------------------- PHASE 159i (item 4): one event's VAT
 
 ### `src/shared/money-readings.ts`
 
@@ -9518,6 +18755,120 @@ neither says.
   > Phase 159j (item 5), 10 October 2026: a document tied to the piece of work on a building it proves, or untied —
   > the event it now names and the one it named before (ids only), so each event counts its own documents.
 
+### `src/modules/claims/claim-facts.ts`
+
+- Line 712:
+
+  > PHASE 159j (L14): read as the survey pack reads it (`packSwitchReadings`), and said in the words for that state.
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 405:
+
+  > PHASE 159j (L14): as the pack the adviser signed read them
+
+### `src/modules/claims/documents-pages.ts`
+
+- Line 249:
+
+  > PHASE 159j (item 5): tie a document to the piece of work it proves, or untie it.
+
+- Line 392:
+
+  > PHASE 159j (item 5): "Which piece of work is it for?" — offered where the building has more than one event. With one,
+  >  a document that names none is counted to it anyway, so the question would only be noise.
+
+### `src/modules/claims/documents.ts`
+
+- Line 550:
+
+  > PHASE 159j (item 5), staff only: the event on the building this NEW document proves (property_events). Absent or
+  >  empty: the request's event, where it answers one that names an event; otherwise none. A new version keeps its
+  >  document's.
+
+- Line 611:
+
+  > PHASE 159j (item 5): WHICH PIECE OF WORK A NEW DOCUMENT PROVES. Chosen by staff on the upload form, or taken from the
+  >      request it answers; checked to be an event on one of this client's buildings.
+
+- Line 838:
+
+  > PHASE 159j (item 5): the event on the building the document is for ("the final account for the 2025 refit").
+  >  Absent or empty: none. On a claim, it must be an event on the claim's building.
+
+- Line 872:
+
+  > PHASE 159j (item 5): the piece of work the document is for, on this client's buildings (the claim's, on a claim).
+
+- Line 964:
+
+  > PHASE 159j (item 5): the piece of work it is for, where the request names one. `type.label` then ends "— for …",
+  >  so every list that names the request says which work.
+
+- Line 1087:
+
+  > PHASE 159j (item 5): the events on the claim's building, offered on the request and upload forms ("Which piece of
+  >  work is it for?"). Absent where the reader may do neither, or the building has none.
+
+- Line 1161:
+
+  > PHASE 159j (item 5): the piece of work this document proves, if it names one; staff only.
+
+- Line 1163:
+
+  > PHASE 159j (item 5): the events on the client's buildings it may be tied to, for a reader who may link it.
+
+- Line 1241:
+
+  > PHASE 159j (item 5): the event a document names, in words, or null.
+
+- Line 1247:
+
+  > PHASE 159j (item 5): every event on a business's buildings, with the building where it has more than one.
+
+- Line 1254:
+
+  > PHASE 159j (item 5) — TIE A DOCUMENT TO THE PIECE OF WORK IT PROVES, or untie it (empty). Staff who may link a
+  > document may do this; the event must be on one of the same client's buildings. Each change is in the audit log.
+
+- Line 1276:
+
+  > PHASE 159j (item 5): the documents that prove a piece of work, asked of the client on the claim.
+
+- Line 1279:
+
+  > PHASE 159j (item 5) — ASK FOR ONE PIECE OF WORK'S FINAL ACCOUNT AND INVOICES. One request for each of the two, naming
+  > the work, so the client's "What we need from you" lists them for that work. A type already asked for that work and
+  > still open, or already held for it, is not asked again. A purchase is not a piece of work: its documents are the
+  > completion statement and the contract, asked as before.
+
+### `src/modules/claims/property-events.ts`
+
+- Line 70:
+
+  > PHASE 159j (item 5): an event named inside a sentence — "a refurbishment or refit (June 2025)".
+
+- Line 76:
+
+  > PHASE 159j (item 5): an event on one of this business's buildings, or null — the check before a document or a
+  >  request names it.
+
+- Line 176:
+
+  > PHASE 159j (item 5): `held` counts the documents that name THIS event. On a building with one event, a document
+  >  that names none is its, as before; with several, it is counted apart, as `untied`, until a person ties it.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 358:
+
+  > ----------------------------------------------- PHASE 159j (item 5): ask for one piece of work's documents
+
+- Line 1116:
+
+  > PHASE 159j (Lockwood L16): the warning is for before the dates are checked. Once every part of the claim has its
+  >      route on the recorded dates (W1, W2 or W3), it has said what it was for, so it goes.
+
 ### `src/shared/money-readings.ts`
 
 - Line 53:
@@ -9535,6 +18886,168 @@ neither says.
 - Line 610:
 
   > PHASE 159k, 10 October 2026 — the seller's structures allowance statement: two dates and a sum, no name.
+
+### `src/modules/assessment/allowances.ts`
+
+- Line 67:
+
+  > PHASE 159k: the asbestos was there when the client acquired the land (CTA 2009 s.1145); absent on a version sent before.
+
+- Line 100:
+
+  > PHASE 159k (item 2): the long-life test on this part — its long-life part, whether it went to the special rate pool
+  >  (null: could not be decided), and why. Null where no long-life part is given or the reading is off.
+
+- Line 103:
+
+  > PHASE 159k (item 2): land remediation relief on this part's asbestos removal — a deduction, never an allowance.
+  >  Null where no asbestos part is given or the reading is off.
+
+- Line 117:
+
+  > PHASE 159k: land remediation relief in this return (the deduction and the additional 50%): not an allowance, so not
+  >  in total_pence.
+
+- Line 197:
+
+  > PHASE 159k (item 2): the readings' parts as approved (pack-approve.ts readingsOf); a version without them has none.
+
+- Line 215:
+
+  > PHASE 159k: asbestos removal is remediation of the land, not construction: never in the structures allowance's base.
+
+- Line 247:
+
+  > 2b · PHASE 159k (item 2, OUR READING, on in test) — THE LONG-LIFE TEST (s.90-104). Plant with an expected life of
+  >      25 years or more is long-life asset expenditure where a period's long-life spend passes the s.99 de minimis
+  >      (£100,000, in proportion for a short period); it then goes to the special rate pool. A building used as homes is
+  >      outside it (s.93). A period not known cannot be decided: the part stays where the survey put it, and says so.
+
+- Line 351:
+
+  > PHASE 159k (item 2, OUR READING, on in test) — LAND REMEDIATION RELIEF on asbestos removal (CTA 2009 Part 14): a
+  >        company's deduction of the spend and an additional 50%, where the asbestos was there when it acquired the land, in
+  >        the return for the year of the work (W1). Never an allowance, and never in the structures allowance's base.
+
+### `src/modules/assessment/long-life-and-remediation.ts`
+
+- Line 1:
+
+  > PHASE 159k (item 2), 10 October 2026 — TWO STATUTORY FIGURES THE ENGINE DOES NOT HOLD.
+  >
+  > src/modules/assessment/allowances.ts states no rate: every rate and date comes from the engine (Rulebook I rule 7.1). These two are
+  > not in the engine (CB_RATES has neither), so they are kept here, each with its section, read by allowances.ts alone,
+  > and put to the tax adviser with the readings that use them (money-readings.ts; Word questions under Phase 159k).
+  >
+  >   LONG_LIFE_DE_MINIMIS_PENCE   CAA 2001 s.99: expenditure is not long-life asset expenditure where a chargeable
+  >                                period's long-life spend is not more than £100,000, reduced in proportion for a period
+  >                                shorter than a year. OUR READING applies it to every claimant; the tax adviser is asked
+  >                                whether a person's business (not a company) may use it.
+  >   LONG_LIFE_YEARS              s.91: an expected useful economic life of 25 years or more, new.
+  >   LRR_ADDITIONAL               CTA 2009 s.1149: land remediation relief is the expenditure deducted in full, and an
+  >                                additional deduction of 50% of it — 150% in all. Companies only.
+
+### `src/modules/claims/claim-facts.ts`
+
+- Line 170:
+
+  > PHASE 159k (item 2, migration 113): the asbestos was there when the client acquired the land (CTA 2009 s.1145).
+  >      Land remediation relief on its removal needs it; not known, none is given.
+
+- Line 918:
+
+  > PHASE 159k (item 1) — THE SELLER'S STRUCTURES ALLOWANCE STATEMENT, RECEIVED, IS ON FILE. When a version of an
+  > SBA_ALLOWANCE_STATEMENT is received by the upload handler (its strip recorded, its quarantine discharged, no refusal),
+  > every claim it is linked to — directly, or through its property — records SBA_STATEMENT_HELD as YES, from the client's
+  > document, by whoever sent it. A claim that already says YES records nothing again. It never records NO and never
+  > touches the figure: SBA_QUALIFYING_EXPENDITURE is the figure staff read off the statement and record on the facts panel.
+  > Returns the claims it recorded on.
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 1154:
+
+  > PHASE 159k (item 1) — the seller's structures and buildings allowance statement, on the same recommendation: strip
+  > the individuals, keep the figures. The seller may be a person; the statement is signed by someone.
+
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 97:
+
+  > Phase 159k (item 1): the seller's structures and buildings allowance statement (CAA 2001 s.270IA). MODEL-EXTRACTABLE:
+
+- Line 137:
+
+  > Phase 159k — the seller's structures allowance statement: its dates and its qualifying expenditure, never the seller.
+
+- Line 484:
+
+  > PHASE 159k (item 1) — THE SELLER'S STRUCTURES AND BUILDINGS ALLOWANCE STATEMENT (s.270IA). A buyer's structures
+  > allowance on a purchase runs on the qualifying expenditure the statement gives, from the dates it gives; without one
+  > there is no allowance. Read by the claim team only, so its figures are GATE.
+
+- Line 563:
+
+  > Phase 159k. Off, by the same rule.
+
+- Line 652:
+
+  > Phase 159k — the seller's structures allowance statement. LAST again (test TX2). A heading naming "structures and
+
+### `src/modules/claims/mandatory-documents.ts`
+
+- Line 100:
+
+  > PHASE 159k (item 1): the seller's structures allowance statement, where the claim takes the structures allowance on
+  >        a purchase from 29 October 2018 — s.270IA gives the buyer no allowance without it.
+
+- Line 115:
+
+  > PHASE 159k: the day the structures and buildings allowance began (CAA 2001 s.270AA).
+
+- Line 127:
+
+  > PHASE 159k (item 1). The phase asked for the statement on every purchase from 29 October 2018. Most healthcare
+  >      buildings were built before then and their sellers have no statement to give, so that would stop at this gate a claim
+  >      that takes no structures allowance at all. The law needs the statement only where the buyer takes the allowance
+  >      (s.270IA), which on a claim is SBA_QUALIFYING_EXPENDITURE recorded as a figure. Not taking it is the cautious way, so
+  >      not recorded excuses the document (it relieves nobody; N4 is about gates that do). A figure recorded on a purchase
+  >      whose date is not known still needs it.
+
+### `src/modules/claims/property-events.ts`
+
+- Line 153:
+
+  > PHASE 159k: an event date ("2019-06" or "2019") known to be before the structures allowance began (29 October 2018).
+
+- Line 159:
+
+  > The documents that prove each kind of event. Every one is on the upload lists (it has a receipt policy). PHASE 159k:
+  >  a purchase's include the seller's structures allowance statement, from 29 October 2018.
+
+- Line 215:
+
+  > PHASE 159k: no structures allowance statement exists for a purchase known to be before 29 October 2018.
+
+### `src/modules/claims/return-entries.ts`
+
+- Line 123:
+
+  > PHASE 159k (item 2): long-life plant moved to the special rate pool, said where the part goes in.
+
+- Line 130:
+
+  > PHASE 159k (item 2): land remediation relief on asbestos removal: a deduction from profits, not an allowance.
+
+- Line 198:
+
+  > PHASE 159k (item 2): read for land remediation relief on asbestos removal.
+
+### `src/modules/claims/uploads.ts`
+
+- Line 422:
+
+  > PHASE 159k (item 1): a seller's structures allowance statement, received, puts SBA_STATEMENT_HELD on its claims.
 
 ### `src/shared/money-readings.ts`
 
@@ -9559,6 +19072,103 @@ neither says.
 
 ## 10 Oct 2026: Phase 159l
 
+### `src/modules/assessment/assessment.ts`
+
+- Line 337:
+
+  > PHASE 159l (L13): what the company search read of the company picked — its status and its latest accounts' type —
+  >        kept with the assessment, so a dormant company shows on the lead before the letter, not only after the research.
+
+### `src/modules/assessment/who-claims.ts`
+
+- Line 109:
+
+  > PHASE 159l (L13): WHAT THE COMPANY SEARCH READ AT THE ASSESSMENT — the company the person picked, its status and its
+  > latest accounts' type (migration 114), from the newest assessment that picked one. The register record the paid
+  > research writes is newer and wins wherever it exists; this is what is known before it. A type not read is not known.
+
+- Line 159:
+
+  > THE QUALIFYING-ACTIVITY CHECK, IN WORDS — what the records say, for the person answering the enquiry check (it is
+  > still a person who answers it). A dormant company is said first — the register's, or before the research the company
+  > search's at the assessment (Phase 159l, L13); then how the client holds each building.
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 633:
+
+  > PHASE 160 (the sweep; job B carried by Phase 159l): EACH RETURN, WHERE STAFF RECORD THE FILING. The client has no
+  > accountant (src/modules/portal/client-filing.ts route CLIENT), so staff record each return's filing (migration 116), as the
+  > accountant confirms each by its own link on the other route (accountant-confirm.ts returnFilings). The same reading
+  > (Word question 283): a return already due must be recorded as filed; one not yet due is held in aftercare with its
+  > due date. A filing recorded before, for the whole claim (the reconciliation's filed_on), counts for the earliest
+  > return only. Null where the claim goes into one return or fewer, or its returns are not settled (one date, as before).
+
+- Line 703:
+
+  > PHASE 159l (item 2, L15): a claim whose parts go into more than one return needs each return that is already due
+  >        confirmed filed, by its own link; a return not yet due is held in aftercare with its due date.
+
+- Line 1160:
+
+  > PHASE 159l (L15): a return the claim goes into that is not due yet, held here with its due date.
+
+### `src/modules/claims/property-events.ts`
+
+- Line 183:
+
+  > PHASE 159l (item 4, L19): EACH EVENT'S FIGURE AS THE SURVEY APPROVED IT — from the newest approved version on the
+  > claim (pack-approve.ts snapshotOf): the purchase's own qualifying amount and each piece of work's, by its event. A
+  > version with no work since holds the purchase as the whole figure. An event added after the version is not in it.
+
+### `src/modules/claims/research.ts`
+
+- Line 998:
+
+  > PHASE 159l (item 3, L18): THE POSTCODES.IO ROW SAYS WHAT HAPPENED. On the Lockwood run the panel said postcodes.io
+  >      was "Waiting" for the privacy notice while the research's own postcode check had called it and kept the council
+  >      area. They are two things: the row is the postcode check at the address question (its own gate, the notice); the
+  >      call is the research's country check above. The row now says so, and what that check did on this click.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 414:
+
+  > PHASE 159l (L19): once the survey has priced an event, its approved figure; until then, the sector's band.
+
+### `src/modules/portal/accountant-confirm-pages.ts`
+
+- Line 35:
+
+  > A closed claim asks only about a return held in aftercare (PHASE 159l).
+
+### `src/modules/portal/accountant-confirm.ts`
+
+- Line 56:
+
+  > PHASE 159l (L15): and once the claim is closed, for a return held in aftercare (a claim with more than one return).
+
+- Line 62:
+
+  > PHASE 159l (L15): a FILED link that names its return asks about that return alone.
+
+- Line 121:
+
+  > PHASE 159l (L15): a claim whose parts go into more than one return asks about each return by its own link.
+
+- Line 229:
+
+  > FILED only: the return the link asks about (PHASE 159l), or null for the claim as a whole.
+
+- Line 268:
+
+  > PHASE 159l (item 2, L15): EACH RETURN THE CLAIM GOES INTO, AND WHETHER IT IS FILED — on the accountant route, from the
+  > accountant's own FILED answers, each for its own return. OUR READING (Word question 283, the accountant): a return
+  > already due must be confirmed filed before the claim closes; a return not yet due (the 2025 refit's, due 31 May 2027,
+  > when the purchase's amended return was filed in 2026) does not hold the claim open — it is held in aftercare with its
+  > due date. A link sent before this phase, for the claim as a whole, counts for the earliest return only.
+  > Null where the claim goes into one return or fewer, or its returns are not settled (one answer, as before).
+
 ### `src/shared/money-readings.ts`
 
 - Line 66:
@@ -9577,6 +19187,16 @@ neither says.
   >        them in our reports (Word question 218, closed 10 Oct 2026). Those reports go to the client, into the accountant's
   >        pack and into the defence pack, so all three are opened, as the solicitor's answer opened HMLR_TITLE's. The rate
   >        TABLE itself is still never reproduced (cl. 2.2), and the data is still never committed (src/web/bcis-index.ts).
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 251:
+
+  > PHASE 160 (job B): where staff record the filing and the claim goes into more than one return, each return.
+
+- Line 720:
+
+  > PHASE 160 (job B): where staff record it, each return already due, as on the accountant's route.
 
 ## 19 Oct 2026: Phase 160a
 
@@ -9653,6 +19273,20 @@ neither says.
 
 ## 19 Oct 2026: Phase 160c
 
+### `src/modules/claims/letter.ts`
+
+- Line 187:
+
+  > PHASE 160d, 19 October 2026: THE LETTER WITHOUT LONG DASHES, as the client reads it on screen since Phase 160c and so
+  >      in the PDF they sign. The Word document itself is not changed (it is with the solicitor, FOR THE SOLICITOR SDP-L3); its
+  >      words are read as they are and each long dash becomes a colon or a comma here (src/shared/plain-dashes.ts). Whether it is
+  >      the test copy, and which specimens it still holds, are read from the document's own words, before that. A letter
+  >      already signed is never drawn again: its text and PDF are kept as they were signed (src/modules/claims/signing.ts).
+
+- Line 219:
+
+  > reaches a person only through a screen or an email, which drop the dash themselves (Phase 160c, 160d).
+
 ### `src/shared/assets.ts`
 
 - Line 65:
@@ -9684,6 +19318,12 @@ neither says.
 - Line 166:
 
   > PHASE 160d, 19 October 2026: no long dash in the words we send (src/shared/plain-dashes.ts, line by line), in the
+
+### `src/modules/claims/claim-record.ts`
+
+- Line 1167:
+
+  > PHASE 160d: the title tasks were raised under before the long dash went. Still found, so no second task is raised.
 
 ### `src/shared/plain-dashes.ts`
 
@@ -9823,11 +19463,108 @@ neither says.
   >
   > WHO. Only the person who started a send may add to it or take it. A send is one file, taken once.
 
+### `src/modules/claims/documents-pages.ts`
+
+- Line 51:
+
+  > PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 59:
+
+  > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+
+### `src/modules/crm/client-page.ts`
+
+- Line 67:
+
+  > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 94:
+
+  > PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+
+### `src/modules/crm/dashboard-pages.ts`
+
+- Line 37:
+
+  > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+
+### `src/modules/crm/free-email-pages.ts`
+
+- Line 68:
+
+  > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+
+### `src/modules/crm/introducers-pages.ts`
+
+- Line 47:
+
+  > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+
+### `src/modules/crm/messages-pages.ts`
+
+- Line 245:
+
+  > PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+
+- Line 503:
+
+  > PHASE 160e: a file over Vercel's 4.5 MB a request came first in pieces (src/core/upload-pieces.ts).
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 65:
+
+  > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+
+### `src/modules/crm/tasks-pages.ts`
+
+- Line 60:
+
+  > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+
+### `src/modules/portal/client-files-pages.ts`
+
+- Line 114:
+
+  > PHASE 160e: a file over Vercel's 4.5 MB a request was sent first in pieces (src/core/upload-pieces.ts); the form
+
+- Line 128:
+
+  > PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+
 ### `src/shared/lists-pages.ts`
 
 - Line 40:
 
   > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+
+## 20 Oct 2026: Phase 99
+
+### `src/modules/public-site/notices-site.ts`
+
+- Line 1:
+
+  > THE PUBLIC NOTICES PAGE ON THE TEST WEBSITE, AND ITS COMPLAINT FORM — PHASE 160f, 20 October 2026.
+  >
+  > The stress test of 19 October 2026 found /privacy and /notices saying the notices "are being prepared" while the
+  > contact form and the assessment already took names, emails and phone numbers. The page is drafted in full
+  > (03-app/caprebate-notices-page.html, Phase 99 onwards); Lakhbir: "Build and publish on test". Its four facts nobody
+  > had supplied are filled with our recommendation and each is marked "Proposed, awaiting our data protection officer".
+  >
+  > SERVED ON THE TEST WEBSITE ONLY. createApp's `testNotices`, passed by api/index.mjs alone, serves the page at
+  > /notices/ (and /privacy/ goes to its privacy part); anywhere else the old placeholder stays. A banner at the top
+  > says it is a draft. The same rule as every other page: nothing inline. Its one <style> block is served as
+  > /assets/notices.css, and the edition is refused if a style attribute, a script or an event handler appears.
+  >
+  > THE COMPLAINT FORM. A complaint counts however it arrives and its thirty days run from when it arrives, so
+  > `receiveComplaintForm` keeps it at once (complaint_forms, migration 118), emails it to the data protection address,
+  > and the staff complaints page lists it until a member of staff logs it into the complaints log with the same arrival
+  > time (`logFormComplaint`). Nothing the person typed is ever drawn as HTML.
 
 ## 20 Oct 2026: Phase 160f
 
@@ -9853,6 +19590,45 @@ neither says.
 - Line 128:
 
   > PHASE 160f: the public notices page and its complaint form (src/web/notices-site.ts). api/index.mjs passes it; nothing else does.
+
+### `src/modules/public-site/legal-pages.ts`
+
+- Line 1:
+
+  > THE WEBSITE'S LEGAL PAGES, AND THE COOKIE BANNER — PHASE 160h, 20 October 2026; PHASE 161g, 5 November 2026.
+  >
+  > Lakhbir, 20 Oct 2026: "draft up some T&C, Policy docs, Cookies (add a cookie consent banner), Privacy policy, all the
+  > usual things you see on the website". The public notices are Phases 160f and 160g (src/modules/public-site/notices-site.ts). This
+  > file holds everything else: the website terms of use, the client's portal terms and the privacy policy (Phase 161g,
+  > src/modules/public-site/privacy-policy.ts), the cookie policy, acceptable use, the accessibility statement and the disclaimer, each a
+  > DRAFT for our solicitor and our data protection officer (FOR THE SOLICITOR, DPO AND DEVELOPER), and the banner.
+  >
+  > WHERE THEY ARE SERVED (Phase 161g). On the test website (the `notices` switch, which api/index.mjs alone passes), and
+  > wherever the new `legal` setting is on (CAPREBATE_LEGAL_PAGES=on, for the live website once its checklist is done).
+  > Anywhere else their addresses say they are being prepared, as before.
+  >
+  > DRAFT UNTIL APPROVED (Phase 161g). Each page has a VERSION (its date). It carries the Draft line until BOTH our
+  > solicitor and our data protection officer have an approval of that version recorded (legal_approvals, migration 121;
+  > src/web/legal-approvals.ts). A new version is a draft again.
+  >
+  > A FACT WE DO NOT HAVE IS NEVER MADE UP. It is written as "to be added" and listed in LEGAL_GAPS.
+  >
+  > ONE COOKIE CHOICE: THIS BANNER (Phase 161g). It needs no script: a form with two buttons of the same size and style,
+  > in the same place, "Accept all" and "Reject non-essential". The answer is kept in one cookie (`cb_cookies`, strictly
+  > necessary: it only remembers the answer) for twelve months. No answer is "no". Google Analytics, the only optional
+  > thing the website could load, loads only after a CLICK on "Accept all" (here or on the cookie policy page):
+  > `optionalAllowed` is the only gate, and the site page is given its measurement id only when it says yes
+  > (src/core/router.ts, the home route). The site page's own question (SITE_CONSENT) no longer asks: it reads the answer.
+  >
+  > THE COOKIE LIST IS TESTED, NOT TYPED: test/phase161g.test.ts collects every cookie name the app can set and every
+  > browser storage key a page it serves writes, and fails unless COOKIE_LIST has each, and on a line for one that is gone.
+
+### `src/modules/public-site/notices-site.ts`
+
+- Line 38:
+
+  > PHASE 160g, 20 October 2026: the eight facts Phase 160f proposed are confirmed by the data protection officer
+  >    (relayed by Lakhbir, for testing), so the page is no longer a draft; the banner says only where it is.
 
 ## 20 Oct 2026: Phase 160h
 
@@ -9880,6 +19656,39 @@ neither says.
   > on it changes an entry: the log refuses any change or deletion (migration 001), and each entry is chained to the one
   > before it, so a change would show.
 
+### `src/modules/claims/claim-overview.ts`
+
+- Line 1:
+
+  > PHASE 160i — WHERE THIS CLAIM STANDS, 20 October 2026. Lakhbir: "i want the back end CRM to be more human friendly ...
+  > a list of all the stages, which stage we are on, what data we need, what data has been gathered and by where, and what
+  > % the survayor pack has been completed ... anyone with no background of capital tax allowances can pick it up", then,
+  > of the mock-up he chose (04-phase-work/mockups/claim-page-redesign.html): "we should be able to click on what API's or
+  > humans have gathered and put in so user can click and see exactly where the information pull from".
+  >
+  > One block at the top of the claim page, read from the claim's own records and never invented:
+  >   - every stage down the left, the ten in the procedure and Closed, each with what is in out of what it needs
+  >     (gateOut, src/modules/crm/pipeline.ts); any stage opens with ?stage=, so staff can look back and ahead;
+  >   - the stage in one plain sentence, who does it, and its needs, met and not;
+  >   - still needed: the stage's unmet needs and what was asked of the client, late ones first;
+  >   - gathered, grouped by where it came from: lookups (register_records, with exactly what came back, field by field,
+  >     and who started the run), the claim's facts (claim_facts, append-only: who typed each value, when, how they got it
+  >     and every value before), what the client answered, and documents;
+  >   - the survey pack's progress, from the chapters the surveyor has gone through and their approval;
+  >   - a short glossary.
+  > Admin and Sales only: the pipeline is theirs (pipeline.read), and so are the facts. No script: the rail is links and
+  > each source opens in place (<details>). Nothing here writes; every change is made by the forms below it, which audit.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 1098:
+
+  > PHASE 160i: the stage opened in "Where this claim stands" (?stage=).
+
+- Line 1148:
+
+  > PHASE 160i: where this claim stands, for the logins that read the pipeline and the facts (Admin and Sales).
+
 ## 20 Oct 2026: Phase 160j
 
 ### `src/core/audit.ts`
@@ -9887,6 +19696,68 @@ neither says.
 - Line 259:
 
   > PHASE 160j: staff checked what a client sent through their portal (src/web/client-checks.ts): accepted, or asked
+
+### `src/modules/claims/claim-overview.ts`
+
+- Line 245:
+
+  > PHASE 160j: what the client sent counts once a member of staff has accepted it; what staff recorded needs no check.
+
+- Line 281:
+
+  > PHASE 160j: something the client sent, waiting for a member of staff to check it.
+
+- Line 283:
+
+  > PHASE 160j: a fact the claim still needs, which can be typed in or asked of the client where it stands.
+
+- Line 360:
+
+  > PHASE 160j: whether this login may check what the client sent and type facts in (claim.write).
+
+- Line 447:
+
+  > PHASE 160j: what the client sent, with the two things a member of staff may do with it. No script: two forms.
+
+- Line 459:
+
+  > PHASE 160j: a fact still to find, typed in where it stands, or asked of the client in their portal.
+
+### `src/modules/claims/claim-record-pages.ts`
+
+- Line 84:
+
+  > PHASE 160j: a fact typed from a "still needed" line goes back to "Where this claim stands".
+
+- Line 88:
+
+  > PHASE 160j: what the client sent, accepted or asked for again (src/modules/crm/client-checks.ts).
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 227:
+
+  > PHASE 160j: asked from a claim's "Where this claim stands", the person goes back there.
+
+### `src/modules/crm/client-checks.ts`
+
+- Line 1:
+
+  > PHASE 160j — WHAT THE CLIENT SENT, CHECKED, 20 October 2026. Lakhbir, of the claim page mock-up he approved: whatever
+  > the client sends waits for staff to check it, then is accepted or asked for again with a reason.
+  >
+  > A client's answer in their portal (portal.ts answerTask) and a file uploaded against a request (documents.ts
+  > receiveByUpload) both end as an ANSWERED client_tasks row with answered_by_role CLIENT. One that has no row in
+  > client_task_checks (migration 119) is waiting. Accepting records who and when. Asking again needs a reason, and opens a
+  > new question (sendTaskToPortal) or document request (createDocumentRequest) carrying it, so the client sees it in their
+  > portal. Each check is kept for good (the table refuses an edit or a deletion) and written to the audit log. What staff
+  > recorded themselves needs no check: they are the check.
+
+### `src/modules/crm/crm-pages.ts`
+
+- Line 497:
+
+  > PHASE 160j: what was just done to something the client sent, or asked of them, said in its own words.
 
 ## 21 Oct 2026: Phase 160k
 
@@ -9896,6 +19767,32 @@ neither says.
 
   > PHASE 160k, 21 OCTOBER 2026: THE NEW PUBLIC WEBSITE. The home page's head script, the five sector landing pages
   >      and their assets, and the self-hosted fonts. Every name is checked against a fixed list; no path reaches the disk.
+
+### `src/modules/public-site/home-site.ts`
+
+- Line 42:
+
+  > The sector landing pages (Phase 160k): their addresses, in the order the site lists them.
+
+- Line 89:
+
+  > Build a page's served edition from its text (Phase 160k: any page, by name). Pure, so a test can hand it a string.
+  >  The <style> block becomes /assets/<name>.css. Scripts in the <head> become /assets/<name>-head.js where the first
+  >  of them stood; scripts in the body become /assets/<name>.js where the LAST of them stood, so they run once the
+  >  page is read. The structured data (ld+json) stays as it is; anything else inline is refused.
+
+## 28 Oct 2026: Phase 160n
+
+### `src/modules/public-site/home-site.ts`
+
+- Line 48:
+
+  > The self-hosted fonts (IBM Plex for the sector pages; Inter Tight and JetBrains Mono for the home page since
+  >  Phase 160n; all SIL Open Font License): the only names /assets/fonts/ will serve.
+
+- Line 54:
+
+  > Phase 160n: the X-ray home page's two (SIL Open Font License, site/fonts/OFL-INTER-TIGHT.txt, OFL-JETBRAINS-MONO.txt)
 
 ## 4 Nov 2026: Phase 160e
 
@@ -10065,6 +19962,51 @@ neither says.
   > "tidied" the port would be a second specification of it, which is the exact
   > failure the extraction of the engine was done to prevent.
 
+## 5 Nov 2026: Phase 160f
+
+### `src/modules/public-site/privacy-policy.ts`
+
+- Line 1:
+
+  > THE PRIVACY POLICY AND THE CLIENT'S PORTAL TERMS — PHASE 161g, 5 November 2026. Both DRAFTS.
+  >
+  > Lakhbir, 5 Nov 2026: "draft the privacy policy" (from the Phase 160f notice, for the live website and the client
+  > portal) and "draft the client's terms and their links". src/modules/public-site/legal-pages.ts serves them with the other legal
+  > pages, each with its Draft line until an approval is recorded (src/web/legal-approvals.ts).
+  >
+  > NOTHING HERE IS INVENTED. Every fact nobody has given us (the ICO number, the data protection officer's name and
+  > contact, a telephone number, where the live website's host keeps data) is a marked gap: `LATER` on the page, listed
+  > in LEGAL_GAPS. The free lookups are LEGITIMATE INTERESTS, never consent (standing rule 13(b)): the only consent here is
+  > the optional analytics cookie. The outside services come from OUTSIDE_SERVICES (src/integrations/outside-services.ts), tied to
+  > SECRET_KEYS by a test; the retention periods come from RETENTION_PARAMETERS (src/web/compliance-identity.ts), the
+  > retention schedule, and say they are not yet approved while they are not.
+  >
+  > The engagement letter's own clauses are not touched here: it governs the work, and these terms say so.
+
+## 5 Nov 2026: Phase 161d1
+
+### `src/modules/claims/letter.ts`
+
+- Line 52:
+
+  > the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 06-commercial-and-governance/Caprebate Engagement Letter.docx, the director's and the solicitor's, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs).
+
+- Line 66:
+
+  > the app's copy, as LETTER_PATH (Phase 161d1); the original is beside the real letter in 06-commercial-and-governance
+
+### `src/modules/public-site/notices-site.ts`
+
+- Line 31:
+
+  > the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 03-app/caprebate-notices-page.html, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs).
+
+### `src/modules/public-site/public-site.ts`
+
+- Line 26:
+
+  > the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, `Caprebate site.html` in Development/, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs).
+
 ## 5 Nov 2026: Phase 161g
 
 ### `src/core/audit.ts`
@@ -10184,6 +20126,14 @@ neither says.
   >
   > Kept outside src/web/ on purpose, like src/integrations/analytics.ts: the analytics allow-list check scans every src/web view for
   > Google's tag names, and this list names Google.
+
+### `src/modules/public-site/notices-site.ts`
+
+- Line 70:
+
+  > PHASE 161g: THE SAME PAGE ON THE LIVE WEBSITE (the `legal` setting). The test website's banner ("Our test website")
+  > is replaced by the page's own Draft line, which goes once our solicitor and our data protection officer have both
+  > approved its version (src/web/legal-approvals.ts).
 
 ## 7 Nov 2026: Phase 133c
 
@@ -10410,6 +20360,18 @@ neither says.
   > WHAT IT HOLDS. The tables SQLITE_SCHEMA names (postcode_authority, authority_name, table_meta), as the ingest writes
   > them, and OSTN15_SCHEMA's one table, ostn15_grid: one row per kilometre point of OSTN15, keyed by k = i + j * 701.
 
+### `src/modules/claims/site-area-run.ts`
+
+- Line 123:
+
+  > PHASE 161h: a file named by CAPREBATE_OSTN15_FILE first (a server's disk), else the reference database (the live
+
+### `src/modules/public-site/privacy-policy.ts`
+
+- Line 51:
+
+  > PHASE 161h, 7 Nov 2026: the live website's nightly backup (src/core/backup.ts, BACKUP_KEEP_DAYS); Word question 292.
+
 ### `src/shared/objectstore.ts`
 
 - Line 344:
@@ -10517,6 +20479,14 @@ neither says.
   > 161l (the tangle undone) moves each one to its owner's data file, reached through that owner's front door or an
   > event. Nothing new belongs here: this file only gets shorter. Text unchanged from the caller.
 
+## Date not recorded: Phase 21
+
+### `src/modules/claims/documents/document-pipeline.ts`
+
+- Line 71:
+
+  > Phase 21 (item 12902240772 §5-§8): CPSE_REPLIES and SALE_CONTRACT remain
+
 ## Date not recorded: Phase 40
 
 ### `src/integrations/registers/name-exclusion.ts`
@@ -10545,6 +20515,194 @@ neither says.
 
   > Class D — no lawful basis is claimed for any of these. Phase 40 §4.5
 
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 322:
+
+  > Where the first durable write of the unredacted file sits relative to the
+  > strip, under each boundary model. This is the table Phase 40 §3.2 would have
+  > drawn for the storage boundary if the storage boundary had been known.
+
+- Line 559:
+
+  > ------------------------------------------------------------------ *
+  > 2. WHO IS A DATA SUBJECT — the legal-form test, extended
+  >
+  > The name exclusion register's preamble already has the right test and it is
+  > NOT restated differently here: "the test is legal form, not whether the
+  > string looks like a name". A company called "A N Other Consulting Ltd" is
+  > not a natural person; a sole trader's provider name is.
+  >
+  > Phase 40 §4.1 adds three cases the register population never needed, because
+  > a register returns fields and a document has parties, signatories and
+  > witnesses. All three are implemented below.
+  > ------------------------------------------------------------------
+
+- Line 694:
+
+  > The roles Phase 40 §4.3 isolates as natural persons one hundred per cent of
+  > the time. Kept as a separate predicate from classifyPartyReference because
+  > that is the whole finding: these three sit OUTSIDE the parties clause, so a
+  > rule about "party names" reaches none of them.
+  >
+  >   1. The attesting witness. A company cannot witness a signature.
+  >   2. The individual who signs, including one signing "for and on behalf of"
+  >      a company — they are a natural person and their name is personal data
+  >      whoever they sign for.
+  >   3. The professional certifier — the FRA assessor, the asbestos surveyor,
+  >      the reinstatement valuer, the building control signatory.
+
+- Line 734:
+
+  > Roles for which Caprebate has NO LAWFUL BASIS AT ALL, so there is nothing
+  > for a transparency notice to describe and the answer is not to hold the data.
+  > Item 5 §4.4: "For Class D, Article 6(1)(f) is not available and is not
+  > claimed." Phase 40 §4.5 shows that LIA-C10 governs the planning API and not an
+  > uploaded planning PDF — which is what condition A14-D4 and section 3 below fix.
+
+- Line 757:
+
+  > Removed on receipt from EVERY document type, including the two
+  > HUMAN_READ_ONLY ones, under EVERY setting, with no override anywhere in this
+  > module. This is Phase 40 condition A14-D4 and it is the one item in this phase
+  > that should not wait for the rest.
+  >
+  > The reason these three are absolute where the rest of the strip is
+  > spec-derived: for everything else the argument is minimisation — no field
+  > needs it, so holding it is unnecessary. For these three the argument is
+  > lawful basis — Caprebate has decided it has NONE, so holding it is not
+  > merely unnecessary, it is unlawful. Those are different arguments with
+  > different consequences and they must not be collapsed into one list.
+
+- Line 798:
+
+  > The roles Phase 40 §4.2 works through for this type, with how often the
+  > role is occupied by a natural person. This is what makes the per-upload
+  > triage at condition A14-D1 performable by a person who has not read Phase 40:
+  > it tells them who to look for in this document type.
+
+- Line 1374:
+
+  > ------------------------------------------------------------------ *
+  > 5. THE HUMAN-CAPTURE RULE — Phase 40 condition A14-D3
+  >
+  > CPSE_REPLIES and SALE_CONTRACT are HUMAN_READ_ONLY and their specs capture
+  > reply text VERBATIM. A person keying that in passes through no control at
+  > all: the four layers, the drop list, the L4 scrubber and the E_PERSON_NAME
+  > egress refusal are ALL model-boundary controls, and these two types never
+  > touch the model path.
+  >
+  > "Do not type in names" is advisory and advisory is not a control. What
+  > follows is enforceable, in two layers, and it is honest about which layer
+  > does the work — the same honesty the pipeline shows about its own L4.
+  >
+  >   LAYER 1, STRUCTURAL, and this is the one that works. The reviewer does not
+  >   supply raw verbatim text. They supply text in which every name has been
+  >   replaced by a ROLE TOKEN — [SELLER], [BUYER], [WITNESS], [NAMED
+  >   INDIVIDUAL], [FEE EARNER] — and they state how many substitutions they
+  >   made. A verbatim field is accepted only with an explicit attestation that
+  >   the rule was applied. No attestation, no capture. This preserves the
+  >   evidential point the DPIA §6 makes for verbatim capture — the qualification
+  >   "not so far as the Seller is aware" survives a role token intact, because
+  >   the token is where the name was and the wording around it is untouched.
+  >
+  >   LAYER 2, PATTERN MATCHING, and it is the backstop and nothing more. The
+  >   same PERSON_NAME_PATTERNS the pipeline uses at L4, applied to the captured
+  >   value. The pipeline's own header says pattern matching is never complete
+  >   and its test P26 demonstrates it missing a bare name in running prose.
+  >   That is equally true here and this module claims nothing more for it.
+  > ------------------------------------------------------------------
+
+- Line 1409:
+
+  > The fields captured verbatim, across both paths. Phase 40 §4.7.
+
+- Line 1571:
+
+  > Route group follows from the document, not from convenience. Phase 40 §7.1.
+
+- Line 1657:
+
+  > ------------------------------------------------------------------ *
+  > 7. RETENTION AND DELETION OF THE RAW FILE
+  >
+  > Distinct from RET-1 and RET-2, which are being derived for the DEFENCE PACK:
+  > keep the evidence until the return can no longer be challenged. Nobody had
+  > asked whether the raw uploaded file needs the same clock, and it matters
+  > because the file is where every third-party name lives — the structured
+  > records contain none.
+  >
+  > Q34 IS THE DECISION AND IT IS NOT MADE HERE. What is built here is the
+  > mechanism, so that whichever way Q34 lands, deletion actually happens and is
+  > evidenced. Phase 40 §10's own words: a retention rule with no deletion
+  > mechanism is a retention rule that says "forever".
+  >
+  > WHAT FAIL-CLOSED MEANS FOR A RETENTION RULE, since it is the opposite of
+  > what it means everywhere else in this codebase: everywhere else fail-closed
+  > means refuse to act. Here it means DELETE SOONER. The default is therefore
+  > the shorter clock, and choosing the longer one is an affirmative decision
+  > somebody has to make and be recorded as making.
+  > ------------------------------------------------------------------
+
+- Line 1678:
+
+  > ------------------------------------------------------------------ *
+  > 7A. THE OPTION WITHDRAWN, AND WHY — Phase 44, board item 12928215019
+  >
+  > Phase 41 offered three retention rules. One of them,
+  > RETAIN_REDACTED_DELETE_ORIGINAL — "keep a copy with the receipt strip
+  > applied; delete the unredacted original" — had nothing behind it.
+  > applyReceiptPolicy returns Segment[], which is text. There is no PDF,
+  > image or OCR redaction anywhere in this codebase; there is no file handling
+  > anywhere in this codebase at all. deletionDueAt treated the rule as
+  > identical to DELETE_ON_EXTRACTION_COMPLETE, so not even the clock
+  > distinguished it. redacted_copy_retained was a boolean a caller asserted.
+  >
+  > WHY THAT IS WORSE THAN A DORMANT ENUM MEMBER. This is the option Phase 40
+  > §7.7 measure 2 recommends where deleting the source early is unacceptable,
+  > and Q34 offers it to Lakhbir and the data protection officer as a live answer. A decision put
+  > to a human with an option that cannot be performed is not a decision. If
+  > they had picked it, the developer would have inherited a rule name and the
+  > protection they thought they were buying would not exist.
+  >
+  > WHAT WAS DONE, AND WHY THIS RATHER THAN BUILDING IT. Withdrawn. Phase 44's
+  > Part A lands on a quarantine step that DOES have the file in hand, which
+  > makes a producer buildable where it previously was not — buildable, but not
+  > built, and shipping an enum member whose guarantee nothing delivers is the
+  > exact defect being fixed, not a smaller version of it. Real redaction means
+  > destroying the underlying text: a black rectangle drawn over selectable text
+  > is the classic way organisations publish the thing they thought they had
+  > hidden, and a producer that did that would be worse than no producer,
+  > because the flag would then be true. REDACTION_PRODUCER_CONTRACT below
+  > states what has to exist before the rule comes back, so that reinstating it
+  > is a build against a specification rather than a judgement call.
+  >
+  > FAIL-CLOSED CHECK. Withdrawing leaves DELETE_ON_EXTRACTION_COMPLETE (the
+  > default, and the shortest clock) and RETAIN_FOR_DEFENCE_PERIOD. Removing
+  > the middle option removes something that held LESS than the long clock, so
+  > withdrawal is not automatically the safe direction — it is safe here only
+  > because the middle option never actually held less than anything. It held
+  > exactly what the long clock held, under a name that said otherwise.
+  > ------------------------------------------------------------------
+
+- Line 2133:
+
+  > When deletion of the raw file falls due, or null where it cannot yet be
+  > computed. Null is NOT "never" — assertNoOverdueUndeleted treats a record
+  > that has been sitting undeletable as the thing to surface, because "we could
+  > not compute a date" is exactly how "forever" gets built by accident.
+  >
+  > PHASE 44 ADDS ONE CONSTRAINT, and it constrains an answer rather than making
+  > one. Where the strip removed NO_LAWFUL_BASIS content, that content is still
+  > in the file (section 1A), and Phase 40 condition A14-D4 says Caprebate must
+  > not hold it. So the defence-period clock is not available for that document
+  > and it falls back to the extraction clock. This is not a choice between
+  > Q34's options: it is condition A14-D4, which is already owned by the Developer,
+  > removing one option for one class of document. Fail-closed for a retention
+  > rule means DELETE SOONER, and this deletes sooner. Q44 puts the consequence
+  > to Lakhbir and the DPO, because the alternative — building the redaction
+  > producer so the long clock becomes available again — is their call to fund.
+
 ## Date not recorded: Phase 41
 
 ### `src/integrations/registers/name-exclusion.ts`
@@ -10552,6 +20710,85 @@ neither says.
 - Line 513:
 
   > Subitem 13. Added by Phase 41 (board item 12928074627). Subitem 12 is
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 492:
+
+  > ------------------------------------------------------------------ *
+  > 1C. CONDITION A14-D4, RE-CHECKED — Phase 44
+  >
+  > A14-D4 (Phase 40 §10): "Planning representations, consultee responses and
+  > correspondence are removed from an uploaded planning document on receipt,
+  > not merely kept out of the model."
+  >
+  > Phase 41 stated A14-D4 as MET and as absolute. It is neither, and the reason is
+  > the boundary above. Recorded as data so the next phase does not have to
+  > re-derive it a fourth time.
+  > ------------------------------------------------------------------
+
+- Line 1212:
+
+  > THE STRIP — ON THE EXTRACTED TEXT.
+  >
+  > WHAT THIS FUNCTION DOES: it decides which extracted segments may be written
+  > onward, per document type, and refuses to return a NO_LAWFUL_BASIS kind
+  > under any setting. That is real and it is the control condition A14-D4 needs.
+  >
+  > WHAT IT DOES NOT DO, corrected by Phase 44 (item 12928214881): it does not
+  > alter the uploaded file, and it does not run before the file is in storage.
+  > Phase 41 described it as running "before anything is written to durable
+  > storage" and as dropping segments "out of the document". Both were written
+  > from an incomplete picture of the upload path — the architecture of record
+  > has the browser writing to S3 by pre-signed URL, so the file is in storage
+  > before any Caprebate code sees it. Section 1A records the boundary this
+  > codebase now assumes and why; section 1B holds the mechanism that bounds it.
+  >
+  > The asymmetry with sanitise() is therefore narrower than Phase 41 claimed,
+  > and stating it accurately is the point: sanitise() decides what reaches a
+  > MODEL; this decides what reaches STORAGE AS TEXT and what the rest of the
+  > system may ever see. Both operate on a document already held. The control
+  > that operates on the file is the quarantine discharge, not this.
+
+## Date not recorded: Phase 44
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 102:
+
+  > --- added by Phase 44, board items 12928214881 and 12928215019 ---
+
+- Line 288:
+
+  > The order an upload handler must call this module in. Stated as data so it
+  > can be asserted, and so a developer writing the handler has one place to
+  > read rather than five. Part D of the name exclusion register makes the same
+  > point for connectors: retrieve -> assert -> write, and if the assertion
+  > throws the write never happens.
+  >
+  > REWRITTEN BY PHASE 44. The previous version described a sequence in which
+  > nothing was written until after the strip. That was never the architecture.
+  > This version states the real order INCLUDING the quarantine write and its
+  > deletion, because the point of a contract stated as data is that a developer
+  > reading one place gets the real order rather than an aspirational one.
+
+- Line 1192:
+
+  > Removed FROM THE EXTRACTED TEXT, before that text is written onward.
+  >
+  > CORRECTED BY PHASE 44 (item 12928214881), and the correction matters. This
+  > does NOT mean the content has been removed from the uploaded file. It has
+  > not: applyReceiptPolicy takes Segment[] and returns Segment[], and never
+  > touches the file. Under every boundary model in BOUNDARY_POSITION except
+  > SERVER_MEDIATED_UPLOAD, the file already exists in storage when this runs,
+  > and everything listed here is still in it. What happens to the file is
+  > governed by the quarantine discharge in section 1B and the retention rule
+  > in section 7 — not by this function.
+  >
+  > Note also what this list carries and what it does not: kind, heading, page
+  > and reason — never the text. The pipeline's sanitise() takes the same care
+  > with its `dropped` list for the same reason, and a removal log that quoted
+  > the content would recreate the exposure it exists to record.
 
 ## Date not recorded: Phase 104
 
@@ -10579,6 +20816,22 @@ neither says.
   > own authentication, its own authorisation or its own database handle; it is
   > handed this application. That is the whole reason it is mounted here rather
   > than run as a second server.
+
+### `src/modules/claims/engaged.ts`
+
+- Line 874:
+
+  > ROUTE ONE — SEND IT TO THE CLIENT'S PORTAL.
+  >
+  > Phase 104 built the receiving half: `client_tasks` rows appear in the portal
+  > with what is asked, WHY, and WHAT IT HOLDS UP, and the client answers them
+  > there. This writes the row and stamps `sent_to_portal_at`, which is what
+  > makes the question visible to them and what makes the list say the claim is
+  > waiting on the client rather than on us.
+  >
+  > `why` AND `holds_up` ARE REQUIRED BY THE SCHEMA AND ARE NOT DECORATION.
+  > Migration 003: "A task with no stated consequence is a chore; a task that
+  > says what it unblocks gets answered."
 
 ## Date not recorded: Phase 105
 
@@ -10636,6 +20889,28 @@ neither says.
   > object is generated. `sent_at` stays NULL on every row, which is how a screen
   > knows rather than how it guesses.
 
+### `src/modules/portal/portal.ts`
+
+- Line 149:
+
+  > The client's own copy of the figure they were given.
+  >
+  > IT IS THE SAME COLUMN PAIR THE BACK OFFICE READS, formatted by the same
+  > function. Phase 105's brief: "If the staff view and the client view of the
+  > same number ever differ, that is a defect, and a test should assert they do
+  > not." A number the client can see and a number a staff member quotes on the
+  > telephone have to be one number, and the only way to be sure of that is for
+  > there to be one.
+  >
+  > `estimate.read` is the rule, and for a CLIENT it is `ownBusiness`. It is
+  > asked here rather than assumed from the fact that they are signed in.
+
+- Line 208:
+
+  > Read from THE SAME booking record the staff calendar reads (Phase 105).
+  > One table, one model, no second copy — the phase brief is explicit that a
+  > second booking model must not be written and CB_BOOKING is the first one.
+
 ### `src/shared/objectstore.ts`
 
 - Line 439:
@@ -10667,6 +20942,23 @@ neither says.
 - Line 454:
 
   > ------------------------------ SECTION 3 · engaged clients (Phase 106)
+
+### `src/modules/portal/portal.ts`
+
+- Line 245:
+
+  > The client answers one.
+  >
+  > TWO THINGS THIS RECORDS THAT A SIMPLER VERSION WOULD LOSE.
+  >
+  > ONE — `answered_by_role = 'CLIENT'`. An answer typed by a staff member on the
+  > client's behalf is a different fact from an answer the client gave, and a
+  > claim file that cannot tell them apart cannot be defended. Phase 106 writes
+  > 'STAFF' on the other side of the same column.
+  >
+  > TWO — "I don't know" IS AN ANSWER. It is stored as DONT_KNOW with a null
+  > value, never as an empty string, because an empty string reads as unanswered
+  > three months later. N4 again, on a screen this time.
 
 ### `src/shared/stages.ts`
 
@@ -10765,6 +21057,12 @@ neither says.
 - Line 478:
 
   > ------------------------------ SECTION 5 · Caprebate's finance (Phase 107)
+
+### `src/modules/claims/engaged.ts`
+
+- Line 1179:
+
+  > decision: Phase 107 mounts client data behind a different gate, and a
 
 ## Date not recorded: Phase 108
 
@@ -10872,7 +21170,81 @@ neither says.
   > that does one. The database keeps UTC; a person reads UK time. See
   > localtime.ts, which is the only file in the application that names a zone.
 
+### `src/modules/crm/schedule.ts`
+
+- Line 325:
+
+  > ------------------------------------------------------------------ *
+  > LOCAL DAYS.
+  >
+  > THE THREE FUNCTIONS BELOW WERE RENAMED IN PHASE 113a AND THE RENAME IS THE
+  > POINT. They were `startOfDay`, `startOfWeek` and `addDays`, and they worked
+  > in UTC midnights — which reads as harmless right up until you notice that in
+  > June a "day" beginning at 00:00Z begins at one o'clock in the morning, so a
+  > calendar drawn from one puts the first hour of every summer day in the
+  > previous column and a fortnight's horizon starts on the wrong date.
+  >
+  > A DAY IS A LOCAL DAY. That is what a person means by Tuesday, what
+  > `?date=2026-09-10` in a query string means, and what the working-times
+  > weekday is counted in. Each returns an ISO-8601 UTC INSTANT as before —
+  > the storage is unchanged, only the arithmetic is local.
+  > ------------------------------------------------------------------
+
 ## Date not recorded: Phase 113c
+
+### `src/modules/claims/letter.ts`
+
+- Line 111:
+
+  > The letter's own XML, read through THE PROJECT'S ONE ZIP READER.
+  >
+  > THE FORTY-LINE CENTRAL-DIRECTORY WALK THAT USED TO LIVE HERE NOW LIVES IN
+  > `zip.ts`, unchanged, because Phase 113c needed the same reading for uploaded
+  > .docx files and a second copy would have been a second place to get the two
+  > traps wrong. Both traps are documented at the top of that file: the
+  > BACKSLASH entry paths this corpus really uses — `word\\document.xml`, whose
+  > forward-slash lookup returns nothing and reads exactly like a corrupt file —
+  > and the refusal to shell out to an `unzip` binary that is not on a stock
+  > Windows machine.
+  >
+  > WHAT DID NOT MOVE IS THE POLICY. The letter is a file this build ships, so a
+  > missing entry here is a broken install and this path lets it THROW. An
+  > uploaded document is a client's file, so the extractor catches the same
+  > error and returns its unreadable marker. Same reader, two right answers.
+
+### `src/modules/claims/uploads.ts`
+
+- Line 70:
+
+  > THE TEXT EXTRACTOR — and it is a STUB, declared as one, FOR WHAT IT STILL
+  > CANNOT READ. That sentence used to have no second half.
+  >
+  > WHAT CHANGED ON 9 SEPTEMBER 2026 (PHASE 113c). Until then this returned one
+  > marker line for every binary upload, so on a PDF or a .docx the receipt
+  > strip ran over a marker rather than over the document — the pipeline was
+  > end-to-end but the control was not exercised on real content. It now reads
+  > .docx files (through `zip.ts`, the ONE zip reader this project has, the same
+  > one the engagement letter uses) and PDFs whose text sits in uncompressed or
+  > FlateDecode content streams.
+  >
+  > WHAT IS STILL A STUB, AND IT IS WHY ROW 4 OF THE SPEC'S STUB TABLE CHANGED
+  > WORDING RATHER THAN DISAPPEARING: a SCANNED PDF — page images with no text
+  > operators, which needs OCR, a library and a decision rather than a gap — an
+  > ENCRYPTED PDF, content behind LZW/ASCII85/JBIG2/CCITT filters, `.doc`, and
+  > `.xlsx`/`.pptx`.
+  >
+  > AND THE RULE THAT DID NOT CHANGE AT ALL. Every path that cannot read a
+  > document returns the MARKER: not a guess, and not an empty page. A fake that
+  > invented plausible page text would be worse than useless — the strip would
+  > be stripping content nobody uploaded, and the `document_events` trail would
+  > record a strip that never touched a real name. An empty page is the same
+  > falsehood more quietly, because downstream zero segments reads as "we looked
+  > and there was nothing to redact". That is N4 applied to extraction, and
+  > `src/shared/extract-text.ts` is written so that every failure funnels into
+  > `markerPages()`.
+  >
+  > The name is `documentTextExtractor` rather than `plainTextExtractor` because
+  > plain text is now the last of the three things it reads, not the only one.
 
 ### `src/shared/extract-text.ts`
 
@@ -10962,6 +21334,83 @@ neither says.
 
   > ---------------------------------- PHASE 146g · addresses we cannot email
 
+### `src/modules/claims/documents-pages.ts`
+
+- Line 512:
+
+  > PHASE 146i — WHAT HAPPENED WHEN WE READ IT, ON A SCREEN AT LAST.
+  >
+  > `finishUpload` has reported this since Phase 146g and nothing drew it, so a file that came back unreadable looked
+  > exactly like one nobody had asked about. THE EMPTY CASE IS DRAWN TOO, and that is the point: "we have not tried"
+  > and "we tried and could not" are different facts and a blank space says neither.
+  >
+  > STAFF ONLY. `documentPage` returns no rows at all to the client, and never a word of the document to anybody.
+
+### `src/modules/claims/uploads.ts`
+
+- Line 156:
+
+  > PHASE 146e. What reads a scanned PDF's page pictures as text — `readScannedPages` in src/integrations/connectors/claude.ts,
+  > behind its own switch. Absent, as shipped: a scan keeps its marker.
+  >
+  > PHASE 146g: A CALLER NO LONGER HAS TO BUILD THIS. Given `reading` below, it is derived from it — and ONLY while
+  > SCANNED_PAGES is on, which is the whole of the rule. Passing one here still wins, so a test can supply its own.
+
+- Line 164:
+
+  > PHASE 146g. HOW A FINISHED UPLOAD REACHES THE DOCUMENT READER — the transport (the live one, or recorded answers
+  > in a test), the key file read at start-up, and the switches. ABSENT, OR WITH DOCUMENT_READING OFF, A FINISHED
+  > UPLOAD BEHAVES EXACTLY AS IT DID BEFORE THIS PHASE: steps 9 and 10 of the receipt contract do not run, nothing is
+  > sent anywhere, and every field the document would have answered stays ASKED of the client (N4).
+  >
+  > It opens no gate. Reading a client's own document is not a register lookup and neither gate governs it; what
+  > governs it is the switch, the key, and the data protection officer's approval of the provider and the transfer —
+  > which src/integrations/connectors/sources.ts still refuses (CLAUDE_DOCUMENTS is region US, `international_transfer_approved`
+  > false). The snapshot below is recorded on the call's audit row and decides nothing.
+
+- Line 178:
+
+  > PHASE 146g. THE ONE PLACE A ROUTE BUILDS A READER, so the two upload routes cannot drift apart. It is handed the
+  > process's own key store and transport and reads the gates as they stand, for the audit row and for nothing else.
+  >
+  > Passing this does NOT switch reading on. `CLAUDE_SWITCHES.DOCUMENT_READING` is false, so every upload that goes
+  > through here behaves exactly as it did before this phase.
+
+- Line 200:
+
+  > PHASE 146g. See `UploadDeps.reading`. The same shape as `ResearchOutside` (src/modules/claims/research.ts), for the same reason.
+
+- Line 238:
+
+  > PHASE 146g. THE CONTEXT EVERY READING CALL RUNS IN, or null where there is nothing to read with. Built once, from
+  > `UploadDeps.reading`, so the page reader and the field reader cannot end up on two different key stores.
+
+- Line 271:
+
+  > PHASE 146g. The page reader, and ONLY while SCANNED_PAGES is on. Off, a scan keeps its marker, exactly as before.
+
+- Line 399:
+
+  > PHASE 146g: what steps 9 and 10 did, or the reason they did not run. Never absent, so a caller cannot read silence as success.
+
+- Line 406:
+
+  > PHASE 146g: STEPS 9 AND 10, ON THIS REQUEST, AND ONLY BEHIND THE SWITCH. Before the row is written, so the
+
+- Line 410:
+
+  > PHASE 146i: AND NOW SOMEBODY CAN SEE WHAT IT DID. One row per reading that actually started — never for a
+  >        reading that was switched off or was never wired in, because with the switch off a finished upload must
+  >        behave exactly as it did before Phase 146g, and a row is a difference.
+
+### `src/modules/portal/client-files-pages.ts`
+
+- Line 91:
+
+  > PHASE 146g: `reading` carries the process's key store and transport to steps 9 and 10 of the receipt contract.
+  >      It switches nothing on — CLAUDE_SWITCHES.DOCUMENT_READING is false — and with it off a finished upload behaves
+  >      exactly as it did before. args.business_id is the client whose gates are recorded on the reading's audit row.
+
 ## Date not recorded: Phase 146h
 
 ### `src/integrations/connectors/companies-house.ts`
@@ -11035,6 +21484,76 @@ neither says.
   > PHASE 146h: the REVIEW band's list to the back office, or a person's choice back, keyed on the transaction id
   >        — HM Land Registry's own key for one sale. Outside that band this does nothing.
 
+### `src/modules/claims/case-stamp.ts`
+
+- Line 234:
+
+  > PHASE 146h: a person's pick for a close match. Its own map, because what it turns on is not a connector but a
+  >        screen that shows one client's staff a handful of other buildings' register entries — a different decision
+  >        with a different owner. Read here so a claim's stamp says whether a figure on it could have been picked.
+
+### `src/modules/claims/engaged-pages.ts`
+
+- Line 142:
+
+  > ---- PHASE 146h · a person's pick for a close match ----
+  >      BOTH ARE POSTS, AND THE FIRST ONE IS A POST ON PURPOSE. Showing the list fetches it from the register again —
+  >      that is a call outside, an audit row and, on a paid lookup, money. A GET that did all three would be a page a
+  >      crawler, a preloading browser or a back button could spend money on.
+
+- Line 396:
+
+  > PHASE 146h: MAY THIS ROW OFFER A LIST? The three conditions this page can see, and the page decides none of them —
+  > src/modules/claims/match-review.ts asserts every one again, server-side, on the request the button makes. A button drawn by
+  > mistake would be refused there; a button NOT drawn is simply a control a person cannot see, which is why the test
+  > for this asserts the server's refusal and not the button's absence.
+
+- Line 431:
+
+  > PHASE 146h: a close match is the one failure a person can resolve rather than retry —
+  >                          retrying it would only find the same entries and score them the same way again. The
+  >                          button shows only where the lookup itself said the band was REVIEW, only once the
+  >                          engagement letter is signed, and only while the pick is switched on.
+
+### `src/modules/claims/research.ts`
+
+- Line 895:
+
+  > PHASE 146h — THE BACK-OFFICE PICK, AND IT IS THE ONLY THING THAT MAY SET THIS. One entry per source, carrying
+  > either a `review` hook (hand me the ranked list) or a `chosen` key (a person picked this one). Absent — which is
+  > every ordinary click — the query a connector is handed is exactly the query it was handed before this phase, and
+  > there is a test that walks every builder and asserts neither key is on it.
+  >
+  > IT OPENS NOTHING. A pick reaches a connector through the same `decided` list as any other lookup, so the two
+  > gates and the source's own switch have already had their say above. src/modules/claims/match-review.ts adds one more
+  > condition on top — a signed engagement, whatever the source's tier — and it asserts that itself.
+
+## Date not recorded: Phase 161j
+
+### `src/modules/assessment/data.ts`
+
+- Line 174:
+
+  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+
+### `src/modules/claims/data.ts`
+
+- Line 1042:
+
+  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+
+### `src/modules/crm/data.ts`
+
+- Line 1063:
+
+  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+
+### `src/modules/portal/data.ts`
+
+- Line 62:
+
+  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+
 ## Date not recorded: Phase 161l
 
 ### `src/core/backup.ts`
@@ -11054,6 +21573,62 @@ neither says.
 - Line 60:
 
   > Read when used, not while this file loads (Phase 161i: the areas' front doors load whole, and the code still loops between areas until Phase 161l).
+
+### `src/modules/assessment/data-borrowed.ts`
+
+- Line 1:
+
+  > BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE ASSESSMENT (09-app/ARCHITECTURE.md rules 3 and 4). These statements
+  > were in this module's page and logic files, which may not run SQL (rule 4). They read or write tables another area
+  > owns, or join this module's tables to another's, so they still go against rule 3 (each counted against the table's
+  > owner). Phase 161l moves each to its owner's data file, reached through that owner's front door or an event. Nothing
+  > new belongs here: this file only gets shorter. Text unchanged from the caller.
+
+### `src/modules/claims/data-borrowed.ts`
+
+- Line 1:
+
+  > BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CLAIMS (09-app/ARCHITECTURE.md rules 3 and 4). These statements
+  > were in this module's page and logic files, which may not run SQL (rule 4). They read or write tables another area
+  > owns, or join this module's tables to another's, so they still go against rule 3 (each counted against the table's
+  > owner). Phase 161l moves each to its owner's data file, reached through that owner's front door or an event. Nothing
+  > new belongs here: this file only gets shorter. Text unchanged from the caller.
+
+### `src/modules/crm/data-borrowed.ts`
+
+- Line 1:
+
+  > BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CRM (09-app/ARCHITECTURE.md rules 3 and 4). These statements
+  > were in this module's page and logic files, which may not run SQL (rule 4). They read or write tables another area
+  > owns, or join this module's tables to another's, so they still go against rule 3 (each counted against the table's
+  > owner). Phase 161l moves each to its owner's data file, reached through that owner's front door or an event. Nothing
+  > new belongs here: this file only gets shorter. Text unchanged from the caller.
+
+### `src/modules/crm/video-calls.ts`
+
+- Line 250:
+
+  > Read when used, not while this file loads (Phase 161i: the areas' front doors load whole, and the code still loops between areas until Phase 161l).
+
+### `src/modules/portal/data-borrowed.ts`
+
+- Line 1:
+
+  > BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CLIENT PORTAL (09-app/ARCHITECTURE.md rules 3 and 4). These statements
+  > were in this module's page and logic files, which may not run SQL (rule 4). They read or write tables another area
+  > owns, or join this module's tables to another's, so they still go against rule 3 (each counted against the table's
+  > owner). Phase 161l moves each to its owner's data file, reached through that owner's front door or an event. Nothing
+  > new belongs here: this file only gets shorter. Text unchanged from the caller.
+
+### `src/modules/public-site/data-borrowed.ts`
+
+- Line 1:
+
+  > BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE PUBLIC SITE (09-app/ARCHITECTURE.md rules 3 and 4). These statements
+  > were in this module's page and logic files, which may not run SQL (rule 4). They read or write tables another area
+  > owns, or join this module's tables to another's, so they still go against rule 3 (each counted against the table's
+  > owner). Phase 161l moves each to its owner's data file, reached through that owner's front door or an event. Nothing
+  > new belongs here: this file only gets shorter. Text unchanged from the caller.
 
 ### `src/shared/objectstore.ts`
 
@@ -11314,6 +21889,98 @@ neither says.
 - Line 648:
 
   > corrections of 3 October said "change the permitted fields first (and ask Sadique), then map". Nothing reads
+
+### `src/modules/assessment/assessment.ts`
+
+- Line 165:
+
+  > The next screen, or the terminal outcome.
+  >
+  > Q1b IS A GATE, AND THE ONLY ONE LEFT IN THE FRONT DOOR. `CB_FRONTDOOR.gateQ1b`
+  > decides whether the client continues or reaches a reasoned negative — a STOP
+  > for a business with no UK tax bill, or a charity. THIS FILE DOES NOT DECIDE
+  > THAT AND MUST NOT: a reasoned no is a valid, honest outcome and the rule for it
+  > lives in one place. A gated exit is also the highest-value place to offer a
+  > call, and CB_BOOKING.offerAt('gated_exit') says so in terms.
+  >
+  > THE GATE NEVER FIRED UNTIL 11 SEPTEMBER 2026. This read a field called `stop`,
+  > which the engine has never returned, and the declaration beside the generated
+  > package named `stop` too, so the compiler agreed. The engine's field is
+  > `gated`; the declaration now names every field `gateQ1b` returns; and
+  > test/gated-exit.test.ts holds the reproduction that was red before this changed.
+
+### `src/modules/claims/documents/client-doc-ingestion.ts`
+
+- Line 2038:
+
+  > The fail-closed defaults. NOT a recommendation and NOT a decision — the
+  > shortest clock the mechanism supports, so that an unconfigured system holds
+  > the least, and so that holding more is a visible act rather than a default
+  > nobody chose. Q34, Q35 and Q36 belong to Lakhbir and the DPO.
+
+### `src/modules/claims/fee-controls.ts`
+
+- Line 75:
+
+  > Added to CAPREBATE QUESTIONS under Lakhbir by CRM 7 of 10: clause 4's payment terms are blank.
+
+- Line 112:
+
+  > Word question 235, quoted. Lakhbir's. Open.
+
+### `src/modules/crm/inbound-email.ts`
+
+- Line 409:
+
+  > 1 OCTOBER 2026 — THE REPLY TIMER. Lakhbir chose a free outside timer (cron-job.org) to wake the website every few
+  > minutes, so replies come in with nobody on the site: POST (or GET) /hooks/read-replies with the header
+  > "Authorization: Bearer <REPLY_TIMER_TOKEN>". Without that word, or with a short one set, it is refused and nothing is
+  > read; compared in constant time. It reads at most once every two minutes however often it is called. Its answer is
+  > counts only — never an address, a subject or a word of any email — so the timer service learns nothing.
+
+### `src/modules/crm/introducers.ts`
+
+- Line 1337:
+
+  > CLAUSE 1'S BLANKS, READ FROM THE LETTER ITSELF. `unresolvedTerms` finds the
+  > square-bracket placeholders in the .docx, tagged with their clause, so this
+  > reads "blank" exactly as the portal does and changes the day the letter does.
+  >
+  > WHAT CLAUSE 1'S BLANK IS, READ ON 11 SEPTEMBER 2026, AND IT IS NOT A REFERRAL
+  > FEE: the fee for Caprebate's own chartered tax adviser, introduced to sign the
+  > filing position for a client who has no adviser (row E51). The switch reads it
+  > as the phase asked; the question under Lakhbir says what it does and does not settle.
+
+### `src/modules/crm/pipeline-pages.ts`
+
+- Line 620:
+
+  > Lakhbir chose "design 2" (00-START-HERE/hub/UI-TIDY-PLAN.md): the pipeline as one table, grouped by stage, with colours
+  > and darker boxes "to make this easier to read". At laptop width the board of columns ran off the right edge. Every
+  > claim the board showed is a row here, in the same groups of stages (src/core/look.ts), the latest next step first; the
+  > row keeps the card's Move button, under its next step, and the board itself is one click away (`layout=board`). Search and the four
+  > filters are links, so nothing needs a script.
+
+### `src/modules/crm/pipeline.ts`
+
+- Line 101:
+
+  > The title of the question under Lakhbir in CAPREBATE QUESTIONS. Quoted, not paraphrased.
+
+### `src/modules/portal/client-layout.ts`
+
+- Line 188:
+
+  > THE CLAIMS AT THE TOP. Lakhbir opened the wrong one of a client's two claims: each is now a box of its own, headed by its
+  > stage in its group's colour and "Claim 1 of 2", named by its site (the company is the page), its number in grey, and its
+  > next step in a dark box with when it is due. The box opens the claim inside this page. The id is the old Claims
+  > section's, so every link to #claims still lands here.
+
+### `src/modules/public-site/home.ts`
+
+- Line 305:
+
+  > EVERY ROW OF THIS LOGIN'S HOME, in Lakhbir's order.
 
 ### `src/shared/assets.ts`
 

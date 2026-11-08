@@ -1,7 +1,7 @@
 /**
- * THE SURVEY REPORT, AFTER THE SURVEYOR APPROVES: AN ADVISER SIGNS OFF, THEN THE CLIENT HAS IT. 2 October 2026.
+ * THE SURVEY REPORT, AFTER THE SURVEYOR APPROVES: AN ADVISER SIGNS OFF, THEN THE CLIENT HAS IT..
  *
- * Lakhbir, asked how the report travels: "Adviser, then client"; our own adviser's sign-off "Staff record it, as today";
+ * the owner, asked how the report travels: "Adviser, then client"; our own adviser's sign-off "Staff record it, as today";
  * the client's accountant by "Email + private sign-off link". The claim's own rule stands: no figure reaches the client
  * before a tax adviser's sign-off is on record (src/shared/stages.ts, TAX_ADVISER_SIGNOFF).
  *
@@ -115,7 +115,7 @@ export function sendForSignoff(
   const expires = new Date(Date.parse(at) + LINK_DAYS * 86_400_000).toISOString();
   const pdf = reportPdf(reportModel(kept.snapshot, kept.row.fingerprint, returnContextFor(d.db, kept.row.id, job.claim_id, job.business_id)));
   return d.db.tx(() => {
-    // PHASE 153b (Word question 121): the return entries for each year, as a spreadsheet, beside the PDF. PHASE 159a
+    // The return entries for each year, as a spreadsheet, beside the PDF. PHASE 159a
     // (C29): the facts it is made from are kept with the version the first time it is sent, and read from then on.
     const csv = returnEntriesCsv(kept.snapshot, freezeReturnContext(d.db, kept.row.id, returnContext(d.db, job.claim_id, job.business_id), 'SENT_FOR_SIGNOFF', at), kept.row.fingerprint);
     const sent = d.email.send({
@@ -145,9 +145,9 @@ export type LinkView =
   | { readonly state: 'ANSWERED'; readonly outcome: 'SIGNED' | 'SENT_BACK'; readonly answered_at: string }
   | { readonly state: 'OPEN'; readonly request_id: string; readonly contact_name: string; readonly company: string; readonly snapshot: Snapshot;
       readonly fingerprint: string; readonly fingerprint_holds: boolean; readonly expires_at: string;
-      /** Phase 159a: the approved version the link is for. */
+      /** The approved version the link is for. */
       readonly approval_id: string;
-      /** Phase 153b: the job's claim and business, for the return-entries spreadsheet. */
+      /** The job's claim and business, for the return-entries spreadsheet. */
       readonly claim_id: string | null; readonly business_id: string };
 
 /** What a sign-off link opens, by the link alone. Unknown, used and out-of-date links are told apart only in words. */
@@ -227,7 +227,7 @@ export function recordAnswer(d: Omit<SignoffDeps, 'email'>, actor: Actor, job_id
       scope: `The ${REPORT_TITLE.toLowerCase()}, version ${String(s.version)} (fingerprint ${kept.row.fingerprint}): the spend that qualifies, its two pools and the share of the building.`,
       method_note: `Signed off by ${ans.signer_name} of ${ans.signer_firm ?? ''} through Cap Rebate’s private sign-off link on ${longDate(ans.answered_at)}, after reading the report.`,
       figure: pounds(s.sums.qualifying_pence ?? 0), confirmed_switches: '',
-      // PHASE 159a (C4): the sign-off names this version, and is refused if the surveyor has approved a newer one.
+      // The sign-off names this version, and is refused if the surveyor has approved a newer one.
       approval_id: kept.row.id,
     });
     if (!r.ok) return r;
@@ -238,7 +238,7 @@ export function recordAnswer(d: Omit<SignoffDeps, 'email'>, actor: Actor, job_id
 
 /**
  * The version the client may see: the newest approved version of any of their survey packs for which a sign-off
- * NAMING THAT VERSION is on the claim (PHASE 159a, C4: never one matched by its total), recorded since the valuation was
+ * NAMING THAT VERSION is on the claim, recorded since the valuation was
  * last reopened (src/modules/claims/valuation-lock.ts) — and only while its fingerprint holds.
  */
 export function releasedVersion(db: Db, business_id: string): { row: ApprovalRow & { job_id: string; claim_id: string }; snapshot: Snapshot } | null {

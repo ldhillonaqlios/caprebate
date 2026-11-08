@@ -1,7 +1,7 @@
 /**
- * PHASE 156c, 5 October 2026 — A WHATSAPP CHAT EXPORTED ON THE PHONE, ADDED TO THE CLIENT'S RECORD BY HAND.
+ * A WHATSAPP CHAT EXPORTED ON THE PHONE, ADDED TO THE CLIENT'S RECORD BY HAND.
  *
- * Lakhbir chose this over a live connection to Meta (5 Oct 2026: "go with manual upload, keep photos"). Staff talk to
+ * the owner chose this over a live connection to Meta. Staff talk to
  * clients on the WhatsApp phone; to keep a conversation they export that one chat and add it here. THREE STEPS:
  *
  *   1. UPLOAD (`startImport`). The chat's text, and the list of files in the export. A small export comes through
@@ -10,15 +10,15 @@
  *      saved to the record at this step. A group chat (more than two names) is refused.
  *   2. CHECK (`importCheck`). How many messages and files, the first and last date, who is us and who is the client,
  *      and from which date to keep them — an export always holds the WHOLE history of the chat. Warnings: dates that
- *      could be read month first; a contact who did not tick the WhatsApp box (their messages are kept: Lakhbir,
- *      5 Oct 2026, "kept in").
+ *      could be read month first; a contact who did not tick the WhatsApp box (their messages are kept: the owner,
+ *     , "kept in").
  *   3. SAVE (`saveImport`). Each message from that date into whatsapp_messages (IN or OUT, the message's own time),
  *      tied to this upload in whatsapp_import_lines. A newer copy of the same chat adds only what is not there yet.
  *      Files: from the kept .zip at once; otherwise the script sends each needed one (`addImportFile`), each sealed
  *      in the file store as a fetched WhatsApp attachment is.
  *
  * Nothing here contacts Meta or anyone else. The copies follow the same keep-and-delete rules as other client
- * messages (Lakhbir, 5 Oct 2026, "yes same rules").
+ * messages.
  */
 import { createHash, randomUUID } from 'node:crypto';
 import type { App } from '../../core/app.ts';

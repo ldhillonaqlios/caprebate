@@ -1,6 +1,6 @@
 /**
  * AUTOMATION RULES — A TRIGGER, AN EFFECT, AND WHAT NO RULE MAY EVER DO.
- * CRM 3 of 10, 11 September 2026.
+ * CRM 3 of 10.
  *
  * The rules are migration 012's `automation_rules`, which ADMIN edits; what each
  * one did is `automation_runs`; the page is src/modules/crm/tasks-pages.ts. CRM 9 of 10
@@ -68,7 +68,7 @@ import { getClaimsIdClaimRefById3 } from '../claims/index.ts';
 import { getAutomationRulesIdLabelById, listAutomationRulesIdLabel, listAutomationRulesIdLabelByActiveTriggerEvent } from './data.ts';
 
 export type AutomationDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
-/** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
+/** `field` is the posted name a refusal is about, where it is about one. */
 export type RuleResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
 
 type Vocab = Readonly<Record<string, string>>;
@@ -114,7 +114,7 @@ export const FORBIDDEN_EFFECTS: Vocab = Object.freeze({
 });
 
 /**
- * THE INVOICE-FRAUD PROCEDURE — WHERE IT STANDS. CRM 7 of 10, 11 September 2026.
+ * THE INVOICE-FRAUD PROCEDURE — WHERE IT STANDS. CRM 7 of 10.
  *
  * The invoice email is not built, and every refusal of it above and in
  * src/web/templates.ts holds while this says `in_force: false`. The procedure did
@@ -208,7 +208,7 @@ export type RuleView = {
 };
 
 /**
- * PHASE 144: WHERE EACH SEEDED RULE CAME FROM, IN PLAIN WORDS. Migration 012 stored each seeded rule's `source` in the
+ * WHERE EACH SEEDED RULE CAME FROM, IN PLAIN WORDS. Migration 012 stored each seeded rule's `source` in the
  * words of the design notes ("It fires for…", "the DERIVED missing list", "the engagement gate"). A migration already
  * run is never edited, so the screen shows these words for the nine seeded rules instead; the stored text is unchanged,
  * and a rule an Admin adds shows its own.
@@ -553,7 +553,7 @@ function isDoNotContactOrganisation(db: Db, business_id: string): boolean {
 
 function activeStaff(db: Db, user_id: string): boolean {
   const u = getUsersRoleDisabledAtById<{ role: string; disabled_at: string | null }>(db, [user_id]);
-  // Phase 132e: a READ_ONLY login owns no work — it may not progress a task — so it is not an owner either.
+  // A READ_ONLY login owns no work — it may not progress a task — so it is not an owner either.
   return u !== undefined && u.disabled_at === null && u.role !== 'CLIENT' && u.role !== 'READ_ONLY';
 }
 
@@ -623,17 +623,17 @@ function informationRequests(d: AutomationDeps, actor: Actor | null, rule: RuleD
 }
 
 /**
- * PHASE 134 — A STAFF NOTICE'S SUBJECT, AND THE COMPANY'S NAME IN IT. BUILT AND SWITCHED OFF.
+ * A STAFF NOTICE'S SUBJECT, AND THE COMPANY'S NAME IN IT. BUILT AND SWITCHED OFF.
  *
- * Lakhbir, 18 September 2026: every email subject leads with the company name. A notice to a member of staff was built
+ * The owner: every email subject leads with the company name. A notice to a member of staff was built
  * (CRM 3 of 10) to carry the claim's reference and never an organisation's name, so that a client's name does not travel
- * in an email subject through a mail provider nobody has chosen yet. Which of the two holds is Lakhbir's to decide —
+ * in an email subject through a mail provider nobody has chosen yet. Which of the two holds is the owner's to decide —
  * CAPREBATE QUESTIONS, "Should an email to our own staff name the client company in its subject line?". Until then:
  *   OFF  the subject says what happened and ends with the reference: "A claim is now at Survey (CR-2026-0004)".
  *   ON   the subject leads with the company: "Dunmarrow Medical Practice Limited — a claim is now at Survey (CR-2026-0004)".
  * Turning it on is this one line. test/phase134.test.ts proves both readings.
  *
- * PHASE 151, 24 September 2026: ANSWERED AND ON. Lakhbir, Word answer 71 (closed that day): yes, staff emails name the
+ * 24 September 2026: ANSWERED AND ON. the owner, Word answer 71 (closed that day): yes, staff emails name the
  * client company in the subject. Nothing is sent while EMAIL_SENDING is off, so today it changes the words of what is
  * saved to the outbox and nothing else. It applies to emails to OUR STAFF only: an alert to a client never carries it
  * (src/modules/crm/messages.ts).
@@ -750,7 +750,7 @@ export function fireAutomation(d: AutomationDeps, actor: Actor | null, event: Au
 }
 
 /**
- * PHASE 133a — THE GATE OF THE AUTOMATION RULES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF THE AUTOMATION RULES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */

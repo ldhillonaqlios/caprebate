@@ -1,5 +1,5 @@
 /**
- * PHASE 157 (the sweep), 6 October 2026 — THE FUNNEL'S OWN TABLES: the only tables a lost funnel enquiry's deletion may
+ * — THE FUNNEL'S OWN TABLES: the only tables a lost funnel enquiry's deletion may
  * reach (src/modules/public-site/enquiry-retention.ts, leadDeletionPlan). A row in any other table that hangs off the lead or its
  * organisation is a reason to keep everything: it has a retention rule of its own, or it is evidence.
  *
@@ -13,7 +13,7 @@ export const FUNNEL_DELETABLE_TABLES: readonly string[] = Object.freeze([
   // the organisation, only when every lead of it goes
   'businesses', 'properties', 'assessments', 'assessment_answers', 'estimates', 'assessment_drafts', 'research_sources',
   'research_runs', 'lookups_declined', 'thread_reads', 'channel_reads',
-  // PHASE 159c: each building's events, as the assessment gave them (migration 105) — the funnel's own answers, kept on the property
+  // Each building's events, as the assessment gave them (migration 105) — the funnel's own answers, kept on the property
   'property_events',
   // the portal sign-up the funnel offered at its close, never taken up (one taken up made a login)
   'client_signups',

@@ -1,6 +1,6 @@
 /**
  * Caprebate — AI Document Pipeline
- * Board item 12830166311. Phase 3, item 5.
+ * Board item 12830166311. Item 5.
  *
  * Clients upload planning documents, fire risk assessments, O&M manuals,
  * asbestos registers, insurance reinstatement valuations, leases and contractor
@@ -23,9 +23,9 @@
  *                      correspondence is DROPPED BEFORE the payload is built.
  *                      Dropped, not redacted — it never enters the payload object.
  *   L3  UNTYPEABLE     the model client accepts only a `ModelPayload`, a branded
- *                      type produced solely by sanitise(). callModel(rawText)
+ *                      type produced solely by sanitise. callModel(rawText)
  *                      is a compile error, not a code-review question.
- *   L4  RE-ASSERTED    sanitise() and the client both re-scan for forbidden
+ *   L4  RE-ASSERTED    sanitise and the client both re-scan for forbidden
  *                      markers and person-name patterns and throw. Belt and
  *                      braces for plain-JS callers.
  *
@@ -33,9 +33,9 @@
  * matching is never complete — it is the last line, not the first.
  * ============================================================================
  *
- * PHASE 151b, 25 September 2026 — THE TAX RETURN AND THE TAX COMPUTATION.
- * Word question 223. The data protection officer, relayed by Lakhbir on 24
- * September 2026: "yes, clients may upload tax returns and tax computations."
+ * THE TAX RETURN AND THE TAX COMPUTATION.
+ * Word question 223. The data protection officer, relayed by the owner on 24
+ *: "yes, clients may upload tax returns and tax computations."
  * What must be removed from them is still open, and until the officer says
  * otherwise they are treated like the other financial documents: keep the
  * figures and the company details, and remove individuals' names, addresses
@@ -60,7 +60,7 @@ export type DocType =
   | 'INSURANCE_REINSTATEMENT'
   | 'LEASE'
   | 'CONTRACTOR_COST_BREAKDOWN'
-  // Phase 14 (item 12902240772): closes the scoping-inheritance gap on the
+  // Closes the scoping-inheritance gap on the
   // Stage 2 upload screen. CPSE_REPLIES and SALE_CONTRACT are designed in the
   // same spec doc but remain gated on the pipeline DPIA's party-identity
   // question — see caprebate-document-property-match.ts's header for why
@@ -68,7 +68,7 @@ export type DocType =
   // will need once it clears.
   | 'BUILDING_REGS_COMPLETION'
   | 'GRANT_FUNDING_AGREEMENT'
-  // Phase 21 (item 12902240772 §5-§8): CPSE_REPLIES and SALE_CONTRACT remain
+  // CPSE_REPLIES and SALE_CONTRACT remain
   // gated on the pipeline DPIA (Gate A) and the lease-party question (Gate
   // B) — see HUMAN_READ_ONLY_TYPES below and section 9. Adding the literal
   // types here, with no DOC_SPECS entry, is what makes specFor() refuse to
@@ -76,25 +76,25 @@ export type DocType =
   // unhandled, but there is no model-facing spec for it to run against.
   | 'CPSE_REPLIES'
   | 'SALE_CONTRACT'
-  // Phase 151b (Word question 223, answered yes on 24 September 2026). Both
+  // Both
   // are MODEL-EXTRACTABLE, like the nine above: every field in their specs is
   // a date, a number or a sum of money, and none is a person's.
   | 'TAX_RETURN'
   | 'TAX_COMPUTATION'
-  // Phase 146l (Lakhbir, 25 and 27 September 2026): HM Land Registry's title register is looked up BY HAND — a person
+  // HM Land Registry's title register is looked up BY HAND — a person
   // buys the official copy of the register and the title plan and uploads them. HUMAN-READ-ONLY, like CPSE_REPLIES and
   // SALE_CONTRACT: the proprietorship register names an owner who holds the property personally, and a charge can name
   // an individual lender, so no model reads it. A person reads it and records the facts on the property page.
   | 'TITLE_REGISTER'
-  // Phase 157d (the Friary House run, finding F16): four types the claim asks clients for, which nothing could receive.
-  // All four are MODEL-EXTRACTABLE on the recommendation recorded by Phase 129 (receipt-recommendations.ts): strip the
+  // Four types the claim asks clients for, which nothing could receive.
+  // All four are MODEL-EXTRACTABLE on the recommendation recorded (receipt-recommendations.ts): strip the
   // individuals, keep the figures. Every field below is a date, a number, a sum of money or a room's label; none is a
   // person's, and none is a contractor's or a party's name (a sole trader's name is a person's).
   | 'COMPLETION_STATEMENT'
   | 'ACCOUNTS'
   | 'CONTRACTOR_INVOICE'
   | 'PLANS'
-  // Phase 159k (item 1): the seller's structures and buildings allowance statement (CAA 2001 s.270IA). MODEL-EXTRACTABLE:
+  // The seller's structures and buildings allowance statement (CAA 2001 s.270IA). MODEL-EXTRACTABLE:
   // a date, a date and a sum of money; the seller's name, the signatory and any individual are never fields.
   | 'SBA_ALLOWANCE_STATEMENT';
 
@@ -117,14 +117,14 @@ export type SegmentKind =
   | 'CERTIFICATE_BODY'
   | 'FUNDING_TERMS'
   | 'FUNDING_SCHEDULE'
-  // Phase 151b — the tax return and the tax computation. The company details
+  // The tax return and the tax computation. The company details
   // are a COMPANY's only: its name, its company number, its own tax reference
   // and the period. Only a heading that names the company lands here; a
   // heading about a person ("your details", "business details") never does.
   | 'TAX_ENTITY_DETAILS'
   | 'TAX_PROFIT_COMPUTATION'
   | 'CAPITAL_ALLOWANCES_COMPUTATION'
-  // Phase 157d — the four document types. Each names figures, never a person: the price and its parts on a
+  // The four document types. Each names figures, never a person: the price and its parts on a
   // completion statement; the balance sheet, the profit and the fixed-asset note in accounts; the lines and totals of a
   // contractor's invoice; the room schedule and the floor plans' labels on drawings. The parties, the solicitors, the
   // bank details, the directors' report and a drawing's title block land in no kind here, so they are UNCLASSIFIED and
@@ -134,7 +134,7 @@ export type SegmentKind =
   | 'FIXED_ASSET_NOTE'
   | 'INVOICE_LINES'
   | 'DRAWING_SCHEDULE'
-  // Phase 159k — the seller's structures allowance statement: its dates and its qualifying expenditure, never the seller.
+  // The seller's structures allowance statement: its dates and its qualifying expenditure, never the seller.
   | 'SBA_STATEMENT_FIGURES'
   // NEVER permitted, anywhere, for any document type
   | 'REPRESENTATIONS'
@@ -143,7 +143,7 @@ export type SegmentKind =
   | 'APPLICANT_DETAILS'
   | 'AGENT_DETAILS'
   | 'SIGNATORIES'
-  // Phase 151b. An individual's own details on a tax return: a sole trader's,
+  // An individual's own details on a tax return: a sole trader's,
   // a partner's or a director's name, home address, National Insurance number
   // and personal tax reference. And the declaration a person signs.
   | 'TAXPAYER_PERSONAL_DETAILS'
@@ -342,7 +342,7 @@ export const DOC_SPECS: readonly DocSpec[] = [
     // s.532 removes base before anything else is calculated (item 12902240772
     // §4). This spec emits NO derived deduction figure: whether the funding
     // was payable for specific items is Rulebook F's tracing judgement, and
-    // it is made under that rulebook, not computed here. (Until 22 Sep 2026 this
+    // it is made under that rulebook, not computed here. (Until this
     // said it went to a CTA review task; Caprebate has no per-case tax adviser
     // under clause 1 of the engagement letter — see REVIEWER below.)
     permitted_segments: ['FUNDING_TERMS', 'FUNDING_SCHEDULE'],
@@ -361,9 +361,9 @@ export const DOC_SPECS: readonly DocSpec[] = [
       'and the filing position is signed by whoever clause 1 of the engagement letter names.',
   },
   /*
-   * THE TAX RETURN AND THE TAX COMPUTATION — Phase 151b, 25 September 2026.
+   * THE TAX RETURN AND THE TAX COMPUTATION.
    * Word question 223: the data protection officer said yes to the uploads on
-   * 24 September 2026; what must be removed stays open, and until the officer
+   *; what must be removed stays open, and until the officer
    * says otherwise the figures and the company details are kept and the
    * individuals are removed. The fields are ONLY what a claim reads from them:
    * the period, the taxable profit, what the return already claims by pool,
@@ -425,7 +425,7 @@ export const DOC_SPECS: readonly DocSpec[] = [
       'individual taxpayer\'s tax reference or National Insurance number, are not needed and are not kept.',
   },
   /*
-   * PHASE 157d — FOUR MORE TYPES THE CLAIM ASKS FOR (the Friary House run, F16). On Phase 129's recorded
+   * FOUR MORE TYPES THE CLAIM ASKS FOR (the Friary House run, F16). On Phase 129's recorded
    * recommendation for each (src/modules/claims/receipt-recommendations.ts): strip the individuals, keep the figures. The
    * completion statement and the accounts are read by the claim team only, so their figures are GATE, never
    * APPORTIONMENT (which sends a review to a surveyor). A contractor's invoice and plans are claim evidence, which a
@@ -482,7 +482,7 @@ export const DOC_SPECS: readonly DocSpec[] = [
       'needed. Only the text layer passes the strip.',
   },
   /*
-   * PHASE 159k (item 1) — THE SELLER'S STRUCTURES AND BUILDINGS ALLOWANCE STATEMENT (s.270IA). A buyer's structures
+   * THE SELLER'S STRUCTURES AND BUILDINGS ALLOWANCE STATEMENT (s.270IA). A buyer's structures
    * allowance on a purchase runs on the qualifying expenditure the statement gives, from the dates it gives; without one
    * there is no allowance. Read by the claim team only, so its figures are GATE.
    */
@@ -504,7 +504,7 @@ export const DOC_SPECS: readonly DocSpec[] = [
 
 /**
  * MANDATORY PERSON REVIEW, PER DOCUMENT TYPE — BUILT AND SWITCHED OFF.
- * Phase 132, 14 September 2026.
+ *
  *
  * WHAT IT CHANGES. Today `extract()` records a value at or above its confidence
  * threshold with no person looking at it: a 0.96 on an apportionment field
@@ -520,7 +520,7 @@ export const DOC_SPECS: readonly DocSpec[] = [
  * its one task, so it does not get a second.
  *
  * EXHAUSTIVE BY TYPE, AT TYPECHECK. Keyed by every type DOC_SPECS carries — every
- * DocType but the two human-read-only ones, which never reach extract() at all.
+ * DocType but the two human-read-only ones, which never reach extract at all.
  * Adding a DocType without a row here fails the typecheck, and a test asserts the
  * keys equal the DOC_SPECS types at runtime as well.
  *
@@ -528,7 +528,7 @@ export const DOC_SPECS: readonly DocSpec[] = [
  * from the table it is handed as REVIEW REQUIRED. Only an explicit `false` switches
  * review off: an absent row is not a decision that nobody needs to look.
  *
- * ALL FALSE, AS SHIPPED, UNTIL 22 SEPTEMBER 2026. Which types warrant a person on
+ * ALL FALSE, AS SHIPPED, UNTIL. Which types warrant a person on
  * every field is a decision for whoever owns the extraction's error rate, not a
  * build step — and Phase 146e was told to take one: FIRE_RISK_ASSESSMENT IS ON. A
  * fire risk assessment can hold residents' health details (who needs help to leave
@@ -543,7 +543,7 @@ export type ExtractableDocType = Exclude<DocType, 'CPSE_REPLIES' | 'SALE_CONTRAC
 
 export const PERSON_REVIEW_BY_DOC_TYPE: Readonly<Record<ExtractableDocType, boolean>> = Object.freeze({
   PLANNING: false,
-  FIRE_RISK_ASSESSMENT: true, // Phase 146e: residents' health details — a person checks every field
+  FIRE_RISK_ASSESSMENT: true, // Residents' health details — a person checks every field
   OM_MANUAL: false,
   ASBESTOS_REGISTER: false,
   INSURANCE_REINSTATEMENT: false,
@@ -551,16 +551,16 @@ export const PERSON_REVIEW_BY_DOC_TYPE: Readonly<Record<ExtractableDocType, bool
   CONTRACTOR_COST_BREAKDOWN: false,
   BUILDING_REGS_COMPLETION: false,
   GRANT_FUNDING_AGREEMENT: false,
-  // Phase 151b. Off, as every type is until somebody who owns the error rate
+  // Off, as every type is until somebody who owns the error rate
   // decides otherwise — Phase 146e's rule for this table. Not decided here.
   TAX_RETURN: false,
   TAX_COMPUTATION: false,
-  // Phase 157d. Off, by the same rule.
+  // Off, by the same rule.
   COMPLETION_STATEMENT: false,
   ACCOUNTS: false,
   CONTRACTOR_INVOICE: false,
   PLANS: false,
-  // Phase 159k. Off, by the same rule.
+  // Off, by the same rule.
   SBA_ALLOWANCE_STATEMENT: false,
 });
 
@@ -588,7 +588,7 @@ const HEADING_RULES: { kind: SegmentKind; patterns: RegExp[] }[] = [
   { kind: 'APPLICANT_DETAILS', patterns: [/applicant/i, /\bowner\s+details/i] },
   { kind: 'AGENT_DETAILS', patterns: [/\bagent\b/i] },
   { kind: 'SIGNATORIES', patterns: [/signed/i, /signatur/i, /prepared\s+by/i, /assessor\s+details/i, /surveyor\s+details/i] },
-  // Phase 151b. A person's own details on a tax return, and the declaration.
+  // A person's own details on a tax return, and the declaration.
   // Narrow on purpose: each names a person or a person's identifier. "Business
   // details" is here because on a sole trader's return the business name and
   // address ARE the person's. A bare "Tax reference" or "UTR" heading matches
@@ -613,7 +613,7 @@ const HEADING_RULES: { kind: SegmentKind; patterns: RegExp[] }[] = [
   { kind: 'CERTIFICATE_BODY', patterns: [/completion\s+certificate/i, /building\s+regulations?/i, /certificate\s+of\s+completion/i, /certificate\s+reference/i] },
   { kind: 'FUNDING_TERMS', patterns: [/funding\s+(agreement|terms)/i, /grant\s+(agreement|terms|conditions)/i, /grant\s+funding/i, /clawback/i] },
   { kind: 'FUNDING_SCHEDULE', patterns: [/itemised\s+schedule/i, /schedule\s+of\s+(works|items|expenditure)/i, /funding\s+schedule/i] },
-  // Phase 151b — the tax return and the tax computation. LAST, so that no
+  // The tax return and the tax computation. LAST, so that no
   // heading any of the eleven earlier types already used changes kind.
   { kind: 'CAPITAL_ALLOWANCES_COMPUTATION', patterns: [
     /capital\s+allowances?/i, /(main|special\s+rate|single\s+asset)\s+pool/i, /annual\s+investment\s+allowance/i,
@@ -629,7 +629,7 @@ const HEADING_RULES: { kind: SegmentKind; patterns: RegExp[] }[] = [
     /\bcompany\s+(information|details|name|registration|number)/i, /\bcompany'?s?\s+(tax\s+reference|unique\s+taxpayer|utr)/i,
     /return\s+period/i, /accounting\s+period/i, /period\s+covered/i,
   ] },
-  // Phase 157d — the four types. LAST again, so no heading an earlier type used changes kind (test TX2).
+  // The four types. LAST again, so no heading an earlier type used changes kind (test TX2).
   { kind: 'COMPLETION_FIGURES', patterns: [
     /completion\s+statement/i, /purchase\s+price/i, /\bconsideration\b/i, /apportion/i, /stamp\s+duty/i, /\bsdlt\b/i,
     /land\s+transaction\s+tax/i, /completion\s+date/i, /balance\s+(due|required)/i,
@@ -649,7 +649,7 @@ const HEADING_RULES: { kind: SegmentKind; patterns: RegExp[] }[] = [
     /room\s+(schedule|data|layout)/i, /schedule\s+of\s+accommodation/i, /floor\s+plan/i, /drawing\s+(schedule|register|list)/i,
     /\b(ground|first|second|third|lower\s+ground|basement)\s+floor\b/i, /gross\s+internal\s+area/i, /\bgia\b/i,
   ] },
-  // Phase 159k — the seller's structures allowance statement. LAST again (test TX2). A heading naming "structures and
+  // The seller's structures allowance statement. LAST again (test TX2). A heading naming "structures and
   // buildings" is already CAPITAL_ALLOWANCES_COMPUTATION, which the statement's spec permits too.
   { kind: 'SBA_STATEMENT_FIGURES', patterns: [
     /allowance\s+statement/i, /section\s+270ia/i, /\bs\.?\s*270ia\b/i, /qualifying\s+expenditure/i,
@@ -857,7 +857,7 @@ export type ExtractionResult = {
   not_found: string[];
 };
 
-/* WHO A REVIEW TASK GOES TO (Phase 146, 22 Sep 2026). A GATE field went to 'CTA'
+/* WHO A REVIEW TASK GOES TO. A GATE field went to 'CTA'
    until then. Caprebate has no tax adviser who could take it: under clause 1 of the
    engagement letter the filing position is signed by the client's own accountant or
    tax adviser, or by the client; the route through a chartered tax adviser of ours
@@ -1063,12 +1063,12 @@ export function toClaims(entity_id: string, r: ExtractionResult, retrieved_at: s
 }
 
 /* ------------------------------------------------------------------ *
- * 9. Human-read-only document types — CPSE_REPLIES and SALE_CONTRACT, and since Phase 146l TITLE_REGISTER
+ * 9. Human-read-only document types — CPSE_REPLIES and SALE_CONTRACT, and TITLE_REGISTER
  *
  * Item 12902240772 §8: neither gate (DPIA, lease-party) is a reason to leave
  * an upload of one of these two unprocessed. The interim position is that a
  * person captures the same field set the eventual model spec names, at the
- * same grade, so toClaims() and everything downstream sees no difference
+ * same grade, so toClaims and everything downstream sees no difference
  * between a human-captured value and a model-extracted one.
  *
  * contract_election_candidates is deliberately absent from SALE_CONTRACT's

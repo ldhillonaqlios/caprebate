@@ -1,7 +1,7 @@
 /**
- * THE CLIENT'S PORTAL HOME AS A DASHBOARD — 1 October 2026.
+ * THE CLIENT'S PORTAL HOME AS A DASHBOARD —.
  *
- * Lakhbir: "for clients, it should show what the progression is, what we are working on, any up coming calls,
+ * the owner: "for clients, it should show what the progression is, what we are working on, any up coming calls,
  * notifications from the portal, and what cap rebate needs from them."
  *
  * Five cards at the top of /portal, each with its button; everything the portal already drew stays below them.
@@ -11,7 +11,7 @@
  *                            ring; a call asked for with no time yet says so; none at all offers "Book a call".
  *   NEW FOR YOU              our messages they have not read, and what we have done or issued in the last 30 days.
  *   WHAT WE NEED FROM YOU    every open question and every document asked for, each with its button.
- * UI TIDY PHASE 16 (3 October 2026): the cards no longer repeat "Send us a message" — the header carries it, once.
+ * The cards no longer repeat "Send us a message" — the header carries it, once.
  * Nothing here is new information: each card reads what the portal's own sections read, asked of the same rules. No
  * figure, no fact and no value is shown — only words, dates and counts.
  */
@@ -102,14 +102,14 @@ export function portalDashboard(x: PortalDashInput): Safe {
   return h`<div class="pdash">${where}${needs}${working}${call}${fresh}</div>`;
 }
 
-/** PHASE 158b (F40, the Friary House run): "We issued your The client report". The label's own "The" goes, and it reads in the sentence. */
+/** "We issued your The client report". The label's own "The" goes, and it reads in the sentence. */
 export function issuedLine(label: string): string {
   const name = label.replace(/^the\s+/i, '');
   return `We issued your ${name.charAt(0).toLowerCase()}${name.slice(1)}`;
 }
 
 /**
- * PHASE 158c (F39, the Friary House run): with the report issued, the client was still told "A chartered surveyor is
+ * With the report issued, the client was still told "A chartered surveyor is
  * valuing the property". Once a version is released to them the sentence says the report is ready, or that they
  * accepted it. Otherwise the step's own words, as before.
  */
@@ -122,7 +122,7 @@ export function workingWords(db: PortalDashInput['db'], actor: PortalDashInput['
   return step ?? 'We are working on your claim.';
 }
 
-/** PHASE 158d (F43): the day the client signed their engagement letter, if it was on or after `since`. */
+/** The day the client signed their engagement letter, if it was on or after `since`. */
 function signedSince(db: Db, business_id: string, since: string): string[] {
   const on = getEngagementsAtByBusinessIdLetterState<{ at: string | null }>(db, [business_id])?.at ?? null;
   return on !== null && localDate(on) >= since ? [localDate(on)] : [];
@@ -131,7 +131,7 @@ function signedSince(db: Db, business_id: string, since: string): string[] {
 export type AlsoNeeded = { readonly words: string; readonly kind: string; readonly href: string; readonly cta: string };
 
 /**
- * PHASE 158d (F43, the second Friary House run): "What we need from you" said "Nothing at the moment" while the claim's
+ * "What we need from you" said "Nothing at the moment" while the claim's
  * gate waited on the client: four documents at Data gathering (they appeared only once staff asked for each), and their
  * acceptance of the report at Reports. Now it lists what the gate itself is waiting on from them: each required document
  * not yet received on a claim at Data gathering (one already asked for is listed once, as the request), and the

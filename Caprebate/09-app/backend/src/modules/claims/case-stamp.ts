@@ -1,6 +1,6 @@
 /**
  * THE CASE STAMP — WHAT DECIDED A SEALED CASE, WRITTEN WHEN A DELIVERABLE IS ISSUED.
- * Phase 132, 14 September 2026.
+ *
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHY IT EXISTS
@@ -20,7 +20,7 @@
  * every kind, written by `recordDeliverable` in the same transaction that issues
  * it: the engine version (NULL reads "not known", never a default), the rulebook
  * module versions, EVERY CB_CTA switch and its position, the free register gate,
- * every back-end switch and its position, every connector switch (Phase 146c), each
+ * every back-end switch and its position, every connector switch, each
  * sign-off record with its hash, the estimate's hash and the head of the anchor log.
  * Hashed, and never changed.
  *
@@ -85,7 +85,7 @@ export const ENGINE_PACKAGE_PATH = join(import.meta.dirname, '..', '..', '..', '
 
 let engineVersion: string | null | undefined;
 
-/** The engine package's own `version`, or null where it states none. Moved here from src/modules/claims/claim-record.ts by Phase 132. */
+/** The engine package's own `version`, or null where it states none. Moved here from src/modules/claims/claim-record.ts. */
 export function readEngineVersion(): string | null {
   if (engineVersion !== undefined) return engineVersion;
   try {
@@ -149,25 +149,25 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   FEE_CONTROLS.above_benefit   the fee above the benefit                       src/modules/claims/fee-controls.ts
  *   FEE_CONTROLS.break_and_abort the break and abort fees                        src/modules/claims/fee-controls.ts
  *   MANDATORY_DOCUMENTS          the documents a gate requires                   src/modules/claims/mandatory-documents.ts
- *   KEEP_ORIGINALS               keeping the file a client sent (Phase 140)      src/shared/originals.ts
+ *   KEEP_ORIGINALS               keeping the file a client sent      src/shared/originals.ts
  *   KEEP_ORIGINALS_TEST_WEBSITE  the same, on the test website only (153c)      src/shared/originals.ts, passed by api/index.mjs
- *   EMAIL_SENDING                sending email from contact@ (Phase 141)       src/integrations/email/email-provider.ts
- *   INBOUND_EMAIL                reading replies to contact@ (Phase 142)       src/integrations/email/email-inbound.ts
- *   IDENTITY_CHECK               the online identity check (Phase 151)          src/integrations/connectors/identity-check.ts
- *   POSTCODE_CHECK               the free postcode check (Phase 151)            src/integrations/connectors/postcode-check.ts
+ *   EMAIL_SENDING                sending email from contact@       src/integrations/email/email-provider.ts
+ *   INBOUND_EMAIL                reading replies to contact@       src/integrations/email/email-inbound.ts
+ *   IDENTITY_CHECK               the online identity check          src/integrations/connectors/identity-check.ts
+ *   POSTCODE_CHECK               the free postcode check            src/integrations/connectors/postcode-check.ts
  *   ADDRESS_LOOKUP               "Find my address", Homedata since 156f (6 Oct)  src/integrations/connectors/address-lookup.ts
  *   COMPANY_TYPE_FROM_REGISTER   the company type from Companies House (153b)   src/integrations/connectors/company-search.ts
- *   ENGAGEMENT_SIGNING           the built-in letter signature (Phase 146f)      src/modules/claims/signing.ts
+ *   ENGAGEMENT_SIGNING           the built-in letter signature      src/modules/claims/signing.ts
  *   ENGAGEMENT_SIGNING_TEST      signing on for testing, test copy only (6 Oct)  src/modules/claims/signing.ts
- *   MESSAGE_RETENTION            the message clean-up job (Phase 142a)           src/modules/crm/message-retention.ts
- *   ENQUIRY_RETENTION            the closed-enquiry clean-up job (Phase 153c)    src/modules/public-site/enquiry-retention.ts
+ *   MESSAGE_RETENTION            the message clean-up job           src/modules/crm/message-retention.ts
+ *   ENQUIRY_RETENTION            the closed-enquiry clean-up job    src/modules/public-site/enquiry-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/modules/claims/defence-pack.ts
  *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/modules/assessment/allowance-profit-comparison.ts
- *   HOMEDATA_DIMENSIONS          Homedata's floor-area estimate (Phase 153e)     src/integrations/connectors/homedata.ts
+ *   HOMEDATA_DIMENSIONS          Homedata's floor-area estimate     src/integrations/connectors/homedata.ts
  *   FUNNEL_SWITCHES.breakeven_is_insufficient_profit
  *                                break-even read as insufficient profit          src/modules/assessment/funnel-session.ts
  *
- * FEE_CONTROLS.minimum_fee left this list in Phase 132e (16 September 2026): the minimum fee is decided none, and the
+ * FEE_CONTROLS.minimum_fee left this list: the minimum fee is decided none, and the
  * control is retired — MINIMUM_FEE_DECISION in src/modules/claims/fee-controls.ts records it.
  *
  * ALLOWANCE_PROFIT_COMPARISON was added by another Phase 132 workstream while this
@@ -189,7 +189,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'CONVEYANCING_STRIP', on: CONVEYANCING_STRIP.enabled, home: 'src/modules/assessment/conveyancing-strip.ts' },
     { switch: 'FEE_CONTROLS.above_benefit', on: FEE_CONTROLS.above_benefit.enabled, home: 'src/modules/claims/fee-controls.ts' },
     { switch: 'FEE_CONTROLS.break_and_abort', on: FEE_CONTROLS.break_and_abort.enabled, home: 'src/modules/claims/fee-controls.ts' },
-    { switch: 'FEE_CONTROLS.uplifts', on: FEE_CONTROLS.uplifts?.enabled === true, home: 'src/modules/claims/fee-controls.ts' }, // Phase 157b, Word question 235
+    { switch: 'FEE_CONTROLS.uplifts', on: FEE_CONTROLS.uplifts?.enabled === true, home: 'src/modules/claims/fee-controls.ts' }, // Word question 235
     { switch: 'MANDATORY_DOCUMENTS', on: MANDATORY_DOCUMENTS.enabled, home: 'src/modules/claims/mandatory-documents.ts' },
     { switch: 'KEEP_ORIGINALS', on: KEEP_ORIGINALS.enabled, home: 'src/shared/originals.ts' },
     { switch: 'KEEP_ORIGINALS_TEST_WEBSITE', on: KEEP_ORIGINALS_TEST_WEBSITE.enabled, home: 'src/shared/originals.ts (the test website only, through api/index.mjs)' },
@@ -201,7 +201,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'COMPANY_TYPE_FROM_REGISTER', on: COMPANY_TYPE_FROM_REGISTER.enabled, home: 'src/integrations/connectors/company-search.ts' },
     { switch: 'ADDRESS_LOOKUP', on: ADDRESS_LOOKUP.enabled, home: 'src/integrations/connectors/address-lookup.ts' },
     { switch: 'ENGAGEMENT_SIGNING', on: ENGAGEMENT_SIGNING.enabled, home: 'src/modules/claims/signing.ts' },
-    { switch: 'ENGAGEMENT_SIGNING_TEST', on: ENGAGEMENT_SIGNING_TEST.enabled, home: 'src/modules/claims/signing.ts' }, // 6 Oct 2026: the test copy only, test website
+    { switch: 'ENGAGEMENT_SIGNING_TEST', on: ENGAGEMENT_SIGNING_TEST.enabled, home: 'src/modules/claims/signing.ts' }, // The test copy only, test website
     { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/modules/crm/message-retention.ts' },
     { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/modules/public-site/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/modules/claims/defence-pack.ts' },
@@ -212,8 +212,8 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
 }
 
 /**
- * THE CONNECTOR SWITCHES — ONE PER LOOKUP, THE DOCUMENT READER'S TWO, AND THE PICK'S. Phase 146c, 23 September 2026;
- * the pick's added by Phase 146h.
+ * THE CONNECTOR SWITCHES — ONE PER LOOKUP, THE DOCUMENT READER'S TWO, AND THE PICK'S.;
+ * the pick's added.
  *
  * They are frozen maps of booleans, not `enabled:` flags, so the grep test in test/phase132-records.test.ts cannot see
  * them — the same reason FUNNEL_SWITCHES is stamped by its own key. Every key of REGISTER_SWITCHES
@@ -231,7 +231,7 @@ export function connectorSwitchReadings(): readonly BackendSwitchReading[] {
     ...(Object.keys(CLAUDE_SWITCHES) as (keyof typeof CLAUDE_SWITCHES)[]).sort().map((k) => ({
       switch: `CLAUDE_SWITCHES.${k}`, on: CLAUDE_SWITCHES[k] === true, home: 'src/integrations/connectors/claude.ts',
     })),
-    /* PHASE 146h: a person's pick for a close match. Its own map, because what it turns on is not a connector but a
+    /* A person's pick for a close match. Its own map, because what it turns on is not a connector but a
        screen that shows one client's staff a handful of other buildings' register entries — a different decision
        with a different owner. Read here so a claim's stamp says whether a figure on it could have been picked. */
     ...Object.keys(PICK_SWITCHES).sort().map((k) => ({
@@ -252,7 +252,7 @@ export type CaseStamp = {
   readonly cta_switches: readonly { readonly switch: string; readonly on: boolean }[];
   readonly registry_free_enabled: boolean;
   readonly backend_switches: readonly BackendSwitchReading[];
-  /** Phase 146c: every connector switch — each register lookup's, and the document reader's. */
+  /** Every connector switch — each register lookup's, and the document reader's. */
   readonly connector_switches: readonly BackendSwitchReading[];
   readonly signoffs: readonly { readonly id: string; readonly record_hash: string }[];
   readonly estimate_hash: string | null;

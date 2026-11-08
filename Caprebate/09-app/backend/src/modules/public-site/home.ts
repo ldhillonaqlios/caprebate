@@ -1,7 +1,7 @@
 /**
- * HOME AS TILES — PHASE 136, 21 September 2026.
+ * HOME AS TILES.
  *
- * Lakhbir, 18 September 2026: "tiles over heavy text, especially on the menu page. The menu page should flow: new leads,
+ * The owner: "tiles over heavy text, especially on the menu page. The menu page should flow: new leads,
  * existing leads' next actions, today and overdue, pipeline by stage." This file draws exactly that, as rows of tiles:
  *
  *   Sales, Admin, Read only   1 New leads · 2 Existing leads — next actions · 3 Today and overdue · 4 Pipeline by stage
@@ -52,7 +52,7 @@ export type HomeTile = {
 export const ROW_LIMIT = 12;
 
 /**
- * Text on a tile, whitespace collapsed and NEVER CUT (29 September 2026, Lakhbir: "too many texts have been cut off").
+ * Text on a tile, whitespace collapsed and NEVER CUT.
  * Until then every tile's text stopped at 48 characters with "…", so a next action read "Confirm who owns the
  * building, and that we…". A tile now wraps its whole text; the grid gives every tile in a row the same height.
  */
@@ -66,7 +66,7 @@ function plural(n: number, one: string, many: string): string {
 
 /* ================================================================== *
  * WORKING DAYS — a new lead turns red once it has waited more than one.
- * PHASE 137: the rule moved to src/shared/working-days.ts, which knows the
+ * The rule moved to src/shared/working-days.ts, which knows the
  * England and Wales bank holidays, so Home and Leads read one function.
  * ================================================================== */
 
@@ -109,7 +109,7 @@ export function leadsRows(actor: Actor, app: App, nowIso: string): Safe[] {
   if (!opens(actor, assertLeadSection)) return [];
   const rows = leadsList(app.db, actor, { filters: {}, sort: 'age' }).rows.filter((l) => l.claim === null);
   const fresh = rows.filter((l) => l.status.key === 'NEW');
-  // PHASE 137: an unanswered website enquiry is in the Leads page's New section, so it is here too — for the logins that
+  // An unanswered website enquiry is in the Leads page's New section, so it is here too — for the logins that
   // may handle enquiries only — and Home and Leads count, order and colour New the same way.
   const enquiries = can(actor, 'lead.write', { type: 'lead', id: '__website_enquiries__', business_id: null })
     ? openEnquiries({ db: app.db, audit: app.audit, now: app.now, newId: () => '' }, actor) : [];
@@ -139,7 +139,7 @@ export function leadsRows(actor: Actor, app: App, nowIso: string): Safe[] {
     };
   });
   const b = capped(goingTiles, '/staff/leads?sort=next_action');
-  // ONE PLACE FOR "WHAT NEXT" (Phase 135, carried): the claims with no next step are Tasks' own view — linked, not repeated.
+  // ONE PLACE FOR "WHAT NEXT": the claims with no next step are Tasks' own view — linked, not repeated.
   const claimsLink: HomeTile[] = opens(actor, T.nextActionsGate)
     ? [{ href: '/staff/next-actions', name: 'Claims with no next step', lines: ['Open the list in Tasks'] }] : [];
   const nextRow = homeRow('next-actions', 'Existing leads — next actions', goingTiles.length === 0 ? [] : [...b.tiles, ...claimsLink],
@@ -162,7 +162,7 @@ type Dated = { readonly due_on: string; readonly late: boolean; readonly tile: H
 export function todayRow(actor: Actor, app: App, nowIso: string): Safe {
   const items = todayItems(actor, app, nowIso);
   const c = capped(items, '/staff/tasks');
-  // UI TIDY PHASE 4: "Do these first" — the late ones first, then today's; the same items as before.
+  // "Do these first" — the late ones first, then today's; the same items as before.
   return homeRow('today', 'Do these first', c.tiles, 'Nothing is due today, and nothing is late.', c.more);
 }
 
@@ -194,7 +194,7 @@ export function todayItems(actor: Actor, app: App, nowIso: string): HomeTile[] {
       tile: { href: `/staff/clients/${r.business_id}`, name: short(r.client), lines: [`Document: ${short(r.type_label)}`, r.due.label], late: r.due.overdue },
     });
   }
-  // PHASE 142: A CLIENT WAITING FOR A REPLY on the company's chat for more than one working day. Only for a login that may
+  // A CLIENT WAITING FOR A REPLY on the company's chat for more than one working day. Only for a login that may
   // read that thread; a message waiting less than that is not late and not "due", so it is not on this row.
   for (const m of M.clientMessagesWaiting(db, actor, nowIso)) {
     if (!m.late) continue;
@@ -204,7 +204,7 @@ export function todayItems(actor: Actor, app: App, nowIso: string): HomeTile[] {
         lines: [m.count === 1 ? 'A message waiting for a reply' : `${m.count} messages waiting for a reply`, waitedWords(m.working_days)], late: true },
     });
   }
-  // PHASE 142: EMAIL REPLIES THE MAILBOX READER COULD NOT FILE, for Admin and Sales. One tile, with the number.
+  // EMAIL REPLIES THE MAILBOX READER COULD NOT FILE, for Admin and Sales. One tile, with the number.
   if (IE.mayReadQueue(actor)) {
     const q = IE.replyQueue(db, actor);
     if (q.length > 0) items.push({ due_on: '', late: true, tile: { href: '/staff/replies', name: 'Email replies to sort', lines: [`${q.length} waiting — choose the company`], late: true } });
@@ -217,7 +217,7 @@ function reportsTile(actor: Actor): HomeTile[] {
 }
 
 /**
- * UI TIDY PHASE 4: THE PIPELINE AS FIVE COLOURED BARS. Lakhbir agreed the eleven stage tiles become one small chart: each
+ * THE PIPELINE AS FIVE COLOURED BARS. the owner agreed the eleven stage tiles become one small chart: each
  * group of stages (src/core/look.ts) with its count, as long as its share, each a link to the Pipeline. On hold, when any,
  * and Reports follow as links. The numbers are the same board's.
  */
@@ -288,7 +288,7 @@ export function adminRow(actor: Actor, app: App): Safe[] {
   const tiles: HomeTile[] = [
     { href: '/staff/users', name: 'Users', lines: [plural(staff.length, 'person can sign in', 'people can sign in')] },
     { href: '/staff/admin-settings', name: 'Switches', lines: ['Turn features on or off'] },
-    // PHASE 156e: the outside services on one page.
+    // The outside services on one page.
     { href: '/staff/connections', name: 'Connections', lines: ['Every outside service'] },
     {
       href: '/staff/audit', name: 'Audit log', late: !log.chain.intact,
@@ -302,7 +302,7 @@ export function adminRow(actor: Actor, app: App): Safe[] {
   return [homeRow('admin', 'Admin', tiles, 'Nothing to show.')];
 }
 
-/** EVERY ROW OF THIS LOGIN'S HOME, in Lakhbir's order. */
+/** EVERY ROW OF THIS LOGIN'S HOME, in the owner's order. */
 export function homeRows(app: App, actor: Actor): Safe {
   const nowIso = app.now();
   const rows: Safe[] = [];

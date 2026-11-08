@@ -1,7 +1,7 @@
 /**
  * CHECKED AND APPROVED, AND TELLING THE CLIENT — PHASE 139, 21 September 2026. "Clean-up 6 of 11."
  *
- * Lakhbir, 18 September 2026: "When viewing the client's portfolio there needs to be where the information has come from
+ * The owner: "When viewing the client's portfolio there needs to be where the information has come from
  * (API) with a secondary approve box. When a user clicks approve this then pushes the details to say Cap Rebate has
  * completed this to the client - the idea is that we can then manage the flow to the customer."
  *
@@ -101,7 +101,7 @@ export const REGISTER_CHIPS: Readonly<Record<string, string>> = Object.freeze({
   EPC: 'EPC register', HMLR_PPD: 'HM Land Registry', HMLR_TITLE: 'HM Land Registry',
   CQC: 'Care regulator', CIW: 'Care regulator', CARE_INSPECTORATE: 'Care regulator', VOA: 'Valuation office', PLANNING: 'Planning register',
   ONS_POSTCODE: 'Postcode register', HOMEDATA_ADDRESS: 'Address lookup',
-  // PHASE 156f (B4): the site area from the title outline.
+  // The site area from the title outline.
   HOMEDATA_BOUNDARY: 'Land Registry title outline, via Homedata',
 });
 
@@ -135,7 +135,7 @@ function fieldWords(field: string): string {
  * 3 · THE VIEW
  * ================================================================== */
 
-/** A claim fact the client answered, offered as the fact itself: approving it records the fact (Phase 138's carry). */
+/** A claim fact the client answered, offered as the fact itself: approving it records the fact. */
 export type AnswerAsFact = {
   readonly key: string;
   readonly kind: 'date' | 'pence' | 'choice' | 'text';
@@ -153,7 +153,7 @@ export type CheckFact = {
   /** Staff only. Never handed to anything the portal draws. */
   readonly value: string;
   readonly chip: string;
-  /** Phase 146c: the words the register's licence says must go with its data, verbatim (HM Land Registry's sale prices). */
+  /** The words the register's licence says must go with its data, verbatim (HM Land Registry's sale prices). */
   readonly attribution?: string | null;
   /** When it arrived — the record's own time. Null only where nothing recorded one. */
   readonly arrived: string | null;
@@ -227,7 +227,7 @@ type RawFact = Omit<CheckFact, 'approved' | 'untick' | 'approvable' | 'why_not'>
 
 function registerFacts(db: Db, business_id: string, claims: readonly ClaimRow[]): RawFact[] {
   const out: RawFact[] = [];
-  // PHASE 156f (B3): once Homedata has answered planning, the free route's planning records are kept, not shown.
+  // Once Homedata has answered planning, the free route's planning records are kept, not shown.
   const homedataPlanning = preferHomedataPlanning(db, business_id);
   for (const r of listRegisterRecordsIdSourceIdByBusinessId<{ id: string; source_id: string; entity_id: string; fields_json: string; obtained_at: string; property_id: string | null }>(db, [business_id])) {
     if (supersededPlanning(r, homedataPlanning)) continue;
@@ -244,7 +244,7 @@ function registerFacts(db: Db, business_id: string, claims: readonly ClaimRow[])
       out.push({
         ref: `reg.${r.id}.${field}`, step: company ? 'COMPANY' : claim === null ? null : 'PROPERTY', claim_id: claim?.id ?? null,
         label: fieldWords(field), value: known ? String(v) : 'not known',
-        // PHASE 146k: a record a person typed from the official copy says so, so nobody ticks it as if a lookup made it.
+        // A record a person typed from the official copy says so, so nobody ticks it as if a lookup made it.
         chip: `${REGISTER_CHIPS[r.source_id] ?? 'A public register'}${r.entity_id.startsWith('by-hand:') ? ', entered by hand' : ''}`,
         attribution: registerAttribution(r.source_id), arrived: r.obtained_at, known,
       });

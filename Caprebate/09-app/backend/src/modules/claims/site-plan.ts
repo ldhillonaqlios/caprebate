@@ -1,9 +1,9 @@
 /**
  * THE REPORT'S SITE PLAN — the client's building, and the buildings round it, from Ordnance Survey's free maps.
- * 2 October 2026, the survey pack, stage 6. Migration 083 (written as 078; renumbered by Phase 153f); the calls are src/integrations/connectors/os-buildings.ts.
+ *, the survey pack, stage 6. Migration 083; the calls are src/integrations/connectors/os-buildings.ts.
  *
- * Lakhbir, 1 Oct 2026: the report's cover shows the building from Ordnance Survey's free building outlines; the site
- * boundary (INSPIRE) is never in a report. 2 Oct 2026: the client's building is picked automatically.
+ * The owner: the report's cover shows the building from Ordnance Survey's free building outlines; the site
+ * boundary (INSPIRE) is never in a report.: the client's building is picked automatically.
  *
  * WHO, AND WHERE. Whoever may change the pack (`surveyor_job.commit`: the assigned surveyor) fetches it, in
  * chapter 9, with one button. Like the free lookups, it is fetched on the test website only for now

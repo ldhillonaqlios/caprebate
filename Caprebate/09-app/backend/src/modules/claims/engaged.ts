@@ -402,7 +402,7 @@ export type MissingFact = {
   readonly has_task: boolean;
   readonly task_state: 'OPEN' | 'ANSWERED' | 'WITHDRAWN' | null;
   /**
-   * PHASE 138 — WHICH SECTION OF THE CLIENT PAGE ASKS FOR IT, AND WHERE IT COMES FROM, in words. Read from the same
+   * WHICH SECTION OF THE CLIENT PAGE ASKS FOR IT, AND WHERE IT COMES FROM, in words. Read from the same
    * source and screen the pack attribution above reads, never typed per fact: Companies House describes the company;
    * EPC, the valuation office, the care regulator and the land registry describe the property; the client's own answers
    * are the property where the screen is the property or the works, and the claim's facts otherwise.
@@ -411,7 +411,7 @@ export type MissingFact = {
   readonly from: string;
 };
 
-/** PHASE 138: a register source's section on the client page, and its name in words. A source not here is the claim's facts. */
+/** A register source's section on the client page, and its name in words. A source not here is the claim's facts. */
 const SECTION_BY_REGISTRY_SOURCE: Readonly<Record<string, { section: MissingFact['section']; from: string }>> = Object.freeze({
   companies_house: { section: 'company', from: 'Companies House' },
   epc: { section: 'property', from: 'the EPC register' },
@@ -420,11 +420,11 @@ const SECTION_BY_REGISTRY_SOURCE: Readonly<Record<string, { section: MissingFact
   hmlr: { section: 'property', from: 'HM Land Registry' },
 });
 
-/** PHASE 138: the screens whose unanswered questions describe the property. Every other screen is the claim's facts. */
+/** The screens whose unanswered questions describe the property. Every other screen is the claim's facts. */
 const PROPERTY_SCREEN_GROUPS: readonly string[] = Object.freeze(['The property', 'Works']);
 
 /**
- * PHASE 139 — WHICH SECTION A FACT BELONGS TO, FROM THE FACT ITSELF. The same two readings the missing list makes — a
+ * WHICH SECTION A FACT BELONGS TO, FROM THE FACT ITSELF. The same two readings the missing list makes — a
  * register field by the source that supplies it, an assessment question by its screen — so an answered fact, which has
  * left the missing list, is still put in the same place.
  */
@@ -514,13 +514,13 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
   const a = latestAssessment(db, business_id);
 
   /**
-   * GATED ON `assessment.read`, AND IT WAS `business.read` UNTIL PHASE 107.
+   * GATED ON `assessment.read`, AND IT WAS `business.read` .
    *
    * That was wrong in both directions, and the surveyor workspace is what
    * exposed it. This list is derived from three things and nothing else: the
    * assessment's own answers, the register records, and the engine's cash
    * gates. `business.read` admits ACCOUNTING — which may read NONE of those
-   * three, by the decision of 6 September 2026 — and refuses SURVEYING, which
+   * three, by the decision — and refuses SURVEYING, which
    * may read ALL of them: it is on assessment.read, answer.read and
    * register_record.read. So the old gate let in the role that must not see
    * the list and kept out the role whose own pack half of it blocks.
@@ -695,12 +695,12 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
  * meet — the same pattern as roles.ts, and for the same reason: one tested
  * mapping beats a cast at every call site.
  *
- * PHASE 146c: THE FIELD NAMES ARE TWO VOCABULARIES TOO, and until this phase
+ * THE FIELD NAMES ARE TWO VOCABULARIES TOO, and until this phase
  * they were merged as they stood — so a stored `epc_total_floor_area_m2` never
- * reached derive()'s `floor_area_m2`, and only `incorporation_date`, the one name
+ * reached derive's `floor_area_m2`, and only `incorporation_date`, the one name
  * the two share, would have. Each field now goes through DERIVE_FIELD_OF
  * (src/integrations/connectors/free-registers.ts), which maps only a field both sides permit;
- * a field it does not list reaches derive() under no name at all. derive() is
+ * a field it does not list reaches derive under no name at all. derive is
  * still switched off (CB_REGISTRY.precondition), so what the screen shows today
  * does not change.
  *
@@ -891,7 +891,7 @@ export function sendTaskToPortal(
   authorise(actor, 'business.read', { type: 'business', id: business_id });
   authorise(actor, 'internal_note.write', { type: 'internal_note', id: business_id, business_id });
 
-  // PHASE 134: a question belongs to the company, and may say which of its claims it is about — only one of its own.
+  // A question belongs to the company, and may say which of its claims it is about — only one of its own.
   const claim_id = args.claim_id ?? null;
   if (claim_id !== null && getClaimsIdByIdBusinessId<{ id: string }>(d.db, [claim_id, business_id]) === undefined) {
     return { ok: false, why: 'that claim is not this company’s.' };
@@ -1187,7 +1187,7 @@ export function businessPage(db: Db, actor: Actor, business_id: string): Busines
 }
 
 /**
- * PHASE 138 — WHICH OF A CLAIM'S FACTS ARE ALREADY WITH THE CLIENT. The claim page's WE NEED lines ask the client through
+ * WHICH OF A CLAIM'S FACTS ARE ALREADY WITH THE CLIENT. The claim page's WE NEED lines ask the client through
  * the same route as the company page (`sendTaskToPortal`), naming the claim and a fact id `claim_fact.<key>`. This reads
  * the open questions back, so a fact already asked says "Asked — waiting" instead of offering a second ask. Asked of the
  * same two rules the ask itself asks; a login refused either reads nothing.

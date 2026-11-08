@@ -1,5 +1,5 @@
 /**
- * PHASE 156e, 5 October 2026 — THE CONNECTIONS PAGE'S ONE SCRIPT: TRIM A CARE REGULATOR'S LIST ON THE ADMIN'S COMPUTER.
+ * THE CONNECTIONS PAGE'S ONE SCRIPT: TRIM A CARE REGULATOR'S LIST ON THE ADMIN'S COMPUTER.
  *
  * Why it exists: the Scottish datastore is about 10 MB and the test website takes about 4.5 MB a request. So, when an
  * import form is sent, this reads the chosen file here, in the publisher's own encoding (the Scottish file is

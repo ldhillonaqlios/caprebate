@@ -1,15 +1,15 @@
 /**
  * THE SURVEY REPORT'S PAGES — the report and its PDF for staff, the accountant's private link, the client's portal, and
- * the "Send the report" panel in the pack's chapter 23. 2 October 2026; the mock-up Lakhbir approved that day.
+ * the "Send the report" panel in the pack's chapter 23. 2 October 2026; the mock-up the owner approved that day.
  *
  *   GET  /staff/survey/{job}/pack/version/{n}/report       the report as the client will see it (surveyor_job.read)
  *   GET  /staff/survey/{job}/pack/version/{n}/report.pdf   its PDF
- *   GET  /staff/survey/{job}/pack/version/{n}/return-entries.csv   beside it, the return entries for each year (Phase 153b)
+ *   GET  /staff/survey/{job}/pack/version/{n}/return-entries.csv   beside it, the return entries for each year
  *   POST /staff/survey/{job}/pack/version/{n}/send         email it to the company's accountant to sign off (email.queue)
  *   POST /staff/survey/{job}/pack/answer/{id}/record       put their signed answer on the claim (tax_signoff.record)
  *   POST /staff/survey/{job}/pack/version/{n}/tell         tell the client it is in their portal (client_message.write)
  *   GET  /signoff/{token}  · POST /signoff/{token} · GET /signoff/{token}/report.pdf     the accountant's link, no login
- *   GET  /signoff/{token}/return-entries.csv                 and its return entries, beside the PDF (Phase 153b)
+ *   GET  /signoff/{token}/return-entries.csv                 and its return entries, beside the PDF
  *   GET  /portal/report    · GET /portal/report.pdf          the client's released version (src/modules/claims/report-signoff.ts)
  *
  * The report and the PDF are made again from the approved version every time (src/web/survey-report.ts): nothing about
@@ -51,7 +51,7 @@ function sendPdf(res: ServerResponse, bytes: Uint8Array, filename: string): void
   res.end(Buffer.from(bytes));
 }
 
-/** PHASE 153b (Word question 121): the return entries for each year, as a spreadsheet beside the PDF. */
+/** The return entries for each year, as a spreadsheet beside the PDF. */
 function sendCsv(res: ServerResponse, text: string, filename: string): void {
   const bytes = Buffer.from(text, 'utf8');
   res.writeHead(200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${filename}"`,
@@ -276,7 +276,7 @@ export function portalReport(app: App, actor: Actor, business_id: string, path: 
 }
 
 /**
- * PHASE 158c (F39): "I accept this report", on the report page and the home card - or when this login accepted it. A
+ * "I accept this report", on the report page and the home card - or when this login accepted it. A
  * plain form, no script: the portal's pages stay script-free.
  */
 export function acceptBox(app: App, actor: Actor, business_id: string): Safe {

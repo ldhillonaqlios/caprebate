@@ -1,7 +1,7 @@
 /**
- * THE BUILT-IN SIGNATURE FOR THE ENGAGEMENT LETTER — BUILT, AND SWITCHED OFF. Phase 146f, 22 September 2026.
+ * THE BUILT-IN SIGNATURE FOR THE ENGAGEMENT LETTER — BUILT, AND SWITCHED OFF.
  *
- * Lakhbir decided on 22 September 2026 that the letter is signed inside the application, not through a bought
+ * the owner decided that the letter is signed inside the application, not through a bought
  * service. It replaces the stub provider in src/integrations/signature.ts for the engagement letter. The surveyor's "commit
  * figures" is a different thing and is untouched.
  *
@@ -66,7 +66,7 @@ export type EngagementSigning = {
   readonly solicitor_confirmed: boolean;
   readonly question: string;
   /**
-   * 6 October 2026 (Lakhbir): ON FOR TESTING. Under this setting the solicitor's answer is waived and the TEST COPY of
+   * ON FOR TESTING. Under this setting the solicitor's answer is waived and the TEST COPY of
    * the letter may be signed — and nothing else: the real letter is refused, whatever else holds. Only
    * ENGAGEMENT_SIGNING_TEST sets it, and only the test website (api/index.mjs) or a local copy started with
    * CAPREBATE_SIGNING_TEST=1 uses that.
@@ -74,17 +74,17 @@ export type EngagementSigning = {
   readonly test_copy_only?: boolean;
   readonly waiver_record?: string;
   /**
-   * PHASE 157d: SIGNING FROM A LINK IN THE EMAIL, without a portal login. Off for real clients until the solicitor's
+   * SIGNING FROM A LINK IN THE EMAIL, without a portal login. Off for real clients until the solicitor's
    * answer covers it (Word question, under the solicitor: SIGNING_LINK_QUESTION); on with ENGAGEMENT_SIGNING_TEST.
    */
   readonly links?: boolean;
 };
 
-/** PHASE 157d: the solicitor's question for signing from an emailed link. Quoted, not paraphrased. */
+/** The solicitor's question for signing from an emailed link. Quoted, not paraphrased. */
 export const SIGNING_LINK_QUESTION =
   'May a client sign our engagement letter from a link in an email, without logging in to the portal?';
 
-/** PHASE 157d: how long a signing link works, from the moment it is sent. A test default, not agreed. */
+/** How long a signing link works, from the moment it is sent. A test default, not agreed. */
 export const SIGN_LINK_DAYS = 7;
 
 /** The question under the solicitor in the Word questions document. Quoted, not paraphrased. */
@@ -98,7 +98,7 @@ export const ENGAGEMENT_SIGNING: EngagementSigning = Object.freeze({
 });
 
 /**
- * SIGNING ON FOR TESTING — 6 October 2026. The test website (and a local copy started with CAPREBATE_SIGNING_TEST=1)
+ * SIGNING ON FOR TESTING —. The test website (and a local copy started with CAPREBATE_SIGNING_TEST=1)
  * lets an invented client sign the TEST COPY of the letter end to end: the drawn signature, the record, the certificate
  * of completion and the signed copy. The real letter cannot be signed under it (`signingMissing`), and the switch real
  * clients would use, ENGAGEMENT_SIGNING above, stays off until the solicitor answers Word question 194.
@@ -129,13 +129,13 @@ export type ShownLetter = {
   readonly open_terms: number;
   readonly specimens: number;
   readonly business_name: string;
-  /** Phase 153d: the test-only copy, with terms nobody has agreed. Never signed. */
+  /** The test-only copy, with terms nobody has agreed. Never signed. */
   readonly test_copy: boolean;
-  /** PHASE 158b (F22): the letter still names the specimen company number, so it does not say which business is signing. */
+  /** The letter still names the specimen company number, so it does not say which business is signing. */
   readonly party_unknown: boolean;
 };
 
-/** PHASE 158b (F22): what the letter says about this client beyond their name - from the records, never typed in. */
+/** What the letter says about this client beyond their name - from the records, never typed in. */
 export type LetterFacts = {
   readonly claimant_type: string | null;
   /** Every property the business holds with us, by label: one engagement covers all of them. */
@@ -191,11 +191,11 @@ export function shownLetter(business: { name: string; company_number?: string | 
 /** What is still missing before a client can sign — each in plain words. Empty means signing is on for this letter. */
 export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter, 'open_terms' | 'specimens'> & { readonly test_copy?: boolean; readonly party_unknown?: boolean }): string[] {
   const out: string[] = [];
-  /* PHASE 158b (F22): a letter that still names the specimen company number does not say which business is signing.
+  /* A letter that still names the specimen company number does not say which business is signing.
      Refused in every mode, the test copy's included: the Friary House run signed a partnership in as "company number
      98604417". The client's kind of business (or a company's number) on their record clears it. */
   const party = 'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.';
-  /* 6 October 2026: signing on for testing signs the test copy and nothing else. The test copy's open terms carry test
+  /* Signing on for testing signs the test copy and nothing else. The test copy's open terms carry test
      defaults (each marked "test default, not agreed"); they are what is being tested, so they do not refuse it here. */
   if (cfg.test_copy_only === true) {
     if (letter.test_copy !== true) out.push('Signing is switched on for testing only, and only the test copy of the letter can be signed there.');
@@ -203,7 +203,7 @@ export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter,
     if (cfg.enabled !== true) out.push('Then signing must be switched on.');
     return out;
   }
-  // Phase 153d: the test-only copy carries terms nobody has agreed. It is shown on the test website and never signed.
+  // The test-only copy carries terms nobody has agreed. It is shown on the test website and never signed.
   if (letter.test_copy === true) out.push('This is the test copy of the letter. Its terms are not agreed, so it can never be signed.');
   if (cfg.solicitor_confirmed !== true) out.push('Our solicitor must confirm that typing your name is a good enough way to sign this letter.');
   if (letter.open_terms > 0 || letter.specimens > 0) out.push('Some terms in the letter are not settled yet, so it cannot be signed.');
@@ -230,7 +230,7 @@ export type SignatureFields = {
   readonly ip: string;
   readonly letter_sha256: string;
   readonly pdf_sha256: string;
-  /** PHASE 157c: absent or 1, the record as Phase 146f made it; 2, with the signature and the certificate's times. */
+  /** Absent or 1, the record as Phase 146f made it; 2, with the signature and the certificate's times. */
   readonly record_version?: 1 | 2 | 3;
   readonly signature_method?: 'DRAWN' | 'TYPED' | null;
   /** The drawn strokes as stored (JSON), or null for a typed signature. */
@@ -239,7 +239,7 @@ export type SignatureFields = {
   readonly letter_prepared_at?: string | null;
   readonly letter_sent_at?: string | null;
   readonly letter_viewed_at?: string | null;
-  /** PHASE 157d (version 3): which signature on the letter this is (1 or 2), and the link it was signed through. */
+  /** Which signature on the letter this is (1 or 2), and the link it was signed through. */
   readonly signer_seq?: 1 | 2;
   readonly link_id?: string | null;
 };
@@ -251,18 +251,18 @@ export function recordHash(f: SignatureFields): string {
     f.signer_name, f.signer_role, f.business_name, 'authority_confirmed', f.signed_at, f.ip, f.letter_sha256, f.pdf_sha256,
   ];
   if ((f.record_version ?? 1) === 1) return sha256(v1.join('\n'));
-  /* PHASE 157c: version 2 also binds the signature itself (its method and every stroke) and the certificate's facts. */
+  /* Version 2 also binds the signature itself (its method and every stroke) and the certificate's facts. */
   const v2 = [
     ...v1.slice(1), f.signature_method ?? '', f.signature_ink ?? '', f.signer_email ?? '',
     f.letter_prepared_at ?? '', f.letter_sent_at ?? '', f.letter_viewed_at ?? '',
   ];
   if (f.record_version === 2) return sha256(['caprebate-engagement-signature-v2', ...v2].join('\n'));
-  /* PHASE 157d: version 3 also binds which signature on the letter it is, and the link it came through. */
+  /* Version 3 also binds which signature on the letter it is, and the link it came through. */
   return sha256(['caprebate-engagement-signature-v3', ...v2, String(f.signer_seq ?? 1), f.link_id ?? ''].join('\n'));
 }
 
 /* ================================================================== *
- * PHASE 157c — THE DRAWN SIGNATURE
+ * THE DRAWN SIGNATURE
  * ================================================================== */
 
 /** The strokes the signing pad sends (src/shared/signature-pad-script.ts): numbers 0 to 1000, within these limits. */
@@ -297,9 +297,9 @@ export function parseInk(raw: string): { ok: true; strokes: readonly (readonly [
 /** The signed PDF: the letter as shown, then a signature page (version 2: then a certificate of completion). */
 export function signedPdf(
   letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha256'>,
-  /** PHASE 157d: the signatures already on this letter, first signer first. Version 3 shows them all. */
+  /** The signatures already on this letter, first signer first. Version 3 shows them all. */
   earlier: readonly Omit<SignatureFields, 'pdf_sha256'>[] = [],
-  /** PHASE 157d: how many signatures the letter needs, for the certificate. */
+  /** How many signatures the letter needs, for the certificate. */
   needed = 1,
 ): Uint8Array {
   const body: PdfLine[] = letter.paragraphs.map((p) => (p.heading ? { text: p.text, bold: true, gap: 4 } : { text: p.text }));
@@ -325,7 +325,7 @@ export function signedPdf(
   return buildPdf([...flow(body), ...flow(page)], { title: `Engagement letter, signed by ${f.signer_name}` }).bytes;
 }
 
-/** PHASE 157c: the signature page, with the drawn signature (or the typed name, where they chose it). */
+/** The signature page, with the drawn signature (or the typed name, where they chose it). */
 function signaturePageV2(f: Omit<SignatureFields, 'pdf_sha256'>): PdfLine[] {
   const ink = f.signature_method === 'DRAWN' && f.signature_ink ? parseInk(f.signature_ink) : null;
   return [
@@ -341,7 +341,7 @@ function signaturePageV2(f: Omit<SignatureFields, 'pdf_sha256'>): PdfLine[] {
   ];
 }
 
-/** PHASE 157c: the certificate of completion - every step of the letter, with its time, and the fingerprints. */
+/** The certificate of completion - every step of the letter, with its time, and the fingerprints. */
 function certificate(letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha256'>): PdfLine[] {
   const when = (t: string | null | undefined) => (t ? `${localWhen(t)} (${t} UTC)` : 'not recorded');
   return [
@@ -370,7 +370,7 @@ function certificate(letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha256'>
 }
 
 /**
- * PHASE 157d: the certificate of completion for one or two signers, each with how they signed — in the portal, signed
+ * The certificate of completion for one or two signers, each with how they signed — in the portal, signed
  * in as their login, or from the link emailed to their address, which is what that link proves.
  */
 function certificateV3(letter: ShownLetter, all: readonly Omit<SignatureFields, 'pdf_sha256'>[], needed: number): PdfLine[] {
@@ -412,7 +412,7 @@ function certificateV3(letter: ShownLetter, all: readonly Omit<SignatureFields, 
 type Deps = { db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string };
 
 /**
- * PHASE 157d: WHO MUST SIGN. The client logins staff recorded (engagement_required_signers), first signer first; none
+ * WHO MUST SIGN. The client logins staff recorded (engagement_required_signers), first signer first; none
  * recorded means any one client login of the business signs, as before.
  */
 export type RequiredSigner = { readonly user_id: string; readonly seq: 1 | 2; readonly name: string; readonly email: string };
@@ -454,7 +454,7 @@ function writeSignature(
     }
     if (complete) {
       updateEngagementsLetterStateSignedAtById(d.db, [full.signed_at, engagement_id]);
-      // PHASE 158d (F43, the second Friary House run): the client signed and their portal still said "Step 1 of 6: Your
+      // The client signed and their portal still said "Step 1 of 6: Your
       // estimate" until staff moved the claim. Signing is the step: it raises the client to it, and never lowers one past it.
       const now = getBusinessesStageById<{ stage: string }>(d.db, [full.business_id])?.stage ?? '';
       if (stageIndex(now) < stageIndex('ENGAGEMENT_SIGNED')) {
@@ -473,9 +473,9 @@ function writeSignature(
 
 export type SignInput = {
   readonly full_name: string; readonly role: string; readonly authorised: boolean; readonly letter_sha256: string;
-  /** PHASE 157c: the signing pad's strokes (JSON), or empty. */
+  /** The signing pad's strokes (JSON), or empty. */
   readonly signature_strokes?: string;
-  /** PHASE 157c: the client chose their typed name as their signature (when they cannot, or would rather not, draw). */
+  /** The client chose their typed name as their signature (when they cannot, or would rather not, draw). */
   readonly typed_as_signature?: boolean;
 };
 export type SignContext = { readonly ip: string; readonly session_id: string };
@@ -526,7 +526,7 @@ function signAs(
   if (role.length < 2 || role.length > 120) return { ok: false, why: SIGN_WORDS.role };
   if (input.authorised !== true) return { ok: false, why: SIGN_WORDS.authorised };
   if (input.letter_sha256 !== letter.sha256) return { ok: false, why: SIGN_WORDS.changed };
-  /* PHASE 157c: a signature, drawn or adopted. A drawing wins over the tick; neither is refused, never assumed. */
+  /* A signature, drawn or adopted. A drawing wins over the tick; neither is refused, never assumed. */
   const strokes = (input.signature_strokes ?? '').trim();
   let method: 'DRAWN' | 'TYPED'; let ink: string | null = null;
   if (strokes !== '') {
@@ -541,7 +541,7 @@ function signAs(
 
   const eng = getEngagementsIdCreatedAtByBusinessId<{ id: string; created_at: string; sent_at: string | null; viewed_at: string | null }>(d.db, [b.id]);
   if (eng === undefined) return { ok: false, why: SIGN_WORDS.none };
-  /* PHASE 157d: who must sign, and whether this login has. */
+  /* Who must sign, and whether this login has. */
   const named = requiredSigners(d.db, eng.id);
   if (named.length > 0 && !named.some((n) => n.user_id === who.user_id)) return { ok: false, why: SIGN_WORDS.not_named };
   const earlier = storedSignatures(d.db, eng.id);
@@ -583,7 +583,7 @@ function signAs(
 /**
  * THE CLIENT SIGNS IN THE PORTAL. The client's own business only (readBusiness refuses any other), the switch on, the
  * letter complete, sent to them and not yet signed, a full name, a role, the tick, the fingerprint of the letter they
- * read — and, since Phase 157d, one of the people staff named, if they named any.
+ * read — and one of the people staff named, if they named any.
  */
 export function signEngagement(
   d: Deps, actor: Actor, business_id: string, input: SignInput, ctx: SignContext,
@@ -597,7 +597,7 @@ export function signEngagement(
 }
 
 /* ================================================================== *
- * PHASE 157d — SIGNING FROM A LINK IN THE EMAIL
+ * SIGNING FROM A LINK IN THE EMAIL
  * ================================================================== */
 
 export const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
@@ -641,7 +641,7 @@ export function signByLink(
 }
 
 /**
- * PHASE 157d: STAFF RECORD WHO MUST SIGN — one or two of the business's client logins. Refused once anyone has signed,
+ * STAFF RECORD WHO MUST SIGN — one or two of the business's client logins. Refused once anyone has signed,
  * because the letter's signatures are counted against it. An empty list goes back to "any one client login".
  */
 export function setRequiredSigners(
@@ -698,7 +698,7 @@ export type SignatureCheck =
 
 /**
  * THE RECORDS, CHECKED. Each present; its hash recomputed from its own fields; the letter text and the PDF matching their
- * fingerprints; and an ENGAGEMENT_SIGNED row in the audit chain carrying that hash. And, since Phase 157d, as many as the
+ * fingerprints; and an ENGAGEMENT_SIGNED row in the audit chain carrying that hash. And as many as the
  * letter needs. Any one wrong is "not signed". The latest signature is the one returned: its PDF carries them all.
  */
 export function checkSignature(db: Db, engagement_id: string): SignatureCheck {

@@ -1,9 +1,9 @@
 /**
- * TAKING SOMETHING BACK OUT OF THE CLAIM FILE — what two take-backs share. Phase 146j, 25 September 2026.
+ * TAKING SOMETHING BACK OUT OF THE CLAIM FILE — what two take-backs share.
  *
  * Two decisions a person makes put register data into a client's file: choosing one entry from a close-match list
- * (src/modules/claims/match-review.ts, Phase 146h) and saying that a name on a client document belongs to an organisation
- * (src/modules/claims/document-reading.ts, Phase 146i). Both can now be taken back, in the shape Phase 139 uses for a fact
+ * and saying that a name on a client document belongs to an organisation
+ *. Both can now be taken back, in the shape Phase 139 uses for a fact
  * somebody ticked — a separate act that ASKS WHY and keeps the reason. Before either removes anything it has to answer
  * the same two questions, and they are answered HERE so the two cannot drift apart:
  *
@@ -13,7 +13,7 @@
  *       refused and says so, and the tick comes off first, by its own act, with its own reason.
  *
  *   2 · WHAT WAS WORKED OUT FROM IT WHILE IT STOOD? Most readers of a register record read it LIVE — the checks panel,
- *       the missing-facts list, the surveyor's payload, the company name on the CRM page, the register bundle derive()
+ *       the missing-facts list, the surveyor's payload, the company name on the CRM page, the register bundle derive
  *       reads — and those change the moment the record does, which is what should happen: the questions it answered
  *       are asked again (N4). But some things were KEPT on the strength of it, and removing the record does not
  *       un-keep them. This is not the take-back's to undo silently, so it lists them, as kinds and counts, and the

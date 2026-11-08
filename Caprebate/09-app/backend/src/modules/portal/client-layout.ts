@@ -1,7 +1,7 @@
 /**
- * THE CLIENT PAGE, LAID OUT AGAIN — 30 September 2026.
+ * THE CLIENT PAGE, LAID OUT AGAIN —.
  *
- * Lakhbir: "the whole interfact for a client needs to be designed - theres too much going on and its hard to find
+ * the owner: "the whole interfact for a client needs to be designed - theres too much going on and its hard to find
  * things". Agreed in the chat from a drawn layout ("Yes, build it"). Nothing is removed; everything is regrouped:
  *
  *   THE HEADER        the company, its owner and who we wait on; the client's six steps as a bar (the names the portal
@@ -106,7 +106,7 @@ export function nextStepCard(db: Db, c: ChecksPanel | null, todayIso: string): S
 const STATE_WORDS: Readonly<Record<string, string>> = { FIRED: 'Done', FAILED: 'Failed', NOT_RUN: 'Not run yet', NOT_PERMITTED_YET: 'Waiting' };
 
 /** A lookup's state in words, and its group on the card. */
-/* PHASE 158b (F24, the Friary House run): the Valuation Office rating list was scrapped on 4 October 2026 (Lakhbir,
+/* The Valuation Office rating list was scrapped (the owner,
    "scrap the VOA rating"; DO NOT REOPEN). It stays in the source register, but the card no longer says it is waiting. */
 const DECIDED_NOT_USED: ReadonlySet<string> = new Set(['VOA']);
 
@@ -137,7 +137,7 @@ export function lookupsCard(src: SourcesPanel | null, nowIso: string): Safe {
 /** The sections, in their tabs. Inside a tab each keeps its own open-or-closed rule (work open, done folded, the person's
  *  own choice kept), and the one just changed opens, as it always has.
  *
- *  UI TIDY PHASE 8, 3 October 2026 — AN OVERVIEW FIRST. With no tab asked for (`defaultTab` null: a plain visit, no change
+ *  AN OVERVIEW FIRST. With no tab asked for (`defaultTab` null: a plain visit, no change
  *  just made), no part is open: the page shows one line per part — its name, where it stands, what is happening, its
  *  count — each a link that opens it, as the left-hand menu's entries do. A part opened says how to get back to them all.
  *  After a change, or with a step asked for, the part it was made in opens, as before. Every section is still in the page.
@@ -174,7 +174,7 @@ function partsList(present: readonly (readonly [TabKey, string])[], by: Readonly
 }
 
 /* ================================================================== *
- * UI TIDY PHASE 7, 3 October 2026 — EACH CLAIM IN ITS OWN BOX, AND THE CLIENT'S OWN MENU
+ * EACH CLAIM IN ITS OWN BOX, AND THE CLIENT'S OWN MENU
  * ================================================================== */
 
 /** "3 days late", "Due today", "No date" — a next step's date as the label the Pipeline uses. */
@@ -186,7 +186,7 @@ function dueLabel(due: string | null, nowIso: string): Safe {
 }
 
 /**
- * THE CLAIMS AT THE TOP. Lakhbir opened the wrong one of a client's two claims: each is now a box of its own, headed by its
+ * THE CLAIMS AT THE TOP. the owner opened the wrong one of a client's two claims: each is now a box of its own, headed by its
  * stage in its group's colour and "Claim 1 of 2", named by its site (the company is the page), its number in grey, and its
  * next step in a dark box with when it is due. The box opens the claim inside this page. The id is the old Claims
  * section's, so every link to #claims still lands here.

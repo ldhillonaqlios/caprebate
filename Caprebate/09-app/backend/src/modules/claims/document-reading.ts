@@ -1,5 +1,5 @@
 /**
- * THE DOCUMENT READER'S TWO FOLLOW-ONS.   Phase 146i, 23 September 2026.
+ * THE DOCUMENT READER'S TWO FOLLOW-ONS.   Phase 146i.
  *
  * Phase 146g wired the reader into the upload flow and left it switched off. Two things about it were true from
  * that day and neither had anywhere to live. They are here together because they are one story: what a reading can
@@ -32,18 +32,18 @@
  * ------------------------------------------------------------------------------------------------------------
  * 2 · WHAT HAPPENED WHEN WE READ IT
  *
- * `finishUpload` has returned a `ReadingOutcome` with a reason in plain words since Phase 146g, and nothing drew
+ * `finishUpload` has returned a `ReadingOutcome` with a reason in plain words and nothing drew
  * it anywhere: a document that was sent and came back unreadable looked exactly like one nobody had asked about.
  * One row per reading, and the staff document page draws it.
  *
  * A READING THAT NEVER STARTED IS NOT A READING. No row is written where no reader was wired in, or where
  * `CLAUDE_SWITCHES.DOCUMENT_READING` is false — which is how this ships. With the switch off a finished upload
- * must behave exactly as it did before Phase 146g, and a row is a difference.
+ * must behave exactly as it did and a row is a difference.
  *
  * NEVER A WORD OF THE DOCUMENT, on the screen or in the row. What is kept is a state, a count and a reason.
  *
  * ------------------------------------------------------------------------------------------------------------
- * 3 · PHASE 146j, 25 September 2026 — THE TWO ONE-WAY DOORS 146i LEFT, CLOSED THE WAY A PICK IS TAKEN BACK
+ * 3 · PHASE 146j — THE TWO ONE-WAY DOORS 146i LEFT, CLOSED THE WAY A PICK IS TAKEN BACK
  *
  * (a) A YES CAN BE TAKEN BACK. A 'yes' lets the next reading keep the name, through `ingestRegisterRecord`, as part
  *     of that version's CLIENT_DOC record. Changing the answer to 'no' afterwards changed nothing already written.
@@ -120,7 +120,7 @@ export function vouchedFieldById(field_id: string): VouchedField | null {
  * 2 · READING AND WRITING A PERSON'S ANSWER
  * ================================================================== */
 
-/** PHASE 146j: where the answer that stands was given. */
+/** Where the answer that stands was given. */
 export type AskedOn = 'PAGE' | 'UPLOAD' | 'REQUEST';
 
 export type VouchRow = {
@@ -128,9 +128,8 @@ export type VouchRow = {
   readonly answer: VouchAnswer;
   readonly answered_by: string;
   readonly answered_at: string;
-  /** PHASE 146j. */
   readonly asked_on: AskedOn;
-  /** PHASE 146j: a yes taken back — who, when and why. All null unless it was. */
+  /** A yes taken back — who, when and why. All null unless it was. */
   readonly withdrawn_at: string | null;
   readonly withdrawn_by: string | null;
   readonly withdrawn_reason: string | null;
@@ -141,7 +140,7 @@ export function vouchesFor(db: Db, logical_document_id: string): readonly VouchR
   return listDocumentFieldVouchesFieldIdAnswerByLogicalDocumentId<VouchRow>(db, [logical_document_id]);
 }
 
-/** PHASE 146j: ONLY A YES THAT STANDS KEEPS ANYTHING. A withdrawn yes is left out exactly as a 'no' is (N4). */
+/** ONLY A YES THAT STANDS KEEPS ANYTHING. A withdrawn yes is left out exactly as a 'no' is (N4). */
 export function vouchKeeps(v: Pick<VouchRow, 'answer' | 'withdrawn_at'> | null | undefined): boolean {
   return v !== null && v !== undefined && v.answer === 'yes' && v.withdrawn_at === null;
 }
@@ -167,7 +166,7 @@ export function discriminantsFor(db: Db, doc_id: string): ClientDocDiscriminants
 /**
  * THE ROW ITSELF, AND NOTHING ELSE. Who may answer, and the note in the audit log, are `vouchDocumentField`'s in
  * src/modules/claims/documents.ts — the one place that authorises anything about a document. A later answer replaces an
- * earlier one; the audit log keeps every one of them, in order, with who gave it. PHASE 146j: a new answer clears a
+ * earlier one; the audit log keeps every one of them, in order, with who gave it. A new answer clears a
  * withdrawal — the withdrawal is on the chain, and the answer that stands is the one just given.
  */
 export function writeVouch(
@@ -179,7 +178,7 @@ export function writeVouch(
 }
 
 /* ================================================================== *
- * 2a · ASKED BEFORE THE FIRST READING — Phase 146j
+ * 2a · ASKED BEFORE THE FIRST READING
  * ================================================================== */
 
 /** The form field an early answer arrives in, one per vouched field: `vouch_grant_funder_name`, `vouch_brc_issuing_body`. */
@@ -321,11 +320,11 @@ export type VouchView = {
   /** What this answer does, in words. Three of the four possible answers do the same thing. */
   readonly effect: string;
   readonly may_answer: boolean;
-  /** PHASE 146j: where the answer was given, in words. Null where nobody has answered. */
+  /** Where the answer was given, in words. Null where nobody has answered. */
   readonly asked_on: string | null;
-  /** PHASE 146j: a yes taken back — by whom, when and why. Null unless it was. */
+  /** A yes taken back — by whom, when and why. Null unless it was. */
   readonly withdrawn: { readonly by: string; readonly at: string; readonly reason: string } | null;
-  /** PHASE 146j: a yes that stands can be taken back, by somebody who may answer. */
+  /** A yes that stands can be taken back, by somebody who may answer. */
   readonly may_withdraw: boolean;
 };
 
@@ -340,7 +339,7 @@ export function vouchEffect(answer: VouchAnswer | null, withdrawn = false): stri
   return 'We leave it out.';
 }
 
-/** PHASE 146j: where the answer was given, in words. */
+/** Where the answer was given, in words. */
 export const ASKED_ON_WORDS: Readonly<Record<AskedOn, string>> = Object.freeze({
   PAGE: 'on this page', UPLOAD: 'when the file was uploaded', REQUEST: 'when the client was asked for it',
 });

@@ -1,9 +1,9 @@
 /**
- * DESK FIRST — HOW MUCH EVIDENCE A JOB NEEDS, AND WHETHER IT CAN BE VALUED FROM THE DESK. Phase 153e, 4 October 2026.
+ * DESK FIRST — HOW MUCH EVIDENCE A JOB NEEDS, AND WHETHER IT CAN BE VALUED FROM THE DESK.
  *
  * Built on our recommendation, for the surveyor to check, in the test system only. Three of the surveyor's questions:
  *   129 "Can you value a building safely without ever visiting it?" — desk-only when the required documents are all in
- *       and no warning sign fires; otherwise "site visit needed". Lakhbir's view (25 Sep): most surveys can be done from
+ *       and no warning sign fires; otherwise "site visit needed". the owner's view (25 Sep): most surveys can be done from
  *       the desk if we have all the information. His input, not the surveyor's sign-off.
  *   130 "When can a video walkthrough replace a site visit?" — never replace: support. The client's checklist, in the
  *       filming script's order, is scored for coverage against a PLACEHOLDER pass mark.
@@ -117,7 +117,7 @@ function pricePaidPence(db: Db, job: JobRow): number | null {
     if (r === undefined) continue;
     try {
       const f = JSON.parse(r.fields_json) as Record<string, unknown>;
-      // PHASE 159g (L11): a Price Paid sale of category B or type "Other" is a lead for the surveyor, never the price.
+      // A Price Paid sale of category B or type "Other" is a lead for the surveyor, never the price.
       if (source === 'HMLR_PPD' && isPricePaidLead(f)) continue;
       const p = f['price_paid'];
       if (typeof p === 'number' && Number.isFinite(p) && p > 0) return Math.round(p * 100);

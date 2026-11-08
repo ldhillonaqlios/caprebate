@@ -1,9 +1,9 @@
 /**
- * WHATSAPP WITH ONE COMPANY, IN TWO HALVES. 1 October 2026.
+ * WHATSAPP WITH ONE COMPANY, IN TWO HALVES..
  *
  *   GET /staff/clients/:id/whatsapp   ?contact= picks whose conversation; the newest otherwise
  *
- * Lakhbir: "the same needs to happen for whats app also i know whats app works a bit differently where it is already one
+ * the owner: "the same needs to happen for whats app also i know whats app works a bit differently where it is already one
  * chain, so the chain should be on the right allowing the user to see the full conversation and the left is to type a
  * message." On the left, the message being written (to the person chosen, with WhatsApp's 24-hour rule in words); on the
  * right, the whole conversation with that number, oldest first — and, where more than one of the company's people is on
@@ -35,7 +35,7 @@ export type WaPerson = {
 };
 
 export type WaLine = { readonly id: string; readonly ours: boolean; readonly who: string; readonly when: string; readonly body: string; readonly state: string | null;
-  /** PHASE 156c: added from a chat exported on the phone. */ readonly imported: boolean };
+  /** Added from a chat exported on the phone. */ readonly imported: boolean };
 
 const WA_STATE: Readonly<Record<string, string>> = { SENT: 'Sent', DELIVERED: 'Delivered', READ: 'Read', FAILED: 'Not delivered', NOT_SENT: 'Not sent' };
 
@@ -68,7 +68,7 @@ export function waLines(db: Db, business_id: string, number: string, nowIso: str
 }
 
 /**
- * PHASE 153f: a file someone sent us — "Get it" (fetched from Meta and kept sealed) for those who write to the company,
+ * A file someone sent us — "Get it" (fetched from Meta and kept sealed) for those who write to the company,
  * then "Open it" for those who may read it.
  */
 function attachmentLine(db: Db, actor: Actor, business_id: string, message_id: string): Safe {
@@ -105,7 +105,7 @@ export function whatsappPage(app: App, actor: Actor, business_id: string, asked:
   const missing = whatsappMissing(app.secrets, app.whatsappPolicy, { outside: app.outside });
   const reachable = people.filter((p) => p.contact !== null);
   const pick = chosen?.contact ?? reachable[0]?.contact ?? null;
-  // PHASE 156c (5 Oct 2026, Lakhbir: manual upload): while the live connection to Meta is off, nothing is written from here.
+  // While the live connection to Meta is off, nothing is written from here.
   // Staff reply on the WhatsApp phone and add the chat when it should be kept (src/modules/crm/whatsapp-import.ts).
   const live = missing.length === 0;
   const first = (chosen?.contact?.first ?? chosen?.name ?? 'them').trim() || 'them';
@@ -149,7 +149,7 @@ export function whatsappPage(app: App, actor: Actor, business_id: string, asked:
 }
 
 /* ================================================================== *
- * PHASE 156c: ADD A CHAT EXPORTED ON THE PHONE (src/modules/crm/whatsapp-import.ts; the script is src/modules/crm/whatsapp-import-script.ts).
+ * ADD A CHAT EXPORTED ON THE PHONE (src/modules/crm/whatsapp-import.ts; the script is src/modules/crm/whatsapp-import-script.ts).
  * ================================================================== */
 function importBox(app: App, business_id: string, contacts: readonly PhoneContact[], pick: string | null): Safe {
   const ups = importsFor(app, business_id).slice(0, 10);
@@ -166,7 +166,7 @@ function importBox(app: App, business_id: string, contacts: readonly PhoneContac
       ? h` — <a href="/staff/clients/${business_id}/whatsapp/import/${u.id}">add them</a>` : raw('')}</li>`)}</ul>`}`;
 }
 
-/** PHASE 156c: the upload form alone — on the WhatsApp page and on the company's conversation (src/modules/crm/communication.ts). */
+/** The upload form alone — on the WhatsApp page and on the company's conversation (src/modules/crm/communication.ts). */
 export function importForm(business_id: string, contacts: readonly PhoneContact[], pick: string | null): Safe {
   return h`<form method="post" action="/staff/clients/${business_id}/whatsapp/import" enctype="multipart/form-data" class="pblock" id="wa-import" aria-labelledby="wa-import-h">
       <label class="fl" for="wa-imp-to">Whose chat is it</label>
@@ -178,7 +178,7 @@ export function importForm(business_id: string, contacts: readonly PhoneContact[
     </form>`;
 }
 
-/** PHASE 156c: the WhatsApp pages run one script of our own (the export reader), so their policy allows it and no more. */
+/** The WhatsApp pages run one script of our own (the export reader), so their policy allows it and no more. */
 export const WHATSAPP_PAGE_HEADERS: Readonly<Record<string, string>> = Object.freeze({
   'content-type': 'text/html; charset=utf-8',
   'x-content-type-options': 'nosniff',

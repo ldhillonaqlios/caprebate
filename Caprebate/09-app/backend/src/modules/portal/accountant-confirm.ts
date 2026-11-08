@@ -1,5 +1,5 @@
 /**
- * THE CLIENT'S ACCOUNTANT CONFIRMS FOR THEMSELVES — Phase 158d, 9 October 2026.
+ * THE CLIENT'S ACCOUNTANT CONFIRMS FOR THEMSELVES.
  *
  * The second Friary House run (04-phase-work/sim-2026-10-06, finding F46): two steps were still ticked by Sales for the
  * client's accountant — "The client's accountant confirmed the claim fits the return and the amendment window"
@@ -53,13 +53,13 @@ export const CONFIRM_ASKS: Readonly<Record<ConfirmKind, { readonly ask: string; 
   },
   FILED: {
     ask: 'The amended return carrying this claim has been filed.',
-    // PHASE 159l (L15): and once the claim is closed, for a return held in aftercare (a claim with more than one return).
+    // And once the claim is closed, for a return held in aftercare (a claim with more than one return).
     stages: ['INVOICE', 'DEFENCE_PACK', 'CLOSED'],
     subject: 'Please confirm the amended return was filed',
   },
 });
 
-/** PHASE 159l (L15): a FILED link that names its return asks about that return alone. */
+/** A FILED link that names its return asks about that return alone. */
 export function askFor(kind: ConfirmKind, period_end: string | null): string {
   return kind === 'FILED' && period_end !== null
     ? `The tax return for the period ending ${ukDate(period_end)}, carrying its part of this claim, has been filed.`
@@ -118,7 +118,7 @@ export function sendConfirmRequest(
   }
   const who = accountantContacts(d.db, c.business_id).find((a) => a.id === f.contact_id);
   if (who === undefined) return { ok: false, field: 'contact_id', why: 'Choose one of the company’s accountants or advisers with an email address. Add them as a contact first.' };
-  /* PHASE 159l (L15): a claim whose parts go into more than one return asks about each return by its own link. */
+  /* A claim whose parts go into more than one return asks about each return by its own link. */
   let period_end: string | null = null;
   if (kind === 'FILED') {
     const returns = returnsOf(d.db, c.id, d.now()) ?? [];
@@ -226,7 +226,7 @@ export function answerConfirmLink(
 export type ConfirmRow = {
   readonly id: string; readonly kind: ConfirmKind; readonly contact_name: string; readonly to_email: string; readonly sent_by_name: string;
   readonly sent_at: string; readonly expires_at: string;
-  /** FILED only: the return the link asks about (PHASE 159l), or null for the claim as a whole. */
+  /** FILED only: the return the link asks about, or null for the claim as a whole. */
   readonly period_end: string | null;
   readonly answer: null | { readonly outcome: 'CONFIRMED' | 'NOT_CONFIRMED'; readonly signer_name: string; readonly signer_firm: string | null;
     readonly filed_on: string | null; readonly reason: string | null; readonly answered_at: string };
@@ -266,7 +266,7 @@ export type ReturnFiling = ClaimReturn & {
 };
 
 /**
- * PHASE 159l (item 2, L15): EACH RETURN THE CLAIM GOES INTO, AND WHETHER IT IS FILED — on the accountant route, from the
+ * EACH RETURN THE CLAIM GOES INTO, AND WHETHER IT IS FILED — on the accountant route, from the
  * accountant's own FILED answers, each for its own return. OUR READING (Word question 283, the accountant): a return
  * already due must be confirmed filed before the claim closes; a return not yet due (the 2025 refit's, due 31 May 2027,
  * when the purchase's amended return was filed in 2026) does not hold the claim open — it is held in aftercare with its

@@ -1,5 +1,5 @@
 /**
- * THE ONE CLIENTS LIST — PHASE 135, 21 September 2026.
+ * THE ONE CLIENTS LIST.
  *
  * Phase 134 made one client page per company, but left two lists of the same companies — "Engaged clients" at
  * /staff/clients and "Organisations" at /staff/organisations — each opening that one page. This is the one list, at
@@ -87,7 +87,7 @@ function waitingCell(w: ClientListRow['waiting']): Safe {
 }
 
 /**
- * UI TIDY PHASE 6, 2 October 2026: who to act on first. A line of counts and solid boxes (waiting on us, waiting on the
+ * Who to act on first. A line of counts and solid boxes (waiting on us, waiting on the
  * client, asked not to be contacted, every company), each a link to that filter; one row with the search, the filters and
  * the two orders; the status in its colour; each claim beside its company, by site and number, its stage in its colour,
  * so two claims of one company cannot be mixed up. Search and filters are links: nothing needs a script.

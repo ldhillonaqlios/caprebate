@@ -1,5 +1,5 @@
 /**
- * A PERSON'S PICK FOR A CLOSE MATCH — the back office resolving a REVIEW-band lookup. Phase 146h, 23 September 2026.
+ * A PERSON'S PICK FOR A CLOSE MATCH — the back office resolving a REVIEW-band lookup.
  * Switched off: PICK_SWITCHES.MATCH_REVIEW_PICK is false.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -24,7 +24,7 @@
  * that) but a back office with a client to work on and somebody entitled to look at the list.
  *
  * THE GATE IS ASSERTED SERVER-SIDE, AGAINST THE RECORD, ON THIS REQUEST — `assertSignedEngagement` in
- * src/modules/claims/research.ts, the same function and the same record as the paid tier's, which since Phase 146f reads the
+ * src/modules/claims/research.ts, the same function and the same record as the paid tier's, which reads the
  * signature record rather than a letter merely marked SIGNED. NOTHING HERE OPENS A GATE and nothing here is a second
  * one: a source still goes through `stateUnderGates` and its own switch before a connector is handed anything, and
  * this adds one condition on top of those rather than replacing any of them.
@@ -63,7 +63,7 @@
  * an audit row, and a source row that says a person looked. It keeps no fact: every question stays asked (N4).
  *
  * ───────────────────────────────────────────────────────────────────────────
- * TAKING A PICK BACK — Phase 146j, 25 September 2026
+ * TAKING A PICK BACK
  *
  * Once a choice lands, the lookup is FIRED and leaves the REVIEW band, so `pickState` refuses to offer the list again
  * — and it should, because at that point there is nothing to choose between. Until Phase 146j that made a wrong
@@ -81,9 +81,9 @@
  *   · and writes REGISTER_MATCH_TAKEN_BACK on the audit chain, carrying the reason.
  *
  * It refuses, and says why, where the record is not the pick's to remove: where we held that entry before the pick
- * (from an earlier lookup — the pick then wrote nothing, and since Phase 146j records no record_id for it), where the
+ *, where the
  * record is not the one the lookup itself names, or where a person has already checked and approved a fact from it
- * (Phase 139). The tick comes off first, by its own act and with its own reason.
+ *. The tick comes off first, by its own act and with its own reason.
  *
  * And it does not un-derive silently. What was worked out FROM the record while it stood — a site area, the check of
  * who signed, a step the client was told was done, an issued report, a surveyor's job — is listed
@@ -206,7 +206,7 @@ export type PickOffer = {
   /** What was chosen last time, where somebody has already looked. Null where nobody has. */
   readonly already: PickRecord | null;
   /**
-   * PHASE 146j: the choice most recently TAKEN BACK on this lookup, and why — so a person looking at the list again
+   * The choice most recently TAKEN BACK on this lookup, and why — so a person looking at the list again
    * can see which entry was chosen and found wrong. Null where no choice here was ever taken back.
    */
   readonly taken_back: TakenBackRecord | null;
@@ -231,7 +231,7 @@ export function lastPick(db: Db, business_id: string, source_id: string): PickRe
   return getRegisterMatchPicksChosenKeyScoreByBusinessIdSourceId<PickRecord>(db, [business_id, source_id]) ?? null;
 }
 
-/** PHASE 146j: the choice on this lookup most recently taken back, with why. */
+/** The choice on this lookup most recently taken back, with why. */
 export function lastTakenBack(db: Db, business_id: string, source_id: string): TakenBackRecord | null {
   return getRegisterMatchPicksChosenKeyReasonByBusinessIdSourceId<TakenBackRecord>(db, [business_id, source_id]) ?? null;
 }
@@ -372,8 +372,8 @@ export async function takePick(
   const entityId = got.bundle.records[0]?.entityId ?? null;
   let record_id: string | null = null;
   d.db.tx(() => {
-    /* PHASE 146j: RECORD THE RECORD THIS PICK WROTE, AND ONLY THAT. `storeResearchOutcomes` keeps a record already held
-       as it was, and until Phase 146j the pick then named that older record as its own — so taking the pick back would
+    /* RECORD THE RECORD THIS PICK WROTE, AND ONLY THAT. `storeResearchOutcomes` keeps a record already held
+       as it was, and the pick then named that older record as its own — so taking the pick back would
        have removed a record an earlier lookup wrote. Migration 042 always said NULL "where the register held the record
        already and it was left as it was"; now it is. */
     const heldBefore = entityId === null ? undefined : getRegisterRecordsIdByBusinessIdSourceId<{ id: string }>(d.db, [business_id, source_id, entityId]);
@@ -398,7 +398,7 @@ export async function takePick(
 
 /**
  * One pick row, replacing this client's STANDING one for this source. The chain keeps every one of them; this is where
- * it landed. A pick that was TAKEN BACK is never replaced or deleted (Phase 146j): it is the record that a choice was
+ * it landed. A pick that was TAKEN BACK is never replaced or deleted: it is the record that a choice was
  * made and found wrong, and the next choice on the same lookup must not erase it.
  */
 function writePick(
@@ -413,7 +413,7 @@ function writePick(
 }
 
 /* ================================================================== *
- * 5 · TAKE A PICK BACK — Phase 146j
+ * 5 · TAKE A PICK BACK
  * ================================================================== */
 
 export type TakeBackResult = {
@@ -464,7 +464,7 @@ export function takeBackPick(
   if (rec === undefined || rec.source_id !== source_id) {
     return refused('The entry that choice kept is not where the choice says it is, so nothing was taken out. Nothing was changed.');
   }
-  /* A RECORD ANOTHER LOOKUP WROTE IS NOT THE PICK'S TO REMOVE. A pick made before Phase 146j could name a record that
+  /* A RECORD ANOTHER LOOKUP WROTE IS NOT THE PICK'S TO REMOVE. A pick made could name a record that
      was already held when it was made; one written before the pick was made is exactly that. */
   if (rec.obtained_at < pick.picked_at) {
     return refused('We held that entry before anybody chose it — an earlier lookup found it — so it is not the choice’s to take out. ' +

@@ -1,7 +1,7 @@
 /**
- * THE FOUR-STAGE FUNNEL — "Am I eligible?", rebuilt. 30 September 2026.
+ * THE FOUR-STAGE FUNNEL — "Am I eligible?", rebuilt.
  *
- * Lakhbir, 29-30 September 2026: "we need to think of more of a funnel for this ... building anticipation prior to
+ * the owner, 29-30: "we need to think of more of a funnel for this ... building anticipation prior to
  * asking for their address details"; "if someone answers no why are we then showing the 'what kind' and 'how much'";
  * a type of business per building with "add another"; "different buildings maybe held by different companies but
  * same directors, so again this needs to be per property"; "each building may be a different business name and of
@@ -13,11 +13,11 @@
  *                             amounts   (roughly how much, and when, each)
  *   STAGE 2  CHECKS           tax, claims, works — each asked PER BUILDING, with "same as Building 1"
  *                             works = "add an event": each piece of work since, with its own kind, cost and date
- *                             (Phase 159c), priced on its own band and added to the building's figure
+ *                            , priced on its own band and added to the building's figure
  *   STAGE 3  YOUR DETAILS     details   (per building: the business that owns it, its legal form, the address)
  *   STAGE 4  YOUR FIGURE      the climbing reveal, then how to reach you: telephone, video call or email
  *
- * THE FIGURE IS SHOWN ONLY AT STAGE 4 (Lakhbir: "providing the full figure here means no one will give the
+ * THE FIGURE IS SHOWN ONLY AT STAGE 4 (the owner: "providing the full figure here means no one will give the
  * details"). Stage 2 ends in words about what their buildings hold, and stage 3 opens on "your figure is ready" with
  * the amount hidden. The page never carries the number before stage 4, not even hidden in the markup.
  *
@@ -30,12 +30,11 @@
  * CB_BAND); a building whose owner pays no UK tax is left out and named; the words under the figure are the engine's
  * assumptions, with each building's tax condition added under its own name. Nothing here is a new number.
  *
- * THE OLD SIX SCREENS (Q1 to Q3) ARE RETIRED (Phase 153f, 4 October 2026): an old link opens stage 1, and nothing
+ * THE OLD SIX SCREENS (Q1 to Q3) ARE RETIRED: an old link opens stage 1, and nothing
  * they recorded is changed. `/assessment` opens stage 1.
  *
  * NOT YET HERE: the old address screen offered "answer it myself" instead of the lookups (Word answer 180), only where
  * the free lookups could run, which today they cannot. When the free gate opens, it belongs on the details screen
- * (Phase 156 B3).
  */
 
 import { h, raw, type Safe } from '../../shared/index.ts';
@@ -55,7 +54,7 @@ export const F4_SCREENS = ['buildings', 'spend-on', 'amounts', 'tax', 'claims', 
 export type F4Screen = (typeof F4_SCREENS)[number];
 export const F4_ROUTE = /^\/assessment\/(buildings|spend-on|amounts|tax|claims|works|details)$/;
 export const MAX_BUILDINGS = 10;
-/** PHASE 159c: the most pieces of work after the first event on one building. */
+/** The most pieces of work after the first event on one building. */
 export const MAX_WORKS = 10;
 
 export const STAGES = Object.freeze([
@@ -66,7 +65,7 @@ export const STAGES = Object.freeze([
 ] as const);
 
 /**
- * PHASE 153c, 4 October 2026 (Word question 208, Sadique's) — THE NAMES WE COUNT EACH SCREEN BY, on the approved list
+ * 4 October 2026 (Word question 208, the data protection officer's) — THE NAMES WE COUNT EACH SCREEN BY, on the approved list
  * (the step names the site's one analytics wrapper accepts). The first four screens of the old estimate were its own earlier claim, the seller's
  * claim, the kind of business and what brought them here; in this funnel those are asked on "spend-on" (what brought
  * them here), "claims" (both claim questions) and "details" (the kind of business). Nothing here sends anything: this
@@ -82,15 +81,15 @@ export const F4_STEP_LABELS: Readonly<Record<string, readonly string[]>> = Objec
 export const F4_TEXT: Readonly<Record<F4Screen, { heading: string; help: string }>> = Object.freeze({
   buildings: { heading: 'What type of business do you have?',
     help: 'Choose one for each building. If you have more than one building, add another.' },
-  // PHASE 159c: this is the FIRST event on each building. Work done since is added as its own event, a few screens on,
+  // This is the FIRST event on each building. Work done since is added as its own event, a few screens on,
   // and priced on its own (F3, one answer per building, is gone).
   'spend-on': { heading: 'What did you spend on each building?',
     help: 'Start with how you came to have each building. If you did work on it later, like a refit or an extension, you can add each piece of work a few questions on.' },
-  // PHASE 159b (E11): an extension is its own answer below — new space, sized like a new build.
+  // An extension is its own answer below — new space, sized like a new build.
   amounts: { heading: 'Roughly how much, and when?', help: 'A rough figure is fine. If you do not know, tick the box.' },
   tax: { heading: 'Does the business that owns each building pay UK tax?',
     help: 'Capital allowances reduce a bill for UK income tax or corporation tax, so there has to be one to claim against. Buildings owned by different companies can have different answers.' },
-  // PHASE 159b (E5): the first question is about YOUR OWN earlier claim. "Has anyone claimed" mixed it with the seller's,
+  // The first question is about YOUR OWN earlier claim. "Has anyone claimed" mixed it with the seller's,
   // and for a purchase a seller who claimed is what makes your claim possible. The seller has its own question.
   claims: { heading: 'Have you claimed on these buildings before?',
     help: 'Most people do not know, and that is fine. Not sure does not stop a claim.' },
@@ -153,7 +152,7 @@ const clip = (v: string | null, max: number): string | null => {
   return t === '' ? null : t.slice(0, max);
 };
 /**
- * PHASE 159b (E9): AN AMOUNT AS A PERSON TYPES IT. "£650,000", "650000", "650k", "1.5m", "£1.25 million" are read as
+ * AN AMOUNT AS A PERSON TYPES IT. "£650,000", "650000", "650k", "1.5m", "£1.25 million" are read as
  * they are meant; "-50000", "1e6", "1,5" and "1.000.000" are refused with a reason rather than read as 50000, 16, 15
  * or nothing. An amount under £1 is refused. An unparseable figure stays NULL; it never becomes 0.
  */
@@ -172,14 +171,14 @@ export function parseMoney(v: string | null): { value: number | null; why: strin
 }
 function num(v: string | null): number | null { return parseMoney(v).value; }
 
-/** PHASE 159b (E12): the first month a "MM/YYYY" or "YYYY" answer could mean, as "YYYY-MM", or null. */
+/** The first month a "MM/YYYY" or "YYYY" answer could mean, as "YYYY-MM", or null. */
 function firstMonth(d: string): string | null {
   const r = (FUNNEL as unknown as { monthRange: (x: string) => [string, string] | null }).monthRange(d);
   return r === null ? null : r[0];
 }
 const thisMonth = (): string => new Date().toISOString().slice(0, 7);
 
-/* ------------------------------------------------------------------ PHASE 159c: events */
+/* ------------------------------------------------------------------ events */
 
 /** One event on a building: what was done, what it cost and when. The first is the building's trigger, spend and date. */
 export type BuildingEvent = {
@@ -194,7 +193,7 @@ export type EventFigure = { type: string | null; cost: number | null; date: stri
   ceiling: number | null; low: number | null; high: number | null; why: string | null; referral: boolean };
 export const EVENT_LABEL: Readonly<Record<string, string>> = EVENTS.EVENT_LABEL;
 /** The kinds of work offered after the first event, in the engine's own order and words. */
-/** PHASE 159g (item 2): how the business holds the building. Owner, landlord or tenant decides whose claim it is; "Not
+/** How the business holds the building. Owner, landlord or tenant decides whose claim it is; "Not
  *  sure", and no answer, are not known (N4) and are asked again at the call. Not required, so nobody is stopped here. */
 export const BUILDING_USE: readonly { value: string; label: string }[] = Object.freeze([
   { value: 'own_use', label: 'The business owns it and works from it' },
@@ -244,7 +243,7 @@ export function allGated(s: S): boolean {
 /** The whole-assessment answers the engine and the old pages read, from the buildings'. */
 function mirror(s: S): void {
   const bs = buildings(s);
-  // PHASE 159c: each building's events start with its first event, kept in step with its trigger, spend and date.
+  // Each building's events start with its first event, kept in step with its trigger, spend and date.
   for (const b of bs) setEvents(b, laterEvents(b));
   const tax = bs.map((b) => b['is_uk_taxpayer']);
   s['is_uk_taxpayer'] = tax.length > 0 && tax.every((t) => t === 'no') ? 'no' : tax.includes('yes') ? 'yes' : tax.length > 0 ? 'not sure' : null;
@@ -304,7 +303,7 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
       if (b['date_unknown'] !== true) {
         if (date === null) errors.push(`Tell us roughly when for ${label(b, i)}, or tick "I don't know".`);
         else if (!MONTH_YEAR.test(date)) { b['date'] = null; errors.push(`For ${label(b, i)}, write the date as month and year, like 06/2021, or just the year.`); }
-        // PHASE 159b (E12): a date that has not happened yet is refused.
+        // A date that has not happened yet is refused.
         else if ((firstMonth(date) ?? '') > thisMonth()) { b['date'] = null; errors.push(`For ${label(b, i)}, the date is in the future. Give the date it happened, or tick "I don't know".`); }
       }
     });
@@ -338,7 +337,7 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
   }
 
   if (id === 'works') {
-    /* PHASE 159c — "ADD AN EVENT". Each piece of work since the first event is its own row: what kind, roughly how much,
+    /* "ADD AN EVENT". Each piece of work since the first event is its own row: what kind, roughly how much,
        and when (a month and year, or a year). "+ Add another piece of work" and "Remove" keep the screen, with what
        was typed kept. A page from before this phase posts the one works answer (b0_works_type, _spend, _year); it is
        read as the first row. The old works_* fields are no longer written: b.events holds the work. */
@@ -420,7 +419,7 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
         }
         const ent = f.get(`b${i}_entity`);
         b['entity_type'] = ent !== null && Object.hasOwn(ENTITY, ent) ? ent : null;
-        /* PHASE 153b (Word question 198), off: with COMPANY_TYPE_FROM_REGISTER on and no kind of business chosen, a
+        /* Off: with COMPANY_TYPE_FROM_REGISTER on and no kind of business chosen, a
            company picked from Companies House fills it in — a limited company or a plc as "Limited company"; an LLP
            only when the person confirms it, so the screen is kept and asks; any other type is asked as before. */
         delete b['entity_suggested'];
@@ -439,7 +438,7 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
       b['line1'] = clip(f.get(`b${i}_line1`), 200);
       b['town'] = clip(f.get(`b${i}_town`), 100);
       let pcTyped = clip(f.get(`b${i}_postcode`), 10);
-      /* An address picked from "Find my address" fills the lines, the town and the postcode. PHASE 156f: the list is
+      /* An address picked from "Find my address" fills the lines, the town and the postcode. The list is
          Homedata's, so the pick carries the property's UPRN, kept on the building and then on the property (submit). */
       const found = (b['address_results'] ?? []) as FoundAddress[];
       const pick = f.get(`b${i}_address_pick`);
@@ -476,7 +475,7 @@ export type BuildingFigure = {
   readonly high: number | null; readonly low: number | null;
   /** Why this building is not counted, in words; null when it is. */
   readonly left_out: string | null;
-  /** PHASE 159c: each event on the building with its own figure, or why it has none. */
+  /** Each event on the building with its own figure, or why it has none. */
   readonly events: readonly EventFigure[];
 };
 
@@ -492,7 +491,7 @@ export function figureF4(s: S): { high: number; low: number; parts: BuildingFigu
       unpricedProperties?: { why?: string; referral?: boolean; events?: EventFigure[] }[] };
     const row = one.breakdown?.[0];
     const high = typeof row?.ceiling === 'number' ? row.ceiling : typeof row?.high === 'number' ? row.high : null;
-    // PHASE 159b: where the engine will not size a building (an earlier claim, the seller, the date, its size), its words.
+    // Where the engine will not size a building (an earlier claim, the seller, the date, its size), its words.
     const cut = one.unpricedProperties?.[0];
     const why = cut?.referral === true && typeof cut.why === 'string' ? `No figure for this one yet: ${cut.why}.` : null;
     const events = row?.events ?? cut?.events ?? [];
@@ -514,7 +513,7 @@ export function figureF4(s: S): { high: number; low: number; parts: BuildingFigu
     if (b['own_prior_claim'] === 'not sure') {
       out.push(`${label(b, i)}: you told us a claim may already have been made on its fixtures. That does not stop the assessment, but an adviser will go through it with you before any figure is relied on.`);
     }
-    // PHASE 159b (E19): a business not making a profit still has the allowances; they come as a loss to carry.
+    // A business not making a profit still has the allowances; they come as a loss to carry.
     if (b['current_year_position'] === 'loss' || b['current_year_position'] === 'breakeven' || b['current_year_position'] === 'unsure') {
       out.push(`${label(b, i)}: if the business is not making a profit, the relief does not cut this year's tax. It makes a loss, which can usually be set against other profits or carried to later years.`);
     }
@@ -585,7 +584,7 @@ export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; post
         ${radios(`b${i}_seller`, OPTIONS.previous_owner_claimed, b['previous_owner_claimed'])}` : raw('')}`))}`;
   }
   if (id === 'works') {
-    /* PHASE 159c: "add an event" — one row per piece of work, each with its own kind, cost and date. */
+    /* "add an event" — one row per piece of work, each with its own kind, cost and date. */
     return h`${bs.map((b, i) => {
       const later = laterEvents(b);
       const rows = later.length === 0 ? [{ type: null, cost: null, cost_unknown: false, date: null, date_unknown: false, vat: null } as BuildingEvent] : later;
@@ -650,7 +649,7 @@ export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; post
   })}`;
 }
 
-/** The addresses "Find my address" found, to pick one; or that it is not there, and it is typed below. Phase 156f: each
+/** The addresses "Find my address" found, to pick one; or that it is not there, and it is typed below. Each
  *  carries its line and town, so the page's script can fill the boxes below when one is picked. */
 function addressPicker(b: B, i: number): Safe {
   const note = typeof b['address_note'] === 'string' ? b['address_note'] : null;
@@ -667,7 +666,7 @@ function addressPicker(b: B, i: number): Safe {
 function teaser(bs: readonly B[]): Safe {
   const kinds = [...new Set(bs.map((b) => b['sector']).filter((x): x is string => typeof x === 'string'))];
   if (kinds.length === 0) return raw('');
-  /* PHASE 157c (the Friary House run, F2): "A GP / primary care holds" read oddly; the sentence names a building. */
+  /* "A GP / primary care holds" read oddly; the sentence names a building. */
   const names = kinds.map((k) => (k === 'gp' ? 'GP surgery' : (SECTOR[k] ?? k).toLowerCase()));
   return h`<div class="f4-teaser"><p class="f4-kicker">Good news</p>
     <p>${kinds.length === 1 ? `A ${names[0]}` : `Your ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`} ${kinds.length === 1 ? 'holds' : 'hold'} fixtures that can qualify:</p>
@@ -708,7 +707,7 @@ export function figureBody(s: S, slots: { available: true; slots: readonly { sta
       ${fig.high > 0 ? h`<p class="f4-lead">Your buildings could hold qualifying fixtures worth up to</p>
       ${revealAmount(fig.high)}
       <p class="help">A ceiling, not a forecast, for what you have told us. Checking the records can move it down. Work you have done since, measured by our surveyor, can add to it.</p>`
-        // PHASE 159b: no building we could size is never "up to £0" — that reads as "you are owed nothing".
+        // No building we could size is never "up to £0" — that reads as "you are owed nothing".
         : h`<p class="f4-lead">We cannot give you a figure yet.</p>
       <p class="help">Each building below says why. An adviser will go through it with you.</p>`}
     </div>
@@ -745,7 +744,7 @@ export function figureBody(s: S, slots: { available: true; slots: readonly { sta
     </form>`;
 }
 
-/** PHASE 159c: each event on a building, with its own "up to" or the reason it has none. */
+/** Each event on a building, with its own "up to" or the reason it has none. */
 export function eventLine(e: EventFigure): string {
   const what = EVENT_LABEL[e.type ?? ''] ?? 'Other work';
   const when = e.date === null ? '' : ` (${e.date})`;
@@ -776,18 +775,18 @@ export function applyReach(s: S, f: URLSearchParams, roles: readonly (readonly [
   c['contact_value'] = value;
   const wrong = problem(channel.capture, value);
   if (wrong !== undefined) return wrong;
-  /* PHASE 153f, 4 October 2026 (Word answer 164, closed 24 September 2026): NO TICK. The contact form's required "you may
+  /* NO TICK. The contact form's required "you may
      contact me" box was replaced by a statement and a link to the privacy notice, because a person who sends an enquiry
      has asked to be answered, and a tick box would misdescribe the basis as consent. The funnel now says the same.
      `contact_consent` stays true — it records that the person asked to be contacted about this enquiry, by sending it —
      and is never marketing consent. WhatsApp is its own, optional box (`whatsapp_optin`): Meta's rules want a person to
-     have agreed to WhatsApp, and Sadique's approval for testing (30 Sep 2026) leaned on the old box. */
+     have agreed to WhatsApp, and the data protection officer's approval for testing leaned on the old box. */
   c['full_name'] = `${first} ${surname}`;
   c['contact_consent'] = true;
   c['sms_variant'] = null;
   c['slot'] = channel.books ? (f.get('slot') ?? null) : null;
   c['day'] = channel.books ? (f.get('day') ?? null) : null;
-  // 30 Sep 2026: a date, then a time on it (src/modules/crm/slot-picker.ts). A time hidden under another date is refused.
+  // A date, then a time on it (src/modules/crm/slot-picker.ts). A time hidden under another date is refused.
   if (channel.books) {
     const wrongDay = slotDayProblem(f.get('day'), f.get('slot'));
     if (wrongDay !== undefined) return wrongDay;
@@ -795,7 +794,7 @@ export function applyReach(s: S, f: URLSearchParams, roles: readonly (readonly [
   return undefined;
 }
 
-/** The buildings grouped by the business that owns each: one organisation per business (Lakhbir, 30 Sep 2026). */
+/** The buildings grouped by the business that owns each: one organisation per business. */
 export function byBusiness(s: S): { name: string; company_number: string | null; entity_type: string | null; indexes: number[] }[] {
   const groups = new Map<string, { name: string; company_number: string | null; entity_type: string | null; indexes: number[] }>();
   buildings(s).forEach((b, i) => {
@@ -828,7 +827,7 @@ export type EnquiryPart = {
 /**
  * ONE ORGANISATION PER BUSINESS THAT OWNS A BUILDING, each through the same `submit` the old funnel used — its own
  * organisation, properties, assessment, answers and lead — because each company signs and claims in its own name
- * (Lakhbir, 30 Sep 2026: "One record per company"). A business whose every building has no UK tax to relieve gets the
+ *. A business whose every building has no UK tax to relieve gets the
  * reasoned negative's lead instead, with its name and no figure. Every lead carries one `enquiry_id` (migration 061).
  */
 export function submitEnquiry(db: Db, d: Draft, now: () => string, id: () => string): { enquiry_id: string; parts: EnquiryPart[] } {
@@ -844,7 +843,7 @@ export function submitEnquiry(db: Db, d: Draft, now: () => string, id: () => str
       continue;
     }
     // A building in this business whose owner pays no UK tax is kept as a property, and counted as nothing.
-    // PHASE 159c: and its work since is counted as nothing too — each event's cost, not only the first.
+    // And its work since is counted as nothing too — each event's cost, not only the first.
     const counted = { ...(gs as unknown as S), properties: gb.map((b) => b['is_uk_taxpayer'] === 'no'
       ? { ...b, spend: null, spend_unknown: true, events: eventsOf(b).map((e) => ({ ...e, cost: null, cost_unknown: true })) } : b) } as unknown as FunnelState;
     const out = submit(db, { token: d.token, state: counted, screen: d.screen }, now, id);

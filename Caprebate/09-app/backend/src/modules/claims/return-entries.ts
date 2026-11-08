@@ -1,7 +1,7 @@
 /**
- * THE RETURN ENTRIES, YEAR BY YEAR, AS A SPREADSHEET BESIDE THE REPORT. PHASE 153b, 4 October 2026.
+ * THE RETURN ENTRIES, YEAR BY YEAR, AS A SPREADSHEET BESIDE THE REPORT.
  *
- * Word question 121, "In what format would you like us to send our results?", for the accountant. Lakhbir: "Any
+ * Word question 121, "In what format would you like us to send our results?", for the accountant. the owner: "Any
  * format". Our recommendation, built for the accountant to check: the signed PDF report (built on 2 October,
  * src/web/survey-report.ts) and BESIDE IT a small spreadsheet of what goes on each year's tax return, so nobody
  * retypes figures. Change it if the accountant names a format their software imports.
@@ -12,13 +12,13 @@
  * CB_RATES) — nothing is restated here.
  *
  * WHAT IT DOES NOT KNOW IT LEAVES BLANK AND SAYS WHY (N4). The main-pool rate turns on the accounting period (18%, or
- * 14% for periods from April 2026, with the straddle rule) and on whether the client is a company. Where the claim's
+ * 14% for periods, with the straddle rule) and on whether the client is a company. Where the claim's
  * accounting period is not recorded, or the claimant type is not known and the two readings differ, the main-pool
  * rows carry no figure and their "How it is worked out" cell says what is missing. The special-rate pool's 6% is the
  * same for everyone and always given. No first-year allowance or annual investment allowance is assumed: the
  * client's accountant chooses those, and the last row says so.
  *
- * MADE AGAIN EVERY TIME, LIKE THE PDF — from the same facts once it has been sent. PHASE 159a (C29): the first time a
+ * MADE AGAIN EVERY TIME, LIKE THE PDF — from the same facts once it has been sent. The first time a
  * version's spreadsheet leaves us (emailed for sign-off, or its sign-off recorded) the claim's accounting period and
  * claimant type are kept with the version (`freezeReturnContext`, table return_entry_contexts), and every later copy of
  * that version is made from them (`returnContextFor`). Before then it reads the claim as it stands. Every cell is quoted
@@ -41,7 +41,7 @@ export type ReturnContext = {
   readonly period_start: string | null;
   /** True for a company, false for self assessment, null where the claimant type is not known. */
   readonly is_company: boolean | null;
-  /** PHASE 159e: the facts the allowances turn on (src/modules/assessment/allowances.ts). Absent on a version sent before, which reads
+  /** The facts the allowances turn on (src/modules/assessment/allowances.ts). Absent on a version sent before, which reads
    *  as it did: no first-year relief is counted on a fact nobody recorded (N4). */
   readonly facts?: AllowanceFacts | null;
 };
@@ -59,7 +59,7 @@ export type ReturnEntry = {
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 /** The entries for each return, from an approved version and what the claim records about its period and claimant.
- *  PHASE 159e: worked out part by part by src/modules/assessment/allowances.ts — each part in its own period (W1) or the first open
+ *  Worked out part by part by src/modules/assessment/allowances.ts — each part in its own period (W1) or the first open
  *  one (W2), with its own first-year relief, the structures allowance and the dated rates. Where a part takes no
  *  first-year relief its row reads exactly as before ("Spend that counts, added to the pool"). */
 export function returnEntries(s: Snapshot, ctx: ReturnContext): ReturnEntry[] {
@@ -120,14 +120,14 @@ export function returnEntries(s: Snapshot, ctx: ReturnContext): ReturnEntry[] {
           amount_pence: null, how: `Not worked out. ${p.sba.why}` });
       }
     }
-    // PHASE 159k (item 2): long-life plant moved to the special rate pool, said where the part goes in.
+    // Long-life plant moved to the special rate pool, said where the part goes in.
     for (const p of entering) {
       if (p.long_life !== null && p.long_life.moved !== false) {
         out.push({ return_no: i + 1, period, pool: 'Special rate pool', entry: `Long-life plant${suffix(p.what)}`,
           amount_pence: p.long_life.moved === true ? p.long_life.pence : null, how: p.long_life.why });
       }
     }
-    // PHASE 159k (item 2): land remediation relief on asbestos removal: a deduction from profits, not an allowance.
+    // Land remediation relief on asbestos removal: a deduction from profits, not an allowance.
     for (const p of entering) {
       if (p.lrr === null) continue;
       if (p.lrr.applies === true) {
@@ -165,7 +165,7 @@ export function returnEntriesCsv(s: Snapshot, ctx: ReturnContext, fingerprint: s
 }
 
 /** What the claim records that the rows need: its accounting period's first day, whether the claimant is a company, and
- *  (PHASE 159e) the facts the allowances turn on. C15, L4 — ONE PERIOD SOURCE: the period is the one the amendment window
+ *  the facts the allowances turn on. C15, L4 — ONE PERIOD SOURCE: the period is the one the amendment window
  *  reads (src/modules/claims/claim-route.ts purchasePeriod): as recorded, or from the client's checked year end. */
 export function returnContext(db: Db, claim_id: string | null, business_id: string): ReturnContext {
   const t = claimantTypeForGate(db, business_id).value;
@@ -195,7 +195,7 @@ export function returnContext(db: Db, claim_id: string | null, business_id: stri
       sba_purchase_pence: pence('SBA_QUALIFYING_EXPENDITURE'),
       purchase_date: acq.known && typeof acq.value === 'string' && ISO.test(acq.value) ? acq.value : null,
       residential: sector === null ? null : sector === 'supported_living',
-      // PHASE 159k (item 2): read for land remediation relief on asbestos removal.
+      // Read for land remediation relief on asbestos removal.
       asbestos_at_acquisition: choice('ASBESTOS_AT_ACQUISITION') === 'YES' ? true : choice('ASBESTOS_AT_ACQUISITION') === 'NO' ? false : null,
     },
   };
@@ -209,7 +209,7 @@ const NO_FACTS_ON: AllowanceFacts = Object.freeze({
 export const csvName = (company: string, version: number) =>
   `${company.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'client'}-return-entries-v${String(version)}.csv`;
 
-/** PHASE 159a (C29): the facts a version's spreadsheet was first sent on, or null if it has not been sent. */
+/** The facts a version's spreadsheet was first sent on, or null if it has not been sent. */
 export function frozenReturnContext(db: Db, approval_id: string): ReturnContext | null {
   const r = getReturnEntryContextsPeriodStartIsCompanyByApprovalId<{ period_start: string | null; is_company: number | null; facts_json: string | null }>(db, [approval_id]);
   if (r === undefined) return null;
@@ -230,7 +230,7 @@ export function returnContextFor(db: Db, approval_id: string, claim_id: string |
   return frozenReturnContext(db, approval_id) ?? returnContext(db, claim_id, business_id);
 }
 
-/** PHASE 159e: the facts a version's figures are made from, found from the version alone (the report and the portal
+/** The facts a version's figures are made from, found from the version alone (the report and the portal
  *  have the approval, not the claim): as first sent, or the claim as it stands. */
 export function contextForApproval(db: Db, approval_id: string): ReturnContext {
   const j = getSurveyPackApprovalsClaimIdBusinessIdById<{ claim_id: string | null; business_id: string }>(db, [approval_id]);

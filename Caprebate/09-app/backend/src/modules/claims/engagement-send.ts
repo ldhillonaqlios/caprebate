@@ -1,5 +1,5 @@
 /**
- * PREPARE AND SEND THE ENGAGEMENT LETTER, AND THE SIGNED COPY — PHASE 157c, 6 October 2026.
+ * PREPARE AND SEND THE ENGAGEMENT LETTER, AND THE SIGNED COPY.
  *
  * The Friary House run (04-phase-work/sim-2026-10-06, finding F21) found that nothing in the application prepared or
  * sent an engagement letter: only the seed wrote one. So a new client's portal said "No engagement letter has been
@@ -28,7 +28,7 @@ import { getEngagementsIdLetterStateByBusinessId } from './data-borrowed.ts';
 
 export type SendDeps = {
   db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string; origin?: string;
-  /** PHASE 157d: the signing setting this copy runs under. Signing links are made only where it says `links`. */
+  /** The signing setting this copy runs under. Signing links are made only where it says `links`. */
   signing?: EngagementSigning;
 };
 
@@ -48,7 +48,7 @@ export type LetterState = {
   /** A signed copy can be handed out: the letter is signed and its record checks out. */
   readonly copy: boolean;
   readonly logins: number;
-  /** PHASE 157d: who must sign (staff's choice; empty is any one login), and who has. */
+  /** Who must sign (staff's choice; empty is any one login), and who has. */
   readonly named: readonly { readonly user_id: string; readonly name: string }[];
   readonly signed_by: readonly { readonly user_id: string | null; readonly name: string; readonly signed_at: string; readonly by_link: boolean }[];
 };
@@ -90,7 +90,7 @@ export function sendEngagementLetter(d: SendDeps, actor: Actor, business_id: str
     });
   });
   const link = `${d.origin ?? ''}/portal/letter`;
-  /* PHASE 157d: where signing links are on, each login is also sent its own single-use link that opens the letter for
+  /* Where signing links are on, each login is also sent its own single-use link that opens the letter for
      signing without signing in. Where staff named who must sign, only they are sent one. */
   const cfg = d.signing ?? ENGAGEMENT_SIGNING;
   const eng = getEngagementsIdByBusinessId<{ id: string }>(d.db, [business_id]);
@@ -117,7 +117,7 @@ export function signedCopy(db: Db, actor: Actor, business_id: string): { pdf: Ui
   if (!can(actor, 'engagement.read', { type: 'engagement', id: business_id, business_id })) return null;
   const e = getEngagementsIdLetterStateByBusinessId2<{ id: string; letter_state: string }>(db, [business_id]);
   if (e === undefined || e.letter_state !== 'SIGNED' || !checkSignature(db, e.id).ok) return null;
-  // PHASE 157d: the latest signature's PDF carries every signature on the letter.
+  // The latest signature's PDF carries every signature on the letter.
   const r = getEngagementSignaturesPdfSignedAtByEngagementId<{ pdf: Uint8Array; signed_at: string }>(db, [e.id]);
   if (r === undefined) return null;
   return { pdf: new Uint8Array(r.pdf), filename: `engagement-letter-signed-${r.signed_at.slice(0, 10)}.pdf` };

@@ -1,10 +1,10 @@
 /**
- * HEALTHCARE PREMISES FROM OPEN-LICENCE REGISTERS — AN IMPORT, AND NOTHING THAT CONTACTS ANYONE. Phase 153c, 4 October 2026.
+ * HEALTHCARE PREMISES FROM OPEN-LICENCE REGISTERS — AN IMPORT, AND NOTHING THAT CONTACTS ANYONE.
  *
- * Word question 183, Sadique's: "Where will the healthcare property list come from, and can we use it for marketing?"
+ * Word question 183, the data protection officer's: "Where will the healthcare property list come from, and can we use it for marketing?"
  * Built on our recommendation, for him to check: a list of healthcare premises built from registers published under
  * the Open Government Licence, keeping FOUR THINGS ONLY — the business's name, the address, the sector and the source
- * (with the register's own reference, so a row can be traced back). Lakhbir wants a list to load into the system; the
+ * (with the register's own reference, so a row can be traced back). the owner wants a list to load into the system; the
  * officer has not yet said how anyone on it may be contacted, so NOTHING HERE CONTACTS ANYONE: the table holds no
  * person's name, no email and no telephone number, and no route, job or message reads it to send anything.
  *

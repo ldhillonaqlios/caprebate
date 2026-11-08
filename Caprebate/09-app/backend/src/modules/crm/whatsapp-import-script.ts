@@ -1,5 +1,5 @@
 /**
- * PHASE 156c, 5 October 2026 — THE WHATSAPP PAGES' ONE SCRIPT: OPEN AN EXPORTED CHAT ON THE PERSON'S OWN COMPUTER.
+ * THE WHATSAPP PAGES' ONE SCRIPT: OPEN AN EXPORTED CHAT ON THE PERSON'S OWN COMPUTER.
  *
  * Why it exists: the test website takes about 4.5 MB a request, and a real export with its photos is far bigger (the
  * first one tried was 53 MB, the whole history of the chat). So, for a .zip over 3.5 MB:

@@ -1,10 +1,10 @@
 /**
- * THE CLIENT'S STEP NAMES — BUILT, SWITCHED OFF, AND ASKED. PHASE 133c, 17 September 2026 (B9).
+ * THE CLIENT'S STEP NAMES — BUILT, SWITCHED OFF, AND ASKED.
  *
  * The portal names its six steps with the business flow's own labels (src/shared/stages.ts), which were written for us and
  * read like a build note to a client: "The engine runs → a narrowed estimate". The proposed names below are a second
  * label set, shown only while the portal-steps switch is on (NAME_SWITCHES in src/core/navigation.ts, shipped OFF). Which
- * set to use is a question for Lakhbir in CAPREBATE QUESTIONS, "The new names and the client's step names - which do we
+ * set to use is a question for the owner in CAPREBATE QUESTIONS, "The new names and the client's step names - which do we
  * switch on?".
  *
  * CHECKED BEFORE WRITING THEM DOWN, on 17 September 2026:
@@ -33,7 +33,7 @@ export function stepName(stage: { readonly key: StageKey; readonly label: string
 }
 
 /**
- * PHASE 158b (F27, the Friary House run): the line the client's portal shows for a step - "Step 2 of 6: Engagement
+ * The line the client's portal shows for a step - "Step 2 of 6: Engagement
  * letter signed" - so the claim page can quote it as the client sees it. The claim page quoted the business flow's own
  * labels with no number, and "Engagement - letter, data & AI consent" read as a step BEFORE "The engine runs" when it is
  * the one after it.
