@@ -25,7 +25,7 @@ export type MoneyReadings = {
   readonly s185_plus_own_s25: boolean;
   readonly vat_shared_with_land: boolean;
   /** Plant with an expected life of 25 years or more goes to the special rate pool where a year's
-   *  long-life spend passes £100,000 (s.90-104; src/web/allowances.ts). */
+   *  long-life spend passes £100,000 (s.90-104; src/modules/assessment/allowances.ts). */
   readonly long_life_test: boolean;
   /** Removing asbestos that was there when a company acquired the land is land remediation relief, a
    *  150% deduction (CTA 2009 Part 14), shown in the return entries — never an allowance. */

@@ -51,16 +51,16 @@
  * writes nothing. The task carries no figure; the finance view carries the reading.
  */
 
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, type Actor } from '../core/index.ts';
-import { localDate, localStamp } from '../shared/index.ts';
-import { formatPence, toPence } from '../shared/index.ts';
-import { insertTask } from './tasks.ts';
-import { latestSignOff } from './claim-record.ts';
-import { computeFee, FEE_CONTROLS, type FeeControls } from './fee-controls.ts';
-import { feeGate, type FeeGateReading } from '../shared/index.ts';
-import { assertFinanceSection, financeSectionObj } from './finance.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, type Actor } from '../../core/index.ts';
+import { localDate, localStamp } from '../../shared/index.ts';
+import { formatPence, toPence } from '../../shared/index.ts';
+import { insertTask } from '../../web/tasks.ts';
+import { latestSignOff } from '../../web/claim-record.ts';
+import { computeFee, FEE_CONTROLS, type FeeControls } from '../../web/fee-controls.ts';
+import { feeGate, type FeeGateReading } from '../../shared/index.ts';
+import { assertFinanceSection, financeSectionObj } from '../../web/finance.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 

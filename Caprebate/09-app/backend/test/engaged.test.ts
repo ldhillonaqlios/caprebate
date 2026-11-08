@@ -35,7 +35,7 @@ import * as E from '../src/web/engaged.ts';
 import * as R from '../src/web/research.ts';
 import {
   FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel, type FunnelStateRow, type FunnelSwitches,
-} from '../src/web/funnel-session.ts';
+} from '../src/modules/assessment/funnel-session.ts';
 import { estimate } from '../src/shared/engine.ts';
 import { registryGate, REGISTRY } from '../src/shared/engine.ts';
 import { assembleSurveyorPayload } from '../src/payload.ts';
@@ -145,7 +145,7 @@ async function boot(): Promise<Harness> {
     await c.post('/assessment/buildings', { b0_sector: 'care_homes' });
     await c.post('/assessment/spend-on', { b0_trigger: answers.trigger ?? 'purchase' });
     await c.post('/assessment/amounts', { b0_spend: '2400000', b0_date: '06/2021', ...(answers.amounts ?? {}) });
-    // "Is it profitable" is asked, and kept, only after "yes" (src/web/funnel4.ts).
+    // "Is it profitable" is asked, and kept, only after "yes" (src/modules/assessment/funnel4.ts).
     await c.post('/assessment/tax', { b0_tax: tax, ...(tax === 'yes' ? { b0_profit: answers.current_year_position ?? 'profitable' } : {}) });
     await c.post('/assessment/claims', { b0_prior: answers.own_prior_claim ?? 'no', b0_seller: answers.previous_owner_claimed ?? 'dont_know' });
     await c.post('/assessment/works', { b0_works: 'no', ...(answers.works ?? {}) });
@@ -1437,7 +1437,7 @@ describe('panel 4 — withdrawing a question asked in error', () => {
  * `unestablishedGates` used to rebuild a session from THREE question ids and
  * ignore everything else the six screens collected. It now reads the CB_FUNNEL
  * state out of `assessment_drafts.state_json` and maps every answer that can be
- * defended from the engine's own code — see src/web/funnel-session.ts, whose
+ * defended from the engine's own code — see src/modules/assessment/funnel-session.ts, whose
  * longer half is the list of what it deliberately leaves absent.
  *
  * N4 IS THE ACCEPTANCE TEST HERE and it is asserted three ways: the "I don't

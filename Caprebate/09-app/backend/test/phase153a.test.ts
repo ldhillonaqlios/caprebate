@@ -21,7 +21,7 @@ import { createApp } from '../src/core/server.ts';
 import * as F from '../src/web/claim-facts.ts';
 import { packView, savePackValue, saveLine, setLineRemoved, type PackDeps } from '../src/web/survey-pack.ts';
 import { CHAPTERS, chaptersToRead } from '../src/web/pack-chapters.ts';
-import { grantProviderNeed, grantSplitNeed, shippedGrantSwitches, GRANT_PAPERS_TYPE } from '../src/web/grant-checks.ts';
+import { grantProviderNeed, grantSplitNeed, shippedGrantSwitches, GRANT_PAPERS_TYPE } from '../src/modules/assessment/grant-checks.ts';
 import { snapshotOf } from '../src/web/pack-approve.ts';
 import { reportModel } from '../src/web/survey-report.ts';
 import { legalView } from '../src/web/pack-legal.ts';

@@ -82,12 +82,12 @@
  * any call outside. The land boundary's own row in the table points at those lines.
  */
 
-import { keepCouncilArea, fillTenureFromRegisters } from './who-claims.ts';
+import { keepCouncilArea, fillTenureFromRegisters } from '../modules/assessment/who-claims.ts';
 import type { Db } from '../core/index.ts';
 import { authorise, can, type Actor } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
 import { registryGate, REGISTRY } from '../shared/index.ts';
-import { DECLINED_LINE, lookupsDeclined } from './address-check.ts';
+import { DECLINED_LINE, lookupsDeclined } from '../modules/assessment/address-check.ts';
 import { SOURCES as REGISTER_SOURCES, LICENCES } from '../integrations/index.ts';
 import { switchedOn, runConnector, REGISTER_SWITCHES, PLANNING_ROUTE, switchesHere, freeGateWaived, gateStatus, type Bundle, type ConnectorContext } from '../integrations/index.ts';
 import type { Env } from '../integrations/index.ts';

@@ -38,16 +38,16 @@
  * (Phase 156 B3).
  */
 
-import { h, raw, type Safe } from '../shared/index.ts';
-import { FUNNEL, FRONTDOOR } from '../shared/index.ts';
+import { h, raw, type Safe } from '../../shared/index.ts';
+import { FUNNEL, FRONTDOOR } from '../../shared/index.ts';
 import { OPTIONS, addressFrom, submit, type Draft, type FunnelState } from './assessment.ts';
-import { openLeadForGatedExit } from './leads.ts';
-import type { Db } from '../core/index.ts';
-import { normalisePostcode } from '../integrations/index.ts';
-import { entityFromCompanyType, accountsTypeWords, type CompanyCandidate } from '../integrations/index.ts';
-import { isDormant } from '../integrations/index.ts';
-import type { FoundAddress } from '../integrations/index.ts';
-import { slotPicker, slotDayProblem } from './slot-picker.ts';
+import { openLeadForGatedExit } from '../../web/leads.ts';
+import type { Db } from '../../core/index.ts';
+import { normalisePostcode } from '../../integrations/index.ts';
+import { entityFromCompanyType, accountsTypeWords, type CompanyCandidate } from '../../integrations/index.ts';
+import { isDormant } from '../../integrations/index.ts';
+import type { FoundAddress } from '../../integrations/index.ts';
+import { slotPicker, slotDayProblem } from '../../web/slot-picker.ts';
 
 export const F4_SCREENS = ['buildings', 'spend-on', 'amounts', 'tax', 'claims', 'works', 'details'] as const;
 export type F4Screen = (typeof F4_SCREENS)[number];

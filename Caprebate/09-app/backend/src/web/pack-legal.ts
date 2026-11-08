@@ -29,7 +29,7 @@ import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
 import { poundsWords } from './pack-sums.ts';
 import { claimantTypeForGate } from './crm.ts';
 import { valuationLock } from './valuation-lock.ts';
-import { claimantRole, type ClaimantRole } from './who-claims.ts';
+import { claimantRole, type ClaimantRole } from '../modules/assessment/who-claims.ts';
 import { LEGAL_ENGINE_SWITCHES } from '../shared/index.ts';
 
 export type EngineQuestion = {

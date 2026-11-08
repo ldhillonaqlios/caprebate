@@ -3,7 +3,7 @@
  * reach (src/modules/public-site/enquiry-retention.ts, leadDeletionPlan). A row in any other table that hangs off the lead or its
  * organisation is a reason to keep everything: it has a retention rule of its own, or it is evidence.
  *
- * The foreign keys from these tables' rows are written out as literal statements in src/web/funnel-edges.ts, which
+ * The foreign keys from these tables' rows are written out as literal statements in src/modules/assessment/funnel-edges.ts, which
  * tools/gen-funnel-edges.ts generates from the database's own schema (no SQL is ever built from a string at run time;
  * tools/lint-sql.cjs). test/phase157.test.ts fails when the schema gains an edge that file lacks.
  */

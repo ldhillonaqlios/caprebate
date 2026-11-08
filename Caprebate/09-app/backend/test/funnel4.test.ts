@@ -1,5 +1,5 @@
 /**
- * 30 SEPTEMBER 2026 — THE FOUR-STAGE FUNNEL (src/web/funnel4.ts).
+ * 30 SEPTEMBER 2026 — THE FOUR-STAGE FUNNEL (src/modules/assessment/funnel4.ts).
  *
  * Lakhbir: buildings first ("add another"), the checks per building, who owns each building and where, then "the big
  * reveal ... a climbing number" with three ways to be reached; one record per company, linked as one enquiry.

@@ -2,7 +2,7 @@
  * PHASE 159e, 10 October 2026 — THE ALLOWANCES ON EACH EVENT, AND THE RETURN ENTRIES (the back end's half).
  *
  * The engine's half is Suite AQ in the site harness. From the stress test of 9 October 2026 (C13, C15, C17, C18) and
- * the Lockwood run (L4). Each test fails on the code before this phase (src/web/allowances.ts did not exist, so this
+ * the Lockwood run (L4). Each test fails on the code before this phase (src/modules/assessment/allowances.ts did not exist, so this
  * file does not load on it at all):
  *   1  C18, items 7 and 8: a 2019 purchase W2 into the 2024 pool and a 2025 refit W1 in its own year, full expensing
  *      and the 50% allowance on the refit, the half left joining the pool the year after; the report shows each part
@@ -33,7 +33,7 @@ import * as EV from '../src/web/survey-evidence.ts';
 import * as CH from '../src/web/pack-chapters.ts';
 import * as REP from '../src/web/survey-report.ts';
 import * as RE from '../src/web/return-entries.ts';
-import * as AL from '../src/web/allowances.ts';
+import * as AL from '../src/modules/assessment/allowances.ts';
 import type { Snapshot } from '../src/web/pack-approve.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;

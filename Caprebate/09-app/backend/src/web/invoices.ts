@@ -3,7 +3,7 @@
  * CRM 7 of 10, 11 September 2026.
  *
  * The schema is migration 016; the fee is src/web/fee-controls.ts; the VAT and
- * its monitoring are src/web/vat.ts; the pages are src/web/finance-pages.ts. The
+ * its monitoring are src/modules/assessment/vat.ts; the pages are src/web/finance-pages.ts. The
  * scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 13.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ import {
 import {
   ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading,
   type SettingsView, type VatReading,
-} from './vat.ts';
+} from '../modules/assessment/vat.ts';
 import { assertFinanceSection, feeVersusBenefit, financeSectionObj, type FeeVersusBenefit } from './finance.ts';
 import { feeList, onClause13Credit, onFeeInvoiced, type FeeView } from './introducers.ts';
 import type { Letter } from './letter.ts';

@@ -595,11 +595,11 @@
    "area": "portal",
    "kind": "logic"
   },
-  "src/web/address-check.ts": {
+  "src/modules/assessment/address-check.ts": {
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/address-lookup-script.ts": {
+  "src/modules/assessment/address-lookup-script.ts": {
    "area": "assessment",
    "kind": "other"
   },
@@ -607,11 +607,11 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/allowance-profit-comparison.ts": {
+  "src/modules/assessment/allowance-profit-comparison.ts": {
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/allowances.ts": {
+  "src/modules/assessment/allowances.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -627,7 +627,7 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/assessment.ts": {
+  "src/modules/assessment/assessment.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -755,7 +755,7 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/conveyancing-strip.ts": {
+  "src/modules/assessment/conveyancing-strip.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -779,7 +779,7 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/desk-first.ts": {
+  "src/modules/assessment/desk-first.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -851,23 +851,23 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/funnel-deletable.ts": {
+  "src/modules/assessment/funnel-deletable.ts": {
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/funnel-edges.ts": {
+  "src/modules/assessment/funnel-edges.ts": {
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/funnel-session.ts": {
+  "src/modules/assessment/funnel-session.ts": {
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/funnel4.ts": {
+  "src/modules/assessment/funnel4.ts": {
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/grant-checks.ts": {
+  "src/modules/assessment/grant-checks.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -919,7 +919,7 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/long-life-and-remediation.ts": {
+  "src/modules/assessment/long-life-and-remediation.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -1051,7 +1051,7 @@
    "area": "portal",
    "kind": "logic"
   },
-  "src/web/report-assumptions.ts": {
+  "src/modules/assessment/report-assumptions.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -1087,7 +1087,7 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/sector-ranges.ts": {
+  "src/modules/assessment/sector-ranges.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -1195,7 +1195,7 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/vat.ts": {
+  "src/modules/assessment/vat.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -1231,7 +1231,7 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/who-claims.ts": {
+  "src/modules/assessment/who-claims.ts": {
    "area": "assessment",
    "kind": "logic"
   }

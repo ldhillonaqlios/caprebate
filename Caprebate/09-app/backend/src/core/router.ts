@@ -41,12 +41,12 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import { FUNNEL, FRONTDOOR, BOOKING, registryGate } from '../shared/index.ts';
 import {
   isGatedExit, newDraft, loadDraft, saveDraft, submit, closeGatedExit, type Draft,
-} from '../web/assessment.ts';
-import { F4_ROUTE, F4_SCREENS, F4_TEXT, applyF4, applyReach, allGated, buildings, figureBody, firstIncomplete, isFunnel4, screenBody, stageBar, stageOf, submitEnquiry, type F4Screen } from '../web/funnel4.ts';
+} from '../modules/assessment/assessment.ts';
+import { F4_ROUTE, F4_SCREENS, F4_TEXT, applyF4, applyReach, allGated, buildings, figureBody, firstIncomplete, isFunnel4, screenBody, stageBar, stageOf, submitEnquiry, type F4Screen } from '../modules/assessment/funnel4.ts';
 import { searchCompanies, companySearchOffered, COMPANY_SEARCH } from '../integrations/index.ts';
 import { checkPostcode, normalisePostcode, postcodeCheckMissing, POSTCODE_CHECK } from '../integrations/index.ts';
 import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses, searchesToday } from '../integrations/index.ts';
-import { ADDRESS_LOOKUP_JS } from '../web/address-lookup-script.ts';
+import { ADDRESS_LOOKUP_JS } from '../modules/assessment/address-lookup-script.ts';
 import { loadLetter } from '../web/letter.ts';
 import * as P from '../web/portal.ts';
 import { ENGAGEMENT_SIGNING, SIGN_WORDS, letterFacts, letterOptions, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning, type LetterFacts } from '../web/signing.ts';
@@ -102,7 +102,7 @@ import { homeEdition, gsapScript, HOME_PAGE_HEADERS, sectorEdition, isSectorSlug
 import { checkTurnstile, refusalWords, turnstileSiteKey, withSiteKey, TURNSTILE_FIELD } from '../integrations/index.ts';
 import { receiveEnquiry } from '../modules/public-site/enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
-import { freeGate, recordLookupsDeclined } from '../web/address-check.ts';
+import { freeGate, recordLookupsDeclined } from '../modules/assessment/address-check.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from '../web/identity-checks.ts';
 import { handleSignoffLink, portalReport, portalReportCard } from '../web/report-pages.ts';
 import { handleConfirmLink } from '../web/accountant-confirm-pages.ts';
@@ -399,7 +399,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assets/register-import.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(REGISTER_IMPORT_JS); return 'handled';
   }
-  // The assessment's address box's one script (src/web/address-lookup-script.ts).
+  // The assessment's address box's one script (src/modules/assessment/address-lookup-script.ts).
   if (path === '/assets/address-lookup.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(ADDRESS_LOOKUP_JS); return 'handled';
   }
@@ -779,7 +779,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assessment' && method === 'GET') {
     const draft = newDraft(d.app.db, now, newId);
     setCookie(res, DRAFT_COOKIE, draft.token, 60 * 60 * 6);
-    // The assessment opens on stage 1 of the four-stage funnel (src/web/funnel4.ts).
+    // The assessment opens on stage 1 of the four-stage funnel (src/modules/assessment/funnel4.ts).
     redirect(res, '/assessment/buildings'); return 'handled';
   }
 
@@ -787,7 +787,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
      funnel asks for them per building, at stage 3. An old link to it opens stage 1. */
   if (path === '/assessment/start') { redirect(res, '/assessment/buildings'); return 'handled'; }
 
-  /* THE FOUR-STAGE FUNNEL (src/web/funnel4.ts). Buildings, then the checks per building, then who
+  /* THE FOUR-STAGE FUNNEL (src/modules/assessment/funnel4.ts). Buildings, then the checks per building, then who
      owns each and where, then the figure. The server keeps a person on the first screen that is not complete, and a
      follow-up that does not apply is not kept. */
   /* THE ADDRESS BOX'S LIST, FOR THE PAGE'S SCRIPT. The postcode a person has typed on "Your details",

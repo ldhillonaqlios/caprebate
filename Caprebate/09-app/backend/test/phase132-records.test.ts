@@ -35,7 +35,7 @@ import * as CS from '../src/web/case-stamp.ts';
 import * as DP from '../src/web/defence-pack.ts';
 import { CTA, ctaSwitchReadings } from '../src/shared/engine.ts';
 import { FEE_CONTROLS } from '../src/web/fee-controls.ts';
-import { FUNNEL_SWITCHES } from '../src/web/funnel-session.ts';
+import { FUNNEL_SWITCHES } from '../src/modules/assessment/funnel-session.ts';
 import {
   BACKUP_CYCLE, FAIL_CLOSED_SETTINGS, RET7, deletionDueAt, type IngestionSettings, type RawFileRecord,
 } from '../src/shared/upload-handler-port.ts';

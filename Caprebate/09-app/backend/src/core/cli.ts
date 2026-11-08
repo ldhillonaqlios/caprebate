@@ -236,7 +236,7 @@ async function main(): Promise<number> {
        per trigger. It changes no band: a person changes the engine, with the surveyor's agreement. */
     const db = new Db(DEFAULT_DB);
     try {
-      const { proposeRanges } = await import('../web/sector-ranges.ts');
+      const { proposeRanges } = await import('../modules/assessment/sector-ranges.ts');
       const r = proposeRanges(db);
       if (r.proposals.length === 0) console.log('No approved survey pack yet, so there is nothing to propose.');
       for (const p of r.proposals) console.log(`${p.sector}${p.trigger === null ? '' : ` (${p.trigger})`}: ${p.words}`);

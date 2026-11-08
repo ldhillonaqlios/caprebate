@@ -55,15 +55,15 @@ import { lastContactFor, timelineIfPermitted, type Timeline } from './timeline.t
 import { fireAutomation } from './automation.ts';
 import { claimDocumentsPanel, type ClaimDocumentsPanel, organisationDocumentsPanel, propertyDocumentsPanel, type PlaceDocumentsPanel } from './documents.ts';
 import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from './claim-facts.ts';
-import { propertyTenure, ROLE_LABELS } from './who-claims.ts';
+import { propertyTenure, ROLE_LABELS } from '../modules/assessment/who-claims.ts';
 import {
   aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask,
   type AftercarePanel, type DeliverablesPanel, type FiguresPanel,
 } from './claim-record.ts';
 import { assembleReleasedFacts, type ReleasedFacts } from '../payload.ts';
 import { vocabChoice, vocabLabel } from './vocabularies.ts';
-import { funnelStateFor } from './funnel-session.ts';
-import { expectedFeeFor } from './vat.ts';
+import { funnelStateFor } from '../modules/assessment/funnel-session.ts';
+import { expectedFeeFor } from '../modules/assessment/vat.ts';
 import { latestSignOff } from './claim-record.ts';
 import { LEAD_ORIGINS } from './leads.ts';
 import { discountsFor, type FeeDiscountView } from './fee-discounts.ts';
@@ -117,7 +117,7 @@ export const CONTACT_TYPES: Vocab = Object.freeze({
 });
 
 export const TENURES: Vocab = Object.freeze({ FREEHOLD: 'Freehold', LEASEHOLD: 'Leasehold', UNKNOWN: 'Not known' });
-/** PHASE 159g: how the client holds the building — whose claim it is (src/web/who-claims.ts ROLE_LABELS, the same words). */
+/** PHASE 159g: how the client holds the building — whose claim it is (src/modules/assessment/who-claims.ts ROLE_LABELS, the same words). */
 export const CLAIMANT_ROLES: Vocab = Object.freeze({ OWNER_OCCUPIER: 'Owner who uses it', LANDLORD: 'Landlord (lets it out)', TENANT: 'Tenant (rents it)' });
 
 export const PRIOR_CLAIM: Vocab = Object.freeze({ YES: 'Yes', NO: 'No', UNKNOWN: 'Not known' });
@@ -213,7 +213,7 @@ export const PRIOR_CLAIM_SOURCE = 'the client’s own answer in the assessment';
 /**
  * THE PRIOR-CLAIM POSITION, DERIVED WHERE THE FUNNEL'S OWN ANSWER SETTLES IT — the CRM follow-on, row 28.3.
  *
- * READ AGAINST src/web/funnel-session.ts's NOT MAPPED LIST, AND IT MAPS ONE ANSWER ONLY. The funnel's Q1 asks, in the
+ * READ AGAINST src/modules/assessment/funnel-session.ts's NOT MAPPED LIST, AND IT MAPS ONE ANSWER ONLY. The funnel's Q1 asks, in the
  * site's own words, "Have you already made a capital allowances claim on the fixtures in this building — the plant,
  * wiring, heating and similar?", and its help text excludes equipment the client could take with them and ordinary
  * repairs. A "yes" to that states the fact this field records — allowances were claimed on the building before — so it is
@@ -1252,7 +1252,7 @@ export type AssessmentLine = { readonly question: string; readonly answer: strin
  * WHAT THE CLIENT TOLD US ABOUT THIS PROPERTY — SHOWN, NOT MAPPED.
  *
  * The funnel captures a date as a month or a year and a spend as a round
- * figure, and src/web/funnel-session.ts records why neither is parsed into an
+ * figure, and src/modules/assessment/funnel-session.ts records why neither is parsed into an
  * engine fact. The same discipline applies here: the answer is shown beside the
  * property's own field with its source, and nothing is copied into the field.
  * A property is matched to its funnel answers by the address the funnel wrote
@@ -2060,7 +2060,7 @@ export type EstimatedFee = {
 
 /**
  * ROW 23.8 — THE FEE THE FINANCE VIEW EXPECTS, ON THE CLAIM, BEFORE ANY FEE INVOICE EXISTS. Read through `expectedFeeFor`
- * in src/web/vat.ts — the one computation `expectedFees` makes — never typed, and there is no agreed-fee field (row 8.14).
+ * in src/modules/assessment/vat.ts — the one computation `expectedFees` makes — never typed, and there is no agreed-fee field (row 8.14).
  * `invoice.read` alone: ADMIN and ACCOUNTING. Never SALES, never SURVEYING — tools/payload-proof.ts holds both. Once a
  * live fee invoice is raised the claim's money lines carry the fee, and this is not drawn.
  */

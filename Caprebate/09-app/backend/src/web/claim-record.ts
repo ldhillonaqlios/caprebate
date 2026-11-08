@@ -47,7 +47,7 @@ import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from '../shared/index.ts';
 import { packSwitchReadings } from '../shared/index.ts';
 import { amendmentWindowReading, dateValue, penceValue } from './claim-facts.ts';
-import { funnelStateFor } from './funnel-session.ts';
+import { funnelStateFor } from '../modules/assessment/funnel-session.ts';
 import { loadLetter, type OpenTerm } from './letter.ts';
 import { insertTask } from './tasks.ts';
 import { NO_RECEIPT_POLICY } from './documents.ts';

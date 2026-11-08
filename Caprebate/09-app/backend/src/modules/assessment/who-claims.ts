@@ -23,9 +23,9 @@
  *
  * This file imports nothing from claim-facts.ts, which imports from here.
  */
-import type { Db } from '../core/index.ts';
-import { isDormant, DORMANT_WORDS } from '../integrations/index.ts';
-import { getRegisterRecordsFieldsJsonByBusinessIdSourceId11, getRegisterRecordsFieldsJsonByBusinessIdSourceId2, getRegisterRecordsFieldsJsonByBusinessIdSourceId5, getRegisterRecordsFieldsJsonByBusinessIdSourceId6, getRegisterRecordsFieldsJsonByBusinessIdSourceId7, getRegisterRecordsFieldsJsonByBusinessIdSourceId9, getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId3 } from '../integrations/index.ts';
+import type { Db } from '../../core/index.ts';
+import { isDormant, DORMANT_WORDS } from '../../integrations/index.ts';
+import { getRegisterRecordsFieldsJsonByBusinessIdSourceId11, getRegisterRecordsFieldsJsonByBusinessIdSourceId2, getRegisterRecordsFieldsJsonByBusinessIdSourceId5, getRegisterRecordsFieldsJsonByBusinessIdSourceId6, getRegisterRecordsFieldsJsonByBusinessIdSourceId7, getRegisterRecordsFieldsJsonByBusinessIdSourceId9, getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId3 } from '../../integrations/index.ts';
 
 const json = (s: string | null | undefined): Record<string, unknown> => {
   if (typeof s !== 'string') return {};

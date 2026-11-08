@@ -12,7 +12,7 @@
  * 1 · DERIVED FIRST, CAPTURED ONLY WHERE NOTHING DERIVES IT. The claimant type is
  *     the organisation's; the jurisdiction is the property's postcode; the
  *     acquisition date is the property's; taxable profit is the client's own
- *     answer read through src/web/funnel-session.ts and its break-even switch;
+ *     answer read through src/modules/assessment/funnel-session.ts and its break-even switch;
  *     the amendment window is CB_CASH's; the election's notification clock is
  *     CB_ELECTION's. WHERE A FACT IS DERIVED, THE STORE REFUSES A RECORDED ONE.
  *
@@ -32,7 +32,7 @@
  *     which can read nothing that is not on that list.
  */
 
-import { registerCompany, yearEndFrom, dormantWarning, propertyTenure, ROLE_LABELS, type YearEndReading } from './who-claims.ts';
+import { registerCompany, yearEndFrom, dormantWarning, propertyTenure, ROLE_LABELS, type YearEndReading } from '../modules/assessment/who-claims.ts';
 import type { Db } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../core/index.ts';
@@ -45,7 +45,7 @@ import type { PackGrant } from './pack-grants.ts';
 import {
   CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, claimObjFor, claimantTypeForGate, isCompanyOrRoleToken, propertyJurisdiction,
 } from './crm.ts';
-import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
+import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from '../modules/assessment/funnel-session.ts';
 import { localStamp, ukDate } from '../shared/index.ts';
 import { formatPence, toPence } from '../shared/index.ts';
 import { VOIDING_REOPEN_STAGES } from './valuation-lock.ts';
@@ -150,7 +150,7 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
      only on evidence — the client's checked answer, or the title register — and never with a sale date on the
      property. Migration 106 adds the key. Read by src/web/claim-route.ts. */
   STILL_OWNED: { label: 'The client still owns the building today', kind: 'choice', choices: YES_NO },
-  /* Phase 159e — the allowances on each event (src/web/allowances.ts). Migration 107 adds the three keys. N4: not recorded
+  /* Phase 159e — the allowances on each event (src/modules/assessment/allowances.ts). Migration 107 adds the three keys. N4: not recorded
      grants nothing. CASH_BASIS: on the cash basis there is no claim on fixtures for the period (OUR READING, Word
      question 260). BOUGHT_NEW_FROM_DEVELOPER: a building bought new and unused from its developer is not second-hand, so
      full expensing and the first-year allowances are open to it (OUR READING, Word question 258). SBA_STATEMENT_HELD: the
@@ -169,7 +169,7 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
      Land remediation relief on its removal needs it; not known, none is given. */
   ASBESTOS_AT_ACQUISITION: { label: 'Asbestos was in the building when the client acquired the land', kind: 'choice', choices: YES_NO },
   /* Phase 153a, 4 October 2026 (Phase 153b lines 12 and 13, with the same grant data). Migration 078 adds both keys.
-     Read by src/web/grant-checks.ts, the gate out of valuation. */
+     Read by src/modules/assessment/grant-checks.ts, the gate out of valuation. */
   GRANT_PROVIDER_CHECKED: {
     label: 'The client has checked with whoever paid the grant that claiming will not make them pay it back', kind: 'choice', choices: YES_NO,
   },
@@ -711,7 +711,7 @@ export type FactsPanel = {
   };
   readonly grants: {
     readonly exist: FactReading; readonly lines: readonly GrantLine[]; readonly traced: { readonly met: boolean; readonly why: string };
-    /* Phase 153a: the two grant facts the valuation gate reads (src/web/grant-checks.ts), and the switch the pack reads. */
+    /* Phase 153a: the two grant facts the valuation gate reads (src/modules/assessment/grant-checks.ts), and the switch the pack reads. */
     readonly provider_checked: FactReading; readonly split_view: FactReading; readonly switch: SwitchLine;
   };
   readonly acquisition_costs: { readonly costs: FactReading; readonly transaction_tax: FactReading; readonly switch: SwitchLine };
@@ -1281,7 +1281,7 @@ export function yearEndKnown(db: Db, c: { id: string; business_id: string }): bo
 }
 
 /** PHASE 159g (L8): the claim's year end — Companies House's accounting reference date for a company that has one, else
- *  the client's checked answer — with the two compared (src/web/who-claims.ts yearEndFrom). */
+ *  the client's checked answer — with the two compared (src/modules/assessment/who-claims.ts yearEndFrom). */
 export function yearEndReading(db: Db, business_id: string): YearEndReading {
   const said = approvedClientAnswer(db, business_id, 'year_end');
   return yearEndFrom(said === null ? null : clientYearEnd(said.answer), registerCompany(db, business_id));

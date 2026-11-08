@@ -31,7 +31,7 @@ import { importPremises, mayNameAPerson, sectorFromServiceTypes, PREMISES_SOURCE
 import { scannedPagesAllowedFor, SCANNED_PAGE_KINDS } from '../src/integrations/connectors/claude.ts';
 import { grantsChapter } from '../src/web/survey-pack-pages.ts';
 import { GRANT_AMOUNTS_TO_SURVEYOR, type PackView } from '../src/web/survey-pack.ts';
-import { F4_STEP_LABELS } from '../src/web/funnel4.ts';
+import { F4_STEP_LABELS } from '../src/modules/assessment/funnel4.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../src/shared/originals.ts';
 import { clientOwners } from '../src/web/documents.ts';
 import { ENQUIRY_RETENTION, enquiryRetentionMissing, sweepEnquiries, type EnquiryRetention } from '../src/modules/public-site/enquiry-retention.ts';

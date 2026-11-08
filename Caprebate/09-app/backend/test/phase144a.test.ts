@@ -3,7 +3,7 @@
  *
  * Phase 144 rewrote every back-office and portal screen. This phase takes the same plain words to what Phase 144
  * exempted by name — the admin and user guide and the Help pages built from it, and the public assessment (changed in
- * the site file and in src/web/assessment.ts together) — to words stored in rows by the migrations, and to six small
+ * the site file and in src/modules/assessment/assessment.ts together) — to words stored in rows by the migrations, and to six small
  * things its crawl found. Words changed; no rule, route, role or store did. These tests prove:
  *   1  the check reads the guide and the Help pages at grade 7 and the assessment at grade 9, and is green on the tree;
  *   2  the assessment's words are the site renderer's words, so the two cannot drift apart again;
@@ -22,7 +22,7 @@ import { spawnSync } from 'node:child_process';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { Db, migrate } from '../src/core/db.ts';
-import { SCREENS, COSMETIC_NOTE } from '../src/web/assessment.ts';
+import { SCREENS, COSMETIC_NOTE } from '../src/modules/assessment/assessment.ts';
 import { FORBIDDEN_SETTINGS, settingLabel } from '../src/web/configuration.ts';
 import { feeSwitchesBox } from '../src/web/finance-pages.ts';
 import * as P from '../src/web/portal.ts';

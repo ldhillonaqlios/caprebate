@@ -37,7 +37,7 @@
  * and this file owns how it moves.
  */
 
-import { qualifyingActivityEvidence } from './who-claims.ts';
+import { qualifyingActivityEvidence } from '../modules/assessment/who-claims.ts';
 import { claimRoutes, legalDeadlineNeed, routesWhy } from './claim-route.ts';
 import type { Db } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
@@ -54,7 +54,7 @@ import { fireAutomation } from './automation.ts';
 import { onClaimStageEntered } from './introducers.ts';
 import { cddGateNeed } from './compliance.ts';
 import { amendmentWindowReading, electionResolved, floorAreaOnRecord, grantsTraced } from './claim-facts.ts';
-import { grantProviderNeed, grantSplitNeed } from './grant-checks.ts';
+import { grantProviderNeed, grantSplitNeed } from '../modules/assessment/grant-checks.ts';
 import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from './claim-record.ts';
 import { clientConfirmationNeed, filingRoute } from './client-filing.ts';
 import { accountantFitNeed } from './accountant-confirm.ts';

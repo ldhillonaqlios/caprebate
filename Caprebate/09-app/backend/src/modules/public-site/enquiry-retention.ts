@@ -34,8 +34,8 @@ import type { AuditLog } from '../../core/audit.ts';
 import { liveHeldIds } from '../../web/compliance.ts';
 import { addMonths } from '../../web/message-retention.ts';
 import { BACKUP_CYCLE, knownBackupCycleDays } from '../../shared/upload-handler-port.ts';
-import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../../web/funnel-deletable.ts';
-import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from '../../web/funnel-edges.ts';
+import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../assessment/funnel-deletable.ts';
+import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from '../assessment/funnel-edges.ts';
 import { getUsersCountByBusinessId } from '../../core/index.ts';
 
 export type EnquiryRetention = {
@@ -105,7 +105,7 @@ export type EnquirySweep =
  * PHASE 157 — THE DELETION PATH FOR A LOST FUNNEL ENQUIRY
  * ================================================================== */
 
-/** THE FUNNEL'S OWN TABLES (src/web/funnel-deletable.ts): the only tables a funnel lead's deletion may reach. */
+/** THE FUNNEL'S OWN TABLES (src/modules/assessment/funnel-deletable.ts): the only tables a funnel lead's deletion may reach. */
 export const FUNNEL_DELETABLE: ReadonlySet<string> = new Set(FUNNEL_DELETABLE_TABLES);
 
 type RowRef = { readonly table: string; readonly rowid: number };
@@ -124,7 +124,7 @@ export type LeadDeletionPlan =
 /**
  * WHAT DELETING THIS FUNNEL LEAD WOULD TAKE WITH IT, OR WHY IT MUST STAY. Reads only. The organisation goes too only
  * when every lead of it is a lost funnel enquiry past the period (`due`). Every row that hangs off what goes is found
- * through the database's own foreign keys, written out as literal statements (src/web/funnel-edges.ts, generated from
+ * through the database's own foreign keys, written out as literal statements (src/modules/assessment/funnel-edges.ts, generated from
  * the schema; a test fails when the schema gains one the file lacks): if it is not one of the funnel's own
  * (FUNNEL_DELETABLE), its row keeps the lot.
  */

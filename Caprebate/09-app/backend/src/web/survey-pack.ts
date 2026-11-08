@@ -39,8 +39,8 @@ import { applyGrants, payerReduces, type GrantReading, type GrantSwitches } from
 import { moneyReadingsHere, type MoneyReadings } from '../shared/index.ts';
 import { acquisitionDateReading, elementName, latestFacts, packGrantsFor } from './claim-facts.ts';
 import { bcisDataHere, bcisDrafts, bcisLocationNamed, indexBetween, type BcisDraft, type RateBasis } from './bcis-data.ts';
-import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from './who-claims.ts';
-import { shippedGrantSwitches } from './grant-checks.ts';
+import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from '../modules/assessment/who-claims.ts';
+import { shippedGrantSwitches } from '../modules/assessment/grant-checks.ts';
 import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId4, listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId2 } from '../integrations/index.ts';
 
 /**

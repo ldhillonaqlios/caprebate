@@ -24,7 +24,7 @@
  */
 import { claimRoutes } from './claim-route.ts';
 import { yearEndKnown } from './claim-facts.ts';
-import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
+import { REPORT_ASSUMPTIONS } from '../modules/assessment/report-assumptions.ts';
 import { sheetsForVersion } from './pack-sheets.ts';
 import { createHash } from 'node:crypto';
 import { authorise, can, type Actor } from '../core/index.ts';

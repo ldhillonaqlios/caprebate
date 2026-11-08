@@ -51,8 +51,8 @@
  * error this file exists to avoid.
  */
 
-import type { Db } from '../core/index.ts';
-import { newSession, FUNNEL, type SectorId, type Session } from '../shared/index.ts';
+import type { Db } from '../../core/index.ts';
+import { newSession, FUNNEL, type SectorId, type Session } from '../../shared/index.ts';
 
 /* ------------------------------------------------------------------ *
  * READING THE STATE

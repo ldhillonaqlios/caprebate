@@ -18,12 +18,12 @@ import type { Db } from '../core/index.ts';
 import type { PackView, ViewLine } from './survey-pack.ts';
 import { packWords, WORD_FIELDS, type WordField } from './pack-words.ts';
 import { claimantTypeReading, captured, latestFacts } from './claim-facts.ts';
-import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
-import { proposeRanges } from './sector-ranges.ts';
-import { deskFirstReading } from './desk-first.ts';
+import { funnelStateFor, sessionFromFunnel } from '../modules/assessment/funnel-session.ts';
+import { proposeRanges } from '../modules/assessment/sector-ranges.ts';
+import { deskFirstReading } from '../modules/assessment/desk-first.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
 import { findingSeen, FINDING_LABELS } from '../shared/index.ts';
-import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
+import { REPORT_ASSUMPTIONS } from '../modules/assessment/report-assumptions.ts';
 import { RATES } from '../shared/index.ts';
 import { ESTIMATED_AREA_LABEL } from '../integrations/index.ts';
 import { BAND, FUNNEL } from '../shared/index.ts';
@@ -355,7 +355,7 @@ function repairsOrCapital(c: Ctx): Sheet {
   const fromTriggers = t !== null && t.some((x) => /refurb|fit_?out|conversion/.test(x));
   const applies = works.length > 0 || fromTriggers;
   /* PHASE 159c: the client's own words were read from funnel['buildings'] — but the state keeps them under 'properties'
-     (src/web/funnel4.ts), so this row always said "not on file". It reads 'properties', and every piece of work. */
+     (src/modules/assessment/funnel4.ts), so this row always said "not on file". It reads 'properties', and every piece of work. */
   const said = (() => {
     const b = c.funnel?.['properties'];
     const first = Array.isArray(b) ? b[0] as Record<string, unknown> | undefined : undefined;

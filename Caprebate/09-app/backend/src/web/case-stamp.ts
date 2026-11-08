@@ -47,7 +47,7 @@ import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { ctaSwitchReadings, registryGate } from '../shared/index.ts';
 import { DISCLOSURE_LOG } from './disclosure-log.ts';
 import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from './introducers.ts';
-import { CONVEYANCING_STRIP } from './conveyancing-strip.ts';
+import { CONVEYANCING_STRIP } from '../modules/assessment/conveyancing-strip.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../shared/index.ts';
@@ -62,8 +62,8 @@ import { COMPANY_SEARCH, COMPANY_TYPE_FROM_REGISTER } from '../integrations/inde
 import { ADDRESS_LOOKUP } from '../integrations/index.ts';
 import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
-import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
-import { FUNNEL_SWITCHES } from './funnel-session.ts';
+import { ALLOWANCE_PROFIT_COMPARISON } from '../modules/assessment/allowance-profit-comparison.ts';
+import { FUNNEL_SWITCHES } from '../modules/assessment/funnel-session.ts';
 import { HOMEDATA_DIMENSIONS } from '../integrations/index.ts';
 import { REGISTER_SWITCHES } from '../integrations/index.ts';
 import { CLAUDE_SWITCHES } from '../integrations/connectors/claude.ts';
@@ -142,7 +142,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   FEE_CLAWBACK                 clause 13 — the fee follows a reduced claim     src/web/claim-record.ts
  *   REFERRAL_FORM                the public referral form                        src/web/introducers.ts
  *   CLIENT_SHARE_GIVE            a client giving the share-progress answer       src/web/introducers.ts
- *   CONVEYANCING_STRIP           company names kept on conveyancing uploads      src/web/conveyancing-strip.ts
+ *   CONVEYANCING_STRIP           company names kept on conveyancing uploads      src/modules/assessment/conveyancing-strip.ts
  *   FEE_CONTROLS.above_benefit   the fee above the benefit                       src/web/fee-controls.ts
  *   FEE_CONTROLS.break_and_abort the break and abort fees                        src/web/fee-controls.ts
  *   MANDATORY_DOCUMENTS          the documents a gate requires                   src/web/mandatory-documents.ts
@@ -159,10 +159,10 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   MESSAGE_RETENTION            the message clean-up job (Phase 142a)           src/web/message-retention.ts
  *   ENQUIRY_RETENTION            the closed-enquiry clean-up job (Phase 153c)    src/modules/public-site/enquiry-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/web/defence-pack.ts
- *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/web/allowance-profit-comparison.ts
+ *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/modules/assessment/allowance-profit-comparison.ts
  *   HOMEDATA_DIMENSIONS          Homedata's floor-area estimate (Phase 153e)     src/integrations/connectors/homedata.ts
  *   FUNNEL_SWITCHES.breakeven_is_insufficient_profit
- *                                break-even read as insufficient profit          src/web/funnel-session.ts
+ *                                break-even read as insufficient profit          src/modules/assessment/funnel-session.ts
  *
  * FEE_CONTROLS.minimum_fee left this list in Phase 132e (16 September 2026): the minimum fee is decided none, and the
  * control is retired — MINIMUM_FEE_DECISION in src/web/fee-controls.ts records it.
@@ -183,7 +183,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'FEE_CLAWBACK', on: FEE_CLAWBACK.enabled, home: 'src/web/claim-record.ts' },
     { switch: 'REFERRAL_FORM', on: REFERRAL_FORM.enabled, home: 'src/web/introducers.ts' },
     { switch: 'CLIENT_SHARE_GIVE', on: CLIENT_SHARE_GIVE.enabled, home: 'src/web/introducers.ts' },
-    { switch: 'CONVEYANCING_STRIP', on: CONVEYANCING_STRIP.enabled, home: 'src/web/conveyancing-strip.ts' },
+    { switch: 'CONVEYANCING_STRIP', on: CONVEYANCING_STRIP.enabled, home: 'src/modules/assessment/conveyancing-strip.ts' },
     { switch: 'FEE_CONTROLS.above_benefit', on: FEE_CONTROLS.above_benefit.enabled, home: 'src/web/fee-controls.ts' },
     { switch: 'FEE_CONTROLS.break_and_abort', on: FEE_CONTROLS.break_and_abort.enabled, home: 'src/web/fee-controls.ts' },
     { switch: 'FEE_CONTROLS.uplifts', on: FEE_CONTROLS.uplifts?.enabled === true, home: 'src/web/fee-controls.ts' }, // Phase 157b, Word question 235
@@ -202,9 +202,9 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/web/message-retention.ts' },
     { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/modules/public-site/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/web/defence-pack.ts' },
-    { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/web/allowance-profit-comparison.ts' },
+    { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/modules/assessment/allowance-profit-comparison.ts' },
     { switch: 'HOMEDATA_DIMENSIONS', on: HOMEDATA_DIMENSIONS.enabled, home: 'src/integrations/connectors/homedata.ts' },
-    { switch: 'FUNNEL_SWITCHES.breakeven_is_insufficient_profit', on: FUNNEL_SWITCHES.breakeven_is_insufficient_profit, home: 'src/web/funnel-session.ts' },
+    { switch: 'FUNNEL_SWITCHES.breakeven_is_insufficient_profit', on: FUNNEL_SWITCHES.breakeven_is_insufficient_profit, home: 'src/modules/assessment/funnel-session.ts' },
   ];
 }
 

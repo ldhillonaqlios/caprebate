@@ -25,7 +25,7 @@ import type { Db } from '../core/index.ts';
 import { acquisitionDateReading, amendmentWindowReading, latestFacts, periodFromYearEnd, windowForPeriod, type WindowReading } from './claim-facts.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, type EventKind, type PropertyEvent } from './property-events.ts';
 import { legalVerdictForClaim } from './pack-legal.ts';
-import { propertyTenure, registerNamesClientPerson } from './who-claims.ts';
+import { propertyTenure, registerNamesClientPerson } from '../modules/assessment/who-claims.ts';
 import { localDate } from '../shared/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId8 } from '../integrations/index.ts';
 
@@ -48,7 +48,7 @@ export type EventRoute = {
   /** The window for the event's own period. */
   readonly window: WindowReading;
   /** PHASE 159e: the event's own date ("2025-06", "2025", or the purchase's day), and the accounting period it falls in,
-   *  where known — the period a W1 part goes into (src/web/allowances.ts). */
+   *  where known — the period a W1 part goes into (src/modules/assessment/allowances.ts). */
   readonly event_date: string | null;
   readonly period: { readonly start: string; readonly end: string } | null;
   /** W2: the first period whose return is still open, and when that window closes. */

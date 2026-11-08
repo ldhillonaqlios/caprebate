@@ -1,7 +1,7 @@
 /**
  * PHASE 159k (item 2), 10 October 2026 — TWO STATUTORY FIGURES THE ENGINE DOES NOT HOLD.
  *
- * src/web/allowances.ts states no rate: every rate and date comes from the engine (Rulebook I rule 7.1). These two are
+ * src/modules/assessment/allowances.ts states no rate: every rate and date comes from the engine (Rulebook I rule 7.1). These two are
  * not in the engine (CB_RATES has neither), so they are kept here, each with its section, read by allowances.ts alone,
  * and put to the tax adviser with the readings that use them (money-readings.ts; Word questions under Phase 159k).
  *

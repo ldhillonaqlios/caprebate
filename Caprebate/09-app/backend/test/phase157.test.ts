@@ -16,7 +16,7 @@ import { createApp } from '../src/core/server.ts';
 import { readFileSync } from 'node:fs';
 import { Db, migrate } from '../src/core/db.ts';
 import { MIGRATIONS_DIR } from '../src/core/app.ts';
-import { FUNNEL_EDGES } from '../src/web/funnel-edges.ts';
+import { FUNNEL_EDGES } from '../src/modules/assessment/funnel-edges.ts';
 import { funnelEdges, render } from '../tools/gen-funnel-edges.ts';
 import {
   ENQUIRY_RETENTION, FUNNEL_DELETABLE, leadDeletionPlan, sweepEnquiries, type EnquiryRetention,
@@ -151,10 +151,10 @@ describe('1 · a lost funnel enquiry past the period is deleted with its own row
     assert.equal(count('leads', 'id = ?', [e.lead]), 1);
   });
 
-  test('the walk is the schema: src/web/funnel-edges.ts is what tools/gen-funnel-edges.ts writes from today\'s migrations', async () => {
+  test('the walk is the schema: src/modules/assessment/funnel-edges.ts is what tools/gen-funnel-edges.ts writes from today\'s migrations', async () => {
     const db = new Db(':memory:');
     migrate(db, MIGRATIONS_DIR);
-    assert.equal(render(funnelEdges(db)), readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'funnel-edges.ts'), 'utf8'),
+    assert.equal(render(funnelEdges(db)), readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'assessment', 'funnel-edges.ts'), 'utf8'),
       'the schema gained or lost a foreign key on a funnel table: run node tools/gen-funnel-edges.ts and read the change');
     db.close();
     assert.ok(FUNNEL_EDGES.some((e) => e.parent === 'leads' && e.child === 'website_enquiries'), 'a blocking table is missing from the walk');

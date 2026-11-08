@@ -101,7 +101,7 @@ const EXEMPT_TEXT = [
   /* Phase 151b: a question's title in the Word questions document (closed 24 September 2026), quoted exactly by
      src/connectors/identity-check.ts and asserted word for word by test/phase151.test.ts. No screen shows it. */
   /^Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD\?$/,
-  /* the assessment's first question (src/web/assessment.ts SCREENS.Q1, and the site's screenQ1, word for word). Its
+  /* the assessment's first question (src/modules/assessment/assessment.ts SCREENS.Q1, and the site's screenQ1, word for word). Its
      wording could change what a client answers, so a plainer version waits in FOR THE ACCOUNTANT for the tax
      adviser (Phase 144a): "Have you already claimed capital allowances on this building's fixtures, such as its
      wiring or heating?" */

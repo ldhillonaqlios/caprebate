@@ -25,7 +25,7 @@ import type { Actor } from '../src/core/authz.ts';
 import { fixedClock } from './helpers.ts';
 import * as E from '../src/shared/engine.ts';
 import * as R from '../src/web/research.ts';
-import * as V from '../src/web/vat.ts';
+import * as V from '../src/modules/assessment/vat.ts';
 import * as C from '../src/web/crm.ts';
 import * as FIN from '../src/web/finance.ts';
 import * as INV from '../src/web/invoices.ts';

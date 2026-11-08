@@ -95,7 +95,7 @@ export type { IngestionSettings, RawFileRecord } from '../modules/claims/documen
 
 /**
  * The legal-form test, the roles that are always a person, and the human-capture rule's role tokens and
- * backstop patterns, AS THE INGESTION MODULE STATES THEM. src/web/conveyancing-strip.ts reads them here and restates none.
+ * backstop patterns, AS THE INGESTION MODULE STATES THEM. src/modules/assessment/conveyancing-strip.ts reads them here and restates none.
  */
 export {
   classifyPartyReference, ALWAYS_NATURAL_PERSON_ROLES, ROLE_TOKENS, CAPTURE_NAME_PATTERNS, assertHumanCaptureClean,

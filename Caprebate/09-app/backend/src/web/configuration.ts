@@ -46,7 +46,7 @@ import { RECIPROCITY_ACTIVITY_TYPES } from './tasks.ts';
 import { typeList, type TypeView } from './documents.ts';
 import { rulesPage, type RuleView } from './automation.ts';
 import { templatesPage } from './templates.ts';
-import { settingsView, type SettingsView } from './vat.ts';
+import { settingsView, type SettingsView } from '../modules/assessment/vat.ts';
 import { settingReading, type SettingReading } from './compliance.ts';
 
 export type ConfigDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };

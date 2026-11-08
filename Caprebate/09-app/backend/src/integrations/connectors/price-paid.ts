@@ -13,7 +13,7 @@
  * repossessions, transfers — and a healthcare building that was once a house, or was bought by a company, can be in
  * it. So it is asked for every sector, by postcode and the building's number and street, and the sale's category is
  * kept (`ppd_category`, A or B). A category B sale, or one of type "Other", is a LEAD for the surveyor to confirm and
- * never the price (src/web/who-claims.ts isPricePaidLead; the desk-first reading skips it). A property outside England
+ * never the price (src/modules/assessment/who-claims.ts isPricePaidLead; the desk-first reading skips it). A property outside England
  * and Wales, or whose nation nobody has recorded, is still not asked about.
  *
  * THE LOOKUP: every sale at the typed postcode, their addresses split and scored against the typed one; sales at the

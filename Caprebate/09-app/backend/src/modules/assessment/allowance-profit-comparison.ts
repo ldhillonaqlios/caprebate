@@ -65,11 +65,11 @@
  * NO ROUTE IMPORTS THIS FILE. A test scans src/ for that.
  */
 
-import type { Db } from '../core/index.ts';
+import type { Db } from '../../core/index.ts';
 import {
   estimate, feeDisplay, BENEFIT, clientVatFromWorks,
   type SectorId, type Session, type BenefitContext, type EngineResult,
-} from '../shared/index.ts';
+} from '../../shared/index.ts';
 import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
 
 /* ================================================================== *
@@ -277,7 +277,7 @@ export type FactState = 'ANSWERED' | 'DONT_KNOW' | 'NEVER_ASKED';
 /**
  * The funnel's spellings of "I don't know".
  *
- * COPIED FROM `DONT_KNOW` in src/web/funnel-session.ts, which does not export
+ * COPIED FROM `DONT_KNOW` in src/modules/assessment/funnel-session.ts, which does not export
  * it. That file uses the set to MERGE an unknown with an absent answer before
  * the engine sees either; this file uses the same three strings to keep them
  * APART. If that list gains a spelling, this one has to gain it too.

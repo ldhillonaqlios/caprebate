@@ -24,7 +24,7 @@ import { beginUpload, acceptClientBytes, finishUpload, eventsFor } from '../src/
 import { assertContractCovered, quarantineKeyFor, UPLOAD_LIMITS } from '../src/shared/upload-handler-port.ts';
 import { STAGES, progressFor, stageIndex } from '../src/shared/stages.ts';
 import { loadLetter, letterExists } from '../src/web/letter.ts';
-import { SCREEN_IDS, SCREENS, answerRows } from '../src/web/assessment.ts';
+import { SCREEN_IDS, SCREENS, answerRows } from '../src/modules/assessment/assessment.ts';
 import { escapeHtml, h } from '../src/shared/html.ts';
 import { registryGate, FUNNEL, BOOKING } from '../src/shared/engine.ts';
 

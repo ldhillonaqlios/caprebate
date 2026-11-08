@@ -33,9 +33,9 @@ import * as L from '../src/web/pack-legal.ts';
 import { snapshotOf } from '../src/web/pack-approve.ts';
 import { writeAssessmentEvents } from '../src/web/property-events.ts';
 import { MONEY_READINGS_OFF, MONEY_READINGS_ON } from '../src/shared/money-readings.ts';
-import { allowancesFor, NO_FACTS, type AllowanceFacts } from '../src/web/allowances.ts';
+import { allowancesFor, NO_FACTS, type AllowanceFacts } from '../src/modules/assessment/allowances.ts';
 import { returnEntries } from '../src/web/return-entries.ts';
-import { longLifeLimitFor } from '../src/web/long-life-and-remediation.ts';
+import { longLifeLimitFor } from '../src/modules/assessment/long-life-and-remediation.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 

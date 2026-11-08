@@ -11,8 +11,8 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any -- the engine is untyped JavaScript; this walks it as it is */
 import * as ENGINE from '../../engine/src/index.ts';
-import * as FUNNEL4 from '../src/web/funnel4.ts';
-import * as SESSION from '../src/web/funnel-session.ts';
+import * as FUNNEL4 from '../src/modules/assessment/funnel4.ts';
+import * as SESSION from '../src/modules/assessment/funnel-session.ts';
 import * as SR from '../src/shared/shown-range.ts';
 
 // Walked as untyped, as the harness walked them: the grids feed every string a person could type, typed or not.
@@ -43,7 +43,7 @@ export function runEngineStress(): EngineStress {
   }
   const bad = (n: unknown): boolean => typeof n !== 'number' || !Number.isFinite(n) || n < 0;
 
-  /* lowOf — TRANSCRIBED from backend/src/web/assessment.ts:357 (not exported). Sum of breakdown[].low, in pence. */
+  /* lowOf — TRANSCRIBED from backend/src/modules/assessment/assessment.ts:357 (not exported). Sum of breakdown[].low, in pence. */
   function lowOf(figure: { breakdown?: { low?: number }[] }): number | null {
     const rows = figure.breakdown ?? []; let total = 0; let any = false;
     for (const r of rows) if (typeof r.low === 'number') { total += r.low; any = true; }

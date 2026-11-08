@@ -37,7 +37,7 @@ import * as R from '../src/web/research.ts';
 import { runSiteAreas, siteAreaLines, storeSiteAreaRuns, siteAreaWaits, type SiteAreaGates, type SiteAreaLine } from '../src/web/site-area-run.ts';
 import { enterSitePoint, addNeighbourCouncil, metres } from '../src/web/site-area-inputs.ts';
 import { NOT_BUILT } from '../src/integrations/connectors/free-registers.ts';
-import { DECLINED_LINE } from '../src/web/address-check.ts';
+import { DECLINED_LINE } from '../src/modules/assessment/address-check.ts';
 import { helpScreenFor } from '../src/core/navigation.ts';
 import { newId } from '../src/core/users.ts';
 import { zipOf } from './document-fixtures.ts';

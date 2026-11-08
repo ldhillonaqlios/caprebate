@@ -19,12 +19,12 @@
  * opens nothing. With no grant left on the claim both are met — there is nothing to split and nobody to check with —
  * and the existing check, every grant traced (src/web/claim-facts.ts, grantsTraced), still asks whether there are any.
  */
-import type { Db } from '../core/index.ts';
-import type { Need } from './pipeline.ts';
-import { latestFacts, packGrantsFor } from './claim-facts.ts';
-import { receivedOnClaim } from './mandatory-documents.ts';
-import { grantRoute, type GrantSwitches } from './pack-grants.ts';
-import { CTA } from '../shared/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { Need } from '../../web/pipeline.ts';
+import { latestFacts, packGrantsFor } from '../../web/claim-facts.ts';
+import { receivedOnClaim } from '../../web/mandatory-documents.ts';
+import { grantRoute, type GrantSwitches } from '../../web/pack-grants.ts';
+import { CTA } from '../../shared/index.ts';
 
 /** The two switches the survey pack reads, as they ship. */
 export function shippedGrantSwitches(): GrantSwitches {

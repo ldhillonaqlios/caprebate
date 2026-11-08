@@ -103,7 +103,7 @@ export async function handleClaimRecord(
     return finish(id, F.recordGrant(deps, actor, id, posted(await form(req),
       ['kind', 'payer_class', 'amount', 'amount_basis', 'traced', 'traced_elements', 'element_ids', 'source_id', 'note', 'paid_to', 'event_id'])), 'Grant not saved', 'grants', GRANTS_ANCHOR);
   }
-  // PHASE 153a: the two grant facts the gate out of valuation reads (src/web/grant-checks.ts), from the grants section,
+  // PHASE 153a: the two grant facts the gate out of valuation reads (src/modules/assessment/grant-checks.ts), from the grants section,
   // and back to it. Only those two keys: every other fact is recorded on the facts panel, as before.
   m = new RegExp(`^/staff/claims/${ID}/grants/fact$`).exec(path);
   if (m) {
@@ -525,7 +525,7 @@ export function grantsBlock(claim_id: string, p: F.FactsPanel, asked: boolean): 
 }
 
 /**
- * PHASE 153a — BEFORE THE CLAIM MOVES ON FROM VALUATION (src/web/grant-checks.ts; Phase 153b lines 12 and 13). Two
+ * PHASE 153a — BEFORE THE CLAIM MOVES ON FROM VALUATION (src/modules/assessment/grant-checks.ts; Phase 153b lines 12 and 13). Two
  * answers, each Yes or No with who told us: the client has checked with whoever paid; and, where a grant is split in
  * equal share with no papers received, the tax adviser's view on the split — which counts only from the tax adviser.
  */

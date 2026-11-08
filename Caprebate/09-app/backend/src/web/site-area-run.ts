@@ -31,7 +31,7 @@
  * WHAT NEVER APPEARS HERE: the polygon, a map of it, or any coordinate from it. A line carries a number, a grade, the
  * councils read and a reason.
  */
-import { siteAreaFlag, floorAreaForSite } from './who-claims.ts';
+import { siteAreaFlag, floorAreaForSite } from '../modules/assessment/who-claims.ts';
 import type { Db } from '../core/index.ts';
 import type { Actor } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
@@ -45,7 +45,7 @@ import { TITLE_BOUNDARY_LABEL, TITLE_BOUNDARY_SOURCE_ID } from '../integrations/
 import { inspireStoreFromEnv, type InspireFileStore } from '../integrations/index.ts';
 import { referenceOstn15Grid } from '../integrations/index.ts';
 import type { RateLimiter, Transport } from '../integrations/index.ts';
-import { DECLINED_LINE } from './address-check.ts';
+import { DECLINED_LINE } from '../modules/assessment/address-check.ts';
 import { postcodeStore } from '../integrations/postcodes/postcode.ts';
 import type { PostcodeStore } from '../integrations/postcodes/postcode-port.ts';
 import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId, getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId2 } from '../integrations/index.ts';

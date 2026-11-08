@@ -34,12 +34,12 @@
  */
 
 import { USE_TO_ROLE } from './who-claims.ts';
-import { writeAssessmentEvents } from './property-events.ts';
-import { normalisePostcode } from '../integrations/index.ts';
+import { writeAssessmentEvents } from '../../web/property-events.ts';
+import { normalisePostcode } from '../../integrations/index.ts';
 import { randomUUID } from 'node:crypto';
-import type { Db } from '../core/index.ts';
-import { FUNNEL, FRONTDOOR } from '../shared/index.ts';
-import { openLeadForGatedExit, openLeadForSubmission } from './leads.ts';
+import type { Db } from '../../core/index.ts';
+import { FUNNEL, FRONTDOOR } from '../../shared/index.ts';
+import { openLeadForGatedExit, openLeadForSubmission } from '../../web/leads.ts';
 
 export const SCREEN_IDS = ['Q1', 'Q1a', 'Q1b', 'Q1c', 'Q2', 'Q3'] as const;
 export type ScreenId = (typeof SCREEN_IDS)[number];

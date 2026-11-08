@@ -35,10 +35,10 @@ import { builtInHolds, can, REGISTERED_ACTIONS } from '../src/core/authz.ts';
 import { NEVER_GRANTED } from '../src/core/custom-roles.ts';
 import { ACTION_WORDS, AREAS, offered } from '../src/web/role-editor-pages.ts';
 import { gateStatus } from '../src/integrations/connectors/registers.ts';
-import { newDraft, loadDraft } from '../src/web/assessment.ts';
+import { newDraft, loadDraft } from '../src/modules/assessment/assessment.ts';
 import {
   ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, lookupsDeclined, lookupsOffered, postcodeIn, recordLookupsDeclined,
-} from '../src/web/address-check.ts';
+} from '../src/modules/assessment/address-check.ts';
 import { readFileSync } from 'node:fs';
 import { randomUUID as uuid151b } from 'node:crypto';
 import * as C from '../src/web/crm.ts';
@@ -46,7 +46,7 @@ import * as R from '../src/web/claim-record.ts';
 import * as CF from './claim-fixtures.ts';
 import { testApp } from './helpers.ts';
 import { sourcesFor } from '../src/web/research.ts';
-import { DECLINED_LINE } from '../src/web/address-check.ts';
+import { DECLINED_LINE } from '../src/modules/assessment/address-check.ts';
 
 /* ------------------------------------------------------------------ a running app, seeded, over HTTP */
 

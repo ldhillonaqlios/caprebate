@@ -7091,7 +7091,7 @@ var CB_BAND = (function(){
   /* PHASE 153e, 4 October 2026 (Word question 138, the surveyor's): supported living's range read for its own
      trigger, behind a switch that ships OFF. Today the calculation reads the refurbishment and fit-out band whatever
      the trigger; its three bands are identical (10% to 25%), so the switch changes no figure until the surveyor sets
-     separate ranges from finished claims (the back end's src/web/sector-ranges.ts proposes them). A trigger list with
+     separate ranges from finished claims (the back end's src/modules/assessment/sector-ranges.ts proposes them). A trigger list with
      more than one trigger takes the band with the LOWEST ceiling (never the one that relieves); no trigger: none. */
   function slBandKey(t){
     if(t === "purchase") return "purchase";

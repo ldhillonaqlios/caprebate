@@ -34,7 +34,7 @@ import { activeMeeting, clientJoinUrl } from './video-calls.ts';
 import { zoomPlanIsFree } from '../integrations/index.ts';
 import * as U from './photo-upload.ts';
 import * as SV from './survey-video.ts';
-import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from './desk-first.ts';
+import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from '../modules/assessment/desk-first.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });

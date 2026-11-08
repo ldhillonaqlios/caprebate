@@ -65,7 +65,7 @@ export type MonthYear = { readonly month: number; readonly year: number };
 /**
  * The spellings of "I don't know".
  *
- * COPIED, NOT IMPORTED, from `DONT_KNOW` in 09-app/backend/src/web/funnel-session.ts
+ * COPIED, NOT IMPORTED, from `DONT_KNOW` in 09-app/backend/src/modules/assessment/funnel-session.ts
  * — "not sure", "dont_know" and "unsure". Phase3 modules are the authorities the
  * back end imports; a phase3 module importing the back end would reverse that, so
  * the three strings are restated here and the day that list changes, this one has

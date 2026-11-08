@@ -36,7 +36,7 @@ import { indexBetween } from './bcis-data.ts';
 import { BAND } from '../shared/index.ts';
 import { acquisitionDateReading } from './claim-facts.ts';
 import { onTestWebsite, type Env } from '../integrations/index.ts';
-import { MIN_CLAIMS } from './sector-ranges.ts';
+import { MIN_CLAIMS } from '../modules/assessment/sector-ranges.ts';
 import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../modules/survey/surveyor-crm.ts';
 
 type IndexTable = { loaded: boolean; source: string; points: readonly (readonly [string, number])[] };

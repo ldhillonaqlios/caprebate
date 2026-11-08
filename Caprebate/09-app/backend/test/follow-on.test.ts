@@ -39,7 +39,7 @@ import * as D from '../src/web/documents.ts';
 import * as DB from '../src/web/dashboard.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as I from '../src/web/introducers.ts';
-import * as V from '../src/web/vat.ts';
+import * as V from '../src/modules/assessment/vat.ts';
 import * as T from '../src/web/tasks.ts';
 import * as F from '../src/web/claim-facts.ts';
 import * as MD from '../src/web/mandatory-documents.ts';

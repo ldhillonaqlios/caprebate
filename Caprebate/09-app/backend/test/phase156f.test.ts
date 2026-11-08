@@ -31,7 +31,7 @@ import { preferHomedataPlanning, supersededPlanning, HOMEDATA_PLANNING_ENTITY } 
 import * as C from '../src/integrations/connectors/registers.ts';
 import * as R from '../src/web/research.ts';
 import { CONNECTIONS } from '../src/web/connections.ts';
-import { ADDRESS_LOOKUP_JS } from '../src/web/address-lookup-script.ts';
+import { ADDRESS_LOOKUP_JS } from '../src/modules/assessment/address-lookup-script.ts';
 import { ADDRESS_PAGE_CSP } from '../src/core/router.ts';
 import { ingestRegisterRecord } from '../src/integrations/register-ingest.ts';
 import { seed } from '../src/core/seed.ts';

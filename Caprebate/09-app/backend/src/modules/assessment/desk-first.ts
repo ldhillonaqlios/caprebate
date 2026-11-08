@@ -22,11 +22,11 @@
  * for that, as before. This is a reading beside it.
  */
 import { isPricePaidLead } from './who-claims.ts';
-import type { Db } from '../core/index.ts';
-import { checklistView, type ChecklistView } from './survey-evidence.ts';
-import { mandatoryDocumentNeeds } from './mandatory-documents.ts';
-import { latestFacts } from './claim-facts.ts';
-import { listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId } from '../integrations/index.ts';
+import type { Db } from '../../core/index.ts';
+import { checklistView, type ChecklistView } from '../../web/survey-evidence.ts';
+import { mandatoryDocumentNeeds } from '../../web/mandatory-documents.ts';
+import { latestFacts } from '../../web/claim-facts.ts';
+import { listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId } from '../../integrations/index.ts';
 
 export const DESK_FIRST_TEST = Object.freeze({
   status: 'TEST_ONLY_PLACEHOLDERS' as const,

@@ -28,7 +28,7 @@
  * out from it while it stood (src/web/take-back.ts), and keeps the entry with who took it back and why.
  */
 
-import { personIsClients, fillTenureFromRegisters } from './who-claims.ts';
+import { personIsClients, fillTenureFromRegisters } from '../modules/assessment/who-claims.ts';
 import type { Db } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
 import { authorise, can, type Actor } from '../core/index.ts';

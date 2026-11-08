@@ -28,7 +28,7 @@ import type { Db } from '../core/index.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { acquisitionDateReading, latestFacts } from './claim-facts.ts';
 import { claimantTypeForGate } from './crm.ts';
-import { allowancesFor, isCompanyType, rateWords, RETURN_YEARS, type AllowanceFacts, type PartResult, type PoolName } from './allowances.ts';
+import { allowancesFor, isCompanyType, rateWords, RETURN_YEARS, type AllowanceFacts, type PartResult, type PoolName } from '../modules/assessment/allowances.ts';
 import { cashBasis, purchasePeriod } from './claim-route.ts';
 
 export { RETURN_YEARS };
@@ -38,7 +38,7 @@ export type ReturnContext = {
   readonly period_start: string | null;
   /** True for a company, false for self assessment, null where the claimant type is not known. */
   readonly is_company: boolean | null;
-  /** PHASE 159e: the facts the allowances turn on (src/web/allowances.ts). Absent on a version sent before, which reads
+  /** PHASE 159e: the facts the allowances turn on (src/modules/assessment/allowances.ts). Absent on a version sent before, which reads
    *  as it did: no first-year relief is counted on a fact nobody recorded (N4). */
   readonly facts?: AllowanceFacts | null;
 };
@@ -56,7 +56,7 @@ export type ReturnEntry = {
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 /** The entries for each return, from an approved version and what the claim records about its period and claimant.
- *  PHASE 159e: worked out part by part by src/web/allowances.ts — each part in its own period (W1) or the first open
+ *  PHASE 159e: worked out part by part by src/modules/assessment/allowances.ts — each part in its own period (W1) or the first open
  *  one (W2), with its own first-year relief, the structures allowance and the dated rates. Where a part takes no
  *  first-year relief its row reads exactly as before ("Spend that counts, added to the pool"). */
 export function returnEntries(s: Snapshot, ctx: ReturnContext): ReturnEntry[] {

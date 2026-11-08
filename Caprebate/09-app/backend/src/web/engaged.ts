@@ -53,8 +53,8 @@ import type { Db } from '../core/index.ts';
 import { authorise, can, type Actor } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
 import { REGISTRY, estimate, type SectorId } from '../shared/index.ts';
-import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
-import { SCREENS, type ScreenId } from './assessment.ts';
+import { funnelStateFor, sessionFromFunnel } from '../modules/assessment/funnel-session.ts';
+import { SCREENS, type ScreenId } from '../modules/assessment/assessment.ts';
 import { formatShownRange } from '../shared/index.ts';
 import { stage as stageOf } from '../shared/index.ts';
 import { answerLabel, NotFoundAsRefusal } from '../core/backoffice.ts';
@@ -481,7 +481,7 @@ const BLOCKS_BY_REGISTRY_SOURCE: Readonly<Record<string, Blocks>> = Object.freez
 /**
  * WHICH PACK AN UNANSWERED FUNNEL QUESTION BLOCKS, BY THE SCREEN IT CAME FROM.
  *
- * The screen groups are already declared in src/web/assessment.ts, transcribed
+ * The screen groups are already declared in src/modules/assessment/assessment.ts, transcribed
  * from the site's own renderer — so this reads an existing classification
  * rather than inventing a second one. The two tax-position screens are the
  * accountant's; the property and works screens describe the building and its
@@ -760,7 +760,7 @@ export function registerBundle(db: Db, business_id: string): Record<string, Reco
  * `assessment_drafts.state_json` — the CB_FUNNEL state the six screens saved —
  * and maps every answer it can defend from the engine's own code onto a
  * Session. The mapping, and the longer list of what it deliberately leaves
- * absent, are in src/web/funnel-session.ts and are not restated here.
+ * absent, are in src/modules/assessment/funnel-session.ts and are not restated here.
  *
  * EVERY "I DON'T KNOW" AND EVERY SKIPPED ANSWER STILL SETS NOTHING. That is
  * enforced once, in `known()` in that file, which is why nothing in this

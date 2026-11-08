@@ -21,11 +21,11 @@
  *     Not chosen, or never offered, changes nothing (N4: an absent choice is not a refusal).
  */
 
-import type { Db } from '../core/index.ts';
-import type { App } from '../core/app.ts';
-import { checkPostcode, normalisePostcode, POSTCODE_CHECK, type PostcodeCheck, type PostcodeCheckConfig } from '../integrations/index.ts';
-import { gateStatus, type GateStatus } from '../integrations/index.ts';
-import { registryGate } from '../shared/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { App } from '../../core/app.ts';
+import { checkPostcode, normalisePostcode, POSTCODE_CHECK, type PostcodeCheck, type PostcodeCheckConfig } from '../../integrations/index.ts';
+import { gateStatus, type GateStatus } from '../../integrations/index.ts';
+import { registryGate } from '../../shared/index.ts';
 
 /** The free-tier gate, as the research panel reads it. */
 export function freeGate(): GateStatus {

@@ -8,7 +8,7 @@
  *        history at all says nothing either way, so the question stays asked, in plain words.
  *   F3   "What did you spend on each building?" takes one answer. A building bought and later refurbished must pick
  *        "We bought it" and give the works on the "other work" step. The page now says so. (The phase brief named the
- *        site file; the question a client meets is the four-stage funnel's, src/web/funnel4.ts.)
+ *        site file; the question a client meets is the four-stage funnel's, src/modules/assessment/funnel4.ts.)
  */
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,7 +17,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from '../src/core/server.ts';
-import { F4_TEXT } from '../src/web/funnel4.ts';
+import { F4_TEXT } from '../src/modules/assessment/funnel4.ts';
 import { RateLimiter, type Transport } from '../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import { PAID_CONNECTORS } from '../src/integrations/connectors/paid-registers.ts';

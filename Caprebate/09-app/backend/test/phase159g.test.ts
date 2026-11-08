@@ -3,7 +3,7 @@
  *
  * From the Lockwood Surgery live run of 9 October 2026 (L2, L8, L11) and the stress test's coverage matrix (2.4, 2.5,
  * 3.1, 3.6): the run picked a dormant company as the owner, and the registers held a real sale price and tenure that
- * nobody read. Each test fails on the code before this phase (src/web/who-claims.ts did not exist, so this file does
+ * nobody read. Each test fails on the code before this phase (src/modules/assessment/who-claims.ts did not exist, so this file does
  * not load on it at all; and each behaviour below was absent):
  *   1  item 1 (L2, L8): "Find this company" shows each match's status AND accounts type; a dormant company is flagged;
  *      the company profile is read on the test website under a waiver (the PSC too, still after signing); the register's
@@ -30,14 +30,14 @@ import { searchCompanies, accountsTypeOfProfile } from '../src/integrations/conn
 import { companyFields, isDormant, DORMANT_WORDS } from '../src/integrations/connectors/companies-house.ts';
 import { categoryOf } from '../src/integrations/connectors/price-paid.ts';
 import { TEST_WEBSITE_LOOKUPS, freeGateWaived } from '../src/integrations/connectors/registers.ts';
-import * as W from '../src/web/who-claims.ts';
-import * as F4 from '../src/web/funnel4.ts';
+import * as W from '../src/modules/assessment/who-claims.ts';
+import * as F4 from '../src/modules/assessment/funnel4.ts';
 import * as PL from '../src/web/pipeline.ts';
 import * as C from '../src/web/crm.ts';
 import * as SP from '../src/web/survey-pack.ts';
 import * as TH from '../src/web/title-by-hand.ts';
 import * as B from '../src/web/bcis-data.ts';
-import { answerRows, type FunnelState } from '../src/web/assessment.ts';
+import { answerRows, type FunnelState } from '../src/modules/assessment/assessment.ts';
 import { periodFromYearEnd, yearEndReading } from '../src/web/claim-facts.ts';
 import { stillOwned } from '../src/web/claim-route.ts';
 
