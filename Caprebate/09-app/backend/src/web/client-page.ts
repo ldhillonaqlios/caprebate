@@ -51,12 +51,12 @@ import { checksPanelIfPermitted } from './approvals.ts';
 import { checksBlock, checksSummary, STEP_ANCHOR } from './approvals-pages.ts';
 import { clientFolder } from './documents.ts';
 import { letterState, letterSteps } from './engagement-send.ts';
-import { filesButton, folderTiles } from './client-files-pages.ts';
+import { filesButton, folderTiles } from '../modules/portal/client-files-pages.ts';
 import { emailButton } from './free-email-pages.ts';
 import { identityChecks, identityPanel } from './identity-checks.ts';
 import { IDENTITY_PROVIDER_NAME } from '../integrations/index.ts';
 import { complianceObj } from './compliance.ts';
-import { claimBoxes, headerActions, lookupsCard, nextStepCard, presentTabs, progressBar, setClientMenu, tabbed, TAB_OF_SECTION, type TabKey } from './client-layout.ts';
+import { claimBoxes, headerActions, lookupsCard, nextStepCard, presentTabs, progressBar, setClientMenu, tabbed, TAB_OF_SECTION, type TabKey } from '../modules/portal/client-layout.ts';
 import { piecesPage } from '../core/index.ts';
 import { listUsersIdNameByBusinessIdRole } from '../core/index.ts';
 

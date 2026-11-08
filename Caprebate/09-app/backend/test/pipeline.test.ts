@@ -508,7 +508,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       walk(SRC);
       assert.deepEqual(writes, [], 'something in src/ writes the sign-off');
       // And nothing client-facing names a claimable figure at all.
-      assert.equal(/claimable/i.test(readFileSync(join(SRC, 'web/portal.ts'), 'utf8')), false);
+      assert.equal(/claimable/i.test(readFileSync(join(SRC, 'modules/portal/portal.ts'), 'utf8')), false);
 
       // THE NEGATIVE CONTROL — the sign-off record itself (CRM 6 of 10).
       CF.signOffRow(app, org.business, org.assessment ?? '', c);

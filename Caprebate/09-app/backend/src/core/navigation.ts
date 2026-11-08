@@ -76,7 +76,7 @@ export const navContext = new AsyncLocalStorage<NavContext>();
  * ------------------------------------------------------------------ */
 
 export type NameSwitches = {
-  /** B9: the proposed names for the client's six steps (src/web/portal-steps.ts), instead of the current ones. */
+  /** B9: the proposed names for the client's six steps (src/modules/portal/portal-steps.ts), instead of the current ones. */
   readonly portalSteps: boolean;
 };
 

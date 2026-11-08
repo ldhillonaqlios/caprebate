@@ -509,7 +509,7 @@ const RULES: RuleTable = {
    * writing exactly as the staff path does.
    */
   'booking.move_own': { CLIENT: ownBusiness as Rule<ObjType> },
-  /* The client accepts the survey report released to them, in their portal (src/web/report-accept.ts). Their own act. */
+  /* The client accepts the survey report released to them, in their portal (src/modules/portal/report-accept.ts). Their own act. */
   'client_report.accept': { CLIENT: ownBusiness as Rule<ObjType> },
   'engagement.read': {
     ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>,
@@ -651,7 +651,7 @@ const RULES: RuleTable = {
   'claim.write': { ADMIN: always, SALES: always },
   /*
    * A CLIENT SEES THEIR OWN COMPANY'S CLAIMS: each one's property and how far it has got, in the portal's six
-   * client words (src/web/portal.ts). `ownBusiness` on the claim itself, asked of every claim on every request. Nothing
+   * client words (src/modules/portal/portal.ts). `ownBusiness` on the claim itself, asked of every claim on every request. Nothing
    * else about a claim reaches a client through it: not the ten staff stages, a hold reason, an exit note, a value, a
    * next action or a person. ADMIN and SALES may look at a client's portal, as they may today.
    */

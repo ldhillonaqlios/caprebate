@@ -26,7 +26,7 @@ import { formatPence } from '../shared/index.ts';
 import { ukDate } from '../shared/index.ts';
 import * as F from './claim-facts.ts';
 import * as R from './claim-record.ts';
-import { recordClientFilingConfirmation } from './client-filing.ts';
+import { recordClientFilingConfirmation } from '../modules/portal/client-filing.ts';
 import { recordFeeDiscount } from './fee-discounts.ts';
 import type { ReleasedFacts } from '../payload.ts';
 
@@ -176,7 +176,7 @@ export async function handleClaimRecord(
     return finish(id, R.closeEnquiry(deps, actor, id, m[2] ?? '', posted(await form(req), ['closed_on', 'outcome', 'amended_figure'])),
       'Enquiry not closed', 'saved');
   }
-  // Phase 132e: the client's own written filing confirmation, where the client has no accountant (src/web/client-filing.ts).
+  // Phase 132e: the client's own written filing confirmation, where the client has no accountant (src/modules/portal/client-filing.ts).
   m = new RegExp(`^/staff/claims/${ID}/client-filing-confirmation$`).exec(path);
   if (m) {
     const id = m[1] ?? '';

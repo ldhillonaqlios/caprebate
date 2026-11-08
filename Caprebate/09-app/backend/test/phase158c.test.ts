@@ -151,7 +151,7 @@ describe('F38 — the issue form asks for no fingerprint where the application w
 /* ================================================================== *
  * F39 — the client reads the report in the portal and accepts it there; the gate reads that, not a staff tick
  * ================================================================== */
-import * as RA from '../src/web/report-accept.ts';
+import * as RA from '../src/modules/portal/report-accept.ts';
 
 function clientLogin(app: App, business: string, id = `u-cl-${business}`): string {
   app.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,'CLIENT','x',?,?,?)",
@@ -269,7 +269,7 @@ describe('F39 — the portal’s accept box and its route', () => {
 
 describe('F39 — what the portal says the team is working on, once the report is out', () => {
   test('ready → accepted; before release, the step’s own words', async () => {
-    const { workingWords } = await import('../src/web/portal-dashboard.ts');
+    const { workingWords } = await import('../src/modules/portal/portal-dashboard.ts');
     const app = await testApp(); staff(app);
     const early = claimAt(app, 'REPORTS');
     const e = clientLogin(app, early.business);

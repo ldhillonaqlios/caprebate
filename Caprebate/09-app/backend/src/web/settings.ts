@@ -4,7 +4,7 @@
  *
  * VIEW MODELS AND MUTATIONS. Every function here takes an ACTOR and calls
  * `authorise` on the SPECIFIC OBJECT before it reads or writes, exactly as
- * src/web/portal.ts does. Not one of them consults a route name or branches on
+ * src/modules/portal/portal.ts does. Not one of them consults a route name or branches on
  * a role, which is why the tests can prove that the four non-admin roles are
  * refused BY THE ENDPOINT rather than merely missing a menu item.
  *

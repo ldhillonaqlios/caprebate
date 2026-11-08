@@ -587,11 +587,11 @@
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/accountant-confirm-pages.ts": {
+  "src/modules/portal/accountant-confirm-pages.ts": {
    "area": "portal",
    "kind": "page"
   },
-  "src/web/accountant-confirm.ts": {
+  "src/modules/portal/accountant-confirm.ts": {
    "area": "portal",
    "kind": "logic"
   },
@@ -687,15 +687,15 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/client-files-pages.ts": {
+  "src/modules/portal/client-files-pages.ts": {
    "area": "portal",
    "kind": "page"
   },
-  "src/web/client-filing.ts": {
+  "src/modules/portal/client-filing.ts": {
    "area": "portal",
    "kind": "logic"
   },
-  "src/web/client-layout.ts": {
+  "src/modules/portal/client-layout.ts": {
    "area": "portal",
    "kind": "page"
   },
@@ -1007,15 +1007,15 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/portal-dashboard.ts": {
+  "src/modules/portal/portal-dashboard.ts": {
    "area": "portal",
    "kind": "page"
   },
-  "src/web/portal-steps.ts": {
+  "src/modules/portal/portal-steps.ts": {
    "area": "portal",
    "kind": "logic"
   },
-  "src/web/portal.ts": {
+  "src/modules/portal/portal.ts": {
    "area": "portal",
    "kind": "logic"
   },
@@ -1047,7 +1047,7 @@
    "area": "claims",
    "kind": "other"
   },
-  "src/web/report-accept.ts": {
+  "src/modules/portal/report-accept.ts": {
    "area": "portal",
    "kind": "logic"
   },
@@ -1155,7 +1155,7 @@
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/take-back.ts": {
+  "src/modules/portal/take-back.ts": {
    "area": "portal",
    "kind": "logic"
   },

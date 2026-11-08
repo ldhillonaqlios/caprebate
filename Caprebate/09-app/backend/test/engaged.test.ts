@@ -1144,7 +1144,7 @@ describe('panel 5 — internal notes', () => {
       // A page test proves that one screen does not draw a note; this proves
       // that nothing the portal can read returns one, which is the claim.
       // `portal.ts` is the whole of what the client half may fetch.
-      const P = await import('../src/web/portal.ts');
+      const P = await import('../src/modules/portal/portal.ts');
       const clientActor = makeActor('CLIENT', 'u-client', business_id);
       const everything = JSON.stringify({
         progress: P.progress(h.app.db, clientActor, business_id),

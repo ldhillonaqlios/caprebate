@@ -18,20 +18,20 @@
  * no target, the tab the server chose shows.
  */
 
-import { h, raw, type Safe } from '../shared/index.ts';
-import { localStamp } from '../shared/index.ts';
-import type { ChecksPanel, StepView } from './approvals.ts';
-import type { SourcesPanel } from './research.ts';
-import type { QuickAction, SectionContext, SectionSpec, SectionStatus } from '../shared/index.ts';
-import { section, SECTION_STATUS_WORDS } from '../shared/index.ts';
-import { clientProgress, whyNotMoved } from './tell-and-move.ts';
+import { h, raw, type Safe } from '../../shared/index.ts';
+import { localStamp } from '../../shared/index.ts';
+import type { ChecksPanel, StepView } from '../../web/approvals.ts';
+import type { SourcesPanel } from '../../web/research.ts';
+import type { QuickAction, SectionContext, SectionSpec, SectionStatus } from '../../shared/index.ts';
+import { section, SECTION_STATUS_WORDS } from '../../shared/index.ts';
+import { clientProgress, whyNotMoved } from '../../web/tell-and-move.ts';
 import { filesButton } from './client-files-pages.ts';
-import type { Db } from '../core/index.ts';
-import type { ClaimSummary } from './crm.ts';
-import { claimHref, claimRef, propertyIn } from '../shared/index.ts';
-import { dueReading } from '../shared/index.ts';
-import { groupBand, lateBadge, noDateBadge, stageGroupOf } from '../core/index.ts';
-import { setSubMenu } from '../core/navigation.ts';
+import type { Db } from '../../core/index.ts';
+import type { ClaimSummary } from '../../web/crm.ts';
+import { claimHref, claimRef, propertyIn } from '../../shared/index.ts';
+import { dueReading } from '../../shared/index.ts';
+import { groupBand, lateBadge, noDateBadge, stageGroupOf } from '../../core/index.ts';
+import { setSubMenu } from '../../core/navigation.ts';
 
 export type TabKey = 'chat' | 'claims' | 'properties' | 'questions' | 'people' | 'checks' | 'files' | 'activity';
 

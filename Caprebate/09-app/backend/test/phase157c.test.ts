@@ -34,7 +34,7 @@ import { FsObjectStore } from '../src/shared/objectstore.ts';
 import { singleFile } from '../src/core/multipart.ts';
 import { newClientDocuments, NEW_DOCUMENT_DAYS } from '../src/web/staff-dashboard.ts';
 import { letterState, letterSteps, sendEngagementLetter, signedCopy, SEND_WORDS } from '../src/web/engagement-send.ts';
-import { markViewed } from '../src/web/portal.ts';
+import { markViewed } from '../src/modules/portal/portal.ts';
 import {
   ENGAGEMENT_SIGNING, INK_LIMITS, SIGNING_QUESTION, checkSignature, parseInk, seedSignatureRecord, shownLetter, signEngagement,
   type EngagementSigning,

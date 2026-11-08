@@ -99,7 +99,7 @@ import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../integr
 import type { PickQuery } from '../integrations/index.ts';
 import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds, uprnFrom } from '../integrations/index.ts';
 import { ingestRegisterRecord } from '../integrations/index.ts';
-import { lookAgainShort } from './take-back.ts';
+import { lookAgainShort } from '../modules/portal/take-back.ts';
 import { postcodeStore } from '../integrations/postcodes/postcode.ts';
 import type { PostcodeStore } from '../integrations/postcodes/postcode-port.ts';
 import { checkSignature } from './signing.ts';

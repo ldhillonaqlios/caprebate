@@ -62,7 +62,7 @@ import {
   type ReadingView, type VouchAnswer, type VouchView,
 } from './document-reading.ts';
 import { removeRegisterField } from '../integrations/index.ts';
-import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from './take-back.ts';
+import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from '../modules/portal/take-back.ts';
 import type { FsObjectStore } from '../shared/objectstore.ts';
 import { getUsersRoleById } from '../core/index.ts';
 

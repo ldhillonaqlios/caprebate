@@ -319,7 +319,7 @@ describe('F28 — the client said they bought it, and the claim reads that', () 
 /* ================================================================== *
  * F27 — the claim page quotes the client's step as the portal shows it, numbered, so a later step never reads as an earlier one
  * ================================================================== */
-import { portalStepLine } from '../src/web/portal-steps.ts';
+import { portalStepLine } from '../src/modules/portal/portal-steps.ts';
 import * as P from '../src/web/pipeline.ts';
 
 describe('F27 — "the client’s page shows" is the portal’s own line', () => {
@@ -386,7 +386,7 @@ describe('F30 — what the client is shown once the research has run', () => {
 /* ================================================================== *
  * F23, F24, F32 — the wording
  * ================================================================== */
-import { lookupsCard } from '../src/web/client-layout.ts';
+import { lookupsCard } from '../src/modules/portal/client-layout.ts';
 import { STAFF_FOOTER } from '../src/shared/html.ts';
 
 describe('F23, F24, F32 — words that said something no longer true', () => {
@@ -417,7 +417,7 @@ describe('F29 — ST at the start of a name is a saint', () => {
 });
 
 /* F40 (from 158b's own run): "We issued your The client report" */
-import { issuedLine } from '../src/web/portal-dashboard.ts';
+import { issuedLine } from '../src/modules/portal/portal-dashboard.ts';
 
 describe('F40 — what the portal says when we issue a deliverable', () => {
   test('"We issued your client report", not "your The client report"', () => {

@@ -1,6 +1,6 @@
 /**
  * PHASE 160, 10 October 2026 — THE SWEEP'S BUILD (job B, carried in by Phase 159l): A FILING PER RETURN WHERE STAFF
- * RECORD IT. The client has no accountant (src/web/client-filing.ts route CLIENT), so staff record each return's filing
+ * RECORD IT. The client has no accountant (src/modules/portal/client-filing.ts route CLIENT), so staff record each return's filing
  * (migration 116), as the accountant confirms each by its own link on the other route (Phase 159l). The claim closes
  * once every return already due is recorded as filed; a later one is held in aftercare with its due date (Word question
  * 283). Each test fails on the code before this phase: migration 116 and `staffReturnFilings` do not exist.

@@ -40,7 +40,7 @@ import * as C from '../src/web/crm.ts';
 import * as T from '../src/web/tasks.ts';
 import * as TL from '../src/web/timeline.ts';
 import * as E from '../src/web/engaged.ts';
-import * as PO from '../src/web/portal.ts';
+import * as PO from '../src/modules/portal/portal.ts';
 import { acceptClientBytes, finishUpload, eventsFor, issuedJob } from '../src/web/uploads.ts';
 import { DOC_SPECS, HUMAN_READ_ONLY_TYPES, RET7, quarantineKeyFor } from '../src/shared/upload-handler-port.ts';
 import { pdfOf } from './document-fixtures.ts';

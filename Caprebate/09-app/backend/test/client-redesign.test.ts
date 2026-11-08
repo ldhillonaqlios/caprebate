@@ -1,6 +1,6 @@
 /**
  * 30 SEPTEMBER 2026 — THE CLIENT PAGE, LAID OUT AGAIN; AND "TELL THE CLIENT AND MOVE ON"
- * (src/web/client-layout.ts, src/web/tell-and-move.ts).
+ * (src/modules/portal/client-layout.ts, src/web/tell-and-move.ts).
  *
  * Lakhbir: "the whole interfact for a client needs to be designed ... look at the quick action, i feel like email the
  * client can change to chat ... we need something which shows which API's have fired and been completed and we then need

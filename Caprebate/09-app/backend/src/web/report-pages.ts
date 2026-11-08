@@ -23,7 +23,7 @@ import { approvedVersion, type Readiness } from './pack-approve.ts';
 import type { PackView } from './survey-pack.ts';
 import { reportHtml, reportModel, reportPdf, longDate, REPORT_TITLE } from './survey-report.ts';
 import * as S from './report-signoff.ts';
-import { ACCEPT_WORDS, myAcceptance } from './report-accept.ts';
+import { ACCEPT_WORDS, myAcceptance } from '../modules/portal/report-accept.ts';
 import { ukDate } from '../shared/index.ts';
 import { poundsWords } from './pack-sums.ts';
 import { contextForApproval, csvName, returnContextFor, returnEntriesCsv } from './return-entries.ts';

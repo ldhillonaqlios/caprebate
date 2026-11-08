@@ -16,18 +16,18 @@
  * figure, no fact and no value is shown — only words, dates and counts.
  */
 
-import type { Db } from '../core/index.ts';
-import type { Actor } from '../core/index.ts';
-import { h, raw, type Safe } from '../shared/index.ts';
-import { clientProgress } from './tell-and-move.ts';
-import { STAGES } from '../shared/index.ts';
-import { localClock, localDate, localPartsOf, ukDate, ukDatesIn, WEEKDAY_NAMES } from '../shared/index.ts';
-import { unreadCount } from './messages.ts';
-import type { ClientStep } from './approvals.ts';
-import type { ClientDeliverable } from './claim-record.ts';
-import { releasedVersion } from './report-signoff.ts';
+import type { Db } from '../../core/index.ts';
+import type { Actor } from '../../core/index.ts';
+import { h, raw, type Safe } from '../../shared/index.ts';
+import { clientProgress } from '../../web/tell-and-move.ts';
+import { STAGES } from '../../shared/index.ts';
+import { localClock, localDate, localPartsOf, ukDate, ukDatesIn, WEEKDAY_NAMES } from '../../shared/index.ts';
+import { unreadCount } from '../../web/messages.ts';
+import type { ClientStep } from '../../web/approvals.ts';
+import type { ClientDeliverable } from '../../web/claim-record.ts';
+import { releasedVersion } from '../../web/report-signoff.ts';
 import { myAcceptance } from './report-accept.ts';
-import { missingDocuments } from './mandatory-documents.ts';
+import { missingDocuments } from '../../web/mandatory-documents.ts';
 
 export type PortalDashInput = {
   readonly db: Db; readonly actor: Actor; readonly business_id: string; readonly nowIso: string;

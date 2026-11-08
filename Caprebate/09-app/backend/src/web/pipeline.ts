@@ -56,14 +56,14 @@ import { cddGateNeed } from './compliance.ts';
 import { amendmentWindowReading, electionResolved, floorAreaOnRecord, grantsTraced } from './claim-facts.ts';
 import { grantProviderNeed, grantSplitNeed } from '../modules/assessment/grant-checks.ts';
 import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from './claim-record.ts';
-import { clientConfirmationNeed, filingRoute } from './client-filing.ts';
-import { accountantFitNeed } from './accountant-confirm.ts';
+import { clientConfirmationNeed, filingRoute } from '../modules/portal/client-filing.ts';
+import { accountantFitNeed } from '../modules/portal/accountant-confirm.ts';
 import {
   EXITS, PROCEDURE_KEYS, PROCEDURE_STAGES, anyStageLabel, claimStage, clientStageFor, exitStage,
   nextProcedureKey, procedureIndex, procedureStage, stage as clientStage, stageIndex,
   type ExitKey, type ProcedureKey, type StageKey,
 } from '../shared/index.ts';
-import { portalStepLine } from './portal-steps.ts';
+import { portalStepLine } from '../modules/portal/portal-steps.ts';
 import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from './valuation-lock.ts';
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
@@ -210,7 +210,7 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
 });
 
 /**
- * PHASE 158c (F39): THE CLIENT ACCEPTED THE ISSUED REPORT, IN THEIR PORTAL (src/web/report-accept.ts) - an acceptance on
+ * PHASE 158c (F39): THE CLIENT ACCEPTED THE ISSUED REPORT, IN THEIR PORTAL (src/modules/portal/report-accept.ts) - an acceptance on
  * this claim of the fingerprint the issued client report carries. A later version issued needs accepting again.
  */
 export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
@@ -635,7 +635,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // CRM 6 of 10: the reports are issued (the deliverables register), and the amendment window is open — UNKNOWN does not pass.
       // PHASE 132e: WHO CONFIRMS THE CLAIM FITS THE RETURN. Where the client has no accountant or tax adviser — a
       // recorded yes from the client, and no such contact on the organisation — the client's own written confirmation
-      // (src/web/client-filing.ts) stands where the accountant's does, and is never recorded as the accountant's. The
+      // (src/modules/portal/client-filing.ts) stands where the accountant's does, and is never recorded as the accountant's. The
       // computation pack is still issued: whoever files needs the computation. Otherwise, exactly as before.
       {
         const today = opts.today ?? new Date().toISOString();

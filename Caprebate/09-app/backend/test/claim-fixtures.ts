@@ -17,7 +17,7 @@
 
 import assert from 'node:assert/strict';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import * as AC from '../src/web/accountant-confirm.ts';
+import * as AC from '../src/modules/portal/accountant-confirm.ts';
 import type { Db } from '../src/core/db.ts';
 import type { AuditLog } from '../src/core/audit.ts';
 import * as F from '../src/web/claim-facts.ts';

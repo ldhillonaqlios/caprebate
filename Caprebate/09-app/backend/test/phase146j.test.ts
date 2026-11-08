@@ -32,7 +32,7 @@ import { secretsFromValues, forgetRegisteredSecretsForTest } from '../src/core/s
 import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-port.ts';
 import * as R from '../src/web/research.ts';
 import * as MR from '../src/web/match-review.ts';
-import * as TB from '../src/web/take-back.ts';
+import * as TB from '../src/modules/portal/take-back.ts';
 import { REGISTRY } from '../src/shared/engine.ts';
 import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../src/web/signing.ts';
 import { seed } from '../src/core/seed.ts';
@@ -43,7 +43,7 @@ import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../src/integrations/connec
 import { acceptClientBytes, finishUpload, issuedJob, type ReadingOutcome, type UploadDeps, type UploadReading } from '../src/web/uploads.ts';
 import * as D from '../src/web/documents.ts';
 import { discriminantsFor, earlyVouchesFrom, vouchesFor, vouchView } from '../src/web/document-reading.ts';
-import { earlyQuestions } from '../src/web/client-files-pages.ts';
+import { earlyQuestions } from '../src/modules/portal/client-files-pages.ts';
 import { docxOf } from './document-fixtures.ts';
 import { testApp, actor } from './helpers.ts';
 import type { Actor } from '../src/core/authz.ts';
@@ -711,7 +711,7 @@ describe('2b · the question asked before the first reading, where the type is c
     // the three staff forms carry it, and the portal's does not
     const pages = readFileSync(join(SRC, 'web', 'documents-pages.ts'), 'utf8');
     assert.equal((pages.match(/earlyQuestions\(p\.early_questions/g) ?? []).length, 2, 'the claim page’s request and upload forms');
-    assert.match(readFileSync(join(SRC, 'web', 'client-files-pages.ts'), 'utf8'), /earlyQuestions\(f\.early_questions/);
+    assert.match(readFileSync(join(SRC, 'modules', 'portal', 'client-files-pages.ts'), 'utf8'), /earlyQuestions\(f\.early_questions/);
     // and the form where staff say what a file that came by email is, which hands the answer to the same upload path
     const msgs = readFileSync(join(SRC, 'web', 'messages-pages.ts'), 'utf8');
     assert.match(msgs, /earlyQuestions\(earlyQuestionsFor\(actor, business_id, types\)/);

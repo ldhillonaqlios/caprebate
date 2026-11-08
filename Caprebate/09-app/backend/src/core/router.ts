@@ -48,14 +48,14 @@ import { checkPostcode, normalisePostcode, postcodeCheckMissing, POSTCODE_CHECK 
 import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses, searchesToday } from '../integrations/index.ts';
 import { ADDRESS_LOOKUP_JS } from '../modules/assessment/address-lookup-script.ts';
 import { loadLetter } from '../web/letter.ts';
-import * as P from '../web/portal.ts';
+import * as P from '../modules/portal/portal.ts';
 import { ENGAGEMENT_SIGNING, SIGN_WORDS, letterFacts, letterOptions, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning, type LetterFacts } from '../web/signing.ts';
 import { portalMessagesBody, readPortalSend, sendFromPortal } from '../web/messages-pages.ts';
 import { clientMessage, type ThreadMessage as MessageView } from '../web/messages.ts';
 import { FsObjectStore } from '../shared/objectstore.ts';
 import { acceptClientBytes, finishUpload, issuedJob, readerFor } from '../web/uploads.ts';
 import { singleFile } from './multipart.ts';
-import { readUpload, receiveFile } from '../web/client-files-pages.ts';
+import { readUpload, receiveFile } from '../modules/portal/client-files-pages.ts';
 import { piecesOf, piecesPage, putPiece, startPieces, sweepPieces, PIECE_BYTES } from './upload-pieces.ts';
 import { UPLOAD_PIECES_JS } from './upload-pieces-script.ts';
 import { READ_AND_DELETED } from '../shared/index.ts';
@@ -64,7 +64,7 @@ import { handleStaff, handlePortalSettings } from './staff.ts';
 import { mayEnterBackOffice, NotFoundAsRefusal } from './backoffice.ts';
 import { navContext, staffShell, portalShell, setSubMenu, type NameSwitches, type NavContext } from './navigation.ts';
 import { badge, breadcrumb, card, claimRef, clientStageBar, noticeAtAddress, propertyIn, savedMessage, welcomeCard, why } from '../shared/index.ts';
-import { stepName } from '../web/portal-steps.ts';
+import { stepName } from '../modules/portal/portal-steps.ts';
 import { clientSteps, type ClientStep } from '../web/approvals.ts';
 import { clientStepsCard } from '../web/approvals-pages.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
@@ -72,7 +72,7 @@ import { clientHelp } from './help.ts';
 import { nameSwitches } from './navigation.ts';
 import { publicSlots, isBookable, SLOT_MINUTES } from '../web/schedule.ts';
 import { activeMeeting, booksATime, clientMayJoin, joinPanel, reconcileVideoMeeting, withJoinScripts, VIDEO_PAGE_HEADERS } from '../web/video-calls.ts';
-import { portalDashboard } from '../web/portal-dashboard.ts';
+import { portalDashboard } from '../modules/portal/portal-dashboard.ts';
 import * as IE from '../web/inbound-email.ts';
 import { joinSignature } from '../integrations/index.ts';
 import { VIDEO_CALL_JS } from '../web/video-call-script.ts';
@@ -105,8 +105,8 @@ import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } f
 import { freeGate, recordLookupsDeclined } from '../modules/assessment/address-check.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from '../web/identity-checks.ts';
 import { handleSignoffLink, portalReport, portalReportCard } from '../web/report-pages.ts';
-import { handleConfirmLink } from '../web/accountant-confirm-pages.ts';
-import { acceptReport } from '../web/report-accept.ts';
+import { handleConfirmLink } from '../modules/portal/accountant-confirm-pages.ts';
+import { acceptReport } from '../modules/portal/report-accept.ts';
 import { handlePortalEvidence, portalEvidenceCard } from '../web/evidence-pages.ts';
 import { noticesEdition, noticesForLiveSite, receiveComplaintForm } from '../modules/public-site/notices-site.ts';
 import { CONSENT_COOKIE, COOKIE_BANNER_CSS, agreementLinks, consentChoice, consentSetCookie, cookieBanner, draftLine, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../modules/public-site/legal-pages.ts';
@@ -653,7 +653,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const r = await handleSignoffLink(d.app, newId, req, res, url, method, form);
     if (r === 'handled') return 'handled';
   }
-  /* The client's accountant confirms for themselves, by the link alone (src/web/accountant-confirm-pages.ts). */
+  /* The client's accountant confirms for themselves, by the link alone (src/modules/portal/accountant-confirm-pages.ts). */
   if (path.startsWith('/confirm/')) {
     const r = await handleConfirmLink(d.app, newId, req, res, url, method, form);
     if (r === 'handled') return 'handled';
@@ -1360,7 +1360,7 @@ async function portalRoutes(
     // Each video call with a meeting gets its join link on the portal.
     const joins: Record<string, string> = {};
     for (const b of bks) { const m = b.channel === 'video' ? activeMeeting(db, b.id) : undefined; if (m !== undefined) joins[b.id] = `/call/${m.client_token}`; }
-    // The top of the portal as a dashboard (src/web/portal-dashboard.ts).
+    // The top of the portal as a dashboard (src/modules/portal/portal-dashboard.ts).
     // The survey report's card leads, once a tax adviser's sign-off has released it (src/web/report-pages.ts).
     const dashboard = h`${portalReportCard(d.app, business_id, actor)}${portalEvidenceCard(db, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
@@ -1377,7 +1377,7 @@ async function portalRoutes(
     if (r === 'handled') return 'handled';
   }
   /* THE CLIENT'S SURVEY REPORT — only the version a tax adviser's sign-off has released (src/web/report-pages.ts). */
-  /* The client accepts the released report (src/web/report-accept.ts). */
+  /* The client accepts the released report (src/modules/portal/report-accept.ts). */
   if (path === '/portal/report/accept' && method === 'POST') {
     P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does
     const r = acceptReport({ db, audit: d.app.audit, now, newId }, actor, business_id);

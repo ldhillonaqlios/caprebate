@@ -41,8 +41,8 @@ import { authorise, can, type Actor, type Obj } from '../core/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from './crm.ts';
 import { enteredAt, raiseBusinessStage, type Need } from './pipeline.ts';
-import { filingRoute } from './client-filing.ts';
-import { latestAnswer, returnFilings, returnsOf, type ReturnFiling } from './accountant-confirm.ts';
+import { filingRoute } from '../modules/portal/client-filing.ts';
+import { latestAnswer, returnFilings, returnsOf, type ReturnFiling } from '../modules/portal/accountant-confirm.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from '../shared/index.ts';
 import { packSwitchReadings } from '../shared/index.ts';
@@ -641,8 +641,8 @@ function reconAudit(d: RecordDeps, actor: Actor, c: ClaimRow, step: string, at: 
 }
 
 /**
- * PHASE 158d (F46): whether the client's accountant files this claim — the Reports route (src/web/client-filing.ts) is
- * ACCOUNTANT. Then the filing date is theirs to give, through their own link (src/web/accountant-confirm.ts).
+ * PHASE 158d (F46): whether the client's accountant files this claim — the Reports route (src/modules/portal/client-filing.ts) is
+ * ACCOUNTANT. Then the filing date is theirs to give, through their own link (src/modules/portal/accountant-confirm.ts).
  */
 export function accountantFiles(db: Db, claim_id: string): boolean {
   const c = db.get<{ id: string; business_id: string; created_at: string }>('SELECT id, business_id, created_at FROM claims WHERE id = ?', [claim_id]);
@@ -651,7 +651,7 @@ export function accountantFiles(db: Db, claim_id: string): boolean {
 
 /**
  * PHASE 160 (the sweep; job B carried by Phase 159l): EACH RETURN, WHERE STAFF RECORD THE FILING. The client has no
- * accountant (src/web/client-filing.ts route CLIENT), so staff record each return's filing (migration 116), as the
+ * accountant (src/modules/portal/client-filing.ts route CLIENT), so staff record each return's filing (migration 116), as the
  * accountant confirms each by its own link on the other route (accountant-confirm.ts returnFilings). The same reading
  * (Word question 283): a return already due must be recorded as filed; one not yet due is held in aftercare with its
  * due date. A filing recorded before, for the whole claim (the reconciliation's filed_on), counts for the earliest

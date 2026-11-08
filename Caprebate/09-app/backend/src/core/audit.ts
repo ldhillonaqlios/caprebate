@@ -84,7 +84,7 @@ export type AuditKind =
   | 'ENGAGEMENT_SIGNERS_SET'
   // Staff opened a survey job on a claim (src/web/survey-open.ts); whether an estimate was sealed with it. No figure.
   | 'SURVEY_JOB_OPENED'
-  // A client accepted the survey report released to them (src/web/report-accept.ts). The version, never a figure.
+  // A client accepted the survey report released to them (src/modules/portal/report-accept.ts). The version, never a figure.
   | 'CLIENT_REPORT_ACCEPTED'
   | 'ACCOUNTANT_CONFIRM_SENT'
   | 'ACCOUNTANT_CONFIRM_ANSWERED'
@@ -361,7 +361,7 @@ export type AuditKind =
    * lookup, the reason in their own words, that the one record the pick wrote was removed, and what must be looked at
    * again as kinds and counts. DOCUMENT_FIELD_VOUCH_WITHDRAWN: a 'yes' about a name on a client document taken back —
    * the field, the reason, and how many records the field was taken out of. NEVER THE ENTRY, THE NAME OR THE VALUE,
-   * and the reason passes the same screen as every other detail (src/web/take-back.ts refuses one that would not).
+   * and the reason passes the same screen as every other detail (src/modules/portal/take-back.ts refuses one that would not).
    */
   | 'REGISTER_MATCH_TAKEN_BACK' | 'DOCUMENT_FIELD_VOUCH_WITHDRAWN'
   /**

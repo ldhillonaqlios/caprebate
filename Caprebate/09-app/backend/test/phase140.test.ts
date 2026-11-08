@@ -23,7 +23,7 @@ import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { can, type Actor, type Obj } from '../src/core/authz.ts';
 import * as D from '../src/web/documents.ts';
-import * as PO from '../src/web/portal.ts';
+import * as PO from '../src/modules/portal/portal.ts';
 import { eventsFor } from '../src/web/uploads.ts';
 import { durableKeyFor, quarantineKeyFor } from '../src/shared/upload-handler-port.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_QUESTION, READ_AND_DELETED, keptDays, seal, unseal } from '../src/shared/originals.ts';

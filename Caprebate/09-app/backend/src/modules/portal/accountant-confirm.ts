@@ -17,19 +17,19 @@
  *   READ     The Reports gate reads a confirmed RETURN_FIT answered since the claim entered Reports
  *            (`accountantFitNeed`); closing a claim at the defence pack reads a confirmed FILED answer
  *            (`filingRecordedNeed` in src/web/claim-record.ts). The staff tick is retired; typing a filing date is
- *            refused where the accountant files. Where the client has no accountant (src/web/client-filing.ts), nothing
+ *            refused where the accountant files. Where the client has no accountant (src/modules/portal/client-filing.ts), nothing
  *            here applies and that route is unchanged.
  */
 import { createHash, randomBytes } from 'node:crypto';
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import type { EmailTransport } from '../integrations/index.ts';
-import { authorise, type Actor } from '../core/index.ts';
-import { localDate, ukDate } from '../shared/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import type { EmailTransport } from '../../integrations/index.ts';
+import { authorise, type Actor } from '../../core/index.ts';
+import { localDate, ukDate } from '../../shared/index.ts';
 // Read inside functions only: pipeline.ts reads this module's need the same way, so the loop is never touched at load.
-import { raiseBusinessStage } from './pipeline.ts';
-import { claimReturns, claimRoutes, type ClaimReturn } from './claim-route.ts';
-import { getOutboxRById } from '../integrations/index.ts';
+import { raiseBusinessStage } from '../../web/pipeline.ts';
+import { claimReturns, claimRoutes, type ClaimReturn } from '../../web/claim-route.ts';
+import { getOutboxRById } from '../../integrations/index.ts';
 
 export type ConfirmKind = 'RETURN_FIT' | 'FILED';
 export type ConfirmDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };

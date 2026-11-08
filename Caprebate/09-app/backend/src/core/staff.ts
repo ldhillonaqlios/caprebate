@@ -56,13 +56,13 @@ import * as S from '../web/settings.ts';
 import * as B from './backoffice.ts';
 import { handleEngaged } from '../web/engaged-pages.ts';
 import { handleClientPage } from '../web/client-page.ts';
-import { handleClientFiles } from '../web/client-files-pages.ts';
+import { handleClientFiles } from '../modules/portal/client-files-pages.ts';
 import { handleFreeEmail } from '../web/free-email-pages.ts';
 import { handleStaffMessages } from '../web/messages-pages.ts';
 import { handleSurveyor } from '../web/surveyor-pages.ts';
 import { handleSurveyPack } from '../web/survey-pack-pages.ts';
 import { handleReportStaff } from '../web/report-pages.ts';
-import { handleAccountantConfirmStaff } from '../web/accountant-confirm-pages.ts';
+import { handleAccountantConfirmStaff } from '../modules/portal/accountant-confirm-pages.ts';
 import { handleStaffEvidence } from '../web/evidence-pages.ts';
 import { handleFinance } from '../web/finance-pages.ts';
 import { handleCrm } from '../web/crm-pages.ts';
@@ -468,7 +468,7 @@ export async function handleStaff(
   // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/web/report-pages.ts).
   const report = await handleReportStaff({ app: d.app, newId: d.newId, nav, stamp, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (report === 'handled') return 'handled';
-  // Email the client's accountant a link to confirm for themselves (src/web/accountant-confirm-pages.ts).
+  // Email the client's accountant a link to confirm for themselves (src/modules/portal/accountant-confirm-pages.ts).
   const confirmLink = await handleAccountantConfirmStaff({ app: d.app, newId: d.newId, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (confirmLink === 'handled') return 'handled';
   // The client's photos, the walkthrough call and how the surveyor inspected (src/web/evidence-pages.ts).

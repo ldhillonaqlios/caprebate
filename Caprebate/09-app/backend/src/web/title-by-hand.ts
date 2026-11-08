@@ -25,7 +25,7 @@
  *
  * AND IT CAN BE TAKEN BACK, which Phase 146j learned the hard way is not optional: a separate act, with a reason, that
  * removes the one record this entry wrote, refuses while a person has approved a fact from it, lists what was worked
- * out from it while it stood (src/web/take-back.ts), and keeps the entry with who took it back and why.
+ * out from it while it stood (src/modules/portal/take-back.ts), and keeps the entry with who took it back and why.
  */
 
 import { personIsClients, fillTenureFromRegisters } from '../modules/assessment/who-claims.ts';
@@ -37,7 +37,7 @@ import { ingestRegisterRecord, removeRegisterRecord } from '../integrations/inde
 import { amount } from '../integrations/index.ts';
 import {
   approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain,
-} from './take-back.ts';
+} from '../modules/portal/take-back.ts';
 import { getRegisterRecordsFieldsJsonById, getRegisterRecordsIdByBusinessIdSourceId, getRegisterRecordsIdSourceIdByIdBusinessId } from '../integrations/index.ts';
 import { getUsersDisplayNameById } from '../core/index.ts';
 

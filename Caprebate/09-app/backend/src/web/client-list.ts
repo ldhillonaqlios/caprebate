@@ -24,7 +24,7 @@ import { waitingOn, type WaitingOn } from './engaged.ts';
 import { h, raw, page, type Safe } from '../shared/index.ts';
 import { badge, claimHref } from '../shared/index.ts';
 import { newFromClient } from './messages.ts';
-import { newDot } from './client-layout.ts';
+import { newDot } from '../modules/portal/client-layout.ts';
 
 export type ClientListRow = {
   readonly id: string;

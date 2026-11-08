@@ -9,10 +9,10 @@
  * ISSUED client report's own fingerprint (src/web/pipeline.ts `clientAcceptedNeed`), so a later version must be
  * accepted again.
  */
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, type Actor } from '../core/index.ts';
-import { releasedVersion } from './report-signoff.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, type Actor } from '../../core/index.ts';
+import { releasedVersion } from '../../web/report-signoff.ts';
 
 export type AcceptDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 

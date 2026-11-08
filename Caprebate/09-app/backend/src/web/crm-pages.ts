@@ -65,8 +65,8 @@ import * as SI from './site-area-inputs.ts';
 import * as TH from './title-by-hand.ts';
 import * as SO from './survey-open.ts';
 import { earlyWindowWarning } from './claim-facts.ts';
-import { portalStepLine } from './portal-steps.ts';
-import { accountantConfirmBlock } from './accountant-confirm-pages.ts';
+import { portalStepLine } from '../modules/portal/portal-steps.ts';
+import { accountantConfirmBlock } from '../modules/portal/accountant-confirm-pages.ts';
 import { claimOverview, overviewBlock } from './claim-overview.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };

@@ -48,7 +48,7 @@ import type { AuditLog } from '../core/audit.ts';
 import type { EmailTransport } from '../integrations/index.ts';
 import { authorise, type Actor } from '../core/index.ts';
 import { loadLetter } from './letter.ts';
-import { engagement, readBusiness } from './portal.ts';
+import { engagement, readBusiness } from '../modules/portal/portal.ts';
 import { localWhen, ukDate } from '../shared/index.ts';
 import { formatPence } from '../shared/index.ts';
 import { claimantTypeForGate } from './crm.ts';

@@ -31,7 +31,7 @@ import * as IE from './inbound-email.ts';
 import { page } from '../shared/index.ts';
 import { localStamp } from '../shared/index.ts';
 import { imapLoginFromKeyFile, imapMailbox, readingMissing, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../integrations/index.ts';
-import { earlyQuestions, receiveFile } from './client-files-pages.ts';
+import { earlyQuestions, receiveFile } from '../modules/portal/client-files-pages.ts';
 import * as W from './whatsapp.ts';
 import { whatsappPage } from './whatsapp-page.ts';
 import { communicate, composer } from './communication.ts';

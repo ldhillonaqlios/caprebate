@@ -3,7 +3,7 @@
  *
  * VIEW MODELS. The renderer in src/core/staff.ts draws what these return and
  * decides nothing; every authorisation is here, on the specific object, exactly
- * as src/web/portal.ts does it for the client half.
+ * as src/modules/portal/portal.ts does it for the client half.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * N1 REACHES THIS FILE, AND IT IS THE REASON `range` IS OPTIONAL

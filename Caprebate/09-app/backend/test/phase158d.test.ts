@@ -15,7 +15,7 @@ import * as CF from './claim-fixtures.ts';
 import { ENGAGEMENT_SIGNING_TEST, letterFacts, shownLetter, signEngagement } from '../src/web/signing.ts';
 import { TEST_LETTER_PATH } from '../src/web/letter.ts';
 import { sendEngagementLetter } from '../src/web/engagement-send.ts';
-import { portalDashboard } from '../src/web/portal-dashboard.ts';
+import { portalDashboard } from '../src/modules/portal/portal-dashboard.ts';
 
 const T0 = '2026-10-09T09:00:00.000Z';
 let n = 0;
@@ -256,7 +256,7 @@ describe('F45 — the window reads the purchase date and year end the client or 
 /* ================================================================== *
  * F46 — the client's accountant confirms for themselves
  * ================================================================== */
-import * as AC from '../src/web/accountant-confirm.ts';
+import * as AC from '../src/modules/portal/accountant-confirm.ts';
 import * as R from '../src/web/claim-record.ts';
 
 function accountantContact(app: App, business: string): string {
@@ -465,7 +465,7 @@ describe('F47 — the defence pack is made from the claim’s own records, its f
 /* ================================================================== *
  * F48 — the portal's claim tile reads the same step as the rest of the portal (found by this phase's own run)
  * ================================================================== */
-import * as PO from '../src/web/portal.ts';
+import * as PO from '../src/modules/portal/portal.ts';
 
 describe('F48 — the claim tile shows the step the client is at', () => {
   const tile = (app: App, c: { business: string; user: string; claim: string }) =>

@@ -37,7 +37,7 @@ import { imapLoginFromKeyFile, parseBounceReport } from '../src/integrations/ema
 import { ingest } from '../src/web/inbound-email.ts';
 import { buildIcs, fold, icsText } from '../src/integrations/email/calendar.ts';
 import { scheduleBooking } from '../src/core/backoffice.ts';
-import { moveOwnBooking, cancelOwnBooking } from '../src/web/portal.ts';
+import { moveOwnBooking, cancelOwnBooking } from '../src/modules/portal/portal.ts';
 import {
   ENGAGEMENT_SIGNING, SIGNING_QUESTION, checkSignature, shownLetter, signEngagement, signingMissing, type EngagementSigning,
 } from '../src/web/signing.ts';

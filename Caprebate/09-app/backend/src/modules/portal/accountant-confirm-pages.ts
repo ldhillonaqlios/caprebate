@@ -1,5 +1,5 @@
 /**
- * THE ACCOUNTANT'S CONFIRMATIONS, ON SCREEN — Phase 158d, 9 October 2026 (F46). src/web/accountant-confirm.ts holds the rules.
+ * THE ACCOUNTANT'S CONFIRMATIONS, ON SCREEN — Phase 158d, 9 October 2026 (F46). src/modules/portal/accountant-confirm.ts holds the rules.
  *
  *   On the claim page   "The accountant's confirmations": what was sent and what came back, and (Admin and Sales, at the
  *                       right stage, on the accountant route) a form to send the link.
@@ -7,14 +7,14 @@
  *   /confirm/{token}    the accountant's own page: no login, the link alone. They confirm, or say it is not so.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../core/app.ts';
-import { can, type Actor } from '../core/index.ts';
-import type { Db } from '../core/index.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
-import { badge } from '../shared/index.ts';
-import { localDate, localStamp, ukDate } from '../shared/index.ts';
+import type { App } from '../../core/app.ts';
+import { can, type Actor } from '../../core/index.ts';
+import type { Db } from '../../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
+import { badge } from '../../shared/index.ts';
+import { localDate, localStamp, ukDate } from '../../shared/index.ts';
 import * as A from './accountant-confirm.ts';
-import { accountantFiles } from './claim-record.ts';
+import { accountantFiles } from '../../web/claim-record.ts';
 
 const KIND_WORDS: Readonly<Record<A.ConfirmKind, string>> = Object.freeze({
   RETURN_FIT: 'The claim fits the return and the amendment window',

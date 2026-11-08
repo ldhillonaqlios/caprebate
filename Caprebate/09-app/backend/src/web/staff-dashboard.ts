@@ -45,7 +45,7 @@ import * as M from './messages.ts';
 import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from '../modules/public-site/home.ts';
 import { kpiRow, type Kpi } from '../core/index.ts';
 import { blocksFor, mayBlockTime } from './time-blocks.ts';
-import { newDot } from './client-layout.ts';
+import { newDot } from '../modules/portal/client-layout.ts';
 import { keysView } from '../core/saved-keys.ts';
 import { repliesStale } from './inbound-email.ts';
 import { listsToImport } from './connections.ts';

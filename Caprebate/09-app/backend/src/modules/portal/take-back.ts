@@ -23,9 +23,9 @@
  * src/integrations/register-ingest.ts — the one door in is the one door out.
  */
 
-import type { Db } from '../core/index.ts';
-import { screenDetail } from '../core/audit.ts';
-import { countRegisterRecordsSince } from '../integrations/index.ts';
+import type { Db } from '../../core/index.ts';
+import { screenDetail } from '../../core/audit.ts';
+import { countRegisterRecordsSince } from '../../integrations/index.ts';
 
 /* ================================================================== *
  * 1 · WHO HAS ALREADY APPROVED IT

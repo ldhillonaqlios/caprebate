@@ -30,7 +30,7 @@ import * as C from '../src/web/crm.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as F from '../src/web/claim-facts.ts';
 import * as T from '../src/web/tasks.ts';
-import * as CFL from '../src/web/client-filing.ts';
+import * as CFL from '../src/modules/portal/client-filing.ts';
 import * as CF from './claim-fixtures.ts';
 import * as I from '../src/web/introducers.ts';
 import * as INV from '../src/web/invoices.ts';
@@ -39,7 +39,7 @@ import { loadLetter, unresolvedTerms } from '../src/web/letter.ts';
 import * as FC from '../src/web/fee-controls.ts';
 import * as FD from '../src/web/fee-discounts.ts';
 import { feeRate } from '../src/shared/engine.ts';
-import * as AC from '../src/web/accountant-confirm.ts';
+import * as AC from '../src/modules/portal/accountant-confirm.ts';
 
 type Res = { status: number; body: string; location: string | null };
 type Client = { get(path: string): Promise<Res>; post(path: string, fields: Record<string, string>): Promise<Res> };

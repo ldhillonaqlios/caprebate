@@ -260,7 +260,7 @@ describe('the client’s portal home as a dashboard', () => {
   });
 
   test('each card’s button: answer a question, send a document, join the video call; only what is recent is new', async () => {
-    const { portalDashboard } = await import('../src/web/portal-dashboard.ts');
+    const { portalDashboard } = await import('../src/modules/portal/portal-dashboard.ts');
     const html = String(portalDashboard({
       db: made.app.db, actor: { id: 'u-dh-client', role: 'CLIENT' } as never, business_id: 'b-dh-1', nowIso: T,
       bookings: [{ id: 'bk-x', channel: 'video', starts_at: '2026-10-02T09:00:00.000Z', cancelled_at: null }, { id: 'bk-gone', channel: 'video', starts_at: '2026-10-01T10:00:00.000Z', cancelled_at: T }],

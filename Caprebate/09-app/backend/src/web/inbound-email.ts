@@ -35,7 +35,7 @@ import { authorise, can, type Actor } from '../core/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { localPartsOf, localStamp } from '../shared/index.ts';
 import type { FsObjectStore } from '../shared/objectstore.ts';
-import { receiveFile } from './client-files-pages.ts';
+import { receiveFile } from '../modules/portal/client-files-pages.ts';
 import { setShownToClient } from './documents.ts';
 import type { VouchAnswer } from './document-reading.ts';
 import { alertNewMessage } from './messages.ts';
