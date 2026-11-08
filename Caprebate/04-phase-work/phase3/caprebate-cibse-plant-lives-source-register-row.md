@@ -65,7 +65,7 @@ The page is `cibse.org/knowledge/about-knowledge-portal/fair-use-policy`. **It i
 
 ## The register row
 
-Written into `caprebate-source-register.ts` as the licence `CIBSE_KNOWLEDGE`, and tested by T-CB1 to T-CB3 in `caprebate-source-register.test.ts`.
+Written into `caprebate-source-register.ts` as the licence `CIBSE_KNOWLEDGE`, and tested by T-CB1 to T-CB3 in `integrations/source-register.test.ts`.
 
 | Field | Value | Where it comes from |
 | --- | --- | --- |

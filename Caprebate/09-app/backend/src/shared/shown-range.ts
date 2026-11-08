@@ -59,7 +59,7 @@ export type ShownRange = {
  * bare number, because a bare number is the one thing that phrasing exists to
  * prevent.
  *
- * PHASE 159a (E3; Lakhbir, 9 October 2026: "always show the up to number"): AND
+ * AND
  * NEVER A RANGE. The client is shown "up to £X" alone, so the lead, the claim
  * record, the staff assessment pages and the portal show that too. They showed
  * "£130,000 to £260,000", a low end the client never saw, and one the engine's own

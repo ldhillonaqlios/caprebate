@@ -1,8 +1,8 @@
 /**
- * THE 318 LOCAL AUTHORITY FILES HM LAND REGISTRY PUBLISHES THE INSPIRE INDEX POLYGONS IN. Phase 150, 24 September 2026.
+ * THE 318 LOCAL AUTHORITY FILES HM LAND REGISTRY PUBLISHES THE INSPIRE INDEX POLYGONS IN.
  *
  * Copied from the links on https://use-land-property-data.service.gov.uk/datasets/inspire/download, read that day
- * (the page says the data was published on 6 September 2026). Each is the file name without ".zip"; the link is
+ *. Each is the file name without ".zip"; the link is
  * /datasets/inspire/download/<name>.zip. src/integrations/connectors/inspire.ts downloads a council's file only when its name is
  * in this list, so a typing mistake or a name from anywhere else is refused before anything is sent.
  *

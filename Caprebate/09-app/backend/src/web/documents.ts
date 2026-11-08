@@ -64,6 +64,7 @@ import {
 import { removeRegisterField } from '../integrations/index.ts';
 import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from './take-back.ts';
 import type { FsObjectStore } from '../shared/objectstore.ts';
+import { getUsersRoleById } from '../core/index.ts';
 
 export type DocDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -1392,7 +1393,7 @@ export function requestWorkDocuments(d: DocDeps, actor: Actor, claim_id: string,
  * show one person's name to another in a record like this, and the audit log already carries who it was.
  */
 function personWords(db: Db, user_id: string): string {
-  const role = db.get<{ role: string }>('SELECT role FROM users WHERE id = ?', [user_id])?.role;
+  const role = getUsersRoleById<{ role: string }>(db, [user_id])?.role;
   return role === undefined ? 'nobody recorded' : role === 'CLIENT' ? 'the client' : `staff (${role.toLowerCase()})`;
 }
 
@@ -1778,7 +1779,7 @@ export function documentCentre(db: Db, actor: Actor, q: URLSearchParams): Docume
 
 /**
  * PHASE 133a — THE GATE OF THE DOCUMENT CENTRE, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function documentCentreGate(actor: Actor): void {
@@ -1787,7 +1788,7 @@ export function documentCentreGate(actor: Actor): void {
 
 /**
  * PHASE 133a — THE GATE OF THE DOCUMENT TYPES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function documentTypesGate(actor: Actor): void {

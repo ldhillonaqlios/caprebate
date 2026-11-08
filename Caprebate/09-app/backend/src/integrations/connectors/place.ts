@@ -1,11 +1,11 @@
 /**
- * WHERE THE APP RUNS DECIDES WHETHER IT MAY REACH A REAL PERSON. 1–2 October 2026.
+ * WHERE THE APP RUNS DECIDES WHETHER IT MAY REACH A REAL PERSON. 1–2.
  *
- * 1 Oct: a copy on Lakhbir's Mac, reading the real key file, made a real Zoom meeting (src/integrations/connectors/zoom.ts).
- * 2 Oct, Lakhbir: WhatsApp and IONOS email get the same guard "for now" (src/integrations/connectors/whatsapp.ts,
+ * 1 Oct: a copy on the owner's Mac, reading the real key file, made a real Zoom meeting (src/integrations/connectors/zoom.ts).
+ * 2 Oct, the owner: WhatsApp and IONOS email get the same guard "for now" (src/integrations/connectors/whatsapp.ts,
  * src/integrations/email/email-provider.ts). So a service that reaches a real person is called only when the app is the deployed
  * test website (Vercel says so: VERCEL=1, VERCEL_ENV production or preview, and VERCEL_URL set), OR the copy was started
- * with that service's own setting = 1, for when Lakhbir really wants to try it on his own computer.
+ * with that service's own setting = 1, for when the owner really wants to try it on his own computer.
  *
  * Only a live connection is ever refused: a test's recorded answers, or its own mail server, reach nobody.
  */

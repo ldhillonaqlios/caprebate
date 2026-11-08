@@ -70,12 +70,13 @@ variable inside a statement. It was proved able to fail before it was kept.
 `npm run lint:paths` (`tools/lint-paths.cjs`) parses every file under `src/` and the repository's `api/`
 and fails on any module they load, or any path they build from their own folder, that lands outside
 `Caprebate/09-app`. Until that day `src/` loaded fourteen modules from the draft folders
-`04-phase-work/phase3` and `phase9` (the ITRoadway audit, section 5). They now live here, by what they do:
-`src/registers/` (the source register, the name exclusion register, the land boundary import),
-`src/documents/` (the document pipeline, client document ingestion, the upload handler), `src/survey/`
-(the anchor quarantine, the surveyor CRM), `src/costing/` (the cost model, the job economics) and
-`src/postcodes/` (postcode to council, the postcode store, the location key, the region), with their tests
-in `test/`. The old paths keep a one-line note that loads the new file. The few paths still allowed
+`04-phase-work/phase3` and `phase9` (the ITRoadway audit, section 5). They now live here, in the area each
+belongs to, without the `caprebate-` prefix (Phases 161i and 161i1): `src/integrations/registers/` (the
+source register, the name exclusion register, the land boundary import), `src/modules/claims/documents/`
+(the document pipeline, client document ingestion, the upload handler), `src/modules/survey/` (the anchor
+quarantine, the surveyor CRM), `src/modules/survey/costing/` (the cost model, the job economics) and
+`src/integrations/postcodes/` (postcode to council, the postcode store, the location key, the region),
+with their tests in `test/`. The old paths keep a one-line note that loads the new file. The few paths still allowed
 outside are listed, with the reason, in `KNOWN` in that file; `--self-test` proves a planted import from
 04-phase-work fails.
 

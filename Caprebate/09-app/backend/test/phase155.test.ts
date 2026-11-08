@@ -134,7 +134,7 @@ describe('line 4: the BCIS index from a file Lakhbir downloads, kept outside the
     assert.ok(t.table !== null);
     assert.equal(t.table.source, 'BCIS building price index, imported from bcis-tpi.csv on 2026-10-04');
     const { createRequire } = await import('node:module');
-    const M = createRequire(import.meta.url)('../src/costing/caprebate-cost-model.cjs') as { indexFactorFromTable: (t: unknown, a: string, b: string) => { factor: number } };
+    const M = createRequire(import.meta.url)('../src/modules/survey/costing/cost-model.cjs') as { indexFactorFromTable: (t: unknown, a: string, b: string) => { factor: number } };
     assert.equal(M.indexFactorFromTable(t.table, '2024-05-01', '2026-01-15').factor, 384 / 396);
   });
 

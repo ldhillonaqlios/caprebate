@@ -1,10 +1,10 @@
 /**
- * THE FREE POSTCODE CHECK AT THE ADDRESS QUESTION — POSTCODES.IO. Phase 151, 24 September 2026.
+ * THE FREE POSTCODE CHECK AT THE ADDRESS QUESTION — POSTCODES.IO.
  * BUILT FOR REAL AND SWITCHED OFF, BEHIND THE FREE-TIER GATE.
  *
- * WHAT LAKHBIR ASKED (Word answers 16, 17, 35 and 36). Homedata, the paid address lookup, runs after signing, when staff
+ * WHAT THE OWNER ASKED (Word answers 16, 17, 35 and 36). Homedata, the paid address lookup, runs after signing, when staff
  * start the research — built (src/integrations/connectors/homedata.ts). At the address question, add a FREE address lookup if one
- * exists. PHASE 151 FOUND NONE THAT A PAID SERVICE MAY USE: getAddress.io stopped trading in February 2026, and every
+ * exists. PHASE 151 FOUND NONE THAT A PAID SERVICE MAY USE: getAddress.io stopped trading, and every
  * other postcode-to-address list is paid or a trial (the source register, POSTCODES_IO_OPEN; the research is
  * 04-phase-work/phase151/free-address-lookup.md). So this is the best free thing there is: a POSTCODE CHECK. The client
  * types their postcode; this confirms it exists and fills in the council area, the region and the country; the client
@@ -14,7 +14,7 @@
  *   1. THE FREE-TIER GATE — CB_REGISTRY.precondition, "a published privacy notice reachable from the address question".
  *      It is read here through `gateStatus`, exactly as the research panel reads it. Not restated; not duplicated.
  *   2. THIS SWITCH — POSTCODE_CHECK.enabled, false — and `named_in_privacy_notice`, false: the notice must name
- *      Postcodes.io before it is switched on (Lakhbir's instruction for this phase).
+ *      Postcodes.io before it is switched on.
  * OFF, NOTHING IS SENT, and the address question works exactly as it does today: the client types the address.
  *
  * WHAT IS SENT: THE POSTCODE, AND NOTHING ELSE. Not a name, not a company, not the rest of the address.
@@ -38,7 +38,7 @@ export type PostcodeCheckConfig = {
   /** Postcodes.io is named in the published privacy notice. */
   readonly named_in_privacy_notice: boolean;
   /**
-   * TESTING ONLY, as the identity check's (src/integrations/connectors/identity-check.ts, Phase 151h): a person's decision to send
+   * TESTING ONLY, as the identity check's: a person's decision to send
    * before the notice is published and names the service. It never makes `named_in_privacy_notice` true. Absent is false.
    */
   readonly papers_waived_for_testing?: boolean;
@@ -47,8 +47,8 @@ export type PostcodeCheckConfig = {
 };
 
 /*
- * SWITCHED ON FOR TESTING, 30 September 2026 (Lakhbir: "switch on companies house and postcodes.io"). The build-then-check
- * rule: built and on in the test website, then Sadique (DPO) is asked whether it is viable. `named_in_privacy_notice`
+ * SWITCHED ON FOR TESTING. The build-then-check
+ * rule: built and on in the test website, then the data protection officer is asked whether it is viable. `named_in_privacy_notice`
  * stays FALSE because it is false. Before real visitors: publish the notice naming Postcodes.io, set that true, and
  * set `papers_waived_for_testing` to false.
  */

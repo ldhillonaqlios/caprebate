@@ -1,7 +1,7 @@
 /**
- * THE HEADER AND THE NAVIGATION — PHASE 133a, 17 September 2026.
+ * THE HEADER AND THE NAVIGATION.
  *
- * Lakhbir: the CRM should "look and work like Salesforce — easy to use, intuitive, an easy layout for each one of the
+ * the owner: the CRM should "look and work like Salesforce — easy to use, intuitive, an easy layout for each one of the
  * logins". That is a set of layout patterns — a header with search, the user menu and my open work; a row of tabs per
  * login — and nothing of anybody's brand.
  *
@@ -13,7 +13,7 @@
  *
  *   · THE MENU ASKS NO RULE OF ITS OWN. Every section names its `gate` — the very function its route's store calls
  *     first (exported beside that store for this purpose). The menu never decides; it asks the section.
- *   · THE FAILURE IS NOT SILENT. test/phase133a.test.ts opens every menu link for every login and requires 200, and
+ *   · THE FAILURE IS NOT SILENT. test/core/header-and-navigation.test.ts opens every menu link for every login and requires 200, and
  *     opens every section NOT in a login's menu and requires 403. A section added to a route and not here, or a gate
  *     that drifts from its route, goes red in both directions.
  *
@@ -21,10 +21,10 @@
  *
  * NOTHING HERE READS A FIGURE. The Tasks tab counts my open tasks through `myWork`, which authorises every row it returns.
  *
- * PHASE 135, 21 September 2026 — A MENU IS A LOGIN'S DAILY WORK, NOT EVERYTHING IT MAY OPEN. Lakhbir found tabs repeating
+ * A MENU IS A LOGIN'S DAILY WORK, NOT EVERYTHING IT MAY OPEN. the owner found tabs repeating
  * each other and a dozen entries under More. Each login's menu is now named in `MENUS`, More holds at most four, and a
  * section off the menu still opens by its address for every login its gate admits. Both halves of the Phase 133a worry
- * still hold: a listed section is still drawn only where its gate admits the login, and test/phase135.test.ts asserts
+ * still hold: a listed section is still drawn only where its gate admits the login, and test/core/menus.test.ts asserts
  * every login's exact menu and every address's answer, so neither a menu nor a permission can drift unseen.
  */
 
@@ -45,6 +45,7 @@ import { assertIntroducerSection, rewardModelGate } from '../web/introducers.ts'
 import { assertSurveySection } from '../web/surveyor.ts';
 import { assertFinanceSection } from '../web/finance.ts';
 import { adminSettingsGate, SETTINGS_TILES } from '../web/admin-tiles.ts';
+import { getUsersDisplayNameById } from './data.ts';
 
 /* ------------------------------------------------------------------ *
  * THE REQUEST'S CONTEXT
@@ -59,10 +60,10 @@ import { adminSettingsGate, SETTINGS_TILES } from '../web/admin-tiles.ts';
  */
 export type NavContext = {
   readonly db: Db; readonly now: () => string; readonly path: string;
-  /** PHASE 133c: the two name switches for this request (B7, B9). Absent is `NAME_SWITCHES` (portal steps on since Phase 144). */
+  /** The two name switches for this request (B7, B9). Absent is `NAME_SWITCHES`. */
   readonly names?: NameSwitches;
   /**
-   * PHASE 133c: A REFUSED FORM KEEPS WHAT WAS TYPED (B6). The router records what a POST carried here, and `problem()` in
+   * A REFUSED FORM KEEPS WHAT WAS TYPED (B6). The router records what a POST carried here, and `problem()` in
    * src/core/staff.ts redraws the page the form was on with those values in it. `rerender` draws a GET of the back office
    * for that. Mutable on purpose: it is this one request's scratch space, and nothing outlives the request.
    */
@@ -71,7 +72,7 @@ export type NavContext = {
 export const navContext = new AsyncLocalStorage<NavContext>();
 
 /* ------------------------------------------------------------------ *
- * THE NAMES — BUILT, SWITCHED OFF, AND ASKED (PHASE 133c, B7 and B9)
+ * THE NAMES — BUILT, SWITCHED OFF, AND ASKED
  * ------------------------------------------------------------------ */
 
 export type NameSwitches = {
@@ -80,11 +81,11 @@ export type NameSwitches = {
 };
 
 /**
- * THE SWITCH: ON SINCE 22 SEPTEMBER 2026. Lakhbir answered CAPREBATE QUESTIONS, "The new names and the client's step
+ * THE SWITCH: ON SINCE. the owner answered CAPREBATE QUESTIONS, "The new names and the client's step
  * names - which do we switch on?", in the Phase 144 chat: "Switch on". Clients read "1 Your estimate" to "6 Aftercare".
- * (Shipped OFF by Phase 133c.) A test still passes both positions.
+ * A test still passes both positions.
  *
- * PHASE 135 — THE MENU NAMES ARE NO LONGER A SWITCH. Of the three proposed in Phase 133c, "Introducer fees" is now the
+ * THE MENU NAMES ARE NO LONGER A SWITCH. Of the three proposed "Introducer fees" is now the
  * section's name; "Client files" and "Claims needing an owner" no longer apply, because Engaged clients became the one
  * Clients list and Next actions became a filter on Tasks. The `menu` switch went with them.
  */
@@ -110,13 +111,13 @@ export type Section = {
 };
 
 /**
- * EVERY BACK-OFFICE SECTION a menu can name. PHASE 135: a section is listed once. Which login sees it, and where, is
+ * EVERY BACK-OFFICE SECTION a menu can name. A section is listed once. Which login sees it, and where, is
  * `MENUS` below — not this table — and a section on no menu still opens by its address for every login its gate admits.
  */
 export const SECTIONS: readonly Section[] = Object.freeze([
   { key: 'home', href: '/staff', label: 'Home', gate: assertBackOffice, under: ['/staff/reports'] },
   { key: 'leads', href: '/staff/leads', label: 'Leads', gate: assertLeadSection, under: ['/staff/assessments'] },
-  // PHASE 151b: the whole record (Admin, Sales, read-only) or Accounting's billing view of it (src/web/billing.ts).
+  // The whole record (Admin, Sales, read-only) or Accounting's billing view of it (src/web/billing.ts).
   { key: 'clients', href: '/staff/clients', label: 'Clients', gate: clientsAreaGate, under: ['/staff/organisations'] },
   { key: 'pipeline', href: '/staff/pipeline', label: 'Pipeline', gate: pipelineBoardGate },
   { key: 'claims', href: '/staff/claims', label: 'Claims', gate: claimListGate },
@@ -131,11 +132,11 @@ export const SECTIONS: readonly Section[] = Object.freeze([
 ]);
 
 /**
- * PHASE 135 — EACH LOGIN'S MENU, BY NAME. Lakhbir, 18 September 2026: the tabs repeated each other, and some logins had a
+ * EACH LOGIN'S MENU, BY NAME. The owner: the tabs repeated each other, and some logins had a
  * dozen entries under More. A login's menu lists the sections it does its daily job in — being allowed to open a section
- * is not a reason to list it. `test/phase135.test.ts` asserts every menu exactly.
+ * is not a reason to list it. `test/core/menus.test.ts` asserts every menu exactly.
  *
- * UI TIDY PHASE 2, 2 October 2026 — A LEFT-HAND MENU IN GROUPS, AND NO MORE. Lakhbir chose "design 2" from the mock-ups
+ * A LEFT-HAND MENU IN GROUPS, AND NO MORE. the owner chose "design 2" from the mock-ups
  * (00-START-HERE/hub/UI-TIDY-PLAN.md): the menu runs down the left in named groups, so nothing is hidden. Admin's Survey
  * jobs, Calendar and Introducers, Sales's Calendar and Accounting's Introducer fees came out of More into their groups;
  * no section joined or left any login's menu. The verdict for every section is the table "The menus" in
@@ -152,7 +153,7 @@ export const MENUS: Readonly<Partial<Record<AppRole, readonly MenuGroup[]>>> = O
     { label: 'Winning clients', keys: ['leads', 'pipeline', 'introducers'] },
     { label: 'Clients and claims', keys: ['clients', 'calendar'] },
   ],
-  // PHASE 151b (Word answer 40, closed 24 September 2026): Clients, as the brief asked — Accounting's billing view of it:
+  // Clients, as the brief asked — Accounting's billing view of it:
   // who to chase, what waits for an invoice, what is owed. Not the client record, which it still may not read.
   ACCOUNTING: [
     { label: null, keys: ['home', 'tasks'] },
@@ -220,7 +221,7 @@ export function menuHrefs(actor: Actor): string[] {
 }
 
 /* ------------------------------------------------------------------ *
- * A MENU THAT OPENS OUT — UI TIDY PHASE 2
+ * A MENU THAT OPENS OUT
  * ------------------------------------------------------------------ */
 
 /**
@@ -243,7 +244,7 @@ export function setSubMenu(menu: SubMenu): void {
 }
 
 /**
- * UI TIDY PHASE 18: a page inside another's frame adds its own parts under the entry marked current — a claim's sections
+ * A page inside another's frame adds its own parts under the entry marked current — a claim's sections
  * under that claim, in its client's menu. With no menu set yet, they become the menu, under `title`.
  */
 export function addUnderCurrent(title: string, items: SubMenu['items']): void {
@@ -281,7 +282,7 @@ function subMenuHtml(menu: SubMenu | null): Safe {
 const MENU_BUTTON = raw('<input type="checkbox" id="navtoggle" class="navtoggle"><label for="navtoggle" class="navbutton">Menu</label>');
 
 /* ------------------------------------------------------------------ *
- * FILTERS — ONE TAB, TWO VIEWS (PHASE 135)
+ * FILTERS — ONE TAB, TWO VIEWS
  * ------------------------------------------------------------------ */
 
 /**
@@ -330,7 +331,7 @@ export const TASK_FILTERS: readonly Filter[] = Object.freeze([
 export class Shell extends Safe {
   readonly home: string;
   /**
-   * PHASE 160a: THE BACK OFFICE'S TOP BAR, drawn by `page()` above the page once it knows the page's title — the trail
+   * THE BACK OFFICE'S TOP BAR, drawn by `page()` above the page once it knows the page's title — the trail
    * that ends on that title, Admin's views, the search, Help and the user menu. Absent for the portal, which keeps its look.
    * `own` is the trail a page drew for itself (`breadcrumb` in src/shared/components.ts), moved up here unchanged so a page
    * never shows two.
@@ -348,7 +349,7 @@ const ROLE_WORDS: Readonly<Record<AppRole, string>> = Object.freeze({
 
 function displayName(db: Db | undefined, actor: Actor): string {
   if (db === undefined) return ROLE_WORDS[actor.role];
-  const u = db.get<{ display_name: string | null }>('SELECT display_name FROM users WHERE id = ?', [actor.id]);
+  const u = getUsersDisplayNameById<{ display_name: string | null }>(db, [actor.id]);
   return u?.display_name ?? ROLE_WORDS[actor.role];
 }
 
@@ -364,7 +365,7 @@ function userMenu(name: string, actor: Actor, settingsHref: string): Safe {
 
 /** The back office's header and tabs, for a staff login. */
 /**
- * 1 OCT 2026 — ADMIN'S VIEWS IN THE TOP BAR. Lakhbir: "i want the sales, accounting, survayor, admin these tabs to be
+ * ADMIN'S VIEWS IN THE TOP BAR. the owner: "i want the sales, accounting, survayor, admin these tabs to be
  * shifted next to the search box in the white space from logo to search box". Admin's choice of Home dashboard, on every
  * back-office page; the one Home is showing is marked. Nobody else has them (src/web/staff-dashboard.ts, dashView).
  */
@@ -378,7 +379,7 @@ export function staffShell(actor: Actor, view: string | null = null): Shell {
   const ctx = navContext.getStore();
   const path = ctx?.path ?? null;
   const tabs = tabsFor(actor);
-  // PHASE 135: the open-task count sits on the Tasks tab. The header's "N open tasks" link opened the same page.
+  // The open-task count sits on the Tasks tab. The header's "N open tasks" link opened the same page.
   let taskCount: Safe = raw('');
   if (ctx !== undefined && tabs.primary.some((s) => s.key === 'tasks')) {
     try {
@@ -404,7 +405,7 @@ export function staffShell(actor: Actor, view: string | null = null): Shell {
       : h`<a href="${s.href}">${s.label}${extra}</a>`;
   };
   const help = h`<a class="helplink" href="/staff/help?screen=${helpScreenFor(path ?? '/staff', actor)}">Help</a>`;
-  /* PHASE 160a, 19 October 2026 — THE SIDEBAR LAYOUT LAKHBIR CHOSE (the Cap Rebate Simple CRM design). The menu down the
+  /* THE SIDEBAR LAYOUT THE OWNER CHOSE (the Cap Rebate Simple CRM design). The menu down the
      left holds only the login's own sections, each with its icon; the search, Help, the user menu and Admin's views move
      to the top bar over the page, after the trail of where the person is. Which sections a login sees is still `tabsFor`. */
   const html = h`<nav class="appnav" aria-label="Sections"><ul class="navgroups">${tabs.groups.map((g) => h`<li class="navgroup">${
@@ -416,7 +417,7 @@ export function staffShell(actor: Actor, view: string | null = null): Shell {
 }
 
 /**
- * PHASE 160a — WHERE YOU ARE: "Cap Rebate / the section / the page". "Cap Rebate" is a link drawn before the trail (so it
+ * WHERE YOU ARE: "Cap Rebate / the section / the page". "Cap Rebate" is a link drawn before the trail (so it
  * also leads a trail a page drew for itself); the section is the one the menu marks as current; the page is the page's
  * own title, left out where it only repeats the section (Leads on the Leads list). The last step is the page itself, so
  * it is words, not a link.
@@ -431,27 +432,27 @@ function trail(section: { readonly label: string; readonly href: string } | null
     : h`<li><a href="${s.href}">${s.label}</a></li>`)}</ol></nav>`;
 }
 
-/** PHASE 160a/160b: the first step of every trail, a link to the login's own home. */
+/** The first step of every trail, a link to the login's own home. */
 function crumbRoot(home: string): Safe {
   return h`<a class="crumbroot" href="${home}">Cap Rebate</a>`;
 }
 
 /**
- * The client portal's header — simpler on purpose: their claims, their settings, sign out. PHASE 134: one company may hold
+ * The client portal's header — simpler on purpose: their claims, their settings, sign out. One company may hold
  * many claims, so the one tab is "Your claims", and it is current on every claim's own page too.
  */
 export function portalShell(actor: Actor): Shell {
   const ctx = navContext.getStore();
   const name = displayName(ctx?.db, actor);
   const current = ctx?.path === '/portal' || (ctx?.path ?? '').startsWith('/portal/claims/');
-  // UI TIDY PHASE 16: on the claims page, its sections open out under Your claims (the page names them, `setSubMenu`).
-  // PHASE 142: MESSAGES, with how many of ours the client has not read. Only for the client, on their own company.
+  // On the claims page, its sections open out under Your claims (the page names them, `setSubMenu`).
+  // MESSAGES, with how many of ours the client has not read. Only for the client, on their own company.
   const onMessages = ctx?.path === '/portal/messages' || (ctx?.path ?? '').startsWith('/portal/messages/');
   const unread = ctx?.db !== undefined && actor.role === 'CLIENT' && actor.business_id !== null && !onMessages
     ? unreadCount(ctx.db, actor, actor.business_id, 'CLIENT') : 0;
   const messages = h`<a href="/portal/messages"${onMessages ? raw(' aria-current="page"') : raw('')}>Messages${
     unread > 0 ? h` <span class="tabcount" aria-label="${unread} not read">${unread}</span>` : raw('')}</a>`;
-  /* PHASE 160b, 19 October 2026 — THE PORTAL IN THE SAME LAYOUT AS THE BACK OFFICE (Phase 160a). The menu down the left
+  /* THE PORTAL IN THE SAME LAYOUT AS THE BACK OFFICE. The menu down the left
      holds the logo and the client's two screens; Help and the user menu move to the top bar, after the trail. */
   const html = h`<nav class="appnav portalnav" aria-label="Sections"><ul class="tabs-main"><li>${current
       ? h`<a href="/portal" aria-current="page">Your claims</a>${subMenuHtml(ctx === undefined ? null : SUB_MENUS.get(ctx) ?? null)}` : h`<a href="/portal">Your claims</a>`}</li>${
@@ -462,7 +463,7 @@ export function portalShell(actor: Actor): Shell {
 }
 
 /* ------------------------------------------------------------------ *
- * HELP — WHICH TRAINING SECTION A SCREEN OPENS (PHASE 133c, B5)
+ * HELP — WHICH TRAINING SECTION A SCREEN OPENS
  * ------------------------------------------------------------------ */
 
 /**
@@ -476,17 +477,17 @@ export const HELP_SCREENS: readonly (readonly [prefix: string, code: string])[] 
   ['/staff/pipeline', 'B21'], ['/staff/tasks', 'B22'], ['/staff/next-actions', 'B24'], ['/staff/automation', 'B25'],
   ['/staff/templates', 'B26'], ['/staff/document-types', 'B29'], ['/staff/documents', 'B44'], ['/staff/introducer-rewards', 'B32'],
   ['/staff/introducers', 'B30'], ['/staff/compliance', 'B33'], ['/staff/dashboard', 'B40'], ['/staff/reports', 'B40'], ['/staff/search', 'B41'],
-  // PHASE 151b: the roles the super admin makes, before '/staff/admin' so the longer address wins.
+  // The roles the super admin makes, before '/staff/admin' so the longer address wins.
   ['/staff/admin/roles', 'B54'],
   ['/staff/admin-settings', 'B43'], ['/staff/audit', 'B45'], ['/staff/admin', 'B46'],
-  // PHASE 142: email replies to sort are part of the chat's training section.
+  // Email replies to sort are part of the chat's training section.
   ['/staff/replies', 'B49'],
 ]);
 
 export function helpScreenFor(path: string, actor?: Actor): string {
-  // PHASE 140: a company's files have their own training section, inside the Clients address.
+  // A company's files have their own training section, inside the Clients address.
   if (/^\/staff\/clients\/([A-Za-z0-9-]+)\/files$/.test(path)) return 'B47';
-  /* PHASE 151c: THE SAME ADDRESS, A DIFFERENT SCREEN. A login that reads the billing view of the Clients tab rather than
+  /* THE SAME ADDRESS, A DIFFERENT SCREEN. A login that reads the billing view of the Clients tab rather than
      the client record (Accounting, src/web/billing.ts) is trained in B55, not B5 — so the link asks who is looking, not
      only where. The same question the Clients tab itself asks (`billingViewFor`), never a role name. */
   if (actor !== undefined && (path === '/staff/clients' || path.startsWith('/staff/clients/')) && billingViewFor(actor)) return 'B55';

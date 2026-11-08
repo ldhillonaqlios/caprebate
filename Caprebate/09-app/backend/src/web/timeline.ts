@@ -61,6 +61,8 @@ import { RECIPROCITY_ACTIVITY_TYPES, TASK_ORIGINS, taskObj } from './tasks.ts';
 import { vocabLabel } from './vocabularies.ts';
 import { RUN_REASONS } from './automation.ts';
 import { documentObj, versionObj } from './documents.ts';
+import { getOutboxAtBySentAt2 } from '../integrations/index.ts';
+import { listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, listAuditLogAtKindByOutcomeKind3, listAuditLogAtKindByOutcomeKind4, listAuditLogAtWhoByKindObjectId } from '../core/index.ts';
 
 export type TimelineSubject = { readonly kind: 'organisation' | 'property' | 'claim' | 'lead'; readonly id: string };
 
@@ -546,9 +548,7 @@ function invoices(
         add({ at: i.cancelled_at, category: 'FINANCE', audience: 'STAFF_ONLY', who: i.canceller, scope,
           what: `Invoice ${number} was cancelled before it was sent, and its number recorded as cancelled` });
       }
-      for (const a of db.all<{ at: string; who: string | null }>(
-        "SELECT a.at, u.display_name AS who FROM audit_log a LEFT JOIN users u ON u.id = a.actor_id WHERE a.kind = 'INVOICE_SENT' AND a.object_id = ? ORDER BY a.seq",
-        [i.id])) {
+      for (const a of listAuditLogAtWhoByKindObjectId<{ at: string; who: string | null }>(db, [i.id])) {
         add({ at: a.at, category: 'FINANCE', audience: 'STAFF_ONLY', who: a.who, scope, what: `Invoice ${number} was recorded as sent` });
       }
       for (const n of db.all<{ recorded_at: string; basis: string; seq: number | null; who: string | null }>(
@@ -602,23 +602,12 @@ function enquiry(db: Db, column: 'claim_id' | 'lead_id', id: string, add: Add, s
 function records(db: Db, subject: TimelineSubject, biz: string | null, add: Add, orgScope: string): void {
   type Row = { at: string; kind: string; object_type: string | null; detail: string; who: string | null };
   const rows: Row[] = subject.kind === 'organisation' && biz !== null
-    ? db.all<Row>(
-      'SELECT a.at, a.kind, a.object_type, a.detail, u.display_name AS who FROM audit_log a LEFT JOIN users u ON u.id = a.actor_id ' +
-        "WHERE a.outcome = 'ALLOWED' AND a.kind IN ('ORGANISATION_UPDATED','CONTACT_CREATED','CONTACT_UPDATED','PROPERTY_CREATED'," +
-        "'PROPERTY_UPDATED','CLAIM_CREATED','CLAIM_UPDATED','LEAD_CREATED','LEAD_UPDATED','LEAD_CONVERTED','EMAIL_QUEUED') " +
-        "AND (a.object_id = ? OR json_extract(a.detail, '$.business') = ?) ORDER BY a.seq", [biz, biz])
+    ? listAuditLogAtKindByOutcomeKind3<Row>(db, [biz, biz])
     : subject.kind === 'claim'
-      ? db.all<Row>(
-        'SELECT a.at, a.kind, a.object_type, a.detail, u.display_name AS who FROM audit_log a LEFT JOIN users u ON u.id = a.actor_id ' +
-          "WHERE a.outcome = 'ALLOWED' AND a.kind IN ('CLAIM_CREATED','CLAIM_UPDATED','EMAIL_QUEUED') " +
-          "AND ((a.object_type = 'claim' AND a.object_id = ?) OR json_extract(a.detail, '$.claim') = ?) ORDER BY a.seq", [subject.id, subject.id])
+      ? listAuditLogAtKindByOutcomeKind<Row>(db, [subject.id, subject.id])
       : subject.kind === 'property'
-        ? db.all<Row>(
-          'SELECT a.at, a.kind, a.object_type, a.detail, u.display_name AS who FROM audit_log a LEFT JOIN users u ON u.id = a.actor_id ' +
-            "WHERE a.outcome = 'ALLOWED' AND a.kind IN ('PROPERTY_CREATED','PROPERTY_UPDATED') AND a.object_id = ? ORDER BY a.seq", [subject.id])
-        : db.all<Row>(
-          'SELECT a.at, a.kind, a.object_type, a.detail, u.display_name AS who FROM audit_log a LEFT JOIN users u ON u.id = a.actor_id ' +
-            "WHERE a.outcome = 'ALLOWED' AND a.kind IN ('LEAD_CREATED','LEAD_UPDATED','LEAD_CONVERTED') AND a.object_id = ? ORDER BY a.seq", [subject.id]);
+        ? listAuditLogAtKindByOutcomeKind4<Row>(db, [subject.id])
+        : listAuditLogAtKindByOutcomeKind2<Row>(db, [subject.id]);
   for (const r of rows) {
     const detail = JSON.parse(r.detail) as Record<string, unknown>;
     add({ at: r.at, category: 'RECORD', audience: 'STAFF_ONLY', who: r.who ?? (r.kind === 'LEAD_CREATED' ? 'the website' : null),
@@ -722,8 +711,7 @@ export function lastContactFor(db: Db, c: { id: string; email: string | null; la
   const task = db.get<{ at: string | null }>(
     "SELECT MAX(completed_at) AS at FROM staff_tasks WHERE contact_id = ? AND status = 'COMPLETED' AND activity_type IN ('CALL','EMAIL','MEETING')",
     [c.id])?.at ?? null;
-  const sent = c.email === null ? null : db.get<{ at: string | null }>(
-    'SELECT MAX(sent_at) AS at FROM outbox WHERE sent_at IS NOT NULL AND lower(to_email) = lower(?)', [c.email])?.at ?? null;
+  const sent = c.email === null ? null : getOutboxAtBySentAt2<{ at: string | null }>(db, [c.email])?.at ?? null;
   const candidates = [
     { at: task, source: 'a completed call, email or meeting task' },
     { at: sent, source: 'an email we sent' },

@@ -1,6 +1,6 @@
 /**
  * GLOBAL SEARCH, THE LIST CONTROLS, SAVED VIEWS AND CSV EXPORT — the routes and the
- * blocks. CRM 9 of 10, 12 September 2026.
+ * blocks. CRM 9 of 10.
  *
  * Same shape as every other section: it returns 'not-mine' for anything it does not
  * own. It is mounted in staff.ts BEFORE the CRM and pipeline sections, because the
@@ -37,7 +37,7 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 const BASE: Readonly<Record<LI.ListKey, string>> = Object.freeze({ CLAIMS: '/staff/claims', LEADS: '/staff/leads' });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -124,7 +124,7 @@ function notAppliedWords(list: LI.ListKey, keys: readonly string[]): string {
 
 export function listControls(
   list: LI.ListKey, v: LI.ListView<unknown>, views: readonly LI.SavedView[], mayShare: boolean, current: string | null,
-  /** PHASE 137: `keep` rides along on every filter (the leads' List view); `noSort` leaves out the order, where a page has its own. */
+  /** `keep` rides along on every filter (the leads' List view); `noSort` leaves out the order, where a page has its own. */
   opts: { readonly keep?: Readonly<Record<string, string>>; readonly noSort?: boolean } = {},
 ): Safe {
   const base = BASE[list];
@@ -171,7 +171,7 @@ export function listControls(
 }
 
 /**
- * PHASE 133a — A SORTABLE COLUMN HEADING. A heading is a link to the same list with its order changed and every filter
+ * A SORTABLE COLUMN HEADING. A heading is a link to the same list with its order changed and every filter
  * kept, for an order this login may already choose in the form beside the list (`v.sorts`, which leaves out what the
  * login may not read, such as the value). Any other heading is plain words. The current order is said in words.
  */

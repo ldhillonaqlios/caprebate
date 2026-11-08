@@ -26,6 +26,7 @@ import type { Db } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
 import { authorise, can, type Actor } from '../core/index.ts';
 import { stageLabel } from '../core/index.ts';
+import { getUsersIdByIdRole2, listUsersIdNameByRoleDisabledAt2 } from '../core/index.ts';
 
 export const FUNNEL_CEILING = 'FUNNEL_CEILING';
 
@@ -48,8 +49,7 @@ const objFor = (c: ClaimRow, surveyor_id: string | null) =>
 
 /** The surveyor logins a job may go to, by name. */
 export function surveyorChoices(db: Db): { id: string; name: string }[] {
-  return db.all<{ id: string; name: string }>(
-    "SELECT id, display_name AS name FROM users WHERE role = 'SURVEYING' AND disabled_at IS NULL ORDER BY display_name, id");
+  return listUsersIdNameByRoleDisabledAt2<{ id: string; name: string }>(db);
 }
 
 export type SurveyJobPanel = {
@@ -118,7 +118,7 @@ export function openSurveyJob(
     'SELECT u.display_name AS surveyor FROM surveyor_jobs j LEFT JOIN users u ON u.id = j.surveyor_id WHERE j.claim_id = ? LIMIT 1', [claim_id]);
   if (open !== undefined) return { ok: false, why: SURVEY_JOB_WORDS.open(open.surveyor ?? 'nobody assigned') };
   const surveyor = surveyor_id === null ? undefined
-    : d.db.get<{ id: string }>("SELECT id FROM users WHERE id = ? AND role = 'SURVEYING' AND disabled_at IS NULL", [surveyor_id]);
+    : getUsersIdByIdRole2<{ id: string }>(d.db, [surveyor_id]);
   if (surveyor === undefined) return { ok: false, why: SURVEY_JOB_WORDS.surveyor, field: 'surveyor_id' };
   if (c.assessment_id === null) return { ok: false, why: SURVEY_JOB_WORDS.no_assessment };
   const assessment_id = c.assessment_id;

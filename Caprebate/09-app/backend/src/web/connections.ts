@@ -41,6 +41,8 @@ import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError
 import { singleFile } from '../core/index.ts';
 import { localStamp, localPartsOf } from '../shared/index.ts';
 import { ADDRESS_SEARCH_CAP, searchesToday } from '../integrations/index.ts';
+import { getMailboxReadsAtFailedById, getOutboxAtBySentAt } from '../integrations/index.ts';
+import { listAuditLogDetailSByKindM } from '../core/index.ts';
 
 /** One outside service as the page shows it. */
 export type Connection = {
@@ -142,10 +144,7 @@ export type ConnectionRow = {
 
 /** The newest CONNECTOR_CALLED row for each service, in one query. */
 function lastCalls(app: App): Map<string, { at: string; result: string; status: number | null }> {
-  const rows = app.db.all<{ s: string | null; at: string; result: string | null; status: number | null }>(
-    `SELECT json_extract(a.detail, '$.service') AS s, a.at, json_extract(a.detail, '$.result') AS result, json_extract(a.detail, '$.status') AS status
-       FROM audit_log a JOIN (SELECT json_extract(detail, '$.service') AS s, max(seq) AS m FROM audit_log WHERE kind = 'CONNECTOR_CALLED' GROUP BY 1) x
-         ON x.m = a.seq`);
+  const rows = listAuditLogDetailSByKindM<{ s: string | null; at: string; result: string | null; status: number | null }>(app.db);
   const out = new Map<string, { at: string; result: string; status: number | null }>();
   for (const r of rows) if (r.s !== null) out.set(r.s, { at: r.at, result: r.result ?? 'unknown', status: r.status });
   return out;
@@ -154,11 +153,11 @@ function lastCalls(app: App): Map<string, { at: string; result: string; status: 
 /** The last time email was sent, or the mailbox read, from their own records (they are not CONNECTOR_CALLED rows). */
 function lastMail(app: App, id: string): { at: string; result: string; status: number | null } | null {
   if (id === 'IONOS_EMAIL') {
-    const r = app.db.get<{ at: string | null }>('SELECT max(sent_at) AS at FROM outbox WHERE sent_at IS NOT NULL');
+    const r = getOutboxAtBySentAt<{ at: string | null }>(app.db);
     return r?.at == null ? null : { at: r.at, result: 'SENT', status: null };
   }
   if (id === 'IONOS_MAILBOX') {
-    const r = app.db.get<{ at: string; failed: number }>('SELECT last_try_at AS at, last_failed AS failed FROM mailbox_reads WHERE id = 1');
+    const r = getMailboxReadsAtFailedById<{ at: string; failed: number }>(app.db);
     return r === undefined ? null : { at: r.at, result: r.failed === 1 ? 'FAILED' : 'OK', status: null };
   }
   return null;

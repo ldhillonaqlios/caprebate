@@ -1,14 +1,14 @@
 /**
- * NO EM DASHES ON SCREEN — PHASE 160c, 19 October 2026.
+ * NO EM DASHES ON SCREEN.
  *
- * Lakhbir: "remove the — AI uses". The house rule is that copy a person reads never uses the long dash; it uses a comma,
+ * the owner: "remove the — AI uses". The house rule is that copy a person reads never uses the long dash; it uses a comma,
  * a colon or a full stop. There are well over a thousand in the screens' words and in the names records carry ("Company —
  * main site"), so rather than rewrite each, `page()` (src/shared/html.ts) passes every finished page through this, the way it
  * already passes dates and "(required)" through theirs. It changes only the words a person reads:
  *
  *   · text between tags, and the four attributes a person reads or hears (title, alt, placeholder, aria-label);
  *   · never inside a script, a style, a text box (what someone typed stays as they typed it), pre or code, nor inside an
- *     element marked `data-as-made` (Phase 160d: an older approved report, drawn in the words it was made in);
+ *     element marked `data-as-made`;
  *   · never an attribute a form sends back (value, name, href), so nothing a form posts is changed on its way round.
  *
  * THE RULES, for each long dash in a run of words (a spaced "a — b" or an unspaced "a—b"):
@@ -71,7 +71,7 @@ export function plainDashes(html: string): string {
   }
   let out = '';
   let skip: string | null = null;
-  // PHASE 160d: an element marked `data-as-made` (an approved report's older version) keeps its words exactly, however
+  // An element marked `data-as-made` (an approved report's older version) keeps its words exactly, however
   // many elements of its own kind it holds, so the depth is counted.
   let depth = 0;
   let last = 0;
@@ -97,7 +97,7 @@ export function plainDashes(html: string): string {
 }
 
 /**
- * PHASE 160d, 19 October 2026 — PLAIN TEXT, LINE BY LINE: an email's subject and body, a task's title, an export's
+ * PLAIN TEXT, LINE BY LINE: an email's subject and body, a task's title, an export's
  * column name. Each line is one run of words for the rules above, so a dash in one paragraph never pairs with one in
  * another.
  */

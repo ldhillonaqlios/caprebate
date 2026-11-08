@@ -34,6 +34,7 @@ import { poundsWords, percentWords, quantityWords } from './pack-sums.ts';
 import { indexReading, insuranceReading, prelimsReading, rateFlagReading, shareFlagReading, INCLUDES_WORDS } from './pack-cost-model.ts';
 import { packDateIso, propertyLine } from './survey-pack.ts';
 import type { Env } from '../integrations/index.ts';
+import { getRegisterRecordsFieldsJsonByBusinessIdSourceId } from '../integrations/index.ts';
 
 /** Where a row's value comes from — shown beside it, so nothing reads as more certain than it is. */
 export type RowFrom = 'the pack' | 'the claim' | 'Land Registry' | 'the energy certificate' | 'Homedata (estimate)' | 'the client'
@@ -75,9 +76,7 @@ const NOT_WRITTEN = 'not written yet';
 const NOT_WORKED = 'not worked out yet';
 
 function record(db: Db, business_id: string, property_id: string | null, source: string): Record<string, unknown> | null {
-  const r = db.get<{ fields_json: string }>(
-    'SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = ? AND (property_id = ? OR ? IS NULL) ORDER BY obtained_at DESC LIMIT 1',
-    [business_id, source, property_id, property_id]);
+  const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId<{ fields_json: string }>(db, [business_id, source, property_id, property_id]);
   if (r === undefined) return null;
   try { const o = JSON.parse(r.fields_json) as unknown; return o !== null && typeof o === 'object' ? o as Record<string, unknown> : null; } catch { return null; }
 }

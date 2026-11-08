@@ -1,9 +1,9 @@
 /**
- * THE LAND BOUNDARY'S TEST LOOKUP — ONE COUNCIL'S FILE, UNDER LAKHBIR'S FIVE CONDITIONS. Phase 151l, 28 September 2026.
+ * THE LAND BOUNDARY'S TEST LOOKUP — ONE COUNCIL'S FILE, UNDER THE OWNER'S FIVE CONDITIONS.
  *
- * WHY IT EXISTS. The land boundary fetcher (src/integrations/connectors/inspire.ts, Phase 150) is built and switched off, and HM Land
+ * WHY IT EXISTS. The land boundary fetcher is built and switched off, and HM Land
  * Registry does not publish the element names inside its GML, so its reader was written tolerantly and the one page
- * says "the first allowed download must confirm the shape". Word question 170 was answered on 25 September 2026 (yes,
+ * says "the first allowed download must confirm the shape". Word question 170 was answered (yes,
  * on five conditions), and Phase 151g built the conditions into the smoke command, which did not cover a download. This
  * file is the download, as a test lookup: `smoke HMLR_INSPIRE`.
  *
@@ -28,8 +28,8 @@
  *
  * THE SWITCH STAYS FALSE. BOUNDARY_FETCHING_SWITCHED_ON is read nowhere here and changed nowhere: this turns the fetcher
  * on for ONE call, in a command a person typed, the way smokeOne turns one register on in a map of its own. Both gates
- * are reported shut on the audit row, because a test lookup opens neither. test/phase151l.test.ts proves the shipped
- * constant is untouched, and test/phase150.test.ts allows this file, and only this file besides the site area function,
+ * are reported shut on the audit row, because a test lookup opens neither. test/integrations/boundary-first-download.test.ts proves the shipped
+ * constant is untouched, and test/integrations/boundary-fetcher.test.ts allows this file, and only this file besides the site area function,
  * to name the fetcher.
  */
 import type { Db } from '../../core/index.ts';
@@ -38,6 +38,8 @@ import { RateLimiter, type CallDeps } from './http.ts';
 import { inspireBoundaryFetcher } from './inspire.ts';
 import { INSPIRE_COUNCILS, inspireFileForLad } from './inspire-councils.ts';
 import { pointInBritishNationalGrid } from './site-area.ts';
+import { listRegisterRecordsFieldsJsonBySourceId } from '../data.ts';
+import { listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../data-borrowed.ts';
 
 /** The connector's name in the test lookup log and on the command line: the source register's own. */
 export const BOUNDARY_TEST_SOURCE = 'HMLR_INSPIRE';
@@ -115,9 +117,9 @@ export function boundaryClientMatchIn(db: Db, v: BoundaryTestValues): { readonly
   let councils: { lad_code: string | null }[];
   let supplier: { fields_json: string }[];
   try {
-    entered = db.all("SELECT easting, northing FROM site_area_inputs WHERE kind = 'POINT'");
-    councils = db.all("SELECT lad_code FROM site_area_inputs WHERE kind = 'NEIGHBOUR_COUNCIL'");
-    supplier = db.all("SELECT fields_json FROM register_records WHERE source_id = 'HOMEDATA_ADDRESS'");
+    entered = listSiteAreaInputsEastingNorthingByKind(db);
+    councils = listSiteAreaInputsLadCodeByKind(db);
+    supplier = listRegisterRecordsFieldsJsonBySourceId(db);
   } catch (e: unknown) {
     return { ok: false, why: `the clients in CAPREBATE_DB could not be read (${e instanceof Error ? e.message : String(e)}), so it is not known that these values are nobody's` };
   }

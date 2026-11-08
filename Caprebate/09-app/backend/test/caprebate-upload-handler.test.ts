@@ -28,13 +28,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   type DocType, type ModelFn, type EgressEntry, type RawExtraction,
-} from '../src/documents/caprebate-document-pipeline.ts';
+} from '../src/modules/claims/documents/document-pipeline.ts';
 import {
   RECEIPT_CONTRACT, INGESTION_BOUNDARY, QUARANTINE_TTL_MINUTES,
   FAIL_CLOSED_SETTINGS, ClientDocIngestionError,
   type QuarantineObject, type RawFileRecord, type IngestionSettings,
   type IdentifiedPerson,
-} from '../src/documents/caprebate-client-doc-ingestion.ts';
+} from '../src/modules/claims/documents/client-doc-ingestion.ts';
 import { NameExclusionError } from '../src/integrations/registers/name-exclusion.ts';
 import {
   UploadHandlerError, UPLOAD_LIMITS, PROMOTION_RULE, CONTRACT_COVERAGE,
@@ -46,7 +46,7 @@ import {
   type ObjectStore, type TextExtractor, type DocTypeClassifier,
   type AuditSink, type AuditEvent, type UploadHandlerDeps, type UploadJob,
   type PresignedUpload,
-} from '../src/documents/caprebate-upload-handler.ts';
+} from '../src/modules/claims/documents/upload-handler.ts';
 
 /* ------------------------------------------------------------------ *
  * Doubles

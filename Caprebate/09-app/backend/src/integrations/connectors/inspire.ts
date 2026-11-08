@@ -1,10 +1,10 @@
 /**
- * THE LAND BOUNDARY FETCHER — HM LAND REGISTRY'S INSPIRE INDEX POLYGONS. Phase 150, 24 September 2026.
+ * THE LAND BOUNDARY FETCHER — HM LAND REGISTRY'S INSPIRE INDEX POLYGONS.
  * BUILT FOR REAL AND SWITCHED OFF.
  *
  * WHAT IT IS. The real `BoundaryFetcher` that 09-app/backend/src/registers/caprebate-boundary-import.ts has waited for since
- * Phase 78. That module's DEFAULT_FETCHER always throws, and it still does: this fetcher is used only when a caller
- * injects it into `fetchAndImportBoundary`, and since Phase 151a exactly one does — src/integrations/connectors/site-area.ts, which
+ * That module's DEFAULT_FETCHER always throws, and it still does: this fetcher is used only when a caller
+ * injects it into `fetchAndImportBoundary`, and exactly one does — src/integrations/connectors/site-area.ts, which
  * works out a property's site area from it, switched off by the same word. Given a council's file and a British
  * National Grid point for the property, it:
  *
@@ -28,13 +28,13 @@
  * element whose name is INSPIREID, and one gml:Polygon with posList rings. It is STRICT about everything else: a
  * feature it cannot read makes the whole file unreadable, because a polygon we skipped could be the one that holds
  * the point, and "exactly one polygon contains it" would then be a guess. THE FIRST ALLOWED DOWNLOAD MUST CONFIRM
- * THE SHAPE. "Can we make a few small, logged test lookups to check a data connector works?" was answered by Lakhbir on
- * 25 September 2026 (yes, on five conditions), and Phase 151l (28 September 2026) built the download as a test lookup
+ * THE SHAPE. "Can we make a few small, logged test lookups to check a data connector works?" was answered by the owner on
+ * (yes, on five conditions), and Phase 151l built the download as a test lookup
  * under them: `smoke HMLR_INSPIRE`, src/integrations/connectors/boundary-test-lookup.ts. Until a person runs it, no file has been
  * downloaded, and every test here runs on an invented fixture with no network.
  *
  * NOTHING HERE DECIDES WHAT THE AREA MAY BE USED FOR. The module's CURRENT_LICENCE_PERMISSION does: our own checks
- * only, and no boundary, map or coordinate in a client report (Lakhbir, 15 September 2026).
+ * only, and no boundary, map or coordinate in a client report.
  */
 
 import { crc32, inflateRawSync } from 'node:zlib';
@@ -73,14 +73,14 @@ export type InspireFetchInput = {
   /** The gates as they stood, for the audit row. `switched_on` is filled in here, from the switch. */
   readonly gate: Omit<GateSnapshot, 'switched_on'>;
   /**
-   * Phase 151a. Where a council's file is kept for the month (src/integrations/connectors/inspire-store.ts). Given, a kept copy of
+   * Where a council's file is kept for the month (src/integrations/connectors/inspire-store.ts). Given, a kept copy of
    * this council's current release is read instead of downloading again, and a fresh download is kept. Absent or
    * null, every lookup downloads. Consulted only after every refusal above has passed, so it cannot fire anything.
    */
   readonly file_store?: InspireFileStore | null;
   /**
    * TESTS ONLY. Absent, the fetcher reads BOUNDARY_FETCHING_SWITCHED_ON, which is false. A test in
-   * test/phase150.test.ts fails if any file under src/ other than this one names the fetcher, so no caller can pass it.
+   * test/integrations/boundary-fetcher.test.ts fails if any file under src/ other than this one names the fetcher, so no caller can pass it.
    */
   readonly switched_on?: boolean;
 };
@@ -122,7 +122,7 @@ export function inspireBoundaryFetcher(input: InspireFetchInput): BoundaryFetche
       refuse('E_INVALID_POINT', 'The property has no usable easting and northing, so there is nothing to look for. Nothing was sent.');
     }
 
-    /* PHASE 151a: ONE FILE A COUNCIL A MONTH. A kept copy of this council's current release serves every property in
+    /* ONE FILE A COUNCIL A MONTH. A kept copy of this council's current release serves every property in
        it; only a miss downloads, and a download that opens is kept. A kept file that will not open is dropped. */
     const now = input.deps.now();
     const release = inspireReleaseOf(now);

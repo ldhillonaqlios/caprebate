@@ -85,40 +85,40 @@ export const PUBLIC_MARK =
   '<rect class="mk-key" x="22" y="35.5" width="4" height="4" rx="1"/><rect class="mk-key" x="28" y="35.5" width="4" height="4" rx="1"/></svg>';
 
 /**
- * PHASE 158b (F32, the Friary House run): the staff footer said "no signature provider is connected" after signing was
+ * The staff footer said "no signature provider is connected" after signing was
  * built in house (157c) and switched on for the test copy (PR 32). What stays true: nothing is paid, and no real
  * contract can be signed - the test copy is never one.
  */
 export const STAFF_FOOTER = 'This is a test system. No payment is taken, and no real contract can be signed.';
 
-/** PHASE 160a: the trail a page drew for itself (`breadcrumb`, src/shared/components.ts) — its first one only. */
+/** The trail a page drew for itself (`breadcrumb`, src/shared/components.ts) — its first one only. */
 const OWN_TRAIL = /<nav class="crumbs" aria-label="Where you are"><ol>[\s\S]*?<\/ol><\/nav>/;
 
 export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boolean }): string {
-  // PHASE 133a: a header that carries its own home (the back office's or the portal's) is drawn as the application
+  // A header that carries its own home (the back office's or the portal's) is drawn as the application
   // header — the name, the search, my open tasks, the user menu, then the tabs. Anything else is the public header.
   const shell = opts.nav !== undefined && 'home' in opts.nav && typeof (opts.nav as { home?: unknown }).home === 'string';
   const home = shell ? (opts.nav as unknown as { home: string }).home : '/';
-  // PHASE 133c — THE CAP REBATE BRAND. The name a person reads is "Cap Rebate", two words (brand book slide 1). The
+  // THE CAP REBATE BRAND. The name a person reads is "Cap Rebate", two words (brand book slide 1). The
   // supplied mono-ink lockup is drawn at 120 px wide (the minimum is 100) on white, top-left, on every page that is not
   // the back office: the sign-in page, the public pages and the client portal. The back office shows the name in the
   // heading font, because the stacked lockup is illegible at the height of a working header and no horizontal lockup
   // or icon-only mark exists yet (slide 24). Phase 133a's invented "C" square is gone.
-  // PHASE 133d (D1): every required field says "(required)" in words, put into its label here (src/core/required.ts).
+  // Every required field says "(required)" in words, put into its label here (src/core/required.ts).
   const staff = shell && home === '/staff';
-  // 29 SEPTEMBER 2026: the public pages (the assessment, sign-in, the enquiry's thank-you) wear the new home page's
-  // colours and its mark — the calculator drawn as a house, with the name beside it (Lakhbir: "when someone clicks am i
+  // The public pages (the assessment, sign-in, the enquiry's thank-you) wear the new home page's
+  // colours and its mark — the calculator drawn as a house, with the name beside it (the owner: "when someone clicks am i
   // eligible it matches the colours of the new home page"). The client portal keeps the supplied lockup.
   const brand = !shell
     ? h`<a class="brandmark" href="/" aria-label="Cap Rebate, home">${raw(PUBLIC_MARK)}<span class="wm">Cap Rebate</span></a>`
-    // PHASE 160c, 19 October 2026: the back office and the portal wear the home page's mark and wordmark (still, not
-    // animated), with a line under the name saying which side this is (Lakhbir: "ensure our branding from the home page
+    // The back office and the portal wear the home page's mark and wordmark (still, not
+    // animated), with a line under the name saying which side this is (the owner: "ensure our branding from the home page
     // matches the back end"). The supplied lockup is no longer drawn on these pages.
     : h`<a class="brandmark" href="${home}" aria-label="Cap Rebate, home">${raw(PUBLIC_MARK)}<span class="wm">Cap Rebate<span class="brandsub">${
       staff ? 'Back office' : 'Client portal'}</span></span></a>`;
-  // PHASE 160a, 19 October 2026: THE BACK OFFICE'S TOP BAR (src/core/navigation.ts, Shell.bar) — where you are, then the
+  // THE BACK OFFICE'S TOP BAR (src/core/navigation.ts, Shell.bar) — where you are, then the
   // search, Help and the user menu. A trail the page drew for itself is moved up into it, so the page never shows two.
-  // PHASE 160b: the client portal's too (where you are, Help and the user menu; the portal has no search).
+  // The client portal's too (where you are, Help and the user menu; the portal has no search).
   const bar = shell ? (opts.nav as unknown as { bar?: (title: string, own: Safe | null) => Safe }).bar : undefined;
   let bodyHtml = opts.body.html;
   let barHtml = '';
@@ -127,7 +127,7 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
     if (own !== null) bodyHtml = bodyHtml.slice(0, own.index) + bodyHtml.slice(own.index + own[0].length);
     barHtml = h`<div class="crumbbar">${bar(opts.title, own === null ? null : raw(own[0]))}</div>`.html;
   }
-  // PHASE 160c, 19 October 2026: no long dashes in the words a person reads (src/shared/plain-dashes.ts).
+  // No long dashes in the words a person reads (src/shared/plain-dashes.ts).
   return plainDashes(
     '<!doctype html>\n' +
     h`<html lang="en-GB"><head><meta charset="utf-8">

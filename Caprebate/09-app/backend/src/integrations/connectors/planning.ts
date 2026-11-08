@@ -1,6 +1,6 @@
 /**
  * PLANNING APPLICATIONS AT THE PROPERTY — planning.data.gov.uk, then PlanIt. ENGLAND AND WALES.
- * Phase 146c, 23 September 2026. Switched off: REGISTER_SWITCHES.PLANNING is false.
+ * Switched off: REGISTER_SWITCHES.PLANNING is false.
  *
  * THE HIGHEST-RISK SOURCE IN THE REGISTER (the name exclusion register, PLANNING's note): a planning record can carry
  * applicants, agents, objectors and neighbours, none of whom is our client. So only five fields are ever read — the
@@ -99,7 +99,7 @@ export function applicationFields(a: Application): Record<string, unknown> {
 }
 
 /**
- * PHASE 146h: `took` is the candidate we are keeping and `why` says how we came by it — an ACCEPT's own words, or a
+ * `took` is the candidate we are keeping and `why` says how we came by it — an ACCEPT's own words, or a
  * person's pick. It used to take the whole match and read `m.best`, which could only ever be an ACCEPT.
  */
 function kept(took: Scored<Application[]>, why: string, where: string, calls: CallResult[]): LookupResult {
@@ -121,7 +121,7 @@ function kept(took: Scored<Application[]>, why: string, where: string, calls: Ca
 const planningKey = (apps: Application[]): string => apps[0]?.reference ?? '';
 
 /**
- * PHASE 146h: THE TWO SERVICES ARE ASKED IN ORDER AND A PICK BELONGS TO ONE OF THEM. A choice made from
+ * THE TWO SERVICES ARE ASKED IN ORDER AND A PICK BELONGS TO ONE OF THEM. A choice made from
  * planning.data.gov.uk's list must not be looked for in PlanIt's, so the pick is applied per service and a key that
  * is not in THIS service's list is simply not a choice here — the next service is asked as it always was. Only when
  * a choice was made and neither service holds it does the lookup report that it has gone.

@@ -25,6 +25,7 @@ import { can, type Actor } from '../core/index.ts';
 import { SENT_SECRET_KINDS } from '../integrations/index.ts';
 import { localStamp } from '../shared/index.ts';
 import { emailsReadUntil } from './messages.ts';
+import { getOutboxCOALESCEThreadKeyKById } from '../integrations/index.ts';
 
 export type ChainEmail = {
   readonly id: string; readonly at: string; readonly when: string; readonly ours: boolean;
@@ -105,7 +106,7 @@ export function emailChains(db: Db, actor: Actor, who: { business_id: string | n
       let key = e.id;
       if (e.matched_outbox_id !== null) {
         key = keyOf.get(e.matched_outbox_id)
-          ?? db.get<{ k: string }>('SELECT COALESCE(thread_key, id) AS k FROM outbox WHERE id = ?', [e.matched_outbox_id])?.k ?? e.id;
+          ?? getOutboxCOALESCEThreadKeyKById<{ k: string }>(db, [e.matched_outbox_id])?.k ?? e.id;
       }
       items.push({
         id: e.id, key, at: e.received_at, when: localStamp(e.received_at, nowIso), ours: false,

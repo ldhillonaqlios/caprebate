@@ -1,5 +1,5 @@
 /**
- * WHAT A FREE LOOKUP IS ASKED ABOUT, AND WHICH PART OF THE UK A PROPERTY IS IN. Phase 146c, 23 September 2026.
+ * WHAT A FREE LOOKUP IS ASKED ABOUT, AND WHICH PART OF THE UK A PROPERTY IS IN.
  *
  * Its own small file so each connector can read it without importing src/integrations/connectors/free-registers.ts, which imports
  * every connector: one direction only, and no cycle to trip over.
@@ -8,6 +8,7 @@
 import type { Db } from '../../core/index.ts';
 import type { Bundle } from './registers.ts';
 import { CB } from '../../shared/index.ts';
+import { getBusinessesNameLegalNameById, getPropertiesIdAddressLine1ByBusinessId } from '../data-borrowed.ts';
 
 export type Nation = 'england' | 'wales' | 'scotland' | 'northern_ireland';
 
@@ -21,7 +22,7 @@ export type TypedProperty = {
   /** As recorded; null when nobody has said. Never assumed to be England. */
   readonly jurisdiction: Nation | null;
   /**
-   * PHASE 156f: the UPRN the client picked from the Homedata list at the assessment (migration 092), or null. A
+   * The UPRN the client picked from the Homedata list at the assessment (migration 092), or null. A
    * client's pick, not a register fact: the paid address lookup checks it belongs to this address before it uses it.
    */
   readonly uprn?: string | null;
@@ -40,11 +41,8 @@ export type ResearchSubject = {
 const NATIONS: readonly Nation[] = ['england', 'wales', 'scotland', 'northern_ireland'];
 
 export function researchSubject(db: Db, business_id: string): ResearchSubject {
-  const b = db.get<{ name: string; legal_name: string | null; company_number: string | null; sector: string | null }>(
-    'SELECT name, legal_name, company_number, sector FROM businesses WHERE id = ?', [business_id]);
-  const p = db.get<{ id: string; address_line_1: string | null; address_line_2: string | null; town: string | null; postcode: string | null; jurisdiction: string | null; uprn: string | null }>(
-    'SELECT id, address_line_1, address_line_2, town, postcode, jurisdiction, uprn FROM properties WHERE business_id = ? ' +
-      'ORDER BY created_at ASC, id ASC LIMIT 1', [business_id]);
+  const b = getBusinessesNameLegalNameById<{ name: string; legal_name: string | null; company_number: string | null; sector: string | null }>(db, [business_id]);
+  const p = getPropertiesIdAddressLine1ByBusinessId<{ id: string; address_line_1: string | null; address_line_2: string | null; town: string | null; postcode: string | null; jurisdiction: string | null; uprn: string | null }>(db, [business_id]);
   const legal = b?.legal_name?.trim() ?? '';
   const number = b?.company_number?.trim() ?? '';
   return {
@@ -74,7 +72,7 @@ export function nationOf(subject: ResearchSubject, earlier: ReadonlyMap<string, 
 }
 
 /**
- * PHASE 157c: the nation from the postcode check's country (postcodes.io: "England", "Wales", "Scotland", "Northern
+ * The nation from the postcode check's country (postcodes.io: "England", "Wales", "Scotland", "Northern
  * Ireland"). Anything else - the Channel Islands, the Isle of Man, a blank - is not a nation we cover, so null (N4).
  */
 export function nationFromCountry(country: string | null | undefined): Nation | null {

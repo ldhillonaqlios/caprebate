@@ -75,7 +75,7 @@ export function readZipEntryFromBuffer(buf: Buffer, names: readonly string[]): B
 }
 
 /**
- * PHASE 156c: THE NAMES IN A ZIP, in the order its central directory lists them. The same walk as above, reading names
+ * THE NAMES IN A ZIP, in the order its central directory lists them. The same walk as above, reading names
  * only; nothing is inflated. Throws like the reader when the file is not a zip.
  */
 export function listZipEntries(buf: Buffer): string[] {

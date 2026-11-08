@@ -1,12 +1,12 @@
 /**
- * FROM A COUNCIL'S ONS CODE TO HM LAND REGISTRY'S FILE NAME. Phase 151a, 24 September 2026.
+ * FROM A COUNCIL'S ONS CODE TO HM LAND REGISTRY'S FILE NAME.
  *
  * The ONS postcode table gives a property's local authority as a code ('E07000223'); HM Land Registry publishes the
  * INSPIRE Index Polygons as one file per council under its own spelling of the council's name
  * ('Adur_District_Council'). This table joins the two, and it is DERIVED FROM THE TWO PUBLISHED LISTS, NEVER GUESSED:
  *
  *   · HM Land Registry's 318 file names — src/integrations/connectors/inspire-authorities.ts, read 24 September 2026 from
- *     https://use-land-property-data.service.gov.uk/datasets/inspire/download (published 6 September 2026);
+ *     https://use-land-property-data.service.gov.uk/datasets/inspire/download;
  *   · ONS's "Local Authority Districts (April 2025) Names and Codes in the UK" — the feature service
  *     LAD_APR_2025_UK_NC_v2 on the ONS Open Geography Portal, read 24 September 2026. Its England and Wales rows
  *     (codes beginning E and W) number 318, the same as HM Land Registry's files. No newer names-and-codes list was

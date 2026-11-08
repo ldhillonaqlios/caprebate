@@ -1,5 +1,5 @@
 /**
- * A SMALL PDF WRITER — plain text pages, for the signed engagement letter. Phase 146f, 22 September 2026.
+ * A SMALL PDF WRITER — plain text pages, for the signed engagement letter.
  *
  * No dependency. PDF 1.4, A4, the standard Helvetica and Helvetica-Bold fonts (every PDF reader has them, so nothing
  * is embedded), WinAnsi encoding. Text is written as hexadecimal strings, so no character in the letter can end a
@@ -10,7 +10,7 @@
 export type PdfLine = { readonly text: string; readonly bold?: boolean; readonly size?: number; readonly gap?: number; readonly ink?: Ink };
 
 /**
- * PHASE 157c, 6 October 2026 — A DRAWN SIGNATURE. Strokes as points from 0 to 1000 across and down a box, drawn as
+ * A DRAWN SIGNATURE. Strokes as points from 0 to 1000 across and down a box, drawn as
  * plain vector lines (no image), so the same strokes always give the same bytes. `width` and `height` are the box's
  * size in points. A line with ink has no text; it takes the box's height on the page.
  */

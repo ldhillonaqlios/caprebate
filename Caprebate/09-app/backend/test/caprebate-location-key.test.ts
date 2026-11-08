@@ -31,7 +31,7 @@ import {
 } from '../src/integrations/postcodes/location-key.ts';
 import { inMemoryPostcodeStore } from '../src/integrations/postcodes/postcode-store.ts';
 import type { PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-authority.ts';
-import COST_MODEL from '../src/costing/caprebate-cost-model.cjs';
+import COST_MODEL from '../src/modules/survey/costing/cost-model.cjs';
 
 const CM = COST_MODEL as unknown as {
   CB_P9_GATES: Record<string, boolean>;

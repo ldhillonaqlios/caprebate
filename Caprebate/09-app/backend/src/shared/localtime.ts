@@ -1,7 +1,7 @@
 /**
  * LOCAL TIME — THE ONLY PLACE IN THIS APPLICATION THAT KNOWS ABOUT A TIMEZONE.
  *
- * Phase 113a, 9 September 2026. Until this file existed every screen printed
+ * 9 September 2026. Until this file existed every screen printed
  * UTC and said so, which was honest and wrong for eight months of the year:
  * a member of staff who set "09:00 to 17:00" in June was setting 10:00 to 18:00
  * as anybody in Britain would read it, and a client offered "Wednesday at
@@ -378,8 +378,8 @@ export function zoneNotice(nowIso: string): string {
 }
 
 /**
- * THE DISPLAY EDGE FOR A WHOLE PAGE — PHASE 133c. Every date a person reads is in the UK form, on every screen, because
- * page() in src/shared/html.ts passes the page body through this: the text BETWEEN tags goes through `ukDatesIn`. Nothing
+ * THE DISPLAY EDGE FOR A WHOLE PAGE. Every date a person reads is in the UK form, on every screen, because
+ * page in src/shared/html.ts passes the page body through this: the text BETWEEN tags goes through `ukDatesIn`. Nothing
  * inside a tag is touched — so an input's value, a link's query string and a date field's ISO value stay ISO — and
  * neither is the text of <code>, <pre>, <textarea>, <script> or <style>, which is typed, copied or read by a machine.
  */

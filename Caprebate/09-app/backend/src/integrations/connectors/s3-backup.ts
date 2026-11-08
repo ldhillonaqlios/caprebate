@@ -1,6 +1,6 @@
 /**
  * THE BACKUP'S SECOND PLACE — a storage bucket at another provider, reached the way S3 is (AWS's Signature Version 4).
- * Phase 161h, 7 November 2026 (the developer question pack, D8: "a nightly encrypted copy ... to a second provider in
+ * (the developer question pack, D8: "a nightly encrypted copy ... to a second provider in
  * the UK").
  *
  * OUR RECOMMENDATION is an Amazon S3 bucket in London (eu-west-2): in the UK, a different company from Vercel and Turso,
@@ -12,7 +12,7 @@
  * cannot read. The user whose key this is may only add, read and delete files in that one bucket (the runbook's policy).
  *
  * THROUGH src/integrations/connectors/http.ts's transport, the one way this application reaches outside. The signing is ours (about
- * forty lines, checked against AWS's own published example in test/phase161h.test.ts) because AWS's SDK would add some
+ * forty lines, checked against AWS's own published example in test/core/live-website.test.ts) because AWS's SDK would add some
  * hundred packages for four calls.
  */
 import { createHash, createHmac } from 'node:crypto';

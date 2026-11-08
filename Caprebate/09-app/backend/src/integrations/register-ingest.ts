@@ -1,11 +1,11 @@
 /**
- * THE ONE DOOR REGISTER DATA ENTERS THE DATABASE BY — and, since Phase 146b (22 September 2026), only that.
+ * THE ONE DOOR REGISTER DATA ENTERS THE DATABASE BY — and only that.
  *
  * The connector shape, the per-source switches, `gateStatus` and `planResearch` moved to
  * src/integrations/connectors/registers.ts, and the one way to call outside is src/integrations/connectors/http.ts. They are re-exported
  * below, unchanged, so every caller and every existing test reads the same functions as before.
  *
- * `ingestRegisterRecord` STAYS HERE, and this file keeps its name, because test/seed.test.ts asserts that this is
+ * `ingestRegisterRecord` STAYS HERE, and this file keeps its name, because test/core/seed.test.ts asserts that this is
  * the only file under src/ that writes register_records — one door, so the N2 check below guards every path in.
  *
  * NOTHING FIRES YET. Every connector switch is off (REGISTER_SWITCHES), so no register is contacted by any code
@@ -23,6 +23,7 @@ import {
   assertNoUnauthorisedName,
   type IngestedRecord,
 } from './registers/name-exclusion.ts';
+import { deleteRegisterRecordsByIdBusinessId, getRegisterRecordsFieldsJsonByIdBusinessId, insertRegisterRecords, updateRegisterRecordsFieldsJsonByIdBusinessId } from './data.ts';
 
 export {
   gateStatus, planResearch, STUB_NOTICE, REGISTER_SWITCHES, switchedOn,
@@ -42,25 +43,21 @@ export function ingestRegisterRecord(
   now: () => string,
   business_id: string,
   rec: IngestedRecord,
-  /** Phase 139: the company's property a property register's record is about, where the lookup was keyed on one. */
+  /** The company's property a property register's record is about, where the lookup was keyed on one. */
   opts: { readonly property_id?: string | null } = {},
 ): string {
   assertNoUnauthorisedName(rec); // N2. Fails closed on an unknown source.
 
   const id = ids();
-  db.run(
-    'INSERT INTO register_records (id, business_id, source_id, entity_id, fields_json, obtained_at, property_id) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, business_id, rec.sourceId, rec.entityId, JSON.stringify(rec.fields), now(), opts.property_id ?? null],
-  );
+  insertRegisterRecords(db, [id, business_id, rec.sourceId, rec.entityId, JSON.stringify(rec.fields), now(), opts.property_id ?? null]);
   return id;
 }
 
 /* ------------------------------------------------------------------ *
- * AND THE ONE DOOR OUT — Phase 146j, 25 September 2026.
+ * AND THE ONE DOOR OUT.
  *
- * Two decisions a person makes put register data in: choosing one entry from a close-match list (Phase 146h) and
- * saying a name on a client document belongs to an organisation (Phase 146i). Both can now be taken back, and taking
+ * Two decisions a person makes put register data in: choosing one entry from a close-match list and
+ * saying a name on a client document belongs to an organisation. Both can now be taken back, and taking
  * one back takes out what it put in — so, like the way in, the way out is in this file and nowhere else, and
  * test/phase146j.test.ts asserts it. Neither function decides WHETHER something may be removed: that is the caller's,
  * who has already checked that nobody approved it and that this decision is what wrote it. These only do it, and
@@ -72,7 +69,7 @@ export function ingestRegisterRecord(
  * by what it says — the caller names the row a decision recorded, never one it re-derived.
  */
 export function removeRegisterRecord(db: Db, business_id: string, record_id: string): boolean {
-  return db.run('DELETE FROM register_records WHERE id = ? AND business_id = ?', [record_id, business_id]).changes === 1;
+  return deleteRegisterRecordsByIdBusinessId(db, [record_id, business_id]).changes === 1;
 }
 
 /**
@@ -81,8 +78,7 @@ export function removeRegisterRecord(db: Db, business_id: string, record_id: str
  * the field. Taking a field out can add no name, so N2 has nothing to check on the way out.
  */
 export function removeRegisterField(db: Db, business_id: string, record_id: string, field_id: string): boolean {
-  const r = db.get<{ fields_json: string }>(
-    'SELECT fields_json FROM register_records WHERE id = ? AND business_id = ?', [record_id, business_id]);
+  const r = getRegisterRecordsFieldsJsonByIdBusinessId<{ fields_json: string }>(db, [record_id, business_id]);
   if (r === undefined) return false;
   let fields: Record<string, unknown>;
   try {
@@ -92,7 +88,6 @@ export function removeRegisterField(db: Db, business_id: string, record_id: stri
   } catch { return false; }
   if (!Object.prototype.hasOwnProperty.call(fields, field_id)) return false;
   const { [field_id]: _gone, ...rest } = fields;
-  db.run('UPDATE register_records SET fields_json = ? WHERE id = ? AND business_id = ?',
-    [JSON.stringify(rest), record_id, business_id]);
+  updateRegisterRecordsFieldsJsonByIdBusinessId(db, [JSON.stringify(rest), record_id, business_id]);
   return true;
 }

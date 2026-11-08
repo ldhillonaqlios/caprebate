@@ -5,14 +5,14 @@
  * the view-only login over HTTP (line 9), customer due diligence for every client
  * (line 11), the client's own filing confirmation (line 7), the percentage
  * referral model (line 10) and the letter's commercial terms (line 2). The rule
- * table's own exhaustive view-only tests are in test/authz.test.ts; the client's
+ * table's own exhaustive view-only tests are in test/core/permissions.test.ts; the client's
  * cancellation is in test/portal-booking.test.ts.
  *
  * THE CLOCK IS PASSED, NOT READ, everywhere in this file: the seed carries fixed
  * dates, so every app here is built on `fixedClock()`.
  */
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
-   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
+   twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';

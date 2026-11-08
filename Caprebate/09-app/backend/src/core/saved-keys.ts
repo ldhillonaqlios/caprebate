@@ -1,7 +1,7 @@
 /**
- * API KEYS, CHANGED FROM HOME'S ADMIN TAB. 1 October 2026 (migration 067).
+ * API KEYS, CHANGED FROM HOME'S ADMIN TAB. (migration 067).
  *
- * Lakhbir: Admin's tab is "back end access … update the API keys and save them". Until now a key could only be changed
+ * the owner: Admin's tab is "back end access … update the API keys and save them". Until now a key could only be changed
  * in the key file on the server, or in the test website's settings on Vercel.
  *
  * WHAT IS SHOWN: each key's name, what it is for, and where its value comes from — saved here (when, and by whom), the
@@ -34,6 +34,8 @@ import { zoomBlockers } from '../web/video-calls.ts';
 import { whatsappMissing } from '../integrations/index.ts';
 import { turnstileWhy } from '../integrations/index.ts';
 import { ga4MeasurementId } from '../integrations/index.ts';
+import { getSavedKeysCoalesceMaxRowidM, insertSavedKeys, listSavedKeysNameSealedByRowidName } from './data-borrowed.ts';
+import { getUsersHByIdDisabledAt } from './data.ts';
 
 const PREFIX = 'cbkey1:';
 
@@ -71,9 +73,7 @@ function open(key: Buffer, name: string, sealed: string): string | null {
 type Latest = { name: string; sealed: string | null; set_at: string; who: string | null };
 
 function latestRows(app: App): Latest[] {
-  return app.db.all<Latest>(
-    'SELECT k.name, k.sealed, k.set_at, u.display_name AS who FROM saved_keys k LEFT JOIN users u ON u.id = k.set_by ' +
-    'WHERE k.rowid = (SELECT max(x.rowid) FROM saved_keys x WHERE x.name = k.name) ORDER BY k.name');
+  return listSavedKeysNameSealedByRowidName<Latest>(app.db);
 }
 
 /** The base keys (file or settings), whatever the overlay has done since. Kept from the first time a saved key was
@@ -88,7 +88,7 @@ function baseOf(app: Holder): SecretStore {
  */
 export function refreshSavedKeys(app: App): void {
   const h = app as Holder;
-  const mark = app.db.get<{ m: number }>('SELECT coalesce(max(rowid), 0) AS m FROM saved_keys')?.m ?? 0;
+  const mark = getSavedKeysCoalesceMaxRowidM<{ m: number }>(app.db)?.m ?? 0;
   if (mark === (h.savedKeysMark ?? 0)) return;
   if (h.baseSecrets === undefined) h.baseSecrets = app.secrets;
   const base = h.baseSecrets;
@@ -104,7 +104,7 @@ export function refreshSavedKeys(app: App): void {
 }
 
 /**
- * 1 OCT 2026 — IS THE SERVICE THAT USES THIS KEY SWITCHED ON? Lakhbir: "not set = red, active = green, set but not
+ * IS THE SERVICE THAT USES THIS KEY SWITCHED ON? the owner: "not set = red, active = green, set but not
  * active = amber". Each service's own switch or readiness check, read as it stands now; the words say what is off.
  */
 export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: string } {
@@ -115,7 +115,7 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
     case 'COMPANIES_HOUSE': return COMPANY_SEARCH.enabled || switchedOn('CH_COMPANY') ? { on: true, why: '' } : off('The Companies House search is not switched on.');
     case 'CQC': return switchedOn('CQC', switchesHere()) ? { on: true, why: '' } : off('The care regulator lookup is not switched on.');
     case 'EPC': return switchedOn('EPC', switchesHere()) ? { on: true, why: '' } : off('The energy certificate lookup is not switched on.');
-    // Phase 156f: the same key answers "Find my address" at the assessment (ADDRESS_LOOKUP), in place of GoAddress.
+    // The same key answers "Find my address" at the assessment (ADDRESS_LOOKUP), in place of GoAddress.
     case 'HOMEDATA_ADDRESS': return ADDRESS_LOOKUP.enabled || switchedOn('HOMEDATA_ADDRESS', switchesHere()) ? { on: true, why: '' } : off('Neither the address box nor the Homedata lookups are switched on.');
     case 'IONOS_EMAIL': return EMAIL_SENDING.enabled ? { on: true, why: '' } : off('Sending email is not switched on.');
     case 'IONOS_MAILBOX': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
@@ -128,7 +128,7 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
     case 'ZOOM': { const m = zoomBlockers(app); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'WHATSAPP': { const m = whatsappMissing(st, app.whatsappPolicy, { outside: app.outside }); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'REPLY_TIMER': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
-    // 2 Oct 2026: the report's site plan (src/web/site-plan.ts), fetched on the test website only, for now.
+    // The report's site plan (src/web/site-plan.ts), fetched on the test website only, for now.
     case 'OS_MAPS': return lookupsWaivedHere() ? { on: true, why: '' } : off('Site plans are fetched on the test website only, for now.');
     default: return off('Nothing uses this key yet.');
   }
@@ -174,7 +174,7 @@ export function keysView(app: App, actor: Actor): KeysView {
 }
 
 async function passwordHolds(app: App, actor: Actor, password: string): Promise<boolean> {
-  const row = app.db.get<{ h: string }>('SELECT password_hash AS h FROM users WHERE id = ? AND disabled_at IS NULL', [actor.id]);
+  const row = getUsersHByIdDisabledAt<{ h: string }>(app.db, [actor.id]);
   return row !== undefined && password !== '' && await app.hasher.verify(row.h, password);
 }
 
@@ -198,7 +198,7 @@ export async function saveKey(app: App, actor: Actor, name: string, value: strin
   }
   const now = app.now();
   const id = randomUUID();
-  app.db.run('INSERT INTO saved_keys (id, name, sealed, set_by, set_at) VALUES (?, ?, ?, ?, ?)', [id, name, sealed, actor.id, now]);
+  insertSavedKeys(app.db, [id, name, sealed, actor.id, now]);
   app.audit.append({ at: now, kind: value === null ? 'KEY_UNSAVED' : 'KEY_SAVED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'saved_key', object_id: id, detail: { key: name } });
   refreshSavedKeys(app);

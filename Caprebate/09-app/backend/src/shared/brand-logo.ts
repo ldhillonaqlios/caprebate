@@ -1,5 +1,5 @@
 /**
- * THE CAP REBATE LOGO, AS A CONSTANT — PHASE 133c, 17 September 2026.
+ * THE CAP REBATE LOGO, AS A CONSTANT.
  *
  * The supplied file, byte for byte: 04-phase-work/phase133c/brand-assets/caprebate_logo_monoink_924.png (the mono-ink
  * stacked lockup, transparent, 924 x 620). The brand book forbids rebuilding the lockup (slide 29), so this is the

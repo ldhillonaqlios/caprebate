@@ -1,7 +1,7 @@
 /**
- * SEEN ON SITE, OR FROM DOCUMENTS — PHASE 153e, 4 October 2026 (Word question 150, the surveyor's).
+ * SEEN ON SITE, OR FROM DOCUMENTS (Word question 150, the surveyor's).
  *
- * Lakhbir answered "No": whether old equipment was swapped for the same kind cannot be told from a visit alone. The
+ * the owner answered "No": whether old equipment was swapped for the same kind cannot be told from a visit alone. The
  * draft in the answer box: reports should separate what was seen on site from what documents showed. Built on our
  * recommendation, for the surveyor to check: every finding (a survey pack line) carries one of two labels.
  *   SEEN ON SITE — the surveyor inspected the building on site (chapter 2 says so) AND set this line's figures or pool

@@ -37,6 +37,7 @@ import { recordSignOff } from './claim-record.ts';
 import { postClientMessage } from './messages.ts';
 import { localDate } from '../shared/index.ts';
 import { poundsWords } from './pack-sums.ts';
+import { getOutboxRById } from '../integrations/index.ts';
 
 export type SignoffDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };
 export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -135,7 +136,7 @@ export function sendForSignoff(
     const id = d.newId();
     d.db.run('INSERT INTO pack_signoff_requests (id, approval_id, contact_id, to_email, token_sha256, permission_note, outbox_id, sent_by, sent_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [id, kept.row.id, who.id, who.email.trim(), hashToken(token), permission, sent.id, actor.id, at, expires]);
-    const requested = d.db.get<{ r: number }>('SELECT send_requested AS r FROM outbox WHERE id = ?', [sent.id])?.r === 1;
+    const requested = getOutboxRById<{ r: number }>(d.db, [sent.id])?.r === 1;
     d.audit.append({ at, kind: 'REPORT_SENT_FOR_SIGNOFF', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'surveyor_job', object_id: job_id, detail: { request: id, version, contact: who.id, sending: requested } });
     return { ok: true as const, id, requested };

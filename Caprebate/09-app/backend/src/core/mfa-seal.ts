@@ -1,5 +1,5 @@
 /**
- * THE AUTHENTICATOR APP'S SECRET, SEALED AT REST. Phase 151k, 28 September 2026.
+ * THE AUTHENTICATOR APP'S SECRET, SEALED AT REST.
  *
  * Phase 151j kept the shared secret of a person's authenticator app as text: `users.mfa_secret`, and while they set it
  * up `sign_in_steps.pending_secret`. Anybody who could read the database could then make that person's codes. So the
@@ -23,6 +23,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import type { SecretStore } from './secrets.ts';
 import type { Db } from './db.ts';
+import { listUsersIdMfaSecretByMfaSecret, updateUsersMfaSecretByIdMfaSecret } from './data.ts';
 
 export const MFA_KEY_NAME = 'CAPREBATE_MFA_KEY';
 export const SEALED_PREFIX = 'cbmfa1:';
@@ -83,25 +84,25 @@ export function openSecret(k: MfaKey, user_id: string, stored: string): { ok: tr
 export function sealTextSecrets(db: Db, k: MfaKey): { state: MfaKey['state']; sealed: number } {
   if (k.state !== 'KEY') return { state: k.state, sealed: 0 };
   let sealed = 0;
-  for (const r of db.all<{ id: string; mfa_secret: string }>("SELECT id, mfa_secret FROM users WHERE mfa_secret IS NOT NULL")) {
+  for (const r of listUsersIdMfaSecretByMfaSecret<{ id: string; mfa_secret: string }>(db)) {
     if (isSealed(r.mfa_secret)) continue;
     const s = sealSecret(k, r.id, r.mfa_secret);
     if (!s.ok) continue;
-    db.run('UPDATE users SET mfa_secret = ? WHERE id = ? AND mfa_secret = ?', [s.stored, r.id, r.mfa_secret]);
+    updateUsersMfaSecretByIdMfaSecret(db, [s.stored, r.id, r.mfa_secret]);
     sealed++;
   }
   return { state: 'KEY', sealed };
 }
 
 /**
- * PHASE 161h, 7 November 2026: CHANGING THE KEY (LIVE-RUNBOOK.md, "Rotate a key"). Every sealed secret is opened with the
+ * CHANGING THE KEY (LIVE-RUNBOOK.md, "Rotate a key"). Every sealed secret is opened with the
  * old key and sealed again with the new one, ALL OR NOTHING: if any one will not open with the old key, nothing changes
  * and it says how many would not, so nobody is locked out of their app by a half-done change. Text secrets are sealed
  * with the new key on the way. Never prints a secret or a key.
  */
 export function resealSecrets(db: Db, oldK: MfaKey, newK: MfaKey): { ok: boolean; resealed: number; would_not_open: number } {
   if (oldK.state !== 'KEY' || newK.state !== 'KEY') return { ok: false, resealed: 0, would_not_open: 0 };
-  const rows = db.all<{ id: string; mfa_secret: string }>('SELECT id, mfa_secret FROM users WHERE mfa_secret IS NOT NULL');
+  const rows = listUsersIdMfaSecretByMfaSecret<{ id: string; mfa_secret: string }>(db);
   const next: { id: string; from: string; to: string }[] = [];
   let bad = 0;
   for (const r of rows) {
@@ -112,6 +113,6 @@ export function resealSecrets(db: Db, oldK: MfaKey, newK: MfaKey): { ok: boolean
     next.push({ id: r.id, from: r.mfa_secret, to: sealed.stored });
   }
   if (bad > 0) return { ok: false, resealed: 0, would_not_open: bad };
-  db.tx(() => { for (const n of next) db.run('UPDATE users SET mfa_secret = ? WHERE id = ? AND mfa_secret = ?', [n.to, n.id, n.from]); });
+  db.tx(() => { for (const n of next) updateUsersMfaSecretByIdMfaSecret(db, [n.to, n.id, n.from]); });
   return { ok: true, resealed: next.length, would_not_open: 0 };
 }

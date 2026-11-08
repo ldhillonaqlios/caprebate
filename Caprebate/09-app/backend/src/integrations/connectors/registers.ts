@@ -1,16 +1,16 @@
 /**
  * THE REGISTER CONNECTORS — the shape every one is built to, the switch each one has, and the two gates.
- * Phase 146b, 22 September 2026, from src/integrations/register-ingest.ts.
+ * From src/integrations/register-ingest.ts.
  *
  * WHAT MOVED HERE AND WHAT DID NOT. `gateStatus` and `planResearch` moved here unchanged, word for word, and
  * src/integrations/register-ingest.ts re-exports them, so every caller and every existing test reads the same functions.
  * `ingestRegisterRecord` — THE ONE DOOR register data enters the database by — stays in src/integrations/register-ingest.ts,
- * because test/seed.test.ts asserts that file is the only one under src/ that writes register_records, and the
+ * because test/core/seed.test.ts asserts that file is the only one under src/ that writes register_records, and the
  * phase's rule is that the existing register tests pass unchanged. Two files, one door: this file never writes to the
  * database; it fetches and shapes, and the caller stores through that door, where N2 is checked.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * THE CONNECTOR SHAPE — configured(), fetch(), toBundle()
+ * THE CONNECTOR SHAPE — configured, fetch, toBundle
  *
  *   configured(secrets)  READY, or NOT_CONFIGURED with the missing key NAMES, or SWITCHED_OFF. A state, never a throw.
  *   fetch(ctx, query)    one call through src/integrations/connectors/http.ts — the only way out — which writes the audit row.
@@ -115,7 +115,7 @@ export const STUB_NOTICE =
 /**
  * ONE SWITCH PER SOURCE THE RESEARCH PANEL LISTS, EVERY ONE OFF. Keyed by the source register's id. A source with no
  * entry here is off (N4: not known is not a yes), and a test checks that every source the panel lists has one.
- * Turning one on is a one-word change and a decision: the connector built (Phases 146c and 146d), tried on public
+ * Turning one on is a one-word change and a decision: the connector built, tried on public
  * test data, its keys in the key file, and — for any live lookup on a client — the data protection officer's answer
  * to "Can we make a few small, logged test lookups to check a data connector works?".
  */
@@ -123,46 +123,46 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
   CH_COMPANY: false,
   CH_PSC: false,
   CQC: false,
-  /* PHASE 155 (line 1): BUILT — Care Inspectorate Wales's directory, imported on this server (src/integrations/connectors/register-files.ts). Still off. */
+  /* BUILT — Care Inspectorate Wales's directory, imported on this server (src/integrations/connectors/register-files.ts). Still off. */
   CIW: false,
-  /* PHASE 155 (line 2): NEW — the Care Inspectorate (Scotland), its datastore imported on this server the same way. Off. */
+  /* NEW — the Care Inspectorate (Scotland), its datastore imported on this server the same way. Off. */
   CARE_INSPECTORATE: false,
   EPC: false,
   HMLR_PPD: false,
-  /* PHASE 155 (line 3): NOT BUILT, AND NOT BUILDABLE AS THINGS STAND — the VOA's licence restricts its rating list to
+  /* NOT BUILT, AND NOT BUILDABLE AS THINGS STAND — the VOA's licence restricts its rating list to
      business rates purposes (the source register's VOA_RATING_LIST). The switch stays so a case stamp reads as before. */
   VOA: false,
   PLANNING: false,
   ONS_POSTCODE: false,
   HOMEDATA_ADDRESS: false,
-  /* PHASE 146k: RETIRED. The title register is looked up by hand (src/web/title-by-hand.ts); its connector is in
+  /* RETIRED. The title register is looked up by hand (src/web/title-by-hand.ts); its connector is in
      PAID_RETIRED, in no map a click reads, so this switch turns nothing on. It stays so a case stamp reads as before. */
   HMLR_TITLE: false,
   BCIS: false,
-  /* PHASE 146d, item 18: the paid planning route, built beside PlanIt. It is not a row on the research panel — the
+  /* Item 18: the paid planning route, built beside PlanIt. It is not a row on the research panel — the
      register source it reads for is PLANNING — so it is a switch with no catalogue entry.
-     PHASE 153b, 4 October 2026 (Word question 202, Lakhbir's): CHOSEN, on our recommendation — Homedata, by the
+     CHOSEN, on our recommendation — Homedata, by the
      property's own number, about 5p on the same click as the address lookup, after the engagement letter is signed;
      PlanIt kept built as the free fallback. See PLANNING_ROUTE below. STILL OFF until the Homedata account is open.
-     PHASE 156f, 6 October 2026: the account is open (Lakhbir: "planning history - use homedata"). Still false here, for
+     The account is open. Still false here, for
      real clients; on for the test website only, through TEST_WEBSITE_PAID_LOOKUPS below. */
   HOMEDATA_PLANNING: false,
-  /* PHASE 156f (B4), 6 October 2026 — THE SITE BOUNDARY FROM HOMEDATA (Lakhbir: "site boundary - use home data"). The
+  /* — THE SITE BOUNDARY FROM HOMEDATA. The
      title outline (`title_boundary`, 5p) on the paid address lookup's own property call, kept as one area under its own
      source (src/integrations/connectors/title-boundary.ts). A paid lookup: after signing, on the click. False here; on for the test
      website only, through TEST_WEBSITE_PAID_LOOKUPS. */
   HOMEDATA_BOUNDARY: false,
-  /* PHASE 150, 24 September 2026: the land boundary. NOT A SECOND SWITCH — it IS the boundary module's own
+  /* The land boundary. NOT A SECOND SWITCH — it IS the boundary module's own
      BOUNDARY_FETCHING_SWITCHED_ON, read here so the research panel shows the same answer the fetcher obeys
      (src/integrations/connectors/inspire.ts). It is false. */
   HMLR_INSPIRE: BOUNDARY_FETCHING_SWITCHED_ON,
-  /* Phase 151: the postcode check at the address question has its own switch, POSTCODE_CHECK, off. Never run by the button. */
+  /* The postcode check at the address question has its own switch, POSTCODE_CHECK, off. Never run by the button. */
   POSTCODES_IO: false,
 });
 
 /**
- * WHICH ROUTE IS CHOSEN WHERE A REGISTER SOURCE HAS TWO. PHASE 153b, 4 October 2026 — Word question 202 ("Should we pay
- * for planning history, or keep the free one that asks us to go slowly?"), Lakhbir's, built on our recommendation for
+ * WHICH ROUTE IS CHOSEN WHERE A REGISTER SOURCE HAS TWO. Word question 202 ("Should we pay
+ * for planning history, or keep the free one that asks us to go slowly?"), the owner's, built on our recommendation for
  * him to confirm. Planning history can come from PlanIt (free, one volunteer, about 300 searches a day, asks not to be
  * built on for a paid service) or from Homedata (paid, by the property's own number, so fewer wrong matches). Homedata
  * is the chosen route and PlanIt the built fallback. Choosing switches NOTHING on: HOMEDATA_PLANNING above stays false
@@ -174,7 +174,7 @@ export const PLANNING_ROUTE = Object.freeze({
   fallback: 'PLANNING',
   question: 202,
   chosen_on: '2026-10-04',
-  /* PHASE 156f, 6 October 2026: confirmed by Lakhbir ("planning history - use homedata") and built to run. Before the
+  /* Confirmed by the owner ("planning history - use homedata") and built to run. Before the
      letter is signed the free route answers; after it, Homedata by the property's number, and its answer is the one used
      and shown (src/integrations/connectors/homedata-planning.ts, preferHomedataPlanning). */
   confirmed_on: '2026-10-06',
@@ -189,9 +189,9 @@ export function switchedOn(source_id: string, switches: Readonly<Record<string, 
 }
 
 /**
- * 2 OCTOBER 2026 — THE FREE LOOKUPS, SWITCHED ON FOR THE TEST WEBSITE ONLY (the survey pack, stage 6).
+ * THE FREE LOOKUPS, SWITCHED ON FOR THE TEST WEBSITE ONLY (the survey pack, stage 6).
  *
- * Lakhbir, asked which lookups to switch on for the test website: "All the free ones" — the energy certificate (EPC),
+ * the owner, asked which lookups to switch on for the test website: "All the free ones" — the energy certificate (EPC),
  * the Land Registry's price paid (HMLR_PPD), planning applications (PLANNING) and the care regulator (CQC). The paid
  * ones (Homedata, the land boundary) stay off, and so does every switch above: REGISTER_SWITCHES is unchanged.
  *
@@ -217,13 +217,13 @@ export const TEST_WEBSITE_LOOKUPS = Object.freeze({
 });
 
 /**
- * 6 OCTOBER 2026 — THE PAID HOMEDATA LOOKUPS, SWITCHED ON FOR THE TEST WEBSITE ONLY. Lakhbir opened the Homedata account
- * (a card added, 6 Oct 2026), put HOMEDATA_API_KEY into Vercel and asked for it to work on the test website; a logged
+ * THE PAID HOMEDATA LOOKUPS, SWITCHED ON FOR THE TEST WEBSITE ONLY. the owner opened the Homedata account
+ *, put HOMEDATA_API_KEY into Vercel and asked for it to work on the test website; a logged
  * test lookup passed the same morning (5p). Kept apart from TEST_WEBSITE_LOOKUPS on purpose: THIS LIST WAIVES NOTHING.
  * It only turns the switch on where the waiver holds. A paid lookup still runs only for a client whose engagement letter
  * is signed and only when a person clicks "Run the research" (on the test website, the seeded invented clients), and it
- * still needs its key. PHASE 156f, the same day: planning from Homedata (HOMEDATA_PLANNING, in place of the free route
- * after signing) and the site boundary (HOMEDATA_BOUNDARY), from Lakhbir's decisions in the chat.
+ * still needs its key. The same day: planning from Homedata (HOMEDATA_PLANNING, in place of the free route
+ * after signing) and the site boundary (HOMEDATA_BOUNDARY), from the owner's decisions in the chat.
  */
 export const TEST_WEBSITE_PAID_LOOKUPS = Object.freeze({
   sources: Object.freeze(['HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING', 'HOMEDATA_BOUNDARY']) as readonly string[],
@@ -288,7 +288,7 @@ export interface RegisterConnector<Q> {
   /** Null when the answer cannot be read. Never a guessed or zero value for a fact the answer did not give. */
   toBundle(body: string, query: Q): Bundle | null;
   /**
-   * PHASE 146c: THE WHOLE LOOKUP, which may be several calls — a search, then the one record that matched. A connector
+   * THE WHOLE LOOKUP, which may be several calls — a search, then the one record that matched. A connector
    * that makes one call gets this from `fetch` and `toBundle`; a connector built with `defineSteppedConnector` writes
    * its own. `runConnector` calls this, and only after the gate, the switch and the key.
    */
@@ -296,7 +296,7 @@ export interface RegisterConnector<Q> {
 }
 
 /**
- * WHAT A LOOKUP CAME TO. Phase 146c. Five endings, and only READ keeps anything.
+ * WHAT A LOOKUP CAME TO. Five endings, and only READ keeps anything.
  *
  *   READ          the register answered and we could read it: records for the one door, facts for the claim.
  *                 A READ with no record is still a READ — Companies House holding no accounts that can be read by a
@@ -368,7 +368,7 @@ export function defineConnector<Q>(spec: {
 }
 
 /**
- * PHASE 146c: A CONNECTOR WHOSE LOOKUP IS SEVERAL CALLS — a search on the typed postcode or name, a match scored
+ * A CONNECTOR WHOSE LOOKUP IS SEVERAL CALLS — a search on the typed postcode or name, a match scored
  * against it, then the one record that matched. Every call still goes through `callOutside` (one audit row each), with
  * this connector's service, and nothing else can be named: `step` takes a path, never an address.
  *
@@ -418,12 +418,12 @@ export type ConnectorRun = {
   readonly bundle: Bundle | null;
   /** The last call made, or null when none was. */
   readonly call: CallResult | null;
-  /** Phase 146c: why it FAILED, as a short code the panel keeps (a call's outcome, UNREADABLE, NO_MATCH …); null otherwise. */
+  /** Why it FAILED, as a short code the panel keeps (a call's outcome, UNREADABLE, NO_MATCH …); null otherwise. */
   readonly failure_code?: string | null;
-  /** Phase 146c: when the publisher's answer was read — set on FIRED only, from the clock, never invented. */
+  /** When the publisher's answer was read — set on FIRED only, from the clock, never invented. */
   readonly retrieved_at?: string | null;
   /**
-   * PHASE 146d: WHAT THIS LOOKUP SPENT, in pence, added up from EVERY call it made — not only the last one. A
+   * WHAT THIS LOOKUP SPENT, in pence, added up from EVERY call it made — not only the last one. A
    * stepped lookup makes several calls and each one may or may not be charged, so the sum has to be taken where the
    * whole list is, which is here. Only a call that says it was charged counts: a refusal, a time-out or an error
    * adds nothing, because the suppliers' own terms are that they do not bill for those. A charge nobody reported is

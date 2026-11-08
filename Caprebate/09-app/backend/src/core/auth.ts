@@ -11,10 +11,10 @@
  *     user" — the second is an account-enumeration oracle, and so is a login
  *     that returns faster for an unknown address than for a wrong password.
  *   A reset token is single-use and expiring, and only its HASH is stored.
- *   PHASE 151j: A PASSWORD ALONE NEVER OPENS A STAFF ACCOUNT. `login` issues a session only when nothing is left to
+ *   A PASSWORD ALONE NEVER OPENS A STAFF ACCOUNT. `login` issues a session only when nothing is left to
  *     do; a temporary password, or a second factor to set up or give, is a step, and `login` refuses with
  *     E_SECOND_STEP rather than skip it. The steps are walked only by src/core/sign-in.ts - by the website and, since
- *     Phase 151k, by the JSON API's /api/login and /api/login/step routes (src/core/server.ts), on the same functions.
+ *     By the JSON API's /api/login and /api/login/step routes (src/core/server.ts), on the same functions.
  */
 
 import { randomBytes } from 'node:crypto';
@@ -23,6 +23,7 @@ import type { AuditLog } from './audit.ts';
 import type { PasswordHasher } from './password.ts';
 import type { User } from './users.ts';
 import { findByEmailWithSecret, findById, hashToken, newId, setPasswordHash, toActor } from './users.ts';
+import { getPasswordResetTokensIdUserIdByTokenHash, getRateLimitHitsHitsByBucketWindowStart, getSessionsIdUserIdByTokenHash, getUsersRolePasswordTemporaryUntilById, insertPasswordResetTokens, insertRateLimitHits, insertSessions, updatePasswordResetTokensUsedAtById, updateSessionsLastSeenAtById, updateSessionsRevokedAtRevokedReasonByIdRevokedAt, updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt, updateUsersPasswordTemporaryUntilById2 } from './data.ts';
 
 /** The ONE message every authentication failure returns. */
 export const GENERIC_AUTH_FAILURE = 'those details did not match';
@@ -51,12 +52,12 @@ const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const RESET_TTL_MS = 30 * 60 * 1000;
 
 /**
- * PHASE 151j — WHO MUST GIVE A SECOND FACTOR. Lakhbir, 28 September 2026: every staff login; a client may choose to.
+ * WHO MUST GIVE A SECOND FACTOR. The owner: every staff login; a client may choose to.
  *   STAFF   the rule, and the default: a staff login with no second factor set up must set one up at sign-in.
  *   OFF     no second step for anyone, and a temporary password is not asked to change - the setting the older
  *           test files pass, each saying so, because they test other things through a password sign-in. Never set
  *           in src/, api/ or a tool a person runs to use the system.
- *   STAFF_EXCEPT_INVENTED   (29 September 2026, Lakhbir: "stop it for the @example.invalid emails") STAFF for every
+ *   STAFF_EXCEPT_INVENTED   STAFF for every
  *           login, except that one whose address is at the reserved domain example.invalid asks for no second step.
  *           That domain can never receive mail (RFC 2606), so only the invented seed logins carry it. Set by the test
  *           website ONLY (api/index.mjs), never by default and never for production. A temporary password is still
@@ -76,7 +77,7 @@ export type Deps = {
   audit: AuditLog;
   hasher: PasswordHasher;
   now: () => string;
-  /** PHASE 151j. Absent is STAFF: the safe reading of a Deps built by hand. */
+  /** Absent is STAFF: the safe reading of a Deps built by hand. */
   twoFactor?: TwoFactorPolicy;
   /** Injected so a test can make a token predictable without weakening the real one. */
   randomToken?: () => string;
@@ -101,7 +102,7 @@ function cookieFor(value: string, expires: string): SessionCookie {
 export const LOGIN_LIMIT = 5;
 export const RESET_LIMIT = 3;
 /**
- * PHASE 160e, 19 October 2026: FROM ONE NETWORK ADDRESS, as well as per email. The stress test sent 100 wrong sign-ins
+ * FROM ONE NETWORK ADDRESS, as well as per email. The stress test sent 100 wrong sign-ins
  * on 100 different addresses from one machine and none was slowed (one password tried on many logins). These count
  * every try from one address in the window, whatever the email; an office of a dozen people signing in is far below.
  */
@@ -116,14 +117,8 @@ function windowStart(nowIso: string): string {
 
 export function rateLimit(d: Deps, bucket: string, limit: number): boolean {
   const w = windowStart(d.now());
-  d.db.run(
-    'INSERT INTO rate_limit_hits (bucket, window_start, hits) VALUES (?, ?, 1) ' +
-      'ON CONFLICT(bucket, window_start) DO UPDATE SET hits = hits + 1',
-    [bucket, w],
-  );
-  const row = d.db.get<{ hits: number }>(
-    'SELECT hits FROM rate_limit_hits WHERE bucket = ? AND window_start = ?', [bucket, w],
-  );
+  insertRateLimitHits(d.db, [bucket, w]);
+  const row = getRateLimitHitsHitsByBucketWindowStart<{ hits: number }>(d.db, [bucket, w]);
   return (row?.hits ?? 0) <= limit;
 }
 
@@ -135,7 +130,7 @@ export type LoginResult = { user: User; cookie: SessionCookie; session_id: strin
 
 export async function login(d: Deps, email: string, password: string): Promise<LoginResult> {
   const found = await verifyPassword(d, email, password);
-  // PHASE 151j: a password alone never skips a step. Only src/core/sign-in.ts walks them (the website and the JSON API).
+  // A password alone never skips a step. Only src/core/sign-in.ts walks them (the website and the JSON API).
   const step = nextSignInStep(d, found.id);
   if (step !== null) {
     d.audit.append({
@@ -165,7 +160,7 @@ export function startSession(d: Deps, user: User, detail: Record<string, unknown
 }
 
 /**
- * PHASE 151j — WHAT IS STILL TO DO BEFORE A SESSION, for a person whose password was right.
+ * WHAT IS STILL TO DO BEFORE A SESSION, for a person whose password was right.
  *   NEW_PASSWORD   their password is a temporary one the super user gave them
  *   SETUP          they must give a second factor and have none set up (every staff login, under STAFF)
  *   VERIFY         they have one: an emailed code, or their authenticator app
@@ -177,8 +172,7 @@ export type SignInStep = 'NEW_PASSWORD' | 'SETUP' | 'VERIFY';
 export const TEMPORARY_PASSWORD_EXPIRED = 'Your temporary password has expired. Ask your administrator for a new one.';
 
 export function nextSignInStep(d: Deps, user_id: string): SignInStep | null {
-  const r = d.db.get<{ role: string; password_temporary_until: string | null; mfa_method: string | null; email: string }>(
-    'SELECT role, password_temporary_until, mfa_method, email FROM users WHERE id = ?', [user_id]);
+  const r = getUsersRolePasswordTemporaryUntilById<{ role: string; password_temporary_until: string | null; mfa_method: string | null; email: string }>(d.db, [user_id]);
   if (r === undefined) throw new AuthError('E_AUTH_FAILED', GENERIC_AUTH_FAILURE);
   if ((d.twoFactor ?? 'STAFF') === 'OFF') return null;
   if (r.password_temporary_until !== null) {
@@ -197,7 +191,7 @@ export function nextSignInStep(d: Deps, user_id: string): SignInStep | null {
  * stored hash upgraded. It issues NOTHING — a session comes from `login` or from the steps.
  */
 export async function verifyPassword(d: Deps, email: string, password: string, source?: string): Promise<User> {
-  // PHASE 160e: the network address first, hashed like the email (it too is personal data). Absent: not counted.
+  // The network address first, hashed like the email (it too is personal data). Absent: not counted.
   if (source !== undefined && !rateLimit(d, 'login-from:' + hashToken(source), LOGIN_SOURCE_LIMIT)) {
     d.audit.append({ at: d.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'login_from_one_address' } });
     throw new AuthError('E_RATE_LIMITED', GENERIC_AUTH_FAILURE);
@@ -253,11 +247,7 @@ function issueSession(d: Deps, user_id: string, rotated_from?: string): { cookie
   const id = newId();
   const created = d.now();
   const expires = new Date(Date.parse(created) + SESSION_TTL_MS).toISOString();
-  d.db.run(
-    'INSERT INTO sessions (id, user_id, token_hash, created_at, expires_at, last_seen_at, revoked_at, revoked_reason, rotated_from) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, ?)',
-    [id, user_id, hashToken(raw), created, expires, created, rotated_from ?? null],
-  );
+  insertSessions(d.db, [id, user_id, hashToken(raw), created, expires, created, rotated_from ?? null]);
   return { cookie: cookieFor(raw, expires), session_id: id };
 }
 
@@ -273,10 +263,7 @@ export const LAST_SEEN_EVERY_MS = 60_000;
 /** Returns undefined for absent, unknown, expired, revoked, or disabled-owner. */
 export function authenticate(d: Deps, rawToken: string | undefined): Authenticated | undefined {
   if (rawToken === undefined || rawToken === '') return undefined;
-  const row = d.db.get<{ id: string; user_id: string; expires_at: string; revoked_at: string | null; last_seen_at: string | null }>(
-    'SELECT id, user_id, expires_at, revoked_at, last_seen_at FROM sessions WHERE token_hash = ?',
-    [hashToken(rawToken)],
-  );
+  const row = getSessionsIdUserIdByTokenHash<{ id: string; user_id: string; expires_at: string; revoked_at: string | null; last_seen_at: string | null }>(d.db, [hashToken(rawToken)]);
   if (row === undefined) return undefined;
   if (row.revoked_at !== null) return undefined;
   if (Date.parse(row.expires_at) <= Date.parse(d.now())) return undefined;
@@ -284,23 +271,20 @@ export function authenticate(d: Deps, rawToken: string | undefined): Authenticat
   const user = findById(d.db, row.user_id);
   if (user === undefined || user.disabled) return undefined;
 
-  // FASTER CLICKS 2, 3 October 2026: "last seen" is written at most once a minute, not twice a click (the server and the
+  // FASTER CLICKS 2: "last seen" is written at most once a minute, not twice a click (the server and the
   // page router each check the session). On the test website a write is a trip to the lasting database's primary, and
   // it made the click forget every read it had (src/core/db.ts withReadMemo). Only Admin's Home reads it — "working now" is
   // seen in the last 30 minutes, "last signed in" is to the minute — so a minute's grain changes nothing shown. Expiry
   // never reads it: a session ends at `expires_at` or when revoked, as before.
   const now = d.now();
   if (row.last_seen_at === null || Date.parse(now) - Date.parse(row.last_seen_at) >= LAST_SEEN_EVERY_MS) {
-    d.db.run('UPDATE sessions SET last_seen_at = ? WHERE id = ?', [now, row.id]);
+    updateSessionsLastSeenAtById(d.db, [now, row.id]);
   }
   return { user, session_id: row.id };
 }
 
 export function logout(d: Deps, session_id: string, actor: User): void {
-  d.db.run(
-    'UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE id = ? AND revoked_at IS NULL',
-    [d.now(), 'LOGOUT', session_id],
-  );
+  updateSessionsRevokedAtRevokedReasonByIdRevokedAt(d.db, [d.now(), 'LOGOUT', session_id]);
   d.audit.append({
     at: d.now(), kind: 'LOGOUT', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role, object_type: 'session', object_id: session_id, detail: {},
@@ -308,10 +292,7 @@ export function logout(d: Deps, session_id: string, actor: User): void {
 }
 
 export function revokeAllSessions(d: Deps, user_id: string, reason: string): number {
-  const r = d.db.run(
-    'UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE user_id = ? AND revoked_at IS NULL',
-    [d.now(), reason, user_id],
-  );
+  const r = updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt(d.db, [d.now(), reason, user_id]);
   d.audit.append({
     at: d.now(), kind: 'SESSION_REVOKED', outcome: 'ALLOWED',
     actor_id: user_id, object_type: 'session', detail: { reason, count: r.changes },
@@ -325,10 +306,7 @@ export function revokeAllSessions(d: Deps, user_id: string, reason: string): num
  * in a comment. Call this whenever a role changes or a password changes.
  */
 export function rotateSession(d: Deps, old_session_id: string, user_id: string): { cookie: SessionCookie; session_id: string } {
-  d.db.run(
-    'UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE id = ? AND revoked_at IS NULL',
-    [d.now(), 'PRIVILEGE_CHANGE', old_session_id],
-  );
+  updateSessionsRevokedAtRevokedReasonByIdRevokedAt(d.db, [d.now(), 'PRIVILEGE_CHANGE', old_session_id]);
   const issued = issueSession(d, user_id, old_session_id);
   d.audit.append({
     at: d.now(), kind: 'SESSION_ROTATED', outcome: 'ALLOWED',
@@ -367,7 +345,7 @@ export async function changeOwnPassword(
 export function requestPasswordReset(
   d: Deps, email: string, source?: string,
 ): { accepted: true; user?: User; plaintextToken?: string } {
-  // PHASE 160e: many addresses' resets asked from one network address are slowed too, so nobody can fill inboxes.
+  // Many addresses' resets asked from one network address are slowed too, so nobody can fill inboxes.
   if (source !== undefined && !rateLimit(d, 'reset-from:' + hashToken(source), RESET_SOURCE_LIMIT)) {
     d.audit.append({ at: d.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'password_reset_from_one_address' } });
     return { accepted: true }; // still generic
@@ -389,11 +367,7 @@ export function requestPasswordReset(
 
   const raw = token(d);
   const created = d.now();
-  d.db.run(
-    'INSERT INTO password_reset_tokens (id, user_id, token_hash, created_at, expires_at, used_at) ' +
-      'VALUES (?, ?, ?, ?, ?, NULL)',
-    [newId(), found.id, hashToken(raw), created, new Date(Date.parse(created) + RESET_TTL_MS).toISOString()],
-  );
+  insertPasswordResetTokens(d.db, [newId(), found.id, hashToken(raw), created, new Date(Date.parse(created) + RESET_TTL_MS).toISOString()]);
   d.audit.append({
     at: d.now(), kind: 'PASSWORD_RESET_REQUESTED', outcome: 'ALLOWED',
     actor_id: found.id, actor_role: found.role, detail: {},
@@ -405,19 +379,16 @@ export function requestPasswordReset(
 
 /** Single-use and expiring. Consuming it revokes every session the user held. */
 export async function completePasswordReset(d: Deps, rawToken: string, next: string): Promise<void> {
-  const row = d.db.get<{ id: string; user_id: string; expires_at: string; used_at: string | null }>(
-    'SELECT id, user_id, expires_at, used_at FROM password_reset_tokens WHERE token_hash = ?',
-    [hashToken(rawToken)],
-  );
+  const row = getPasswordResetTokensIdUserIdByTokenHash<{ id: string; user_id: string; expires_at: string; used_at: string | null }>(d.db, [hashToken(rawToken)]);
   if (row === undefined || row.used_at !== null || Date.parse(row.expires_at) <= Date.parse(d.now())) {
     throw new AuthError('E_BAD_TOKEN', 'that reset link is no longer valid');
   }
   const hash = await d.hasher.hash(next);
   d.db.tx(() => {
-    d.db.run('UPDATE password_reset_tokens SET used_at = ? WHERE id = ?', [d.now(), row.id]);
+    updatePasswordResetTokensUsedAtById(d.db, [d.now(), row.id]);
     setPasswordHash(d.db, d.now, row.user_id, hash);
-    // PHASE 151j: a password the person chose replaces a temporary one. The second factor stays as it was.
-    d.db.run('UPDATE users SET password_temporary_until = NULL WHERE id = ?', [row.user_id]);
+    // A password the person chose replaces a temporary one. The second factor stays as it was.
+    updateUsersPasswordTemporaryUntilById2(d.db, [row.user_id]);
   });
   revokeAllSessions(d, row.user_id, 'PASSWORD_RESET');
   d.audit.append({

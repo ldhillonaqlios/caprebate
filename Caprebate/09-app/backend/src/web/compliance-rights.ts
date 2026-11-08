@@ -37,6 +37,7 @@ import {
   record, requiredText, textField, TWO_PERSON_LIMITATION, ukDay, vocabField, words,
   type Check, type ComplianceDeps, type Fields, type HoldRow, type LinkLine, type Vocab, type WriteResult,
 } from './compliance.ts';
+import { listUsersIdDisplayNameByRoleEmailCanonical } from '../core/index.ts';
 
 class Refusal extends Error {}
 
@@ -815,8 +816,7 @@ export function searchPerson(d: ComplianceDeps, actor: Actor, term: string): Sea
       hits.push({ store: 'consent_answers', how: 'a consent answer', id: e.id, label: `${e.kind} ${e.decision}`, link: `/staff/compliance/consent/${c.id}` });
     }
   }
-  for (const u of db.all<{ id: string; display_name: string }>(
-    "SELECT id, display_name FROM users WHERE role = 'CLIENT' AND (lower(display_name) LIKE ? ESCAPE '\\' OR email_canonical LIKE ? ESCAPE '\\') LIMIT 100", [pattern, pattern])) {
+  for (const u of listUsersIdDisplayNameByRoleEmailCanonical<{ id: string; display_name: string }>(db, [pattern, pattern])) {
     hits.push({ store: 'users', how: 'a client login', id: u.id, label: u.display_name, link: null });
   }
   for (const r of db.all<{ id: string; request_ref: string }>(

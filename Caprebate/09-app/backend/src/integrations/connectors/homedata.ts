@@ -1,6 +1,6 @@
 /**
  * THE PAID ADDRESS LOOKUP — HOMEDATA. UPRN, ADDRESS, POSTCODE AND COORDINATES, AFTER A SIGNED ENGAGEMENT.
- * Phase 146d, 23 September 2026. Switched off: REGISTER_SWITCHES.HOMEDATA_ADDRESS is false.
+ * Switched off: REGISTER_SWITCHES.HOMEDATA_ADDRESS is false.
  *
  * WHAT IT IS FOR, AND WHAT IT IS NOT FOR. Every free register is matched on a typed address, and a typed address is
  * the weakest key in this system (src/integrations/connectors/matching.ts, at thresholds nobody has measured). A UPRN is the
@@ -77,10 +77,10 @@ export type HomedataQuery = {
   readonly property: TypedProperty | null;
   /** The 200-property measurement only (tools/match-measure.ts). Never set by the research flow. */
   readonly measure?: MeasureHook;
-  /** PHASE 153e: TESTS ONLY. Absent, HOMEDATA_DIMENSIONS governs, and it is off. */
+  /** TESTS ONLY. Absent, HOMEDATA_DIMENSIONS governs, and it is off. */
   readonly dimensions?: HomedataDimensions;
   /**
-   * PHASE 156f (B4): ask for the title outline too (`title_boundary`, 5 tokens) on the same property call. Set from the
+   * Ask for the title outline too (`title_boundary`, 5 tokens) on the same property call. Set from the
    * HOMEDATA_BOUNDARY switch (paid-registers.ts and research.ts); absent or false, the slug is not asked for.
    */
   readonly boundary?: boolean;
@@ -96,7 +96,7 @@ export type HomedataQuery = {
 export const HOMEDATA_SLUGS: readonly string[] = Object.freeze(['address', 'lr_title']);
 
 /**
- * PHASE 153e, 4 October 2026 (Word question 203, the surveyor's) — HOMEDATA'S `dimensions` ITEM (1 token, a penny), BEHIND
+ * HOMEDATA'S `dimensions` ITEM (1 token, a penny), BEHIND
  * ITS OWN SWITCH, OFF. A floor area worked out from the building's outline and height, for a building with no energy
  * certificate. It is NOT a measurement, so it is never stored as a register fact and is always labelled "estimated from
  * the building's shape". Before it is relied on, it is compared on five homes whose floor areas are known
@@ -108,7 +108,7 @@ export const DIMENSIONS_QUESTION = 'Can we use a measured floor area when a buil
 export const HOMEDATA_DIMENSIONS: HomedataDimensions = Object.freeze({ enabled: false, question: DIMENSIONS_QUESTION });
 export const ESTIMATED_AREA_LABEL = 'estimated from the building’s shape';
 
-/** The slugs for one lookup: the two always asked, `dimensions` only with its switch on, and (Phase 156f) the title
+/** The slugs for one lookup: the two always asked, `dimensions` only with its switch on, and the title
  *  outline only with HOMEDATA_BOUNDARY on. */
 export function homedataSlugs(d: HomedataDimensions = HOMEDATA_DIMENSIONS, boundary = false): readonly string[] {
   return [...HOMEDATA_SLUGS, ...(d.enabled ? ['dimensions'] : []), ...(boundary ? [TITLE_BOUNDARY_SLUG] : [])];
@@ -152,7 +152,7 @@ export function compareEstimatedAreas(rows: readonly AreaComparisonRow[]): AreaC
  */
 export const HOMEDATA_TIER_PATHS: readonly string[] = Object.freeze(['address', 'base', 'core', 'complete']);
 
-/** The published weight of each slug, in tokens. 100 tokens = £1, so a token is a penny. Read 23 September 2026. */
+/** The published weight of each slug, in tokens. 100 tokens = £1, so a token is a penny. Read. */
 export const HOMEDATA_SLUG_TOKENS: Readonly<Record<string, number>> = Object.freeze({
   address: 5, lr_title: 1, lr_title_full: 10, dimensions: 1, construction: 1, risks: 7,
   planning_history: 5, title_boundary: 5, council_tax: 3,
@@ -211,7 +211,7 @@ export function candidateOf(r: Record<string, unknown>, searched: string): Candi
   const uprn = uprnOf(r['uprn'] ?? r['UPRN'] ?? r['uprn_id']);
   if (uprn === null) return null;
   const single = str(r['address'] ?? r['address_line'] ?? r['full_address'] ?? r['formatted_address']);
-  /* PHASE 156f: the names the live answer uses (read 6 Oct 2026 at a public postcode): sub_building, building_name,
+  /* The names the live answer uses (read 6 Oct 2026 at a public postcode): sub_building, building_name,
      building_number, street, town. The older names from the supplier's prose are still read. */
   const lines = [str(r['sub_building']) ?? str(r['sub_building_name']), str(r['building_name']), str(r['building_number']), str(r['street']) ?? str(r['thoroughfare'])]
     .filter((x): x is string => x !== null);
@@ -237,7 +237,7 @@ export function addressFields(a: Record<string, unknown>, uprn: string, fallback
   const lat = num(a['latitude'] ?? a['lat']);
   const lon = num(a['longitude'] ?? a['lng'] ?? a['lon']);
   if (lat !== null && lon !== null && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) { f.latitude = lat; f.longitude = lon; }
-  /* PHASE 151a: THE SAME POINT IN BRITISH NATIONAL GRID, where the answer gives it. Homedata's schema publishes `easting` and
+  /* THE SAME POINT IN BRITISH NATIONAL GRID, where the answer gives it. Homedata's schema publishes `easting` and
      `northing` (property_lite); the land boundary lookup (src/integrations/connectors/site-area.ts) needs exactly that, and Homedata
      labels its latitude and longitude WGS84, which Ordnance Survey's exact conversion does not take. Kept only as a
      pair, and only inside Great Britain's national grid; whether the address slug carries them, the first allowed
@@ -262,7 +262,7 @@ export type TitlePreCheck = {
 export function preCheckOf(v: unknown): TitlePreCheck {
   const t = obj(v);
   if (t === null) return { has_title: false, title_number: null, tenure: null, restrictions: null };
-  /* PHASE 156f: the live answer (6 Oct 2026, 10 Downing Street) names it `title_no`, and gives no `tenure` but a
+  /* The live answer names it `title_no`, and gives no `tenure` but a
      `title_class` ("Absolute freehold title"). Until then this read only the prose's names and said "no registered
      title" for a property that has one. */
   const number = str(t['title_no'] ?? t['title_number'] ?? t['titleNumber'] ?? t['number']);
@@ -283,7 +283,7 @@ export function isTierPath(path: string): boolean {
 }
 
 /**
- * PHASE 156f (B1): DOES THE UPRN THE CLIENT PICKED BELONG TO THE ADDRESS AND POSTCODE THEY GAVE? The property call's own
+ * DOES THE UPRN THE CLIENT PICKED BELONG TO THE ADDRESS AND POSTCODE THEY GAVE? The property call's own
  * answer is read back: its postcode must be the property's, and its address must match the one typed at the EPC
  * threshold (accept, not review). Anything less is a mismatch, and the lookup goes back to the postcode search.
  */
@@ -351,7 +351,7 @@ export const homedataAddress = defineSteppedConnector<HomedataQuery>({
     const candidates = list.flatMap((r) => { const o = obj(r); const c = o === null ? null : candidateOf(o, pc); return c === null ? [] : [c]; });
     const m = matchAddress(typed, candidates, MATCH_THRESHOLDS.EPC, 'the paid address lookup');
     q.measure?.({ profile: 'EPC', register: 'homedata', match: m, top_address: m.top?.candidate.address ?? null });
-    /* PHASE 146h: the REVIEW band's list to the back office, or a person's choice back, keyed on the UPRN — the key
+    /* The REVIEW band's list to the back office, or a person's choice back, keyed on the UPRN — the key
        the detail call is made BY. This lookup is paid and already waits on a signed engagement, which is the same
        gate the pick waits on, so nothing here widens when the pick may be offered. */
     const pick = applyPick(m, q, { profile: 'EPC', register: 'the paid address lookup', keyOf: (u) => u });
@@ -384,7 +384,7 @@ function readOf(parsed: Record<string, unknown>, uprn: string, pc: string, q: Ho
   const addressPart = obj(parsed['address']) ?? parsed;
   const fields = addressFields(addressPart, uprn, pc);
   const pre = preCheckOf(parsed['lr_title']);
-  /* PHASE 156f (B4): the title outline's area, worked out here and handed on in the facts; the HOMEDATA_BOUNDARY
+  /* The title outline's area, worked out here and handed on in the facts; the HOMEDATA_BOUNDARY
      lookup on the same click keeps it (paid-registers.ts). The outline itself goes no further than this function. */
   const outline = q.boundary === true ? titleBoundaryArea(parsed[TITLE_BOUNDARY_SLUG], { uprn, retrieved_at: 'the research click' }) : null;
   const bundle: Bundle = {
@@ -392,7 +392,7 @@ function readOf(parsed: Record<string, unknown>, uprn: string, pc: string, q: Ho
     /* `uprn` is repeated in the facts on purpose: the facts are what the next lookup on this click reads, and the
        energy certificate lookup takes the UPRN from here to turn its fuzzy postcode match into an exact key. */
     facts: { ...fields, title_pre_check: pre,
-      // Phase 153e: only with the dimensions switch on, and never a register fact: labelled as the estimate it is.
+      // Only with the dimensions switch on, and never a register fact: labelled as the estimate it is.
       ...((q.dimensions ?? HOMEDATA_DIMENSIONS).enabled ? { estimated_floor_area: dimensionsEstimate(parsed['dimensions']) } : {}),
       ...(outline === null ? {} : { title_boundary_area: outline }) },
   };

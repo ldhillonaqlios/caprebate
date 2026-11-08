@@ -1,12 +1,12 @@
 /**
  * A PDF THAT IS DRAWN, NOT ONLY WRITTEN — boxes, lines, bars and text placed exactly, for the client's survey report.
- * 2 October 2026 (Lakhbir: the client "would want something visually appealing"; the design approved as a mock-up).
+ * 2 October 2026.
  *
  * Like src/shared/pdf.ts, which writes the signed engagement letter: no dependency, PDF 1.4, A4, the standard fonts every
  * reader has (nothing embedded), WinAnsi text written as hexadecimal strings so no character can end a string early or be
  * read as an operator, and the same bytes for the same input — so the PDF of an approved version is the same file
  * every time it is made, and needs no keeping. What it adds: a filled or outlined box (square or rounded), a line
- * (solid or dashed), a filled circle, a shape of straight sides (2 Oct 2026, the site plan), text in Helvetica, Helvetica-Bold or Times-Bold in any colour, set left, right or
+ * (solid or dashed), a filled circle, a shape of straight sides, text in Helvetica, Helvetica-Bold or Times-Bold in any colour, set left, right or
  * centred, and the exact width of a piece of text (src/shared/pdf-metrics.ts), so prose wraps and figures line up.
  *
  * Positions are in points from the TOP-LEFT of the page (text at its baseline), as a page is read; the writer turns them
@@ -23,7 +23,7 @@ export type Op =
       readonly fill?: Rgb; readonly stroke?: Rgb; readonly lw?: number; readonly r?: number; readonly dash?: number }
   | { readonly k: 'line'; readonly x1: number; readonly y1: number; readonly x2: number; readonly y2: number; readonly color: Rgb; readonly lw: number; readonly dash?: number }
   | { readonly k: 'circle'; readonly cx: number; readonly cy: number; readonly r: number; readonly fill: Rgb }
-  /** 2 Oct 2026: a shape of straight sides — the site plan's buildings. Rings of [x, y] points; holes drawn even-odd. */
+  /** A shape of straight sides — the site plan's buildings. Rings of [x, y] points; holes drawn even-odd. */
   | { readonly k: 'poly'; readonly rings: readonly (readonly (readonly [number, number])[])[]; readonly fill?: Rgb; readonly stroke?: Rgb; readonly lw?: number }
   | { readonly k: 'text'; readonly x: number; readonly y: number; readonly s: string; readonly font: PdfFont; readonly size: number; readonly color: Rgb;
       readonly align?: 'left' | 'right' | 'center'; readonly spacing?: number };

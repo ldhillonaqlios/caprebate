@@ -20,7 +20,7 @@
  * four fields per row, the same GSS code widths, the same proportion
  * terminated. Memory and disk cost follow shape and scale, not content, so
  * the figures transfer. Lookup CORRECTNESS does not, and is not claimed here —
- * that is what caprebate-postcode-authority.test.ts is for.
+ * that is what integrations/postcode-authority.test.ts is for.
  *
  * EACH MEASUREMENT RUNS IN ITS OWN PROCESS. A resident-set figure taken after
  * another option has already run measures the high-water mark of the run, not

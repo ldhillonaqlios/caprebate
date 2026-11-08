@@ -1,5 +1,5 @@
 /**
- * THE SHARED PARTS' FRONT DOOR (Phase 161i, 7 Nov 2026; 09-app/ARCHITECTURE.md rule 1): page templates and components, dates and working days, PDF and ZIP, the document store, plain words, and the claim calculator's adapter. No business rule lives in shared/. Another area imports it only from this file.
+ * THE SHARED PARTS' FRONT DOOR: page templates and components, dates and working days, PDF and ZIP, the document store, plain words, and the claim calculator's adapter. No business rule lives in shared/. Another area imports it only from this file.
  * Generated from the imports other areas made on that day, and kept by hand since: add a name here when another area
  * needs it, never a whole file.
  */

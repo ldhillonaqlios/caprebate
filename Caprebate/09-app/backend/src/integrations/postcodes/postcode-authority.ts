@@ -2,7 +2,7 @@
  * Caprebate — Postcode to Billing Authority Resolver (prepared, NOT SHIPPED)
  *
  * Board item 12991298199, "Resolve a property's postcode to its billing
- * authority from the ONS postcode lookup". Phase 9. Built 8 September 2026.
+ * authority from the ONS postcode lookup". Built.
  *
  * WHY THIS EXISTS. LEG-E4 — the regional location factor — consumes a
  * `location_key` and refuses without one. Nothing in this system has ever
@@ -29,7 +29,7 @@
  * Runs on Node >= 22.6 with type stripping (`node --test file.ts`). No enums,
  * no namespaces, no parameter properties — those are not strippable.
  *
- * Run:  cd phase9 && node --test caprebate-postcode-authority.test.ts
+ * Run:  cd phase9 && node --test integrations/postcode-authority.test.ts
  */
 
 /* ------------------------------------------------------------------ *
@@ -37,7 +37,7 @@
  * ------------------------------------------------------------------ */
 
 /**
- * Established 7 September 2026 by fetching the publisher's own pages and
+ * Established by fetching the publisher's own pages and
  * querying its own live service — not assumed, and not inherited from an
  * earlier note. The item had been recorded as blocked on the VOA rating list,
  * which IS licence-gated. This route is not.
@@ -156,7 +156,7 @@ const POSTCODE_PATTERN = /^[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}$/;
  * list they are reported as malformed, which is wrong and is exactly the
  * failure this module's own rule warns about.
  *
- * FOUND BY RUNNING THE REAL FILE, 8 September 2026. Ingesting NSPL_AUG_2026
+ * FOUND BY RUNNING THE REAL FILE. Ingesting NSPL_AUG_2026
  * quarantined 2,418 postcodes as malformed. 2,417 of them were NPT — the
  * historic Newport, Gwent area, superseded by NP but still carried in the ONS
  * table. They are all terminated, so nothing would have resolved them anyway;
@@ -245,7 +245,7 @@ export type PostcodeAuthorityTable = {
    *  it every release, so the table records what it was built from. */
   lad_column_used?: string;
   /** Which header the region code was read from, or null if the file had
-   *  none. Phase 110. Recorded for the same reason as lad_column_used, and
+   *  none. Recorded for the same reason as lad_column_used, and
    *  null is a normal answer rather than a defect. */
   region_column_used?: string | null;
   byPostcode: Record<string, PostcodeAuthorityRow>;
@@ -253,7 +253,7 @@ export type PostcodeAuthorityTable = {
 
 /**
  * EMPTY BECAUSE NOBODY HAS RUN AN INGEST YET — not because anything forbids
- * it. This is the only empty table in Phase 9 whose licence is already
+ * it. This is the only empty table whose licence is already
  * cleared, and it is the cheapest of them all to fill: one 176.5 MB download,
  * no counterparty, no fee.
  */
@@ -544,7 +544,7 @@ export type NsplQuarantineRow = {
  *
  * AND THE INTERESTING PART IS NOT THAT IT WAS WRONG, IT IS THAT IT MOVES.
  * The local-authority column is VERSIONED BY RELEASE YEAR — `lad26cd` in the
- * August 2026 CSV, `LAD25CD` on the live feature service, `laua` historically.
+ * CSV, `LAD25CD` on the live feature service, `laua` historically.
  * A hard-coded name is therefore not merely wrong today, it is a thing that
  * breaks every time ONS publishes. Since ONS publishes quarterly and this
  * table is refreshed quarterly, a hard-coded name would fail on roughly the
@@ -644,7 +644,7 @@ export type NsplIngest = {
  * cannot read the file it was written for. The real NSPL UK extract is
  * 964 MB of CSV, and Node's maximum string length is about 512 MB, so
  * `readFileSync(path, 'utf8')` throws ERR_STRING_TOO_LONG before a single row
- * is parsed. Found on 8 September 2026 by running the ingest against the real
+ * is parsed. Found by running the ingest against the real
  * download — every unit test passed, because every fixture was three lines.
  *
  * So the row logic lives here and is fed a line at a time, and `ingestNspl`

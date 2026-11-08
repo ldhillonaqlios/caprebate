@@ -1,12 +1,12 @@
 /**
- * HM LAND REGISTRY PRICE PAID DATA — WHAT A PROPERTY SOLD FOR, AND WHEN. EVERY SECTOR SINCE PHASE 159g.
- * Phase 146c, 23 September 2026. Switched off: REGISTER_SWITCHES.HMLR_PPD is false (on for the test website only).
+ * HM LAND REGISTRY PRICE PAID DATA — WHAT A PROPERTY SOLD FOR, AND WHEN. EVERY SECTOR.
+ * Switched off: REGISTER_SWITCHES.HMLR_PPD is false (on for the test website only).
  *
  * Built against HM Land Registry's published guidance and its linked-data documentation (read 23 September 2026; the
  * addresses and date are in the source register's SUPPLIER_DOCS). No key: the linked-data API at
  * https://landregistry.data.gov.uk, `/data/ppi/transaction-record.json?propertyAddress.postcode=…`.
  *
- * PHASE 159g, 10 October 2026 — ASKED FOR EVERY SECTOR (the Lockwood run, L11). Until now this lookup was made for
+ * ASKED FOR EVERY SECTOR (the Lockwood run, L11). Until now this lookup was made for
  * supported living only, on the reading that a surgery, a care home or a dental practice is commercial and never in
  * the dataset. That was wrong for Lockwood Surgery: HM Land Registry holds 3 Meltham Road, sold 3 June 2020 for
  * £540,000, leasehold, type "Other", category B. Category B is "additional price paid" — sales to companies, buy-to-lets,
@@ -52,7 +52,7 @@ type Sale = {
   readonly tenure: string | null;
   readonly type: string | null;
   readonly new_build: boolean | null;
-  /** PHASE 159g: A, a standard sale at full market value; B, "additional price paid". Null when it is not stated. */
+  /** A, a standard sale at full market value; B, "additional price paid". Null when it is not stated. */
   readonly category: 'A' | 'B' | null;
 };
 
@@ -121,7 +121,7 @@ export const pricePaid = defineSteppedConnector<PricePaidQuery>({
   async lookup(step, q): Promise<LookupResult> {
     if (q.nation === null) return { kind: 'NOT_COVERED', why: 'we do not know which part of the UK the property is in, and sale prices are published for England and Wales only' };
     if (jurisSource(q.nation, 'price_paid') !== 'HMLR_PPD') return { kind: 'NOT_COVERED', why: 'sale prices are published for England and Wales only' };
-    // PHASE 159g (L11): no sector is left out. A category B or "Other" sale is kept as a lead, never the price.
+    // No sector is left out. A category B or "Other" sale is kept as a lead, never the price.
     const pc = postcodeKey(q.property?.postcode);
     if (q.property === null || pc === '') return { kind: 'NOT_MATCHED', code: 'INSUFFICIENT_INPUT', why: 'there is no postcode we can read for the property', calls: [] };
 
@@ -143,7 +143,7 @@ export const pricePaid = defineSteppedConnector<PricePaidQuery>({
     const m = matchAddress(typed, candidates, MATCH_THRESHOLDS.HMLR_PPD, 'HM Land Registry’s sale prices',
       (a, b) => (b.date > a.date ? b : a));
     q.measure?.({ profile: 'HMLR_PPD', match: m, top_address: m.top?.candidate.address ?? null });
-    /* PHASE 146h: the REVIEW band's list to the back office, or a person's choice back, keyed on the transaction id
+    /* The REVIEW band's list to the back office, or a person's choice back, keyed on the transaction id
        — HM Land Registry's own key for one sale. Outside that band this does nothing. */
     const pick = applyPick(m, q, {
       profile: 'HMLR_PPD', register: 'HM Land Registry’s sale prices', keyOf: (sale) => sale.id,

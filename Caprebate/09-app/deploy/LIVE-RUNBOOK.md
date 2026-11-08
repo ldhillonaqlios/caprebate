@@ -86,7 +86,7 @@ Table changes (migrations) are not undone by a rollback. Every migration only ad
 
 Turso also keeps its own point-in-time copies (24 hours on its free plan, 10 to 90 days on paid plans). That is a second line, not the backup.
 
-**Restore (tried on a copy on 7 Nov 2026 by test/phase161h.test.ts; try it again on a copy each quarter):**
+**Restore (tried on a copy on 7 Nov 2026 by test/core/live-website.test.ts; try it again on a copy each quarter):**
 
 ```bash
 aws s3 sync s3://<BACKUP_S3_BUCKET> ~/caprebate-restore/bucket
@@ -148,4 +148,4 @@ Set `CAPREBATE_REFERENCE_DB_URL` and `CAPREBATE_REFERENCE_DB_TOKEN` to the new d
 | The timers | `Caprebate/09-app/backend/src/core/timers.ts` |
 | The backup and restore | `src/core/backup.ts`, `src/integrations/connectors/s3-backup.ts`, `tools/restore-backup.ts` |
 | The reference database | `src/integrations/postcodes/reference-db.ts`, `tools/build-reference-db.ts` |
-| The tests | `test/phase161h.test.ts` |
+| The tests | `test/core/live-website.test.ts` |

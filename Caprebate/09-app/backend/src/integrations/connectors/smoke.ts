@@ -1,9 +1,9 @@
 /**
- * THE LIVE SMOKE TEST — DOES THIS ACCOUNT, THIS KEY AND THIS ADDRESS ACTUALLY WORK? Phase 146g, 23 September 2026.
+ * THE LIVE SMOKE TEST — DOES THIS ACCOUNT, THIS KEY AND THIS ADDRESS ACTUALLY WORK?
  *
  * WHY IT EXISTS. The handover page in the Developer Spec gives every outside service a row, and one column of that
  * row is "the live smoke test that proves it". Before this file there was no such thing: every suite runs on
- * recorded answers with no key and no network (Phase 146b's rule 3), which proves the code and proves nothing at all
+ * recorded answers with no key and no network, which proves the code and proves nothing at all
  * about an account somebody has just opened. A developer who has just been issued a Companies House key needs one
  * command that says yes or no.
  *
@@ -12,9 +12,9 @@
  * turns ONE source on for ONE call, in a map of its own, in a command a person typed.
  *
  * PUBLIC TEST DATA ONLY, AND THAT IS THE RULE THIS FILE EXISTS INSIDE. "Can we make a few small, logged test lookups
- * to check a data connector works?" was answered by Lakhbir on 25 September 2026: yes, on five conditions (Word
+ * to check a data connector works?" was answered by The owner: yes, on five conditions (Word
  * question 170). The defaults below are Caprebate's own company number and a public address that belongs to nobody
- * we act for. SINCE PHASE 151g THE COMMAND ENFORCES THE FIVE CONDITIONS rather than printing a warning: who and why,
+ * we act for. THE COMMAND ENFORCES THE FIVE CONDITIONS rather than printing a warning: who and why,
  * a log outside the repository, three lookups per switch-on, never a client's values, never a demonstration. That is
  * src/integrations/connectors/test-lookups.ts; this file still makes the one call and says whether it was taken.
  *
@@ -48,7 +48,7 @@ export const SMOKE_SOURCES: Readonly<Record<string, 'free' | 'paid' | 'not chose
  * THE PUBLIC VALUES A SMOKE TEST ASKS ABOUT, and every one of them is a matter of public record that belongs to
  * nobody this business acts for.
  *
- *   · the company is CAP REBATE LTD, 17307313 — our own, confirmed on 18 September 2026;
+ *   · the company is CAP REBATE LTD, 17307313 — our own, confirmed;
  *   · the address is 70 Whitehall, London SW1A 2AS — the Cabinet Office, and about as public as a building gets.
  *
  * `--postcode`, `--company-number` and `--company-name` replace them. A CLIENT'S VALUE IS NEVER PASSED, and since
@@ -69,11 +69,11 @@ export type SmokeValues = {
   address_line_1: string;
   town: string;
   postcode: string;
-  /** PHASE 156a: the part of the UK, when the person running the test says it (--nation). Otherwise the ONS table. */
+  /** The part of the UK, when the person running the test says it (--nation). Otherwise the ONS table. */
   nation?: Nation | null;
-  /** PHASE 156a: the council area, when the person running the test says it (--council). CQC searches by council. */
+  /** The council area, when the person running the test says it (--council). CQC searches by council. */
   council?: string | null;
-  /** PHASE 156f: a public property's UPRN, standing where the paid address lookup's would (Homedata planning is keyed on it). */
+  /** A public property's UPRN, standing where the paid address lookup's would (Homedata planning is keyed on it). */
   uprn?: string | null;
 };
 
@@ -90,7 +90,7 @@ export function smokeSubject(v: SmokeValues): ResearchSubject {
       address_line_2: null,
       town: v.town === '' ? null : v.town,
       postcode: v.postcode === '' ? null : v.postcode,
-      // Left unsaid unless the person running the test says it (--nation, Phase 156a): the ONS lookup is what says which
+      // Left unsaid unless the person running the test says it: the ONS lookup is what says which
       // part of the UK a postcode is in, and a smoke test that ASSUMED England would hide the mistake it is meant to
       // catch. Without the ONS table (none is installed on the Mac or the test website), EPC and CQC never called.
       jurisdiction: v.nation ?? null,
@@ -162,7 +162,7 @@ export async function smokeOne(source_id: string, values: SmokeValues, d: SmokeD
     gate: { free_gate_open: false, engagement_signed: false, switched_on: true },
     secrets: null,
   };
-  // PHASE 156a: a council area the person typed stands where the ONS table's answer would (CQC searches by council).
+  // A council area the person typed stands where the ONS table's answer would (CQC searches by council).
   const earlier = new Map<string, Bundle>();
   if (values.council != null && values.council.trim() !== '') earlier.set('ONS_POSTCODE', { records: [], facts: { ons_lad_name: values.council.trim() } });
   if (values.uprn != null && /^\d{1,14}$/.test(values.uprn)) earlier.set('HOMEDATA_ADDRESS', { records: [], facts: { uprn: values.uprn } });

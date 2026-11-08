@@ -1,7 +1,7 @@
 /**
  * UI TIDY — one place to start the application on the seed and sign each login in, for the test/ui-tidy-*.test.ts files
  * from phase 3 on. Not a test itself (it does not end .test.ts). Password sign-in with twoFactor 'off', as
- * test/phase135.test.ts does; the second step is proved in test/phase151j.test.ts.
+ * test/core/menus.test.ts does; the second step is proved in test/core/sign-in-steps.test.ts.
  */
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';

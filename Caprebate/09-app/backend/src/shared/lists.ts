@@ -1,5 +1,5 @@
 /**
- * THE LISTS — FILTERS, SORTS, SAVED VIEWS AND EXPORT. CRM 9 of 10, 12 September 2026.
+ * THE LISTS — FILTERS, SORTS, SAVED VIEWS AND EXPORT. CRM 9 of 10.
  *
  * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, rows 16.2 to 16.6, and the
  * decisions this file takes are that table's Part E from E119. The pages are the
@@ -41,6 +41,8 @@ import { LEAD_ORIGINS, LEAD_STATUSES, NO_RANGE_NO_ASSESSMENT, RANGE_NOT_SHOWN, S
 import { CLOSED_STAGE, EXITS, ON_HOLD_STAGE, PROCEDURE_STAGES, claimStage } from './stages.ts';
 import { formatShownRange } from './shown-range.ts';
 import { localDate, localStamp } from './localtime.ts';
+import { getSavedViewsIdListById, insertSavedViews, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from './data-borrowed.ts';
+import { listClaimsRows, listLeadsRows } from './data-borrowed.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -78,7 +80,7 @@ export const CLAIM_FILTERS: readonly FilterDef[] = Object.freeze([
 ] as FilterDef[]);
 
 export const CLAIM_SORTS: Vocab = Object.freeze({
-  // PHASE 134: the client is the company, so the list reads by company first; the reference is one sort among the rest.
+  // The client is the company, so the list reads by company first; the reference is one sort among the rest.
   company: 'Company, A to Z',
   reference: 'Reference, newest first',
   next_action: 'Next action due, soonest first',
@@ -208,40 +210,6 @@ type ClaimListDb = {
   q: number | null; shown_low_pence: number | null; shown_high_pence: number | null; has_estimate: number | null;
 };
 
-/** CLIENT AND REFERENCE — the whole of what ACCOUNTING reads of a claim. No join to anything else. */
-const CLAIMS_MONEY =
-  'SELECT c.id, c.claim_ref, c.business_id, b.name AS client, c.created_at, NULL AS sector, NULL AS org_source, NULL AS stage, ' +
-  'NULL AS workstream, NULL AS owner_id, NULL AS owner_name, NULL AS priority, NULL AS expected_completion, NULL AS property_label, ' +
-  'NULL AS property_type, NULL AS jurisdiction, NULL AS postcode, NULL AS lead_source, NULL AS introducer_id, NULL AS firm_name, ' +
-  'NULL AS next_action, NULL AS next_action_due, NULL AS q, NULL AS shown_low_pence, NULL AS shown_high_pence, NULL AS has_estimate ' +
-  'FROM claims c JOIN businesses b ON b.id = c.business_id ORDER BY c.claim_ref DESC LIMIT 1000';
-
-/** THE WORKING LINE — no estimate, no assessment, for a reader who may not read the value. */
-const CLAIMS_WORKING =
-  'SELECT c.id, c.claim_ref, c.business_id, b.name AS client, c.created_at, b.sector, b.source AS org_source, c.stage, c.workstream, ' +
-  'c.owner_id, u.display_name AS owner_name, c.priority, c.expected_completion, p.label AS property_label, p.property_type, ' +
-  'p.jurisdiction, p.postcode, l.source AS lead_source, l.introducer_id, i.firm_name, ' +
-  "(SELECT t.title FROM staff_tasks t WHERE t.claim_id = c.id AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')) AS next_action, " +
-  "(SELECT t.due_on FROM staff_tasks t WHERE t.claim_id = c.id AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')) AS next_action_due, " +
-  'NULL AS q, NULL AS shown_low_pence, NULL AS shown_high_pence, NULL AS has_estimate ' +
-  'FROM claims c JOIN businesses b ON b.id = c.business_id LEFT JOIN users u ON u.id = c.owner_id ' +
-  'LEFT JOIN properties p ON p.id = c.property_id LEFT JOIN leads l ON l.claim_id = c.id LEFT JOIN introducers i ON i.id = l.introducer_id ' +
-  'ORDER BY c.claim_ref DESC LIMIT 1000';
-
-/** THE WORKING LINE AND THE VALUE — for a reader `claim.read_value` admits, and still asked per claim. */
-const CLAIMS_VALUE =
-  'SELECT c.id, c.claim_ref, c.business_id, b.name AS client, c.created_at, b.sector, b.source AS org_source, c.stage, c.workstream, ' +
-  'c.owner_id, u.display_name AS owner_name, c.priority, c.expected_completion, p.label AS property_label, p.property_type, ' +
-  'p.jurisdiction, p.postcode, l.source AS lead_source, l.introducer_id, i.firm_name, ' +
-  "(SELECT t.title FROM staff_tasks t WHERE t.claim_id = c.id AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')) AS next_action, " +
-  "(SELECT t.due_on FROM staff_tasks t WHERE t.claim_id = c.id AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')) AS next_action_due, " +
-  '(SELECT e.qualifying_expenditure_pence FROM estimates e WHERE e.assessment_id = c.assessment_id ORDER BY e.rowid DESC LIMIT 1) AS q, ' +
-  'a.shown_low_pence, a.shown_high_pence, ' +
-  '(SELECT COUNT(*) FROM estimates e WHERE e.assessment_id = c.assessment_id) AS has_estimate ' +
-  'FROM claims c JOIN businesses b ON b.id = c.business_id LEFT JOIN users u ON u.id = c.owner_id ' +
-  'LEFT JOIN properties p ON p.id = c.property_id LEFT JOIN leads l ON l.claim_id = c.id LEFT JOIN introducers i ON i.id = l.introducer_id ' +
-  'LEFT JOIN assessments a ON a.id = c.assessment_id ORDER BY c.claim_ref DESC LIMIT 1000';
-
 const VALUE_SENTINEL: Obj = { type: 'claim', id: '__list__', business_id: '__list__', assigned_surveyor_ids: [] };
 const EXPORT_OBJ: Obj = { type: 'pipeline', id: '__export__' };
 
@@ -289,8 +257,7 @@ export function claimsList(db: Db, actor: Actor, p: ListParams, ignored: readonl
   assertClaimList(actor);
   // THE SAME TEST `claimList` MAKES: accounting reads client and reference. Then the value, by the rule table.
   const shape: ListShape = actor.role === 'ACCOUNTING' ? 'MONEY' : can(actor, 'claim.read_value', VALUE_SENTINEL) ? 'VALUE' : 'WORKING';
-  const statement = shape === 'MONEY' ? CLAIMS_MONEY : shape === 'VALUE' ? CLAIMS_VALUE : CLAIMS_WORKING;
-  const readable = db.all<ClaimListDb>(statement).filter((r) => can(actor, 'claim.read', claimObjFor(db, r)));
+  const readable = listClaimsRows<ClaimListDb>(db, shape).filter((r) => can(actor, 'claim.read', claimObjFor(db, r)));
   const rank = priorityRank(db);
   const said = [...ignored];
   const applied: { key: string; label: string; value: string }[] = [];
@@ -390,12 +357,12 @@ export function claimsList(db: Db, actor: Actor, p: ListParams, ignored: readonl
  * 3 · THE LEADS LIST
  * ================================================================== */
 
-/** PHASE 136: `lead_at` is the lead's own instant, so Home can say how long a new lead has waited. */
+/** `lead_at` is the lead's own instant, so Home can say how long a new lead has waited. */
 export type LeadListRow = LeadRow & {
   readonly priority: string; readonly lead_at: string;
-  /** PHASE 137: the sector, in words, for the lead's card — the organisation's own, or the one recorded on the lead. */
+  /** The sector, in words, for the lead's card — the organisation's own, or the one recorded on the lead. */
   readonly sector: string;
-  /** PHASE 137: the lead's owner by id, so the cards can offer "take it" only where there is nobody. */
+  /** The lead's owner by id, so the cards can offer "take it" only where there is nobody. */
   readonly owner_id: string | null;
 };
 
@@ -407,23 +374,9 @@ type LeadListDb = {
   shown_low_pence: number | null; shown_high_pence: number | null;
 };
 
-/** A LEAD'S NEXT ACTION IS ITS EARLIEST OPEN TASK — migration 018 retired the free text. One sort, one source. */
-const LEADS_ALL =
-  'SELECT l.id, l.business_id, l.assessment_id, l.origin, l.source, l.introducer_id, i.firm_name, l.prospect_organisation, ' +
-  'l.prospect_sector, l.lead_date, l.owner_id, u.display_name AS owner_name, l.priority, l.status, l.claim_id, c.claim_ref, ' +
-  'b.name AS business_name, b.sector AS business_sector, ' +
-  "(SELECT t.title FROM staff_tasks t WHERE t.lead_id = l.id AND t.status IN ('OPEN','IN_PROGRESS') " +
-  'ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC, t.id ASC LIMIT 1) AS next_action, ' +
-  "(SELECT t.due_on FROM staff_tasks t WHERE t.lead_id = l.id AND t.status IN ('OPEN','IN_PROGRESS') " +
-  'ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC, t.id ASC LIMIT 1) AS next_action_due, ' +
-  'a.shown_low_pence, a.shown_high_pence ' +
-  'FROM leads l LEFT JOIN businesses b ON b.id = l.business_id LEFT JOIN users u ON u.id = l.owner_id ' +
-  'LEFT JOIN claims c ON c.id = l.claim_id LEFT JOIN introducers i ON i.id = l.introducer_id ' +
-  'LEFT JOIN assessments a ON a.id = l.assessment_id ORDER BY l.lead_date DESC, l.id ASC LIMIT 1000';
-
 export function leadsList(db: Db, actor: Actor, p: ListParams, ignored: readonly string[] = []): ListView<LeadListRow> {
   assertLeadSection(actor);
-  const readable = db.all<LeadListDb>(LEADS_ALL).filter((r) => can(actor, 'lead.read', { type: 'lead', id: r.id, business_id: r.business_id }));
+  const readable = listLeadsRows<LeadListDb>(db).filter((r) => can(actor, 'lead.read', { type: 'lead', id: r.id, business_id: r.business_id }));
   const rank = priorityRank(db);
   const rangeOf = (r: LeadListDb): string | undefined =>
     r.business_id === null || r.assessment_id === null
@@ -525,11 +478,7 @@ function viewObj(r: { id: string; created_by: string; shared: number | boolean }
 }
 
 export function viewsFor(db: Db, actor: Actor, list: ListKey): SavedView[] {
-  return db.all<ViewRow>(
-    'SELECT id, list, name, params, shared, created_by, retired_at FROM saved_views ' +
-      'WHERE list = ? AND retired_at IS NULL AND (shared = 1 OR created_by = ?) ORDER BY shared DESC, name ASC, id ASC',
-    [list, actor.id],
-  ).map((r) => ({
+  return listSavedViewsIdListByListRetiredAt<ViewRow>(db, [list, actor.id]).map((r) => ({
     id: r.id, list, name: r.name, params: r.params, shared: r.shared === 1, mine: r.created_by === actor.id,
     may_retire: r.created_by === actor.id ? can(actor, 'saved_view.write', viewObj(r)) : r.shared === 1 && can(actor, 'saved_view.share', viewObj(r)),
   }));
@@ -537,7 +486,7 @@ export function viewsFor(db: Db, actor: Actor, list: ListKey): SavedView[] {
 
 /** The parameters of a view the reader may use — their own, or a shared one. Any other id looks like one that does not exist. */
 export function viewParams(db: Db, actor: Actor, list: ListKey, id: string): URLSearchParams {
-  const r = db.get<ViewRow>('SELECT id, list, name, params, shared, created_by, retired_at FROM saved_views WHERE id = ?', [id]);
+  const r = getSavedViewsIdListById<ViewRow>(db, [id]);
   if (r === undefined || r.list !== list || r.retired_at !== null || (r.shared !== 1 && r.created_by !== actor.id)) throw new NotFoundAsRefusal();
   return new URLSearchParams(r.params);
 }
@@ -556,8 +505,7 @@ export function saveView(
   const id = d.newId();
   const at = d.now();
   d.db.tx(() => {
-    d.db.run('INSERT INTO saved_views (id, list, name, params, shared, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, list, name, canonical(params), input.shared ? 1 : 0, actor.id, at]);
+    insertSavedViews(d.db, [id, list, name, canonical(params), input.shared ? 1 : 0, actor.id, at]);
     d.audit.append({
       at, kind: 'SAVED_VIEW_CREATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'saved_view', object_id: id,
       detail: { list, shared: input.shared, filters: Object.keys(params.filters), sort: params.sort },
@@ -567,13 +515,13 @@ export function saveView(
 }
 
 export function retireView(d: ListDeps, actor: Actor, id: string): { ok: true; list: ListKey } | { ok: false; why: string } {
-  const r = d.db.get<ViewRow>('SELECT id, list, name, params, shared, created_by, retired_at FROM saved_views WHERE id = ?', [id]);
+  const r = getSavedViewsIdListById<ViewRow>(d.db, [id]);
   if (r === undefined || (r.shared !== 1 && r.created_by !== actor.id)) throw new NotFoundAsRefusal();
   authorise(actor, r.created_by === actor.id ? 'saved_view.write' : 'saved_view.share', viewObj(r));
   if (r.retired_at !== null) return { ok: false, why: 'That view has already been retired.' };
   const at = d.now();
   d.db.tx(() => {
-    d.db.run('UPDATE saved_views SET retired_at = ?, retired_by = ? WHERE id = ?', [at, actor.id, id]);
+    updateSavedViewsRetiredAtRetiredByById(d.db, [at, actor.id, id]);
     d.audit.append({
       at, kind: 'SAVED_VIEW_RETIRED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'saved_view', object_id: id,
       detail: { list: r.list, shared: r.shared === 1 },
@@ -601,7 +549,7 @@ export function csvCell(v: string | number | null | undefined): string {
 }
 
 const CLAIM_COLUMNS: Readonly<Record<ListShape, readonly (readonly [keyof ClaimListRow, string])[]>> = Object.freeze({
-  // PHASE 134: the company first, the reference last.
+  // The company first, the reference last.
   MONEY: [['client', 'Company'], ['opened', 'Opened'], ['claim_ref', 'Reference']],
   WORKING: [['client', 'Company'], ['property', 'Property'], ['workstream', 'Workstream'], ['stage', 'Stage'],
     ['owner', 'Owner'], ['priority', 'Priority'], ['next_action', 'Next action'], ['next_action_due', 'Next action due'],
@@ -661,8 +609,8 @@ export function exportList(d: ListDeps, actor: Actor, list: ListKey, q: URLSearc
 }
 
 /**
- * PHASE 133a — THE GATE OF THE CLAIMS LIST, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * THE GATE OF THE CLAIMS LIST, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function claimListGate(actor: Actor): void {

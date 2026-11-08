@@ -33,6 +33,7 @@ import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { localStamp, ukDate } from '../shared/index.ts';
 import { clientAuditCount } from './audit-log.ts';
 import { SOURCES as REGISTER_SOURCES } from '../integrations/index.ts';
+import { listRegisterRecordsSourceIdEntityIdByBusinessIdPropertyId } from '../integrations/index.ts';
 
 /* ================================================================== *
  * 1 · THE STAGES, IN PLAIN WORDS
@@ -155,10 +156,7 @@ export function sourceName(source_id: string): string {
 
 /** The lookups kept for this client: each record exactly as it came back, with who started the run that fetched it. */
 export function lookups(db: Db, business_id: string, property_id: string | null): Gathered[] {
-  const rows = db.all<{ source_id: string; entity_id: string; fields_json: string; obtained_at: string }>(
-    'SELECT source_id, entity_id, fields_json, obtained_at FROM register_records WHERE business_id = ? ' +
-      'AND (property_id IS NULL OR property_id = ? OR ? IS NULL) ORDER BY obtained_at DESC, rowid DESC',
-    [business_id, property_id, property_id]);
+  const rows = listRegisterRecordsSourceIdEntityIdByBusinessIdPropertyId<{ source_id: string; entity_id: string; fields_json: string; obtained_at: string }>(db, [business_id, property_id, property_id]);
   return rows.map((r) => {
     let fields: (readonly [string, string])[] = [];
     let summary = '';

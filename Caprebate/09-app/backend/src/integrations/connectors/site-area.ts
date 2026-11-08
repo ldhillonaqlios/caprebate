@@ -1,12 +1,11 @@
 /**
- * A PROPERTY'S SITE AREA FROM HM LAND REGISTRY'S LAND BOUNDARY — WIRED, AND SWITCHED OFF. Phase 151a, 24 Sep 2026.
+ * A PROPERTY'S SITE AREA FROM HM LAND REGISTRY'S LAND BOUNDARY — WIRED, AND SWITCHED OFF.
  *
  * THE ONE BACK-END FUNCTION, `siteAreaFromLandBoundary`, that joins what Phase 150 built to a stored fact:
  *
  *   1. the switch. While BOUNDARY_FETCHING_SWITCHED_ON (09-app/backend/src/registers/caprebate-boundary-import.ts) is false it
  *      returns SWITCHED_OFF before anything else — nothing read, nothing sent, nothing stored;
  *   2. the use. `checkBoundaryUse('INTERNAL_CALCULATION')` must say yes. The boundary is for our own checks only
- *      (CURRENT_LICENCE_PERMISSION, Lakhbir, 15 September 2026);
  *   3. the point. A British National Grid easting and northing — one a person enters, or one a supplier gives in that
  *      grid — or an ETRS89 latitude and longitude, converted by Ordnance Survey's exact method (src/connectors/
  *      ostn15.ts) and refused rather than approximated. NO POINT, NO LOOKUP (N4): the site area stays asked;
@@ -19,19 +18,19 @@
  *      area of the one polygon that holds the point;
  *   6. the fact. site_area_m2 is stored through the one door, `ingestRegisterRecord`, under source HMLR_INSPIRE, at
  *      grade B at best (the source register's max_grade for HMLR_INSPIRE), with the polygon's INSPIRE ID. A record
- *      already held for the property is kept as it was, as research does (Phase 139).
+ *      already held for the property is kept as it was, as research does.
  *
  * WHAT NEVER LEAVES THIS FUNCTION: the polygon, a map of it, and its coordinates. The outcome carries a number, a
  * grade, the councils read and the reason — nothing else — and the stored record carries the area, its grade and the
  * polygon's identifier. The boundary module's CURRENT_LICENCE_PERMISSION keeps a boundary out of every client report
  * and this function gives no way round it.
  *
- * ITS ONE CALLER IS THE RESEARCH RUN AFTER SIGNING (Phase 151c, src/web/site-area-run.ts): "Run the research" works
+ * ITS ONE CALLER IS THE RESEARCH RUN AFTER SIGNING: "Run the research" works
  * out each property's site area on the same click, passing the postcode's council, any neighbouring council a person
  * added, and the point a person entered or Homedata's own easting and northing. NOTHING CAN FIRE IT TODAY: the switch
- * is false. Turning it on is the one word in the boundary module, and it is Lakhbir's. "Can we make a few small, logged
- * test lookups to check a data connector works?" was answered on 25 September 2026, and the first download, as a test
- * lookup under its five conditions, is `smoke HMLR_INSPIRE` (Phase 151l, src/integrations/connectors/boundary-test-lookup.ts).
+ * is false. Turning it on is the one word in the boundary module, and it is the owner's. "Can we make a few small, logged
+ * test lookups to check a data connector works?" was answered, and the first download, as a test
+ * lookup under its five conditions, is `smoke HMLR_INSPIRE`.
  */
 import type { Db } from '../../core/index.ts';
 import {
@@ -54,6 +53,8 @@ import type { InspireFileStore } from './inspire-store.ts';
 import { etrs89ToBritishNationalGrid, type Ostn15Grid } from './ostn15.ts';
 import { resolveProperty } from '../postcodes/postcode.ts';
 import type { PostcodeStore } from '../postcodes/postcode-port.ts';
+import { getRegisterRecordsFieldsJsonByBusinessIdSourceId10, getRegisterRecordsIdFieldsJsonByBusinessIdSourceId } from '../data.ts';
+import { getPropertiesIdByIdBusinessId } from '../data-borrowed.ts';
 
 export const SITE_AREA_SOURCE_ID = 'HMLR_INSPIRE';
 
@@ -217,7 +218,7 @@ export function planSiteArea(d: Pick<SiteAreaDeps, 'db' | 'grid'>, input: SiteAr
   const use = checkBoundaryUse('INTERNAL_CALCULATION');
   if (!use.permitted) return stop(outcome('NOT_PERMITTED', use.reason));
 
-  const property = d.db.get<{ id: string }>('SELECT id FROM properties WHERE id = ? AND business_id = ?', [input.property_id, input.business_id]);
+  const property = getPropertiesIdByIdBusinessId<{ id: string }>(d.db, [input.property_id, input.business_id]);
   if (property === undefined) return stop(outcome('NOT_PERMITTED', 'That property is not one of this company\'s, so nothing was looked up.'));
 
   const point = pointInBritishNationalGrid(input.point, d.grid);
@@ -238,10 +239,7 @@ export function planSiteArea(d: Pick<SiteAreaDeps, 'db' | 'grid'>, input: SiteAr
     : ` We read the files of ${names.join(' and ')}.`;
 
   const entity_id = `property:${input.property_id}`;
-  const held = d.db.get<{ id: string; fields_json: string }>(
-    'SELECT id, fields_json FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id = ?',
-    [input.business_id, SITE_AREA_SOURCE_ID, entity_id],
-  );
+  const held = getRegisterRecordsIdFieldsJsonByBusinessIdSourceId<{ id: string; fields_json: string }>(d.db, [input.business_id, SITE_AREA_SOURCE_ID, entity_id]);
   if (held !== undefined) {
     return stop(outcome('ALREADY_HELD', 'We already hold a site area from the land boundary for this property, so it was kept as it was and nothing was read.', { record_id: held.id }));
   }
@@ -314,10 +312,7 @@ export function councilOfPostcode(postcode: string | null, store: PostcodeStore 
  */
 export function homedataPointOf(db: Db, business_id: string, property_id: string):
   { easting: unknown; northing: unknown } | { latitude: unknown; longitude: unknown; datum: 'ETRS89' | null } | null {
-  const r = db.get<{ fields_json: string }>(
-    "SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = 'HOMEDATA_ADDRESS' AND property_id = ? ORDER BY obtained_at DESC, id DESC LIMIT 1",
-    [business_id, property_id],
-  );
+  const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId10<{ fields_json: string }>(db, [business_id, property_id]);
   if (r === undefined) return null;
   try {
     const f = JSON.parse(r.fields_json) as Record<string, unknown>;

@@ -1,8 +1,8 @@
 /**
- * STUB 2 of 3 — document signature. REPLACED FOR THE ENGAGEMENT LETTER BY PHASE 146f, 22 September 2026.
+ * STUB 2 of 3 — document signature. REPLACED FOR THE ENGAGEMENT LETTER BY PHASE 146f.
  *
  * The stub provider that lived here (`stubSignatureProvider`, which contacted nothing and executed nothing) is gone.
- * Lakhbir decided the engagement letter is signed inside the application, so the signature is built in:
+ * the owner decided the engagement letter is signed inside the application, so the signature is built in:
  * src/web/signing.ts — the client types their full name and role, ticks that they may sign for the business, and
  * presses Sign; the record, its fingerprint in the audit chain and a signed PDF are kept. It is switched off
  * (ENGAGEMENT_SIGNING) until our solicitor confirms a typed name suits the letter and the letter's open terms are

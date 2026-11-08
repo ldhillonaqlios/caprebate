@@ -21,6 +21,7 @@ import * as N from './breach-names.ts';
 import * as V from './compliance-views.ts';
 import { identityPanel, sendIdentityCheck } from './identity-checks.ts';
 import { logFormComplaint, waitingForms } from './notices-site.ts';
+import { listUsersIdNameByRoleDisabledAt } from '../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -116,7 +117,7 @@ export async function handleCompliance(
   if (path === '/staff/compliance/aml' && method === 'GET') {
     const v = A.amlView(db, actor, now());
     return html(res, V.amlPage(nav, v, db.all<{ id: string; name: string }>('SELECT id, name FROM businesses ORDER BY name LIMIT 1000'),
-      db.all<{ id: string; name: string }>("SELECT id, display_name AS name FROM users WHERE role <> 'CLIENT' AND disabled_at IS NULL ORDER BY display_name"), msg));
+      listUsersIdNameByRoleDisabledAt<{ id: string; name: string }>(db), msg));
   }
   if (path === '/staff/compliance/aml/officers' && method === 'POST') return back(A.recordOfficer(deps, actor, posted(await form(req))), 'Not recorded', '/staff/compliance/aml?done=saved', '/staff/compliance/aml');
   const endOfficer = m(`/aml/officers/${ID}/end`);

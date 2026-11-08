@@ -61,5 +61,5 @@ The answer is the product name and its order form (user count, office, any speci
 `04-phase-work/phase9/caprebate-cost-model.cjs` stay empty and the gate stays off. Permissions and licensing:
 contactbcis@bcis.co.uk; API access: api@bcis.co.uk.
 
-The tests: `T-BC1` to `T-BC3` in `caprebate-source-register.test.ts`. The first two fail on the pre-change register
+The tests: `T-BC1` to `T-BC3` in `integrations/source-register.test.ts`. The first two fail on the pre-change register
 (`04-phase-work/phase151/proofs/phase3-bcis-tests-on-bak151-MUST-FAIL.log`).

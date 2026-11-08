@@ -1,7 +1,7 @@
 /**
- * EVERY OUTSIDE SERVICE THAT CAN RECEIVE PERSONAL DATA — PHASE 161g, 5 November 2026.
+ * EVERY OUTSIDE SERVICE THAT CAN RECEIVE PERSONAL DATA.
  *
- * Lakhbir, 5 Nov 2026: the privacy policy "names every outside service that receives personal data, from the
+ * The owner: the privacy policy "names every outside service that receives personal data, from the
  * connectors and SECRET_KEYS owners ... what is sent, why, and where it is held. Where it is held outside the UK, the
  * transfer basis is written 'to be confirmed by our DPO', never guessed. A test ties the list to SECRET_KEYS, so a new
  * connector cannot be added without a line."
@@ -112,7 +112,7 @@ export const OUTSIDE_SERVICES: readonly OutsideService[] = Object.freeze([
     sent: 'Nothing. It only knocks on our website’s door.', why: 'So replies are read on time.',
     where: 'Not applicable: it receives nothing about anyone.', outsideUk: false, transfer: null, inUse: 'In use.' },
 
-  /* PHASE 161h, 7 Nov 2026: the live website's timers, its backup and its reference database. */
+  /* The live website's timers, its backup and its reference database. */
   { keyOwner: 'TIMERS', name: 'Vercel Cron (our timers)', role: 'wakes our live website on a timetable for its scheduled jobs', personalData: false,
     sent: 'Nothing. It only knocks on our website\u2019s door.', why: 'So emails, replies and clean-ups happen on time.',
     where: 'Not applicable: it receives nothing about anyone.', outsideUk: false, transfer: null, inUse: 'The live website is not yet open.' },
@@ -126,7 +126,7 @@ export const OUTSIDE_SERVICES: readonly OutsideService[] = Object.freeze([
     where: 'Turso, beside our database. It holds no personal data.', outsideUk: false, transfer: null, inUse: 'The live website is not yet open.' },
 
   /* ---------------------------------------------------- the services that need no key */
-  /* PHASE 161h, 7 Nov 2026: where the live website keeps data, as the phase decided it (Word question 291 asks the
+  /* Where the live website keeps data, as the phase decided it (Word question 291 asks the
      developer and the data protection officer to agree). Vercel and Turso are US companies; Vercel's own records of each
      request, and Turso's database in Ireland, are outside the UK, so their safeguard is the DPO's to confirm. */
   { keyOwner: null, name: 'Our hosting company', role: 'runs our website and client portal', personalData: true,

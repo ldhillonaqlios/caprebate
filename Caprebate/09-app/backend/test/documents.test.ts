@@ -23,7 +23,7 @@
  */
 
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
-   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
+   twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
@@ -212,7 +212,7 @@ describe('who may do what — the nine new actions, every role, and document.rea
   test('each new action admits exactly the roles granted it, and REFUSES every other role — and a disabled user every one', () => {
     for (const [action, granted] of Object.entries(GRANTED)) {
       assert.ok(REGISTERED_ACTIONS.includes(action), `${action} is not registered`);
-      for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/authz.test.ts */) {
+      for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/core/permissions.test.ts */) {
         const a = actor(role, `u-${role}`, 'biz-1');
         assert.equal(can(a, action, favourable(action, role)), granted.includes(role), `${role} on ${action}`);
       }
@@ -223,7 +223,7 @@ describe('who may do what — the nine new actions, every role, and document.rea
 
   test('A REFUSAL PER ROLE PER SENSITIVITY: document.read admits each reader class’s roles, on the most favourable object, and refuses every other', () => {
     for (const r of READS) {
-      for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/authz.test.ts */) {
+      for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/core/permissions.test.ts */) {
         const o: Obj = { type: 'document', id: 'd-1', business_id: 'biz-1', readers: r.readers, carries_value: r.carries_value, letter_signed: r.letter_signed, assigned_surveyor_ids: [`u-${role}`], shown_to_client: true };
         assert.equal(can(actor(role, `u-${role}`, 'biz-1'), 'document.read', o), r.admitted.includes(role),
           `${role} on ${r.readers}${r.carries_value ? ' (carries a value)' : ''}${r.letter_signed ? '' : ' (letter unsigned)'}: expected ${r.admitted.includes(role) ? 'allowed' : 'REFUSED'}`);

@@ -29,6 +29,7 @@
 import type { Db } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
 import { postcodeKey } from '../integrations/index.ts';
+import { deleteRegisterFileRowsBySourceId, getRegisterFileImportsAtBySourceId, getRegisterFileRowsCountBySourceId, insertRegisterFileImports, insertRegisterFileRows, listRegisterFileRowsRefAddressBySourceIdPostcodeKey } from '../integrations/index.ts';
 
 export type FileSourceId = 'CIW' | 'CARE_INSPECTORATE';
 
@@ -198,15 +199,13 @@ export function importRegisterFile(
     good.push({ ref, pc, address: src.address.map(cell).filter((x) => x !== '').join(', '), fields });
   }
   const replaced = d.db.tx(() => {
-    const before = d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM register_file_rows WHERE source_id = ?', [source_id])?.n ?? 0;
-    d.db.run('DELETE FROM register_file_rows WHERE source_id = ?', [source_id]);
+    const before = getRegisterFileRowsCountBySourceId<{ n: number }>(d.db, [source_id])?.n ?? 0;
+    deleteRegisterFileRowsBySourceId(d.db, [source_id]);
     for (const g of good) {
-      d.db.run('INSERT INTO register_file_rows (source_id, ref, postcode_key, address, fields, imported_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [source_id, g.ref, g.pc, g.address, JSON.stringify(g.fields), now]);
+      insertRegisterFileRows(d.db, [source_id, g.ref, g.pc, g.address, JSON.stringify(g.fields), now]);
       kept++;
     }
-    d.db.run('INSERT INTO register_file_imports (source_id, file_name, imported_at, rows_kept, rows_skipped, by_user) VALUES (?, ?, ?, ?, ?, ?)',
-      [source_id, file_name, now, kept, skipped, actor.id]);
+    insertRegisterFileImports(d.db, [source_id, file_name, now, kept, skipped, actor.id]);
     return before;
   });
   d.audit.append({
@@ -224,11 +223,10 @@ export type FileRow = { readonly ref: string; readonly address: string; readonly
 
 /** The rows at one postcode, and when the source was last imported (null: never). */
 export function rowsAtPostcode(db: Db, source_id: FileSourceId, postcode: string | null | undefined): { readonly imported_at: string | null; readonly rows: readonly FileRow[] } {
-  const last = db.get<{ at: string | null }>('SELECT MAX(imported_at) AS at FROM register_file_imports WHERE source_id = ?', [source_id])?.at ?? null;
+  const last = getRegisterFileImportsAtBySourceId<{ at: string | null }>(db, [source_id])?.at ?? null;
   const pc = postcodeKey(postcode);
   if (last === null || pc === '') return { imported_at: last, rows: [] };
-  const rows = db.all<{ ref: string; address: string; postcode_key: string; fields: string }>(
-    'SELECT ref, address, postcode_key, fields FROM register_file_rows WHERE source_id = ? AND postcode_key = ? ORDER BY ref', [source_id, pc]);
+  const rows = listRegisterFileRowsRefAddressBySourceIdPostcodeKey<{ ref: string; address: string; postcode_key: string; fields: string }>(db, [source_id, pc]);
   return {
     imported_at: last,
     rows: rows.map((r) => ({ ref: r.ref, address: r.address, postcode_key: r.postcode_key, fields: JSON.parse(r.fields) as Record<string, string | number> })),

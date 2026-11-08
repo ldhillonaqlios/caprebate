@@ -1,6 +1,6 @@
 /**
  * THE TITLE REGISTER — HM LAND REGISTRY BUSINESS GATEWAY. ABOUT £7 A TITLE, AFTER A SIGNED ENGAGEMENT, ON A CLICK.
- * Phase 146d, 23 September 2026. Switched off: REGISTER_SWITCHES.HMLR_TITLE is false.
+ * Switched off: REGISTER_SWITCHES.HMLR_TITLE is false.
  *
  * WHY THIS ONE IS WORTH £7 WHEN EVERYTHING ELSE HERE IS FREE. The engine needs what the client paid for the building,
  * because the purchase price is the starting point for an apportionment. HM Land Registry's free Price Paid Data
@@ -25,9 +25,9 @@
  * (REGISTER_AMOUNTS_WITHHELD in src/web/surveyor.ts) so that a surveyor cannot anchor on it. The rest of the record —
  * the tenure, the dates, the title number — goes to them as usual.
  *
- * ONWARD SUPPLY TO THE CLIENT'S ACCOUNTANT — OPEN SINCE PHASE 146m (27 September 2026). The solicitor answered yes,
- * relayed by Lakhbir, and the HMLR_TITLE licence in the source register no longer awaits legal review. The client
- * report stays shut: it was not asked about. The licence is the register's, not a setting here — and since Phase 146k
+ * ONWARD SUPPLY TO THE CLIENT'S ACCOUNTANT — OPEN. The solicitor answered yes,
+ * relayed by the owner, and the HMLR_TITLE licence in the source register no longer awaits legal review. The client
+ * report stays shut: it was not asked about. The licence is the register's, not a setting here — and
  * this connector is retired: the copy is bought, typed and uploaded by hand.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@
  *
  *   1. ADDRESS → TITLE NUMBER.  Search by Property Description, a SOAP service. "Use this service to find out the
  *      title number and tenure of a property based on the address supplied" (the Business Gateway service list, read
- *      23 September 2026).
+ *     ).
  *   2. IS THERE AN OFFICIAL COPY TO BUY?  GET /{rest}/s1/v1/titles/{title_number}/official-copies/availability —
  *      PUBLISHED, in the REST developer guide, and it "Returns the OC1 document availability (title register and
  *      title plan)". Free to ask, so it is asked before the £7 is spent.
@@ -70,7 +70,7 @@ export type TitleQuery = {
   readonly property: TypedProperty | null;
   readonly nation: Nation | null;
   /**
-   * PHASE 146d, ITEM 15: WHAT THE PENNY PRE-CHECK FOUND, where it ran on this same click. Null when it did not run —
+   * ITEM 15: WHAT THE PENNY PRE-CHECK FOUND, where it ran on this same click. Null when it did not run —
    * and a null is NOT a reason to skip the £7 call. "We did not look" and "we looked and there is no title" are
    * different facts, and only the second one saves money (N4 applied to a spending decision).
    */

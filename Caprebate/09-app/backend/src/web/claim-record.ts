@@ -1214,12 +1214,12 @@ export const DISPOSAL_TASK_TITLE_BEFORE = 'The election on a future sale — rea
 
 /**
  * PHASE 153d, 4 October 2026 (Word question 23, the director's): THE FIXED DISPOSAL FEE, read from the job cost model
- * (09-app/backend/src/costing/caprebate-job-economics.cjs, `disposalFee`), never restated here. Built on our recommendation:
+ * (09-app/backend/src/modules/survey/costing/job-economics.cjs, `disposalFee`), never restated here. Built on our recommendation:
  * a fixed fee for the review and the drafted election, never a percentage of the sale or the election figure. A TEST
  * DEFAULT, NOT AGREED, and every place it is shown says so. The director decides the figure.
  */
 export type DisposalFee = { readonly pounds: number; readonly pence: number; readonly words: string; readonly status: string };
-export const DISPOSAL_FEE: DisposalFee = (createRequire(import.meta.url)('../costing/caprebate-job-economics.cjs') as { disposalFee: () => DisposalFee }).disposalFee();
+export const DISPOSAL_FEE: DisposalFee = (createRequire(import.meta.url)('../modules/survey/costing/job-economics.cjs') as { disposalFee: () => DisposalFee }).disposalFee();
 
 export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { openTerms?: readonly OpenTerm[]; today?: string } = {}): AftercarePanel {
   const c = loadClaim(db, claim_id);

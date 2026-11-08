@@ -29,6 +29,7 @@ import { localDate, ukDate } from '../shared/index.ts';
 // Read inside functions only: pipeline.ts reads this module's need the same way, so the loop is never touched at load.
 import { raiseBusinessStage } from './pipeline.ts';
 import { claimReturns, claimRoutes, type ClaimReturn } from './claim-route.ts';
+import { getOutboxRById } from '../integrations/index.ts';
 
 export type ConfirmKind = 'RETURN_FIT' | 'FILED';
 export type ConfirmDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };
@@ -142,7 +143,7 @@ export function sendConfirmRequest(
     const id = d.newId();
     d.db.run('INSERT INTO accountant_confirm_requests (id, claim_id, kind, contact_id, to_email, token_sha256, outbox_id, sent_by, sent_at, expires_at, period_end) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [id, c.id, kind, who.id, who.email.trim(), sha(token), sent.id, actor.id, at, expires, period_end]);
-    const requested = d.db.get<{ r: number }>('SELECT send_requested AS r FROM outbox WHERE id = ?', [sent.id])?.r === 1;
+    const requested = getOutboxRById<{ r: number }>(d.db, [sent.id])?.r === 1;
     d.audit.append({ at, kind: 'ACCOUNTANT_CONFIRM_SENT', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'claim', object_id: c.id, detail: { request: id, confirm: kind, contact: who.id, sending: requested, period_end } });
     return { ok: true as const, id, requested };

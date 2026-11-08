@@ -1,7 +1,7 @@
 /**
  * Caprebate — THE WIRING. Postcode in, location_key out, LEG-E4 still off.
  *
- * Board item 12993800139, Phase 110, 9 September 2026.
+ * Board item 12993800139, Phase 110.
  *
  * ─────────────────────────────────────────────────────────────────────────
  * WHAT WAS MISSING, AND IT WAS NOT CODE
@@ -10,7 +10,7 @@
  *
  *   `caprebate-postcode-authority.ts` turns a postcode into a council area,
  *   and then into a `location_key` — 38 assertions, run end to end against
- *   the real 2.7 million-row ONS file on 8 September 2026.
+ *   the real 2.7 million-row ONS file.
  *
  *   `caprebate-cost-model.cjs` LEG-E4 consumes `input.location_key` and
  *   refuses without one.
@@ -70,7 +70,7 @@
  *
  * So the refusal lives here and the data is left whole. THE SERVED SET IS NOT
  * DEFINED IN THIS FILE. It is passed in, because it already exists exactly
- * once — `CB_JURIS.SERVED` in the engine — and Lakhbir flips it. A copy here
+ * once — `CB_JURIS.SERVED` in the engine — and the owner flips it. A copy here
  * would be a second place to change, and the day Scotland is switched on the
  * two would disagree and the client would be refused by the older one.
  *
@@ -95,7 +95,7 @@ import type {
 } from './postcode-authority.ts';
 import { freshnessOf, ONS_TABLE_STALE_FLAG } from './postcode-store.ts';
 import type { Freshness, PostcodeStore } from './postcode-store.ts';
-import COST_MODEL from '../../costing/caprebate-cost-model.cjs';
+import COST_MODEL from '../../modules/survey/costing/cost-model.cjs';
 
 /* ------------------------------------------------------------------ *
  * 1. The served set — supplied, never defined here

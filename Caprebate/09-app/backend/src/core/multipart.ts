@@ -131,7 +131,7 @@ export function singleFile(
     return { ok: false, why: e instanceof MultipartError ? e.message : 'that upload could not be read' };
   }
   const files = parts.filter((p) => p.filename !== undefined && p.bytes.length > 0);
-  // PHASE 157c (the Friary House run, F17): a file that was chosen but holds nothing arrives with its name and no bytes;
+  // A file that was chosen but holds nothing arrives with its name and no bytes;
   // a browser with no file chosen sends a part with an empty name. Say which, rather than "choose a file" for both.
   if (files.length === 0 && parts.some((p) => p.filename !== undefined && p.filename !== '' && p.bytes.length === 0)) return { ok: false, why: 'that file is empty' };
   if (files.length === 0) return { ok: false, why: 'no file was attached' };
@@ -146,7 +146,7 @@ export function singleFile(
 }
 
 /**
- * PHASE 160e: A FORM WHOSE FILE WAS SENT FIRST IN PIECES (src/core/upload-pieces.ts) — no file in it, and the send's id
+ * A FORM WHOSE FILE WAS SENT FIRST IN PIECES (src/core/upload-pieces.ts) — no file in it, and the send's id
  * in a field named `pieces`. Its text fields and that id; null for any other form, which is then read as before.
  */
 export function piecedFields(body: Uint8Array, contentType: string | undefined): { id: string; fields: Record<string, string> } | null {
@@ -166,7 +166,7 @@ export function piecedFields(body: Uint8Array, contentType: string | undefined):
 }
 
 /**
- * 2 Oct 2026: SEVERAL PHOTOS IN ONE FORM — the client's "send lots of photos at once" (src/web/evidence-pages.ts).
+ * SEVERAL PHOTOS IN ONE FORM — the client's "send lots of photos at once" (src/web/evidence-pages.ts).
  * The same ungenerous reader; every file part is returned, in order, up to `max` of them (the parts cap above still
  * holds). A form that posts more than `max` is refused, not cut short.
  */
@@ -182,7 +182,7 @@ export function manyFiles(
     return { ok: false, why: e instanceof MultipartError ? e.message : 'that upload could not be read' };
   }
   const files = parts.filter((p) => p.filename !== undefined && p.bytes.length > 0);
-  // PHASE 157c (the Friary House run, F17): a file that was chosen but holds nothing arrives with its name and no bytes;
+  // A file that was chosen but holds nothing arrives with its name and no bytes;
   // a browser with no file chosen sends a part with an empty name. Say which, rather than "choose a file" for both.
   if (files.length === 0 && parts.some((p) => p.filename !== undefined && p.filename !== '' && p.bytes.length === 0)) return { ok: false, why: 'that file is empty' };
   if (files.length === 0) return { ok: false, why: 'no file was attached' };

@@ -1,20 +1,20 @@
 /**
- * AN ONLINE IDENTITY CHECK FOR THE MONEY-LAUNDERING RULES — DIDIT. Phase 151, 24 September 2026, built for Veriff;
- * Phase 151f, 25 September 2026, SWITCHED TO DIDIT on Lakhbir's instruction. BUILT FOR REAL AND SWITCHED OFF.
+ * AN ONLINE IDENTITY CHECK FOR THE MONEY-LAUNDERING RULES — DIDIT. Built for Veriff;
+ * SWITCHED TO DIDIT on the owner's instruction. BUILT FOR REAL AND SWITCHED OFF.
  *
- * WHY DIDIT (Lakhbir, 25 September 2026, in chat: "switch to Didit", after asking for a free alternative with an API).
+ * WHY DIDIT.
  * Didit's own pages, read 25 September 2026: 500 full checks a month free, permanently, with no card (ID document,
  * passive liveness, face match and an IP check), then US$0.33 a check; one POST that returns a hosted link; a result
  * webhook SIGNED with HMAC-SHA256; data processed and stored in the EU (AWS) by default; retention set by us, from one
  * month to ten years. What its pages did NOT show: certification under the UK digital identity trust framework
  * (Veriff states it has one). The money-laundering rules do not require that certification as far as we know, and
  * whether we are supervised at all is Word question 10; the officer and the solicitor see this change in their register.
- * Veriff, Credas and APLYiD were compared on 24 September 2026 (04-phase-work/phase151/identity-check-providers.md);
+ * Veriff, Credas and APLYiD were compared (04-phase-work/phase151/identity-check-providers.md);
  * Didit's page reads are in 04-phase-work/phase151f/didit.md.
  *
  * WHY IT IS OFF, AND WHAT TURNS IT ON. `IDENTITY_CHECK.enabled` ships false. `identityCheckMissing` lists what must be
  * true first, in plain words, and every one is a person's decision, not Claude's:
- *   1. the provider chosen — Didit, Lakhbir's choice of 25 September 2026;
+ *   1. the provider chosen — Didit, the owner's choice;
  *   2. the provider named as a processor in the privacy notice AND in clause 7 of the engagement letter (the Phase 115
  *      rule: nothing carries client data through a processor the client was not told about);
  *   3. its key, its webhook secret and the id of the check we set up in its console (the "workflow") in the key file
@@ -24,9 +24,9 @@
  * 2026), so nothing here reads AML_IN_SCOPE.
  * OFF, NOTHING LEAVES THIS SERVER: `startIdentityCheck` refuses before any call, any audit row of a call, anything.
  *
- * SWITCHED ON FOR TESTING — Phase 151h, 25 September 2026, Lakhbir in chat: "switch it on we are still in a testing
+ * SWITCHED ON FOR TESTING, the owner in chat: "switch it on we are still in a testing
  * enviroment". The Didit account is live and its three entries are in the key file. The officer approved the Didit
- * entry of the privacy notice the same day (relayed by Lakhbir), BUT THE PAPERS ARE NOT DONE: the notice is still a
+ * entry of the privacy notice the same day, BUT THE PAPERS ARE NOT DONE: the notice is still a
  * draft, not published, and clause 7 of the engagement letter names Didit only in a comment. So `enabled` is true, the
  * two `named_in_*` flags stay FALSE because they are false, and `papers_waived_for_testing` records the decision to
  * test before the papers are done, with who and when in `waiver_record`. While it is waived and the papers are not
@@ -85,8 +85,8 @@ export type IdentityCheckConfig = {
 };
 
 /**
- * The question that chose a provider, closed 24 September 2026 (Veriff), and reopened by Lakhbir's switch to Didit on
- * 25 September 2026, recorded under it in the closed questions document. Quoted by its title, which did not change.
+ * The question that chose a provider, closed (Veriff), and reopened by the owner's switch to Didit on
+ *, recorded under it in the closed questions document. Quoted by its title, which did not change.
  */
 export const IDENTITY_CHECK_QUESTION =
   'Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD?';
@@ -283,7 +283,7 @@ export function readIdentityDecision(rawBody: string, sig: IdentitySignature, se
 }
 
 /**
- * OUR OWN COPY OF A RESULT — Phase 151b, 25 September 2026; Didit's shape since Phase 151f. The decision's own fields
+ * OUR OWN COPY OF A RESULT; Didit's shape. The decision's own fields
  * and nothing about the person: the session's status, when it was decided, whether the document, the liveness and
  * the face match each passed, and the TYPE and issuing COUNTRY of the document checked. Never a name, a date of birth,
  * a document number, an address, an image or a media link. Read only from a body whose signature has already held

@@ -112,6 +112,7 @@ import { noticesEdition, noticesForLiveSite, receiveComplaintForm } from '../web
 import { CONSENT_COOKIE, COOKIE_BANNER_CSS, agreementLinks, consentChoice, consentSetCookie, cookieBanner, draftLine, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../web/legal-pages.ts';
 import { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from '../web/legal-approvals.ts';
 import { nav as staffNav } from './staff.ts';
+import { getResearchSourcesCountByBusinessIdState2 } from '../integrations/index.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -121,21 +122,21 @@ export type WebDeps = {
   newId?: () => string;
   /** CRM 5 of 10: the public referral form's gate. Absent is `REFERRAL_FORM`, shipped off. */
   referralForm?: { readonly enabled: boolean; readonly requires: string };
-  /** PHASE 133c: the portal name switch (the menu switch went in Phase 135). Absent is `NAME_SWITCHES` in src/core/navigation.ts, off. */
+  /** The portal name switch. Absent is `NAME_SWITCHES` in src/core/navigation.ts, off. */
   names?: NameSwitches;
   /**
-   * PHASE 133j: the site's own address, for a link sent by email (a client's sign-up). CONFIGURED, NEVER TAKEN FROM THE
+   * The site's own address, for a link sent by email (a client's sign-up). CONFIGURED, NEVER TAKEN FROM THE
    * REQUEST'S Host header, which is whatever the sender typed. Absent is http://localhost:8103.
    */
   publicOrigin?: string;
-  /** PHASE 153d: the test-only letter (src/web/letter.ts, TEST_LETTER_PATH). Absent is the real letter. Only the test website passes it. */
+  /** The test-only letter (src/web/letter.ts, TEST_LETTER_PATH). Absent is the real letter. Only the test website passes it. */
   letterPath?: string;
-  /** 6 Oct 2026: signing on for testing (ENGAGEMENT_SIGNING_TEST, the test copy only). Absent is ENGAGEMENT_SIGNING, off. */
+  /** Signing on for testing (ENGAGEMENT_SIGNING_TEST, the test copy only). Absent is ENGAGEMENT_SIGNING, off. */
   signing?: EngagementSigning;
-  /** PHASE 160f: the public notices page and its complaint form (src/web/notices-site.ts). Only the test website passes it. */
+  /** The public notices page and its complaint form (src/web/notices-site.ts). Only the test website passes it. */
   notices?: boolean;
   /**
-   * PHASE 161g, 5 Nov 2026: THE LEGAL SETTING, for the live website. The legal pages, the notices page, the cookie
+   * THE LEGAL SETTING, for the live website. The legal pages, the notices page, the cookie
    * banner and the client's tick are served wherever it is on, as on the test website, but each page carries its Draft
    * line until our solicitor and our data protection officer have both approved its version (src/web/legal-approvals.ts).
    * Off unless CAPREBATE_LEGAL_PAGES=on (src/core/server.ts). With it and `notices` both off, nothing changes.
@@ -163,7 +164,7 @@ function setCookie(res: ServerResponse, name: string, value: string, maxAge: num
   res.setHeader('set-cookie', Array.isArray(prior) ? [...prior, line] : prior ? [String(prior), line] : [line]);
 }
 
-/** STRESS TEST, 29 SEP 2026: the addresses where a HEAD is answered as a GET, because their GET changes nothing. */
+/** STRESS TEST: the addresses where a HEAD is answered as a GET, because their GET changes nothing. */
 function HEAD_AS_GET(path: string): boolean {
   return path === '/' || path.startsWith('/assets/') || path === '/login' || path === '/favicon.svg' || path === '/favicon.ico'
     || path === '/privacy/' || path === '/privacy' || path === '/notices/' || path === '/notices'
@@ -185,7 +186,7 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form gets the script that sends a big file in pieces (src/core/upload-pieces.ts).
+  // A page with an upload form gets the script that sends a big file in pieces (src/core/upload-pieces.ts).
   const p = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, p.headers);
   res.end(p.body);
@@ -202,7 +203,7 @@ function redirect(res: ServerResponse, to: string): void {
 }
 
 /**
- * PHASE 154a1 (line 3), 4 October 2026 — A REFUSED BODY CLOSES ITS CONNECTION, CLEANLY. The 3 October sweep found that
+ * — A REFUSED BODY CLOSES ITS CONNECTION, CLEANLY. The 3 October sweep found that
  * after a 413 on a kept-alive connection the next request on it hung about 6 s and was reset: reading stopped part-way,
  * the rest of the body was left in the connection, and the connection was kept. Now the rest of a body over its cap is
  * read and dropped - up to DRAIN_MAX more, so the sender is never cut off mid-send and sees the answer - and the 413
@@ -221,7 +222,7 @@ function closeAfterAnswer(req: IncomingMessage): void {
 }
 
 /**
- * PHASE 161b, 4 November 2026: A BODY IS READ ONCE AND KEPT FOR ITS REQUEST. The form-token check (src/core/server.ts,
+ * 4 November 2026: A BODY IS READ ONCE AND KEPT FOR ITS REQUEST. The form-token check (src/core/server.ts,
  * src/core/form-token.ts) reads a form before any route does; the route then reads the same bytes from here, with the
  * token's fields taken out (`keepBody`). A kept body still meets the route's own cap.
  */
@@ -266,16 +267,16 @@ export class PayloadTooLarge extends Error {
 }
 
 async function form(req: IncomingMessage): Promise<URLSearchParams> {
-  // PHASE 154a1 (line 9): invisible characters out on the way in (src/core/typed.ts).
+  // Invisible characters out on the way in (src/core/typed.ts).
   const typed = cleanForm(new URLSearchParams((await readBody(req)).toString('utf8')));
-  // PHASE 133c: what the form carried is kept for this request, so a refusal can put it back where it was typed (B6).
+  // What the form carried is kept for this request, so a refusal can put it back where it was typed (B6).
   const scratch = navContext.getStore()?.form;
   if (scratch !== undefined) { scratch.typed = typed; scratch.action = new URL(req.url ?? '/', 'http://localhost').pathname; }
   return typed;
 }
 
 /**
- * PHASE 133c — A GET OF THE BACK OFFICE, DRAWN INTO A STRING, for `problem()` to redraw the page a refused form was on.
+ * A GET OF THE BACK OFFICE, DRAWN INTO A STRING, for `problem()` to redraw the page a refused form was on.
  * It is the ordinary route under the same login, so it shows exactly what that login's GET shows and nothing else.
  */
 function captureResponse(): { res: ServerResponse; done: Promise<{ status: number; body: string }> } {
@@ -305,14 +306,14 @@ async function inContext(d: WebDeps, path: string, work: () => Promise<WebResult
 
 function nav(actor: Actor | undefined): Safe {
   return actor === undefined
-    // 29 Sep 2026: the public header says what the home page's button says (Lakhbir: "Am I eligible?").
+    // The public header says what the home page's button says.
     ? h`<nav><a class="navcta" href="/assessment">Am I eligible?</a><a href="/login">Log in</a></nav>`
-    // PHASE 133a: a signed-in person gets their application's header — the back office's for staff, the portal's for a client.
+    // A signed-in person gets their application's header — the back office's for staff, the portal's for a client.
     : mayEnterBackOffice(actor) ? staffShell(actor) : portalShell(actor);
 }
 
 /**
- * PHASE 133a — THE REFUSAL, AS A PAGE. Which addresses answer a refusal with a page: the two applications' screens, and
+ * THE REFUSAL, AS A PAGE. Which addresses answer a refusal with a page: the two applications' screens, and
  * not their data addresses, whose readers expect JSON or a file.
  */
 export function refusalAsPage(path: string): boolean {
@@ -343,16 +344,16 @@ export type WebResult = 'handled' | 'not-mine';
 export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerResponse): Promise<WebResult> {
   const url = new URL(req.url ?? '/', 'http://localhost');
   const path = url.pathname;
-  /* STRESS TEST, 29 SEP 2026: A HEAD asks for a GET's headers without its body (Node drops the body itself). Link
+  /* STRESS TEST: A HEAD asks for a GET's headers without its body (Node drops the body itself). Link
      checkers, uptime monitors and link previews send it, and got a 401. Answered as a GET only where a GET changes
      nothing: the home page, the files, sign-in, the notices. Anywhere else a HEAD meets the page for unknown addresses. */
   const method = req.method === 'HEAD' && HEAD_AS_GET(path) ? 'GET' : req.method ?? 'GET';
   const newId = d.newId ?? randomUUID;
   const now = d.app.now;
-  /* PHASE 161g: the legal pages are served on the test website (`notices`) or wherever the `legal` setting is on. */
+  /* The legal pages are served on the test website (`notices`) or wherever the `legal` setting is on. */
   const legalServed = d.notices === true || d.legal === true;
 
-  /* PHASE 160e, 19 October 2026: A FORM SENT FROM ANOTHER WEBSITE IS REFUSED. The session cookie is SameSite=Lax, which
+  /* A FORM SENT FROM ANOTHER WEBSITE IS REFUSED. The session cookie is SameSite=Lax, which
      stops a browser sending it with another site's form; this is the second lock. Browsers mark every request with
      where it came from (Sec-Fetch-Site), and no page of ours posts from elsewhere. The Origin header cannot be used
      for this here: under our no-referrer policy a browser sends "Origin: null" even on our own forms. A service calling
@@ -365,9 +366,9 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   const session = authenticate(d.app.deps, cookie(req, SESSION_COOKIE_NAME));
   const actor: Actor | undefined = session ? toActor(session.user) : undefined;
 
-  /* PHASE 160h, 20 October 2026: THE COOKIE BANNER (src/web/legal-pages.ts), on the test website with the notices. A
+  /* THE COOKIE BANNER (src/web/legal-pages.ts), on the test website with the notices. A
      visitor who is not signed in and has not answered gets it at the foot of any page of ours: two buttons of the same
-     size, no script. It is added as the page leaves, so every page writer (page(), the home page, the notices page)
+     size, no script. It is added as the page leaves, so every page writer (page, the home page, the notices page)
      carries it without knowing about it. */
   if (legalServed && method === 'GET' && wantsBanner(path, actor !== undefined, consentChoice(cookie(req, CONSENT_COOKIE)))) {
     const analyticsOn = ga4MeasurementId(d.app.secrets) !== null;
@@ -386,35 +387,35 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assets/site.css' && method === 'GET') {
     res.writeHead(200, CSS_HEADERS); res.end(SITE_CSS); return 'handled';
   }
-  // 30 Sep 2026: the join pages' one script (src/web/video-call-script.ts).
+  // The join pages' one script (src/web/video-call-script.ts).
   if (path === '/assets/video-call.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(VIDEO_CALL_JS); return 'handled';
   }
-  // PHASE 156c: the WhatsApp pages' one script, which opens an exported chat on the person's computer.
+  // The WhatsApp pages' one script, which opens an exported chat on the person's computer.
   if (path === '/assets/whatsapp-import.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(WHATSAPP_IMPORT_JS); return 'handled';
   }
-  // PHASE 156e: the Connections page's one script, which trims a care regulator's list on the Admin's computer.
+  // The Connections page's one script, which trims a care regulator's list on the Admin's computer.
   if (path === '/assets/register-import.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(REGISTER_IMPORT_JS); return 'handled';
   }
-  // PHASE 156f: the assessment's address box's one script (src/web/address-lookup-script.ts).
+  // The assessment's address box's one script (src/web/address-lookup-script.ts).
   if (path === '/assets/address-lookup.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(ADDRESS_LOOKUP_JS); return 'handled';
   }
-  // PHASE 157c: the engagement letter's signing pad (src/shared/signature-pad-script.ts).
+  // The engagement letter's signing pad (src/shared/signature-pad-script.ts).
   if (path === '/assets/signature-pad.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(SIGNATURE_PAD_JS); return 'handled';
   }
-  // 2 Oct 2026: the photo page's one script (src/web/photo-upload-script.ts).
+  // The photo page's one script (src/web/photo-upload-script.ts).
   if (path === '/assets/photo-upload.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(PHOTO_UPLOAD_JS); return 'handled';
   }
-  // PHASE 160e: the upload forms' one script (src/core/upload-pieces-script.ts), which sends a big file in pieces.
+  // The upload forms' one script (src/core/upload-pieces-script.ts), which sends a big file in pieces.
   if (path === '/assets/upload-pieces.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(UPLOAD_PIECES_JS); return 'handled';
   }
-  /* PHASE 160e: A FILE SENT IN PIECES (src/core/upload-pieces.ts) - Vercel takes at most 4.5 MB a request. JSON for the
+  /* A FILE SENT IN PIECES (src/core/upload-pieces.ts) - Vercel takes at most 4.5 MB a request. JSON for the
      page's script only; any signed-in person, for their own send only. The form that sends the file takes it. */
   if (path === '/upload/pieces/start' && method === 'POST') {
     if (actor === undefined) { piecesJson(res, 401, { ok: false, why: 'You need to be signed in.' }); return 'handled'; }
@@ -430,9 +431,9 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const r = await putPiece({ db: d.app.db, now: d.app.now, newId }, d.store, actor, piecePut[1] ?? '', piecePut[2] ?? '', new Uint8Array(bytes));
     piecesJson(res, r.ok ? 200 : 400, r); return 'handled';
   }
-  /* 30 Sep 2026: THE CLIENT'S JOIN PAGE, /call/<token>. The token is the only key: 64 hex characters, made when the
+  /* THE CLIENT'S JOIN PAGE, /call/<token>. The token is the only key: 64 hex characters, made when the
      meeting was made and sent only to the client. It opens from half an hour before the call until an hour after. */
-  /* PHASE 157d: SIGNING FROM THE LINK IN THE LETTER EMAIL — no login. The link is the key: single use, out of date
+  /* SIGNING FROM THE LINK IN THE LETTER EMAIL — no login. The link is the key: single use, out of date
      after SIGN_LINK_DAYS, one login's, one letter's. Opening it (a GET, which email scanners also make) signs nothing and
      uses nothing; only the signed form uses the link. Off unless the signing setting says `links`. */
   const signMatch = /^\/sign\/([0-9a-f]{64})$/.exec(path);
@@ -492,22 +493,22 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const out = page({ title: 'Your video call', nav: nav(actor), body, wide: true });
     res.writeHead(200, VIDEO_PAGE_HEADERS); res.end(sig === null ? out : withJoinScripts(out)); return 'handled';
   }
-  // PHASE 133c: the supplied logo, from memory, like the stylesheet — never from a path on disk.
+  // The supplied logo, from memory, like the stylesheet — never from a path on disk.
   if (path === '/assets/cap-rebate-logo.png' && method === 'GET') {
     res.writeHead(200, PNG_HEADERS); res.end(LOGO_INK_PNG); return 'handled';
   }
-  // STRESS TEST, 29 SEP 2026: the house mark as the browser tab's icon. A browser asked for /favicon.ico on every page
+  // STRESS TEST: the house mark as the browser tab's icon. A browser asked for /favicon.ico on every page
   // and met a 401, which it logged as an error; pages now name /favicon.svg, and /favicon.ico answers "nothing here".
   if (path === '/favicon.svg' && method === 'GET') { res.writeHead(200, FAVICON_HEADERS); res.end(FAVICON_SVG); return 'handled'; }
   if (path === '/favicon.ico' && method === 'GET') { res.writeHead(204, { 'cache-control': 'public, max-age=86400' }); res.end(); return 'handled'; }
-  /* STRESS TEST, 29 SEP 2026: THE PRIVACY NOTICE AND THE PUBLIC NOTICES ARE NOT PUBLISHED YET (03-app's notices page is a
+  /* STRESS TEST: THE PRIVACY NOTICE AND THE PUBLIC NOTICES ARE NOT PUBLISHED YET (03-app's notices page is a
      draft with facts not set, and the privacy notice waits on the data protection officer), but every page links to them
      and the links answered 401. Until they are published, a page that says so and how to reach us - nothing more. */
-  /* PHASE 160f, 20 October 2026: ON THE TEST WEBSITE, THE NOTICES PAGE ITSELF (src/web/notices-site.ts) - a draft,
+  /* ON THE TEST WEBSITE, THE NOTICES PAGE ITSELF (src/web/notices-site.ts) - a draft,
      its proposed facts marked - with its style as a file and its complaint form working. Anywhere else, as before. */
   if (legalServed) {
-    /* PHASE 160h: the website's other legal pages, the banner's styles, and the answer (src/web/legal-pages.ts).
-       PHASE 161g: also wherever the `legal` setting is on; each page says Draft until both approvals are recorded. */
+    /* The website's other legal pages, the banner's styles, and the answer (src/web/legal-pages.ts).
+       Also wherever the `legal` setting is on; each page says Draft until both approvals are recorded. */
     if (path === '/assets/cookie-banner.css' && method === 'GET') { res.writeHead(200, CSS_HEADERS); res.end(COOKIE_BANNER_CSS); return 'handled'; }
     if (path === '/cookies/choice' && method === 'POST') {
       const f = await form(req);
@@ -530,7 +531,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       const ed = noticesEdition();
       if (ed !== undefined) { res.writeHead(200, CSS_HEADERS); res.end(ed.css); return 'handled'; }
     }
-    // PHASE 161g: the privacy policy is its own page now; the notices page is for people who are not our clients.
+    // The privacy policy is its own page now; the notices page is for people who are not our clients.
     if ((path === '/privacy' || path === '/privacy/') && method === 'GET') { redirect(res, '/privacy-policy/'); return 'handled'; }
     if ((path === '/notices' || path === '/notices/') && method === 'GET') {
       const ed = noticesEdition();
@@ -555,7 +556,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       <p><a href="/">Back to the home page</a></p>` }));
     return 'handled';
   }
-  /* PHASE 160h: away from the test website the legal pages are not served yet; their addresses say so, as the notices'
+  /* Away from the test website the legal pages are not served yet; their addresses say so, as the notices'
      do, rather than answer "unknown page" to a footer link. */
   if (method === 'GET' && /^\/(terms|portal-terms|privacy-policy|cookies|acceptable-use|accessibility|disclaimer)\/?$/.test(path)) {
     html(res, 200, page({ title: 'Being prepared', nav: nav(actor), body: h`<h1>This page is being prepared</h1>
@@ -564,11 +565,11 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       <p><a href="/">Back to the home page</a></p>` }));
     return 'handled';
   }
-  // STRESS TEST, 29 SEP 2026: the enquiry's thank-you page, reloaded or bookmarked, is a GET; it goes back to the form.
+  // STRESS TEST: the enquiry's thank-you page, reloaded or bookmarked, is a GET; it goes back to the form.
   if (path === '/enquiry' && method === 'GET') { redirect(res, '/#contact'); return 'handled'; }
 
   /* ------------------------------------------------------ public site */
-  /* PHASE 133j: THE WEBSITE IS `Caprebate site.html`, served from the one file (src/web/public-site.ts) with its style
+  /* THE WEBSITE IS `Caprebate site.html`, served from the one file (src/web/public-site.ts) with its style
      and script as two fixed assets. Its "Start your assessment" links come here, to /assessment, and its enquiry form
      to /enquiry. With no site file beside the build, `/` is the back end's own home page, as before. */
   if (path === '/assets/site-page.css' && method === 'GET') {
@@ -579,7 +580,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const site = siteEdition();
     if (site !== undefined) { res.writeHead(200, SITE_JS_HEADERS); res.end(site.js); return 'handled'; }
   }
-  /* 29 SEPTEMBER 2026: THE NEW HOME PAGE (src/web/home-site.ts), its style, its script and GSAP, when the file is beside
+  /* THE NEW HOME PAGE (src/web/home-site.ts), its style, its script and GSAP, when the file is beside
      the build. Without it, `/` is `Caprebate site.html` as below. */
   if (path === '/assets/home.css' && method === 'GET') {
     const edition = homeEdition();
@@ -590,7 +591,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     // The configured Turnstile site key goes in here; without one the page keeps Cloudflare's test key.
     if (edition !== undefined) { res.writeHead(200, { ...SITE_JS_HEADERS, 'cache-control': 'public, max-age=300' }); res.end(withSiteKey(edition.js, turnstileSiteKey(d.app.secrets))); return 'handled'; }
   }
-  /* PHASE 160k, 21 OCTOBER 2026: THE NEW PUBLIC WEBSITE. The home page's head script, the five sector landing pages
+  /* THE NEW PUBLIC WEBSITE. The home page's head script, the five sector landing pages
      and their assets, and the self-hosted fonts. Every name is checked against a fixed list; no path reaches the disk. */
   if (path === '/assets/home-head.js' && method === 'GET') {
     const edition = homeEdition();
@@ -631,8 +632,8 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     if (edition !== undefined) { res.writeHead(200, HOME_PAGE_HEADERS); res.end(edition.html); return 'handled'; }
     const site = siteEdition();
     if (site !== undefined) {
-      // PHASE 146f: the analytics measurement id comes from the key file, not the file (src/integrations/analytics.ts). None, no change.
-      // PHASE 161g: AND ONLY AFTER A CLICK ON "Accept all". The page is given the id, and its policy names Google, only
+      // The analytics measurement id comes from the key file, not the file (src/integrations/analytics.ts). None, no change.
+      // AND ONLY AFTER A CLICK ON "Accept all". The page is given the id, and its policy names Google, only
       // when the visitor's answer (cb_cookies, set by that click) is "all". No answer is no: the page then carries no id,
       // its policy allows only our own address, and nothing of Google's can load (sitePageFor, src/integrations/analytics.ts).
       const ga = ga4MeasurementId(d.app.secrets);
@@ -643,21 +644,21 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     }
     html(res, 200, home(actor)); return 'handled';
   }
-  /* PHASE 151b: THE IDENTITY CHECK'S SIGNED RESULT. The service has no login, so this sits outside it — and believes
+  /* THE IDENTITY CHECK'S SIGNED RESULT. The service has no login, so this sits outside it — and believes
      nothing it is sent unless the signature holds (src/web/identity-checks.ts). A bad signature is refused and audited.
      The answer is a status and nothing else: the service reads no page, and a refusal says nothing about why. */
-  /* 2 OCT 2026: THE ACCOUNTANT'S PRIVATE SIGN-OFF LINK (src/web/report-pages.ts). No login: the link is the key, kept only
+  /* THE ACCOUNTANT'S PRIVATE SIGN-OFF LINK (src/web/report-pages.ts). No login: the link is the key, kept only
      as its SHA-256, answered once, for 30 days. */
   if (path.startsWith('/signoff/')) {
     const r = await handleSignoffLink(d.app, newId, req, res, url, method, form);
     if (r === 'handled') return 'handled';
   }
-  /* PHASE 158d (F46): the client's accountant confirms for themselves, by the link alone (src/web/accountant-confirm-pages.ts). */
+  /* The client's accountant confirms for themselves, by the link alone (src/web/accountant-confirm-pages.ts). */
   if (path.startsWith('/confirm/')) {
     const r = await handleConfirmLink(d.app, newId, req, res, url, method, form);
     if (r === 'handled') return 'handled';
   }
-  /* 30 SEP 2026: WHATSAPP — THE ADDRESS META CALLS (src/web/whatsapp.ts). No login: Meta has none. GET is Meta checking
+  /* WHATSAPP — THE ADDRESS META CALLS (src/web/whatsapp.ts). No login: Meta has none. GET is Meta checking
      the address with our verify word; POST carries messages and statuses, believed only under Meta's signature. */
   if (path === '/hooks/whatsapp' && method === 'GET') {
     const ok = webhookChallenge(d.app.secrets, url.searchParams.get('hub.mode'), url.searchParams.get('hub.verify_token'), url.searchParams.get('hub.challenge'));
@@ -673,7 +674,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     res.end(r.status === 200 ? 'ok' : 'refused');
     return 'handled';
   }
-  /* PHASE 161h, 7 NOV 2026: THE LIVE WEBSITE'S OWN TIMERS (src/core/timers.ts). No login: Vercel Cron calls them, with the
+  /* THE LIVE WEBSITE'S OWN TIMERS (src/core/timers.ts). No login: Vercel Cron calls them, with the
      project's word (CRON_SECRET) in the Authorization header. Refused without it, and answered with counts only. */
   if (path.startsWith(TIMER_PATH_PREFIX) && method === 'GET') {
     const job = timerJobOf(path);
@@ -691,7 +692,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     res.end(r.line);
     return 'handled';
   }
-  /* 1 OCT 2026: THE REPLY TIMER (src/web/inbound-email.ts, timerMayRead). No login: an outside timer calls it, with its
+  /* THE REPLY TIMER (src/web/inbound-email.ts, timerMayRead). No login: an outside timer calls it, with its
      word in the Authorization header. Counts only in the answer. */
   if (path === '/hooks/read-replies' && (method === 'POST' || method === 'GET')) {
     const auth = req.headers['authorization'];
@@ -702,7 +703,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       return 'handled';
     }
     const r = await IE.readRepliesIfDue(d.app);
-    // 2 Oct 2026: the same wake clears photo uploads never finished within a day (src/web/photo-upload.ts).
+    // The same wake clears photo uploads never finished within a day (src/web/photo-upload.ts).
     await sweepUploads({ db: d.app.db, now: d.app.now }, d.store);
     await sweepVideos({ db: d.app.db, now: d.app.now }, d.store);
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
@@ -712,7 +713,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   }
   if (path === IDENTITY_HOOK_PATH && method === 'POST') {
     const raw0 = (await readBody(req, IDENTITY_HOOK_MAX_BYTES)).toString('utf8');
-    // PHASE 151f: Didit signs with two headers and dates the result; any may be missing, and then nothing is believed.
+    // Didit signs with two headers and dates the result; any may be missing, and then nothing is believed.
     const one = (name: string): string | null => { const v = req.headers[name]; return typeof v === 'string' ? v : null; };
     const r = receiveIdentityResult(d.app, newId, raw0, {
       v2: one(IDENTITY_SIGNATURE_HEADERS.v2), raw: one(IDENTITY_SIGNATURE_HEADERS.raw), timestamp: one(IDENTITY_SIGNATURE_HEADERS.timestamp),
@@ -723,7 +724,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   }
   if (path === '/enquiry' && method === 'POST') {
     const posted = await form(req);
-    /* 29 SEPTEMBER 2026: THE SECURITY CHECK, ON THE SERVER (src/integrations/connectors/turnstile.ts). Without a secret key, or before
+    /* THE SECURITY CHECK, ON THE SERVER (src/integrations/connectors/turnstile.ts). Without a secret key, or before
        the transfer to Cloudflare is approved, nothing is checked and the enquiry is kept as before. With both, an answer
        that is missing, rejected or unanswered refuses the enquiry: nothing is kept, and the audit says which. */
     const check = await checkTurnstile({ audit: d.app.audit, now: d.app.now, transport: d.app.outside, secrets: d.app.secrets,
@@ -748,7 +749,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     return 'handled';
   }
 
-  /* ------------------------------------------ a client's own login (PHASE 133j) */
+  /* ------------------------------------------ a client's own login */
   if (path === '/account/create' && method === 'POST') {
     const r = await requestSignup(d.app, d.publicOrigin ?? 'http://localhost:8103', await form(req), legalServed ? currentTermsVersions() : null);
     if (!r.ok) { html(res, 400, simple('Your login was not created', r.why)); return 'handled'; }
@@ -778,18 +779,18 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assessment' && method === 'GET') {
     const draft = newDraft(d.app.db, now, newId);
     setCookie(res, DRAFT_COOKIE, draft.token, 60 * 60 * 6);
-    // 30 Sep 2026: the assessment opens on stage 1 of the four-stage funnel (src/web/funnel4.ts).
+    // The assessment opens on stage 1 of the four-stage funnel (src/web/funnel4.ts).
     redirect(res, '/assessment/buildings'); return 'handled';
   }
 
-  /* 30 SEPTEMBER 2026: the first screen of 29 September (the company and the property up front) is retired: the four-stage
+  /* The first screen of 29 September (the company and the property up front) is retired: the four-stage
      funnel asks for them per building, at stage 3. An old link to it opens stage 1. */
   if (path === '/assessment/start') { redirect(res, '/assessment/buildings'); return 'handled'; }
 
-  /* 30 SEPTEMBER 2026: THE FOUR-STAGE FUNNEL (src/web/funnel4.ts). Buildings, then the checks per building, then who
+  /* THE FOUR-STAGE FUNNEL (src/web/funnel4.ts). Buildings, then the checks per building, then who
      owns each and where, then the figure. The server keeps a person on the first screen that is not complete, and a
      follow-up that does not apply is not kept. */
-  /* PHASE 156f (B1): THE ADDRESS BOX'S LIST, FOR THE PAGE'S SCRIPT. The postcode a person has typed on "Your details",
+  /* THE ADDRESS BOX'S LIST, FOR THE PAGE'S SCRIPT. The postcode a person has typed on "Your details",
      once it is a complete UK postcode: the addresses there, as JSON, through the same search (and the same £1 a day
      cap) as the "Find my address" button. Only for an assessment already at that screen. */
   if (path === '/assessment/details/addresses' && method === 'POST') {
@@ -858,16 +859,16 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     redirect(res, next === undefined ? '/assessment/figure' : `/assessment/${next}`); return 'handled';
   }
 
-  /* PHASE 153f, 4 October 2026: the six screens of the first funnel are retired; an old link opens the four-stage funnel.
+  /* The six screens of the first funnel are retired; an old link opens the four-stage funnel.
      Nothing they recorded is changed or deleted. Any request, GET or POST, with or without a draft, is sent to stage 1:
-     no draft is made, read, saved or removed here. The privacy-notice link of Phase 153, which sat on the old address
+     no draft is made, read, saved or removed here. The privacy-notice link which sat on the old address
      screen (Q2), is drawn on the four-stage address screen ("details") instead, under the same switch. */
   if (/^\/assessment\/(Q1|Q1a|Q1b|Q1c|Q2|Q3)$/.test(path)) { redirect(res, '/assessment/buildings'); return 'handled'; }
 
   if (path === '/assessment/figure' && method === 'GET') {
     const draft = loadDraft(d.app.db, cookie(req, DRAFT_COOKIE));
     if (draft === undefined) { redirect(res, '/assessment'); return 'handled'; }
-    // 30 Sep 2026: a four-stage draft sees its figure only when stage 3 is done.
+    // A four-stage draft sees its figure only when stage 3 is done.
     if (isFunnel4(draft.state)) {
       const s = draft.state as unknown as Record<string, unknown>;
       if (allGated(s)) { redirect(res, '/assessment/no-claim'); return 'handled'; }
@@ -898,7 +899,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       return 'handled';
     }
     if (method === 'POST' && isFunnel4(draft.state) && !allGated(draft.state as unknown as Record<string, unknown>)) {
-      /* 30 SEPTEMBER 2026: THE FOUR-STAGE CLOSE. First name, surname, position; then telephone (a time and the number),
+      /* THE FOUR-STAGE CLOSE. First name, surname, position; then telephone (a time and the number),
          video call (a time and an email address) or email. One organisation per business that owns a building, each
          with its own lead, linked as one enquiry; the person is the contact on each; one booking, on the first. */
       const s = draft.state as unknown as Record<string, unknown>;
@@ -919,7 +920,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
         if (k === 0) booked = w;
         fireAutomation({ db: d.app.db, audit: d.app.audit, now, newId }, null, { trigger: 'LEAD_CREATED', lead_id: p.lead_id });
       });
-      // 30 Sep 2026: a video call with a time gets its Zoom meeting now, and its invitation carries the link.
+      // A video call with a time gets its Zoom meeting now, and its invitation carries the link.
       let video: { join: string | null } | undefined;
       if (booked.booking_id !== null && booked.booked_at !== null && (s['contact'] as Record<string, unknown>)['channel'] === 'video') {
         await reconcileVideoMeeting(d.app, booked.booking_id);
@@ -961,7 +962,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
         html(res, 200, gatedThankYouPage(closed.written, actor)); return 'handled';
       }
       const out = submit(d.app.db, draft, now, newId);
-      // PHASE 151b (Word answer 180): the client asked us to leave the lookups alone. Kept with their organisation.
+      // The client asked us to leave the lookups alone. Kept with their organisation.
       if ((draft.state as Record<string, unknown>)['lookups_declined'] === true) recordLookupsDeclined({ db: d.app.db, audit: d.app.audit, now }, out.business_id);
       // CRM 2 of 10: the funnel records a LEAD, and the claim waits for the
       // enquiry gate. There is no actor — a prospect has no account — and the
@@ -972,7 +973,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
         detail: { business: out.business_id, origin: 'ASSESSMENT', route: 'funnel_close' },
       });
       const booked = writeBookingAndContact(d, draft, { business_id: out.business_id }, 'funnel_close', newId);
-      // PHASE 133j: the offer of a login for this organisation, made once, here, and only here.
+      // The offer of a login for this organisation, made once, here, and only here.
       const offer = offerSignup(d.app, newId, out.business_id, out.assessment_id);
       // CRM 3 of 10: lead created → a first follow-up, waiting with Sales until somebody takes it.
       fireAutomation({ db: d.app.db, audit: d.app.audit, now, newId }, null, { trigger: 'LEAD_CREATED', lead_id: out.lead_id });
@@ -1004,14 +1005,14 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
 
   /* ------------------------------------------------------------ login */
   if (path === '/login' && method === 'GET') {
-    // PHASE 133j: the website's "Log in" button, pressed by somebody already signed in, goes straight to their home.
+    // The website's "Log in" button, pressed by somebody already signed in, goes straight to their home.
     if (actor !== undefined) { redirect(res, mayEnterBackOffice(actor) ? '/staff' : '/portal'); return 'handled'; }
     html(res, 200, loginPage(undefined)); return 'handled';
   }
   if (path === '/login' && method === 'POST') {
     const f = await form(req);
     try {
-      // PHASE 151j: the password first, then the steps it still needs - a session only when none is left.
+      // The password first, then the steps it still needs - a session only when none is left.
       const r = await SI.beginSignIn(d.app, f.get('email') ?? '', f.get('password') ?? '', clientIp(req));
       if (r.kind === 'STEP') {
         res.setHeader('set-cookie', stepCookie(r.token));
@@ -1030,9 +1031,9 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     }
   }
 
-  /* PHASE 151j — THE STEPS BETWEEN A RIGHT PASSWORD AND A SESSION (src/core/sign-in.ts). */
+  /* THE STEPS BETWEEN A RIGHT PASSWORD AND A SESSION (src/core/sign-in.ts). */
   if (path === '/login/step' && method === 'GET') {
-    // PHASE 151m: ?use=recovery draws the VERIFY step as the recovery-code form.
+    // ?use=recovery draws the VERIFY step as the recovery-code form.
     const body = SI.stepPage(d.app, cookie(req, SI.STEP_COOKIE), undefined, undefined, url.searchParams.get('use') === 'recovery' ? 'recovery' : undefined);
     if (body === undefined) { res.setHeader('set-cookie', stepCookie(null)); html(res, 200, loginPage(SI.STEP_GONE, undefined, stepGoneWhy(d.app))); return 'handled'; }
     html(res, 200, body); return 'handled';
@@ -1049,7 +1050,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       : SI.resendCode(d.app, raw0);
     if (r.kind === 'SESSION') {
       res.setHeader('set-cookie', [stepCookie(null), sessionCookie(r.login)]);
-      // PHASE 151m: a second step just set up shows its recovery codes, once, here - they are kept nowhere as text, so
+      // A second step just set up shows its recovery codes, once, here - they are kept nowhere as text, so
       // this answer is the page. With two or fewer left, the page after sign-in is "Your second step", which says so.
       const home = mayEnterBackOffice(toActor(r.login.user)) ? '/staff' : '/portal';
       if (r.recovery_codes !== undefined) { html(res, 200, SI.recoveryCodesPage(r.recovery_codes, { href: home, label: 'I have saved them. Continue' })); return 'handled'; }
@@ -1071,7 +1072,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     html(res, r.kind === 'ERROR' ? 400 : 200, page0); return 'handled';
   }
 
-  /* PHASE 151j — A FORGOTTEN PASSWORD: an emailed link, single-use, 30 minutes (src/core/auth.ts). The page says the same
+  /* A FORGOTTEN PASSWORD: an emailed link, single-use, 30 minutes (src/core/auth.ts). The page says the same
      thing whether or not the address has an account, so it cannot be used to find out who has one. */
   if (path === '/login/forgot' && method === 'GET') { html(res, 200, forgotPage(undefined)); return 'handled'; }
   if (path === '/login/forgot' && method === 'POST') {
@@ -1106,7 +1107,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     html(res, 200, loginPage(undefined, 'Your password has been changed. Sign in with it now.')); return 'handled';
   }
 
-  /* PHASE 151j — A PERSON'S OWN SECOND STEP: set it up, change it, or (a client only) turn it off. A client's page is
+  /* A PERSON'S OWN SECOND STEP: set it up, change it, or (a client only) turn it off. A client's page is
      under /portal and a member of staff's under /staff, so each header links only inside its own application. */
   const own = /^\/(staff|portal)\/two-factor(\/change|\/off|\/recovery-codes)?$/.exec(path);
   if (own) {
@@ -1116,7 +1117,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     if (own[2] === undefined && method === 'GET') {
       html(res, 200, twoFactorPage(actor, home, SI.ownTwoFactor(d.app, actor), url.searchParams.get('done'), undefined, SI.ownRecoveryCodesLeft(d.app, actor))); return 'handled';
     }
-    /* PHASE 151m: "Make new recovery codes" - ten new ones, shown once on this answer, and every unused old one gone. */
+    /* "Make new recovery codes" - ten new ones, shown once on this answer, and every unused old one gone. */
     if (own[2] === '/recovery-codes' && method === 'POST') {
       const r = SI.makeNewRecoveryCodes(d.app, actor);
       if (!r.ok) { html(res, 400, twoFactorPage(actor, home, SI.ownTwoFactor(d.app, actor), null, r.why, SI.ownRecoveryCodesLeft(d.app, actor))); return 'handled'; }
@@ -1141,7 +1142,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* ------------------------------------------------------ back office */
   if (path === '/staff' || path.startsWith('/staff/')) {
     if (actor === undefined) { redirect(res, '/login'); return 'handled'; }
-    /* PHASE 161g: the legal pages' approvals (src/web/legal-approvals.ts). Admins only; recorded once, never changed. */
+    /* The legal pages' approvals (src/web/legal-approvals.ts). Admins only; recorded once, never changed. */
     if ((path === '/staff/legal' && method === 'GET') || (path === '/staff/legal/approve' && method === 'POST')) {
       if (actor.role !== 'ADMIN') { html(res, 403, simple('Not allowed', 'Only an admin can see or record the legal pages’ approvals.')); return 'handled'; }
       return inContext(d, path, async () => {
@@ -1151,7 +1152,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
         return 'handled';
       });
     }
-    // PHASE 133a: the header reads the database, the clock and the address from this context — see src/core/navigation.ts.
+    // The header reads the database, the clock and the address from this context — see src/core/navigation.ts.
     const rerender = async (href: string): Promise<{ status: number; body: string }> => {
       const u = new URL(href, 'http://localhost');
       const cap = captureResponse();
@@ -1166,7 +1167,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* ----------------------------------------------------------- portal */
   if (path === '/portal' || path.startsWith('/portal/')) {
     if (actor === undefined) { redirect(res, '/login'); return 'handled'; }
-    /* PHASE 161g: A CLIENT AGREES TO THE CURRENT TERMS BEFORE THE PORTAL OPENS, where the legal pages are served. The
+    /* A CLIENT AGREES TO THE CURRENT TERMS BEFORE THE PORTAL OPENS, where the legal pages are served. The
        sign-up's tick usually covers it; this asks a client who signed up before, was given a login, or when a version
        changes. Their own second step stays open, so they are never locked out of keeping their login safe. */
     if (legalServed && actor.role === 'CLIENT' && !/^\/portal\/two-factor(\/|$)/.test(path)) {
@@ -1222,7 +1223,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     } else {
       file = new Uint8Array(bytes);
     }
-    /* PHASE 146g: `reading` carries the process's key store and transport to steps 9 and 10 of the receipt contract,
+    /* `reading` carries the process's key store and transport to steps 9 and 10 of the receipt contract,
        which nothing in src/ reached until this phase. It switches nothing on — CLAUDE_SWITCHES.DOCUMENT_READING is
        false — and with it off a finished upload behaves exactly as it did before. The document's own business is
        whose gates the reading's audit row records; `P.document` above has already authorised this actor on it. */
@@ -1244,7 +1245,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     return 'handled';
   }
 
-  /* STRESS TEST, 29 SEP 2026: AN ADDRESS NOBODY OWNS. It fell through to the JSON API, which asked for a login and
+  /* STRESS TEST: AN ADDRESS NOBODY OWNS. It fell through to the JSON API, which asked for a login and
      answered 401 "those details did not match" to a person who had only mistyped an address. A GET or HEAD outside
      /api now gets a page that says so. The JSON API keeps its own answers: every one of its addresses is under /api. */
   if ((method === 'GET' || method === 'HEAD') && path !== '/api' && !path.startsWith('/api/')) {
@@ -1325,7 +1326,7 @@ async function portalRoutes(
     redirect(res, '/portal'); return 'handled';
   }
 
-  /* PHASE 133c: the client's Help, and hiding the welcome card. */
+  /* The client's Help, and hiding the welcome card. */
   if (path === '/portal/help' && method === 'GET') {
     html(res, 200, page({ title: 'Help', nav: nav(actor), wide: true, body: h`<div class="guide card"><h1>Help with your claim page</h1>${clientHelp()}
       <p>Still stuck? Reply to any message from us, or ask for a call on <a href="/portal#appointment">your claim page</a>.</p></div>` }));
@@ -1352,31 +1353,31 @@ async function portalRoutes(
     // CRM 8 of 10: the client's own share-progress answers. A staff member viewing the portal is not the client, and is not asked.
     const shr = actor.role === 'CLIENT' ? clientShareChoices(db, actor, business_id) : [];
     const welcome = actor.role === 'CLIENT' && welcomeShown(db, actor) ? welcomeCard(WELCOME_JOBS.CLIENT, '/portal/welcome/dismiss') : undefined;
-    // PHASE 134: every claim this company holds, each asked of `claim.progress_read`.
+    // Every claim this company holds, each asked of `claim.progress_read`.
     const cls = P.claims(db, actor, business_id);
-    // PHASE 139: the steps staff have told this client about — words and dates, and nothing behind them.
+    // The steps staff have told this client about — words and dates, and nothing behind them.
     const done = portalSteps(db, actor, business_id);
-    // 30 Sep 2026: each video call with a meeting gets its join link on the portal.
+    // Each video call with a meeting gets its join link on the portal.
     const joins: Record<string, string> = {};
     for (const b of bks) { const m = b.channel === 'video' ? activeMeeting(db, b.id) : undefined; if (m !== undefined) joins[b.id] = `/call/${m.client_token}`; }
-    // 1 Oct 2026: the top of the portal as a dashboard (src/web/portal-dashboard.ts).
-    // 2 Oct 2026: the survey report's card leads, once a tax adviser's sign-off has released it (src/web/report-pages.ts).
+    // The top of the portal as a dashboard (src/web/portal-dashboard.ts).
+    // The survey report's card leads, once a tax adviser's sign-off has released it (src/web/report-pages.ts).
     const dashboard = h`${portalReportCard(d.app, business_id, actor)}${portalEvidenceCard(db, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
       publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(/^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('again') ?? '') ? { sentBefore: url.searchParams.get('again') as string } : {}), joins, dashboard, rangeBasis: rangeBasisFor(db, business_id), ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
   }
 
-  /* PHASE 142: MESSAGES — the thread with the client, and nothing else. `business_id` is the session's for a client, so a
+  /* MESSAGES — the thread with the client, and nothing else. `business_id` is the session's for a client, so a
      client only ever reads and writes their own company's thread; every read and write is asked of the rule table again. */
-  /* 2 OCT 2026: "SHOW US YOUR BUILDING" — the photo checklist and the recorded walkthrough call (src/web/evidence-pages.ts). */
+  /* "SHOW US YOUR BUILDING" — the photo checklist and the recorded walkthrough call (src/web/evidence-pages.ts). */
   if (path === '/portal/building' || path.startsWith('/portal/building/')) {
     P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does
     const r = await handlePortalEvidence({ app: d.app, store: d.store, newId, nav: nav(actor), form, readBody }, req, res, url, method, actor, business_id);
     if (r === 'handled') return 'handled';
   }
-  /* 2 OCT 2026: THE CLIENT'S SURVEY REPORT — only the version a tax adviser's sign-off has released (src/web/report-pages.ts). */
-  /* PHASE 158c (F39): the client accepts the released report (src/web/report-accept.ts). */
+  /* THE CLIENT'S SURVEY REPORT — only the version a tax adviser's sign-off has released (src/web/report-pages.ts). */
+  /* The client accepts the released report (src/web/report-accept.ts). */
   if (path === '/portal/report/accept' && method === 'POST') {
     P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does
     const r = acceptReport({ db, audit: d.app.audit, now, newId }, actor, business_id);
@@ -1421,7 +1422,7 @@ async function portalRoutes(
     return 'handled';
   }
 
-  /* PHASE 134: ONE CLAIM'S PROGRESS. Looked for only among this company's own claims, so another company's claim and a
+  /* ONE CLAIM'S PROGRESS. Looked for only among this company's own claims, so another company's claim and a
      claim that does not exist both answer 404 — the same page, naming nothing. */
   const claimMatch = /^\/portal\/claims\/([A-Za-z0-9-]+)$/.exec(path);
   if (claimMatch && method === 'GET') {
@@ -1432,7 +1433,7 @@ async function portalRoutes(
         <p>It may have been typed wrongly.</p><p><a class="btn btn-primary" href="/portal">See your claims</a></p></div>` }));
       return 'handled';
     }
-    // PHASE 159d (item 6): which way each part of the claim goes in — the claim the portal has already authorised.
+    // Which way each part of the claim goes in — the claim the portal has already authorised.
     const row = db.get<{ property_id: string | null }>('SELECT property_id FROM claims WHERE id = ? AND business_id = ?', [c.id, business_id]);
     const routes = row === undefined || c.state !== 'OPEN' ? [] : claimRoutes(db, { id: c.id, business_id, property_id: row.property_id }, new Date().toISOString())
       .map((r) => ({ label: r.label === 'The claim' ? 'Your claim' : r.label, words: r.words }));
@@ -1448,7 +1449,7 @@ async function portalRoutes(
     return 'handled';
   }
 
-  /* PHASE 157c: the signed copy - the letter, the signature page and the certificate of completion - for the client. */
+  /* The signed copy - the letter, the signature page and the certificate of completion - for the client. */
   if (path === '/portal/letter/signed.pdf' && method === 'GET') {
     const c = signedCopy(db, actor, business_id);
     if (c === null) { html(res, 404, simple('No signed copy', 'Your letter is not signed yet.')); return 'handled'; }
@@ -1457,7 +1458,7 @@ async function portalRoutes(
     return 'handled';
   }
 
-  /* PHASE 146f: THE BUILT-IN SIGNATURE (src/web/signing.ts). Every check is there, on the record: the switch
+  /* THE BUILT-IN SIGNATURE (src/web/signing.ts). Every check is there, on the record: the switch
      (ENGAGEMENT_SIGNING, off), the letter complete, sent and not yet signed, a full name, a role, the tick, and the
      fingerprint of the letter the page drew. A refusal is a page the client reads, with what they typed kept. */
   if (path === '/portal/letter/sign' && method === 'POST') {
@@ -1484,7 +1485,7 @@ async function portalRoutes(
   }
 
   /**
-   * THE CLIENT MOVES THEIR OWN CALL — Phase 113a. One route, two verbs, and the
+   * THE CLIENT MOVES THEIR OWN CALL. One route, two verbs, and the
    * decision about which is a radio button rather than two forms that could
    * disagree about which booking they are addressing.
    *
@@ -1499,7 +1500,7 @@ async function portalRoutes(
     const moveDeps = {
       db, audit: d.app.audit, email: d.app.email, now, newId,
     };
-    // Phase 132e: a third verb, `cancel`, on the same route — see cancelOwnBooking in portal.ts.
+    // A third verb, `cancel`, on the same route — see cancelOwnBooking in portal.ts.
     const r = f.get('cancel') === 'on'
       ? P.cancelOwnBooking(moveDeps, actor, business_id, { booking_id: bookingMatch[1] ?? '' })
       : f.get('release') === 'on'
@@ -1511,7 +1512,7 @@ async function portalRoutes(
       html(res, 400, simple(f.get('cancel') === 'on' ? 'The call was not cancelled' : 'That time was not taken', r.why));
       return 'handled';
     }
-    // 30 Sep 2026: a video call's Zoom meeting follows the change (moved, or deleted when cancelled or given back).
+    // A video call's Zoom meeting follows the change (moved, or deleted when cancelled or given back).
     await reconcileVideoMeeting(d.app, bookingMatch[1] ?? '');
     redirect(res, '/portal'); return 'handled';
   }
@@ -1528,7 +1529,7 @@ async function portalRoutes(
   }
 
   if (path === '/portal/documents' && method === 'POST' && /^multipart\/form-data\b/i.test(req.headers['content-type'] ?? '')) {
-    // PHASE 140: THE FILE COMES WITH THE FORM. One step, and exactly the path the upload address takes — the same
+    // THE FILE COMES WITH THE FORM. One step, and exactly the path the upload address takes — the same
     // single-use key, `acceptClientBytes` and `finishUpload` — so no page ever shows an HTTP PUT address.
     const up = await readUpload(req, readBody, piecesOf(d.app, d.store, actor));
     if (!up.ok) { html(res, 400, simple('Not sent', up.why)); return 'handled'; }
@@ -1537,7 +1538,7 @@ async function portalRoutes(
       type_code: up.fields.type_code ?? null, logical_document_id: up.fields.document ?? null, request_id: up.fields.request ?? null, claim_id: null,
     }, up.bytes);
     if (!r.ok) { html(res, 400, simple('Not sent', r.why)); return 'handled'; }
-    // PHASE 157d (F18): the same file sent before — the day only, which says nothing about anyone.
+    // The same file sent before — the day only, which says nothing about anyone.
     redirect(res, r.sent_before === null ? '/portal?sent=1#documents' : `/portal?sent=1&again=${localDate(r.sent_before)}#documents`);
     return 'handled';
   }
@@ -1561,7 +1562,7 @@ async function portalRoutes(
   const docMatch = /^\/portal\/documents\/([A-Za-z0-9-]+)$/.exec(path);
   if (docMatch && method === 'GET') {
     const doc = P.document(db, actor, docMatch[1] ?? '');
-    // PHASE 144: the same plain counts the staff Files folder shows, from the same reader — never the handler's own step log.
+    // The same plain counts the staff Files folder shows, from the same reader — never the handler's own step log.
     html(res, 200, documentPage(doc, readLines(db, doc)));
     return 'handled';
   }
@@ -1615,9 +1616,9 @@ async function portalRoutes(
  * ------------------------------------------------------------------ */
 
 /**
- * PHASE 151e (line 6), 28 September 2026 — THE FUNNEL'S CLOSE NEEDS A WAY TO REACH THE PERSON, on the channel they chose:
+ * — THE FUNNEL'S CLOSE NEEDS A WAY TO REACH THE PERSON, on the channel they chose:
  * an email address for email, a telephone number for a call or a text. Blank, or not one, is refused in words, and
- * nothing is saved. "We must get contact details, it is a non negotiable" (Lakhbir).
+ * nothing is saved. "We must get contact details, it is a non negotiable".
  */
 export function contactValueProblem(channel: string, value: string): string | undefined {
   if (channel === 'email') {
@@ -1636,14 +1637,14 @@ function applyClose(draft: Draft, f: URLSearchParams): string | undefined {
   const channels = BOOKING.CHANNELS;
   if (name.length === 0) return 'We need a name to know who we are calling.';
   if (!channels.some((ch) => ch.id === channelId)) return 'Choose how you would like us to reach you.';
-  // PHASE 151e (line 6): contact details are not optional (Lakhbir, 28 Sep 2026). No way to reach them, no client.
+  // Contact details are not optional. No way to reach them, no client.
   const reach = contactValueProblem(channelId, (f.get('contact_value') ?? '').trim());
   if (reach !== undefined) return reach;
   if (f.get('contact_consent') !== 'on') {
     return 'We need your permission to contact you about this. It is not marketing consent.';
   }
   c.full_name = name;
-  // 29 Sep 2026: the box is filled from the first screen; left empty, the first screen's name stands.
+  // The box is filled from the first screen; left empty, the first screen's name stands.
   c.business_name = (f.get('business_name') ?? '').trim() || (typeof c.business_name === 'string' && c.business_name.trim() !== '' ? c.business_name : null);
   c.job_role = f.get('job_role');
   c.channel = channelId;
@@ -1677,18 +1678,18 @@ function applyClose(draft: Draft, f: URLSearchParams): string | undefined {
 function writeBookingAndContact(
   d: WebDeps, draft: Draft, holder: { business_id: string } | { lead_id: string },
   entry_point: 'funnel_close' | 'gated_exit', newId: () => string,
-  /** 30 Sep 2026: false for the second and later businesses of one enquiry — the person, not a second call. */
+  /** False for the second and later businesses of one enquiry — the person, not a second call. */
   withBooking = true,
 ): { booked_at: string | null; booking_id: string | null } {
   const c = (draft.state as { contact: Record<string, unknown> }).contact;
   const at = d.app.now();
   const business_id = 'business_id' in holder ? holder.business_id : null;
   const lead_id = 'lead_id' in holder ? holder.lead_id : null;
-  // PHASE 151e (line 6): the person's own contact holds the address they typed, at the funnel close too. It was
+  // The person's own contact holds the address they typed, at the funnel close too. It was
   // kept only on the organisation there, which left every website client with a contact nobody could reach.
   const typed = typeof c.contact_value === 'string' && c.contact_value.trim() !== '' ? c.contact_value.trim() : null;
   d.app.db.run(
-    // PHASE 153f (migration 086): the funnel's optional "you may also message me on WhatsApp" box, kept on the contact.
+    // The funnel's optional "you may also message me on WhatsApp" box, kept on the contact.
     'INSERT INTO contacts (id, business_id, lead_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, whatsapp_optin, ' +
       'email, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [newId(), business_id, lead_id, String(c.full_name ?? ''), c.job_role as string | null,
@@ -1734,10 +1735,10 @@ function writeBookingAndContact(
   // it without one — so its booking points at the lead instead, and conversion
   // hands the lead its booking once the organisation exists.
   if (business_id !== null) linkBookingToLead(d.app.db, business_id, booking_id, at);
-  /* PHASE 146f: A CALL GIVEN A TIME HERE GETS ITS INVITATION TOO, like one given a time by staff or moved by the
+  /* A CALL GIVEN A TIME HERE GETS ITS INVITATION TOO, like one given a time by staff or moved by the
      client — the same email, the same .ics, the same switch (EMAIL_SENDING, off). With no email address recorded,
      nothing is written: the call still stands, and staff reach them the way they asked. */
-  // 30 Sep 2026: a VIDEO call's invitation waits for its meeting, so it carries the link (sendVideoInvite, below).
+  // A VIDEO call's invitation waits for its meeting, so it carries the link (sendVideoInvite, below).
   if (starts !== null && ends !== null && c.channel !== 'video') {
     const to = business_id !== null
       ? d.app.db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [business_id])?.e ?? null
@@ -1767,7 +1768,7 @@ function writeBookingAndContact(
 /**
  * A moment, spelled out, IN UK TIME — "Wednesday 2026-06-10 at 10:00 BST".
  *
- * ONE OF THE FOUR DISPLAY EDGES (Phase 113a). It used to print UTC and the
+ * ONE OF THE FOUR DISPLAY EDGES. It used to print UTC and the
  * callers appended the word, which was honest and an hour wrong for eight
  * months of the year: a client offered "Wednesday at 09:00" in June would have
  * turned up at ten. The stored value is untouched; localtime.ts converts, and
@@ -1834,12 +1835,12 @@ function home(actor: Actor | undefined): string {
   });
 }
 
-/* ------------------------------------------------ 30 Sep 2026: the four-stage funnel's pages */
+/* ------------------------------------------------: the four-stage funnel's pages */
 
 type F4Lookups = {
   readonly gate: ReturnType<typeof freeGate>; readonly company: boolean; readonly postcode: boolean;
   readonly companyConfig: typeof COMPANY_SEARCH; readonly postcodeConfig: typeof POSTCODE_CHECK;
-  /** "Find my address" (Homedata since Phase 156f): its switch, its key and its outside-call row. */
+  /** "Find my address": its switch, its key and its outside-call row. */
   readonly address: boolean;
 };
 
@@ -1856,7 +1857,7 @@ function f4Lookups(app: WebDeps['app']): F4Lookups {
 }
 
 /**
- * PHASE 156f (B1): ONE SEARCH FOR THE ADDRESS BOX, for the button and the page's script alike. A postcode already searched
+ * ONE SEARCH FOR THE ADDRESS BOX, for the button and the page's script alike. A postcode already searched
  * in this assessment is not searched again (the list stands, and narrowing it is free); otherwise Homedata is asked once,
  * inside the £1 a day cap (today's searches from the audit log, and this visitor's from the draft).
  */
@@ -1875,7 +1876,7 @@ async function addressSearch(app: WebDeps['app'], s: Record<string, unknown>, b:
   b['address_note'] = got.state === 'FOUND' ? null : got.why;
 }
 
-/** PHASE 156f: the funnel's pages, with the address box's one script on "Your details" while "Find my address" is on. */
+/** The funnel's pages, with the address box's one script on "Your details" while "Find my address" is on. */
 function f4Html(res: ServerResponse, status: number, body: string, id: F4Screen, lookups: F4Lookups): void {
   if (id !== 'details' || !lookups.address) { html(res, status, body); return; }
   res.writeHead(status, { ...HTML_HEADERS, 'content-security-policy': ADDRESS_PAGE_CSP });
@@ -2057,13 +2058,13 @@ function closePage(
 function submittedPage(
   out: { business_id: string; assessment_id: string; low_pence: number | null; high_pence: number | null },
   booked: { booked_at: string | null }, actor: Actor | undefined, offer?: string,
-  /** 30 Sep 2026: the four-stage funnel shows "up to" a figure, not a range, so the thank-you says what was shown. */
+  /** The four-stage funnel shows "up to" a figure, not a range, so the thank-you says what was shown. */
   upTo = false,
-  /** 30 Sep 2026: a video call with a time: its join page when the meeting was made, else null (the link will follow). */
+  /** A video call with a time: its join page when the meeting was made, else null (the link will follow). */
   video?: { join: string | null },
-  /** 30 Sep 2026: whether emails are being sent, so the page does not say an invitation is unsent when it is going. */
+  /** Whether emails are being sent, so the page does not say an invitation is unsent when it is going. */
   sending = false,
-  /** PHASE 161g: where the legal pages are served, the sign-up asks for the tick that the person has read them. */
+  /** Where the legal pages are served, the sign-up asks for the tick that the person has read them. */
   agreement = false,
 ): string {
   return page({
@@ -2100,7 +2101,7 @@ function submittedPage(
 }
 
 /**
- * MOVING OR CANCELLING YOUR OWN CALL — Phase 113a, revised by Phase 132e.
+ * MOVING OR CANCELLING YOUR OWN CALL.
  *
  * IT DRAWS WHAT THE STORE WOULD ACCEPT, AND NOTHING MORE. Every condition below
  * is asked of the same functions the write path asks: `BOOKING.booksASlot` for
@@ -2109,7 +2110,7 @@ function submittedPage(
  * CONTROL — a client who posts a time this panel never drew is refused by
  * `isBookable` and the notice period at the moment of writing.
  *
- * PHASE 132e: THE CONTROL IS DRAWN AT ANY TIME, however close or past the call
+ * THE CONTROL IS DRAWN AT ANY TIME, however close or past the call
  * is ("Give the client full control to cancel at any time, and rebook at a time
  * that suits them"). THE ORDER IS THE DECISION: new times first, then "ring me
  * instead", then cancelling outright.
@@ -2157,7 +2158,7 @@ function movePanel(
     </details>`;
 }
 
-/* PHASE 151j: the cookies of a sign-in - the part-way step's, and the session's. */
+/* The cookies of a sign-in - the part-way step's, and the session's. */
 function stepCookie(token: string | null): string {
   return token === null ? `${SI.STEP_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`
     : `${SI.STEP_COOKIE}=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${Math.floor(SI.STEP_TTL_MS / 1000)}`;
@@ -2214,7 +2215,7 @@ function resetPage(tok: string, error: string | undefined): string {
 
 function twoFactorPage(actor: Actor, home: string, method: SI.Method | null, done: string | null, error: string | undefined, recoveryLeft: number): string {
   const words = method === 'APP' ? 'an authenticator app' : method === 'EMAIL' ? 'a code sent to your email' : 'nothing yet';
-  // PHASE 151m: the recovery codes - how many are left, a warning with two or fewer, and a button for new ones.
+  // The recovery codes - how many are left, a warning with two or fewer, and a button for new ones.
   const rc = SI.recoveryCodesWords(recoveryLeft);
   const recovery = method === null ? raw('') : h`
       <h2>Recovery codes</h2>
@@ -2237,7 +2238,7 @@ function twoFactorPage(actor: Actor, home: string, method: SI.Method | null, don
 }
 
 /**
- * 29 SEPTEMBER 2026 — WHY A SIGN-IN STEP IS LOST, SAID WHERE IT HAPPENS. A step lives in the database (sign_in_steps).
+ * WHY A SIGN-IN STEP IS LOST, SAID WHERE IT HAPPENS. A step lives in the database (sign_in_steps).
  * On a database kept in memory, each copy of the website has its own, so a step begun on one copy is not there when the
  * next request reaches another, and it reads as "timed out" at once. Reproduced that day with two copies on memory.
  * The test website runs on memory whenever its lasting database is not in use (api/index.mjs, lastingDatabase).
@@ -2273,16 +2274,16 @@ const BOOKED_FROM: Readonly<Record<string, string>> = Object.freeze({
 });
 
 /**
- * THE RANGE'S BASIS, FOR THE CLIENT — PHASE 133c. The brand book: "Estimates always render as a range with its basis
+ * THE RANGE'S BASIS, FOR THE CLIENT. The brand book: "Estimates always render as a range with its basis
  * stated underneath" (slide 49). The same facts as RANGE_QUALIFIER, which the back office still shows, in the client's
  * words and with no build language.
  */
-// PHASE 159b (item 8): "move it down, not up" stops being true once later works are measured (Phase 159c), so it says what is.
+// "move it down, not up" stops being true once later works are measured, so it says what is.
 export const CLIENT_RANGE_BASIS =
   'An indicative figure, built only from what you told us in the assessment. It is the top of the range for that. Checking the records ' +
   'can move it down. Work you have done since, measured by our surveyor, can add to it. No property registers have been checked yet.';
 /**
- * PHASE 158b (F30, the Friary House run): once a register has answered, "No property registers have been checked yet"
+ * Once a register has answered, "No property registers have been checked yet"
  * is no longer true of the client's claim, though it is still true of the figure. So the note says both.
  */
 export const CLIENT_RANGE_BASIS_AFTER_RESEARCH =
@@ -2290,7 +2291,7 @@ export const CLIENT_RANGE_BASIS_AFTER_RESEARCH =
   'can move it down. Work you have done since, measured by our surveyor, can add to it. We worked it out before checking any property records. We have now started checking the property records.';
 
 export function rangeBasisFor(db: Db, business_id: string): string {
-  const fired = db.get<{ n: number }>("SELECT COUNT(*) AS n FROM research_sources WHERE business_id = ? AND state = 'FIRED'", [business_id])?.n ?? 0;
+  const fired = getResearchSourcesCountByBusinessIdState2<{ n: number }>(db, [business_id])?.n ?? 0;
   return fired > 0 ? CLIENT_RANGE_BASIS_AFTER_RESEARCH : CLIENT_RANGE_BASIS;
 }
 
@@ -2312,7 +2313,7 @@ function portalPage(
   const cls = extra.claims ?? [];
   const answered = tks.filter((t) => t.state === 'ANSWERED');
   const received = reqs.filter((r) => r.state === 'RECEIVED');
-  // UI TIDY PHASE 16: the page's parts open out under Your claims in the left-hand menu.
+  // The page's parts open out under Your claims in the left-hand menu.
   setSubMenu({ items: [
     ...(extra.dashboard === undefined ? [] : [{ href: '#where-you-are', label: 'Where your claim is' }]),
     { href: '#waiting-on-you', label: 'What we need from you', ...(open.length + asked.length > 0 ? { note: String(open.length + asked.length) } : {}) },
@@ -2325,10 +2326,10 @@ function portalPage(
   ] });
   return page({
     title: business.name, nav: nav(actor), wide: true,
-    /* PHASE 133c (B9): THE PORTAL, IN THE ORDER A CLIENT NEEDS IT. At the top, how to reach us and book a call; then where
+    /* THE PORTAL, IN THE ORDER A CLIENT NEEDS IT. At the top, how to reach us and book a call; then where
        the claim is; the range with its basis underneath; what we need from you; then everything else. The long step
        explanations sit behind "What happens at each step". Every section Phase 133a drew is still on the page.
-       UI TIDY PHASE 16 (3 October 2026): the header also offers Send us a document; the questions and the documents asked
+       The header also offers Send us a document; the questions and the documents asked
        for are drawn only when there is one (the "What we need from you" card already says when nothing is); How to
        contact us moves to the end, its words unchanged; the parts are listed under Your claims in the left-hand menu. */
     body: h`
@@ -2343,7 +2344,7 @@ function portalPage(
       <section class="card" id="your-range"><div class="card-h"><h2>The figure you were shown</h2></div>
       ${rng === null
         ? h`<p class="help">No assessment has been recorded for this business.</p>`
-        /* PHASE 157c (the Friary House run, F13): the assessment shows a ceiling, "up to £X", and never a low end, so
+        /* The assessment shows a ceiling, "up to £X", and never a low end, so
            this says the same. It said "£127,500 to £255,000", a range the client was never shown. */
         : h`<p class="figbig">${formatShownRange({ low_pence: null, high_pence: rng.high_pence })}</p>
             <p class="help">${extra.rangeBasis ?? CLIENT_RANGE_BASIS}</p>`}
@@ -2492,7 +2493,7 @@ function portalClaimStage(c: P.PortalClaim, named: boolean): string {
   return stepName(c.progress.current, named);
 }
 
-/** PHASE 134 — ONE TILE PER CLAIM: the property, its town, how far it has got, and its reference in grey. */
+/** ONE TILE PER CLAIM: the property, its town, how far it has got, and its reference in grey. */
 function portalClaimTiles(cls: readonly P.PortalClaim[], named: boolean, company: string): Safe {
   return h`<ul class="tiles">${cls.map((c) => h`<li class="tile">
     <p class="tilename"><a href="/portal/claims/${c.id}">${propertyIn(company, c.property) ?? 'Your claim'}</a></p>
@@ -2502,8 +2503,8 @@ function portalClaimTiles(cls: readonly P.PortalClaim[], named: boolean, company
     <p class="help">Questions, documents and messages for all your claims are on this page.</p>`;
 }
 
-/** PHASE 134 — ONE CLAIM'S PROGRESS, inside the company's portal. Questions, documents and messages stay on /portal. */
-/** PHASE 139: the client's told steps, or none for a login that may not read them. Never a refusal on the portal's own page. */
+/** ONE CLAIM'S PROGRESS, inside the company's portal. Questions, documents and messages stay on /portal. */
+/** The client's told steps, or none for a login that may not read them. Never a refusal on the portal's own page. */
 function portalSteps(db: Db, actor: Actor, business_id: string): ClientStep[] {
   return can(actor, 'client_step.read', { type: 'client_steps', id: business_id, business_id }) ? clientSteps(db, actor, business_id) : [];
 }
@@ -2511,7 +2512,7 @@ function portalSteps(db: Db, actor: Actor, business_id: string): ClientStep[] {
 function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, named: boolean, done: readonly ClientStep[] = [],
   routes: readonly { readonly label: string; readonly words: string }[] = []): string {
   const property = propertyIn(business.name, c.property);
-  // PHASE 157c (F8): the town only where the property's words do not already carry it.
+  // The town only where the property's words do not already carry it.
   const where = [property, c.town !== null && property !== null && property.toLowerCase().includes(c.town.trim().toLowerCase()) ? null : c.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
   return page({
     title: `${business.name} — ${property ?? 'your claim'}`, nav: nav(actor), wide: true,
@@ -2538,7 +2539,7 @@ function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, n
 }
 
 /**
- * PHASE 146f: THE ADDRESS A SIGNATURE CAME FROM. The socket's own address; behind a host's proxy, the first address in
+ * THE ADDRESS A SIGNATURE CAME FROM. The socket's own address; behind a host's proxy, the first address in
  * X-Forwarded-For, but only when CAPREBATE_TRUST_PROXY=1 says a proxy we trust set it — otherwise anyone could type one.
  */
 export function clientIp(req: IncomingMessage): string {
@@ -2547,13 +2548,13 @@ export function clientIp(req: IncomingMessage): string {
     const first = (Array.isArray(fwd) ? fwd[0] : fwd)?.split(',')[0]?.trim();
     if (first !== undefined && first !== '') return first;
   }
-  /* STRESS TEST, 29 SEP 2026: every enquiry answered 500 on the test website, and nothing else there differs from a
+  /* STRESS TEST: every enquiry answered 500 on the test website, and nothing else there differs from a
      local run but the request. The address is now read so that a request with no socket cannot throw. */
   try { return req.socket?.remoteAddress ?? 'unknown'; } catch { return 'unknown'; }
 }
 
 /**
- * PHASE 157c: the letter page. While the letter can be signed (the signing form, and its pad, are on the page), every
+ * The letter page. While the letter can be signed (the signing form, and its pad, are on the page), every
  * page's policy plus OUR OWN script, the signing pad's. Otherwise exactly every page's policy, with no script at all.
  */
 export const LETTER_PAGE_CSP = "default-src 'none'; style-src 'self'; img-src 'self' data:; script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
@@ -2566,9 +2567,9 @@ function letterHtml(res: ServerResponse, status: number, body: string): void {
 function letterPage(
   actor: Actor | undefined, business: Pick<P.Business, 'id' | 'name' | 'company_number'>, eng: P.EngagementView | null,
   problem?: string, typed?: { full_name: string; role: string }, letterPath?: string, signing: EngagementSigning = ENGAGEMENT_SIGNING,
-  /** PHASE 157d: where the form posts (the portal, or a signing link), whether this signer has signed, and the steps so far. */
+  /** Where the form posts (the portal, or a signing link), whether this signer has signed, and the steps so far. */
   extra: { readonly action?: string; readonly mine?: boolean; readonly progress?: readonly string[]; readonly byLink?: boolean; readonly facts?: LetterFacts } = {},
-  /** PHASE 161g: where the legal pages are served, the signing screen links the client's terms, the website terms and the privacy policy. */
+  /** Where the legal pages are served, the signing screen links the client's terms, the website terms and the privacy policy. */
   legalLinks = false,
 ): string {
   // The record's number travels with its name. Absent is omitted, never passed as undefined; a blank is passed and
@@ -2608,7 +2609,7 @@ function letterPage(
         <label>Your full name <input name="full_name" required maxlength="200" autocomplete="name" value="${typed?.full_name ?? ''}"></label>
         <label>Your role in the business <input name="signer_role" required maxlength="120" autocomplete="organization-title" value="${typed?.role ?? ''}"></label>
         <fieldset class="sig"><legend>Your signature</legend>
-          ${missing.length > 0 ? raw('') /* PHASE 157c: the pad, and its one script, only while the letter can be signed */ : h`<div class="sig-pad" data-sig-pad hidden>
+          ${missing.length > 0 ? raw('') /* The pad, and its one script, only while the letter can be signed */ : h`<div class="sig-pad" data-sig-pad hidden>
             <canvas class="sig-canvas" width="600" height="200" aria-label="Draw your signature here"></canvas>
             <p class="help" data-sig-note></p>
             <button type="button" class="btn-quiet" data-sig-clear>Clear and draw again</button>
@@ -2625,10 +2626,10 @@ function letterPage(
   });
 }
 
-/** PHASE 157d: the letter page's second-signer facts — whether this login has signed, and the steps so far. */
+/** The letter page's second-signer facts — whether this login has signed, and the steps so far. */
 function letterExtra(db: Db, business_id: string, user_id: string): { mine: boolean; progress: string[]; facts: LetterFacts } {
   const ls = letterState(db, business_id);
-  // PHASE 158b (F22): the client's kind of business, properties, the date sent and the figure shown, for the letter.
+  // The client's kind of business, properties, the date sent and the figure shown, for the letter.
   return { facts: letterFacts(db, business_id), mine: ls.state !== 'SIGNED' && ls.signed_by.some((x) => x.user_id === user_id),
     progress: ls.named.length === 0 && ls.signed_by.length === 0 ? [] : letterSteps(ls).filter((w) => /^(To be signed|Signed by|Waiting)/.test(w)) };
 }
@@ -2654,7 +2655,7 @@ function uploadTicketPage(doc_id: string, url: string, expires_at: string): stri
 }
 
 /**
- * THE CLIENT'S OWN DOCUMENT PAGE. PHASE 144: what we read is said in the same plain counts the staff Files folder shows
+ * THE CLIENT'S OWN DOCUMENT PAGE. What we read is said in the same plain counts the staff Files folder shows
  * ("We read 3 pages."), from `readLines` — counts only, never the file's words, a note or a figure. Anything not known yet
  * is said as not known, never left out.
  */

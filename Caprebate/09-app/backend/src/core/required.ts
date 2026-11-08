@@ -1,12 +1,12 @@
 /**
- * "(REQUIRED)" IN WORDS BESIDE EVERY REQUIRED FIELD — PHASE 133d, 17 September 2026 (D1).
+ * "(REQUIRED)" IN WORDS BESIDE EVERY REQUIRED FIELD.
  *
  * Phase 133c wrote "(required)" by hand into three forms (the task, the lead and the enquiry check). Every other form
  * that carries `required` showed nothing a person could read: the browser's own marker only appears after a failed
  * submit, and a screen reader or a printout never sees it. Rather than edit some ninety labels one by one — and miss
  * the next one somebody adds — `page()` in src/shared/html.ts passes every page body through this, as it already passes
  * it through `ukDatesInMarkup`. A test crawls every page every login reaches and fails on a required control whose label
- * does not say so (test/phase133d.test.ts).
+ * does not say so (test/core/required-fields.test.ts).
  *
  * A CONTROL'S LABEL IS FOUND THE WAY A BROWSER FINDS IT, then one fallback:
  *   1. `<label for="x">` when the control has id="x";
@@ -96,7 +96,7 @@ export function requiredWithoutWords(html: string): string[] {
 }
 
 /**
- * PHASE 133e (D5) — LABELLED BY POSITION IS NOT LABELLED.
+ * LABELLED BY POSITION IS NOT LABELLED.
  *
  * `requiredWordsInMarkup` above will put "(required)" into a bare `<label>` that merely SITS before a control
  * (route 3), because that is how several of these forms are drawn and the words are worth having either way.

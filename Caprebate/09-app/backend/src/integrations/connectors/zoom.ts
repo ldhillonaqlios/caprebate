@@ -1,7 +1,7 @@
 /**
- * VIDEO CALLS THROUGH ZOOM — a meeting made for each call, and joined inside our own pages. 30 September 2026.
+ * VIDEO CALLS THROUGH ZOOM — a meeting made for each call, and joined inside our own pages.
  *
- * Lakhbir: "with the video call link this should be sent automatically, and i feel zoom would be best for this as we
+ * the owner: "with the video call link this should be sent automatically, and i feel zoom would be best for this as we
  * can run it via our platform, is there a way to have zoom embeded on our back end so its done though there?"
  *
  * TWO ZOOM APPS, BOTH MADE IN THE ZOOM APP MARKETPLACE ON OUR OWN ACCOUNT (developers.zoom.us, read 30 Sep 2026):
@@ -10,20 +10,20 @@
  *     (ZAK) when a member of staff opens the call. Scopes: meeting:write:meeting:admin, meeting:update:meeting:admin,
  *     meeting:delete:meeting:admin, and user:read:token:admin — the first live call (30 Sep 2026) showed the start token
  *     needs that one ("user:read:zak:admin" is not enough: Zoom answered 4711).
- *     PHASE 153f, 4 Oct 2026: to read how long a call lasted and who came, two more - added by Lakhbir and used by
- *     zoomPastCall since PHASE 156d, 5 Oct 2026:
+ *     4 Oct 2026: to read how long a call lasted and who came, two more - added by the owner and used by
+ *     zoomPastCall:
  *     meeting:read:past_meeting:admin (GET /v2/past_meetings/{meetingId}: its duration) and
  *     meeting:read:list_past_participants:admin (GET /v2/past_meetings/{meetingId}/participants). Phase 156 A6.
- *     EACH CALL HAS ITS OWN HOST (Phase 153f): the meeting is made under the assigned member of staff's email, which
+ *     EACH CALL HAS ITS OWN HOST: the meeting is made under the assigned member of staff's email, which
  *     must be a user on our Zoom account (a paid licence each, for calls over 40 minutes).
  *   · a MEETING SDK app — ZOOM_SDK_CLIENT_ID, ZOOM_SDK_CLIENT_SECRET. Its secret signs each join ON THIS SERVER (a JWT,
  *     HMAC-SHA256: appKey, mn, role, iat, exp, tokenExp), so the meeting runs inside our page with Zoom's own Web SDK.
- *     Meetings on our own account need no Zoom review; since 2 March 2026 only joining OTHER accounts' meetings does.
+ *     Meetings on our own account need no Zoom review; only joining OTHER accounts' meetings does.
  * The host is a user on our account (ZOOM_HOST_EMAIL, else the account's owner). Calls are booked for an hour
- * (SLOT_MINUTES). A FREE Zoom plan stops a meeting at 40 minutes, and for testing that is accepted (Lakhbir, 30 Sep
+ * (SLOT_MINUTES). A FREE Zoom plan stops a meeting at 40 minutes, and for testing that is accepted (the owner, 30 Sep
  * 2026: "leave the time for having it free at 40 mins but each appointment should be 1 hour"); a paid licence lifts it.
  *
- * PHASE 156d, 5 October 2026 — THE FREE ZOOM PLAN, ON PURPOSE. Lakhbir: "yes change 156d so i dont pay", and "right now
+ * THE FREE ZOOM PLAN, ON PURPOSE. the owner: "yes change 156d so i dont pay", and "right now
  * i dont need to add additonal staff contact@caprebate is enough". So every call is hosted by contact@ (ZOOM_HOST_EMAIL),
  * a call stops at 40 minutes, and Zoom keeps no recording. ZOOM_PLAN says which plan we are on: absent, or anything but
  * "pro" (or "paid", "business"), is the free plan (`zoomPlanIsFree`). On the free plan a walkthrough call does not ask
@@ -32,13 +32,13 @@
  *
  * NOTHING HAPPENS UNTIL BOTH ARE TRUE, each said in words by `zoomMissing`: the five keys are in the key file, and
  * the transfer is approved (sources.ts, ZOOM_OAUTH and ZOOM_API: Zoom is a US company). The transfer was approved for
- * testing on 30 September 2026 (Sadique Maskeen, relayed by Lakhbir). Without the keys no meeting is made, the booking
+ * testing. Without the keys no meeting is made, the booking
  * stands, and the back office says "send them a link", as before.
  *
- * 1 OCT 2026 — ONLY THE TEST WEBSITE CALLS ZOOM. A copy on Lakhbir's Mac (a demo server reading the real key file) booked
+ * ONLY THE TEST WEBSITE CALLS ZOOM. A copy on the owner's Mac (a demo server reading the real key file) booked
  * a test call from the Communication tab and made a REAL meeting on our Zoom account. So a third thing must be true,
  * said in words by `zoomPlaceRefusal`: the app is the deployed test website (Vercel says so: VERCEL=1, VERCEL_ENV
- * production or preview, and VERCEL_URL set), OR the copy was started with CAPREBATE_LOCAL_ZOOM=1, for when Lakhbir
+ * production or preview, and VERCEL_URL set), OR the copy was started with CAPREBATE_LOCAL_ZOOM=1, for when the owner
  * really wants to try Zoom on his own computer. A test's recorded answers reach nobody, so they are never refused.
  *
  * WHAT IS SENT TO ZOOM: the time, the length and the words "Cap Rebate call". Never the client's name, email or number.
@@ -62,15 +62,15 @@ export const ZOOM_SDK_BASE = `https://source.zoom.us/${ZOOM_SDK_VERSION}`;
 /** What Zoom's meeting is called. Deliberately nobody's name. */
 export const MEETING_TOPIC = 'Cap Rebate call';
 
-/** PHASE 156d: the words that say a paid plan is in use. Anything else, or nothing, is the free plan. */
+/** The words that say a paid plan is in use. Anything else, or nothing, is the free plan. */
 const PAID_PLAN_WORDS: readonly string[] = Object.freeze(['pro', 'paid', 'business']);
 
-/** PHASE 156d: true unless ZOOM_PLAN says a paid plan. The free plan is the default, on purpose (5 Oct 2026). */
+/** True unless ZOOM_PLAN says a paid plan. The free plan is the default, on purpose. */
 export function zoomPlanIsFree(store: SecretStore): boolean {
   return !PAID_PLAN_WORDS.includes((store.forOwner('ZOOM').get('ZOOM_PLAN') ?? '').trim().toLowerCase());
 }
 
-/** PHASE 156d: the free plan's limit, said plainly where a video call is booked and in its invitation. */
+/** The free plan's limit, said plainly where a video call is booked and in its invitation. */
 export const FREE_PLAN_LINE = 'On our current Zoom plan a call ends after 40 minutes. If it does, use the same link to start again.';
 
 export type ZoomDeps = {
@@ -109,11 +109,11 @@ function transferRefused(o?: Partial<CallPolicy>): string | null {
   return null;
 }
 
-/** 1 Oct 2026: the setting that lets a copy that is not the test website call Zoom. Off unless it is exactly "1". */
+/** The setting that lets a copy that is not the test website call Zoom. Off unless it is exactly "1". */
 export const ZOOM_LOCAL_OPT_IN = 'CAPREBATE_LOCAL_ZOOM';
 
 /**
- * 1 Oct 2026: why THIS copy may not call Zoom, in words, or null when it may. Only a live transport is ever refused:
+ * Why THIS copy may not call Zoom, in words, or null when it may. Only a live transport is ever refused:
  * a test's recorded answers reach nobody.
  */
 export function zoomPlaceRefusal(outside: Transport, env: Env = process.env): string | null {
@@ -185,10 +185,10 @@ async function api(d: ZoomDeps, k: Keys, method: 'GET' | 'POST' | 'PATCH' | 'DEL
 
 export type MadeMeeting =
   | { readonly state: 'MADE'; readonly meeting_id: string; readonly join_url: string; readonly passcode: string | null }
-  | { readonly state: 'NOT_MADE'; readonly why: string; /** PHASE 153f: true when the host asked for is not a Zoom user on our account. */ readonly host_unknown?: boolean };
+  | { readonly state: 'NOT_MADE'; readonly why: string; /** True when the host asked for is not a Zoom user on our account. */ readonly host_unknown?: boolean };
 
 /**
- * PHASE 153f, 4 October 2026 — ZOOM'S "NO SUCH USER". A meeting made, or a start token asked for, under an email that
+ * ZOOM'S "NO SUCH USER". A meeting made, or a start token asked for, under an email that
  * is not a user on our Zoom account answers 404, or an error carrying code 1001 ("User does not exist") or 1120.
  */
 function hostUnknown(r: { readonly status: number | null; readonly body: string | null }): boolean {
@@ -200,9 +200,9 @@ function hostUnknown(r: { readonly status: number | null; readonly body: string 
 function zoomTime(iso: string): string { return new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z'); }
 
 /** Make the meeting for one call. At most one token call and one meeting call; never throws. */
-/** 2 Oct 2026: `record` — a survey walkthrough call (src/web/survey-evidence.ts) is recorded to Zoom's cloud. */
+/** `record` — a survey walkthrough call (src/web/survey-evidence.ts) is recorded to Zoom's cloud. */
 /**
- * PHASE 153f, 4 October 2026: `host` — the email of the member of staff the call is assigned to, so each call has its
+ * `host` — the email of the member of staff the call is assigned to, so each call has its
  * own Zoom host and two calls at the same time can both run (one Zoom user hosts one meeting at a time). Absent: the
  * shared host (ZOOM_HOST_EMAIL, else the account's owner). A host who is not a user on our account is NOT_MADE with
  * `host_unknown`, so the caller can say so and use the shared host instead.
@@ -215,7 +215,7 @@ export async function makeZoomMeeting(d: ZoomDeps, startsAt: string, minutes: nu
   const r = await api(d, k, 'POST', '/v2/users/{user}/meetings', { user: host }, {
     topic: MEETING_TOPIC, type: 2, start_time: zoomTime(startsAt), duration: minutes, timezone: 'Europe/London',
     settings: { join_before_host: false, waiting_room: true, mute_upon_entry: false, host_video: true, participant_video: true, approval_type: 2,
-      // PHASE 156d: the free plan has no cloud recording, so only a paid plan is asked to record a walkthrough there.
+      // The free plan has no cloud recording, so only a paid plan is asked to record a walkthrough there.
       auto_recording: opts.record === true && !zoomPlanIsFree(d.secrets) ? 'cloud' : 'none' },
   });
   if (r === null) return { state: 'NOT_MADE', why: 'Zoom did not give us a token: check the Server-to-Server app’s keys and that it is activated.' };
@@ -236,7 +236,7 @@ export type Recording = { readonly state: 'FOUND'; readonly share_url: string; r
   | { readonly state: 'NOT_YET' | 'NOT_FOUND'; readonly why: string };
 
 /**
- * 2 Oct 2026: a walkthrough call's cloud recording, as Zoom describes it (GET /v2/meetings/{meetingId}/recordings,
+ * A walkthrough call's cloud recording, as Zoom describes it (GET /v2/meetings/{meetingId}/recordings,
  * developers.zoom.us, read 2 Oct 2026). Only its sharing link, passcode, length and start are read; the video stays
  * with Zoom. Needs the Server-to-Server app's recording scope, and cloud recording on our Zoom plan.
  */
@@ -260,10 +260,10 @@ export async function zoomRecording(d: ZoomDeps, meetingId: string): Promise<Rec
 }
 
 /**
- * PHASE 156d, 5 October 2026 — HOW LONG A CALL LASTED, AND HOW MANY JOINED. GET /v2/past_meetings/{meetingId} gives the
+ * HOW LONG A CALL LASTED, AND HOW MANY JOINED. GET /v2/past_meetings/{meetingId} gives the
  * last time the meeting ran: its length in minutes ("duration") and how many joined ("participants_count");
  * where it does not say how many, GET .../participants with page_size 1 gives the count ("total_records"). Scopes
- * meeting:read:past_meeting:admin and meeting:read:list_past_participants:admin (added by Lakhbir on 5 Oct 2026).
+ * meeting:read:past_meeting:admin and meeting:read:list_past_participants:admin.
  * Only two numbers are kept: never a name, an email or anything else from the answer.
  * Zoom may keep this from a free plan; then the screens say "not shown on our Zoom plan", so nobody thinks it broke.
  */
@@ -331,7 +331,7 @@ export async function cancelZoomMeeting(d: ZoomDeps, meetingId: string): Promise
 
 /**
  * The host's start token (ZAK), so a member of staff starts the call as its host inside our page. Null if refused.
- * PHASE 153f: `host` — the email the meeting was made under (src/web/video-calls.ts, meetingHost); absent, the shared host.
+ * `host` — the email the meeting was made under (src/web/video-calls.ts, meetingHost); absent, the shared host.
  */
 export async function hostZak(d: ZoomDeps, host?: string): Promise<string | null> {
   if (blocked(d).length > 0) return null;

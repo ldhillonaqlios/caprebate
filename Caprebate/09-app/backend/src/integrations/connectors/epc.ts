@@ -1,6 +1,6 @@
 /**
  * ENERGY CERTIFICATES — FLOOR AREA AND BUILDING TYPE FROM THE ENGLAND AND WALES REGISTER.
- * Phase 146c, 23 September 2026. Switched off: REGISTER_SWITCHES.EPC is false.
+ * Switched off: REGISTER_SWITCHES.EPC is false.
  *
  * Built against the "Get energy performance of buildings data" service's API documentation and its OpenAPI file
  * (read 23 September 2026; the addresses and date are in the source register's SUPPLIER_DOCS). Base
@@ -21,7 +21,7 @@
  *      building type — only the certificate does.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * A UPRN IS AN EXACT KEY, AND A POSTCODE IS NOT (Phase 146d, item 9)
+ * A UPRN IS AN EXACT KEY, AND A POSTCODE IS NOT
  *
  * Steps 1 and 2 above exist because a postcode search returns every certificate in the postcode and we then have to
  * work out which one is our client's, by splitting addresses and scoring them at thresholds nobody has measured.
@@ -40,12 +40,12 @@
  * neighbour's certificate ends up in a client's claim file.
  *
  * WHAT IS KEPT: the floor area, the building type (a non-domestic certificate's `property_type`, a domestic one's
- * `dwelling_type`), the date it was registered, its number, and — since Phase 146h — the construction age band and
+ * `dwelling_type`), the date it was registered, its number, and — — the construction age band and
  * the tenure of a DOMESTIC certificate, DECODED. NOT KEPT: any address line (the register's addresses are under an
  * Ordnance Survey and Royal Mail notice), the UPRN and the energy assessor (a person).
  *
  * ───────────────────────────────────────────────────────────────────────────
- * THE DOMESTIC CERTIFICATE'S CODES (Phase 146h, item 2, 23 September 2026)
+ * THE DOMESTIC CERTIFICATE'S CODES
  *
  * A domestic certificate does not spell out its construction age band or its tenure. It gives each as a CODE: the age
  * band as a letter on each of the certificate's building parts (`sap_building_parts[].construction_age_band`, "M"),
@@ -72,7 +72,7 @@
  * code, and a lookup that asked anyway would be spending a call on a question it does not have.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * A PERSON'S PICK (Phase 146h, item 1)
+ * A PERSON'S PICK
  *
  * A REVIEW-band match still keeps nothing here. What changed is that the ranked list can be handed to the back office
  * — after a signed engagement only — and a person can choose one certificate or none (src/web/match-review.ts). The
@@ -93,7 +93,7 @@ import { jurisSource, type Nation, type TypedProperty } from './nations.ts';
 export type EpcQuery = {
   readonly property: TypedProperty | null; readonly nation: Nation | null; readonly sector: string | null;
   /**
-   * PHASE 146d, ITEM 9 — THE PAID LOOKUP'S UPRN, WHERE IT RAN FIRST ON THIS CLICK AND MATCHED. Null otherwise, and
+   * ITEM 9 — THE PAID LOOKUP'S UPRN, WHERE IT RAN FIRST ON THIS CLICK AND MATCHED. Null otherwise, and
    * null is the ordinary case: the paid address lookup is switched off and, even switched on, fires only after a
    * signed engagement. A UPRN turns this lookup's weakest step into its strongest — see `bySearchKey` below.
    */
@@ -280,7 +280,7 @@ export const epc = defineSteppedConnector<EpcQuery>({
       const m = matchAddress(typed, candidates, MATCH_THRESHOLDS.EPC, 'the energy certificate register',
         (a, b) => (b.registered > a.registered ? b : a));
       q.measure?.({ profile: 'EPC', register: registersFor(q.sector).join('+'), match: m, top_address: m.top?.candidate.address ?? null });
-      /* PHASE 146h: the REVIEW band's list goes to the back office, or a person's choice comes back in it. Outside
+      /* The REVIEW band's list goes to the back office, or a person's choice comes back in it. Outside
          that band this does nothing at all, and the four lines below are what they were. */
       const pick = applyPick(m, q, {
         profile: 'EPC', register: registersFor(q.sector).join('+'),
@@ -303,7 +303,7 @@ export const epc = defineSteppedConnector<EpcQuery>({
     if (data === null) return { kind: 'UNREADABLE', call: cert, calls };
     const fields = certificateFields(data, hit);
 
-    /* PHASE 146h, ITEM 2 — THE TWO CODED FIELDS, DECODED THROUGH THE REGISTER'S OWN CODE LISTS, or left out.
+    /* ITEM 2 — THE TWO CODED FIELDS, DECODED THROUGH THE REGISTER'S OWN CODE LISTS, or left out.
        Domestic certificates only: nothing else carries either code, so nothing else spends a call asking. */
     let decoded = '';
     const wanted = hit.register === 'domestic'

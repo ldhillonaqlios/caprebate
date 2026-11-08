@@ -128,7 +128,7 @@ export function outboxLogLine(rows) {
   return `test deployment: ${rows.length} new email${rows.length === 1 ? '' : 's'} in the outbox - ${list}; ${sent} sent, ${rows.length - sent} not sent`;
 }
 
-/** 29 Sep 2026: who gives a second step on the test website. Read by test/invented-logins.test.ts. */
+/** 29 Sep 2026: who gives a second step on the test website. Read by test/core/invented-logins.test.ts. */
 export const TEST_WEBSITE_TWO_FACTOR = 'staff-except-invented';
 
 // 30 Sep 2026: COMPANIES_HOUSE_API_KEY for "Find my company" (switched on for testing, src/connectors/company-search.ts),

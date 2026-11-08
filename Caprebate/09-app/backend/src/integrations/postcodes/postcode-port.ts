@@ -1,7 +1,7 @@
 /**
  * THE ONE PLACE THIS APPLICATION NAMES THE POSTCODE RESOLVER.
  *
- * Phase 110, 9 September 2026. The same seam, for the same reason, as
+ * The same seam, for the same reason, as
  * `upload-handler-port.ts`: `grep -rn "04-phase-work" src/` must return one
  * line per module and each of them must be here.
  *
@@ -85,7 +85,7 @@ export {
   RegionError,
   regionOf,
   regionKeyOf,
-  /* Phase 132f: the region switches (Phase 132e). Passed explicitly by resolveProperty; the Inner London switch is OFF. */
+  /* The region switches. Passed explicitly by resolveProperty; the Inner London switch is OFF. */
   REGION_SWITCHES,
   SURVEYOR_INNER_LONDON_ONS_FOURTEEN,
 } from './region.ts';

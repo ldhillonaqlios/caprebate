@@ -1,7 +1,7 @@
 /**
- * RECOVERY CODES: TEN ONE-USE CODES, SO A PERSON WHO LOSES THEIR PHONE CAN STILL SIGN IN. Phase 151m, 28 September 2026.
+ * RECOVERY CODES: TEN ONE-USE CODES, SO A PERSON WHO LOSES THEIR PHONE CAN STILL SIGN IN.
  *
- * Lakhbir, 28 September 2026 (Word question 232, closed): yes. Until now a person who lost their phone had to ask the
+ * The owner (Word question 232, closed): yes. Until now a person who lost their phone had to ask the
  * super user to reset their second step.
  *
  * WHAT A CODE IS. Ten characters from a set of 32 with no look-alikes (no 0/O, no 1/I/L, one case only, so it can be
@@ -18,6 +18,7 @@
 import { randomInt, scryptSync, timingSafeEqual } from 'node:crypto';
 import type { App } from './app.ts';
 import { newId } from './users.ts';
+import { deleteRecoveryCodesByUserId, getRecoveryCodesCountByUserIdUsedAt, insertRecoveryCodes, listRecoveryCodesIdCodeHashByUserIdUsedAt, updateRecoveryCodesUsedAtByIdUsedAt } from './data.ts';
 
 export const RECOVERY_CODE_COUNT = 10;
 /** With this many or fewer left, the page after sign-in says so and offers new ones. */
@@ -49,13 +50,13 @@ function hashFor(user_id: string, normalised: string): string {
 
 /** How many unused codes a person has. */
 export function recoveryCodesLeft(app: App, user_id: string): number {
-  return app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM recovery_codes WHERE user_id = ? AND used_at IS NULL', [user_id])?.n ?? 0;
+  return getRecoveryCodesCountByUserIdUsedAt<{ n: number }>(app.db, [user_id])?.n ?? 0;
 }
 
 /** Delete every code a person has, used or not. Returns how many unused ones went. */
 export function clearRecoveryCodes(app: App, user_id: string): number {
   const left = recoveryCodesLeft(app, user_id);
-  app.db.run('DELETE FROM recovery_codes WHERE user_id = ?', [user_id]);
+  deleteRecoveryCodesByUserId(app.db, [user_id]);
   return left;
 }
 
@@ -70,8 +71,7 @@ export function replaceRecoveryCodes(app: App, user_id: string): { codes: string
   for (let i = 0; i < RECOVERY_CODE_COUNT; i++) {
     const code = recoveryCode();
     codes.push(code);
-    app.db.run('INSERT INTO recovery_codes (id, user_id, code_hash, made_at) VALUES (?, ?, ?, ?)',
-      [newId(), user_id, hashFor(user_id, normaliseRecoveryCode(code)!), at]);
+    insertRecoveryCodes(app.db, [newId(), user_id, hashFor(user_id, normaliseRecoveryCode(code)!), at]);
   }
   return { codes, voided };
 }
@@ -84,8 +84,7 @@ export function useRecoveryCode(app: App, user_id: string, given: string): { ok:
   const n = normaliseRecoveryCode(given);
   if (n === null) return { ok: false };
   const want = Buffer.from(hashFor(user_id, n), 'hex');
-  const rows = app.db.all<{ id: string; code_hash: string }>(
-    'SELECT id, code_hash FROM recovery_codes WHERE user_id = ? AND used_at IS NULL', [user_id]);
+  const rows = listRecoveryCodesIdCodeHashByUserIdUsedAt<{ id: string; code_hash: string }>(app.db, [user_id]);
   let hit: string | null = null;
   for (const r of rows) {
     const have = Buffer.from(r.code_hash, 'hex');
@@ -93,6 +92,6 @@ export function useRecoveryCode(app: App, user_id: string, given: string): { ok:
   }
   if (hit === null) return { ok: false };
   // Used once: the row is taken only while it is still unused, so two sign-ins racing on one code cannot both win.
-  if (app.db.run('UPDATE recovery_codes SET used_at = ? WHERE id = ? AND used_at IS NULL', [app.now(), hit]).changes !== 1) return { ok: false };
+  if (updateRecoveryCodesUsedAtByIdUsedAt(app.db, [app.now(), hit]).changes !== 1) return { ok: false };
   return { ok: true, left: recoveryCodesLeft(app, user_id) };
 }

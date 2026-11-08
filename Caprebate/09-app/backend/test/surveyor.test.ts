@@ -28,7 +28,7 @@
  */
 
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
-   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
+   twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -38,8 +38,8 @@ import { createApp } from '../src/core/server.ts';
 import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
 import { can } from '../src/core/authz.ts';
 import { quarantinedKeysAndValues } from '../src/payload.ts';
-import { verifyChain, type EstimateOutputs, type LogEntry } from '../src/survey/caprebate-anchor-quarantine.ts';
-import { RATE_FIELDS, OverrideStore, adoption, isBlankControl } from '../src/survey/caprebate-surveyor-crm.ts';
+import { verifyChain, type EstimateOutputs, type LogEntry } from '../src/modules/survey/anchor-quarantine.ts';
+import { RATE_FIELDS, OverrideStore, adoption, isBlankControl } from '../src/modules/survey/surveyor-crm.ts';
 import { allRoomIds, roomsFor } from '../src/web/rooms.ts';
 import { DbAnchorLog } from '../src/web/anchor-store.ts';
 import { RATE_FIELD_IDS } from '../src/web/surveyor.ts';

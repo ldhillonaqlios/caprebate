@@ -50,6 +50,7 @@ import { randomUUID, timingSafeEqual } from 'node:crypto';
 import type { SecretStore } from '../core/index.ts';
 import { redactSecrets } from '../core/index.ts';
 import { STATE_WORDS } from './email-chains.ts';
+import { getInboundBounceNoticesIdByMailboxUid, getInboundEmailFileSavesIdByInboundEmailFileId, getInboundEmailFilesIdPartNoById, getInboundEmailIdByMailboxUid, getInboundEmailIdFromAddressByIdOutcome, getInboundEmailN, getInboundEmailXByMailboxUid, getMailboxReadsLastOkAtLastFailedById, getMailboxWatermarkUidById, getOutboxIdBusinessIdByProviderRefSentAt, getOutboxIdByProviderRefSentAt, insertInboundBounceNotices, insertInboundEmail, insertInboundEmailFileSaves, insertInboundEmailFiles, insertInboundEmailFilings, insertInboundEmailFilings2, insertMailboxReads, insertMailboxWatermark, insertMailboxWatermarkByUid, listInboundEmailFilesIdPartNoByClientMessageId, listInboundEmailFilesIdReceivedAtByInboundEmailIdOutcome, listInboundEmailIdFromAddressByOutcomeBusinessId } from '../integrations/index.ts';
 
 export type InboundDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -62,8 +63,7 @@ type Outcome = 'FILED' | 'QUEUED' | 'DO_NOT_CONTACT' | 'BOUNCE';
 /** The Message-ID we stamped, as a reply names it: without the angle brackets. */
 function ourEmail(db: Db, answers: readonly string[]): { id: string; business_id: string; claim_id: string | null; to_email: string } | null {
   for (const ref of answers) {
-    const o = db.get<{ id: string; business_id: string | null; claim_id: string | null; to_email: string }>(
-      'SELECT id, business_id, claim_id, to_email FROM outbox WHERE provider_ref = ? AND sent_at IS NOT NULL', [ref]);
+    const o = getOutboxIdBusinessIdByProviderRefSentAt<{ id: string; business_id: string | null; claim_id: string | null; to_email: string }>(db, [ref]);
     if (o !== undefined && o.business_id !== null) return { id: o.id, business_id: o.business_id, claim_id: o.claim_id, to_email: o.to_email };
   }
   return null;
@@ -87,21 +87,20 @@ function contactOf(db: Db, business_id: string, address: string): string | null 
  */
 export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = parseEmail(mail.raw)): Outcome | null {
   const uid = String(mail.uid);
-  if (d.db.get('SELECT id FROM inbound_email WHERE mailbox_uid = ?', [uid]) !== undefined) return null;
-  if (d.db.get('SELECT id FROM inbound_bounce_notices WHERE mailbox_uid = ?', [uid]) !== undefined) return null;
+  if (getInboundEmailIdByMailboxUid(d.db, [uid]) !== undefined) return null;
+  if (getInboundBounceNoticesIdByMailboxUid(d.db, [uid]) !== undefined) return null;
   /* PHASE 146f: A DELIVERY REPORT IS NOT A REPLY. It is matched to the email of ours it names, recorded as a bounce, and
      never filed on a chat or queued for staff. A HARD one stops further email to that address. */
   const report = parseBounceReport(mail.raw);
   if (report !== null) {
     const at = d.now();
     const ours = report.original_message_id === null ? undefined
-      : d.db.get<{ id: string }>('SELECT id FROM outbox WHERE provider_ref = ? AND sent_at IS NOT NULL', [report.original_message_id]);
+      : getOutboxIdByProviderRefSentAt<{ id: string }>(d.db, [report.original_message_id]);
     const id = d.newId();
     let bounce: string | null = null;
     d.db.tx(() => {
       if (ours !== undefined) bounce = recordBounce(d.db, d.now, ours.id, { kind: report.kind, status: report.status, source: 'REPORT' });
-      d.db.run('INSERT INTO inbound_bounce_notices (id, mailbox_uid, received_at, matched_outbox_id, bounce_id) VALUES (?, ?, ?, ?, ?)',
-        [id, uid, at, ours?.id ?? null, bounce]);
+      insertInboundBounceNotices(d.db, [id, uid, at, ours?.id ?? null, bounce]);
     });
     d.audit.append({
       at, kind: 'EMAIL_BOUNCED', outcome: 'ALLOWED', actor_id: null, actor_role: 'SYSTEM',
@@ -130,15 +129,11 @@ export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = par
     } else {
       outcome = 'QUEUED';
     }
-    d.db.run(
-      'INSERT INTO inbound_email (id, received_at, mailbox_uid, message_id, from_address, subject, text_body, matched_outbox_id, business_id, claim_id, ' +
-        'contact_id, outcome, queue_reason, client_message_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, at, uid, parsed.message_id, parsed.from_address, parsed.subject, text, ours?.id ?? null,
+    insertInboundEmail(d.db, [id, at, uid, parsed.message_id, parsed.from_address, parsed.subject, text, ours?.id ?? null,
         outcome === 'QUEUED' ? null : ours?.business_id ?? null, outcome === 'QUEUED' ? null : ours?.claim_id ?? null, contact,
         outcome, outcome === 'QUEUED' ? (ours === null ? 'NO_MATCH' : 'NOT_A_CONTACT') : null, message]);
     parsed.files.forEach((f, i) => {
-      d.db.run('INSERT INTO inbound_email_files (id, inbound_email_id, part_no, content_type, size_bytes) VALUES (?, ?, ?, ?, ?)',
-        [d.newId(), id, i + 1, f.content_type, f.bytes.length]);
+      insertInboundEmailFiles(d.db, [d.newId(), id, i + 1, f.content_type, f.bytes.length]);
     });
   });
   const o = outcome!;
@@ -161,15 +156,13 @@ export type ReadResult =
 /** READ EVERY NEW REPLY. OFF returns at once and opens no connection. */
 export async function readMailbox(d: InboundDeps, cfg: InboundEmail, login: ImapLogin | null, mailbox: Mailbox | null): Promise<ReadResult> {
   if (!readingOn(cfg, login) || mailbox === null) return { state: 'OFF', missing: readingMissing(cfg, login) };
-  const kept = d.db.get<{ n: number | null }>(
-    'SELECT MAX(n) AS n FROM (SELECT MAX(CAST(mailbox_uid AS INTEGER)) AS n FROM inbound_email ' +
-      'UNION ALL SELECT MAX(CAST(mailbox_uid AS INTEGER)) FROM inbound_bounce_notices)')?.n ?? null;
-  const mark = d.db.get<{ uid: number }>('SELECT uid FROM mailbox_watermark WHERE id = 1')?.uid ?? null;
+  const kept = getInboundEmailN<{ n: number | null }>(d.db)?.n ?? null;
+  const mark = getMailboxWatermarkUidById<{ uid: number }>(d.db)?.uid ?? null;
   /* 30 Sep 2026: THE FIRST READ ONLY NOTES WHERE THE INBOX STANDS. Nothing read yet and nothing noted: note the highest
      message number and read nothing, so mail that was already there is never brought in (migration 064). */
   if (kept === null && mark === null && mailbox.highestUid !== undefined) {
     const top = await mailbox.highestUid();
-    d.db.run('INSERT INTO mailbox_watermark (id, uid, set_at) VALUES (1, ?, ?) ON CONFLICT(id) DO NOTHING', [top, d.now()]);
+    insertMailboxWatermark(d.db, [top, d.now()]);
     const r = await repliesToOurs(d, mailbox, top);
     return { state: 'RAN', read: r, filed: r, queued: 0, do_not_contact: 0, bounces: 0, started: true };
   }
@@ -189,7 +182,7 @@ export async function readMailbox(d: InboundDeps, cfg: InboundEmail, login: Imap
   filed += fileByRule(d);
   // Move the mark past everything looked at, so a message this reader passes over is not fetched again next time.
   if (top > (mark ?? 0)) {
-    d.db.run('INSERT INTO mailbox_watermark (id, uid, set_at) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET uid = excluded.uid, set_at = excluded.set_at WHERE excluded.uid > mailbox_watermark.uid', [top, d.now()]);
+    insertMailboxWatermarkByUid(d.db, [top, d.now()]);
   }
   return { state: 'RAN', read, filed, queued, do_not_contact: dnc, bounces: bounced };
 }
@@ -212,7 +205,7 @@ async function repliesToOurs(d: InboundDeps, mailbox: Mailbox, upTo: number): Pr
   try { found = await mailbox.answering(domain); } catch { return 0; }
   const uids = found.filter((u) => u <= upTo).slice(-25);
   for (const uid of uids) {
-    if (d.db.get('SELECT 1 AS x FROM inbound_email WHERE mailbox_uid = ?', [String(uid)]) !== undefined) continue;
+    if (getInboundEmailXByMailboxUid(d.db, [String(uid)]) !== undefined) continue;
     const m = await mailbox.one(uid);
     if (m === null) continue;
     const parsed = parseEmail(m.raw);
@@ -230,10 +223,7 @@ async function repliesToOurs(d: InboundDeps, mailbox: Mailbox, upTo: number): Pr
  * rule recorded in place of a person (migration 068). Nothing else in the queue moves. Returns how many it filed.
  */
 export function fileByRule(d: InboundDeps): number {
-  const waiting = d.db.all<{ id: string; from_address: string; text_body: string; outbox_id: string; business_id: string; claim_id: string | null; to_email: string; received_at: string }>(
-    'SELECT e.id, e.from_address, e.text_body, o.id AS outbox_id, o.business_id, o.claim_id, o.to_email, e.received_at FROM inbound_email e ' +
-    "JOIN outbox o ON o.id = e.matched_outbox_id WHERE e.outcome = 'QUEUED' AND o.business_id IS NOT NULL " +
-    'AND NOT EXISTS (SELECT 1 FROM inbound_email_filings g WHERE g.inbound_email_id = e.id) ORDER BY e.received_at, e.id');
+  const waiting = listInboundEmailIdFromAddressByOutcomeBusinessId<{ id: string; from_address: string; text_body: string; outbox_id: string; business_id: string; claim_id: string | null; to_email: string; received_at: string }>(d.db);
   let filed = 0;
   for (const w of waiting) {
     const contact = contactOf(d.db, w.business_id, plainAddress(w.from_address));
@@ -244,8 +234,7 @@ export function fileByRule(d: InboundDeps): number {
     d.db.tx(() => {
       d.db.run('INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)',
         [message, w.business_id, w.claim_id, 'FROM_CLIENT', 'EMAIL', contact, w.text_body.slice(0, 8000), at]);
-      d.db.run('INSERT INTO inbound_email_filings (id, inbound_email_id, business_id, claim_id, client_message_id, filed_by, rule, filed_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?)',
-        [d.newId(), w.id, w.business_id, w.claim_id, message, 'ANSWERS_OUR_EMAIL', at]);
+      insertInboundEmailFilings2(d.db, [d.newId(), w.id, w.business_id, w.claim_id, message, 'ANSWERS_OUR_EMAIL', at]);
     });
     d.audit.append({ at, kind: 'INBOUND_EMAIL_FILED', outcome: 'ALLOWED', actor_id: null, actor_role: null, object_type: 'inbound_email', object_id: w.id,
       detail: { business: w.business_id, message, by_rule: 'ANSWERS_OUR_EMAIL', contact_known: contact !== null } });
@@ -287,11 +276,7 @@ export function mayReadQueue(actor: Actor): boolean {
 /** EVERY REPLY STILL WAITING TO BE FILED, oldest first. Admin and Sales. */
 export function replyQueue(db: Db, actor: Actor): QueuedReply[] {
   authorise(actor, 'inbound_email.read', queueObj);
-  return db.all<{ id: string; received_at: string; from_address: string; subject: string; text_body: string; queue_reason: string; files: number }>(
-    'SELECT e.id, e.received_at, e.from_address, e.subject, e.text_body, e.queue_reason, ' +
-      '(SELECT COUNT(*) FROM inbound_email_files f WHERE f.inbound_email_id = e.id) AS files FROM inbound_email e ' +
-      "WHERE e.outcome = 'QUEUED' AND NOT EXISTS (SELECT 1 FROM inbound_email_filings g WHERE g.inbound_email_id = e.id) " +
-      'ORDER BY e.received_at ASC')
+  return listInboundEmailFilesIdReceivedAtByInboundEmailIdOutcome<{ id: string; received_at: string; from_address: string; subject: string; text_body: string; queue_reason: string; files: number }>(db)
     .map((r) => ({ id: r.id, when: localStamp(r.received_at), from_address: r.from_address, subject: r.subject, text: r.text_body,
       why: QUEUE_WORDS[r.queue_reason] ?? 'We could not tell which company it is from.', files: r.files }));
 }
@@ -303,9 +288,7 @@ export function replyQueue(db: Db, actor: Actor): QueuedReply[] {
  */
 export function fileQueued(d: InboundDeps, actor: Actor, inbound_id: string, business_id: string): { ok: true; message_id: string } | { ok: false; why: string } {
   authorise(actor, 'inbound_email.file', { type: 'inbound_email', id: inbound_id });
-  const e = d.db.get<{ id: string; from_address: string; text_body: string }>(
-    "SELECT id, from_address, text_body FROM inbound_email WHERE id = ? AND outcome = 'QUEUED' " +
-      'AND NOT EXISTS (SELECT 1 FROM inbound_email_filings g WHERE g.inbound_email_id = inbound_email.id)', [inbound_id]);
+  const e = getInboundEmailIdFromAddressByIdOutcome<{ id: string; from_address: string; text_body: string }>(d.db, [inbound_id]);
   if (e === undefined) throw new NotFoundAsRefusal();
   if (d.db.get('SELECT id FROM businesses WHERE id = ?', [business_id]) === undefined) return { ok: false, why: 'Choose a company.' };
   authorise(actor, 'client_message.write', { type: 'client_message', id: business_id, business_id });
@@ -316,8 +299,7 @@ export function fileQueued(d: InboundDeps, actor: Actor, inbound_id: string, bus
     d.db.run(
       'INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, ?, NULL, ?, ?, NULL, ?, ?, ?)',
       [message, business_id, 'FROM_CLIENT', 'EMAIL', contact, e.text_body.slice(0, 8000), at]);
-    d.db.run('INSERT INTO inbound_email_filings (id, inbound_email_id, business_id, claim_id, client_message_id, filed_by, filed_at) VALUES (?, ?, ?, NULL, ?, ?, ?)',
-      [d.newId(), e.id, business_id, message, actor.id, at]);
+    insertInboundEmailFilings(d.db, [d.newId(), e.id, business_id, message, actor.id, at]);
   });
   d.audit.append({
     at, kind: 'INBOUND_EMAIL_FILED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -345,11 +327,7 @@ const TYPE_WORDS: Readonly<Record<string, string>> = Object.freeze({
 /** The files of an emailed message that nobody has saved yet — for staff who may file replies. Empty for anyone else. */
 export function unsavedFiles(db: Db, actor: Actor, message_id: string): EmailedFile[] {
   if (!mayReadQueue(actor)) return [];
-  return db.all<{ id: string; part_no: number; content_type: string; size_bytes: number }>(
-    'SELECT f.id, f.part_no, f.content_type, f.size_bytes FROM inbound_email_files f JOIN inbound_email e ON e.id = f.inbound_email_id ' +
-      'LEFT JOIN inbound_email_filings g ON g.inbound_email_id = e.id ' +
-      'WHERE (e.client_message_id = ? OR g.client_message_id = ?) AND NOT EXISTS (SELECT 1 FROM inbound_email_file_saves s WHERE s.inbound_email_file_id = f.id) ' +
-      'ORDER BY f.part_no', [message_id, message_id])
+  return listInboundEmailFilesIdPartNoByClientMessageId<{ id: string; part_no: number; content_type: string; size_bytes: number }>(db, [message_id, message_id])
     .map((f) => ({ id: f.id, label: `File ${f.part_no} — a ${TYPE_WORDS[f.content_type] ?? 'file'}, ${sizeWords(f.size_bytes)}` }));
 }
 
@@ -365,12 +343,9 @@ export async function saveEmailedFile(
 ): Promise<{ ok: true; business_id: string } | { ok: false; why: string }> {
   authorise(actor, 'inbound_email.file', { type: 'inbound_email', id: file_id });
   const db = d.app.db;
-  const f = db.get<{ id: string; part_no: number; uid: string; message: string | null; business_id: string | null; claim_id: string | null }>(
-    'SELECT f.id, f.part_no, e.mailbox_uid AS uid, COALESCE(e.client_message_id, g.client_message_id) AS message, ' +
-      'COALESCE(e.business_id, g.business_id) AS business_id, e.claim_id FROM inbound_email_files f ' +
-      'JOIN inbound_email e ON e.id = f.inbound_email_id LEFT JOIN inbound_email_filings g ON g.inbound_email_id = e.id WHERE f.id = ?', [file_id]);
+  const f = getInboundEmailFilesIdPartNoById<{ id: string; part_no: number; uid: string; message: string | null; business_id: string | null; claim_id: string | null }>(db, [file_id]);
   if (f === undefined || f.message === null || f.business_id === null) throw new NotFoundAsRefusal();
-  if (db.get('SELECT id FROM inbound_email_file_saves WHERE inbound_email_file_id = ?', [f.id]) !== undefined) return { ok: false, why: 'That file is already saved.' };
+  if (getInboundEmailFileSavesIdByInboundEmailFileId(db, [f.id]) !== undefined) return { ok: false, why: 'That file is already saved.' };
   if (type_code.trim() === '') return { ok: false, why: 'Choose what the file is.' };
   if (mayReadQueue(actor) === false) throw new NotFoundAsRefusal();
   if (mailbox === null) return { ok: false, why: 'We cannot reach the mailbox right now, so the file cannot be fetched. Try again later.' };
@@ -383,8 +358,7 @@ export async function saveEmailedFile(
   const at = d.app.now();
   db.tx(() => {
     db.run('INSERT INTO client_message_files (id, message_id, logical_document_id, linked_at) VALUES (?, ?, ?, ?)', [d.newId(), f.message, r.logical_document_id, at]);
-    db.run('INSERT INTO inbound_email_file_saves (id, inbound_email_file_id, logical_document_id, saved_by, saved_at) VALUES (?, ?, ?, ?, ?)',
-      [d.newId(), f.id, r.logical_document_id, actor.id, at]);
+    insertInboundEmailFileSaves(db, [d.newId(), f.id, r.logical_document_id, actor.id, at]);
   });
   // The client sent it, so the client may see it — said as a row, as every change of who may see a file is.
   setShownToClient({ db, audit: d.app.audit, now: d.app.now, newId: d.newId }, actor, r.logical_document_id, true);
@@ -422,7 +396,7 @@ export type ReadingState = {
 
 export function readingState(db: Db, actor: Actor, nowIso: string): ReadingState {
   authorise(actor, 'inbound_email.read', queueObj);
-  const mark = db.get<{ uid: number }>('SELECT uid FROM mailbox_watermark WHERE id = 1')?.uid ?? null;
+  const mark = getMailboxWatermarkUidById<{ uid: number }>(db)?.uid ?? null;
   const received = db.all<{ uid: string; at: string; from_address: string; subject: string; outcome: string; queue_reason: string | null; matched: string | null; ours_company: string | null; filed_on: string | null; by: string | null; rule: string | null; direct: string | null }>(
     'SELECT e.mailbox_uid AS uid, e.received_at AS at, e.from_address, e.subject, e.outcome, e.queue_reason, e.matched_outbox_id AS matched, ' +
     'ob.name AS ours_company, COALESCE(fb.name, gb.name) AS filed_on, u.display_name AS by, g.rule, fb.name AS direct ' +
@@ -493,9 +467,7 @@ export const REPLY_WATCH = Object.freeze({
 
 function noteRead(db: App['db'], at: string, ok: boolean): void {
   try {
-    db.run('INSERT INTO mailbox_reads (id, last_try_at, last_ok_at, last_failed) VALUES (1, ?, ?, ?) ' +
-      'ON CONFLICT(id) DO UPDATE SET last_try_at = excluded.last_try_at, last_failed = excluded.last_failed, ' +
-      'last_ok_at = COALESCE(excluded.last_ok_at, mailbox_reads.last_ok_at)', [at, ok ? at : null, ok ? 0 : 1]);
+    insertMailboxReads(db, [at, ok ? at : null, ok ? 0 : 1]);
   } catch { /* a database without migration 088 yet keeps reading; it just cannot warn */ }
 }
 
@@ -510,7 +482,7 @@ export function repliesStale(app: App, nowIso: string = app.now()): string | nul
   const p = localPartsOf(Date.parse(nowIso));
   if (!REPLY_WATCH.days.includes(p.weekday) || p.minuteOfDay < REPLY_WATCH.from_minute || p.minuteOfDay >= REPLY_WATCH.to_minute) return null;
   let row: { last_ok_at: string | null; last_failed: number } | undefined;
-  try { row = app.db.get<{ last_ok_at: string | null; last_failed: number }>('SELECT last_ok_at, last_failed FROM mailbox_reads WHERE id = 1'); }
+  try { row = getMailboxReadsLastOkAtLastFailedById<{ last_ok_at: string | null; last_failed: number }>(app.db); }
   catch { row = undefined; }
   const okAt = row?.last_ok_at ?? null;
   const ageMin = okAt === null ? null : (Date.parse(nowIso) - Date.parse(okAt)) / 60_000;

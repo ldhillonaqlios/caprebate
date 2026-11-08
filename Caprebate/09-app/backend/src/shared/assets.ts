@@ -1,7 +1,7 @@
 /**
  * The assets this application serves, AS CONSTANTS.
  *
- * PHASE 161i, 7 November 2026: the stylesheet is the one exception, and only in where its text is kept. It is read once,
+ * 7 November 2026: the stylesheet is the one exception, and only in where its text is kept. It is read once,
  * when this module loads, from a fixed file the code names (src/styles/site.css), never from anything a request says;
  * so there is still no route that maps a request onto the filesystem. Everything else below is as it was.
  *
@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * WHICH TAB OR SECTION IS CURRENT, BY POSITION — PHASE 133b. Phase 133a marked the current record tab by its id (details,
+ * WHICH TAB OR SECTION IS CURRENT, BY POSITION. Phase 133a marked the current record tab by its id (details,
  * related, activity). The five long screens name their own tabs, and admin settings names its sections from its lists, so
  * the current one is marked by POSITION instead: the n-th panel targeted marks the n-th link. One rule per position, up to
  * MAX_TABS in src/shared/components.ts, which refuses to draw more.
@@ -53,18 +53,18 @@ export const BRAND_TOKENS: Readonly<Record<string, string>> = Object.freeze({
   ok: '#1d6b35', okbg: '#e6f4ea',
   warn: '#8a5300', warnbg: '#fff5e0',
   stop: '#a01e1e', stopbg: '#fcefef',
-  // UI TIDY PHASE 1, 2 October 2026: one colour for each group of claim stages (src/core/look.ts), from the mock-ups
-  // Lakhbir chose. Each group has a solid colour (white text on it), a light tint, and the darker text drawn on the tint.
+  // One colour for each group of claim stages (src/core/look.ts), from the mock-ups
+  // the owner chose. Each group has a solid colour (white text on it), a light tint, and the darker text drawn on the tint.
   'g-win': '#1e4fa3', 'g-win-bg': '#dfe9f9', 'g-win-ink': '#1a438c',
   'g-gather': '#6b3fa0', 'g-gather-bg': '#ece3f7', 'g-gather-ink': '#55308a',
   'g-survey': '#0f6b5c', 'g-survey-bg': '#d4efe8', 'g-survey-ink': '#0b5548',
   'g-sign': '#8a5300', 'g-sign-bg': '#fbecd0', 'g-sign-ink': '#6e4300',
   'g-paid': '#1d6b35', 'g-paid-bg': '#dcf0e1', 'g-paid-ink': '#185c2d',
   nodate: '#e3e8e6', zebra: '#f6f9f8',
-  // PHASE 160a, 19 October 2026: the back office in the layout Lakhbir chose (the Cap Rebate Simple CRM design): a light
-  // page (page), fine rules (rule) and grey column headings (thead). Its navy went in Phase 160c, for the home page's ink.
+  // The back office in the layout the owner chose (the Cap Rebate Simple CRM design): a light
+  // page (page), fine rules (rule) and grey column headings (thead). Its navy went for the home page's ink.
   page: '#f3f6f4', rule: '#dde6e2', thead: '#4f5b56',
-  // PHASE 160c, 19 October 2026: the home page's own colours replace 160a's navy (Lakhbir: "ensure our branding from the
+  // The home page's own colours replace 160a's navy (the owner: "ensure our branding from the
   // home page matches the back end"). The menu down the left is the home page's ink ground (side) with its ivory words,
   // a lighter ink for hover (side-2) and its quiet words (side-mute); the page a pale mint-grey (page) with green-grey
   // rules and headings (rule, thead), so the working pages stay light and tables read easily.
@@ -80,17 +80,17 @@ export const TEXT_PAIRINGS: readonly (readonly [text: string, ground: string])[]
   ['mut', 'white'], ['accent', 'white'], ['accent', 'mist'], ['on-accent', 'accent'],
   ['ok', 'white'], ['ok', 'mist'], ['ok', 'okbg'], ['warn', 'white'], ['warn', 'mist'], ['warn', 'warnbg'],
   ['stop', 'white'], ['stop', 'mist'], ['stop', 'stopbg'],
-  // PHASE 135: the Tasks tab's count when a task is overdue.
+  // The Tasks tab's count when a task is overdue.
   ['white', 'stop'],
-  // UI TIDY PHASE 1: the stage groups (a label on its tint, white on its solid band), the solid number boxes, the black
+  // The stage groups (a label on its tint, white on its solid band), the solid number boxes, the black
   // table heading, the "no date" label and the striped rows.
   ['g-win-ink', 'g-win-bg'], ['white', 'g-win'], ['g-gather-ink', 'g-gather-bg'], ['white', 'g-gather'],
   ['g-survey-ink', 'g-survey-bg'], ['white', 'g-survey'], ['g-sign-ink', 'g-sign-bg'], ['white', 'g-sign'],
   ['g-paid-ink', 'g-paid-bg'], ['white', 'g-paid'], ['white', 'warn'], ['white', 'ok'], ['white', 'ink'], ['mint', 'ink'],
   ['ink', 'nodate'], ['ink', 'zebra'], ['body', 'zebra'],
-  // PHASE 160a: the grey page, the column headings and the blue label (its navy pairings went with the navy in 160c).
+  // The grey page, the column headings and the blue label (its navy pairings went with the navy in 160c).
   ['body', 'page'], ['thead', 'white'], ['thead', 'page'], ['thead', 'zebra'], ['g-win-ink', 'white'],
-  // PHASE 160c: the home page's ink menu, its ivory and mint words on it, and ink words on the mint buttons.
+  // The home page's ink menu, its ivory and mint words on it, and ink words on the mint buttons.
   ['ivory', 'side'], ['ivory', 'side-2'], ['side-mute', 'side'], ['side-mute', 'side-2'], ['mint', 'side'], ['mint', 'side-2'],
   ['ink', 'page'], ['ink', 'mint'],
 ]);
@@ -101,8 +101,8 @@ const HEADING_STACK = '"Bookman Old Style","Roboto Slab",Georgia,"Times New Roma
 const BODY_STACK = 'Calibri,"Segoe UI",Inter,Arial,Helvetica,sans-serif';
 
 /**
- * PHASE 160a — THE MENU'S ICONS, one per section, by the address its link opens: a plain character drawn before the words
- * (the design's own icons are characters too). Nothing is fetched (the stylesheet holds no url(), test/phase133a), the
+ * THE MENU'S ICONS, one per section, by the address its link opens: a plain character drawn before the words
+ * (the design's own icons are characters too). Nothing is fetched (the stylesheet holds no url, test/phase133a), the
  * menu's markup is unchanged, and the icon is never read out ("/ ''" is its empty spoken text; the words name the section).
  */
 const MENU_ICONS: readonly (readonly [href: string, codepoint: string])[] = Object.freeze([
@@ -118,15 +118,15 @@ const MENU_ICONS: readonly (readonly [href: string, codepoint: string])[] = Obje
   ['/staff/introducer-rewards', '0025'],
   ['/staff/calendar', '25A5'],
   ['/staff/admin', '2699'],
-  // PHASE 160b: the client portal's two screens.
+  // The client portal's two screens.
   ['/portal', '25A4'], ['/portal/messages', '2709'],
 ]);
 const MENU_ICON_CSS = MENU_ICONS.map(([href, c]) =>
   `body.crm .tabs-main>li>a[href="${href}"]::before{content:"\\${c}";content:"\\${c}" / ""}`).join('\n');
 
 /**
- * THE STYLESHEET IS A REAL FILE: src/styles/site.css (Phase 161i, 7 November 2026; the ITRoadway audit's regroup). It was
- * held here as text until then; the file is that text, byte for byte, as it was served (test/phase161i.test.ts holds its
+ * THE STYLESHEET IS A REAL FILE: src/styles/site.css. It was
+ * held here as text until then; the file is that text, byte for byte, as it was served (test/core/front-doors.test.ts holds its
  * SHA-256). Edit the CSS there. The parts made from code above (the brand tokens, the two font stacks, the menu's icons
  * and the current-tab selectors) must still be in it exactly as the code makes them: assertCssCarriesParts checks that when
  * this module loads, so a colour changed in one place and not the other stops the application from starting.

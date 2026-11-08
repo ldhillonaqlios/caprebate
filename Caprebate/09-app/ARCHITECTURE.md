@@ -99,7 +99,7 @@ business area is a module with a front door, and a check refuses any route round
 and kind, and each area's front door), the table owners (`tables.json`) and the baseline (`baseline.json`).
 `node tools/boundaries.cjs` (in `npm run check`) measured **2,162 breaks** on the day it started: rule 1, 1,030; rule 2,
 92 (all twelve areas sit in one cycle); rule 3, 868; rule 4, 172. `--counts` prints them by area; `--lower` takes off
-the ones a phase has removed. **Phase 161i (7 Nov 2026)** moved core, shared and integrations behind their doors: **1,612** (`--rebase`, logged in the baseline's history; rule 1 against those three from 656 to 96).
+the ones a phase has removed. **Phase 161i (7 Nov 2026)** moved core, shared and integrations behind their doors: **1,612** (`--rebase`, logged in the baseline's history; rule 1 against those three from 656 to 96). **Phase 161i1 (8 Nov 2026)** gave the core and the outside services their data files (`src/core/data.ts`, `src/integrations/data.ts`) and took every SQL statement out of the three areas' page and logic files: **1,454** (rule 4 for the three at 0; rule 3 against core 96 to 49 and against integrations 94 to 26, every one left a statement that joins a business table, for Phase 161l). SQL the three areas ran on business tables waits in each area's `data-borrowed.ts`, which only gets shorter.
 
 The boundary check starts by **counting** today's breaks of rules 1 to 4 and writing them to a baseline file. From then
 on, any **new** break fails the build at once, and the count may only go down. Each regroup phase moves one group of
@@ -113,6 +113,7 @@ keeps all tests green, so behaviour never changes while the walls go up.
 | 161h | The live website on Vercel, built and proved on a preview; the database decision above built in | Next, before go-live |
 | 161h1 | The module map, the boundary check and its baseline (ratchet on); no code moves | Before go-live, after 161h |
 | 161i | core, shared, integrations and styles behind their doors; their count to zero | Before go-live, after 161h1 |
+| 161i1 | the data files of core and integrations, no SQL in the three areas' pages and logic, the notes out of their code, their tests by feature, the last three old folders | Before go-live, after 161i |
 | 161j | public-site, assessment, portal, CRM and claims as modules; the router split; their count to zero | Before go-live, after 161i |
 | 161k | survey, finance, compliance and admin as modules; tests by module; the notes out of the code | Before go-live, after 161j |
 | 161l | The tangle undone: one-way order, events in place of the upward imports, permissions per module; no cycles | Before go-live, after 161k |

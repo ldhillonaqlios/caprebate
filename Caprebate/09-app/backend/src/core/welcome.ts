@@ -1,5 +1,5 @@
 /**
- * THE WELCOME CARD — PHASE 133c, 17 September 2026 (B5).
+ * THE WELCOME CARD.
  *
  * A person who has never seen the system is shown, on Home, the three jobs their login does most — taken from the
  * Phase 133a audit of each login's five most frequent jobs (04-phase-work/phase133a/ui-audit.md) — as buttons, until
@@ -14,6 +14,7 @@ import type { AuditLog } from './audit.ts';
 import type { Actor } from './authz.ts';
 import type { AppRole } from './roles.ts';
 import type { Job } from '../shared/index.ts';
+import { getUsersWelcomeDismissedAtById, updateUsersWelcomeDismissedAtByIdWelcomeDismissedAt } from './data.ts';
 
 /** Each login's three most frequent jobs (ui-audit.md, jobs 1 to 3 for each login). */
 export const WELCOME_JOBS: Readonly<Record<AppRole, readonly Job[]>> = Object.freeze({
@@ -51,7 +52,7 @@ export const WELCOME_JOBS: Readonly<Record<AppRole, readonly Job[]>> = Object.fr
 
 /** Whether this person's card is still to be shown. A user row that cannot be found shows no card. */
 export function welcomeShown(db: Db, actor: Actor): boolean {
-  const r = db.get<{ welcome_dismissed_at: string | null }>('SELECT welcome_dismissed_at FROM users WHERE id = ?', [actor.id]);
+  const r = getUsersWelcomeDismissedAtById<{ welcome_dismissed_at: string | null }>(db, [actor.id]);
   return r !== undefined && r.welcome_dismissed_at === null;
 }
 
@@ -59,9 +60,9 @@ export function welcomeShown(db: Db, actor: Actor): boolean {
 export function dismissWelcome(d: { db: Db; audit: AuditLog; now: () => string }, actor: Actor): void {
   const at = d.now();
   d.db.tx(() => {
-    const r = d.db.get<{ welcome_dismissed_at: string | null }>('SELECT welcome_dismissed_at FROM users WHERE id = ?', [actor.id]);
+    const r = getUsersWelcomeDismissedAtById<{ welcome_dismissed_at: string | null }>(d.db, [actor.id]);
     if (r === undefined || r.welcome_dismissed_at !== null) return;
-    d.db.run('UPDATE users SET welcome_dismissed_at = ? WHERE id = ? AND welcome_dismissed_at IS NULL', [at, actor.id]);
+    updateUsersWelcomeDismissedAtByIdWelcomeDismissedAt(d.db, [at, actor.id]);
     d.audit.append({
       at, kind: 'WELCOME_DISMISSED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'user', object_id: actor.id, detail: {},

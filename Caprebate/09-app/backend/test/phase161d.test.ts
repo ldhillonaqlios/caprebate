@@ -22,16 +22,16 @@ const lint = createRequire(import.meta.url)('../tools/lint-paths.cjs') as {
 };
 
 const MOVED: [string, string][] = [
-  ['phase3/caprebate-anchor-quarantine.ts', 'survey'],
-  ['phase3/caprebate-surveyor-crm.ts', 'survey'],
+  ['phase3/caprebate-anchor-quarantine.ts', 'modules/survey'],
+  ['phase3/caprebate-surveyor-crm.ts', 'modules/survey'],
   ['phase3/caprebate-source-register.ts', 'integrations/registers'],
   ['phase3/caprebate-name-exclusion.ts', 'integrations/registers'],
   ['phase9/caprebate-boundary-import.ts', 'integrations/registers'],
-  ['phase3/caprebate-document-pipeline.ts', 'documents'],
-  ['phase3/caprebate-client-doc-ingestion.ts', 'documents'],
-  ['phase3/caprebate-upload-handler.ts', 'documents'],
-  ['phase9/caprebate-cost-model.cjs', 'costing'],
-  ['phase9/caprebate-job-economics.cjs', 'costing'],
+  ['phase3/caprebate-document-pipeline.ts', 'modules/claims/documents'],
+  ['phase3/caprebate-client-doc-ingestion.ts', 'modules/claims/documents'],
+  ['phase3/caprebate-upload-handler.ts', 'modules/claims/documents'],
+  ['phase9/caprebate-cost-model.cjs', 'modules/survey/costing'],
+  ['phase9/caprebate-job-economics.cjs', 'modules/survey/costing'],
   ['phase9/caprebate-postcode-authority.ts', 'integrations/postcodes'],
   ['phase9/caprebate-postcode-store.ts', 'integrations/postcodes'],
   ['phase9/caprebate-location-key.ts', 'integrations/postcodes'],
@@ -67,8 +67,9 @@ test('npm run check runs it', () => {
 
 test('each moved module is in src/, its old place keeps a one-line note that loads it, and nothing was deleted', async () => {
   for (const [old, folder] of MOVED) {
-    // PHASE 161i: registers/ and postcodes/ moved into integrations/, and lost their caprebate- prefix
-    const name = folder.startsWith('integrations/') ? old.split('/')[1]!.replace(/^caprebate-/, '') : old.split('/')[1]!;
+    // PHASE 161i: registers/ and postcodes/ moved into integrations/, and lost their caprebate- prefix; PHASE 161i1:
+    // documents/, survey/ and costing/ into their modules (claims, survey), the same way. Every one has lost it now.
+    const name = old.split('/')[1]!.replace(/^caprebate-/, '');
     const now = join(BACKEND, 'src', folder, name);
     assert.ok(existsSync(now), `${now} is missing`);
     const note = readFileSync(join(PHASE_WORK, old), 'utf8');
@@ -82,5 +83,5 @@ test('each moved module is in src/, its old place keeps a one-line note that loa
   const viaNew = await import(join(BACKEND, 'src', 'integrations', 'registers', 'source-register.ts')) as { SOURCES: unknown };
   assert.equal(viaOld.SOURCES, viaNew.SOURCES);
   const req = createRequire(import.meta.url);
-  assert.equal(req(join(PHASE_WORK, 'phase9', 'caprebate-cost-model.cjs')), req(join(BACKEND, 'src', 'costing', 'caprebate-cost-model.cjs')));
+  assert.equal(req(join(PHASE_WORK, 'phase9', 'caprebate-cost-model.cjs')), req(join(BACKEND, 'src', 'modules', 'survey', 'costing', 'cost-model.cjs')));
 });

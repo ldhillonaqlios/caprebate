@@ -1,5 +1,5 @@
 /**
- * LATITUDE AND LONGITUDE TO BRITISH NATIONAL GRID, EXACTLY — OR NOT AT ALL. Phase 151a, 24 September 2026.
+ * LATITUDE AND LONGITUDE TO BRITISH NATIONAL GRID, EXACTLY — OR NOT AT ALL.
  *
  * The land boundary files are in British National Grid (EPSG:27700), metres. A point given as latitude and longitude
  * must be converted before it can be looked for, and HM Land Registry warns that a rough conversion can move features
@@ -8,7 +8,7 @@
  * does ONE conversion, the one Ordnance Survey defines as exact for this purpose, OSTN15, and refuses otherwise.
  *
  * OSTN15, AS ORDNANCE SURVEY PUBLISHES IT ("A guide to coordinate systems in Great Britain", docs.os.uk, read
- * 24 September 2026, and the OSTN15 developer pack):
+ *
  *   1. the ETRS89 latitude and longitude are projected with the National Grid's Transverse Mercator projection on
  *      the GRS80 ellipsoid (true origin 49°N 2°W, scale 0.9996012717, false origin 400 km west and 100 km north);
  *   2. "the grids of northing and easting shifts between ETRS89 and OSGB36 cover Britain at a resolution of one
@@ -26,9 +26,9 @@
  * this server OUTSIDE the repository and named by CAPREBATE_OSTN15_FILE — like the ONS postcode table, a deployment
  * artefact, absent by default. ABSENT, every latitude and longitude is refused and nothing else changes. The first
  * copy put on a server must be checked against the pack's own test points (tools/ostn15-verify.ts) before it is
- * trusted. No file was downloaded by the phase that built this. Phase 151a's addendum (24 September 2026) put OS's full
+ * trusted. No file was downloaded by the phase that built this. Phase 151a's addendum put OS's full
  * developer pack on the Mac, in ~/caprebate-data/ostn15/, outside the repository, and the check passed on all forty
- * test points. Phase 151c: the demo launcher names that file when it is there (tools/demo-server.cjs).
+ * test points. The demo launcher names that file when it is there (tools/demo-server.cjs).
  */
 import { readFileSync } from 'node:fs';
 
@@ -99,7 +99,7 @@ export type Ostn15Grid = {
   readonly source: string;
   /** Whether every one of the 876,951 points is present. A test's invented grid is not. */
   readonly complete: boolean;
-  /* PHASE 161h: any column that answers by point number - the arrays a file is read into, or the reference database's
+  /* Any column that answers by point number - the arrays a file is read into, or the reference database's
      table read a point at a time (src/integrations/postcodes/reference-db.ts, ostn15GridFromDatabase). */
   readonly se: { readonly [k: number]: number };
   readonly sn: { readonly [k: number]: number };

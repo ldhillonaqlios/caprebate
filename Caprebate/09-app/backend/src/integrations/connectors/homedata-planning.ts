@@ -1,9 +1,9 @@
 /**
  * PLANNING BY UPRN, FROM THE PAID SUPPLIER — BUILT IN PHASE 146d, CHOSEN IN 153b, RUNNING ON THE TEST WEBSITE SINCE 156f.
- * Phase 146d, 23 September 2026. REGISTER_SWITCHES.HOMEDATA_PLANNING is false; TEST_WEBSITE_PAID_LOOKUPS turns it on
+ * REGISTER_SWITCHES.HOMEDATA_PLANNING is false; TEST_WEBSITE_PAID_LOOKUPS turns it on
  * for the test website only.
  *
- * PHASE 156f, 6 OCTOBER 2026 — LAKHBIR: "planning history - use homedata". The trade below was his to make, and he made
+ * THE OWNER: "planning history - use homedata". The trade below was his to make, and he made
  * it: AFTER SIGNING, Homedata answers the PLANNING row by the property's UPRN (about 5p); BEFORE SIGNING the free route
  * (planning.data.gov.uk, then PlanIt) still answers, so the free estimate keeps planning. Where both have run,
  * Homedata's answer is the one the case uses and shows (`preferHomedataPlanning`): its records are kept under their own
@@ -31,7 +31,7 @@
  * we do, a paid one only after an engagement letter is signed. So planning would stop firing before signature, and
  * the free estimate — the thing a prospective client sees before they have signed anything — would lose planning
  * entirely. WHETHER THAT TRADE IS WORTH MAKING IS NOT A BUILD DECISION AND IS NOT THIS PHASE'S TO TAKE. It is
- * written up for Lakhbir, with a recommendation, and this connector sits beside PlanIt in the paid map waiting for
+ * written up for the owner, with a recommendation, and this connector sits beside PlanIt in the paid map waiting for
  * the answer. Turning it on is one word in REGISTER_SWITCHES.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -50,6 +50,7 @@ import type { CallResult } from './http.ts';
 import { defineSteppedConnector, type Bundle, type LookupResult } from './registers.ts';
 import { jurisSource, type Nation } from './nations.ts';
 import type { Db } from '../../core/index.ts';
+import { getResearchSourcesCountByBusinessIdSourceId } from '../data.ts';
 
 export type HomedataPlanningQuery = {
   readonly nation: Nation | null;
@@ -64,18 +65,16 @@ export const PLANNING_HISTORY_TOKENS = 5;
 /** How many applications at the property we keep, most recent first. The same figure the free route keeps. */
 export const MAX_KEPT = 20;
 
-/** PHASE 156f: the entity id prefix of a planning record Homedata answered. */
+/** The entity id prefix of a planning record Homedata answered. */
 export const HOMEDATA_PLANNING_ENTITY = 'homedata:';
 
 /**
- * PHASE 156f (B3): HOMEDATA'S PLANNING ANSWER IS THE ONE THE CASE USES AND SHOWS. True once Homedata has answered this
+ * HOMEDATA'S PLANNING ANSWER IS THE ONE THE CASE USES AND SHOWS. True once Homedata has answered this
  * client's PLANNING row (research_sources.route, migration 092) — even with no applications, which is an answer too.
  * Then a screen that lists register records leaves out the free route's planning records (kept, not shown).
  */
 export function preferHomedataPlanning(db: Db, business_id: string): boolean {
-  return db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM research_sources WHERE business_id = ? AND source_id = 'PLANNING' AND route = 'HOMEDATA_PLANNING'",
-    [business_id])?.n === 1;
+  return getResearchSourcesCountByBusinessIdSourceId<{ n: number }>(db, [business_id])?.n === 1;
 }
 
 /** Whether a register record is one the screens leave out: a free-route planning record once Homedata has answered. */
@@ -102,7 +101,7 @@ export function applicationFields(r: Record<string, unknown>, uprn: string): Rec
   if (decided !== null) f.planning_decision_date = decided;
   const received = day(r['submitted_date'] ?? r['received_date'] ?? r['start_date']);
   if (received !== null) f.planning_received_date = received;
-  // PHASE 156f: the live answer (6 Oct 2026, 10 Downing Street) names it `proposal`; `description` is the prose's name.
+  // The live answer names it `proposal`; `description` is the prose's name.
   const description = str(r['description'] ?? r['proposal']);
   if (description !== null) f.planning_description = description;
   return f;
@@ -136,7 +135,7 @@ export const homedataPlanning = defineSteppedConnector<HomedataPlanningQuery>({
       const held = j?.[PLANNING_HISTORY_SLUG];
       const inner = obj(held);
       list = Array.isArray(held) ? held : Array.isArray(inner?.['applications']) ? inner['applications'] as unknown[] : null;
-      /* PHASE 158a (F25, the Friary House run): a property with no applications was called "not in a form we could
+      /* A property with no applications was called "not in a form we could
          read", after a charged call. A count of 0 is an answer: none. An answer with no history at all says nothing
          either way, so the question stays asked - in those words, not "unreadable". */
       if (list === null && inner?.['count'] === 0) list = [];
@@ -148,12 +147,12 @@ export const homedataPlanning = defineSteppedConnector<HomedataPlanningQuery>({
     if (list === null) return { kind: 'UNREADABLE', call: c, calls };
 
     const records = list
-      /* PHASE 156f: the live answer says of each application whether its postcode matches the property's. One that says
+      /* The live answer says of each application whether its postcode matches the property's. One that says
          it does not is left out: it is not known to be this building's (N4). */
       .flatMap((r) => { const o = obj(r); const f = o === null || o['postcode_matches_property'] === false ? null : applicationFields(o, q.uprn as string); return f === null ? [] : [f]; })
       .sort((a, b) => String(b['planning_received_date'] ?? '').localeCompare(String(a['planning_received_date'] ?? '')))
       .slice(0, MAX_KEPT)
-      /* PHASE 156f: its own entity ids, so a reference the free route already holds is kept beside it, not skipped. */
+      /* Its own entity ids, so a reference the free route already holds is kept beside it, not skipped. */
       .map((f) => ({ sourceId: 'PLANNING', entityId: `${HOMEDATA_PLANNING_ENTITY}${String(f['planning_reference'])}`, fields: f }));
 
     const bundle: Bundle = { records, facts: { planning_applications: records.length } };

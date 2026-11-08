@@ -19,7 +19,7 @@
  * WHAT IS STUBBED HERE, AND IT SAYS SO ON SCREEN
  *
  * Outbound email and calendar invitations. Both write to the `outbox` table
- * from Phase 103 and neither leaves the building. The settings page shows the
+ * and neither leaves the building. The settings page shows the
  * outbox so that "not sent" is something a person can look at rather than a
  * claim in a footer.
  */
@@ -90,14 +90,16 @@ import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJo
 import { sendVideoInvite } from '../web/booking-invite.ts';
 import { hostZak, joinSignature } from '../integrations/index.ts';
 import { piecesPage } from './upload-pieces.ts';
+import { listOutboxCreatedAtToEmailByOutboxId, updateVideoMeetingsHostOpenedAtHostOpenedByByIdHostOpenedAt } from '../integrations/index.ts';
+import { getSessionsIdByTokenHashRevokedAt, getUsersNById } from './data.ts';
 
 export type StaffDeps = {
   app: App;
   store: FsObjectStore;
   newId: () => string;
-  /** 30 Sep 2026: the site's address, for a video call's join page in its invitation. */
+  /** The site's address, for a video call's join page in its invitation. */
   publicOrigin?: string;
-  /** PHASE 157d: the signing setting this copy runs under (src/web/signing.ts), for the letter's links. */
+  /** The signing setting this copy runs under (src/web/signing.ts), for the letter's links. */
   signing?: EngagementSigning;
 };
 
@@ -109,7 +111,7 @@ export type WebResult = 'handled' | 'not-mine';
  * ------------------------------------------------------------------ */
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -152,7 +154,7 @@ function askedDate(raw0: string | null, now: string): string {
  * scanning, and printing it raw is how six of them become one grey block. The
  * stored value is unchanged; this is a rendering.
  *
- * SINCE PHASE 113a IT IS ALSO A CONVERSION, and this is one of the four places
+ * IT IS ALSO A CONVERSION, and this is one of the four places
  * that does one. The database keeps UTC; a person reads UK time. See
  * localtime.ts, which is the only file in the application that names a zone.
  */
@@ -167,11 +169,11 @@ function when(iso: string | null): string {
 }
 
 /**
- * THE NAVIGATION — PHASE 133a. Until 17 September 2026 this drew the same twenty links for every staff role, on the
- * reasoning that a menu built from permissions puts an authorisation decision in a renderer. Lakhbir asked for "an easy
+ * THE NAVIGATION. this drew the same twenty links for every staff role, on the
+ * reasoning that a menu built from permissions puts an authorisation decision in a renderer. the owner asked for "an easy
  * layout for each one of the logins", and the phase brief for a menu that "shows only what the role can open". The
  * reversal, and how it keeps the worry answered, is written at the top of src/core/navigation.ts: the menu asks each
- * section's own gate, and test/phase133a.test.ts opens every link for every login in both directions.
+ * section's own gate, and test/core/header-and-navigation.test.ts opens every link for every login in both directions.
  */
 export function nav(actor: Actor, view: string | null = null): Safe {
   return staffShell(actor, view);
@@ -184,8 +186,8 @@ export function nav(actor: Actor, view: string | null = null): Safe {
  * without naming the object.
  */
 export function problem(res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string): 'handled' {
-  // PHASE 133d (D4): where the refusal names the field it is about, the message is drawn beside that field instead.
-  // PHASE 133c (B6): A REFUSED FORM KEEPS WHAT WAS TYPED. Where the request carried a form, the page it was typed on is
+  // Where the refusal names the field it is about, the message is drawn beside that field instead.
+  // A REFUSED FORM KEEPS WHAT WAS TYPED. Where the request carried a form, the page it was typed on is
   // drawn again under the same login with the values put back and the refusal's words at the top of the form
   // (src/core/refill.ts). The status is still 400. Where that page cannot be drawn, or holds no such form, the plain
   // refusal below is shown with what was typed listed under it, so it is never simply lost.
@@ -246,7 +248,7 @@ export async function handleStaff(
 
   /* ------------------------------------------------------------ home */
   if (path === '/staff' && method === 'GET') {
-    // 1 Oct 2026: Home is a dashboard, in the shape of the login's role; Admin has a tab for each (src/web/staff-dashboard.ts).
+    // Home is a dashboard, in the shape of the login's role; Admin has a tab for each (src/web/staff-dashboard.ts).
     const view = dashView(actor, url.searchParams.get('view'));
     // 1 Oct 2026: the inbox is read first (at most every two minutes), so "new messages" counts a reply that just came.
     if (mayReadQueue(actor)) await readRepliesIfDue(d.app);
@@ -254,7 +256,7 @@ export async function handleStaff(
       : dashboard(d.app, actor, view, { week: url.searchParams.get('week'), done: url.searchParams.get('done') }), view)); return 'handled';
   }
 
-  /* ------------------------------------------ 1 OCT 2026 · blocking off time in your own diary */
+  /* ------------------------------------------ · blocking off time in your own diary */
   if (path === '/staff/time-blocks' && method === 'POST') {
     const f = await form(req);
     const r = addBlock({ db, audit: d.app.audit, now, newId: d.newId }, actor, {
@@ -272,12 +274,12 @@ export async function handleStaff(
     redirect(res, withDone(back, 'freed')); return 'handled';
   }
 
-  /* ------------------------------------------ PHASE 133c · the welcome card and Help */
+  /* ------------------------------------------ · the welcome card and Help */
   if (path === '/staff/welcome/dismiss' && method === 'POST') {
     dismissWelcome({ db, audit: d.app.audit, now }, actor);
     redirect(res, '/staff/help'); return 'handled';
   }
-  /* ------------------------------------------ PHASE 138 · a person keeps a page section open or closed */
+  /* ------------------------------------------ · a person keeps a page section open or closed */
   if (path === '/staff/me/sections' && method === 'POST') {
     const f = await form(req);
     const r = keepSectionChoice({ db, audit: d.app.audit, now }, actor, {
@@ -286,14 +288,14 @@ export async function handleStaff(
     if (!r.ok) return problem(res, actor, 'Not kept', 'That choice could not be kept. Go back and try again.', '/staff');
     redirect(res, r.to); return 'handled';
   }
-  /* ------------------------------------------ PHASE 135 · Settings, one page of tiles (Admin) */
+  /* ------------------------------------------ · Settings, one page of tiles (Admin) */
   if (path === '/staff/admin' && method === 'GET') {
     const tiles = settingsTiles(actor, opens);
     html(res, 200, page({ title: 'Settings', nav: nav(actor), wide: true, body: settingsBody(tiles) })); return 'handled';
   }
   if (path === '/staff/help' && method === 'GET') {
     const help = staffHelp(url.searchParams.get('screen') ?? 'B0');
-    // PHASE 136: the welcome card lives here now, on Help's own landing section, until the person hides it.
+    // The welcome card lives here now, on Help's own landing section, until the person hides it.
     const welcome = (url.searchParams.get('screen') ?? 'B0') === 'B0' && welcomeShown(db, actor)
       ? welcomeCard(WELCOME_JOBS[actor.role], '/staff/welcome/dismiss') : raw('');
     html(res, 200, page({ title: help.title, nav: nav(actor), wide: true, body: h`${welcome}${help.body}` })); return 'handled';
@@ -337,18 +339,18 @@ export async function handleStaff(
       { booking_id: id, starts_at: starts, assigned_to: f.get('assigned_to') },
     );
     if (!r.ok) return problem(res, actor, 'Not scheduled', r.why, '/staff/calendar');
-    // 30 Sep 2026: a video call's Zoom meeting is made (or moved) for the time, and its invitation carries the link.
+    // A video call's Zoom meeting is made (or moved) for the time, and its invitation carries the link.
     if (r.booking.channel === 'video') {
       await reconcileVideoMeeting(d.app, id);
       sendVideoInvite(d.app, d.publicOrigin ?? 'http://localhost:8103', id, hadTime === null ? 'arranged' : 'moved');
-      // PHASE 156d: booked over another video call on the same Zoom user: the call's own page says so. A warning only.
+      // Booked over another video call on the same Zoom user: the call's own page says so. A warning only.
       if (videoCallsAtSameTime(db, id) > 0) { redirect(res, `/staff/calendar/${id}`); return 'handled'; }
     }
     redirect(res, `/staff/calendar?view=day&date=${isoDate(r.booking.starts_at ?? now())}`);
     return 'handled';
   }
 
-  /* 30 Sep 2026: A VIDEO CALL, JOINED INSIDE THE BACK OFFICE. Those who arrange calls start it as the host (Zoom's start
+  /* A VIDEO CALL, JOINED INSIDE THE BACK OFFICE. Those who arrange calls start it as the host (Zoom's start
      token, asked for now and put only in this page, which is never cached); anyone else who may see the call joins it. */
   const videoCall = /^\/staff\/calendar\/([A-Za-z0-9-]+)\/video$/.exec(path);
   if (videoCall && method === 'GET') {
@@ -361,16 +363,16 @@ export async function handleStaff(
       return problem(res, actor, 'No video call to join', why, `/staff/calendar/${id}`);
     }
     const host = B.mayArrangeCalls(actor);
-    // 1 Oct 2026: the first time a host opens the call, it is marked started — the Communication tab shows it.
-    if (host && db.run('UPDATE video_meetings SET host_opened_at = ?, host_opened_by = ? WHERE id = ? AND host_opened_at IS NULL', [now(), actor.id, m.id]).changes === 1) {
+    // The first time a host opens the call, it is marked started — the Communication tab shows it.
+    if (host && updateVideoMeetingsHostOpenedAtHostOpenedByByIdHostOpenedAt(db, [now(), actor.id, m.id]).changes === 1) {
       d.app.audit.append({ at: now(), kind: 'VIDEO_CALL_OPENED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'booking', object_id: id, detail: {} });
     }
-    // PHASE 153f: the start token of the Zoom user the meeting was made under (the assigned member of staff, else the shared host).
+    // The start token of the Zoom user the meeting was made under (the assigned member of staff, else the shared host).
     const zhost = meetingHost(db, m);
     const zak = host ? await hostZak(zoomDeps(d.app), zhost?.email) : null;
     const sig = joinSignature(d.app.secrets, m.meeting_id, host && zak !== null ? 1 : 0, now());
     if (sig === null) return problem(res, actor, 'No video call to join', zoomBlockers(d.app).join(' '), `/staff/calendar/${id}`);
-    const name = db.get<{ n: string }>('SELECT display_name AS n FROM users WHERE id = ?', [actor.id])?.n ?? 'Cap Rebate';
+    const name = getUsersNById<{ n: string }>(db, [actor.id])?.n ?? 'Cap Rebate';
     const out = page({ title: `Video call · ${bk.business_name}`, nav: nav(actor), wide: true, body: h`
       <h1>Video call with ${bk.business_name}</h1>
       ${videoCallsAtSameTime(db, id) > 0 ? h`<div class="flag" role="note">${SAME_TIME_WORDS}</div>` : raw('')}
@@ -382,7 +384,7 @@ export async function handleStaff(
     return 'handled';
   }
 
-  /* PHASE 156d: ask Zoom how long a video call lasted and how many joined. Those who arrange calls, after it began. */
+  /* Ask Zoom how long a video call lasted and how many joined. Those who arrange calls, after it began. */
   const callLength = /^\/staff\/calendar\/([A-Za-z0-9-]+)\/length$/.exec(path);
   if (callLength && method === 'POST') {
     const id = callLength[1] ?? '';
@@ -403,11 +405,11 @@ export async function handleStaff(
     // THE SAME FUNCTION THE CALENDAR AND THE CLIENT'S OWN PICKER ASK. One
     // source of bookable time, reached from three places.
     const slots = staffSlots(db, now(), addLocalDays(startOfLocalDay(now()), HORIZON_DAYS), { now: now() });
-    // 30 Sep 2026: a video call says whether its Zoom meeting is ready to join, and if not why.
+    // A video call says whether its Zoom meeting is ready to join, and if not why.
     const video = bk.channel !== 'video' || bk.cancelled_at !== null ? undefined
       : activeMeeting(db, id) !== undefined ? { ready: true as const }
       : { ready: false as const, why: bk.starts_at === null ? 'It has no time yet; its meeting is made when it is given one.' : zoomBlockers(d.app).join(' ') || 'Zoom did not make a meeting. Give it its time again to try once more, or send the client a link yourself.' };
-    // PHASE 156d: the free plan's 40 minutes, a call booked over another on the same Zoom user, and how long it lasted.
+    // The free plan's 40 minutes, a call booked over another on the same Zoom user, and how long it lasted.
     const asked = url.searchParams.get('length');
     const zoomNotes: ZoomNotes | undefined = bk.channel !== 'video' || bk.cancelled_at !== null ? undefined : {
       plan: zoomPlanLine(d.app),
@@ -421,59 +423,59 @@ export async function handleStaff(
     return 'handled';
   }
 
-  /* ------------------------------------------------ PHASE 151b · Accounting's clients area, and chasing an invoice */
+  /* ------------------------------------------------ · Accounting's clients area, and chasing an invoice */
   const billing = await handleBilling({ app: d.app, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
   if (billing === 'handled') return 'handled';
 
-  /* ------------------ SECTION 3 · a free-typed email to a company or a lead (Phase 141) */
+  /* ------------------ SECTION 3 · a free-typed email to a company or a lead */
   const freeEmail = await handleFreeEmail({ app: d.app, store: d.store, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
   if (freeEmail === 'handled') return 'handled';
 
-  /* ------------------ SECTION 3 · a WhatsApp chat exported on the phone, added by hand (Phase 156c) */
+  /* ------------------ SECTION 3 · a WhatsApp chat exported on the phone, added by hand */
   const waImport = await handleWhatsAppImport({ app: d.app, store: d.store, nav, problem }, req, res, url, method, actor, form, body);
   if (waImport === 'handled') return 'handled';
 
-  /* ------------------ PHASE 156e · every outside service on one page, and the care regulators' lists (Admin) */
+  /* ------------------ · every outside service on one page, and the care regulators' lists (Admin) */
   const conn = await handleConnections({ app: d.app, nav, problem }, req, res, url, method, actor, body);
   if (conn === 'handled') return 'handled';
 
-  /* ------------------ SECTION 3 · writing to the client on the company's chat, and email replies to sort (Phase 142) */
+  /* ------------------ SECTION 3 · writing to the client on the company's chat, and email replies to sort */
   const chat = await handleStaffMessages({ app: d.app, store: d.store, newId: d.newId, nav, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form);
   if (chat === 'handled') return 'handled';
 
-  /* ------------------ SECTION 3 · the company's files, in folders, and a staff upload (Phase 140) */
+  /* ------------------ SECTION 3 · the company's files, in folders, and a staff upload */
   const clientFiles = await handleClientFiles({ app: d.app, store: d.store, newId: d.newId, nav, problem }, req, res, url, method, actor, form, body);
   if (clientFiles === 'handled') return 'handled';
 
-  /* ------------------ SECTION 3 · the one client page, and a claim inside it (Phase 134) */
+  /* ------------------ SECTION 3 · the one client page, and a claim inside it */
   const client = await handleClientPage({ app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor);
   if (client === 'handled') return 'handled';
 
-  /* ------------------------------ SECTION 3 · engaged clients (Phase 106) */
+  /* ------------------------------ SECTION 3 · engaged clients */
   const engaged = await handleEngaged(
     { app: d.app, newId: d.newId, nav, stamp, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }), ...(d.signing === undefined ? {} : { signing: d.signing }) }, req, res, url, method, actor, form,
   );
   if (engaged === 'handled') return 'handled';
 
-  /* ------------------------- SECTION 4 · the surveyor workspace (Phase 107) */
+  /* ------------------------- SECTION 4 · the surveyor workspace */
   const survey = await handleSurveyor(
     { app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form,
   );
   if (survey === 'handled') return 'handled';
-  // 1 Oct 2026: the survey pack — the sums, the surveyor's stamped changes (src/web/survey-pack-pages.ts).
+  // The survey pack — the sums, the surveyor's stamped changes (src/web/survey-pack-pages.ts).
   const pack = await handleSurveyPack({ app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form);
   if (pack === 'handled') return 'handled';
   // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/web/report-pages.ts).
   const report = await handleReportStaff({ app: d.app, newId: d.newId, nav, stamp, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (report === 'handled') return 'handled';
-  // PHASE 158d (F46): email the client's accountant a link to confirm for themselves (src/web/accountant-confirm-pages.ts).
+  // Email the client's accountant a link to confirm for themselves (src/web/accountant-confirm-pages.ts).
   const confirmLink = await handleAccountantConfirmStaff({ app: d.app, newId: d.newId, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (confirmLink === 'handled') return 'handled';
-  // 2 Oct 2026: the client's photos, the walkthrough call and how the surveyor inspected (src/web/evidence-pages.ts).
+  // The client's photos, the walkthrough call and how the surveyor inspected (src/web/evidence-pages.ts).
   const evidence = await handleStaffEvidence({ app: d.app, store: d.store, newId: d.newId, nav, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (evidence === 'handled') return 'handled';
 
-  /* ------------------------------ SECTION 5 · Caprebate's finance (Phase 107) */
+  /* ------------------------------ SECTION 5 · Caprebate's finance */
   const finance = await handleFinance(
     { app: d.app, nav, stamp, problem }, req, res, url, method, actor, form,
   );
@@ -543,7 +545,7 @@ export async function handleStaff(
     return 'handled';
   }
 
-  /* ------------------------------------------------ PHASE 151b · SUPER ADMIN ONLY · the roles they make */
+  /* ------------------------------------------------ · SUPER ADMIN ONLY · the roles they make */
   const roles = await handleRoleEditor({ app: d.app, nav, problem }, req, res, url, method, actor, form);
   if (roles === 'handled') return 'handled';
 
@@ -554,7 +556,7 @@ export async function handleStaff(
 
   if (path === '/staff/users/create' && method === 'POST') {
     const f = await form(req);
-    /* PHASE 151j (Lakhbir, 28 Sep 2026): the system makes a TEMPORARY password, shown once, here, to hand over. The
+    /* The system makes a TEMPORARY password, shown once, here, to hand over. The
        person chooses their own at their first sign-in, and sets up their second step. Nobody types a password here. */
     const password = SI.temporaryPassword();
     const until = SI.temporaryUntil(now());
@@ -576,7 +578,7 @@ export async function handleStaff(
     html(res, 200, temporaryPasswordPage(actor, created.display_name, created.email, roleName(created.role), password, until, true)); return 'handled';
   }
 
-  /* PHASE 151j: the super user gives somebody a new temporary password (a forgotten one, or none to hand), or clears
+  /* The super user gives somebody a new temporary password (a forgotten one, or none to hand), or clears
      their second step (a lost phone). Either ends their sessions. */
   const tempMatch = /^\/staff\/users\/([A-Za-z0-9-]+)\/temporary-password$/.exec(path);
   if (tempMatch && method === 'POST') {
@@ -603,7 +605,7 @@ export async function handleStaff(
 
   const disableMatch = /^\/staff\/users\/([A-Za-z0-9-]+)\/disable$/.exec(path);
   if (disableMatch && method === 'POST') {
-    // 1 Oct 2026: "Archive" on Home's Admin tab posts here too, and goes back there.
+    // "Archive" on Home's Admin tab posts here too, and goes back there.
     const fromHome = (await form(req)).get('back') === '/staff?view=admin';
     try {
       S.disableUser(d.app.deps, actor, disableMatch[1] ?? '');
@@ -611,7 +613,7 @@ export async function handleStaff(
       if (e instanceof S.SettingsError) return problem(res, actor, 'Not disabled', e.message, '/staff/users');
       throw e;
     }
-    /* PHASE 151 (Word answer 166, closed 24 September 2026): a leaver's photo is deleted when their account is disabled
+    /* A leaver's photo is deleted when their account is disabled
        — the row and the file, by the same clearPhoto a person uses on their own, which fails rather than report a file
        gone that is still on disk. Only once the account is disabled: a refused disable deletes nothing. */
     const hadPhoto = photoFor(db, disableMatch[1] ?? '') !== undefined;
@@ -625,7 +627,7 @@ export async function handleStaff(
     redirect(res, fromHome ? '/staff?view=admin&done=archived#people' : '/staff/users?done=disabled'); return 'handled';
   }
 
-  /* ------------------------------------------ 1 OCT 2026 · Admin saves an API key, sealed (src/core/saved-keys.ts) */
+  /* ------------------------------------------ · Admin saves an API key, sealed (src/core/saved-keys.ts) */
   const keyMatch = /^\/staff\/keys\/([A-Z0-9_]{1,64})(\/unsave)?$/.exec(path);
   if (keyMatch && method === 'POST') {
     const f = await form(req);
@@ -635,7 +637,7 @@ export async function handleStaff(
     redirect(res, `/staff?view=admin&done=${unsave ? 'key-unsaved' : 'key-saved'}#key-${keyMatch[1] ?? ''}`); return 'handled';
   }
 
-  /* ---------------------------------- PHASE 146g · addresses we cannot email */
+  /* ---------------------------------- · addresses we cannot email */
   if (path === '/staff/email-addresses' && method === 'GET') {
     html(res, 200, stoppedAddressesPage(actor, S.stoppedAddresses(db, actor), url.searchParams.get('done') ?? undefined));
     return 'handled';
@@ -726,7 +728,7 @@ async function handleSettings(
         `Expires=${new Date(rotated.cookie.expires).toUTCString()}`);
     } catch (e) {
       if (e instanceof AuthError) {
-        // PHASE 133e (D4, continued): the only thing a password change can be refused on here is the current one.
+        // The only thing a password change can be refused on here is the current one.
         return problem(res, actor, 'Not changed', e.message, base, 'current');
       }
       if (e instanceof Error && /at least 12/.test(e.message)) {
@@ -850,10 +852,7 @@ function currentSessionId(d: StaffDeps, req: IncomingMessage): string {
   for (const part of raw0.split(';')) {
     const [k, ...v] = part.trim().split('=');
     if (k === SESSION_COOKIE_NAME) {
-      const s = d.app.db.get<{ id: string }>(
-        'SELECT id FROM sessions WHERE token_hash = ? AND revoked_at IS NULL',
-        [hashToken(decodeURIComponent(v.join('=')))],
-      );
+      const s = getSessionsIdByTokenHashRevokedAt<{ id: string }>(d.app.db, [hashToken(decodeURIComponent(v.join('=')))]);
       return s?.id ?? '';
     }
   }
@@ -865,7 +864,7 @@ function currentSessionId(d: StaffDeps, req: IncomingMessage): string {
  * ================================================================== */
 
 /* ------------------------------------------------------------------ *
- * HOME — PHASE 136: ROWS OF TILES, IN LAKHBIR'S ORDER (src/web/home.ts)
+ * HOME: ROWS OF TILES, IN THE OWNER'S ORDER (src/web/home.ts)
  * ------------------------------------------------------------------ */
 
 /**
@@ -886,7 +885,7 @@ function withDone(back: string, done: string): string {
 }
 
 function homePage(actor: Actor, rows: Safe, view: string | null = null): string {
-  // UI TIDY PHASE 4: a dashboard draws its own heading, with the day and what is late beside it (src/web/staff-dashboard.ts).
+  // A dashboard draws its own heading, with the day and what is late beside it (src/web/staff-dashboard.ts).
   return page({ title: 'Home', nav: nav(actor, view), wide: true, body: view === null ? h`<h1>Home</h1>${rows}` : rows });
 }
 
@@ -923,7 +922,7 @@ function auditPage(actor: Actor, v: AuditLogView): string {
 }
 
 /**
- * PHASE 160i — ONE CLIENT'S AUDIT LOG, from the claim page. Who did what and when, in plain words, newest first. Nothing
+ * ONE CLIENT'S AUDIT LOG, from the claim page. Who did what and when, in plain words, newest first. Nothing
  * on it changes an entry: the log refuses any change or deletion (migration 001), and each entry is chained to the one
  * before it, so a change would show.
  */
@@ -1026,7 +1025,7 @@ function availabilityNote(a: B.CalendarView['availability']): Safe {
 }
 
 /**
- * UI TIDY PHASE 13 — THE CALENDAR, 3 October 2026. The page opens with what it is showing ("Friday 2 Oct 2026"), the
+ * THE CALENDAR. The page opens with what it is showing ("Friday 2 Oct 2026"), the
  * buttons to move (Earlier, Today, Later) and to switch between the day and the week, and four boxes counting the calls
  * held in the window and the three lists below. The week is seven boxes side by side on a laptop — each day's calls, or
  * "Nothing booked" — instead of seven headings; the day is one table. A call with nobody on it says "Nobody yet" in
@@ -1146,7 +1145,7 @@ function calendarPage(
   });
 }
 
-/** PHASE 156d: what the call's page says about Zoom beyond the join button. */
+/** What the call's page says about Zoom beyond the join button. */
 type ZoomNotes = { readonly plan: string | null; readonly sameTime: boolean; readonly length: string | null; readonly mayCheck: boolean; readonly asked: string | null };
 
 function bookingPage(
@@ -1246,16 +1245,12 @@ function settingsPage(
      It holds messages addressed to every client, so drawing it conditionally
      while still fetching it would be a screen omitting a field — the thing this
      application refuses to call a control. It is not read at all. */
-  /* PHASE 146g: AND WHETHER IT BOUNCED. Phase 146f recorded bounces and nothing showed them, so an email the
+  /* AND WHETHER IT BOUNCED. Phase 146f recorded bounces and nothing showed them, so an email the
      server would not deliver looked exactly like one that had not been sent yet. The newest bounce for each
      message, its kind and the server's CODE — never the server's words. */
   const outbox = inBackOffice
-    ? d.app.db.all<{ created_at: string; to_email: string; subject: string; kind: string; sent_at: string | null;
-      business_id: string | null; bounce_kind: string | null; bounce_status: string | null }>(
-      'SELECT o.created_at, o.to_email, o.subject, o.kind, o.sent_at, o.business_id, ' +
-        'b.kind AS bounce_kind, b.status AS bounce_status FROM outbox o ' +
-        'LEFT JOIN email_bounces b ON b.id = (SELECT id FROM email_bounces x WHERE x.outbox_id = o.id ' +
-        'ORDER BY x.at DESC, x.rowid DESC LIMIT 1) ORDER BY o.created_at DESC LIMIT 20')
+    ? listOutboxCreatedAtToEmailByOutboxId<{ created_at: string; to_email: string; subject: string; kind: string; sent_at: string | null;
+      business_id: string | null; bounce_kind: string | null; bounce_status: string | null }>(d.app.db)
     : [];
   const stopped = inBackOffice && S.canAdminister(actor) ? S.stoppedAddresses(d.app.db, actor).length : 0;
   return page({
@@ -1354,7 +1349,7 @@ function settingsPage(
 }
 
 /**
- * ADDRESSES WE CANNOT EMAIL — PHASE 146g, 23 September 2026. Admin only.
+ * ADDRESSES WE CANNOT EMAIL. Admin only.
  *
  * An address the mail server refused for good is stopped, and nothing more is sent to it. That was built by Phase
  * 146f with no way back: `liftSuppression` existed and no screen called it. This is the screen.
@@ -1391,7 +1386,7 @@ function roleName(role: string): string {
   return customRoleOf(role)?.name ?? role;
 }
 
-/** PHASE 151j: the temporary password, shown ONCE, to be handed over by the super user. Never stored in clear. */
+/** The temporary password, shown ONCE, to be handed over by the super user. Never stored in clear. */
 function temporaryPasswordPage(actor: Actor, name: string, email: string, role: string, password: string, until: string, isNew: boolean): string {
   return page({
     title: 'Temporary password', nav: nav(actor),
@@ -1411,10 +1406,10 @@ function temporaryPasswordPage(actor: Actor, name: string, email: string, role: 
   });
 }
 
-/** UI TIDY PHASE 15: where Add a user lands — the form, opened. Home's "Add a person" card links here too. */
+/** Where Add a user lands — the form, opened. Home's "Add a person" card links here too. */
 export const ADD_USER_HREF = '/staff/users?add=1#create-user';
 
-/** UI TIDY PHASE 15: the counts over the users list. "Staff" leaves out client logins; turned off accounts count apart. */
+/** The counts over the users list. "Staff" leaves out client logins; turned off accounts count apart. */
 export function userCounts(rows: readonly Pick<S.StaffRow, 'user' | 'working_periods'>[]): {
   staff: number; clients: number; off: number; no_hours: number;
 } {
@@ -1427,7 +1422,7 @@ export function userCounts(rows: readonly Pick<S.StaffRow, 'user' | 'working_per
 }
 
 /**
- * UI TIDY PHASE 15 — USERS AND ROLES, 3 October 2026. Was 5,000 px: a block of six role buttons for every person, then
+ * USERS AND ROLES. Was 5,000 px: a block of six role buttons for every person, then
  * the create form. Now: a header with Make or change a role and Add a user, four boxes, and one table that stacks on a
  * phone — each person's name over their username, their role as a label, Active in green or Turned off in red, and their
  * actions: the three that were there, and Change role, folded in their own row, a list of the roles instead of six
@@ -1435,7 +1430,7 @@ export function userCounts(rows: readonly Pick<S.StaffRow, 'user' | 'working_per
  */
 function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | undefined,
   made: readonly { key: string; name: string }[] = [], adding = false): string {
-  // PHASE 151b: the roles the super admin made are offered beside the built-in ones, by their own names.
+  // The roles the super admin made are offered beside the built-in ones, by their own names.
   const staffOnly = made.map((m) => ({ value: m.key, label: m.name }));
   const all = [...APP_ROLES.map((r) => ({ value: r as string, label: r as string })), ...staffOnly];
   const n = userCounts(rows);

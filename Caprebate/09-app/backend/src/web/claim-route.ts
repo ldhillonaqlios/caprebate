@@ -27,6 +27,7 @@ import { dateWords, eventsOfProperty, KIND_WORDS, type EventKind, type PropertyE
 import { legalVerdictForClaim } from './pack-legal.ts';
 import { propertyTenure, registerNamesClientPerson } from './who-claims.ts';
 import { localDate } from '../shared/index.ts';
+import { getRegisterRecordsFieldsJsonByBusinessIdSourceId8 } from '../integrations/index.ts';
 
 export type Route = 'W1' | 'W2' | 'W3' | 'NOT_KNOWN';
 
@@ -77,9 +78,7 @@ export function stillOwned(db: Db, c: { id: string; business_id: string; propert
   // The current title register naming the client's company is evidence too.
   const co = db.get<{ company_number: string | null }>('SELECT company_number FROM businesses WHERE id = ?', [c.business_id])?.company_number ?? null;
   if (co !== null) {
-    const t = db.get<{ fields_json: string }>(
-      "SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = 'HMLR_TITLE' AND property_id = ? ORDER BY obtained_at DESC LIMIT 1",
-      [c.business_id, c.property_id]);
+    const t = getRegisterRecordsFieldsJsonByBusinessIdSourceId8<{ fields_json: string }>(db, [c.business_id, c.property_id]);
     let n: unknown = null;
     try { n = t === undefined ? null : (JSON.parse(t.fields_json) as Record<string, unknown>)['proprietor_company_number']; } catch { n = null; }
     if (typeof n === 'string' && n.trim().toUpperCase() === co.trim().toUpperCase()) return { value: 'YES', why: 'the current title register names the client’s company as the owner' };

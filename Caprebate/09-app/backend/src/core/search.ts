@@ -1,6 +1,6 @@
 /**
- * GLOBAL SEARCH — LIMITED BY can() INSIDE THE QUERY, NEVER FILTERED AFTERWARDS.
- * CRM 9 of 10, 12 September 2026.
+ * GLOBAL SEARCH — LIMITED BY can INSIDE THE QUERY, NEVER FILTERED AFTERWARDS.
+ * CRM 9 of 10.
  *
  * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, row 16.1, and the decisions
  * this file takes are that table's Part E from E119. The page is
@@ -43,6 +43,8 @@ import { authorise, can, type Actor, type Obj } from './authz.ts';
 import { claimObjFor } from '../web/crm.ts';
 import { claimName } from '../shared/index.ts';
 import { anyStageLabel } from '../shared/index.ts';
+import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId } from './data-borrowed.ts';
+import { SEARCH_STATEMENTS, searchClaims, searchClaimsAssigned, searchContacts, searchInvoices, searchNotes, searchOrganisations, searchProperties, searchPropertiesAssigned, searchProspects } from './data-borrowed.ts';
 
 export type SearchKind = 'ORGANISATION' | 'PROSPECT' | 'CONTACT' | 'PROPERTY' | 'CLAIM' | 'INVOICE' | 'NOTE';
 
@@ -51,7 +53,7 @@ export type SearchHit = {
   readonly label: string;
   readonly detail: string;
   readonly href: string;
-  /** Phase 134: the company the hit belongs to, where it has one — a hit whose company's name matches ranks first. */
+  /** The company the hit belongs to, where it has one — a hit whose company's name matches ranks first. */
   readonly company?: string;
 };
 
@@ -99,70 +101,8 @@ function scopeOf(actor: Actor, action: string, whole: Obj, reachedByOwnJob: Obj 
 }
 
 function surveyorsOfBusiness(db: Db, business_id: string): string[] {
-  return db.all<{ surveyor_id: string }>(
-    'SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', [business_id],
-  ).map((r) => r.surveyor_id);
+  return listSurveyorJobsSurveyorIdByBusinessIdSurveyorId<{ surveyor_id: string }>(db, [business_id]).map((r) => r.surveyor_id);
 }
-
-/* ------------------------------------------------ the fixed statements */
-
-const ORGANISATIONS_ALL =
-  'SELECT b.id, b.name, b.legal_name, b.sector FROM businesses b ' +
-  "WHERE lower(b.name) LIKE ? ESCAPE '\\' OR lower(COALESCE(b.legal_name, '')) LIKE ? ESCAPE '\\' " +
-  "OR lower(COALESCE(b.company_number, '')) LIKE ? ESCAPE '\\' ORDER BY b.name ASC, b.id ASC LIMIT 25";
-
-const PROSPECTS_ALL =
-  'SELECT l.id, l.prospect_organisation FROM leads l ' +
-  "WHERE l.business_id IS NULL AND lower(COALESCE(l.prospect_organisation, '')) LIKE ? ESCAPE '\\' " +
-  'ORDER BY l.lead_date DESC, l.id ASC LIMIT 25';
-
-/** The client's own contacts, and a prospect's — never a person at an introducing firm. */
-const CONTACTS_ALL =
-  'SELECT c.id, c.full_name, c.business_id, c.lead_id, b.name AS business_name FROM contacts c ' +
-  'LEFT JOIN businesses b ON b.id = c.business_id WHERE c.introducer_id IS NULL ' +
-  "AND (lower(c.full_name) LIKE ? ESCAPE '\\' OR lower(COALESCE(c.email, '')) LIKE ? ESCAPE '\\') " +
-  'ORDER BY c.full_name ASC, c.id ASC LIMIT 25';
-
-const PROPERTIES_ALL =
-  'SELECT p.id, p.business_id, p.label, p.postcode, p.town, b.name AS business_name FROM properties p ' +
-  'JOIN businesses b ON b.id = p.business_id ' +
-  "WHERE lower(p.label) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.address_line_1, '')) LIKE ? ESCAPE '\\' " +
-  "OR lower(COALESCE(p.address_line_2, '')) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.town, '')) LIKE ? ESCAPE '\\' " +
-  "OR replace(lower(COALESCE(p.postcode, '')), ' ', '') LIKE ? ESCAPE '\\' ORDER BY p.label ASC, p.id ASC LIMIT 25";
-
-const PROPERTIES_ASSIGNED =
-  'SELECT p.id, p.business_id, p.label, p.postcode, p.town, b.name AS business_name FROM properties p ' +
-  'JOIN businesses b ON b.id = p.business_id ' +
-  'WHERE EXISTS (SELECT 1 FROM surveyor_jobs j WHERE j.business_id = p.business_id AND j.surveyor_id = ?) ' +
-  "AND (lower(p.label) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.address_line_1, '')) LIKE ? ESCAPE '\\' " +
-  "OR lower(COALESCE(p.address_line_2, '')) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.town, '')) LIKE ? ESCAPE '\\' " +
-  "OR replace(lower(COALESCE(p.postcode, '')), ' ', '') LIKE ? ESCAPE '\\') ORDER BY p.label ASC, p.id ASC LIMIT 25";
-
-// PHASE 134: a claim is found by its reference AND by its company's name, and is named by its company and property.
-const CLAIMS_ALL =
-  'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name, p.label AS property_label FROM claims c ' +
-  'JOIN businesses b ON b.id = c.business_id LEFT JOIN properties p ON p.id = c.property_id ' +
-  "WHERE lower(c.claim_ref) LIKE ? ESCAPE '\\' OR lower(b.name) LIKE ? ESCAPE '\\' ORDER BY b.name ASC, c.claim_ref DESC LIMIT 25";
-
-const CLAIMS_ASSIGNED =
-  'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name, p.label AS property_label FROM claims c ' +
-  'JOIN businesses b ON b.id = c.business_id LEFT JOIN properties p ON p.id = c.property_id ' +
-  'WHERE EXISTS (SELECT 1 FROM surveyor_jobs j WHERE j.claim_id = c.id AND j.surveyor_id = ?) ' +
-  "AND (lower(c.claim_ref) LIKE ? ESCAPE '\\' OR lower(b.name) LIKE ? ESCAPE '\\') ORDER BY b.name ASC, c.claim_ref DESC LIMIT 25";
-
-/**
- * An invoice by its number — CB-000123, 000123 or 123 — or by the start of it as it is printed: "CB-0", "CB-00012". Never
- * by an amount. The CRM follow-on added the prefix: a whole number was the only thing that found anything.
- */
-const INVOICES_ALL =
-  'SELECT n.seq, i.id, i.business_id, c.claim_ref, b.name AS business_name FROM invoice_numbers n ' +
-  'JOIN invoices i ON i.id = n.invoice_id JOIN claims c ON c.id = i.claim_id JOIN businesses b ON b.id = i.business_id ' +
-  "WHERE n.kind = 'INVOICE' AND (n.seq = ? OR printf('%06d', n.seq) LIKE ?) ORDER BY n.seq ASC LIMIT 25";
-
-const NOTES_ALL =
-  'SELECT n.id, n.business_id, n.claim_id, n.property_id, substr(n.body, 1, 160) AS snippet, b.name AS business_name ' +
-  'FROM internal_notes n JOIN businesses b ON b.id = n.business_id ' +
-  "WHERE lower(n.body) LIKE ? ESCAPE '\\' ORDER BY n.created_at DESC, n.id ASC LIMIT 25";
 
 const SENTINEL = '__search__';
 
@@ -186,21 +126,21 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
   const compact = pattern(term.replace(/\s+/g, ''));
 
   if (add('ORGANISATION', scopeOf(actor, 'organisation.read', { type: 'business', id: SENTINEL }, null)) === 'ALL') {
-    for (const r of db.all<{ id: string; name: string; legal_name: string | null; sector: string }>(ORGANISATIONS_ALL, [like, like, like])) {
+    for (const r of searchOrganisations<{ id: string; name: string; legal_name: string | null; sector: string }>(db, [like, like, like])) {
       authorise(actor, 'organisation.read', { type: 'business', id: r.id });
       hits.push({ kind: 'ORGANISATION', label: r.name, detail: r.legal_name ?? r.sector.replace(/_/g, ' '), href: `/staff/clients/${r.id}`, company: r.name });
     }
   }
 
   if (add('PROSPECT', scopeOf(actor, 'lead.read', { type: 'lead', id: SENTINEL, business_id: null }, null)) === 'ALL') {
-    for (const r of db.all<{ id: string; prospect_organisation: string | null }>(PROSPECTS_ALL, [like])) {
+    for (const r of searchProspects<{ id: string; prospect_organisation: string | null }>(db, [like])) {
       authorise(actor, 'lead.read', { type: 'lead', id: r.id, business_id: null });
       hits.push({ kind: 'PROSPECT', label: r.prospect_organisation ?? 'no name given', detail: 'a new enquiry, with no organisation record yet', href: `/staff/leads/${r.id}` });
     }
   }
 
   if (add('CONTACT', scopeOf(actor, 'contact.read', { type: 'contact', id: SENTINEL, business_id: SENTINEL }, null)) === 'ALL') {
-    for (const r of db.all<{ id: string; full_name: string; business_id: string | null; lead_id: string | null; business_name: string | null }>(CONTACTS_ALL, [like, like])) {
+    for (const r of searchContacts<{ id: string; full_name: string; business_id: string | null; lead_id: string | null; business_name: string | null }>(db, [like, like])) {
       authorise(actor, 'contact.read', { type: 'contact', id: r.id, business_id: r.business_id });
       hits.push({
         kind: 'CONTACT', label: r.full_name,
@@ -216,8 +156,8 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
     { type: 'property', id: SENTINEL, business_id: SENTINEL, assigned_surveyor_ids: [actor.id] }));
   if (properties !== 'NOT_SEARCHED') {
     const rows = properties === 'ALL'
-      ? db.all<{ id: string; business_id: string; label: string; postcode: string | null; town: string | null; business_name: string }>(PROPERTIES_ALL, [like, like, like, like, compact])
-      : db.all<{ id: string; business_id: string; label: string; postcode: string | null; town: string | null; business_name: string }>(PROPERTIES_ASSIGNED, [actor.id, like, like, like, like, compact]);
+      ? searchProperties<{ id: string; business_id: string; label: string; postcode: string | null; town: string | null; business_name: string }>(db, [like, like, like, like, compact])
+      : searchPropertiesAssigned<{ id: string; business_id: string; label: string; postcode: string | null; town: string | null; business_name: string }>(db, [actor.id, like, like, like, like, compact]);
     for (const r of rows) {
       authorise(actor, 'property.read', { type: 'property', id: r.id, business_id: r.business_id, assigned_surveyor_ids: surveyorsOfBusiness(db, r.business_id) });
       hits.push({
@@ -232,8 +172,8 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
     { type: 'claim', id: SENTINEL, business_id: SENTINEL, assigned_surveyor_ids: [actor.id] }));
   if (claims !== 'NOT_SEARCHED') {
     const rows = claims === 'ALL'
-      ? db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string; property_label: string | null }>(CLAIMS_ALL, [like, like])
-      : db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string; property_label: string | null }>(CLAIMS_ASSIGNED, [actor.id, like, like]);
+      ? searchClaims<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string; property_label: string | null }>(db, [like, like])
+      : searchClaimsAssigned<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string; property_label: string | null }>(db, [actor.id, like, like]);
     for (const r of rows) {
       authorise(actor, 'claim.read', claimObjFor(db, r));
       hits.push({
@@ -248,8 +188,7 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
     const n = /^(cb-?)?(\d{0,9})$/i.exec(term.replace(/\s+/g, ''));
     if (n !== null && ((n[1] ?? '') !== '' || (n[2] ?? '') !== '')) {
       const digits = n[2] ?? '';
-      for (const r of db.all<{ seq: number; id: string; business_id: string; claim_ref: string; business_name: string }>(
-        INVOICES_ALL, [digits === '' ? -1 : Number(digits), `${digits}%`])) {
+      for (const r of searchInvoices<{ seq: number; id: string; business_id: string; claim_ref: string; business_name: string }>(db, [digits === '' ? -1 : Number(digits), `${digits}%`])) {
         authorise(actor, 'invoice.read', { type: 'invoice', id: r.id, business_id: r.business_id });
         hits.push({ kind: 'INVOICE', label: `${r.business_name} — invoice CB-${String(r.seq).padStart(6, '0')}`, detail: r.claim_ref, href: `/staff/finance/${r.id}`, company: r.business_name });
       }
@@ -257,7 +196,7 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
   }
 
   if (add('NOTE', scopeOf(actor, 'internal_note.read', { type: 'internal_note', id: SENTINEL, business_id: SENTINEL }, null)) === 'ALL') {
-    for (const r of db.all<{ id: string; business_id: string; claim_id: string | null; property_id: string | null; snippet: string; business_name: string }>(NOTES_ALL, [like])) {
+    for (const r of searchNotes<{ id: string; business_id: string; claim_id: string | null; property_id: string | null; snippet: string; business_name: string }>(db, [like])) {
       authorise(actor, 'internal_note.read', { type: 'internal_note', id: r.id, business_id: r.business_id });
       hits.push({
         kind: 'NOTE', label: r.snippet, detail: `a note on ${r.business_name}`, company: r.business_name,
@@ -266,7 +205,7 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
     }
   }
 
-  // PHASE 134: A COMPANY-NAME MATCH RANKS FIRST — the company itself, then anything whose company's name matches, then the
+  // A COMPANY-NAME MATCH RANKS FIRST — the company itself, then anything whose company's name matches, then the
   // rest, each group in the order it was found. The order only; nothing is added or dropped.
   const t = term.toLowerCase();
   const rank = (x: SearchHit): number =>
@@ -279,17 +218,14 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
 export const RESULT_LIMIT = LIMIT;
 
 /**
- * EVERY STATEMENT SEARCH CAN RUN, exported so test/search.test.ts can assert that none of them names the identity
- * store, a compliance register, a document's content or the estimate. The prose at the top of this file names those
- * tables on purpose, so the test reads these and not the source text.
+ * EVERY STATEMENT SEARCH CAN RUN, for test/search.test.ts (see SEARCH_STATEMENTS in src/core/data-borrowed.ts, where the
+ * statements now live).
  */
-export const STATEMENTS: readonly string[] = Object.freeze([
-  ORGANISATIONS_ALL, PROSPECTS_ALL, CONTACTS_ALL, PROPERTIES_ALL, PROPERTIES_ASSIGNED, CLAIMS_ALL, CLAIMS_ASSIGNED, INVOICES_ALL, NOTES_ALL,
-]);
+export const STATEMENTS: readonly string[] = SEARCH_STATEMENTS;
 
 /**
- * PHASE 133a — THE GATE OF THE SEARCH SECTION, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * THE GATE OF THE SEARCH SECTION, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function searchGate(actor: Actor): void {

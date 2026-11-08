@@ -1,6 +1,6 @@
 /**
  * THE WELSH AND SCOTTISH CARE REGULATORS — A PROPERTY'S REGISTERED SERVICE, ITS PLACES AND ITS PROVIDER.
- * Phase 155 (lines 1 and 2), 4 October 2026. Switched off: REGISTER_SWITCHES.CIW and REGISTER_SWITCHES.CARE_INSPECTORATE.
+ *. Switched off: REGISTER_SWITCHES.CIW and REGISTER_SWITCHES.CARE_INSPECTORATE.
  *
  * THE SAME SHAPE AS THE ENGLISH ONE (src/integrations/connectors/cqc.ts) — registration, places, provider — and the same match:
  * the services at the typed postcode, scored on their address lines against the typed address, and only one clear

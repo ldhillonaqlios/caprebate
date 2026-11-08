@@ -1,5 +1,5 @@
 /**
- * THE LIVE WEBSITE'S OWN TIMERS — every scheduled job, woken by Vercel Cron. Phase 161h, 7 November 2026 (the developer
+ * THE LIVE WEBSITE'S OWN TIMERS — every scheduled job, woken by Vercel Cron. (the developer
  * question pack, D11: "Vercel Cron on the Pro plan for the live website, each call carrying its own secret word and
  * writing a log line").
  *
@@ -38,6 +38,7 @@ import { ENQUIRY_RETENTION, sweepEnquiries } from '../web/enquiry-retention.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { isInventedAddress } from '../integrations/index.ts';
 import { runNightlyBackup } from './backup.ts';
+import { listOutboxIdToEmailBySendRequestedSentAt, updateOutboxLastErrorByIdLastError, updateOutboxLastErrorByIdSentAt, updateOutboxLastErrorByIdSentAt2 } from '../integrations/index.ts';
 
 export const TIMER_JOBS = Object.freeze(['every-five-minutes', 'nightly', 'backup'] as const);
 export type TimerJob = (typeof TIMER_JOBS)[number];
@@ -95,12 +96,10 @@ export async function retryUnsent(app: App, store: FsObjectStore, limit = 50): P
   let tried = 0, sent = 0;
   for (const r of rows) {
     if (isInventedAddress(r.to_email)) {
-      app.db.run('UPDATE outbox SET last_error = ? WHERE id = ? AND sent_at IS NULL', ['An invented address, so it was not sent.', r.id]);
+      updateOutboxLastErrorByIdSentAt(app.db, ['An invented address, so it was not sent.', r.id]);
       continue;
     }
-    const claimed = app.db.run(
-      'UPDATE outbox SET last_error = ? WHERE id = ? AND sent_at IS NULL AND (last_error IS NULL OR last_error = ? OR (last_error = ? AND created_at < ?))',
-      [BEING_SENT, r.id, COULD_NOT, BEING_SENT, iso(now - STUCK_MINUTES * 60_000)]);
+    const claimed = updateOutboxLastErrorByIdSentAt2(app.db, [BEING_SENT, r.id, COULD_NOT, BEING_SENT, iso(now - STUCK_MINUTES * 60_000)]);
     if (claimed.changes !== 1) continue;
     tried++;
     try {
@@ -110,7 +109,7 @@ export async function retryUnsent(app: App, store: FsObjectStore, limit = 50): P
       }, r.id);
       if (out.state === 'RAN') sent += out.sent;
     } catch {
-      app.db.run('UPDATE outbox SET last_error = ? WHERE id = ? AND last_error = ?', [COULD_NOT, r.id, BEING_SENT]);
+      updateOutboxLastErrorByIdLastError(app.db, [COULD_NOT, r.id, BEING_SENT]);
     }
   }
   return { tried, sent, state: 'RAN' };
@@ -120,10 +119,7 @@ export async function retryUnsent(app: App, store: FsObjectStore, limit = 50): P
 export function rowsToRetry(db: App['db'], nowIso: string, limit = 50): { id: string; to_email: string }[] {
   const now = Date.parse(nowIso);
   const iso = (ms: number): string => new Date(ms).toISOString();
-  return db.all<{ id: string; to_email: string }>(
-    'SELECT id, to_email FROM outbox WHERE send_requested = 1 AND sent_at IS NULL AND created_at >= ? AND created_at < ? ' +
-      'AND (last_error IS NULL OR last_error = ? OR (last_error = ? AND created_at < ?)) ORDER BY created_at LIMIT ?',
-    [iso(now - RETRY_HOURS * 3_600_000), iso(now - FIRST_TRY_MINUTES * 60_000), COULD_NOT, BEING_SENT, iso(now - STUCK_MINUTES * 60_000), limit]);
+  return listOutboxIdToEmailBySendRequestedSentAt<{ id: string; to_email: string }>(db, [iso(now - RETRY_HOURS * 3_600_000), iso(now - FIRST_TRY_MINUTES * 60_000), COULD_NOT, BEING_SENT, iso(now - STUCK_MINUTES * 60_000), limit]);
 }
 
 export type TimerResult = { readonly ok: boolean; readonly line: string };

@@ -24,6 +24,7 @@ import { attachmentOf, phoneContacts, ATTACHMENT_WORDS, type PhoneContact } from
 import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../integrations/index.ts';
 import { isDoNotContact } from '../integrations/index.ts';
 import { importsFor } from './whatsapp-import.ts';
+import { listWhatsappImportLinesPhoneLastAtByBusinessId } from '../integrations/index.ts';
 
 /** One person (or one number we filed under the company) we have a WhatsApp conversation with, or could. */
 export type WaPerson = {
@@ -42,9 +43,7 @@ export function waPeople(db: Db, actor: Actor, business_id: string, nowIso: stri
   const contacts = phoneContacts(db, business_id, nowIso);
   const byNumber = new Map<string, WaPerson>();
   for (const c of contacts) if (!byNumber.has(c.number)) byNumber.set(c.number, { key: c.id, name: c.name, number: c.number, contact: c, last_at: null, unread: 0 });
-  for (const r of db.all<{ phone: string; last_at: string; first_id: string; unread: number }>(
-    "SELECT phone, max(created_at) AS last_at, min(id) AS first_id, sum(CASE WHEN direction = 'IN' AND created_at > ? AND id NOT IN (SELECT message_id FROM whatsapp_import_lines) THEN 1 ELSE 0 END) AS unread " +
-    'FROM whatsapp_messages WHERE business_id = ? GROUP BY phone', [readUntil, business_id])) {
+  for (const r of listWhatsappImportLinesPhoneLastAtByBusinessId<{ phone: string; last_at: string; first_id: string; unread: number }>(db, [readUntil, business_id])) {
     const known = byNumber.get(r.phone);
     byNumber.set(r.phone, known !== undefined ? { ...known, last_at: r.last_at, unread: r.unread }
       : { key: `n-${r.first_id}`, name: `+${r.phone}`, number: r.phone, contact: null, last_at: r.last_at, unread: r.unread });

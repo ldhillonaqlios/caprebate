@@ -1,9 +1,9 @@
 /**
- * CALENDAR INVITATIONS — a standard .ics file on every booked, moved or cancelled call. Phase 146f, 22 September 2026.
+ * CALENDAR INVITATIONS — a standard .ics file on every booked, moved or cancelled call.
  *
- * Lakhbir decided email and calendar invitations go through IONOS. Booking already happens inside the application
+ * the owner decided email and calendar invitations go through IONOS. Booking already happens inside the application
  * (the staff calendar, the client's own portal, the funnel's close); what was missing was the invitation itself.
- * `src/integrations/email/email.ts` has said since Phase 105 that an invitation "is an email with an attachment, so it goes down
+ * `src/integrations/email/email.ts` has said that an invitation "is an email with an attachment, so it goes down
  * the same path": this builds the attachment, and it rides the same outbox and the same switch (EMAIL_SENDING, off).
  *
  * WHAT IS SENT. One iCalendar object (RFC 5545) with METHOD:REQUEST for a call booked or moved, and METHOD:CANCEL for

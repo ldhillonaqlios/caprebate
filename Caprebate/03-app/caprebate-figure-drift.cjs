@@ -345,11 +345,18 @@ function runBackendCheck(dir) {
    out and NAMED in the output, so it can never turn the count red and never hides. If git cannot be asked (a copy of
    the tree with no repository), every test file on disk is run and the output says so. */
 function backendTestFiles(dir) {
-  const onDisk = fs.readdirSync(path.join(dir, "test")).filter(f => /\.test\.ts$/.test(f)).sort();
+  /* PHASE 161i1: tests by feature sit one folder down too (test/core/, test/shared/, test/integrations/, and the
+     modules' folders after them), as `npm test` runs them: the test folder and each folder directly inside it. */
+  const t = path.join(dir, "test");
+  const onDisk = [
+    ...fs.readdirSync(t).filter(f => /\.test\.ts$/.test(f)),
+    ...fs.readdirSync(t, { withFileTypes: true }).filter(d => d.isDirectory())
+      .flatMap(d => fs.readdirSync(path.join(t, d.name)).filter(f => /\.test\.ts$/.test(f)).map(f => `${d.name}/${f}`)),
+  ].sort();
   let tracked;
   try {
-    tracked = execFileSync("git", ["ls-files", "--", "test/*.test.ts"], { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })
-      .split("\n").filter(l => /^test\/[^/]+\.test\.ts$/.test(l)).map(l => l.slice(5));
+    tracked = execFileSync("git", ["ls-files", "--", "test/*.test.ts", "test/*/*.test.ts"], { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })
+      .split("\n").filter(l => /^test\/([^/]+\/)?[^/]+\.test\.ts$/.test(l)).map(l => l.slice(5));
   } catch (e) {
     return { files: onDisk, untracked: [], how: "git could not be asked, so every test file on disk was run" };
   }

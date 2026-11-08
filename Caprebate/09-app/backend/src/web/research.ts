@@ -109,6 +109,8 @@ import {
 } from '../integrations/index.ts';
 import { runSiteAreas, siteAreaLines, storeSiteAreaRuns, type SiteAreaLine, type SiteAreaSetup } from './site-area-run.ts';
 import { raiseToResearch } from './pipeline.ts';
+import { getRegisterRecordsFieldsJsonByBusinessIdSourceId3, getRegisterRecordsIdByBusinessIdSourceId, getRegisterRecordsObtainedAtByBusinessIdSourceId, getResearchRunsCostPenceAtByBusinessId, getResearchRunsCountByBusinessIdKind, getResearchSourcesIdAttemptsByBusinessIdSourceId, insertResearchRuns, insertResearchRuns2, insertResearchSources, listRegisterMatchPicksSourceIdByBusinessIdTakenBackAt, listRegisterMatchPicksSourceIdTakenBackAtByBusinessIdTakenBa, listResearchSourcesSourceIdStateByBusinessId } from '../integrations/index.ts';
+import { updateResearchSourcesAfterRun } from '../integrations/index.ts';
 
 export type Tier = 'FREE' | 'PAID';
 export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
@@ -688,28 +690,16 @@ export function sourcesFor(
   const engagement = assertSignedEngagement(db, business_id);
 
   const stored = new Map(
-    db.all<{
+    listResearchSourcesSourceIdStateByBusinessId<{
       source_id: string; state: string; fired_at: string | null; retrieved_at: string | null;
       attempts: number; failure_code: string | null; detail: string | null; route: string | null;
-    }>(
-      'SELECT source_id, state, fired_at, retrieved_at, attempts, failure_code, detail, route ' +
-        'FROM research_sources WHERE business_id = ?',
-      [business_id],
-    ).map((r) => [r.source_id, r] as const),
+    }>(db, [business_id]).map((r) => [r.source_id, r] as const),
   );
 
   /* PHASE 146j: the lookups whose entry a person chose, where that choice stands and its record is still held. */
-  const picked = new Set(db.all<{ source_id: string }>(
-    'SELECT source_id FROM register_match_picks WHERE business_id = ? AND taken_back_at IS NULL ' +
-      'AND chosen_key IS NOT NULL AND record_id IS NOT NULL',
-    [business_id],
-  ).map((r) => r.source_id));
+  const picked = new Set(listRegisterMatchPicksSourceIdByBusinessIdTakenBackAt<{ source_id: string }>(db, [business_id]).map((r) => r.source_id));
   const takenBack = new Map<string, { at: string; reason: string; look_again: string[] }>();
-  for (const r of db.all<{ source_id: string; taken_back_at: string; taken_back_reason: string; look_again_json: string | null }>(
-    'SELECT source_id, taken_back_at, taken_back_reason, look_again_json FROM register_match_picks ' +
-      'WHERE business_id = ? AND taken_back_at IS NOT NULL ORDER BY taken_back_at ASC, rowid ASC',
-    [business_id],
-  )) takenBack.set(r.source_id, { at: r.taken_back_at, reason: r.taken_back_reason, look_again: lookAgainShort(r.look_again_json) });
+  for (const r of listRegisterMatchPicksSourceIdTakenBackAtByBusinessIdTakenBa<{ source_id: string; taken_back_at: string; taken_back_reason: string; look_again_json: string | null }>(db, [business_id])) takenBack.set(r.source_id, { at: r.taken_back_at, reason: r.taken_back_reason, look_again: lookAgainShort(r.look_again_json) });
 
   const sources = catalogue().map((entry) => {
     const row = stored.get(entry.source_id);
@@ -723,9 +713,7 @@ export function sourcesFor(
        read off what is held, never off a row a click wrote. Before signing it waits like any paid source. */
     const hand = BY_HAND[entry.source_id];
     if (hand !== undefined) {
-      const held = db.get<{ obtained_at: string }>(
-        "SELECT obtained_at FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id LIKE 'by-hand:%' ORDER BY obtained_at DESC LIMIT 1",
-        [business_id, entry.source_id]);
+      const held = getRegisterRecordsObtainedAtByBusinessIdSourceId<{ obtained_at: string }>(db, [business_id, entry.source_id]);
       const state: SourceState = held !== undefined ? 'FIRED' : resolved.state === 'NOT_PERMITTED_YET' ? 'NOT_PERMITTED_YET' : 'NOT_RUN';
       return {
         ...entry, state, fired_at: held?.obtained_at ?? null, retrieved_at: held?.obtained_at ?? null, attempts: 0, failure_code: null,
@@ -754,10 +742,7 @@ export function sourcesFor(
 
   const outstandingPaid = sources.filter((s) => s.state !== 'FIRED').map((s) => s.source_id);
   const before = totalBeforePence(outstandingPaid, (id) => switchedOn(id, switchesHere(opts.env)));
-  const last = db.get<{ cost_pence: number | null; at: string }>(
-    'SELECT cost_pence, at FROM research_runs WHERE business_id = ? ORDER BY at DESC, rowid DESC LIMIT 1',
-    [business_id],
-  );
+  const last = getResearchRunsCostPenceAtByBusinessId<{ cost_pence: number | null; at: string }>(db, [business_id]);
   return {
     free, engagement, sources,
     outstanding: sources.filter((s) => s.state !== 'FIRED').length,
@@ -809,10 +794,7 @@ export type RateState = {
 export function rateState(db: Db, business_id: string, actor: Actor): RateState {
   const may = can(actor, 'research.run', { type: 'research', id: business_id, business_id });
   const since = new Date(Date.now() - RESEARCH_WINDOW_MS).toISOString();
-  const row = db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM research_runs WHERE business_id = ? AND kind = ? AND at >= ?',
-    [business_id, 'RUN', since],
-  );
+  const row = getResearchRunsCountByBusinessIdKind<{ n: number }>(db, [business_id, 'RUN', since]);
   const used = row?.n ?? 0;
   if (!may) {
     return { used, limit: RESEARCH_LIMIT, allowed: false, why: 'your role cannot run the research' };
@@ -1047,10 +1029,7 @@ export function storeResearchOutcomes(d: RunDeps, business_id: string, outcomes:
     if (o.state === 'FIRED' && o.bundle !== null) {
       let kept = 0;
       for (const rec of o.bundle.records) {
-        const held = d.db.get<{ id: string }>(
-          'SELECT id FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id = ?',
-          [business_id, rec.sourceId, rec.entityId],
-        );
+        const held = getRegisterRecordsIdByBusinessIdSourceId<{ id: string }>(d.db, [business_id, rec.sourceId, rec.entityId]);
         if (held !== undefined) continue;
         ingestRegisterRecord(d.db, d.newId, d.now, business_id, rec, { property_id });
         kept++;
@@ -1132,11 +1111,7 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
   let checked: readonly SignatoryOutcome[] = [];
   d.db.tx(() => {
     storeResearchOutcomes(d, business_id, outcomes, at);
-    d.db.run(
-      'INSERT INTO research_runs (id, business_id, actor_id, at, considered, fired, ' +
-        'not_permitted, failed, kind, source_id, cost_pence) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)',
-      [d.newId(), business_id, actor.id, at, panel.sources.length, fired, notPermitted, failed, 'RUN', spent],
-    );
+    insertResearchRuns(d.db, [d.newId(), business_id, actor.id, at, panel.sources.length, fired, notPermitted, failed, 'RUN', spent]);
     checked = storeSignatoryChecks(d, actor, business_id, signatory, at);
     storeSiteAreaRuns(d, actor, business_id, site, at);
     /* PHASE 159g (items 4 and 7): what this click read, kept on the property where nothing is kept yet — the council
@@ -1191,9 +1166,7 @@ export type SignatoryRun = {
 
 /** The latest register record of one source for this client, as its fields. Null when none is held or it cannot be read. */
 function heldFields(db: Db, business_id: string, source_id: string): Record<string, unknown> | null {
-  const r = db.get<{ fields_json: string }>(
-    'SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = ? ORDER BY obtained_at DESC, rowid DESC LIMIT 1',
-    [business_id, source_id]);
+  const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId3<{ fields_json: string }>(db, [business_id, source_id]);
   if (r === undefined) return null;
   try {
     const v = JSON.parse(r.fields_json) as unknown;
@@ -1341,13 +1314,9 @@ export async function retryFailedSource(
 
   d.db.tx(() => {
     storeResearchOutcomes(d, business_id, [outcome], at);
-    d.db.run(
-      'INSERT INTO research_runs (id, business_id, actor_id, at, considered, fired, ' +
-        'not_permitted, failed, kind, source_id, cost_pence) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)',
-      [d.newId(), business_id, actor.id, at, outcome.state === 'FIRED' ? 1 : 0,
+    insertResearchRuns2(d.db, [d.newId(), business_id, actor.id, at, outcome.state === 'FIRED' ? 1 : 0,
        outcome.state === 'NOT_PERMITTED_YET' ? 1 : 0, outcome.state === 'FAILED' ? 1 : 0,
-       'RETRY', source_id, outcome.cost_pence],
-    );
+       'RETRY', source_id, outcome.cost_pence]);
   });
 
   d.audit.append({
@@ -1388,24 +1357,14 @@ function upsertSource(
   /* PHASE 156f (B3): which route answered a FIRED row (HOMEDATA_PLANNING, or null for the source's own). Kept only on a
      fire, so a later refusal does not forget that Homedata already answered. */
   const route = read.route ?? null;
-  const existing = d.db.get<{ id: string; attempts: number }>(
-    'SELECT id, attempts FROM research_sources WHERE business_id = ? AND source_id = ?',
-    [business_id, entry.source_id],
-  );
+  const existing = getResearchSourcesIdAttemptsByBusinessIdSourceId<{ id: string; attempts: number }>(d.db, [business_id, entry.source_id]);
   if (existing === undefined) {
-    d.db.run(
-      'INSERT INTO research_sources (id, business_id, source_id, tier, state, fired_at, detail, ' +
-        'publisher, licence_id, retrieved_at, failure_code, attempts, route) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [d.newId(), business_id, entry.source_id, entry.tier, state, fired ? at : null, detail,
+    insertResearchSources(d.db, [d.newId(), business_id, entry.source_id, entry.tier, state, fired ? at : null, detail,
        entry.publisher, entry.licence_id, fired ? read.retrieved_at : null,
-       state === 'FAILED' ? read.failure_code : null, state === 'NOT_PERMITTED_YET' ? 0 : 1, fired ? route : null],
-    );
+       state === 'FAILED' ? read.failure_code : null, state === 'NOT_PERMITTED_YET' ? 0 : 1, fired ? route : null]);
     return;
   }
-  d.db.run(
-    'UPDATE research_sources SET tier = ?, state = ?, detail = ?, publisher = ?, licence_id = ?, attempts = ?, ' +
-      'failure_code = ?' + (fired ? ', fired_at = ?, retrieved_at = ?, route = ?' : '') + ' WHERE id = ?',
+  updateResearchSourcesAfterRun(d.db, fired,
     [entry.tier, state, detail, entry.publisher, entry.licence_id,
      existing.attempts + (state === 'NOT_PERMITTED_YET' ? 0 : 1),
      state === 'FAILED' ? read.failure_code : null,

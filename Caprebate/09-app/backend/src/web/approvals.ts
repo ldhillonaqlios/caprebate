@@ -40,6 +40,7 @@ import { registerAttribution } from './research.ts';
 import { FACTS, captured, factsPanel, latestFacts, recordFact, type FactReading } from './claim-facts.ts';
 import type { ProcedureKey } from '../shared/index.ts';
 import { preferHomedataPlanning, supersededPlanning } from '../integrations/index.ts';
+import { listRegisterRecordsIdSourceIdByBusinessId } from '../integrations/index.ts';
 
 export type ApprovalDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -232,9 +233,7 @@ function registerFacts(db: Db, business_id: string, claims: readonly ClaimRow[])
   const out: RawFact[] = [];
   // PHASE 156f (B3): once Homedata has answered planning, the free route's planning records are kept, not shown.
   const homedataPlanning = preferHomedataPlanning(db, business_id);
-  for (const r of db.all<{ id: string; source_id: string; entity_id: string; fields_json: string; obtained_at: string; property_id: string | null }>(
-    'SELECT id, source_id, entity_id, fields_json, obtained_at, property_id FROM register_records WHERE business_id = ? ORDER BY obtained_at ASC, id ASC',
-    [business_id])) {
+  for (const r of listRegisterRecordsIdSourceIdByBusinessId<{ id: string; source_id: string; entity_id: string; fields_json: string; obtained_at: string; property_id: string | null }>(db, [business_id])) {
     if (supersededPlanning(r, homedataPlanning)) continue;
     let fields: Record<string, unknown>;
     try { fields = JSON.parse(r.fields_json) as Record<string, unknown>; } catch { continue; }

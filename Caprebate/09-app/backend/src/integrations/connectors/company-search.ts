@@ -1,15 +1,15 @@
 /**
- * "FIND MY COMPANY" AT THE START OF THE ASSESSMENT — a search of Companies House by name. 29 September 2026.
+ * "FIND MY COMPANY" AT THE START OF THE ASSESSMENT — a search of Companies House by name.
  *
- * Lakhbir: "with the am i eligible we should be asking for address and company name", and, for the first screen,
+ * the owner: "with the am i eligible we should be asking for address and company name", and, for the first screen,
  * the company name with a search. The person types their business's name and presses "Find my company"; the SERVER
  * asks Companies House (its public search, /search/companies) and the page lists up to eight companies to choose from,
  * or "none of these". The page itself makes no call: every search is a form sent to this server, so the key stays here.
  *
  * WHAT IS KEPT FROM A RESULT, AND ONLY THAT: the company's name, its number, its status, its registered office's
- * POSTCODE and (Phase 159g) the type of its latest accounts — the source register's permitted fields for CH_COMPANY (company_number, company_status,
+ * POSTCODE and the type of its latest accounts — the source register's permitted fields for CH_COMPANY (company_number, company_status,
  * registered_office_postcode), and the name the person is choosing as their own. Never an officer, a director or an
- * address line. THE COMPANY'S TYPE ONLY WITH COMPANY_TYPE_FROM_REGISTER ON (below, Phase 153b, Word question 198): the
+ * address line. THE COMPANY'S TYPE ONLY WITH COMPANY_TYPE_FROM_REGISTER ON: the
  * register now lists `company_type` as a PROPOSED permitted field for the data protection officer to agree, and while
  * the switch is off it is not kept and the assessment asks the legal form, exactly as before.
  *
@@ -33,7 +33,7 @@ export type CompanySearchConfig = {
 };
 
 /*
- * SWITCHED ON FOR TESTING, 30 September 2026 (Lakhbir: "switch on companies house and postcodes.io"), under the same
+ * SWITCHED ON FOR TESTING, under the same
  * recorded waiver as the postcode check. The key is still needed: in the key file locally, and on the test website
  * COMPANIES_HOUSE_API_KEY in its settings (api/index.mjs reads it behind the test password). Without it there is no
  * "Find my company" button and the name is typed, as before.
@@ -51,13 +51,13 @@ export type CompanyCandidate = {
   readonly office_postcode: string | null;
   /** Companies House's company type ("ltd", "plc", "llp" ...). Kept ONLY with COMPANY_TYPE_FROM_REGISTER on. */
   readonly company_type?: string | null;
-  /** PHASE 159g (L2): the type of its latest accounts, from its profile ("dormant", "micro-entity" ...). Null when none
+  /** The type of its latest accounts, from its profile ("dormant", "micro-entity" ...). Null when none
    *  is filed or the profile could not be read — not known, never "not dormant" (N4). */
   readonly accounts_type?: string | null;
 };
 
 /*
- * PHASE 159g, 10 October 2026 — THE LOCKWOOD RUN, L2. "Find this company" offered LOCKWOOD SURGERY PRIME HEALTH LTD
+ * THE LOCKWOOD RUN, L2. "Find this company" offered LOCKWOOD SURGERY PRIME HEALTH LTD
  * first: the right name and postcode, but it files DORMANT accounts, so it has no tax for allowances to relieve, and
  * nothing on the screen said so. Each match now shows its status AND its accounts type, read from its profile
  * (/company/{company_number}: accounts.last_accounts.type), and a dormant company is flagged at once. One profile call
@@ -84,7 +84,7 @@ export function accountsTypeWords(t: string | null | undefined): string | null {
 }
 
 /*
- * PHASE 153b, 4 October 2026 — WORD QUESTION 198 ("When Companies House says a client is an LLP, what kind of business
+ * WORD QUESTION 198 ("When Companies House says a client is an LLP, what kind of business
  * should our estimate treat it as?"), for the accountant, with the data protection officer's one-line change to the
  * permitted fields. Built on our recommendation and SWITCHED OFF until both have answered:
  *   "ltd" and "plc"  -> a company ("Limited company"), filled in for the person, who can still change it;
@@ -171,7 +171,7 @@ export async function searchCompanies(i: {
     candidates.push(keepType ? { ...candidate, company_type: str(o['company_type']) } : candidate);
   }
   if (candidates.length === 0) return { state: 'NONE' };
-  // PHASE 159g (L2): each match's accounts type, from its profile, one call each.
+  // Each match's accounts type, from its profile, one call each.
   const withAccounts: CompanyCandidate[] = [];
   for (const [n, c] of candidates.entries()) {
     if (n >= COMPANY_SEARCH_PROFILE_LIMIT) { withAccounts.push({ ...c, accounts_type: null }); continue; }

@@ -36,6 +36,7 @@ import { addMonths } from './message-retention.ts';
 import { BACKUP_CYCLE, knownBackupCycleDays } from '../shared/upload-handler-port.ts';
 import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from './funnel-deletable.ts';
 import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from './funnel-edges.ts';
+import { getUsersCountByBusinessId } from '../core/index.ts';
 
 export type EnquiryRetention = {
   readonly enabled: boolean;
@@ -142,7 +143,7 @@ export function leadDeletionPlan(db: Db, lead_id: string, due: (lead_id: string)
     wholeBusiness = others.every((o) => o.status === 'LOST' && o.enquiry_id !== null && due(o.id) && !liveHeldIds(db, 'LEAD').has(o.id));
     /* A portal login is tied to its organisation by `users.business_id`, which carries no foreign key, so the walk
        below would not see it. A client who made a login keeps their organisation: that is theirs to close. */
-    if (wholeBusiness && db.get<{ n: number }>('SELECT COUNT(*) AS n FROM users WHERE business_id = ?', [business])!.n > 0) {
+    if (wholeBusiness && getUsersCountByBusinessId<{ n: number }>(db, [business])!.n > 0) {
       return { delete: false, why: 'the client made a portal login for the organisation' };
     }
   }

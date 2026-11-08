@@ -1,10 +1,10 @@
 /**
- * THE SHARED LOOK — UI TIDY PHASE 1, 2 October 2026.
+ * THE SHARED LOOK.
  *
- * Lakhbir chose "design 2" from the mock-ups (https://claude.ai/artifact/G74T4SbqtQLJX7AeamdgBW) and asked for colours
+ * the owner chose "design 2" from the mock-ups (https://claude.ai/artifact/G74T4SbqtQLJX7AeamdgBW) and asked for colours
  * and darker boxes, so a busy person reads a page at a glance. The plan is 00-START-HERE/hub/UI-TIDY-PLAN.md. This module
  * draws the pieces every tidied page shares; the colours are tokens in src/shared/assets.ts, each pairing checked at 4.5:1
- * by test/phase133c.test.ts, and the pieces are proved in test/ui-tidy-look.test.ts.
+ * by test/phase133c.test.ts, and the pieces are proved in test/core/look.test.ts.
  *
  * - **A colour for each group of claim stages.** The ten steps of the procedure and Closed fall into five groups. A stage
  *   that is not a step (on hold, or one of the ways a claim ends) has no group and is drawn in the plain badge.

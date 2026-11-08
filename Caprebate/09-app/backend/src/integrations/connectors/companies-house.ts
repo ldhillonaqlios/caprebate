@@ -1,6 +1,6 @@
 /**
  * COMPANIES HOUSE — THE COMPANY, ITS FILINGS, AND (ONLY AFTER SIGNATURE) ITS PEOPLE WITH SIGNIFICANT CONTROL.
- * Phase 146c, 23 September 2026. Switched off: REGISTER_SWITCHES.CH_COMPANY and .CH_PSC are false.
+ * Switched off: REGISTER_SWITCHES.CH_COMPANY and .CH_PSC are false.
  *
  * Built against the Companies House Public Data API's published documentation (the address and the date read are in
  * the source register's SUPPLIER_DOCS). The key is the user name of HTTP Basic authentication with an empty password,
@@ -30,7 +30,7 @@
  * exclusion register, CH_COMPANY's excluded fields `officer_*`, `director_*`, `secretary_*`).
  *
  * ───────────────────────────────────────────────────────────────────────────
- * THE OFFICERS LIST — READ IN MEMORY, NEVER KEPT. Phase 151b, 25 September 2026.
+ * THE OFFICERS LIST — READ IN MEMORY, NEVER KEPT. 25 September 2026.
  *
  * Word question 156, for the data protection officer: "May we briefly check two public register names without saving
  * them?" Answer, closed 24 September 2026: "Yes – best to check who signs and if they have authority". So
@@ -188,7 +188,7 @@ export function companyFields(p: Record<string, unknown>): Record<string, unknow
   if (day !== null && month !== null && /^\d{1,2}$/.test(day) && /^\d{1,2}$/.test(month)) f.accounts_year_end = `${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   const created = str(p['date_of_creation']);
   if (created !== null && /^\d{4}-\d{2}-\d{2}$/.test(created)) f.incorporation_date = created;
-  /* PHASE 159g (L2): the latest accounts' type and the day they were made up to, from the profile. A dormant company
+  /* The latest accounts' type and the day they were made up to, from the profile. A dormant company
      carries on no trade and no property business, so it has no tax for allowances to relieve. */
   const last = obj(obj(p['accounts'])?.['last_accounts']);
   const type = str(last?.['type']);
@@ -198,7 +198,7 @@ export function companyFields(p: Record<string, unknown>): Record<string, unknow
   return f;
 }
 
-/** PHASE 159g (L2): true only where the register says the latest accounts are dormant accounts. Not known is not dormant. */
+/** True only where the register says the latest accounts are dormant accounts. Not known is not dormant. */
 export function isDormant(accounts_type: unknown): boolean {
   return typeof accounts_type === 'string' && accounts_type.trim().toLowerCase() === 'dormant';
 }
@@ -229,7 +229,7 @@ export const companiesHouse = defineSteppedConnector<CompanyQuery>({
         return n !== null && t !== null ? [{ name: t, payload: n }] : [];
       });
       const m = matchCompanyName(q.name, candidates, MATCH_THRESHOLDS.CH_COMPANY);
-      /* PHASE 146h: the REVIEW band's list to the back office, or a person's choice back, keyed on the COMPANY
+      /* The REVIEW band's list to the back office, or a person's choice back, keyed on the COMPANY
          NUMBER — which is what this lookup reads a profile by, so a choice names a company and not a row. */
       const pick = applyPick(m, q, { profile: 'CH_COMPANY', register: 'Companies House', keyOf: (n) => n });
       if (pick.kind === 'GONE') {
@@ -277,7 +277,7 @@ export const companiesHouse = defineSteppedConnector<CompanyQuery>({
     const filings = history.outcome !== 'OK' ? ' Its filings could not be read this time.'
       : historyBody === null ? ' Its filings came back in a form we could not read.' : ` ${accountsWords(accounts)}`;
 
-    // PHASE 159g (L2): the filing history's type is the newer reading where it was read.
+    // The filing history's type is the newer reading where it was read.
     if (accounts?.accounts_type !== null && accounts?.accounts_type !== undefined && /^[a-z-]{2,40}$/.test(accounts.accounts_type)) fields.accounts_type = accounts.accounts_type;
     if (accounts?.made_up_to !== null && accounts?.made_up_to !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(accounts.made_up_to)) fields.accounts_made_up_to = accounts.made_up_to;
     const dormant = isDormant(fields['accounts_type']) ? ` ${DORMANT_WORDS}` : '';
@@ -337,7 +337,7 @@ export const companiesHousePsc = defineSteppedConnector<PscQuery>({
   },
 });
 
-/* ------------------------------------------------------------------ the officers, read in memory only (Phase 151b) */
+/* ------------------------------------------------------------------ the officers, read in memory only */
 
 export type OfficersQuery = {
   readonly company_number: string | null;

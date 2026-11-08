@@ -22,7 +22,7 @@ import {
 import { documentTextExtractor } from '../src/web/uploads.ts';
 import {
   extract, sanitise, PERSON_REVIEW_BY_DOC_TYPE, specFor, type ModelPayload, type Segment,
-} from '../src/documents/caprebate-document-pipeline.ts';
+} from '../src/modules/claims/documents/document-pipeline.ts';
 import { testApp } from './helpers.ts';
 
 const FAKE_KEY = 'sk-ant-fixture-key-4444-5555-6666';

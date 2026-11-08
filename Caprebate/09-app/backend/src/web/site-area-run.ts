@@ -48,6 +48,7 @@ import type { RateLimiter, Transport } from '../integrations/index.ts';
 import { DECLINED_LINE } from './address-check.ts';
 import { postcodeStore } from '../integrations/postcodes/postcode.ts';
 import type { PostcodeStore } from '../integrations/postcodes/postcode-port.ts';
+import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId, getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId2 } from '../integrations/index.ts';
 
 /** Every state a site area line can be in: the function's own seven, and two that belong to the click. */
 export type SiteAreaLineState = SiteAreaState | 'WAITING' | 'READY';
@@ -217,10 +218,7 @@ function preview(db: Db, business_id: string, p: PropertyRow, gates: SiteAreaGat
 /** The site area held for a property, as a line, or null when none is held. HM Land Registry's land boundary first;
  *  PHASE 156f (B4): else the area from the title outline Homedata sold on the paid address lookup. */
 function held(db: Db, business_id: string, p: PropertyRow): SiteAreaLine | null {
-  const r = db.get<{ fields_json: string; obtained_at: string }>(
-    'SELECT fields_json, obtained_at FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id = ?',
-    [business_id, SITE_AREA_SOURCE_ID, `property:${p.id}`],
-  );
+  const r = getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId<{ fields_json: string; obtained_at: string }>(db, [business_id, SITE_AREA_SOURCE_ID, `property:${p.id}`]);
   if (r === undefined) return heldFromTitleOutline(db, business_id, p);
   let area: number | null = null; let grade: string | null = null;
   try {
@@ -246,11 +244,7 @@ function flagFor(db: Db, business_id: string, property_id: string, area: number 
 
 /** PHASE 156f (B4): the area from Homedata's title outline for this property, as a line, or null. */
 function heldFromTitleOutline(db: Db, business_id: string, p: PropertyRow): SiteAreaLine | null {
-  const r = db.get<{ fields_json: string; obtained_at: string }>(
-    'SELECT fields_json, obtained_at FROM register_records WHERE business_id = ? AND source_id = ? AND property_id = ? ' +
-      'ORDER BY obtained_at DESC, id DESC LIMIT 1',
-    [business_id, TITLE_BOUNDARY_SOURCE_ID, p.id],
-  );
+  const r = getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId2<{ fields_json: string; obtained_at: string }>(db, [business_id, TITLE_BOUNDARY_SOURCE_ID, p.id]);
   if (r === undefined) return null;
   let area: number | null = null; let grade: string | null = null;
   try {

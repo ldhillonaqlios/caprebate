@@ -1,7 +1,7 @@
 /**
- * ROLES A SUPER ADMIN CAN MAKE. Phase 151, 24 September 2026.
+ * ROLES A SUPER ADMIN CAN MAKE.
  *
- * WHAT LAKHBIR DECIDED (Word answers 39 and 40, closed 24 September 2026). The super admin must be able to create
+ * WHAT THE OWNER DECIDED. The super admin must be able to create
  * roles, choose what each can see and do, and give people roles.
  *
  * HOW A ROLE IS MADE, AND WHY THIS SHAPE. A role the super admin makes is a NAME and a LIST OF GRANTS. Each grant is one
@@ -33,6 +33,7 @@
  */
 
 import type { Db } from './db.ts';
+import { listCustomRoleGrantsRoleAction, listCustomRolesRoleNameByRetiredAt } from './data.ts';
 
 /** The four staff roles a made role may borrow a rule from. Never CLIENT, never READ_ONLY, never the DPO. */
 export const BORROWABLE_ROLES = ['ADMIN', 'SALES', 'ACCOUNTING', 'SURVEYING'] as const;
@@ -126,8 +127,8 @@ export function isCustomRoleKey(key: string): boolean {
 
 /** Read every live made role from the database into memory. Called at start-up and after every change. */
 export function loadCustomRoles(db: Db): void {
-  const roles = db.all<{ role: string; name: string }>('SELECT role, name FROM custom_roles WHERE retired_at IS NULL ORDER BY role');
-  const grants = db.all<{ role: string; action: string; as_role: string }>('SELECT role, action, as_role FROM custom_role_grants ORDER BY role, action');
+  const roles = listCustomRolesRoleNameByRetiredAt<{ role: string; name: string }>(db);
+  const grants = listCustomRoleGrantsRoleAction<{ role: string; action: string; as_role: string }>(db);
   REGISTRY.clear();
   for (const r of roles) {
     REGISTRY.set(r.role, Object.freeze({

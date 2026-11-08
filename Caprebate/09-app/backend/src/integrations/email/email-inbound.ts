@@ -1,5 +1,5 @@
 /**
- * INBOUND_EMAIL — READING REPLIES TO contact@caprebate.co.uk. BUILT, AND SWITCHED OFF. Phase 142, 22 September 2026.
+ * INBOUND_EMAIL — READING REPLIES TO contact@caprebate.co.uk. BUILT, AND SWITCHED OFF.
  *
  * Phase 141 wrote the design into the Developer Spec (B48, "Where replies to contact@ will land"); this builds it.
  *
@@ -7,7 +7,7 @@
  * WHY IT IS OFF
  *
  * There is no mailbox to read. contact@caprebate.co.uk has to exist first, with its email security records — a board item
- * for Lakhbir, "Create the contact@caprebate.co.uk mailbox and check its email security records" — and which service
+ * for the owner, "Create the contact@caprebate.co.uk mailbox and check its email security records" — and which service
  * hosts it is the same question Phase 141 put to him: "Which email service should send our emails from
  * contact@caprebate.co.uk?". The recommendation there is IONOS, the host the privacy notice already names, so this reader
  * speaks IMAP, which IONOS offers. OFF IS EXACTLY TODAY: `readMailbox` returns OFF without opening a connection.
@@ -44,9 +44,9 @@ export type InboundEmail = {
   readonly question: string;
 };
 
-/** PHASE 142b: Lakhbir chose IONOS on 22 September 2026, so the mailbox is read over IMAP. Still off: the mailbox is not ready. */
+/** the owner chose IONOS on 22 September 2026, so the mailbox is read over IMAP. Still off: the mailbox is not ready. */
 /*
- * SWITCHED ON FOR TESTING, 30 September 2026 (Lakhbir: the IONOS_IMAP_* login added, "lets work on this" — reading
+ * SWITCHED ON FOR TESTING (the owner: the IONOS_IMAP_* login added, "lets work on this" — reading
  * clients' email replies into their conversation). Read-only (EXAMINE, BODY.PEEK): nothing in the mailbox is changed or
  * deleted. The first read starts from the inbox as it stands (migration 064), so mail already there is never brought in.
  * The privacy notice is a draft: it is to name this before real clients.
@@ -54,10 +54,10 @@ export type InboundEmail = {
 export const INBOUND_EMAIL: InboundEmail = Object.freeze({
   enabled: true,
   provider: 'IMAP',
-  /* True since 24 September 2026: contact@ exists and Sadique Maskeen reads it (Word questions 216 and 217, closed).
+  /* True: contact@ exists and the data protection officer reads it (Word questions 216 and 217, closed).
      Reading replies stays OFF until its IMAP login is in the key file and the switch is turned on. */
   mailbox_ready: true,
-  // Read when used, not while this file loads (Phase 161i: the areas' front doors load whole, and the code still loops between areas until Phase 161l).
+  // Read when used, not while this file loads.
   get question() { return EMAIL_PROVIDER_QUESTION; },
 });
 
@@ -65,7 +65,7 @@ export const INBOUND_EMAIL: InboundEmail = Object.freeze({
 export type ImapLogin = { readonly host: string; readonly port: number; readonly user: string; readonly password: string };
 
 /**
- * PHASE 146f: the key file's IONOS_IMAP_* names, read only through `loadSecrets().forOwner('IONOS_MAILBOX')`. Port 993
+ * The key file's IONOS_IMAP_* names, read only through `loadSecrets().forOwner('IONOS_MAILBOX')`. Port 993
  * by default. A host that is not an IONOS server is refused as if there were no login (IONOS_HOST).
  */
 export function imapLoginFromKeyFile(store: SecretStore = processSecrets()): ImapLogin | null {
@@ -208,7 +208,7 @@ export function parseEmail(raw: Uint8Array): ParsedEmail {
 }
 
 /* ================================================================== *
- * A DELIVERY REPORT — PHASE 146f
+ * A DELIVERY REPORT
  * ================================================================== */
 
 /**
@@ -245,9 +245,9 @@ export interface Mailbox {
   since(after: number): Promise<RawEmail[]>;
   /** One message by its number, or null if it is no longer there. Read-only. */
   one(uid: number): Promise<RawEmail | null>;
-  /** 30 Sep 2026: the inbox's highest message number (0 when empty), without reading any message. Read-only. */
+  /** The inbox's highest message number (0 when empty), without reading any message. Read-only. */
   highestUid?(): Promise<number>;
-  /** 1 Oct 2026: the numbers of the messages that answer an email whose Message-ID ends "@domain" — replies to ours,
+  /** The numbers of the messages that answer an email whose Message-ID ends "@domain" — replies to ours,
    *  whenever they arrived. A read-only search of one header; nothing is fetched. */
   answering?(domain: string): Promise<number[]>;
 }
@@ -334,7 +334,7 @@ export function imapMailbox(
     const sock = connect(login);
     const timer = setTimeout(() => sock.destroy(new Error('timed out')), timeoutMs);
     const s = new ImapSession(sock);
-    // PHASE 146f: one audit row per connection — the outcome and how many messages came back, never the login.
+    // One audit row per connection — the outcome and how many messages came back, never the login.
     let outcome: 'OK' | 'REFUSED' | 'FAILED' = 'FAILED';
     let messages = 0;
     try {
