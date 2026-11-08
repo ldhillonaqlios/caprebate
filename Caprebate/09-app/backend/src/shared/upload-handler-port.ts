@@ -21,12 +21,53 @@
  * failure the extraction of the engine was done to prevent.
  */
 
-export { UPLOAD_LIMITS, UploadHandlerError, sniffAccepted, pdfLooksComplete, quarantineKeyFor, durableKeyFor, retainedTextKeyFor, shouldPromoteRawFile, issueUploadUrl, recordUploadComplete, processUpload, openTransparency, runExtraction, writeClaims, closeJob, runScheduledSweeps, deleteDueRawFile, CONTRACT_COVERAGE, assertContractCovered, RECEIPT_CONTRACT, INGESTION_BOUNDARY, FAIL_CLOSED_SETTINGS, receiptPolicyFor } from '../modules/claims/index.ts';
+// These come straight from the claims module's document files, not through its front door: the shared parts and the
+// core load them, and the front door would load the whole claims module into the bottom layers (a loop that leaves a
+// value unset while files load). Counted by the boundary check (rule 1) until Phase 161l turns the upward imports
+// into events or ports the lower layers own.
+export {
+  UPLOAD_LIMITS,
+  UploadHandlerError,
+  sniffAccepted,
+  pdfLooksComplete,
+  quarantineKeyFor,
+  durableKeyFor,
+  retainedTextKeyFor,
+  shouldPromoteRawFile,
+  issueUploadUrl,
+  recordUploadComplete,
+  processUpload,
+  openTransparency,
+  runExtraction,
+  writeClaims,
+  closeJob,
+  runScheduledSweeps,
+  deleteDueRawFile,
+  CONTRACT_COVERAGE,
+  assertContractCovered,
+  RECEIPT_CONTRACT,
+  INGESTION_BOUNDARY,
+  FAIL_CLOSED_SETTINGS,
+  receiptPolicyFor,
+} from '../modules/claims/documents/upload-handler.ts';
 
-export type { ObjectStore, PresignedUpload, TextExtractor, DocTypeClassifier, AuditSink, AuditEvent, UploadHandlerDeps, UploadJob, JobState, ProcessResult, Clock, UploadHandlerErrorCode } from '../modules/claims/index.ts';
+export type {
+  ObjectStore,
+  PresignedUpload,
+  TextExtractor,
+  DocTypeClassifier,
+  AuditSink,
+  AuditEvent,
+  UploadHandlerDeps,
+  UploadJob,
+  JobState,
+  ProcessResult,
+  Clock,
+  UploadHandlerErrorCode,
+} from '../modules/claims/documents/upload-handler.ts';
 
-export type { DocType } from '../modules/claims/index.ts';
-export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../modules/claims/index.ts';
+export type { DocType } from '../modules/claims/documents/document-pipeline.ts';
+export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../modules/claims/documents/document-pipeline.ts';
 
 /**
  * CRM 4 of 10. The one deletion clock the Retention Procedure gives a client
@@ -35,15 +76,17 @@ export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../modules/claims/index.ts';
  * than writing "not approved" into a screen, so the day the data protection
  * officer approves it the reading changes with no second edit.
  */
-export { RET7 } from '../modules/claims/index.ts';
+export { RET7 } from '../modules/claims/documents/client-doc-ingestion.ts';
 
 /**
  * The host's backup cycle — NOT SET, a named blank on every deletion — the guard that
  * refuses to restore a deleted record without the data protection officer's approval, and RET-3's clock, AS THE
  * INGESTION MODULE STATES THEM. The deletion log in migration 022 and the retention list read them here and restate none.
  */
-export { BACKUP_CYCLE, knownBackupCycleDays, assertRestoreApproved, ret3DueAt } from '../modules/claims/index.ts';
-export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryClock } from '../modules/claims/index.ts';
+export {
+  BACKUP_CYCLE, knownBackupCycleDays, assertRestoreApproved, ret3DueAt,
+} from '../modules/claims/documents/client-doc-ingestion.ts';
+export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryClock } from '../modules/claims/documents/client-doc-ingestion.ts';
 
 /**
  * The deletion clock itself — and its rule that where two clocks are known the LATER governs (Word answer
@@ -51,12 +94,14 @@ export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryCl
  * dates src/modules/claims/documents.ts reads can be proved against the one function that
  * would turn them into a date. Nothing in src/ calls it: RET-7 is not approved.
  */
-export { deletionDueAt } from '../modules/claims/index.ts';
-export type { IngestionSettings, RawFileRecord } from '../modules/claims/index.ts';
+export { deletionDueAt } from '../modules/claims/documents/client-doc-ingestion.ts';
+export type { IngestionSettings, RawFileRecord } from '../modules/claims/documents/client-doc-ingestion.ts';
 
 /**
  * The legal-form test, the roles that are always a person, and the human-capture rule's role tokens and
  * backstop patterns, AS THE INGESTION MODULE STATES THEM. src/modules/assessment/conveyancing-strip.ts reads them here and restates none.
  */
-export { classifyPartyReference, ALWAYS_NATURAL_PERSON_ROLES, ROLE_TOKENS, CAPTURE_NAME_PATTERNS, assertHumanCaptureClean } from '../modules/claims/index.ts';
-export type { PartyLegalForm, PersonRole } from '../modules/claims/index.ts';
+export {
+  classifyPartyReference, ALWAYS_NATURAL_PERSON_ROLES, ROLE_TOKENS, CAPTURE_NAME_PATTERNS, assertHumanCaptureClean,
+} from '../modules/claims/documents/client-doc-ingestion.ts';
+export type { PartyLegalForm, PersonRole } from '../modules/claims/documents/client-doc-ingestion.ts';

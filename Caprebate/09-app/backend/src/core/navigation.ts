@@ -128,7 +128,7 @@ export const SECTIONS: readonly Section[] = Object.freeze([
   { key: 'introducer-rewards', href: '/staff/introducer-rewards', label: 'Introducer fees', gate: rewardModelGate },
   { key: 'calendar', href: '/staff/calendar', label: 'Calendar', gate: (a) => assertSection(a, 'booking.read') },
   { key: 'settings', href: '/staff/admin', label: 'Settings', gate: adminSettingsGate,
-    under: SETTINGS_TILES.map((t) => t.href) },
+    get under() { return SETTINGS_TILES.map((t) => t.href); } },
 ]);
 
 /**
