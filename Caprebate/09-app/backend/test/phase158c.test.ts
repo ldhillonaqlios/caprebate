@@ -78,7 +78,7 @@ describe('F34, F35 — the surveyor’s valuation is the surveyor’s approval o
 /* ================================================================== *
  * F38, F36 — the client report and the accountant's pack are the application's own report, never a typed fingerprint
  * ================================================================== */
-import * as R from '../src/web/claim-record.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
 
 const deliver = (app: App, claim: string, kind: string, action: string, extra: Record<string, string> = {}) =>
   R.recordDeliverable(CF.recordDeps(app), actor('SALES'), claim, { kind, action, ...extra });
@@ -135,7 +135,7 @@ describe('F38, F36 — reports issued from the survey report the surveyor approv
 
 describe('F38 — the issue form asks for no fingerprint where the application works it out', () => {
   test('no SHA-256 box for the client report or the accountant’s pack; the defence pack keeps its own', async () => {
-    const { deliverablesBlock } = await import('../src/web/claim-record-pages.ts');
+    const { deliverablesBlock } = await import('../src/modules/claims/claim-record-pages.ts');
     const app = await testApp(); staff(app);
     const c = claimAt(app, 'REPORTS');
     CF.signOffRow(app, c.business, c.assessment, c.claim, 195_000_00);
@@ -219,7 +219,7 @@ describe('F39 — the client accepts the report in the portal', () => {
 
 describe('F39 — the portal’s accept box and its route', () => {
   test('the box offers "I accept this report", then says when this login accepted it', async () => {
-    const { acceptBox } = await import('../src/web/report-pages.ts');
+    const { acceptBox } = await import('../src/modules/claims/report-pages.ts');
     const app = await testApp(); staff(app);
     const c = released(app);
     const me = clientLogin(app, c.business);
@@ -286,7 +286,7 @@ describe('F39 — what the portal says the team is working on, once the report i
 /* ================================================================== *
  * F37 — the amendment window, warned early, from the client's own date
  * ================================================================== */
-import * as F from '../src/web/claim-facts.ts';
+import * as F from '../src/modules/claims/claim-facts.ts';
 
 function said(app: App, assessment: string, label: string, month: string, entity = 'partnership'): void {
   for (const [ord, q, v] of [[0, 'Q2-1-address', label], [1, 'Q2-1-trigger', 'purchase'], [2, 'Q2-1-date', month], [3, 'Q2-1-entity', entity]] as const) {

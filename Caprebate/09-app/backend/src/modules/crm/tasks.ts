@@ -25,7 +25,7 @@
  * action completed, with none — a state to show, not a row to refuse.
  *
  * WHO IS WAITING IS NOT DECIDED HERE. The engaged-client list already answers it
- * — `whoIsWaiting` in src/web/engaged.ts, where both sides waiting reads as ours
+ * — `whoIsWaiting` in src/modules/claims/engaged.ts, where both sides waiting reads as ours
  * — and `waitingOn` beside it is how this file asks. There is no second ladder.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { localDate, localStamp, ukDate, dueWords } from '../../shared/index.ts';
 import { claimNaming, claimObjFor, claimWords, PRIORITIES, type Fields } from './crm.ts';
 import { anyStageLabel, claimStage } from '../../shared/index.ts';
-import { waitingOn, type WaitingOn } from '../../web/engaged.ts';
+import { waitingOn, type WaitingOn } from '../claims/engaged.ts';
 import { fireAutomation } from './automation.ts';
 import { mayTake, vocabLabel } from '../../web/vocabularies.ts';
 import { listUsersIdDisplayNameByRoleADM2 } from '../../core/index.ts';

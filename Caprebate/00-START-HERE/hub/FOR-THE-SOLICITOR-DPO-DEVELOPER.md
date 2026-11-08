@@ -1793,7 +1793,7 @@ Name:                                  Date:
 
  **What it is.** When we look a client's building up on a free public register we search on their postcode and score every entry the register holds at that postcode against the address they typed. A clear match pre-fills a figure the client then confirms or corrects. A close-but-not-certain match — the REVIEW band of the address matching specification — kept **nothing at all**, so the floor area, the age band, the registration and the sale price stayed as questions the client answers from memory. The specification always said what should happen instead: the ranked list goes to a person, and nothing is written until they resolve it. Until this phase there was nowhere to send it.
 
- **There is now a back-office screen that does exactly that, and it is switched off.** `PICK_SWITCHES.MATCH_REVIEW_PICK` in `src/web/match-review.ts` is false. Turning it on is one word, and it is yours to turn, not the developer's — because what it turns on is a screen that shows one client's staff a handful of **other buildings'** register entries on the way to picking the right one.
+ **There is now a back-office screen that does exactly that, and it is switched off.** `PICK_SWITCHES.MATCH_REVIEW_PICK` in `src/modules/claims/match-review.ts` is false. Turning it on is one word, and it is yours to turn, not the developer's — because what it turns on is a screen that shows one client's staff a handful of **other buildings'** register entries on the way to picking the right one.
 
  **Four limits are already built in, and none of them is something you have to ask for.**
 

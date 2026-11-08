@@ -20,8 +20,8 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import * as AC from '../src/modules/portal/accountant-confirm.ts';
 import type { Db } from '../src/core/db.ts';
 import type { AuditLog } from '../src/core/audit.ts';
-import * as F from '../src/web/claim-facts.ts';
-import * as R from '../src/web/claim-record.ts';
+import * as F from '../src/modules/claims/claim-facts.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
 import { allocateNumber } from '../src/web/invoices.ts';
 import { actor } from './helpers.ts';
 
@@ -364,7 +364,7 @@ export function claimInvoiceRow(
 }
 
 /**
- * PHASE 151b — THE DOCUMENTS THAT MUST ARRIVE, ARRIVED. MANDATORY_DOCUMENTS is on (src/web/mandatory-documents.ts), so a
+ * PHASE 151b — THE DOCUMENTS THAT MUST ARRIVE, ARRIVED. MANDATORY_DOCUMENTS is on (src/modules/claims/mandatory-documents.ts), so a
  * claim leaves DATA_GATHERING only once the client's tax return and tax computation are received, and the sale
  * contract and CPSE replies too where the client bought the building. A test that is about something else walks its
  * claim past the gate with this: the client did not buy the building (recorded NO, which excuses those two), and a

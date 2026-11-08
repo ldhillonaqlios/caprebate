@@ -426,7 +426,7 @@ export const DOC_SPECS: readonly DocSpec[] = [
   },
   /*
    * PHASE 157d — FOUR MORE TYPES THE CLAIM ASKS FOR (the Friary House run, F16). On Phase 129's recorded
-   * recommendation for each (src/web/receipt-recommendations.ts): strip the individuals, keep the figures. The
+   * recommendation for each (src/modules/claims/receipt-recommendations.ts): strip the individuals, keep the figures. The
    * completion statement and the accounts are read by the claim team only, so their figures are GATE, never
    * APPORTIONMENT (which sends a review to a surveyor). A contractor's invoice and plans are claim evidence, which a
    * surveyor reads.
@@ -1138,7 +1138,7 @@ export const HUMAN_CAPTURE_SPECS: readonly HumanCaptureDocSpec[] = [
     ],
     why: 'The same facts the retired Business Gateway lookup kept, less the one it could keep under Exception 2 — a ' +
       'personal owner\'s name — because a person reading a copy is not the register handing us a marked field. In the ' +
-      'back end a person types these on the property page (src/web/title-by-hand.ts), where they are stored as the ' +
+      'back end a person types these on the property page (src/modules/claims/title-by-hand.ts), where they are stored as the ' +
       'register source HMLR_TITLE, marked as entered by hand.',
   },
 ];

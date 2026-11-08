@@ -10,7 +10,7 @@
  * not open before. Each row is still asked of `organisation.read` on its own company.
  *
  * WHAT EACH COLUMN NEEDS IS ASKED PER ROW. "Waiting on" is built from the letter, the questions and the missing facts,
- * which is the research's rule (`research.read`, Admin and Sales). `waitingOn` in src/web/engaged.ts answers null for a
+ * which is the research's rule (`research.read`, Admin and Sales). `waitingOn` in src/modules/claims/engaged.ts answers null for a
  * login that rule refuses, so the view-only login sees company, status, owner and claims, and no waiting column — the
  * same as the organisations list showed it before this phase.
  */
@@ -20,7 +20,7 @@ import type { Actor } from '../../core/index.ts';
 import { organisationList, assertOrganisationSection, NOT_RECORDED, CLIENT_STATUSES, pipelineBoard, pipelineBoardGate } from './crm.ts';
 import { opens } from '../../core/navigation.ts';
 import { kpiRow, nobodyBadge, siteOf, stageBadge } from '../../core/index.ts';
-import { waitingOn, type WaitingOn } from '../../web/engaged.ts';
+import { waitingOn, type WaitingOn } from '../claims/engaged.ts';
 import { h, raw, page, type Safe } from '../../shared/index.ts';
 import { badge, claimHref } from '../../shared/index.ts';
 import { newFromClient } from './messages.ts';

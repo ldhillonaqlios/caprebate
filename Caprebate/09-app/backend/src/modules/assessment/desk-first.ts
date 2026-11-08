@@ -24,8 +24,8 @@
 import { isPricePaidLead } from './who-claims.ts';
 import type { Db } from '../../core/index.ts';
 import { checklistView, type ChecklistView } from '../../web/survey-evidence.ts';
-import { mandatoryDocumentNeeds } from '../../web/mandatory-documents.ts';
-import { latestFacts } from '../../web/claim-facts.ts';
+import { mandatoryDocumentNeeds } from '../claims/mandatory-documents.ts';
+import { latestFacts } from '../claims/claim-facts.ts';
 import { listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId } from '../../integrations/index.ts';
 
 export const DESK_FIRST_TEST = Object.freeze({

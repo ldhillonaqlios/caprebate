@@ -35,13 +35,13 @@ import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
 import { can, REGISTERED_ACTIONS, NotAuthorised, type Actor, type Obj } from '../src/core/authz.ts';
-import * as D from '../src/web/documents.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import * as T from '../src/modules/crm/tasks.ts';
 import * as TL from '../src/modules/crm/timeline.ts';
-import * as E from '../src/web/engaged.ts';
+import * as E from '../src/modules/claims/engaged.ts';
 import * as PO from '../src/modules/portal/portal.ts';
-import { acceptClientBytes, finishUpload, eventsFor, issuedJob } from '../src/web/uploads.ts';
+import { acceptClientBytes, finishUpload, eventsFor, issuedJob } from '../src/modules/claims/uploads.ts';
 import { DOC_SPECS, HUMAN_READ_ONLY_TYPES, RET7, quarantineKeyFor } from '../src/shared/upload-handler-port.ts';
 import { pdfOf } from './document-fixtures.ts';
 import { actor, signatureRecordFor } from './helpers.ts';
@@ -714,8 +714,8 @@ describe('extend, never rebuild — no event log, no second upload handler', () 
     } finally { w.close(); }
   });
 
-  test('src/ names the upload handler through the port alone, and src/web/documents.ts calls no step of the contract itself', () => {
-    const src = readFileSync(fileURLToPath(new URL('../src/web/documents.ts', import.meta.url)), 'utf8');
+  test('src/ names the upload handler through the port alone, and src/modules/claims/documents.ts calls no step of the contract itself', () => {
+    const src = readFileSync(fileURLToPath(new URL('../src/modules/claims/documents.ts', import.meta.url)), 'utf8');
     assert.equal(/04-phase-work/.test(src), false);
     for (const step of ['issueUploadUrl', 'recordUploadComplete', 'processUpload', 'applyReceiptPolicy']) {
       assert.equal(new RegExp(`\\b${step}\\s*\\(`).test(src), false, `documents.ts calls ${step}`);

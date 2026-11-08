@@ -2,13 +2,13 @@
  * TAKING SOMETHING BACK OUT OF THE CLAIM FILE — what two take-backs share. Phase 146j, 25 September 2026.
  *
  * Two decisions a person makes put register data into a client's file: choosing one entry from a close-match list
- * (src/web/match-review.ts, Phase 146h) and saying that a name on a client document belongs to an organisation
- * (src/web/document-reading.ts, Phase 146i). Both can now be taken back, in the shape Phase 139 uses for a fact
+ * (src/modules/claims/match-review.ts, Phase 146h) and saying that a name on a client document belongs to an organisation
+ * (src/modules/claims/document-reading.ts, Phase 146i). Both can now be taken back, in the shape Phase 139 uses for a fact
  * somebody ticked — a separate act that ASKS WHY and keeps the reason. Before either removes anything it has to answer
  * the same two questions, and they are answered HERE so the two cannot drift apart:
  *
  *   1 · HAS A PERSON ALREADY CHECKED AND APPROVED IT? A fact from a register record is named `reg.<record id>.<field>`
- *       on the checks panel (src/web/approvals.ts), and its state is its latest row in `fact_approvals`. Where that is
+ *       on the checks panel (src/modules/claims/approvals.ts), and its state is its latest row in `fact_approvals`. Where that is
  *       APPROVED, somebody has put their name to the value, and it does not vanish from under them: the take-back is
  *       refused and says so, and the tick comes off first, by its own act, with its own reason.
  *
@@ -85,7 +85,7 @@ const SIGNATORY_READS: Readonly<Record<string, string>> = Object.freeze({ CH_COM
  * the record does not change:
  *   · SITE_AREA — src/integrations/connectors/site-area.ts reads the property's point from Homedata's address record
  *     (`homedataPointOf`) and keeps the site area it works out from it, as a record of its own.
- *   · SIGNATORY_CHECK — `runSignatoryCheck` (src/web/research.ts) reads the company number from Companies House's
+ *   · SIGNATORY_CHECK — `runSignatoryCheck` (src/modules/claims/research.ts) reads the company number from Companies House's
  *     record and the care registration from the care regulator's, and keeps YES or NO. It does not ask again once it
  *     has one, so the check stands until a person looks at it.
  *   · CLIENT_TOLD — a step on the client's portal told as done since the record arrived, and not taken back. The

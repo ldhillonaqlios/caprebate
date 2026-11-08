@@ -14,7 +14,7 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { badge } from '../../shared/index.ts';
 import { localDate, localStamp, ukDate } from '../../shared/index.ts';
 import * as A from './accountant-confirm.ts';
-import { accountantFiles } from '../../web/claim-record.ts';
+import { accountantFiles } from '../claims/claim-record.ts';
 
 const KIND_WORDS: Readonly<Record<A.ConfirmKind, string>> = Object.freeze({
   RETURN_FIT: 'The claim fits the return and the amendment window',

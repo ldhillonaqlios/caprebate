@@ -23,11 +23,11 @@ import { clientProgress } from '../crm/tell-and-move.ts';
 import { STAGES } from '../../shared/index.ts';
 import { localClock, localDate, localPartsOf, ukDate, ukDatesIn, WEEKDAY_NAMES } from '../../shared/index.ts';
 import { unreadCount } from '../crm/messages.ts';
-import type { ClientStep } from '../../web/approvals.ts';
-import type { ClientDeliverable } from '../../web/claim-record.ts';
-import { releasedVersion } from '../../web/report-signoff.ts';
+import type { ClientStep } from '../claims/approvals.ts';
+import type { ClientDeliverable } from '../claims/claim-record.ts';
+import { releasedVersion } from '../claims/report-signoff.ts';
 import { myAcceptance } from './report-accept.ts';
-import { missingDocuments } from '../../web/mandatory-documents.ts';
+import { missingDocuments } from '../claims/mandatory-documents.ts';
 
 export type PortalDashInput = {
   readonly db: Db; readonly actor: Actor; readonly business_id: string; readonly nowIso: string;

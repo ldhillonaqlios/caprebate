@@ -42,7 +42,7 @@ import * as T from '../src/modules/crm/tasks.ts';
 import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 import { oneDriveOnly, oneDrivePath } from './onedrive-only.ts';
-import * as R from '../src/web/claim-record.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';

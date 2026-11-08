@@ -30,7 +30,7 @@ import {
 } from '../src/integrations/email/email-provider.ts';
 import * as F from '../src/modules/crm/free-email.ts';
 import { timelineFor } from '../src/modules/crm/timeline.ts';
-import { backendSwitchReadings } from '../src/web/case-stamp.ts';
+import { backendSwitchReadings } from '../src/modules/claims/case-stamp.ts';
 import { receiveFile } from '../src/modules/portal/client-files-pages.ts';
 import { KEEP_ORIGINALS_QUESTION } from '../src/shared/originals.ts';
 import { pdfOf } from './document-fixtures.ts';

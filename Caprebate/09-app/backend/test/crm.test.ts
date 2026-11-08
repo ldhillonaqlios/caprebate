@@ -499,7 +499,7 @@ describe('N1 and the role boundaries, over HTTP, on the seeded data', () => {
       // CRM 4 of 10 adds `documents`, built forwards from `document.read` — for ACCOUNTING the fee invoice
       // and the signed letter and nothing else (disposition row E38); test/documents.test.ts holds that.
       // Phase 132e adds `fee_discounts` — a proposed multi-site discount on our fee, recorded and never applied, which is
-      // money and nothing else (src/web/fee-discounts.ts, `fee_discount.read`).
+      // money and nothing else (src/modules/claims/fee-discounts.ts, `fee_discount.read`).
       assert.deepEqual(Object.keys(body).sort(), ['claim_ref', 'client', 'documents', 'fee_discounts', 'id', 'may_write', 'money', 'timeline']);
       assert.equal(body['claim_ref'], claim.claim_ref);
       assert.ok(Array.isArray(body['money']) && body['money'].length >= 1, 'the money is missing');

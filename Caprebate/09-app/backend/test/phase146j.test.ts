@@ -30,19 +30,19 @@ import { fixtureTransport, RateLimiter, type Fixture } from '../src/integrations
 import * as C from '../src/integrations/connectors/registers.ts';
 import { secretsFromValues, forgetRegisteredSecretsForTest } from '../src/core/secrets.ts';
 import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-port.ts';
-import * as R from '../src/web/research.ts';
-import * as MR from '../src/web/match-review.ts';
+import * as R from '../src/modules/claims/research.ts';
+import * as MR from '../src/modules/claims/match-review.ts';
 import * as TB from '../src/modules/portal/take-back.ts';
 import { REGISTRY } from '../src/shared/engine.ts';
-import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../src/web/signing.ts';
+import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../src/modules/claims/signing.ts';
 import { seed } from '../src/core/seed.ts';
 import { createUser, newId } from '../src/core/users.ts';
 import { ingestRegisterRecord, removeRegisterField, removeRegisterRecord } from '../src/integrations/register-ingest.ts';
 import { createApp } from '../src/core/server.ts';
 import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../src/integrations/connectors/claude.ts';
-import { acceptClientBytes, finishUpload, issuedJob, type ReadingOutcome, type UploadDeps, type UploadReading } from '../src/web/uploads.ts';
-import * as D from '../src/web/documents.ts';
-import { discriminantsFor, earlyVouchesFrom, vouchesFor, vouchView } from '../src/web/document-reading.ts';
+import { acceptClientBytes, finishUpload, issuedJob, type ReadingOutcome, type UploadDeps, type UploadReading } from '../src/modules/claims/uploads.ts';
+import * as D from '../src/modules/claims/documents.ts';
+import { discriminantsFor, earlyVouchesFrom, vouchesFor, vouchView } from '../src/modules/claims/document-reading.ts';
 import { earlyQuestions } from '../src/modules/portal/client-files-pages.ts';
 import { docxOf } from './document-fixtures.ts';
 import { testApp, actor } from './helpers.ts';
@@ -345,7 +345,7 @@ describe('1 · taking back a pick: a separate act, with a reason, that removes t
     app.db.run("UPDATE research_sources SET detail = 'close, and not close enough' WHERE business_id = ? AND source_id = 'EPC'", [id]);
     const row = R.sourcesFor(app.db, me, id).sources.find((x) => x.source_id === 'EPC');
     assert.deepEqual([row?.taken_back?.reason, row?.taken_back?.look_again], [REASON, ['a step the client was told was done']]);
-    assert.match(readFileSync(join(SRC, 'web', 'engaged-pages.ts'), 'utf8'), /A choice here was taken back \$\{localStamp\(x\.taken_back\.at\)\}/);
+    assert.match(readFileSync(join(SRC, 'modules', 'claims', 'engaged-pages.ts'), 'utf8'), /A choice here was taken back \$\{localStamp\(x\.taken_back\.at\)\}/);
     // and nothing it lists was changed: the step still reads as told
     assert.equal(app.db.all("SELECT id FROM client_step_notices WHERE business_id = ? AND action = 'TOLD'", [id]).length, 1);
     app.close();
@@ -709,7 +709,7 @@ describe('2b · the question asked before the first reading, where the type is c
     assert.match(html, /name="vouch_grant_funder_name" value="yes"/);
     assert.match(html, /name="vouch_grant_funder_name" value="" checked> Leave it for now/);
     // the three staff forms carry it, and the portal's does not
-    const pages = readFileSync(join(SRC, 'web', 'documents-pages.ts'), 'utf8');
+    const pages = readFileSync(join(SRC, 'modules', 'claims', 'documents-pages.ts'), 'utf8');
     assert.equal((pages.match(/earlyQuestions\(p\.early_questions/g) ?? []).length, 2, 'the claim page’s request and upload forms');
     assert.match(readFileSync(join(SRC, 'modules', 'portal', 'client-files-pages.ts'), 'utf8'), /earlyQuestions\(f\.early_questions/);
     // and the form where staff say what a file that came by email is, which hands the answer to the same upload path
@@ -780,11 +780,11 @@ describe('3 · one door out, the tables that keep both facts, and the routes', (
   });
 
   test('S4 — BOTH TAKE-BACKS ARE POSTS, carry what they need and nothing else, and are drawn only where there is something to take back', () => {
-    const engaged = readFileSync(join(SRC, 'web', 'engaged-pages.ts'), 'utf8');
+    const engaged = readFileSync(join(SRC, 'modules', 'claims', 'engaged-pages.ts'), 'utf8');
     assert.match(engaged, /research\\\/pick\\\/take-back\$\/\.exec\(path\);\n\s*if \(takeBack && method === 'POST'\)/);
     assert.match(engaged, /MR\.takeBackPick\(deps, actor, id, f\.get\('source_id'\) \?\? '', f\.get\('reason'\)\)/);
     assert.match(engaged, /x\.picked && s\.engagement\.signed \? h`/);
-    const docs = readFileSync(join(SRC, 'web', 'documents-pages.ts'), 'utf8');
+    const docs = readFileSync(join(SRC, 'modules', 'claims', 'documents-pages.ts'), 'utf8');
     assert.match(docs, /vouch\\\/withdraw\$\/\.exec\(path\);\n\s*if \(docWithdraw && method === 'POST'\)/);
     assert.match(docs, /D\.withdrawVouch\(deps, actor, id, f\.get\('field_id'\) \?\? '', f\.get\('reason'\)\)/);
     assert.match(docs, /v\.may_withdraw \? h`/);

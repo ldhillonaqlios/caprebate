@@ -56,11 +56,11 @@ import { outboxTransport, STUB_NOTICE } from '../../integrations/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
 import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
-import { missingFacts } from '../../web/engaged.ts';
+import { missingFacts } from '../claims/engaged.ts';
 import { POOL_ROLES, addDaysToDate, insertTask } from './tasks.ts';
 import { claimWords, type Fields } from './crm.ts';
 import { mayTake, vocabLabel } from '../../web/vocabularies.ts';
-import { createDocumentRequest, NO_RECEIPT_POLICY } from '../../web/documents.ts';
+import { createDocumentRequest, NO_RECEIPT_POLICY } from '../claims/documents.ts';
 import { getUsersEmailRoleById, getUsersRoleDisabledAtById } from '../../core/index.ts';
 
 export type AutomationDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };

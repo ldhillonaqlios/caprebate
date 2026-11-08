@@ -37,8 +37,8 @@ import { whatsappPage } from './whatsapp-page.ts';
 import { communicate, composer } from './communication.ts';
 import { boundaryOf, parseMultipart, piecedFields, type Part } from '../../core/index.ts';
 import { UPLOAD_LIMITS } from '../../shared/upload-handler-port.ts';
-import { earlyQuestionsFor, receivableTypes } from '../../web/documents.ts';
-import { earlyVouchesFrom } from '../../web/document-reading.ts';
+import { earlyQuestionsFor, receivableTypes } from '../claims/documents.ts';
+import { earlyVouchesFrom } from '../claims/document-reading.ts';
 import { cleanField } from '../../core/index.ts';
 import { piecesPage } from '../../core/index.ts';
 

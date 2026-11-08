@@ -413,7 +413,7 @@ describe('the allowance and profit comparison — built, empty, off, and unroute
    * NOTHING UNDER src CAN RUN IT. Phase 132, 14 September 2026.
    *
    * WHAT IS ALLOWED, AND WHY THE SCAN IS NOT "NO MENTION AT ALL". Another Phase 132
-   * workstream's src/web/case-stamp.ts imports `ALLOWANCE_PROFIT_COMPARISON` — the
+   * workstream's src/modules/claims/case-stamp.ts imports `ALLOWANCE_PROFIT_COMPARISON` — the
    * frozen switch object — to list every switch and its position, and that file is
    * reached from the claim record. Reading a switch's position runs nothing. So the
    * scan permits an import of that one name and refuses everything else: an import

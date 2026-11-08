@@ -19,7 +19,7 @@
  *   · none of the new records is ever edited or deleted; the sent link leaves the outbox.
  */
 // PHASE 159e: the report's allowances read the facts the version was sent on.
-import { contextForApproval } from '../src/web/return-entries.ts';
+import { contextForApproval } from '../src/modules/claims/return-entries.ts';
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -34,12 +34,12 @@ import { packView, savePackValue, saveLine, setLineRemoved } from '../src/web/su
 import { answerLegal, legalView } from '../src/web/pack-legal.ts';
 import { approvePack, approvedVersion, saveDetails } from '../src/web/pack-approve.ts';
 import { chaptersToRead } from '../src/web/pack-chapters.ts';
-import * as S from '../src/web/report-signoff.ts';
+import * as S from '../src/modules/claims/report-signoff.ts';
 import { setBasis } from '../src/web/survey-evidence.ts';
 import { blankSentSecrets, SENT_SECRET_BODY } from '../src/integrations/email/email-provider.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import * as P from '../src/modules/crm/pipeline.ts';
-import * as R from '../src/web/claim-record.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
 import { actor } from './helpers.ts';
 import { plainDashes } from '../src/shared/plain-dashes.ts';
 

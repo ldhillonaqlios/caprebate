@@ -184,7 +184,7 @@ test('161b: pages carry the tokens in our POST forms, a sensitive form its singl
     for (const f of forms) assert.ok((f[1] ?? '').startsWith(`<input type="hidden" name="${FORM_FIELD}" value="${t.token('admin')}">`), 'every POST form starts with the token');
     const create = /<form\b[^>]*action="\/staff\/users\/create"[^>]*>([\s\S]{0,400})/i.exec(page.body);
     assert.ok(create !== null && (create[1] ?? '').includes(`name="${ONCE_FIELD}"`), 'the create form has a single-use token');
-    for (const f of ['modules/assessment/address-lookup-script.ts', 'web/photo-upload-script.ts', 'web/register-import-script.ts', 'core/upload-pieces-script.ts', 'modules/crm/whatsapp-import-script.ts']) {
+    for (const f of ['modules/assessment/address-lookup-script.ts', 'web/photo-upload-script.ts', 'modules/claims/register-import-script.ts', 'core/upload-pieces-script.ts', 'modules/crm/whatsapp-import-script.ts']) {
       const s = readFileSync(join(BACKEND, 'src', f), 'utf8');
       assert.match(s, /meta\[name="cb-form"\]/, `${f} reads the token`);
       assert.match(s, /'x-cb-form': cbForm\(\)/, `${f} sends it`);

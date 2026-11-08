@@ -7,7 +7,7 @@
  * usual checks, and if one blocks, the client is still told and staff see what is stopping the move.
  *
  * ONE PRESS, THREE THINGS, IN THIS ORDER:
- *   1 · TOLD. `tellClient` (src/web/approvals.ts), unchanged: only a complete step, only once. The portal's "What Cap
+ *   1 · TOLD. `tellClient` (src/modules/claims/approvals.ts), unchanged: only a complete step, only once. The portal's "What Cap
  *       Rebate has done" card shows it with the date — never a fact, a value or a figure.
  *   2 · EMAILED. One email to the company's address (else its first contact with one): what we have done, and, where a
  *       claim moved, the next phase in the client's own step names; and the portal's address. Sent when email sending is
@@ -23,7 +23,7 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import type { Actor } from '../../core/index.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
-import { checksPanel, stepDef, tellClient, type ChecksPanel, type StepView } from '../../web/approvals.ts';
+import { checksPanel, stepDef, tellClient, type ChecksPanel, type StepView } from '../claims/approvals.ts';
 import { gateOut, loadPipelineClaim, moveClaim } from './pipeline.ts';
 import { claimStage, clientStageFor, nextProcedureKey, STAGES, type ProcedureKey } from '../../shared/index.ts';
 import { PROPOSED_STEP_NAMES } from '../portal/portal-steps.ts';

@@ -12,9 +12,9 @@ import { testApp, actor } from './helpers.ts';
 import type { App } from '../src/core/app.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import * as CF from './claim-fixtures.ts';
-import { ENGAGEMENT_SIGNING_TEST, letterFacts, shownLetter, signEngagement } from '../src/web/signing.ts';
-import { TEST_LETTER_PATH } from '../src/web/letter.ts';
-import { sendEngagementLetter } from '../src/web/engagement-send.ts';
+import { ENGAGEMENT_SIGNING_TEST, letterFacts, shownLetter, signEngagement } from '../src/modules/claims/signing.ts';
+import { TEST_LETTER_PATH } from '../src/modules/claims/letter.ts';
+import { sendEngagementLetter } from '../src/modules/claims/engagement-send.ts';
 import { portalDashboard } from '../src/modules/portal/portal-dashboard.ts';
 
 const T0 = '2026-10-09T09:00:00.000Z';
@@ -178,7 +178,7 @@ describe('F44 — "Data gathering complete — floor area sourced" needs a floor
 /* ================================================================== *
  * F45 — one purchase date, and the client's year end, read by the window
  * ================================================================== */
-import * as F from '../src/web/claim-facts.ts';
+import * as F from '../src/modules/claims/claim-facts.ts';
 
 /** The surveyor's answer to the legal check's G9d ("On what date did that happen?") on a pack on this claim. */
 function surveyorSaid(app: App, c: { business: string; assessment: string; claim: string }, iso: string): void {
@@ -257,7 +257,7 @@ describe('F45 — the window reads the purchase date and year end the client or 
  * F46 — the client's accountant confirms for themselves
  * ================================================================== */
 import * as AC from '../src/modules/portal/accountant-confirm.ts';
-import * as R from '../src/web/claim-record.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
 
 function accountantContact(app: App, business: string): string {
   const id = randomUUID();

@@ -14,9 +14,9 @@ import { createApp } from '../src/core/server.ts';
 import {
   ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST, checkSignature, shownLetter, signEngagement, signingHere, signingMissing,
   letterFacts,
-} from '../src/web/signing.ts';
-import { TEST_LETTER_PATH } from '../src/web/letter.ts';
-import { sendEngagementLetter } from '../src/web/engagement-send.ts';
+} from '../src/modules/claims/signing.ts';
+import { TEST_LETTER_PATH } from '../src/modules/claims/letter.ts';
+import { sendEngagementLetter } from '../src/modules/claims/engagement-send.ts';
 import { docxOf } from './document-fixtures.ts';
 import { actor, testApp } from './helpers.ts';
 

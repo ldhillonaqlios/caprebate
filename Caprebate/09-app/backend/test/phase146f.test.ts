@@ -40,12 +40,12 @@ import { scheduleBooking } from '../src/core/backoffice.ts';
 import { moveOwnBooking, cancelOwnBooking } from '../src/modules/portal/portal.ts';
 import {
   ENGAGEMENT_SIGNING, SIGNING_QUESTION, checkSignature, shownLetter, signEngagement, signingMissing, type EngagementSigning,
-} from '../src/web/signing.ts';
-import { assertSignedEngagement } from '../src/web/research.ts';
+} from '../src/modules/claims/signing.ts';
+import { assertSignedEngagement } from '../src/modules/claims/research.ts';
 import { ANALYTICS_CSP, ga4MeasurementId, sitePolicy, withMeasurementId } from '../src/integrations/analytics.ts';
 import { SITE_PAGE_CSP } from '../src/modules/public-site/public-site.ts';
 import { STUBS } from '../src/core/app.ts';
-import { backendSwitchReadings } from '../src/web/case-stamp.ts';
+import { backendSwitchReadings } from '../src/modules/claims/case-stamp.ts';
 import { docxOf } from './document-fixtures.ts';
 
 const T0 = '2026-09-22T09:00:00.000Z';
@@ -499,11 +499,11 @@ describe('6 · Google Analytics: the id is configuration, and the policy widens 
 describe('the stub list and the switches say what is true', () => {
   test('the signature entry names the built-in signature and says it is off; the email entry names IONOS', () => {
     const sig = STUBS.find((s) => s.id === 'signature');
-    assert.equal(sig?.module, 'src/web/signing.ts');
+    assert.equal(sig?.module, 'src/modules/claims/signing.ts');
     assert.match(sig?.what ?? '', /BUILT IN by Phase 146f and switched off/);
     assert.match(STUBS.find((s) => s.id === 'email')?.what ?? '', /pointed it at IONOS/);
   });
   test('ENGAGEMENT_SIGNING is stamped on every claim, off', () => {
-    assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'ENGAGEMENT_SIGNING'), { switch: 'ENGAGEMENT_SIGNING', on: false, home: 'src/web/signing.ts' });
+    assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'ENGAGEMENT_SIGNING'), { switch: 'ENGAGEMENT_SIGNING', on: false, home: 'src/modules/claims/signing.ts' });
   });
 });

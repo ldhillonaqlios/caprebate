@@ -181,7 +181,7 @@ function periodsFrom(first: Period | null, count: number): (Period | null)[] {
 }
 
 /** The allowances for one approved version. `period_start` and `is_company` are the claim's, as the return entries read
- *  them (one source: src/web/claim-route.ts purchasePeriod); `facts` as they stood when it was sent. */
+ *  them (one source: src/modules/claims/claim-route.ts purchasePeriod); `facts` as they stood when it was sent. */
 export function allowancesFor(s: Snapshot, ctx: { period_start: string | null; is_company: boolean | null; facts?: AllowanceFacts | null }): Allowances {
   const facts = ctx.facts ?? NO_FACTS;
   const isCo = ctx.is_company;

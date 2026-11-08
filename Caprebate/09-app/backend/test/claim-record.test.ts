@@ -49,9 +49,9 @@ import { can, REGISTERED_ACTIONS, NotAuthorised, type Obj } from '../src/core/au
 import { RELEASED_FACTS_TO_SURVEYOR } from '../src/payload.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import * as P from '../src/modules/crm/pipeline.ts';
-import * as F from '../src/web/claim-facts.ts';
-import * as R from '../src/web/claim-record.ts';
-import * as D from '../src/web/documents.ts';
+import * as F from '../src/modules/claims/claim-facts.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import * as T from '../src/modules/crm/tasks.ts';
 import { actor, scalars, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';

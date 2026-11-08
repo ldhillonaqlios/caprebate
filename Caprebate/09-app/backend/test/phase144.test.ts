@@ -20,7 +20,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import type { Actor } from '../src/core/authz.ts';
-import * as D from '../src/web/documents.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import { KEEP_ORIGINALS_QUESTION } from '../src/shared/originals.ts';
 import { pdfOf } from './document-fixtures.ts';
 import { PLAIN_SWAPS } from '../src/shared/voice.ts';

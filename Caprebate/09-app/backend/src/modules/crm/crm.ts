@@ -41,7 +41,7 @@ import {
   EXITS, LEGACY_STAGE_TO_PROCEDURE, anyStageLabel, claimStage, nextProcedureKey, procedureIndex, stage as stageOf,
   type ProcedureKey,
 } from '../../shared/index.ts';
-import { assertSignedEngagement } from '../../web/research.ts';
+import { assertSignedEngagement } from '../claims/research.ts';
 import {
   BOARD_COLUMNS, FEE_TRIGGER, FEE_TRIGGERS, liveFeeInvoiceCount, loadPipelineClaim, pipelinePanel, recordOpened, type PipelinePanel,
 } from './pipeline.ts';
@@ -53,20 +53,20 @@ import { claimMoneyLines, type ClaimMoneyLine } from '../../web/invoices.ts';
 import { claimTaskPanel, followUpsFor, type ClaimTaskPanel } from './tasks.ts';
 import { lastContactFor, timelineIfPermitted, type Timeline } from './timeline.ts';
 import { fireAutomation } from './automation.ts';
-import { claimDocumentsPanel, type ClaimDocumentsPanel, organisationDocumentsPanel, propertyDocumentsPanel, type PlaceDocumentsPanel } from '../../web/documents.ts';
-import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from '../../web/claim-facts.ts';
+import { claimDocumentsPanel, type ClaimDocumentsPanel, organisationDocumentsPanel, propertyDocumentsPanel, type PlaceDocumentsPanel } from '../claims/documents.ts';
+import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from '../claims/claim-facts.ts';
 import { propertyTenure, ROLE_LABELS } from '../assessment/who-claims.ts';
 import {
   aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask,
   type AftercarePanel, type DeliverablesPanel, type FiguresPanel,
-} from '../../web/claim-record.ts';
+} from '../claims/claim-record.ts';
 import { assembleReleasedFacts, type ReleasedFacts } from '../../payload.ts';
 import { vocabChoice, vocabLabel } from '../../web/vocabularies.ts';
 import { funnelStateFor } from '../assessment/funnel-session.ts';
 import { expectedFeeFor } from '../assessment/vat.ts';
-import { latestSignOff } from '../../web/claim-record.ts';
+import { latestSignOff } from '../claims/claim-record.ts';
 import { LEAD_ORIGINS } from './leads.ts';
-import { discountsFor, type FeeDiscountView } from '../../web/fee-discounts.ts';
+import { discountsFor, type FeeDiscountView } from '../claims/fee-discounts.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId4 } from '../../integrations/index.ts';
 import { listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleDisabledAt } from '../../core/index.ts';
 

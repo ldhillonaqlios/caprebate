@@ -14,7 +14,7 @@
  *   · the job has its locked estimate (approving commits the figures, which releases it — the existing rule);
  *   · this exact state of the pack is not already approved;
  *   · PHASE 159a (C3, C5, L3): the claim is not past the tax adviser's sign-off, and has not stopped. After that the
- *     signed figures are fixed, and only "Reopen the valuation" on the claim page changes that (src/web/valuation-lock.ts).
+ *     signed figures are fixed, and only "Reopen the valuation" on the claim page changes that (src/modules/claims/valuation-lock.ts).
  *
  * ONE CLICK, AND THEN: the whole report as it stands is written down as one JSON document (keys in a fixed order), its
  * SHA-256 is its fingerprint, and both are kept for ever as the next version. In the same transaction the surveyor's
@@ -22,8 +22,8 @@
  * own stages read them exactly as before. If any of that is refused, nothing is kept. The form carries both counters,
  * so a page drawn before a change cannot approve the changed pack, and a second click on the same state is refused.
  */
-import { claimRoutes } from './claim-route.ts';
-import { yearEndKnown } from './claim-facts.ts';
+import { claimRoutes } from '../modules/claims/claim-route.ts';
+import { yearEndKnown } from '../modules/claims/claim-facts.ts';
 import { REPORT_ASSUMPTIONS } from '../modules/assessment/report-assumptions.ts';
 import { sheetsForVersion } from './pack-sheets.ts';
 import { createHash } from 'node:crypto';
@@ -35,8 +35,8 @@ import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { basisOf, checklistView, evidenceByLine, walkthroughsOf } from './survey-evidence.ts';
 import { findingSeen } from '../shared/index.ts';
 import { videosOf } from './survey-video.ts';
-import { sitePlanOf, type SitePlan } from './site-plan.ts';
-import { valuationLock } from './valuation-lock.ts';
+import { sitePlanOf, type SitePlan } from '../modules/claims/site-plan.ts';
+import { valuationLock } from '../modules/claims/valuation-lock.ts';
 import { getUsersNById } from '../core/index.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
@@ -247,7 +247,7 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     vat: { position: v.vat.position, amount_pence: v.vat.amount_pence, counted_pence: v.vat.counted_pence, words: v.vat.words },
     // PHASE 153e (Word question 145): the planning assumption, frozen with the version (a test reading for the surveyor).
     assumptions: [...REPORT_ASSUMPTIONS],
-    // 2 Oct 2026, stage 6: the site plan as it stood at approval (src/web/site-plan.ts), so the report never changes after.
+    // 2 Oct 2026, stage 6: the site plan as it stood at approval (src/modules/claims/site-plan.ts), so the report never changes after.
     // Only when there is one: a version approved without a plan keeps the shape every earlier version has.
     ...siteOf(d, v.job.id),
     // PHASE 153g: chapters 5, 8, 11, 14, 16 to 20 and 22, as they stood at approval (src/web/pack-sheets.ts).
@@ -271,7 +271,7 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     // residual way beside the proportional one. A version approved before has none and reads as it did.
     pricing: { priced_at: v.pricing.priced_at, purchase: v.pricing.purchase, bcis_kind: v.pricing.bcis.kind, bcis_words: v.pricing.bcis.words,
       location: v.pricing.bcis.location, residual_pence: v.pricing.residual.qualifying_pence },
-    // PHASE 159d (item 6): which way each part of the claim goes in, as it stood at approval (src/web/claim-route.ts).
+    // PHASE 159d (item 6): which way each part of the claim goes in, as it stood at approval (src/modules/claims/claim-route.ts).
     ...(v.job.claim_id === null ? {} : { routes: claimRoutes(d.db, { id: v.job.claim_id, business_id: v.job.business_id, property_id: v.property?.id ?? null }, a.at)
       /* PHASE 159e (items 4, 7, 8): with each part's own period and, for W2, the first open one — so the return entries
          put each spend in its own period from the facts as they stood at approval, the same period the window read. */

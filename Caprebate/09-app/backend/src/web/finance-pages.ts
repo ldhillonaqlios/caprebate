@@ -7,7 +7,7 @@
  *
  * NOTHING HERE DECIDES ANYTHING. src/web/finance.ts (an organisation's invoices
  * from before), src/web/invoices.ts (a claim's), src/modules/assessment/vat.ts and
- * src/web/fee-controls.ts do every authorisation and every derivation; this
+ * src/modules/claims/fee-controls.ts do every authorisation and every derivation; this
  * draws what they return. In particular the fee-versus-benefit comparison is
  * rendered exactly as the engine computed it, including its three-valued answer;
  * a due date nobody set is drawn as UNSET; and a blank in the engagement letter is

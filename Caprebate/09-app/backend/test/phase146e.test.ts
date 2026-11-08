@@ -19,7 +19,7 @@ import * as CL from '../src/integrations/connectors/claude.ts';
 import {
   extractPages, isMarkerPages, isScanMarker, pdfPageImages, UNREADABLE_MARKER_PREFIX,
 } from '../src/shared/extract-text.ts';
-import { documentTextExtractor } from '../src/web/uploads.ts';
+import { documentTextExtractor } from '../src/modules/claims/uploads.ts';
 import {
   extract, sanitise, PERSON_REVIEW_BY_DOC_TYPE, specFor, type ModelPayload, type Segment,
 } from '../src/modules/claims/documents/document-pipeline.ts';

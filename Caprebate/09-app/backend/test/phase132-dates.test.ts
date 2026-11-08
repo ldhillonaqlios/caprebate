@@ -1,7 +1,7 @@
 /**
  * PHASE 132 — A MONTH THAT DOES NOT HAVE THE DAY ENDS ON ITS LAST DAY. 15 September 2026.
  *
- * src/web/claim-record.ts's addMonths built `Date.UTC(y, m - 1 + months, d)`, which rolls a day the target month does
+ * src/modules/claims/claim-record.ts's addMonths built `Date.UTC(y, m - 1 + months, d)`, which rolls a day the target month does
  * not have into the next month: 29 February 2024 plus twelve months read 1 March 2025, 31 January plus one read
  * 3 March. The enquiry window after a filing is twelve months, so a filing on 29 February was held open a day too long.
  * The engine's CB_CASH.addMonths was clamped on 14 September; this is the same rule.
@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import * as C from '../src/modules/crm/crm.ts';
 import * as P from '../src/modules/crm/pipeline.ts';
-import * as R from '../src/web/claim-record.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
 import * as T from '../src/modules/crm/tasks.ts';
 import { actor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';

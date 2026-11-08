@@ -57,7 +57,7 @@ import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { outboxTransport } from '../../integrations/index.ts';
-import { loadLetter, type OpenTerm } from '../../web/letter.ts';
+import { loadLetter, type OpenTerm } from '../claims/letter.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
 import { PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';

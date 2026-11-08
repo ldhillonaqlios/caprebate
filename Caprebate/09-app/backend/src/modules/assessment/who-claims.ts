@@ -324,7 +324,7 @@ export function sameName(a: string, b: string): boolean {
 /**
  * IS THE PERSON THE REGISTER NAMES ONE OF THE CLIENT'S OWN PEOPLE? Asked in memory, and only the answer is kept — as
  * the officers check does (Word answer 156). A sole trader's or a partnership's building is registered to the people
- * themselves, so the company number cannot match it (src/web/claim-route.ts stillOwned).
+ * themselves, so the company number cannot match it (src/modules/claims/claim-route.ts stillOwned).
  */
 export function personIsClients(db: Db, business_id: string, registerName: string): boolean {
   return db.all<{ full_name: string }>('SELECT full_name FROM contacts WHERE business_id = ?', [business_id]).some((c) => sameName(c.full_name, registerName));

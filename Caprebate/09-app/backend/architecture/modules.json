@@ -619,11 +619,11 @@
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/approvals-pages.ts": {
+  "src/modules/claims/approvals-pages.ts": {
    "area": "claims",
    "kind": "page"
   },
-  "src/web/approvals.ts": {
+  "src/modules/claims/approvals.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -659,27 +659,27 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/case-stamp.ts": {
+  "src/modules/claims/case-stamp.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/claim-facts.ts": {
+  "src/modules/claims/claim-facts.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/claim-overview.ts": {
+  "src/modules/claims/claim-overview.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/claim-record-pages.ts": {
+  "src/modules/claims/claim-record-pages.ts": {
    "area": "claims",
    "kind": "page"
   },
-  "src/web/claim-record.ts": {
+  "src/modules/claims/claim-record.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/claim-route.ts": {
+  "src/modules/claims/claim-route.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -775,7 +775,7 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/defence-pack.ts": {
+  "src/modules/claims/defence-pack.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -787,15 +787,15 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/document-reading.ts": {
+  "src/modules/claims/document-reading.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/documents-pages.ts": {
+  "src/modules/claims/documents-pages.ts": {
    "area": "claims",
    "kind": "page"
   },
-  "src/web/documents.ts": {
+  "src/modules/claims/documents.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -803,15 +803,15 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/engaged-pages.ts": {
+  "src/modules/claims/engaged-pages.ts": {
    "area": "claims",
    "kind": "page"
   },
-  "src/web/engaged.ts": {
+  "src/modules/claims/engaged.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/engagement-send.ts": {
+  "src/modules/claims/engagement-send.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -827,11 +827,11 @@
    "area": "survey",
    "kind": "page"
   },
-  "src/web/fee-controls.ts": {
+  "src/modules/claims/fee-controls.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/fee-discounts.ts": {
+  "src/modules/claims/fee-discounts.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -915,7 +915,7 @@
    "area": "public-site",
    "kind": "page"
   },
-  "src/web/letter.ts": {
+  "src/modules/claims/letter.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -923,15 +923,15 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/mandatory-documents.ts": {
+  "src/modules/claims/mandatory-documents.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/match-review-pages.ts": {
+  "src/modules/claims/match-review-pages.ts": {
    "area": "claims",
    "kind": "page"
   },
-  "src/web/match-review.ts": {
+  "src/modules/claims/match-review.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -1027,7 +1027,7 @@
    "area": "public-site",
    "kind": "page"
   },
-  "src/web/property-events.ts": {
+  "src/modules/claims/property-events.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -1035,15 +1035,15 @@
    "area": "public-site",
    "kind": "page"
   },
-  "src/web/receipt-recommendations.ts": {
+  "src/modules/claims/receipt-recommendations.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/register-files.ts": {
+  "src/modules/claims/register-files.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/register-import-script.ts": {
+  "src/modules/claims/register-import-script.ts": {
    "area": "claims",
    "kind": "other"
   },
@@ -1055,19 +1055,19 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/web/report-pages.ts": {
+  "src/modules/claims/report-pages.ts": {
    "area": "claims",
    "kind": "page"
   },
-  "src/web/report-signoff.ts": {
+  "src/modules/claims/report-signoff.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/research.ts": {
+  "src/modules/claims/research.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/return-entries.ts": {
+  "src/modules/claims/return-entries.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -1095,19 +1095,19 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/signing.ts": {
+  "src/modules/claims/signing.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/site-area-inputs.ts": {
+  "src/modules/claims/site-area-inputs.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/site-area-run.ts": {
+  "src/modules/claims/site-area-run.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/site-plan.ts": {
+  "src/modules/claims/site-plan.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -1183,15 +1183,15 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/web/title-by-hand.ts": {
+  "src/modules/claims/title-by-hand.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/uploads.ts": {
+  "src/modules/claims/uploads.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/web/valuation-lock.ts": {
+  "src/modules/claims/valuation-lock.ts": {
    "area": "claims",
    "kind": "logic"
   },

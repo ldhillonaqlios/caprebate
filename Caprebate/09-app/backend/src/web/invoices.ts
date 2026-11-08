@@ -2,7 +2,7 @@
  * FINANCE ON THE CLAIM — INVOICES, CREDIT NOTES AND MONEY RECEIVED.
  * CRM 7 of 10, 11 September 2026.
  *
- * The schema is migration 016; the fee is src/web/fee-controls.ts; the VAT and
+ * The schema is migration 016; the fee is src/modules/claims/fee-controls.ts; the VAT and
  * its monitoring are src/modules/assessment/vat.ts; the pages are src/web/finance-pages.ts. The
  * scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 13.
  *
@@ -43,19 +43,19 @@ import { formatPence, toPence } from '../shared/index.ts';
 import { addDaysToDate, dueReading, taskObj, type DueReading } from '../modules/crm/tasks.ts';
 import { claimStage } from '../shared/index.ts';
 import { enteredAt, feeTriggerReached, liveFeeInvoiceCount, loadPipelineClaim, reportDeliveredOn, type FeeTrigger } from '../modules/crm/pipeline.ts';
-import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from './claim-record.ts';
+import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from '../modules/claims/claim-record.ts';
 import { claimantTypeForGate, claimObjFor } from '../modules/crm/crm.ts';
 import {
   computeFee, controlsView, letterFee, letterFees, FEE_CONTROLS, PAYMENT_TERMS_QUESTION,
   type ControlsView, type FeeControls,
-} from './fee-controls.ts';
+} from '../modules/claims/fee-controls.ts';
 import {
   ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading,
   type SettingsView, type VatReading,
 } from '../modules/assessment/vat.ts';
 import { assertFinanceSection, feeVersusBenefit, financeSectionObj, type FeeVersusBenefit } from './finance.ts';
 import { feeList, onClause13Credit, onFeeInvoiced, type FeeView } from '../modules/crm/introducers.ts';
-import type { Letter } from './letter.ts';
+import type { Letter } from '../modules/claims/letter.ts';
 
 export type InvoiceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one, so the

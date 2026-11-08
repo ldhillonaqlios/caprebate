@@ -17,10 +17,10 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
-import { loadLetter, LETTER_PATH, TEST_LETTER_PATH, TEST_COPY_MARK, TEST_DEFAULT_MARK } from '../src/web/letter.ts';
-import { letterFees } from '../src/web/fee-controls.ts';
-import { clawbackReading, DISPOSAL_FEE } from '../src/web/claim-record.ts';
-import { shownLetter, signingMissing, signEngagement } from '../src/web/signing.ts';
+import { loadLetter, LETTER_PATH, TEST_LETTER_PATH, TEST_COPY_MARK, TEST_DEFAULT_MARK } from '../src/modules/claims/letter.ts';
+import { letterFees } from '../src/modules/claims/fee-controls.ts';
+import { clawbackReading, DISPOSAL_FEE } from '../src/modules/claims/claim-record.ts';
+import { shownLetter, signingMissing, signEngagement } from '../src/modules/claims/signing.ts';
 import * as A from '../src/web/compliance-aml.ts';
 import type * as C from '../src/web/compliance.ts';
 import { actor, testApp } from './helpers.ts';
@@ -36,7 +36,7 @@ describe('line 1 — Word question 23: a fixed disposal fee, a test default', ()
     assert.match(DISPOSAL_FEE.words, /^£290, fixed, for .*test default, not agreed/i);
   });
   test('the staff task and the aftercare panel carry it; the code that raises the task reads it, never restates a figure', () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'claim-record.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'claims', 'claim-record.ts'), 'utf8');
     assert.match(src, /Our fee for this work: \$\{DISPOSAL_FEE\.words\}/);
     assert.match(src, /Our fee for that work: \$\{DISPOSAL_FEE\.words\}/);
     assert.ok(!/£290/.test(src), 'the figure is restated in the back end');

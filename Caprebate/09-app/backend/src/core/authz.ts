@@ -129,7 +129,7 @@ export type Obj =
    * versions — a document type, and a document request.
    *
    * A DOCUMENT CARRIES WHAT ITS READING TURNS ON, READ OFF ITS TYPE AND ITS
-   * CLAIMS BY src/web/documents.ts: who its type admits (`readers`), whether the
+   * CLAIMS BY src/modules/claims/documents.ts: who its type admits (`readers`), whether the
    * type can hold a claim value, a tax benefit or a fee (`carries_value`, N1),
    * whether the organisation's engagement letter is signed, and the surveyors
    * holding a job on a claim the document is linked to — or, for a document
@@ -147,7 +147,7 @@ export type Obj =
       readonly released_to_client?: boolean;
       /**
        * Whether the client may see this file at all — theirs if they sent it, ours only once staff say so. Read by
-       * src/web/documents.ts (`shownToClient`). Absent is not true: a client is refused a document that does not say.
+       * src/modules/claims/documents.ts (`shownToClient`). Absent is not true: a client is refused a document that does not say.
        */
       readonly shown_to_client?: boolean;
       /** The client's owners — read by `document.read_original` for Sales. Absent is nobody. */
@@ -172,7 +172,7 @@ export type Obj =
    * reconciliation, a deliverable, and an HMRC enquiry.
    *
    * A DELIVERABLE CARRIES WHAT ITS CLIENT RELEASE TURNS ON, read by
-   * src/web/claim-record.ts: its kind, its state, and whether the claim's figure
+   * src/modules/claims/claim-record.ts: its kind, its state, and whether the claim's figure
    * is released — the tax adviser's sign-off record exists.
    */
   | {
@@ -288,7 +288,7 @@ type DocumentFacts = {
   /**
    * CRM 6 of 10. True only for a capital allowances report that is an ISSUED
    * client report on a claim whose tax adviser's sign-off record exists — read by
-   * src/web/documents.ts. Absent on every other document, and absent is not true.
+   * src/modules/claims/documents.ts. Absent on every other document, and absent is not true.
    */
   released_to_client?: boolean;
   /** See the `document` object. Absent is not true. */
@@ -514,7 +514,7 @@ const RULES: RuleTable = {
   'engagement.read': {
     ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>,
   },
-  /* Prepare the engagement letter and send it to the client's logins (src/web/engagement-send.ts). */
+  /* Prepare the engagement letter and send it to the client's logins (src/modules/claims/engagement-send.ts). */
   'engagement.send': { ADMIN: always, SALES: always },
   'research.run': { ADMIN: always, SALES: always },
   'research.read': { ADMIN: always, SALES: always },
@@ -523,7 +523,7 @@ const RULES: RuleTable = {
    * CHECKED AND APPROVED, AND TELLING THE CLIENT. Ticking a fact as checked, and pressing "Tell the client" on
    * a step, are ADMIN's and SALES's — the people who work the client. TAKING A STEP BACK, after the client has been told,
    * is ADMIN's alone. The client reads what it was told, on its own company, and nothing else: the view model
-   * (src/web/approvals.ts, `clientSteps`) carries a step's words and a date, never a fact, a value or a reason.
+   * (src/modules/claims/approvals.ts, `clientSteps`) carries a step's words and a date, never a fact, a value or a reason.
    */
   'fact.approve': { ADMIN: always, SALES: always },
   'client_step.tell': { ADMIN: always, SALES: always },
@@ -850,7 +850,7 @@ const RULES: RuleTable = {
      people who hold the claim's papers, as a deliverable is. Nobody else; test/phase132e.test.ts asserts it per role. */
   'client_filing.record': { ADMIN: always, SALES: always },
   /* A multi-site discount is proposed by the people who agree terms with a client, and read by them and by
-     finance. It is a record and is never applied: see src/web/fee-discounts.ts. */
+     finance. It is a record and is never applied: see src/modules/claims/fee-discounts.ts. */
   'fee_discount.record': { ADMIN: always, SALES: always },
   'fee_discount.read': { ADMIN: always, SALES: always, ACCOUNTING: always },
 
@@ -903,7 +903,7 @@ const RULES: RuleTable = {
    *
    * NEW, AND EVERY ROLE NOT NAMED IS REFUSED — test/phase132-records.test.ts asserts
    * the refusal for each one. The generator is switched off (`DEFENCE_PACK_GENERATOR`
-   * in src/web/defence-pack.ts), so today this row admits a person to a refusal that
+   * in src/modules/claims/defence-pack.ts), so today this row admits a person to a refusal that
    * says so. Switched on it builds a manifest from the claim's sealed records and
    * issues nothing: ADMIN and SALES, who hold the claim's figures and its papers, as
    * `claim_figures.read` and `deliverable.record` are. No route asks it yet.

@@ -28,13 +28,13 @@ import { can, NotAuthorised, REGISTERED_ACTIONS, type Obj } from '../src/core/au
 import * as C from '../src/modules/crm/crm.ts';
 import * as P from '../src/modules/crm/pipeline.ts';
 import * as T from '../src/modules/crm/tasks.ts';
-import * as R from '../src/web/claim-record.ts';
-import * as D from '../src/web/documents.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import * as S from '../src/web/compliance-identity.ts';
-import * as CS from '../src/web/case-stamp.ts';
-import * as DP from '../src/web/defence-pack.ts';
+import * as CS from '../src/modules/claims/case-stamp.ts';
+import * as DP from '../src/modules/claims/defence-pack.ts';
 import { CTA, ctaSwitchReadings } from '../src/shared/engine.ts';
-import { FEE_CONTROLS } from '../src/web/fee-controls.ts';
+import { FEE_CONTROLS } from '../src/modules/claims/fee-controls.ts';
 import { FUNNEL_SWITCHES } from '../src/modules/assessment/funnel-session.ts';
 import {
   BACKUP_CYCLE, FAIL_CLOSED_SETTINGS, RET7, deletionDueAt, type IngestionSettings, type RawFileRecord,
@@ -146,7 +146,7 @@ describe('line 2 — every sealed case stamped with the engine version, the rule
       assert.equal(sw.cta.length, ctaSwitchReadings().length);
       assert.equal(sw.registry_free_enabled, false, 'the free register gate ships shut');
       assert.deepEqual(sw.backend.map((x) => x.switch), CS.backendSwitchReadings().map((x) => x.switch));
-      assert.deepEqual(sw.backend.find((x) => x.switch === 'DEFENCE_PACK_GENERATOR'), { switch: 'DEFENCE_PACK_GENERATOR', on: false, home: 'src/web/defence-pack.ts' });
+      assert.deepEqual(sw.backend.find((x) => x.switch === 'DEFENCE_PACK_GENERATOR'), { switch: 'DEFENCE_PACK_GENERATOR', on: false, home: 'src/modules/claims/defence-pack.ts' });
 
       const refs = JSON.parse(s.signoff_refs_json) as { id: string; record_hash: string }[];
       assert.deepEqual(refs, a.db.all<{ id: string; record_hash: string }>('SELECT id, record_hash FROM tax_adviser_signoffs WHERE claim_id = ?', [claim]).map((x) => ({ ...x })));

@@ -8,7 +8,7 @@
  * is sent anywhere else, and nothing is kept in the browser.
  *
  * IF IT CANNOT RUN (no script, an old browser), the box says so and the client can still sign with their typed name,
- * by ticking "Use my typed name as my signature" (src/web/signing.ts accepts one or the other, never neither). It sets
+ * by ticking "Use my typed name as my signature" (src/modules/claims/signing.ts accepts one or the other, never neither). It sets
  * no style and no HTML from anything typed: it only draws on its own canvas and fills its own hidden field.
  */
 export const SIGNATURE_PAD_JS = `(function () {

@@ -11,10 +11,10 @@ import { randomUUID } from 'node:crypto';
 import { testApp, actor } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 import * as C from '../src/modules/crm/crm.ts';
-import * as PE from '../src/web/property-events.ts';
+import * as PE from '../src/modules/claims/property-events.ts';
 import * as PL from '../src/modules/crm/pipeline.ts';
-import * as R from '../src/web/claim-record.ts';
-import { figuresBlock } from '../src/web/claim-record-pages.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
+import { figuresBlock } from '../src/modules/claims/claim-record-pages.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T = '2026-09-01T00:00:00.000Z';

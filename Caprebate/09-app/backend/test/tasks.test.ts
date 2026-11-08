@@ -42,7 +42,7 @@ import * as P from '../src/modules/crm/pipeline.ts';
 import * as L from '../src/modules/crm/leads.ts';
 import * as T from '../src/modules/crm/tasks.ts';
 import * as TL from '../src/modules/crm/timeline.ts';
-import * as E from '../src/web/engaged.ts';
+import * as E from '../src/modules/claims/engaged.ts';
 import { actor, fixedClock, testApp } from './helpers.ts';
 import { localDate } from '../src/shared/localtime.ts';
 

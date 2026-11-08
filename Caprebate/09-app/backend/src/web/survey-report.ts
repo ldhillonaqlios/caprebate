@@ -17,7 +17,7 @@
  *   5  the surveyor's declaration, their name and RICS number, the fingerprint, and how the report was made
  *
  * Page 1 also shows the site plan, when the version has one (stage 6, 2 Oct 2026): the client's building and the buildings
- * round it, from Ordnance Survey's free maps (src/web/site-plan.ts). The site boundary (INSPIRE) is never in it
+ * round it, from Ordnance Survey's free maps (src/modules/claims/site-plan.ts). The site boundary (INSPIRE) is never in it
  * (Lakhbir's rule, 1 Oct 2026).
  */
 import { propertyLine } from './survey-pack.ts';
@@ -27,10 +27,10 @@ import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { BASIS_WORDS, baseWords } from './bcis-data.ts';
 import { allowancesFor, allowanceWords, type AllowanceWords } from '../modules/assessment/allowances.ts';
-import type { ReturnContext } from './return-entries.ts';
+import type { ReturnContext } from '../modules/claims/return-entries.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from '../shared/index.ts';
 import { minutesWords } from './survey-video.ts';
-import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from './site-plan.ts';
+import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from '../modules/claims/site-plan.ts';
 import { ukDatesIn } from '../shared/index.ts';
 import { plainDashLines } from '../shared/index.ts';
 

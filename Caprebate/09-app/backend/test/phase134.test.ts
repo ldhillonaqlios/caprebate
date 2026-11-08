@@ -30,7 +30,7 @@ import { randomUUID } from 'node:crypto';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { createUser } from '../src/core/users.ts';
-import * as E from '../src/web/engaged.ts';
+import * as E from '../src/modules/claims/engaged.ts';
 import * as SE from '../src/core/search.ts';
 import { companyFirst } from '../src/web/templates.ts';
 import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from '../src/modules/crm/automation.ts';

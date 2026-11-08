@@ -57,8 +57,8 @@ import { authorise, type Actor } from '../../core/index.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
 import { insertTask } from '../crm/tasks.ts';
-import { latestSignOff } from '../../web/claim-record.ts';
-import { computeFee, FEE_CONTROLS, type FeeControls } from '../../web/fee-controls.ts';
+import { latestSignOff } from '../claims/claim-record.ts';
+import { computeFee, FEE_CONTROLS, type FeeControls } from '../claims/fee-controls.ts';
 import { feeGate, type FeeGateReading } from '../../shared/index.ts';
 import { assertFinanceSection, financeSectionObj } from '../../web/finance.ts';
 

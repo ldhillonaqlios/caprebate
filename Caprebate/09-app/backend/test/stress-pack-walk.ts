@@ -15,7 +15,7 @@
  */
 import { LIMITS, packSums, type PackInputs, type PackLine } from '../src/web/pack-sums.ts';
 import { applyGrants, type PackGrant } from '../src/web/pack-grants.ts';
-import { returnEntries, RETURN_YEARS, type ReturnEntry } from '../src/web/return-entries.ts';
+import { returnEntries, RETURN_YEARS, type ReturnEntry } from '../src/modules/claims/return-entries.ts';
 
 /** xorshift32 from a fixed seed: the same draws every run. */
 export function seeded(seed: number): { rnd: () => number; ri: (lo: number, hi: number) => number; pick: <T>(xs: readonly T[]) => T } {

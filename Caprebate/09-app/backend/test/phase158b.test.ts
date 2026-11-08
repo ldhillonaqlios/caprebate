@@ -215,8 +215,8 @@ describe('F31 — the claim page at Survey', () => {
 /* ================================================================== *
  * F22 — the letter names the client as they are, and the property, the date and the figure they saw
  * ================================================================== */
-import { loadLetter, TEST_LETTER_PATH } from '../src/web/letter.ts';
-import { letterFacts, shownLetter, signingMissing, ENGAGEMENT_SIGNING_TEST } from '../src/web/signing.ts';
+import { loadLetter, TEST_LETTER_PATH } from '../src/modules/claims/letter.ts';
+import { letterFacts, shownLetter, signingMissing, ENGAGEMENT_SIGNING_TEST } from '../src/modules/claims/signing.ts';
 
 const line = (l: ReturnType<typeof loadLetter>, start: string): string => l.paragraphs.find((p) => p.text.startsWith(start))?.text ?? '';
 
@@ -277,8 +277,8 @@ describe('F22 — the letter says who the client is, and what it is about', () =
 /* ================================================================== *
  * F28 — "bought" is the client's own answer until staff record otherwise; and letterFacts reads the entity answer
  * ================================================================== */
-import { clientSaidBought } from '../src/web/claim-facts.ts';
-import { mandatoryDocumentNeeds, MANDATORY_DOCUMENTS } from '../src/web/mandatory-documents.ts';
+import { clientSaidBought } from '../src/modules/claims/claim-facts.ts';
+import { mandatoryDocumentNeeds, MANDATORY_DOCUMENTS } from '../src/modules/claims/mandatory-documents.ts';
 
 describe('F28 — the client said they bought it, and the claim reads that', () => {
   test('clientSaidBought: purchase is YES, a build or a fit-out is NO, nothing said is null', async () => {

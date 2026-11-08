@@ -26,7 +26,7 @@ import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES, isBookable } from '../crm/sch
 import { claimStage, progressFor, type Progress } from '../../shared/index.ts';
 // Read inside functions only, so the import loop through pipeline.ts is never touched while the modules load.
 import { clientStageForClaim } from '../crm/pipeline.ts';
-import { RECEIVED_ONLY_BY_UPLOAD, requestsFor, versionObj, type RequestView } from '../../web/documents.ts';
+import { RECEIVED_ONLY_BY_UPLOAD, requestsFor, versionObj, type RequestView } from '../claims/documents.ts';
 
 export type Business = {
   id: string; name: string; sector: string; stage: string;

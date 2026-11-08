@@ -24,7 +24,7 @@ import { seed } from '../src/core/seed.ts';
 import type { Actor } from '../src/core/authz.ts';
 import { fixedClock } from './helpers.ts';
 import * as E from '../src/shared/engine.ts';
-import * as R from '../src/web/research.ts';
+import * as R from '../src/modules/claims/research.ts';
 import * as V from '../src/modules/assessment/vat.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import * as FIN from '../src/web/finance.ts';

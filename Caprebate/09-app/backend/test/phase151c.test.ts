@@ -4,11 +4,11 @@
  *
  * With NO NETWORK and on INVENTED data only (the land boundary files, the grid and every point are made up):
  *
- *   1. THE CALLER — "Run the research" is the one caller of siteAreaFromLandBoundary (src/web/site-area-run.ts). As
+ *   1. THE CALLER — "Run the research" is the one caller of siteAreaFromLandBoundary (src/modules/claims/site-area-run.ts). As
  *      shipped it reads, sends and stores nothing, and every property's line says the site area is switched off.
  *      Switched on for a test with the gates open it passes the council and the point on, stores through the one door,
  *      and gives one line in words for every state. Nothing refuses and nothing throws.
- *   2. THE SCREEN — a point and a neighbouring council on the property page (src/web/site-area-inputs.ts): Admin or
+ *   2. THE SCREEN — a point and a neighbouring council on the property page (src/modules/claims/site-area-inputs.ts): Admin or
  *      Sales, after signing only, kept with who and when, audited, and passed on by the research run.
  *   3. THE GRID FILE'S TOOL — tools/ostn15-verify.ts on a generated, invented full grid in a temporary folder: 0 when
  *      every point agrees, 1 when one does not, 2 — a plain sentence, no stack trace — when nothing could be checked.
@@ -33,9 +33,9 @@ import { fixtureTransport, RateLimiter, type Fixture } from '../src/integrations
 import { projectNationalGrid, GRS80, OSTN15_COLUMNS, OSTN15_ROWS } from '../src/integrations/connectors/ostn15.ts';
 import { BOUNDARY_FETCHING_SWITCHED_ON, checkBoundaryUse } from '../src/integrations/registers/boundary-import.ts';
 import { LICENCES } from '../src/integrations/registers/source-register.ts';
-import * as R from '../src/web/research.ts';
-import { runSiteAreas, siteAreaLines, storeSiteAreaRuns, siteAreaWaits, type SiteAreaGates, type SiteAreaLine } from '../src/web/site-area-run.ts';
-import { enterSitePoint, addNeighbourCouncil, metres } from '../src/web/site-area-inputs.ts';
+import * as R from '../src/modules/claims/research.ts';
+import { runSiteAreas, siteAreaLines, storeSiteAreaRuns, siteAreaWaits, type SiteAreaGates, type SiteAreaLine } from '../src/modules/claims/site-area-run.ts';
+import { enterSitePoint, addNeighbourCouncil, metres } from '../src/modules/claims/site-area-inputs.ts';
 import { NOT_BUILT } from '../src/integrations/connectors/free-registers.ts';
 import { DECLINED_LINE } from '../src/modules/assessment/address-check.ts';
 import { helpScreenFor } from '../src/core/navigation.ts';

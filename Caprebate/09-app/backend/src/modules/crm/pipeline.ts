@@ -17,7 +17,7 @@
  *
  *   ENQUIRY          the enquiry checks, each YES — UNKNOWN and never-asked do not pass
  *   ASSESSMENT       an assessment on record for the organisation
- *   ENGAGEMENT       `assertSignedEngagement` in src/web/research.ts — reused, never a second one
+ *   ENGAGEMENT       `assertSignedEngagement` in src/modules/claims/research.ts — reused, never a second one
  *   DATA_GATHERING   a recorded confirmation, since the claim entered the stage
  *   SURVEY           a `surveyor_commitments` row on a survey job on THIS claim
  *   VALUATION        a recorded confirmation
@@ -38,24 +38,24 @@
  */
 
 import { qualifyingActivityEvidence } from '../assessment/who-claims.ts';
-import { claimRoutes, legalDeadlineNeed, routesWhy } from '../../web/claim-route.ts';
+import { claimRoutes, legalDeadlineNeed, routesWhy } from '../claims/claim-route.ts';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal, answerLabel } from '../../core/backoffice.ts';
-import { assertSignedEngagement } from '../../web/research.ts';
+import { assertSignedEngagement } from '../claims/research.ts';
 import { localStamp } from '../../shared/index.ts';
 import { claimObjFor, priorClaimFor } from './crm.ts';
-import { MANDATORY_DOCUMENTS, mandatoryDocumentNeeds, type MandatoryDocuments } from '../../web/mandatory-documents.ts';
+import { MANDATORY_DOCUMENTS, mandatoryDocumentNeeds, type MandatoryDocuments } from '../claims/mandatory-documents.ts';
 import {
   isTerminalStage, nextActionRefusal, validNextAction, writeNextAction, type NextActionInput, type NextActionWrite,
 } from './tasks.ts';
 import { fireAutomation } from './automation.ts';
 import { onClaimStageEntered } from './introducers.ts';
 import { cddGateNeed } from '../../web/compliance.ts';
-import { amendmentWindowReading, electionResolved, floorAreaOnRecord, grantsTraced } from '../../web/claim-facts.ts';
+import { amendmentWindowReading, electionResolved, floorAreaOnRecord, grantsTraced } from '../claims/claim-facts.ts';
 import { grantProviderNeed, grantSplitNeed } from '../assessment/grant-checks.ts';
-import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from '../../web/claim-record.ts';
+import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from '../claims/claim-record.ts';
 import { clientConfirmationNeed, filingRoute } from '../portal/client-filing.ts';
 import { accountantFitNeed } from '../portal/accountant-confirm.ts';
 import {
@@ -64,7 +64,7 @@ import {
   type ExitKey, type ProcedureKey, type StageKey,
 } from '../../shared/index.ts';
 import { portalStepLine } from '../portal/portal-steps.ts';
-import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../../web/valuation-lock.ts';
+import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../claims/valuation-lock.ts';
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
@@ -217,7 +217,7 @@ export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
   const a = db.get<{ accepted_at: string; name: string | null }>(
     'SELECT x.accepted_at, u.display_name AS name FROM client_report_acceptances x LEFT JOIN users u ON u.id = x.user_id ' +
       "WHERE x.claim_id = ? AND x.fingerprint = (SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' " +
-      // PHASE 159a: an acceptance from before the valuation was last reopened is set aside (src/web/valuation-lock.ts).
+      // PHASE 159a: an acceptance from before the valuation was last reopened is set aside (src/modules/claims/valuation-lock.ts).
       "AND state = 'ISSUED' ORDER BY version DESC LIMIT 1) AND x.accepted_at >= ? ORDER BY x.accepted_at ASC LIMIT 1", [c.id, c.id, voidLine(db, c.id) ?? '']);
   return {
     what: 'The client accepted the report, in their portal',
@@ -826,7 +826,7 @@ type Apply = {
 function apply(d: PipelineDeps, actor: Actor, c: PipelineClaim, m: Apply, next: NextActionWrite | null = null): MoveResult {
   const at = d.now();
   const id = d.newId();
-  // PHASE 159a: a reopen to the tax adviser's sign-off or earlier sets aside what was released (src/web/valuation-lock.ts).
+  // PHASE 159a: a reopen to the tax adviser's sign-off or earlier sets aside what was released (src/modules/claims/valuation-lock.ts).
   const aside: { set: SetAside | null } = { set: null };
   const { raised, nextTask } = d.db.tx(() => {
     if (m.kind === 'REOPEN' && VOIDING_REOPEN_STAGES.includes(m.to)) aside.set = setAsideOnReopen(d.db, c.id, at, actor.id);

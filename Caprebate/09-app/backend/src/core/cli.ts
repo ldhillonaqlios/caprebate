@@ -31,7 +31,7 @@ import { AuditLog } from './audit.ts';
 import { join } from 'node:path';
 import { FsObjectStore } from '../shared/objectstore.ts';
 import { sealKeyFromEnv } from '../shared/index.ts';
-import { openKeptOriginal, sweepOriginals } from '../web/uploads.ts';
+import { openKeptOriginal, sweepOriginals } from '../modules/claims/uploads.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, emailPlaceRefusal, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { INBOUND_EMAIL, imapLoginFromKeyFile, imapMailbox } from '../integrations/index.ts';
 import { readMailbox } from '../modules/crm/inbound-email.ts';
@@ -169,11 +169,11 @@ async function main(): Promise<number> {
 
   if (cmd === 'import-register') {
     /* The Welsh or Scottish care regulator's downloaded list into a table on this server
-       (src/web/register-files.ts). Importing switches nothing on: each lookup stays behind its own switch, off. */
+       (src/modules/claims/register-files.ts). Importing switches nothing on: each lookup stays behind its own switch, off. */
     const [source, file] = [process.argv[3], process.argv[4]];
     const byAt = process.argv.indexOf('--by');
     const by = byAt > 0 ? process.argv[byAt + 1] : undefined;
-    const { importRegisterFile, decodeRegisterFile, FILE_SOURCES } = await import('../web/register-files.ts');
+    const { importRegisterFile, decodeRegisterFile, FILE_SOURCES } = await import('../modules/claims/register-files.ts');
     if (source === undefined || !(source in FILE_SOURCES) || file === undefined || by === undefined) {
       console.error(`Usage: node src/core/cli.ts import-register <${Object.keys(FILE_SOURCES).join('|')}> <file> --by <user id>`);
       for (const f of Object.values(FILE_SOURCES)) console.error(`  ${f.source_id}: ${f.download}`);

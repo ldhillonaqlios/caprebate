@@ -21,7 +21,7 @@
  * NO SCRIPT. The content security policy allows none, and none is needed: a browser's own file picker takes a file
  * dropped onto it, so the drop area is the picker, drawn large.
  *
- * NOTHING HERE DECIDES WHO SEES WHAT. src/web/documents.ts builds the folder and asks `document.read` of every file;
+ * NOTHING HERE DECIDES WHO SEES WHAT. src/modules/claims/documents.ts builds the folder and asks `document.read` of every file;
  * src/core/authz.ts decides whether a client may see a file.
  */
 
@@ -31,14 +31,14 @@ import { authorise, type Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { badge, breadcrumb, claimRef, highlights, propertyIn, savedMessage, why } from '../../shared/index.ts';
 import * as C from '../crm/crm.ts';
-import * as D from '../../web/documents.ts';
+import * as D from '../claims/documents.ts';
 import type { FsObjectStore } from '../../shared/objectstore.ts';
 import { piecedFields, singleFile } from '../../core/index.ts';
 import { piecesOf, piecesPage } from '../../core/index.ts';
-import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals, readerFor, DAMAGED_PDF } from '../../web/uploads.ts';
+import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals, readerFor, DAMAGED_PDF } from '../claims/uploads.ts';
 import { UPLOAD_LIMITS, pdfLooksComplete, sniffAccepted } from '../../shared/upload-handler-port.ts';
 import { NO_DUE_DATE } from '../crm/tasks.ts';
-import { ANSWER_WORDS, EARLY_VOUCH_PREFIX, VOUCH_ANSWERS, earlyVouchesFrom } from '../../web/document-reading.ts';
+import { ANSWER_WORDS, EARLY_VOUCH_PREFIX, VOUCH_ANSWERS, earlyVouchesFrom } from '../claims/document-reading.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

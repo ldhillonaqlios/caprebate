@@ -10,7 +10,7 @@
  * A FILTER OR A SORT IS A KEY IN A FIXED TABLE, NEVER SQL. `readParams` reads a
  * request through `CLAIM_FILTERS`, `LEAD_FILTERS` and the two sort tables; an
  * unknown key is dropped and said, and an ORDER BY is never built from a request
- * value — the rule src/web/engaged-pages.ts already follows (row 16.4). The rows
+ * value — the rule src/modules/claims/engaged-pages.ts already follows (row 16.4). The rows
  * are read once, each asked of `can()`, and then filtered and sorted in code.
  *
  * A LIST IS BUILT FORWARDS FOR ITS READER, EXACTLY AS THE LIST BEFORE IT WAS.

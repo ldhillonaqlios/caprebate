@@ -18,12 +18,12 @@ import { testApp, actor } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import * as SP from '../src/web/survey-pack.ts';
-import * as F from '../src/web/claim-facts.ts';
+import * as F from '../src/modules/claims/claim-facts.ts';
 import { packSums, type PackInputs, type PackLine, type Pool, type Valued, type WorksSums } from '../src/web/pack-sums.ts';
 import { applyGrants, type GrantSwitches, type PackGrant } from '../src/web/pack-grants.ts';
 import { capped, withPastOwnerGrants, type LegalVerdict } from '../src/web/pack-legal.ts';
 import { moneyReadingsHere, MONEY_READINGS_OFF, MONEY_READINGS_ON } from '../src/shared/money-readings.ts';
-import { setEventVat } from '../src/web/property-events.ts';
+import { setEventVat } from '../src/modules/claims/property-events.ts';
 
 const gbp = (p: number) => p * 100;
 const ev = (value: number | null): Valued => ({ value, source: value === null ? null : { kind: 'EVIDENCE', text: 'test' } });

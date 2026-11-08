@@ -11,8 +11,8 @@ import assert from 'node:assert/strict';
 import {
   FEE_CONTROLS, RATE_CARD_UPLIFTS, UPLIFTS_QUESTION, computeFee, controlReadings, upliftPreview, upliftReading,
   type FeeControls, type FeeFacts,
-} from '../src/web/fee-controls.ts';
-import { backendSwitchReadings } from '../src/web/case-stamp.ts';
+} from '../src/modules/claims/fee-controls.ts';
+import { backendSwitchReadings } from '../src/modules/claims/case-stamp.ts';
 
 /** £100,000 of allowances: Word question 235's own example. */
 const FACTS: FeeFacts = Object.freeze({

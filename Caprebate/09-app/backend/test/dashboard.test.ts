@@ -350,7 +350,7 @@ describe('my work — every question I am waiting on, and my claims with their n
 
 describe('the reconciliation tiles — the quote gap said not known, the variance tag awaited, a withdrawal kept out of the ratios', () => {
   test('a claim signed off opens a case; the tiles read it through varianceOf and never count the unknown quote gap as nought', async () => {
-    const R = await import('../src/web/claim-record.ts');
+    const R = await import('../src/modules/claims/claim-record.ts');
     const P = await import('../src/modules/crm/pipeline.ts');
     const C = await import('../src/modules/crm/crm.ts');
     const CF = await import('./claim-fixtures.ts');

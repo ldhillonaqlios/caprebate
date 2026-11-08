@@ -23,19 +23,19 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
-import * as D from '../src/web/documents.ts';
-import { addStaffEvent, eventsOnClaim } from '../src/web/property-events.ts';
+import * as D from '../src/modules/claims/documents.ts';
+import { addStaffEvent, eventsOnClaim } from '../src/modules/claims/property-events.ts';
 import type { Actor } from '../src/core/authz.ts';
-import { factsPanel } from '../src/web/claim-facts.ts';
+import { factsPanel } from '../src/modules/claims/claim-facts.ts';
 import { MONEY_READINGS_OFF, MONEY_READINGS_ON, packSwitchReadings } from '../src/shared/money-readings.ts';
 import { ctaSwitchReadings } from '../src/shared/engine.ts';
 import { runEngineStress } from './stress-engine-walk.ts';
 import { runGrantStress, runPackStress, runReturnStress } from './stress-pack-walk.ts';
 import { WINDOW_HEADER, WINDOW_NOW, periodContaining, windowRig, windowTable } from './stress-window-walk.ts';
 import * as CF from './claim-fixtures.ts';
-import { amendmentWindowReading } from '../src/web/claim-facts.ts';
-import { claimRoutes } from '../src/web/claim-route.ts';
-import { reportsWindowNeed } from '../src/web/claim-record.ts';
+import { amendmentWindowReading } from '../src/modules/claims/claim-facts.ts';
+import { claimRoutes } from '../src/modules/claims/claim-route.ts';
+import { reportsWindowNeed } from '../src/modules/claims/claim-record.ts';
 
 /** The engine harness's findings that are kept ON PURPOSE, each with the Word question that asks the tax adviser. A
  *  class not listed here fails the test; a listed class that no longer appears fails it too, so this list is never stale. */

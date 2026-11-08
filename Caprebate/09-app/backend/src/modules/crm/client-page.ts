@@ -22,7 +22,7 @@
  *
  * NOTHING HERE DECIDES WHO SEES WHAT. Each half is built only where its own gate says yes — the organisation's record by
  * `organisation.read` (src/modules/crm/crm.ts), the research half by the engaged-clients section's `research.read`
- * (src/web/engaged.ts) — and each view is authorised on the object inside its own store. A login that passes neither is
+ * (src/modules/claims/engaged.ts) — and each view is authorised on the object inside its own store. A login that passes neither is
  * refused by the organisation's own read, as /staff/organisations/:id refused it. Internal notes come only through the
  * timeline's `internal_note.read`, so a client, a surveyor and the view-only login never receive one.
  */
@@ -35,9 +35,9 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { breadcrumb, claimName, moreDetail, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, type Need, type QuickAction, type SectionContext, type SectionSpec } from '../../shared/index.ts';
 import { sectionPrefs } from '../../core/index.ts';
 import * as C from './crm.ts';
-import * as E from '../../web/engaged.ts';
-import * as R from '../../web/research.ts';
-import { assertClientsSection } from '../../web/engaged.ts';
+import * as E from '../claims/engaged.ts';
+import * as R from '../claims/research.ts';
+import { assertClientsSection } from '../claims/engaged.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { opens } from '../../core/navigation.ts';
 import { timelineIfPermitted } from './timeline.ts';
@@ -46,11 +46,11 @@ import { timelineBlock } from './tasks-pages.ts';
 import { communicationPanel } from './communication.ts';
 import * as M from './messages.ts';
 import { organisationSections, renderClaim, type CrmPageDeps } from './crm-pages.ts';
-import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from '../../web/engaged-pages.ts';
-import { checksPanelIfPermitted } from '../../web/approvals.ts';
-import { checksBlock, checksSummary, STEP_ANCHOR } from '../../web/approvals-pages.ts';
-import { clientFolder } from '../../web/documents.ts';
-import { letterState, letterSteps } from '../../web/engagement-send.ts';
+import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from '../claims/engaged-pages.ts';
+import { checksPanelIfPermitted } from '../claims/approvals.ts';
+import { checksBlock, checksSummary, STEP_ANCHOR } from '../claims/approvals-pages.ts';
+import { clientFolder } from '../claims/documents.ts';
+import { letterState, letterSteps } from '../claims/engagement-send.ts';
 import { filesButton, folderTiles } from '../portal/client-files-pages.ts';
 import { emailButton } from './free-email-pages.ts';
 import { identityChecks, identityPanel } from '../../web/identity-checks.ts';

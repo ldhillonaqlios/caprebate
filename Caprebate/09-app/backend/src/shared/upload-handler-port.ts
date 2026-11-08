@@ -68,7 +68,7 @@ export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../modules/claims/documents/do
 /**
  * CRM 4 of 10. The one deletion clock the Retention Procedure gives a client
  * document, AS THE INGESTION MODULE STATES IT — its period, its trigger and
- * whether it is approved. src/web/documents.ts reads `RET7.approved` here rather
+ * whether it is approved. src/modules/claims/documents.ts reads `RET7.approved` here rather
  * than writing "not approved" into a screen, so the day the data protection
  * officer approves it the reading changes with no second edit.
  */
@@ -87,7 +87,7 @@ export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryCl
 /**
  * The deletion clock itself — and its rule that where two clocks are known the LATER governs (Word answer
  * 173; it was the earlier) — as the ingestion module states it, so the RET-7
- * dates src/web/documents.ts reads can be proved against the one function that
+ * dates src/modules/claims/documents.ts reads can be proved against the one function that
  * would turn them into a date. Nothing in src/ calls it: RET-7 is not approved.
  */
 export { deletionDueAt } from '../modules/claims/documents/client-doc-ingestion.ts';

@@ -28,11 +28,11 @@ import { secretsFromValues, emptySecrets, SECRET_KEYS } from '../src/core/secret
 import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/integrations/registers/source-register.ts';
 import { NAME_EXCLUSION_POLICY, classifyField } from '../src/integrations/registers/name-exclusion.ts';
 import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-port.ts';
-import * as R from '../src/web/research.ts';
-import * as E from '../src/web/engaged.ts';
+import * as R from '../src/modules/claims/research.ts';
+import * as E from '../src/modules/claims/engaged.ts';
 import { REGISTRY, registryGate } from '../src/shared/engine.ts';
-import { connectorSwitchReadings } from '../src/web/case-stamp.ts';
-import { PICK_SWITCHES } from '../src/web/match-review.ts';
+import { connectorSwitchReadings } from '../src/modules/claims/case-stamp.ts';
+import { PICK_SWITCHES } from '../src/modules/claims/match-review.ts';
 import { CLAUDE_SWITCHES } from '../src/integrations/connectors/claude.ts';
 import { buildApp, STUBS } from '../src/core/app.ts';
 import { seed } from '../src/core/seed.ts';
@@ -457,8 +457,8 @@ describe('HM Land Registry sale prices: every sector (Phase 159g), the latest sa
 
   test('WHEREVER A PRICE PAID IS SHOWN, THE ATTRIBUTION IS SHOWN WITH IT: every screen that draws register records carries it', () => {
     // The two screens that draw a register record's values: the client page's checks (approvals) and the surveyor's evidence.
-    assert.match(readFileSync(join(SRC, 'web', 'approvals.ts'), 'utf8'), /attribution: registerAttribution\(r\.source_id\)/);
-    assert.match(readFileSync(join(SRC, 'web', 'approvals-pages.ts'), 'utf8'), /f\.attribution/);
+    assert.match(readFileSync(join(SRC, 'modules', 'claims', 'approvals.ts'), 'utf8'), /attribution: registerAttribution\(r\.source_id\)/);
+    assert.match(readFileSync(join(SRC, 'modules', 'claims', 'approvals-pages.ts'), 'utf8'), /f\.attribution/);
     assert.match(readFileSync(join(SRC, 'web', 'surveyor-pages.ts'), 'utf8'), /registerAttribution\(r\.source_id\)/);
     assert.equal(R.registerAttribution('HMLR_PPD'), PRICE_PAID_ATTRIBUTION);
     assert.equal(R.registerAttribution('NOT_A_SOURCE'), null);
@@ -588,7 +588,7 @@ describe('"Run the research" runs a connector only for what the gates allow — 
   });
 
   test('the route passes the app’s key file and transport; the key file is read ONCE, at start-up, into the app', async () => {
-    const pages = readFileSync(join(SRC, 'web', 'engaged-pages.ts'), 'utf8');
+    const pages = readFileSync(join(SRC, 'modules', 'claims', 'engaged-pages.ts'), 'utf8');
     assert.match(pages, /await R\.runResearch\(\{ \.\.\.deps, outside: \{ transport: d\.app\.outside, secrets: d\.app\.secrets \} \}/);
     assert.match(pages, /await R\.retryFailedSource\(\{ \.\.\.deps, outside: \{ transport: d\.app\.outside, secrets: d\.app\.secrets \} \}/);
     const app = await buildApp({ hasher: fakeHasher(), now: fixedClock() });
@@ -769,7 +769,7 @@ describe('only fields both registers permit; the supplier docs recorded and date
   });
 
   /* PHASE 146h, 23 September 2026 adds a THIRD map to this reading: PICK_SWITCHES, a person's pick for a close
-     match (src/web/match-review.ts). It is not a connector switch and is deliberately not in REGISTER_SWITCHES, so
+     match (src/modules/claims/match-review.ts). It is not a connector switch and is deliberately not in REGISTER_SWITCHES, so
      the count below carries it by name rather than by accident. */
   test('EVERY SWITCH IS STILL OFF, AND THE CASE STAMP READS EVERY ONE — each lookup’s, the document reader’s and the pick’s', () => {
     for (const [k, v] of Object.entries(C.REGISTER_SWITCHES)) assert.equal(v, false, k);
@@ -779,7 +779,7 @@ describe('only fields both registers permit; the supplier docs recorded and date
     for (const k of Object.keys(PICK_SWITCHES)) assert.ok(readings.some((r) => r.switch === `PICK_SWITCHES.${k}` && r.on === false), k);
     for (const k of Object.keys(C.REGISTER_SWITCHES)) assert.ok(readings.some((r) => r.switch === `REGISTER_SWITCHES.${k}` && r.on === false), k);
     for (const k of Object.keys(CLAUDE_SWITCHES)) assert.ok(readings.some((r) => r.switch === `CLAUDE_SWITCHES.${k}` && r.on === false), k);
-    const stamp = readFileSync(join(SRC, 'web', 'case-stamp.ts'), 'utf8');
+    const stamp = readFileSync(join(SRC, 'modules', 'claims', 'case-stamp.ts'), 'utf8');
     assert.match(stamp, /connectors: stamp\.connector_switches/);
   });
 

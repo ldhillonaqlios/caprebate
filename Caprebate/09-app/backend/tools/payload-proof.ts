@@ -58,14 +58,14 @@ import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { quarantinedKeysAndValues } from '../src/payload.ts';
 import { randomUUID } from 'node:crypto';
-import * as D from '../src/web/documents.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import * as I from '../src/modules/crm/introducers.ts';
-import { acceptClientBytes, finishUpload, issuedJob } from '../src/web/uploads.ts';
-import * as F from '../src/web/claim-facts.ts';
+import { acceptClientBytes, finishUpload, issuedJob } from '../src/modules/claims/uploads.ts';
+import * as F from '../src/modules/claims/claim-facts.ts';
 import { RELEASED_FACTS_TO_SURVEYOR } from '../src/payload.ts';
 import * as DB from '../src/modules/crm/dashboard.ts';
 import { can as canForProof } from '../src/core/authz.ts';
-import { addNote } from '../src/web/engaged.ts';
+import { addNote } from '../src/modules/claims/engaged.ts';
 
 // PHASE 151j: this proof reads what each ROLE receives once signed in; the second step is not what it proves, and it
 // signs in with a password only. test/core/sign-in-steps.test.ts proves the second step on the default application.

@@ -38,11 +38,11 @@ import { secretsFromValues } from '../src/core/secrets.ts';
 import { SOURCES as REGISTER_SOURCES, LICENCES } from '../src/integrations/registers/source-register.ts';
 import { classifyField } from '../src/integrations/registers/name-exclusion.ts';
 import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-port.ts';
-import * as R from '../src/web/research.ts';
-import * as MR from '../src/web/match-review.ts';
+import * as R from '../src/modules/claims/research.ts';
+import * as MR from '../src/modules/claims/match-review.ts';
 import { REGISTRY } from '../src/shared/engine.ts';
-import { connectorSwitchReadings } from '../src/web/case-stamp.ts';
-import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../src/web/signing.ts';
+import { connectorSwitchReadings } from '../src/modules/claims/case-stamp.ts';
+import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../src/modules/claims/signing.ts';
 import { seed } from '../src/core/seed.ts';
 import { createUser, newId } from '../src/core/users.ts';
 import { docxOf } from './document-fixtures.ts';
@@ -390,7 +390,7 @@ describe('3 · the back-office pick: the gate, the switch, and the one record it
     // not a register switch: the two maps do not overlap
     for (const k of Object.keys(MR.PICK_SWITCHES)) assert.equal(k in C.REGISTER_SWITCHES, false, k);
     const readings = connectorSwitchReadings();
-    assert.ok(readings.some((r) => r.switch === 'PICK_SWITCHES.MATCH_REVIEW_PICK' && r.on === false && r.home === 'src/web/match-review.ts'));
+    assert.ok(readings.some((r) => r.switch === 'PICK_SWITCHES.MATCH_REVIEW_PICK' && r.on === false && r.home === 'src/modules/claims/match-review.ts'));
   });
 
   test('SWITCHED OFF, AS SHIPPED: nothing is fetched and no list is shown, even with the engagement signed and every key in place', async () => {
@@ -652,7 +652,7 @@ describe('3 · the back-office pick: the gate, the switch, and the one record it
   });
 
   test('the route hands the pick the app’s key file and transport, and both steps are POSTs', () => {
-    const pages = readFileSync(join(SRC, 'web', 'engaged-pages.ts'), 'utf8');
+    const pages = readFileSync(join(SRC, 'modules', 'claims', 'engaged-pages.ts'), 'utf8');
     assert.match(pages, /await MR\.offerPick\(\{ \.\.\.deps, outside: \{ transport: d\.app\.outside, secrets: d\.app\.secrets \} \}/);
     assert.match(pages, /await MR\.takePick\(\{ \.\.\.deps, outside: \{ transport: d\.app\.outside, secrets: d\.app\.secrets \} \}/);
     assert.match(pages, /research\\\/pick\$\/\.exec\(path\);\n\s*if \(pick && method === 'POST'\)/);

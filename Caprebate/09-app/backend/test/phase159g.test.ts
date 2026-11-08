@@ -35,11 +35,11 @@ import * as F4 from '../src/modules/assessment/funnel4.ts';
 import * as PL from '../src/modules/crm/pipeline.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import * as SP from '../src/web/survey-pack.ts';
-import * as TH from '../src/web/title-by-hand.ts';
+import * as TH from '../src/modules/claims/title-by-hand.ts';
 import * as B from '../src/web/bcis-data.ts';
 import { answerRows, type FunnelState } from '../src/modules/assessment/assessment.ts';
-import { periodFromYearEnd, yearEndReading } from '../src/web/claim-facts.ts';
-import { stillOwned } from '../src/web/claim-route.ts';
+import { periodFromYearEnd, yearEndReading } from '../src/modules/claims/claim-facts.ts';
+import { stillOwned } from '../src/modules/claims/claim-route.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T = '2026-10-10T09:00:00.000Z';

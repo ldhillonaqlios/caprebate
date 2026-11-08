@@ -29,11 +29,11 @@ import { can, type Actor } from '../src/core/authz.ts';
 import * as M from '../src/modules/crm/messages.ts';
 import * as IE from '../src/modules/crm/inbound-email.ts';
 import { INBOUND_EMAIL, imapMailbox, parseEmail, readingMissing, type InboundEmail, type Mailbox } from '../src/integrations/email/email-inbound.ts';
-import { addNote } from '../src/web/engaged.ts';
+import { addNote } from '../src/modules/claims/engaged.ts';
 import { timelineFor } from '../src/modules/crm/timeline.ts';
-import { backendSwitchReadings } from '../src/web/case-stamp.ts';
+import { backendSwitchReadings } from '../src/modules/claims/case-stamp.ts';
 import { pdfOf } from './document-fixtures.ts';
-import { shownToClient } from '../src/web/documents.ts';
+import { shownToClient } from '../src/modules/claims/documents.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string };
@@ -575,7 +575,7 @@ describe('replies to contact@caprebate.co.uk', () => {
     assert.ok(r.ok, JSON.stringify(r));
     const link = w.made.app.db.get<{ logical_document_id: string }>('SELECT logical_document_id FROM client_message_files WHERE message_id = ?', [msg]);
     assert.ok(link);
-    // The latest word on who may see it is the answer, as src/web/documents.ts reads it.
+    // The latest word on who may see it is the answer, as src/modules/claims/documents.ts reads it.
     assert.equal(shownToClient(w.made.app.db, link.logical_document_id), true, 'the client cannot see the file they sent');
     assert.deepEqual(IE.unsavedFiles(w.made.app.db, w.as('SALES'), msg), []);
     const sales = await w.signIn('sales');

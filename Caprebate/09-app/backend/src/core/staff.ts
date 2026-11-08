@@ -24,7 +24,7 @@
  * claim in a footer.
  */
 
-import type { EngagementSigning } from '../web/signing.ts';
+import type { EngagementSigning } from '../modules/claims/signing.ts';
 import { handleWhatsAppImport } from '../modules/crm/whatsapp-import-pages.ts';
 import { handleConnections } from '../web/connections.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -54,23 +54,23 @@ import { keepSectionChoice } from './sections.ts';
 import { staffHelp } from './help.ts';
 import * as S from '../web/settings.ts';
 import * as B from './backoffice.ts';
-import { handleEngaged } from '../web/engaged-pages.ts';
+import { handleEngaged } from '../modules/claims/engaged-pages.ts';
 import { handleClientPage } from '../modules/crm/client-page.ts';
 import { handleClientFiles } from '../modules/portal/client-files-pages.ts';
 import { handleFreeEmail } from '../modules/crm/free-email-pages.ts';
 import { handleStaffMessages } from '../modules/crm/messages-pages.ts';
 import { handleSurveyor } from '../web/surveyor-pages.ts';
 import { handleSurveyPack } from '../web/survey-pack-pages.ts';
-import { handleReportStaff } from '../web/report-pages.ts';
+import { handleReportStaff } from '../modules/claims/report-pages.ts';
 import { handleAccountantConfirmStaff } from '../modules/portal/accountant-confirm-pages.ts';
 import { handleStaffEvidence } from '../web/evidence-pages.ts';
 import { handleFinance } from '../web/finance-pages.ts';
 import { handleCrm } from '../modules/crm/crm-pages.ts';
 import { handlePipeline } from '../modules/crm/pipeline-pages.ts';
 import { handleTasks } from '../modules/crm/tasks-pages.ts';
-import { handleDocuments } from '../web/documents-pages.ts';
+import { handleDocuments } from '../modules/claims/documents-pages.ts';
 import { handleIntroducers } from '../modules/crm/introducers-pages.ts';
-import { handleClaimRecord } from '../web/claim-record-pages.ts';
+import { handleClaimRecord } from '../modules/claims/claim-record-pages.ts';
 import { handleCompliance } from '../web/compliance-pages.ts';
 import { handleDashboard } from '../modules/crm/dashboard-pages.ts';
 import { handleLists } from '../shared/lists-pages.ts';
@@ -99,7 +99,7 @@ export type StaffDeps = {
   newId: () => string;
   /** The site's address, for a video call's join page in its invitation. */
   publicOrigin?: string;
-  /** The signing setting this copy runs under (src/web/signing.ts), for the letter's links. */
+  /** The signing setting this copy runs under (src/modules/claims/signing.ts), for the letter's links. */
   signing?: EngagementSigning;
 };
 
@@ -465,7 +465,7 @@ export async function handleStaff(
   // The survey pack — the sums, the surveyor's stamped changes (src/web/survey-pack-pages.ts).
   const pack = await handleSurveyPack({ app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form);
   if (pack === 'handled') return 'handled';
-  // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/web/report-pages.ts).
+  // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/modules/claims/report-pages.ts).
   const report = await handleReportStaff({ app: d.app, newId: d.newId, nav, stamp, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (report === 'handled') return 'handled';
   // Email the client's accountant a link to confirm for themselves (src/modules/portal/accountant-confirm-pages.ts).

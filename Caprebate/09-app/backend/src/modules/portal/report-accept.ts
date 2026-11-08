@@ -12,7 +12,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
-import { releasedVersion } from '../../web/report-signoff.ts';
+import { releasedVersion } from '../claims/report-signoff.ts';
 
 export type AcceptDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 

@@ -24,8 +24,8 @@ import { seed } from '../src/core/seed.ts';
 import { can, type Actor } from '../src/core/authz.ts';
 import * as M from '../src/modules/crm/messages.ts';
 import * as IE from '../src/modules/crm/inbound-email.ts';
-import { addNote } from '../src/web/engaged.ts';
-import { backendSwitchReadings } from '../src/web/case-stamp.ts';
+import { addNote } from '../src/modules/claims/engaged.ts';
+import { backendSwitchReadings } from '../src/modules/claims/case-stamp.ts';
 import {
   MESSAGE_RETENTION, MESSAGE_RETENTION_QUESTION, MESSAGE_RETENTION_RECOMMENDED, addMonths, messagesDue, retentionMissing, sweepMessages,
   type MessageRetention,

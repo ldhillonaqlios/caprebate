@@ -26,19 +26,19 @@ import { createApp } from '../src/core/server.ts';
 import { fixtureTransport, type Fixture } from '../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import { nationFromCountry } from '../src/integrations/connectors/nations.ts';
-import * as R from '../src/web/research.ts';
+import * as R from '../src/modules/claims/research.ts';
 import { claimantFor } from '../src/web/pack-legal.ts';
-import { acquisitionDateReading, clientSaidPurchaseDate } from '../src/web/claim-facts.ts';
-import * as D from '../src/web/documents.ts';
+import { acquisitionDateReading, clientSaidPurchaseDate } from '../src/modules/claims/claim-facts.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import { FsObjectStore } from '../src/shared/objectstore.ts';
 import { singleFile } from '../src/core/multipart.ts';
 import { newClientDocuments, NEW_DOCUMENT_DAYS } from '../src/modules/crm/staff-dashboard.ts';
-import { letterState, letterSteps, sendEngagementLetter, signedCopy, SEND_WORDS } from '../src/web/engagement-send.ts';
+import { letterState, letterSteps, sendEngagementLetter, signedCopy, SEND_WORDS } from '../src/modules/claims/engagement-send.ts';
 import { markViewed } from '../src/modules/portal/portal.ts';
 import {
   ENGAGEMENT_SIGNING, INK_LIMITS, SIGNING_QUESTION, checkSignature, parseInk, seedSignatureRecord, shownLetter, signEngagement,
   type EngagementSigning,
-} from '../src/web/signing.ts';
+} from '../src/modules/claims/signing.ts';
 import { buildPdf, flow } from '../src/shared/pdf.ts';
 import { SIGNATURE_PAD_JS } from '../src/shared/signature-pad-script.ts';
 import { LETTER_PAGE_CSP } from '../src/core/router.ts';

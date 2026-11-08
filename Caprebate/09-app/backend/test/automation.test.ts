@@ -37,12 +37,12 @@ import * as L from '../src/modules/crm/leads.ts';
 import * as T from '../src/modules/crm/tasks.ts';
 import * as A from '../src/modules/crm/automation.ts';
 import * as M from '../src/web/templates.ts';
-import * as E from '../src/web/engaged.ts';
+import * as E from '../src/modules/claims/engaged.ts';
 import { registryGate, feeGuard } from '../src/shared/engine.ts';
 import { localDate } from '../src/shared/localtime.ts';
 import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
-import * as R from '../src/web/claim-record.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const SRC = fileURLToPath(new URL('../src/', import.meta.url));

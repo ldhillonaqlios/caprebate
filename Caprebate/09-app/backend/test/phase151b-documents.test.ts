@@ -27,13 +27,13 @@ import type { Actor } from '../src/core/authz.ts';
 import type { AuditLog } from '../src/core/audit.ts';
 import { Db, migrate } from '../src/core/db.ts';
 import { MIGRATIONS_DIR } from '../src/core/app.ts';
-import * as D from '../src/web/documents.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import * as P from '../src/modules/crm/pipeline.ts';
-import * as F from '../src/web/claim-facts.ts';
-import * as MD from '../src/web/mandatory-documents.ts';
-import * as RR from '../src/web/receipt-recommendations.ts';
-import { backendSwitchReadings } from '../src/web/case-stamp.ts';
-import { acceptClientBytes, finishUpload, issuedJob } from '../src/web/uploads.ts';
+import * as F from '../src/modules/claims/claim-facts.ts';
+import * as MD from '../src/modules/claims/mandatory-documents.ts';
+import * as RR from '../src/modules/claims/receipt-recommendations.ts';
+import { backendSwitchReadings } from '../src/modules/claims/case-stamp.ts';
+import { acceptClientBytes, finishUpload, issuedJob } from '../src/modules/claims/uploads.ts';
 import {
   retainedTextKeyFor, deletionDueAt, FAIL_CLOSED_SETTINGS, receiptPolicyFor, DOC_SPECS,
   type IngestionSettings, type RawFileRecord,
@@ -204,7 +204,7 @@ describe('3 · the must-arrive documents are switched on — Lakhbir’s four, a
   test('it ships ON, the case stamp reads it on, and it waits on nothing', () => {
     assert.equal(MD.MANDATORY_DOCUMENTS.enabled, true);
     assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'MANDATORY_DOCUMENTS'),
-      { switch: 'MANDATORY_DOCUMENTS', on: true, home: 'src/web/mandatory-documents.ts' });
+      { switch: 'MANDATORY_DOCUMENTS', on: true, home: 'src/modules/claims/mandatory-documents.ts' });
     assert.match(MD.MANDATORY_DOCUMENTS_ALSO_WAITS_ON, /^nothing now/);
     assert.deepEqual(MD.MANDATORY_DOCUMENTS.requires.map((r) => `${r.type_code}:${r.condition}`),
       ['SALE_CONTRACT:BOUGHT', 'CPSE_REPLIES:BOUGHT', 'TAX_RETURN:ALWAYS', 'TAX_COMPUTATION:ALWAYS', 'SBA_ALLOWANCE_STATEMENT:SBA_ON_PURCHASE']);

@@ -21,14 +21,14 @@ import {
   ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST, SIGN_LINK_DAYS, SIGN_WORDS, checkSignature, requiredSigners, setRequiredSigners,
   shownLetter, signByLink, signEngagement, signLinkFor, sha256Hex,
   letterFacts,
-} from '../src/web/signing.ts';
-import { TEST_LETTER_PATH } from '../src/web/letter.ts';
-import { letterState, letterSteps, sendEngagementLetter, signedCopy } from '../src/web/engagement-send.ts';
-import { assertSignedEngagement } from '../src/web/research.ts';
+} from '../src/modules/claims/signing.ts';
+import { TEST_LETTER_PATH } from '../src/modules/claims/letter.ts';
+import { letterState, letterSteps, sendEngagementLetter, signedCopy } from '../src/modules/claims/engagement-send.ts';
+import { assertSignedEngagement } from '../src/modules/claims/research.ts';
 import { pdfLooksComplete } from '../src/shared/upload-handler-port.ts';
-import { acceptClientBytes, DAMAGED_PDF } from '../src/web/uploads.ts';
+import { acceptClientBytes, DAMAGED_PDF } from '../src/modules/claims/uploads.ts';
 import { receiveFile } from '../src/modules/portal/client-files-pages.ts';
-import * as D from '../src/web/documents.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import { FsObjectStore } from '../src/shared/objectstore.ts';
 import { classifyHeading, NEVER_TO_MODEL } from '../src/modules/claims/documents/document-pipeline.ts';
 import { receiptPolicyFor } from '../src/modules/claims/documents/client-doc-ingestion.ts';

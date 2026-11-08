@@ -18,7 +18,7 @@ import { randomUUID } from 'node:crypto';
 import { testApp } from './helpers.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import { assessLegal, legalAllows, legalQuestions, LEGAL_READINGS } from '../src/web/pack-legal.ts';
-import { stillOwned } from '../src/web/claim-route.ts';
+import { stillOwned } from '../src/modules/claims/claim-route.ts';
 
 const NOW = '2026-10-10T09:00:00.000Z';
 const ask = (answers: Record<string, unknown>, holding?: { role: 'OWNER_OCCUPIER' | 'LANDLORD' | 'TENANT' | null }) =>

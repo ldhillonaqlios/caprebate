@@ -20,8 +20,8 @@ import { can, canAsDpo, DPO_ROLE_SWITCH, DPO_SCOPE, NotAuthorised, REGISTERED_AC
 import { assignRole } from '../src/web/settings.ts';
 import * as CS from '../src/modules/assessment/conveyancing-strip.ts';
 import * as DL from '../src/web/disclosure-log.ts';
-import * as RR from '../src/web/receipt-recommendations.ts';
-import * as D from '../src/web/documents.ts';
+import * as RR from '../src/modules/claims/receipt-recommendations.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import { assertHumanCaptureClean, ROLE_TOKENS } from '../src/shared/upload-handler-port.ts';
 import type { FsObjectStore } from '../src/shared/objectstore.ts';
 import { actor, scalars, testApp } from './helpers.ts';

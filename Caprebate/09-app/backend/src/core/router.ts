@@ -23,7 +23,7 @@
  *    string concatenation of markup anywhere in this file.
  */
 
-import { claimRoutes } from '../web/claim-route.ts';
+import { claimRoutes } from '../modules/claims/claim-route.ts';
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { cleanForm } from './typed.ts';
@@ -47,26 +47,26 @@ import { searchCompanies, companySearchOffered, COMPANY_SEARCH } from '../integr
 import { checkPostcode, normalisePostcode, postcodeCheckMissing, POSTCODE_CHECK } from '../integrations/index.ts';
 import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses, searchesToday } from '../integrations/index.ts';
 import { ADDRESS_LOOKUP_JS } from '../modules/assessment/address-lookup-script.ts';
-import { loadLetter } from '../web/letter.ts';
+import { loadLetter } from '../modules/claims/letter.ts';
 import * as P from '../modules/portal/portal.ts';
-import { ENGAGEMENT_SIGNING, SIGN_WORDS, letterFacts, letterOptions, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning, type LetterFacts } from '../web/signing.ts';
+import { ENGAGEMENT_SIGNING, SIGN_WORDS, letterFacts, letterOptions, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning, type LetterFacts } from '../modules/claims/signing.ts';
 import { portalMessagesBody, readPortalSend, sendFromPortal } from '../modules/crm/messages-pages.ts';
 import { clientMessage, type ThreadMessage as MessageView } from '../modules/crm/messages.ts';
 import { FsObjectStore } from '../shared/objectstore.ts';
-import { acceptClientBytes, finishUpload, issuedJob, readerFor } from '../web/uploads.ts';
+import { acceptClientBytes, finishUpload, issuedJob, readerFor } from '../modules/claims/uploads.ts';
 import { singleFile } from './multipart.ts';
 import { readUpload, receiveFile } from '../modules/portal/client-files-pages.ts';
 import { piecesOf, piecesPage, putPiece, startPieces, sweepPieces, PIECE_BYTES } from './upload-pieces.ts';
 import { UPLOAD_PIECES_JS } from './upload-pieces-script.ts';
 import { READ_AND_DELETED } from '../shared/index.ts';
-import { receivableTypes, startDocumentUpload, readLines, type RequestView } from '../web/documents.ts';
+import { receivableTypes, startDocumentUpload, readLines, type RequestView } from '../modules/claims/documents.ts';
 import { handleStaff, handlePortalSettings } from './staff.ts';
 import { mayEnterBackOffice, NotFoundAsRefusal } from './backoffice.ts';
 import { navContext, staffShell, portalShell, setSubMenu, type NameSwitches, type NavContext } from './navigation.ts';
 import { badge, breadcrumb, card, claimRef, clientStageBar, noticeAtAddress, propertyIn, savedMessage, welcomeCard, why } from '../shared/index.ts';
 import { stepName } from '../modules/portal/portal-steps.ts';
-import { clientSteps, type ClientStep } from '../web/approvals.ts';
-import { clientStepsCard } from '../web/approvals-pages.ts';
+import { clientSteps, type ClientStep } from '../modules/claims/approvals.ts';
+import { clientStepsCard } from '../modules/claims/approvals-pages.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
 import { clientHelp } from './help.ts';
 import { nameSwitches } from './navigation.ts';
@@ -78,9 +78,9 @@ import { joinSignature } from '../integrations/index.ts';
 import { VIDEO_CALL_JS } from '../modules/crm/video-call-script.ts';
 import { PHOTO_UPLOAD_JS } from '../web/photo-upload-script.ts';
 import { SIGNATURE_PAD_JS } from '../shared/index.ts';
-import { letterState, letterSteps, signedCopy } from '../web/engagement-send.ts';
+import { letterState, letterSteps, signedCopy } from '../modules/claims/engagement-send.ts';
 import { WHATSAPP_IMPORT_JS } from '../modules/crm/whatsapp-import-script.ts';
-import { REGISTER_IMPORT_JS } from '../web/register-import-script.ts';
+import { REGISTER_IMPORT_JS } from '../modules/claims/register-import-script.ts';
 import { sweepUploads } from '../web/photo-upload.ts';
 import { runTimerJob, timerJobOf, timerWordRefusal, TIMER_PATH_PREFIX } from './timers.ts';
 import { sweepVideos } from '../web/survey-video.ts';
@@ -96,7 +96,7 @@ import { fireAutomation } from '../modules/crm/automation.ts';
 import {
   PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen, clientShareChoices, recordShareConsentByClient, type ClientShareChoice,
 } from '../modules/crm/introducers.ts';
-import { clientDeliverables, type ClientDeliverable } from '../web/claim-record.ts';
+import { clientDeliverables, type ClientDeliverable } from '../modules/claims/claim-record.ts';
 import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from '../modules/public-site/public-site.ts';
 import { homeEdition, gsapScript, HOME_PAGE_HEADERS, sectorEdition, isSectorSlug, fontFile } from '../modules/public-site/home-site.ts';
 import { checkTurnstile, refusalWords, turnstileSiteKey, withSiteKey, TURNSTILE_FIELD } from '../integrations/index.ts';
@@ -104,7 +104,7 @@ import { receiveEnquiry } from '../modules/public-site/enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
 import { freeGate, recordLookupsDeclined } from '../modules/assessment/address-check.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from '../web/identity-checks.ts';
-import { handleSignoffLink, portalReport, portalReportCard } from '../web/report-pages.ts';
+import { handleSignoffLink, portalReport, portalReportCard } from '../modules/claims/report-pages.ts';
 import { handleConfirmLink } from '../modules/portal/accountant-confirm-pages.ts';
 import { acceptReport } from '../modules/portal/report-accept.ts';
 import { handlePortalEvidence, portalEvidenceCard } from '../web/evidence-pages.ts';
@@ -129,7 +129,7 @@ export type WebDeps = {
    * REQUEST'S Host header, which is whatever the sender typed. Absent is http://localhost:8103.
    */
   publicOrigin?: string;
-  /** The test-only letter (src/web/letter.ts, TEST_LETTER_PATH). Absent is the real letter. Only the test website passes it. */
+  /** The test-only letter (src/modules/claims/letter.ts, TEST_LETTER_PATH). Absent is the real letter. Only the test website passes it. */
   letterPath?: string;
   /** Signing on for testing (ENGAGEMENT_SIGNING_TEST, the test copy only). Absent is ENGAGEMENT_SIGNING, off. */
   signing?: EngagementSigning;
@@ -647,7 +647,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* THE IDENTITY CHECK'S SIGNED RESULT. The service has no login, so this sits outside it — and believes
      nothing it is sent unless the signature holds (src/web/identity-checks.ts). A bad signature is refused and audited.
      The answer is a status and nothing else: the service reads no page, and a refusal says nothing about why. */
-  /* THE ACCOUNTANT'S PRIVATE SIGN-OFF LINK (src/web/report-pages.ts). No login: the link is the key, kept only
+  /* THE ACCOUNTANT'S PRIVATE SIGN-OFF LINK (src/modules/claims/report-pages.ts). No login: the link is the key, kept only
      as its SHA-256, answered once, for 30 days. */
   if (path.startsWith('/signoff/')) {
     const r = await handleSignoffLink(d.app, newId, req, res, url, method, form);
@@ -1361,7 +1361,7 @@ async function portalRoutes(
     const joins: Record<string, string> = {};
     for (const b of bks) { const m = b.channel === 'video' ? activeMeeting(db, b.id) : undefined; if (m !== undefined) joins[b.id] = `/call/${m.client_token}`; }
     // The top of the portal as a dashboard (src/modules/portal/portal-dashboard.ts).
-    // The survey report's card leads, once a tax adviser's sign-off has released it (src/web/report-pages.ts).
+    // The survey report's card leads, once a tax adviser's sign-off has released it (src/modules/claims/report-pages.ts).
     const dashboard = h`${portalReportCard(d.app, business_id, actor)}${portalEvidenceCard(db, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
       publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(/^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('again') ?? '') ? { sentBefore: url.searchParams.get('again') as string } : {}), joins, dashboard, rangeBasis: rangeBasisFor(db, business_id), ...(welcome === undefined ? {} : { welcome }) }));
@@ -1376,7 +1376,7 @@ async function portalRoutes(
     const r = await handlePortalEvidence({ app: d.app, store: d.store, newId, nav: nav(actor), form, readBody }, req, res, url, method, actor, business_id);
     if (r === 'handled') return 'handled';
   }
-  /* THE CLIENT'S SURVEY REPORT — only the version a tax adviser's sign-off has released (src/web/report-pages.ts). */
+  /* THE CLIENT'S SURVEY REPORT — only the version a tax adviser's sign-off has released (src/modules/claims/report-pages.ts). */
   /* The client accepts the released report (src/modules/portal/report-accept.ts). */
   if (path === '/portal/report/accept' && method === 'POST') {
     P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does
@@ -1458,7 +1458,7 @@ async function portalRoutes(
     return 'handled';
   }
 
-  /* THE BUILT-IN SIGNATURE (src/web/signing.ts). Every check is there, on the record: the switch
+  /* THE BUILT-IN SIGNATURE (src/modules/claims/signing.ts). Every check is there, on the record: the switch
      (ENGAGEMENT_SIGNING, off), the letter complete, sent and not yet signed, a full name, a role, the tick, and the
      fingerprint of the letter the page drew. A refusal is a page the client reads, with what they typed kept. */
   if (path === '/portal/letter/sign' && method === 'POST') {

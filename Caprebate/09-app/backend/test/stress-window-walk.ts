@@ -11,7 +11,7 @@ import { randomUUID } from 'node:crypto';
 import { testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 import { insertClaim } from '../src/modules/crm/crm.ts';
-import { amendmentWindowReading } from '../src/web/claim-facts.ts';
+import { amendmentWindowReading } from '../src/modules/claims/claim-facts.ts';
 import type { App } from '../src/core/app.ts';
 
 export const WINDOW_NOW = '2026-10-09T12:00:00.000Z';

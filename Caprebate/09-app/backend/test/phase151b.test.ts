@@ -42,10 +42,10 @@ import {
 import { readFileSync } from 'node:fs';
 import { randomUUID as uuid151b } from 'node:crypto';
 import * as C from '../src/modules/crm/crm.ts';
-import * as R from '../src/web/claim-record.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
 import * as CF from './claim-fixtures.ts';
 import { testApp } from './helpers.ts';
-import { sourcesFor } from '../src/web/research.ts';
+import { sourcesFor } from '../src/modules/claims/research.ts';
 import { DECLINED_LINE } from '../src/modules/assessment/address-check.ts';
 
 /* ------------------------------------------------------------------ a running app, seeded, over HTTP */

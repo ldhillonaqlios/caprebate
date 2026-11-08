@@ -1,6 +1,6 @@
 /**
  * PHASE 160d — NO LONG DASHES IN THE EMAILS, THE LETTER AND REPORTS GOING FORWARD, THE TEXT THE SYSTEM WRITES, AND THE
- * EXPORT'S COLUMN NAMES, 19 October 2026 (src/integrations/email/email.ts, src/web/letter.ts, src/web/claim-record.ts, src/modules/crm/leads.ts,
+ * EXPORT'S COLUMN NAMES, 19 October 2026 (src/integrations/email/email.ts, src/modules/claims/letter.ts, src/modules/claims/claim-record.ts, src/modules/crm/leads.ts,
  * src/shared/lists.ts, src/modules/crm/booking-invite.ts, src/web/templates.ts, migration 117; the report's versions are in
  * test/survey-report.test.ts).
  */
@@ -13,8 +13,8 @@ import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { outboxTransport } from '../src/integrations/email/email.ts';
 import { plainDashLines } from '../src/shared/plain-dashes.ts';
-import { loadLetter, letterExists, LETTER_PATH, TEST_LETTER_PATH } from '../src/web/letter.ts';
-import { DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE } from '../src/web/claim-record.ts';
+import { loadLetter, letterExists, LETTER_PATH, TEST_LETTER_PATH } from '../src/modules/claims/letter.ts';
+import { DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE } from '../src/modules/claims/claim-record.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 let made: Made;
@@ -81,7 +81,7 @@ describe('Phase 160d: the text the system writes', () => {
   test('the Disposal Note task is raised without a long dash, and a task raised under the old title is still found', () => {
     assert.doesNotMatch(DISPOSAL_TASK_TITLE, DASH);
     assert.match(DISPOSAL_TASK_TITLE_BEFORE, DASH);
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'claim-record.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'claims', 'claim-record.ts'), 'utf8');
     assert.equal((src.match(/title IN \(\?, \?\)[^\n]*DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE/g) ?? []).length, 2, 'both lookups read the old title too');
   });
 

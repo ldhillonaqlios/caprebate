@@ -23,21 +23,21 @@
  * every derivation; this file draws what it returns.
  */
 
-import { checksPanelIfPermitted } from '../../web/approvals.ts';
-import { checksSummary, claimChecksBlock, STEP_ANCHOR } from '../../web/approvals-pages.ts';
+import { checksPanelIfPermitted } from '../claims/approvals.ts';
+import { checksSummary, claimChecksBlock, STEP_ANCHOR } from '../claims/approvals-pages.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
 import type { Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { piecesPage } from '../../core/index.ts';
 import * as C from './crm.ts';
-import type * as F from '../../web/claim-facts.ts';
+import type * as F from '../claims/claim-facts.ts';
 import type { PipelinePanel } from './pipeline.ts';
 import { enquiryBlock } from './pipeline-pages.ts';
 import { authorise, can } from '../../core/index.ts';
-import { addStaffEvent, approvedEventFigures, eventsOnClaim, setEventVat, EVENT_KINDS, KIND_WORDS, type ApprovedEventFigure, type EventOnClaim } from '../../web/property-events.ts';
-import { requestWorkDocuments } from '../../web/documents.ts';
-import { claimRoutes } from '../../web/claim-route.ts';
+import { addStaffEvent, approvedEventFigures, eventsOnClaim, setEventVat, EVENT_KINDS, KIND_WORDS, type ApprovedEventFigure, type EventOnClaim } from '../claims/property-events.ts';
+import { requestWorkDocuments } from '../claims/documents.ts';
+import { claimRoutes } from '../claims/claim-route.ts';
 
 /** PHASE 159i: an event's VAT position, in words (migration 105's three). */
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({ INCLUDED_NOT_RECLAIMABLE: 'The client could not reclaim it', EXCLUDED_OR_RECLAIMED: 'The client reclaimed it, or none was charged', NOT_KNOWN: 'Not known' });
@@ -46,28 +46,28 @@ import { claimTasksBlock, emailBlock, newTaskForm, notesBlock, timelineBlock } f
 import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { timelineIfPermitted, type Timeline } from './timeline.ts';
 import { activeTemplates } from '../../web/templates.ts';
-import { claimDocumentsBlock, placeDocumentsBlock } from '../../web/documents-pages.ts';
+import { claimDocumentsBlock, placeDocumentsBlock } from '../claims/documents-pages.ts';
 import * as LI from '../../shared/lists.ts';
 import { taskChoices, vocabulary } from '../../web/vocabularies.ts';
 import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from '../../shared/lists-pages.ts';
-import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock } from '../../web/claim-record-pages.ts';
+import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock } from '../claims/claim-record-pages.ts';
 import { addUnderCurrent, opens } from '../../core/navigation.ts';
 import { nobodyBadge, stageBadge } from '../../core/index.ts';
-import { assertClientsSection } from '../../web/engaged.ts';
+import { assertClientsSection } from '../claims/engaged.ts';
 import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, moreDetail, nextStepCard, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, why, type Need, type QuickAction, type SectionContext, type SectionSpec } from '../../shared/index.ts';
 import { sectionPrefs } from '../../core/index.ts';
 import { plainNeed } from '../../shared/index.ts';
-import { openClaimQuestions } from '../../web/engaged.ts';
+import { openClaimQuestions } from '../claims/engaged.ts';
 import { claimNextStep } from '../../shared/index.ts';
 import { dueWords, localStamp, ukDate } from '../../shared/index.ts';
 import { nameSwitches, navContext } from '../../core/navigation.ts';
-import * as SI from '../../web/site-area-inputs.ts';
-import * as TH from '../../web/title-by-hand.ts';
+import * as SI from '../claims/site-area-inputs.ts';
+import * as TH from '../claims/title-by-hand.ts';
 import * as SO from '../../web/survey-open.ts';
-import { earlyWindowWarning } from '../../web/claim-facts.ts';
+import { earlyWindowWarning } from '../claims/claim-facts.ts';
 import { portalStepLine } from '../portal/portal-steps.ts';
 import { accountantConfirmBlock } from '../portal/accountant-confirm-pages.ts';
-import { claimOverview, overviewBlock } from '../../web/claim-overview.ts';
+import { claimOverview, overviewBlock } from '../claims/claim-overview.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };
 
@@ -254,7 +254,7 @@ export async function handleCrm(
     return 'handled';
   }
 
-  /* PHASE 151c: THE SITE AREA'S POINT AND A NEIGHBOURING COUNCIL (src/web/site-area-inputs.ts). Admin or Sales, only once
+  /* PHASE 151c: THE SITE AREA'S POINT AND A NEIGHBOURING COUNCIL (src/modules/claims/site-area-inputs.ts). Admin or Sales, only once
      the engagement letter is signed — both asked there, on the server. Saving sends nothing anywhere. */
   const sitePoint = /^\/staff\/properties\/([A-Za-z0-9-]+)\/site-point$/.exec(path);
   if (sitePoint && method === 'POST') {
@@ -274,7 +274,7 @@ export async function handleCrm(
     return 'handled';
   }
 
-  /* PHASE 146k: THE TITLE REGISTER, BY HAND (src/web/title-by-hand.ts). Admin or Sales, once the letter is signed —
+  /* PHASE 146k: THE TITLE REGISTER, BY HAND (src/modules/claims/title-by-hand.ts). Admin or Sales, once the letter is signed —
      both asked there, on the server. Recording it sends nothing anywhere; taking it back asks why. */
   const titleHand = /^\/staff\/properties\/([A-Za-z0-9-]+)\/title-register(\/take-back)?$/.exec(path);
   if (titleHand && method === 'POST') {

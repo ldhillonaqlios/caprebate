@@ -37,9 +37,9 @@ import * as I from '../src/modules/crm/introducers.ts';
 import * as L from '../src/modules/crm/leads.ts';
 import * as P from '../src/modules/crm/pipeline.ts';
 import * as T from '../src/modules/crm/tasks.ts';
-import { NO_RECEIPT_POLICY } from '../src/web/documents.ts';
+import { NO_RECEIPT_POLICY } from '../src/modules/claims/documents.ts';
 import { ctaSwitchReadings } from '../src/shared/engine.ts';
-import { FEE_CONTROLS } from '../src/web/fee-controls.ts';
+import { FEE_CONTROLS } from '../src/modules/claims/fee-controls.ts';
 import { localDate } from '../src/shared/localtime.ts';
 import { actor, testApp } from './helpers.ts';
 

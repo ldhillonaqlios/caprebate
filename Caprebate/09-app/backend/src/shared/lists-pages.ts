@@ -17,7 +17,7 @@ import { can, type Actor } from '../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as LI from './lists.ts';
 import * as S from '../core/search.ts';
-import { documentCentreGate } from '../web/documents.ts';
+import { documentCentreGate } from '../modules/claims/documents.ts';
 import { opens } from '../core/navigation.ts';
 import { piecesPage } from '../core/index.ts';
 

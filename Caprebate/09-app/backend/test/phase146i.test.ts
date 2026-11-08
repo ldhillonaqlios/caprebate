@@ -33,12 +33,12 @@ import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../src/integrations/connec
 import {
   acceptClientBytes, finishUpload, issuedJob,
   type ReadingOutcome, type UploadDeps, type UploadReading,
-} from '../src/web/uploads.ts';
-import * as D from '../src/web/documents.ts';
+} from '../src/modules/claims/uploads.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import {
   ANSWER_WORDS, READING_WORDS, VOUCHED_FIELDS, VOUCH_ANSWERS, discriminantsFor, readingIsWorthRecording,
   vouchedFieldFor, vouchesFor,
-} from '../src/web/document-reading.ts';
+} from '../src/modules/claims/document-reading.ts';
 import { assertClaimsWritable } from '../src/modules/claims/documents/client-doc-ingestion.ts';
 import { actor } from './helpers.ts';
 import type { Actor } from '../src/core/authz.ts';

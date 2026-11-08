@@ -34,7 +34,7 @@
  */
 
 import { USE_TO_ROLE } from './who-claims.ts';
-import { writeAssessmentEvents } from '../../web/property-events.ts';
+import { writeAssessmentEvents } from '../claims/property-events.ts';
 import { normalisePostcode } from '../../integrations/index.ts';
 import { randomUUID } from 'node:crypto';
 import type { Db } from '../../core/index.ts';

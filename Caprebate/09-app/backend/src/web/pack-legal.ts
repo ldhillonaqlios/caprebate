@@ -28,7 +28,7 @@ import { packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
 import { poundsWords } from './pack-sums.ts';
 import { claimantTypeForGate } from '../modules/crm/crm.ts';
-import { valuationLock } from './valuation-lock.ts';
+import { valuationLock } from '../modules/claims/valuation-lock.ts';
 import { claimantRole, type ClaimantRole } from '../modules/assessment/who-claims.ts';
 import { LEGAL_ENGINE_SWITCHES } from '../shared/index.ts';
 
@@ -385,7 +385,7 @@ function withHolding(v: LegalVerdict, role: ClaimantRole | null, s: Record<strin
 }
 
 /**
- * PHASE 159d: THE LEGAL CHECK FOR A CLAIM, read without a login — for the claim's routes (src/web/claim-route.ts) and
+ * PHASE 159d: THE LEGAL CHECK FOR A CLAIM, read without a login — for the claim's routes (src/modules/claims/claim-route.ts) and
  * the gates that re-check a deadline (C9). The newest survey job on the claim, its pack's answers, today's verdict. Null
  * where the claim has no survey pack yet: no answer, and nothing is decided on it.
  */

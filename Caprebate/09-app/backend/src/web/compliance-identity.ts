@@ -52,7 +52,7 @@
 
 import type { Db } from '../core/index.ts';
 import { authorise, type Actor } from '../core/index.ts';
-import { retentionReading, ret7Limbs } from './documents.ts';
+import { retentionReading, ret7Limbs } from '../modules/claims/documents.ts';
 import { BACKUP_CYCLE } from '../shared/upload-handler-port.ts';
 import { MESSAGE_RETENTION_QUESTION } from '../modules/crm/message-retention.ts';
 import {

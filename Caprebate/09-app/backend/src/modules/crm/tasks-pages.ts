@@ -30,7 +30,7 @@ import * as T from './tasks.ts';
 import * as A from './automation.ts';
 import * as M from '../../web/templates.ts';
 import { emailButton } from './free-email-pages.ts';
-import { addNote } from '../../web/engaged.ts';
+import { addNote } from '../claims/engaged.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import type { Fields } from './crm.ts';
 import { taskChoices, type TaskChoices } from '../../web/vocabularies.ts';

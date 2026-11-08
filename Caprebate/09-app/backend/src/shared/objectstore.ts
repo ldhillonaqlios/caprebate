@@ -6,7 +6,7 @@
  * tests and, until this file, NO CONSUMER. Its own header says so: "Eighty-two
  * tests passed against a module with no consumer, which proves the design is
  * coherent and proves nothing about whether a single client document is
- * protected." This is the store it takes, and src/web/uploads.ts is the caller.
+ * protected." This is the store it takes, and src/modules/claims/uploads.ts is the caller.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * REQUIREMENT DB-W1, WHICH IS WHY THIS FILE IS SHAPED THE WAY IT IS
@@ -183,7 +183,7 @@ export class FsObjectStore implements ObjectStore {
     }
   }
 
-  /** A kept original, decrypted. Only src/web/uploads.ts calls this, after `document.read_original`. */
+  /** A kept original, decrypted. Only src/modules/claims/uploads.ts calls this, after `document.read_original`. */
   async openOriginal(key: string): Promise<Buffer> {
     if (!isOriginalKey(key)) throw new Error('not an original');
     if (this.#sealKey === null) throw new Error('no key to open a kept original');

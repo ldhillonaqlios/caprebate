@@ -31,8 +31,8 @@ import { createApp } from '../src/core/server.ts';
 import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
 import { can } from '../src/core/authz.ts';
 import { actor as makeActor, signatureRecordFor } from './helpers.ts';
-import * as E from '../src/web/engaged.ts';
-import * as R from '../src/web/research.ts';
+import * as E from '../src/modules/claims/engaged.ts';
+import * as R from '../src/modules/claims/research.ts';
 import {
   FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel, type FunnelStateRow, type FunnelSwitches,
 } from '../src/modules/assessment/funnel-session.ts';

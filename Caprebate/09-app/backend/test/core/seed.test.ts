@@ -284,13 +284,13 @@ describe('what is stubbed is a short list, and it is stated', () => {
     }
   });
 
-  /* THE NEGATIVE CONTROL FOR THE WHOLE LIST. src/web/uploads.ts calls itself a
+  /* THE NEGATIVE CONTROL FOR THE WHOLE LIST. src/modules/claims/uploads.ts calls itself a
      stub in prose; that prose and this list must not be able to disagree
      again. */
   test('the module that calls itself a stub in prose is in the list', async () => {
     const { readFileSync } = await import('node:fs');
-    const src = readFileSync(new URL('../../src/web/uploads.ts', import.meta.url), 'utf8');
+    const src = readFileSync(new URL('../../src/modules/claims/uploads.ts', import.meta.url), 'utf8');
     assert.match(src, /it is a STUB, declared as one/);
-    assert.ok(STUBS.some((s) => s.module === 'src/web/uploads.ts'));
+    assert.ok(STUBS.some((s) => s.module === 'src/modules/claims/uploads.ts'));
   });
 });

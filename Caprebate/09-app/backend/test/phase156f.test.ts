@@ -29,7 +29,7 @@ import { PAID_CONNECTORS, PAID_NOT_CHOSEN, totalBeforePence } from '../src/integ
 import { runOrder } from '../src/integrations/connectors/free-registers.ts';
 import { preferHomedataPlanning, supersededPlanning, HOMEDATA_PLANNING_ENTITY } from '../src/integrations/connectors/homedata-planning.ts';
 import * as C from '../src/integrations/connectors/registers.ts';
-import * as R from '../src/web/research.ts';
+import * as R from '../src/modules/claims/research.ts';
 import { CONNECTIONS } from '../src/web/connections.ts';
 import { ADDRESS_LOOKUP_JS } from '../src/modules/assessment/address-lookup-script.ts';
 import { ADDRESS_PAGE_CSP } from '../src/core/router.ts';

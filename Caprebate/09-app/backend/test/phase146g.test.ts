@@ -26,7 +26,7 @@ import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../src/integrations/connec
 import {
   beginUpload, acceptClientBytes, finishUpload, readerFor,
   type ReadingOutcome, type UploadDeps, type UploadReading,
-} from '../src/web/uploads.ts';
+} from '../src/modules/claims/uploads.ts';
 import { specFor, type DocType } from '../src/modules/claims/documents/document-pipeline.ts';
 import { randomUUID } from 'node:crypto';
 import type { Actor } from '../src/core/authz.ts';

@@ -42,7 +42,7 @@ import { currentSender, outboxTransport, type Sender } from '../../integrations/
 import { EMAIL_SENDING, sendingMissing, sendingOn, type EmailSending, type MailWhere, type SmtpLogin } from '../../integrations/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import * as C from './crm.ts';
-import * as D from '../../web/documents.ts';
+import * as D from '../claims/documents.ts';
 import { assertLeadSection } from './leads.ts';
 import { activeTemplates, freeTextRefusal, mergePlain, mergeValues, templateRefusal } from '../../web/templates.ts';
 import { propertyIn } from '../../shared/index.ts';

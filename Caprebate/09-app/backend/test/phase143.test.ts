@@ -26,7 +26,7 @@ import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { SITE_CSS as CSS } from '../src/shared/assets.ts';
-import { grantsTraced } from '../src/web/claim-facts.ts';
+import { grantsTraced } from '../src/modules/claims/claim-facts.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string };

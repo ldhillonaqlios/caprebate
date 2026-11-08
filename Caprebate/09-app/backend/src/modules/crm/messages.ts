@@ -9,7 +9,7 @@
  *
  *   "Team only"        the company's internal notes — `internal_notes`, asked of `internal_note.read` / `.write`, which
  *                      name Admin and Sales and nobody else. Every note ever written is already a message on it, with its
- *                      date and its author. `teamThread` below reads it; `addNote` (src/web/engaged.ts) still writes it.
+ *                      date and its author. `teamThread` below reads it; `addNote` (src/modules/claims/engaged.ts) still writes it.
  *   "With the client"  `client_messages`, asked of `client_message.read` / `.write`: Admin, Sales, and the client on its
  *                      own company. It is the portal's "Messages".
  *
@@ -35,7 +35,7 @@ import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { localStamp } from '../../shared/index.ts';
 import { propertyIn } from '../../shared/index.ts';
 import { workingDaysSince, LATE_AFTER_WORKING_DAYS } from '../../shared/index.ts';
-import { documentObj } from '../../web/documents.ts';
+import { documentObj } from '../claims/documents.ts';
 import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type EmailSending, type MailWhere, type SmtpLogin } from '../../integrations/index.ts';
 import { outboxTransport } from '../../integrations/index.ts';
 import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from './automation.ts';

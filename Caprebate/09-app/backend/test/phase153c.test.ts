@@ -33,7 +33,7 @@ import { grantsChapter } from '../src/web/survey-pack-pages.ts';
 import { GRANT_AMOUNTS_TO_SURVEYOR, type PackView } from '../src/web/survey-pack.ts';
 import { F4_STEP_LABELS } from '../src/modules/assessment/funnel4.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../src/shared/originals.ts';
-import { clientOwners } from '../src/web/documents.ts';
+import { clientOwners } from '../src/modules/claims/documents.ts';
 import { ENQUIRY_RETENTION, enquiryRetentionMissing, sweepEnquiries, type EnquiryRetention } from '../src/modules/public-site/enquiry-retention.ts';
 import { ADDRESS_KEEP_UNTIL } from '../src/integrations/connectors/address-lookup.ts';
 import { IDENTITY_CHECK } from '../src/integrations/connectors/identity-check.ts';
@@ -225,7 +225,7 @@ describe('line 12 — Word question 193: page pictures go to the reader only for
     for (const k of ['LEASE', 'ACCOUNTS', 'FIRE_RISK_ASSESSMENT', '', null, undefined]) assert.equal(scannedPagesAllowedFor(k), false, String(k));
   });
   test('the upload path passes each document’s kind to the reader', () => {
-    const uploads = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'uploads.ts'), 'utf8');
+    const uploads = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'claims', 'uploads.ts'), 'utf8');
     assert.match(uploads, /SELECT type_code FROM documents WHERE id = \?/);
     assert.match(uploads, /readScannedPages\(ctx, doc_id, images, kind\)/);
   });

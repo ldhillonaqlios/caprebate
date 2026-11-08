@@ -34,7 +34,7 @@ import { INCLUDES_BITS, packDateIso } from './survey-pack.ts';
 import { bcisIndexTable } from './bcis-index.ts';
 import { indexBetween } from './bcis-data.ts';
 import { BAND } from '../shared/index.ts';
-import { acquisitionDateReading } from './claim-facts.ts';
+import { acquisitionDateReading } from '../modules/claims/claim-facts.ts';
 import { onTestWebsite, type Env } from '../integrations/index.ts';
 import { MIN_CLAIMS } from '../modules/assessment/sector-ranges.ts';
 import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../modules/survey/surveyor-crm.ts';
@@ -94,7 +94,7 @@ export type IndexReading = {
 };
 
 /**
- * PHASE 159a (the Lockwood run, L7): THE ONE PURCHASE DATE, as the amendment window reads it (src/web/claim-facts.ts
+ * PHASE 159a (the Lockwood run, L7): THE ONE PURCHASE DATE, as the amendment window reads it (src/modules/claims/claim-facts.ts
  * acquisitionDateReading, Phase 158d): the property record, else the surveyor's legal check, else the client's checked
  * answer. Chapter 11 read the property record alone, so it said "not on file" while the legal check held the date.
  */

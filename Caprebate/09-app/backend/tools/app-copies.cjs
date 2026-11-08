@@ -44,9 +44,9 @@ const COPIES = [
   { original: 'Caprebate/02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv',
     why: "the fixture list a claim's survey pack is drafted from (src/web/pack-lines.ts)" },
   { original: 'Caprebate/06-commercial-and-governance/Caprebate Engagement Letter.docx',
-    why: "the engagement letter (src/web/letter.ts); the director's and the solicitor's document" },
+    why: "the engagement letter (src/modules/claims/letter.ts); the director's and the solicitor's document" },
   { original: 'Caprebate/06-commercial-and-governance/Caprebate Engagement Letter - TEST DEFAULTS, not agreed.docx',
-    why: "the test website's copy of the letter (src/web/letter.ts, TEST_LETTER_PATH)" },
+    why: "the test website's copy of the letter (src/modules/claims/letter.ts, TEST_LETTER_PATH)" },
 ];
 
 const COPY_DIR = 'Caprebate/09-app/backend/copies';

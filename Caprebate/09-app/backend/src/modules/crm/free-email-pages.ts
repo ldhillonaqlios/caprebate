@@ -32,7 +32,7 @@ import type { FsObjectStore } from '../../shared/objectstore.ts';
 import * as F from './free-email.ts';
 import { SAVED_NOT_SENT } from '../../integrations/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, smtpLoginFromKeyFile, smtpProvider, type EmailSending, type SmtpLogin } from '../../integrations/index.ts';
-import { openKeptOriginal } from '../../web/uploads.ts';
+import { openKeptOriginal } from '../claims/uploads.ts';
 import { markChannelRead } from './messages.ts';
 import { lastReadWords, mayReadQueue, readRepliesIfDue } from './inbound-email.ts';
 import { localStamp } from '../../shared/index.ts';

@@ -18,7 +18,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
-import * as F from '../src/web/claim-facts.ts';
+import * as F from '../src/modules/claims/claim-facts.ts';
 import { packView, savePackValue, saveLine, setLineRemoved, type PackDeps } from '../src/web/survey-pack.ts';
 import { CHAPTERS, chaptersToRead } from '../src/web/pack-chapters.ts';
 import { grantProviderNeed, grantSplitNeed, shippedGrantSwitches, GRANT_PAPERS_TYPE } from '../src/modules/assessment/grant-checks.ts';

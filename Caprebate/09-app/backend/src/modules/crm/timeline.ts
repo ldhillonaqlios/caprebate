@@ -60,7 +60,7 @@ import { CREDIT_BASES, INVOICE_KINDS, formatInvoiceNumber } from '../../web/invo
 import { RECIPROCITY_ACTIVITY_TYPES, TASK_ORIGINS, taskObj } from './tasks.ts';
 import { vocabLabel } from '../../web/vocabularies.ts';
 import { RUN_REASONS } from './automation.ts';
-import { documentObj, versionObj } from '../../web/documents.ts';
+import { documentObj, versionObj } from '../claims/documents.ts';
 import { getOutboxAtBySentAt2 } from '../../integrations/index.ts';
 import { listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, listAuditLogAtKindByOutcomeKind3, listAuditLogAtKindByOutcomeKind4, listAuditLogAtWhoByKindObjectId } from '../../core/index.ts';
 

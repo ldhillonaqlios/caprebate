@@ -17,12 +17,12 @@
  *
  * N4: a fact not recorded, recorded as not known, or (for the adviser's view) recorded by anyone but the tax adviser
  * opens nothing. With no grant left on the claim both are met — there is nothing to split and nobody to check with —
- * and the existing check, every grant traced (src/web/claim-facts.ts, grantsTraced), still asks whether there are any.
+ * and the existing check, every grant traced (src/modules/claims/claim-facts.ts, grantsTraced), still asks whether there are any.
  */
 import type { Db } from '../../core/index.ts';
 import type { Need } from '../crm/pipeline.ts';
-import { latestFacts, packGrantsFor } from '../../web/claim-facts.ts';
-import { receivedOnClaim } from '../../web/mandatory-documents.ts';
+import { latestFacts, packGrantsFor } from '../claims/claim-facts.ts';
+import { receivedOnClaim } from '../claims/mandatory-documents.ts';
 import { grantRoute, type GrantSwitches } from '../../web/pack-grants.ts';
 import { CTA } from '../../shared/index.ts';
 

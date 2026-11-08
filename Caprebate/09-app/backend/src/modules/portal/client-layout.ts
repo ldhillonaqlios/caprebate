@@ -20,8 +20,8 @@
 
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import type { ChecksPanel, StepView } from '../../web/approvals.ts';
-import type { SourcesPanel } from '../../web/research.ts';
+import type { ChecksPanel, StepView } from '../claims/approvals.ts';
+import type { SourcesPanel } from '../claims/research.ts';
 import type { QuickAction, SectionContext, SectionSpec, SectionStatus } from '../../shared/index.ts';
 import { section, SECTION_STATUS_WORDS } from '../../shared/index.ts';
 import { clientProgress, whyNotMoved } from '../crm/tell-and-move.ts';

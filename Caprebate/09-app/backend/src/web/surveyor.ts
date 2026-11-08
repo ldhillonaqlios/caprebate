@@ -64,8 +64,8 @@ import {
 } from '../modules/survey/surveyor-crm.ts';
 import { DbAnchorLog, hydrateQuarantine, storeCommitment, type StoredJob } from './anchor-store.ts';
 import { roomsFor, SOURCE_DOCUMENT, type RoomType, type SectorRooms } from '../modules/crm/rooms.ts';
-import { missingFacts, NotFoundAsRefusal, type MissingFact } from './engaged.ts';
-import { versionObj } from './documents.ts';
+import { missingFacts, NotFoundAsRefusal, type MissingFact } from '../modules/claims/engaged.ts';
+import { versionObj } from '../modules/claims/documents.ts';
 import { anyStageLabel, stage as stageOf } from '../shared/index.ts';
 /* Phase 110. The region a rate library entry is keyed on. resolveProperty
    never throws and never guesses — see the comment on REGION_NOT_CAPTURED. */

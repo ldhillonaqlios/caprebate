@@ -17,7 +17,7 @@
 import type { Db } from '../core/index.ts';
 import type { PackView, ViewLine } from './survey-pack.ts';
 import { packWords, WORD_FIELDS, type WordField } from './pack-words.ts';
-import { claimantTypeReading, captured, latestFacts } from './claim-facts.ts';
+import { claimantTypeReading, captured, latestFacts } from '../modules/claims/claim-facts.ts';
 import { funnelStateFor, sessionFromFunnel } from '../modules/assessment/funnel-session.ts';
 import { proposeRanges } from '../modules/assessment/sector-ranges.ts';
 import { deskFirstReading } from '../modules/assessment/desk-first.ts';

@@ -27,7 +27,7 @@ import { epc } from '../src/integrations/connectors/epc.ts';
 import { secretsFromValues, emptySecrets, SECRET_KEYS, parseSecretsFile, KEY_OF_NAME } from '../src/core/secrets.ts';
 import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../src/integrations/registers/source-register.ts';
 import { NAME_EXCLUSION_POLICY, classifyField, assertNoUnauthorisedName } from '../src/integrations/registers/name-exclusion.ts';
-import * as R from '../src/web/research.ts';
+import * as R from '../src/modules/claims/research.ts';
 import * as S from '../src/web/surveyor.ts';
 import { STUBS } from '../src/core/app.ts';
 import { seed } from '../src/core/seed.ts';
@@ -469,7 +469,7 @@ describe('the cost, shown before the click from a price list and after it from t
   });
 
   test('BOTH FIGURES REACH THE SCREEN, beside the button, and the page says which is a price list', () => {
-    const page = readFileSync(join(SRC, 'web', 'engaged-pages.ts'), 'utf8');
+    const page = readFileSync(join(SRC, 'modules', 'claims', 'engaged-pages.ts'), 'utf8');
     assert.match(page, /What it costs/);
     assert.match(page, /s\.cost_before_words/);
     assert.match(page, /s\.cost_last_words/);
@@ -610,7 +610,7 @@ describe('a client certificate can be presented, and only from src/integrations/
 
 describe('the paid map beside the free one, every switch off, and BCIS unbuilt and saying why', () => {
   test('"Run the research" reads BOTH maps, and a source in neither has no connector', () => {
-    const research = readFileSync(join(SRC, 'web', 'research.ts'), 'utf8');
+    const research = readFileSync(join(SRC, 'modules', 'claims', 'research.ts'), 'utf8');
     assert.match(research, /FREE_CONNECTORS\[x\.entry\.source_id\] \?\? PAID_CONNECTORS\[x\.entry\.source_id\]/);
     for (const id of ['HOMEDATA_ADDRESS', 'HMLR_TITLE']) {
       assert.equal(FREE_CONNECTORS[id], undefined, `${id} is in the free map`);

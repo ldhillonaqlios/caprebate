@@ -33,11 +33,11 @@ import {
   packSums, parseMoney, parsePercent, parseQuantity, parseRate, poundsWords, worksSums, WORKS_FIELDS, WORKS_PART_FIELDS, worksPartProblems, type WorksPartField,
   mulDivRound, type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued, type WorksField, type WorksInputs, type WorksSums,
 } from './pack-sums.ts';
-import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from './property-events.ts';
+import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from '../modules/claims/property-events.ts';
 import { legalVerdictForJob } from './pack-legal.ts';
 import { applyGrants, payerReduces, type GrantReading, type GrantSwitches } from './pack-grants.ts';
 import { moneyReadingsHere, type MoneyReadings } from '../shared/index.ts';
-import { acquisitionDateReading, elementName, latestFacts, packGrantsFor } from './claim-facts.ts';
+import { acquisitionDateReading, elementName, latestFacts, packGrantsFor } from '../modules/claims/claim-facts.ts';
 import { bcisDataHere, bcisDrafts, bcisLocationNamed, indexBetween, type BcisDraft, type RateBasis } from './bcis-data.ts';
 import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from '../modules/assessment/who-claims.ts';
 import { shippedGrantSwitches } from '../modules/assessment/grant-checks.ts';

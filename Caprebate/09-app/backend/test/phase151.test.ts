@@ -23,7 +23,7 @@ import {
   IDENTITY_CHECK, IDENTITY_CHECK_QUESTION, IDENTITY_SESSION_ENDPOINT, identityCheckMissing, readIdentityDecision,
   signatureHolds, startIdentityCheck, DIDIT_STATUS_OUTCOME, type IdentityCheckConfig,
 } from '../src/integrations/connectors/identity-check.ts';
-import { backendSwitchReadings } from '../src/web/case-stamp.ts';
+import { backendSwitchReadings } from '../src/modules/claims/case-stamp.ts';
 import { testApp } from './helpers.ts';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';

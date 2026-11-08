@@ -31,7 +31,7 @@
  * 011, disposition row E22). Still one table a person lives in; never a column here.
  */
 
-import { dateWords, KIND_WORDS, type EventKind } from '../../web/property-events.ts';
+import { dateWords, KIND_WORDS, type EventKind } from '../claims/property-events.ts';
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
 import { NotFoundAsRefusal, answerLabel, contactFor, contactForLead } from '../../core/backoffice.ts';

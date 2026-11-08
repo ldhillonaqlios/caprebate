@@ -13,8 +13,8 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { claimObjFor, loadClaimRow } from './crm.ts';
-import { sendTaskToPortal } from '../../web/engaged.ts';
-import { createDocumentRequest } from '../../web/documents.ts';
+import { sendTaskToPortal } from '../claims/engaged.ts';
+import { createDocumentRequest } from '../claims/documents.ts';
 
 export type CheckDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 

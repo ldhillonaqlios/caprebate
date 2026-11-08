@@ -14,7 +14,7 @@ import type { Actor } from '../core/index.ts';
 import { h, type Safe } from '../shared/index.ts';
 import { usersGate } from './settings.ts';
 import { assertConfigurationRead } from './configuration.ts';
-import { documentTypesGate } from './documents.ts';
+import { documentTypesGate } from '../modules/claims/documents.ts';
 import { automationGate } from '../modules/crm/automation.ts';
 import { templatesGate } from './templates.ts';
 import { assertComplianceRead } from './compliance.ts';

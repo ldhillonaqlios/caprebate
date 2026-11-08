@@ -41,7 +41,7 @@ import * as M from './messages.ts';
 import * as W from './whatsapp.ts';
 import * as F from './free-email.ts';
 import { emailChains, reSubject } from './email-chains.ts';
-import { addNote } from '../../web/engaged.ts';
+import { addNote } from '../claims/engaged.ts';
 import { createTask } from './tasks.ts';
 import { mayArrangeCalls } from '../../core/backoffice.ts';
 import { addLocalDays, isBookable, SLOT_MINUTES, staffSlots, startOfLocalDay } from './schedule.ts';
@@ -53,7 +53,7 @@ import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../../integrat
 import type { FsObjectStore } from '../../shared/objectstore.ts';
 import * as IE from './inbound-email.ts';
 import { emailedFiles } from './messages-pages.ts';
-import { receivableTypes } from '../../web/documents.ts';
+import { receivableTypes } from '../claims/documents.ts';
 import { getWhatsappMessagesCByBusinessIdContactId } from '../../integrations/index.ts';
 
 export type Via = 'email' | 'whatsapp' | 'portal' | 'team' | 'zoom' | 'call';
