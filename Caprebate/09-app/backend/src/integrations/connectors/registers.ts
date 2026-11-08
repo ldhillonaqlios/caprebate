@@ -5,7 +5,7 @@
  * WHAT MOVED HERE AND WHAT DID NOT. `gateStatus` and `planResearch` moved here unchanged, word for word, and
  * src/integrations/register-ingest.ts re-exports them, so every caller and every existing test reads the same functions.
  * `ingestRegisterRecord` — THE ONE DOOR register data enters the database by — stays in src/integrations/register-ingest.ts,
- * because test/seed.test.ts asserts that file is the only one under src/ that writes register_records, and the
+ * because test/core/seed.test.ts asserts that file is the only one under src/ that writes register_records, and the
  * phase's rule is that the existing register tests pass unchanged. Two files, one door: this file never writes to the
  * database; it fetches and shapes, and the caller stores through that door, where N2 is checked.
  *

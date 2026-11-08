@@ -48,7 +48,7 @@
  * namespaces, no parameter properties — those are not strippable.
  *
  * Run the tests:
- *   node --test caprebate-boundary-import.test.ts
+ *   node --test integrations/boundary-import.test.ts
  */
 
 /* ------------------------------------------------------------------ *

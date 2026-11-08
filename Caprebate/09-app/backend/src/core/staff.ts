@@ -173,7 +173,7 @@ function when(iso: string | null): string {
  * reasoning that a menu built from permissions puts an authorisation decision in a renderer. the owner asked for "an easy
  * layout for each one of the logins", and the phase brief for a menu that "shows only what the role can open". The
  * reversal, and how it keeps the worry answered, is written at the top of src/core/navigation.ts: the menu asks each
- * section's own gate, and test/phase133a.test.ts opens every link for every login in both directions.
+ * section's own gate, and test/core/header-and-navigation.test.ts opens every link for every login in both directions.
  */
 export function nav(actor: Actor, view: string | null = null): Safe {
   return staffShell(actor, view);

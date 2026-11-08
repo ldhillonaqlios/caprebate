@@ -6,7 +6,7 @@
  * submit, and a screen reader or a printout never sees it. Rather than edit some ninety labels one by one — and miss
  * the next one somebody adds — `page()` in src/shared/html.ts passes every page body through this, as it already passes
  * it through `ukDatesInMarkup`. A test crawls every page every login reaches and fails on a required control whose label
- * does not say so (test/phase133d.test.ts).
+ * does not say so (test/core/required-fields.test.ts).
  *
  * A CONTROL'S LABEL IS FOUND THE WAY A BROWSER FINDS IT, then one fallback:
  *   1. `<label for="x">` when the control has id="x";

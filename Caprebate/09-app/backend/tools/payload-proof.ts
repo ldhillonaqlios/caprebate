@@ -68,7 +68,7 @@ import { can as canForProof } from '../src/core/authz.ts';
 import { addNote } from '../src/web/engaged.ts';
 
 // PHASE 151j: this proof reads what each ROLE receives once signed in; the second step is not what it proves, and it
-// signs in with a password only. test/phase151j.test.ts proves the second step on the default application.
+// signs in with a password only. test/core/sign-in-steps.test.ts proves the second step on the default application.
 const made = await createApp(':memory:', {
   twoFactor: 'off',
   documentRoot: mkdtempSync(join(tmpdir(), 'cb-payload-proof-')),

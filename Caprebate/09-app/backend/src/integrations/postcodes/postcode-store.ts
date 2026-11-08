@@ -106,7 +106,7 @@
  * was done to prevent.
  *
  * Runs on Node >= 22.6 with type stripping. No enums, no namespaces.
- * Run:  cd phase9 && node --test caprebate-postcode-store.test.ts
+ * Run:  cd phase9 && node --test integrations/postcode-store.test.ts
  */
 
 import type {

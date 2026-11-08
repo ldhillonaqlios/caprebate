@@ -10,7 +10,7 @@
     "seed": "CAPREBATE_ALLOW_SEED=1 node src/core/cli.ts seed",
     "verify-audit": "node src/core/cli.ts verify-audit",
     "start": "node src/core/server.ts",
-    "test": "node --test test/*.test.ts",
+    "test": "node --test test/*.test.ts test/*/*.test.ts",
     "typecheck": "node tools/typecheck.cjs",
     "lint:sql": "node tools/lint-sql.cjs",
     "lint:paths": "node tools/lint-paths.cjs",

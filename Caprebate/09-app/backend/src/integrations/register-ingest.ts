@@ -5,7 +5,7 @@
  * src/integrations/connectors/registers.ts, and the one way to call outside is src/integrations/connectors/http.ts. They are re-exported
  * below, unchanged, so every caller and every existing test reads the same functions as before.
  *
- * `ingestRegisterRecord` STAYS HERE, and this file keeps its name, because test/seed.test.ts asserts that this is
+ * `ingestRegisterRecord` STAYS HERE, and this file keeps its name, because test/core/seed.test.ts asserts that this is
  * the only file under src/ that writes register_records — one door, so the N2 check below guards every path in.
  *
  * NOTHING FIRES YET. Every connector switch is off (REGISTER_SWITCHES), so no register is contacted by any code

@@ -126,7 +126,7 @@ const MENU_ICON_CSS = MENU_ICONS.map(([href, c]) =>
 
 /**
  * THE STYLESHEET IS A REAL FILE: src/styles/site.css. It was
- * held here as text until then; the file is that text, byte for byte, as it was served (test/phase161i.test.ts holds its
+ * held here as text until then; the file is that text, byte for byte, as it was served (test/core/front-doors.test.ts holds its
  * SHA-256). Edit the CSS there. The parts made from code above (the brand tokens, the two font stacks, the menu's icons
  * and the current-tab selectors) must still be in it exactly as the code makes them: assertCssCarriesParts checks that when
  * this module loads, so a colour changed in one place and not the other stops the application from starting.

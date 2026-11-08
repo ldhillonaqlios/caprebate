@@ -1109,7 +1109,7 @@ export function followUpsFor(db: Db, contact_id: string): { due_on: string | nul
 
 /**
  * PHASE 133a — THE GATE OF THE ONE-NEXT-ACTION LIST, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function nextActionsGate(actor: Actor): void {

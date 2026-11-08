@@ -30,7 +30,7 @@ const assets = async (): Promise<AssetsModule> => (await import('../src/shared/a
 const nextStep = async (): Promise<NextStepModule> => (await import(`../src/shared/${'next-step'}.ts`)) as unknown as NextStepModule;
 
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
-   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
+   twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';

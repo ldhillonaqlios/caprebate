@@ -13,7 +13,7 @@
  *
  *   · THE MENU ASKS NO RULE OF ITS OWN. Every section names its `gate` — the very function its route's store calls
  *     first (exported beside that store for this purpose). The menu never decides; it asks the section.
- *   · THE FAILURE IS NOT SILENT. test/phase133a.test.ts opens every menu link for every login and requires 200, and
+ *   · THE FAILURE IS NOT SILENT. test/core/header-and-navigation.test.ts opens every menu link for every login and requires 200, and
  *     opens every section NOT in a login's menu and requires 403. A section added to a route and not here, or a gate
  *     that drifts from its route, goes red in both directions.
  *
@@ -24,7 +24,7 @@
  * A MENU IS A LOGIN'S DAILY WORK, NOT EVERYTHING IT MAY OPEN. the owner found tabs repeating
  * each other and a dozen entries under More. Each login's menu is now named in `MENUS`, More holds at most four, and a
  * section off the menu still opens by its address for every login its gate admits. Both halves of the Phase 133a worry
- * still hold: a listed section is still drawn only where its gate admits the login, and test/phase135.test.ts asserts
+ * still hold: a listed section is still drawn only where its gate admits the login, and test/core/menus.test.ts asserts
  * every login's exact menu and every address's answer, so neither a menu nor a permission can drift unseen.
  */
 
@@ -134,7 +134,7 @@ export const SECTIONS: readonly Section[] = Object.freeze([
 /**
  * EACH LOGIN'S MENU, BY NAME. The owner: the tabs repeated each other, and some logins had a
  * dozen entries under More. A login's menu lists the sections it does its daily job in — being allowed to open a section
- * is not a reason to list it. `test/phase135.test.ts` asserts every menu exactly.
+ * is not a reason to list it. `test/core/menus.test.ts` asserts every menu exactly.
  *
  * A LEFT-HAND MENU IN GROUPS, AND NO MORE. the owner chose "design 2" from the mock-ups
  * (00-START-HERE/hub/UI-TIDY-PLAN.md): the menu runs down the left in named groups, so nothing is hidden. Admin's Survey

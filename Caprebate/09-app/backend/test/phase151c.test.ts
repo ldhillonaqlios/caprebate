@@ -16,7 +16,7 @@
  *   8. ACCOUNTING'S HELP LINK — the Clients tab names B55 for a login that sees the billing view.
  */
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
-   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
+   twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, createWriteStream } from 'node:fs';

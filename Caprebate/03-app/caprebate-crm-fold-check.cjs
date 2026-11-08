@@ -98,7 +98,8 @@ function loadInputs() {
   const code = walk(path.join(P.backend, 'src')).concat(walk(path.join(P.backend, 'migrations')), walk(path.join(P.backend, 'test')), walk(path.join(P.backend, 'tools')), walk(P.engineGen))
     .filter((f) => /\.(ts|sql|cjs|js)$/.test(f));
   const codeText = new Map(code.map((f) => [f, fs.readFileSync(f, 'utf8')]));
-  const testFiles = code.filter((f) => /\/test\/[^/]+\.test\.ts$/.test(f));
+  // Phase 161i1: tests by feature sit one folder down too (test/core/, test/shared/, test/integrations/, and later the modules')
+  const testFiles = code.filter((f) => /\/test\/(?:[^/]+\/)?[^/]+\.test\.ts$/.test(f));
   // files outside the back end that §4 cites (check C), read once each, on demand; null = not there
   const readCache = new Map();
   const readText = (abs) => {

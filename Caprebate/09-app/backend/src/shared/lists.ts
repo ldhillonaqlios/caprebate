@@ -610,7 +610,7 @@ export function exportList(d: ListDeps, actor: Actor, list: ListKey, q: URLSearc
 
 /**
  * THE GATE OF THE CLAIMS LIST, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/phase133a.test.ts opens
+ * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
 export function claimListGate(actor: Actor): void {

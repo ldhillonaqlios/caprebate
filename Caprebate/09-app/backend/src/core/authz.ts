@@ -986,7 +986,7 @@ export const REGISTERED_ACTIONS: readonly string[] = Object.freeze(Object.keys(R
  * WHY A TABLE OF ITS OWN, AND NOT A COLUMN IN `RULES`. A role absent from a row
  * of `RULES` is refused, which is right — but it is refused SILENTLY, and a
  * future row that forgot this role would be decided by forgetting. Here every
- * registered action carries a decision and a reason, and test/authz.test.ts
+ * registered action carries a decision and a reason, and test/core/permissions.test.ts
  * loops over `REGISTERED_ACTIONS`: an action with no entry below fails that
  * test, and every entry that says no is asserted refused.
  *
@@ -1160,7 +1160,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
 });
 
 /**
- * The view-only decision. An action with no entry is refused (and test/authz.test.ts fails on it). A "no" is
+ * The view-only decision. An action with no entry is refused (and test/core/permissions.test.ts fails on it). A "no" is
  * refused. A "yes" still asks its test of the specific object. A disabled user is refused before this is reached.
  */
 export function canAsReadOnly(actor: Actor, action: string, object: Obj): boolean {

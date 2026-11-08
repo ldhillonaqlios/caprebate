@@ -14,7 +14,7 @@
 | | |
 |---|---|
 | Module | `caprebate-postcode-authority.ts` |
-| Tests | `caprebate-postcode-authority.test.ts` — **38 pass / 0 fail**. Phase 110 adds 52 more across three new files; the folder total is **324 pass / 0 fail** (re-derived 9 Sep 2026 after Phase 113d added Suite H, the engagement gate's cost input — run it, do not quote it). |
+| Tests | `integrations/postcode-authority.test.ts` — **38 pass / 0 fail**. Phase 110 adds 52 more across three new files; the folder total is **324 pass / 0 fail** (re-derived 9 Sep 2026 after Phase 113d added Suite H, the engagement gate's cost input — run it, do not quote it). |
 | Run | `cd phase9 && node --test` |
 | Ships | Two empty tables, for two different reasons. Nothing can resolve until an ingest is run. |
 | Proven | **Run end to end against the real 964 MB ONS download on 8 September 2026** — 2,657,599 postcodes, 352 authorities. See §5. |

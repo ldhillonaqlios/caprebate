@@ -3,7 +3,7 @@
  *
  * The standard every authenticator app speaks (Google Authenticator, Microsoft Authenticator, 1Password and the rest):
  * a shared secret, HMAC-SHA1, a 30-second step, six digits. Written here on node:crypto rather than taken from a
- * package, because it is thirty lines and the RFC's own test vectors (in test/phase151j.test.ts) prove it.
+ * package, because it is thirty lines and the RFC's own test vectors (in test/core/sign-in-steps.test.ts) prove it.
  *
  *   newSecret        20 random bytes, base32 - what the person's app is given, by QR code or typed in
  *   otpauthUri       the address a QR code carries: otpauth://totp/<issuer>:<account>?secret=...&issuer=...

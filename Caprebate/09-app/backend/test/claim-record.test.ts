@@ -34,7 +34,7 @@
  */
 
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
-   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
+   twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync } from 'node:fs';
@@ -153,7 +153,7 @@ describe('WHO MAY DO WHAT — nine new actions, deny by default, every role not 
   test('each role on each action, a client on its own organisation included, a disabled user refused everything — and ACCOUNTING on none', () => {
     for (const [action, granted] of Object.entries(GRANTS)) {
       assert.ok(REGISTERED_ACTIONS.includes(action), `${action} is not registered`);
-      for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/authz.test.ts */) {
+      for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/core/permissions.test.ts */) {
         const who = actor(role, `u-${role}`, 'b1');
         assert.equal(can(who, action, objFor(action)), granted.includes(role), `${role} on ${action}`);
         assert.equal(can({ ...who, disabled: true }, action, objFor(action)), false, `a disabled ${role} on ${action}`);

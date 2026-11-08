@@ -80,7 +80,7 @@ export type InspireFetchInput = {
   readonly file_store?: InspireFileStore | null;
   /**
    * TESTS ONLY. Absent, the fetcher reads BOUNDARY_FETCHING_SWITCHED_ON, which is false. A test in
-   * test/phase150.test.ts fails if any file under src/ other than this one names the fetcher, so no caller can pass it.
+   * test/integrations/boundary-fetcher.test.ts fails if any file under src/ other than this one names the fetcher, so no caller can pass it.
    */
   readonly switched_on?: boolean;
 };

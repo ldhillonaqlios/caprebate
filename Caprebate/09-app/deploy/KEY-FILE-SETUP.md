@@ -75,4 +75,4 @@ Admin can also save a new value for a key on Home's Admin tab, sealed in the dat
 
 ## Proof
 
-`09-app/backend/test/phase161c.test.ts` checks each rule above: the status page's exact answer, the 503, the switch list for Admin only, systemd's folder read first, a 644 file stopping a live start (on the function and on a real start of `src/core/server.ts`) and only warning elsewhere, another owner, and no key printed.
+`09-app/backend/test/core/status-page-and-key-file.test.ts` checks each rule above: the status page's exact answer, the 503, the switch list for Admin only, systemd's folder read first, a 644 file stopping a live start (on the function and on a real start of `src/core/server.ts`) and only warning elsewhere, another owner, and no key printed.

@@ -642,7 +642,7 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   reserved domain example.invalid (the invented seed logins) asks for no
   second step - policy STAFF_EXCEPT_INVENTED, set by api/index.mjs
   (TEST_WEBSITE_TWO_FACTOR), never by src/ and never the default; every other
-  login still must give one (test/invented-logins.test.ts). A sign-in step
+  login still must give one (test/core/invented-logins.test.ts). A sign-in step
   lives in the database, so ON MEMORY each copy of the website has its own
   and a step begun on one is "timed out" on the next - reproduced that day;
   the time-out page now says so (stepGoneWhy). Sessions live there too.
@@ -1757,7 +1757,7 @@ release workflow (.github/workflows/release-live.yml, branch "live"), the
 timers, the nightly backup and its restore, and the reference database for
 the postcode table and the grid; and wrote the runbook and the go-live
 checklist (09-app/deploy/LIVE-RUNBOOK.md, GO-LIVE-CHECKLIST.md). It proved
-them on a database FILE (test/phase161h.test.ts). It made NO live project,
+them on a database FILE (test/core/live-website.test.ts). It made NO live project,
 database or store: Vercel Pro is not bought and the Turso account needs
 Lakhbir's sign-in, so the real-preview proof is BUILD item 1 below. Phases
 161h1 to 161m regrouped the code behind the boundary check. The sweep (162) ran after 161m. The legal pages are built and off

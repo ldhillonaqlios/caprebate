@@ -19,7 +19,7 @@
  */
 
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
-   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
+   twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
@@ -172,7 +172,7 @@ describe('who may do what — two new actions and the one the audit page asks', 
     ];
     for (const [action, obj, roles] of granted) {
       assert.ok(REGISTERED_ACTIONS.includes(action), `${action} is not registered`);
-      for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/authz.test.ts */) {
+      for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/core/permissions.test.ts */) {
         assert.equal(can(actor(role, `u-${role}`, role === 'CLIENT' ? 'b' : null), action, obj), roles.includes(role), `${role} on ${action}`);
       }
       assert.equal(can({ ...actor('ADMIN'), disabled: true }, action, obj), false, `a disabled ADMIN on ${action}`);

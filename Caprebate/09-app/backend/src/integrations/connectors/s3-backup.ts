@@ -12,7 +12,7 @@
  * cannot read. The user whose key this is may only add, read and delete files in that one bucket (the runbook's policy).
  *
  * THROUGH src/integrations/connectors/http.ts's transport, the one way this application reaches outside. The signing is ours (about
- * forty lines, checked against AWS's own published example in test/phase161h.test.ts) because AWS's SDK would add some
+ * forty lines, checked against AWS's own published example in test/core/live-website.test.ts) because AWS's SDK would add some
  * hundred packages for four calls.
  */
 import { createHash, createHmac } from 'node:crypto';

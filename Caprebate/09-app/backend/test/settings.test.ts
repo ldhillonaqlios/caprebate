@@ -7,7 +7,7 @@
  * So every administration test below is a real HTTP request, made with a real
  * session cookie belonging to a real user of that role, against the real
  * server. Nothing here calls `can()` and asserts a boolean — that is tested in
- * authz.test.ts and it proves the rule, not the wiring. What it cannot prove is
+ * core/permissions.test.ts and it proves the rule, not the wiring. What it cannot prove is
  * that the route ASKS, and a route that forgot to ask is exactly the defect
  * this file exists to catch. Each one is asserted to answer 403, and to have
  * changed nothing.
@@ -17,7 +17,7 @@
  */
 
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
-   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
+   twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -300,7 +300,7 @@ describe('every role manages its own account', () => {
   test('display name, username and password, for all five roles', async () => {
     const h = await boot();
     try {
-      for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/authz.test.ts */) {
+      for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/core/permissions.test.ts */) {
         const { client } = await h.signIn(role);
         // THE SAME IMPLEMENTATION, MOUNTED TWICE. A client's settings are at
         // /portal/settings and a staff member's at /staff/settings; the routes

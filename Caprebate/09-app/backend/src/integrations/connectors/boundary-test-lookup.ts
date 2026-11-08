@@ -28,8 +28,8 @@
  *
  * THE SWITCH STAYS FALSE. BOUNDARY_FETCHING_SWITCHED_ON is read nowhere here and changed nowhere: this turns the fetcher
  * on for ONE call, in a command a person typed, the way smokeOne turns one register on in a map of its own. Both gates
- * are reported shut on the audit row, because a test lookup opens neither. test/phase151l.test.ts proves the shipped
- * constant is untouched, and test/phase150.test.ts allows this file, and only this file besides the site area function,
+ * are reported shut on the audit row, because a test lookup opens neither. test/integrations/boundary-first-download.test.ts proves the shipped
+ * constant is untouched, and test/integrations/boundary-fetcher.test.ts allows this file, and only this file besides the site area function,
  * to name the fetcher.
  */
 import type { Db } from '../../core/index.ts';

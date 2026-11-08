@@ -1,4 +1,4 @@
-/** Shared fixtures. A fake hasher keeps the suite fast; the real one is exercised in auth.test.ts. */
+/** Shared fixtures. A fake hasher keeps the suite fast; the real one is exercised in core/auth.test.ts. */
 import { buildApp, type App } from '../src/core/app.ts';
 import type { PasswordHasher } from '../src/core/password.ts';
 import type { Actor } from '../src/core/authz.ts';
@@ -39,7 +39,7 @@ export function fixedClock(): () => string {
 
 export async function testApp(hasher?: PasswordHasher): Promise<App> {
   // PHASE 151j: the unit tests sign in with a password alone, so the second step is off here, and said so. It is
-  // proved on the default (every staff login must) in test/phase151j.test.ts.
+  // proved on the default (every staff login must) in test/core/sign-in-steps.test.ts.
   return buildApp({ hasher: hasher ?? fakeHasher(), now: fixedClock(), twoFactor: 'off' });
 }
 

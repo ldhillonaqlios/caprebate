@@ -29,7 +29,7 @@
  * Runs on Node >= 22.6 with type stripping (`node --test file.ts`). No enums,
  * no namespaces, no parameter properties — those are not strippable.
  *
- * Run:  cd phase9 && node --test caprebate-postcode-authority.test.ts
+ * Run:  cd phase9 && node --test integrations/postcode-authority.test.ts
  */
 
 /* ------------------------------------------------------------------ *

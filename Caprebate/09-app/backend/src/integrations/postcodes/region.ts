@@ -84,7 +84,7 @@
  * prove that field by field. Only the surveyor's own answer turns it on.
  *
  * Runs on Node >= 22.6 with type stripping.
- * Run:  cd phase9 && node --test caprebate-region.test.ts
+ * Run:  cd phase9 && node --test integrations/region.test.ts
  */
 
 import type { BillingAuthority } from './postcode-authority.ts';

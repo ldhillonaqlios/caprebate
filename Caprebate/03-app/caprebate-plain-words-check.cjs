@@ -106,7 +106,7 @@ const EXEMPT_TEXT = [
      opening words - see EXEMPT_CONSTS below. */
   /* Phase 146b: planResearch's reasons and the register STUB_NOTICE (src/connectors/registers.ts), moved there word for
      word from src/stubs/registers.ts. No screen shows them — the research panel's words are stateUnderGates's, in
-     src/web/research.ts — and test/seed.test.ts reads them exactly, and must pass unchanged. */
+     src/web/research.ts — and test/core/seed.test.ts reads them exactly, and must pass unchanged. */
   /^already fired$/,
   /^free sources are gated on a published privacy notice:\s*$/,
   /^paid sources are gated on a signed engagement, asserted server-side$/,
