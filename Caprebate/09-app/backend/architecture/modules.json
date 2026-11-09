@@ -1,5 +1,21 @@
 {
  "note": "THE MODULE MAP (Phase 161h1, 7 Nov 2026; 09-app/docs/ARCHITECTURE.md). Every file under src/: its area and its kind (page, logic, data, routes, other). doors: the one file of each area another area may import; until it exists, every import into the area is a break of rule 1. Read by tools/boundaries.cjs. A new file is placed here on purpose; moving a file to another area is a change to review.",
+ "order_note": "THE ORDER (Phase 161l, 9 Nov 2026; docs/ARCHITECTURE.md rule 2): the areas from the bottom up. An area imports only areas below it; when a lower area must tell a higher one something, it announces an event (src/core/events.ts) or offers a port the higher one fills at start. shared is at the bottom (plain tools: no sign-in, no SQL), then the core; app is the start-up wiring at the top, which nothing imports.",
+ "order": [
+  "shared",
+  "core",
+  "integrations",
+  "assessment",
+  "claims",
+  "survey",
+  "finance",
+  "compliance",
+  "admin",
+  "crm",
+  "portal",
+  "public-site",
+  "app"
+ ],
  "doors": {
   "core": "src/core/index.ts",
   "shared": "src/shared/index.ts",
@@ -12,7 +28,8 @@
   "survey": "src/modules/survey/index.ts",
   "finance": "src/modules/finance/index.ts",
   "compliance": "src/modules/compliance/index.ts",
-  "admin": "src/modules/admin/index.ts"
+  "admin": "src/modules/admin/index.ts",
+  "app": null
  },
  "files": {
   "src/core/app.ts": {

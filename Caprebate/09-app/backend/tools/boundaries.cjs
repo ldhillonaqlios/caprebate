@@ -14,7 +14,9 @@
  * THE FOUR RULES (a "break" is one thing that goes against a rule; each has a key, so the same break is the same key)
  *   1  FRONT DOORS ONLY. A file imports a file of another area only through that area's front door.
  *      key "importer -> imported", counted against the area whose door was gone round.
- *   2  ONE WAY ONLY. No import cycle between areas: every area-to-area import inside a strongly connected group.
+ *   2  ONE WAY ONLY. Areas depend on each other in one direction: modules.json's "order" lists them from the bottom
+ *      up, and an area may import only an area BELOW it. An import up the order is a break (and so is every
+ *      area-to-area import inside a cycle, which an order makes impossible). Without an "order", only cycles count.
  *      key "from-area -> to-area", counted against the from-area.
  *   3  EACH TABLE HAS ONE OWNER. Only the owning area's data file runs SQL on a table.
  *      key "file : table", counted against the table's owner.
@@ -45,9 +47,11 @@ const os = require('os');
 const path = require('path');
 const { findingsIn } = require('./lint-paths.cjs');
 
-const AREAS = ['core', 'shared', 'integrations', 'public-site', 'assessment', 'portal', 'crm', 'claims', 'survey', 'finance', 'compliance', 'admin'];
+/* 'app' (Phase 161l): the start-up wiring at the top of the order (src/app/): the server, the router shell, the timers,
+   the command line and the seed. It may import every area; no area imports it, so it has no front door (null). */
+const AREAS = ['core', 'shared', 'integrations', 'public-site', 'assessment', 'portal', 'crm', 'claims', 'survey', 'finance', 'compliance', 'admin', 'app'];
 const KINDS = ['page', 'logic', 'data', 'routes', 'other'];
-const RULES = { 1: 'front doors only', 2: 'one way only (no cycle between areas)', 3: 'each table has one owner', 4: 'screens hold no SQL; rules hold no HTML and no SQL' };
+const RULES = { 1: 'front doors only', 2: 'one way only (an area imports only areas below it in the order)', 3: 'each table has one owner', 4: 'screens hold no SQL; rules hold no HTML and no SQL' };
 const SQL = /\b(SELECT\b[\s\S]*\bFROM|INSERT\s+(OR\s+\w+\s+)?INTO|UPDATE\s+[a-z_][a-z0-9_]*\s+SET|DELETE\s+FROM|CREATE\s+(TABLE|TRIGGER|INDEX|VIEW))\b/;
 const TABLE_REF = /\b(?:FROM|JOIN|INTO|UPDATE|TABLE)\s+([a-z_][a-z0-9_]*)/g;
 
@@ -151,12 +155,19 @@ function measure({ backend, files, modules, tables, tableList, ts }) {
     if (!tableList.includes(t)) problems.push(`architecture/tables.json lists the table ${t}, which the migrations no longer make: take it off`);
     if (!AREAS.includes(a)) problems.push(`architecture/tables.json: "${a}", the owner of ${t}, is not one of the areas`);
   }
-  for (const a of AREAS) if (typeof modules.doors?.[a] !== 'string') problems.push(`architecture/modules.json names no front door for ${a}`);
+  for (const a of AREAS) if (typeof modules.doors?.[a] !== 'string' && modules.doors?.[a] !== null) problems.push(`architecture/modules.json names no front door for ${a}`);
+  /* THE ORDER (Phase 161l): every area once, from the bottom up. */
+  const order = Array.isArray(modules.order) ? modules.order : null;
+  if (order !== null) {
+    for (const a of AREAS) if (order.filter((x) => x === a).length !== 1) problems.push(`architecture/modules.json's order must name ${a} exactly once`);
+    for (const a of order) if (!AREAS.includes(a)) problems.push(`architecture/modules.json's order names "${a}", which is not one of the areas`);
+  }
+  const rank = (a) => (order === null ? -1 : order.indexOf(a));
   const breaks = { 1: {}, 2: {}, 3: {}, 4: {} };
   const add = (rule, area, key) => { (breaks[rule][area] ??= new Set()).add(key); };
   const areaOf = (f) => map[f]?.area;
   const doorOf = (a) => modules.doors?.[a];
-  const hasDoor = (a) => fs.existsSync(path.join(backend, doorOf(a) ?? '\u0000'));
+  const hasDoor = (a) => typeof doorOf(a) === 'string' && fs.existsSync(path.join(backend, doorOf(a)));
   const edges = new Map();
   const known = new Set(tableList);
   for (const f of files) {
@@ -190,7 +201,9 @@ function measure({ backend, files, modules, tables, tableList, ts }) {
     if (sql && (e.kind === 'page' || e.kind === 'logic')) add(4, e.area, `${f} : ${e.kind} runs SQL`);
   }
   const groups = strongGroups([...edges.keys()], edges);
-  for (const g of groups) for (const a of g) for (const b of edges.get(a) ?? []) if (g.includes(b)) add(2, a, `${a} -> ${b}`);
+  /* With an order, an import up it is the break (every cycle has one); without one, every import inside a cycle. */
+  if (order === null) for (const g of groups) for (const a of g) for (const b of edges.get(a) ?? []) if (g.includes(b)) add(2, a, `${a} -> ${b}`);
+  if (order !== null) for (const [a, to] of edges) for (const b of to) if (rank(b) > rank(a)) add(2, a, `${a} -> ${b}`);
   const out = {};
   for (const r of Object.keys(breaks)) { out[r] = {}; for (const a of Object.keys(breaks[r]).sort()) out[r][a] = [...breaks[r][a]].sort(); }
   return { breaks: out, problems, groups };
@@ -312,7 +325,7 @@ function selfTest() {
   const backend = path.join(__dirname, '..');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-boundaries-'));
   const put = (rel, body) => { fs.mkdirSync(path.dirname(path.join(tmp, rel)), { recursive: true }); fs.writeFileSync(path.join(tmp, rel), body); };
-  const doors = { ...Object.fromEntries(AREAS.map((a) => [a, ['core', 'shared', 'integrations'].includes(a) ? `src/${a}/index.ts` : `src/modules/${a}/index.ts`])), shared: 'src/shared/html.ts' };
+  const doors = { ...Object.fromEntries(AREAS.map((a) => [a, ['core', 'shared', 'integrations'].includes(a) ? `src/${a}/index.ts` : `src/modules/${a}/index.ts`])), shared: 'src/shared/html.ts', app: null };
   const files = {
     'src/core/db.ts': { area: 'core', kind: 'data' }, 'src/shared/html.ts': { area: 'shared', kind: 'other' },
     'src/modules/claims/index.ts': { area: 'claims', kind: 'other' }, 'src/modules/claims/data.ts': { area: 'claims', kind: 'data' },
@@ -355,6 +368,17 @@ function selfTest() {
     const [m, u] = plant('src/modules/claims/logic.ts', "import { q } from '../crm/index.ts';\nexport const two = q;\n", { 'src/modules/crm/index.ts': { area: 'crm', kind: 'other' } });
     check('rule 2: a cycle between two areas fails (through their front doors, so rule 1 holds)', 2,
       () => { put('src/modules/crm/index.ts', 'export const q = 1;\n'); m(); }, () => { u(); fs.rmSync(path.join(tmp, 'src/modules/crm/index.ts')); });
+  }
+  {
+    /* THE ORDER: claims sits below crm, so claims importing crm through its door is a break even with no cycle */
+    const order = ['shared', 'core', 'integrations', 'assessment', 'claims', 'survey', 'finance', 'compliance', 'admin', 'crm', 'portal', 'public-site', 'app'];
+    const withOrder = (crmDoor = true) => put('architecture/modules.json', JSON.stringify({ doors, order, files: { ...files, ...(crmDoor ? { 'src/modules/crm/index.ts': { area: 'crm', kind: 'other' } } : {}) } }));
+    const [m, u] = plant('src/modules/claims/logic.ts', "import { q } from '../crm/index.ts';\nexport const two = q;\n");
+    check('rule 2: an import up the order fails, with no cycle (through the front door, so rule 1 holds)', 2,
+      () => { put('src/modules/crm/index.ts', 'export const q = 1;\n'); m(); withOrder(); }, () => { u(); fs.rmSync(path.join(tmp, 'src/modules/crm/index.ts')); });
+    const [m2, u2] = plant('src/modules/crm/page.ts', "import { one } from '../claims/index.ts';\nexport const p = one;\n");
+    check('rule 2: an import down the order passes', false, () => { m2(); withOrder(false); }, () => u2());
+    check('the order must name every area once', true, () => put('architecture/modules.json', JSON.stringify({ doors, order: order.slice(1), files })), () => write());
   }
   check('rule 3: SQL on a table from a file that is not its owner\'s data file fails', true, ...plant('src/modules/claims/logic.ts', "export const two = (db: any) => db.get('SELECT id FROM leads');\n"));
   check('rule 4: a page that runs SQL fails', true, ...plant('src/modules/crm/page.ts', "export const p = (db: any) => db.all('SELECT id FROM leads');\n"));

@@ -139,46 +139,28 @@
   },
   "2": {
    "admin": [
-    "admin -> assessment",
-    "admin -> claims",
-    "admin -> compliance",
-    "admin -> core",
-    "admin -> crm",
-    "admin -> integrations",
-    "admin -> shared"
+    "admin -> crm"
    ],
    "assessment": [
     "assessment -> claims",
-    "assessment -> core",
     "assessment -> crm",
     "assessment -> finance",
-    "assessment -> integrations",
     "assessment -> public-site",
-    "assessment -> shared",
     "assessment -> survey"
    ],
    "claims": [
     "claims -> admin",
-    "claims -> assessment",
     "claims -> compliance",
-    "claims -> core",
     "claims -> crm",
     "claims -> finance",
-    "claims -> integrations",
     "claims -> portal",
     "claims -> public-site",
-    "claims -> shared",
     "claims -> survey"
    ],
    "compliance": [
     "compliance -> admin",
-    "compliance -> assessment",
-    "compliance -> claims",
-    "compliance -> core",
     "compliance -> crm",
-    "compliance -> integrations",
-    "compliance -> public-site",
-    "compliance -> shared"
+    "compliance -> public-site"
    ],
    "core": [
     "core -> admin",
@@ -190,60 +172,24 @@
     "core -> integrations",
     "core -> portal",
     "core -> public-site",
-    "core -> shared",
     "core -> survey"
    ],
    "crm": [
-    "crm -> admin",
-    "crm -> assessment",
-    "crm -> claims",
-    "crm -> compliance",
-    "crm -> core",
-    "crm -> finance",
-    "crm -> integrations",
     "crm -> portal",
-    "crm -> public-site",
-    "crm -> shared",
-    "crm -> survey"
+    "crm -> public-site"
    ],
    "finance": [
-    "finance -> assessment",
-    "finance -> claims",
     "finance -> compliance",
-    "finance -> core",
-    "finance -> crm",
-    "finance -> shared"
+    "finance -> crm"
    ],
    "integrations": [
     "integrations -> admin",
     "integrations -> claims",
-    "integrations -> core",
     "integrations -> crm",
-    "integrations -> shared",
     "integrations -> survey"
    ],
    "portal": [
-    "portal -> admin",
-    "portal -> assessment",
-    "portal -> claims",
-    "portal -> compliance",
-    "portal -> core",
-    "portal -> crm",
-    "portal -> integrations",
-    "portal -> public-site",
-    "portal -> shared",
-    "portal -> survey"
-   ],
-   "public-site": [
-    "public-site -> admin",
-    "public-site -> assessment",
-    "public-site -> compliance",
-    "public-site -> core",
-    "public-site -> crm",
-    "public-site -> finance",
-    "public-site -> integrations",
-    "public-site -> shared",
-    "public-site -> survey"
+    "portal -> public-site"
    ],
    "shared": [
     "shared -> admin",
@@ -254,12 +200,7 @@
     "shared -> survey"
    ],
    "survey": [
-    "survey -> assessment",
-    "survey -> claims",
-    "survey -> core",
-    "survey -> crm",
-    "survey -> integrations",
-    "survey -> shared"
+    "survey -> crm"
    ]
   },
   "3": {
@@ -453,6 +394,14 @@
    "after": 350,
    "renamed_or_new": 44,
    "gone": 300
+  },
+  {
+   "date": "2026-11-09",
+   "why": "Phase 161l: the order written into architecture/modules.json (shared, core, integrations, assessment, claims, survey, finance, compliance, admin, crm, portal, public-site, app); rule 2 now counts each pair of areas where one imports another above it, in place of every pair inside the one cycle (99 to 42); no code changed",
+   "before": 350,
+   "after": 293,
+   "renamed_or_new": 0,
+   "gone": 57
   }
  ]
 }
