@@ -108,8 +108,7 @@
    "survey": [
     "src/core/cli.ts -> src/modules/survey/bcis-data.ts",
     "src/core/cli.ts -> src/modules/survey/bcis-index.ts",
-    "src/core/search.ts -> src/modules/survey/data.ts",
-    "src/integrations/postcodes/location-key.ts -> src/modules/survey/costing/cost-model.cjs"
+    "src/core/search.ts -> src/modules/survey/data.ts"
    ]
   },
   "2": {
@@ -160,8 +159,7 @@
    "integrations": [
     "integrations -> admin",
     "integrations -> claims",
-    "integrations -> crm",
-    "integrations -> survey"
+    "integrations -> crm"
    ],
    "portal": [
     "portal -> public-site"

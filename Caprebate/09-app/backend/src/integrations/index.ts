@@ -38,6 +38,8 @@ export { INBOUND_EMAIL, imapLoginFromKeyFile, imapMailbox, parseBounceReport, pa
 export { EMAIL_SENDING, SENT_SECRET_KINDS, auditMailConnections, dispatchOutbox, emailPlaceRefusal, liftSuppression, mailWhere, recordBounce, sendingMissing, sendingOn, smtpLoginFromKeyFile, smtpProvider } from './email/email-provider.ts';
 export { SAVED_NOT_SENT, STUB_NOTICE, currentSender, isDoNotContact, isInventedAddress, outboxTransport } from './email/email.ts';
 export { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from './outside-services.ts';
+export { locationKeyFor } from './postcodes/location-key.ts';
+export { ONS_TABLE_STALE_FLAG } from './postcodes/postcode-store.ts';
 export { referenceLocation, referenceOstn15Grid } from './postcodes/reference-db.ts';
 export { ingestRegisterRecord, removeRegisterField, removeRegisterRecord } from './register-ingest.ts';
 export { BOUNDARY_FETCHING_SWITCHED_ON } from './registers/boundary-import.ts';
@@ -67,6 +69,7 @@ export type { ImapLogin, InboundEmail, Mailbox, ParsedEmail, RawEmail } from './
 export type { Connector, EmailSending, MailWhere, SmtpLogin } from './email/email-provider.ts';
 export type { EmailTransport, InlineFile, Sender } from './email/email.ts';
 export type { FileRow, FileSource, FileSourceId, ImportResult } from './registers/file-registers.ts';
+export type { ResolveDeps } from './postcodes/location-key.ts';
 export type { IngestedRecord } from './registers/name-exclusion.ts';
 export type { Grade } from './registers/source-register.ts';
 export type { SignatureProvider } from './signature.ts';
