@@ -13,3 +13,5 @@ export { allocateNumber, claimMoneyLines, CREDIT_BASES, financeDashboard, format
 export type { ClaimMoneyLine, FinanceDashboard } from './invoices.ts';
 // Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
 import './nav.ts';
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/crm/data-borrowed.ts).
+export { listInvoiceCreditNotesRecordedAtBasisRecordedByByInvoiceId, listInvoicePaymentsRecordedAtVoidedAtRecordedByByInvoiceId, listInvoicesIdByBusinessIdWithoutClaim, listInvoicesIdKindRaisedByByClaimId, listInvoiceNumbersSeqInvoiceIdBySeqLike, listInvoicesIdFeeByClaimIds, INVOICE_NUMBER_SEARCH } from './data.ts';

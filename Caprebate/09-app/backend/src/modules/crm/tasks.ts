@@ -49,9 +49,13 @@ import { fireAutomation } from './automation.ts';
 import { mayTake, vocabLabel } from '../admin/index.ts';
 import { listUsersIdDisplayNameByRoleADM2 } from '../../core/index.ts';
 import { getBusinessesIdById, getContactsIdBusinessIdById3, getLeadsBusinessIdById, getLeadsIdBusinessIdById, getStaffTasksDueOnNByContactIdStatus, getStaffTasksIdByCreatedByOrigin, insertStaffTasks, listClientTasksQuestionDueOnByAskedByState, listClientTasksQuestionDueOnByAskedByState2, listClientTasksQuestionDueOnByBusinessIdState, updateStaffTasksIsNextActionUpdatedAtByClaimIdIsNextAction, updateStaffTasksIsNextActionUpdatedAtById, updateStaffTasksStatusCancelledAtById, updateStaffTasksStatusCompletedAtById, updateStaffTasksStatusStartedAtById, updateStaffTasksStatusUpdatedAtById, updateStaffTasksTitleDescriptionById } from './data.ts';
-import { getStaffTasksIdTitleByClaimIdIsNextAction, listClaimsIdClaimRef, listClaimsIdClaimRefByOwnerId2, listClientTasksIdTypeLabelByAskedByKind } from './data-borrowed.ts';
+import { getStaffTasksIdTitleByClaimIdIsNextAction, listClaimsIdClaimRef, listClaimsIdClaimRefByOwnerId2 } from './data-borrowed.ts';
 import { getClaimsIdBusinessIdById7, getClaimsIdStageById, getClaimsStageById, getPropertiesIdBusinessIdById, listClaimsIdClaimRefByOwnerId } from '../claims/index.ts';
 import { getIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO2, listIntroducersIdTitleByIdJO3, listIntroducersIdTitleByIdJO4 } from './data-borrowed.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { listDocumentTypesCodeReadersLabelByCodes } from '../admin/index.ts';
+import { listClaimsIdClaimRefStageByIds } from '../claims/index.ts';
+import { byId, idsOf, listClientTasksIdRequestedTypeByAskedByKind, lookUp } from './data.ts';
 
 export type TaskDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type TaskResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -1030,4 +1034,20 @@ export function followUpsFor(db: Db, contact_id: string): { due_on: string | nul
  */
 export function nextActionsGate(actor: Actor): void {
   authorise(actor, 'pipeline.read', { type: 'pipeline', id: '__next_actions__' });
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listClientTasksIdTypeLabelByAskedByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const tasks = listClientTasksIdRequestedTypeByAskedByKind<{ id: unknown; requested_type: unknown; due_on: unknown; business_id: unknown; business_name: unknown; claim_id: unknown }>(db, params);
+  const types = new Map(listDocumentTypesCodeReadersLabelByCodes<{ code: string; label: unknown }>(db, [idsOf(tasks.map((t) => t.requested_type))]).map((d) => [d.code, d]));
+  const claims = byId(listClaimsIdClaimRefStageByIds<{ id: string; claim_ref: unknown }>(db, [idsOf(tasks.map((t) => t.claim_id))]));
+  const rows: Row[] = [];
+  for (const t of tasks) {
+    const type = lookUp(types, t.requested_type);
+    if (type === undefined) continue; // JOIN document_types
+    rows.push({ id: t.id, type_label: type.label, due_on: t.due_on, business_id: t.business_id, business_name: t.business_name, claim_id: t.claim_id,
+      claim_ref: lookUp(claims, t.claim_id)?.claim_ref ?? null });
+  }
+  return rows as unknown as T[];
 }

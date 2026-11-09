@@ -168,3 +168,8 @@ export function listSavedKeysNameSealedByRowidName<T extends Row = Row>(db: Db, 
   return fillUsers(db, db.all<T>('SELECT k.name, k.sealed, k.set_at, k.set_by AS who FROM saved_keys k ' +
     'WHERE k.rowid = (SELECT max(x.rowid) FROM saved_keys x WHERE x.name = k.name) ORDER BY k.name', params), { who: 'display_name' });
 }
+
+// FOR THE CRM (Phase 161l1): the document types the given codes name, in place of the CRM's joins to document_types.
+export function listDocumentTypesCodeReadersLabelByCodes<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT t.code, t.readers, t.carries_value, t.label FROM document_types t WHERE t.code IN (SELECT value FROM json_each(?))', params);
+}

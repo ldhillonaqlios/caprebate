@@ -42,10 +42,14 @@ import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from './automation.t
 import { getUsersIdEmailByIdDisabledAt, listUsersIdEmailByRoleBusinessId, listUsersIdEmailByRoleDisabledAt } from '../../core/index.ts';
 import { getWhatsappMessagesCountByBusinessIdDirection } from '../../integrations/index.ts';
 import { getBusinessesIdNameById2, getChannelReadsAtByUserIdBusinessId, getClientMessageFilesIdBusinessIdByLogicalDocumentId, getClientMessagesBusinessIdDirectionById, getClientMessagesCountByBusinessIdDirection, getClientMessagesCountByBusinessIdDirection2, getInternalNotesCountByBusinessIdAuthorId, getThreadReadsAtByUserIdBusinessId, insertChannelReads, insertClientMessageFiles, insertClientMessages, insertThreadReads, listClientMessagesBusinessIdNameByDirectionCreatedAt } from './data.ts';
-import { listDocumentsIdBusinessIdByLogicalDocumentIdJO, listInternalNotesIdAuthorIdByBusinessId } from './data-borrowed.ts';
+import { listInternalNotesIdAuthorIdByBusinessId } from './data-borrowed.ts';
 import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from '../survey/index.ts';
 import { getClaimsIdByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel } from '../claims/index.ts';
 import { getClientMessagesIdBusinessIdByIdBusinessId, listClientMessagesIdBusinessIdByBusinessId } from './data-borrowed.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { listDocumentTypesCodeReadersLabelByCodes } from '../admin/index.ts';
+import { listLogicalDocumentsIdTypeCodeVersionByIds } from '../claims/index.ts';
+import { byId, idsOf, listClientMessageFilesLogicalDocumentIdByMessageId, lookUp } from './data.ts';
 
 export type MessageDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -461,4 +465,20 @@ export function clientMessagesWaiting(db: Db, actor: Actor, nowIso: string): Wai
 export function messageOfFile(db: Db, logical_document_id: string): { id: string; business_id: string; from_client: boolean } | null {
   const r = getClientMessageFilesIdBusinessIdByLogicalDocumentId<{ id: string; business_id: string; direction: string }>(db, [logical_document_id]);
   return r === undefined ? null : { id: r.id, business_id: r.business_id, from_client: r.direction === 'FROM_CLIENT' };
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listDocumentsIdBusinessIdByLogicalDocumentIdJO<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  // The message's files in the order they were added, each the logical document (JOIN) of a known type (JOIN), with its latest version.
+  const files = listClientMessageFilesLogicalDocumentIdByMessageId<{ logical_document_id: unknown }>(db, params);
+  const logical = byId(listLogicalDocumentsIdTypeCodeVersionByIds<{ id: string; business_id: unknown; type_code: unknown; seq: unknown; version: unknown }>(db, [idsOf(files.map((f) => f.logical_document_id))]));
+  const types = new Map(listDocumentTypesCodeReadersLabelByCodes<{ code: string; readers: unknown; carries_value: unknown; label: unknown }>(db, [idsOf([...logical.values()].map((l) => l.type_code))]).map((d) => [d.code, d]));
+  const rows: Row[] = [];
+  for (const f of files) {
+    const l = lookUp(logical, f.logical_document_id), t = l === undefined ? undefined : lookUp(types, l.type_code);
+    if (l === undefined || t === undefined) continue;
+    rows.push({ id: l.id, business_id: l.business_id, readers: t.readers, carries_value: t.carries_value, label: t.label, seq: l.seq, version: l.version });
+  }
+  return rows as unknown as T[];
 }

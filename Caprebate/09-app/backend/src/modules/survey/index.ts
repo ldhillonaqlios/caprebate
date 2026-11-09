@@ -37,3 +37,5 @@ export { assembleReleasedFacts } from '../../payload.ts';
 export type { ReleasedFacts } from '../../payload.ts';
 // Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
 import './nav.ts';
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/crm/data-borrowed.ts).
+export { getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId, listSurveyorCommitmentsCommittedAtJobIdSurveyorIdByClaimId, listSurveyorJobsBusinessIdClaimIdBySurveyorId, listSurveyorJobsIdBusinessIdClaimIdBySurveyorId } from './data.ts';

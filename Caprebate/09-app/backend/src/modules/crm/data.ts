@@ -1115,3 +1115,69 @@ export function listBusinessesIdNameSectorByIds<T extends Row = Row>(db: Db, par
 export function updateBusinessesClientStatusActiveById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run("UPDATE businesses SET client_status = 'ACTIVE' WHERE id = ?", params);
 }
+
+export function getBookingsStartsAtEndsAtBusinessIdLeadIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT b.starts_at, b.ends_at, b.cancelled_at, b.business_id, b.lead_id FROM bookings b WHERE b.id = ?', params);
+}
+export function listBookingsIdByIdChannelOverlap<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(`SELECT o.id FROM bookings o
+    WHERE o.id <> ? AND o.channel = 'video' AND o.cancelled_at IS NULL AND o.starts_at IS NOT NULL AND o.ends_at IS NOT NULL
+    AND o.starts_at < ? AND o.ends_at > ?`, params);
+}
+/** The companies the given ids name, for a company's name in place of a join to businesses. */
+export function listBusinessesIdNameByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT b.id, b.name FROM businesses b WHERE b.id IN (SELECT value FROM json_each(?))', params);
+}
+export function listClientMessagesIdCreatedAtByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT m.id, m.created_at FROM client_messages m WHERE m.id IN (SELECT value FROM json_each(?))', params);
+}
+/** The claims an introducer's leads hold (with_claim: only the leads that hold one; each lead once). */
+export function listLeadsClaimIdByIntroducerIdWithClaim<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.claim_id FROM leads l WHERE l.introducer_id = ? AND l.claim_id IS NOT NULL', params);
+}
+export function listLeadsClaimIdByIntroducerIdEvery<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.claim_id FROM leads l WHERE l.introducer_id = ?', params);
+}
+export function listClientTasksIdKindAnsweredByByBusinessIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT t.id, t.kind, t.question, t.answer, t.answer_state, t.received_document_id, t.answered_by, t.answered_at ' +
+    'FROM client_tasks t LEFT JOIN client_task_checks k ON k.task_id = t.id ' +
+    "WHERE t.business_id = ? AND (t.claim_id = ? OR t.claim_id IS NULL) AND t.state = 'ANSWERED' AND t.answered_by_role = 'CLIENT' " +
+    'AND k.id IS NULL ORDER BY t.answered_at ASC, t.rowid ASC', params);
+}
+export function listClientTasksIdRequestedTypeByAskedByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT ct.id, ct.requested_type, ct.due_on, ct.business_id, b.name AS business_name, ct.claim_id FROM client_tasks ct ' +
+    'JOIN businesses b ON b.id = ct.business_id ' +
+    "WHERE ct.asked_by = ? AND ct.kind = 'DOCUMENT' AND ct.state = 'OPEN' ORDER BY ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC", params);
+}
+export function listClientTasksQuestionCreatedAtAskedByByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT ct.question, ct.created_at, ct.sent_to_portal_at, ct.answered_at, ct.answer_state, ct.answered_by_role, ct.withdrawn_at, ' +
+    'ct.due_on, ct.asked_by, ct.answered_by, ct.withdrawn_by, ct.kind, ct.requested_type, ct.claim_id, ct.received_document_id FROM client_tasks ct ' +
+    'WHERE ct.business_id = ? ORDER BY ct.created_at', params);
+}
+export function listClientMessageFilesLogicalDocumentIdByMessageId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT f.logical_document_id FROM client_message_files f WHERE f.message_id = ? ORDER BY f.linked_at', params);
+}
+// HELPERS FOR A SPLIT JOIN (Phase 161l1): no SQL; used where the CRM puts its rows and another area's together.
+/** The ids a list of rows names, for a lookup by ids (SELECT ... WHERE id IN (SELECT value FROM json_each(?))). */
+export function idsOf(ids: readonly unknown[]): string {
+  return JSON.stringify([...new Set(ids.filter((id): id is string => typeof id === 'string'))]);
+}
+export function byId<R extends { id: string }>(rows: readonly R[]): Map<string, R> {
+  return new Map(rows.map((r) => [r.id, r]));
+}
+export function lookUp<R>(rows: Map<string, R>, id: unknown): R | undefined {
+  return typeof id === 'string' ? rows.get(id) : undefined;
+}
+/** SQLite's ORDER BY ... ASC for the values these statements sort on: NULL first, numbers before text, text by its bytes. */
+export function sqlOrder(a: unknown, b: unknown): number {
+  if (a === b) return 0;
+  if (a === null || a === undefined) return -1;
+  if (b === null || b === undefined) return 1;
+  if (typeof a === 'number' && typeof b === 'number') return a < b ? -1 : 1;
+  if (typeof a === 'number') return -1;
+  if (typeof b === 'number') return 1;
+  return Buffer.compare(Buffer.from(String(a)), Buffer.from(String(b)));
+}
+export function listContactsIdFullNameContactTypeByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.full_name, c.contact_type FROM contacts c WHERE c.id IN (SELECT value FROM json_each(?))', params);
+}

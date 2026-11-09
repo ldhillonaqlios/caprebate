@@ -82,3 +82,6 @@ export type { PostcodeStore } from './postcodes/postcode-port.ts';
 export type { IngestedRecord } from './registers/name-exclusion.ts';
 export type { Grade } from './registers/source-register.ts';
 export type { SignatureProvider } from './signature.ts';
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/crm/data-borrowed.ts).
+export { getVideoMeetingsBookingIdMeetingIdByClientToken, getVideoMeetingsHostOpenedAtHostOpenedByByBookingId, listResearchRunsAtKindActorIdByBusinessId, listVideoMeetingsBookingIdHostUserIdByBookingIds } from './data.ts';
+export { getOutboxXByKindLeadIdBusinessId, listInboundEmailIdReceivedAtContactIdByBusinessId, listInboundEmailUidAtBusinessIds, listOutboxAtToEmailBusinessIdByKind, listOutboxCreatedAtKindClaimIdByBusinessId, listOutboxCreatedAtKindClaimIdByLeadIdBusinessId, listOutboxIdCreatedAtWrittenByByBusinessId, listOutboxIdCreatedAtWrittenByByLeadIdBusinessId, listWhatsappImportLinesImportIdUploadedAtUploadedByByMessageId, listWhatsappImportsIdContactIdByBusinessIdStatus, listWhatsappMessagesCreatedAtDirectionContactIdByBusinessId, listWhatsappMessagesIdCreatedAtSenderByBusinessId, listWhatsappMessagesIdCreatedAtSenderByBusinessIdPhone } from './data.ts';

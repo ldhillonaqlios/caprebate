@@ -67,11 +67,18 @@ import { SECTORS } from './leads.ts';
 import { ACTIVITY_TYPES, RECIPROCITY_ACTIVITY_TYPES, dueReading, insertTask } from './tasks.ts';
 import { vocabChoice, vocabLabel, vocabulary } from '../admin/index.ts';
 import { getContactsIdByIdIntroducerId, getContactsIdFullNameByIdIntroducerId, getIntroducerFeesCountByIntroducerId, getIntroducerFeesIdByClaimId, getIntroducerNoticesIdByLeadIdNotice, getIntroducerPercentageEntriesIdByInvoiceIdEntryKind, getIntroducerPercentageEntriesIntroducerIdClaimIdByInvoiceId, getIntroducerPercentageEntriesTByInvoiceId, getIntroducerTermsSignaturesTermsVersionSignedOnByIntroducer, getIntroducersFirmNameById, getIntroducersIdById, getIntroducersIdIntroducerTypeById, getIntroducersIdMergedIntoIdById, getLeadsClaimIdById, getLeadsIdBusinessIdByBusinessIdIntroducerId, getLeadsIdBusinessIdById2, getLeadsIdBusinessIdById7, getLeadsIdByClaimIdIntroducerId, getLeadsIntroducerIdByClaimIdIntroducerType, getLeadsIntroducerIdById, getStaffTasksCompletedAtActivityTypeByIntroducerIdStatus, getStaffTasksCountByIntroducerId, getStaffTasksDueOnTitleByIntroducerIdStatus, insertContacts5, insertIntroducerFees, insertIntroducerMerges, insertIntroducerNotices, insertIntroducerPercentageEntries, insertIntroducerPercentageEntries2, insertIntroducerShareConsents, insertIntroducerShareConsents2, insertIntroducerTermsSignatures, insertIntroducers, insertIntroducers2, insertLeads5, listContactsIdFullNameByIntroducerId, listIntroducerNoticesAtNoticeByLeadId, listIntroducersIdName, listIntroducersIdNameByIdMergedIntoId, listLeadsLeadIdIntroducerIdByBusinessId, updateContactsFullNameJobRoleOtherById2, updateContactsIntroducerIdUpdatedAtByIntroducerId, updateIntroducerFeesDisclosureGivenAtDisclosureRecordedByByI, updateIntroducerFeesStatePaidAtById, updateIntroducerMergesCompletedAtLeadsMovedById, updateIntroducerRewardSettingModelFeePenceById, updateIntroducersFirmNameIntroducerTypeById, updateIntroducersMergedIntoIdMergedAtById, updateIntroducersNoticeContactIdUpdatedAtByIdNoticeContactId, updateLeadsIntroducerIdUpdatedAtByIntroducerId, updateStaffTasksIntroducerIdUpdatedAtByIntroducerIdStatus, updateStaffTasksStatusCompletedAtById } from './data.ts';
-import { getClaimStageMovesLabelByClaimIdToStage, getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence, getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO, listInvoicesIdFeeByClaimIdIntroducerId, listLeadsIdBusinessIdByIntroducerId, listStaffTasksIdTitleByIntroducerIdStatus } from './data-borrowed.ts';
+import { getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence, getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, listLeadsIdBusinessIdByIntroducerId, listStaffTasksIdTitleByIntroducerIdStatus } from './data-borrowed.ts';
 import { getInvoiceCreditNotesIdInvoiceIdById, getInvoiceCreditNotesNByInvoiceId, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesIdClaimIdById } from '../finance/index.ts';
 import { getClaimsStageHoldReturnStageById, listClaimStageMovesToStageByClaimId } from '../claims/index.ts';
 import { getIntroducerFeesIdIntroducerIdById, getIntroducersIdFirmNameById, listIntroducerFeesIdIntroducerId, listIntroducerFeesIdIntroducerIdByIntroducerId, listIntroducersIdFirmName2 } from './data-borrowed.ts';
 import { listIntroducerPercentageEntriesIdIntroducerId, listIntroducerPercentageEntriesIdIntroducerIdByIntroducerId } from './data-borrowed.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { listClaimStageMovesReasonCodeByClaimIdToNegative } from '../claims/index.ts';
+import { listReasonListsCodeLabelByList } from '../admin/index.ts';
+import { listInvoicesIdFeeByClaimIds } from '../finance/index.ts';
+import { listClaimsIdClaimRefStageByIds } from '../claims/index.ts';
+import { listEstimatesQualifyingExpenditurePenceByAssessmentIds } from '../assessment/index.ts';
+import { byId, idsOf, listLeadsClaimIdByIntroducerIdEvery, listLeadsClaimIdByIntroducerIdWithClaim, lookUp } from './data.ts';
 
 export type IntroducerDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -1599,4 +1606,32 @@ export function percentageLedger(db: Db, actor: Actor, introducer_id?: string): 
  */
 export function rewardModelGate(actor: Actor): void {
   authorise(actor, 'introducer_reward.read', REWARD_OBJECT);
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function getClaimStageMovesLabelByClaimIdToStage<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  // The newest move to the reasoned negative whose reason is on the claim exit list (the old inner join), and its label.
+  const labels = new Map(listReasonListsCodeLabelByList<{ code: string; label: unknown }>(db, ['CLAIM_EXIT']).map((r) => [r.code, r.label]));
+  for (const m of listClaimStageMovesReasonCodeByClaimIdToNegative<{ reason_code: unknown }>(db, params)) {
+    if (typeof m.reason_code === 'string' && labels.has(m.reason_code)) return { label: labels.get(m.reason_code) } as unknown as T;
+  }
+  return undefined;
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listInvoicesIdFeeByClaimIdIntroducerId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  // The raised and sent invoices on the claims the introducer's leads hold (the old IN subquery on leads).
+  const claims = listLeadsClaimIdByIntroducerIdWithClaim<{ claim_id: unknown }>(db, params).map((l) => l.claim_id);
+  return claims.length === 0 ? [] : listInvoicesIdFeeByClaimIds<T>(db, [idsOf(claims)]);
+}
+export function listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  // One row per lead of the introducer whose claim is there (JOIN claims): the claim's stage and its assessment's estimate.
+  const held = listLeadsClaimIdByIntroducerIdEvery<{ claim_id: unknown }>(db, params).map((l) => l.claim_id);
+  const claims = byId(listClaimsIdClaimRefStageByIds<{ id: string; stage: unknown; assessment_id: unknown }>(db, [idsOf(held)]));
+  const found = held.flatMap((id) => { const c = lookUp(claims, id); return c === undefined ? [] : [c]; });
+  const estimates = new Map(listEstimatesQualifyingExpenditurePenceByAssessmentIds<{ assessment_id: unknown; qualifying_expenditure_pence: unknown }>(db, [idsOf(found.map((c) => c.assessment_id))])
+    .map((e) => [e.assessment_id, e.qualifying_expenditure_pence]));
+  return found.map((c) => ({ stage: c.stage, q: estimates.get(c.assessment_id) ?? null })) as unknown as T[];
 }

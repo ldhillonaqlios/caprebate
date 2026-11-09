@@ -62,29 +62,18 @@
   },
   "3": {
    "admin": [
-    "src/modules/claims/data-borrowed.ts : document_types",
-    "src/modules/crm/data-borrowed.ts : document_types",
-    "src/modules/crm/data-borrowed.ts : reason_lists"
+    "src/modules/claims/data-borrowed.ts : document_types"
    ],
    "assessment": [
-    "src/modules/crm/data-borrowed.ts : assessments",
-    "src/modules/crm/data-borrowed.ts : estimates"
+    "src/modules/crm/data-borrowed.ts : assessments"
    ],
    "claims": [
     "src/modules/assessment/data-borrowed.ts : claim_deliverables",
     "src/modules/assessment/data-borrowed.ts : claims",
-    "src/modules/crm/data-borrowed.ts : claim_contacts",
-    "src/modules/crm/data-borrowed.ts : claim_deliverables",
-    "src/modules/crm/data-borrowed.ts : claim_milestones",
-    "src/modules/crm/data-borrowed.ts : claim_stage_moves",
     "src/modules/crm/data-borrowed.ts : claims",
-    "src/modules/crm/data-borrowed.ts : document_links",
-    "src/modules/crm/data-borrowed.ts : documents",
-    "src/modules/crm/data-borrowed.ts : logical_documents",
     "src/modules/crm/data-borrowed.ts : properties"
    ],
    "core": [
-    "src/modules/crm/data-borrowed.ts : audit_log",
     "src/modules/crm/data-borrowed.ts : users"
    ],
    "crm": [
@@ -113,21 +102,7 @@
     "src/modules/assessment/data-borrowed.ts : finance_settings",
     "src/modules/assessment/data-borrowed.ts : invoice_credit_notes",
     "src/modules/assessment/data-borrowed.ts : invoices",
-    "src/modules/claims/data-borrowed.ts : fee_discounts",
-    "src/modules/crm/data-borrowed.ts : invoice_credit_notes",
-    "src/modules/crm/data-borrowed.ts : invoice_numbers",
-    "src/modules/crm/data-borrowed.ts : invoice_payments",
-    "src/modules/crm/data-borrowed.ts : invoices"
-   ],
-   "integrations": [
-    "src/modules/crm/data-borrowed.ts : inbound_email",
-    "src/modules/crm/data-borrowed.ts : inbound_email_filings",
-    "src/modules/crm/data-borrowed.ts : outbox",
-    "src/modules/crm/data-borrowed.ts : research_runs",
-    "src/modules/crm/data-borrowed.ts : video_meetings",
-    "src/modules/crm/data-borrowed.ts : whatsapp_import_lines",
-    "src/modules/crm/data-borrowed.ts : whatsapp_imports",
-    "src/modules/crm/data-borrowed.ts : whatsapp_messages"
+    "src/modules/claims/data-borrowed.ts : fee_discounts"
    ],
    "portal": [
     "src/modules/claims/data-borrowed.ts : client_step_notices",
@@ -146,11 +121,7 @@
     "src/modules/claims/data-borrowed.ts : survey_pack_legal_answers",
     "src/modules/claims/data-borrowed.ts : survey_packs",
     "src/modules/claims/data-borrowed.ts : surveyor_jobs",
-    "src/modules/crm/data-borrowed.ts : survey_pack_approvals",
-    "src/modules/crm/data-borrowed.ts : survey_packs",
-    "src/modules/crm/data-borrowed.ts : survey_walkthroughs",
-    "src/modules/crm/data-borrowed.ts : surveyor_commitments",
-    "src/modules/crm/data-borrowed.ts : surveyor_jobs"
+    "src/modules/crm/data-borrowed.ts : survey_walkthroughs"
    ]
   },
   "4": {}

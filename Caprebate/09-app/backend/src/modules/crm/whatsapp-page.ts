@@ -26,7 +26,11 @@ import { isDoNotContact } from '../../integrations/index.ts';
 import { importsFor } from './whatsapp-import.ts';
 import { listWhatsappImportLinesPhoneLastAtByBusinessId } from '../../integrations/index.ts';
 import { getBusinessesNameById } from './data.ts';
-import { listWhatsappMessagesIdCreatedAtByBusinessIdPhone } from './data-borrowed.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { namesByIds } from '../../core/index.ts';
+import { listWhatsappMessagesIdCreatedAtSenderByBusinessIdPhone } from '../../integrations/index.ts';
+import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from './data.ts';
+
 
 /** One person (or one number we filed under the company) we have a WhatsApp conversation with, or could. */
 export type WaPerson = {
@@ -194,3 +198,12 @@ export function withImportScript(html: string): string {
   return html.replace('</body>', '<script src="/assets/whatsapp-import.js" defer></script></body>');
 }
 
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listWhatsappMessagesIdCreatedAtByBusinessIdPhone<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listWhatsappMessagesIdCreatedAtSenderByBusinessIdPhone<{ id: unknown; created_at: unknown; direction: unknown; body: unknown; status: unknown; error: unknown; contact_id: unknown; written_by: unknown; sender: unknown }>(db, params);
+  const contacts = byId(listContactsIdFullNameByIds<{ id: string; full_name: unknown }>(db, [idsOf(rows.map((r) => r.contact_id))]));
+  const name = namesByIds(db, rows.map((r) => r.written_by));
+  return rows.map((w) => ({ id: w.id, created_at: w.created_at, direction: w.direction, body: w.body, status: w.status, error: w.error,
+    contact: lookUp(contacts, w.contact_id)?.full_name ?? null, writer: name(w.written_by), sender: w.sender })) as unknown as T[];
+}

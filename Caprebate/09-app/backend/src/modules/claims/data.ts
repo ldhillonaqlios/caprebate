@@ -1183,3 +1183,64 @@ export function getClaimsIdByBusinessIdAssessmentIdNull<T extends Row = Row>(db:
 export function listEngagementsBusinessIdByLetterStateSigned<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>("SELECT business_id FROM engagements WHERE letter_state = 'SIGNED'", params);
 }
+
+// FOR THE CRM (Phase 161l1): its statements that joined these tables to its own, or to the core's users, now read
+// here and look the rest up through the other area's front door (src/modules/crm/data-borrowed.ts).
+export function listClaimMilestonesRecordedAtMilestoneRecordedByByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT cm.recorded_at, cm.milestone, cm.recorded_by FROM claim_milestones cm ' +
+    'WHERE cm.claim_id = ? ORDER BY cm.recorded_at', params);
+}
+export function listClaimStageMovesReasonCodeByClaimIdToNegative<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT m.reason_code FROM claim_stage_moves m ' +
+    "WHERE m.claim_id = ? AND m.to_stage = 'REASONED_NEGATIVE' ORDER BY m.at DESC, m.rowid DESC", params);
+}
+export function listClaimStageMovesAtKindActorIdByClaimIdNewest<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT m.at, m.kind, m.from_stage, m.to_stage, m.reason_code, m.reason_text, m.actor_id ' +
+    'FROM claim_stage_moves m WHERE m.claim_id = ? ORDER BY m.at DESC, m.rowid DESC', params);
+}
+export function listClaimStageMovesAtKindActorIdByClaimIdOldest<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT m.at, m.kind, m.from_stage, m.to_stage, m.reason_code, m.reason_text, m.actor_id ' +
+    'FROM claim_stage_moves m WHERE m.claim_id = ? ORDER BY m.at, m.rowid', params);
+}
+export function listClaimContactsIdContactIdLinkedByByClaimIdLinked<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT k.id, k.contact_id, k.linked_at, k.linked_by FROM claim_contacts k ' +
+    'WHERE k.claim_id = ? AND k.unlinked_at IS NULL', params);
+}
+/** The claims the given ids name: one read by a list of ids, in place of another area's join to claims. */
+export function listClaimsIdClaimRefStageByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.claim_ref, c.stage, c.assessment_id FROM claims c WHERE c.id IN (SELECT value FROM json_each(?))', params);
+}
+export function listClaimsIdClaimRefOwnerIdByClaimRef<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, c.owner_id, ' +
+    'c.assessment_id, c.expected_completion, c.completed_at, c.created_at FROM claims c ORDER BY c.claim_ref ASC', params);
+}
+export function getClaimDeliverablesContentHashByClaimIdIssuedReport<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' " +
+    "AND state = 'ISSUED' ORDER BY version DESC LIMIT 1", params);
+}
+/** The documents the given ids name: each one's logical document, version and the logical document's number. */
+export function listDocumentsIdLogicalDocumentIdVersionNoByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT d.id, d.logical_document_id, d.version_no, l.seq FROM documents d LEFT JOIN logical_documents l ON l.id = d.logical_document_id ' +
+    'WHERE d.id IN (SELECT value FROM json_each(?))', params);
+}
+export function listDocumentsUploadedByByBusinessIdSince<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT d.uploaded_by FROM documents d WHERE d.business_id = ? AND d.created_at >= ?', params);
+}
+/** The logical documents the given ids name, each with its latest version. */
+export function listLogicalDocumentsIdTypeCodeVersionByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, ' +
+    '(SELECT d.id FROM documents d WHERE d.logical_document_id = l.id ORDER BY d.version_no DESC LIMIT 1) AS version ' +
+    'FROM logical_documents l WHERE l.id IN (SELECT value FROM json_each(?))', params);
+}
+export function listDocumentsIdDeclaredTypeTypeCodeByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT d.id, d.declared_type, d.doc_type, d.state, d.created_at, d.type_code, l.seq, d.version_no FROM documents d ' +
+    'LEFT JOIN logical_documents l ON l.id = d.logical_document_id ' +
+    'WHERE d.business_id = ? ORDER BY d.created_at', params);
+}
+export function listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT k.logical_document_id, l.business_id, l.type_code, l.seq, k.claim_id, c.claim_ref, p.label AS property_label, ' +
+    'k.linked_at, k.unlinked_at, k.linked_by, k.unlinked_by FROM document_links k ' +
+    'JOIN logical_documents l ON l.id = k.logical_document_id ' +
+    'LEFT JOIN claims c ON c.id = k.claim_id LEFT JOIN properties p ON p.id = k.property_id ' +
+    'WHERE l.business_id = ? ORDER BY k.linked_at', params);
+}

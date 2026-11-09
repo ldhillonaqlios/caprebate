@@ -76,3 +76,6 @@ export { getClaimsIdByBusinessIdAssessmentIdNotNull, getClaimsIdByBusinessIdAsse
 export { getDocumentLinksCount, getDocumentsCountVersions, getDocumentsTypeCodeCreatedAtRetentionRefById, getLogicalDocumentsCount } from './data.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { claimsAssets, claimsSignoffLink } from './routes.ts';
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/crm/data-borrowed.ts).
+export { listClaimContactsIdContactIdLinkedByByClaimIdLinked, listClaimMilestonesRecordedAtMilestoneRecordedByByClaimId, listClaimsIdClaimRefOwnerIdByClaimRef, listClaimsIdClaimRefStageByIds, listClaimStageMovesAtKindActorIdByClaimIdNewest, listClaimStageMovesAtKindActorIdByClaimIdOldest, listClaimStageMovesReasonCodeByClaimIdToNegative } from './data.ts';
+export { getClaimDeliverablesContentHashByClaimIdIssuedReport, listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId, listDocumentsIdDeclaredTypeTypeCodeByBusinessId, listDocumentsIdLogicalDocumentIdVersionNoByIds, listDocumentsUploadedByByBusinessIdSince, listLogicalDocumentsIdTypeCodeVersionByIds } from './data.ts';
