@@ -10,7 +10,7 @@ export { SECTION_STATUS_WORDS, badge, brandName, breadcrumb, card, claimHref, cl
 export { BAND, BENEFIT, BOOKING, CB, CTA, FRONTDOOR, FUNNEL, RATES, REGISTRY, amendmentWindow, clientVatFromWorks, ctaSwitchReadings, electionNotifiedInTime, estimate, feeDisplay, feeGate, feeGuard, feeRate, getSector, marginalRateRange, multiSiteDiscount, newSession, noClaimThreshold, registryGate } from './engine.ts';
 export { extractPages, isScanMarker, pdfPageImages } from './extract-text.ts';
 export { FINDING_LABELS, findingSeen } from './finding-source.ts';
-export { HTML_HEADERS, Safe, escapeHtml, h, page, raw } from './html.ts';
+export { HTML_HEADERS, SITE_JS_HEADERS, Safe, escapeHtml, h, page, raw } from './html.ts';
 export { IMAGE_LIMITS, ImageError, reEncodeAvatar } from './images.ts';
 export { WEEKDAY_NAMES, addLocalDaysMs, dueReading, dueWords, instantsForLocalMinute, localClock, localDate, localPartsOf, localStamp, localWhen, startOfLocalDayMs, ukDate, ukDatesIn, zoneNotice } from './localtime.ts';
 export { LEGAL_ENGINE_SWITCHES, moneyReadingsHere, packSwitchReadings } from './money-readings.ts';
@@ -34,3 +34,5 @@ export type { Op, PdfFont, Rgb } from './pdf-canvas.ts';
 export type { PdfLine } from './pdf.ts';
 export type { ShownRange } from './shown-range.ts';
 export type { ExitKey, ProcedureKey, Progress, StageKey } from './stages.ts';
+export { dateField, has, requiredText, textField, words } from './form-fields.ts';
+export type { Check, Fields as FormFields, Vocab } from './form-fields.ts';

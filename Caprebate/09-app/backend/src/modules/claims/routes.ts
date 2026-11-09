@@ -4,7 +4,7 @@
  * which every address is tried is unchanged.
  */
 import { form, type WebRequest, type WebResult } from '../../core/index.ts';
-import { SITE_JS_HEADERS } from '../public-site/index.ts';
+import { SITE_JS_HEADERS } from '../../shared/index.ts';
 import { REGISTER_IMPORT_JS } from './register-import-script.ts';
 import { handleSignoffLink } from './report-pages.ts';
 

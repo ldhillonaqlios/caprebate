@@ -1372,6 +1372,10 @@
    "area": "shared",
    "kind": "logic"
   },
+  "src/shared/form-fields.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
   "src/shared/html.ts": {
    "area": "shared",
    "kind": "page"

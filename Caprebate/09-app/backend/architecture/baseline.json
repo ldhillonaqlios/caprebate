@@ -89,7 +89,6 @@
     "assessment -> claims",
     "assessment -> crm",
     "assessment -> finance",
-    "assessment -> public-site",
     "assessment -> survey"
    ],
    "claims": [
@@ -123,7 +122,6 @@
     "crm -> public-site"
    ],
    "finance": [
-    "finance -> compliance",
     "finance -> crm"
    ],
    "integrations": [

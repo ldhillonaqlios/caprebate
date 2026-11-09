@@ -6,7 +6,7 @@
 import { clockOf, form, html, nav, simple, type Actor, type WebRequest, type WebResult } from '../../core/index.ts';
 import { h, page, raw, type Safe } from '../../shared/index.ts';
 import { joinSignature } from '../../integrations/index.ts';
-import { SITE_JS_HEADERS } from '../public-site/index.ts';
+import { SITE_JS_HEADERS } from '../../shared/index.ts';
 import { getContactsNByBusinessIdLeadId } from './data.ts';
 import { getVideoMeetingsBookingIdMeetingIdByClientTokenCancelledAt } from './data-borrowed.ts';
 import { PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen } from './introducers.ts';
