@@ -64,7 +64,7 @@ import { documentObj, versionObj } from '../claims/index.ts';
 import { getOutboxAtBySentAt2 } from '../../integrations/index.ts';
 import { listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, listAuditLogAtKindByOutcomeKind3, listAuditLogAtKindByOutcomeKind4, listAuditLogAtWhoByKindObjectId } from '../../core/index.ts';
 import { getBusinessesIdById, getLeadsIdBusinessIdById, getStaffTasksAtByContactIdStatus, listBookingsIdBusinessIdByBusinessIdLeadId, listBookingsIdBusinessIdByLeadIdId, listContactsIdCreatedAtByLeadId, listLeadsIdByBusinessId, listLeadsIdByClaimId } from './data.ts';
-import { listBookingChangesAtFromStartsAtByBookingId, listClientTasksQuestionCreatedAtByBusinessId, listDocumentLinksLogicalDocumentIdBusinessIdByBusinessId, listDocumentsIdDeclaredTypeByBusinessId, listEnquiryChecksRecordedAtCheckKeyByClaimId, listEnquiryChecksRecordedAtCheckKeyByLeadId } from './data-borrowed.ts';
+import { listBookingChangesAtFromStartsAtByBookingId, listEnquiryChecksRecordedAtCheckKeyByClaimId, listEnquiryChecksRecordedAtCheckKeyByLeadId } from './data-borrowed.ts';
 import { listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId } from '../finance/index.ts';
 import { listSurveyorJobsIdBusinessIdByClaimId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from '../survey/index.ts';
 import { getEngagementsLetterStateSignedAtByBusinessId2, getPropertiesIdBusinessIdById, listClaimStageMovesAtKindByClaimId, listDocumentEventsAtContractStepByDocId } from '../claims/index.ts';
@@ -81,6 +81,9 @@ import { idsOf } from './data.ts';
 import { listOutboxCreatedAtKindClaimIdByBusinessId, listOutboxCreatedAtKindClaimIdByLeadIdBusinessId } from '../../integrations/index.ts';
 import { listClaimsIdClaimRefStageByIds } from '../claims/index.ts';
 import { byId, listContactsIdFullNameByIds, lookUp } from './data.ts';
+import { listDocumentTypesCodeReadersLabelByCodes } from '../admin/index.ts';
+import { listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId, listDocumentsIdDeclaredTypeTypeCodeByBusinessId, listDocumentsIdLogicalDocumentIdVersionNoByIds } from '../claims/index.ts';
+import { listClientTasksQuestionCreatedAtAskedByByBusinessId } from './data.ts';
 
 export type TimelineSubject = { readonly kind: 'organisation' | 'property' | 'claim' | 'lead'; readonly id: string };
 
@@ -734,4 +737,41 @@ function outboxLines(db: Db, rows: readonly { created_at: unknown; kind: unknown
   const name = namesByIds(db, rows.map((r) => r.written_by));
   return rows.map((o) => ({ created_at: o.created_at, kind: o.kind, subject: o.subject, sent_at: o.sent_at, claim_ref: lookUp(claims, o.claim_id)?.claim_ref ?? null,
     who: name(o.written_by), to_name: lookUp(contacts, o.contact_id)?.full_name ?? null }));
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listClientTasksQuestionCreatedAtByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const tasks = listClientTasksQuestionCreatedAtAskedByByBusinessId<Row & { asked_by: unknown; answered_by: unknown; withdrawn_by: unknown; requested_type: unknown; claim_id: unknown; received_document_id: unknown }>(db, params);
+  const name = namesByIds(db, tasks.flatMap((t) => [t.asked_by, t.answered_by, t.withdrawn_by]));
+  const types = new Map(listDocumentTypesCodeReadersLabelByCodes<{ code: string; label: unknown }>(db, [idsOf(tasks.map((t) => t.requested_type))]).map((d) => [d.code, d]));
+  const claims = byId(listClaimsIdClaimRefStageByIds<{ id: string; claim_ref: unknown }>(db, [idsOf(tasks.map((t) => t.claim_id))]));
+  const documents = byId(listDocumentsIdLogicalDocumentIdVersionNoByIds<{ id: string; version_no: unknown; seq: unknown }>(db, [idsOf(tasks.map((t) => t.received_document_id))]));
+  return tasks.map((t) => {
+    const d = lookUp(documents, t.received_document_id);
+    return { question: t.question, created_at: t.created_at, sent_to_portal_at: t.sent_to_portal_at, answered_at: t.answered_at, answer_state: t.answer_state,
+      answered_by_role: t.answered_by_role, withdrawn_at: t.withdrawn_at, due_on: t.due_on, asked_by: name(t.asked_by), answered_by: name(t.answered_by),
+      withdrawn_by: name(t.withdrawn_by), kind: t.kind, type_label: lookUp(types, t.requested_type)?.label ?? null, claim_id: t.claim_id,
+      claim_ref: lookUp(claims, t.claim_id)?.claim_ref ?? null, received_version: d?.version_no ?? null, received_seq: d?.seq ?? null };
+  }) as unknown as T[];
+}
+export function listDocumentLinksLogicalDocumentIdBusinessIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const links = listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId<Row & { type_code: unknown; linked_by: unknown; unlinked_by: unknown }>(db, params);
+  const types = new Map(listDocumentTypesCodeReadersLabelByCodes<{ code: string; readers: unknown; carries_value: unknown; label: unknown }>(db, [idsOf(links.map((k) => k.type_code))]).map((d) => [d.code, d]));
+  const name = namesByIds(db, links.flatMap((k) => [k.linked_by, k.unlinked_by]));
+  const rows: Row[] = [];
+  for (const k of links) {
+    const t = lookUp(types, k.type_code);
+    if (t === undefined) continue; // JOIN document_types
+    rows.push({ logical_document_id: k.logical_document_id, business_id: k.business_id, readers: t.readers, carries_value: t.carries_value, label: t.label, seq: k.seq,
+      claim_id: k.claim_id, claim_ref: k.claim_ref, property_label: k.property_label, linked_at: k.linked_at, unlinked_at: k.unlinked_at,
+      linked_by: name(k.linked_by), unlinked_by: name(k.unlinked_by) });
+  }
+  return rows as unknown as T[];
+}
+export function listDocumentsIdDeclaredTypeByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const documents = listDocumentsIdDeclaredTypeTypeCodeByBusinessId<{ id: unknown; declared_type: unknown; doc_type: unknown; state: unknown; created_at: unknown; type_code: unknown; seq: unknown; version_no: unknown }>(db, params);
+  const types = new Map(listDocumentTypesCodeReadersLabelByCodes<{ code: string; label: unknown }>(db, [idsOf(documents.map((d) => d.type_code))]).map((t) => [t.code, t]));
+  return documents.map((d) => ({ id: d.id, declared_type: d.declared_type, doc_type: d.doc_type, state: d.state, created_at: d.created_at,
+    type_label: lookUp(types, d.type_code)?.label ?? null, seq: d.seq, version_no: d.version_no })) as unknown as T[];
 }

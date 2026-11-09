@@ -33,11 +33,14 @@ import * as WHATSAPP from '../../src/modules/crm/whatsapp.ts';
 import * as WHATSAPP_PAGE from '../../src/modules/crm/whatsapp-page.ts';
 import * as SEARCH from '../../src/modules/crm/search.ts';
 import * as CLAIM_LISTS from '../../src/modules/crm/claim-lists.ts';
+import * as CLIENT_CHECKS from '../../src/modules/crm/client-checks.ts';
+import * as TASKS from '../../src/modules/crm/tasks.ts';
+import * as MESSAGES from '../../src/modules/crm/messages.ts';
 
 /** The function the CRM now calls by this name: still in its borrowed file, moved to the owner's front door, or split
  * in the CRM file that calls it. */
 function from(name: string): Call {
-  for (const space of [SEARCH, CLAIM_LISTS, B, SURVEY, INTEGRATIONS, TIMELINE, INTRODUCERS, PIPELINE, CRM, DASHBOARD, ROUTES, COMMUNICATION, VIDEO, STAFF_DASHBOARD, INBOUND, EMAIL_CHAINS, WHATSAPP_IMPORT, WHATSAPP, WHATSAPP_PAGE, SEARCH, CLAIM_LISTS] as object[]) {
+  for (const space of [SEARCH, CLAIM_LISTS, B, SURVEY, INTEGRATIONS, TIMELINE, INTRODUCERS, PIPELINE, CRM, DASHBOARD, ROUTES, COMMUNICATION, VIDEO, STAFF_DASHBOARD, INBOUND, EMAIL_CHAINS, WHATSAPP_IMPORT, WHATSAPP, WHATSAPP_PAGE, SEARCH, CLAIM_LISTS, CLIENT_CHECKS, TASKS, MESSAGES] as object[]) {
     const f = (space as Record<string, unknown>)[name];
     if (typeof f === 'function') return f as Call;
   }
@@ -230,6 +233,51 @@ function theWorld(): Promise<World> {
     put(db, 'leads', { id: 'lead-i5', business_id: biz, introducer_id: 'intro-1', claim_id: 'claim-none', lead_date: t(1), status: 'CONVERTED' });
     // an estimate whose assessment no claim names (one estimate per assessment: estimates.assessment_id is unique)
     put(db, 'estimates', { id: 'est-orphan', assessment_id: 'assessment-none', business_id: biz, qualifying_expenditure_pence: 1 });
+    // documents: types known and not, logical documents and their versions, links, a message's files, the client's tasks
+    const [typeA, typeB] = db.all<{ code: string }>('SELECT code FROM document_types ORDER BY code LIMIT 2').map((r) => r.code) as [string, string];
+    const client = db.get<{ id: string }>("SELECT id FROM users WHERE role = 'CLIENT'")!.id;
+    const property = db.get<{ id: string }>('SELECT id FROM properties WHERE business_id = ?', [biz])!.id;
+    put(db, 'logical_documents', { id: 'ld-1', business_id: biz, type_code: typeA, seq: 1 });
+    put(db, 'logical_documents', { id: 'ld-2', business_id: biz, type_code: 'TYPE-NONE', seq: 2 });
+    put(db, 'logical_documents', { id: 'ld-3', business_id: biz2, type_code: typeB, seq: 1 });
+    put(db, 'logical_documents', { id: 'ld-4', business_id: biz, type_code: typeB, seq: 3 });
+    put(db, 'documents', { id: 'd-1', business_id: biz, logical_document_id: 'ld-1', version_no: 1, uploaded_by: client, created_at: t(1), type_code: typeA, state: 'STORED' });
+    put(db, 'documents', { id: 'd-2', business_id: biz, logical_document_id: 'ld-1', version_no: 2, uploaded_by: staff, created_at: t(2), type_code: null, state: 'STORED' });
+    put(db, 'documents', { id: 'd-3', business_id: biz, logical_document_id: 'ld-none', version_no: 1, uploaded_by: GHOST, created_at: t(3), type_code: 'TYPE-NONE', state: 'STORED' });
+    put(db, 'documents', { id: 'd-4', business_id: biz, logical_document_id: 'ld-4', version_no: 1, uploaded_by: client, created_at: t(4), type_code: typeB, state: 'STORED' });
+    put(db, 'documents', { id: 'd-5', business_id: biz2, logical_document_id: null, version_no: 1, uploaded_by: client, created_at: t(4), state: 'STORED' });
+    put(db, 'document_links', { id: 'k-1', logical_document_id: 'ld-1', claim_id: claim, property_id: property, linked_at: t(1), linked_by: staff });
+    put(db, 'document_links', { id: 'k-2', logical_document_id: 'ld-2', claim_id: claim, linked_at: t(1), linked_by: staff });
+    put(db, 'document_links', { id: 'k-3', logical_document_id: 'ld-4', claim_id: 'claim-none', property_id: 'property-none', linked_at: t(1), linked_by: GHOST, unlinked_at: t(2), unlinked_by: staff });
+    put(db, 'document_links', { id: 'k-4', logical_document_id: 'ld-3', claim_id: claim2, linked_at: t(2), linked_by: other });
+    put(db, 'document_links', { id: 'k-5', logical_document_id: 'ld-none', claim_id: claim, linked_at: t(1), linked_by: staff });
+    put(db, 'document_links', { id: 'k-6', logical_document_id: 'ld-4', claim_id: null, property_id: null, linked_at: t(1), linked_by: null });
+    put(db, 'client_message_files', { id: 'f-1', message_id: 'cm-1', logical_document_id: 'ld-1', linked_at: t(2) });
+    put(db, 'client_message_files', { id: 'f-2', message_id: 'cm-1', logical_document_id: 'ld-2', linked_at: t(1) });
+    put(db, 'client_message_files', { id: 'f-3', message_id: 'cm-1', logical_document_id: 'ld-none', linked_at: t(3) });
+    put(db, 'client_message_files', { id: 'f-4', message_id: 'cm-1', logical_document_id: 'ld-4', linked_at: t(2) });
+    put(db, 'client_message_files', { id: 'f-5', message_id: 'cm-1', logical_document_id: 'ld-3', linked_at: t(0) });
+    const task = (v: Record<string, Param>): void => put(db, 'client_tasks', { business_id: biz, asked_by: staff, kind: 'DOCUMENT', state: 'OPEN', created_at: t(1), question: 'q', ...v });
+    task({ id: 'ct-1', claim_id: claim, requested_type: typeA, due_on: null });
+    task({ id: 'ct-2', requested_type: 'TYPE-NONE', due_on: null });
+    task({ id: 'ct-3', business_id: biz2, claim_id: 'claim-none', requested_type: typeB, due_on: '2026-10-20', created_at: t(2) });
+    task({ id: 'ct-4', business_id: 'biz-none', requested_type: typeA, due_on: '2026-10-20', created_at: t(2) });
+    task({ id: 'ct-4b', requested_type: typeB, due_on: '2026-10-20', created_at: t(2) });
+    task({ id: 'ct-4c', requested_type: typeA, due_on: '2026-10-20', created_at: t(2), claim_id: claim });
+    task({ id: 'ct-5', claim_id: claim, kind: 'QUESTION', state: 'ANSWERED', answered_by_role: 'CLIENT', answered_by: client, answered_at: t(3), received_document_id: 'd-1', asked_by: other, withdrawn_by: GHOST, requested_type: typeA });
+    task({ id: 'ct-6', claim_id: null, kind: 'DOCUMENT', state: 'ANSWERED', answered_by_role: 'CLIENT', answered_by: GHOST, answered_at: t(3), received_document_id: 'd-none', asked_by: null });
+    task({ id: 'ct-7', claim_id: claim, kind: 'DOCUMENT', state: 'ANSWERED', answered_by_role: 'CLIENT', answered_by: client, answered_at: t(2), received_document_id: 'd-4' });
+    task({ id: 'ct-8', claim_id: claim2, kind: 'DOCUMENT', state: 'ANSWERED', answered_by_role: 'CLIENT', answered_by: client, answered_at: t(1), received_document_id: 'd-3' });
+    task({ id: 'ct-9', claim_id: claim, kind: 'DOCUMENT', state: 'ANSWERED', answered_by_role: 'CLIENT', answered_by: staff, answered_at: t(1), received_document_id: null });
+    put(db, 'client_task_checks', { id: 'tc-1', task_id: 'ct-7', outcome: 'ACCEPTED', checked_by: staff, checked_at: t(4) });
+    // the client report: issued versions and a draft, and acceptances of each
+    put(db, 'claim_deliverables', { id: 'cd-1', claim_id: claim, kind: 'CLIENT_REPORT', version: 101, state: 'ISSUED', content_hash: 'h1' });
+    put(db, 'claim_deliverables', { id: 'cd-2', claim_id: claim, kind: 'CLIENT_REPORT', version: 102, state: 'ISSUED', content_hash: 'h2' });
+    put(db, 'claim_deliverables', { id: 'cd-3', claim_id: claim, kind: 'CLIENT_REPORT', version: 103, state: 'DRAFT', content_hash: 'h3' });
+    put(db, 'client_report_acceptances', { id: 'x-1', claim_id: claim, fingerprint: 'h2', user_id: staff, accepted_at: t(2) });
+    put(db, 'client_report_acceptances', { id: 'x-2', claim_id: claim, fingerprint: 'h2', user_id: GHOST, accepted_at: t(1) });
+    put(db, 'client_report_acceptances', { id: 'x-3', claim_id: claim, fingerprint: 'h1', user_id: staff, accepted_at: t(0) });
+    put(db, 'client_report_acceptances', { id: 'x-4', claim_id: claim, fingerprint: 'h3', user_id: staff, accepted_at: t(0) });
     const lead2 = db.get<{ id: string }>('SELECT id FROM leads WHERE business_id = ?', [biz2])?.id ?? 'lead-j1-2';
     return { db, staff, other, biz, biz2, claim, claim2, lead, lead2 };
   })();
@@ -489,6 +537,70 @@ const CASES: Case[] = [
       'LEFT JOIN properties p ON p.id = c.property_id LEFT JOIN leads l ON l.claim_id = c.id LEFT JOIN introducers i ON i.id = l.introducer_id ' +
       'LEFT JOIN assessments a ON a.id = c.assessment_id ORDER BY c.claim_ref DESC LIMIT 1000',
     call: (db) => (from('listClaimsRows') as unknown as (db: Db, shape: string) => Row[])(db, 'VALUE'), params: () => [[]], atLeast: 5,
+  },
+  {
+    name: 'getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint', get: true,
+    old: 'SELECT x.accepted_at, u.display_name AS name FROM client_report_acceptances x LEFT JOIN users u ON u.id = x.user_id ' +
+      "WHERE x.claim_id = ? AND x.fingerprint = (SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' " +
+      "AND state = 'ISSUED' ORDER BY version DESC LIMIT 1) AND x.accepted_at >= ? ORDER BY x.accepted_at ASC LIMIT 1",
+    call: from('getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint'),
+    params: (w) => [[w.claim, w.claim, ''], [w.claim, w.claim, '2026-10-01T12:00:00.000Z'], [w.claim, w.claim, '2027'], [w.claim2, w.claim2, ''], ['claim-none', 'claim-none', '']], atLeast: 2,
+  },
+  {
+    name: 'listClientTasksIdKindByBusinessIdClaimId',
+    old: 'SELECT t.id, t.kind, t.question, t.answer, t.answer_state, t.received_document_id, d.logical_document_id AS logical, ' +
+      'u.display_name AS who, t.answered_at FROM client_tasks t LEFT JOIN client_task_checks k ON k.task_id = t.id ' +
+      'LEFT JOIN users u ON u.id = t.answered_by LEFT JOIN documents d ON d.id = t.received_document_id ' +
+      "WHERE t.business_id = ? AND (t.claim_id = ? OR t.claim_id IS NULL) AND t.state = 'ANSWERED' AND t.answered_by_role = 'CLIENT' " +
+      'AND k.id IS NULL ORDER BY t.answered_at ASC, t.rowid ASC',
+    call: from('listClientTasksIdKindByBusinessIdClaimId'), params: (w) => [[w.biz, w.claim], [w.biz, w.claim2], [w.biz2, w.claim2]], atLeast: 4,
+  },
+  {
+    name: 'listClientTasksIdTypeLabelByAskedByKind',
+    old: 'SELECT ct.id, t.label AS type_label, ct.due_on, ct.business_id, b.name AS business_name, ct.claim_id, c.claim_ref FROM client_tasks ct ' +
+      'JOIN document_types t ON t.code = ct.requested_type JOIN businesses b ON b.id = ct.business_id LEFT JOIN claims c ON c.id = ct.claim_id ' +
+      "WHERE ct.asked_by = ? AND ct.kind = 'DOCUMENT' AND ct.state = 'OPEN' ORDER BY ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC",
+    call: from('listClientTasksIdTypeLabelByAskedByKind'), params: (w) => [[w.staff], [w.other]], atLeast: 3,
+  },
+  {
+    name: 'listClientTasksQuestionCreatedAtByBusinessId',
+    old: 'SELECT ct.question, ct.created_at, ct.sent_to_portal_at, ct.answered_at, ct.answer_state, ct.answered_by_role, ct.withdrawn_at, ' +
+      'ct.due_on, ab.display_name AS asked_by, an.display_name AS answered_by, wb.display_name AS withdrawn_by, ct.kind, ' +
+      't.label AS type_label, ct.claim_id, c.claim_ref, d.version_no AS received_version, l.seq AS received_seq FROM client_tasks ct ' +
+      'LEFT JOIN users ab ON ab.id = ct.asked_by LEFT JOIN users an ON an.id = ct.answered_by LEFT JOIN users wb ON wb.id = ct.withdrawn_by ' +
+      'LEFT JOIN document_types t ON t.code = ct.requested_type LEFT JOIN claims c ON c.id = ct.claim_id ' +
+      'LEFT JOIN documents d ON d.id = ct.received_document_id LEFT JOIN logical_documents l ON l.id = d.logical_document_id ' +
+      'WHERE ct.business_id = ? ORDER BY ct.created_at',
+    call: from('listClientTasksQuestionCreatedAtByBusinessId'), params: (w) => [[w.biz], [w.biz2]], atLeast: 8,
+  },
+  {
+    name: 'listDocumentLinksLogicalDocumentIdBusinessIdByBusinessId',
+    old: 'SELECT k.logical_document_id, l.business_id, t.readers, t.carries_value, t.label, l.seq, k.claim_id, c.claim_ref, p.label AS property_label, ' +
+      'k.linked_at, k.unlinked_at, lb.display_name AS linked_by, ub.display_name AS unlinked_by FROM document_links k ' +
+      'JOIN logical_documents l ON l.id = k.logical_document_id JOIN document_types t ON t.code = l.type_code ' +
+      'LEFT JOIN claims c ON c.id = k.claim_id LEFT JOIN properties p ON p.id = k.property_id ' +
+      'LEFT JOIN users lb ON lb.id = k.linked_by LEFT JOIN users ub ON ub.id = k.unlinked_by WHERE l.business_id = ? ORDER BY k.linked_at',
+    call: from('listDocumentLinksLogicalDocumentIdBusinessIdByBusinessId'), params: (w) => [[w.biz], [w.biz2]], atLeast: 4,
+  },
+  {
+    name: 'getDocumentsCountByBusinessIdRole', get: true,
+    old: "SELECT COUNT(*) AS n FROM documents d JOIN users u ON u.id = d.uploaded_by WHERE d.business_id = ? AND u.role = 'CLIENT' AND d.created_at >= ?",
+    call: from('getDocumentsCountByBusinessIdRole'), params: (w) => [[w.biz, ''], [w.biz, '2026-10-02'], [w.biz2, ''], ['biz-none', '']], atLeast: 2,
+  },
+  {
+    name: 'listDocumentsIdBusinessIdByLogicalDocumentIdJO',
+    old: 'SELECT l.id, l.business_id, t.readers, t.carries_value, t.label, l.seq, ' +
+      '(SELECT d.id FROM documents d WHERE d.logical_document_id = l.id ORDER BY d.version_no DESC LIMIT 1) AS version ' +
+      'FROM client_message_files f JOIN logical_documents l ON l.id = f.logical_document_id ' +
+      'JOIN document_types t ON t.code = l.type_code WHERE f.message_id = ? ORDER BY f.linked_at',
+    call: from('listDocumentsIdBusinessIdByLogicalDocumentIdJO'), params: () => [['cm-1'], ['cm-none']], atLeast: 3,
+  },
+  {
+    name: 'listDocumentsIdDeclaredTypeByBusinessId',
+    old: 'SELECT d.id, d.declared_type, d.doc_type, d.state, d.created_at, t.label AS type_label, l.seq, d.version_no FROM documents d ' +
+      'LEFT JOIN document_types t ON t.code = d.type_code LEFT JOIN logical_documents l ON l.id = d.logical_document_id ' +
+      'WHERE d.business_id = ? ORDER BY d.created_at',
+    call: from('listDocumentsIdDeclaredTypeByBusinessId'), params: (w) => [[w.biz], [w.biz2]], atLeast: 5,
   },
 ];
 

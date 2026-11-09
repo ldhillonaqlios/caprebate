@@ -16,7 +16,11 @@ import { claimObjFor, loadClaimRow } from './crm.ts';
 import { sendTaskToPortal } from '../claims/index.ts';
 import { createDocumentRequest } from '../claims/index.ts';
 import { getClientTaskChecksIdByTaskId, getClientTasksIdKindById, insertClientTaskChecks, insertClientTaskChecks2 } from './data.ts';
-import { getClientTaskChecksOutcomeWhoByTaskId, listClientTasksIdKindByBusinessIdClaimId } from './data-borrowed.ts';
+import { getClientTaskChecksOutcomeWhoByTaskId } from './data-borrowed.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { namesByIds } from '../../core/index.ts';
+import { listDocumentsIdLogicalDocumentIdVersionNoByIds } from '../claims/index.ts';
+import { byId, idsOf, listClientTasksIdKindAnsweredByByBusinessIdClaimId, lookUp } from './data.ts';
 
 export type CheckDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 
@@ -104,4 +108,14 @@ export function askAgain(d: CheckDeps, actor: Actor, claim_id: string, task_id: 
       object_type: 'client_task', object_id: task_id, detail: { business: w.biz, claim: claim_id, again: againId } });
   });
   return refused === null ? { ok: true } : { ok: false, why: refused };
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listClientTasksIdKindByBusinessIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const tasks = listClientTasksIdKindAnsweredByByBusinessIdClaimId<{ id: unknown; kind: unknown; question: unknown; answer: unknown; answer_state: unknown; received_document_id: unknown; answered_by: unknown; answered_at: unknown }>(db, params);
+  const documents = byId(listDocumentsIdLogicalDocumentIdVersionNoByIds<{ id: string; logical_document_id: unknown }>(db, [idsOf(tasks.map((t) => t.received_document_id))]));
+  const name = namesByIds(db, tasks.map((t) => t.answered_by));
+  return tasks.map((t) => ({ id: t.id, kind: t.kind, question: t.question, answer: t.answer, answer_state: t.answer_state, received_document_id: t.received_document_id,
+    logical: lookUp(documents, t.received_document_id)?.logical_document_id ?? null, who: name(t.answered_by), answered_at: t.answered_at })) as unknown as T[];
 }

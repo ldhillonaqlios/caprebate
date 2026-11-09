@@ -65,7 +65,7 @@ import {
 } from '../../shared/index.ts';
 import { portalStepLine } from '../portal/index.ts';
 import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../claims/index.ts';
-import { getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint } from './data-borrowed.ts';
+
 import { getInvoicesFeeCountByClaimId, getInvoicesSentOnByClaimIdKind } from '../finance/index.ts';
 import { getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, listReasonListsCodeLabelActiveByList } from '../admin/index.ts';
 import { getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyorCommitmentsCommittedAtByClaimId } from '../survey/index.ts';
@@ -78,6 +78,8 @@ import type { Param, Row } from '../../core/index.ts';
 import { namesByIds } from '../../core/index.ts';
 import { listClaimStageMovesAtKindActorIdByClaimIdNewest } from '../claims/index.ts';
 import { getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId } from '../survey/index.ts';
+import { getClaimDeliverablesContentHashByClaimIdIssuedReport } from '../claims/index.ts';
+import { getClientReportAcceptancesAcceptedAtUserIdByClaimIdFingerprint } from './data-borrowed.ts';
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
@@ -1268,4 +1270,14 @@ export function getSurveyPackApprovalsVersionApprovedAtByClaimId<T extends Row =
   if (row === undefined) return undefined;
   const { approved_by, ...r } = row;
   return { ...r, name: namesByIds(db, [approved_by])(approved_by) } as unknown as T;
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  // The fingerprint of the claim's latest issued client report (none: no acceptance matches, as the old subquery's NULL).
+  const [claimId = null, ofClaim = null, since = null] = params;
+  const fingerprint = getClaimDeliverablesContentHashByClaimIdIssuedReport<{ content_hash: Param }>(db, [ofClaim])?.content_hash ?? null;
+  const x = getClientReportAcceptancesAcceptedAtUserIdByClaimIdFingerprint<{ accepted_at: unknown; user_id: unknown }>(db, [claimId, fingerprint, since]);
+  return x === undefined ? undefined : { accepted_at: x.accepted_at, name: namesByIds(db, [x.user_id])(x.user_id) } as unknown as T;
 }

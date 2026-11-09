@@ -1092,3 +1092,33 @@ export function listClaimsIdClaimRefOwnerIdByClaimRef<T extends Row = Row>(db: D
   return db.all<T>('SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, c.owner_id, ' +
     'c.assessment_id, c.expected_completion, c.completed_at, c.created_at FROM claims c ORDER BY c.claim_ref ASC', params);
 }
+export function getClaimDeliverablesContentHashByClaimIdIssuedReport<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' " +
+    "AND state = 'ISSUED' ORDER BY version DESC LIMIT 1", params);
+}
+/** The documents the given ids name: each one's logical document, version and the logical document's number. */
+export function listDocumentsIdLogicalDocumentIdVersionNoByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT d.id, d.logical_document_id, d.version_no, l.seq FROM documents d LEFT JOIN logical_documents l ON l.id = d.logical_document_id ' +
+    'WHERE d.id IN (SELECT value FROM json_each(?))', params);
+}
+export function listDocumentsUploadedByByBusinessIdSince<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT d.uploaded_by FROM documents d WHERE d.business_id = ? AND d.created_at >= ?', params);
+}
+/** The logical documents the given ids name, each with its latest version. */
+export function listLogicalDocumentsIdTypeCodeVersionByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, ' +
+    '(SELECT d.id FROM documents d WHERE d.logical_document_id = l.id ORDER BY d.version_no DESC LIMIT 1) AS version ' +
+    'FROM logical_documents l WHERE l.id IN (SELECT value FROM json_each(?))', params);
+}
+export function listDocumentsIdDeclaredTypeTypeCodeByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT d.id, d.declared_type, d.doc_type, d.state, d.created_at, d.type_code, l.seq, d.version_no FROM documents d ' +
+    'LEFT JOIN logical_documents l ON l.id = d.logical_document_id ' +
+    'WHERE d.business_id = ? ORDER BY d.created_at', params);
+}
+export function listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT k.logical_document_id, l.business_id, l.type_code, l.seq, k.claim_id, c.claim_ref, p.label AS property_label, ' +
+    'k.linked_at, k.unlinked_at, k.linked_by, k.unlinked_by FROM document_links k ' +
+    'JOIN logical_documents l ON l.id = k.logical_document_id ' +
+    'LEFT JOIN claims c ON c.id = k.claim_id LEFT JOIN properties p ON p.id = k.property_id ' +
+    'WHERE l.business_id = ? ORDER BY k.linked_at', params);
+}

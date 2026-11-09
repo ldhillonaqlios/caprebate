@@ -74,7 +74,6 @@
   "3": {
    "admin": [
     "src/modules/claims/data-borrowed.ts : document_types",
-    "src/modules/crm/data-borrowed.ts : document_types",
     "src/modules/portal/data-borrowed.ts : document_types"
    ],
    "assessment": [
@@ -95,11 +94,7 @@
     "src/modules/compliance/data-borrowed.ts : documents",
     "src/modules/compliance/data-borrowed.ts : logical_documents",
     "src/modules/compliance/data-borrowed.ts : properties",
-    "src/modules/crm/data-borrowed.ts : claim_deliverables",
     "src/modules/crm/data-borrowed.ts : claims",
-    "src/modules/crm/data-borrowed.ts : document_links",
-    "src/modules/crm/data-borrowed.ts : documents",
-    "src/modules/crm/data-borrowed.ts : logical_documents",
     "src/modules/crm/data-borrowed.ts : properties",
     "src/modules/finance/data-borrowed.ts : claims",
     "src/modules/portal/data-borrowed.ts : claims",

@@ -161,3 +161,8 @@ export function updateDocumentTypesLabelReadersByCode(db: Db, params: readonly P
 export function updateSavedViewsRetiredAtRetiredByById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE saved_views SET retired_at = ?, retired_by = ? WHERE id = ?', params);
 }
+
+// FOR THE CRM (Phase 161l1): the document types the given codes name, in place of the CRM's joins to document_types.
+export function listDocumentTypesCodeReadersLabelByCodes<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT t.code, t.readers, t.carries_value, t.label FROM document_types t WHERE t.code IN (SELECT value FROM json_each(?))', params);
+}

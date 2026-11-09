@@ -1132,6 +1132,25 @@ export function listLeadsClaimIdByIntroducerIdWithClaim<T extends Row = Row>(db:
 export function listLeadsClaimIdByIntroducerIdEvery<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT l.claim_id FROM leads l WHERE l.introducer_id = ?', params);
 }
+export function listClientTasksIdKindAnsweredByByBusinessIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT t.id, t.kind, t.question, t.answer, t.answer_state, t.received_document_id, t.answered_by, t.answered_at ' +
+    'FROM client_tasks t LEFT JOIN client_task_checks k ON k.task_id = t.id ' +
+    "WHERE t.business_id = ? AND (t.claim_id = ? OR t.claim_id IS NULL) AND t.state = 'ANSWERED' AND t.answered_by_role = 'CLIENT' " +
+    'AND k.id IS NULL ORDER BY t.answered_at ASC, t.rowid ASC', params);
+}
+export function listClientTasksIdRequestedTypeByAskedByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT ct.id, ct.requested_type, ct.due_on, ct.business_id, b.name AS business_name, ct.claim_id FROM client_tasks ct ' +
+    'JOIN businesses b ON b.id = ct.business_id ' +
+    "WHERE ct.asked_by = ? AND ct.kind = 'DOCUMENT' AND ct.state = 'OPEN' ORDER BY ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC", params);
+}
+export function listClientTasksQuestionCreatedAtAskedByByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT ct.question, ct.created_at, ct.sent_to_portal_at, ct.answered_at, ct.answer_state, ct.answered_by_role, ct.withdrawn_at, ' +
+    'ct.due_on, ct.asked_by, ct.answered_by, ct.withdrawn_by, ct.kind, ct.requested_type, ct.claim_id, ct.received_document_id FROM client_tasks ct ' +
+    'WHERE ct.business_id = ? ORDER BY ct.created_at', params);
+}
+export function listClientMessageFilesLogicalDocumentIdByMessageId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT f.logical_document_id FROM client_message_files f WHERE f.message_id = ? ORDER BY f.linked_at', params);
+}
 
 // HELPERS FOR A SPLIT JOIN (Phase 161l1): no SQL; used where the CRM puts its rows and another area's together.
 /** The ids a list of rows names, for a lookup by ids (SELECT ... WHERE id IN (SELECT value FROM json_each(?))). */
