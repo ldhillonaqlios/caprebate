@@ -30,7 +30,7 @@ export { PIECED_ABOVE, PIECE_BYTES, piecesOf, piecesPage, putPiece, setDocumentM
 export { assignRole, canonicalEmail, createUser, disableUser, findById, hashToken, listUsers, newId, toActor } from './users.ts';
 export { WELCOME_JOBS, dismissWelcome, welcomeShown } from './welcome.ts';
 // What the start-up wiring (src/app/) uses of the core. Each file named here loads no business module.
-export { MIGRATIONS_DIR } from './app.ts';
+export { MIGRATIONS_DIR, STUBS } from './app.ts';
 export { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';
 export { formToken, formTokensMode, onceToken } from './form-token.ts';
 export { MFA_KEY_NAME, mfaKeyFrom, resealSecrets, sealTextSecrets } from './mfa-seal.ts';

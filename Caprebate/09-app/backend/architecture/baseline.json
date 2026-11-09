@@ -8,9 +8,7 @@
    ],
    "core": [
     "src/integrations/connectors/test-lookups.ts -> src/core/app.ts",
-    "src/integrations/connectors/test-lookups.ts -> src/core/audit.ts",
-    "src/modules/admin/connections.ts -> src/core/app.ts",
-    "src/modules/crm/claim-lists.ts -> src/core/backoffice.ts"
+    "src/integrations/connectors/test-lookups.ts -> src/core/audit.ts"
    ],
    "crm": [
     "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts"
@@ -23,10 +21,6 @@
     "src/modules/claims/match-review.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/research.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/uploads.ts -> src/integrations/connectors/claude.ts"
-   ],
-   "shared": [
-    "src/app/live-website.ts -> src/shared/shared-objectstore.ts",
-    "src/app/server.ts -> src/shared/shared-objectstore.ts"
    ]
   },
   "2": {
