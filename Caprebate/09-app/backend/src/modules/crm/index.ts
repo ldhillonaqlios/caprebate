@@ -5,6 +5,8 @@
  */
 // Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
 export { CRM_ACTIONS } from './actions.ts';
+// What the outside services ask it (their ports): handed in first, as it reaches only its own data and their door.
+import './do-not-contact.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
 export { addLocalDays, CLIENT_MOVE_NOTICE_MINUTES, clockToMinutes, distinctMoments, HORIZON_DAYS, isBookable, minutesToClock, publicSlots, replaceWorkingTimes, SLOT_MINUTES, staffSlots, startOfLocalDay, startOfLocalWeek, WEEKDAY_NAMES, WorkingTimeError, workingTimesFor } from './schedule.ts';
 export { bookingInviteFile, sendVideoInvite } from './booking-invite.ts';

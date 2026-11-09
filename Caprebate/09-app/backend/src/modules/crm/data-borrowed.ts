@@ -582,3 +582,10 @@ export function listClaimsRows<T extends Row = Row>(db: Db, shape: 'MONEY' | 'VA
 export function listLeadsRows<T extends Row = Row>(db: Db): T[] {
   return db.all<T>(LEADS_ALL);
 }
+
+// the do-not-contact check (src/modules/crm/do-not-contact.ts): a client login of an organisation marked do not contact;
+// from src/integrations/data-borrowed.ts in Phase 161l, text unchanged. It joins the core's users to the CRM's businesses.
+export function getUsersCountByClientStatusEmailCanonical<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM users u JOIN businesses b ON b.id = u.business_id ' +
+    "WHERE b.client_status = 'DO_NOT_CONTACT' AND u.email_canonical = lower(?)", params);
+}

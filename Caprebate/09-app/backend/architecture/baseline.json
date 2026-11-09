@@ -3,8 +3,7 @@
  "breaks": {
   "1": {
    "admin": [
-    "src/core/saved-keys.ts -> src/modules/admin/data.ts",
-    "src/integrations/email/email.ts -> src/modules/admin/data.ts"
+    "src/core/saved-keys.ts -> src/modules/admin/data.ts"
    ],
    "assessment": [
     "src/core/backoffice.ts -> src/modules/assessment/data.ts"
@@ -74,8 +73,7 @@
    "crm": [
     "src/core/backoffice.ts -> src/modules/crm/data.ts",
     "src/integrations/connectors/nations.ts -> src/modules/crm/data.ts",
-    "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts",
-    "src/integrations/email/email.ts -> src/modules/crm/data.ts"
+    "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts"
    ],
    "integrations": [
     "src/core/cli.ts -> src/integrations/connectors/test-lookups.ts",
@@ -157,7 +155,6 @@
     "finance -> crm"
    ],
    "integrations": [
-    "integrations -> admin",
     "integrations -> claims",
     "integrations -> crm"
    ],
@@ -219,7 +216,6 @@
     "src/modules/survey/data-borrowed.ts : properties"
    ],
    "core": [
-    "src/integrations/data-borrowed.ts : users",
     "src/modules/admin/data-borrowed.ts : users",
     "src/modules/assessment/data-borrowed.ts : users",
     "src/modules/claims/data-borrowed.ts : users",
@@ -240,7 +236,6 @@
     "src/core/data-borrowed.ts : leads",
     "src/core/data-borrowed.ts : working_times",
     "src/core/seed.ts : businesses",
-    "src/integrations/data-borrowed.ts : businesses",
     "src/modules/admin/data-borrowed.ts : businesses",
     "src/modules/assessment/data-borrowed.ts : businesses",
     "src/modules/claims/data-borrowed.ts : businesses",

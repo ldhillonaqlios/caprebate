@@ -5,6 +5,8 @@
  */
 // Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
 export { ADMIN_ACTIONS } from './actions.ts';
+// What the outside services ask it (their ports): handed in first, as it reaches only its own data and their door.
+import './email-sender.ts';
 export { adminSettingsGate, SETTINGS_TILES, settingsBody, settingsTiles } from './admin-tiles.ts';
 export { handleConfiguration } from './configuration-pages.ts';
 export { handleConnections, listsToImport } from './connections.ts';

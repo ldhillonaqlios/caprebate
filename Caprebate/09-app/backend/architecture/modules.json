@@ -384,10 +384,6 @@
    "area": "integrations",
    "kind": "logic"
   },
-  "src/integrations/data-borrowed.ts": {
-   "area": "integrations",
-   "kind": "data"
-  },
   "src/integrations/data.ts": {
    "area": "integrations",
    "kind": "data"
@@ -495,6 +491,10 @@
   "src/modules/admin/data.ts": {
    "area": "admin",
    "kind": "data"
+  },
+  "src/modules/admin/email-sender.ts": {
+   "area": "admin",
+   "kind": "logic"
   },
   "src/modules/admin/index.ts": {
    "area": "admin",
@@ -935,6 +935,10 @@
   "src/modules/crm/data.ts": {
    "area": "crm",
    "kind": "data"
+  },
+  "src/modules/crm/do-not-contact.ts": {
+   "area": "crm",
+   "kind": "logic"
   },
   "src/modules/crm/email-chains.ts": {
    "area": "crm",
