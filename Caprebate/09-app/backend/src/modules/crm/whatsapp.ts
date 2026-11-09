@@ -36,11 +36,11 @@ import {
 import { WHATSAPP_PREFIX, type FsObjectStore } from '../../shared/index.ts';
 import { getWhatsappMediaMediaIdByMessageId, getWhatsappMediaMessageIdBusinessIdByMessageId, getWhatsappMessagesAtByPhoneDirection, getWhatsappMessagesIdStatusByWaIdDirection, insertWhatsappMedia2, insertWhatsappMessages, insertWhatsappMessages3, listOutboxCreatedAtToEmailByBusinessId, listWhatsappMessagesIdPhoneByBusinessIdDirection, updateWhatsappMediaObjectKeyBytesByMessageIdFetchedAt, updateWhatsappMessagesBusinessIdFiledByByIdBusinessId, updateWhatsappMessagesStatusStatusAtById } from '../../integrations/index.ts';
 
-import { getBusinessesXById, listContactsEByBusinessIdEmail, listContactsIdBusinessIdByBusinessIdPhone, listContactsIdFullNameByBusinessIdPhone } from './data.ts';
+import { getBusinessesXById, listContactsEByBusinessIdEmail, listContactsIdBusinessIdByBusinessIdPhone, listContactsIdFullNameByBusinessIdPhone } from '../clients/index.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { namesByIds } from '../../core/index.ts';
 import { listWhatsappMessagesCreatedAtDirectionContactIdByBusinessId } from '../../integrations/index.ts';
-import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from './data.ts';
+import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from '../clients/index.ts';
 
 export function whatsappDeps(app: App): WhatsAppDeps {
   return { audit: app.audit, now: app.now, transport: app.outside, secrets: app.secrets,

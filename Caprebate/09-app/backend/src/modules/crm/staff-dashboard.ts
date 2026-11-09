@@ -19,7 +19,7 @@
  *   ADMIN       (Admin only) who is working and when · the admin tiles
  * The view-only login sees the Sales view, with no buttons that change anything.
  *
- * THE BUTTONS: a video call's is "Start the Zoom call" (the host's page inside the site, src/modules/crm/video-calls.ts); a
+ * THE BUTTONS: a video call's is "Start the Zoom call" (the host's page inside the site, src/modules/clients/video-calls.ts); a
  * first email's is "Write the first email" (the email page, filled in); a telephone call is made by hand, so its button
  * opens the call's page to note it, and the number is shown beside it.
  *
@@ -40,22 +40,22 @@ import { assertFinanceSection } from '../finance/index.ts';
 import { assertSurveySection, surveyorJobs } from '../survey/index.ts';
 import { isLateNewLead } from '../../shared/index.ts';
 import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES } from '../../shared/index.ts';
-import { addLocalDays, startOfLocalDay, startOfLocalWeek } from './schedule.ts';
+import { addLocalDays, startOfLocalDay, startOfLocalWeek } from '../clients/index.ts';
 import * as B from './assessments-and-calendar.ts';
 import * as M from './messages.ts';
 import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from '../public-site/index.ts';
 import { kpiRow, type Kpi } from '../../core/index.ts';
-import { blocksFor, mayBlockTime } from './time-blocks.ts';
+import { blocksFor, mayBlockTime } from '../clients/index.ts';
 import { newDot } from '../portal/index.ts';
 import { keysView } from '../admin/index.ts';
 import { repliesStale } from './inbound-email.ts';
 import { listsToImport } from '../admin/index.ts';
 import { listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole } from '../../core/index.ts';
 
-import { getContactsFullNamePhoneByBusinessId } from './data.ts';
+import { getContactsFullNamePhoneByBusinessId } from '../clients/index.ts';
 import type { Db, Param, Row } from '../../core/index.ts';
 import { getOutboxXByKindLeadIdBusinessId } from '../../integrations/index.ts';
-import { getLeadsBusinessIdById } from './data.ts';
+import { getLeadsBusinessIdById } from '../clients/index.ts';
 import { peopleByIds } from '../../core/index.ts';
 import { listDocumentsUploadedByByBusinessIdSince } from '../claims/index.ts';
 

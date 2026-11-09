@@ -60,8 +60,8 @@ import {
 import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
 import { readPayloadWithClaude, SERVICE_ID as CLAUDE_SERVICE_ID } from './claude.ts';
 import { sanitise, type Segment } from '../../modules/claims/index.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module.
-import { listBusinessesNameLegalName, listLeadsProspectOrganisationProspectPostcode } from '../../modules/crm/data.ts';
+// The client record's values through the port this layer owns (Phase 161l1): the client record hands them in as it loads.
+import { clientValues } from './client-values.ts';
 // Straight from the data file, not the front door: a lower layer must not load a whole business module.
 import { listPropertiesPostcode, listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../../modules/claims/data.ts';
 import { listRegisterRecordsFieldsJsonBySourceId } from '../data.ts';
@@ -252,9 +252,10 @@ export function clientMatchIn(db: Db, v: SmokeValues): ClientCheck {
   let properties: { postcode: string | null }[];
   let leads: { prospect_organisation: string | null; prospect_postcode: string | null }[];
   try {
-    businesses = listBusinessesNameLegalName(db);
+    const held = clientValues(db);
+    businesses = held.businesses;
     properties = listPropertiesPostcode(db);
-    leads = listLeadsProspectOrganisationProspectPostcode(db);
+    leads = held.leads;
   } catch (e: unknown) {
     return { ok: false, why: `the clients in CAPREBATE_DB could not be read (${e instanceof Error ? e.message : String(e)}), so it is not known that these values are nobody's` };
   }

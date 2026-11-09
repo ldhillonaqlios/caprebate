@@ -52,13 +52,17 @@ import { mayTake, vocabLabel } from '../admin/index.ts';
 import {
   PROSPECT_EVENTS, REFERRAL_SOURCES, introducerChoices, introducerExists, leadReferral, onLeadConverted, type LeadReferral,
 } from './introducers.ts';
-import { getAssessmentsIdLeadIdByBusinessId, insertLeadsByBusinessIdId } from './data-borrowed.ts';
-import { getBookingsIdByLeadIdBusinessId, getBusinessesIdById, getBusinessesIdSourceById, getContactsIdFullNameByLeadId, getLeadsEnquiryIdById, getStaffTasksTitleOwnerIdByLeadIdStatus, insertLeads, insertLeads2, insertLeads4, listBusinessesIdName3, listLeadsLeadIdNameByEnquiryIdId, updateBookingsBusinessIdByLeadIdBusinessId, updateBusinessesSourceUpdatedAtById, updateContactsBusinessIdUpdatedAtByLeadIdBusinessId, updateLeadsBookingIdUpdatedAtByBusinessIdBookingId, updateLeadsOwnerIdPriorityById, updateLeadsStatusConvertedAtById } from './data.ts';
+import { getAssessmentsIdLeadIdByBusinessId, insertLeadsByBusinessIdId } from '../clients/index.ts';
+import { getBookingsIdByLeadIdBusinessId, getBusinessesIdById, getBusinessesIdSourceById, getContactsIdFullNameByLeadId, getLeadsEnquiryIdById, getStaffTasksTitleOwnerIdByLeadIdStatus, insertLeads2, listBusinessesIdName3, listLeadsLeadIdNameByEnquiryIdId, updateBookingsBusinessIdByLeadIdBusinessId, updateBusinessesSourceUpdatedAtById, updateContactsBusinessIdUpdatedAtByLeadIdBusinessId, updateLeadsOwnerIdPriorityById, updateLeadsStatusConvertedAtById } from '../clients/index.ts';
 import { getAssessmentsLowHighById, getEstimatesCountByAssessmentId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId } from '../assessment/index.ts';
 import { listPropertiesIdByBusinessId2, listPropertiesIdLabelByBusinessId, listPropertyEventsLabelKindByAssessmentId } from '../claims/index.ts';
-import { getStaffTasksIdBusinessIdByLeadIdStatus, listStaffTasksIdBusinessIdByLeadIdStatus } from './data-borrowed.ts';
+import { getStaffTasksIdBusinessIdByLeadIdStatus, listStaffTasksIdBusinessIdByLeadIdStatus } from '../clients/index.ts';
 
 type Vocab = Readonly<Record<string, string>>;
+
+// The website's leads, written inside the assessment's transactions: the client record's (src/modules/clients/leads.ts).
+import { linkBookingToLead, openLeadForGatedExit, openLeadForSubmission } from '../clients/index.ts';
+export { linkBookingToLead, openLeadForGatedExit, openLeadForSubmission };
 
 export const LEAD_STATUSES: Vocab = Object.freeze({
   NEW: 'New', CONTACTED: 'Contacted', QUALIFIED: 'Qualified', NURTURE: 'Nurture', CONVERTED: 'Converted', LOST: 'Lost',
@@ -675,46 +679,6 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
 /* ================================================================== *
  * 5 · THE FUNNEL, THE BOOKING, AND THE SEED
  * ================================================================== */
-
-/**
- * THE FUNNEL'S LEAD — written inside `submit()`'s transaction. A lead, NEW,
- * from the website, carrying the organisation and the assessment the submission
- * just created. No claim: that waits for the enquiry gate.
- */
-export function openLeadForSubmission(
-  db: Db, newId: () => string, v: { business_id: string; assessment_id: string; at: string },
-): string {
-  const id = newId();
-  insertLeads(db, [id, v.business_id, v.assessment_id, v.at, v.at, v.at]);
-  return id;
-}
-
-/**
- * THE GATED EXIT'S LEAD — the gated-exit repair.
- *
- * A prospect stopped at Q1b who asks for a call. NEW, from the website, origin
- * GATED_EXIT, and with NO ORGANISATION: they reached the reasoned negative before
- * the property question, so there is no sector to give one, and inventing one
- * would put a fact in the record nobody gave us. The table's CHECK asks for the
- * organisation's name instead — the business name the prospect typed, or
- * "Unnamed business", exactly as `submit()` names an organisation nobody named.
- *
- * THE PERSON AND THE CHANNEL ARE NOT HERE (row E21). They are a contact and a
- * booking that BELONG TO THIS LEAD until it is linked to an organisation (row
- * E22, migration 011), and `convertLead` moves them — the same rows — when it is.
- */
-export function openLeadForGatedExit(
-  db: Db, newId: () => string, v: { prospect_organisation: string; at: string },
-): string {
-  const id = newId();
-  insertLeads4(db, [id, v.prospect_organisation, v.at, v.at, v.at]);
-  return id;
-}
-
-/** The funnel close's booking, tied to the lead it belongs to. */
-export function linkBookingToLead(db: Db, business_id: string, booking_id: string, at: string): void {
-  updateLeadsBookingIdUpdatedAtByBusinessIdBookingId(db, [booking_id, at, business_id]);
-}
 
 /**
  * MIGRATION 010's LEAD BACKFILL, FOR ONE ORGANISATION — the same derivation,

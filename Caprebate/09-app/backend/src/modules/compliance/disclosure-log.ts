@@ -34,7 +34,7 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor, type Obj } from '../../core/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { getUsersRoleById } from '../../core/index.ts';
-import { getBusinessesIdById, getContactsBusinessIdById } from '../crm/index.ts';
+import { getBusinessesIdById, getContactsBusinessIdById } from '../clients/index.ts';
 import { getClaimsBusinessIdById } from '../claims/index.ts';
 import { getDisclosureLogBusinessIdById, insertDisclosureLog, listDisclosureLogIdRecipientRecordedByByBusinessId } from './data.ts';
 import { userNames } from './compliance.ts';

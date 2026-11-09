@@ -1,5 +1,5 @@
 /**
- * THE CRM'S BORROWED STATEMENTS, SPLIT (Phase 161l1). Each statement in src/modules/crm/data-borrowed.ts that read
+ * THE CRM'S BORROWED STATEMENTS, SPLIT (Phase 161l1). Each statement in src/modules/clients/data-borrowed.ts that read
  * another area's tables is split into the CRM's own read plus a lookup through the owner's front door, or moved to
  * the owner. What the screen shows must not change: the same rows, in the same order, with the same values, and a null
  * wherever the old LEFT JOIN found nothing.
@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { testApp, fakeHasher, fixedClock } from '../helpers.ts';
 import { seed } from '../../src/app/seed.ts';
 import type { Db, Param, Row } from '../../src/core/index.ts';
-import * as B from '../../src/modules/crm/data-borrowed.ts';
+import * as B from '../../src/modules/clients/data-borrowed.ts';
 import * as SURVEY from '../../src/modules/survey/index.ts';
 import * as INTEGRATIONS from '../../src/integrations/index.ts';
 import * as TIMELINE from '../../src/modules/crm/timeline.ts';
@@ -24,7 +24,7 @@ import * as CRM from '../../src/modules/crm/crm.ts';
 import * as DASHBOARD from '../../src/modules/crm/dashboard.ts';
 import * as ROUTES from '../../src/modules/crm/routes.ts';
 import * as COMMUNICATION from '../../src/modules/crm/communication.ts';
-import * as VIDEO from '../../src/modules/crm/video-calls.ts';
+import * as VIDEO from '../../src/modules/clients/video-calls.ts';
 import * as STAFF_DASHBOARD from '../../src/modules/crm/staff-dashboard.ts';
 import * as INBOUND from '../../src/modules/crm/inbound-email.ts';
 import * as EMAIL_CHAINS from '../../src/modules/crm/email-chains.ts';
@@ -33,7 +33,7 @@ import * as WHATSAPP from '../../src/modules/crm/whatsapp.ts';
 import * as WHATSAPP_PAGE from '../../src/modules/crm/whatsapp-page.ts';
 import * as SEARCH from '../../src/modules/crm/search.ts';
 import * as CLAIM_LISTS from '../../src/modules/crm/claim-lists.ts';
-import * as CLIENT_CHECKS from '../../src/modules/crm/client-checks.ts';
+import * as CLIENT_CHECKS from '../../src/modules/claims/client-checks.ts';
 import * as TASKS from '../../src/modules/crm/tasks.ts';
 import * as MESSAGES from '../../src/modules/crm/messages.ts';
 

@@ -54,14 +54,14 @@ import type { Db } from '../../core/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { retentionReading, ret7Limbs } from '../claims/index.ts';
 import { BACKUP_CYCLE } from '../claims/index.ts';
-import { MESSAGE_RETENTION_QUESTION } from '../crm/index.ts';
+import { MESSAGE_RETENTION_QUESTION } from '../clients/index.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, holdsFor, liveHeldIds, NotFoundAsRefusal, opaqueRef, record, requiredText,
   textField, ukDay, vocabField, words,
   type Check, type ComplianceDeps, type Fields, type HoldRow, type Vocab, type WriteResult,
 } from './compliance.ts';
 import { getDocumentsIdById, listLogicalDocumentsId } from '../claims/index.ts';
-import { getContactsIdById, getContactsIdFullNameById, listIntroducerShareConsentsRecordedAtDecisionByBusinessId, updateContactsContactConsentUpdatedAtById, updateContactsMarketingOptinUpdatedAtById } from '../crm/index.ts';
+import { getContactsIdById, getContactsIdFullNameById, listIntroducerShareConsentsRecordedAtDecisionByBusinessId, updateContactsContactConsentUpdatedAtById, updateContactsMarketingOptinUpdatedAtById } from '../clients/index.ts';
 import { insertConsentAnswers, listConsentAnswersRecordedAtKindByContactId } from '../assessment/index.ts';
 import { getIdentityPersonsPersonRefNoticeTemplateByPersonRef, insertIdentityPersons, insertIdentitySearchLog, listComplaintsIdRefByPersonRef, listIdentityPersonsPersonRefRole, listRightsRequestsIdRefByPersonRef, updateIdentityPersonsExemptionArticleExemptionReasonByPerson, updateIdentityPersonsNoticeTemplateNoticeRouteByPersonRef } from './data.ts';
 import { getIdentityCount, getSqliteMasterNameByTblName, type IdentityCount } from './data.ts';

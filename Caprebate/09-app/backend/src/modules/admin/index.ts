@@ -7,6 +7,11 @@
 export { ADMIN_ACTIONS } from './actions.ts';
 // What the outside services ask it (their ports): handed in first, as it reaches only its own data and their door.
 import './email-sender.ts';
+// The sender setting and the automation rules as read (moved from the CRM, Phase 161l1).
+export { senderSetting, setSender } from './sender-setting.ts';
+export type { SenderDeps } from './sender-setting.ts';
+export { recentRuns, rulesPage } from './automation-rules.ts';
+export type { RuleView, RulesPage, RunView } from './automation-rules.ts';
 export { adminSettingsGate, SETTINGS_TILES, settingsBody, settingsTiles } from './admin-tiles.ts';
 export { handleConfiguration } from './configuration-pages.ts';
 export { handleConnections, listsToImport } from './connections.ts';
@@ -20,5 +25,5 @@ export type { TaskChoices } from './vocabularies.ts';
 export { getDocumentTypesCodeByCode, getDocumentTypesCodeLabelByCode, getDocumentTypesHandlerTypeActiveByCode, getDocumentTypesHandlerTypeByCode, getDocumentTypesLabelByCode, getDocumentTypesLabelByCode2, getDocumentTypesM, getDocumentTypesOrdByCode, getEmailSenderA, getEmailTemplatesLabelSubjectByIdActive, getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, getSavedViewsIdListById, getVocabulariesActivityTypeCountByCode, insertDocumentTypes, insertEmailSender, insertSavedViews, listDocumentTypesCodeLabel, listDocumentTypesCodeLabel2, listDocumentTypesCodeLabelByActiveHandlerType, listDocumentTypesCodeLabelByActiveHandlerType2, listReasonListsCodeLabelActiveByList, listSavedViewsIdListByListRetiredAt, updateDocumentTypesLabelReadersByCode, updateSavedViewsRetiredAtRetiredByById } from './data.ts';
 // Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
 import './nav.ts';
-// Phase 161l1: what the CRM reads here in place of its joins (src/modules/crm/data-borrowed.ts).
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
 export { listDocumentTypesCodeReadersLabelByCodes, listReasonListsCodeLabelByList } from './data.ts';

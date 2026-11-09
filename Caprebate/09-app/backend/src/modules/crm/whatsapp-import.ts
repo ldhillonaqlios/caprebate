@@ -30,11 +30,11 @@ import { phoneContacts } from './whatsapp.ts';
 import { listZipEntries, readZipEntryFromBuffer } from '../../shared/index.ts';
 import { getWhatsappImportLinesExistsByFingerprint, getWhatsappImportsByIdBusinessId, insertWhatsappImportLines, insertWhatsappImports, insertWhatsappMedia, insertWhatsappMessages2, listWhatsappImportLinesAttachmentByImportIdAttachment, listWhatsappImportLinesMessageIdByImportIdAttachment, updateWhatsappImportsStatusById, updateWhatsappImportsStatusUsNameById } from '../../integrations/index.ts';
 
-import { getContactsFullNameWhatsappOptinById } from './data.ts';
+import { getContactsFullNameWhatsappOptinById } from '../clients/index.ts';
 import type { Db, Param, Row } from '../../core/index.ts';
 import { peopleByIds } from '../../core/index.ts';
 import { listWhatsappImportLinesImportIdUploadedAtUploadedByByMessageId, listWhatsappImportsIdContactIdByBusinessIdStatus } from '../../integrations/index.ts';
-import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from './data.ts';
+import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from '../clients/index.ts';
 
 /** Where an upload's text and .zip are kept, sealed. */
 export const IMPORT_PREFIX = WHATSAPP_IMPORT_PREFIX;

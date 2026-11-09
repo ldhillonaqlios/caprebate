@@ -66,20 +66,28 @@ import {
 import { portalStepLine } from '../portal/index.ts';
 import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../claims/index.ts';
 
-import { getInvoicesFeeCountByClaimId, getInvoicesSentOnByClaimIdKind } from '../finance/index.ts';
+import { getInvoicesSentOnByClaimIdKind } from '../finance/index.ts';
 import { getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, listReasonListsCodeLabelActiveByList } from '../admin/index.ts';
 import { getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyorCommitmentsCommittedAtByClaimId } from '../survey/index.ts';
-import { getBusinessesSectorById, getBusinessesStageById, getLeadsIdBusinessIdById4, getLeadsIdByClaimId, updateBusinessesStageUpdatedAtById, updateLeadsUpdatedAtById } from './data.ts';
+import { getBusinessesSectorById, getBusinessesStageById, getLeadsIdBusinessIdById4, getLeadsIdByClaimId, updateLeadsUpdatedAtById } from '../clients/index.ts';
 import { insertEnquiryChecks } from '../public-site/index.ts';
-import { getClaimDeliverablesIssuedOnKindByClaimIdState, getClaimMilestonesAtByClaimIdMilestone, getClaimReconciliationsFiledOnByClaimId, getClaimStageMovesAtByClaimIdToStage, getClaimsCountByBusinessIdStage, getClaimsIdBusinessIdById3, insertClaimMilestones, insertClaimStageMoves, insertClaimStageMoves2, listClaimStageMovesFromStageToStageByClaimId, listClaimsIdStageByBusinessId, listPropertiesBusinessIdLabelByBusinessId, updateClaimsStageHoldReturnStageById } from '../claims/index.ts';
+import { getClaimMilestonesAtByClaimIdMilestone, getClaimsCountByBusinessIdStage, insertClaimMilestones, insertClaimStageMoves, insertClaimStageMoves2, listClaimStageMovesFromStageToStageByClaimId, listPropertiesBusinessIdLabelByBusinessId, updateClaimsStageHoldReturnStageById } from '../claims/index.ts';
 import { getAssessmentsIdByBusinessId2, getAssessmentsSubmittedAtByBusinessId, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId } from '../assessment/index.ts';
-import { listEnquiryChecksSeqCheckKeyByClaimId, listEnquiryChecksSeqCheckKeyByLeadId } from './data-borrowed.ts';
+import { listEnquiryChecksSeqCheckKeyByClaimId, listEnquiryChecksSeqCheckKeyByLeadId } from '../clients/index.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { namesByIds } from '../../core/index.ts';
 import { listClaimStageMovesAtKindActorIdByClaimIdNewest } from '../claims/index.ts';
 import { getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId } from '../survey/index.ts';
 import { getClaimDeliverablesContentHashByClaimIdIssuedReport } from '../claims/index.ts';
-import { getClientReportAcceptancesAcceptedAtUserIdByClaimIdFingerprint } from './data-borrowed.ts';
+import { getClientReportAcceptancesAcceptedAtUserIdByClaimIdFingerprint } from '../clients/index.ts';
+// The client's step raised by the research: the client record's (src/modules/clients/stage.ts).
+import { raiseToResearch } from '../clients/index.ts';
+// Moved below (Phase 161l1): the claim's stage read to the claims, its live fee invoices to the finance.
+import { clientStageForClaim, enteredAt, loadPipelineClaim, raiseBusinessStage, reportDeliveredOn, type Need, type PipelineClaim } from '../claims/index.ts';
+import { liveFeeInvoiceCount, type FeeTrigger } from '../finance/index.ts';
+export { clientStageForClaim, enteredAt, liveFeeInvoiceCount, loadPipelineClaim, raiseBusinessStage, reportDeliveredOn };
+export type { FeeTrigger, Need, PipelineClaim };
+export { raiseToResearch };
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
@@ -110,8 +118,6 @@ function stageLabel(key: ProcedureKey | 'CLOSED'): string {
 /** The title of the question under the owner in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
 export const FEE_TRIGGER_QUESTION =
   'When is our fee earned — when the client accepts the report, when their accountant files the amended return, or when HMRC processes the relief?';
-
-export type FeeTrigger = 'REPORT_DELIVERED_FOR_FILING' | 'CLIENT_ACCEPTED_REPORT' | 'AMENDED_RETURN_FILED' | 'HMRC_PROCESSED_RELIEF';
 
 export const FEE_TRIGGERS: Readonly<Record<FeeTrigger, string>> = Object.freeze({
   REPORT_DELIVERED_FOR_FILING: 'when our report is delivered for filing, to the client or to their accountant',
@@ -146,16 +152,6 @@ export const FEE_TRIGGER: {
   why: 'The owner decided: our fee is due when we finish the report and send it for filing, to the client or their accountant. Sending it counts, because nobody will confirm the filing.',
   question: FEE_TRIGGER_QUESTION,
 });
-
-/**
- * WHEN OUR REPORT WAS DELIVERED FOR FILING — the earliest issue date of the claim's CLIENT_REPORT or
- * ACCOUNTANT_COMPUTATION_PACK that stands ISSUED in the deliverables register, or null where neither is (N4: an
- * unknown delivery is null, never today). Read by the fee trigger and by the finance view's expected-fee date.
- */
-export function reportDeliveredOn(db: Db, claim_id: string): { readonly on: string; readonly kind: string } | null {
-  const r = getClaimDeliverablesIssuedOnKindByClaimIdState<{ issued_on: string; kind: string }>(db, [claim_id]);
-  return r === undefined ? null : { on: r.issued_on, kind: r.kind };
-}
 
 /**
  * `today` is the instant a gate reads the amendment window against — CRM 6 of 10.
@@ -425,38 +421,9 @@ export function enquiryEvidence(
  * 4 · THE CLAIM, AS A GATE READS IT
  * ================================================================== */
 
-export type PipelineClaim = {
-  id: string; business_id: string; assessment_id: string | null; stage: string | null;
-  hold_return_stage: string | null; hold_reason: string | null;
-  /** RETIRED BY CRM 6 of 10 and read by no gate: the database refuses any write to it. The sign-off is a record. */
-  tax_adviser_signoff_at: string | null;
-  created_at: string;
-  /** CRM 6 of 10: the amendment window reads the property's acquisition date. */
-  property_id: string | null;
-};
-
-export function loadPipelineClaim(db: Db, id: string): PipelineClaim {
-  const c = getClaimsIdBusinessIdById3<PipelineClaim>(db, [id]);
-  // A missing row and a forbidden row look the same from outside.
-  if (c === undefined) throw new NotFoundAsRefusal();
-  return c;
-}
-
-/**
- * WHEN THE CLAIM LAST ENTERED A STAGE — by moving into it, being opened in it,
- * being converted into it, or being reopened at it. A RESUME is not an entry:
- * a hold is a pause, and what was confirmed before it still stands.
- */
-export function enteredAt(db: Db, c: { id: string; created_at: string }, stageKey: string): string {
-  const r = getClaimStageMovesAtByClaimIdToStage<{ at: string | null }>(db, [c.id, stageKey]);
-  return r?.at ?? c.created_at;
-}
-
 function milestoneSince(db: Db, claim_id: string, m: MilestoneKey, since: string): { at: string } | undefined {
   return getClaimMilestonesAtByClaimIdMilestone<{ at: string }>(db, [claim_id, m, since]);
 }
-
-export type Need = { readonly what: string; readonly met: boolean; readonly why: string };
 
 export type GateReading = {
   readonly from: ProcedureKey;
@@ -503,15 +470,6 @@ export function feeTriggerReached(db: Db, c: PipelineClaim, trigger: FeeTrigger 
     what: `The fee trigger is reached — ${FEE_TRIGGERS[trigger]}${trigger === FEE_TRIGGER.reading && !FEE_TRIGGER.decided ? ' (the most cautious reading, while the fee trigger is undecided)' : ''}`,
     met: t.met, why: t.why,
   };
-}
-
-/**
- * THE CLAIM'S OWN LIVE FEE INVOICES — CRM 7 of 10. Raised or sent, and not
- * credited in full. An organisation's invoice, another claim's, a cancelled one
- * and one credited in full are none of them this claim's fee.
- */
-export function liveFeeInvoiceCount(db: Db, claim_id: string): number {
-  return getInvoicesFeeCountByClaimId<{ n: number }>(db, [claim_id])?.n ?? 0;
 }
 
 /**
@@ -714,54 +672,6 @@ export function furthestReached(db: Db, c: PipelineClaim): number {
     best = Math.max(best, procedureIndex(m.from_stage), procedureIndex(m.to_stage));
   }
   return best;
-}
-
-/**
- * THE ORGANISATION'S STORED STAGE, RAISED — NEVER LOWERED.
- *
- * `businesses.stage` stays the engaged-client list's sort key and the portal's
- * source. A move raises it to the client label the organisation's most advanced
- * open claim evidences (stages.ts), and never lowers it: an exit, a hold or a
- * reopen does not move a client's progress backwards, and no migration rewrites
- * a stored stage. Returns the key it was raised to, or null.
- */
-export function raiseBusinessStage(db: Db, business_id: string, at: string): StageKey | null {
-  const b = getBusinessesStageById<{ stage: string }>(db, [business_id]);
-  if (b === undefined) return null;
-  let best: StageKey | null = null;
-  for (const c of listClaimsIdStageByBusinessId<{ id: string; stage: string | null; hold_return_stage: string | null }>(db, [business_id])) {
-    const k = clientStageForClaim(db, c.id, c.stage === 'ON_HOLD' ? c.hold_return_stage : c.stage);
-    if (k !== null && (best === null || stageIndex(k) > stageIndex(best))) best = k;
-  }
-  if (best === null || stageIndex(b.stage) >= stageIndex(best)) return null;
-  updateBusinessesStageUpdatedAtById(db, [best, at, business_id]);
-  return best;
-}
-
-/**
- * The client's step a claim evidences. The defence pack and Closed are the
- * client's "5 Claim filed", and the portal said so with no record that the claim was filed. Until the filing date is on
- * the claim's reconciliation, such a claim evidences "4 Expert sign-off"; recording it raises the client's step.
- */
-export function clientStageForClaim(db: Db, claim_id: string, key: string | null): StageKey | null {
-  const k = clientStageFor(key);
-  if (k !== 'INVOICED') return k;
-  const filed = getClaimReconciliationsFiledOnByClaimId<{ filed_on: string | null }>(db, [claim_id])?.filed_on ?? null;
-  return filed === null ? 'AT_SURVEY' : k;
-}
-
-/**
- * No claim stage maps to the client's step 3, "We research your property", so a
- * client went from step 2 to step 4 while we researched. A research run that got an answer from at least one register,
- * on a client whose letter is signed, raises the client's step to it. Raise only, as raiseBusinessStage: a business
- * already past it stays where it is, and one whose letter is not signed is never shown a step it has not reached.
- */
-export function raiseToResearch(db: Db, business_id: string, at: string, run: { readonly signed: boolean; readonly fired: number }): boolean {
-  if (!run.signed || run.fired === 0) return false;
-  const b = getBusinessesStageById<{ stage: string }>(db, [business_id]);
-  if (b === undefined || stageIndex(b.stage) >= stageIndex('RESEARCH_PART_RUN')) return false;
-  updateBusinessesStageUpdatedAtById(db, ['RESEARCH_PART_RUN', at, business_id]);
-  return true;
 }
 
 /**

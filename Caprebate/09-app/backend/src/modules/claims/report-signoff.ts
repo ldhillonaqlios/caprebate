@@ -34,14 +34,14 @@ import { reportModel, reportPdf, longDate, REPORT_TITLE } from '../survey/index.
 import { freezeReturnContext, returnContext, returnContextFor, returnEntriesCsv } from './return-entries.ts';
 import { voidLine } from './valuation-lock.ts';
 import { recordSignOff } from './claim-record.ts';
-import { postClientMessage } from '../crm/index.ts';
+import { postClientMessage } from '../clients/index.ts';
 import { localDate } from '../../shared/index.ts';
 import { poundsWords } from '../survey/index.ts';
 import { getOutboxRById } from '../../integrations/index.ts';
 import { getPackClientNoticesToldAtToldByNameByApprovalId, getPackSignoffRequestsIdApprovalIdByTokenSha256, listPackSignoffRequestsIdApprovalIdByJobId, listSurveyPackApprovalsIdVersionByBusinessIdClaimId } from './data-borrowed.ts';
 import { insertPackClientNotices, insertPackSignoffAnswers, insertPackSignoffRecorded, insertPackSignoffRequests } from '../survey/index.ts';
 import { getTaxAdviserSignoffsCountByApprovalIdRecordedAt } from './data.ts';
-import { listContactsIdNameByBusinessIdContactType2 } from '../crm/index.ts';
+import { listContactsIdNameByBusinessIdContactType2 } from '../clients/index.ts';
 
 export type SignoffDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };
 export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };

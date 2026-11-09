@@ -122,7 +122,7 @@ export function isDoNotContact(db: Db, to_email: string, business_id: string | n
 /*
  * WHAT THIS FILE ASKS THE MODULES ABOVE IT: TWO PORTS IT OWNS. Whether an organisation, an address, a
  * contact or a client login is marked DO_NOT_CONTACT is the CRM's to say (its tables: the four tests above, in the
- * same order, in src/modules/crm/do-not-contact.ts); who every email comes from is the admin's setting
+ * same order, in src/modules/clients/do-not-contact.ts); who every email comes from is the admin's setting
  * (src/modules/admin/email-sender.ts). Each module hands its answer in when its front door loads, so the outside
  * services import nothing of a business module. Asked before it is handed in, each refuses rather than guess: no
  * email is written. Declared with `var`, so a hand-in that comes while this file is still loading (a loop through a

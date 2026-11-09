@@ -8,7 +8,7 @@ import type { Db, Param, Row } from '../../core/index.ts';
 import { fillUsers } from '../../core/index.ts';
 import { listDocumentTypesCodeLabel } from '../admin/index.ts';
 import { getDocumentsIdBusinessIdTypeCodeById, listClaimsIdBusinessIdStageClaimRefByIds, listDocumentsIdBusinessIdTypeCodeByBusinessId } from '../claims/index.ts';
-import { listBusinessesIdNameSectorByIds, listContactsIdFullNameByIds } from '../crm/index.ts';
+import { listBusinessesIdNameSectorByIds, listContactsIdFullNameByIds } from '../clients/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 

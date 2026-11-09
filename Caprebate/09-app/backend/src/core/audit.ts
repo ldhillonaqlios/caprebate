@@ -262,7 +262,7 @@ export type AuditKind =
   | 'COMPLAINT_LOGGED' | 'COMPLAINT_CLASSIFIED' | 'COMPLAINT_PROGRESS_RECORDED' | 'COMPLAINT_UPDATED' | 'COMPLAINT_CLOSED'
   // A complaint sent through the public notices page's form (src/modules/public-site/notices-site.ts).
   | 'COMPLAINT_FORM_RECEIVED'
-  // Staff checked what a client sent through their portal (src/modules/crm/client-checks.ts): accepted, or asked
+  // Staff checked what a client sent through their portal (src/modules/claims/client-checks.ts): accepted, or asked
   // again with a reason. The ids only.
   | 'CLIENT_SENT_ACCEPTED'
   | 'CLIENT_SENT_ASKED_AGAIN'
@@ -389,7 +389,7 @@ export type AuditKind =
    * outcomes only — NEVER a number or the words.
    */
   | 'WHATSAPP_SENT' | 'WHATSAPP_NOT_SENT' | 'WHATSAPP_RECEIVED' | 'WHATSAPP_REFUSED' | 'WHATSAPP_FILED'
-  // A person blocking off, or freeing, time in their own diary (src/modules/crm/time-blocks.ts).
+  // A person blocking off, or freeing, time in their own diary (src/modules/clients/time-blocks.ts).
   | 'TIME_BLOCKED' | 'TIME_FREED'
   // Admin saved a key's new value (sealed), or went back to the key file's (src/core/saved-keys.ts). The name only.
   | 'KEY_SAVED' | 'KEY_UNSAVED'

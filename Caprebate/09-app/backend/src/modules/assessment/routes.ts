@@ -7,7 +7,7 @@ import type { ServerResponse } from 'node:http';
 import { JSON_HEADERS, clockOf, cookie, form, html, nav, redirect, setCookie, shellParts, simple, type Actor, type WebDeps, type WebRequest, type WebResult } from '../../core/index.ts';
 import { BOOKING, FRONTDOOR, FUNNEL, HTML_HEADERS, formatPence, formatShownRange, h, localWhen, noticeAtAddress, page, raw, registryGate, toPence, why, zoneNotice, type Safe } from '../../shared/index.ts';
 import { ADDRESS_LOOKUP, COMPANY_SEARCH, EMAIL_SENDING, POSTCODE_CHECK, addressLookupMissing, checkPostcode, companySearchOffered, findAddresses, mailWhere, normalisePostcode, postcodeCheckMissing, searchCompanies, searchesToday, sendingOn, smtpLoginFromKeyFile } from '../../integrations/index.ts';
-import { SLOT_MINUTES, activeMeeting, bookingInviteFile, fireAutomation, getBusinessesEById, insertBookings2, insertContacts4, isBookable, linkBookingToLead, publicSlots, reconcileVideoMeeting, sendVideoInvite } from '../crm/index.ts';
+import { SLOT_MINUTES, activeMeeting, bookingInviteFile, fireAutomation, getBusinessesEById, insertBookings2, insertContacts4, isBookable, linkBookingToLead, publicSlots, reconcileVideoMeeting, sendVideoInvite } from '../clients/index.ts';
 import { SITE_JS_HEADERS } from '../../shared/index.ts';
 import { freeGate, recordLookupsDeclined } from './address-check.ts';
 import { ADDRESS_LOOKUP_JS } from './address-lookup-script.ts';

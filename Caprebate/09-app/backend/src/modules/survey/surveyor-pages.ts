@@ -33,7 +33,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
-import type { Actor } from '../../core/index.ts';
+import type { Actor, Db } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { breadcrumb, claimRef, dataLink, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from '../../shared/index.ts';
 import { kpiRow, nobodyBadge, siteOf, stageBadge } from '../../core/index.ts';
@@ -42,9 +42,22 @@ import * as S from './surveyor.ts';
 import { registerAttribution } from '../claims/index.ts';
 import { formatPence } from '../../shared/index.ts';
 import { FUNNEL_CEILING, SURVEY_JOB_WORDS as SO_WORDS } from './survey-open.ts';
-import { surveyorThreadPanel } from '../crm/index.ts';
 import { deskFirstReading } from '../assessment/index.ts';
 import { piecesPage } from '../../core/index.ts';
+
+/*
+ * THE THREAD WITH THE CLIENT, AS THE SURVEYOR READS IT, IS THE CRM'S TO DRAW (src/modules/crm/messages-pages.ts
+ * surveyorThreadPanel): A PORT THIS FILE OWNS, handed in by src/modules/crm/ports.ts as the CRM's front door loads, so
+ * the surveyor's pages show it without importing the CRM. Asked before it is handed in, it refuses rather than hide the
+ * thread. Asked only while code runs (Phase 161l1).
+ */
+export type SurveyorThreadPanel = (db: Db, actor: Actor, business_id: string) => Safe | null;
+var threadPanel: SurveyorThreadPanel | undefined;
+export function setSurveyorThreadPanel(draw: SurveyorThreadPanel): void { threadPanel = draw; }
+function surveyorThreadPanel(db: Db, actor: Actor, business_id: string): Safe | null {
+  if (threadPanel === undefined) throw new Error('The thread with the client is not set up. The CRM sets it up when it loads, so nothing was drawn.');
+  return threadPanel(db, actor, business_id);
+}
 
 export type WebResult = 'handled' | 'not-mine';
 

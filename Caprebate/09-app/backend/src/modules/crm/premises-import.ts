@@ -22,7 +22,7 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { parseCsv } from '../survey/index.ts';
 import { normalisePostcode } from '../../integrations/index.ts';
-import { getHealthcarePremisesXBySourceIdSourceRef, insertHealthcarePremises } from './data.ts';
+import { getHealthcarePremisesXBySourceIdSourceRef, insertHealthcarePremises } from '../clients/index.ts';
 
 export type PremisesSector = 'care_homes' | 'dental' | 'supported_living' | 'gp' | 'private_hospital';
 

@@ -50,7 +50,7 @@
  */
 
 import type { Db } from '../../core/index.ts';
-import type { Need } from '../crm/index.ts';
+import type { Need } from './claim-stage.ts';
 import { acquisitionDateReading, clientSaidBought, latestFacts } from './claim-facts.ts';
 import { getDocumentTypesLabelByCode } from '../admin/index.ts';
 import { getDocumentsAtByTypeCodeStripRecordedAt, getPropertiesTenureById } from './data.ts';

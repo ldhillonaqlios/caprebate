@@ -65,7 +65,7 @@ const APP_DIR = path.join(WEB, '..', 'app');
 const CORE = path.join(WEB, '..', 'core'), SHARED = path.join(WEB, '..', 'shared'), INTEG = path.join(WEB, '..', 'integrations');
 /* The business modules' folders (the screens that were in src/web/, which is gone since Phase 161k): each folder's own files,
    not its data files or front door, which hold no words for a person. */
-const MODULE_DIRS = ['public-site', 'assessment', 'portal', 'crm', 'claims', 'survey', 'finance', 'compliance', 'admin'].map((m) => path.join(WEB, '..', 'modules', m));
+const MODULE_DIRS = ['public-site', 'assessment', 'portal', 'clients', 'crm', 'claims', 'survey', 'finance', 'compliance', 'admin'].map((m) => path.join(WEB, '..', 'modules', m));
 const NOT_SCREENS_IN_MODULES = new Set(['data.ts', 'data-borrowed.ts', 'index.ts']);
 /* The survey module's two measurement files (the anchor quarantine and the surveyor CRM, moved from survey/ by Phase
    161i1) were never read as screens: they are the protocol's measuring code (the rate library and adoption metric, the

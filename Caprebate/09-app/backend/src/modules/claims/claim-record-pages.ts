@@ -13,7 +13,7 @@
  * derivation. Every staff-supplied value is drawn through `h`, which escapes it.
  */
 
-import { clientChecksModule as CK } from '../crm/index.ts';
+import * as CK from './client-checks.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS } from './property-events.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
@@ -85,7 +85,7 @@ export async function handleClaimRecord(
     const anchor = f.get('from') === 'where' ? '#where' : '';
     return finish(id, F.recordFact(deps, actor, id, posted(f, ['fact_key', 'answer', 'value', 'source_id', 'note'])), 'Fact not recorded', 'saved', anchor);
   }
-  /* What the client sent, accepted or asked for again (src/modules/crm/client-checks.ts). */
+  /* What the client sent, accepted or asked for again (src/modules/claims/client-checks.ts). */
   m = new RegExp(`^/staff/claims/${ID}/sent/${ID}/accept$`).exec(path);
   if (m) {
     const id = m[1] ?? '';

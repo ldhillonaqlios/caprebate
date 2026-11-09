@@ -1185,7 +1185,7 @@ export function listEngagementsBusinessIdByLetterStateSigned<T extends Row = Row
 }
 
 // FOR THE CRM (Phase 161l1): its statements that joined these tables to its own, or to the core's users, now read
-// here and look the rest up through the other area's front door (src/modules/crm/data-borrowed.ts).
+// here and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts).
 export function listClaimMilestonesRecordedAtMilestoneRecordedByByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT cm.recorded_at, cm.milestone, cm.recorded_by FROM claim_milestones cm ' +
     'WHERE cm.claim_id = ? ORDER BY cm.recorded_at', params);

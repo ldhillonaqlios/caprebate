@@ -12,15 +12,16 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
-import { claimObjFor, loadClaimRow } from './crm.ts';
-import { sendTaskToPortal } from '../claims/index.ts';
-import { createDocumentRequest } from '../claims/index.ts';
-import { getClientTaskChecksIdByTaskId, getClientTasksIdKindById, insertClientTaskChecks, insertClientTaskChecks2 } from './data.ts';
-import { getClientTaskChecksOutcomeWhoByTaskId } from './data-borrowed.ts';
+import { loadClaimRow } from '../clients/index.ts';
+import { claimObjFor } from './claim-object.ts';
+import { sendTaskToPortal } from './engaged.ts';
+import { createDocumentRequest } from './documents.ts';
+import { getClientTaskChecksIdByTaskId, getClientTasksIdKindById, insertClientTaskChecks, insertClientTaskChecks2 } from '../clients/index.ts';
+import { getClientTaskChecksOutcomeWhoByTaskId } from '../clients/index.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { namesByIds } from '../../core/index.ts';
-import { listDocumentsIdLogicalDocumentIdVersionNoByIds } from '../claims/index.ts';
-import { byId, idsOf, listClientTasksIdKindAnsweredByByBusinessIdClaimId, lookUp } from './data.ts';
+import { listDocumentsIdLogicalDocumentIdVersionNoByIds } from './data.ts';
+import { byId, idsOf, listClientTasksIdKindAnsweredByByBusinessIdClaimId, lookUp } from '../clients/index.ts';
 
 export type CheckDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 

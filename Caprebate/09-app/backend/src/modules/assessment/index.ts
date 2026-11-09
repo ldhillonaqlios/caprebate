@@ -6,6 +6,8 @@
 // Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
 export { ASSESSMENT_ACTIONS } from './actions.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
+// The claimant type as a gate reads it (moved from the CRM, Phase 161l1).
+export { claimantFromAnswers, claimantTypeForGate } from './claimant-type.ts';
 export { FUNNEL_DELETABLE_TABLES } from './funnel-deletable.ts';
 export { jobEconomicsDisposalFee } from './fee-gate.ts';
 export { DECLINED_LINE, freeGate, lookupsDeclined, recordLookupsDeclined } from './address-check.ts';

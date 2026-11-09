@@ -42,7 +42,10 @@ import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type Engine
 import { packSwitchReadings } from '../../shared/index.ts';
 import { TAXONOMY_SECTOR, taxonomy } from '../survey/index.ts';
 import type { PackGrant } from '../survey/index.ts';
-import { CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, claimObjFor, claimantTypeForGate, isCompanyOrRoleToken, propertyJurisdiction } from '../crm/index.ts';
+import { CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, isCompanyOrRoleToken } from '../clients/index.ts';
+import { claimObjFor } from './claim-object.ts';
+import { claimantTypeForGate } from '../assessment/index.ts';
+import { propertyJurisdiction } from './jurisdiction.ts';
 import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from '../assessment/index.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
@@ -51,7 +54,7 @@ import type { PostcodeStore } from '../../integrations/index.ts';
 import { listRegisterRecordsSourceIdFieldsJsonByBusinessIdSourceId } from '../../integrations/index.ts';
 import { getClaimGrantsIdWithdrawnAtByIdClaimId, getClaimOwnerChainIdByClaimIdPosition, getClaimOwnerChainIdWithdrawnAtByIdClaimId, getClaimsIdBusinessIdById6, getClaimsPById, getDocumentsLogicalDocumentIdUploadedByByIdTypeCode, getFactApprovalsActionByBusinessIdFactRef, getPropertiesAcquisitionDateById, getPropertiesBusinessIdById, getPropertiesBusinessIdLabelById, getPropertiesCountByBusinessId, getPropertyEventsIdByIdPropertyId, insertClaimFacts, insertClaimFacts3, insertClaimGrantElements, insertClaimGrants, insertClaimOwnerChain, listClaimFactsSeqIdByClaimId, listClaimGrantElementsGrantIdElementIdByClaimId, listClaimGrantsIdKindByClaimId, listClaimOwnerChainIdPositionByClaimIdWithdrawnAt, listDocumentLinksIdBusinessIdByLogicalDocumentIdUnlinkedAt, updateClaimGrantsWithdrawnByWithdrawnAtById, updateClaimOwnerChainWithdrawnByWithdrawnAtById } from './data.ts';
 import { getSurveyPackApprovalsSnapshotJsonVersionByPropertyId, getSurveyPackLegalAnswersValueJsonAtByQuestionIdPropertyId } from './data-borrowed.ts';
-import { getBusinessesNameSectorById, listClientTasksIdAnswerByBusinessIdFactId } from '../crm/index.ts';
+import { getBusinessesNameSectorById, listClientTasksIdAnswerByBusinessIdFactId } from '../clients/index.ts';
 import { getAssessmentAnswersQuestionIdByAssessmentIdQuestionId, getAssessmentAnswersValueByAssessmentIdQuestionId, getAssessmentsIdByBusinessId2, getAssessmentsSectorById, listAssessmentAnswersQuestionIdValueByAssessmentIdState } from '../assessment/index.ts';
 
 export type FactDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };

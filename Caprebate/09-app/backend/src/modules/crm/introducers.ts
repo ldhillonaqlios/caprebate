@@ -66,19 +66,26 @@ import { ownerChoices } from './crm.ts';
 import { SECTORS } from './leads.ts';
 import { ACTIVITY_TYPES, RECIPROCITY_ACTIVITY_TYPES, dueReading, insertTask } from './tasks.ts';
 import { vocabChoice, vocabLabel, vocabulary } from '../admin/index.ts';
-import { getContactsIdByIdIntroducerId, getContactsIdFullNameByIdIntroducerId, getIntroducerFeesCountByIntroducerId, getIntroducerFeesIdByClaimId, getIntroducerNoticesIdByLeadIdNotice, getIntroducerPercentageEntriesIdByInvoiceIdEntryKind, getIntroducerPercentageEntriesIntroducerIdClaimIdByInvoiceId, getIntroducerPercentageEntriesTByInvoiceId, getIntroducerTermsSignaturesTermsVersionSignedOnByIntroducer, getIntroducersFirmNameById, getIntroducersIdById, getIntroducersIdIntroducerTypeById, getIntroducersIdMergedIntoIdById, getLeadsClaimIdById, getLeadsIdBusinessIdByBusinessIdIntroducerId, getLeadsIdBusinessIdById2, getLeadsIdBusinessIdById7, getLeadsIdByClaimIdIntroducerId, getLeadsIntroducerIdByClaimIdIntroducerType, getLeadsIntroducerIdById, getStaffTasksCompletedAtActivityTypeByIntroducerIdStatus, getStaffTasksCountByIntroducerId, getStaffTasksDueOnTitleByIntroducerIdStatus, insertContacts5, insertIntroducerFees, insertIntroducerMerges, insertIntroducerNotices, insertIntroducerPercentageEntries, insertIntroducerPercentageEntries2, insertIntroducerShareConsents, insertIntroducerShareConsents2, insertIntroducerTermsSignatures, insertIntroducers, insertIntroducers2, insertLeads5, listContactsIdFullNameByIntroducerId, listIntroducerNoticesAtNoticeByLeadId, listIntroducersIdName, listIntroducersIdNameByIdMergedIntoId, listLeadsLeadIdIntroducerIdByBusinessId, updateContactsFullNameJobRoleOtherById2, updateContactsIntroducerIdUpdatedAtByIntroducerId, updateIntroducerFeesDisclosureGivenAtDisclosureRecordedByByI, updateIntroducerFeesStatePaidAtById, updateIntroducerMergesCompletedAtLeadsMovedById, updateIntroducerRewardSettingModelFeePenceById, updateIntroducersFirmNameIntroducerTypeById, updateIntroducersMergedIntoIdMergedAtById, updateIntroducersNoticeContactIdUpdatedAtByIdNoticeContactId, updateLeadsIntroducerIdUpdatedAtByIntroducerId, updateStaffTasksIntroducerIdUpdatedAtByIntroducerIdStatus, updateStaffTasksStatusCompletedAtById } from './data.ts';
-import { getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence, getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, listLeadsIdBusinessIdByIntroducerId, listStaffTasksIdTitleByIntroducerIdStatus } from './data-borrowed.ts';
+import { getContactsIdByIdIntroducerId, getContactsIdFullNameByIdIntroducerId, getIntroducerFeesCountByIntroducerId, getIntroducerFeesIdByClaimId, getIntroducerNoticesIdByLeadIdNotice, getIntroducerPercentageEntriesIdByInvoiceIdEntryKind, getIntroducerPercentageEntriesIntroducerIdClaimIdByInvoiceId, getIntroducerPercentageEntriesTByInvoiceId, getIntroducerTermsSignaturesTermsVersionSignedOnByIntroducer, getIntroducersFirmNameById, getIntroducersIdById, getIntroducersIdIntroducerTypeById, getIntroducersIdMergedIntoIdById, getLeadsClaimIdById, getLeadsIdBusinessIdByBusinessIdIntroducerId, getLeadsIdBusinessIdById2, getLeadsIdBusinessIdById7, getLeadsIdByClaimIdIntroducerId, getLeadsIntroducerIdByClaimIdIntroducerType, getLeadsIntroducerIdById, getStaffTasksCompletedAtActivityTypeByIntroducerIdStatus, getStaffTasksCountByIntroducerId, getStaffTasksDueOnTitleByIntroducerIdStatus, insertContacts5, insertIntroducerFees, insertIntroducerMerges, insertIntroducerNotices, insertIntroducerPercentageEntries, insertIntroducerPercentageEntries2, insertIntroducerShareConsents, insertIntroducerShareConsents2, insertIntroducerTermsSignatures, insertIntroducers, insertIntroducers2, insertLeads5, listContactsIdFullNameByIntroducerId, listIntroducerNoticesAtNoticeByLeadId, listIntroducersIdName, listIntroducersIdNameByIdMergedIntoId, listLeadsLeadIdIntroducerIdByBusinessId, updateContactsFullNameJobRoleOtherById2, updateContactsIntroducerIdUpdatedAtByIntroducerId, updateIntroducerFeesDisclosureGivenAtDisclosureRecordedByByI, updateIntroducerFeesStatePaidAtById, updateIntroducerMergesCompletedAtLeadsMovedById, updateIntroducerRewardSettingModelFeePenceById, updateIntroducersFirmNameIntroducerTypeById, updateIntroducersMergedIntoIdMergedAtById, updateIntroducersNoticeContactIdUpdatedAtByIdNoticeContactId, updateLeadsIntroducerIdUpdatedAtByIntroducerId, updateStaffTasksIntroducerIdUpdatedAtByIntroducerIdStatus, updateStaffTasksStatusCompletedAtById } from '../clients/index.ts';
+import { getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence, getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, listLeadsIdBusinessIdByIntroducerId, listStaffTasksIdTitleByIntroducerIdStatus } from '../clients/index.ts';
 import { getInvoiceCreditNotesIdInvoiceIdById, getInvoiceCreditNotesNByInvoiceId, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesIdClaimIdById } from '../finance/index.ts';
 import { getClaimsStageHoldReturnStageById, listClaimStageMovesToStageByClaimId } from '../claims/index.ts';
-import { getIntroducerFeesIdIntroducerIdById, getIntroducersIdFirmNameById, listIntroducerFeesIdIntroducerId, listIntroducerFeesIdIntroducerIdByIntroducerId, listIntroducersIdFirmName2 } from './data-borrowed.ts';
-import { listIntroducerPercentageEntriesIdIntroducerId, listIntroducerPercentageEntriesIdIntroducerIdByIntroducerId } from './data-borrowed.ts';
+import { getIntroducerFeesIdIntroducerIdById, getIntroducersIdFirmNameById, listIntroducersIdFirmName2 } from '../clients/index.ts';
+import { listIntroducerPercentageEntriesIdIntroducerId, listIntroducerPercentageEntriesIdIntroducerIdByIntroducerId } from '../clients/index.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { listClaimStageMovesReasonCodeByClaimIdToNegative } from '../claims/index.ts';
 import { listReasonListsCodeLabelByList } from '../admin/index.ts';
 import { listInvoicesIdFeeByClaimIds } from '../finance/index.ts';
 import { listClaimsIdClaimRefStageByIds } from '../claims/index.ts';
 import { listEstimatesQualifyingExpenditurePenceByAssessmentIds } from '../assessment/index.ts';
-import { byId, idsOf, listLeadsClaimIdByIntroducerIdEvery, listLeadsClaimIdByIntroducerIdWithClaim, lookUp } from './data.ts';
+import { byId, idsOf, listLeadsClaimIdByIntroducerIdEvery, listLeadsClaimIdByIntroducerIdWithClaim, lookUp } from '../clients/index.ts';
+// The two switches and the reward setting's gate: the client record's (src/modules/clients/introducers.ts).
+import { CLIENT_SHARE_GIVE, REFERRAL_FORM, REWARD_OBJECT, rewardModelGate } from '../clients/index.ts';
+// Model B's fees as a list: the client record's (src/modules/clients/introducers.ts).
+import { FEE_STATES, feeList, feeObj, type FeeDbRow, type FeeView } from '../clients/index.ts';
+export { FEE_STATES, feeList };
+export type { FeeView };
+export { CLIENT_SHARE_GIVE, REFERRAL_FORM, rewardModelGate };
 
 export type IntroducerDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -182,8 +189,6 @@ export function recordTermsSigned(d: IntroducerDeps, actor: Actor, introducer_id
   return { ok: true, id };
 }
 
-export const FEE_STATES: Vocab = Object.freeze({ ACCRUED: 'Accrued', PAID: 'Paid to the firm' });
-
 export const SHARE_DECISIONS: Vocab = Object.freeze({
   GIVEN: 'Yes — share progress with this firm',
   DECLINED: 'No — do not share progress with this firm',
@@ -241,18 +246,6 @@ export const NOTICE_REASONS: Vocab = Object.freeze({
   DO_NOT_CONTACT: 'not sent — the client is marked do not contact',
 });
 
-/**
- * THE PUBLIC REFERRAL FORM SHIPS OFF. It collects another firm's client's
- * details, so it waits on a published privacy notice that says so. This is its
- * own switch — the free register gate is `CB_REGISTRY.precondition` and governs
- * register lookups, not this — and turning it on is one line, not ours to turn.
- */
-export const REFERRAL_FORM: { readonly enabled: boolean; readonly requires: string } = Object.freeze({
-  enabled: false,
-  requires: 'a published privacy notice, linked from the referral form. It tells a referred client what their firm sent us, ' +
-    'why we may keep it, and how to object',
-});
-
 export function referralFormOpen(gate: { readonly enabled: boolean } = REFERRAL_FORM): boolean {
   return gate.enabled === true;
 }
@@ -262,7 +255,6 @@ export function referralFormOpen(gate: { readonly enabled: boolean } = REFERRAL_
  * ================================================================== */
 
 const SECTION = '__introducer_section__';
-const REWARD_OBJECT = { type: 'introducer_reward' as const, id: 'the-setting' };
 const TASK_SECTION = {
   type: 'staff_task' as const, id: '__task_section__', business_id: null, owner_id: null, owner_role: null, assigned_surveyor_ids: [],
 };
@@ -1086,27 +1078,6 @@ export function recordShareConsent(d: IntroducerDeps, actor: Actor, lead_id: str
   return { ok: true, id };
 }
 
-/* ------------------------------------------------ the client's own route — CRM 8 of 10 */
-
-/**
- * THE CLIENT GIVES OR WITHDRAWS THE OPT-IN IN THEIR OWN PORTAL, writing the same
- * table under the route CLIENT_PORTAL (migration 017). One consent history, not two.
- *
- * WITHDRAWING IS ALWAYS OPEN: stopping a notice can never be the wrong words. It is
- * offered only while the answer is yes, so a client who was never asked stays no
- * row — and shares nothing.
- *
- * GIVING FROM THE PORTAL IS BUILT AND SHIPS OFF. The words a referred client must be
- * told are not agreed; until they are, a yes is still recorded by staff, who ask.
- */
-/* 24 September 2026: ANSWERED AND ON. the owner, Word answer 168 (closed that day): ask the client's
-   permission before updating the firm that referred them, with a request from the client's own portal. So giving from
-   the portal is switched on; a staff-recorded yes still works beside it, and nothing is shared without a yes. */
-export const CLIENT_SHARE_GIVE: { readonly enabled: boolean; readonly requires: string } = Object.freeze({
-  enabled: true,
-  requires: 'Answered: the client says yes or no in their own portal first.',
-});
-
 export type ClientShareChoice = {
   readonly introducer_id: string;
   readonly firm_name: string;
@@ -1425,52 +1396,6 @@ export function setRewardModel(
   return { ok: true, id: 'the-setting' };
 }
 
-/* ------------------------------------------------ model B's fees */
-
-export type FeeView = {
-  readonly id: string;
-  readonly firm: { readonly id: string; readonly name: string };
-  readonly claim: { readonly id: string; readonly claim_ref: string };
-  readonly amount: string;
-  readonly disclosure: { readonly given: boolean; readonly recorded: string | null };
-  readonly state: { readonly key: string; readonly label: string };
-  readonly payable: boolean;
-  readonly paid: string | null;
-  readonly may_disclose: boolean;
-  readonly may_record_settled: boolean;
-};
-
-type FeeDbRow = {
-  id: string; introducer_id: string; firm_name: string; claim_id: string; claim_ref: string; business_id: string; amount_pence: number;
-  disclosure_given_at: string | null; discloser: string | null; state: string; paid_at: string | null; payer: string | null;
-};
-
-function feeObj(r: { id: string; business_id: string }): { type: 'introducer_fee'; id: string; business_id: string } {
-  return { type: 'introducer_fee', id: r.id, business_id: r.business_id };
-}
-
-export function feeList(db: Db, actor: Actor, introducer_id?: string): FeeView[] {
-  const rows = introducer_id === undefined
-    ? listIntroducerFeesIdIntroducerId<FeeDbRow>(db)
-    : listIntroducerFeesIdIntroducerIdByIntroducerId<FeeDbRow>(db, [introducer_id]);
-  return rows.filter((r) => can(actor, 'introducer_fee.read', feeObj(r))).map((r) => ({
-    id: r.id,
-    firm: { id: r.introducer_id, name: r.firm_name },
-    claim: { id: r.claim_id, claim_ref: r.claim_ref },
-    amount: formatPence(r.amount_pence),
-    disclosure: {
-      given: r.disclosure_given_at !== null,
-      recorded: r.disclosure_given_at === null ? null : `${localStamp(r.disclosure_given_at)}${r.discloser === null ? '' : ` by ${r.discloser}`}`,
-    },
-    state: { key: r.state, label: words(FEE_STATES, r.state, r.state) },
-    // NOTHING IS PAYABLE BEFORE THE DISCLOSURE IS GIVEN.
-    payable: r.state === 'ACCRUED' && r.disclosure_given_at !== null,
-    paid: r.paid_at === null ? null : `${localStamp(r.paid_at)}${r.payer === null ? '' : ` by ${r.payer}`}`,
-    may_disclose: r.disclosure_given_at === null && can(actor, 'introducer_fee.disclose', feeObj(r)),
-    may_record_settled: r.state === 'ACCRUED' && r.disclosure_given_at !== null && can(actor, 'introducer_fee.record_settled', feeObj(r)),
-  }));
-}
-
 /** A referred claim closed — the paper's "successful claim" — while model B is the setting. */
 function accrueFee(d: IntroducerDeps, actor: Actor | null, claim_id: string): void {
   const s = rewardSetting(d.db);
@@ -1597,15 +1522,6 @@ export function percentageLedger(db: Db, actor: Actor, introducer_id?: string): 
     amount: r.amount_pence < 0 ? `−${formatPence(-r.amount_pence)}` : formatPence(r.amount_pence),
     amount_pence: r.amount_pence, recorded: localStamp(r.created_at),
   }));
-}
-
-/**
- * THE GATE OF THE REWARD MODEL, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
- * every menu link for every login, so a gate that drifted from its route fails there.
- */
-export function rewardModelGate(actor: Actor): void {
-  authorise(actor, 'introducer_reward.read', REWARD_OBJECT);
 }
 
 // THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read

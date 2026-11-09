@@ -22,7 +22,7 @@ import * as V from './compliance-views.ts';
 import { identityPanel, sendIdentityCheck } from './identity-checks.ts';
 import { logFormComplaint, waitingForms } from '../public-site/index.ts';
 import { listUsersIdNameByRoleDisabledAt } from '../../core/index.ts';
-import { listBusinessesIdName4 } from '../crm/index.ts';
+import { listBusinessesIdName4 } from '../clients/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

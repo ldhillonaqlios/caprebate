@@ -28,14 +28,14 @@ import * as E from './survey-evidence.ts';
 import { GROUPS, NOBODY_IN_SHOT } from './survey-checklist.ts';
 import { manyFiles, singleFile } from '../../core/index.ts';
 import { packJob } from './surveyor.ts';
-import { staffSlots, addLocalDays, startOfLocalDay } from '../crm/index.ts';
+import { staffSlots, addLocalDays, startOfLocalDay } from '../clients/index.ts';
 import { localDate, localClock, ukDate } from '../../shared/index.ts';
-import { activeMeeting, clientJoinUrl } from '../crm/index.ts';
+import { activeMeeting, clientJoinUrl } from '../clients/index.ts';
 import { zoomPlanIsFree } from '../../integrations/index.ts';
 import * as U from './photo-upload.ts';
 import * as SV from './survey-video.ts';
 import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from '../assessment/index.ts';
-import { listContactsEmailNameByBusinessIdEmail } from '../crm/index.ts';
+import { listContactsEmailNameByBusinessIdEmail } from '../clients/index.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });

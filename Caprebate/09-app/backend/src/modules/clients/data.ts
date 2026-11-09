@@ -1,5 +1,6 @@
 /**
- * THE CRM'S DATA FILE (09-app/docs/ARCHITECTURE.md rule 3). The only file that runs SQL on the tables
+ * THE CLIENT RECORD'S DATA FILE (09-app/docs/ARCHITECTURE.md rule 3; the CRM's until Phase 161l1, moved whole and
+ * unchanged when the client record became its own area low in the order). The only file that runs SQL on the tables
  * architecture/tables.json gives this module: organisations, leads, the pipeline, tasks, messages, the calendar and introducers. Every other file asks through these functions: inside the
  * module from here, from another area through the module's front door (index.ts). Each statement is the one its caller
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).

@@ -44,12 +44,12 @@ import { claimObjFor } from './crm.ts';
 import { claimName } from '../../shared/index.ts';
 import { anyStageLabel } from '../../shared/index.ts';
 import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId } from '../survey/index.ts';
-import { SEARCH_STATEMENTS, searchClaims, searchClaimsOfIds, searchContacts, searchNotes, searchOrganisations, searchProperties, searchPropertiesOfBusinesses, searchProspects } from './data-borrowed.ts';
+import { SEARCH_STATEMENTS, searchClaims, searchClaimsOfIds, searchContacts, searchNotes, searchOrganisations, searchProperties, searchPropertiesOfBusinesses, searchProspects } from '../clients/index.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { listSurveyorJobsBusinessIdClaimIdBySurveyorId } from '../survey/index.ts';
 import { INVOICE_NUMBER_SEARCH, listInvoiceNumbersSeqInvoiceIdBySeqLike } from '../finance/index.ts';
 import { listClaimsIdClaimRefStageByIds } from '../claims/index.ts';
-import { byId, idsOf, listBusinessesIdNameByIds, lookUp } from './data.ts';
+import { byId, idsOf, listBusinessesIdNameByIds, lookUp } from '../clients/index.ts';
 
 export type SearchKind = 'ORGANISATION' | 'PROSPECT' | 'CONTACT' | 'PROPERTY' | 'CLAIM' | 'INVOICE' | 'NOTE';
 

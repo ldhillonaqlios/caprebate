@@ -57,7 +57,8 @@ business area is a module with a front door, and a check refuses any route round
   shared/        page templates, components, dates, PDF, ZIP, plain-words helpers  (no business logic)
   integrations/  every outside service (connectors/, the email sender)             (no business logic)
   modules/
-    public-site/  assessment/  portal/  crm/  claims/  survey/  finance/  compliance/  admin/
+    public-site/  assessment/  portal/  clients/  crm/  claims/  survey/  finance/  compliance/  admin/
+                  (clients/ is the client record low in the order; crm/ is its screens and pipeline, near the top)
       each one:
         index.ts        THE FRONT DOOR: the only file another module may import
         routes.ts       its addresses, registered with the router shell
@@ -77,15 +78,17 @@ business area is a module with a front door, and a check refuses any route round
    (built in Phase 161h1) reads every import with the TypeScript compiler, as `lint-paths` already does.
 2. **One way only.** Modules depend on each other in one direction, written in `architecture/modules.json` as the
    `order` (Phase 161l, 9 Nov 2026), from the bottom up:
-   `shared` ← `core` ← `integrations` ← `assessment` ← `claims` ← `survey` ← `finance` ← `compliance` ← `admin` ←
-   `crm` ← `portal` ← `public-site` ← `app`. An area imports only areas below it. `shared` is at the bottom because it
+   `shared` ← `core` ← `integrations` ← `clients` ← `assessment` ← `claims` ← `survey` ← `finance` ← `compliance` ←
+   `admin` ← `crm` ← `portal` ← `public-site` ← `app`. An area imports only areas below it. `clients` (Phase 161l1) is
+   the client record (organisations, contacts, leads, bookings, tasks, messages: the CRM's tables and their plain
+   rules), placed low so the modules that read a client need not import the CRM's screens, which sit near the top. `shared` is at the bottom because it
    is plain tools (no sign-in, no SQL) that the core's own pages are drawn with; `app` (`src/app/`) is the start-up
    wiring at the top (the server, the router shell, the staff pages' dispatch, the timers, the command line, the seed),
    which may import every area and which nothing imports. When a lower module needs to tell a higher one something
    (the letter was signed, so the client's stage moves on), it **announces an event** (`src/core/events.ts`: in the
    same transaction as the change, written to the audit log, a failing listener undoing the change) and the other module
    listens; when it needs to ask one something, it owns a small **port** the higher module fills as its front door loads
-   (the menu's `provideNav`, the outbox's do-not-contact check). It never imports upwards. *Check:* the boundary check
+   (the menu's `provideNav`, the outbox's do-not-contact check; since Phase 161l1 also who holds a survey job in the core, the automation runner in `clients`, the pipeline's gate needs and the clients list in `claims`, the fee trigger in `finance` and the surveyor's thread panel in `survey`, each filled by the CRM's or the survey's door). It never imports upwards. *Check:* the boundary check
    counts every pair of areas where one imports another above it.
 3. **Each table has one owner.** Every table belongs to one module (a list kept beside the migrations), and only that
    module's `data.ts` runs SQL on it. Others ask through its front door. *Check:* the boundary check reads the SQL text

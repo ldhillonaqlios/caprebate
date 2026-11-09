@@ -43,12 +43,12 @@ import { authorise, can, NotAuthorised, type Actor } from '../../core/index.ts';
 import type { FsObjectStore } from '../../shared/index.ts';
 import { packJob } from './surveyor.ts';
 import { checklistFor, type ChecklistItem } from './survey-checklist.ts';
-import { postClientMessage } from '../crm/index.ts';
-import { isBookable, SLOT_MINUTES } from '../crm/index.ts';
-import { reconcileVideoMeeting, zoomDeps } from '../crm/index.ts';
-import { sendVideoInvite } from '../crm/index.ts';
+import { postClientMessage } from '../clients/index.ts';
+import { isBookable, SLOT_MINUTES } from '../clients/index.ts';
+import { reconcileVideoMeeting, zoomDeps } from '../clients/index.ts';
+import { sendVideoInvite } from '../clients/index.ts';
 import { zoomRecording } from '../../integrations/index.ts';
-import { getContactsXByBusinessId, insertBookings3 } from '../crm/index.ts';
+import { getContactsXByBusinessId, insertBookings3 } from '../clients/index.ts';
 import { getSurveyInspectionBasisBasisNoteByJobId, getSurveyPhotoWithdrawalsXByPhotoId, getSurveyPhotosJobIdBusinessIdById, getSurveyPhotosJobIdBusinessIdById2, getSurveyRecordingsShareUrlByIdJobId, getSurveyWalkthroughAsksXByJobId, insertSurveyChecklistMarks, insertSurveyInspectionBasis, insertSurveyPhotoSorts, insertSurveyPhotoWithdrawals, insertSurveyPhotos, insertSurveyRecordingViews, insertSurveyRecordings, insertSurveyWalkthroughAsks, insertSurveyWalkthroughs, listSurveyChecklistMarksItemKeyMarkByJobIdRowid, listSurveyPhotoSortsIdItemKeyByPhotoIdJO, listSurveyRecordingViewsIdShareUrlByRecordingIdWalkthroughId, listSurveyWalkthroughAsksAtByNameByJobId } from './data.ts';
 import { getSurveyorJobsIdBusinessIdById, listSurveyorJobsIdBusinessIdByBusinessId, listVideoMeetingsIdBookingIdByBookingIdJO } from './data-borrowed.ts';
 

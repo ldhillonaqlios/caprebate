@@ -21,6 +21,7 @@ export { OS_ATTRIBUTION, PLAN_HALF_M, PLAN_MAX_BUILDINGS, buildingsAround, pickB
 export { ostn15Grid } from './connectors/ostn15.ts';
 export { PAID_CONNECTORS, PAID_ORDER, pounds, totalBeforePence, uprnFrom } from './connectors/paid-registers.ts';
 export { setSubjectBusinessReader, setSubjectPropertyReader } from './connectors/nations.ts';
+export { setClientValuesReader } from './connectors/client-values.ts';
 export { onTestWebsite } from './connectors/place.ts';
 export { POSTCODE_CHECK, checkPostcode, normalisePostcode, postcodeCheckMissing } from './connectors/postcode-check.ts';
 export { PRICE_PAID_ATTRIBUTION } from './connectors/price-paid.ts';
@@ -82,6 +83,6 @@ export type { PostcodeStore } from './postcodes/postcode-port.ts';
 export type { IngestedRecord } from './registers/name-exclusion.ts';
 export type { Grade } from './registers/source-register.ts';
 export type { SignatureProvider } from './signature.ts';
-// Phase 161l1: what the CRM reads here in place of its joins (src/modules/crm/data-borrowed.ts).
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
 export { getVideoMeetingsBookingIdMeetingIdByClientToken, getVideoMeetingsHostOpenedAtHostOpenedByByBookingId, listResearchRunsAtKindActorIdByBusinessId, listVideoMeetingsBookingIdHostUserIdByBookingIds } from './data.ts';
 export { getOutboxXByKindLeadIdBusinessId, listInboundEmailIdReceivedAtContactIdByBusinessId, listInboundEmailUidAtBusinessIds, listOutboxAtToEmailBusinessIdByKind, listOutboxCreatedAtKindClaimIdByBusinessId, listOutboxCreatedAtKindClaimIdByLeadIdBusinessId, listOutboxIdCreatedAtWrittenByByBusinessId, listOutboxIdCreatedAtWrittenByByLeadIdBusinessId, listWhatsappImportLinesImportIdUploadedAtUploadedByByMessageId, listWhatsappImportsIdContactIdByBusinessIdStatus, listWhatsappMessagesCreatedAtDirectionContactIdByBusinessId, listWhatsappMessagesIdCreatedAtSenderByBusinessId, listWhatsappMessagesIdCreatedAtSenderByBusinessIdPhone } from './data.ts';

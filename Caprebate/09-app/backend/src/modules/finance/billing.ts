@@ -32,7 +32,7 @@ import { dateField, textField, words, type FormFields as Fields, type Vocab } fr
 import { claimInvoices, financeDashboard, type ClaimInvoiceView, type ExpectedClaim } from './invoices.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
 import { formatPence } from '../../shared/index.ts';
-import { getBusinessesIdNameById, getBusinessesNameById, listContactsFullNameJobRoleByBusinessId } from '../crm/index.ts';
+import { getBusinessesIdNameById, getBusinessesNameById, listContactsFullNameJobRoleByBusinessId } from '../clients/index.ts';
 import { getClaimsBById, listClaimsIdByBusinessId } from '../claims/index.ts';
 import { getInvoicesIdBusinessIdByIdClaimId2, insertInvoiceChases, listInvoiceChasesChasedOnHowByInvoiceId } from './data.ts';
 

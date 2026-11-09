@@ -27,11 +27,11 @@ import { localStamp } from '../../shared/index.ts';
 import { emailsReadUntil } from './messages.ts';
 import { getOutboxCOALESCEThreadKeyKById } from '../../integrations/index.ts';
 
-import { listContactsEByBusinessIdEmail } from './data.ts';
+import { listContactsEByBusinessIdEmail } from '../clients/index.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { namesByIds } from '../../core/index.ts';
 import { listInboundEmailIdReceivedAtContactIdByBusinessId, listOutboxIdCreatedAtWrittenByByBusinessId, listOutboxIdCreatedAtWrittenByByLeadIdBusinessId } from '../../integrations/index.ts';
-import { byId, idsOf, listClientMessagesIdCreatedAtByIds, listContactsIdFullNameByIds, lookUp } from './data.ts';
+import { byId, idsOf, listClientMessagesIdCreatedAtByIds, listContactsIdFullNameByIds, lookUp } from '../clients/index.ts';
 
 export type ChainEmail = {
   readonly id: string; readonly at: string; readonly when: string; readonly ours: boolean;

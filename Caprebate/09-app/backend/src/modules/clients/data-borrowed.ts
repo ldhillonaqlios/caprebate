@@ -1,5 +1,6 @@
 /**
- * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CRM (09-app/docs/ARCHITECTURE.md rules 3 and 4). These statements
+ * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CLIENT RECORD (the CRM's until Phase 161l1;
+ * 09-app/docs/ARCHITECTURE.md rules 3 and 4). These statements
  * were in this module's page and logic files, which may not run SQL (rule 4). They read or write tables another area
  * owns, or join this module's tables to another's, so they still go against rule 3 (each counted against the table's
  * owner). Phase 161l1 moves each to its owner's data file, reached through that owner's front door or an event. Nothing
@@ -541,7 +542,7 @@ export function listLeadsRows<T extends Row = Row>(db: Db): T[] {
   return db.all<T>(LEADS_ALL);
 }
 
-// the do-not-contact check (src/modules/crm/do-not-contact.ts): a client login of an organisation marked do not contact;
+// the do-not-contact check (src/modules/clients/do-not-contact.ts): a client login of an organisation marked do not contact;
 // from src/integrations/data-borrowed.ts, text unchanged. It joins the core's users to the CRM's businesses.
 export function getUsersCountByClientStatusEmailCanonical<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT COUNT(*) AS n FROM users u JOIN businesses b ON b.id = u.business_id ' +

@@ -45,12 +45,12 @@ import { can } from '../../core/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { localWhen } from '../../shared/index.ts';
 import { assertComplianceRead, assertComplianceWrite, complianceObj, record, userNames, type ComplianceDeps } from './compliance.ts';
-import { isReachable } from '../crm/index.ts';
+import { isReachable } from '../clients/index.ts';
 import {
   IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision,
   sentUnderTestingWaiver, startIdentityCheck, type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,
 } from '../../integrations/index.ts';
-import { getBusinessesIdById, getContactsIdEmailByIdBusinessId, listContactsIdByBusinessId } from '../crm/index.ts';
+import { getBusinessesIdById, getContactsIdEmailByIdBusinessId, listContactsIdByBusinessId } from '../clients/index.ts';
 import { getCddChecksStateByIdBusinessId, getCddChecksStateVerificationMethodById, getIdentityCheckResultsOutcomeReceivedAtByIdentityCheckId, getIdentityChecksIdBusinessIdBySessionId, getIdentityChecksIdBySessionId, insertIdentityCheckResults, insertIdentityChecks, updateCddChecksVerificationMethodUpdatedAtById } from './data.ts';
 import { listIdentityChecksIdContactByBusinessId, listIdentityChecksIdContactByCddCheckId } from './data-borrowed.ts';
 

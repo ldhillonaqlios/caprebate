@@ -39,10 +39,10 @@ import { normalisePostcode } from '../../integrations/index.ts';
 import { randomUUID } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import { FUNNEL, FRONTDOOR } from '../../shared/index.ts';
-import { openLeadForGatedExit, openLeadForSubmission } from '../crm/index.ts';
+import { openLeadForGatedExit, openLeadForSubmission } from '../clients/index.ts';
 import { getAssessmentDraftsStateJsonScreenByToken, insertAssessmentAnswers, insertAssessmentDrafts, insertAssessments, updateAssessmentDraftsClosedLeadIdUpdatedAtByToken, updateAssessmentDraftsStateJsonScreenByToken, updateAssessmentDraftsSubmittedAssessmentIdByToken } from './data.ts';
 import { insertProperties } from '../claims/index.ts';
-import { insertBusinesses } from '../crm/index.ts';
+import { insertBusinesses } from '../clients/index.ts';
 
 export const SCREEN_IDS = ['Q1', 'Q1a', 'Q1b', 'Q1c', 'Q2', 'Q3'] as const;
 export type ScreenId = (typeof SCREEN_IDS)[number];

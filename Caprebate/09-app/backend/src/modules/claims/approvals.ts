@@ -43,7 +43,7 @@ import { preferHomedataPlanning, supersededPlanning } from '../../integrations/i
 import { listRegisterRecordsIdSourceIdByBusinessId } from '../../integrations/index.ts';
 import { insertClientStepNotices, insertClientStepNotices2, listClientStepNoticesClaimIdStepByBusinessId2 } from '../portal/index.ts';
 import { insertFactApprovals, insertFactApprovals2, listClaimDeliverablesIdVersionByClaimIdKind, listClaimsIdClaimRefByBusinessId, listFactApprovalsFactRefActionByBusinessId, listTaxAdviserSignoffsIdSignedOnByClaimId } from './data.ts';
-import { getBusinessesIdNameById, listClientTasksIdFactIdByBusinessIdKind } from '../crm/index.ts';
+import { getBusinessesIdNameById, listClientTasksIdFactIdByBusinessIdKind } from '../clients/index.ts';
 import { listClientStepNoticesClaimIdStepByBusinessId } from './data-borrowed.ts';
 import { listSurveyorJobsIdSurveyorIdByClaimId } from '../survey/index.ts';
 

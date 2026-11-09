@@ -41,7 +41,7 @@ import { staffShell, portalShell, opens, filterBar, LEAD_FILTERS } from '../core
 import { settingsBody, settingsTiles } from '../modules/admin/index.ts';
 import { homeRows } from '../modules/public-site/index.ts';
 import { dashboard, dashView } from '../modules/crm/index.ts';
-import { addBlock, removeBlock } from '../modules/crm/index.ts';
+import { addBlock, removeBlock } from '../modules/clients/index.ts';
 import { saveKey } from '../modules/admin/index.ts';
 import { mayReadQueue, readRepliesIfDue } from '../modules/crm/index.ts';
 import { welcomeCard, why } from '../shared/index.ts';
@@ -68,17 +68,17 @@ import { handleCompliance } from '../modules/compliance/index.ts';
 import { handleDashboard } from '../modules/crm/index.ts';
 import { handleLists } from '../modules/crm/index.ts';
 import { handleConfiguration } from '../modules/admin/index.ts';
-import { HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments, startOfLocalDay, staffSlots, type Availability, type WorkingTimeInput } from '../modules/crm/index.ts';
+import { HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments, startOfLocalDay, staffSlots, type Availability, type WorkingTimeInput } from '../modules/clients/index.ts';
 import {
   localClock, localDate, localPartsOf, localStamp, localWhen, zoneNotice,
 } from '../shared/index.ts';
 import { RANGE_QUALIFIER } from '../shared/index.ts';
 import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from '../modules/compliance/index.ts';
-import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine, SAME_TIME_WORDS, VIDEO_PAGE_HEADERS } from '../modules/crm/index.ts';
-import { sendVideoInvite } from '../modules/crm/index.ts';
+import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine, SAME_TIME_WORDS, VIDEO_PAGE_HEADERS } from '../modules/clients/index.ts';
+import { sendVideoInvite } from '../modules/clients/index.ts';
 import { hostZak, joinSignature } from '../integrations/index.ts';
 import { listOutboxCreatedAtToEmailByOutboxId, updateVideoMeetingsHostOpenedAtHostOpenedByByIdHostOpenedAt } from '../integrations/index.ts';
-import { getBookingsSById } from '../modules/crm/index.ts';
+import { getBookingsSById } from '../modules/clients/index.ts';
 
 export type StaffDeps = {
   app: App;

@@ -21,6 +21,7 @@ export { JSON_HEADERS, PayloadTooLarge, bindResponse, clientIp, clockOf, cookie,
 export { STAGE_GROUPS, groupBand, groupBar, kpiRow, lateBadge, noDateBadge, nobodyBadge, siteOf, stageBadge, stageGroupOf, stageLabel } from './look.ts';
 export { nameSwitches, navContext, setSubMenu } from './nav-context.ts';
 export { LEAD_FILTERS, TASK_FILTERS, addUnderCurrent, filterBar, opens, portalShell, provideNav, staffShell } from './navigation.ts';
+export { setAssignedSurveyorsReader, surveyorsOnBusiness, surveyorsOnClaim } from './assigned-surveyors.ts';
 export { MultipartError, boundaryOf, manyFiles, parseMultipart, piecedFields, singleFile } from './multipart.ts';
 export { APP_ROLES, DPO_ROLE, isAppRole, toQuarantineRole } from './roles.ts';
 export { SECRET_KEYS, isInside, isProduction, keyFileStartCheck, overlaySecrets, processSecrets, redactSecrets, repositoryRoot, secretsFromEnvironment, useProcessSecrets } from './secrets.ts';
@@ -49,6 +50,7 @@ export type { UserColumn } from './data.ts';
 export type { WebDeps, WebRequest, WebResult } from './http.ts';
 export type { GroupKey, Kpi, KpiTone } from './look.ts';
 export type { NavParts } from './navigation.ts';
+export type { AssignedSurveyorsReader } from './assigned-surveyors.ts';
 export type { Part } from './multipart.ts';
 export type { AppRole } from './roles.ts';
 export type { OwnerSecrets, SecretKey, SecretOwner, SecretStore } from './secrets.ts';

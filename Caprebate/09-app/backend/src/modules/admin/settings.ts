@@ -41,12 +41,12 @@ import {
   canonicalEmail, createUser, disableUser as storeDisable, findById, listUsers,
   assignRole as storeAssignRole, newId, type User,
 } from '../../core/index.ts';
-import { replaceWorkingTimes, workingTimesFor, WorkingTimeError, WEEKDAY_NAMES, minutesToClock, type WorkingTime, type WorkingTimeInput } from '../crm/index.ts';
+import { replaceWorkingTimes, workingTimesFor, WorkingTimeError, WEEKDAY_NAMES, minutesToClock, type WorkingTime, type WorkingTimeInput } from '../clients/index.ts';
 import { photoFor, type PhotoRecord } from '../../core/index.ts';
 import { liftSuppression } from '../../integrations/index.ts';
 import { listEmailSuppressionsAddressAtByStateId } from '../../integrations/index.ts';
 import { getSessionsCountByUserIdRevokedReason, getUsersCountByRoleDisabledAt, getUsersIdByEmailCanonical, getUsersIdByEmailCanonicalId, listUserPhotosUserId, updateUsersDisplayNameUpdatedAtById, updateUsersEmailEmailCanonicalById, updateUsersPasswordTemporaryUntilById } from '../../core/index.ts';
-import { listWorkingTimesUserIdN } from '../crm/index.ts';
+import { listWorkingTimesUserIdN } from '../clients/index.ts';
 
 export class SettingsError extends Error {
   readonly code: string;

@@ -1,7 +1,7 @@
 /**
  * PHASE 160d — NO LONG DASHES IN THE EMAILS, THE LETTER AND REPORTS GOING FORWARD, THE TEXT THE SYSTEM WRITES, AND THE
  * EXPORT'S COLUMN NAMES, 19 October 2026 (src/integrations/email/email.ts, src/modules/claims/letter.ts, src/modules/claims/claim-record.ts, src/modules/crm/leads.ts,
- * src/modules/crm/claim-lists.ts, src/modules/crm/booking-invite.ts, src/modules/admin/templates.ts, migration 117; the report's versions are in
+ * src/modules/crm/claim-lists.ts, src/modules/clients/booking-invite.ts, src/modules/admin/templates.ts, migration 117; the report's versions are in
  * test/survey/survey-report.test.ts).
  */
 import { test, describe, before, after } from 'node:test';
@@ -84,8 +84,8 @@ describe('Phase 160d: the text the system writes', () => {
     const src = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'modules', 'claims', 'claim-record.ts'), 'utf8');
     const calls = [...src.matchAll(/(\w+)<[^>]*>\([^\n]*DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE/g)].map((m) => m[1] ?? '');
     assert.equal(calls.length, 2, 'both lookups read the old title too');
-    // Each asks the CRM's data file, whose statement reads both titles.
-    const data = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'modules', 'crm', 'data.ts'), 'utf8');
+    // Each asks the client record's data file, whose statement reads both titles.
+    const data = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'modules', 'clients', 'data.ts'), 'utf8');
     for (const f of calls) assert.match(data, new RegExp(`export function ${f}\\b[^\\n]*\\n[^\\n]*title IN \\(\\?, \\?\\)`), f);
   });
 
@@ -109,7 +109,7 @@ describe('Phase 160d: the export and the calendar file', () => {
   });
 
   test('the video call’s calendar entry says "or in the Zoom app" with a comma', () => {
-    const src = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'modules', 'crm', 'booking-invite.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'modules', 'clients', 'booking-invite.ts'), 'utf8');
     assert.match(src, /`, or in the Zoom app: \$\{m\.join_url\}`/);
   });
 });

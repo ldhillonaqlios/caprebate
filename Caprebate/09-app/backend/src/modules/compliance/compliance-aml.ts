@@ -37,7 +37,7 @@ import { identityPassed } from './identity-checks.ts';
 import { getResearchSourcesIdStateByBusinessIdSourceId } from '../../integrations/index.ts';
 import { getUsersIdByIdRole } from '../../core/index.ts';
 import { getClaimsIdByIdBusinessId, getDocumentsIdByIdBusinessId, listDocumentsIdTypeCodeByBusinessId } from '../claims/index.ts';
-import { getBusinessesIdById, getBusinessesNameById, getContactsIdByIdBusinessId, listContactsIdFullNameByBusinessId } from '../crm/index.ts';
+import { getBusinessesIdById, getBusinessesNameById, getContactsIdByIdBusinessId, listContactsIdFullNameByBusinessId } from '../clients/index.ts';
 import { getAmlFirmRiskAssessmentsAssessedOnDocumentRef, getAmlOfficersAppointedOnEndedOnById, getCddBeneficialOwnersCountByCheckId, getCddChecksIdBusinessIdById, getCddChecksIdByIdBusinessId, getCddPscDecisionsIdByCheckIdDecision, insertAmlFirmRiskAssessments, insertAmlOfficers, insertCddBeneficialOwners, insertCddChecks, insertCddMonitoringNotes, insertCddPscDecisions, listCddMonitoringNotesNotedOnNoteByBusinessId, listCddPscDecisionsIdDecisionByCheckId, updateAmlOfficersEndedOnById, updateCddChecksIdentifiedVerificationMethodById, updateCddChecksStateCompletedAtById, updateCddChecksStateWithdrawnReasonById } from './data.ts';
 import { listAmlOfficersIdOfficeUserId } from './data.ts';
 import { listCddBeneficialOwnersIdContactIdByCheckId, listCddChecksIdBusinessId } from './data-borrowed.ts';

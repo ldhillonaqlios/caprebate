@@ -11,7 +11,7 @@
  * equipment (MP_AIA — the accountant's claim from the fixed-asset register, not a fixture), anything excluded (NONE),
  * and the structures allowance (SBA — a different relief).
  *
- * WHAT IS DRAFTED, AND ONLY FROM EVIDENCE (src/modules/crm/rooms.ts: "a seeded count would be this system inventing a property
+ * WHAT IS DRAFTED, AND ONLY FROM EVIDENCE (src/modules/clients/rooms.ts: "a seeded count would be this system inventing a property
  * fact"):
  *   · the share that qualifies, where the list gives one (a number, with its authority): Cap Rebate's DRAFT;
  *   · the pool, where the list gives one: DRAFT;
@@ -78,7 +78,7 @@ export const TAXONOMY_SECTOR: Readonly<Record<string, string>> = Object.freeze({
 /** The list's pools that a survey puts in a pool; null: the surveyor decides. */
 const POOL_OF: Readonly<Record<string, Pool | null>> = Object.freeze({ MP: 'MP', SR: 'SR', APPORTION: null, FOLLOWS_PLANT: null });
 
-/** WHICH ROOM COUNTS A ROW IS COUNTED BY: the list's `quantity_basis`, to the room ids of src/modules/crm/rooms.ts. */
+/** WHICH ROOM COUNTS A ROW IS COUNTED BY: the list's `quantity_basis`, to the room ids of src/modules/clients/rooms.ts. */
 export const ROOM_BASIS: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>> = Object.freeze({
   // The room schedule's GP-8 and GP-17: a treatment room and a phlebotomy room carry the consulting room's fittings.
   GP: Object.freeze({ 'consulting room count': Object.freeze(['GP-R1', 'GP-R2', 'GP-R7']) }),

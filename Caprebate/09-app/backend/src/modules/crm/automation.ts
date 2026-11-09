@@ -54,65 +54,38 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { outboxTransport, STUB_NOTICE } from '../../integrations/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
-import { localDate, localStamp } from '../../shared/index.ts';
+import { localDate } from '../../shared/index.ts';
 import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
 import { missingFacts } from '../claims/index.ts';
 import { POOL_ROLES, addDaysToDate, insertTask } from './tasks.ts';
-import { claimWords, type Fields } from './crm.ts';
-import { mayTake, vocabLabel } from '../admin/index.ts';
+import type { Fields } from './crm.ts';
+import { mayTake } from '../admin/index.ts';
 import { createDocumentRequest, NO_RECEIPT_POLICY } from '../claims/index.ts';
 import { getUsersEmailRoleById, getUsersRoleDisabledAtById } from '../../core/index.ts';
-import { getAutomationRulesN, getBusinessesClientStatusById, getBusinessesIdOwnerIdById, getBusinessesNameById, getLeadsIdBusinessIdById3, insertAutomationRules, insertAutomationRuns, listStaffTasksFactIdByBusinessIdFactId, updateAutomationRulesLabelTriggerEventById } from './data.ts';
-import { getStaffTasksIdBusinessIdById, listAutomationRunsAtTriggerEvent } from './data-borrowed.ts';
-import { getDocumentTypesHandlerTypeActiveByCode, getVocabulariesActivityTypeCountByCode, listDocumentTypesCodeLabelByActiveHandlerType2 } from '../admin/index.ts';
+import { getAutomationRulesN, getBusinessesClientStatusById, getBusinessesIdOwnerIdById, getBusinessesNameById, getLeadsIdBusinessIdById3, insertAutomationRules, insertAutomationRuns, listStaffTasksFactIdByBusinessIdFactId, updateAutomationRulesLabelTriggerEventById } from '../clients/index.ts';
+import { getStaffTasksIdBusinessIdById } from '../clients/index.ts';
+import { getDocumentTypesHandlerTypeActiveByCode, getVocabulariesActivityTypeCountByCode } from '../admin/index.ts';
 import { getClaimsIdClaimRefById3 } from '../claims/index.ts';
-import { getAutomationRulesIdLabelById, listAutomationRulesIdLabel, listAutomationRulesIdLabelByActiveTriggerEvent } from './data.ts';
+import { getAutomationRulesIdLabelById, listAutomationRulesIdLabelByActiveTriggerEvent } from '../clients/index.ts';
 
-export type AutomationDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
+// The notice's subject words: the client record's (src/modules/clients/messages.ts), as its message alert uses them too.
+import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from '../clients/index.ts';
+export { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject };
+
+// The rules' words and the section's gate: the client record's (src/modules/clients/automation-words.ts).
+import { ASSIGN, ATTACH, EFFECTS, FORBIDDEN_EFFECTS, RULES_SECTION, RUN_REASONS, TRIGGERS, automationGate, type RuleDbRow } from '../clients/index.ts';
+// The rules as read moved to the admin (Phase 161l1).
+import { recentRuns, rulesPage, type RuleView, type RulesPage, type RunView } from '../admin/index.ts';
+export { recentRuns, rulesPage };
+// What an event carries and what a run did: the client record's port's (src/modules/clients/automation-port.ts).
+import type { AutomationDeps, AutomationEvent, RunOutcome } from '../clients/index.ts';
+export type { AutomationDeps, AutomationEvent, RunOutcome };
+export type { RuleView, RulesPage, RunView };
+export { ASSIGN, ATTACH, EFFECTS, FORBIDDEN_EFFECTS, RUN_REASONS, TRIGGERS, automationGate };
 /** `field` is the posted name a refusal is about, where it is about one. */
 export type RuleResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
 
 type Vocab = Readonly<Record<string, string>>;
-
-export const TRIGGERS: Vocab = Object.freeze({
-  LEAD_CREATED: 'A lead is created',
-  STAGE_ENTERED: 'A claim enters a stage',
-  DOCUMENT_REQUESTED: 'A document is requested',
-  TASK_COMPLETED: 'A task is completed',
-  OWNER_CHANGED: 'An owner changes — of a claim, a lead or a task',
-});
-
-export const EFFECTS: Vocab = Object.freeze({
-  CREATE_TASK: 'A task, from the rule’s template',
-  FOLLOW_UP: 'A follow-up date — a follow-up task, due in the days the rule gives',
-  NOTIFY_OWNER: 'A notice to the owner, added to the emails waiting to send',
-  INFORMATION_REQUEST_TASKS: 'Tasks to ask for information — one for each missing fact nobody has asked for yet',
-  // CRM 9 of 10: raised through createDocumentRequest, the store a person uses, and never a second insert.
-  REQUEST_DOCUMENT: 'A document request to the client — of a type something can receive, saying why and what it holds up',
-});
-
-/**
- * WHAT NO RULE MAY DO — each refused BY NAME, with the reason, so an ADMIN who
- * asks for one is told why rather than finding it missing from a list.
- */
-export const FORBIDDEN_EFFECTS: Vocab = Object.freeze({
-  OPEN_FREE_GATE: 'No rule can turn on free lookups. They start when our privacy notice is published.',
-  OPEN_PAID_GATE: 'No rule can turn on paid lookups. They need a signed engagement letter and a person to click.',
-  SIGN_ENGAGEMENT: 'No rule can record a signature. Only the client signs the engagement letter.',
-  MOVE_CLAIM: 'No rule can move a claim. A person moves it, and each step is checked first.',
-  RECORD_CONFIRMATION: 'No rule can record a confirmation that a step checks. That would let a claim skip the check.',
-  FLIP_CTA_SWITCH: 'No rule can change a tax adviser’s switch. Each stays off until a chartered tax adviser answers.',
-  FIRE_REGISTER_CALL: 'No rule can look up a register. A person chooses when to do it.',
-  RUN_RESEARCH: 'No rule can run the research. A person chooses when to do it.',
-  SEND_EMAIL: 'No rule can send a message itself. It can only add a notice to the emails waiting to send.',
-  SEND_SMS: 'No rule can send a message itself.',
-  WEBHOOK: 'No rule can send a message itself.',
-  WRITE_TO_DO_NOT_CONTACT: 'No rule can write to an organisation marked do not contact.',
-  INVOICE_EMAIL: 'No rule can make an invoice email. That waits on our invoice-fraud procedure.',
-  // CRM 7 of 10: the two an invoice email would arrive as by another name.
-  INVOICE_REMINDER: 'No rule can chase an invoice or a payment. A reminder is an invoice email too. It waits on our invoice-fraud procedure.',
-  SEND_BANK_DETAILS: 'No rule can send or change our bank details. The client checks them with us another way than email. We never change them because an email asked.',
-});
 
 /**
  * THE INVOICE-FRAUD PROCEDURE — WHERE IT STANDS. CRM 7 of 10.
@@ -132,31 +105,6 @@ export const INVOICE_FRAUD_PROCEDURE: { readonly in_force: boolean; readonly whe
   in_force: false,
   where: 'Section 9 of our operating procedures. It is marked as a DRAFT ADDITION, written on 11 September 2026',
   signoff: 'the solicitor, the DPO and the developer still have to sign it off',
-});
-
-export const ASSIGN: Vocab = Object.freeze({
-  SUBJECT_OWNER: 'The owner of what the event is about — or the team named, where it has none',
-  ROLE: 'The team named, until somebody takes it',
-});
-
-export const ATTACH: Vocab = Object.freeze({
-  SUBJECT: 'What the event is about — the claim, the lead, or the task’s own subject',
-  ORGANISATION: 'The organisation — so the rule needs one',
-});
-
-export const RUN_REASONS: Vocab = Object.freeze({
-  DO_NOT_CONTACT: 'the organisation is marked do not contact, and no rule writes to it',
-  NEEDS_ORGANISATION: 'this rule needs an organisation and there is none yet — it did not run, and this line is the record that it did not',
-  NOBODY_TO_OWN_IT: 'there is nobody to own the task: what the event is about has no owner, and the rule names no team',
-  NO_OWNER: 'nobody owns what the event is about, so there is nobody to tell',
-  OWNER_MADE_THE_CHANGE: 'the owner made the change themselves, so there is nobody else to tell',
-  OWNER_IS_NOT_STAFF: 'the owner is not a member of staff, and a rule only ever writes to staff',
-  NO_ONE_TO_READ_THE_MISSING_LIST: 'nobody who can see the missing list caused the event, so the list could not be worked out',
-  NOTHING_MISSING: 'everything on the missing list has already been asked for',
-  EFFECT_NOT_ALLOWED: 'the rule names an effect no rule may have',
-  NO_ONE_TO_RAISE_THE_REQUEST: 'nobody who may raise a document request caused the event, so no request was raised',
-  REQUEST_REFUSED: 'the document request was refused — the type is retired, or nothing can receive it — so nothing was raised',
-  ERROR: 'the rule failed and wrote nothing; the event it followed stands',
 });
 
 const STAGE_KEYS: readonly string[] = Object.freeze([...PROCEDURE_KEYS, 'CLOSED', ...EXIT_KEYS, 'ON_HOLD']);
@@ -180,124 +128,6 @@ function clean(v: string | null | undefined): string | null {
 /* ================================================================== *
  * 1 · THE RULES
  * ================================================================== */
-
-type RuleDbRow = {
-  id: string; label: string; trigger_event: string; trigger_stage: string | null; trigger_activity: string | null;
-  effect: string; task_title: string | null; task_description: string | null; task_activity_type: string | null;
-  task_priority: string | null; due_in_days: number | null; assign_to: string | null; assign_role: string | null;
-  attach_to: string; active: number; ord: number; source: string; created_at: string; updated_at: string;
-  request_type: string | null;
-};
-
-export type RuleView = {
-  readonly id: string;
-  readonly label: string;
-  readonly trigger: { readonly key: string; readonly label: string; readonly stage: string | null; readonly activity: string | null };
-  readonly effect: { readonly key: string; readonly label: string };
-  readonly task: {
-    readonly title: string | null; readonly description: string | null; readonly activity: string | null;
-    readonly priority: string | null; readonly due_in_days: number | null;
-  } | null;
-  readonly assign: { readonly to: string | null; readonly role: string | null; readonly label: string };
-  readonly attach_to: { readonly key: string; readonly label: string };
-  readonly active: boolean;
-  readonly source: string;
-  readonly updated: string;
-  /** CRM 9 of 10: the document type a REQUEST_DOCUMENT rule asks the client for. */
-  readonly request_type: string | null;
-};
-
-/**
- * WHERE EACH SEEDED RULE CAME FROM, IN PLAIN WORDS. Migration 012 stored each seeded rule's `source` in the
- * words of the design notes ("It fires for…", "the DERIVED missing list", "the engagement gate"). A migration already
- * run is never edited, so the screen shows these words for the nine seeded rules instead; the stored text is unchanged,
- * and a rule an Admin adds shows its own.
- */
-const SEEDED_RULE_WHY: Readonly<Record<string, string>> = Object.freeze({
-  'rule-lead-first-follow-up': 'Our specification, 14.1. A new lead gets an owner and a first follow-up. If the lead has no owner, it waits with Sales until someone takes it. This works for a lead with no company too.',
-  'rule-engaged-information-requests': 'Our specification, 14.2. A claim reaches data gathering only once the letter is signed. Then we ask for each fact nobody has asked for yet, one task each, from the list on the client page.',
-  'rule-survey-brief': 'Our specification, 14.3 and 14.4. When data gathering is done, the survey starts, and this is the next task. No visit is booked here: the survey starts at a desk.',
-  'rule-committed-valuation': 'Our specification, 14.5. A claim leaves the survey step only when the surveyor commits, so this task starts then.',
-  'rule-committed-reports': 'Our specification, 14.5. The report task that goes with the one above.',
-  'rule-reports-follow-up': 'Our specification, 14.6. When the client starts reading the report, we set a date to follow up.',
-  'rule-invoice-finance-task': 'Our specification, 14.7. At the invoice step, Accounting gets a task. It is never an invoice email.',
-  'rule-stage-notify-owner': 'Our specification, 14.9. When a claim moves on, its owner is told by email. It goes only to their own work address, and never about a company marked do not contact.',
-  'rule-owner-notify': 'Our specification, 14.9. When the owner changes, the new owner is told by email.',
-});
-
-function ruleView(db: Db, r: RuleDbRow): RuleView {
-  const when = r.trigger_event === 'STAGE_ENTERED'
-    ? `${words(TRIGGERS, r.trigger_event, r.trigger_event)}: ${r.trigger_stage === null ? 'any stage' : anyStageLabel(r.trigger_stage)}`
-    : r.trigger_event === 'TASK_COMPLETED'
-      ? `${words(TRIGGERS, r.trigger_event, r.trigger_event)}: ${r.trigger_activity === null ? 'any activity' : vocabLabel(db, 'ACTIVITY_TYPE', r.trigger_activity, r.trigger_activity)}`
-      : words(TRIGGERS, r.trigger_event, r.trigger_event);
-  return {
-    id: r.id, label: r.label,
-    trigger: { key: r.trigger_event, label: when, stage: r.trigger_stage, activity: r.trigger_activity },
-    effect: { key: r.effect, label: words(EFFECTS, r.effect, r.effect) },
-    task: r.effect === 'NOTIFY_OWNER' ? null : {
-      title: r.task_title, description: r.task_description, activity: r.task_activity_type,
-      priority: r.task_priority, due_in_days: r.due_in_days,
-    },
-    assign: {
-      to: r.assign_to, role: r.assign_role,
-      label: r.effect === 'NOTIFY_OWNER' ? 'the owner'
-        : r.assign_to === 'ROLE' ? `waits with ${words(POOL_ROLES, r.assign_role, 'no team')}`
-          : `the owner, or ${r.assign_role === null ? 'nobody' : words(POOL_ROLES, r.assign_role, r.assign_role)} where there is none`,
-    },
-    attach_to: { key: r.attach_to, label: words(ATTACH, r.attach_to, r.attach_to) },
-    active: r.active === 1,
-    source: SEEDED_RULE_WHY[r.id] ?? r.source,
-    updated: localStamp(r.updated_at),
-    request_type: r.request_type,
-  };
-}
-
-export type RunView = {
-  readonly at: string;
-  readonly rule: string;
-  readonly trigger: string;
-  readonly ran: boolean;
-  readonly reason: string | null;
-  readonly tasks_created: number;
-  readonly outbox: boolean;
-  readonly about: string;
-};
-
-export type RulesPage = {
-  readonly rules: readonly RuleView[];
-  readonly runs: readonly RunView[];
-  readonly may_write: boolean;
-  readonly forbidden: readonly { readonly key: string; readonly why: string }[];
-  /** CRM 9 of 10: the document types a REQUEST_DOCUMENT rule may ask for — active, and something can receive them. */
-  readonly request_types: Readonly<Record<string, string>>;
-};
-
-const RULES_SECTION = { type: 'automation_rule' as const, id: '__rules__' };
-
-export function rulesPage(db: Db, actor: Actor): RulesPage {
-  authorise(actor, 'automation_rule.read', RULES_SECTION);
-  return {
-    rules: listAutomationRulesIdLabel<RuleDbRow>(db).map((r) => ruleView(db, r)),
-    runs: recentRuns(db, actor),
-    may_write: can(actor, 'automation_rule.write', RULES_SECTION),
-    forbidden: Object.entries(FORBIDDEN_EFFECTS).map(([key, why]) => ({ key, why })),
-    request_types: Object.fromEntries(listDocumentTypesCodeLabelByActiveHandlerType2<{ code: string; label: string }>(db).map((t) => [t.code, t.label])),
-  };
-}
-
-export function recentRuns(db: Db, actor: Actor, limit = 100): RunView[] {
-  authorise(actor, 'automation_rule.read', RULES_SECTION);
-  return listAutomationRunsAtTriggerEvent<{
-    at: string; trigger_event: string; outcome: string; reason: string | null; tasks_created: number; outbox_id: string | null;
-    claim_id: string | null; lead_id: string | null; task_id: string | null; label: string;
-  }>(db, [limit]).map((r) => ({
-    at: localStamp(r.at), rule: r.label, trigger: words(TRIGGERS, r.trigger_event, r.trigger_event),
-    ran: r.outcome === 'RAN', reason: r.reason === null ? null : words(RUN_REASONS, r.reason, r.reason),
-    tasks_created: r.tasks_created, outbox: r.outbox_id !== null,
-    about: r.claim_id !== null ? claimWords(db, r.claim_id) : r.lead_id !== null ? 'a lead' : r.task_id !== null ? 'a task' : 'a company',
-  }));
-}
 
 type RuleValues = {
   label: string; trigger_event: string; trigger_stage: string | null; trigger_activity: string | null; effect: string;
@@ -441,16 +271,6 @@ export function updateRule(d: AutomationDeps, actor: Actor, id: string, input: F
  * 2 · EVENTS, AND RUNNING THE RULES THAT MATCH
  * ================================================================== */
 
-export type AutomationEvent =
-  | { readonly trigger: 'LEAD_CREATED'; readonly lead_id: string }
-  | { readonly trigger: 'STAGE_ENTERED'; readonly claim_id: string; readonly stage: string }
-  | { readonly trigger: 'TASK_COMPLETED'; readonly task_id: string }
-  | { readonly trigger: 'OWNER_CHANGED'; readonly claim_id: string }
-  | { readonly trigger: 'OWNER_CHANGED'; readonly lead_id: string }
-  | { readonly trigger: 'OWNER_CHANGED'; readonly task_id: string }
-  /** No source raises this yet: CRM 4 of 10 builds document requests and calls it. */
-  | { readonly trigger: 'DOCUMENT_REQUESTED'; readonly business_id: string; readonly claim_id: string | null };
-
 type Subject = {
   readonly kind: 'claim' | 'lead' | 'task' | 'organisation';
   readonly claim_id: string | null;
@@ -510,15 +330,6 @@ function matches(r: RuleDbRow, e: AutomationEvent, s: Subject): boolean {
   if (r.trigger_event === 'TASK_COMPLETED') return r.trigger_activity === null || r.trigger_activity === s.activity;
   return true;
 }
-
-export type RunOutcome = {
-  readonly rule_id: string;
-  readonly run_id: string;
-  readonly outcome: 'RAN' | 'NOT_RUN';
-  readonly reason: string | null;
-  readonly tasks_created: number;
-  readonly outbox_id: string | null;
-};
 
 type Result = { outcome: 'RAN' | 'NOT_RUN'; reason: string | null; tasks: number; outbox_id: string | null };
 
@@ -620,29 +431,6 @@ function informationRequests(d: AutomationDeps, actor: Actor | null, rule: RuleD
     return id;
   });
   return finish(d, actor, rule, e, s, run, o);
-}
-
-/**
- * A STAFF NOTICE'S SUBJECT, AND THE COMPANY'S NAME IN IT. BUILT AND SWITCHED OFF.
- *
- * The owner: every email subject leads with the company name. A notice to a member of staff was built
- * (CRM 3 of 10) to carry the claim's reference and never an organisation's name, so that a client's name does not travel
- * in an email subject through a mail provider nobody has chosen yet. Which of the two holds is the owner's to decide —
- * CAPREBATE QUESTIONS, "Should an email to our own staff name the client company in its subject line?". Until then:
- *   OFF  the subject says what happened and ends with the reference: "A claim is now at Survey (CR-2026-0004)".
- *   ON   the subject leads with the company: "Dunmarrow Medical Practice Limited — a claim is now at Survey (CR-2026-0004)".
- * Turning it on is this one line. test/crm/client-is-the-company.test.ts proves both readings.
- *
- * 24 September 2026: ANSWERED AND ON. the owner, Word answer 71 (closed that day): yes, staff emails name the
- * client company in the subject. Nothing is sent while EMAIL_SENDING is off, so today it changes the words of what is
- * saved to the outbox and nothing else. It applies to emails to OUR STAFF only: an alert to a client never carries it
- * (src/modules/crm/messages.ts).
- */
-export const NOTICE_SUBJECT_LEADS_WITH_COMPANY = true;
-
-/** The two readings of the switch, as one pure function: the company in front, or the words as they are. */
-export function noticeSubject(what: string, company: string | null): string {
-  return company === null ? what : `${company} — ${what.charAt(0).toLowerCase()}${what.slice(1)}`;
 }
 
 function noticeWords(rule: RuleDbRow, e: AutomationEvent, s: Subject, company: string | null = null): { subject: string; body: string } {
@@ -747,13 +535,4 @@ export function fireAutomation(d: AutomationDeps, actor: Actor | null, event: Au
     }
   }
   return out;
-}
-
-/**
- * THE GATE OF THE AUTOMATION RULES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
- * every menu link for every login, so a gate that drifted from its route fails there.
- */
-export function automationGate(actor: Actor): void {
-  authorise(actor, 'automation_rule.read', RULES_SECTION);
 }

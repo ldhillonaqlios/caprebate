@@ -26,7 +26,8 @@ it through a port the higher one fills, and each module declares its own permiss
 | `src/modules/public-site/` | the home page, sector pages, the enquiry form and the legal pages |
 | `src/modules/assessment/` | the eligibility check, its figures, the engagement gate and its job cost model (`costing/`) |
 | `src/modules/portal/` | the client's dashboard, their files, confirmations, report acceptance and sign-up |
-| `src/modules/crm/` | organisations, leads, the pipeline, tasks, messages, the calendar, filled assessments, search, the claims and leads lists, video calls and introducers |
+| `src/modules/clients/` | the client record, low in the order (Phase 161l1): the CRM's tables (organisations, contacts, leads, bookings, tasks, messages, introducers) and the plain rules other modules need of them, with no screens |
+| `src/modules/crm/` | the CRM's screens and workflow, near the top of the order: organisations, leads, the pipeline and its moves, tasks, messages, the calendar, filled assessments, search, the claims and leads lists, the email and WhatsApp intake and introducers (their data and the plain rules other modules need are in `clients/`) |
 | `src/modules/claims/` | the claim record, its facts, documents (`documents/`), signing, research and the report |
 | `src/modules/survey/` | the surveyor workspace, the survey pack, the report, photos, video and the costings (`costing/`) |
 | `src/modules/finance/` | invoices, VAT, billing and filing |

@@ -46,13 +46,13 @@ import { DPO_ROLE_SWITCH } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
 import { ctaSwitchReadings, registryGate } from '../../shared/index.ts';
 import { DISCLOSURE_LOG } from '../compliance/index.ts';
-import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../crm/index.ts';
+import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../clients/index.ts';
 import { CONVEYANCING_STRIP } from './conveyancing-strip.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../../shared/index.ts';
 import { ENQUIRY_RETENTION } from '../public-site/index.ts';
-import { MESSAGE_RETENTION } from '../crm/index.ts';
+import { MESSAGE_RETENTION } from '../clients/index.ts';
 import { EMAIL_SENDING } from '../../integrations/index.ts';
 import { ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST } from './signing.ts';
 import { INBOUND_EMAIL } from '../../integrations/index.ts';
@@ -184,8 +184,8 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'DISCLOSURE_LOG', on: DISCLOSURE_LOG.enabled, home: 'src/modules/compliance/disclosure-log.ts' },
     { switch: 'DPO_ROLE_SWITCH', on: DPO_ROLE_SWITCH.enabled, home: 'src/core/authz.ts' },
     { switch: 'FEE_CLAWBACK', on: FEE_CLAWBACK.enabled, home: 'src/modules/claims/claim-record.ts' },
-    { switch: 'REFERRAL_FORM', on: REFERRAL_FORM.enabled, home: 'src/modules/crm/introducers.ts' },
-    { switch: 'CLIENT_SHARE_GIVE', on: CLIENT_SHARE_GIVE.enabled, home: 'src/modules/crm/introducers.ts' },
+    { switch: 'REFERRAL_FORM', on: REFERRAL_FORM.enabled, home: 'src/modules/clients/introducers.ts' },
+    { switch: 'CLIENT_SHARE_GIVE', on: CLIENT_SHARE_GIVE.enabled, home: 'src/modules/clients/introducers.ts' },
     { switch: 'CONVEYANCING_STRIP', on: CONVEYANCING_STRIP.enabled, home: 'src/modules/claims/conveyancing-strip.ts' },
     { switch: 'FEE_CONTROLS.above_benefit', on: FEE_CONTROLS.above_benefit.enabled, home: 'src/modules/claims/fee-controls.ts' },
     { switch: 'FEE_CONTROLS.break_and_abort', on: FEE_CONTROLS.break_and_abort.enabled, home: 'src/modules/claims/fee-controls.ts' },
@@ -202,7 +202,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'ADDRESS_LOOKUP', on: ADDRESS_LOOKUP.enabled, home: 'src/integrations/connectors/address-lookup.ts' },
     { switch: 'ENGAGEMENT_SIGNING', on: ENGAGEMENT_SIGNING.enabled, home: 'src/modules/claims/signing.ts' },
     { switch: 'ENGAGEMENT_SIGNING_TEST', on: ENGAGEMENT_SIGNING_TEST.enabled, home: 'src/modules/claims/signing.ts' }, // The test copy only, test website
-    { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/modules/crm/message-retention.ts' },
+    { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/modules/clients/message-retention.ts' },
     { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/modules/public-site/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/modules/claims/defence-pack.ts' },
     { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/modules/assessment/allowance-profit-comparison.ts' },

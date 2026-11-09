@@ -27,7 +27,7 @@ import type { Db } from '../../core/index.ts';
 import { isDormant, DORMANT_WORDS } from '../../integrations/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId11, getRegisterRecordsFieldsJsonByBusinessIdSourceId2, getRegisterRecordsFieldsJsonByBusinessIdSourceId5, getRegisterRecordsFieldsJsonByBusinessIdSourceId6, getRegisterRecordsFieldsJsonByBusinessIdSourceId7, getRegisterRecordsFieldsJsonByBusinessIdSourceId9, getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId3 } from '../../integrations/index.ts';
 import { getPropertiesBusinessIdTenureById, getPropertiesClaimantRoleClaimantRoleSourceById, getPropertiesCouncilAreaById, getPropertiesCouncilAreaCouncilAreaSourceById, getPropertiesTenureTenureSourceById, listPropertiesIdLabelByBusinessId, updatePropertiesCouncilAreaCouncilAreaSourceById, updatePropertiesTenureTenureSourceById } from '../claims/index.ts';
-import { getBusinessesClaimantTypeById, listContactsFullNameByBusinessId } from '../crm/index.ts';
+import { getBusinessesClaimantTypeById, listContactsFullNameByBusinessId } from '../clients/index.ts';
 import { getAssessmentsCompanyNumberCompanyStatusByBusinessIdCompanyN } from './data.ts';
 
 const json = (s: string | null | undefined): Record<string, unknown> => {

@@ -60,7 +60,7 @@ import { complianceObj } from '../compliance/index.ts';
 import { claimBoxes, headerActions, lookupsCard, nextStepCard, presentTabs, progressBar, setClientMenu, tabbed, TAB_OF_SECTION, type TabKey } from '../portal/index.ts';
 import { piecesPage } from '../../core/index.ts';
 import { listUsersIdNameByBusinessIdRole } from '../../core/index.ts';
-import { listContactsIdFullNameByBusinessId } from './data.ts';
+import { listContactsIdFullNameByBusinessId } from '../clients/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

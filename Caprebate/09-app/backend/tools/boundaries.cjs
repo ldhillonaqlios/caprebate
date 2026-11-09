@@ -47,9 +47,11 @@ const os = require('os');
 const path = require('path');
 const { findingsIn } = require('./lint-paths.cjs');
 
-/* 'app' (Phase 161l): the start-up wiring at the top of the order (src/app/): the server, the router shell, the timers,
+/* 'clients' (Phase 161l1): the client record (organisations, contacts, leads, bookings, tasks, messages: the CRM's tables)
+   low in the order, just above the outside services, so the modules that read a client need not import the CRM's
+   screens above them. 'app' (Phase 161l): the start-up wiring at the top of the order (src/app/): the server, the router shell, the timers,
    the command line and the seed. It may import every area; no area imports it, so it has no front door (null). */
-const AREAS = ['core', 'shared', 'integrations', 'public-site', 'assessment', 'portal', 'crm', 'claims', 'survey', 'finance', 'compliance', 'admin', 'app'];
+const AREAS = ['core', 'shared', 'integrations', 'clients', 'public-site', 'assessment', 'portal', 'crm', 'claims', 'survey', 'finance', 'compliance', 'admin', 'app'];
 const KINDS = ['page', 'logic', 'data', 'routes', 'other'];
 const RULES = { 1: 'front doors only', 2: 'one way only (an area imports only areas below it in the order)', 3: 'each table has one owner', 4: 'screens hold no SQL; rules hold no HTML and no SQL' };
 const SQL = /\b(SELECT\b[\s\S]*\bFROM|INSERT\s+(OR\s+\w+\s+)?INTO|UPDATE\s+[a-z_][a-z0-9_]*\s+SET|DELETE\s+FROM|CREATE\s+(TABLE|TRIGGER|INDEX|VIEW))\b/;
@@ -382,7 +384,7 @@ function selfTest() {
   }
   {
     /* THE ORDER: claims sits below crm, so claims importing crm through its door is a break even with no cycle */
-    const order = ['shared', 'core', 'integrations', 'assessment', 'claims', 'survey', 'finance', 'compliance', 'admin', 'crm', 'portal', 'public-site', 'app'];
+    const order = ['shared', 'core', 'integrations', 'clients', 'assessment', 'claims', 'survey', 'finance', 'compliance', 'admin', 'crm', 'portal', 'public-site', 'app'];
     const withOrder = (crmDoor = true) => put('architecture/modules.json', JSON.stringify({ doors, order, files: { ...files, ...(crmDoor ? { 'src/modules/crm/index.ts': { area: 'crm', kind: 'other' } } : {}) } }));
     const [m, u] = plant('src/modules/claims/logic.ts', "import { q } from '../crm/index.ts';\nexport const two = q;\n");
     check('rule 2: an import up the order fails, with no cycle (through the front door, so rule 1 holds)', 2,

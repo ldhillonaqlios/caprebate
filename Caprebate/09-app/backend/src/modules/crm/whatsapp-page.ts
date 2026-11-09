@@ -25,11 +25,11 @@ import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../../integrat
 import { isDoNotContact } from '../../integrations/index.ts';
 import { importsFor } from './whatsapp-import.ts';
 import { listWhatsappImportLinesPhoneLastAtByBusinessId } from '../../integrations/index.ts';
-import { getBusinessesNameById } from './data.ts';
+import { getBusinessesNameById } from '../clients/index.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { namesByIds } from '../../core/index.ts';
 import { listWhatsappMessagesIdCreatedAtSenderByBusinessIdPhone } from '../../integrations/index.ts';
-import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from './data.ts';
+import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from '../clients/index.ts';
 
 
 /** One person (or one number we filed under the company) we have a WhatsApp conversation with, or could. */

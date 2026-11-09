@@ -620,7 +620,7 @@ export function listOutboxIdSentAtLastErrorByIds<T extends Row = Row>(db: Db, pa
 }
 
 // FOR THE CRM (Phase 161l1): its statements that joined these tables to its own, or to the core's users, now read
-// here and look the rest up through the other area's front door (src/modules/crm/data-borrowed.ts).
+// here and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts).
 export function listResearchRunsAtKindActorIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT r.at, r.kind, r.considered, r.fired, r.not_permitted, r.failed, r.actor_id FROM research_runs r ' +
     'WHERE r.business_id = ? ORDER BY r.at', params);

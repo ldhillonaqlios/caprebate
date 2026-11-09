@@ -53,11 +53,11 @@ import { STATE_WORDS } from './email-chains.ts';
 import { getInboundBounceNoticesIdByMailboxUid, getInboundEmailFileSavesIdByInboundEmailFileId, getInboundEmailFilesIdPartNoById, getInboundEmailIdByMailboxUid, getInboundEmailIdFromAddressByIdOutcome, getInboundEmailN, getInboundEmailXByMailboxUid, getMailboxReadsLastOkAtLastFailedById, getMailboxWatermarkUidById, getOutboxIdBusinessIdByProviderRefSentAt, getOutboxIdByProviderRefSentAt, insertInboundBounceNotices, insertInboundEmail, insertInboundEmailFileSaves, insertInboundEmailFiles, insertInboundEmailFilings, insertInboundEmailFilings2, insertMailboxReads, insertMailboxWatermark, insertMailboxWatermarkByUid, listInboundEmailFilesIdPartNoByClientMessageId, listInboundEmailFilesIdReceivedAtByInboundEmailIdOutcome, listInboundEmailIdFromAddressByOutcomeBusinessId } from '../../integrations/index.ts';
 
 import { getEmailSenderA } from '../admin/index.ts';
-import { getBusinessesIdById, getBusinessesSById, getContactsIdByBusinessId, insertClientMessageFiles, insertClientMessages2, insertClientMessages3 } from './data.ts';
+import { getBusinessesIdById, getBusinessesSById, getContactsIdByBusinessId, insertClientMessageFiles, insertClientMessages2, insertClientMessages3 } from '../clients/index.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { namesByIds } from '../../core/index.ts';
 import { listInboundEmailUidAtBusinessIds, listOutboxAtToEmailBusinessIdByKind } from '../../integrations/index.ts';
-import { byId, idsOf, listBusinessesIdNameByIds, lookUp } from './data.ts';
+import { byId, idsOf, listBusinessesIdNameByIds, lookUp } from '../clients/index.ts';
 
 export type InboundDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;

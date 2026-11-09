@@ -21,7 +21,6 @@
  * screen omitting a field, which is presentation and not a control.
  */
 
-import { tellAndMoveOn } from '../crm/index.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
 import type { Actor } from '../../core/index.ts';
@@ -35,11 +34,40 @@ import { sendEngagementLetter, signedCopy } from './engagement-send.ts';
 import { setRequiredSigners, type EngagementSigning } from './signing.ts';
 import * as A from './approvals.ts';
 import { STEP_ANCHOR } from './approvals-pages.ts';
-import { clientList, clientListPage, type ClientSort } from '../crm/index.ts';
 import * as MR from './match-review.ts';
 import { pickPage } from './match-review-pages.ts';
 import { piecesPage } from '../../core/index.ts';
 import { getClaimsIdByIdBusinessId } from './data.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import type { EmailTransport } from '../../integrations/index.ts';
+
+/*
+ * THE ONE CLIENTS LIST AND "TELL THE CLIENT AND MOVE ON" ARE THE CRM'S (src/modules/crm/client-list.ts,
+ * src/modules/crm/tell-and-move.ts), and their addresses are matched here, where they always were, so the order of the
+ * routes is unchanged: A PORT THIS FILE OWNS, handed in by src/modules/crm/ports.ts as the CRM's front door loads, so
+ * the claims draw the list and tell the client without importing the CRM. Asked before it is handed in, each refuses
+ * rather than guess. Asked only while code runs (Phase 161l1).
+ */
+export type ClientSort = 'waiting' | 'name';
+export type TellDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };
+export type TellResult =
+  | { readonly ok: true; readonly emailed: boolean; readonly moved: readonly unknown[] }
+  | { readonly ok: false; readonly why: string; readonly field?: string };
+export type ClientsPorts = {
+  /** The one clients list, drawn: the list this login may read, in this order, with these filters. */
+  readonly clientsListPage: (db: Db, actor: Actor, nav: Safe, sort: ClientSort, nowIso: string, f: { q: string; show: string }) => string;
+  readonly tellAndMoveOn: (d: TellDeps, actor: Actor, business_id: string, input: { step: string; claim_id?: string | null }, origin: string) => TellResult;
+};
+var clientsPorts: ClientsPorts | undefined;
+export function setClientsPorts(p: ClientsPorts): void { clientsPorts = p; }
+function asked(): ClientsPorts {
+  if (clientsPorts === undefined) throw new Error('The clients list is not set up. The CRM sets it up when it loads, so nothing was done.');
+  return clientsPorts;
+}
+function tellAndMoveOn(d: TellDeps, actor: Actor, business_id: string, input: { step: string; claim_id?: string | null }, origin: string): TellResult {
+  return asked().tellAndMoveOn(d, actor, business_id, input, origin);
+}
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -84,7 +112,7 @@ export async function handleEngaged(
      can read it. The engaged-client list it replaced is no longer drawn; `engagedClients` still serves its other readers. */
   if (path === '/staff/clients' && method === 'GET') {
     const sort: ClientSort = url.searchParams.get('sort') === 'name' ? 'name' : 'waiting';
-    html(res, 200, clientListPage(d.nav(actor), clientList(db, actor, sort, d.app.now()), sort,
+    html(res, 200, asked().clientsListPage(db, actor, d.nav(actor), sort, d.app.now(),
       { q: url.searchParams.get('q') ?? '', show: url.searchParams.get('show') ?? '' }));
     return 'handled';
   }

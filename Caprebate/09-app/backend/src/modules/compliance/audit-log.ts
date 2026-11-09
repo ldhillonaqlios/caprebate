@@ -28,7 +28,7 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { getAuditLogCount, getAuditLogCountByObjectIds, listAuditLogKind, listAuditLogLines, listAuditLogLinesByObjectIds } from '../../core/index.ts';
-import { getBusinessesIdNameById } from '../crm/index.ts';
+import { getBusinessesIdNameById } from '../clients/index.ts';
 import { listClaimsIdByBusinessId, listPropertiesIdByBusinessId } from '../claims/index.ts';
 
 export type AuditLogDeps = { db: Db; audit: AuditLog; now: () => string };

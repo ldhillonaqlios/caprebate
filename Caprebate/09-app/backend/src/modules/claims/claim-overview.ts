@@ -21,13 +21,14 @@
 import type { Db } from '../../core/index.ts';
 import { can, type Actor } from '../../core/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
-import { gateOut, loadPipelineClaim, type Need, type PipelineClaim } from '../crm/index.ts';
+import { gateOut, loadPipelineClaim, type Need, type PipelineClaim } from './claim-stage.ts';
 import { CLOSED_STAGE, PROCEDURE_STAGES, claimStage, type ProcedureKey } from '../../shared/index.ts';
 import { plainNeed } from '../../shared/index.ts';
 import { CAPTURE_SOURCES, FACTS, captured, latestFacts, type FactReading, type FactsPanel } from './claim-facts.ts';
-import { waitingForCheck, type ToCheck } from '../crm/index.ts';
+import { waitingForCheck, type ToCheck } from './client-checks.ts';
 import { plainDashText } from '../../shared/index.ts';
-import { claimObjFor, loadClaimRow } from '../crm/index.ts';
+import { claimObjFor } from './claim-object.ts';
+import { loadClaimRow } from '../clients/index.ts';
 import type { ClaimDocumentsPanel } from './documents.ts';
 import { chaptersToRead, CHAPTERS } from '../survey/index.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
@@ -36,7 +37,7 @@ import { SOURCES as REGISTER_SOURCES, getResearchRunsWhoAtByBusinessIdAt } from 
 import { listRegisterRecordsSourceIdEntityIdByBusinessIdPropertyId } from '../../integrations/index.ts';
 import { getSurveyorJobsIdSurveyorIdByClaimId, listClientTasksQuestionAnswerByBusinessIdState } from './data-borrowed.ts';
 import { getSurveyPackApprovalsCountByPackId, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyPacksIdByJobId, listSurveyPackReadsChapterSeqByJobIdUserId } from '../survey/index.ts';
-import { listClientTasksFactIdByBusinessIdState, listClientTasksQuestionKindByBusinessIdState } from '../crm/index.ts';
+import { listClientTasksFactIdByBusinessIdState, listClientTasksQuestionKindByBusinessIdState } from '../clients/index.ts';
 import { listClaimFactsIdFactKeyByClaimIdFactKey } from './data.ts';
 
 /* ================================================================== *

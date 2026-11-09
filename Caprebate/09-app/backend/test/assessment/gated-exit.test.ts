@@ -38,7 +38,7 @@ import { createApp } from '../../src/app/server.ts';
 import { seed } from '../../src/app/seed.ts';
 import { BOOKING, FRONTDOOR, FUNNEL } from '../../src/shared/engine.ts';
 import { nextScreen, type FunnelState } from '../../src/modules/assessment/assessment.ts';
-import { isBookable } from '../../src/modules/crm/schedule.ts';
+import { isBookable } from '../../src/modules/clients/schedule.ts';
 import * as L from '../../src/modules/crm/leads.ts';
 import * as P from '../../src/modules/crm/pipeline.ts';
 import { actor, testApp } from '../helpers.ts';

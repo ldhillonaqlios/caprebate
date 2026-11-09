@@ -19,7 +19,7 @@ import { createApp } from '../../src/app/server.ts';
 import { fixtureTransport, isLiveTransport, liveTransport, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import { cancelZoomMeeting, forgetZoomToken, hostZak, makeZoomMeeting, moveZoomMeeting, onTestWebsite, zoomMissing, zoomPlaceRefusal, zoomWhy, ZOOM_LOCAL_OPT_IN } from '../../src/integrations/connectors/zoom.ts';
-import { zoomBlockers, zoomDeps } from '../../src/modules/crm/video-calls.ts';
+import { zoomBlockers, zoomDeps } from '../../src/modules/clients/video-calls.ts';
 import { serviceOn } from '../../src/modules/admin/saved-keys.ts';
 
 const T = '2026-10-01T09:00:00.000Z';
@@ -114,7 +114,7 @@ describe('where a copy may call Zoom from', () => {
       const s = readFileSync(new URL(f, dir), 'utf8');
       for (const m of s.matchAll(/zoomMissing\(([^)]*)\)/g)) asked.push(`${f}: ${m[1] ?? ''}`);
     }
-    assert.deepEqual(asked, ['modules/admin/saved-keys.ts: app.secrets, app.zoomPolicy, { outside: app.outside }', 'modules/crm/video-calls.ts: app.secrets, app.zoomPolicy, { outside: app.outside }']);
+    assert.deepEqual(asked, ['modules/admin/saved-keys.ts: app.secrets, app.zoomPolicy, { outside: app.outside }', 'modules/clients/video-calls.ts: app.secrets, app.zoomPolicy, { outside: app.outside }']);
   });
 });
 

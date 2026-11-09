@@ -9,7 +9,8 @@ import { NotAuthorised, WELCOME_JOBS, can, clientHelp, clientIp, clockOf, dismis
 import { HTML_HEADERS, READ_AND_DELETED, badge, breadcrumb, card, claimRef, clientStageBar, formatShownRange, h, localDate, localStamp, localWhen, page, propertyIn, raw, savedMessage, ukDate, ukDatesIn, welcomeCard, why, zoneNotice, type Safe } from '../../shared/index.ts';
 import { getResearchSourcesCountByBusinessIdState2 } from '../../integrations/index.ts';
 import { ENGAGEMENT_SIGNING, SIGN_WORDS, claimRoutes, clientDeliverables, clientSteps, clientStepsCard, getClaimsPropertyIdByIdBusinessId, getEngagementsStateSignedAtById, letterFacts, letterOptions, letterState, letterSteps, loadLetter, portalReport, portalReportCard, readLines, receivableTypes, shownLetter, signByLink, signEngagement, signLinkFor, signedCopy, signingMissing, startDocumentUpload, updateEngagementsLetterStateViewedAtByIdLetterState, type ClientDeliverable, type ClientStep, type EngagementSigning, type LetterFacts, type RequestView } from '../claims/index.ts';
-import { activeMeeting, booksATime, clientMessage, clientShareChoices, portalMessagesBody, publicSlots, readPortalSend, reconcileVideoMeeting, recordShareConsentByClient, sendFromPortal, type ClientShareChoice, type ThreadMessage as MessageView } from '../crm/index.ts';
+import { activeMeeting, booksATime, publicSlots, reconcileVideoMeeting } from '../clients/index.ts';
+import { clientMessage, clientShareChoices, portalMessagesBody, readPortalSend, recordShareConsentByClient, sendFromPortal, type ClientShareChoice, type ThreadMessage as MessageView } from '../crm/index.ts';
 import { agreementLinks, safeBack } from '../public-site/index.ts';
 import { handlePortalEvidence, portalEvidenceCard } from '../survey/index.ts';
 import { handleConfirmLink } from './accountant-confirm-pages.ts';

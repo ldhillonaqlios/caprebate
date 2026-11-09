@@ -1,10 +1,11 @@
 {
  "note": "THE MODULE MAP (Phase 161h1, 7 Nov 2026; 09-app/docs/ARCHITECTURE.md). Every file under src/: its area and its kind (page, logic, data, routes, other). doors: the one file of each area another area may import; until it exists, every import into the area is a break of rule 1. Read by tools/boundaries.cjs. A new file is placed here on purpose; moving a file to another area is a change to review.",
- "order_note": "THE ORDER (Phase 161l, 9 Nov 2026; docs/ARCHITECTURE.md rule 2): the areas from the bottom up. An area imports only areas below it; when a lower area must tell a higher one something, it announces an event (src/core/events.ts) or offers a port the higher one fills at start. shared is at the bottom (plain tools: no sign-in, no SQL), then the core; app is the start-up wiring at the top, which nothing imports.",
+ "order_note": "THE ORDER (Phase 161l, 9 Nov 2026; docs/ARCHITECTURE.md rule 2): the areas from the bottom up. An area imports only areas below it; when a lower area must tell a higher one something, it announces an event (src/core/events.ts) or offers a port the higher one fills at start. clients (Phase 161l1) is the client record, low in the order so the modules can read a client without importing the CRM's screens above them. shared is at the bottom (plain tools: no sign-in, no SQL), then the core; app is the start-up wiring at the top, which nothing imports.",
  "order": [
   "shared",
   "core",
   "integrations",
+  "clients",
   "assessment",
   "claims",
   "survey",
@@ -20,6 +21,7 @@
   "core": "src/core/index.ts",
   "shared": "src/shared/index.ts",
   "integrations": "src/integrations/index.ts",
+  "clients": "src/modules/clients/index.ts",
   "public-site": "src/modules/public-site/index.ts",
   "assessment": "src/modules/assessment/index.ts",
   "portal": "src/modules/portal/index.ts",
@@ -71,6 +73,10 @@
   "src/core/app.ts": {
    "area": "core",
    "kind": "other"
+  },
+  "src/core/assigned-surveyors.ts": {
+   "area": "core",
+   "kind": "logic"
   },
   "src/core/audit.ts": {
    "area": "core",
@@ -221,6 +227,10 @@
    "kind": "logic"
   },
   "src/integrations/connectors/claude.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/integrations/connectors/client-values.ts": {
    "area": "integrations",
    "kind": "logic"
   },
@@ -460,6 +470,10 @@
    "area": "admin",
    "kind": "logic"
   },
+  "src/modules/admin/automation-rules.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
   "src/modules/admin/configuration-pages.ts": {
    "area": "admin",
    "kind": "page"
@@ -504,6 +518,10 @@
    "area": "admin",
    "kind": "logic"
   },
+  "src/modules/admin/sender-setting.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
   "src/modules/admin/settings.ts": {
    "area": "admin",
    "kind": "logic"
@@ -537,6 +555,10 @@
    "kind": "logic"
   },
   "src/modules/assessment/assessment.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/modules/assessment/claimant-type.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -628,6 +650,14 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/claim-object.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/claim-of-business.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/claim-overview.ts": {
    "area": "claims",
    "kind": "logic"
@@ -641,6 +671,14 @@
    "kind": "logic"
   },
   "src/modules/claims/claim-route.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/claim-stage.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/client-checks.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -715,6 +753,10 @@
   "src/modules/claims/index.ts": {
    "area": "claims",
    "kind": "other"
+  },
+  "src/modules/claims/jurisdiction.ts": {
+   "area": "claims",
+   "kind": "logic"
   },
   "src/modules/claims/letter.ts": {
    "area": "claims",
@@ -800,6 +842,102 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/clients/actions.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/automation-port.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/automation-words.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/booking-invite.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/claim-row.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/client-values.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/data-borrowed.ts": {
+   "area": "clients",
+   "kind": "data"
+  },
+  "src/modules/clients/data.ts": {
+   "area": "clients",
+   "kind": "data"
+  },
+  "src/modules/clients/do-not-contact.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/index.ts": {
+   "area": "clients",
+   "kind": "other"
+  },
+  "src/modules/clients/introducers.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/leads.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/message-retention.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/messages.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/research-subject.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/rooms.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/schedule.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/slot-picker.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/stage.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/tasks.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/time-blocks.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/video-call-script.ts": {
+   "area": "clients",
+   "kind": "other"
+  },
+  "src/modules/clients/video-calls.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/vocab.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
   "src/modules/compliance/actions.ts": {
    "area": "compliance",
    "kind": "logic"
@@ -880,19 +1018,11 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/modules/crm/booking-invite.ts": {
-   "area": "crm",
-   "kind": "logic"
-  },
   "src/modules/crm/claim-lists-pages.ts": {
    "area": "crm",
    "kind": "page"
   },
   "src/modules/crm/claim-lists.ts": {
-   "area": "crm",
-   "kind": "logic"
-  },
-  "src/modules/crm/client-checks.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -929,18 +1059,6 @@
    "kind": "page"
   },
   "src/modules/crm/dashboard.ts": {
-   "area": "crm",
-   "kind": "logic"
-  },
-  "src/modules/crm/data-borrowed.ts": {
-   "area": "crm",
-   "kind": "data"
-  },
-  "src/modules/crm/data.ts": {
-   "area": "crm",
-   "kind": "data"
-  },
-  "src/modules/crm/do-not-contact.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1008,15 +1126,11 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/crm/ports.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
   "src/modules/crm/premises-import.ts": {
-   "area": "crm",
-   "kind": "logic"
-  },
-  "src/modules/crm/research-subject.ts": {
-   "area": "crm",
-   "kind": "logic"
-  },
-  "src/modules/crm/rooms.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1024,15 +1138,7 @@
    "area": "crm",
    "kind": "routes"
   },
-  "src/modules/crm/schedule.ts": {
-   "area": "crm",
-   "kind": "logic"
-  },
   "src/modules/crm/search.ts": {
-   "area": "crm",
-   "kind": "logic"
-  },
-  "src/modules/crm/slot-picker.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1052,19 +1158,7 @@
    "area": "crm",
    "kind": "logic"
   },
-  "src/modules/crm/time-blocks.ts": {
-   "area": "crm",
-   "kind": "logic"
-  },
   "src/modules/crm/timeline.ts": {
-   "area": "crm",
-   "kind": "logic"
-  },
-  "src/modules/crm/video-call-script.ts": {
-   "area": "crm",
-   "kind": "other"
-  },
-  "src/modules/crm/video-calls.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1103,6 +1197,10 @@
   "src/modules/finance/data.ts": {
    "area": "finance",
    "kind": "data"
+  },
+  "src/modules/finance/fee-invoices.ts": {
+   "area": "finance",
+   "kind": "logic"
   },
   "src/modules/finance/finance-pages.ts": {
    "area": "finance",
@@ -1245,6 +1343,10 @@
    "kind": "logic"
   },
   "src/modules/survey/anchor-store.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/assigned-surveyors.ts": {
    "area": "survey",
    "kind": "logic"
   },

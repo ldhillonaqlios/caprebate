@@ -73,7 +73,7 @@ import {
 import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
 import { getAssessmentsSectorById } from './data.ts';
 import { getClaimFactsAnswerByClaimIdFactKey, listClaimsIdBusinessId } from '../claims/index.ts';
-import { listClientTasksAnswerStateByBusinessIdFactId } from '../crm/index.ts';
+import { listClientTasksAnswerStateByBusinessIdFactId } from '../clients/index.ts';
 
 /* ================================================================== *
  * THE SWITCH

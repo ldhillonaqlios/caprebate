@@ -40,10 +40,10 @@ import { priorityRank, vocabLabel, vocabulary } from '../admin/index.ts';
 import { LEAD_ORIGINS, LEAD_STATUSES, NO_RANGE_NO_ASSESSMENT, RANGE_NOT_SHOWN, SECTORS, assertLeadSection, type LeadRow } from './leads.ts';
 import { CLOSED_STAGE, EXITS, ON_HOLD_STAGE, PROCEDURE_STAGES, claimStage, formatShownRange, localDate, localStamp } from '../../shared/index.ts';
 import { getSavedViewsIdListById, insertSavedViews, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from '../admin/index.ts';
-import { listClaimsRows as listClaimsRowsBorrowed, listLeadsRows } from './data-borrowed.ts';
+import { listClaimsRows as listClaimsRowsBorrowed, listLeadsRows } from '../clients/index.ts';
 import type { Row } from '../../core/index.ts';
 import { listEstimatesQualifyingExpenditurePenceByAssessmentIds } from '../assessment/index.ts';
-import { idsOf } from './data.ts';
+import { idsOf } from '../clients/index.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
