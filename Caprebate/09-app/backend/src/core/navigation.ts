@@ -38,11 +38,11 @@ import { searchGate } from './search.ts';
 import { mayCreateTask, myWork, nextActionsGate } from '../modules/crm/index.ts';
 import { assertLeadSection } from '../modules/crm/index.ts';
 import { pipelineBoardGate } from '../modules/crm/index.ts';
-import { billingViewFor, clientsAreaGate } from '../web/billing.ts';
+import { billingViewFor, clientsAreaGate } from '../modules/finance/billing.ts';
 import { claimListGate } from '../shared/lists.ts';
 import { assertIntroducerSection, rewardModelGate } from '../modules/crm/index.ts';
 import { assertSurveySection } from '../modules/survey/surveyor.ts';
-import { assertFinanceSection } from '../web/finance.ts';
+import { assertFinanceSection } from '../modules/finance/finance.ts';
 import { adminSettingsGate, SETTINGS_TILES } from '../web/admin-tiles.ts';
 import { getUsersDisplayNameById } from './data.ts';
 
@@ -73,7 +73,7 @@ export type Section = {
 export const SECTIONS: readonly Section[] = Object.freeze([
   { key: 'home', href: '/staff', label: 'Home', gate: assertBackOffice, under: ['/staff/reports'] },
   { key: 'leads', href: '/staff/leads', label: 'Leads', gate: assertLeadSection, under: ['/staff/assessments'] },
-  // The whole record (Admin, Sales, read-only) or Accounting's billing view of it (src/web/billing.ts).
+  // The whole record (Admin, Sales, read-only) or Accounting's billing view of it (src/modules/finance/billing.ts).
   { key: 'clients', href: '/staff/clients', label: 'Clients', gate: clientsAreaGate, under: ['/staff/organisations'] },
   { key: 'pipeline', href: '/staff/pipeline', label: 'Pipeline', gate: pipelineBoardGate },
   { key: 'claims', href: '/staff/claims', label: 'Claims', gate: claimListGate },
@@ -408,7 +408,7 @@ export function helpScreenFor(path: string, actor?: Actor): string {
   // A company's files have their own training section, inside the Clients address.
   if (/^\/staff\/clients\/([A-Za-z0-9-]+)\/files$/.test(path)) return 'B47';
   /* THE SAME ADDRESS, A DIFFERENT SCREEN. A login that reads the billing view of the Clients tab rather than
-     the client record (Accounting, src/web/billing.ts) is trained in B55, not B5 — so the link asks who is looking, not
+     the client record (Accounting, src/modules/finance/billing.ts) is trained in B55, not B5 — so the link asks who is looking, not
      only where. The same question the Clients tab itself asks (`billingViewFor`), never a role name. */
   if (actor !== undefined && (path === '/staff/clients' || path.startsWith('/staff/clients/')) && billingViewFor(actor)) return 'B55';
   for (const [prefix, code] of HELP_SCREENS) if (path === prefix || path.startsWith(`${prefix}/`)) return code;

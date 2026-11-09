@@ -3,7 +3,7 @@
  * CRM 7 of 10, 11 September 2026.
  *
  * The schema is migration 016; the fee is src/modules/claims/fee-controls.ts; the VAT and
- * its monitoring are src/modules/assessment/vat.ts; the pages are src/web/finance-pages.ts. The
+ * its monitoring are src/modules/assessment/vat.ts; the pages are src/modules/finance/finance-pages.ts. The
  * scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 13.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -34,24 +34,24 @@
  * decided for its five facts, and nothing of it is returned but that figure.
  */
 
-import type { Db } from '../core/index.ts';
-import type { AuditKind, AuditLog, Outcome } from '../core/audit.ts';
-import { authorise, can, type Actor } from '../core/index.ts';
-import { NotFoundAsRefusal } from '../core/backoffice.ts';
-import { localDate, localStamp } from '../shared/index.ts';
-import { formatPence, toPence } from '../shared/index.ts';
-import { addDaysToDate, dueReading, taskObj, type DueReading } from '../modules/crm/index.ts';
-import { claimStage } from '../shared/index.ts';
-import { enteredAt, feeTriggerReached, liveFeeInvoiceCount, loadPipelineClaim, reportDeliveredOn, type FeeTrigger } from '../modules/crm/index.ts';
-import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from '../modules/claims/index.ts';
-import { claimantTypeForGate, claimObjFor } from '../modules/crm/index.ts';
-import { computeFee, controlsView, letterFee, letterFees, FEE_CONTROLS, PAYMENT_TERMS_QUESTION, type ControlsView, type FeeControls } from '../modules/claims/index.ts';
-import { ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading, type SettingsView, type VatReading } from '../modules/assessment/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditKind, AuditLog, Outcome } from '../../core/audit.ts';
+import { authorise, can, type Actor } from '../../core/index.ts';
+import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { localDate, localStamp } from '../../shared/index.ts';
+import { formatPence, toPence } from '../../shared/index.ts';
+import { addDaysToDate, dueReading, taskObj, type DueReading } from '../crm/index.ts';
+import { claimStage } from '../../shared/index.ts';
+import { enteredAt, feeTriggerReached, liveFeeInvoiceCount, loadPipelineClaim, reportDeliveredOn, type FeeTrigger } from '../crm/index.ts';
+import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from '../claims/index.ts';
+import { claimantTypeForGate, claimObjFor } from '../crm/index.ts';
+import { computeFee, controlsView, letterFee, letterFees, FEE_CONTROLS, PAYMENT_TERMS_QUESTION, type ControlsView, type FeeControls } from '../claims/index.ts';
+import { ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading, type SettingsView, type VatReading } from '../assessment/index.ts';
 import { assertFinanceSection, feeVersusBenefit, financeSectionObj, type FeeVersusBenefit } from './finance.ts';
-import { feeList, onClause13Credit, onFeeInvoiced, type FeeView } from '../modules/crm/index.ts';
-import type { Letter } from '../modules/claims/index.ts';
-import { getBusinessesSectorById, getStaffTasksIdTitleByClaimIdRuleId } from '../modules/crm/index.ts';
-import { getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn } from '../modules/claims/index.ts';
+import { feeList, onClause13Credit, onFeeInvoiced, type FeeView } from '../crm/index.ts';
+import type { Letter } from '../claims/index.ts';
+import { getBusinessesSectorById, getStaffTasksIdTitleByClaimIdRuleId } from '../crm/index.ts';
+import { getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn } from '../claims/index.ts';
 
 export type InvoiceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one, so the

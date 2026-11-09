@@ -54,6 +54,7 @@
     "src/modules/crm/dashboard.ts -> src/web/compliance-rights.ts",
     "src/modules/crm/message-retention.ts -> src/web/compliance.ts",
     "src/modules/crm/pipeline.ts -> src/web/compliance.ts",
+    "src/modules/finance/billing.ts -> src/web/compliance.ts",
     "src/modules/public-site/enquiry-retention.ts -> src/web/compliance.ts",
     "src/modules/public-site/home.ts -> src/web/audit-log.ts",
     "src/modules/public-site/notices-site.ts -> src/web/compliance-rights.ts",
@@ -61,7 +62,6 @@
     "src/modules/public-site/privacy-policy.ts -> src/web/compliance-identity.ts",
     "src/web/admin-tiles.ts -> src/web/audit-log.ts",
     "src/web/admin-tiles.ts -> src/web/compliance.ts",
-    "src/web/billing.ts -> src/web/compliance.ts",
     "src/web/configuration.ts -> src/web/compliance.ts"
    ],
    "core": [
@@ -99,6 +99,10 @@
     "src/modules/crm/tasks-pages.ts -> src/core/navigation.ts",
     "src/modules/crm/tasks.ts -> src/core/backoffice.ts",
     "src/modules/crm/timeline.ts -> src/core/backoffice.ts",
+    "src/modules/finance/billing.ts -> src/core/backoffice.ts",
+    "src/modules/finance/finance-pages.ts -> src/core/navigation.ts",
+    "src/modules/finance/finance.ts -> src/core/backoffice.ts",
+    "src/modules/finance/invoices.ts -> src/core/backoffice.ts",
     "src/modules/portal/client-layout.ts -> src/core/navigation.ts",
     "src/modules/portal/take-back.ts -> src/core/audit.ts",
     "src/modules/public-site/home.ts -> src/core/navigation.ts",
@@ -107,14 +111,10 @@
     "src/shared/lists-pages.ts -> src/core/navigation.ts",
     "src/shared/lists-pages.ts -> src/core/search.ts",
     "src/shared/lists.ts -> src/core/backoffice.ts",
-    "src/web/billing.ts -> src/core/backoffice.ts",
     "src/web/compliance.ts -> src/core/backoffice.ts",
     "src/web/configuration.ts -> src/core/backoffice.ts",
     "src/web/connections.ts -> src/core/app.ts",
     "src/web/connections.ts -> src/core/saved-keys.ts",
-    "src/web/finance-pages.ts -> src/core/navigation.ts",
-    "src/web/finance.ts -> src/core/backoffice.ts",
-    "src/web/invoices.ts -> src/core/backoffice.ts",
     "src/web/templates.ts -> src/core/backoffice.ts"
    ],
    "crm": [
@@ -124,20 +124,20 @@
     "src/integrations/email/email.ts -> src/modules/crm/data.ts"
    ],
    "finance": [
-    "src/core/navigation.ts -> src/web/billing.ts",
-    "src/core/navigation.ts -> src/web/finance.ts",
-    "src/core/seed.ts -> src/web/invoices.ts",
-    "src/core/staff.ts -> src/web/billing.ts",
-    "src/core/staff.ts -> src/web/finance-pages.ts",
-    "src/modules/assessment/vat.ts -> src/web/finance.ts",
-    "src/modules/crm/crm.ts -> src/web/invoices.ts",
-    "src/modules/crm/dashboard.ts -> src/web/invoices.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/web/finance.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/web/invoices.ts",
-    "src/modules/crm/timeline.ts -> src/web/finance.ts",
-    "src/modules/crm/timeline.ts -> src/web/invoices.ts",
-    "src/modules/public-site/home.ts -> src/web/finance.ts",
-    "src/modules/public-site/home.ts -> src/web/invoices.ts"
+    "src/core/navigation.ts -> src/modules/finance/billing.ts",
+    "src/core/navigation.ts -> src/modules/finance/finance.ts",
+    "src/core/seed.ts -> src/modules/finance/invoices.ts",
+    "src/core/staff.ts -> src/modules/finance/billing.ts",
+    "src/core/staff.ts -> src/modules/finance/finance-pages.ts",
+    "src/modules/assessment/vat.ts -> src/modules/finance/finance.ts",
+    "src/modules/crm/crm.ts -> src/modules/finance/invoices.ts",
+    "src/modules/crm/dashboard.ts -> src/modules/finance/invoices.ts",
+    "src/modules/crm/staff-dashboard.ts -> src/modules/finance/finance.ts",
+    "src/modules/crm/staff-dashboard.ts -> src/modules/finance/invoices.ts",
+    "src/modules/crm/timeline.ts -> src/modules/finance/finance.ts",
+    "src/modules/crm/timeline.ts -> src/modules/finance/invoices.ts",
+    "src/modules/public-site/home.ts -> src/modules/finance/finance.ts",
+    "src/modules/public-site/home.ts -> src/modules/finance/invoices.ts"
    ],
    "integrations": [
     "src/core/cli.ts -> src/integrations/connectors/test-lookups.ts",
@@ -396,6 +396,7 @@
     "src/modules/crm/data-borrowed.ts : documents",
     "src/modules/crm/data-borrowed.ts : logical_documents",
     "src/modules/crm/data-borrowed.ts : properties",
+    "src/modules/finance/invoices.ts : claims",
     "src/modules/portal/data-borrowed.ts : claims",
     "src/modules/portal/data-borrowed.ts : documents",
     "src/modules/portal/data-borrowed.ts : logical_documents",
@@ -411,7 +412,6 @@
     "src/web/compliance-identity.ts : document_links",
     "src/web/compliance-identity.ts : documents",
     "src/web/compliance-identity.ts : logical_documents",
-    "src/web/invoices.ts : claims",
     "src/web/templates.ts : claims"
    ],
    "compliance": [
@@ -466,6 +466,8 @@
     "src/modules/claims/data-borrowed.ts : users",
     "src/modules/crm/data-borrowed.ts : audit_log",
     "src/modules/crm/data-borrowed.ts : users",
+    "src/modules/finance/billing.ts : users",
+    "src/modules/finance/invoices.ts : users",
     "src/modules/portal/data-borrowed.ts : users",
     "src/modules/survey/pack-approve.ts : users",
     "src/modules/survey/pack-legal.ts : users",
@@ -478,12 +480,10 @@
     "src/shared/data-borrowed.ts : users",
     "src/web/audit-log.ts : audit_log",
     "src/web/audit-log.ts : users",
-    "src/web/billing.ts : users",
     "src/web/compliance-aml.ts : users",
     "src/web/connections.ts : users",
     "src/web/disclosure-log.ts : users",
-    "src/web/identity-checks.ts : users",
-    "src/web/invoices.ts : users"
+    "src/web/identity-checks.ts : users"
    ],
    "crm": [
     "src/core/data-borrowed.ts : booking_changes",
@@ -501,6 +501,8 @@
     "src/modules/claims/data-borrowed.ts : client_tasks",
     "src/modules/claims/data-borrowed.ts : contacts",
     "src/modules/claims/data-borrowed.ts : internal_notes",
+    "src/modules/finance/finance.ts : businesses",
+    "src/modules/finance/invoices.ts : businesses",
     "src/modules/portal/data-borrowed.ts : businesses",
     "src/modules/portal/data-borrowed.ts : contacts",
     "src/modules/survey/survey-evidence.ts : bookings",
@@ -522,9 +524,7 @@
     "src/web/compliance-identity.ts : leads",
     "src/web/compliance-identity.ts : staff_tasks",
     "src/web/compliance-rights.ts : contacts",
-    "src/web/finance.ts : businesses",
     "src/web/identity-checks.ts : contacts",
-    "src/web/invoices.ts : businesses",
     "src/web/templates.ts : businesses"
    ],
    "finance": [
@@ -543,13 +543,13 @@
     "src/modules/crm/data-borrowed.ts : invoice_numbers",
     "src/modules/crm/data-borrowed.ts : invoice_payments",
     "src/modules/crm/data-borrowed.ts : invoices",
-    "src/web/billing.ts : invoice_chases",
-    "src/web/billing.ts : invoices",
-    "src/web/finance.ts : invoices",
-    "src/web/invoices.ts : invoice_credit_notes",
-    "src/web/invoices.ts : invoice_numbers",
-    "src/web/invoices.ts : invoice_payments",
-    "src/web/invoices.ts : invoices"
+    "src/modules/finance/billing.ts : invoice_chases",
+    "src/modules/finance/billing.ts : invoices",
+    "src/modules/finance/finance.ts : invoices",
+    "src/modules/finance/invoices.ts : invoice_credit_notes",
+    "src/modules/finance/invoices.ts : invoice_numbers",
+    "src/modules/finance/invoices.ts : invoice_payments",
+    "src/modules/finance/invoices.ts : invoices"
    ],
    "integrations": [
     "src/modules/claims/data-borrowed.ts : outbox",
@@ -671,9 +671,9 @@
     "src/web/legal-approvals.ts : logic runs SQL"
    ],
    "finance": [
-    "src/web/billing.ts : logic runs SQL",
-    "src/web/finance.ts : logic runs SQL",
-    "src/web/invoices.ts : logic runs SQL"
+    "src/modules/finance/billing.ts : logic runs SQL",
+    "src/modules/finance/finance.ts : logic runs SQL",
+    "src/modules/finance/invoices.ts : logic runs SQL"
    ],
    "survey": [
     "src/modules/survey/anchor-store.ts : logic runs SQL",

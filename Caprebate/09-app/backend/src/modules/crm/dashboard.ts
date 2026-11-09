@@ -36,7 +36,7 @@ import { EXITS, PROCEDURE_STAGES, anyStageLabel, claimStage, procedureIndex } fr
 import { dueReading, isTerminalStage, nextActionBreakers } from './tasks.ts';
 import { localDate } from '../../shared/index.ts';
 import { formatPence } from '../../shared/index.ts';
-import { financeDashboard, type FinanceDashboard } from '../../web/invoices.ts';
+import { financeDashboard, type FinanceDashboard } from '../finance/invoices.ts';
 import { DELIVERABLES, QUOTE_GAP_REVIEW_PCT, VARIANCE_CATEGORIES, deliverableIssued, latestSignOff, varianceOf } from '../claims/index.ts';
 import { pipelineFigures } from './introducers.ts';
 import { reasonLabel } from './pipeline.ts';

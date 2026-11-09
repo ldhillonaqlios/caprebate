@@ -37,7 +37,7 @@ import { ingestRegisterRecord, insertResearchSourcesNotPermittedYet } from '../i
 import type { AppRole } from './roles.ts';
 import { catalogue } from '../modules/claims/index.ts';
 import { backfillClaimFor, insertClaim } from '../modules/crm/index.ts';
-import { allocateNumber } from '../web/invoices.ts';
+import { allocateNumber } from '../modules/finance/invoices.ts';
 import { backfillLeadFor } from '../modules/crm/index.ts';
 import { recordOpened } from '../modules/crm/index.ts';
 import { insertTask, type TaskInsert } from '../modules/crm/index.ts';

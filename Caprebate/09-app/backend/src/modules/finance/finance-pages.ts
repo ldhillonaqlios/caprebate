@@ -5,8 +5,8 @@
  * Same shape as `handleEngaged` and `handleSurveyor`: 'not-mine' for anything
  * it does not own. The three rules from router.ts apply unchanged.
  *
- * NOTHING HERE DECIDES ANYTHING. src/web/finance.ts (an organisation's invoices
- * from before), src/web/invoices.ts (a claim's), src/modules/assessment/vat.ts and
+ * NOTHING HERE DECIDES ANYTHING. src/modules/finance/finance.ts (an organisation's invoices
+ * from before), src/modules/finance/invoices.ts (a claim's), src/modules/assessment/vat.ts and
  * src/modules/claims/fee-controls.ts do every authorisation and every derivation; this
  * draws what they return. In particular the fee-versus-benefit comparison is
  * rendered exactly as the engine computed it, including its three-valued answer;
@@ -19,16 +19,16 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import type { App } from '../core/app.ts';
-import type { Actor } from '../core/index.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
-import { claimRef, recordTabs } from '../shared/index.ts';
-import { kpiRow, lateBadge, noDateBadge } from '../core/index.ts';
-import { setSubMenu } from '../core/navigation.ts';
+import type { App } from '../../core/app.ts';
+import type { Actor } from '../../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
+import { claimRef, recordTabs } from '../../shared/index.ts';
+import { kpiRow, lateBadge, noDateBadge } from '../../core/index.ts';
+import { setSubMenu } from '../../core/navigation.ts';
 import * as F from './finance.ts';
 import * as I from './invoices.ts';
-import { vatModule as V } from '../modules/assessment/index.ts';
-import { piecesPage } from '../core/index.ts';
+import { vatModule as V } from '../assessment/index.ts';
+import { piecesPage } from '../../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

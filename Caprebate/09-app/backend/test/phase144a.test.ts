@@ -24,7 +24,7 @@ import { seed } from '../src/core/seed.ts';
 import { Db, migrate } from '../src/core/db.ts';
 import { SCREENS, COSMETIC_NOTE } from '../src/modules/assessment/assessment.ts';
 import { FORBIDDEN_SETTINGS, settingLabel } from '../src/web/configuration.ts';
-import { feeSwitchesBox } from '../src/web/finance-pages.ts';
+import { feeSwitchesBox } from '../src/modules/finance/finance-pages.ts';
 import * as P from '../src/modules/portal/portal.ts';
 import { PLAIN_SWAPS } from '../src/shared/voice.ts';
 

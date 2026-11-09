@@ -475,7 +475,7 @@ function confirmation(db: Db, c: PipelineClaim, m: MilestoneKey): Need {
 
 /**
  * THE FEE TRIGGER, READ — CRM 7 of 10. The gate out of INVOICE asks it, and so
- * does raising our fee in src/web/invoices.ts: one reading of FEE_TRIGGER, in one
+ * does raising our fee in src/modules/finance/invoices.ts: one reading of FEE_TRIGGER, in one
  * place, never re-decided by the finance view.
  */
 export function feeTriggerReached(db: Db, c: PipelineClaim, trigger: FeeTrigger = FEE_TRIGGER.reading): Need {
@@ -631,7 +631,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // organisation, so one claim's invoice opened every claim of the same client.
       const live = liveFeeInvoiceCount(db, c.id);
       /* The claim moved on with the fee "raised, not sent" - the client had not been
-         invoiced. A live fee invoice must be recorded as SENT (finance's "sent", src/web/invoices.ts markSent). */
+         invoiced. A live fee invoice must be recorded as SENT (finance's "sent", src/modules/finance/invoices.ts markSent). */
       const sent = getInvoicesSentOnByClaimIdKind<{ sent_on: string | null }>(db, [c.id]);
       needs.push({
         what: 'Our fee invoice is sent to the client on this claim',

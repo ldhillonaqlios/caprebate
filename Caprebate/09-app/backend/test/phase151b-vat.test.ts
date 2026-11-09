@@ -3,7 +3,7 @@
  *
  * DECIDED: Word question 61, Lakhbir Dhillon, closed 24 September 2026 — "The relief is calculated over the 5 years –
  * and must include VAT". Closed as: measure the relief over five years, and include VAT where the client cannot
- * reclaim it. The rule is the engine's (CB_FEE.NO_CLAIM_VAT, in "Caprebate site.html"); src/web/finance.ts reads it
+ * reclaim it. The rule is the engine's (CB_FEE.NO_CLAIM_VAT, in "Caprebate site.html"); src/modules/finance/finance.ts reads it
  * for the tax adviser. These tests prove, through FIN.feeVersusBenefit:
  *
  *   1. NOT REGISTERED (as shipped) — no VAT exists to count; every client VAT position gives today's answer;
@@ -21,7 +21,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import * as E from '../src/shared/engine.ts';
-import * as FIN from '../src/web/finance.ts';
+import * as FIN from '../src/modules/finance/finance.ts';
 
 type VatSetting = { we_are_vat_registered?: unknown; vat_rate?: unknown };
 

@@ -354,7 +354,7 @@ type Reading = { readonly label: string; readonly rate: number; readonly compari
 
 /**
  * THE FIRST-YEAR COMPARISON, ON A RECORDED RATE OR AT BOTH ENDS OF THE BAND —
- * the same readings src/web/finance.ts shows, so the control and the screen can
+ * the same readings src/modules/finance/finance.ts shows, so the control and the screen can
  * never disagree about what the benefit is.
  */
 function readingsFor(f: FeeFacts): Reading[] {

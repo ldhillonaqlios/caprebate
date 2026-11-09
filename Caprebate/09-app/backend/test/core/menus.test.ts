@@ -44,7 +44,7 @@ type Staff = (typeof STAFF)[number];
  */
 const MENUS: Readonly<Record<Staff, { tabs: readonly string[]; more: readonly string[] }>> = {
   sales: { tabs: ['Home', 'Tasks', 'Leads', 'Pipeline', 'Introducers', 'Clients', 'Calendar'], more: [] },
-  // PHASE 151b (Word answer 40): Accounting's Clients tab — its billing view of the clients area (src/web/billing.ts).
+  // PHASE 151b (Word answer 40): Accounting's Clients tab — its billing view of the clients area (src/modules/finance/billing.ts).
   accounting: { tabs: ['Home', 'Tasks', 'Clients', 'Claims', 'Finance', 'Introducer fees'], more: [] },
   surveying: { tabs: ['Home', 'Survey jobs', 'Tasks'], more: [] },
   readonly: { tabs: ['Home', 'Leads', 'Pipeline', 'Clients'], more: [] },

@@ -1,6 +1,6 @@
 /**
  * UI TIDY PHASE 17 — ACCOUNTING'S AND THE SURVEYOR'S OWN PAGES, 3 October 2026 (src/modules/crm/crm-pages.ts claimsPage,
- * src/web/billing.ts listPage). Accounting's Claims list drew four columns of dashes — Property, Stage, Next action and
+ * src/modules/finance/billing.ts listPage). Accounting's Claims list drew four columns of dashes — Property, Stage, Next action and
  * Owner are not Accounting's to read — so a column no row may show is left out and the page says so. Accounting's
  * Clients list shows an overdue invoice as a red label. The homes (phase 4) and the phone check needed no change.
  */

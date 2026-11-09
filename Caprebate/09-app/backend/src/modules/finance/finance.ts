@@ -53,15 +53,15 @@
  * its own about which way it falls.
  */
 
-import type { Db } from '../core/index.ts';
-import { authorise, can, type Actor } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
+import type { Db } from '../../core/index.ts';
+import { authorise, can, type Actor } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
 import {
   feeDisplay, feeGuard, feeRate, marginalRateRange, noClaimThreshold,
   type EntityKey, type FeeComparison, type NoClaimVatReading, type RecommendationThreshold,
-} from '../shared/index.ts';
-import { formatPence } from '../shared/index.ts';
-import { NotFoundAsRefusal } from '../core/backoffice.ts';
+} from '../../shared/index.ts';
+import { formatPence } from '../../shared/index.ts';
+import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 
 export { NotFoundAsRefusal };
 
@@ -446,7 +446,7 @@ function toRow(r: InvoiceDbRow): FinanceRow {
  */
 export function invoices(db: Db, actor: Actor, limit = 200): FinanceRow[] {
   assertFinanceSection(actor);
-  // CRM 7 of 10: AN ORGANISATION'S INVOICES FROM BEFORE INVOICES SAT ON THE CLAIM. A claim's invoice is src/web/invoices.ts's.
+  // CRM 7 of 10: AN ORGANISATION'S INVOICES FROM BEFORE INVOICES SAT ON THE CLAIM. A claim's invoice is src/modules/finance/invoices.ts's.
   return db.all<InvoiceDbRow>(`${INVOICE_SELECT}WHERE i.claim_id IS NULL ORDER BY i.created_at DESC, b.name ASC LIMIT ?`, [limit])
     .filter((r) =>
       can(actor, 'invoice.read', { type: 'invoice', id: r.id, business_id: r.business_id })

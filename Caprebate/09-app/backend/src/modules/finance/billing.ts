@@ -8,7 +8,7 @@
  *
  * WHAT WAS ALREADY THERE, AND WHAT WAS NOT. Being told to raise the invoice was built: when a claim reaches the invoice
  * stage, rule-invoice-finance-task gives Accounting a task (migration 012), and the finance page lists every claim
- * waiting to be invoiced. Recording payment was built (recordReceived, src/web/invoices.ts). Two things were missing:
+ * waiting to be invoiced. Recording payment was built (recordReceived, src/modules/finance/invoices.ts). Two things were missing:
  *   1. THE CLIENTS AREA. The Clients tab was gated on `organisation.read` — the WHOLE client record — which Accounting
  *      does not hold, on purpose (src/core/authz.ts): the record carries internal notes, the research, the answers the
  *      client gave, and where the client came from. Opening it to Accounting failed fifteen tests that guard exactly
@@ -24,16 +24,16 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../core/app.ts';
-import { authorise, can, type Actor } from '../core/index.ts';
-import { h, page, raw, HTML_HEADERS, type Safe } from '../shared/index.ts';
-import { localDate } from '../shared/index.ts';
-import { dateField, textField, words, type Fields, type Vocab } from './compliance.ts';
+import type { App } from '../../core/app.ts';
+import { authorise, can, type Actor } from '../../core/index.ts';
+import { h, page, raw, HTML_HEADERS, type Safe } from '../../shared/index.ts';
+import { localDate } from '../../shared/index.ts';
+import { dateField, textField, words, type Fields, type Vocab } from '../../web/compliance.ts';
 import { claimInvoices, financeDashboard, type ClaimInvoiceView, type ExpectedClaim } from './invoices.ts';
-import { NotFoundAsRefusal } from '../core/backoffice.ts';
-import { formatPence } from '../shared/index.ts';
-import { getBusinessesIdNameById, getBusinessesNameById, listContactsFullNameJobRoleByBusinessId } from '../modules/crm/index.ts';
-import { getClaimsBById, listClaimsIdByBusinessId } from '../modules/claims/index.ts';
+import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { formatPence } from '../../shared/index.ts';
+import { getBusinessesIdNameById, getBusinessesNameById, listContactsFullNameJobRoleByBusinessId } from '../crm/index.ts';
+import { getClaimsBById, listClaimsIdByBusinessId } from '../claims/index.ts';
 
 export const CHASE_WAYS: Vocab = Object.freeze({
   PHONE: 'A phone call', EMAIL: 'An email', LETTER: 'A letter', IN_PERSON: 'In person',

@@ -33,7 +33,7 @@ import * as T from '../../src/modules/crm/tasks.ts';
 import * as CFL from '../../src/modules/portal/client-filing.ts';
 import * as CF from '../claim-fixtures.ts';
 import * as I from '../../src/modules/crm/introducers.ts';
-import * as INV from '../../src/web/invoices.ts';
+import * as INV from '../../src/modules/finance/invoices.ts';
 import * as R from '../../src/modules/claims/claim-record.ts';
 import { loadLetter, unresolvedTerms } from '../../src/modules/claims/letter.ts';
 import * as FC from '../../src/modules/claims/fee-controls.ts';

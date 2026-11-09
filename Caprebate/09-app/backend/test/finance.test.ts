@@ -36,7 +36,7 @@ import { createApp } from '../src/core/server.ts';
 import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
 import { can, REGISTERED_ACTIONS } from '../src/core/authz.ts';
 import { feeDisplay, feeGuard, feeRate, marginalRateRange } from '../src/shared/engine.ts';
-import * as F from '../src/web/finance.ts';
+import * as F from '../src/modules/finance/finance.ts';
 import { actor } from './helpers.ts';
 
 const PASSWORD = 'a-very-long-development-password';

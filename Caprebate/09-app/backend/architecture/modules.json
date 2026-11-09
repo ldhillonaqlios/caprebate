@@ -1155,7 +1155,7 @@
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/billing.ts": {
+  "src/modules/finance/billing.ts": {
    "area": "finance",
    "kind": "logic"
   },
@@ -1215,11 +1215,11 @@
    "area": "survey",
    "kind": "page"
   },
-  "src/web/finance-pages.ts": {
+  "src/modules/finance/finance-pages.ts": {
    "area": "finance",
    "kind": "page"
   },
-  "src/web/finance.ts": {
+  "src/modules/finance/finance.ts": {
    "area": "finance",
    "kind": "logic"
   },
@@ -1227,7 +1227,7 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/invoices.ts": {
+  "src/modules/finance/invoices.ts": {
    "area": "finance",
    "kind": "logic"
   },

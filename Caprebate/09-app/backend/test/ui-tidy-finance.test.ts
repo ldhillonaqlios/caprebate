@@ -1,5 +1,5 @@
 /**
- * UI TIDY PHASE 12 — FINANCE, 3 October 2026 (src/web/finance-pages.ts).
+ * UI TIDY PHASE 12 — FINANCE, 3 October 2026 (src/modules/finance/finance-pages.ts).
  * Four boxes count the money; one line names every claim ready to invoice; invoices open first; the sections are in the
  * left-hand menu with their counts; each claim's number sits under its company; a late invoice is a red label. The
  * right-hand panel, which said the top's buttons again and pushed the invoices table sideways, is gone.
@@ -7,9 +7,9 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import * as I from '../src/web/invoices.ts';
-import * as F from '../src/web/finance.ts';
-import { financeMenu, lateBoxLabel, readyLine, invoiceDue } from '../src/web/finance-pages.ts';
+import * as I from '../src/modules/finance/invoices.ts';
+import * as F from '../src/modules/finance/finance.ts';
+import { financeMenu, lateBoxLabel, readyLine, invoiceDue } from '../src/modules/finance/finance-pages.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit12'); });

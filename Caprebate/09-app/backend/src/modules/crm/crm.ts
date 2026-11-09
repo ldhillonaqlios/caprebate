@@ -50,7 +50,7 @@ import { postcodeStore, POSTCODE_GATE } from '../../integrations/postcodes/postc
 import { resolveServedAuthority, type PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
 import { formatPence, formatShownRange, toPence } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import { claimMoneyLines, type ClaimMoneyLine } from '../../web/invoices.ts';
+import { claimMoneyLines, type ClaimMoneyLine } from '../finance/invoices.ts';
 import { claimTaskPanel, followUpsFor, type ClaimTaskPanel } from './tasks.ts';
 import { lastContactFor, timelineIfPermitted, type Timeline } from './timeline.ts';
 import { fireAutomation } from './automation.ts';
@@ -1454,7 +1454,7 @@ export function claimList(db: Db, actor: Actor, limit = 200): ClaimRow[] {
     });
 }
 
-/** CRM 7 of 10: a line of the claim's own invoices — src/web/invoices.ts builds it. */
+/** CRM 7 of 10: a line of the claim's own invoices — src/modules/finance/invoices.ts builds it. */
 export type MoneyLine = ClaimMoneyLine;
 
 export type ClaimView = {

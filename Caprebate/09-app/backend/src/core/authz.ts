@@ -627,7 +627,7 @@ const RULES: RuleTable = {
    * see the clients area, so it is told to raise the invoice, chases it and records payment. NOT `organisation.read`:
    * the whole record carries the notes, the research, the answers and where the client came from, and opening it to
    * Accounting failed fifteen tests that guard those boundaries. This is the billing view of the same area
-   * (src/web/billing.ts): each client's name, the people to chase and how to reach them, the claims waiting for an
+   * (src/modules/finance/billing.ts): each client's name, the people to chase and how to reach them, the claims waiting for an
    * invoice, and the invoices with every chase. Read only.
    */
   'client_billing.read': { ADMIN: always, ACCOUNTING: always },
