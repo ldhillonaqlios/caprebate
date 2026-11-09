@@ -14194,7 +14194,7 @@ all               16    22   110     0   148
 
 - **Accept, the figures.** Before (main at b7cb100): site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,956, project 5,484. After: site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,969 of 3,969 across 224 files, project 5,497; the pass lists the same name for name in all four suites, the back end plus exactly the 13 new tests. `npm run check` green; every file loads alone; the route list identical. Drift checker (0 wrong), CRM fold check (and self-test; the line references the moves shifted re-derived), register check, tracker check and self-test, plain words (265 files, 15,838 strings, the same strings), brand, analytics (26), notices acceptance, payload proof, verify-page and the boundary self-test (25) green. The site harness's two checks that load the job cost model read its new place. Not done here: signing in on the preview as staff and as a client; the suites drive both through the app.
 - **Not done as the block said, and why.** "Zero breaks of every rule": 148 are left. Most of the modules' upward imports are reads of the CRM's client record (businesses, contacts), which nearly every module needs and the CRM owns near the top: they need a decision (move the client record low in the order, our recommendation, or ports) before they can be turned round, and the 110 joins need a test of each screen's output before each is split. Both are Phase 161l1, written with the counts by pair, the six simplest joins named, and the helper's finding that the check hides a value import from a path another statement imports as a type.
-- **Board and plan.** 161l Done (group Z, claim cleared) on the board and the tracker; 161l1 made (board item 13502997938, Ready - Claude can build) and written before 161m in ACTION-PLAN.md and on the run sheet; COORDINATES' order line and section 6's row name it. 4B: the build queue is 161l1 and 161m, each a phase; no orphans. The run sheet's 161l block waits for Lakhbir's yes in the chat before it is deleted.
+- **Board and plan.** 161l Done (group Z, claim cleared) on the board and the tracker; 161l1 made (board item 13502997938, Ready - Claude can build) and written before 161m in ACTION-PLAN.md and on the run sheet; COORDINATES' order line and section 6's row name it. 4B: the build queue is 161l1 and 161m, each a phase; no orphans. The run sheet's 161l block was deleted after Lakhbir's yes in the chat ("Yes, both"), the same yes that merged the pull request.
 
 ```
 DONE          The order written into the module map and checked (rule 2 refuses an import up it); events
@@ -14206,9 +14206,10 @@ NOT DONE      The client record low in the order, the modules' own upward import
               (110), 16 imports round a door, routes and permissions files for survey, finance, compliance and admin,
               the parts the router lends, the load-order workarounds, the check's hidden value imports - BUILDABLE -
               new Phase 161l1, written and inserted before 161m.
-              Deleting the run sheet's 161l block - BLOCKED on Lakhbir's yes in the chat - asked in the report.
               Signing in on the preview as staff and as a client - BUILDABLE - after the merge, on the test website.
               The developer's answer to D16 (how far the notes come out) - BLOCKED on the developer - the developer
               question pack, D16 (our recommendation is built meanwhile).
 NOTHING LEFT  beyond those lines.
 ```
+
+- **Merged, 9 Nov 2026.** Lakhbir said yes in the chat ("Yes, both"): PR #92 is merged into main (merge commit cd9ca4f, GitHub's three checks green), and the run sheet's 161l block is deleted, with a line saying so at the end of the run sheet. The first phase on the run sheet is now 161l1.

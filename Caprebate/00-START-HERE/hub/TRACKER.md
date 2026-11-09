@@ -3785,6 +3785,7 @@
 - Note 2026-11-08 (Phase 161j): Item 6 added by Phase 161j: 84 rule-3 joins against the five modules, 12 lower-layer imports of module data files, the parts router.ts lends the routes files (uncounted by the boundary check), four load-order workarounds, misleading generated data-function names.
 - Note 2026-11-09 (Phase 161k): Item 7 added by Phase 161k: 31 rule-3 joins against survey, finance and admin, nine imports round a door, routes and permissions files for the four modules, two load-order workarounds. Same text in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-09 (Phase 161l): Done 9 Nov 2026: the order written into the module map and checked (rule 2 refuses an import up it), events (src/core/events.ts) with the first three upward calls replaced, each module's permissions in its actions.ts, the start-up wiring in src/app/, the core, shared parts and outside services taken off the modules; breaks 350 -> 148; every suite the same pass list plus 13 tests. The rest is Phase 161l1 (board item 13502997938). PR on GitHub; Lakhbir merges.
+- Note 2026-11-09 (Phase 161l): Merged 9 Nov 2026 on Lakhbir's yes in the chat: PR #92, merge commit cd9ca4f on main; the run sheet's 161l block deleted on the same yes.
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 
