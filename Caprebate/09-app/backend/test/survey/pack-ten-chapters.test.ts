@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { packView, saveLine, savePackValue, setLineRemoved, type PackDeps } from '../../src/modules/survey/survey-pack.ts';
 import { savePackWords, WORD_FIELD_NAMES, WORD_FIELDS } from '../../src/modules/survey/pack-words.ts';
 import { packSheet, packSheets, SHEET_CHAPTERS } from '../../src/modules/survey/pack-sheets.ts';

@@ -14,10 +14,10 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../../src/core/server.ts';
-import { seed, SEED_PASSWORD } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed, SEED_PASSWORD } from '../../src/app/seed.ts';
 import { isInventedLogin } from '../../src/core/auth.ts';
-import { STEP_LOST_ON_MEMORY } from '../../src/core/router.ts';
+import { STEP_LOST_ON_MEMORY } from '../../src/app/router.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 

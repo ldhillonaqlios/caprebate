@@ -27,7 +27,7 @@ import { SOURCES as REGISTER_SOURCES, SUPPLIER_DOCS } from '../../src/integratio
 import * as R from '../../src/modules/claims/research.ts';
 import * as E from '../../src/modules/claims/engaged.ts';
 import { panel2 } from '../../src/modules/claims/engaged-pages.ts';
-import { seed } from '../../src/core/seed.ts';
+import { seed } from '../../src/app/seed.ts';
 import { newId } from '../../src/core/users.ts';
 import { testApp, actor } from '../helpers.ts';
 

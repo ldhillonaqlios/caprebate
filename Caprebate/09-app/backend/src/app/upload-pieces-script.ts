@@ -10,7 +10,7 @@
  * It sets no HTML from anything: it reads the chosen file's size, sends its bytes, and writes its own words into the
  * form's own note. Nothing is kept in the browser.
  */
-import { PIECED_ABOVE } from './upload-pieces.ts';
+import { PIECED_ABOVE } from '../core/index.ts';
 
 export const UPLOAD_PIECES_JS = `(function () {
   'use strict';

@@ -21,11 +21,9 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { SECRET_KEYS, secretsFromEnvironment, useProcessSecrets, isProduction } from './secrets.ts';
-import { mfaKeyFrom } from './mfa-seal.ts';
+import { SECRET_KEYS, getUsersIdByIdEmailCanonical, isProduction, mfaKeyFrom, secretsFromEnvironment, useProcessSecrets } from '../core/index.ts';
 import { referenceLocation } from '../integrations/index.ts';
 import { CRON_SECRET_MIN_LENGTH } from './timers.ts';
-import { getUsersIdByIdEmailCanonical } from './data.ts';
 
 export type Env = Readonly<Record<string, string | undefined>>;
 type Listener = (req: IncomingMessage, res: ServerResponse) => void;

@@ -343,7 +343,7 @@ export function bookingById(db: Db, actor: Actor, id: string): BookingRow {
  * it: move one, and show both views change."
  *
  * There is nothing here that creates a second record. The row was written by
- * the funnel close in src/core/router.ts; this UPDATEs it, `P.bookings` in
+ * the funnel close in src/app/router.ts; this UPDATEs it, `P.bookings` in
  * portal.ts SELECTs it, and there is no copy anywhere between them.
  *
  * THE SLOT IS RE-CHECKED HERE, NOT TRUSTED FROM THE FORM. `isBookable` asks the

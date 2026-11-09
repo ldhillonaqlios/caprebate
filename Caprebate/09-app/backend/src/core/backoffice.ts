@@ -2,7 +2,7 @@
  * THE BACK OFFICE'S GATES: may you enter it, may you open a section, and a missing row read as a refusal. The two
  * sections that were here (filled assessments and the calendar) are the CRM's: src/modules/crm/assessments-and-calendar.ts.
  *
- * VIEW MODELS. The renderer in src/core/staff.ts draws what these return and
+ * VIEW MODELS. The renderer in src/app/staff.ts draws what these return and
  * decides nothing; every authorisation is here, on the specific object, exactly
  * as src/modules/portal/portal.ts does it for the client half.
  *

@@ -6,7 +6,7 @@
  * sent its file whole, while the portal says "The most we take is 50 MB". Photos and videos already go round the limit
  * (src/modules/survey/photo-upload.ts, src/modules/survey/survey-video.ts); documents did not.
  *
- * HOW. The page's script (src/core/upload-pieces-script.ts) sees a chosen file over `PIECED_ABOVE`, asks to START
+ * HOW. The page's script (src/app/upload-pieces-script.ts) sees a chosen file over `PIECED_ABOVE`, asks to START
  * (`startPieces`: the size, so the server says how many pieces), sends each piece of at most `PIECE_BYTES` (`putPiece`),
  * then sends the form exactly as before with the file box emptied and the start's id in a field named `pieces`. The
  * form's own handler reads the file from the pieces (`takePieces`, through `readUpload` in client-files-pages.ts and

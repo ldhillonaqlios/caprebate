@@ -1,5 +1,5 @@
 /**
- * 30 SEPTEMBER 2026 — EMAIL SENDING SWITCHED ON FOR TESTING (src/integrations/email/email-provider.ts, src/core/server.ts).
+ * 30 SEPTEMBER 2026 — EMAIL SENDING SWITCHED ON FOR TESTING (src/integrations/email/email-provider.ts, src/app/server.ts).
  *
  * Lakhbir: "swithc on sending emails" — "again remeber this is all a test and not the final version". Every email a
  * request saves to be sent is tried once before the answer finishes. A fake mail server only: nothing leaves the Mac.
@@ -10,7 +10,7 @@ import { createServer as createTcp, connect as netConnect, type Server } from 'n
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import { isInventedAddress, withoutNotSentWords, NOT_SENT_WORDS } from '../../src/integrations/email/email.ts';
 

@@ -1,6 +1,6 @@
 /**
  * THE ASSESSMENT'S ADDRESSES: the address box's script, a client's own login made from the assessment, and the
- * four-stage assessment itself, with its pages. The router shell (src/core/router.ts) asks each function at the point
+ * four-stage assessment itself, with its pages. The router shell (src/app/router.ts) asks each function at the point
  * where its addresses have always been matched, so the order in which every address is tried is unchanged.
  */
 import type { ServerResponse } from 'node:http';

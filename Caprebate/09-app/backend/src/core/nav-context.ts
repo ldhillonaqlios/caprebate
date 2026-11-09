@@ -23,7 +23,7 @@ export type NavContext = {
   readonly names?: NameSwitches;
   /**
    * A REFUSED FORM KEEPS WHAT WAS TYPED (B6). The router records what a POST carried here, and `problem()` in
-   * src/core/staff.ts redraws the page the form was on with those values in it. `rerender` draws a GET of the back office
+   * src/app/staff.ts redraws the page the form was on with those values in it. `rerender` draws a GET of the back office
    * for that. Mutable on purpose: it is this one request's scratch space, and nothing outlives the request.
    */
   readonly form?: { typed?: URLSearchParams; action?: string; pending?: Promise<void>; rerender?: (href: string) => Promise<{ status: number; body: string }> };

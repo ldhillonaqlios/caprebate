@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { HOME_PAGE_CSP, SECTOR_SLUGS, sectorPath, FONT_FILES, buildEdition } from '../../src/modules/public-site/home-site.ts';
 import { avoidHits } from '../../src/shared/voice.ts';
 // @ts-expect-error the tool is plain JavaScript (an .mjs file with no type declarations)

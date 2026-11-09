@@ -14,7 +14,7 @@
  *   A PASSWORD ALONE NEVER OPENS A STAFF ACCOUNT. `login` issues a session only when nothing is left to
  *     do; a temporary password, or a second factor to set up or give, is a step, and `login` refuses with
  *     E_SECOND_STEP rather than skip it. The steps are walked only by src/core/sign-in.ts - by the website and, since
- *     By the JSON API's /api/login and /api/login/step routes (src/core/server.ts), on the same functions.
+ *     By the JSON API's /api/login and /api/login/step routes (src/app/server.ts), on the same functions.
  */
 
 import { randomBytes } from 'node:crypto';

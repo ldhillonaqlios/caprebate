@@ -27,8 +27,7 @@
     "src/shared/lists-pages.ts -> src/modules/crm/search.ts"
    ],
    "integrations": [
-    "src/core/cli.ts -> src/integrations/connectors/test-lookups.ts",
-    "src/core/cli.ts -> src/integrations/postcodes/postcode.ts",
+    "src/app/cli.ts -> src/integrations/connectors/test-lookups.ts",
     "src/modules/admin/saved-keys.ts -> src/integrations/connectors/claude.ts",
     "src/modules/claims/case-stamp.ts -> src/integrations/connectors/claude.ts",
     "src/modules/claims/engaged.ts -> src/integrations/connectors/free-registers.ts",
@@ -46,11 +45,9 @@
     "src/modules/survey/surveyor.ts -> src/integrations/postcodes/postcode.ts"
    ],
    "shared": [
-    "src/core/cli.ts -> src/shared/objectstore.ts",
-    "src/core/live-website.ts -> src/shared/shared-objectstore.ts",
-    "src/core/server.ts -> src/shared/objectstore.ts",
-    "src/core/server.ts -> src/shared/shared-objectstore.ts",
-    "src/core/staff.ts -> src/shared/lists-pages.ts",
+    "src/app/live-website.ts -> src/shared/shared-objectstore.ts",
+    "src/app/server.ts -> src/shared/shared-objectstore.ts",
+    "src/app/staff.ts -> src/shared/lists-pages.ts",
     "src/core/upload-pieces.ts -> src/shared/objectstore.ts",
     "src/core/upload-pieces.ts -> src/shared/upload-handler-port.ts",
     "src/modules/assessment/conveyancing-strip.ts -> src/shared/upload-handler-port.ts",
@@ -74,8 +71,6 @@
     "src/modules/survey/survey-video.ts -> src/shared/objectstore.ts"
    ],
    "survey": [
-    "src/core/cli.ts -> src/modules/survey/bcis-data.ts",
-    "src/core/cli.ts -> src/modules/survey/bcis-index.ts",
     "src/integrations/postcodes/location-key.ts -> src/modules/survey/costing/cost-model.cjs",
     "src/modules/claims/claim-record.ts -> src/modules/survey/costing/job-economics.cjs",
     "src/shared/engine.ts -> src/modules/survey/costing/job-economics.cjs"
@@ -104,18 +99,6 @@
     "compliance -> admin",
     "compliance -> crm",
     "compliance -> public-site"
-   ],
-   "core": [
-    "core -> admin",
-    "core -> assessment",
-    "core -> claims",
-    "core -> compliance",
-    "core -> crm",
-    "core -> finance",
-    "core -> integrations",
-    "core -> portal",
-    "core -> public-site",
-    "core -> survey"
    ],
    "crm": [
     "crm -> portal",
@@ -153,7 +136,7 @@
     "src/modules/portal/data-borrowed.ts : document_types"
    ],
    "assessment": [
-    "src/core/seed.ts : assessments",
+    "src/app/seed.ts : assessments",
     "src/modules/claims/data-borrowed.ts : assessments",
     "src/modules/compliance/data-borrowed.ts : consent_answers",
     "src/modules/crm/data-borrowed.ts : assessments",
@@ -163,8 +146,8 @@
     "src/shared/data-borrowed.ts : estimates"
    ],
    "claims": [
-    "src/core/seed.ts : claims",
-    "src/core/seed.ts : engagements",
+    "src/app/seed.ts : claims",
+    "src/app/seed.ts : engagements",
     "src/modules/admin/data-borrowed.ts : claims",
     "src/modules/assessment/data-borrowed.ts : claim_deliverables",
     "src/modules/assessment/data-borrowed.ts : claims",
@@ -207,7 +190,7 @@
     "src/shared/data-borrowed.ts : users"
    ],
    "crm": [
-    "src/core/seed.ts : businesses",
+    "src/app/seed.ts : businesses",
     "src/integrations/data-borrowed.ts : businesses",
     "src/modules/admin/data-borrowed.ts : businesses",
     "src/modules/assessment/data-borrowed.ts : businesses",
@@ -271,7 +254,7 @@
     "src/modules/crm/data-borrowed.ts : enquiry_checks"
    ],
    "survey": [
-    "src/core/seed.ts : surveyor_jobs",
+    "src/app/seed.ts : surveyor_jobs",
     "src/modules/assessment/data-borrowed.ts : surveyor_jobs",
     "src/modules/claims/data-borrowed.ts : pack_client_notices",
     "src/modules/claims/data-borrowed.ts : pack_signoff_answers",

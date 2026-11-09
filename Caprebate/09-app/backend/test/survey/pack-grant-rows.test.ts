@@ -17,7 +17,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import * as F from '../../src/modules/claims/claim-facts.ts';
 import { packView, savePackValue, saveLine, setLineRemoved, type PackDeps } from '../../src/modules/survey/survey-pack.ts';
 import { CHAPTERS, chaptersToRead } from '../../src/modules/survey/pack-chapters.ts';

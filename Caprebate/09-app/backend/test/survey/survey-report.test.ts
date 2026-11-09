@@ -27,7 +27,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { buildCanvasPdf, textWidth, wrapText } from '../../src/shared/pdf-canvas.ts';
 import { reportHtml, reportModel, reportPdf } from '../../src/modules/survey/survey-report.ts';
 import { packView, savePackValue, saveLine, setLineRemoved } from '../../src/modules/survey/survey-pack.ts';

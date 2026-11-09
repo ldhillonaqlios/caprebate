@@ -34,6 +34,10 @@ import {
 import {
   SLOT_MINUTES, isBookable, slotsBetween, startOfLocalDay, addLocalDays,
 } from '../../src/modules/crm/schedule.ts';
+/* The CRM's permissions (booking.write: who may own a call), which its front door registers as it loads. The
+   application always loads them; this test reads the schedule on its own, so it loads them here (Phase 161l: before,
+   src/core/app.ts happened to load them on the way: its audit log read the survey's front door, which loaded every module). */
+import '../../src/modules/crm/actions.ts';
 
 /* The two 2026 transitions. Real dates, looked up rather than assumed. */
 const CLOCKS_GO_FORWARD = '2026-03-29';

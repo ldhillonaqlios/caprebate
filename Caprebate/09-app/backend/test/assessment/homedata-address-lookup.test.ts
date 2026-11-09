@@ -15,7 +15,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { RateLimiter, type CallDeps, type Transport } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues, SECRET_KEYS } from '../../src/core/secrets.ts';
 import {
@@ -34,7 +34,7 @@ import { CONNECTIONS } from '../../src/modules/admin/connections.ts';
 import { ADDRESS_LOOKUP_JS } from '../../src/modules/assessment/address-lookup-script.ts';
 import { ADDRESS_PAGE_CSP } from '../../src/modules/assessment/index.ts';
 import { ingestRegisterRecord } from '../../src/integrations/register-ingest.ts';
-import { seed } from '../../src/core/seed.ts';
+import { seed } from '../../src/app/seed.ts';
 import { newId } from '../../src/core/users.ts';
 import { testApp, actor } from '../helpers.ts';
 

@@ -74,7 +74,7 @@ export function droppedConnection(e: unknown): boolean {
  * clicks." On the test website every query is a trip over the network to the lasting database (Turso), and a click on
  * Home asked 467 to 737 of them — the same "which surveyor is on this claim?" 165 times — so a page that takes 0.03 s on
  * the Mac took 4 to 10 s there. While one click is answered (`withReadMemo`, wrapped round every request in
- * src/core/server.ts), a read asked again with the same SQL and the same values is answered from what this click already
+ * src/app/server.ts), a read asked again with the same SQL and the same values is answered from what this click already
  * has. It is safe because it can never be out of date:
  *   - ANY WRITE, by this click or any other one in this process, forgets everything remembered, at once (`#epoch`);
  *   - INSIDE A TRANSACTION nothing is remembered or reused: a transaction reads the database itself;
@@ -195,7 +195,7 @@ export class Db {
 
   /**
    * Faster clicks, part 2: bring the local copy up to date with what any copy of the website wrote — one trip. Called at
-   * the start of every click (src/core/server.ts). Nothing to do without a local copy.
+   * the start of every click (src/app/server.ts). Nothing to do without a local copy.
    */
   refresh(): void {
     if (!this.localCopy) return;
@@ -306,7 +306,7 @@ export class Db {
 
 /**
  * 28 September 2026: the migrations NOT yet applied here, read and never written. A copy of the
- * test website opens its lasting database with `schema: 'require-built'` (src/core/app.ts) and refuses one with any left,
+ * test website opens its lasting database with `schema: 'require-built'` (src/app/build-app.ts) and refuses one with any left,
  * because two copies building one empty database at once left it half built, twice.
  */
 export function pendingMigrations(db: Db, dir: string): string[] {

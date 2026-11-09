@@ -7,7 +7,7 @@
  *   - control characters, except the tab and the two line endings, which keep a note's lines as typed;
  *   - the direction marks, embeddings, overrides and isolates (U+061C, U+200E, U+200F, U+202A-U+202E, U+2066-U+2069).
  * Everything else - accents, dashes, any language's letters, emoji - is kept. Read by every form the web half reads
- * (src/core/router.ts form, src/core/multipart.ts, src/modules/crm/messages-pages.ts); a password is never changed (KEEP_AS_SENT).
+ * (src/app/router.ts form, src/core/multipart.ts, src/modules/crm/messages-pages.ts); a password is never changed (KEEP_AS_SENT).
  */
 const INVISIBLE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F؜‎‏‪-‮⁦-⁩]/g;
 

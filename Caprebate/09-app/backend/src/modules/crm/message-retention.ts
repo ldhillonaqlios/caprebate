@@ -47,7 +47,7 @@
  *
  * AUDITED WITH IDS AND COUNTS, NEVER THE WORDS: one MESSAGES_DELETED entry per run, naming every id it removed.
  *
- * Run by `node src/core/cli.ts sweep-messages`. A scheduled run of that one line is all the hosting needs to add.
+ * Run by `node src/app/cli.ts sweep-messages`. A scheduled run of that one line is all the hosting needs to add.
  */
 
 import type { Db } from '../../core/index.ts';

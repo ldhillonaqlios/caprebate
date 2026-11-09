@@ -12,7 +12,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { IncomingMessage } from 'node:http';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { clientIp } from '../../src/core/http.ts';
 import { HOME_PATH } from '../../src/modules/public-site/home-site.ts';
 

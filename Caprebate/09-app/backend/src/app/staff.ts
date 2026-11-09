@@ -28,30 +28,23 @@ import type { EngagementSigning } from '../modules/claims/index.ts';
 import { handleWhatsAppImport } from '../modules/crm/index.ts';
 import { handleConnections } from '../modules/admin/index.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import * as SI from './sign-in.ts';
-import type { App } from './app.ts';
-import { type Actor } from './authz.ts';
-import { changeOwnPassword, SESSION_COOKIE_NAME, AuthError } from './auth.ts';
-import { APP_ROLES } from './roles.ts';
+import * as SI from '../core/index.ts'; // the sign-in steps (src/core/sign-in.ts), through the core's door
+import { APP_ROLES, AuthError, IMAGE_LIMITS, PHOTO_HEADERS, SESSION_COOKIE_NAME, WELCOME_JOBS, changeOwnPassword, clearPhoto, customRoleOf, dismissWelcome, findById, getSessionsIdByTokenHashRevokedAt, getUsersNById, hashToken, keepSectionChoice, kpiRow, lateBadge, navContext, nobodyBadge, photoFor, piecesPage, readPhoto, refillForm, setPhoto, setSubMenu, singleFile, staffHelp, typedValues, welcomeShown } from '../core/index.ts';
+import type { Actor, App } from '../core/index.ts';
 import { handleRoleEditor, madeRoleChoices } from '../modules/admin/index.ts';
 import { handleBilling } from '../modules/finance/index.ts';
-import { customRoleOf } from './custom-roles.ts';
-import { findById, hashToken } from './users.ts';
-import type { FsObjectStore } from '../shared/objectstore.ts';
+import type { FsObjectStore } from '../shared/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
-import { staffShell, portalShell, opens, navContext, filterBar, LEAD_FILTERS, setSubMenu } from './navigation.ts';
-import { kpiRow, lateBadge, nobodyBadge } from './look.ts';
+/* Straight from these three core files, not the core's door: each reads business modules as it loads (the menus, the
+   back office's views, the saved keys), so the door cannot name them (Phase 161l; see src/core/index.ts). */
+import { staffShell, portalShell, opens, filterBar, LEAD_FILTERS } from '../core/index.ts';
 import { settingsBody, settingsTiles } from '../modules/admin/index.ts';
 import { homeRows } from '../modules/public-site/index.ts';
 import { dashboard, dashView } from '../modules/crm/index.ts';
 import { addBlock, removeBlock } from '../modules/crm/index.ts';
 import { saveKey } from '../modules/admin/index.ts';
 import { mayReadQueue, readRepliesIfDue } from '../modules/crm/index.ts';
-import { refillForm, typedValues } from './refill.ts';
 import { welcomeCard, why } from '../shared/index.ts';
-import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
-import { keepSectionChoice } from './sections.ts';
-import { staffHelp } from './help.ts';
 import { settingsModule as S } from '../modules/admin/index.ts';
 import { backOffice as B } from '../modules/crm/index.ts';
 import { handleEngaged } from '../modules/claims/index.ts';
@@ -75,20 +68,16 @@ import { handleCompliance } from '../modules/compliance/index.ts';
 import { handleDashboard } from '../modules/crm/index.ts';
 import { handleLists } from '../shared/lists-pages.ts';
 import { handleConfiguration } from '../modules/admin/index.ts';
-import { setPhoto, clearPhoto, readPhoto, photoFor, PHOTO_HEADERS, IMAGE_LIMITS } from './avatar.ts';
 import { HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments, startOfLocalDay, staffSlots, type Availability, type WorkingTimeInput } from '../modules/crm/index.ts';
 import {
   localClock, localDate, localPartsOf, localStamp, localWhen, zoneNotice,
 } from '../shared/index.ts';
-import { singleFile } from './multipart.ts';
 import { RANGE_QUALIFIER } from '../shared/index.ts';
 import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from '../modules/compliance/index.ts';
 import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine, SAME_TIME_WORDS, VIDEO_PAGE_HEADERS } from '../modules/crm/index.ts';
 import { sendVideoInvite } from '../modules/crm/index.ts';
 import { hostZak, joinSignature } from '../integrations/index.ts';
-import { piecesPage } from './upload-pieces.ts';
 import { listOutboxCreatedAtToEmailByOutboxId, updateVideoMeetingsHostOpenedAtHostOpenedByByIdHostOpenedAt } from '../integrations/index.ts';
-import { getSessionsIdByTokenHashRevokedAt, getUsersNById } from './data.ts';
 import { getBookingsSById } from '../modules/crm/index.ts';
 
 export type StaffDeps = {

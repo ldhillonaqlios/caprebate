@@ -13,7 +13,7 @@ import { createHmac } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { fixtureTransport, liveTransport, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import { forgetZoomToken, joinSignature, makeZoomMeeting, zoomMissing, MEETING_TOPIC } from '../../src/integrations/connectors/zoom.ts';

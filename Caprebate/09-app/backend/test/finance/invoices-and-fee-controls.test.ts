@@ -26,7 +26,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import type { Db } from '../../src/core/db.ts';
 import type { AuditLog } from '../../src/core/audit.ts';
 import { APP_ROLES, type AppRole } from '../../src/core/roles.ts';

@@ -11,7 +11,7 @@
  * THREE STATES, AND NOTHING SET UP TODAY STOPS WORKING:
  *   NONE   no key set. A new secret is kept as text, exactly as before this phase, and a text one is read.
  *   KEY    a good key. A new secret is sealed. A text one is still read - and sealed the next time it is used to sign
- *          in (src/core/sign-in.ts), or all at once by `node src/core/cli.ts seal-app-secrets`.
+ *          in (src/core/sign-in.ts), or all at once by `node src/app/cli.ts seal-app-secrets`.
  *   BAD    a key is set but is not 32 bytes of base64. Nothing new is written with it, and it opens nothing: it refuses
  *          in words, because keeping a secret as text while somebody believes it is sealed is worse than saying so.
  * A SEALED SECRET WITHOUT ITS KEY IS REFUSED IN WORDS (the key removed, or changed): never read as text, never a crash.
@@ -78,7 +78,7 @@ export function openSecret(k: MfaKey, user_id: string, stored: string): { ok: tr
 }
 
 /**
- * EVERY SECRET STILL KEPT AS TEXT, SEALED AT ONCE: `node src/core/cli.ts seal-app-secrets`, run once after the key is set.
+ * EVERY SECRET STILL KEPT AS TEXT, SEALED AT ONCE: `node src/app/cli.ts seal-app-secrets`, run once after the key is set.
  * Without a good key it seals nothing and says why. A sealed one is left as it is. Returns how many it sealed.
  */
 export function sealTextSecrets(db: Db, k: MfaKey): { state: MfaKey['state']; sealed: number } {

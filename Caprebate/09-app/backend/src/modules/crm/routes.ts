@@ -1,6 +1,6 @@
 /**
  * THE CRM'S ADDRESSES: its two scripts, the client's video-call join page and the public referral form. The router
- * shell (src/core/router.ts) asks each function at the point where its addresses have always been matched, so the
+ * shell (src/app/router.ts) asks each function at the point where its addresses have always been matched, so the
  * order in which every address is tried is unchanged.
  */
 import { clockOf, form, html, nav, simple, type Actor, type WebRequest, type WebResult } from '../../core/index.ts';

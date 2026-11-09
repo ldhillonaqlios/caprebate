@@ -1,7 +1,7 @@
 /**
  * THE PORTAL'S ADDRESSES: signing the engagement letter by its emailed link, the accountant's confirmation link, and
  * the client portal itself (the agreement to the current terms first, then its pages). The router shell
- * (src/core/router.ts) asks each function at the point where its addresses have always been matched, so the order in
+ * (src/app/router.ts) asks each function at the point where its addresses have always been matched, so the order in
  * which every address is tried is unchanged; the portal's pages are asked from its entry, as before.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';

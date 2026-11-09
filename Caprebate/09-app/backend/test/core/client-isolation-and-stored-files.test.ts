@@ -18,7 +18,7 @@ import { mkdtempSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pdfOf } from '../document-fixtures.ts';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { FsObjectStore, assertNoStaticFileRoute, FILE_MODE } from '../../src/shared/objectstore.ts';
 import { beginUpload, acceptClientBytes, finishUpload, eventsFor } from '../../src/modules/claims/uploads.ts';
 import { assertContractCovered, quarantineKeyFor, UPLOAD_LIMITS } from '../../src/shared/upload-handler-port.ts';
@@ -187,12 +187,12 @@ test('DB-W1-T1 — a stored document is not reachable by path, unauthenticated',
  * file by path cannot be added anywhere in the web sources without this failing.
  */
 test('DB-W1-T1 — NO web source (the core, the shared parts and every module) maps a request path onto the filesystem', async () => {
-  // src/web/ is gone: its files are in src/core/, src/shared/ and src/modules/<area>/ (and their subfolders).
+  // src/web/ is gone: its files are in src/core/, src/app/, src/shared/ and src/modules/<area>/ (and their subfolders).
   const root = new URL('../../src/', import.meta.url);
   // Two files read a file by a fixed path while they load, never by a request's path, and serve nothing: the database
   // gate reads the migrations, and assets.ts reads the one stylesheet (src/styles/site.css). They are not web sources.
   const NOT_WEB = new Set(['core/db.ts', 'shared/assets.ts']);
-  const files = ['core', 'shared', 'modules'].flatMap((d) => readdirSync(new URL(`${d}/`, root), { recursive: true })
+  const files = ['core', 'app', 'shared', 'modules'].flatMap((d) => readdirSync(new URL(`${d}/`, root), { recursive: true })
     .map(String).filter((f) => f.endsWith('.ts') && !NOT_WEB.has(`${d}/${f}`)).map((f) => new URL(`${d}/${f}`, root)));
   assert.ok(files.length >= 200, `only ${files.length} web sources found — the scan is not finding them`);
   for (const f of files) {

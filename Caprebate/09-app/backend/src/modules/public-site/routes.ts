@@ -1,6 +1,6 @@
 /**
  * THE PUBLIC SITE'S ADDRESSES: the legal pages and the notices, the home page, the sector pages and their files, and
- * the enquiry form. The router shell (src/core/router.ts) asks each function at the point where its addresses have
+ * the enquiry form. The router shell (src/app/router.ts) asks each function at the point where its addresses have
  * always been matched, so the order in which every address is tried is unchanged.
  */
 import { clientIp, cookie, form, html, nav, redirect, shellParts, type Actor, type WebRequest, type WebResult } from '../../core/index.ts';

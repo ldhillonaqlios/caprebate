@@ -26,8 +26,8 @@ import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { createApp } from '../../src/core/server.ts';
-import { seed, SEED_PASSWORD } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed, SEED_PASSWORD } from '../../src/app/seed.ts';
 import { Db, migrate } from '../../src/core/db.ts';
 import { AuditLog } from '../../src/core/audit.ts';
 import { FsObjectStore, assertNoStaticFileRoute } from '../../src/shared/objectstore.ts';
@@ -457,7 +457,7 @@ describe('151i · 4 · the audit log on a database two copies share', () => {
       for (let i = 0; i < 4; i++) new AuditLog(i % 2 === 0 ? a : b).append(row(`v-${i}`));
     } finally { a.close(); b.close(); }
     const r = await new Promise<{ code: number | null; out: string }>((resolve) => {
-      const p = spawn(process.execPath, [join(HERE, 'src', 'core', 'cli.ts'), 'verify-audit'], { env: { ...process.env, CAPREBATE_DB: file }, stdio: ['ignore', 'pipe', 'pipe'] });
+      const p = spawn(process.execPath, [join(HERE, 'src', 'app', 'cli.ts'), 'verify-audit'], { env: { ...process.env, CAPREBATE_DB: file }, stdio: ['ignore', 'pipe', 'pipe'] });
       let out = '';
       p.stdout.on('data', (d: Buffer) => { out += d.toString(); });
       p.on('exit', (code) => resolve({ code, out }));

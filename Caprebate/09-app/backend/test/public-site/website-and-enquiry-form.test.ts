@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { buildSiteEdition, SITE_PATH } from '../../src/modules/public-site/public-site.ts';
 
 const PASSWORD = 'a-very-long-development-password';

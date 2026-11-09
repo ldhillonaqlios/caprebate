@@ -30,7 +30,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32 } from 'node:zlib';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { FsObjectStore } from '../../src/shared/objectstore.ts';
 import { manyFiles } from '../../src/core/multipart.ts';
 import { checklistFor, GROUPS, NOBODY_IN_SHOT } from '../../src/modules/survey/survey-checklist.ts';

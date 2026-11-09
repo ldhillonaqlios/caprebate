@@ -15,7 +15,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { fixtureTransport, isLiveTransport, liveTransport, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import { cancelZoomMeeting, forgetZoomToken, hostZak, makeZoomMeeting, moveZoomMeeting, onTestWebsite, zoomMissing, zoomPlaceRefusal, zoomWhy, ZOOM_LOCAL_OPT_IN } from '../../src/integrations/connectors/zoom.ts';

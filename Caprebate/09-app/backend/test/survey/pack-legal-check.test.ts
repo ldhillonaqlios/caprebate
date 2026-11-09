@@ -20,7 +20,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { assessLegal, legalAllows, legalQuestions, legalView, parseAnswer } from '../../src/modules/survey/pack-legal.ts';
 import { SECTOR_IDS } from '../../src/shared/engine.ts';
 import { actor } from '../helpers.ts';

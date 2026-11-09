@@ -1,6 +1,6 @@
 /**
  * THE ADDRESS BOX'S ONE SCRIPT — served at /assets/address-lookup.js, and named only by the assessment's "Your details"
- * screen while "Find my address" is on (src/core/router.ts, f4Html).
+ * screen while "Find my address" is on (src/app/router.ts, f4Html).
  *
  * the owner: "one address box on Homedata". As soon as the postcode typed is a complete UK postcode, the list of addresses
  * there fills (one 2p search, POST /assessment/details/addresses, which keeps the £1 a day cap); typing in the box above

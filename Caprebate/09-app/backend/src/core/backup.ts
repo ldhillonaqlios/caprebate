@@ -1,7 +1,7 @@
 /**
  * THE NIGHTLY BACKUP, AND ITS RESTORE.
  *
- * WHAT IT COPIES, EVERY NIGHT (the live website's "backup" timer, src/core/timers.ts, 02:00 UTC):
+ * WHAT IT COPIES, EVERY NIGHT (the live website's "backup" timer, src/app/timers.ts, 02:00 UTC):
  *   - THE DATABASE, whole, as one SQLite file (VACUUM INTO, which writes a clean, complete copy while the website keeps
  *     running), to database/<date>.db.cbbk. On Turso the file is first brought down as a local copy of the live database
  *     (libsql's own replica), then written out the same way.

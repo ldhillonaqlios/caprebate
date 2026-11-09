@@ -24,7 +24,7 @@ import { mkdtempSync, existsSync, readdirSync, readFileSync, writeFileSync } fro
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import vm from 'node:vm';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { FsObjectStore } from '../../src/shared/objectstore.ts';
 import { PHOTO_UPLOAD_JS } from '../../src/modules/survey/photo-upload-script.ts';
 import { LOCK_OVERHEAD } from '../../src/modules/survey/photo-upload.ts';

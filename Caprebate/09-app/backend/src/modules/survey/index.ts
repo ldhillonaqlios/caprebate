@@ -7,6 +7,9 @@
 export { SURVEY_ACTIONS } from './actions.ts';
 export { GENESIS } from './anchor-quarantine.ts';
 export type { Role } from './anchor-quarantine.ts';
+// The BCIS importers, for the command line (src/app/cli.ts).
+export { importBcisData } from './bcis-data.ts';
+export { importBcisIndex } from './bcis-index.ts';
 export { getAnchorLogCountByJobIdClaimId, getAnchorLogHash, getAnchorLogSeqHashByJobIdClaimId, getSitePlansPostcodeHalfMByJobId, getSurveyorCommitmentsCommittedAtByClaimId, getSurveyorCommitmentsIdJobIdByClaimId, getSurveyorCommitmentsNByAssessmentId, getSurveyorJobsCountByBusinessIdState, getSurveyorJobsIdBusinessIdById4, getSurveyorJobsSurveyorIdByBusinessIdSurveyorId, getSurveyPackApprovalsClaimIdBusinessIdById, getSurveyPackApprovalsCountByPackId, getSurveyPackApprovalsIdVersionByClaimId, getSurveyPackApprovalsJsonExtractSnapshotJsonFById, getSurveyPackApprovalsJsonExtractSnapshotJsonQById, getSurveyPackApprovalsSnapshotJsonByClaimId, getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyPackApprovalsVersionSnapshotJsonByClaimId, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyPacksIdByJobId, insertPackClientNotices, insertPackSignoffAnswers, insertPackSignoffRecorded, insertPackSignoffRequests, insertSitePlans, insertSurveyorCommitments, insertSurveyorJobs, listSurveyorJobsIdBusinessIdByClaimId, listSurveyorJobsIdSurveyorIdByClaimId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3, listSurveyorJobsSurveyorIdByClaimIdSurveyorId, listSurveyorJobsSurveyorIdByClaimIdSurveyorId2, listSurveyPackApprovalsSnapshotJsonAssessmentIdByVersionPack, listSurveyPackReadsChapterSeqByJobIdUserId, updateSurveyorJobsClaimIdByBusinessIdAssessmentId } from './data.ts';
 export { handlePortalEvidence, handleStaffEvidence, portalEvidenceCard } from './evidence-pages.ts';
 export { approvedVersion } from './pack-approve.ts';

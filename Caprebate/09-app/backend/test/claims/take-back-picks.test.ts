@@ -35,10 +35,10 @@ import * as MR from '../../src/modules/claims/match-review.ts';
 import * as TB from '../../src/modules/portal/take-back.ts';
 import { REGISTRY } from '../../src/shared/engine.ts';
 import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../../src/modules/claims/signing.ts';
-import { seed } from '../../src/core/seed.ts';
+import { seed } from '../../src/app/seed.ts';
 import { createUser, newId } from '../../src/core/users.ts';
 import { ingestRegisterRecord, removeRegisterField, removeRegisterRecord } from '../../src/integrations/register-ingest.ts';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../../src/integrations/connectors/claude.ts';
 import { acceptClientBytes, finishUpload, issuedJob, type ReadingOutcome, type UploadDeps, type UploadReading } from '../../src/modules/claims/uploads.ts';
 import * as D from '../../src/modules/claims/documents.ts';
@@ -718,7 +718,7 @@ describe('2b · the question asked before the first reading, where the type is c
     assert.match(msgs, /mailboxFor\(d\),\n\s*earlyVouchesFrom\(\(n\) => f\.get\(n\)\)\)/);
     assert.match(readFileSync(join(SRC, 'modules', 'crm', 'inbound-email.ts'), 'utf8'), /claim_id: f\.claim_id, early_vouch \}, part\.bytes\)/);
     // The router shell and the module routes files it asks.
-    for (const f of ['core/router.ts', ...['public-site', 'assessment', 'portal', 'crm', 'claims'].map((m) => `modules/${m}/routes.ts`)]) {
+    for (const f of ['app/router.ts', ...['public-site', 'assessment', 'portal', 'crm', 'claims'].map((m) => `modules/${m}/routes.ts`)]) {
       assert.doesNotMatch(readFileSync(join(SRC, f), 'utf8'), /vouch_|earlyQuestions/, f);
     }
     w.close();

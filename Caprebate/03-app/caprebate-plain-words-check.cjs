@@ -59,6 +59,9 @@ const ROOT = path.join(__dirname, '..');
 const WEB = path.join(ROOT, '09-app', 'backend', 'src', 'web');
 /* PHASE 161i, 7 Nov 2026: screens, sign-in, page parts and the core moved from src/web/ into src/core/ and src/shared/;
    every file in those two folders is read as src/web/ is (the core's own files, never read before, are read too). */
+/* PHASE 161l, 9 Nov 2026: the start-up wiring (the server, the router shell, the back office's pages, the timers, the
+   sign-up, the seed and the command line) moved from src/core/ to src/app/; that folder is read as the core's is. */
+const APP_DIR = path.join(WEB, '..', 'app');
 const CORE = path.join(WEB, '..', 'core'), SHARED = path.join(WEB, '..', 'shared'), INTEG = path.join(WEB, '..', 'integrations');
 /* The business modules' folders (the screens that were in src/web/, which is gone since Phase 161k): each folder's own files,
    not its data files or front door, which hold no words for a person. */
@@ -72,7 +75,7 @@ const NOT_SCREENS_IN_SURVEY = new Set(['anchor-quarantine.ts', 'surveyor-crm.ts'
    the audit log and the rest): their words are for developers, not a screen. seed.ts and secrets.ts were read before
    and still are. A new core file is read unless it is named here with that reason. */
 const CORE_NOT_SCREENS = new Set(['app.ts', 'server.ts', 'db.ts', 'audit.ts', 'auth.ts', 'authz.ts', 'roles.ts', 'custom-roles.ts',
-  'users.ts', 'password.ts', 'totp.ts', 'mfa-seal.ts', 'cli.ts', 'live-website.ts', 'backup.ts']);
+  'users.ts', 'password.ts', 'totp.ts', 'mfa-seal.ts', 'cli.ts', 'live-website.ts', 'backup.ts', 'build-app.ts']);
 const ts = require(path.join(ROOT, '09-app', 'backend', 'node_modules', 'typescript'));
 
 /* ---------------------------------------------------------------- exemptions */
@@ -447,7 +450,7 @@ function altOf(f, suffix, dir) {
 
 function screenFiles(suffix, dir) {
   const dirTs = (d) => fs.readdirSync(d).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f) && f !== 'index.ts').sort().map((f) => path.join(d, f));
-  const all = [...MODULE_DIRS.filter((d) => fs.existsSync(d)).flatMap((d) => dirTs(d).filter((f) => !NOT_SCREENS_IN_MODULES.has(path.basename(f)) && !(path.basename(d) === 'survey' && NOT_SCREENS_IN_SURVEY.has(path.basename(f))))), ...dirTs(CORE).filter((f) => !CORE_NOT_SCREENS.has(path.basename(f))), ...dirTs(SHARED)].concat(EXTRA);
+  const all = [...MODULE_DIRS.filter((d) => fs.existsSync(d)).flatMap((d) => dirTs(d).filter((f) => !NOT_SCREENS_IN_MODULES.has(path.basename(f)) && !(path.basename(d) === 'survey' && NOT_SCREENS_IN_SURVEY.has(path.basename(f))))), ...dirTs(CORE).filter((f) => !CORE_NOT_SCREENS.has(path.basename(f))), ...(fs.existsSync(APP_DIR) ? dirTs(APP_DIR).filter((f) => !CORE_NOT_SCREENS.has(path.basename(f))) : []), ...dirTs(SHARED)].concat(EXTRA);
   return all.map((f) => {
     const alt = altOf(f, suffix, dir);
     return { label: path.relative(path.join(WEB, '..', '..'), f), file: alt && fs.existsSync(alt) ? alt : f };
