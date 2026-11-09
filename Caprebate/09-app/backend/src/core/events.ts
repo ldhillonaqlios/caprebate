@@ -48,7 +48,7 @@ const LISTENERS = new Map<EventName, Entry[]>();
 /** Thrown when announce() is called outside a transaction: the change and its listeners must commit together. */
 export class EventOutsideTransaction extends Error {
   constructor(event: string) {
-    super(`the event ${event} was announced outside a transaction: announce it inside the transaction of the change that caused it`);
+    super(`The event ${event} was announced on its own. Announce it inside the change that caused it.`);
     this.name = 'EventOutsideTransaction';
   }
 }
@@ -58,7 +58,7 @@ export class ListenerFailed extends Error {
   readonly event: string;
   readonly listener: string;
   constructor(event: string, listener: string, cause: unknown) {
-    super(`the listener ${listener} failed on ${event}, so the change that caused it was undone: ${String((cause as Error | null)?.message ?? cause)}`, { cause });
+    super(`The listener ${listener} failed on ${event}. The change was undone. ${String((cause as Error | null)?.message ?? cause)}`, { cause });
     this.name = 'ListenerFailed';
     this.event = event;
     this.listener = listener;

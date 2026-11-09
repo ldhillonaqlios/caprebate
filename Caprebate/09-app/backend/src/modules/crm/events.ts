@@ -31,7 +31,7 @@ listen('credit_note.issued', 'crm', 'reverse the introducer percentage on a clau
 
 /* Asked only if a row is made (the listener is silent unless model C is the setting). */
 function need(newId: (() => string) | undefined): () => string {
-  return newId ?? ((): string => { throw new Error('this listener makes a row, so the announcement must pass newId'); });
+  return newId ?? ((): string => { throw new Error('This listener makes a row, so it needs newId.'); });
 }
 
 /* The finance module announces with the signed-in person who acted (an Actor). */
