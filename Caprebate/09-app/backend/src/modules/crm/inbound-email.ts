@@ -34,7 +34,7 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localPartsOf, localStamp } from '../../shared/index.ts';
-import type { FsObjectStore } from '../../shared/objectstore.ts';
+import type { FsObjectStore } from '../../shared/index.ts';
 import { receiveFile } from '../portal/index.ts';
 import { setShownToClient } from '../claims/index.ts';
 import type { VouchAnswer } from '../claims/index.ts';

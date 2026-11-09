@@ -5,6 +5,9 @@
  */
 // Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
 export { CRM_ACTIONS } from './actions.ts';
+// What the outside services ask it (their ports): handed in first, as it reaches only its own data and their door.
+import './do-not-contact.ts';
+import './research-subject.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
 export { addLocalDays, CLIENT_MOVE_NOTICE_MINUTES, clockToMinutes, distinctMoments, HORIZON_DAYS, isBookable, minutesToClock, publicSlots, replaceWorkingTimes, SLOT_MINUTES, staffSlots, startOfLocalDay, startOfLocalWeek, WEEKDAY_NAMES, WorkingTimeError, workingTimesFor } from './schedule.ts';
 export { bookingInviteFile, sendVideoInvite } from './booking-invite.ts';
@@ -28,6 +31,8 @@ export { addDaysToDate, dueReading, insertTask, mayCreateTask, myWork, nextActio
 export * as clientChecksModule from './client-checks.ts';
 export { waitingForCheck } from './client-checks.ts';
 export { clientList, clientListPage } from './client-list.ts';
+export { claimListGate, leadsList } from './claim-lists.ts';
+export { handleLists } from './claim-lists-pages.ts';
 export { handleClientPage } from './client-page.ts';
 export { handleCrm } from './crm.routes.ts';
 export { handleDashboard } from './dashboard-pages.ts';
@@ -56,6 +61,7 @@ export type { LeadRow } from './leads.ts';
 export type { DueReading, TaskInsert } from './tasks.ts';
 export type { ToCheck } from './client-checks.ts';
 export type { ClientSort } from './client-list.ts';
+export type { LeadListRow } from './claim-lists.ts';
 export type { ThreadMessage } from './messages.ts';
 export type { FeeTrigger, Need, PipelineClaim } from './pipeline.ts';
 // The back office's filled assessments and calendar, read by the staff pages as one name.

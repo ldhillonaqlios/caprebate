@@ -38,7 +38,7 @@ import type { Timeline } from './timeline.ts';
 import { activeTemplates } from '../admin/index.ts';
 import { claimDocumentsBlock, placeDocumentsBlock } from '../claims/index.ts';
 import { taskChoices, vocabulary } from '../admin/index.ts';
-import type { SortBy } from '../../shared/lists-pages.ts';
+import type { SortBy } from './claim-lists-pages.ts';
 import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock } from '../claims/index.ts';
 import { addUnderCurrent, opens } from '../../core/index.ts';
 import { nobodyBadge, stageBadge } from '../../core/index.ts';

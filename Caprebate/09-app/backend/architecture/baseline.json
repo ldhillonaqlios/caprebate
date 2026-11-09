@@ -2,29 +2,18 @@
  "note": "THE RATCHET (tools/boundaries.cjs). Breaks of rules 1 to 4 of ARCHITECTURE.md, by rule and area. It may only go down: node tools/boundaries.cjs --lower.",
  "breaks": {
   "1": {
-   "admin": [
-    "src/integrations/email/email.ts -> src/modules/admin/data.ts",
-    "src/shared/lists.ts -> src/modules/admin/data.ts"
-   ],
    "claims": [
-    "src/integrations/connectors/boundary-test-lookup.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/nations.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/register-files.ts -> src/modules/claims/register-files.ts",
-    "src/integrations/connectors/site-area.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts"
+    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts",
+    "src/modules/assessment/conveyancing-strip.ts -> src/modules/claims/upload-handler-port.ts"
    ],
    "core": [
     "src/integrations/connectors/test-lookups.ts -> src/core/app.ts",
     "src/integrations/connectors/test-lookups.ts -> src/core/audit.ts",
     "src/modules/admin/connections.ts -> src/core/app.ts",
-    "src/shared/lists-pages.ts -> src/core/navigation.ts",
-    "src/shared/lists.ts -> src/core/backoffice.ts"
+    "src/modules/crm/claim-lists.ts -> src/core/backoffice.ts"
    ],
    "crm": [
-    "src/integrations/connectors/nations.ts -> src/modules/crm/data.ts",
-    "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts",
-    "src/integrations/email/email.ts -> src/modules/crm/data.ts",
-    "src/shared/lists-pages.ts -> src/modules/crm/search.ts"
+    "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts"
    ],
    "integrations": [
     "src/app/cli.ts -> src/integrations/connectors/test-lookups.ts",
@@ -33,47 +22,11 @@
     "src/modules/claims/engaged.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/match-review.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/research.ts -> src/integrations/connectors/free-registers.ts",
-    "src/modules/claims/research.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/claims/site-area-inputs.ts -> src/integrations/connectors/site-area.ts",
-    "src/modules/claims/site-area-inputs.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/claims/site-area-run.ts -> src/integrations/connectors/site-area.ts",
-    "src/modules/claims/site-area-run.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/claims/uploads.ts -> src/integrations/connectors/claude.ts",
-    "src/modules/crm/crm.ts -> src/integrations/postcodes/postcode-port.ts",
-    "src/modules/crm/crm.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/survey/surveyor.ts -> src/integrations/postcodes/postcode-port.ts",
-    "src/modules/survey/surveyor.ts -> src/integrations/postcodes/postcode.ts"
+    "src/modules/claims/uploads.ts -> src/integrations/connectors/claude.ts"
    ],
    "shared": [
     "src/app/live-website.ts -> src/shared/shared-objectstore.ts",
-    "src/app/server.ts -> src/shared/shared-objectstore.ts",
-    "src/app/staff.ts -> src/shared/lists-pages.ts",
-    "src/core/upload-pieces.ts -> src/shared/objectstore.ts",
-    "src/core/upload-pieces.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/assessment/conveyancing-strip.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/claims/documents.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/claims/uploads.ts -> src/shared/objectstore.ts",
-    "src/modules/claims/uploads.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/compliance/compliance-identity.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/crm.routes.ts -> src/shared/lists-pages.ts",
-    "src/modules/crm/crm.routes.ts -> src/shared/lists.ts",
-    "src/modules/crm/message-retention.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/messages-pages.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/pipeline-pages.ts -> src/shared/lists-pages.ts",
-    "src/modules/crm/pipeline-pages.ts -> src/shared/lists.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/shared/lists.ts",
-    "src/modules/crm/whatsapp-import.ts -> src/shared/objectstore.ts",
-    "src/modules/crm/whatsapp.ts -> src/shared/objectstore.ts",
-    "src/modules/portal/client-files-pages.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/public-site/enquiry-retention.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/public-site/home.ts -> src/shared/lists.ts",
-    "src/modules/survey/photo-upload.ts -> src/shared/objectstore.ts",
-    "src/modules/survey/survey-video.ts -> src/shared/objectstore.ts"
-   ],
-   "survey": [
-    "src/integrations/postcodes/location-key.ts -> src/modules/survey/costing/cost-model.cjs",
-    "src/modules/claims/claim-record.ts -> src/modules/survey/costing/job-economics.cjs",
-    "src/shared/engine.ts -> src/modules/survey/costing/job-economics.cjs"
+    "src/app/server.ts -> src/shared/shared-objectstore.ts"
    ]
   },
   "2": {
@@ -108,21 +61,11 @@
     "finance -> crm"
    ],
    "integrations": [
-    "integrations -> admin",
     "integrations -> claims",
-    "integrations -> crm",
-    "integrations -> survey"
+    "integrations -> crm"
    ],
    "portal": [
     "portal -> public-site"
-   ],
-   "shared": [
-    "shared -> admin",
-    "shared -> claims",
-    "shared -> core",
-    "shared -> crm",
-    "shared -> integrations",
-    "shared -> survey"
    ],
    "survey": [
     "survey -> crm"
@@ -141,9 +84,7 @@
     "src/modules/compliance/data-borrowed.ts : consent_answers",
     "src/modules/crm/data-borrowed.ts : assessments",
     "src/modules/crm/data-borrowed.ts : estimates",
-    "src/modules/survey/data-borrowed.ts : estimates",
-    "src/shared/data-borrowed.ts : assessments",
-    "src/shared/data-borrowed.ts : estimates"
+    "src/modules/survey/data-borrowed.ts : estimates"
    ],
    "claims": [
     "src/app/seed.ts : claims",
@@ -171,12 +112,9 @@
     "src/modules/portal/data-borrowed.ts : logical_documents",
     "src/modules/survey/data-borrowed.ts : claim_grants",
     "src/modules/survey/data-borrowed.ts : claims",
-    "src/modules/survey/data-borrowed.ts : properties",
-    "src/shared/data-borrowed.ts : claims",
-    "src/shared/data-borrowed.ts : properties"
+    "src/modules/survey/data-borrowed.ts : properties"
    ],
    "core": [
-    "src/integrations/data-borrowed.ts : users",
     "src/modules/admin/data-borrowed.ts : users",
     "src/modules/assessment/data-borrowed.ts : users",
     "src/modules/claims/data-borrowed.ts : users",
@@ -186,12 +124,10 @@
     "src/modules/crm/data-borrowed.ts : users",
     "src/modules/finance/data-borrowed.ts : users",
     "src/modules/portal/data-borrowed.ts : users",
-    "src/modules/survey/data-borrowed.ts : users",
-    "src/shared/data-borrowed.ts : users"
+    "src/modules/survey/data-borrowed.ts : users"
    ],
    "crm": [
     "src/app/seed.ts : businesses",
-    "src/integrations/data-borrowed.ts : businesses",
     "src/modules/admin/data-borrowed.ts : businesses",
     "src/modules/assessment/data-borrowed.ts : businesses",
     "src/modules/claims/data-borrowed.ts : businesses",
@@ -213,11 +149,7 @@
     "src/modules/portal/data-borrowed.ts : businesses",
     "src/modules/portal/data-borrowed.ts : contacts",
     "src/modules/survey/data-borrowed.ts : bookings",
-    "src/modules/survey/data-borrowed.ts : businesses",
-    "src/shared/data-borrowed.ts : businesses",
-    "src/shared/data-borrowed.ts : introducers",
-    "src/shared/data-borrowed.ts : leads",
-    "src/shared/data-borrowed.ts : staff_tasks"
+    "src/modules/survey/data-borrowed.ts : businesses"
    ],
    "finance": [
     "src/modules/assessment/data-borrowed.ts : finance_settings",

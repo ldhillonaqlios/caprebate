@@ -37,7 +37,7 @@ import { acceptClientBytes, finishUpload, issuedJob } from '../../src/modules/cl
 import {
   retainedTextKeyFor, deletionDueAt, FAIL_CLOSED_SETTINGS, receiptPolicyFor, DOC_SPECS,
   type IngestionSettings, type RawFileRecord,
-} from '../../src/shared/upload-handler-port.ts';
+} from '../../src/modules/claims/upload-handler-port.ts';
 import { pdfOf } from '../document-fixtures.ts';
 import { fixedClock } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';

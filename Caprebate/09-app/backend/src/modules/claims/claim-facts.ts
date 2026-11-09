@@ -47,7 +47,7 @@ import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from '../assessmen
 import { localStamp, ukDate } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
 import { VOIDING_REOPEN_STAGES } from './valuation-lock.ts';
-import type { PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
+import type { PostcodeStore } from '../../integrations/index.ts';
 import { listRegisterRecordsSourceIdFieldsJsonByBusinessIdSourceId } from '../../integrations/index.ts';
 import { getClaimGrantsIdWithdrawnAtByIdClaimId, getClaimOwnerChainIdByClaimIdPosition, getClaimOwnerChainIdWithdrawnAtByIdClaimId, getClaimsIdBusinessIdById6, getClaimsPById, getFactApprovalsActionByBusinessIdFactRef, getPropertiesAcquisitionDateById, getPropertiesBusinessIdById, getPropertiesBusinessIdLabelById, getPropertiesCountByBusinessId, getPropertyEventsIdByIdPropertyId, insertClaimFacts, insertClaimFacts3, insertClaimGrantElements, insertClaimGrants, insertClaimOwnerChain, listClaimGrantElementsGrantIdElementIdByClaimId, listDocumentLinksIdBusinessIdByLogicalDocumentIdUnlinkedAt, updateClaimGrantsWithdrawnByWithdrawnAtById, updateClaimOwnerChainWithdrawnByWithdrawnAtById } from './data.ts';
 import { getDocumentsLogicalDocumentIdUploadedByByIdTypeCode, getSurveyPackApprovalsSnapshotJsonVersionByPropertyId, getSurveyPackLegalAnswersValueJsonAtByQuestionIdPropertyId, listClaimFactsSeqIdByClaimId, listClaimGrantsIdKindByClaimId, listClaimOwnerChainIdPositionByClaimIdWithdrawnAt } from './data-borrowed.ts';

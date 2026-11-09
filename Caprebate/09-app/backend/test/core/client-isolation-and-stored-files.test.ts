@@ -21,7 +21,7 @@ import { pdfOf } from '../document-fixtures.ts';
 import { createApp } from '../../src/app/server.ts';
 import { FsObjectStore, assertNoStaticFileRoute, FILE_MODE } from '../../src/shared/objectstore.ts';
 import { beginUpload, acceptClientBytes, finishUpload, eventsFor } from '../../src/modules/claims/uploads.ts';
-import { assertContractCovered, quarantineKeyFor, UPLOAD_LIMITS } from '../../src/shared/upload-handler-port.ts';
+import { assertContractCovered, quarantineKeyFor, UPLOAD_LIMITS } from '../../src/modules/claims/upload-handler-port.ts';
 import { STAGES, progressFor, stageIndex } from '../../src/shared/stages.ts';
 import { loadLetter, letterExists } from '../../src/modules/claims/letter.ts';
 import { SCREEN_IDS, SCREENS, answerRows } from '../../src/modules/assessment/assessment.ts';

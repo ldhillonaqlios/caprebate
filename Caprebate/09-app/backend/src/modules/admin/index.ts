@@ -5,6 +5,8 @@
  */
 // Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
 export { ADMIN_ACTIONS } from './actions.ts';
+// What the outside services ask it (their ports): handed in first, as it reaches only its own data and their door.
+import './email-sender.ts';
 export { adminSettingsGate, SETTINGS_TILES, settingsBody, settingsTiles } from './admin-tiles.ts';
 export { handleConfiguration } from './configuration-pages.ts';
 export { handleConnections, listsToImport } from './connections.ts';
@@ -15,6 +17,6 @@ export * as templatesModule from './templates.ts';
 export { activeTemplates, carriesBankDetails, freeTextRefusal, mergePlain, mergeValues, templateRefusal, tipsOff } from './templates.ts';
 export { mayTake, priorityRank, taskChoices, vocabChoice, vocabLabel, vocabulary } from './vocabularies.ts';
 export type { TaskChoices } from './vocabularies.ts';
-export { getDocumentTypesCodeByCode, getDocumentTypesCodeLabelByCode, getDocumentTypesHandlerTypeActiveByCode, getDocumentTypesHandlerTypeByCode, getDocumentTypesLabelByCode, getDocumentTypesLabelByCode2, getDocumentTypesM, getDocumentTypesOrdByCode, getEmailSenderA, getEmailTemplatesLabelSubjectByIdActive, getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, getVocabulariesActivityTypeCountByCode, insertDocumentTypes, insertEmailSender, listDocumentTypesCodeLabel, listDocumentTypesCodeLabel2, listDocumentTypesCodeLabelByActiveHandlerType, listDocumentTypesCodeLabelByActiveHandlerType2, listReasonListsCodeLabelActiveByList, updateDocumentTypesLabelReadersByCode } from './data.ts';
+export { getDocumentTypesCodeByCode, getDocumentTypesCodeLabelByCode, getDocumentTypesHandlerTypeActiveByCode, getDocumentTypesHandlerTypeByCode, getDocumentTypesLabelByCode, getDocumentTypesLabelByCode2, getDocumentTypesM, getDocumentTypesOrdByCode, getEmailSenderA, getEmailTemplatesLabelSubjectByIdActive, getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, getSavedViewsIdListById, getVocabulariesActivityTypeCountByCode, insertDocumentTypes, insertEmailSender, insertSavedViews, listDocumentTypesCodeLabel, listDocumentTypesCodeLabel2, listDocumentTypesCodeLabelByActiveHandlerType, listDocumentTypesCodeLabelByActiveHandlerType2, listReasonListsCodeLabelActiveByList, listSavedViewsIdListByListRetiredAt, updateDocumentTypesLabelReadersByCode, updateSavedViewsRetiredAtRetiredByById } from './data.ts';
 // Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
 import './nav.ts';

@@ -25,7 +25,7 @@ import { can, type Actor, type Obj } from '../../src/core/authz.ts';
 import * as D from '../../src/modules/claims/documents.ts';
 import * as PO from '../../src/modules/portal/portal.ts';
 import { eventsFor } from '../../src/modules/claims/uploads.ts';
-import { durableKeyFor, quarantineKeyFor } from '../../src/shared/upload-handler-port.ts';
+import { durableKeyFor, quarantineKeyFor } from '../../src/modules/claims/upload-handler-port.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_QUESTION, READ_AND_DELETED, keptDays, seal, unseal } from '../../src/shared/originals.ts';
 import { backendSwitchReadings } from '../../src/modules/claims/case-stamp.ts';
 import { pdfOf } from '../document-fixtures.ts';

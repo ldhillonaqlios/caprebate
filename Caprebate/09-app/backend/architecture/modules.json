@@ -372,10 +372,6 @@
    "area": "integrations",
    "kind": "logic"
   },
-  "src/integrations/data-borrowed.ts": {
-   "area": "integrations",
-   "kind": "data"
-  },
   "src/integrations/data.ts": {
    "area": "integrations",
    "kind": "data"
@@ -440,6 +436,10 @@
    "area": "integrations",
    "kind": "logic"
   },
+  "src/integrations/registers/file-registers.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
   "src/integrations/registers/name-exclusion.ts": {
    "area": "integrations",
    "kind": "logic"
@@ -479,6 +479,10 @@
   "src/modules/admin/data.ts": {
    "area": "admin",
    "kind": "data"
+  },
+  "src/modules/admin/email-sender.ts": {
+   "area": "admin",
+   "kind": "logic"
   },
   "src/modules/admin/index.ts": {
    "area": "admin",
@@ -540,6 +544,10 @@
    "area": "assessment",
    "kind": "logic"
   },
+  "src/modules/assessment/costing/job-economics.cjs": {
+   "area": "assessment",
+   "kind": "other"
+  },
   "src/modules/assessment/data-borrowed.ts": {
    "area": "assessment",
    "kind": "data"
@@ -549,6 +557,10 @@
    "kind": "data"
   },
   "src/modules/assessment/desk-first.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/modules/assessment/fee-gate.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -728,10 +740,6 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/modules/claims/register-files.ts": {
-   "area": "claims",
-   "kind": "logic"
-  },
   "src/modules/claims/register-import-script.ts": {
    "area": "claims",
    "kind": "other"
@@ -741,6 +749,10 @@
    "kind": "page"
   },
   "src/modules/claims/report-signoff.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/research-subject.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -773,6 +785,10 @@
    "kind": "logic"
   },
   "src/modules/claims/title-by-hand.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/upload-handler-port.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -868,6 +884,14 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/crm/claim-lists-pages.ts": {
+   "area": "crm",
+   "kind": "page"
+  },
+  "src/modules/crm/claim-lists.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
   "src/modules/crm/client-checks.ts": {
    "area": "crm",
    "kind": "logic"
@@ -915,6 +939,10 @@
   "src/modules/crm/data.ts": {
    "area": "crm",
    "kind": "data"
+  },
+  "src/modules/crm/do-not-contact.ts": {
+   "area": "crm",
+   "kind": "logic"
   },
   "src/modules/crm/email-chains.ts": {
    "area": "crm",
@@ -981,6 +1009,10 @@
    "kind": "logic"
   },
   "src/modules/crm/premises-import.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/modules/crm/research-subject.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1232,10 +1264,6 @@
    "area": "survey",
    "kind": "other"
   },
-  "src/modules/survey/costing/job-economics.cjs": {
-   "area": "survey",
-   "kind": "other"
-  },
   "src/modules/survey/data-borrowed.ts": {
    "area": "survey",
    "kind": "data"
@@ -1251,6 +1279,10 @@
   "src/modules/survey/index.ts": {
    "area": "survey",
    "kind": "other"
+  },
+  "src/modules/survey/location-factor.ts": {
+   "area": "survey",
+   "kind": "logic"
   },
   "src/modules/survey/nav.ts": {
    "area": "survey",
@@ -1360,10 +1392,6 @@
    "area": "shared",
    "kind": "page"
   },
-  "src/shared/data-borrowed.ts": {
-   "area": "shared",
-   "kind": "data"
-  },
   "src/shared/engine.ts": {
    "area": "shared",
    "kind": "logic"
@@ -1391,14 +1419,6 @@
   "src/shared/index.ts": {
    "area": "shared",
    "kind": "other"
-  },
-  "src/shared/lists-pages.ts": {
-   "area": "shared",
-   "kind": "page"
-  },
-  "src/shared/lists.ts": {
-   "area": "shared",
-   "kind": "logic"
   },
   "src/shared/localtime.ts": {
    "area": "shared",
@@ -1456,7 +1476,7 @@
    "area": "shared",
    "kind": "logic"
   },
-  "src/shared/upload-handler-port.ts": {
+  "src/shared/test-website.ts": {
    "area": "shared",
    "kind": "logic"
   },

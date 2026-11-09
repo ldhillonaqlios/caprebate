@@ -6,20 +6,20 @@
  * own. It is mounted in staff.ts BEFORE the CRM and pipeline sections, because the
  * export routes share their prefixes.
  *
- * NOTHING HERE DECIDES ANYTHING. src/core/search.ts and src/shared/lists.ts ask `can()`
+ * NOTHING HERE DECIDES ANYTHING. src/core/search.ts and src/modules/crm/claim-lists.ts ask `can()`
  * for every row and every column; this file draws what they return with the `h`
  * tagged template, and serves a CSV body those functions built.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../core/app.ts';
-import { can, type Actor } from '../core/index.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import * as LI from './lists.ts';
-import * as S from '../modules/crm/search.ts';
-import { documentCentreGate } from '../modules/claims/index.ts';
-import { opens } from '../core/navigation.ts';
-import { piecesPage } from '../core/index.ts';
+import type { App } from '../../core/app.ts';
+import { can, type Actor } from '../../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
+import * as LI from './claim-lists.ts';
+import * as S from './search.ts';
+import { documentCentreGate } from '../claims/index.ts';
+import { opens } from '../../core/index.ts';
+import { piecesPage } from '../../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

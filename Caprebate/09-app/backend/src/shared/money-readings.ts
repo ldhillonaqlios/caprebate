@@ -16,7 +16,7 @@
  * The public estimate's own switches (CB_CTA, in the site file) are not touched: the site harness asserts them off, and
  * they move the figure every visitor sees. The pack reads these instead, as arguments, so both ways are tested.
  */
-import { onTestWebsite, type Env } from '../integrations/index.ts';
+import { onTestWebsite, type Env } from './test-website.ts';
 
 export type MoneyReadings = {
   readonly grant_untraced_full: boolean;

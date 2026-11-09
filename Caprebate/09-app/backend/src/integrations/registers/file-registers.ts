@@ -22,13 +22,16 @@
  * (the source register's SUPPLIER_DOCS, read 4 October 2026). A row we cannot read (no reference, no postcode we can
  * read) is skipped and counted, never guessed.
  *
+ * AN OUTSIDE SERVICE'S DATA, SO THE OUTSIDE SERVICES HOLD IT (Phase 161l: from src/modules/claims/register-files.ts; its
+ * tables, register_file_rows and register_file_imports, are theirs). The claims module names it through its front door.
+ *
  * THE SWITCHES ARE NOT HERE. Importing a file switches nothing on: each lookup (src/integrations/connectors/register-files.ts) is
  * behind its own REGISTER_SWITCHES entry, OFF, and the research panel's free gate, shut.
  */
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
-import { postcodeKey } from '../../integrations/index.ts';
-import { deleteRegisterFileRowsBySourceId, getRegisterFileImportsAtBySourceId, getRegisterFileRowsCountBySourceId, insertRegisterFileImports, insertRegisterFileRows, listRegisterFileRowsRefAddressBySourceIdPostcodeKey } from '../../integrations/index.ts';
+import { postcodeKey } from '../connectors/matching.ts';
+import { deleteRegisterFileRowsBySourceId, getRegisterFileImportsAtBySourceId, getRegisterFileRowsCountBySourceId, insertRegisterFileImports, insertRegisterFileRows, listRegisterFileRowsRefAddressBySourceIdPostcodeKey } from '../data.ts';
 
 export type FileSourceId = 'CIW' | 'CARE_INSPECTORATE';
 

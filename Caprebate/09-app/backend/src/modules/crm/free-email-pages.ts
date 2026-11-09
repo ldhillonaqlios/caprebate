@@ -28,7 +28,7 @@ import type { App } from '../../core/app.ts';
 import type { Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { savedMessage, why } from '../../shared/index.ts';
-import type { FsObjectStore } from '../../shared/objectstore.ts';
+import type { FsObjectStore } from '../../shared/index.ts';
 import * as F from './free-email.ts';
 import { SAVED_NOT_SENT } from '../../integrations/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, smtpLoginFromKeyFile, smtpProvider, type EmailSending, type SmtpLogin } from '../../integrations/index.ts';

@@ -53,7 +53,7 @@
 import type { Db } from '../../core/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { retentionReading, ret7Limbs } from '../claims/index.ts';
-import { BACKUP_CYCLE } from '../../shared/upload-handler-port.ts';
+import { BACKUP_CYCLE } from '../claims/index.ts';
 import { MESSAGE_RETENTION_QUESTION } from '../crm/index.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, holdsFor, liveHeldIds, NotFoundAsRefusal, opaqueRef, record, requiredText,

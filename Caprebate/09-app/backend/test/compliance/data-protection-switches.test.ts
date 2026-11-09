@@ -22,7 +22,7 @@ import * as CS from '../../src/modules/assessment/conveyancing-strip.ts';
 import * as DL from '../../src/modules/compliance/disclosure-log.ts';
 import * as RR from '../../src/modules/claims/receipt-recommendations.ts';
 import * as D from '../../src/modules/claims/documents.ts';
-import { assertHumanCaptureClean, ROLE_TOKENS } from '../../src/shared/upload-handler-port.ts';
+import { assertHumanCaptureClean, ROLE_TOKENS } from '../../src/modules/claims/upload-handler-port.ts';
 import type { FsObjectStore } from '../../src/shared/objectstore.ts';
 import { actor, scalars, testApp } from '../helpers.ts';
 

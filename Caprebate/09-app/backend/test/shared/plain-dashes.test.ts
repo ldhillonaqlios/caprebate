@@ -1,7 +1,7 @@
 /**
  * PHASE 160d — NO LONG DASHES IN THE EMAILS, THE LETTER AND REPORTS GOING FORWARD, THE TEXT THE SYSTEM WRITES, AND THE
  * EXPORT'S COLUMN NAMES, 19 October 2026 (src/integrations/email/email.ts, src/modules/claims/letter.ts, src/modules/claims/claim-record.ts, src/modules/crm/leads.ts,
- * src/shared/lists.ts, src/modules/crm/booking-invite.ts, src/modules/admin/templates.ts, migration 117; the report's versions are in
+ * src/modules/crm/claim-lists.ts, src/modules/crm/booking-invite.ts, src/modules/admin/templates.ts, migration 117; the report's versions are in
  * test/survey/survey-report.test.ts).
  */
 import { test, describe, before, after } from 'node:test';
@@ -102,7 +102,7 @@ describe('Phase 160d: the text the system writes', () => {
 
 describe('Phase 160d: the export and the calendar file', () => {
   test('the claims and leads export’s column names hold no long dash', () => {
-    const src = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'shared', 'lists.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'modules', 'crm', 'claim-lists.ts'), 'utf8');
     const cols = src.slice(src.indexOf('const CLAIM_COLUMNS'), src.indexOf('export function', src.indexOf('const LEAD_COLUMNS')));
     assert.match(cols, /'Estimated value: the figure shown'/);
     assert.doesNotMatch(cols, DASH);

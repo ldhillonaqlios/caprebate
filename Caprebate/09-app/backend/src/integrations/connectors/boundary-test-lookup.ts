@@ -38,9 +38,6 @@ import { RateLimiter, type CallDeps } from './http.ts';
 import { inspireBoundaryFetcher } from './inspire.ts';
 import { INSPIRE_COUNCILS, inspireFileForLad } from './inspire-councils.ts';
 import { pointInBritishNationalGrid } from './site-area.ts';
-import { listRegisterRecordsFieldsJsonBySourceId } from '../data.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
-import { listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../../modules/claims/data.ts';
 
 /** The connector's name in the test lookup log and on the command line: the source register's own. */
 export const BOUNDARY_TEST_SOURCE = 'HMLR_INSPIRE';
@@ -106,38 +103,6 @@ export function notTheBoundaryDefaults(v: BoundaryTestValues): string[] {
   if (v.easting !== BOUNDARY_TEST_DEFAULTS.easting || v.northing !== BOUNDARY_TEST_DEFAULTS.northing) out.push('point');
   if (v.lad_code !== BOUNDARY_TEST_DEFAULTS.lad_code) out.push('council');
   return out;
-}
-
-/**
- * CONDITION 2 AGAINST THE DATABASE, FOR A POINT AND A COUNCIL. Every point a person entered for a property and every
- * easting and northing the paid address lookup gave, within CLIENT_POINT_RADIUS_M; every council a person added for a
- * property. A match refuses and names the FIELD, never the value. A database that cannot be read refuses.
- */
-export function boundaryClientMatchIn(db: Db, v: BoundaryTestValues): { readonly ok: true } | { readonly ok: false; readonly why: string } {
-  let entered: { easting: number | null; northing: number | null }[];
-  let councils: { lad_code: string | null }[];
-  let supplier: { fields_json: string }[];
-  try {
-    entered = listSiteAreaInputsEastingNorthingByKind(db);
-    councils = listSiteAreaInputsLadCodeByKind(db);
-    supplier = listRegisterRecordsFieldsJsonBySourceId(db);
-  } catch (e: unknown) {
-    return { ok: false, why: `the clients in CAPREBATE_DB could not be read (${e instanceof Error ? e.message : String(e)}), so it is not known that these values are nobody's` };
-  }
-  const points = entered.map((p) => ({ e: p.easting, n: p.northing }));
-  for (const r of supplier) {
-    try {
-      const f = JSON.parse(r.fields_json) as Record<string, unknown>;
-      if (typeof f['easting'] === 'number' && typeof f['northing'] === 'number') points.push({ e: f['easting'], n: f['northing'] });
-    } catch { /* a record that is not JSON holds no point */ }
-  }
-  const near = points.some((p) => typeof p.e === 'number' && typeof p.n === 'number'
-    && Math.hypot(p.e - v.easting, p.n - v.northing) <= CLIENT_POINT_RADIUS_M);
-  if (near) return { ok: false, why: `the point is within ${CLIENT_POINT_RADIUS_M} metres of a point held in the database for a client's property` };
-  if (councils.some((c) => (c.lad_code ?? '').trim().toUpperCase() === v.lad_code)) {
-    return { ok: false, why: 'the council is held in the database against a client\'s property' };
-  }
-  return { ok: true };
 }
 
 export type BoundaryTestStage =

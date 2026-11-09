@@ -59,7 +59,7 @@ import { formatPence, toPence } from '../../shared/index.ts';
 import { insertTask } from '../crm/index.ts';
 import { latestSignOff } from '../claims/index.ts';
 import { computeFee, FEE_CONTROLS, type FeeControls } from '../claims/index.ts';
-import { feeGate, type FeeGateReading } from '../../shared/index.ts';
+import { feeGate, type FeeGateReading } from './fee-gate.ts';
 import { assertFinanceSection, financeSectionObj } from '../finance/index.ts';
 import { getStaffTasksIdByCompanySubjectStatus } from '../crm/index.ts';
 import { getInvoicesNByClaimIdInvoiceStatus, listClaimsIdClaimRefByStageClaimId } from './data-borrowed.ts';

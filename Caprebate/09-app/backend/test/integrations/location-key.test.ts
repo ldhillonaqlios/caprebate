@@ -22,13 +22,12 @@ import assert from 'node:assert/strict';
 import {
   resolveServedAuthority,
   locationKeyFor,
-  locationFactorForPostcode,
   explainLocationKey,
   nationOf,
   LocationKeyError,
-  LEG_E4_GATE,
   type ServedSet,
 } from '../../src/integrations/postcodes/location-key.ts';
+import { locationFactorForPostcode, LEG_E4_GATE } from '../../src/modules/survey/location-factor.ts';
 import { inMemoryPostcodeStore } from '../../src/integrations/postcodes/postcode-store.ts';
 import type { PostcodeAuthorityTable } from '../../src/integrations/postcodes/postcode-authority.ts';
 import COST_MODEL from '../../src/modules/survey/costing/cost-model.cjs';

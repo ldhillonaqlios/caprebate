@@ -82,6 +82,8 @@ import {
   type IngestionSettings, type TransparencyRecord, type ClientDocDiscriminants,
   type IdentifiedPerson,
 } from './client-doc-ingestion.ts';
+import { setDocumentKeys } from '../../../shared/index.ts';
+import { setDocumentMaxBytes } from '../../../core/index.ts';
 
 /* ------------------------------------------------------------------ *
  * 0. Errors
@@ -220,6 +222,8 @@ export const UPLOAD_LIMITS = {
     { label: 'zip-or-ooxml', bytes: [0x50, 0x4b, 0x03, 0x04] },   // docx / xlsx
   ],
 } as const;
+// The core's upload in pieces takes the same limit (src/core/upload-pieces.ts).
+setDocumentMaxBytes(UPLOAD_LIMITS.max_bytes);
 
 /**
  * A PDF THAT STOPS PART-WAY IS REFUSED AS DAMAGED.
@@ -958,3 +962,7 @@ export function assertContractCovered(): void {
 }
 
 export { RECEIPT_CONTRACT, INGESTION_BOUNDARY, FAIL_CLOSED_SETTINGS, receiptPolicyFor };
+
+/* The document store asks which keys are kept originals (src/shared/objectstore.ts, a port it owns): the keys above,
+   handed in as this file loads, so the store and this file never disagree. Phase 161l. */
+setDocumentKeys({ durableKeyFor, retainedTextKeyFor });

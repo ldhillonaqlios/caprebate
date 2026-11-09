@@ -21,12 +21,12 @@
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
-import { pointInBritishNationalGrid, councilOfPostcode, homedataPointOf } from '../../integrations/connectors/site-area.ts';
+import { pointInBritishNationalGrid, councilOfPostcode, homedataPointOf } from '../../integrations/index.ts';
 import { INSPIRE_COUNCILS, inspireFileForLad } from '../../integrations/index.ts';
 import { assertSignedEngagement } from './research.ts';
 import { enteredCouncils, enteredPoint } from './site-area-run.ts';
-import { postcodeStore } from '../../integrations/postcodes/postcode.ts';
-import type { PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
+import { postcodeStore } from '../../integrations/index.ts';
+import type { PostcodeStore } from '../../integrations/index.ts';
 import { getUsersDisplayNameById } from '../../core/index.ts';
 import { getPropertiesIdBusinessIdById3, insertSiteAreaInputs, insertSiteAreaInputs2 } from './data.ts';
 

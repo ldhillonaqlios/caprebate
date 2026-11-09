@@ -22,7 +22,7 @@
 import { createHash, generateKeyPairSync } from 'node:crypto';
 import type { Actor } from '../../core/index.ts';
 import { authorise, NotAuthorised } from '../../core/index.ts';
-import { INCOMING_PREFIX, VIDEO_PREFIX, type FsObjectStore, type IncomingTarget } from '../../shared/objectstore.ts';
+import { INCOMING_PREFIX, VIDEO_PREFIX, type FsObjectStore, type IncomingTarget } from '../../shared/index.ts';
 import { clientOf, NO_KEY, type EvidenceDeps } from './survey-evidence.ts';
 import { failureWords, LOCK_OVERHEAD, SITE_SUFFIX, unlockPhoto, type UploadResult } from './photo-upload.ts';
 import { packJob } from './surveyor.ts';

@@ -34,7 +34,6 @@
 
 import { claimAlive, claimRoutes, legalDeadlineNeed, routesWhy } from './claim-route.ts';
 import { createHash } from 'node:crypto';
-import { createRequire } from 'node:module';
 import type { Db } from '../../core/index.ts';
 import { _canonical, type AuditLog } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
@@ -47,7 +46,7 @@ import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from '../../shared/index.ts';
 import { packSwitchReadings } from '../../shared/index.ts';
 import { amendmentWindowReading, dateValue, penceValue } from './claim-facts.ts';
-import { funnelStateFor } from '../assessment/index.ts';
+import { funnelStateFor, jobEconomicsDisposalFee } from '../assessment/index.ts';
 import { loadLetter, type OpenTerm } from './letter.ts';
 import { insertTask } from '../crm/index.ts';
 import { NO_RECEIPT_POLICY } from './documents.ts';
@@ -1171,12 +1170,12 @@ export const DISPOSAL_TASK_TITLE_BEFORE = 'The election on a future sale — rea
 
 /**
  * 4 October 2026 (Word question 23, the director's): THE FIXED DISPOSAL FEE, read from the job cost model
- * (09-app/backend/src/modules/survey/costing/job-economics.cjs, `disposalFee`), never restated here. Built on our recommendation:
+ * (09-app/backend/src/modules/assessment/costing/job-economics.cjs, `disposalFee`, through the assessment's door), never restated here. Built on our recommendation:
  * a fixed fee for the review and the drafted election, never a percentage of the sale or the election figure. A TEST
  * DEFAULT, NOT AGREED, and every place it is shown says so. The director decides the figure.
  */
 export type DisposalFee = { readonly pounds: number; readonly pence: number; readonly words: string; readonly status: string };
-export const DISPOSAL_FEE: DisposalFee = (createRequire(import.meta.url)('../survey/costing/job-economics.cjs') as { disposalFee: () => DisposalFee }).disposalFee();
+export const DISPOSAL_FEE: DisposalFee = jobEconomicsDisposalFee() as DisposalFee;
 
 export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { openTerms?: readonly OpenTerm[]; today?: string } = {}): AftercarePanel {
   const c = loadClaim(db, claim_id);

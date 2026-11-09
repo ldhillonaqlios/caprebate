@@ -1,2 +1,2 @@
-// Moved by Phase 161d (4 Nov 2026) to 09-app/backend/src/modules/survey/costing/job-economics.cjs, with its tests (09-app/backend/test/). This keeps the older modules here and the site harness working.
-module.exports = require('../../09-app/backend/src/modules/survey/costing/job-economics.cjs');
+// Moved by Phase 161d (4 Nov 2026) to 09-app/backend/src/modules/survey/costing/job-economics.cjs, and by Phase 161l (9 Nov 2026) to 09-app/backend/src/modules/assessment/costing/job-economics.cjs, with its tests (09-app/backend/test/). This keeps the older modules here and the site harness working.
+module.exports = require('../../09-app/backend/src/modules/assessment/costing/job-economics.cjs');

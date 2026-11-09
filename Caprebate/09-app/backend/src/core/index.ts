@@ -24,7 +24,7 @@ export { APP_ROLES, DPO_ROLE, isAppRole, toQuarantineRole } from './roles.ts';
 export { SECRET_KEYS, isInside, isProduction, keyFileStartCheck, overlaySecrets, processSecrets, redactSecrets, repositoryRoot, secretsFromEnvironment, useProcessSecrets } from './secrets.ts';
 export { keepSectionChoice, sectionPrefs } from './sections.ts';
 export { cleanField } from './typed.ts';
-export { PIECED_ABOVE, PIECE_BYTES, piecesOf, piecesPage, putPiece, startPieces, sweepPieces } from './upload-pieces.ts';
+export { PIECED_ABOVE, PIECE_BYTES, piecesOf, piecesPage, putPiece, setDocumentMaxBytes, startPieces, sweepPieces } from './upload-pieces.ts';
 export { assignRole, canonicalEmail, createUser, disableUser, findById, hashToken, listUsers, newId, toActor } from './users.ts';
 export { WELCOME_JOBS, dismissWelcome, welcomeShown } from './welcome.ts';
 // Phase 161l: what the start-up wiring (src/app/) uses of the core. Each file named here loads no business module.

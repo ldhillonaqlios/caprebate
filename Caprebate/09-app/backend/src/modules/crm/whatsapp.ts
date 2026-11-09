@@ -33,7 +33,7 @@ import {
   MAX_WHATSAPP_TEXT, WINDOW_HOURS, fetchWhatsAppMedia, readWebhook, sendWhatsAppOpening, sendWhatsAppText, signatureHolds, waNumber,
   type WhatsAppDeps,
 } from '../../integrations/index.ts';
-import { WHATSAPP_PREFIX, type FsObjectStore } from '../../shared/objectstore.ts';
+import { WHATSAPP_PREFIX, type FsObjectStore } from '../../shared/index.ts';
 import { getWhatsappMediaMediaIdByMessageId, getWhatsappMediaMessageIdBusinessIdByMessageId, getWhatsappMessagesAtByPhoneDirection, getWhatsappMessagesIdStatusByWaIdDirection, insertWhatsappMedia2, insertWhatsappMessages, insertWhatsappMessages3, listOutboxCreatedAtToEmailByBusinessId, listWhatsappMessagesIdPhoneByBusinessIdDirection, updateWhatsappMediaObjectKeyBytesByMessageIdFetchedAt, updateWhatsappMessagesBusinessIdFiledByByIdBusinessId, updateWhatsappMessagesStatusStatusAtById } from '../../integrations/index.ts';
 import { listWhatsappMessagesCreatedAtDirectionByBusinessId } from './data-borrowed.ts';
 import { getBusinessesXById, listContactsEByBusinessIdEmail, listContactsIdBusinessIdByBusinessIdPhone, listContactsIdFullNameByBusinessIdPhone } from './data.ts';

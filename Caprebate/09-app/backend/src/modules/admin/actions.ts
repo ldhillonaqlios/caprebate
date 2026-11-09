@@ -14,7 +14,7 @@ export const ADMIN_ACTIONS = registerActions('admin', {
   /*
    * EXPORT IS THE LIST THE READER ALREADY READS, AS CSV — and SURVEYING is not on it. A surveyor's lists are the
    * working line of their own jobs, and nothing about survey work needs a spreadsheet of them; a file leaves the
-   * application, where no rule follows it. What each exporter's file holds is their own row shape (src/shared/lists.ts).
+   * application, where no rule follows it. What each exporter's file holds is their own row shape (src/modules/crm/claim-lists.ts).
    */
   'list.export': { ADMIN: always, SALES: always, ACCOUNTING: always },
   /* A SAVED VIEW is a person's own; a SHARED one is ADMIN's to set and to retire. */
