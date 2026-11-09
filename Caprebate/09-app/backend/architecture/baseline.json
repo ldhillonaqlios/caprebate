@@ -3,8 +3,7 @@
  "breaks": {
   "1": {
    "claims": [
-    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts",
-    "src/modules/assessment/conveyancing-strip.ts -> src/modules/claims/upload-handler-port.ts"
+    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts"
    ],
    "core": [
     "src/integrations/connectors/test-lookups.ts -> src/core/app.ts",

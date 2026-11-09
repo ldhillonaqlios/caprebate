@@ -540,8 +540,8 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/modules/assessment/conveyancing-strip.ts": {
-   "area": "assessment",
+  "src/modules/claims/conveyancing-strip.ts": {
+   "area": "claims",
    "kind": "logic"
   },
   "src/modules/assessment/costing/job-economics.cjs": {
