@@ -21,7 +21,7 @@
 
    WHAT IT CHECKS
      A  THE SCAN. "Caprebate site.html", every 03-app/*.html and every
-        09-app/backend/src/web/*.ts:
+        back-end view (09-app/backend/src/core, shared and modules/<area>/*.ts):
         A1 no gtag, dataLayer or googletagmanager anywhere outside the CB_TRACK
            block in the site file (the only place allowed to reach a sink);
         A2 every CB_TRACK.track( call is a literal event with a literal
@@ -46,7 +46,7 @@
         B6 load() with enabled true and an id injects exactly one tag, with
            automatic page views and Google Signals off - the positive control
            that shows B3's "no tag" is the switch and not a broken loader.
-     C  THE PORTAL. No 09-app/backend/src/web/*.ts view names CB_TRACK or
+     C  THE PORTAL. No back-end view (src/core, shared, modules) names CB_TRACK or
         reaches gtag: the post-engagement pages load no tag (5.1).
      D  THE COOKIE CHOICE, run in a sandbox from the site's own SITE_CONSENT
         and CB_TRACK text. PHASE 161g, 5 Nov 2026 (Lakhbir: "Google Analytics
@@ -142,7 +142,7 @@ function readTree(sitePath) {
   let ts = [];
   try {
     /* PHASE 161i, 7 Nov 2026: views and page parts also live in src/core/ and src/shared/ now; all three are read */
-    ts = ["web", "core", "shared", "modules/public-site", "modules/assessment", "modules/portal", "modules/crm", "modules/claims"].filter(d => fs.existsSync(path.join(WEB, "..", d))).flatMap(d => fs.readdirSync(path.join(WEB, "..", d)).filter(f => /\.ts$/.test(f))
+    ts = ["core", "shared", "modules/public-site", "modules/assessment", "modules/portal", "modules/crm", "modules/claims", "modules/survey", "modules/finance", "modules/compliance", "modules/admin"].filter(d => fs.existsSync(path.join(WEB, "..", d))).flatMap(d => fs.readdirSync(path.join(WEB, "..", d)).filter(f => /\.ts$/.test(f))
       .map(f => ({ name: "09-app/backend/src/" + d + "/" + f, text: fs.readFileSync(path.join(WEB, "..", d, f), "utf8") })));
   } catch (e) { cannot("cannot read " + WEB + " - " + e.message); }
   if (!ts.length) cannot("no portal views found under " + WEB);

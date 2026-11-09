@@ -60,10 +60,14 @@ const WEB = path.join(ROOT, '09-app', 'backend', 'src', 'web');
 /* PHASE 161i, 7 Nov 2026: screens, sign-in, page parts and the core moved from src/web/ into src/core/ and src/shared/;
    every file in those two folders is read as src/web/ is (the core's own files, never read before, are read too). */
 const CORE = path.join(WEB, '..', 'core'), SHARED = path.join(WEB, '..', 'shared'), INTEG = path.join(WEB, '..', 'integrations');
-/* The business modules' folders (Phases 161j and 161k move the screens there from src/web/): each folder's own files,
+/* The business modules' folders (the screens that were in src/web/, which is gone since Phase 161k): each folder's own files,
    not its data files or front door, which hold no words for a person. */
-const MODULE_DIRS = ['public-site', 'assessment', 'portal', 'crm', 'claims'].map((m) => path.join(WEB, '..', 'modules', m));
+const MODULE_DIRS = ['public-site', 'assessment', 'portal', 'crm', 'claims', 'survey', 'finance', 'compliance', 'admin'].map((m) => path.join(WEB, '..', 'modules', m));
 const NOT_SCREENS_IN_MODULES = new Set(['data.ts', 'data-borrowed.ts', 'index.ts']);
+/* The survey module's two measurement files (the anchor quarantine and the surveyor CRM, moved from survey/ by Phase
+   161i1) were never read as screens: they are the protocol's measuring code (the rate library and adoption metric, the
+   quarantine rules), and the same 249 files are read as before the move. */
+const NOT_SCREENS_IN_SURVEY = new Set(['anchor-quarantine.ts', 'surveyor-crm.ts']);
 /* The core's files that were never in src/web/ and were never read (the server, database, sign-in rules, permissions,
    the audit log and the rest): their words are for developers, not a screen. seed.ts and secrets.ts were read before
    and still are. A new core file is read unless it is named here with that reason. */
@@ -443,7 +447,7 @@ function altOf(f, suffix, dir) {
 
 function screenFiles(suffix, dir) {
   const dirTs = (d) => fs.readdirSync(d).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f) && f !== 'index.ts').sort().map((f) => path.join(d, f));
-  const all = [...dirTs(WEB), ...MODULE_DIRS.filter((d) => fs.existsSync(d)).flatMap((d) => dirTs(d).filter((f) => !NOT_SCREENS_IN_MODULES.has(path.basename(f)))), ...dirTs(CORE).filter((f) => !CORE_NOT_SCREENS.has(path.basename(f))), ...dirTs(SHARED)].concat(EXTRA);
+  const all = [...MODULE_DIRS.filter((d) => fs.existsSync(d)).flatMap((d) => dirTs(d).filter((f) => !NOT_SCREENS_IN_MODULES.has(path.basename(f)) && !(path.basename(d) === 'survey' && NOT_SCREENS_IN_SURVEY.has(path.basename(f))))), ...dirTs(CORE).filter((f) => !CORE_NOT_SCREENS.has(path.basename(f))), ...dirTs(SHARED)].concat(EXTRA);
   return all.map((f) => {
     const alt = altOf(f, suffix, dir);
     return { label: path.relative(path.join(WEB, '..', '..'), f), file: alt && fs.existsSync(alt) ? alt : f };
