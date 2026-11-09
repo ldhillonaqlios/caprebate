@@ -338,7 +338,7 @@ export function readyForReports(app: FixtureApp, business: string, property: str
  * CRM 7 of 10 — A CLAIM'S FEE INVOICE, WRITTEN AS ITS ROW, with the next number in
  * the series: for a claim a test places straight at a stage, as `claimAt` places
  * the claim. The store that raises one is `raiseInvoice` in src/modules/finance/invoices.ts,
- * and test/finance-claim.test.ts tries every refusal it makes; this is the row a
+ * and test/finance/invoices-and-fee-controls.test.ts tries every refusal it makes; this is the row a
  * gate, a timeline or a dashboard reads. It passes every CHECK and trigger
  * migration 016 puts on a claim's invoice.
  */

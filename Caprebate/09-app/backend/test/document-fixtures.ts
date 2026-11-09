@@ -6,7 +6,7 @@
  * a real zip and a real PDF at run time instead — structurally valid, not
  * merely valid enough for the code under test.
  *
- * THEY LIVE HERE RATHER THAN IN ONE TEST FILE because `web.test.ts` needs them
+ * THEY LIVE HERE RATHER THAN IN ONE TEST FILE because `core/client-isolation-and-stored-files.test.ts` needs them
  * too. Before Phase 113c its end-to-end upload test fed the handler the string
  * "%PDF-1.4\nLandlord: Acme Holdings Ltd…" — bytes that pass the magic-number
  * sniffer and are not a PDF. That read as plain text under the old extractor,

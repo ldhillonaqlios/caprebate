@@ -48,7 +48,7 @@
 
    grant_traced_to_elements is read by the back end's survey pack, not by these
    flows (Suite H, H24), so here it is NO FIGURE MOVED by design; its direction is
-   proved in 09-app/backend/test/pack-grants.test.ts, where it moves money either
+   proved in 09-app/backend/test/survey/pack-grants.test.ts, where it moves money either
    way. The tool says so on its line.
 
    RUN
@@ -300,7 +300,7 @@ for (const t of TARGETED) for (const sector of SECTORS) {
 }
 
 const PACK_ONLY = new Set(["grant_traced_to_elements", "fvr_requires_past_owner_claim"]);
-const PACK_WHY = { grant_traced_to_elements: "read by the survey pack, not these flows: see test/pack-grants.test.ts",
+const PACK_WHY = { grant_traced_to_elements: "read by the survey pack, not these flows: see test/survey/pack-grants.test.ts",
   fvr_requires_past_owner_claim: "the flows cap only a seller KNOWN to have claimed; it moves the survey pack's legal check (pack-legal.ts)" };
 function classOf(t, k) {
   if (PACK_ONLY.has(k)) return "PACK ONLY";

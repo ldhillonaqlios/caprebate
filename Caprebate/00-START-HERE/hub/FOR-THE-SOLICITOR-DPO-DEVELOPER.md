@@ -2057,7 +2057,7 @@ Name:                                  Date:
 -  **The test website's function log no longer prints emails.** It printed every new email in the outbox — the address, the subject and the body, sign-up links included — against the Developer Spec's rule of no personal data in logs. It now prints how many, of which kinds, and how many were sent: "3 new emails in the outbox - FREE_TYPED 1, SIGN_UP 2; 1 sent, 2 not sent". Nothing else changed in what is sent.
 -  **Invisible characters are taken out of what people type.** A null and a right-to-left override typed into a claim note or a portal message were stored and shown back as typed; the override can make a file name read backwards. Every form the website reads now drops control characters (keeping tabs and line breaks) and the direction marks and overrides. A password is never altered.
 
- **For the developer.** No migration and no new route. Line by line, with its test in `09-app/backend/test/phase154a1.test.ts`:
+ **For the developer.** No migration and no new route. Line by line, with its test in `09-app/backend/test/core/sweep-fixes.test.ts`:
 -  A body over its cap is read and dropped (up to 8 MB more) and the 413 says `Connection: close` (`src/core/router.ts` `readBody`, `bindResponse`); the JSON API's cap is now a 413 too, not a 500 (`src/core/server.ts` `readJson`). Before, the next request on that connection hung six seconds and was reset.
 -  The compliance person search cuts its term to 200 characters and says so (`SEARCH_TERM_MAX`); 50,000 characters was a 500.
 -  A contact, an introducer's person or a firm with no name field at all is refused (`crm.ts`, `introducers.ts`); the firm was a 500.

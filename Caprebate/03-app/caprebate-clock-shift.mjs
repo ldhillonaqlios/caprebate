@@ -4,7 +4,7 @@
 // Sunday afternoon and passed on every other day.
 //
 //   CB_FAKE_NOW="2026-09-13T15:45:00.000Z" \
-//     node --import "<abs path>/03-app/caprebate-clock-shift.mjs" --test test/staff.test.ts
+//     node --import "<abs path>/03-app/caprebate-clock-shift.mjs" --test test/core/filled-assessments-and-calendar.test.ts
 //
 // Date.now() and new Date() start at CB_FAKE_NOW and tick from there; a Date
 // built from an explicit value is untouched. It changes nothing on disk and

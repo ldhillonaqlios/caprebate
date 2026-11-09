@@ -8,7 +8,7 @@
  * stylesheet and the logo, so there is still no route that reads a file.
  *
  *   node tools/build-help.cjs           write src/core/help-content.ts
- *   node tools/build-help.cjs --check   exit 1 if it is stale against the guide (test/phase133c.test.ts runs this)
+ *   node tools/build-help.cjs --check   exit 1 if it is stale against the guide (test/core/brand-voice-and-first-use.test.ts runs this)
  *
  * Change the guide, then run this. Never edit help-content.ts by hand.
  */

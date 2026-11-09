@@ -13,7 +13,7 @@
  * L14 (the Lockwood run of 10 October 2026): the claim page and the sign-off read the adviser's switches as the pack does.
  * Item 5 (carried from Phase 159c): a document names the piece of work it proves, and each event counts its own.
  * Already in the suite before this phase, so not repeated here: the version scenarios (claim/h5) are Phase 159a's C3,
- * C4 and C5 tests (test/phase159a.test.ts), and the legal-path walk (claim/h6) is test/legal-paths.test.ts (Phase 159h).
+ * C4 and C5 tests (test/claims/one-version-after-sign-off.test.ts), and the legal-path walk (claim/h6) is test/survey/legal-check-paths.test.ts (Phase 159h).
  */
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';

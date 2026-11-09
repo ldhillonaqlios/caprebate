@@ -103,7 +103,7 @@ const EXEMPT_TEXT = [
   /* a question's title in CAPREBATE QUESTIONS, quoted exactly so the two stay one question (src/web/postcode.ts) */
   /^Does the permission gate apply to a council-area lookup with no personal data in it\?$/,
   /* Phase 151b: a question's title in the Word questions document (closed 24 September 2026), quoted exactly by
-     src/connectors/identity-check.ts and asserted word for word by test/phase151.test.ts. No screen shows it. */
+     src/connectors/identity-check.ts and asserted word for word by test/compliance/identity-check-and-custom-roles.test.ts. No screen shows it. */
   /^Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD\?$/,
   /* the assessment's first question (src/modules/assessment/assessment.ts SCREENS.Q1, and the site's screenQ1, word for word). Its
      wording could change what a client answers, so a plainer version waits in FOR THE ACCOUNTANT for the tax

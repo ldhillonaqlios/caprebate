@@ -299,7 +299,7 @@ year and make them re-enter it. `schedule.ts` decision 3 has the full reasoning.
 **The offset is asked of `Intl`, never assumed.** A hard-coded `+1` is wrong for four months
 of the year, a `0` for eight, and both are wrong on the two mornings that matter — so
 `instantsForLocalMinute` returns **zero** instants for a local time in the March gap and
-**two** for one in the October overlap. `test/localtime.test.ts` asserts everything twice, on
+**two** for one in the October overlap. `test/shared/local-time.test.ts` asserts everything twice, on
 real dates either side of both 2026 transitions, and **fails on either constant**; that was
 proved by inserting them.
 
