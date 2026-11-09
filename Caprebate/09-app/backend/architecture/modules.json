@@ -544,6 +544,10 @@
    "area": "assessment",
    "kind": "logic"
   },
+  "src/modules/assessment/costing/job-economics.cjs": {
+   "area": "assessment",
+   "kind": "other"
+  },
   "src/modules/assessment/data-borrowed.ts": {
    "area": "assessment",
    "kind": "data"
@@ -553,6 +557,10 @@
    "kind": "data"
   },
   "src/modules/assessment/desk-first.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/modules/assessment/fee-gate.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -1221,10 +1229,6 @@
    "kind": "other"
   },
   "src/modules/survey/costing/cost-model.d.cts": {
-   "area": "survey",
-   "kind": "other"
-  },
-  "src/modules/survey/costing/job-economics.cjs": {
    "area": "survey",
    "kind": "other"
   },

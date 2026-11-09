@@ -7,7 +7,7 @@
 export { CSS_HEADERS, PNG_HEADERS, SITE_CSS } from './assets.ts';
 export { LOGO_INK_PNG } from './brand-logo.ts';
 export { SECTION_STATUS_WORDS, badge, brandName, breadcrumb, card, claimHref, claimName, claimRef, claimStageBar, claimTiles, clientStageBar, dataLink, fields, highlights, moreDetail, nextStepCard, noticeAtAddress, propertyIn, recordLayout, recordTabs, savedMessage, section, sectionList, sidePanel, statusFromNeeds, welcomeCard, why } from './components.ts';
-export { BAND, BENEFIT, BOOKING, CB, CTA, FRONTDOOR, FUNNEL, RATES, REGISTRY, amendmentWindow, clientVatFromWorks, ctaSwitchReadings, electionNotifiedInTime, estimate, feeDisplay, feeGate, feeGuard, feeRate, getSector, marginalRateRange, multiSiteDiscount, newSession, noClaimThreshold, registryGate } from './engine.ts';
+export { BAND, BENEFIT, BOOKING, CB, CTA, FEE, FRONTDOOR, FUNNEL, GATE, GATE_CONFIG, RATES, REGISTRY, amendmentWindow, clientVatFromWorks, ctaSwitchReadings, electionNotifiedInTime, estimate, feeDisplay, feeGuard, feeRate, getSector, marginalRateRange, multiSiteDiscount, newSession, noClaimThreshold, registryGate } from './engine.ts';
 export { extractPages, isScanMarker, pdfPageImages } from './extract-text.ts';
 export { FINDING_LABELS, findingSeen } from './finding-source.ts';
 export { HTML_HEADERS, Safe, escapeHtml, h, page, raw } from './html.ts';
@@ -26,7 +26,7 @@ export { CLOSED_STAGE, EXITS, EXIT_KEYS, LEGACY_STAGE_TO_PROCEDURE, ON_HOLD_STAG
 export { LATE_AFTER_WORKING_DAYS, isLateNewLead, waitedWords, workingDaysSince } from './working-days.ts';
 export { DOCX_DOCUMENT_ENTRIES, docxParagraphTexts, listZipEntries, readZipEntry, readZipEntryFromBuffer } from './zip.ts';
 export type { Job, Need, QuickAction, RecordTab, SectionContext, SectionSpec, SectionStatus, Tone } from './components.ts';
-export type { BenefitContext, EngineResult, EngineWindow, EntityKey, FeeComparison, FeeGateReading, NoClaimVatReading, RecommendationThreshold, SectorId, Session } from './engine.ts';
+export type { BenefitContext, EngineResult, EngineWindow, EntityKey, FeeComparison, FeeDisplay, GateDecision, NoClaimVatReading, RecommendationThreshold, SectorId, Session } from './engine.ts';
 export type { ExtractedPage, PageImage } from './extract-text.ts';
 export type { MoneyReadings } from './money-readings.ts';
 export type { KeepOriginals } from './originals.ts';

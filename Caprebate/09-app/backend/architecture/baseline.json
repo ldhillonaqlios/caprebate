@@ -123,9 +123,7 @@
     "src/core/cli.ts -> src/modules/survey/bcis-data.ts",
     "src/core/cli.ts -> src/modules/survey/bcis-index.ts",
     "src/core/search.ts -> src/modules/survey/data.ts",
-    "src/integrations/postcodes/location-key.ts -> src/modules/survey/costing/cost-model.cjs",
-    "src/modules/claims/claim-record.ts -> src/modules/survey/costing/job-economics.cjs",
-    "src/shared/engine.ts -> src/modules/survey/costing/job-economics.cjs"
+    "src/integrations/postcodes/location-key.ts -> src/modules/survey/costing/cost-model.cjs"
    ]
   },
   "2": {
@@ -183,8 +181,7 @@
     "portal -> public-site"
    ],
    "shared": [
-    "shared -> core",
-    "shared -> survey"
+    "shared -> core"
    ],
    "survey": [
     "survey -> crm"
