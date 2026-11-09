@@ -107,7 +107,7 @@ and fails on any module they load, or any path they build from their own folder,
 belongs to, without the `caprebate-` prefix (Phases 161i and 161i1): `src/integrations/registers/` (the
 source register, the name exclusion register, the land boundary import), `src/modules/claims/documents/`
 (the document pipeline, client document ingestion, the upload handler), `src/modules/survey/` (the anchor
-quarantine, the surveyor CRM), `src/modules/survey/costing/` (the cost model, the job economics) and
+quarantine, the surveyor CRM), `src/modules/survey/costing/` (the cost model), `src/modules/assessment/costing/` (the job economics, Phase 161l) and
 `src/integrations/postcodes/` (postcode to council, the postcode store, the location key, the region),
 with their tests in `test/`. The old paths keep a one-line note that loads the new file. The few paths still allowed
 outside are listed, with the reason, in `KNOWN` in that file; `--self-test` proves a planted import from

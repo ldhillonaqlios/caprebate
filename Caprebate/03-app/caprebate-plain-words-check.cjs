@@ -417,6 +417,9 @@ const EXTRA = [
   path.join(INTEG, 'email', 'email.ts'), path.join(INTEG, 'email', 'email-provider.ts'), path.join(INTEG, 'email', 'email-inbound.ts'),
   /* Phase 146b: the connectors' words — why a lookup did not run or did not work — reach the research panel */
   path.join(INTEG, 'connectors', 'registers.ts'), path.join(INTEG, 'connectors', 'http.ts'),
+  /* Phase 161l: the registers published as a file moved from src/modules/claims/register-files.ts; their words (the
+     publishers, the columns named on the import page) reach the admin's import page, so they are read as before */
+  path.join(INTEG, 'registers', 'file-registers.ts'),
   /* Phase 146c: the free registers' connectors and the matcher — each lookup's result, in words, is what the research
      panel shows beside it */
   ...['free-registers.ts', 'matching.ts', 'companies-house.ts', 'cqc.ts', 'epc.ts', 'price-paid.ts', 'planning.ts', 'postcode.ts', 'nations.ts']
