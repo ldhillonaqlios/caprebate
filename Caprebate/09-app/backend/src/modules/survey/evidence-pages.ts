@@ -1,5 +1,5 @@
 /**
- * THE SURVEY'S EVIDENCE — ITS PAGES. 2 October 2026; the mock-up Lakhbir approved that day (src/web/survey-evidence.ts).
+ * THE SURVEY'S EVIDENCE — ITS PAGES. 2 October 2026; the mock-up Lakhbir approved that day (src/modules/survey/survey-evidence.ts).
  *
  * THE CLIENT'S PORTAL — "Show us your building":
  *   GET  /portal/building[?job=]            the ways (the photo checklist, a video, a video call - recorded on a paid Zoom plan only, Phase 156d) and the checklist
@@ -20,22 +20,22 @@
  *   GET  /staff/survey/{job}/pack/recording/{id}    open it (recorded), on Zoom
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../core/app.ts';
-import { can, NotAuthorised, type Actor } from '../core/index.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
-import type { FsObjectStore } from '../shared/objectstore.ts';
+import type { App } from '../../core/app.ts';
+import { can, NotAuthorised, type Actor } from '../../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
+import type { FsObjectStore } from '../../shared/objectstore.ts';
 import * as E from './survey-evidence.ts';
 import { GROUPS, NOBODY_IN_SHOT } from './survey-checklist.ts';
-import { manyFiles, singleFile } from '../core/index.ts';
+import { manyFiles, singleFile } from '../../core/index.ts';
 import { packJob } from './surveyor.ts';
-import { staffSlots, addLocalDays, startOfLocalDay } from '../modules/crm/index.ts';
-import { localDate, localClock, ukDate } from '../shared/index.ts';
-import { activeMeeting, clientJoinUrl } from '../modules/crm/index.ts';
-import { zoomPlanIsFree } from '../integrations/index.ts';
+import { staffSlots, addLocalDays, startOfLocalDay } from '../crm/index.ts';
+import { localDate, localClock, ukDate } from '../../shared/index.ts';
+import { activeMeeting, clientJoinUrl } from '../crm/index.ts';
+import { zoomPlanIsFree } from '../../integrations/index.ts';
 import * as U from './photo-upload.ts';
 import * as SV from './survey-video.ts';
-import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from '../modules/assessment/index.ts';
-import { listContactsEmailNameByBusinessIdEmail } from '../modules/crm/index.ts';
+import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from '../assessment/index.ts';
+import { listContactsEmailNameByBusinessIdEmail } from '../crm/index.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
@@ -239,7 +239,7 @@ function videoPage(d: PortalEvidenceDeps, v: E.ChecklistView, actor: Actor, q: U
     </section>`;
 }
 
-/** PHASE 156d: the walkthrough call's words for our Zoom plan (src/web/survey-evidence.ts, WALK_WORDS). */
+/** PHASE 156d: the walkthrough call's words for our Zoom plan (src/modules/survey/survey-evidence.ts, WALK_WORDS). */
 function W(d: { app: App }): E.WalkWords { return E.walkWords(zoomPlanIsFree(d.app.secrets)); }
 
 /** The walkthrough video call: ask for one, or the time booked and the way in. */
@@ -335,7 +335,7 @@ export async function handlePortalEvidence(
     redirect(res, safeBack(got.fields['back'] ?? null, `/portal/building/photos?job=${job}`, 'photo'));
     return 'handled';
   }
-  /* 2 Oct 2026: a send straight to the file store, each photo locked on the phone (src/web/photo-upload.ts). JSON for the
+  /* 2 Oct 2026: a send straight to the file store, each photo locked on the phone (src/modules/survey/photo-upload.ts). JSON for the
      page's script only. */
   if (path === '/portal/building/upload/start' && method === 'POST') {
     const f = await d.form(req);
@@ -381,7 +381,7 @@ export async function handlePortalEvidence(
     redirect(res, `/portal/building/call?job=${f.get('job') ?? ''}&done=asked`);
     return 'handled';
   }
-  /* 2 Oct 2026: A VIDEO, in locked pieces straight to the file store (src/web/survey-video.ts). JSON for the page's script. */
+  /* 2 Oct 2026: A VIDEO, in locked pieces straight to the file store (src/modules/survey/survey-video.ts). JSON for the page's script. */
   if (path === '/portal/building/video' && method === 'POST') {
     // Only a browser that could not run the page's script posts the form itself: a video cannot go without it.
     redirect(res, `/portal/building/video?job=${(await d.form(req)).get('job') ?? ''}&done=script`);

@@ -229,7 +229,7 @@ export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
 }
 
 /**
- * THE SURVEYOR'S VALUATION IS THE SURVEYOR'S APPROVAL OF THE PACK (src/web/pack-approve.ts) - a version
+ * THE SURVEYOR'S VALUATION IS THE SURVEYOR'S APPROVAL OF THE PACK (src/modules/survey/pack-approve.ts) - a version
  * approved on a survey job on THIS claim. Approving needs every value, the legal check settled, every chapter opened,
  * the inspection basis and a RICS number, so no tick can stand in for it.
  */

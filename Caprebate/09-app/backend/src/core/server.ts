@@ -34,7 +34,7 @@ import { authorise, can, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj
 import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAILURE, type LoginResult } from './auth.ts';
 import * as SI from './sign-in.ts';
 import { toActor } from './users.ts';
-import { payloadFor, assertSurveySection } from '../web/surveyor.ts';
+import { payloadFor, assertSurveySection } from '../modules/survey/surveyor.ts';
 import { handleWeb, refusalAsPage, sendRefusalPage } from './router.ts';
 import { bindResponse, clientIp, PayloadTooLarge, readBody } from './http.ts';
 import { FsObjectStore } from '../shared/objectstore.ts';

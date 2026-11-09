@@ -59,11 +59,11 @@ import { handleClientPage } from '../modules/crm/index.ts';
 import { handleClientFiles } from '../modules/portal/index.ts';
 import { handleFreeEmail } from '../modules/crm/index.ts';
 import { handleStaffMessages } from '../modules/crm/index.ts';
-import { handleSurveyor } from '../web/surveyor-pages.ts';
-import { handleSurveyPack } from '../web/survey-pack-pages.ts';
+import { handleSurveyor } from '../modules/survey/surveyor-pages.ts';
+import { handleSurveyPack } from '../modules/survey/survey-pack-pages.ts';
 import { handleReportStaff } from '../modules/claims/index.ts';
 import { handleAccountantConfirmStaff } from '../modules/portal/index.ts';
-import { handleStaffEvidence } from '../web/evidence-pages.ts';
+import { handleStaffEvidence } from '../modules/survey/evidence-pages.ts';
 import { handleFinance } from '../web/finance-pages.ts';
 import { handleCrm } from '../modules/crm/index.ts';
 import { handlePipeline } from '../modules/crm/index.ts';
@@ -460,7 +460,7 @@ export async function handleStaff(
     { app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form,
   );
   if (survey === 'handled') return 'handled';
-  // The survey pack — the sums, the surveyor's stamped changes (src/web/survey-pack-pages.ts).
+  // The survey pack — the sums, the surveyor's stamped changes (src/modules/survey/survey-pack-pages.ts).
   const pack = await handleSurveyPack({ app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form);
   if (pack === 'handled') return 'handled';
   // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/modules/claims/report-pages.ts).
@@ -469,7 +469,7 @@ export async function handleStaff(
   // Email the client's accountant a link to confirm for themselves (src/modules/portal/accountant-confirm-pages.ts).
   const confirmLink = await handleAccountantConfirmStaff({ app: d.app, newId: d.newId, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (confirmLink === 'handled') return 'handled';
-  // The client's photos, the walkthrough call and how the surveyor inspected (src/web/evidence-pages.ts).
+  // The client's photos, the walkthrough call and how the surveyor inspected (src/modules/survey/evidence-pages.ts).
   const evidence = await handleStaffEvidence({ app: d.app, store: d.store, newId: d.newId, nav, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (evidence === 'handled') return 'handled';
 

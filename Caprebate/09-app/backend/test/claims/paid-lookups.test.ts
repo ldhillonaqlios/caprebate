@@ -28,7 +28,7 @@ import { secretsFromValues, emptySecrets, SECRET_KEYS, parseSecretsFile, KEY_OF_
 import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../../src/integrations/registers/source-register.ts';
 import { NAME_EXCLUSION_POLICY, classifyField, assertNoUnauthorisedName } from '../../src/integrations/registers/name-exclusion.ts';
 import * as R from '../../src/modules/claims/research.ts';
-import * as S from '../../src/web/surveyor.ts';
+import * as S from '../../src/modules/survey/surveyor.ts';
 import { STUBS } from '../../src/core/app.ts';
 import { seed } from '../../src/core/seed.ts';
 import { newId } from '../../src/core/users.ts';
@@ -409,7 +409,7 @@ describe('the title register: the price four of five sectors have no other sourc
 
   test('THE SURVEYOR NEVER RECEIVES THE PRICE: an amount between buyer and seller waits with our own estimate', () => {
     assert.deepEqual(S.REGISTER_AMOUNTS_WITHHELD['HMLR_TITLE'], ['price_paid']);
-    const surveyor = readFileSync(join(SRC, 'web', 'surveyor.ts'), 'utf8');
+    const surveyor = readFileSync(join(SRC, 'modules', 'survey', 'surveyor.ts'), 'utf8');
     assert.match(surveyor, /HMLR_TITLE: Object\.freeze\(\['price_paid'\]\)/);
   });
 

@@ -356,7 +356,7 @@ describe('line 13: the pooling requirement (s.187A(4)) in the survey pack, as in
   const NOW = '2026-10-04T09:00:00.000Z';
   const seller = (extra: Record<string, unknown>) => new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2019-06-01', G12: 'taxpaying', G14s: 'sale',
     G14: 'no', G14po: 'sold_market', G14pod: '2019-06-01', G14iv: 'no', G14t: 'none', G15: 'no', G14fvr: 'yes', ...extra }));
-  const legal = async () => (await import('../src/web/pack-legal.ts')).assessLegal;
+  const legal = async () => (await import('../src/modules/survey/pack-legal.ts')).assessLegal;
   const cta = async () => (await import('../src/shared/engine.ts')).CB.CB_CTA as unknown as Record<string, unknown>;
 
   test('a tax-paying seller who never claimed, sold in 2019: RED, naming the pooling requirement and what would meet it', async () => {

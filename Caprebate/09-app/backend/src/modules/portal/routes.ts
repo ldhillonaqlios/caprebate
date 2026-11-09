@@ -11,7 +11,7 @@ import { getResearchSourcesCountByBusinessIdState2 } from '../../integrations/in
 import { ENGAGEMENT_SIGNING, SIGN_WORDS, claimRoutes, clientDeliverables, clientSteps, clientStepsCard, getClaimsPropertyIdByIdBusinessId, getEngagementsStateSignedAtById, letterFacts, letterOptions, letterState, letterSteps, loadLetter, portalReport, portalReportCard, readLines, receivableTypes, shownLetter, signByLink, signEngagement, signLinkFor, signedCopy, signingMissing, startDocumentUpload, updateEngagementsLetterStateViewedAtByIdLetterState, type ClientDeliverable, type ClientStep, type EngagementSigning, type LetterFacts, type RequestView } from '../claims/index.ts';
 import { activeMeeting, booksATime, clientMessage, clientShareChoices, portalMessagesBody, publicSlots, readPortalSend, reconcileVideoMeeting, recordShareConsentByClient, sendFromPortal, type ClientShareChoice, type ThreadMessage as MessageView } from '../crm/index.ts';
 import { agreementLinks, safeBack } from '../public-site/index.ts';
-import { handlePortalEvidence, portalEvidenceCard } from '../../web/evidence-pages.ts';
+import { handlePortalEvidence, portalEvidenceCard } from '../survey/evidence-pages.ts';
 import { handleConfirmLink } from './accountant-confirm-pages.ts';
 import { readUpload, receiveFile } from './client-files-pages.ts';
 import { portalDashboard } from './portal-dashboard.ts';
@@ -217,7 +217,7 @@ async function portalRoutes(
 
   /* MESSAGES — the thread with the client, and nothing else. `business_id` is the session's for a client, so a
      client only ever reads and writes their own company's thread; every read and write is asked of the rule table again. */
-  /* "SHOW US YOUR BUILDING" — the photo checklist and the recorded walkthrough call (src/web/evidence-pages.ts). */
+  /* "SHOW US YOUR BUILDING" — the photo checklist and the recorded walkthrough call (src/modules/survey/evidence-pages.ts). */
   if (path === '/portal/building' || path.startsWith('/portal/building/')) {
     P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does
     const r = await handlePortalEvidence({ app: d.app, store: d.store, newId, nav: nav(actor), form, readBody }, req, res, url, method, actor, business_id);

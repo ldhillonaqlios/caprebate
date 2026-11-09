@@ -4,7 +4,7 @@
  * Rulebook F (01-rulebooks/Caprebate-Statutory-Rules-Register-F-Contributions-And-Grants-v1.md): money from someone
  * else reduces the spend "to the extent that" it met it (s.532, F-R1), and F3 says "trace it to cost elements; do not
  * pro-rate yet". Until this file, a grant on the claim record (claim_grants, migration 015) was matched only in words,
- * and nothing took it off anything: the survey pack's sums (src/web/pack-sums.ts) had no grant in them at all.
+ * and nothing took it off anything: the survey pack's sums (src/modules/survey/pack-sums.ts) had no grant in them at all.
  *
  * TWO ROUTES, AND THE SWITCH CB_CTA.grant_traced_to_elements CHOOSES BETWEEN THEM. It ships OFF.
  *

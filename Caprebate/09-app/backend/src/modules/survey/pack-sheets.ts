@@ -3,9 +3,9 @@
  *
  * Chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22 (the report template's sections of the same numbers,
  * 04-phase-work/phase9/surveyor-valuation-report-template-v2.md). Each is a SHEET: rows read from the pack, the claim, the
- * registers we hold, or the surveyor's own words (src/web/pack-words.ts), and nothing else. One reading, used three ways:
- * the pack's pages (src/web/survey-pack-pages.ts), the approved version (src/web/pack-approve.ts) and the client's report
- * (src/web/survey-report.ts), so the page, the version and the report never disagree.
+ * registers we hold, or the surveyor's own words (src/modules/survey/pack-words.ts), and nothing else. One reading, used three ways:
+ * the pack's pages (src/modules/survey/survey-pack-pages.ts), the approved version (src/modules/survey/pack-approve.ts) and the client's report
+ * (src/modules/survey/survey-report.ts), so the page, the version and the report never disagree.
  *
  * N4: a row with nothing behind it is null, shown as "not on file" (a record), "not written yet" (the surveyor's words)
  * or "not worked out yet" (a sum), never a guess and never a default. No land fraction, dwelling fraction or qualifying
@@ -14,28 +14,28 @@
  * The Phase 153e lines each chapter carries are named on the chapter (the order: 04-phase-work/phase153f/
  * survey-pack-chapters-order.md).
  */
-import type { Db } from '../core/index.ts';
+import type { Db } from '../../core/index.ts';
 import type { PackView, ViewLine } from './survey-pack.ts';
 import { packWords, WORD_FIELDS, type WordField } from './pack-words.ts';
-import { claimantTypeReading, captured, latestFacts } from '../modules/claims/index.ts';
-import { funnelStateFor, sessionFromFunnel } from '../modules/assessment/index.ts';
-import { proposeRanges } from '../modules/assessment/index.ts';
-import { deskFirstReading } from '../modules/assessment/index.ts';
+import { claimantTypeReading, captured, latestFacts } from '../claims/index.ts';
+import { funnelStateFor, sessionFromFunnel } from '../assessment/index.ts';
+import { proposeRanges } from '../assessment/index.ts';
+import { deskFirstReading } from '../assessment/index.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
-import { findingSeen, FINDING_LABELS } from '../shared/index.ts';
-import { REPORT_ASSUMPTIONS } from '../modules/assessment/index.ts';
-import { RATES } from '../shared/index.ts';
-import { ESTIMATED_AREA_LABEL } from '../integrations/index.ts';
-import { BAND, FUNNEL } from '../shared/index.ts';
+import { findingSeen, FINDING_LABELS } from '../../shared/index.ts';
+import { REPORT_ASSUMPTIONS } from '../assessment/index.ts';
+import { RATES } from '../../shared/index.ts';
+import { ESTIMATED_AREA_LABEL } from '../../integrations/index.ts';
+import { BAND, FUNNEL } from '../../shared/index.ts';
 
 /** PHASE 159c: the funnel's own words for each kind of event. */
 const FUNNEL_LABEL = (FUNNEL as unknown as { EVENT_LABEL: Record<string, string> }).EVENT_LABEL;
 import { poundsWords, percentWords, quantityWords } from './pack-sums.ts';
 import { indexReading, insuranceReading, prelimsReading, rateFlagReading, shareFlagReading, INCLUDES_WORDS } from './pack-cost-model.ts';
 import { packDateIso, propertyLine } from './survey-pack.ts';
-import type { Env } from '../integrations/index.ts';
-import { getRegisterRecordsFieldsJsonByBusinessIdSourceId } from '../integrations/index.ts';
-import { getLogicalDocumentsCountByBusinessIdTypeCode } from '../modules/claims/index.ts';
+import type { Env } from '../../integrations/index.ts';
+import { getRegisterRecordsFieldsJsonByBusinessIdSourceId } from '../../integrations/index.ts';
+import { getLogicalDocumentsCountByBusinessIdTypeCode } from '../claims/index.ts';
 
 /** Where a row's value comes from — shown beside it, so nothing reads as more certain than it is. */
 export type RowFrom = 'the pack' | 'the claim' | 'Land Registry' | 'the energy certificate' | 'Homedata (estimate)' | 'the client'
@@ -94,7 +94,7 @@ type Ctx = {
   readonly words: ReturnType<typeof packWords>;
   readonly triggers: readonly string[] | null;
   readonly funnel: Record<string, unknown> | undefined;
-  /** PHASE 157a: where this copy runs, for the cost model's test placeholders (src/web/pack-cost-model.ts). */
+  /** PHASE 157a: where this copy runs, for the cost model's test placeholders (src/modules/survey/pack-cost-model.ts). */
   readonly env: Env;
 };
 
@@ -245,7 +245,7 @@ function qualifyingShare(c: Ctx): Sheet {
       { label: `Judgement or contested items (${String(jd.count)})`, value: jd.pct, from: 'worked out', missing: jd.count === 0 ? 'none in this pack' : NOT_WORKED },
       { label: 'The building’s structure (what is left after the plant)', value: residual === null ? null : poundsWords(residual), from: 'worked out', missing: NOT_WORKED },
       wordsRow(c, 'qpct_basis'),
-      // Phase 153e lines 7, 8 and 10, wired by Phase 157a (src/web/pack-cost-model.ts): test placeholders, for the surveyor.
+      // Phase 153e lines 7, 8 and 10, wired by Phase 157a (src/modules/survey/pack-cost-model.ts): test placeholders, for the surveyor.
       ...checkRows(c),
     ],
     words: ['qpct_basis'], items: [], carries: '153e lines 7, 8 and 10 (wired by Phase 157a)',

@@ -6,7 +6,7 @@
  * the client, the assigned surveyor, Admin, Sales and the data protection officer.
  *
  * HOW. A video is far bigger than one request to the test website may carry (4.5 MB), and than a phone can lock in one
- * go. So the page's script (src/web/photo-upload-script.ts) cuts it into pieces of 4 MB. The send gets a one-time lock
+ * go. So the page's script (src/modules/survey/photo-upload-script.ts) cuts it into pieces of 4 MB. The send gets a one-time lock
  * (`startVideo`, as a photo send does); each piece is locked on the phone with a fresh key, given its own place
  * (`videoSlot`: a Blob presigned PUT on the test website, or our own route — `putVideoLocal` — on any other copy or
  * when the store gives no address), sent, and reported (`finishPiece`): the server opens it, checks its size, and keeps
@@ -20,9 +20,9 @@
  * which is what an iPhone needs to play and seek, and keeps every answer under the test website's limit.
  */
 import { createHash, generateKeyPairSync } from 'node:crypto';
-import type { Actor } from '../core/index.ts';
-import { authorise, NotAuthorised } from '../core/index.ts';
-import { INCOMING_PREFIX, VIDEO_PREFIX, type FsObjectStore, type IncomingTarget } from '../shared/objectstore.ts';
+import type { Actor } from '../../core/index.ts';
+import { authorise, NotAuthorised } from '../../core/index.ts';
+import { INCOMING_PREFIX, VIDEO_PREFIX, type FsObjectStore, type IncomingTarget } from '../../shared/objectstore.ts';
 import { clientOf, NO_KEY, type EvidenceDeps } from './survey-evidence.ts';
 import { failureWords, LOCK_OVERHEAD, SITE_SUFFIX, unlockPhoto, type UploadResult } from './photo-upload.ts';
 import { packJob } from './surveyor.ts';

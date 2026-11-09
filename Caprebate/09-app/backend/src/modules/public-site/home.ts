@@ -29,7 +29,7 @@ import { leadsList, type LeadListRow } from '../../shared/lists.ts';
 import { pipelineBoard, pipelineBoardGate } from '../crm/index.ts';
 import { financeDashboard } from '../../web/invoices.ts';
 import { assertFinanceSection } from '../../web/finance.ts';
-import { assertSurveySection, surveyorJobs } from '../../web/surveyor.ts';
+import { assertSurveySection, surveyorJobs } from '../survey/surveyor.ts';
 import { auditLogView } from '../../web/audit-log.ts';
 import { isLateNewLead, waitedWords, workingDaysSince } from '../../shared/index.ts';
 import { tasksModule as T } from '../crm/index.ts';

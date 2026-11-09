@@ -40,7 +40,7 @@ import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } 
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';
 import { enquiriesModule as E } from '../public-site/index.ts';
-import * as SO from '../../web/survey-open.ts';
+import * as SO from '../survey/survey-open.ts';
 import { leadSectionCounts, leadSections, type CardDeps } from './lead-cards.ts';
 import { piecesPage } from '../../core/index.ts';
 
@@ -256,7 +256,7 @@ export async function handlePipeline(
     return 'handled';
   }
 
-  /* Open the claim's survey job for the surveyor chosen; it seals the estimate (src/web/survey-open.ts). */
+  /* Open the claim's survey job for the surveyor chosen; it seals the estimate (src/modules/survey/survey-open.ts). */
   const surveyJob = /^\/staff\/claims\/([A-Za-z0-9-]+)\/survey-job$/.exec(path);
   if (surveyJob && method === 'POST') {
     const id = surveyJob[1] ?? '';

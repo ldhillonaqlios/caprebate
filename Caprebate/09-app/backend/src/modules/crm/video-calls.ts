@@ -164,7 +164,7 @@ export async function reconcileVideoMeeting(app: App, booking_id: string): Promi
     const ok = await moveZoomMeeting(zd, m.meeting_id, b.starts_at, SLOT_MINUTES).catch(() => false);
     return ok ? 'MOVED' : { not_made: 'Zoom did not take the new time. The link still works; the host starts the call at the new time.' };
   }
-  // A survey walkthrough call (src/web/survey-evidence.ts) is recorded, so the surveyor can watch it.
+  // A survey walkthrough call (src/modules/survey/survey-evidence.ts) is recorded, so the surveyor can watch it.
   const record = getSurveyWalkthroughsXByBookingId(app.db, [booking_id]) !== undefined;
   // Made under the assigned member of staff, so two calls at once can both run; if they have no Zoom user
   // on our account, under the shared host instead, and the audit line says so.

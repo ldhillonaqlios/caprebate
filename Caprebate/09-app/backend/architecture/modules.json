@@ -1139,7 +1139,7 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/anchor-store.ts": {
+  "src/modules/survey/anchor-store.ts": {
    "area": "survey",
    "kind": "logic"
   },
@@ -1147,11 +1147,11 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/bcis-data.ts": {
+  "src/modules/survey/bcis-data.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/bcis-index.ts": {
+  "src/modules/survey/bcis-index.ts": {
    "area": "survey",
    "kind": "logic"
   },
@@ -1211,7 +1211,7 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/evidence-pages.ts": {
+  "src/modules/survey/evidence-pages.ts": {
    "area": "survey",
    "kind": "page"
   },
@@ -1235,51 +1235,51 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/pack-approve.ts": {
+  "src/modules/survey/pack-approve.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/pack-chapters.ts": {
+  "src/modules/survey/pack-chapters.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/pack-cost-model.ts": {
+  "src/modules/survey/pack-cost-model.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/pack-grants.ts": {
+  "src/modules/survey/pack-grants.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/pack-legal.ts": {
+  "src/modules/survey/pack-legal.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/pack-lines.ts": {
+  "src/modules/survey/pack-lines.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/pack-sheets.ts": {
+  "src/modules/survey/pack-sheets.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/pack-sums.ts": {
+  "src/modules/survey/pack-sums.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/pack-vat.ts": {
+  "src/modules/survey/pack-vat.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/pack-words.ts": {
+  "src/modules/survey/pack-words.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/photo-upload-script.ts": {
+  "src/modules/survey/photo-upload-script.ts": {
    "area": "survey",
    "kind": "other"
   },
-  "src/web/photo-upload.ts": {
+  "src/modules/survey/photo-upload.ts": {
    "area": "survey",
    "kind": "logic"
   },
@@ -1295,39 +1295,39 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/survey-checklist.ts": {
+  "src/modules/survey/survey-checklist.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/survey-evidence.ts": {
+  "src/modules/survey/survey-evidence.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/survey-open.ts": {
+  "src/modules/survey/survey-open.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/survey-pack-pages.ts": {
+  "src/modules/survey/survey-pack-pages.ts": {
    "area": "survey",
    "kind": "page"
   },
-  "src/web/survey-pack.ts": {
+  "src/modules/survey/survey-pack.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/survey-report.ts": {
+  "src/modules/survey/survey-report.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/survey-video.ts": {
+  "src/modules/survey/survey-video.ts": {
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/surveyor-pages.ts": {
+  "src/modules/survey/surveyor-pages.ts": {
    "area": "survey",
    "kind": "page"
   },
-  "src/web/surveyor.ts": {
+  "src/modules/survey/surveyor.ts": {
    "area": "survey",
    "kind": "logic"
   },

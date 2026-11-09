@@ -19,12 +19,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
 import * as F from '../src/modules/claims/claim-facts.ts';
-import { packView, savePackValue, saveLine, setLineRemoved, type PackDeps } from '../src/web/survey-pack.ts';
-import { CHAPTERS, chaptersToRead } from '../src/web/pack-chapters.ts';
+import { packView, savePackValue, saveLine, setLineRemoved, type PackDeps } from '../src/modules/survey/survey-pack.ts';
+import { CHAPTERS, chaptersToRead } from '../src/modules/survey/pack-chapters.ts';
 import { grantProviderNeed, grantSplitNeed, shippedGrantSwitches, GRANT_PAPERS_TYPE } from '../src/modules/assessment/grant-checks.ts';
-import { snapshotOf } from '../src/web/pack-approve.ts';
-import { reportModel } from '../src/web/survey-report.ts';
-import { legalView } from '../src/web/pack-legal.ts';
+import { snapshotOf } from '../src/modules/survey/pack-approve.ts';
+import { reportModel } from '../src/modules/survey/survey-report.ts';
+import { legalView } from '../src/modules/survey/pack-legal.ts';
 import { plainNeed } from '../src/shared/next-step.ts';
 import { actor } from './helpers.ts';
 

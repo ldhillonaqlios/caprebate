@@ -4,7 +4,7 @@
  * Lakhbir: "once the surveyor approves it gets sent to the client and they would want something visually appealing";
  * the design approved as a mock-up the same day ("Yes, build it as shown").
  *
- * ONE SET OF CONTENTS, TWO DRAWINGS. `reportModel` reads an approved version (src/web/pack-approve.ts, the JSON kept with
+ * ONE SET OF CONTENTS, TWO DRAWINGS. `reportModel` reads an approved version (src/modules/survey/pack-approve.ts, the JSON kept with
  * its fingerprint) and puts every word and figure of the report in one place; `reportHtml` and `reportPdf` only draw it.
  * So the page and the PDF can never say different things, and both are made again, the same, from the kept version
  * whenever they are asked for: nothing new is stored, and the fingerprint on page 5 is the version's own.
@@ -21,18 +21,18 @@
  * (Lakhbir's rule, 1 Oct 2026).
  */
 import { propertyLine } from './survey-pack.ts';
-import { h, raw, type Safe } from '../shared/index.ts';
+import { h, raw, type Safe } from '../../shared/index.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { BASIS_WORDS, baseWords } from './bcis-data.ts';
-import { allowancesFor, allowanceWords, type AllowanceWords } from '../modules/assessment/index.ts';
-import type { ReturnContext } from '../modules/claims/index.ts';
-import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from '../shared/index.ts';
+import { allowancesFor, allowanceWords, type AllowanceWords } from '../assessment/index.ts';
+import type { ReturnContext } from '../claims/index.ts';
+import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from '../../shared/index.ts';
 import { minutesWords } from './survey-video.ts';
-import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from '../modules/claims/index.ts';
-import { ukDatesIn } from '../shared/index.ts';
-import { plainDashLines } from '../shared/index.ts';
+import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from '../claims/index.ts';
+import { ukDatesIn } from '../../shared/index.ts';
+import { plainDashLines } from '../../shared/index.ts';
 
 export const REPORT_TITLE = 'Capital allowances survey report';
 
@@ -70,7 +70,7 @@ export type ReportModel = {
   readonly next: readonly { readonly title: string; readonly words: string }[];
   readonly declaration: readonly string[];
   readonly automation_note: string;
-  /** 2 Oct 2026: how the building was inspected, and what the client sent (src/web/survey-evidence.ts). Null in a version approved before. */
+  /** 2 Oct 2026: how the building was inspected, and what the client sent (src/modules/survey/survey-evidence.ts). Null in a version approved before. */
   readonly inspection: string | null;
   /** PHASE 153e: the assumptions the version was approved on (the planning assumption). Empty in a version approved before. */
   readonly assumptions: readonly string[];

@@ -50,11 +50,11 @@ import { handleStaff, handlePortalSettings } from './staff.ts';
 import { mayEnterBackOffice, NotFoundAsRefusal } from './backoffice.ts';
 import { staffShell, portalShell } from './navigation.ts';
 import { inboundEmailModule as IE } from '../modules/crm/index.ts';
-import { PHOTO_UPLOAD_JS } from '../web/photo-upload-script.ts';
+import { PHOTO_UPLOAD_JS } from '../modules/survey/photo-upload-script.ts';
 import { SIGNATURE_PAD_JS } from '../shared/index.ts';
-import { sweepUploads } from '../web/photo-upload.ts';
+import { sweepUploads } from '../modules/survey/photo-upload.ts';
 import { runTimerJob, timerJobOf, timerWordRefusal, TIMER_PATH_PREFIX } from './timers.ts';
-import { sweepVideos } from '../web/survey-video.ts';
+import { sweepVideos } from '../modules/survey/survey-video.ts';
 import { receiveWhatsApp } from '../modules/crm/index.ts';
 import { webhookChallenge } from '../integrations/index.ts';
 import { ga4MeasurementId } from '../integrations/index.ts';
@@ -206,7 +206,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assets/signature-pad.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(SIGNATURE_PAD_JS); return 'handled';
   }
-  // The photo page's one script (src/web/photo-upload-script.ts).
+  // The photo page's one script (src/modules/survey/photo-upload-script.ts).
   if (path === '/assets/photo-upload.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(PHOTO_UPLOAD_JS); return 'handled';
   }
@@ -289,7 +289,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       return 'handled';
     }
     const r = await IE.readRepliesIfDue(d.app);
-    // The same wake clears photo uploads never finished within a day (src/web/photo-upload.ts).
+    // The same wake clears photo uploads never finished within a day (src/modules/survey/photo-upload.ts).
     await sweepUploads({ db: d.app.db, now: d.app.now }, d.store);
     await sweepVideos({ db: d.app.db, now: d.app.now }, d.store);
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });

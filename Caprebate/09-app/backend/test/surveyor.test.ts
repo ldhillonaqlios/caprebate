@@ -41,8 +41,8 @@ import { quarantinedKeysAndValues } from '../src/payload.ts';
 import { verifyChain, type EstimateOutputs, type LogEntry } from '../src/modules/survey/anchor-quarantine.ts';
 import { RATE_FIELDS, OverrideStore, adoption, isBlankControl } from '../src/modules/survey/surveyor-crm.ts';
 import { allRoomIds, roomsFor } from '../src/modules/crm/rooms.ts';
-import { DbAnchorLog } from '../src/web/anchor-store.ts';
-import { RATE_FIELD_IDS } from '../src/web/surveyor.ts';
+import { DbAnchorLog } from '../src/modules/survey/anchor-store.ts';
+import { RATE_FIELD_IDS } from '../src/modules/survey/surveyor.ts';
 import { actor, keys, scalars } from './helpers.ts';
 
 const PASSWORD = 'a-very-long-development-password';

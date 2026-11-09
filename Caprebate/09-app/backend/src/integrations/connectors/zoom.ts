@@ -200,7 +200,7 @@ function hostUnknown(r: { readonly status: number | null; readonly body: string 
 function zoomTime(iso: string): string { return new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z'); }
 
 /** Make the meeting for one call. At most one token call and one meeting call; never throws. */
-/** `record` — a survey walkthrough call (src/web/survey-evidence.ts) is recorded to Zoom's cloud. */
+/** `record` — a survey walkthrough call (src/modules/survey/survey-evidence.ts) is recorded to Zoom's cloud. */
 /**
  * `host` — the email of the member of staff the call is assigned to, so each call has its
  * own Zoom host and two calls at the same time can both run (one Zoom user hosts one meeting at a time). Absent: the

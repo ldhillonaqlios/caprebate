@@ -45,12 +45,12 @@
  */
 
 import { createHash } from 'node:crypto';
-import type { Db } from '../core/index.ts';
-import { _canonical } from '../core/audit.ts';
+import type { Db } from '../../core/index.ts';
+import { _canonical } from '../../core/audit.ts';
 import {
   AnchorLog, AnchorQuarantine, GENESIS, verifyChain,
   type Commitment, type EstimateOutputs, type LogEntry, type LogKind, type SurveyorFigures,
-} from '../modules/survey/anchor-quarantine.ts';
+} from './anchor-quarantine.ts';
 
 /** Once per job, by meaning. See the header. */
 const ONCE_PER_JOB: readonly LogKind[] = Object.freeze(['QUARANTINE_CREATED', 'ESTIMATE_SEALED']);

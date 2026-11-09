@@ -229,9 +229,9 @@ describe('line 6(a) — a file someone sends us on WhatsApp, got and kept here',
 
 /* ------------------------------------------------------------------ line 2: six more chapters of the survey pack */
 
-import { packView, saveLine, setLineRemoved, savePackValue, type PackDeps } from '../src/web/survey-pack.ts';
-import { reportChapter, purposeChapter, roomsChapter, itemsChapter, poolsChapter, limitsChapter, CHAPTERS } from '../src/web/survey-pack-pages.ts';
-import { chaptersToRead } from '../src/web/pack-chapters.ts';
+import { packView, saveLine, setLineRemoved, savePackValue, type PackDeps } from '../src/modules/survey/survey-pack.ts';
+import { reportChapter, purposeChapter, roomsChapter, itemsChapter, poolsChapter, limitsChapter, CHAPTERS } from '../src/modules/survey/survey-pack-pages.ts';
+import { chaptersToRead } from '../src/modules/survey/pack-chapters.ts';
 import { actor } from './helpers.ts';
 
 describe('line 2 — chapters 1, 3, 6, 12, 13 and 21 of the survey pack', () => {

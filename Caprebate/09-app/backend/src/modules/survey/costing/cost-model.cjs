@@ -2140,8 +2140,8 @@ function residualApportionment(input, opts) {
 /* ============================================================================
    PHASE 153e, 4 October 2026 — FOUR OF THE SURVEYOR'S QUESTIONS, BUILT ON OUR RECOMMENDATION, IN THIS MODEL'S OWN
    TEST SYSTEM (its suites, and TEST_SYSTEM_GATES / TEST_SYSTEM_TABLES below). NOTE WHICH TEST SYSTEM: the back end's
-   survey pack (09-app/backend/src/web/pack-sums.ts) does not call this model at all, so none of this reaches the test
-   website until the pack is wired to it. PHASE 157a (6 October 2026) wired it: 09-app/backend/src/web/pack-cost-model.ts
+   survey pack (09-app/backend/src/modules/survey/pack-sums.ts) does not call this model at all, so none of this reaches the test
+   website until the pack is wired to it. PHASE 157a (6 October 2026) wired it: 09-app/backend/src/modules/survey/pack-cost-model.ts
    reads the preliminaries bands, the index factor and the insurance check for one pack, as test placeholders (chapters
    11 and 14), and every gate here stays off.
    ============================================================================ */
@@ -2171,7 +2171,7 @@ const CB_BCIS_INDEX_PLACEHOLDER = Object.freeze({
 /* PHASE 155 (line 4), 4 October 2026 — THE REAL INDEX, FROM A FILE LAKHBIR DOWNLOADS. BCIS publishes no API licence
    and nothing here calls BCIS (Word question 218, closed 10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir, 9 Oct 2026); the export is board item 13254356802). Lakhbir downloads
    the index series from BCIS as a spreadsheet saved as CSV, and `parseIndexTable` turns it into a table of exactly
-   CB_BCIS_INDEX's shape. The back end keeps it OUTSIDE the repository (09-app/backend/src/web/bcis-index.ts, the
+   CB_BCIS_INDEX's shape. The back end keeps it OUTSIDE the repository (09-app/backend/src/modules/survey/bcis-index.ts, the
    command `import-bcis-index`): BCIS's licence (BCIS_COMMERCIAL in the source register) lets named users use the rates
    and does not let the table be reproduced, so it is never committed and never published.
    WHAT IT READS: two columns per row - a period and an index figure. A period is a month (2024-01, 2024-01-31,

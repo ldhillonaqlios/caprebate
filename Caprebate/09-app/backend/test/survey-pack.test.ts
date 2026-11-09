@@ -1,5 +1,5 @@
 /**
- * 1 OCTOBER 2026 — THE SURVEY PACK, THROUGH ITS OWN PAGES (src/web/survey-pack.ts, src/web/survey-pack-pages.ts).
+ * 1 OCTOBER 2026 — THE SURVEY PACK, THROUGH ITS OWN PAGES (src/modules/survey/survey-pack.ts, src/modules/survey/survey-pack-pages.ts).
  *
  * Lakhbir: "any edits made by the surveyor needs to essentially have their stamp to say thats their number" … "when
  * you build this stress test it, this is one thing that cannot fail."
@@ -22,9 +22,9 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
-import { packView, type PackDeps } from '../src/web/survey-pack.ts';
-import { packSums } from '../src/web/pack-sums.ts';
-import { linesForSector, parseCsv, taxonomy } from '../src/web/pack-lines.ts';
+import { packView, type PackDeps } from '../src/modules/survey/survey-pack.ts';
+import { packSums } from '../src/modules/survey/pack-sums.ts';
+import { linesForSector, parseCsv, taxonomy } from '../src/modules/survey/pack-lines.ts';
 import { actor } from './helpers.ts';
 
 const T = '2026-10-01T09:00:00.000Z';

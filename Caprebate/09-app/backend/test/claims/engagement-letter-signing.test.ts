@@ -27,7 +27,7 @@ import { fixtureTransport, type Fixture } from '../../src/integrations/connector
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import { nationFromCountry } from '../../src/integrations/connectors/nations.ts';
 import * as R from '../../src/modules/claims/research.ts';
-import { claimantFor } from '../../src/web/pack-legal.ts';
+import { claimantFor } from '../../src/modules/survey/pack-legal.ts';
 import { acquisitionDateReading, clientSaidPurchaseDate } from '../../src/modules/claims/claim-facts.ts';
 import * as D from '../../src/modules/claims/documents.ts';
 import { FsObjectStore } from '../../src/shared/objectstore.ts';

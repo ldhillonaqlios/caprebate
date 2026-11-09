@@ -22,7 +22,7 @@
  *
  * THE PRICE PAID WAITS WITH OUR ESTIMATE. It is an amount agreed between a buyer and a seller, so the same rule the
  * sale-price lookup already follows applies: it is withheld from the surveyor's job
- * (REGISTER_AMOUNTS_WITHHELD in src/web/surveyor.ts) so that a surveyor cannot anchor on it. The rest of the record —
+ * (REGISTER_AMOUNTS_WITHHELD in src/modules/survey/surveyor.ts) so that a surveyor cannot anchor on it. The rest of the record —
  * the tenure, the dates, the title number — goes to them as usual.
  *
  * ONWARD SUPPLY TO THE CLIENT'S ACCOUNTANT — OPEN. The solicitor answered yes,

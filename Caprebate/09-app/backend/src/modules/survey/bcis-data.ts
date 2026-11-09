@@ -13,11 +13,11 @@
  *      so an export with extra columns still reads; a file this cannot read is refused whole, never half-read. The data
  *      is kept OUTSIDE the repository (CAPREBATE_BCIS_DATA_FILE, or ~/.caprebate-bcis-data.json): it is BCIS's, for
  *      our named users, and is never committed or published. The index (the All-in Tender Price Index or the building
- *      price index) comes in by `import-bcis-index`, as before (src/web/bcis-index.ts).
+ *      price index) comes in by `import-bcis-index`, as before (src/modules/survey/bcis-index.ts).
  *   2. THE DRAFTS (`bcisDrafts`): the whole-building rate from the sector's BCIS building function, and the rate of every
  *      line measured by floor area from its NRM element — each × the location factor for the pack's area × the index
  *      from BCIS's base quarter to the PURCHASE date. A draft is a DRAFT: the surveyor accepts it by leaving it, or
- *      overrides it with a reason and a source of their own (src/web/survey-pack.ts).
+ *      overrides it with a reason and a source of their own (src/modules/survey/survey-pack.ts).
  *   3. UNTIL BCIS'S DATA ARRIVES it is off and says so. On the test website (or a copy started with
  *      CAPREBATE_COST_MODEL_TEST=1) a PLACEHOLDER of invented figures drafts instead, labelled on every rate, every
  *      screen and the report as a test rate, not BCIS — so a reader of the PDF can always tell (L12).
@@ -31,9 +31,9 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { basename, isAbsolute, join, resolve } from 'node:path';
-import { isInside, repositoryRoot } from '../core/index.ts';
+import { isInside, repositoryRoot } from '../../core/index.ts';
 import { bcisIndexTable } from './bcis-index.ts';
-import { onTestWebsite, type Env } from '../integrations/index.ts';
+import { onTestWebsite, type Env } from '../../integrations/index.ts';
 
 export type BcisType = { readonly name: string; readonly mean_pence: number; readonly median_pence: number | null; readonly sample: number | null };
 export type BcisElement = { readonly type_name: string; readonly code: string; readonly name: string; readonly rate_pence: number };
@@ -73,7 +73,7 @@ export const BCIS_BUILDING_TYPE: Readonly<Record<string, readonly string[]>> = O
 
 /**
  * THE FIXTURE LIST'S FLOOR-AREA ROWS, BY NRM ELEMENT (RICS New Rules of Measurement 1, group element 5, services). Only
- * the rows measured by floor area (GIA m², src/web/pack-lines.ts) are drafted from an elemental £/m²; a row counted per
+ * the rows measured by floor area (GIA m², src/modules/survey/pack-lines.ts) are drafted from an elemental £/m²; a row counted per
  * room or per item is not, because BCIS's elemental analyses are per m² of floor. Several elements on one row add up.
  */
 export const NRM_OF_LINE: Readonly<Record<string, readonly string[]>> = Object.freeze({
@@ -308,7 +308,7 @@ export function bcisLocationNamed(area: string, env: Env = process.env): string 
 /* ------------------------------------------------------------------ the drafts */
 
 type IndexTable = { loaded: boolean; source: string; points: readonly (readonly [string, number])[] };
-const CM = createRequire(import.meta.url)('../modules/survey/costing/cost-model.cjs') as {
+const CM = createRequire(import.meta.url)('./costing/cost-model.cjs') as {
   CB_BCIS_INDEX_PLACEHOLDER: IndexTable;
   indexFactorFromTable: (t: IndexTable, purchase: string, valuation: string) => { factor: number; index_at_purchase: number; index_at_valuation: number };
 };

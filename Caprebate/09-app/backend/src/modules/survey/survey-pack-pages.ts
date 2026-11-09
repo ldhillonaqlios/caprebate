@@ -16,25 +16,25 @@
  *   GET  /staff/survey/{job}/pack/version/N  an approved version, exactly as it was approved, and whether its fingerprint holds
  *
  * Opening a chapter is recorded for the assigned surveyor: the Approve button stays grey until every built chapter
- * has been opened (src/web/pack-approve.ts).
+ * has been opened (src/modules/survey/pack-approve.ts).
  *
  * Every number on these pages says where it came from: the evidence, our draft, or the surveyor's own name. Every form
  * carries the pack's counter (`seq`), so a change from an out-of-date page is refused, never applied blind.
  */
-import { PRICE_PAID_ATTRIBUTION } from '../integrations/index.ts';
+import { PRICE_PAID_ATTRIBUTION } from '../../integrations/index.ts';
 import { VAT_POSITION_WORDS } from './pack-vat.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../core/app.ts';
-import type { Actor } from '../core/index.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import type { App } from '../../core/app.ts';
+import type { Actor } from '../../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import * as P from './survey-pack.ts';
 import * as L from './pack-legal.ts';
 import * as A from './pack-approve.ts';
-import { sendPanel } from '../modules/claims/index.ts';
+import { sendPanel } from '../claims/index.ts';
 import { inspectionChapter, lineEvidence } from './evidence-pages.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
-import { findingSeen } from '../shared/index.ts';
-import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from '../modules/claims/index.ts';
+import { findingSeen } from '../../shared/index.ts';
+import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from '../claims/index.ts';
 import { percentWords, poundsWords, quantityWords, WORKS_FIELDS, WORKS_WORDS, WORKS_PART_FIELDS, WORKS_PART_WORDS, type Source, type Valued, type WorksField, type WorksPartField } from './pack-sums.ts';
 
 export type PackPageDeps = {
@@ -49,11 +49,11 @@ export { CHAPTERS } from './pack-chapters.ts';
 import { CHAPTERS } from './pack-chapters.ts';
 import * as S from './surveyor.ts';
 import { jobSite, setJobMenu } from './surveyor-pages.ts';
-import { lateBadge, siteOf } from '../core/index.ts';
-import { PAYER_CLASSES } from '../modules/claims/index.ts';
-import { deskFirstReading } from '../modules/assessment/index.ts';
-import { roomsFor } from '../modules/crm/index.ts';
-import { REPORT_ASSUMPTIONS } from '../modules/assessment/index.ts';
+import { lateBadge, siteOf } from '../../core/index.ts';
+import { PAYER_CLASSES } from '../claims/index.ts';
+import { deskFirstReading } from '../assessment/index.ts';
+import { roomsFor } from '../crm/index.ts';
+import { REPORT_ASSUMPTIONS } from '../assessment/index.ts';
 import { TEST_DEFAULT_WORDS } from './pack-lines.ts';
 import { packSheet, SHEET_CHAPTERS, type SheetRow } from './pack-sheets.ts';
 import { INCLUDES_WORDS } from './pack-cost-model.ts';
@@ -130,7 +130,7 @@ export async function handleSurveyPack(
     // PHASE 159f: the BCIS location the drafts are read for.
     case 'location': r = P.savePackLocation(deps, actor, job, { area: f.get('area') ?? '', reason, seq }); break;
     case 'extra': r = P.savePackExtra(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
-    // PHASE 153g: the surveyor's own words in chapters 5, 8, 11, 14, 16, 19, 20 and 22 (src/web/pack-words.ts).
+    // PHASE 153g: the surveyor's own words in chapters 5, 8, 11, 14, 16, 19, 20 and 22 (src/modules/survey/pack-words.ts).
     case 'words': r = savePackWords(deps, actor, job, { field: f.get('field') ?? '', words: f.get('words') ?? '', reason, seq }); break;
     case 'line': r = P.saveLine(deps, actor, job, { line, qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq, ...src }); break;
     case 'revert': r = P.revertLine(deps, actor, job, { line, reason, seq }); break;
@@ -435,7 +435,7 @@ export function limitsChapter(): Safe {
 const FROM_CLASS: Readonly<Record<string, string>> = Object.freeze({ 'the surveyor': 'pk-sv', 'the pack': 'pk-dr', 'worked out': 'pk-dr', 'fixed wording': 'pk-dr', 'the cost model (test)': 'pk-dr' });
 
 /**
- * PHASE 153g — chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22, from one reading (src/web/pack-sheets.ts): each row
+ * PHASE 153g — chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22, from one reading (src/modules/survey/pack-sheets.ts): each row
  * says where it comes from, and a row with nothing behind it says so in words. The surveyor's words are each a form, kept
  * with a reason under their name; Admin and Sales read them.
  */
@@ -463,7 +463,7 @@ export function sheetChapter(d: PackPageDeps, v: P.PackView, ch: number): Safe {
 }
 
 /**
- * PHASE 157a — the cost model's values (src/web/pack-cost-model.ts): chapter 11's valuation date, chapter 14's
+ * PHASE 157a — the cost model's values (src/modules/survey/pack-cost-model.ts): chapter 11's valuation date, chapter 14's
  * insurance figure, its date, and what each figure includes. Each the surveyor's, with a reason; empty clears it.
  */
 function costForms(v: P.PackView, ch: number): Safe {
@@ -500,7 +500,7 @@ const ROUTE_WORDS: Readonly<Record<string, string>> = Object.freeze({
 
 /**
  * PHASE 153a, 4 October 2026 — F-15's remainder. The claim's grants, read from the claim record, and what each takes off
- * (src/web/pack-grants.ts). Nothing is typed here: a grant is recorded, matched and removed on the claim, by Sales or
+ * (src/modules/survey/pack-grants.ts). Nothing is typed here: a grant is recorded, matched and removed on the claim, by Sales or
  * Admin, so the surveyor sees what the claim holds and the figure it gives. VAT is not in the pack yet.
  */
 export function grantsChapter(v: P.PackView): Safe {
@@ -544,7 +544,7 @@ function moneySection(v: P.PackView): Safe {
 }
 
 /**
- * PHASE 153e — CHAPTER 15'S VAT HALF (src/web/pack-vat.ts; Module 00 C23). The surveyor records whether the client could
+ * PHASE 153e — CHAPTER 15'S VAT HALF (src/modules/survey/pack-vat.ts; Module 00 C23). The surveyor records whether the client could
  * reclaim the VAT, and the VAT not reclaimed, each with a reason. Only "exempt" adds it to the price paid; partly exempt
  * waits for the tax adviser; not known adds nothing (N4).
  */
@@ -796,7 +796,7 @@ function elementsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearc
   const editing = q.get('edit');
   const sumOf = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
   const live = v.lines.filter((l) => !l.removed);
-  // 2 Oct 2026: each line's photos from the client (src/web/survey-evidence.ts).
+  // 2 Oct 2026: each line's photos from the client (src/modules/survey/survey-evidence.ts).
   const evidence = evidenceByLine(d.app.db, v.job.id);
   // PHASE 153e (Word question 150): each line says whether it was seen on site or comes from documents.
   const basis = basisOf(d.app.db, v.job.id)?.basis ?? null;

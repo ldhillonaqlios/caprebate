@@ -20,18 +20,18 @@
  * answer the engine treats as unknown. Where an election or a disposal value statement caps the claim, the cap is
  * returned, and the pack may not be approved above it (stage 3).
  */
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, can, type Actor } from '../core/index.ts';
-import { CB, getSector, newSession } from '../shared/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, can, type Actor } from '../../core/index.ts';
+import { CB, getSector, newSession } from '../../shared/index.ts';
 import { packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
 import { poundsWords } from './pack-sums.ts';
-import { claimantTypeForGate } from '../modules/crm/index.ts';
-import { valuationLock } from '../modules/claims/index.ts';
-import { claimantRole, type ClaimantRole } from '../modules/assessment/index.ts';
-import { LEGAL_ENGINE_SWITCHES } from '../shared/index.ts';
-import { getBusinessesSectorById } from '../modules/crm/index.ts';
+import { claimantTypeForGate } from '../crm/index.ts';
+import { valuationLock } from '../claims/index.ts';
+import { claimantRole, type ClaimantRole } from '../assessment/index.ts';
+import { LEGAL_ENGINE_SWITCHES } from '../../shared/index.ts';
+import { getBusinessesSectorById } from '../crm/index.ts';
 
 export type EngineQuestion = {
   readonly id: string;

@@ -1,6 +1,6 @@
 /**
- * 2 OCTOBER 2026 — FULL-SIZE PHOTOS, SENT STRAIGHT TO THE FILE STORE, LOCKED ON THE PHONE (src/web/photo-upload.ts,
- * src/web/photo-upload-script.ts, the store's incoming steps; migration 076).
+ * 2 OCTOBER 2026 — FULL-SIZE PHOTOS, SENT STRAIGHT TO THE FILE STORE, LOCKED ON THE PHONE (src/modules/survey/photo-upload.ts,
+ * src/modules/survey/photo-upload-script.ts, the store's incoming steps; migration 076).
  *
  * Lakhbir: "go with option 2"; "Lock on the phone"; "100 photos, 25 MB each"; "Yes, build it as shown".
  *
@@ -28,9 +28,9 @@ import vm from 'node:vm';
 import { createApp } from '../src/core/server.ts';
 import { FsObjectStore } from '../src/shared/objectstore.ts';
 import { SharedObjectStore, vercelBlobClient, BLOB_UPLOAD_ORIGIN, type VercelBlobSdk } from '../src/shared/shared-objectstore.ts';
-import { PHOTO_UPLOAD_JS } from '../src/web/photo-upload-script.ts';
-import * as U from '../src/web/photo-upload.ts';
-import * as E from '../src/web/survey-evidence.ts';
+import { PHOTO_UPLOAD_JS } from '../src/modules/survey/photo-upload-script.ts';
+import * as U from '../src/modules/survey/photo-upload.ts';
+import * as E from '../src/modules/survey/survey-evidence.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import { actor } from './helpers.ts';
 import { PIECES_PAGE_CSP } from '../src/core/upload-pieces.ts';

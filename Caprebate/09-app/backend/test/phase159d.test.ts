@@ -29,12 +29,12 @@ import * as R from '../src/modules/claims/claim-record.ts';
 import * as P from '../src/modules/crm/pipeline.ts';
 import * as RT from '../src/modules/claims/claim-route.ts';
 import * as PE from '../src/modules/claims/property-events.ts';
-import * as SP from '../src/web/survey-pack.ts';
-import * as L from '../src/web/pack-legal.ts';
-import * as A from '../src/web/pack-approve.ts';
-import * as EV from '../src/web/survey-evidence.ts';
-import * as CH from '../src/web/pack-chapters.ts';
-import * as REP from '../src/web/survey-report.ts';
+import * as SP from '../src/modules/survey/survey-pack.ts';
+import * as L from '../src/modules/survey/pack-legal.ts';
+import * as A from '../src/modules/survey/pack-approve.ts';
+import * as EV from '../src/modules/survey/survey-evidence.ts';
+import * as CH from '../src/modules/survey/pack-chapters.ts';
+import * as REP from '../src/modules/survey/survey-report.ts';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 

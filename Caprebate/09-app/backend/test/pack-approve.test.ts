@@ -1,5 +1,5 @@
 /**
- * 2 OCTOBER 2026 — THE SURVEY PACK'S APPROVAL (src/web/pack-approve.ts, chapter 23 of the pack).
+ * 2 OCTOBER 2026 — THE SURVEY PACK'S APPROVAL (src/modules/survey/pack-approve.ts, chapter 23 of the pack).
  *
  * Lakhbir: "whole pack needs to be read through then approve button ungreys like someone reading and accepting T&C";
  * "when the surveyor signs it should be a single CTA approve click"; "this is one thing that cannot fail".
@@ -23,11 +23,11 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
-import { choosePackProperty, packView, savePackValue, saveLine, setLineRemoved } from '../src/web/survey-pack.ts';
-import { answerLegal, legalView } from '../src/web/pack-legal.ts';
-import { approvePack, approvedVersion, canonical, fingerprintOf, readiness, saveDetails, DECLARATION } from '../src/web/pack-approve.ts';
-import { chaptersToRead } from '../src/web/pack-chapters.ts';
-import { setBasis } from '../src/web/survey-evidence.ts';
+import { choosePackProperty, packView, savePackValue, saveLine, setLineRemoved } from '../src/modules/survey/survey-pack.ts';
+import { answerLegal, legalView } from '../src/modules/survey/pack-legal.ts';
+import { approvePack, approvedVersion, canonical, fingerprintOf, readiness, saveDetails, DECLARATION } from '../src/modules/survey/pack-approve.ts';
+import { chaptersToRead } from '../src/modules/survey/pack-chapters.ts';
+import { setBasis } from '../src/modules/survey/survey-evidence.ts';
 import { actor } from './helpers.ts';
 
 const T = '2026-10-02T09:00:00.000Z';

@@ -41,7 +41,7 @@ import { pipelineBoardGate } from '../modules/crm/index.ts';
 import { billingViewFor, clientsAreaGate } from '../web/billing.ts';
 import { claimListGate } from '../shared/lists.ts';
 import { assertIntroducerSection, rewardModelGate } from '../modules/crm/index.ts';
-import { assertSurveySection } from '../web/surveyor.ts';
+import { assertSurveySection } from '../modules/survey/surveyor.ts';
 import { assertFinanceSection } from '../web/finance.ts';
 import { adminSettingsGate, SETTINGS_TILES } from '../web/admin-tiles.ts';
 import { getUsersDisplayNameById } from './data.ts';

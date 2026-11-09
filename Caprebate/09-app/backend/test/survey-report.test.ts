@@ -1,5 +1,5 @@
 /**
- * 2 OCTOBER 2026 — THE CLIENT'S SURVEY REPORT, ITS PDF, AND HOW IT TRAVELS (src/web/survey-report.ts, pdf-canvas.ts,
+ * 2 OCTOBER 2026 — THE CLIENT'S SURVEY REPORT, ITS PDF, AND HOW IT TRAVELS (src/modules/survey/survey-report.ts, pdf-canvas.ts,
  * report-signoff.ts, report-pages.ts; migration 073).
  *
  * Lakhbir: the report goes to the client "visually appealing"; the adviser signs off first, then the client has it; our own
@@ -29,13 +29,13 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createApp } from '../src/core/server.ts';
 import { buildCanvasPdf, textWidth, wrapText } from '../src/shared/pdf-canvas.ts';
-import { reportHtml, reportModel, reportPdf } from '../src/web/survey-report.ts';
-import { packView, savePackValue, saveLine, setLineRemoved } from '../src/web/survey-pack.ts';
-import { answerLegal, legalView } from '../src/web/pack-legal.ts';
-import { approvePack, approvedVersion, saveDetails } from '../src/web/pack-approve.ts';
-import { chaptersToRead } from '../src/web/pack-chapters.ts';
+import { reportHtml, reportModel, reportPdf } from '../src/modules/survey/survey-report.ts';
+import { packView, savePackValue, saveLine, setLineRemoved } from '../src/modules/survey/survey-pack.ts';
+import { answerLegal, legalView } from '../src/modules/survey/pack-legal.ts';
+import { approvePack, approvedVersion, saveDetails } from '../src/modules/survey/pack-approve.ts';
+import { chaptersToRead } from '../src/modules/survey/pack-chapters.ts';
 import * as S from '../src/modules/claims/report-signoff.ts';
-import { setBasis } from '../src/web/survey-evidence.ts';
+import { setBasis } from '../src/modules/survey/survey-evidence.ts';
 import { blankSentSecrets, SENT_SECRET_BODY } from '../src/integrations/email/email-provider.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import * as P from '../src/modules/crm/pipeline.ts';

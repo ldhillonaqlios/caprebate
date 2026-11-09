@@ -371,12 +371,12 @@ export const LICENCES: readonly Licence[] = [
     attribution_text:
       'NOT PUBLISHED BY BCIS — its licence (Annex One, cl. 7.3) requires a credit to BCIS wherever feasible but gives no ' +
       'wording. Ours: every rate drawn from BCIS names "BCIS" and the series it came from, in the report\'s "Where each rate ' +
-      'comes from" (src/web/survey-report.ts).',
+      'comes from" (src/modules/survey/survey-report.ts).',
     /*: OPENED ON BCIS'S OWN ANSWER. The owner: "we spoke to BCIS and they
        said its fine for us to do what we are doing" — loading BCIS's data, drafting the pack's rates from it and showing
        them in our reports. Those reports go to the client, into the accountant's
        pack and into the defence pack, so all three are opened, as the solicitor's answer opened HMLR_TITLE's. The rate
-       TABLE itself is still never reproduced (cl. 2.2), and the data is still never committed (src/web/bcis-index.ts). */
+       TABLE itself is still never reproduced (cl. 2.2), and the data is still never committed (src/modules/survey/bcis-index.ts). */
     redistribution: { client_report: true, accountant_report: true, hmrc_pack: true, internal: true },
     cache_max_age_days: 365,
     legal_review_required: false,

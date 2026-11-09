@@ -32,19 +32,19 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../core/app.ts';
-import type { Actor } from '../core/index.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
-import { breadcrumb, claimRef, dataLink, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from '../shared/index.ts';
-import { kpiRow, nobodyBadge, siteOf, stageBadge } from '../core/index.ts';
-import { setSubMenu } from '../core/navigation.ts';
+import type { App } from '../../core/app.ts';
+import type { Actor } from '../../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
+import { breadcrumb, claimRef, dataLink, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from '../../shared/index.ts';
+import { kpiRow, nobodyBadge, siteOf, stageBadge } from '../../core/index.ts';
+import { setSubMenu } from '../../core/navigation.ts';
 import * as S from './surveyor.ts';
-import { registerAttribution } from '../modules/claims/index.ts';
-import { formatPence } from '../shared/index.ts';
+import { registerAttribution } from '../claims/index.ts';
+import { formatPence } from '../../shared/index.ts';
 import { FUNNEL_CEILING, SURVEY_JOB_WORDS as SO_WORDS } from './survey-open.ts';
-import { surveyorThreadPanel } from '../modules/crm/index.ts';
-import { deskFirstReading } from '../modules/assessment/index.ts';
-import { piecesPage } from '../core/index.ts';
+import { surveyorThreadPanel } from '../crm/index.ts';
+import { deskFirstReading } from '../assessment/index.ts';
+import { piecesPage } from '../../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

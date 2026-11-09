@@ -1,5 +1,5 @@
 /**
- * PHASE 157a, 6 October 2026 — THE COST MODEL IN THE SURVEY PACK (src/web/pack-cost-model.ts; migration 095).
+ * PHASE 157a, 6 October 2026 — THE COST MODEL IN THE SURVEY PACK (src/modules/survey/pack-cost-model.ts; migration 095).
  *
  * The cost model's four test-system pieces from Phase 153e, read for one pack and shown to the surveyor: the index dates
  * and factor in chapter 11, preliminaries by job size and the insurance check in chapter 14, and the phase3 module's
@@ -14,13 +14,13 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
-import { packView, savePackExtra, savePackValue, setLineRemoved, parsePackDate, type PackDeps } from '../src/web/survey-pack.ts';
-import { packSheet } from '../src/web/pack-sheets.ts';
-import { sheetChapter } from '../src/web/survey-pack-pages.ts';
-import { snapshotOf } from '../src/web/pack-approve.ts';
-import { legalView } from '../src/web/pack-legal.ts';
-import { reportHtml, reportModel } from '../src/web/survey-report.ts';
-import { costModelTestSystem, indexReading, insuranceReading, prelimsReading, rateFlagReading, COST_MODEL_TEST_OPT_IN } from '../src/web/pack-cost-model.ts';
+import { packView, savePackExtra, savePackValue, setLineRemoved, parsePackDate, type PackDeps } from '../src/modules/survey/survey-pack.ts';
+import { packSheet } from '../src/modules/survey/pack-sheets.ts';
+import { sheetChapter } from '../src/modules/survey/survey-pack-pages.ts';
+import { snapshotOf } from '../src/modules/survey/pack-approve.ts';
+import { legalView } from '../src/modules/survey/pack-legal.ts';
+import { reportHtml, reportModel } from '../src/modules/survey/survey-report.ts';
+import { costModelTestSystem, indexReading, insuranceReading, prelimsReading, rateFlagReading, COST_MODEL_TEST_OPT_IN } from '../src/modules/survey/pack-cost-model.ts';
 import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../src/modules/survey/surveyor-crm.ts';
 import { raw } from '../src/shared/html.ts';
 import { actor } from './helpers.ts';

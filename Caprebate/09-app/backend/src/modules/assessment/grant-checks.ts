@@ -5,7 +5,7 @@
  *   NO GRANT SPLIT IN EQUAL SHARE WITHOUT ITS PAPERS OR THE TAX ADVISER'S VIEW. Word question 109, "How should we split
  *   a grant when we cannot tell what it paid for?": our recommendation is to keep the equal share only as a labelled
  *   estimate and, before filing, split the grant from its papers or ask the tax adviser. The survey pack takes a grant
- *   in equal share (src/web/pack-grants.ts) whenever it is not matched to rows of the fixture list — and, while
+ *   in equal share (src/modules/survey/pack-grants.ts) whenever it is not matched to rows of the fixture list — and, while
  *   CB_CTA.grant_traced_to_elements is off as it ships, always. So while any grant on the claim would be taken that way,
  *   the gate needs the grant papers received on the claim (a grant or NHS premises funding agreement) or the tax
  *   adviser's view recorded (GRANT_SPLIT_ADVISER_VIEW, YES, with the tax adviser as its source).
@@ -23,7 +23,7 @@ import type { Db } from '../../core/index.ts';
 import type { Need } from '../crm/index.ts';
 import { latestFacts, packGrantsFor } from '../claims/index.ts';
 import { receivedOnClaim } from '../claims/index.ts';
-import { grantRoute, type GrantSwitches } from '../../web/pack-grants.ts';
+import { grantRoute, type GrantSwitches } from '../survey/pack-grants.ts';
 import { CTA } from '../../shared/index.ts';
 
 /** The two switches the survey pack reads, as they ship. */

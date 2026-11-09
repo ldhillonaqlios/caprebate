@@ -1,5 +1,5 @@
 /**
- * 1 OCTOBER 2026 — THE SURVEY PACK'S SUMS, STRESS-TESTED (src/web/pack-sums.ts).
+ * 1 OCTOBER 2026 — THE SURVEY PACK'S SUMS, STRESS-TESTED (src/modules/survey/pack-sums.ts).
  *
  * Lakhbir: "when you build this stress test it, this is one thing that cannot fail."
  *
@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import {
   LIMITS, mulDivRound, packSums, parseMoney, parsePercent, parseQuantity, parseRate, percentWords, poundsWords, quantityWords,
   type PackInputs, type PackLine, type Pool, type Valued,
-} from '../src/web/pack-sums.ts';
+} from '../src/modules/survey/pack-sums.ts';
 
 const ev = (value: number | null): Valued => ({ value, source: value === null ? null : { kind: 'EVIDENCE', text: 'test' } });
 

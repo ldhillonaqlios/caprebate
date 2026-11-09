@@ -1,5 +1,5 @@
 /**
- * PHASE 153a, 4 OCTOBER 2026 — THE SURVEY PACK'S GRANTS, BOTH WAYS (src/web/pack-grants.ts). F-15's remainder.
+ * PHASE 153a, 4 OCTOBER 2026 — THE SURVEY PACK'S GRANTS, BOTH WAYS (src/modules/survey/pack-grants.ts). F-15's remainder.
  *
  * The switch CB_CTA.grant_traced_to_elements ships OFF. Off, every grant comes off in equal share (the grant_fraction
  * route); on, a grant matched to rows of the fixture list comes off only those rows. Both are tested here, by passing the
@@ -17,8 +17,8 @@
  */
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { packSums, type PackInputs, type PackLine, type Pool, type Valued } from '../src/web/pack-sums.ts';
-import { applyGrants, grantRoute, PAYER_CLASS_KEYS, type GrantSwitches, type PackGrant } from '../src/web/pack-grants.ts';
+import { packSums, type PackInputs, type PackLine, type Pool, type Valued } from '../src/modules/survey/pack-sums.ts';
+import { applyGrants, grantRoute, PAYER_CLASS_KEYS, type GrantSwitches, type PackGrant } from '../src/modules/survey/pack-grants.ts';
 import { CTA } from '../src/shared/engine.ts';
 
 const ev = (value: number | null): Valued => ({ value, source: value === null ? null : { kind: 'EVIDENCE', text: 'test' } });

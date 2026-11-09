@@ -13,9 +13,9 @@
  * worth a photograph.
  *
  * Nothing here is stored: the list is made from the sector each time, and only what the client did is kept
- * (src/web/survey-evidence.ts). An item's key never changes once used, so a photo stays with its item.
+ * (src/modules/survey/survey-evidence.ts). An item's key never changes once used, so a photo stays with its item.
  */
-import { roomsFor } from '../modules/crm/index.ts';
+import { roomsFor } from '../crm/index.ts';
 
 export type ChecklistItem = {
   /** Stable: a building item's name, or ROOM-<room id>. */

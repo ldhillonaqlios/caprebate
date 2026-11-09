@@ -88,10 +88,10 @@ function assertIncomingKey(key: string): void {
 
 /** Where survey photos are kept, each sealed (`putSealed`). */
 export const SEALED_PREFIX = 'survey-photos/';
-/** Where a photo LOCKED ON THE PHONE waits (src/web/photo-upload.ts) until the server opens, cleans and seals
+/** Where a photo LOCKED ON THE PHONE waits (src/modules/survey/photo-upload.ts) until the server opens, cleans and seals
  *  it. Only locked bytes are ever here, and each is removed once it is dealt with. */
 export const INCOMING_PREFIX = 'survey-incoming/';
-/** Where a client's video is kept, in pieces, each sealed (src/web/survey-video.ts). */
+/** Where a client's video is kept, in pieces, each sealed (src/modules/survey/survey-video.ts). */
 export const VIDEO_PREFIX = 'survey-videos/';
 /** A file someone sent us on WhatsApp, fetched from Meta and kept sealed (src/modules/crm/whatsapp.ts). */
 export const WHATSAPP_PREFIX = 'whatsapp-files/';
@@ -208,7 +208,7 @@ export class FsObjectStore implements ObjectStore {
   }
 
   /**
-   * A SURVEY PHOTO (src/web/survey-evidence.ts) — kept ENCRYPTED with the same key as a kept original, under
+   * A SURVEY PHOTO (src/modules/survey/survey-evidence.ts) — kept ENCRYPTED with the same key as a kept original, under
    * its own prefix, and refused with no key: a photo of the inside of a client's building is never written in the clear.
    */
   get canSeal(): boolean { return this.#sealKey !== null; }

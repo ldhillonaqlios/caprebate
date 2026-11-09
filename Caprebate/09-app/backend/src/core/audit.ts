@@ -82,7 +82,7 @@ export type AuditKind =
   | 'ENGAGEMENT_LETTER_SENT'
   // Staff recorded who must sign the letter
   | 'ENGAGEMENT_SIGNERS_SET'
-  // Staff opened a survey job on a claim (src/web/survey-open.ts); whether an estimate was sealed with it. No figure.
+  // Staff opened a survey job on a claim (src/modules/survey/survey-open.ts); whether an estimate was sealed with it. No figure.
   | 'SURVEY_JOB_OPENED'
   // A client accepted the survey report released to them (src/modules/portal/report-accept.ts). The version, never a figure.
   | 'CLIENT_REPORT_ACCEPTED'
@@ -402,14 +402,14 @@ export type AuditKind =
   | 'PROPERTY_EVENT_ADDED'
   /** A person recorded an event's VAT on its claim: the event and the field — never an amount. */
   | 'PROPERTY_EVENT_CHANGED'
-  /** A surveyor changed the survey pack (src/web/survey-pack.ts): what, which line, which fields — never a value. */
+  /** A surveyor changed the survey pack (src/modules/survey/survey-pack.ts): what, which line, which fields — never a value. */
   | 'SURVEY_PACK_CHANGED'
-  /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/web/pack-approve.ts): the version and its fingerprint. */
+  /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/modules/survey/pack-approve.ts): the version and its fingerprint. */
   | 'SURVEY_PACK_APPROVED'
   /** The survey report emailed to the client's accountant for sign-off; their answer by the private link
    *  (src/modules/claims/report-signoff.ts). Ids, the version and the outcome — never the link, never a figure. */
   | 'REPORT_SENT_FOR_SIGNOFF' | 'REPORT_SIGNOFF_ANSWERED'
-  /** A client's photo for the survey checklist (src/web/survey-evidence.ts). The photo's id and item only. */
+  /** A client's photo for the survey checklist (src/modules/survey/survey-evidence.ts). The photo's id and item only. */
   | 'SURVEY_EVIDENCE_ADDED'
   /** Photos sent in one go put under checklist items by Admin or Sales, or taken back. Counts only. */
   | 'SURVEY_PHOTOS_SORTED'

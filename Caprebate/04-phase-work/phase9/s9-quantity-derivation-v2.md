@@ -663,7 +663,7 @@ theatre proper and the anaesthetic / prep / recovery spaces?**
 default for you to confirm:* the room list now has the theatre (`PH-R2`) and four suite spaces
 (anaesthetic `PH-R2A`, preparation `PH-R2B`, scrub `PH-R2C`, recovery `PH-R2D`), each counted. Ultra-clean
 ventilation and the operating lights stay with the theatre; medical gases and monitoring are counted
-from every space that carries them (`SUITE_ROWS` in `09-app/backend/src/web/pack-lines.ts`).
+from every space that carries them (`SUITE_ROWS` in `09-app/backend/src/modules/survey/pack-lines.ts`).
 
 **Q-S9-2 — Is the room-driven detection count right in size, not just in shape?** We believe
 detection follows compartmentation and we have rebuilt the method accordingly. On a 268 m² dental

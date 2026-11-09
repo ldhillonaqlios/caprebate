@@ -91,7 +91,7 @@ const SIGNATORY_READS: Readonly<Record<string, string>> = Object.freeze({ CH_COM
  *   · CLIENT_TOLD — a step on the client's portal told as done since the record arrived, and not taken back. The
  *     record's facts sat on that step; the client may have been told "checked" on the strength of this one.
  *   · REPORT_ISSUED — a report or pack issued since. Issued is issued: it is not re-cut here.
- *   · SURVEYOR_JOB — the surveyor's payload carries register records (src/web/surveyor.ts). An open job saw it; a job
+ *   · SURVEYOR_JOB — the surveyor's payload carries register records (src/modules/survey/surveyor.ts). An open job saw it; a job
  *     committed since may have used it.
  *   · GRANT_RECORDED — only for the name of whoever paid a grant: a grant recorded from a client document since.
  */

@@ -38,7 +38,7 @@ import { buildApp, STUBS } from '../../src/core/app.ts';
 import { seed } from '../../src/core/seed.ts';
 import { newId } from '../../src/core/users.ts';
 import { testApp, actor, fakeHasher, fixedClock } from '../helpers.ts';
-import * as S from '../../src/web/surveyor.ts';
+import * as S from '../../src/modules/survey/surveyor.ts';
 import { ingestRegisterRecord } from '../../src/integrations/register-ingest.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -459,7 +459,7 @@ describe('HM Land Registry sale prices: every sector (Phase 159g), the latest sa
     // The two screens that draw a register record's values: the client page's checks (approvals) and the surveyor's evidence.
     assert.match(readFileSync(join(SRC, 'modules', 'claims', 'approvals.ts'), 'utf8'), /attribution: registerAttribution\(r\.source_id\)/);
     assert.match(readFileSync(join(SRC, 'modules', 'claims', 'approvals-pages.ts'), 'utf8'), /f\.attribution/);
-    assert.match(readFileSync(join(SRC, 'web', 'surveyor-pages.ts'), 'utf8'), /registerAttribution\(r\.source_id\)/);
+    assert.match(readFileSync(join(SRC, 'modules', 'survey', 'surveyor-pages.ts'), 'utf8'), /registerAttribution\(r\.source_id\)/);
     assert.equal(R.registerAttribution('HMLR_PPD'), PRICE_PAID_ATTRIBUTION);
     assert.equal(R.registerAttribution('NOT_A_SOURCE'), null);
   });

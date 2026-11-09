@@ -7,7 +7,7 @@
  * CALL ("Recorded Zoom call") — the test website takes at most 4.5 MB a request, so a 20–40 minute phone video cannot be
  * uploaded, and a page may run no script to send it in pieces.
  *
- * THE PHOTOS. A client of the company takes one photo at a time for a checklist item (src/web/survey-checklist.ts),
+ * THE PHOTOS. A client of the company takes one photo at a time for a checklist item (src/modules/survey/survey-checklist.ts),
  * saying nobody is in it. It must be a JPEG or PNG — read from its first bytes, not its name — of at most 4.4 MB. Its
  * hidden details are taken out before it is kept: a JPEG's EXIF, XMP and IPTC blocks and comments (where the phone was,
  * which phone, when), a PNG's text and EXIF chunks. Then it is ENCRYPTED with the store's key (AES-256-GCM, the key a
@@ -36,19 +36,19 @@
  * the assigned surveyor in chapter 2, and goes in the approved report.
  */
 import { createHash } from 'node:crypto';
-import type { App } from '../core/app.ts';
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, can, NotAuthorised, type Actor } from '../core/index.ts';
-import type { FsObjectStore } from '../shared/objectstore.ts';
+import type { App } from '../../core/app.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, can, NotAuthorised, type Actor } from '../../core/index.ts';
+import type { FsObjectStore } from '../../shared/objectstore.ts';
 import { packJob } from './surveyor.ts';
 import { checklistFor, type ChecklistItem } from './survey-checklist.ts';
-import { postClientMessage } from '../modules/crm/index.ts';
-import { isBookable, SLOT_MINUTES } from '../modules/crm/index.ts';
-import { reconcileVideoMeeting, zoomDeps } from '../modules/crm/index.ts';
-import { sendVideoInvite } from '../modules/crm/index.ts';
-import { zoomRecording } from '../integrations/index.ts';
-import { getContactsXByBusinessId, insertBookings3 } from '../modules/crm/index.ts';
+import { postClientMessage } from '../crm/index.ts';
+import { isBookable, SLOT_MINUTES } from '../crm/index.ts';
+import { reconcileVideoMeeting, zoomDeps } from '../crm/index.ts';
+import { sendVideoInvite } from '../crm/index.ts';
+import { zoomRecording } from '../../integrations/index.ts';
+import { getContactsXByBusinessId, insertBookings3 } from '../crm/index.ts';
 
 export type EvidenceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };

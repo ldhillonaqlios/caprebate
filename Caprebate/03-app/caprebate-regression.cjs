@@ -2115,7 +2115,7 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
        question. PHASE 153a, 4 October 2026. grant_traced_to_elements is read
        by the back end's survey pack, where each line is a fixture-list row
        and a grant on the claim record can name the rows it paid for
-       (09-app/backend/src/web/pack-grants.ts, tested there both ways). The
+       (09-app/backend/src/modules/survey/pack-grants.ts, tested there both ways). The
        public estimate holds no row-by-row spend, so every grant in it is
        untraced and keeps the grant_fraction route whichever way the switch
        sits - the figure, the flags and the words, in all five sectors.

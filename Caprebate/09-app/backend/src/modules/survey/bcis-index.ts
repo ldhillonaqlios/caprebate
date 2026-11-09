@@ -11,17 +11,17 @@
  *
  * UNTIL THEN: the shipped CB_BCIS_INDEX stays an empty stub, and the cost model's test system uses its PLACEHOLDER table
  * of invented points, labelled as such. PHASE 157a (6 October 2026) wired the survey pack to it: chapter 11's index factor
- * reads this table first (src/web/pack-cost-model.ts, indexTableHere), the placeholder only in the test system, and
+ * reads this table first (src/modules/survey/pack-cost-model.ts, indexTableHere), the placeholder only in the test system, and
  * otherwise nothing.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { basename, isAbsolute, join, resolve } from 'node:path';
-import { isInside, repositoryRoot } from '../core/index.ts';
+import { isInside, repositoryRoot } from '../../core/index.ts';
 
 type IndexTable = { loaded: true; source: string; licence: string; verified_at: string | null; points: readonly (readonly [string, number])[] };
-const costModel = createRequire(import.meta.url)('../modules/survey/costing/cost-model.cjs') as {
+const costModel = createRequire(import.meta.url)('./costing/cost-model.cjs') as {
   parseIndexTable: (text: string, meta: { source: string; verified_at: string; licence?: string }) => { table: IndexTable; passed_over: number };
 };
 

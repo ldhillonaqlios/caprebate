@@ -7,8 +7,8 @@
  * THE BUTTON UNGREYS ONLY WHEN EVERY ONE OF THESE HOLDS, each said in words with a link to where it is put right:
  *   · it is the assigned surveyor;
  *   · the pack says which property it is for;
- *   · the sums are complete — every value in, no problem standing (src/web/pack-sums.ts);
- *   · the legal check allows it — clear, or clear with a deadline, and the figure not above a cap (src/web/pack-legal.ts);
+ *   · the sums are complete — every value in, no problem standing (src/modules/survey/pack-sums.ts);
+ *   · the legal check allows it — clear, or clear with a deadline, and the figure not above a cap (src/modules/survey/pack-legal.ts);
  *   · the surveyor has opened every built chapter — and the legal check again since anyone else last answered it;
  *   · their RICS number is on file;
  *   · the job has its locked estimate (approving commits the figures, which releases it — the existing rule);
@@ -22,22 +22,22 @@
  * own stages read them exactly as before. If any of that is refused, nothing is kept. The form carries both counters,
  * so a page drawn before a change cannot approve the changed pack, and a second click on the same state is refused.
  */
-import { claimRoutes } from '../modules/claims/index.ts';
-import { yearEndKnown } from '../modules/claims/index.ts';
-import { REPORT_ASSUMPTIONS } from '../modules/assessment/index.ts';
+import { claimRoutes } from '../claims/index.ts';
+import { yearEndKnown } from '../claims/index.ts';
+import { REPORT_ASSUMPTIONS } from '../assessment/index.ts';
 import { sheetsForVersion } from './pack-sheets.ts';
 import { createHash } from 'node:crypto';
-import { authorise, can, type Actor } from '../core/index.ts';
+import { authorise, can, type Actor } from '../../core/index.ts';
 import { amendFigures, commitFigures, jobHasEstimate, packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult, type PackView } from './survey-pack.ts';
 import { capped, legalAllows, legalView, type LegalView } from './pack-legal.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { basisOf, checklistView, evidenceByLine, walkthroughsOf } from './survey-evidence.ts';
-import { findingSeen } from '../shared/index.ts';
+import { findingSeen } from '../../shared/index.ts';
 import { videosOf } from './survey-video.ts';
-import { sitePlanOf, type SitePlan } from '../modules/claims/index.ts';
-import { valuationLock } from '../modules/claims/index.ts';
-import { getUsersNById } from '../core/index.ts';
+import { sitePlanOf, type SitePlan } from '../claims/index.ts';
+import { valuationLock } from '../claims/index.ts';
+import { getUsersNById } from '../../core/index.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',
@@ -139,7 +139,7 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
     blockers.push({ key: 'priced_at', href: `${base(job_id)}?ch=11`,
       words: `The rates are priced at different days, and the index cannot bring them to the purchase date: ${v.pricing.mixed.join('; ')}. Price them at one day, or record the purchase date.` });
   }
-  // 2 Oct 2026: how the surveyor inspected (chapter 2, src/web/survey-evidence.ts) goes in the report.
+  // 2 Oct 2026: how the surveyor inspected (chapter 2, src/modules/survey/survey-evidence.ts) goes in the report.
   if (basisOf(d.db, job_id) === null) blockers.push({ key: 'basis', words: 'Say how you inspected the building, in chapter 2.', href: `${base(job_id)}?ch=2#inspection` });
   const details = detailsOf(d.db, surveyor);
   if (details === null) blockers.push({ key: 'details', words: 'Add your RICS number below. It goes on the report with your name.', href: `${base(job_id)}?ch=23#details` });
@@ -187,7 +187,7 @@ function inspectionOf(d: { db: PackDeps['db'] }, job_id: string) {
     basis: b?.basis ?? null, words: b?.words ?? null, note: b?.note ?? null,
     photos: c?.photos ?? 0, items_done: c?.done ?? 0, items_marked: c?.marked ?? 0, items_total: c?.total ?? 0,
     recordings: recs.length, recorded_minutes: recs.reduce((a, r) => a + r.minutes, 0),
-    // 2 Oct 2026: the client's own videos of the building (src/web/survey-video.ts).
+    // 2 Oct 2026: the client's own videos of the building (src/modules/survey/survey-video.ts).
     videos: vids.length, video_minutes: Math.round(vids.reduce((a, v) => a + v.duration_ms, 0) / 60_000),
   };
 }
@@ -204,7 +204,7 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
   const photosByLine = evidenceByLine(d.db, v.job.id);
   return {
     format: 'cap-rebate-survey-pack/1',
-    // PHASE 160d, 19 October 2026: a version approved from now on is drawn without long dashes (src/web/survey-report.ts,
+    // PHASE 160d, 19 October 2026: a version approved from now on is drawn without long dashes (src/modules/survey/survey-report.ts,
     // reportModel). One approved before has no `words` and is drawn exactly as it was made.
     words: 'plain' as const,
     version: a.version,
@@ -250,7 +250,7 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     // 2 Oct 2026, stage 6: the site plan as it stood at approval (src/modules/claims/site-plan.ts), so the report never changes after.
     // Only when there is one: a version approved without a plan keeps the shape every earlier version has.
     ...siteOf(d, v.job.id),
-    // PHASE 153g: chapters 5, 8, 11, 14, 16 to 20 and 22, as they stood at approval (src/web/pack-sheets.ts).
+    // PHASE 153g: chapters 5, 8, 11, 14, 16 to 20 and 22, as they stood at approval (src/modules/survey/pack-sheets.ts).
     chapters: sheetsForVersion(d.db, v),
     legal: {
       verdict: lv.verdict,

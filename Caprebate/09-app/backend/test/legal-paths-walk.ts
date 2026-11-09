@@ -14,7 +14,7 @@
  * with the fixed value requirement's reading (pack-legal.ts LEGAL_READINGS #9 and #10), and re-recorded the walk.
  */
 import { createHash } from 'node:crypto';
-import { assessLegal } from '../src/web/pack-legal.ts';
+import { assessLegal } from '../src/modules/survey/pack-legal.ts';
 
 export const LEGAL_PATHS_NOW = '2026-10-09T09:00:00.000Z';
 type Q = { id: string; type: string; optional?: boolean; opts?: readonly (readonly [string, string])[] };

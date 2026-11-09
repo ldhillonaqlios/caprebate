@@ -22,13 +22,13 @@
  * ONE JOB PER CLAIM. A claim with a job already on it is refused, in words that say whose it is.
  */
 import { createHash } from 'node:crypto';
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, can, type Actor } from '../core/index.ts';
-import { stageLabel } from '../core/index.ts';
-import { getUsersIdByIdRole2, listUsersIdNameByRoleDisabledAt2 } from '../core/index.ts';
-import { getAssessmentsShownHighPenceById, getEstimatesBasisByAssessmentId, getEstimatesIdByAssessmentId, insertEstimates, listAssessmentAnswersValueByAssessmentIdState } from '../modules/assessment/index.ts';
-import { getClaimsIdBusinessIdById2 } from '../modules/claims/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, can, type Actor } from '../../core/index.ts';
+import { stageLabel } from '../../core/index.ts';
+import { getUsersIdByIdRole2, listUsersIdNameByRoleDisabledAt2 } from '../../core/index.ts';
+import { getAssessmentsShownHighPenceById, getEstimatesBasisByAssessmentId, getEstimatesIdByAssessmentId, insertEstimates, listAssessmentAnswersValueByAssessmentIdState } from '../assessment/index.ts';
+import { getClaimsIdBusinessIdById2 } from '../claims/index.ts';
 
 export const FUNNEL_CEILING = 'FUNNEL_CEILING';
 

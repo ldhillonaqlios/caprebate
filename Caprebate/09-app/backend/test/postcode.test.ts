@@ -25,7 +25,7 @@ import {
   inMemoryPostcodeStore, REGION_NOT_CAPTURED,
 } from '../src/integrations/postcodes/postcode-port.ts';
 import type { PostcodeAuthorityTable } from '../src/integrations/postcodes/postcode-port.ts';
-import { contextFor, regionContextFor } from '../src/web/surveyor.ts';
+import { contextFor, regionContextFor } from '../src/modules/survey/surveyor.ts';
 import { CB } from '../src/shared/engine.ts';
 
 const TABLE: PostcodeAuthorityTable = {

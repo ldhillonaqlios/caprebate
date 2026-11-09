@@ -1,6 +1,6 @@
 /**
- * 2 OCTOBER 2026 — "SHOW US YOUR BUILDING", REDESIGNED, AND A VIDEO OF THE BUILDING (src/web/survey-video.ts,
- * src/web/evidence-pages.ts, src/web/photo-upload-script.ts; migration 077).
+ * 2 OCTOBER 2026 — "SHOW US YOUR BUILDING", REDESIGNED, AND A VIDEO OF THE BUILDING (src/modules/survey/survey-video.ts,
+ * src/modules/survey/evidence-pages.ts, src/modules/survey/photo-upload-script.ts; migration 077).
  *
  * Lakhbir: "The UI is horrible, everything seems everywhere and there no distinction around being able to send a video";
  * "we need to add an option of upload video"; the mock-up, with "item by item needs a "i dont have this" which takes it
@@ -26,10 +26,10 @@ import { join } from 'node:path';
 import vm from 'node:vm';
 import { createApp } from '../src/core/server.ts';
 import { FsObjectStore } from '../src/shared/objectstore.ts';
-import { PHOTO_UPLOAD_JS } from '../src/web/photo-upload-script.ts';
-import { LOCK_OVERHEAD } from '../src/web/photo-upload.ts';
-import * as V from '../src/web/survey-video.ts';
-import * as E from '../src/web/survey-evidence.ts';
+import { PHOTO_UPLOAD_JS } from '../src/modules/survey/photo-upload-script.ts';
+import { LOCK_OVERHEAD } from '../src/modules/survey/photo-upload.ts';
+import * as V from '../src/modules/survey/survey-video.ts';
+import * as E from '../src/modules/survey/survey-evidence.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import { actor } from './helpers.ts';
 

@@ -124,7 +124,7 @@ describe('line 4: the BCIS index from a file Lakhbir downloads, kept outside the
   const FILE = 'Period,Index\n1Q 2024,380\n2Q 2024,384\nJan 2025,388\n2026-01,396\n';
 
   test('imported to a file outside the repository, read back in the cost model’s table shape, and the factor uses it', async () => {
-    const { importBcisIndex, bcisIndexTable } = await import('../src/web/bcis-index.ts');
+    const { importBcisIndex, bcisIndexTable } = await import('../src/modules/survey/bcis-index.ts');
     const out = join(mkdtempSync(join(tmpdir(), 'cb-bcis-')), 'index.json');
     const env = { CAPREBATE_BCIS_INDEX_FILE: out };
     assert.deepEqual(bcisIndexTable(env), { table: null, why: 'no BCIS index has been imported yet: the BCIS export has not arrived' }); // Phase 160: Word question 218 closed
@@ -139,7 +139,7 @@ describe('line 4: the BCIS index from a file Lakhbir downloads, kept outside the
   });
 
   test('a path inside the repository is refused, and nothing is written there', async () => {
-    const { importBcisIndex } = await import('../src/web/bcis-index.ts');
+    const { importBcisIndex } = await import('../src/modules/survey/bcis-index.ts');
     const { repositoryRoot } = await import('../src/core/secrets.ts');
     const inside = join(repositoryRoot(), 'bcis-index-155.json');
     const r = importBcisIndex(FILE, 'x.csv', '2026-10-04T15:00:00.000Z', { CAPREBATE_BCIS_INDEX_FILE: inside });
@@ -150,7 +150,7 @@ describe('line 4: the BCIS index from a file Lakhbir downloads, kept outside the
   });
 
   test('a file the cost model cannot read whole is refused whole, and an earlier good table is left as it was', async () => {
-    const { importBcisIndex, bcisIndexTable } = await import('../src/web/bcis-index.ts');
+    const { importBcisIndex, bcisIndexTable } = await import('../src/modules/survey/bcis-index.ts');
     const out = join(mkdtempSync(join(tmpdir(), 'cb-bcis-')), 'index.json');
     const env = { CAPREBATE_BCIS_INDEX_FILE: out };
     assert.equal(importBcisIndex(FILE, 'good.csv', '2026-10-04T15:00:00.000Z', env).ok, true);

@@ -14,7 +14,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CB, clientVatFromWorks } from '../src/shared/engine.ts';
-import { assessLegal, assessLegalUnder } from '../src/web/pack-legal.ts';
+import { assessLegal, assessLegalUnder } from '../src/modules/survey/pack-legal.ts';
 import { csvCell, returnEntries, returnEntriesCsv, RETURN_YEARS } from '../src/modules/claims/return-entries.ts';
 import { COMPANY_TYPE_FROM_REGISTER, entityFromCompanyType, searchCompanies } from '../src/integrations/connectors/company-search.ts';
 import { PLANNING_ROUTE, REGISTER_SWITCHES } from '../src/integrations/connectors/registers.ts';
@@ -22,7 +22,7 @@ import { catalogue } from '../src/modules/claims/research.ts';
 import { fixtureTransport } from '../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import { SOURCES } from '../src/integrations/registers/source-register.ts';
-import type { Snapshot } from '../src/web/pack-approve.ts';
+import type { Snapshot } from '../src/modules/survey/pack-approve.ts';
 
 const NOW = '2026-10-04T09:00:00.000Z';
 const CTA = (CB as unknown as { CB_CTA: Record<string, boolean> }).CB_CTA;
@@ -185,8 +185,8 @@ describe('line 21 — the two switches that act only in the survey pack, each on
     assert.equal(CTA['fvr_requires_past_owner_claim'], false, 'the public estimate’s own switch is put back');
   });
   test('grant_traced_to_elements — EITHER WAY in the pack: off, £40,000 of NHS money takes £5,600 off a £140,000 pack; on, matched to the fire alarm it takes £40,000, matched to items that never qualify it takes nothing', async () => {
-    const { packSums } = await import('../src/web/pack-sums.ts');
-    const { applyGrants } = await import('../src/web/pack-grants.ts');
+    const { packSums } = await import('../src/modules/survey/pack-sums.ts');
+    const { applyGrants } = await import('../src/modules/survey/pack-grants.ts');
     const ev = (value: number) => ({ value, source: { kind: 'EVIDENCE' as const, text: 'test' } });
     const L = (id: string, element_id: string, qty: number, rate: number, qpct: number, pool: 'SR' | 'MP') =>
       ({ id, label: id, element_id, unit: 'no', pool, pool_source: null, qty_milli: ev(qty), rate_pence: ev(rate), qpct_bp: ev(qpct), removed: false, removed_source: null });

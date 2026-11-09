@@ -37,7 +37,7 @@ import { pipelineBoard, organisationList } from './crm.ts';
 import { pipelineBoardGate } from './crm.permissions.ts';
 import { financeDashboard } from '../../web/invoices.ts';
 import { assertFinanceSection } from '../../web/finance.ts';
-import { assertSurveySection, surveyorJobs } from '../../web/surveyor.ts';
+import { assertSurveySection, surveyorJobs } from '../survey/surveyor.ts';
 import { isLateNewLead } from '../../shared/index.ts';
 import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES } from '../../shared/index.ts';
 import { addLocalDays, startOfLocalDay, startOfLocalWeek } from './schedule.ts';

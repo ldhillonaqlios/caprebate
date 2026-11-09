@@ -30,8 +30,8 @@ import type * as C from '../src/web/compliance.ts';
 import { addCalendarMonth, complaintTargets, COMPLAINT_TARGET_NOTE, COMPLAINT_UPDATE_EVERY_DAYS } from '../src/web/compliance-clock.ts';
 import { importPremises, mayNameAPerson, sectorFromServiceTypes, PREMISES_SOURCES } from '../src/modules/crm/premises-import.ts';
 import { scannedPagesAllowedFor, SCANNED_PAGE_KINDS } from '../src/integrations/connectors/claude.ts';
-import { grantsChapter } from '../src/web/survey-pack-pages.ts';
-import { GRANT_AMOUNTS_TO_SURVEYOR, type PackView } from '../src/web/survey-pack.ts';
+import { grantsChapter } from '../src/modules/survey/survey-pack-pages.ts';
+import { GRANT_AMOUNTS_TO_SURVEYOR, type PackView } from '../src/modules/survey/survey-pack.ts';
 import { F4_STEP_LABELS } from '../src/modules/assessment/funnel4.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../src/shared/originals.ts';
 import { clientOwners } from '../src/modules/claims/documents.ts';
@@ -259,7 +259,7 @@ describe('line 13 — chapter 15 does not show the surveyor what each grant paid
     assert.ok(!s.includes('Held by the office'));
   });
   test('the view decides by role: SURVEYING is the only role the amounts are hidden from', () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'survey-pack.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'survey', 'survey-pack.ts'), 'utf8');
     assert.match(src, /amounts_shown: actor\.role !== 'SURVEYING' \|\| GRANT_AMOUNTS_TO_SURVEYOR/);
   });
 });

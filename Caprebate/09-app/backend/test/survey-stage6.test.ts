@@ -35,12 +35,12 @@ import { seed } from '../src/core/seed.ts';
 import { newId } from '../src/core/users.ts';
 import { testApp, actor } from './helpers.ts';
 import { createApp } from '../src/core/server.ts';
-import { reportHtml, reportModel, reportPdf } from '../src/web/survey-report.ts';
-import { packView, savePackValue, saveLine, setLineRemoved } from '../src/web/survey-pack.ts';
-import { answerLegal, legalView } from '../src/web/pack-legal.ts';
-import { approvePack, approvedVersion, saveDetails } from '../src/web/pack-approve.ts';
-import { chaptersToRead } from '../src/web/pack-chapters.ts';
-import { setBasis } from '../src/web/survey-evidence.ts';
+import { reportHtml, reportModel, reportPdf } from '../src/modules/survey/survey-report.ts';
+import { packView, savePackValue, saveLine, setLineRemoved } from '../src/modules/survey/survey-pack.ts';
+import { answerLegal, legalView } from '../src/modules/survey/pack-legal.ts';
+import { approvePack, approvedVersion, saveDetails } from '../src/modules/survey/pack-approve.ts';
+import { chaptersToRead } from '../src/modules/survey/pack-chapters.ts';
+import { setBasis } from '../src/modules/survey/survey-evidence.ts';
 import * as CRM from '../src/modules/crm/crm.ts';
 import * as PL from '../src/modules/crm/pipeline.ts';
 

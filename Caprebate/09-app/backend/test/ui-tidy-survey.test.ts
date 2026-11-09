@@ -1,13 +1,13 @@
 /**
- * UI TIDY PHASE 10 — SURVEY JOBS AND A SURVEY JOB, 3 October 2026 (src/web/surveyor-pages.ts, src/web/surveyor.ts).
+ * UI TIDY PHASE 10 — SURVEY JOBS AND A SURVEY JOB, 3 October 2026 (src/modules/survey/surveyor-pages.ts, src/modules/survey/surveyor.ts).
  * Lakhbir opened the wrong one of Dunmarrow's two surveys. Every job now names its site and its claim number; the job
  * page says which it is, links the client's other jobs, marks its own site, and opens out the left-hand menu.
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import * as S from '../src/web/surveyor.ts';
-import { jobSite } from '../src/web/surveyor-pages.ts';
+import * as S from '../src/modules/survey/surveyor.ts';
+import { jobSite } from '../src/modules/survey/surveyor-pages.ts';
 import { stageGroupOf } from '../src/core/look.ts';
 import { plainDashText } from '../src/shared/plain-dashes.ts';
 

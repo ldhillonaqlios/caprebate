@@ -3,7 +3,7 @@
  *
  * From the Lockwood run (L12) and the stress test of 9 October 2026 (C19, C20, C21). Lakhbir, 9 October 2026: "With
  * BCIS data loaded, the pack could draft each rate from the right building type — this needs to happen." Each test fails
- * on the code before this phase (src/web/bcis-data.ts did not exist, so this file does not load on it at all):
+ * on the code before this phase (src/modules/survey/bcis-data.ts did not exist, so this file does not load on it at all):
  *   1  item 1: the importer reads BCIS's exports (an invented fixture in BCIS's format), keeps them outside the
  *      repository, refuses a file it cannot read whole, and refuses a quarter it cannot find
  *   2  item 2: with the data loaded, the pack drafts the whole-building rate and the floor-area lines from the
@@ -25,16 +25,16 @@ import { join } from 'node:path';
 import { testApp, actor } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 import * as C from '../src/modules/crm/crm.ts';
-import * as SP from '../src/web/survey-pack.ts';
-import * as L from '../src/web/pack-legal.ts';
-import * as A from '../src/web/pack-approve.ts';
-import * as EV from '../src/web/survey-evidence.ts';
-import * as CH from '../src/web/pack-chapters.ts';
-import * as REP from '../src/web/survey-report.ts';
+import * as SP from '../src/modules/survey/survey-pack.ts';
+import * as L from '../src/modules/survey/pack-legal.ts';
+import * as A from '../src/modules/survey/pack-approve.ts';
+import * as EV from '../src/modules/survey/survey-evidence.ts';
+import * as CH from '../src/modules/survey/pack-chapters.ts';
+import * as REP from '../src/modules/survey/survey-report.ts';
 import * as PL from '../src/modules/crm/pipeline.ts';
-import * as B from '../src/web/bcis-data.ts';
-import { importBcisIndex } from '../src/web/bcis-index.ts';
-import { rateFlagReading, shareFlagReading } from '../src/web/pack-cost-model.ts';
+import * as B from '../src/modules/survey/bcis-data.ts';
+import { importBcisIndex } from '../src/modules/survey/bcis-index.ts';
+import { rateFlagReading, shareFlagReading } from '../src/modules/survey/pack-cost-model.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T = '2026-09-08T00:00:00.000Z';

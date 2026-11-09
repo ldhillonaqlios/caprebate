@@ -1,5 +1,5 @@
 import { walkLegalPaths, LEGAL_PATHS_NOW } from '../test/legal-paths-walk.ts';
-import { assessLegalUnder, assessLegal } from '../src/web/pack-legal.ts';
+import { assessLegalUnder, assessLegal } from '../src/modules/survey/pack-legal.ts';
 const OFF = { s187a_6b_statements_route: false, fvr_requires_past_owner_claim: false };
 let n = 0;
 for (const l of walkLegalPaths('gp', 'company')) {

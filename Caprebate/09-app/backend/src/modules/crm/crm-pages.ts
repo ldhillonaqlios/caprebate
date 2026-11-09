@@ -32,7 +32,7 @@ import { claimRoutes } from '../claims/index.ts';
 
 /** An event's VAT position, in words (migration 105's three). */
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({ INCLUDED_NOT_RECLAIMABLE: 'The client could not reclaim it', EXCLUDED_OR_RECLAIMED: 'The client reclaimed it, or none was charged', NOT_KNOWN: 'Not known' });
-import { poundsWords } from '../../web/pack-sums.ts';
+import { poundsWords } from '../survey/pack-sums.ts';
 import { claimTasksBlock, emailBlock, newTaskForm, notesBlock, timelineBlock } from './tasks-pages.ts';
 import type { Timeline } from './timeline.ts';
 import { activeTemplates } from '../../web/templates.ts';
@@ -52,7 +52,7 @@ import { dueWords, localStamp, ukDate } from '../../shared/index.ts';
 import { nameSwitches, navContext } from '../../core/navigation.ts';
 import { siteAreaInputsModule as SI } from '../claims/index.ts';
 import { titleByHandModule as TH } from '../claims/index.ts';
-import * as SO from '../../web/survey-open.ts';
+import * as SO from '../survey/survey-open.ts';
 import { earlyWindowWarning } from '../claims/index.ts';
 import { portalStepLine } from '../portal/index.ts';
 import { accountantConfirmBlock } from '../portal/index.ts';
@@ -730,7 +730,7 @@ export const SECTION_STATUS_NOTE: Readonly<Record<'WORKING' | 'WAITING', string>
 
 /**
  * The claim's survey job. At Survey, with none open, Admin and Sales choose a surveyor and open it,
- * which seals the estimate (src/web/survey-open.ts). Once open, whose it is and whether the figures are in. Never a
+ * which seals the estimate (src/modules/survey/survey-open.ts). Once open, whose it is and whether the figures are in. Never a
  * figure: this page is read by roles the estimate is hidden from.
  */
 function surveyJobBlock(claim_id: string, p: SO.SurveyJobPanel | null, preferred: string | null): Safe {

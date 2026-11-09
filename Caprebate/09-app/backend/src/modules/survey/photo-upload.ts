@@ -6,7 +6,7 @@
  * through the website: "go with option 2"; "Lock on the phone"; "100 photos, 25 MB each"; the mock-up, "Yes, build it
  * as shown".
  *
- * HOW. The page's one script (src/web/photo-upload-script.ts) asks to START a send (`startUpload`): the server makes a
+ * HOW. The page's one script (src/modules/survey/photo-upload-script.ts) asks to START a send (`startUpload`): the server makes a
  * ONE-TIME LOCK for it — an RSA-2048 key pair — and gives the phone its public half; the private half is kept in the
  * database, itself encrypted with the store's key. For each photo the phone makes a fresh AES-256-GCM key, locks the
  * photo with it, and locks that key with the public half (RSA-OAEP, SHA-256). It asks for a SLOT (`slotFor`): one
@@ -23,9 +23,9 @@
  * (migration 076). Admin or Sales sort the photos as before (survey-evidence.ts `sortPhotos`).
  */
 import { constants, createDecipheriv, generateKeyPairSync, privateDecrypt } from 'node:crypto';
-import type { Actor } from '../core/index.ts';
-import { NotAuthorised } from '../core/index.ts';
-import { INCOMING_PREFIX, type FsObjectStore, type IncomingTarget } from '../shared/objectstore.ts';
+import type { Actor } from '../../core/index.ts';
+import { NotAuthorised } from '../../core/index.ts';
+import { INCOMING_PREFIX, type FsObjectStore, type IncomingTarget } from '../../shared/objectstore.ts';
 import { cleaned, clientOf, keep, NO_KEY, UNSORTED, type EvidenceDeps } from './survey-evidence.ts';
 
 /** The most photos in one send, and the most one photo may be (Lakhbir, 2 Oct 2026). */

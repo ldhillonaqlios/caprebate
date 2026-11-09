@@ -20,7 +20,7 @@
  *     Everything else is left for the surveyor.
  *   · the rate: PHASE 159f (Lakhbir, 9 October 2026: "With BCIS data loaded, the pack could draft each rate from the
  *     right building type — this needs to happen"). The whole-building rate and every line measured by floor area are
- *     drafted from BCIS in src/web/bcis-data.ts (NRM_OF_LINE), at the purchase date; the surveyor accepts or overrides
+ *     drafted from BCIS in src/modules/survey/bcis-data.ts (NRM_OF_LINE), at the purchase date; the surveyor accepts or overrides
  *     each, with a source. A line counted per room or per item is not drafted: BCIS prices elements per m² of floor.
  */
 import { readFileSync } from 'node:fs';
@@ -28,7 +28,7 @@ import { join } from 'node:path';
 import type { Pool } from './pack-sums.ts';
 
 /** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
-export const TAXONOMY_FILE = join(import.meta.dirname, '..', '..', 'copies', 'Caprebate-Fixture-Taxonomy-v1.csv');
+export const TAXONOMY_FILE = join(import.meta.dirname, '..', '..', '..', 'copies', 'Caprebate-Fixture-Taxonomy-v1.csv');
 
 export type TaxonomyRow = Readonly<Record<string, string>>;
 
@@ -179,7 +179,7 @@ export function linesForSector(sector: string): LineTemplate[] {
     else if (rooms[basis] !== undefined && COUNT_UNITS.has(unitCode)) { qty_from = { kind: 'ROOMS', rooms: rooms[basis] as readonly string[] }; unit = 'rooms'; }
     // Communal floor area in supported living is not the whole floor area: never drafted from it.
     // PHASE 153e (Word question 133): drafted from the shared areas the surveyor reads off the floor plans instead; with
-    // none, a flat 25% of the floor area, labelled as the fallback it is (src/web/survey-pack.ts, sharedDraft).
+    // none, a flat 25% of the floor area, labelled as the fallback it is (src/modules/survey/survey-pack.ts, sharedDraft).
     if (qty_from.kind === 'GIA' && /^communal/i.test(basis)) { qty_from = { kind: 'SHARED' }; unit = 'm² of common parts'; }
     const pct = (r['qualifying_pct'] ?? '').trim();
     const qpct_bp = /^\d{1,3}$/.test(pct) && Number(pct) <= 100 ? Number(pct) * 100 : null;

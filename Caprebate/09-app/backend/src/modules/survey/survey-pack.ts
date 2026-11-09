@@ -10,7 +10,7 @@
  *   DRAFT     Cap Rebate's, from the fixture list: a line's pool and the share that qualifies, with its authority;
  *   SURVEYOR  typed by the surveyor: their name, the time and their reason, kept for ever (migration 070).
  * Nothing else fills a box. A value we do not hold is NEEDED, and the sums give no total until it is there
- * (src/web/pack-sums.ts). PHASE 159f: rates are DRAFTED from BCIS (src/web/bcis-data.ts) — the whole-building rate and every
+ * (src/modules/survey/pack-sums.ts). PHASE 159f: rates are DRAFTED from BCIS (src/modules/survey/bcis-data.ts) — the whole-building rate and every
  * line measured by floor area — at the purchase date; the surveyor accepts each or types their own with its source.
  *
  * WHO MAY CHANGE IT: the surveyor the job is assigned to (`surveyor_job.commit`, the rule the workspace's figures use).
@@ -24,25 +24,25 @@
  * follows Lakhbir's decision of 1 October 2026 that the surveyor works from a pre-filled pack and approves it.
  */
 import { vatReading, VAT_POSITION_CODES, type VatReading } from './pack-vat.ts';
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, can, type Actor } from '../core/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, can, type Actor } from '../../core/index.ts';
 import { packJob, type PackJob } from './surveyor.ts';
 import { linesForSector, type LineTemplate } from './pack-lines.ts';
 import {
   packSums, parseMoney, parsePercent, parseQuantity, parseRate, poundsWords, worksSums, WORKS_FIELDS, WORKS_PART_FIELDS, worksPartProblems, type WorksPartField,
   mulDivRound, type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued, type WorksField, type WorksInputs, type WorksSums,
 } from './pack-sums.ts';
-import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from '../modules/claims/index.ts';
+import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from '../claims/index.ts';
 import { legalVerdictForJob } from './pack-legal.ts';
 import { applyGrants, payerReduces, type GrantReading, type GrantSwitches } from './pack-grants.ts';
-import { moneyReadingsHere, type MoneyReadings } from '../shared/index.ts';
-import { acquisitionDateReading, elementName, latestFacts, packGrantsFor } from '../modules/claims/index.ts';
+import { moneyReadingsHere, type MoneyReadings } from '../../shared/index.ts';
+import { acquisitionDateReading, elementName, latestFacts, packGrantsFor } from '../claims/index.ts';
 import { bcisDataHere, bcisDrafts, bcisLocationNamed, indexBetween, type BcisDraft, type RateBasis } from './bcis-data.ts';
-import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from '../modules/assessment/index.ts';
-import { shippedGrantSwitches } from '../modules/assessment/index.ts';
-import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId4, listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId2 } from '../integrations/index.ts';
-import { getClaimsPById, listPropertiesIdLabelByBusinessId3 } from '../modules/claims/index.ts';
+import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from '../assessment/index.ts';
+import { shippedGrantSwitches } from '../assessment/index.ts';
+import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId4, listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId2 } from '../../integrations/index.ts';
+import { getClaimsPById, listPropertiesIdLabelByBusinessId3 } from '../claims/index.ts';
 
 /**
  * `grantSwitches` (Phase 153a) is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be
@@ -50,7 +50,7 @@ import { getClaimsPById, listPropertiesIdLabelByBusinessId3 } from '../modules/c
  */
 export type PackDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; grantSwitches?: GrantSwitches; money?: MoneyReadings };
 
-/** Chapter 15's grants: the claim's, as the pack takes them (src/web/pack-grants.ts). */
+/** Chapter 15's grants: the claim's, as the pack takes them (src/modules/survey/pack-grants.ts). */
 export type PackGrants = {
   /** The claim the survey job is on; null for a job on no claim, which has no grants to read. */
   readonly claim_id: string | null;
@@ -79,7 +79,7 @@ export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' 
   | CostField | WorksField | 'location'
   /* PHASE 159k (item 2): the three readings' parts */ | WorksPartField | 'long_life';
 
-/** PHASE 159c: one piece of work on the building, priced on its own cost (chapter 9; src/web/pack-sums.ts worksSums). */
+/** PHASE 159c: one piece of work on the building, priced on its own cost (chapter 9; src/modules/survey/pack-sums.ts worksSums). */
 export type WorksView = {
   readonly event: PropertyEvent;
   /** "A refurbishment or refit, June 2025". */
@@ -97,7 +97,7 @@ export type WorksView = {
 };
 
 /**
- * PHASE 157a, 6 October 2026 — THE COST MODEL'S FIVE VALUES (migration 095; src/web/pack-cost-model.ts). Each the
+ * PHASE 157a, 6 October 2026 — THE COST MODEL'S FIVE VALUES (migration 095; src/modules/survey/pack-cost-model.ts). Each the
  * surveyor's, with a reason, for the index dates in chapter 11 and the insurance check in chapter 14. A date is kept as
  * YYYYMMDD; what a figure includes is 1 demolition + 2 professional fees + 4 preliminaries. Never drafted (N4).
  */
@@ -219,7 +219,7 @@ export type PackView = {
   /** The pack's sums AFTER the claim's grants (Phase 153a, chapter 15); the figures before them are `grants.reading.before`. */
   readonly sums: PackSums;
   readonly grants: PackGrants;
-  /** PHASE 153e: chapter 15's VAT half (src/web/pack-vat.ts). Its counted VAT is in `sums`, added to the price paid. */
+  /** PHASE 153e: chapter 15's VAT half (src/modules/survey/pack-vat.ts). Its counted VAT is in `sums`, added to the price paid. */
   readonly vat: VatReading;
   /** PHASE 153e: supported living's shared areas from the floor plans, in thousandths of a m² (the surveyor's, with a reason). */
   readonly shared_area: Valued;
@@ -438,7 +438,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
 
   const ev = evidenceInputs(d.db, job.business_id, property);
   const none: Valued = { value: null, source: null };
-  // PHASE 159f: BCIS's drafts, at the purchase date, for the pack's chosen location (src/web/bcis-data.ts).
+  // PHASE 159f: BCIS's drafts, at the purchase date, for the pack's chosen location (src/modules/survey/bcis-data.ts).
   const acq = property === null ? null : acquisitionDateReading(d.db, property.id);
   const purchase = acq !== null && acq.known && typeof acq.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(acq.value) ? acq.value.slice(0, 10) : null;
   const locEntry = last(null, 'location');
@@ -701,7 +701,7 @@ function begin(d: PackDeps, actor: Actor, job_id: string, reason: string, expect
   });
 }
 
-/** PHASE 153g: the same guard for the surveyor's own words (src/web/pack-words.ts): who may, the reason, a page out of date. */
+/** PHASE 153g: the same guard for the surveyor's own words (src/modules/survey/pack-words.ts): who may, the reason, a page out of date. */
 export const beginPackChange = begin;
 
 function insertEntry(d: PackDeps, actor: Actor, pack_id: string, line_key: string | null, field: PackField, value: number | null, pool: Pool | null, reason: string,

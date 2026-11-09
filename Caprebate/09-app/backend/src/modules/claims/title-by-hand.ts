@@ -269,7 +269,7 @@ function valueWords(k: string, v: unknown): string {
 
 /**
  * THE BLOCK, OR NOTHING. Register data is read only by a login that may read register records, and NOT by the
- * surveyor here: the price paid is withheld from the surveyor everywhere else (src/web/surveyor.ts), and a property
+ * surveyor here: the price paid is withheld from the surveyor everywhere else (src/modules/survey/surveyor.ts), and a property
  * page is not a way round that.
  */
 export function titleByHandView(db: Db, actor: Actor, property_id: string): TitleByHandView | null {

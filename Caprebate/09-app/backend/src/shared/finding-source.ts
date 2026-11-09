@@ -10,7 +10,7 @@
  *                  client photographed it. A video or photos are not a visit.
  * N4: no inspection basis recorded reads as not seen on site.
  */
-import type { Valued, Source } from '../web/pack-sums.ts';
+import type { Valued, Source } from '../modules/survey/pack-sums.ts';
 
 export const FINDING_LABELS = Object.freeze({ SITE: 'Seen on site', DOCUMENTS: 'From documents' });
 

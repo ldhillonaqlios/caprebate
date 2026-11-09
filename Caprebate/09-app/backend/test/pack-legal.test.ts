@@ -1,5 +1,5 @@
 /**
- * 2 OCTOBER 2026 — THE SURVEY PACK'S LEGAL CHECK (src/web/pack-legal.ts, chapter 7 of the pack).
+ * 2 OCTOBER 2026 — THE SURVEY PACK'S LEGAL CHECK (src/modules/survey/pack-legal.ts, chapter 7 of the pack).
  *
  * Lakhbir agreed (1 Oct 2026) that the legal check comes before the survey: a building bought from an owner who could
  * claim can leave the buyer nothing on the fixtures unless the value was fixed in time (CAA 2001 s.187A, s.198).
@@ -21,7 +21,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
-import { assessLegal, legalAllows, legalQuestions, legalView, parseAnswer } from '../src/web/pack-legal.ts';
+import { assessLegal, legalAllows, legalQuestions, legalView, parseAnswer } from '../src/modules/survey/pack-legal.ts';
 import { SECTOR_IDS } from '../src/shared/engine.ts';
 import { actor } from './helpers.ts';
 

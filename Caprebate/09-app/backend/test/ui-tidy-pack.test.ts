@@ -1,5 +1,5 @@
 /**
- * UI TIDY PHASE 11 — THE SURVEY PACK, 3 October 2026 (src/web/survey-pack-pages.ts, src/web/survey-video.ts).
+ * UI TIDY PHASE 11 — THE SURVEY PACK, 3 October 2026 (src/modules/survey/survey-pack-pages.ts, src/modules/survey/survey-video.ts).
  * Lakhbir: "The survey pack doesn't say which of a client's surveys you are looking at. Dunmarrow has two, and I opened
  * the wrong one first", and lengths read "0 min 32 s". The pack names its client, site and claim in a dark band, says
  * which of the client's jobs it is, switches to the other at the same chapter, marks itself in the job's menu, and groups
@@ -8,10 +8,10 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import * as S from '../src/web/surveyor.ts';
-import * as P from '../src/web/survey-pack.ts';
-import { jobSite } from '../src/web/surveyor-pages.ts';
-import { lengthWords } from '../src/web/survey-video.ts';
+import * as S from '../src/modules/survey/surveyor.ts';
+import * as P from '../src/modules/survey/survey-pack.ts';
+import { jobSite } from '../src/modules/survey/surveyor-pages.ts';
+import { lengthWords } from '../src/modules/survey/survey-video.ts';
 import { siteOf } from '../src/core/look.ts';
 
 let H: Harness;

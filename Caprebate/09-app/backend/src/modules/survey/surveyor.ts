@@ -1,7 +1,7 @@
 /**
  * THE SURVEYOR'S REVIEW-AND-SIGN WORKSPACE — view models. Block F, part one.
  *
- * Routes and rendering are src/web/surveyor-pages.ts. Every function here
+ * Routes and rendering are src/modules/survey/surveyor-pages.ts. Every function here
  * takes an ACTOR, authorises on the SPECIFIC job before it reads, and returns
  * what that actor may have — the same discipline as engaged.ts and portal.ts.
  *
@@ -49,32 +49,32 @@
  * may not do. The log has one entry per attempt because there was one attempt.
  */
 
-import type { Db } from '../core/index.ts';
-import { authorise, can, type Actor, type Obj } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { assembleSurveyorPayload, QUARANTINE_NOTICE, type JobInputs, type SurveyorPayload } from '../payload.ts';
+import type { Db } from '../../core/index.ts';
+import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { assembleSurveyorPayload, QUARANTINE_NOTICE, type JobInputs, type SurveyorPayload } from '../../payload.ts';
 import {
   assureProcess, driftReport, QuarantineError, RELEASED_TO_SURVEYOR_ALWAYS,
   type EstimateOutputs, type ProcessAssurance, type SurveyorFigures,
-} from '../modules/survey/anchor-quarantine.ts';
+} from './anchor-quarantine.ts';
 import {
   fieldSpec, propose, OverrideStore, RateLibrary, RATE_FIELDS,
   isBlankControl, ControlStore,
   CrmError, type Context, type PrefillEvent, type Proposal, type Sector,
-} from '../modules/survey/surveyor-crm.ts';
+} from './surveyor-crm.ts';
 import { DbAnchorLog, hydrateQuarantine, storeCommitment, type StoredJob } from './anchor-store.ts';
-import { roomsFor, SOURCE_DOCUMENT, type RoomType, type SectorRooms } from '../modules/crm/index.ts';
-import { missingFacts, NotFoundAsRefusal, type MissingFact } from '../modules/claims/index.ts';
-import { versionObj } from '../modules/claims/index.ts';
-import { anyStageLabel, stage as stageOf } from '../shared/index.ts';
+import { roomsFor, SOURCE_DOCUMENT, type RoomType, type SectorRooms } from '../crm/index.ts';
+import { missingFacts, NotFoundAsRefusal, type MissingFact } from '../claims/index.ts';
+import { versionObj } from '../claims/index.ts';
+import { anyStageLabel, stage as stageOf } from '../../shared/index.ts';
 /* Phase 110. The region a rate library entry is keyed on. resolveProperty
    never throws and never guesses — see the comment on REGION_NOT_CAPTURED. */
-import { resolveProperty } from '../integrations/postcodes/postcode.ts';
-import { preferHomedataPlanning, supersededPlanning } from '../integrations/index.ts';
+import { resolveProperty } from '../../integrations/postcodes/postcode.ts';
+import { preferHomedataPlanning, supersededPlanning } from '../../integrations/index.ts';
 import { estimateBasis } from './survey-open.ts';
-import { listRegisterRecordsSourceIdEntityIdByBusinessId } from '../integrations/index.ts';
-import { getPropertiesPostcodeByBusinessId, listDocumentsIdFilenameByBusinessId, listPropertiesLabelPostcodeByBusinessId2 } from '../modules/claims/index.ts';
-import { getEstimatesByAssessmentId, listAssessmentAnswersOrdQuestionIdByAssessmentId2 } from '../modules/assessment/index.ts';
+import { listRegisterRecordsSourceIdEntityIdByBusinessId } from '../../integrations/index.ts';
+import { getPropertiesPostcodeByBusinessId, listDocumentsIdFilenameByBusinessId, listPropertiesLabelPostcodeByBusinessId2 } from '../claims/index.ts';
+import { getEstimatesByAssessmentId, listAssessmentAnswersOrdQuestionIdByAssessmentId2 } from '../assessment/index.ts';
 
 export { NotFoundAsRefusal };
 
@@ -198,7 +198,7 @@ function loadJob(db: Db, actor: Actor, job_id: string): JobDbRow {
 }
 
 /**
- * 1 Oct 2026: THE JOB, FOR THE SURVEY PACK (src/web/survey-pack.ts) — read under the same rule as the workspace
+ * 1 Oct 2026: THE JOB, FOR THE SURVEY PACK (src/modules/survey/survey-pack.ts) — read under the same rule as the workspace
  * (`surveyor_job.read` on the specific job), and its authorisation object, so the pack asks `surveyor_job.commit` of the
  * same object the workspace does. Nothing else of the job is handed out.
  */
@@ -594,7 +594,7 @@ const CRM_SECTOR: Readonly<Record<string, Sector>> = Object.freeze({
  * A silent default of "London" would still look like data. It is still not
  * there.
  */
-export { REGION_NOT_CAPTURED } from '../integrations/postcodes/postcode-port.ts';
+export { REGION_NOT_CAPTURED } from '../../integrations/postcodes/postcode-port.ts';
 
 /**
  * The rate library's context for a job.

@@ -40,8 +40,8 @@ import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { SOURCES as REGISTER_SOURCES } from '../../integrations/index.ts';
 import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type EngineWindow, type SectorId } from '../../shared/index.ts';
 import { packSwitchReadings } from '../../shared/index.ts';
-import { TAXONOMY_SECTOR, taxonomy } from '../../web/pack-lines.ts';
-import type { PackGrant } from '../../web/pack-grants.ts';
+import { TAXONOMY_SECTOR, taxonomy } from '../survey/pack-lines.ts';
+import type { PackGrant } from '../survey/pack-grants.ts';
 import { CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, claimObjFor, claimantTypeForGate, isCompanyOrRoleToken, propertyJurisdiction } from '../crm/index.ts';
 import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from '../assessment/index.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
@@ -616,7 +616,7 @@ export function elementName(element_id: string): string {
 }
 
 /**
- * THE CLAIM'S GRANTS AS THE SURVEY PACK TAKES THEM (src/web/pack-grants.ts, chapter 15): every grant not
+ * THE CLAIM'S GRANTS AS THE SURVEY PACK TAKES THEM (src/modules/survey/pack-grants.ts, chapter 15): every grant not
  * withdrawn, with its payer class, its amount and the fixture-list rows it paid for.
  */
 export function packGrantsFor(db: Db, claim_id: string): (PackGrant & { readonly kind: string; readonly traced: string })[] {
