@@ -2,7 +2,7 @@
  * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CRM (09-app/docs/ARCHITECTURE.md rules 3 and 4). These statements
  * were in this module's page and logic files, which may not run SQL (rule 4). They read or write tables another area
  * owns, or join this module's tables to another's, so they still go against rule 3 (each counted against the table's
- * owner). Phase 161l moves each to its owner's data file, reached through that owner's front door or an event. Nothing
+ * owner). Phase 161l1 moves each to its owner's data file, reached through that owner's front door or an event. Nothing
  * new belongs here: this file only gets shorter. Text unchanged from the caller.
  */
 import type { Db, Param, Row } from '../../core/index.ts';
@@ -670,7 +670,7 @@ export const SEARCH_STATEMENTS: readonly string[] = Object.freeze([
   ORGANISATIONS_ALL, PROSPECTS_ALL, CONTACTS_ALL, PROPERTIES_ALL, PROPERTIES_ASSIGNED, CLAIMS_ALL, CLAIMS_ASSIGNED, INVOICES_ALL, NOTES_ALL,
 ]);
 
-// the claim and lead lists (src/modules/crm/claim-lists.ts, from src/shared/ in Phase 161l): the fixed statements, moved with
+// the claim and lead lists (src/modules/crm/claim-lists.ts, from src/shared/): the fixed statements, moved with
 // their notes. Each joins the claim or the lead to other owners' tables, so it waits here.
 /** CLIENT AND REFERENCE — the whole of what ACCOUNTING reads of a claim. No join to anything else. */
 const CLAIMS_MONEY =
@@ -730,7 +730,7 @@ export function listLeadsRows<T extends Row = Row>(db: Db): T[] {
 }
 
 // the do-not-contact check (src/modules/crm/do-not-contact.ts): a client login of an organisation marked do not contact;
-// from src/integrations/data-borrowed.ts in Phase 161l, text unchanged. It joins the core's users to the CRM's businesses.
+// from src/integrations/data-borrowed.ts, text unchanged. It joins the core's users to the CRM's businesses.
 export function getUsersCountByClientStatusEmailCanonical<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT COUNT(*) AS n FROM users u JOIN businesses b ON b.id = u.business_id ' +
     "WHERE b.client_status = 'DO_NOT_CONTACT' AND u.email_canonical = lower(?)", params);

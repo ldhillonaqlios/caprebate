@@ -29,7 +29,7 @@ import { getAuditLogSeqHash, insertAuditLog, listAuditLog } from './data.ts';
 
 /**
  * THE HASH BEFORE THE FIRST ENTRY of a chain: this audit log's, and the survey's quarantine log's, which re-exports it
- * (src/modules/survey/anchor-quarantine.ts), so the two chains start from the one value. Phase 161l: defined here, in
+ * (src/modules/survey/anchor-quarantine.ts), so the two chains start from the one value. Defined here, in
  * the core, so the audit log loads no business module.
  */
 export const GENESIS = '0'.repeat(64);

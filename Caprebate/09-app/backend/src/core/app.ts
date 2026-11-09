@@ -7,7 +7,7 @@
  * application in memory and the production start-up does the same thing with
  * different arguments.
  *
- * Phase 161l: this file keeps the shapes (App, BuildOptions), where the table steps are (MIGRATIONS_DIR) and the list
+ * This file keeps the shapes (App, BuildOptions), where the table steps are (MIGRATIONS_DIR) and the list
  * of stubs. buildApp(), which opens the database and makes the parts, is start-up wiring: src/app/build-app.ts.
  */
 

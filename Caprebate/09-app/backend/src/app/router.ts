@@ -40,7 +40,7 @@ import { acceptClientBytes, finishUpload, issuedJob, readerFor } from '../module
 import { UPLOAD_PIECES_JS } from './upload-pieces-script.ts';
 import { handleStaff, handlePortalSettings } from './staff.ts';
 /* Straight from these two core files, not the core's door: each reads business modules as it loads, so the door cannot
-   name them (Phase 161l; see src/core/index.ts). */
+   name them (see src/core/index.ts). */
 import { mayEnterBackOffice, NotFoundAsRefusal } from '../core/index.ts';
 import { staffShell, portalShell } from '../core/index.ts';
 import { inboundEmailModule as IE } from '../modules/crm/index.ts';

@@ -200,7 +200,7 @@ export type SiteAreaReady = {
 };
 
 /*
- * WHETHER A PROPERTY IS THIS COMPANY'S IS THE CLAIMS MODULE'S TO SAY: A PORT THIS FILE OWNS (Phase 161l), handed in by
+ * WHETHER A PROPERTY IS THIS COMPANY'S IS THE CLAIMS MODULE'S TO SAY: A PORT THIS FILE OWNS, handed in by
  * src/modules/claims/research-subject.ts as the claims' front door loads; the statement is the claims' own, unchanged.
  * Declared with `var`, so a hand-in that comes while this file is still loading is kept.
  */

@@ -211,7 +211,7 @@ export function feeDisplay(
 }
 
 /* THE ENGAGEMENT GATE'S CONFIG AND THE GATE, as the engine ships them. The gate run with the job cost model's costing
-   injected (feeGate, feeQuote) is the assessment's, beside that model (src/modules/assessment/fee-gate.ts, Phase 161l), so
+   injected (feeGate, feeQuote) is the assessment's, beside that model (src/modules/assessment/fee-gate.ts), so
    the shared parts load nothing of a business module. */
 export const GATE_CONFIG = CB.CB_GATE_CONFIG;
 export const GATE = CB.CB_GATE;

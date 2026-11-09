@@ -36,7 +36,7 @@ import { handleBilling } from '../modules/finance/index.ts';
 import type { FsObjectStore } from '../shared/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 /* Straight from these three core files, not the core's door: each reads business modules as it loads (the menus, the
-   back office's views, the saved keys), so the door cannot name them (Phase 161l; see src/core/index.ts). */
+   back office's views, the saved keys), so the door cannot name them (see src/core/index.ts). */
 import { staffShell, portalShell, opens, filterBar, LEAD_FILTERS } from '../core/index.ts';
 import { settingsBody, settingsTiles } from '../modules/admin/index.ts';
 import { homeRows } from '../modules/public-site/index.ts';

@@ -964,5 +964,5 @@ export function assertContractCovered(): void {
 export { RECEIPT_CONTRACT, INGESTION_BOUNDARY, FAIL_CLOSED_SETTINGS, receiptPolicyFor };
 
 /* The document store asks which keys are kept originals (src/shared/objectstore.ts, a port it owns): the keys above,
-   handed in as this file loads, so the store and this file never disagree. Phase 161l. */
+   handed in as this file loads, so the store and this file never disagree. */
 setDocumentKeys({ durableKeyFor, retainedTextKeyFor });

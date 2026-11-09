@@ -1,6 +1,6 @@
 /**
  * WHAT THE OUTSIDE SERVICES ASK THE CLAIMS ABOUT A PROPERTY, handed in to the ports they own as the claims' front door
- * loads (Phase 161l): a company's first property, for what a free lookup is asked about
+ * loads: a company's first property, for what a free lookup is asked about
  * (src/integrations/connectors/nations.ts), and whether a property is the company's, before a site area is worked
  * out (src/integrations/connectors/site-area.ts). The statements are the claims' own (data.ts), unchanged.
  */

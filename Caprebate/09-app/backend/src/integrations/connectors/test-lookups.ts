@@ -62,9 +62,9 @@ import {
 import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
 import { readPayloadWithClaude, SERVICE_ID as CLAUDE_SERVICE_ID } from './claude.ts';
 import { sanitise, type Segment } from '../../modules/claims/index.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+// Straight from the data file, not the front door: a lower layer must not load a whole business module.
 import { listBusinessesNameLegalName, listLeadsProspectOrganisationProspectPostcode } from '../../modules/crm/data.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+// Straight from the data file, not the front door: a lower layer must not load a whole business module.
 import { listPropertiesPostcode, listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../../modules/claims/data.ts';
 import { listRegisterRecordsFieldsJsonBySourceId } from '../data.ts';
 
@@ -278,7 +278,7 @@ export function clientMatchIn(db: Db, v: SmokeValues): ClientCheck {
 }
 
 /**
- * CONDITION 2 AGAINST THE DATABASE, FOR A POINT AND A COUNCIL (from boundary-test-lookup.ts in Phase 161l, text unchanged:
+ * CONDITION 2 AGAINST THE DATABASE, FOR A POINT AND A COUNCIL (from boundary-test-lookup.ts, text unchanged:
  * the client tables are read here only, beside the other client check, so the land boundary's lookup reads none). Every point a person entered for a property and every
  * easting and northing the paid address lookup gave, within CLIENT_POINT_RADIUS_M; every council a person added for a
  * property. A match refuses and names the FIELD, never the value. A database that cannot be read refuses.

@@ -1,6 +1,6 @@
 /**
  * LEG-E4, GIVEN A POSTCODE: THE SURVEY'S COST MODEL FED A LOCATION KEY. Moved from
- * src/integrations/postcodes/location-key.ts in Phase 161l, text unchanged: the outside services resolve the postcode
+ * src/integrations/postcodes/location-key.ts, text unchanged: the outside services resolve the postcode
  * (locationKeyFor) and this file, beside the cost model (./costing/cost-model.cjs), owns the gate and the factor. Read
  * the header of location-key.ts before changing anything here.
  */

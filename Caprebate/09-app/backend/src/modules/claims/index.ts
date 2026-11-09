@@ -18,7 +18,7 @@ export { assertContractCovered, closeJob, CONTRACT_COVERAGE, deleteDueRawFile, d
 export { discountsFor } from './fee-discounts.ts';
 export { loadLetter, TEST_LETTER_PATH } from './letter.ts';
 export { addStaffEvent, approvedEventFigures, dateWords, EVENT_KINDS, eventsOfProperty, eventsOnClaim, KIND_WORDS, purchaseApplies, setEventVat, worksEvents, writeAssessmentEvents } from './property-events.ts';
-// The registers published as a file are the outside services' (src/integrations/registers/file-registers.ts, Phase 161l);
+// The registers published as a file are the outside services' (src/integrations/registers/file-registers.ts);
 // named here as before, for the command line's import-register.
 export { decodeRegisterFile, FILE_SOURCES, importRegisterFile, RegisterFileError, rowsAtPostcode } from '../../integrations/index.ts';
 export { REGISTER_IMPORT_JS } from './register-import-script.ts';

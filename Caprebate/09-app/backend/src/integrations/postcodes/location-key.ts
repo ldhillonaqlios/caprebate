@@ -258,7 +258,7 @@ export function locationKeyFor(
  * 3. The LEG-E4 seam
  *
  * Moved to the survey, beside the cost model it feeds (src/modules/survey/location-factor.ts,
- * `locationFactorForPostcode` and `LEG_E4_GATE`, Phase 161l), text unchanged: the outside services
+ * `locationFactorForPostcode` and `LEG_E4_GATE`), text unchanged: the outside services
  * resolve the postcode and load nothing of a business module.
  * ------------------------------------------------------------------ */
 

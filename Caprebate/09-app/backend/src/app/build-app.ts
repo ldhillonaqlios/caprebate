@@ -1,5 +1,5 @@
 /**
- * BUILDING THE APPLICATION (start-up wiring, Phase 161l; it was the second half of src/core/app.ts). One process, both
+ * BUILDING THE APPLICATION (the start-up wiring; it was the second half of src/core/app.ts). One process, both
  * applications, no hidden state: everything it needs is passed in (the database location, the clock, the hasher, the
  * transports), so a test builds a whole application in memory and the production start-up does the same thing with
  * different arguments. The shapes it returns (App, BuildOptions) stay in the core (src/core/app.ts), where every area

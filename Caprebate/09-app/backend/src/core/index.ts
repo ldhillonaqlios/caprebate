@@ -27,7 +27,7 @@ export { cleanField } from './typed.ts';
 export { PIECED_ABOVE, PIECE_BYTES, piecesOf, piecesPage, putPiece, setDocumentMaxBytes, startPieces, sweepPieces } from './upload-pieces.ts';
 export { assignRole, canonicalEmail, createUser, disableUser, findById, hashToken, listUsers, newId, toActor } from './users.ts';
 export { WELCOME_JOBS, dismissWelcome, welcomeShown } from './welcome.ts';
-// Phase 161l: what the start-up wiring (src/app/) uses of the core. Each file named here loads no business module.
+// What the start-up wiring (src/app/) uses of the core. Each file named here loads no business module.
 export { MIGRATIONS_DIR } from './app.ts';
 export { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';
 export { formToken, formTokensMode, onceToken } from './form-token.ts';

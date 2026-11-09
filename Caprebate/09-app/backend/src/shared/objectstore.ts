@@ -53,7 +53,7 @@ import type { ObjectStore, PresignedUpload } from '../modules/claims/index.ts';
 import { KEEP_ORIGINALS, keptDays, seal, unseal, type KeepOriginals } from './originals.ts';
 
 /**
- * THE DOCUMENT KEYS, AS THE UPLOAD HANDLER NAMES THEM: A PORT THIS FILE OWNS (Phase 161l). Which keys are kept
+ * THE DOCUMENT KEYS, AS THE UPLOAD HANDLER NAMES THEM: A PORT THIS FILE OWNS. Which keys are kept
  * originals is the handler's to say (src/modules/claims/documents/upload-handler.ts, durableKeyFor and
  * retainedTextKeyFor); the handler hands them in when it loads, so the shared parts import nothing of the claims module.
  * Asked before they are handed in, the store refuses rather than guess which keys are originals.

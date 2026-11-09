@@ -24,7 +24,7 @@
 // The claims module's document files, named here. Areas above the claims read them through its front door; the two
 // below it that need them (the core's upload in pieces, src/core/upload-pieces.ts, and the assessment's conveyancing
 // strip, src/modules/assessment/conveyancing-strip.ts) name this file, as the front door would load the whole claims
-// module into a lower layer. Moved here from src/shared/ in Phase 161l: the document store reads the handler's keys
+// module into a lower layer. Moved here from src/shared/: the document store reads the handler's keys
 // through a port of its own (src/shared/objectstore.ts, setDocumentKeys), so the shared parts no longer load it.
 export {
   UPLOAD_LIMITS,

@@ -10,7 +10,7 @@
  * Only a live connection is ever refused: a test's recorded answers, or its own mail server, reach nobody.
  */
 
-// The test website's own reading lives in the shared parts (src/shared/test-website.ts, Phase 161l), as the money
+// The test website's own reading lives in the shared parts (src/shared/test-website.ts), as the money
 // readings ask it too; it is named here as before, so every caller of this file reads the same function.
 import { onTestWebsite, type Env } from '../../shared/index.ts';
 export { onTestWebsite };

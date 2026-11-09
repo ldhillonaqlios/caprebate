@@ -1,5 +1,5 @@
 /**
- * THE ENGAGEMENT GATE, RUN WITH THE JOB COST MODEL'S COSTING. Moved from src/shared/engine.ts in Phase 161l, text
+ * THE ENGAGEMENT GATE, RUN WITH THE JOB COST MODEL'S COSTING. Moved from src/shared/engine.ts, text
  * unchanged, with the job cost model it injects (src/modules/assessment/costing/job-economics.cjs, from the survey's
  * costing folder, where nothing read it): the shared parts load nothing of a business module, and the assessment, the
  * lowest module, is the one that asks the gate (vat.ts) and the one the claims below the CRM can reach.
