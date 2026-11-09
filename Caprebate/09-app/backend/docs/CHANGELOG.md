@@ -10,7 +10,9 @@ moved (`survey/`, `finance/`, `compliance/`, `admin/`) are here: every business 
 
 How far the notes come out was put to the developer (question D16 of the developer question pack). Until they answer,
 this follows our recommendation: keep a short comment that says why; move every dated note, and every name, here.
-A phase's full record is in `00-START-HERE/hub/PHASE-HISTORY.md`.
+A phase's full record is in `00-START-HERE/hub/PHASE-HISTORY.md`. Phase 161l (9 November 2026) moved files between areas but moved no note here; where a heading names a file that has
+moved since (the job cost model is now `src/modules/assessment/costing/job-economics.cjs`, the lists `src/modules/crm/claim-lists*.ts`,
+the start-up wiring `src/app/`), the heading keeps the name the file had on the day.
 
 Dates: the date the note itself gives, otherwise the date of its phase in the phase history; "date not recorded" where
 neither says.

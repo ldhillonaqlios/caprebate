@@ -13,23 +13,25 @@
 
 The code is grouped by business area (09-app/docs/ARCHITECTURE.md). Another area reaches a module only through its
 front door, `index.ts`; only a module's `data.ts` runs SQL on the tables it owns, and its `data-borrowed.ts` holds the
-statements on other areas' tables that Phase 161l moves to their owners.
+statements on other areas' tables that Phase 161l1 moves to their owners. Areas depend one way only (the `order` in
+`architecture/modules.json`); a lower area tells a higher one something through an event (`src/core/events.ts`) and asks
+it through a port the higher one fills, and each module declares its own permissions in its `actions.ts`.
 
 | Folder | What is in it |
 |---|---|
-| `src/app/` | the start-up wiring (Phase 161l): the server, the router shell, the back office's own pages, the timers, the sign-up, the seed and the command line; it may import every area's front door and no area imports it |
-| `src/core/` | the database gate, sign-in, permissions, the audit log, keys, the menus and the back office's views |
+| `src/app/` | the start-up wiring: the server, the router shell, the back office's own pages, the timers, the seed and the command line; it may import every area's front door and no area imports it |
+| `src/core/` | the database gate, sign-in, permissions (put together from each module's `actions.ts`), the audit log, events, keys, the menu and the back office's gates |
 | `src/shared/` | page templates and parts, PDF, ZIP, dates, money and the other pieces every area uses |
 | `src/integrations/` | the outside services: email, identity checks, Zoom, WhatsApp, Claude, Companies House, the registers and postcodes |
 | `src/modules/public-site/` | the home page, sector pages, the enquiry form and the legal pages |
-| `src/modules/assessment/` | the eligibility check, its figures and sign-up |
-| `src/modules/portal/` | the client's dashboard, their files, confirmations and report acceptance |
-| `src/modules/crm/` | organisations, leads, the pipeline, tasks, messages, the calendar, video calls and introducers |
+| `src/modules/assessment/` | the eligibility check, its figures, the engagement gate and its job cost model (`costing/`) |
+| `src/modules/portal/` | the client's dashboard, their files, confirmations, report acceptance and sign-up |
+| `src/modules/crm/` | organisations, leads, the pipeline, tasks, messages, the calendar, filled assessments, search, the claims and leads lists, video calls and introducers |
 | `src/modules/claims/` | the claim record, its facts, documents (`documents/`), signing, research and the report |
 | `src/modules/survey/` | the surveyor workspace, the survey pack, the report, photos, video and the costings (`costing/`) |
 | `src/modules/finance/` | invoices, VAT, billing and filing |
 | `src/modules/compliance/` | identity checks, data protection, the breach log, retention, complaints, legal approvals and the audit log screen |
-| `src/modules/admin/` | settings, roles, templates, connections, configuration and lists |
+| `src/modules/admin/` | settings, roles, templates, connections, saved keys, configuration and lists |
 | `src/styles/` | the one stylesheet, `site.css` |
 | `test/` | the tests, in the same folders as `src/` and named by feature; shared helpers at the top; `fixtures/` holds their files |
 | `migrations/` | the database changes, in order (never edited once applied) |
