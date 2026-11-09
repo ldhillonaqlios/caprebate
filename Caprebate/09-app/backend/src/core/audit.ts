@@ -444,7 +444,10 @@ export type AuditKind =
   /** An admin recorded a solicitor's or the DPO's approval of a legal page's version (src/modules/compliance/legal-approvals.ts). */
   | 'LEGAL_PAGE_APPROVED'
   /** A client ticked that they have read the portal terms, the website terms and the privacy policy; the versions are kept. */
-  | 'TERMS_AGREED';
+  | 'TERMS_AGREED'
+  /* One module told the modules above it that something happened (src/core/events.ts): the announcement, then each
+     listener that heard it. Inside the transaction of the change itself, so a listener that fails undoes both. */
+  | 'EVENT_ANNOUNCED' | 'EVENT_HEARD';
 
 export type Outcome = 'ALLOWED' | 'REFUSED' | 'ERROR';
 

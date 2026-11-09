@@ -269,6 +269,11 @@ export class Db {
    * audited action is lost. Holding the lock from the start, every other writer waits until this one commits, and
    * reads what it wrote. libSQL's own client asks for a write transaction the same way.
    */
+  /** Whether a transaction is open on this connection (src/core/events.ts announces only inside one). */
+  get inTransaction(): boolean {
+    return this.#depth > 0;
+  }
+
   tx<T>(fn: () => T): T {
     // A transaction whose connection was dropped is begun again once, from the start (see droppedConnection).
     for (let attempt = 1; ; attempt++) {

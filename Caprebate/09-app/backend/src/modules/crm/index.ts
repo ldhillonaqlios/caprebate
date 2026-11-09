@@ -58,3 +58,5 @@ export type { ThreadMessage } from './messages.ts';
 export type { FeeTrigger, Need, PipelineClaim } from './pipeline.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { crmAssets, crmCallPage, crmReferralForm } from './routes.ts';
+// What the CRM listens for (the modules below announce; src/core/events.ts). Last, as it reaches the CRM's own files.
+import './events.ts';

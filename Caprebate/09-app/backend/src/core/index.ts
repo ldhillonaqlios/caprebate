@@ -7,6 +7,7 @@
 export { rateLimit, revokeAllSessions } from './auth.ts';
 export { DPO_ROLE_SWITCH, NotAuthorised, REGISTERED_ACTIONS, authorise, builtInHolds, can } from './authz.ts';
 export { photoFor } from './avatar.ts';
+export { EventOutsideTransaction, ListenerFailed, announce, listen, listenersOf } from './events.ts';
 export { BACKUP_KEEP_DAYS } from './backup.ts';
 export { BORROWABLE_ROLES, NEVER_GRANTED, customRoleKey, isCustomRoleKey, loadCustomRoles, roleRefusal } from './custom-roles.ts';
 export { deleteCustomRoleGrantsByRole, getAuditLogCount, getAuditLogCountByKindAt, getAuditLogCountByKindObjectId, getCustomRolesNameRetiredAtByRole, getCustomRolesRoleByName, getRolesRoleByRole, getSessionsCountByUserIdRevokedReason, getUsersCountByBusinessId, getUsersCountByBusinessIdRole, getUsersCountByIdBusinessId, getUsersCountByRole, getUsersCountByRoleDisabledAt, getUsersDisplayNameById, getUsersEmailById, getUsersEmailDisplayNameById, getUsersEmailRoleById, getUsersIdByEmailCanonical, getUsersIdByEmailCanonicalId, getUsersIdByIdRole, getUsersIdByIdRole2, getUsersIdEmailByIdDisabledAt, getUsersNById, getUsersRoleById, getUsersRoleDisabledAtById, insertCustomRoleGrants, insertCustomRoles, insertRoles, listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, listAuditLogAtKindByOutcomeKind3, listAuditLogAtKindByOutcomeKind4, listAuditLogAtWhoByKindObjectId, listAuditLogDetailSByKindM, listAuditLogKind, listCustomRoleGrantsActionAsRoleByRole, listCustomRolesRoleName, listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole, listUserPhotosUserId, listUsersIdByRole, listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleADM2, listUsersIdDisplayNameByRoleDisabledAt, listUsersIdDisplayNameByRoleEmailCanonical, listUsersIdEmailByBusinessIdRole, listUsersIdEmailByRoleBusinessId, listUsersIdEmailByRoleDisabledAt, listUsersIdNameByBusinessIdRole, listUsersIdNameByRoleDisabledAt, listUsersIdNameByRoleDisabledAt2, listUsersIdRoleByDisabledAt, updateCustomRolesRetiredAtUpdatedAtByRole, updateCustomRolesUpdatedAtByRole, updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt, updateUsersDisplayNameUpdatedAtById, updateUsersEmailEmailCanonicalById, updateUsersPasswordTemporaryUntilById } from './data.ts';
@@ -27,6 +28,7 @@ export { WELCOME_JOBS, dismissWelcome, welcomeShown } from './welcome.ts';
 export type { Deps } from './auth.ts';
 export type { Actor, Obj } from './authz.ts';
 export type { PhotoRecord } from './avatar.ts';
+export type { EventContext, EventMap, EventName, Listener } from './events.ts';
 export type { BorrowableRole, Grant } from './custom-roles.ts';
 export type { Param, Row } from './db.ts';
 export type { WebDeps, WebRequest, WebResult } from './http.ts';

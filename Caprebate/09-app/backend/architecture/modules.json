@@ -80,6 +80,10 @@
    "area": "core",
    "kind": "data"
   },
+  "src/core/events.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
   "src/core/form-token-check.ts": {
    "area": "core",
    "kind": "logic"
@@ -893,6 +897,10 @@
    "kind": "data"
   },
   "src/modules/crm/email-chains.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/modules/crm/events.ts": {
    "area": "crm",
    "kind": "logic"
   },

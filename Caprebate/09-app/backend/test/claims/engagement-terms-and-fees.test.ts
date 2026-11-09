@@ -20,6 +20,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createApp } from '../../src/core/server.ts';
+import { listen, ListenerFailed } from '../../src/core/events.ts';
 import { seed } from '../../src/core/seed.ts';
 import { isAppRole } from '../../src/core/roles.ts';
 import { can, type Actor } from '../../src/core/authz.ts';
@@ -469,6 +470,46 @@ describe('line 10 — model C: 10% of our fee as invoiced, off, refused while cl
       assert.throws(() => app.db.run('UPDATE introducer_percentage_entries SET amount_pence = 1'), /never an edit/);
       assert.throws(() => app.db.run('DELETE FROM introducer_percentage_entries'), /never a delete/);
       assert.ok(app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'INTRODUCER_PERCENTAGE_REVERSED'")?.n === 1);
+    } finally { app.close(); }
+  });
+
+  /* EVENTS (src/core/events.ts): finance announces; the CRM listens, in the invoice's own transaction. */
+  test('the CRM hears an invoice raised and a credit note issued (events), in the same transaction, and the audit log says so', async () => {
+    const { app, claim } = await referredAtInvoice();
+    try {
+      assert.ok(I.setRewardModel(CF.recordDeps(app) as never, actor('ADMIN'), { model: 'C_PERCENT_OF_INVOICED_FEE' }, { openTerms: [] }).ok);
+      const r = INV.raiseInvoice(invoiceDeps(app), actor('ACCOUNTING'), claim, { kind: 'FEE' });
+      assert.equal(r.ok, true, r.ok ? '' : r.why);
+      assert.equal(entries(app).length, 1, 'the listener did not accrue');
+      const heard = (event: string, listener: string): number => app.db.all<{ detail: string }>(
+        "SELECT detail FROM audit_log WHERE kind = 'EVENT_HEARD' AND object_id = ?", [event]).filter((l) => JSON.parse(l.detail).listener === listener).length;
+      assert.equal(heard('invoice.raised', 'accrue the introducer percentage on a fee invoice'), 1);
+      assert.equal(reduceUnderClause13(app, claim, r.ok ? r.id : '', '200000').ok, true);
+      assert.equal(entries(app).length, 2, 'the listener did not reverse');
+      assert.equal(heard('credit_note.issued', 'reverse the introducer percentage on a clause 13 credit'), 1);
+    } finally { app.close(); }
+  });
+
+  test('a listener that fails undoes the invoice, and the credit note, that caused it', async () => {
+    const { app, claim } = await referredAtInvoice();
+    try {
+      assert.ok(I.setRewardModel(CF.recordDeps(app) as never, actor('ADMIN'), { model: 'C_PERCENT_OF_INVOICED_FEE' }, { openTerms: [] }).ok);
+      const invoices = (): number => app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM invoices')?.n ?? 0;
+      const stop = listen('invoice.raised', 'test', 'fails', () => { throw new Error('planted'); });
+      try {
+        assert.throws(() => INV.raiseInvoice(invoiceDeps(app), actor('ACCOUNTING'), claim, { kind: 'FEE' }), ListenerFailed);
+      } finally { stop(); }
+      assert.equal(invoices(), 0, 'the invoice stayed although its listener failed');
+      assert.deepEqual(entries(app), []);
+      const r = INV.raiseInvoice(invoiceDeps(app), actor('ACCOUNTING'), claim, { kind: 'FEE' });
+      assert.equal(r.ok, true);
+      const credits = (): number => app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM invoice_credit_notes')?.n ?? 0;
+      const stop2 = listen('credit_note.issued', 'test', 'fails', () => { throw new Error('planted'); });
+      try {
+        assert.throws(() => reduceUnderClause13(app, claim, r.ok ? r.id : '', '200000'), ListenerFailed);
+      } finally { stop2(); }
+      assert.equal(credits(), 0, 'the credit note stayed although its listener failed');
+      assert.equal(entries(app).length, 1, 'the accrual was reversed by a credit note that was undone');
     } finally { app.close(); }
   });
 
