@@ -24,7 +24,7 @@ import {
   IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, identityCheckMissing, identityTestingWarning, sentUnderTestingWaiver,
   type IdentityCheckConfig,
 } from '../src/integrations/connectors/identity-check.ts';
-import { identityPanel, sendIdentityCheck } from '../src/web/identity-checks.ts';
+import { identityPanel, sendIdentityCheck } from '../src/modules/compliance/identity-checks.ts';
 
 const KEYS = { DIDIT_API_KEY: 'test-didit-key-not-real-151h', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-151h', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151h00000001' };
 const SESSION_OK: Fixture = { status: 201, body: JSON.stringify({ session_id: 'a1b2c3d4-0000-4000-8000-151h00000001', url: 'https://verify.didit.me/en/session/INVENTED151H', status: 'Not Started' }) };

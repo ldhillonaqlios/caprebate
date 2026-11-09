@@ -50,19 +50,19 @@
  * still with no date computed, because RET-7 is not approved.
  */
 
-import type { Db } from '../core/index.ts';
-import { authorise, type Actor } from '../core/index.ts';
-import { retentionReading, ret7Limbs } from '../modules/claims/index.ts';
-import { BACKUP_CYCLE } from '../shared/upload-handler-port.ts';
-import { MESSAGE_RETENTION_QUESTION } from '../modules/crm/index.ts';
+import type { Db } from '../../core/index.ts';
+import { authorise, type Actor } from '../../core/index.ts';
+import { retentionReading, ret7Limbs } from '../claims/index.ts';
+import { BACKUP_CYCLE } from '../../shared/upload-handler-port.ts';
+import { MESSAGE_RETENTION_QUESTION } from '../crm/index.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, holdsFor, liveHeldIds, NotFoundAsRefusal, opaqueRef, record, requiredText,
   textField, ukDay, vocabField, words,
   type Check, type ComplianceDeps, type Fields, type HoldRow, type Vocab, type WriteResult,
 } from './compliance.ts';
-import { getDocumentsIdById, listLogicalDocumentsId } from '../modules/claims/index.ts';
-import { getContactsIdById, getContactsIdFullNameById, listIntroducerShareConsentsRecordedAtDecisionByBusinessId, updateContactsContactConsentUpdatedAtById, updateContactsMarketingOptinUpdatedAtById } from '../modules/crm/index.ts';
-import { insertConsentAnswers, listConsentAnswersRecordedAtKindByContactId } from '../modules/assessment/index.ts';
+import { getDocumentsIdById, listLogicalDocumentsId } from '../claims/index.ts';
+import { getContactsIdById, getContactsIdFullNameById, listIntroducerShareConsentsRecordedAtDecisionByBusinessId, updateContactsContactConsentUpdatedAtById, updateContactsMarketingOptinUpdatedAtById } from '../crm/index.ts';
+import { insertConsentAnswers, listConsentAnswersRecordedAtKindByContactId } from '../assessment/index.ts';
 
 class Refusal extends Error {}
 

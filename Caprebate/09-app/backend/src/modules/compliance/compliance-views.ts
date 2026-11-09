@@ -8,10 +8,10 @@
  * person_refs, never names.
  */
 
-import { h, raw, page, type Safe } from '../shared/index.ts';
-import { localWhen } from '../shared/index.ts';
+import { h, raw, page, type Safe } from '../../shared/index.ts';
+import { localWhen } from '../../shared/index.ts';
 import { COMPLAINT_TARGET_NOTE } from './compliance-clock.ts';
-import { kpiRow } from '../core/index.ts';
+import { kpiRow } from '../../core/index.ts';
 import type { AmlView, CheckView } from './compliance-aml.ts';
 import { AUTHORITY_BASES, BENEFICIAL_OWNERSHIP, CLAIMANT_TYPES, ENTITY_STATUSES, OFFICES, OWNER_SOURCES, PSC_DECISIONS, RISK_LEVELS, RISK_RATING_NOTE, SANCTIONS_RESULTS } from './compliance-aml.ts';
 import type { ComplaintCount, ComplaintView, RegisterLine, RequestView, SearchResult } from './compliance-rights.ts';
@@ -24,7 +24,7 @@ import { ART33, ART34, DISCOVERY_ROUTES, FACT_VALUES, INCIDENT_KINDS, OCCURRED_S
 import type { ConsentHistory, PersonView, RetentionLine } from './compliance-identity.ts';
 import { CONSENT_DECISIONS, CONSENT_KINDS, NOTICE_ROUTES, PERSON_ROLES, ROUTE_KINDS, S2_REFUSALS } from './compliance-identity.ts';
 import { HOLD_KINDS, HOLD_REASONS, LINK_KINDS, SETTING_VALUES, SETTINGS, TWO_PERSON_LIMITATION, type HoldRow, type LinkLine, type SettingReading, type Vocab } from './compliance.ts';
-import type { WaitingForm } from '../modules/public-site/index.ts';
+import type { WaitingForm } from '../public-site/index.ts';
 
 type Nav = Safe;
 

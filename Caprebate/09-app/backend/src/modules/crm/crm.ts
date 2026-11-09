@@ -1018,7 +1018,7 @@ function contactValues(input: Fields, stored: ContactValues): Check<ContactValue
  *   - a client saved from the website cannot be saved without one (the funnel's close, src/core/router.ts);
  *   - a change here that would leave a client with no contact we can reach is refused (`updateContact`);
  *   - a client that has none is flagged on its page until it does (src/modules/crm/client-page.ts); and
- *   - an identity check goes only to a contact who has one (src/web/identity-checks.ts).
+ *   - an identity check goes only to a contact who has one (src/modules/compliance/identity-checks.ts).
  * A contact added here may still lack both: the rule is about the client, and the flag stays until one has them.
  */
 export const NO_WAY_TO_REACH_WORDS = 'We must have a way to reach this client: a contact with an email address or a telephone number.';

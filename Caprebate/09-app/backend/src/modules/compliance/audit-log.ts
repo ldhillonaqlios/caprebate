@@ -23,12 +23,12 @@
  * three; anything else is dropped and said.
  */
 
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, type Actor } from '../core/index.ts';
-import { localStamp } from '../shared/index.ts';
-import { getAuditLogCount, listAuditLogKind } from '../core/index.ts';
-import { getBusinessesIdNameById } from '../modules/crm/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, type Actor } from '../../core/index.ts';
+import { localStamp } from '../../shared/index.ts';
+import { getAuditLogCount, listAuditLogKind } from '../../core/index.ts';
+import { getBusinessesIdNameById } from '../crm/index.ts';
 
 export type AuditLogDeps = { db: Db; audit: AuditLog; now: () => string };
 

@@ -13,7 +13,7 @@
  *
  * DRAFT UNTIL APPROVED. Each page has a VERSION (its date). It carries the Draft line until BOTH our
  * solicitor and our data protection officer have an approval of that version recorded (legal_approvals, migration 121;
- * src/web/legal-approvals.ts). A new version is a draft again.
+ * src/modules/compliance/legal-approvals.ts). A new version is a draft again.
  *
  * A FACT WE DO NOT HAVE IS NEVER MADE UP. It is written as "to be added" and listed in LEGAL_GAPS.
  *

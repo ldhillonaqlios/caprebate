@@ -40,8 +40,8 @@ import { financeDashboard, type FinanceDashboard } from '../finance/invoices.ts'
 import { DELIVERABLES, QUOTE_GAP_REVIEW_PCT, VARIANCE_CATEGORIES, deliverableIssued, latestSignOff, varianceOf } from '../claims/index.ts';
 import { pipelineFigures } from './introducers.ts';
 import { reasonLabel } from './pipeline.ts';
-import { rightsRegister, complaintsLog } from '../../web/compliance-rights.ts';
-import { breachRegister } from '../../web/compliance-breach.ts';
+import { rightsRegister, complaintsLog } from '../compliance/compliance-rights.ts';
+import { breachRegister } from '../compliance/compliance-breach.ts';
 import { claimObjFor, claimWords } from './crm.ts';
 import { vocabLabel } from '../../web/vocabularies.ts';
 import { SECTORS } from './leads.ts';

@@ -1143,7 +1143,7 @@
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/audit-log.ts": {
+  "src/modules/compliance/audit-log.ts": {
    "area": "compliance",
    "kind": "logic"
   },
@@ -1159,39 +1159,39 @@
    "area": "finance",
    "kind": "logic"
   },
-  "src/web/breach-names.ts": {
+  "src/modules/compliance/breach-names.ts": {
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/compliance-aml.ts": {
+  "src/modules/compliance/compliance-aml.ts": {
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/compliance-breach.ts": {
+  "src/modules/compliance/compliance-breach.ts": {
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/compliance-clock.ts": {
+  "src/modules/compliance/compliance-clock.ts": {
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/compliance-identity.ts": {
+  "src/modules/compliance/compliance-identity.ts": {
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/compliance-pages.ts": {
+  "src/modules/compliance/compliance-pages.ts": {
    "area": "compliance",
    "kind": "page"
   },
-  "src/web/compliance-rights.ts": {
+  "src/modules/compliance/compliance-rights.ts": {
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/compliance-views.ts": {
+  "src/modules/compliance/compliance-views.ts": {
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/compliance.ts": {
+  "src/modules/compliance/compliance.ts": {
    "area": "compliance",
    "kind": "logic"
   },
@@ -1207,7 +1207,7 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/disclosure-log.ts": {
+  "src/modules/compliance/disclosure-log.ts": {
    "area": "compliance",
    "kind": "logic"
   },
@@ -1223,7 +1223,7 @@
    "area": "finance",
    "kind": "logic"
   },
-  "src/web/identity-checks.ts": {
+  "src/modules/compliance/identity-checks.ts": {
    "area": "compliance",
    "kind": "logic"
   },
@@ -1231,7 +1231,7 @@
    "area": "finance",
    "kind": "logic"
   },
-  "src/web/legal-approvals.ts": {
+  "src/modules/compliance/legal-approvals.ts": {
    "area": "compliance",
    "kind": "logic"
   },

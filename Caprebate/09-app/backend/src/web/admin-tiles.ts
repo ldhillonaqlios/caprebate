@@ -17,8 +17,8 @@ import { assertConfigurationRead } from './configuration.ts';
 import { documentTypesGate } from '../modules/claims/index.ts';
 import { automationGate } from '../modules/crm/index.ts';
 import { templatesGate } from './templates.ts';
-import { assertComplianceRead } from './compliance.ts';
-import { auditLogGate } from './audit-log.ts';
+import { assertComplianceRead } from '../modules/compliance/compliance.ts';
+import { auditLogGate } from '../modules/compliance/audit-log.ts';
 import { rewardModelGate } from '../modules/crm/index.ts';
 
 export type Tile = {

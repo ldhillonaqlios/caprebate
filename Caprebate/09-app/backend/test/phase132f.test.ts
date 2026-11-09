@@ -29,7 +29,7 @@ import * as V from '../src/modules/assessment/vat.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import * as FIN from '../src/modules/finance/finance.ts';
 import * as INV from '../src/modules/finance/invoices.ts';
-import * as RIGHTS from '../src/web/compliance-rights.ts';
+import * as RIGHTS from '../src/modules/compliance/compliance-rights.ts';
 import * as PC from '../src/integrations/postcodes/postcode.ts';
 import * as PORT from '../src/integrations/postcodes/postcode-port.ts';
 
@@ -168,7 +168,7 @@ describe('line 1 (back end) — the regulator is named both ways, copied from th
     assert.ok(RIGHTS.ONWARD_ROUTE_ITEMS['S165']?.includes(DUAL));
     assert.ok(RIGHTS.ACCESS_RESPONSE_ITEMS['S165']?.includes(DUAL));
     assert.ok(RIGHTS.REFUSAL_RESPONSE_ITEMS['S165']?.includes(DUAL));
-    assert.ok(readFileSync(join(BACKEND, 'src', 'web', 'compliance-views.ts'), 'utf8').includes(OFFICE));
+    assert.ok(readFileSync(join(BACKEND, 'src', 'modules', 'compliance', 'compliance-views.ts'), 'utf8').includes(OFFICE));
   });
 });
 

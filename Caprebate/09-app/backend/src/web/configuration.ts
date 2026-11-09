@@ -47,7 +47,7 @@ import { typeList, type TypeView } from '../modules/claims/index.ts';
 import { rulesPage, type RuleView } from '../modules/crm/index.ts';
 import { templatesPage } from './templates.ts';
 import { settingsView, type SettingsView } from '../modules/assessment/index.ts';
-import { settingReading, type SettingReading } from './compliance.ts';
+import { settingReading, type SettingReading } from '../modules/compliance/compliance.ts';
 import { getAutomationRulesCOUNTByActiveTaskPriority } from '../modules/crm/index.ts';
 
 export type ConfigDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };

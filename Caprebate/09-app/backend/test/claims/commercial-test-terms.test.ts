@@ -21,8 +21,8 @@ import { loadLetter, LETTER_PATH, TEST_LETTER_PATH, TEST_COPY_MARK, TEST_DEFAULT
 import { letterFees } from '../../src/modules/claims/fee-controls.ts';
 import { clawbackReading, DISPOSAL_FEE } from '../../src/modules/claims/claim-record.ts';
 import { shownLetter, signingMissing, signEngagement } from '../../src/modules/claims/signing.ts';
-import * as A from '../../src/web/compliance-aml.ts';
-import type * as C from '../../src/web/compliance.ts';
+import * as A from '../../src/modules/compliance/compliance-aml.ts';
+import type * as C from '../../src/modules/compliance/compliance.ts';
 import { actor, testApp } from '../helpers.ts';
 import { plainDashText } from '../../src/shared/plain-dashes.ts';
 

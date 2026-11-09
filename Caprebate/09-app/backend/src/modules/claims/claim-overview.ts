@@ -31,7 +31,7 @@ import { claimObjFor, loadClaimRow } from '../crm/index.ts';
 import type { ClaimDocumentsPanel } from './documents.ts';
 import { chaptersToRead, CHAPTERS } from '../survey/pack-chapters.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
-import { clientAuditCount } from '../../web/audit-log.ts';
+import { clientAuditCount } from '../compliance/audit-log.ts';
 import { SOURCES as REGISTER_SOURCES } from '../../integrations/index.ts';
 import { listRegisterRecordsSourceIdEntityIdByBusinessIdPropertyId } from '../../integrations/index.ts';
 import { getResearchRunsWhoAtByBusinessIdAt, getSurveyPackApprovalsCountByPackId, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyPacksIdByJobId, getSurveyorJobsIdSurveyorIdByClaimId, listClaimFactsIdFactKeyByClaimIdFactKey, listClientTasksQuestionAnswerByBusinessIdState, listSurveyPackReadsChapterSeqByJobIdUserId } from './data-borrowed.ts';

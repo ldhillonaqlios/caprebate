@@ -29,13 +29,13 @@
  * NO PERSON'S NAME IS WRITTEN HERE, and the audit line carries codes and counts only.
  */
 
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, type Actor, type Obj } from '../core/index.ts';
-import { localStamp } from '../shared/index.ts';
-import { getUsersRoleById } from '../core/index.ts';
-import { getBusinessesIdById, getContactsBusinessIdById } from '../modules/crm/index.ts';
-import { getClaimsBusinessIdById } from '../modules/claims/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, type Actor, type Obj } from '../../core/index.ts';
+import { localStamp } from '../../shared/index.ts';
+import { getUsersRoleById } from '../../core/index.ts';
+import { getBusinessesIdById, getContactsBusinessIdById } from '../crm/index.ts';
+import { getClaimsBusinessIdById } from '../claims/index.ts';
 
 export type DisclosureDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;

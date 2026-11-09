@@ -45,7 +45,7 @@ import { _canonical } from '../../core/audit.ts';
 import { DPO_ROLE_SWITCH } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { ctaSwitchReadings, registryGate } from '../../shared/index.ts';
-import { DISCLOSURE_LOG } from '../../web/disclosure-log.ts';
+import { DISCLOSURE_LOG } from '../compliance/disclosure-log.ts';
 import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../crm/index.ts';
 import { CONVEYANCING_STRIP } from '../assessment/index.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
@@ -140,7 +140,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
 /**
  * EVERY BACK-END SWITCH, BY NAME, WITH ITS POSITION AS THIS BUILD SHIPS IT.
  *
- *   DISCLOSURE_LOG               the per-disclosure log                          src/web/disclosure-log.ts
+ *   DISCLOSURE_LOG               the per-disclosure log                          src/modules/compliance/disclosure-log.ts
  *   DPO_ROLE_SWITCH              a data protection officer role                  src/core/authz.ts
  *   FEE_CLAWBACK                 clause 13 — the fee follows a reduced claim     src/modules/claims/claim-record.ts
  *   REFERRAL_FORM                the public referral form                        src/modules/crm/introducers.ts
@@ -181,7 +181,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  */
 export function backendSwitchReadings(): readonly BackendSwitchReading[] {
   return [
-    { switch: 'DISCLOSURE_LOG', on: DISCLOSURE_LOG.enabled, home: 'src/web/disclosure-log.ts' },
+    { switch: 'DISCLOSURE_LOG', on: DISCLOSURE_LOG.enabled, home: 'src/modules/compliance/disclosure-log.ts' },
     { switch: 'DPO_ROLE_SWITCH', on: DPO_ROLE_SWITCH.enabled, home: 'src/core/authz.ts' },
     { switch: 'FEE_CLAWBACK', on: FEE_CLAWBACK.enabled, home: 'src/modules/claims/claim-record.ts' },
     { switch: 'REFERRAL_FORM', on: REFERRAL_FORM.enabled, home: 'src/modules/crm/introducers.ts' },

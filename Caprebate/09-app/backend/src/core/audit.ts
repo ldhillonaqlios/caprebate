@@ -371,7 +371,7 @@ export type AuditKind =
    */
   | 'TITLE_RECORDED_BY_HAND' | 'TITLE_BY_HAND_TAKEN_BACK'
   /**
-   * The online identity check (src/web/identity-checks.ts). A check sent, or not sent and
+   * The online identity check (src/modules/compliance/identity-checks.ts). A check sent, or not sent and
    * why in words; the outside service's signed result received, or refused because its signature did not hold or it
    * named no check we sent. Ids, the outcome and the service's status word only — NEVER a name, a document number, a
    * date of birth or an image. What the service tells us is kept in the check's own row, not here.
@@ -441,7 +441,7 @@ export type AuditKind =
   | 'AUTHORISATION_REFUSED'
   /** A signed-in person's form refused for a missing, wrong or used token (src/core/form-token.ts). */
   | 'FORM_TOKEN_REFUSED'
-  /** An admin recorded a solicitor's or the DPO's approval of a legal page's version (src/web/legal-approvals.ts). */
+  /** An admin recorded a solicitor's or the DPO's approval of a legal page's version (src/modules/compliance/legal-approvals.ts). */
   | 'LEGAL_PAGE_APPROVED'
   /** A client ticked that they have read the portal terms, the website terms and the privacy policy; the versions are kept. */
   | 'TERMS_AGREED';

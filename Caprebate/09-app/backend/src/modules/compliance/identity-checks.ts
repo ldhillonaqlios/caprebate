@@ -39,18 +39,18 @@
  */
 
 import { createHash } from 'node:crypto';
-import type { App } from '../core/app.ts';
-import type { Actor } from '../core/index.ts';
-import { can } from '../core/index.ts';
-import { h, raw, type Safe } from '../shared/index.ts';
-import { localWhen } from '../shared/index.ts';
+import type { App } from '../../core/app.ts';
+import type { Actor } from '../../core/index.ts';
+import { can } from '../../core/index.ts';
+import { h, raw, type Safe } from '../../shared/index.ts';
+import { localWhen } from '../../shared/index.ts';
 import { assertComplianceRead, assertComplianceWrite, complianceObj, record, type ComplianceDeps } from './compliance.ts';
-import { isReachable } from '../modules/crm/index.ts';
+import { isReachable } from '../crm/index.ts';
 import {
   IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision,
   sentUnderTestingWaiver, startIdentityCheck, type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,
-} from '../integrations/index.ts';
-import { getBusinessesIdById, getContactsIdEmailByIdBusinessId, listContactsIdByBusinessId } from '../modules/crm/index.ts';
+} from '../../integrations/index.ts';
+import { getBusinessesIdById, getContactsIdEmailByIdBusinessId, listContactsIdByBusinessId } from '../crm/index.ts';
 
 /** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/core/router.ts, outside the login. */
 export const IDENTITY_HOOK_PATH = '/hooks/identity-check';

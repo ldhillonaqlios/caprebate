@@ -95,7 +95,7 @@ const REFUSED: readonly (readonly [RegExp, string])[] = Object.freeze([
 /** The shapes and words of a bank detail — the first nine refusals above. The breach register never records one. */
 const BANK_DETAIL_REFUSALS = REFUSED.slice(2, 9);
 
-/** WHAT BANK DETAIL A TEXT CARRIES, OR NULL. src/web/compliance.ts asks it of every breach entry's prose. */
+/** WHAT BANK DETAIL A TEXT CARRIES, OR NULL. src/modules/compliance/compliance.ts asks it of every breach entry's prose. */
 export function carriesBankDetails(text: string): string | null {
   for (const [pattern, what] of BANK_DETAIL_REFUSALS) if (pattern.test(text)) return what;
   return null;

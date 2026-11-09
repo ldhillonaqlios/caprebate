@@ -25,7 +25,7 @@ import type { Actor } from '../src/core/authz.ts';
 import { fixtureTransport } from '../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import { IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, type IdentityCheckConfig } from '../src/integrations/connectors/identity-check.ts';
-import { identityPanel, sendIdentityCheck, UNREACHABLE_CONTACT_WORDS } from '../src/web/identity-checks.ts';
+import { identityPanel, sendIdentityCheck, UNREACHABLE_CONTACT_WORDS } from '../src/modules/compliance/identity-checks.ts';
 import * as C from '../src/modules/crm/crm.ts';
 import { contactValueProblem } from '../src/modules/assessment/index.ts';
 

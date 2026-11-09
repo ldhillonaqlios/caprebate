@@ -3,7 +3,7 @@
  *
  * Built to the AML/KYC Position Paper (08-monday-doc-exports/12830178449),
  * sections 5 and 6. The setting that switches it on is AML_IN_SCOPE in
- * src/web/compliance.ts, and it ships false: whether supervision is required is
+ * src/modules/compliance/compliance.ts, and it ships false: whether supervision is required is
  * with the accountant and a solicitor.
  *
  * OFF, NOTHING HERE BLOCKS A CLAIM — the register can still be kept. ON, a claim
@@ -26,18 +26,18 @@
  * write is `compliance.read` or `compliance.write`, which no CLIENT holds.
  */
 
-import type { Db } from '../core/index.ts';
-import type { Actor } from '../core/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { Actor } from '../../core/index.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, NotFoundAsRefusal, record, requiredText, textField,
   TWO_PERSON_LIMITATION, settingReading, ukDay, vocabField, words,
   type Check, type ComplianceDeps, type Fields, type SettingReading, type Vocab, type WriteResult,
 } from './compliance.ts';
 import { identityPassed } from './identity-checks.ts';
-import { getResearchSourcesIdStateByBusinessIdSourceId } from '../integrations/index.ts';
-import { getUsersIdByIdRole } from '../core/index.ts';
-import { getClaimsIdByIdBusinessId, getDocumentsIdByIdBusinessId, listDocumentsIdTypeCodeByBusinessId } from '../modules/claims/index.ts';
-import { getBusinessesIdById, getBusinessesNameById, getContactsIdByIdBusinessId, listContactsIdFullNameByBusinessId } from '../modules/crm/index.ts';
+import { getResearchSourcesIdStateByBusinessIdSourceId } from '../../integrations/index.ts';
+import { getUsersIdByIdRole } from '../../core/index.ts';
+import { getClaimsIdByIdBusinessId, getDocumentsIdByIdBusinessId, listDocumentsIdTypeCodeByBusinessId } from '../claims/index.ts';
+import { getBusinessesIdById, getBusinessesNameById, getContactsIdByIdBusinessId, listContactsIdFullNameByBusinessId } from '../crm/index.ts';
 
 /* ================================================================== *
  * 1 · THE VOCABULARIES — the paper's own, section 5

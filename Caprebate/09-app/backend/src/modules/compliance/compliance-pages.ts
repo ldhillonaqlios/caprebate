@@ -9,9 +9,9 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../core/app.ts';
-import type { Actor } from '../core/index.ts';
-import { HTML_HEADERS, type Safe } from '../shared/index.ts';
+import type { App } from '../../core/app.ts';
+import type { Actor } from '../../core/index.ts';
+import { HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import * as C from './compliance.ts';
 import * as A from './compliance-aml.ts';
 import * as R from './compliance-rights.ts';
@@ -20,9 +20,9 @@ import * as S from './compliance-identity.ts';
 import * as N from './breach-names.ts';
 import * as V from './compliance-views.ts';
 import { identityPanel, sendIdentityCheck } from './identity-checks.ts';
-import { logFormComplaint, waitingForms } from '../modules/public-site/index.ts';
-import { listUsersIdNameByRoleDisabledAt } from '../core/index.ts';
-import { listBusinessesIdName4 } from '../modules/crm/index.ts';
+import { logFormComplaint, waitingForms } from '../public-site/index.ts';
+import { listUsersIdNameByRoleDisabledAt } from '../../core/index.ts';
+import { listBusinessesIdName4 } from '../crm/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

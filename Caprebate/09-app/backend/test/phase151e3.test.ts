@@ -49,7 +49,7 @@ function bareClient(db: Pick<import('../src/core/db.ts').Db, 'run'>): { id: stri
 import {
   FORGETFUL_DATABASE_WORDS, FORGOTTEN_CHECK_WORDS, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, NO_CONTACTS_WORDS,
   identityChecks, identityPanel, sendIdentityCheck,
-} from '../src/web/identity-checks.ts';
+} from '../src/modules/compliance/identity-checks.ts';
 
 const NOW = '2026-09-27T10:00:00.000Z';
 const KEYS = { DIDIT_API_KEY: 'test-didit-key-not-real-151e3', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-151e3', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151e30000000' };

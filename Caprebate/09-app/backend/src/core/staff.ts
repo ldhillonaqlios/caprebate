@@ -71,7 +71,7 @@ import { handleTasks } from '../modules/crm/index.ts';
 import { handleDocuments } from '../modules/claims/index.ts';
 import { handleIntroducers } from '../modules/crm/index.ts';
 import { handleClaimRecord } from '../modules/claims/index.ts';
-import { handleCompliance } from '../web/compliance-pages.ts';
+import { handleCompliance } from '../modules/compliance/compliance-pages.ts';
 import { handleDashboard } from '../modules/crm/index.ts';
 import { handleLists } from '../shared/lists-pages.ts';
 import { handleConfiguration } from '../web/configuration-pages.ts';
@@ -82,7 +82,7 @@ import {
 } from '../shared/index.ts';
 import { singleFile } from './multipart.ts';
 import { RANGE_QUALIFIER } from '../shared/index.ts';
-import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from '../web/audit-log.ts';
+import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from '../modules/compliance/audit-log.ts';
 import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine, SAME_TIME_WORDS, VIDEO_PAGE_HEADERS } from '../modules/crm/index.ts';
 import { sendVideoInvite } from '../modules/crm/index.ts';
 import { hostZak, joinSignature } from '../integrations/index.ts';

@@ -30,7 +30,7 @@ import { pipelineBoard, pipelineBoardGate } from '../crm/index.ts';
 import { financeDashboard } from '../finance/invoices.ts';
 import { assertFinanceSection } from '../finance/finance.ts';
 import { assertSurveySection, surveyorJobs } from '../survey/surveyor.ts';
-import { auditLogView } from '../../web/audit-log.ts';
+import { auditLogView } from '../compliance/audit-log.ts';
 import { isLateNewLead, waitedWords, workingDaysSince } from '../../shared/index.ts';
 import { tasksModule as T } from '../crm/index.ts';
 import { messagesModule as M } from '../crm/index.ts';

@@ -5,9 +5,9 @@
  * section gate, the dated compliance settings, the reference series, legal holds
  * and restrictions, cross-references, and the one reading the pipeline asks —
  * whether customer due diligence stops a claim leaving ENGAGEMENT. The registers
- * themselves are src/web/compliance-aml.ts, compliance-rights.ts,
+ * themselves are src/modules/compliance/compliance-aml.ts, compliance-rights.ts,
  * compliance-breach.ts and compliance-identity.ts; the pages are
- * src/web/compliance-pages.ts; every choice that is not obvious is a row of
+ * src/modules/compliance/compliance-pages.ts; every choice that is not obvious is a row of
  * Part E of 09-app/CAPREBATE-CRM-DISPOSITION.md from E94.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -22,17 +22,17 @@
  * ───────────────────────────────────────────────────────────────────────────
  * NOTHING IS DELETED AND NOTHING IS DUE BY A STORED FLAG
  *
- * Statutory clocks are read by src/web/compliance-clock.ts; retention clocks by
- * src/web/compliance-identity.ts from parameters none of which is approved. A
+ * Statutory clocks are read by src/modules/compliance/compliance-clock.ts; retention clocks by
+ * src/modules/compliance/compliance-identity.ts from parameters none of which is approved. A
  * hold blocks a record from the due-for-deletion list; there is no deleter.
  */
 
 import { randomBytes } from 'node:crypto';
-import type { Db } from '../core/index.ts';
-import type { AuditLog, AuditKind, Outcome } from '../core/audit.ts';
-import { authorise, type Actor } from '../core/index.ts';
-import { NotFoundAsRefusal } from '../core/backoffice.ts';
-import { instantsForLocalMinute, localDate } from '../shared/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
+import { authorise, type Actor } from '../../core/index.ts';
+import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { instantsForLocalMinute, localDate } from '../../shared/index.ts';
 
 export type ComplianceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;

@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import {
   acknowledgementClock, ClockInputError, inclusiveDays, limbClock, monthsBeginningWith,
   type Limb, type LimbClockInput,
-} from '../src/web/compliance-clock.ts';
+} from '../src/modules/compliance/compliance-clock.ts';
 
 const Y = '2027';
 const d = (mmdd: string): string => `${Y}-${mmdd}`;

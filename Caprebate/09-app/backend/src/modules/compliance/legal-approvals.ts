@@ -14,11 +14,11 @@
  * asked once at /portal/agree before the portal opens. Both only where the legal pages are served (the test website's
  * `notices`, or the `legal` setting), so a link never leads to "being prepared".
  */
-import type { App } from '../core/app.ts';
-import type { Actor } from '../core/index.ts';
-import type { Db } from '../core/index.ts';
-import { h, raw, page, type Safe } from '../shared/index.ts';
-import { LEGAL_PAGES, NOTICES_VERSION, agreementLinks, inForce, versionOf, type Approvals, type LegalPageKey, type PageApproval } from '../modules/public-site/index.ts';
+import type { App } from '../../core/app.ts';
+import type { Actor } from '../../core/index.ts';
+import type { Db } from '../../core/index.ts';
+import { h, raw, page, type Safe } from '../../shared/index.ts';
+import { LEGAL_PAGES, NOTICES_VERSION, agreementLinks, inForce, versionOf, type Approvals, type LegalPageKey, type PageApproval } from '../public-site/index.ts';
 
 /** Every page an approval can be recorded for, with its title. */
 export const APPROVABLE: readonly (readonly [key: LegalPageKey, title: string])[] = Object.freeze([

@@ -23,7 +23,7 @@ import {
   canonicalJson, IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, IDENTITY_SESSION_ENDPOINT, readIdentityDecision, signatureHolds,
   timestampFresh, type IdentityCheckConfig,
 } from '../src/integrations/connectors/identity-check.ts';
-import { identityPassed, passEvidenceSentence, receiveIdentityResult, sendIdentityCheck } from '../src/web/identity-checks.ts';
+import { identityPassed, passEvidenceSentence, receiveIdentityResult, sendIdentityCheck } from '../src/modules/compliance/identity-checks.ts';
 
 const KEYS = { DIDIT_API_KEY: 'test-didit-key-not-real-151f', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-151f', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151f00000001' };
 /* The papers done and nothing waived (Phase 151h shipped a testing waiver; these tests are about the gate itself). */

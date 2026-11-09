@@ -14,11 +14,11 @@
  * `breach_names_deputies`, with the paper that names them. Every other Admin — and every other role — is refused, and
  * the refusal is in the audit log as well as every read. Naming the deputy is itself an Admin's recorded act.
  */
-import type { Db } from '../core/index.ts';
-import { can, type Actor } from '../core/index.ts';
-import { DPO_ROLE } from '../core/index.ts';
+import type { Db } from '../../core/index.ts';
+import { can, type Actor } from '../../core/index.ts';
+import { DPO_ROLE } from '../../core/index.ts';
 import { complianceObj, record, requiredText, textField, type ComplianceDeps, type Fields, type WriteResult } from './compliance.ts';
-import { getUsersRoleDisabledAtById } from '../core/index.ts';
+import { getUsersRoleDisabledAtById } from '../../core/index.ts';
 
 export type NameLine = { readonly annex_ref: string; readonly name: string; readonly how_involved: string; readonly note: string | null; readonly recorded_at: string };
 

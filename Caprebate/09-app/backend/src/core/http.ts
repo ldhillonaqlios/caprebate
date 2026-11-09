@@ -10,7 +10,7 @@ import type { authenticate } from './auth.ts';
 import type { NotFoundAsRefusal } from './backoffice.ts';
 import type { confirmSignup, offerSignup, requestSignup, verifyOpen } from './signup.ts';
 import type { handlePortalSettings } from './staff.ts';
-import type { agreementPage, agreementTick, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement } from '../web/legal-approvals.ts';
+import type { agreementPage, agreementTick, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement } from '../modules/compliance/legal-approvals.ts';
 import { cleanForm } from './typed.ts';
 import { navContext, type NavContext, type NameSwitches } from './nav-context.ts';
 import { piecesPage } from './upload-pieces.ts';
@@ -39,7 +39,7 @@ export type WebDeps = {
   /**
    * THE LEGAL SETTING, for the live website. The legal pages, the notices page, the cookie
    * banner and the client's tick are served wherever it is on, as on the test website, but each page carries its Draft
-   * line until our solicitor and our data protection officer have both approved its version (src/web/legal-approvals.ts).
+   * line until our solicitor and our data protection officer have both approved its version (src/modules/compliance/legal-approvals.ts).
    * Off unless CAPREBATE_LEGAL_PAGES=on (src/core/server.ts). With it and `notices` both off, nothing changes.
    */
   legal?: boolean;

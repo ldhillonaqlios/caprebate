@@ -1,5 +1,5 @@
 /**
- * UI TIDY PHASE 15 — SETTINGS, 3 October 2026 (src/core/staff.ts usersPage, src/modules/crm/tasks-pages.ts, src/web/compliance-views.ts).
+ * UI TIDY PHASE 15 — SETTINGS, 3 October 2026 (src/core/staff.ts usersPage, src/modules/crm/tasks-pages.ts, src/modules/compliance/compliance-views.ts).
  * Users and roles: a header with its two buttons, four boxes, one table with each person's role as a label, their state
  * in colour and their role change folded in their own row; Add a user folded until asked for. Automation: four boxes,
  * the things no rule may do folded with their count, each rule's source in its second row. Email templates: Add a

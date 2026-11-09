@@ -28,7 +28,7 @@ import type { App } from '../../core/app.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { h, page, raw, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { localDate } from '../../shared/index.ts';
-import { dateField, textField, words, type Fields, type Vocab } from '../../web/compliance.ts';
+import { dateField, textField, words, type Fields, type Vocab } from '../compliance/compliance.ts';
 import { claimInvoices, financeDashboard, type ClaimInvoiceView, type ExpectedClaim } from './invoices.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { formatPence } from '../../shared/index.ts';

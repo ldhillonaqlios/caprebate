@@ -7,7 +7,7 @@
  * Operating Procedure (12818099921), section 5.
  *
  * TABLE A IS THE REQUEST; TABLE B IS ONE ROW PER LIMB. The Article 12A deadlines
- * are READ, per limb, by src/web/compliance-clock.ts from the inputs recorded
+ * are READ, per limb, by src/modules/compliance/compliance-clock.ts from the inputs recorded
  * here — never stored, and never one date for a letter that engages two rights.
  *
  * THE COMPLAINTS LOG IS COUNTABLE (s.164B): classified on receipt, never revised
@@ -24,10 +24,10 @@
  * printed on one is in S2, searched separately and logged there.
  */
 
-import type { Db } from '../core/index.ts';
-import type { Actor } from '../core/index.ts';
-import { outboxTransport } from '../integrations/index.ts';
-import { tipsOff } from './templates.ts';
+import type { Db } from '../../core/index.ts';
+import type { Actor } from '../../core/index.ts';
+import { outboxTransport } from '../../integrations/index.ts';
+import { tipsOff } from '../../web/templates.ts';
 import {
   ClockInputError, LIMB_LABELS, LIMBS, EXTENSION_GROUNDS, acknowledgementClock, limbClock, complaintTargets,
   type AckClock, type ComplaintTargets, type Limb, type LimbClock, type LimbClockInput,
@@ -37,10 +37,10 @@ import {
   record, requiredText, textField, TWO_PERSON_LIMITATION, ukDay, vocabField, words,
   type Check, type ComplianceDeps, type Fields, type HoldRow, type LinkLine, type Vocab, type WriteResult,
 } from './compliance.ts';
-import { listUsersIdDisplayNameByRoleEmailCanonical } from '../core/index.ts';
-import { listConsentAnswersIdKindByContactId } from '../modules/assessment/index.ts';
-import { getBusinessesIdById, getContactsIdById, getLeadsIdById, listClientTasksIdRequestedTypeByBusinessIdKind, listContactsIdFullName, listIntroducerShareConsentsIdDecisionByBusinessId, listStaffTasksIdTitleByContactId } from '../modules/crm/index.ts';
-import { getClaimsIdByIdBusinessId } from '../modules/claims/index.ts';
+import { listUsersIdDisplayNameByRoleEmailCanonical } from '../../core/index.ts';
+import { listConsentAnswersIdKindByContactId } from '../assessment/index.ts';
+import { getBusinessesIdById, getContactsIdById, getLeadsIdById, listClientTasksIdRequestedTypeByBusinessIdKind, listContactsIdFullName, listIntroducerShareConsentsIdDecisionByBusinessId, listStaffTasksIdTitleByContactId } from '../crm/index.ts';
+import { getClaimsIdByIdBusinessId } from '../claims/index.ts';
 
 class Refusal extends Error {}
 

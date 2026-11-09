@@ -128,7 +128,7 @@ export type ServerOptions = {
   testLetter?: boolean;
   /** The public notices page and its complaint form (src/modules/public-site/notices-site.ts). api/index.mjs passes it; nothing else does. */
   testNotices?: boolean;
-  /** The legal pages for the live website, each a Draft until approved (src/web/legal-approvals.ts). Off unless CAPREBATE_LEGAL_PAGES=on. */
+  /** The legal pages for the live website, each a Draft until approved (src/modules/compliance/legal-approvals.ts). Off unless CAPREBATE_LEGAL_PAGES=on. */
   legal?: boolean;
   /** Signing on for testing — the test copy of the letter only (ENGAGEMENT_SIGNING_TEST). Needs testLetter. api/index.mjs passes it; locally CAPREBATE_SIGNING_TEST=1. */
   testSigning?: boolean;

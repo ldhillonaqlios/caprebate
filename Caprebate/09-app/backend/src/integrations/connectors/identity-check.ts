@@ -49,7 +49,7 @@
  * acknowledged and ignored.
  *
  * WHAT IT DOES NOT DO. It never finishes a check on its own. A PASS is recorded on the check as evidence of how
- * identity was verified; a person still completes the check (`completeCheck` in src/web/compliance-aml.ts), as today.
+ * identity was verified; a person still completes the check (`completeCheck` in src/modules/compliance/compliance-aml.ts), as today.
  * And we keep our own record of the decision, whatever retention is set in Didit's console: the money-laundering
  * rules ask us to keep our evidence for five years.
  */

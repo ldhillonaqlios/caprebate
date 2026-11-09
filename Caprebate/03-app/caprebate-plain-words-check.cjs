@@ -89,7 +89,7 @@ const EXEMPT_TEXT = [
   /* the privacy notice's own words, where a screen quotes them */
   /^We use your information because we have a legitimate interest/i,
   /* the three ways to complain, sent in rights letters word for word from the public notices page (the data
-     protection officer's wording, ONWARD_ROUTE_TEXT in src/web/compliance-rights.ts; a test keeps the two identical) */
+     protection officer's wording, ONWARD_ROUTE_TEXT in src/modules/compliance/compliance-rights.ts; a test keeps the two identical) */
   /^1\. Complain to us\. You have a right to complain to us about how we have handled your personal data/,
   /^2\. Complain to the data protection regulator\. You have a right to complain to the Information Commissioner/,
   /^3\. Go to court\. You can also take your own case to court/,

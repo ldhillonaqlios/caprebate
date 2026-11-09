@@ -777,7 +777,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
       assert.equal(page.status, 200);
       assert.match(page.body, /Audit log checked: nothing changed\. All [\d,]+ records were checked/);
       assert.equal(count(db, "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'AUDIT_LOG_READ'"), reads + 1, 'the read was not recorded');
-      const v = (await import('../../src/web/audit-log.ts')).auditLogView(deps(h.made), who(db, 'ADMIN'), new URLSearchParams({ kind: 'LOGIN_SUCCEEDED', outcome: 'SOMETIMES' }));
+      const v = (await import('../../src/modules/compliance/audit-log.ts')).auditLogView(deps(h.made), who(db, 'ADMIN'), new URLSearchParams({ kind: 'LOGIN_SUCCEEDED', outcome: 'SOMETIMES' }));
       assert.ok(v.lines.length >= 1 && v.lines.every((l) => l.kind === 'LOGIN_SUCCEEDED'));
       // PHASE 160i: who, by name, and the kind in plain words are added; neither is read from the detail.
       for (const l of v.lines) assert.deepEqual(Object.keys(l).sort(), ['actor_id', 'actor_role', 'at', 'kind', 'object_id', 'object_type', 'outcome', 'seq', 'what', 'who']);

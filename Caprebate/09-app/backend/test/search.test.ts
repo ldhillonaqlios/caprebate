@@ -19,9 +19,9 @@ import { seed } from '../src/core/seed.ts';
 import type { AppRole } from '../src/core/roles.ts';
 import type { Actor } from '../src/core/authz.ts';
 import * as SE from '../src/core/search.ts';
-import * as R from '../src/web/compliance-rights.ts';
-import * as B from '../src/web/compliance-breach.ts';
-import * as SI from '../src/web/compliance-identity.ts';
+import * as R from '../src/modules/compliance/compliance-rights.ts';
+import * as B from '../src/modules/compliance/compliance-breach.ts';
+import * as SI from '../src/modules/compliance/compliance-identity.ts';
 import { testApp } from './helpers.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';

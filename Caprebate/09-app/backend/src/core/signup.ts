@@ -27,7 +27,7 @@ import { randomBytes } from 'node:crypto';
 import type { App } from './app.ts';
 import { rateLimit } from './auth.ts';
 import { canonicalEmail, createUser, hashToken } from './users.ts';
-import { keepAgreement, type TermsVersions } from '../web/legal-approvals.ts';
+import { keepAgreement, type TermsVersions } from '../modules/compliance/legal-approvals.ts';
 // Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
 import { getClientSignupsIdBusinessIdByOfferHash, getClientSignupsIdBusinessIdByVerifyHash, getClientSignupsTermsAgreedAtTermsVersionsById, getClientSignupsVerifyExpiresAtVerifiedAtByVerifyHash, insertClientSignups, updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt, updateClientSignupsVerifiedAtUserIdById } from '../modules/portal/data.ts';
 import { getUsersCountByEmailCanonical } from './data.ts';

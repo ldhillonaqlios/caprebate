@@ -28,8 +28,8 @@ import { secretsFromValues } from '../src/core/secrets.ts';
 import { IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, type IdentityCheckConfig } from '../src/integrations/connectors/identity-check.ts';
 import {
   IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, identityChecks, identityPassed, passEvidenceSentence, receiveIdentityResult, sendIdentityCheck,
-} from '../src/web/identity-checks.ts';
-import { checkView } from '../src/web/compliance-aml.ts';
+} from '../src/modules/compliance/identity-checks.ts';
+import { checkView } from '../src/modules/compliance/compliance-aml.ts';
 import type { Db } from '../src/core/db.ts';
 import { builtInHolds, can, REGISTERED_ACTIONS } from '../src/core/authz.ts';
 import { NEVER_GRANTED } from '../src/core/custom-roles.ts';

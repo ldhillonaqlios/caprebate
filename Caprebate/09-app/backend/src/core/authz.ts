@@ -879,7 +879,7 @@ const RULES: RuleTable = {
   'compliance.write': { ADMIN: always },
   'compliance.identity_read': { ADMIN: always },
   'compliance.identity_write': { ADMIN: always },
-  /* The restricted breach names list. ADMIN here only as the door: src/web/breach-names.ts
+  /* The restricted breach names list. ADMIN here only as the door: src/modules/compliance/breach-names.ts
      lets an Admin through only when they are the deputy named in breach_names_deputies (migration 080). */
   'compliance.breach_names': { ADMIN: always },
   'share_consent.client_record': { CLIENT: ownBusiness as Rule<ObjType> },
@@ -888,7 +888,7 @@ const RULES: RuleTable = {
    *
    * BOTH ROWS ARE NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/phase129.test.ts
    * asserts the refusal for each one, per action. The log is switched off
-   * (`DISCLOSURE_LOG` in src/web/disclosure-log.ts), so today these rows admit a
+   * (`DISCLOSURE_LOG` in src/modules/compliance/disclosure-log.ts), so today these rows admit a
    * person to a refusal that says so, and nothing more.
    *
    * RECORDING a disclosure is ADMIN's and SALES's — the people who send a
