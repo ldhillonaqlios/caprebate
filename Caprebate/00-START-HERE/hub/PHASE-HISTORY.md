@@ -14116,3 +14116,53 @@ NOT DONE      84 rule-3 joins against the five, 12 lower-layer imports of module
               question pack, D16 (our recommendation is built meanwhile).
 NOTHING LEFT  beyond those lines.
 ```
+
+## Phase 161k — Regroup 3: survey, finance, compliance and admin as modules, tests by feature, and the specs out of the code — 9 November 2026
+
+**ACTIONS AND OUTCOMES.** Phase 161k, 9 Nov 2026: Survey, finance, compliance and admin now live in their own folders under src/modules/, each behind one front door with one data file that alone reads and writes its tables; the old src/web/ folder is gone, so every business area is a module. No screen or rule file anywhere in the back end runs SQL any more. Every test sits in the folder of what it tests, named by feature; the specs and guides are in 09-app/docs/, and the back end's README maps every folder in a line (the runbook and the Developer Spec give the developer the same map). 478 more dated notes went to the changelog; comments that named a phase now say why, and people are named by their role in screen text and records. Breaks counted by the boundary check: 606 to 350. Every suite passes with the same pass list. Joins across owners, nine imports round a door, routes files for the four and two load-order workarounds are carried to 161l. PR on GitHub; Lakhbir merges.
+
+- **Read first.** PR #90 (Phase 161j) was still open when this phase started; it was merged on Lakhbir's yes in the chat (relayed by the session that started this one; merge commit cf0b209) and recorded on 161j's tracker row, the run sheet and memory. Main pulled, the branch made from it, the claim taken (CLAIM.md, the board item Working on it, the tracker). The block read word for word on the run sheet and in ACTION-PLAN.md (the same text). The four suites were run first on a copy of main: site 1,428 / 0 / 3 both modes (1,426 and six named skips on that fresh copy), phase3 71, phase9 29, back end 3,956 tests (3,950 pass and six OneDrive-only skips on the fresh copy; 3,956 on the Mac copy).
+- **Built 1, the moves.** The 51 files the module map gives the four areas moved from `src/web/` into `src/modules/survey/` (25), `finance/` (4), `compliance/` (13) and `admin/` (9), one commit per area (git mv), every import and live reference following; `--moved-map` renamed their breaks in the baseline. `src/web/` is gone. The plain-words and analytics checks read the four new folders (the same 249 files and 15,832 strings); the CRM fold check's route reader reads all nine module folders (266 routes, as before; it had fallen to 176 after the moves); the static-file test (DB-W1-T1) reads every web source, not only the old folder (it had silently narrowed as 161i and 161j moved files out).
+- **Built 1, front doors and data files.** 161j's scripts (statement mover, door writer, unborrow), extended to nine modules: 278 statements moved by script into the four modules' `data.ts` and `data-borrowed.ts` with their text unchanged, and 85 functions other areas had borrowed on these four modules' tables moved to their owners (five identical twins kept once; three that ran different statements under one name renamed by what they read). By hand, where a caller chose between statements, the choice moved with the text: a legal hold's register entry and its cross-references (compliance `data.ts`), the audit log page's two statements and the retention list's record-kind counts (compliance `data-borrowed.ts`), the identity store's counts. Rule 4 is 0 for every area.
+- **Load order.** Every file still loads on its own (`test/core/load-alone.test.ts`): the core's seed and server name the modules' `data.ts` directly; the legal approvals list (`approvable()`, was `APPROVABLE`) is worked out when asked, because the privacy policy reads compliance through its front door while the legal pages load; the survey walkthrough check stays in the CRM's borrowed file, because reading it through the survey's door from the video calls loops back into the CRM. Both are in 161l item 7d.
+- **Built 2, tests by feature.** By a helper agent in its own copy, merged here: the 85 test files left at the top of `test/` moved (git mv) into survey 24, core 14, compliance 10, claims 8, crm 7, admin 5, finance 5, integrations 4, shared 4, portal 2, assessment 1, public-site 1, named by feature; the 18 cross-area tests and the 10 that reach business screens through the app placed by what they mostly test. `docs/TEST-NAMES.md` has 223 rows. `03-app/caprebate-clock-grid.mjs` reads one folder down. The code's comments name the tests by their new names.
+- **Built 3, the specs out of the code.** The Developer Spec, ARCHITECTURE.md, the admin and user guide, the CRM disposition, the live runbook, the go-live checklist and the key-file set-up moved into `09-app/docs/` (git mv; the renames landed in the calculator commit, 2bd7185, because git had them staged); every live reference follows (the checks, the Help builder, the workflow, the hub's live documents). The engine's `EXTRACTION.md` stays with the engine package, which ships it. The backend README maps every folder in a line.
+- **Built 4, the developer's map.** The runbook's section 11 and the Developer Spec's one page for the developer (section 3.2, the 146g handover) give the new map.
+- **Built 5 and 6, what 161i1 and 161j left.** The four modules' 478 dated notes to `docs/CHANGELOG.md` word for word (2,633 in all). By a second helper agent: 352 comment lines that named a phase as their subject reworded to say why, line for line (the exceptions are text shown on screen or kept as a record, generated files, pointers to 161l and phases used as a document's name); 62 lines of people's names in screen text and records became their roles (the owner, the data protection officer), the dates and quoted words kept, the Help pages rebuilt from the guide, site.css's hash in its test updated, 12 tests that read those records changed with them. The two comments that named old places corrected; the calculator's source changed and the page rebuilt with `npm run page` (verify-page green).
+- **Built, the baseline.** Rebased once, the reason logged: 606 to 350.
+
+```
+area           rule1 rule2 rule3 rule4 total
+core              51    11    12     0    74
+shared            27     6     0     0    33
+integrations      17     6    15     0    38
+public-site        0     9     1     0    10
+assessment         1     8     9     0    18
+portal             1    10     2     0    13
+crm                4    11    35     0    50
+claims             6    11    30     0    47
+survey             6     6    16     0    28
+finance            0     6    10     0    16
+compliance         0     8     0     0     8
+admin              3     7     5     0    15
+all              116    99   135     0   350
+```
+
+- **Accept, the figures.** Before (main at cf0b209, on a fresh copy): site 1,426 / 0 / 3 and six named skips both modes, phase3 71, phase9 29, back end 3,956 tests, 3,950 passing and six OneDrive-only skips. After (the Mac copy): site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,956 of 3,956 (`npm run check` green: the package audit, the SQL, path, boundary, copies and backup checks, the typecheck and the tests), project 5,484. The back end's pass list is the same name for name: one title names what it now reads (DB-W1-T1), and the six OneDrive-only tests pass on the Mac copy. The route list unchanged; every file loads alone. Drift checker, CRM fold check (and self-test), register check, tracker check, plain words, brand, analytics, notices acceptance, payload proof and the boundary self-test green; verify-page green after `npm run page`. Not done here: signing in on the preview as staff and as a client; the suites drive both through the app.
+- **Not done as the block said, and why.** "Breaks of rules 1, 3 and 4 to zero": rule 4 is 0 everywhere; against the four, rule 1 is 9 (imports that name `survey/data.ts`, `admin/data.ts` or the survey's BCIS and costing files directly, eight from the lower layers) and rule 3 is 31 (joins across owners), both for 161l. Each module's routes and permissions files (the audit's section 6.2 example) were not split out for the four: their handlers sit in their pages files and core/staff.ts asks each; carried to 161l item 7c. The run sheet's 161k block is not deleted yet: deleting a run-sheet block needs Lakhbir's yes in the chat.
+- **Board and plan.** 161l item 7 carries the rest in terms (ACTION-PLAN.md and the run sheet, read back equal); the run sheet's 161l, 161m, 161n and sweep blocks follow the docs' new paths. 4B: the build queue is 161l and 161m, each a phase; no orphans.
+
+```
+DONE          src/web/ gone: survey, finance, compliance and admin in src/modules/ behind front doors with their data
+              files; no page or logic file runs SQL (rule 4 at 0); every test in the folder of what it tests, named by
+              feature; the specs and guides in 09-app/docs/; the backend README maps every folder; the developer's map
+              in the runbook and the Developer Spec; 478 notes to the changelog; phase-named comments reworded; names
+              in screen text as roles; the baseline 606 -> 350; every suite green, the pass list the same.
+NOT DONE      31 rule-3 joins against the four, nine imports round a door, routes and permissions files for the four,
+              two load-order workarounds - BUILDABLE - Phase 161l (item 7).
+              Deleting 161k's block from the run sheet - BLOCKED on Lakhbir's yes in the chat (the permission check
+              refuses deleting run-sheet blocks without it) - asked in the report.
+              The developer's answer to D16 (how far the notes come out) - BLOCKED on the developer - the developer
+              question pack, D16 (our recommendation is built meanwhile).
+NOTHING LEFT  beyond those lines.
+```
