@@ -464,6 +464,10 @@
    "area": "integrations",
    "kind": "logic"
   },
+  "src/modules/admin/actions.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
   "src/modules/admin/admin-tiles.ts": {
    "area": "admin",
    "kind": "logic"
@@ -510,6 +514,10 @@
   },
   "src/modules/admin/vocabularies.ts": {
    "area": "admin",
+   "kind": "logic"
+  },
+  "src/modules/assessment/actions.ts": {
+   "area": "assessment",
    "kind": "logic"
   },
   "src/modules/assessment/address-check.ts": {
@@ -594,6 +602,10 @@
   },
   "src/modules/assessment/who-claims.ts": {
    "area": "assessment",
+   "kind": "logic"
+  },
+  "src/modules/claims/actions.ts": {
+   "area": "claims",
    "kind": "logic"
   },
   "src/modules/claims/approvals-pages.ts": {
@@ -776,6 +788,10 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/compliance/actions.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
   "src/modules/compliance/audit-log.ts": {
    "area": "compliance",
    "kind": "logic"
@@ -838,6 +854,10 @@
   },
   "src/modules/compliance/legal-approvals.ts": {
    "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/crm/actions.ts": {
+   "area": "crm",
    "kind": "logic"
   },
   "src/modules/crm/automation.ts": {
@@ -1028,6 +1048,10 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/finance/actions.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
   "src/modules/finance/billing.ts": {
    "area": "finance",
    "kind": "logic"
@@ -1061,6 +1085,10 @@
    "kind": "page"
   },
   "src/modules/portal/accountant-confirm.ts": {
+   "area": "portal",
+   "kind": "logic"
+  },
+  "src/modules/portal/actions.ts": {
    "area": "portal",
    "kind": "logic"
   },
@@ -1159,6 +1187,10 @@
   "src/modules/public-site/routes.ts": {
    "area": "public-site",
    "kind": "routes"
+  },
+  "src/modules/survey/actions.ts": {
+   "area": "survey",
+   "kind": "logic"
   },
   "src/modules/survey/anchor-quarantine.ts": {
    "area": "survey",

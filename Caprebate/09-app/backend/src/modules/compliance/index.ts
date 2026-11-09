@@ -3,6 +3,8 @@
  * Generated from the imports other areas made on the day the module moved, and kept by hand since: add a name here when
  * another area needs it, never a whole file.
  */
+// Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
+export { COMPLIANCE_ACTIONS } from './actions.ts';
 export { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogGate, auditLogView, clientAuditCount } from './audit-log.ts';
 export type { AuditLogView } from './audit-log.ts';
 export { breachRegister } from './compliance-breach.ts';

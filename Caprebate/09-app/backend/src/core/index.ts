@@ -5,7 +5,7 @@
  */
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
 export { rateLimit, revokeAllSessions } from './auth.ts';
-export { DPO_ROLE_SWITCH, NotAuthorised, REGISTERED_ACTIONS, authorise, builtInHolds, can } from './authz.ts';
+export { DPO_ROLE_SWITCH, NotAuthorised, PREDICATES, REGISTERED_ACTIONS, actionOwner, authorise, builtInHolds, can, registerActions } from './authz.ts';
 export { photoFor } from './avatar.ts';
 export { EventOutsideTransaction, ListenerFailed, announce, listen, listenersOf } from './events.ts';
 export { BACKUP_KEEP_DAYS } from './backup.ts';
@@ -26,7 +26,7 @@ export { piecesOf, piecesPage } from './upload-pieces.ts';
 export { assignRole, canonicalEmail, createUser, disableUser, findById, hashToken, listUsers, newId } from './users.ts';
 export { WELCOME_JOBS, dismissWelcome, welcomeShown } from './welcome.ts';
 export type { Deps } from './auth.ts';
-export type { Actor, Obj } from './authz.ts';
+export type { Actor, DocumentFacts, Obj, ObjType, Rule, RuleTable } from './authz.ts';
 export type { PhotoRecord } from './avatar.ts';
 export type { EventContext, EventMap, EventName, Listener } from './events.ts';
 export type { BorrowableRole, Grant } from './custom-roles.ts';
