@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 361 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1536,7 +1536,7 @@
 
 ### Phase 161l1 - The tangle undone, part 2: the client record low in the order, the modules' own upward imports, the joins split by owner (Phase 161l, 9 Nov 2026)
 
-`13502997938` · **Ready - Claude can build** · owner Claude
+`13502997938` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Phase 161l1)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-09 (Phase 161l): Written by Phase 161l for what it could not finish (148 breaks left: the client record owned by the CRM near the top, 22 pairs of modules importing upwards, 110 joins across owners, 16 imports round a door, routes files for four modules, the parts the router lends, the load-order workarounds). The block is in ACTION-PLAN.md and on the run sheet.
