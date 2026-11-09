@@ -26,7 +26,7 @@ test('161i: the CSS is a real file (src/styles/site.css), served at the same add
   const file = readFileSync(join(BACKEND, 'src', 'styles', 'site.css'), 'utf8');
   assert.equal(SITE_CSS, file);
   assert.equal(createHash('sha256').update(file).digest('hex'), CSS_BEFORE);
-  const { createApp } = await import('../../src/core/server.ts');
+  const { createApp } = await import('../../src/app/server.ts');
   const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-161i-')) });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   try {

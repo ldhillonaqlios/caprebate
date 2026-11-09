@@ -2,7 +2,7 @@
  * PHASE 152 (the sweep, 28 September 2026) — THE SIGN-UP CONFIRMATION LINK LEAVES THE OUTBOX ONCE IT HAS GONE.
  *
  * Phase 151k took a SENT sign-in code and a SENT password reset link out of the outbox (SENT_SECRET_KINDS, migration
- * 058), as it was asked. The email that confirms a new client login (kind ACCOUNT_VERIFY, src/core/signup.ts) carries a
+ * 058), as it was asked. The email that confirms a new client login (kind ACCOUNT_VERIFY, src/app/signup.ts) carries a
  * link of the same sort: it works once (client_signups.verified_at) and for 24 hours (VERIFY_TTL_MS), and anybody who
  * can read the outbox could open it first. Only its hash is kept in client_signups, so taking the words out of the
  * outbox does not stop the link working for the person it was sent to.
@@ -24,11 +24,11 @@ import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import { outboxTransport } from '../../src/integrations/email/email.ts';
 import * as EP from '../../src/integrations/email/email-provider.ts';
-import { offerSignup, requestSignup, confirmSignup } from '../../src/core/signup.ts';
+import { offerSignup, requestSignup, confirmSignup } from '../../src/app/signup.ts';
 import type { EmailSending, SmtpLogin } from '../../src/integrations/email/email-provider.ts';
 import { Db as TheDb, migrate, pendingMigrations } from '../../src/core/db.ts';
 import type { Db } from '../../src/core/db.ts';

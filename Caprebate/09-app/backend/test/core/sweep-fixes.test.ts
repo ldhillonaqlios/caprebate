@@ -22,7 +22,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { Agent, request } from 'node:http';
 import { startHarness, LOGINS, type Harness, type Login } from '../ui-tidy-harness.ts';
 import { SITE_CSS } from '../../src/shared/assets.ts';
-import { SEED_PASSWORD } from '../../src/core/seed.ts';
+import { SEED_PASSWORD } from '../../src/app/seed.ts';
 
 let H: Harness;
 let base = '';

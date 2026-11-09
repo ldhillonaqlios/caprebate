@@ -26,8 +26,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import type { Actor } from '../../src/core/authz.ts';
 import { fixtureTransport, RateLimiter, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { projectNationalGrid, GRS80, OSTN15_COLUMNS, OSTN15_ROWS } from '../../src/integrations/connectors/ostn15.ts';

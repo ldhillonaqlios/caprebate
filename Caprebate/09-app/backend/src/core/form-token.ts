@@ -21,13 +21,13 @@
  * (form_tokens_used, migration 120) and refuses one it has seen. So a sensitive form cannot be sent twice, even by
  * going back and pressing the button again: the page has to be opened afresh.
  *
- * WHERE IT IS CHECKED. In src/core/server.ts, at the top of the one handler every request goes through, BEFORE any route
+ * WHERE IT IS CHECKED. In src/app/server.ts, at the top of the one handler every request goes through, BEFORE any route
  * runs: a request that is not GET or HEAD, from a signed-in person, on an address not in EXEMPT. A refusal changes
  * nothing, answers "This form has expired", and is written to the audit log (FORM_TOKEN_REFUSED).
  *
  * WHEN IT IS OFF. Only when createApp is told `formTokens: 'off'`, or, with no word either way, inside Node's own test
  * runner (`testRunner()`), as Django's test client does: the existing tests post forms without tokens, and the tests of
- * this file turn it on. Every real start says `formTokens: 'on'` in so many words (src/core/server.ts's own start and
+ * this file turn it on. Every real start says `formTokens: 'on'` in so many words (src/app/server.ts's own start and
  * api/index.mjs), so the default never decides a real website.
  */
 

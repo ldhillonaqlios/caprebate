@@ -3,7 +3,7 @@
  * question pack, D11: "Vercel Cron on the Pro plan for the live website, each call carrying its own secret word and
  * writing a log line").
  *
- * THE JOBS, LISTED FROM THE CODE (src/core/cli.ts's scheduled commands, and what the reply timer's call already did):
+ * THE JOBS, LISTED FROM THE CODE (src/app/cli.ts's scheduled commands, and what the reply timer's call already did):
  *   every-five-minutes  read email replies (at most once every two minutes, as the reply timer does); clear photo and
  *                       video uploads never finished within a day, and upload pieces never taken; try again any email
  *                       that could not be sent at the moment it was saved (retryUnsent, below).
@@ -24,20 +24,17 @@
  * A LOG LINE EACH RUN: "timer <job>: ..." with the same counts, so the function log shows every run and what it did.
  */
 import { randomUUID, timingSafeEqual } from 'node:crypto';
-import type { App } from './app.ts';
-import type { SecretStore } from './secrets.ts';
-import type { FsObjectStore } from '../shared/objectstore.ts';
-import { AuditLog } from './audit.ts';
+import { AuditLog, runNightlyBackup, sweepPieces } from '../core/index.ts';
+import type { App, SecretStore } from '../core/index.ts';
+import type { FsObjectStore } from '../shared/index.ts';
 import { inboundEmailModule as IE } from '../modules/crm/index.ts';
 import { sweepUploads } from '../modules/survey/index.ts';
 import { sweepVideos } from '../modules/survey/index.ts';
-import { sweepPieces } from './upload-pieces.ts';
 import { sweepOriginals, openKeptOriginal } from '../modules/claims/index.ts';
 import { MESSAGE_RETENTION, sweepMessages } from '../modules/crm/index.ts';
 import { ENQUIRY_RETENTION, sweepEnquiries } from '../modules/public-site/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { isInventedAddress } from '../integrations/index.ts';
-import { runNightlyBackup } from './backup.ts';
 import { listOutboxIdToEmailBySendRequestedSentAt, updateOutboxLastErrorByIdLastError, updateOutboxLastErrorByIdSentAt, updateOutboxLastErrorByIdSentAt2 } from '../integrations/index.ts';
 
 export const TIMER_JOBS = Object.freeze(['every-five-minutes', 'nightly', 'backup'] as const);
@@ -73,7 +70,7 @@ export function timerWordRefusal(store: SecretStore, authorization: string | und
 export const RETRY_HOURS = 24;
 /** One left "Being sent." this long ago was dropped by a copy that stopped; it may be tried again. */
 export const STUCK_MINUTES = 15;
-/** The moment of saving is the first try (src/core/server.ts, sendSaved); the timer waits this long before a second. */
+/** The moment of saving is the first try (src/app/server.ts, sendSaved); the timer waits this long before a second. */
 export const FIRST_TRY_MINUTES = 2;
 const COULD_NOT = 'It could not be sent just now.';
 const BEING_SENT = 'Being sent.';

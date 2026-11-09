@@ -115,7 +115,7 @@ describe('NO PERSONAL DATA IN LOG LINES — refused, not redacted', () => {
   });
 
   test('a real login writes no email address into the log', async () => {
-    const { seed } = await import('../../src/core/seed.ts');
+    const { seed } = await import('../../src/app/seed.ts');
     const { login } = await import('../../src/core/auth.ts');
     const app = await testApp();
     const r = await seed(app.db, app.hasher, app.now);

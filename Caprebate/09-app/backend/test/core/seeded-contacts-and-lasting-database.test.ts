@@ -15,8 +15,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import { reachableContacts } from '../../src/modules/crm/crm.ts';
 
 const NOW = '2026-09-28T12:00:00.000Z';

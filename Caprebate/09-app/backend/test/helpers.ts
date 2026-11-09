@@ -1,5 +1,6 @@
 /** Shared fixtures. A fake hasher keeps the suite fast; the real one is exercised in core/auth.test.ts. */
-import { buildApp, type App } from '../src/core/app.ts';
+import type { App } from '../src/core/app.ts';
+import { buildApp } from '../src/app/build-app.ts';
 import type { PasswordHasher } from '../src/core/password.ts';
 import type { Actor } from '../src/core/authz.ts';
 import type { AppRole } from '../src/core/roles.ts';

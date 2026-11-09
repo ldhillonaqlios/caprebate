@@ -3,7 +3,7 @@
  *
  * The free register lookups rest on legitimate interests, and CB_REGISTRY.precondition says they wait on "a published
  * privacy notice reachable from the address question". The site file's funnel drew that link in Phase 153 (harness
- * Suite Q7); the served assessment is this back end's own (src/core/router.ts, screen Q2), so it needs it too.
+ * Suite Q7); the served assessment is this back end's own (src/app/router.ts, screen Q2), so it needs it too.
  *
  *   1. the switch is off, so nothing is drawn;
  *   2. with the switch on, the link to /notices/ is drawn, and it asks nothing (no tick box);
@@ -16,7 +16,7 @@ import { readFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { noticeAtAddress } from '../../src/shared/components.ts';
 import { registryGate } from '../../src/shared/engine.ts';
 

@@ -1,6 +1,6 @@
 /**
  * THE ROUTE FILES' PLUMBING: reading a request (its cookies, its body, its form) and writing the answer (a page, a
- * redirect), for the router shell (src/core/router.ts) and every module's routes file alike. It loads no business
+ * redirect), for the router shell (src/app/router.ts) and every module's routes file alike. It loads no business
  * module, so the core's front door can offer it.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -8,8 +8,8 @@ import type { App } from './app.ts';
 import type { Actor } from './authz.ts';
 import type { authenticate } from './auth.ts';
 import type { NotFoundAsRefusal } from './backoffice.ts';
-import type { confirmSignup, offerSignup, requestSignup, verifyOpen } from './signup.ts';
-import type { handlePortalSettings } from './staff.ts';
+import type { confirmSignup, offerSignup, requestSignup, verifyOpen } from '../app/signup.ts';
+import type { handlePortalSettings } from '../app/staff.ts';
 import type { agreementPage, agreementTick, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement } from '../modules/compliance/index.ts';
 import { cleanForm } from './typed.ts';
 import { navContext, type NavContext, type NameSwitches } from './nav-context.ts';
@@ -40,7 +40,7 @@ export type WebDeps = {
    * THE LEGAL SETTING, for the live website. The legal pages, the notices page, the cookie
    * banner and the client's tick are served wherever it is on, as on the test website, but each page carries its Draft
    * line until our solicitor and our data protection officer have both approved its version (src/modules/compliance/legal-approvals.ts).
-   * Off unless CAPREBATE_LEGAL_PAGES=on (src/core/server.ts). With it and `notices` both off, nothing changes.
+   * Off unless CAPREBATE_LEGAL_PAGES=on (src/app/server.ts). With it and `notices` both off, nothing changes.
    */
   legal?: boolean;
 };
@@ -97,7 +97,7 @@ function closeAfterAnswer(req: IncomingMessage): void {
 }
 
 /**
- * 4 November 2026: A BODY IS READ ONCE AND KEPT FOR ITS REQUEST. The form-token check (src/core/server.ts,
+ * 4 November 2026: A BODY IS READ ONCE AND KEPT FOR ITS REQUEST. The form-token check (src/app/server.ts,
  * src/core/form-token.ts) reads a form before any route does; the route then reads the same bytes from here, with the
  * token's fields taken out (`keepBody`). A kept body still meets the route's own cap.
  */
@@ -243,6 +243,6 @@ export type ShellParts = {
 let lent: ShellParts | undefined;
 export function lendShellParts(parts: ShellParts): void { lent = parts; }
 export function shellParts(): ShellParts {
-  if (lent === undefined) throw new Error('The router shell (src/core/router.ts) has not lent its parts: it has not loaded.');
+  if (lent === undefined) throw new Error('The router shell (src/app/router.ts) has not lent its parts: it has not loaded.');
   return lent;
 }

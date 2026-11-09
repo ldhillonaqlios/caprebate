@@ -4,7 +4,7 @@
  * Word question 222, the data protection officer's: "How long do we keep a closed website enquiry before it is deleted?" Built on our
  * recommendation for him to check: twelve months after it was closed. A deletion cannot be undone, so — like the
  * message clean-up before it was answered — the job ships OFF and deletes nothing until the officer approves the period
- * and that approval is recorded; then a scheduled run of `node src/core/cli.ts sweep-enquiries` applies it.
+ * and that approval is recorded; then a scheduled run of `node src/app/cli.ts sweep-enquiries` applies it.
  *
  * TWO KINDS OF ENQUIRY, NAMED:
  *   1. THE CONTACT FORM (/enquiry, `website_enquiries`, migration 031). One closed by staff (status CLOSED, its

@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { Db } from '../../src/core/db.ts';
 import { AuditLog } from '../../src/core/audit.ts';
 import { SECRET_KEYS, secretsFromValues, forgetRegisteredSecretsForTest } from '../../src/core/secrets.ts';
@@ -23,10 +23,10 @@ import {
   BACKUP_KEEP_DAYS, backupDocuments, folderTarget, lockBackup, restoreDatabase, restoreDocuments, runNightlyBackup, unlockBackup,
 } from '../../src/core/backup.ts';
 import { FsObjectStore } from '../../src/shared/objectstore.ts';
-import { rowsToRetry, timerJobOf, timerWordRefusal, TIMER_SCHEDULES, TIMER_JOBS } from '../../src/core/timers.ts';
+import { rowsToRetry, timerJobOf, timerWordRefusal, TIMER_SCHEDULES, TIMER_JOBS } from '../../src/app/timers.ts';
 import {
   holdsInventedSeed, LIVE_KEYS, LIVE_REQUIRED, liveStartCheck, prepareLiveDatabase, startLiveWebsite, TEST_ONLY_SETTINGS,
-} from '../../src/core/live-website.ts';
+} from '../../src/app/live-website.ts';
 import { forgetReferenceGrid, OSTN15_SCHEMA, referenceLocation, referenceOstn15Grid, referencePostcodeStore } from '../../src/integrations/postcodes/reference-db.ts';
 import { SQLITE_SCHEMA } from '../../src/integrations/postcodes/postcode-store.ts';
 import { etrs89ToBritishNationalGrid, ostn15GridFromRows, OSTN15_COLUMNS, OSTN15_ROWS } from '../../src/integrations/connectors/ostn15.ts';

@@ -21,6 +21,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { GENESIS } from '../../core/index.ts';
 
 /* ------------------------------------------------------------------ *
  * 1. Roles
@@ -119,7 +120,9 @@ function canonical(v: unknown): string {
   return JSON.stringify(v);
 }
 
-export const GENESIS = '0'.repeat(64);
+/* The audit log's own genesis hash (src/core/audit.ts), so the two chains start from the one value (Phase 161l: it was
+   defined here, and the core's audit log reached up into the survey for it). */
+export { GENESIS };
 
 export type ChainCheck = { intact: boolean; broken_at: number | null };
 

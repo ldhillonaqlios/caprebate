@@ -6,7 +6,7 @@
  * in-memory application, seeds it, and listens — so a person can open the
  * screens without leaving a caprebate.db behind or having to remember to seed.
  *
- * IT REFUSES TO RUN WITHOUT CAPREBATE_ALLOW_SEED, for the same reason src/core/cli.ts
+ * IT REFUSES TO RUN WITHOUT CAPREBATE_ALLOW_SEED, for the same reason src/app/cli.ts
  * does: invented data with a known password must not arrive in a deployment
  * because somebody forgot a flag.
  */

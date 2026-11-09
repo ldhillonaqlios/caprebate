@@ -14,7 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { isBookable, staffSlots } from '../../src/modules/crm/schedule.ts';
 import { dashView } from '../../src/modules/crm/staff-dashboard.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';

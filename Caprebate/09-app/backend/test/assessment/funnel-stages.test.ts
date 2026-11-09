@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { SITE_CSS } from '../../src/shared/assets.ts';
 import { fixtureTransport, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';

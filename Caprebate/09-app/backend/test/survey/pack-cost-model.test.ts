@@ -13,7 +13,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { packView, savePackExtra, savePackValue, setLineRemoved, parsePackDate, type PackDeps } from '../../src/modules/survey/survey-pack.ts';
 import { packSheet } from '../../src/modules/survey/pack-sheets.ts';
 import { sheetChapter } from '../../src/modules/survey/survey-pack-pages.ts';

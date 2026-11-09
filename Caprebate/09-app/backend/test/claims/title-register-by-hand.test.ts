@@ -27,7 +27,7 @@ import * as TH from '../../src/modules/claims/title-by-hand.ts';
 import { checksPanel } from '../../src/modules/claims/approvals.ts';
 import { REGISTER_AMOUNTS_WITHHELD } from '../../src/modules/survey/surveyor.ts';
 import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../../src/modules/claims/signing.ts';
-import { seed } from '../../src/core/seed.ts';
+import { seed } from '../../src/app/seed.ts';
 import { createUser, newId } from '../../src/core/users.ts';
 import { docxOf } from '../document-fixtures.ts';
 import { testApp, actor } from '../helpers.ts';

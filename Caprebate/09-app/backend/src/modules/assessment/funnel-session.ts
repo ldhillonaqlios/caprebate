@@ -37,7 +37,7 @@
  *
  * `assessment_answers` looks like the obvious source and it is the wrong one:
  * ITS `question_id` IS NOT A SINGLE VOCABULARY. The funnel writes Q1 for
- * "have you already claimed on the fixtures"; `src/core/seed.ts` writes Q1 for "how
+ * "have you already claimed on the fixtures"; `src/app/seed.ts` writes Q1 for "how
  * is the business set up" with the value "company". The three-question mapping
  * this file replaces read the first and got the second, so every seeded
  * business carried `own_prior_claim: "company"` — a fact nobody stated, on a

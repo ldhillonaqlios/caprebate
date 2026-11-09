@@ -22,7 +22,7 @@
  * necessary: it only remembers the answer) for twelve months. No answer is "no". Google Analytics, the only optional
  * thing the website could load, loads only after a CLICK on "Accept all" (here or on the cookie policy page):
  * `optionalAllowed` is the only gate, and the site page is given its measurement id only when it says yes
- * (src/core/router.ts, the home route). The site page's own question (SITE_CONSENT) no longer asks: it reads the answer.
+ * (src/app/router.ts, the home route). The site page's own question (SITE_CONSENT) no longer asks: it reads the answer.
  *
  * THE COOKIE LIST IS TESTED, NOT TYPED: test/public-site/cookie-and-privacy-pages.test.ts collects every cookie name the app can set and every
  * browser storage key a page it serves writes, and fails unless COOKIE_LIST has each, and on a line for one that is gone.

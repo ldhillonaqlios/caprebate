@@ -22,7 +22,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { runInNewContext } from 'node:vm';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { fixtureTransport, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import { nationFromCountry } from '../../src/integrations/connectors/nations.ts';

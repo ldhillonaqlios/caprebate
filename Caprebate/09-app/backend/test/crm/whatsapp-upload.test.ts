@@ -14,7 +14,7 @@ import { mkdtempSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { parseChat } from '../../src/integrations/connectors/whatsapp-export.ts';
 import { safeEntryName, fileKind } from '../../src/modules/crm/whatsapp-import.ts';
 import { unreadWhatsApp } from '../../src/modules/crm/messages.ts';

@@ -43,7 +43,7 @@ import * as MR from '../../src/modules/claims/match-review.ts';
 import { REGISTRY } from '../../src/shared/engine.ts';
 import { connectorSwitchReadings } from '../../src/modules/claims/case-stamp.ts';
 import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../../src/modules/claims/signing.ts';
-import { seed } from '../../src/core/seed.ts';
+import { seed } from '../../src/app/seed.ts';
 import { createUser, newId } from '../../src/core/users.ts';
 import { docxOf } from '../document-fixtures.ts';
 import { testApp, actor } from '../helpers.ts';

@@ -8,7 +8,7 @@
  * (NDR) purposes only" and says "An open government licence does not apply" (read 4 October 2026; the source register's
  * VOA_RATING_LIST licence). A capital allowances claim is not a rating purpose, so it is recorded and not imported.
  *
- * Each is IMPORTED ON A COMMAND (`node src/core/cli.ts import-register <source> <file> --by <admin>`), never fetched per
+ * Each is IMPORTED ON A COMMAND (`node src/app/cli.ts import-register <source> <file> --by <admin>`), never fetched per
  * client: a person downloads the file from the publisher and the import replaces that source's rows whole, in one
  * transaction. A lookup then reads this table — NOTHING IS SENT OUTSIDE, as for the ONS postcode table.
  *

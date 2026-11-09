@@ -3065,7 +3065,7 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
        still requires it on disk, at its new path, because it is the only
        record of the screen sequence as it was first drawn. */
     ["journey wireframe (archived by Phase 104)", "_archive/superseded/caprebate-journey-wireframe.html"],
-    ["the application that replaced it", "09-app/backend/src/core/router.ts"],
+    ["the application that replaced it", "09-app/backend/src/app/router.ts"],
     ["CTA switch table", "01-rulebooks/Caprebate-Phase-51-CTA-Switch-Table-v1.md"],
     ["upload handler", "09-app/backend/src/modules/claims/documents/upload-handler.ts"],
   ];

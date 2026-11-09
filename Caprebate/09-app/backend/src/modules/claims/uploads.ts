@@ -696,7 +696,7 @@ export async function openKeptOriginal(
 
 /**
  * DELETE EVERY KEPT ORIGINAL WHOSE TIME IS UP. Runs whenever a folder or an original is opened, and from
- * `node src/core/cli.ts sweep-originals`. It deletes, then records — a record written first would claim a deletion that had
+ * `node src/app/cli.ts sweep-originals`. It deletes, then records — a record written first would claim a deletion that had
  * not happened. A file already gone is recorded as deleted: the time is up either way, and nothing is left to serve.
  * Returns how many it deleted.
  */

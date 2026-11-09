@@ -19,7 +19,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { packView, savePackValue, saveLine, setLineRemoved, savePackExtra, SHARED_FALLBACK_WORDS, type PackDeps } from '../../src/modules/survey/survey-pack.ts';
 import { coverageOf, deskFirstVerdict, deskFirstReading, DESK_FIRST_TEST, OPTIONAL_ITEMS, TIER_WORDS, type DeskFirstFacts } from '../../src/modules/assessment/desk-first.ts';
 import { linesForSector, taxonomy, SUITE_ROWS, TEST_DEFAULT_WORDS } from '../../src/modules/survey/pack-lines.ts';

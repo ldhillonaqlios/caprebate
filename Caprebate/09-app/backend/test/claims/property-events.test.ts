@@ -37,8 +37,8 @@ import * as SH from '../../src/modules/survey/pack-sheets.ts';
 import * as PE from '../../src/modules/claims/property-events.ts';
 import { sessionFromFunnel } from '../../src/modules/assessment/funnel-session.ts';
 import { estimate } from '../../src/shared/engine.ts';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 
 type S = Record<string, unknown>;
 type App = Awaited<ReturnType<typeof testApp>>;

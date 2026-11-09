@@ -24,12 +24,14 @@ export { SIGNATURE_PAD_JS } from './signature-pad-script.ts';
 export { CLOSED_STAGE, EXITS, EXIT_KEYS, LEGACY_STAGE_TO_PROCEDURE, PROCEDURE_KEYS, PROCEDURE_STAGES, STAGES, anyStageLabel, claimStage, clientStageFor, exitStage, nextProcedureKey, procedureIndex, procedureStage, progressFor, stage, stageIndex } from './stages.ts';
 export { LATE_AFTER_WORKING_DAYS, isLateNewLead, waitedWords, workingDaysSince } from './working-days.ts';
 export { DOCX_DOCUMENT_ENTRIES, docxParagraphTexts, listZipEntries, readZipEntry, readZipEntryFromBuffer } from './zip.ts';
+// Phase 161l: the document store, for the start-up wiring (src/app/). The shared store (shared-objectstore.ts) is not
+// named here: it extends this one as it loads, so a loop through this door would find FsObjectStore not yet made.
+export { FsObjectStore } from './objectstore.ts';
 export type { Job, Need, QuickAction, RecordTab, SectionContext, SectionSpec, SectionStatus, Tone } from './components.ts';
 export type { BenefitContext, EngineResult, EngineWindow, EntityKey, FeeComparison, FeeGateReading, NoClaimVatReading, RecommendationThreshold, SectorId, Session } from './engine.ts';
 export type { ExtractedPage, PageImage } from './extract-text.ts';
 export type { MoneyReadings } from './money-readings.ts';
 export type { KeepOriginals } from './originals.ts';
-export type { FsObjectStore } from './objectstore.ts';
 export type { Op, PdfFont, Rgb } from './pdf-canvas.ts';
 export type { PdfLine } from './pdf.ts';
 export type { ShownRange } from './shown-range.ts';

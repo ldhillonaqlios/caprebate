@@ -1,5 +1,5 @@
 /**
- * UI TIDY PHASE 13 — THE CALENDAR, 3 October 2026 (src/core/staff.ts calendarPage).
+ * UI TIDY PHASE 13 — THE CALENDAR, 3 October 2026 (src/app/staff.ts calendarPage).
  * The page says which day or week it shows, with Earlier, Today, Later and the switch; four boxes count the calls held
  * and the three lists; the week is seven boxes, one a day; a call with nobody on it says so in amber and a cancelled
  * one in red; "Give it a time" only for a login that may arrange calls; the cancelled calls fold away with their count;
@@ -9,7 +9,7 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from '../ui-tidy-harness.ts';
 import * as B from '../../src/core/backoffice.ts';
-import { calendarCounts } from '../../src/core/staff.ts';
+import { calendarCounts } from '../../src/app/staff.ts';
 import { localDate } from '../../src/shared/localtime.ts';
 
 let H: Harness;

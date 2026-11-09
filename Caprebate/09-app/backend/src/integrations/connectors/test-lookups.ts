@@ -40,7 +40,7 @@
  * `smoke-switched-on HMLR_INSPIRE` starts its count of three like any other connector's.
  *
  * NOTHING HERE READS THE KEY FILE OR REACHES THE NETWORK. The caller hands in the transport and the key store:
- * src/core/cli.ts hands in the live ones, and the tests hand in recorded answers.
+ * src/app/cli.ts hands in the live ones, and the tests hand in recorded answers.
  */
 
 import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
@@ -368,12 +368,12 @@ function whoAndWhy(argv: readonly string[]): { who: string; why: string } | stri
   return { who, why };
 }
 
-const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--nation england|wales|scotland|northern_ireland] [--council C] [--not-a-client] [--uprn U] [--save-answers <folder outside the repository>]\n' +
-  `       CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke OS_FEATURES --who "<name>" --why "<reason>"   (the public test point only)\n` +
-  `       CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke ${BOUNDARY_TEST_SOURCE} --who "<name>" --why "<reason>" [--easting E --northing N] [--council <ONS code or HM Land Registry file name>] [--not-a-client]`;
+const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/app/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--nation england|wales|scotland|northern_ireland] [--council C] [--not-a-client] [--uprn U] [--save-answers <folder outside the repository>]\n' +
+  `       CAPREBATE_LIVE_SMOKE=1 node src/app/cli.ts smoke OS_FEATURES --who "<name>" --why "<reason>"   (the public test point only)\n` +
+  `       CAPREBATE_LIVE_SMOKE=1 node src/app/cli.ts smoke ${BOUNDARY_TEST_SOURCE} --who "<name>" --why "<reason>" [--easting E --northing N] [--council <ONS code or HM Land Registry file name>] [--not-a-client]`;
 /** The four values --nation takes (src/integrations/connectors/nations.ts). */
 const SMOKE_NATIONS: readonly string[] = ['england', 'wales', 'scotland', 'northern_ireland'];
-const SWITCH_USAGE = 'usage: node src/core/cli.ts smoke-switched-on <SOURCE> --who "<name>" --why "<reason>"';
+const SWITCH_USAGE = 'usage: node src/app/cli.ts smoke-switched-on <SOURCE> --who "<name>" --why "<reason>"';
 
 /**
  * `smoke-switched-on <SOURCE> --who --why` — A PERSON RECORDS THAT A CONNECTOR HAS BEEN SWITCHED ON. It makes no call
@@ -430,7 +430,7 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
   const count = lookupsSinceSwitchOn(log.lines, source_id);
   if (!count.switched_on) {
     d.err(`refused: ${source_id} has no "switched on" line in the log, so its ${TEST_LOOKUPS_PER_SWITCH_ON} test lookups have not started. The person who switched it on records it first:`);
-    d.err(`  node src/core/cli.ts smoke-switched-on ${source_id} --who "<name>" --why "<reason>"`);
+    d.err(`  node src/app/cli.ts smoke-switched-on ${source_id} --who "<name>" --why "<reason>"`);
     return 1;
   }
   if (count.used >= TEST_LOOKUPS_PER_SWITCH_ON) {

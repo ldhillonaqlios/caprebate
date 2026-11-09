@@ -3,7 +3,7 @@
  *
  * Since Phase 151j every staff login gives a second step, so the screenshot tool
  * (04-phase-work/phase144/tools/crawl-shots.mjs), which signed in with a password, stopped at the step page and reached
- * no staff screen at all. This signs it in through the JSON API's steps (src/core/server.ts, /api/login and
+ * no staff screen at all. This signs it in through the JSON API's steps (src/app/server.ts, /api/login and
  * /api/login/step/...), the same functions a person's sign-in runs:
  *
  *   SET UP (a login with no second step yet, which is every staff login on a demo just started)

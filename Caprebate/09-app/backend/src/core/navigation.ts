@@ -6,7 +6,7 @@
  * login — and nothing of anybody's brand.
  *
  * THE MENU SHOWS ONLY WHAT THE LOGIN CAN OPEN, AND THAT IS A REVERSAL, ON INSTRUCTION. Until this phase the back office
- * drew the same twenty links for every staff role, on the reasoning (src/core/staff.ts, before this phase) that "a menu
+ * drew the same twenty links for every staff role, on the reasoning (src/app/staff.ts, before this phase) that "a menu
  * built from `can()` would put an authorisation decision in a renderer, where the next person to add a section would
  * forget it, and the failure would be silent in both directions". Both halves of that worry are answered here rather
  * than set aside:

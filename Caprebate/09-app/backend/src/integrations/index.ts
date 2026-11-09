@@ -44,6 +44,8 @@ export { BOUNDARY_FETCHING_SWITCHED_ON } from './registers/boundary-import.ts';
 export { NameExclusionError, assertNoUnauthorisedName } from './registers/name-exclusion.ts';
 export { LICENCES, SOURCES, worstGrade } from './registers/source-register.ts';
 export { builtInSignatureProvider } from './signature.ts';
+// Phase 161l: the postcode table, for the command line (src/app/cli.ts).
+export { postcodeStore } from './postcodes/postcode.ts';
 export type { AddressLookupConfig, FoundAddress } from './connectors/address-lookup.ts';
 export type { CompanyCandidate, CompanySearchConfig } from './connectors/company-search.ts';
 export type { GateSnapshot, Transport } from './connectors/http.ts';

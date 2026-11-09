@@ -16,8 +16,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../../src/core/server.ts';
-import { seed, SEED_PASSWORD } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed, SEED_PASSWORD } from '../../src/app/seed.ts';
 import { login, SECOND_STEP_NEEDED, TEMPORARY_PASSWORD_EXPIRED } from '../../src/core/auth.ts';
 import { base32Decode, base32Encode, codeAt, hotp, stepAt, verifyCode } from '../../src/core/totp.ts';
 import { MAX_WRONG_CODES, STEP_GONE, TOO_MANY_CODES, WRONG_CODE } from '../../src/core/sign-in.ts';

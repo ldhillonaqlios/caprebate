@@ -18,7 +18,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { docxOf } from '../document-fixtures.ts';
 import { secretsFromValues, forgetRegisteredSecretsForTest } from '../../src/core/secrets.ts';
 import { fixtureTransport, RateLimiter } from '../../src/integrations/connectors/http.ts';

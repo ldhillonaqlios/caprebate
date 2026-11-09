@@ -35,8 +35,8 @@ import * as A from '../../src/modules/survey/pack-approve.ts';
 import * as EV from '../../src/modules/survey/survey-evidence.ts';
 import * as CH from '../../src/modules/survey/pack-chapters.ts';
 import * as REP from '../../src/modules/survey/survey-report.ts';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T = '2026-09-08T00:00:00.000Z';

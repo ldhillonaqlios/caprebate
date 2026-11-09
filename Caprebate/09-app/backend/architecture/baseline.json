@@ -78,8 +78,8 @@
     "src/integrations/email/email.ts -> src/modules/crm/data.ts"
    ],
    "integrations": [
-    "src/core/cli.ts -> src/integrations/connectors/test-lookups.ts",
-    "src/core/cli.ts -> src/integrations/postcodes/postcode.ts",
+    "src/app/cli.ts -> src/integrations/connectors/test-lookups.ts",
+    "src/app/cli.ts -> src/integrations/postcodes/postcode.ts",
     "src/core/saved-keys.ts -> src/integrations/connectors/claude.ts",
     "src/modules/claims/case-stamp.ts -> src/integrations/connectors/claude.ts",
     "src/modules/claims/engaged.ts -> src/integrations/connectors/free-registers.ts",
@@ -97,15 +97,15 @@
     "src/modules/survey/surveyor.ts -> src/integrations/postcodes/postcode.ts"
    ],
    "portal": [
-    "src/core/signup.ts -> src/modules/portal/data.ts"
+    "src/app/signup.ts -> src/modules/portal/data.ts"
    ],
    "shared": [
-    "src/core/cli.ts -> src/shared/objectstore.ts",
-    "src/core/live-website.ts -> src/shared/shared-objectstore.ts",
+    "src/app/cli.ts -> src/shared/objectstore.ts",
+    "src/app/live-website.ts -> src/shared/shared-objectstore.ts",
+    "src/app/server.ts -> src/shared/objectstore.ts",
+    "src/app/server.ts -> src/shared/shared-objectstore.ts",
+    "src/app/staff.ts -> src/shared/lists-pages.ts",
     "src/core/navigation.ts -> src/shared/lists.ts",
-    "src/core/server.ts -> src/shared/objectstore.ts",
-    "src/core/server.ts -> src/shared/shared-objectstore.ts",
-    "src/core/staff.ts -> src/shared/lists-pages.ts",
     "src/core/upload-pieces.ts -> src/shared/objectstore.ts",
     "src/core/upload-pieces.ts -> src/shared/upload-handler-port.ts",
     "src/modules/assessment/conveyancing-strip.ts -> src/shared/upload-handler-port.ts",
@@ -129,8 +129,8 @@
     "src/modules/survey/survey-video.ts -> src/shared/objectstore.ts"
    ],
    "survey": [
-    "src/core/cli.ts -> src/modules/survey/bcis-data.ts",
-    "src/core/cli.ts -> src/modules/survey/bcis-index.ts",
+    "src/app/cli.ts -> src/modules/survey/bcis-data.ts",
+    "src/app/cli.ts -> src/modules/survey/bcis-index.ts",
     "src/core/search.ts -> src/modules/survey/data.ts",
     "src/integrations/postcodes/location-key.ts -> src/modules/survey/costing/cost-model.cjs",
     "src/modules/claims/claim-record.ts -> src/modules/survey/costing/job-economics.cjs",
@@ -212,8 +212,8 @@
     "src/modules/portal/data-borrowed.ts : document_types"
    ],
    "assessment": [
+    "src/app/seed.ts : assessments",
     "src/core/data-borrowed.ts : assessments",
-    "src/core/seed.ts : assessments",
     "src/modules/claims/data-borrowed.ts : assessments",
     "src/modules/compliance/data-borrowed.ts : consent_answers",
     "src/modules/crm/data-borrowed.ts : assessments",
@@ -223,10 +223,10 @@
     "src/shared/data-borrowed.ts : estimates"
    ],
    "claims": [
+    "src/app/seed.ts : claims",
+    "src/app/seed.ts : engagements",
     "src/core/data-borrowed.ts : claims",
     "src/core/data-borrowed.ts : properties",
-    "src/core/seed.ts : claims",
-    "src/core/seed.ts : engagements",
     "src/modules/admin/data-borrowed.ts : claims",
     "src/modules/assessment/data-borrowed.ts : claim_deliverables",
     "src/modules/assessment/data-borrowed.ts : claims",
@@ -269,6 +269,7 @@
     "src/shared/data-borrowed.ts : users"
    ],
    "crm": [
+    "src/app/seed.ts : businesses",
     "src/core/data-borrowed.ts : booking_changes",
     "src/core/data-borrowed.ts : bookings",
     "src/core/data-borrowed.ts : businesses",
@@ -276,7 +277,6 @@
     "src/core/data-borrowed.ts : internal_notes",
     "src/core/data-borrowed.ts : leads",
     "src/core/data-borrowed.ts : working_times",
-    "src/core/seed.ts : businesses",
     "src/integrations/data-borrowed.ts : businesses",
     "src/modules/admin/data-borrowed.ts : businesses",
     "src/modules/assessment/data-borrowed.ts : businesses",
@@ -342,8 +342,8 @@
     "src/modules/crm/data-borrowed.ts : enquiry_checks"
    ],
    "survey": [
+    "src/app/seed.ts : surveyor_jobs",
     "src/core/data-borrowed.ts : surveyor_jobs",
-    "src/core/seed.ts : surveyor_jobs",
     "src/modules/assessment/data-borrowed.ts : surveyor_jobs",
     "src/modules/claims/data-borrowed.ts : pack_client_notices",
     "src/modules/claims/data-borrowed.ts : pack_signoff_answers",

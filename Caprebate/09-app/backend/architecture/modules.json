@@ -32,6 +32,46 @@
   "app": null
  },
  "files": {
+  "src/app/build-app.ts": {
+   "area": "app",
+   "kind": "other"
+  },
+  "src/app/cli.ts": {
+   "area": "app",
+   "kind": "routes"
+  },
+  "src/app/live-website.ts": {
+   "area": "app",
+   "kind": "logic"
+  },
+  "src/app/router.ts": {
+   "area": "app",
+   "kind": "routes"
+  },
+  "src/app/seed.ts": {
+   "area": "app",
+   "kind": "data"
+  },
+  "src/app/server.ts": {
+   "area": "app",
+   "kind": "routes"
+  },
+  "src/app/signup.ts": {
+   "area": "app",
+   "kind": "logic"
+  },
+  "src/app/staff.ts": {
+   "area": "app",
+   "kind": "routes"
+  },
+  "src/app/timers.ts": {
+   "area": "app",
+   "kind": "logic"
+  },
+  "src/app/upload-pieces-script.ts": {
+   "area": "app",
+   "kind": "other"
+  },
   "src/core/app.ts": {
    "area": "core",
    "kind": "other"
@@ -59,10 +99,6 @@
   "src/core/backup.ts": {
    "area": "core",
    "kind": "logic"
-  },
-  "src/core/cli.ts": {
-   "area": "core",
-   "kind": "routes"
   },
   "src/core/custom-roles.ts": {
    "area": "core",
@@ -108,10 +144,6 @@
    "area": "core",
    "kind": "other"
   },
-  "src/core/live-website.ts": {
-   "area": "core",
-   "kind": "logic"
-  },
   "src/core/look.ts": {
    "area": "core",
    "kind": "page"
@@ -152,10 +184,6 @@
    "area": "core",
    "kind": "logic"
   },
-  "src/core/router.ts": {
-   "area": "core",
-   "kind": "routes"
-  },
   "src/core/saved-keys.ts": {
    "area": "core",
    "kind": "logic"
@@ -172,27 +200,7 @@
    "area": "core",
    "kind": "logic"
   },
-  "src/core/seed.ts": {
-   "area": "core",
-   "kind": "data"
-  },
-  "src/core/server.ts": {
-   "area": "core",
-   "kind": "routes"
-  },
   "src/core/sign-in.ts": {
-   "area": "core",
-   "kind": "logic"
-  },
-  "src/core/signup.ts": {
-   "area": "core",
-   "kind": "logic"
-  },
-  "src/core/staff.ts": {
-   "area": "core",
-   "kind": "routes"
-  },
-  "src/core/timers.ts": {
    "area": "core",
    "kind": "logic"
   },
@@ -203,10 +211,6 @@
   "src/core/typed.ts": {
    "area": "core",
    "kind": "logic"
-  },
-  "src/core/upload-pieces-script.ts": {
-   "area": "core",
-   "kind": "other"
   },
   "src/core/upload-pieces.ts": {
    "area": "core",

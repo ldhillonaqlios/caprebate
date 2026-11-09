@@ -6,26 +6,18 @@
  * configuration read from somewhere unnamed, so a test builds a whole
  * application in memory and the production start-up does the same thing with
  * different arguments.
+ *
+ * Phase 161l: this file keeps the shapes (App, BuildOptions), where the table steps are (MIGRATIONS_DIR) and the list
+ * of stubs. buildApp(), which opens the database and makes the parts, is start-up wiring: src/app/build-app.ts.
  */
 
-import { loadCustomRoles } from './custom-roles.ts';
 import { join } from 'node:path';
-import { Db, migrate, pendingMigrations } from './db.ts';
-import { AuditLog } from './audit.ts';
-import { defaultHasher, type PasswordHasher } from './password.ts';
-import { outboxTransport, type EmailTransport } from '../integrations/index.ts';
-import { EMAIL_SENDING, mailWhere, sendingOn, smtpLoginFromKeyFile, type Connector } from '../integrations/index.ts';
-import type { AddressLookupConfig } from '../integrations/index.ts';
-import type { InboundEmail, Mailbox } from '../integrations/index.ts';
-import { builtInSignatureProvider, type SignatureProvider } from '../integrations/index.ts';
-import { newId } from './users.ts';
-import { primeTimingDefence, type Deps } from './auth.ts';
-import { processSecrets, type SecretStore } from './secrets.ts';
-import type { CallPolicy } from '../integrations/index.ts';
-import type { GateStatus } from '../integrations/index.ts';
-import type { CompanySearchConfig } from '../integrations/index.ts';
-import type { PostcodeCheckConfig } from '../integrations/index.ts';
-import { liveTransport, type Transport } from '../integrations/index.ts';
+import type { Db } from './db.ts';
+import type { AuditLog } from './audit.ts';
+import type { PasswordHasher } from './password.ts';
+import type { Deps } from './auth.ts';
+import type { SecretStore } from './secrets.ts';
+import type { AddressLookupConfig, CallPolicy, CompanySearchConfig, Connector, EmailTransport, GateStatus, InboundEmail, Mailbox, PostcodeCheckConfig, SignatureProvider, Transport } from '../integrations/index.ts';
 
 export const MIGRATIONS_DIR = join(import.meta.dirname, '..', '..', 'migrations');
 
@@ -107,42 +99,6 @@ export type BuildOptions = {
   /** Tests only: recorded answers in place of the live transport. */
   outside?: Transport;
 };
-
-export async function buildApp(opts: BuildOptions = {}): Promise<App> {
-  const db = new Db(opts.location ?? ':memory:', {
-    ...(opts.dbAuthToken === undefined ? {} : { authToken: opts.dbAuthToken }), ...(opts.dbEngine === undefined ? {} : { engine: opts.dbEngine }),
-    ...(opts.dbLocalCopy === undefined ? {} : { localCopy: opts.dbLocalCopy }),
-  });
-  if (opts.schema === 'require-built') {
-    const left = pendingMigrations(db, opts.migrationsDir ?? MIGRATIONS_DIR);
-    if (left.length > 0) {
-      db.close();
-      throw Object.assign(new Error(`the database is not built: ${left.length} of its table steps are missing`), { code: 'E_NOT_BUILT' });
-    }
-  } else {
-    migrate(db, opts.migrationsDir ?? MIGRATIONS_DIR);
-  }
-  loadCustomRoles(db); // The roles the super admin made, for can
-
-  const now = opts.now ?? ((): string => new Date().toISOString());
-  const hasher = opts.hasher ?? (await defaultHasher());
-  const audit = new AuditLog(db);
-  // 30 Sep 2026: sending is asked at the moment each email is saved, of the switch and of THIS app's key store (read
-  // through `made`, because the test website replaces its store after start-up).
-  let made: App | undefined;
-  const email = outboxTransport(db, newId, now,
-    () => made !== undefined && sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(made.secrets), mailWhere(made)));
-  const signature = builtInSignatureProvider(newId);
-  const secrets = opts.secrets ?? processSecrets();
-  const outside = opts.outside ?? liveTransport;
-
-  await primeTimingDefence(hasher);
-
-  const deps: Deps = { db, audit, hasher, now, twoFactor: opts.twoFactor === 'off' ? 'OFF'
-    : opts.twoFactor === 'staff-except-invented' ? 'STAFF_EXCEPT_INVENTED' : 'STAFF' };
-  made = { db, audit, hasher, email, signature, secrets, outside, now, deps, close: () => db.close() };
-  return made;
-}
 
 /**
  * THE STUBS, in one list, so "what is not real here" is a question with an

@@ -7,7 +7,7 @@
  * in which addresses are tried never depends on where the code lives.
  *
  * ONE PROCESS, BOTH APPLICATIONS. This mounts alongside the JSON API in
- * src/core/server.ts; there is no second server, no second session store and no
+ * src/app/server.ts; there is no second server, no second session store and no
  * second authorisation function.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -29,26 +29,20 @@
 
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from './app.ts';
-import { NotAuthorised, type Actor } from './authz.ts';
-import { authenticate, logout, AuthError, SESSION_COOKIE_NAME, GENERIC_AUTH_FAILURE, TEMPORARY_PASSWORD_EXPIRED,
-  requestPasswordReset, completePasswordReset, type LoginResult } from './auth.ts';
-import * as SI from './sign-in.ts';
-import { RECOVERY_CODES_LOW } from './recovery-codes.ts';
-import { toActor } from './users.ts';
-import { cookie, form, html, inContext, lendShellParts, nav, readBody, redirect, simple, clientIp, JSON_HEADERS, type WebDeps, type WebRequest, type WebResult } from './http.ts';
-import { navContext } from './nav-context.ts';
+import { AuthError, GENERIC_AUTH_FAILURE, JSON_HEADERS, NotAuthorised, PIECE_BYTES, RECOVERY_CODES_LOW, SESSION_COOKIE_NAME, TEMPORARY_PASSWORD_EXPIRED, authenticate, clientIp, completePasswordReset, cookie, form, html, inContext, lendShellParts, logout, nav, navContext, putPiece, readBody, redirect, requestPasswordReset, simple, singleFile, startPieces, sweepPieces, toActor } from '../core/index.ts';
+import type { Actor, App, LoginResult, WebDeps, WebRequest, WebResult } from '../core/index.ts';
+import * as SI from '../core/index.ts'; // the sign-in steps (src/core/sign-in.ts), through the core's door
 import { SITE_CSS, CSS_HEADERS, PNG_HEADERS } from '../shared/index.ts';
 import { LOGO_INK_PNG } from '../shared/index.ts';
 import { h, page, raw } from '../shared/index.ts';
 import { portalModule as P } from '../modules/portal/index.ts';
 import { acceptClientBytes, finishUpload, issuedJob, readerFor } from '../modules/claims/index.ts';
-import { singleFile } from './multipart.ts';
-import { putPiece, startPieces, sweepPieces, PIECE_BYTES } from './upload-pieces.ts';
 import { UPLOAD_PIECES_JS } from './upload-pieces-script.ts';
 import { handleStaff, handlePortalSettings } from './staff.ts';
-import { mayEnterBackOffice, NotFoundAsRefusal } from './backoffice.ts';
-import { staffShell, portalShell } from './navigation.ts';
+/* Straight from these two core files, not the core's door: each reads business modules as it loads, so the door cannot
+   name them (Phase 161l; see src/core/index.ts). */
+import { mayEnterBackOffice, NotFoundAsRefusal } from '../core/backoffice.ts';
+import { staffShell, portalShell } from '../core/navigation.ts';
 import { inboundEmailModule as IE } from '../modules/crm/index.ts';
 import { PHOTO_UPLOAD_JS } from '../modules/survey/index.ts';
 import { SIGNATURE_PAD_JS } from '../shared/index.ts';
@@ -210,7 +204,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assets/photo-upload.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(PHOTO_UPLOAD_JS); return 'handled';
   }
-  // The upload forms' one script (src/core/upload-pieces-script.ts), which sends a big file in pieces.
+  // The upload forms' one script (src/app/upload-pieces-script.ts), which sends a big file in pieces.
   if (path === '/assets/upload-pieces.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(UPLOAD_PIECES_JS); return 'handled';
   }
@@ -260,7 +254,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     res.end(r.status === 200 ? 'ok' : 'refused');
     return 'handled';
   }
-  /* THE LIVE WEBSITE'S OWN TIMERS (src/core/timers.ts). No login: Vercel Cron calls them, with the
+  /* THE LIVE WEBSITE'S OWN TIMERS (src/app/timers.ts). No login: Vercel Cron calls them, with the
      project's word (CRON_SECRET) in the Authorization header. Refused without it, and answered with counts only. */
   if (path.startsWith(TIMER_PATH_PREFIX) && method === 'GET') {
     const job = timerJobOf(path);

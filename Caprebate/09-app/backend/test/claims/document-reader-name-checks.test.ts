@@ -25,7 +25,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { docxOf } from '../document-fixtures.ts';
 import { secretsFromValues, forgetRegisteredSecretsForTest } from '../../src/core/secrets.ts';
 import { fixtureTransport, RateLimiter, type Fixture } from '../../src/integrations/connectors/http.ts';

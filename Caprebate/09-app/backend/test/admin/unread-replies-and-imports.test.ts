@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import * as IE from '../../src/modules/crm/inbound-email.ts';
 

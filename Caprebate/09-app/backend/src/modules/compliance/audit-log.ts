@@ -3,7 +3,7 @@
  *
  * Developer Spec section 1 said Admin reads the audit log. `audit.read` was registered for ADMIN and nothing asked it, and
  * `AuditLog.verify()` was called by the tests alone. This is the page that asks it, and `npm run verify-audit`
- * (src/core/cli.ts) is the command that verifies the chain without the server.
+ * (src/app/cli.ts) is the command that verifies the chain without the server.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * KINDS, IDS AND OUTCOMES — NEVER A VALUE

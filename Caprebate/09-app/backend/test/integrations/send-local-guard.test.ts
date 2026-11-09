@@ -14,7 +14,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { connect as netConnect } from 'node:net';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { fixtureTransport, liveTransport } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import { onTestWebsite, placeRefusal } from '../../src/integrations/connectors/place.ts';

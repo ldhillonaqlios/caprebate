@@ -19,8 +19,8 @@
  *
  * THE HASH IS NOT RE-INVENTED HERE, AND THIS IS THE LOAD-BEARING PART. The
  * scheme is sha256 over the canonical form of the entry plus the previous
- * hash, and `_canonical` in src/core/audit.ts is that canonicaliser — audit.ts
- * imports GENESIS from the quarantine module and there is already a test that
+ * hash, and `_canonical` in src/core/audit.ts is that canonicaliser — the
+ * quarantine module re-exports audit.ts's GENESIS and there is already a test that
  * the two logs agree on a hash rather than merely looking alike. So this file
  * uses the same function, and then the module's OWN exported `verifyChain`
  * recomputes every row it wrote. If this file's chaining were wrong in any

@@ -3,8 +3,8 @@ import { turnstileWhy } from '../src/integrations/connectors/turnstile.ts';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../src/core/server.ts';
-import { seed } from '../src/core/seed.ts';
+import { createApp } from '../src/app/server.ts';
+import { seed } from '../src/app/seed.ts';
 
 if (process.env.CAPREBATE_ALLOW_SEED !== '1') {
   console.error('refusing to run: this launcher seeds invented data with a known password');
@@ -22,7 +22,7 @@ const r = await seed(made.app.db, made.app.hasher, made.app.now);
 
 /* PHASE 135: A VIEW-ONLY LOGIN, IN THE DEMO ONLY. The seed is one user per role and gives the view-only role to nobody
    (Phase 132e), so the demo had no way to see the back office as Read only. This launcher adds one, with the seed's
-   password; src/core/seed.ts is unchanged, so no other database gains a user. */
+   password; src/app/seed.ts is unchanged, so no other database gains a user. */
 {
   const t = made.app.now();
   const id = 'u-demo-readonly';

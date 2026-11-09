@@ -35,7 +35,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { APP_ROLES, type AppRole } from '../../src/core/roles.ts';
 import { can, REGISTERED_ACTIONS } from '../../src/core/authz.ts';
 import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES } from '../../src/modules/crm/schedule.ts';

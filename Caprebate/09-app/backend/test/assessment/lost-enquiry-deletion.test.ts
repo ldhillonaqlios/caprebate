@@ -12,7 +12,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { readFileSync } from 'node:fs';
 import { Db, migrate } from '../../src/core/db.ts';
 import { MIGRATIONS_DIR } from '../../src/core/app.ts';

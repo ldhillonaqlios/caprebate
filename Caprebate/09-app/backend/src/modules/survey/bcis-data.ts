@@ -7,7 +7,7 @@
  * not a question any more. The Lockwood run (L12) printed every rate as "Surveyor", with no source.
  *
  * WHAT THIS FILE DOES:
- *   1. THE IMPORTER (`importBcisData`, `node src/core/cli.ts import-bcis-data`): BCIS's own CSV exports — the average prices
+ *   1. THE IMPORTER (`importBcisData`, `node src/app/cli.ts import-bcis-data`): BCIS's own CSV exports — the average prices
  *      by building function (£/m², rebased to a stated quarter at the UK mean location), the elemental analyses (£/m²
  *      of floor by NRM element), and the location factors. Columns are found by their header words, not their place,
  *      so an export with extra columns still reads; a file this cannot read is refused whole, never half-read. The data

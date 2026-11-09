@@ -23,8 +23,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import { SITE_CSS as CSS } from '../../src/shared/assets.ts';
 import { grantsTraced } from '../../src/modules/claims/claim-facts.ts';
 

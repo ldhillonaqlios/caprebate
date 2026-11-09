@@ -25,8 +25,14 @@
 import { createHash } from 'node:crypto';
 import type { Db } from './db.ts';
 import { carriesSecret } from './secrets.ts';
-import { GENESIS } from '../modules/survey/index.ts';
 import { getAuditLogSeqHash, insertAuditLog, listAuditLog } from './data.ts';
+
+/**
+ * THE HASH BEFORE THE FIRST ENTRY of a chain: this audit log's, and the survey's quarantine log's, which re-exports it
+ * (src/modules/survey/anchor-quarantine.ts), so the two chains start from the one value. Phase 161l: defined here, in
+ * the core, so the audit log loads no business module.
+ */
+export const GENESIS = '0'.repeat(64);
 
 export type AuditKind =
   | 'LOGIN_SUCCEEDED' | 'LOGIN_FAILED' | 'LOGOUT'
@@ -35,7 +41,7 @@ export type AuditKind =
   /** The steps between a right password and a session (src/core/sign-in.ts), and the super user's part. */
   | 'SIGN_IN_STEP_STARTED' | 'SIGN_IN_STEP_REFUSED' | 'SIGN_IN_CODE_SENT'
   | 'TWO_FACTOR_SET_UP' | 'TWO_FACTOR_REMOVED' | 'TEMPORARY_PASSWORD_ISSUED'
-  /* `node src/core/cli.ts seal-app-secrets` sealed the app secrets still kept as text - a count, never a secret. */
+  /* `node src/app/cli.ts seal-app-secrets` sealed the app secrets still kept as text - a count, never a secret. */
   | 'APP_SECRETS_SEALED'
   /* Recovery codes made (a count and why, never a code), and one used (how many are left, never the code). */
   | 'RECOVERY_CODES_MADE' | 'RECOVERY_CODE_USED'

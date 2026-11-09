@@ -12,8 +12,8 @@
  * sign-in page. A code is never kept as text, never written to a log line or an audit row, and never emailed: it is
  * shown once, on the page (or in the API's answer) that made it.
  *
- * WHO CALLS THIS. Only src/core/sign-in.ts, whose functions the website (src/core/router.ts) and the JSON API
- * (src/core/server.ts) both call. There is no second implementation.
+ * WHO CALLS THIS. Only src/core/sign-in.ts, whose functions the website (src/app/router.ts) and the JSON API
+ * (src/app/server.ts) both call. There is no second implementation.
  */
 import { randomInt, scryptSync, timingSafeEqual } from 'node:crypto';
 import type { App } from './app.ts';

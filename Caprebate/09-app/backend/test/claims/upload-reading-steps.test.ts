@@ -18,7 +18,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { docxOf } from '../document-fixtures.ts';
 import { secretsFromValues, emptySecrets, forgetRegisteredSecretsForTest } from '../../src/core/secrets.ts';
 import { fixtureTransport, RateLimiter, type Fixture } from '../../src/integrations/connectors/http.ts';
