@@ -25,7 +25,7 @@
  * where it must be, and a cell that a spreadsheet would read as a formula is made plain text.
  */
 import type { Db } from '../../core/index.ts';
-import type { Snapshot } from '../survey/pack-approve.ts';
+import type { Snapshot } from '../survey/index.ts';
 import { acquisitionDateReading, latestFacts } from './claim-facts.ts';
 import { claimantTypeForGate } from '../crm/index.ts';
 import { allowancesFor, isCompanyType, rateWords, RETURN_YEARS, type AllowanceFacts, type PartResult, type PoolName } from '../assessment/index.ts';

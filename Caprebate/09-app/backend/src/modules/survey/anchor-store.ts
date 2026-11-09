@@ -51,6 +51,7 @@ import {
   AnchorLog, AnchorQuarantine, GENESIS, verifyChain,
   type Commitment, type EstimateOutputs, type LogEntry, type LogKind, type SurveyorFigures,
 } from './anchor-quarantine.ts';
+import { getAnchorLogByJobIdKind, getAnchorLogCOALESCEMAXSeqN, getAnchorLogHash, getSurveyorCommitmentsByJobId, insertAnchorLog, insertSurveyorCommitments, listAnchorLog, listAnchorLogByJobId, updateSurveyorJobsStateCommittedAtById } from './data.ts';
 
 /** Once per job, by meaning. See the header. */
 const ONCE_PER_JOB: readonly LogKind[] = Object.freeze(['QUARANTINE_CREATED', 'ESTIMATE_SEALED']);
@@ -78,16 +79,13 @@ export class DbAnchorLog extends AnchorLog {
 
   override append(e: Omit<LogEntry, 'seq' | 'prev_hash' | 'hash'>): LogEntry {
     if (ONCE_PER_JOB.includes(e.kind)) {
-      const existing = this.#db.get<LogRow>(
-        'SELECT * FROM anchor_log WHERE job_id = ? AND kind = ? ORDER BY seq ASC LIMIT 1',
-        [e.job_id, e.kind],
-      );
+      const existing = getAnchorLogByJobIdKind<LogRow>(this.#db, [e.job_id, e.kind]);
       if (existing !== undefined) return toEntry(existing);
     }
 
-    const last = this.#db.get<{ hash: string }>('SELECT hash FROM anchor_log ORDER BY seq DESC LIMIT 1');
+    const last = getAnchorLogHash<{ hash: string }>(this.#db);
     const prev_hash = last ? last.hash : GENESIS;
-    const seqRow = this.#db.get<{ n: number }>('SELECT COALESCE(MAX(seq),0) + 1 AS n FROM anchor_log');
+    const seqRow = getAnchorLogCOALESCEMAXSeqN<{ n: number }>(this.#db);
     const seq = seqRow ? seqRow.n : 1;
 
     // The module's own body shape, field for field and in its own order — the
@@ -99,21 +97,16 @@ export class DbAnchorLog extends AnchorLog {
     };
     const hash = createHash('sha256').update(_canonical(body)).digest('hex');
 
-    this.#db.run(
-      'INSERT INTO anchor_log (seq, kind, job_id, actor, at, detail_json, prev_hash, hash) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [seq, e.kind, e.job_id, e.actor, e.at, JSON.stringify(e.detail), prev_hash, hash],
-    );
+    insertAnchorLog(this.#db, [seq, e.kind, e.job_id, e.actor, e.at, JSON.stringify(e.detail), prev_hash, hash]);
     return { ...body, hash };
   }
 
   override entries(): readonly LogEntry[] {
-    return this.#db.all<LogRow>('SELECT * FROM anchor_log ORDER BY seq ASC').map(toEntry);
+    return listAnchorLog<LogRow>(this.#db).map(toEntry);
   }
 
   override of(job_id: string): readonly LogEntry[] {
-    return this.#db
-      .all<LogRow>('SELECT * FROM anchor_log WHERE job_id = ? ORDER BY seq ASC', [job_id])
+    return listAnchorLogByJobId<LogRow>(this.#db, [job_id])
       .map(toEntry);
   }
 
@@ -158,11 +151,11 @@ export function hydrateQuarantine(
   q.surveyor_id = job.surveyor_id;
   q.state = job.state;
 
-  const c = db.get<{
+  const c = getSurveyorCommitmentsByJobId<{
     surveyor_id: string; a_qualifying_plant_pence: number; b_building_pence: number;
     c_bare_land_pence: number; qualifying_pct: number; method_note: string;
     committed_at: string; figures_hash: string; released_at: string;
-  }>('SELECT * FROM surveyor_commitments WHERE job_id = ?', [job.job_id]);
+  }>(db, [job.job_id]);
 
   if (c !== undefined) {
     const figures: SurveyorFigures = {
@@ -190,16 +183,8 @@ export function hydrateQuarantine(
 export function storeCommitment(
   db: Db, id: string, c: Commitment, released_at: string,
 ): void {
-  db.run(
-    'INSERT INTO surveyor_commitments (id, job_id, surveyor_id, a_qualifying_plant_pence, ' +
-      'b_building_pence, c_bare_land_pence, qualifying_pct, method_note, committed_at, ' +
-      'figures_hash, released_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, c.job_id, c.surveyor_id, c.figures.A_qualifying_plant_pence, c.figures.B_building_pence,
+  insertSurveyorCommitments(db, [id, c.job_id, c.surveyor_id, c.figures.A_qualifying_plant_pence, c.figures.B_building_pence,
       c.figures.C_bare_land_pence, c.figures.qualifying_pct, c.method_note, c.committed_at,
-      c.hash, released_at],
-  );
-  db.run(
-    "UPDATE surveyor_jobs SET state = 'COMMITTED_AND_RELEASED', committed_at = ? WHERE id = ?",
-    [c.committed_at, c.job_id],
-  );
+      c.hash, released_at]);
+  updateSurveyorJobsStateCommittedAtById(db, [c.committed_at, c.job_id]);
 }

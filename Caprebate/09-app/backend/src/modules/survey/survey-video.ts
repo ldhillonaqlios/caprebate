@@ -26,6 +26,8 @@ import { INCOMING_PREFIX, VIDEO_PREFIX, type FsObjectStore, type IncomingTarget 
 import { clientOf, NO_KEY, type EvidenceDeps } from './survey-evidence.ts';
 import { failureWords, LOCK_OVERHEAD, SITE_SUFFIX, unlockPhoto, type UploadResult } from './photo-upload.ts';
 import { packJob } from './surveyor.ts';
+import { getSurveyVideoOutcomesOutcomeWhyBySendId, getSurveyVideoPiecesCountBySendId, getSurveyVideoSendsIdJobIdById, getSurveyVideoSlotsIdSendIdByIdSendId, getSurveyVideoSlotsXBySendIdN, getSurveyVideoWithdrawalsXByVideoId, getSurveyVideosBusinessIdById, getSurveyVideosJobIdBusinessIdById, getSurveyVideosMsById, insertSurveyVideoOutcomes, insertSurveyVideoOutcomes2, insertSurveyVideoOutcomes3, insertSurveyVideoPieces, insertSurveyVideoSends, insertSurveyVideoSlots, insertSurveyVideoWithdrawals, insertSurveyVideos, listSurveyVideoSendsIdPiecesBySendIdCreatedAt, listSurveyVideoSlotsStagedKeyBySendId } from './data.ts';
+import { listSurveyVideosIdContentTypeByJobIdVideoId } from './data-borrowed.ts';
 
 export const VIDEO_PIECE_BYTES = 4 * 1024 * 1024;
 export const MAX_VIDEO_BYTES = 1024 * 1024 * 1024;
@@ -72,20 +74,19 @@ export function startVideo(d: EvidenceDeps, store: FsObjectStore, actor: Actor, 
   const now = d.now();
   const key = Buffer.from(pair.publicKey).toString('base64');
   const pieces = Math.ceil(size / VIDEO_PIECE_BYTES);
-  d.db.run('INSERT INTO survey_video_sends (id, job_id, by_user, byte_size, pieces, note, nobody_in_it, public_key, private_key_sealed, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)',
-    [id, job.id, actor.id, size, pieces, note === '' ? null : note, key, store.sealBytes(pair.privateKey).toString('base64'), now,
+  insertSurveyVideoSends(d.db, [id, job.id, actor.id, size, pieces, note === '' ? null : note, key, store.sealBytes(pair.privateKey).toString('base64'), now,
       new Date(Date.parse(now) + VIDEO_SEND_HOURS * 3_600_000).toISOString()]);
   return { ok: true, send: id, key, pieces, piece_bytes: VIDEO_PIECE_BYTES };
 }
 
 function ownSend(d: EvidenceDeps, actor: Actor, send_id: string): Send {
-  const s = d.db.get<Send>('SELECT id, job_id, by_user, byte_size, pieces, note, private_key_sealed, expires_at FROM survey_video_sends WHERE id = ?', [send_id]);
+  const s = getSurveyVideoSendsIdJobIdById<Send>(d.db, [send_id]);
   if (s === undefined || s.by_user !== actor.id) throw new NotAuthorised('survey_evidence.add', 'surveyor_job');
   clientOf(d.db, actor, s.job_id);
   return s;
 }
 
-const outcomeOf = (d: EvidenceDeps, send_id: string) => d.db.get<{ outcome: string; why: string | null }>('SELECT outcome, why FROM survey_video_outcomes WHERE send_id = ?', [send_id]);
+const outcomeOf = (d: EvidenceDeps, send_id: string) => getSurveyVideoOutcomesOutcomeWhyBySendId<{ outcome: string; why: string | null }>(d.db, [send_id]);
 
 /** One piece's place: the store's one-time address, or our own route. */
 export async function videoSlot(d: EvidenceDeps, store: FsObjectStore, actor: Actor, send_id: string, f: { n: string; size: string }):
@@ -98,7 +99,7 @@ export async function videoSlot(d: EvidenceDeps, store: FsObjectStore, actor: Ac
   if (n < 1 || n > s.pieces) return { ok: false, why: 'That piece is not one of this video.' };
   const size = /^\d{1,8}$/.test(f.size.trim()) ? Number(f.size.trim()) : 0;
   if (size !== plainSizeOf(s, n) + LOCK_OVERHEAD) return { ok: false, why: 'That piece is not the size it should be.' };
-  if (d.db.get('SELECT 1 AS x FROM survey_video_slots WHERE send_id = ? AND n = ?', [s.id, n]) !== undefined) return { ok: false, why: 'That piece has already been sent.' };
+  if (getSurveyVideoSlotsXBySendIdN(d.db, [s.id, n]) !== undefined) return { ok: false, why: 'That piece has already been sent.' };
   const id = d.newId();
   let key = `${INCOMING_PREFIX}${s.id}/v${String(n)}-${id}.lock`;
   const until = Math.min(Date.parse(now) + VIDEO_SLOT_MINUTES * 60_000, Date.parse(s.expires_at));
@@ -110,15 +111,13 @@ export async function videoSlot(d: EvidenceDeps, store: FsObjectStore, actor: Ac
     remote = null;
     key = key.replace(/\.lock$/, SITE_SUFFIX);
   }
-  d.db.run('INSERT INTO survey_video_slots (id, send_id, n, staged_key, byte_size, issued_at) VALUES (?, ?, ?, ?, ?, ?)', [id, s.id, n, key, size, now]);
+  insertSurveyVideoSlots(d.db, [id, s.id, n, key, size, now]);
   const target = remote ?? { url: `/portal/building/video/${s.id}/slot/${id}`, headers: {} };
   return { ok: true, slot: id, url: target.url, headers: target.headers };
 }
 
 type Slot = { id: string; send_id: string; n: number; staged_key: string; byte_size: number; issued_at: string; kept: number };
-const slotOf = (d: EvidenceDeps, send_id: string, slot_id: string) => d.db.get<Slot>(
-  'SELECT s.id, s.send_id, s.n, s.staged_key, s.byte_size, s.issued_at, (p.slot_id IS NOT NULL) AS kept FROM survey_video_slots s ' +
-    'LEFT JOIN survey_video_pieces p ON p.slot_id = s.id WHERE s.id = ? AND s.send_id = ?', [slot_id, send_id]);
+const slotOf = (d: EvidenceDeps, send_id: string, slot_id: string) => getSurveyVideoSlotsIdSendIdByIdSendId<Slot>(d.db, [slot_id, send_id]);
 
 /** A locked piece through our own route: on a copy that is not the test website, or a slot the store gave no address. */
 export async function putVideoLocal(d: EvidenceDeps, store: FsObjectStore, actor: Actor, send_id: string, slot_id: string, bytes: Uint8Array): Promise<UploadResult<object>> {
@@ -149,8 +148,7 @@ export async function finishPiece(d: EvidenceDeps, store: FsObjectStore, actor: 
   if (plain.length !== plainSizeOf(s, slot.n)) return refuse('That piece is not the size it should be.');
   await store.putSealed(pieceKey(s.id, slot.n), plain);
   await store.dropIncoming(slot.staged_key);
-  d.db.run('INSERT INTO survey_video_pieces (send_id, n, slot_id, byte_size, sha256, at) VALUES (?, ?, ?, ?, ?, ?)',
-    [s.id, slot.n, slot.id, plain.length, createHash('sha256').update(plain).digest('hex'), d.now()]);
+  insertSurveyVideoPieces(d.db, [s.id, slot.n, slot.id, plain.length, createHash('sha256').update(plain).digest('hex'), d.now()]);
   return { ok: true, n: slot.n };
 }
 
@@ -241,13 +239,13 @@ export function blankPlaces(moov: Buffer): number {
 export async function finishVideo(d: EvidenceDeps, store: FsObjectStore, actor: Actor, send_id: string): Promise<UploadResult<{ readonly video: string; readonly minutes: number }>> {
   const s = ownSend(d, actor, send_id);
   const done = outcomeOf(d, s.id);
-  if (done?.outcome === 'KEPT') return { ok: true, video: s.id, minutes: Math.round((d.db.get<{ ms: number }>('SELECT duration_ms AS ms FROM survey_videos WHERE id = ?', [s.id])?.ms ?? 0) / 60_000) };
+  if (done?.outcome === 'KEPT') return { ok: true, video: s.id, minutes: Math.round((getSurveyVideosMsById<{ ms: number }>(d.db, [s.id])?.ms ?? 0) / 60_000) };
   if (done !== undefined) return { ok: false, why: done.why ?? 'That video was not kept.' };
-  const have = d.db.get<{ n: number }>('SELECT count(*) AS n FROM survey_video_pieces WHERE send_id = ?', [s.id])!.n;
+  const have = getSurveyVideoPiecesCountBySendId<{ n: number }>(d.db, [s.id])!.n;
   if (have < s.pieces) return { ok: false, why: `${String(s.pieces - have)} of the video’s ${String(s.pieces)} pieces have not come yet.` };
   const refuse = async (why: string): Promise<{ ok: false; why: string }> => {
     for (let n = 1; n <= s.pieces; n++) await store.dropVideoPiece(pieceKey(s.id, n));
-    d.db.run("INSERT INTO survey_video_outcomes (send_id, outcome, why, at) VALUES (?, 'REFUSED', ?, ?)", [s.id, why, d.now()]);
+    insertSurveyVideoOutcomes3(d.db, [s.id, why, d.now()]);
     return { ok: false, why };
   };
   const r = new Pieces(store, s.id, s.byte_size);
@@ -276,9 +274,8 @@ export async function finishVideo(d: EvidenceDeps, store: FsObjectStore, actor: 
   const blanked = blankPlaces(body);
   if (blanked > 0) { await r.write(moov.offset + moov.header, body); await r.save(); }
   d.db.tx(() => {
-    d.db.run('INSERT INTO survey_videos (id, job_id, content_type, byte_size, duration_ms, pieces, places_blanked, note, taken_by, taken_at, nobody_in_it) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
-      [s.id, s.job_id, contentType, s.byte_size, ms, s.pieces, blanked, s.note, actor.id, d.now()]);
-    d.db.run("INSERT INTO survey_video_outcomes (send_id, outcome, why, at) VALUES (?, 'KEPT', NULL, ?)", [s.id, d.now()]);
+    insertSurveyVideos(d.db, [s.id, s.job_id, contentType, s.byte_size, ms, s.pieces, blanked, s.note, actor.id, d.now()]);
+    insertSurveyVideoOutcomes2(d.db, [s.id, d.now()]);
     d.audit.append({ at: d.now(), kind: 'SURVEY_EVIDENCE_ADDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'surveyor_job', object_id: s.job_id,
       detail: { video: s.id, item: 'VIDEO' } });
   });
@@ -292,16 +289,12 @@ export async function finishVideo(d: EvidenceDeps, store: FsObjectStore, actor: 
 export type VideoRow = { readonly id: string; readonly content_type: string; readonly byte_size: number; readonly duration_ms: number; readonly note: string | null; readonly taken_at: string; readonly taken_by_name: string };
 
 export function videosOf(db: EvidenceDeps['db'], job_id: string): VideoRow[] {
-  return db.all<VideoRow>(
-    'SELECT v.id, v.content_type, v.byte_size, v.duration_ms, v.note, v.taken_at, u.display_name AS taken_by_name FROM survey_videos v JOIN users u ON u.id = v.taken_by ' +
-      'LEFT JOIN survey_video_withdrawals w ON w.video_id = v.id WHERE v.job_id = ? AND w.video_id IS NULL ORDER BY v.taken_at, v.rowid', [job_id]);
+  return listSurveyVideosIdContentTypeByJobIdVideoId<VideoRow>(db, [job_id]);
 }
 
 /** The client of that company, or staff who may read the job (the assigned surveyor, Admin, Sales). Null when not shown. */
 function mayWatch(d: EvidenceDeps, actor: Actor, video_id: string): { size: number; pieces: number; content_type: string } | null {
-  const v = d.db.get<{ job_id: string; business_id: string; byte_size: number; pieces: number; content_type: string; withdrawn: number }>(
-    'SELECT v.job_id, j.business_id, v.byte_size, v.pieces, v.content_type, (w.video_id IS NOT NULL) AS withdrawn FROM survey_videos v JOIN surveyor_jobs j ON j.id = v.job_id ' +
-      'LEFT JOIN survey_video_withdrawals w ON w.video_id = v.id WHERE v.id = ?', [video_id]);
+  const v = getSurveyVideosJobIdBusinessIdById<{ job_id: string; business_id: string; byte_size: number; pieces: number; content_type: string; withdrawn: number }>(d.db, [video_id]);
   if (v === undefined) return null;
   if (actor.role === 'CLIENT') {
     if (actor.business_id !== v.business_id) throw new NotAuthorised('survey_evidence.read', 'surveyor_job');
@@ -334,26 +327,25 @@ export async function videoBytes(d: EvidenceDeps, store: FsObjectStore, actor: A
 
 /** A video taken back: by the client of that company, or by Admin or Sales with a reason. It is then shown to nobody. */
 export function withdrawVideo(d: EvidenceDeps, actor: Actor, video_id: string, reason: string): UploadResult<object> {
-  const v = d.db.get<{ business_id: string }>('SELECT j.business_id FROM survey_videos v JOIN surveyor_jobs j ON j.id = v.job_id WHERE v.id = ?', [video_id]);
+  const v = getSurveyVideosBusinessIdById<{ business_id: string }>(d.db, [video_id]);
   if (v === undefined) return { ok: false, why: 'That video is not one of ours.' };
   const own = actor.role === 'CLIENT' && actor.business_id === v.business_id;
   if (!own) authorise(actor, 'email.queue', { type: 'email', id: v.business_id, business_id: v.business_id });
   const why = own && reason.trim() === '' ? 'Taken back by the client.' : reason.trim().replace(/\s+/g, ' ');
   if (why === '' || why.length > 300) return { ok: false, why: 'Say why the video is taken back, in under 300 characters.' };
-  if (d.db.get('SELECT 1 AS x FROM survey_video_withdrawals WHERE video_id = ?', [video_id]) !== undefined) return { ok: false, why: 'That video has already been taken back.' };
-  d.db.run('INSERT INTO survey_video_withdrawals (video_id, by_user, reason, at) VALUES (?, ?, ?, ?)', [video_id, actor.id, why, d.now()]);
+  if (getSurveyVideoWithdrawalsXByVideoId(d.db, [video_id]) !== undefined) return { ok: false, why: 'That video has already been taken back.' };
+  insertSurveyVideoWithdrawals(d.db, [video_id, actor.id, why, d.now()]);
   return { ok: true };
 }
 
 /** Remove every video send not finished within a day: its locked and its kept pieces. Recorded ABANDONED, once. */
 export async function sweepVideos(d: Pick<EvidenceDeps, 'db' | 'now'>, store: FsObjectStore, limit = 10): Promise<number> {
   const before = new Date(Date.parse(d.now()) - VIDEO_ABANDON_HOURS * 3_600_000).toISOString();
-  const stale = d.db.all<{ id: string; pieces: number }>(
-    'SELECT s.id, s.pieces FROM survey_video_sends s LEFT JOIN survey_video_outcomes o ON o.send_id = s.id WHERE o.send_id IS NULL AND s.created_at < ? ORDER BY s.created_at LIMIT ?', [before, limit]);
+  const stale = listSurveyVideoSendsIdPiecesBySendIdCreatedAt<{ id: string; pieces: number }>(d.db, [before, limit]);
   for (const s of stale) {
-    for (const slot of d.db.all<{ staged_key: string }>('SELECT staged_key FROM survey_video_slots WHERE send_id = ?', [s.id])) await store.dropIncoming(slot.staged_key);
+    for (const slot of listSurveyVideoSlotsStagedKeyBySendId<{ staged_key: string }>(d.db, [s.id])) await store.dropIncoming(slot.staged_key);
     for (let n = 1; n <= s.pieces; n++) await store.dropVideoPiece(pieceKey(s.id, n));
-    d.db.run("INSERT INTO survey_video_outcomes (send_id, outcome, why, at) VALUES (?, 'ABANDONED', ?, ?)", [s.id, 'Never finished: removed after a day.', d.now()]);
+    insertSurveyVideoOutcomes(d.db, [s.id, 'Never finished: removed after a day.', d.now()]);
   }
   return stale.length;
 }

@@ -60,7 +60,7 @@ import { insertTask } from '../crm/index.ts';
 import { latestSignOff } from '../claims/index.ts';
 import { computeFee, FEE_CONTROLS, type FeeControls } from '../claims/index.ts';
 import { feeGate, type FeeGateReading } from '../../shared/index.ts';
-import { assertFinanceSection, financeSectionObj } from '../finance/finance.ts';
+import { assertFinanceSection, financeSectionObj } from '../finance/index.ts';
 import { getStaffTasksIdByCompanySubjectStatus } from '../crm/index.ts';
 import { getInvoiceCreditNotesNByIssuedOn, getInvoicesCountByClaimIdInvoiceStatus, getInvoicesNByClaimIdInvoiceStatus, insertFinanceSettings, listClaimsIdClaimRefByStageClaimId } from './data-borrowed.ts';
 import { getFinanceSettingsIdSettingBySettingEffectiveFrom, listFinanceSettingsIdSetting } from './data-borrowed.ts';

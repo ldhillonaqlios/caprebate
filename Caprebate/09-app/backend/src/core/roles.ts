@@ -19,7 +19,7 @@
  * has no login at all and receives the computation pack offline.
  */
 
-import type { Role as QuarantineRole } from '../modules/survey/anchor-quarantine.ts';
+import type { Role as QuarantineRole } from '../modules/survey/index.ts';
 import { canSurvey, customRoleOf, isCustomRoleKey } from './custom-roles.ts';
 
 /**

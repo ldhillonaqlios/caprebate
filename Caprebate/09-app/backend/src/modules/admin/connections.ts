@@ -43,6 +43,7 @@ import { localStamp, localPartsOf } from '../../shared/index.ts';
 import { ADDRESS_SEARCH_CAP, searchesToday } from '../../integrations/index.ts';
 import { getMailboxReadsAtFailedById, getOutboxAtBySentAt } from '../../integrations/index.ts';
 import { listAuditLogDetailSByKindM } from '../../core/index.ts';
+import { getRegisterFileImportsImportedAtRowsKeptBySourceId } from './data-borrowed.ts';
 
 /** One outside service as the page shows it. */
 export type Connection = {
@@ -170,9 +171,7 @@ function sameMonth(a: string, b: string): boolean {
 }
 
 export function lastImport(app: App, source: FileSourceId): ConnectionRow['file'] {
-  const r = app.db.get<{ imported_at: string; rows_kept: number; rows_skipped: number; who: string | null }>(
-    `SELECT i.imported_at, i.rows_kept, i.rows_skipped, u.display_name AS who FROM register_file_imports i LEFT JOIN users u ON u.id = i.by_user
-      WHERE i.source_id = ? ORDER BY i.imported_at DESC, i.rowid DESC LIMIT 1`, [source]);
+  const r = getRegisterFileImportsImportedAtRowsKeptBySourceId<{ imported_at: string; rows_kept: number; rows_skipped: number; who: string | null }>(app.db, [source]);
   return r === undefined ? null : { imported_at: r.imported_at, kept: r.rows_kept, skipped: r.rows_skipped, by: r.who, this_month: sameMonth(r.imported_at, app.now()) };
 }
 

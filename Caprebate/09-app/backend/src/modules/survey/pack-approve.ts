@@ -38,6 +38,8 @@ import { videosOf } from './survey-video.ts';
 import { sitePlanOf, type SitePlan } from '../claims/index.ts';
 import { valuationLock } from '../claims/index.ts';
 import { getUsersNById } from '../../core/index.ts';
+import { getSurveyPackApprovalsIdVersionByJobIdVersion, listSurveyPackApprovalsIdVersionByPackId } from './data-borrowed.ts';
+import { getSurveyPackLegalAnswersSByPackIdByUser, getSurveyorDetailsRicsNumberFirmByUserId, insertSurveyPackApprovals, insertSurveyPackReads, insertSurveyorDetails, listSurveyPackReadsChapterSeqByJobIdUserId } from './data.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',
@@ -79,14 +81,12 @@ const base = (job: string) => `/staff/survey/${job}/pack`;
 /** The surveyor's details: the newest row. */
 export function detailsOf(db: PackDeps['db'], user_id: string | null): Details | null {
   if (user_id === null) return null;
-  return db.get<Details>('SELECT rics_number, firm, at FROM surveyor_details WHERE user_id = ? ORDER BY at DESC, rowid DESC LIMIT 1', [user_id]) ?? null;
+  return getSurveyorDetailsRicsNumberFirmByUserId<Details>(db, [user_id]) ?? null;
 }
 
 export function approvalsOf(db: PackDeps['db'], pack_id: string | null): ApprovalRow[] {
   if (pack_id === null) return [];
-  return db.all<ApprovalRow>(
-    'SELECT a.id, a.version, a.pack_seq, a.legal_seq, a.fingerprint, a.approved_by, u.display_name AS approver_name, a.approved_at ' +
-      'FROM survey_pack_approvals a JOIN users u ON u.id = a.approved_by WHERE a.pack_id = ? ORDER BY a.version DESC', [pack_id]);
+  return listSurveyPackApprovalsIdVersionByPackId<ApprovalRow>(db, [pack_id]);
 }
 
 /** Record that the assigned surveyor opened a chapter. Nobody else's opening counts, and nothing else is written. */
@@ -94,8 +94,7 @@ export function recordRead(d: PackDeps, actor: Actor, job_id: string, chapter: n
   if (!Number.isInteger(chapter) || chapter < 1 || chapter > 23) return;
   const { obj } = packJob(d.db, actor, job_id);
   if (!can(actor, 'surveyor_job.commit', obj)) return;
-  d.db.run('INSERT OR IGNORE INTO survey_pack_reads (id, job_id, user_id, chapter, legal_seq, at) VALUES (?, ?, ?, ?, ?, ?)',
-    [d.newId(), job_id, actor.id, chapter, legal_seq, d.now()]);
+  insertSurveyPackReads(d.db, [d.newId(), job_id, actor.id, chapter, legal_seq, d.now()]);
 }
 
 export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView, lv: LegalView): Readiness {
@@ -118,10 +117,8 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
   if (!legal.ok && !v.purchase_w3) blockers.push({ key: 'legal', words: `The legal check: ${legal.why}`, href: `${base(job_id)}?ch=7` });
 
   // Every built chapter opened by the surveyor — and the legal check again since anyone else last answered it.
-  const reads = surveyor === null ? [] : d.db.all<{ chapter: number; seq: number }>(
-    'SELECT chapter, MAX(legal_seq) AS seq FROM survey_pack_reads WHERE job_id = ? AND user_id = ? GROUP BY chapter', [job_id, surveyor]);
-  const othersLegal = v.pack_id === null || surveyor === null ? 0 : d.db.get<{ s: number | null }>(
-    'SELECT MAX(seq) AS s FROM survey_pack_legal_answers WHERE pack_id = ? AND by_user <> ?', [v.pack_id, surveyor])?.s ?? 0;
+  const reads = surveyor === null ? [] : listSurveyPackReadsChapterSeqByJobIdUserId<{ chapter: number; seq: number }>(d.db, [job_id, surveyor]);
+  const othersLegal = v.pack_id === null || surveyor === null ? 0 : getSurveyPackLegalAnswersSByPackIdByUser<{ s: number | null }>(d.db, [v.pack_id, surveyor])?.s ?? 0;
   const readAt = new Map(reads.map((r) => [r.chapter, r.seq] as const));
   const unread = chaptersToRead().filter((c) => !readAt.has(c) || (c === 7 && (readAt.get(c) ?? -1) < othersLegal));
   if (unread.length > 0) {
@@ -360,8 +357,7 @@ export function approvePack(d: PackDeps, actor: Actor, job_id: string, f: { seq:
       const name = getUsersNById<{ n: string }>(d.db, [actor.id])?.n ?? actor.id;
       const json = canonical(snapshotOf(v, lv, { version, at, by: { id: actor.id, name }, details }, d));
       const fingerprint = fingerprintOf(json);
-      d.db.run('INSERT INTO survey_pack_approvals (id, pack_id, version, pack_seq, legal_seq, snapshot_json, fingerprint, approved_by, approved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [d.newId(), pack_id, version, v.seq, lv.seq, json, fingerprint, actor.id, at]);
+      insertSurveyPackApprovals(d.db, [d.newId(), pack_id, version, v.seq, lv.seq, json, fingerprint, actor.id, at]);
 
       // The surveyor's figures, committed to the job as the workspace commits them — so the claim reads them as before.
       /* PHASE 159c: with work since, the figure is the purchase and every piece of work. The building figure is the
@@ -409,7 +405,7 @@ export function saveDetails(d: PackDeps, actor: Actor, job_id: string, f: { rics
   if (firm.length > 200) return { ok: false, field: 'firm', why: 'Keep the firm’s name under 200 characters.' };
   const now = detailsOf(d.db, actor.id);
   if (now !== null && now.rics_number === rics && (now.firm ?? '') === firm) return { ok: false, why: 'Those are already your details.' };
-  d.db.run('INSERT INTO surveyor_details (id, user_id, rics_number, firm, at) VALUES (?, ?, ?, ?, ?)', [d.newId(), actor.id, rics, firm === '' ? null : firm, d.now()]);
+  insertSurveyorDetails(d.db, [d.newId(), actor.id, rics, firm === '' ? null : firm, d.now()]);
   return { ok: true };
 }
 
@@ -418,10 +414,7 @@ export function approvedVersion(d: PackDeps, actor: Actor, job_id: string, versi
   row: ApprovalRow; snapshot: Snapshot; fingerprint_holds: boolean;
 } | null {
   packJob(d.db, actor, job_id);
-  const r = d.db.get<ApprovalRow & { snapshot_json: string }>(
-    'SELECT a.id, a.version, a.pack_seq, a.legal_seq, a.fingerprint, a.approved_by, u.display_name AS approver_name, a.approved_at, a.snapshot_json ' +
-      'FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN users u ON u.id = a.approved_by WHERE p.job_id = ? AND a.version = ?',
-    [job_id, version]);
+  const r = getSurveyPackApprovalsIdVersionByJobIdVersion<ApprovalRow & { snapshot_json: string }>(d.db, [job_id, version]);
   if (r === undefined) return null;
   const { snapshot_json, ...row } = r;
   return { row, snapshot: JSON.parse(snapshot_json) as Snapshot, fingerprint_holds: fingerprintOf(snapshot_json) === r.fingerprint };

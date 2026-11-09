@@ -36,6 +36,8 @@ import { localStamp } from '../../shared/index.ts';
 import { getUsersRoleById } from '../../core/index.ts';
 import { getBusinessesIdById, getContactsBusinessIdById } from '../crm/index.ts';
 import { getClaimsBusinessIdById } from '../claims/index.ts';
+import { listDisclosureLogIdRecipientByBusinessId } from './data-borrowed.ts';
+import { getDisclosureLogBusinessIdById, insertDisclosureLog } from './data.ts';
 
 export type DisclosureDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -220,16 +222,13 @@ export function recordDisclosure(d: DisclosureDeps, actor: Actor, input: Fields,
   const correctsIn = (input['corrects_id'] ?? '').trim();
   const corrects_id = correctsIn === '' ? null : correctsIn;
   if (corrects_id !== null
-    && d.db.get<{ business_id: string }>('SELECT business_id FROM disclosure_log WHERE id = ?', [corrects_id])?.business_id !== business_id) {
+    && getDisclosureLogBusinessIdById<{ business_id: string }>(d.db, [corrects_id])?.business_id !== business_id) {
     return { ok: false, why: 'a correction must point to an earlier disclosure for this same organisation.' };
   }
 
   const id = d.newId();
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO disclosure_log (id, business_id, claim_id, recipient, recipient_contact_id, recipient_user_id, data_categories, occasion, route, ' +
-        'lawful_basis, disclosed_at, recorded_by, recorded_at, corrects_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, business_id, claim_id, recipient, recipient_contact_id, recipient_user_id, JSON.stringify(cats), occasion, route, basis,
+    insertDisclosureLog(d.db, [id, business_id, claim_id, recipient, recipient_contact_id, recipient_user_id, JSON.stringify(cats), occasion, route, basis,
         disclosed_at, actor.id, at, corrects_id]);
     d.audit.append({
       at, kind: 'DISCLOSURE_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -265,13 +264,10 @@ export const NOT_KEPT_LABEL =
 export function disclosuresFor(db: Db, actor: Actor, business_id: string, s: DisclosureLogSwitch = DISCLOSURE_LOG): DisclosureReading {
   authorise(actor, 'disclosure.read', LOG_OBJ);
   if (!s.enabled || s.in_force_from === null) return { state: 'NOT_KEPT', label: NOT_KEPT_LABEL, rows: [] };
-  const rows = db.all<{
+  const rows = listDisclosureLogIdRecipientByBusinessId<{
     id: string; recipient: string; data_categories: string; occasion: string; route: string; lawful_basis: string;
     disclosed_at: string; corrects_id: string | null; recorder: string;
-  }>(
-    'SELECT d.id, d.recipient, d.data_categories, d.occasion, d.route, d.lawful_basis, d.disclosed_at, d.corrects_id, u.display_name AS recorder ' +
-      'FROM disclosure_log d JOIN users u ON u.id = d.recorded_by WHERE d.business_id = ? ORDER BY d.disclosed_at ASC, d.recorded_at ASC',
-    [business_id]).map((r) => ({
+  }>(db, [business_id]).map((r) => ({
     id: r.id,
     recipient: { code: r.recipient, label: has(RECIPIENTS, r.recipient) ? RECIPIENTS[r.recipient].label : r.recipient },
     categories: (JSON.parse(r.data_categories) as string[]).map((c) => (has(DATA_CATEGORIES, c) ? DATA_CATEGORIES[c] : c)),

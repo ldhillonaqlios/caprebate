@@ -34,7 +34,7 @@ import { authorise, can, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj
 import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAILURE, type LoginResult } from './auth.ts';
 import * as SI from './sign-in.ts';
 import { toActor } from './users.ts';
-import { payloadFor, assertSurveySection } from '../modules/survey/surveyor.ts';
+import { payloadFor, assertSurveySection } from '../modules/survey/index.ts';
 import { handleWeb, refusalAsPage, sendRefusalPage } from './router.ts';
 import { bindResponse, clientIp, PayloadTooLarge, readBody } from './http.ts';
 import { FsObjectStore } from '../shared/objectstore.ts';
@@ -47,6 +47,8 @@ import { openKeptOriginal } from '../modules/claims/index.ts';
 import { formToken, formTokensMode, onceToken, type FormTokens } from './form-token.ts';
 import { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';
 import { listOutboxIdToEmailBySendRequestedSentAt2, updateOutboxLastErrorByIdLastError2, updateOutboxLastErrorByIdLastError3, updateOutboxLastErrorByIdLastError4 } from '../integrations/index.ts';
+import { getSurveyorJobsIdBusinessIdById4 } from '../modules/survey/index.ts';
+import { getInvoicesIdBusinessIdById2, getInvoicesIdBusinessIdById4 } from '../modules/finance/index.ts';
 
 function readCookie(req: IncomingMessage, name: string): string | undefined {
   const raw = req.headers.cookie;
@@ -367,23 +369,16 @@ export async function createApp(
 
     if (path.startsWith('/api/invoices/') && req.method === 'GET') {
       const id = path.slice('/api/invoices/'.length);
-      const row = app.db.get<{ id: string; business_id: string }>(
-        'SELECT id, business_id FROM invoices WHERE id = ?', [id],
-      );
+      const row = getInvoicesIdBusinessIdById2<{ id: string; business_id: string }>(app.db, [id]);
       if (row === undefined) return send(res, 404, { error: 'not found' });
       authorise(actor, 'invoice.read', { type: 'invoice', id: row.id, business_id: row.business_id });
-      const full = app.db.get(
-        'SELECT id, business_id, claim_value_pence, fee_pence, invoice_status, payment_status, vat_position ' +
-          'FROM invoices WHERE id = ?', [id],
-      );
+      const full = getInvoicesIdBusinessIdById4(app.db, [id]);
       return send(res, 200, { invoice: full });
     }
 
     if (path.startsWith('/api/surveyor-jobs/') && req.method === 'GET') {
       const id = path.slice('/api/surveyor-jobs/'.length);
-      const job = app.db.get<{ id: string; business_id: string; surveyor_id: string | null }>(
-        'SELECT id, business_id, surveyor_id FROM surveyor_jobs WHERE id = ?', [id],
-      );
+      const job = getSurveyorJobsIdBusinessIdById4<{ id: string; business_id: string; surveyor_id: string | null }>(app.db, [id]);
       if (job === undefined) return send(res, 404, { error: 'not found' });
       authorise(actor, 'surveyor_job.read', {
         type: 'surveyor_job', id: job.id, business_id: job.business_id, surveyor_id: job.surveyor_id,

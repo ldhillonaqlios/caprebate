@@ -10,7 +10,7 @@ import type { authenticate } from './auth.ts';
 import type { NotFoundAsRefusal } from './backoffice.ts';
 import type { confirmSignup, offerSignup, requestSignup, verifyOpen } from './signup.ts';
 import type { handlePortalSettings } from './staff.ts';
-import type { agreementPage, agreementTick, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement } from '../modules/compliance/legal-approvals.ts';
+import type { agreementPage, agreementTick, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement } from '../modules/compliance/index.ts';
 import { cleanForm } from './typed.ts';
 import { navContext, type NavContext, type NameSwitches } from './nav-context.ts';
 import { piecesPage } from './upload-pieces.ts';

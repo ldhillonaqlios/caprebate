@@ -19,6 +19,7 @@ import type { Actor } from '../../core/index.ts';
 import type { Db } from '../../core/index.ts';
 import { h, raw, page, type Safe } from '../../shared/index.ts';
 import { LEGAL_PAGES, NOTICES_VERSION, agreementLinks, inForce, versionOf, type Approvals, type LegalPageKey, type PageApproval } from '../public-site/index.ts';
+import { getLegalApprovalsCountByPageVersion, getTermsAgreementsCountByUserIdPortalTermsVersion, insertLegalApprovals, insertTermsAgreements, listLegalApprovalsPageVersion } from './data.ts';
 
 /** Every page an approval can be recorded for, with its title. */
 export const APPROVABLE: readonly (readonly [key: LegalPageKey, title: string])[] = Object.freeze([
@@ -33,8 +34,7 @@ export const currentTermsVersions = (): TermsVersions =>
 
 /** The approvals of each page's current version. */
 export function currentApprovals(db: Db): Approvals {
-  const rows = db.all<{ page: LegalPageKey; version: string; approved_by: string; approver_role: 'SOLICITOR' | 'DPO'; approved_on: string }>(
-    'SELECT page, version, approved_by, approver_role, approved_on FROM legal_approvals');
+  const rows = listLegalApprovalsPageVersion<{ page: LegalPageKey; version: string; approved_by: string; approver_role: 'SOLICITOR' | 'DPO'; approved_on: string }>(db);
   const out = new Map<LegalPageKey, PageApproval>();
   for (const [key] of APPROVABLE) {
     const mine = rows.filter((r) => r.page === key && r.version === versionOf(key));
@@ -60,12 +60,11 @@ export function recordApproval(app: App, actor: Actor, f: URLSearchParams, newId
   if (!DAY.test(on) || Number.isNaN(Date.parse(on))) return { ok: false, why: 'Give the date they approved it.' };
   if (on > app.now().slice(0, 10)) return { ok: false, why: 'The date they approved it cannot be in the future.' };
   const version = versionOf(key);
-  const taken = app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM legal_approvals WHERE page = ? AND version = ? AND approver_role = ?', [key, version, role]);
+  const taken = getLegalApprovalsCountByPageVersion<{ n: number }>(app.db, [key, version, role]);
   if ((taken?.n ?? 0) > 0) return { ok: false, why: 'That approval of this version is already recorded.' };
   const id = newId();
   const at = app.now();
-  app.db.run('INSERT INTO legal_approvals (id, page, version, approved_by, approver_role, approved_on, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, key, version, by, role, on, actor.id, at]);
+  insertLegalApprovals(app.db, [id, key, version, by, role, on, actor.id, at]);
   app.audit.append({ at, kind: 'LEGAL_PAGE_APPROVED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'legal_page', object_id: id, detail: { page: key, version, role, approved_on: on } });
   return { ok: true };
@@ -74,15 +73,13 @@ export function recordApproval(app: App, actor: Actor, f: URLSearchParams, newId
 /** Whether this person has agreed to the current version of all three documents. */
 export function hasAgreedCurrent(db: Db, user_id: string): boolean {
   const v = currentTermsVersions();
-  return db.get<{ n: number }>('SELECT COUNT(*) AS n FROM terms_agreements WHERE user_id = ? AND portal_terms_version = ? AND website_terms_version = ? AND privacy_version = ?',
-    [user_id, v.portal_terms, v.website_terms, v.privacy])!.n > 0;
+  return getTermsAgreementsCountByUserIdPortalTermsVersion<{ n: number }>(db, [user_id, v.portal_terms, v.website_terms, v.privacy])!.n > 0;
 }
 
 /** Keep a tick: its date and the three versions, and an audit entry. `at` is when the person ticked. */
 export function keepAgreement(app: App, user_id: string, role: string, at: string, v: TermsVersions, newId: () => string, route: string): void {
   const id = newId();
-  app.db.run('INSERT INTO terms_agreements (id, user_id, agreed_at, portal_terms_version, website_terms_version, privacy_version) VALUES (?, ?, ?, ?, ?, ?)',
-    [id, user_id, at, v.portal_terms, v.website_terms, v.privacy]);
+  insertTermsAgreements(app.db, [id, user_id, at, v.portal_terms, v.website_terms, v.privacy]);
   app.audit.append({ at: app.now(), kind: 'TERMS_AGREED', outcome: 'ALLOWED', actor_id: user_id, actor_role: role,
     object_type: 'terms_agreement', object_id: id, detail: { ...v, ticked_at: at, route } });
 }

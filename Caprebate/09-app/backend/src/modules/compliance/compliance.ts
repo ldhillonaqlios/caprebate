@@ -33,6 +33,7 @@ import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { instantsForLocalMinute, localDate } from '../../shared/index.ts';
+import { getCddChecksCompletedAtByBusinessIdState, getComplianceRefSeriesLastNByKind, getComplianceSettingsValueEffectiveFromBySettingEffectiveFro, getLegalHoldsLiftedAtById, insertComplianceLinks, insertComplianceSettings, insertLegalHolds, listComplianceLinksKIByFromKindFromId, listLegalHoldsIdHoldKindByRecordKindRecordId, listLegalHoldsRecordIdByRecordKindLiftedAt, updateComplianceRefSeriesLastNByKind, updateLegalHoldsLiftedAtLiftedByById } from './data.ts';
 
 export type ComplianceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -158,8 +159,8 @@ export function opaqueRef(prefix: string): string {
  * ================================================================== */
 
 export function nextRef(db: Db, kind: 'RR' | 'CP' | 'PDB'): string {
-  db.run('UPDATE compliance_ref_series SET last_n = last_n + 1 WHERE kind = ?', [kind]);
-  const n = db.get<{ last_n: number }>('SELECT last_n FROM compliance_ref_series WHERE kind = ?', [kind])?.last_n;
+  updateComplianceRefSeriesLastNByKind(db, [kind]);
+  const n = getComplianceRefSeriesLastNByKind<{ last_n: number }>(db, [kind])?.last_n;
   if (n === undefined) throw new Error(`no reference series for ${kind}`);
   return `${kind}-${String(n).padStart(3, '0')}`;
 }
@@ -187,9 +188,7 @@ export type SettingReading = {
 };
 
 export function settingReading(db: Db, setting: string, today: string): SettingReading {
-  const r = db.get<{ value: string; effective_from: string; source: string }>(
-    'SELECT value, effective_from, source FROM compliance_settings WHERE setting = ? AND effective_from <= ? ' +
-      'ORDER BY effective_from DESC, rowid DESC LIMIT 1', [setting, ukDay(today)]);
+  const r = getComplianceSettingsValueEffectiveFromBySettingEffectiveFro<{ value: string; effective_from: string; source: string }>(db, [setting, ukDay(today)]);
   if (r === undefined) return { setting, value: null, label: 'Not set', effective_from: null, source: null }; // Phase 133c: a setting nobody has recorded reads "Not set"
   return { setting, value: r.value, label: SETTING_VALUES[setting]?.[r.value] ?? r.value, effective_from: r.effective_from, source: r.source };
 }
@@ -229,9 +228,7 @@ export function recordSetting(d: ComplianceDeps, actor: Actor, input: Fields): W
   const source = requiredText(input['source'], 1000, 'Where it comes from');
   if (!source.ok) return source;
   const id = d.newId();
-  d.db.run(
-    'INSERT INTO compliance_settings (id, setting, value, effective_from, source, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, setting, value, from.value, source.value, actor.id, d.now()]);
+  insertComplianceSettings(d.db, [id, setting, value, from.value, source.value, actor.id, d.now()]);
   record(d, actor, 'COMPLIANCE_SETTING_RECORDED', 'ALLOWED', 'compliance_setting', id, { setting, value, effective_from: from.value });
   return { ok: true, id };
 }
@@ -250,8 +247,7 @@ export type CddNeed = { readonly what: string; readonly met: boolean; readonly w
  */
 export function cddGateNeed(db: Db, business_id: string, today: string): CddNeed | null {
   if (!amlInScope(db, today)) return null;
-  const k = db.get<{ completed_at: string }>(
-    "SELECT completed_at FROM cdd_checks WHERE business_id = ? AND state = 'COMPLETE' ORDER BY completed_at DESC LIMIT 1", [business_id]);
+  const k = getCddChecksCompletedAtByBusinessIdState<{ completed_at: string }>(db, [business_id]);
   return {
     what: 'Customer due diligence is finished for the organisation',
     met: k !== undefined,
@@ -301,10 +297,7 @@ export function setHold(d: ComplianceDeps, actor: Actor, input: Fields): WriteRe
   for (const c of [rr, cp, bi]) if (!c.ok) return c;
   const id = d.newId();
   try {
-    d.db.run(
-      'INSERT INTO legal_holds (id, hold_kind, record_kind, record_id, reason_kind, rights_request_id, complaint_id, incident_id, reason, review_on, set_by, set_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, hold_kind, record_kind, record_id.value, reason_kind, rr.ok ? rr.value : null, cp.ok ? cp.value : null, bi.ok ? bi.value : null,
+    insertLegalHolds(d.db, [id, hold_kind, record_kind, record_id.value, reason_kind, rr.ok ? rr.value : null, cp.ok ? cp.value : null, bi.ok ? bi.value : null,
         reason.value, review.value, actor.id, d.now()]);
   } catch (e) {
     return { ok: false, why: `The hold was not recorded: ${(e as Error).message.replace(/^.*?: /, '')}` };
@@ -315,12 +308,12 @@ export function setHold(d: ComplianceDeps, actor: Actor, input: Fields): WriteRe
 
 export function liftHold(d: ComplianceDeps, actor: Actor, id: string, input: Fields): WriteResult {
   assertComplianceWrite(actor);
-  const h = d.db.get<{ lifted_at: string | null }>('SELECT lifted_at FROM legal_holds WHERE id = ?', [id]);
+  const h = getLegalHoldsLiftedAtById<{ lifted_at: string | null }>(d.db, [id]);
   if (h === undefined) throw new NotFoundAsRefusal();
   if (h.lifted_at !== null) return { ok: false, why: 'This hold was lifted already.' };
   const reason = requiredText(input['lift_reason'], 2000, 'The reason it is lifted');
   if (!reason.ok) return reason;
-  d.db.run('UPDATE legal_holds SET lifted_at = ?, lifted_by = ?, lift_reason = ? WHERE id = ?', [d.now(), actor.id, reason.value, id]);
+  updateLegalHoldsLiftedAtLiftedByById(d.db, [d.now(), actor.id, reason.value, id]);
   record(d, actor, 'LEGAL_HOLD_LIFTED', 'ALLOWED', 'legal_hold', id, {});
   return { ok: true, id };
 }
@@ -330,7 +323,7 @@ const HOLD_SELECT =
   'rights_request_id, complaint_id, incident_id FROM legal_holds ';
 
 export function holdsFor(db: Db, record_kind: string, record_id: string): HoldRow[] {
-  return db.all<HoldRow>(`${HOLD_SELECT}WHERE record_kind = ? AND record_id = ? ORDER BY set_at`, [record_kind, record_id]);
+  return listLegalHoldsIdHoldKindByRecordKindRecordId<HoldRow>(db, [record_kind, record_id]);
 }
 
 export function holdsForEntry(db: Db, column: 'rights_request_id' | 'complaint_id' | 'incident_id', id: string): HoldRow[] {
@@ -342,8 +335,7 @@ export function holdsForEntry(db: Db, column: 'rights_request_id' | 'complaint_i
 
 /** The live holds, by record kind — what the due-for-deletion list excludes. */
 export function liveHeldIds(db: Db, record_kind: string): Set<string> {
-  return new Set(db.all<{ record_id: string }>(
-    "SELECT record_id FROM legal_holds WHERE record_kind = ? AND lifted_at IS NULL AND hold_kind = 'LEGAL_HOLD'", [record_kind]).map((r) => r.record_id));
+  return new Set(listLegalHoldsRecordIdByRecordKindLiftedAt<{ record_id: string }>(db, [record_kind]).map((r) => r.record_id));
 }
 
 /* ================================================================== *
@@ -374,8 +366,7 @@ export function link(d: ComplianceDeps, actor: Actor, input: Fields): WriteResul
   if (from_kind === to_kind && from_id === to_id) return { ok: false, why: 'An entry is not cross-referenced to itself.' };
   if (linksFor(d.db, from_kind, from_id).some((l) => l.kind === to_kind && l.id === to_id)) return { ok: false, why: 'These two entries are cross-referenced already.' };
   const id = d.newId();
-  d.db.run('INSERT INTO compliance_links (id, from_kind, from_id, to_kind, to_id, linked_by, linked_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, from_kind, from_id, to_kind, to_id, actor.id, d.now()]);
+  insertComplianceLinks(d.db, [id, from_kind, from_id, to_kind, to_id, actor.id, d.now()]);
   record(d, actor, 'COMPLIANCE_LINKED', 'ALLOWED', 'compliance_link', id, { from_kind, from: from_id, to_kind, to: to_id });
   return { ok: true, id };
 }
@@ -383,8 +374,6 @@ export function link(d: ComplianceDeps, actor: Actor, input: Fields): WriteResul
 export type LinkLine = { readonly kind: string; readonly id: string; readonly ref: string | null; readonly label: string };
 
 export function linksFor(db: Db, kind: string, id: string): LinkLine[] {
-  const rows = db.all<{ k: string; i: string }>(
-    'SELECT to_kind AS k, to_id AS i FROM compliance_links WHERE from_kind = ? AND from_id = ? ' +
-      'UNION SELECT from_kind AS k, from_id AS i FROM compliance_links WHERE to_kind = ? AND to_id = ?', [kind, id, kind, id]);
+  const rows = listComplianceLinksKIByFromKindFromId<{ k: string; i: string }>(db, [kind, id, kind, id]);
   return rows.map((r) => ({ kind: r.k, id: r.i, ref: refOf(db, r.k, r.i), label: words(LINK_KINDS, r.k, r.k) }));
 }

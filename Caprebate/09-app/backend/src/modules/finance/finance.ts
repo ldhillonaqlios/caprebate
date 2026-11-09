@@ -62,6 +62,8 @@ import {
 } from '../../shared/index.ts';
 import { formatPence } from '../../shared/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { getInvoicesIdBusinessIdById3, updateInvoicesInvoiceStatusPaymentStatusById } from './data.ts';
+import { getInvoicesIdBusinessIdByIdClaimId, listInvoicesIdBusinessIdByClaimId2 } from './data-borrowed.ts';
 
 export { NotFoundAsRefusal };
 
@@ -447,7 +449,7 @@ function toRow(r: InvoiceDbRow): FinanceRow {
 export function invoices(db: Db, actor: Actor, limit = 200): FinanceRow[] {
   assertFinanceSection(actor);
   // CRM 7 of 10: AN ORGANISATION'S INVOICES FROM BEFORE INVOICES SAT ON THE CLAIM. A claim's invoice is src/modules/finance/invoices.ts's.
-  return db.all<InvoiceDbRow>(`${INVOICE_SELECT}WHERE i.claim_id IS NULL ORDER BY i.created_at DESC, b.name ASC LIMIT ?`, [limit])
+  return listInvoicesIdBusinessIdByClaimId2<InvoiceDbRow>(db, [limit])
     .filter((r) =>
       can(actor, 'invoice.read', { type: 'invoice', id: r.id, business_id: r.business_id })
       && can(actor, 'business.read', { type: 'business', id: r.business_id }))
@@ -455,7 +457,7 @@ export function invoices(db: Db, actor: Actor, limit = 200): FinanceRow[] {
 }
 
 export function invoiceById(db: Db, actor: Actor, id: string): FinanceRow {
-  const r = db.get<InvoiceDbRow>(`${INVOICE_SELECT}WHERE i.id = ? AND i.claim_id IS NULL`, [id]);
+  const r = getInvoicesIdBusinessIdByIdClaimId<InvoiceDbRow>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'invoice.read', { type: 'invoice', id: r.id, business_id: r.business_id });
   authorise(actor, 'business.read', { type: 'business', id: r.business_id });
@@ -489,9 +491,7 @@ export function setStatuses(
   d: FinanceDeps, actor: Actor, invoice_id: string,
   input: { invoice_status: string; payment_status: string },
 ): UpdateResult {
-  const r = d.db.get<{ id: string; business_id: string; claim_id: string | null }>(
-    'SELECT id, business_id, claim_id FROM invoices WHERE id = ?', [invoice_id],
-  );
+  const r = getInvoicesIdBusinessIdById3<{ id: string; business_id: string; claim_id: string | null }>(d.db, [invoice_id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'invoice.write', { type: 'invoice', id: r.id, business_id: r.business_id });
   // CRM 7 of 10: a claim's invoice is never typed into a state. It is raised, sent or cancelled, and what it is owed is read.
@@ -517,8 +517,7 @@ export function setStatuses(
     };
   }
 
-  d.db.run('UPDATE invoices SET invoice_status = ?, payment_status = ? WHERE id = ?',
-    [input.invoice_status, input.payment_status, invoice_id]);
+  updateInvoicesInvoiceStatusPaymentStatusById(d.db, [input.invoice_status, input.payment_status, invoice_id]);
 
   d.audit.append({
     at: d.now(), kind: 'INVOICE_UPDATED', actor_id: actor.id, actor_role: actor.role,

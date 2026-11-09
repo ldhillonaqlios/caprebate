@@ -38,6 +38,8 @@ import { getResearchSourcesIdStateByBusinessIdSourceId } from '../../integration
 import { getUsersIdByIdRole } from '../../core/index.ts';
 import { getClaimsIdByIdBusinessId, getDocumentsIdByIdBusinessId, listDocumentsIdTypeCodeByBusinessId } from '../claims/index.ts';
 import { getBusinessesIdById, getBusinessesNameById, getContactsIdByIdBusinessId, listContactsIdFullNameByBusinessId } from '../crm/index.ts';
+import { getAmlFirmRiskAssessmentsAssessedOnDocumentRef, getAmlOfficersAppointedOnEndedOnById, getCddBeneficialOwnersCountByCheckId, getCddChecksIdBusinessIdById, getCddChecksIdByIdBusinessId, getCddPscDecisionsIdByCheckIdDecision, insertAmlFirmRiskAssessments, insertAmlOfficers, insertCddBeneficialOwners, insertCddChecks, insertCddMonitoringNotes, insertCddPscDecisions, listCddMonitoringNotesNotedOnNoteByBusinessId, listCddPscDecisionsIdDecisionByCheckId, updateAmlOfficersEndedOnById, updateCddChecksIdentifiedVerificationMethodById, updateCddChecksStateCompletedAtById, updateCddChecksStateWithdrawnReasonById } from './data.ts';
+import { listAmlOfficersIdOffice, listCddBeneficialOwnersIdContactIdByCheckId, listCddChecksIdBusinessId } from './data-borrowed.ts';
 
 /* ================================================================== *
  * 1 · THE VOCABULARIES — the paper's own, section 5
@@ -192,8 +194,7 @@ export function recordOfficer(d: ComplianceDeps, actor: Actor, input: Fields): W
     if (on === null) return { ok: false, why: 'Give the date of appointment.' };
     const source = check(requiredText(input['source'], 1000, 'Where the appointment is named in writing'));
     const id = d.newId();
-    d.db.run('INSERT INTO aml_officers (id, office, user_id, appointed_on, source, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, office, user_id, on, source, actor.id, d.now()]);
+    insertAmlOfficers(d.db, [id, office, user_id, on, source, actor.id, d.now()]);
     record(d, actor, 'AML_OFFICER_RECORDED', 'ALLOWED', 'aml_officer', id, { office, user: user_id, change: 'APPOINTED' });
     return { ok: true, id };
   });
@@ -202,12 +203,12 @@ export function recordOfficer(d: ComplianceDeps, actor: Actor, input: Fields): W
 export function endOfficer(d: ComplianceDeps, actor: Actor, id: string, input: Fields): WriteResult {
   assertComplianceWrite(actor);
   return guarded(() => {
-    const row = d.db.get<{ appointed_on: string; ended_on: string | null }>('SELECT appointed_on, ended_on FROM aml_officers WHERE id = ?', [id]);
+    const row = getAmlOfficersAppointedOnEndedOnById<{ appointed_on: string; ended_on: string | null }>(d.db, [id]);
     if (row === undefined) throw new NotFoundAsRefusal();
     if (row.ended_on !== null) return { ok: false, why: 'This appointment has ended already.' };
     const on = check(dateField(input['ended_on'], 'The date it ended'));
     if (on === null || on < row.appointed_on) return { ok: false, why: 'Give the date it ended, on or after the appointment.' };
-    d.db.run('UPDATE aml_officers SET ended_on = ? WHERE id = ?', [on, id]);
+    updateAmlOfficersEndedOnById(d.db, [on, id]);
     record(d, actor, 'AML_OFFICER_RECORDED', 'ALLOWED', 'aml_officer', id, { change: 'ENDED' });
     return { ok: true, id };
   });
@@ -223,8 +224,7 @@ export function recordRiskAssessment(d: ComplianceDeps, actor: Actor, input: Fie
     const named = input['contingent_fee_named'] === 'YES' ? 1 : input['contingent_fee_named'] === 'NO' ? 0 : null;
     if (named === null) return { ok: false, why: 'Say whether it names the contingent fee as a risk factor — the paper requires it to.' };
     const id = d.newId();
-    d.db.run('INSERT INTO aml_firm_risk_assessments (id, assessed_on, document_ref, covers, contingent_fee_named, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, on, ref, covers, named, actor.id, d.now()]);
+    insertAmlFirmRiskAssessments(d.db, [id, on, ref, covers, named, actor.id, d.now()]);
     record(d, actor, 'AML_RISK_ASSESSMENT_RECORDED', 'ALLOWED', 'aml_risk_assessment', id, { assessed_on: on, contingent_fee_named: named === 1 });
     return { ok: true, id };
   });
@@ -249,7 +249,7 @@ const CHECK_SELECT =
   'risk_rating, risk_level, risk_rating_basis, checked_on, checked_by, state, completed_at, withdrawn_reason, created_at, updated_at FROM cdd_checks ';
 
 function loadCheck(db: Db, id: string): CheckRow {
-  const r = db.get<CheckRow>(`${CHECK_SELECT}WHERE id = ?`, [id]);
+  const r = getCddChecksIdBusinessIdById<CheckRow>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
 }
@@ -269,10 +269,7 @@ export function openCheck(d: ComplianceDeps, actor: Actor, input: Fields): Write
     if (type === 'OTHER' && note === null) return { ok: false, why: 'Say what kind of claimant this is — the paper does not cover it.' };
     const id = d.newId();
     const at = d.now();
-    d.db.run(
-      'INSERT INTO cdd_checks (id, business_id, claim_id, claimant_type, claimant_type_note, state, created_by, created_at, updated_at) ' +
-        "VALUES (?, ?, ?, ?, ?, 'IN_PROGRESS', ?, ?, ?)",
-      [id, business_id, claim_id, type, note, actor.id, at, at]);
+    insertCddChecks(d.db, [id, business_id, claim_id, type, note, actor.id, at, at]);
     record(d, actor, 'CDD_CHECK_CREATED', 'ALLOWED', 'cdd_check', id, { business: business_id, claim: claim_id, claimant_type: type });
     return { ok: true, id };
   });
@@ -316,11 +313,7 @@ export function updateCheck(d: ComplianceDeps, actor: Actor, id: string, input: 
     }
     if (next.sanctions_screen !== null && next.sanctions_screened_on === null) return { ok: false, why: 'Give the date of the sanctions screen.' };
     const changed = CHECK_FIELDS.filter((k) => next[k] !== c[k]);
-    d.db.run(
-      'UPDATE cdd_checks SET identified = ?, verification_method = ?, register_ref = ?, evidence_document_id = ?, beneficial_ownership = ?, ' +
-        'authority_basis = ?, authority_contact_id = ?, authority_evidence = ?, entity_status = ?, sanctions_screen = ?, sanctions_screened_on = ?, ' +
-        'risk_rating = ?, risk_level = ?, risk_rating_basis = ?, checked_on = ?, checked_by = ?, updated_at = ? WHERE id = ?',
-      [next.identified, next.verification_method, next.register_ref, next.evidence_document_id, next.beneficial_ownership, next.authority_basis,
+    updateCddChecksIdentifiedVerificationMethodById(d.db, [next.identified, next.verification_method, next.register_ref, next.evidence_document_id, next.beneficial_ownership, next.authority_basis,
         next.authority_contact_id, next.authority_evidence, next.entity_status, next.sanctions_screen, next.sanctions_screened_on,
         next.risk_rating, next.risk_level, next.risk_rating_basis, next.checked_on, next.checked_on === null ? null : actor.id, d.now(), id]);
     record(d, actor, 'CDD_CHECK_UPDATED', 'ALLOWED', 'cdd_check', id, { fields: changed });
@@ -362,10 +355,7 @@ export function recordPscDecision(d: ComplianceDeps, actor: Actor, check_id: str
     const on = check(dateField(input['decided_on'], 'The date of the decision'));
     if (on === null) return { ok: false, why: 'The decision is dated.' };
     const id = d.newId();
-    d.db.run(
-      'INSERT INTO cdd_psc_decisions (id, check_id, research_source_id, pull_retrieved_at, decision, reasoning, decided_on, decided_by, recorded_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, check_id, pull.source_row_id, pull.retrieved_at, decision, reasoning, on, actor.id, d.now()]);
+    insertCddPscDecisions(d.db, [id, check_id, pull.source_row_id, pull.retrieved_at, decision, reasoning, on, actor.id, d.now()]);
     record(d, actor, 'CDD_PSC_DECISION_RECORDED', 'ALLOWED', 'cdd_psc_decision', id, { check: check_id, decision, decided_on: on });
     return { ok: true, id };
   });
@@ -390,8 +380,7 @@ export function recordOwner(d: ComplianceDeps, actor: Actor, check_id: string, i
         return { ok: false, why: 'Name the evidence document, on this organisation.' };
       }
     } else {
-      const relied = d.db.get<{ id: string }>(
-        "SELECT id FROM cdd_psc_decisions WHERE check_id = ? AND decision = 'RELIED_ON_FOR_BENEFICIAL_OWNERSHIP' ORDER BY rowid DESC LIMIT 1", [check_id]);
+      const relied = getCddPscDecisionsIdByCheckIdDecision<{ id: string }>(d.db, [check_id]);
       if (relied === undefined) {
         record(d, actor, 'CDD_OWNER_RECORDED', 'REFUSED', 'cdd_check', check_id, { reason: 'E_PSC_NOT_BENEFICIAL_OWNERSHIP' });
         return { ok: false, why: `The PSC pull has not been relied on for beneficial ownership on this check. ${PSC_SEPARATION}` };
@@ -400,10 +389,7 @@ export function recordOwner(d: ComplianceDeps, actor: Actor, check_id: string, i
     }
     const verified = check(textField(input['verified_how'], 2000, 'How the owner was verified'));
     const id = d.newId();
-    d.db.run(
-      'INSERT INTO cdd_beneficial_owners (id, check_id, contact_id, basis_of_control, identified_from, evidence_document_id, psc_decision_id, verified_how, recorded_by, recorded_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, check_id, contact_id, basis, from, from === 'EVIDENCE_DOCUMENT' ? doc : null, decision, verified, actor.id, d.now()]);
+    insertCddBeneficialOwners(d.db, [id, check_id, contact_id, basis, from, from === 'EVIDENCE_DOCUMENT' ? doc : null, decision, verified, actor.id, d.now()]);
     record(d, actor, 'CDD_OWNER_RECORDED', 'ALLOWED', 'cdd_owner', id, { check: check_id, contact: contact_id, identified_from: from });
     return { ok: true, id };
   });
@@ -418,7 +404,7 @@ export function missingForCompletion(db: Db, c: CheckRow): string[] {
   if (c.evidence_document_id === null && c.register_ref === null) out.push('the evidence document or the register number');
   if (c.beneficial_ownership === null) out.push('the beneficial ownership position');
   if (c.beneficial_ownership === 'RECORDED'
-    && (db.get<{ n: number }>('SELECT COUNT(*) AS n FROM cdd_beneficial_owners WHERE check_id = ?', [c.id])?.n ?? 0) === 0) {
+    && (getCddBeneficialOwnersCountByCheckId<{ n: number }>(db, [c.id])?.n ?? 0) === 0) {
     out.push('at least one beneficial owner');
   }
   if (c.authority_basis === null) out.push('the authority to bind');
@@ -435,7 +421,7 @@ export function completeCheck(d: ComplianceDeps, actor: Actor, id: string): Writ
     const missing = missingForCompletion(d.db, c);
     if (missing.length > 0) return { ok: false, why: `Not finished — it still needs ${missing.join(', ')}.` };
     const at = d.now();
-    d.db.run("UPDATE cdd_checks SET state = 'COMPLETE', completed_at = ?, updated_at = ? WHERE id = ?", [at, at, id]);
+    updateCddChecksStateCompletedAtById(d.db, [at, at, id]);
     record(d, actor, 'CDD_CHECK_COMPLETED', 'ALLOWED', 'cdd_check', id, { business: c.business_id });
     return { ok: true, id };
   });
@@ -447,7 +433,7 @@ export function withdrawCheck(d: ComplianceDeps, actor: Actor, id: string, input
     const c = loadCheck(d.db, id);
     if (c.state !== 'IN_PROGRESS') return { ok: false, why: 'Only an open check is withdrawn.' };
     const reason = check(requiredText(input['withdrawn_reason'], 2000, 'Why it is withdrawn'));
-    d.db.run("UPDATE cdd_checks SET state = 'WITHDRAWN', withdrawn_reason = ?, updated_at = ? WHERE id = ?", [reason, d.now(), id]);
+    updateCddChecksStateWithdrawnReasonById(d.db, [reason, d.now(), id]);
     record(d, actor, 'CDD_CHECK_WITHDRAWN', 'ALLOWED', 'cdd_check', id, {});
     return { ok: true, id };
   });
@@ -459,15 +445,14 @@ export function addMonitoringNote(d: ComplianceDeps, actor: Actor, input: Fields
     const business_id = (input['business_id'] ?? '').trim();
     if (getBusinessesIdById<{ id: string }>(d.db, [business_id]) === undefined) return { ok: false, why: 'Choose the organisation.' };
     const check_id = check(textField(input['check_id'], 100, 'The check'));
-    if (check_id !== null && d.db.get<{ id: string }>('SELECT id FROM cdd_checks WHERE id = ? AND business_id = ?', [check_id, business_id]) === undefined) {
+    if (check_id !== null && getCddChecksIdByIdBusinessId<{ id: string }>(d.db, [check_id, business_id]) === undefined) {
       return { ok: false, why: 'That check is not one of this organisation’s.' };
     }
     const on = check(dateField(input['noted_on'], 'The date'));
     if (on === null) return { ok: false, why: 'Date the note.' };
     const note = check(requiredText(input['note'], 4000, 'The note'));
     const id = d.newId();
-    d.db.run('INSERT INTO cdd_monitoring_notes (id, business_id, check_id, noted_on, note, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, business_id, check_id, on, note, actor.id, d.now()]);
+    insertCddMonitoringNotes(d.db, [id, business_id, check_id, on, note, actor.id, d.now()]);
     record(d, actor, 'CDD_MONITORING_NOTED', 'ALLOWED', 'cdd_monitoring_note', id, { business: business_id, check: check_id });
     return { ok: true, id };
   });
@@ -500,25 +485,21 @@ export function amlView(db: Db, actor: Actor, today: string): AmlView {
   assertComplianceRead(actor);
   const scope = settingReading(db, 'AML_IN_SCOPE', today);
   const inForce = scope.value === 'true';
-  const ra = db.get<{ assessed_on: string; document_ref: string; covers: string; contingent_fee_named: number }>(
-    'SELECT assessed_on, document_ref, covers, contingent_fee_named FROM aml_firm_risk_assessments ORDER BY assessed_on DESC, rowid DESC LIMIT 1');
+  const ra = getAmlFirmRiskAssessmentsAssessedOnDocumentRef<{ assessed_on: string; document_ref: string; covers: string; contingent_fee_named: number }>(db);
   return {
     in_scope: scope, in_force: inForce,
     effect: inForce
       ? 'ON — a claim cannot pass the engagement step until its organisation has a finished check.'
       : 'OFF — nothing here blocks a claim. The register can still be kept. Whether it must be is with the accountant and a solicitor.',
     limitation: TWO_PERSON_LIMITATION,
-    officers: db.all<{ id: string; office: string; who: string; appointed_on: string; ended_on: string | null; source: string }>(
-      'SELECT o.id, o.office, u.display_name AS who, o.appointed_on, o.ended_on, o.source FROM aml_officers o JOIN users u ON u.id = o.user_id ORDER BY o.appointed_on DESC')
+    officers: listAmlOfficersIdOffice<{ id: string; office: string; who: string; appointed_on: string; ended_on: string | null; source: string }>(db)
       .map((o) => ({ ...o, office: words(OFFICES, o.office, o.office) })),
     risk_assessment: ra === undefined ? null
       : { assessed_on: ra.assessed_on, document_ref: ra.document_ref, covers: ra.covers, contingent_fee_named: ra.contingent_fee_named === 1, review_due: plusYear(ra.assessed_on) },
     risk_assessment_reading: ra === undefined
       ? 'No firm-wide risk assessment is recorded. The paper wants one — a few pages, naming the contingent fee — reviewed at least annually.'
       : `Dated ${ra.assessed_on}; the paper wants it reviewed at least annually, so by ${plusYear(ra.assessed_on)}${plusYear(ra.assessed_on) < ukDay(today) ? ' — OVERDUE' : ''}.`,
-    checks: db.all<{ id: string; business_id: string; organisation: string; claimant_type: string; state: string; completed_at: string | null }>(
-      'SELECT k.id, k.business_id, b.name AS organisation, k.claimant_type, k.state, k.completed_at FROM cdd_checks k JOIN businesses b ON b.id = k.business_id ' +
-        'ORDER BY k.created_at DESC LIMIT 500')
+    checks: listCddChecksIdBusinessId<{ id: string; business_id: string; organisation: string; claimant_type: string; state: string; completed_at: string | null }>(db)
       .map((k) => ({ ...k, claimant_type: words(CLAIMANT_TYPES, k.claimant_type, k.claimant_type) })),
     psc_separation: PSC_SEPARATION,
     risk_rating_note: RISK_RATING_NOTE,
@@ -545,13 +526,10 @@ export function checkView(db: Db, actor: Actor, id: string): CheckView {
   return {
     check: { ...c, organisation: org, claimant_label: words(CLAIMANT_TYPES, c.claimant_type, c.claimant_type) },
     guide: CLAIMANT_GUIDE[c.claimant_type] ?? (CLAIMANT_GUIDE['OTHER'] as ClaimantGuide),
-    owners: db.all<{ id: string; contact_id: string; contact: string; basis_of_control: string; identified_from: string; psc_decision_id: string | null; verified_how: string | null }>(
-      'SELECT o.id, o.contact_id, c.full_name AS contact, o.basis_of_control, o.identified_from, o.psc_decision_id, o.verified_how ' +
-        'FROM cdd_beneficial_owners o JOIN contacts c ON c.id = o.contact_id WHERE o.check_id = ? ORDER BY o.recorded_at', [id]),
+    owners: listCddBeneficialOwnersIdContactIdByCheckId<{ id: string; contact_id: string; contact: string; basis_of_control: string; identified_from: string; psc_decision_id: string | null; verified_how: string | null }>(db, [id]),
     psc_pull: pscPullReading(db, c.business_id),
-    psc_decisions: db.all<{ id: string; decision: string; reasoning: string; decided_on: string; pull_retrieved_at: string | null }>(
-      'SELECT id, decision, reasoning, decided_on, pull_retrieved_at FROM cdd_psc_decisions WHERE check_id = ? ORDER BY rowid', [id]),
-    notes: db.all<{ noted_on: string; note: string }>('SELECT noted_on, note FROM cdd_monitoring_notes WHERE business_id = ? ORDER BY noted_on DESC', [c.business_id]),
+    psc_decisions: listCddPscDecisionsIdDecisionByCheckId<{ id: string; decision: string; reasoning: string; decided_on: string; pull_retrieved_at: string | null }>(db, [id]),
+    notes: listCddMonitoringNotesNotedOnNoteByBusinessId<{ noted_on: string; note: string }>(db, [c.business_id]),
     missing: c.state === 'IN_PROGRESS' ? missingForCompletion(db, c) : [],
     contacts: listContactsIdFullNameByBusinessId<{ id: string; full_name: string }>(db, [c.business_id]),
     documents: listDocumentsIdTypeCodeByBusinessId<{ id: string; label: string }>(db, [c.business_id]),

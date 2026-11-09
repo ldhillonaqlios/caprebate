@@ -27,7 +27,7 @@
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import { outboxTransport } from '../../integrations/index.ts';
-import { tipsOff } from '../admin/templates.ts';
+import { tipsOff } from '../admin/index.ts';
 import {
   ClockInputError, LIMB_LABELS, LIMBS, EXTENSION_GROUNDS, acknowledgementClock, limbClock, complaintTargets,
   type AckClock, type ComplaintTargets, type Limb, type LimbClock, type LimbClockInput,
@@ -41,6 +41,8 @@ import { listUsersIdDisplayNameByRoleEmailCanonical } from '../../core/index.ts'
 import { listConsentAnswersIdKindByContactId } from '../assessment/index.ts';
 import { getBusinessesIdById, getContactsIdById, getLeadsIdById, listClientTasksIdRequestedTypeByBusinessIdKind, listContactsIdFullName, listIntroducerShareConsentsIdDecisionByBusinessId, listStaffTasksIdTitleByContactId } from '../crm/index.ts';
 import { getClaimsIdByIdBusinessId } from '../claims/index.ts';
+import { getComplaintsById, getComplaintsRefReceivedAtById, getRightsRequestLimbsIdRequestIdByRequestIdLimb, getRightsRequestsById, insertComplaintProgressUpdates, insertComplaints, insertRightsRequestLimbs, insertRightsRequestLimbs2, insertRightsRequests, listComplaintProgressUpdatesToldOnByComplaintId, listComplaintProgressUpdatesToldOnSaidByComplaintId, listComplaints, listComplaintsIdComplaintRef, listComplaintsReceivedAtIs164a, listRightsRequestLimbsIdRequestIdByRequestId, listRightsRequestLimbsIdRequestIdByRequestId2, listRightsRequests, listRightsRequestsIdRequestRef, updateComplaintsAllegedInfringementInfringementMappingById, updateComplaintsIs164aClassificationReasonById, updateComplaintsStatusOnwardRouteGivenById, updateRightsRequestLimbsClarificationRequestedAtClarificatio, updateRightsRequestsRequesterAsDescribedClassificationAltern, updateRightsRequestsStatusResponseContentCheckById } from './data.ts';
+import { getRightsRequestsRefReceivedAtById } from './data-borrowed.ts';
 
 class Refusal extends Error {}
 
@@ -224,9 +226,8 @@ export function draftLetter(db: Db, actor: Actor, kind: LetterKind, entry_id: st
   assertComplianceRead(actor);
   const spec = LETTERS[kind];
   const row = spec.register === 'COMPLAINT'
-    ? db.get<{ ref: string; received_at: string; business_id: string | null }>('SELECT complaint_ref AS ref, received_at, business_id FROM complaints WHERE id = ?', [entry_id])
-    : db.get<{ ref: string; received_at: string; business_id: string | null }>(
-      'SELECT r.request_ref AS ref, r.received_at, c.business_id FROM rights_requests r LEFT JOIN contacts c ON c.id = r.contact_id WHERE r.id = ?', [entry_id]);
+    ? getComplaintsRefReceivedAtById<{ ref: string; received_at: string; business_id: string | null }>(db, [entry_id])
+    : getRightsRequestsRefReceivedAtById<{ ref: string; received_at: string; business_id: string | null }>(db, [entry_id]);
   if (row === undefined) throw new NotFoundAsRefusal();
   return { ...letterBody(kind, row.ref, ukDay(row.received_at), extra), business_id: row.business_id };
 }
@@ -284,7 +285,7 @@ const LIMB_SELECT =
   'extension_reasons, decision, decision_reasoning, undue_delay_assessment FROM rights_request_limbs ';
 
 function loadRequest(db: Db, id: string): RequestRow {
-  const r = db.get<RequestRow>(`${REQUEST_SELECT}WHERE id = ?`, [id]);
+  const r = getRightsRequestsById<RequestRow>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
 }
@@ -335,14 +336,11 @@ export function logRequest(d: ComplianceDeps, actor: Actor, input: Fields): Writ
     const at = d.now();
     const ref = d.db.tx(() => {
       const r = nextRef(d.db, 'RR');
-      d.db.run(
-        'INSERT INTO rights_requests (id, request_ref, received_at, received_via, received_via_detail, forwarded_at, forwarded_by, requester_as_described, ' +
-          "request_verbatim, contact_id, lead_id, classification_alternatives, status, recorded_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, ?)",
-        [id, r, received, via, check(textField(input['received_via_detail'], 500, 'Where it arrived')), forwarded,
+      insertRightsRequests(d.db, [id, r, received, via, check(textField(input['received_via_detail'], 500, 'Where it arrived')), forwarded,
           check(textField(input['forwarded_by'], 200, 'Who forwarded it')), check(textField(input['requester_as_described'], 2000, 'How they describe themselves')),
           verbatim, contact_id, lead_id, check(textField(input['classification_alternatives'], 2000, 'The alternative considered')), actor.id, at, at]);
       for (const limb of limbs) {
-        d.db.run('INSERT INTO rights_request_limbs (id, request_id, limb, created_at, updated_at) VALUES (?, ?, ?, ?, ?)', [d.newId(), id, limb, at, at]);
+        insertRightsRequestLimbs2(d.db, [d.newId(), id, limb, at, at]);
       }
       return r;
     });
@@ -388,12 +386,7 @@ export function updateRequest(d: ComplianceDeps, actor: Actor, id: string, input
     if (probe !== null) return { ok: false, why: probe };
     const changed = [...REQUEST_TEXT.map((x) => x[0]), ...REQUEST_MOMENTS.map((x) => x[0]), 'identity_status', 'identity_route', 'identity_outcome', 'status']
       .filter((k) => next[k] !== (cur[k] ?? null));
-    d.db.run(
-      'UPDATE rights_requests SET requester_as_described = ?, classification_alternatives = ?, identity_standard_applied = ?, authority_grantor = ?, ' +
-        'clarification = ?, search_scope = ?, records_found = ?, response_route = ?, outcome = ?, received_via_detail = ?, forwarded_by = ?, ' +
-        'forwarded_at = ?, id_requested_at = ?, id_received_at = ?, fee_charged_at = ?, fee_paid_at = ?, restriction_applied_at = ?, responded_at = ?, ' +
-        'identity_status = ?, identity_route = ?, identity_outcome = ?, identity_evidence = ?, fee_status = ?, search_done_on = ?, status = ?, updated_at = ? WHERE id = ?',
-      [next['requester_as_described'] ?? null, next['classification_alternatives'] ?? null, next['identity_standard_applied'] ?? null, next['authority_grantor'] ?? null,
+    updateRightsRequestsRequesterAsDescribedClassificationAltern(d.db, [next['requester_as_described'] ?? null, next['classification_alternatives'] ?? null, next['identity_standard_applied'] ?? null, next['authority_grantor'] ?? null,
         next['clarification'] ?? null, next['search_scope'] ?? null, next['records_found'] ?? null, next['response_route'] ?? null, next['outcome'] ?? null,
         next['received_via_detail'] ?? null, next['forwarded_by'] ?? null, next['forwarded_at'] ?? null, next['id_requested_at'] ?? null,
         next['id_received_at'] ?? null, next['fee_charged_at'] ?? null, next['fee_paid_at'] ?? null, next['restriction_applied_at'] ?? null,
@@ -407,7 +400,7 @@ export function updateRequest(d: ComplianceDeps, actor: Actor, id: string, input
 /** Every limb's clock must still be computable from what the request now says — a date the Article cannot produce is refused. */
 function limbClockProbe(db: Db, r: RequestRow, next: Record<string, string | null>): string | null {
   const merged = { ...r, ...next } as RequestRow;
-  for (const l of db.all<LimbRow>(`${LIMB_SELECT}WHERE request_id = ?`, [r.id])) {
+  for (const l of listRightsRequestLimbsIdRequestIdByRequestId<LimbRow>(db, [r.id])) {
     try { limbClock(clockInput(merged, l)); } catch (e) { if (e instanceof ClockInputError || e instanceof RangeError) return e.message; throw e; }
   }
   return null;
@@ -420,7 +413,7 @@ export function recordLimb(d: ComplianceDeps, actor: Actor, id: string, input: F
     if (r.status === 'CLOSED') return { ok: false, why: 'A closed request is kept as it was.' };
     const limb = input['limb'] ?? null;
     if (limb === null || !(LIMBS as readonly string[]).includes(limb)) return { ok: false, why: 'Choose the right this is about.' };
-    const existing = d.db.get<LimbRow>(`${LIMB_SELECT}WHERE request_id = ? AND limb = ?`, [id, limb]);
+    const existing = getRightsRequestLimbsIdRequestIdByRequestIdLimb<LimbRow>(d.db, [id, limb]);
     const cur = (existing ?? {}) as Record<string, string | null>;
     const moment = (k: string, what: string): string | null => (Object.hasOwn(input, k) ? check(momentField(input[k], what)) : (cur[k] ?? null));
     const text = (k: string, max: number, what: string): string | null => (Object.hasOwn(input, k) ? check(textField(input[k], max, what)) : (cur[k] ?? null));
@@ -439,16 +432,10 @@ export function recordLimb(d: ComplianceDeps, actor: Actor, id: string, input: F
     limbClock(clockInput(r, next));
     const at = d.now();
     if (existing === undefined) {
-      d.db.run(
-        'INSERT INTO rights_request_limbs (id, request_id, limb, clarification_requested_at, clarification_received_at, extension_notified_at, extension_ground, ' +
-          'extension_reasons, decision, decision_reasoning, undue_delay_assessment, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [next.id, id, limb, next.clarification_requested_at, next.clarification_received_at, next.extension_notified_at, next.extension_ground,
+      insertRightsRequestLimbs(d.db, [next.id, id, limb, next.clarification_requested_at, next.clarification_received_at, next.extension_notified_at, next.extension_ground,
           next.extension_reasons, next.decision, next.decision_reasoning, next.undue_delay_assessment, at, at]);
     } else {
-      d.db.run(
-        'UPDATE rights_request_limbs SET clarification_requested_at = ?, clarification_received_at = ?, extension_notified_at = ?, extension_ground = ?, ' +
-          'extension_reasons = ?, decision = ?, decision_reasoning = ?, undue_delay_assessment = ?, updated_at = ? WHERE id = ?',
-        [next.clarification_requested_at, next.clarification_received_at, next.extension_notified_at, next.extension_ground, next.extension_reasons,
+      updateRightsRequestLimbsClarificationRequestedAtClarificatio(d.db, [next.clarification_requested_at, next.clarification_received_at, next.extension_notified_at, next.extension_ground, next.extension_reasons,
           next.decision, next.decision_reasoning, next.undue_delay_assessment, at, next.id]);
     }
     record(d, actor, 'RIGHTS_REQUEST_LIMB_RECORDED', 'ALLOWED', 'rights_request', id, { ref: r.request_ref, limb, decision: next.decision });
@@ -465,7 +452,7 @@ export function closeRequest(d: ComplianceDeps, actor: Actor, id: string, input:
   return guarded(() => {
     const r = loadRequest(d.db, id);
     if (r.status === 'CLOSED') return { ok: false, why: 'This request is closed already.' };
-    const limbs = d.db.all<LimbRow>(`${LIMB_SELECT}WHERE request_id = ?`, [id]);
+    const limbs = listRightsRequestLimbsIdRequestIdByRequestId<LimbRow>(d.db, [id]);
     const missing: string[] = [];
     if (r.responded_at === null) missing.push('when the response was sent');
     if (r.search_scope === null) missing.push('what was searched — “nothing found” with no search is not an answer');
@@ -484,8 +471,7 @@ export function closeRequest(d: ComplianceDeps, actor: Actor, id: string, input:
     }
     if (missing.length > 0) return { ok: false, why: `Not closed — it still needs ${missing.join('; ')}.` };
     const at = d.now();
-    d.db.run("UPDATE rights_requests SET status = 'CLOSED', response_content_check = ?, closed_at = ?, closed_by = ?, updated_at = ? WHERE id = ?",
-      [JSON.stringify({ checked_at: at, ...content }), at, actor.id, at, id]);
+    updateRightsRequestsStatusResponseContentCheckById(d.db, [JSON.stringify({ checked_at: at, ...content }), at, actor.id, at, id]);
     record(d, actor, 'RIGHTS_REQUEST_CLOSED', 'ALLOWED', 'rights_request', id, { ref: r.request_ref });
     return { ok: true, id };
   });
@@ -504,7 +490,7 @@ export type RequestView = {
 };
 
 function limbViews(db: Db, r: RequestRow): LimbView[] {
-  return db.all<LimbRow>(`${LIMB_SELECT}WHERE request_id = ? ORDER BY limb`, [r.id]).map((l) => {
+  return listRightsRequestLimbsIdRequestIdByRequestId2<LimbRow>(db, [r.id]).map((l) => {
     try { return { row: l, label: LIMB_WORDS[l.limb] ?? l.limb, clock: limbClock(clockInput(r, l)), clock_error: null }; } catch (e) {
       return { row: l, label: LIMB_WORDS[l.limb] ?? l.limb, clock: null, clock_error: (e as Error).message };
     }
@@ -525,7 +511,7 @@ export type RegisterLine = { id: string; ref: string; received: string; status: 
 
 export function rightsRegister(db: Db, actor: Actor): RegisterLine[] {
   assertComplianceRead(actor);
-  return db.all<RequestRow>(`${REQUEST_SELECT}ORDER BY received_at DESC LIMIT 500`).map((r) => {
+  return listRightsRequests<RequestRow>(db).map((r) => {
     const views = limbViews(db, r);
     const ends = views.map((v) => v.clock?.applicable_period_end?.end ?? null).filter((x): x is string => x !== null).sort();
     const waits = views.flatMap((v) => v.clock?.waiting_on ?? (v.clock_error === null ? [] : [v.clock_error]));
@@ -554,7 +540,7 @@ type ComplaintRow = {
 };
 
 function loadComplaint(db: Db, id: string): ComplaintRow {
-  const r = db.get<ComplaintRow>('SELECT * FROM complaints WHERE id = ?', [id]);
+  const r = getComplaintsById<ComplaintRow>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
 }
@@ -590,11 +576,7 @@ export function logComplaint(d: ComplianceDeps, actor: Actor, input: Fields): Wr
     const at = d.now();
     const ref = d.db.tx(() => {
       const r = nextRef(d.db, 'CP');
-      d.db.run(
-        'INSERT INTO complaints (id, complaint_ref, received_at, received_via, received_via_detail, forwarded_at, forwarded_by, complainant_as_described, ' +
-          'complaint_verbatim, business_id, claim_id, contact_id, is_164a, classification_reason, classified_at, classified_by, status, recorded_by, created_at, updated_at) ' +
-          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, ?)",
-        [id, r, received, via, check(textField(input['received_via_detail'], 500, 'Where it arrived')), check(momentField(input['forwarded_at'], 'When it was forwarded')),
+      insertComplaints(d.db, [id, r, received, via, check(textField(input['received_via_detail'], 500, 'Where it arrived')), check(momentField(input['forwarded_at'], 'When it was forwarded')),
           check(textField(input['forwarded_by'], 200, 'Who forwarded it')), check(textField(input['complainant_as_described'], 2000, 'How they describe themselves')),
           verbatim, business_id, claim_id, contact_id, cls?.is_164a ?? null, cls?.reason ?? null, cls === null ? null : at, cls === null ? null : actor.id,
           actor.id, at, at]);
@@ -613,8 +595,7 @@ export function classifyComplaint(d: ComplianceDeps, actor: Actor, id: string, i
     const cls = check(classify(input));
     if (cls === null) return { ok: false, why: 'Choose the classification.' };
     const at = d.now();
-    d.db.run('UPDATE complaints SET is_164a = ?, classification_reason = ?, classified_at = ?, classified_by = ?, updated_at = ? WHERE id = ?',
-      [cls.is_164a, cls.reason, at, actor.id, at, id]);
+    updateComplaintsIs164aClassificationReasonById(d.db, [cls.is_164a, cls.reason, at, actor.id, at, id]);
     record(d, actor, 'COMPLAINT_CLASSIFIED', 'ALLOWED', 'complaint', id, { ref: c.complaint_ref, is_164a: cls.is_164a });
     return { ok: true, id };
   });
@@ -645,11 +626,7 @@ export function updateComplaint(d: ComplianceDeps, actor: Actor, id: string, inp
     }
     if (next['acknowledged_at'] !== null && next['acknowledged_at'] < c.received_at) return { ok: false, why: 'It cannot have been acknowledged before it was received.' };
     const status = next['outcome_notified_at'] !== null ? 'OUTCOME_NOTIFIED' : next['acknowledged_at'] !== null ? 'ACKNOWLEDGED' : 'OPEN';
-    d.db.run(
-      'UPDATE complaints SET alleged_infringement = ?, infringement_mapping = ?, acknowledged_route = ?, enquiries_made = ?, out_of_scope_route = ?, ' +
-        'outcome_reasoning = ?, undue_delay_assessment = ?, decided_by = ?, decided_by_reason = ?, countersigned_by = ?, countersigner_view = ?, ' +
-        'lessons_and_changes = ?, acknowledged_at = ?, outcome_notified_at = ?, limb = ?, outcome = ?, status = ?, updated_at = ? WHERE id = ?',
-      [next['alleged_infringement'] ?? null, next['infringement_mapping'] ?? null, next['acknowledged_route'] ?? null, next['enquiries_made'] ?? null,
+    updateComplaintsAllegedInfringementInfringementMappingById(d.db, [next['alleged_infringement'] ?? null, next['infringement_mapping'] ?? null, next['acknowledged_route'] ?? null, next['enquiries_made'] ?? null,
         next['out_of_scope_route'] ?? null, next['outcome_reasoning'] ?? null, next['undue_delay_assessment'] ?? null, next['decided_by'] ?? null,
         next['decided_by_reason'] ?? null, next['countersigned_by'] ?? null, next['countersigner_view'] ?? null, next['lessons_and_changes'] ?? null,
         next['acknowledged_at'] ?? null, next['outcome_notified_at'] ?? null, next['limb'] ?? null, next['outcome'] ?? null, status, d.now(), id]);
@@ -669,7 +646,7 @@ export function addProgressUpdate(d: ComplianceDeps, actor: Actor, id: string, i
     if (on === null) return { ok: false, why: 'Date the update.' };
     const said = check(requiredText(input['said'], 4000, 'What they were told'));
     const pid = d.newId();
-    d.db.run('INSERT INTO complaint_progress_updates (id, complaint_id, told_on, said, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?)', [pid, id, on, said, actor.id, d.now()]);
+    insertComplaintProgressUpdates(d.db, [pid, id, on, said, actor.id, d.now()]);
     record(d, actor, 'COMPLAINT_PROGRESS_RECORDED', 'ALLOWED', 'complaint', id, { ref: c.complaint_ref, told_on: on });
     return { ok: true, id };
   });
@@ -693,8 +670,7 @@ export function closeComplaint(d: ComplianceDeps, actor: Actor, id: string, inpu
     for (const [k, ticked] of Object.entries(routes)) if (!ticked) missing.push(`the outcome letter to give: ${ONWARD_ROUTE_ITEMS[k] ?? k}`);
     if (missing.length > 0) return { ok: false, why: `Not closed — it still needs ${missing.join('; ')}.` };
     const at = d.now();
-    d.db.run("UPDATE complaints SET status = 'CLOSED', onward_route_given = ?, closed_at = ?, closed_by = ?, updated_at = ? WHERE id = ?",
-      [JSON.stringify({ checked_at: at, ...routes }), at, actor.id, at, id]);
+    updateComplaintsStatusOnwardRouteGivenById(d.db, [JSON.stringify({ checked_at: at, ...routes }), at, actor.id, at, id]);
     record(d, actor, 'COMPLAINT_CLOSED', 'ALLOWED', 'complaint', id, { ref: c.complaint_ref });
     return { ok: true, id };
   });
@@ -717,7 +693,7 @@ export type ComplaintView = {
 export function complaintView(db: Db, actor: Actor, id: string): ComplaintView {
   assertComplianceRead(actor);
   const c = loadComplaint(db, id);
-  const progress = db.all<{ told_on: string; said: string }>('SELECT told_on, said FROM complaint_progress_updates WHERE complaint_id = ? ORDER BY told_on', [id]);
+  const progress = listComplaintProgressUpdatesToldOnSaidByComplaintId<{ told_on: string; said: string }>(db, [id]);
   return {
     complaint: c, ack: acknowledgementClock(ukDay(c.received_at), day(c.acknowledged_at)),
     targets: complaintTargets(ukDay(c.received_at), day(c.acknowledged_at), progress.map((p) => p.told_on), day(c.outcome_notified_at)),
@@ -731,9 +707,9 @@ export function complaintView(db: Db, actor: Actor, id: string): ComplaintView {
 
 export function complaintsLog(db: Db, actor: Actor): { id: string; ref: string; received: string; classified: string; ack_deadline: string; ack_in_time: string; status: string; next_update_due: string | null; target_outcome: string }[] {
   assertComplianceRead(actor);
-  return db.all<ComplaintRow>('SELECT * FROM complaints ORDER BY received_at DESC LIMIT 500').map((c) => {
+  return listComplaints<ComplaintRow>(db).map((c) => {
     const ack = acknowledgementClock(ukDay(c.received_at), day(c.acknowledged_at));
-    const told = db.all<{ told_on: string }>('SELECT told_on FROM complaint_progress_updates WHERE complaint_id = ?', [c.id]).map((p) => p.told_on);
+    const told = listComplaintProgressUpdatesToldOnByComplaintId<{ told_on: string }>(db, [c.id]).map((p) => p.told_on);
     const t = complaintTargets(ukDay(c.received_at), day(c.acknowledged_at), told, day(c.outcome_notified_at));
     return {
       id: c.id, ref: c.complaint_ref, received: ukDay(c.received_at), classified: c.is_164a === null ? 'NOT CLASSIFIED' : words(IS_164A, c.is_164a, c.is_164a),
@@ -748,7 +724,7 @@ export type ComplaintCount = { from: string; to: string; s164a: number; not_164a
 /** THE s.164B COUNT: complaints received in the period classified YES or BOTH. An unclassified complaint is counted apart, never as no. */
 export function complaintCount(db: Db, actor: Actor, from: string, to: string): ComplaintCount {
   assertComplianceRead(actor);
-  const rows = db.all<{ received_at: string; is_164a: string | null }>('SELECT received_at, is_164a FROM complaints');
+  const rows = listComplaintsReceivedAtIs164a<{ received_at: string; is_164a: string | null }>(db);
   const inside = rows.filter((r) => ukDay(r.received_at) >= from && ukDay(r.received_at) <= to);
   return {
     from, to,
@@ -817,12 +793,10 @@ export function searchPerson(d: ComplianceDeps, actor: Actor, term: string): Sea
   for (const u of listUsersIdDisplayNameByRoleEmailCanonical<{ id: string; display_name: string }>(db, [pattern, pattern])) {
     hits.push({ store: 'users', how: 'a client login', id: u.id, label: u.display_name, link: null });
   }
-  for (const r of db.all<{ id: string; request_ref: string }>(
-    "SELECT id, request_ref FROM rights_requests WHERE lower(COALESCE(requester_as_described, '')) LIKE ? ESCAPE '\\' OR lower(request_verbatim) LIKE ? ESCAPE '\\' LIMIT 100", [pattern, pattern])) {
+  for (const r of listRightsRequestsIdRequestRef<{ id: string; request_ref: string }>(db, [pattern, pattern])) {
     hits.push({ store: 'rights_requests', how: 'an earlier request', id: r.id, label: r.request_ref, link: `/staff/compliance/rights/${r.id}` });
   }
-  for (const c of db.all<{ id: string; complaint_ref: string }>(
-    "SELECT id, complaint_ref FROM complaints WHERE lower(COALESCE(complainant_as_described, '')) LIKE ? ESCAPE '\\' OR lower(complaint_verbatim) LIKE ? ESCAPE '\\' LIMIT 100", [pattern, pattern])) {
+  for (const c of listComplaintsIdComplaintRef<{ id: string; complaint_ref: string }>(db, [pattern, pattern])) {
     hits.push({ store: 'complaints', how: 'a complaint', id: c.id, label: c.complaint_ref, link: `/staff/compliance/complaints/${c.id}` });
   }
   const counts: Record<string, number> = {};

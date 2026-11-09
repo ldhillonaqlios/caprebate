@@ -59,6 +59,7 @@ import { packSheet, SHEET_CHAPTERS, type SheetRow } from './pack-sheets.ts';
 import { INCLUDES_WORDS } from './pack-cost-model.ts';
 import { BASIS_WORDS, bcisDataHere, PLACEHOLDER_WORDS } from './bcis-data.ts';
 import { savePackWords, WORD_FIELDS } from './pack-words.ts';
+import { listSurveyorRoomCountsRoomIdRoomCountByJobId2 } from './data.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
@@ -372,8 +373,7 @@ export function purposeChapter(d: PackPageDeps, v: P.PackView): Safe {
 export function roomsChapter(d: PackPageDeps, v: P.PackView): Safe {
   const r = roomsFor(v.job.sector);
   if (r === null) return h`<p class="help">This kind of property has no room list.</p>`;
-  const counts = new Map(d.app.db.all<{ room_id: string; room_count: number | null }>(
-    'SELECT room_id, room_count FROM surveyor_room_counts WHERE job_id = ?', [v.job.id]).map((x) => [x.room_id, x.room_count] as const));
+  const counts = new Map(listSurveyorRoomCountsRoomIdRoomCountByJobId2<{ room_id: string; room_count: number | null }>(d.app.db, [v.job.id]).map((x) => [x.room_id, x.room_count] as const));
   const missing = r.rooms.filter((x) => (counts.get(x.room_id) ?? null) === null).length;
   return h`<p class="lede">The rooms, counted. A count sizes every line of chapter 10 that is counted per room. This sector scales on ${r.scales_on}.</p>
     ${missing === 0 ? raw('') : h`<p class="gate" role="note">${String(missing)} of ${String(r.rooms.length)} rooms not counted yet. Count them on <a href="/staff/survey/${v.job.id}">the survey job</a>.</p>`}

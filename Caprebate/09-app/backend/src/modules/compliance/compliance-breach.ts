@@ -29,7 +29,7 @@
 
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
-import { carriesBankDetails } from '../admin/templates.ts';
+import { carriesBankDetails } from '../admin/index.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, holdsForEntry, linksFor, momentField, nextRef, NotFoundAsRefusal,
   record, requiredText, settingReading, textField, TWO_PERSON_LIMITATION, ukDay, vocabField, words,
@@ -37,6 +37,7 @@ import {
 } from './compliance.ts';
 import { localWhen } from '../../shared/index.ts';
 import { getClaimsBusinessIdById, getClaimsClaimRefById } from '../claims/index.ts';
+import { getBreachDecisionsByIncidentId, getBreachIncidentsById, getBreachNotificationPhasesCOALESCEMAXPhaseNoNByIncidentId, getBreachNotificationPhasesCountByIncidentId, getBreachOtherNotificationsIdByIncidentIdRecipientKind, insertBreachAwarenessCorrections, insertBreachDecisions, insertBreachIncidents, insertBreachNotificationPhases, insertBreachOtherNotifications, insertBreachOtherNotifications2, listBreachAwarenessCorrectionsCorrectedToReasonByIncidentId, listBreachIncidents, listBreachNotificationPhasesPhaseNoSentAtByIncidentId, listBreachOtherNotificationsRecipientKindPositionByIncidentI, updateBreachDecisionsArt33DecisionArt33ReasoningById, updateBreachIncidentsDescriptionSubjectCategoriesAndNumberBy, updateBreachIncidentsStatusClosedAtById, updateBreachIncidentsStatusUpdatedAtByIdStatus, updateBreachOtherNotificationsPositionToldAtById } from './data.ts';
 
 class Refusal extends Error {}
 
@@ -118,7 +119,7 @@ type IncidentRow = {
 };
 
 function loadIncident(db: Db, id: string): IncidentRow {
-  const r = db.get<IncidentRow>('SELECT * FROM breach_incidents WHERE id = ?', [id]);
+  const r = getBreachIncidentsById<IncidentRow>(db, [id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
 }
@@ -159,15 +160,9 @@ export function openIncident(d: ComplianceDeps, actor: Actor, input: Fields): Wr
     const at = d.now();
     const ref = d.db.tx(() => {
       const r = nextRef(d.db, 'PDB');
-      d.db.run(
-        'INSERT INTO breach_incidents (id, incident_ref, kind, business_id, claim_id, fraud_attempted_on, discovered_at, discovered_by, discovery_route, ' +
-          'awareness_at, awareness_basis, occurred_state, occurred_at, occurred_basis, description, status, recorded_by, created_at, updated_at) ' +
-          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, ?)",
-        [id, r, kind, business_id, claim_id, fraudOn, discovered, by, route, awareness, basis, occurred_state, occurred_at, occurred_basis, description, actor.id, at, at]);
+      insertBreachIncidents(d.db, [id, r, kind, business_id, claim_id, fraudOn, discovered, by, route, awareness, basis, occurred_state, occurred_at, occurred_basis, description, actor.id, at, at]);
       if (settingReading(d.db, 'INSURANCE_POSITION', at).value !== 'POLICY_IN_FORCE') {
-        d.db.run(
-          "INSERT INTO breach_other_notifications (id, incident_id, recipient_kind, position, told_at, note, recorded_by, recorded_at) VALUES (?, ?, 'INSURER', 'NO_POLICY_IN_FORCE', NULL, ?, ?, ?)",
-          [d.newId(), id, 'Recorded when the entry was opened, from the dated insurance position.', actor.id, at]);
+        insertBreachOtherNotifications2(d.db, [d.newId(), id, 'Recorded when the entry was opened, from the dated insurance position.', actor.id, at]);
       }
       return r;
     });
@@ -193,11 +188,7 @@ export function updateIncident(d: ComplianceDeps, actor: Actor, id: string, inpu
     const annex = Object.hasOwn(input, 'annex_ref') ? check(textField(input['annex_ref'], 20, 'The annex reference')) : i.annex_ref;
     if (annex !== null && !/^ANX-\d{3,}$/.test(annex)) return { ok: false, why: 'An annex reference looks like ANX-001. The names stay in the restricted annex, never here.' };
     check(noBankDetails(TEXT_FIELDS.map((k) => next[k] ?? null)));
-    d.db.run(
-      'UPDATE breach_incidents SET description = ?, subject_categories_and_number = ?, record_categories_and_number = ?, special_category_present = ?, ' +
-        'likely_consequences = ?, remedial_action = ?, mitigating_action = ?, processor_involved = ?, lessons_and_changes = ?, occurred_basis = ?, ' +
-        'classification_reason = ?, is_personal_data_breach = ?, annex_ref = ?, updated_at = ? WHERE id = ?',
-      [next['description'] ?? null, next['subject_categories_and_number'] ?? null, next['record_categories_and_number'] ?? null, next['special_category_present'] ?? null,
+    updateBreachIncidentsDescriptionSubjectCategoriesAndNumberBy(d.db, [next['description'] ?? null, next['subject_categories_and_number'] ?? null, next['record_categories_and_number'] ?? null, next['special_category_present'] ?? null,
         next['likely_consequences'] ?? null, next['remedial_action'] ?? null, next['mitigating_action'] ?? null, next['processor_involved'] ?? null,
         next['lessons_and_changes'] ?? null, next['occurred_basis'] ?? null, next['classification_reason'] ?? null, next['is_personal_data_breach'] ?? null,
         annex, d.now(), id]);
@@ -217,8 +208,7 @@ export function correctAwareness(d: ComplianceDeps, actor: Actor, id: string, in
     if (to === null) return { ok: false, why: 'Give the corrected moment.' };
     const reason = check(requiredText(input['reason'], 2000, 'Why it is corrected'));
     const cid = d.newId();
-    d.db.run('INSERT INTO breach_awareness_corrections (id, incident_id, corrected_to, reason, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [cid, id, to, reason, actor.id, d.now()]);
+    insertBreachAwarenessCorrections(d.db, [cid, id, to, reason, actor.id, d.now()]);
     record(d, actor, 'BREACH_AWARENESS_CORRECTED', 'ALLOWED', 'breach_incident', id, { ref: i.incident_ref, correction: cid });
     return { ok: true, id };
   });
@@ -246,7 +236,7 @@ export function recordDecision(d: ComplianceDeps, actor: Actor, id: string, inpu
   return guarded(() => {
     const i = loadIncident(d.db, id);
     if (i.status === 'CLOSED') return { ok: false, why: 'A closed breach entry is kept as it was.' };
-    const existing = d.db.get<DecisionRow>('SELECT * FROM breach_decisions WHERE incident_id = ?', [id]);
+    const existing = getBreachDecisionsByIncidentId<DecisionRow>(d.db, [id]);
     const cur = (existing ?? { deputy_route_used: 0 }) as unknown as Record<string, string | number | null>;
     const text = (k: string, max: number, what: string): string | null => (Object.hasOwn(input, k) ? check(textField(input[k], max, what)) : ((cur[k] as string | null | undefined) ?? null));
     const moment = (k: string, what: string): string | null => (Object.hasOwn(input, k) ? check(momentField(input[k], what)) : ((cur[k] as string | null | undefined) ?? null));
@@ -288,22 +278,12 @@ export function recordDecision(d: ComplianceDeps, actor: Actor, id: string, inpu
       n.fact_route_to_individual, n.decided_by, n.decided_at, n.deputy_route_used, n.dpo_contact_attempts, n.countersigned_by];
     d.db.tx(() => {
       if (existing === undefined) {
-        d.db.run(
-          'INSERT INTO breach_decisions (art33_decision, art33_reasoning, notified_at, notified_recipient, delay_reasons, art34_decision, art34_reasoning, ' +
-            'communicated_at, communicated_route, fact_device_encrypted, fact_backup_restored, fact_recipient_confirmed_deletion, fact_route_to_individual, ' +
-            'decided_by, decided_at, deputy_route_used, dpo_contact_attempts, countersigned_by, id, incident_id, recorded_by, created_at, updated_at) ' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [...values, d.newId(), id, actor.id, at, at]);
+        insertBreachDecisions(d.db, [...values, d.newId(), id, actor.id, at, at]);
       } else {
-        d.db.run(
-          'UPDATE breach_decisions SET art33_decision = ?, art33_reasoning = ?, notified_at = ?, notified_recipient = ?, delay_reasons = ?, art34_decision = ?, ' +
-            'art34_reasoning = ?, communicated_at = ?, communicated_route = ?, fact_device_encrypted = ?, fact_backup_restored = ?, ' +
-            'fact_recipient_confirmed_deletion = ?, fact_route_to_individual = ?, decided_by = ?, decided_at = ?, deputy_route_used = ?, ' +
-            'dpo_contact_attempts = ?, countersigned_by = ?, updated_at = ? WHERE id = ?',
-          [...values, at, existing.id]);
+        updateBreachDecisionsArt33DecisionArt33ReasoningById(d.db, [...values, at, existing.id]);
       }
       if (n.art33_decision !== null && n.art34_decision !== null) {
-        d.db.run("UPDATE breach_incidents SET status = 'NOTIFICATION_DECIDED', updated_at = ? WHERE id = ? AND status = 'OPEN'", [at, id]);
+        updateBreachIncidentsStatusUpdatedAtByIdStatus(d.db, [at, id]);
       }
     });
     record(d, actor, 'BREACH_DECISION_RECORDED', 'ALLOWED', 'breach_incident', id, {
@@ -323,10 +303,9 @@ export function recordPhase(d: ComplianceDeps, actor: Actor, id: string, input: 
     const what = check(requiredText(input['what_was_sent'], 4000, 'What was sent'));
     const outstanding = check(requiredText(input['outstanding'], 4000, 'What was still outstanding, and by when'));
     check(noBankDetails([what, outstanding]));
-    const n = (d.db.get<{ n: number }>('SELECT COALESCE(MAX(phase_no), 0) + 1 AS n FROM breach_notification_phases WHERE incident_id = ?', [id])?.n) ?? 1;
+    const n = (getBreachNotificationPhasesCOALESCEMAXPhaseNoNByIncidentId<{ n: number }>(d.db, [id])?.n) ?? 1;
     const pid = d.newId();
-    d.db.run('INSERT INTO breach_notification_phases (id, incident_id, phase_no, sent_at, what_was_sent, outstanding, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [pid, id, n, sent, what, outstanding, actor.id, d.now()]);
+    insertBreachNotificationPhases(d.db, [pid, id, n, sent, what, outstanding, actor.id, d.now()]);
     record(d, actor, 'BREACH_PHASE_RECORDED', 'ALLOWED', 'breach_incident', id, { ref: i.incident_ref, phase: n });
     return { ok: true, id };
   });
@@ -349,14 +328,12 @@ export function recordTold(d: ComplianceDeps, actor: Actor, id: string, input: F
     if ((position === 'TOLD') !== (told !== null)) return { ok: false, why: position === 'TOLD' ? 'Give when they were told.' : 'A time is given only for somebody told.' };
     const note = check(textField(input['note'], 2000, 'The note'));
     check(noBankDetails([note]));
-    const existing = d.db.get<{ id: string }>('SELECT id FROM breach_other_notifications WHERE incident_id = ? AND recipient_kind = ?', [id, kind]);
+    const existing = getBreachOtherNotificationsIdByIncidentIdRecipientKind<{ id: string }>(d.db, [id, kind]);
     const at = d.now();
     if (existing === undefined) {
-      d.db.run('INSERT INTO breach_other_notifications (id, incident_id, recipient_kind, position, told_at, note, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [d.newId(), id, kind, position, told, note, actor.id, at]);
+      insertBreachOtherNotifications(d.db, [d.newId(), id, kind, position, told, note, actor.id, at]);
     } else {
-      d.db.run('UPDATE breach_other_notifications SET position = ?, told_at = ?, note = ?, recorded_by = ?, recorded_at = ? WHERE id = ?',
-        [position, told, note, actor.id, at, existing.id]);
+      updateBreachOtherNotificationsPositionToldAtById(d.db, [position, told, note, actor.id, at, existing.id]);
     }
     record(d, actor, 'BREACH_NOTIFICATION_RECORDED', 'ALLOWED', 'breach_incident', id, { ref: i.incident_ref, recipient: kind, position });
     return { ok: true, id };
@@ -368,7 +345,7 @@ export function closeIncident(d: ComplianceDeps, actor: Actor, id: string): Writ
   return guarded(() => {
     const i = loadIncident(d.db, id);
     if (i.status === 'CLOSED') return { ok: false, why: 'This entry is closed already.' };
-    const dec = d.db.get<DecisionRow>('SELECT * FROM breach_decisions WHERE incident_id = ?', [id]);
+    const dec = getBreachDecisionsByIncidentId<DecisionRow>(d.db, [id]);
     const missing: string[] = [];
     if (i.kind === 'ATTEMPTED_INVOICE_FRAUD' && i.is_personal_data_breach === null) {
       missing.push('the classification, from the data protection officer');
@@ -378,7 +355,7 @@ export function closeIncident(d: ComplianceDeps, actor: Actor, id: string): Writ
       if (dec?.art34_decision === null || dec === undefined) missing.push('the Article 34 decision, reasoned');
       if (dec !== undefined && dec.art33_decision !== null && dec.countersigned_by === null) missing.push('the countersignature, on a decision to report or not to');
       if (dec?.art33_decision === 'NOTIFIED_IN_PHASES'
-        && (d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM breach_notification_phases WHERE incident_id = ?', [id])?.n ?? 0) === 0) {
+        && (getBreachNotificationPhasesCountByIncidentId<{ n: number }>(d.db, [id])?.n ?? 0) === 0) {
         missing.push('the notification phases');
       }
     }
@@ -386,7 +363,7 @@ export function closeIncident(d: ComplianceDeps, actor: Actor, id: string): Writ
     if (i.lessons_and_changes === null) missing.push('what changed as a result, including that nothing needed to');
     if (missing.length > 0) return { ok: false, why: `Not closed — it still needs ${missing.join('; ')}. Notification alone does not close an entry.` };
     const at = d.now();
-    d.db.run("UPDATE breach_incidents SET status = 'CLOSED', closed_at = ?, closed_by = ?, updated_at = ? WHERE id = ?", [at, actor.id, at, id]);
+    updateBreachIncidentsStatusClosedAtById(d.db, [at, actor.id, at, id]);
     record(d, actor, 'BREACH_CLOSED', 'ALLOWED', 'breach_incident', id, { ref: i.incident_ref });
     return { ok: true, id };
   });
@@ -434,9 +411,8 @@ export type IncidentView = {
 export function incidentView(db: Db, actor: Actor, id: string, nowIso: string): IncidentView {
   assertComplianceRead(actor);
   const i = loadIncident(db, id);
-  const corrections = db.all<{ corrected_to: string; reason: string; recorded_at: string }>(
-    'SELECT corrected_to, reason, recorded_at FROM breach_awareness_corrections WHERE incident_id = ? ORDER BY rowid', [id]);
-  const dec = db.get<DecisionRow>('SELECT * FROM breach_decisions WHERE incident_id = ?', [id]);
+  const corrections = listBreachAwarenessCorrectionsCorrectedToReasonByIncidentId<{ corrected_to: string; reason: string; recorded_at: string }>(db, [id]);
+  const dec = getBreachDecisionsByIncidentId<DecisionRow>(db, [id]);
   const ins = settingReading(db, 'INSURANCE_POSITION', nowIso);
   return {
     incident: {
@@ -445,10 +421,8 @@ export function incidentView(db: Db, actor: Actor, id: string, nowIso: string): 
     },
     clock: article33Reading(i, dec, corrections, nowIso),
     corrections, decision: dec ?? null,
-    phases: db.all<{ phase_no: number; sent_at: string; what_was_sent: string; outstanding: string }>(
-      'SELECT phase_no, sent_at, what_was_sent, outstanding FROM breach_notification_phases WHERE incident_id = ? ORDER BY phase_no', [id]),
-    told: db.all<{ recipient_kind: string; position: string; told_at: string | null; note: string | null }>(
-      'SELECT recipient_kind, position, told_at, note FROM breach_other_notifications WHERE incident_id = ? ORDER BY recipient_kind', [id])
+    phases: listBreachNotificationPhasesPhaseNoSentAtByIncidentId<{ phase_no: number; sent_at: string; what_was_sent: string; outstanding: string }>(db, [id]),
+    told: listBreachOtherNotificationsRecipientKindPositionByIncidentI<{ recipient_kind: string; position: string; told_at: string | null; note: string | null }>(db, [id])
       .map((t) => ({ ...t, label: words(RECIPIENTS, t.recipient_kind, t.recipient_kind) })),
     insurance: ins.value === null ? 'The insurance position is not recorded. We never record an insurer as told just because nothing was said.'
       : `${ins.label}, from ${ins.effective_from ?? ''}. Source: ${ins.source ?? ''}`,
@@ -458,8 +432,8 @@ export function incidentView(db: Db, actor: Actor, id: string, nowIso: string): 
 
 export function breachRegister(db: Db, actor: Actor, nowIso: string): { id: string; ref: string; kind: string; aware: string; clock: string; status: string }[] {
   assertComplianceRead(actor);
-  return db.all<IncidentRow>('SELECT * FROM breach_incidents ORDER BY awareness_at DESC LIMIT 500').map((i) => {
-    const dec = db.get<DecisionRow>('SELECT * FROM breach_decisions WHERE incident_id = ?', [i.id]);
+  return listBreachIncidents<IncidentRow>(db).map((i) => {
+    const dec = getBreachDecisionsByIncidentId<DecisionRow>(db, [i.id]);
     return {
       id: i.id, ref: i.incident_ref, kind: words(INCIDENT_KINDS, i.kind, i.kind), aware: localWhen(i.awareness_at),
       clock: i.status === 'CLOSED' ? 'closed' : article33Reading(i, dec, [], nowIso).label, status: i.status,

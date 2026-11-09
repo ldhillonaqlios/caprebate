@@ -32,6 +32,8 @@ import { valuationLock } from '../claims/index.ts';
 import { claimantRole, type ClaimantRole } from '../assessment/index.ts';
 import { LEGAL_ENGINE_SWITCHES } from '../../shared/index.ts';
 import { getBusinessesSectorById } from '../crm/index.ts';
+import { getSurveyPacksIdByJobId, getSurveyorJobsIdBusinessIdById3, getSurveyorJobsIdByClaimId, insertSurveyPackLegalAnswersByPackId, insertSurveyPacks, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId2 } from './data.ts';
+import { getSurveyorJobsPropertyIdPById, listClaimGrantsAmountPenceByIdPaidTo, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId } from './data-borrowed.ts';
 
 export type EngineQuestion = {
   readonly id: string;
@@ -391,19 +393,19 @@ function withHolding(v: LegalVerdict, role: ClaimantRole | null, s: Record<strin
  * where the claim has no survey pack yet: no answer, and nothing is decided on it.
  */
 export function legalVerdictForClaim(db: Db, claim_id: string, nowIso: string): LegalVerdict | null {
-  const job = db.get<{ id: string }>('SELECT id FROM surveyor_jobs WHERE claim_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1', [claim_id]);
+  const job = getSurveyorJobsIdByClaimId<{ id: string }>(db, [claim_id]);
   return job === undefined ? null : legalVerdictForJob(db, job.id, nowIso);
 }
 
 /** The same for one survey job, by its id. */
 export function legalVerdictForJob(db: Db, job_id: string, nowIso: string): LegalVerdict | null {
-  const job = db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM surveyor_jobs WHERE id = ?', [job_id]);
+  const job = getSurveyorJobsIdBusinessIdById3<{ id: string; business_id: string }>(db, [job_id]);
   if (job === undefined) return null;
-  const pack = db.get<{ id: string }>('SELECT id FROM survey_packs WHERE job_id = ?', [job.id]);
+  const pack = getSurveyPacksIdByJobId<{ id: string }>(db, [job.id]);
   if (pack === undefined) return null;
   const sector = getBusinessesSectorById<{ sector: string }>(db, [job.business_id])?.sector ?? '';
   const values = new Map<string, unknown>();
-  for (const r of db.all<{ question_id: string; value_json: string }>('SELECT question_id, value_json FROM survey_pack_legal_answers WHERE pack_id = ? ORDER BY seq ASC', [pack.id])) {
+  for (const r of listSurveyPackLegalAnswersQuestionIdValueJsonByPackId2<{ question_id: string; value_json: string }>(db, [pack.id])) {
     values.set(r.question_id, JSON.parse(r.value_json) as unknown);
   }
   return withPastOwnerGrants(assessLegal(sector, values, nowIso, claimantFor(db, job.business_id), holdingFor(db, job.id)).verdict, pastOwnerGrants(db, job.id));
@@ -411,9 +413,7 @@ export function legalVerdictForJob(db: Db, job_id: string, nowIso: string): Lega
 
 /** PHASE 159i (item 1): the grants an EARLIER owner received, on the job's claim — their amounts, in pence (null: not known). */
 function pastOwnerGrants(db: Db, job_id: string): (number | null)[] {
-  return db.all<{ amount_pence: number | null }>(
-    "SELECT g.amount_pence FROM claim_grants g JOIN surveyor_jobs j ON j.claim_id = g.claim_id WHERE j.id = ? AND g.paid_to = 'PAST_OWNER' AND g.withdrawn_at IS NULL",
-    [job_id]).map((r) => r.amount_pence);
+  return listClaimGrantsAmountPenceByIdPaidTo<{ amount_pence: number | null }>(db, [job_id]).map((r) => r.amount_pence);
 }
 
 /**
@@ -435,8 +435,7 @@ export function withPastOwnerGrants(v: LegalVerdict, grants: readonly (number | 
 
 /** PHASE 159h (item 7): how the client holds the pack's building — the pack's chosen property, else its claim's. */
 function holdingFor(db: Db, job_id: string): { role: ClaimantRole | null } | undefined {
-  const p = db.get<{ p: string | null }>(
-    'SELECT COALESCE(sp.property_id, c.property_id) AS p FROM surveyor_jobs j LEFT JOIN survey_packs sp ON sp.job_id = j.id LEFT JOIN claims c ON c.id = j.claim_id WHERE j.id = ?', [job_id])?.p ?? null;
+  const p = getSurveyorJobsPropertyIdPById<{ p: string | null }>(db, [job_id])?.p ?? null;
   return p === null ? undefined : { role: claimantRole(db, p).role };
 }
 
@@ -478,10 +477,8 @@ function mayAnswer(d: PackDeps, actor: Actor, job: { business_id: string }, comm
 
 export function legalView(d: PackDeps, actor: Actor, job_id: string): LegalView {
   const { job, obj } = packJob(d.db, actor, job_id);
-  const pack = d.db.get<{ id: string }>('SELECT id FROM survey_packs WHERE job_id = ?', [job.id]);
-  const rows = pack === undefined ? [] : d.db.all<{ question_id: string; value_json: string; by_name: string; source_note: string; at: string; seq: number }>(
-    'SELECT a.question_id, a.value_json, u.display_name AS by_name, a.source_note, a.at, a.seq FROM survey_pack_legal_answers a JOIN users u ON u.id = a.by_user WHERE a.pack_id = ? ORDER BY a.seq ASC',
-    [pack.id]);
+  const pack = getSurveyPacksIdByJobId<{ id: string }>(d.db, [job.id]);
+  const rows = pack === undefined ? [] : listSurveyPackLegalAnswersQuestionIdValueJsonByPackId<{ question_id: string; value_json: string; by_name: string; source_note: string; at: string; seq: number }>(d.db, [pack.id]);
   const history: LegalAnswer[] = rows.map((r) => ({ question_id: r.question_id, value: JSON.parse(r.value_json) as unknown, by_name: r.by_name, source_note: r.source_note, at: r.at, seq: r.seq }));
   const answers = new Map<string, LegalAnswer>();
   for (const h of history) answers.set(h.question_id, h);
@@ -555,12 +552,9 @@ export function answerLegal(d: PackDeps, actor: Actor, job_id: string, f: { ques
     let pack_id = pv.pack_id;
     if (pack_id === null) {
       pack_id = d.newId();
-      d.db.run('INSERT INTO survey_packs (id, job_id, property_id, created_at, created_by) VALUES (?, ?, ?, ?, ?)', [pack_id, job.id, pv.property.id, d.now(), actor.id]);
+      insertSurveyPacks(d.db, [pack_id, job.id, pv.property.id, d.now(), actor.id]);
     }
-    d.db.run(
-      'INSERT INTO survey_pack_legal_answers (id, pack_id, seq, question_id, value_json, by_user, source_note, at) ' +
-        'SELECT ?, ?, COALESCE(MAX(seq), 0) + 1, ?, ?, ?, ?, ? FROM survey_pack_legal_answers WHERE pack_id = ?',
-      [d.newId(), pack_id, q.id, JSON.stringify(p.value), actor.id, source, d.now(), pack_id]);
+    insertSurveyPackLegalAnswersByPackId(d.db, [d.newId(), pack_id, q.id, JSON.stringify(p.value), actor.id, source, d.now(), pack_id]);
     (d.audit as AuditLog).append({ at: d.now(), kind: 'SURVEY_PACK_CHANGED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'surveyor_job', object_id: job.id, detail: { what: 'legal', line: q.id, fields: 'answer' } });
     return { ok: true };

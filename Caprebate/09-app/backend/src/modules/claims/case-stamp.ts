@@ -45,7 +45,7 @@ import { _canonical } from '../../core/audit.ts';
 import { DPO_ROLE_SWITCH } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { ctaSwitchReadings, registryGate } from '../../shared/index.ts';
-import { DISCLOSURE_LOG } from '../compliance/disclosure-log.ts';
+import { DISCLOSURE_LOG } from '../compliance/index.ts';
 import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../crm/index.ts';
 import { CONVEYANCING_STRIP } from '../assessment/index.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';

@@ -27,15 +27,15 @@ import { assertDashboard } from '../crm/index.ts';
 import { assertLeadSection } from '../crm/index.ts';
 import { leadsList, type LeadListRow } from '../../shared/lists.ts';
 import { pipelineBoard, pipelineBoardGate } from '../crm/index.ts';
-import { financeDashboard } from '../finance/invoices.ts';
-import { assertFinanceSection } from '../finance/finance.ts';
-import { assertSurveySection, surveyorJobs } from '../survey/surveyor.ts';
-import { auditLogView } from '../compliance/audit-log.ts';
+import { financeDashboard } from '../finance/index.ts';
+import { assertFinanceSection } from '../finance/index.ts';
+import { assertSurveySection, surveyorJobs } from '../survey/index.ts';
+import { auditLogView } from '../compliance/index.ts';
 import { isLateNewLead, waitedWords, workingDaysSince } from '../../shared/index.ts';
 import { tasksModule as T } from '../crm/index.ts';
 import { messagesModule as M } from '../crm/index.ts';
 import { inboundEmailModule as IE } from '../crm/index.ts';
-import * as S from '../admin/settings.ts';
+import { settingsModule as S } from '../admin/index.ts';
 import { STAGE_GROUPS } from '../../core/index.ts';
 
 /** One tile: a name and at most two more lines. `late` draws it red. */

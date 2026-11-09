@@ -63,6 +63,8 @@ import {
 import { getDocumentsIdById, listLogicalDocumentsId } from '../claims/index.ts';
 import { getContactsIdById, getContactsIdFullNameById, listIntroducerShareConsentsRecordedAtDecisionByBusinessId, updateContactsContactConsentUpdatedAtById, updateContactsMarketingOptinUpdatedAtById } from '../crm/index.ts';
 import { insertConsentAnswers, listConsentAnswersRecordedAtKindByContactId } from '../assessment/index.ts';
+import { getIdentityPersonsPersonRefNoticeTemplateByPersonRef, insertIdentityPersons, insertIdentitySearchLog, listComplaintsIdRefByPersonRef, listIdentityPersonsPersonRefRole, listRightsRequestsIdRefByPersonRef, updateIdentityPersonsExemptionArticleExemptionReasonByPerson, updateIdentityPersonsNoticeTemplateNoticeRouteByPersonRef } from './data.ts';
+import { getIdentityPersonsPersonRefNameByPersonRef } from './data-borrowed.ts';
 
 class Refusal extends Error {}
 
@@ -136,10 +138,7 @@ export function recordPerson(d: ComplianceDeps, actor: Actor, input: Fields): Wr
     }
     const person_ref = opaqueRef('PR');
     const at = d.now();
-    d.db.run(
-      'INSERT INTO identity_persons (person_ref, name, role, contact_route, contact_route_kind, doc_id, source_record_ref, recorded_by, recorded_at, updated_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [person_ref, name, role, route, kind, doc_id, doc_id, actor.id, at, at]);
+    insertIdentityPersons(d.db, [person_ref, name, role, route, kind, doc_id, doc_id, actor.id, at, at]);
     record(d, actor, 'IDENTITY_RECORDED', 'ALLOWED', 'identity_person', person_ref, { person_ref, doc: doc_id, role });
     return { ok: true, id: person_ref };
   });
@@ -148,8 +147,7 @@ export function recordPerson(d: ComplianceDeps, actor: Actor, input: Fields): Wr
 export function updatePerson(d: ComplianceDeps, actor: Actor, ref: string, input: Fields): WriteResult {
   assertIdentityWrite(actor, ref);
   return guarded(() => {
-    const p = d.db.get<{ person_ref: string; notice_template: string | null; exemption_article: string | null }>(
-      'SELECT person_ref, notice_template, exemption_article FROM identity_persons WHERE person_ref = ?', [ref]);
+    const p = getIdentityPersonsPersonRefNoticeTemplateByPersonRef<{ person_ref: string; notice_template: string | null; exemption_article: string | null }>(d.db, [ref]);
     if (p === undefined) throw new NotFoundAsRefusal();
     const what = input['what'] ?? null;
     const at = d.now();
@@ -163,13 +161,11 @@ export function updatePerson(d: ComplianceDeps, actor: Actor, ref: string, input
       if (route === 'CLIENT_ROUTE' && !published) {
         return { ok: false, why: '“Through the client” is never the only route. Record that the notice is also on our published notices page for this person, or send it directly.' };
       }
-      d.db.run('UPDATE identity_persons SET notice_template = ?, notice_route = ?, notice_sent_on = ?, notice_published_too = ?, updated_at = ? WHERE person_ref = ?',
-        [template, route, on, published ? 1 : 0, at, ref]);
+      updateIdentityPersonsNoticeTemplateNoticeRouteByPersonRef(d.db, [template, route, on, published ? 1 : 0, at, ref]);
     } else if (what === 'EXEMPTION') {
       const article = check(requiredText(input['exemption_article'], 60, 'The Article relied on'));
       const reason = check(requiredText(input['exemption_reason'], 4000, 'The reason, for this person and this document'));
-      d.db.run('UPDATE identity_persons SET exemption_article = ?, exemption_reason = ?, exemption_recorded_by = ?, exemption_recorded_at = ?, updated_at = ? WHERE person_ref = ?',
-        [article, reason, actor.id, at, at, ref]);
+      updateIdentityPersonsExemptionArticleExemptionReasonByPerson(d.db, [article, reason, actor.id, at, at, ref]);
     } else {
       return { ok: false, why: 'Record a notice sent, or the exemption relied on.' };
     }
@@ -190,14 +186,11 @@ export type PersonView = {
 /** A READ OF ONE PERSON, BY person_ref — audited every time, whoever asks and whatever they then do. */
 export function readPerson(d: ComplianceDeps, actor: Actor, ref: string): PersonView {
   assertIdentityRead(actor, ref);
-  const p = d.db.get<{
+  const p = getIdentityPersonsPersonRefNameByPersonRef<{
     person_ref: string; name: string; role: string; contact_route: string | null; contact_route_kind: string | null; doc_id: string;
     notice_template: string | null; notice_route: string | null; notice_sent_on: string | null; notice_published_too: number | null; exemption_article: string | null;
     exemption_reason: string | null; doc_type: string | null; doc_created: string; retention_ref: string | null;
-  }>(
-    'SELECT p.person_ref, p.name, p.role, p.contact_route, p.contact_route_kind, p.doc_id, p.notice_template, p.notice_route, p.notice_sent_on, p.notice_published_too, ' +
-      'p.exemption_article, p.exemption_reason, d.type_code AS doc_type, d.created_at AS doc_created, d.retention_ref ' +
-      'FROM identity_persons p JOIN documents d ON d.id = p.source_record_ref WHERE p.person_ref = ?', [ref]);
+  }>(d.db, [ref]);
   if (p === undefined) throw new NotFoundAsRefusal();
   record(d, actor, 'IDENTITY_READ', 'ALLOWED', 'identity_person', ref, { person_ref: ref });
   const ra = p.contact_route !== null;
@@ -212,8 +205,8 @@ export function readPerson(d: ComplianceDeps, actor: Actor, ref: string): Person
     exemption: p.exemption_article === null ? 'No exemption recorded' : `${p.exemption_article}: ${p.exemption_reason ?? ''}`,
     retention: `Kept as long as the claim record it points to, and never longer. That record’s deletion date: ${clock.label}`,
     holds: holdsFor(d.db, 'IDENTITY_PERSON', ref),
-    rights_requests: d.db.all<{ id: string; ref: string }>('SELECT id, request_ref AS ref FROM rights_requests WHERE person_ref = ?', [ref]),
-    complaints: d.db.all<{ id: string; ref: string }>('SELECT id, complaint_ref AS ref FROM complaints WHERE person_ref = ?', [ref]),
+    rights_requests: listRightsRequestsIdRefByPersonRef<{ id: string; ref: string }>(d.db, [ref]),
+    complaints: listComplaintsIdRefByPersonRef<{ id: string; ref: string }>(d.db, [ref]),
     purpose: 'Kept only to tell this person we hold their details (Article 14) and to answer their rights requests.',
     refusals: S2_REFUSALS,
   };
@@ -231,11 +224,10 @@ export function searchIdentity(d: ComplianceDeps, actor: Actor, term: string): {
   if (t.length < 2 || t.length > 200) throw new Refusal('Search for at least two characters of a name.');
   const escaped = t.toLowerCase().replace(/[\\%_]/g, (m) => `\\${m}`);
   const pattern = ['%', escaped, '%'].join('');
-  const results = d.db.all<{ person_ref: string; role: string; doc_id: string }>(
-    "SELECT person_ref, role, doc_id FROM identity_persons WHERE lower(name) LIKE ? ESCAPE '\\' ORDER BY recorded_at LIMIT 100", [pattern])
+  const results = listIdentityPersonsPersonRefRole<{ person_ref: string; role: string; doc_id: string }>(d.db, [pattern])
     .map((r) => ({ ...r, role: words(PERSON_ROLES, r.role, r.role) }));
   const search_id = d.newId();
-  d.db.run('INSERT INTO identity_search_log (id, term, result_count, searched_by, searched_at) VALUES (?, ?, ?, ?, ?)', [search_id, t, results.length, actor.id, d.now()]);
+  insertIdentitySearchLog(d.db, [search_id, t, results.length, actor.id, d.now()]);
   record(d, actor, 'IDENTITY_SEARCHED', 'ALLOWED', 'identity_search', search_id, { search: search_id, results: results.length });
   return { search_id, results };
 }

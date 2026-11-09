@@ -47,7 +47,7 @@ import {
 } from './pipeline.ts';
 import { fireAutomation } from './automation.ts';
 import { createTask, insertTask, setNextAction, setTaskStatus } from './tasks.ts';
-import { mayTake, vocabLabel } from '../admin/vocabularies.ts';
+import { mayTake, vocabLabel } from '../admin/index.ts';
 import {
   PROSPECT_EVENTS, REFERRAL_SOURCES, introducerChoices, introducerExists, leadReferral, onLeadConverted, type LeadReferral,
 } from './introducers.ts';

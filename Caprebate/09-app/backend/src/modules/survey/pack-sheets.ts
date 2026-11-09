@@ -36,6 +36,7 @@ import { packDateIso, propertyLine } from './survey-pack.ts';
 import type { Env } from '../../integrations/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId } from '../../integrations/index.ts';
 import { getLogicalDocumentsCountByBusinessIdTypeCode } from '../claims/index.ts';
+import { getSurveyPhotosCountByJobIdPhotoId, getSurveyorJobsAssessmentIdById } from './data.ts';
 
 /** Where a row's value comes from — shown beside it, so nothing reads as more certain than it is. */
 export type RowFrom = 'the pack' | 'the claim' | 'Land Registry' | 'the energy certificate' | 'Homedata (estimate)' | 'the client'
@@ -104,7 +105,7 @@ function wordsRow(c: Ctx, f: WordField): SheetRow {
 }
 
 function triggersOf(db: Db, v: PackView): { triggers: readonly string[] | null; funnel: Record<string, unknown> | undefined } {
-  const a = db.get<{ assessment_id: string | null }>('SELECT assessment_id FROM surveyor_jobs WHERE id = ?', [v.job.id])?.assessment_id ?? null;
+  const a = getSurveyorJobsAssessmentIdById<{ assessment_id: string | null }>(db, [v.job.id])?.assessment_id ?? null;
   const state = a === null ? undefined : funnelStateFor(db, a);
   if (state === undefined) return { triggers: null, funnel: undefined };
   const t = (sessionFromFunnel(v.job.sector as Parameters<typeof sessionFromFunnel>[0], state).session as { trigger?: unknown }).trigger;
@@ -126,7 +127,7 @@ function building(c: Ctx): Sheet {
   const hd = record(db, v.job.business_id, pid, 'HOMEDATA_ADDRESS');
   const est = hd?.['estimated_floor_area'] as { floor_area_m2?: unknown } | undefined;
   const gia = v.inputs.gia_milli_m2.value;
-  const photos = db.get<{ n: number }>('SELECT COUNT(*) AS n FROM survey_photos p LEFT JOIN survey_photo_withdrawals w ON w.photo_id = p.id WHERE p.job_id = ? AND w.photo_id IS NULL', [v.job.id])?.n ?? 0;
+  const photos = getSurveyPhotosCountByJobIdPhotoId<{ n: number }>(db, [v.job.id])?.n ?? 0;
   const plans = docsHeld(db, v.job.business_id, 'PLANS');
   return {
     n: 5, title: 'The building', applies: true, not_applies_words: null,

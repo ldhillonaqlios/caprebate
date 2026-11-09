@@ -43,6 +43,8 @@ import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAre
 import { shippedGrantSwitches } from '../assessment/index.ts';
 import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId4, listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId2 } from '../../integrations/index.ts';
 import { getClaimsPById, listPropertiesIdLabelByBusinessId3 } from '../claims/index.ts';
+import { getSurveyPacksIdPropertyIdByJobId, insertSurveyPackAddedLines, insertSurveyPackEntriesByPackId, insertSurveyPackEntriesByPackId2, insertSurveyPacks, updateSurveyPacksPropertyIdByIdPropertyId } from './data.ts';
+import { listSurveyPackAddedLinesIdLabelByPackId, listSurveyPackEntriesIdSeqByPackId, listSurveyorRoomCountsRoomIdRoomCountByJobId } from './data-borrowed.ts';
 
 /**
  * `grantSwitches` (Phase 153a) is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be
@@ -309,9 +311,7 @@ function evidenceInputs(db: Db, business_id: string, property: PropertyChoice | 
 
 /** The room counts recorded on the job, summed for a line counted per room — only when every room it needs is counted. */
 function roomDraft(db: Db, job_id: string, rooms: readonly string[]): Valued {
-  const rows = db.all<{ room_id: string; room_count: number | null; recorded_at: string; by_name: string | null }>(
-    'SELECT c.room_id, c.room_count, c.recorded_at, u.display_name AS by_name FROM surveyor_room_counts c LEFT JOIN users u ON u.id = c.recorded_by WHERE c.job_id = ?',
-    [job_id]);
+  const rows = listSurveyorRoomCountsRoomIdRoomCountByJobId<{ room_id: string; room_count: number | null; recorded_at: string; by_name: string | null }>(db, [job_id]);
   let total = 0;
   let latest: { at: string; by: string | null } | null = null;
   for (const r of rooms) {
@@ -421,11 +421,9 @@ export const SHARED_FALLBACK_WORDS = 'Fallback: a flat 25% of the floor area. A 
 
 export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   const { job, obj } = packJob(d.db, actor, job_id);
-  const pack = d.db.get<{ id: string; property_id: string | null }>('SELECT id, property_id FROM survey_packs WHERE job_id = ?', [job.id]);
+  const pack = getSurveyPacksIdPropertyIdByJobId<{ id: string; property_id: string | null }>(d.db, [job.id]);
   const { property, choices } = propertyOf(d.db, job, pack?.property_id);
-  const entries = pack === undefined ? [] : d.db.all<EntryRow>(
-    'SELECT e.id, e.seq, e.line_key, e.field, e.value, e.pool, e.by_user, u.display_name AS by_name, e.reason, e.at, e.rate_basis, e.rate_ref, e.rate_priced_at ' +
-      'FROM survey_pack_entries e JOIN users u ON u.id = e.by_user WHERE e.pack_id = ? ORDER BY e.seq ASC', [pack.id]);
+  const entries = pack === undefined ? [] : listSurveyPackEntriesIdSeqByPackId<EntryRow>(d.db, [pack.id]);
   const latest = new Map<string, EntryRow>();
   for (const e of entries) latest.set(`${e.line_key ?? ''}|${e.field}`, e);
   const last = (line: string | null, field: PackField): EntryRow | undefined => latest.get(`${line ?? ''}|${field}`);
@@ -495,9 +493,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
 
   let lines: ViewLine[] = linesForSector(job.sector).map((t) => lineFrom(t.element_id, t.label, t.unit, t, null));
   if (pack !== undefined) {
-    for (const a of d.db.all<{ id: string; label: string; unit: string; by_name: string; added_at: string; reason: string }>(
-      'SELECT a.id, a.label, a.unit, u.display_name AS by_name, a.added_at, a.reason FROM survey_pack_added_lines a JOIN users u ON u.id = a.added_by WHERE a.pack_id = ? ORDER BY a.added_at ASC, a.id ASC',
-      [pack.id])) {
+    for (const a of listSurveyPackAddedLinesIdLabelByPackId<{ id: string; label: string; unit: string; by_name: string; added_at: string; reason: string }>(d.db, [pack.id])) {
       lines.push(lineFrom(a.id, a.label, a.unit, null, { by_name: a.by_name, at: a.added_at, reason: a.reason }));
     }
   }
@@ -694,8 +690,7 @@ function begin(d: PackDeps, actor: Actor, job_id: string, reason: string, expect
     let pack_id = view.pack_id;
     if (pack_id === null) {
       pack_id = d.newId();
-      d.db.run('INSERT INTO survey_packs (id, job_id, property_id, created_at, created_by) VALUES (?, ?, ?, ?, ?)',
-        [pack_id, view.job.id, view.property.id, d.now(), actor.id]);
+      insertSurveyPacks(d.db, [pack_id, view.job.id, view.property.id, d.now(), actor.id]);
     }
     return write({ view, pack_id });
   });
@@ -706,10 +701,7 @@ export const beginPackChange = begin;
 
 function insertEntry(d: PackDeps, actor: Actor, pack_id: string, line_key: string | null, field: PackField, value: number | null, pool: Pool | null, reason: string,
   src: { basis: string | null; ref: string | null; priced_at: string | null } = { basis: null, ref: null, priced_at: null }): void {
-  d.db.run(
-    'INSERT INTO survey_pack_entries (id, pack_id, seq, line_key, field, value, pool, by_user, reason, at, rate_basis, rate_ref, rate_priced_at) ' +
-      'SELECT ?, ?, COALESCE(MAX(seq), 0) + 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM survey_pack_entries WHERE pack_id = ?',
-    [d.newId(), pack_id, line_key, field, value, pool, actor.id, reason.trim(), d.now(), src.basis, src.ref, src.priced_at, pack_id]);
+  insertSurveyPackEntriesByPackId(d.db, [d.newId(), pack_id, line_key, field, value, pool, actor.id, reason.trim(), d.now(), src.basis, src.ref, src.priced_at, pack_id]);
 }
 
 /** PHASE 159f: the sources a surveyor may give a rate they type (BCIS's own drafts carry theirs). */
@@ -777,10 +769,7 @@ export function savePackLocation(d: PackDeps, actor: Actor, job_id: string, f: {
   return begin(d, actor, job_id, f.reason, f.seq, ({ view, pack_id }) => {
     const now = view.pricing.bcis.location.area;
     if ((loc?.area ?? null) === now) return { ok: false, field: 'area', why: 'That is already the location. Nothing changed.' };
-    d.db.run(
-      'INSERT INTO survey_pack_entries (id, pack_id, seq, line_key, field, value, pool, by_user, reason, at, rate_ref) ' +
-        "SELECT ?, ?, COALESCE(MAX(seq), 0) + 1, NULL, 'location', ?, NULL, ?, ?, ?, ? FROM survey_pack_entries WHERE pack_id = ?",
-      [d.newId(), pack_id, loc === null ? null : Math.round(loc.factor * 1000), actor.id, f.reason.trim(), d.now(), loc?.area ?? null, pack_id]);
+    insertSurveyPackEntriesByPackId2(d.db, [d.newId(), pack_id, loc === null ? null : Math.round(loc.factor * 1000), actor.id, f.reason.trim(), d.now(), loc?.area ?? null, pack_id]);
     audit(d, actor, view, 'location', null, ['location']);
     return { ok: true };
   });
@@ -984,8 +973,7 @@ export function addLine(d: PackDeps, actor: Actor, job_id: string, f: { label: s
       return { ok: false, field: 'label', why: 'The pack already has a line by that name. Change that one instead.' };
     }
     const id = `ADD-${d.newId()}`;
-    d.db.run('INSERT INTO survey_pack_added_lines (id, pack_id, label, unit, added_by, added_at, reason) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, pack_id, label, unit, actor.id, d.now(), f.reason.trim()]);
+    insertSurveyPackAddedLines(d.db, [id, pack_id, label, unit, actor.id, d.now(), f.reason.trim()]);
     if (p.v.qty !== null) insertEntry(d, actor, pack_id, id, 'qty', p.v.qty, null, f.reason);
     if (p.v.rate !== null) insertEntry(d, actor, pack_id, id, 'rate', p.v.rate, null, f.reason, rs.src);
     if (p.v.qpct !== null) insertEntry(d, actor, pack_id, id, 'qpct', p.v.qpct, null, f.reason);
@@ -1007,10 +995,9 @@ export function choosePackProperty(d: PackDeps, actor: Actor, job_id: string, pr
     const chosen = view.property_choices.find((p) => p.id === property_id);
     if (chosen === undefined) return { ok: false, field: 'property_id', why: 'Choose one of this company’s properties.' };
     if (view.pack_id === null) {
-      d.db.run('INSERT INTO survey_packs (id, job_id, property_id, created_at, created_by) VALUES (?, ?, ?, ?, ?)',
-        [d.newId(), view.job.id, chosen.id, d.now(), actor.id]);
+      insertSurveyPacks(d.db, [d.newId(), view.job.id, chosen.id, d.now(), actor.id]);
     } else {
-      d.db.run('UPDATE survey_packs SET property_id = ? WHERE id = ? AND property_id IS NULL', [chosen.id, view.pack_id]);
+      updateSurveyPacksPropertyIdByIdPropertyId(d.db, [chosen.id, view.pack_id]);
     }
     d.audit.append({ at: d.now(), kind: 'SURVEY_PACK_CHANGED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'surveyor_job', object_id: view.job.id, detail: { what: 'property', line: '', fields: 'property_id' } });

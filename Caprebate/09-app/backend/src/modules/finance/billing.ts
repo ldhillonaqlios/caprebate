@@ -28,12 +28,14 @@ import type { App } from '../../core/app.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { h, page, raw, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { localDate } from '../../shared/index.ts';
-import { dateField, textField, words, type Fields, type Vocab } from '../compliance/compliance.ts';
+import { dateField, textField, words, type Fields, type Vocab } from '../compliance/index.ts';
 import { claimInvoices, financeDashboard, type ClaimInvoiceView, type ExpectedClaim } from './invoices.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { formatPence } from '../../shared/index.ts';
 import { getBusinessesIdNameById, getBusinessesNameById, listContactsFullNameJobRoleByBusinessId } from '../crm/index.ts';
 import { getClaimsBById, listClaimsIdByBusinessId } from '../claims/index.ts';
+import { getInvoicesIdBusinessIdByIdClaimId2, insertInvoiceChases } from './data.ts';
+import { listInvoiceChasesChasedOnHowByInvoiceId } from './data-borrowed.ts';
 
 export const CHASE_WAYS: Vocab = Object.freeze({
   PHONE: 'A phone call', EMAIL: 'An email', LETTER: 'A letter', IN_PERSON: 'In person',
@@ -60,9 +62,7 @@ export function billingViewFor(actor: Actor, id: string = SECTION): boolean {
 export type ChaseLine = { readonly chased_on: string; readonly how: string; readonly note: string | null; readonly by: string };
 
 function chasesOf(db: App['db'], invoice_id: string): ChaseLine[] {
-  return db.all<{ chased_on: string; how: string; note: string | null; who: string | null }>(
-    'SELECT c.chased_on, c.how, c.note, u.display_name AS who FROM invoice_chases c LEFT JOIN users u ON u.id = c.chased_by ' +
-      'WHERE c.invoice_id = ? ORDER BY c.chased_on DESC, c.rowid DESC', [invoice_id])
+  return listInvoiceChasesChasedOnHowByInvoiceId<{ chased_on: string; how: string; note: string | null; who: string | null }>(db, [invoice_id])
     .map((c) => ({ chased_on: c.chased_on, how: words(CHASE_WAYS, c.how, c.how), note: c.note, by: c.who ?? 'a former user' }));
 }
 
@@ -130,7 +130,7 @@ export type ChaseResult = { readonly ok: true; readonly id: string; readonly bus
 export function recordChase(
   d: { db: App['db']; audit: App['audit']; now: () => string; newId: () => string }, actor: Actor, invoice_id: string, input: Fields,
 ): ChaseResult {
-  const inv = d.db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM invoices WHERE id = ? AND claim_id IS NOT NULL', [invoice_id]);
+  const inv = getInvoicesIdBusinessIdByIdClaimId2<{ id: string; business_id: string }>(d.db, [invoice_id]);
   if (inv === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'invoice.record_received', { type: 'invoice', id: inv.id, business_id: inv.business_id });
   const view = claimInvoices(d.db, actor, d.now()).find((i) => i.id === inv.id);
@@ -146,8 +146,7 @@ export function recordChase(
   const note = textField(input['note'], 500, 'The note');
   if (!note.ok) return note;
   const id = d.newId();
-  d.db.run('INSERT INTO invoice_chases (id, invoice_id, chased_on, how, note, chased_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, inv.id, day, how, note.value, actor.id, d.now()]);
+  insertInvoiceChases(d.db, [id, inv.id, day, how, note.value, actor.id, d.now()]);
   d.audit.append({
     at: d.now(), kind: 'INVOICE_CHASED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'invoice', object_id: inv.id, detail: { chased_on: day, how },

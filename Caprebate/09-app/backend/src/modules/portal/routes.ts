@@ -11,7 +11,7 @@ import { getResearchSourcesCountByBusinessIdState2 } from '../../integrations/in
 import { ENGAGEMENT_SIGNING, SIGN_WORDS, claimRoutes, clientDeliverables, clientSteps, clientStepsCard, getClaimsPropertyIdByIdBusinessId, getEngagementsStateSignedAtById, letterFacts, letterOptions, letterState, letterSteps, loadLetter, portalReport, portalReportCard, readLines, receivableTypes, shownLetter, signByLink, signEngagement, signLinkFor, signedCopy, signingMissing, startDocumentUpload, updateEngagementsLetterStateViewedAtByIdLetterState, type ClientDeliverable, type ClientStep, type EngagementSigning, type LetterFacts, type RequestView } from '../claims/index.ts';
 import { activeMeeting, booksATime, clientMessage, clientShareChoices, portalMessagesBody, publicSlots, readPortalSend, reconcileVideoMeeting, recordShareConsentByClient, sendFromPortal, type ClientShareChoice, type ThreadMessage as MessageView } from '../crm/index.ts';
 import { agreementLinks, safeBack } from '../public-site/index.ts';
-import { handlePortalEvidence, portalEvidenceCard } from '../survey/evidence-pages.ts';
+import { handlePortalEvidence, portalEvidenceCard } from '../survey/index.ts';
 import { handleConfirmLink } from './accountant-confirm-pages.ts';
 import { readUpload, receiveFile } from './client-files-pages.ts';
 import { portalDashboard } from './portal-dashboard.ts';

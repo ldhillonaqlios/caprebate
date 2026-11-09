@@ -50,7 +50,7 @@ import { postcodeStore, POSTCODE_GATE } from '../../integrations/postcodes/postc
 import { resolveServedAuthority, type PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
 import { formatPence, formatShownRange, toPence } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import { claimMoneyLines, type ClaimMoneyLine } from '../finance/invoices.ts';
+import { claimMoneyLines, type ClaimMoneyLine } from '../finance/index.ts';
 import { claimTaskPanel, followUpsFor, type ClaimTaskPanel } from './tasks.ts';
 import { lastContactFor, timelineIfPermitted, type Timeline } from './timeline.ts';
 import { fireAutomation } from './automation.ts';
@@ -58,8 +58,8 @@ import { claimDocumentsPanel, type ClaimDocumentsPanel, organisationDocumentsPan
 import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from '../claims/index.ts';
 import { propertyTenure, ROLE_LABELS } from '../assessment/index.ts';
 import { aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask, type AftercarePanel, type DeliverablesPanel, type FiguresPanel } from '../claims/index.ts';
-import { assembleReleasedFacts, type ReleasedFacts } from '../../payload.ts';
-import { vocabChoice, vocabLabel } from '../admin/vocabularies.ts';
+import { assembleReleasedFacts, type ReleasedFacts } from '../survey/index.ts';
+import { vocabChoice, vocabLabel } from '../admin/index.ts';
 import { funnelStateFor } from '../assessment/index.ts';
 import { expectedFeeFor } from '../assessment/index.ts';
 import { latestSignOff } from '../claims/index.ts';

@@ -44,7 +44,7 @@ import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import * as C from './crm.ts';
 import { documentsModule as D } from '../claims/index.ts';
 import { assertLeadSection } from './leads.ts';
-import { activeTemplates, freeTextRefusal, mergePlain, mergeValues, templateRefusal } from '../admin/templates.ts';
+import { activeTemplates, freeTextRefusal, mergePlain, mergeValues, templateRefusal } from '../admin/index.ts';
 import { propertyIn } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { KEEP_ORIGINALS } from '../../shared/index.ts';

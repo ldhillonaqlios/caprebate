@@ -38,6 +38,7 @@ import { acquisitionDateReading } from '../claims/index.ts';
 import { onTestWebsite, type Env } from '../../integrations/index.ts';
 import { MIN_CLAIMS } from '../assessment/index.ts';
 import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from './surveyor-crm.ts';
+import { listSurveyPackApprovalsSnapshotJsonJobIdByVersionPackId } from './data.ts';
 
 type IndexTable = { loaded: boolean; source: string; points: readonly (readonly [string, number])[] };
 type Includes = { demolition?: boolean; fees?: boolean; prelims?: boolean };
@@ -207,9 +208,7 @@ function median(xs: readonly number[]): number {
  * review, never a fail.
  */
 export function rateFlagReading(db: Db, v: PackView, min = MIN_CLAIMS, env: Env = process.env): RateFlagReading {
-  const rows = db.all<{ snapshot_json: string; job_id: string }>(
-    'SELECT a.snapshot_json, p.job_id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
-      'WHERE a.version = (SELECT MAX(x.version) FROM survey_pack_approvals x WHERE x.pack_id = a.pack_id)');
+  const rows = listSurveyPackApprovalsSnapshotJsonJobIdByVersionPackId<{ snapshot_json: string; job_id: string }>(db);
   /* PHASE 159f (C20): EVERY RATE REBASED TO ONE DAY before it is compared — this pack's own pricing day. A rate priced
      at another day is brought to it by the index; one that cannot be (an older version with no pricing day, or no
      index) is left out of the middle rate, and the sentence says how many. */

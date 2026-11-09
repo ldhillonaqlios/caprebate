@@ -35,12 +35,12 @@ import * as P from './pipeline.ts';
 import * as T from './tasks.ts';
 import { newTaskForm, timelineBlock } from './tasks-pages.ts';
 import * as LI from '../../shared/lists.ts';
-import { taskChoices, vocabulary } from '../admin/vocabularies.ts';
+import { taskChoices, vocabulary } from '../admin/index.ts';
 import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from '../../shared/lists-pages.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';
 import { enquiriesModule as E } from '../public-site/index.ts';
-import * as SO from '../survey/survey-open.ts';
+import { surveyOpenModule as SO } from '../survey/index.ts';
 import { leadSectionCounts, leadSections, type CardDeps } from './lead-cards.ts';
 import { piecesPage } from '../../core/index.ts';
 

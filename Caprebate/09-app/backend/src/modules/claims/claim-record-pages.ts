@@ -28,7 +28,7 @@ import * as F from './claim-facts.ts';
 import * as R from './claim-record.ts';
 import { recordClientFilingConfirmation } from '../portal/index.ts';
 import { recordFeeDiscount } from './fee-discounts.ts';
-import type { ReleasedFacts } from '../../payload.ts';
+import type { ReleasedFacts } from '../survey/index.ts';
 import { getClaimsBusinessIdById, getClaimsPById } from './data.ts';
 
 export type WebResult = 'handled' | 'not-mine';

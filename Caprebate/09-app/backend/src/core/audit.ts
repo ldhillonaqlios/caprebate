@@ -25,7 +25,7 @@
 import { createHash } from 'node:crypto';
 import type { Db } from './db.ts';
 import { carriesSecret } from './secrets.ts';
-import { GENESIS } from '../modules/survey/anchor-quarantine.ts';
+import { GENESIS } from '../modules/survey/index.ts';
 import { getAuditLogSeqHash, insertAuditLog, listAuditLog } from './data.ts';
 
 export type AuditKind =

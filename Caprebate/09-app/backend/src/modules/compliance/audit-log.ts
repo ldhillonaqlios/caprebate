@@ -29,6 +29,7 @@ import { authorise, type Actor } from '../../core/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { getAuditLogCount, listAuditLogKind } from '../../core/index.ts';
 import { getBusinessesIdNameById } from '../crm/index.ts';
+import { getAuditLogCountByObjectId } from './data-borrowed.ts';
 
 export type AuditLogDeps = { db: Db; audit: AuditLog; now: () => string };
 
@@ -145,11 +146,6 @@ export function kindWords(kind: string): string {
 export const clientAuditParams = (business_id: string): string[] => [business_id, business_id, business_id, business_id, business_id, business_id];
 
 export function clientAuditCount(db: Db, business_id: string): number {
-  return db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM audit_log a WHERE ' +
-      '(a.object_id = ? OR a.object_id IN (SELECT id FROM claims WHERE business_id = ?) ' +
-      'OR a.object_id IN (SELECT id FROM properties WHERE business_id = ?) ' +
-      "OR json_extract(a.detail, '$.business') = ? OR json_extract(a.detail, '$.business_id') = ? " +
-      "OR json_extract(a.detail, '$.claim') IN (SELECT id FROM claims WHERE business_id = ?)) ", clientAuditParams(business_id))?.n ?? 0;
+  return getAuditLogCountByObjectId<{ n: number }>(db, clientAuditParams(business_id))?.n ?? 0;
 }
 

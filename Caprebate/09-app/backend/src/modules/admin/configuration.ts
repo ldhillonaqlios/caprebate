@@ -47,8 +47,9 @@ import { typeList, type TypeView } from '../claims/index.ts';
 import { rulesPage, type RuleView } from '../crm/index.ts';
 import { templatesPage } from './templates.ts';
 import { settingsView, type SettingsView } from '../assessment/index.ts';
-import { settingReading, type SettingReading } from '../compliance/compliance.ts';
+import { settingReading, type SettingReading } from '../compliance/index.ts';
 import { getAutomationRulesCOUNTByActiveTaskPriority } from '../crm/index.ts';
+import { getReasonListsCountByListCode, getReasonListsLabelActiveByListCode, getReasonListsNByList, getVocabulariesCountByListCode, getVocabulariesLabelActiveByListCode, getVocabulariesNByList, insertReasonLists, insertVocabularies, listReasonListsCodeLabelByList, updateReasonListsLabelActiveByListCode, updateVocabulariesLabelActiveByListCode } from './data.ts';
 
 export type ConfigDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
@@ -198,9 +199,7 @@ export function configurationView(db: Db, actor: Actor, today: string): Configur
     })),
     reasons: (Object.keys(REASON_LISTS) as ReasonList[]).map((list) => ({
       list, label: REASON_LISTS[list],
-      values: db.all<{ code: string; label: string; ord: number; active: number; source: string }>(
-        'SELECT code, label, ord, active, source FROM reason_lists WHERE list = ? ORDER BY ord ASC, code ASC', [list],
-      ).map((r) => ({ code: r.code, label: r.label, ord: r.ord, active: r.active === 1, source: r.source })),
+      values: listReasonListsCodeLabelByList<{ code: string; label: string; ord: number; active: number; source: string }>(db, [list]).map((r) => ({ code: r.code, label: r.label, ord: r.ord, active: r.active === 1, source: r.source })),
     })),
     ...(canType ? { document_types: typeList(db, actor) } : {}),
     ...(rules === null ? {} : { automation: { rules: rules.rules, may_write: rules.may_write } }),
@@ -238,15 +237,13 @@ export function addValue(d: ConfigDeps, actor: Actor, input: Fields): ConfigResu
   if (list === 'ACTIVITY_TYPE' && Object.hasOwn(RECIPROCITY_ACTIVITY_TYPES, code)) return { ok: false, why: FORBIDDEN_SETTINGS['RECIPROCITY_KINDS'] ?? '', field: 'code' };
   const label = clean(input['label']);
   if (label === null || label.length > 120) return { ok: false, why: 'Give the value a label of up to 120 characters.', field: 'label' };
-  if (d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM vocabularies WHERE list = ? AND code = ?', [list, code])?.n !== 0) {
+  if (getVocabulariesCountByListCode<{ n: number }>(d.db, [list, code])?.n !== 0) {
     return { ok: false, why: 'That code is already on the list. A retired value is brought back by changing it, not by adding it again.', field: 'code' };
   }
   const at = d.now();
-  const ord = (d.db.get<{ n: number | null }>('SELECT MAX(ord) AS n FROM vocabularies WHERE list = ?', [list])?.n ?? 0) + 10;
+  const ord = (getVocabulariesNByList<{ n: number | null }>(d.db, [list])?.n ?? 0) + 10;
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO vocabularies (list, code, label, ord, active, fixed, source, created_at, updated_at) VALUES (?, ?, ?, ?, 1, 0, ?, ?, ?)',
-      [list, code, label, ord, 'Added by an administrator on the settings screen.', at, at]);
+    insertVocabularies(d.db, [list, code, label, ord, 'Added by an administrator on the settings screen.', at, at]);
     d.audit.append({
       at, kind: 'CONFIGURATION_VALUE_ADDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'configuration', object_id: `${list}:${code}`, detail: { list, code },
@@ -264,7 +261,7 @@ export function changeValue(d: ConfigDeps, actor: Actor, listRaw: string, code: 
   authorise(actor, 'configuration.write', OBJ);
   if (!isVocabList(listRaw)) return { ok: false, why: listRefusal(listRaw), field: 'list' };
   const list: VocabList = listRaw;
-  const r = d.db.get<{ label: string; active: number; fixed: number }>('SELECT label, active, fixed FROM vocabularies WHERE list = ? AND code = ?', [list, code]);
+  const r = getVocabulariesLabelActiveByListCode<{ label: string; active: number; fixed: number }>(d.db, [list, code]);
   if (r === undefined) throw new NotFoundAsRefusal();
   const label = Object.hasOwn(input, 'label') ? clean(input['label']) : r.label;
   if (label === null || label.length > 120) return { ok: false, why: 'Give the value a label of up to 120 characters.', field: 'label' };
@@ -278,7 +275,7 @@ export function changeValue(d: ConfigDeps, actor: Actor, listRaw: string, code: 
   if (fields.length === 0) return { ok: true, id: `${list}:${code}` };
   const at = d.now();
   d.db.tx(() => {
-    d.db.run('UPDATE vocabularies SET label = ?, active = ?, updated_at = ? WHERE list = ? AND code = ?', [label, active, at, list, code]);
+    updateVocabulariesLabelActiveByListCode(d.db, [label, active, at, list, code]);
     d.audit.append({
       at, kind: 'CONFIGURATION_VALUE_CHANGED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'configuration', object_id: `${list}:${code}`, detail: { list, code, fields },
@@ -303,14 +300,13 @@ export function addReason(d: ConfigDeps, actor: Actor, input: Fields): ConfigRes
   if (!/^[A-Z][A-Z_]{1,59}$/.test(code)) return { ok: false, why: 'A reason’s code is capital letters and underscores — 2 to 60. It never changes once saved.', field: 'code' };
   const label = clean(input['label']);
   if (label === null || label.length > 300) return { ok: false, why: 'Give the reason a label of up to 300 characters.', field: 'label' };
-  if (d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM reason_lists WHERE list = ? AND code = ?', [list, code])?.n !== 0) {
+  if (getReasonListsCountByListCode<{ n: number }>(d.db, [list, code])?.n !== 0) {
     return { ok: false, why: 'That code is already on the list.' };
   }
-  const ord = (d.db.get<{ n: number | null }>('SELECT MAX(ord) AS n FROM reason_lists WHERE list = ?', [list])?.n ?? 0) + 10;
+  const ord = (getReasonListsNByList<{ n: number | null }>(d.db, [list])?.n ?? 0) + 10;
   const at = d.now();
   d.db.tx(() => {
-    d.db.run('INSERT INTO reason_lists (list, code, label, ord, active, source) VALUES (?, ?, ?, ?, 1, ?)',
-      [list, code, label, ord, 'Added by an administrator on the settings screen.']);
+    insertReasonLists(d.db, [list, code, label, ord, 'Added by an administrator on the settings screen.']);
     d.audit.append({
       at, kind: 'REASON_ADDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'configuration', object_id: `${list}:${code}`, detail: { list, code },
@@ -322,7 +318,7 @@ export function addReason(d: ConfigDeps, actor: Actor, input: Fields): ConfigRes
 export function changeReason(d: ConfigDeps, actor: Actor, listRaw: string, code: string, input: Fields): ConfigResult {
   authorise(actor, 'configuration.write', OBJ);
   if (!isReasonList(listRaw)) return { ok: false, why: 'A reason belongs to why a lead is lost or why a claim leaves the procedure.' };
-  const r = d.db.get<{ label: string; active: number }>('SELECT label, active FROM reason_lists WHERE list = ? AND code = ?', [listRaw, code]);
+  const r = getReasonListsLabelActiveByListCode<{ label: string; active: number }>(d.db, [listRaw, code]);
   if (r === undefined) throw new NotFoundAsRefusal();
   const label = Object.hasOwn(input, 'label') ? clean(input['label']) : r.label;
   if (label === null || label.length > 300) return { ok: false, why: 'Give the reason a label of up to 300 characters.', field: 'label' };
@@ -332,7 +328,7 @@ export function changeReason(d: ConfigDeps, actor: Actor, listRaw: string, code:
   const fields = [...(label !== r.label ? ['label'] : []), ...(active !== r.active ? ['active'] : [])];
   if (fields.length === 0) return { ok: true, id: `${listRaw}:${code}` };
   d.db.tx(() => {
-    d.db.run('UPDATE reason_lists SET label = ?, active = ? WHERE list = ? AND code = ?', [label, active, listRaw, code]);
+    updateReasonListsLabelActiveByListCode(d.db, [label, active, listRaw, code]);
     d.audit.append({
       at: d.now(), kind: 'REASON_CHANGED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'configuration', object_id: `${listRaw}:${code}`, detail: { list: listRaw, code, fields },

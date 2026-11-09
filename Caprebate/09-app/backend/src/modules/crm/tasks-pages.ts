@@ -28,12 +28,12 @@ import { kpiRow, lateBadge, noDateBadge, type KpiTone } from '../../core/index.t
 import { claimRef, savedMessage, why } from '../../shared/index.ts';
 import * as T from './tasks.ts';
 import * as A from './automation.ts';
-import * as M from '../admin/templates.ts';
+import { templatesModule as M } from '../admin/index.ts';
 import { emailButton } from './free-email-pages.ts';
 import { addNote } from '../claims/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import type { Fields } from './crm.ts';
-import { taskChoices, type TaskChoices } from '../admin/vocabularies.ts';
+import { taskChoices, type TaskChoices } from '../admin/index.ts';
 import { EXITS, PROCEDURE_STAGES } from '../../shared/index.ts';
 import type { Timeline } from './timeline.ts';
 import { piecesPage } from '../../core/index.ts';

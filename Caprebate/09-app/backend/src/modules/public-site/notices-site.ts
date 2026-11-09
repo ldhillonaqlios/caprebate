@@ -23,8 +23,8 @@ import type { Actor } from '../../core/index.ts';
 import { rateLimit } from '../../core/index.ts';
 import { hashToken } from '../../core/index.ts';
 import type { Db } from '../../core/index.ts';
-import { logComplaint } from '../compliance/compliance-rights.ts';
-import { assertComplianceWrite, type ComplianceDeps } from '../compliance/compliance.ts';
+import { logComplaint } from '../compliance/index.ts';
+import { assertComplianceWrite, type ComplianceDeps } from '../compliance/index.ts';
 import { plainDashes } from '../../shared/index.ts';
 import { getComplaintFormsIdReceivedAtById, insertComplaintForms, listComplaintFormsIdReceivedAtByLoggedComplaintId, updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl } from './data-borrowed.ts';
 

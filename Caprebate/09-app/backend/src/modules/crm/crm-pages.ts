@@ -32,12 +32,12 @@ import { claimRoutes } from '../claims/index.ts';
 
 /** An event's VAT position, in words (migration 105's three). */
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({ INCLUDED_NOT_RECLAIMABLE: 'The client could not reclaim it', EXCLUDED_OR_RECLAIMED: 'The client reclaimed it, or none was charged', NOT_KNOWN: 'Not known' });
-import { poundsWords } from '../survey/pack-sums.ts';
+import { poundsWords } from '../survey/index.ts';
 import { claimTasksBlock, emailBlock, newTaskForm, notesBlock, timelineBlock } from './tasks-pages.ts';
 import type { Timeline } from './timeline.ts';
-import { activeTemplates } from '../admin/templates.ts';
+import { activeTemplates } from '../admin/index.ts';
 import { claimDocumentsBlock, placeDocumentsBlock } from '../claims/index.ts';
-import { taskChoices, vocabulary } from '../admin/vocabularies.ts';
+import { taskChoices, vocabulary } from '../admin/index.ts';
 import type { SortBy } from '../../shared/lists-pages.ts';
 import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock } from '../claims/index.ts';
 import { addUnderCurrent, opens } from '../../core/navigation.ts';
@@ -52,7 +52,7 @@ import { dueWords, localStamp, ukDate } from '../../shared/index.ts';
 import { nameSwitches, navContext } from '../../core/navigation.ts';
 import { siteAreaInputsModule as SI } from '../claims/index.ts';
 import { titleByHandModule as TH } from '../claims/index.ts';
-import * as SO from '../survey/survey-open.ts';
+import { surveyOpenModule as SO } from '../survey/index.ts';
 import { earlyWindowWarning } from '../claims/index.ts';
 import { portalStepLine } from '../portal/index.ts';
 import { accountantConfirmBlock } from '../portal/index.ts';

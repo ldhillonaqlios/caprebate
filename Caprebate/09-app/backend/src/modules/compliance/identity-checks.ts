@@ -51,6 +51,8 @@ import {
   sentUnderTestingWaiver, startIdentityCheck, type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,
 } from '../../integrations/index.ts';
 import { getBusinessesIdById, getContactsIdEmailByIdBusinessId, listContactsIdByBusinessId } from '../crm/index.ts';
+import { getCddChecksStateByIdBusinessId, getCddChecksStateVerificationMethodById, getIdentityCheckResultsOutcomeReceivedAtByIdentityCheckId, getIdentityChecksIdBusinessIdBySessionId, getIdentityChecksIdBySessionId, insertIdentityCheckResults, insertIdentityChecks, updateCddChecksVerificationMethodUpdatedAtById } from './data.ts';
+import { listIdentityChecksIdContactByBusinessId, listIdentityChecksIdContactByCddCheckId } from './data-borrowed.ts';
 
 /** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/core/router.ts, outside the login. */
 export const IDENTITY_HOOK_PATH = '/hooks/identity-check';
@@ -100,7 +102,7 @@ export async function sendIdentityCheck(
   // PHASE 151e (line 6): we send the link to the person, so we must be able to reach them (Lakhbir, 28 Sep 2026)
   if (!isReachable(contact)) return { ok: false, why: UNREACHABLE_CONTACT_WORDS };
   if (input.cdd_check_id !== null) {
-    const c = db.get<{ state: string }>('SELECT state FROM cdd_checks WHERE id = ? AND business_id = ?', [input.cdd_check_id, input.business_id]);
+    const c = getCddChecksStateByIdBusinessId<{ state: string }>(db, [input.cdd_check_id, input.business_id]);
     if (c === undefined) return { ok: false, why: 'That due diligence check is not one of this organisation’s.' };
     if (c.state !== 'IN_PROGRESS') return { ok: false, why: 'That due diligence check is finished or withdrawn. Send it from the client’s page instead.' };
   }
@@ -116,9 +118,7 @@ export async function sendIdentityCheck(
     record(cd, actor, 'IDENTITY_CHECK_NOT_SENT', 'REFUSED', 'business', input.business_id, { contact: input.contact_id, cdd_check: input.cdd_check_id, why: out.why });
     return { ok: false, why: `Not sent. ${out.why}` };
   }
-  db.run(
-    'INSERT INTO identity_checks (id, business_id, contact_id, cdd_check_id, provider, session_id, link, sent_by, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, input.business_id, input.contact_id, input.cdd_check_id, 'DIDIT', out.session_id, out.link, actor.id, d.app.now()]);
+  insertIdentityChecks(db, [id, input.business_id, input.contact_id, input.cdd_check_id, 'DIDIT', out.session_id, out.link, actor.id, d.app.now()]);
   record(cd, actor, 'IDENTITY_CHECK_SENT', 'ALLOWED', 'identity_check', id, {
     business: input.business_id, contact: input.contact_id, cdd_check: input.cdd_check_id,
     // Phase 151h: a check sent before the papers name the service says so, in the row that records it
@@ -174,18 +174,15 @@ export function receiveIdentityResult(app: App, newId: () => string, rawBody: st
     return { status: 200, outcome: null };
   }
   if (read.state === 'UNDER_WAY') {
-    const known = app.db.get<{ id: string }>('SELECT id FROM identity_checks WHERE session_id = ?', [read.session_id]);
+    const known = getIdentityChecksIdBySessionId<{ id: string }>(app.db, [read.session_id]);
     if (known === undefined) return noCheckToMatch(app, cd);
     record(cd, null, 'IDENTITY_RESULT_NOT_KEPT', 'ALLOWED', 'identity_check', known.id, { why: 'the check is still under way', status: read.status });
     return { status: 200, outcome: null };
   }
-  const check = app.db.get<{ id: string; business_id: string; cdd_check_id: string | null }>(
-    'SELECT id, business_id, cdd_check_id FROM identity_checks WHERE session_id = ?', [read.session_id]);
+  const check = getIdentityChecksIdBusinessIdBySessionId<{ id: string; business_id: string; cdd_check_id: string | null }>(app.db, [read.session_id]);
   if (check === undefined || (read.check_ref !== null && read.check_ref !== check.id)) return noCheckToMatch(app, cd);
   const at = app.now();
-  app.db.run(
-    'INSERT INTO identity_check_results (id, identity_check_id, outcome, provider_status, decided_at, received_at, body_sha256, result_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [newId(), check.id, read.outcome, read.status.slice(0, 80), read.decided_at, at,
+  insertIdentityCheckResults(app.db, [newId(), check.id, read.outcome, read.status.slice(0, 80), read.decided_at, at,
       createHash('sha256').update(rawBody, 'utf8').digest('hex'), JSON.stringify(identityResultCopy(rawBody))]);
   record(cd, null, 'IDENTITY_RESULT_RECEIVED', 'ALLOWED', 'identity_check', check.id, { business: check.business_id, outcome: read.outcome, status: read.status });
   if (read.outcome === 'PASS' && check.cdd_check_id !== null) recordPassAsEvidence(cd, check.cdd_check_id, (read.decided_at ?? at).slice(0, 10));
@@ -211,9 +208,9 @@ export function passEvidenceSentence(day: string): string {
 }
 
 function recordPassAsEvidence(cd: ComplianceDeps, cdd_check_id: string, day: string): void {
-  const c = cd.db.get<{ state: string; verification_method: string | null }>('SELECT state, verification_method FROM cdd_checks WHERE id = ?', [cdd_check_id]);
+  const c = getCddChecksStateVerificationMethodById<{ state: string; verification_method: string | null }>(cd.db, [cdd_check_id]);
   if (c === undefined || c.state !== 'IN_PROGRESS' || c.verification_method !== null) return;
-  cd.db.run('UPDATE cdd_checks SET verification_method = ?, updated_at = ? WHERE id = ?', [passEvidenceSentence(day), cd.now(), cdd_check_id]);
+  updateCddChecksVerificationMethodUpdatedAtById(cd.db, [passEvidenceSentence(day), cd.now(), cdd_check_id]);
   record(cd, null, 'CDD_CHECK_UPDATED', 'ALLOWED', 'cdd_check', cdd_check_id, { fields: ['verification_method'], because: 'IDENTITY_CHECK_PASSED' });
 }
 
@@ -230,15 +227,10 @@ export type IdentityCheckLine = {
 /** The checks sent for an organisation or from one due diligence check, each with its LATEST result — read, not stored. */
 export function identityChecks(db: App['db'], where: { readonly business_id?: string; readonly cdd_check_id?: string }): IdentityCheckLine[] {
   const rows = where.cdd_check_id !== undefined
-    ? db.all<{ id: string; contact: string; sent_at: string; link: string; cdd_check_id: string | null; who: string | null }>(
-      'SELECT i.id, c.full_name AS contact, i.sent_at, i.link, i.cdd_check_id, u.display_name AS who FROM identity_checks i ' +
-        'JOIN contacts c ON c.id = i.contact_id LEFT JOIN users u ON u.id = i.sent_by WHERE i.cdd_check_id = ? ORDER BY i.sent_at DESC', [where.cdd_check_id])
-    : db.all<{ id: string; contact: string; sent_at: string; link: string; cdd_check_id: string | null; who: string | null }>(
-      'SELECT i.id, c.full_name AS contact, i.sent_at, i.link, i.cdd_check_id, u.display_name AS who FROM identity_checks i ' +
-        'JOIN contacts c ON c.id = i.contact_id LEFT JOIN users u ON u.id = i.sent_by WHERE i.business_id = ? ORDER BY i.sent_at DESC', [where.business_id ?? '']);
+    ? listIdentityChecksIdContactByCddCheckId<{ id: string; contact: string; sent_at: string; link: string; cdd_check_id: string | null; who: string | null }>(db, [where.cdd_check_id])
+    : listIdentityChecksIdContactByBusinessId<{ id: string; contact: string; sent_at: string; link: string; cdd_check_id: string | null; who: string | null }>(db, [where.business_id ?? '']);
   return rows.map((r) => {
-    const latest = db.get<{ outcome: IdentityOutcome; received_at: string }>(
-      'SELECT outcome, received_at FROM identity_check_results WHERE identity_check_id = ? ORDER BY received_at DESC, rowid DESC LIMIT 1', [r.id]);
+    const latest = getIdentityCheckResultsOutcomeReceivedAtByIdentityCheckId<{ outcome: IdentityOutcome; received_at: string }>(db, [r.id]);
     return {
       id: r.id, contact: r.contact, sent_at: r.sent_at, sent: `${localWhen(r.sent_at)} by ${r.who ?? 'a former user'}`, link: r.link,
       outcome: latest?.outcome ?? null, outcome_words: latest === undefined ? 'No result yet' : OUTCOME_WORDS[latest.outcome],

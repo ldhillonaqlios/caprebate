@@ -27,6 +27,7 @@ import type { Actor } from '../../core/index.ts';
 import { NotAuthorised } from '../../core/index.ts';
 import { INCOMING_PREFIX, type FsObjectStore, type IncomingTarget } from '../../shared/objectstore.ts';
 import { cleaned, clientOf, keep, NO_KEY, UNSORTED, type EvidenceDeps } from './survey-evidence.ts';
+import { getSurveyUploadSessionsIdJobIdById, getSurveyUploadSlotsIdSessionIdByIdSessionId, getSurveyUploadSlotsXBySessionIdN, insertSurveyUploadOutcomes, insertSurveyUploadOutcomes2, insertSurveyUploadOutcomes3, insertSurveyUploadSessions, insertSurveyUploadSlots, listSurveyUploadSlotsIdStagedKeyBySlotIdIssuedAt } from './data.ts';
 
 /** The most photos in one send, and the most one photo may be (Lakhbir, 2 Oct 2026). */
 export const MAX_PHOTOS_PER_SEND = 100;
@@ -80,14 +81,13 @@ export function startUpload(d: EvidenceDeps, store: FsObjectStore, actor: Actor,
   const now = d.now();
   const expires = new Date(Date.parse(now) + SEND_HOURS * 3_600_000).toISOString();
   const key = Buffer.from(pair.publicKey).toString('base64');
-  d.db.run('INSERT INTO survey_upload_sessions (id, job_id, by_user, photos_planned, note, nobody_in_it, public_key, private_key_sealed, created_at, expires_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?)',
-    [id, job.id, actor.id, n, note === '' ? null : note, key, store.sealBytes(pair.privateKey).toString('base64'), now, expires]);
+  insertSurveyUploadSessions(d.db, [id, job.id, actor.id, n, note === '' ? null : note, key, store.sealBytes(pair.privateKey).toString('base64'), now, expires]);
   return { ok: true, session: id, key, max_bytes: MAX_LOCKED_BYTES, expires_at: expires };
 }
 
 /** The caller's own send, for a client of its company still. Anyone else's is refused. */
 function ownSession(d: EvidenceDeps, actor: Actor, session_id: string): Session {
-  const s = d.db.get<Session>('SELECT id, job_id, by_user, photos_planned, note, private_key_sealed, expires_at FROM survey_upload_sessions WHERE id = ?', [session_id]);
+  const s = getSurveyUploadSessionsIdJobIdById<Session>(d.db, [session_id]);
   if (s === undefined || s.by_user !== actor.id) throw new NotAuthorised('survey_evidence.add', 'surveyor_job');
   clientOf(d.db, actor, s.job_id);
   return s;
@@ -104,7 +104,7 @@ export async function slotFor(d: EvidenceDeps, store: FsObjectStore, actor: Acto
   const size = /^\d{1,9}$/.test(f.size.trim()) ? Number(f.size.trim()) : 0;
   if (size <= LOCK_OVERHEAD) return { ok: false, why: 'That photo is empty.' };
   if (size > MAX_LOCKED_BYTES) return { ok: false, why: 'That photo is too big. The most is 25 MB.' };
-  if (d.db.get('SELECT 1 AS x FROM survey_upload_slots WHERE session_id = ? AND n = ?', [s.id, n]) !== undefined) return { ok: false, why: 'That photo has already been sent in this send.' };
+  if (getSurveyUploadSlotsXBySessionIdN(d.db, [s.id, n]) !== undefined) return { ok: false, why: 'That photo has already been sent in this send.' };
   const id = d.newId();
   const staged = `${INCOMING_PREFIX}${s.id}/${id}.lock`;
   const until = Math.min(Date.parse(now) + SLOT_MINUTES * 60_000, Date.parse(s.expires_at));
@@ -122,7 +122,7 @@ export async function slotFor(d: EvidenceDeps, store: FsObjectStore, actor: Acto
     remote = null;
     key = staged.replace(/\.lock$/, SITE_SUFFIX);
   }
-  d.db.run('INSERT INTO survey_upload_slots (id, session_id, n, staged_key, byte_size, issued_at) VALUES (?, ?, ?, ?, ?, ?)', [id, s.id, n, key, size, now]);
+  insertSurveyUploadSlots(d.db, [id, s.id, n, key, size, now]);
   const target = remote ?? { url: `/portal/building/upload/${s.id}/slot/${id}`, headers: {} };
   return { ok: true, slot: id, url: target.url, headers: target.headers };
 }
@@ -130,8 +130,7 @@ export async function slotFor(d: EvidenceDeps, store: FsObjectStore, actor: Acto
 type Slot = { id: string; session_id: string; staged_key: string; byte_size: number; issued_at: string; outcome: string | null; photo_id: string | null; why: string | null };
 
 function slotOf(d: EvidenceDeps, session_id: string, slot_id: string): Slot | undefined {
-  return d.db.get<Slot>('SELECT s.id, s.session_id, s.staged_key, s.byte_size, s.issued_at, o.outcome, o.photo_id, o.why FROM survey_upload_slots s ' +
-    'LEFT JOIN survey_upload_outcomes o ON o.slot_id = s.id WHERE s.id = ? AND s.session_id = ?', [slot_id, session_id]);
+  return getSurveyUploadSlotsIdSessionIdByIdSessionId<Slot>(d.db, [slot_id, session_id]);
 }
 
 /**
@@ -181,7 +180,7 @@ export async function finishSlot(d: EvidenceDeps, store: FsObjectStore, actor: A
   if (slot.outcome !== null) return { ok: false, why: slot.why ?? 'That photo was not kept.' };
   const refuse = async (why: string): Promise<{ ok: false; why: string }> => {
     await store.dropIncoming(slot.staged_key);
-    d.db.run("INSERT INTO survey_upload_outcomes (slot_id, outcome, photo_id, why, at) VALUES (?, 'REFUSED', NULL, ?, ?)", [slot.id, why, d.now()]);
+    insertSurveyUploadOutcomes3(d.db, [slot.id, why, d.now()]);
     return { ok: false, why };
   };
   const locked = await store.takeIncoming(slot.staged_key);
@@ -195,7 +194,7 @@ export async function finishSlot(d: EvidenceDeps, store: FsObjectStore, actor: A
   if (!c.ok) return refuse(c.why);
   const photo = await keep(d, store, actor, s.job_id, UNSORTED, c, s.note ?? '');
   await store.dropIncoming(slot.staged_key);
-  d.db.run("INSERT INTO survey_upload_outcomes (slot_id, outcome, photo_id, why, at) VALUES (?, 'KEPT', ?, NULL, ?)", [slot.id, photo, d.now()]);
+  insertSurveyUploadOutcomes2(d.db, [slot.id, photo, d.now()]);
   return { ok: true, photo };
 }
 
@@ -205,12 +204,10 @@ export async function finishSlot(d: EvidenceDeps, store: FsObjectStore, actor: A
  */
 export async function sweepUploads(d: Pick<EvidenceDeps, 'db' | 'now'>, store: FsObjectStore, limit = 50): Promise<number> {
   const before = new Date(Date.parse(d.now()) - ABANDON_HOURS * 3_600_000).toISOString();
-  const stale = d.db.all<{ id: string; staged_key: string }>(
-    'SELECT s.id, s.staged_key FROM survey_upload_slots s LEFT JOIN survey_upload_outcomes o ON o.slot_id = s.id WHERE o.slot_id IS NULL AND s.issued_at < ? ORDER BY s.issued_at LIMIT ?',
-    [before, limit]);
+  const stale = listSurveyUploadSlotsIdStagedKeyBySlotIdIssuedAt<{ id: string; staged_key: string }>(d.db, [before, limit]);
   for (const x of stale) {
     await store.dropIncoming(x.staged_key);
-    d.db.run("INSERT INTO survey_upload_outcomes (slot_id, outcome, photo_id, why, at) VALUES (?, 'ABANDONED', NULL, ?, ?)", [x.id, 'Never finished: removed after a day.', d.now()]);
+    insertSurveyUploadOutcomes(d.db, [x.id, 'Never finished: removed after a day.', d.now()]);
   }
   return stale.length;
 }

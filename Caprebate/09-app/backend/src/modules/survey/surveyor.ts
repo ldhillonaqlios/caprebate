@@ -75,6 +75,8 @@ import { estimateBasis } from './survey-open.ts';
 import { listRegisterRecordsSourceIdEntityIdByBusinessId } from '../../integrations/index.ts';
 import { getPropertiesPostcodeByBusinessId, listDocumentsIdFilenameByBusinessId, listPropertiesLabelPostcodeByBusinessId2 } from '../claims/index.ts';
 import { getEstimatesByAssessmentId, listAssessmentAnswersOrdQuestionIdByAssessmentId2 } from '../assessment/index.ts';
+import { getSurveyorRateEventsCountByJobId, getSurveyorRoomCountsCountByJobIdRoomCount, insertSurveyorControlObservations, insertSurveyorRateEvents, insertSurveyorRoomCounts, listSurveyorRateEventsBySurveyorId, listSurveyorRateEventsFieldIdFinalValueByJobId, listSurveyorRoomCountsRoomIdRoomCountByJobId3 } from './data.ts';
+import { getEstimatesXById, getSurveyorJobsIdBusinessIdById2, listSurveyorJobsIdBusinessId } from './data-borrowed.ts';
 
 export { NotFoundAsRefusal };
 
@@ -150,13 +152,8 @@ function objOf(r: JobDbRow): Extract<Obj, { type: 'surveyor_job' }> {
 function toRow(db: Db, r: JobDbRow): JobRow {
   const schedule = roomsFor(r.sector);
   const total = schedule === null ? 0 : schedule.rooms.length;
-  const counted = db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM surveyor_room_counts WHERE job_id = ? AND room_count IS NOT NULL',
-    [r.id],
-  )?.n ?? 0;
-  const rates = db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM surveyor_rate_events WHERE job_id = ?', [r.id],
-  )?.n ?? 0;
+  const counted = getSurveyorRoomCountsCountByJobIdRoomCount<{ n: number }>(db, [r.id])?.n ?? 0;
+  const rates = getSurveyorRateEventsCountByJobId<{ n: number }>(db, [r.id])?.n ?? 0;
   return {
     job_id: r.id, business_id: r.business_id, business_name: r.name, sector: r.sector,
     assessment_id: r.assessment_id, surveyor_id: r.surveyor_id, surveyor_name: r.surveyor_name,
@@ -186,12 +183,12 @@ function toRow(db: Db, r: JobDbRow): JobRow {
  */
 export function surveyorJobs(db: Db, actor: Actor, limit = 200): JobRow[] {
   assertSurveySection(actor);
-  const rows = db.all<JobDbRow>(`${JOB_SELECT}ORDER BY j.created_at DESC LIMIT ?`, [limit]);
+  const rows = listSurveyorJobsIdBusinessId<JobDbRow>(db, [limit]);
   return rows.filter((r) => can(actor, 'surveyor_job.read', objOf(r))).map((r) => toRow(db, r));
 }
 
 function loadJob(db: Db, actor: Actor, job_id: string): JobDbRow {
-  const r = db.get<JobDbRow>(`${JOB_SELECT}WHERE j.id = ?`, [job_id]);
+  const r = getSurveyorJobsIdBusinessIdById2<JobDbRow>(db, [job_id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'surveyor_job.read', objOf(r));
   return r;
@@ -209,7 +206,7 @@ export type PackJob = {
 };
 /** 2 Oct 2026: whether a job has its locked estimate — without one, committing figures releases nothing and is refused. */
 export function jobHasEstimate(db: Db, job_id: string): boolean {
-  return db.get('SELECT 1 AS x FROM estimates e JOIN surveyor_jobs j ON j.assessment_id = e.assessment_id WHERE j.id = ?', [job_id]) !== undefined;
+  return getEstimatesXById(db, [job_id]) !== undefined;
 }
 
 export function packJob(db: Db, actor: Actor, job_id: string): { job: PackJob; obj: Extract<Obj, { type: 'surveyor_job' }> } {
@@ -364,10 +361,7 @@ export function roomSchedule(db: Db, actor: Actor, job_id: string): RoomSchedule
     return { schedule: null, rows: [], counted: 0, uncounted: 0, source: SOURCE_DOCUMENT };
   }
   const stored = new Map(
-    db.all<{ room_id: string; room_count: number | null; note: string | null; recorded_at: string }>(
-      'SELECT room_id, room_count, note, recorded_at FROM surveyor_room_counts WHERE job_id = ?',
-      [job_id],
-    ).map((x) => [x.room_id, x] as const),
+    listSurveyorRoomCountsRoomIdRoomCountByJobId3<{ room_id: string; room_count: number | null; note: string | null; recorded_at: string }>(db, [job_id]).map((x) => [x.room_id, x] as const),
   );
   const rows: RoomRow[] = schedule.rooms.map((room) => {
     const s = stored.get(room.room_id);
@@ -418,13 +412,7 @@ export function saveRoomCount(
   }
   const note = input.note.trim() === '' ? null : input.note.trim();
 
-  d.db.run(
-    'INSERT INTO surveyor_room_counts (id, job_id, room_id, room_count, note, recorded_by, recorded_at) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (job_id, room_id) DO UPDATE SET ' +
-      'room_count = excluded.room_count, note = excluded.note, ' +
-      'recorded_by = excluded.recorded_by, recorded_at = excluded.recorded_at',
-    [d.newId(), job_id, input.room_id, count, note, actor.id, d.now()],
-  );
+  insertSurveyorRoomCounts(d.db, [d.newId(), job_id, input.room_id, count, note, actor.id, d.now()]);
   return { ok: true };
 }
 
@@ -536,11 +524,11 @@ function libraryFor(db: Db, surveyor_id: string): RateLibrary {
 
 /** Every stored event for a surveyor, oldest first, as the module's own type. */
 function eventsOf(db: Db, surveyor_id: string): PrefillEvent[] {
-  return db.all<{
+  return listSurveyorRateEventsBySurveyorId<{
     job_id: string; surveyor_id: string; field_id: string; sector: string; region: string;
     prefilled_value: number; prefill_origin: string; final_value: number; outcome: string;
     relative_delta: number; reason: string | null; at: string; anchor_verdict: string;
-  }>('SELECT * FROM surveyor_rate_events WHERE surveyor_id = ? ORDER BY at ASC, id ASC', [surveyor_id])
+  }>(db, [surveyor_id])
     .map((x) => ({
       job_id: x.job_id, surveyor_id: x.surveyor_id, field_id: x.field_id,
       context: { sector: x.sector as Sector, region: x.region },
@@ -645,10 +633,7 @@ export function rateLibrary(db: Db, actor: Actor, job_id: string): {
   const surveyor = r.surveyor_id;
 
   const recorded = new Map(
-    db.all<{ field_id: string; final_value: number; outcome: string; reason: string | null }>(
-      'SELECT field_id, final_value, outcome, reason FROM surveyor_rate_events WHERE job_id = ?',
-      [job_id],
-    ).map((x) => [x.field_id, x] as const),
+    listSurveyorRateEventsFieldIdFinalValueByJobId<{ field_id: string; final_value: number; outcome: string; reason: string | null }>(db, [job_id]).map((x) => [x.field_id, x] as const),
   );
 
   const lib = surveyor === null ? new RateLibrary() : libraryFor(db, surveyor);
@@ -912,17 +897,9 @@ function recordRates(
       reviewed: input.reviewed,
     });
 
-    d.db.run(
-      'INSERT INTO surveyor_rate_events (id, job_id, surveyor_id, field_id, sector, region, ' +
-        'prefilled_value, prefill_origin, final_value, outcome, relative_delta, reason, at, ' +
-        'anchor_verdict, reviewed, blank_control) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ' +
-        'ON CONFLICT (job_id, field_id) DO UPDATE SET final_value = excluded.final_value, ' +
-        'outcome = excluded.outcome, relative_delta = excluded.relative_delta, ' +
-        'reason = excluded.reason, at = excluded.at, reviewed = excluded.reviewed',
-      [d.newId(), r.id, actor.id, e.field_id, e.context.sector, e.context.region,
+    insertSurveyorRateEvents(d.db, [d.newId(), r.id, actor.id, e.field_id, e.context.sector, e.context.region,
         e.prefilled_value, e.prefill_origin, e.final_value, e.outcome, e.relative_delta,
-        e.reason, e.at, e.anchor_verdict, input.reviewed ? 1 : 0, blank ? 1 : 0],
-    );
+        e.reason, e.at, e.anchor_verdict, input.reviewed ? 1 : 0, blank ? 1 : 0]);
 
     /**
      * THE CONTROL OBSERVATION — AND THE DECISION ABOUT WHERE A CONTROL FIELD'S
@@ -962,12 +939,8 @@ function recordRates(
         job_id: r.id, surveyor_id: actor.id, field_id: e.field_id, context,
         value: e.final_value, at, anchor_verdict: verdict,
       });
-      d.db.run(
-        'INSERT INTO surveyor_control_observations (id, job_id, surveyor_id, field_id, sector, region, ' +
-          'value, at, anchor_verdict) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (job_id, field_id) DO NOTHING',
-        [d.newId(), o.job_id, o.surveyor_id, o.field_id, o.context.sector, o.context.region,
-          o.value, o.at, o.anchor_verdict],
-      );
+      insertSurveyorControlObservations(d.db, [d.newId(), o.job_id, o.surveyor_id, o.field_id, o.context.sector, o.context.region,
+          o.value, o.at, o.anchor_verdict]);
     }
   }
 }

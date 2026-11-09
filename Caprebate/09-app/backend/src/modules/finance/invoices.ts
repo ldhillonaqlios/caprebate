@@ -52,6 +52,8 @@ import { feeList, onClause13Credit, onFeeInvoiced, type FeeView } from '../crm/i
 import type { Letter } from '../claims/index.ts';
 import { getBusinessesSectorById, getStaffTasksIdTitleByClaimIdRuleId } from '../crm/index.ts';
 import { getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn } from '../claims/index.ts';
+import { getInvoiceCreditNotesAVByInvoiceId, getInvoiceNumbersCOALESCEMAXSeqN, getInvoicePaymentsCountByInvoiceIdVoidedAt, getInvoicePaymentsIdInvoiceIdById, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesCountByClaimId, getInvoicesCountByClaimIdKind, getInvoicesIdByIdClaimId, insertInvoiceCreditNotes, insertInvoiceNumbers, insertInvoicePayments, insertInvoices, listInvoiceCreditNotesInvoiceIdAmountPence, listInvoicePaymentsInvoiceIdAmountPenceByVoidedAt, updateInvoiceNumbersStateCancelledAtByInvoiceIdKind, updateInvoicePaymentsVoidedAtVoidedByById, updateInvoicesInvoiceStatusCancelledAtById, updateInvoicesInvoiceStatusSentOnById } from './data.ts';
+import { getClaimsCreatedAtNameById, getClaimsIdBusinessIdById, getInvoicesIdBusinessIdById, listInvoiceCreditNotesIdBasisByInvoiceId, listInvoicePaymentsIdReceivedOnByInvoiceId, listInvoicesIdBusinessId, listInvoicesIdBusinessIdByClaimId } from './data-borrowed.ts';
 
 export type InvoiceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one, so the
@@ -143,10 +145,8 @@ function record(d: InvoiceDeps, actor: Actor, kind: AuditKind, object_type: stri
 export function allocateNumber(
   db: Db, kind: 'INVOICE' | 'CREDIT_NOTE', invoice_id: string, credit_note_id: string | null, by: string, at: string,
 ): number {
-  const next = db.get<{ n: number }>('SELECT COALESCE(MAX(seq), 0) + 1 AS n FROM invoice_numbers')?.n ?? 1;
-  db.run(
-    'INSERT INTO invoice_numbers (seq, kind, invoice_id, credit_note_id, state, issued_at, issued_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [next, kind, invoice_id, credit_note_id, 'ISSUED', at, by]);
+  const next = getInvoiceNumbersCOALESCEMAXSeqN<{ n: number }>(db)?.n ?? 1;
+  insertInvoiceNumbers(db, [next, kind, invoice_id, credit_note_id, 'ISSUED', at, by]);
   return next;
 }
 
@@ -177,14 +177,10 @@ export type InvoiceMoney = {
 export function invoiceMoney(
   db: Db, i: { id: string; fee_pence: number; vat_pence: number; invoice_status: string; due_on: string | null }, nowIso: string,
 ): InvoiceMoney {
-  const creditRow = db.get<{ a: number | null; v: number | null }>(
-    'SELECT SUM(amount_pence) AS a, SUM(vat_pence) AS v FROM invoice_credit_notes WHERE invoice_id = ?', [i.id]);
+  const creditRow = getInvoiceCreditNotesAVByInvoiceId<{ a: number | null; v: number | null }>(db, [i.id]);
   const credited = (creditRow?.a ?? 0) + (creditRow?.v ?? 0);
-  const received = db.get<{ n: number | null }>(
-    'SELECT SUM(amount_pence) AS n FROM invoice_payments WHERE invoice_id = ? AND voided_at IS NULL', [i.id])?.n ?? 0;
-  const unconfirmed = db.get<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM invoice_payments WHERE invoice_id = ? AND voided_at IS NULL ' +
-      "AND (bank_details_confirmed IS NULL OR bank_details_confirmed <> 'OTHER_CHANNEL')", [i.id])?.n ?? 0;
+  const received = getInvoicePaymentsNByInvoiceIdVoidedAt<{ n: number | null }>(db, [i.id])?.n ?? 0;
+  const unconfirmed = getInvoicePaymentsCountByInvoiceIdVoidedAt<{ n: number }>(db, [i.id])?.n ?? 0;
   const total = i.fee_pence + i.vat_pence;
   const owed = total - credited;
   const outstanding = i.invoice_status === 'CANCELLED' ? 0 : owed - received;
@@ -225,7 +221,7 @@ const INVOICE_SELECT =
   'LEFT JOIN users u ON u.id = i.raised_by LEFT JOIN users x ON x.id = i.cancelled_by ';
 
 function loadInvoice(db: Db, id: string): InvoiceRow {
-  const r = db.get<InvoiceRow>(`${INVOICE_SELECT}WHERE i.id = ?`, [id]);
+  const r = getInvoicesIdBusinessIdById<InvoiceRow>(db, [id]);
   // A missing row, an organisation's old invoice and a forbidden row look the same from outside.
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
@@ -233,7 +229,7 @@ function loadInvoice(db: Db, id: string): InvoiceRow {
 
 /** Whether `id` is a claim's invoice — for the page deciding which view to draw. Authorises nothing. */
 export function isClaimInvoice(db: Db, id: string): boolean {
-  return db.get<{ id: string }>('SELECT id FROM invoices WHERE id = ? AND claim_id IS NOT NULL', [id]) !== undefined;
+  return getInvoicesIdByIdClaimId<{ id: string }>(db, [id]) !== undefined;
 }
 
 export type CreditNoteView = {
@@ -283,24 +279,16 @@ export type ClaimInvoiceView = {
 function viewOf(db: Db, actor: Actor, r: InvoiceRow, nowIso: string): ClaimInvoiceView {
   const obj = { type: 'invoice' as const, id: r.id, business_id: r.business_id };
   const money = invoiceMoney(db, r, nowIso);
-  const credit_notes = db.all<{
+  const credit_notes = listInvoiceCreditNotesIdBasisByInvoiceId<{
     id: string; basis: string; amount_pence: number; vat_pence: number; issued_on: string; reason: string; recorded_at: string; who: string | null; seq: number | null;
-  }>(
-    'SELECT c.id, c.basis, c.amount_pence, c.vat_pence, c.issued_on, c.reason, c.recorded_at, u.display_name AS who, n.seq ' +
-      'FROM invoice_credit_notes c LEFT JOIN users u ON u.id = c.recorded_by LEFT JOIN invoice_numbers n ON n.credit_note_id = c.id ' +
-      'WHERE c.invoice_id = ? ORDER BY c.recorded_at ASC, c.rowid ASC', [r.id],
-  ).map((c) => ({
+  }>(db, [r.id]).map((c) => ({
     id: c.id, number: formatInvoiceNumber(c.seq), basis: words(CREDIT_BASES, c.basis, c.basis), amount: formatPence(c.amount_pence),
     vat: formatPence(c.vat_pence), issued_on: c.issued_on, reason: c.reason, recorded: `${localStamp(c.recorded_at)} by ${c.who ?? 'a former user'}`,
   }));
-  const received = db.all<{
+  const received = listInvoicePaymentsIdReceivedOnByInvoiceId<{
     id: string; received_on: string; amount_pence: number; bank_details_confirmed: string | null; recorded_at: string; who: string | null;
     voided_at: string | null; void_reason: string | null; voider: string | null;
-  }>(
-    'SELECT p.id, p.received_on, p.amount_pence, p.bank_details_confirmed, p.recorded_at, u.display_name AS who, p.voided_at, ' +
-      'p.void_reason, v.display_name AS voider FROM invoice_payments p LEFT JOIN users u ON u.id = p.recorded_by ' +
-      'LEFT JOIN users v ON v.id = p.voided_by WHERE p.invoice_id = ? ORDER BY p.received_on ASC, p.rowid ASC', [r.id],
-  ).map((p) => ({
+  }>(db, [r.id]).map((p) => ({
     id: p.id, received_on: p.received_on, amount: formatPence(p.amount_pence), method: 'bank transfer',
     bank_details: p.bank_details_confirmed === null ? BANK_NEVER_ASKED : words(BANK_CONFIRMATIONS, p.bank_details_confirmed, p.bank_details_confirmed),
     confirmed_off_email: p.bank_details_confirmed === 'OTHER_CHANNEL',
@@ -346,8 +334,8 @@ export function claimInvoiceById(db: Db, actor: Actor, id: string, nowIso: strin
 /** Every claim invoice this actor may read — or one claim's. */
 export function claimInvoices(db: Db, actor: Actor, nowIso: string, opts: { claim_id?: string; limit?: number } = {}): ClaimInvoiceView[] {
   const rows = opts.claim_id === undefined
-    ? db.all<InvoiceRow>(`${INVOICE_SELECT}ORDER BY i.invoice_date DESC, n.seq DESC LIMIT ?`, [opts.limit ?? 500])
-    : db.all<InvoiceRow>(`${INVOICE_SELECT}WHERE i.claim_id = ? ORDER BY i.invoice_date ASC, n.seq ASC`, [opts.claim_id]);
+    ? listInvoicesIdBusinessId<InvoiceRow>(db, [opts.limit ?? 500])
+    : listInvoicesIdBusinessIdByClaimId<InvoiceRow>(db, [opts.claim_id]);
   return rows
     .filter((r) => can(actor, 'invoice.read', { type: 'invoice', id: r.id, business_id: r.business_id })
       && can(actor, 'business.read', { type: 'business', id: r.business_id }))
@@ -382,18 +370,13 @@ export function claimMoneyLines(db: Db, actor: Actor, claim_id: string, nowIso: 
 type ClaimRow = { id: string; business_id: string; claim_ref: string; stage: string | null; created_at: string; sector: string | null };
 
 function loadClaim(db: Db, id: string): ClaimRow {
-  const c = db.get<ClaimRow>(
-    'SELECT c.id, c.business_id, c.claim_ref, c.stage, c.created_at, b.sector FROM claims c JOIN businesses b ON b.id = c.business_id WHERE c.id = ?',
-    [id]);
+  const c = getClaimsIdBusinessIdById<ClaimRow>(db, [id]);
   if (c === undefined) throw new NotFoundAsRefusal();
   return c;
 }
 
 function liveInvoicesOfKind(db: Db, claim_id: string, kind: string): number {
-  return db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM invoices i WHERE i.claim_id = ? AND i.kind = ? AND i.invoice_status IN ('RAISED','SENT') " +
-      'AND i.fee_pence > COALESCE((SELECT SUM(c.amount_pence) FROM invoice_credit_notes c WHERE c.invoice_id = i.id), 0)',
-    [claim_id, kind])?.n ?? 0;
+  return getInvoicesCountByClaimIdKind<{ n: number }>(db, [claim_id, kind])?.n ?? 0;
 }
 
 /**
@@ -481,11 +464,7 @@ export function raiseInvoice(d: InvoiceDeps, actor: Actor, claim_id: string, inp
 
   const id = d.newId();
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO invoices (id, business_id, claim_id, kind, claim_value_pence, fee_pence, fee_rate, invoice_status, payment_status, ' +
-        'vat_position, vat_setting_id, vat_pence, invoice_date, due_on, due_basis, fee_basis, fee_warning, raised_by, created_at, entity_type) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, c.business_id, c.id, kind, figure, fee_pence, fee_rate, 'RAISED', 'UNPAID', vat.words, vat.setting_id, vat.vat_pence,
+    insertInvoices(d.db, [id, c.business_id, c.id, kind, figure, fee_pence, fee_rate, 'RAISED', 'UNPAID', vat.words, vat.setting_id, vat.vat_pence,
         today, due_on, due_basis, basis, warning, actor.id, at, entity]);
     const seq = allocateNumber(d.db, 'INVOICE', id, null, actor.id, at);
     // The kind, the number and whether a due date was set — never an amount.
@@ -515,7 +494,7 @@ export function markSent(d: InvoiceDeps, actor: Actor, id: string, input: Fields
   if (sent < r.invoice_date) return { ok: false, why: 'An invoice is not sent before the day it was raised.', field: 'sent_on' };
   if (sent > today) return { ok: false, why: 'An invoice is recorded as sent once it has been — not on a day still to come.', field: 'sent_on' };
   d.db.tx(() => {
-    d.db.run("UPDATE invoices SET invoice_status = 'SENT', sent_on = ? WHERE id = ?", [sent, r.id]);
+    updateInvoicesInvoiceStatusSentOnById(d.db, [sent, r.id]);
     record(d, actor, 'INVOICE_SENT', 'invoice', r.id, 'ALLOWED', { number: formatInvoiceNumber(r.seq) });
   });
   return { ok: true, id: r.id };
@@ -538,10 +517,8 @@ export function cancelInvoice(d: InvoiceDeps, actor: Actor, id: string, input: F
   if (reason.length > 2000) return { ok: false, why: 'The reason is longer than we store — 2,000 characters is the limit.' };
   const at = d.now();
   d.db.tx(() => {
-    d.db.run("UPDATE invoices SET invoice_status = 'CANCELLED', cancelled_at = ?, cancelled_by = ?, cancel_reason = ? WHERE id = ?",
-      [at, actor.id, reason, r.id]);
-    d.db.run("UPDATE invoice_numbers SET state = 'CANCELLED', cancelled_at = ?, cancelled_by = ? WHERE invoice_id = ? AND kind = 'INVOICE'",
-      [at, actor.id, r.id]);
+    updateInvoicesInvoiceStatusCancelledAtById(d.db, [at, actor.id, reason, r.id]);
+    updateInvoiceNumbersStateCancelledAtByInvoiceIdKind(d.db, [at, actor.id, r.id]);
     record(d, actor, 'INVOICE_CANCELLED', 'invoice', r.id, 'ALLOWED', { number: formatInvoiceNumber(r.seq) });
     ensureVatTask(d.db, d.now, d.newId, vatReading(d.db, at), actor.id);
   });
@@ -549,8 +526,7 @@ export function cancelInvoice(d: InvoiceDeps, actor: Actor, id: string, input: F
 }
 
 function creditedSoFar(db: Db, invoice_id: string): { amount: number; vat: number } {
-  const r = db.get<{ a: number | null; v: number | null }>(
-    'SELECT SUM(amount_pence) AS a, SUM(vat_pence) AS v FROM invoice_credit_notes WHERE invoice_id = ?', [invoice_id]);
+  const r = getInvoiceCreditNotesAVByInvoiceId<{ a: number | null; v: number | null }>(db, [invoice_id]);
   return { amount: r?.a ?? 0, vat: r?.v ?? 0 };
 }
 
@@ -561,10 +537,7 @@ function issueCredit(
   const id = d.newId();
   const at = d.now();
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO invoice_credit_notes (id, invoice_id, basis, amount_pence, vat_pence, corrected_claim_value_pence, issued_on, reason, recorded_by, recorded_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, r.id, basis, amount, vat, corrected, localDate(at), reason, actor.id, at]);
+    insertInvoiceCreditNotes(d.db, [id, r.id, basis, amount, vat, corrected, localDate(at), reason, actor.id, at]);
     const seq = allocateNumber(d.db, 'CREDIT_NOTE', r.id, id, actor.id, at);
     record(d, actor, 'CREDIT_NOTE_ISSUED', 'credit_note', id, 'ALLOWED', {
       basis, number: formatInvoiceNumber(seq), invoice_id: r.id,
@@ -655,10 +628,7 @@ export function recordReceived(d: InvoiceDeps, actor: Actor, id: string, input: 
   }
   const pid = d.newId();
   d.db.tx(() => {
-    d.db.run(
-      'INSERT INTO invoice_payments (id, invoice_id, received_on, amount_pence, method, bank_details_confirmed, recorded_by, recorded_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [pid, r.id, on, pence, 'BANK_TRANSFER', confirmed, actor.id, d.now()]);
+    insertInvoicePayments(d.db, [pid, r.id, on, pence, 'BANK_TRANSFER', confirmed, actor.id, d.now()]);
     // Whether the details were confirmed — never the amount.
     record(d, actor, 'MONEY_RECEIVED_RECORDED', 'invoice_payment', pid, 'ALLOWED', {
       invoice_id: r.id, bank_details: confirmed ?? 'NEVER_ASKED',
@@ -669,8 +639,7 @@ export function recordReceived(d: InvoiceDeps, actor: Actor, id: string, input: 
 
 /** A MISTAKEN RECORD, VOIDED ONCE WITH A REASON — never deleted and never edited. Returns the invoice's id. */
 export function voidReceived(d: InvoiceDeps, actor: Actor, payment_id: string, input: Fields): InvoiceResult {
-  const p = d.db.get<{ id: string; invoice_id: string; voided_at: string | null }>(
-    'SELECT id, invoice_id, voided_at FROM invoice_payments WHERE id = ?', [payment_id]);
+  const p = getInvoicePaymentsIdInvoiceIdById<{ id: string; invoice_id: string; voided_at: string | null }>(d.db, [payment_id]);
   if (p === undefined) throw new NotFoundAsRefusal();
   const r = loadInvoice(d.db, p.invoice_id);
   authorise(actor, 'invoice.record_received', { type: 'invoice', id: r.id, business_id: r.business_id });
@@ -679,7 +648,7 @@ export function voidReceived(d: InvoiceDeps, actor: Actor, payment_id: string, i
   if (reason === null) return { ok: false, why: 'Say why the record is voided.', field: 'reason' };
   if (reason.length > 2000) return { ok: false, why: 'The reason is longer than we store — 2,000 characters is the limit.' };
   d.db.tx(() => {
-    d.db.run('UPDATE invoice_payments SET voided_at = ?, voided_by = ?, void_reason = ? WHERE id = ?', [d.now(), actor.id, reason, p.id]);
+    updateInvoicePaymentsVoidedAtVoidedByById(d.db, [d.now(), actor.id, reason, p.id]);
     record(d, actor, 'MONEY_RECEIVED_VOIDED', 'invoice_payment', p.id, 'ALLOWED', { invoice_id: r.id });
   });
   return { ok: true, id: r.id };
@@ -740,8 +709,7 @@ export function financeDashboard(db: Db, actor: Actor, nowIso: string, opts: Inv
   const expectedAll = expectedFees(db, { controls: opts.controls ?? FEE_CONTROLS })
     .filter((e) => can(actor, 'claim.read', claimObjFor(db, { id: e.claim_id, business_id: e.business_id })))
     .map((e): ExpectedClaim => {
-      const c = db.get<{ created_at: string; name: string }>(
-        'SELECT c.created_at, b.name FROM claims c JOIN businesses b ON b.id = c.business_id WHERE c.id = ?', [e.claim_id]);
+      const c = getClaimsCreatedAtNameById<{ created_at: string; name: string }>(db, [e.claim_id]);
       const entered = localDate(enteredAt(db, { id: e.claim_id, created_at: c?.created_at ?? nowIso }, 'INVOICE'));
       const t = getStaffTasksIdTitleByClaimIdRuleId<{ id: string; title: string; status: string; due_on: string | null; owner_id: string | null; owner_role: string | null; business_id: string | null; claim_id: string | null }>(db, [e.claim_id, FINANCE_TASK_RULE]);
       const task = t !== undefined && can(actor, 'staff_task.read', taskObj(db, t))
@@ -763,10 +731,8 @@ export function financeDashboard(db: Db, actor: Actor, nowIso: string, opts: Inv
       };
     });
 
-  const credits = db.all<{ invoice_id: string; amount_pence: number; issued_on: string }>(
-    'SELECT invoice_id, amount_pence, issued_on FROM invoice_credit_notes').filter((c) => invoices.some((v) => v.id === c.invoice_id));
-  const payments = db.all<{ invoice_id: string; amount_pence: number; received_on: string }>(
-    'SELECT invoice_id, amount_pence, received_on FROM invoice_payments WHERE voided_at IS NULL').filter((p) => invoices.some((v) => v.id === p.invoice_id));
+  const credits = listInvoiceCreditNotesInvoiceIdAmountPence<{ invoice_id: string; amount_pence: number; issued_on: string }>(db).filter((c) => invoices.some((v) => v.id === c.invoice_id));
+  const payments = listInvoicePaymentsInvoiceIdAmountPenceByVoidedAt<{ invoice_id: string; amount_pence: number; received_on: string }>(db).filter((p) => invoices.some((v) => v.id === p.invoice_id));
 
   const months: DashboardMonth[] = Array.from({ length: 12 }, (_, i) => monthStart(today, i).slice(0, 7)).map((month) => {
     const invoiced = live.filter((v) => v.invoice_date.startsWith(month)).reduce((a, v) => a + v.fee_pence, 0);
@@ -802,7 +768,7 @@ export function financeDashboard(db: Db, actor: Actor, nowIso: string, opts: Inv
       without_a_fee: expectedAll.length - countedExpected.length,
     },
     invoices,
-    organisation_invoices_from_before: db.get<{ n: number }>('SELECT COUNT(*) AS n FROM invoices WHERE claim_id IS NULL')?.n ?? 0,
+    organisation_invoices_from_before: getInvoicesCountByClaimId<{ n: number }>(db)?.n ?? 0,
     vat: vatReading(db, nowIso, { controls: opts.controls ?? FEE_CONTROLS }),
     settings: settingsView(db, actor, today),
     may_record_setting: can(actor, 'finance_setting.write', financeSectionObj()),

@@ -46,6 +46,8 @@ import { localStamp, ukDate } from '../../shared/index.ts';
 import { claimObjFor, type Fields } from '../crm/index.ts';
 import { getContactsFullNameById, getContactsIdBusinessIdById2, getStaffTasksTitleDueOnByClaimIdIsNextAction } from '../crm/index.ts';
 import { getClaimsIdBusinessIdById, getPropertiesAddressLine1AddressLine2ById } from '../claims/index.ts';
+import { getEmailTemplatesIdLabelById, getEmailTemplatesIdLabelByIdActive, insertEmailTemplates, listEmailTemplatesIdLabel, listEmailTemplatesIdLabelByActive, updateEmailTemplatesLabelSubjectById } from './data.ts';
+import { getClaimsClaimRefBusinessNameById } from './data-borrowed.ts';
 
 export type TemplateDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 
@@ -180,7 +182,7 @@ const SECTION = { type: 'email_template' as const, id: '__templates__' };
 export function templatesPage(db: Db, actor: Actor): TemplatesPage {
   authorise(actor, 'email_template.read', SECTION);
   return {
-    templates: db.all<TemplateRow>('SELECT id, label, subject, body, active, created_at, updated_at FROM email_templates ORDER BY label ASC')
+    templates: listEmailTemplatesIdLabel<TemplateRow>(db)
       .map((t) => ({ id: t.id, label: t.label, subject: t.subject, body: t.body, active: t.active === 1, updated: localStamp(t.updated_at) })),
     merge_fields: MERGE_FIELDS,
     may_write: can(actor, 'email_template.write', SECTION),
@@ -190,7 +192,7 @@ export function templatesPage(db: Db, actor: Actor): TemplatesPage {
 /** The active templates, for a claim's email form. */
 export function activeTemplates(db: Db, actor: Actor): { id: string; label: string }[] {
   if (!can(actor, 'email_template.read', SECTION)) return [];
-  return db.all<{ id: string; label: string }>('SELECT id, label FROM email_templates WHERE active = 1 ORDER BY label ASC');
+  return listEmailTemplatesIdLabelByActive<{ id: string; label: string }>(db);
 }
 
 type Values = { label: string; subject: string; body: string; active: number };
@@ -219,8 +221,7 @@ export function createTemplate(d: TemplateDeps, actor: Actor, input: Fields): { 
   if (!v.ok) return v;
   const id = d.newId();
   const at = d.now();
-  d.db.run('INSERT INTO email_templates (id, label, subject, body, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, v.value.label, v.value.subject, v.value.body, v.value.active, at, at]);
+  insertEmailTemplates(d.db, [id, v.value.label, v.value.subject, v.value.body, v.value.active, at, at]);
   d.audit.append({
     at, kind: 'EMAIL_TEMPLATE_CREATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'email_template', object_id: id, detail: { template: id },
@@ -231,14 +232,13 @@ export function createTemplate(d: TemplateDeps, actor: Actor, input: Fields): { 
 /** CHANGE A TEMPLATE, OR RETIRE IT. Never deleted. */
 export function updateTemplate(d: TemplateDeps, actor: Actor, id: string, input: Fields): { ok: true; id: string } | { ok: false; why: string; field?: string } {
   authorise(actor, 'email_template.write', { type: 'email_template', id });
-  const t = d.db.get<TemplateRow>('SELECT id, label, subject, body, active, created_at, updated_at FROM email_templates WHERE id = ?', [id]);
+  const t = getEmailTemplatesIdLabelById<TemplateRow>(d.db, [id]);
   if (t === undefined) throw new NotFoundAsRefusal();
   const v = values(input, { label: t.label, subject: t.subject, body: t.body, active: t.active });
   if (!v.ok) return v;
   const changed = (['label', 'subject', 'body', 'active'] as const).filter((k) => v.value[k] !== t[k]);
   if (changed.length === 0) return { ok: true, id };
-  d.db.run('UPDATE email_templates SET label = ?, subject = ?, body = ?, active = ?, updated_at = ? WHERE id = ?',
-    [v.value.label, v.value.subject, v.value.body, v.value.active, d.now(), id]);
+  updateEmailTemplatesLabelSubjectById(d.db, [v.value.label, v.value.subject, v.value.body, v.value.active, d.now(), id]);
   d.audit.append({
     at: d.now(), kind: 'EMAIL_TEMPLATE_UPDATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'email_template', object_id: id, detail: { template: id, fields: changed },
@@ -254,9 +254,7 @@ export type MergeValues = Readonly<Record<string, string | null>>;
 
 /** What each merge field holds for this claim and this contact — null where nothing is recorded. */
 export function mergeValues(db: Db, claim_id: string, contact_id: string | null): MergeValues {
-  const c = db.get<{ claim_ref: string; business_name: string; property_id: string | null }>(
-    'SELECT c.claim_ref, b.name AS business_name, c.property_id FROM claims c JOIN businesses b ON b.id = c.business_id WHERE c.id = ?',
-    [claim_id]);
+  const c = getClaimsClaimRefBusinessNameById<{ claim_ref: string; business_name: string; property_id: string | null }>(db, [claim_id]);
   const p = c?.property_id === null || c?.property_id === undefined ? undefined
     : getPropertiesAddressLine1AddressLine2ById<{ address_line_1: string | null; address_line_2: string | null; town: string | null; postcode: string | null }>(db, [c.property_id]);
   const address = p === undefined ? ''
@@ -318,9 +316,7 @@ export function queueTemplate(d: TemplateDeps, actor: Actor, claim_id: string, i
   if (c === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'claim.read', claimObjFor(d.db, c));
   authorise(actor, 'email.queue', { type: 'email', id: c.id, business_id: c.business_id });
-  const t = d.db.get<TemplateRow>(
-    'SELECT id, label, subject, body, active, created_at, updated_at FROM email_templates WHERE id = ? AND active = 1',
-    [(input['template_id'] ?? '').trim()]);
+  const t = getEmailTemplatesIdLabelByIdActive<TemplateRow>(d.db, [(input['template_id'] ?? '').trim()]);
   if (t === undefined) return { ok: false, why: 'Choose one of the templates offered.', field: 'template_id' };
   const refusal = templateRefusal(t);
   if (refusal !== null) return { ok: false, why: refusal };

@@ -19,15 +19,15 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
 import { can, type Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
-import { approvedVersion, type Readiness } from '../survey/pack-approve.ts';
-import type { PackView } from '../survey/survey-pack.ts';
-import { reportHtml, reportModel, reportPdf, longDate, REPORT_TITLE } from '../survey/survey-report.ts';
+import { approvedVersion, type Readiness } from '../survey/index.ts';
+import type { PackView } from '../survey/index.ts';
+import { reportHtml, reportModel, reportPdf, longDate, REPORT_TITLE } from '../survey/index.ts';
 import * as S from './report-signoff.ts';
 import { ACCEPT_WORDS, myAcceptance } from '../portal/index.ts';
 import { ukDate } from '../../shared/index.ts';
-import { poundsWords } from '../survey/pack-sums.ts';
+import { poundsWords } from '../survey/index.ts';
 import { contextForApproval, csvName, returnContextFor, returnEntriesCsv } from './return-entries.ts';
-import { packJob } from '../survey/surveyor.ts';
+import { packJob } from '../survey/index.ts';
 import { getSurveyPackApprovalsJsonExtractSnapshotJsonQById } from './data-borrowed.ts';
 
 export type ReportPageDeps = {

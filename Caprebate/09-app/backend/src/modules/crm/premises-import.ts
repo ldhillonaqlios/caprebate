@@ -20,7 +20,7 @@
  */
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
-import { parseCsv } from '../survey/pack-lines.ts';
+import { parseCsv } from '../survey/index.ts';
 import { normalisePostcode } from '../../integrations/index.ts';
 import { getHealthcarePremisesXBySourceIdSourceRef, insertHealthcarePremises } from './data.ts';
 

@@ -9,6 +9,8 @@
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import { beginPackChange, type PackDeps, type PackResult } from './survey-pack.ts';
+import { insertSurveyPackWords } from './data.ts';
+import { listSurveyPackWordsFieldWordsByPackId } from './data-borrowed.ts';
 
 export type WordField = 'construction_type' | 'build_year' | 'building_other' | 'dwelling_method' | 'dwelling_segregation'
   | 'land_comparables' | 'land_voa' | 'land_date' | 'land_planning_basis' | 'qpct_basis' | 'disposal_value' | 'sector_core'
@@ -43,9 +45,7 @@ export type Words = { readonly words: string | null; readonly by_name: string; r
 export function packWords(db: Db, pack_id: string | null): ReadonlyMap<WordField, Words> {
   const out = new Map<WordField, Words>();
   if (pack_id === null) return out;
-  for (const r of db.all<{ field: WordField; words: string | null; by_name: string; at: string; reason: string }>(
-    'SELECT w.field, w.words, u.display_name AS by_name, w.at, w.reason FROM survey_pack_words w JOIN users u ON u.id = w.by_user ' +
-    'WHERE w.pack_id = ? ORDER BY w.at, w.rowid', [pack_id])) {
+  for (const r of listSurveyPackWordsFieldWordsByPackId<{ field: WordField; words: string | null; by_name: string; at: string; reason: string }>(db, [pack_id])) {
     out.set(r.field, { words: r.words, by_name: r.by_name, at: r.at, reason: r.reason });
   }
   return out;
@@ -61,8 +61,7 @@ export function savePackWords(d: PackDeps, actor: Actor, job_id: string, f: { fi
     const was = packWords(d.db, pack_id).get(field);
     if (words === null && (was === undefined || was.words === null)) return { ok: false, field: 'words', why: 'Nothing is written yet, so there is nothing to clear.' };
     if (words !== null && was?.words === words) return { ok: false, field: 'words', why: 'That is already what it says. Nothing changed.' };
-    d.db.run('INSERT INTO survey_pack_words (id, pack_id, field, words, by_user, reason, at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [d.newId(), pack_id, field, words, actor.id, f.reason.trim(), d.now()]);
+    insertSurveyPackWords(d.db, [d.newId(), pack_id, field, words, actor.id, f.reason.trim(), d.now()]);
     d.audit.append({ at: d.now(), kind: 'SURVEY_PACK_CHANGED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'surveyor_job', object_id: view.job.id, detail: { what: 'words', line: '', fields: field } });
     return { ok: true };

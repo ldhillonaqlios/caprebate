@@ -38,12 +38,12 @@ import { searchGate } from './search.ts';
 import { mayCreateTask, myWork, nextActionsGate } from '../modules/crm/index.ts';
 import { assertLeadSection } from '../modules/crm/index.ts';
 import { pipelineBoardGate } from '../modules/crm/index.ts';
-import { billingViewFor, clientsAreaGate } from '../modules/finance/billing.ts';
+import { billingViewFor, clientsAreaGate } from '../modules/finance/index.ts';
 import { claimListGate } from '../shared/lists.ts';
 import { assertIntroducerSection, rewardModelGate } from '../modules/crm/index.ts';
-import { assertSurveySection } from '../modules/survey/surveyor.ts';
-import { assertFinanceSection } from '../modules/finance/finance.ts';
-import { adminSettingsGate, SETTINGS_TILES } from '../modules/admin/admin-tiles.ts';
+import { assertSurveySection } from '../modules/survey/index.ts';
+import { assertFinanceSection } from '../modules/finance/index.ts';
+import { adminSettingsGate, SETTINGS_TILES } from '../modules/admin/index.ts';
 import { getUsersDisplayNameById } from './data.ts';
 
 // The request's context, the name switches and the menu a page opens out are in nav-context.ts, which loads no business

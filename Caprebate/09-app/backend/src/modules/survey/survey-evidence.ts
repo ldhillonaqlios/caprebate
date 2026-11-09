@@ -49,6 +49,8 @@ import { reconcileVideoMeeting, zoomDeps } from '../crm/index.ts';
 import { sendVideoInvite } from '../crm/index.ts';
 import { zoomRecording } from '../../integrations/index.ts';
 import { getContactsXByBusinessId, insertBookings3 } from '../crm/index.ts';
+import { getSurveyPhotoWithdrawalsXByPhotoId, getSurveyPhotosJobIdBusinessIdById, getSurveyPhotosJobIdBusinessIdById2, getSurveyRecordingsShareUrlByIdJobId, getSurveyWalkthroughAsksXByJobId, insertSurveyChecklistMarks, insertSurveyInspectionBasis, insertSurveyPhotoSorts, insertSurveyPhotoWithdrawals, insertSurveyPhotos, insertSurveyRecordingViews, insertSurveyRecordings, insertSurveyWalkthroughAsks, insertSurveyWalkthroughs, listSurveyChecklistMarksItemKeyMarkByJobIdRowid, listSurveyRecordingViewsIdShareUrlByRecordingIdWalkthroughId } from './data.ts';
+import { getSurveyInspectionBasisBasisNoteByJobId, getSurveyorJobsIdBusinessIdById, listSurveyPhotoSortsIdItemKeyByPhotoIdJO, listSurveyWalkthroughAsksAtByNameByJobId, listSurveyorJobsIdBusinessIdByBusinessId, listVideoMeetingsIdBookingIdByBookingIdJO } from './data-borrowed.ts';
 
 export type EvidenceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -127,15 +129,11 @@ export type EvidenceJob = { readonly id: string; readonly business_id: string; r
 
 /** The company's survey jobs, with the property each pack is for. */
 export function jobsOfBusiness(db: Db, business_id: string): EvidenceJob[] {
-  return db.all<EvidenceJob>(
-    "SELECT j.id, j.business_id, b.sector, COALESCE(p.label, b.name) AS place, j.surveyor_id FROM surveyor_jobs j JOIN businesses b ON b.id = j.business_id " +
-      'LEFT JOIN survey_packs sp ON sp.job_id = j.id LEFT JOIN properties p ON p.id = sp.property_id WHERE j.business_id = ? ORDER BY j.created_at, j.id', [business_id]);
+  return listSurveyorJobsIdBusinessIdByBusinessId<EvidenceJob>(db, [business_id]);
 }
 
 function jobRow(db: Db, job_id: string): EvidenceJob | null {
-  return db.get<EvidenceJob>(
-    "SELECT j.id, j.business_id, b.sector, COALESCE(p.label, b.name) AS place, j.surveyor_id FROM surveyor_jobs j JOIN businesses b ON b.id = j.business_id " +
-      'LEFT JOIN survey_packs sp ON sp.job_id = j.id LEFT JOIN properties p ON p.id = sp.property_id WHERE j.id = ?', [job_id]) ?? null;
+  return getSurveyorJobsIdBusinessIdById<EvidenceJob>(db, [job_id]) ?? null;
 }
 
 /** A client of the job's own company — the only person who adds photos and marks items. */
@@ -158,19 +156,14 @@ export type ChecklistView = { readonly job: EvidenceJob; readonly items: readonl
 export const UNSORTED = 'UNSORTED';
 
 export function photosOf(db: Db, job_id: string): PhotoRow[] {
-  return db.all<PhotoRow>(
-    'SELECT p.id, COALESCE((SELECT s.item_key FROM survey_photo_sorts s WHERE s.photo_id = p.id ORDER BY s.at DESC, s.rowid DESC LIMIT 1), p.item_key) AS item_key, ' +
-      'p.content_type, p.byte_size, p.note, p.taken_at, u.display_name AS taken_by_name FROM survey_photos p JOIN users u ON u.id = p.taken_by ' +
-      'LEFT JOIN survey_photo_withdrawals w ON w.photo_id = p.id WHERE p.job_id = ? AND w.photo_id IS NULL ORDER BY p.taken_at, p.rowid', [job_id]);
+  return listSurveyPhotoSortsIdItemKeyByPhotoIdJO<PhotoRow>(db, [job_id]);
 }
 
 export function checklistView(db: Db, job_id: string): ChecklistView | null {
   const job = jobRow(db, job_id);
   if (job === null) return null;
   const photos = photosOf(db, job_id);
-  const marks = new Map(db.all<{ item_key: string; mark: string }>(
-    'SELECT m.item_key, m.mark FROM survey_checklist_marks m WHERE m.job_id = ? AND m.rowid = (SELECT x.rowid FROM survey_checklist_marks x WHERE x.job_id = m.job_id AND x.item_key = m.item_key ORDER BY x.at DESC, x.rowid DESC LIMIT 1)',
-    [job_id]).map((r) => [r.item_key, r.mark] as const));
+  const marks = new Map(listSurveyChecklistMarksItemKeyMarkByJobIdRowid<{ item_key: string; mark: string }>(db, [job_id]).map((r) => [r.item_key, r.mark] as const));
   const items = checklistFor(job.sector).map((i): ItemView => {
     const ps = photos.filter((p) => p.item_key === i.key);
     const m = marks.get(i.key);
@@ -238,8 +231,7 @@ export async function keep(d: EvidenceDeps, store: FsObjectStore, actor: Actor, 
   const key = `survey-photos/${job_id}/${id}.${c.type === 'image/jpeg' ? 'jpg' : 'png'}`;
   await store.putSealed(key, c.bytes);
   const at = d.now();
-  d.db.run('INSERT INTO survey_photos (id, job_id, item_key, object_key, content_type, byte_size, sha256, note, taken_by, taken_at, nobody_in_it) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
-    [id, job_id, item_key, key, c.type, c.bytes.length, createHash('sha256').update(c.bytes).digest('hex'), note === '' ? null : note, actor.id, at]);
+  insertSurveyPhotos(d.db, [id, job_id, item_key, key, c.type, c.bytes.length, createHash('sha256').update(c.bytes).digest('hex'), note === '' ? null : note, actor.id, at]);
   d.audit.append({ at, kind: 'SURVEY_EVIDENCE_ADDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'surveyor_job', object_id: job_id,
     detail: { photo: id, item: item_key } });
   return id;
@@ -282,20 +274,20 @@ export function markItem(d: EvidenceDeps, actor: Actor, f: { job_id: string; ite
   if (!checklistFor(job.sector).some((i) => i.key === f.item_key)) return { ok: false, why: 'That is not one of the checklist’s items.' };
   if (!['NOT_HERE', 'NOT_SAFE', 'CLEARED'].includes(f.mark)) return { ok: false, why: 'Choose “not in our building” or “not safe or not ours”.' };
   const id = d.newId();
-  d.db.run('INSERT INTO survey_checklist_marks (id, job_id, item_key, mark, by_user, at) VALUES (?, ?, ?, ?, ?, ?)', [id, job.id, f.item_key, f.mark, actor.id, d.now()]);
+  insertSurveyChecklistMarks(d.db, [id, job.id, f.item_key, f.mark, actor.id, d.now()]);
   return { ok: true, id };
 }
 
 /** A photo taken back: by the client of that company, or by Admin or Sales with a reason. It is then shown to nobody. */
 export function withdrawPhoto(d: EvidenceDeps, actor: Actor, photo_id: string, reason: string): Result {
-  const p = d.db.get<{ job_id: string; business_id: string }>('SELECT p.job_id, j.business_id FROM survey_photos p JOIN surveyor_jobs j ON j.id = p.job_id WHERE p.id = ?', [photo_id]);
+  const p = getSurveyPhotosJobIdBusinessIdById<{ job_id: string; business_id: string }>(d.db, [photo_id]);
   if (p === undefined) return { ok: false, why: 'That photo is not one of ours.' };
   const own = actor.role === 'CLIENT' && actor.business_id === p.business_id;
   if (!own) authorise(actor, 'email.queue', { type: 'email', id: p.business_id, business_id: p.business_id });
   const why = own && reason.trim() === '' ? 'Taken back by the client.' : reason.trim().replace(/\s+/g, ' ');
   if (why === '' || why.length > 300) return { ok: false, field: 'reason', why: 'Say why the photo is taken back, in under 300 characters.' };
-  if (d.db.get('SELECT 1 AS x FROM survey_photo_withdrawals WHERE photo_id = ?', [photo_id]) !== undefined) return { ok: false, why: 'That photo has already been taken back.' };
-  d.db.run('INSERT INTO survey_photo_withdrawals (photo_id, by_user, reason, at) VALUES (?, ?, ?, ?)', [photo_id, actor.id, why, d.now()]);
+  if (getSurveyPhotoWithdrawalsXByPhotoId(d.db, [photo_id]) !== undefined) return { ok: false, why: 'That photo has already been taken back.' };
+  insertSurveyPhotoWithdrawals(d.db, [photo_id, actor.id, why, d.now()]);
   return { ok: true, id: photo_id };
 }
 
@@ -304,9 +296,7 @@ export function withdrawPhoto(d: EvidenceDeps, actor: Actor, photo_id: string, r
  * Sales). A withdrawn photo is shown to nobody. Null when there is nothing to show; a refusal throws.
  */
 export async function photoBytes(d: EvidenceDeps, store: FsObjectStore, actor: Actor, photo_id: string): Promise<{ bytes: Buffer; content_type: string } | null> {
-  const p = d.db.get<{ job_id: string; business_id: string; object_key: string; content_type: string; withdrawn: number }>(
-    'SELECT p.job_id, j.business_id, p.object_key, p.content_type, (w.photo_id IS NOT NULL) AS withdrawn FROM survey_photos p JOIN surveyor_jobs j ON j.id = p.job_id ' +
-      'LEFT JOIN survey_photo_withdrawals w ON w.photo_id = p.id WHERE p.id = ?', [photo_id]);
+  const p = getSurveyPhotosJobIdBusinessIdById2<{ job_id: string; business_id: string; object_key: string; content_type: string; withdrawn: number }>(d.db, [photo_id]);
   if (p === undefined) return null;
   if (actor.role === 'CLIENT') {
     if (actor.business_id !== p.business_id) throw new NotAuthorised('survey_evidence.read', 'surveyor_job');
@@ -350,10 +340,10 @@ export function sortPhotos(d: EvidenceDeps, actor: Actor, job_id: string, choice
   d.db.tx(() => {
     for (const [photo, to] of moves) {
       if (to === TAKE_BACK) {
-        d.db.run('INSERT INTO survey_photo_withdrawals (photo_id, by_user, reason, at) VALUES (?, ?, ?, ?)', [photo, actor.id, 'Not useful, taken back when sorting.', d.now()]);
+        insertSurveyPhotoWithdrawals(d.db, [photo, actor.id, 'Not useful, taken back when sorting.', d.now()]);
         taken_back++;
       } else if (live.get(photo)?.item_key !== to) {
-        d.db.run('INSERT INTO survey_photo_sorts (id, photo_id, item_key, by_user, at) VALUES (?, ?, ?, ?, ?)', [d.newId(), photo, to, actor.id, d.now()]);
+        insertSurveyPhotoSorts(d.db, [d.newId(), photo, to, actor.id, d.now()]);
         sorted++;
       }
     }
@@ -408,13 +398,13 @@ export function walkWords(freePlan: boolean): WalkWords { return freePlan ? WALK
 
 export function askWalkthrough(d: EvidenceDeps, actor: Actor, job_id: string, freePlan = false): Result {
   const job = clientOf(d.db, actor, job_id);
-  const open = d.db.get('SELECT 1 AS x FROM survey_walkthrough_asks a WHERE a.job_id = ? AND NOT EXISTS (SELECT 1 FROM survey_walkthroughs w WHERE w.job_id = a.job_id AND w.booked_at >= a.at)', [job_id]);
+  const open = getSurveyWalkthroughAsksXByJobId(d.db, [job_id]);
   if (open !== undefined) return { ok: false, why: 'We have your request. We will offer you a time.' };
   return d.db.tx((): Result => {
     const m = postClientMessage(d, actor, job.business_id, { body: walkWords(freePlan).message, claim_id: null });
     if (!m.ok) return m;
     const id = d.newId();
-    d.db.run('INSERT INTO survey_walkthrough_asks (id, job_id, by_user, at) VALUES (?, ?, ?, ?)', [id, job_id, actor.id, d.now()]);
+    insertSurveyWalkthroughAsks(d.db, [id, job_id, actor.id, d.now()]);
     return { ok: true, id };
   });
 }
@@ -426,19 +416,14 @@ export type Walkthrough = {
 };
 
 export function walkthroughsOf(db: Db, job_id: string): Walkthrough[] {
-  return db.all<{ id: string; booking_id: string; starts_at: string | null; cancelled_at: string | null; booked_by_name: string; meeting_id: string | null }>(
-    'SELECT w.id, w.booking_id, b.starts_at, b.cancelled_at, u.display_name AS booked_by_name, ' +
-      '(SELECT m.meeting_id FROM video_meetings m WHERE m.booking_id = b.id ORDER BY m.created_at DESC LIMIT 1) AS meeting_id ' +
-      'FROM survey_walkthroughs w JOIN bookings b ON b.id = w.booking_id JOIN users u ON u.id = w.booked_by WHERE w.job_id = ? ORDER BY w.booked_at DESC', [job_id],
-  ).map((w) => ({
+  return listVideoMeetingsIdBookingIdByBookingIdJO<{ id: string; booking_id: string; starts_at: string | null; cancelled_at: string | null; booked_by_name: string; meeting_id: string | null }>(db, [job_id]).map((w) => ({
     id: w.id, booking_id: w.booking_id, starts_at: w.starts_at, cancelled: w.cancelled_at !== null, booked_by_name: w.booked_by_name, meeting_id: w.meeting_id,
-    recordings: db.all<{ id: string; share_url: string; passcode: string | null; minutes: number; recorded_at: string; views: number }>(
-      'SELECT r.id, r.share_url, r.passcode, r.minutes, r.recorded_at, (SELECT COUNT(*) FROM survey_recording_views v WHERE v.recording_id = r.id) AS views FROM survey_recordings r WHERE r.walkthrough_id = ? ORDER BY r.recorded_at', [w.id]),
+    recordings: listSurveyRecordingViewsIdShareUrlByRecordingIdWalkthroughId<{ id: string; share_url: string; passcode: string | null; minutes: number; recorded_at: string; views: number }>(db, [w.id]),
   }));
 }
 
 export function asksOf(db: Db, job_id: string): { at: string; by_name: string }[] {
-  return db.all('SELECT a.at, u.display_name AS by_name FROM survey_walkthrough_asks a JOIN users u ON u.id = a.by_user WHERE a.job_id = ? ORDER BY a.at DESC', [job_id]);
+  return listSurveyWalkthroughAsksAtByNameByJobId(db, [job_id]);
 }
 
 /** Who may fetch the walkthrough's recording: the assigned surveyor, Admin or Sales. */
@@ -466,7 +451,7 @@ export async function bookWalkthrough(app: App, newId: () => string, actor: Acto
   const id = newId();
   app.db.tx(() => {
     insertBookings3(app.db, [booking, job.business_id, actor.id, starts, ends, now]);
-    app.db.run('INSERT INTO survey_walkthroughs (id, job_id, booking_id, booked_by, booked_at) VALUES (?, ?, ?, ?, ?)', [id, job_id, booking, actor.id, now]);
+    insertSurveyWalkthroughs(app.db, [id, job_id, booking, actor.id, now]);
     app.audit.append({ at: now, kind: 'BOOKING_CREATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'booking', object_id: booking,
       detail: { business: job.business_id, channel: 'video', walkthrough: true } });
   });
@@ -485,8 +470,7 @@ export async function fetchRecording(app: App, newId: () => string, actor: Actor
   if (r.state !== 'FOUND') return { ok: false, why: r.why };
   if (w.recordings.some((x) => x.share_url === r.share_url)) return { ok: false, why: 'We already have that recording.' };
   const id = newId();
-  app.db.run('INSERT INTO survey_recordings (id, walkthrough_id, share_url, passcode, minutes, recorded_at, fetched_by, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, w.id, r.share_url, r.passcode, r.minutes, r.recorded_at, actor.id, app.now()]);
+  insertSurveyRecordings(app.db, [id, w.id, r.share_url, r.passcode, r.minutes, r.recorded_at, actor.id, app.now()]);
   return { ok: true, id };
 }
 
@@ -494,9 +478,9 @@ export async function fetchRecording(app: App, newId: () => string, actor: Actor
 export function watchRecording(d: EvidenceDeps, actor: Actor, job_id: string, recording_id: string): string | null {
   const { obj } = packJob(d.db, actor, job_id);
   authorise(actor, 'surveyor_job.read', obj);
-  const r = d.db.get<{ share_url: string }>('SELECT r.share_url FROM survey_recordings r JOIN survey_walkthroughs w ON w.id = r.walkthrough_id WHERE r.id = ? AND w.job_id = ?', [recording_id, job_id]);
+  const r = getSurveyRecordingsShareUrlByIdJobId<{ share_url: string }>(d.db, [recording_id, job_id]);
   if (r === undefined) return null;
-  d.db.run('INSERT INTO survey_recording_views (id, recording_id, by_user, at) VALUES (?, ?, ?, ?)', [d.newId(), recording_id, actor.id, d.now()]);
+  insertSurveyRecordingViews(d.db, [d.newId(), recording_id, actor.id, d.now()]);
   return r.share_url;
 }
 
@@ -513,8 +497,7 @@ export const BASIS_WORDS: Readonly<Record<string, string>> = Object.freeze({
 export type Basis = { readonly basis: string; readonly words: string; readonly note: string | null; readonly by_name: string; readonly at: string };
 
 export function basisOf(db: Db, job_id: string): Basis | null {
-  const r = db.get<{ basis: string; note: string | null; by_name: string; at: string }>(
-    'SELECT b.basis, b.note, u.display_name AS by_name, b.at FROM survey_inspection_basis b JOIN users u ON u.id = b.by_user WHERE b.job_id = ? ORDER BY b.at DESC, b.rowid DESC LIMIT 1', [job_id]);
+  const r = getSurveyInspectionBasisBasisNoteByJobId<{ basis: string; note: string | null; by_name: string; at: string }>(db, [job_id]);
   return r === undefined ? null : { ...r, words: BASIS_WORDS[r.basis] ?? r.basis };
 }
 
@@ -527,6 +510,6 @@ export function setBasis(d: EvidenceDeps, actor: Actor, job_id: string, f: { bas
   const now = basisOf(d.db, job_id);
   if (now !== null && now.basis === f.basis && (now.note ?? '') === note) return { ok: false, why: 'That is already how you inspected it.' };
   const id = d.newId();
-  d.db.run('INSERT INTO survey_inspection_basis (id, job_id, basis, note, by_user, at) VALUES (?, ?, ?, ?, ?, ?)', [id, job_id, f.basis, note === '' ? null : note, actor.id, d.now()]);
+  insertSurveyInspectionBasis(d.db, [id, job_id, f.basis, note === '' ? null : note, actor.id, d.now()]);
   return { ok: true, id };
 }

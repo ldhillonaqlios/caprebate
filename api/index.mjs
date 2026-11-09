@@ -10,7 +10,7 @@
  * CAPREBATE_DB_URL and CAPREBATE_DB_TOKEN in the website's settings (or TURSO_DATABASE_URL and TURSO_AUTH_TOKEN, the
  * names Vercel's Turso integration gives them; a Turso database, through Vercel's Marketplace),
  * AND the test password set, every copy uses that one database: the seed runs only when it is empty. Without all
- * three, nothing changes, and the identity panel says the records are kept in memory (src/web/identity-checks.ts).
+ * three, nothing changes, and the identity panel says the records are kept in memory (src/modules/compliance/identity-checks.ts).
  *
  * PHASE 151i, 28 September 2026: ONE PRIVATE DOCUMENT STORE FOR EVERY COPY, SWITCHED OFF UNTIL LAKHBIR CONNECTS ONE.
  * With the lasting database IN USE (not merely set: a copy that fell back to memory keeps the folder) AND a private

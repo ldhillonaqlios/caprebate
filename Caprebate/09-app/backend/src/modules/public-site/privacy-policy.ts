@@ -17,7 +17,7 @@
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../../integrations/index.ts';
 import { BACKUP_KEEP_DAYS } from '../../core/index.ts';
-import { RETENTION_PARAMETERS } from '../compliance/compliance-identity.ts';
+import { RETENTION_PARAMETERS } from '../compliance/index.ts';
 
 export const COMPANY = 'CAP REBATE LTD';
 export const COMPANY_NUMBER = '17307313';

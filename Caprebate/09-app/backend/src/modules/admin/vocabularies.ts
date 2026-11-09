@@ -26,6 +26,7 @@
  */
 
 import type { Db } from '../../core/index.ts';
+import { getVocabulariesActiveByListCode, getVocabulariesLabelByListCode, listVocabulariesCodeLabelByList } from './data.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -53,9 +54,7 @@ export type VocabValue = {
 };
 
 export function vocabularyValues(db: Db, list: VocabList): VocabValue[] {
-  return db.all<{ code: string; label: string; ord: number; active: number; fixed: number; source: string }>(
-    'SELECT code, label, ord, active, fixed, source FROM vocabularies WHERE list = ? ORDER BY ord ASC, code ASC', [list],
-  ).map((r) => ({ code: r.code, label: r.label, ord: r.ord, active: r.active === 1, fixed: r.fixed === 1, source: r.source }));
+  return listVocabulariesCodeLabelByList<{ code: string; label: string; ord: number; active: number; fixed: number; source: string }>(db, [list]).map((r) => ({ code: r.code, label: r.label, ord: r.ord, active: r.active === 1, fixed: r.fixed === 1, source: r.source }));
 }
 
 /**
@@ -73,13 +72,13 @@ export function vocabulary(db: Db, list: VocabList, keep: string | null = null):
 /** A value's label, whatever its state. A value the list has never held — recorded before it existed — reads as written. */
 export function vocabLabel(db: Db, list: VocabList, code: string | null | undefined, none: string): string {
   if (code === null || code === undefined || code === '') return none;
-  return db.get<{ label: string }>('SELECT label FROM vocabularies WHERE list = ? AND code = ?', [list, code])?.label ?? code;
+  return getVocabulariesLabelByListCode<{ label: string }>(db, [list, code])?.label ?? code;
 }
 
 /** May a record take this value now? Only an active one — or the value it already holds. */
 export function mayTake(db: Db, list: VocabList, code: string, stored: string | null = null): boolean {
   if (stored !== null && code === stored) return true;
-  return db.get<{ active: number }>('SELECT active FROM vocabularies WHERE list = ? AND code = ?', [list, code])?.active === 1;
+  return getVocabulariesActiveByListCode<{ active: number }>(db, [list, code])?.active === 1;
 }
 
 type Check<T> = { ok: true; value: T } | { ok: false; why: string };

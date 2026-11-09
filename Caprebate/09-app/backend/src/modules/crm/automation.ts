@@ -59,7 +59,7 @@ import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts'
 import { missingFacts } from '../claims/index.ts';
 import { POOL_ROLES, addDaysToDate, insertTask } from './tasks.ts';
 import { claimWords, type Fields } from './crm.ts';
-import { mayTake, vocabLabel } from '../admin/vocabularies.ts';
+import { mayTake, vocabLabel } from '../admin/index.ts';
 import { createDocumentRequest, NO_RECEIPT_POLICY } from '../claims/index.ts';
 import { getUsersEmailRoleById, getUsersRoleDisabledAtById } from '../../core/index.ts';
 import { getAutomationRulesN, getBusinessesClientStatusById, getBusinessesIdOwnerIdById, getBusinessesNameById, getLeadsIdBusinessIdById3, insertAutomationRules, insertAutomationRuns, listStaffTasksFactIdByBusinessIdFactId, updateAutomationRulesLabelTriggerEventById } from './data.ts';

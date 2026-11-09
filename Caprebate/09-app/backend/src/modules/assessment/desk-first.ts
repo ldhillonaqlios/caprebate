@@ -23,7 +23,7 @@
  */
 import { isPricePaidLead } from './who-claims.ts';
 import type { Db } from '../../core/index.ts';
-import { checklistView, type ChecklistView } from '../survey/survey-evidence.ts';
+import { checklistView, type ChecklistView } from '../survey/index.ts';
 import { mandatoryDocumentNeeds } from '../claims/index.ts';
 import { latestFacts } from '../claims/index.ts';
 import { listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId } from '../../integrations/index.ts';

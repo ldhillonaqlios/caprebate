@@ -36,14 +36,14 @@ import { EXITS, PROCEDURE_STAGES, anyStageLabel, claimStage, procedureIndex } fr
 import { dueReading, isTerminalStage, nextActionBreakers } from './tasks.ts';
 import { localDate } from '../../shared/index.ts';
 import { formatPence } from '../../shared/index.ts';
-import { financeDashboard, type FinanceDashboard } from '../finance/invoices.ts';
+import { financeDashboard, type FinanceDashboard } from '../finance/index.ts';
 import { DELIVERABLES, QUOTE_GAP_REVIEW_PCT, VARIANCE_CATEGORIES, deliverableIssued, latestSignOff, varianceOf } from '../claims/index.ts';
 import { pipelineFigures } from './introducers.ts';
 import { reasonLabel } from './pipeline.ts';
-import { rightsRegister, complaintsLog } from '../compliance/compliance-rights.ts';
-import { breachRegister } from '../compliance/compliance-breach.ts';
+import { rightsRegister, complaintsLog } from '../compliance/index.ts';
+import { breachRegister } from '../compliance/index.ts';
 import { claimObjFor, claimWords } from './crm.ts';
-import { vocabLabel } from '../admin/vocabularies.ts';
+import { vocabLabel } from '../admin/index.ts';
 import { SECTORS } from './leads.ts';
 import { listClaimsIdCompletedAtByStage, listEstimatesIdClaimRefByAssessmentIdJO, listSurveyorJobsIdBusinessIdBySurveyorId } from './data-borrowed.ts';
 import { listClientTasksIdBusinessIdByStateDueOn, listIntroducersIdFirmName, listLeadsIdBusinessId, listLeadsIdBusinessIdByStatus, listStaffTasksIdBusinessIdByStatus } from './data.ts';

@@ -36,7 +36,7 @@ import type { AuditLog } from '../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../core/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { JURISDICTIONS, WORKSTREAMS, claimObjFor, derivedJurisdiction, type ClaimRow } from '../modules/crm/index.ts';
-import { priorityRank, vocabLabel, vocabulary } from '../modules/admin/vocabularies.ts';
+import { priorityRank, vocabLabel, vocabulary } from '../modules/admin/index.ts';
 import { LEAD_ORIGINS, LEAD_STATUSES, NO_RANGE_NO_ASSESSMENT, RANGE_NOT_SHOWN, SECTORS, assertLeadSection, type LeadRow } from '../modules/crm/index.ts';
 import { CLOSED_STAGE, EXITS, ON_HOLD_STAGE, PROCEDURE_STAGES, claimStage } from './stages.ts';
 import { formatShownRange } from './shown-range.ts';

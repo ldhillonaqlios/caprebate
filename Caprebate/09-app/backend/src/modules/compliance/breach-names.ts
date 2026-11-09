@@ -19,13 +19,13 @@ import { can, type Actor } from '../../core/index.ts';
 import { DPO_ROLE } from '../../core/index.ts';
 import { complianceObj, record, requiredText, textField, type ComplianceDeps, type Fields, type WriteResult } from './compliance.ts';
 import { getUsersRoleDisabledAtById } from '../../core/index.ts';
+import { getBreachIncidentsAnnexRefById, getBreachIncidentsCountByAnnexRef, getBreachIncidentsExistsByAnnexRef, getBreachNamesDeputiesUserIdSource, insertBreachNames, insertBreachNamesDeputies, listBreachNamesAnnexRefNameByIncidentId, updateBreachIncidentsAnnexRefUpdatedAtById } from './data.ts';
 
 export type NameLine = { readonly annex_ref: string; readonly name: string; readonly how_involved: string; readonly note: string | null; readonly recorded_at: string };
 
 /** The deputy named now: the latest row, or null where nobody has been named. */
 export function currentDeputy(db: Db): { user_id: string; source: string; named_at: string } | null {
-  return db.get<{ user_id: string; source: string; named_at: string }>(
-    'SELECT user_id, source, named_at FROM breach_names_deputies ORDER BY named_at DESC, rowid DESC LIMIT 1') ?? null;
+  return getBreachNamesDeputiesUserIdSource<{ user_id: string; source: string; named_at: string }>(db) ?? null;
 }
 
 /** May this person open the list? The officer, or the named deputy — and nobody else. */
@@ -50,20 +50,20 @@ export function nameDeputy(d: ComplianceDeps, actor: Actor, input: Fields): Writ
   const source = requiredText(input['source'], 500, 'The paper that names them, such as the signed letter of authority');
   if (!source.ok) return source;
   const id = d.newId();
-  d.db.run('INSERT INTO breach_names_deputies (id, user_id, source, named_by, named_at) VALUES (?, ?, ?, ?, ?)', [id, user_id, source.value, actor.id, d.now()]);
+  insertBreachNamesDeputies(d.db, [id, user_id, source.value, actor.id, d.now()]);
   record(d, actor, 'COMPLIANCE_SETTING_RECORDED', 'ALLOWED', 'breach_names_deputy', id, { setting: 'BREACH_NAMES_DEPUTY' });
   return { ok: true, id };
 }
 
 /** The entry's annex reference, given now if it has none (ANX-001, ANX-002 …). */
 function annexRefFor(d: ComplianceDeps, incident_id: string): string | null {
-  const i = d.db.get<{ annex_ref: string | null }>('SELECT annex_ref FROM breach_incidents WHERE id = ?', [incident_id]);
+  const i = getBreachIncidentsAnnexRefById<{ annex_ref: string | null }>(d.db, [incident_id]);
   if (i === undefined) return null;
   if (i.annex_ref !== null) return i.annex_ref;
-  const n = d.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM breach_incidents WHERE annex_ref IS NOT NULL")?.n ?? 0;
+  const n = getBreachIncidentsCountByAnnexRef<{ n: number }>(d.db)?.n ?? 0;
   let k = n + 1, ref = '';
-  for (;;) { ref = `ANX-${String(k).padStart(3, '0')}`; if (d.db.get('SELECT 1 FROM breach_incidents WHERE annex_ref = ?', [ref]) === undefined) break; k++; }
-  d.db.run('UPDATE breach_incidents SET annex_ref = ?, updated_at = ? WHERE id = ?', [ref, d.now(), incident_id]);
+  for (;;) { ref = `ANX-${String(k).padStart(3, '0')}`; if (getBreachIncidentsExistsByAnnexRef(d.db, [ref]) === undefined) break; k++; }
+  updateBreachIncidentsAnnexRefUpdatedAtById(d.db, [ref, d.now(), incident_id]);
   return ref;
 }
 
@@ -79,8 +79,7 @@ export function addName(d: ComplianceDeps, actor: Actor, incident_id: string, in
     const ref = annexRefFor(d, incident_id);
     if (ref === null) return { ok: false, why: 'No such breach entry.' };
     const id = d.newId();
-    d.db.run('INSERT INTO breach_names (id, annex_ref, incident_id, name, how_involved, note, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, ref, incident_id, name.value, how.value, note.value, actor.id, d.now()]);
+    insertBreachNames(d.db, [id, ref, incident_id, name.value, how.value, note.value, actor.id, d.now()]);
     record(d, actor, 'BREACH_NAME_ADDED', 'ALLOWED', 'breach_incident', incident_id, { annex_ref: ref });
     return { ok: true, id };
   });
@@ -88,8 +87,8 @@ export function addName(d: ComplianceDeps, actor: Actor, incident_id: string, in
 
 export function namesFor(d: ComplianceDeps, actor: Actor, incident_id: string): { ok: true; annex_ref: string | null; lines: readonly NameLine[] } | { ok: false; why: string } {
   if (!mayOpenNames(d.db, actor)) return refuse(d, actor, incident_id);
-  const ref = d.db.get<{ annex_ref: string | null }>('SELECT annex_ref FROM breach_incidents WHERE id = ?', [incident_id])?.annex_ref ?? null;
-  const lines = d.db.all<NameLine>('SELECT annex_ref, name, how_involved, note, recorded_at FROM breach_names WHERE incident_id = ? ORDER BY recorded_at, rowid', [incident_id]);
+  const ref = getBreachIncidentsAnnexRefById<{ annex_ref: string | null }>(d.db, [incident_id])?.annex_ref ?? null;
+  const lines = listBreachNamesAnnexRefNameByIncidentId<NameLine>(d.db, [incident_id]);
   record(d, actor, 'BREACH_NAMES_READ', 'ALLOWED', 'breach_incident', incident_id, { annex_ref: ref, count: lines.length });
   return { ok: true, annex_ref: ref, lines };
 }

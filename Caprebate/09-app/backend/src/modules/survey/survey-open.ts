@@ -29,6 +29,8 @@ import { stageLabel } from '../../core/index.ts';
 import { getUsersIdByIdRole2, listUsersIdNameByRoleDisabledAt2 } from '../../core/index.ts';
 import { getAssessmentsShownHighPenceById, getEstimatesBasisByAssessmentId, getEstimatesIdByAssessmentId, insertEstimates, listAssessmentAnswersValueByAssessmentIdState } from '../assessment/index.ts';
 import { getClaimsIdBusinessIdById2 } from '../claims/index.ts';
+import { insertSurveyorJobs2 } from './data.ts';
+import { getSurveyorJobsIdSurveyorByClaimId, getSurveyorJobsSurveyorByClaimId } from './data-borrowed.ts';
 
 export const FUNNEL_CEILING = 'FUNNEL_CEILING';
 
@@ -65,9 +67,7 @@ export type SurveyJobPanel = {
 export function surveyJobPanel(db: Db, actor: Actor, claim_id: string): SurveyJobPanel | null {
   const c = getClaimsIdBusinessIdById2<ClaimRow>(db, [claim_id]);
   if (c === undefined) return null;
-  const job = db.get<{ id: string; surveyor: string | null; created_at: string; state: string }>(
-    'SELECT j.id, u.display_name AS surveyor, j.created_at, j.state FROM surveyor_jobs j LEFT JOIN users u ON u.id = j.surveyor_id ' +
-      'WHERE j.claim_id = ? ORDER BY j.created_at DESC, j.id LIMIT 1', [claim_id]);
+  const job = getSurveyorJobsIdSurveyorByClaimId<{ id: string; surveyor: string | null; created_at: string; state: string }>(db, [claim_id]);
   const may_open = can(actor, 'surveyor_job.assign', objFor(c, null));
   if (!may_open && job === undefined) return null;
   return {
@@ -111,8 +111,7 @@ export function openSurveyJob(
   if (c === undefined) return { ok: false, why: SURVEY_JOB_WORDS.none };
   authorise(actor, 'surveyor_job.assign', objFor(c, surveyor_id));
   if (c.stage !== 'SURVEY') return { ok: false, why: SURVEY_JOB_WORDS.stage(stageLabel(c.stage)) };
-  const open = d.db.get<{ surveyor: string | null }>(
-    'SELECT u.display_name AS surveyor FROM surveyor_jobs j LEFT JOIN users u ON u.id = j.surveyor_id WHERE j.claim_id = ? LIMIT 1', [claim_id]);
+  const open = getSurveyorJobsSurveyorByClaimId<{ surveyor: string | null }>(d.db, [claim_id]);
   if (open !== undefined) return { ok: false, why: SURVEY_JOB_WORDS.open(open.surveyor ?? 'nobody assigned') };
   const surveyor = surveyor_id === null ? undefined
     : getUsersIdByIdRole2<{ id: string }>(d.db, [surveyor_id]);
@@ -126,9 +125,7 @@ export function openSurveyJob(
   d.db.tx(() => {
     const sealed = sealFunnelEstimate(d, c.business_id, assessment_id, at);
     if (!sealed.ok) { out = sealed; return; }
-    d.db.run(
-      "INSERT INTO surveyor_jobs (id, business_id, assessment_id, surveyor_id, state, committed_at, created_at, claim_id) VALUES (?, ?, ?, ?, 'SEALED', NULL, ?, ?)",
-      [job_id, c.business_id, assessment_id, surveyor.id, at, c.id]);
+    insertSurveyorJobs2(d.db, [job_id, c.business_id, assessment_id, surveyor.id, at, c.id]);
     d.audit.append({
       at, kind: 'SURVEY_JOB_OPENED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'claim', object_id: c.id, detail: { job_id, estimate_sealed_now: sealed.sealed },
