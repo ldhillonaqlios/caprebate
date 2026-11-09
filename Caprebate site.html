@@ -1997,8 +1997,8 @@ var CB_CTA = {
      THIS ESTIMATE NEVER READS IT. The public estimate holds no item-by-item
      spend, so every grant here is untraced and keeps the grant_fraction route
      whichever way this sits - Suite H, H24, asserts that in all five sectors.
-     It is read by the back end's survey pack (09-app/backend/src/web/
-     pack-grants.ts, chapter 15), where each line is a row of the fixture list
+     It is read by the back end's survey pack (09-app/backend/src/modules/
+     survey/pack-grants.ts, chapter 15), where each line is a row of the fixture list
      and a grant on the claim record can name the rows it paid for.
      ON => a grant matched to named fixture-list rows comes off only those
      rows' qualifying spend (and their pool); a grant not matched to rows
@@ -8427,7 +8427,7 @@ var CB_BAND = (function(){
   /* PHASE 153e, 4 October 2026 (Word question 138, the surveyor's): supported living's range read for its own
      trigger, behind a switch that ships OFF. Today the calculation reads the refurbishment and fit-out band whatever
      the trigger; its three bands are identical (10% to 25%), so the switch changes no figure until the surveyor sets
-     separate ranges from finished claims (the back end's src/web/sector-ranges.ts proposes them). A trigger list with
+     separate ranges from finished claims (the back end's src/modules/assessment/sector-ranges.ts proposes them). A trigger list with
      more than one trigger takes the band with the LOWEST ceiling (never the one that relieves); no trigger: none. */
   function slBandKey(t){
     if(t === "purchase") return "purchase";
