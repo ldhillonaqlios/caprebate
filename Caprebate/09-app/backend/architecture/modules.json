@@ -92,10 +92,6 @@
    "area": "core",
    "kind": "logic"
   },
-  "src/core/backup.ts": {
-   "area": "core",
-   "kind": "logic"
-  },
   "src/core/custom-roles.ts": {
    "area": "core",
    "kind": "logic"
@@ -209,6 +205,10 @@
    "kind": "page"
   },
   "src/integrations/analytics.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/integrations/backup.ts": {
    "area": "integrations",
    "kind": "logic"
   },
@@ -540,10 +540,6 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/modules/assessment/conveyancing-strip.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
   "src/modules/assessment/costing/job-economics.cjs": {
    "area": "assessment",
    "kind": "other"
@@ -645,6 +641,10 @@
    "kind": "logic"
   },
   "src/modules/claims/claim-route.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/conveyancing-strip.ts": {
    "area": "claims",
    "kind": "logic"
   },

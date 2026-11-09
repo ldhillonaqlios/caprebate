@@ -30,11 +30,11 @@ import { dirname, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { DatabaseSync } from 'node:sqlite';
 import { gunzipSync, gzipSync } from 'node:zlib';
-import type { Db } from './db.ts';
-import type { SecretStore } from './secrets.ts';
-import { isInside, repositoryRoot } from './secrets.ts';
-import type { Transport } from '../integrations/index.ts';
-import { s3LoginFrom, s3Target, type BackupTarget } from '../integrations/index.ts';
+import type { Db } from '../core/index.ts';
+import type { SecretStore } from '../core/index.ts';
+import { isInside, repositoryRoot } from '../core/index.ts';
+import type { Transport } from './connectors/http.ts';
+import { s3LoginFrom, s3Target, type BackupTarget } from './connectors/s3-backup.ts';
 import type { FsObjectStore } from '../shared/index.ts';
 import { INCOMING_PREFIX } from '../shared/index.ts';
 

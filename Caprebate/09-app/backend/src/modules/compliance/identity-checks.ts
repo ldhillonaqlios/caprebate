@@ -44,7 +44,7 @@ import type { Actor } from '../../core/index.ts';
 import { can } from '../../core/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { localWhen } from '../../shared/index.ts';
-import { assertComplianceRead, assertComplianceWrite, complianceObj, record, type ComplianceDeps } from './compliance.ts';
+import { assertComplianceRead, assertComplianceWrite, complianceObj, record, userNames, type ComplianceDeps } from './compliance.ts';
 import { isReachable } from '../crm/index.ts';
 import {
   IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision,
@@ -226,9 +226,12 @@ export type IdentityCheckLine = {
 
 /** The checks sent for an organisation or from one due diligence check, each with its LATEST result — read, not stored. */
 export function identityChecks(db: App['db'], where: { readonly business_id?: string; readonly cdd_check_id?: string }): IdentityCheckLine[] {
-  const rows = where.cdd_check_id !== undefined
-    ? listIdentityChecksIdContactByCddCheckId<{ id: string; contact: string; sent_at: string; link: string; cdd_check_id: string | null; who: string | null }>(db, [where.cdd_check_id])
-    : listIdentityChecksIdContactByBusinessId<{ id: string; contact: string; sent_at: string; link: string; cdd_check_id: string | null; who: string | null }>(db, [where.business_id ?? '']);
+  const sent = where.cdd_check_id !== undefined
+    ? listIdentityChecksIdContactByCddCheckId<{ id: string; contact: string; sent_at: string; link: string; cdd_check_id: string | null; sent_by: string }>(db, [where.cdd_check_id])
+    : listIdentityChecksIdContactByBusinessId<{ id: string; contact: string; sent_at: string; link: string; cdd_check_id: string | null; sent_by: string }>(db, [where.business_id ?? '']);
+  // Who sent each, by name (the users are the core's); a sender who is gone reads as nobody.
+  const names = userNames(db, sent.map((r) => r.sent_by));
+  const rows = sent.map((r) => ({ ...r, who: names.get(r.sent_by) ?? null }));
   return rows.map((r) => {
     const latest = getIdentityCheckResultsOutcomeReceivedAtByIdentityCheckId<{ outcome: IdentityOutcome; received_at: string }>(db, [r.id]);
     return {

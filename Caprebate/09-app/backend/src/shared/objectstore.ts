@@ -354,7 +354,7 @@ export class FsObjectStore implements ObjectStore {
    * test website reaches, and inherits every rule above unchanged. Each step is given a key the public method above
    * has already checked. */
 
-  /* ---------------------------------------------------------------- for the backup only (src/core/backup.ts) */
+  /* ---------------------------------------------------------------- for the backup only (src/integrations/backup.ts) */
 
   /**
    * Every object's key and when it was last written, oldest first. The backup reads this to copy what is new or changed

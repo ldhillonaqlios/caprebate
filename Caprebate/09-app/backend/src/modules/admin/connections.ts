@@ -30,7 +30,7 @@
  * A list not imported this calendar month is shown on Home's Admin view, so each new monthly file is imported.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { STUBS, type App } from '../../core/app.ts';
+import { STUBS, type App } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { SECRET_KEYS, type SecretOwner } from '../../core/index.ts';

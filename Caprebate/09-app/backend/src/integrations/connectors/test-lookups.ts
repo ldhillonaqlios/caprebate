@@ -47,9 +47,7 @@ import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSyn
 import { homedir } from 'node:os';
 import { isAbsolute, join, resolve, resolve as resolvePath } from 'node:path';
 
-import { AuditLog } from '../../core/audit.ts';
-import { Db, migrate } from '../../core/index.ts';
-import { MIGRATIONS_DIR } from '../../core/app.ts';
+import { AuditLog, Db, MIGRATIONS_DIR, migrate } from '../../core/index.ts';
 import { isInside, repositoryRoot, type SecretStore } from '../../core/index.ts';
 import type { Transport } from './http.ts';
 import type { PostcodeStore } from '../postcodes/postcode-port.ts';

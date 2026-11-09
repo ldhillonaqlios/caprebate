@@ -65,8 +65,11 @@ import { getContactsIdById, getContactsIdFullNameById, listIntroducerShareConsen
 import { insertConsentAnswers, listConsentAnswersRecordedAtKindByContactId } from '../assessment/index.ts';
 import { getIdentityPersonsPersonRefNoticeTemplateByPersonRef, insertIdentityPersons, insertIdentitySearchLog, listComplaintsIdRefByPersonRef, listIdentityPersonsPersonRefRole, listRightsRequestsIdRefByPersonRef, updateIdentityPersonsExemptionArticleExemptionReasonByPerson, updateIdentityPersonsNoticeTemplateNoticeRouteByPersonRef } from './data.ts';
 import { getIdentityCount, getSqliteMasterNameByTblName, type IdentityCount } from './data.ts';
-import { countRecordKind, listRecordKindClockRows, recordKindHasClock } from './data-borrowed.ts';
-import { getIdentityPersonsPersonRefNameByPersonRef } from './data-borrowed.ts';
+import { countRecordKind, getIdentityPersonsPersonRefNameByPersonRef, listRecordKindClockRows, recordKindHasClock } from './data.ts';
+import { countCrmRecordKind } from './data-borrowed.ts';
+import { getDocumentLinksCount, getDocumentsCountVersions, getDocumentsTypeCodeCreatedAtRetentionRefById, getLogicalDocumentsCount } from '../claims/index.ts';
+import { getOutboxCountQueued, getRegisterRecordsCount } from '../../integrations/index.ts';
+import { getConsentAnswersCount } from '../assessment/index.ts';
 
 class Refusal extends Error {}
 
@@ -185,14 +188,28 @@ export type PersonView = {
   readonly purpose: string; readonly refusals: readonly string[];
 };
 
-/** A READ OF ONE PERSON, BY person_ref — audited every time, whoever asks and whatever they then do. */
-export function readPerson(d: ComplianceDeps, actor: Actor, ref: string): PersonView {
-  assertIdentityRead(actor, ref);
+/** One person, with the document version their record follows (the documents are the claims module's): none if either is missing. */
+function personWithDocument(db: Db, ref: string): {
+  person_ref: string; name: string; role: string; contact_route: string | null; contact_route_kind: string | null; doc_id: string;
+  notice_template: string | null; notice_route: string | null; notice_sent_on: string | null; notice_published_too: number | null; exemption_article: string | null;
+  exemption_reason: string | null; doc_type: string | null; doc_created: string; retention_ref: string | null;
+} | undefined {
   const p = getIdentityPersonsPersonRefNameByPersonRef<{
     person_ref: string; name: string; role: string; contact_route: string | null; contact_route_kind: string | null; doc_id: string;
     notice_template: string | null; notice_route: string | null; notice_sent_on: string | null; notice_published_too: number | null; exemption_article: string | null;
-    exemption_reason: string | null; doc_type: string | null; doc_created: string; retention_ref: string | null;
-  }>(d.db, [ref]);
+    exemption_reason: string | null; source_record_ref: string;
+  }>(db, [ref]);
+  if (p === undefined) return undefined;
+  const doc = getDocumentsTypeCodeCreatedAtRetentionRefById<{ type_code: string | null; created_at: string; retention_ref: string | null }>(db, [p.source_record_ref]);
+  if (doc === undefined) return undefined;
+  const { source_record_ref: _source, ...person } = p;
+  return { ...person, doc_type: doc.type_code, doc_created: doc.created_at, retention_ref: doc.retention_ref };
+}
+
+/** A READ OF ONE PERSON, BY person_ref — audited every time, whoever asks and whatever they then do. */
+export function readPerson(d: ComplianceDeps, actor: Actor, ref: string): PersonView {
+  assertIdentityRead(actor, ref);
+  const p = personWithDocument(d.db, ref);
   if (p === undefined) throw new NotFoundAsRefusal();
   record(d, actor, 'IDENTITY_READ', 'ALLOWED', 'identity_person', ref, { person_ref: ref });
   const ra = p.contact_route !== null;
@@ -362,11 +379,28 @@ const BACKUP_CYCLE_WORDS: Readonly<Record<string, string>> = Object.freeze({ NOT
 
 type Kind = {
   readonly kind: string; readonly label: string; readonly table: string; readonly ref: string | null; readonly why_unset: string;
-  /* Its count, and the rows with the moment their clock starts where the determination gives one this build records, are
-     the data files' (countRecordKind, recordKindHasClock, listRecordKindClockRows), by this kind. */
+  /* Its count is its table owner's (recordCount); the rows with the moment their clock starts, where the determination
+     gives one this build records, are this module's (recordKindHasClock, listRecordKindClockRows), by this kind. */
 };
 
 const NOT_COVERED = 'No rule for this yet. Our retention rules do not cover it';
+
+/* THE COUNT OF EACH KIND, ASKED OF ITS TABLE'S OWNER: the claims module's documents, the outside services' register
+   records and emails, the assessment's consent history through their front doors; this module's own from its data file;
+   the CRM's (above this module) from the borrowed file. */
+const COUNT_BY_OWNER: Readonly<Record<string, (db: Db) => { n: number } | undefined>> = Object.freeze({
+  DOCUMENT_VERSIONS: (db: Db) => getDocumentsCountVersions<{ n: number }>(db),
+  LOGICAL_DOCUMENTS: (db: Db) => getLogicalDocumentsCount<{ n: number }>(db),
+  DOCUMENT_LINKS: (db: Db) => getDocumentLinksCount<{ n: number }>(db),
+  REGISTER_RECORDS: (db: Db) => getRegisterRecordsCount<{ n: number }>(db),
+  OUTBOX_QUEUED: (db: Db) => getOutboxCountQueued<{ n: number }>(db),
+  CONSENT_ANSWERS: (db: Db) => getConsentAnswersCount<{ n: number }>(db),
+});
+
+function recordCount(db: Db, kind: string): number {
+  const lower = COUNT_BY_OWNER[kind];
+  return (lower !== undefined ? lower(db) : countRecordKind<{ n: number }>(db, kind) ?? countCrmRecordKind<{ n: number }>(db, kind))?.n ?? 0;
+}
 
 export const RECORD_KINDS: readonly Kind[] = Object.freeze([
   { kind: 'RIGHTS_REQUESTS', label: 'The rights-request register', table: 'rights_requests', ref: 'RET-4', why_unset: 'Drafted, not signed yet' },
@@ -443,7 +477,7 @@ export function retentionList(d: ComplianceDeps, actor: Actor, today: string, pa
   assertComplianceRead(actor);
   const day = ukDay(today);
   const lines = RECORD_KINDS.map((k): RetentionLine => {
-    const records = countRecordKind<{ n: number }>(d.db, k.kind)?.n ?? 0;
+    const records = recordCount(d.db, k.kind);
     const p = k.ref === null ? null : (parameters[k.ref] ?? null);
     const refused = deleteRefusal(d.db, k.table);
     const del = refused === null

@@ -21,11 +21,10 @@
  * failure the extraction of the engine was done to prevent.
  */
 
-// The claims module's document files, named here. Areas above the claims read them through its front door; the two
-// below it that need them (the core's upload in pieces, src/core/upload-pieces.ts, and the assessment's conveyancing
-// strip, src/modules/assessment/conveyancing-strip.ts) name this file, as the front door would load the whole claims
-// module into a lower layer. Moved here from src/shared/: the document store reads the handler's keys
-// through a port of its own (src/shared/objectstore.ts, setDocumentKeys), so the shared parts no longer load it.
+// The claims module's document files, named here. Areas above the claims read them through its front door; inside the
+// module (the conveyancing strip, src/modules/claims/conveyancing-strip.ts, among them) files name this one. Moved here
+// from src/shared/: the document store reads the handler's keys through a port of its own (src/shared/objectstore.ts,
+// setDocumentKeys), so the shared parts no longer load it.
 export {
   UPLOAD_LIMITS,
   UploadHandlerError,
@@ -100,7 +99,7 @@ export type { IngestionSettings, RawFileRecord } from './documents/client-doc-in
 
 /**
  * The legal-form test, the roles that are always a person, and the human-capture rule's role tokens and
- * backstop patterns, AS THE INGESTION MODULE STATES THEM. src/modules/assessment/conveyancing-strip.ts reads them here and restates none.
+ * backstop patterns, AS THE INGESTION MODULE STATES THEM. src/modules/claims/conveyancing-strip.ts reads them here and restates none.
  */
 export {
   classifyPartyReference, ALWAYS_NATURAL_PERSON_ROLES, ROLE_TOKENS, CAPTURE_NAME_PATTERNS, assertHumanCaptureClean,

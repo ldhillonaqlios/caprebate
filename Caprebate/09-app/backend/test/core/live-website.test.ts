@@ -21,7 +21,7 @@ import { SECRET_KEYS, secretsFromValues, forgetRegisteredSecretsForTest } from '
 import { signS3, s3EncodePath, s3LoginFrom, s3Target } from '../../src/integrations/connectors/s3-backup.ts';
 import {
   BACKUP_KEEP_DAYS, backupDocuments, folderTarget, lockBackup, restoreDatabase, restoreDocuments, runNightlyBackup, unlockBackup,
-} from '../../src/core/backup.ts';
+} from '../../src/integrations/backup.ts';
 import { FsObjectStore } from '../../src/shared/objectstore.ts';
 import { rowsToRetry, timerJobOf, timerWordRefusal, TIMER_SCHEDULES, TIMER_JOBS } from '../../src/app/timers.ts';
 import {

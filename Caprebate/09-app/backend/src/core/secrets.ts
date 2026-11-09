@@ -54,7 +54,7 @@ export type SecretOwner =
   | 'REPLY_TIMER'
   /** The live website's own timers (Vercel Cron), GET /hooks/timer/<job> (src/app/timers.ts). */
   | 'TIMERS'
-  /** The nightly backup - its encryption key and the second place it is copied to (src/core/backup.ts). */
+  /** The nightly backup - its encryption key and the second place it is copied to (src/integrations/backup.ts). */
   | 'BACKUPS'
   /** The reference database - the ONS postcode table and Ordnance Survey's OSTN15 grid (src/integrations/postcodes/reference-db.ts). */
   | 'REFERENCE_DB';

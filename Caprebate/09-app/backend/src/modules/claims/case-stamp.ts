@@ -47,7 +47,7 @@ import { NotFoundAsRefusal } from '../../core/index.ts';
 import { ctaSwitchReadings, registryGate } from '../../shared/index.ts';
 import { DISCLOSURE_LOG } from '../compliance/index.ts';
 import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../crm/index.ts';
-import { CONVEYANCING_STRIP } from '../assessment/index.ts';
+import { CONVEYANCING_STRIP } from './conveyancing-strip.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../../shared/index.ts';
@@ -145,7 +145,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   FEE_CLAWBACK                 clause 13 — the fee follows a reduced claim     src/modules/claims/claim-record.ts
  *   REFERRAL_FORM                the public referral form                        src/modules/crm/introducers.ts
  *   CLIENT_SHARE_GIVE            a client giving the share-progress answer       src/modules/crm/introducers.ts
- *   CONVEYANCING_STRIP           company names kept on conveyancing uploads      src/modules/assessment/conveyancing-strip.ts
+ *   CONVEYANCING_STRIP           company names kept on conveyancing uploads      src/modules/claims/conveyancing-strip.ts
  *   FEE_CONTROLS.above_benefit   the fee above the benefit                       src/modules/claims/fee-controls.ts
  *   FEE_CONTROLS.break_and_abort the break and abort fees                        src/modules/claims/fee-controls.ts
  *   MANDATORY_DOCUMENTS          the documents a gate requires                   src/modules/claims/mandatory-documents.ts
@@ -186,7 +186,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'FEE_CLAWBACK', on: FEE_CLAWBACK.enabled, home: 'src/modules/claims/claim-record.ts' },
     { switch: 'REFERRAL_FORM', on: REFERRAL_FORM.enabled, home: 'src/modules/crm/introducers.ts' },
     { switch: 'CLIENT_SHARE_GIVE', on: CLIENT_SHARE_GIVE.enabled, home: 'src/modules/crm/introducers.ts' },
-    { switch: 'CONVEYANCING_STRIP', on: CONVEYANCING_STRIP.enabled, home: 'src/modules/assessment/conveyancing-strip.ts' },
+    { switch: 'CONVEYANCING_STRIP', on: CONVEYANCING_STRIP.enabled, home: 'src/modules/claims/conveyancing-strip.ts' },
     { switch: 'FEE_CONTROLS.above_benefit', on: FEE_CONTROLS.above_benefit.enabled, home: 'src/modules/claims/fee-controls.ts' },
     { switch: 'FEE_CONTROLS.break_and_abort', on: FEE_CONTROLS.break_and_abort.enabled, home: 'src/modules/claims/fee-controls.ts' },
     { switch: 'FEE_CONTROLS.uplifts', on: FEE_CONTROLS.uplifts?.enabled === true, home: 'src/modules/claims/fee-controls.ts' }, // Word question 235

@@ -18,7 +18,7 @@ import { randomUUID } from 'node:crypto';
 import { APP_ROLES, DPO_ROLE, isAppRole } from '../../src/core/roles.ts';
 import { can, canAsDpo, DPO_ROLE_SWITCH, DPO_SCOPE, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj } from '../../src/core/authz.ts';
 import { assignRole } from '../../src/modules/admin/settings.ts';
-import * as CS from '../../src/modules/assessment/conveyancing-strip.ts';
+import * as CS from '../../src/modules/claims/conveyancing-strip.ts';
 import * as DL from '../../src/modules/compliance/disclosure-log.ts';
 import * as RR from '../../src/modules/claims/receipt-recommendations.ts';
 import * as D from '../../src/modules/claims/documents.ts';

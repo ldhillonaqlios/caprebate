@@ -16,7 +16,7 @@
  */
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../../integrations/index.ts';
-import { BACKUP_KEEP_DAYS } from '../../core/index.ts';
+import { BACKUP_KEEP_DAYS } from '../../integrations/index.ts';
 import { RETENTION_PARAMETERS } from '../compliance/index.ts';
 
 export const COMPANY = 'CAP REBATE LTD';
@@ -48,7 +48,7 @@ function retentionRows(): Safe {
     ['A record of a data breach', ret('RET-5')],
     ['An enquiry from our website that does not become a claim', { says: 'Twelve months after we close it.', approved: false }],
     ['Messages with a client who has no claim with us', { says: 'Twelve months.', approved: false }],
-    // The live website's nightly backup (src/core/backup.ts, BACKUP_KEEP_DAYS); Word question 292.
+    // The live website's nightly backup (src/integrations/backup.ts, BACKUP_KEEP_DAYS); Word question 292.
     ['A copy in our nightly backup', { says: `${BACKUP_KEEP_DAYS} days. Something we delete leaves the backup ${BACKUP_KEEP_DAYS} days later.`, approved: false }],
   ];
   return h`${rows.map(([what, r]) => h`<tr><td>${what}</td><td>${r.says}</td><td>${r.approved ? 'Approved' : 'Proposed. Not yet approved by our data protection officer.'}</td></tr>`)}`;

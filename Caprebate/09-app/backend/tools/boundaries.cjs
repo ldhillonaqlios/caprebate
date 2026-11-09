@@ -104,13 +104,24 @@ function literalsIn(ts, file) {
   return out;
 }
 
-/** Imports that carry values (not `import type`), as backend-relative paths of files under src/. */
+/**
+ * Imports that carry values (not `import type`), as backend-relative paths of files under src/. Decided statement by
+ * statement, with TypeScript's own reader: an `import type ... from` or `export type ... from` is dropped when the file
+ * runs, so it loads nothing; any other import of the same path, in another statement, still loads it, so one
+ * `import type` of a path never hides a value import of it. `import { type A } from` is not type-only: the statement
+ * stays when the file runs, and loads the file.
+ */
 function importsIn(ts, file, backend) {
   const text = fs.readFileSync(file, 'utf8');
+  const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, /\.m?js$|\.cjs$/.test(file) ? ts.ScriptKind.JS : ts.ScriptKind.TS);
+  const line = (n) => sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
   const typeOnly = new Set();
-  for (const m of text.matchAll(/^\s*(?:import|export)\s+type\s[^;]*?from\s+['"]([^'"]+)['"]/gm)) typeOnly.add(m[1]);
+  for (const n of sf.statements) {
+    const erased = (ts.isImportDeclaration(n) && n.importClause?.isTypeOnly === true) || (ts.isExportDeclaration(n) && n.isTypeOnly);
+    if (erased && n.moduleSpecifier !== undefined && ts.isStringLiteral(n.moduleSpecifier)) typeOnly.add(`${line(n)}|${n.moduleSpecifier.text}`);
+  }
   return findingsIn(ts, file)
-    .filter((f) => f.kind === 'loads' && !typeOnly.has(f.spec))
+    .filter((f) => f.kind === 'loads' && !typeOnly.has(`${f.line}|${f.spec}`))
     .map((f) => path.relative(backend, f.target).split(path.sep).join('/'))
     .filter((t) => t.startsWith('src/'));
 }
@@ -386,6 +397,10 @@ function selfTest() {
   check('rule 3: a statement wrapped across lines is read whole', true, ...plant('src/modules/claims/logic.ts', "export const two = (db: any) => db.get('SELECT id ' +\n  'FROM leads');\n"));
   check('a file with no area fails', true, ...plant('src/modules/crm/new.ts', 'export const x = 1;\n'));
   check('an import type is not an import', false, ...plant('src/modules/claims/logic.ts', "import type { Db } from '../../core/db.ts';\nexport const two = (d: Db) => d;\n"));
+  check('an import type is not an import, nor an export type', false, ...plant('src/modules/claims/logic.ts', "export type { Db } from '../../core/db.ts';\nexport const two = 1;\n"));
+  check('a value import is an import though another statement imports types from the same file', 1, ...plant('src/modules/crm/page.ts',
+    "import type { one as One } from '../claims/data.ts';\nimport { one } from '../claims/data.ts';\nexport const p: typeof One = one;\n"));
+  check('an import of types named one by one still loads the file', 1, ...plant('src/modules/crm/page.ts', "import { type one } from '../claims/data.ts';\nexport type P = typeof one;\n"));
   check('prose that says select and from is not SQL', false, ...plant('src/modules/claims/logic.ts', "export const two = 'select the claims from the list';\n"));
   {
     const mig = keep('migrations/001.sql');

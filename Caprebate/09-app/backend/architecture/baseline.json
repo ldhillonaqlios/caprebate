@@ -3,14 +3,7 @@
  "breaks": {
   "1": {
    "claims": [
-    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts",
-    "src/modules/assessment/conveyancing-strip.ts -> src/modules/claims/upload-handler-port.ts"
-   ],
-   "core": [
-    "src/integrations/connectors/test-lookups.ts -> src/core/app.ts",
-    "src/integrations/connectors/test-lookups.ts -> src/core/audit.ts",
-    "src/modules/admin/connections.ts -> src/core/app.ts",
-    "src/modules/crm/claim-lists.ts -> src/core/backoffice.ts"
+    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts"
    ],
    "crm": [
     "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts"
@@ -23,10 +16,6 @@
     "src/modules/claims/match-review.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/research.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/uploads.ts -> src/integrations/connectors/claude.ts"
-   ],
-   "shared": [
-    "src/app/live-website.ts -> src/shared/shared-objectstore.ts",
-    "src/app/server.ts -> src/shared/shared-objectstore.ts"
    ]
   },
   "2": {
@@ -78,18 +67,12 @@
     "src/modules/crm/data-borrowed.ts : reason_lists"
    ],
    "assessment": [
-    "src/modules/compliance/data-borrowed.ts : consent_answers",
     "src/modules/crm/data-borrowed.ts : assessments",
     "src/modules/crm/data-borrowed.ts : estimates"
    ],
    "claims": [
     "src/modules/assessment/data-borrowed.ts : claim_deliverables",
     "src/modules/assessment/data-borrowed.ts : claims",
-    "src/modules/compliance/data-borrowed.ts : claims",
-    "src/modules/compliance/data-borrowed.ts : document_links",
-    "src/modules/compliance/data-borrowed.ts : documents",
-    "src/modules/compliance/data-borrowed.ts : logical_documents",
-    "src/modules/compliance/data-borrowed.ts : properties",
     "src/modules/crm/data-borrowed.ts : claim_contacts",
     "src/modules/crm/data-borrowed.ts : claim_deliverables",
     "src/modules/crm/data-borrowed.ts : claim_milestones",
@@ -101,8 +84,6 @@
     "src/modules/crm/data-borrowed.ts : properties"
    ],
    "core": [
-    "src/modules/compliance/data-borrowed.ts : audit_log",
-    "src/modules/compliance/data-borrowed.ts : users",
     "src/modules/crm/data-borrowed.ts : audit_log",
     "src/modules/crm/data-borrowed.ts : users"
    ],
@@ -139,8 +120,6 @@
     "src/modules/crm/data-borrowed.ts : invoices"
    ],
    "integrations": [
-    "src/modules/compliance/data-borrowed.ts : outbox",
-    "src/modules/compliance/data-borrowed.ts : register_records",
     "src/modules/crm/data-borrowed.ts : inbound_email",
     "src/modules/crm/data-borrowed.ts : inbound_email_filings",
     "src/modules/crm/data-borrowed.ts : outbox",

@@ -33,8 +33,7 @@ import type { Actor, FormTokens, LoginResult, Obj } from '../core/index.ts';
 import * as SI from '../core/index.ts'; // the sign-in steps (src/core/sign-in.ts), through the core's door
 import { payloadFor, assertSurveySection } from '../modules/survey/index.ts';
 import { handleWeb, refusalAsPage, sendRefusalPage } from './router.ts';
-import { FsObjectStore, sealKeyFromEnv, type KeepOriginals } from '../shared/index.ts';
-import { SharedObjectStore, type BlobClient } from '../shared/shared-objectstore.ts';
+import { FsObjectStore, SharedObjectStore, sealKeyFromEnv, type BlobClient, type KeepOriginals } from '../shared/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { isInventedAddress } from '../integrations/index.ts';
 import { refreshSavedKeys } from '../modules/admin/index.ts';
