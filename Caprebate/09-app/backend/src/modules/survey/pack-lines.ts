@@ -1,9 +1,9 @@
 /**
- * THE SURVEY PACK'S LINES — from the fixture list, never invented. 1 October 2026.
+ * THE SURVEY PACK'S LINES — from the fixture list, never invented.
  *
  * Every line a pack starts with is a row of `02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv` (103 rows,
  * each with its statutory authority and its pool), for the building's sector and the rows every sector shares. This
- * file reads that list from the app's own copy (`backend/copies/`, Phase 161d1), kept byte for byte the same as the
+ * file reads that list from the app's own copy, kept byte for byte the same as the
  * original by `npm run lint:copies`; nothing here re-types it.
  *
  * WHICH ROWS: those that can go in a pool through a survey — main pool (MP), special rate (SR), and the two the list
@@ -18,7 +18,7 @@
  *   · how much, ONLY where the list measures the row against something we hold — the floor area (from the energy
  *     certificate) for a whole-building system, or a room count the surveyor has recorded, for a row counted per room.
  *     Everything else is left for the surveyor.
- *   · the rate: PHASE 159f (Lakhbir, 9 October 2026: "With BCIS data loaded, the pack could draft each rate from the
+ *   · the rate: PHASE 159f (The owner: "With BCIS data loaded, the pack could draft each rate from the
  *     right building type — this needs to happen"). The whole-building rate and every line measured by floor area are
  *     drafted from BCIS in src/modules/survey/bcis-data.ts (NRM_OF_LINE), at the purchase date; the surveyor accepts or overrides
  *     each, with a source. A line counted per room or per item is not drafted: BCIS prices elements per m² of floor.
@@ -27,7 +27,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Pool } from './pack-sums.ts';
 
-/** the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
+/** the app's own copy: edit the original, 02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const TAXONOMY_FILE = join(import.meta.dirname, '..', '..', '..', 'copies', 'Caprebate-Fixture-Taxonomy-v1.csv');
 
 export type TaxonomyRow = Readonly<Record<string, string>>;
@@ -87,7 +87,7 @@ export const ROOM_BASIS: Readonly<Record<string, Readonly<Record<string, readonl
 });
 
 /**
- * PHASE 153e, 4 October 2026 — TEST DEFAULTS FOR THE SURVEYOR TO CONFIRM, laid over the fixture list without changing it.
+ * TEST DEFAULTS FOR THE SURVEYOR TO CONFIRM, laid over the fixture list without changing it.
  *
  * SUITE_ROWS (Word question 148): a theatre row is counted from the suite's spaces that carry its equipment, each
  * counted, not from the theatres alone. Ultra-clean ventilation and the operating lights stay with the theatre.
@@ -142,7 +142,7 @@ export type LineTemplate = {
   readonly unit: string;
   /** How the quantity is drafted: from the floor area, from room counts, or not at all. */
   readonly qty_from: { readonly kind: 'GIA' } | { readonly kind: 'ROOMS'; readonly rooms: readonly string[] } | { readonly kind: 'NONE' }
-    /** PHASE 153e: supported living's common parts, from the shared areas on the floor plans (else the 25% fallback). */
+    /** Supported living's common parts, from the shared areas on the floor plans (else the 25% fallback). */
     | { readonly kind: 'SHARED' };
   readonly pool: Pool | null;
   /** Hundredths of a per cent, or null where the list leaves it to the surveyor. */
@@ -178,7 +178,7 @@ export function linesForSector(sector: string): LineTemplate[] {
     }
     else if (rooms[basis] !== undefined && COUNT_UNITS.has(unitCode)) { qty_from = { kind: 'ROOMS', rooms: rooms[basis] as readonly string[] }; unit = 'rooms'; }
     // Communal floor area in supported living is not the whole floor area: never drafted from it.
-    // PHASE 153e (Word question 133): drafted from the shared areas the surveyor reads off the floor plans instead; with
+    // Drafted from the shared areas the surveyor reads off the floor plans instead; with
     // none, a flat 25% of the floor area, labelled as the fallback it is (src/modules/survey/survey-pack.ts, sharedDraft).
     if (qty_from.kind === 'GIA' && /^communal/i.test(basis)) { qty_from = { kind: 'SHARED' }; unit = 'm² of common parts'; }
     const pct = (r['qualifying_pct'] ?? '').trim();

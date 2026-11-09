@@ -1,5 +1,5 @@
 /**
- * THE ROLE EDITOR — MAKE, CHANGE AND RETIRE A ROLE. Phase 151, 24 September 2026.
+ * THE ROLE EDITOR — MAKE, CHANGE AND RETIRE A ROLE.
  *
  * The design and the hard limits are src/core/custom-roles.ts. This file is the only place a made role is written, and
  * every write is on the server, for the super admin alone (`role.manage`, which no made role can be given):

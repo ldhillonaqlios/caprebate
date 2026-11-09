@@ -1,5 +1,5 @@
 /**
- * THE ADMIN SETTINGS SCREEN — routes and page. CRM 9 of 10, 12 September 2026.
+ * THE ADMIN SETTINGS SCREEN — routes and page. CRM 9 of 10.
  *
  * Same shape as every other section: 'not-mine' for anything it does not own.
  * NOTHING HERE DECIDES ANYTHING. src/modules/admin/configuration.ts authorises every read and
@@ -30,7 +30,7 @@ export type ConfigPageDeps = {
 const BASE = '/staff/admin-settings';
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -47,7 +47,7 @@ function fields(f: URLSearchParams, names: readonly string[]): Readonly<Record<s
   return out;
 }
 
-/** PHASE 133b — after a save, land on the section saved. A list code is capitals and underscores (the routes' own pattern); anything else lands at the top. */
+/** After a save, land on the section saved. A list code is capitals and underscores (the routes' own pattern); anything else lands at the top. */
 function back(kind: 'list' | 'reasons', list: string | null | undefined): string {
   return typeof list === 'string' && /^[A-Z_]+$/.test(list) ? `#${kind}-${list.toLowerCase()}` : '';
 }
@@ -113,7 +113,7 @@ export async function handleConfiguration(
   return 'not-mine';
 }
 
-// PHASE 154a1 (line 4): the label box and this list sit in a table row with no label of their own, so each says
+// The label box and this list sit in a table row with no label of their own, so each says
 // what it is to a screen reader (aria-label), naming the code it is for.
 function activeSelect(active: boolean, disabled: boolean, code: string): Safe {
   return disabled
@@ -124,7 +124,7 @@ function activeSelect(active: boolean, disabled: boolean, code: string): Safe {
 }
 
 /**
- * PHASE 141 — WHO EVERY EMAIL COMES FROM, AS ONE SETTING. Read by the outbox for every email it writes. Admin changes it;
+ * WHO EVERY EMAIL COMES FROM, AS ONE SETTING. Read by the outbox for every email it writes. Admin changes it;
  * Sales reads it. Whether emails are actually sent is not a setting: it is EMAIL_SENDING, in code, off until its three
  * conditions are met.
  */
@@ -144,7 +144,7 @@ function senderSection(d: ConfigPageDeps, actor: Actor): RecordTab {
 }
 
 /**
- * PHASE 133b — ADMIN SETTINGS AS A LEFT-HAND SECTION LIST. Every list, every set of reasons, the four summaries of other
+ * ADMIN SETTINGS AS A LEFT-HAND SECTION LIST. Every list, every set of reasons, the four summaries of other
  * admin screens and what a setting may not change are each a section, in the order the page drew them, with the same
  * words and the same forms; the list down the left links to each by anchor, and the stylesheet shows one at a time. With
  * the stylesheet off every section shows, one after another. The view is the same one `configurationView` returned.

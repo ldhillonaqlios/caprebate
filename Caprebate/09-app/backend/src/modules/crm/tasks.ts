@@ -2,7 +2,7 @@
  * STAFF TASKS, AND ONE NEXT ACTION PER CLAIM. CRM 3 of 10.
  *
  * The schema is migration 012; the routes and pages are src/modules/crm/tasks-pages.ts;
- * the scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 10 and Part E from
+ * the scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, section 10 and Part E from
  * row E23.
  *
  * ───────────────────────────────────────────────────────────────────────────

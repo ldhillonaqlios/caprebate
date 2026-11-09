@@ -1,5 +1,5 @@
 /**
- * THE COMPLIANCE REGISTERS — THE ROUTES. CRM 8 of 10, 12 September 2026.
+ * THE COMPLIANCE REGISTERS — THE ROUTES. CRM 8 of 10.
  *
  * Same shape as src/modules/crm/introducers-pages.ts: 'not-mine' for anything outside
  * /staff/compliance, so the mounting in staff.ts is one line. NOTHING HERE DECIDES
@@ -132,7 +132,7 @@ export async function handleCompliance(
   const oneCheck = m(`/aml/checks/${ID}`);
   if (oneCheck && method === 'GET') {
     const v = A.checkView(db, actor, oneCheck[1] ?? '');
-    // PHASE 151b: the online identity check, sent from this check while it is open.
+    // The online identity check, sent from this check while it is open.
     return html(res, V.checkPage(nav, v, msg, identityPanel(d.app, actor, { business_id: v.check.business_id, cdd_check_id: v.check.id }, v.contacts)));
   }
   /* PHASE 151b · THE ONLINE IDENTITY CHECK: sent from a due diligence check, or from the client's page. compliance.write,
@@ -180,7 +180,7 @@ export async function handleCompliance(
 
   /* ------------------------------------------------ complaints */
   if (path === '/staff/compliance/complaints' && method === 'GET') return html(res, V.complaintsListPage(nav, R.complaintsLog(db, actor), msg, waitingForms(db)));
-  // PHASE 160f: a complaint sent through the public notices page's form, logged with the time it arrived.
+  // A complaint sent through the public notices page's form, logged with the time it arrived.
   const formLog = m(`/complaint-forms/${ID}/log`);
   if (formLog && method === 'POST') {
     const r = logFormComplaint(deps, actor, formLog[1] ?? '');
@@ -213,7 +213,7 @@ export async function handleCompliance(
     const s = B.icoAnswerSheet(db, actor, sheet[1] ?? '', now());
     return html(res, V.icoSheetPage(nav, s.ref, s.sections, s.note));
   }
-  /* Phase 153c (Word question 181): the restricted names list — the officer and the named deputy only. */
+  /* The restricted names list — the officer and the named deputy only. */
   const names = m(`/breaches/${ID}/names`);
   if (names && method === 'GET') {
     const r = N.namesFor(deps, actor, names[1] ?? '');

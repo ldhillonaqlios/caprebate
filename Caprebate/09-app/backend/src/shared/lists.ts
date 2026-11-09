@@ -1,7 +1,7 @@
 /**
  * THE LISTS — FILTERS, SORTS, SAVED VIEWS AND EXPORT. CRM 9 of 10.
  *
- * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, rows 16.2 to 16.6, and the
+ * The scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, rows 16.2 to 16.6, and the
  * decisions this file takes are that table's Part E from E119. The pages are the
  * claims and leads lists (src/modules/crm/crm-pages.ts, src/modules/crm/pipeline-pages.ts), which
  * draw `listControls` from src/shared/lists-pages.ts; saved views are migration 018.

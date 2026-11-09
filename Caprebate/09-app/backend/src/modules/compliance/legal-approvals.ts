@@ -1,14 +1,14 @@
 /**
  * WHO APPROVED EACH LEGAL PAGE, AND WHO AGREED TO THE TERMS — PHASE 161g, 5 November 2026 (migration 121).
  *
- * APPROVALS. Lakhbir, 5 Nov 2026: the legal pages are built ready for the live website "but not switched on ... each
+ * APPROVALS. The owner: the legal pages are built ready for the live website "but not switched on ... each
  * page shows the 'Draft' line until an approval is recorded (who approved it, and the date, kept in the database and
  * the audit log). With no approval nothing goes live." An admin records each approval in the back office at
  * /staff/legal: the page, who approved it, as solicitor or as data protection officer, and the date. A page is in force
  * when both have approved its CURRENT version (LEGAL_PAGES in src/modules/public-site/legal-pages.ts); a new version starts again.
  * An approval is never changed or deleted (migration 121's triggers).
  *
- * AGREEMENTS. Lakhbir, 5 Nov 2026: "the sign-up asks the person to tick that they have read them (the tick, its date
+ * AGREEMENTS. the owner, 5 Nov 2026: "the sign-up asks the person to tick that they have read them (the tick, its date
  * and the version are kept, and the audit log records it)". The sign-up offered after the free assessment carries the
  * tick (src/core/signup.ts keeps it until the login is made); a client who has not agreed to the current versions is
  * asked once at /portal/agree before the portal opens. Both only where the legal pages are served (the test website's

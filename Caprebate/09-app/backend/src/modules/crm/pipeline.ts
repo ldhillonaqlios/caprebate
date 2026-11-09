@@ -3,7 +3,7 @@
  * THEIR EXITS. CRM 2 of 10.
  *
  * The stages' words are src/shared/stages.ts; the schema is migration 010; the
- * scope is 09-app/CAPREBATE-CRM-DISPOSITION.md. The routes and pages are
+ * scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md. The routes and pages are
  * src/modules/crm/pipeline-pages.ts, which draws what this returns and decides nothing.
  *
  * ───────────────────────────────────────────────────────────────────────────

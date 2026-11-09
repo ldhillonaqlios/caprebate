@@ -1,6 +1,6 @@
 /**
  * THE PHOTO PAGE'S ONE SCRIPT — served at /assets/photo-upload.js, and named only by "Show us your building" (the
- * client portal), whose security policy alone allows it (src/modules/survey/evidence-pages.ts, photoPageCsp). 2 October 2026.
+ * client portal), whose security policy alone allows it (src/modules/survey/evidence-pages.ts, photoPageCsp).
  *
  * It takes over "Send lots of photos at once": each photo chosen is checked (JPEG or PNG by its first bytes, at most
  * 25 MB), LOCKED ON THE PHONE (a fresh AES-256-GCM key for each photo, itself locked with the send's public key, RSA-OAEP
@@ -8,7 +8,7 @@
  * gives, and then reported done. The page shows each photo's state and the count. No photo is read by anything but this
  * script and our server.
  *
- * 2 Oct 2026: it also sends a video, in locked pieces of 4 MB (initVideo; src/modules/survey/survey-video.ts).
+ * It also sends a video, in locked pieces of 4 MB (initVideo; src/modules/survey/survey-video.ts).
  *
  * IF IT CANNOT RUN (no script, an old browser, no Web Crypto), nothing changes: the form posts to the page as before,
  * up to 15 photos and 4.4 MB a send. It sets no style (the security policy allows none): it only sets classes, text and

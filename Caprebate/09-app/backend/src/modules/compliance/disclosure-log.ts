@@ -1,5 +1,5 @@
 /**
- * THE PER-DISCLOSURE LOG — BUILT, AND SWITCHED OFF. Phase 129, 12 September 2026.
+ * THE PER-DISCLOSURE LOG — BUILT, AND SWITCHED OFF.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHY IT EXISTS

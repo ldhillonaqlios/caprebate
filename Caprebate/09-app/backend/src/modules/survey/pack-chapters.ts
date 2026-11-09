@@ -3,8 +3,8 @@
  * (src/modules/survey/pack-approve.ts): every chapter that is built must be opened before the pack can be approved.
  */
 /** The report's 23 chapters, in the report template's order (surveyor-valuation-report-template-v2.md). */
-/* PHASE 153f, 4 October 2026: chapters 1, 3, 6, 12, 13 and 21 built — each shows what the pack already holds.
-   PHASE 153g, the same day: the other ten (5, 8, 11, 14, 16, 17, 18, 19, 20, 22), from src/modules/survey/pack-sheets.ts, with the
+/* Chapters 1, 3, 6, 12, 13 and 21 built — each shows what the pack already holds.
+   The same day: the other ten (5, 8, 11, 14, 16, 17, 18, 19, 20, 22), from src/modules/survey/pack-sheets.ts, with the
    surveyor's own words where the template asks for them (src/modules/survey/pack-words.ts). Every chapter is now built. */
 export const CHAPTERS: readonly { readonly n: number; readonly title: string; readonly built: boolean }[] = Object.freeze([
   { n: 1, title: 'Report and property', built: true }, { n: 2, title: 'Your inspection', built: true },

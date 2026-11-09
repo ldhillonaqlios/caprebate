@@ -1,5 +1,5 @@
 /**
- * THE SURVEY PACK'S GRANTS — chapter 15. Phase 153a, 4 October 2026: F-15's remainder.
+ * THE SURVEY PACK'S GRANTS — chapter 15. F-15's remainder.
  *
  * Rulebook F (01-rulebooks/Caprebate-Statutory-Rules-Register-F-Contributions-And-Grants-v1.md): money from someone
  * else reduces the spend "to the extent that" it met it (s.532, F-R1), and F3 says "trace it to cost elements; do not
@@ -33,7 +33,7 @@
  * is left. Every amount is whole pence in BigInt, each rounding the nearest penny, a half up (pack-sums.ts's own rule).
  * Main pool + special rate pool = what qualifies, to the penny, after grants as before them.
  *
- * PHASE 159i (item 1, Rulebook F F-R12): A THIRD ROUTE, FULL, replaces the equal share where `untraced_full` is on (on
+ * A THIRD ROUTE, FULL, replaces the equal share where `untraced_full` is on (on
  * in test): a grant that cannot be traced to the items it paid for comes off what qualifies in full — the conservative
  * deduction — after the traced ones. A grant paid to an EARLIER owner (PAST_OWNER) takes nothing off the buyer's sums;
  * it lowers the cap from the earlier sale (s.185, pack-legal.ts). And C23: every route's rows add up to its total.
@@ -55,10 +55,10 @@ const CONNECTED: readonly string[] = Object.freeze(['landlord_connected', 'group
 
 export type PackGrant = {
   readonly id: string;
-  /** PHASE 159i: who received it. A PAST owner's grant lowered what that owner could claim, so it lowers the s.185 cap
+  /** Who received it. A PAST owner's grant lowered what that owner could claim, so it lowers the s.185 cap
    *  (pack-legal.ts), never the buyer's price. Absent is the client's own, as before. */
   readonly paid_to?: 'CLIENT' | 'PAST_OWNER';
-  /** PHASE 159i (item 4): the event on the building it paid for (property_events.id); null: not recorded. */
+  /** The event on the building it paid for (property_events.id); null: not recorded. */
   readonly event_id?: string | null;
   /** Who paid, as a class from the closed list. A key not on it is read as not known. */
   readonly payer_class: string;
@@ -72,7 +72,7 @@ export type GrantSwitches = {
   readonly element_trace: boolean;
   /** CB_CTA.connected_contributor_no_reduction. */
   readonly connected_no_reduction: boolean;
-  /** PHASE 159i (item 1, Rulebook F F-R12): a grant that cannot be traced to the items it paid for comes off what
+  /** A grant that cannot be traced to the items it paid for comes off what
    *  qualifies IN FULL — the conservative reading of "to the extent that" (s.532) — in place of the equal share. On in
    *  test. Absent is off. */
   readonly untraced_full?: boolean;
@@ -206,7 +206,7 @@ export function applyGrants(inputs: PackInputs, lines: readonly PackLine[], sums
   let M0 = M - TM;
   if (M0 > Q0) M0 = Q0;
 
-  // 1b. PHASE 159i: FULL — each untraced grant's whole amount off what is left, the pools sharing it in proportion.
+  // 1b. FULL — each untraced grant's whole amount off what is left, the pools sharing it in proportion.
   const fullGrants = reducing.filter((x) => x.route === 'FULL');
   const AF = fullGrants.reduce((t, x) => t + BigInt(x.g.amount_pence as number), ZERO);
   const fullOff = AF >= Q0 ? Q0 : AF;
@@ -223,7 +223,7 @@ export function applyGrants(inputs: PackInputs, lines: readonly PackLine[], sums
   if (M2 > Q2) M2 = Q2;
   const S2 = Q2 - M2;
 
-  /* PHASE 159i (C23): THE ROWS ADD UP TO THE TOTAL. Each route's total is shared across its grants by amount, the
+  /* THE ROWS ADD UP TO THE TOTAL. Each route's total is shared across its grants by amount, the
      pennies left by rounding going to the largest remainders, so the rows always sum to what the route took off. */
   const share = (xs: typeof reducing, total: bigint): Map<string, bigint> => {
     const out = new Map<string, bigint>();

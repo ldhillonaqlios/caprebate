@@ -1,6 +1,6 @@
 /**
  * THE LIVE WEBSITE ON VERCEL — how it starts. "lets keep it as
- * vercel"; the runbook is 09-app/deploy/LIVE-RUNBOOK.md).
+ * vercel"; the runbook is 09-app/docs/LIVE-RUNBOOK.md).
  *
  * ONE ENTRY, TWO PROJECTS. Vercel runs api/index.mjs for both the test website (project caprebate-test) and the live one
  * (its own project). The entry decides from its OWN SETTINGS: CAPREBATE_PRODUCTION=1 starts the live website through this

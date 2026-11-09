@@ -3054,7 +3054,7 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
        handover pack on board item 12937209644 ships it. M4 still requires it on
        disk, at its new path. */
     ["Developer Brief (archived by Phase 108)", "_archive/superseded/Caprebate-Developer-Brief.md"],
-    ["the Developer Spec that replaced it", "09-app/CAPREBATE-DEVELOPER-SPEC.md"],
+    ["the Developer Spec that replaced it", "09-app/docs/CAPREBATE-DEVELOPER-SPEC.md"],
     ["build spec v2", "02-modules-and-build-prep/Build-Prep-06-Developer-Build-Specification-v2.md"],
     ["decided/not-decided note", "06-commercial-and-governance/Caprebate-Decided-And-Not-Decided-v1.md"],
     /* SUPERSEDED BY PHASE 104, 8 September 2026, and this is why the entry

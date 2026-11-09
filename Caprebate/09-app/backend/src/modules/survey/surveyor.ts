@@ -67,7 +67,7 @@ import { roomsFor, SOURCE_DOCUMENT, type RoomType, type SectorRooms } from '../c
 import { missingFacts, NotFoundAsRefusal, type MissingFact } from '../claims/index.ts';
 import { versionObj } from '../claims/index.ts';
 import { anyStageLabel, stage as stageOf } from '../../shared/index.ts';
-/* Phase 110. The region a rate library entry is keyed on. resolveProperty
+/* The region a rate library entry is keyed on. resolveProperty
    never throws and never guesses — see the comment on REGION_NOT_CAPTURED. */
 import { resolveProperty } from '../../integrations/postcodes/postcode.ts';
 import { preferHomedataPlanning, supersededPlanning } from '../../integrations/index.ts';
@@ -119,7 +119,7 @@ export type JobRow = {
   /** Rate fields the surveyor has recorded a figure for, out of the ten tracked. */
   readonly rates_recorded: number;
   readonly rates_total: number;
-  /** UI TIDY PHASE 10: the job's own claim — its number, its site and its stage — so two jobs for one client are told
+  /** The job's own claim — its number, its site and its stage — so two jobs for one client are told
    *  apart. Null for a job on no claim. The site is the property's label; the surveyor's payload already carries it. */
   readonly claim_id: string | null;
   readonly claim_ref: string | null;
@@ -197,7 +197,7 @@ export type PackJob = {
   readonly surveyor_id: string | null; readonly surveyor_name: string | null; readonly claim_id: string | null;
   readonly state: string;
 };
-/** 2 Oct 2026: whether a job has its locked estimate — without one, committing figures releases nothing and is refused. */
+/** Whether a job has its locked estimate — without one, committing figures releases nothing and is refused. */
 export function jobHasEstimate(db: Db, job_id: string): boolean {
   return getEstimatesXById(db, [job_id]) !== undefined;
 }
@@ -249,14 +249,14 @@ function inputsFor(db: Db, r: JobDbRow): JobInputs {
     business_name: r.name,
     sector: r.sector,
     answers: listAssessmentAnswersOrdQuestionIdByAssessmentId2<{ ord: number; question_id: string; question_text: string; state: string; value: string | null }>(db, [r.assessment_id]),
-    // PHASE 156f (B3): once Homedata has answered planning, the free route's planning records are kept, not shown.
+    // Once Homedata has answered planning, the free route's planning records are kept, not shown.
     register_records: listRegisterRecordsSourceIdEntityIdByBusinessId<{ source_id: string; entity_id: string; fields_json: string }>(db, [r.business_id]).filter((x) => !supersededPlanning(x, preferHomedataPlanning(db, r.business_id))).map((x) => ({ source_id: x.source_id, fields: withoutAmounts(x.source_id, safeParse(x.fields_json)) })),
     properties: listPropertiesLabelPostcodeByBusinessId2<{ label: string; postcode: string | null }>(db, [r.business_id]),
   };
 }
 
 /**
- * PHASE 146c: A PRICE A REGISTER GIVES IS NOT A SURVEYOR'S INPUT. Before this phase no register could give one; the sale
+ * A PRICE A REGISTER GIVES IS NOT A SURVEYOR'S INPUT. Before this phase no register could give one; the sale
  * price lookup (HM Land Registry's Price Paid Data) now can. "An amount agreed between buyer and seller is a number a
  * surveyor could anchor on as readily as our own, so it waits with our estimate" — the rule CRM 6 wrote for the claim's
  * facts (RELEASED_FACTS_TO_SURVEYOR in src/payload.ts), applied here to the register records the same way: the field
@@ -264,7 +264,7 @@ function inputsFor(db: Db, r: JobDbRow): JobInputs {
  */
 export const REGISTER_AMOUNTS_WITHHELD: Readonly<Record<string, readonly string[]>> = Object.freeze({
   HMLR_PPD: Object.freeze(['price_paid']),
-  /* PHASE 146d: THE TITLE REGISTER'S PRICE IS THE SAME KIND OF NUMBER AND WAITS THE SAME WAY. An official copy
+  /* THE TITLE REGISTER'S PRICE IS THE SAME KIND OF NUMBER AND WAITS THE SAME WAY. An official copy
      records the price paid, or the value stated where no price was paid, and either is an amount agreed between a
      buyer and a seller — a number a surveyor could anchor on as readily as our own. It is left out of the
      surveyor's job; the tenure, the dates and the title number still go. This matters MORE here than it does for
@@ -371,7 +371,7 @@ export function roomSchedule(db: Db, actor: Actor, job_id: string): RoomSchedule
   };
 }
 
-/** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. A refusal
+/** `field` is the posted name a refusal is about, where it is about one. A refusal
  *  about the job's own state — already committed, no sealed estimate — is about no one field and carries none. */
 export type SaveResult = { ok: true } | { ok: false; why: string; field?: string };
 
@@ -459,7 +459,7 @@ export type RateRow = {
   /** What we would pre-fill, and whose figure it is. Null where we have neither — AND ON A BLANK CONTROL. */
   readonly proposal: Proposal | null;
   /**
-   * PHASE 132. True where `isBlankControl(job, field)` puts this field in the
+   * True where `isBlankControl(job, field)` puts this field in the
    * control arm on this job: it is shown EMPTY, whatever we or the surveyor's own
    * library would otherwise have proposed. Deterministic, so a reload serves the
    * same arm.
@@ -475,10 +475,10 @@ function libraryFor(db: Db, surveyor_id: string): RateLibrary {
   for (const e of eventsOf(db, surveyor_id)) {
     /**
      * MIRRORS `RateLibrary.learn`'s OWN GUARD, and the mirror has to be kept
-     * in step — Phase 107a is the second time it has mattered.
+     * in step is the second time it has mattered.
      *
      * The module refuses an UNTOUCHED event unless the figure is the
-     * surveyor's own, which since Phase 107a means SURVEYOR_LIBRARY or
+     * surveyor's own, which means SURVEYOR_LIBRARY or
      * NOTHING_PROPOSED. Skipping the refused ones here rather than catching
      * the exception is deliberate: a caught exception in a rebuild loop hides
      * the day the rule changes. THE COST OF THAT CHOICE is that this line
@@ -495,7 +495,7 @@ function libraryFor(db: Db, surveyor_id: string): RateLibrary {
 }
 
 /**
- * PHASE 107a DELETED A FALLBACK THAT USED TO SIT HERE, and the reason is worth
+ * DELETED A FALLBACK THAT USED TO SIT HERE, and the reason is worth
  * keeping because the fallback's own comment was the specification for the fix.
  *
  * `RateLibrary.learn` refuses an UNTOUCHED event unless the figure is the
@@ -549,12 +549,12 @@ const CRM_SECTOR: Readonly<Record<string, Sector>> = Object.freeze({
 });
 
 /**
- * THE REGION NOW COMES FROM THE PROPERTY'S POSTCODE. Phase 110, board item
+ * THE REGION NOW COMES FROM THE PROPERTY'S POSTCODE. Board item
  * 13004035199 job 3.
  *
  * A rate library entry is keyed on surveyor, field, sector AND region, because
  * a figure that is right in one part of the country is not automatically right
- * in another. Until 9 September 2026 nothing in this system had a region to
+ * in another. nothing in this system had a region to
  * give it, every entry was keyed on the constant below, and a surveyor's own
  * figures were proposed back to them ACROSS THE WHOLE COUNTRY.
  *
@@ -635,7 +635,7 @@ export function rateLibrary(db: Db, actor: Actor, job_id: string): {
   const rows: RateRow[] = RATE_FIELDS.map((f) => {
     const got = recorded.get(f.field_id);
     /**
-     * THE BLANK-FIELD CONTROL, SERVED. Phase 132, 14 September 2026 — calibration
+     * THE BLANK-FIELD CONTROL, SERVED. Calibration
      * instrument open item O-2.
      *
      * ONE FIELD IN TEN, PER JOB, IS SHOWN WITH NOTHING IN IT, and the module decides
@@ -699,7 +699,7 @@ export type CommitInput = {
 
 export type CommitResult =
   | { ok: true; released_at: string }
-  /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
+  /** `field` is the posted name a refusal is about, where it is about one. */
   | { ok: false; why: string; field?: string };
 
 /** Pence from a pounds figure typed by a person. Refuses anything else. */
@@ -896,7 +896,7 @@ function recordRates(
 
     /**
      * THE CONTROL OBSERVATION — AND THE DECISION ABOUT WHERE A CONTROL FIELD'S
-     * FIGURE GOES. Phase 132, 14 September 2026.
+     * FIGURE GOES.
      *
      * IT GOES IN BOTH PLACES, AND THE RATE EVENT ABOVE IS NOT OPTIONAL. The job's
      * rates ARE `surveyor_rate_events`: the job list's "rates recorded" count, the
@@ -1160,7 +1160,7 @@ export type Workspace = {
   /** True where THIS actor is the assigned surveyor and may commit. */
   readonly may_commit: boolean;
   readonly signature: string;
-  /** PHASE 158b: what the RELEASED estimate was built from (migration 100); null before release, or for an older row. */
+  /** What the RELEASED estimate was built from (migration 100); null before release, or for an older row. */
   readonly estimate_basis: string | null;
 };
 

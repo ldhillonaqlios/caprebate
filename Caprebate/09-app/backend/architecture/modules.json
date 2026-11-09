@@ -1,5 +1,5 @@
 {
- "note": "THE MODULE MAP (Phase 161h1, 7 Nov 2026; 09-app/ARCHITECTURE.md). Every file under src/: its area and its kind (page, logic, data, routes, other). doors: the one file of each area another area may import; until it exists, every import into the area is a break of rule 1. Read by tools/boundaries.cjs. A new file is placed here on purpose; moving a file to another area is a change to review.",
+ "note": "THE MODULE MAP (Phase 161h1, 7 Nov 2026; 09-app/docs/ARCHITECTURE.md). Every file under src/: its area and its kind (page, logic, data, routes, other). doors: the one file of each area another area may import; until it exists, every import into the area is a break of rule 1. Read by tools/boundaries.cjs. A new file is placed here on purpose; moving a file to another area is a change to review.",
  "doors": {
   "core": "src/core/index.ts",
   "shared": "src/shared/index.ts",

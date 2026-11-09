@@ -1,5 +1,5 @@
 /**
- * THE COMPLIANCE REGISTERS — THE PAGES. CRM 8 of 10, 12 September 2026.
+ * THE COMPLIANCE REGISTERS — THE PAGES. CRM 8 of 10.
  *
  * Drawing only. Every value a person typed goes through `h` and is escaped. Every
  * page carries the known limitation — one person today — because a register that
@@ -31,7 +31,7 @@ type Nav = Safe;
 /* ------------------------------------------------------------------ form pieces */
 
 /**
- * PHASE 154a1 (line 4), 4 October 2026: EVERY LABEL NAMES ITS BOX. These three wrote <label class="fl"> with no for=
+ *: EVERY LABEL NAMES ITS BOX. These three wrote <label class="fl"> with no for=
  * and not around the box, so a screen reader read every compliance form's boxes with no name (the 3 October sweep).
  * Each box now has an id of its own - a page can carry the same field in several forms, so the id is numbered - and its
  * label says for= that id.
@@ -76,7 +76,7 @@ function limitation(): Safe {
   return h`<div class="flag">${TWO_PERSON_LIMITATION}</div>`;
 }
 
-/** PHASE 151b: a result that needs a sentence rather than its code word. Anything else is shown as before. */
+/** A result that needs a sentence rather than its code word. Anything else is shown as before. */
 const DONE_SENTENCES: Readonly<Record<string, string>> = Object.freeze({
   'identity-sent': 'The identity check was sent. Give the person their link, below.',
 });
@@ -113,7 +113,7 @@ function holdsAndLinks(kind: string, id: string, holds: readonly HoldRow[], link
 /* ------------------------------------------------------------------ the landing page */
 
 /**
- * UI TIDY PHASE 15 (3 October 2026): the landing page opens with what it is and three boxes, one a register, each a link;
+ * The landing page opens with what it is and three boxes, one a register, each a link;
  * a breach on the register makes its box red. The form for a new dated value folds until asked for (or a refusal).
  */
 export function landingPage(nav: Nav, aml: AmlView, settings: readonly SettingReading[], counts: { rights: number; complaints: number; breaches: number }, count: ComplaintCount, msg?: string): string {
@@ -300,7 +300,7 @@ export function searchPage(nav: Nav, _term: string, s: SearchResult): string {
 
 export function complaintsListPage(nav: Nav, rows: readonly { id: string; ref: string; received: string; classified: string; ack_deadline: string; ack_in_time: string; status: string; next_update_due: string | null; target_outcome: string }[], msg?: string,
   waiting: readonly WaitingForm[] = []): string {
-  // PHASE 160f: complaints sent through the public notices page's form, kept with when they arrived, until logged.
+  // Complaints sent through the public notices page's form, kept with when they arrived, until logged.
   const fromForm = waiting.length === 0 ? raw('') : h`<section class="card" id="from-the-form"><h2>Sent through the website's complaint form: ${String(waiting.length)} to log</h2>
       <p class="help">Each one's thirty days run from when it arrived, shown here. Logging it keeps that time.</p>
       ${waiting.map((w) => h`<div class="pblock"><p><strong>${w.ref}</strong>, arrived ${localWhen(w.received_at)}. ${w.name}, reply to ${w.reply_to}.</p>
@@ -358,7 +358,7 @@ export function complaintPage(nav: Nav, v: ComplaintView, msg?: string): string 
 
 /* ------------------------------------------------------------------ breaches */
 
-/** Phase 153c (Word question 181): the restricted names list for one breach entry. Only its two readers reach this page. */
+/** The restricted names list for one breach entry. Only its two readers reach this page. */
 export function breachNamesPage(nav: Nav, incident_id: string, annex_ref: string | null, lines: readonly { annex_ref: string; name: string; how_involved: string; note: string | null; recorded_at: string }[], msg?: string): string {
   return page({
     title: 'Restricted names', nav, wide: true,

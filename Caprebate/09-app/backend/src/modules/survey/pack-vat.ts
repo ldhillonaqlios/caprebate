@@ -1,5 +1,5 @@
 /**
- * CHAPTER 15'S VAT HALF — PHASE 153e, 4 October 2026 (added to the phase by Phase 153a).
+ * CHAPTER 15'S VAT HALF.
  *
  * Module 00 C23: "Irrecoverable VAT is included in qualifying expenditure. Healthcare is largely VAT-exempt, so this is
  * usually a meaningful uplift — but watch partial exemption (cosmetic / dispensing / NHS-contract mixes)." Built on

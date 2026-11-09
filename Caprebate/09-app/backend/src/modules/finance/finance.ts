@@ -1,7 +1,7 @@
 /**
  * THE ACCOUNTING VIEW — Caprebate's own finance. Block F, part three.
  *
- * SETTLED 6 SEPTEMBER 2026, AND THE FIRST SENTENCE IS THE WHOLE DESIGN: this
+ * SETTLED, AND THE FIRST SENTENCE IS THE WHOLE DESIGN: this
  * is CAPREBATE'S finance, not the client's accountant. The client's accountant
  * is a different actor, has no login at all, and receives the computation pack
  * offline — the Developer Brief's actor table still says so and it is still
@@ -39,14 +39,14 @@
  * sees the fee at all.
  *
  * BOTH CB_FEEGUARD SWITCHES ARE OFF AND THIS FILE DOES NOT TOUCH THEM. The
- * rendered amount is 3% of the allowances identified, as it ships (5% until Phase 132e). Displaying
+ * rendered amount is 3% of the allowances identified, as it ships. Displaying
  * the comparison changes no figure — capping the fee at the year-one benefit
  * is Q90(a) and attaching a case-specific warning is Q90(b), and both are
- * decisions for Lakhbir rather than for a screen.
+ * decisions for the owner rather than for a screen.
  *
  * AND THE ARITHMETIC IS STILL UNCOMFORTABLE, ON PURPOSE — BUT IT MOVED WITH THE FEE.
  * At 5% a company's year-one relief fell short of the fee at any rate and any
- * pool split (18% × 26.5% is 4.77%). At 3% (Phase 132e, 16 September 2026) it
+ * pool split (18% × 26.5% is 4.77%). At 3% it
  * depends on the split: on the main pool, 18% × 26.5% = 4.77% and 14% × 26.5% =
  * 3.71% both exceed 3%, and on the special-rate pool 6% × 26.5% = 1.59% does
  * not. So this view shows the comparison the engine returns, and says nothing of
@@ -173,7 +173,7 @@ export type FeeVersusBenefit = {
   readonly switches: { readonly cap: boolean; readonly warn: boolean };
   /** True where the rendered fee is the plain 3% — which is how both switches ship. */
   readonly amount_untouched: boolean;
-  /** PHASE 132f — the engine's £1,000 no-claim threshold (CB_FEE.recommendationThreshold), for the tax adviser. */
+  /** The engine's £1,000 no-claim threshold (CB_FEE.recommendationThreshold), for the tax adviser. */
   readonly recommendation_threshold: NoClaimReading;
 };
 
@@ -181,7 +181,7 @@ export type FeeVersusBenefit = {
  * THE NO-CLAIM THRESHOLD, WHERE THE FEE IS SHOWN AGAINST THE BENEFIT — Phase 132f, reading Phase 132e's engine output.
  *
  * CB_FEE.display returns `recommendation_threshold` on every call: the five-year relief (CB_BENEFIT's cumulative
- * benefit) less our fee, against £1,000 (NO_CLAIM_THRESHOLD, Lakhbir, read 15 September 2026). It REFUSES NOTHING,
+ * benefit) less our fee, against £1,000. It REFUSES NOTHING,
  * withholds nothing and moves no figure: the figures are printed, the client chooses, and the reading is marked for
  * the tax adviser, whose review of it is outstanding (its own `awaiting_tax_adviser_review`).
  *
@@ -190,7 +190,7 @@ export type FeeVersusBenefit = {
  * No reading at all — no entity type, so no rate — is UNDETERMINED. An unknown relief is never nil relief, so an
  * unknown never tells anyone not to claim (N4).
  *
- * PHASE 151b, 25 September 2026 — VAT. Word question 61, Lakhbir, closed 24 September 2026: "The relief is
+ * VAT. Word question 61, the owner, closed: "The relief is
  * calculated over the 5 years – and must include VAT". The five years was already the measure (CB_BENEFIT's horizon)
  * and is unchanged. The VAT rule is the ENGINE'S (CB_FEE.NO_CLAIM_VAT), and this file only says what it did:
  *   · we are not VAT-registered (today) — there is no VAT on our fee, and the test is exactly what it was;
@@ -207,7 +207,7 @@ export type NoClaimReading = {
   readonly readings: readonly { readonly label: string; readonly rate: number; readonly threshold: RecommendationThreshold }[];
   readonly why: string | null;
   readonly for_the_tax_adviser: string;
-  /** Phase 151b — how VAT on our fee was treated in this test, read off the engine, in words for the finance view. */
+  /** How VAT on our fee was treated in this test, read off the engine, in words for the finance view. */
   readonly vat: NoClaimVatWords;
   readonly refuses_work: false;
 };
@@ -294,7 +294,7 @@ export type ComparisonFacts = {
   readonly claim_value_pence: number | null; readonly entity_type: string | null; readonly tax_rate: number | null;
   readonly pool_split_main_pence: number | null; readonly pool_split_special_pence: number | null; readonly period_start: string | null;
   /**
-   * PHASE 151b — the client's VAT position ON OUR FEE ('can_reclaim' / 'cannot_reclaim'), where a caller knows it.
+   * The client's VAT position ON OUR FEE ('can_reclaim' / 'cannot_reclaim'), where a caller knows it.
    * No invoice records it, so it is normally absent, and absent is "not known" — which counts for nothing while we are
    * not VAT-registered, and is UNDETERMINED (never "do not claim") once we are.
    */
@@ -465,7 +465,7 @@ export function invoiceById(db: Db, actor: Actor, id: string): FinanceRow {
 
 export type FinanceDeps = { db: Db; audit: AuditLog; now: () => string };
 
-/** PHASE 133e (D4, continued): `field` names the posted field a refusal is about, where it is about one. */
+/** `field` names the posted field a refusal is about, where it is about one. */
 export type UpdateResult = { ok: true } | { ok: false; why: string; field?: string };
 
 /**
@@ -543,7 +543,7 @@ export type FinanceSummary = {
 
 /**
  * VAT IS RECORDED, NOT DERIVED. Caprebate is not VAT registered — confirmed in
- * Phase 74, and the engagement letter says so — and the position is a column
+ * And the engagement letter says so — and the position is a column
  * on every invoice rather than a constant in this file, because the day that
  * changes it changes for new invoices and not for old ones.
  */

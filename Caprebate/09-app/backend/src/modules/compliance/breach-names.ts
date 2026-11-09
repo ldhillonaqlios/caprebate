@@ -1,7 +1,7 @@
 /**
- * THE RESTRICTED BREACH NAMES LIST. PHASE 153c, 4 October 2026.
+ * THE RESTRICTED BREACH NAMES LIST.
  *
- * Word question 181, Sadique's: "Once the back office is live, which breach record is the official one?" Built on our
+ * Word question 181, the data protection officer's: "Once the back office is live, which breach record is the official one?" Built on our
  * recommendation for him to check: the back office's breach register is the official record, and the names of anyone
  * who had to be identified are kept apart from it, in this list, which only two people may open — the data protection
  * officer and the deputy named in writing (the letter of authority, Word question 184).

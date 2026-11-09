@@ -1,9 +1,9 @@
 /**
  * THE SURVEY'S EVIDENCE FROM THE CLIENT — the photo checklist, the recorded walkthrough call, and how the surveyor
- * inspected. 2 October 2026; the mock-up Lakhbir approved that day.
+ * inspected. 2 October 2026; the mock-up the owner approved that day.
  *
- * Lakhbir: "a recorded phone walkthrough … and add the option for … a guided photo checklist in the client portal".
- * Asked on 2 Oct 2026: the photos are KEPT, FOR TESTING ("Keep them, test only"); the walkthrough is a RECORDED ZOOM
+ * the owner: "a recorded phone walkthrough … and add the option for … a guided photo checklist in the client portal".
+ * Asked: the photos are KEPT, FOR TESTING ("Keep them, test only"); the walkthrough is a RECORDED ZOOM
  * CALL ("Recorded Zoom call") — the test website takes at most 4.5 MB a request, so a 20–40 minute phone video cannot be
  * uploaded, and a page may run no script to send it in pieces.
  *
@@ -15,14 +15,14 @@
  * where it is, its type, size and SHA-256, who took it, when, and the client's "nobody is in it". A photo is never
  * edited or deleted here: it is taken back (withdrawn), by the client or by staff, and is then shown to nobody.
  *
- * MANY AT ONCE (2 Oct 2026, Lakhbir: "not only … individually but also in one go. admin can then split"). A client
+ * MANY AT ONCE. A client
  * may send up to 15 photos in one go, with one "nobody is in them", up to 4.4 MB in all (the test website's limit is
  * for the whole send). Each is checked and cleaned like a single one; if any is refused, none is kept, and the page
  * says which. They are kept under UNSORTED until Admin or Sales put each under a checklist item (`sortPhotos`, migration
  * 075): the newest move is the photo's item. One that is not useful is taken back.
  *
  * WHO SEES A PHOTO. The client of that company; Admin and Sales; and the surveyor assigned to the job — every request
- * asked of the rules (`surveyor_job.read` for staff). Lakhbir's waiver for testing names Admin, Sales, the data
+ * asked of the rules (`surveyor_job.read` for staff). the owner's waiver for testing names Admin, Sales, the data
  * protection officer, the client and the assigned surveyor, and the 7-year keep (SURVEY_PHOTOS below). Real use waits
  * for the officer and the privacy notice.
  *
@@ -55,7 +55,7 @@ import { getSurveyInspectionBasisBasisNoteByJobId, getSurveyorJobsIdBusinessIdBy
 export type EvidenceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
 
-/** Lakhbir's decision for testing, 2 October 2026, as asked. */
+/** the owner's decision for testing, as asked. */
 export const SURVEY_PHOTOS = Object.freeze({
   kept_for_testing: true,
   waiver_record: 'On 2 Oct 2026 Lakhbir was asked if we keep survey photos before the data officer has said. ' +
@@ -362,10 +362,10 @@ export function sortPhotos(d: EvidenceDeps, actor: Actor, job_id: string, choice
 export const ASK_WORDS = 'I would like a recorded video call to show you around the building for the survey.';
 
 /**
- * PHASE 156d, 5 October 2026 — THE WALKTHROUGH CALL'S WORDS, BY ZOOM PLAN. On the free plan (src/integrations/connectors/zoom.ts,
+ * THE WALKTHROUGH CALL'S WORDS, BY ZOOM PLAN. On the free plan (src/integrations/connectors/zoom.ts,
  * zoomPlanIsFree) Zoom keeps no recording and a call stops at 40 minutes, so nothing promises a recording: the person
  * who leads the call writes down what they see on the job, and the client can still send photos and a video.
- * The paid words are the ones Lakhbir approved on 2 Oct 2026 ("Recorded Zoom call"); they come back with ZOOM_PLAN=pro.
+ * The paid words are the ones the owner approved on 2 Oct 2026 ("Recorded Zoom call"); they come back with ZOOM_PLAN=pro.
  */
 export type WalkWords = { readonly [k in 'name' | 'choice' | 'lead' | 'ask' | 'message' | 'guide' | 'staffName' | 'staffLede' | 'book' | 'booked' | 'staffHelp' | 'surveyorHelp' | 'noRecording']: string };
 

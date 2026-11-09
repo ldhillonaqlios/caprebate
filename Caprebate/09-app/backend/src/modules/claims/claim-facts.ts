@@ -1,7 +1,7 @@
 /**
  * THE CLAIM'S CAPITAL ALLOWANCES FACTS — CRM 6 of 10.
  *
- * The schema is migration 015; the scope is 09-app/CAPREBATE-CRM-DISPOSITION.md
+ * The schema is migration 015; the scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md
  * Part B2; the figures, the sign-off, the deliverables and aftercare are
  * src/modules/claims/claim-record.ts. The routes and pages are src/modules/claims/claim-record-pages.ts,
  * which draws what these return and decides nothing.

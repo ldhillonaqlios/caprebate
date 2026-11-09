@@ -149,3 +149,9 @@ Set `CAPREBATE_REFERENCE_DB_URL` and `CAPREBATE_REFERENCE_DB_TOKEN` to the new d
 | The backup and restore | `src/core/backup.ts`, `src/integrations/connectors/s3-backup.ts`, `tools/restore-backup.ts` |
 | The reference database | `src/integrations/postcodes/reference-db.ts`, `tools/build-reference-db.ts` |
 | The tests | `test/core/live-website.test.ts` |
+
+The back end is grouped by business area since Phase 161k (9 November 2026): `src/core/`, `src/shared/`,
+`src/integrations/` and one module per area in `src/modules/` (public site, assessment, portal, CRM, claims, survey,
+finance, compliance, admin), each reached through its front door `index.ts`; the tests sit in the same folders under
+`test/`. `Caprebate/09-app/backend/README.md` maps every folder in a line; this runbook and the other specs and guides
+are in `Caprebate/09-app/docs/`.

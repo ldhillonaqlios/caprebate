@@ -1,14 +1,14 @@
 /**
- * PHASE 156e, 5 October 2026 — THE ADMIN "CONNECTIONS" PAGE (B3), AND THE TWO CARE REGULATORS' LISTS (B4).
+ * THE ADMIN "CONNECTIONS" PAGE (B3), AND THE TWO CARE REGULATORS' LISTS (B4).
  *
  *   GET  /staff/connections                          every outside service on one page, read only. Admin only.
  *   GET  /staff/connections/import?list={CIW|CARE_INSPECTORATE}   the import page, with its one script. Admin only.
  *   POST /staff/connections/register/{CIW|CARE_INSPECTORATE}   import that regulator's downloaded list. Admin only.
  *   GET  /staff/connections/switches.json            PHASE 161c: the list of what is built and switched off (STUBS in
- *                                                    src/core/app.ts), which /api/health served to anyone until 4 Nov 2026.
+ *                                                    src/core/app.ts), which /api/health served to anyone.
  *                                                    Admin only; anyone else gets 403 and nothing of it.
  * The Connections page itself carries no script, as every page reached from Home must (test/phase133a); the import
- * page, which needs one, is opened by a button, as the WhatsApp upload page is (Phase 156c).
+ * page, which needs one, is opened by a button, as the WhatsApp upload page is.
  *
  * WHY. "So nobody has to read code to know": one row per outside service - is its key there (yes or no, NEVER the
  * value), is it switched on (and what switch says so), is it on for testing under a waiver or for real clients, when it
@@ -18,9 +18,9 @@
  * does not do. Nothing on it changes anything; keys are changed in Home's Admin tab, switches in code.
  *
  * NOTHING IS ON FOR REAL CLIENTS. Every service that is on, is on for testing only, under a recorded waiver or approval
- * (Lakhbir, and Sadique for the US transfers); the column says so, and what turns it on for real is in "Waits on".
+ *; the column says so, and what turns it on for real is in "Waits on".
  *
- * THE TWO LISTS (Lakhbir, 5 Oct 2026, asked whether his 2 Oct "All the free ones" covers them: "Yes, include them").
+ * THE TWO LISTS.
  * Care Inspectorate Wales and the Care Inspectorate (Scotland) publish a file, not an API (src/modules/claims/register-files.ts).
  * The Scottish file is about 10 MB (31 August 2026's: 9,859,714 bytes, read 5 Oct 2026) and the test website takes about
  * 4.5 MB a request. So the page's script (src/modules/claims/register-import-script.ts) reads the file ON THE ADMIN'S COMPUTER and
@@ -62,7 +62,7 @@ export type Connection = {
   readonly waits: string;
   /** A regulator's list imported from a file. */
   readonly file?: FileSourceId;
-  /** PHASE 156f: a count for today, in words, shown under the service (the address box's searches against its cap). */
+  /** A count for today, in words, shown under the service (the address box's searches against its cap). */
   readonly today?: (app: App) => string;
 };
 
@@ -188,7 +188,7 @@ export function connectionsView(app: App, actor: Actor): readonly ConnectionRow[
   });
 }
 
-/** PHASE 156e: a regulator's list not imported this calendar month, for Home's Admin view. Null when both are current. */
+/** A regulator's list not imported this calendar month, for Home's Admin view. Null when both are current. */
 export function listsToImport(app: App): string | null {
   const due = (Object.keys(FILE_SOURCES) as FileSourceId[]).filter((s) => TEST_WEBSITE_LOOKUPS.sources.includes(s))
     .filter((s) => { const f = lastImport(app, s); return f === null || !f.this_month; });
@@ -222,7 +222,7 @@ function fileCell(r: ConnectionRow, now: string): Safe {
       <button class="btn-quiet" type="submit">Import a new list</button></form></div>`;
 }
 
-/** PHASE 156e: the import page for one list - the form the script trims a file from. */
+/** The import page for one list - the form the script trims a file from. */
 export function importPage(app: App, actor: Actor, nav: Safe, source: FileSourceId): string {
   const src = FILE_SOURCES[source];
   const last = actor.role === 'ADMIN' ? lastImport(app, source) : null;
@@ -269,7 +269,7 @@ export function connectionsPage(app: App, actor: Actor, nav: Safe, done: string 
  * THE ROUTES
  * ================================================================== */
 
-/** PHASE 161c: where the list of what is built and switched off is served, to Admin only. */
+/** Where the list of what is built and switched off is served, to Admin only. */
 export const SWITCHES_PATH = '/staff/connections/switches.json';
 const SWITCHES_HEADERS: Readonly<Record<string, string>> = Object.freeze({
   'content-type': 'application/json; charset=utf-8', 'x-content-type-options': 'nosniff', 'cache-control': 'no-store',

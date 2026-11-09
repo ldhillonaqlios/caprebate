@@ -42,7 +42,7 @@ export const AUDIT_PAGE_SIZE = 200;
 export type AuditLine = {
   readonly seq: number; readonly at: string; readonly kind: string; readonly actor_role: string | null; readonly actor_id: string | null;
   readonly object_type: string | null; readonly object_id: string | null; readonly outcome: string;
-  /** PHASE 160i: who, by name, and what happened in plain words. */
+  /** Who, by name, and what happened in plain words. */
   readonly who: string | null; readonly what: string;
 };
 
@@ -66,7 +66,7 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
   const askedOutcome = (q.get('outcome') ?? '').trim();
   const outcome = askedOutcome === '' ? null : Object.hasOwn(AUDIT_OUTCOMES, askedOutcome) ? askedOutcome : null;
   if (askedOutcome !== '' && outcome === null) said.push('Outcome: not allowed, refused or error, so it was not used');
-  // PHASE 160i: one client's entries, from the claim page's "Open the audit log for this client".
+  // One client's entries, from the claim page's "Open the audit log for this client".
   const askedClient = (q.get('client') ?? '').trim();
   const clientRow = askedClient === '' ? undefined : getBusinessesIdNameById<{ id: string; name: string }>(d.db, [askedClient]);
   const client = clientRow === undefined ? null : { id: clientRow.id, name: clientRow.name };
@@ -103,7 +103,7 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
 }
 
 /**
- * PHASE 133a — THE GATE OF THE AUDIT LOG, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF THE AUDIT LOG, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
@@ -112,7 +112,7 @@ export function auditLogGate(actor: Actor): void {
 }
 
 /**
- * PHASE 160i — WHAT AN ENTRY'S KIND MEANS, in plain words, for the one-client view. A kind without its own words is said
+ * WHAT AN ENTRY'S KIND MEANS, in plain words, for the one-client view. A kind without its own words is said
  * from its name ("CLAIM_FACT_RECORDED" reads "Claim fact recorded"), never left as a code.
  */
 const KIND_WORDS: Readonly<Record<string, string>> = Object.freeze({
@@ -133,7 +133,7 @@ export function kindWords(kind: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/** PHASE 160i — the audit log's entries about one client: the company, its claims and properties, or naming them. */
+/** The audit log's entries about one client: the company, its claims and properties, or naming them. */
 export const clientAuditParams = (business_id: string): string[] => [business_id, business_id, business_id, business_id, business_id, business_id];
 
 export function clientAuditCount(db: Db, business_id: string): number {

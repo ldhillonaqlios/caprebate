@@ -1,6 +1,6 @@
 /**
  * Caprebate — Anchor Quarantine
- * Board item 12830183464. Phase 3, item 4.
+ * Board item 12830183464. Item 4.
  *
  * Anchoring is real and well evidenced: a surveyor who has seen our estimate
  * before forming their own view drifts toward it. That drift destroys the

@@ -46,7 +46,7 @@ jobs:
         run: npm run check
 
       # Phase 161h1, 7 November 2026: the boundary check runs inside npm run check above; here its self-test proves a
-      # planted break of each rule still turns it red (09-app/ARCHITECTURE.md, the ratchet).
+      # planted break of each rule still turns it red (09-app/docs/ARCHITECTURE.md, the ratchet).
       - name: The boundary check's own controls
         working-directory: Caprebate/09-app/backend
         run: node tools/boundaries.cjs --self-test

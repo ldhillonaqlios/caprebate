@@ -2,7 +2,7 @@
  * GLOBAL SEARCH — LIMITED BY can INSIDE THE QUERY, NEVER FILTERED AFTERWARDS.
  * CRM 9 of 10.
  *
- * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, row 16.1, and the decisions
+ * The scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, row 16.1, and the decisions
  * this file takes are that table's Part E from E119. The page is
  * src/shared/lists-pages.ts; the proof is test/search.test.ts and
  * tools/payload-proof.ts.

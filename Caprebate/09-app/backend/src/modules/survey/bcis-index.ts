@@ -1,8 +1,8 @@
 /**
- * THE BCIS INDEX TABLE, FROM A FILE LAKHBIR DOWNLOADS — KEPT OUTSIDE THE REPOSITORY. Phase 155 (line 4), 4 October 2026.
+ * THE BCIS INDEX TABLE, FROM A FILE THE OWNER DOWNLOADS — KEPT OUTSIDE THE REPOSITORY..
  *
  * BCIS is the chosen cost source (Word answers 6 and 8) but publishes no API licence, so nothing here calls BCIS (our
- * use is confirmed: Word question 218, closed 10 Oct 2026). Once the export arrives, Lakhbir downloads the index series as a
+ * use is confirmed: Word question 218, closed). Once the export arrives, the owner downloads the index series as a
  * spreadsheet saved as CSV and runs `node src/core/cli.ts import-bcis-index <file>`. The cost model's own reader
  * (09-app/backend/src/modules/survey/costing/cost-model.cjs, parseIndexTable) turns it into a table of exactly CB_BCIS_INDEX's
  * shape, and this file writes it to CAPREBATE_BCIS_INDEX_FILE, or ~/.caprebate-bcis-index.json — NEVER inside the
@@ -10,7 +10,7 @@
  * (BCIS_COMMERCIAL in the source register), so it is never committed and never published on the test website.
  *
  * UNTIL THEN: the shipped CB_BCIS_INDEX stays an empty stub, and the cost model's test system uses its PLACEHOLDER table
- * of invented points, labelled as such. PHASE 157a (6 October 2026) wired the survey pack to it: chapter 11's index factor
+ * of invented points, labelled as such. PHASE 157a wired the survey pack to it: chapter 11's index factor
  * reads this table first (src/modules/survey/pack-cost-model.ts, indexTableHere), the placeholder only in the test system, and
  * otherwise nothing.
  */
@@ -48,7 +48,7 @@ export function importBcisIndex(csv: string, fileName: string, nowIso: string,
   }
   let parsed: { table: IndexTable; passed_over: number };
   try {
-    // PHASE 159f: the All-in Tender Price Index (--tpi) or the building price index, named; BCIS confirmed our use.
+    // The All-in Tender Price Index (--tpi) or the building price index, named; BCIS confirmed our use.
     parsed = costModel.parseIndexTable(csv, { source: `BCIS ${series === 'TPI' ? 'All-in Tender Price Index' : 'building price index'}, imported from ${basename(fileName)} on ${nowIso.slice(0, 10)}`, verified_at: nowIso,
       licence: 'BCIS (RICS) subscription. BCIS confirmed our use: storing, drafting from and printing its figures (relayed by Lakhbir, 9 October 2026; Word question 218).' });
   } catch (e) {

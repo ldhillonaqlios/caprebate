@@ -534,7 +534,7 @@ export const DOC_SPECS: readonly DocSpec[] = [
  * fire risk assessment can hold residents' health details (who needs help to leave
  * the building, and why), so every field read from one is checked by a person
  * before it stands, however confident the model was. The other eight are as they
- * were. Recorded in 09-app/CAPREBATE-DEVELOPER-SPEC.md; test M1 holds the table.
+ * were. Recorded in 09-app/docs/CAPREBATE-DEVELOPER-SPEC.md; test M1 holds the table.
  * Phase 151b added the tax return and the tax computation, OFF: whether a person
  * checks every figure read from them is the same kind of decision, and nobody has
  * taken it.

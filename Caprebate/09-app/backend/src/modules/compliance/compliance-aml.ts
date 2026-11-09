@@ -1,5 +1,5 @@
 /**
- * CUSTOMER DUE DILIGENCE — BUILT, AND OFF. CRM 8 of 10, 12 September 2026.
+ * CUSTOMER DUE DILIGENCE — BUILT, AND OFF. CRM 8 of 10.
  *
  * Built to the AML/KYC Position Paper (08-monday-doc-exports/12830178449),
  * sections 5 and 6. The setting that switches it on is AML_IN_SCOPE in
@@ -83,7 +83,7 @@ export const CLAIMANT_GUIDE: Readonly<Record<string, ClaimantGuide>> = Object.fr
     owners: 'Not applicable — the individual is the customer.',
     authority: 'The paper does not say.',
   },
-  /* PHASE 153d, 4 October 2026 (Word question 45): three more kinds, TEST DEFAULTS, NOT AGREED — for the solicitor. */
+  /* Three more kinds, TEST DEFAULTS, NOT AGREED — for the solicitor. */
   ORDINARY_PARTNERSHIP: {
     label: 'Ordinary partnership (not GPs) — test default',
     identify: 'The partnership, and each partner who owns more than 25% or controls it.',
@@ -132,7 +132,7 @@ export const PSC_DECISIONS: Vocab = Object.freeze({
 export const OFFICES: Vocab = Object.freeze({ NOMINATED_OFFICER: 'Nominated officer', COMPLIANCE_OFFICER: 'Compliance officer' });
 
 /**
- * PHASE 153d, 4 October 2026 — THE CHECK'S TEST DEFAULTS (Word question 45, the director's, for the solicitor). Built on
+ * THE CHECK'S TEST DEFAULTS (Word question 45, the director's, for the solicitor). Built on
  * our recommendation so the test system runs end to end: a low, medium or high risk level; anyone owning more than 25%
  * treated as an owner to check; and ordinary partnerships, LLPs and trusts as kinds of claimant. NOT AGREED: the
  * solicitor checks each. The check is still switched off with AML_IN_SCOPE, and the level is never required to finish.
@@ -395,7 +395,7 @@ export function recordOwner(d: ComplianceDeps, actor: Actor, check_id: string, i
 export function missingForCompletion(db: Db, c: CheckRow): string[] {
   const out: string[] = [];
   if (c.identified === null) out.push('what was identified');
-  // PHASE 151b: a PASS from the online identity check is evidence of how identity was verified (it also fills the field).
+  // A PASS from the online identity check is evidence of how identity was verified (it also fills the field).
   if (c.verification_method === null && !identityPassed(db, c.id)) out.push('how it was verified');
   if (c.evidence_document_id === null && c.register_ref === null) out.push('the evidence document or the register number');
   if (c.beneficial_ownership === null) out.push('the beneficial ownership position');

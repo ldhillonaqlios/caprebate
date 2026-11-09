@@ -1,7 +1,7 @@
 /**
  * THE SURVEY PACK'S APPROVAL — read every chapter, then one click; the report frozen and fingerprinted. 2 October 2026.
  *
- * Lakhbir: "whole pack needs to be read through then approve button ungreys like someone reading and accepting T&C";
+ * the owner: "whole pack needs to be read through then approve button ungreys like someone reading and accepting T&C";
  * "when the surveyor signs it should be a single CTA approve click"; and the fingerprint, approved ("5) approved").
  *
  * THE BUTTON UNGREYS ONLY WHEN EVERY ONE OF THESE HOLDS, each said in words with a link to where it is put right:
@@ -102,7 +102,7 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
   const surveyor = v.job.surveyor_id;
   const blockers: Blocker[] = [];
   const may = can(actor, 'surveyor_job.commit', obj);
-  // PHASE 159a: first, because nothing else on the pack matters once the claim's figures are fixed.
+  // First, because nothing else on the pack matters once the claim's figures are fixed.
   const lock = valuationLock(d.db, v.job.claim_id);
   if (lock.locked) blockers.push({ key: 'locked', words: lock.why, href: v.job.claim_id === null ? null : `/staff/claims/${v.job.claim_id}#valuation` });
   if (surveyor === null) blockers.push({ key: 'surveyor', words: 'No surveyor is assigned to this job.', href: null });
@@ -113,7 +113,7 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
       words: n > 0 ? `${n} value${n === 1 ? ' is' : 's are'} still needed. There is no total until then.` : (v.sums.problems[0]?.words ?? 'The sums are not complete.') });
   }
   const legal = legalAllows(lv.verdict, ...capped(v));
-  // PHASE 159d (item 8): a purchase that fails the legal check, with work since, is not claimed; the works go on.
+  // A purchase that fails the legal check, with work since, is not claimed; the works go on.
   if (!legal.ok && !v.purchase_w3) blockers.push({ key: 'legal', words: `The legal check: ${legal.why}`, href: `${base(job_id)}?ch=7` });
 
   // Every built chapter opened by the surveyor — and the legal check again since anyone else last answered it.
@@ -125,7 +125,7 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
     const names = unread.map((c) => `${c} · ${CHAPTERS.find((x) => x.n === c)?.title ?? ''}`).join('; ');
     blockers.push({ key: 'read', words: `Open every chapter first. Still to open: ${names}.`, href: `${base(job_id)}?ch=${String(unread[0])}` });
   }
-  // PHASE 159f (item 3): EVERY RATE SOURCED — the SOP's Valuation gate, made a test. A BCIS draft carries its own; a rate the
+  // EVERY RATE SOURCED — the SOP's Valuation gate, made a test. A BCIS draft carries its own; a rate the
   // surveyor typed needs theirs. And (C19) every rate at one day, so the share's arithmetic matches the report's words.
   if (v.pricing.unsourced.length > 0) {
     const n = v.pricing.unsourced.length;
@@ -136,11 +136,11 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
     blockers.push({ key: 'priced_at', href: `${base(job_id)}?ch=11`,
       words: `The rates are priced at different days, and the index cannot bring them to the purchase date: ${v.pricing.mixed.join('; ')}. Price them at one day, or record the purchase date.` });
   }
-  // 2 Oct 2026: how the surveyor inspected (chapter 2, src/modules/survey/survey-evidence.ts) goes in the report.
+  // How the surveyor inspected (chapter 2, src/modules/survey/survey-evidence.ts) goes in the report.
   if (basisOf(d.db, job_id) === null) blockers.push({ key: 'basis', words: 'Say how you inspected the building, in chapter 2.', href: `${base(job_id)}?ch=2#inspection` });
   const details = detailsOf(d.db, surveyor);
   if (details === null) blockers.push({ key: 'details', words: 'Add your RICS number below. It goes on the report with your name.', href: `${base(job_id)}?ch=23#details` });
-  // PHASE 159e (item 4; C15, L4): each part's year comes from the client's year end, read once at approval.
+  // Each part's year comes from the client's year end, read once at approval.
   if (v.job.claim_id !== null && !yearEndKnown(d.db, { id: v.job.claim_id, business_id: v.job.business_id })) {
     blockers.push({ key: 'year_end', href: `/staff/claims/${v.job.claim_id}#facts`,
       words: 'Record the client’s year end first. Each part of the claim goes into the year it falls in, and that comes from the year end. Ask the client for it, or record the accounting period on the claim.' });
@@ -184,7 +184,7 @@ function inspectionOf(d: { db: PackDeps['db'] }, job_id: string) {
     basis: b?.basis ?? null, words: b?.words ?? null, note: b?.note ?? null,
     photos: c?.photos ?? 0, items_done: c?.done ?? 0, items_marked: c?.marked ?? 0, items_total: c?.total ?? 0,
     recordings: recs.length, recorded_minutes: recs.reduce((a, r) => a + r.minutes, 0),
-    // 2 Oct 2026: the client's own videos of the building (src/modules/survey/survey-video.ts).
+    // The client's own videos of the building (src/modules/survey/survey-video.ts).
     videos: vids.length, video_minutes: Math.round(vids.reduce((a, v) => a + v.duration_ms, 0) / 60_000),
   };
 }
@@ -196,12 +196,12 @@ function siteOf(d: { db: PackDeps['db'] }, job_id: string): { site_plan?: SitePl
 
 export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at: string; by: { id: string; name: string }; details: Details }, d: { db: PackDeps['db'] }) {
   const sumOf = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
-  // PHASE 153e (Word question 150): each finding, seen on site or from documents, frozen with the version.
+  // Each finding, seen on site or from documents, frozen with the version.
   const basis = basisOf(d.db, v.job.id)?.basis ?? null;
   const photosByLine = evidenceByLine(d.db, v.job.id);
   return {
     format: 'cap-rebate-survey-pack/1',
-    // PHASE 160d, 19 October 2026: a version approved from now on is drawn without long dashes (src/modules/survey/survey-report.ts,
+    // 19 October 2026: a version approved from now on is drawn without long dashes (src/modules/survey/survey-report.ts,
     // reportModel). One approved before has no `words` and is drawn exactly as it was made.
     words: 'plain' as const,
     version: a.version,
@@ -225,7 +225,7 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
       qualifying_pence: v.sums.qualifying_pence, main_pool_pence: v.sums.main_pool_pence,
       special_pool_pence: v.sums.special_pool_pence, share_bp: v.sums.share_bp,
     },
-    // PHASE 153a — chapter 15: the claim's grants and what each took off. `sums` above is the figure after them.
+    // Chapter 15: the claim's grants and what each took off. `sums` above is the figure after them.
     grants: {
       element_trace: v.grants.switches.element_trace,
       before_qualifying_pence: v.grants.reading.before.qualifying_pence,
@@ -240,14 +240,14 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     },
     changes: v.changes,
     inspection: inspectionOf(d, v.job.id),
-    // PHASE 153e: chapter 15's VAT half, frozen with the version. Its counted VAT is already in `sums`.
+    // Chapter 15's VAT half, frozen with the version. Its counted VAT is already in `sums`.
     vat: { position: v.vat.position, amount_pence: v.vat.amount_pence, counted_pence: v.vat.counted_pence, words: v.vat.words },
-    // PHASE 153e (Word question 145): the planning assumption, frozen with the version (a test reading for the surveyor).
+    // The planning assumption, frozen with the version (a test reading for the surveyor).
     assumptions: [...REPORT_ASSUMPTIONS],
-    // 2 Oct 2026, stage 6: the site plan as it stood at approval (src/modules/claims/site-plan.ts), so the report never changes after.
+    // The site plan as it stood at approval (src/modules/claims/site-plan.ts), so the report never changes after.
     // Only when there is one: a version approved without a plan keeps the shape every earlier version has.
     ...siteOf(d, v.job.id),
-    // PHASE 153g: chapters 5, 8, 11, 14, 16 to 20 and 22, as they stood at approval (src/modules/survey/pack-sheets.ts).
+    // Chapters 5, 8, 11, 14, 16 to 20 and 22, as they stood at approval (src/modules/survey/pack-sheets.ts).
     chapters: sheetsForVersion(d.db, v),
     legal: {
       verdict: lv.verdict,
@@ -258,26 +258,26 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     },
     pack_seq: v.seq,
     legal_seq: lv.seq,
-    // PHASE 159c: where the building has work done since, each spend as approved: the purchase's own sums and each piece of
+    // Where the building has work done since, each spend as approved: the purchase's own sums and each piece of
     // work on its own cost. `sums` above is their total. A version with no work keeps the shape every earlier version has.
     ...eventsOf(v),
-    // PHASE 159k (item 2): the readings' parts as approved, and whether each reading was on. Only where a part is given:
+    // The readings' parts as approved, and whether each reading was on. Only where a part is given:
     // a version with none keeps the shape every earlier version has.
     ...readingsOf(v),
-    // PHASE 159f: how the rates were priced — the day they are all at, BCIS's drafts and location, and section 562 the
+    // How the rates were priced — the day they are all at, BCIS's drafts and location, and section 562 the
     // residual way beside the proportional one. A version approved before has none and reads as it did.
     pricing: { priced_at: v.pricing.priced_at, purchase: v.pricing.purchase, bcis_kind: v.pricing.bcis.kind, bcis_words: v.pricing.bcis.words,
       location: v.pricing.bcis.location, residual_pence: v.pricing.residual.qualifying_pence },
-    // PHASE 159d (item 6): which way each part of the claim goes in, as it stood at approval (src/modules/claims/claim-route.ts).
+    // Which way each part of the claim goes in, as it stood at approval (src/modules/claims/claim-route.ts).
     ...(v.job.claim_id === null ? {} : { routes: claimRoutes(d.db, { id: v.job.claim_id, business_id: v.job.business_id, property_id: v.property?.id ?? null }, a.at)
-      /* PHASE 159e (items 4, 7, 8): with each part's own period and, for W2, the first open one — so the return entries
+      /* With each part's own period and, for W2, the first open one — so the return entries
          put each spend in its own period from the facts as they stood at approval, the same period the window read. */
       .map((r) => ({ label: r.label, route: r.route, words: r.words, event_id: r.event_id, kind: r.kind, event_date: r.event_date,
         period: r.period, first_open: r.first_open })) }),
   };
 }
 
-/** PHASE 159k (item 2): the long-life and asbestos parts the allowances read, frozen with the version, with the readings
+/** The long-life and asbestos parts the allowances read, frozen with the version, with the readings
  *  as they stood (money-readings.ts). s.33B is already in the sums. */
 function readingsOf(v: PackView): { readings_159k?: {
   long_life_test: boolean; asbestos_lrr: boolean; s33b_aggregation: boolean;
@@ -295,7 +295,7 @@ function readingsOf(v: PackView): { readings_159k?: {
   } };
 }
 
-/** PHASE 159c: the events part of a version, only where there is work since. */
+/** The events part of a version, only where there is work since. */
 function eventsOf(v: PackView): { events?: {
   purchase_applies: boolean;
   purchase_w3?: boolean;
@@ -308,14 +308,14 @@ function eventsOf(v: PackView): { events?: {
   if (v.works.length === 0) return {};
   return { events: {
     purchase_applies: v.purchase_applies && !v.purchase_w3,
-    // PHASE 159d (item 8): the purchase failed the legal check, so it is not claimed; the report says so.
+    // The purchase failed the legal check, so it is not claimed; the report says so.
     ...(v.purchase_w3 ? { purchase_w3: true } : {}),
     purchase: v.purchase_applies && !v.purchase_w3 ? { qualifying_pence: v.purchase_sums.qualifying_pence, main_pool_pence: v.purchase_sums.main_pool_pence, special_pool_pence: v.purchase_sums.special_pool_pence } : null,
     works: v.works.map((w) => ({ event_id: w.event.id, kind: w.event.kind, event_date: w.event.event_date, label: w.label,
       inputs: Object.fromEntries(Object.entries(w.inputs).map(([k, x]) => [k, x.value])),
       qualifying_pence: w.sums.qualifying_pence, main_pool_pence: w.sums.main_pool_pence, special_pool_pence: w.sums.special_pool_pence,
       repairs_pence: w.sums.repairs_pence,
-      // PHASE 159l (item 5, L20): where each value came from, so the report can say it as it does for every rate.
+      // Where each value came from, so the report can say it as it does for every rate.
       input_sources: Object.fromEntries(Object.entries(w.inputs).map(([k, x]) => [k, x.source === null
         ? null : { kind: x.source.kind, text: x.source.text, by_name: x.source.by_name ?? null, reason: x.source.reason ?? null }])) })),
   } };
@@ -360,7 +360,7 @@ export function approvePack(d: PackDeps, actor: Actor, job_id: string, f: { seq:
       insertSurveyPackApprovals(d.db, [d.newId(), pack_id, version, v.seq, lv.seq, json, fingerprint, actor.id, at]);
 
       // The surveyor's figures, committed to the job as the workspace commits them — so the claim reads them as before.
-      /* PHASE 159c: with work since, the figure is the purchase and every piece of work. The building figure is the
+      /* With work since, the figure is the purchase and every piece of work. The building figure is the
          purchase's building plus what the work cost; with no purchase it is what the work cost, on no land; the share
          is what qualifies of that. A pack with no work commits exactly as before. */
       const worksCost = v.works.reduce((a, w) => a + (w.inputs.works_total.value ?? 0), 0);

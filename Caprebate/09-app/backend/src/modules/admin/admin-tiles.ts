@@ -1,8 +1,8 @@
 /**
- * SETTINGS — ONE PAGE OF TILES, FOR ADMIN. PHASE 135, 21 September 2026.
+ * SETTINGS — ONE PAGE OF TILES, FOR ADMIN.
  *
  * Until this phase Admin's menu was eight tabs of setup screens — Users, Admin settings, Document types, Automation, Email
- * templates, Compliance, Audit log — and the reward model under More. Lakhbir asked for menus that do not repeat and are
+ * templates, Compliance, Audit log — and the reward model under More. the owner asked for menus that do not repeat and are
  * not bloated, so the setup screens moved behind one "Settings" tab: a page of tiles, one per screen.
  *
  * NOTHING HERE DECIDES WHO MAY DO WHAT. Each tile names the gate its screen's store calls first, and is drawn only where
@@ -33,7 +33,7 @@ export type Tile = {
 export const SETTINGS_TILES: readonly Tile[] = Object.freeze([
   { href: '/staff/users', label: 'Users', does: 'Add a colleague, change their role, or stop their sign-in.', gate: usersGate },
   { href: '/staff/admin-settings', label: 'Switches', does: 'Turn features on or off, and set the numbers the system uses.', gate: assertConfigurationRead },
-  // PHASE 156e: every outside service, its key and its switch, on one read-only page; Admin's, as Users is.
+  // Every outside service, its key and its switch, on one read-only page; Admin's, as Users is.
   { href: '/staff/connections', label: 'Connections', does: 'Every outside service: its key, its switch and its last call.', gate: usersGate },
   { href: '/staff/document-types', label: 'Document types', does: 'The kinds of document we ask clients for.', gate: documentTypesGate },
   { href: '/staff/automation', label: 'Automation', does: 'Tasks and reminders that start by themselves when a claim moves.', gate: automationGate },

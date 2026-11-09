@@ -1,5 +1,5 @@
 /**
- * THE ROLE EDITOR'S SCREENS — /staff/admin/roles. Phase 151b, 25 September 2026.
+ * THE ROLE EDITOR'S SCREENS — /staff/admin/roles.
  *
  * Phase 151 built the role editor itself (src/modules/admin/role-editor.ts: makeRole, changeRole, retireRole, every step in the
  * audit log) and its hard limits (src/core/custom-roles.ts, roleRefusal), and left them with no screen. This is the screen.

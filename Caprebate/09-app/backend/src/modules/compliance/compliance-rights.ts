@@ -1,6 +1,6 @@
 /**
  * THE RIGHTS-REQUEST REGISTER, THE COMPLAINTS LOG, THEIR LETTERS AND THE SEARCH.
- * CRM 8 of 10, 12 September 2026.
+ * CRM 8 of 10.
  *
  * Built to the Rights-Request Register, Complaints Log and s.164A pack
  * (08-monday-doc-exports/12927908435) and the Retention and Rights-Request
@@ -114,10 +114,10 @@ export const ONWARD_ROUTE_ITEMS: Vocab = Object.freeze({
 /**
  * Pack 5.7, the onward route, as it must be stated — in every refusal and every access response.
  *
- * DRAFT 15 September 2026 (Phase 132c), FOR THE DATA PROTECTION OFFICER: the regulator named both ways. Copied by
- * Phase 132f (16 September 2026) from 03-app/caprebate-notices-page.html, where the dated dual wording is Block A's
+ * DRAFT, FOR THE DATA PROTECTION OFFICER: the regulator named both ways. Copied by
+ * Phase 132f from 03-app/caprebate-notices-page.html, where the dated dual wording is Block A's
  * and the option 2 and 3 text below is Block F's, word for word: S.I. 2026/1015 reg 2(c) moves the functions to the
- * Information Commission on 30 September 2026 and s.118 abolishes the office of Information Commissioner, so "the
+ * Information Commission and s.118 abolishes the office of Information Commissioner, so "the
  * Information Commissioner" alone is wrong from that day. Not approved; shortening it after that date is the officer's.
  */
 export const ONWARD_ROUTE_TEXT = [
@@ -159,7 +159,7 @@ function letterBody(kind: LetterKind, ref: string, receivedDay: string, extra: {
           `We received it on ${receivedDay}. Your reference is ${ref}. Please quote it if you contact us again.`, '',
           'The person who handles data protection matters for Cap Rebate is dealing with it. We will look into what you have told us and write to you with the outcome. If it is going to take us a while, we will keep you updated rather than leave you waiting.', '',
           ...(extra.asked === null ? [] : [`You also asked us to ${extra.asked}. We are treating that as a separate request about your data. It has its own timescale. We will normally answer it within one month. We will tell you if we need longer, and why.`, '']),
-          'If at any point you are not satisfied with how we are handling this, you do not have to wait for us to finish. You can complain to the Information Commissioner (from 30 September 2026, the Information Commission) — their details are at ico.org.uk.', // DRAFT (Phase 132c wording, Block A), for the data protection officer
+          'If at any point you are not satisfied with how we are handling this, you do not have to wait for us to finish. You can complain to the Information Commissioner (from 30 September 2026, the Information Commission) — their details are at ico.org.uk.', // DRAFT, for the data protection officer
           ...sign,
         ].join('\n'),
       };
@@ -675,7 +675,7 @@ export function closeComplaint(d: ComplianceDeps, actor: Actor, id: string, inpu
 export type ComplaintView = {
   readonly complaint: ComplaintRow;
   readonly ack: AckClock;
-  /** Phase 153c (Word question 178): our own targets — the next update and the outcome. Not legal deadlines. */
+  /** Our own targets — the next update and the outcome. Not legal deadlines. */
   readonly targets: ComplaintTargets;
   readonly progress: readonly { told_on: string; said: string }[];
   readonly links: readonly LinkLine[];
@@ -738,12 +738,12 @@ export function complaintCount(db: Db, actor: Actor, from: string, to: string): 
 export type SearchHit = { readonly store: string; readonly how: string; readonly id: string; readonly label: string; readonly link: string | null };
 export type SearchResult = {
   readonly hits: readonly SearchHit[]; readonly scope: readonly string[]; readonly s2_note: string;
-  /** PHASE 154a1 (line 1): what was searched, at most SEARCH_TERM_MAX characters, and whether the typed term was longer. */
+  /** What was searched, at most SEARCH_TERM_MAX characters, and whether the typed term was longer. */
   readonly term: string; readonly cut: boolean;
 };
 
 /**
- * PHASE 154a1 (line 1), 4 October 2026: THE TERM IS CAPPED, AS THE OTHER SEARCHES ARE. The 3 October sweep posted 50,000
+ *: THE TERM IS CAPPED, AS THE OTHER SEARCHES ARE. The 3 October sweep posted 50,000
  * characters here and got a 500: the LIKE pattern built from it was over SQLite's 50,000-byte limit. The S2 name search
  * stops at 200 (compliance-identity.ts) and the back office search cuts to 100 (search.ts); this one cuts to 200 and the
  * page says so, so nobody thinks the whole of what they typed was searched.

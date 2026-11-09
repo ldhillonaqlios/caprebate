@@ -1,5 +1,5 @@
 /**
- * THE CLAIMS' FRONT DOOR: the claim record, its facts, documents, signing and research. Another area imports this module only from here (09-app/ARCHITECTURE.md rule 1).
+ * THE CLAIMS' FRONT DOOR: the claim record, its facts, documents, signing and research. Another area imports this module only from here (09-app/docs/ARCHITECTURE.md rule 1).
  * Generated from the imports other areas made on the day the module moved, and kept by hand since: add a name here when
  * another area needs it, never a whole file.
  */

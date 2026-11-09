@@ -1,6 +1,6 @@
 /**
  * THE SURVEY PACK'S PAGES — chapters on the left, the book in the middle, the totals and the changes on the right.
- * 1 October 2026; the layout Lakhbir approved as a mock-up that day.
+ * 1 October 2026; the layout the owner approved as a mock-up that day.
  *
  *   GET  /staff/survey/{job}/pack?ch=10[&edit=LINE|&add=1]    a chapter (an edit form opens in place, no script)
  *   POST /staff/survey/{job}/pack/value      one of the four values that belong to the whole pack
@@ -117,28 +117,28 @@ export async function handleSurveyPack(
     return 'handled';
   }
   if (act === 'site-plan') {
-    // 2 Oct 2026, stage 6: the site plan for the report's cover, from Ordnance Survey's free maps (src/modules/claims/site-plan.ts).
+    // The site plan for the report's cover, from Ordnance Survey's free maps (src/modules/claims/site-plan.ts).
     const r = await fetchSitePlan({ db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId, transport: d.app.outside, secrets: d.app.secrets }, actor, job);
     if (!r.ok) return d.problem(res, actor, 'No site plan', r.why, `${base(job)}?ch=9#site-plan`);
     redirect(res, `${base(job)}?ch=9&done=plan#site-plan`);
     return 'handled';
   }
   let r: P.PackResult;
-  // PHASE 159f: a typed rate's source, from the three boxes every rate form carries.
+  // A typed rate's source, from the three boxes every rate form carries.
   const src = { rate_basis: f.get('rate_basis') ?? '', rate_ref: f.get('rate_ref') ?? '', rate_priced_at: f.get('rate_priced_at') ?? '' };
   switch (act) {
     case 'value': r = P.savePackValue(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq, ...src }); break;
-    // PHASE 159f: the BCIS location the drafts are read for.
+    // The BCIS location the drafts are read for.
     case 'location': r = P.savePackLocation(deps, actor, job, { area: f.get('area') ?? '', reason, seq }); break;
     case 'extra': r = P.savePackExtra(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
-    // PHASE 153g: the surveyor's own words in chapters 5, 8, 11, 14, 16, 19, 20 and 22 (src/modules/survey/pack-words.ts).
+    // The surveyor's own words in chapters 5, 8, 11, 14, 16, 19, 20 and 22 (src/modules/survey/pack-words.ts).
     case 'words': r = savePackWords(deps, actor, job, { field: f.get('field') ?? '', words: f.get('words') ?? '', reason, seq }); break;
     case 'line': r = P.saveLine(deps, actor, job, { line, qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq, ...src }); break;
     case 'revert': r = P.revertLine(deps, actor, job, { line, reason, seq }); break;
     case 'remove': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, true); break;
     case 'restore': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, false); break;
     case 'add': r = P.addLine(deps, actor, job, { label: f.get('label') ?? '', unit: f.get('unit') ?? '', qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq, ...src }); break;
-    // PHASE 159c: a piece of work's cost-led values, from its final account (chapter 9).
+    // A piece of work's cost-led values, from its final account (chapter 9).
     case 'works': r = P.saveWorks(deps, actor, job, { event: f.get('event') ?? '', reason, seq,
       values: Object.fromEntries([...WORKS_FIELDS, ...WORKS_PART_FIELDS].map((k) => [k, f.get(k) ?? ''])) as Partial<Record<WorksField | WorksPartField, string>> }); break;
     case 'details': r = A.saveDetails(deps, actor, job, { rics_number: f.get('rics_number') ?? '', firm: f.get('firm') ?? '' }); break;
@@ -159,7 +159,7 @@ export async function handleSurveyPack(
 function sourceTag(d: PackPageDeps, s: Source | null, short = false): Safe {
   if (s === null) return h`<span class="pk-src pk-need">needed</span>`;
   if (s.kind === 'EVIDENCE') return h`<span class="pk-src pk-ev">${short ? 'Evidence' : s.text}</span>`;
-  // PHASE 159f: a drafted rate names BCIS (or says it is a test rate); a typed rate names its own source.
+  // A drafted rate names BCIS (or says it is a test rate); a typed rate names its own source.
   if (s.kind === 'DRAFT' && s.basis !== undefined && s.basis !== null) {
     return h`<span class="pk-src pk-dr" title="${s.text}">${s.basis.kind === 'TEST_PLACEHOLDER' ? 'TEST RATE — not BCIS' : 'BCIS draft'}</span>`;
   }
@@ -172,7 +172,7 @@ function sourceTag(d: PackPageDeps, s: Source | null, short = false): Safe {
   return h`<span class="pk-src pk-sv">${s.by_name ?? s.text}${short || s.at === null || s.at === undefined ? '' : ` · ${d.stamp(s.at)}`}</span>`;
 }
 
-/** PHASE 159f (item 3): the three boxes a typed rate's source needs — what, which one, and the day it is priced at. */
+/** The three boxes a typed rate's source needs — what, which one, and the day it is priced at. */
 function rateSourceFields(cur: Source | null): Safe {
   const b = cur?.kind === 'SURVEYOR' ? cur.basis ?? null : null;
   const opt = (k: P.RateSourceForm['rate_basis'] & string, w: string) => h`<option value="${k}"${b?.kind === k ? raw(' selected') : raw('')}>${w}</option>`;
@@ -231,7 +231,7 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
 }
 
 /**
- * UI TIDY PHASE 11, 3 October 2026 — WHICH PACK THIS IS. Lakhbir: "The survey pack doesn't say which of a client's surveys
+ * WHICH PACK THIS IS. the owner: "The survey pack doesn't say which of a client's surveys
  * you are looking at. Dunmarrow has two, and I opened the wrong one first." A dark band names the client and the site (the
  * pack's own property, else its claim's), the claim number and postcode, which of the client's survey jobs it is, and a
  * button to each of the others' packs, at the same chapter.
@@ -242,7 +242,7 @@ function packHead(app: App, actor: Actor, v: P.PackView, ch: number): Safe {
   const job = all.find((j) => j.job_id === v.job.id);
   const site = v.property !== null ? siteOf(v.job.business_name, v.property.label) : job === undefined ? 'no site recorded' : jobSite(job);
   const pc = v.property?.postcode ?? job?.property_postcode ?? null;
-  // PHASE 159a (L6): the postcode once — not again here when the site's own words already end with it.
+  // The postcode once — not again here when the site's own words already end with it.
   const postcode = pc === null || P.propertyLine({ label: site, postcode: pc }) === site ? null : pc;
   const n = all.findIndex((j) => j.job_id === v.job.id);
   const facts = [job?.claim_ref ?? null, postcode, all.length > 1 && n >= 0 ? `survey job ${String(n + 1)} of ${String(all.length)} for this client` : null]
@@ -286,7 +286,7 @@ function summaryChapter(v: P.PackView): Safe {
     ${neededList(v)}`;
 }
 
-/** PHASE 159c: where the building has work done since, each part of the total on its own line. */
+/** Where the building has work done since, each part of the total on its own line. */
 function eventParts(v: P.PackView): Safe {
   if (v.works.length === 0) return raw('');
   return h`<h2>Each spend on the building</h2>
@@ -307,7 +307,7 @@ function neededList(v: P.PackView): Safe {
 }
 
 /**
- * UI TIDY PHASE 11: STILL NEEDED, IN GROUPS. Forty-one links in two columns was a wall. The values of chapter 9 are few
+ * STILL NEEDED, IN GROUPS. Forty-one links in two columns was a wall. The values of chapter 9 are few
  * and listed; the lines of chapter 10 are counted, with one link to the chapter; every one is still listed, one per line,
  * behind "Show all".
  */
@@ -333,7 +333,7 @@ function neededGroups(v: P.PackView): Safe {
         ${s.needed.length > 60 ? h`<p class="help">… and ${String(s.needed.length - 60)} more.</p>` : raw('')}</details>`;
 }
 
-/* ------------------------------------------------------------ PHASE 153f: chapters 1, 3, 6, 12, 13 and 21 */
+/* ------------------------------------------------------------ chapters 1, 3, 6, 12, 13 and 21 */
 
 const SECTOR_WORDS: Readonly<Record<string, string>> = Object.freeze({
   care_homes: 'Care home', dental: 'Dental practice', supported_living: 'Supported living', gp: 'GP surgery', private_hospital: 'Private hospital or clinic',
@@ -357,7 +357,7 @@ export function reportChapter(d: PackPageDeps, actor: Actor, v: P.PackView): Saf
       : h`<div class="rp-plan">${sitePlanSvg(plan, `Site plan round ${plan.postcode}`)}<p class="help">${pickWords(plan)} ${plan.attribution}. Not the legal boundary of the site.</p></div>`}`;
 }
 
-/** Chapter 3 — what the report is for, and the basis it was made on (Phase 153e lines 1 to 3: the evidence level). */
+/** Chapter 3 — what the report is for, and the basis it was made on. */
 export function purposeChapter(d: PackPageDeps, v: P.PackView): Safe {
   const b = basisOf(d.app.db, v.job.id);
   const level = deskFirstReading(d.app.db, v.job.id);
@@ -416,7 +416,7 @@ export function poolsChapter(v: P.PackView): Safe {
     ${undecided.length === 0 ? raw('') : h`<p class="gate" role="note">${String(undecided.length)} item${undecided.length === 1 ? '' : 's'} with no pool yet: ${undecided.map((l) => l.label).join(', ')}. Decide each in chapter 10.</p>`}`;
 }
 
-/** Chapter 21 — the report's limits and standard assumptions, with the planning assumption (Phase 153e line 11). */
+/** Chapter 21 — the report's limits and standard assumptions, with the planning assumption. */
 export function limitsChapter(): Safe {
   return h`<p class="lede">What the report does not cover, and what it assumes. Test wording, for you to approve.</p>
     <ul>
@@ -430,12 +430,12 @@ export function limitsChapter(): Safe {
     <p class="help">Write any special assumption in your notes for now. Do the same for a limit on what you could inspect, or anything you were asked to leave out.</p>`;
 }
 
-/* ------------------------------------------------------------ PHASE 153g: the other ten chapters */
+/* ------------------------------------------------------------ the other ten chapters */
 
 const FROM_CLASS: Readonly<Record<string, string>> = Object.freeze({ 'the surveyor': 'pk-sv', 'the pack': 'pk-dr', 'worked out': 'pk-dr', 'fixed wording': 'pk-dr', 'the cost model (test)': 'pk-dr' });
 
 /**
- * PHASE 153g — chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22, from one reading (src/modules/survey/pack-sheets.ts): each row
+ * Chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22, from one reading (src/modules/survey/pack-sheets.ts): each row
  * says where it comes from, and a row with nothing behind it says so in words. The surveyor's words are each a form, kept
  * with a reason under their name; Admin and Sales read them.
  */
@@ -463,7 +463,7 @@ export function sheetChapter(d: PackPageDeps, v: P.PackView, ch: number): Safe {
 }
 
 /**
- * PHASE 157a — the cost model's values (src/modules/survey/pack-cost-model.ts): chapter 11's valuation date, chapter 14's
+ * The cost model's values (src/modules/survey/pack-cost-model.ts): chapter 11's valuation date, chapter 14's
  * insurance figure, its date, and what each figure includes. Each the surveyor's, with a reason; empty clears it.
  */
 function costForms(v: P.PackView, ch: number): Safe {
@@ -499,7 +499,7 @@ const ROUTE_WORDS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 /**
- * PHASE 153a, 4 October 2026 — F-15's remainder. The claim's grants, read from the claim record, and what each takes off
+ * 4 October 2026 — F-15's remainder. The claim's grants, read from the claim record, and what each takes off
  * (src/modules/survey/pack-grants.ts). Nothing is typed here: a grant is recorded, matched and removed on the claim, by Sales or
  * Admin, so the surveyor sees what the claim holds and the figure it gives. VAT is not in the pack yet.
  */
@@ -534,7 +534,7 @@ export function grantsChapter(v: P.PackView): Safe {
 `;
 }
 
-/** PHASE 159i: what the money readings added to or took off the purchase (src/shared/money-readings.ts), in words. */
+/** What the money readings added to or took off the purchase (src/shared/money-readings.ts), in words. */
 function moneySection(v: P.PackView): Safe {
   const m = v.money;
   if (m.words.length === 0) return raw('');
@@ -544,7 +544,7 @@ function moneySection(v: P.PackView): Safe {
 }
 
 /**
- * PHASE 153e — CHAPTER 15'S VAT HALF (src/modules/survey/pack-vat.ts; Module 00 C23). The surveyor records whether the client could
+ * CHAPTER 15'S VAT HALF (src/modules/survey/pack-vat.ts; Module 00 C23). The surveyor records whether the client could
  * reclaim the VAT, and the VAT not reclaimed, each with a reason. Only "exempt" adds it to the price paid; partly exempt
  * waits for the tax adviser; not known adds nothing (N4).
  */
@@ -670,7 +670,7 @@ function inputsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchP
 }
 
 /**
- * PHASE 159g — WHAT THE REGISTERS ALREADY SAY, for the surveyor to confirm: Price Paid's sale at the address (a lead,
+ * WHAT THE REGISTERS ALREADY SAY, for the surveyor to confirm: Price Paid's sale at the address (a lead,
  * never the price, where it is category B or "Other"), a site area far larger than the building (never the plot), and
  * how the client holds the building. Shown here; nothing in it is counted.
  */
@@ -686,7 +686,7 @@ function leadsBlock(v: P.PackView): Safe {
 }
 
 /**
- * PHASE 159f — THE BCIS DRAFTS AND THE LOCATION. What the drafts rest on, in words; the location the factor is read for,
+ * THE BCIS DRAFTS AND THE LOCATION. What the drafts rest on, in words; the location the factor is read for,
  * chosen from the loaded BCIS table (none: the UK mean, which never changes the share); a test rate said plainly.
  */
 function bcisBlock(_d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchParams): Safe {
@@ -706,7 +706,7 @@ function bcisBlock(_d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchPara
 }
 
 /**
- * PHASE 159c — WORK DONE SINCE, PRICED ON ITS OWN COST. Each piece of work on the building, from its final account (or
+ * WORK DONE SINCE, PRICED ON ITS OWN COST. Each piece of work on the building, from its final account (or
  * contract sum) by element: what it cost in all, and its parts. The plant, with the builder's work and the demolition
  * that serve it, qualifies; the preliminaries and the fees are shared out over the rest; the repair part is a deduction
  * from profits, never an allowance (chapter 20). The parts must add up to the final account.
@@ -734,7 +734,7 @@ function worksBlock(d: PackPageDeps, v: P.PackView, ch: number): Safe {
 }
 
 /**
- * PHASE 159k (item 2): a piece of work's parts for the three readings, shown where any is given or a reading has
+ * A piece of work's parts for the three readings, shown where any is given or a reading has
  * something to say. Each is a part of a value above, from the final account.
  */
 function partsTable(d: PackPageDeps, v: P.PackView, w: P.WorksView): Safe {
@@ -749,7 +749,7 @@ function partsTable(d: PackPageDeps, v: P.PackView, w: P.WorksView): Safe {
 }
 
 /**
- * PHASE 159k (item 2): the purchase's long-life part — of its main pool, what has an expected life of 25 years or more.
+ * The purchase's long-life part — of its main pool, what has an expected life of 25 years or more.
  * The surveyor's, with a reason; the return entries apply the test year by year.
  */
 function longLifeBlock(d: PackPageDeps, v: P.PackView, ch: number): Safe {
@@ -764,7 +764,7 @@ function longLifeBlock(d: PackPageDeps, v: P.PackView, ch: number): Safe {
 }
 
 /**
- * PHASE 153e (Word question 133): supported living's shared areas, measured from the floor plans. The common-parts
+ * Supported living's shared areas, measured from the floor plans. The common-parts
  * rows are drafted from it; with none, a flat 25% of the floor area, labelled as the fallback it is.
  */
 function sharedAreaBlock(d: PackPageDeps, v: P.PackView, ch: number): Safe {
@@ -778,7 +778,7 @@ function sharedAreaBlock(d: PackPageDeps, v: P.PackView, ch: number): Safe {
       <button class="cta" type="submit">Save</button></form>`}`;
 }
 
-/** 2 Oct 2026, stage 6: the site plan for the report's cover. Fetched with one button; the newest is shown. */
+/** The site plan for the report's cover. Fetched with one button; the newest is shown. */
 function sitePlanPanel(d: PackPageDeps, v: P.PackView, ch: number): Safe {
   const plan = sitePlanOf(d.app.db, v.job.id);
   return h`<section class="pk-card" id="site-plan"><h2>Site plan for the report</h2>
@@ -796,9 +796,9 @@ function elementsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearc
   const editing = q.get('edit');
   const sumOf = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
   const live = v.lines.filter((l) => !l.removed);
-  // 2 Oct 2026: each line's photos from the client (src/modules/survey/survey-evidence.ts).
+  // Each line's photos from the client (src/modules/survey/survey-evidence.ts).
   const evidence = evidenceByLine(d.app.db, v.job.id);
-  // PHASE 153e (Word question 150): each line says whether it was seen on site or comes from documents.
+  // Each line says whether it was seen on site or comes from documents.
   const basis = basisOf(d.app.db, v.job.id)?.basis ?? null;
   const groups: { title: string; lines: P.ViewLine[] }[] = [
     { title: 'Special rate pool — integral features', lines: live.filter((l) => l.pool === 'SR' && l.added === null) },

@@ -1,5 +1,5 @@
 /**
- * THE SURVEYOR'S OWN WORDS IN THE SURVEY PACK — PHASE 153g, 4 October 2026.
+ * THE SURVEYOR'S OWN WORDS IN THE SURVEY PACK.
  *
  * Eight of the pack's chapters ask the surveyor for words rather than a number (the report template's [SURVEYOR]
  * fields, 04-phase-work/phase9/surveyor-valuation-report-template-v2.md). Each is kept like every other pack change:

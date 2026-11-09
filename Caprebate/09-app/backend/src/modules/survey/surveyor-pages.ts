@@ -57,7 +57,7 @@ export type SurveyorDeps = {
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -209,7 +209,7 @@ function ratesFrom(f: URLSearchParams): S.RateInput[] {
  * ------------------------------------------------------------------ */
 
 /**
- * UI TIDY PHASE 10, 3 October 2026. Lakhbir opened the wrong one of Dunmarrow's two surveys: each job now names its site
+ * the owner opened the wrong one of Dunmarrow's two surveys: each job now names its site
  * and its claim number under the client, and its stage is in its colour. Solid boxes count the jobs, those waiting for
  * the surveyor's figures, those with figures in, and the rooms still to count.
  */
@@ -292,7 +292,7 @@ const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 /**
- * PHASE 133b — THE WORKSPACE ON THE RECORD LAYOUT. The six numbered sections become six tabs, in their order, each drawn
+ * THE WORKSPACE ON THE RECORD LAYOUT. The six numbered sections become six tabs, in their order, each drawn
  * by the same panel function from the same workspace; "Our estimate" — withheld or released — moves to the right-hand
  * panel, so it is beside every tab rather than above the first. The workspace and its payload are built exactly as before,
  * forwards, before a line of this is drawn: the layout reads the view, it never shapes it.
@@ -310,7 +310,7 @@ function workspacePage(
   const committed = w.job.state === 'COMMITTED_AND_RELEASED';
   const released = w.payload.quarantine.state === 'COMMITTED_AND_RELEASED';
   const rates = w.rates.rows.filter((f) => f.recorded !== null).length;
-  // 1 Oct 2026: the survey pack — every element, the sums, and the surveyor's stamped changes.
+  // The survey pack — every element, the sums, and the surveyor's stamped changes.
   const packLink: QuickAction = { href: `/staff/survey/${w.job.job_id}/pack?ch=4`, label: 'Open the survey pack' };
   const quick: QuickAction[] = !w.may_commit ? [packLink] : [
     packLink,
@@ -320,9 +320,9 @@ function workspacePage(
     w.rooms.schedule === null ? null : { href: '#rooms', label: 'Record the room counts' },
     { href: '#dn', label: 'Record what the client told you' },
   ].filter((q): q is QuickAction => q !== null);
-  // PHASE 142b: the thread with the client, read only, where the rule admits this login.
+  // The thread with the client, read only, where the rule admits this login.
   const chat = surveyorThreadPanel(d.app.db, actor, w.job.business_id);
-  // UI TIDY PHASE 10: the job names its site and claim; the client's other jobs are a link away; the menu opens out.
+  // The job names its site and claim; the client's other jobs are a link away; the menu opens out.
   const site = jobSite(w.job);
   const others = otherJobs(d.app, actor, w.job);
   setJobMenu(d.app, actor, w.job, null);
@@ -379,7 +379,7 @@ function quarantinePanel(d: SurveyorDeps, w: S.Workspace): Safe {
       <p class="help">What you always get:
         ${w.payload.quarantine.released_always.join(' · ')}.</p>
       ${(() => {
-        // PHASE 153e (Word question 131): the evidence level, worked out from the price paid. The level only.
+        // The evidence level, worked out from the price paid. The level only.
         const r = deskFirstReading(d.app.db, w.job.job_id);
         return r === null ? raw('') : h`<p><strong>How much evidence:</strong> ${r.level_words}</p>`;
       })()}
@@ -464,7 +464,7 @@ function ratesPanel(w: S.Workspace): Safe {
     ${w.rates.context === null
       ? h`<p class="help">We have no rates for this sector.</p>`
       : w.rates.region_derived
-        /* THE REGION IS DERIVED FROM THE PROPERTY'S POSTCODE. Phase 110. It is
+        /* THE REGION IS DERIVED FROM THE PROPERTY'S POSTCODE. It is
            named on the screen rather than implied, because a surveyor needs to
            know which of their own past figures they are being shown. */
         ? h`<p class="help">Your figures are offered back to you for
@@ -486,7 +486,7 @@ function ratesPanel(w: S.Workspace): Safe {
         <td>${f.field_id.replace(/_/g, ' ')}</td>
         <td>${f.unit}</td>
         <td>${f.blank_control
-          /* PHASE 132 — THE BLANK-FIELD CONTROL. No figure and no proposal text: the
+          /* THE BLANK-FIELD CONTROL. No figure and no proposal text: the
              label names whose figure a proposal is, and on a control field there is
              none to name. What the surveyor IS told is that the gap is deliberate,
              which anchors nothing. */
@@ -559,7 +559,7 @@ function fieldList(fields: unknown): string {
 /* --------------------------------------------------------- your own figures */
 
 /**
- * PHASE 132, 14 SEPTEMBER 2026 — THE "I LOOKED AT THIS FIELD" BOX NO LONGER STARTS TICKED.
+ * THE "I LOOKED AT THIS FIELD" BOX NO LONGER STARTS TICKED.
  *
  * Ticked by default, it recorded `reviewed` for every field nobody touched, so
  * NOT_REVIEWED could never fire and the instrument's unreviewed rate read zero by
@@ -574,7 +574,7 @@ function fieldList(fields: unknown): string {
 function figuresPanel(w: S.Workspace): Safe {
   const committed = w.job.state === 'COMMITTED_AND_RELEASED';
   const est = w.payload.estimate;
-  // PHASE 158b: an estimate sealed from the funnel's figure holds no pool split or land value; say so, not "£0".
+  // An estimate sealed from the funnel's figure holds no pool split or land value; say so, not "£0".
   const notEstimated = w.estimate_basis === FUNNEL_CEILING;
 
   return h`

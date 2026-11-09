@@ -1,7 +1,7 @@
 /**
- * THE PHOTO CHECKLIST — what a client photographs so the surveyor can see inside the building. 2 October 2026.
+ * THE PHOTO CHECKLIST — what a client photographs so the surveyor can see inside the building.
  *
- * Lakhbir: "a recorded phone walkthrough … and add the option for … a guided photo checklist in the client portal";
+ * the owner: "a recorded phone walkthrough … and add the option for … a guided photo checklist in the client portal";
  * the mock-up approved the same day ("Yes, build it as shown").
  *
  * IN THE FILMING GUIDE'S ORDER (04-phase-work/phase9/video-walkthrough-capture-script-v1.md, Part B): the outside, the
@@ -43,7 +43,7 @@ const BUILDING: readonly ChecklistItem[] = [
   { key: 'PLANT-BOILER', group: 'The plant room', title: 'The boiler(s)', what: 'Each boiler, and the data plate on each — the label with the model and serial number. Hold still so it is readable.', lines: ['LS-SR-003'] },
   { key: 'PLANT-CYLINDER', group: 'The plant room', title: 'The hot water cylinder', what: 'The hot water cylinder or calorifier, and its data plate.', lines: ['LS-SR-003', 'LS-SR-002'] },
   { key: 'PLANT-PIPES', group: 'The plant room', title: 'Pumps, valves and the pipework', what: 'The pumps and valves, and the pipes leaving the plant room. Follow the pipes as far as you can see them.', lines: ['LS-SR-003', 'LS-SR-002'] },
-  /* PHASE 153e (Word question 134): what decides a ventilation system's group is what it is for and how it is specified,
+  /* What decides a ventilation system's group is what it is for and how it is specified,
      not the room it serves, so the client is asked both. Their answer goes in the photo's note. A test default. */
   { key: 'PLANT-AIR', group: 'The plant room', title: 'Ventilation or air-handling units', what: 'Any ventilation or air-handling unit, and its data plate. In the note, tell us what it serves and what it is for. Say if it was built to a clinical standard, such as HTM 03-01. Its specification or commissioning certificate helps.', lines: ['LS-SR-004', 'LS-GP-008'] },
   { key: 'PLANT-CONTROLS', group: 'The plant room', title: 'The controls panel', what: 'The box with the screen or dials, and any building management system screen.', lines: ['LS-SR-003', 'LS-SR-004'] },

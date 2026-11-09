@@ -1,7 +1,7 @@
 /**
- * THE SURVEY PACK'S LEGAL CHECK — can the client claim on these fixtures at all? 2 October 2026.
+ * THE SURVEY PACK'S LEGAL CHECK — can the client claim on these fixtures at all?.
  *
- * Lakhbir, 1 October 2026, agreeing that the legal check comes before the survey: on a building bought from an owner
+ * The owner, agreeing that the legal check comes before the survey: on a building bought from an owner
  * who could claim, the buyer's claim on the fixtures can be worth nothing unless the value was fixed — a section 198
  * election, or a tribunal application, within two years (CAA 2001 s.187A) — however good the survey is.
  *
@@ -49,13 +49,13 @@ export type EngineQuestion = {
 
 /** The facts that decide the legal check. A question that sets one of these is asked. */
 const LEGAL_FACT = /^(trigger|deal|event_date|acquisition_date|prior_owner_(claimed|entitled|s35_barred)|earlier_entitled_owner|earlier_disposal_value|transaction_type|election(_[a-z0-9_]+)?|s183_election_made|past_owner_[a-z0-9_]+|intervening_owner[a-z0-9_]*|dvs_[a-z_]+|s187a_8_statements|tribunal_[a-z_]+|seller_pre_2008|fvr_window_closed)$/;
-/* PHASE 159h (C7, C8): `earlier_disposal_value` (G12bv — the value fixed when an earlier owner sold on, the s.185 cap)
+/* `earlier_disposal_value` (G12bv — the value fixed when an earlier owner sold on, the s.185 cap)
    and `transaction_type` (G14s — how the client took the property on) were missing, so neither was ever asked. */
 
 /**
- * PHASE 159h, 10 October 2026 — READINGS BUILT ON OUR RECOMMENDATION AND SWITCHED ON IN TEST (Lakhbir, 29 September
+ * READINGS BUILT ON OUR RECOMMENDATION AND SWITCHED ON IN TEST (the owner, 29 September
  * 2026: build it, then ask). Each is a viability question to the tax adviser in the Word questions document (268-272).
- * Off, the legal check reads exactly as before Phase 159h on that point.
+ * Off, the legal check reads exactly as on that point.
  */
 export const LEGAL_READINGS = Object.freeze({
   /** C26 (engine switch E-8's reading): a landlord who let the building as homes was barred from claiming by s.35, so
@@ -70,22 +70,22 @@ export const LEGAL_READINGS = Object.freeze({
   /** C7: a non-entitled seller with an earlier owner who could claim — the claim is capped at the value fixed when that
    *  earlier owner sold on (s.185), and is not settled while that value is not known. */
   s185_earlier_cap: true,
-  /** PHASE 159l (item 8, #9; Word question 284): the s.187A(6)(b) statements route — where an owner in between could
+  /** The s.187A(6)(b) statements route — where an owner in between could
    *  never claim, two written statements fix the value with no deadline. The engine's CB_CTA.s187a_6b_statements_route,
    *  held on for the pack's legal check only (G14ivne and G14st8 are asked). */
   s187a_6b_statements_route: true,
-  /** PHASE 159l (item 8, #10; Word question 285): the fixed value requirement needs a past owner who CLAIMED; a past
+  /** The fixed value requirement needs a past owner who CLAIMED; a past
    *  owner known never to have claimed brings no disposal value, so the requirement does not bite. The engine's
    *  CB_CTA.fvr_requires_past_owner_claim, held on for the pack's legal check only. */
   fvr_requires_past_owner_claim: true,
 } as const);
 
-/** PHASE 159l (item 8): the engine's own switches the pack's legal check reads, by the reading that holds them. */
+/** The engine's own switches the pack's legal check reads, by the reading that holds them. */
 export { LEGAL_ENGINE_SWITCHES };
 export type LegalEngineReadings = Readonly<Record<(typeof LEGAL_ENGINE_SWITCHES)[number], boolean>>;
 
 /**
- * THE ENGINE'S TWO SWITCHES, HELD FOR ONE CALL (Phase 159l, item 8). CB_S187A.assess and the two questions' showIf read
+ * THE ENGINE'S TWO SWITCHES, HELD FOR ONE CALL. CB_S187A.assess and the two questions' showIf read
  * CB_CTA as they run, so the pack sets them, runs the whole legal flow, and puts them back — in a finally, and
  * synchronously, so no other request ever sees them set. The public estimate never runs inside this, and keeps CB_CTA as
  * it ships (the site harness asserts it off).
@@ -135,7 +135,7 @@ export function legalQuestions(sector: string): readonly EngineQuestion[] {
   const engine = all.filter((q) => factsSetBy(q).some((k) => LEGAL_FACT.test(k)));
   const picked: EngineQuestion[] = [];
   for (const q of engine) {
-    /* PHASE 159h (C8): HOW THE CLIENT TOOK THE PROPERTY ON is asked on every purchase of the property, not only where an
+    /* HOW THE CLIENT TOOK THE PROPERTY ON is asked on every purchase of the property, not only where an
        election is held: a new lease for a premium, or a transfer below value, changes the route whether or not there
        is an election (no election is available at all on s.196 Table items 2 and 3). */
     if (setsTransaction(q)) {
@@ -167,10 +167,10 @@ export type LegalVerdict = {
   /** Where an election or a statement caps the claim on the fixtures: the cap, in pence. */
   readonly cap_pence: number | null;
   readonly cap_words: string | null;
-  /** PHASE 159h (C11): where an election over the fixtures generally gives separate figures, the integral features'
+  /** Where an election over the fixtures generally gives separate figures, the integral features'
    *  figure caps the special rate pool and the rest caps the main pool. Null where there is no split. */
   readonly pool_caps?: { readonly special_pence: number; readonly main_pence: number } | null;
-  /** PHASE 159h (item 7): the purchase is not the client's to claim on as a tenant (the route reads it as W3). */
+  /** The purchase is not the client's to claim on as a tenant (the route reads it as W3). */
   readonly tenant_purchase?: boolean;
 };
 
@@ -200,7 +200,7 @@ function poundsToPence(v: unknown): number | null {
 
 /**
  * The engine's claimant type. Unknown is read as a company: its earlier start date never relieves (CB_S187A).
- * PHASE 157c (the Friary House run, F15): read as every other gate reads it (claimantTypeForGate) - the client's own
+ * Read as every other gate reads it (claimantTypeForGate) - the client's own
  * answer at the assessment first, then what staff recorded. It read only the recorded column, so a partnership that
  * said so at the assessment was checked on a company's dates.
  */
@@ -214,7 +214,7 @@ export function claimantFor(db: Db, business_id: string): string {
  * the same verdict.
  */
 export function assessLegal(sector: string, answers: ReadonlyMap<string, unknown>, nowIso: string, claimant: string,
-  /** PHASE 159h (item 7): how the client holds the building, from the property (who-claims.ts propertyTenure). Absent:
+  /** How the client holds the building, from the property (who-claims.ts propertyTenure). Absent:
    *  not read at all (a caller with no property). Present and null: not known — asked, never assumed (N4). */
   holding?: { readonly role: ClaimantRole | null },
 ): { asked: EngineQuestion[]; unanswered: EngineQuestion[]; verdict: LegalVerdict } {
@@ -247,7 +247,7 @@ function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, 
     try { q.onSet?.(s, answers.get(q.id)); } catch { unanswered.push(q); }
     if (setsSeller(q)) {
       s['__seller_answer'] = answers.get(q.id);
-      // PHASE 159h (C26, OUR READING): a landlord barred by s.35 was never entitled to claim; look past them.
+      // A landlord barred by s.35 was never entitled to claim; look past them.
       if (LEGAL_READINGS.s35_seller_not_entitled && s['prior_owner_s35_barred'] === true) s['prior_owner_entitled'] = 'no';
     }
   }
@@ -265,7 +265,7 @@ function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, 
     if (deal === 'shares') return { level: 'GREEN', headline: 'The company’s shares were bought, not the building. The building did not change hands, so these rules do not apply.', why: [], actions: [], ...none };
     if (deal !== 'property' && deal !== 'buyin') return { level: 'AMBER', headline: 'Find out whether the building itself, or a company’s shares, were bought.', why: [], actions: [], ...none };
 
-    /* PHASE 159h (C6): ANSWERS THAT CANNOT ALL BE TRUE ARE NEVER CLEAR. "A previous owner claimed", with a seller who
+    /* ANSWERS THAT CANNOT ALL BE TRUE ARE NEVER CLEAR. "A previous owner claimed", with a seller who
        could never claim and nobody earlier who could, contradicts itself; the engine read the last two and switched the
        rules off. Until a person settles which answer is wrong, the check is not known. */
     if (s['prior_owner_claimed'] === 'yes' && s['prior_owner_entitled'] === 'no' && s['earlier_entitled_owner'] === 'no') {
@@ -273,7 +273,7 @@ function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, 
         why: ['You said a previous owner claimed. You also said the seller could never claim, and nor could anyone before. Both cannot be true.'], actions: ['Check the property enquiry replies and the title history. Then correct the wrong answer.'], ...none };
     }
 
-    /* PHASE 159h (C8, OUR READING): THE LEASE ROUTE. A premium for a new lease: the fixtures pass to the tenant only on a
+    /* THE LEASE ROUTE. A premium for a new lease: the fixtures pass to the tenant only on a
        joint s.183 election where the landlord could claim; where it could not (an NHS body, a developer, a charity),
        s.184 treats the tenant as owner. Whether an election was made, where it matters, must be known. */
     if (LEGAL_READINGS.lease_route && s['transaction_type'] === 'lease_premium') {
@@ -319,7 +319,7 @@ function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, 
     let cap_words: string | null = null;
     if (e.outcome === el.OUT['CAP_ELECT']) {
       const mode = e.scope?.mode;
-      /* PHASE 153b (Word question 98): with CB_CTA.election_value_cut_to_lawful_max on, the engine has already cut an
+      /* With CB_CTA.election_value_cut_to_lawful_max on, the engine has already cut an
          elected figure above what the seller paid, or above the price, down to that limit; the cap says so. */
       const cut = (e as { cut?: { applied?: boolean; by?: { words?: string } } | null }).cut;
       if (mode === 'all_fixtures') {
@@ -334,7 +334,7 @@ function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, 
       const v = poundsToPence(a.value);
       if (v !== null && (cap === null || v < cap)) { cap = v; cap_words = 'the value in the earlier owner’s written statement'; }
     }
-    /* PHASE 159h (C7, OUR READING): SECTION 185 LOOKS PAST A SELLER WHO COULD NEVER CLAIM to the earlier owner who
+    /* SECTION 185 LOOKS PAST A SELLER WHO COULD NEVER CLAIM to the earlier owner who
        could. The claim is capped at the value fixed when that owner sold on (G12bv), and is not settled while it is not
        known. */
     if (LEGAL_READINGS.s185_earlier_cap && s['prior_owner_entitled'] === 'no' && s['earlier_entitled_owner'] === 'yes') {
@@ -346,7 +346,7 @@ function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, 
       }
       if (cap === null || v < cap) { cap = v; cap_words = 'the value fixed when the earlier owner sold on (section 185)'; }
     }
-    /* PHASE 159h (C11): AN ELECTION IS CHECKED POOL BY POOL. Where it gives the integral features a figure of their own,
+    /* AN ELECTION IS CHECKED POOL BY POOL. Where it gives the integral features a figure of their own,
        that figure caps the special rate pool and the rest caps the main pool — not only the total. */
     let pool_caps: LegalVerdict['pool_caps'] = null;
     if (e.outcome === el.OUT['CAP_ELECT'] && e.scope?.mode === 'all_fixtures' && s['election_rate_split'] === 'split') {
@@ -365,7 +365,7 @@ function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, 
 }
 
 /**
- * PHASE 159h (item 7, carried from 159g): WHO CLAIMS, READ BY THE LEGAL CHECK.
+ * WHO CLAIMS, READ BY THE LEGAL CHECK.
  *   TENANT    its claim is on the fixtures it paid for (its own fit-out), never a share of a purchase price — unless it
  *             paid a premium for a new lease, which takes the lease route above (s.183 / s.184). A tenant who bought
  *             an existing lease takes over only the outgoing tenant's fixtures, never the landlord's: a person must say
@@ -388,7 +388,7 @@ function withHolding(v: LegalVerdict, role: ClaimantRole | null, s: Record<strin
 }
 
 /**
- * PHASE 159d: THE LEGAL CHECK FOR A CLAIM, read without a login — for the claim's routes (src/modules/claims/claim-route.ts) and
+ * THE LEGAL CHECK FOR A CLAIM, read without a login — for the claim's routes (src/modules/claims/claim-route.ts) and
  * the gates that re-check a deadline (C9). The newest survey job on the claim, its pack's answers, today's verdict. Null
  * where the claim has no survey pack yet: no answer, and nothing is decided on it.
  */
@@ -411,13 +411,13 @@ export function legalVerdictForJob(db: Db, job_id: string, nowIso: string): Lega
   return withPastOwnerGrants(assessLegal(sector, values, nowIso, claimantFor(db, job.business_id), holdingFor(db, job.id)).verdict, pastOwnerGrants(db, job.id));
 }
 
-/** PHASE 159i (item 1): the grants an EARLIER owner received, on the job's claim — their amounts, in pence (null: not known). */
+/** The grants an EARLIER owner received, on the job's claim — their amounts, in pence (null: not known). */
 function pastOwnerGrants(db: Db, job_id: string): (number | null)[] {
   return listClaimGrantsAmountPenceByIdPaidTo<{ amount_pence: number | null }>(db, [job_id]).map((r) => r.amount_pence);
 }
 
 /**
- * PHASE 159i (item 1, Rulebook F; s.185 with s.62): AN EARLIER OWNER'S GRANT LOWERS THE CAP FROM THE EARLIER SALE, never
+ * AN EARLIER OWNER'S GRANT LOWERS THE CAP FROM THE EARLIER SALE, never
  * the buyer's price. That owner could claim only what it paid less the grant, so what passes on is lower by it. Where
  * a cap stands it comes down by the grant; an amount not known leaves the check not settled (N4); with no cap, the
  * surveyor is told to size one.
@@ -433,13 +433,13 @@ export function withPastOwnerGrants(v: LegalVerdict, grants: readonly (number | 
   return { ...v, cap_pence: cap, cap_words: `${v.cap_words ?? 'the cap'}, less the earlier owner’s grant of ${poundsWords(total)}` };
 }
 
-/** PHASE 159h (item 7): how the client holds the pack's building — the pack's chosen property, else its claim's. */
+/** How the client holds the pack's building — the pack's chosen property, else its claim's. */
 function holdingFor(db: Db, job_id: string): { role: ClaimantRole | null } | undefined {
   const p = getSurveyorJobsPropertyIdPById<{ p: string | null }>(db, [job_id])?.p ?? null;
   return p === null ? undefined : { role: claimantRole(db, p).role };
 }
 
-/** PHASE 159i (item 3): what the cap is checked against — the pack's figure and pools, less the buyer's own alterations
+/** What the cap is checked against — the pack's figure and pools, less the buyer's own alterations
  *  (s.25), which are claimed on top of the cap. */
 export function capped(v: { readonly sums: { readonly qualifying_pence: number | null; readonly main_pool_pence: number | null; readonly special_pool_pence: number | null }; readonly money?: { readonly alterations_pence: number } }):
   [number | null, { main_pence: number | null; special_pence: number | null }] {
@@ -454,7 +454,7 @@ export function legalAllows(v: LegalVerdict, qualifying_pence: number | null, po
   if (v.cap_pence !== null && qualifying_pence !== null && qualifying_pence > v.cap_pence) {
     return { ok: false, why: `The pack’s figure is above ${v.cap_words ?? 'the cap'}. The claim on the fixtures cannot be more than that.` };
   }
-  // PHASE 159h (C11): each pool against its own part of the election.
+  // Each pool against its own part of the election.
   if (v.pool_caps !== null && v.pool_caps !== undefined && pools !== undefined) {
     if (pools.special_pence !== null && pools.special_pence > v.pool_caps.special_pence) {
       return { ok: false, why: `The pack’s special rate pool is above the election’s figure for the integral features, ${poundsWords(v.pool_caps.special_pence)}. Move the excess or lower it.` };
@@ -531,7 +531,7 @@ export function parseAnswer(q: EngineQuestion, raw: readonly string[]): { ok: tr
 export function answerLegal(d: PackDeps, actor: Actor, job_id: string, f: { question: string; values: readonly string[]; source: string; seq: string }): PackResult {
   const { job, obj } = packJob(d.db, actor, job_id);
   if (!mayAnswer(d, actor, job, obj)) authorise(actor, 'surveyor_job.commit', obj);
-  // PHASE 159a (C3, L3): once the claim is past the tax adviser's sign-off, or has stopped, the legal check is fixed too.
+  // Once the claim is past the tax adviser's sign-off, or has stopped, the legal check is fixed too.
   const lock = valuationLock(d.db, job.claim_id);
   if (lock.locked) return { ok: false, why: lock.why };
   const source = f.source.trim();

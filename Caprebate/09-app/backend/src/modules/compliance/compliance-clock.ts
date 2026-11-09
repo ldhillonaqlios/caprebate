@@ -346,7 +346,7 @@ export function acknowledgementClock(receipt: string, acknowledged: string | nul
 }
 
 /* ================================================================== *
- * A COMPLAINT'S OWN TARGETS — PHASE 153c, 4 October 2026 (Word question 178, Sadique's: "How often
+ * A COMPLAINT'S OWN TARGETS (Word question 178, the data protection officer's: "How often
  * should someone who complained get updates, and when should it be finished?"). Built on our recommendation for him
  * to check: an update at least every 28 days, and our own target of one calendar month from receipt to the outcome.
  * NEITHER IS A LEGAL DEADLINE and the words say so: the law asks only that a complaint is answered "without undue

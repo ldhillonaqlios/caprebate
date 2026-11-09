@@ -1,8 +1,8 @@
 /**
- * THE SURVEY'S EVIDENCE — ITS PAGES. 2 October 2026; the mock-up Lakhbir approved that day (src/modules/survey/survey-evidence.ts).
+ * THE SURVEY'S EVIDENCE — ITS PAGES. 2 October 2026; the mock-up the owner approved that day (src/modules/survey/survey-evidence.ts).
  *
  * THE CLIENT'S PORTAL — "Show us your building":
- *   GET  /portal/building[?job=]            the ways (the photo checklist, a video, a video call - recorded on a paid Zoom plan only, Phase 156d) and the checklist
+ *   GET  /portal/building[?job=]            the ways and the checklist
  *   GET  /portal/building/item/{key}?job=   one item, as a phone shows it, with the next item after it
  *   GET  /portal/building/guide?job=        the filming guide, for the call
  *   POST /portal/building/photo             one photo for one item (a form with a file; no script)
@@ -86,7 +86,7 @@ function markForms(job: string, item: E.ItemView, back: string, inList = false):
   if (item.mark === 'NOT_HERE') return f('CLEARED', 'I do have this');
   if (item.mark !== null) return f('CLEARED', 'Change this');
   if (item.photos.length > 0) return raw('');
-  // 2 Oct 2026, Lakhbir: the list needs "I don't have this", which takes the item off the list.
+  // The list needs "I don't have this", which takes the item off the list.
   return inList ? f('NOT_HERE', 'I don’t have this') : h`${f('NOT_HERE', 'I don’t have this')} ${f('NOT_SAFE', 'Not safe or not ours')}`;
 }
 
@@ -123,7 +123,7 @@ function manyForm(job: string, unsorted: number): Safe {
 
 const crumb = (job: string, here: string): Safe => h`<p class="ev-crumb"><a href="/portal/building?job=${job}">Show us your building</a> › <strong>${here}</strong></p>`;
 
-/* 2 Oct 2026: three plain drawings for the three choices — no picture files, no style, nothing to load. */
+/* Three plain drawings for the three choices — no picture files, no style, nothing to load. */
 const ICONS: Readonly<Record<'photos' | 'video' | 'call', Safe>> = Object.freeze({
   photos: raw('<svg class="ev-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg>'),
   video: raw('<svg class="ev-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="6.5" width="12.5" height="11" rx="1.5"/><path d="M15.5 10.5l5.5-3v9l-5.5-3z"/></svg>'),
@@ -137,7 +137,7 @@ function callState(d: PortalEvidenceDeps, job: string): CallState {
   return { next, meeting: next === null ? undefined : activeMeeting(d.app.db, next.booking_id), asked: E.asksOf(d.app.db, job)[0] };
 }
 
-/** "Show us your building": three choices, each to its own page (the mock-up Lakhbir approved, 2 Oct 2026). */
+/** "Show us your building": three choices, each to its own page. */
 function overview(d: PortalEvidenceDeps, v: E.ChecklistView, jobs: readonly E.EvidenceJob[], q: URLSearchParams): Safe {
   const job = v.job.id;
   const pct = v.total === 0 ? 0 : Math.round(((v.done + v.marked) * 100) / v.total);
@@ -239,7 +239,7 @@ function videoPage(d: PortalEvidenceDeps, v: E.ChecklistView, actor: Actor, q: U
     </section>`;
 }
 
-/** PHASE 156d: the walkthrough call's words for our Zoom plan (src/modules/survey/survey-evidence.ts, WALK_WORDS). */
+/** The walkthrough call's words for our Zoom plan (src/modules/survey/survey-evidence.ts, WALK_WORDS). */
 function W(d: { app: App }): E.WalkWords { return E.walkWords(zoomPlanIsFree(d.app.secrets)); }
 
 /** The walkthrough video call: ask for one, or the time booked and the way in. */
@@ -335,7 +335,7 @@ export async function handlePortalEvidence(
     redirect(res, safeBack(got.fields['back'] ?? null, `/portal/building/photos?job=${job}`, 'photo'));
     return 'handled';
   }
-  /* 2 Oct 2026: a send straight to the file store, each photo locked on the phone (src/modules/survey/photo-upload.ts). JSON for the
+  /* A send straight to the file store, each photo locked on the phone (src/modules/survey/photo-upload.ts). JSON for the
      page's script only. */
   if (path === '/portal/building/upload/start' && method === 'POST') {
     const f = await d.form(req);
@@ -381,7 +381,7 @@ export async function handlePortalEvidence(
     redirect(res, `/portal/building/call?job=${f.get('job') ?? ''}&done=asked`);
     return 'handled';
   }
-  /* 2 Oct 2026: A VIDEO, in locked pieces straight to the file store (src/modules/survey/survey-video.ts). JSON for the page's script. */
+  /* A VIDEO, in locked pieces straight to the file store (src/modules/survey/survey-video.ts). JSON for the page's script. */
   if (path === '/portal/building/video' && method === 'POST') {
     // Only a browser that could not run the page's script posts the form itself: a video cannot go without it.
     redirect(res, `/portal/building/video?job=${(await d.form(req)).get('job') ?? ''}&done=script`);
@@ -444,7 +444,7 @@ export async function handlePortalEvidence(
 const BACK_INTO_CHECKLIST = /^\/portal\/building(\/item\/[A-Z0-9-]{2,60}|\/photos)?\?job=[A-Za-z0-9-]+(&hidden=1)?(#i-[A-Z0-9-]{2,60})?$/;
 
 /**
- * 2 Oct 2026: a step of a send that fails ANSWERS IN WORDS, with what went wrong (U.failureWords: never an address or a
+ * A step of a send that fails ANSWERS IN WORDS, with what went wrong (U.failureWords: never an address or a
  * token), and says it in the log — so a failure on the test website is never only "the website did not answer". A
  * refusal of who may do it is not caught: it is the router's 403, as everywhere.
  */
@@ -528,7 +528,7 @@ export async function handleStaffEvidence(
     sendImage(res, img);
     return 'handled';
   }
-  /* 2 Oct 2026: the client's videos, watched in pieces; Admin or Sales may take one back. */
+  /* The client's videos, watched in pieces; Admin or Sales may take one back. */
   if (method === 'GET' && what.startsWith('video/')) return playVideo(res, await SV.videoBytes(deps, d.store, actor, what.slice(6), req.headers['range']));
   if (method === 'GET' && what === 'videos') {
     const { obj, job: pj } = packJob(d.app.db, actor, job);
@@ -685,7 +685,7 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
           <p class="help">${words.staffHelp}</p>
           <button class="cta" type="submit">Book it</button></form></details>`}
     ${(() => {
-      // PHASE 153e (Word questions 129 to 131): the desk-first reading. The surveyor sees the level only; staff also see why.
+      // The desk-first reading. The surveyor sees the level only; staff also see why.
       const r = deskFirstReading(app.db, job_id);
       if (r === null) return raw('');
       return h`<div class="pk-add"><h2>How much evidence this job needs (a test reading)</h2>
@@ -704,7 +704,7 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
 }
 
 /**
- * PHASE 153e (Word question 130): the coverage of the filming guide's required items, and the PLACEHOLDER pass mark.
+ * The coverage of the filming guide's required items, and the PLACEHOLDER pass mark.
  * It measures how much of the guide was captured, never whether the figure is right.
  */
 function coverageWords(c: Coverage | null): string {

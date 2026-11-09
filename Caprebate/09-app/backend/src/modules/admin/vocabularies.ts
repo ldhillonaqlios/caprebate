@@ -1,6 +1,6 @@
 /**
  * THE CONFIGURABLE LISTS — READ FROM THE DATABASE, NEVER FROM A CONSTANT.
- * CRM 9 of 10, 12 September 2026.
+ * CRM 9 of 10.
  *
  * `vocabularies` (migration 019) holds the lead sources, the priorities, the task
  * activity types, the property types and the introducer types, seeded from the

@@ -45,7 +45,7 @@
      node 03-app/caprebate-plain-words-check.cjs --guide        read only the admin and user guide
 
    PHASE 144a, 22 September 2026: the check also reads THE ADMIN AND USER GUIDE
-   (09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md) and the Help pages built from it
+   (09-app/docs/CAPREBATE-ADMIN-AND-USER-GUIDE.md) and the Help pages built from it
    (help-content.ts, no longer exempt), both at GRADE 7, and the public
    assessment (assessment.ts, no longer exempt) at grade 9 like every screen.
    `--suffix .bak-phase144a` reads the guide's and Help's pre-change copies and
@@ -345,7 +345,7 @@ function checkStrings(strings, swaps) {
    typed exactly and reads as one short word. A fenced block is a command and is not read.
    Text between <!-- plain-words: quotes-old-words --> and <!-- /plain-words --> quotes the banned words ON PURPOSE (the
    table of old words and their swaps): the grade is still checked there; the banned list is not. */
-const GUIDE = path.join(ROOT, '09-app', 'CAPREBATE-ADMIN-AND-USER-GUIDE.md');
+const GUIDE = path.join(ROOT, '09-app', 'docs', 'CAPREBATE-ADMIN-AND-USER-GUIDE.md');
 const GUIDE_GRADE = 7;
 
 function markdownPieces(md) {
@@ -456,7 +456,7 @@ function screenFiles(suffix, dir) {
 
 function guideFiles(suffix, dir) {
   const alt = altOf(GUIDE, suffix, dir);
-  return [{ label: '09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md', file: alt && fs.existsSync(alt) ? alt : GUIDE }];
+  return [{ label: '09-app/docs/CAPREBATE-ADMIN-AND-USER-GUIDE.md', file: alt && fs.existsSync(alt) ? alt : GUIDE }];
 }
 
 function readAny(f) {

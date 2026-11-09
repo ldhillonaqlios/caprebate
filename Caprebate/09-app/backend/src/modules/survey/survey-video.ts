@@ -1,7 +1,7 @@
 /**
- * A VIDEO OF THE BUILDING, SENT FROM THE PHONE IN LOCKED PIECES. 2 October 2026.
+ * A VIDEO OF THE BUILDING, SENT FROM THE PHONE IN LOCKED PIECES..
  *
- * Lakhbir: "we need to add an option of upload video"; the limits, "10 minutes, 1 GB each"; how videos are kept,
+ * the owner: "we need to add an option of upload video"; the limits, "10 minutes, 1 GB each"; how videos are kept,
  * "Same as photos" — locked on the phone, the place it was filmed taken out, encrypted, kept for testing 7 years, seen by
  * the client, the assigned surveyor, Admin, Sales and the data protection officer.
  *
@@ -45,7 +45,7 @@ type Send = { id: string; job_id: string; by_user: string; byte_size: number; pi
 const pieceKey = (send: string, n: number): string => `${VIDEO_PREFIX}${send}/${String(n)}`;
 const plainSizeOf = (s: Pick<Send, 'byte_size' | 'pieces'>, n: number): number => n < s.pieces ? VIDEO_PIECE_BYTES : s.byte_size - (s.pieces - 1) * VIDEO_PIECE_BYTES;
 
-/** UI tidy phase 11: a video's length, short — "32 s", "2 min", "2 min 12 s" — never "0 min 32 s" (Lakhbir, 2 October 2026). */
+/** UI tidy phase 11: a video's length, short — "32 s", "2 min", "2 min 12 s" — never "0 min 32 s". */
 export function lengthWords(secs: number): string {
   const s = Math.max(0, Math.round(secs));
   const m = Math.floor(s / 60);

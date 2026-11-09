@@ -1276,7 +1276,7 @@ supervised
 
  **Reconciling the nine — deciding which register each belongs in and writing each one up in the shape these documents use — is a scheduled job with its own board item (13004486738)**, not a note somebody hopes to get to. **Until it is done, read the thirty-five in this register as complete for what it covers, and the split in Appendix 1 as the shape rather than the count.**
 
- **One thing in Appendix 1's own table is also now out of date, and it is a description rather than a number.** The developer's row reads _"the handover pack — brief, build order and what to price"_. **What is handed to a developer since 9 September 2026 is two working applications and one specification that describes them**, at `09-app/CAPREBATE-DEVELOPER-SPEC.md`. The brief and the build order are archived and still travel with the pack. The table cannot gain a row through the interface that maintains this document, which is why this is said in prose beside it.
+ **One thing in Appendix 1's own table is also now out of date, and it is a description rather than a number.** The developer's row reads _"the handover pack — brief, build order and what to price"_. **What is handed to a developer since 9 September 2026 is two working applications and one specification that describes them**, at `09-app/docs/CAPREBATE-DEVELOPER-SPEC.md`. The brief and the build order are archived and still travel with the pack. The table cannot gain a row through the interface that maintains this document, which is why this is said in prose beside it.
 
 ---
 

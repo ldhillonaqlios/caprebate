@@ -1,6 +1,6 @@
 /**
  * THE ACCOUNTING VIEW — routes and rendering. Block F, part four; extended by
- * CRM 7 of 10, 11 September 2026, with finance on the claim.
+ * CRM 7 of 10, with finance on the claim.
  *
  * Same shape as `handleEngaged` and `handleSurveyor`: 'not-mine' for anything
  * it does not own. The three rules from router.ts apply unchanged.
@@ -40,7 +40,7 @@ export type FinanceDeps = {
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
-  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  // A page with an upload form also names the script that sends a big file in pieces.
   const pp = piecesPage(HTML_HEADERS, body);
   res.writeHead(status, pp.headers);
   res.end(pp.body);
@@ -235,7 +235,7 @@ function settingsBlock(v: I.FinanceDashboard): Safe {
       </form>` : raw('')}`;
 }
 
-/** UI TIDY PHASE 12: Finance's sections in the left-hand menu, with how many invoices each list holds. */
+/** Finance's sections in the left-hand menu, with how many invoices each list holds. */
 export function financeMenu(invoices: number, earlier: number): { href: string; label: string; note?: string }[] {
   return [
     { href: '/staff/finance#invoices', label: 'Invoices', ...(invoices > 0 ? { note: String(invoices) } : {}) },
@@ -247,32 +247,32 @@ export function financeMenu(invoices: number, earlier: number): { href: string; 
   ];
 }
 
-/** UI TIDY PHASE 12: the red box's label, "Late, on 1 invoice" or "Late, on 2 invoices". */
+/** The red box's label, "Late, on 1 invoice" or "Late, on 2 invoices". */
 export function lateBoxLabel(n: number): string {
   return `Late, on ${String(n)} invoice${n === 1 ? '' : 's'}`;
 }
 
-/** UI TIDY PHASE 12: one line naming every claim ready to invoice, and Raise our fee where the login may raise one. */
+/** One line naming every claim ready to invoice, and Raise our fee where the login may raise one. */
 export function readyLine(claims: readonly Pick<I.FinanceDashboard['expected']['claims'][number], 'client_name' | 'claim_ref' | 'may_raise'>[]): Safe {
   if (claims.length === 0) return raw('');
   return h`<p class="readyline"><strong>Ready to invoice:</strong> ${claims.map((c, i) => h`${i === 0 ? raw('') : raw(', ')}${c.client_name} ${claimRef(c.claim_ref)}`)}${
     claims.some((c) => c.may_raise) ? h` <a class="btn btn-primary" href="#to-invoice">Raise our fee</a>` : raw('')}</p>`;
 }
 
-/** UI TIDY PHASE 12: an invoice's Due cell. Late is a red label; no due date a grey one; on time the words. */
+/** An invoice's Due cell. Late is a red label; no due date a grey one; on time the words. */
 export function invoiceDue(i: { due_on: string | null; money: { overdue: boolean; due: { label: string } } }): Safe {
   if (i.due_on === null) return noDateBadge('No due date set yet');
   return i.money.overdue ? lateBadge(i.money.due.label) : h`${i.money.due.label}`;
 }
 
 /**
- * PHASE 133b — FINANCE ON TABS. The eight numbered sections keep their numbers and their words, and each heading now has
+ * FINANCE ON TABS. The eight numbered sections keep their numbers and their words, and each heading now has
  * an id, so a link can land on one (Accounting's home cards do). They are grouped into six tabs, by the job a person comes
  * to do: the money; VAT; invoices (what is waiting to be invoiced, and what is invoiced); the fee controls and the fees
  * to firms; the settings; and the organisations' invoices from before. Every section is on the page, drawn from the same
  * two views as before, whichever tab is showing. The three closing notes sit with the section they are about.
  *
- * UI TIDY PHASE 12 (3 October 2026): the right-hand panel is gone. Its three links were said again at the top (Raise our
+ * The right-hand panel is gone. Its three links were said again at the top (Raise our
  * fee, Run the VAT check) and in the left-hand menu (Finance settings), and it pushed the invoices table sideways on a
  * laptop. Four boxes count the money; a line names every claim ready to invoice; invoices open first; each claim's
  * number sits under its company instead of in a column of its own; a late invoice is a red label.
@@ -281,7 +281,7 @@ function listPage(
   d: FinanceDeps, actor: Actor, s: F.FinanceSummary, v: I.FinanceDashboard, saved: string | undefined,
 ): string {
   const pct = Math.round(s.fee_rate * 1000) / 10;
-  // UI TIDY PHASE 12: Finance's sections in the left-hand menu, opening out under Finance; on a laptop they replace the
+  // Finance's sections in the left-hand menu, opening out under Finance; on a laptop they replace the
   // row of tabs (`financepage`), and on a phone the tabs stay.
   setSubMenu({ items: financeMenu(v.invoices.length, s.rows.length) });
   return page({
@@ -401,7 +401,7 @@ function pctOf(v: number | null): Safe {
 }
 
 /**
- * PHASE 132f — the engine's no-claim threshold, beside the fee against the benefit. Marked for the tax adviser,
+ * The engine's no-claim threshold, beside the fee against the benefit. Marked for the tax adviser,
  * printing the figures, refusing nothing. UNDETERMINED says why and draws no verdict.
  */
 function noClaimBlock(r: F.NoClaimReading): Safe {
@@ -473,7 +473,7 @@ function comparisonBlock(c: F.FeeVersusBenefit, fee: string): Safe {
 }
 
 /**
- * PHASE 144a — THE FEE-CAP BOX READS THE TWO SWITCHES. It said "both are off" in fixed words whatever the switches
+ * THE FEE-CAP BOX READS THE TWO SWITCHES. It said "both are off" in fixed words whatever the switches
  * said; now each sentence is chosen by the switch it describes, so the words cannot disagree with the brackets.
  */
 export function feeSwitchesBox(s: { readonly cap: boolean; readonly warn: boolean }, untouched: boolean): Safe {

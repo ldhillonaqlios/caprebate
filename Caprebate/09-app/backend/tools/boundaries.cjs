@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * THE BOUNDARY CHECK — the walls' alarm. Phase 161h1, 7 November 2026 (09-app/ARCHITECTURE.md, rules 1 to 4; Lakhbir,
+ * THE BOUNDARY CHECK — the walls' alarm. Phase 161h1, 7 November 2026 (09-app/docs/ARCHITECTURE.md, rules 1 to 4; Lakhbir,
  * 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others").
  *
  * WHAT IT READS
@@ -461,7 +461,7 @@ if (require.main === module) {
   const lines = say(r);
   if (r.rebased !== undefined) { console.log(`boundaries — rebased: ${r.rebased.before} breaks before, ${r.rebased.after} now (logged in the baseline's history).`); process.exit(0); }
   if (write === 'lower' && r.lowered !== undefined) { console.log(`boundaries — the baseline lowered by ${r.lowered}.`); process.exit(0); }
-  if (lines.length) { console.error(`boundaries FAILED (09-app/ARCHITECTURE.md, rules 1 to 4):\n${lines.join('\n')}`); process.exit(1); }
+  if (lines.length) { console.error(`boundaries FAILED (09-app/docs/ARCHITECTURE.md, rules 1 to 4):\n${lines.join('\n')}`); process.exit(1); }
   const total = rows.reduce((s, x) => s + x.total, 0);
   console.log(`boundaries — ${write === 'first' ? 'the baseline written' : 'no new break'}: ${total} breaks of rules 1 to 4 in the baseline, by ${rows.length} areas; the count may only go down.`);
 }

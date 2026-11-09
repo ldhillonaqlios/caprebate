@@ -1,13 +1,13 @@
 /**
- * THE ONLINE IDENTITY CHECK, WIRED IN — SENDING ONE, AND RECEIVING THE SIGNED RESULT. Phase 151b, 25 September 2026.
+ * THE ONLINE IDENTITY CHECK, WIRED IN — SENDING ONE, AND RECEIVING THE SIGNED RESULT.
  *
- * WHAT WAS DECIDED. Lakhbir chose Veriff (Word question 225, closed 24 September 2026), and on 25 September 2026 switched
- * to Didit, which is free for 500 checks a month (Phase 151f; the reasons are in the connector). Identity is checked whether or
- * not money-laundering supervision applies (Word question 10, recorded 24 September 2026, Lakhbir in chat: "we still
+ * WHAT WAS DECIDED. the owner chose Veriff, and switched
+ * to Didit, which is free for 500 checks a month. Identity is checked whether or
+ * not money-laundering supervision applies (Word question 10, recorded, the owner in chat: "we still
  * check for identity"), so NOTHING HERE READS AML_IN_SCOPE: a check can be sent for any client, from the client's own
  * record or from an open customer due diligence check.
  *
- * THE CONNECTOR IS src/integrations/connectors/identity-check.ts (Phase 151), and it decides whether anything leaves this server:
+ * THE CONNECTOR IS src/integrations/connectors/identity-check.ts, and it decides whether anything leaves this server:
  * `startIdentityCheck` refuses before any call while `identityCheckMissing` lists anything — the service named in the
  * privacy notice and in clause 7 of the engagement letter, its three entries in the key file, and the IDENTITY_CHECK switch,
  * which ships false. OFF, A PERSON WHO PRESSES "SEND" IS TOLD, IN WORDS, WHAT IS STILL MISSING, AND NOTHING IS SENT.
@@ -99,7 +99,7 @@ export async function sendIdentityCheck(
   if (business === undefined) return { ok: false, why: 'Choose the organisation.' };
   const contact = getContactsIdEmailByIdBusinessId<{ id: string; email: string | null; phone: string | null }>(db, [input.contact_id, input.business_id]);
   if (contact === undefined) return { ok: false, why: 'Choose the person to be checked. They must be a contact of this organisation.' };
-  // PHASE 151e (line 6): we send the link to the person, so we must be able to reach them (Lakhbir, 28 Sep 2026)
+  // We send the link to the person, so we must be able to reach them
   if (!isReachable(contact)) return { ok: false, why: UNREACHABLE_CONTACT_WORDS };
   if (input.cdd_check_id !== null) {
     const c = getCddChecksStateByIdBusinessId<{ state: string }>(db, [input.cdd_check_id, input.business_id]);
@@ -121,14 +121,14 @@ export async function sendIdentityCheck(
   insertIdentityChecks(db, [id, input.business_id, input.contact_id, input.cdd_check_id, 'DIDIT', out.session_id, out.link, actor.id, d.app.now()]);
   record(cd, actor, 'IDENTITY_CHECK_SENT', 'ALLOWED', 'identity_check', id, {
     business: input.business_id, contact: input.contact_id, cdd_check: input.cdd_check_id,
-    // Phase 151h: a check sent before the papers name the service says so, in the row that records it
+    // A check sent before the papers name the service says so, in the row that records it
     ...(sentUnderTestingWaiver(opts.config ?? IDENTITY_CHECK) ? { papers_waived_for_testing: true } : {}),
   });
   return { ok: true, id, link: out.link };
 }
 
 /**
- * PHASE 151e (line 4), 27 September 2026 — SAYING SO, WHEN THIS SERVER FORGETS.
+ * — SAYING SO, WHEN THIS SERVER FORGETS.
  *
  * On a database in memory (the test website until it is given a lasting one, and the demo), a check is kept only by the
  * copy of the server that sent it. A restart forgets it, and on Vercel a second copy never saw it. A result that arrives
@@ -149,7 +149,7 @@ export function forgetfulDatabaseWarning(app: App): string | null {
   return app.storageWhy === undefined ? FORGETFUL_DATABASE_WORDS : `${FORGETFUL_DATABASE_WORDS} ${storageReason(app.storageWhy)}`;
 }
 
-/** 29 Sep 2026: the reason the server gave at start-up, as one sentence. It never holds an address or a token. */
+/** The reason the server gave at start-up, as one sentence. It never holds an address or a token. */
 export function storageReason(why: string): string {
   const t = why.trim().replace(/[.\s]+$/, '');
   return `Why: ${t.charAt(0).toUpperCase()}${t.slice(1)}.`;
@@ -191,7 +191,7 @@ export function receiveIdentityResult(app: App, newId: () => string, rawBody: st
 
 /**
  * A signed result that names no check we sent: REFUSED, AUDITED, NOTHING WRITTEN, and never matched to the nearest check.
- * On a database in memory the refusal also says why that may be, and what to do (Phase 151e, line 4).
+ * On a database in memory the refusal also says why that may be, and what to do.
  */
 function noCheckToMatch(app: App, cd: ComplianceDeps): ReceiveResult {
   const forgetful = forgetfulDatabaseWarning(app) !== null;
@@ -240,12 +240,12 @@ export function identityChecks(db: App['db'], where: { readonly business_id?: st
 }
 
 /**
- * PHASE 151e (line 5), 27 September 2026: a client with no contacts showed no form and said nothing, so nobody could tell
- * how to send a check (Lakhbir, 25 September 2026). A check goes only to a contact of the client, so the panel says so,
+ *: a client with no contacts showed no form and said nothing, so nobody could tell
+ * how to send a check. A check goes only to a contact of the client, so the panel says so,
  * with a link to the form that adds one.
  */
 export const NO_CONTACTS_WORDS = 'A check goes to a contact of this client. Add the person as a contact first, then come back here to send it.';
-/** PHASE 151e (line 6): a check goes only to a contact with an email address or a telephone number. */
+/** A check goes only to a contact with an email address or a telephone number. */
 export const UNREACHABLE_CONTACT_WORDS =
   'We cannot reach this person. Add their email address or telephone number to their contact details first, then send the check.';
 
@@ -263,7 +263,7 @@ export function identityPanel(app: App, actor: Actor, where: { readonly business
   const testing = identityTestingWarning(IDENTITY_CHECK);
   const forgetful = forgetfulDatabaseWarning(app);
   const mayWrite = can(actor, 'compliance.write', complianceObj());
-  // PHASE 151e (line 6): only a contact we can reach is offered; the rest are named, with what to add
+  // Only a contact we can reach is offered; the rest are named, with what to add
   const reachableIds = new Set(listContactsIdByBusinessId<{ id: string }>(app.db, [where.business_id]).map((r) => r.id));
   const offered = contacts.filter((c) => reachableIds.has(c.id));
   const unreachable = contacts.filter((c) => !reachableIds.has(c.id));

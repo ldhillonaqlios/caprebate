@@ -1,6 +1,6 @@
 /**
  * Caprebate — Surveyor CRM: rate library and adoption metric
- * Board item 12818968809. Phase 3, item 6.
+ * Board item 12818968809. Item 6.
  *
  * When a surveyor overrides one of our pre-filled rates, that override is kept
  * and becomes part of that surveyor's own rate library, offered back to them on
@@ -92,7 +92,7 @@ export type PrefillOrigin =
   | 'PRIOR_JOB_SAME_PROPERTY'
   /**
    * NOTHING WAS PROPOSED. The surveyor was shown an empty box and typed their
-   * own figure into it. Added Phase 107a, 9 September 2026.
+   * own figure into it. Added Phase 107a.
    *
    * ───────────────────────────────────────────────────────────────────────
    * WHY THE OTHER FOUR COULD NOT COVER THIS, AND HOW IT WAS FOUND
@@ -116,19 +116,19 @@ export type PrefillOrigin =
    * WHAT EVERY METRIC DOES WITH IT — worked out before it was added, because
    * an origin no metric knows about is worse than no origin at all.
    *
-   *   adoption()        EXCLUDES it, and counts it separately at
+   *   adoption        EXCLUDES it, and counts it separately at
    *                     `excluded_nothing_proposed`. There was no number of
    *                     ours to adopt or reject, so it is evidence about our
    *                     estimates in neither direction. It is NOT merged into
    *                     `excluded_not_platform_default`, because "they used
    *                     their own library figure" and "we offered nothing"
    *                     are different facts about the capture flow.
-   *   selfConsistency() EXCLUDES it. It counts acceptance of the surveyor's
+   *   selfConsistency EXCLUDES it. It counts acceptance of the surveyor's
    *                     OWN library figure; accepting nothing is not that.
-   *   drift()           EXCLUDES it. Drift is measured on PLATFORM_DEFAULT
+   *   drift           EXCLUDES it. Drift is measured on PLATFORM_DEFAULT
    *                     pre-fills only, and this is definitionally not one.
-   *   divergences()     EXCLUDES it, for the same reason.
-   *   controlComparison() EXCLUDES it — the blank-field control's whole point
+   *   divergences     EXCLUDES it, for the same reason.
+   *   controlComparison EXCLUDES it — the blank-field control's whole point
    *                     is to compare a pre-filled arm against a blank one,
    *                     and a NOTHING_PROPOSED event is already blank.
    *
@@ -153,7 +153,7 @@ export type PrefillOrigin =
 export const CALIBRATION_ORIGIN: PrefillOrigin = 'PLATFORM_DEFAULT';
 
 /**
- * NOT_REVIEWED added in Phase 52 (calibration instrument, item 12830166861).
+ * NOT_REVIEWED added (calibration instrument, item 12830166861).
  *
  * UNTOUCHED and NOT_REVIEWED look identical in the data — in both cases the
  * final value equals the pre-filled value — and they mean opposite things. One
@@ -418,9 +418,9 @@ export class OverrideStore {
  * Below this an adoption rate is not a rate, it is an anecdote.
  *
  * RE-DERIVED against the AD-HOC engagement model (item 12927112944, Phase 10
- * finding: MIN_N_FOR_RATE and selfConsistency() were both set assuming repeat
+ * finding: MIN_N_FOR_RATE and selfConsistency were both set assuming repeat
  * engagements with the same surveyor). Raised from 5 to 7. This constant gates
- * the POOLED, cross-surveyor adoption()/divergences() cohort signal, which was
+ * the POOLED, cross-surveyor adoption/divergences cohort signal, which was
  * never itself repeat-engagement-dependent — `adoption()` already pools across
  * ALL_SURVEYORS by default. What ad-hoc engagement changes is the composition
  * of that pool: instead of a handful of repeat observations from one surveyor
@@ -504,7 +504,7 @@ export type AdoptionStats = {
   replaced: number;
   /**
    * Pre-fills the surveyor never opened. Counted and reported, never included
-   * in n — silence is not agreement (Phase 52, item 12830166861 §4.3).
+   * in n — silence is not agreement.
    */
   not_reviewed: number;
   /**
@@ -526,7 +526,7 @@ export type AdoptionStats = {
    */
   excluded_not_platform_default: number;
   /**
-   * Fields where the surveyor was shown an EMPTY BOX (Phase 107a). Excluded
+   * Fields where the surveyor was shown an EMPTY BOX. Excluded
    * because there was no number of ours to adopt or reject, and counted
    * separately because it measures something quite different from the line
    * above: `excluded_not_platform_default` says the pre-fill came from
@@ -722,7 +722,7 @@ export function calibrationFeed(store: OverrideStore, now: string): CalibrationF
  *
  * Added Phase 52 (calibration instrument, item 12830166861).
  *
- * adoption() is a SNAPSHOT. It pools every observation ever recorded and
+ * adoption is a SNAPSHOT. It pools every observation ever recorded and
  * reports one median. That is the right shape for "is this pre-fill any good",
  * and the wrong shape for "is it drifting" — a field whose first ten jobs ran
  * 8% high and whose last ten run 8% low reports a pooled median near zero and
@@ -869,7 +869,7 @@ export function drift(store: OverrideStore, field_id: string): Drift {
  *
  * WHAT IT DETECTS THAT ADOPTION CANNOT. A high adoption rate is consistent with
  * two opposite worlds: our pre-fill is accurate, or our pre-fill is an anchor
- * that surveyors drift toward. adoption() cannot separate them, because both
+ * that surveyors drift toward. adoption cannot separate them, because both
  * worlds produce the same data. The control can: if unanchored surveyors land
  * somewhere materially different, the adoption rate was measuring the anchor.
  * ------------------------------------------------------------------ */
@@ -881,7 +881,7 @@ export const BLANK_CONTROL_EVERY_N = 10;
 export const BLANK_CONTROL_DIVERGENCE_PP = 3;
 
 /**
- * PHASE 153e, 4 October 2026 (Word question 149, the surveyor's): the limit for a GBP/m2 field, a TEST DEFAULT built on
+ * The limit for a GBP/m2 field, a TEST DEFAULT built on
  * the answer typed under the question ("For price-per-square-metre figures, use a 10% tolerance as the initial
  * threshold … flagged for review rather than automatically treated as a failure"). Relative to the pre-filled median.
  * Outside it the field is FLAGGED FOR REVIEW, never retired automatically. For the surveyor to confirm.
@@ -973,9 +973,9 @@ export type ControlComparison = {
     | 'RETIRE_PREFILL'
     /** The threshold is expressed in percentage points and this field is not a percentage (no test limit for its unit). */
     | 'THRESHOLD_NOT_DEFINED_FOR_UNIT'
-    /** Phase 153e: a GBP/m2 field within the test limit of 10%. */
+    /** A GBP/m2 field within the test limit of 10%. */
     | 'WITHIN_TEST_LIMIT'
-    /** Phase 153e: a GBP/m2 field more than 10% apart. Flagged for the surveyor's review, not a fail. */
+    /** A GBP/m2 field more than 10% apart. Flagged for the surveyor's review, not a fail. */
     | 'FLAG_FOR_REVIEW';
   note: string;
 };
@@ -1038,7 +1038,7 @@ export function blankControlComparison(
     };
   }
 
-  // PHASE 153e: a GBP/m2 field has a test limit now: 10% of the pre-filled median, as a flag, never a retirement.
+  // A GBP/m2 field has a test limit now: 10% of the pre-filled median, as a flag, never a retirement.
   if (spec.unit === 'GBP/m2' && prefilled_median !== null && prefilled_median !== 0 && gap !== null) {
     const rel = Math.abs(gap) / Math.abs(prefilled_median);
     const pct = Math.round(rel * 1000) / 10;
@@ -1080,7 +1080,7 @@ export function blankControlComparison(
 /* ------------------------------------------------------------------ *
  * 10. What is being measured — recorded before the first job, not after
  *
- * The board confirmed (item 12818132946, 28 Aug 2026) that engagements are
+ * The board confirmed that engagements are
  * ad-hoc one-offs with no retained surveyor. That changes what the adoption
  * rate MEANS without changing what it looks like:
  *
@@ -1098,7 +1098,7 @@ export function blankControlComparison(
 
 export type CalibrationMode = 'WITHIN_SURVEYOR' | 'CROSS_SURVEYOR';
 
-/** Set to match the ad-hoc engagement model confirmed on 28 August 2026. */
+/** Set to match the ad-hoc engagement model confirmed. */
 export const CALIBRATION_MODE: CalibrationMode = 'CROSS_SURVEYOR';
 
 /**

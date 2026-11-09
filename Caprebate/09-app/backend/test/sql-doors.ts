@@ -1,5 +1,5 @@
 /**
- * WHERE A STATEMENT LIVES, AND WHO MAY RUN IT (Phase 161i1, 8 Nov 2026). Since the data files (09-app/ARCHITECTURE.md
+ * WHERE A STATEMENT LIVES, AND WHO MAY RUN IT (Phase 161i1, 8 Nov 2026). Since the data files (09-app/docs/ARCHITECTURE.md
  * rule 3), a statement's text sits in its owner's data file and the file that used to run it calls a function there.
  * A test that said "only file X contains this statement" now asks two things: which files hold the text, and which
  * files call a data-file function that runs it. Together they say the same as before: there is still one door.

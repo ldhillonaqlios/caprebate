@@ -1,5 +1,5 @@
 /**
- * THE COMPLIANCE REGISTERS — THE CORE. CRM 8 of 10, 12 September 2026.
+ * THE COMPLIANCE REGISTERS — THE CORE. CRM 8 of 10.
  *
  * The schema is migration 017. This file holds what every register shares: the
  * section gate, the dated compliance settings, the reference series, legal holds
@@ -8,7 +8,7 @@
  * themselves are src/modules/compliance/compliance-aml.ts, compliance-rights.ts,
  * compliance-breach.ts and compliance-identity.ts; the pages are
  * src/modules/compliance/compliance-pages.ts; every choice that is not obvious is a row of
- * Part E of 09-app/CAPREBATE-CRM-DISPOSITION.md from E94.
+ * Part E of 09-app/docs/CAPREBATE-CRM-DISPOSITION.md from E94.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHO — ADMIN, TODAY, AND ONLY BECAUSE NOBODY ELSE CAN
@@ -190,7 +190,7 @@ export type SettingReading = {
 
 export function settingReading(db: Db, setting: string, today: string): SettingReading {
   const r = getComplianceSettingsValueEffectiveFromBySettingEffectiveFro<{ value: string; effective_from: string; source: string }>(db, [setting, ukDay(today)]);
-  if (r === undefined) return { setting, value: null, label: 'Not set', effective_from: null, source: null }; // Phase 133c: a setting nobody has recorded reads "Not set"
+  if (r === undefined) return { setting, value: null, label: 'Not set', effective_from: null, source: null }; // A setting nobody has recorded reads "Not set"
   return { setting, value: r.value, label: SETTING_VALUES[setting]?.[r.value] ?? r.value, effective_from: r.effective_from, source: r.source };
 }
 
@@ -200,7 +200,7 @@ export function settingReading(db: Db, setting: string, today: string): SettingR
  * exactly today's behaviour — nothing blocks a claim.
  */
 /*
- * PHASE 132e, 16 SEPTEMBER 2026 — READ AGAINST LAKHBIR'S "we need to do AML check on every client", AND LEFT OFF.
+ * 16 SEPTEMBER 2026 — READ AGAINST THE OWNER'S "we need to do AML check on every client", AND LEFT OFF.
  * The phase brief said: switch it on as business policy only if doing so records checks without refusing a claim for
  * want of a risk rating nobody has defined; if switching it on would refuse or block any work, leave it off. Re-derived
  * in code: ON, `cddGateNeed` below refuses every claim's move out of ENGAGEMENT until a FINISHED check is on record for

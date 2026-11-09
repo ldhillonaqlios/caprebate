@@ -6,7 +6,7 @@
  * what keeps the description true of the code after the phases stop, and it can
  * fail. Four checks:
  *
- *   A  THE DISPOSITION TABLE (09-app/CAPREBATE-CRM-DISPOSITION.md)
+ *   A  THE DISPOSITION TABLE (09-app/docs/CAPREBATE-CRM-DISPOSITION.md)
  *      A1 every row carries exactly one mark;
  *      A2 every QUESTION row, every title in Part F, and every quoted title in
  *         Developer Spec §5.3 exists under exactly that title in the monday.com
@@ -29,7 +29,7 @@
  *   C  §4's LINE REFERENCES - every `file:NN` in section 4 lands on a line that
  *      carries the name written beside it: back end (src/), the site file, the
  *      engine package, phase9 and phase3 (widened by Phase 132g, 16 Sep 2026).
- *   D  THE GUIDE (09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md) - every CRM screen in
+ *   D  THE GUIDE (09-app/docs/CAPREBATE-ADMIN-AND-USER-GUIDE.md) - every CRM screen in
  *      Developer Spec §2 has a "### Training — `id`" section.
  *
  *   node 03-app/caprebate-crm-fold-check.cjs              exit 0 green, 1 on any failure
@@ -52,9 +52,9 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
 const P = {
-  table: path.join(ROOT, '09-app/CAPREBATE-CRM-DISPOSITION.md'),
-  spec: path.join(ROOT, '09-app/CAPREBATE-DEVELOPER-SPEC.md'),
-  guide: path.join(ROOT, '09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md'),
+  table: path.join(ROOT, '09-app/docs/CAPREBATE-CRM-DISPOSITION.md'),
+  spec: path.join(ROOT, '09-app/docs/CAPREBATE-DEVELOPER-SPEC.md'),
+  guide: path.join(ROOT, '09-app/docs/CAPREBATE-ADMIN-AND-USER-GUIDE.md'),
   backend: path.join(ROOT, '09-app/backend'),
   engineGen: path.join(ROOT, '09-app/engine/src/calculator'),
   hub: path.join(ROOT, '00-START-HERE/hub'),
@@ -322,8 +322,8 @@ function expandRegex(src) {
 function codeRoutes(inp) {
   const routes = new Map();
   for (const [f, t] of inp.codeText) {
-    // the screens' folder, and since Phase 161j the five business modules' own folders (their files moved there)
-    if (!/\/src\/(web\/[^/]+|modules\/(?:public-site|assessment|portal|crm|claims)\/[^/]+|app|server)\.ts$/.test(f)) continue;
+    // the business modules' own folders (the screens' folder src/web/ is gone: its files are in the nine modules)
+    if (!/\/src\/(modules\/(?:public-site|assessment|portal|crm|claims|survey|finance|compliance|admin)\/[^/]+|app|server)\.ts$/.test(f)) continue;
     for (const m of t.matchAll(/path === '(\/[^']*)'/g)) if (PREFIX.test(m[1]) || m[1] === '/') routes.set(m[1], path.basename(f));
     for (const m of t.matchAll(/\/\^(\\\/[^\n]*?)\$\/[a-z]*\.(?:exec|test)\(/g)) for (const r of expandRegex(m[1])) if (PREFIX.test(r)) routes.set(r, path.basename(f));
   }

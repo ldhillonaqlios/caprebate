@@ -1,7 +1,7 @@
 /**
  * THE SURVEY PACK'S SUMS — how the price paid becomes the spend that qualifies. 1 October 2026.
  *
- * Lakhbir: "build the comprehensive report, as best we can and then we engage with a surveyor … each section allowing
+ * the owner: "build the comprehensive report, as best we can and then we engage with a surveyor … each section allowing
  * the surveyor to edit if needed and the numbers matching what they put in, change or take out" — and, of these sums,
  * "this is one thing that cannot fail".
  *
@@ -41,7 +41,7 @@ export type Source = {
   readonly by_name?: string | null;
   readonly at?: string | null;
   readonly reason?: string | null;
-  /** PHASE 159f: a rate's structured source — BCIS (its reference, base date, location factor and index), a QS's priced
+  /** A rate's structured source — BCIS (its reference, base date, location factor and index), a QS's priced
    *  schedule, the contractor's invoice or a price book — and the day it is priced at. A rate without one is not sourced. */
   readonly basis?: RateBasis | null;
 };
@@ -80,14 +80,14 @@ export type PackInputs = {
   readonly building_rate_pence: Valued;
 };
 
-/** INPUT: chapter 9. LINE: chapter 10. GRANT (Phase 153a): a grant on the claim whose amount is not known, chapter 15 —
- *  `line_id` then holds the grant's id. WORKS (Phase 159c): a cost-led value for a piece of work, chapter 9 — `line_id`
+/** INPUT: chapter 9. LINE: chapter 10. GRANT: a grant on the claim whose amount is not known, chapter 15 —
+ *  `line_id` then holds the grant's id. WORKS: a cost-led value for a piece of work, chapter 9 — `line_id`
  *  holds the event's id. */
 export type Needed = { readonly where: 'INPUT' | 'LINE' | 'GRANT' | 'WORKS'; readonly key: string; readonly line_id: string | null; readonly words: string };
 
 export type ProblemCode = 'LAND_NOT_BELOW_PRICE' | 'ELEMENTS_EXCEED_BUILDING' | 'NO_REBUILD_COST' | 'TOO_LARGE'
-  /* PHASE 159c: a piece of work priced on its own cost */ | 'WORKS_PARTS_NOT_TOTAL' | 'NO_WORKS_COST' | 'GRANTS_ON_EVENTS'
-  /* PHASE 159k: a reading's part is more than the figure it is part of */ | 'WORKS_PART_TOO_BIG';
+  /* A piece of work priced on its own cost */ | 'WORKS_PARTS_NOT_TOTAL' | 'NO_WORKS_COST' | 'GRANTS_ON_EVENTS'
+  /* A reading's part is more than the figure it is part of */ | 'WORKS_PART_TOO_BIG';
 export type Problem = { readonly code: ProblemCode; readonly words: string };
 
 export type LineSum = {
@@ -177,7 +177,7 @@ export function packSums(inputs: PackInputs, lines: readonly PackLine[]): PackSu
   const out: LineSum[] = [];
   for (const l of lines) {
     if (l.removed) { out.push({ line_id: l.id, cost_pence: null, qualifying_pence: null, counted: false }); continue; }
-    /* PHASE 159a (C22): A LINE OF NOTHING NEEDS NO POOL. A count of 0 is the line taken out by its number: it adds
+    /* A LINE OF NOTHING NEEDS NO POOL. A count of 0 is the line taken out by its number: it adds
        nothing and asks for nothing more. A rate or a share of 0 still adds its cost to the elements, but qualifies
        nothing, so it needs no pool either. Before, such a line blocked the total until a pool was chosen for it. */
     if (known(l.qty_milli, LIMITS.qty_milli) && l.qty_milli.value === 0) {
@@ -260,10 +260,10 @@ export function packSums(inputs: PackInputs, lines: readonly PackLine[]): PackSu
   };
 }
 
-/* ------------------------------------------------------------------ PHASE 159c: works priced on their own cost */
+/* ------------------------------------------------------------------ works priced on their own cost */
 
 /**
- * THE COST-LED MODE, FOR WORK THE CLIENT PAID FOR (Phase 159c, item 4). Section 562 shares a PRICE out by rebuild cost,
+ * THE COST-LED MODE, FOR WORK THE CLIENT PAID FOR. Section 562 shares a PRICE out by rebuild cost,
  * which is how a purchase is claimed. Work the client paid for — a refit, an extension, a fit-out, a new build — is
  * claimed on what it COST, from the final account or the contract sum by element. So each piece of work has its own
  * values, the surveyor's from the final account, in whole pence:
@@ -342,7 +342,7 @@ export function worksSums(event_id: string, label: string, w: WorksInputs): Work
 }
 
 /**
- * PHASE 159k (item 2) — THE THREE READINGS' PARTS OF A PIECE OF WORK. Each is a PART of a value above, optional, the
+ * THE THREE READINGS' PARTS OF A PIECE OF WORK. Each is a PART of a value above, optional, the
  * surveyor's from the final account, with a reason. Not given: that reading is not applied to the work, and says so.
  *   long_life       of the plant (works_main), what has an expected life of 25 years or more (s.91)
  *   asbestos        of the work that does not qualify (works_other), what was spent removing asbestos (CTA 2009 Part 14)
@@ -361,7 +361,7 @@ export const WORKS_PART_WORDS: Readonly<Record<WorksPartField, string>> = Object
   works_if_replacement: 'What replacing those integral features would cost.',
 });
 
-/** PHASE 159k: a part more than the figure it is part of is a problem, and the work has no total until it is put right. */
+/** A part more than the figure it is part of is a problem, and the work has no total until it is put right. */
 export function worksPartProblems(label: string, w: WorksInputs, parts: Readonly<Record<WorksPartField, Valued>>): Problem[] {
   const out: Problem[] = [];
   for (const k of WORKS_PART_FIELDS) {

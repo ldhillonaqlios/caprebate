@@ -1,8 +1,8 @@
 /**
- * BCIS RATES IN THE SURVEY PACK — PHASE 159f, 10 October 2026.
+ * BCIS RATES IN THE SURVEY PACK.
  *
- * Lakhbir, 9 October 2026: "With BCIS data loaded, the pack could draft each rate from the right building type — this
- * needs to happen." And: "we spoke to BCIS and they said its fine for us to do what we are doing" — relayed by Lakhbir,
+ * The owner: "With BCIS data loaded, the pack could draft each rate from the right building type — this
+ * needs to happen." And: "we spoke to BCIS and they said its fine for us to do what we are doing" — relayed by the owner,
  * recorded against Word question 218: storing BCIS rates, drafting from them and printing them in a client's report is
  * not a question any more. The Lockwood run (L12) printed every rate as "Surveyor", with no source.
  *
@@ -160,7 +160,7 @@ function money(raw: string, where: string): number | null {
 
 const QUARTER = /\b([1-4])\s*Q\s*((?:19|20)\d{2})\b|\bQ([1-4])\s*((?:19|20)\d{2})\b/i;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-/** PHASE 159l (item 6, L17): BCIS's base quarter in words, by its first month ("2026-01" is "January 2026"). Anything
+/** BCIS's base quarter in words, by its first month ("2026-01" is "January 2026"). Anything
  *  else is said as it is. */
 export function baseWords(base: string): string {
   const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(base);
@@ -297,7 +297,7 @@ export function bcisDataHere(env: Env = process.env): { data: BcisData } | { dat
   return real;
 }
 
-/** PHASE 159g (item 7): the loaded location table's own name for an area (a council area, say), or null when it has none. */
+/** The loaded location table's own name for an area (a council area, say), or null when it has none. */
 export function bcisLocationNamed(area: string, env: Env = process.env): string | null {
   const here = bcisDataHere(env);
   if (here.data === null) return null;

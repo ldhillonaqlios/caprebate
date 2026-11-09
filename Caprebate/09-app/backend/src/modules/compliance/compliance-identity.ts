@@ -1,6 +1,6 @@
 /**
  * S2 THE IDENTITY STORE, ONE CONSENT HISTORY PER CONTACT, AND THE RETENTION LIST.
- * CRM 8 of 10, 12 September 2026.
+ * CRM 8 of 10.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * S2 (Dashboard Data Specification 3.2, 4 and 7; Retention Procedure 2.3B)
@@ -40,7 +40,7 @@
  * out of the host's backup is still open, and a file alive in a backup has not
  * been deleted.
  *
- * PHASE 132, 14 SEPTEMBER 2026. THE DELETION LOG IS A KIND ON THIS LIST (migration
+ * THE DELETION LOG IS A KIND ON THIS LIST (migration
  * 022), under RET-3 — six years from the day a deletion is complete everywhere,
  * `verified_at` or the last backup copy's expiry, as Retention Determinations v1.2
  * section 12.4 drafts it. Drafted is not approved, and an entry with backups
@@ -95,7 +95,7 @@ export const PERSON_ROLES: Vocab = Object.freeze({
 export const ROUTE_KINDS: Vocab = Object.freeze({ POSTAL: 'A postal address printed on the document', EMAIL: 'An email address printed on the document' });
 export const NOTICE_ROUTES: Vocab = Object.freeze({ DIRECT_POST: 'By post, directly', DIRECT_EMAIL: 'By email, directly', CLIENT_ROUTE: 'Through the client' });
 /**
- * PHASE 153c, 4 October 2026 (Word question 162, Sadique's: "May we ask our client to pass our privacy notice to a
+ * (Word question 162, the data protection officer's: "May we ask our client to pass our privacy notice to a
  * stranger named in our records?"). Built on our recommendation for him to check: "Through the client" is never the
  * only route. It saves only when the notice is also published on our notices page and that is recorded for the same
  * person — and the record shows both. The database refuses it too (migration 080).
@@ -343,7 +343,7 @@ const WHICH_CLOCK_QUESTION =
 
 /**
  * The determinations, as they stand. NOT ONE IS APPROVED; changing that is the data protection officer's signature, then one line here.
- * Phase 132: RET-1 to RET-4 as Retention Determinations section 12 drafts them (12.2–12.6, restated at 13.2) — drafted, so
+ * RET-1 to RET-4 as Retention Determinations section 12 drafts them (12.2–12.6, restated at 13.2) — drafted, so
  * DERIVED, NOT APPROVED. RET-5, RET-6 and RET-7 checked against sections 2.3, 3.3, 4.3, 11 and 13.2: period, trigger and state agree.
  */
 export const RETENTION_PARAMETERS: Readonly<Record<string, Parameter>> = Object.freeze({
@@ -377,7 +377,7 @@ export const RECORD_KINDS: readonly Kind[] = Object.freeze([
   { kind: 'DOCUMENT_VERSIONS', label: 'Client document versions — no date yet, so never due and never kept for ever', table: 'documents', ref: 'RET-7', why_unset: 'Not signed yet, so no date is worked out. It needs two dates from each document’s claim. One is the accounting period end. The other is the day the client report was first sent. Each is shown as known or not known' },
   { kind: 'LOGICAL_DOCUMENTS', label: 'Documents, with all their versions', table: 'logical_documents', ref: 'RET-7', why_unset: 'It follows its versions' },
   { kind: 'DOCUMENT_LINKS', label: 'Document links', table: 'document_links', ref: 'RET-7', why_unset: 'It follows its versions' },
-  // Phase 132 — migration 022. RET-3 needs `verified_at` and, where backups are pending, the last copy's expiry: no date is computed here.
+  // Migration 022. RET-3 needs `verified_at` and, where backups are pending, the last copy's expiry: no date is computed here.
   { kind: 'DELETION_LOG', label: 'The deletion log — one entry per deletion, never a name', table: 'deletion_log', ref: 'RET-3', why_unset: `Drafted, not signed yet, so no date is worked out. An entry still waiting on backups has no date while the host’s backup cycle is ${BACKUP_CYCLE_WORDS[BACKUP_CYCLE.state] ?? BACKUP_CYCLE.state}` },
   { kind: 'REGISTER_RECORDS', label: 'Register records — people who control a company, and owners who are people', table: 'register_records', ref: 'RET-1', why_unset: 'Drafted, not signed yet' },
   { kind: 'LEADS_NEVER_CONVERTED', label: 'Leads that never convert, with a referral’s property basics', table: 'leads', ref: null, why_unset: NOT_COVERED },
@@ -391,7 +391,7 @@ export const RECORD_KINDS: readonly Kind[] = Object.freeze([
   { kind: 'SHARE_CONSENTS', label: 'The share-progress answers', table: 'introducer_share_consents', ref: null, why_unset: NOT_COVERED },
   { kind: 'INTRODUCER_NOTICES', label: 'Stage notices to firms', table: 'introducer_notices', ref: null, why_unset: NOT_COVERED },
   { kind: 'CONSENT_ANSWERS', label: 'The consent history', table: 'consent_answers', ref: null, why_unset: NOT_COVERED },
-  // Phase 142a — the two chat threads. Their clean-up job is built and switched off (MESSAGE_RETENTION); the period is the officer's.
+  // The two chat threads. Their clean-up job is built and switched off (MESSAGE_RETENTION); the period is the officer's.
   { kind: 'CLIENT_MESSAGE', label: 'Messages with the client — the portal’s Messages', table: 'client_messages', ref: null, get why_unset() { return `${NOT_COVERED}. Lakhbir set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet`; } },
   { kind: 'TEAM_MESSAGE', label: 'Team-only messages — the internal notes', table: 'internal_notes', ref: null, get why_unset() { return `${NOT_COVERED}. Lakhbir set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet`; } },
   { kind: 'CDD_RECORDS', label: 'Customer due diligence records', table: 'cdd_checks', ref: null, why_unset: `${NOT_COVERED}. Our position paper says five years from the end of the client relationship. That comes from the Money Laundering Regulations, so it applies only if they apply to us` },
@@ -401,7 +401,7 @@ export type RetentionLine = {
   readonly kind: string; readonly label: string; readonly ref: string | null; readonly state: ParameterState | 'NOT_COVERED';
   readonly clock: string; readonly records: number; readonly unscheduled: number; readonly held: number;
   readonly due: readonly { id: string; due_on: string }[]; readonly delete: string;
-  /** DOCUMENT_VERSIONS only (Phase 132): RET-7's two dates for each document, read from its claim — known or not known. */
+  /** DOCUMENT_VERSIONS only: RET-7's two dates for each document, read from its claim — known or not known. */
   readonly limbs?: readonly DocumentLimbs[];
 };
 

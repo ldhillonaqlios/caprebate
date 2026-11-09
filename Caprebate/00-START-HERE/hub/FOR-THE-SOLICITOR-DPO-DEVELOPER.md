@@ -770,7 +770,7 @@ For the developer, from the ITRoadway audit's third finding (forms protected by 
 
 ## Added 9 September 2026 — the handover pack has been rebuilt, and one thing in it was flatly wrong
 
- **Entry SDP-V1 above has been rewritten rather than annotated**, because what is being handed to a developer is no longer a set of design documents. It is **two working applications and one specification that describes them**, and the specification — `09-app/CAPREBATE-DEVELOPER-SPEC.md` — is now the first thing a developer reads.
+ **Entry SDP-V1 above has been rewritten rather than annotated**, because what is being handed to a developer is no longer a set of design documents. It is **two working applications and one specification that describes them**, and the specification — `09-app/docs/CAPREBATE-DEVELOPER-SPEC.md` — is now the first thing a developer reads.
 
 ### For the developer — what actually changed in the ask
 
@@ -1208,7 +1208,7 @@ Signed .............................  Date ..........................
 
  Confirm that the invoice email, when it is built, is a deliberate piece of work — its template, its channel and the confirmation check — and is not turned on by a flag. Every refusal today sits in two places only: the automation rule store, and the email template store with its table trigger.
 
- **Where it is.** SOP 9 of the standard operating procedures export, attached to "Create standard operating procedures"; `INVOICE_FRAUD_PROCEDURE` in `09-app/backend/src/modules/crm/automation.ts`; decision E89 in `09-app/CAPREBATE-CRM-DISPOSITION.md`.
+ **Where it is.** SOP 9 of the standard operating procedures export, attached to "Create standard operating procedures"; `INVOICE_FRAUD_PROCEDURE` in `09-app/backend/src/modules/crm/automation.ts`; decision E89 in `09-app/docs/CAPREBATE-CRM-DISPOSITION.md`.
 
 ## Added 12 September 2026 — the compliance registers are built: seven entries more, SDP-L8 and SDP-P12 to SDP-P17
 
@@ -1248,7 +1248,7 @@ Signed .............................  Date ..........................
  **What is built.** A retention clock on every record kind — twenty-one — with UNSET shown as unset; nothing computes a date, because none of RET-1 to RET-8 is approved. A legal hold keeps a record off the list. **There is no deleter**: whether client-document folders can be kept out of the host's backup is still open. Seven letters — the complaint acknowledgement and the complaint outcome, the identity request, the extension notice, the refusal and the objection decision with the three onward routes, and the access response's cover — are drafts that reach the outbox and nowhere else. **For the developer:** confirm that deletion, when it is built, is a deliberate piece of work that answers the backup question first, and that several tables refuse a delete by trigger today — the list says which.
 
 
- **Where it is.** `09-app/backend/migrations/017-compliance-registers.sql`; `src/web/compliance*.ts`; decisions E94 to E118 and Part O in `09-app/CAPREBATE-CRM-DISPOSITION.md`.
+ **Where it is.** `09-app/backend/migrations/017-compliance-registers.sql`; `src/web/compliance*.ts`; decisions E94 to E118 and Part O in `09-app/docs/CAPREBATE-CRM-DISPOSITION.md`.
 
  **Internal index, for whoever maintains this register:** SDP-L8 and SDP-P12 to SDP-P17 — board item 13032264597, Built — awaiting sign-off.
 

@@ -1,5 +1,5 @@
 /**
- * OPENING A SURVEY JOB — Phase 158b, 7 October 2026.
+ * OPENING A SURVEY JOB.
  *
  * The Friary House run (04-phase-work/sim-2026-10-06, finding F31) reached Survey and stopped: nothing in the
  * application opened a survey job. `surveyor_jobs` and `estimates` were written only by the seed and the tests, and a
@@ -78,7 +78,7 @@ export function surveyJobPanel(db: Db, actor: Actor, claim_id: string): SurveyJo
   };
 }
 
-/** What the client said was spent on the buildings (the funnel's `Q2-N-spend` answers, and since Phase 159c each piece of
+/** What the client said was spent on the buildings (the funnel's `Q2-N-spend` answers, and each piece of
  *  work's `Q3-N-wJ-spend`, which the figure now counts too), in pounds; null if none. */
 function spendSaid(db: Db, assessment_id: string): number | null {
   const rows = listAssessmentAnswersValueByAssessmentIdState<{ value: string | null }>(db, [assessment_id]);

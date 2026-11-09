@@ -1,8 +1,8 @@
 /**
  * THE ADMIN SETTINGS SCREEN'S STORE — THE LISTS, THE REASONS, AND WHAT NO SETTING
- * MAY CHANGE. CRM 9 of 10, 12 September 2026.
+ * MAY CHANGE. CRM 9 of 10.
  *
- * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 20, and the decisions
+ * The scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, section 20, and the decisions
  * this file takes are that table's Part E from E119. The screen is
  * src/modules/admin/configuration-pages.ts; the lists are src/modules/admin/vocabularies.ts and
  * migration 019.
@@ -52,7 +52,7 @@ import { getAutomationRulesCOUNTByActiveTaskPriority } from '../crm/index.ts';
 import { getReasonListsCountByListCode, getReasonListsLabelActiveByListCode, getReasonListsNByList, getVocabulariesCountByListCode, getVocabulariesLabelActiveByListCode, getVocabulariesNByList, insertReasonLists, insertVocabularies, listReasonListsCodeLabelByList, updateReasonListsLabelActiveByListCode, updateVocabulariesLabelActiveByListCode } from './data.ts';
 
 export type ConfigDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
-/** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
+/** `field` is the posted name a refusal is about, where it is about one. */
 export type ConfigResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
 type Fields = Readonly<Record<string, string | null>>;
 
@@ -96,7 +96,7 @@ export const FORBIDDEN_SETTINGS: Readonly<Record<string, string>> = Object.freez
 });
 
 /**
- * PHASE 144a — THE NAME A PERSON READS FOR EACH OF THOSE SETTINGS. The key (STAGE_GATE:INVOICE, FEE_TRIGGER …) is
+ * THE NAME A PERSON READS FOR EACH OF THOSE SETTINGS. The key (STAGE_GATE:INVOICE, FEE_TRIGGER …) is
  * still the value a form posts and the store records; the screen shows this label instead of the key.
  */
 const SETTING_LABELS: Readonly<Record<string, string>> = Object.freeze({

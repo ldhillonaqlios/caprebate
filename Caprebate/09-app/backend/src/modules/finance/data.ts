@@ -1,5 +1,5 @@
 /**
- * FINANCE'S DATA FILE (09-app/ARCHITECTURE.md rule 3). The only file that runs SQL on the tables
+ * FINANCE'S DATA FILE (09-app/docs/ARCHITECTURE.md rule 3). The only file that runs SQL on the tables
  * architecture/tables.json gives this module: invoices, VAT, billing and filing. Every other file asks through these functions: inside the
  * module from here, from another area through the module's front door (index.ts). Each statement is the one its caller
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).

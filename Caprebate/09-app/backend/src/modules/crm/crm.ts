@@ -5,7 +5,7 @@
  * VIEW MODELS AND WRITES. The routes are src/modules/crm/crm.routes.ts and the
  * rendering src/modules/crm/crm-pages.ts, which draws what these return and
  * decides nothing. The section gates are src/modules/crm/crm.permissions.ts. The scope — every field
- * and why it is shaped the way it is — is 09-app/CAPREBATE-CRM-DISPOSITION.md,
+ * and why it is shaped the way it is — is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md,
  * and the schema is migration 009.
  *
  * ───────────────────────────────────────────────────────────────────────────

@@ -18,7 +18,7 @@
  *
  * The rest of this header is as it was written while the switch was off, and says why it was built that way.
  *
- * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, row 29.5, and Part R. The gate that reads it is the gate out of
+ * The scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, row 29.5, and Part R. The gate that reads it is the gate out of
  * DATA_GATHERING in src/modules/crm/pipeline.ts.
  *
  * ───────────────────────────────────────────────────────────────────────────

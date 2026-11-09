@@ -1,8 +1,8 @@
 /**
- * THE COST MODEL IN THE SURVEY PACK — PHASE 157a, 6 October 2026 (from Phase 153e, with 153g's and 155's additions).
+ * THE COST MODEL IN THE SURVEY PACK.
  *
  * 09-app/backend/src/modules/survey/costing/cost-model.cjs has had four of the surveyor's questions built in its own test system
- * since 4 October (Phase 153e): preliminaries by job size (Word question 136), the insurance cross-check (137), the
+ * since 4 October: preliminaries by job size (Word question 136), the insurance cross-check (137), the
  * past-claim limits (139) and the index factor (147). The pack did not call it at all. This file reads it for one pack,
  * and the chapters show what it says (src/modules/survey/pack-sheets.ts):
  *
@@ -83,7 +83,7 @@ const pounds = (p: number) => `£${Math.round(p / 100).toLocaleString('en-GB')}`
 
 export type IndexReading = {
   readonly purchase: string | null;
-  /** PHASE 159a (L7): where the purchase date came from, in words — the property record, the legal check, the client. */
+  /** Where the purchase date came from, in words — the property record, the legal check, the client. */
   readonly purchase_from: 'the property record' | 'the surveyor' | 'the client';
   readonly valuation: string | null;
   readonly kind: 'BCIS' | 'PLACEHOLDER' | null;
@@ -95,7 +95,7 @@ export type IndexReading = {
 };
 
 /**
- * PHASE 159a (the Lockwood run, L7): THE ONE PURCHASE DATE, as the amendment window reads it (src/modules/claims/claim-facts.ts
+ * THE ONE PURCHASE DATE, as the amendment window reads it (src/modules/claims/claim-facts.ts
  * acquisitionDateReading, Phase 158d): the property record, else the surveyor's legal check, else the client's checked
  * answer. Chapter 11 read the property record alone, so it said "not on file" while the legal check held the date.
  */
@@ -209,7 +209,7 @@ function median(xs: readonly number[]): number {
  */
 export function rateFlagReading(db: Db, v: PackView, min = MIN_CLAIMS, env: Env = process.env): RateFlagReading {
   const rows = listSurveyPackApprovalsSnapshotJsonJobIdByVersionPackId<{ snapshot_json: string; job_id: string }>(db);
-  /* PHASE 159f (C20): EVERY RATE REBASED TO ONE DAY before it is compared — this pack's own pricing day. A rate priced
+  /* EVERY RATE REBASED TO ONE DAY before it is compared — this pack's own pricing day. A rate priced
      at another day is brought to it by the index; one that cannot be (an older version with no pricing day, or no
      index) is left out of the middle rate, and the sentence says how many. */
   const target = v.pricing.priced_at;
@@ -243,7 +243,7 @@ export function rateFlagReading(db: Db, v: PackView, min = MIN_CLAIMS, env: Env 
 }
 
 /**
- * PHASE 159f (C21): THE QUALIFYING SHARE AGAINST THE SECTOR'S CEILING. The engine's purchase band (CB_BAND) tops out at a
+ * THE QUALIFYING SHARE AGAINST THE SECTOR'S CEILING. The engine's purchase band (CB_BAND) tops out at a
  * share for each sector; a pack whose share is above it is FLAGGED FOR REVIEW — never refused. A whole building that
  * qualifies is possible, but rare, and the surveyor should look again.
  */

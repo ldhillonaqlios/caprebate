@@ -1,6 +1,6 @@
 # Caprebate — the Administrator Guide and the User Guide
 
-**It goes with `09-app/CAPREBATE-DEVELOPER-SPEC.md`.** It was written on 12 September 2026. It covers rows 26.11 and
+**It goes with `09-app/docs/CAPREBATE-DEVELOPER-SPEC.md`.** It was written on 12 September 2026. It covers rows 26.11 and
 26.12 of the CRM table of open items. Those rows asked for an admin guide, and a user guide with basic training.
 
 **The Developer Spec says what the system is. This says how to use it.** Sometimes the two may not agree. Then the

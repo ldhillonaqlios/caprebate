@@ -1,10 +1,10 @@
 /**
  * FINANCE ON THE CLAIM — INVOICES, CREDIT NOTES AND MONEY RECEIVED.
- * CRM 7 of 10, 11 September 2026.
+ * CRM 7 of 10.
  *
  * The schema is migration 016; the fee is src/modules/claims/fee-controls.ts; the VAT and
  * its monitoring are src/modules/assessment/vat.ts; the pages are src/modules/finance/finance-pages.ts. The
- * scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 13.
+ * scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, section 13.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * AN INVOICE BELONGS TO A CLAIM, AND ITS AMOUNT IS NEVER TYPED
@@ -56,7 +56,7 @@ import { getInvoiceCreditNotesAVByInvoiceId, getInvoiceNumbersCOALESCEMAXSeqN, g
 import { getClaimsCreatedAtNameById, getClaimsIdBusinessIdById, getInvoicesIdBusinessIdById, listInvoiceCreditNotesIdBasisByInvoiceId, listInvoicePaymentsIdReceivedOnByInvoiceId, listInvoicesIdBusinessId, listInvoicesIdBusinessIdByClaimId } from './data-borrowed.ts';
 
 export type InvoiceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
-/** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one, so the
+/** `field` is the posted name a refusal is about, where it is about one, so the
  *  message is drawn beside that field rather than at the top of the form. A refusal about the invoice's own
  *  state — already sent, already cancelled, nothing owed — is about no one field and carries none. */
 export type InvoiceResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -465,7 +465,7 @@ export function raiseInvoice(d: InvoiceDeps, actor: Actor, claim_id: string, inp
     });
     ensureVatTask(d.db, d.now, d.newId, vatReading(d.db, at, { controls }), actor.id);
   });
-  // Phase 132e: reward model C accrues its percentage on the fee AS INVOICED — silent unless C is the setting.
+  // Reward model C accrues its percentage on the fee AS INVOICED — silent unless C is the setting.
   if (kind === 'FEE') onFeeInvoiced(d, actor, id);
   return { ok: true, id };
 }
@@ -536,7 +536,7 @@ function issueCredit(
     });
     ensureVatTask(d.db, d.now, d.newId, vatReading(d.db, at), actor.id);
   });
-  // Phase 132e: a fee reduced under clause 13 reverses reward model C's percentage on it — a reversing entry, never a delete.
+  // A fee reduced under clause 13 reverses reward model C's percentage on it — a reversing entry, never a delete.
   if (basis === 'CLAUSE_13_REDUCTION') onClause13Credit(d, actor, id);
   return { ok: true, id };
 }
@@ -660,7 +660,7 @@ export type ExpectedClaim = {
   readonly claim_id: string; readonly claim_ref: string; readonly client_name: string; readonly entered_invoice_on: string;
   readonly expected: string; readonly expected_pence: number | null; readonly why: string | null;
   /**
-   * Phase 132e: WHEN THE FEE IS EXPECTED — the date our report was delivered for filing, which is when the fee is
+   * WHEN THE FEE IS EXPECTED — the date our report was delivered for filing, which is when the fee is
    * earned (FEE_TRIGGER). Null where no delivery is recorded: an unknown delivery has no date, and is never today.
    */
   readonly expected_on: string | null;
@@ -730,7 +730,7 @@ export function financeDashboard(db: Db, actor: Actor, nowIso: string, opts: Inv
     const invoiced = live.filter((v) => v.invoice_date.startsWith(month)).reduce((a, v) => a + v.fee_pence, 0);
     const credited = credits.filter((c) => c.issued_on.startsWith(month)).reduce((a, c) => a + c.amount_pence, 0);
     const received = payments.filter((p) => p.received_on.startsWith(month)).reduce((a, p) => a + p.amount_pence, 0);
-    // Phase 132e: a fee is expected in the month our report was delivered for filing; with no delivery recorded it is in no month.
+    // A fee is expected in the month our report was delivered for filing; with no delivery recorded it is in no month.
     const expected = expectedAll.filter((e) => e.expected_on !== null && e.expected_on.startsWith(month)).reduce((a, e) => a + (e.expected_pence ?? 0), 0);
     return {
       month, invoiced_pence: invoiced, credited_pence: credited, received_pence: received, expected_pence: expected,

@@ -1,7 +1,7 @@
 /**
- * FULL-SIZE PHOTOS, SENT STRAIGHT TO THE FILE STORE, LOCKED ON THE PHONE. 2 October 2026.
+ * FULL-SIZE PHOTOS, SENT STRAIGHT TO THE FILE STORE, LOCKED ON THE PHONE..
  *
- * Lakhbir asked whether the test website's 4.5 MB a send could be raised. It cannot: it is Vercel's fixed limit on a
+ * the owner asked whether the test website's 4.5 MB a send could be raised. It cannot: it is Vercel's fixed limit on a
  * request to the website. So each photo goes from the phone STRAIGHT TO THE PRIVATE FILE STORE (Vercel Blob), never
  * through the website: "go with option 2"; "Lock on the phone"; "100 photos, 25 MB each"; the mock-up, "Yes, build it
  * as shown".
@@ -29,7 +29,7 @@ import { INCOMING_PREFIX, type FsObjectStore, type IncomingTarget } from '../../
 import { cleaned, clientOf, keep, NO_KEY, UNSORTED, type EvidenceDeps } from './survey-evidence.ts';
 import { getSurveyUploadSessionsIdJobIdById, getSurveyUploadSlotsIdSessionIdByIdSessionId, getSurveyUploadSlotsXBySessionIdN, insertSurveyUploadOutcomes, insertSurveyUploadOutcomes2, insertSurveyUploadOutcomes3, insertSurveyUploadSessions, insertSurveyUploadSlots, listSurveyUploadSlotsIdStagedKeyBySlotIdIssuedAt } from './data.ts';
 
-/** The most photos in one send, and the most one photo may be (Lakhbir, 2 Oct 2026). */
+/** The most photos in one send, and the most one photo may be. */
 export const MAX_PHOTOS_PER_SEND = 100;
 export const MAX_FULL_PHOTO_BYTES = 25 * 1024 * 1024;
 /** What locking adds: the mark, the locked key's length, the locked key, the nonce, the tag. */
@@ -41,7 +41,7 @@ export const SLOT_MINUTES = 30;
 /** An upload not finished after this long is removed by the sweep. */
 export const ABANDON_HOURS = 24;
 /**
- * 2 Oct 2026, the first send on the test website: every photo failed at "the website did not answer". The fallback: if
+ *, the first send on the test website: every photo failed at "the website did not answer". The fallback: if
  * the store will not give its one-time address, the locked photo comes through our own route instead — on the test
  * website at most 4.4 MB a photo (its limit on a request). Such a slot's key ends `.site.lock`, so our route knows it.
  */

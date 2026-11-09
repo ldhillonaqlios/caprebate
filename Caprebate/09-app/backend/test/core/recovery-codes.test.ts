@@ -434,7 +434,7 @@ describe('151m · 4 · the JSON API walks the same path, on the same functions',
 describe('151m · 5 · the words: the step page, Help and the guide name recovery codes', () => {
   test('Help and the guide say what they are, where to keep them, and what to do when they run out', () => {
     const help = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'core', 'help-content.ts'), 'utf8');
-    const guide = readFileSync(join(import.meta.dirname, '..', '..', '..', 'CAPREBATE-ADMIN-AND-USER-GUIDE.md'), 'utf8');
+    const guide = readFileSync(join(import.meta.dirname, '..', '..', '..', 'docs', 'CAPREBATE-ADMIN-AND-USER-GUIDE.md'), 'utf8');
     for (const [name, text] of [['Help', help], ['the guide', guide]] as const) {
       assert.match(text, /recovery code/i, `${name} does not mention recovery codes`);
       assert.match(text, /Make new recovery codes/, `${name} does not say how to get new ones`);

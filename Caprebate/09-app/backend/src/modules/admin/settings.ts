@@ -51,7 +51,7 @@ import { listWorkingTimesUserIdN } from '../crm/index.ts';
 export class SettingsError extends Error {
   readonly code: string;
   /**
-   * PHASE 133e (D4, continued): the posted field this refusal is about, where it is about one, so the account
+   * The posted field this refusal is about, where it is about one, so the account
    * settings and the Create-a-user form can draw the message beside that field instead of at the top. A refusal
    * about the account rather than a field — no such user, the last administrator, your own role — carries none.
    */
@@ -299,13 +299,13 @@ export async function createStaffUser(
   actor: Actor,
   args: {
     email: string; display_name: string; role: string; password: string; business_id?: string | null;
-    /** PHASE 151j: the password is a temporary one, good until this time; the person chooses their own at first sign-in. */
+    /** The password is a temporary one, good until this time; the person chooses their own at first sign-in. */
     temporary_until?: string;
   },
 ): Promise<User> {
   authorise(actor, 'user.create', { type: 'user', id: 'new', role: 'SALES' });
 
-  // PHASE 151b: or a role the super admin made — a staff role, so the account belongs to no business (checked below).
+  // Or a role the super admin made — a staff role, so the account belongs to no business (checked below).
   const madeRole = isCustomRoleKey(args.role);
   if (!isAppRole(args.role) && !madeRole) {
     throw new SettingsError('E_BAD_ROLE', `a role is one of ${APP_ROLES.join(', ')}, or one the super admin made`, 'role');
@@ -370,7 +370,7 @@ export function assignRole(d: Deps, actor: Actor, target_id: string, role: strin
   if (target === undefined) throw new SettingsError('E_NO_USER', 'no such user');
   authorise(actor, 'user.assign_role', { type: 'user', id: target.id, role: target.role });
 
-  // Phase 151: or a role the super admin made (src/core/custom-roles.ts) — a staff role, so never on a client account.
+  // Or a role the super admin made (src/core/custom-roles.ts) — a staff role, so never on a client account.
   const made = isCustomRoleKey(role);
   if (!isAppRole(role) && !made) {
     throw new SettingsError('E_BAD_ROLE', `a role is one of ${APP_ROLES.join(', ')}, or one the super admin made`);
@@ -440,7 +440,7 @@ export function disableUser(d: Deps, actor: Actor, target_id: string): User {
 }
 
 /**
- * PHASE 133a — THE GATE OF USERS AND ROLES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF USERS AND ROLES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */
@@ -449,7 +449,7 @@ export function usersGate(actor: Actor): void {
 }
 
 /* ================================================================== *
- * ADDRESSES WE CANNOT EMAIL — PHASE 146g, 23 September 2026
+ * ADDRESSES WE CANNOT EMAIL
  *
  * Phase 146f recorded bounces and stopped sending to an address that bounced
  * for good, and `liftSuppression` (src/integrations/email/email-provider.ts) was written for

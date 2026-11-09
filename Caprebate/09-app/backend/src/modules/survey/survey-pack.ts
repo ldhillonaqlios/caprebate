@@ -1,7 +1,7 @@
 /**
- * THE SURVEY PACK — the drafts, the surveyor's stamped changes, and the sums. 1 October 2026.
+ * THE SURVEY PACK — the drafts, the surveyor's stamped changes, and the sums.
  *
- * Lakhbir: "the idea is API's do most of the work, they check and approve" and "any edits made by the surveyor needs to
+ * the owner: "the idea is API's do most of the work, they check and approve" and "any edits made by the surveyor needs to
  * essentially have their stamp to say thats their number".
  *
  * A VALUE IS ONE OF THREE THINGS, AND THE PACK ALWAYS SAYS WHICH:
@@ -10,7 +10,7 @@
  *   DRAFT     Cap Rebate's, from the fixture list: a line's pool and the share that qualifies, with its authority;
  *   SURVEYOR  typed by the surveyor: their name, the time and their reason, kept for ever (migration 070).
  * Nothing else fills a box. A value we do not hold is NEEDED, and the sums give no total until it is there
- * (src/modules/survey/pack-sums.ts). PHASE 159f: rates are DRAFTED from BCIS (src/modules/survey/bcis-data.ts) — the whole-building rate and every
+ * (src/modules/survey/pack-sums.ts). Rates are DRAFTED from BCIS (src/modules/survey/bcis-data.ts) — the whole-building rate and every
  * line measured by floor area — at the purchase date; the surveyor accepts each or types their own with its source.
  *
  * WHO MAY CHANGE IT: the surveyor the job is assigned to (`surveyor_job.commit`, the rule the workspace's figures use).
@@ -21,7 +21,7 @@
  *
  * THE PRICE IS IN THE PACK. The workspace withholds a register's price from a surveyor (REGISTER_AMOUNTS_WITHHELD, so
  * they cannot anchor on it). The pack cannot: section 562 shares out the price, so the price is its first input. This
- * follows Lakhbir's decision of 1 October 2026 that the surveyor works from a pre-filled pack and approves it.
+ * follows the owner's decision that the surveyor works from a pre-filled pack and approves it.
  */
 import { vatReading, VAT_POSITION_CODES, type VatReading } from './pack-vat.ts';
 import type { Db } from '../../core/index.ts';
@@ -47,7 +47,7 @@ import { getSurveyPacksIdPropertyIdByJobId, insertSurveyPackAddedLines, insertSu
 import { listSurveyPackAddedLinesIdLabelByPackId, listSurveyPackEntriesIdSeqByPackId, listSurveyorRoomCountsRoomIdRoomCountByJobId } from './data-borrowed.ts';
 
 /**
- * `grantSwitches` (Phase 153a) is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be
+ * `grantSwitches` is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be
  * proved both ways. Nothing in src/ or api/ passes it, so a pack always takes the switches as they ship.
  */
 export type PackDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; grantSwitches?: GrantSwitches; money?: MoneyReadings };
@@ -62,44 +62,44 @@ export type PackGrants = {
   }[];
   readonly switches: GrantSwitches;
   readonly reading: GrantReading;
-  /** False for the surveyor (Phase 153c): what each grant paid, and what each takes off, is not shown to them. */
+  /** False for the surveyor: what each grant paid, and what each takes off, is not shown to them. */
   readonly amounts_shown: boolean;
 };
 
 /**
- * PHASE 153c, 4 October 2026 — MAY THE SURVEYOR SEE WHAT EACH GRANT PAID? Built on our recommendation, for Sadique Maskeen
+ * MAY THE SURVEYOR SEE WHAT EACH GRANT PAID? Built on our recommendation, for the data protection officer
  * (data protection officer) to check. The surveyor's released list (src/payload.ts, releasedFactReader) carries no
  * amount, so the pack does not show one either: chapter 15 shows the surveyor who paid (as a class), what it paid for
  * and how it comes off, but not each grant's amount or what each takes off. The pack's totals — before grants, less
  * grants, the spend that qualifies — are still shown, because they are in the figures the surveyor approves. Every
- * other role sees the amounts. If Sadique says the surveyor may see them, this becomes true and the pack goes on the
+ * other role sees the amounts. If the data protection officer says the surveyor may see them, this becomes true and the pack goes on the
  * released list instead.
  */
 export const GRANT_AMOUNTS_TO_SURVEYOR = false;
 
 export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed' | 'vat_position' | 'vat' | 'shared_area'
   | CostField | WorksField | 'location'
-  /* PHASE 159k (item 2): the three readings' parts */ | WorksPartField | 'long_life';
+  /* The three readings' parts */ | WorksPartField | 'long_life';
 
-/** PHASE 159c: one piece of work on the building, priced on its own cost (chapter 9; src/modules/survey/pack-sums.ts worksSums). */
+/** One piece of work on the building, priced on its own cost (chapter 9; src/modules/survey/pack-sums.ts worksSums). */
 export type WorksView = {
   readonly event: PropertyEvent;
   /** "A refurbishment or refit, June 2025". */
   readonly label: string;
   readonly inputs: WorksInputs;
   readonly sums: WorksSums;
-  /** PHASE 159k (item 2): the readings' parts of this work — each optional, the surveyor's, with a reason. */
+  /** The readings' parts of this work — each optional, the surveyor's, with a reason. */
   readonly parts: Readonly<Record<WorksPartField, Valued>>;
-  /** PHASE 159k: s.33B on this work — the repairs on integral features made capital, in pence (0: not), and why. */
+  /** S.33B on this work — the repairs on integral features made capital, in pence (0: not), and why. */
   readonly s33b: { readonly capital_pence: number; readonly words: string | null };
-  /** PHASE 159k: of this work's main pool, what is long-life (s.91), and of its cost, the asbestos removal with its share
+  /** Of this work's main pool, what is long-life (s.91), and of its cost, the asbestos removal with its share
    *  of the preliminaries and fees (Part 14); null where not given. */
   readonly long_life_pence: number | null;
   readonly asbestos_pence: number | null;
 };
 
 /**
- * PHASE 157a, 6 October 2026 — THE COST MODEL'S FIVE VALUES (migration 095; src/modules/survey/pack-cost-model.ts). Each the
+ * THE COST MODEL'S FIVE VALUES (migration 095; src/modules/survey/pack-cost-model.ts). Each the
  * surveyor's, with a reason, for the index dates in chapter 11 and the insurance check in chapter 14. A date is kept as
  * YYYYMMDD; what a figure includes is 1 demolition + 2 professional fees + 4 preliminaries. Never drafted (N4).
  */
@@ -113,12 +113,12 @@ export type PackInputField = (typeof PACK_INPUT_FIELDS)[number];
 type EntryRow = {
   id: string; seq: number; line_key: string | null; field: PackField; value: number | null; pool: Pool | null;
   by_user: string; by_name: string; reason: string; at: string;
-  /** PHASE 159f (migration 108): a typed rate's source, all three or none; on 'location', rate_ref is the BCIS area. */
+  /** A typed rate's source, all three or none; on 'location', rate_ref is the BCIS area. */
   rate_basis: RateBasis['kind'] | null; rate_ref: string | null; rate_priced_at: string | null;
 };
 
 /**
- * PHASE 159f — HOW THE PACK'S RATES ARE PRICED (chapters 9, 10 and 11). The BCIS drafts, the day every rate is brought to
+ * HOW THE PACK'S RATES ARE PRICED (chapters 9, 10 and 11). The BCIS drafts, the day every rate is brought to
  * (the purchase date, C19), the rates that could not be brought to it, the rates with no source, and section 562 both
  * ways (item 6): the proportional apportionment the report uses, and the residual one beside it for the surveyor.
  */
@@ -133,12 +133,12 @@ export type Pricing = {
   /** Counted rates with no source: the whole-building rate, or a line's label. */
   readonly unsourced: readonly string[];
   readonly residual: { readonly qualifying_pence: number | null; readonly words: string };
-  /** PHASE 159g (item 7): where the BCIS location came from — the surveyor's choice, the property's council area, or
+  /** Where the BCIS location came from — the surveyor's choice, the property's council area, or
    *  neither (the UK mean). The council area is a draft: still the surveyor's to change, with a reason. */
   readonly location_from: 'SURVEYOR' | 'COUNCIL' | null;
 };
 
-/** PHASE 159i: the purchase's money adjustments (money-readings.ts), each shown with what it did. */
+/** The purchase's money adjustments (money-readings.ts), each shown with what it did. */
 export type PackMoney = {
   readonly readings: MoneyReadings;
   /** Stamp duty and acquisition fees added to the price shared out (on in test). */
@@ -152,7 +152,7 @@ export type PackMoney = {
   readonly words: readonly string[];
 };
 
-/** PHASE 159i (item 4): a piece of work's own grants and its irrecoverable VAT, applied to its cost-led sums. VAT the
+/** A piece of work's own grants and its irrecoverable VAT, applied to its cost-led sums. VAT the
  *  client could not reclaim follows every part of the cost; a grant that paid for this work comes off what qualifies in
  *  full (it cannot be traced to rows of a final account), the pools sharing it. */
 export function adjustWorks(w: WorksSums, vat_pence: number | null, grants_pence: readonly (number | null)[], total_pence: number | null): WorksSums {
@@ -177,7 +177,7 @@ export function adjustWorks(w: WorksSums, vat_pence: number | null, grants_pence
   return { ...w, qualifying_pence: Number(q), main_pool_pence: Number(m), special_pool_pence: Number(q - m), repairs_pence: w.repairs_pence === null ? null : Number(r) };
 }
 
-/** PHASE 159g: what the registers already say, for the surveyor to confirm — never a value the pack counts. */
+/** What the registers already say, for the surveyor to confirm — never a value the pack counts. */
 export type RegisterLeads = {
   /** Price Paid's sale at the address, as a lead or a price, in words (items 3 and 4); null when none is held. */
   readonly price_paid: string | null;
@@ -195,7 +195,7 @@ export type ViewLine = PackLine & {
 export type PropertyChoice = { readonly id: string; readonly label: string; readonly postcode: string | null };
 
 /**
- * PHASE 159a (the Lockwood run, L6): A PROPERTY AS ONE LINE — its label, then its postcode only where the label does not
+ * A PROPERTY AS ONE LINE — its label, then its postcode only where the label does not
  * already end with it. A label typed as a full address ("3 Meltham Road, Huddersfield, HD1 3XH") printed its postcode
  * twice on the report and the pack.
  */
@@ -218,34 +218,34 @@ export type PackView = {
   readonly property_choices: readonly PropertyChoice[];
   readonly inputs: PackInputs;
   readonly lines: readonly ViewLine[];
-  /** The pack's sums AFTER the claim's grants (Phase 153a, chapter 15); the figures before them are `grants.reading.before`. */
+  /** The pack's sums AFTER the claim's grants; the figures before them are `grants.reading.before`. */
   readonly sums: PackSums;
   readonly grants: PackGrants;
-  /** PHASE 153e: chapter 15's VAT half (src/modules/survey/pack-vat.ts). Its counted VAT is in `sums`, added to the price paid. */
+  /** Chapter 15's VAT half (src/modules/survey/pack-vat.ts). Its counted VAT is in `sums`, added to the price paid. */
   readonly vat: VatReading;
-  /** PHASE 153e: supported living's shared areas from the floor plans, in thousandths of a m² (the surveyor's, with a reason). */
+  /** Supported living's shared areas from the floor plans, in thousandths of a m² (the surveyor's, with a reason). */
   readonly shared_area: Valued;
-  /** PHASE 157a: the cost model's five values (chapter 11's valuation date, chapter 14's insurance check). */
+  /** The cost model's five values (chapter 11's valuation date, chapter 14's insurance check). */
   readonly cost: CostValues;
-  /** PHASE 159c: what happened to the building, in order (migration 105). Empty for a building with none recorded. */
+  /** What happened to the building, in order (migration 105). Empty for a building with none recorded. */
   readonly events: readonly PropertyEvent[];
-  /** PHASE 159c: false where the building was not bought (no purchase recorded among its events): no price to share out. */
+  /** False where the building was not bought (no purchase recorded among its events): no price to share out. */
   readonly purchase_applies: boolean;
-  /** PHASE 159c: the purchase's own sums (section 562, after grants). `sums` is these plus every piece of work. */
+  /** The purchase's own sums (section 562, after grants). `sums` is these plus every piece of work. */
   readonly purchase_sums: PackSums;
-  /** PHASE 159c: each piece of work since, on its own cost. */
+  /** Each piece of work since, on its own cost. */
   readonly works: readonly WorksView[];
-  /** PHASE 159d (item 8): the purchase fails the legal check (RED) and there is work since: the purchase is W3 — not
+  /** The purchase fails the legal check (RED) and there is work since: the purchase is W3 — not
    *  claimed — and the works stand on their own. False otherwise: a pack with no work stops at the legal check as before. */
   readonly purchase_w3: boolean;
-  /** PHASE 159f: how the rates are priced — the BCIS drafts, one day, their sources, and section 562 both ways. */
+  /** How the rates are priced — the BCIS drafts, one day, their sources, and section 562 both ways. */
   readonly pricing: Pricing;
-  /** PHASE 159i: the money added to or taken off the purchase, in words and pence. */
+  /** The money added to or taken off the purchase, in words and pence. */
   readonly money: PackMoney;
-  /** PHASE 159k (item 2): of the purchase's main pool, what has an expected life of 25 years or more (s.91) — the
+  /** Of the purchase's main pool, what has an expected life of 25 years or more (s.91) — the
    *  surveyor's, with a reason; not given, the long-life test is not applied to the purchase. */
   readonly long_life: Valued;
-  /** PHASE 159g: the register leads for chapter 9. */
+  /** The register leads for chapter 9. */
   readonly leads: RegisterLeads;
   /** The pack's counter as this view was read. A change must carry it back. */
   readonly seq: number;
@@ -349,17 +349,17 @@ const FIELD_WORDS: Readonly<Record<PackField, string>> = Object.freeze({
 });
 
 /**
- * PHASE 159c: THE PACK'S TOTAL IS THE PURCHASE AND EVERY PIECE OF WORK. Where the building was bought (or has no events
+ * THE PACK'S TOTAL IS THE PURCHASE AND EVERY PIECE OF WORK. Where the building was bought (or has no events
  * recorded: every pack from before), the purchase's section 562 sums stand as they were. Each piece of work adds its own
  * cost-led figure. There is a total only when every part has one (N4). A grant on a building with work since is not
- * yet taken off any part but the purchase, so it stops the total until Phase 159i says which spend it paid for: a grant
+ * yet taken off any part but the purchase, so it stops the total says which spend it paid for: a grant
  * left on the wrong spend is an over-claim.
  */
 function combined(purchase: PackSums, applies: boolean, works: readonly WorksView[], grants: number): PackSums {
   if (works.length === 0) return purchase;
   const needed = [...(applies ? purchase.needed : []), ...works.flatMap((w) => w.sums.needed)];
   const problems = [...(applies ? purchase.problems : []), ...works.flatMap((w) => w.sums.problems)];
-  // PHASE 159i (item 4): only a grant whose spend is not recorded stops the total now; one recorded against an event comes off it.
+  // Only a grant whose spend is not recorded stops the total now; one recorded against an event comes off it.
   if (grants > 0) problems.push({ code: 'GRANTS_ON_EVENTS', words: 'A grant is on this claim, and the building has work done since. Say which spend it paid for: the purchase or a piece of work. Until then it is not taken off, and there is no total.' });
   const complete = (applies ? purchase.complete : true) && works.every((w) => w.sums.complete) && problems.length === 0;
   const add = (pick: (x: { qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null }) => number | null): number | null => {
@@ -378,7 +378,7 @@ function combined(purchase: PackSums, applies: boolean, works: readonly WorksVie
 }
 
 /**
- * PHASE 159k (item 2, OUR READING, on in test) — s.33B ACROSS THE BUILDING'S PIECES OF WORK. Where, in any twelve months,
+ * S.33B ACROSS THE BUILDING'S PIECES OF WORK. Where, in any twelve months,
  * repairs on integral features pass half of what replacing them would cost, the spend is capital, not a repair: it goes
  * to the special rate pool. Each piece of work gives its repairs on integral features and that replacement cost (both
  * parts of its final account, the surveyor's). A work's repairs are read with every other work's within twelve months of
@@ -408,14 +408,14 @@ export function s33bDecisions(works: readonly { id: string; date: string | null;
   return out;
 }
 
-/** PHASE 159k: a work with a repair part whose s.33B parts are not given says so (while the reading is on). */
+/** A work with a repair part whose s.33B parts are not given says so (while the reading is on). */
 function s33Unchecked(on: boolean, w: WorksInputs, parts: Readonly<Record<WorksPartField, Valued>>): string | null {
   if (!on || (w.works_repairs.value ?? 0) === 0) return null;
   if (parts.works_repairs_if.value !== null && parts.works_if_replacement.value !== null) return null;
   return 's.33B not checked: give how much of the repairs was on integral features, and what replacing them would cost. Until then the repairs stay repairs.';
 }
 
-/** PHASE 153e (Word question 133): the share of the floor area used when no floor plans give the shared areas. */
+/** The share of the floor area used when no floor plans give the shared areas. */
 export const SHARED_FALLBACK_BP = 2500;
 export const SHARED_FALLBACK_WORDS = 'Fallback: a flat 25% of the floor area. A test default, not yet checked by a surveyor';
 
@@ -436,11 +436,11 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
 
   const ev = evidenceInputs(d.db, job.business_id, property);
   const none: Valued = { value: null, source: null };
-  // PHASE 159f: BCIS's drafts, at the purchase date, for the pack's chosen location (src/modules/survey/bcis-data.ts).
+  // BCIS's drafts, at the purchase date, for the pack's chosen location (src/modules/survey/bcis-data.ts).
   const acq = property === null ? null : acquisitionDateReading(d.db, property.id);
   const purchase = acq !== null && acq.known && typeof acq.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(acq.value) ? acq.value.slice(0, 10) : null;
   const locEntry = last(null, 'location');
-  /* PHASE 159g (item 7, carried from 159f): THE LOCATION FROM THE PROPERTY'S COUNCIL AREA. Until the surveyor chooses
+  /* THE LOCATION FROM THE PROPERTY'S COUNCIL AREA. Until the surveyor chooses
      (an entry, the UK mean included), the drafts are read at the property's council area where the loaded BCIS table
      names it. The surveyor's choice always wins. */
   const council = locEntry !== undefined || property === null ? null : councilAreaOf(d.db, property.id);
@@ -457,7 +457,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     building_rate_pence: resolve(null, 'building_rate', draftOf(bcis.building_rate)),
   };
 
-  // PHASE 153e (Word question 133): the common parts, by floor area from the floor plans, or the labelled 25% fallback.
+  // The common parts, by floor area from the floor plans, or the labelled 25% fallback.
   const shared_area = resolve(null, 'shared_area', none);
   const sharedDraft: Valued = shared_area.value !== null
     ? { value: shared_area.value, source: { kind: 'SURVEYOR', text: 'The shared areas from the floor plans (chapter 9)', by_name: shared_area.source?.by_name ?? null, at: shared_area.source?.at ?? null } }
@@ -498,7 +498,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     }
   }
 
-  /* PHASE 159f (C19): EVERY RATE AT ONE DAY. The share is the qualifying parts' rebuild cost over the whole building's,
+  /* EVERY RATE AT ONE DAY. The share is the qualifying parts' rebuild cost over the whole building's,
      so the two must be priced at the same day or the arithmetic does not match the words. Every sourced rate priced at a
      day other than the purchase date is brought to it by the index; one that cannot be (no index, or no purchase date)
      stays at its own day and is listed, and the pack is not approved while its rates sit at more than one day. */
@@ -524,7 +524,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   if (days.size > 1) for (const x of at) mixed.push(`${x.label}: ${x.day}`);
 
   const labelOf = new Map(lines.map((l) => [l.id, l.label] as const));
-  // PHASE 159c: a works value's line is the event; it is named by its kind and date.
+  // A works value's line is the event; it is named by its kind and date.
   for (const e of eventsOfProperty(d.db, property?.id ?? null)) labelOf.set(e.id, `${KIND_WORDS[e.kind]}, ${dateWords(e.event_date)}`);
   const changes: Change[] = [...entries].reverse().map((e) => ({
     seq: e.seq, at: e.at, by_name: e.by_name, reason: e.reason, line_key: e.line_key,
@@ -534,24 +534,24 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       : `set the ${FIELD_WORDS[e.field]}`,
   }));
 
-  // PHASE 153a — the claim's grants come off the sums here, so every total, the legal check, approval and the report
+  // The claim's grants come off the sums here, so every total, the legal check, approval and the report
   // read the figure after them. With no grant on the claim the sums are exactly packSums's.
-  // PHASE 159i: the money readings (on in test, money-readings.ts) choose the grant routes too: traced grants off their
+  // The money readings (on in test, money-readings.ts) choose the grant routes too: traced grants off their
   // items, an untraced one off in full.
   const money = d.money ?? moneyReadingsHere();
   const switches = d.grantSwitches ?? (money.grant_untraced_full ? { ...shippedGrantSwitches(), element_trace: true, untraced_full: true } : shippedGrantSwitches());
   const allGrants = job.claim_id === null ? [] : packGrantsFor(d.db, job.claim_id);
-  // PHASE 159i (item 4): a grant recorded against a piece of work comes off that work, below; the rest are the purchase's.
+  // A grant recorded against a piece of work comes off that work, below; the rest are the purchase's.
   const eventsHere = eventsOfProperty(d.db, property?.id ?? null);
   const worksIds = new Set(worksEvents(eventsHere).map((e) => e.id));
   const onClaim = allGrants.filter((g) => g.event_id === null || g.event_id === undefined || !worksIds.has(g.event_id));
   const facts = job.claim_id === null ? new Map() : latestFacts(d.db, job.claim_id);
   const pence = (k: string): number => { const r = facts.get(k); return r !== undefined && r.answer === 'VALUE' && typeof r.value_pence === 'number' && r.value_pence > 0 ? r.value_pence : 0; };
   const yes = (k: string): boolean => { const r = facts.get(k); return r !== undefined && r.answer === 'VALUE' && r.value_text === 'YES'; };
-  // PHASE 153e: VAT the client could not reclaim is part of the price that is shared out (Module 00 C23). The price
+  // VAT the client could not reclaim is part of the price that is shared out (Module 00 C23). The price
   // shown stays the price paid; the sums read it with the counted VAT added.
   const vat = vatReading(resolve(null, 'vat_position', none), resolve(null, 'vat', none));
-  /* PHASE 159i (item 3, OUR READINGS, on in test): the stamp duty or land transaction tax paid (#11) and the legal and
+  /* The stamp duty or land transaction tax paid (#11) and the legal and
      other acquisition fees (#13) are part of the price shared out. And C12: that money, and the VAT, is shared between
      the land and the building in the same proportion as the price, so the land takes its part and the fixtures do not
      take all of it. Off, the VAT goes to the building alone, as before. */
@@ -566,7 +566,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     : inputs;
   const before = packSums(forSums, lines);
   const graded = applyGrants(forSums, lines, before, onClaim, switches);
-  /* PHASE 159i (item 3, s.185 plus own s.25, #1, on in test): the buyer's own alterations to install plant are its own
+  /* The buyer's own alterations to install plant are its own
      spend under s.25, claimed in the main pool on top of whatever caps the price's share. Only on a recorded yes with an
      amount. */
   const alterations = money.s185_plus_own_s25 && yes('BUYER_ALTERATIONS') ? pence('BUYER_ALTERATIONS_AMOUNT') : 0;
@@ -587,7 +587,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       element_ids: g.element_ids, element_names: g.element_ids.map(elementName) })),
   };
 
-  // PHASE 159f (item 6): section 562 the other way, beside the proportional sum the report uses. The building's own
+  // Section 562 the other way, beside the proportional sum the report uses. The building's own
   // rebuild cost (the whole less the parts that qualify) comes off the price first; the fixtures take what is left, never
   // more than their own rebuild cost nor the price. Shown to the surveyor; which one is used is put to the tax adviser.
   const ps = reading.sums;
@@ -599,7 +599,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       return { qualifying_pence: q, words: `The residual way: the building less its own rebuild cost (${(shell / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' })}) leaves ${(q / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' })} for the fixtures. The proportional way, which the report uses, gives ${((ps.qualifying_pence ?? 0) / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' })}. Which is used is a question for the surveyor and the tax adviser.` };
     })();
   const pricing: Pricing = { bcis, priced_at: days.size === 1 ? [...days][0] ?? null : null, purchase, mixed, unsourced, residual, location_from };
-  // PHASE 159g: what the registers already say, for chapter 9 — shown, never counted.
+  // What the registers already say, for chapter 9 — shown, never counted.
   const leads: RegisterLeads = property === null ? { price_paid: null, site_area: null, tenure: 'No property is chosen for this pack.' } : {
     price_paid: pricePaidSale(d.db, job.business_id, property.id)?.words ?? null,
     site_area: siteAreaFlag(siteAreaOf(d.db, job.business_id, property.id), inputs.gia_milli_m2.value === null ? floorAreaForSite(d.db, job.business_id, property.id) : inputs.gia_milli_m2.value / 1000),
@@ -612,7 +612,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     rebuild_includes: resolve(null, 'rebuild_includes', none),
   };
 
-  // PHASE 159c: each piece of work on the building, on its own cost. The final account is drafted from what the client
+  // Each piece of work on the building, on its own cost. The final account is drafted from what the client
   // said it cost, as evidence of their word; every part of it is the surveyor's, from the final account itself.
   const events = eventsOfProperty(d.db, property?.id ?? null);
   const applies = purchaseApplies(events);
@@ -622,7 +622,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       ? { value: e.cost_pence, source: { kind: 'EVIDENCE', text: e.source === 'ASSESSMENT' ? 'What the client said it cost, at the assessment' : 'What the claim records it cost' } }
       : none;
     const winputs = Object.fromEntries(WORKS_FIELDS.map((f) => [f, resolve(e.id, f, draft(f))])) as unknown as WorksInputs;
-    // PHASE 159k (item 2): the readings' parts, each optional; a part more than its whole stops the work's total.
+    // The readings' parts, each optional; a part more than its whole stops the work's total.
     const parts = Object.fromEntries(WORKS_PART_FIELDS.map((f) => [f, resolve(e.id, f, none)])) as unknown as Record<WorksPartField, Valued>;
     const raw = worksSums(e.id, label, winputs);
     const tooBig = worksPartProblems(label, winputs, parts);
@@ -631,9 +631,9 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   });
   const s33 = money.s33b_aggregation ? s33bDecisions(worksBase.map((w) => ({ id: w.e.id, date: w.e.event_date, parts: w.parts }))) : new Map<string, S33b>();
   const works: WorksView[] = worksBase.map(({ e, label, winputs, parts, base }) => {
-    // PHASE 159i (item 4): this work's own grants (the client's, recorded against it) and its irrecoverable VAT.
+    // This work's own grants (the client's, recorded against it) and its irrecoverable VAT.
     const own = allGrants.filter((g) => g.event_id === e.id && g.paid_to !== 'PAST_OWNER' && payerReduces(g.payer_class, switches).reduces).map((g) => g.amount_pence);
-    // PHASE 159k (item 2, s.33B): repairs on integral features made capital go to the special rate pool, before VAT and grants.
+    // Repairs on integral features made capital go to the special rate pool, before VAT and grants.
     const d33 = s33.get(e.id) ?? { capital: false, words: s33Unchecked(money.s33b_aggregation, winputs, parts) };
     const capital = d33.capital && base.complete && base.direct_pence !== null && base.oncost_pence !== null && parts.works_repairs_if.value !== null
       ? parts.works_repairs_if.value + Number(mulDivRound(BigInt(base.oncost_pence), BigInt(parts.works_repairs_if.value), BigInt(base.direct_pence))) : 0;
@@ -650,7 +650,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     return { event: e, label, inputs: winputs, sums, parts, s33b: { capital_pence: capital, words: d33.words }, long_life_pence, asbestos_pence };
   });
 
-  // PHASE 159d (item 8): the legal check is the purchase's. Failed, with work since, it stops the purchase only.
+  // The legal check is the purchase's. Failed, with work since, it stops the purchase only.
   const purchaseW3 = applies && works.length > 0 && legalVerdictForJob(d.db, job.id, d.now())?.level === 'RED';
 
   return {
@@ -696,7 +696,7 @@ function begin(d: PackDeps, actor: Actor, job_id: string, reason: string, expect
   });
 }
 
-/** PHASE 153g: the same guard for the surveyor's own words (src/modules/survey/pack-words.ts): who may, the reason, a page out of date. */
+/** The same guard for the surveyor's own words (src/modules/survey/pack-words.ts): who may, the reason, a page out of date. */
 export const beginPackChange = begin;
 
 function insertEntry(d: PackDeps, actor: Actor, pack_id: string, line_key: string | null, field: PackField, value: number | null, pool: Pool | null, reason: string,
@@ -704,7 +704,7 @@ function insertEntry(d: PackDeps, actor: Actor, pack_id: string, line_key: strin
   insertSurveyPackEntriesByPackId(d.db, [d.newId(), pack_id, line_key, field, value, pool, actor.id, reason.trim(), d.now(), src.basis, src.ref, src.priced_at, pack_id]);
 }
 
-/** PHASE 159f: the sources a surveyor may give a rate they type (BCIS's own drafts carry theirs). */
+/** The sources a surveyor may give a rate they type (BCIS's own drafts carry theirs). */
 export const RATE_BASES = Object.freeze(['BCIS', 'QS_SCHEDULE', 'CONTRACTOR_INVOICE', 'PRICE_BOOK'] as const);
 export type RateSourceForm = { rate_basis?: string; rate_ref?: string; rate_priced_at?: string };
 
@@ -756,7 +756,7 @@ export function savePackValue(d: PackDeps, actor: Actor, job_id: string, f: { fi
 }
 
 /**
- * PHASE 159f: THE PACK'S BCIS LOCATION — the area the location factor is read for, as the loaded location table names
+ * THE PACK'S BCIS LOCATION — the area the location factor is read for, as the loaded location table names
  * it. Empty puts the UK mean back. The surveyor's, with a reason. The factor is kept with it, so the version says what
  * was used even if the table is imported again.
  */
@@ -776,7 +776,7 @@ export function savePackLocation(d: PackDeps, actor: Actor, job_id: string, f: {
 }
 
 /**
- * PHASE 153e — THE PACK'S EXTRA VALUES: chapter 15's VAT position (one of four) and the amount not reclaimed, and
+ * THE PACK'S EXTRA VALUES: chapter 15's VAT position (one of four) and the amount not reclaimed, and
  * supported living's shared areas from the floor plans. Each the surveyor's, with a reason. Empty: back to not recorded.
  */
 export function savePackExtra(d: PackDeps, actor: Actor, job_id: string, f: { field: string; value: string; reason: string; seq: string }): PackResult {
@@ -827,7 +827,7 @@ export function packDateIso(v: number | null): string | null {
   return /^\d{8}$/.test(s) ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : null;
 }
 
-/** PHASE 157a: one of the cost model's five values (COST_FIELDS). Empty: back to not recorded. */
+/** One of the cost model's five values (COST_FIELDS). Empty: back to not recorded. */
 function saveCostValue(d: PackDeps, actor: Actor, job_id: string, field: CostField, f: { value: string; reason: string; seq: string }): PackResult {
   const raw = f.value.trim();
   let value: number | null = null;
@@ -857,12 +857,12 @@ function saveCostValue(d: PackDeps, actor: Actor, job_id: string, field: CostFie
 }
 
 /**
- * PHASE 159c: A PIECE OF WORK'S COST-LED VALUES, from its final account. Only what differs from the value as it stands
+ * A PIECE OF WORK'S COST-LED VALUES, from its final account. Only what differs from the value as it stands
  * is written, each as its own entry under the one reason. An empty box leaves that value as it is.
  */
 export function saveWorks(d: PackDeps, actor: Actor, job_id: string, f: { event: string; values: Readonly<Partial<Record<WorksField | WorksPartField, string>>>; reason: string; seq: string }): PackResult {
   const parsed: Partial<Record<WorksField | WorksPartField, number>> = {};
-  // PHASE 159k (item 2): the readings' parts are saved the same way, each with the one reason.
+  // The readings' parts are saved the same way, each with the one reason.
   for (const k of [...WORKS_FIELDS, ...WORKS_PART_FIELDS]) {
     const raw = (f.values[k] ?? '').trim();
     if (raw === '') continue;
@@ -908,7 +908,7 @@ function parseLine(f: Omit<LineForm, 'line' | 'reason' | 'seq'>): { ok: true; v:
 export function saveLine(d: PackDeps, actor: Actor, job_id: string, f: LineForm): PackResult {
   const p = parseLine(f);
   if (!p.ok) return { ok: false, why: p.why, field: p.field };
-  // PHASE 159f: a rate typed with its source; a source with no rate typed is refused, so nothing is half-said.
+  // A rate typed with its source; a source with no rate typed is refused, so nothing is half-said.
   const rs = parseRateSource(f);
   if (!rs.ok) return { ok: false, why: rs.why, field: rs.field };
   if (rs.src.basis !== null && p.v.rate === null) return { ok: false, field: 'rate', why: 'Type the rate the source is for.' };

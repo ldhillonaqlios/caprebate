@@ -96,7 +96,7 @@ export const SECTIONS: readonly Section[] = Object.freeze([
  * (00-START-HERE/hub/UI-TIDY-PLAN.md): the menu runs down the left in named groups, so nothing is hidden. Admin's Survey
  * jobs, Calendar and Introducers, Sales's Calendar and Accounting's Introducer fees came out of More into their groups;
  * no section joined or left any login's menu. The verdict for every section is the table "The menus" in
- * 09-app/CAPREBATE-DEVELOPER-SPEC.md, section 2.
+ * 09-app/docs/CAPREBATE-DEVELOPER-SPEC.md, section 2.
  *
  * THE MENU NEVER GRANTS OR REMOVES A PERMISSION. A listed section is still drawn only where its gate admits the login,
  * and a section on no menu answers its address exactly as before.

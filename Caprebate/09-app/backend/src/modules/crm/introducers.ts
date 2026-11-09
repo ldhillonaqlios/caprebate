@@ -5,7 +5,7 @@
  * for the public referral form, src/core/router.ts. The mechanics are the
  * Accountant Referral Network paper, section 5 — 08-monday-doc-exports/
  * 12552691718__Accountant-Referral-Network.md — and every decision below that is
- * not obvious is a row of Part E of 09-app/CAPREBATE-CRM-DISPOSITION.md.
+ * not obvious is a row of Part E of 09-app/docs/CAPREBATE-CRM-DISPOSITION.md.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * AN INTRODUCER IS A FIRM, AND NEVER A USER

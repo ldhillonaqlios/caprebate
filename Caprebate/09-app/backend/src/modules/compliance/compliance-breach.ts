@@ -1,5 +1,5 @@
 /**
- * THE BREACH REGISTER. CRM 8 of 10, 12 September 2026.
+ * THE BREACH REGISTER. CRM 8 of 10.
  *
  * Built to the Personal Data Breach Register and Incident Response Procedure
  * (08-monday-doc-exports/12927581028) — Table A the facts, Table B the decisions,
@@ -441,7 +441,7 @@ export function breachRegister(db: Db, actor: Actor, nowIso: string): { id: stri
   });
 }
 
-/* ------------------------------------------------ the regulator’s answer sheet — a template (dual wording, Phase 132f: the Information Commissioner (from 30 September 2026, the Information Commission)) */
+/* ------------------------------------------------ the regulator’s answer sheet — a template (dual wording, Phase 132f: the Information Commissioner) */
 
 export type SheetLine = { readonly field: string; readonly answer: string };
 export type SheetSection = { readonly title: string; readonly lines: readonly SheetLine[] };
@@ -455,7 +455,7 @@ export const STANDING_MEASURES: readonly SheetLine[] = Object.freeze([
   { field: 'Device encryption', answer: 'NOT ESTABLISHED — state as it is on the day' },
   { field: 'Document-store access logging', answer: 'NOT ESTABLISHED — state as it is on the day' },
   { field: 'Monitored data protection address', answer: 'NOT SET — state as it is on the day' },
-  // Phase 151j, 28 Sep 2026: the second step at sign-in is built; Cyber Essentials is still a readiness pack.
+  // The second step at sign-in is built; Cyber Essentials is still a readiness pack.
   { field: 'MFA / Cyber Essentials', answer: 'Every staff login has a second step. Cyber Essentials is not certified — state as it is on the day' },
 ]);
 

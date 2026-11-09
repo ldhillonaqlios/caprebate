@@ -1,5 +1,5 @@
 /**
- * EMAIL TEMPLATES, MERGED INTO THE OUTBOX. CRM 3 of 10, 11 September 2026.
+ * EMAIL TEMPLATES, MERGED INTO THE OUTBOX. CRM 3 of 10.
  *
  * The table is migration 012's `email_templates`; the pages are
  * src/modules/crm/tasks-pages.ts. ADMIN writes a template; ADMIN and SALES merge one for
@@ -112,7 +112,7 @@ export function tipsOff(text: string): string | null {
 const PLACEHOLDER = /\{\{\s*([^{}]*?)\s*\}\}/g;
 
 /**
- * PHASE 141 — WHY A FREE-TYPED EMAIL IS REFUSED, OR NULL. The same words and shapes a template is refused for: never bank
+ * WHY A FREE-TYPED EMAIL IS REFUSED, OR NULL. The same words and shapes a template is refused for: never bank
  * details, never an invoice (it waits on the invoice-fraud procedure), and nothing that would tip somebody off. Typing an
  * email yourself does not step round a rule a template is held to.
  */
@@ -127,7 +127,7 @@ export function freeTextRefusal(subject: string, body: string): string | null {
 }
 
 /**
- * PHASE 141 — A TEMPLATE MERGED AS PLAIN TEXT, to start a free-typed email from. The same values and the same visible gap
+ * A TEMPLATE MERGED AS PLAIN TEXT, to start a free-typed email from. The same values and the same visible gap
  * for a value nobody recorded; nothing is escaped here because the text goes into a box to be edited, and the page
  * escapes it when drawing it.
  */
@@ -197,7 +197,7 @@ export function activeTemplates(db: Db, actor: Actor): { id: string; label: stri
 
 type Values = { label: string; subject: string; body: string; active: number };
 
-/** PHASE 133e (D4, continued): a refusal names the posted field it is about, where it is about one. */
+/** A refusal names the posted field it is about, where it is about one. */
 function values(input: Fields, stored: Values): { ok: true; value: Values } | { ok: false; why: string; field?: string } {
   const pick = (k: 'label' | 'subject' | 'body'): string => (Object.hasOwn(input, k) ? (input[k] ?? '') : stored[k]).trim();
   const v: Values = {
@@ -269,13 +269,13 @@ export function mergeValues(db: Db, claim_id: string, contact_id: string | null)
     property_address: blank(address),
     claim_reference: blank(c?.claim_ref),
     next_action: blank(next?.title),
-    // PHASE 133c: the date a client reads in a message is a UK date, "31 Dec 2026". The stored value stays ISO.
+    // The date a client reads in a message is a UK date, "31 Dec 2026". The stored value stays ISO.
     due_date: blank(next?.due_on === null || next?.due_on === undefined ? null : ukDate(next.due_on)),
   };
 }
 
 /**
- * PHASE 134 — AN EMAIL'S SUBJECT LEADS WITH THE COMPANY. Lakhbir, 18 September 2026: the client is the company, and a
+ * AN EMAIL'S SUBJECT LEADS WITH THE COMPANY. The owner: the client is the company, and a
  * person reads the company's name first. A merged subject that does not already start with it gets it in front:
  * "Elverton Private Hospital Limited — Documents we still need". Where the company has no name recorded, nothing is
  * invented — the subject is left as merged.
@@ -304,7 +304,7 @@ export function mergeText(text: string, v: MergeValues, subjectLine: boolean): {
 
 export type QueueResult =
   | { readonly ok: true; readonly id: string; readonly gaps: readonly string[] }
-  /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */
+  /** `field` is the posted name a refusal is about, where it is about one. */
   | { readonly ok: false; readonly why: string; readonly field?: string };
 
 /**
@@ -345,7 +345,7 @@ export function queueTemplate(d: TemplateDeps, actor: Actor, claim_id: string, i
 }
 
 /**
- * PHASE 133a — THE GATE OF THE EMAIL TEMPLATES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+ * THE GATE OF THE EMAIL TEMPLATES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
  * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
  * every menu link for every login, so a gate that drifted from its route fails there.
  */

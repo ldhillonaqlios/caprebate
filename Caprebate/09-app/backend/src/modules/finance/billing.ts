@@ -1,7 +1,7 @@
 /**
- * THE CLIENTS AREA FOR ACCOUNTING — RAISE, CHASE, RECORD PAYMENT. Phase 151b, 25 September 2026.
+ * THE CLIENTS AREA FOR ACCOUNTING — RAISE, CHASE, RECORD PAYMENT.
  *
- * WHAT WAS DECIDED. Lakhbir, Word answer 40 (closed 24 September 2026): "I think best the accounting team have access to
+ * WHAT WAS DECIDED. the owner, Word answer 40: "I think best the accounting team have access to
  * this specific area so they can get notified to raise the invoice and chase, and also update once payment has been
  * received". Closed as: Accounting should see the clients area, so it is told to raise the invoice, chases it and
  * records payment.
@@ -158,7 +158,7 @@ export function recordChase(
  * THE SCREENS
  * ================================================================== */
 
-/** UI TIDY PHASE 17 (3 October 2026): a client with an invoice overdue shows it as a red label, as every other list does. */
+/** A client with an invoice overdue shows it as a red label, as every other list does. */
 function listPage(nav: Safe, rows: ReturnType<typeof billingClients>): string {
   return page({
     title: 'Clients', nav, wide: true,

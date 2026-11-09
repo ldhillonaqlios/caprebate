@@ -6,7 +6,7 @@
  * WHY THIS EXISTS
  *
  * CRM 4 of 10 recorded fourteen document types from the CRM specification's list with no receipt policy (migration 013;
- * 09-app/CAPREBATE-CRM-DISPOSITION.md row E34). Choosing a strip is the data protection officer's decision, asked in
+ * 09-app/docs/CAPREBATE-CRM-DISPOSITION.md row E34). Choosing a strip is the data protection officer's decision, asked in
  * CAPREBATE QUESTIONS under exactly this title:
  *   "Which receipt strip should each new document type carry before anyone may upload one?"
  * Whatever can be built before the person answers is built and switched off, so the officer approves or amends a

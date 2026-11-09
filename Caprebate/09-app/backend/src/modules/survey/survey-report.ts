@@ -1,7 +1,7 @@
 /**
  * THE CLIENT'S SURVEY REPORT — the approved version, drawn for the client: as a page, and as a PDF. 2 October 2026.
  *
- * Lakhbir: "once the surveyor approves it gets sent to the client and they would want something visually appealing";
+ * the owner: "once the surveyor approves it gets sent to the client and they would want something visually appealing";
  * the design approved as a mock-up the same day ("Yes, build it as shown").
  *
  * ONE SET OF CONTENTS, TWO DRAWINGS. `reportModel` reads an approved version (src/modules/survey/pack-approve.ts, the JSON kept with
@@ -16,9 +16,8 @@
  *   4  the legal check, and what happens next
  *   5  the surveyor's declaration, their name and RICS number, the fingerprint, and how the report was made
  *
- * Page 1 also shows the site plan, when the version has one (stage 6, 2 Oct 2026): the client's building and the buildings
+ * Page 1 also shows the site plan, when the version has one: the client's building and the buildings
  * round it, from Ordnance Survey's free maps (src/modules/claims/site-plan.ts). The site boundary (INSPIRE) is never in it
- * (Lakhbir's rule, 1 Oct 2026).
  */
 import { propertyLine } from './survey-pack.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
@@ -43,12 +42,12 @@ export type ReportRow = {
   readonly cost: string; readonly qpct: string; readonly qpct_chip: Chip; readonly qualifying: string;
   /** This item's share of the qualifying total, as a whole percentage, for its bar. */
   readonly share: number;
-  /** PHASE 153e: seen on site, or from documents. Null in a version approved before. */
+  /** Seen on site, or from documents. Null in a version approved before. */
   readonly seen: string | null;
 };
 
 export type ReportModel = {
-  /** PHASE 160d: drawn without long dashes, because the version says so (`words: 'plain'`); an older version is drawn as made. */
+  /** Drawn without long dashes, because the version says so (`words: 'plain'`); an older version is drawn as made. */
   readonly plain_words?: boolean;
   readonly company: string;
   readonly property: string;
@@ -72,26 +71,26 @@ export type ReportModel = {
   readonly automation_note: string;
   /** 2 Oct 2026: how the building was inspected, and what the client sent (src/modules/survey/survey-evidence.ts). Null in a version approved before. */
   readonly inspection: string | null;
-  /** PHASE 153e: the assumptions the version was approved on (the planning assumption). Empty in a version approved before. */
+  /** The assumptions the version was approved on (the planning assumption). Empty in a version approved before. */
   readonly assumptions: readonly string[];
   /** 2 Oct 2026, stage 6: the site plan from Ordnance Survey's free maps, as approved; null when the version has none. */
   readonly site_plan: SitePlan | null;
-  /** PHASE 153g: the surveyor's chapters (5, 8, 11, 14, 16 to 20, 22) as approved. Empty in a version approved before. */
+  /** The surveyor's chapters (5, 8, 11, 14, 16 to 20, 22) as approved. Empty in a version approved before. */
   readonly chapters: readonly ReportChapter[];
-  /** PHASE 159c: each spend on the building, with its own figure, where there is work since. Empty otherwise. */
+  /** Each spend on the building, with its own figure, where there is work since. Empty otherwise. */
   readonly events: readonly { readonly label: string; readonly qualifying: string; readonly main: string; readonly special: string; readonly note: string }[];
-  /** PHASE 159c: what the cover's figure is for, where it is more than one purchase. Null otherwise (the cover says the share). */
+  /** What the cover's figure is for, where it is more than one purchase. Null otherwise (the cover says the share). */
   readonly headline_note: string | null;
-  /** PHASE 159c: the opening of section 01, which says how the figure was worked out. */
+  /** The opening of section 01, which says how the figure was worked out. */
   readonly method_lede: string;
-  /** PHASE 159d (item 6): which way each part of the claim goes in, as approved. Empty in a version approved before. */
+  /** Which way each part of the claim goes in, as approved. Empty in a version approved before. */
   readonly routes: readonly { readonly label: string; readonly words: string }[];
-  /** PHASE 159e (item 6): each part's year, its allowances and the pools carried on, from the version and the facts it
+  /** Each part's year, its allowances and the pools carried on, from the version and the facts it
    *  was sent on (src/modules/assessment/allowances.ts) — the same figures as the return entries. */
   readonly allowances: AllowanceWords;
-  /** PHASE 159f (item 4): where each rate comes from, in full — the short chip in the table, the whole source here. */
+  /** Where each rate comes from, in full — the short chip in the table, the whole source here. */
   readonly rate_sources: readonly { readonly label: string; readonly words: string }[];
-  /** PHASE 159f (L12): true where any rate is a test rate (invented figures, not BCIS): the report says so at the top. */
+  /** True where any rate is a test rate (invented figures, not BCIS): the report says so at the top. */
   readonly test_rates: boolean;
 };
 
@@ -103,11 +102,11 @@ type SnapEvents = {
   purchase_w3?: boolean;
   purchase: { qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null } | null;
   works: { label: string; inputs: Record<string, number | null>; qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null; repairs_pence: number | null;
-    /** PHASE 159l (item 5): each value's source, as approved. A version approved before has none. */
+    /** Each value's source, as approved. A version approved before has none. */
     input_sources?: Record<string, Source | null> }[];
 };
 
-/** PHASE 159l (item 5, L20): each piece of work's final-account values, in the order the pack asks them. */
+/** Each piece of work's final-account values, in the order the pack asks them. */
 const WORK_VALUE_LABELS: readonly (readonly [string, string])[] = [
   ['works_total', 'the final account, in all'], ['works_main', 'plant and machinery (main pool)'], ['works_special', 'integral features (special rate pool)'],
   ['works_bwic', 'builder’s work for that plant'], ['works_demolition', 'taking out old plant'], ['works_other', 'other building work, which does not qualify'],
@@ -143,7 +142,7 @@ function clock(iso: string): string {
   return new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
 }
 
-/** PHASE 159f (item 4): a rate's own source as a label — BCIS, a QS schedule, an invoice, a price book, a test rate, or no
+/** A rate's own source as a label — BCIS, a QS schedule, an invoice, a price book, a test rate, or no
  *  source — never just "Surveyor". The full reference is listed under "Where each rate comes from". */
 function rateChip(s: Source | null): Chip {
   const b = s?.basis ?? null;
@@ -160,7 +159,7 @@ function rateSourceWords(s: Source | null): string {
   if (b === null || b === undefined) return 'No source recorded.';
   const loc = b.location === undefined || b.location === null ? '' : `, location factor ${b.location.factor.toFixed(2)}${b.location.area === null ? ' (the UK mean)' : ` (${b.location.area})`}`;
   const ix = b.index === undefined || b.index === null || b.index.factor === null ? '' : `, indexed ×${b.index.factor.toFixed(4)}`;
-  // PHASE 159l (item 6): a version approved before says BCIS's quarter as "at 2026-01"; it is read as "at January 2026".
+  // A version approved before says BCIS's quarter as "at 2026-01"; it is read as "at January 2026".
   const ref = b.ref.replace(/ at (\d{4}-(?:0[1-9]|1[0-2]))(?![\d-])/g, (_m, q: string) => ` at ${baseWords(q)}`);
   return `${BASIS_WORDS[b.kind]}: ${ref}${loc}${ix}${b.priced_at === null ? '' : `, priced at ${longDate(b.priced_at)}`}.`;
 }
@@ -192,7 +191,7 @@ function inspectionWords(i: Snapshot['inspection'] | undefined): string | null {
 }
 
 /**
- * PHASE 160d, 19 October 2026 — A REPORT IS DRAWN IN THE WORDS ITS VERSION WAS MADE IN. The report is drawn again from its
+ * A REPORT IS DRAWN IN THE WORDS ITS VERSION WAS MADE IN. The report is drawn again from its
  * approved version every time it is opened, so changing the words here would change how an approved or signed-off
  * version reads. A version approved from now on carries `words: 'plain'` and is drawn without long dashes (each becomes
  * a colon or a comma, src/shared/plain-dashes.ts); one approved before carries nothing and is drawn exactly as it was, here,
@@ -214,13 +213,13 @@ function plainStrings<T>(v: T): T {
 }
 
 function reportModelAsMade(x: Snapshot, fingerprint: string, ctx: ReturnContext): ReportModel {
-  // PHASE 159c: a version with work since keeps each spend (`events`); `sums` is their total. The section 562 sum below is
+  // A version with work since keeps each spend (`events`); `sums` is their total. The section 562 sum below is
   // the purchase's own, so it reads the purchase's figures; the cover reads the total.
   const ev = (x as { events?: SnapEvents }).events;
   const total = x.sums;
   const s = ev === undefined ? total : { ...total,
     qualifying_pence: ev.purchase?.qualifying_pence ?? null, main_pool_pence: ev.purchase?.main_pool_pence ?? null, special_pool_pence: ev.purchase?.special_pool_pence ?? null };
-  // PHASE 153a: a version approved before grants came off has no `grants`; one with grants that took nothing off reads as before.
+  // A version approved before grants came off has no `grants`; one with grants that took nothing off reads as before.
   const gr = (x as { grants?: Snapshot['grants'] }).grants;
   const off = gr !== undefined && gr.reduction_pence !== null && gr.reduction_pence > 0 ? gr : null;
   const beforeShare = s.rebuild_pence === null || s.rebuild_pence === 0 || s.elements_qualifying_pence === null ? null
@@ -266,7 +265,7 @@ function reportModelAsMade(x: Snapshot, fingerprint: string, ctx: ReturnContext)
     ],
     flow: [
       { label: 'Price paid', value: poundsWords(iv.price_paid_pence.value), note: 'what you paid' },
-      // PHASE 153e: VAT the client could not reclaim, where the version counted any. A version approved before has none.
+      // VAT the client could not reclaim, where the version counted any. A version approved before has none.
       ...(((x as { vat?: { counted_pence: number } }).vat?.counted_pence ?? 0) > 0
         ? [{ label: 'Plus VAT not reclaimed', value: `+ ${poundsWords((x as { vat?: { counted_pence: number } }).vat?.counted_pence ?? 0)}`, note: 'part of what you spent' }] : []),
       { label: 'Less bare land', value: `– ${poundsWords(iv.land_pence.value)}`, note: 'the land alone' },
@@ -321,7 +320,7 @@ function reportModelAsMade(x: Snapshot, fingerprint: string, ctx: ReturnContext)
     chapters: ((x as { chapters?: readonly ReportChapter[] }).chapters ?? []).map((c) => ({ n: c.n, title: c.title, applies: c.applies, not_applies_words: c.not_applies_words,
       rows: c.rows.map((r) => ({ label: r.label, value: r.value, missing: r.missing })), items: c.items.map((i) => ({ label: i.label, detail: i.detail })) })),
     ...eventsPart(ev, purchaseLede(x)),
-    routes: ((x as { routes?: readonly { label: string; route: string; words: string }[] }).routes ?? []).map((r) => ({ label: r.label === 'The claim' ? 'Your claim' : r.label, words: ukDatesIn(r.words) })), // PHASE 159j (L17): the PDF as the page
+    routes: ((x as { routes?: readonly { label: string; route: string; words: string }[] }).routes ?? []).map((r) => ({ label: r.label === 'The claim' ? 'Your claim' : r.label, words: ukDatesIn(r.words) })), // The PDF as the page
     allowances: allowanceWords(allowancesFor(x, ctx)),
     rate_sources: [{ label: 'The whole-building rate', words: rateSourceWords(iv.building_rate_pence.source) },
       ...live.filter((l) => l.rate_pence.value !== null).map((l) => ({ label: l.label, words: rateSourceWords(l.rate_pence.source) }))],
@@ -330,9 +329,9 @@ function reportModelAsMade(x: Snapshot, fingerprint: string, ctx: ReturnContext)
 }
 
 /**
- * PHASE 159f (C19, item 6): THE METHOD, IN WORDS THAT MATCH THE ARITHMETIC. Every rate is priced at one day (the purchase
+ * THE METHOD, IN WORDS THAT MATCH THE ARITHMETIC. Every rate is priced at one day (the purchase
  * date where the index reaches it), so the report says that day, not "build again today"; and it names the way section
- * 562's just apportionment is done. A version approved before Phase 159f keeps the words it was approved with.
+ * 562's just apportionment is done. A version approved keeps the words it was approved with.
  */
 function purchaseLede(x: Snapshot): string {
   const p = (x as { pricing?: { priced_at: string | null; purchase: string | null } }).pricing;
@@ -343,11 +342,11 @@ function purchaseLede(x: Snapshot): string {
     `The building’s price is shared out as the cost to build each part is. Every cost is priced at ${day}.`;
 }
 
-/** PHASE 159c: each spend on the building, and what the cover's figure is for. A version with no work since: nothing. */
+/** Each spend on the building, and what the cover's figure is for. A version with no work since: nothing. */
 function eventsPart(ev: SnapEvents | undefined, lede: string = PURCHASE_LEDE): Pick<ReportModel, 'events' | 'headline_note' | 'method_lede'> & Partial<Pick<ReportModel, 'flow' | 'sum_words'>> {
   if (ev === undefined) return { events: [], headline_note: null, method_lede: lede };
   const rows = [
-    // PHASE 159d (item 8): a purchase that failed the legal check is named, with no figure.
+    // A purchase that failed the legal check is named, with no figure.
     ...(ev.purchase_w3 === true ? [{ label: 'The purchase', qualifying: '£0', main: '£0', special: '£0',
       note: 'Not claimed. The purchase does not pass the second-hand fixtures rules (section 187A), so only the work done since is claimed.' }] : []),
     ...(ev.purchase_applies && ev.purchase !== null ? [{ label: 'The purchase', qualifying: poundsWords(ev.purchase.qualifying_pence), main: poundsWords(ev.purchase.main_pool_pence),
@@ -548,7 +547,7 @@ function fit(s: string, font: PdfFont, size: number, maxW: number): string {
 }
 
 /**
- * PHASE 160d: the canvas a version made from now on is drawn on. Every string handed to one of its methods (the words of a
+ * The canvas a version made from now on is drawn on. Every string handed to one of its methods (the words of a
  * line, a heading, a cell) loses its long dashes on the way in; a font's name has none, so it passes unchanged. An older
  * version gets the canvas itself, untouched.
  */
@@ -564,7 +563,7 @@ function plainCanvas(plain: boolean, c: Canvas): Canvas {
 }
 
 export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number } {
-  // PHASE 160d: a version made from now on also loses the long dashes in the words written here, not only the model's.
+  // A version made from now on also loses the long dashes in the words written here, not only the model's.
   const c = plainCanvas(m.plain_words === true, new Canvas(fit(`Cap Rebate · ${REPORT_TITLE} · ${m.company} · version ${String(m.version)}`, 'Helvetica', 7.5, W - 70)));
 
   /* ---------------------------------------------------------- 1 · the cover */
@@ -616,7 +615,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
   c.text(L + 66, 546, `Approved by the surveyor on ${m.approved_on}. Version ${String(m.version)}.`, 'Helvetica-Bold', 10.5, C.ink);
   c.text(L + 66, 561, 'Each figure says where it came from. Every figure the surveyor set carries their name.', 'Helvetica', 9.5, C.body);
   c.text(L + 66, 577, `Report reference (fingerprint): ${m.fingerprint.slice(0, 8)}…${m.fingerprint.slice(-7)}`, 'Helvetica', 8.5, C.mut);
-  // 2 Oct 2026, stage 6: the site plan, from Ordnance Survey's free maps, when the version has one.
+  // The site plan, from Ordnance Survey's free maps, when the version has one.
   if (m.site_plan !== null) {
     const top = 612;
     const side = 150; // the box ends at the page's bottom margin (BOTTOM, 778)
@@ -634,7 +633,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
   /* ---------------------------------------------------------- 2 · how it is worked out */
   c.page();
   c.heading('01', 'How the figure is worked out');
-  // PHASE 159f (L12): a report with any test rate says so before anything else in the method.
+  // A report with any test rate says so before anything else in the method.
   if (m.test_rates) c.para('TEST RATES. Some rates in this report are invented test figures, not BCIS. It is not a real valuation.', { size: 11, color: C.ink, after: 8 });
   c.para(m.method_lede, { size: 11, color: C.ink, after: 12 });
   const boxW = W / m.flow.length;
@@ -667,7 +666,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     poolLines[i]?.forEach((line, j) => c.text(x + 12, c.y + 38 + j * 13, line, 'Helvetica', 9.5, C.body));
   });
   c.y += ph + 22;
-  // PHASE 159c: each spend on the building, where there is work since.
+  // Each spend on the building, where there is work since.
   if (m.events.length > 0) {
     c.need(40);
     c.text(L, c.y, 'Each spend on the building', 'Times-Bold', 13, C.ink);
@@ -757,7 +756,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     c.y += 6;
     c.para(`${m.taken_out.join('; ')}. The surveyor took each out with a reason, kept with this report.`, { size: 8.5, color: C.mut });
   }
-  // PHASE 159f (item 4): where each rate comes from, in full.
+  // Where each rate comes from, in full.
   c.need(40);
   c.y += 10;
   c.text(L, c.y, 'Where each rate comes from', 'Times-Bold', 13, C.ink);
@@ -792,7 +791,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     c.ops.push({ k: 'line', x1: L, y1: c.y, x2: R, y2: c.y, color: C.line, lw: 0.5 });
   }
   c.y += 16;
-  // PHASE 159d (item 6): which way each part of the claim goes in.
+  // Which way each part of the claim goes in.
   if (m.routes.length > 0) {
     c.need(40);
     c.text(L, c.y, 'How each part goes in', 'Times-Bold', 13, C.ink);
@@ -800,7 +799,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     for (const r of m.routes) c.para(`${r.label}. ${r.words}`, { size: 9.5, after: 4 });
     c.y += 8;
   }
-  // PHASE 159e (item 6): each part's year and allowances, then year by year.
+  // Each part's year and allowances, then year by year.
   c.need(40);
   c.text(L, c.y, 'The allowances, part by part', 'Times-Bold', 13, C.ink);
   c.y += 8;
