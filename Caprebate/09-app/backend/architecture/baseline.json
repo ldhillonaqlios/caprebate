@@ -161,12 +161,6 @@
     "src/modules/claims/data-borrowed.ts : research_runs",
     "src/modules/compliance/data-borrowed.ts : outbox",
     "src/modules/compliance/data-borrowed.ts : register_records",
-    "src/modules/crm/data-borrowed.ts : inbound_email",
-    "src/modules/crm/data-borrowed.ts : inbound_email_filings",
-    "src/modules/crm/data-borrowed.ts : outbox",
-    "src/modules/crm/data-borrowed.ts : whatsapp_import_lines",
-    "src/modules/crm/data-borrowed.ts : whatsapp_imports",
-    "src/modules/crm/data-borrowed.ts : whatsapp_messages",
     "src/modules/survey/data-borrowed.ts : video_meetings"
    ],
    "portal": [

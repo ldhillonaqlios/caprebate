@@ -51,8 +51,11 @@ import { keysView } from '../admin/index.ts';
 import { repliesStale } from './inbound-email.ts';
 import { listsToImport } from '../admin/index.ts';
 import { listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole } from '../../core/index.ts';
-import { getDocumentsCountByBusinessIdRole, getOutboxXByKindLeadId } from './data-borrowed.ts';
+import { getDocumentsCountByBusinessIdRole } from './data-borrowed.ts';
 import { getContactsFullNamePhoneByBusinessId } from './data.ts';
+import type { Db, Param, Row } from '../../core/index.ts';
+import { getOutboxXByKindLeadIdBusinessId } from '../../integrations/index.ts';
+import { getLeadsBusinessIdById } from './data.ts';
 
 export type DashView = 'sales' | 'accounting' | 'surveying' | 'admin';
 
@@ -404,4 +407,13 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
     [todayRow(actor, app, now), todayActivities(app, actor)],
     [...jobsRow(actor, app), calendarCard(app, actor, view, q.week, q.done)],
   )}`;
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function getOutboxXByKindLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  // An email to the lead, or to its company (the lead's business_id; none when the lead has no company or is not there).
+  const [leadId = null, ofLead = null] = params;
+  const company = getLeadsBusinessIdById<{ business_id: Param }>(db, [ofLead])?.business_id ?? null;
+  return getOutboxXByKindLeadIdBusinessId<T>(db, [leadId, company]);
 }

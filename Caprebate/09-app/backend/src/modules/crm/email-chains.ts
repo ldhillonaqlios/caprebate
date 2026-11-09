@@ -26,8 +26,12 @@ import { SENT_SECRET_KINDS } from '../../integrations/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { emailsReadUntil } from './messages.ts';
 import { getOutboxCOALESCEThreadKeyKById } from '../../integrations/index.ts';
-import { listInboundEmailIdReceivedAt, listOutboxIdCreatedAtByBusinessId, listOutboxIdCreatedAtByLeadIdBusinessId } from './data-borrowed.ts';
+
 import { listContactsEByBusinessIdEmail } from './data.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { namesByIds } from '../../core/index.ts';
+import { listInboundEmailIdReceivedAtContactIdByBusinessId, listOutboxIdCreatedAtWrittenByByBusinessId, listOutboxIdCreatedAtWrittenByByLeadIdBusinessId } from '../../integrations/index.ts';
+import { byId, idsOf, listClientMessagesIdCreatedAtByIds, listContactsIdFullNameByIds, lookUp } from './data.ts';
 
 export type ChainEmail = {
   readonly id: string; readonly at: string; readonly when: string; readonly ours: boolean;
@@ -128,4 +132,24 @@ export function emailChains(db: Db, actor: Actor, who: { business_id: string | n
     });
   }
   return chains.sort((a, b) => (a.last_at > b.last_at ? -1 : a.last_at < b.last_at ? 1 : 0));
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listOutboxIdCreatedAtByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listOutboxIdCreatedAtWrittenByByBusinessId<Row & { written_by: unknown }>(db, params);
+  const name = namesByIds(db, rows.map((r) => r.written_by));
+  return rows.map(({ written_by, ...r }) => ({ ...r, writer: name(written_by) })) as unknown as T[];
+}
+export function listOutboxIdCreatedAtByLeadIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listOutboxIdCreatedAtWrittenByByLeadIdBusinessId<Row & { written_by: unknown }>(db, params);
+  const name = namesByIds(db, rows.map((r) => r.written_by));
+  return rows.map(({ written_by, ...r }) => ({ ...r, writer: name(written_by) })) as unknown as T[];
+}
+export function listInboundEmailIdReceivedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listInboundEmailIdReceivedAtContactIdByBusinessId<Row & { contact_id: unknown; client_message_id: unknown }>(db, params);
+  const contacts = byId(listContactsIdFullNameByIds<{ id: string; full_name: unknown }>(db, [idsOf(rows.map((r) => r.contact_id))]));
+  const read = byId(listClientMessagesIdCreatedAtByIds<{ id: string; created_at: unknown }>(db, [idsOf(rows.map((r) => r.client_message_id))]));
+  return rows.map(({ contact_id, client_message_id, ...e }) => ({ ...e, contact: lookUp(contacts, contact_id)?.full_name ?? null,
+    read_at: lookUp(read, client_message_id)?.created_at ?? null })) as unknown as T[];
 }

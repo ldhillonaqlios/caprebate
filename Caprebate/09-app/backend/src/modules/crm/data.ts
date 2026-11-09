@@ -1118,6 +1118,13 @@ export function listBookingsIdByIdChannelOverlap<T extends Row = Row>(db: Db, pa
     WHERE o.id <> ? AND o.channel = 'video' AND o.cancelled_at IS NULL AND o.starts_at IS NOT NULL AND o.ends_at IS NOT NULL
     AND o.starts_at < ? AND o.ends_at > ?`, params);
 }
+/** The companies the given ids name, for a company's name in place of a join to businesses. */
+export function listBusinessesIdNameByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT b.id, b.name FROM businesses b WHERE b.id IN (SELECT value FROM json_each(?))', params);
+}
+export function listClientMessagesIdCreatedAtByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT m.id, m.created_at FROM client_messages m WHERE m.id IN (SELECT value FROM json_each(?))', params);
+}
 
 // HELPERS FOR A SPLIT JOIN (Phase 161l1): no SQL; used where the CRM puts its rows and another area's together.
 /** The ids a list of rows names, for a lookup by ids (SELECT ... WHERE id IN (SELECT value FROM json_each(?))). */

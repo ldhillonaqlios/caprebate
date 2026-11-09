@@ -68,7 +68,7 @@ import { listBookingChangesAtFromStartsAtByBookingId, listClientTasksQuestionCre
 import { listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId } from '../finance/index.ts';
 import { listSurveyorJobsIdBusinessIdByClaimId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from '../survey/index.ts';
 import { getEngagementsLetterStateSignedAtByBusinessId2, getPropertiesIdBusinessIdById, listClaimStageMovesAtKindByClaimId, listDocumentEventsAtContractStepByDocId } from '../claims/index.ts';
-import { getClaimsIdClaimRefById4, listClaimsIdClaimRefByBusinessId4, listClaimsIdClaimRefByPropertyId, listOutboxCreatedAtKindByBusinessId, listOutboxCreatedAtKindByLeadIdBusinessId } from './data-borrowed.ts';
+import { getClaimsIdClaimRefById4, listClaimsIdClaimRefByBusinessId4, listClaimsIdClaimRefByPropertyId } from './data-borrowed.ts';
 import { listClientMessageFilesCreatedAtDirectionByMessageIdJO, listClientMessageFilesCreatedAtDirectionByMessageIdJO2, listInternalNotesCreatedAtBodyByBusinessId, listInternalNotesCreatedAtBodyByBusinessIdClaimId, listInternalNotesCreatedAtBodyByPropertyIdClaimId, listStaffTasksIdTitleByBusinessIdLeadId, listStaffTasksIdTitleByClaimId, listStaffTasksIdTitleByLeadId, listStaffTasksIdTitleByPropertyIdClaimId } from './data-borrowed.ts';
 import { listAutomationRunsAtOutcomeByBusinessIdClaimId, listAutomationRunsAtOutcomeByClaimId, listAutomationRunsAtOutcomeByLeadId } from './data.ts';
 import type { Param, Row } from '../../core/index.ts';
@@ -78,6 +78,9 @@ import { listClaimMilestonesRecordedAtMilestoneRecordedByByClaimId, listClaimSta
 import { listInvoiceCreditNotesRecordedAtBasisRecordedByByInvoiceId, listInvoicePaymentsRecordedAtVoidedAtRecordedByByInvoiceId, listInvoicesIdByBusinessIdWithoutClaim, listInvoicesIdKindRaisedByByClaimId } from '../finance/index.ts';
 import { listSurveyorCommitmentsCommittedAtJobIdSurveyorIdByClaimId } from '../survey/index.ts';
 import { idsOf } from './data.ts';
+import { listOutboxCreatedAtKindClaimIdByBusinessId, listOutboxCreatedAtKindClaimIdByLeadIdBusinessId } from '../../integrations/index.ts';
+import { listClaimsIdClaimRefStageByIds } from '../claims/index.ts';
+import { byId, listContactsIdFullNameByIds, lookUp } from './data.ts';
 
 export type TimelineSubject = { readonly kind: 'organisation' | 'property' | 'claim' | 'lead'; readonly id: string };
 
@@ -714,4 +717,21 @@ export function listSurveyorCommitmentsCommittedAtJobIdByClaimId<T extends Row =
   const rows = listSurveyorCommitmentsCommittedAtJobIdSurveyorIdByClaimId<Row & { surveyor_id: unknown }>(db, params);
   const name = namesByIds(db, rows.map((r) => r.surveyor_id));
   return rows.map(({ surveyor_id, ...r }) => ({ ...r, who: name(surveyor_id) })) as unknown as T[];
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listOutboxCreatedAtKindByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return outboxLines(db, listOutboxCreatedAtKindClaimIdByBusinessId(db, params)) as unknown as T[];
+}
+export function listOutboxCreatedAtKindByLeadIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return outboxLines(db, listOutboxCreatedAtKindClaimIdByLeadIdBusinessId(db, params)) as unknown as T[];
+}
+/** The timeline's lines for emails sent: the claim's reference, the writer's name and the person it went to, each null when not there. */
+function outboxLines(db: Db, rows: readonly { created_at: unknown; kind: unknown; subject: unknown; sent_at: unknown; claim_id: unknown; written_by: unknown; contact_id: unknown }[]): Row[] {
+  const claims = byId(listClaimsIdClaimRefStageByIds<{ id: string; claim_ref: unknown }>(db, [idsOf(rows.map((r) => r.claim_id))]));
+  const contacts = byId(listContactsIdFullNameByIds<{ id: string; full_name: unknown }>(db, [idsOf(rows.map((r) => r.contact_id))]));
+  const name = namesByIds(db, rows.map((r) => r.written_by));
+  return rows.map((o) => ({ created_at: o.created_at, kind: o.kind, subject: o.subject, sent_at: o.sent_at, claim_ref: lookUp(claims, o.claim_id)?.claim_ref ?? null,
+    who: name(o.written_by), to_name: lookUp(contacts, o.contact_id)?.full_name ?? null }));
 }

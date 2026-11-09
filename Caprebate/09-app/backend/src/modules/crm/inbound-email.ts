@@ -51,9 +51,13 @@ import type { SecretStore } from '../../core/index.ts';
 import { redactSecrets } from '../../core/index.ts';
 import { STATE_WORDS } from './email-chains.ts';
 import { getInboundBounceNoticesIdByMailboxUid, getInboundEmailFileSavesIdByInboundEmailFileId, getInboundEmailFilesIdPartNoById, getInboundEmailIdByMailboxUid, getInboundEmailIdFromAddressByIdOutcome, getInboundEmailN, getInboundEmailXByMailboxUid, getMailboxReadsLastOkAtLastFailedById, getMailboxWatermarkUidById, getOutboxIdBusinessIdByProviderRefSentAt, getOutboxIdByProviderRefSentAt, insertInboundBounceNotices, insertInboundEmail, insertInboundEmailFileSaves, insertInboundEmailFiles, insertInboundEmailFilings, insertInboundEmailFilings2, insertMailboxReads, insertMailboxWatermark, insertMailboxWatermarkByUid, listInboundEmailFilesIdPartNoByClientMessageId, listInboundEmailFilesIdReceivedAtByInboundEmailIdOutcome, listInboundEmailIdFromAddressByOutcomeBusinessId } from '../../integrations/index.ts';
-import { listInboundEmailUidAt, listOutboxAtToEmailByKind } from './data-borrowed.ts';
+
 import { getEmailSenderA } from '../admin/index.ts';
 import { getBusinessesIdById, getBusinessesSById, getContactsIdByBusinessId, insertClientMessageFiles, insertClientMessages2, insertClientMessages3 } from './data.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { namesByIds } from '../../core/index.ts';
+import { listInboundEmailUidAtBusinessIds, listOutboxAtToEmailBusinessIdByKind } from '../../integrations/index.ts';
+import { byId, idsOf, listBusinessesIdNameByIds, lookUp } from './data.ts';
 
 export type InboundDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -503,4 +507,23 @@ export async function readRepliesIfDue(app: App, force = false): Promise<ReadRes
     lastOutcome.set(app, { at: app.now(), ok: false, words: `Could not read the inbox: ${redactSecrets(e instanceof Error ? e.message : String(e)).slice(0, 160)}` });
     return null;
   }
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listOutboxAtToEmailByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listOutboxAtToEmailBusinessIdByKind<{ at: unknown; to_email: unknown; business_id: unknown; subject: unknown; sent_at: unknown; send_requested: unknown; last_error: unknown; provider_ref: unknown }>(db, params);
+  const companies = byId(listBusinessesIdNameByIds<{ id: string; name: unknown }>(db, [idsOf(rows.map((r) => r.business_id))]));
+  return rows.map((o) => ({ at: o.at, to_email: o.to_email, company: lookUp(companies, o.business_id)?.name ?? null, subject: o.subject, sent_at: o.sent_at,
+    send_requested: o.send_requested, last_error: o.last_error, provider_ref: o.provider_ref })) as unknown as T[];
+}
+export function listInboundEmailUidAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listInboundEmailUidAtBusinessIds<{ uid: unknown; at: unknown; from_address: unknown; subject: unknown; outcome: unknown; queue_reason: unknown; matched: unknown;
+    ours_business_id: unknown; direct_business_id: unknown; filed_business_id: unknown; filed_by: unknown; rule: unknown }>(db, params);
+  const companies = byId(listBusinessesIdNameByIds<{ id: string; name: unknown }>(db, [idsOf(rows.flatMap((r) => [r.ours_business_id, r.direct_business_id, r.filed_business_id]))]));
+  const company = (id: unknown): unknown => lookUp(companies, id)?.name ?? null;
+  const name = namesByIds(db, rows.map((r) => r.filed_by));
+  return rows.map((e) => ({ uid: e.uid, at: e.at, from_address: e.from_address, subject: e.subject, outcome: e.outcome, queue_reason: e.queue_reason, matched: e.matched,
+    ours_company: company(e.ours_business_id), filed_on: company(e.direct_business_id) ?? company(e.filed_business_id), by: name(e.filed_by), rule: e.rule,
+    direct: company(e.direct_business_id) })) as unknown as T[];
 }

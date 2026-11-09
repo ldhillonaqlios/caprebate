@@ -25,11 +25,17 @@ import * as DASHBOARD from '../../src/modules/crm/dashboard.ts';
 import * as ROUTES from '../../src/modules/crm/routes.ts';
 import * as COMMUNICATION from '../../src/modules/crm/communication.ts';
 import * as VIDEO from '../../src/modules/crm/video-calls.ts';
+import * as STAFF_DASHBOARD from '../../src/modules/crm/staff-dashboard.ts';
+import * as INBOUND from '../../src/modules/crm/inbound-email.ts';
+import * as EMAIL_CHAINS from '../../src/modules/crm/email-chains.ts';
+import * as WHATSAPP_IMPORT from '../../src/modules/crm/whatsapp-import.ts';
+import * as WHATSAPP from '../../src/modules/crm/whatsapp.ts';
+import * as WHATSAPP_PAGE from '../../src/modules/crm/whatsapp-page.ts';
 
 /** The function the CRM now calls by this name: still in its borrowed file, moved to the owner's front door, or split
  * in the CRM file that calls it. */
 function from(name: string): Call {
-  for (const space of [B, SURVEY, INTEGRATIONS, TIMELINE, INTRODUCERS, PIPELINE, CRM, DASHBOARD, ROUTES, COMMUNICATION, VIDEO] as object[]) {
+  for (const space of [B, SURVEY, INTEGRATIONS, TIMELINE, INTRODUCERS, PIPELINE, CRM, DASHBOARD, ROUTES, COMMUNICATION, VIDEO, STAFF_DASHBOARD, INBOUND, EMAIL_CHAINS, WHATSAPP_IMPORT, WHATSAPP, WHATSAPP_PAGE] as object[]) {
     const f = (space as Record<string, unknown>)[name];
     if (typeof f === 'function') return f as Call;
   }
@@ -97,7 +103,7 @@ function put(db: Db, table: string, values: Record<string, Param>): void {
   }));
 }
 
-interface World { db: Db; staff: string; other: string; biz: string; biz2: string; claim: string; claim2: string; lead: string }
+interface World { db: Db; staff: string; other: string; biz: string; biz2: string; claim: string; claim2: string; lead: string; lead2: string }
 
 let world: Promise<World> | null = null;
 function theWorld(): Promise<World> {
@@ -173,7 +179,38 @@ function theWorld(): Promise<World> {
     put(db, 'video_meetings', { booking_id: 'bk-2', meeting_id: 'm-2', join_url: 'https://j/2', passcode: 'p', client_token: 'tok-2', host_user_id: staff, host_opened_by: GHOST, created_at: t(1) });
     put(db, 'video_meetings', { booking_id: 'bk-3', meeting_id: 'm-3', join_url: 'https://j/3', passcode: 'p', client_token: 'tok-3', host_user_id: null, created_at: t(1) });
     put(db, 'video_meetings', { booking_id: 'bk-none', meeting_id: 'm-4', join_url: 'https://j/4', passcode: 'p', client_token: 'tok-4', created_at: t(1) });
-    return { db, staff, other, biz, biz2, claim, claim2, lead };
+    // outbox: on the company, on a claim that is not there, on a lead alone, on a company that is not there, another kind
+    put(db, 'outbox', { id: 'o-1', business_id: biz, kind: 'TEMPLATE', written_by: staff, claim_id: claim, contact_id: 'ct-z', created_at: t(1), to_email: 'a@x.invalid', subject: 'One' });
+    put(db, 'outbox', { id: 'o-2', business_id: biz, kind: 'FREE_TYPED', written_by: GHOST, claim_id: 'claim-none', contact_id: null, created_at: t(2), to_email: 'b@x.invalid', subject: 'Two' });
+    put(db, 'outbox', { id: 'o-3', business_id: null, lead_id: lead, kind: 'NOTIFICATION', written_by: null, created_at: t(3), to_email: 'c@x.invalid', subject: 'Three' });
+    put(db, 'outbox', { id: 'o-4', business_id: 'biz-none', kind: 'NOTIFICATION', written_by: staff, contact_id: 'ct-none', created_at: t(4), to_email: 'd@x.invalid', subject: 'Four' });
+    put(db, 'outbox', { id: 'o-5', business_id: biz, kind: 'OTHER_KIND', written_by: staff, created_at: t(5), to_email: 'e@x.invalid', subject: 'Five' });
+    put(db, 'outbox', { id: 'o-6', business_id: null, lead_id: lead, kind: 'TEMPLATE', written_by: staff, claim_id: claim, created_at: t(6), to_email: 'f@x.invalid', subject: 'Six' });
+    // the client's messages, and the emails that came in: filed directly, filed by a rule, on a company not there, unfiled
+    put(db, 'client_messages', { id: 'cm-1', business_id: biz, created_at: t(5), body: 'hello', direction: 'IN' });
+    put(db, 'inbound_email', { id: 'ie-1', business_id: biz, contact_id: 'ct-z', client_message_id: 'cm-1', matched_outbox_id: 'o-1', mailbox_uid: '5', received_at: t(1), subject: 'Re: One' });
+    put(db, 'inbound_email', { id: 'ie-2', business_id: null, contact_id: 'ct-none', mailbox_uid: '12', received_at: t(2), matched_outbox_id: 'o-none' });
+    put(db, 'inbound_email_filings', { id: 'g-1', inbound_email_id: 'ie-2', business_id: biz, client_message_id: 'cm-1', filed_by: staff, rule: 'SENDER' });
+    put(db, 'inbound_email', { id: 'ie-3', business_id: 'biz-none', mailbox_uid: '3', received_at: t(3), matched_outbox_id: 'o-4' });
+    put(db, 'inbound_email', { id: 'ie-4', business_id: null, mailbox_uid: '20', received_at: t(4) });
+    put(db, 'inbound_email', { id: 'ie-5', business_id: biz2, client_message_id: 'cm-none', mailbox_uid: '7', received_at: t(5), matched_outbox_id: 'o-2' });
+    put(db, 'inbound_email_filings', { id: 'g-2', inbound_email_id: 'ie-5', business_id: biz, filed_by: GHOST, rule: 'HAND' });
+    put(db, 'inbound_email', { id: 'ie-6', business_id: null, mailbox_uid: '9', received_at: t(1) });
+    put(db, 'inbound_email_filings', { id: 'g-3', inbound_email_id: 'ie-6', business_id: 'biz-none', filed_by: null, rule: 'HAND' });
+    // WhatsApp: messages from a known contact and person, a contact and person not there, nobody; imports and their lines
+    put(db, 'whatsapp_messages', { id: 'wm-1', business_id: biz, contact_id: 'ct-z', written_by: staff, phone: '+441', created_at: t(1), direction: 'OUT', body: 'one', status: 'SENT' });
+    put(db, 'whatsapp_messages', { id: 'wm-2', business_id: biz, contact_id: 'ct-none', written_by: GHOST, phone: '+441', created_at: t(2), direction: 'IN', body: 'two' });
+    put(db, 'whatsapp_messages', { id: 'wm-3', business_id: biz, contact_id: null, written_by: null, phone: '+442', created_at: t(2), direction: 'IN', body: 'three' });
+    put(db, 'whatsapp_imports', { id: 'iw-1', business_id: biz, contact_id: 'ct-z', uploaded_by: staff, status: 'SAVED', uploaded_at: t(3), added: 2 });
+    put(db, 'whatsapp_imports', { id: 'iw-2', business_id: biz, contact_id: 'ct-none', uploaded_by: staff, status: 'SAVED', uploaded_at: t(4), added: 0 });
+    put(db, 'whatsapp_imports', { id: 'iw-3', business_id: biz, contact_id: 'ct-a', uploaded_by: GHOST, status: 'SAVED', uploaded_at: t(5), added: 1 });
+    put(db, 'whatsapp_imports', { id: 'iw-4', business_id: biz, contact_id: 'ct-a', uploaded_by: other, status: 'PENDING', uploaded_at: t(5), added: 1 });
+    put(db, 'whatsapp_imports', { id: 'iw-5', business_id: biz, contact_id: 'ct-a', uploaded_by: other, status: 'SAVED', uploaded_at: t(5), added: 1 });
+    put(db, 'whatsapp_import_lines', { message_id: 'wm-1', import_id: 'iw-1', sender: 'Them' });
+    put(db, 'whatsapp_import_lines', { message_id: 'wm-2', import_id: 'iw-3', sender: 'Us' });
+    put(db, 'whatsapp_import_lines', { message_id: 'wm-3', import_id: 'iw-none', sender: 'Us' });
+    const lead2 = db.get<{ id: string }>('SELECT id FROM leads WHERE business_id = ?', [biz2])?.id ?? 'lead-j1-2';
+    return { db, staff, other, biz, biz2, claim, claim2, lead, lead2 };
   })();
   return world;
 }
@@ -287,6 +324,89 @@ const CASES: Case[] = [
     call: from('getBookingsCountByIdChannel'), params: (w) => [['bk-x', '2026-10-09T00:00:00.000Z', '2026-10-01T00:00:00.000Z', w.staff], ['bk-1', '2026-10-09T00:00:00.000Z', '2026-10-01T00:00:00.000Z', w.staff],
       ['bk-x', '2026-10-09T00:00:00.000Z', '2026-10-01T00:00:00.000Z', ''], ['bk-x', '2026-10-01T00:00:00.000Z', '2026-09-01T00:00:00.000Z', w.staff]],
     atLeast: 1,
+  },
+  {
+    name: 'getOutboxXByKindLeadId', get: true,
+    old: "SELECT 1 AS x FROM outbox o WHERE o.kind IN ('FREE_TYPED','TEMPLATE') AND (o.lead_id = ? OR o.business_id = (SELECT business_id FROM leads WHERE id = ?)) LIMIT 1",
+    call: from('getOutboxXByKindLeadId'), params: (w) => [[w.lead, w.lead], [w.lead2, w.lead2], ['lead-none', 'lead-none']], atLeast: 1,
+  },
+  {
+    name: 'listOutboxAtToEmailByKind',
+    old: "SELECT o.created_at AS at, o.to_email, b.name AS company, o.subject, o.sent_at, o.send_requested, o.last_error, o.provider_ref FROM outbox o LEFT JOIN businesses b ON b.id = o.business_id " +
+      "WHERE o.kind IN ('FREE_TYPED','TEMPLATE','NOTIFICATION') ORDER BY o.created_at DESC LIMIT 8",
+    call: from('listOutboxAtToEmailByKind'), params: () => [[]], atLeast: 5,
+  },
+  {
+    name: 'listOutboxIdCreatedAtByBusinessId',
+    old: 'SELECT o.id, o.created_at, o.to_email, o.subject, o.body, o.sent_at, o.send_requested, o.last_error, o.kind, o.provider_ref, o.thread_key, o.claim_id, ' +
+      'u.display_name AS writer FROM outbox o LEFT JOIN users u ON u.id = o.written_by WHERE o.business_id = ? ORDER BY o.created_at, o.id',
+    call: from('listOutboxIdCreatedAtByBusinessId'), params: (w) => [[w.biz], [w.biz2], ['biz-none']], atLeast: 4,
+  },
+  {
+    name: 'listOutboxIdCreatedAtByLeadIdBusinessId',
+    old: 'SELECT o.id, o.created_at, o.to_email, o.subject, o.body, o.sent_at, o.send_requested, o.last_error, o.kind, o.provider_ref, o.thread_key, o.claim_id, ' +
+      'u.display_name AS writer FROM outbox o LEFT JOIN users u ON u.id = o.written_by WHERE o.lead_id = ? AND o.business_id IS NULL ORDER BY o.created_at, o.id',
+    call: from('listOutboxIdCreatedAtByLeadIdBusinessId'), params: (w) => [[w.lead], [w.lead2]], atLeast: 2,
+  },
+  {
+    name: 'listOutboxCreatedAtKindByBusinessId',
+    old: 'SELECT o.created_at, o.kind, o.subject, o.sent_at, c.claim_ref, u.display_name AS who, ct.full_name AS to_name FROM outbox o LEFT JOIN claims c ON c.id = o.claim_id LEFT JOIN users u ON u.id = o.written_by LEFT JOIN contacts ct ON ct.id = o.contact_id WHERE o.business_id = ? ORDER BY o.created_at',
+    call: from('listOutboxCreatedAtKindByBusinessId'), params: (w) => [[w.biz], [w.biz2], ['biz-none']], atLeast: 4,
+  },
+  {
+    name: 'listOutboxCreatedAtKindByLeadIdBusinessId',
+    old: 'SELECT o.created_at, o.kind, o.subject, o.sent_at, c.claim_ref, u.display_name AS who, ct.full_name AS to_name FROM outbox o LEFT JOIN claims c ON c.id = o.claim_id LEFT JOIN users u ON u.id = o.written_by LEFT JOIN contacts ct ON ct.id = o.contact_id WHERE o.lead_id = ? AND o.business_id IS NULL ORDER BY o.created_at',
+    call: from('listOutboxCreatedAtKindByLeadIdBusinessId'), params: (w) => [[w.lead], [w.lead2]], atLeast: 2,
+  },
+  {
+    name: 'listInboundEmailIdReceivedAt',
+    old: 'SELECT e.id, e.received_at, e.from_address, e.subject, e.text_body, e.message_id, e.matched_outbox_id, e.claim_id, c.full_name AS contact, m.created_at AS read_at ' +
+      'FROM inbound_email e LEFT JOIN inbound_email_filings g ON g.inbound_email_id = e.id LEFT JOIN contacts c ON c.id = e.contact_id ' +
+      'LEFT JOIN client_messages m ON m.id = COALESCE(e.client_message_id, g.client_message_id) ' +
+      'WHERE COALESCE(e.business_id, g.business_id) = ? ORDER BY e.received_at, e.id',
+    call: from('listInboundEmailIdReceivedAt'), params: (w) => [[w.biz], [w.biz2], ['biz-none']], atLeast: 4,
+  },
+  {
+    name: 'listInboundEmailUidAt',
+    old: 'SELECT e.mailbox_uid AS uid, e.received_at AS at, e.from_address, e.subject, e.outcome, e.queue_reason, e.matched_outbox_id AS matched, ' +
+      'ob.name AS ours_company, COALESCE(fb.name, gb.name) AS filed_on, u.display_name AS by, g.rule, fb.name AS direct ' +
+      'FROM inbound_email e LEFT JOIN outbox o ON o.id = e.matched_outbox_id LEFT JOIN businesses ob ON ob.id = o.business_id ' +
+      'LEFT JOIN businesses fb ON fb.id = e.business_id LEFT JOIN inbound_email_filings g ON g.inbound_email_id = e.id ' +
+      'LEFT JOIN businesses gb ON gb.id = g.business_id LEFT JOIN users u ON u.id = g.filed_by ' +
+      'ORDER BY CAST(e.mailbox_uid AS INTEGER) DESC LIMIT 12',
+    call: from('listInboundEmailUidAt'), params: () => [[]], atLeast: 6,
+  },
+  {
+    name: 'getWhatsappImportLinesImportIdUploadedAtByMessageId', get: true,
+    old: 'SELECT l.import_id, i.uploaded_at, u.display_name AS by FROM whatsapp_import_lines l JOIN whatsapp_imports i ON i.id = l.import_id ' +
+      'JOIN users u ON u.id = i.uploaded_by WHERE l.message_id = ?',
+    call: from('getWhatsappImportLinesImportIdUploadedAtByMessageId'), params: () => [['wm-1'], ['wm-2'], ['wm-3'], ['wm-none']], atLeast: 1,
+  },
+  {
+    name: 'listWhatsappImportsIdContactByBusinessIdStatus',
+    old: 'SELECT i.id, c.full_name AS contact, i.status, i.uploaded_at, u.display_name AS by, i.added FROM whatsapp_imports i ' +
+      'JOIN contacts c ON c.id = i.contact_id JOIN users u ON u.id = i.uploaded_by WHERE i.business_id = ? AND i.status <> ? ORDER BY i.uploaded_at DESC, i.id',
+    call: from('listWhatsappImportsIdContactByBusinessIdStatus'), params: (w) => [[w.biz, 'PENDING'], [w.biz, 'NONE'], [w.biz2, 'PENDING']], atLeast: 3,
+  },
+  {
+    name: 'listWhatsappMessagesCreatedAtDirectionByBusinessId',
+    old: 'SELECT w.created_at, w.direction, w.body, w.status, w.error, c.full_name AS contact, u.display_name AS writer, w.phone FROM whatsapp_messages w ' +
+      'LEFT JOIN contacts c ON c.id = w.contact_id LEFT JOIN users u ON u.id = w.written_by WHERE w.business_id = ? ORDER BY w.created_at',
+    call: from('listWhatsappMessagesCreatedAtDirectionByBusinessId'), params: (w) => [[w.biz], [w.biz2]], atLeast: 3,
+  },
+  {
+    name: 'listWhatsappMessagesIdCreatedAtByBusinessId',
+    old: 'SELECT w.id, w.created_at, w.direction, w.body, w.status, w.error, w.contact_id, c.full_name AS contact, u.display_name AS writer, w.phone, l.sender FROM whatsapp_messages w ' +
+      'LEFT JOIN contacts c ON c.id = w.contact_id LEFT JOIN users u ON u.id = w.written_by LEFT JOIN whatsapp_import_lines l ON l.message_id = w.id ' +
+      'WHERE w.business_id = ? ORDER BY w.created_at, w.id',
+    call: from('listWhatsappMessagesIdCreatedAtByBusinessId'), params: (w) => [[w.biz], [w.biz2]], atLeast: 3,
+  },
+  {
+    name: 'listWhatsappMessagesIdCreatedAtByBusinessIdPhone',
+    old: 'SELECT w.id, w.created_at, w.direction, w.body, w.status, w.error, c.full_name AS contact, u.display_name AS writer, l.sender FROM whatsapp_messages w ' +
+      'LEFT JOIN contacts c ON c.id = w.contact_id LEFT JOIN users u ON u.id = w.written_by LEFT JOIN whatsapp_import_lines l ON l.message_id = w.id ' +
+      'WHERE w.business_id = ? AND w.phone = ? ORDER BY w.created_at, w.id',
+    call: from('listWhatsappMessagesIdCreatedAtByBusinessIdPhone'), params: (w) => [[w.biz, '+441'], [w.biz, '+442'], [w.biz2, '+441']], atLeast: 3,
   },
 ];
 
