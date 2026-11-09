@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 3 |
+| Ready - Claude can build | 2 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 359 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1495,7 +1495,7 @@
 
 ### Phase 161k - Regroup 3: survey, finance, compliance and admin as modules, tests by feature, and the specs out of the code (audit 2 Nov 2026, before go-live)
 
-`13462572225` · **Ready - Claude can build** · owner Claude
+`13462572225` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac (Claude Code, desktop app), 9 Nov 2026**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-04 (Planning, 4 Nov 2026): Written from the ITRoadway technical audit (2 Nov 2026) and Lakhbir's note of 4 Nov 2026 ("we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production"; "we also need to consider privacy policy, T&C, cookies ect"). One of eleven, 161a to 161k, run in order one chat each; the phase is on the run sheet and in ACTION-PLAN.md.
@@ -3758,6 +3758,7 @@
 - Note 2026-11-06 (Planning): Order changed 6 Nov 2026 (Lakhbir: "review all the phases see exactly what can be run before going live, restructure them"): 161h, 161h1, 161i, 161j, 161k, 161l and 161m all run before go-live, none waits on a person; then the sweep (162) out of order, then 161n goes live once its gate is open (board 13488910486), then the sweep again before the first client. Same text in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-08 (Phase 161i1): Amended by Phase 161i1 (item 4): this phase's notes to docs/CHANGELOG.md, its tests by feature in test/<module>/ and docs/TEST-NAMES.md, and the borrowed SQL on its tables into its data.ts.
 - Note 2026-11-08 (Phase 161j): Built: the five areas in src/modules/ behind front doors with data and routes files; router.ts a 663-line shell; rule 4 at 0 for the five; 1,079 notes to the changelog; 93 tests by feature; a new test that every file loads on its own; baseline 1,454 to 606; every suite green. Carried: 161k item 6, 161l item 6, the sweep. PR open; Lakhbir merges.
+- Note 2026-11-09 (Phase 161k): Merged 9 Nov 2026 on Lakhbir's yes in the chat: PR #90, merge commit cf0b209 on main (the branch kept).
 
 ### After Phase 161b is merged: on the test website, send one survey photo from your phone (it must show on the claim), and use one form in the back office, the portal and the surveyor's page; tell Claude if any says This form has expired
 
