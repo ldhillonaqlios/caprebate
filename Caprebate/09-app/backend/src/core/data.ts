@@ -265,6 +265,46 @@ export function listUserPhotosUserId<T extends Row = Row>(db: Db, params: readon
   return db.all<T>('SELECT user_id FROM user_photos', params);
 }
 
+// users, by ids (Phase 161l1): the one read that serves every other area's join on users. An area reads its own rows
+// with the user's id standing where the joined column stood (`x.recorded_by AS recorder`), then fillUsers puts the
+// user's column in its place: same rows, same order, same keys in the same places, NULL where a LEFT JOIN found no one.
+export function listUsersDisplayNameByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, display_name FROM users WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+export function listUsersIdDisplayNameRoleEmailByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, display_name, role, email, disabled_at FROM users WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+/** A user's column another area showed by a join: which one each key of a row takes from the user whose id it holds. */
+export type UserColumn = 'display_name' | 'role' | 'email' | 'disabled_at';
+/**
+ * Each key named in `columns` holds a user's id; it is replaced, where it stands, by that user's column (NULL for no id
+ * or no such user, as a LEFT JOIN gave). One read for every row. An inner JOIN on a NOT NULL column that refers to
+ * users (the database refuses a row without its user) finds a user for every row, so it reads the same way.
+ */
+export function fillUsers<T extends Row>(db: Db, rows: readonly T[], columns: Readonly<Record<string, UserColumn>>): T[] {
+  const keys = Object.keys(columns);
+  const ids = new Set<string>();
+  for (const r of rows) for (const k of keys) { const v = r[k]; if (typeof v === 'string') ids.add(v); }
+  const wide = keys.some((k) => columns[k] !== 'display_name');
+  const found = new Map<string, Row>();
+  if (ids.size > 0) {
+    const read = wide ? listUsersIdDisplayNameRoleEmailByIds : listUsersDisplayNameByIds;
+    for (const u of read(db, [JSON.stringify([...ids])])) found.set(String(u.id), u);
+  }
+  return rows.map((r) => {
+    const out: Row = {};
+    for (const [k, v] of Object.entries(r)) {
+      const col = columns[k];
+      out[k] = col === undefined ? v : (typeof v === 'string' ? (found.get(v)?.[col] ?? null) : null);
+    }
+    return out as T;
+  });
+}
+/** fillUsers for one row (a `get`): undefined stays undefined. */
+export function fillUser<T extends Row>(db: Db, row: T | undefined, columns: Readonly<Record<string, UserColumn>>): T | undefined {
+  return row === undefined ? undefined : fillUsers(db, [row], columns)[0];
+}
+
 // users
 export function getUsersCountByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT COUNT(*) AS n FROM users WHERE business_id = ?', params);

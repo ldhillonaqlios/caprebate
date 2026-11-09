@@ -5,6 +5,7 @@
  * area through the outside services' front door. Each statement is the one its caller ran before, text unchanged.
  */
 import type { Db, Param, Row } from '../core/index.ts';
+import { fillUser } from '../core/index.ts';
 
 // email_bounces
 export function insertEmailBounces(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
@@ -587,4 +588,24 @@ export function insertResearchSourcesNotPermittedYet(db: Db, params: readonly Pa
       'publisher, licence_id) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)',
     params,
   );
+}
+
+// Phase 161l1: for the areas above that joined these tables to their own rows (each reads its own rows, then these).
+export function getVideoMeetingsMeetingIdByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT m.meeting_id FROM video_meetings m WHERE m.booking_id = ? ORDER BY m.created_at DESC LIMIT 1', params);
+}
+export function getRegisterFileImportsImportedAtRowsKeptBySourceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>(`SELECT i.imported_at, i.rows_kept, i.rows_skipped, i.by_user AS who FROM register_file_imports i
+    WHERE i.source_id = ? ORDER BY i.imported_at DESC, i.rowid DESC LIMIT 1`, params), { who: 'display_name' });
+}
+export function listRegisterRecordsIdSourceIdBySourceIdBusinessIdEntityIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT r.id, r.source_id, r.obtained_at, r.property_id, r.fields_json FROM register_records r " +
+    "WHERE r.source_id = 'CLIENT_DOC' AND r.business_id = ? AND r.entity_id IN (SELECT value FROM json_each(?)) ORDER BY r.obtained_at ASC, r.id ASC", params);
+}
+export function getResearchRunsWhoAtByBusinessIdAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT r.actor_id AS who, r.at FROM research_runs r ' +
+    'WHERE r.business_id = ? AND r.at <= ? ORDER BY r.at DESC LIMIT 1', params), { who: 'display_name' });
+}
+export function listOutboxIdSentAtLastErrorByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, sent_at, last_error FROM outbox WHERE id IN (SELECT value FROM json_each(?))', params);
 }

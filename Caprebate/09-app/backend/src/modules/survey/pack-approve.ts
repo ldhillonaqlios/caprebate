@@ -38,8 +38,7 @@ import { videosOf } from './survey-video.ts';
 import { sitePlanOf, type SitePlan } from '../claims/index.ts';
 import { valuationLock } from '../claims/index.ts';
 import { getUsersNById } from '../../core/index.ts';
-import { getSurveyPackApprovalsIdVersionByJobIdVersion, listSurveyPackApprovalsIdVersionByPackId } from './data-borrowed.ts';
-import { getSurveyPackLegalAnswersSByPackIdByUser, getSurveyorDetailsRicsNumberFirmByUserId, insertSurveyPackApprovals, insertSurveyPackReads, insertSurveyorDetails, listSurveyPackReadsChapterSeqByJobIdUserId } from './data.ts';
+import { getSurveyPackApprovalsIdVersionByJobIdVersion, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyorDetailsRicsNumberFirmByUserId, insertSurveyPackApprovals, insertSurveyPackReads, insertSurveyorDetails, listSurveyPackApprovalsIdVersionByPackId, listSurveyPackReadsChapterSeqByJobIdUserId } from './data.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',

@@ -43,8 +43,7 @@ import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAre
 import { shippedGrantSwitches } from '../assessment/index.ts';
 import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId4, listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId2 } from '../../integrations/index.ts';
 import { getClaimsPById, listPropertiesIdLabelByBusinessId3 } from '../claims/index.ts';
-import { getSurveyPacksIdPropertyIdByJobId, insertSurveyPackAddedLines, insertSurveyPackEntriesByPackId, insertSurveyPackEntriesByPackId2, insertSurveyPacks, updateSurveyPacksPropertyIdByIdPropertyId } from './data.ts';
-import { listSurveyPackAddedLinesIdLabelByPackId, listSurveyPackEntriesIdSeqByPackId, listSurveyorRoomCountsRoomIdRoomCountByJobId } from './data-borrowed.ts';
+import { getSurveyPacksIdPropertyIdByJobId, insertSurveyPackAddedLines, insertSurveyPackEntriesByPackId, insertSurveyPackEntriesByPackId2, insertSurveyPacks, listSurveyPackAddedLinesIdLabelByPackId, listSurveyPackEntriesIdSeqByPackId, listSurveyorRoomCountsRoomIdRoomCountByJobId, updateSurveyPacksPropertyIdByIdPropertyId } from './data.ts';
 
 /**
  * `grantSwitches` is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be

@@ -34,8 +34,7 @@ import { NotFoundAsRefusal } from '../../core/index.ts';
 import { formatPence } from '../../shared/index.ts';
 import { getBusinessesIdNameById, getBusinessesNameById, listContactsFullNameJobRoleByBusinessId } from '../crm/index.ts';
 import { getClaimsBById, listClaimsIdByBusinessId } from '../claims/index.ts';
-import { getInvoicesIdBusinessIdByIdClaimId2, insertInvoiceChases } from './data.ts';
-import { listInvoiceChasesChasedOnHowByInvoiceId } from './data-borrowed.ts';
+import { getInvoicesIdBusinessIdByIdClaimId2, insertInvoiceChases, listInvoiceChasesChasedOnHowByInvoiceId } from './data.ts';
 
 export const CHASE_WAYS: Vocab = Object.freeze({
   PHONE: 'A phone call', EMAIL: 'An email', LETTER: 'A letter', IN_PERSON: 'In person',

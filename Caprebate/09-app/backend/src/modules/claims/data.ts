@@ -5,6 +5,8 @@
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).
  */
 import type { Db, Param, Row } from '../../core/index.ts';
+import { fillUser, fillUsers } from '../../core/index.ts';
+import { listRegisterRecordsIdSourceIdBySourceIdBusinessIdEntityIds } from '../../integrations/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -1060,4 +1062,108 @@ export function listSiteAreaInputsEastingNorthingByKind<T extends Row = Row>(db:
 }
 export function listSiteAreaInputsLadCodeByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>("SELECT lad_code FROM site_area_inputs WHERE kind = 'NEIGHBOUR_COUNCIL'", params);
+}
+
+// Phase 161l1: read by a list of ids (a JSON array), for the areas above that joined these tables to their own rows.
+// Each reads its own rows with the id where the joined columns stood, then puts these columns in their places.
+export function listClaimsIdBusinessIdStageClaimRefByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, business_id, stage, claim_ref, property_id, created_at FROM claims WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+export function listPropertiesIdLabelPostcodeByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, label, postcode FROM properties WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+export function listClaimGrantsAmountPenceByClaimIdPaidTo<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT g.amount_pence FROM claim_grants g WHERE g.claim_id = ? AND g.paid_to = 'PAST_OWNER' AND g.withdrawn_at IS NULL", params);
+}
+// The client's documents for the portal; type_label holds the type's code, for the portal to put the label in its place.
+export function getDocumentsIdBusinessIdTypeCodeById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT d.id, d.business_id, d.filename, d.declared_type, d.doc_type, d.byte_size, d.sniffed_as, d.state, d.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.logical_document_id, d.version_no, d.original_kept_at, d.original_deleted_at, d.type_code AS type_label, l.seq FROM documents d LEFT JOIN logical_documents l ON l.id = d.logical_document_id WHERE d.id = ?', params);
+}
+export function listDocumentsIdBusinessIdTypeCodeByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT d.id, d.business_id, d.filename, d.declared_type, d.doc_type, d.byte_size, d.sniffed_as, d.state, d.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.logical_document_id, d.version_no, d.original_kept_at, d.original_deleted_at, d.type_code AS type_label, l.seq FROM documents d LEFT JOIN logical_documents l ON l.id = d.logical_document_id WHERE d.business_id = ? ORDER BY d.created_at DESC', params);
+}
+
+// Phase 161l1: these joined users (the core) or the register records (the outside services), both below the claims.
+// Each reads this module's rows with the id where the joined column stood; the core's fillUsers (or the outside
+// services' read) puts the column in its place: the same rows, in the same order, with the same keys in the same places.
+export function listClaimFactsIdFactKeyByClaimIdFactKey<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT f.id, f.fact_key, f.answer, f.value_text, f.value_pence, f.value_date, f.source_id, f.note, f.recorded_at, ' +
+    'f.recorded_by AS recorder FROM claim_facts f ' +
+    'WHERE f.claim_id = ? AND f.fact_key = ? ORDER BY f.recorded_at DESC, f.rowid DESC', params), { recorder: 'display_name' });
+}
+export function listClaimFactsSeqIdByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT f.rowid AS seq, f.id, f.fact_key, f.answer, f.value_text, f.value_pence, f.value_date, f.source_id, f.note, f.recorded_at, ' +
+    'f.recorded_by AS recorder FROM claim_facts f WHERE f.claim_id = ? ' +
+    'ORDER BY f.recorded_at ASC, f.rowid ASC', params), { recorder: 'display_name' });
+}
+export function listClaimGrantsIdKindByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT g.id, g.kind, g.payer_class, g.amount_pence, g.amount_basis, g.traced, g.traced_elements, g.source_id, g.note, ' +
+    'g.recorded_at, g.recorded_by AS recorder, g.withdrawn_at, g.withdraw_reason, g.paid_to, g.event_id FROM claim_grants g ' +
+    'WHERE g.claim_id = ? ORDER BY g.recorded_at ASC, g.rowid ASC', params), { recorder: 'display_name' });
+}
+export function listClaimOwnerChainIdPositionByClaimIdWithdrawnAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT o.id, o.position, o.owner, o.acquired_on, o.ceased_on, o.claimed, o.source_id, o.recorded_at, o.recorded_by AS recorder ' +
+    'FROM claim_owner_chain o WHERE o.claim_id = ? AND o.withdrawn_at IS NULL ORDER BY o.position ASC', params), { recorder: 'display_name' });
+}
+export function getClaimStageMovesAtWhoByClaimIdKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT m.at, m.actor_id AS who, m.reason_text AS reason, m.to_stage AS "to" FROM claim_stage_moves m ' +
+    "WHERE m.claim_id = ? AND m.kind = 'REOPEN' AND m.to_stage IN (SELECT value FROM json_each(?)) ORDER BY m.at DESC, m.rowid DESC LIMIT 1", params), { who: 'display_name' });
+}
+export function getDocumentsIdBusinessIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT d.id, d.business_id, d.type_code, d.request_id, d.logical_document_id, d.version_no, d.strip_recorded_at, ' +
+    'd.quarantine_discharged_at, d.failure_code, d.uploaded_by, d.uploaded_by AS role FROM documents d WHERE d.id = ?', params), { role: 'role' });
+}
+export function getDocumentsLogicalDocumentIdUploadedByByIdTypeCode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT d.logical_document_id, d.uploaded_by, d.uploaded_by AS role, d.version_no FROM documents d JOIN logical_documents l ON l.id = d.logical_document_id ' +
+    'WHERE d.id = ? AND l.type_code = ? AND d.strip_recorded_at IS NOT NULL ' +
+    'AND d.quarantine_discharged_at IS NOT NULL AND d.failure_code IS NULL', params), { role: 'role' });
+}
+export function getDocumentsRoleById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT d.uploaded_by AS role FROM documents d WHERE d.id = ?', params), { role: 'role' });
+}
+export function listEngagementRequiredSignersUserIdSeqByEngagementId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT r.user_id, r.seq, r.user_id AS name, r.user_id AS email FROM engagement_required_signers r ' +
+    'WHERE r.engagement_id = ? ORDER BY r.seq ASC', params), { name: 'display_name', email: 'email' });
+}
+export function getEngagementsIdLetterStateByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT e.id, e.letter_state, e.created_at, e.sent_at, e.sent_by, e.viewed_at, e.signed_at FROM engagements e WHERE e.business_id = ?', params), { sent_by: 'display_name' });
+}
+export function listFactApprovalsFactRefActionByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT a.fact_ref, a.action, a.reason, a.at, a.actor_id AS who FROM fact_approvals a ' +
+    'WHERE a.business_id = ? ORDER BY a.at ASC, a.rowid ASC', params), { who: 'display_name' });
+}
+export function listHmrcEnquiriesIdOpenedOnByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT e.id, e.opened_on, e.note, e.closed_on, e.outcome, e.amended_figure_pence, e.opened_recorded_at, e.opened_by AS opener ' +
+    'FROM hmrc_enquiries e WHERE e.claim_id = ? ORDER BY e.opened_on DESC, e.rowid DESC', params), { opener: 'display_name' });
+}
+export function getLogicalDocumentsRoleById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT l.created_by AS role FROM logical_documents l WHERE l.id = ?', params), { role: 'role' });
+}
+/** The role of the person who made the logical document (none when there is no such document). */
+export function getUsersRoleById2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return getLogicalDocumentsRoleById<T>(db, params);
+}
+export function listDocumentsIdLogicalDocumentIdByLogicalDocumentId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT d.id, d.logical_document_id, d.version_no, d.type_code, d.retention_ref, d.request_id, d.state, d.doc_type, d.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.uploaded_by AS uploader_role, d.original_kept_at, d.original_delete_after, d.original_deleted_at FROM documents d WHERE d.logical_document_id = ? ORDER BY d.version_no DESC', params), { uploader_role: 'role' });
+}
+export function getTaxAdviserSignoffsIdClaimIdByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT s.id, s.claim_id, s.adviser, s.credential, s.signed_on, s.scope, s.method_note, s.switch_readings_json, s.figure_pence, s.commitment_id, s.record_hash, s.recorded_at, s.recorded_by AS recorder, s.approval_id FROM tax_adviser_signoffs s WHERE s.claim_id = ? ORDER BY s.recorded_at DESC, s.rowid DESC LIMIT 1', params), { recorder: 'display_name' });
+}
+export function getTaxAdviserSignoffsIdClaimIdByClaimIdRecordedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT s.id, s.claim_id, s.adviser, s.credential, s.signed_on, s.scope, s.method_note, s.switch_readings_json, s.figure_pence, s.commitment_id, s.record_hash, s.recorded_at, s.recorded_by AS recorder, s.approval_id FROM tax_adviser_signoffs s WHERE s.claim_id = ? AND s.recorded_at >= ? ORDER BY s.recorded_at DESC, s.rowid DESC LIMIT 1', params), { recorder: 'display_name' });
+}
+/** The register records read from a client's document: any version of the logical document (params: business, document). */
+export function listRegisterRecordsIdSourceIdBySourceIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const versions = db.all<{ id: string }>('SELECT v.id FROM documents v WHERE v.logical_document_id = ?', [params[1] ?? null]).map((v) => v.id);
+  return versions.length === 0 ? [] : listRegisterRecordsIdSourceIdBySourceIdBusinessIdEntityIds<T>(db, [params[0] ?? null, JSON.stringify(versions)]);
+}
+// For the seed (src/app/seed.ts), which writes and reads each area's rows through its front door.
+export function getClaimsIdByBusinessIdAssessmentIdNotNull<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id FROM claims WHERE business_id = ? AND assessment_id IS NOT NULL ORDER BY claim_ref LIMIT 1', params);
+}
+export function getClaimsIdByBusinessIdAssessmentIdNull<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id FROM claims WHERE business_id = ? AND assessment_id IS NULL ORDER BY claim_ref LIMIT 1', params);
+}
+export function listEngagementsBusinessIdByLetterStateSigned<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT business_id FROM engagements WHERE letter_state = 'SIGNED'", params);
 }

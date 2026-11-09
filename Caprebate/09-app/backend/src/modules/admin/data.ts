@@ -5,6 +5,7 @@
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).
  */
 import type { Db, Param, Row } from '../../core/index.ts';
+import { fillUsers } from '../../core/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -160,4 +161,10 @@ export function updateDocumentTypesLabelReadersByCode(db: Db, params: readonly P
 }
 export function updateSavedViewsRetiredAtRetiredByById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE saved_views SET retired_at = ?, retired_by = ? WHERE id = ?', params);
+}
+
+// Phase 161l1: this joined users (the core); the user's name is put in its place by the core's fillUsers.
+export function listSavedKeysNameSealedByRowidName<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT k.name, k.sealed, k.set_at, k.set_by AS who FROM saved_keys k ' +
+    'WHERE k.rowid = (SELECT max(x.rowid) FROM saved_keys x WHERE x.name = k.name) ORDER BY k.name', params), { who: 'display_name' });
 }

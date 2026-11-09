@@ -9,8 +9,7 @@
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import { beginPackChange, type PackDeps, type PackResult } from './survey-pack.ts';
-import { insertSurveyPackWords } from './data.ts';
-import { listSurveyPackWordsFieldWordsByPackId } from './data-borrowed.ts';
+import { insertSurveyPackWords, listSurveyPackWordsFieldWordsByPackId } from './data.ts';
 
 export type WordField = 'construction_type' | 'build_year' | 'building_other' | 'dwelling_method' | 'dwelling_segregation'
   | 'land_comparables' | 'land_voa' | 'land_date' | 'land_planning_basis' | 'qpct_basis' | 'disposal_value' | 'sector_core'

@@ -5,6 +5,10 @@
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).
  */
 import type { Db, Param, Row } from '../../core/index.ts';
+import { fillUsers } from '../../core/index.ts';
+import { listDocumentTypesCodeLabel } from '../admin/index.ts';
+import { getDocumentsIdBusinessIdTypeCodeById, listClaimsIdBusinessIdStageClaimRefByIds, listDocumentsIdBusinessIdTypeCodeByBusinessId } from '../claims/index.ts';
+import { listBusinessesIdNameSectorByIds, listContactsIdFullNameByIds } from '../crm/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -85,4 +89,58 @@ export function updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt(db: D
 }
 export function updateClientSignupsVerifiedAtUserIdById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE client_signups SET verified_at = ?, user_id = ?, password_hash = NULL WHERE id = ?', params);
+}
+
+// Phase 161l1: these joined the claims' (claims, documents), the CRM's (contacts, businesses), admin's (document types)
+// and the core's (users) tables, all below the portal. Each reads the portal's own rows with the id where the joined
+// column stood, asks the owner through its front door, and puts the column in its place. A row an inner JOIN would
+// have dropped (no such contact, claim or organisation) is dropped here too.
+type Ided = { id: string };
+function byIds<R extends Ided>(read: (db: Db, params: readonly Param[]) => R[], db: Db, ids: readonly unknown[]): Map<string, R> {
+  const want = [...new Set(ids.filter((x): x is string => typeof x === 'string'))];
+  return new Map(want.length === 0 ? [] : read(db, [JSON.stringify(want)]).map((r) => [r.id, r]));
+}
+type ClaimCols = Ided & { business_id: string; stage: unknown; claim_ref: unknown };
+type ContactCols = Ided & { full_name: unknown };
+type BusinessCols = Ided & { name: unknown };
+const claimsRead = (db: Db, p: readonly Param[]): ClaimCols[] => listClaimsIdBusinessIdStageClaimRefByIds<ClaimCols>(db, p);
+const contactsRead = (db: Db, p: readonly Param[]): ContactCols[] => listContactsIdFullNameByIds<ContactCols>(db, p);
+const businessesRead = (db: Db, p: readonly Param[]): BusinessCols[] => listBusinessesIdNameSectorByIds<BusinessCols>(db, p);
+
+export function getAccountantConfirmRequestsIdKindByTokenSha256<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const r = db.get('SELECT r.id, r.kind, r.expires_at, r.period_end, r.contact_id AS name, r.claim_id AS company, r.claim_id AS claim_ref, x.outcome, x.answered_at ' +
+    'FROM accountant_confirm_requests r LEFT JOIN accountant_confirm_answers x ON x.request_id = r.id WHERE r.token_sha256 = ?', params);
+  if (r === undefined) return undefined;
+  const k = byIds(contactsRead, db, [r.name]).get(String(r.name));
+  const c = byIds(claimsRead, db, [r.claim_ref]).get(String(r.claim_ref));
+  const b = c === undefined ? undefined : byIds(businessesRead, db, [c.business_id]).get(c.business_id);
+  return k === undefined || c === undefined || b === undefined ? undefined : ({ ...r, name: k.full_name, company: b.name, claim_ref: c.claim_ref } as Row as T);
+}
+export function listAccountantConfirmRequestsIdKindByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = fillUsers(db, db.all('SELECT r.id, r.kind, r.contact_id AS contact_name, r.to_email, r.sent_by AS sent_by_name, r.sent_at, r.expires_at, r.period_end, ' +
+    'x.outcome, x.signer_name, x.signer_firm, x.filed_on, x.reason, x.answered_at FROM accountant_confirm_requests r ' +
+    'LEFT JOIN accountant_confirm_answers x ON x.request_id = r.id ' +
+    'WHERE r.claim_id = ? ORDER BY r.sent_at DESC, r.rowid DESC', params), { sent_by_name: 'display_name' });
+  const contacts = byIds(contactsRead, db, rows.map((r) => r.contact_name));
+  return rows.flatMap((r) => {
+    const k = contacts.get(String(r.contact_name));
+    return k === undefined ? [] : [{ ...r, contact_name: k.full_name } as Row as T];
+  });
+}
+export function getClaimsIdBusinessIdById8<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const c = byIds(claimsRead, db, [params[0]]).get(String(params[0]));
+  const b = c === undefined ? undefined : byIds(businessesRead, db, [c.business_id]).get(c.business_id);
+  return c === undefined || b === undefined ? undefined : ({ id: c.id, business_id: c.business_id, stage: c.stage, claim_ref: c.claim_ref, company: b.name } as Row as T);
+}
+/** type_label: the document type's label (LEFT JOIN document_types ON code = type_code), from admin's list. */
+function typeLabels<T extends Row>(db: Db, rows: readonly Row[]): T[] {
+  const label = new Map(rows.length === 0 ? [] : listDocumentTypesCodeLabel<{ code: string; label: unknown }>(db).map((t) => [t.code, t.label]));
+  return rows.map((r) => ({ ...r, type_label: typeof r.type_label === 'string' ? label.get(r.type_label) ?? null : null }) as Row as T);
+}
+export function getDocumentsIdBusinessIdById4<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const d = getDocumentsIdBusinessIdTypeCodeById(db, params);
+  return d === undefined ? undefined : typeLabels<T>(db, [d])[0];
+}
+export function listDocumentsIdBusinessIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return typeLabels<T>(db, listDocumentsIdBusinessIdTypeCodeByBusinessId(db, params));
 }

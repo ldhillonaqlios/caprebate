@@ -71,5 +71,7 @@ export type { ReturnContext } from './return-entries.ts';
 export type { EngagementSigning, LetterFacts } from './signing.ts';
 export type { SitePlan } from './site-plan.ts';
 export { getClaimsIdClaimRefByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel2 } from './data.ts';
+// Phase 161l1: read by ids, for the areas above that joined these tables to their own rows; and for the seed.
+export { getClaimsIdByBusinessIdAssessmentIdNotNull, getClaimsIdByBusinessIdAssessmentIdNull, getDocumentsIdBusinessIdTypeCodeById, listEngagementsBusinessIdByLetterStateSigned, listClaimGrantsAmountPenceByClaimIdPaidTo, listClaimsIdBusinessIdStageClaimRefByIds, listDocumentsIdBusinessIdTypeCodeByBusinessId, listPropertiesIdLabelPostcodeByIds } from './data.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { claimsAssets, claimsSignoffLink } from './routes.ts';

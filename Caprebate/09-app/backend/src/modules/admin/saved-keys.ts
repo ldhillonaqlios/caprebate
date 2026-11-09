@@ -32,8 +32,7 @@ import { CLAUDE_SWITCHES } from '../../integrations/connectors/claude.ts';
 import { whatsappMissing, zoomMissing } from '../../integrations/index.ts';
 import { turnstileWhy } from '../../integrations/index.ts';
 import { ga4MeasurementId } from '../../integrations/index.ts';
-import { listSavedKeysNameSealedByRowidName } from './data-borrowed.ts';
-import { getSavedKeysCoalesceMaxRowidM, insertSavedKeys } from './data.ts';
+import { getSavedKeysCoalesceMaxRowidM, insertSavedKeys, listSavedKeysNameSealedByRowidName } from './data.ts';
 
 const PREFIX = 'cbkey1:';
 

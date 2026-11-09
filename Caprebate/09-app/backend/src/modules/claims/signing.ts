@@ -54,10 +54,10 @@ import { formatPence } from '../../shared/index.ts';
 import { claimantTypeForGate } from '../crm/index.ts';
 import { buildPdf, flow, type PdfLine } from '../../shared/index.ts';
 import { getAuditLogCountByKindObjectId, getUsersCountByIdBusinessId, getUsersEmailById } from '../../core/index.ts';
-import { deleteEngagementRequiredSignersByEngagementId, getEngagementSignaturesCountByEngagementId, getEngagementsIdByBusinessId, getEngagementsIdCreatedAtByBusinessId, getEngagementsIdSignedAtByBusinessId, getEngagementsSentAtByBusinessId, insertEngagementRequiredSigners, insertEngagementSignLinks, insertEngagementSignatures, listEngagementSignaturesIdEngagementIdByEngagementId, listPropertiesLabelByBusinessId, updateEngagementSignLinksUsedAtByIdUsedAt, updateEngagementsLetterStateSignedAtById } from './data.ts';
+import { deleteEngagementRequiredSignersByEngagementId, getEngagementSignaturesCountByEngagementId, getEngagementsIdByBusinessId, getEngagementsIdCreatedAtByBusinessId, getEngagementsIdSignedAtByBusinessId, getEngagementsSentAtByBusinessId, insertEngagementRequiredSigners, insertEngagementSignLinks, insertEngagementSignatures, listEngagementRequiredSignersUserIdSeqByEngagementId, listEngagementSignaturesIdEngagementIdByEngagementId, listPropertiesLabelByBusinessId, updateEngagementSignLinksUsedAtByIdUsedAt, updateEngagementsLetterStateSignedAtById } from './data.ts';
 import { getBusinessesNameCompanyNumberById } from '../crm/index.ts';
 import { announce } from '../../core/index.ts';
-import { getEngagementSignLinksIdEngagementIdByTokenSha256, listEngagementRequiredSignersUserIdSeqByEngagementId } from './data-borrowed.ts';
+import { getEngagementSignLinksIdEngagementIdByTokenSha256 } from './data-borrowed.ts';
 import { getAssessmentsShownHighPenceByBusinessId } from '../assessment/index.ts';
 
 export type EngagementSigning = {

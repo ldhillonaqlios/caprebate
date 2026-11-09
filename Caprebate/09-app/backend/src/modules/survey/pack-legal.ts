@@ -32,8 +32,7 @@ import { valuationLock } from '../claims/index.ts';
 import { claimantRole, type ClaimantRole } from '../assessment/index.ts';
 import { LEGAL_ENGINE_SWITCHES } from '../../shared/index.ts';
 import { getBusinessesSectorById } from '../crm/index.ts';
-import { getSurveyPacksIdByJobId, getSurveyorJobsIdBusinessIdById3, getSurveyorJobsIdByClaimId, insertSurveyPackLegalAnswersByPackId, insertSurveyPacks, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId2 } from './data.ts';
-import { getSurveyorJobsPropertyIdPById, listClaimGrantsAmountPenceByIdPaidTo, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId } from './data-borrowed.ts';
+import { getSurveyPacksIdByJobId, getSurveyorJobsIdBusinessIdById3, getSurveyorJobsIdByClaimId, getSurveyorJobsPropertyIdPById, insertSurveyPackLegalAnswersByPackId, insertSurveyPacks, listClaimGrantsAmountPenceByIdPaidTo, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId2 } from './data.ts';
 
 export type EngineQuestion = {
   readonly id: string;
