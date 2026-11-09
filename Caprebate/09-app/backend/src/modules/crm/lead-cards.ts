@@ -26,7 +26,7 @@ import { emailButton } from './free-email-pages.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { plainNeed } from '../../shared/index.ts';
 import { ukDatesIn } from '../../shared/index.ts';
-import type { LeadListRow } from '../../shared/lists.ts';
+import type { LeadListRow } from './claim-lists.ts';
 import type { LeadView } from './leads.ts';
 import type { EnquiryRow } from '../public-site/index.ts';
 import { PROPERTY_TYPES } from '../public-site/index.ts';

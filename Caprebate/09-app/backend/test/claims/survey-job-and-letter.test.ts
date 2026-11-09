@@ -14,7 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { testApp, actor } from '../helpers.ts';
 import type { App } from '../../src/core/app.ts';
 import * as C from '../../src/modules/crm/crm.ts';

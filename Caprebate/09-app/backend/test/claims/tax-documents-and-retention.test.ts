@@ -21,8 +21,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import type { Actor } from '../../src/core/authz.ts';
 import type { AuditLog } from '../../src/core/audit.ts';
 import { Db, migrate } from '../../src/core/db.ts';
@@ -37,7 +37,7 @@ import { acceptClientBytes, finishUpload, issuedJob } from '../../src/modules/cl
 import {
   retainedTextKeyFor, deletionDueAt, FAIL_CLOSED_SETTINGS, receiptPolicyFor, DOC_SPECS,
   type IngestionSettings, type RawFileRecord,
-} from '../../src/shared/upload-handler-port.ts';
+} from '../../src/modules/claims/upload-handler-port.ts';
 import { pdfOf } from '../document-fixtures.ts';
 import { fixedClock } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';

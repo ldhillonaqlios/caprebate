@@ -5,32 +5,28 @@
  *   npm run migrate      create or update caprebate.db
  *   npm run seed         invented data + one user per role
  *   npm run verify-audit recompute the audit log's hash chain; exit 1 if it is broken
- *   node src/core/cli.ts sweep-originals   delete every kept original whose time is up (KEEP_ORIGINALS; off, so none)
- *   node src/core/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
- *   node src/core/cli.ts read-mailbox      read new replies to contact@caprebate.co.uk, read-only (INBOUND_EMAIL; off, so none)
- *   node src/core/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
- *   node src/core/cli.ts sweep-enquiries   delete every closed website enquiry past its period
- *   node src/core/cli.ts import-premises <CQC_CARE_DIRECTORY|NHS_ODS_DENTAL|NHS_ODS_GP> <file> --by <user id>   healthcare premises, no names
- *   node src/core/cli.ts sector-ranges     propose each sector's range from approved survey packs; changes nothing
- *   node src/core/cli.ts sweep-land-boundaries   delete every kept land boundary file past the licence's 35 days
- *   node src/core/cli.ts seal-app-secrets  seal every authenticator app secret still kept as text
- *   CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup
- *   node src/core/cli.ts smoke-switched-on <SOURCE> --who W --why Y   record a switch-on; the count of three starts again
- *   CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke HMLR_INSPIRE --who W --why Y   one council's land boundary file, the same way
- *   CAPREBATE_LOCAL_ZOOM=1 node src/core/cli.ts zoom-call-length <meeting id>   ask Zoom how long one call lasted
+ *   node src/app/cli.ts sweep-originals   delete every kept original whose time is up (KEEP_ORIGINALS; off, so none)
+ *   node src/app/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
+ *   node src/app/cli.ts read-mailbox      read new replies to contact@caprebate.co.uk, read-only (INBOUND_EMAIL; off, so none)
+ *   node src/app/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
+ *   node src/app/cli.ts sweep-enquiries   delete every closed website enquiry past its period
+ *   node src/app/cli.ts import-premises <CQC_CARE_DIRECTORY|NHS_ODS_DENTAL|NHS_ODS_GP> <file> --by <user id>   healthcare premises, no names
+ *   node src/app/cli.ts sector-ranges     propose each sector's range from approved survey packs; changes nothing
+ *   node src/app/cli.ts sweep-land-boundaries   delete every kept land boundary file past the licence's 35 days
+ *   node src/app/cli.ts seal-app-secrets  seal every authenticator app secret still kept as text
+ *   CAPREBATE_LIVE_SMOKE=1 node src/app/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup
+ *   node src/app/cli.ts smoke-switched-on <SOURCE> --who W --why Y   record a switch-on; the count of three starts again
+ *   CAPREBATE_LIVE_SMOKE=1 node src/app/cli.ts smoke HMLR_INSPIRE --who W --why Y   one council's land boundary file, the same way
+ *   CAPREBATE_LOCAL_ZOOM=1 node src/app/cli.ts zoom-call-length <meeting id>   ask Zoom how long one call lasted
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */
 
-import { buildApp } from './app.ts';
-import { keyFileStartCheck } from './secrets.ts';
+import { buildApp } from './build-app.ts';
+import { AuditLog, Db, MFA_KEY_NAME, MIGRATIONS_DIR, getUsersRoleByIdDisabledAt, keyFileStartCheck, mfaKeyFrom, migrate, processSecrets, sealTextSecrets } from '../core/index.ts';
 import { seed } from './seed.ts';
-import { Db, migrate } from './db.ts';
-import { MIGRATIONS_DIR } from './app.ts';
-import { AuditLog } from './audit.ts';
 import { join } from 'node:path';
-import { FsObjectStore } from '../shared/objectstore.ts';
-import { sealKeyFromEnv } from '../shared/index.ts';
+import { FsObjectStore, sealKeyFromEnv } from '../shared/index.ts';
 import { openKeptOriginal, sweepOriginals } from '../modules/claims/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, emailPlaceRefusal, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { INBOUND_EMAIL, imapLoginFromKeyFile, imapMailbox } from '../integrations/index.ts';
@@ -38,13 +34,9 @@ import { readMailbox } from '../modules/crm/index.ts';
 import { MESSAGE_RETENTION, sweepMessages } from '../modules/crm/index.ts';
 import { inspireStoreFromEnv, INSPIRE_KEEP_DAYS } from '../integrations/index.ts';
 import { randomUUID } from 'node:crypto';
-import { liveTransport } from '../integrations/index.ts';
+import { liveTransport, postcodeStore } from '../integrations/index.ts';
 import { runSmokeCommand, runSwitchedOnCommand } from '../integrations/connectors/test-lookups.ts';
-import { processSecrets } from './secrets.ts';
-import { mfaKeyFrom, MFA_KEY_NAME, sealTextSecrets } from './mfa-seal.ts';
-import { postcodeStore } from '../integrations/postcodes/postcode.ts';
 import { zoomPastCall } from '../integrations/index.ts';
-import { getUsersRoleByIdDisabledAt } from './data.ts';
 
 const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
 
@@ -150,7 +142,7 @@ async function main(): Promise<number> {
     const by = byAt > 0 ? process.argv[byAt + 1] : undefined;
     const { importPremises, PREMISES_SOURCES } = await import('../modules/crm/index.ts');
     if (source === undefined || !(source in PREMISES_SOURCES) || file === undefined || by === undefined) {
-      console.error(`Usage: node src/core/cli.ts import-premises <${Object.keys(PREMISES_SOURCES).join('|')}> <file> --by <user id>`);
+      console.error(`Usage: node src/app/cli.ts import-premises <${Object.keys(PREMISES_SOURCES).join('|')}> <file> --by <user id>`);
       return 1;
     }
     const { readFileSync } = await import('node:fs');
@@ -175,7 +167,7 @@ async function main(): Promise<number> {
     const by = byAt > 0 ? process.argv[byAt + 1] : undefined;
     const { importRegisterFile, decodeRegisterFile, FILE_SOURCES } = await import('../modules/claims/index.ts');
     if (source === undefined || !(source in FILE_SOURCES) || file === undefined || by === undefined) {
-      console.error(`Usage: node src/core/cli.ts import-register <${Object.keys(FILE_SOURCES).join('|')}> <file> --by <user id>`);
+      console.error(`Usage: node src/app/cli.ts import-register <${Object.keys(FILE_SOURCES).join('|')}> <file> --by <user id>`);
       for (const f of Object.values(FILE_SOURCES)) console.error(`  ${f.source_id}: ${f.download}`);
       return 1;
     }
@@ -203,9 +195,9 @@ async function main(): Promise<number> {
     const args = process.argv.slice(3);
     const tpi = args.includes('--tpi');
     const file = args.find((x) => !x.startsWith('--'));
-    if (file === undefined) { console.error('Usage: node src/core/cli.ts import-bcis-index [--tpi] <the CSV downloaded from BCIS>'); return 1; }
+    if (file === undefined) { console.error('Usage: node src/app/cli.ts import-bcis-index [--tpi] <the CSV downloaded from BCIS>'); return 1; }
     const { readFileSync } = await import('node:fs');
-    const { importBcisIndex } = await import('../modules/survey/bcis-index.ts');
+    const { importBcisIndex } = await import('../modules/survey/index.ts');
     const r = importBcisIndex(readFileSync(file, 'utf8'), file, new Date().toISOString(), process.env, undefined, tpi ? 'TPI' : 'BPI');
     if (!r.ok) { console.error(r.why); return 1; }
     console.log(`${r.points} index points, ${r.from} to ${r.to}, kept at ${r.path}${r.passed_over === 0 ? '' : ` (${r.passed_over} row${r.passed_over === 1 ? '' : 's'} with no figure passed over)`}. ` +
@@ -219,9 +211,9 @@ async function main(): Promise<number> {
     const args = process.argv.slice(3);
     const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
     const rates = opt('--rates');
-    if (rates === undefined) { console.error('Usage: node src/core/cli.ts import-bcis-data --rates <average prices CSV> [--elements <elemental CSV>] [--locations <location factors CSV>] [--base 2026-04]'); return 1; }
+    if (rates === undefined) { console.error('Usage: node src/app/cli.ts import-bcis-data --rates <average prices CSV> [--elements <elemental CSV>] [--locations <location factors CSV>] [--base 2026-04]'); return 1; }
     const { readFileSync } = await import('node:fs');
-    const { importBcisData } = await import('../modules/survey/bcis-data.ts');
+    const { importBcisData } = await import('../modules/survey/index.ts');
     const read = (f: string | undefined) => (f === undefined ? undefined : { text: readFileSync(f, 'utf8'), name: f });
     const el = read(opt('--elements')), lo = read(opt('--locations')), base = opt('--base');
     const r = importBcisData({ rates: { text: readFileSync(rates, 'utf8'), name: rates }, ...(el === undefined ? {} : { elements: el }), ...(lo === undefined ? {} : { locations: lo }) },
@@ -268,8 +260,8 @@ async function main(): Promise<number> {
     /* Changing CAPREBATE_MFA_KEY. The OLD key in CAPREBATE_MFA_KEY_OLD and the NEW one in CAPREBATE_MFA_KEY,
        each 32 bytes as base64, both from the environment of this one command; the database from CAPREBATE_DB (with
        CAPREBATE_DB_TOKEN for the live Turso database). All or nothing. Never prints a secret or a key. */
-    const { resealSecrets } = await import('./mfa-seal.ts');
-    const { secretsFromEnvironment } = await import('./secrets.ts');
+    const { resealSecrets } = await import('../core/index.ts');
+    const { secretsFromEnvironment } = await import('../core/index.ts');
     const keyOf = (name: string) => mfaKeyFrom(secretsFromEnvironment({ [MFA_KEY_NAME]: process.env[name] ?? '' }, [MFA_KEY_NAME]));
     const token = (process.env.CAPREBATE_DB_TOKEN ?? '').trim();
     const db = new Db(DEFAULT_DB, token === '' ? {} : { authToken: token });
@@ -390,7 +382,7 @@ async function main(): Promise<number> {
     }
   }
 
-  console.error('usage: node src/core/cli.ts <migrate|seed|verify-audit|sweep-originals|sweep-messages|sweep-land-boundaries|send-outbox|read-mailbox|smoke|smoke-switched-on|zoom-call-length>');
+  console.error('usage: node src/app/cli.ts <migrate|seed|verify-audit|sweep-originals|sweep-messages|sweep-land-boundaries|send-outbox|read-mailbox|smoke|smoke-switched-on|zoom-call-length>');
   return 1;
 }
 

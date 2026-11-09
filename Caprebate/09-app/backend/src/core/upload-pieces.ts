@@ -6,7 +6,7 @@
  * sent its file whole, while the portal says "The most we take is 50 MB". Photos and videos already go round the limit
  * (src/modules/survey/photo-upload.ts, src/modules/survey/survey-video.ts); documents did not.
  *
- * HOW. The page's script (src/core/upload-pieces-script.ts) sees a chosen file over `PIECED_ABOVE`, asks to START
+ * HOW. The page's script (src/app/upload-pieces-script.ts) sees a chosen file over `PIECED_ABOVE`, asks to START
  * (`startPieces`: the size, so the server says how many pieces), sends each piece of at most `PIECE_BYTES` (`putPiece`),
  * then sends the form exactly as before with the file box emptied and the start's id in a field named `pieces`. The
  * form's own handler reads the file from the pieces (`takePieces`, through `readUpload` in client-files-pages.ts and
@@ -21,8 +21,7 @@
  */
 import type { Actor } from './authz.ts';
 import type { Db } from './db.ts';
-import { INCOMING_PREFIX, type FsObjectStore } from '../shared/objectstore.ts';
-import { UPLOAD_LIMITS } from '../shared/upload-handler-port.ts';
+import { INCOMING_PREFIX, type FsObjectStore } from '../shared/index.ts';
 import { getUploadPiecesIdUserIdById, insertUploadPieces, listUploadPiecesIdPiecesByEndedAtStartedAt, updateUploadPiecesEndedAtEndedHowByIdEndedAt, updateUploadPiecesEndedAtEndedHowByIdEndedAt2, updateUploadPiecesSealedById } from './data.ts';
 
 /** Each piece the page sends: well under Vercel's 4.5 MB a request. */
@@ -30,7 +29,11 @@ export const PIECE_BYTES = 3 * 1024 * 1024;
 /** A file at or under this goes whole, as before; above it the page's script sends it in pieces. */
 export const PIECED_ABOVE = 4 * 1000 * 1000;
 /** The most a file sent in pieces may be: the same as any document. */
-export const maxPiecedBytes = (): number => UPLOAD_LIMITS.max_bytes; // Read when used, not while this file loads.
+/* The most any document may be is the upload handler's to say (src/modules/claims/documents/upload-handler.ts); it hands
+   it down when it loads, so the core names no module. Asked before that, nothing is taken in pieces (0). */
+var documentMaxBytes = 0;
+export function setDocumentMaxBytes(bytes: number): void { documentMaxBytes = bytes; }
+export const maxPiecedBytes = (): number => documentMaxBytes; // Read when used, not while this file loads.
 /** A send not taken within this many hours is removed. */
 export const ABANDON_HOURS = 24;
 

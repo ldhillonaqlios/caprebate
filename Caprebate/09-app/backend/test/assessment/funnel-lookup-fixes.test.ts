@@ -16,7 +16,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { F4_TEXT } from '../../src/modules/assessment/funnel4.ts';
 import { RateLimiter, type Transport } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';

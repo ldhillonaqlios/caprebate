@@ -30,9 +30,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { zipOf, docxOf, pdfOf } from '../document-fixtures.ts';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { beginUpload, acceptClientBytes, finishUpload, eventsFor } from '../../src/modules/claims/uploads.ts';
-import { retainedTextKeyFor } from '../../src/shared/upload-handler-port.ts';
+import { retainedTextKeyFor } from '../../src/modules/claims/upload-handler-port.ts';
 import {
   extractPages, isMarkerPages, UNREADABLE_MARKER_PREFIX,
   type ExtractedPage,

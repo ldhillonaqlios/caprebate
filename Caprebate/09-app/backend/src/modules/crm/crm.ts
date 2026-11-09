@@ -37,7 +37,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog, AuditKind } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { NotFoundAsRefusal, answerLabel } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal, answerLabel } from '../../core/index.ts';
 import {
   EXITS, LEGACY_STAGE_TO_PROCEDURE, anyStageLabel, claimStage, nextProcedureKey, procedureIndex, stage as stageOf,
   type ProcedureKey,
@@ -46,8 +46,8 @@ import { assertSignedEngagement } from '../claims/index.ts';
 import {
   BOARD_COLUMNS, FEE_TRIGGER, FEE_TRIGGERS, liveFeeInvoiceCount, loadPipelineClaim, pipelinePanel, recordOpened, type PipelinePanel,
 } from './pipeline.ts';
-import { postcodeStore, POSTCODE_GATE } from '../../integrations/postcodes/postcode.ts';
-import { resolveServedAuthority, type PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
+import { postcodeStore, POSTCODE_GATE } from '../../integrations/index.ts';
+import { resolveServedAuthority, type PostcodeStore } from '../../integrations/index.ts';
 import { formatPence, formatShownRange, toPence } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { claimMoneyLines, type ClaimMoneyLine } from '../finance/index.ts';
@@ -1013,7 +1013,7 @@ function contactValues(input: Fields, stored: ContactValues): Check<ContactValue
 /**
  * — CONTACT DETAILS ARE NOT OPTIONAL. the owner: "we must get contact details, it
  * is a non negotiable". A client must have at least one contact with an email address or a telephone number:
- *   - a client saved from the website cannot be saved without one (the funnel's close, src/core/router.ts);
+ *   - a client saved from the website cannot be saved without one (the funnel's close, src/app/router.ts);
  *   - a change here that would leave a client with no contact we can reach is refused (`updateContact`);
  *   - a client that has none is flagged on its page until it does (src/modules/crm/client-page.ts); and
  *   - an identity check goes only to a contact who has one (src/modules/compliance/identity-checks.ts).
@@ -1764,7 +1764,7 @@ export type ClaimOrigin = {
 
 /**
  * ROWS 8.5 AND 8.6 — READ THROUGH THE LEAD, NEVER A COLUMN ON THE CLAIM. The join is the one `CLAIMS_WORKING` in
- * src/shared/lists.ts makes (`leads.claim_id`, then `introducers`), and a claim with no lead reads its organisation's source,
+ * src/modules/crm/claim-lists.ts makes (`leads.claim_id`, then `introducers`), and a claim with no lead reads its organisation's source,
  * exactly as that list's source filter does. `lead.read` builds the block; `introducer.read` adds the firm. SURVEYING and
  * ACCOUNTING hold neither, so their claim view carries no origin at all.
  */

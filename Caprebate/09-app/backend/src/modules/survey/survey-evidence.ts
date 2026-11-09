@@ -40,7 +40,7 @@ import type { App } from '../../core/app.ts';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, NotAuthorised, type Actor } from '../../core/index.ts';
-import type { FsObjectStore } from '../../shared/objectstore.ts';
+import type { FsObjectStore } from '../../shared/index.ts';
 import { packJob } from './surveyor.ts';
 import { checklistFor, type ChecklistItem } from './survey-checklist.ts';
 import { postClientMessage } from '../crm/index.ts';

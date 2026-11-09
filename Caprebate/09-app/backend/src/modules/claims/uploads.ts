@@ -21,7 +21,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
-import { FsObjectStore } from '../../shared/objectstore.ts';
+import { FsObjectStore } from '../../shared/index.ts';
 import { extractPages, isScanMarker, pdfPageImages, type ExtractedPage, type PageImage } from '../../shared/index.ts';
 import { receiveByUpload } from './documents.ts';
 import { recordSbaStatementHeld } from './claim-facts.ts';
@@ -43,7 +43,7 @@ import {
   assertContractCovered, FAIL_CLOSED_SETTINGS, DOC_SPECS, HUMAN_READ_ONLY_TYPES, durableKeyFor,
   type AuditEvent, type AuditSink, type DocType, type DocTypeClassifier,
   type TextExtractor, type UploadHandlerDeps, type UploadJob,
-} from '../../shared/upload-handler-port.ts';
+} from './upload-handler-port.ts';
 import { getDocumentEventsJobIdAtByDocIdContractStep, getDocumentsCreatedAtByBusinessIdContentSha256, getDocumentsIdBusinessIdById2, getDocumentsOriginalKeptAtOriginalDeletedAtById, getDocumentsTypeCodeById, insertDocumentEvents, insertDocuments, listDocumentEventsContractStepActionByDocId, listDocumentsIdLogicalDocumentIdByOriginalKeptAtOriginalDele, updateDocumentsByteSizeSniffedAsById, updateDocumentsFailureCodeById, updateDocumentsOriginalDeletedAtByIdOriginalDeletedAt, updateDocumentsOriginalKeptAtOriginalDeleteAfterByIdOriginal, updateDocumentsStateDocTypeById } from './data.ts';
 
 /**
@@ -696,7 +696,7 @@ export async function openKeptOriginal(
 
 /**
  * DELETE EVERY KEPT ORIGINAL WHOSE TIME IS UP. Runs whenever a folder or an original is opened, and from
- * `node src/core/cli.ts sweep-originals`. It deletes, then records — a record written first would claim a deletion that had
+ * `node src/app/cli.ts sweep-originals`. It deletes, then records — a record written first would claim a deletion that had
  * not happened. A file already gone is recorded as deleted: the time is up either way, and nothing is left to serve.
  * Returns how many it deleted.
  */

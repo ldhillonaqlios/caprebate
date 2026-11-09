@@ -32,11 +32,11 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { badge, breadcrumb, claimRef, highlights, propertyIn, savedMessage, why } from '../../shared/index.ts';
 import { crmModule as C } from '../crm/index.ts';
 import { documentsModule as D } from '../claims/index.ts';
-import type { FsObjectStore } from '../../shared/objectstore.ts';
+import type { FsObjectStore } from '../../shared/index.ts';
 import { piecedFields, singleFile } from '../../core/index.ts';
 import { piecesOf, piecesPage } from '../../core/index.ts';
 import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals, readerFor, DAMAGED_PDF } from '../claims/index.ts';
-import { UPLOAD_LIMITS, pdfLooksComplete, sniffAccepted } from '../../shared/upload-handler-port.ts';
+import { UPLOAD_LIMITS, pdfLooksComplete, sniffAccepted } from '../claims/index.ts';
 import { NO_DUE_DATE } from '../crm/index.ts';
 import { ANSWER_WORDS, EARLY_VOUCH_PREFIX, VOUCH_ANSWERS, earlyVouchesFrom } from '../claims/index.ts';
 

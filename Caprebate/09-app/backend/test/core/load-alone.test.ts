@@ -28,7 +28,7 @@ function loadAlone(file: string): Promise<string | null> {
     const p = spawn(process.execPath, ['--input-type=module', '-e', `await import(${JSON.stringify('./' + file)})`], { cwd: BACKEND, stdio: ['ignore', 'ignore', 'pipe'] });
     let err = '';
     p.stderr.on('data', (b: Buffer) => { err += b.toString(); });
-    // A file that runs as a command (src/core/cli.ts) may stop with its own usage message; only an error while loading counts.
+    // A file that runs as a command (src/app/cli.ts) may stop with its own usage message; only an error while loading counts.
     p.on('close', () => done(err.match(/(ReferenceError|TypeError|SyntaxError|ERR_MODULE_NOT_FOUND)[^\n]*/)?.[0] ?? null));
   });
 }

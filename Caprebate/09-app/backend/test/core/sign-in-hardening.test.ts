@@ -14,8 +14,8 @@ import { mkdtempSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../../src/core/server.ts';
-import { seed, SEED_PASSWORD } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed, SEED_PASSWORD } from '../../src/app/seed.ts';
 import { codeAt, stepAt } from '../../src/core/totp.ts';
 import { forgetRegisteredSecretsForTest, loadSecrets, secretsFromValues, emptySecrets, SECRET_KEYS } from '../../src/core/secrets.ts';
 import { outboxTransport } from '../../src/integrations/email/email.ts';
@@ -234,7 +234,7 @@ describe('151k · 1 · the JSON API walks the steps, on the same functions as th
       assert.equal(r.status, 200);
       assert.match(await r.text(), /Your recovery codes[\s\S]*href="\/staff">I have saved them/);
       // and server.ts calls the step functions of src/core/sign-in.ts, and verifies no code of its own
-      const src = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'core', 'server.ts'), 'utf8');
+      const src = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'app', 'server.ts'), 'utf8');
       assert.match(src, /SI\.submitCode\(/);
       assert.doesNotMatch(src, /verifyCode|codeAt|code_hash/);
     } finally { w.close(); }

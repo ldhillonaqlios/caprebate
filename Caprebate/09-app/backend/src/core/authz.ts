@@ -217,7 +217,7 @@ export type Obj =
 export type ObjType = Obj['type'];
 
 /** Narrow a rule to one object type without a cast at the call site. */
-type Rule<T extends ObjType> = (actor: Actor, object: Extract<Obj, { type: T }>) => boolean;
+export type Rule<T extends ObjType> = (actor: Actor, object: Extract<Obj, { type: T }>) => boolean;
 
 /* ------------------------------------------------------------------ *
  * The predicates the rules are built from. Named, so a rule table reads
@@ -283,7 +283,7 @@ const ownTaskOnAssignedJob = (
  * without the fields: `undefined` is none of the reader classes, and
  * `carries_value === false` is false for an object that does not say.
  */
-type DocumentFacts = {
+export type DocumentFacts = {
   readers: string; carries_value: boolean; letter_signed: boolean; assigned_surveyor_ids: readonly string[];
   /**
    * CRM 6 of 10. True only for a capital allowances report that is an ISSUED
@@ -374,11 +374,42 @@ const clientDeliverable = (
  * the view-only role is decided by `READ_ONLY_RULES` below, one explicit yes or no per
  * action, and never by a key here — so it cannot be given an action by being added to a row.
  */
-type RuleTable = {
+export type RuleTable = {
   readonly [A in string]: Partial<Record<Exclude<AppRole, 'READ_ONLY'>, Rule<ObjType>>>;
 };
 
-const RULES: RuleTable = {
+/** One action's row: the five roles' tests, as in RuleTable. */
+type RuleRow = RuleTable[string];
+
+/**
+ * THE TABLE, PUT TOGETHER. Each module declares its own actions in its actions.ts and hands them to registerActions
+ * when it loads (its front door loads it first); the core's own are below. authorise() and can() read this one table,
+ * as they always did. An action is declared by one area only: a second area naming it is refused at start.
+ */
+const RULES: Record<string, RuleRow> = {};
+const OWNER = new Map<string, string>();
+const REGISTERED: string[] = [];
+
+/** Put a module's actions into the table (src/modules/<area>/actions.ts). Returns the table it was given. */
+export function registerActions<T extends RuleTable>(area: string, table: T): T {
+  for (const [action, row] of Object.entries(table)) {
+    const had = OWNER.get(action);
+    if (had !== undefined && had !== area) throw new Error(`the action ${action} is declared by ${had} and by ${area}: one module owns each action`);
+    if (had === undefined) REGISTERED.push(action);
+    OWNER.set(action, area);
+    RULES[action] = row;
+  }
+  return table;
+}
+
+/** Which area declared an action, or undefined if none has. */
+export function actionOwner(action: string): string | undefined {
+  return OWNER.get(action);
+}
+
+/* THE CORE'S OWN ACTIONS. Every other action is declared by its module (src/modules/<area>/actions.ts) and put
+   in this table when the module loads (registerActions below). */
+const CORE_ACTIONS: RuleTable = {
   /* --- user administration. ADMIN alone, and that is the whole of it. --- */
   'user.create': { ADMIN: always },
   'user.update': { ADMIN: always },
@@ -419,30 +450,6 @@ const RULES: RuleTable = {
     ACCOUNTING: self as Rule<ObjType>, SURVEYING: self as Rule<ObjType>,
     CLIENT: self as Rule<ObjType>,
   },
-  'working_time.write': {
-    ADMIN: always,
-    SALES: ownWorkingTime as Rule<ObjType>,
-    ACCOUNTING: ownWorkingTime as Rule<ObjType>,
-    SURVEYING: ownWorkingTime as Rule<ObjType>,
-  },
-  /**
-   * Reading working times. WIDER THAN WRITING THEM, and deliberately so.
-   *
-   * ADMIN and SALES read everybody's, because the calendar cannot offer a slot
-   * without knowing whose hours it falls in and cannot assign a call without
-   * knowing who is free. ACCOUNTING and SURVEYING read only their own — they
-   * have their own hours to set and no business with anyone else's diary.
-   * CLIENT reads none at all: the client's own picker is served by
-   * `publicSlots`, which returns moments with the people taken out and asks
-   * this table without ever asking this rule, because a visitor with no account
-   * is not an actor.
-   */
-  'working_time.read': {
-    ADMIN: always,
-    SALES: always,
-    ACCOUNTING: ownWorkingTime as Rule<ObjType>,
-    SURVEYING: ownWorkingTime as Rule<ObjType>,
-  },
 
   /**
    * MAY YOU OPEN THE BACK OFFICE AT ALL.
@@ -461,518 +468,21 @@ const RULES: RuleTable = {
    * landing page now leads somewhere.
    */
   'backoffice.enter': { ADMIN: always, SALES: always, ACCOUNTING: always, SURVEYING: always },
-
-  /* --- the pipeline --- */
-  'business.read': {
-    ADMIN: always, SALES: always,
-    ACCOUNTING: always, // the client NAME, for an invoice. Nothing else follows from it.
-    CLIENT: isOwnBusiness as Rule<ObjType>,
-  },
-  'assessment.read': {
-    ADMIN: always, SALES: always,
-    SURVEYING: always, // an INPUT the survey needs; the estimate is a separate object
-    CLIENT: ownBusiness as Rule<ObjType>,
-  },
-  'answer.read': {
-    ADMIN: always, SALES: always, SURVEYING: always,
-    CLIENT: ownBusiness as Rule<ObjType>,
-  },
-  'estimate.read': {
-    ADMIN: always, SALES: always,
-    CLIENT: ownBusiness as Rule<ObjType>,
-    // SURVEYING is deliberately absent. See payload.ts and N1.
-  },
-  'booking.read': {
-    ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>,
-  },
-  'booking.write': { ADMIN: always, SALES: always },
-  /**
-   * A CLIENT MOVES THEIR OWN CALL. And it is a
-   * DECISION rather than a gap being filled — so it is written here as its own
-   * row with its own reasoning, which is the whole reason it did not become
-   * `CLIENT: ownBusiness` bolted onto `booking.write` above.
-   *
-   * WHY NOT LOOSEN `booking.write`. That action means "own and arrange a client
-   * call": it decides whose diary a booking may be put into, it is what
-   * `bookableUserIds` asks of every staff member to build the diary, and it is
-   * the gate on the whole back-office calendar section through the sentinel
-   * object. A CLIENT on that row would have appeared in the answer to "who
-   * could take this call", which is absurd, and would have passed the section
-   * gate, which is a leak. THE ACTIONS ARE GENUINELY DIFFERENT and one of them
-   * did not exist until a client needed it.
-   *
-   * WHAT IT ADMITS, EXACTLY: the CLIENT role alone, on `ownBusiness`, on their
-   * own booking object. No staff role is on it — a staff member moving a call
-   * is `booking.write`, on the row above, and neither route is the other's back
-   * door. Nothing else about a booking changes: reading it is still
-   * `booking.read`, and the write path re-checks `isBookable` at the moment of
-   * writing exactly as the staff path does.
-   */
-  'booking.move_own': { CLIENT: ownBusiness as Rule<ObjType> },
-  /* The client accepts the survey report released to them, in their portal (src/modules/portal/report-accept.ts). Their own act. */
-  'client_report.accept': { CLIENT: ownBusiness as Rule<ObjType> },
-  'engagement.read': {
-    ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>,
-  },
-  /* Prepare the engagement letter and send it to the client's logins (src/modules/claims/engagement-send.ts). */
-  'engagement.send': { ADMIN: always, SALES: always },
-  'research.run': { ADMIN: always, SALES: always },
-  'research.read': { ADMIN: always, SALES: always },
-  'register_record.read': { ADMIN: always, SALES: always, SURVEYING: always },
-  /*
-   * CHECKED AND APPROVED, AND TELLING THE CLIENT. Ticking a fact as checked, and pressing "Tell the client" on
-   * a step, are ADMIN's and SALES's — the people who work the client. TAKING A STEP BACK, after the client has been told,
-   * is ADMIN's alone. The client reads what it was told, on its own company, and nothing else: the view model
-   * (src/modules/claims/approvals.ts, `clientSteps`) carries a step's words and a date, never a fact, a value or a reason.
-   */
-  'fact.approve': { ADMIN: always, SALES: always },
-  'client_step.tell': { ADMIN: always, SALES: always },
-  'client_step.take_back': { ADMIN: always },
-  'client_step.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
-  'internal_note.read': { ADMIN: always, SALES: always },
-  'internal_note.write': { ADMIN: always, SALES: always },
-  /*
-   * THE THREAD WITH THE CLIENT. Admin and Sales, who work the client, and the client on its own company. The
-   * TEAM thread is `internal_note.*` above, and the client is on neither of its rows. THE SURVEYOR READS THE THREAD
-   * WITH THE CLIENT, AND NOTHING MORE: the owner answered "Should the surveyor see a client's chat?" —
-   * "With the client" only. A surveyor reads it on a company where they hold an assigned survey job (`throughAssignedJob`,
-   * failing closed on an object without the list), never writes on it, and is on no row of the TEAM thread. Accounting is not on them either: its view is invoices, settled.
-   * A REPLY BY EMAIL waits for Admin or Sales, who read the queue and file what the mailbox reader could not.
-   */
-  'client_message.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>, SURVEYING: throughAssignedJob as Rule<ObjType> },
-  'client_message.write': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
-  'inbound_email.read': { ADMIN: always, SALES: always },
-  'inbound_email.file': { ADMIN: always, SALES: always },
-
-  /* --- Caprebate's own finance --- */
-  'invoice.read': { ADMIN: always, ACCOUNTING: always },
-  'invoice.write': { ADMIN: always, ACCOUNTING: always },
-  /*
-   * CRM 7 of 10 — FINANCE ON THE CLAIM. EVERY ROW BELOW IS NEW AND EVERY ROLE NOT
-   * NAMED IS REFUSED — test/finance/invoices-and-fee-controls.test.ts asserts it per role, per action.
-   *
-   * RAISING, CREDITING AND RECORDING MONEY RECEIVED ARE ACCOUNTING'S AND ADMIN'S,
-   * as the invoice is. None of them takes money: `record_received` records what a
-   * person saw arrive, and test/finance/accounting-view.test.ts still refuses any action named for
-   * taking a payment. A FINANCE SETTING — the VAT position, the threshold, the
-   * margin — IS ADMIN'S ALONE: the monitoring is a director's check, and the person
-   * whose invoices it monitors does not move its line.
-   */
-  'invoice.raise': { ADMIN: always, ACCOUNTING: always },
-  'invoice.credit': { ADMIN: always, ACCOUNTING: always },
-  'invoice.record_received': { ADMIN: always, ACCOUNTING: always },
-  'finance_setting.write': { ADMIN: always },
-
-  /* --- the surveyor's workspace, and nothing else --- */
-  /**
-   * MAY YOU OPEN THE SURVEY SECTION AT ALL — the same kind of question
-   * `backoffice.enter` asks, and it needs its own row for a reason that only
-   * shows up on this section.
-   *
-   * Every other collection gate in this application is a SENTINEL OBJECT: a
-   * business belonging to nobody, refused to CLIENT because every rule that
-   * lets a client through is `ownBusiness`. That works because the roles the
-   * gate admits are on `always`. It does not work here: SURVEYING reaches
-   * `surveyor_job.read` through `assignedSurveyor`, which is a test on the
-   * SPECIFIC job, and a sentinel job would have to carry the requester's own
-   * id in `surveyor_id` to pass it — a sentinel built to satisfy the rule
-   * being asked, which proves nothing and reads as a trick.
-   *
-   * So the section is its own action. ACCOUNTING is absent, as it is from
-   * every row below.
-   */
-  'surveyor_job.enter': { ADMIN: always, SALES: always, SURVEYING: always },
-  'surveyor_job.read': {
-    ADMIN: always, SALES: always,
-    SURVEYING: assignedSurveyor as Rule<ObjType>,
-  },
-  'surveyor_job.commit': { SURVEYING: assignedSurveyor as Rule<ObjType> },
-  'surveyor_job.assign': { ADMIN: always, SALES: always },
-
-  /* --- the CRM backbone. CRM 1 of 10 ---------------------
-   *
-   * EVERY ROW BELOW IS NEW, AND EVERY ROLE NOT NAMED ON A ROW IS REFUSED IT —
-   * test/crm/crm.test.ts asserts the refusal for each one, per action, rather than
-   * trusting that an absent key means what it should.
-   *
-   * THE ORGANISATION IS THE `business` OBJECT. It is the same row, extended;
-   * a second object type for it would be a second place to authorise one thing.
-   * `business.read` above is untouched — it is still the client NAME, for an
-   * invoice, and it is what ACCOUNTING holds. `organisation.read` is the whole
-   * record, and ACCOUNTING is not on it.
-   *
-   * CONTACTS ARE ADMIN AND SALES ONLY. They carry people's names, routes and
-   * internal notes, and nothing about the survey or the money needs them.
-   *
-   * PROPERTIES AND CLAIMS ARE REACHABLE BY SURVEYING ONLY `throughAssignedJob`.
-   * The section gates `property.enter` and `claim.enter` are their own actions
-   * for the reason `surveyor_job.enter` is: a sentinel object cannot satisfy a
-   * test on the specific object without being built to pass it.
-   *
-   * N1 — `claim.read_value` IS ADMIN AND SALES AND NOBODY ELSE. The claim value,
-   * the tax benefit and every sealed estimate field hang off it. A claim page
-   * built for any other role is built forwards without them, and the payload
-   * proof searches the response for all seven.
-   *
-   * ACCOUNTING READS A CLAIM AS CLIENT, REFERENCE AND MONEY. `claim.read`
-   * admits it; src/modules/crm/crm.ts builds its view from those three and the money
-   * comes through `invoice.read`, which it already holds. No join to the
-   * answers, the register data, the notes, the workings or the estimate.
-   *
-   * CLIENT IS ON NONE OF THEM. The portal is unchanged by this phase.
-   * ------------------------------------------------------------------------ */
-  'organisation.read': { ADMIN: always, SALES: always },
-  /**
-   * THE CLIENTS AREA, AS ACCOUNTING READS IT. Word answer 40: Accounting should
-   * see the clients area, so it is told to raise the invoice, chases it and records payment. NOT `organisation.read`:
-   * the whole record carries the notes, the research, the answers and where the client came from, and opening it to
-   * Accounting failed fifteen tests that guard those boundaries. This is the billing view of the same area
-   * (src/modules/finance/billing.ts): each client's name, the people to chase and how to reach them, the claims waiting for an
-   * invoice, and the invoices with every chase. Read only.
-   */
-  'client_billing.read': { ADMIN: always, ACCOUNTING: always },
-  'organisation.write': { ADMIN: always, SALES: always },
-  'contact.read': { ADMIN: always, SALES: always },
-  'contact.write': { ADMIN: always, SALES: always },
-  'property.enter': { ADMIN: always, SALES: always, SURVEYING: always },
-  'property.read': {
-    ADMIN: always, SALES: always,
-    SURVEYING: throughAssignedJob as Rule<ObjType>,
-  },
-  'property.write': { ADMIN: always, SALES: always },
-  'claim.enter': { ADMIN: always, SALES: always, ACCOUNTING: always, SURVEYING: always },
-  'claim.read': {
-    ADMIN: always, SALES: always,
-    ACCOUNTING: always, // client, reference and money — see the block above
-    SURVEYING: throughAssignedJob as Rule<ObjType>,
-  },
-  'claim.read_value': { ADMIN: always, SALES: always },
-  'claim.create': { ADMIN: always, SALES: always },
-  'claim.write': { ADMIN: always, SALES: always },
-  /*
-   * A CLIENT SEES THEIR OWN COMPANY'S CLAIMS: each one's property and how far it has got, in the portal's six
-   * client words (src/modules/portal/portal.ts). `ownBusiness` on the claim itself, asked of every claim on every request. Nothing
-   * else about a claim reaches a client through it: not the ten staff stages, a hold reason, an exit note, a value, a
-   * next action or a person. ADMIN and SALES may look at a client's portal, as they may today.
-   */
-  'claim.progress_read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
-
-  /* --- leads and the pipeline. CRM 2 of 10 --------------
-   *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * crm/pipeline.test.ts asserts the refusal for each one, per action.
-   *
-   * LEADS ARE ADMIN AND SALES. A lead is a prospect being worked, with the
-   * estimate the client was shown beside it; nothing about it is money or
-   * survey work, so ACCOUNTING and SURVEYING are on none of these rows.
-   *
-   * `claim.move` IS A MOVE THROUGH A GATE, and the gate is asked on the server
-   * at every write — src/modules/crm/pipeline.ts. Holding this action lets a person ASK
-   * for a move; it never lets them past a gate that is shut. `claim.reopen`,
-   * the one move backwards, is ADMIN alone and needs a reason.
-   *
-   * THE BOARD IS ADMIN AND SALES. A card's value is still asked per card of
-   * `claim.read_value`, so a role added here later would get no value on a
-   * card without being added there too.
-   * ------------------------------------------------------------------------ */
-  'lead.read': { ADMIN: always, SALES: always },
-  'lead.write': { ADMIN: always, SALES: always },
-  'lead.convert': { ADMIN: always, SALES: always },
-  'pipeline.read': { ADMIN: always, SALES: always },
-  'claim.move': { ADMIN: always, SALES: always },
-  'claim.reopen': { ADMIN: always },
-
-  /* --- tasks, the timeline, automation and templates. CRM 3 of 10 ----------
-   *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * crm/tasks.test.ts asserts the refusal for each one, per action.
-   *
-   * A TASK IS READ AND WORKED BY WHOEVER IT BELONGS TO. ADMIN and SALES read and
-   * change every task. ACCOUNTING reads and progresses its own tasks and the ones
-   * waiting with Accounting — the finance task the invoice stage raises — and
-   * nothing about them is a join to the answers, the register data, the notes,
-   * the workings or the estimate. SURVEYING does the same, and only on a claim an
-   * assigned survey job reaches. Creating a task, and changing or cancelling one,
-   * is ADMIN and SALES.
-   *
-   * THE TIMELINE ADMITS ACCOUNTING AND IS BUILT FORWARDS FOR IT. `timeline.read`
-   * lets ACCOUNTING open a claim's timeline — it is already on `claim.read` — and
-   * src/modules/crm/timeline.ts builds that timeline from `invoice.read` alone, so it
-   * holds financial events and nothing else. SURVEYING reaches only the timeline
-   * of a claim an assigned job is on, built from that job's reach.
-   *
-   * AN AUTOMATION RULE AND A TEMPLATE ARE ADMIN'S TO CHANGE. SALES reads both and
-   * queues a merged email; nobody else is on any of these rows.
-   * ------------------------------------------------------------------------ */
-  'staff_task.read': {
-    ADMIN: always, SALES: always,
-    ACCOUNTING: ownOrPooledTask as Rule<ObjType>,
-    SURVEYING: ownTaskOnAssignedJob as Rule<ObjType>,
-  },
-  'staff_task.create': { ADMIN: always, SALES: always },
-  'staff_task.write': { ADMIN: always, SALES: always },
-  'staff_task.progress': {
-    ADMIN: always, SALES: always,
-    ACCOUNTING: ownOrPooledTask as Rule<ObjType>,
-    SURVEYING: ownTaskOnAssignedJob as Rule<ObjType>,
-  },
-  'timeline.read': {
-    ADMIN: always, SALES: always,
-    ACCOUNTING: always, // financial events only — see the block above
-    SURVEYING: throughAssignedJob as Rule<ObjType>,
-  },
-  'automation_rule.read': { ADMIN: always, SALES: always },
-  'automation_rule.write': { ADMIN: always },
-  'email_template.read': { ADMIN: always, SALES: always },
-  'email_template.write': { ADMIN: always },
-  'email.queue': { ADMIN: always, SALES: always },
-
-  /* --- documents on the claim. CRM 4 of 10 ---------------
-   *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * claims/documents.test.ts asserts the refusal for each one, per action, and
-   * `document.read` per role PER READER CLASS.
-   *
-   * `document.read` IS ASKED OF THE DOCUMENT ITSELF, never of its organisation:
-   * `business.read` admits ACCOUNTING to every client's name, and a document
-   * authorised that way would have admitted it to every client's lease.
-   *
-   * `document.read_original` IS THE FILE, AND IT IS NARROWER. The Dashboard Data
-   * Specification's access table gives the surveyor and the accountant NO access
-   * to the raw document store, and names no Sales row. Under the fail-closed
-   * settings there is no original to serve in any case; the route still asks.
-   *
-   * TYPES ARE ADMIN'S TO CHANGE, AND A REQUEST IS ADMIN'S OR SALES'S TO RAISE.
-   * The client reads their own requests in the portal and answers one only by
-   * uploading — there is no action for answering, because there is no click that
-   * receives a document.
-   * ------------------------------------------------------------------------ */
-  'document.read': {
-    ADMIN: always,
-    SALES: salesDocument as Rule<ObjType>,
-    ACCOUNTING: accountingDocument as Rule<ObjType>,
-    SURVEYING: surveyorDocument as Rule<ObjType>,
-    CLIENT: clientDocument as Rule<ObjType>,
-  },
-  /* Sales, Admin and the data protection officer may open a kept original. Sales
-     on the same documents it may read, never the fee invoice. Kept originals exist only while KEEP_ORIGINALS is on. */
-  /* Sales opens a kept original only
-     on a client it owns — the organisation's owner, or the owner of one of its claims. Another salesperson's client is
-     refused, and an owner not recorded admits nobody (N4). Reading the document itself (`document.read`) is unchanged. */
-  'document.read_original': { ADMIN: always, SALES: ((a: Actor, o: DocumentFacts) => salesDocument(a, o) && Array.isArray(o.owner_ids) && o.owner_ids.includes(a.id)) as Rule<ObjType>, CLIENT: clientDocument as Rule<ObjType> },
-  'document.upload': { ADMIN: always, SALES: always, CLIENT: isOwnBusiness as Rule<ObjType> },
-  'document.link': { ADMIN: always, SALES: always },
-  /** Whether the client can see a file — the two roles that upload one. Never the client, never a surveyor. */
-  'document.show_to_client': { ADMIN: always, SALES: always },
-  /**
-   * Saying whether a name on a document belongs to an organisation rather than to somebody. Two
-   * CLIENT_DOC fields are kept on that footing alone and it cannot be inferred from the document, so it is a
-   * person's answer. THE TWO ROLES THAT WORK THE CLIENT AND NOBODY ELSE — not a surveyor, not Accounting, and
-   * never the client, who would be vouching for their own document.
-   */
-  'document.vouch': { ADMIN: always, SALES: always },
-  'document_type.read': { ADMIN: always, SALES: always },
-  'document_type.write': { ADMIN: always },
-  'document_request.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
-  'document_request.create': { ADMIN: always, SALES: always },
-  'document_request.withdraw': { ADMIN: always, SALES: always },
-
-  /* --- introducers and the referral channel. CRM 5 of 10 ---
-   *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * crm/introducers.test.ts asserts the refusal for each one, per action.
-   *
-   * AN INTRODUCER IS A FIRM AND NEVER A USER. No row here, and no row anywhere,
-   * gives a firm or a person at it a way in: CLIENT and SURVEYING are on none.
-   *
-   * THE FIRM IS ADMIN'S AND SALES'S TO READ AND KEEP. `introducer.read_value` —
-   * the estimated claim value of what it referred — is ADMIN and SALES, as
-   * `claim.read_value` is. `introducer.read_money` — the fees invoiced and paid
-   * from those claims — is ADMIN and ACCOUNTING, as `invoice.read` is, and
-   * ACCOUNTING opens a firm with that alone: src/modules/crm/introducers.ts builds its
-   * view forwards from the money, with no join to the answers, the register data,
-   * the notes, the workings or the estimate.
-   *
-   * THE CLIENT'S OPT-IN is recorded by ADMIN or SALES, who ask the client.
-   *
-   * THE REWARD SETTING IS ADMIN'S TO SWITCH, and the switch still refuses while
-   * clause 1 of the letter is blank. A model-B fee's disclosure is recorded by the
-   * people who talk to the client, ADMIN and SALES; that it was settled with the
-   * firm, by the people who keep the money, ADMIN and ACCOUNTING. NOTHING HERE
-   * TAKES MONEY: `record_settled` records that Caprebate paid a firm, and
-   * test/finance/accounting-view.test.ts still refuses any action named for taking a payment.
-   *
-   * CONTACT WITH A FIRM IS A STAFF TASK (row E48), so logging or planning it also
-   * asks `staff_task.create`, which is ADMIN's and SALES's already.
-   * ------------------------------------------------------------------------ */
-  'introducer.enter': { ADMIN: always, SALES: always, ACCOUNTING: always },
-  'introducer.read': { ADMIN: always, SALES: always },
-  'introducer.read_value': { ADMIN: always, SALES: always },
-  'introducer.read_money': { ADMIN: always, ACCOUNTING: always },
-  'introducer.write': { ADMIN: always, SALES: always },
-  'share_consent.read': { ADMIN: always, SALES: always },
-  'share_consent.record': { ADMIN: always, SALES: always },
-  'introducer_reward.read': { ADMIN: always, SALES: always, ACCOUNTING: always },
-  'introducer_reward.switch': { ADMIN: always },
-  'introducer_fee.read': { ADMIN: always, SALES: always, ACCOUNTING: always },
-  'introducer_fee.disclose': { ADMIN: always, SALES: always },
-  'introducer_fee.record_settled': { ADMIN: always, ACCOUNTING: always },
-
-  /* --- the claim's facts, figures, sign-off, deliverables and aftercare. CRM 6 of 10 ---
-   *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * claims/claim-record.test.ts asserts the refusal for each one, per action.
-   *
-   * THE FACTS ARE ADMIN'S AND SALES'S. ACCOUNTING IS ON NONE OF THESE ROWS: a
-   * fact about the tax position, an election or a grant is not money.
-   * `claim_facts.read_released` IS THE SURVEYOR'S, on an assigned job only, and
-   * it reaches the RELEASED inputs alone — src/payload.ts assembles them forwards
-   * from a list that holds no figure, amount, window or profit position.
-   *
-   * THE FIGURES ARE ADMIN'S AND SALES'S, as `claim.read_value` is (N1): the
-   * indicative estimate, the researched estimate's state, the surveyor's
-   * committed figure, the tax adviser's figure and the reconciliation. Recording
-   * the sign-off record, the reconciliation, a deliverable and an enquiry is
-   * ADMIN's and SALES's — the people who hold the claim's papers.
-   *
-   * A DELIVERABLE IS READ BY THE CLIENT ONLY THROUGH `clientDeliverable` above.
-   * ------------------------------------------------------------------------ */
-  'claim_facts.read': { ADMIN: always, SALES: always },
-  'claim_facts.read_released': { SURVEYING: throughAssignedJob as Rule<ObjType> },
-  'claim_facts.record': { ADMIN: always, SALES: always },
-  'claim_figures.read': { ADMIN: always, SALES: always },
-  'tax_signoff.record': { ADMIN: always, SALES: always },
-  'reconciliation.record': { ADMIN: always, SALES: always },
-  'deliverable.read': { ADMIN: always, SALES: always, CLIENT: clientDeliverable as Rule<ObjType> },
-  'deliverable.record': { ADMIN: always, SALES: always },
-  'hmrc_enquiry.record': { ADMIN: always, SALES: always },
-  /* Recording the client's own written filing confirmation, where the client has no accountant — the
-     people who hold the claim's papers, as a deliverable is. Nobody else; test/claims/engagement-terms-and-fees.test.ts asserts it per role. */
-  'client_filing.record': { ADMIN: always, SALES: always },
-  /* A multi-site discount is proposed by the people who agree terms with a client, and read by them and by
-     finance. It is a record and is never applied: see src/modules/claims/fee-discounts.ts. */
-  'fee_discount.record': { ADMIN: always, SALES: always },
-  'fee_discount.read': { ADMIN: always, SALES: always, ACCOUNTING: always },
-
-  /* --- the compliance registers. CRM 8 of 10 ---------------
-   *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * test/compliance/compliance-registers.test.ts asserts the refusal for each one, per action.
-   *
-   * NONE OF THIS IS FOR SALES, ACCOUNTING OR SURVEYING, and ADMIN holds it TODAY
-   * ONLY because nobody else can. There is no data protection officer role and
-   * ADMIN is a super user, not an officer: whether compliance needs a role of its
-   * own is the owner's question, "Do we need a compliance role separate from Admin?",
-   * and a sixth role is not ENABLED here. One is DEFINED and switched off —
-   * `DPO_RULES` and `canAsDpo` below — and while `DPO_ROLE_SWITCH` is off it reaches nothing.
-   *
-   * THE IDENTITY STORE IS NARROWER THAN EVERYTHING ELSE. `compliance.read` does not
-   * reach it and nothing inherits it: a person in S2 is read only through
-   * `compliance.identity_read`, by person_ref or by a logged name search, and
-   * every read is audited (Dashboard Data Specification, section 7).
-   *
-   * THE CLIENT'S OWN ROUTE TO THE SHARE-PROGRESS OPT-IN is the one row here for a
-   * CLIENT, on their own organisation — withdrawing always, giving only while its
-   * switch is on.
-   * ------------------------------------------------------------------------ */
-  'compliance.read': { ADMIN: always },
-  'compliance.write': { ADMIN: always },
-  'compliance.identity_read': { ADMIN: always },
-  'compliance.identity_write': { ADMIN: always },
-  /* The restricted breach names list. ADMIN here only as the door: src/modules/compliance/breach-names.ts
-     lets an Admin through only when they are the deputy named in breach_names_deputies (migration 080). */
-  'compliance.breach_names': { ADMIN: always },
-  'share_consent.client_record': { CLIENT: ownBusiness as Rule<ObjType> },
-
-  /* --- the per-disclosure log. -------------------
-   *
-   * BOTH ROWS ARE NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/compliance/data-protection-switches.test.ts
-   * asserts the refusal for each one, per action. The log is switched off
-   * (`DISCLOSURE_LOG` in src/modules/compliance/disclosure-log.ts), so today these rows admit a
-   * person to a refusal that says so, and nothing more.
-   *
-   * RECORDING a disclosure is ADMIN's and SALES's — the people who send a
-   * client's papers to a surveyor, a tax adviser or the client's accountant.
-   * READING who has received a client's data is a compliance register, ADMIN's
-   * alone, as the rights-request register is.
-   * ------------------------------------------------------------------------ */
-  'disclosure.read': { ADMIN: always },
-  'disclosure.record': { ADMIN: always, SALES: always },
-
-  /* --- the defence pack generator. ---------------
-   *
-   * NEW, AND EVERY ROLE NOT NAMED IS REFUSED — test/claims/defence-pack-and-case-stamp.test.ts asserts
-   * the refusal for each one. The generator is switched off (`DEFENCE_PACK_GENERATOR`
-   * in src/modules/claims/defence-pack.ts), so today this row admits a person to a refusal that
-   * says so. Switched on it builds a manifest from the claim's sealed records and
-   * issues nothing: ADMIN and SALES, who hold the claim's figures and its papers, as
-   * `claim_figures.read` and `deliverable.record` are. No route asks it yet.
-   * ------------------------------------------------------------------------ */
-  'defence_pack.generate': { ADMIN: always, SALES: always },
-
-  /* --- dashboards, search, saved views, export and admin settings. CRM 9 of 10 ---
-   *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/crm/management-dashboard.test.ts
-   * asserts the refusal for each one, per action.
-   *
-   * `dashboard.enter` OPENS THE MANAGEMENT DASHBOARD AND NOTHING INSIDE IT. Every tile
-   * asks the actions its own figures already need — `pipeline.read`, `claim.read_value`,
-   * `invoice.read`, `claim_figures.read`, `compliance.read` and the rest — so a role that
-   * enters sees only the tiles those rows admit, and SURVEYING, which holds none of them,
-   * sees its own survey jobs and nothing else. A tile is never a second rule.
-   * ------------------------------------------------------------------------ */
-  'dashboard.enter': { ADMIN: always, SALES: always, ACCOUNTING: always, SURVEYING: always },
-  /*
-   * EXPORT IS THE LIST THE READER ALREADY READS, AS CSV — and SURVEYING is not on it. A surveyor's lists are the
-   * working line of their own jobs, and nothing about survey work needs a spreadsheet of them; a file leaves the
-   * application, where no rule follows it. What each exporter's file holds is their own row shape (src/shared/lists.ts).
-   */
-  'list.export': { ADMIN: always, SALES: always, ACCOUNTING: always },
-  /* A SAVED VIEW is a person's own; a SHARED one is ADMIN's to set and to retire. */
-  'saved_view.write': {
-    ADMIN: ownView as Rule<ObjType>, SALES: ownView as Rule<ObjType>,
-    ACCOUNTING: ownView as Rule<ObjType>, SURVEYING: ownView as Rule<ObjType>,
-  },
-  'saved_view.share': { ADMIN: always },
-  /*
-   * THE ADMIN SETTINGS SCREEN. SALES READS IT, as it reads the automation rules, the templates and the document types
-   * it folds in; ADMIN alone changes a list or a reason. What no setting may change — a gate, a switch, a role — is
-   * refused by the store (src/modules/admin/configuration.ts), and no action here reaches one.
-   */
-  'configuration.read': { ADMIN: always, SALES: always },
-  'configuration.write': { ADMIN: always },
-  /*
-   * MERGING A FIRM — the public referral form's new firm onto the one already recorded. ADMIN alone: it moves who
-   * referred what, and migration 019's trigger admits a person's move between firms only inside the merge.
-   */
-  'introducer.merge': { ADMIN: always },
-
-  /* --- the CRM follow-on ------------------------------------
-   *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/crm/introducer-source-claim-team.test.ts
-   * asserts the refusal for each one, per action.
-   *
-   * THE CLAIM TEAM. Reading the team is the actions its parts already need — `contact.read` for the organisation's
-   * accountant and adviser, `claim_figures.read` for the tax adviser's sign-off record — so a surveyor is drawn the
-   * owner and the surveyor it already reads and nothing else. LINKING A CONTACT TO A CLAIM, and ending the link, is
-   * ADMIN's and SALES's, the people who keep the organisation's contacts. A contact is never a user.
-   *
-   * THE DOCUMENT CENTRE is a list over every document, and every row on it is still asked of `document.read` on the
-   * document itself — so a role that enters sees only the documents that rule admits, and a surveyor the claim evidence
-   * of its own jobs. CLIENT is not on it: the portal is the client's list.
-   */
-  'claim_team.write': { ADMIN: always, SALES: always },
-  'document_centre.enter': { ADMIN: always, SALES: always, ACCOUNTING: always, SURVEYING: always },
-
-  /* --- the audit log is readable by the super user alone ---
-   * The CRM follow-on built the page that asks it: /staff/audit, kinds, ids and outcomes and never a value. */
-  'audit.read': { ADMIN: always },
 };
 
-export type Action = keyof typeof RULES & string;
+registerActions('core', CORE_ACTIONS);
+
+export type Action = string;
 
 /** Every action the table knows. Used by the deny-by-default test and by /whoami. */
-export const REGISTERED_ACTIONS: readonly string[] = Object.freeze(Object.keys(RULES));
+export const REGISTERED_ACTIONS: readonly string[] = REGISTERED;
+
+/** The tests the rules are built from, for the modules' own tables (their actions.ts). */
+export const PREDICATES = Object.freeze({
+  always, ownBusiness, isOwnBusiness, assignedSurveyor, self, ownWorkingTime, throughAssignedJob, ownOrPooledTask,
+  ownTaskOnAssignedJob, salesDocument, accountingDocument, surveyorDocument, clientDocument, ownView, clientDeliverable,
+});
+
 
 
 /* ------------------------------------------------------------------ *

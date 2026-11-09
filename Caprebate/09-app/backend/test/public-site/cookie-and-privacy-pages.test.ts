@@ -19,8 +19,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import vm from 'node:vm';
 import type { IncomingMessage } from 'node:http';
-import { createApp, legalPagesSetting } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp, legalPagesSetting } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import { SECRET_KEYS } from '../../src/core/secrets.ts';
 import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../../src/integrations/outside-services.ts';
 import { sitePageFor } from '../../src/integrations/analytics.ts';
@@ -29,7 +29,7 @@ import {
   CONSENT_COOKIE, CONSENT_MAX_AGE, COOKIE_LIST, LEGAL_GAPS, LEGAL_PAGES, cookieBanner, legalPageHtml, optionalAllowed, versionOf,
 } from '../../src/modules/public-site/legal-pages.ts';
 import { currentApprovals, currentTermsVersions, hasAgreedCurrent } from '../../src/modules/compliance/legal-approvals.ts';
-import { offerSignup, requestSignup, confirmSignup } from '../../src/core/signup.ts';
+import { offerSignup, requestSignup, confirmSignup } from '../../src/modules/portal/signup.ts';
 import { STEP_TTL_MS } from '../../src/core/sign-in.ts';
 
 const SRC = join(import.meta.dirname, '..', '..', 'src');

@@ -352,7 +352,7 @@ describe('F46 — the accountant confirms the return fit and the filing through 
 });
 
 async function salesWeb() {
-  const { createApp } = await import('../../src/core/server.ts');
+  const { createApp } = await import('../../src/app/server.ts');
   const { mkdtempSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');

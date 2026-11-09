@@ -15,8 +15,8 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import { loadLetter, LETTER_PATH, TEST_LETTER_PATH, TEST_COPY_MARK, TEST_DEFAULT_MARK } from '../../src/modules/claims/letter.ts';
 import { letterFees } from '../../src/modules/claims/fee-controls.ts';
 import { clawbackReading, DISPOSAL_FEE } from '../../src/modules/claims/claim-record.ts';
@@ -127,7 +127,7 @@ describe('lines 2, 3 and 7 — Word questions 33, 34 and 196: the test-only enga
     }
     const api = readFileSync(join(ROOT, 'api', 'index.mjs'), 'utf8');
     assert.match(api, /^\s*testLetter: true,$/m);
-    const server = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'core', 'server.ts'), 'utf8');
+    const server = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'app', 'server.ts'), 'utf8');
     assert.match(server, /opts\.testLetter === true \? \{ letterPath: TEST_LETTER_PATH \} : \{\}/);
   });
 });

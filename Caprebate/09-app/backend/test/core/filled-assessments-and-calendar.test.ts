@@ -23,7 +23,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { APP_ROLES, type AppRole } from '../../src/core/roles.ts';
 import { BOOKING } from '../../src/shared/engine.ts';
 import {

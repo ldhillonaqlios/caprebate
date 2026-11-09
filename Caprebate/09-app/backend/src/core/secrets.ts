@@ -52,7 +52,7 @@ export type SecretOwner =
   | 'OS_MAPS'
   /** 1 Oct 2026: the outside timer that wakes the website to read email replies (POST /hooks/read-replies). */
   | 'REPLY_TIMER'
-  /** The live website's own timers (Vercel Cron), GET /hooks/timer/<job> (src/core/timers.ts). */
+  /** The live website's own timers (Vercel Cron), GET /hooks/timer/<job> (src/app/timers.ts). */
   | 'TIMERS'
   /** The nightly backup - its encryption key and the second place it is copied to (src/core/backup.ts). */
   | 'BACKUPS'

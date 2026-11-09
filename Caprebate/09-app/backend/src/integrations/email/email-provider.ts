@@ -556,7 +556,7 @@ type Waiting = {
  * read a sign-in code or a reset link (api/index.mjs prints the outbox to the function log). The Developer Spec says so.
  */
 /* ACCOUNT_VERIFY too. The email that confirms a new client login carries a
-   link that works once and for 24 hours (src/core/signup.ts), the same sort of secret; only its hash is kept in
+   link that works once and for 24 hours (src/app/signup.ts), the same sort of secret; only its hash is kept in
    client_signups, so the link still works after its words leave the outbox. The sentence now names all three.
    Migration 060 lets this sentence through for the three kinds; a row 058 blanked keeps 058's sentence for good. */
 /* REPORT_FOR_SIGNOFF too — the accountant's one-use sign-off link (src/modules/claims/report-signoff.ts); migration 073. */

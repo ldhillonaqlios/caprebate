@@ -77,3 +77,15 @@ test('161h1: npm run check runs it after lint-paths, and GitHub\'s fresh-copy ch
   assert.match(pkg.scripts['check'] ?? '', /npm run lint:paths && npm run lint:boundaries &&/);
   assert.match(readFileSync(join(REPO, '.github', 'workflows', 'checks.yml'), 'utf8'), /node tools\/boundaries\.cjs --self-test/);
 });
+
+test('the order: every area once, from the bottom up, and the check refuses an import up it even with no cycle', () => {
+  const m = read('architecture/modules.json') as { order: string[]; doors: Record<string, string | null> };
+  assert.deepEqual([...m.order].sort(), [...B.AREAS].sort());
+  assert.equal(m.order[0], 'shared');
+  assert.equal(m.order[m.order.length - 1], 'app');
+  assert.equal(m.doors['app'], null, 'nothing imports the start-up wiring, so it has no front door');
+  const r = spawnSync(process.execPath, [join(BACKEND, 'tools', 'boundaries.cjs'), '--self-test'], { cwd: BACKEND, encoding: 'utf8' });
+  assert.match(r.stdout, /AS REQUIRED +rule 2: an import up the order fails, with no cycle/);
+  assert.match(r.stdout, /AS REQUIRED +rule 2: an import down the order passes/);
+  assert.match(r.stdout, /AS REQUIRED +the order must name every area once/);
+});

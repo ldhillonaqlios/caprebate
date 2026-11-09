@@ -1,14 +1,14 @@
 /**
  * PHASE 160h — THE WEBSITE'S OTHER LEGAL PAGES AND THE COOKIE BANNER, 20 October 2026 (src/modules/public-site/legal-pages.ts; the routes
- * and the banner in src/core/router.ts; the footers in src/shared/html.ts and 09-app/site/home.html).
+ * and the banner in src/app/router.ts; the footers in src/shared/html.ts and 09-app/site/home.html).
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import type { IncomingMessage } from 'node:http';
 import { CONSENT_COOKIE, LEGAL_GAPS, LEGAL_PAGES, consentSetCookie, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../../src/modules/public-site/legal-pages.ts';
 import { HOME_PATH } from '../../src/modules/public-site/home-site.ts';
@@ -80,7 +80,7 @@ describe('Phase 160h: the legal pages', () => {
     const c = legalPageHtml('/cookies/', null) ?? '';
     for (const name of ['cb_session', 'cb_step', 'cb_draft', CONSENT_COOKIE]) assert.match(c, new RegExp(`<td><code>${name}</code></td>`), name);
     // The cookies the code sets are exactly these (and the answer's own cookie).
-    const src = ['core/auth.ts', 'core/sign-in.ts', 'core/router.ts', 'modules/assessment/routes.ts'].map((f) => readFileSync(join(import.meta.dirname, '..', '..', 'src', f), 'utf8')).join('\n');
+    const src = ['core/auth.ts', 'core/sign-in.ts', 'app/router.ts', 'modules/assessment/routes.ts'].map((f) => readFileSync(join(import.meta.dirname, '..', '..', 'src', f), 'utf8')).join('\n');
     for (const name of ['cb_session', 'cb_step', 'cb_draft']) assert.match(src, new RegExp(name), `${name} is no longer set: update the cookie policy`);
     assert.match(c, /Cloudflare/);
     assert.match(c, /Zoom/);

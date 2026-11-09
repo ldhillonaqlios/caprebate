@@ -580,7 +580,7 @@ export function countRegisterRecordsSince<T extends Row = Row>(db: Db, forBuildi
     params,
   );
 }
-/** research_sources: the example data's first row per source, before any lookup may run (src/core/seed.ts). */
+/** research_sources: the example data's first row per source, before any lookup may run (src/app/seed.ts). */
 export function insertResearchSourcesNotPermittedYet(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run(
     'INSERT INTO research_sources (id, business_id, source_id, tier, state, fired_at, detail, ' +

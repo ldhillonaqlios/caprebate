@@ -51,7 +51,9 @@ business area is a module with a front door, and a check refuses any route round
 
 ```
 09-app/backend/src/
-  core/          server, router shell, config, database gate (db.ts), sign-in, permissions, audit log, secrets
+  app/           the start-up wiring (Phase 161l): server, router shell, back-office pages, timers, seed, command line
+                 (it may import every front door; nothing imports it)
+  core/          config, database gate (db.ts), sign-in, permissions, audit log, secrets
   shared/        page templates, components, dates, PDF, ZIP, plain-words helpers  (no business logic)
   integrations/  every outside service (connectors/, the email sender)             (no business logic)
   modules/
@@ -73,11 +75,18 @@ business area is a module with a front door, and a check refuses any route round
 
 1. **Front doors only.** A module imports another module only through its `index.ts`. *Check:* the boundary check
    (built in Phase 161h1) reads every import with the TypeScript compiler, as `lint-paths` already does.
-2. **One way only.** Modules depend on each other in one direction:
-   `core` ← `shared` ← `integrations` ← `assessment` ← `claims` ← `survey` ← `finance` ← `compliance`, with
-   `crm`, `portal`, `public-site` and `admin` on top, reading the others through their front doors. When a lower module
-   needs to tell a higher one something (survey finished, so the claim moves on), it **announces an event** and the
-   other module listens; it never imports upwards. *Check:* no import cycle between modules.
+2. **One way only.** Modules depend on each other in one direction, written in `architecture/modules.json` as the
+   `order` (Phase 161l, 9 Nov 2026), from the bottom up:
+   `shared` ← `core` ← `integrations` ← `assessment` ← `claims` ← `survey` ← `finance` ← `compliance` ← `admin` ←
+   `crm` ← `portal` ← `public-site` ← `app`. An area imports only areas below it. `shared` is at the bottom because it
+   is plain tools (no sign-in, no SQL) that the core's own pages are drawn with; `app` (`src/app/`) is the start-up
+   wiring at the top (the server, the router shell, the staff pages' dispatch, the timers, the command line, the seed),
+   which may import every area and which nothing imports. When a lower module needs to tell a higher one something
+   (the letter was signed, so the client's stage moves on), it **announces an event** (`src/core/events.ts`: in the
+   same transaction as the change, written to the audit log, a failing listener undoing the change) and the other module
+   listens; when it needs to ask one something, it owns a small **port** the higher module fills as its front door loads
+   (the menu's `provideNav`, the outbox's do-not-contact check). It never imports upwards. *Check:* the boundary check
+   counts every pair of areas where one imports another above it.
 3. **Each table has one owner.** Every table belongs to one module (a list kept beside the migrations), and only that
    module's `data.ts` runs SQL on it. Others ask through its front door. *Check:* the boundary check reads the SQL text
    and the table list.
@@ -101,6 +110,8 @@ and kind, and each area's front door), the table owners (`tables.json`) and the 
 92 (all twelve areas sit in one cycle); rule 3, 868; rule 4, 172. `--counts` prints them by area; `--lower` takes off
 the ones a phase has removed. **Phase 161i (7 Nov 2026)** moved core, shared and integrations behind their doors: **1,612** (`--rebase`, logged in the baseline's history; rule 1 against those three from 656 to 96). **Phase 161i1 (8 Nov 2026)** gave the core and the outside services their data files (`src/core/data.ts`, `src/integrations/data.ts`) and took every SQL statement out of the three areas' page and logic files: **1,454** (rule 4 for the three at 0; rule 3 against core 96 to 49 and against integrations 94 to 26, every one left a statement that joins a business table, for Phase 161l). SQL the three areas ran on business tables waits in each area's `data-borrowed.ts`, which only gets shorter. **Phase 161j (8 Nov 2026)** moved the public site, assessment, portal, CRM and claims into `src/modules/` behind their doors, each with its `data.ts` and `data-borrowed.ts` and its own `routes.ts` (the router a shell of 663 lines): **606** (rule 4 for the five at 0; rule 1 into them at 0 but for 12 imports where a lower layer names a module's `data.ts`, because a front door would load the whole module into the lower layers; rule 3 against them 466 to 84, nearly all joins across owners, for Phase 161l). The core's, shared parts' and outside services' doors load no business module, and `test/core/load-alone.test.ts` loads every file first on its own. **Phase 161k (9 Nov 2026)** moved survey, finance, compliance and admin into `src/modules/` the same way (`src/web/` is gone), moved the statements other areas had borrowed on their tables to them, and took the last SQL out of every page and logic file: **350** (`--rebase`, logged; rule 4 at 0 everywhere; against the four, rule 1 is 9, imports that name `survey/data.ts`, `admin/data.ts` or the survey's BCIS and costing files directly, eight of them from the lower layers, and rule 3 is 31, joins across owners, for Phase 161l). The tests sit in the same folders as the code, and the specs and guides are in `09-app/docs/`.
 
+**Phase 161l (9 Nov 2026)** wrote the order into the map (rule 2 now counts each pair of areas where one imports another above it, in place of every pair inside the one cycle: `--rebase`, logged, 350 to 293), built the events (`src/core/events.ts`) and the ports, put each module's permissions in its own `actions.ts` (the core's `authz.ts` puts them together; `authorise()` unchanged), moved the start-up wiring into `src/app/`, and took the core, the shared parts and the outside services off the modules: **148** (rule 1: 16, rule 2: 22, rule 3: 110, rule 4: 0; the core and the shared parts are out of the cycle). What is left is the modules' own upward imports and the joins across owners, for Phase 161l1.
+
 The boundary check starts by **counting** today's breaks of rules 1 to 4 and writing them to a baseline file. From then
 on, any **new** break fails the build at once, and the count may only go down. Each regroup phase moves one group of
 modules behind their front doors and brings their count to zero. No phase moves everything at once, and every phase
@@ -116,14 +127,15 @@ keeps all tests green, so behaviour never changes while the walls go up.
 | 161i1 | the data files of core and integrations, no SQL in the three areas' pages and logic, the notes out of their code, their tests by feature, the last three old folders | Before go-live, after 161i |
 | 161j | public-site, assessment, portal, CRM and claims as modules; the router split; their count to zero | Before go-live, after 161i |
 | 161k | survey, finance, compliance and admin as modules; tests by module; the notes out of the code | Before go-live, after 161j |
-| 161l | The tangle undone: one-way order, events in place of the upward imports, permissions per module; no cycles | Before go-live, after 161k |
+| 161l | The tangle undone, part 1: the one-way order written and checked, events, permissions per module, the start-up wiring in `src/app/`, the lower layers off the modules (done 9 Nov 2026) | Before go-live, after 161k |
+| 161l1 | The tangle undone, part 2: the client record low in the order, the modules' own upward imports, the joins split by owner; zero breaks | Before go-live, after 161l |
 | 161m | Rules as versioned data: the rules registers, the engine's version, versions on every sealed result | Before go-live, after 161l |
 | 162 | The sweep: every check, and the go-live gate checked | After 161m, out of order |
 | 161n | Go live: the gate (Vercel Pro, the ICO number, every legal page approved, the other sign-offs), then the live website switched on and proved | Once its gate is open |
 | 162 | The sweep again, against the live website | Before the first client |
 
 **Why this order (decided 6 Nov 2026).** Going live waits on people: the solicitor's and the data protection
-officer's approvals, the ICO number and Vercel Pro. None of 161h to 161m waits on a person, so the code is regrouped
+officer's approvals, the ICO number and Vercel Pro. None of 161h to 161m (161l1 included) waits on a person, so the code is regrouped
 while they work, with no real client on the website. Moving code before there are real clients is safer, the developer
 learns the final layout once, and the sweep checks the code we actually launch. Every phase leaves the website working,
 so if the gate opens early we finish the phase in progress, run the sweep and go live; the phases left run afterwards,

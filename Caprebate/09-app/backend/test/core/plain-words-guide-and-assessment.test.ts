@@ -19,8 +19,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import { Db, migrate } from '../../src/core/db.ts';
 import { SCREENS, COSMETIC_NOTE } from '../../src/modules/assessment/assessment.ts';
 import { FORBIDDEN_SETTINGS, settingLabel } from '../../src/modules/admin/configuration.ts';
@@ -188,7 +188,7 @@ describe('4 · the six small things, and the breadcrumb', () => {
     assert.equal(P.stageInWords(null), 'No step is recorded yet.');
     assert.equal(P.stageInWords('NOT_A_STAGE'), 'Our records show a step we do not recognise.');
     for (const k of ['ENQUIRY', 'INVOICE', 'ON_HOLD', 'CLOSED']) assert.equal(/[A-Z]{2,}_|<code>/.test(P.stageInWords(k)), false, k);
-    const router = ['core', 'modules/portal'].map((d) => readFileSync(join(import.meta.dirname, '..', '..', 'src', d, d === 'core' ? 'router.ts' : 'routes.ts'), 'utf8')).join('\n');
+    const router = ['app', 'modules/portal'].map((d) => readFileSync(join(import.meta.dirname, '..', '..', 'src', d, d === 'app' ? 'router.ts' : 'routes.ts'), 'utf8')).join('\n');
     assert.equal(router.includes('(Step: <code>${business.stage}</code>)'), false);
   });
 

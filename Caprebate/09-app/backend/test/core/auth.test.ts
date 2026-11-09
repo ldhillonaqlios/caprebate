@@ -12,7 +12,7 @@ import {
   AuthError, GENERIC_AUTH_FAILURE, LOGIN_LIMIT,
 } from '../../src/core/auth.ts';
 import { createUser, disableUser, findById } from '../../src/core/users.ts';
-import { seed, SEED_PASSWORD } from '../../src/core/seed.ts';
+import { seed, SEED_PASSWORD } from '../../src/app/seed.ts';
 import { testApp, fakeHasher, scalars, keys } from '../helpers.ts';
 import { defaultHasher } from '../../src/core/password.ts';
 
@@ -186,7 +186,7 @@ describe('password reset', () => {
 
   test('an expired token is refused', async () => {
     let t = Date.UTC(2026, 8, 8, 12, 0, 0);
-    const app = await (await import('../../src/core/app.ts')).buildApp({ twoFactor: 'off',
+    const app = await (await import('../../src/app/build-app.ts')).buildApp({ twoFactor: 'off',
       hasher: fakeHasher(), now: () => new Date(t).toISOString(),
     });
     const u = createUser(app.db, app.now, {

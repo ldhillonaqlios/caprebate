@@ -7,12 +7,12 @@
  *
  * EVERY CONDITION IS TESTED BOTH WAYS: refused where it must refuse, allowed where it must allow.
  *
- * NO NETWORK, AND NOTHING REAL. The command is run as a person runs it, `node src/core/cli.ts smoke ...`, with an invented
+ * NO NETWORK, AND NOTHING REAL. The command is run as a person runs it, `node src/app/cli.ts smoke ...`, with an invented
  * log in a temporary folder, HOME moved to that folder, and an EMPTY key file — so Companies House, the source used
  * throughout, has no key and no call can leave (the run says "no call was made"). The one PASS is run in-process on
  * a recorded answer. Every company, number and postcode below is invented except the public defaults.
  *
- * The CLI tests import nothing this phase added, so run against the pre-change src/core/cli.ts they fail on their
+ * The CLI tests import nothing this phase added, so run against the pre-change src/app/cli.ts they fail on their
  * assertions, not on an import: that is how they were proved red.
  */
 import { test, describe } from 'node:test';
@@ -26,7 +26,7 @@ import { Db, migrate } from '../../src/core/db.ts';
 import { MIGRATIONS_DIR } from '../../src/core/app.ts';
 
 const BACKEND = join(import.meta.dirname, '..', '..');
-const CLI = join(BACKEND, 'src', 'core', 'cli.ts');
+const CLI = join(BACKEND, 'src', 'app', 'cli.ts');
 const T = '2026-09-28T09:00:00.000Z';
 
 /** An invented client, held in an invented database. */

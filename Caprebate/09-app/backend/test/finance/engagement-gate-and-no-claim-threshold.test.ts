@@ -19,11 +19,12 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import type { Actor } from '../../src/core/authz.ts';
 import { fixedClock } from '../helpers.ts';
 import * as E from '../../src/shared/engine.ts';
+import * as G from '../../src/modules/assessment/fee-gate.ts';
 import * as R from '../../src/modules/claims/research.ts';
 import * as V from '../../src/modules/assessment/vat.ts';
 import * as C from '../../src/modules/crm/crm.ts';
@@ -178,15 +179,15 @@ describe('line 1 (back end) — the regulator is named both ways, copied from th
 
 describe('line 12 — the engagement gate is handed phase9’s costing, and stops what it should', () => {
   test('THE COSTING LOADS, AND THE SHIPPED CONFIG IS PUT BACK EXACTLY after every reading', () => {
-    assert.equal(E.gateCostingLoaded(), true, 'phase9 job economics did not load — every reading would be UNDETERMINED');
-    E.feeGate(4935, 'gp', { jobs_per_year: 'not sure' });
+    assert.equal(G.gateCostingLoaded(), true, 'phase9 job economics did not load — every reading would be UNDETERMINED');
+    G.feeGate(4935, 'gp', { jobs_per_year: 'not sure' });
     assert.equal(E.GATE_CONFIG.costing, null, 'the costing was left injected into the shared engine config');
     assert.equal(E.GATE_CONFIG.jobs_per_year, 120);
     assert.equal(E.GATE_CONFIG.enabled, true);
   });
 
   test('FIRES BELOW THE LINE: a GP fee of £4,935 routes to the engine’s own words; the caveat is on it', () => {
-    const g = E.feeGate(4935, 'gp');
+    const g = G.feeGate(4935, 'gp');
     assert.equal(g.outcome, 'FIRE');
     assert.equal(g.withholds_quote, true);
     assert.equal(g.routes_to, E.GATE.COME_BACK);
@@ -195,7 +196,7 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
     assert.equal(g.cost_basis_is_a_placeholder, true);
     assert.match(g.placeholder_caveat, /a guess for now/);
     /* The engine's whole quote agrees: no figure rendered, the reason is the routing sentence. */
-    const q = E.feeQuote(164_500, null, { sector: 'gp' });
+    const q = G.feeQuote(164_500, null, { sector: 'gp' });
     assert.equal(q.render, false);
     assert.equal(q.amount, null);
     assert.equal(q.reason, E.GATE.COME_BACK);
@@ -204,25 +205,25 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
 
   test('QUOTES ABOVE THE LINE: the same GP at £10,000, and a dental fee of £4,935, pass — with the caveat still on', () => {
     for (const [fee, sector] of [[10_000, 'gp'], [4935, 'dental']] as const) {
-      const g = E.feeGate(fee, sector);
+      const g = G.feeGate(fee, sector);
       assert.equal(g.outcome, 'PASS', `${sector} ${fee}`);
       assert.equal(g.withholds_quote, false);
       assert.equal(g.routes_to, null);
       assert.match(g.placeholder_caveat, /a guess for now/);
     }
-    const q = E.feeQuote(500_000, null, { sector: 'gp' });
+    const q = G.feeQuote(500_000, null, { sector: 'gp' });
     assert.equal(q.render, true);
     assert.equal(q.amount, 15_000);
   });
 
   test('CARE HOMES ARE COSTED — the engine’s care_homes is phase9’s care_home', () => {
-    assert.equal(E.feeGate(4935, 'care_homes').determined, true);
-    assert.equal(E.feeGate(4935, 'care_homes').sector, 'care_homes');
+    assert.equal(G.feeGate(4935, 'care_homes').determined, true);
+    assert.equal(G.feeGate(4935, 'care_homes').sector, 'care_homes');
   });
 
   test('UNKNOWN VOLUME, AS "not sure" AND AS ABSENT, STAYS UNDETERMINED — never a pass, never a refusal, never a throw', () => {
     for (const v of ['not sure', undefined, null]) {
-      const g = E.feeGate(4935, 'gp', { jobs_per_year: v });
+      const g = G.feeGate(4935, 'gp', { jobs_per_year: v });
       assert.equal(g.outcome, 'UNDETERMINED', String(v));
       assert.equal(g.determined, false);
       assert.equal(g.withholds_quote, false);
@@ -234,7 +235,7 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
 
   test('UNKNOWN FEE, AS "not sure" AND AS ABSENT, STAYS UNDETERMINED', () => {
     for (const fee of ['not sure', undefined, null]) {
-      const g = E.feeGate(fee, 'gp');
+      const g = G.feeGate(fee, 'gp');
       assert.equal(g.outcome, 'UNDETERMINED', String(fee));
       assert.equal(g.withholds_quote, false);
       assert.ok(g.missing.includes('expected_fee'));
@@ -244,7 +245,7 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
 
   test('SUPPORTED LIVING HAS NO COST ROW, AND AN UNKNOWN SECTOR IS UNKNOWN: both UNDETERMINED, naming the sector', () => {
     for (const sector of ['supported_living', 'not sure', undefined, null]) {
-      const g = E.feeGate(1, sector);
+      const g = G.feeGate(1, sector);
       assert.equal(g.outcome, 'UNDETERMINED', String(sector));
       assert.equal(g.withholds_quote, false);
       assert.ok(g.missing.includes('sector'), String(sector));

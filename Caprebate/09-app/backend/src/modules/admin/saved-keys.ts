@@ -16,27 +16,24 @@
  * one copy of the website is read by every copy at its next request.
  */
 
-import { ADDRESS_LOOKUP } from '../integrations/index.ts';
+import { ADDRESS_LOOKUP } from '../../integrations/index.ts';
 import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from 'node:crypto';
-import type { App } from './app.ts';
-import type { Actor } from './authz.ts';
-import { SECRET_KEYS, overlaySecrets, type SecretKey, type SecretStore } from './secrets.ts';
-import { MFA_KEY_NAME, mfaKeyFrom } from './mfa-seal.ts';
-import { localStamp } from '../shared/index.ts';
-import type { SecretOwner } from './secrets.ts';
-import { EMAIL_SENDING } from '../integrations/index.ts';
-import { INBOUND_EMAIL } from '../integrations/index.ts';
-import { IDENTITY_CHECK } from '../integrations/index.ts';
-import { COMPANY_SEARCH } from '../integrations/index.ts';
-import { lookupsWaivedHere, switchedOn, switchesHere } from '../integrations/index.ts';
-import { CLAUDE_SWITCHES } from '../integrations/connectors/claude.ts';
-import { zoomBlockers } from '../modules/crm/index.ts';
-import { whatsappMissing } from '../integrations/index.ts';
-import { turnstileWhy } from '../integrations/index.ts';
-import { ga4MeasurementId } from '../integrations/index.ts';
+import type { App } from '../../core/app.ts';
+import type { Actor } from '../../core/index.ts';
+import { MFA_KEY_NAME, SECRET_KEYS, getUsersHByIdDisabledAt, mfaKeyFrom, overlaySecrets, type SecretKey, type SecretStore } from '../../core/index.ts';
+import { localStamp } from '../../shared/index.ts';
+import type { SecretOwner } from '../../core/index.ts';
+import { EMAIL_SENDING } from '../../integrations/index.ts';
+import { INBOUND_EMAIL } from '../../integrations/index.ts';
+import { IDENTITY_CHECK } from '../../integrations/index.ts';
+import { COMPANY_SEARCH } from '../../integrations/index.ts';
+import { lookupsWaivedHere, switchedOn, switchesHere } from '../../integrations/index.ts';
+import { CLAUDE_SWITCHES } from '../../integrations/connectors/claude.ts';
+import { whatsappMissing, zoomMissing } from '../../integrations/index.ts';
+import { turnstileWhy } from '../../integrations/index.ts';
+import { ga4MeasurementId } from '../../integrations/index.ts';
 import { listSavedKeysNameSealedByRowidName } from './data-borrowed.ts';
-import { getSavedKeysCoalesceMaxRowidM, insertSavedKeys } from '../modules/admin/data.ts';
-import { getUsersHByIdDisabledAt } from './data.ts';
+import { getSavedKeysCoalesceMaxRowidM, insertSavedKeys } from './data.ts';
 
 const PREFIX = 'cbkey1:';
 
@@ -126,7 +123,7 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
       const w = turnstileWhy(st);
       return /is checked on the server with Cloudflare$/.test(w) ? { on: true, why: '' } : off(w.replace(/^the contact form’s security check /, 'The contact form’s security check '));
     }
-    case 'ZOOM': { const m = zoomBlockers(app); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
+    case 'ZOOM': { const m = zoomMissing(app.secrets, app.zoomPolicy, { outside: app.outside }); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'WHATSAPP': { const m = whatsappMissing(st, app.whatsappPolicy, { outside: app.outside }); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'REPLY_TIMER': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
     // The report's site plan (src/modules/claims/site-plan.ts), fetched on the test website only, for now.

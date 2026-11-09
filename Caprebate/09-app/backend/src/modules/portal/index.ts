@@ -3,6 +3,9 @@
  * Generated from the imports other areas made on the day the module moved, and kept by hand since: add a name here when
  * another area needs it, never a whole file.
  */
+// Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
+export { PORTAL_ACTIONS } from './actions.ts';
+export { confirmSignup, MIN_PASSWORD, offerSignup, requestSignup, verifyOpen } from './signup.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
 export { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing, getClientSignupsIdBusinessIdByOfferHash, getClientSignupsIdBusinessIdByVerifyHash, getClientSignupsTermsAgreedAtTermsVersionsById, getClientSignupsVerifyExpiresAtVerifiedAtByVerifyHash, insertClientSignups, insertClientStepNotices, insertClientStepNotices2, listClientStepNoticesClaimIdStepByBusinessId2, updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt, updateClientSignupsVerifiedAtUserIdById } from './data.ts';
 export { portalStepLine, PROPOSED_STEP_NAMES, stepName } from './portal-steps.ts';

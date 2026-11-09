@@ -33,7 +33,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { claimName } from '../../shared/index.ts';
 import { missingFacts, sectionOfFact } from './engaged.ts';
 import { registerAttribution } from './research.ts';

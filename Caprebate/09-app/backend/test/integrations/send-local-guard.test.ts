@@ -14,14 +14,14 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { connect as netConnect } from 'node:net';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { fixtureTransport, liveTransport } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import { onTestWebsite, placeRefusal } from '../../src/integrations/connectors/place.ts';
 import { onTestWebsite as zoomOnTestWebsite } from '../../src/integrations/connectors/zoom.ts';
 import { sendWhatsAppText, whatsappMissing, whatsappPlaceRefusal, WHATSAPP_LOCAL_OPT_IN } from '../../src/integrations/connectors/whatsapp.ts';
 import { EMAIL_LOCAL_OPT_IN, EMAIL_SENDING, emailPlaceRefusal, mailWhere, sendingMissing, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../../src/integrations/email/email-provider.ts';
-import { serviceOn } from '../../src/core/saved-keys.ts';
+import { serviceOn } from '../../src/modules/admin/saved-keys.ts';
 
 const T = '2026-10-02T09:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';

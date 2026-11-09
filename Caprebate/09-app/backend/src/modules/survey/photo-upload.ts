@@ -25,7 +25,7 @@
 import { constants, createDecipheriv, generateKeyPairSync, privateDecrypt } from 'node:crypto';
 import type { Actor } from '../../core/index.ts';
 import { NotAuthorised } from '../../core/index.ts';
-import { INCOMING_PREFIX, type FsObjectStore, type IncomingTarget } from '../../shared/objectstore.ts';
+import { INCOMING_PREFIX, type FsObjectStore, type IncomingTarget } from '../../shared/index.ts';
 import { cleaned, clientOf, keep, NO_KEY, UNSORTED, type EvidenceDeps } from './survey-evidence.ts';
 import { getSurveyUploadSessionsIdJobIdById, getSurveyUploadSlotsIdSessionIdByIdSessionId, getSurveyUploadSlotsXBySessionIdN, insertSurveyUploadOutcomes, insertSurveyUploadOutcomes2, insertSurveyUploadOutcomes3, insertSurveyUploadSessions, insertSurveyUploadSlots, listSurveyUploadSlotsIdStagedKeyBySlotIdIssuedAt } from './data.ts';
 

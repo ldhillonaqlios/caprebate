@@ -31,18 +31,19 @@ import { randomBytes } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { instantsForLocalMinute, localDate } from '../../shared/index.ts';
 import { getHoldEntryId, getLinkedEntryRef, listLegalHoldsForEntry } from './data.ts';
 import { getCddChecksCompletedAtByBusinessIdState, getComplianceRefSeriesLastNByKind, getComplianceSettingsValueEffectiveFromBySettingEffectiveFro, getLegalHoldsLiftedAtById, insertComplianceLinks, insertComplianceSettings, insertLegalHolds, listComplianceLinksKIByFromKindFromId, listLegalHoldsIdHoldKindByRecordKindRecordId, listLegalHoldsRecordIdByRecordKindLiftedAt, updateComplianceRefSeriesLastNByKind, updateLegalHoldsLiftedAtLiftedByById } from './data.ts';
+import { dateField, has, requiredText, textField, words, type Check, type FormFields as Fields, type Vocab } from '../../shared/index.ts';
 
 export type ComplianceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
-export type Fields = Readonly<Record<string, string | null>>;
 export type WriteResult = { ok: true; id: string } | { ok: false; why: string };
-export type Vocab = Readonly<Record<string, string>>;
-export type Check<T> = { ok: true; value: T } | { ok: false; why: string };
 
 export { NotFoundAsRefusal };
+/* The plain form checks are shared (src/shared/form-fields.ts); named here too, for this module's files. */
+export { dateField, has, requiredText, textField, words };
+export type { Check, Fields, Vocab };
 
 /** Said on every register page, in these words. */
 export const TWO_PERSON_LIMITATION =
@@ -68,38 +69,10 @@ export function assertComplianceWrite(actor: Actor): void {
   authorise(actor, 'compliance.write', complianceObj());
 }
 
-export function has(vocab: Vocab, v: string | null | undefined): v is string {
-  return typeof v === 'string' && Object.hasOwn(vocab, v);
-}
 
-export function words(vocab: Vocab, v: string | null | undefined, none: string): string {
-  return has(vocab, v) ? (vocab[v] ?? v) : none;
-}
 
-export function textField(v: string | null | undefined, max: number, what: string): Check<string | null> {
-  if (v === null || v === undefined) return { ok: true, value: null };
-  const t = v.trim();
-  if (t === '') return { ok: true, value: null };
-  if (t.length > max) return { ok: false, why: `${what} is longer than we store — ${max.toLocaleString('en-GB')} characters is the limit.` };
-  return { ok: true, value: t };
-}
 
-export function requiredText(v: string | null | undefined, max: number, what: string): Check<string> {
-  const t = textField(v, max, what);
-  if (!t.ok) return t;
-  if (t.value === null) return { ok: false, why: `${what} is needed.` };
-  return { ok: true, value: t.value };
-}
 
-export function dateField(v: string | null | undefined, what: string): Check<string | null> {
-  if (v === null || v === undefined || v.trim() === '') return { ok: true, value: null };
-  const t = v.trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || !Number.isFinite(Date.parse(`${t}T12:00:00.000Z`))
-    || new Date(`${t}T12:00:00.000Z`).toISOString().slice(0, 10) !== t) {
-    return { ok: false, why: `${what} must be a date, like 2026-03-31.` };
-  }
-  return { ok: true, value: t };
-}
 
 /**
  * A MOMENT — the statutory clocks run from one. A full ISO instant is taken as it

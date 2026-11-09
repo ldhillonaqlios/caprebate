@@ -13,7 +13,7 @@
  * WHAT WAS NOT HERE, AND NOW IS. The enforcement was built first, saying
  * "Phases 104 to 107 build what sits on it". The first of
  * them — the public site, the assessment, the login and the client portal —
- * and it is mounted BEFORE the JSON API below, in src/core/router.ts.
+ * and it is mounted BEFORE the JSON API below, in src/app/router.ts.
  *
  * ONE PROCESS, ONE SESSION STORE, ONE `can()`. The web half does not get its
  * own authentication, its own authorisation or its own database handle; it is
@@ -27,25 +27,18 @@ import { turnstileWhy } from '../integrations/index.ts';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { buildApp } from './app.ts';
-import { keyFileStartCheck } from './secrets.ts';
-import { withReadMemo } from './db.ts';
-import { authorise, can, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj } from './authz.ts';
-import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAILURE, type LoginResult } from './auth.ts';
-import * as SI from './sign-in.ts';
-import { toActor } from './users.ts';
+import { buildApp } from './build-app.ts';
+import { AuthError, GENERIC_AUTH_FAILURE, NotAuthorised, PayloadTooLarge, REGISTERED_ACTIONS, SESSION_COOKIE_NAME, addTokensToPages, authenticate, authorise, bindResponse, can, clientIp, formToken, formTokenRefusal, formTokensMode, keyFileStartCheck, logout, onceToken, readBody, refuseForm, toActor, withReadMemo } from '../core/index.ts';
+import type { Actor, FormTokens, LoginResult, Obj } from '../core/index.ts';
+import * as SI from '../core/index.ts'; // the sign-in steps (src/core/sign-in.ts), through the core's door
 import { payloadFor, assertSurveySection } from '../modules/survey/index.ts';
 import { handleWeb, refusalAsPage, sendRefusalPage } from './router.ts';
-import { bindResponse, clientIp, PayloadTooLarge, readBody } from './http.ts';
-import { FsObjectStore } from '../shared/objectstore.ts';
+import { FsObjectStore, sealKeyFromEnv, type KeepOriginals } from '../shared/index.ts';
 import { SharedObjectStore, type BlobClient } from '../shared/shared-objectstore.ts';
-import { sealKeyFromEnv, type KeepOriginals } from '../shared/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { isInventedAddress } from '../integrations/index.ts';
-import { refreshSavedKeys } from './saved-keys.ts';
+import { refreshSavedKeys } from '../modules/admin/index.ts';
 import { openKeptOriginal } from '../modules/claims/index.ts';
-import { formToken, formTokensMode, onceToken, type FormTokens } from './form-token.ts';
-import { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';
 import { listOutboxIdToEmailBySendRequestedSentAt2, updateOutboxLastErrorByIdLastError2, updateOutboxLastErrorByIdLastError3, updateOutboxLastErrorByIdLastError4 } from '../integrations/index.ts';
 import { getSurveyorJobsIdBusinessIdById4 } from '../modules/survey/index.ts';
 import { getInvoicesIdBusinessIdById2, getInvoicesIdBusinessIdById4 } from '../modules/finance/index.ts';
@@ -169,7 +162,7 @@ export async function createApp(
     : new SharedObjectStore({ ...kept, client: opts.sharedDocuments.client, linkSecret: opts.sharedDocuments.linkSecret });
 
   /* EMAILS SAVED TO BE SENT ARE SENT BEFORE THE ANSWER FINISHES. Sending is on for testing
-     (EMAIL_SENDING); before, only `node src/core/cli.ts send-outbox` could send, and nothing ran it. The answer's end is held
+     (EMAIL_SENDING); before, only `node src/app/cli.ts send-outbox` could send, and nothing ran it. The answer's end is held
      until every email this request saved to be sent - by any part of the site: an invitation, a staff email, a message
      alert - has been tried once through IONOS, then released; so the test website's copy, frozen once it has answered,
      still sends. Each row is claimed first (last_error set while it goes), so two copies never send one email twice. An

@@ -31,7 +31,7 @@ const MOVED: [string, string][] = [
   ['phase3/caprebate-client-doc-ingestion.ts', 'modules/claims/documents'],
   ['phase3/caprebate-upload-handler.ts', 'modules/claims/documents'],
   ['phase9/caprebate-cost-model.cjs', 'modules/survey/costing'],
-  ['phase9/caprebate-job-economics.cjs', 'modules/survey/costing'],
+  ['phase9/caprebate-job-economics.cjs', 'modules/assessment/costing'],
   ['phase9/caprebate-postcode-authority.ts', 'integrations/postcodes'],
   ['phase9/caprebate-postcode-store.ts', 'integrations/postcodes'],
   ['phase9/caprebate-location-key.ts', 'integrations/postcodes'],

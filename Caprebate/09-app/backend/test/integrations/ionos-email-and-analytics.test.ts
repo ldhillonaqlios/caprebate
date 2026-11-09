@@ -23,8 +23,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { createServer, connect as netConnect, type Server } from 'node:net';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import type { Actor } from '../../src/core/authz.ts';
 import { createUser } from '../../src/core/users.ts';
 import { secretsFromValues, processSecrets } from '../../src/core/secrets.ts';
@@ -36,7 +36,7 @@ import {
 import { imapLoginFromKeyFile, parseBounceReport } from '../../src/integrations/email/email-inbound.ts';
 import { ingest } from '../../src/modules/crm/inbound-email.ts';
 import { buildIcs, fold, icsText } from '../../src/integrations/email/calendar.ts';
-import { scheduleBooking } from '../../src/core/backoffice.ts';
+import { scheduleBooking } from '../../src/modules/crm/assessments-and-calendar.ts';
 import { moveOwnBooking, cancelOwnBooking } from '../../src/modules/portal/portal.ts';
 import {
   ENGAGEMENT_SIGNING, SIGNING_QUESTION, checkSignature, shownLetter, signEngagement, signingMissing, type EngagementSigning,

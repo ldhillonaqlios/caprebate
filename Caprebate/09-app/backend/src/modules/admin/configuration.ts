@@ -37,7 +37,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { VOCAB_LISTS, isVocabList, vocabularyValues, type VocabList, type VocabValue } from './vocabularies.ts';
 import { PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
 import { ctaSwitchReadings } from '../../shared/index.ts';

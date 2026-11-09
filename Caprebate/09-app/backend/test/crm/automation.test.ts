@@ -27,7 +27,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
-import { seed } from '../../src/core/seed.ts';
+import { seed } from '../../src/app/seed.ts';
 import type { Db } from '../../src/core/db.ts';
 import { NotAuthorised, type Actor } from '../../src/core/authz.ts';
 import type { AppRole } from '../../src/core/roles.ts';

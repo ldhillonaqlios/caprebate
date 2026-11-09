@@ -18,7 +18,7 @@
  */
 
 import { ukDatesInMarkup } from './localtime.ts';
-import { requiredWordsInMarkup } from '../core/index.ts';
+import { requiredWordsInMarkup } from './required.ts';
 import { plainDashes } from './plain-dashes.ts';
 
 const ESCAPES: Readonly<Record<string, string>> = Object.freeze({
@@ -163,4 +163,11 @@ export const HTML_HEADERS: Readonly<Record<string, string>> = Object.freeze({
   'content-security-policy':
     "default-src 'none'; style-src 'self'; img-src 'self' data:; " +
     "form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+});
+
+/** A page script's headers: JavaScript, never sniffed, never kept. */
+export const SITE_JS_HEADERS: Readonly<Record<string, string>> = Object.freeze({
+  'content-type': 'text/javascript; charset=utf-8',
+  'x-content-type-options': 'nosniff',
+  'cache-control': 'no-store',
 });

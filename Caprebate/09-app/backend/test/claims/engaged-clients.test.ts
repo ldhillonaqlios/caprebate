@@ -27,7 +27,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { APP_ROLES, type AppRole } from '../../src/core/roles.ts';
 import { can } from '../../src/core/authz.ts';
 import { actor as makeActor, signatureRecordFor } from '../helpers.ts';
@@ -1670,7 +1670,7 @@ describe('the engine session is rebuilt from the funnel, not from three question
 
   test('THE SEED’S Q1 IS NOT THE FUNNEL’S Q1 — no assessment answer reaches the session', () => {
     // The defect the widening removed. `assessment_answers.question_id` is not
-    // one vocabulary: src/core/seed.ts writes Q1 for "how is the business set up"
+    // one vocabulary: src/app/seed.ts writes Q1 for "how is the business set up"
     // with the value "company", and the old three-question mapping read it as
     // the funnel's `own_prior_claim`. A session built where no draft survives
     // now carries nothing at all rather than a fact nobody stated.

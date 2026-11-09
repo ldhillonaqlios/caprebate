@@ -2,290 +2,93 @@
  "note": "THE RATCHET (tools/boundaries.cjs). Breaks of rules 1 to 4 of ARCHITECTURE.md, by rule and area. It may only go down: node tools/boundaries.cjs --lower.",
  "breaks": {
   "1": {
-   "admin": [
-    "src/core/saved-keys.ts -> src/modules/admin/data.ts",
-    "src/integrations/email/email.ts -> src/modules/admin/data.ts",
-    "src/shared/lists.ts -> src/modules/admin/data.ts"
-   ],
-   "assessment": [
-    "src/core/backoffice.ts -> src/modules/assessment/data.ts"
-   ],
    "claims": [
-    "src/core/backoffice.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/boundary-test-lookup.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/nations.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/register-files.ts -> src/modules/claims/register-files.ts",
-    "src/integrations/connectors/site-area.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts"
+    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts",
+    "src/modules/assessment/conveyancing-strip.ts -> src/modules/claims/upload-handler-port.ts"
    ],
    "core": [
     "src/integrations/connectors/test-lookups.ts -> src/core/app.ts",
     "src/integrations/connectors/test-lookups.ts -> src/core/audit.ts",
-    "src/modules/admin/configuration.ts -> src/core/backoffice.ts",
     "src/modules/admin/connections.ts -> src/core/app.ts",
-    "src/modules/admin/connections.ts -> src/core/saved-keys.ts",
-    "src/modules/admin/templates.ts -> src/core/backoffice.ts",
-    "src/modules/claims/approvals.ts -> src/core/backoffice.ts",
-    "src/modules/claims/case-stamp.ts -> src/core/audit.ts",
-    "src/modules/claims/case-stamp.ts -> src/core/backoffice.ts",
-    "src/modules/claims/claim-facts.ts -> src/core/backoffice.ts",
-    "src/modules/claims/claim-record.ts -> src/core/audit.ts",
-    "src/modules/claims/claim-record.ts -> src/core/backoffice.ts",
-    "src/modules/claims/defence-pack.ts -> src/core/audit.ts",
-    "src/modules/claims/defence-pack.ts -> src/core/backoffice.ts",
-    "src/modules/claims/documents.ts -> src/core/backoffice.ts",
-    "src/modules/claims/engaged.ts -> src/core/backoffice.ts",
-    "src/modules/compliance/compliance.ts -> src/core/backoffice.ts",
-    "src/modules/crm/automation.ts -> src/core/backoffice.ts",
-    "src/modules/crm/client-list.ts -> src/core/navigation.ts",
-    "src/modules/crm/client-page.ts -> src/core/backoffice.ts",
-    "src/modules/crm/client-page.ts -> src/core/navigation.ts",
-    "src/modules/crm/communication.ts -> src/core/backoffice.ts",
-    "src/modules/crm/crm-pages.ts -> src/core/navigation.ts",
-    "src/modules/crm/crm.ts -> src/core/backoffice.ts",
-    "src/modules/crm/free-email.ts -> src/core/backoffice.ts",
-    "src/modules/crm/inbound-email.ts -> src/core/backoffice.ts",
-    "src/modules/crm/introducers-pages.ts -> src/core/navigation.ts",
-    "src/modules/crm/introducers.ts -> src/core/backoffice.ts",
-    "src/modules/crm/leads.ts -> src/core/backoffice.ts",
-    "src/modules/crm/messages.ts -> src/core/backoffice.ts",
-    "src/modules/crm/pipeline-pages.ts -> src/core/navigation.ts",
-    "src/modules/crm/pipeline.ts -> src/core/backoffice.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/core/backoffice.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/core/navigation.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/core/saved-keys.ts",
-    "src/modules/crm/tasks-pages.ts -> src/core/backoffice.ts",
-    "src/modules/crm/tasks-pages.ts -> src/core/navigation.ts",
-    "src/modules/crm/tasks.ts -> src/core/backoffice.ts",
-    "src/modules/crm/timeline.ts -> src/core/backoffice.ts",
-    "src/modules/finance/billing.ts -> src/core/backoffice.ts",
-    "src/modules/finance/finance-pages.ts -> src/core/navigation.ts",
-    "src/modules/finance/finance.ts -> src/core/backoffice.ts",
-    "src/modules/finance/invoices.ts -> src/core/backoffice.ts",
-    "src/modules/portal/client-layout.ts -> src/core/navigation.ts",
-    "src/modules/portal/take-back.ts -> src/core/audit.ts",
-    "src/modules/public-site/home.ts -> src/core/navigation.ts",
-    "src/modules/survey/anchor-store.ts -> src/core/audit.ts",
-    "src/modules/survey/surveyor-pages.ts -> src/core/navigation.ts",
-    "src/shared/lists-pages.ts -> src/core/navigation.ts",
-    "src/shared/lists-pages.ts -> src/core/search.ts",
-    "src/shared/lists.ts -> src/core/backoffice.ts"
+    "src/modules/crm/claim-lists.ts -> src/core/backoffice.ts"
    ],
    "crm": [
-    "src/core/backoffice.ts -> src/modules/crm/data.ts",
-    "src/integrations/connectors/nations.ts -> src/modules/crm/data.ts",
-    "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts",
-    "src/integrations/email/email.ts -> src/modules/crm/data.ts"
+    "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts"
    ],
    "integrations": [
-    "src/core/cli.ts -> src/integrations/connectors/test-lookups.ts",
-    "src/core/cli.ts -> src/integrations/postcodes/postcode.ts",
-    "src/core/saved-keys.ts -> src/integrations/connectors/claude.ts",
+    "src/app/cli.ts -> src/integrations/connectors/test-lookups.ts",
+    "src/modules/admin/saved-keys.ts -> src/integrations/connectors/claude.ts",
     "src/modules/claims/case-stamp.ts -> src/integrations/connectors/claude.ts",
     "src/modules/claims/engaged.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/match-review.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/research.ts -> src/integrations/connectors/free-registers.ts",
-    "src/modules/claims/research.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/claims/site-area-inputs.ts -> src/integrations/connectors/site-area.ts",
-    "src/modules/claims/site-area-inputs.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/claims/site-area-run.ts -> src/integrations/connectors/site-area.ts",
-    "src/modules/claims/site-area-run.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/claims/uploads.ts -> src/integrations/connectors/claude.ts",
-    "src/modules/crm/crm.ts -> src/integrations/postcodes/postcode-port.ts",
-    "src/modules/crm/crm.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/survey/surveyor.ts -> src/integrations/postcodes/postcode-port.ts",
-    "src/modules/survey/surveyor.ts -> src/integrations/postcodes/postcode.ts"
-   ],
-   "portal": [
-    "src/core/signup.ts -> src/modules/portal/data.ts"
+    "src/modules/claims/uploads.ts -> src/integrations/connectors/claude.ts"
    ],
    "shared": [
-    "src/core/cli.ts -> src/shared/objectstore.ts",
-    "src/core/live-website.ts -> src/shared/shared-objectstore.ts",
-    "src/core/navigation.ts -> src/shared/lists.ts",
-    "src/core/server.ts -> src/shared/objectstore.ts",
-    "src/core/server.ts -> src/shared/shared-objectstore.ts",
-    "src/core/staff.ts -> src/shared/lists-pages.ts",
-    "src/core/upload-pieces.ts -> src/shared/objectstore.ts",
-    "src/core/upload-pieces.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/assessment/conveyancing-strip.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/claims/documents.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/claims/uploads.ts -> src/shared/objectstore.ts",
-    "src/modules/claims/uploads.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/compliance/compliance-identity.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/crm.routes.ts -> src/shared/lists-pages.ts",
-    "src/modules/crm/crm.routes.ts -> src/shared/lists.ts",
-    "src/modules/crm/message-retention.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/messages-pages.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/pipeline-pages.ts -> src/shared/lists-pages.ts",
-    "src/modules/crm/pipeline-pages.ts -> src/shared/lists.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/shared/lists.ts",
-    "src/modules/crm/whatsapp-import.ts -> src/shared/objectstore.ts",
-    "src/modules/crm/whatsapp.ts -> src/shared/objectstore.ts",
-    "src/modules/portal/client-files-pages.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/public-site/enquiry-retention.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/public-site/home.ts -> src/shared/lists.ts",
-    "src/modules/survey/photo-upload.ts -> src/shared/objectstore.ts",
-    "src/modules/survey/survey-video.ts -> src/shared/objectstore.ts"
-   ],
-   "survey": [
-    "src/core/cli.ts -> src/modules/survey/bcis-data.ts",
-    "src/core/cli.ts -> src/modules/survey/bcis-index.ts",
-    "src/core/search.ts -> src/modules/survey/data.ts",
-    "src/integrations/postcodes/location-key.ts -> src/modules/survey/costing/cost-model.cjs",
-    "src/modules/claims/claim-record.ts -> src/modules/survey/costing/job-economics.cjs",
-    "src/shared/engine.ts -> src/modules/survey/costing/job-economics.cjs"
+    "src/app/live-website.ts -> src/shared/shared-objectstore.ts",
+    "src/app/server.ts -> src/shared/shared-objectstore.ts"
    ]
   },
   "2": {
    "admin": [
-    "admin -> assessment",
-    "admin -> claims",
-    "admin -> compliance",
-    "admin -> core",
-    "admin -> crm",
-    "admin -> integrations",
-    "admin -> shared"
+    "admin -> crm"
    ],
    "assessment": [
     "assessment -> claims",
-    "assessment -> core",
     "assessment -> crm",
     "assessment -> finance",
-    "assessment -> integrations",
-    "assessment -> public-site",
-    "assessment -> shared",
     "assessment -> survey"
    ],
    "claims": [
     "claims -> admin",
-    "claims -> assessment",
     "claims -> compliance",
-    "claims -> core",
     "claims -> crm",
     "claims -> finance",
-    "claims -> integrations",
     "claims -> portal",
     "claims -> public-site",
-    "claims -> shared",
     "claims -> survey"
    ],
    "compliance": [
     "compliance -> admin",
-    "compliance -> assessment",
-    "compliance -> claims",
-    "compliance -> core",
     "compliance -> crm",
-    "compliance -> integrations",
-    "compliance -> public-site",
-    "compliance -> shared"
-   ],
-   "core": [
-    "core -> admin",
-    "core -> assessment",
-    "core -> claims",
-    "core -> compliance",
-    "core -> crm",
-    "core -> finance",
-    "core -> integrations",
-    "core -> portal",
-    "core -> public-site",
-    "core -> shared",
-    "core -> survey"
+    "compliance -> public-site"
    ],
    "crm": [
-    "crm -> admin",
-    "crm -> assessment",
-    "crm -> claims",
-    "crm -> compliance",
-    "crm -> core",
-    "crm -> finance",
-    "crm -> integrations",
     "crm -> portal",
-    "crm -> public-site",
-    "crm -> shared",
-    "crm -> survey"
+    "crm -> public-site"
    ],
    "finance": [
-    "finance -> assessment",
-    "finance -> claims",
-    "finance -> compliance",
-    "finance -> core",
-    "finance -> crm",
-    "finance -> shared"
+    "finance -> crm"
    ],
    "integrations": [
-    "integrations -> admin",
     "integrations -> claims",
-    "integrations -> core",
-    "integrations -> crm",
-    "integrations -> shared",
-    "integrations -> survey"
+    "integrations -> crm"
    ],
    "portal": [
-    "portal -> admin",
-    "portal -> assessment",
-    "portal -> claims",
-    "portal -> compliance",
-    "portal -> core",
-    "portal -> crm",
-    "portal -> integrations",
-    "portal -> public-site",
-    "portal -> shared",
-    "portal -> survey"
-   ],
-   "public-site": [
-    "public-site -> admin",
-    "public-site -> assessment",
-    "public-site -> compliance",
-    "public-site -> core",
-    "public-site -> crm",
-    "public-site -> finance",
-    "public-site -> integrations",
-    "public-site -> shared",
-    "public-site -> survey"
-   ],
-   "shared": [
-    "shared -> admin",
-    "shared -> claims",
-    "shared -> core",
-    "shared -> crm",
-    "shared -> integrations",
-    "shared -> survey"
+    "portal -> public-site"
    ],
    "survey": [
-    "survey -> assessment",
-    "survey -> claims",
-    "survey -> core",
-    "survey -> crm",
-    "survey -> integrations",
-    "survey -> shared"
+    "survey -> crm"
    ]
   },
   "3": {
    "admin": [
-    "src/core/data-borrowed.ts : saved_keys",
     "src/modules/claims/data-borrowed.ts : document_types",
     "src/modules/crm/data-borrowed.ts : document_types",
     "src/modules/crm/data-borrowed.ts : reason_lists",
     "src/modules/portal/data-borrowed.ts : document_types"
    ],
    "assessment": [
-    "src/core/data-borrowed.ts : assessments",
-    "src/core/seed.ts : assessments",
+    "src/app/seed.ts : assessments",
     "src/modules/claims/data-borrowed.ts : assessments",
     "src/modules/compliance/data-borrowed.ts : consent_answers",
     "src/modules/crm/data-borrowed.ts : assessments",
     "src/modules/crm/data-borrowed.ts : estimates",
-    "src/modules/survey/data-borrowed.ts : estimates",
-    "src/shared/data-borrowed.ts : assessments",
-    "src/shared/data-borrowed.ts : estimates"
+    "src/modules/survey/data-borrowed.ts : estimates"
    ],
    "claims": [
-    "src/core/data-borrowed.ts : claims",
-    "src/core/data-borrowed.ts : properties",
-    "src/core/seed.ts : claims",
-    "src/core/seed.ts : engagements",
+    "src/app/seed.ts : claims",
+    "src/app/seed.ts : engagements",
     "src/modules/admin/data-borrowed.ts : claims",
     "src/modules/assessment/data-borrowed.ts : claim_deliverables",
     "src/modules/assessment/data-borrowed.ts : claims",
@@ -309,12 +112,9 @@
     "src/modules/portal/data-borrowed.ts : logical_documents",
     "src/modules/survey/data-borrowed.ts : claim_grants",
     "src/modules/survey/data-borrowed.ts : claims",
-    "src/modules/survey/data-borrowed.ts : properties",
-    "src/shared/data-borrowed.ts : claims",
-    "src/shared/data-borrowed.ts : properties"
+    "src/modules/survey/data-borrowed.ts : properties"
    ],
    "core": [
-    "src/integrations/data-borrowed.ts : users",
     "src/modules/admin/data-borrowed.ts : users",
     "src/modules/assessment/data-borrowed.ts : users",
     "src/modules/claims/data-borrowed.ts : users",
@@ -324,19 +124,10 @@
     "src/modules/crm/data-borrowed.ts : users",
     "src/modules/finance/data-borrowed.ts : users",
     "src/modules/portal/data-borrowed.ts : users",
-    "src/modules/survey/data-borrowed.ts : users",
-    "src/shared/data-borrowed.ts : users"
+    "src/modules/survey/data-borrowed.ts : users"
    ],
    "crm": [
-    "src/core/data-borrowed.ts : booking_changes",
-    "src/core/data-borrowed.ts : bookings",
-    "src/core/data-borrowed.ts : businesses",
-    "src/core/data-borrowed.ts : contacts",
-    "src/core/data-borrowed.ts : internal_notes",
-    "src/core/data-borrowed.ts : leads",
-    "src/core/data-borrowed.ts : working_times",
-    "src/core/seed.ts : businesses",
-    "src/integrations/data-borrowed.ts : businesses",
+    "src/app/seed.ts : businesses",
     "src/modules/admin/data-borrowed.ts : businesses",
     "src/modules/assessment/data-borrowed.ts : businesses",
     "src/modules/claims/data-borrowed.ts : businesses",
@@ -358,15 +149,9 @@
     "src/modules/portal/data-borrowed.ts : businesses",
     "src/modules/portal/data-borrowed.ts : contacts",
     "src/modules/survey/data-borrowed.ts : bookings",
-    "src/modules/survey/data-borrowed.ts : businesses",
-    "src/shared/data-borrowed.ts : businesses",
-    "src/shared/data-borrowed.ts : introducers",
-    "src/shared/data-borrowed.ts : leads",
-    "src/shared/data-borrowed.ts : staff_tasks"
+    "src/modules/survey/data-borrowed.ts : businesses"
    ],
    "finance": [
-    "src/core/data-borrowed.ts : invoice_numbers",
-    "src/core/data-borrowed.ts : invoices",
     "src/modules/assessment/data-borrowed.ts : finance_settings",
     "src/modules/assessment/data-borrowed.ts : invoice_credit_notes",
     "src/modules/assessment/data-borrowed.ts : invoices",
@@ -401,8 +186,7 @@
     "src/modules/crm/data-borrowed.ts : enquiry_checks"
    ],
    "survey": [
-    "src/core/data-borrowed.ts : surveyor_jobs",
-    "src/core/seed.ts : surveyor_jobs",
+    "src/app/seed.ts : surveyor_jobs",
     "src/modules/assessment/data-borrowed.ts : surveyor_jobs",
     "src/modules/claims/data-borrowed.ts : pack_client_notices",
     "src/modules/claims/data-borrowed.ts : pack_signoff_answers",
@@ -453,6 +237,14 @@
    "after": 350,
    "renamed_or_new": 44,
    "gone": 300
+  },
+  {
+   "date": "2026-11-09",
+   "why": "Phase 161l: the order written into architecture/modules.json (shared, core, integrations, assessment, claims, survey, finance, compliance, admin, crm, portal, public-site, app); rule 2 now counts each pair of areas where one imports another above it, in place of every pair inside the one cycle (99 to 42); no code changed",
+   "before": 350,
+   "after": 293,
+   "renamed_or_new": 0,
+   "gone": 57
   }
  ]
 }

@@ -28,13 +28,10 @@
  * entirely at one stage tests nothing about the pipeline.
  */
 
-import type { Db } from './db.ts';
-import type { PasswordHasher } from './password.ts';
-import { createUser, newId } from './users.ts';
-import { AuditLog } from './audit.ts';
+import { AuditLog, createUser, newId } from '../core/index.ts';
+import type { AppRole, Db, PasswordHasher } from '../core/index.ts';
 import { seedSignatureRecord } from '../modules/claims/index.ts';
 import { ingestRegisterRecord, insertResearchSourcesNotPermittedYet } from '../integrations/index.ts';
-import type { AppRole } from './roles.ts';
 import { catalogue } from '../modules/claims/index.ts';
 import { backfillClaimFor, insertClaim } from '../modules/crm/index.ts';
 import { allocateNumber } from '../modules/finance/index.ts';
@@ -50,7 +47,7 @@ import { insertSurveyorCommitments, insertSurveyorJobs } from '../modules/survey
 
 /**
  * Development credentials. Printed by `npm run seed`, never a default in any
- * deployed configuration: `src/core/cli.ts` refuses to seed, and `tools/demo-server.ts`
+ * deployed configuration: `src/app/cli.ts` refuses to seed, and `tools/demo-server.ts`
  * refuses to start, unless CAPREBATE_ALLOW_SEED is set, so this cannot arrive in
  * production by being forgotten. `app.ts` does not check the flag; those two do.
  */

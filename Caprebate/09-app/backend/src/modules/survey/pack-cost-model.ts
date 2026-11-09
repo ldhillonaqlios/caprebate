@@ -9,7 +9,7 @@
  *   chapter 11  THE INDEX DATES. The purchase date (the property record) and the valuation date (the surveyor's, chapter
  *               11), the index at each and the factor between them: index(purchase) / index(valuation), which turns a
  *               cost priced at the valuation date back to the purchase date. The table is the real BCIS index where one
- *               has been imported (src/modules/survey/bcis-index.ts, `node src/core/cli.ts import-bcis-index`); the cost model's
+ *               has been imported (src/modules/survey/bcis-index.ts, `node src/app/cli.ts import-bcis-index`); the cost model's
  *               PLACEHOLDER table of invented points ONLY in the test system; otherwise nothing — never a guess.
  *   chapter 14  THE CHECKS. Preliminaries: the model as shipped uses a flat 18% with its switch off; the placeholder bands
  *               by job size are shown, in the test system only, against this pack's rebuild cost. The insurance figure:

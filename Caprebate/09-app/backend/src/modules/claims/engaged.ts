@@ -57,7 +57,7 @@ import { funnelStateFor, sessionFromFunnel } from '../assessment/index.ts';
 import { SCREENS, type ScreenId } from '../assessment/index.ts';
 import { formatShownRange } from '../../shared/index.ts';
 import { stage as stageOf } from '../../shared/index.ts';
-import { answerLabel, NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { answerLabel, NotFoundAsRefusal } from '../../core/index.ts';
 import { RECEIVED_ONLY_BY_UPLOAD } from './documents.ts';
 import { DERIVE_FIELD_OF } from '../../integrations/connectors/free-registers.ts';
 import {

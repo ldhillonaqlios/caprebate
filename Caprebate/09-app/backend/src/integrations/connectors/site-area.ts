@@ -54,8 +54,6 @@ import { etrs89ToBritishNationalGrid, type Ostn15Grid } from './ostn15.ts';
 import { resolveProperty } from '../postcodes/postcode.ts';
 import type { PostcodeStore } from '../postcodes/postcode-port.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId10, getRegisterRecordsIdFieldsJsonByBusinessIdSourceId } from '../data.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
-import { getPropertiesIdByIdBusinessId } from '../../modules/claims/data.ts';
 
 export const SITE_AREA_SOURCE_ID = 'HMLR_INSPIRE';
 
@@ -201,6 +199,14 @@ export type SiteAreaReady = {
   readonly entity_id: string;
 };
 
+/*
+ * WHETHER A PROPERTY IS THIS COMPANY'S IS THE CLAIMS MODULE'S TO SAY: A PORT THIS FILE OWNS, handed in by
+ * src/modules/claims/research-subject.ts as the claims' front door loads; the statement is the claims' own, unchanged.
+ * Declared with `var`, so a hand-in that comes while this file is still loading is kept.
+ */
+var propertyOfBusiness: ((db: Db, property_id: string, business_id: string) => { readonly id: string } | undefined) | undefined;
+export function setPropertyOfBusinessReader(read: (db: Db, property_id: string, business_id: string) => { readonly id: string } | undefined): void { propertyOfBusiness = read; }
+
 /**
  * EVERY CHECK BEFORE THE DOWNLOAD, AND NOTHING ELSE. Split out of `siteAreaFromLandBoundary`, unchanged
  * and in the same order, so the research panel can say what the next click would do without sending anything: the
@@ -219,7 +225,8 @@ export function planSiteArea(d: Pick<SiteAreaDeps, 'db' | 'grid'>, input: SiteAr
   const use = checkBoundaryUse('INTERNAL_CALCULATION');
   if (!use.permitted) return stop(outcome('NOT_PERMITTED', use.reason));
 
-  const property = getPropertiesIdByIdBusinessId<{ id: string }>(d.db, [input.property_id, input.business_id]);
+  if (propertyOfBusiness === undefined) throw new Error('Which properties are this company\'s is not set up. The claims set it up when they load, so nothing was looked up.');
+  const property = propertyOfBusiness(d.db, input.property_id, input.business_id);
   if (property === undefined) return stop(outcome('NOT_PERMITTED', 'That property is not one of this company\'s, so nothing was looked up.'));
 
   const point = pointInBritishNationalGrid(input.point, d.grid);

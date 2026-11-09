@@ -18,7 +18,7 @@ import { h, raw, page, type Safe } from '../../shared/index.ts';
 import { savedMessage } from '../../shared/index.ts';
 import { boundaryOf, parseMultipart, MultipartError, type Part } from '../../core/index.ts';
 import { ukDate } from '../../shared/index.ts';
-import type { FsObjectStore } from '../../shared/objectstore.ts';
+import type { FsObjectStore } from '../../shared/index.ts';
 import {
   addImportFile, cancelImport, importCheck, importFilesWaiting, saveImport, startImport, IMPORT_MAX_FILE, IMPORT_MAX_ZIP,
 } from './whatsapp-import.ts';

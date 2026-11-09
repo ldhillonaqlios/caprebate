@@ -61,7 +61,7 @@ import {
   type EntityKey, type FeeComparison, type NoClaimVatReading, type RecommendationThreshold,
 } from '../../shared/index.ts';
 import { formatPence } from '../../shared/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { getInvoicesIdBusinessIdById3, updateInvoicesInvoiceStatusPaymentStatusById } from './data.ts';
 import { getInvoicesIdBusinessIdByIdClaimId, listInvoicesIdBusinessIdByClaimId2 } from './data-borrowed.ts';
 

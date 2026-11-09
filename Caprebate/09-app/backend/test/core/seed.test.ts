@@ -7,7 +7,7 @@
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { seed } from '../../src/core/seed.ts';
+import { seed } from '../../src/app/seed.ts';
 import { ingestRegisterRecord, planResearch, gateStatus } from '../../src/integrations/register-ingest.ts';
 import { NameExclusionError, assertNoUnauthorisedName } from '../../src/integrations/registers/name-exclusion.ts';
 import { readdirSync, readFileSync } from 'node:fs';

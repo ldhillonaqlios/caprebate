@@ -12,10 +12,6 @@ import { createHash } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import { plainDashLines } from '../../shared/index.ts';
 import { insertOutbox, insertOutboxAttachments, insertOutboxInlineFiles } from '../data.ts';
-import { getUsersCountByClientStatusEmailCanonical } from '../data-borrowed.ts';
-import { getEmailSenderDisplayNameAddress } from '../../modules/admin/data.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
-import { getBusinessesCountByClientStatus, getBusinessesCountByIdClientStatus, getContactsCountByClientStatus } from '../../modules/crm/data.ts';
 
 /**
  * CALENDAR_INVITE IS THE SECOND STUBBED TRANSPORT AND IT IS NOT A SECOND STUB.
@@ -119,17 +115,25 @@ export type EmailTransport = {
  * the caller is told `refused`.
  */
 export function isDoNotContact(db: Db, to_email: string, business_id: string | null | undefined): boolean {
-  if (business_id !== null && business_id !== undefined) {
-    const b = getBusinessesCountByIdClientStatus<{ n: number }>(db, [business_id]);
-    if ((b?.n ?? 0) > 0) return true;
-  }
-  const byChannel = getBusinessesCountByClientStatus<{ n: number }>(db, [to_email]);
-  if ((byChannel?.n ?? 0) > 0) return true;
-  const byContact = getContactsCountByClientStatus<{ n: number }>(db, [to_email]);
-  if ((byContact?.n ?? 0) > 0) return true;
-  const byLogin = getUsersCountByClientStatusEmailCanonical<{ n: number }>(db, [to_email]);
-  return (byLogin?.n ?? 0) > 0;
+  if (doNotContactCheck === undefined) throw new Error('The do-not-contact check is not set up. The CRM sets it up when it loads, so no email was written.');
+  return doNotContactCheck(db, to_email, business_id);
 }
+
+/*
+ * WHAT THIS FILE ASKS THE MODULES ABOVE IT: TWO PORTS IT OWNS. Whether an organisation, an address, a
+ * contact or a client login is marked DO_NOT_CONTACT is the CRM's to say (its tables: the four tests above, in the
+ * same order, in src/modules/crm/do-not-contact.ts); who every email comes from is the admin's setting
+ * (src/modules/admin/email-sender.ts). Each module hands its answer in when its front door loads, so the outside
+ * services import nothing of a business module. Asked before it is handed in, each refuses rather than guess: no
+ * email is written. Declared with `var`, so a hand-in that comes while this file is still loading (a loop through a
+ * front door) is kept, not refused.
+ */
+export type DoNotContactCheck = (db: Db, to_email: string, business_id: string | null | undefined) => boolean;
+export type SenderRow = { readonly display_name: string; readonly address: string; readonly reply_to: string };
+var doNotContactCheck: DoNotContactCheck | undefined;
+var senderRow: ((db: Db) => SenderRow | undefined) | undefined;
+export function setDoNotContactCheck(check: DoNotContactCheck): void { doNotContactCheck = check; }
+export function setSenderReader(read: (db: Db) => SenderRow | undefined): void { senderRow = read; }
 
 /**
  * WHO EVERY EMAIL COMES FROM, AS ONE SETTING. The latest row of `email_sender` (migration 036), which Admin
@@ -142,7 +146,8 @@ export function currentSender(db: Db): Sender {
   /* THE NEWEST ROW WINS, BY WHEN IT WAS WRITTEN, NOT BY THE DATE IT CARRIES. A change is a new row and the
      table is never edited, so the last row written is the last decision. Ordering on set_at let a migration's dated row
      (044, 24 September 2026) outrank a change an administrator made later on a server whose clock read earlier. */
-  const r = getEmailSenderDisplayNameAddress<{ display_name: string; address: string; reply_to: string }>(db);
+  if (senderRow === undefined) throw new Error('The email sender is not set up. The admin settings set it up when they load, so no email was written.');
+  const r = senderRow(db);
   if (r === undefined) throw new Error('no sender is set for email: migration 036 writes one');
   return { ...r, from_header: `${r.display_name} <${r.address}>` };
 }

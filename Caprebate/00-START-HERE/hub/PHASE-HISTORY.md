@@ -14164,3 +14164,51 @@ NOT DONE      31 rule-3 joins against the four, nine imports round a door, route
               question pack, D16 (our recommendation is built meanwhile).
 NOTHING LEFT  beyond those lines.
 ```
+
+## Phase 161l — The tangle undone, part 1: the order written and checked, events, permissions per module, the start-up wiring, and the lower layers off the modules — 9 November 2026
+
+**ACTIONS AND OUTCOMES.** Phase 161l, 9 Nov 2026: The order the business areas depend on each other is now written into the module map, and the boundary check refuses any import that goes up it. A module can now tell the modules above it that something happened (an event) instead of reaching up into them: the letter signed, an invoice raised and a credit note issued are the first three. Each module declares its own permissions, which the core puts together; nothing about who may do what changed. The start-up wiring moved into its own folder at the top (src/app/), and the core, the shared parts and the outside services no longer reach into any business module. Breaks counted by the boundary check: 350 to 148. Every suite passes with the same pass list, plus 13 new tests. The rest of the tangle (the modules' own upward imports and the joins across owners, which first need the client record moved low in the order) is the new Phase 161l1, before 161m. PR on GitHub; Lakhbir merges.
+
+- **Read first.** PR #91 (Phase 161k) merged on main (b7cb100). The block read word for word in ACTION-PLAN.md and on the run sheet (the same text, 172 lines). The claim taken (CLAIM.md, the board item Working on it with the machine filled, the tracker). The four suites run first on main: site 1,428 / 0 / 3 in both modes, phase3 71, phase9 29, back end 3,956 of 3,956.
+- **Built 1, the order.** `architecture/modules.json` carries the `order` (bottom up: shared, core, integrations, assessment, claims, survey, finance, compliance, admin, crm, portal, public-site, app) and a new area `app` with no front door (nothing imports the start-up wiring). Two changes from ARCHITECTURE.md's first sketch, both recorded there: shared sits below the core (it is plain tools the core's pages are drawn with; the core imported it 34 times and it imported the core 6), and the four top modules are ordered admin, crm, portal, public-site (the fewest imports to turn round). `tools/boundaries.cjs`: rule 2 counts each pair of areas where one imports another above it (with an order, in place of every pair inside a cycle); three new self-test controls. Rebased once, logged: 350 to 293 (rule 2: 99 pairs inside the one cycle to 42 pairs that import upwards).
+- **Built 2, events.** `src/core/events.ts`: `announce` runs every listener in the transaction of the change that caused it and refuses to run outside one; the announcement and each hearing are in the audit log (`EVENT_ANNOUNCED`, `EVENT_HEARD`); a listener that throws undoes the whole change (`ListenerFailed` names it). The first three: the claims module announces `letter.signed` (the CRM raises the client's stage; was a direct write to the CRM's table), finance announces `invoice.raised` and `credit_note.issued` (the CRM accrues or reverses the introducer percentage; was a call into the CRM after the commit, now inside it). Tests: the mechanism (`test/core/events.test.ts`, five), and each real listener runs and a planted failure undoes the signature, the invoice and the credit note (`test/crm/pipeline.test.ts`, `test/claims/engagement-terms-and-fees.test.ts`).
+- **Built 3, permissions per module.** Each module's `actions.ts` declares its own actions (crm 43, claims 40, compliance 8, admin 8, finance 7, portal 6, survey 4, assessment 3; the core keeps its 11); `src/core/authz.ts` puts them together (`registerActions`, one owner per action, a second owner refused); the module's front door and its `data.ts` load them, so every path into a module can ask them. `authorise()` and `can()` unchanged; the 571 rule lines moved word for word (checked line for line against the old table); every existing permission test passes (`test/core/permissions-per-module.test.ts`, four new).
+- **Built 4, the start-up wiring and the lower layers.** Two helper agents in their own git worktrees, merged here. (a) `src/app/`: server, cli, seed, router, staff, timers, live-website and upload-pieces-script moved (git mv), `buildApp` split into `src/app/build-app.ts`; every importer, the API entry, the docs and the folder-reading checks followed; the route list byte-identical. (b) The core names no module: the calendar and filled assessments into the CRM (`crm/assessments-and-calendar.ts`; the gates stay in `core/backoffice.ts`), global search into the CRM, saved keys into admin and client sign-up into the portal (their tables' owners), the chain's GENESIS into the core's audit log, `required.ts` down into shared; the menu takes each module's gates and counts as a port (`provideNav`, each module's `nav.ts`; a part not handed in shuts its section). (c) The shared parts and the outside services name no module: the claims and leads lists into the CRM, the fee gate and its job cost model into the assessment, the plain form checks and the page-script headers into shared, ports the lower layer owns for the document keys, the upload limit, the outbox's do-not-contact and sender checks and the lookups' subjects; the shared and integrations borrowed files emptied and gone. Statements moved with their text unchanged; the baseline's names moved with their files (`--moved`, `--moved-map`), then lowered.
+
+```
+area           rule1 rule2 rule3 rule4 total
+core               4     0    10     0    14
+shared             2     0     0     0     2
+integrations       7     2    15     0    24
+public-site        0     0     1     0     1
+assessment         0     4     6     0    10
+portal             0     1     2     0     3
+crm                1     2    23     0    26
+claims             2     7    26     0    35
+survey             0     1    15     0    16
+finance            0     1     8     0     9
+compliance         0     3     0     0     3
+admin              0     1     4     0     5
+all               16    22   110     0   148
+```
+
+- **Accept, the figures.** Before (main at b7cb100): site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,956, project 5,484. After: site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,969 of 3,969 across 224 files, project 5,497; the pass lists the same name for name in all four suites, the back end plus exactly the 13 new tests. `npm run check` green; every file loads alone; the route list identical. Drift checker (0 wrong), CRM fold check (and self-test; the line references the moves shifted re-derived), register check, tracker check and self-test, plain words (265 files, 15,838 strings, the same strings), brand, analytics (26), notices acceptance, payload proof, verify-page and the boundary self-test (25) green. The site harness's two checks that load the job cost model read its new place. Not done here: signing in on the preview as staff and as a client; the suites drive both through the app.
+- **Not done as the block said, and why.** "Zero breaks of every rule": 148 are left. Most of the modules' upward imports are reads of the CRM's client record (businesses, contacts), which nearly every module needs and the CRM owns near the top: they need a decision (move the client record low in the order, our recommendation, or ports) before they can be turned round, and the 110 joins need a test of each screen's output before each is split. Both are Phase 161l1, written with the counts by pair, the six simplest joins named, and the helper's finding that the check hides a value import from a path another statement imports as a type.
+- **Board and plan.** 161l Done (group Z, claim cleared) on the board and the tracker; 161l1 made (board item 13502997938, Ready - Claude can build) and written before 161m in ACTION-PLAN.md and on the run sheet; COORDINATES' order line and section 6's row name it. 4B: the build queue is 161l1 and 161m, each a phase; no orphans. The run sheet's 161l block waits for Lakhbir's yes in the chat before it is deleted.
+
+```
+DONE          The order written into the module map and checked (rule 2 refuses an import up it); events
+              (src/core/events.ts) in the change's own transaction, audit-logged, a failing listener undoing the change,
+              with the first three upward calls replaced; each module's permissions in its actions.ts, authorise()
+              unchanged; the start-up wiring in src/app/; the core, the shared parts and the outside services name no
+              module; the baseline 350 -> 148; every suite green, the pass list the same plus 13 tests.
+NOT DONE      The client record low in the order, the modules' own upward imports (22 pairs), the joins across owners
+              (110), 16 imports round a door, routes and permissions files for survey, finance, compliance and admin,
+              the parts the router lends, the load-order workarounds, the check's hidden value imports - BUILDABLE -
+              new Phase 161l1, written and inserted before 161m.
+              Deleting the run sheet's 161l block - BLOCKED on Lakhbir's yes in the chat - asked in the report.
+              Signing in on the preview as staff and as a client - BUILDABLE - after the merge, on the test website.
+              The developer's answer to D16 (how far the notes come out) - BLOCKED on the developer - the developer
+              question pack, D16 (our recommendation is built meanwhile).
+NOTHING LEFT  beyond those lines.
+```

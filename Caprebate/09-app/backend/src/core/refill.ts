@@ -2,7 +2,7 @@
  * A REFUSED FORM KEEPS WHAT WAS TYPED.
  *
  * Until this phase a refusal landed on a separate "Not saved" page with a "Go back" link, and whatever the person had
- * typed was gone. `problem()` in src/core/staff.ts now redraws the page the form was on — the ordinary GET, under the
+ * typed was gone. `problem()` in src/app/staff.ts now redraws the page the form was on — the ordinary GET, under the
  * same login — and this file puts the typed values back into THAT form, puts the refusal's words at the top of it, and
  * opens the <details> and the tab that hold it, so the person sees the message where they typed.
  *

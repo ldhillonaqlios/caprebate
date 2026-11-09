@@ -19,7 +19,7 @@ import { can, type Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { breadcrumb, claimRef, dataLink, savedMessage } from '../../shared/index.ts';
 import { kpiRow, lateBadge, nobodyBadge } from '../../core/index.ts';
-import { setSubMenu } from '../../core/navigation.ts';
+import { setSubMenu } from '../../core/index.ts';
 import * as I from './introducers.ts';
 import { vocabulary } from '../admin/index.ts';
 import { SECTORS } from './leads.ts';

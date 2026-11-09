@@ -8,10 +8,6 @@
 import type { Db } from '../../core/index.ts';
 import type { Bundle } from './registers.ts';
 import { CB } from '../../shared/index.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
-import { getBusinessesNameLegalNameById } from '../../modules/crm/data.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
-import { getPropertiesIdAddressLine1ByBusinessId } from '../../modules/claims/data.ts';
 
 export type Nation = 'england' | 'wales' | 'scotland' | 'northern_ireland';
 
@@ -43,9 +39,29 @@ export type ResearchSubject = {
 
 const NATIONS: readonly Nation[] = ['england', 'wales', 'scotland', 'northern_ireland'];
 
+/*
+ * WHAT A LOOKUP IS ASKED ABOUT IS THE MODULES' TO SAY: TWO PORTS THIS FILE OWNS. The organisation's names,
+ * number and sector are the CRM's (src/modules/crm/research-subject.ts); its first property is the claims module's
+ * (src/modules/claims/research-subject.ts). Each hands its reading in as its front door loads, so the outside services
+ * import nothing of a business module; the statements are the modules' own, unchanged. Declared with `var`, so a
+ * hand-in that comes while this file is still loading (a loop through a front door) is kept.
+ */
+export type SubjectBusiness = { readonly name: string; readonly legal_name: string | null; readonly company_number: string | null; readonly sector: string | null };
+export type SubjectProperty = {
+  readonly id: string; readonly address_line_1: string | null; readonly address_line_2: string | null; readonly town: string | null;
+  readonly postcode: string | null; readonly jurisdiction: string | null; readonly uprn: string | null;
+};
+var subjectBusinessOf: ((db: Db, business_id: string) => SubjectBusiness | undefined) | undefined;
+var subjectPropertyOf: ((db: Db, business_id: string) => SubjectProperty | undefined) | undefined;
+export function setSubjectBusinessReader(read: (db: Db, business_id: string) => SubjectBusiness | undefined): void { subjectBusinessOf = read; }
+export function setSubjectPropertyReader(read: (db: Db, business_id: string) => SubjectProperty | undefined): void { subjectPropertyOf = read; }
+
 export function researchSubject(db: Db, business_id: string): ResearchSubject {
-  const b = getBusinessesNameLegalNameById<{ name: string; legal_name: string | null; company_number: string | null; sector: string | null }>(db, [business_id]);
-  const p = getPropertiesIdAddressLine1ByBusinessId<{ id: string; address_line_1: string | null; address_line_2: string | null; town: string | null; postcode: string | null; jurisdiction: string | null; uprn: string | null }>(db, [business_id]);
+  if (subjectBusinessOf === undefined || subjectPropertyOf === undefined) {
+    throw new Error('What a lookup is asked about is not set up. The CRM and the claims set it up when they load, so nothing was looked up.');
+  }
+  const b = subjectBusinessOf(db, business_id);
+  const p = subjectPropertyOf(db, business_id);
   const legal = b?.legal_name?.trim() ?? '';
   const number = b?.company_number?.trim() ?? '';
   return {

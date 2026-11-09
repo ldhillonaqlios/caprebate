@@ -1,12 +1,12 @@
 /**
  * THE CRM'S ADDRESSES: its two scripts, the client's video-call join page and the public referral form. The router
- * shell (src/core/router.ts) asks each function at the point where its addresses have always been matched, so the
+ * shell (src/app/router.ts) asks each function at the point where its addresses have always been matched, so the
  * order in which every address is tried is unchanged.
  */
 import { clockOf, form, html, nav, simple, type Actor, type WebRequest, type WebResult } from '../../core/index.ts';
 import { h, page, raw, type Safe } from '../../shared/index.ts';
 import { joinSignature } from '../../integrations/index.ts';
-import { SITE_JS_HEADERS } from '../public-site/index.ts';
+import { SITE_JS_HEADERS } from '../../shared/index.ts';
 import { getContactsNByBusinessIdLeadId } from './data.ts';
 import { getVideoMeetingsBookingIdMeetingIdByClientTokenCancelledAt } from './data-borrowed.ts';
 import { PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen } from './introducers.ts';

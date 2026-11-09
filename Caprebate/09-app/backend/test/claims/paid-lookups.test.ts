@@ -30,7 +30,7 @@ import { NAME_EXCLUSION_POLICY, classifyField, assertNoUnauthorisedName } from '
 import * as R from '../../src/modules/claims/research.ts';
 import * as S from '../../src/modules/survey/surveyor.ts';
 import { STUBS } from '../../src/core/app.ts';
-import { seed } from '../../src/core/seed.ts';
+import { seed } from '../../src/app/seed.ts';
 import { newId } from '../../src/core/users.ts';
 import { testApp, actor, signatureRecordFor } from '../helpers.ts';
 

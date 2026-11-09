@@ -32,8 +32,8 @@ async function build() {
   // overwrites so a visitor cannot set it (vercel.com/docs/headers/request-headers). Without this, the address on a
   // signature was Vercel's own, and the sign-in limit per network address would count every visitor as one.
   process.env.CAPREBATE_TRUST_PROXY ??= '1';
-  const { createApp } = await import('../Caprebate/09-app/backend/src/core/server.ts');
-  const { seed } = await import('../Caprebate/09-app/backend/src/core/seed.ts');
+  const { createApp } = await import('../Caprebate/09-app/backend/src/app/server.ts');
+  const { seed } = await import('../Caprebate/09-app/backend/src/app/seed.ts');
   const host = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
   const publicOrigin = process.env.CAPREBATE_PUBLIC_ORIGIN ?? (host ? `https://${host}` : undefined);
   const since = new Date().toISOString();
@@ -163,7 +163,7 @@ export async function configureTestDeploy(made, env) {
   const hash = await made.app.hasher.hash(pw);
   // PHASE 151j: only the logins STILL ON THE PUBLIC SEED PASSWORD move. On a lasting database a person may have chosen
   // their own password (or been given a temporary one); every cold start overwrote it until 28 Sep 2026.
-  const { SEED_PASSWORD } = await import('../Caprebate/09-app/backend/src/core/seed.ts');
+  const { SEED_PASSWORD } = await import('../Caprebate/09-app/backend/src/app/seed.ts');
   for (const u of made.app.db.all('SELECT id, password_hash FROM users')) {
     if (await made.app.hasher.verify(u.password_hash, SEED_PASSWORD)) {
       made.app.db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, u.id]);
@@ -467,7 +467,7 @@ export function isLiveDeploy(env) {
 async function buildLive() {
   const started = Date.now();
   process.env.CAPREBATE_TRUST_PROXY ??= '1';
-  const { startLiveWebsite } = await import('../Caprebate/09-app/backend/src/core/live-website.ts');
+  const { startLiveWebsite } = await import('../Caprebate/09-app/backend/src/app/live-website.ts');
   const r = await startLiveWebsite(process.env);
   for (const line of r.lines) (r.started ? console.log : console.error)(line);
   if (r.started) console.log(`live website: this copy started in ${Date.now() - started} ms`);

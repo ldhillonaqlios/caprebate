@@ -1,5 +1,5 @@
 /**
- * THE FORM-TOKEN CHECK, RUN BEFORE ANY ROUTE (src/core/server.ts), AND THE PAGE STEP THAT
+ * THE FORM-TOKEN CHECK, RUN BEFORE ANY ROUTE (src/app/server.ts), AND THE PAGE STEP THAT
  * PUTS THE TOKENS IN. What the tokens are, and why, is in src/core/form-token.ts.
  */
 
@@ -15,7 +15,7 @@ import {
 } from './form-token.ts';
 import { deleteFormTokensUsedByUsedAt, insertFormTokensUsed } from './data.ts';
 
-/** The largest body any route accepts (a big file in one request, src/core/router.ts), so the check never refuses first. */
+/** The largest body any route accepts (a big file in one request, src/app/router.ts), so the check never refuses first. */
 const MOST = 64 * 1024 * 1024 + 64 * 1024;
 
 const SAFE = new Set(['GET', 'HEAD', 'OPTIONS']);

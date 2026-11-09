@@ -20,7 +20,7 @@
  * and as text, while they set it up.
  *
  *
- *   - THE JSON API WALKS THE SAME STEPS. `/api/login` and `/api/login/step/...` (src/core/server.ts) call these same
+ *   - THE JSON API WALKS THE SAME STEPS. `/api/login` and `/api/login/step/...` (src/app/server.ts) call these same
  *     functions, with the step's token in the request body instead of the `cb_step` cookie; `describeStep` says what a
  *     step needs, for the page and for the API alike. There is no second implementation.
  *   - THE APP'S SECRET IS SEALED where a key is set (src/core/mfa-seal.ts, CAPREBATE_MFA_KEY): in `pending_secret` while
@@ -407,7 +407,7 @@ function masked(email: string): string {
 }
 
 /**
- * WHAT A STEP NEEDS NEXT, ONCE, for the page below and for the JSON API (src/core/server.ts). Undefined when the
+ * WHAT A STEP NEEDS NEXT, ONCE, for the page below and for the JSON API (src/app/server.ts). Undefined when the
  * token opens no step. `needs` is what the person does now:
  *   CHOOSE_PASSWORD   type a password of their own, twice
  *   CHOOSE_METHOD     choose EMAIL or APP

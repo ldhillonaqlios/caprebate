@@ -31,7 +31,7 @@ import { cqcNamedPeople } from '../../src/integrations/connectors/cqc.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import * as R from '../../src/modules/claims/research.ts';
 import { claimantTypeForGate } from '../../src/modules/crm/crm.ts';
-import { seed } from '../../src/core/seed.ts';
+import { seed } from '../../src/app/seed.ts';
 import { newId } from '../../src/core/users.ts';
 import { testApp, actor } from '../helpers.ts';
 

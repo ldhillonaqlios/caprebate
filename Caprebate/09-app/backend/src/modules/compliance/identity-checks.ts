@@ -54,7 +54,7 @@ import { getBusinessesIdById, getContactsIdEmailByIdBusinessId, listContactsIdBy
 import { getCddChecksStateByIdBusinessId, getCddChecksStateVerificationMethodById, getIdentityCheckResultsOutcomeReceivedAtByIdentityCheckId, getIdentityChecksIdBusinessIdBySessionId, getIdentityChecksIdBySessionId, insertIdentityCheckResults, insertIdentityChecks, updateCddChecksVerificationMethodUpdatedAtById } from './data.ts';
 import { listIdentityChecksIdContactByBusinessId, listIdentityChecksIdContactByCddCheckId } from './data-borrowed.ts';
 
-/** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/core/router.ts, outside the login. */
+/** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/app/router.ts, outside the login. */
 export const IDENTITY_HOOK_PATH = '/hooks/identity-check';
 /** The headers the service signs its result with (Didit's own names for them), as Node lower-cases them. */
 export const IDENTITY_SIGNATURE_HEADERS = Object.freeze({ v2: 'x-signature-v2', raw: 'x-signature', timestamp: 'x-timestamp' } as const);

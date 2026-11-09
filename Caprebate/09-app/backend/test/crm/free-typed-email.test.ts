@@ -20,8 +20,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { createServer, connect as netConnect, type Server } from 'node:net';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import { NotAuthorised, type Actor } from '../../src/core/authz.ts';
 import { currentSender, outboxTransport } from '../../src/integrations/email/email.ts';
 import {

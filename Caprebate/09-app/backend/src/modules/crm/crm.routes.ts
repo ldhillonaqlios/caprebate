@@ -19,8 +19,8 @@ import type { Actor } from '../../core/index.ts';
 import { authorise, can } from '../../core/index.ts';
 import { piecesPage } from '../../core/index.ts';
 import { h, page, HTML_HEADERS } from '../../shared/index.ts';
-import * as LI from '../../shared/lists.ts';
-import { listControls, mayShareViews, requestParams, sortHeading } from '../../shared/lists-pages.ts';
+import * as LI from './claim-lists.ts';
+import { listControls, mayShareViews, requestParams, sortHeading } from './claim-lists-pages.ts';
 import { addStaffEvent, setEventVat } from '../claims/index.ts';
 import { requestWorkDocuments } from '../claims/index.ts';
 import { siteAreaInputsModule as SI } from '../claims/index.ts';
@@ -31,6 +31,9 @@ import { claimsPage, propertiesPage, propertyPage, renderClaim, type CrmPageDeps
 import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { getContactsBusinessIdLeadIdById } from './data.ts';
+import { provideNav } from '../../core/index.ts';
+// The Claims tab's gate is the claims list's own (the menu asks it; src/core/navigation.ts).
+provideNav({ gates: { claims: LI.claimListGate } });
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -261,7 +264,7 @@ export async function handleCrm(
 
   /* ----------------------------------------------------------- claims */
   if (path === '/staff/claims' && method === 'GET') {
-    // CRM 9 of 10: filtered, sorted and saved through src/shared/lists.ts, each row still asked of `claim.read`.
+    // CRM 9 of 10: filtered, sorted and saved through src/modules/crm/claim-lists.ts, each row still asked of `claim.read`.
     const asked = requestParams(d.app, actor, 'CLAIMS', url.searchParams);
     const v = LI.claimsList(db, actor, asked.params, asked.ignored);
     html(res, 200, claimsPage(d, actor, v.rows, listControls('CLAIMS', v, LI.viewsFor(db, actor, 'CLAIMS'), mayShareViews(actor), asked.view), sortHeading('CLAIMS', v)));

@@ -41,7 +41,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { buildApp } from '../src/core/app.ts';
+import { buildApp } from '../src/app/build-app.ts';
 import { loadSecrets, repositoryRoot, isInside, type SecretStore } from '../src/core/secrets.ts';
 import { liveTransport, fixtureTransport, type Transport } from '../src/integrations/connectors/http.ts';
 import type { ConnectorContext, RegisterConnector } from '../src/integrations/connectors/registers.ts';

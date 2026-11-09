@@ -1,6 +1,6 @@
 /**
  * THE ASSESSMENT'S ADDRESSES: the address box's script, a client's own login made from the assessment, and the
- * four-stage assessment itself, with its pages. The router shell (src/core/router.ts) asks each function at the point
+ * four-stage assessment itself, with its pages. The router shell (src/app/router.ts) asks each function at the point
  * where its addresses have always been matched, so the order in which every address is tried is unchanged.
  */
 import type { ServerResponse } from 'node:http';
@@ -8,7 +8,7 @@ import { JSON_HEADERS, clockOf, cookie, form, html, nav, redirect, setCookie, sh
 import { BOOKING, FRONTDOOR, FUNNEL, HTML_HEADERS, formatPence, formatShownRange, h, localWhen, noticeAtAddress, page, raw, registryGate, toPence, why, zoneNotice, type Safe } from '../../shared/index.ts';
 import { ADDRESS_LOOKUP, COMPANY_SEARCH, EMAIL_SENDING, POSTCODE_CHECK, addressLookupMissing, checkPostcode, companySearchOffered, findAddresses, mailWhere, normalisePostcode, postcodeCheckMissing, searchCompanies, searchesToday, sendingOn, smtpLoginFromKeyFile } from '../../integrations/index.ts';
 import { SLOT_MINUTES, activeMeeting, bookingInviteFile, fireAutomation, getBusinessesEById, insertBookings2, insertContacts4, isBookable, linkBookingToLead, publicSlots, reconcileVideoMeeting, sendVideoInvite } from '../crm/index.ts';
-import { SITE_JS_HEADERS } from '../public-site/index.ts';
+import { SITE_JS_HEADERS } from '../../shared/index.ts';
 import { freeGate, recordLookupsDeclined } from './address-check.ts';
 import { ADDRESS_LOOKUP_JS } from './address-lookup-script.ts';
 import { closeGatedExit, isGatedExit, loadDraft, newDraft, saveDraft, submit, type Draft } from './assessment.ts';

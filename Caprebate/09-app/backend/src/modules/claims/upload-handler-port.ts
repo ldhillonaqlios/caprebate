@@ -21,10 +21,11 @@
  * failure the extraction of the engine was done to prevent.
  */
 
-// These come straight from the claims module's document files, not through its front door: the shared parts and the
-// core load them, and the front door would load the whole claims module into the bottom layers (a loop that leaves a
-// value unset while files load). Counted by the boundary check (rule 1) until Phase 161l turns the upward imports
-// into events or ports the lower layers own.
+// The claims module's document files, named here. Areas above the claims read them through its front door; the two
+// below it that need them (the core's upload in pieces, src/core/upload-pieces.ts, and the assessment's conveyancing
+// strip, src/modules/assessment/conveyancing-strip.ts) name this file, as the front door would load the whole claims
+// module into a lower layer. Moved here from src/shared/: the document store reads the handler's keys
+// through a port of its own (src/shared/objectstore.ts, setDocumentKeys), so the shared parts no longer load it.
 export {
   UPLOAD_LIMITS,
   UploadHandlerError,
@@ -49,7 +50,7 @@ export {
   INGESTION_BOUNDARY,
   FAIL_CLOSED_SETTINGS,
   receiptPolicyFor,
-} from '../modules/claims/documents/upload-handler.ts';
+} from './documents/upload-handler.ts';
 
 export type {
   ObjectStore,
@@ -64,10 +65,10 @@ export type {
   ProcessResult,
   Clock,
   UploadHandlerErrorCode,
-} from '../modules/claims/documents/upload-handler.ts';
+} from './documents/upload-handler.ts';
 
-export type { DocType } from '../modules/claims/documents/document-pipeline.ts';
-export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../modules/claims/documents/document-pipeline.ts';
+export type { DocType } from './documents/document-pipeline.ts';
+export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from './documents/document-pipeline.ts';
 
 /**
  * CRM 4 of 10. The one deletion clock the Retention Procedure gives a client
@@ -76,7 +77,7 @@ export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../modules/claims/documents/do
  * than writing "not approved" into a screen, so the day the data protection
  * officer approves it the reading changes with no second edit.
  */
-export { RET7 } from '../modules/claims/documents/client-doc-ingestion.ts';
+export { RET7 } from './documents/client-doc-ingestion.ts';
 
 /**
  * The host's backup cycle — NOT SET, a named blank on every deletion — the guard that
@@ -85,8 +86,8 @@ export { RET7 } from '../modules/claims/documents/client-doc-ingestion.ts';
  */
 export {
   BACKUP_CYCLE, knownBackupCycleDays, assertRestoreApproved, ret3DueAt,
-} from '../modules/claims/documents/client-doc-ingestion.ts';
-export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryClock } from '../modules/claims/documents/client-doc-ingestion.ts';
+} from './documents/client-doc-ingestion.ts';
+export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryClock } from './documents/client-doc-ingestion.ts';
 
 /**
  * The deletion clock itself — and its rule that where two clocks are known the LATER governs (Word answer
@@ -94,8 +95,8 @@ export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryCl
  * dates src/modules/claims/documents.ts reads can be proved against the one function that
  * would turn them into a date. Nothing in src/ calls it: RET-7 is not approved.
  */
-export { deletionDueAt } from '../modules/claims/documents/client-doc-ingestion.ts';
-export type { IngestionSettings, RawFileRecord } from '../modules/claims/documents/client-doc-ingestion.ts';
+export { deletionDueAt } from './documents/client-doc-ingestion.ts';
+export type { IngestionSettings, RawFileRecord } from './documents/client-doc-ingestion.ts';
 
 /**
  * The legal-form test, the roles that are always a person, and the human-capture rule's role tokens and
@@ -103,5 +104,5 @@ export type { IngestionSettings, RawFileRecord } from '../modules/claims/documen
  */
 export {
   classifyPartyReference, ALWAYS_NATURAL_PERSON_ROLES, ROLE_TOKENS, CAPTURE_NAME_PATTERNS, assertHumanCaptureClean,
-} from '../modules/claims/documents/client-doc-ingestion.ts';
-export type { PartyLegalForm, PersonRole } from '../modules/claims/documents/client-doc-ingestion.ts';
+} from './documents/client-doc-ingestion.ts';
+export type { PartyLegalForm, PersonRole } from './documents/client-doc-ingestion.ts';

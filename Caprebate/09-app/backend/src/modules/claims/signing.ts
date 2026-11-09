@@ -53,10 +53,10 @@ import { localWhen, ukDate } from '../../shared/index.ts';
 import { formatPence } from '../../shared/index.ts';
 import { claimantTypeForGate } from '../crm/index.ts';
 import { buildPdf, flow, type PdfLine } from '../../shared/index.ts';
-import { stageIndex } from '../../shared/index.ts';
 import { getAuditLogCountByKindObjectId, getUsersCountByIdBusinessId, getUsersEmailById } from '../../core/index.ts';
 import { deleteEngagementRequiredSignersByEngagementId, getEngagementSignaturesCountByEngagementId, getEngagementsIdByBusinessId, getEngagementsIdCreatedAtByBusinessId, getEngagementsIdSignedAtByBusinessId, getEngagementsSentAtByBusinessId, insertEngagementRequiredSigners, insertEngagementSignLinks, insertEngagementSignatures, listEngagementSignaturesIdEngagementIdByEngagementId, listPropertiesLabelByBusinessId, updateEngagementSignLinksUsedAtByIdUsedAt, updateEngagementsLetterStateSignedAtById } from './data.ts';
-import { getBusinessesNameCompanyNumberById, getBusinessesStageById, updateBusinessesStageUpdatedAtById } from '../crm/index.ts';
+import { getBusinessesNameCompanyNumberById } from '../crm/index.ts';
+import { announce } from '../../core/index.ts';
 import { getEngagementSignLinksIdEngagementIdByTokenSha256, listEngagementRequiredSignersUserIdSeqByEngagementId } from './data-borrowed.ts';
 import { getAssessmentsShownHighPenceByBusinessId } from '../assessment/index.ts';
 
@@ -454,12 +454,6 @@ function writeSignature(
     }
     if (complete) {
       updateEngagementsLetterStateSignedAtById(d.db, [full.signed_at, engagement_id]);
-      // The client signed and their portal still said "Step 1 of 6: Your
-      // estimate" until staff moved the claim. Signing is the step: it raises the client to it, and never lowers one past it.
-      const now = getBusinessesStageById<{ stage: string }>(d.db, [full.business_id])?.stage ?? '';
-      if (stageIndex(now) < stageIndex('ENGAGEMENT_SIGNED')) {
-        updateBusinessesStageUpdatedAtById(d.db, ['ENGAGEMENT_SIGNED', full.signed_at, full.business_id]);
-      }
     }
     d.audit.append({
       at: full.signed_at, kind: 'ENGAGEMENT_SIGNED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -467,6 +461,11 @@ function writeSignature(
       detail: { signature: full.id, record: record_sha256, letter: full.letter_sha256, pdf: full.pdf_sha256, session: full.session_id, origin: full.origin,
         seq: full.signer_seq ?? 1, needed, complete },
     });
+    // Signed: the modules above are told in the same transaction (the CRM raises the client's stage to it).
+    if (complete) {
+      announce({ db: d.db, audit: d.audit, now: () => full.signed_at, actor }, 'claims', 'letter.signed',
+        { engagement_id, business_id: full.business_id, signed_at: full.signed_at });
+    }
   });
   return { record_sha256, pdf, complete };
 }

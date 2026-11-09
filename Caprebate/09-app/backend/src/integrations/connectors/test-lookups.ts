@@ -40,7 +40,7 @@
  * `smoke-switched-on HMLR_INSPIRE` starts its count of three like any other connector's.
  *
  * NOTHING HERE READS THE KEY FILE OR REACHES THE NETWORK. The caller hands in the transport and the key store:
- * src/core/cli.ts hands in the live ones, and the tests hand in recorded answers.
+ * src/app/cli.ts hands in the live ones, and the tests hand in recorded answers.
  */
 
 import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
@@ -56,15 +56,17 @@ import type { PostcodeStore } from '../postcodes/postcode-port.ts';
 import { smokeOne, SMOKE_DEFAULTS, SMOKE_SOURCES, type SmokeValues } from './smoke.ts';
 import type { Nation } from './nations.ts';
 import {
-  BOUNDARY_TEST_DEFAULTS, BOUNDARY_TEST_SOURCE, boundaryClientMatchIn, boundaryTestOne, boundaryValuesFrom, notTheBoundaryDefaults,
+  type BoundaryTestValues,
+  BOUNDARY_TEST_DEFAULTS, BOUNDARY_TEST_SOURCE, CLIENT_POINT_RADIUS_M, boundaryTestOne, boundaryValuesFrom, notTheBoundaryDefaults,
 } from './boundary-test-lookup.ts';
 import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
 import { readPayloadWithClaude, SERVICE_ID as CLAUDE_SERVICE_ID } from './claude.ts';
 import { sanitise, type Segment } from '../../modules/claims/index.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+// Straight from the data file, not the front door: a lower layer must not load a whole business module.
 import { listBusinessesNameLegalName, listLeadsProspectOrganisationProspectPostcode } from '../../modules/crm/data.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
-import { listPropertiesPostcode } from '../../modules/claims/data.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module.
+import { listPropertiesPostcode, listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../../modules/claims/data.ts';
+import { listRegisterRecordsFieldsJsonBySourceId } from '../data.ts';
 
 /** The Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */
 export const OS_TEST_SOURCE = OS_SERVICE_ID;
@@ -275,6 +277,39 @@ export function clientMatchIn(db: Db, v: SmokeValues): ClientCheck {
   return { ok: true };
 }
 
+/**
+ * CONDITION 2 AGAINST THE DATABASE, FOR A POINT AND A COUNCIL (from boundary-test-lookup.ts, text unchanged:
+ * the client tables are read here only, beside the other client check, so the land boundary's lookup reads none). Every point a person entered for a property and every
+ * easting and northing the paid address lookup gave, within CLIENT_POINT_RADIUS_M; every council a person added for a
+ * property. A match refuses and names the FIELD, never the value. A database that cannot be read refuses.
+ */
+export function boundaryClientMatchIn(db: Db, v: BoundaryTestValues): { readonly ok: true } | { readonly ok: false; readonly why: string } {
+  let entered: { easting: number | null; northing: number | null }[];
+  let councils: { lad_code: string | null }[];
+  let supplier: { fields_json: string }[];
+  try {
+    entered = listSiteAreaInputsEastingNorthingByKind(db);
+    councils = listSiteAreaInputsLadCodeByKind(db);
+    supplier = listRegisterRecordsFieldsJsonBySourceId(db);
+  } catch (e: unknown) {
+    return { ok: false, why: `the clients in CAPREBATE_DB could not be read (${e instanceof Error ? e.message : String(e)}), so it is not known that these values are nobody's` };
+  }
+  const points = entered.map((p) => ({ e: p.easting, n: p.northing }));
+  for (const r of supplier) {
+    try {
+      const f = JSON.parse(r.fields_json) as Record<string, unknown>;
+      if (typeof f['easting'] === 'number' && typeof f['northing'] === 'number') points.push({ e: f['easting'], n: f['northing'] });
+    } catch { /* a record that is not JSON holds no point */ }
+  }
+  const near = points.some((p) => typeof p.e === 'number' && typeof p.n === 'number'
+    && Math.hypot(p.e - v.easting, p.n - v.northing) <= CLIENT_POINT_RADIUS_M);
+  if (near) return { ok: false, why: `the point is within ${CLIENT_POINT_RADIUS_M} metres of a point held in the database for a client's property` };
+  if (councils.some((c) => (c.lad_code ?? '').trim().toUpperCase() === v.lad_code)) {
+    return { ok: false, why: 'the council is held in the database against a client\'s property' };
+  }
+  return { ok: true };
+}
+
 /** The fields whose value is not the public default, by name. Compared after the same normalising. */
 export function notTheDefaults(v: SmokeValues): string[] {
   const d = SMOKE_DEFAULTS;
@@ -368,12 +403,12 @@ function whoAndWhy(argv: readonly string[]): { who: string; why: string } | stri
   return { who, why };
 }
 
-const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--nation england|wales|scotland|northern_ireland] [--council C] [--not-a-client] [--uprn U] [--save-answers <folder outside the repository>]\n' +
-  `       CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke OS_FEATURES --who "<name>" --why "<reason>"   (the public test point only)\n` +
-  `       CAPREBATE_LIVE_SMOKE=1 node src/core/cli.ts smoke ${BOUNDARY_TEST_SOURCE} --who "<name>" --why "<reason>" [--easting E --northing N] [--council <ONS code or HM Land Registry file name>] [--not-a-client]`;
+const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/app/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--nation england|wales|scotland|northern_ireland] [--council C] [--not-a-client] [--uprn U] [--save-answers <folder outside the repository>]\n' +
+  `       CAPREBATE_LIVE_SMOKE=1 node src/app/cli.ts smoke OS_FEATURES --who "<name>" --why "<reason>"   (the public test point only)\n` +
+  `       CAPREBATE_LIVE_SMOKE=1 node src/app/cli.ts smoke ${BOUNDARY_TEST_SOURCE} --who "<name>" --why "<reason>" [--easting E --northing N] [--council <ONS code or HM Land Registry file name>] [--not-a-client]`;
 /** The four values --nation takes (src/integrations/connectors/nations.ts). */
 const SMOKE_NATIONS: readonly string[] = ['england', 'wales', 'scotland', 'northern_ireland'];
-const SWITCH_USAGE = 'usage: node src/core/cli.ts smoke-switched-on <SOURCE> --who "<name>" --why "<reason>"';
+const SWITCH_USAGE = 'usage: node src/app/cli.ts smoke-switched-on <SOURCE> --who "<name>" --why "<reason>"';
 
 /**
  * `smoke-switched-on <SOURCE> --who --why` — A PERSON RECORDS THAT A CONNECTOR HAS BEEN SWITCHED ON. It makes no call
@@ -430,7 +465,7 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
   const count = lookupsSinceSwitchOn(log.lines, source_id);
   if (!count.switched_on) {
     d.err(`refused: ${source_id} has no "switched on" line in the log, so its ${TEST_LOOKUPS_PER_SWITCH_ON} test lookups have not started. The person who switched it on records it first:`);
-    d.err(`  node src/core/cli.ts smoke-switched-on ${source_id} --who "<name>" --why "<reason>"`);
+    d.err(`  node src/app/cli.ts smoke-switched-on ${source_id} --who "<name>" --why "<reason>"`);
     return 1;
   }
   if (count.used >= TEST_LOOKUPS_PER_SWITCH_ON) {

@@ -1,6 +1,6 @@
 /**
  * THE SIGNING PAD'S ONE SCRIPT — served at /assets/signature-pad.js, and named only by the engagement letter page while
- * the letter can be signed (src/core/router.ts, letterPage).
+ * the letter can be signed (src/app/router.ts, letterPage).
  *
  * the owner: "cant it be a docusign style document which captures a signed digital copy?" The client draws their
  * signature in a box with a finger, a pen or a mouse. The strokes go back with the form as numbers from 0 to 1000

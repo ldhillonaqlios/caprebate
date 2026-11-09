@@ -48,11 +48,24 @@ import { mkdirSync, existsSync, chmodSync, statSync } from 'node:fs';
 import { readFile, writeFile, unlink, mkdir, copyFile, access, readdir, stat } from 'node:fs/promises';
 import { constants as FS } from 'node:fs';
 import { join, dirname, normalize, sep } from 'node:path';
-import { durableKeyFor, retainedTextKeyFor, type ObjectStore, type PresignedUpload } from './upload-handler-port.ts';
+// The store's contract is the upload handler's (its type only: nothing of the claims module loads from here).
+import type { ObjectStore, PresignedUpload } from '../modules/claims/index.ts';
 import { KEEP_ORIGINALS, keptDays, seal, unseal, type KeepOriginals } from './originals.ts';
+
+/**
+ * THE DOCUMENT KEYS, AS THE UPLOAD HANDLER NAMES THEM: A PORT THIS FILE OWNS. Which keys are kept
+ * originals is the handler's to say (src/modules/claims/documents/upload-handler.ts, durableKeyFor and
+ * retainedTextKeyFor); the handler hands them in when it loads, so the shared parts import nothing of the claims module.
+ * Asked before they are handed in, the store refuses rather than guess which keys are originals.
+ */
+export type DocumentKeys = { readonly durableKeyFor: (doc_id: string) => string; readonly retainedTextKeyFor: (doc_id: string) => string };
+let documentKeys: DocumentKeys | null = null;
+export function setDocumentKeys(keys: DocumentKeys): void { documentKeys = keys; }
 
 /** Where a kept original lives — the handler's durable prefix. The retained text beside it is not an original. */
 function isOriginalKey(key: string): boolean {
+  if (documentKeys === null) throw new Error('the document keys are not set: the upload handler (src/modules/claims/documents/upload-handler.ts) sets them when it loads');
+  const { durableKeyFor, retainedTextKeyFor } = documentKeys;
   const DURABLE_PREFIX = durableKeyFor(''); // Read when used, not while this file loads.
   return key.startsWith(DURABLE_PREFIX) && !key.endsWith(retainedTextKeyFor('').slice(DURABLE_PREFIX.length));
 }

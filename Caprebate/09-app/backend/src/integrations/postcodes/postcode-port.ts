@@ -66,11 +66,9 @@ export type {
 export {
   resolveServedAuthority,
   locationKeyFor,
-  locationFactorForPostcode,
   explainLocationKey,
   nationOf,
   LocationKeyError,
-  LEG_E4_GATE,
 } from './location-key.ts';
 
 export type {

@@ -15,8 +15,8 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../../src/core/server.ts';
-import { seed, SEED_PASSWORD } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed, SEED_PASSWORD } from '../../src/app/seed.ts';
 import { codeAt, stepAt } from '../../src/core/totp.ts';
 import * as SI from '../../src/core/sign-in.ts';
 import * as EP from '../../src/integrations/email/email-provider.ts';
@@ -408,7 +408,7 @@ describe('151m · 4 · the JSON API walks the same path, on the same functions',
       assert.equal((await w.api('/api/login/step/recovery', { step_token: t4, code: next[0] })).status, 200);
       assert.equal((await w.api('/api/account/recovery-codes', {})).status, 401, 'new codes without a session');
       // one implementation: server.ts calls the functions of src/core/sign-in.ts and hashes nothing itself
-      const src = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'core', 'server.ts'), 'utf8');
+      const src = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'app', 'server.ts'), 'utf8');
       assert.match(src, /SI\.submitRecoveryCode\(/);
       assert.match(src, /SI\.makeNewRecoveryCodes\(/);
       assert.doesNotMatch(src, /scrypt|recovery_codes WHERE/);

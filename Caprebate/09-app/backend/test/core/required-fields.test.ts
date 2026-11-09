@@ -2,7 +2,7 @@
  * PHASE 133d — WHAT PHASE 133c LEFT IN THE APP. 17 September 2026.
  *
  *   D1 "(REQUIRED)"   → every page every login reaches: a control carrying `required` has "(required)" in words in its
- *                       label (src/core/required.ts, applied in page()); the three ways a label is found, and a planted
+ *                       label (src/shared/required.ts, applied in page()); the three ways a label is found, and a planted
  *                       unlabelled field, are checked on markup directly.
  *   D2 THE STAGE BAR  → a step is never narrower than its longest word, so a label wraps rather than being cut.
  *   D5 LABEL AND FIELD → PHASE 133e. Every required control on every page is joined to its label the way a browser and a
@@ -23,7 +23,7 @@ type RequiredModule = {
   requiredWithoutWords: (html: string) => string[];
   requiredLabelledByPositionOnly?: (html: string) => string[];
 };
-const required = async (): Promise<RequiredModule> => (await import(`../../src/core/${'required'}.ts`)) as unknown as RequiredModule;
+const required = async (): Promise<RequiredModule> => (await import(`../../src/shared/${'required'}.ts`)) as unknown as RequiredModule;
 
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
    twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
@@ -32,8 +32,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import { SITE_CSS } from '../../src/shared/assets.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;

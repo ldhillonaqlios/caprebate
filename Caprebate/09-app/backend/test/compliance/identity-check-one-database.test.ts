@@ -27,8 +27,8 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
 import type { Actor } from '../../src/core/authz.ts';
 import { Db, dbKind } from '../../src/core/db.ts';
 import { fixtureTransport, type Fixture } from '../../src/integrations/connectors/http.ts';

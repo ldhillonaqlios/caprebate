@@ -10,7 +10,7 @@
  *
  * AGREEMENTS. the owner, 5 Nov 2026: "the sign-up asks the person to tick that they have read them (the tick, its date
  * and the version are kept, and the audit log records it)". The sign-up offered after the free assessment carries the
- * tick (src/core/signup.ts keeps it until the login is made); a client who has not agreed to the current versions is
+ * tick (src/app/signup.ts keeps it until the login is made); a client who has not agreed to the current versions is
  * asked once at /portal/agree before the portal opens. Both only where the legal pages are served (the test website's
  * `notices`, or the `legal` setting), so a link never leads to "being prepared".
  */

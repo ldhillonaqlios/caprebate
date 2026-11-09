@@ -2,7 +2,7 @@
  * INTRODUCERS AND THE ACCOUNTANT REFERRAL CHANNEL. CRM 5 of 10.
  *
  * The schema is migration 014; the routes are src/modules/crm/introducers-pages.ts and,
- * for the public referral form, src/core/router.ts. The mechanics are the
+ * for the public referral form, src/app/router.ts. The mechanics are the
  * Accountant Referral Network paper, section 5 — 08-monday-doc-exports/
  * 12552691718__Accountant-Referral-Network.md — and every decision below that is
  * not obvious is a row of Part E of 09-app/docs/CAPREBATE-CRM-DISPOSITION.md.
@@ -55,7 +55,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { outboxTransport } from '../../integrations/index.ts';
 import { loadLetter, type OpenTerm } from '../claims/index.ts';
 import { localDate, localStamp } from '../../shared/index.ts';

@@ -36,7 +36,7 @@
  * that maps a path onto it), opened only through `document.read_original` — Admin, Sales (on the documents Sales may
  * read) and the data protection officer since 24 September 2026 (Word question 219), and the client on their own — and
  * DELETED when its days are up, by `sweepOriginals`, which runs whenever the folder or the original is opened and from
- * `node src/core/cli.ts sweep-originals`.
+ * `node src/app/cli.ts sweep-originals`.
  */
 
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';

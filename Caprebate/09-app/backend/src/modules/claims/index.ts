@@ -3,6 +3,10 @@
  * Generated from the imports other areas made on the day the module moved, and kept by hand since: add a name here when
  * another area needs it, never a whole file.
  */
+// Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
+export { CLAIMS_ACTIONS } from './actions.ts';
+// What the outside services ask it (their ports): handed in first, as it reaches only its own data and their door.
+import './research-subject.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
 export { computeFee, controlsView, FEE_CONTROLS, letterFee, letterFees, PAYMENT_TERMS_QUESTION } from './fee-controls.ts';
 export { checksBlock, checksSummary, claimChecksBlock, clientStepsCard, STEP_ANCHOR } from './approvals-pages.ts';
@@ -14,7 +18,9 @@ export { assertContractCovered, closeJob, CONTRACT_COVERAGE, deleteDueRawFile, d
 export { discountsFor } from './fee-discounts.ts';
 export { loadLetter, TEST_LETTER_PATH } from './letter.ts';
 export { addStaffEvent, approvedEventFigures, dateWords, EVENT_KINDS, eventsOfProperty, eventsOnClaim, KIND_WORDS, purchaseApplies, setEventVat, worksEvents, writeAssessmentEvents } from './property-events.ts';
-export { decodeRegisterFile, FILE_SOURCES, importRegisterFile, RegisterFileError, rowsAtPostcode } from './register-files.ts';
+// The registers published as a file are the outside services' (src/integrations/registers/file-registers.ts);
+// named here as before, for the command line's import-register.
+export { decodeRegisterFile, FILE_SOURCES, importRegisterFile, RegisterFileError, rowsAtPostcode } from '../../integrations/index.ts';
 export { REGISTER_IMPORT_JS } from './register-import-script.ts';
 export { lastReopen, REOPEN_VOIDS_WORDS, setAsideOnReopen, valuationLock, VOIDING_REOPEN_STAGES, voidLine } from './valuation-lock.ts';
 export { documentCentreGate, documentTypesGate } from './documents.permissions.ts';
@@ -51,7 +57,7 @@ export type { AuditEvent, AuditSink, Clock, DocTypeClassifier, JobState, ObjectS
 export type { FeeDiscountView } from './fee-discounts.ts';
 export type { Letter, OpenTerm } from './letter.ts';
 export type { ApprovedEventFigure, EventKind, EventOnClaim, PropertyEvent } from './property-events.ts';
-export type { FileRow, FileSourceId } from './register-files.ts';
+export type { FileRow, FileSourceId } from '../../integrations/index.ts';
 export type { SetAside } from './valuation-lock.ts';
 export type { ClaimDocumentsPanel, PlaceDocumentsPanel, RequestView, TypeView } from './documents.ts';
 export type { ChecksPanel, ClientStep, StepView } from './approvals.ts';

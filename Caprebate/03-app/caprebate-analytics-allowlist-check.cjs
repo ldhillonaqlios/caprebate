@@ -141,8 +141,9 @@ function readTree(sitePath) {
     .map(f => ({ name: "03-app/" + f, text: fs.readFileSync(path.join(APP, f), "utf8") }));
   let ts = [];
   try {
-    /* PHASE 161i, 7 Nov 2026: views and page parts also live in src/core/ and src/shared/ now; all three are read */
-    ts = ["core", "shared", "modules/public-site", "modules/assessment", "modules/portal", "modules/crm", "modules/claims", "modules/survey", "modules/finance", "modules/compliance", "modules/admin"].filter(d => fs.existsSync(path.join(WEB, "..", d))).flatMap(d => fs.readdirSync(path.join(WEB, "..", d)).filter(f => /\.ts$/.test(f))
+    /* PHASE 161i, 7 Nov 2026: views and page parts also live in src/core/ and src/shared/ now; all three are read
+       (PHASE 161l, 9 Nov 2026: and src/app/, where the start-up wiring and the back office's pages moved from src/core/) */
+    ts = ["core", "app", "shared", "modules/public-site", "modules/assessment", "modules/portal", "modules/crm", "modules/claims", "modules/survey", "modules/finance", "modules/compliance", "modules/admin"].filter(d => fs.existsSync(path.join(WEB, "..", d))).flatMap(d => fs.readdirSync(path.join(WEB, "..", d)).filter(f => /\.ts$/.test(f))
       .map(f => ({ name: "09-app/backend/src/" + d + "/" + f, text: fs.readFileSync(path.join(WEB, "..", d, f), "utf8") })));
   } catch (e) { cannot("cannot read " + WEB + " - " + e.message); }
   if (!ts.length) cannot("no portal views found under " + WEB);

@@ -12,11 +12,11 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApp } from '../../src/core/server.ts';
-import { seed, SEED_PASSWORD } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed, SEED_PASSWORD } from '../../src/app/seed.ts';
 import { short } from '../../src/modules/public-site/home.ts';
 import { forgetfulDatabaseWarning, FORGETFUL_DATABASE_WORDS, storageReason } from '../../src/modules/compliance/identity-checks.ts';
-import { stepGoneWhy, STEP_LOST_ON_MEMORY } from '../../src/core/router.ts';
+import { stepGoneWhy, STEP_LOST_ON_MEMORY } from '../../src/app/router.ts';
 import { SITE_CSS } from '../../src/shared/assets.ts';
 
 describe('Home tiles show their whole text', () => {

@@ -37,7 +37,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditKind, AuditLog, Outcome } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
 import { addDaysToDate, dueReading, taskObj, type DueReading } from '../crm/index.ts';
@@ -48,7 +48,8 @@ import { claimantTypeForGate, claimObjFor } from '../crm/index.ts';
 import { computeFee, controlsView, letterFee, letterFees, FEE_CONTROLS, PAYMENT_TERMS_QUESTION, type ControlsView, type FeeControls } from '../claims/index.ts';
 import { ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading, type SettingsView, type VatReading } from '../assessment/index.ts';
 import { assertFinanceSection, feeVersusBenefit, financeSectionObj, type FeeVersusBenefit } from './finance.ts';
-import { feeList, onClause13Credit, onFeeInvoiced, type FeeView } from '../crm/index.ts';
+import { feeList, type FeeView } from '../crm/index.ts';
+import { announce } from '../../core/index.ts';
 import type { Letter } from '../claims/index.ts';
 import { getBusinessesSectorById, getStaffTasksIdTitleByClaimIdRuleId } from '../crm/index.ts';
 import { getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn } from '../claims/index.ts';
@@ -464,9 +465,9 @@ export function raiseInvoice(d: InvoiceDeps, actor: Actor, claim_id: string, inp
       kind, number: formatInvoiceNumber(seq), claim_id: c.id, due: due_on === null ? DUE_UNSET : 'SET',
     });
     ensureVatTask(d.db, d.now, d.newId, vatReading(d.db, at, { controls }), actor.id);
+    // Told in the same transaction: reward model C accrues its percentage on the fee AS INVOICED (the CRM listens).
+    announce({ ...d, actor }, 'finance', 'invoice.raised', { invoice_id: id, kind });
   });
-  // Reward model C accrues its percentage on the fee AS INVOICED — silent unless C is the setting.
-  if (kind === 'FEE') onFeeInvoiced(d, actor, id);
   return { ok: true, id };
 }
 
@@ -535,9 +536,9 @@ function issueCredit(
       basis, number: formatInvoiceNumber(seq), invoice_id: r.id,
     });
     ensureVatTask(d.db, d.now, d.newId, vatReading(d.db, at), actor.id);
+    // Told in the same transaction: a fee reduced under clause 13 reverses reward model C's percentage on it (the CRM listens).
+    announce({ ...d, actor }, 'finance', 'credit_note.issued', { credit_note_id: id, invoice_id: r.id, basis });
   });
-  // A fee reduced under clause 13 reverses reward model C's percentage on it — a reversing entry, never a delete.
-  if (basis === 'CLAUSE_13_REDUCTION') onClause13Credit(d, actor, id);
   return { ok: true, id };
 }
 

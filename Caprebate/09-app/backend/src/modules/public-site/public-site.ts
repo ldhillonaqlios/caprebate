@@ -22,6 +22,7 @@
 
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { SITE_JS_HEADERS } from '../../shared/index.ts';
 
 /** the app's own copy: edit the original, `Caprebate site.html` in Development/, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const SITE_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'Caprebate site.html');
@@ -39,11 +40,8 @@ export const SITE_PAGE_HEADERS: Readonly<Record<string, string>> = Object.freeze
   'content-security-policy': SITE_PAGE_CSP,
 });
 
-export const SITE_JS_HEADERS: Readonly<Record<string, string>> = Object.freeze({
-  'content-type': 'text/javascript; charset=utf-8',
-  'x-content-type-options': 'nosniff',
-  'cache-control': 'no-store',
-});
+/* The headers a page script is served with are shared (src/shared/html.ts), so every module's routes use the same. */
+export { SITE_JS_HEADERS };
 
 export type SiteEdition = { readonly html: string; readonly css: string; readonly js: string };
 

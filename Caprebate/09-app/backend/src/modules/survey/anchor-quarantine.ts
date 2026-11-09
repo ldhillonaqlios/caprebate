@@ -20,6 +20,7 @@
  * exposed to. That measurement feeds 12830166861 and 12818968809.
  */
 
+import { GENESIS } from '../../core/index.ts';
 import { createHash } from 'node:crypto';
 
 /* ------------------------------------------------------------------ *
@@ -119,7 +120,8 @@ function canonical(v: unknown): string {
   return JSON.stringify(v);
 }
 
-export const GENESIS = '0'.repeat(64);
+/* The chain's first previous hash is the audit log's own (src/core/audit.ts), so the two chains start alike. */
+export { GENESIS };
 
 export type ChainCheck = { intact: boolean; broken_at: number | null };
 

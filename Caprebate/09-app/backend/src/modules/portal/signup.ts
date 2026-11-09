@@ -24,13 +24,12 @@
  */
 
 import { randomBytes } from 'node:crypto';
-import type { App } from './app.ts';
-import { rateLimit } from './auth.ts';
-import { canonicalEmail, createUser, hashToken } from './users.ts';
-import { keepAgreement, type TermsVersions } from '../modules/compliance/index.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
-import { getClientSignupsIdBusinessIdByOfferHash, getClientSignupsIdBusinessIdByVerifyHash, getClientSignupsTermsAgreedAtTermsVersionsById, getClientSignupsVerifyExpiresAtVerifiedAtByVerifyHash, insertClientSignups, updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt, updateClientSignupsVerifiedAtUserIdById } from '../modules/portal/data.ts';
-import { getUsersCountByEmailCanonical } from './data.ts';
+import type { App } from '../../core/app.ts';
+import { rateLimit } from '../../core/index.ts';
+import { canonicalEmail, createUser, hashToken } from '../../core/index.ts';
+import { keepAgreement, type TermsVersions } from '../compliance/index.ts';
+import { getClientSignupsIdBusinessIdByOfferHash, getClientSignupsIdBusinessIdByVerifyHash, getClientSignupsTermsAgreedAtTermsVersionsById, getClientSignupsVerifyExpiresAtVerifiedAtByVerifyHash, insertClientSignups, updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt, updateClientSignupsVerifiedAtUserIdById } from './data.ts';
+import { getUsersCountByEmailCanonical } from '../../core/index.ts';
 
 export const OFFER_TTL_MS = 24 * 60 * 60 * 1000;
 export const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;

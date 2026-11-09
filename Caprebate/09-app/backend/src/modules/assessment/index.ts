@@ -3,8 +3,11 @@
  * Generated from the imports other areas made on the day the module moved, and kept by hand since: add a name here when
  * another area needs it, never a whole file.
  */
+// Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
+export { ASSESSMENT_ACTIONS } from './actions.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
 export { FUNNEL_DELETABLE_TABLES } from './funnel-deletable.ts';
+export { jobEconomicsDisposalFee } from './fee-gate.ts';
 export { DECLINED_LINE, freeGate, lookupsDeclined, recordLookupsDeclined } from './address-check.ts';
 export { ADDRESS_LOOKUP_JS } from './address-lookup-script.ts';
 export { allowancesFor, allowanceWords, isCompanyType, rateWords, RETURN_YEARS } from './allowances.ts';

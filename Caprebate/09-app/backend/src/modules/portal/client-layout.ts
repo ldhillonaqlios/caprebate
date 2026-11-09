@@ -31,7 +31,7 @@ import type { ClaimSummary } from '../crm/index.ts';
 import { claimHref, claimRef, propertyIn } from '../../shared/index.ts';
 import { dueReading } from '../../shared/index.ts';
 import { groupBand, lateBadge, noDateBadge, stageGroupOf } from '../../core/index.ts';
-import { setSubMenu } from '../../core/navigation.ts';
+import { setSubMenu } from '../../core/index.ts';
 
 export type TabKey = 'chat' | 'claims' | 'properties' | 'questions' | 'people' | 'checks' | 'files' | 'activity';
 

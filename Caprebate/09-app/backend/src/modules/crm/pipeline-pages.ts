@@ -25,7 +25,7 @@ import { badge, brandName, claimRef, dataLink, fields, highlights, nextStepCard,
 import { sectionPrefs } from '../../core/index.ts';
 import { leadNextStep, plainNeed } from '../../shared/index.ts';
 import { dueReading, dueWords, ukDatesIn } from '../../shared/index.ts';
-import { navContext, filterBar, LEAD_FILTERS } from '../../core/navigation.ts';
+import { navContext, filterBar, LEAD_FILTERS } from '../../core/index.ts';
 import { STAGE_GROUPS, groupBand, groupBar, kpiRow, lateBadge, noDateBadge, nobodyBadge, siteOf, stageBadge, stageGroupOf, stageLabel, type GroupKey } from '../../core/index.ts';
 export { siteOf } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
@@ -34,9 +34,9 @@ import * as L from './leads.ts';
 import * as P from './pipeline.ts';
 import * as T from './tasks.ts';
 import { newTaskForm, timelineBlock } from './tasks-pages.ts';
-import * as LI from '../../shared/lists.ts';
+import * as LI from './claim-lists.ts';
 import { taskChoices, vocabulary } from '../admin/index.ts';
-import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from '../../shared/lists-pages.ts';
+import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from './claim-lists-pages.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';
 import { enquiriesModule as E } from '../public-site/index.ts';
@@ -135,7 +135,7 @@ export async function handlePipeline(
 
   /* ------------------------------------------------------------ leads */
   if (path === '/staff/leads' && method === 'GET') {
-    // CRM 9 of 10: filtered, sorted and saved through src/shared/lists.ts, each row still asked of `lead.read`.
+    // CRM 9 of 10: filtered, sorted and saved through src/modules/crm/claim-lists.ts, each row still asked of `lead.read`.
     // Cards in four sections by default; `layout=list` is the table, for anyone who prefers it. Neither
     // `layout` nor `done` is a filter, so neither is handed to the list to be reported as one it did not apply.
     const asList = url.searchParams.get('layout') === 'list';

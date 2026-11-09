@@ -11,7 +11,7 @@
  * are kept in the order they are matched; the files are taken in a fixed order of their routes' own text, so a rename
  * does not reorder them.
  *
- * THE ROUTER'S SHELL IS FOLLOWED. src/core/router.ts asks each module's routes file (src/modules/<module>/routes.ts)
+ * THE ROUTER'S SHELL IS FOLLOWED. src/app/router.ts asks each module's routes file (src/modules/<module>/routes.ts)
  * at the point where that module's addresses have always been matched. So the shell is read line by line as before,
  * and a line that calls a function of a routes file is replaced by that function's routes, in the place the call is
  * made: the list reads in the order the addresses are matched, wherever the code lives. A routes function that is
@@ -43,7 +43,7 @@ function routesOf(text) {
   return out;
 }
 
-const SHELL = 'src/core/router.ts';
+const SHELL = 'src/app/router.ts';
 const ROUTES_FILE = /^src\/modules\/[^/]+\/routes\.ts$/;
 
 /** The top-level functions of a routes file, each with its own lines (from its first line to its closing brace). */

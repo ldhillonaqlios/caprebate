@@ -21,7 +21,7 @@
  *; the column says so, and what turns it on for real is in "Waits on".
  *
  * THE TWO LISTS.
- * Care Inspectorate Wales and the Care Inspectorate (Scotland) publish a file, not an API (src/modules/claims/register-files.ts).
+ * Care Inspectorate Wales and the Care Inspectorate (Scotland) publish a file, not an API (src/integrations/registers/file-registers.ts).
  * The Scottish file is about 10 MB (31 August 2026's: 9,859,714 bytes, read 5 Oct 2026) and the test website takes about
  * 4.5 MB a request. So the page's script (src/modules/claims/register-import-script.ts) reads the file ON THE ADMIN'S COMPUTER and
  * sends only the columns we keep - the names, telephone numbers and emails in these files never leave that computer.
@@ -34,10 +34,10 @@ import { STUBS, type App } from '../../core/app.ts';
 import type { Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { SECRET_KEYS, type SecretOwner } from '../../core/index.ts';
-import { serviceOn } from '../../core/saved-keys.ts';
+import { serviceOn } from './saved-keys.ts';
 import { switchedOn, switchesHere, TEST_WEBSITE_LOOKUPS, lookupsWaivedHere } from '../../integrations/index.ts';
 import { POSTCODE_CHECK } from '../../integrations/index.ts';
-import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from '../claims/index.ts';
+import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from '../../integrations/index.ts';
 import { singleFile } from '../../core/index.ts';
 import { localStamp, localPartsOf } from '../../shared/index.ts';
 import { ADDRESS_SEARCH_CAP, searchesToday } from '../../integrations/index.ts';

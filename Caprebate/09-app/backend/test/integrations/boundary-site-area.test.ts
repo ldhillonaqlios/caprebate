@@ -395,7 +395,7 @@ describe('Phase 151a: one file a council a month, kept outside the repository fo
   });
 
   test('the daily sweep is one command: none set up deletes nothing, and a file past its days is deleted', () => {
-    const run = (env: Record<string, string>) => spawnSync(process.execPath, ['src/core/cli.ts', 'sweep-land-boundaries'],
+    const run = (env: Record<string, string>) => spawnSync(process.execPath, ['src/app/cli.ts', 'sweep-land-boundaries'],
       { cwd: join(HERE, '..', '..'), env: { PATH: process.env['PATH'] ?? '', ...env }, encoding: 'utf8' });
     const none = run({});
     assert.equal(none.status, 0);

@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import * as IE from '../../src/modules/crm/inbound-email.ts';
 
@@ -185,7 +185,7 @@ describe('lines 1 and 2: the Welsh and Scottish care regulators, imported on thi
   const deps = () => ({ db: made.app.db, audit: made.app.audit, now: () => '2026-10-04T16:00:00.000Z' });
 
   test('CIW: imported by Admin only; the services kept by their own reference, with places, kind, provider number and dates, and never a name or an email', async () => {
-    const RF = await import('../../src/modules/claims/register-files.ts');
+    const RF = await import('../../src/integrations/registers/file-registers.ts');
     assert.throws(() => RF.importRegisterFile(deps(), 'CIW', CIW_FILE, 'ciw.csv', { id: 'u-155-sales', role: 'SALES' }), /only Admin/);
     const r = RF.importRegisterFile(deps(), 'CIW', CIW_FILE, 'ciw.csv', ADMIN);
     assert.deepEqual(r, { kept: 2, skipped_unreadable: 1, replaced: 0 });
@@ -202,14 +202,14 @@ describe('lines 1 and 2: the Welsh and Scottish care regulators, imported on thi
   });
 
   test('a file whose columns are not the regulator’s is refused whole, and the rows already held stay', async () => {
-    const RF = await import('../../src/modules/claims/register-files.ts');
+    const RF = await import('../../src/integrations/registers/file-registers.ts');
     const wrong = CIW_FILE.replace('"Service postcode"', '"Postcode"');
     assert.throws(() => RF.importRegisterFile(deps(), 'CIW', wrong, 'wrong.csv', ADMIN), /not the ones Care Inspectorate Wales describes, so nothing was imported\. Missing: Service postcode/);
     assert.equal(made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM register_file_rows WHERE source_id = 'CIW'")?.n, 2);
   });
 
   test('the Care Inspectorate: a Windows-1252 file read as such, its own day-month-year dates, beds only where stated, Inactive kept as inactive', async () => {
-    const RF = await import('../../src/modules/claims/register-files.ts');
+    const RF = await import('../../src/integrations/registers/file-registers.ts');
     const text = [CI_HEAD,
       'CS2001000001,Care Home Service,Older People,Invented House,1 Invented Street,,,,Nowhere,ZZ8 2BB,200000000001,Edna Invented,0100 000 0000,ednainvented@example.invalid,SP2001000001,Fred Invented,Active,01/04/2002,40,Invented Council,40,3',
       'CS2001000002,Care Home Service,Older People,St Invent’s House,2 Invented Street,,,,Nowhere,ZZ8 2BB,,,,,SP2001000002,Invented Group Ltd,Inactive,15/06/2010,,Invented Council,25,0',
@@ -311,7 +311,7 @@ describe('line 3: the valuation office’s rating list — its licence read, and
 
   test('nothing imports it, and the research panel says why in plain words', async () => {
     const { FREE_CONNECTORS, NOT_BUILT } = await import('../../src/integrations/connectors/free-registers.ts');
-    const { FILE_SOURCES } = await import('../../src/modules/claims/register-files.ts');
+    const { FILE_SOURCES } = await import('../../src/integrations/registers/file-registers.ts');
     assert.equal(FREE_CONNECTORS['VOA'], undefined);
     assert.equal((FILE_SOURCES as Record<string, unknown>)['VOA'], undefined);
     assert.match(NOT_BUILT['VOA'] ?? '', /licence lets its rating list be used for business rates only\. A capital allowances claim is not that/);

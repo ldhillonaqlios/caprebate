@@ -88,8 +88,8 @@ describe('151e · the test website installs everything the application imports',
 import { randomBytes as rb151e } from 'node:crypto';
 import { mkdtempSync as mkd151e } from 'node:fs';
 import { tmpdir as tmp151e } from 'node:os';
-import { createApp } from '../../src/core/server.ts';
-import { seed, SEED_PASSWORD } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed, SEED_PASSWORD } from '../../src/app/seed.ts';
 import { secretsFromEnvironment } from '../../src/core/secrets.ts';
 import { IDENTITY_CHECK, identityCheckMissing } from '../../src/integrations/connectors/identity-check.ts';
 

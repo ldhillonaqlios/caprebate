@@ -42,7 +42,7 @@ import { claimRoutes, legalDeadlineNeed, routesWhy } from '../claims/index.ts';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
-import { NotFoundAsRefusal, answerLabel } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal, answerLabel } from '../../core/index.ts';
 import { assertSignedEngagement } from '../claims/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { claimObjFor, priorClaimFor } from './crm.ts';

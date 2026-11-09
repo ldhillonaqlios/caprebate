@@ -16,7 +16,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { createApp } from '../../src/core/server.ts';
+import { createApp } from '../../src/app/server.ts';
 import {
   ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST, SIGN_LINK_DAYS, SIGN_WORDS, checkSignature, requiredSigners, setRequiredSigners,
   shownLetter, signByLink, signEngagement, signLinkFor, sha256Hex,
@@ -25,7 +25,7 @@ import {
 import { TEST_LETTER_PATH } from '../../src/modules/claims/letter.ts';
 import { letterState, letterSteps, sendEngagementLetter, signedCopy } from '../../src/modules/claims/engagement-send.ts';
 import { assertSignedEngagement } from '../../src/modules/claims/research.ts';
-import { pdfLooksComplete } from '../../src/shared/upload-handler-port.ts';
+import { pdfLooksComplete } from '../../src/modules/claims/upload-handler-port.ts';
 import { acceptClientBytes, DAMAGED_PDF } from '../../src/modules/claims/uploads.ts';
 import { receiveFile } from '../../src/modules/portal/client-files-pages.ts';
 import * as D from '../../src/modules/claims/documents.ts';

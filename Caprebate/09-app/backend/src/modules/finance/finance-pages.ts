@@ -24,7 +24,7 @@ import type { Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { claimRef, recordTabs } from '../../shared/index.ts';
 import { kpiRow, lateBadge, noDateBadge } from '../../core/index.ts';
-import { setSubMenu } from '../../core/navigation.ts';
+import { setSubMenu } from '../../core/index.ts';
 import * as F from './finance.ts';
 import * as I from './invoices.ts';
 import { vatModule as V } from '../assessment/index.ts';

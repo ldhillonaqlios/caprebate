@@ -30,8 +30,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../../src/core/server.ts';
-import { seed } from '../../src/core/seed.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed } from '../../src/app/seed.ts';
+import { listen, ListenerFailed } from '../../src/core/events.ts';
 import { Db, migrate } from '../../src/core/db.ts';
 import { APP_ROLES, type AppRole } from '../../src/core/roles.ts';
 import { can, REGISTERED_ACTIONS, NotAuthorised, type Obj } from '../../src/core/authz.ts';
@@ -774,6 +775,28 @@ describe('exits keep the record — nothing is deleted', () => {
  * ================================================================== */
 
 describe('businesses.stage stays the sort key and the portal’s source — a move raises it, and nothing lowers it', () => {
+  /* EVENTS (src/core/events.ts): the claims module announces the letter signed; the CRM listens and raises the stage. */
+  test('the CRM hears the letter signed (an event) and raises the client; a listener that fails undoes the signature', async () => {
+    const app = await testApp();
+    try {
+      staff(app);
+      const org = organisation(app, { stage: 'ASSESSMENT_SUBMITTED' });
+      letter(app, org.business, 'SIGNED');
+      const stageOfOrg = (b: string) => app.db.get<{ s: string }>('SELECT stage AS s FROM businesses WHERE id = ?', [b])?.s;
+      assert.equal(stageOfOrg(org.business), 'ENGAGEMENT_SIGNED');
+      assert.ok(app.db.all<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'EVENT_HEARD' AND object_id = 'letter.signed'")
+        .some((l) => JSON.parse(l.detail).listener === 'raise the client to engagement signed'));
+      const other = organisation(app, { stage: 'ASSESSMENT_SUBMITTED' });
+      const stop = listen('letter.signed', 'test', 'fails', () => { throw new Error('planted'); });
+      try {
+        assert.throws(() => letter(app, other.business, 'SIGNED'), ListenerFailed);
+      } finally { stop(); }
+      assert.equal(stageOfOrg(other.business), 'ASSESSMENT_SUBMITTED');
+      assert.equal(app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM engagement_signatures WHERE business_id = ?', [other.business])?.n, 0,
+        'the signature stayed although its listener failed');
+    } finally { app.close(); }
+  });
+
   test('a move raises it to what the claim evidences; an exit, a reopen and a lower claim do not lower it', async () => {
     const app = await testApp();
     try {
