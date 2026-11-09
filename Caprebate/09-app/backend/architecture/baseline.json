@@ -5,10 +5,6 @@
    "claims": [
     "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts"
    ],
-   "core": [
-    "src/integrations/connectors/test-lookups.ts -> src/core/app.ts",
-    "src/integrations/connectors/test-lookups.ts -> src/core/audit.ts"
-   ],
    "crm": [
     "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts"
    ],
