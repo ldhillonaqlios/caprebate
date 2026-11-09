@@ -588,3 +588,21 @@ export function insertResearchSourcesNotPermittedYet(db: Db, params: readonly Pa
     params,
   );
 }
+
+// FOR THE CRM (Phase 161l1): its statements that joined these tables to its own, or to the core's users, now read
+// here and look the rest up through the other area's front door (src/modules/crm/data-borrowed.ts).
+export function listResearchRunsAtKindActorIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT r.at, r.kind, r.considered, r.fired, r.not_permitted, r.failed, r.actor_id FROM research_runs r ' +
+    'WHERE r.business_id = ? ORDER BY r.at', params);
+}
+export function getVideoMeetingsBookingIdMeetingIdByClientToken<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT v.booking_id, v.meeting_id, v.join_url, v.passcode FROM video_meetings v WHERE v.client_token = ? AND v.cancelled_at IS NULL', params);
+}
+export function getVideoMeetingsHostOpenedAtHostOpenedByByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT v.host_opened_at, v.host_opened_by, 1 AS meeting FROM video_meetings v WHERE v.booking_id = ? ORDER BY v.created_at DESC LIMIT 1', params);
+}
+/** The live meeting's host for each booking named (one live meeting per booking: index video_meetings_one_live). */
+export function listVideoMeetingsBookingIdHostUserIdByBookingIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT m.booking_id, m.host_user_id FROM video_meetings m WHERE m.cancelled_at IS NULL ' +
+    'AND m.booking_id IN (SELECT value FROM json_each(?))', params);
+}

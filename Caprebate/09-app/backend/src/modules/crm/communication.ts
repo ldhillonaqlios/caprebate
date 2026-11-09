@@ -57,7 +57,10 @@ import { receivableTypes } from '../claims/index.ts';
 import { getWhatsappMessagesCByBusinessIdContactId } from '../../integrations/index.ts';
 import { getBusinessesEById, getBusinessesSById, getContactsXByBusinessId, getContactsXByIdBusinessId, insertBookings3, insertCallLogs, listContactsIdFullNameByBusinessId2 } from './data.ts';
 import { listClaimsIdClaimRefByBusinessId3 } from '../claims/index.ts';
-import { getVideoMeetingsHostOpenedAtOpenerByBookingId, listBookingsIdChannelByBusinessIdChannel, listCallLogsIdLoggedAtByBusinessId, listWhatsappMessagesIdCreatedAtByBusinessId } from './data-borrowed.ts';
+import { listBookingsIdChannelByBusinessIdChannel, listCallLogsIdLoggedAtByBusinessId, listWhatsappMessagesIdCreatedAtByBusinessId } from './data-borrowed.ts';
+import type { Db, Param, Row } from '../../core/index.ts';
+import { namesByIds } from '../../core/index.ts';
+import { getVideoMeetingsHostOpenedAtHostOpenedByByBookingId } from '../../integrations/index.ts';
 
 export type Via = 'email' | 'whatsapp' | 'portal' | 'team' | 'zoom' | 'call';
 export type Kind = Via;
@@ -544,4 +547,12 @@ export async function communicate(d: SendDeps, actor: Actor, business_id: string
   sendVideoInvite(d.app, d.origin, id, 'arranged', to);
   return { ok: true, to: go !== 'zoom-book' ? `/staff/calendar/${id}/video`
     : back(zoomed !== 'MADE' ? 'booked-no-zoom' : videoCallsAtSameTime(db, id) > 0 ? 'booked-zoom-same-time' : 'booked-zoom') };
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function getVideoMeetingsHostOpenedAtOpenerByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const v = getVideoMeetingsHostOpenedAtHostOpenedByByBookingId<{ host_opened_at: unknown; host_opened_by: unknown; meeting: unknown }>(db, params);
+  if (v === undefined) return undefined;
+  return { host_opened_at: v.host_opened_at, opener: namesByIds(db, [v.host_opened_by])(v.host_opened_by), meeting: v.meeting } as unknown as T;
 }

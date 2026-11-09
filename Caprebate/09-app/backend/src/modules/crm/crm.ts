@@ -69,12 +69,16 @@ import { getRegisterRecordsFieldsJsonByBusinessIdSourceId4 } from '../../integra
 import { listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleDisabledAt } from '../../core/index.ts';
 import { getClaimContactsIdByClaimIdContactId, getClaimContactsIdClaimIdById, getClaimStageMovesAtByClaimId, getClaimsBusinessIdById, getClaimsCountByBusinessId, getPropertiesCountByBusinessId, getPropertiesIdByBusinessId2, getPropertiesPostcodeJurisdictionById, insertClaimContacts, insertClaimRefSeries, insertClaimStageMoves4, insertClaims, insertProperties4, listClaimsIdBusinessIdByPropertyId, listPropertiesIdByBusinessId, listPropertiesIdLabelByBusinessId, updateClaimContactsUnlinkedAtUnlinkedByByIdUnlinkedAt, updateClaimsOwnerIdSurveyorIdById, updatePropertiesClaimantRoleClaimantRoleSourceById, updatePropertiesLabelPostcodeById, updatePropertiesLandlordUpdatedAtById, updatePropertiesLeaseEndDateUpdatedAtById, updatePropertiesSaleInProspectUpdatedAtById, updatePropertiesTenureSourceById } from '../claims/index.ts';
 import { getBusinessesClaimantTypeById, getBusinessesSectorById, getBusinessesSourceById, getBusinessesStageById, getContactsCountByBusinessIdId, getContactsIdBusinessIdById, getLeadsIdBusinessIdByClaimId, insertContacts, listContactsIdFullNameByBusinessIdContactType, listLeadsIdFirmNameByBusinessId, updateBusinessesLegalNameCompanyNumberById, updateContactsFullNameJobRoleOtherById } from './data.ts';
-import { getClaimsBusinessIdCompanyById, listClaimContactsIdContactIdByClaimIdUnlinkedAt } from './data-borrowed.ts';
+import { getClaimsBusinessIdCompanyById } from './data-borrowed.ts';
 import { getSurveyorCommitmentsNByAssessmentId, getSurveyorJobsSurveyorIdByBusinessIdSurveyorId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3, listSurveyorJobsSurveyorIdByClaimIdSurveyorId2, updateSurveyorJobsClaimIdByBusinessIdAssessmentId } from '../survey/index.ts';
 import { getAssessmentsIdByBusinessId2, getAssessmentsShownLowPenceShownHighPenceById, getEstimatesCountByBusinessId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId, listAssessmentAnswersStateValueByAssessmentIdQuestionId } from '../assessment/index.ts';
 import { getBusinessesIdNameById5, getPropertiesIdBusinessIdById4, getStaffTasksIdClaimRefByClaimIdIsNextAction, listBusinessesIdName5, listPropertiesIdBusinessId, listPropertiesIdBusinessIdByBusinessId, listStaffTasksIdClaimRefByClaimIdIsNextAction, listStaffTasksIdClaimRefByClaimIdIsNextAction2, listStaffTasksIdClaimRefByClaimIdIsNextAction3, listStaffTasksIdClaimRefByClaimIdIsNextAction4 } from './data-borrowed.ts';
 import { getContactsIdBusinessIdById4, listContactsIdBusinessIdByBusinessId } from './data.ts';
 import { assertClaimSection, assertOrganisationSection, assertPropertySection } from './crm.permissions.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { namesByIds } from '../../core/index.ts';
+import { listClaimContactsIdContactIdLinkedByByClaimIdLinked } from '../claims/index.ts';
+import { byId, idsOf, listContactsIdFullNameByIds, lookUp, sqlOrder } from './data.ts';
 
 export { NotFoundAsRefusal };
 
@@ -2042,4 +2046,20 @@ function feeDiscountsOn(db: Db, actor: Actor, claim_id: string): { fee_discounts
   const c = getClaimsBusinessIdById<{ business_id: string }>(db, [claim_id]);
   if (c === undefined || !can(actor, 'fee_discount.read', { type: 'claim', id: claim_id, business_id: c.business_id, assigned_surveyor_ids: [] })) return {};
   return { fee_discounts: discountsFor(db, actor, claim_id) };
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listClaimContactsIdContactIdByClaimIdUnlinkedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const links = listClaimContactsIdContactIdLinkedByByClaimIdLinked<{ id: unknown; contact_id: unknown; linked_at: unknown; linked_by: unknown }>(db, params);
+  const contacts = byId(listContactsIdFullNameByIds<{ id: string; full_name: unknown; contact_type: unknown }>(db, [idsOf(links.map((k) => k.contact_id))]));
+  const name = namesByIds(db, links.map((k) => k.linked_by));
+  const rows: { id: unknown; contact_id: unknown; linked_at: unknown; full_name: unknown; contact_type: unknown; linked_by: string | null }[] = [];
+  for (const k of links) {
+    const ct = lookUp(contacts, k.contact_id);
+    if (ct === undefined) continue; // JOIN contacts: a link to a contact that is not there is not shown
+    rows.push({ id: k.id, contact_id: k.contact_id, linked_at: k.linked_at, full_name: ct.full_name, contact_type: ct.contact_type, linked_by: name(k.linked_by) });
+  }
+  // ORDER BY ct.full_name ASC, k.id ASC
+  return rows.sort((a, b) => sqlOrder(a.full_name, b.full_name) || sqlOrder(a.id, b.id)) as unknown as T[];
 }

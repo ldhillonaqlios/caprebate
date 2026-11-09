@@ -64,13 +64,20 @@ import { documentObj, versionObj } from '../claims/index.ts';
 import { getOutboxAtBySentAt2 } from '../../integrations/index.ts';
 import { listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, listAuditLogAtKindByOutcomeKind3, listAuditLogAtKindByOutcomeKind4, listAuditLogAtWhoByKindObjectId } from '../../core/index.ts';
 import { getBusinessesIdById, getLeadsIdBusinessIdById, getStaffTasksAtByContactIdStatus, listBookingsIdBusinessIdByBusinessIdLeadId, listBookingsIdBusinessIdByLeadIdId, listContactsIdCreatedAtByLeadId, listLeadsIdByBusinessId, listLeadsIdByClaimId } from './data.ts';
-import { listAuditLogAtDetailByKindBusinessId, listBookingChangesAtFromStartsAtByBookingId, listClaimMilestonesRecordedAtMilestoneByClaimId, listClaimStageMovesAtKindByClaimId3, listClientTasksQuestionCreatedAtByBusinessId, listDocumentLinksLogicalDocumentIdBusinessIdByBusinessId, listDocumentsIdDeclaredTypeByBusinessId, listEnquiryChecksRecordedAtCheckKeyByClaimId, listEnquiryChecksRecordedAtCheckKeyByLeadId, listInvoiceCreditNotesRecordedAtBasisByInvoiceId, listInvoicePaymentsRecordedAtVoidedAtByInvoiceId, listInvoicesIdKindByClaimId, listResearchRunsAtKindByBusinessId, listSurveyorCommitmentsCommittedAtJobIdByClaimId } from './data-borrowed.ts';
+import { listBookingChangesAtFromStartsAtByBookingId, listClientTasksQuestionCreatedAtByBusinessId, listDocumentLinksLogicalDocumentIdBusinessIdByBusinessId, listDocumentsIdDeclaredTypeByBusinessId, listEnquiryChecksRecordedAtCheckKeyByClaimId, listEnquiryChecksRecordedAtCheckKeyByLeadId } from './data-borrowed.ts';
 import { listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId } from '../finance/index.ts';
 import { listSurveyorJobsIdBusinessIdByClaimId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from '../survey/index.ts';
 import { getEngagementsLetterStateSignedAtByBusinessId2, getPropertiesIdBusinessIdById, listClaimStageMovesAtKindByClaimId, listDocumentEventsAtContractStepByDocId } from '../claims/index.ts';
 import { getClaimsIdClaimRefById4, listClaimsIdClaimRefByBusinessId4, listClaimsIdClaimRefByPropertyId, listOutboxCreatedAtKindByBusinessId, listOutboxCreatedAtKindByLeadIdBusinessId } from './data-borrowed.ts';
 import { listClientMessageFilesCreatedAtDirectionByMessageIdJO, listClientMessageFilesCreatedAtDirectionByMessageIdJO2, listInternalNotesCreatedAtBodyByBusinessId, listInternalNotesCreatedAtBodyByBusinessIdClaimId, listInternalNotesCreatedAtBodyByPropertyIdClaimId, listStaffTasksIdTitleByBusinessIdLeadId, listStaffTasksIdTitleByClaimId, listStaffTasksIdTitleByLeadId, listStaffTasksIdTitleByPropertyIdClaimId } from './data-borrowed.ts';
 import { listAutomationRunsAtOutcomeByBusinessIdClaimId, listAutomationRunsAtOutcomeByClaimId, listAutomationRunsAtOutcomeByLeadId } from './data.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { listAuditLogAtDetailActorIdByInvoiceUpdatedObjectIds, namesByIds } from '../../core/index.ts';
+import { listResearchRunsAtKindActorIdByBusinessId } from '../../integrations/index.ts';
+import { listClaimMilestonesRecordedAtMilestoneRecordedByByClaimId, listClaimStageMovesAtKindActorIdByClaimIdOldest } from '../claims/index.ts';
+import { listInvoiceCreditNotesRecordedAtBasisRecordedByByInvoiceId, listInvoicePaymentsRecordedAtVoidedAtRecordedByByInvoiceId, listInvoicesIdByBusinessIdWithoutClaim, listInvoicesIdKindRaisedByByClaimId } from '../finance/index.ts';
+import { listSurveyorCommitmentsCommittedAtJobIdSurveyorIdByClaimId } from '../survey/index.ts';
+import { idsOf } from './data.ts';
 
 export type TimelineSubject = { readonly kind: 'organisation' | 'property' | 'claim' | 'lead'; readonly id: string };
 
@@ -661,4 +668,50 @@ export function lastContactFor(db: Db, c: { id: string; email: string | null; la
   const latest = candidates.reduce((a, b) => (b.at > a.at ? b : a));
   const shown = /^\d{4}-\d{2}-\d{2}$/.test(latest.at) ? latest.at : localStamp(latest.at);
   return { at: latest.at, label: `${shown} — ${latest.source}`, source: latest.source };
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listResearchRunsAtKindByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listResearchRunsAtKindActorIdByBusinessId<Row & { actor_id: unknown }>(db, params);
+  const name = namesByIds(db, rows.map((r) => r.actor_id));
+  return rows.map(({ actor_id, ...r }) => ({ ...r, who: name(actor_id) })) as unknown as T[];
+}
+export function listClaimMilestonesRecordedAtMilestoneByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listClaimMilestonesRecordedAtMilestoneRecordedByByClaimId<Row & { recorded_by: unknown }>(db, params);
+  const name = namesByIds(db, rows.map((r) => r.recorded_by));
+  return rows.map(({ recorded_by, ...r }) => ({ ...r, who: name(recorded_by) })) as unknown as T[];
+}
+export function listClaimStageMovesAtKindByClaimId3<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listClaimStageMovesAtKindActorIdByClaimIdOldest<Row & { actor_id: unknown }>(db, params);
+  const name = namesByIds(db, rows.map((r) => r.actor_id));
+  return rows.map(({ actor_id, ...r }) => ({ ...r, who: name(actor_id) })) as unknown as T[];
+}
+export function listInvoiceCreditNotesRecordedAtBasisByInvoiceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listInvoiceCreditNotesRecordedAtBasisRecordedByByInvoiceId<Row & { recorded_by: unknown }>(db, params);
+  const name = namesByIds(db, rows.map((r) => r.recorded_by));
+  return rows.map(({ recorded_by, ...r }) => ({ ...r, who: name(recorded_by) })) as unknown as T[];
+}
+export function listInvoicePaymentsRecordedAtVoidedAtByInvoiceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listInvoicePaymentsRecordedAtVoidedAtRecordedByByInvoiceId<Row & { recorded_by: unknown; voided_by: unknown }>(db, params);
+  const name = namesByIds(db, rows.flatMap((r) => [r.recorded_by, r.voided_by]));
+  return rows.map(({ recorded_by, voided_by, ...r }) => ({ ...r, who: name(recorded_by), voider: name(voided_by) })) as unknown as T[];
+}
+export function listInvoicesIdKindByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listInvoicesIdKindRaisedByByClaimId<Row & { raised_by: unknown; cancelled_by: unknown }>(db, params);
+  const name = namesByIds(db, rows.flatMap((r) => [r.raised_by, r.cancelled_by]));
+  return rows.map(({ raised_by, cancelled_by, ...r }) => ({ ...r, raiser: name(raised_by), canceller: name(cancelled_by) })) as unknown as T[];
+}
+export function listAuditLogAtDetailByKindBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  // The changes to the company's own invoices (no claim): the invoices from finance, their changes from the audit log.
+  const invoices = listInvoicesIdByBusinessIdWithoutClaim<{ id: unknown }>(db, params);
+  if (invoices.length === 0) return [];
+  const rows = listAuditLogAtDetailActorIdByInvoiceUpdatedObjectIds<Row & { actor_id: unknown }>(db, [idsOf(invoices.map((i) => i.id))]);
+  const name = namesByIds(db, rows.map((r) => r.actor_id));
+  return rows.map(({ actor_id, ...r }) => ({ ...r, who: name(actor_id) })) as unknown as T[];
+}
+export function listSurveyorCommitmentsCommittedAtJobIdByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listSurveyorCommitmentsCommittedAtJobIdSurveyorIdByClaimId<Row & { surveyor_id: unknown }>(db, params);
+  const name = namesByIds(db, rows.map((r) => r.surveyor_id));
+  return rows.map(({ surveyor_id, ...r }) => ({ ...r, who: name(surveyor_id) })) as unknown as T[];
 }

@@ -65,7 +65,7 @@ import {
 } from '../../shared/index.ts';
 import { portalStepLine } from '../portal/index.ts';
 import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../claims/index.ts';
-import { getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint, getSurveyPackApprovalsVersionApprovedAtByClaimId, listClaimStageMovesAtKindByClaimId2 } from './data-borrowed.ts';
+import { getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint } from './data-borrowed.ts';
 import { getInvoicesFeeCountByClaimId, getInvoicesSentOnByClaimIdKind } from '../finance/index.ts';
 import { getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, listReasonListsCodeLabelActiveByList } from '../admin/index.ts';
 import { getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyorCommitmentsCommittedAtByClaimId } from '../survey/index.ts';
@@ -74,6 +74,10 @@ import { insertEnquiryChecks } from '../public-site/index.ts';
 import { getClaimDeliverablesIssuedOnKindByClaimIdState, getClaimMilestonesAtByClaimIdMilestone, getClaimReconciliationsFiledOnByClaimId, getClaimStageMovesAtByClaimIdToStage, getClaimsCountByBusinessIdStage, getClaimsIdBusinessIdById3, insertClaimMilestones, insertClaimStageMoves, insertClaimStageMoves2, listClaimStageMovesFromStageToStageByClaimId, listClaimsIdStageByBusinessId, listPropertiesBusinessIdLabelByBusinessId, updateClaimsStageHoldReturnStageById } from '../claims/index.ts';
 import { getAssessmentsIdByBusinessId2, getAssessmentsSubmittedAtByBusinessId, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId } from '../assessment/index.ts';
 import { listEnquiryChecksSeqCheckKeyByClaimId, listEnquiryChecksSeqCheckKeyByLeadId } from './data-borrowed.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { namesByIds } from '../../core/index.ts';
+import { listClaimStageMovesAtKindActorIdByClaimIdNewest } from '../claims/index.ts';
+import { getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId } from '../survey/index.ts';
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
@@ -1251,3 +1255,17 @@ export const BOARD_COLUMNS: readonly {
   ...PROCEDURE_STAGES.map((p) => ({ key: p.key, label: p.label, gate: p.gate, owner: p.owner })),
   { key: 'CLOSED' as const, label: 'Closed', gate: '', owner: '' },
 ]);
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listClaimStageMovesAtKindByClaimId2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listClaimStageMovesAtKindActorIdByClaimIdNewest<Row & { actor_id: unknown }>(db, params);
+  const name = namesByIds(db, rows.map((r) => r.actor_id));
+  return rows.map(({ actor_id, ...r }) => ({ ...r, who: name(actor_id) })) as unknown as T[];
+}
+export function getSurveyPackApprovalsVersionApprovedAtByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const row = getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId<Row & { approved_by: unknown }>(db, params);
+  if (row === undefined) return undefined;
+  const { approved_by, ...r } = row;
+  return { ...r, name: namesByIds(db, [approved_by])(approved_by) } as unknown as T;
+}

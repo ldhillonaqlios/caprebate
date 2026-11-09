@@ -444,3 +444,33 @@ export function updateUsersRoleUpdatedAtById(db: Db, params: readonly Param[] = 
 export function updateUsersWelcomeDismissedAtByIdWelcomeDismissedAt(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE users SET welcome_dismissed_at = ? WHERE id = ? AND welcome_dismissed_at IS NULL', params);
 }
+
+// LOOKUPS IN PLACE OF A JOIN (Phase 161l1): an area that showed a person's name by joining the core's users now reads
+// its own rows, then asks here once for the people those rows name. A LEFT JOIN users became a lookup that gives null
+// for an id that is null or names nobody, as the join did. One read, by a list of ids, serves every caller.
+export function listUsersIdDisplayNameByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, display_name, email, role, disabled_at FROM users WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+
+/** What the lookup gives for one person. */
+export interface PersonFacts { id: string; display_name: string | null; email: string | null; role: string | null; disabled_at: string | null }
+
+/** The people the given ids name, by id. Null, empty and repeated ids are skipped; an id that names nobody is absent. */
+export function peopleByIds(db: Db, ids: Iterable<unknown>): Map<string, PersonFacts> {
+  const wanted = [...new Set([...ids].filter((id): id is string => typeof id === 'string' && id !== ''))];
+  const found = new Map<string, PersonFacts>();
+  if (wanted.length === 0) return found;
+  for (const p of listUsersIdDisplayNameByIds<PersonFacts & Row>(db, [JSON.stringify(wanted)])) found.set(p.id, p);
+  return found;
+}
+
+/** A person's display name by id, null when the id is null or names nobody (what LEFT JOIN users u ... u.display_name gave). */
+export function namesByIds(db: Db, ids: Iterable<unknown>): (id: unknown) => string | null {
+  const people = peopleByIds(db, ids);
+  return (id) => (typeof id === 'string' ? people.get(id)?.display_name ?? null : null);
+}
+/** The invoice changes recorded against the invoices named (the CRM's invoice history, Phase 161l1). */
+export function listAuditLogAtDetailActorIdByInvoiceUpdatedObjectIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT a.at, a.detail, a.actor_id FROM audit_log a WHERE a.kind = 'INVOICE_UPDATED' " +
+    'AND a.object_id IN (SELECT value FROM json_each(?)) ORDER BY a.seq', params);
+}

@@ -45,9 +45,13 @@ import { breachRegister } from '../compliance/index.ts';
 import { claimObjFor, claimWords } from './crm.ts';
 import { vocabLabel } from '../admin/index.ts';
 import { SECTORS } from './leads.ts';
-import { listClaimsIdCompletedAtByStage, listEstimatesIdClaimRefByAssessmentIdJO, listSurveyorJobsIdBusinessIdBySurveyorId } from './data-borrowed.ts';
+import { listClaimsIdCompletedAtByStage, listEstimatesIdClaimRefByAssessmentIdJO } from './data-borrowed.ts';
 import { listClientTasksIdBusinessIdByStateDueOn, listIntroducersIdFirmName, listLeadsIdBusinessId, listLeadsIdBusinessIdByStatus, listStaffTasksIdBusinessIdByStatus } from './data.ts';
 import { getClaimStageMovesAtByClaimIdKind, getClaimStageMovesReasonCodeByClaimIdKind, listClaimReconciliationsClaimIdBusinessId, listClaimStageMovesClaimIdAt, listClaimsIdClaimRefByStage } from '../claims/index.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { listClaimsIdClaimRefStageByIds } from '../claims/index.ts';
+import { listSurveyorJobsIdBusinessIdClaimIdBySurveyorId } from '../survey/index.ts';
+import { byId, idsOf, lookUp } from './data.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -869,3 +873,14 @@ export function dashboard(db: Db, actor: Actor, nowIso: string, period: Period =
 
 /** Unused-import guard for the terminal-stage reading the pipeline tiles share with the task lists. */
 void isTerminalStage;
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listSurveyorJobsIdBusinessIdBySurveyorId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const jobs = listSurveyorJobsIdBusinessIdClaimIdBySurveyorId<{ id: unknown; business_id: unknown; surveyor_id: unknown; state: unknown; claim_id: unknown }>(db, params);
+  const claims = byId(listClaimsIdClaimRefStageByIds<{ id: string; claim_ref: unknown; stage: unknown }>(db, [idsOf(jobs.map((j) => j.claim_id))]));
+  return jobs.map((j) => {
+    const c = lookUp(claims, j.claim_id); // LEFT JOIN claims: null when the job has no claim, or names one that is not there
+    return { id: j.id, business_id: j.business_id, surveyor_id: j.surveyor_id, state: j.state, claim_id: c?.id ?? null, claim_ref: c?.claim_ref ?? null, stage: c?.stage ?? null };
+  }) as unknown as T[];
+}

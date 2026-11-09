@@ -450,3 +450,19 @@ export function listSurveyorJobsSurveyorIdByClaimIdSurveyorId2<T extends Row = R
 export function updateSurveyorJobsClaimIdByBusinessIdAssessmentId(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE surveyor_jobs SET claim_id = ? WHERE business_id = ? AND assessment_id = ? AND claim_id IS NULL', params);
 }
+
+// FOR THE CRM (Phase 161l1): its statements that joined these tables to the core's users or the claims now read here
+// and look the rest up through the other area's front door (src/modules/crm/data-borrowed.ts).
+export function getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT a.version, a.approved_at, a.approved_by FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
+    'JOIN surveyor_jobs j ON j.id = p.job_id WHERE j.claim_id = ? ' +
+    'ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', params);
+}
+export function listSurveyorCommitmentsCommittedAtJobIdSurveyorIdByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT sc.committed_at, sc.job_id, sc.surveyor_id FROM surveyor_commitments sc JOIN surveyor_jobs j ON j.id = sc.job_id ' +
+    'WHERE j.claim_id = ? ORDER BY sc.committed_at', params);
+}
+export function listSurveyorJobsIdBusinessIdClaimIdBySurveyorId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT j.id, j.business_id, j.surveyor_id, j.state, j.claim_id FROM surveyor_jobs j ' +
+    'WHERE j.surveyor_id = ? ORDER BY j.created_at ASC, j.id ASC', params);
+}

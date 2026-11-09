@@ -1103,3 +1103,40 @@ export function listLeadsProspectOrganisationProspectPostcode<T extends Row = Ro
 export function updateBookingsStartsAtEndsAtById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE bookings SET starts_at = ?, ends_at = ?, assigned_to = ? WHERE id = ?', params);
 }
+
+// THE CRM'S OWN HALF OF A SPLIT JOIN (Phase 161l1): its statements that joined other areas' tables now read the
+// CRM's rows here and look the rest up through the other area's front door (src/modules/crm/data-borrowed.ts).
+/** The contacts the given ids name: one read by a list of ids, in place of a join to contacts. */
+export function listContactsIdFullNameByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.full_name, c.contact_type FROM contacts c WHERE c.id IN (SELECT value FROM json_each(?))', params);
+}
+export function getBookingsStartsAtEndsAtBusinessIdLeadIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT b.starts_at, b.ends_at, b.cancelled_at, b.business_id, b.lead_id FROM bookings b WHERE b.id = ?', params);
+}
+export function listBookingsIdByIdChannelOverlap<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(`SELECT o.id FROM bookings o
+    WHERE o.id <> ? AND o.channel = 'video' AND o.cancelled_at IS NULL AND o.starts_at IS NOT NULL AND o.ends_at IS NOT NULL
+    AND o.starts_at < ? AND o.ends_at > ?`, params);
+}
+
+// HELPERS FOR A SPLIT JOIN (Phase 161l1): no SQL; used where the CRM puts its rows and another area's together.
+/** The ids a list of rows names, for a lookup by ids (SELECT ... WHERE id IN (SELECT value FROM json_each(?))). */
+export function idsOf(ids: readonly unknown[]): string {
+  return JSON.stringify([...new Set(ids.filter((id): id is string => typeof id === 'string'))]);
+}
+export function byId<R extends { id: string }>(rows: readonly R[]): Map<string, R> {
+  return new Map(rows.map((r) => [r.id, r]));
+}
+export function lookUp<R>(rows: Map<string, R>, id: unknown): R | undefined {
+  return typeof id === 'string' ? rows.get(id) : undefined;
+}
+/** SQLite's ORDER BY ... ASC for the values these statements sort on: NULL first, numbers before text, text by its bytes. */
+export function sqlOrder(a: unknown, b: unknown): number {
+  if (a === b) return 0;
+  if (a === null || a === undefined) return -1;
+  if (b === null || b === undefined) return 1;
+  if (typeof a === 'number' && typeof b === 'number') return a < b ? -1 : 1;
+  if (typeof a === 'number') return -1;
+  if (typeof b === 'number') return 1;
+  return Buffer.compare(Buffer.from(String(a)), Buffer.from(String(b)));
+}

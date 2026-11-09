@@ -13,6 +13,8 @@ export { EventOutsideTransaction, ListenerFailed, announce, listen, listenersOf 
 export { BACKUP_KEEP_DAYS, runNightlyBackup } from './backup.ts';
 export { BORROWABLE_ROLES, NEVER_GRANTED, customRoleKey, customRoleOf, isCustomRoleKey, loadCustomRoles, roleRefusal } from './custom-roles.ts';
 export { deleteCustomRoleGrantsByRole, getAuditLogCount, getAuditLogCountByKindAt, getAuditLogCountByKindObjectId, getCustomRolesNameRetiredAtByRole, getCustomRolesRoleByName, getRolesRoleByRole, getSessionsCountByUserIdRevokedReason, getSessionsIdByTokenHashRevokedAt, getUsersCountByBusinessId, getUsersCountByBusinessIdRole, getUsersCountByEmailCanonical, getUsersCountByIdBusinessId, getUsersCountByRole, getUsersCountByRoleDisabledAt, getUsersDisplayNameById, getUsersEmailById, getUsersEmailDisplayNameById, getUsersEmailRoleById, getUsersHByIdDisabledAt, getUsersIdByEmailCanonical, getUsersIdByEmailCanonicalId, getUsersIdByIdEmailCanonical, getUsersIdByIdRole, getUsersIdByIdRole2, getUsersIdEmailByIdDisabledAt, getUsersNById, getUsersRoleById, getUsersRoleByIdDisabledAt, getUsersRoleDisabledAtById, insertCustomRoleGrants, insertCustomRoles, insertRoles, listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, listAuditLogAtKindByOutcomeKind3, listAuditLogAtKindByOutcomeKind4, listAuditLogAtWhoByKindObjectId, listAuditLogDetailSByKindM, listAuditLogKind, listCustomRoleGrantsActionAsRoleByRole, listCustomRolesRoleName, listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole, listUserPhotosUserId, listUsersIdByRole, listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleADM2, listUsersIdDisplayNameByRoleDisabledAt, listUsersIdDisplayNameByRoleEmailCanonical, listUsersIdEmailByBusinessIdRole, listUsersIdEmailByRoleBusinessId, listUsersIdEmailByRoleDisabledAt, listUsersIdNameByBusinessIdRole, listUsersIdNameByRoleDisabledAt, listUsersIdNameByRoleDisabledAt2, listUsersIdRoleByDisabledAt, updateCustomRolesRetiredAtUpdatedAtByRole, updateCustomRolesUpdatedAtByRole, updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt, updateUsersDisplayNameUpdatedAtById, updateUsersEmailEmailCanonicalById, updateUsersPasswordTemporaryUntilById } from './data.ts';
+// Phase 161l1: the lookup by ids that takes the place of another area's join to users.
+export { listAuditLogAtDetailActorIdByInvoiceUpdatedObjectIds, namesByIds, peopleByIds } from './data.ts';
 export { Db, migrate, pendingMigrations, withReadMemo } from './db.ts';
 export { clientHelp, staffHelp } from './help.ts';
 export { JSON_HEADERS, PayloadTooLarge, bindResponse, clientIp, clockOf, cookie, form, html, inContext, lendShellParts, nav, readBody, redirect, setCookie, shellParts, simple } from './http.ts';
@@ -50,6 +52,7 @@ export type { Part } from './multipart.ts';
 export type { AppRole } from './roles.ts';
 export type { OwnerSecrets, SecretKey, SecretOwner, SecretStore } from './secrets.ts';
 export type { User } from './users.ts';
+export type { PersonFacts } from './data.ts';
 export type { App, BuildOptions } from './app.ts';
 export type { FormTokens } from './form-token.ts';
 export type { PasswordHasher } from './password.ts';

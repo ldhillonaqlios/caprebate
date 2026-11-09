@@ -1061,3 +1061,30 @@ export function listSiteAreaInputsEastingNorthingByKind<T extends Row = Row>(db:
 export function listSiteAreaInputsLadCodeByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>("SELECT lad_code FROM site_area_inputs WHERE kind = 'NEIGHBOUR_COUNCIL'", params);
 }
+
+// FOR THE CRM (Phase 161l1): its statements that joined these tables to its own, or to the core's users, now read
+// here and look the rest up through the other area's front door (src/modules/crm/data-borrowed.ts).
+export function listClaimMilestonesRecordedAtMilestoneRecordedByByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT cm.recorded_at, cm.milestone, cm.recorded_by FROM claim_milestones cm ' +
+    'WHERE cm.claim_id = ? ORDER BY cm.recorded_at', params);
+}
+export function listClaimStageMovesReasonCodeByClaimIdToNegative<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT m.reason_code FROM claim_stage_moves m ' +
+    "WHERE m.claim_id = ? AND m.to_stage = 'REASONED_NEGATIVE' ORDER BY m.at DESC, m.rowid DESC", params);
+}
+export function listClaimStageMovesAtKindActorIdByClaimIdNewest<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT m.at, m.kind, m.from_stage, m.to_stage, m.reason_code, m.reason_text, m.actor_id ' +
+    'FROM claim_stage_moves m WHERE m.claim_id = ? ORDER BY m.at DESC, m.rowid DESC', params);
+}
+export function listClaimStageMovesAtKindActorIdByClaimIdOldest<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT m.at, m.kind, m.from_stage, m.to_stage, m.reason_code, m.reason_text, m.actor_id ' +
+    'FROM claim_stage_moves m WHERE m.claim_id = ? ORDER BY m.at, m.rowid', params);
+}
+export function listClaimContactsIdContactIdLinkedByByClaimIdLinked<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT k.id, k.contact_id, k.linked_at, k.linked_by FROM claim_contacts k ' +
+    'WHERE k.claim_id = ? AND k.unlinked_at IS NULL', params);
+}
+/** The claims the given ids name: one read by a list of ids, in place of another area's join to claims. */
+export function listClaimsIdClaimRefStageByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.claim_ref, c.stage FROM claims c WHERE c.id IN (SELECT value FROM json_each(?))', params);
+}
