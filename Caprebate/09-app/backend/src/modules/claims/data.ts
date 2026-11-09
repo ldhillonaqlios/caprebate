@@ -1086,5 +1086,9 @@ export function listClaimContactsIdContactIdLinkedByByClaimIdLinked<T extends Ro
 }
 /** The claims the given ids name: one read by a list of ids, in place of another area's join to claims. */
 export function listClaimsIdClaimRefStageByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT c.id, c.claim_ref, c.stage FROM claims c WHERE c.id IN (SELECT value FROM json_each(?))', params);
+  return db.all<T>('SELECT c.id, c.claim_ref, c.stage, c.assessment_id FROM claims c WHERE c.id IN (SELECT value FROM json_each(?))', params);
+}
+export function listClaimsIdClaimRefOwnerIdByClaimRef<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, c.owner_id, ' +
+    'c.assessment_id, c.expected_completion, c.completed_at, c.created_at FROM claims c ORDER BY c.claim_ref ASC', params);
 }

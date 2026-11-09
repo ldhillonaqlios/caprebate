@@ -44,7 +44,12 @@ import { claimObjFor } from './crm.ts';
 import { claimName } from '../../shared/index.ts';
 import { anyStageLabel } from '../../shared/index.ts';
 import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId } from '../survey/index.ts';
-import { SEARCH_STATEMENTS, searchClaims, searchClaimsAssigned, searchContacts, searchInvoices, searchNotes, searchOrganisations, searchProperties, searchPropertiesAssigned, searchProspects } from './data-borrowed.ts';
+import { SEARCH_STATEMENTS, searchClaims, searchClaimsOfIds, searchContacts, searchNotes, searchOrganisations, searchProperties, searchPropertiesOfBusinesses, searchProspects } from './data-borrowed.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { listSurveyorJobsBusinessIdClaimIdBySurveyorId } from '../survey/index.ts';
+import { INVOICE_NUMBER_SEARCH, listInvoiceNumbersSeqInvoiceIdBySeqLike } from '../finance/index.ts';
+import { listClaimsIdClaimRefStageByIds } from '../claims/index.ts';
+import { byId, idsOf, listBusinessesIdNameByIds, lookUp } from './data.ts';
 
 export type SearchKind = 'ORGANISATION' | 'PROSPECT' | 'CONTACT' | 'PROPERTY' | 'CLAIM' | 'INVOICE' | 'NOTE';
 
@@ -219,9 +224,14 @@ export const RESULT_LIMIT = LIMIT;
 
 /**
  * EVERY STATEMENT SEARCH CAN RUN, for test/core/global-search.test.ts (see SEARCH_STATEMENTS in src/core/data-borrowed.ts, where the
- * statements now live).
+ * statements now live). Phase 161l1: the invoice search is finance's statement (INVOICE_NUMBER_SEARCH); the claim's
+ * reference and the company's name it shows are lookups by ids of claims and businesses, and a surveyor's companies
+ * and claims are the survey's jobs. Asked for, not read while the files load: finance's statement is not there yet while a
+ * loop through the front doors loads.
  */
-export const STATEMENTS: readonly string[] = SEARCH_STATEMENTS;
+export function statements(): readonly string[] {
+  return [...SEARCH_STATEMENTS, INVOICE_NUMBER_SEARCH];
+}
 
 /**
  * THE GATE OF THE SEARCH SECTION, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
@@ -230,4 +240,34 @@ export const STATEMENTS: readonly string[] = SEARCH_STATEMENTS;
  */
 export function searchGate(actor: Actor): void {
   authorise(actor, 'backoffice.enter', { type: 'business', id: SENTINEL });
+}
+
+// THE SEARCH'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1; test/crm/borrowed-split.test.ts). A surveyor's
+// properties and claims are those of the companies and claims of their jobs (the survey's), in place of EXISTS on
+// surveyor_jobs; an invoice is found by its number in finance, then named by its claim and company.
+/** The surveyor's jobs' companies and claims, as lists of ids. */
+function jobsOf(db: Db, surveyor: Param): { companies: string; claims: string } {
+  const jobs = listSurveyorJobsBusinessIdClaimIdBySurveyorId<{ business_id: unknown; claim_id: unknown }>(db, [surveyor]);
+  return { companies: idsOf(jobs.map((j) => j.business_id)), claims: idsOf(jobs.map((j) => j.claim_id)) };
+}
+export function searchPropertiesAssigned<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const [surveyor = null, ...words] = params;
+  return searchPropertiesOfBusinesses<T>(db, [jobsOf(db, surveyor).companies, ...words]);
+}
+export function searchClaimsAssigned<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const [surveyor = null, ...words] = params;
+  return searchClaimsOfIds<T>(db, [jobsOf(db, surveyor).claims, ...words]);
+}
+export function searchInvoices<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const found = listInvoiceNumbersSeqInvoiceIdBySeqLike<{ seq: unknown; id: unknown; business_id: unknown; claim_id: unknown }>(db, params);
+  const claims = byId(listClaimsIdClaimRefStageByIds<{ id: string; claim_ref: unknown }>(db, [idsOf(found.map((n) => n.claim_id))]));
+  const companies = byId(listBusinessesIdNameByIds<{ id: string; name: unknown }>(db, [idsOf(found.map((n) => n.business_id))]));
+  const rows: Row[] = [];
+  for (const n of found) {
+    const c = lookUp(claims, n.claim_id), b = lookUp(companies, n.business_id);
+    if (c === undefined || b === undefined) continue; // JOIN claims, JOIN businesses
+    rows.push({ seq: n.seq, id: n.id, business_id: n.business_id, claim_ref: c.claim_ref, business_name: b.name });
+    if (rows.length === LIMIT) break; // ORDER BY n.seq ASC LIMIT 25
+  }
+  return rows as unknown as T[];
 }

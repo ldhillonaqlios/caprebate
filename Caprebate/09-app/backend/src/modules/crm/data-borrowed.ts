@@ -137,16 +137,6 @@ export function listEnquiryChecksRecordedAtCheckKeyByLeadId<T extends Row = Row>
 }
 
 // estimates
-export function listEstimatesIdClaimRefByAssessmentIdJO<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, c.owner_id, u.display_name AS owner_name, ' +
-    'c.assessment_id, c.expected_completion, c.completed_at, c.created_at, ' +
-    '(SELECT e.qualifying_expenditure_pence FROM estimates e WHERE e.assessment_id = c.assessment_id ORDER BY e.rowid DESC LIMIT 1) AS q ' +
-    'FROM claims c LEFT JOIN users u ON u.id = c.owner_id ORDER BY c.claim_ref ASC', params);
-}
-export function listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT c.stage AS stage, (SELECT e.qualifying_expenditure_pence FROM estimates e WHERE e.assessment_id = c.assessment_id ' +
-    'ORDER BY e.rowid DESC LIMIT 1) AS q FROM leads l JOIN claims c ON c.id = l.claim_id WHERE l.introducer_id = ?', params);
-}
 
 // inbound_email
 
@@ -169,10 +159,6 @@ export function getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId<T exten
   return db.get<T>('SELECT s.id, s.decision, s.wording_version, s.recorded_at, u.display_name AS who FROM introducer_share_consents s ' +
     'LEFT JOIN users u ON u.id = s.recorded_by WHERE s.introducer_id = ? AND (s.lead_id = ? OR s.business_id = ? ' +
     'OR s.lead_id IN (SELECT l.id FROM leads l WHERE l.business_id = ?)) ORDER BY s.rowid DESC LIMIT 1', params);
-}
-export function listInvoicesIdFeeByClaimIdIntroducerId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT i.id, i.fee_pence AS fee FROM invoices i WHERE i.claim_id IN ' +
-    "(SELECT l.claim_id FROM leads l WHERE l.introducer_id = ? AND l.claim_id IS NOT NULL) AND i.invoice_status IN ('RAISED','SENT')", params);
 }
 
 // leads
@@ -480,7 +466,8 @@ const PROPERTIES_ALL =
 const PROPERTIES_ASSIGNED =
   'SELECT p.id, p.business_id, p.label, p.postcode, p.town, b.name AS business_name FROM properties p ' +
   'JOIN businesses b ON b.id = p.business_id ' +
-  'WHERE EXISTS (SELECT 1 FROM surveyor_jobs j WHERE j.business_id = p.business_id AND j.surveyor_id = ?) ' +
+  // The surveyor's companies (from the survey's jobs, src/modules/crm/search.ts), as a list of ids (Phase 161l1).
+  'WHERE p.business_id IN (SELECT value FROM json_each(?)) ' +
   "AND (lower(p.label) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.address_line_1, '')) LIKE ? ESCAPE '\\' " +
   "OR lower(COALESCE(p.address_line_2, '')) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.town, '')) LIKE ? ESCAPE '\\' " +
   "OR replace(lower(COALESCE(p.postcode, '')), ' ', '') LIKE ? ESCAPE '\\') ORDER BY p.label ASC, p.id ASC LIMIT 25";
@@ -494,17 +481,9 @@ const CLAIMS_ALL =
 const CLAIMS_ASSIGNED =
   'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name, p.label AS property_label FROM claims c ' +
   'JOIN businesses b ON b.id = c.business_id LEFT JOIN properties p ON p.id = c.property_id ' +
-  'WHERE EXISTS (SELECT 1 FROM surveyor_jobs j WHERE j.claim_id = c.id AND j.surveyor_id = ?) ' +
+  // The surveyor's claims (from the survey's jobs, src/modules/crm/search.ts), as a list of ids (Phase 161l1).
+  'WHERE c.id IN (SELECT value FROM json_each(?)) ' +
   "AND (lower(c.claim_ref) LIKE ? ESCAPE '\\' OR lower(b.name) LIKE ? ESCAPE '\\') ORDER BY b.name ASC, c.claim_ref DESC LIMIT 25";
-
-/**
- * An invoice by its number — CB-000123, 000123 or 123 — or by the start of it as it is printed: "CB-0", "CB-00012". Never
- * by an amount. The CRM follow-on added the prefix: a whole number was the only thing that found anything.
- */
-const INVOICES_ALL =
-  'SELECT n.seq, i.id, i.business_id, c.claim_ref, b.name AS business_name FROM invoice_numbers n ' +
-  'JOIN invoices i ON i.id = n.invoice_id JOIN claims c ON c.id = i.claim_id JOIN businesses b ON b.id = i.business_id ' +
-  "WHERE n.kind = 'INVOICE' AND (n.seq = ? OR printf('%06d', n.seq) LIKE ?) ORDER BY n.seq ASC LIMIT 25";
 
 const NOTES_ALL =
   'SELECT n.id, n.business_id, n.claim_id, n.property_id, substr(n.body, 1, 160) AS snippet, b.name AS business_name ' +
@@ -522,17 +501,14 @@ export function searchContacts<T extends Row = Row>(db: Db, params: readonly Par
 export function searchProperties<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>(PROPERTIES_ALL, params);
 }
-export function searchPropertiesAssigned<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+export function searchPropertiesOfBusinesses<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>(PROPERTIES_ASSIGNED, params);
 }
 export function searchClaims<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>(CLAIMS_ALL, params);
 }
-export function searchClaimsAssigned<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+export function searchClaimsOfIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>(CLAIMS_ASSIGNED, params);
-}
-export function searchInvoices<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>(INVOICES_ALL, params);
 }
 export function searchNotes<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>(NOTES_ALL, params);
@@ -544,7 +520,7 @@ export function searchNotes<T extends Row = Row>(db: Db, params: readonly Param[
  * tables on purpose, so the test reads these and not the source text.
  */
 export const SEARCH_STATEMENTS: readonly string[] = Object.freeze([
-  ORGANISATIONS_ALL, PROSPECTS_ALL, CONTACTS_ALL, PROPERTIES_ALL, PROPERTIES_ASSIGNED, CLAIMS_ALL, CLAIMS_ASSIGNED, INVOICES_ALL, NOTES_ALL,
+  ORGANISATIONS_ALL, PROSPECTS_ALL, CONTACTS_ALL, PROPERTIES_ALL, PROPERTIES_ASSIGNED, CLAIMS_ALL, CLAIMS_ASSIGNED, NOTES_ALL,
 ]);
 
 // the claim and lead lists (src/modules/crm/claim-lists.ts, from src/shared/): the fixed statements, moved with
@@ -576,9 +552,8 @@ const CLAIMS_VALUE =
   'p.jurisdiction, p.postcode, l.source AS lead_source, l.introducer_id, i.firm_name, ' +
   "(SELECT t.title FROM staff_tasks t WHERE t.claim_id = c.id AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')) AS next_action, " +
   "(SELECT t.due_on FROM staff_tasks t WHERE t.claim_id = c.id AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')) AS next_action_due, " +
-  '(SELECT e.qualifying_expenditure_pence FROM estimates e WHERE e.assessment_id = c.assessment_id ORDER BY e.rowid DESC LIMIT 1) AS q, ' +
-  'a.shown_low_pence, a.shown_high_pence, ' +
-  '(SELECT COUNT(*) FROM estimates e WHERE e.assessment_id = c.assessment_id) AS has_estimate ' +
+  // q and has_estimate are the assessment's estimate, from the assessment area by value_of (src/modules/crm/claim-lists.ts).
+  'NULL AS q, a.shown_low_pence, a.shown_high_pence, NULL AS has_estimate, c.assessment_id AS value_of ' +
   'FROM claims c JOIN businesses b ON b.id = c.business_id LEFT JOIN users u ON u.id = c.owner_id ' +
   'LEFT JOIN properties p ON p.id = c.property_id LEFT JOIN leads l ON l.claim_id = c.id LEFT JOIN introducers i ON i.id = l.introducer_id ' +
   'LEFT JOIN assessments a ON a.id = c.assessment_id ORDER BY c.claim_ref DESC LIMIT 1000';

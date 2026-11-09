@@ -178,3 +178,12 @@ export function listAssessmentAnswersOrdQuestionIdByAssessmentId<T extends Row =
   return db.all<T>('SELECT ord, question_id, question_text, state, value FROM assessment_answers ' +
     'WHERE assessment_id = ? ORDER BY ord ASC', params);
 }
+
+// FOR THE CRM (Phase 161l1): an assessment's estimate, by a list of assessment ids, in place of the CRM's subqueries
+// on estimates (src/modules/crm/dashboard.ts, introducers.ts, claim-lists.ts).
+/** The latest estimate of each assessment named (its last row), and how many it has. */
+export function listEstimatesQualifyingExpenditurePenceByAssessmentIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT e.assessment_id, e.qualifying_expenditure_pence, ' +
+    '(SELECT COUNT(*) FROM estimates x WHERE x.assessment_id = e.assessment_id) AS n FROM estimates e ' +
+    'WHERE e.rowid IN (SELECT MAX(y.rowid) FROM estimates y WHERE y.assessment_id IN (SELECT value FROM json_each(?)) GROUP BY y.assessment_id)', params);
+}

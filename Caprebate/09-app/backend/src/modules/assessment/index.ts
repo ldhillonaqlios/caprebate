@@ -34,3 +34,5 @@ export type { SettingsView, VatReading } from './vat.ts';
 export type { ClaimantRole, YearEndReading } from './who-claims.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { ADDRESS_PAGE_CSP, assessmentAssets, assessmentRoutes, contactValueProblem } from './routes.ts';
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/crm/dashboard.ts, introducers.ts, claim-lists.ts).
+export { listEstimatesQualifyingExpenditurePenceByAssessmentIds } from './data.ts';

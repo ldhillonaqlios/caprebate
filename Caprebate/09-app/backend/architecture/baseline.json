@@ -82,7 +82,6 @@
     "src/modules/claims/data-borrowed.ts : assessments",
     "src/modules/compliance/data-borrowed.ts : consent_answers",
     "src/modules/crm/data-borrowed.ts : assessments",
-    "src/modules/crm/data-borrowed.ts : estimates",
     "src/modules/survey/data-borrowed.ts : estimates"
    ],
    "claims": [
@@ -150,9 +149,7 @@
     "src/modules/assessment/data-borrowed.ts : finance_settings",
     "src/modules/assessment/data-borrowed.ts : invoice_credit_notes",
     "src/modules/assessment/data-borrowed.ts : invoices",
-    "src/modules/claims/data-borrowed.ts : fee_discounts",
-    "src/modules/crm/data-borrowed.ts : invoice_numbers",
-    "src/modules/crm/data-borrowed.ts : invoices"
+    "src/modules/claims/data-borrowed.ts : fee_discounts"
    ],
    "integrations": [
     "src/modules/admin/data-borrowed.ts : register_file_imports",
@@ -181,8 +178,7 @@
     "src/modules/claims/data-borrowed.ts : survey_pack_legal_answers",
     "src/modules/claims/data-borrowed.ts : survey_packs",
     "src/modules/claims/data-borrowed.ts : surveyor_jobs",
-    "src/modules/crm/data-borrowed.ts : survey_walkthroughs",
-    "src/modules/crm/data-borrowed.ts : surveyor_jobs"
+    "src/modules/crm/data-borrowed.ts : survey_walkthroughs"
    ]
   },
   "4": {}

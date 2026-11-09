@@ -159,3 +159,19 @@ export function listInvoicesIdKindRaisedByByClaimId<T extends Row = Row>(db: Db,
 export function listInvoicesIdByBusinessIdWithoutClaim<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT i.id FROM invoices i WHERE i.business_id = ? AND i.claim_id IS NULL', params);
 }
+export function listInvoicesIdFeeByClaimIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT i.id, i.fee_pence AS fee FROM invoices i WHERE i.claim_id IN (SELECT value FROM json_each(?)) ' +
+    "AND i.invoice_status IN ('RAISED','SENT')", params);
+}
+/**
+ * The search's invoices by number (src/modules/crm/search.ts): every match on a claim, by number; the search keeps 25.
+ * An invoice by its number — CB-000123, 000123 or 123 — or by the start of it as it is printed: "CB-0", "CB-00012". Never
+ * by an amount. The CRM follow-on added the prefix: a whole number was the only thing that found anything. Exported as
+ * text too, for test/core/global-search.test.ts, which reads every statement the search can run.
+ */
+export const INVOICE_NUMBER_SEARCH =
+  'SELECT n.seq, i.id, i.business_id, i.claim_id FROM invoice_numbers n JOIN invoices i ON i.id = n.invoice_id ' +
+  "WHERE n.kind = 'INVOICE' AND (n.seq = ? OR printf('%06d', n.seq) LIKE ?) AND i.claim_id IS NOT NULL ORDER BY n.seq ASC";
+export function listInvoiceNumbersSeqInvoiceIdBySeqLike<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(INVOICE_NUMBER_SEARCH, params);
+}

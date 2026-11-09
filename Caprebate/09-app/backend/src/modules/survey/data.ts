@@ -466,3 +466,6 @@ export function listSurveyorJobsIdBusinessIdClaimIdBySurveyorId<T extends Row = 
   return db.all<T>('SELECT j.id, j.business_id, j.surveyor_id, j.state, j.claim_id FROM surveyor_jobs j ' +
     'WHERE j.surveyor_id = ? ORDER BY j.created_at ASC, j.id ASC', params);
 }
+export function listSurveyorJobsBusinessIdClaimIdBySurveyorId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT j.business_id, j.claim_id FROM surveyor_jobs j WHERE j.surveyor_id = ?', params);
+}

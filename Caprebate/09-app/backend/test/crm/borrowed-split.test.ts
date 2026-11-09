@@ -31,11 +31,13 @@ import * as EMAIL_CHAINS from '../../src/modules/crm/email-chains.ts';
 import * as WHATSAPP_IMPORT from '../../src/modules/crm/whatsapp-import.ts';
 import * as WHATSAPP from '../../src/modules/crm/whatsapp.ts';
 import * as WHATSAPP_PAGE from '../../src/modules/crm/whatsapp-page.ts';
+import * as SEARCH from '../../src/modules/crm/search.ts';
+import * as CLAIM_LISTS from '../../src/modules/crm/claim-lists.ts';
 
 /** The function the CRM now calls by this name: still in its borrowed file, moved to the owner's front door, or split
  * in the CRM file that calls it. */
 function from(name: string): Call {
-  for (const space of [B, SURVEY, INTEGRATIONS, TIMELINE, INTRODUCERS, PIPELINE, CRM, DASHBOARD, ROUTES, COMMUNICATION, VIDEO, STAFF_DASHBOARD, INBOUND, EMAIL_CHAINS, WHATSAPP_IMPORT, WHATSAPP, WHATSAPP_PAGE] as object[]) {
+  for (const space of [SEARCH, CLAIM_LISTS, B, SURVEY, INTEGRATIONS, TIMELINE, INTRODUCERS, PIPELINE, CRM, DASHBOARD, ROUTES, COMMUNICATION, VIDEO, STAFF_DASHBOARD, INBOUND, EMAIL_CHAINS, WHATSAPP_IMPORT, WHATSAPP, WHATSAPP_PAGE, SEARCH, CLAIM_LISTS] as object[]) {
     const f = (space as Record<string, unknown>)[name];
     if (typeof f === 'function') return f as Call;
   }
@@ -209,6 +211,25 @@ function theWorld(): Promise<World> {
     put(db, 'whatsapp_import_lines', { message_id: 'wm-1', import_id: 'iw-1', sender: 'Them' });
     put(db, 'whatsapp_import_lines', { message_id: 'wm-2', import_id: 'iw-3', sender: 'Us' });
     put(db, 'whatsapp_import_lines', { message_id: 'wm-3', import_id: 'iw-none', sender: 'Us' });
+    // invoices found by number: more than a page of them, every other one the company's own (no claim, so not shown)
+    for (let n = 0; n < 30; n++) {
+      put(db, 'invoices', { id: `inv-l-${n}`, business_id: n % 5 === 0 ? 'biz-none' : biz, claim_id: n % 2 === 0 ? claim2 : null, kind: 'FEE', created_at: t(1), fee_pence: n, invoice_status: 'RAISED' });
+      put(db, 'invoice_numbers', { seq: 9100 + n, invoice_id: `inv-l-${n}`, kind: 'INVOICE' });
+    }
+    put(db, 'invoices', { id: 'inv-5', business_id: biz, claim_id: 'claim-none', kind: 'FEE', created_at: t(1), fee_pence: 5, invoice_status: 'RAISED' });
+    put(db, 'invoice_numbers', { seq: 9005, invoice_id: 'inv-5', kind: 'INVOICE' });
+    put(db, 'invoice_numbers', { seq: 9004, invoice_id: 'inv-3', kind: 'INVOICE' });
+    // an introducer's leads: two on claims (one twice), one with no claim, one on a claim that is not there
+    const free = db.all<{ id: string }>('SELECT id FROM claims WHERE id NOT IN (SELECT claim_id FROM leads WHERE claim_id IS NOT NULL) ORDER BY claim_ref').map((c) => c.id);
+    assert.ok(free.length >= 2, 'two claims no lead holds');
+    put(db, 'leads', { id: 'lead-i1', business_id: biz, introducer_id: 'intro-1', claim_id: free[0]!, lead_date: t(1), status: 'CONVERTED' });
+    put(db, 'leads', { id: 'lead-i2', business_id: biz2, introducer_id: 'intro-1', claim_id: free[1]!, lead_date: t(1), status: 'CONVERTED' });
+    put(db, 'leads', { id: 'lead-i3', business_id: biz, introducer_id: 'intro-1', claim_id: null, lead_date: t(1), status: 'NEW' });
+    const held = db.get<{ claim_id: string }>('SELECT claim_id FROM leads WHERE claim_id IS NOT NULL AND introducer_id IS NULL LIMIT 1');
+    if (held) db.run("UPDATE leads SET introducer_id = 'intro-1' WHERE claim_id = ?", [held.claim_id]);
+    put(db, 'leads', { id: 'lead-i5', business_id: biz, introducer_id: 'intro-1', claim_id: 'claim-none', lead_date: t(1), status: 'CONVERTED' });
+    // an estimate whose assessment no claim names (one estimate per assessment: estimates.assessment_id is unique)
+    put(db, 'estimates', { id: 'est-orphan', assessment_id: 'assessment-none', business_id: biz, qualifying_expenditure_pence: 1 });
     const lead2 = db.get<{ id: string }>('SELECT id FROM leads WHERE business_id = ?', [biz2])?.id ?? 'lead-j1-2';
     return { db, staff, other, biz, biz2, claim, claim2, lead, lead2 };
   })();
@@ -216,7 +237,8 @@ function theWorld(): Promise<World> {
 }
 
 type Call = (db: Db, params: readonly Param[]) => Row[] | Row | undefined;
-interface Case { name: string; old: string; get?: boolean; call: Call; params: (w: World) => Param[][]; atLeast: number }
+/** unordered: the old statement has no ORDER BY and its caller only adds the rows up, so the rows are compared as a set. */
+interface Case { name: string; old: string; get?: boolean; unordered?: boolean; call: Call; params: (w: World) => Param[][]; atLeast: number }
 
 const CASES: Case[] = [
   {
@@ -408,6 +430,66 @@ const CASES: Case[] = [
       'WHERE w.business_id = ? AND w.phone = ? ORDER BY w.created_at, w.id',
     call: from('listWhatsappMessagesIdCreatedAtByBusinessIdPhone'), params: (w) => [[w.biz, '+441'], [w.biz, '+442'], [w.biz2, '+441']], atLeast: 3,
   },
+  {
+    name: 'searchInvoices',
+    old: 'SELECT n.seq, i.id, i.business_id, c.claim_ref, b.name AS business_name FROM invoice_numbers n ' +
+      'JOIN invoices i ON i.id = n.invoice_id JOIN claims c ON c.id = i.claim_id JOIN businesses b ON b.id = i.business_id ' +
+      "WHERE n.kind = 'INVOICE' AND (n.seq = ? OR printf('%06d', n.seq) LIKE ?) ORDER BY n.seq ASC LIMIT 25",
+    call: from('searchInvoices'), params: () => [[-1, '%'], [9001, '9001%'], [-1, '0091%'], [9004, '9004%'], [-1, '0090%']], atLeast: 25,
+  },
+  {
+    name: 'listInvoicesIdFeeByClaimIdIntroducerId',
+    old: 'SELECT i.id, i.fee_pence AS fee FROM invoices i WHERE i.claim_id IN ' +
+      "(SELECT l.claim_id FROM leads l WHERE l.introducer_id = ? AND l.claim_id IS NOT NULL) AND i.invoice_status IN ('RAISED','SENT')",
+    call: from('listInvoicesIdFeeByClaimIdIntroducerId'), params: () => [['intro-1'], ['intro-none']], atLeast: 3, unordered: true,
+  },
+  {
+    name: 'searchPropertiesAssigned',
+    old: 'SELECT p.id, p.business_id, p.label, p.postcode, p.town, b.name AS business_name FROM properties p ' +
+      'JOIN businesses b ON b.id = p.business_id ' +
+      'WHERE EXISTS (SELECT 1 FROM surveyor_jobs j WHERE j.business_id = p.business_id AND j.surveyor_id = ?) ' +
+      "AND (lower(p.label) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.address_line_1, '')) LIKE ? ESCAPE '\\' " +
+      "OR lower(COALESCE(p.address_line_2, '')) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.town, '')) LIKE ? ESCAPE '\\' " +
+      "OR replace(lower(COALESCE(p.postcode, '')), ' ', '') LIKE ? ESCAPE '\\') ORDER BY p.label ASC, p.id ASC LIMIT 25",
+    call: from('searchPropertiesAssigned'), params: (w) => [[w.other, '%', '%', '%', '%', '%'], [w.staff, '%', '%', '%', '%', '%'], ['u-none', '%', '%', '%', '%', '%'], [w.other, '%main%', 'x', 'x', 'x', 'x']], atLeast: 1,
+  },
+  {
+    name: 'searchClaimsAssigned',
+    old: 'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name, p.label AS property_label FROM claims c ' +
+      'JOIN businesses b ON b.id = c.business_id LEFT JOIN properties p ON p.id = c.property_id ' +
+      'WHERE EXISTS (SELECT 1 FROM surveyor_jobs j WHERE j.claim_id = c.id AND j.surveyor_id = ?) ' +
+      "AND (lower(c.claim_ref) LIKE ? ESCAPE '\\' OR lower(b.name) LIKE ? ESCAPE '\\') ORDER BY b.name ASC, c.claim_ref DESC LIMIT 25",
+    call: from('searchClaimsAssigned'), params: (w) => [[w.other, '%', '%'], [w.staff, '%', '%'], ['u-none', '%', '%']], atLeast: 2,
+  },
+  {
+    name: 'listEstimatesIdClaimRefByAssessmentIdJO',
+    old: 'SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, c.owner_id, u.display_name AS owner_name, ' +
+      'c.assessment_id, c.expected_completion, c.completed_at, c.created_at, ' +
+      '(SELECT e.qualifying_expenditure_pence FROM estimates e WHERE e.assessment_id = c.assessment_id ORDER BY e.rowid DESC LIMIT 1) AS q ' +
+      'FROM claims c LEFT JOIN users u ON u.id = c.owner_id ORDER BY c.claim_ref ASC',
+    call: from('listEstimatesIdClaimRefByAssessmentIdJO'), params: () => [[]], atLeast: 5,
+  },
+  {
+    name: 'listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO',
+    old: 'SELECT c.stage AS stage, (SELECT e.qualifying_expenditure_pence FROM estimates e WHERE e.assessment_id = c.assessment_id ' +
+      'ORDER BY e.rowid DESC LIMIT 1) AS q FROM leads l JOIN claims c ON c.id = l.claim_id WHERE l.introducer_id = ?',
+    call: from('listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO'), params: () => [['intro-1'], ['intro-none']], atLeast: 3,
+  },
+  {
+    name: 'listClaimsRows (the value shape)',
+    old: 'SELECT c.id, c.claim_ref, c.business_id, b.name AS client, c.created_at, b.sector, b.source AS org_source, c.stage, c.workstream, ' +
+      'c.owner_id, u.display_name AS owner_name, c.priority, c.expected_completion, p.label AS property_label, p.property_type, ' +
+      'p.jurisdiction, p.postcode, l.source AS lead_source, l.introducer_id, i.firm_name, ' +
+      "(SELECT t.title FROM staff_tasks t WHERE t.claim_id = c.id AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')) AS next_action, " +
+      "(SELECT t.due_on FROM staff_tasks t WHERE t.claim_id = c.id AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')) AS next_action_due, " +
+      '(SELECT e.qualifying_expenditure_pence FROM estimates e WHERE e.assessment_id = c.assessment_id ORDER BY e.rowid DESC LIMIT 1) AS q, ' +
+      'a.shown_low_pence, a.shown_high_pence, ' +
+      '(SELECT COUNT(*) FROM estimates e WHERE e.assessment_id = c.assessment_id) AS has_estimate ' +
+      'FROM claims c JOIN businesses b ON b.id = c.business_id LEFT JOIN users u ON u.id = c.owner_id ' +
+      'LEFT JOIN properties p ON p.id = c.property_id LEFT JOIN leads l ON l.claim_id = c.id LEFT JOIN introducers i ON i.id = l.introducer_id ' +
+      'LEFT JOIN assessments a ON a.id = c.assessment_id ORDER BY c.claim_ref DESC LIMIT 1000',
+    call: (db) => (from('listClaimsRows') as unknown as (db: Db, shape: string) => Row[])(db, 'VALUE'), params: () => [[]], atLeast: 5,
+  },
 ];
 
 for (const c of CASES) {
@@ -417,7 +499,8 @@ for (const c of CASES) {
     for (const p of c.params(w)) {
       const want = c.get === true ? w.db.get(c.old, p) : w.db.all(c.old, p);
       const got = c.call(w.db, p);
-      assert.deepEqual(got, want, `${c.name}(${JSON.stringify(p)})`);
+      const order = (rows: unknown): unknown => (c.unordered === true ? [...(rows as Row[])].sort((a, b) => (JSON.stringify(a) < JSON.stringify(b) ? -1 : 1)) : rows);
+      assert.deepEqual(order(got), order(want), `${c.name}(${JSON.stringify(p)})`);
       if (c.get === true) { if (want !== undefined && Object.values(want).some((v) => v !== 0 && v !== null)) seen++; }
       else seen += (want as Row[]).length;
     }

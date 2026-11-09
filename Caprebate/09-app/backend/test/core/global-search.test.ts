@@ -90,8 +90,8 @@ describe('the scope of each kind is read from can(), never from a role name', ()
 describe('never searched — the identity store, the compliance registers, document text and the estimate', () => {
   test('no statement search can run names any of them', () => {
     const forbidden = /\b(identity_persons|identity_search_log|rights_requests|rights_request_limbs|complaints|breach_incidents|cdd_checks|cdd_beneficial_owners|consent_answers|legal_holds|estimates|documents|document_text|logical_documents|document_versions)\b/;
-    assert.ok(SE.STATEMENTS.length >= 9);
-    for (const sql of SE.STATEMENTS) assert.equal(forbidden.test(sql), false, `a search statement names a table it must never reach: ${sql.slice(0, 80)}`);
+    assert.ok(SE.statements().length >= 9);
+    for (const sql of SE.statements()) assert.equal(forbidden.test(sql), false, `a search statement names a table it must never reach: ${sql.slice(0, 80)}`);
   });
 
   test('A PLANTED NAME: found as a client’s contact and in a note, and nowhere else — not in S2, its search log, a rights request, a complaint, a breach entry, or a person at an introducing firm', async () => {

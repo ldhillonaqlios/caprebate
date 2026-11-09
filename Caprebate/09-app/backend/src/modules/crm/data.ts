@@ -1125,6 +1125,13 @@ export function listBusinessesIdNameByIds<T extends Row = Row>(db: Db, params: r
 export function listClientMessagesIdCreatedAtByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT m.id, m.created_at FROM client_messages m WHERE m.id IN (SELECT value FROM json_each(?))', params);
 }
+/** The claims an introducer's leads hold (with_claim: only the leads that hold one; each lead once). */
+export function listLeadsClaimIdByIntroducerIdWithClaim<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.claim_id FROM leads l WHERE l.introducer_id = ? AND l.claim_id IS NOT NULL', params);
+}
+export function listLeadsClaimIdByIntroducerIdEvery<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.claim_id FROM leads l WHERE l.introducer_id = ?', params);
+}
 
 // HELPERS FOR A SPLIT JOIN (Phase 161l1): no SQL; used where the CRM puts its rows and another area's together.
 /** The ids a list of rows names, for a lookup by ids (SELECT ... WHERE id IN (SELECT value FROM json_each(?))). */
