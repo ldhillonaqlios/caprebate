@@ -39,7 +39,7 @@ import { mayCreateTask, myWork, nextActionsGate } from '../modules/crm/index.ts'
 import { assertLeadSection } from '../modules/crm/index.ts';
 import { pipelineBoardGate } from '../modules/crm/index.ts';
 import { billingViewFor, clientsAreaGate } from '../modules/finance/index.ts';
-import { claimListGate } from '../shared/lists.ts';
+import { claimListGate } from '../modules/crm/index.ts';
 import { assertIntroducerSection, rewardModelGate } from '../modules/crm/index.ts';
 import { assertSurveySection } from '../modules/survey/index.ts';
 import { assertFinanceSection } from '../modules/finance/index.ts';

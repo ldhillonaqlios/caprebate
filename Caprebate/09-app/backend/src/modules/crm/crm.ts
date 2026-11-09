@@ -1764,7 +1764,7 @@ export type ClaimOrigin = {
 
 /**
  * ROWS 8.5 AND 8.6 — READ THROUGH THE LEAD, NEVER A COLUMN ON THE CLAIM. The join is the one `CLAIMS_WORKING` in
- * src/shared/lists.ts makes (`leads.claim_id`, then `introducers`), and a claim with no lead reads its organisation's source,
+ * src/modules/crm/claim-lists.ts makes (`leads.claim_id`, then `introducers`), and a claim with no lead reads its organisation's source,
  * exactly as that list's source filter does. `lead.read` builds the block; `introducer.read` adds the firm. SURVEYING and
  * ACCOUNTING hold neither, so their claim view carries no origin at all.
  */

@@ -31,7 +31,7 @@ import { seed } from '../../src/core/seed.ts';
 import { Db, migrate } from '../../src/core/db.ts';
 import { APP_ROLES, type AppRole } from '../../src/core/roles.ts';
 import { can, REGISTERED_ACTIONS, type Actor, type Obj } from '../../src/core/authz.ts';
-import * as LI from '../../src/shared/lists.ts';
+import * as LI from '../../src/modules/crm/claim-lists.ts';
 import * as L from '../../src/modules/crm/leads.ts';
 import * as C from '../../src/modules/crm/crm.ts';
 import { actor, testApp } from '../helpers.ts';

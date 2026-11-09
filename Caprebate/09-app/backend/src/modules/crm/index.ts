@@ -28,6 +28,8 @@ export { addDaysToDate, dueReading, insertTask, mayCreateTask, myWork, nextActio
 export * as clientChecksModule from './client-checks.ts';
 export { waitingForCheck } from './client-checks.ts';
 export { clientList, clientListPage } from './client-list.ts';
+export { claimListGate, leadsList } from './claim-lists.ts';
+export { handleLists } from './claim-lists-pages.ts';
 export { handleClientPage } from './client-page.ts';
 export { handleCrm } from './crm.routes.ts';
 export { handleDashboard } from './dashboard-pages.ts';
@@ -56,6 +58,7 @@ export type { LeadRow } from './leads.ts';
 export type { DueReading, TaskInsert } from './tasks.ts';
 export type { ToCheck } from './client-checks.ts';
 export type { ClientSort } from './client-list.ts';
+export type { LeadListRow } from './claim-lists.ts';
 export type { ThreadMessage } from './messages.ts';
 export type { FeeTrigger, Need, PipelineClaim } from './pipeline.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.

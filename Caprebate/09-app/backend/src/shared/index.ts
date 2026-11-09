@@ -21,7 +21,7 @@ export { buildPdf, flow } from './pdf.ts';
 export { plainDashLines, plainDashText, plainDashes } from './plain-dashes.ts';
 export { RANGE_QUALIFIER, formatPence, formatShownRange, toPence } from './shown-range.ts';
 export { SIGNATURE_PAD_JS } from './signature-pad-script.ts';
-export { CLOSED_STAGE, EXITS, EXIT_KEYS, LEGACY_STAGE_TO_PROCEDURE, PROCEDURE_KEYS, PROCEDURE_STAGES, STAGES, anyStageLabel, claimStage, clientStageFor, exitStage, nextProcedureKey, procedureIndex, procedureStage, progressFor, stage, stageIndex } from './stages.ts';
+export { CLOSED_STAGE, EXITS, EXIT_KEYS, LEGACY_STAGE_TO_PROCEDURE, ON_HOLD_STAGE, PROCEDURE_KEYS, PROCEDURE_STAGES, STAGES, anyStageLabel, claimStage, clientStageFor, exitStage, nextProcedureKey, procedureIndex, procedureStage, progressFor, stage, stageIndex } from './stages.ts';
 export { LATE_AFTER_WORKING_DAYS, isLateNewLead, waitedWords, workingDaysSince } from './working-days.ts';
 export { DOCX_DOCUMENT_ENTRIES, docxParagraphTexts, listZipEntries, readZipEntry, readZipEntryFromBuffer } from './zip.ts';
 export type { Job, Need, QuickAction, RecordTab, SectionContext, SectionSpec, SectionStatus, Tone } from './components.ts';

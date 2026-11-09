@@ -32,7 +32,7 @@ import { can, type Actor } from '../../core/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { opens } from '../../core/navigation.ts';
 import { assertLeadSection } from './leads.ts';
-import { leadsList } from '../../shared/lists.ts';
+import { leadsList } from './claim-lists.ts';
 import { pipelineBoard, organisationList } from './crm.ts';
 import { pipelineBoardGate } from './crm.permissions.ts';
 import { financeDashboard } from '../finance/index.ts';

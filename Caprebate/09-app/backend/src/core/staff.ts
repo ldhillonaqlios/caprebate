@@ -73,7 +73,7 @@ import { handleIntroducers } from '../modules/crm/index.ts';
 import { handleClaimRecord } from '../modules/claims/index.ts';
 import { handleCompliance } from '../modules/compliance/index.ts';
 import { handleDashboard } from '../modules/crm/index.ts';
-import { handleLists } from '../shared/lists-pages.ts';
+import { handleLists } from '../modules/crm/index.ts';
 import { handleConfiguration } from '../modules/admin/index.ts';
 import { setPhoto, clearPhoto, readPhoto, photoFor, PHOTO_HEADERS, IMAGE_LIMITS } from './avatar.ts';
 import { HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments, startOfLocalDay, staffSlots, type Availability, type WorkingTimeInput } from '../modules/crm/index.ts';

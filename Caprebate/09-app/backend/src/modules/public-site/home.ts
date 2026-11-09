@@ -25,7 +25,7 @@ import { h, raw, type Safe } from '../../shared/index.ts';
 import { opens } from '../../core/navigation.ts';
 import { assertDashboard } from '../crm/index.ts';
 import { assertLeadSection } from '../crm/index.ts';
-import { leadsList, type LeadListRow } from '../../shared/lists.ts';
+import { leadsList, type LeadListRow } from '../crm/index.ts';
 import { pipelineBoard, pipelineBoardGate } from '../crm/index.ts';
 import { financeDashboard } from '../finance/index.ts';
 import { assertFinanceSection } from '../finance/index.ts';

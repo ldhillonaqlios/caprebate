@@ -4,8 +4,7 @@
   "1": {
    "admin": [
     "src/core/saved-keys.ts -> src/modules/admin/data.ts",
-    "src/integrations/email/email.ts -> src/modules/admin/data.ts",
-    "src/shared/lists.ts -> src/modules/admin/data.ts"
+    "src/integrations/email/email.ts -> src/modules/admin/data.ts"
    ],
    "assessment": [
     "src/core/backoffice.ts -> src/modules/assessment/data.ts"
@@ -37,6 +36,9 @@
     "src/modules/claims/engaged.ts -> src/core/backoffice.ts",
     "src/modules/compliance/compliance.ts -> src/core/backoffice.ts",
     "src/modules/crm/automation.ts -> src/core/backoffice.ts",
+    "src/modules/crm/claim-lists-pages.ts -> src/core/navigation.ts",
+    "src/modules/crm/claim-lists-pages.ts -> src/core/search.ts",
+    "src/modules/crm/claim-lists.ts -> src/core/backoffice.ts",
     "src/modules/crm/client-list.ts -> src/core/navigation.ts",
     "src/modules/crm/client-page.ts -> src/core/backoffice.ts",
     "src/modules/crm/client-page.ts -> src/core/navigation.ts",
@@ -66,10 +68,7 @@
     "src/modules/portal/take-back.ts -> src/core/audit.ts",
     "src/modules/public-site/home.ts -> src/core/navigation.ts",
     "src/modules/survey/anchor-store.ts -> src/core/audit.ts",
-    "src/modules/survey/surveyor-pages.ts -> src/core/navigation.ts",
-    "src/shared/lists-pages.ts -> src/core/navigation.ts",
-    "src/shared/lists-pages.ts -> src/core/search.ts",
-    "src/shared/lists.ts -> src/core/backoffice.ts"
+    "src/modules/survey/surveyor-pages.ts -> src/core/navigation.ts"
    ],
    "crm": [
     "src/core/backoffice.ts -> src/modules/crm/data.ts",
@@ -102,10 +101,8 @@
    "shared": [
     "src/core/cli.ts -> src/shared/objectstore.ts",
     "src/core/live-website.ts -> src/shared/shared-objectstore.ts",
-    "src/core/navigation.ts -> src/shared/lists.ts",
     "src/core/server.ts -> src/shared/objectstore.ts",
     "src/core/server.ts -> src/shared/shared-objectstore.ts",
-    "src/core/staff.ts -> src/shared/lists-pages.ts",
     "src/core/upload-pieces.ts -> src/shared/objectstore.ts",
     "src/core/upload-pieces.ts -> src/shared/upload-handler-port.ts",
     "src/modules/assessment/conveyancing-strip.ts -> src/shared/upload-handler-port.ts",
@@ -113,18 +110,12 @@
     "src/modules/claims/uploads.ts -> src/shared/objectstore.ts",
     "src/modules/claims/uploads.ts -> src/shared/upload-handler-port.ts",
     "src/modules/compliance/compliance-identity.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/crm.routes.ts -> src/shared/lists-pages.ts",
-    "src/modules/crm/crm.routes.ts -> src/shared/lists.ts",
     "src/modules/crm/message-retention.ts -> src/shared/upload-handler-port.ts",
     "src/modules/crm/messages-pages.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/pipeline-pages.ts -> src/shared/lists-pages.ts",
-    "src/modules/crm/pipeline-pages.ts -> src/shared/lists.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/shared/lists.ts",
     "src/modules/crm/whatsapp-import.ts -> src/shared/objectstore.ts",
     "src/modules/crm/whatsapp.ts -> src/shared/objectstore.ts",
     "src/modules/portal/client-files-pages.ts -> src/shared/upload-handler-port.ts",
     "src/modules/public-site/enquiry-retention.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/public-site/home.ts -> src/shared/lists.ts",
     "src/modules/survey/photo-upload.ts -> src/shared/objectstore.ts",
     "src/modules/survey/survey-video.ts -> src/shared/objectstore.ts"
    ],
@@ -192,10 +183,7 @@
     "portal -> public-site"
    ],
    "shared": [
-    "shared -> admin",
-    "shared -> claims",
     "shared -> core",
-    "shared -> crm",
     "shared -> integrations",
     "shared -> survey"
    ],
@@ -218,9 +206,7 @@
     "src/modules/compliance/data-borrowed.ts : consent_answers",
     "src/modules/crm/data-borrowed.ts : assessments",
     "src/modules/crm/data-borrowed.ts : estimates",
-    "src/modules/survey/data-borrowed.ts : estimates",
-    "src/shared/data-borrowed.ts : assessments",
-    "src/shared/data-borrowed.ts : estimates"
+    "src/modules/survey/data-borrowed.ts : estimates"
    ],
    "claims": [
     "src/core/data-borrowed.ts : claims",
@@ -250,9 +236,7 @@
     "src/modules/portal/data-borrowed.ts : logical_documents",
     "src/modules/survey/data-borrowed.ts : claim_grants",
     "src/modules/survey/data-borrowed.ts : claims",
-    "src/modules/survey/data-borrowed.ts : properties",
-    "src/shared/data-borrowed.ts : claims",
-    "src/shared/data-borrowed.ts : properties"
+    "src/modules/survey/data-borrowed.ts : properties"
    ],
    "core": [
     "src/integrations/data-borrowed.ts : users",
@@ -265,8 +249,7 @@
     "src/modules/crm/data-borrowed.ts : users",
     "src/modules/finance/data-borrowed.ts : users",
     "src/modules/portal/data-borrowed.ts : users",
-    "src/modules/survey/data-borrowed.ts : users",
-    "src/shared/data-borrowed.ts : users"
+    "src/modules/survey/data-borrowed.ts : users"
    ],
    "crm": [
     "src/core/data-borrowed.ts : booking_changes",
@@ -299,11 +282,7 @@
     "src/modules/portal/data-borrowed.ts : businesses",
     "src/modules/portal/data-borrowed.ts : contacts",
     "src/modules/survey/data-borrowed.ts : bookings",
-    "src/modules/survey/data-borrowed.ts : businesses",
-    "src/shared/data-borrowed.ts : businesses",
-    "src/shared/data-borrowed.ts : introducers",
-    "src/shared/data-borrowed.ts : leads",
-    "src/shared/data-borrowed.ts : staff_tasks"
+    "src/modules/survey/data-borrowed.ts : businesses"
    ],
    "finance": [
     "src/core/data-borrowed.ts : invoice_numbers",

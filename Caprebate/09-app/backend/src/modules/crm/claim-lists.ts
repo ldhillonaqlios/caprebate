@@ -4,7 +4,7 @@
  * The scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, rows 16.2 to 16.6, and the
  * decisions this file takes are that table's Part E from E119. The pages are the
  * claims and leads lists (src/modules/crm/crm-pages.ts, src/modules/crm/pipeline-pages.ts), which
- * draw `listControls` from src/shared/lists-pages.ts; saved views are migration 018.
+ * draw `listControls` from src/modules/crm/claim-lists-pages.ts; saved views are migration 018.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * A FILTER OR A SORT IS A KEY IN A FIXED TABLE, NEVER SQL. `readParams` reads a
@@ -31,17 +31,15 @@
  * here reads them.
  */
 
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, can, type Actor, type Obj } from '../core/index.ts';
-import { NotFoundAsRefusal } from '../core/backoffice.ts';
-import { JURISDICTIONS, WORKSTREAMS, claimObjFor, derivedJurisdiction, type ClaimRow } from '../modules/crm/index.ts';
-import { priorityRank, vocabLabel, vocabulary } from '../modules/admin/index.ts';
-import { LEAD_ORIGINS, LEAD_STATUSES, NO_RANGE_NO_ASSESSMENT, RANGE_NOT_SHOWN, SECTORS, assertLeadSection, type LeadRow } from '../modules/crm/index.ts';
-import { CLOSED_STAGE, EXITS, ON_HOLD_STAGE, PROCEDURE_STAGES, claimStage } from './stages.ts';
-import { formatShownRange } from './shown-range.ts';
-import { localDate, localStamp } from './localtime.ts';
-import { getSavedViewsIdListById, insertSavedViews, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from '../modules/admin/data.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
+import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { JURISDICTIONS, WORKSTREAMS, claimObjFor, derivedJurisdiction, type ClaimRow } from './crm.ts';
+import { priorityRank, vocabLabel, vocabulary } from '../admin/index.ts';
+import { LEAD_ORIGINS, LEAD_STATUSES, NO_RANGE_NO_ASSESSMENT, RANGE_NOT_SHOWN, SECTORS, assertLeadSection, type LeadRow } from './leads.ts';
+import { CLOSED_STAGE, EXITS, ON_HOLD_STAGE, PROCEDURE_STAGES, claimStage, formatShownRange, localDate, localStamp } from '../../shared/index.ts';
+import { getSavedViewsIdListById, insertSavedViews, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from '../admin/index.ts';
 import { listClaimsRows, listLeadsRows } from './data-borrowed.ts';
 
 type Vocab = Readonly<Record<string, string>>;

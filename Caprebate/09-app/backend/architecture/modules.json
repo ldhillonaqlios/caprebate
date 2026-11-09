@@ -868,6 +868,14 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/crm/claim-lists-pages.ts": {
+   "area": "crm",
+   "kind": "page"
+  },
+  "src/modules/crm/claim-lists.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
   "src/modules/crm/client-checks.ts": {
    "area": "crm",
    "kind": "logic"
@@ -1340,10 +1348,6 @@
    "area": "shared",
    "kind": "page"
   },
-  "src/shared/data-borrowed.ts": {
-   "area": "shared",
-   "kind": "data"
-  },
   "src/shared/engine.ts": {
    "area": "shared",
    "kind": "logic"
@@ -1367,14 +1371,6 @@
   "src/shared/index.ts": {
    "area": "shared",
    "kind": "other"
-  },
-  "src/shared/lists-pages.ts": {
-   "area": "shared",
-   "kind": "page"
-  },
-  "src/shared/lists.ts": {
-   "area": "shared",
-   "kind": "logic"
   },
   "src/shared/localtime.ts": {
    "area": "shared",
