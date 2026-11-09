@@ -5121,7 +5121,7 @@ if (startSuite("S", "Phase 96 — the £1m allowance cap, and the two facts we n
 if (startSuite("T", "Phase 113d — the engagement gate, switched on by Phase 132e")) {
 
   let JE = null, jeError = null;
-  try { JE = require(path.join(APP_SRC, "modules", "survey", "costing", "job-economics.cjs")); } catch (e) { jeError = e; }
+  try { JE = require(path.join(APP_SRC, "modules", "assessment", "costing", "job-economics.cjs")); } catch (e) { jeError = e; }
 
   const gateSrc = src.slice(src.indexOf("var CB_GATE_CONFIG"), src.indexOf("var CB_BOOKING"));
 
@@ -7225,7 +7225,7 @@ if (startSuite("AB", "Phase 132e — the no-claim threshold")) {
 
   /* --- NCT6: where the engagement gate withholds the quote, no fee is printed here either */
   (function(){
-    let JE = null; try { JE = require(path.join(APP_SRC, "modules", "survey", "costing", "job-economics.cjs")); } catch (e) { JE = null; }
+    let JE = null; try { JE = require(path.join(APP_SRC, "modules", "assessment", "costing", "job-economics.cjs")); } catch (e) { JE = null; }
     if (!JE) { check("NCT6 — the phase9 job-economics module loads", "missing", "loaded"); return; }
     const keep = { enabled: CB_GATE_CONFIG.enabled, jobs_per_year: CB_GATE_CONFIG.jobs_per_year, costing: CB_GATE_CONFIG.costing };
     try {
