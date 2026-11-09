@@ -14149,7 +14149,7 @@ all              116    99   135     0   350
 ```
 
 - **Accept, the figures.** Before (main at cf0b209, on a fresh copy): site 1,426 / 0 / 3 and six named skips both modes, phase3 71, phase9 29, back end 3,956 tests, 3,950 passing and six OneDrive-only skips. After (the Mac copy): site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,956 of 3,956 (`npm run check` green: the package audit, the SQL, path, boundary, copies and backup checks, the typecheck and the tests), project 5,484. The back end's pass list is the same name for name: one title names what it now reads (DB-W1-T1), and the six OneDrive-only tests pass on the Mac copy. The route list unchanged; every file loads alone. Drift checker, CRM fold check (and self-test), register check, tracker check, plain words, brand, analytics, notices acceptance, payload proof and the boundary self-test green; verify-page green after `npm run page`. Not done here: signing in on the preview as staff and as a client; the suites drive both through the app.
-- **Not done as the block said, and why.** "Breaks of rules 1, 3 and 4 to zero": rule 4 is 0 everywhere; against the four, rule 1 is 9 (imports that name `survey/data.ts`, `admin/data.ts` or the survey's BCIS and costing files directly, eight from the lower layers) and rule 3 is 31 (joins across owners), both for 161l. Each module's routes and permissions files (the audit's section 6.2 example) were not split out for the four: their handlers sit in their pages files and core/staff.ts asks each; carried to 161l item 7c. The run sheet's 161k block is not deleted yet: deleting a run-sheet block needs Lakhbir's yes in the chat.
+- **Not done as the block said, and why.** "Breaks of rules 1, 3 and 4 to zero": rule 4 is 0 everywhere; against the four, rule 1 is 9 (imports that name `survey/data.ts`, `admin/data.ts` or the survey's BCIS and costing files directly, eight from the lower layers) and rule 3 is 31 (joins across owners), both for 161l. Each module's routes and permissions files (the audit's section 6.2 example) were not split out for the four: their handlers sit in their pages files and core/staff.ts asks each; carried to 161l item 7c. The run sheet's 161k block was deleted after Lakhbir's yes in the chat ("Yes, delete it").
 - **Board and plan.** 161l item 7 carries the rest in terms (ACTION-PLAN.md and the run sheet, read back equal); the run sheet's 161l, 161m, 161n and sweep blocks follow the docs' new paths. 4B: the build queue is 161l and 161m, each a phase; no orphans.
 
 ```
@@ -14160,8 +14160,6 @@ DONE          src/web/ gone: survey, finance, compliance and admin in src/module
               in screen text as roles; the baseline 606 -> 350; every suite green, the pass list the same.
 NOT DONE      31 rule-3 joins against the four, nine imports round a door, routes and permissions files for the four,
               two load-order workarounds - BUILDABLE - Phase 161l (item 7).
-              Deleting 161k's block from the run sheet - BLOCKED on Lakhbir's yes in the chat (the permission check
-              refuses deleting run-sheet blocks without it) - asked in the report.
               The developer's answer to D16 (how far the notes come out) - BLOCKED on the developer - the developer
               question pack, D16 (our recommendation is built meanwhile).
 NOTHING LEFT  beyond those lines.
