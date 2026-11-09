@@ -3,7 +3,7 @@
  *
  * This is `letter.ts`'s central-directory walk, lifted here unchanged so that
  * the upload text extractor can use it. IT WAS NOT REWRITTEN AND IT WAS NOT
- * COPIED — `letter.ts` now imports it. Phase 113c's brief is explicit about
+ * COPIED — `letter.ts` now imports it. The brief for the upload reader is explicit about
  * that: "DO NOT WRITE A SECOND ZIP READER", because a second one would be a
  * second place for the two traps below to be got wrong.
  *

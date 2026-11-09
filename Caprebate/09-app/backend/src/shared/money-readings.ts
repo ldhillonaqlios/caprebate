@@ -60,7 +60,7 @@ export function moneyReadingsHere(env: Env = process.env): MoneyReadings {
 export const PACK_SWITCH_OF: Readonly<Record<string, keyof MoneyReadings>> = Object.freeze({
   transaction_tax_in_base: 'transaction_tax_in_base', legal_fees_in_base: 'legal_fees_in_base',
   s185_plus_own_s25: 's185_plus_own_s25', grant_traced_to_elements: 'grant_untraced_full',
-  s33b_aggregation: 's33b_aggregation',   // PHASE 159k
+  s33b_aggregation: 's33b_aggregation',   // the long-life test's aggregation
 });
 
 /** The engine's switches the pack's legal check holds on for itself (pack-legal.ts

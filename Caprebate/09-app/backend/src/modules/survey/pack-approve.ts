@@ -13,7 +13,7 @@
  *   · their RICS number is on file;
  *   · the job has its locked estimate (approving commits the figures, which releases it — the existing rule);
  *   · this exact state of the pack is not already approved;
- *   · PHASE 159a (C3, C5, L3): the claim is not past the tax adviser's sign-off, and has not stopped. After that the
+ *   · (C3, C5, L3): the claim is not past the tax adviser's sign-off, and has not stopped. After that the
  *     signed figures are fixed, and only "Reopen the valuation" on the claim page changes that (src/modules/claims/valuation-lock.ts).
  *
  * ONE CLICK, AND THEN: the whole report as it stands is written down as one JSON document (keys in a fixed order), its
@@ -364,7 +364,7 @@ export function approvePack(d: PackDeps, actor: Actor, job_id: string, f: { seq:
          purchase's building plus what the work cost; with no purchase it is what the work cost, on no land; the share
          is what qualifies of that. A pack with no work commits exactly as before. */
       const worksCost = v.works.reduce((a, w) => a + (w.inputs.works_total.value ?? 0), 0);
-      const purchaseCounts = v.purchase_applies && !v.purchase_w3;   // PHASE 159d (item 8)
+      const purchaseCounts = v.purchase_applies && !v.purchase_w3;   // item 8
       const building = (purchaseCounts ? (s.building_price_pence as number) : 0) + worksCost;
       const figures = {
         a_qualifying_plant: poundsString(s.qualifying_pence as number),

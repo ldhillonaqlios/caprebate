@@ -1,7 +1,7 @@
 /**
  * Caprebate — COUNCIL AREA TO REGION, in the price book's own vocabulary.
  *
- * Board item 13004035199 job 3, deferred out into Phase 110.
+ * Board item 13004035199 job 3, deferred out to the postcode work.
  *
  * ─────────────────────────────────────────────────────────────────────────
  * THE DEFECT
@@ -45,7 +45,7 @@
  * wearing the book's thirteen labels — which is the honest description of it,
  * and it is the reason this work needed no purchase at all.
  *
- * THAT LAST POINT IS THE FINDING. Phase 107a deferred this job here on the
+ * THAT LAST POINT IS THE FINDING. This job was deferred here on the
  * understanding that a region needed the price book. IT DOES NOT. The book
  * supplies the FACTORS; the region MEMBERSHIP is free. This is the same
  * mistake the postcode resolver itself found about LEG-E4 — an item recorded
@@ -376,8 +376,8 @@ export class RegionError extends Error {
  *                                                  (an operator or a developer)
  *
  * `switches` is optional, and leaving it out uses REGION_SWITCHES, which is
- * off. With the switch off, London refuses exactly as it did before Phase
- * 132e: same code, same message, same detail.
+ * off. With the switch off, London refuses exactly as it did before the
+ * switch existed: same code, same message, same detail.
  */
 export function regionOf(authority: Pick<BillingAuthority,
   'region_code' | 'country_code' | 'lad_code' | 'lad_name' | 'postcode'>,

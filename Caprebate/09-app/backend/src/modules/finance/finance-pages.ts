@@ -489,7 +489,7 @@ export function feeSwitchesBox(s: { readonly cap: boolean; readonly warn: boolea
         We could cap the fee at the client’s first-year saving, or add a warning for this client.
         Each can be switched on, and ${state}
         (cap: ${s.cap ? 'on' : 'off'}; warning: ${s.warn ? 'on' : 'off'}).
-        ${fee} Turning either on or off is a business decision for Lakhbir, not this screen.</div>`;
+        ${fee} Turning either on or off is a business decision for the owner, not this screen.</div>`;
 }
 
 /* ------------------------------------------------------------------ *

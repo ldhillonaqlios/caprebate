@@ -109,7 +109,7 @@ export const ENGAGEMENT_SIGNING_TEST: EngagementSigning = Object.freeze({
   question: SIGNING_QUESTION,
   test_copy_only: true,
   links: true,
-  waiver_record: 'Lakhbir Dhillon, 6 October 2026, in the chat with Claude: "Signing itself is still switched off. switch this on for test purposes at the moment". The test copy of the letter only, invented clients only; the real letter keeps its blanks and ENGAGEMENT_SIGNING stays off.',
+  waiver_record: 'The owner (Head of Business Development), 6 October 2026, in the chat with Claude: "Signing itself is still switched off. switch this on for test purposes at the moment". The test copy of the letter only, invented clients only; the real letter keeps its blanks and ENGAGEMENT_SIGNING stays off.',
 });
 
 /** Which signing setting this copy runs under: the test one only where it was asked for. */
@@ -230,7 +230,7 @@ export type SignatureFields = {
   readonly ip: string;
   readonly letter_sha256: string;
   readonly pdf_sha256: string;
-  /** Absent or 1, the record as Phase 146f made it; 2, with the signature and the certificate's times. */
+  /** Absent or 1, the record as first made; 2, with the signature and the certificate's times. */
   readonly record_version?: 1 | 2 | 3;
   readonly signature_method?: 'DRAWN' | 'TYPED' | null;
   /** The drawn strokes as stored (JSON), or null for a typed signature. */

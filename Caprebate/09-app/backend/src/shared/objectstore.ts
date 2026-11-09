@@ -439,7 +439,7 @@ export async function assertNoStaticFileRoute(routerSource: string): Promise<voi
   /**
    * THE PATTERNS MUST NOT MATCH THEIR OWN SOURCE, and one of them did.
    *
-   * Phase 105 widened this scan from `router.ts` alone to every file in
+   * This scan was widened from `router.ts` alone to every file in
    * src/web/ — necessary, because `staff.ts` serves the profile photograph and
    * a check scoped to one file stops being a check the moment a second file can
    * answer with bytes. The wider scan then failed on THIS FILE, because the

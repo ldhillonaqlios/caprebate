@@ -207,11 +207,11 @@ export function switchedOn(source_id: string, switches: Readonly<Record<string, 
  */
 export const TEST_WEBSITE_LOOKUPS = Object.freeze({
   sources: Object.freeze(['CQC', 'EPC', 'HMLR_PPD', 'PLANNING', 'CIW', 'CARE_INSPECTORATE', 'CH_COMPANY', 'CH_PSC']) as readonly string[],
-  waiver_record: 'Lakhbir Dhillon, 2 October 2026, in the chat with Claude, asked which lookups to switch on for the test ' +
+  waiver_record: 'The owner (Head of Business Development), 2 October 2026, in the chat with Claude, asked which lookups to switch on for the test ' +
     'website: "All the free ones" (EPC, price paid, planning applications, CQC). The privacy notice is a draft and is not ' +
     'published. Test website only; real visitors are not affected. 5 October 2026 (Phase 156e): asked whether that covers ' +
     'the Welsh and Scottish care regulators\' downloaded lists (CIW, CARE_INSPECTORATE), he answered "Yes, include them". ' +
-    '10 October 2026 (Phase 159g): Lakhbir ran the phase written from his 9 October stress test ("merge and run 159g"), ' +
+    '10 October 2026 (Phase 159g): the owner ran the phase written from his 9 October stress test ("merge and run 159g"), ' +
     'which says the research reads the Companies House company profile (CH_COMPANY) on the test website, recorded as a ' +
     'waiver for testing, the people with significant control (CH_PSC) too. CH_PSC still waits for the signed letter (CA2).',
 });
@@ -227,7 +227,7 @@ export const TEST_WEBSITE_LOOKUPS = Object.freeze({
  */
 export const TEST_WEBSITE_PAID_LOOKUPS = Object.freeze({
   sources: Object.freeze(['HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING', 'HOMEDATA_BOUNDARY']) as readonly string[],
-  record: 'Lakhbir Dhillon, 6 October 2026, in the chat with Claude. He added a card to the Homedata account. ' +
+  record: 'The owner (Head of Business Development), 6 October 2026, in the chat with Claude. He added a card to the Homedata account. ' +
     'He put the key into Vercel. He asked for Homedata to work on the test website. Test website only. ' +
     'Later he said to use Homedata for planning and for the site boundary.',
 });

@@ -20,7 +20,7 @@ export const WHATSAPP_IMPORT_JS = `(function () {
   var canInflate = typeof DecompressionStream === 'function';
   // The browser's own fetch, named through root like the other page scripts (test/phase146b: only http.ts calls fetch on the server).
   var root = typeof window !== 'undefined' ? window : globalThis;
-// PHASE 161b: our form token, from the page, for the x-cb-form header (src/core/form-token.ts).
+// Our form token, from the page, for the x-cb-form header (src/core/form-token.ts).
 function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
 
   function say(el, words) { if (el) el.textContent = words; }

@@ -10,7 +10,7 @@
  *   "How long do we keep client messages and the team chat?"
  * A message deleted early cannot be brought back, so nothing deletes one until that is answered.
  *
- * OFF WAS EXACTLY PHASE 142a's STATE. With the setting off, `messagesDue` returns nothing and `sweepMessages` deletes
+ * OFF IS EXACTLY THE STATE BEFORE MESSAGES COULD BE DELETED. With the setting off, `messagesDue` returns nothing and `sweepMessages` deletes
  * nothing, writes nothing and returns OFF with what is missing, in plain words.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ export const MESSAGE_RETENTION: MessageRetention = Object.freeze({
   enabled: true,
   with_claim_years: 7,
   without_claim_months: 84,
-  approved_by: 'Lakhbir Dhillon',
+  approved_by: 'The owner (Head of Business Development)',
   review_ref: 'CAPREBATE QUESTIONS, "How long do we keep client messages and the team chat?", answered 22 September 2026',
   question: MESSAGE_RETENTION_QUESTION,
 });

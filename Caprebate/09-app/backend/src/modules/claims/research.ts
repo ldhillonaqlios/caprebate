@@ -1153,7 +1153,7 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
 }
 
 /* ================================================================== *
- * WHO SIGNED, AND WHETHER THE REGISTER SAYS THEY MAY — Phase 151b, Word answer 156
+ * WHO SIGNED, AND WHETHER THE REGISTER SAYS THEY MAY — Word answer 156
  * ================================================================== */
 
 export type SignatoryRun = {

@@ -116,7 +116,7 @@ export function sendForSignoff(
   const expires = new Date(Date.parse(at) + LINK_DAYS * 86_400_000).toISOString();
   const pdf = reportPdf(reportModel(kept.snapshot, kept.row.fingerprint, returnContextFor(d.db, kept.row.id, job.claim_id, job.business_id)));
   return d.db.tx(() => {
-    // The return entries for each year, as a spreadsheet, beside the PDF. PHASE 159a
+    // The return entries for each year, as a spreadsheet, beside the PDF.
     // (C29): the facts it is made from are kept with the version the first time it is sent, and read from then on.
     const csv = returnEntriesCsv(kept.snapshot, freezeReturnContext(d.db, kept.row.id, returnContext(d.db, job.claim_id, job.business_id), 'SENT_FOR_SIGNOFF', at), kept.row.fingerprint);
     const sent = d.email.send({

@@ -10,7 +10,7 @@
  * (BCIS_COMMERCIAL in the source register), so it is never committed and never published on the test website.
  *
  * UNTIL THEN: the shipped CB_BCIS_INDEX stays an empty stub, and the cost model's test system uses its PLACEHOLDER table
- * of invented points, labelled as such. PHASE 157a wired the survey pack to it: chapter 11's index factor
+ * of invented points, labelled as such. The survey pack is wired to it: chapter 11's index factor
  * reads this table first (src/modules/survey/pack-cost-model.ts, indexTableHere), the placeholder only in the test system, and
  * otherwise nothing.
  */
@@ -50,7 +50,7 @@ export function importBcisIndex(csv: string, fileName: string, nowIso: string,
   try {
     // The All-in Tender Price Index (--tpi) or the building price index, named; BCIS confirmed our use.
     parsed = costModel.parseIndexTable(csv, { source: `BCIS ${series === 'TPI' ? 'All-in Tender Price Index' : 'building price index'}, imported from ${basename(fileName)} on ${nowIso.slice(0, 10)}`, verified_at: nowIso,
-      licence: 'BCIS (RICS) subscription. BCIS confirmed our use: storing, drafting from and printing its figures (relayed by Lakhbir, 9 October 2026; Word question 218).' });
+      licence: 'BCIS (RICS) subscription. BCIS confirmed our use: storing, drafting from and printing its figures (relayed by the owner, 9 October 2026; Word question 218).' });
   } catch (e) {
     return { ok: false, why: `the file was not imported: ${e instanceof Error ? e.message : String(e)}` };
   }

@@ -1,7 +1,7 @@
 /**
  * THE POSTCODE CHECK AT THE ADDRESS QUESTION, AND "ANSWER IT MYSELF".
  *
- * 1 · THE POSTCODE CHECK, WIRED INTO THE BACK END'S OWN ASSESSMENT AS A SERVER-SIDE STEP. Phase 151 built the check
+ * 1 · THE POSTCODE CHECK, WIRED INTO THE BACK END'S OWN ASSESSMENT AS A SERVER-SIDE STEP. The check is built
  *     (src/integrations/connectors/postcode-check.ts: Postcodes.io, the postcode only, switched off behind the free-tier gate and
  *     until the privacy notice names the service). This runs it when a client saves the property screen (Q2), on this
  *     server, never in the page: THE SITE FILE STILL MAKES NO NETWORK CALL, and neither does the form the back end
@@ -11,7 +11,7 @@
  *     where the postcode is — and the client's typed address is never changed by it.
  *
  * 2 · "ANSWER IT MYSELF" — Word answer 180, "Should people be able to skip the automatic lookups and answer the
- *     questions themselves?", closed 24 September 2026 by Lakhbir ("I think a manual option is best to have as dont
+ *     questions themselves?", closed 24 September 2026 by the owner ("I think a manual option is best to have as dont
  *     want customers to get put off by not able to look up there property"). A choice at the address question: answer
  *     the property questions yourself instead of the lookups. SWITCHED OFF WITH THE LOOKUPS: it is offered only when
  *     the free lookups could run at all (the free-tier gate, CB_REGISTRY.precondition, read through registryGate — no

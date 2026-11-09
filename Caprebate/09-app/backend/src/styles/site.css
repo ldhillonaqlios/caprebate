@@ -1,6 +1,6 @@
 
 /* ================================================================== *
- * CAP REBATE — PHASE 133c, 17 September 2026. The layout is Phase 133a's;
+ * CAP REBATE — 17 September 2026. The layout is the first audit's;
  * the colours, type and logo are the brand book's (v1.0, slides 30-38).
  * System fonts only: no web font file and nothing fetched from
  * anywhere, so the Content-Security-Policy is unchanged.
@@ -42,7 +42,7 @@ body.public .topline{padding:.9rem 1.5rem;max-width:74rem}
 .gsearch{display:flex;align-items:center;gap:0}
 .gsearch input{width:22rem;max-width:40vw;min-height:2.5rem;border:1px solid var(--line);border-right:0;border-radius:var(--radius) 0 0 var(--radius);padding:.35rem .7rem;font:inherit;background:var(--white)}
 .gsearch button{border-radius:0 var(--radius) var(--radius) 0;min-height:2.5rem}
-/* PHASE 135: the open-task count sits on the Tasks tab; red when any is overdue. */
+/* The open-task count sits on the Tasks tab; red when any is overdue. */
 .tabcount{display:inline-grid;place-items:center;min-width:1.5rem;height:1.5rem;margin-left:.3rem;padding:0 .35rem;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:14px;line-height:1}
 .tabcount.late{background:var(--stop);color:var(--white)}
 .helplink{color:var(--ink);font-weight:600;font-size:16px}
@@ -517,7 +517,7 @@ details[open]>summary{margin-bottom:.4rem}
 fieldset{border:1px solid var(--line);border-radius:var(--radius);padding:.75rem 1rem;margin:1rem 0}
 legend{font-family:"Bookman Old Style","Roboto Slab",Georgia,"Times New Roman",serif;font-size:18px;font-weight:600;color:var(--ink);padding:0 .3rem}
 
-/* ---------------- "WHY?" — the explanation behind a small toggle (PHASE 133c) ---------------- */
+/* ---------------- "WHY?" — the explanation behind a small toggle ---------------- */
 details.why{display:inline;margin-left:.4rem}
 details.why>summary{display:inline;font-size:14px;font-weight:600;padding:0}
 details.why[open]{display:block;margin:.3rem 0 .5rem}
@@ -533,7 +533,7 @@ details.why .whytext{display:block;color:var(--body);font-size:16px;border-left:
 .card-h .count{font-family:Calibri,"Segoe UI",Inter,Arial,Helvetica,sans-serif;font-size:16px;font-weight:600;color:var(--ink)}
 .cards{align-items:start;display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:1rem;margin:0 0 1rem}
 .cards>.card{margin:0}
-/* PHASE 135: a card's table wraps its long words (LOGIN_SUCCEEDED) rather than pushing the page sideways. */
+/* A card's table wraps its long words (LOGIN_SUCCEEDED) rather than pushing the page sideways. */
 .cards>.card{min-width:0}
 .card table.compact td{overflow-wrap:anywhere;word-break:break-word}
 .card>h3:first-child{margin-top:0}
@@ -549,21 +549,21 @@ details.why .whytext{display:block;color:var(--body);font-size:16px;border-left:
 .pagehead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:.5rem 1rem;margin:0 0 1rem}
 .pagehead h1{margin:0}
 
-/* ---------------- MESSAGES AT THE TOP OF A PAGE (PHASE 133c) ---------------- */
+/* ---------------- MESSAGES AT THE TOP OF A PAGE ---------------- */
 .saved{background:var(--okbg);color:var(--ok);border:1px solid #b7d9c2;border-radius:var(--radius);padding:.7rem 1rem;margin:0 0 1rem;font-weight:600}
 .formerr{background:var(--stopbg);color:var(--stop);border:1px solid #ebc0c0;border-radius:var(--radius);padding:.7rem 1rem;margin:.5rem 0 .8rem}
 .formerr strong{color:var(--stop)}
-/* PHASE 133d (D4): a refusal beside the field it is about. */
+/* D4: a refusal beside the field it is about. */
 .fielderr{background:var(--stopbg);color:var(--stop);border-left:4px solid var(--stop);border-radius:0 var(--radius) var(--radius) 0;padding:.45rem .8rem;margin:.3rem 0 .7rem;font-size:16px}
 .fielderr strong{color:var(--stop)}
 [aria-invalid="true"]{border-color:var(--stop)!important;outline:2px solid var(--stop);outline-offset:1px}
 .req{font-weight:400;font-size:14px;color:var(--body)}
 
-/* ---------------- THE WELCOME CARD (PHASE 133c) ---------------- */
+/* ---------------- THE WELCOME CARD ---------------- */
 .welcome{border-top:4px solid var(--mint)}
 .welcome .jobs{display:flex;flex-wrap:wrap;gap:.5rem;margin:.6rem 0}
 
-/* ---------------- THE NEXT STEP (PHASE 133c) ---------------- */
+/* ---------------- THE NEXT STEP ---------------- */
 .nextstep .btn,.nextstep button{width:100%}
 .nextstep .needed{margin:.4rem 0 .6rem}
 
@@ -575,7 +575,7 @@ details.why .whytext{display:block;color:var(--body);font-size:16px;border-left:
 .badge.b-info{background:var(--white);color:var(--ink);border-color:var(--ink)}
 
 /* ---------------- BUTTONS AND FORMS ---------------- */
-/* PHASE 157c (the Friary House run, F1): a button the page script hides stays hidden; this rule outranked [hidden]. */
+/* The Friary House run, F1: a button the page script hides stays hidden; this rule outranked [hidden]. */
 button[hidden],.btn[hidden],.cta[hidden]{display:none!important}
 button,.btn,.cta{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:2.5rem;padding:.45rem 1rem;border:1px solid var(--ink);border-radius:var(--radius);background:var(--white);color:var(--ink);font:inherit;font-size:16px;font-weight:600;cursor:pointer;text-decoration:none;line-height:1.2}
 button:hover,.btn:hover{background:var(--mist)}
@@ -602,7 +602,7 @@ details.more-options{margin:.3rem 0 .6rem}
 .fl{display:block;margin:1rem 0 .3rem;font-size:18px;font-weight:600;color:var(--ink)}
 .fi{width:100%;padding:.6rem .7rem;border:1px solid #6f7a76;border-radius:.4rem;font:inherit;background:var(--white)}
 .ck{display:block;margin:.4rem 0;font-size:16px;font-weight:400;color:var(--body)}
-/* PHASE 161g: the client's tick that they have read the terms (the sign-up and the portal's agreement page) */
+/* The client's tick that they have read the terms (the sign-up and the portal's agreement page) */
 label.tick{display:flex;gap:10px;align-items:flex-start;margin:.8rem 0;font-weight:400}
 label.tick input{margin-top:.3rem}
 .err{color:var(--stop);font-size:16px}
@@ -617,7 +617,7 @@ button.opt:hover{border-color:var(--ink);background:var(--white)}
 .stop{border:1px solid #ebc0c0;background:var(--stopbg);color:var(--stop);border-radius:var(--radius);padding:.8rem 1rem;margin:1rem 0}
 .gate{border:1px dashed var(--line);background:var(--white);border-radius:var(--radius);padding:.8rem 1rem;margin:1rem 0;color:var(--body);font-size:16px}
 .ok{color:var(--ok)}
-/* Phase 151j: the QR code an authenticator app scans at sign-in, drawn as SVG by the server */
+/* The QR code an authenticator app scans at sign-in, drawn as SVG by the server */
 .qr{max-width:220px;margin:12px 0}
 .qr svg{width:100%;height:auto;display:block}
 .refusal{max-width:40rem;margin:2rem auto;border-left:4px solid var(--ink)}
@@ -648,7 +648,7 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
 .assumebox ul{margin:.5rem 0 0;padding-left:1.1rem}.assumebox li{margin:.3rem 0;font-size:16px;color:var(--body)}
 .clause{margin:1.3rem 0 .4rem;font-weight:600}
 .letter p{font-size:16px}
-/* PHASE 157c: the engagement letter's signing pad. touch-action:none so a finger draws instead of scrolling the page. */
+/* The engagement letter's signing pad. touch-action:none so a finger draws instead of scrolling the page. */
 fieldset.sig{border:0;padding:0;margin:1rem 0}
 .sig-canvas{display:block;width:100%;max-width:600px;height:auto;aspect-ratio:3/1;border:1px solid #9aa6a2;border-radius:8px;background:#fff;touch-action:none;cursor:crosshair}
 .steps{list-style:none;padding:0;margin:1rem 0}
@@ -673,7 +673,7 @@ fieldset.sig{border:0;padding:0;margin:1rem 0}
 .highlights .hl div{min-width:0}
 .highlights .hl dt{font-size:14px;color:var(--body);font-weight:600;padding:0}
 .highlights .hl dd{margin:.1rem 0 0;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
-/* PHASE 134: THE COMPANY IS THE FRAME. The claim reference is a small grey label; a claim is a tile; the breadcrumb
+/* THE COMPANY IS THE FRAME. The claim reference is a small grey label; a claim is a tile; the breadcrumb
    names the company first. */
 .highlights .subhead{margin:-.5rem 0 .75rem;color:var(--body);font-size:16px}
 .claimref{display:inline-block;color:var(--body);font-size:14px;font-weight:400;white-space:nowrap}
@@ -687,7 +687,7 @@ fieldset.sig{border:0;padding:0;margin:1rem 0}
 .tile .badge,.highlights .badge{white-space:normal;overflow-wrap:anywhere;max-width:100%}
 .stagebar{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:.75rem;margin:0 0 1rem;box-shadow:var(--shadow)}
 .stagebar ol{display:flex;list-style:none;margin:0;padding:0;gap:.2rem;overflow-x:auto}
-/* PHASE 133d (D2): a step is never narrower than its longest word, so a label WRAPS onto a second line instead of being
+/* D2: a step is never narrower than its longest word, so a label WRAPS onto a second line instead of being
    cut by the arrow ("Assessmen" at 1280 px); the bar scrolls sideways only if ten longest words cannot fit at all. */
 .stagebar li{flex:1 1 0;min-width:max(5.2rem,min-content);position:relative;text-align:center;font-size:14px;line-height:1.3;padding:.55rem .75rem .55rem 1rem;overflow-wrap:normal;hyphens:manual;background:#e7ecea;color:var(--ink);clip-path:polygon(0 0,calc(100% - .6rem) 0,100% 50%,calc(100% - .6rem) 100%,0 100%,.6rem 50%)}
 .stagebar li:first-child{clip-path:polygon(0 0,calc(100% - .6rem) 0,100% 50%,calc(100% - .6rem) 100%,0 100%);border-radius:.4rem 0 0 .4rem}
@@ -767,13 +767,13 @@ fieldset.sig{border:0;padding:0;margin:1rem 0}
   .seclayout:has(.tabpanel:nth-of-type(22):target,.tabpanel:nth-of-type(22) :target) .vtabs li:nth-child(22) a,
   .seclayout:has(.tabpanel:nth-of-type(23):target,.tabpanel:nth-of-type(23) :target) .vtabs li:nth-child(23) a,
   .seclayout:has(.tabpanel:nth-of-type(24):target,.tabpanel:nth-of-type(24) :target) .vtabs li:nth-child(24) a{border-left-color:var(--ink);background:var(--mint);color:var(--ink)}
-  /* PHASE 133c: A REFUSED FORM IS SHOWN WHERE IT WAS TYPED. The page redrawn after a refusal marks the tab that holds
+  /* A REFUSED FORM IS SHOWN WHERE IT WAS TYPED. The page redrawn after a refusal marks the tab that holds
      the form, and that tab shows whichever tab the address names. */
   .tabset:has(.tabpanel.has-refusal) .tabpanel:not(.has-refusal){display:none!important}
   .tabset .tabpanel.has-refusal{display:block!important}
 }
 
-/* ---------------- A SETTINGS SCREEN'S SECTION LIST (PHASE 133b) ---------------- */
+/* ---------------- A SETTINGS SCREEN'S SECTION LIST ---------------- */
 .seclayout{display:grid;grid-template-columns:16rem minmax(0,1fr);gap:1rem;align-items:start}
 .seclist{position:sticky;top:.75rem;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:.4rem;max-height:calc(100vh - 1.5rem);overflow-y:auto}
 .vtabs{flex-direction:column;border-bottom:0;margin:0;gap:.1rem;overflow-x:visible}
@@ -814,22 +814,22 @@ fieldset.sig{border:0;padding:0;margin:1rem 0}
 .listlayout>.filters{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:.9rem 1rem;box-shadow:var(--shadow)}
 .listlayout>.filters label>select,.listlayout>.filters label>input{max-width:100%}
 
-/* ---------------- THE HELP PAGE (PHASE 133c) ---------------- */
+/* ---------------- THE HELP PAGE ---------------- */
 .guide h2{font-size:32px}.guide h3{font-size:24px}.guide h4{font-size:20px}
 .guide table{font-size:16px}
 
-/* PHASE 135: one tab, two views — a row of filters at the top of a list. */
+/* One tab, two views — a row of filters at the top of a list. */
 .viewbar{display:flex;flex-wrap:wrap;gap:.4rem;margin:.25rem 0 1rem}
 .viewbar a{display:inline-block;padding:.35rem .8rem;border:1px solid var(--line);border-radius:999px;background:var(--white);color:var(--ink);text-decoration:none;font-size:16px}
 .viewbar a:hover{background:var(--mist)}
 .viewbar a[aria-current="page"]{background:var(--mint);border-color:var(--ink);font-weight:700}
-/* PHASE 135: Admin's Settings — one tile per setup screen, the whole tile a link. */
+/* Admin's Settings — one tile per setup screen, the whole tile a link. */
 .settings-tiles .tile{padding:0}
 .settings-tiles .tilelink{display:block;padding:.9rem 1rem;color:var(--ink);text-decoration:none;height:100%}
 .settings-tiles .tilelink:hover{background:var(--mist)}
 .settings-tiles .tiledoes{display:block;margin-top:.3rem;color:var(--body);font-size:16px}
 .clientlist .rowname{font-weight:700}
-/* PHASE 136: Home as rows of tiles. The whole tile is a link; a late one is red at the top and on its last line. */
+/* Home as rows of tiles. The whole tile is a link; a late one is red at the top and on its last line. */
 .homerow{margin:0 0 1.4rem}
 .homerow>h2{font-size:24px;margin:0 0 .6rem}
 .hometiles{grid-template-columns:repeat(auto-fill,minmax(13rem,1fr))}
@@ -843,7 +843,7 @@ fieldset.sig{border:0;padding:0;margin:1rem 0}
 .hometile.late .tileline.when{color:var(--stop);font-weight:700}
 .hometile .tileline,main .hometile .tileline.when{white-space:normal;overflow-wrap:break-word}
 
-/* PHASE 137: the leads as cards in four sections. A card is a <details>: its summary is the card, and it opens in place. */
+/* The leads as cards in four sections. A card is a <details>: its summary is the card, and it opens in place. */
 .leadtools{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.5rem 1rem;margin:0 0 .75rem}
 .leadtools .viewbar{margin:0}
 .filterbox{flex:1 1 100%}
@@ -897,7 +897,7 @@ dl.lc-facts{display:block;margin:0}
 .lc-take{padding:0 1rem 1rem}
 .lc-full{margin:.9rem 0 0}
 
-/* ---------------- PHASE 138 — COLOURED SECTIONS THAT OPEN AND CLOSE ---------------- */
+/* ---------------- COLOURED SECTIONS THAT OPEN AND CLOSE ---------------- */
 /* One colour per kind of section, from the brand tokens alone; each kind also carries an icon and a word, so colour is
    never the only signal. The band is a strip down the left edge; Messages' is striped, so it differs in shape as well. */
 .sec{--band:var(--ink);position:relative;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);margin:0 0 1rem;box-shadow:var(--shadow)}
@@ -936,7 +936,7 @@ details.more .moretext{padding:.3rem 0 0}
 .contactcard .cname{font-weight:700;color:var(--ink);margin:0}
 .contactcard p{margin:.15rem 0}
 .sources-now{margin:0 0 .8rem;padding-left:1.1rem}
-/* PHASE 139: checked and approved, and telling the client. Brand tokens only; a tick is a word as well as a mark. */
+/* Checked and approved, and telling the client. Brand tokens only; a tick is a word as well as a mark. */
 .checkset .step{border:1px solid var(--line);border-radius:var(--radius);background:var(--white);padding:.75rem .9rem;margin:0 0 .8rem}
 .checkset .step-ready-to-tell{border-color:var(--ink)}
 .checkset .step-told{border-left:6px solid var(--ok)}
@@ -966,7 +966,7 @@ details.undo>summary{font-size:14px}
 .donelist li{padding:.3rem 0;border-top:1px solid var(--line)}
 .donelist li.rechecking{color:var(--warn)}
 .doneclaim{font-size:18px;margin:.8rem 0 .2rem}
-/* PHASE 140: the company's files. A folder button in the header with a count; folders as tiles; a file as a card; the drop
+/* The company's files. A folder button in the header with a count; folders as tiles; a file as a card; the drop
    area IS the browser's own file picker, drawn large — no script, and a dropped file lands in it. Brand tokens only. */
 .filesbtn-row{margin:.6rem 0 0}
 .filesbtn{display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .8rem;border:1px solid var(--ink);border-radius:var(--radius);background:var(--white);color:var(--ink);font-weight:700;text-decoration:none}
@@ -1001,7 +1001,7 @@ details.undo>summary{font-size:14px}
 .dropzone input[type="file"]{display:block;width:100%;max-width:100%;min-height:3.5rem;box-sizing:border-box;padding:.6rem;background:var(--white);border:1px solid var(--line);border-radius:var(--radius)}
 .uploadbox .tickbox{display:flex;margin:.6rem 0 .8rem}
 a.small{font-size:16px;font-weight:400;margin-left:.5rem}
-/* PHASE 142: chat on every client. Two tabs ("Team only", "With the client") that are plain links — no script; a message is
+/* Chat on every client. Two tabs ("Team only", "With the client") that are plain links — no script; a message is
    a bubble, ours or theirs on the right, the other side's on the left; the box to write in sits under the thread. The
    "Team only" tab is drawn in a warning colour so nobody mistakes it for the thread the client reads. Brand tokens only. */
 .chattabs{display:flex;flex-wrap:wrap;gap:.4rem;margin:0 0 .8rem;padding:0;list-style:none}
@@ -1021,7 +1021,7 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
 .chatform{max-width:44rem}
 .chatform textarea.fi{min-height:6rem;resize:vertical}
 .chatfile{border:0;margin:.4rem 0;padding:0;min-width:0}
-/* PHASE 143: grants and contributions. One question with three answers; three totals; a card per grant with who paid in
+/* Grants and contributions. One question with three answers; three totals; a card per grant with who paid in
    large type and a chip in words (never colour alone); a pop-up that asks why before a grant is removed (the popover
    attribute, so no script); and the step-by-step form, one question per page. Brand tokens only. */
 .gask{background:var(--mist);border:1px solid var(--line);border-radius:var(--radius);padding:.8rem 1rem;margin:0 0 1rem}
@@ -1080,7 +1080,7 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
   .menu-pop{right:auto;left:0}
   main,body.app main{padding:1rem .75rem 2.5rem}
   main table{display:block;overflow-x:auto;white-space:normal}
-  /* PHASE 135: a stacked list reads as one card per row on a phone, each cell labelled — no sideways scroll. */
+  /* A stacked list reads as one card per row on a phone, each cell labelled — no sideways scroll. */
   main table.stack{display:table;overflow:visible;border:0;background:transparent}
   table.stack thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   table.stack,table.stack tbody,table.stack tr,table.stack td{display:block;width:100%}
@@ -1096,7 +1096,7 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
   .board>li,.board>li.empty-col{flex-basis:auto;width:100%}
   .cards{grid-template-columns:minmax(0,1fr)}
   .hometiles{grid-template-columns:minmax(0,1fr)}
-  /* PHASE 137: Home's Pipeline by stage row — two stage tiles to a row on a phone; every other row stays one. */
+  /* Home's Pipeline by stage row — two stage tiles to a row on a phone; every other row stays one. */
   .hometiles.pairtiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
   .pairtiles .hometile .tilelink{padding:.6rem .65rem}
   .pairtiles .hometile .tilename{font-size:16px}
@@ -1106,25 +1106,25 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
   .lc-body{padding:0 .75rem .9rem}
   .typefacts{grid-template-columns:minmax(0,1fr)}
   .form-row{display:block}
-  /* PHASE 138: the sections' three lines stack, and the summary wraps, at phone width. */
+  /* The sections' three lines stack, and the summary wraps, at phone width. */
   dl.three{grid-template-columns:minmax(0,1fr)}
   .sec>summary{padding:.7rem .75rem .7rem 1.1rem}
   .secbody{padding:0 .75rem .9rem 1.1rem}
   .seckind{min-width:0}
   form label>input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),form label>select,form label>textarea{max-width:none}
-  /* PHASE 139: a long unbroken value in a list — a sign-off record's 64-character code — wraps instead of widening the page. */
+  /* A long unbroken value in a list — a sign-off record's 64-character code — wraps instead of widening the page. */
   dd{overflow-wrap:anywhere;min-width:0}
-  /* PHASE 139: a fact's tick and its box stack at phone width. */
+  /* A fact's tick and its box stack at phone width. */
   .checkset .step{padding:.6rem .65rem}
   .tickform{display:block}
   .tickform>*{margin:.25rem 0}
   .tickform input,.tickform select{width:100%;max-width:none}
-  /* PHASE 140: folders two to a row on a phone; the drop area full width. */
+  /* Folders two to a row on a phone; the drop area full width. */
   .foldertiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
   .foldertile .tilelink{padding:.6rem .65rem}
   .foldertile .tilename{font-size:16px}
   .uploadbox select{width:100%;max-width:none}
-  /* PHASE 143: the grant cards one to a row, the totals stacked, the steps two to a row on a phone. */
+  /* The grant cards one to a row, the totals stacked, the steps two to a row on a phone. */
   .gcards{grid-template-columns:minmax(0,1fr)}
   .gtotals{gap:.6rem 1.2rem}
   .gsteps li{flex:1 1 40%}
@@ -1133,8 +1133,8 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 
 /* ================================================================== *
- * UI TIDY PHASE 1 — THE SHARED LOOK, 2 October 2026 (src/core/look.ts).
- * Lakhbir chose "design 2" and asked for colours and darker boxes, so a
+ * THE SHARED LOOK, 2 October 2026 (src/core/look.ts).
+ * The owner chose "design 2" and asked for colours and darker boxes, so a
  * busy person reads a page at a glance. The back office and the portal
  * only: every rule starts body.app or names a class only look.ts draws.
  * ================================================================== */
@@ -1173,7 +1173,7 @@ a.kpi:hover{text-decoration:none;filter:brightness(1.15)}a.kpi:hover .kpi-label{
 @media (max-width:600px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}.kpi{padding:.7rem .8rem}.kpi .kpi-value{font-size:26px}}
 
 /* ================================================================== *
- * UI TIDY PHASE 2 — THE LEFT-HAND MENU, 2 October 2026.
+ * THE LEFT-HAND MENU, 2 October 2026.
  * The back office's and the portal's header becomes a black menu down
  * the left (the markup is unchanged: header.top holds the name, the
  * util and the sections). Groups are named; nothing is under More.
@@ -1247,7 +1247,7 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
   body.app .uname{position:static;width:auto;height:auto;overflow:visible;clip:auto}
 }
 
-/* UI TIDY PHASE 3 — THE PIPELINE AS ONE TABLE (src/web/pipeline-pages.ts, pipelineTable). Each group of stages opens
+/* THE PIPELINE AS ONE TABLE (src/web/pipeline-pages.ts, pipelineTable). Each group of stages opens
    with its coloured band; the business is the link a person reads first. */
 .listtools{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:.6rem 1rem;margin:0 0 .9rem}
 .listtools .viewbar{margin:0}
@@ -1264,8 +1264,8 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 .pipetable .btn-quiet{white-space:nowrap;font-size:14px}
 @media (max-width:720px){.pipetable .bandrow th{display:block}.pipetable .bandrow{border:0;padding:0;background:transparent}}
 
-/* UI TIDY PHASE 4 — HOME IN TWO COLUMNS (src/web/staff-dashboard.ts). The work on the left as rows, one line each, late
-   in red; the pipeline's five coloured bars and the week on the right. The rows' markup is Phase 136's tiles. */
+/* HOME IN TWO COLUMNS (src/web/staff-dashboard.ts). The work on the left as rows, one line each, late
+   in red; the pipeline's five coloured bars and the week on the right. The rows' markup is Home's tiles. */
 .home-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:1.25rem;align-items:start}
 @media (max-width:1100px){.home-cols{grid-template-columns:minmax(0,1fr)}}
 .home-cols .homerow,.home-cols .dash-card{background:var(--white);border:1px solid var(--line);border-radius:.75rem;padding:1rem 1.1rem;margin:0 0 1.25rem}
@@ -1299,7 +1299,7 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 .home-side .wk-day.today{border-color:var(--ink);background:var(--mint)}
 .home-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:0 1.25rem;align-items:start}
 
-/* UI TIDY PHASE 5 — LEADS (src/web/pipeline-pages.ts leadsHead). Every switch on one row; the record form folded. */
+/* LEADS (src/web/pipeline-pages.ts leadsHead). Every switch on one row; the record form folded. */
 .leadtools{align-items:center}
 .leadtools .toolnote{margin:0;font-size:15px}
 .recordlead>summary.pnum{display:block;cursor:pointer;list-style:none;margin:0;padding:0;border:0;font-size:20px}
@@ -1309,12 +1309,12 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 .recordlead[open]>summary::before{content:"– "}
 .recordlead[open]>summary.pnum{margin-bottom:.6rem;padding-bottom:.5rem;border-bottom:1px solid var(--line)}
 
-/* UI TIDY PHASE 6 — THE CLIENTS LIST (src/web/client-list.ts). Each claim beside its company, by site, in its colour. */
+/* THE CLIENTS LIST (src/web/client-list.ts). Each claim beside its company, by site, in its colour. */
 .claimsat{list-style:none;margin:0;padding:0;display:grid;gap:.3rem}
 .claimsat li{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .45rem}
 .clientlist .rowname{font-weight:700;color:var(--ink)}
 
-/* UI TIDY PHASE 7 — A CLIENT'S PAGE (src/web/client-page.ts, client-layout.ts). The name and its labels, the actions
+/* A CLIENT'S PAGE (src/web/client-page.ts, client-layout.ts). The name and its labels, the actions
    beside them, then each claim in a box of its own, headed in its stage's colour, its next step in a dark box. */
 .clienthead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:.75rem 1.25rem;margin:0 0 .75rem}
 .clienthead h1{margin:0 0 .2rem;font-size:36px}
@@ -1333,7 +1333,7 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 .nextbox-t{margin:.2rem 0 0;font-size:17px;font-weight:700;color:var(--white)}
 .claimbox-go{margin:auto 0 0}
 
-/* UI TIDY PHASE 8 — A CLIENT'S PAGE, PART 2 (src/web/client-layout.ts tabbed, partsList). A plain visit shows one line per
+/* A CLIENT'S PAGE, PART 2 (src/web/client-layout.ts tabbed, partsList). A plain visit shows one line per
    part; a part opens when it is chosen here or in the left-hand menu. From 900 px the menu holds the parts, so the row of
    tabs is for phones. */
 .cparts{list-style:none;margin:1rem 0;padding:0;background:var(--white);border:1px solid var(--line);border-radius:.75rem;overflow:hidden}
@@ -1350,20 +1350,20 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 @media (min-width:900px){body.app .ctabs{display:none}}
 @media (max-width:720px){.cpart{grid-template-columns:minmax(0,1fr) auto}.cpart-what{grid-column:1/-1}}
 
-/* UI TIDY PHASE 9 — TASKS (src/web/tasks-pages.ts). The longer lists under the tasks fold, each with how many it holds. */
+/* TASKS (src/web/tasks-pages.ts). The longer lists under the tasks fold, each with how many it holds. */
 .morelist{border-top:1px solid var(--line);padding:.6rem 0}
 .morelist>summary{cursor:pointer;font-weight:700;font-size:16px;color:var(--ink)}
 .morelist>summary .count{display:inline-block;min-width:1.4rem;padding:0 .35rem;border-radius:999px;background:var(--ink);color:var(--white);font-size:13px;text-align:center}
 #my-tasks table{margin-top:0}
 table tr.overdue{color:inherit}
 
-/* UI TIDY PHASE 10 — SURVEY JOBS (src/web/surveyor-pages.ts). The site under the client, the claim number beside it. */
+/* SURVEY JOBS (src/web/surveyor-pages.ts). The site under the client, the claim number beside it. */
 .jobtable .rowlink{font-weight:700;color:var(--ink)}
 .jobsite{font-weight:600;color:var(--ink)}
 .otherjobs{margin:-.25rem 0 1rem;padding:.6rem .9rem;background:var(--warnbg);border:1px solid #ecd29a;border-radius:.5rem;color:var(--ink)}
 tr.thisjob td{background:var(--okbg)}
 
-/* UI TIDY PHASE 11 — THE SURVEY PACK (src/web/survey-pack-pages.ts packHead). Which client, which site, which claim. */
+/* THE SURVEY PACK (src/web/survey-pack-pages.ts packHead). Which client, which site, which claim. */
 .packhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem 1rem;background:var(--ink);color:var(--white);border-radius:.75rem;padding:.9rem 1.2rem;margin:0 0 1rem}
 .packhead p{margin:0;color:var(--white)}
 .packhead-kind{color:var(--mint)!important;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
@@ -1373,12 +1373,12 @@ a.packhead-switch{background:var(--mint);color:var(--ink);border-radius:.5rem;pa
 a.packhead-switch:hover{text-decoration:underline}
 .pk-groups td:nth-child(2){white-space:nowrap}
 
-/* UI TIDY PHASE 12 — FINANCE (src/web/finance-pages.ts). From 900 px the left-hand menu holds Finance's sections. */
+/* FINANCE (src/web/finance-pages.ts). From 900 px the left-hand menu holds Finance's sections. */
 .readyline{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem;background:var(--warnbg);border:1px solid #ecd29a;border-radius:.6rem;padding:.7rem 1rem;color:var(--ink);margin:0 0 1rem}
 .readyline .btn-primary{margin-left:auto}
 @media (min-width:900px){.financepage .rtabs{display:none}}
 
-/* UI TIDY PHASE 13 — THE CALENDAR (src/core/staff.ts calendarPage). The week as seven boxes side by side from 900 px. */
+/* THE CALENDAR (src/core/staff.ts calendarPage). The week as seven boxes side by side from 900 px. */
 .calnav{display:flex;flex-wrap:wrap;gap:.4rem;margin:0}
 .weekgrid{list-style:none;margin:0 0 1.5rem;padding:0;display:grid;grid-template-columns:1fr;gap:.5rem}
 .wday{background:var(--white);border:1px solid var(--line);border-radius:.6rem;padding:.6rem .7rem;min-width:0}
@@ -1392,7 +1392,7 @@ a.packhead-switch:hover{text-decoration:underline}
 @media (min-width:900px){.weekgrid{grid-template-columns:repeat(7,minmax(0,1fr))}.wday{min-height:7rem}}
 @media (max-width:899px){.wday:not(:has(.wcalls)){display:flex;justify-content:space-between;align-items:baseline;gap:.5rem}.wday:not(:has(.wcalls)) .wday-h{margin:0}}
 
-/* UI TIDY PHASE 14 — INTRODUCERS (src/web/introducers-pages.ts). */
+/* INTRODUCERS (src/web/introducers-pages.ts). */
 .rewardline{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem;margin:0 0 .5rem}
 .formfold{margin:.75rem 0 0}
 .formfold>summary{display:inline-block;cursor:pointer;list-style:none;font-weight:700;border:1px solid var(--ink);border-radius:.5rem;padding:.45rem .9rem;background:var(--white)}
@@ -1401,7 +1401,7 @@ a.packhead-switch:hover{text-decoration:underline}
 .formfold[open]>summary::before{content:"– "}
 .formfold[open]>summary{margin-bottom:.6rem}
 
-/* UI TIDY PHASE 15 — SETTINGS (src/core/staff.ts usersPage, tasks-pages.ts, compliance-views.ts). */
+/* SETTINGS (src/core/staff.ts usersPage, tasks-pages.ts, compliance-views.ts). */
 .rolefold{margin:.35rem 0 0}
 .rolefold>summary{padding:.25rem .65rem;font-size:14px}
 .rolefold form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:.4rem}
@@ -1409,22 +1409,22 @@ a.packhead-switch:hover{text-decoration:underline}
 .userlist td:last-child{min-width:14rem}
 .cantdo ul{margin:.25rem 0 0}
 
-/* UI TIDY PHASE 18 — THE CLAIM PAGE (src/web/crm-pages.ts). Its sections, indented under the claim in the left-hand menu. */
+/* THE CLAIM PAGE (src/web/crm-pages.ts). Its sections, indented under the claim in the left-hand menu. */
 .subnav li.subsub a{padding-left:1.75rem;font-size:13px}
 
 /* ================================================================== *
- * PHASE 160a — THE BACK OFFICE IN THE LAYOUT LAKHBIR CHOSE, 19 October 2026.
+ * THE BACK OFFICE IN THE LAYOUT THE OWNER CHOSE, 19 October 2026.
  * From the Cap Rebate Simple CRM design (04-phase-work/phase160a/): a
  * navy menu down the left with an icon per section, a white top bar
  * with where you are, the search, Help and the user menu, a light grey
  * page of white cards, tables with small grey column headings, and
  * coloured status labels. Which sections a login sees is unchanged
  * (src/core/navigation.ts MENUS).
- * PHASE 160c, 19 October 2026: in the home page's own branding, not
+ * 19 October 2026: in the home page's own branding, not
  * the design's navy: its ink menu with ivory words, Cap Mint for the
  * current page and the main buttons (pills, ink words), the brand's
  * heading type, and its mark and wordmark at the top of the menu.
- * PHASE 160b, 19 October 2026: the client portal too. Every rule is
+ * 19 October 2026: the client portal too. Every rule is
  * under body.crm, which the back office (body.staffapp) and the portal
  * (body.portalapp) both carry; the public pages keep their look.
  * ================================================================== */
@@ -1534,7 +1534,7 @@ body.crm .badge.b-stop{background:var(--stopbg);color:var(--stop);border-color:t
 body.crm .badge.b-info{background:var(--g-win-bg);color:var(--g-win-ink);border-color:transparent}
 body.crm .badge.b-late{background:var(--stop);color:var(--white)}
 
-/* BUTTONS — the main one the home page's mint pill with ink words (Phase 160c); the quiet ones white with a border. */
+/* BUTTONS — the main one the home page's mint pill with ink words; the quiet ones white with a border. */
 body.crm main button,body.crm main .btn{border-color:var(--rule);color:var(--ink);border-radius:999px}
 body.crm main button:hover,body.crm main .btn:hover{background:var(--page)}
 body.crm .cta,body.crm .btn-primary,body.crm main .cta,body.crm main .btn-primary,body.crm main button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet){background:var(--mint);border-color:var(--mint);color:var(--ink)}
@@ -1564,7 +1564,7 @@ body.crm main .linkish{border:0;color:var(--accent)}
   body.crm main h1{font-size:24px}
 }
 
-/* PHASE 160i, 20 October 2026: WHERE THIS CLAIM STANDS (src/web/claim-overview.ts). The stages down the left, the
+/* 20 October 2026: WHERE THIS CLAIM STANDS (src/web/claim-overview.ts). The stages down the left, the
    chosen stage's needs, still needed and gathered side by side, each source opening in place, and the survey pack. */
 body.crm .cov{background:var(--white);border:1px solid var(--rule);border-top:4px solid var(--mint);border-radius:12px;padding:1rem 1.25rem;margin:1rem 0}
 body.crm .cov-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.5rem 1rem;margin-bottom:.75rem}
@@ -1657,7 +1657,7 @@ body.crm .cov-gloss dd{margin:0}
 
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
- * Lakhbir: "when someone clicks am i eligible it matches the colours of
+ * The owner: "when someone clicks am i eligible it matches the colours of
  * the new home page". The assessment, sign-in and the enquiry's
  * thank-you (body.public) take the home page's ink ground, ivory type,
  * Cap Mint actions and its mark. The back office and the portal are

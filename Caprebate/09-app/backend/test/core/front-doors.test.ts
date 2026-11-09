@@ -18,8 +18,8 @@ test('161i: every route the code answers is the same list as before the first mo
   assert.equal(R.routeList(BACKEND), readFileSync(join(BACKEND, 'test', 'fixtures', 'route-list.txt'), 'utf8'));
 });
 
-/* The stylesheet as it was served before this phase, by its SHA-256 (taken from the text held in src/web/assets.ts). */
-const CSS_BEFORE = '4d1a381788eb4c6e956788f5c8010940c7562363dff9529cbdca6dc269c0a112';
+/* The stylesheet's bytes, by SHA-256: a change to src/styles/site.css changes this on purpose, in the same commit. */
+const CSS_BEFORE = '8eb845d03e09d034c98643407c1273336f30528fcb9b86f8a7c87fc616835d7c';
 
 test('161i: the CSS is a real file (src/styles/site.css), served at the same address with the same bytes and headers', async () => {
   const { SITE_CSS, CSS_HEADERS } = await import('../../src/shared/assets.ts');

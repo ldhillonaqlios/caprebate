@@ -46,7 +46,7 @@ export function isSectorSlug(x: string): x is SectorSlug { return (SECTOR_SLUGS 
 export const sectorPath = (slug: SectorSlug): string => join(SITE_DIR, 'capital-allowances', `${slug}.html`);
 
 /** The self-hosted fonts (IBM Plex for the sector pages; Inter Tight and JetBrains Mono for the home page since
- *  Phase 160n; all SIL Open Font License): the only names /assets/fonts/ will serve. */
+ *  the redesign; all SIL Open Font License): the only names /assets/fonts/ will serve. */
 export const FONT_FILES = [
   'ibm-plex-sans-latin-400-normal.woff2', 'ibm-plex-sans-latin-500-normal.woff2', 'ibm-plex-sans-latin-600-normal.woff2',
   'ibm-plex-sans-condensed-latin-500-normal.woff2', 'ibm-plex-sans-condensed-latin-600-normal.woff2', 'ibm-plex-sans-condensed-latin-700-normal.woff2',

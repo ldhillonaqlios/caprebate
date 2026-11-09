@@ -14,10 +14,10 @@
  * UK OR EU ONLY, UNLESS A TRANSFER IS APPROVED. `region` is where the service says it holds the data. http.ts refuses
  * a call to any other region unless `international_transfer_approved` is true, and today it is true for none. The
  * Claude API is the only row outside the UK and EU; approving that transfer is the data protection officer's, and
- * Phase 146e carries it.
+ * the document reader carries it.
  *
  * RATE LIMITS are the publisher's own, where it publishes one, and a cautious guess where it does not — said so in
- * `rate_basis`. We stay under the published figure rather than on it. Phase 146c read every figure again from the
+ * `rate_basis`. We stay under the published figure rather than on it. Every figure was read again from the
  * publishers' pages and wrote down in `rate_basis` what each page does and does not say.
  */
 
@@ -170,7 +170,7 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     cost_pence: 5,
   },
   HMLR_TITLE: {
-    /* THE LIVE BUSINESS GATEWAY. Phase 146b left this row with no address, so every
+    /* THE LIVE BUSINESS GATEWAY. This row once had no address, so every
        call was refused. The address is HM Land Registry's own, published in the Business Gateway developer pack
        (landregistry.github.io/bgtechdoc, read 23 September 2026) and recorded in SUPPLIER_DOCS. Having the address
        does NOT make a call possible: the Gateway needs a user account AND the client certificate HM Land Registry

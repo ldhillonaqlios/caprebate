@@ -20,7 +20,7 @@ import { getBusinessesCountByClientStatus, getBusinessesCountByIdClientStatus, g
 /**
  * CALENDAR_INVITE IS THE SECOND STUBBED TRANSPORT AND IT IS NOT A SECOND STUB.
  *
- * Phase 105's brief names two things as stubbed: outbound email AND calendar
+ * The booking work's brief names two things as stubbed: outbound email AND calendar
  * invitations, and says both write to this table. An invitation is an email
  * with an attachment, so it goes down the same path rather than acquiring an
  * interface of its own — one thing to replace, and one row shape a screen can

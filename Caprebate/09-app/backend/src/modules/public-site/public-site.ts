@@ -47,7 +47,7 @@ export const SITE_JS_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 
 export type SiteEdition = { readonly html: string; readonly css: string; readonly js: string };
 
-/** What must not survive into the served page. The same patterns the Phase 133a test holds every page to. */
+/** What must not survive into the served page. The same patterns the test of every page holds it to. */
 const INLINE: readonly [RegExp, string][] = [
   [/<style\b/i, 'an inline <style> block'],
   [/<script\b(?![^>]*\ssrc=)/i, 'an inline <script>'],

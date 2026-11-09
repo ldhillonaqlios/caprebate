@@ -64,7 +64,7 @@ export const ADDRESS_KEEP_UNTIL = Object.freeze({
 export const ADDRESS_LOOKUP: AddressLookupConfig = Object.freeze({
   enabled: true, named_in_privacy_notice: false,
   papers_waived_for_testing: true,
-  waiver_record: 'Lakhbir Dhillon, 6 October 2026, in chat: "one address box on Homedata, with GoAddress removed - yes", ' +
+  waiver_record: 'The owner (Head of Business Development), 6 October 2026, in chat: "one address box on Homedata, with GoAddress removed - yes", ' +
     'and the £1 a day cap: "yes please". A test build. The privacy notice does not name Homedata yet.',
 });
 

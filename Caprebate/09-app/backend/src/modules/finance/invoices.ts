@@ -452,7 +452,7 @@ export function raiseInvoice(d: InvoiceDeps, actor: Actor, claim_id: string, inp
   const due_on = terms.state === 'DAYS' ? addDaysToDate(today, terms.days) : null;
   const due_basis = terms.state === 'DAYS'
     ? `due ${terms.label}`
-    : `${DUE_UNSET} — ${terms.label} “${PAYMENT_TERMS_QUESTION}” is for Lakhbir to decide.`;
+    : `${DUE_UNSET} — ${terms.label} “${PAYMENT_TERMS_QUESTION}” is for the owner to decide.`;
 
   const id = d.newId();
   d.db.tx(() => {

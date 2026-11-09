@@ -448,7 +448,7 @@ describe('4 · EMAIL_SENDING — built, and off', () => {
   test('on for testing: the papers are waived, never claimed; the case stamp reads it on; without the login it is off, in words', () => {
     assert.equal(EMAIL_SENDING.enabled, true);
     assert.equal(EMAIL_SENDING.papers_waived_for_testing, true);
-    assert.match(EMAIL_SENDING.waiver_record ?? '', /^Lakhbir Dhillon, 30 September 2026, .*"swithc on sending emails"/);
+    assert.match(EMAIL_SENDING.waiver_record ?? '', /^The owner \(Head of Business Development\), 30 September 2026, .*"swithc on sending emails"/);
     // PHASE 142b: Lakhbir chose IONOS on 22 September 2026, so the provider is set; sending stays off.
     assert.equal(EMAIL_SENDING.provider, 'SMTP');
     assert.equal(EMAIL_SENDING.named_in_privacy_notice, false);

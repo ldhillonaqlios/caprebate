@@ -451,7 +451,7 @@ export function usersGate(actor: Actor): void {
 /* ================================================================== *
  * ADDRESSES WE CANNOT EMAIL
  *
- * Phase 146f recorded bounces and stopped sending to an address that bounced
+ * Bounces are recorded, and sending stops to an address that bounced
  * for good, and `liftSuppression` (src/integrations/email/email-provider.ts) was written for
  * a member of staff to say the address works again — with no screen to say it
  * from. So an address stopped for good was stopped for ever, and the only way

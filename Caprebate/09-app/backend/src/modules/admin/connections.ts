@@ -4,7 +4,7 @@
  *   GET  /staff/connections                          every outside service on one page, read only. Admin only.
  *   GET  /staff/connections/import?list={CIW|CARE_INSPECTORATE}   the import page, with its one script. Admin only.
  *   POST /staff/connections/register/{CIW|CARE_INSPECTORATE}   import that regulator's downloaded list. Admin only.
- *   GET  /staff/connections/switches.json            PHASE 161c: the list of what is built and switched off (STUBS in
+ *   GET  /staff/connections/switches.json            the list of what is built and switched off (STUBS in
  *                                                    src/core/app.ts), which /api/health served to anyone.
  *                                                    Admin only; anyone else gets 403 and nothing of it.
  * The Connections page itself carries no script, as every page reached from Home must (test/phase133a); the import
@@ -26,7 +26,7 @@
  * 4.5 MB a request. So the page's script (src/modules/claims/register-import-script.ts) reads the file ON THE ADMIN'S COMPUTER and
  * sends only the columns we keep - the names, telephone numbers and emails in these files never leave that computer.
  * With no script, a file under 4.4 MB goes as it is and the server reads only the same columns. Either way the import
- * is the one Phase 155 built (`importRegisterFile`): refused whole on wrong columns, replacing that list whole.
+ * is the one in `importRegisterFile`: refused whole on wrong columns, replacing that list whole.
  * A list not imported this calendar month is shown on Home's Admin view, so each new monthly file is imported.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -111,22 +111,22 @@ export const CONNECTIONS: readonly Connection[] = Object.freeze([
     today: (app) => `Address box today: ${String(searchesToday(app.db, app.now()))} of ${String(ADDRESS_SEARCH_CAP.per_day)} searches (2p each).`,
     waits: 'On for testing (6 Oct 2026). For real clients: the privacy notice naming Homedata.' },
   { id: 'DIDIT', name: 'Didit', does: 'The online identity check.', owner: 'DIDIT_IDV', calls: ['DIDIT_IDV'],
-    switch_name: 'IDENTITY_CHECK', waits: 'How long Didit keeps results. Set it in Didit once Sadique agrees how long we keep things. Then the privacy notice.' },
+    switch_name: 'IDENTITY_CHECK', waits: 'How long Didit keeps results. Set it in Didit once the data protection officer agrees how long we keep things. Then the privacy notice.' },
   { id: 'IONOS_EMAIL', name: 'IONOS email sending', does: 'Emails from staff, sign-in codes and calendar invites.', owner: 'IONOS_EMAIL', calls: [],
     switch_name: 'EMAIL_SENDING', waits: 'For real clients: the privacy notice and the engagement letter naming IONOS.' },
   { id: 'IONOS_MAILBOX', name: 'IONOS mailbox reading', does: 'Replies to contact@ come into the back office.', owner: 'IONOS_MAILBOX', calls: [],
     switch_name: 'INBOUND_EMAIL; the cron-job.org timer', waits: 'For real clients: the privacy notice.' },
   { id: 'ZOOM', name: 'Zoom', does: 'Video calls, made on our account and joined inside the back office.', owner: 'ZOOM', calls: ['ZOOM_OAUTH', 'ZOOM_API'],
-    switch_name: 'zoomMissing; ZOOM_PLAN', waits: 'For real clients: Sadique’s approval of the transfer. Zoom Pro is optional (40 minutes, no recording on the free plan).' },
+    switch_name: 'zoomMissing; ZOOM_PLAN', waits: 'For real clients: the data protection officer’s approval of the transfer. Zoom Pro is optional (40 minutes, no recording on the free plan).' },
   { id: 'WHATSAPP', name: 'WhatsApp (live connection)', does: 'Sending from the back office. Chats are added by hand instead (Phase 156c).', owner: 'WHATSAPP', calls: ['WHATSAPP_CLOUD', 'WHATSAPP_MEDIA'],
     switch_name: 'whatsappMissing', waits: 'Nothing: off on purpose. Staff export a chat on the phone and add it to the record.' },
   { id: 'CLOUDFLARE_TURNSTILE', name: 'Cloudflare Turnstile', does: 'The contact form’s check that a person, not a robot, sent it.', owner: 'CLOUDFLARE_TURNSTILE', calls: ['CLOUDFLARE_TURNSTILE'],
     switch_name: 'turnstileWhy', waits: 'Approved for testing (5 Oct 2026). For real clients: the privacy notice naming Cloudflare.' },
   { id: 'CLAUDE_DOCUMENTS', name: 'Anthropic (reading documents)', does: 'Reads clients’ documents for the facts a claim needs.', owner: 'CLAUDE_DOCUMENTS', calls: ['CLAUDE_DOCUMENTS'],
     switch_name: 'CLAUDE_SWITCHES',
-    waits: 'Approved for testing (5 Oct 2026); its reading switches stay off and the key is not on the test website. For real clients: the privacy notice and Sadique’s retention answer.' },
+    waits: 'Approved for testing (5 Oct 2026); its reading switches stay off and the key is not on the test website. For real clients: the privacy notice and the data protection officer’s retention answer.' },
   { id: 'GOOGLE_ANALYTICS', name: 'Google Analytics', does: 'Website visits, after consent.', owner: 'GOOGLE_ANALYTICS', calls: [],
-    switch_name: 'GA4_MEASUREMENT_ID', waits: 'Dropped for now (Lakhbir, 4 Oct 2026): the marketing team may pick it up later.' },
+    switch_name: 'GA4_MEASUREMENT_ID', waits: 'Dropped for now (the owner, 4 Oct 2026): the marketing team may pick it up later.' },
 ] satisfies readonly Connection[]);
 
 /** The services kept off on purpose, or never called from here, that no CONNECTOR_CALLED row is expected for. */
@@ -259,7 +259,7 @@ export function connectionsPage(app: App, actor: Actor, nav: Safe, done: string 
           <td data-label="For">${r.use === 'TESTING' ? 'Testing only' : 'Nothing yet'}</td>
           <td data-label="Last call">${r.last === null ? h`<span class="help">Never from here</span>` : `${localStamp(r.last.at, now)}: ${RESULT_WORDS[r.last.result] ?? r.last.result.toLowerCase()}${r.last.status === null ? '' : ` (${String(r.last.status)})`}`}</td>
           <td data-label="Waits on">${r.c.waits}</td></tr>`)}</tbody></table>
-      <p class="help">Testing only means the test website uses it, with made-up clients. Each one has a written yes from Lakhbir.
+      <p class="help">Testing only means the test website uses it, with made-up clients. Each one has a written yes from the owner.
         ${lookupsWaivedHere() ? '' : 'This copy is not the test website, so the free lookups are off here.'}</p>
       <p class="help">For the developer: <a href="${SWITCHES_PATH}">the parts that are built but switched off</a>, as data. Only Admin can open it.</p>`,
   });

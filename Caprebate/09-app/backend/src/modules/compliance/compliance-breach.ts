@@ -441,7 +441,7 @@ export function breachRegister(db: Db, actor: Actor, nowIso: string): { id: stri
   });
 }
 
-/* ------------------------------------------------ the regulator’s answer sheet — a template (dual wording, Phase 132f: the Information Commissioner) */
+/* ------------------------------------------------ the regulator’s answer sheet — a template (dual wording: the Information Commissioner) */
 
 export type SheetLine = { readonly field: string; readonly answer: string };
 export type SheetSection = { readonly title: string; readonly lines: readonly SheetLine[] };
@@ -499,7 +499,7 @@ export function icoAnswerSheet(db: Db, actor: Actor, id: string, nowIso: string)
         ...STANDING_MEASURES,
       ] },
       { title: '6 · Who to contact, and who else you have told', lines: [
-        { field: 'Named contact', answer: 'Sadique Maskeen, Data Protection Officer. If he cannot be reached: the breach deputy, Lakhbir Dhillon. Confirm on the day' },
+        { field: 'Named contact', answer: 'The data protection officer. If he cannot be reached: the breach deputy, the owner (Head of Business Development). Confirm on the day' },
         { field: 'Email', answer: NOT_SET('no data protection mailbox is watched yet. Give an address that someone actually reads, and say which it is') },
         { field: 'Telephone', answer: NOT_SET('to confirm') },
         { field: 'Data protection officer', answer: 'Designated, but the appointment is not in effect. Say so plainly. Do not give them as the data protection officer contact' },

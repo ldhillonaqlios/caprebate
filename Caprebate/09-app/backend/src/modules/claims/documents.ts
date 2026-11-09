@@ -1370,7 +1370,7 @@ export type WithdrawResult =
   | { readonly ok: false; readonly why: string; readonly field?: 'reason' };
 
 /**
- * TAKE A YES BACK, WITH A REASON. The same shape as taking back a pick (src/modules/claims/match-review.ts) and Phase 139's tick:
+ * TAKE A YES BACK, WITH A REASON. The same shape as taking back a pick (src/modules/claims/match-review.ts) and a ticked fact (src/modules/claims/approvals.ts):
  * its own act, asking why, keeping the reason.
  *
  *   · it takes THAT FIELD, AND NO OTHER, out of every record the yes let it into (`removeRegisterField`, the one door

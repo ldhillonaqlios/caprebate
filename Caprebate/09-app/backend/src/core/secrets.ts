@@ -102,7 +102,7 @@ export type SecretKey = {
  *     get-energy-performance-data.communities.gov.uk. Its API is api.get-energy-performance-data.communities.gov.uk
  *     and takes ONE bearer token, "found on your my account page when you are logged in to the service" (GOV.UK One
  *     Login). The old service's e-mail-plus-key pair is not needed, so there is one EPC name, not two.
- *   · HM Land Registry Business Gateway — RETIRED BY PHASE 146k. the owner decided the title register
+ *   · HM Land Registry Business Gateway — RETIRED. the owner decided the title register
  *     is looked up by hand, and took its four details out of the key file. Its four names (HMLR_BG_USERNAME,
  *     HMLR_BG_PASSWORD, HMLR_BG_CERT_PATH with the alias HMLR_BG_CERTIFICATE_PATH, HMLR_BG_CERT_PASSPHRASE) are marked
  *     `retired` below and are no longer in secrets.example.env. Nothing a click runs reads them: the connector that

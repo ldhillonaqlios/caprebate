@@ -159,7 +159,7 @@ describe('Phase 160a: staff only, and nothing loosened', () => {
   });
 
   test('every section has its icon, the stylesheet fetches nothing, and every rule of the block is under body.crm (Phase 160b)', () => {
-    const from = SITE_CSS.lastIndexOf('/*', SITE_CSS.indexOf('PHASE 160a — THE BACK OFFICE IN THE LAYOUT'));
+    const from = SITE_CSS.lastIndexOf('/*', SITE_CSS.indexOf('THE BACK OFFICE IN THE LAYOUT'));
     const block = SITE_CSS.slice(from, SITE_CSS.indexOf('THE PUBLIC PAGES IN THE HOME PAGE'));
     for (const s of SECTIONS) {
       assert.match(block, new RegExp(`body\\.crm \\.tabs-main>li>a\\[href="${s.href}"\\]::before\\{content:"\\\\[0-9A-F]{4}";content:"\\\\[0-9A-F]{4}" / ""\\}`), `${s.label} has no icon`);

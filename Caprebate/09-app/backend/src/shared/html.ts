@@ -103,7 +103,7 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
   // supplied mono-ink lockup is drawn at 120 px wide (the minimum is 100) on white, top-left, on every page that is not
   // the back office: the sign-in page, the public pages and the client portal. The back office shows the name in the
   // heading font, because the stacked lockup is illegible at the height of a working header and no horizontal lockup
-  // or icon-only mark exists yet (slide 24). Phase 133a's invented "C" square is gone.
+  // or icon-only mark exists yet (slide 24). The invented "C" square of the first layout is gone.
   // Every required field says "(required)" in words, put into its label here (src/core/required.ts).
   const staff = shell && home === '/staff';
   // The public pages (the assessment, sign-in, the enquiry's thank-you) wear the new home page's

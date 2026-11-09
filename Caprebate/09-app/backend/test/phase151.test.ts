@@ -430,7 +430,7 @@ describe('3 · the free postcode check is built for real and switched off behind
     assert.equal(POSTCODE_CHECK.enabled, true);
     assert.equal(POSTCODE_CHECK.named_in_privacy_notice, false, 'the waiver never pretends the notice names it');
     assert.equal(POSTCODE_CHECK.papers_waived_for_testing, true);
-    assert.match(POSTCODE_CHECK.waiver_record ?? '', /^Lakhbir Dhillon, 30 September 2026, .*"switch on companies house and postcodes\.io"/);
+    assert.match(POSTCODE_CHECK.waiver_record ?? '', /^The owner \(Head of Business Development\), 30 September 2026, .*"switch on companies house and postcodes\.io"/);
     assert.equal(backendSwitchReadings().find((r) => r.switch === 'POSTCODE_CHECK')?.on, true);
     assert.deepEqual(postcodeCheckMissing(POSTCODE_CHECK, SHUT), []);
     const r = await pcRig();

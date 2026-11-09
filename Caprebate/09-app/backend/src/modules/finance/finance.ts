@@ -178,7 +178,7 @@ export type FeeVersusBenefit = {
 };
 
 /**
- * THE NO-CLAIM THRESHOLD, WHERE THE FEE IS SHOWN AGAINST THE BENEFIT — Phase 132f, reading Phase 132e's engine output.
+ * THE NO-CLAIM THRESHOLD, WHERE THE FEE IS SHOWN AGAINST THE BENEFIT — reading the engine's output.
  *
  * CB_FEE.display returns `recommendation_threshold` on every call: the five-year relief (CB_BENEFIT's cumulative
  * benefit) less our fee, against £1,000. It REFUSES NOTHING,
@@ -221,7 +221,7 @@ export type NoClaimVatWords = {
   readonly awaiting_tax_adviser_review: boolean;
 };
 
-/* The sentence the tax adviser reviews. Phase 151b added the VAT sentence (question 61); the rest is Phase 132f's. */
+/* The sentence the tax adviser reviews. The VAT sentence was added later (question 61). */
 export const NO_CLAIM_FOR_TAX_ADVISER =
   'FOR THE TAX ADVISER — AWAITING REVIEW. We take “tax relief after our fee” to mean the five-year relief less ' +
   'our fee. VAT on our fee is counted only when we are VAT-registered and the client cannot reclaim it; a client ' +

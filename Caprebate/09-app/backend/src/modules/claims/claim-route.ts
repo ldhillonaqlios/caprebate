@@ -136,7 +136,7 @@ function firstOpen(db: Db, c: { id: string; business_id: string }, from: { start
   return null;
 }
 
-/** The period the PURCHASE falls in — the recorded one, else from the client's year end — for the W2 search. PHASE 159e
+/** The period the PURCHASE falls in — the recorded one, else from the client's year end — for the W2 search.
  *  (C15, L4): the return entries read this same period, so the window and the spreadsheet can never disagree. */
 export function purchasePeriod(db: Db, c: { id: string; business_id: string; property_id: string | null }): { start: string; end: string } | null {
   const f = latestFacts(db, c.id);

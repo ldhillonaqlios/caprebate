@@ -1243,7 +1243,7 @@ function settingsPage(
      It holds messages addressed to every client, so drawing it conditionally
      while still fetching it would be a screen omitting a field — the thing this
      application refuses to call a control. It is not read at all. */
-  /* AND WHETHER IT BOUNCED. Phase 146f recorded bounces and nothing showed them, so an email the
+  /* AND WHETHER IT BOUNCED. Bounces were recorded and nothing showed them, so an email the
      server would not deliver looked exactly like one that had not been sent yet. The newest bounce for each
      message, its kind and the server's CODE — never the server's words. */
   const outbox = inBackOffice
@@ -1349,8 +1349,8 @@ function settingsPage(
 /**
  * ADDRESSES WE CANNOT EMAIL. Admin only.
  *
- * An address the mail server refused for good is stopped, and nothing more is sent to it. That was built by Phase
- * 146f with no way back: `liftSuppression` existed and no screen called it. This is the screen.
+ * An address the mail server refused for good is stopped, and nothing more is sent to it. That was built
+ * with no way back: `liftSuppression` existed and no screen called it. This is the screen.
  *
  * A LIFT IS A NEW ROW, not an edit. The bounce stays on record and so does the stop; the lift sits after them with
  * who pressed the button and when. Pressing it for an address that is not stopped is not an error and says so.

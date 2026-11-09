@@ -1,7 +1,7 @@
 /**
  * A PROPERTY'S SITE AREA FROM HM LAND REGISTRY'S LAND BOUNDARY — WIRED, AND SWITCHED OFF.
  *
- * THE ONE BACK-END FUNCTION, `siteAreaFromLandBoundary`, that joins what Phase 150 built to a stored fact:
+ * THE ONE BACK-END FUNCTION, `siteAreaFromLandBoundary`, that joins the land boundary fetcher to a stored fact:
  *
  *   1. the switch. While BOUNDARY_FETCHING_SWITCHED_ON (09-app/backend/src/registers/caprebate-boundary-import.ts) is false it
  *      returns SWITCHED_OFF before anything else — nothing read, nothing sent, nothing stored;
@@ -202,7 +202,7 @@ export type SiteAreaReady = {
 };
 
 /**
- * EVERY CHECK BEFORE THE DOWNLOAD, AND NOTHING ELSE. Phase 151c split this out of `siteAreaFromLandBoundary`, unchanged
+ * EVERY CHECK BEFORE THE DOWNLOAD, AND NOTHING ELSE. Split out of `siteAreaFromLandBoundary`, unchanged
  * and in the same order, so the research panel can say what the next click would do without sending anything: the
  * switch, the use, the property, the point, the councils, and a site area already held. It reads the database and
  * nothing outside it. An outcome is a reason to stop; `ready` is everything the download needs.
@@ -213,7 +213,7 @@ export function planSiteArea(d: Pick<SiteAreaDeps, 'db' | 'grid'>, input: SiteAr
   const on = input.switched_on ?? BOUNDARY_FETCHING_SWITCHED_ON;
   if (on !== true) {
     return stop(outcome('SWITCHED_OFF',
-      'Working out the site area from HM Land Registry\'s land boundaries is switched off. Only Lakhbir can switch it ' +
+      'Working out the site area from HM Land Registry\'s land boundaries is switched off. Only the owner can switch it ' +
       'on. A test download checks the file first. Nothing was read or sent, and the site area stays asked.'));
   }
   const use = checkBoundaryUse('INTERNAL_CALCULATION');

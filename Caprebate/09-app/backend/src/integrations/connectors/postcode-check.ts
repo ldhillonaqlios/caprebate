@@ -4,7 +4,7 @@
  *
  * WHAT THE OWNER ASKED (Word answers 16, 17, 35 and 36). Homedata, the paid address lookup, runs after signing, when staff
  * start the research — built (src/integrations/connectors/homedata.ts). At the address question, add a FREE address lookup if one
- * exists. PHASE 151 FOUND NONE THAT A PAID SERVICE MAY USE: getAddress.io stopped trading, and every
+ * exists. THE RESEARCH FOUND NONE THAT A PAID SERVICE MAY USE: getAddress.io stopped trading, and every
  * other postcode-to-address list is paid or a trial (the source register, POSTCODES_IO_OPEN; the research is
  * 04-phase-work/phase151/free-address-lookup.md). So this is the best free thing there is: a POSTCODE CHECK. The client
  * types their postcode; this confirms it exists and fills in the council area, the region and the country; the client
@@ -55,7 +55,7 @@ export type PostcodeCheckConfig = {
 export const POSTCODE_CHECK: PostcodeCheckConfig = Object.freeze({
   enabled: true, named_in_privacy_notice: false,
   papers_waived_for_testing: true,
-  waiver_record: 'Lakhbir Dhillon, 30 September 2026, in the chat with Claude: "switch on companies house and postcodes.io". The privacy notice is a draft and is not published; it does not yet name Postcodes.io. Test website, invented data only. Asked whether that is acceptable for testing: "yes its acceptable" (Lakhbir, 30 September 2026).',
+  waiver_record: 'The owner (Head of Business Development), 30 September 2026, in the chat with Claude: "switch on companies house and postcodes.io". The privacy notice is a draft and is not published; it does not yet name Postcodes.io. Test website, invented data only. Asked whether that is acceptable for testing: "yes its acceptable" (the owner, 30 September 2026).',
 });
 
 /** What must be true before a postcode is sent, each in plain words. Empty means it can be sent. */

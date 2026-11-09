@@ -115,9 +115,9 @@ export const FEE_TRIGGERS: Readonly<Record<FeeTrigger, string>> = Object.freeze(
 });
 
 /**
- * WHAT MOVES A CLAIM PAST INVOICE — DECIDED ON, BUILT BY PHASE 132e.
+ * WHAT MOVES A CLAIM PAST INVOICE — DECIDED ON, AND BUILT.
  *
- * Until Phase 132e the procedure left it open and it shipped at the most
+ * Until the decision the procedure left it open and it shipped at the most
  * cautious of three readings, HMRC processing the relief. the owner's answer to
  * "When is our fee earned ...?": due when we complete the report and either
  * submit it for the client or send it to them to submit; we will not get
@@ -137,7 +137,7 @@ export const FEE_TRIGGER: {
 } = Object.freeze({
   reading: 'REPORT_DELIVERED_FOR_FILING',
   decided: true,
-  why: 'Lakhbir decided: our fee is due when we finish the report and send it for filing, to the client or their accountant. Sending it counts, because nobody will confirm the filing.',
+  why: 'The owner decided: our fee is due when we finish the report and send it for filing, to the client or their accountant. Sending it counts, because nobody will confirm the filing.',
   question: FEE_TRIGGER_QUESTION,
 });
 
@@ -376,7 +376,7 @@ function checkReading(key: CheckKey, r: CheckDbRow | undefined): CheckReading {
  * the check in: none of these is the same fact as the check. A healthcare sector
  * is not a UK property; paying tax is not a qualifying activity (a dormant
  * company pays nothing, and a holding company that neither trades nor lets has
- * none — Phase 159g; a landlord that lets the building has one); "how did you come by this one" is
+ * none; a landlord that lets the building has one); "how did you come by this one" is
  * not authority to act; and a client's own "no prior claim" is not the same as no
  * conflict. So the evidence sits beside the question, with its source, and a
  * person answers it — which is SOP 1's own owner doing SOP 1's own step.
@@ -621,7 +621,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
               .map((r) => r.deadline).filter((x): x is string => x !== null).sort()[0] ?? amendmentWindowReading(db, c, today).deadline)
             : accountantFitNeed(db, c.id, since), // The accountant's own answer, not a staff tick
           reportsWindowNeed(db, c, today),
-          legalDeadlineNeed(db, c, today),   // PHASE 159d (C9)
+          legalDeadlineNeed(db, c, today),   // C9
         );
       }
       break;
@@ -648,7 +648,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // CRM 6 of 10: the pack complete is the deliverables register's issued defence pack, immutable with its hash.
       // The confirmation that stood in for it is retired (MILESTONES below): nothing is left for a click to stand in for.
       needs.push(deliverableIssuedNeed(db, c.id, 'DEFENCE_PACK'));
-      needs.push(filingRecordedNeed(db, c.id, opts.today ?? new Date().toISOString())); // PHASE 158c (F42); per return since 159l
+      needs.push(filingRecordedNeed(db, c.id, opts.today ?? new Date().toISOString())); // the Friary House run, F42; one per return
       break;
   }
   return {

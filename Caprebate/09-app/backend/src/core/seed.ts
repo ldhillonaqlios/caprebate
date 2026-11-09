@@ -66,7 +66,7 @@ const USERS: readonly { email: string; display_name: string; role: AppRole }[] =
 /**
  * THE CONTACT CHANNEL IS CB_BOOKING'S, AND IT USED NOT TO BE.
  *
- * Until Phase 105 this list carried 'virtual' and 'post'. 'virtual' is VIDEO,
+ * This list once carried 'virtual' and 'post'. 'virtual' is VIDEO,
  * which CB_BOOKING deliberately removed and whose own
  * comment says "do not quietly re-add it here"; 'post' was never a channel at
  * all. Neither is a thing a client can choose, so the seed was demonstrating a
@@ -252,7 +252,7 @@ function seedClaimAtInvoice(
 }
 
 /**
- * WORKING TIMES FIRST, THEN BOOKINGS — the same order Phase 105 builds in, and
+ * WORKING TIMES FIRST, THEN BOOKINGS — the same order the calendar builds in, and
  * for the same reason: a booking that does not fall inside somebody's hours is
  * a booking the calendar could not have made, and a seed that contained one
  * would be demonstrating a state the application refuses to produce.
@@ -294,7 +294,7 @@ function seedWorkingTimesAndBookings(
    * close writes when a client asks for a call without picking a moment — so
    * the seeded back office opens on a real work queue rather than on a diary
    * that somebody has already tidied. Booking one of these in and watching it
-   * appear in the client's own portal is the demonstration Phase 105's brief
+   * appear in the client's own portal is the demonstration the booking work
    * asks for, and it cannot be demonstrated on data that arrived pre-booked.
    */
   for (const b of BUSINESSES) {
@@ -352,7 +352,7 @@ function seedPipeline(
     // today: the privacy notice is not published and no connector exists.
     //
     // THE LIST AND THE TIERS COME FROM THE CATALOGUE, NOT FROM HERE. Until
-    // Phase 106 this was five hand-written pairs, and by the time that phase
+    // a later check this was five hand-written pairs, and by the time that check
     // read them two were WRONG: HMLR Price Paid and VOA open data were marked
     // PAID, where the Build Order's two-tier table and the Provenance Map both
     // put them in tier 1. A seed is what a developer reads as the schema, so a
@@ -388,7 +388,7 @@ function seedPipeline(
    * `entity_type` IS `company` ON ALL SIX AND IT AGREES WITH THE ANSWERS.
    * Every seeded assessment answers Q1 "How is the business set up?" as
    * `company`, so anything else here would be a seed contradicting itself —
-   * which is the class of defect Phase 106 found in this same file when two
+   * which is the class of defect once found in this same file when two
    * source tiers disagreed with the two documents that decided them.
    *
    * `tax_rate` IS DELIBERATELY LEFT NULL, and it is the more interesting half.
@@ -407,7 +407,7 @@ function seedPipeline(
   /**
    * TWO SURVEY JOBS, BOTH ASSIGNED, AND NEITHER COMMITTED.
    *
-   * Until Phase 107 there was one, unassigned — and an unassigned job belongs
+   * Until the surveyor workspace there was one, unassigned — and an unassigned job belongs
    * to NOBODY, because `assignedSurveyor` says so. So the surveying user
    * signed in, opened the section and correctly saw an empty list, which reads
    * exactly like a broken screen. A seed whose only demonstration of a feature

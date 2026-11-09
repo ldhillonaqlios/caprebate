@@ -230,7 +230,7 @@ const BUILDING_TYPE = { STANDARD: "standard", HIGHLY_SERVICED: "highly_serviced"
    and the factor is factors[property] / factors[where the rates are priced],
    both read from this one table. A table still carrying a bare mean refuses
    (E_LOCATION_MEAN_DEPRECATED) rather than being read the old way.
-   (Updated, Phase 153: BCIS publishes its factors against a
+   (Updated: BCIS publishes its factors against a
    UK mean of 100, which is basis "national_mean" with the UK mean as the base
    row - read from BCIS's own page; see the LEG-E4 note. The stub stays empty.) */
 const CB_LOCATION_FACTORS = emptyTable(
@@ -305,7 +305,7 @@ const CB_PRICE_SOURCES = emptyTable(
    REQUIRED on a loaded table and an out-of-range contract value throws.
    This is not a theoretical path: the standing worked example on the board is a
    GBP 6m contract, so refusal is what will fire first when the book is bought.
-   Phase 132 added the surveyor's alternative behind
+   The surveyor's alternative was added behind
    leg_e4_contract_size_outside_window, OFF: hold at the nearer limit and say
    which way that errs. Off, the refusal above is unchanged.
 
@@ -614,7 +614,7 @@ function interpolateScale(scale, value, what, options) {
    IS THIS ACTUALLY LICENCE-GATED? A QUESTION FOR THE OWNER, NOT A DECISION.
 
    The board marked this blocked on VOA licence clearance (that licence was
-   dropped; Phase 157a corrected this text). Reading the change
+   dropped, so this text was corrected). Reading the change
    itself: turning this gate on sets a multiplier to 1.0 and deletes a
    parameter. It reproduces no VOA table, quotes no VOA figure, and needs no
    VOA data to compute. The only VOA-derived thing involved is the KNOWLEDGE
@@ -1002,11 +1002,11 @@ function feesFactor(input, opts) {
    adjustment means. The order is asserted in the tests so a later refactor
    cannot quietly transpose it.
 
-   THE INDEX BASE WAS A SEPARATE DEFECT, AND PHASE 97 DID NOT FIX IT. The
+   THE INDEX BASE WAS A SEPARATE DEFECT, AND THE CORRECTION ABOVE DID NOT FIX IT. The
    comment on CB_LOCATION_FACTORS said "mean 100"; Spon's is indexed to Outer
    London = 1.00 and the Mechanical and Electrical book uses a third base again.
    Fixing WHERE the factor is applied is independent of fixing WHAT the factor
-   is indexed to, and Phase 97 did the first only.
+   is indexed to, and the correction above did the first only.
 
    FIXED, under this same gate - no new gate,
    because the gate was never on and the old arithmetic never reached a figure.
@@ -1198,7 +1198,7 @@ function locationAndContractSizeFactor(input, opts) {
       { given: sizeTable.assumed_contract_value });
   }
   /* Off: throws E_SCALE_VALUE_OUT_OF_RANGE outside the book's stated window
-     rather than extrapolating - see interpolateScale. On (Phase 132, waits on
+     rather than extrapolating - see interpolateScale. On (waits on
      the surveyor): held at the nearer limit and flagged with the direction of
      the error. */
   const outsideOn = gateOn("leg_e4_contract_size_outside_window", opts);
@@ -1639,7 +1639,7 @@ const DEPRECIATION_METHOD_DEFAULT = DEPRECIATION_METHOD.NONE;
    without the other invites an answer to the wrong question. */
 const CB_P9_WORKING_METHOD = {
   depreciation_method: DEPRECIATION_METHOD.WHOLE_BUILDING,
-  stated_by: "Lakhbir Dhillon (Head of Business Development)",
+  stated_by: "The owner (Head of Business Development)",
   stated_on: "2026-09-01",
   source: "surveyor pack question I5",
   set_by_surveyor: false,
@@ -1670,7 +1670,7 @@ function resolveDepreciationMethod(input, opts) {
 
   /* THE ONE BACK-COMPATIBILITY RULE, AND WHY IT IS NOT A CHOICE.
 
-     Before Phase 52 there was exactly one method, and turning the E5 gate on
+     Before E5b there was exactly one method, and turning the E5 gate on
      applied it. "Default to current behaviour" means that configuration must
      keep behaving identically: E5 gate on, E5b gate off, no method stated ->
      per_element, exactly as before. Nothing about a number changes.
@@ -1947,7 +1947,7 @@ function residualApportionment(input, opts) {
        value and not to individual element or material items. An element line is
        therefore quantity x rate, depreciated, on-costed and indexed - and
        nothing else. The single LEG-E4 factor is applied to the summed total
-       below. (Phase 97, 7 Sep 2026; this multiplication used to read
+       below. (7 Sep 2026; this multiplication used to read
        "qty * rate * loc.factor * dep.factor * ...".) */
     const cost = qty * rate * dep.factor * prelims.factor * index;
     if (pool === "nonqual") rawB += cost; else rawA += cost;
@@ -2141,7 +2141,7 @@ function residualApportionment(input, opts) {
    FOUR OF THE SURVEYOR'S QUESTIONS, BUILT ON OUR RECOMMENDATION, IN THIS MODEL'S OWN
    TEST SYSTEM (its suites, and TEST_SYSTEM_GATES / TEST_SYSTEM_TABLES below). NOTE WHICH TEST SYSTEM: the back end's
    survey pack (09-app/backend/src/modules/survey/pack-sums.ts) does not call this model at all, so none of this reaches the test
-   website until the pack is wired to it. PHASE 157a wired it: 09-app/backend/src/modules/survey/pack-cost-model.ts
+   website until the pack is wired to it. It is wired: 09-app/backend/src/modules/survey/pack-cost-model.ts
    reads the preliminaries bands, the index factor and the insurance check for one pack, as test placeholders (chapters
    11 and 14), and every gate here stays off.
    ============================================================================ */
@@ -2219,7 +2219,7 @@ function parseIndexTable(text, meta) {
     table: Object.freeze({
       loaded: true,
       source: meta.source || "BCIS building price index, imported from a file",
-      licence: meta.licence || "BCIS (RICS) subscription - our use confirmed by BCIS, reports included (relayed by Lakhbir, 9 Oct 2026); the table itself is never reproduced (BCIS_COMMERCIAL)",
+      licence: meta.licence || "BCIS (RICS) subscription - our use confirmed by BCIS, reports included (relayed by the owner, 9 Oct 2026); the table itself is never reproduced (BCIS_COMMERCIAL)",
       verified_at: meta.verified_at || null,
       points: Object.freeze(points)
     }),

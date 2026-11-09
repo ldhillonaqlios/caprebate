@@ -214,7 +214,7 @@ export function feeDisplay(
 /* ================================================================== *
  * THE ENGAGEMENT GATE, WITH ITS COSTING INJECTED
  *
- * Phase 132e switched CB_GATE_CONFIG on (120 jobs this year), and nothing handed it costs: `costing` ships null, so
+ * CB_GATE_CONFIG was switched on (120 jobs this year), and nothing handed it costs: `costing` ships null, so
  * every assessment came back UNDETERMINED naming "costing" and the gate stopped nothing. The engine says the costing
  * is "injected by whatever runs it", and that the only calculator is
  * 09-app/backend/src/modules/survey/costing/job-economics.cjs `costingForGate`. This is the back end injecting it.
@@ -264,7 +264,7 @@ export function gateCostingLoaded(): boolean {
  */
 export const GATE_PLACEHOLDER_CAVEAT =
   'An estimate, not a measured cost. Our overheads in it are a guess for now. ' +
-  'The surveyor and tax adviser fees are estimates, not quotes. It assumes the number of jobs Lakhbir gave ' +
+  'The surveyor and tax adviser fees are estimates, not quotes. It assumes the number of jobs the owner gave ' +
   'for this year. If we do fewer jobs than that, some jobs that lose money will pass.';
 
 export type FeeGateReading = GateDecision & { readonly placeholder_caveat: string; readonly costing_loaded: boolean };
@@ -366,7 +366,7 @@ export const ELECTION = CB.CB_ELECTION;
 export const CTA = CB.CB_CTA;
 
 /**
- * The engine's claimant readings for the window: a company, anyone filing self assessment, or — Phase 132,
+ * The engine's claimant readings for the window: a company, anyone filing self assessment, or — added later,
  * A partnership or LLP, whose date turns on whether a partner or member is a company.
  */
 export type WindowClaimant = 'company' | 'self_assessment' | 'partnership';

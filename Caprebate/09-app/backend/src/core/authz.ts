@@ -455,8 +455,8 @@ const RULES: RuleTable = {
    * sections it cannot open rather than a page it should not have.
    *
    * ACCOUNTING HAS SOMETHING TO OPEN SINCE 9 SEPTEMBER 2026. This comment read
-   * "has nothing to open yet. Its view is Phase 107"; Phase 107
-   * built /staff/finance the same week, so the note outlived its own fact. The
+   * "has nothing to open yet. Its view is Phase 107"; that view,
+   * /staff/finance, was built the same week, so the note outlived its own fact. The
    * row is unchanged and was always right — what changed is only that the
    * landing page now leads somewhere.
    */
@@ -863,7 +863,7 @@ const RULES: RuleTable = {
    * ONLY because nobody else can. There is no data protection officer role and
    * ADMIN is a super user, not an officer: whether compliance needs a role of its
    * own is the owner's question, "Do we need a compliance role separate from Admin?",
-   * and a sixth role is not ENABLED here. Phase 129 DEFINED one and switched it off —
+   * and a sixth role is not ENABLED here. One is DEFINED and switched off —
    * `DPO_RULES` and `canAsDpo` below — and while `DPO_ROLE_SWITCH` is off it reaches nothing.
    *
    * THE IDENTITY STORE IS NARROWER THAN EVERYTHING ELSE. `compliance.read` does not

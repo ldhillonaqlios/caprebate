@@ -282,7 +282,7 @@ no manager role of its own. There is no tax reviewer role either.
 **A seventh role is built but switched off. You will not find it on this page.** It is a data protection officer role.
 It would reach the compliance registers and nothing else. It would not reach the audit log or Users and roles. It would
 not reach a claim, a document or the money. While it is off, the role list does not offer it. If you try to force it
-on someone, you are refused. The message lists the six roles you can give. Lakhbir decides if it is ever switched on.
+on someone, you are refused. The message lists the six roles you can give. The owner decides if it is ever switched on.
 He asks: *"Do we need a compliance role separate from Admin?"*
 
 **Two kinds of people never get a login.**
@@ -404,14 +404,14 @@ them:
 | "Fee rule: when our fee is more than the tax saved". "Fee rule: a claim that is stopped part way". There is no minimum fee, so none is listed. | "A fee rule. If a setting could change our pricing, whoever found the setting would decide it." |
 | The introducer reward model | "An admin changes it on its own page, and not while clause 1 of the engagement letter is blank." |
 | Taking back a fee (clause 13) | "Clause 13's fee clawback stays off until its three blanks are filled in. It is a system change, not a setting." |
-| When our fee is earned | "Lakhbir decided when our fee is earned: when our report is delivered for filing. This is built in, so no setting can change it." |
+| When our fee is earned | "The owner decided when our fee is earned: when our report is delivered for filing. This is built in, so no setting can change it." |
 | Money laundering checks | "That is set on the compliance page, with a date and a source. It is checked before we take on a client." |
 | Clients agreeing to share progress | "That waits on wording our data protection officer agrees." |
 | The public referral form | The public referral form waits until our privacy notice is out. "It is not a setting." |
 | Sending invoices by email | "Turning them on is a piece of work, not a setting." |
 | The 15% level for checking quotes | "The 15% review level is fixed in how we check quotes. It is not a setting." |
 | How long we keep data | How long we keep data is fixed in the system. Our data protection officer signs it off first |
-| Staff roles and what each can do | "The staff roles, and what each can do, are built in and checked on every request. A new or wider role is for Lakhbir to decide." |
+| Staff roles and what each can do | "The staff roles, and what each can do, are built in and checked on every request. A new or wider role is for the owner to decide." |
 | Keeping a file or deleting it, for each document type | "Whether we keep a file, or read it and then delete it, is fixed for each document type. Only a system update changes it." |
 | Document types that can hold a value | Some document types can hold a claim value, a tax benefit or a fee. Such a type is never marked as holding none |
 | The facts we hold about a claim; The ways we take in information; The payer types in Rulebook F | Each is fixed. A new one needs a system update. It is not a list value |
@@ -663,13 +663,13 @@ from — a document, a page and the day it was read."
 
 **The fee controls start switched off.** Section "5 · The fee controls, and what the engagement letter says" shows:
 - our fee above the client's first-year saving — off;
-- **a minimum fee — "none — decided"**. Lakhbir decided there is no minimum fee, so the old switch here is retired;
+- **a minimum fee — "none — decided"**. The owner decided there is no minimum fee, so the old switch here is retired;
 - **a multi-site discount — "a choice, never taken off a fee by the system"**. How large it may be, and who approves it,
   are both "NOT DECIDED";
 - the break fee and the abort fee — off.
 
 Each one names the question it waits on. No screen turns them on. They are switches in the code (see A10). There is no
-smallest job size at all: "Lakhbir decided so on 1 September 2026".
+smallest job size at all: "The owner decided so on 1 September 2026".
 
 **A multi-site discount is noted, but not used.** Admin or Sales can record one on a claim, using
 `POST /staff/claims/{id}/fee-discount`. It is a share of our fee, with the reason. On the claim page, it is in the
@@ -699,11 +699,11 @@ It reads "It is Off — nothing is offered to an introducer." Three models are b
 - **Model B:** a fixed fee for each claim that succeeds. It is paid to the firm, never to a person. "Nothing is paid
   until we record that the client was told about it."
 - **Model C:** **"a share of the fee we actually invoice"**. The share is 10%. It is paid to a registered accountancy
-  firm that sent us the claim. This was Lakhbir's answer. It is owed once our fee invoice is raised. It is never owed on
+  firm that sent us the claim. This was the owner's answer. It is owed once our fee invoice is raised. It is never owed on
   a quote or an estimate. If the fee is cut under clause 13, a **reversing entry** is written. Nothing is changed or
   deleted. The solicitor is still to say if the client must be told, and how.
 
-The page says Lakhbir decides which one, if any. His question is: “Is anything paid to the accountant?”
+The page says the owner decides which one, if any. His question is: “Is anything paid to the accountant?”
 
 **Switching.** Only Admin sees "Switch it". Choose a "Model" and enter "Model B's fee per successful claim, in pounds".
 Then press **Save**. When Accounting opens the page, there is no switch. The page shows clause 1 as it still reads. It says
@@ -820,20 +820,20 @@ below has answered.
 |---|---|---|---|
 | **Free lookups** (the screens say "free lookups") | `CB_REGISTRY.precondition` (`enabled: false`) — `09-app/engine/src/calculator/shared.js` (search for `precondition`). This file is the calculator's source. Make the change there, then run `npm run page` in `09-app/engine` to build the website page from it. Never change the calculator inside `Caprebate site.html` | No free register lookup is allowed | Whoever publishes the privacy notice. It must be linked from the address question. The code asks for both |
 | **The twelve tax adviser switches** | `CB_CTA` — `09-app/engine/src/calculator/shared.js` (search for `var CB_CTA`). The names are listed in A3 | Each claim is worked out on today's reading. Nine of them would make claims bigger | **A chartered tax adviser**, one question at a time |
-| **The engagement fee check** (found in the engine) | `CB_GATE_CONFIG` (`enabled: true`, `jobs_per_year: 120`) — in the engine | **On, but it decides nothing yet.** No costing is put in, so every case is not yet known. No figure is held back. The back office never quotes a fee to a client. This check never holds back an earned fee from an invoice | Lakhbir decided "Yes" and "120". The costing is still an estimate |
+| **The engagement fee check** (found in the engine) | `CB_GATE_CONFIG` (`enabled: true`, `jobs_per_year: 120`) — in the engine | **On, but it decides nothing yet.** No costing is put in, so every case is not yet known. No figure is held back. The back office never quotes a fee to a client. This check never holds back an earned fee from an invoice | The owner decided "Yes" and "120". The costing is still an estimate |
 | **Break-even counted as too little profit** | `FUNNEL_SWITCHES.breakeven_is_insufficient_profit: false` — `09-app/backend/src/modules/assessment/funnel-session.ts:216` | "Roughly break-even", "not sure" and never asked all read the same | The tax adviser. They are asked: is roughly break-even enough profit? Is it enough for the relief to bite on? |
 | **The public referral form** | `REFERRAL_FORM` (`enabled: false`) — `src/modules/crm/introducers.ts:180` | The page does not exist. It answers as an unknown address | Whoever publishes a privacy notice for it. It must be linked from the referral form. It must tell a client what their firm sent us |
-| **A client saying yes to sharing, from the portal** | `CLIENT_SHARE_GIVE` (`enabled: true` since 24 September 2026) — `src/modules/crm/introducers.ts` | Switched on. Clients give or take back a yes in their portal. Staff can still record a yes after asking | Lakhbir decided it: ask the client first, from their portal |
+| **A client saying yes to sharing, from the portal** | `CLIENT_SHARE_GIVE` (`enabled: true` since 24 September 2026) — `src/modules/crm/introducers.ts` | Switched on. Clients give or take back a yes in their portal. Staff can still record a yes after asking | The owner decided it: ask the client first, from their portal |
 | **The fee controls** (two) | `FEE_CONTROLS` — `src/modules/claims/fee-controls.ts`: `above_benefit`, `break_and_abort`, each `enabled: false`. The minimum fee is no longer a switch. `MINIMUM_FEE_DECISION` records that it is decided as none | The fee is not capped or changed. There is no break fee and no abort fee | A pricing choice. The code names two open questions, but not a person. One asks: do we cap the fee, warn about it, or adjust the percentage? The other asks: what is the break fee, and is there ever an abort fee or a fixed fee? |
 | **Clause 13 fee clawback** | `FEE_CLAWBACK` (`enabled: false`) — `src/modules/claims/claim-record.ts` | A smaller claim raises nothing. The audit log says why | Part (a) is answered yes. The time limit is now in the letter. It reads "for so long as the claim remains open to enquiry". It still waits on clause 13's other two blanks. They are the trigger and settlements |
-| **The fee trigger** — decided | `FEE_TRIGGER` (`reading: 'REPORT_DELIVERED_FOR_FILING'`, `decided: true`) — `src/modules/crm/pipeline.ts` | Our fee is earned when our report is delivered for filing. It goes to the client or their accountant. The system reads this from the list of what we have sent. That means the client report or computation pack, on the day it was sent. If nothing was sent, the fee is not earned yet | Decided by Lakhbir. Nothing here says we file the tax return. Nothing says we sign the filing position |
+| **The fee trigger** — decided | `FEE_TRIGGER` (`reading: 'REPORT_DELIVERED_FOR_FILING'`, `decided: true`) — `src/modules/crm/pipeline.ts` | Our fee is earned when our report is delivered for filing. It goes to the client or their accountant. The system reads this from the list of what we have sent. That means the client report or computation pack, on the day it was sent. If nothing was sent, the fee is not earned yet | Decided by the owner. Nothing here says we file the tax return. Nothing says we sign the filing position |
 | **The invoice-fraud procedure** | `INVOICE_FRAUD_PROCEDURE` (`in_force: false`) — `src/modules/crm/automation.ts:124` | No invoice email and no chasing email can exist | The solicitor signs it off. The data protection officer signs it off too. So does the developer. Even then, the invoice email is **new work**, not a flag |
-| **The data protection officer role** | `DPO_ROLE_SWITCH` (`enabled: false`) — `09-app/backend/src/core/authz.ts:1089` | Nobody can hold the role. If you force it, you are refused | Lakhbir decides. He asks: "Do we need a compliance role separate from Admin?" |
+| **The data protection officer role** | `DPO_ROLE_SWITCH` (`enabled: false`) — `09-app/backend/src/core/authz.ts:1089` | Nobody can hold the role. If you force it, you are refused | The owner decides. He asks: "Do we need a compliance role separate from Admin?" |
 | **Company names kept on sale-contract uploads** | `CONVEYANCING_STRIP` (`enabled: false`) — `src/modules/assessment/conveyancing-strip.ts:64` | This covers each party named on a sale contract. It covers the replies to the buyer's questions too. Those are the questions asked before the contract. Each party is kept only as its role, such as [SELLER]. Companies are kept that way too | The data protection officer. The question is whether company names may stay on these uploads. We would still take out the people |
 | **The log of each time we share data** | `DISCLOSURE_LOG` (`enabled: false`) — `src/modules/compliance/disclosure-log.ts:61` | Nothing is noted. Where it would show who has had a client's data, it reads "NOT KEPT — this log is switched off". It never says none | The data protection officer and the solicitor. They must sign off the list "Who we pass client personal data on to" |
 | **The suggested rules for reading each document type** | `RECEIPT_RECOMMENDATIONS` (`approved: false`) — `src/modules/claims/receipt-recommendations.ts:65` | Nothing changes. Even once approved, a type cannot be sent yet. First, a system update must switch its rule on | The data protection officer: "For each new document type, what do we keep when a file comes in? Nobody may upload one until this is decided." |
-| **Customer due diligence in force** — not like the rest | *Not a code switch.* `AML_IN_SCOPE` is a dated setting, read by `src/modules/compliance/compliance.ts` (`amlInScope`, about line 216) | Nothing blocks a claim. Lakhbir said "we need to do AML check on every client". But it was left off on purpose. If it were on, no claim could leave Engagement without a finished check. That would hold up work. So keep a check for every client on the register now, with the switch off | The accountant and a solicitor. They are asked: does the law say we must have AML supervision? **Unlike the rest, an Admin can record a new dated value on the Compliance page.** We tried it on the demo with a future date. Only record it once that written answer exists. Give the answer as its source |
-| **The reward model** — also different | Switched on its own page (`B32`). It is refused there while clause 1 of the letter is blank. It covers models A, B and C (10% of our fee as invoiced) | Nothing is offered to an introducer | Lakhbir: "Is anything paid to the accountant?" |
+| **Customer due diligence in force** — not like the rest | *Not a code switch.* `AML_IN_SCOPE` is a dated setting, read by `src/modules/compliance/compliance.ts` (`amlInScope`, about line 216) | Nothing blocks a claim. The owner said "we need to do AML check on every client". But it was left off on purpose. If it were on, no claim could leave Engagement without a finished check. That would hold up work. So keep a check for every client on the register now, with the switch off | The accountant and a solicitor. They are asked: does the law say we must have AML supervision? **Unlike the rest, an Admin can record a new dated value on the Compliance page.** We tried it on the demo with a future date. Only record it once that written answer exists. Give the answer as its source |
+| **The reward model** — also different | Switched on its own page (`B32`). It is refused there while clause 1 of the letter is blank. It covers models A, B and C (10% of our fee as invoiced) | Nothing is offered to an introducer | The owner: "Is anything paid to the accountant?" |
 
 ---
 
@@ -1503,7 +1503,7 @@ line is late. The welcome card is on **Help**. Your full task list is on **Tasks
 **Reports**.
 
 **What it is for**
-The first page every staff member sees — **Home**. It answers "what do I do next", in the order Lakhbir set.
+The first page every staff member sees — **Home**. It answers "what do I do next", in the order the owner set.
 
 **Who can open it**
 Admin and Sales can open it. So can Accounting, Surveying and Read only. A client who tries is refused. A client lands
@@ -1533,7 +1533,7 @@ Address: `/staff`
 - **Pipeline** — five coloured bars, one for each group of stages, each with its number of claims. A bar opens the
   **Pipeline**. Under them, **Reports** opens the figures by month, quarter or year (`B40`).
 - **Admin** — **Users**, **Switches**, **Audit log** and **Refused sign-ins**. The **Audit log** tile reads "Checked —
-  nothing changed". Or it reads, in red, "Problem found — tell Lakhbir". **Refused sign-ins** come from the latest
+  nothing changed". Or it reads, in red, "Problem found — tell the owner". **Refused sign-ins** come from the latest
   entries of the log.
 
 A row with nothing in it says so in one line, such as "No new leads." That way you can tell empty from broken.
@@ -1944,7 +1944,7 @@ Address: /staff/users (the **Settings** tab → **Users**; or **Your account** �
 1. *A salesperson moves to Accounting. When does their Sales access stop?* The moment you press Assign: "Changing a role signs that person out at once."
 2. *A client's accountant asks for a login. What do you do?* Nothing on this page. The client's accountant never gets a login; they are a contact.
 3. *A colleague's display name is misspelt. Can you correct it?* No. They correct it on their own Settings page.
-4. *The data protection officer asks for a login of their own. Can you give one?* Not yet. The role is built but switched off, so it is not in the role list. It waits on Lakhbir's decision. Until then the registers stay with Admin.
+4. *The data protection officer asks for a login of their own. Can you give one?* Not yet. The role is built but switched off, so it is not in the role list. It waits on the owner's decision. Until then the registers stay with Admin.
 
 ---
 
@@ -2664,7 +2664,7 @@ Address: `/staff/documents/{document}`
 
 **What it will refuse, and why**
 - A role the type does not let in is refused. For example, Accounting, or a surveyor not on the job, opening a lease. The refusal is logged.
-- Admin may ask for the original. The answer is "We read each file and then delete it. We keep what we took from it, not the file." The page offers **See what we took from it**. Keeping originals is switched off for now. It stays off until Lakhbir and the data protection officer decide (see `B47`).
+- Admin may ask for the original. The answer is "We read each file and then delete it. We keep what we took from it, not the file." The page offers **See what we took from it**. Keeping originals is switched off for now. It stays off until the owner and the data protection officer decide (see `B47`).
 - A new version must be the same type. If not: "a new version of … must be of the same type."
 - Ending a link twice: "that link has already been ended."
 
@@ -2679,7 +2679,7 @@ same address is refused.
 **Check yourself**
 - *Why does the page name "the client" rather than a person?* — Versions record a role, never a name.
 - *A newer lease arrives. What happens to the old one?* — It stays as version 1. Nothing is overwritten.
-- *Can Admin download the original?* — Not today. It was deleted on purpose once it was read. Lakhbir may switch on keeping originals. Then Admin can open one until its time is up.
+- *Can Admin download the original?* — Not today. It was deleted on purpose once it was read. The owner may switch on keeping originals. Then Admin can open one until its time is up.
 
 ---
 
@@ -2809,7 +2809,7 @@ Address: /staff/introducer-rewards
 
 **How to do the common job**
 1. Read the wording of clause 1 near the top. Above it is the state, such as "It is Off — nothing is offered to an introducer."
-2. Wait until Lakhbir has decided and clause 1 of the letter is complete. Then choose a "Model" under "Switch it". If it is B, enter "Model B's fee per successful claim, in pounds". Press **Save**.
+2. Wait until the owner has decided and clause 1 of the letter is complete. Then choose a "Model" under "Switch it". If it is B, enter "Model B's fee per successful claim, in pounds". Press **Save**.
 3. Under model B, a fee appears in "Fees to introducers" when a referred claim closes. Sales or Admin records that the client was told about it. Only after that may Admin or Accounting mark it settled. (No fee exists on the demo, so these controls could not be seen.)
 
 **What it will refuse, and why**
@@ -2824,7 +2824,7 @@ Address: /staff/introducer-rewards
 3. Sign in as Accounting and open the page. *Observed:* it opens, shows "It is Off", and has no "Switch it" section.
 
 **Check yourself**
-1. *Who decides whether a firm is paid?* Lakhbir ("Is anything paid to the accountant?"). Clause 1 of the letter must be complete first.
+1. *Who decides whether a firm is paid?* The owner ("Is anything paid to the accountant?"). Clause 1 of the letter must be complete first.
 2. *Can Accounting switch the model?* No. Accounting reads the page. It can mark a fee settled, but only once the client has been told.
 3. *Under model B, when may a fee be paid?* Only once we have recorded that the client was told.
 4. *Under model C, a clause 13 credit note reduces our fee. What happens to the firm's 10%?* We write a new entry beside the first one. It takes back 10% of the amount credited. The first entry is never edited or deleted.
@@ -3072,7 +3072,7 @@ Last comes **What a setting may not change**. Only the section you choose shows.
 1. Under Lead sources, set **OUTBOUND** to retired and press Save. *Observed:* its state reads "retired", and the Leads page no longer offers Outbound.
 2. Relabel **WEBSITE** to *Our website*. *Observed:* saved, and Leads now shows "Our website". It has no retire option. When forced, it said no. The system writes this value itself, so it is never retired.
 3. Under Property types, add Code *HOSPICE*, Label *Hospice*. *Observed:* added, active.
-4. Under "Ask to change one anyway", choose **When our fee is earned** and press **Ask**. *Observed:* "Not a setting — Lakhbir decided when our fee is earned: when our report is delivered for filing. This is built in, so no setting can change it."
+4. Under "Ask to change one anyway", choose **When our fee is earned** and press **Ask**. *Observed:* "Not a setting — The owner decided when our fee is earned: when our report is delivered for filing. This is built in, so no setting can change it."
 
 **Check yourself**
 1. *Why can a value be retired but never deleted?* Old records name its code. Deleting it would leave those records pointing at nothing.
@@ -3253,7 +3253,7 @@ Address: `/staff/clients/{company}/files` — or press **Files** at the top of t
 **Why the original says "Read and then deleted"**
 
 We read every file and keep what we need from it. Then we delete the file itself. That is our promise to keep as
-little as we can. We have built a way to keep the originals, but it is switched off. Lakhbir has said to keep them for
+little as we can. We have built a way to keep the originals, but it is switched off. The owner has said to keep them for
 seven years. Admin, Sales and our privacy officer may see them. The officer must agree first. The
 question is:
 - *"How long do we keep the files clients upload, and who may open them?"*
@@ -3319,8 +3319,8 @@ can also press it on a lead card. You can press it on a claim too, and then that
 - A refusal keeps what you typed. You can fix it and save again.
 
 **Why it is not sent yet**
-The email service is chosen: IONOS. The mailbox contact@caprebate.co.uk is set up, and Sadique reads it. A test
-email reached Lakhbir on 24 September 2026. One thing must still be true first, and it is for Lakhbir to do:
+The email service is chosen: IONOS. The mailbox contact@caprebate.co.uk is set up, and the data protection officer reads it. A test
+email reached the owner on 24 September 2026. One thing must still be true first, and it is for the owner to do:
 - Name IONOS in the privacy notice and in the engagement letter.
 
 The sending is built. It stays switched off until then. An email saved while it is off will never go out later by
@@ -3351,7 +3351,7 @@ client. The client reads and answers in their portal. They can send a file with 
 **Who can open it**
 Admin and Sales, on the client's page, under **Chat**. The client sees only **With the client**. In their portal it is
 called **Messages**. A surveyor can read **With the client**, but never **Team only**. They read it on a **Messages**
-tab of their survey job. This is only for a company where they have a job. They cannot write on it. Lakhbir decided
+tab of their survey job. This is only for a company where they have a job. They cannot write on it. The owner decided
 this on 22 September 2026. Accounting and the view-only login see neither tab.
 
 Address: `/staff/clients/{company}#chat`. **Team only** is `?chat=team`, and **With the client** is `?chat=client`.
@@ -3397,7 +3397,7 @@ emailed, and nothing waits to be sent. The line under **Send to the client** say
 
 **Old messages are cleaned up after seven years (switched on 22 September 2026)**
 
-Lakhbir set the period: **seven years**. A company with a claim keeps its messages for seven years from the claim's own
+The owner set the period: **seven years**. A company with a claim keeps its messages for seven years from the claim's own
 date. That date is its accounting period end or our report, whichever is later. A company that never had a claim keeps
 them for seven years after its last message. Nothing written today is due before 2033. A file sent with a message stays
 in **Files**. Nothing else can delete a message.
@@ -3496,7 +3496,7 @@ NHS paying £40,000 towards "the new treatment rooms", and mark it matched. The 
 
 ### Training — `B51` plain words on every screen
 
-Lakhbir set the aim on 18 September 2026. The back office "needs to be readable at a 12-year-old level and to the
+The owner set the aim on 18 September 2026. The back office "needs to be readable at a 12-year-old level and to the
 point".
 
 **What it is for**
@@ -3555,7 +3555,7 @@ Everybody. This is how every screen reads, for every role and for the client. Th
 1. Use the screens as before. Where this guide quotes a screen, the words now match.
 2. An older note, email or training sheet may use an old word. Find that word in the table above. The new word beside
    it is the one on screen.
-3. **If you see a word on a screen you do not understand, tell Lakhbir.** That is a fault in the wording, not in you.
+3. **If you see a word on a screen you do not understand, tell the owner.** That is a fault in the wording, not in you.
 
 **What it refuses, and why**
 - Nothing new is refused. Every refusal says the same thing as before, in plainer words. For example: "No rule can
@@ -3570,7 +3570,7 @@ Everybody. This is how every screen reads, for every role and for the client. Th
 - *A retention row says "No deletion date set yet". Does that mean it is kept for ever?* — No. It means no date has
   been set. Nothing is deleted on a date, and nothing is promised kept.
 - *A claim has no estimate yet. Is it counted as £0 on Reports?* — No. It is counted on its own, and the tile says so.
-- *A screen uses a word you do not understand. What do you do?* — Tell Lakhbir.
+- *A screen uses a word you do not understand. What do you do?* — Tell the owner.
 
 ---
 

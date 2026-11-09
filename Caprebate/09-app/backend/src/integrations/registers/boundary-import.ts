@@ -448,7 +448,7 @@ function permissionFor(
  * nothing else in this file. Every function that needs a permission defaults
  * to reading it here.
  *
- * DECIDED, Phase 132e. Until this phase the value
+ * DECIDED. Until the decision the value
  * below was the same outcome, but only as an unconfirmed default. It is now a
  * recorded decision:
  *   - Decided by the owner, Head of Business Development. His answer "Yes" to "Switch on
@@ -473,8 +473,8 @@ function permissionFor(
  * Polygons was built, and left switched off
  * at 09-app/backend/src/connectors/inspire.ts. The data protection officer's
  * question on small, logged test lookups was answered by the owner on 25
- * (yes, on five conditions), and Phase 151l
- * built the first download as a test lookup under them: `smoke HMLR_INSPIRE`
+ * (yes, on five conditions), and
+ * the first download is built as a test lookup under them: `smoke HMLR_INSPIRE`
  * in the back end, which switches the fetcher on for its one call and never
  * touches this module. Switching fetching on for the application is the owner's
  * decision; a PASS from that test lookup, which proves the file's shape, comes
@@ -484,7 +484,7 @@ export const CURRENT_LICENCE_PERMISSION: LicencePermission = {
   outcome: 'INTERNAL_CALCULATION_ONLY',
   allow_internal_calculation: true,
   allow_report_reproduction: false,
-  decided_by: 'Lakhbir Dhillon, Head of Business Development',
+  decided_by: 'The owner (Head of Business Development)',
   decided_at: '2026-09-15',
   decision_record:
     'Answer "Yes" in caprebate-questions.md, question "Switch on automatic site area from the land ' +
@@ -588,7 +588,7 @@ export function checkBoundaryUse(
              Word question "May the site area we work out from a land boundary go in a client's report?". */
           reason:
             'Refused: boundary maps stay out of client reports. The boundary may be used for internal ' +
-            'calculation only. A site area worked out from it is for our own checks too, until Lakhbir decides ' +
+            'calculation only. A site area worked out from it is for our own checks too, until the owner decides ' +
             'whether the number may go in a client report. The map, an image of it and its coordinates never may.',
         };
   }
@@ -898,7 +898,7 @@ function emptyStub<T>(dataset_id: string, notes: string): ReferenceTableStub<T> 
   return Object.freeze({ dataset_id, loaded: false, rows: Object.freeze([]) as readonly T[], notes });
 }
 
-/** Empty. No data pulled, and none is kept here: the Phase 150 fetcher reads a council's file for one point and keeps only that polygon. */
+/** Empty. No data pulled, and none is kept here: the land boundary fetcher reads a council's file for one point and keeps only that polygon. */
 export const HMLR_INSPIRE_INDEX_POLYGON_TABLE: ReferenceTableStub<unknown> = emptyStub(
   'HMLR_INSPIRE_INDEX_POLYGON',
   'Empty stub — board item 12830205914 licence pending. No live rows have ever been loaded here.',

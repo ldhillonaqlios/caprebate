@@ -450,8 +450,8 @@ describe('THE BREACH REGISTER — the four facts, no policy in force, and attemp
       assert.ok(sheet.sections.flatMap((s) => s.lines).some((l) => l.answer.startsWith('NOT SET')));
       // Phase 133i, 18 Sep 2026: the officer is the named contact; Lakhbir Dhillon only as the breach deputy.
       const contact = sheet.sections.flatMap((s) => s.lines).find((l) => l.field === 'Named contact')?.answer ?? '';
-      assert.match(contact, /^Sadique Maskeen, Data Protection Officer/);
-      assert.match(contact, /deputy[^—]*Lakhbir Dhillon/);
+      assert.match(contact, /^The data protection officer/);
+      assert.match(contact, /deputy[^—]*the owner \(Head of Business Development\)/);
     } finally { a.close(); }
   });
 

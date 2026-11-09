@@ -42,7 +42,7 @@
    ---------------------------------------------------------------------------
    WHAT ALREADY EXISTED, BECAUSE THE PHASE PROMPT SAID NOTHING DID
 
-   The Phase 100 prompt asserted "THERE IS NO PER-JOB COST MODEL ANYWHERE" and
+   The prompt for this work asserted "THERE IS NO PER-JOB COST MODEL ANYWHERE" and
    "nothing computes what one job costs to produce". Re-derived,
    that is not quite right and the correction matters:
 
@@ -86,7 +86,7 @@
    THE RULE THIS FILE OBEYS, AND IT IS THE SAME ONE AS EVERYWHERE ELSE
 
    NO RATE IS RESTATED HERE. The fee rate belongs to CB_FEE in the shipped
-   engine (a flat 3% of allowances identified: the basis is Q55, Phase 74; the
+   engine (a flat 3% of allowances identified: the basis is Q55; the
    3% is the owner's answer read 15 September 2026, built). Sector yield bands belong
    to Rulebook I. Tax rates belong to CB_RATES and the benefit model to
    CB_BENEFIT. Every one of them is INJECTED. Pass the wrong one and the
@@ -98,14 +98,14 @@
    midpoint, or a pass. Read PARAMS.homedata_cost_per_lookup below: while it
    was null, reading it through cost functions yielded a result flagged
    known:false, and nothing silently treated a missing cost as a free one.
-   (Updated, Phase 153:
+   (Updated:
    it is 0.08 - Homedata's 8p list price, not a price on an account - and
    homedata_cost_per_lookup_basis says so in every result that reads it. The
    reader still returns known:false for a value that is not a number. The
    rule still shows in PARAMS.overhead_per_year and
    PARAMS.surveyor_review_and_sign_quote, which are null.)
-   (Updated 6 October 2026, Phase 157b: the 8p was read once on 23 September and
-   never read again, while Phase 156f changed what we call. It is now 17p a
+   (Updated 6 October 2026: the 8p was read once on 23 September and
+   never read again, while what we call changed. It is now 17p a
    property after signing, the price on our own account, and a separate 2p
    address search before signing is modelled - PARAMS below.)
 
@@ -285,7 +285,7 @@ const PARAMS = {
   /* ------------------------------------------------------------------------
      THE ADDRESS LOOKUP (Homedata). A COST OF A SIGNED JOB, ONCE PER PROPERTY.
 
-     REWRITTEN BY PHASE 147. Until then this comment, the
+     REWRITTEN. Until then this comment, the
      function that reads it and section 6 of the .md modelled the lookup as the
      one cost spent BEFORE a client signs: fired per property on every enquiry,
      charged four times over to the one enquiry in four that converts, and
@@ -301,7 +301,7 @@ const PARAMS = {
      that has landed, beside the £50 data line. It is NOT a loading on the
      enquiries that failed, and nothing here charges it to them.
 
-     CORRECTED. Since Phase 156f an enquiry that
+     CORRECTED. Now an enquiry that
      never signs CAN cost something: "Find my address" at the assessment is a
      Homedata postcode search, 2p, capped at 50 a day (£1). That is a different
      call, before signing, and it is modelled on its own below
@@ -344,8 +344,8 @@ const PARAMS = {
   /* ------------------------------------------------------------------------
      THE ADDRESS SEARCH AT THE ASSESSMENT ("Find my address").
 
-     BEFORE SIGNING, AND SO CHARGED TO THE ENQUIRIES BEHIND A SIGNED JOB. Since
-     Phase 156f a person who presses "Find my address" makes one Homedata
+     BEFORE SIGNING, AND SO CHARGED TO THE ENQUIRIES BEHIND A SIGNED JOB. Now
+     a person who presses "Find my address" makes one Homedata
      postcode search: 2 tokens, 2p, the postcode only. It is capped: 50 a UK day
      (£1) and 5 for one visitor (ADDRESS_SEARCH_CAP in
      09-app/backend/src/connectors/address-lookup.ts). So the most it can cost
@@ -624,7 +624,7 @@ function addressSearchCost(opts) {
 /* =============================================================================
    5. WHERE EACH ROUTE STOPS PAYING FOR ITSELF
 
-   The fee is a percentage of ALLOWANCES IDENTIFIED (Q55, Phase 74, and
+   The fee is a percentage of ALLOWANCES IDENTIFIED (Q55, and
    CB_FEE.RATE in the shipped engine). So the allowances figure at which a route
    breaks even is simply:
 
@@ -982,8 +982,8 @@ function reproducePublishedPaper(opts) {
    WHY THIS SECTION EXISTS. Sections 5 to 8 above answer "where does a job stop
    paying US". They do not price a job. Five documents on the board DO price
    jobs, and every fee figure in them was computed on LIFETIME RELIEF — the base
-   the fee-basis options paper recommended and Q55 did not choose. Phase 101
-   banned quoting from them; this section is what makes their numbers derivable
+   the fee-basis options paper recommended and Q55 did not choose. Quoting
+   from them is banned; this section is what makes their numbers derivable
    again, so that no replacement figure is typed by hand into prose.
 
    THE ONE THING TO UNDERSTAND BEFORE READING ANY FUNCTION HERE.
@@ -1033,7 +1033,7 @@ const FEE_DECISION = {
     asked: "the largest discount and who approves it",
     applied_automatically: false
   },
-  decided_by: "Lakhbir Dhillon",
+  decided_by: "The owner (Head of Business Development)",
   answer_read: "2026-09-15",
   built: "2026-09-16"
 };
@@ -1280,7 +1280,7 @@ function priceJobBothReadings(sectorId, routeId, purchasePrice, yieldRate,
     /* Resolved, and named. */
     decided_reading: "minimum_withdrawn",
     decision: "there is no minimum fee: a flat percentage of the allowances "+
-      "identified, with no bands (Lakhbir Dhillon, answer read 15 September "+
+      "identified, with no bands (the owner, answer read 15 September "+
       "2026). The old question - whether the launch minimum survived the 1 "+
       "September 2026 no-minimum-job-size decision - is closed."
   };
@@ -1368,7 +1368,7 @@ function effectiveRateOnLifetimeRelief(fee, allowances, taxRate) {
    ============================================================================= */
 
 /* =============================================================================
-   10. THE ENGAGEMENT GATE'S COST INPUT — PHASE 113d, board item 13005159647
+   10. THE ENGAGEMENT GATE'S COST INPUT — board item 13005159647
 
    THE GATE ITSELF IS NOT HERE. It lives in the site engine, as CB_GATE, next
    to the fee module whose quote it withholds. What lives here is the ONE thing
@@ -1411,8 +1411,8 @@ const GATE = {
 
   /* S7.3, second requirement: the CURRENT YEAR'S ACTUAL job volume, not an
      assumed 100. SUPPLIED: the owner gave 120 jobs
-     this year when he switched the gate on (answer read that day, built by
-     Phase 132e). It was null until then. The site's
+     this year when he switched the gate on (answer read that day, built
+     then). It was null until then. The site's
      CB_GATE_CONFIG.jobs_per_year restates it and Suite T asserts the two agree.
      120 is about five to seven times the business plan's own volume (16 in
      year one; the papers use 25), so the warning below applies to it.

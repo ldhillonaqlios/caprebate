@@ -35,7 +35,7 @@ export const DP_MAIL = 'data.protection@caprebate.co.uk';
 /** Complaints from one network address in the 15-minute window, before the form says to wait. */
 export const COMPLAINT_SOURCE_LIMIT = 10;
 
-/* The eight facts Phase 160f proposed are confirmed by the data protection officer
+/* The eight facts the notices proposed are confirmed by the data protection officer
   , so the page is no longer a draft; the banner says only where it is. */
 const BANNER = '<p class="draft-banner" role="note"><strong>Our test website.</strong> It holds invented information '
   + 'only. Our public website will carry this page too.</p>';

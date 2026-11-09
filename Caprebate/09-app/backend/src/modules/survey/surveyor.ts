@@ -482,7 +482,7 @@ function libraryFor(db: Db, surveyor_id: string): RateLibrary {
      * NOTHING_PROPOSED. Skipping the refused ones here rather than catching
      * the exception is deliberate: a caught exception in a rebuild loop hides
      * the day the rule changes. THE COST OF THAT CHOICE is that this line
-     * restates the rule, and when Phase 107a widened the module's guard this
+     * restates the rule, and when the module's guard was widened this
      * line still had the old one — so every first figure a surveyor entered
      * was learned by the module and then dropped here, and the library still
      * looked empty. The suite caught it; nothing else would have.
@@ -507,8 +507,8 @@ function libraryFor(db: Db, surveyor_id: string): RateLibrary {
  * PLATFORM_DEFAULT + UNTOUCHED — false, and refused. THE LIBRARY COULD NEVER
  * ACQUIRE A FIRST ENTRY, so nobody's figures ever came back to them.
  *
- * Phase 107 answered that one case here, in application code, and said in terms
- * that the module was the right place for it. Phase 107a added
+ * That one case was first answered here, in application code, saying in terms
+ * that the module was the right place for it. A later change added
  * `NOTHING_PROPOSED` to the module, worked out what all five metrics do with it
  * (they exclude it by construction, and `adoption` now counts it on its own
  * line), and the call site below is `propose` again with nothing wrapped round
@@ -856,8 +856,8 @@ function recordRates(
      */
     const prior = own !== null && own !== undefined && own.value !== 0 ? own.value : null;
     /**
-     * THE ORIGIN IS THE TRUTH ABOUT WHAT WAS ON THE SCREEN, and since Phase
-     * 107a the module can express all of it. `NOTHING_PROPOSED` where the box
+     * THE ORIGIN IS THE TRUTH ABOUT WHAT WAS ON THE SCREEN, and now
+     * the module can express all of it. `NOTHING_PROPOSED` where the box
      * was empty — which in this build is every first figure, because there are
      * no platform defaults — and `SURVEYOR_LIBRARY` where we put their own
      * earlier figure in front of them. `PLATFORM_DEFAULT` is deliberately
@@ -1119,7 +1119,7 @@ export type Evidence = {
  * `business.read` and is the entitlement that actually applies: these are the
  * papers of a job they are doing.
  *
- * THE MISSING LIST IS `missingFacts` FILTERED, NOT REBUILT. Phase 106 derived
+ * THE MISSING LIST IS `missingFacts` FILTERED, NOT REBUILT. The back office derived
  * it from the engine and classified what each fact blocks, with anything
  * unrecognised reported as blocking BOTH packs rather than neither. Writing a
  * second one here is how the two would drift, so this takes that list and

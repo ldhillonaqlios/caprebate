@@ -1,7 +1,7 @@
 /**
  * THE AUTHENTICATOR APP'S SECRET, SEALED AT REST.
  *
- * Phase 151j kept the shared secret of a person's authenticator app as text: `users.mfa_secret`, and while they set it
+ * The shared secret of a person's authenticator app was first kept as text: `users.mfa_secret`, and while they set it
  * up `sign_in_steps.pending_secret`. Anybody who could read the database could then make that person's codes. So the
  * secret is now SEALED with AES-256-GCM under a key read the way every other key is read (src/core/secrets.ts): the name
  * CAPREBATE_MFA_KEY in the key file outside the repository (never a key file inside it), or on the test website its

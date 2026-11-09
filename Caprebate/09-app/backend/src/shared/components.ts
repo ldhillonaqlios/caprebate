@@ -162,7 +162,7 @@ export function clientStageBar(steps: readonly { readonly label: string; readonl
 }
 
 /**
- * A TAB'S id IS ITS ANCHOR. The four record pages use details, related and activity; Phase 133b's screens name their own
+ * A TAB'S id IS ITS ANCHOR. The four record pages use details, related and activity; the longer screens name their own
  * (a business page's sources, a survey job's figures, finance's VAT). An id must be unique on its page and must not be an
  * id a form field already uses — the phase133b test opens every tab link and finds its panel.
  */
@@ -201,7 +201,7 @@ export function sectionList(label: string, sections: readonly RecordTab[]): Safe
 export type QuickAction = { readonly href: string; readonly label: string };
 
 /**
- * The right-hand panel: PHASE 133c puts the next STEP first where the page has one (a claim's move, a lead's checks), then
+ * The right-hand panel puts the next STEP first where the page has one (a claim's move, a lead's checks), then
  * the next action, then quick actions. A quick action is passed only when its form is on the page.
  */
 export function sidePanel(next: Safe | null, actions: readonly QuickAction[], extra: Safe = raw(''), step: Safe = raw('')): Safe {

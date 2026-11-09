@@ -10,7 +10,7 @@
  * CHECKED BEFORE WRITING THEM DOWN, on 17 September 2026:
  *   · against the brand book's avoid list (slide 15): no "guaranteed", "HMRC approved", "we get you", "capital gains",
  *     and no "rebate" as a refund — test/phase133c.test.ts greps the portal under both switch positions;
- *   · against the open solicitor point on whether we submit anything on a client's behalf (register SDP, Phase 132e,
+ *   · against the open solicitor point on whether we submit anything on a client's behalf (register SDP,
  *     point 1): "5 Claim filed" says the claim is filed and NOT who files it, so it promises neither answer.
  *
  * A STEP'S NAME CHANGES; ITS MEANING DOES NOT. The key, the order and what counts as done are stages.ts's, unchanged.

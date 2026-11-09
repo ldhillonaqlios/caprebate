@@ -1,5 +1,5 @@
 /**
- * WHO APPROVED EACH LEGAL PAGE, AND WHO AGREED TO THE TERMS — PHASE 161g, 5 November 2026 (migration 121).
+ * WHO APPROVED EACH LEGAL PAGE, AND WHO AGREED TO THE TERMS — 5 November 2026 (migration 121).
  *
  * APPROVALS. The owner: the legal pages are built ready for the live website "but not switched on ... each
  * page shows the 'Draft' line until an approval is recorded (who approved it, and the date, kept in the database and

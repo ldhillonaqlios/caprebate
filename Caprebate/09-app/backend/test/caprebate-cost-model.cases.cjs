@@ -1972,7 +1972,7 @@ test("H22 the result carries the method on its face, so a report can state it", 
 test("I5-1 the working method is recorded as whole-building", () => {
   assert.equal(M.CB_P9_WORKING_METHOD.depreciation_method,
     M.DEPRECIATION_METHOD.WHOLE_BUILDING);
-  assert.equal(M.CB_P9_WORKING_METHOD.stated_by, "Lakhbir Dhillon (Head of Business Development)");
+  assert.equal(M.CB_P9_WORKING_METHOD.stated_by, "The owner (Head of Business Development)");
   assert.doesNotMatch(M.CB_P9_WORKING_METHOD.stated_by, /controller|director|principal/i);
 });
 

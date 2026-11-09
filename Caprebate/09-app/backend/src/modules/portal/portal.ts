@@ -150,7 +150,7 @@ export type ShownRangeView = {
  * The client's own copy of the figure they were given.
  *
  * IT IS THE SAME COLUMN PAIR THE BACK OFFICE READS, formatted by the same
- * function. Phase 105's brief: "If the staff view and the client view of the
+ * function. The booking work's brief: "If the staff view and the client view of the
  * same number ever differ, that is a defect, and a test should assert they do
  * not." A number the client can see and a number a staff member quotes on the
  * telephone have to be one number, and the only way to be sure of that is for
@@ -249,7 +249,7 @@ export function documentRequests(db: Db, actor: Actor, business_id: string, nowI
  *
  * ONE — `answered_by_role = 'CLIENT'`. An answer typed by a staff member on the
  * client's behalf is a different fact from an answer the client gave, and a
- * claim file that cannot tell them apart cannot be defended. Phase 106 writes
+ * claim file that cannot tell them apart cannot be defended. The back office writes
  * 'STAFF' on the other side of the same column.
  *
  * TWO — "I don't know" IS AN ANSWER. It is stored as DONT_KNOW with a null
@@ -335,9 +335,9 @@ export function stageInWords(key: string | null): string {
 }
 
 /* ============================================================================ *
- * 3b · THE CLIENT MOVES THEIR OWN CALL          Phase 113a
+ * 3b · THE CLIENT MOVES THEIR OWN CALL
  *
- * WHY THIS EXISTS. Phase 105 built the picker at the funnel close and the staff
+ * WHY THIS EXISTS. The funnel close had a picker and the staff had their
  * side of moving a booking. The portal showed a client their appointment and
  * gave them no way to change it, so the only route was to telephone us — which
  * is the one thing a portal exists to avoid. A client who cannot move a call
@@ -365,13 +365,13 @@ export function stageInWords(key: string | null): string {
  *   is the whole of the mutation, and the staff calendar reads it back.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * TWO DECISIONS THIS JOB HAD TO MAKE — BOTH REVISED BY PHASE 132e
+ * TWO DECISIONS THIS JOB HAD TO MAKE — BOTH REVISED ON THE OWNER'S ANSWER
  *
  * The owner, answering "How late may a client move their own
  * call, and may they cancel it outright?": "Give the client full control to
  * cancel at any time, and rebook at a time that suits them".
  *
- * 1 · HOW LATE MAY THEY MOVE IT — AT ANY TIME. Until Phase 132e a call inside
+ * 1 · HOW LATE MAY THEY MOVE IT — AT ANY TIME. Until that answer a call inside
  *     two hours could not be moved, released or cancelled here. That refusal is
  *     gone for the call the client already holds. What stays is the rule for the
  *     NEW time a client picks: it must be at least two hours away
@@ -379,7 +379,7 @@ export function stageInWords(key: string | null): string {
  *     about it. A call that has already passed may be moved to a new time too —
  *     a missed call is exactly the one somebody wants to rebook.
  *
- * 2 · MAY THEY CANCEL — YES, AT ANY TIME, AND THE TIMES COME FIRST. Phase 113a
+ * 2 · MAY THEY CANCEL — YES, AT ANY TIME, AND THE TIMES COME FIRST. This file first
  *     refused a self-service cancellation on the reasoning that it turns a lead
  *     cold. The decision now belongs to the client. The screen still offers new
  *     times first, then "ring me instead" (`releaseOwnBooking`), and only then

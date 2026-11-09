@@ -3,7 +3,7 @@
  *
  * the owner: "we then need a CTA next to where it says 'tell the client' when this is clicked the stage moves along and it
  * then notifies the client on their portal and email to let them know that Cap rebate has collected this information and
- * we are moving on to the next phase". Asked how the stage should move, Lakhbir chose "Move it when allowed": through the
+ * we are moving on to the next phase". Asked how the stage should move, the owner chose "Move it when allowed": through the
  * usual checks, and if one blocks, the client is still told and staff see what is stopping the move.
  *
  * ONE PRESS, THREE THINGS, IN THIS ORDER:

@@ -13,7 +13,7 @@
  *     4 Oct 2026: to read how long a call lasted and who came, two more - added by the owner and used by
  *     zoomPastCall:
  *     meeting:read:past_meeting:admin (GET /v2/past_meetings/{meetingId}: its duration) and
- *     meeting:read:list_past_participants:admin (GET /v2/past_meetings/{meetingId}/participants). Phase 156 A6.
+ *     meeting:read:list_past_participants:admin (GET /v2/past_meetings/{meetingId}/participants). Zoom check A6.
  *     EACH CALL HAS ITS OWN HOST: the meeting is made under the assigned member of staff's email, which
  *     must be a user on our Zoom account (a paid licence each, for calls over 40 minutes).
  *   · a MEETING SDK app — ZOOM_SDK_CLIENT_ID, ZOOM_SDK_CLIENT_SECRET. Its secret signs each join ON THIS SERVER (a JWT,

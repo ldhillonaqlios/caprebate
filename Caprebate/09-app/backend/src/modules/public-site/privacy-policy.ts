@@ -1,7 +1,7 @@
 /**
  * THE PRIVACY POLICY AND THE CLIENT'S PORTAL TERMS. Both DRAFTS.
  *
- * The owner: "draft the privacy policy" (from the Phase 160f notice, for the live website and the client
+ * The owner: "draft the privacy policy" (from the public notice, for the live website and the client
  * portal) and "draft the client's terms and their links". src/modules/public-site/legal-pages.ts serves them with the other legal
  * pages, each with its Draft line until an approval is recorded (src/modules/compliance/legal-approvals.ts).
  *
