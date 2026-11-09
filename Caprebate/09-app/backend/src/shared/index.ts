@@ -19,6 +19,7 @@ export { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE, READ_AND_DELETED, sealKeyF
 export { PAGE, buildCanvasPdf, textWidth, wrapText } from './pdf-canvas.ts';
 export { buildPdf, flow } from './pdf.ts';
 export { plainDashLines, plainDashText, plainDashes } from './plain-dashes.ts';
+export { onTestWebsite } from './test-website.ts';
 export { RANGE_QUALIFIER, formatPence, formatShownRange, toPence } from './shown-range.ts';
 export { SIGNATURE_PAD_JS } from './signature-pad-script.ts';
 export { CLOSED_STAGE, EXITS, EXIT_KEYS, LEGACY_STAGE_TO_PROCEDURE, ON_HOLD_STAGE, PROCEDURE_KEYS, PROCEDURE_STAGES, STAGES, anyStageLabel, claimStage, clientStageFor, exitStage, nextProcedureKey, procedureIndex, procedureStage, progressFor, stage, stageIndex } from './stages.ts';
@@ -33,4 +34,5 @@ export type { FsObjectStore } from './objectstore.ts';
 export type { Op, PdfFont, Rgb } from './pdf-canvas.ts';
 export type { PdfLine } from './pdf.ts';
 export type { ShownRange } from './shown-range.ts';
+export type { Env } from './test-website.ts';
 export type { ExitKey, ProcedureKey, Progress, StageKey } from './stages.ts';

@@ -10,12 +10,11 @@
  * Only a live connection is ever refused: a test's recorded answers, or its own mail server, reach nobody.
  */
 
-export type Env = Readonly<Record<string, string | undefined>>;
-
-/** True on the deployed test website: Vercel sets these three on its own servers, for a live or a preview deploy. */
-export function onTestWebsite(env: Env = process.env): boolean {
-  return env['VERCEL'] === '1' && (env['VERCEL_ENV'] === 'production' || env['VERCEL_ENV'] === 'preview') && (env['VERCEL_URL'] ?? '').trim() !== '';
-}
+// The test website's own reading lives in the shared parts (src/shared/test-website.ts, Phase 161l), as the money
+// readings ask it too; it is named here as before, so every caller of this file reads the same function.
+import { onTestWebsite, type Env } from '../../shared/index.ts';
+export { onTestWebsite };
+export type { Env };
 
 /**
  * Why THIS copy may not use a service, in words, or null when it may. `live` is whether the connection would really

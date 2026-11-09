@@ -1424,6 +1424,10 @@
    "area": "shared",
    "kind": "logic"
   },
+  "src/shared/test-website.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
   "src/shared/upload-handler-port.ts": {
    "area": "shared",
    "kind": "logic"
