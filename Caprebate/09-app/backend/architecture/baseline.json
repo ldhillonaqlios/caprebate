@@ -14,7 +14,6 @@
     "src/core/upload-pieces.ts -> src/modules/claims/upload-handler-port.ts",
     "src/integrations/connectors/boundary-test-lookup.ts -> src/modules/claims/data.ts",
     "src/integrations/connectors/nations.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/register-files.ts -> src/modules/claims/register-files.ts",
     "src/integrations/connectors/site-area.ts -> src/modules/claims/data.ts",
     "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts",
     "src/modules/assessment/conveyancing-strip.ts -> src/modules/claims/upload-handler-port.ts"

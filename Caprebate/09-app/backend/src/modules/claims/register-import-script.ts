@@ -3,7 +3,7 @@
  *
  * Why it exists: the Scottish datastore is about 10 MB and the test website takes about 4.5 MB a request. So, when an
  * import form is sent, this reads the chosen file here, in the publisher's own encoding (the Scottish file is
- * Windows-1252), keeps only the columns named on the form (`data-columns`: the ones src/modules/claims/register-files.ts reads),
+ * Windows-1252), keeps only the columns named on the form (`data-columns`: the ones src/integrations/registers/file-registers.ts reads),
  * and sends that as UTF-8 with `trimmed=1`. Names, telephone numbers and emails in the file never leave this computer.
  * A column the file does not have is simply not sent, so the server refuses the import whole and names it (N4).
  * With no script, the form still works as a plain upload for a file under 4.4 MB.

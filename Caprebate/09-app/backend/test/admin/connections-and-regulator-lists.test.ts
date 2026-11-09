@@ -25,7 +25,7 @@ import { fixtureTransport, type Fixture } from '../../src/integrations/connector
 import * as L from '../../src/integrations/connectors/test-lookups.ts';
 import { CONNECTIONS, RETIRED_CALLS, connectionsView, listsToImport, ONE_REQUEST_BYTES } from '../../src/modules/admin/connections.ts';
 import { REGISTER_IMPORT_JS } from '../../src/modules/claims/register-import-script.ts';
-import { FILE_SOURCES } from '../../src/modules/claims/register-files.ts';
+import { FILE_SOURCES } from '../../src/integrations/registers/file-registers.ts';
 import { SETTINGS_TILES } from '../../src/modules/admin/admin-tiles.ts';
 import { startHarness, type Harness } from '../ui-tidy-harness.ts';
 

@@ -452,6 +452,10 @@
    "area": "integrations",
    "kind": "logic"
   },
+  "src/integrations/registers/file-registers.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
   "src/integrations/registers/name-exclusion.ts": {
    "area": "integrations",
    "kind": "logic"
@@ -737,10 +741,6 @@
    "kind": "logic"
   },
   "src/modules/claims/receipt-recommendations.ts": {
-   "area": "claims",
-   "kind": "logic"
-  },
-  "src/modules/claims/register-files.ts": {
    "area": "claims",
    "kind": "logic"
   },
