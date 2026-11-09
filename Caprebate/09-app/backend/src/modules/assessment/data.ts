@@ -113,6 +113,10 @@ export function insertAssessments2(db: Db, params: readonly Param[] = []): { cha
 }
 
 // consent_answers
+// The retention list's count of the consent history (src/modules/compliance/compliance-identity.ts), text unchanged from it.
+export function getConsentAnswersCount<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM consent_answers', params);
+}
 export function insertConsentAnswers(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO consent_answers (id, contact_id, kind, decision, wording_version, route, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
 }

@@ -71,5 +71,6 @@ export type { ReturnContext } from './return-entries.ts';
 export type { EngagementSigning, LetterFacts } from './signing.ts';
 export type { SitePlan } from './site-plan.ts';
 export { getClaimsIdClaimRefByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel2 } from './data.ts';
+export { getDocumentLinksCount, getDocumentsCountVersions, getDocumentsTypeCodeCreatedAtRetentionRefById, getLogicalDocumentsCount } from './data.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { claimsAssets, claimsSignoffLink } from './routes.ts';

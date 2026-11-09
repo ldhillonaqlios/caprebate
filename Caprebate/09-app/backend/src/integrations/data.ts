@@ -145,6 +145,11 @@ export function insertMailboxWatermarkByUid(db: Db, params: readonly Param[] = [
 }
 
 // outbox
+// The retention list's count of the emails we send from rules, templates, notices and registers
+// (src/modules/compliance/compliance-identity.ts), text unchanged from it.
+export function getOutboxCountQueued<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM outbox WHERE kind IN ('NOTIFICATION','TEMPLATE','COMPLIANCE_LETTER')", params);
+}
 export function getOutboxAtBySentAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT max(sent_at) AS at FROM outbox WHERE sent_at IS NOT NULL', params);
 }
@@ -304,6 +309,10 @@ export function updateRegisterMatchPicksRecordIdRemovedRecordIdById(db: Db, para
 }
 
 // register_records
+// The retention list's count of register records (src/modules/compliance/compliance-identity.ts), text unchanged from it.
+export function getRegisterRecordsCount<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM register_records', params);
+}
 export function deleteRegisterRecordsByIdBusinessId(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('DELETE FROM register_records WHERE id = ? AND business_id = ?', params);
 }

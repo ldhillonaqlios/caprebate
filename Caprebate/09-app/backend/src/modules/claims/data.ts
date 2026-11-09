@@ -478,6 +478,10 @@ export function updateDocumentFieldVouchesWithdrawnAtWithdrawnByByLogicalDoc(db:
 }
 
 // document_links
+// The retention list's count of document links (src/modules/compliance/compliance-identity.ts), text unchanged from it.
+export function getDocumentLinksCount<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM document_links', params);
+}
 export function getDocumentLinksCountByLogicalDocumentIdUnlinkedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT COUNT(*) AS n FROM document_links WHERE logical_document_id = ? AND unlinked_at IS NULL', params);
 }
@@ -540,6 +544,14 @@ export function insertDocumentVisibility(db: Db, params: readonly Param[] = []):
 }
 
 // documents
+// The retention list's count of document versions (src/modules/compliance/compliance-identity.ts), text unchanged from it.
+export function getDocumentsCountVersions<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM documents WHERE logical_document_id IS NOT NULL', params);
+}
+// The document version a person named on a document points at (src/modules/compliance/compliance-identity.ts readPerson).
+export function getDocumentsTypeCodeCreatedAtRetentionRefById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT type_code, created_at, retention_ref FROM documents WHERE id = ?', params);
+}
 export function getDocumentsAtByTypeCodeStripRecordedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT MAX(d.created_at) AS at FROM documents d JOIN logical_documents l ON l.id = d.logical_document_id ' +
     'WHERE l.type_code = ? AND d.strip_recorded_at IS NOT NULL AND d.quarantine_discharged_at IS NOT NULL AND d.failure_code IS NULL ' +
@@ -744,6 +756,10 @@ export function updateHmrcEnquiriesClosedOnOutcomeById(db: Db, params: readonly 
 }
 
 // logical_documents
+// The retention list's count of documents (src/modules/compliance/compliance-identity.ts), text unchanged from it.
+export function getLogicalDocumentsCount<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM logical_documents', params);
+}
 export function getLogicalDocumentsCountByBusinessIdTypeCode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT COUNT(*) AS n FROM logical_documents WHERE business_id = ? AND type_code = ?', params);
 }

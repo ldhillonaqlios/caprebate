@@ -58,6 +58,30 @@ export function listAuditLogDetailSByKindM<T extends Row = Row>(db: Db, params: 
 export function listAuditLogKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT DISTINCT kind FROM audit_log ORDER BY kind ASC', params);
 }
+// The audit log page's lines (src/modules/compliance/audit-log.ts), text unchanged from it.
+export function listAuditLogLines<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT a.seq, a.at, a.kind, a.actor_role, a.actor_id, a.object_type, a.object_id, a.outcome, u.display_name AS who FROM audit_log a ' +
+    'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) ORDER BY a.seq DESC LIMIT ?', params);
+}
+/* ONE CLIENT'S AUDIT LINES: about the client, its claims or its properties, or naming them. The client's claims and
+   properties are the claims module's, so the caller hands their ids in as JSON arrays (in this order: the client, its
+   claims, its properties, the client twice, its claims); each is compared as text, as the claims' own id column was. */
+export function listAuditLogLinesByObjectIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT a.seq, a.at, a.kind, a.actor_role, a.actor_id, a.object_type, a.object_id, a.outcome, u.display_name AS who FROM audit_log a ' +
+    'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) AND ' +
+    '(a.object_id = ? OR a.object_id IN (SELECT CAST(value AS TEXT) FROM json_each(?)) ' +
+    'OR a.object_id IN (SELECT CAST(value AS TEXT) FROM json_each(?)) ' +
+    "OR json_extract(a.detail, '$.business') = ? OR json_extract(a.detail, '$.business_id') = ? " +
+    "OR json_extract(a.detail, '$.claim') IN (SELECT CAST(value AS TEXT) FROM json_each(?))) " +
+    'ORDER BY a.seq DESC LIMIT ?', params);
+}
+export function getAuditLogCountByObjectIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM audit_log a WHERE ' +
+    '(a.object_id = ? OR a.object_id IN (SELECT CAST(value AS TEXT) FROM json_each(?)) ' +
+    'OR a.object_id IN (SELECT CAST(value AS TEXT) FROM json_each(?)) ' +
+    "OR json_extract(a.detail, '$.business') = ? OR json_extract(a.detail, '$.business_id') = ? " +
+    "OR json_extract(a.detail, '$.claim') IN (SELECT CAST(value AS TEXT) FROM json_each(?))) ", params);
+}
 
 // custom_role_grants
 export function deleteCustomRoleGrantsByRole(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
@@ -352,6 +376,10 @@ export function getUsersWelcomeDismissedAtById<T extends Row = Row>(db: Db, para
 export function insertUsers(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO users (id, email, email_canonical, display_name, role, password_hash, disabled_at, created_at, updated_at, business_id) ' +
     'VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)', params);
+}
+// Users' names by id, for another area's list that names who did each thing (the ids as one JSON array).
+export function listUsersDisplayNameByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, display_name FROM users WHERE id IN (SELECT value FROM json_each(?))', params);
 }
 export function listUsersIdByRole<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT id FROM users WHERE role = ?', params);

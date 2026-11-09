@@ -12,6 +12,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import type { App } from '../../src/core/app.ts';
+import type { AuditKind } from '../../src/core/audit.ts';
 import { auditLogView, clientAuditCount } from '../../src/modules/compliance/audit-log.ts';
 import { amlView } from '../../src/modules/compliance/compliance-aml.ts';
 import { disclosuresFor } from '../../src/modules/compliance/disclosure-log.ts';
@@ -139,17 +140,17 @@ async function seeded(): Promise<Seeded> {
 
   // Audit lines about the client: its id, a claim, a property, in the detail by each key, a claim named as a number,
   // by a user that does not exist and by nobody.
-  const line = (kind: string, actor_id: string | null, object_id: string | null, detail: Record<string, unknown>, outcome: 'ALLOWED' | 'REFUSED' = 'ALLOWED'): void => {
+  const line = (kind: AuditKind, actor_id: string | null, object_id: string | null, detail: Record<string, unknown>, outcome: 'ALLOWED' | 'REFUSED' = 'ALLOWED'): void => {
     app.audit.append({ at: app.now(), kind, outcome, actor_id, actor_role: actor_id === null ? null : 'ADMIN', object_type: 'test', object_id, detail });
   };
-  line('SPLIT_TEST', p1, business, {});
-  line('SPLIT_TEST', p2, claims[0] ?? null, {});
-  line('SPLIT_TEST', 'u-gone', properties[0] ?? null, {}, 'REFUSED');
-  line('SPLIT_TEST', null, null, { business: business });
-  line('SPLIT_TEST', p1, null, { business_id: business });
-  line('SPLIT_TEST', p2, null, { claim: claims[claims.length - 1] ?? '' });
-  line('SPLIT_TEST', p1, null, { claim: 12345 });
-  line('OTHER_KIND', p1, 'unrelated', { claim: 'not-a-claim' });
+  line('CLIENT_SENT_ACCEPTED', p1, business, {});
+  line('CLIENT_SENT_ACCEPTED', p2, claims[0] ?? null, {});
+  line('CLIENT_SENT_ACCEPTED', 'u-gone', properties[0] ?? null, {}, 'REFUSED');
+  line('CLIENT_SENT_ACCEPTED', null, null, { business: business });
+  line('CLIENT_SENT_ACCEPTED', p1, null, { business_id: business });
+  line('CLIENT_SENT_ACCEPTED', p2, null, { claim: claims[claims.length - 1] ?? '' });
+  line('CLIENT_SENT_ACCEPTED', p1, null, { claim: 12345 });
+  line('DOCUMENT_REQUEST_RECEIVED', p1, 'unrelated', { claim: 'not-a-claim' });
   return { app, business, claims, properties, bare, contacts };
 }
 
@@ -164,10 +165,10 @@ describe('compliance reads split by owner: the same rows as the joined statement
         const want = app.db.get<{ n: number }>(BEFORE.clientCount, [business, business, business, business, business, business])?.n;
         assert.equal(clientAuditCount(app.db, business), want, `the count for ${business}`);
       }
-      const about = app.db.all(BEFORE.clientLines, ['SPLIT_TEST', 'SPLIT_TEST', null, null, ...Array(6).fill(s.business), 200]);
+      const about = app.db.all(BEFORE.clientLines, ['CLIENT_SENT_ACCEPTED', 'CLIENT_SENT_ACCEPTED', null, null, ...Array(6).fill(s.business), 200]);
       assert.equal(about.length, 7, 'all seven lines about the client, the claim named as a number among them');
       const deps = { db: app.db, audit: app.audit, now: app.now };
-      for (const kind of [null, 'SPLIT_TEST', 'OTHER_KIND']) {
+      for (const kind of [null, 'CLIENT_SENT_ACCEPTED', 'DOCUMENT_REQUEST_RECEIVED']) {
         for (const outcome of [null, 'ALLOWED', 'REFUSED']) {
           for (const client of [null, s.business, s.bare]) {
             const q = new URLSearchParams();
@@ -176,7 +177,7 @@ describe('compliance reads split by owner: the same rows as the joined statement
             if (client !== null) q.set('client', client);
             const params = [kind, kind, outcome, outcome, ...(client === null ? [] : Array(6).fill(client)), 200];
             const want = app.db.all<Record<string, unknown>>(client === null ? BEFORE.lines : BEFORE.clientLines, params);
-            if (client !== null) assert.ok(want.length > 0 || client === s.bare || kind === 'OTHER_KIND' || outcome === 'REFUSED', `lines about ${client}`);
+            if (client !== null) assert.ok(want.length > 0 || client === s.bare || kind === 'DOCUMENT_REQUEST_RECEIVED' || outcome === 'REFUSED', `lines about ${client}`);
             const got = auditLogView(deps, ADMIN, q).lines.map((l) => ({
               seq: l.seq, kind: l.kind, actor_role: l.actor_role, actor_id: l.actor_id, object_type: l.object_type, object_id: l.object_id, outcome: l.outcome, who: l.who,
             }));
