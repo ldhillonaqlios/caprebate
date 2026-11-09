@@ -1388,7 +1388,7 @@ right register.
 
 WHAT IS THERE NOW: after 161h1 to 161k, every module is behind its front
 door and the boundary check's counts for rules 1, 3 and 4 are zero, except
-what items 5 and 6 list, which no move can clear. What is left is
+what items 5, 6 and 7 list, which no move can clear. What is left is
 rule 2: modules still depend on each other in both directions
 (CRM and the portal, claims and survey were the worst on 6 Nov 2026), and
 authz.ts holds all 130 actions in one table.
@@ -1416,10 +1416,11 @@ BUILD
    runs and WhatsApp lines). Split each into the owner's own query and a
    call through the other area's front door, keeping what the screen shows
    the same (a test per screen first). Two by hand: the audit log page
-   (src/web/audit-log.ts) chooses between a core-only statement and one
-   that also reads claims and properties; the retention page
-   (src/web/compliance-identity.ts) runs count statements held as strings
-   in a table, two of them on outside-service tables. And empty the three
+   chooses between a core-only statement and one that also reads claims
+   and properties, and the retention page runs count statements held in a
+   table, most of them on other areas' tables (both now in
+   src/modules/compliance/data-borrowed.ts: listAuditLogLines and
+   RECORD_KIND_STATEMENTS, moved there by 161k). And empty the three
    data-borrowed.ts files (161j and 161k move most of them; what is left
    here is a bottom-layer file reading a business table, which becomes an
    event or a front-door call). The check then reads zero for rule 3.
@@ -1440,18 +1441,48 @@ BUILD
    PARTS: router.ts hands the routes files the parts of the core and of
    compliance that load business code (the signed-in header, the sign-up
    functions and MIN_PASSWORD, handlePortalSettings, NotFoundAsRefusal, and
-   the legal pages' approval functions from src/web/legal-approvals.ts) at
+   the legal pages' approval functions from
+   src/modules/compliance/legal-approvals.ts) at
    start (lendShellParts in router.ts, shellParts() in src/core/http.ts);
    the boundary check cannot count those links, so replace each with a
    front-door import once the loops are gone. (d) Four load-order
    workarounds to take out when the loops go, each the same value read
-   later: the getters in src/web/compliance-identity.ts (RET-7's state, the
-   message rows' why_unset) and src/core/navigation.ts (Settings' under),
-   and maxLockedPiece() in src/web/survey-video.ts (was MAX_LOCKED_PIECE).
+   later: the getters in src/modules/compliance/compliance-identity.ts
+   (RET-7's state, the message rows' why_unset) and src/core/navigation.ts
+   (Settings' under), and maxLockedPiece() in
+   src/modules/survey/survey-video.ts (was MAX_LOCKED_PIECE).
    (e) The generated names of some data functions describe the first table
    their statement names, not what it reads (for example
    getStaffTasksIdBusinessIdByLeadIdStatus reads a lead): rename them by
    what they return as each is touched.
+7. ADDED 9 NOV 2026 BY PHASE 161k: what moving survey, finance,
+   compliance and admin could not clear. (a) THE JOINS: 31 rule-3 breaks
+   against those four (survey 16, finance 10, admin 5; node
+   tools/boundaries.cjs --counts), statements in their data-borrowed.ts
+   files (and the other areas' borrowed files) that join their tables to
+   another owner's; split each as in item 5. (b) Nine rule-1 breaks into
+   them: core/search.ts names survey's data.ts; core/saved-keys.ts,
+   integrations/email/email.ts and shared/lists.ts name admin's data.ts;
+   core/cli.ts names survey's two BCIS files; shared/engine.ts,
+   integrations/postcodes/location-key.ts and claims/claim-record.ts name
+   the costing files (survey/costing/). core/seed.ts and core/server.ts
+   name survey's and finance's data.ts too (the check does not count those
+   two kinds of file). Each lower-layer one becomes an event or a port the
+   lower layer owns, as in item 6b; claim-record.ts goes through the
+   survey's door once the loops are gone. (c) ROUTES AND PERMISSIONS FILES for the four, as 161j did for the
+   CRM and the documents: their handlers (handleSurveyor, handleSurveyPack,
+   handleStaffEvidence, handleFinance, handleBilling, handleCompliance,
+   handleConnections, handleConfiguration) sit in their pages files and
+   core/staff.ts asks each in turn, and router.ts still answers the legal
+   pages' approvals and the identity check's hook itself; give each
+   module a routes.ts (and its gates a .permissions.ts), the route list
+   unchanged. (d) Two load-order workarounds: approvable() in
+   compliance/legal-approvals.ts (was APPROVABLE) is worked out when asked
+   because the privacy policy reads compliance through its front door
+   while the legal pages load; and the survey walkthrough check
+   (getSurveyWalkthroughsXByBookingId) stays in crm/data-borrowed.ts
+   because reading it through the survey's door from video-calls.ts loops
+   back into the CRM. Undo both once the loops are gone.
 
 THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
 what can be run before going live, restructure them"): every phase from
