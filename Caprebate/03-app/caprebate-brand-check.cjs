@@ -5,7 +5,7 @@
 
    WHAT IT CHECKS
      Phase 133c put the back office and the client portal into the brand, and
-     test/phase133c.test.ts guards those. Nothing guarded the three public files
+     test/core/brand-voice-and-first-use.test.ts guards those. Nothing guarded the three public files
      outside the application. This does, reading each as a file:
 
        "Caprebate site.html"             (one level above the tree)

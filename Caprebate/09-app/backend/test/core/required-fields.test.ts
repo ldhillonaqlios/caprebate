@@ -14,7 +14,7 @@
  *                       straight after that field (after its label), the field is aria-invalid and described by the
  *                       message, and nothing else sits between them. A refusal naming no field stays at the top.
  *
- * Like test/phase133c.test.ts, everything the phase added is imported inside the test that needs it, so this file runs
+ * Like test/core/brand-voice-and-first-use.test.ts, everything the phase added is imported inside the test that needs it, so this file runs
  * against the pre-change copy (the .bak-phase133d files) and each test can be seen to fail there.
  */
 

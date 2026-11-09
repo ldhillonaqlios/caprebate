@@ -118,7 +118,7 @@ async function build() {
  *       nothing changes and NO key is read, whatever the settings hold. The identity panel says the keys are missing.
  * It prints what it did - never a password and never a key.
  */
-/** PHASE 154a1 (line 10): new outbox emails as one log line - counts and kinds only. Read by test/phase154a1.test.ts. */
+/** PHASE 154a1 (line 10): new outbox emails as one log line - counts and kinds only. Read by test/core/sweep-fixes.test.ts. */
 export function outboxLogLine(rows) {
   if (rows.length === 0) return null;
   const kinds = new Map();

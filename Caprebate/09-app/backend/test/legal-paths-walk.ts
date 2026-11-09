@@ -6,7 +6,7 @@
  * route-deciding questions enumerated in full, and below them a fixed number of seeded random walks, so every later
  * option is reached many times. The same seed gives the same paths. Each complete path's outcome — its level, its cap
  * and its deadline — is recorded in test/fixtures/phase159h/legal-paths-gp-company.txt (`node tools/legal-paths-record.ts`)
- * and test/legal-paths.test.ts checks every one. A change to the law that moves an outcome must be recorded on purpose.
+ * and test/survey/legal-check-paths.test.ts checks every one. A change to the law that moves an outcome must be recorded on purpose.
  *
  * Phase 159h added the questions it made route-deciding to the full enumeration: how the property was taken on (G14s),
  * the s.183 election on a new lease (G14s3), and whether a seller was a charity or another body that pays no tax.

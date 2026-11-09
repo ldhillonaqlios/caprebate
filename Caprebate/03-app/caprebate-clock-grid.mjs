@@ -41,8 +41,16 @@ const ROOT = path.resolve(HERE, '..');
 const SHIFT = path.join(HERE, 'caprebate-clock-shift.mjs');
 
 const SUITES = {
-  backend: { cwd: path.join(ROOT, '09-app', 'backend'), files: dir =>
-    fs.readdirSync(path.join(dir, 'test')).filter(f => /\.test\.ts$/.test(f)).sort().map(f => path.join('test', f)) },
+  // Phase 161k: the tests sit in folders by feature (test/core/, test/survey/ ...), as `npm test` runs them: the test
+  // folder and each folder directly inside it.
+  backend: { cwd: path.join(ROOT, '09-app', 'backend'), files: dir => {
+    const t = path.join(dir, 'test');
+    return [
+      ...fs.readdirSync(t).filter(f => /\.test\.ts$/.test(f)),
+      ...fs.readdirSync(t, { withFileTypes: true }).filter(d => d.isDirectory())
+        .flatMap(d => fs.readdirSync(path.join(t, d.name)).filter(f => /\.test\.ts$/.test(f)).map(f => `${d.name}/${f}`)),
+    ].sort().map(f => path.join('test', f));
+  } },
   phase3: { cwd: path.join(ROOT, '04-phase-work', 'phase3'), files: () => [] },
   phase9: { cwd: path.join(ROOT, '04-phase-work', 'phase9'), files: () => [] },
 };
