@@ -69,7 +69,7 @@ import { versionObj } from '../claims/index.ts';
 import { anyStageLabel, stage as stageOf } from '../../shared/index.ts';
 /* The region a rate library entry is keyed on. resolveProperty
    never throws and never guesses — see the comment on REGION_NOT_CAPTURED. */
-import { resolveProperty } from '../../integrations/postcodes/postcode.ts';
+import { resolveProperty } from '../../integrations/index.ts';
 import { preferHomedataPlanning, supersededPlanning } from '../../integrations/index.ts';
 import { estimateBasis } from './survey-open.ts';
 import { listRegisterRecordsSourceIdEntityIdByBusinessId } from '../../integrations/index.ts';
@@ -575,7 +575,7 @@ const CRM_SECTOR: Readonly<Record<string, Sector>> = Object.freeze({
  * A silent default of "London" would still look like data. It is still not
  * there.
  */
-export { REGION_NOT_CAPTURED } from '../../integrations/postcodes/postcode-port.ts';
+export { REGION_NOT_CAPTURED } from '../../integrations/index.ts';
 
 /**
  * The rate library's context for a job.

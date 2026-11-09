@@ -100,8 +100,8 @@ import type { PickQuery } from '../../integrations/index.ts';
 import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds, uprnFrom } from '../../integrations/index.ts';
 import { ingestRegisterRecord } from '../../integrations/index.ts';
 import { lookAgainShort } from '../portal/index.ts';
-import { postcodeStore } from '../../integrations/postcodes/postcode.ts';
-import type { PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
+import { postcodeStore } from '../../integrations/index.ts';
+import type { PostcodeStore } from '../../integrations/index.ts';
 import { checkSignature } from './signing.ts';
 import {
   checkSignatory, notYet, outcome as signatoryOutcome, signatoryWords, SIGNATORY_SOURCES,

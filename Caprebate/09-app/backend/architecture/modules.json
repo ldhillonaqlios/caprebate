@@ -756,6 +756,10 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/research-subject.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/research.ts": {
    "area": "claims",
    "kind": "logic"
@@ -1001,6 +1005,10 @@
    "kind": "logic"
   },
   "src/modules/crm/premises-import.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/modules/crm/research-subject.ts": {
    "area": "crm",
    "kind": "logic"
   },

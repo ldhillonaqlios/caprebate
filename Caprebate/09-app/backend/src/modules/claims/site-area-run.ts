@@ -38,15 +38,15 @@ import { BOUNDARY_FETCHING_SWITCHED_ON } from '../../integrations/index.ts';
 import {
   councilOfPostcode, homedataPointOf, planSiteArea, siteAreaFromLandBoundary, SITE_AREA_SOURCE_ID,
   type SiteAreaInput, type SiteAreaOutcome, type SiteAreaState,
-} from '../../integrations/connectors/site-area.ts';
+} from '../../integrations/index.ts';
 import { ostn15Grid, type Ostn15Grid } from '../../integrations/index.ts';
 import { TITLE_BOUNDARY_LABEL, TITLE_BOUNDARY_SOURCE_ID } from '../../integrations/index.ts';
 import { inspireStoreFromEnv, type InspireFileStore } from '../../integrations/index.ts';
 import { referenceOstn15Grid } from '../../integrations/index.ts';
 import type { RateLimiter, Transport } from '../../integrations/index.ts';
 import { DECLINED_LINE } from '../assessment/index.ts';
-import { postcodeStore } from '../../integrations/postcodes/postcode.ts';
-import type { PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
+import { postcodeStore } from '../../integrations/index.ts';
+import type { PostcodeStore } from '../../integrations/index.ts';
 import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId, getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId2 } from '../../integrations/index.ts';
 import { getSiteAreaInputsCountByPropertyIdEnteredAt, getSiteAreaInputsEastingNorthingByPropertyIdKind, getSiteAreaRunsStateWhyByPropertyId, insertSiteAreaRuns, listPropertiesIdLabelByBusinessId2, listSiteAreaInputsLadCodeEnteredByByPropertyIdKind } from './data.ts';
 

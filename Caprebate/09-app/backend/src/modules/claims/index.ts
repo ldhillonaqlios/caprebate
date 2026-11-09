@@ -5,6 +5,8 @@
  */
 // Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
 export { CLAIMS_ACTIONS } from './actions.ts';
+// What the outside services ask it (their ports): handed in first, as it reaches only its own data and their door.
+import './research-subject.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
 export { computeFee, controlsView, FEE_CONTROLS, letterFee, letterFees, PAYMENT_TERMS_QUESTION } from './fee-controls.ts';
 export { checksBlock, checksSummary, claimChecksBlock, clientStepsCard, STEP_ANCHOR } from './approvals-pages.ts';

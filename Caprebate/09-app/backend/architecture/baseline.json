@@ -11,9 +11,6 @@
    "claims": [
     "src/core/backoffice.ts -> src/modules/claims/data.ts",
     "src/core/upload-pieces.ts -> src/modules/claims/upload-handler-port.ts",
-    "src/integrations/connectors/boundary-test-lookup.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/nations.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/site-area.ts -> src/modules/claims/data.ts",
     "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts",
     "src/modules/assessment/conveyancing-strip.ts -> src/modules/claims/upload-handler-port.ts"
    ],
@@ -72,7 +69,6 @@
    ],
    "crm": [
     "src/core/backoffice.ts -> src/modules/crm/data.ts",
-    "src/integrations/connectors/nations.ts -> src/modules/crm/data.ts",
     "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts"
    ],
    "integrations": [
@@ -83,16 +79,7 @@
     "src/modules/claims/engaged.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/match-review.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/research.ts -> src/integrations/connectors/free-registers.ts",
-    "src/modules/claims/research.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/claims/site-area-inputs.ts -> src/integrations/connectors/site-area.ts",
-    "src/modules/claims/site-area-inputs.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/claims/site-area-run.ts -> src/integrations/connectors/site-area.ts",
-    "src/modules/claims/site-area-run.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/claims/uploads.ts -> src/integrations/connectors/claude.ts",
-    "src/modules/crm/crm.ts -> src/integrations/postcodes/postcode-port.ts",
-    "src/modules/crm/crm.ts -> src/integrations/postcodes/postcode.ts",
-    "src/modules/survey/surveyor.ts -> src/integrations/postcodes/postcode-port.ts",
-    "src/modules/survey/surveyor.ts -> src/integrations/postcodes/postcode.ts"
+    "src/modules/claims/uploads.ts -> src/integrations/connectors/claude.ts"
    ],
    "portal": [
     "src/core/signup.ts -> src/modules/portal/data.ts"

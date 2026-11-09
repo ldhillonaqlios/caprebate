@@ -46,8 +46,8 @@ import { assertSignedEngagement } from '../claims/index.ts';
 import {
   BOARD_COLUMNS, FEE_TRIGGER, FEE_TRIGGERS, liveFeeInvoiceCount, loadPipelineClaim, pipelinePanel, recordOpened, type PipelinePanel,
 } from './pipeline.ts';
-import { postcodeStore, POSTCODE_GATE } from '../../integrations/postcodes/postcode.ts';
-import { resolveServedAuthority, type PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
+import { postcodeStore, POSTCODE_GATE } from '../../integrations/index.ts';
+import { resolveServedAuthority, type PostcodeStore } from '../../integrations/index.ts';
 import { formatPence, formatShownRange, toPence } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { claimMoneyLines, type ClaimMoneyLine } from '../finance/index.ts';
