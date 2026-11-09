@@ -42,7 +42,7 @@ import { SharedObjectStore, type BlobClient } from '../shared/shared-objectstore
 import { sealKeyFromEnv, type KeepOriginals } from '../shared/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { isInventedAddress } from '../integrations/index.ts';
-import { refreshSavedKeys } from './saved-keys.ts';
+import { refreshSavedKeys } from '../modules/admin/index.ts';
 import { openKeptOriginal } from '../modules/claims/index.ts';
 import { formToken, formTokensMode, onceToken, type FormTokens } from './form-token.ts';
 import { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';

@@ -28,7 +28,7 @@ import { createApp } from '../../src/core/server.ts';
 import { seed } from '../../src/core/seed.ts';
 import { outboxTransport } from '../../src/integrations/email/email.ts';
 import * as EP from '../../src/integrations/email/email-provider.ts';
-import { offerSignup, requestSignup, confirmSignup } from '../../src/core/signup.ts';
+import { offerSignup, requestSignup, confirmSignup } from '../../src/modules/portal/signup.ts';
 import type { EmailSending, SmtpLogin } from '../../src/integrations/email/email-provider.ts';
 import { Db as TheDb, migrate, pendingMigrations } from '../../src/core/db.ts';
 import type { Db } from '../../src/core/db.ts';

@@ -34,7 +34,8 @@
 import { dateWords, KIND_WORDS, type EventKind } from '../claims/index.ts';
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { NotFoundAsRefusal, answerLabel, contactFor, contactForLead } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal, answerLabel } from '../../core/index.ts';
+import { contactFor, contactForLead } from './assessments-and-calendar.ts';
 import { FUNNEL } from '../../shared/index.ts';
 import { formatShownRange } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';

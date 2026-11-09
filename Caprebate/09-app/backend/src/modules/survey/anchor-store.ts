@@ -46,7 +46,7 @@
 
 import { createHash } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
-import { _canonical } from '../../core/audit.ts';
+import { _canonical } from '../../core/index.ts';
 import {
   AnchorLog, AnchorQuarantine, GENESIS, verifyChain,
   type Commitment, type EstimateOutputs, type LogEntry, type LogKind, type SurveyorFigures,

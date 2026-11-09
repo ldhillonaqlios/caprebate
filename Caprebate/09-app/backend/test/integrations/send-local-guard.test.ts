@@ -21,7 +21,7 @@ import { onTestWebsite, placeRefusal } from '../../src/integrations/connectors/p
 import { onTestWebsite as zoomOnTestWebsite } from '../../src/integrations/connectors/zoom.ts';
 import { sendWhatsAppText, whatsappMissing, whatsappPlaceRefusal, WHATSAPP_LOCAL_OPT_IN } from '../../src/integrations/connectors/whatsapp.ts';
 import { EMAIL_LOCAL_OPT_IN, EMAIL_SENDING, emailPlaceRefusal, mailWhere, sendingMissing, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../../src/integrations/email/email-provider.ts';
-import { serviceOn } from '../../src/core/saved-keys.ts';
+import { serviceOn } from '../../src/modules/admin/saved-keys.ts';
 
 const T = '2026-10-02T09:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';

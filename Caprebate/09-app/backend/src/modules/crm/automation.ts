@@ -53,7 +53,7 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { outboxTransport, STUB_NOTICE } from '../../integrations/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
 import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
 import { missingFacts } from '../claims/index.ts';

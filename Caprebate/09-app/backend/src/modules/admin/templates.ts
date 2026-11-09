@@ -40,7 +40,7 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { outboxTransport } from '../../integrations/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { escapeHtml } from '../../shared/index.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
 import { claimObjFor, type Fields } from '../crm/index.ts';

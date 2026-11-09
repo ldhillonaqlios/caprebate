@@ -31,7 +31,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { propertyIn } from '../../shared/index.ts';
 import { workingDaysSince, LATE_AFTER_WORKING_DAYS } from '../../shared/index.ts';

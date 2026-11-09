@@ -31,9 +31,9 @@
  */
 
 import { createHash } from 'node:crypto';
-import { _canonical } from '../../core/audit.ts';
+import { _canonical } from '../../core/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { latestFacts } from './claim-facts.ts';
 import { commitmentOnClaim, deliverableIssued, latestSignOff, type RecordDeps } from './claim-record.ts';
 import { caseStamp, type CaseStamp } from './case-stamp.ts';

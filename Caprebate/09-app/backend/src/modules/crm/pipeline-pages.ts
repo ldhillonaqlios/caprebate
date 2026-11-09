@@ -25,7 +25,7 @@ import { badge, brandName, claimRef, dataLink, fields, highlights, nextStepCard,
 import { sectionPrefs } from '../../core/index.ts';
 import { leadNextStep, plainNeed } from '../../shared/index.ts';
 import { dueReading, dueWords, ukDatesIn } from '../../shared/index.ts';
-import { navContext, filterBar, LEAD_FILTERS } from '../../core/navigation.ts';
+import { navContext, filterBar, LEAD_FILTERS } from '../../core/index.ts';
 import { STAGE_GROUPS, groupBand, groupBar, kpiRow, lateBadge, noDateBadge, nobodyBadge, siteOf, stageBadge, stageGroupOf, stageLabel, type GroupKey } from '../../core/index.ts';
 export { siteOf } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';

@@ -31,7 +31,7 @@ import { randomBytes } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { instantsForLocalMinute, localDate } from '../../shared/index.ts';
 import { getHoldEntryId, getLinkedEntryRef, listLegalHoldsForEntry } from './data.ts';
 import { getCddChecksCompletedAtByBusinessIdState, getComplianceRefSeriesLastNByKind, getComplianceSettingsValueEffectiveFromBySettingEffectiveFro, getLegalHoldsLiftedAtById, insertComplianceLinks, insertComplianceSettings, insertLegalHolds, listComplianceLinksKIByFromKindFromId, listLegalHoldsIdHoldKindByRecordKindRecordId, listLegalHoldsRecordIdByRecordKindLiftedAt, updateComplianceRefSeriesLastNByKind, updateLegalHoldsLiftedAtLiftedByById } from './data.ts';

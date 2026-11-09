@@ -28,22 +28,11 @@
  * every login's exact menu and every address's answer, so neither a menu nor a permission can drift unseen.
  */
 
-import { unreadCount } from '../modules/crm/index.ts';
 import type { Db } from './db.ts';
 import { NotAuthorised, type Actor } from './authz.ts';
 import type { AppRole } from './roles.ts';
 import { h, raw, Safe } from '../shared/index.ts';
 import { assertBackOffice, assertSection } from './backoffice.ts';
-import { searchGate } from './search.ts';
-import { mayCreateTask, myWork, nextActionsGate } from '../modules/crm/index.ts';
-import { assertLeadSection } from '../modules/crm/index.ts';
-import { pipelineBoardGate } from '../modules/crm/index.ts';
-import { billingViewFor, clientsAreaGate } from '../modules/finance/index.ts';
-import { claimListGate } from '../shared/lists.ts';
-import { assertIntroducerSection, rewardModelGate } from '../modules/crm/index.ts';
-import { assertSurveySection } from '../modules/survey/index.ts';
-import { assertFinanceSection } from '../modules/finance/index.ts';
-import { adminSettingsGate, SETTINGS_TILES } from '../modules/admin/index.ts';
 import { getUsersDisplayNameById } from './data.ts';
 
 // The request's context, the name switches and the menu a page opens out are in nav-context.ts, which loads no business
@@ -51,6 +40,45 @@ import { getUsersDisplayNameById } from './data.ts';
 export { NAME_SWITCHES, SUB_MENUS, addUnderCurrent, navContext, nameSwitches, setSubMenu } from './nav-context.ts';
 export type { NameSwitches, NavContext, SubMenu } from './nav-context.ts';
 import { SUB_MENUS, navContext, type SubMenu } from './nav-context.ts';
+
+/* ------------------------------------------------------------------ *
+ * THE MODULES' PARTS (09-app/docs/ARCHITECTURE.md rule 2). The core sits below every module, so it names none: each
+ * module hands the menu its own gates and counts when its front door loads (src/modules/<area>/nav.ts). A part not
+ * handed in shuts what it serves: its gate refuses and its count is nothing, never an open door.
+ * ------------------------------------------------------------------ */
+
+type Gate = (actor: Actor) => void;
+type GateKey = 'search' | 'leads' | 'clients' | 'pipeline' | 'claims' | 'finance' | 'survey' | 'introducers' | 'introducer-rewards' | 'settings' | 'next-actions';
+export type NavParts = {
+  readonly gates?: Readonly<Partial<Record<GateKey, Gate>>>;
+  /** Settings' tiles, in order (admin). */
+  readonly settingsTiles?: () => readonly { readonly href: string; readonly label: string; readonly gate: Gate }[];
+  readonly mayCreateTask?: (actor: Actor) => boolean;
+  /** My open tasks, for the count on the Tasks tab (crm). */
+  readonly myWork?: (db: Db, actor: Actor, nowIso: string) => { readonly tasks: readonly unknown[]; readonly overdue: number };
+  /** How many of our messages the client has not read (crm). */
+  readonly unreadCount?: (db: Db, actor: Actor, business_id: string, thread: 'CLIENT') => number;
+  /** Whether a login reads the Clients tab as the billing view (finance). */
+  readonly billingViewFor?: (actor: Actor) => boolean;
+};
+const PARTS: { gates: Partial<Record<GateKey, Gate>>; rest: Omit<NavParts, 'gates'> } = { gates: {}, rest: {} };
+
+/** A module hands in its parts of the menu (its nav.ts, loaded by its front door). */
+export function provideNav(p: NavParts): void {
+  Object.assign(PARTS.gates, p.gates ?? {});
+  const { gates: _g, ...rest } = p;
+  PARTS.rest = { ...PARTS.rest, ...rest };
+}
+
+/** A section's gate, asked of the module that handed it in; refused while none has. */
+const gateOf = (key: GateKey): Gate => (actor: Actor): void => {
+  const g = PARTS.gates[key];
+  if (g === undefined) throw new NotAuthorised('backoffice.enter', key);
+  g(actor);
+};
+const settingsTiles = (): readonly { readonly href: string; readonly label: string; readonly gate: Gate }[] => PARTS.rest.settingsTiles?.() ?? [];
+const mayCreateTask = (actor: Actor): boolean => PARTS.rest.mayCreateTask?.(actor) ?? false;
+const billingViewFor = (actor: Actor): boolean => PARTS.rest.billingViewFor?.(actor) ?? false;
 
 /* ------------------------------------------------------------------ *
  * THE SECTIONS
@@ -72,19 +100,19 @@ export type Section = {
  */
 export const SECTIONS: readonly Section[] = Object.freeze([
   { key: 'home', href: '/staff', label: 'Home', gate: assertBackOffice, under: ['/staff/reports'] },
-  { key: 'leads', href: '/staff/leads', label: 'Leads', gate: assertLeadSection, under: ['/staff/assessments'] },
+  { key: 'leads', href: '/staff/leads', label: 'Leads', gate: gateOf('leads'), under: ['/staff/assessments'] },
   // The whole record (Admin, Sales, read-only) or Accounting's billing view of it (src/modules/finance/billing.ts).
-  { key: 'clients', href: '/staff/clients', label: 'Clients', gate: clientsAreaGate, under: ['/staff/organisations'] },
-  { key: 'pipeline', href: '/staff/pipeline', label: 'Pipeline', gate: pipelineBoardGate },
-  { key: 'claims', href: '/staff/claims', label: 'Claims', gate: claimListGate },
+  { key: 'clients', href: '/staff/clients', label: 'Clients', gate: gateOf('clients'), under: ['/staff/organisations'] },
+  { key: 'pipeline', href: '/staff/pipeline', label: 'Pipeline', gate: gateOf('pipeline') },
+  { key: 'claims', href: '/staff/claims', label: 'Claims', gate: gateOf('claims') },
   { key: 'tasks', href: '/staff/tasks', label: 'Tasks', gate: assertBackOffice, under: ['/staff/next-actions'] },
-  { key: 'finance', href: '/staff/finance', label: 'Finance', gate: assertFinanceSection },
-  { key: 'survey', href: '/staff/survey', label: 'Survey jobs', gate: assertSurveySection },
-  { key: 'introducers', href: '/staff/introducers', label: 'Introducers', gate: assertIntroducerSection },
-  { key: 'introducer-rewards', href: '/staff/introducer-rewards', label: 'Introducer fees', gate: rewardModelGate },
+  { key: 'finance', href: '/staff/finance', label: 'Finance', gate: gateOf('finance') },
+  { key: 'survey', href: '/staff/survey', label: 'Survey jobs', gate: gateOf('survey') },
+  { key: 'introducers', href: '/staff/introducers', label: 'Introducers', gate: gateOf('introducers') },
+  { key: 'introducer-rewards', href: '/staff/introducer-rewards', label: 'Introducer fees', gate: gateOf('introducer-rewards') },
   { key: 'calendar', href: '/staff/calendar', label: 'Calendar', gate: (a) => assertSection(a, 'booking.read') },
-  { key: 'settings', href: '/staff/admin', label: 'Settings', gate: adminSettingsGate,
-    get under() { return SETTINGS_TILES.map((t) => t.href); } },
+  { key: 'settings', href: '/staff/admin', label: 'Settings', gate: gateOf('settings'),
+    get under() { return settingsTiles().map((t) => t.href); } },
 ]);
 
 /**
@@ -171,7 +199,7 @@ export function tabsFor(actor: Actor): Tabs {
 export function menuHrefs(actor: Actor): string[] {
   const t = tabsFor(actor);
   const out = t.primary.map((s) => s.href);
-  if (opens(actor, searchGate)) out.push('/staff/search');
+  if (opens(actor, gateOf('search'))) out.push('/staff/search');
   out.push('/staff/settings');
   return [...new Set(out)];
 }
@@ -183,7 +211,7 @@ function subMenuFor(actor: Actor, section: Section, path: string | null): SubMen
   const own = ctx === undefined ? undefined : SUB_MENUS.get(ctx);
   if (own !== undefined) return own;
   if (section.key === 'settings') {
-    return { items: SETTINGS_TILES.filter((t) => opens(actor, t.gate)).map((t) => ({
+    return { items: settingsTiles().filter((t) => opens(actor, t.gate)).map((t) => ({
       href: t.href, label: t.label, current: path !== null && (path === t.href || path.startsWith(`${t.href}/`)) })) };
   }
   return null;
@@ -228,7 +256,7 @@ function isCurrent(s: Section, path: string | null): boolean {
 
 /** Leads: every lead, or the filled assessments — a filled assessment is a lead that came through the website. */
 export const LEAD_FILTERS: readonly Filter[] = Object.freeze([
-  { href: '/staff/leads', label: 'All leads', gate: assertLeadSection },
+  { href: '/staff/leads', label: 'All leads', gate: gateOf('leads') },
   { href: '/staff/assessments', label: 'Filled assessments', gate: (a: Actor) => assertSection(a, 'assessment.read') },
 ]);
 
@@ -237,7 +265,7 @@ export const TASK_FILTERS: readonly Filter[] = Object.freeze([
   { href: '/staff/tasks', label: 'My tasks', gate: assertBackOffice },
   { href: '/staff/tasks?view=all', label: 'Every open task',
     gate: (a: Actor) => { if (!mayCreateTask(a)) throw new NotAuthorised('staff_task.create', 'staff_task'); } },
-  { href: '/staff/next-actions', label: 'Claims with no next step', gate: nextActionsGate },
+  { href: '/staff/next-actions', label: 'Claims with no next step', gate: gateOf('next-actions') },
 ]);
 
 /* ------------------------------------------------------------------ *
@@ -303,9 +331,9 @@ export function staffShell(actor: Actor, view: string | null = null): Shell {
   let taskCount: Safe = raw('');
   if (ctx !== undefined && tabs.primary.some((s) => s.key === 'tasks')) {
     try {
-      const w = myWork(ctx.db, actor, ctx.now());
-      const open = w.tasks.length;
-      if (open > 0) {
+      const w = PARTS.rest.myWork?.(ctx.db, actor, ctx.now());
+      const open = w?.tasks.length ?? 0;
+      if (w !== undefined && open > 0) {
         taskCount = h` <span class="tabcount${w.overdue > 0 ? ' late' : ''}">${open}<span class="vh"> open${
           w.overdue > 0 ? h`, ${w.overdue} overdue` : raw('')}</span></span>`;
       }
@@ -313,7 +341,7 @@ export function staffShell(actor: Actor, view: string | null = null): Shell {
       if (!((e as { code?: string }).code === 'E_NOT_AUTHORISED' || (e instanceof Error && e.name === 'NotAuthorised'))) throw e;
     }
   }
-  const search = opens(actor, searchGate)
+  const search = opens(actor, gateOf('search'))
     ? h`<form class="gsearch" method="get" action="/staff/search" role="search"><label class="vh" for="gsearch-q">Search</label>
         <input id="gsearch-q" name="q" type="search" placeholder="Search clients, claims, invoices…" minlength="2">
         <button type="submit">Search</button></form>`
@@ -369,7 +397,7 @@ export function portalShell(actor: Actor): Shell {
   // MESSAGES, with how many of ours the client has not read. Only for the client, on their own company.
   const onMessages = ctx?.path === '/portal/messages' || (ctx?.path ?? '').startsWith('/portal/messages/');
   const unread = ctx?.db !== undefined && actor.role === 'CLIENT' && actor.business_id !== null && !onMessages
-    ? unreadCount(ctx.db, actor, actor.business_id, 'CLIENT') : 0;
+    ? (PARTS.rest.unreadCount?.(ctx.db, actor, actor.business_id, 'CLIENT') ?? 0) : 0;
   const messages = h`<a href="/portal/messages"${onMessages ? raw(' aria-current="page"') : raw('')}>Messages${
     unread > 0 ? h` <span class="tabcount" aria-label="${unread} not read">${unread}</span>` : raw('')}</a>`;
   /* THE PORTAL IN THE SAME LAYOUT AS THE BACK OFFICE. The menu down the left

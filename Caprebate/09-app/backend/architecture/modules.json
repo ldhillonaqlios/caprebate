@@ -144,10 +144,6 @@
    "area": "core",
    "kind": "logic"
   },
-  "src/core/required.ts": {
-   "area": "core",
-   "kind": "logic"
-  },
   "src/core/roles.ts": {
    "area": "core",
    "kind": "logic"
@@ -155,14 +151,6 @@
   "src/core/router.ts": {
    "area": "core",
    "kind": "routes"
-  },
-  "src/core/saved-keys.ts": {
-   "area": "core",
-   "kind": "logic"
-  },
-  "src/core/search.ts": {
-   "area": "core",
-   "kind": "logic"
   },
   "src/core/secrets.ts": {
    "area": "core",
@@ -181,10 +169,6 @@
    "kind": "routes"
   },
   "src/core/sign-in.ts": {
-   "area": "core",
-   "kind": "logic"
-  },
-  "src/core/signup.ts": {
    "area": "core",
    "kind": "logic"
   },
@@ -496,11 +480,19 @@
    "area": "admin",
    "kind": "other"
   },
+  "src/modules/admin/nav.ts": {
+   "area": "admin",
+   "kind": "other"
+  },
   "src/modules/admin/role-editor-pages.ts": {
    "area": "admin",
    "kind": "page"
   },
   "src/modules/admin/role-editor.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
+  "src/modules/admin/saved-keys.ts": {
    "area": "admin",
    "kind": "logic"
   },
@@ -860,6 +852,10 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/crm/assessments-and-calendar.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
   "src/modules/crm/automation.ts": {
    "area": "crm",
    "kind": "logic"
@@ -968,6 +964,10 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/crm/nav.ts": {
+   "area": "crm",
+   "kind": "other"
+  },
   "src/modules/crm/pipeline-pages.ts": {
    "area": "crm",
    "kind": "page"
@@ -989,6 +989,10 @@
    "kind": "routes"
   },
   "src/modules/crm/schedule.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/modules/crm/search.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1080,6 +1084,10 @@
    "area": "finance",
    "kind": "logic"
   },
+  "src/modules/finance/nav.ts": {
+   "area": "finance",
+   "kind": "other"
+  },
   "src/modules/portal/accountant-confirm-pages.ts": {
    "area": "portal",
    "kind": "page"
@@ -1135,6 +1143,10 @@
   "src/modules/portal/routes.ts": {
    "area": "portal",
    "kind": "routes"
+  },
+  "src/modules/portal/signup.ts": {
+   "area": "portal",
+   "kind": "logic"
   },
   "src/modules/portal/take-back.ts": {
    "area": "portal",
@@ -1233,6 +1245,10 @@
    "kind": "page"
   },
   "src/modules/survey/index.ts": {
+   "area": "survey",
+   "kind": "other"
+  },
+  "src/modules/survey/nav.ts": {
    "area": "survey",
    "kind": "other"
   },
@@ -1409,6 +1425,10 @@
    "kind": "logic"
   },
   "src/shared/plain-dashes.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/shared/required.ts": {
    "area": "shared",
    "kind": "logic"
   },

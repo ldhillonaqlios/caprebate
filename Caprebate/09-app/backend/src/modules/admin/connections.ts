@@ -34,7 +34,7 @@ import { STUBS, type App } from '../../core/app.ts';
 import type { Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { SECRET_KEYS, type SecretOwner } from '../../core/index.ts';
-import { serviceOn } from '../../core/saved-keys.ts';
+import { serviceOn } from './saved-keys.ts';
 import { switchedOn, switchesHere, TEST_WEBSITE_LOOKUPS, lookupsWaivedHere } from '../../integrations/index.ts';
 import { POSTCODE_CHECK } from '../../integrations/index.ts';
 import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from '../claims/index.ts';

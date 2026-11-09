@@ -22,7 +22,7 @@ import type { App } from '../../core/app.ts';
 import { can, type Actor } from '../../core/index.ts';
 import { openEnquiries } from './enquiries.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
-import { opens } from '../../core/navigation.ts';
+import { opens } from '../../core/index.ts';
 import { assertDashboard } from '../crm/index.ts';
 import { assertLeadSection } from '../crm/index.ts';
 import { leadsList, type LeadListRow } from '../../shared/lists.ts';

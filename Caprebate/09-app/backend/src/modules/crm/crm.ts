@@ -37,7 +37,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog, AuditKind } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { NotFoundAsRefusal, answerLabel } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal, answerLabel } from '../../core/index.ts';
 import {
   EXITS, LEGACY_STAGE_TO_PROCEDURE, anyStageLabel, claimStage, nextProcedureKey, procedureIndex, stage as stageOf,
   type ProcedureKey,

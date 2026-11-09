@@ -50,7 +50,7 @@
 
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localStamp, localWhen } from '../../shared/index.ts';
 import { claimObjFor } from './crm.ts';
 import { anyStageLabel } from '../../shared/index.ts';

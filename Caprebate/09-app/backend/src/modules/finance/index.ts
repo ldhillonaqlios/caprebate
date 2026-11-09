@@ -11,3 +11,5 @@ export { handleFinance } from './finance-pages.ts';
 export { assertFinanceSection, financeSectionObj, INVOICE_WORDS, PAYMENT_WORDS } from './finance.ts';
 export { allocateNumber, claimMoneyLines, CREDIT_BASES, financeDashboard, formatInvoiceNumber, INVOICE_KINDS } from './invoices.ts';
 export type { ClaimMoneyLine, FinanceDashboard } from './invoices.ts';
+// Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
+import './nav.ts';

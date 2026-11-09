@@ -25,7 +25,8 @@
 import { createHash } from 'node:crypto';
 import type { Db } from './db.ts';
 import { carriesSecret } from './secrets.ts';
-import { GENESIS } from '../modules/survey/index.ts';
+/** The previous hash of the first line of a chain (the audit log's, and the survey's anchor log's). */
+export const GENESIS = '0'.repeat(64);
 import { getAuditLogSeqHash, insertAuditLog, listAuditLog } from './data.ts';
 
 export type AuditKind =

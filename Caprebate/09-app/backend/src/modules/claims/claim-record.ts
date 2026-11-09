@@ -36,9 +36,9 @@ import { claimAlive, claimRoutes, legalDeadlineNeed, routesWhy } from './claim-r
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import type { Db } from '../../core/index.ts';
-import { _canonical, type AuditLog } from '../../core/audit.ts';
+import { _canonical, type AuditLog } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from '../crm/index.ts';
 import { enteredAt, raiseBusinessStage, type Need } from '../crm/index.ts';
 import { filingRoute } from '../portal/index.ts';

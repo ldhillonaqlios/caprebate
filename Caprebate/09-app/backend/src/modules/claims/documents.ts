@@ -53,7 +53,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localDate, localStamp, ukDate } from '../../shared/index.ts';
 import { READ_AND_DELETED } from '../../shared/index.ts';
 import { RET7, type DocType, type UploadJob } from '../../shared/upload-handler-port.ts';

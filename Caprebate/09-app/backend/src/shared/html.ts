@@ -18,7 +18,7 @@
  */
 
 import { ukDatesInMarkup } from './localtime.ts';
-import { requiredWordsInMarkup } from '../core/index.ts';
+import { requiredWordsInMarkup } from './required.ts';
 import { plainDashes } from './plain-dashes.ts';
 
 const ESCAPES: Readonly<Record<string, string>> = Object.freeze({

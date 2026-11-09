@@ -60,7 +60,7 @@ import { webhookChallenge } from '../integrations/index.ts';
 import { ga4MeasurementId } from '../integrations/index.ts';
 import { localDate, ukDate } from '../shared/index.ts';
 import { SITE_JS_HEADERS } from '../modules/public-site/index.ts';
-import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
+import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from '../modules/portal/index.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from '../modules/compliance/index.ts';
 import { CONSENT_COOKIE, consentChoice, cookieBanner, wantsBanner } from '../modules/public-site/index.ts';
 import { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from '../modules/compliance/index.ts';

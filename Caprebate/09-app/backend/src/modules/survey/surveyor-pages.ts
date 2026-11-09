@@ -37,7 +37,7 @@ import type { Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { breadcrumb, claimRef, dataLink, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from '../../shared/index.ts';
 import { kpiRow, nobodyBadge, siteOf, stageBadge } from '../../core/index.ts';
-import { setSubMenu } from '../../core/navigation.ts';
+import { setSubMenu } from '../../core/index.ts';
 import * as S from './surveyor.ts';
 import { registerAttribution } from '../claims/index.ts';
 import { formatPence } from '../../shared/index.ts';

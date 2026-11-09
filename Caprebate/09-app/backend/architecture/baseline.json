@@ -3,15 +3,10 @@
  "breaks": {
   "1": {
    "admin": [
-    "src/core/saved-keys.ts -> src/modules/admin/data.ts",
     "src/integrations/email/email.ts -> src/modules/admin/data.ts",
     "src/shared/lists.ts -> src/modules/admin/data.ts"
    ],
-   "assessment": [
-    "src/core/backoffice.ts -> src/modules/assessment/data.ts"
-   ],
    "claims": [
-    "src/core/backoffice.ts -> src/modules/claims/data.ts",
     "src/integrations/connectors/boundary-test-lookup.ts -> src/modules/claims/data.ts",
     "src/integrations/connectors/nations.ts -> src/modules/claims/data.ts",
     "src/integrations/connectors/register-files.ts -> src/modules/claims/register-files.ts",
@@ -21,66 +16,20 @@
    "core": [
     "src/integrations/connectors/test-lookups.ts -> src/core/app.ts",
     "src/integrations/connectors/test-lookups.ts -> src/core/audit.ts",
-    "src/modules/admin/configuration.ts -> src/core/backoffice.ts",
     "src/modules/admin/connections.ts -> src/core/app.ts",
-    "src/modules/admin/connections.ts -> src/core/saved-keys.ts",
-    "src/modules/admin/templates.ts -> src/core/backoffice.ts",
-    "src/modules/claims/approvals.ts -> src/core/backoffice.ts",
-    "src/modules/claims/case-stamp.ts -> src/core/audit.ts",
-    "src/modules/claims/case-stamp.ts -> src/core/backoffice.ts",
-    "src/modules/claims/claim-facts.ts -> src/core/backoffice.ts",
-    "src/modules/claims/claim-record.ts -> src/core/audit.ts",
-    "src/modules/claims/claim-record.ts -> src/core/backoffice.ts",
-    "src/modules/claims/defence-pack.ts -> src/core/audit.ts",
-    "src/modules/claims/defence-pack.ts -> src/core/backoffice.ts",
-    "src/modules/claims/documents.ts -> src/core/backoffice.ts",
-    "src/modules/claims/engaged.ts -> src/core/backoffice.ts",
-    "src/modules/compliance/compliance.ts -> src/core/backoffice.ts",
-    "src/modules/crm/automation.ts -> src/core/backoffice.ts",
-    "src/modules/crm/client-list.ts -> src/core/navigation.ts",
-    "src/modules/crm/client-page.ts -> src/core/backoffice.ts",
-    "src/modules/crm/client-page.ts -> src/core/navigation.ts",
-    "src/modules/crm/communication.ts -> src/core/backoffice.ts",
-    "src/modules/crm/crm-pages.ts -> src/core/navigation.ts",
-    "src/modules/crm/crm.ts -> src/core/backoffice.ts",
-    "src/modules/crm/free-email.ts -> src/core/backoffice.ts",
-    "src/modules/crm/inbound-email.ts -> src/core/backoffice.ts",
-    "src/modules/crm/introducers-pages.ts -> src/core/navigation.ts",
-    "src/modules/crm/introducers.ts -> src/core/backoffice.ts",
-    "src/modules/crm/leads.ts -> src/core/backoffice.ts",
-    "src/modules/crm/messages.ts -> src/core/backoffice.ts",
-    "src/modules/crm/pipeline-pages.ts -> src/core/navigation.ts",
-    "src/modules/crm/pipeline.ts -> src/core/backoffice.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/core/backoffice.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/core/navigation.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/core/saved-keys.ts",
-    "src/modules/crm/tasks-pages.ts -> src/core/backoffice.ts",
-    "src/modules/crm/tasks-pages.ts -> src/core/navigation.ts",
-    "src/modules/crm/tasks.ts -> src/core/backoffice.ts",
-    "src/modules/crm/timeline.ts -> src/core/backoffice.ts",
-    "src/modules/finance/billing.ts -> src/core/backoffice.ts",
-    "src/modules/finance/finance-pages.ts -> src/core/navigation.ts",
-    "src/modules/finance/finance.ts -> src/core/backoffice.ts",
-    "src/modules/finance/invoices.ts -> src/core/backoffice.ts",
-    "src/modules/portal/client-layout.ts -> src/core/navigation.ts",
-    "src/modules/portal/take-back.ts -> src/core/audit.ts",
-    "src/modules/public-site/home.ts -> src/core/navigation.ts",
-    "src/modules/survey/anchor-store.ts -> src/core/audit.ts",
-    "src/modules/survey/surveyor-pages.ts -> src/core/navigation.ts",
     "src/shared/lists-pages.ts -> src/core/navigation.ts",
-    "src/shared/lists-pages.ts -> src/core/search.ts",
     "src/shared/lists.ts -> src/core/backoffice.ts"
    ],
    "crm": [
-    "src/core/backoffice.ts -> src/modules/crm/data.ts",
     "src/integrations/connectors/nations.ts -> src/modules/crm/data.ts",
     "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts",
-    "src/integrations/email/email.ts -> src/modules/crm/data.ts"
+    "src/integrations/email/email.ts -> src/modules/crm/data.ts",
+    "src/shared/lists-pages.ts -> src/modules/crm/search.ts"
    ],
    "integrations": [
     "src/core/cli.ts -> src/integrations/connectors/test-lookups.ts",
     "src/core/cli.ts -> src/integrations/postcodes/postcode.ts",
-    "src/core/saved-keys.ts -> src/integrations/connectors/claude.ts",
+    "src/modules/admin/saved-keys.ts -> src/integrations/connectors/claude.ts",
     "src/modules/claims/case-stamp.ts -> src/integrations/connectors/claude.ts",
     "src/modules/claims/engaged.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/match-review.ts -> src/integrations/connectors/free-registers.ts",
@@ -96,13 +45,9 @@
     "src/modules/survey/surveyor.ts -> src/integrations/postcodes/postcode-port.ts",
     "src/modules/survey/surveyor.ts -> src/integrations/postcodes/postcode.ts"
    ],
-   "portal": [
-    "src/core/signup.ts -> src/modules/portal/data.ts"
-   ],
    "shared": [
     "src/core/cli.ts -> src/shared/objectstore.ts",
     "src/core/live-website.ts -> src/shared/shared-objectstore.ts",
-    "src/core/navigation.ts -> src/shared/lists.ts",
     "src/core/server.ts -> src/shared/objectstore.ts",
     "src/core/server.ts -> src/shared/shared-objectstore.ts",
     "src/core/staff.ts -> src/shared/lists-pages.ts",
@@ -131,7 +76,6 @@
    "survey": [
     "src/core/cli.ts -> src/modules/survey/bcis-data.ts",
     "src/core/cli.ts -> src/modules/survey/bcis-index.ts",
-    "src/core/search.ts -> src/modules/survey/data.ts",
     "src/integrations/postcodes/location-key.ts -> src/modules/survey/costing/cost-model.cjs",
     "src/modules/claims/claim-record.ts -> src/modules/survey/costing/job-economics.cjs",
     "src/shared/engine.ts -> src/modules/survey/costing/job-economics.cjs"
@@ -205,14 +149,12 @@
   },
   "3": {
    "admin": [
-    "src/core/data-borrowed.ts : saved_keys",
     "src/modules/claims/data-borrowed.ts : document_types",
     "src/modules/crm/data-borrowed.ts : document_types",
     "src/modules/crm/data-borrowed.ts : reason_lists",
     "src/modules/portal/data-borrowed.ts : document_types"
    ],
    "assessment": [
-    "src/core/data-borrowed.ts : assessments",
     "src/core/seed.ts : assessments",
     "src/modules/claims/data-borrowed.ts : assessments",
     "src/modules/compliance/data-borrowed.ts : consent_answers",
@@ -223,8 +165,6 @@
     "src/shared/data-borrowed.ts : estimates"
    ],
    "claims": [
-    "src/core/data-borrowed.ts : claims",
-    "src/core/data-borrowed.ts : properties",
     "src/core/seed.ts : claims",
     "src/core/seed.ts : engagements",
     "src/modules/admin/data-borrowed.ts : claims",
@@ -269,13 +209,6 @@
     "src/shared/data-borrowed.ts : users"
    ],
    "crm": [
-    "src/core/data-borrowed.ts : booking_changes",
-    "src/core/data-borrowed.ts : bookings",
-    "src/core/data-borrowed.ts : businesses",
-    "src/core/data-borrowed.ts : contacts",
-    "src/core/data-borrowed.ts : internal_notes",
-    "src/core/data-borrowed.ts : leads",
-    "src/core/data-borrowed.ts : working_times",
     "src/core/seed.ts : businesses",
     "src/integrations/data-borrowed.ts : businesses",
     "src/modules/admin/data-borrowed.ts : businesses",
@@ -306,8 +239,6 @@
     "src/shared/data-borrowed.ts : staff_tasks"
    ],
    "finance": [
-    "src/core/data-borrowed.ts : invoice_numbers",
-    "src/core/data-borrowed.ts : invoices",
     "src/modules/assessment/data-borrowed.ts : finance_settings",
     "src/modules/assessment/data-borrowed.ts : invoice_credit_notes",
     "src/modules/assessment/data-borrowed.ts : invoices",
@@ -342,7 +273,6 @@
     "src/modules/crm/data-borrowed.ts : enquiry_checks"
    ],
    "survey": [
-    "src/core/data-borrowed.ts : surveyor_jobs",
     "src/core/seed.ts : surveyor_jobs",
     "src/modules/assessment/data-borrowed.ts : surveyor_jobs",
     "src/modules/claims/data-borrowed.ts : pack_client_notices",

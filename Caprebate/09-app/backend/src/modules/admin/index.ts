@@ -9,9 +9,12 @@ export { adminSettingsGate, SETTINGS_TILES, settingsBody, settingsTiles } from '
 export { handleConfiguration } from './configuration-pages.ts';
 export { handleConnections, listsToImport } from './connections.ts';
 export { handleRoleEditor, madeRoleChoices } from './role-editor-pages.ts';
+export { keysView, refreshSavedKeys, saveKey, serviceOn } from './saved-keys.ts';
 export * as settingsModule from './settings.ts';
 export * as templatesModule from './templates.ts';
 export { activeTemplates, carriesBankDetails, freeTextRefusal, mergePlain, mergeValues, templateRefusal, tipsOff } from './templates.ts';
 export { mayTake, priorityRank, taskChoices, vocabChoice, vocabLabel, vocabulary } from './vocabularies.ts';
 export type { TaskChoices } from './vocabularies.ts';
 export { getDocumentTypesCodeByCode, getDocumentTypesCodeLabelByCode, getDocumentTypesHandlerTypeActiveByCode, getDocumentTypesHandlerTypeByCode, getDocumentTypesLabelByCode, getDocumentTypesLabelByCode2, getDocumentTypesM, getDocumentTypesOrdByCode, getEmailSenderA, getEmailTemplatesLabelSubjectByIdActive, getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, getVocabulariesActivityTypeCountByCode, insertDocumentTypes, insertEmailSender, listDocumentTypesCodeLabel, listDocumentTypesCodeLabel2, listDocumentTypesCodeLabelByActiveHandlerType, listDocumentTypesCodeLabelByActiveHandlerType2, listReasonListsCodeLabelActiveByList, updateDocumentTypesLabelReadersByCode } from './data.ts';
+// Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
+import './nav.ts';

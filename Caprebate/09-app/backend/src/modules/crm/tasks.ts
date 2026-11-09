@@ -40,7 +40,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditKind, AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localDate, localStamp, ukDate, dueWords } from '../../shared/index.ts';
 import { claimNaming, claimObjFor, claimWords, PRIORITIES, type Fields } from './crm.ts';
 import { anyStageLabel, claimStage } from '../../shared/index.ts';

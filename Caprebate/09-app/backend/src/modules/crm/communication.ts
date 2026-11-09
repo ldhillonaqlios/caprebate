@@ -43,7 +43,7 @@ import * as F from './free-email.ts';
 import { emailChains, reSubject } from './email-chains.ts';
 import { addNote } from '../claims/index.ts';
 import { createTask } from './tasks.ts';
-import { mayArrangeCalls } from '../../core/backoffice.ts';
+import { mayArrangeCalls } from '../../core/index.ts';
 import { addLocalDays, isBookable, SLOT_MINUTES, staffSlots, startOfLocalDay } from './schedule.ts';
 import { activeMeeting, callLengthOf, callLengthWords, reconcileVideoMeeting, videoCallsAtSameTime, zoomBlockers, zoomPlanLine, SAME_TIME_WORDS } from './video-calls.ts';
 import { sendVideoInvite } from './booking-invite.ts';

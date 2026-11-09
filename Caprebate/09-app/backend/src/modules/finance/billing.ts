@@ -30,7 +30,7 @@ import { h, page, raw, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { localDate } from '../../shared/index.ts';
 import { dateField, textField, words, type Fields, type Vocab } from '../compliance/index.ts';
 import { claimInvoices, financeDashboard, type ClaimInvoiceView, type ExpectedClaim } from './invoices.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { formatPence } from '../../shared/index.ts';
 import { getBusinessesIdNameById, getBusinessesNameById, listContactsFullNameJobRoleByBusinessId } from '../crm/index.ts';
 import { getClaimsBById, listClaimsIdByBusinessId } from '../claims/index.ts';

@@ -29,7 +29,7 @@ import {
   CONSENT_COOKIE, CONSENT_MAX_AGE, COOKIE_LIST, LEGAL_GAPS, LEGAL_PAGES, cookieBanner, legalPageHtml, optionalAllowed, versionOf,
 } from '../../src/modules/public-site/legal-pages.ts';
 import { currentApprovals, currentTermsVersions, hasAgreedCurrent } from '../../src/modules/compliance/legal-approvals.ts';
-import { offerSignup, requestSignup, confirmSignup } from '../../src/core/signup.ts';
+import { offerSignup, requestSignup, confirmSignup } from '../../src/modules/portal/signup.ts';
 import { STEP_TTL_MS } from '../../src/core/sign-in.ts';
 
 const SRC = join(import.meta.dirname, '..', '..', 'src');

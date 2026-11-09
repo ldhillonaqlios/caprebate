@@ -17,3 +17,7 @@ export function getRegisterFileImportsImportedAtRowsKeptBySourceId<T extends Row
   return db.get<T>(`SELECT i.imported_at, i.rows_kept, i.rows_skipped, u.display_name AS who FROM register_file_imports i LEFT JOIN users u ON u.id = i.by_user
     WHERE i.source_id = ? ORDER BY i.imported_at DESC, i.rowid DESC LIMIT 1`, params);
 }
+export function listSavedKeysNameSealedByRowidName<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT k.name, k.sealed, k.set_at, u.display_name AS who FROM saved_keys k LEFT JOIN users u ON u.id = k.set_by ' +
+    'WHERE k.rowid = (SELECT max(x.rowid) FROM saved_keys x WHERE x.name = k.name) ORDER BY k.name', params);
+}

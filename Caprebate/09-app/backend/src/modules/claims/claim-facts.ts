@@ -36,7 +36,7 @@ import { registerCompany, yearEndFrom, dormantWarning, propertyTenure, ROLE_LABE
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { SOURCES as REGISTER_SOURCES } from '../../integrations/index.ts';
 import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type EngineWindow, type SectorId } from '../../shared/index.ts';
 import { packSwitchReadings } from '../../shared/index.ts';

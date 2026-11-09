@@ -55,7 +55,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { outboxTransport } from '../../integrations/index.ts';
 import { loadLetter, type OpenTerm } from '../claims/index.ts';
 import { localDate, localStamp } from '../../shared/index.ts';

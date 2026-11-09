@@ -58,7 +58,11 @@ export type { ToCheck } from './client-checks.ts';
 export type { ClientSort } from './client-list.ts';
 export type { ThreadMessage } from './messages.ts';
 export type { FeeTrigger, Need, PipelineClaim } from './pipeline.ts';
+// The back office's filled assessments and calendar, read by the staff pages as one name.
+export * as backOffice from './assessments-and-calendar.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { crmAssets, crmCallPage, crmReferralForm } from './routes.ts';
 // What the CRM listens for (the modules below announce; src/core/events.ts). Last, as it reaches the CRM's own files.
 import './events.ts';
+// Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
+import './nav.ts';

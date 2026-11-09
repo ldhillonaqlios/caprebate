@@ -8,7 +8,7 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from '../ui-tidy-harness.ts';
-import * as B from '../../src/core/backoffice.ts';
+import * as B from '../../src/modules/crm/assessments-and-calendar.ts';
 import { calendarCounts } from '../../src/core/staff.ts';
 import { localDate } from '../../src/shared/localtime.ts';
 

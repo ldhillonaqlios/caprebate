@@ -24,7 +24,7 @@
  */
 
 import type { Db } from '../../core/index.ts';
-import { screenDetail } from '../../core/audit.ts';
+import { screenDetail } from '../../core/index.ts';
 import { countRegisterRecordsSince } from '../../integrations/index.ts';
 import { getClaimDeliverablesCountByBusinessIdState, getClaimGrantsCountByBusinessIdSourceId, listFactApprovalsFactRefActionByBusinessId2 } from '../claims/index.ts';
 import { getSignatoryChecksCountByBusinessIdSource } from '../compliance/index.ts';

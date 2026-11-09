@@ -40,7 +40,7 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { currentSender, outboxTransport, type Sender } from '../../integrations/index.ts';
 import { EMAIL_SENDING, sendingMissing, sendingOn, type EmailSending, type MailWhere, type SmtpLogin } from '../../integrations/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import * as C from './crm.ts';
 import { documentsModule as D } from '../claims/index.ts';
 import { assertLeadSection } from './leads.ts';

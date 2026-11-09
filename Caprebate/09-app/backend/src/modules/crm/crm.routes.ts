@@ -31,6 +31,9 @@ import { claimsPage, propertiesPage, propertyPage, renderClaim, type CrmPageDeps
 import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { getContactsBusinessIdLeadIdById } from './data.ts';
+import { provideNav } from '../../core/index.ts';
+// The Claims tab's gate is the claims list's own (the menu asks it; src/core/navigation.ts).
+provideNav({ gates: { claims: LI.claimListGate } });
 
 export type WebResult = 'handled' | 'not-mine';
 

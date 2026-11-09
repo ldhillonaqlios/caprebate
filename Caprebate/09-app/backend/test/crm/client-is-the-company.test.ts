@@ -31,7 +31,7 @@ import { createApp } from '../../src/core/server.ts';
 import { seed } from '../../src/core/seed.ts';
 import { createUser } from '../../src/core/users.ts';
 import * as E from '../../src/modules/claims/engaged.ts';
-import * as SE from '../../src/core/search.ts';
+import * as SE from '../../src/modules/crm/search.ts';
 import { companyFirst } from '../../src/modules/admin/templates.ts';
 import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from '../../src/modules/crm/automation.ts';
 import type { Actor } from '../../src/core/authz.ts';

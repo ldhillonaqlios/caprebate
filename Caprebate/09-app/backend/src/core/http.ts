@@ -8,7 +8,7 @@ import type { App } from './app.ts';
 import type { Actor } from './authz.ts';
 import type { authenticate } from './auth.ts';
 import type { NotFoundAsRefusal } from './backoffice.ts';
-import type { confirmSignup, offerSignup, requestSignup, verifyOpen } from './signup.ts';
+import type { confirmSignup, offerSignup, requestSignup, verifyOpen } from '../modules/portal/signup.ts';
 import type { handlePortalSettings } from './staff.ts';
 import type { agreementPage, agreementTick, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement } from '../modules/compliance/index.ts';
 import { cleanForm } from './typed.ts';

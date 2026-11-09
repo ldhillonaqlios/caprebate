@@ -5,6 +5,8 @@
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).
  */
 import type { Db, Param, Row } from '../../core/index.ts';
+// This module's permissions are registered whenever its data is, so every path into the module can ask them.
+import './actions.ts';
 
 // email_templates
 export function getEmailTemplatesIdLabelById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {

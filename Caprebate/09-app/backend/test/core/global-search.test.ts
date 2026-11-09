@@ -18,7 +18,7 @@ import { randomUUID } from 'node:crypto';
 import { seed } from '../../src/core/seed.ts';
 import type { AppRole } from '../../src/core/roles.ts';
 import type { Actor } from '../../src/core/authz.ts';
-import * as SE from '../../src/core/search.ts';
+import * as SE from '../../src/modules/crm/search.ts';
 import * as R from '../../src/modules/compliance/compliance-rights.ts';
 import * as B from '../../src/modules/compliance/compliance-breach.ts';
 import * as SI from '../../src/modules/compliance/compliance-identity.ts';
