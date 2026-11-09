@@ -178,3 +178,8 @@ export function listAssessmentAnswersOrdQuestionIdByAssessmentId<T extends Row =
   return db.all<T>('SELECT ord, question_id, question_text, state, value FROM assessment_answers ' +
     'WHERE assessment_id = ? ORDER BY ord ASC', params);
 }
+
+// Phase 161l1: by a list of businesses (a JSON array), for the areas above that read each one's latest assessment.
+export function listAssessmentsBusinessIdSubmittedAtByBusinessIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT a.business_id, MAX(a.submitted_at) AS submitted_at FROM assessments a WHERE a.business_id IN (SELECT value FROM json_each(?)) GROUP BY a.business_id', params);
+}

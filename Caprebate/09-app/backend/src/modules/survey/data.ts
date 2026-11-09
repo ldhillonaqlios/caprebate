@@ -5,6 +5,9 @@
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).
  */
 import type { Db, Param, Row } from '../../core/index.ts';
+import { fillUser, fillUsers } from '../../core/index.ts';
+import { getEstimatesIdByAssessmentId } from '../assessment/index.ts';
+import { listClaimGrantsAmountPenceByClaimIdPaidTo, listClaimsIdBusinessIdStageClaimRefByIds } from '../claims/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -449,4 +452,72 @@ export function listSurveyorJobsSurveyorIdByClaimIdSurveyorId2<T extends Row = R
 }
 export function updateSurveyorJobsClaimIdByBusinessIdAssessmentId(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE surveyor_jobs SET claim_id = ? WHERE business_id = ? AND assessment_id = ? AND claim_id IS NULL', params);
+}
+
+// Phase 161l1: these joined users (the core), claims' or the assessment's tables. Each reads this module's rows with
+// the id where the joined column stood, then asks the owner through its front door and puts the column in its place:
+// the same rows, in the same order, with the same keys in the same places.
+export function getSurveyInspectionBasisBasisNoteByJobId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT b.basis, b.note, b.by_user AS by_name, b.at FROM survey_inspection_basis b WHERE b.job_id = ? ORDER BY b.at DESC, b.rowid DESC LIMIT 1', params), { by_name: 'display_name' });
+}
+export function listSurveyPackAddedLinesIdLabelByPackId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT a.id, a.label, a.unit, a.added_by AS by_name, a.added_at, a.reason FROM survey_pack_added_lines a WHERE a.pack_id = ? ORDER BY a.added_at ASC, a.id ASC', params), { by_name: 'display_name' });
+}
+export function getSurveyPackApprovalsIdVersionByJobIdVersion<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT a.id, a.version, a.pack_seq, a.legal_seq, a.fingerprint, a.approved_by, a.approved_by AS approver_name, a.approved_at, a.snapshot_json ' +
+    'FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id WHERE p.job_id = ? AND a.version = ?', params), { approver_name: 'display_name' });
+}
+export function listSurveyPackApprovalsIdVersionByPackId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT a.id, a.version, a.pack_seq, a.legal_seq, a.fingerprint, a.approved_by, a.approved_by AS approver_name, a.approved_at ' +
+    'FROM survey_pack_approvals a WHERE a.pack_id = ? ORDER BY a.version DESC', params), { approver_name: 'display_name' });
+}
+export function listSurveyPackEntriesIdSeqByPackId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT e.id, e.seq, e.line_key, e.field, e.value, e.pool, e.by_user, e.by_user AS by_name, e.reason, e.at, e.rate_basis, e.rate_ref, e.rate_priced_at ' +
+    'FROM survey_pack_entries e WHERE e.pack_id = ? ORDER BY e.seq ASC', params), { by_name: 'display_name' });
+}
+export function listSurveyPackLegalAnswersQuestionIdValueJsonByPackId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT a.question_id, a.value_json, a.by_user AS by_name, a.source_note, a.at, a.seq FROM survey_pack_legal_answers a WHERE a.pack_id = ? ORDER BY a.seq ASC', params), { by_name: 'display_name' });
+}
+export function listSurveyPackWordsFieldWordsByPackId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT w.field, w.words, w.by_user AS by_name, w.at, w.reason FROM survey_pack_words w ' +
+    'WHERE w.pack_id = ? ORDER BY w.at, w.rowid', params), { by_name: 'display_name' });
+}
+export function listSurveyPhotoSortsIdItemKeyByPhotoIdJO<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT p.id, COALESCE((SELECT s.item_key FROM survey_photo_sorts s WHERE s.photo_id = p.id ORDER BY s.at DESC, s.rowid DESC LIMIT 1), p.item_key) AS item_key, ' +
+    'p.content_type, p.byte_size, p.note, p.taken_at, p.taken_by AS taken_by_name FROM survey_photos p ' +
+    'LEFT JOIN survey_photo_withdrawals w ON w.photo_id = p.id WHERE p.job_id = ? AND w.photo_id IS NULL ORDER BY p.taken_at, p.rowid', params), { taken_by_name: 'display_name' });
+}
+export function listSurveyVideosIdContentTypeByJobIdVideoId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT v.id, v.content_type, v.byte_size, v.duration_ms, v.note, v.taken_at, v.taken_by AS taken_by_name FROM survey_videos v ' +
+    'LEFT JOIN survey_video_withdrawals w ON w.video_id = v.id WHERE v.job_id = ? AND w.video_id IS NULL ORDER BY v.taken_at, v.rowid', params), { taken_by_name: 'display_name' });
+}
+export function listSurveyWalkthroughAsksAtByNameByJobId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT a.at, a.by_user AS by_name FROM survey_walkthrough_asks a WHERE a.job_id = ? ORDER BY a.at DESC', params), { by_name: 'display_name' });
+}
+export function getSurveyorJobsIdSurveyorByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT j.id, j.surveyor_id AS surveyor, j.created_at, j.state FROM surveyor_jobs j ' +
+    'WHERE j.claim_id = ? ORDER BY j.created_at DESC, j.id LIMIT 1', params), { surveyor: 'display_name' });
+}
+export function getSurveyorJobsSurveyorByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT j.surveyor_id AS surveyor FROM surveyor_jobs j WHERE j.claim_id = ? LIMIT 1', params), { surveyor: 'display_name' });
+}
+export function listSurveyorRoomCountsRoomIdRoomCountByJobId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT c.room_id, c.room_count, c.recorded_at, c.recorded_by AS by_name FROM surveyor_room_counts c WHERE c.job_id = ?', params), { by_name: 'display_name' });
+}
+/** The grants paid to a past owner on the job's claim (none when the job has no claim yet). */
+export function listClaimGrantsAmountPenceByIdPaidTo<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const job = db.get<{ claim_id: string | null }>('SELECT j.claim_id FROM surveyor_jobs j WHERE j.id = ?', params);
+  return job === undefined || job.claim_id === null ? [] : listClaimGrantsAmountPenceByClaimIdPaidTo<T>(db, [job.claim_id]);
+}
+/** { x: 1 } when the job's assessment has an estimate. */
+export function getEstimatesXById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const job = db.get<{ assessment_id: string }>('SELECT j.assessment_id FROM surveyor_jobs j WHERE j.id = ?', params);
+  return job === undefined || getEstimatesIdByAssessmentId(db, [job.assessment_id]) === undefined ? undefined : ({ x: 1 } as Row as T);
+}
+/** The job's property: its pack's, else its claim's. */
+export function getSurveyorJobsPropertyIdPById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const j = db.get<{ p: string | null; claim_id: string | null }>('SELECT sp.property_id AS p, j.claim_id FROM surveyor_jobs j LEFT JOIN survey_packs sp ON sp.job_id = j.id WHERE j.id = ?', params);
+  if (j === undefined) return undefined;
+  const claim = j.p === null && j.claim_id !== null ? listClaimsIdBusinessIdStageClaimRefByIds<{ property_id: string | null }>(db, [JSON.stringify([j.claim_id])])[0] : undefined;
+  return { p: j.p ?? claim?.property_id ?? null } as Row as T;
 }

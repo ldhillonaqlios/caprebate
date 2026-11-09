@@ -26,8 +26,7 @@ import { INCOMING_PREFIX, VIDEO_PREFIX, type FsObjectStore, type IncomingTarget 
 import { clientOf, NO_KEY, type EvidenceDeps } from './survey-evidence.ts';
 import { failureWords, LOCK_OVERHEAD, SITE_SUFFIX, unlockPhoto, type UploadResult } from './photo-upload.ts';
 import { packJob } from './surveyor.ts';
-import { getSurveyVideoOutcomesOutcomeWhyBySendId, getSurveyVideoPiecesCountBySendId, getSurveyVideoSendsIdJobIdById, getSurveyVideoSlotsIdSendIdByIdSendId, getSurveyVideoSlotsXBySendIdN, getSurveyVideoWithdrawalsXByVideoId, getSurveyVideosBusinessIdById, getSurveyVideosJobIdBusinessIdById, getSurveyVideosMsById, insertSurveyVideoOutcomes, insertSurveyVideoOutcomes2, insertSurveyVideoOutcomes3, insertSurveyVideoPieces, insertSurveyVideoSends, insertSurveyVideoSlots, insertSurveyVideoWithdrawals, insertSurveyVideos, listSurveyVideoSendsIdPiecesBySendIdCreatedAt, listSurveyVideoSlotsStagedKeyBySendId } from './data.ts';
-import { listSurveyVideosIdContentTypeByJobIdVideoId } from './data-borrowed.ts';
+import { getSurveyVideoOutcomesOutcomeWhyBySendId, getSurveyVideoPiecesCountBySendId, getSurveyVideoSendsIdJobIdById, getSurveyVideoSlotsIdSendIdByIdSendId, getSurveyVideoSlotsXBySendIdN, getSurveyVideoWithdrawalsXByVideoId, getSurveyVideosBusinessIdById, getSurveyVideosJobIdBusinessIdById, getSurveyVideosMsById, insertSurveyVideoOutcomes, insertSurveyVideoOutcomes2, insertSurveyVideoOutcomes3, insertSurveyVideoPieces, insertSurveyVideoSends, insertSurveyVideoSlots, insertSurveyVideoWithdrawals, insertSurveyVideos, listSurveyVideoSendsIdPiecesBySendIdCreatedAt, listSurveyVideoSlotsStagedKeyBySendId, listSurveyVideosIdContentTypeByJobIdVideoId } from './data.ts';
 
 export const VIDEO_PIECE_BYTES = 4 * 1024 * 1024;
 export const MAX_VIDEO_BYTES = 1024 * 1024 * 1024;

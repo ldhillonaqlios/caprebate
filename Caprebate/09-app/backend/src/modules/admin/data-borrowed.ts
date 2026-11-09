@@ -6,18 +6,18 @@
  * new belongs here: this file only gets shorter. Text unchanged from the caller.
  */
 import type { Db, Param, Row } from '../../core/index.ts';
+import { listClaimsIdBusinessIdStageClaimRefByIds } from '../claims/index.ts';
+
+/*
+ * Phase 161l1: what is left here reads the CRM's businesses, which sit above admin in the order (for the CRM's own
+ * split). The claim itself is read through the claims' front door; the users and the register imports went to their
+ * owners (the core's fillUsers; the outside services' data file).
+ */
 
 // claims
 export function getClaimsClaimRefBusinessNameById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT c.claim_ref, b.name AS business_name, c.property_id FROM claims c JOIN businesses b ON b.id = c.business_id WHERE c.id = ?', params);
-}
-
-// register_file_imports
-export function getRegisterFileImportsImportedAtRowsKeptBySourceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>(`SELECT i.imported_at, i.rows_kept, i.rows_skipped, u.display_name AS who FROM register_file_imports i LEFT JOIN users u ON u.id = i.by_user
-    WHERE i.source_id = ? ORDER BY i.imported_at DESC, i.rowid DESC LIMIT 1`, params);
-}
-export function listSavedKeysNameSealedByRowidName<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT k.name, k.sealed, k.set_at, u.display_name AS who FROM saved_keys k LEFT JOIN users u ON u.id = k.set_by ' +
-    'WHERE k.rowid = (SELECT max(x.rowid) FROM saved_keys x WHERE x.name = k.name) ORDER BY k.name', params);
+  const c = listClaimsIdBusinessIdStageClaimRefByIds<{ business_id: string; claim_ref: unknown; property_id: unknown }>(db, [JSON.stringify([params[0]])])[0];
+  if (c === undefined) return undefined;
+  const b = db.get<{ name: unknown }>('SELECT b.name FROM businesses b WHERE b.id = ?', [c.business_id]);
+  return b === undefined ? undefined : ({ claim_ref: c.claim_ref, business_name: b.name, property_id: c.property_id } as Row as T);
 }

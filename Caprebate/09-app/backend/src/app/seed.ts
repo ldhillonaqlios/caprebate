@@ -39,8 +39,8 @@ import { backfillLeadFor } from '../modules/crm/index.ts';
 import { recordOpened } from '../modules/crm/index.ts';
 import { insertTask, type TaskInsert } from '../modules/crm/index.ts';
 import { insertEnquiryChecks2 } from '../modules/public-site/index.ts';
-import { getContactsCountByBusinessId, getContactsIdByBusinessIdContactType, getLeadsIdByOriginStatus, insertBookings, insertBusinesses2, insertContacts2, insertLeads3, insertStaffTasks2, insertWorkingTimes, updateBusinessesClaimantTypeById, updateBusinessesClientStatusById, updateBusinessesLegalNameCompanyNumberById2, updateBusinessesSourceUpdatedAt } from '../modules/crm/index.ts';
-import { getClaimsIdByBusinessIdAssessmentId, getClaimsIdByBusinessIdLabel, getPropertiesIdByBusinessId, getPropertiesIdByBusinessId3, insertClaimDeliverables2, insertClaimFacts2, insertClaimMilestones2, insertClaimStageMoves3, insertEngagements2, insertProperties2, insertProperties3, insertProperties5, insertTaxAdviserSignoffs2, updateClaimDeliverablesStateIssuedOnById2, updateClaimsOwnerIdPriorityByBusinessId, updatePropertiesAddressLine1TownByBusinessId, updatePropertiesTenureTownById } from '../modules/claims/index.ts';
+import { getContactsCountByBusinessId, getContactsIdByBusinessIdContactType, getLeadsIdByOriginStatus, insertBookings, insertBusinesses2, insertContacts2, insertLeads3, insertStaffTasks2, insertWorkingTimes, updateBusinessesClaimantTypeById, updateBusinessesClientStatusActiveById, updateBusinessesClientStatusById, updateBusinessesLegalNameCompanyNumberById2, updateBusinessesSourceUpdatedAt } from '../modules/crm/index.ts';
+import { getClaimsIdByBusinessIdAssessmentId, getClaimsIdByBusinessIdAssessmentIdNotNull, getClaimsIdByBusinessIdAssessmentIdNull, listEngagementsBusinessIdByLetterStateSigned, getClaimsIdByBusinessIdLabel, getPropertiesIdByBusinessId, getPropertiesIdByBusinessId3, insertClaimDeliverables2, insertClaimFacts2, insertClaimMilestones2, insertClaimStageMoves3, insertEngagements2, insertProperties2, insertProperties3, insertProperties5, insertTaxAdviserSignoffs2, updateClaimDeliverablesStateIssuedOnById2, updateClaimsOwnerIdPriorityByBusinessId, updatePropertiesAddressLine1TownByBusinessId, updatePropertiesTenureTownById } from '../modules/claims/index.ts';
 import { getAssessmentsIdByBusinessId, insertAssessmentAnswers, insertAssessments2, insertEstimates2 } from '../modules/assessment/index.ts';
 import { insertInvoicePayments, insertInvoices2 } from '../modules/finance/index.ts';
 import { insertSurveyorCommitments, insertSurveyorJobs } from '../modules/survey/index.ts';
@@ -423,11 +423,9 @@ function seedPipeline(
    */
   const surveying = users.find((u) => u.role === 'SURVEYING');
   for (const k of ['b4', 'b6']) {
-    db.run(
-      'INSERT INTO surveyor_jobs (id, business_id, assessment_id, surveyor_id, state, committed_at, created_at) ' +
-        'SELECT ?, ?, id, ?, ?, NULL, ? FROM assessments WHERE business_id = ?',
-      [newId(), get(k), surveying?.id ?? null, 'SEALED', t, get(k)],
-    );
+    // Phase 161l1: the assessment's id from the assessment, the job written by the survey (each through its front door).
+    const assessment = getAssessmentsIdByBusinessId<{ id: string }>(db, [get(k)]);
+    if (assessment !== undefined) insertSurveyorJobs(db, [newId(), get(k), assessment.id, surveying?.id ?? null, 'SEALED', null, t, null]);
   }
 }
 
@@ -561,10 +559,8 @@ function seedCrm(
 
   // Derived as migration 009 derives them: signed is ACTIVE, the funnel is WEBSITE.
   updateBusinessesSourceUpdatedAt(db, [t]);
-  db.run(
-    "UPDATE businesses SET client_status = 'ACTIVE' WHERE id IN " +
-      "(SELECT business_id FROM engagements WHERE letter_state = 'SIGNED')",
-  );
+  // Phase 161l1: the signed letters from the claims, each organisation marked by the CRM (each through its front door).
+  for (const e of listEngagementsBusinessIdByLetterStateSigned<{ business_id: string }>(db)) updateBusinessesClientStatusActiveById(db, [e.business_id]);
   updateBusinessesClientStatusById(db, [get('b6')]);
   updateBusinessesClaimantTypeById(db, [get('b2')]);
 
@@ -639,11 +635,7 @@ function seedTasks(
     return v;
   };
   const claim = (k: string, withAssessment: boolean): string => {
-    const c = db.get<{ id: string }>(
-      withAssessment
-        ? 'SELECT id FROM claims WHERE business_id = ? AND assessment_id IS NOT NULL ORDER BY claim_ref LIMIT 1'
-        : 'SELECT id FROM claims WHERE business_id = ? AND assessment_id IS NULL ORDER BY claim_ref LIMIT 1',
-      [get(k)]);
+    const c = (withAssessment ? getClaimsIdByBusinessIdAssessmentIdNotNull : getClaimsIdByBusinessIdAssessmentIdNull)<{ id: string }>(db, [get(k)]);
     if (c === undefined) throw new Error(`seed: no claim for ${k}`);
     return c.id;
   };

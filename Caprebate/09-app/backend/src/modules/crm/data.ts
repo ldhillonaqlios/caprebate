@@ -1103,3 +1103,15 @@ export function listLeadsProspectOrganisationProspectPostcode<T extends Row = Ro
 export function updateBookingsStartsAtEndsAtById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE bookings SET starts_at = ?, ends_at = ?, assigned_to = ? WHERE id = ?', params);
 }
+
+// Phase 161l1: read by a list of ids (a JSON array), for the areas above that joined these tables to their own rows.
+export function listContactsIdFullNameByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, full_name FROM contacts WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+export function listBusinessesIdNameSectorByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, name, sector FROM businesses WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+// For the seed (src/app/seed.ts): an organisation with a signed letter is a client.
+export function updateBusinessesClientStatusActiveById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run("UPDATE businesses SET client_status = 'ACTIVE' WHERE id = ?", params);
+}
