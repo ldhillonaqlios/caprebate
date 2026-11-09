@@ -38,7 +38,7 @@ import { FEE_CONTROLS } from '../../src/modules/claims/fee-controls.ts';
 import { FUNNEL_SWITCHES } from '../../src/modules/assessment/funnel-session.ts';
 import {
   BACKUP_CYCLE, FAIL_CLOSED_SETTINGS, RET7, deletionDueAt, type IngestionSettings, type RawFileRecord,
-} from '../../src/shared/upload-handler-port.ts';
+} from '../../src/modules/claims/upload-handler-port.ts';
 import { actor, testApp } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';
 import { oneDriveOnly } from '../onedrive-only.ts';

@@ -46,7 +46,7 @@
 import {
   ALWAYS_NATURAL_PERSON_ROLES, CAPTURE_NAME_PATTERNS, ROLE_TOKENS, classifyPartyReference,
   type PartyLegalForm, type PersonRole,
-} from '../../shared/upload-handler-port.ts';
+} from '../claims/upload-handler-port.ts';
 
 /** The title of the question for the data protection officer in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
 export const CONVEYANCING_STRIP_QUESTION = 'May company names stay on conveyancing uploads if we strip the individuals?';

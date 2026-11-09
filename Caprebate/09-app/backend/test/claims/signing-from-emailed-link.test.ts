@@ -25,7 +25,7 @@ import {
 import { TEST_LETTER_PATH } from '../../src/modules/claims/letter.ts';
 import { letterState, letterSteps, sendEngagementLetter, signedCopy } from '../../src/modules/claims/engagement-send.ts';
 import { assertSignedEngagement } from '../../src/modules/claims/research.ts';
-import { pdfLooksComplete } from '../../src/shared/upload-handler-port.ts';
+import { pdfLooksComplete } from '../../src/modules/claims/upload-handler-port.ts';
 import { acceptClientBytes, DAMAGED_PDF } from '../../src/modules/claims/uploads.ts';
 import { receiveFile } from '../../src/modules/portal/client-files-pages.ts';
 import * as D from '../../src/modules/claims/documents.ts';

@@ -11,11 +11,13 @@
    ],
    "claims": [
     "src/core/backoffice.ts -> src/modules/claims/data.ts",
+    "src/core/upload-pieces.ts -> src/modules/claims/upload-handler-port.ts",
     "src/integrations/connectors/boundary-test-lookup.ts -> src/modules/claims/data.ts",
     "src/integrations/connectors/nations.ts -> src/modules/claims/data.ts",
     "src/integrations/connectors/register-files.ts -> src/modules/claims/register-files.ts",
     "src/integrations/connectors/site-area.ts -> src/modules/claims/data.ts",
-    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts"
+    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts",
+    "src/modules/assessment/conveyancing-strip.ts -> src/modules/claims/upload-handler-port.ts"
    ],
    "core": [
     "src/integrations/connectors/test-lookups.ts -> src/core/app.ts",
@@ -102,22 +104,7 @@
     "src/core/cli.ts -> src/shared/objectstore.ts",
     "src/core/live-website.ts -> src/shared/shared-objectstore.ts",
     "src/core/server.ts -> src/shared/objectstore.ts",
-    "src/core/server.ts -> src/shared/shared-objectstore.ts",
-    "src/core/upload-pieces.ts -> src/shared/objectstore.ts",
-    "src/core/upload-pieces.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/assessment/conveyancing-strip.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/claims/documents.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/claims/uploads.ts -> src/shared/objectstore.ts",
-    "src/modules/claims/uploads.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/compliance/compliance-identity.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/message-retention.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/messages-pages.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/crm/whatsapp-import.ts -> src/shared/objectstore.ts",
-    "src/modules/crm/whatsapp.ts -> src/shared/objectstore.ts",
-    "src/modules/portal/client-files-pages.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/public-site/enquiry-retention.ts -> src/shared/upload-handler-port.ts",
-    "src/modules/survey/photo-upload.ts -> src/shared/objectstore.ts",
-    "src/modules/survey/survey-video.ts -> src/shared/objectstore.ts"
+    "src/core/server.ts -> src/shared/shared-objectstore.ts"
    ],
    "survey": [
     "src/core/cli.ts -> src/modules/survey/bcis-data.ts",

@@ -42,7 +42,7 @@ import * as TL from '../../src/modules/crm/timeline.ts';
 import * as E from '../../src/modules/claims/engaged.ts';
 import * as PO from '../../src/modules/portal/portal.ts';
 import { acceptClientBytes, finishUpload, eventsFor, issuedJob } from '../../src/modules/claims/uploads.ts';
-import { DOC_SPECS, HUMAN_READ_ONLY_TYPES, RET7, quarantineKeyFor } from '../../src/shared/upload-handler-port.ts';
+import { DOC_SPECS, HUMAN_READ_ONLY_TYPES, RET7, quarantineKeyFor } from '../../src/modules/claims/upload-handler-port.ts';
 import { pdfOf } from '../document-fixtures.ts';
 import { actor, signatureRecordFor } from '../helpers.ts';
 

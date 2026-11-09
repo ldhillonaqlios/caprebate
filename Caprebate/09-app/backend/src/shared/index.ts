@@ -4,6 +4,10 @@
  * needs it, never a whole file.
  */
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
+// The document store first of all: the upload handler hands it its keys while it loads (setDocumentKeys), and the
+// handler can be reached from the core, which html.ts below reaches.
+export { FsObjectStore, INCOMING_PREFIX, SEALED_PREFIX, VIDEO_PREFIX, WHATSAPP_IMPORT_PREFIX, WHATSAPP_PREFIX, setDocumentKeys } from './objectstore.ts';
+export { BLOB_API_VERSION, BLOB_UPLOAD_ORIGIN, SHARED_PREFIX, SharedObjectStore, uploadLinkSecret, vercelBlobClient } from './shared-objectstore.ts';
 export { CSS_HEADERS, PNG_HEADERS, SITE_CSS } from './assets.ts';
 export { LOGO_INK_PNG } from './brand-logo.ts';
 export { SECTION_STATUS_WORDS, badge, brandName, breadcrumb, card, claimHref, claimName, claimRef, claimStageBar, claimTiles, clientStageBar, dataLink, fields, highlights, moreDetail, nextStepCard, noticeAtAddress, propertyIn, recordLayout, recordTabs, savedMessage, section, sectionList, sidePanel, statusFromNeeds, welcomeCard, why } from './components.ts';
@@ -30,7 +34,8 @@ export type { BenefitContext, EngineResult, EngineWindow, EntityKey, FeeComparis
 export type { ExtractedPage, PageImage } from './extract-text.ts';
 export type { MoneyReadings } from './money-readings.ts';
 export type { KeepOriginals } from './originals.ts';
-export type { FsObjectStore } from './objectstore.ts';
+export type { DocumentKeys, FsObjectStoreOptions, IncomingTarget } from './objectstore.ts';
+export type { BlobClient, SharedObjectStoreOptions, SharedPutOptions, VercelBlobSdk } from './shared-objectstore.ts';
 export type { Op, PdfFont, Rgb } from './pdf-canvas.ts';
 export type { PdfLine } from './pdf.ts';
 export type { ShownRange } from './shown-range.ts';

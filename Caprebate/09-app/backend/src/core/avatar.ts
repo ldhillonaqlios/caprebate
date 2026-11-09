@@ -48,7 +48,7 @@
 
 import { createHash } from 'node:crypto';
 import type { Db } from './db.ts';
-import type { FsObjectStore } from '../shared/objectstore.ts';
+import type { FsObjectStore } from '../shared/index.ts';
 import { reEncodeAvatar, ImageError, IMAGE_LIMITS } from '../shared/index.ts';
 import { deleteUserPhotosByUserId, getUserPhotosUserIdStorageKeyByUserId, insertUserPhotos } from './data.ts';
 

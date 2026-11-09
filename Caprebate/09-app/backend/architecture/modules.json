@@ -788,6 +788,10 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/upload-handler-port.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/uploads.ts": {
    "area": "claims",
    "kind": "logic"
@@ -1429,10 +1433,6 @@
    "kind": "logic"
   },
   "src/shared/test-website.ts": {
-   "area": "shared",
-   "kind": "logic"
-  },
-  "src/shared/upload-handler-port.ts": {
    "area": "shared",
    "kind": "logic"
   },

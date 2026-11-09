@@ -33,7 +33,7 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { liveHeldIds } from '../compliance/index.ts';
 import { addMonths } from '../crm/index.ts';
-import { BACKUP_CYCLE, knownBackupCycleDays } from '../../shared/upload-handler-port.ts';
+import { BACKUP_CYCLE, knownBackupCycleDays } from '../claims/index.ts';
 import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../assessment/index.ts';
 import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from '../assessment/index.ts';
 import { getUsersCountByBusinessId } from '../../core/index.ts';

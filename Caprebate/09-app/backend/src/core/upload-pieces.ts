@@ -21,8 +21,8 @@
  */
 import type { Actor } from './authz.ts';
 import type { Db } from './db.ts';
-import { INCOMING_PREFIX, type FsObjectStore } from '../shared/objectstore.ts';
-import { UPLOAD_LIMITS } from '../shared/upload-handler-port.ts';
+import { INCOMING_PREFIX, type FsObjectStore } from '../shared/index.ts';
+import { UPLOAD_LIMITS } from '../modules/claims/upload-handler-port.ts';
 import { getUploadPiecesIdUserIdById, insertUploadPieces, listUploadPiecesIdPiecesByEndedAtStartedAt, updateUploadPiecesEndedAtEndedHowByIdEndedAt, updateUploadPiecesEndedAtEndedHowByIdEndedAt2, updateUploadPiecesSealedById } from './data.ts';
 
 /** Each piece the page sends: well under Vercel's 4.5 MB a request. */

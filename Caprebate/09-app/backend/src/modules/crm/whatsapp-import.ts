@@ -25,7 +25,7 @@ import type { App } from '../../core/app.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { parseChat, type ExportMessage, type ParsedChat } from '../../integrations/index.ts';
 import { localDate } from '../../shared/index.ts';
-import { WHATSAPP_IMPORT_PREFIX, WHATSAPP_PREFIX, type FsObjectStore } from '../../shared/objectstore.ts';
+import { WHATSAPP_IMPORT_PREFIX, WHATSAPP_PREFIX, type FsObjectStore } from '../../shared/index.ts';
 import { phoneContacts } from './whatsapp.ts';
 import { listZipEntries, readZipEntryFromBuffer } from '../../shared/index.ts';
 import { getWhatsappImportLinesExistsByFingerprint, getWhatsappImportsByIdBusinessId, insertWhatsappImportLines, insertWhatsappImports, insertWhatsappMedia, insertWhatsappMessages2, listWhatsappImportLinesAttachmentByImportIdAttachment, listWhatsappImportLinesMessageIdByImportIdAttachment, updateWhatsappImportsStatusById, updateWhatsappImportsStatusUsNameById } from '../../integrations/index.ts';

@@ -50,7 +50,7 @@ import { sendVideoInvite } from './booking-invite.ts';
 import { sendSavedEmailNow } from './free-email-pages.ts';
 import { EMAIL_SENDING, mailWhere, smtpLoginFromKeyFile, sendingOn, SENT_SECRET_KINDS } from '../../integrations/index.ts';
 import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../../integrations/index.ts';
-import type { FsObjectStore } from '../../shared/objectstore.ts';
+import type { FsObjectStore } from '../../shared/index.ts';
 import * as IE from './inbound-email.ts';
 import { emailedFiles } from './messages-pages.ts';
 import { receivableTypes } from '../claims/index.ts';

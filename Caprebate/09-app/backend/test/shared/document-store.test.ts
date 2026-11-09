@@ -32,7 +32,7 @@ import { Db, migrate } from '../../src/core/db.ts';
 import { AuditLog } from '../../src/core/audit.ts';
 import { FsObjectStore, assertNoStaticFileRoute } from '../../src/shared/objectstore.ts';
 import * as SO from '../../src/shared/shared-objectstore.ts';
-import { durableKeyFor, quarantineKeyFor, retainedTextKeyFor } from '../../src/shared/upload-handler-port.ts';
+import { durableKeyFor, quarantineKeyFor, retainedTextKeyFor } from '../../src/modules/claims/upload-handler-port.ts';
 import { KEEP_ORIGINALS_QUESTION } from '../../src/shared/originals.ts';
 import { pdfOf } from '../document-fixtures.ts';
 /* PHASE 161h: vercel.json became vercel.ts (both projects build from it); vercelConfig({}) is the old file, exactly. */

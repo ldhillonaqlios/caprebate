@@ -19,7 +19,7 @@ import type { Actor } from '../../core/index.ts';
 import { h, raw, page, type Safe } from '../../shared/index.ts';
 import * as D from './documents.ts';
 import { badge, claimRef, dataLink, savedMessage, sectionList, why, type RecordTab } from '../../shared/index.ts';
-import type { FsObjectStore } from '../../shared/objectstore.ts';
+import type { FsObjectStore } from '../../shared/index.ts';
 import { ANSWER_WORDS, LEFT_OUT_NOTE, VOUCH_ANSWERS } from './document-reading.ts';
 import { earlyQuestions } from '../portal/index.ts';
 

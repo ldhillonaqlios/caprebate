@@ -35,8 +35,8 @@ import type { SecretStore } from './secrets.ts';
 import { isInside, repositoryRoot } from './secrets.ts';
 import type { Transport } from '../integrations/index.ts';
 import { s3LoginFrom, s3Target, type BackupTarget } from '../integrations/index.ts';
-import type { FsObjectStore } from '../shared/objectstore.ts';
-import { INCOMING_PREFIX } from '../shared/objectstore.ts';
+import type { FsObjectStore } from '../shared/index.ts';
+import { INCOMING_PREFIX } from '../shared/index.ts';
 
 /** How long a night's copy, and the copy of a deleted document, is kept. A question for the data protection officer. */
 export const BACKUP_KEEP_DAYS = 35;

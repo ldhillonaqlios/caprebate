@@ -23,7 +23,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
 import { can, NotAuthorised, type Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
-import type { FsObjectStore } from '../../shared/objectstore.ts';
+import type { FsObjectStore } from '../../shared/index.ts';
 import * as E from './survey-evidence.ts';
 import { GROUPS, NOBODY_IN_SHOT } from './survey-checklist.ts';
 import { manyFiles, singleFile } from '../../core/index.ts';
