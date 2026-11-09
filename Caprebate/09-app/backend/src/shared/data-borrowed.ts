@@ -7,21 +7,6 @@
  */
 import type { Db, Param, Row } from '../core/index.ts';
 
-// saved_views
-export function getSavedViewsIdListById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT id, list, name, params, shared, created_by, retired_at FROM saved_views WHERE id = ?', params);
-}
-export function insertSavedViews(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO saved_views (id, list, name, params, shared, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)', params);
-}
-export function listSavedViewsIdListByListRetiredAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT id, list, name, params, shared, created_by, retired_at FROM saved_views ' +
-    'WHERE list = ? AND retired_at IS NULL AND (shared = 1 OR created_by = ?) ORDER BY shared DESC, name ASC, id ASC', params);
-}
-export function updateSavedViewsRetiredAtRetiredByById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('UPDATE saved_views SET retired_at = ?, retired_by = ? WHERE id = ?', params);
-}
-
 // the claim and lead lists (src/shared/lists.ts): the fixed statements, moved with their notes
 /** CLIENT AND REFERENCE — the whole of what ACCOUNTING reads of a claim. No join to anything else. */
 const CLAIMS_MONEY =

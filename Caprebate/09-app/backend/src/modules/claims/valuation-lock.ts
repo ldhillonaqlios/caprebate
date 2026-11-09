@@ -23,7 +23,8 @@
  */
 import type { Db } from '../../core/index.ts';
 import { PROCEDURE_KEYS, anyStageLabel, claimStage } from '../../shared/index.ts';
-import { getClaimStageMovesAtWhoByClaimIdKind, getSurveyPackApprovalsIdVersionByClaimId } from './data-borrowed.ts';
+import { getClaimStageMovesAtWhoByClaimIdKind } from './data-borrowed.ts';
+import { getSurveyPackApprovalsIdVersionByClaimId } from '../survey/index.ts';
 import { getClaimStageMovesAtByClaimIdKind2, getClaimsStageHoldReturnStageById, updateClaimDeliverablesStateUpdatedByByClaimIdKind2 } from './data.ts';
 import { getClaimDeliverablesCountByClaimIdKind3, getClaimDeliverablesCountByClaimIdKind4, getTaxAdviserSignoffsCountByClaimId } from './data.ts';
 import { getClientReportAcceptancesCountByClaimId } from '../portal/index.ts';

@@ -100,3 +100,41 @@ export function updateInvoicesInvoiceStatusPaymentStatusById(db: Db, params: rea
 export function updateInvoicesInvoiceStatusSentOnById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run("UPDATE invoices SET invoice_status = 'SENT', sent_on = ? WHERE id = ?", params);
 }
+
+// Moved here from other areas' borrowed files: their statements are on this module's tables.
+export function getInvoiceCreditNotesIdInvoiceIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, invoice_id, basis, amount_pence FROM invoice_credit_notes WHERE id = ?', params);
+}
+export function getInvoiceCreditNotesNByInvoiceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT SUM(amount_pence) AS n FROM invoice_credit_notes WHERE invoice_id = ?', params);
+}
+export function getInvoiceCreditNotesNByIssuedOn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT SUM(amount_pence) AS n FROM invoice_credit_notes WHERE issued_on >= ? AND issued_on <= ?', params);
+}
+export function getInvoiceNumbersSeqByInvoiceIdKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT (SELECT n.seq FROM invoice_numbers n WHERE n.invoice_id = i.id AND n.kind = 'INVOICE') AS seq, i.sent_on, i.fee_pence FROM invoices i " +
+    "WHERE i.claim_id = ? AND i.kind = 'FEE' AND i.invoice_status = 'SENT' ORDER BY i.sent_on DESC LIMIT 1", params);
+}
+export function getInvoicesCountByClaimIdInvoiceStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM invoices WHERE claim_id IS NULL AND invoice_status IN ('RAISED','SENT')", params);
+}
+export function getInvoicesFeeCountByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM invoices i WHERE i.claim_id = ? AND i.kind = 'FEE' AND i.invoice_status IN ('RAISED','SENT') " +
+    'AND i.fee_pence > COALESCE((SELECT SUM(n.amount_pence) FROM invoice_credit_notes n WHERE n.invoice_id = i.id), 0)', params);
+}
+export function getInvoicesIdClaimIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, claim_id, business_id, kind, fee_pence FROM invoices WHERE id = ?', params);
+}
+export function getInvoicesSentOnByClaimIdKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT i.sent_on FROM invoices i WHERE i.claim_id = ? AND i.kind = 'FEE' AND i.invoice_status = 'SENT' " +
+    'AND i.fee_pence > COALESCE((SELECT SUM(n.amount_pence) FROM invoice_credit_notes n WHERE n.invoice_id = i.id), 0) ORDER BY i.sent_on DESC LIMIT 1', params);
+}
+export function insertFeeDiscounts(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO fee_discounts (id, claim_id, business_id, discount_bp, reason, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function insertFinanceSettings(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO finance_settings (id, setting, value, effective_from, source, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT created_at, invoice_status, payment_status FROM invoices WHERE business_id = ? AND claim_id IS NULL ORDER BY created_at', params);
+}

@@ -51,7 +51,8 @@ import type { SecretStore } from '../../core/index.ts';
 import { redactSecrets } from '../../core/index.ts';
 import { STATE_WORDS } from './email-chains.ts';
 import { getInboundBounceNoticesIdByMailboxUid, getInboundEmailFileSavesIdByInboundEmailFileId, getInboundEmailFilesIdPartNoById, getInboundEmailIdByMailboxUid, getInboundEmailIdFromAddressByIdOutcome, getInboundEmailN, getInboundEmailXByMailboxUid, getMailboxReadsLastOkAtLastFailedById, getMailboxWatermarkUidById, getOutboxIdBusinessIdByProviderRefSentAt, getOutboxIdByProviderRefSentAt, insertInboundBounceNotices, insertInboundEmail, insertInboundEmailFileSaves, insertInboundEmailFiles, insertInboundEmailFilings, insertInboundEmailFilings2, insertMailboxReads, insertMailboxWatermark, insertMailboxWatermarkByUid, listInboundEmailFilesIdPartNoByClientMessageId, listInboundEmailFilesIdReceivedAtByInboundEmailIdOutcome, listInboundEmailIdFromAddressByOutcomeBusinessId } from '../../integrations/index.ts';
-import { getEmailSenderA, listInboundEmailUidAt, listOutboxAtToEmailByKind } from './data-borrowed.ts';
+import { listInboundEmailUidAt, listOutboxAtToEmailByKind } from './data-borrowed.ts';
+import { getEmailSenderA } from '../admin/index.ts';
 import { getBusinessesIdById, getBusinessesSById, getContactsIdByBusinessId, insertClientMessageFiles, insertClientMessages2, insertClientMessages3 } from './data.ts';
 
 export type InboundDeps = {

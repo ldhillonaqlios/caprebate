@@ -58,7 +58,10 @@ import { latestApprovalOnClaim, laterOf, voidLine } from './valuation-lock.ts';
 import { freezeReturnContext, returnContext } from './return-entries.ts';
 import { getClaimDeliverablesByClaimIdKind, getClaimDeliverablesCountByClaimIdKind, getClaimDeliverablesIdByClaimIdKind, getClaimDeliverablesIssuedOnVersionByClaimIdKind, getClaimDeliverablesNByClaimIdKind, getClaimDeliverablesVersionIssuedOnByClaimIdKind, getClaimReconciliationsByClaimId, getClaimReconciliationsFiledOnByClaimId, getClaimReconciliationsFiledOnSnapshotHashByClaimId, getClaimReconciliationsIdByClaimId, getClaimsClaimRefById, getClaimsIdBusinessIdById4, getClaimsIdClaimRefById2, getClaimsIdCreatedAtById, getHmrcEnquiriesClosedOnOutcomeByClaimIdClosedOn, getHmrcEnquiriesIdByClaimIdClosedOn, getHmrcEnquiriesIdOpenedOnByIdClaimId, getTaxAdviserSignoffsIdRecordHashByClaimIdRecordedAt, insertClaimDeliverables, insertClaimReconciliations, insertClaimReturnFilings, insertDefencePackManifests, insertHmrcEnquiries, insertTaxAdviserSignoffs, listClaimDeliverablesByBusinessIdState, listClaimDeliverablesByClaimId, listClaimReturnFilingsPeriodEndFiledOnByClaimId, updateClaimDeliverablesStateIssuedOnById, updateClaimDeliverablesStateUpdatedByByClaimIdKind, updateClaimReconciliationsDValuePenceDDateCapturedById, updateClaimReconciliationsFiledOnFiledRecordedByById, updateClaimReconciliationsVarianceCategoryVarianceNotesById, updateHmrcEnquiriesClosedOnOutcomeById } from './data.ts';
 import { getBusinessesSectorById, getStaffTasksIdByPropertyIdTitle, listStaffTasksIdTitleByPropertyIdTitle } from '../crm/index.ts';
-import { getInvoiceNumbersSeqByInvoiceIdKind, getSurveyPackApprovalsJsonExtractSnapshotJsonFById, getSurveyorCommitmentsIdJobIdByClaimId, listDocumentTypesCodeLabel, listHmrcEnquiriesIdOpenedOnByClaimId, listSurveyPackApprovalsFingerprintSnapshotJsonByClaimId } from './data-borrowed.ts';
+import { listHmrcEnquiriesIdOpenedOnByClaimId, listSurveyPackApprovalsFingerprintSnapshotJsonByClaimId } from './data-borrowed.ts';
+import { getInvoiceNumbersSeqByInvoiceIdKind } from '../finance/index.ts';
+import { getSurveyPackApprovalsJsonExtractSnapshotJsonFById, getSurveyorCommitmentsIdJobIdByClaimId } from '../survey/index.ts';
+import { listDocumentTypesCodeLabel } from '../admin/index.ts';
 import { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing } from '../portal/index.ts';
 import { getAssessmentsShownLowPenceShownHighPenceById, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm2, getEstimatesQualifyingExpenditurePenceSealedAtByAssessmentId } from '../assessment/index.ts';
 import { getTaxAdviserSignoffsIdClaimIdByClaimId, getTaxAdviserSignoffsIdClaimIdByClaimIdRecordedAt } from './data-borrowed.ts';
@@ -110,7 +113,6 @@ type SignoffRow = {
   /** The approved version the adviser signed; null on a claim with no approved survey pack. */
   approval_id: string | null;
 };
-
 
 export function latestSignOff(db: Db, claim_id: string): SignoffRow | undefined {
   return getTaxAdviserSignoffsIdClaimIdByClaimId<SignoffRow>(db, [claim_id]);

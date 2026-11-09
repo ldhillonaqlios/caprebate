@@ -41,7 +41,7 @@ import { LEAD_ORIGINS, LEAD_STATUSES, NO_RANGE_NO_ASSESSMENT, RANGE_NOT_SHOWN, S
 import { CLOSED_STAGE, EXITS, ON_HOLD_STAGE, PROCEDURE_STAGES, claimStage } from './stages.ts';
 import { formatShownRange } from './shown-range.ts';
 import { localDate, localStamp } from './localtime.ts';
-import { getSavedViewsIdListById, insertSavedViews, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from './data-borrowed.ts';
+import { getSavedViewsIdListById, insertSavedViews, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from '../modules/admin/data.ts';
 import { listClaimsRows, listLeadsRows } from './data-borrowed.ts';
 
 type Vocab = Readonly<Record<string, string>>;

@@ -69,7 +69,7 @@ import { REGISTER_SWITCHES } from '../../integrations/index.ts';
 import { CLAUDE_SWITCHES } from '../../integrations/connectors/claude.ts';
 import { PICK_SWITCHES } from './match-review.ts';
 import { getClaimsIdAssessmentIdById, insertClaimVersionStamps, listTaxAdviserSignoffsIdRecordHashByClaimId } from './data.ts';
-import { getAnchorLogHash } from './data-borrowed.ts';
+import { getAnchorLogHash } from '../survey/index.ts';
 import { getEstimatesEstimateHashByAssessmentId } from '../assessment/index.ts';
 
 function sha256(v: unknown): string {

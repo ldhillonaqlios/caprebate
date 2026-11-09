@@ -38,7 +38,7 @@ import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../assessment/index.ts
 import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from '../assessment/index.ts';
 import { getUsersCountByBusinessId } from '../../core/index.ts';
 import { deleteWebsiteEnquiriesById, listWebsiteEnquiriesIdHandledAtByStatus } from './data.ts';
-import { insertDeletionLog2 } from './data-borrowed.ts';
+import { insertDeletionLog2 } from '../compliance/index.ts';
 import { getBusinessesIdByRowid, getBusinessesRowidById, getLeadsIdBusinessIdById5, getLeadsIdByRowid, getLeadsRowidById, listLeadsIdStatusByBusinessId, listLeadsIdUpdatedAtByEnquiryIdStatus, listLeadsUpdatedAtByEnquiryIdStatus } from '../crm/index.ts';
 
 export type EnquiryRetention = {

@@ -26,7 +26,7 @@ import type { Db } from '../../core/index.ts';
 import { logComplaint } from '../compliance/index.ts';
 import { assertComplianceWrite, type ComplianceDeps } from '../compliance/index.ts';
 import { plainDashes } from '../../shared/index.ts';
-import { getComplaintFormsIdReceivedAtById, insertComplaintForms, listComplaintFormsIdReceivedAtByLoggedComplaintId, updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl } from './data-borrowed.ts';
+import { getComplaintFormsIdReceivedAtById, insertComplaintForms, listComplaintFormsIdReceivedAtByLoggedComplaintId, updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl } from '../compliance/index.ts';
 
 /** the app's own copy: edit the original, 03-app/caprebate-notices-page.html, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const NOTICES_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'caprebate-notices-page.html');

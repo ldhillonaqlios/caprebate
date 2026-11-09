@@ -19,7 +19,8 @@
 import type { Db } from '../../core/index.ts';
 import { BAND } from '../../shared/index.ts';
 import { getLogicalDocumentsCountByBusinessIdTypeCode2, getLogicalDocumentsCountByBusinessIdTypeCode3, getPropertyEventsIdByIdPropertyId, getPropertyEventsIdPropertyIdByIdBusinessId, insertPropertyEvents, insertPropertyEvents2, listPropertyEventsIdPropertyIdByPropertyId, updatePropertyEventsVatVatPenceById } from './data.ts';
-import { getDocumentTypesLabelByCode, getSurveyPackApprovalsVersionSnapshotJsonByClaimId } from './data-borrowed.ts';
+import { getDocumentTypesLabelByCode } from '../admin/index.ts';
+import { getSurveyPackApprovalsVersionSnapshotJsonByClaimId } from '../survey/index.ts';
 
 export const EVENT_KINDS = ['PURCHASE', 'NEW_BUILD', 'EXTENSION', 'REFURBISHMENT', 'FIT_OUT', 'CONVERSION', 'REPAIRS', 'OTHER'] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];

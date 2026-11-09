@@ -44,7 +44,8 @@ import { listRegisterRecordsIdSourceIdByBusinessId } from '../../integrations/in
 import { insertClientStepNotices, insertClientStepNotices2, listClientStepNoticesClaimIdStepByBusinessId2 } from '../portal/index.ts';
 import { insertFactApprovals, insertFactApprovals2, listClaimDeliverablesIdVersionByClaimIdKind, listClaimsIdClaimRefByBusinessId, listTaxAdviserSignoffsIdSignedOnByClaimId } from './data.ts';
 import { getBusinessesIdNameById, listClientTasksIdFactIdByBusinessIdKind } from '../crm/index.ts';
-import { listClientStepNoticesClaimIdStepByBusinessId, listFactApprovalsFactRefActionByBusinessId, listSurveyorJobsIdSurveyorIdByClaimId } from './data-borrowed.ts';
+import { listClientStepNoticesClaimIdStepByBusinessId, listFactApprovalsFactRefActionByBusinessId } from './data-borrowed.ts';
+import { listSurveyorJobsIdSurveyorIdByClaimId } from '../survey/index.ts';
 
 export type ApprovalDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true } | { readonly ok: false; readonly why: string; readonly field?: string };

@@ -28,7 +28,7 @@ import type { ClientDeliverable } from '../claims/index.ts';
 import { releasedVersion } from '../claims/index.ts';
 import { myAcceptance } from './report-accept.ts';
 import { missingDocuments } from '../claims/index.ts';
-import { getDocumentTypesLabelByCode2 } from './data-borrowed.ts';
+import { getDocumentTypesLabelByCode2 } from '../admin/index.ts';
 import { getEngagementsAtByBusinessIdLetterState, listClaimsIdPropertyIdByBusinessIdStage } from '../claims/index.ts';
 
 export type PortalDashInput = {

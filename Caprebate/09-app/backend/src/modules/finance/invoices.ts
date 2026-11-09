@@ -211,14 +211,6 @@ type InvoiceRow = {
   claim_ref: string; client_name: string; seq: number | null; number_state: string | null; raiser: string | null; canceller: string | null;
 };
 
-const INVOICE_SELECT =
-  'SELECT i.id, i.business_id, i.claim_id, i.kind, i.claim_value_pence, i.fee_pence, i.fee_rate, i.invoice_status, i.vat_position, ' +
-  'i.vat_pence, i.invoice_date, i.due_on, i.due_basis, i.sent_on, i.fee_basis, i.fee_warning, i.cancelled_at, i.cancel_reason, ' +
-  'i.created_at, i.entity_type, i.tax_rate, i.pool_split_main_pence, i.pool_split_special_pence, i.period_start, ' +
-  'c.claim_ref, b.name AS client_name, n.seq, n.state AS number_state, u.display_name AS raiser, x.display_name AS canceller ' +
-  'FROM invoices i JOIN claims c ON c.id = i.claim_id JOIN businesses b ON b.id = i.business_id ' +
-  "LEFT JOIN invoice_numbers n ON n.invoice_id = i.id AND n.kind = 'INVOICE' " +
-  'LEFT JOIN users u ON u.id = i.raised_by LEFT JOIN users x ON x.id = i.cancelled_by ';
 
 function loadInvoice(db: Db, id: string): InvoiceRow {
   const r = getInvoicesIdBusinessIdById<InvoiceRow>(db, [id]);

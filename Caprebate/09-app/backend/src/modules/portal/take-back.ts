@@ -27,7 +27,8 @@ import type { Db } from '../../core/index.ts';
 import { screenDetail } from '../../core/audit.ts';
 import { countRegisterRecordsSince } from '../../integrations/index.ts';
 import { getClaimDeliverablesCountByBusinessIdState, getClaimGrantsCountByBusinessIdSourceId, listFactApprovalsFactRefActionByBusinessId2 } from '../claims/index.ts';
-import { getSignatoryChecksCountByBusinessIdSource, getSurveyorJobsCountByBusinessIdState } from './data-borrowed.ts';
+import { getSignatoryChecksCountByBusinessIdSource } from '../compliance/index.ts';
+import { getSurveyorJobsCountByBusinessIdState } from '../survey/index.ts';
 import { listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep } from './data.ts';
 
 /* ================================================================== *

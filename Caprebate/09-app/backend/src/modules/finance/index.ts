@@ -4,7 +4,7 @@
  * another area needs it, never a whole file.
  */
 export { billingViewFor, clientsAreaGate, handleBilling } from './billing.ts';
-export { getInvoicesIdBusinessIdById2, getInvoicesIdBusinessIdById4, insertInvoicePayments, insertInvoices2 } from './data.ts';
+export { getInvoiceCreditNotesIdInvoiceIdById, getInvoiceCreditNotesNByInvoiceId, getInvoiceCreditNotesNByIssuedOn, getInvoiceNumbersSeqByInvoiceIdKind, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesCountByClaimIdInvoiceStatus, getInvoicesFeeCountByClaimId, getInvoicesIdBusinessIdById2, getInvoicesIdBusinessIdById4, getInvoicesIdClaimIdById, getInvoicesSentOnByClaimIdKind, insertFeeDiscounts, insertFinanceSettings, insertInvoicePayments, insertInvoices2, listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId } from './data.ts';
 export { handleFinance } from './finance-pages.ts';
 export { assertFinanceSection, financeSectionObj, INVOICE_WORDS, PAYMENT_WORDS } from './finance.ts';
 export { allocateNumber, claimMoneyLines, CREDIT_BASES, financeDashboard, formatInvoiceNumber, INVOICE_KINDS } from './invoices.ts';

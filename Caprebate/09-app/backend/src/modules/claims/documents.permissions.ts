@@ -9,7 +9,7 @@ import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
 import type { DocObj, LinkView, TypeRow } from './documents.ts';
 import { getClaimsBusinessIdById, getPropertiesBusinessIdById } from './data.ts';
-import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2, listSurveyorJobsSurveyorIdByClaimIdSurveyorId } from './data-borrowed.ts';
+import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2, listSurveyorJobsSurveyorIdByClaimIdSurveyorId } from '../survey/index.ts';
 
 /** The sentinel objects the section gates ask about: the document types, and the centre itself. */
 export const TYPES_OBJ: Obj = { type: 'document_type', id: '__document_types__' };

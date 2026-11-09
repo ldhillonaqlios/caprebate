@@ -156,7 +156,7 @@ describe('line 1 (back end) — the regulator is named both ways, copied from th
 
   test('NO BARE, PRESENT-TENSE REGULATOR NAME IS LEFT IN A STRING in the compliance modules — comments and document titles apart', () => {
     for (const f of ['compliance-rights.ts', 'compliance-breach.ts', 'compliance-views.ts']) {
-      const code = readFileSync(join(BACKEND, 'src', 'web', f), 'utf8').split('\n')
+      const code = readFileSync(join(BACKEND, 'src', 'modules', 'compliance', f), 'utf8').split('\n')
         .filter((l) => !/^\s*(\*|\/\*|\/\/)/.test(l)).join('\n');
       assert.equal(/the Commissioner\b/.test(code), false, `${f} still says "the Commissioner"`);
       assert.equal(/\bICO\b/.test(code), false, `${f} still says "ICO" in a string`);

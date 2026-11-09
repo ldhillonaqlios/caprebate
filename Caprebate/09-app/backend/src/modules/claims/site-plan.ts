@@ -31,7 +31,7 @@ import { packJob } from '../survey/index.ts';
 import { packView } from '../survey/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import type { Op, Rgb } from '../../shared/index.ts';
-import { getSitePlansPostcodeHalfMByJobId, insertSitePlans } from './data-borrowed.ts';
+import { getSitePlansPostcodeHalfMByJobId, insertSitePlans } from '../survey/index.ts';
 
 /** A site plan as kept and as drawn. Rings are [east, north] in DECIMETRES from the postcode's point. */
 export type SitePlan = {

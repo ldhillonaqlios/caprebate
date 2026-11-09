@@ -184,14 +184,19 @@ test('DB-W1-T1 — a stored document is not reachable by path, unauthenticated',
  * `staff.ts` serves the profile photograph, and a check scoped to one file
  * stopped being a check the moment a second file could serve. It is also not a
  * property of today's routes — the point is that a future route which reads a
- * file by path cannot be added anywhere in src/web/ without this failing.
+ * file by path cannot be added anywhere in the web sources without this failing.
  */
-test('DB-W1-T1 — NO file in src/web/ maps a request path onto the filesystem', async () => {
-  const dir = new URL('../src/web/', import.meta.url);
-  const files = readdirSync(dir).filter((f) => f.endsWith('.ts'));
-  assert.ok(files.length >= 10, `only ${files.length} web sources found — the scan is not finding them`);
+test('DB-W1-T1 — NO web source (the core, the shared parts and every module) maps a request path onto the filesystem', async () => {
+  // src/web/ is gone: its files are in src/core/, src/shared/ and src/modules/<area>/ (and their subfolders).
+  const root = new URL('../src/', import.meta.url);
+  // Two files read a file by a fixed path while they load, never by a request's path, and serve nothing: the database
+  // gate reads the migrations, and assets.ts reads the one stylesheet (src/styles/site.css). They are not web sources.
+  const NOT_WEB = new Set(['core/db.ts', 'shared/assets.ts']);
+  const files = ['core', 'shared', 'modules'].flatMap((d) => readdirSync(new URL(`${d}/`, root), { recursive: true })
+    .map(String).filter((f) => f.endsWith('.ts') && !NOT_WEB.has(`${d}/${f}`)).map((f) => new URL(`${d}/${f}`, root)));
+  assert.ok(files.length >= 200, `only ${files.length} web sources found — the scan is not finding them`);
   for (const f of files) {
-    const src = readFileSync(new URL(f, dir), 'utf8');
+    const src = readFileSync(f, 'utf8');
     await assertNoStaticFileRoute(src);
   }
   // NEGATIVE CONTROLS, one per pattern, so a check that cannot fail cannot

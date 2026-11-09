@@ -28,7 +28,7 @@ import { ukDate } from '../../shared/index.ts';
 import { poundsWords } from '../survey/index.ts';
 import { contextForApproval, csvName, returnContextFor, returnEntriesCsv } from './return-entries.ts';
 import { packJob } from '../survey/index.ts';
-import { getSurveyPackApprovalsJsonExtractSnapshotJsonQById } from './data-borrowed.ts';
+import { getSurveyPackApprovalsJsonExtractSnapshotJsonQById } from '../survey/index.ts';
 
 export type ReportPageDeps = {
   app: App;

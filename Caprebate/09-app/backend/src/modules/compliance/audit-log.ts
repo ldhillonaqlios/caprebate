@@ -29,7 +29,7 @@ import { authorise, type Actor } from '../../core/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { getAuditLogCount, listAuditLogKind } from '../../core/index.ts';
 import { getBusinessesIdNameById } from '../crm/index.ts';
-import { getAuditLogCountByObjectId } from './data-borrowed.ts';
+import { getAuditLogCountByObjectId, listAuditLogLines } from './data-borrowed.ts';
 
 export type AuditLogDeps = { db: Db; audit: AuditLog; now: () => string };
 
@@ -75,20 +75,11 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
 
   const entries = getAuditLogCount<{ n: number }>(d.db)?.n ?? 0;
   const v = d.audit.verify();
-  const lines = d.db.all<{
+  const lines = listAuditLogLines<{
     seq: number; at: string; kind: string; actor_role: string | null; actor_id: string | null; object_type: string | null; object_id: string | null; outcome: string;
     who: string | null;
   }>(
-    client === null
-      ? 'SELECT a.seq, a.at, a.kind, a.actor_role, a.actor_id, a.object_type, a.object_id, a.outcome, u.display_name AS who FROM audit_log a ' +
-        'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) ORDER BY a.seq DESC LIMIT ?'
-      : 'SELECT a.seq, a.at, a.kind, a.actor_role, a.actor_id, a.object_type, a.object_id, a.outcome, u.display_name AS who FROM audit_log a ' +
-        'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) AND ' +
-        '(a.object_id = ? OR a.object_id IN (SELECT id FROM claims WHERE business_id = ?) ' +
-        'OR a.object_id IN (SELECT id FROM properties WHERE business_id = ?) ' +
-        "OR json_extract(a.detail, '$.business') = ? OR json_extract(a.detail, '$.business_id') = ? " +
-        "OR json_extract(a.detail, '$.claim') IN (SELECT id FROM claims WHERE business_id = ?)) " +
-        'ORDER BY a.seq DESC LIMIT ?',
+    d.db, client !== null,
     [kind, kind, outcome, outcome, ...(client === null ? [] : clientAuditParams(client.id)), AUDIT_PAGE_SIZE],
   ).map((r) => ({ ...r, at: localStamp(r.at), what: kindWords(r.kind) }));
 

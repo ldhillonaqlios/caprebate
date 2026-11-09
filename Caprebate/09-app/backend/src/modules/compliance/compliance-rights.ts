@@ -279,10 +279,6 @@ type LimbRow = {
   decision_reasoning: string | null; undue_delay_assessment: string | null;
 };
 
-const REQUEST_SELECT = 'SELECT * FROM rights_requests ';
-const LIMB_SELECT =
-  'SELECT id, request_id, limb, clarification_requested_at, clarification_received_at, extension_notified_at, extension_ground, ' +
-  'extension_reasons, decision, decision_reasoning, undue_delay_assessment FROM rights_request_limbs ';
 
 function loadRequest(db: Db, id: string): RequestRow {
   const r = getRightsRequestsById<RequestRow>(db, [id]);

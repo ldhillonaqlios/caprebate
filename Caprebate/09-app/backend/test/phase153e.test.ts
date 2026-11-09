@@ -39,7 +39,7 @@ let made: Awaited<ReturnType<typeof createApp>>;
 let n = 0;
 const ids = () => `e153-${(++n).toString().padStart(6, '0')}`;
 const deps = (): PackDeps => ({ db: made.app.db, audit: made.app.audit, now: made.app.now, newId: ids });
-const src = (f: string) => readFileSync(join(import.meta.dirname, '..', 'src', 'web', f), 'utf8');
+const src = (f: string) => readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'survey', f), 'utf8');
 
 /** Two jobs: j-gp (a GP purchase, the pack filled) and j-sl (supported living, nothing typed). */
 before(async () => {

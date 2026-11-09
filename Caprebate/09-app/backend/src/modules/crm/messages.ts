@@ -42,7 +42,8 @@ import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from './automation.t
 import { getUsersIdEmailByIdDisabledAt, listUsersIdEmailByRoleBusinessId, listUsersIdEmailByRoleDisabledAt } from '../../core/index.ts';
 import { getWhatsappMessagesCountByBusinessIdDirection } from '../../integrations/index.ts';
 import { getBusinessesIdNameById2, getChannelReadsAtByUserIdBusinessId, getClientMessageFilesIdBusinessIdByLogicalDocumentId, getClientMessagesBusinessIdDirectionById, getClientMessagesCountByBusinessIdDirection, getClientMessagesCountByBusinessIdDirection2, getInternalNotesCountByBusinessIdAuthorId, getThreadReadsAtByUserIdBusinessId, insertChannelReads, insertClientMessageFiles, insertClientMessages, insertThreadReads, listClientMessagesBusinessIdNameByDirectionCreatedAt } from './data.ts';
-import { listDocumentsIdBusinessIdByLogicalDocumentIdJO, listInternalNotesIdAuthorIdByBusinessId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from './data-borrowed.ts';
+import { listDocumentsIdBusinessIdByLogicalDocumentIdJO, listInternalNotesIdAuthorIdByBusinessId } from './data-borrowed.ts';
+import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from '../survey/index.ts';
 import { getClaimsIdByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel } from '../claims/index.ts';
 import { getClientMessagesIdBusinessIdByIdBusinessId, listClientMessagesIdBusinessIdByBusinessId } from './data-borrowed.ts';
 
@@ -214,7 +215,6 @@ type MessageRow = {
   created_at: string; body: string; author: string | null; author_role: string | null; contact: string | null;
   claim_ref: string | null; claim_property: string | null;
 };
-
 
 /** A message's files, each asked of `document.read` for this reader: a file the reader may not open is not listed. */
 function filesOf(db: Db, actor: Actor, message_id: string): MessageFile[] {

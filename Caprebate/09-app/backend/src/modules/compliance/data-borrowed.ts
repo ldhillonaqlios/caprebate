@@ -60,3 +60,61 @@ export function getIdentityPersonsPersonRefNameByPersonRef<T extends Row = Row>(
 export function getRightsRequestsRefReceivedAtById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT r.request_ref AS ref, r.received_at, c.business_id FROM rights_requests r LEFT JOIN contacts c ON c.id = r.contact_id WHERE r.id = ?', params);
 }
+
+// audit_log + users (+ claims and properties for one client): the audit log page's lines, with or without a client filter;
+// the caller chose between the two statements, and the choice moved here with the text.
+export function listAuditLogLines<T extends Row = Row>(db: Db, byClient: boolean, params: readonly Param[] = []): T[] {
+  return db.all<T>(
+    !byClient
+      ? 'SELECT a.seq, a.at, a.kind, a.actor_role, a.actor_id, a.object_type, a.object_id, a.outcome, u.display_name AS who FROM audit_log a ' +
+        'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) ORDER BY a.seq DESC LIMIT ?'
+      : 'SELECT a.seq, a.at, a.kind, a.actor_role, a.actor_id, a.object_type, a.object_id, a.outcome, u.display_name AS who FROM audit_log a ' +
+        'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) AND ' +
+        '(a.object_id = ? OR a.object_id IN (SELECT id FROM claims WHERE business_id = ?) ' +
+        'OR a.object_id IN (SELECT id FROM properties WHERE business_id = ?) ' +
+        "OR json_extract(a.detail, '$.business') = ? OR json_extract(a.detail, '$.business_id') = ? " +
+        "OR json_extract(a.detail, '$.claim') IN (SELECT id FROM claims WHERE business_id = ?)) " +
+        'ORDER BY a.seq DESC LIMIT ?',
+    params,
+  );
+}
+
+// The retention list's record kinds (compliance-identity.ts RECORD_KINDS): each kind's count, and the rows with the moment
+// its clock starts where the determination gives one this build records. Most are other areas' tables; text unchanged.
+const RECORD_KIND_STATEMENTS: Readonly<Record<string, { count: string; clockRows: string | null }>> = Object.freeze({
+  RIGHTS_REQUESTS: { count: 'SELECT COUNT(*) AS n FROM rights_requests', clockRows: null },
+  COMPLAINTS: { count: 'SELECT COUNT(*) AS n FROM complaints', clockRows: 'SELECT id, outcome_notified_at AS starts FROM complaints' },
+  BREACH_INCIDENTS: { count: 'SELECT COUNT(*) AS n FROM breach_incidents', clockRows: 'SELECT id, closed_at AS starts FROM breach_incidents' },
+  IDENTITY_PERSON: { count: 'SELECT COUNT(*) AS n FROM identity_persons', clockRows: null },
+  IDENTITY_SEARCH_LOG: { count: 'SELECT COUNT(*) AS n FROM identity_search_log', clockRows: null },
+  DOCUMENT_VERSIONS: { count: 'SELECT COUNT(*) AS n FROM documents WHERE logical_document_id IS NOT NULL', clockRows: null },
+  LOGICAL_DOCUMENTS: { count: 'SELECT COUNT(*) AS n FROM logical_documents', clockRows: null },
+  DOCUMENT_LINKS: { count: 'SELECT COUNT(*) AS n FROM document_links', clockRows: null },
+  DELETION_LOG: { count: 'SELECT COUNT(*) AS n FROM deletion_log', clockRows: null },
+  REGISTER_RECORDS: { count: 'SELECT COUNT(*) AS n FROM register_records', clockRows: null },
+  LEADS_NEVER_CONVERTED: { count: "SELECT COUNT(*) AS n FROM leads WHERE status <> 'CONVERTED'", clockRows: null },
+  LEAD_PEOPLE: { count: 'SELECT COUNT(*) AS n FROM contacts WHERE lead_id IS NOT NULL AND business_id IS NULL', clockRows: null },
+  STAFF_TASKS: { count: 'SELECT COUNT(*) AS n FROM staff_tasks', clockRows: null },
+  LEAD_FOLLOW_UP_TASKS: { count: "SELECT COUNT(*) AS n FROM staff_tasks t JOIN leads l ON l.id = t.lead_id WHERE l.status <> 'CONVERTED'", clockRows: null },
+  AUTOMATION_RUNS: { count: 'SELECT COUNT(*) AS n FROM automation_runs', clockRows: null },
+  OUTBOX_QUEUED: { count: "SELECT COUNT(*) AS n FROM outbox WHERE kind IN ('NOTIFICATION','TEMPLATE','COMPLIANCE_LETTER')", clockRows: null },
+  INTRODUCERS: { count: 'SELECT COUNT(*) AS n FROM introducers', clockRows: null },
+  INTRODUCER_PEOPLE: { count: 'SELECT COUNT(*) AS n FROM contacts WHERE introducer_id IS NOT NULL', clockRows: null },
+  SHARE_CONSENTS: { count: 'SELECT COUNT(*) AS n FROM introducer_share_consents', clockRows: null },
+  INTRODUCER_NOTICES: { count: 'SELECT COUNT(*) AS n FROM introducer_notices', clockRows: null },
+  CONSENT_ANSWERS: { count: 'SELECT COUNT(*) AS n FROM consent_answers', clockRows: null },
+  CLIENT_MESSAGE: { count: 'SELECT COUNT(*) AS n FROM client_messages', clockRows: null },
+  TEAM_MESSAGE: { count: 'SELECT COUNT(*) AS n FROM internal_notes', clockRows: null },
+  CDD_RECORDS: { count: 'SELECT COUNT(*) AS n FROM cdd_checks', clockRows: null },
+});
+export function countRecordKind<T extends Row = Row>(db: Db, kind: string, params: readonly Param[] = []): T | undefined {
+  const s = RECORD_KIND_STATEMENTS[kind];
+  return s === undefined ? undefined : db.get<T>(s.count, params);
+}
+export function recordKindHasClock(kind: string): boolean {
+  return (RECORD_KIND_STATEMENTS[kind]?.clockRows ?? null) !== null;
+}
+export function listRecordKindClockRows<T extends Row = Row>(db: Db, kind: string, params: readonly Param[] = []): T[] {
+  const sql = RECORD_KIND_STATEMENTS[kind]?.clockRows ?? null;
+  return sql === null ? [] : db.all<T>(sql, params);
+}

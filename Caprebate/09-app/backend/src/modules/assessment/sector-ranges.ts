@@ -14,7 +14,7 @@
 import type { Db } from '../../core/index.ts';
 import { BAND } from '../../shared/index.ts';
 import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
-import { listSurveyPackApprovalsSnapshotJsonAssessmentIdByVersionPack } from './data-borrowed.ts';
+import { listSurveyPackApprovalsSnapshotJsonAssessmentIdByVersionPack } from '../survey/index.ts';
 
 export const MIN_CLAIMS = 5;
 

@@ -406,3 +406,80 @@ export function getTermsAgreementsCountByUserIdPortalTermsVersion<T extends Row 
 export function insertTermsAgreements(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO terms_agreements (id, user_id, agreed_at, portal_terms_version, website_terms_version, privacy_version) VALUES (?, ?, ?, ?, ?, ?)', params);
 }
+
+// Moved here from other areas' borrowed files: their statements are on this module's tables.
+export function getComplaintFormsIdReceivedAtById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, received_at, name, reply_to, on_behalf, authority_detail, matching_info, complaint_verbatim, remedy_sought, rights, logged_complaint_id FROM complaint_forms WHERE id = ?', params);
+}
+export function getSignatoryChecksCountByBusinessIdSource<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM signatory_checks WHERE business_id = ? AND source = ? AND checked_at >= ?', params);
+}
+export function getSignatoryChecksResultReasonByBusinessIdSource<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT result, reason, checked_at FROM signatory_checks WHERE business_id = ? AND source = ? ORDER BY checked_at DESC, rowid DESC LIMIT 1', params);
+}
+export function insertComplaintForms(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO complaint_forms (id, received_at, name, reply_to, on_behalf, authority_detail, matching_info, about, complaint_verbatim, remedy_sought, rights) '
+    + 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function insertDeletionLog(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO deletion_log (deletion_ref, record_kind, record_id, category, basis_rule, basis_due_on, approved_by, review_ref, executed_by, ' +
+    'executed_at, stores_json, backups_pending, backup_cycle_days, backup_copies_expire_at, verified_by, verified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)', params);
+}
+export function insertDeletionLog2(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO deletion_log (deletion_ref, record_kind, record_id, category, basis_rule, basis_due_on, approved_by, review_ref, executed_by, ' +
+    'executed_at, stores_json, backups_pending, backup_cycle_days, backup_copies_expire_at, verified_by, verified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)', params);
+}
+export function insertSignatoryChecks(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO signatory_checks (id, business_id, engagement_id, source, result, reason, checked_at, checked_by) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function listComplaintFormsIdReceivedAtByLoggedComplaintId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, received_at, name, reply_to, complaint_verbatim FROM complaint_forms WHERE logged_complaint_id IS NULL ORDER BY received_at', params);
+}
+export function listSignatoryChecksSourceByEngagementIdResult<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT DISTINCT source FROM signatory_checks WHERE engagement_id = ? AND result IN ('YES','NO')", params);
+}
+export function updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('UPDATE complaint_forms SET logged_complaint_id = ?, logged_at = ?, logged_by = ? WHERE id = ? AND logged_complaint_id IS NULL', params);
+}
+
+// Statements a caller chose between by a key: the choice moved here with the text, each statement unchanged.
+// legal_holds: a hold's register entry, by the column that points at it (rights request, complaint or breach entry)
+export function getHoldEntryId<T extends Row = Row>(db: Db, column: 'rights_request_id' | 'complaint_id' | 'incident_id', params: readonly Param[] = []): T | undefined {
+  const sql = column === 'rights_request_id' ? 'SELECT id FROM rights_requests WHERE id = ?'
+    : column === 'complaint_id' ? 'SELECT id FROM complaints WHERE id = ?'
+      : 'SELECT id FROM breach_incidents WHERE id = ?';
+  return db.get<T>(sql, params);
+}
+export function listLegalHoldsForEntry<T extends Row = Row>(db: Db, column: 'rights_request_id' | 'complaint_id' | 'incident_id', params: readonly Param[] = []): T[] {
+  const sql = column === 'rights_request_id' ? 'SELECT id, hold_kind, record_kind, record_id, reason_kind, reason, review_on, set_at, lifted_at, lift_reason, rights_request_id, complaint_id, incident_id FROM legal_holds WHERE rights_request_id = ? ORDER BY set_at'
+    : column === 'complaint_id' ? 'SELECT id, hold_kind, record_kind, record_id, reason_kind, reason, review_on, set_at, lifted_at, lift_reason, rights_request_id, complaint_id, incident_id FROM legal_holds WHERE complaint_id = ? ORDER BY set_at'
+      : 'SELECT id, hold_kind, record_kind, record_id, reason_kind, reason, review_on, set_at, lifted_at, lift_reason, rights_request_id, complaint_id, incident_id FROM legal_holds WHERE incident_id = ? ORDER BY set_at';
+  return db.all<T>(sql, params);
+}
+// a cross-reference's other end: its reference, by the kind of entry (an unknown kind reads nothing)
+export function getLinkedEntryRef<T extends Row = Row>(db: Db, kind: string, params: readonly Param[] = []): T | undefined {
+  const sql = kind === 'RIGHTS_REQUEST' ? 'SELECT request_ref AS ref FROM rights_requests WHERE id = ?'
+    : kind === 'COMPLAINT' ? 'SELECT complaint_ref AS ref FROM complaints WHERE id = ?'
+      : kind === 'BREACH' ? 'SELECT incident_ref AS ref FROM breach_incidents WHERE id = ?' : null;
+  return sql === null ? undefined : db.get<T>(sql, params);
+}
+
+// identity_persons, identity_search_log: the identity store's shape in counts, by which count is asked (text unchanged)
+export type IdentityCount = 'people' | 'route_a' | 'route_b' | 'notices' | 'exemptions' | 'searches';
+const IDENTITY_COUNTS: Readonly<Record<IdentityCount, string>> = Object.freeze({
+  people: 'SELECT COUNT(*) AS n FROM identity_persons',
+  route_a: 'SELECT COUNT(*) AS n FROM identity_persons WHERE contact_route IS NOT NULL',
+  route_b: 'SELECT COUNT(*) AS n FROM identity_persons WHERE contact_route IS NULL',
+  notices: 'SELECT COUNT(*) AS n FROM identity_persons WHERE notice_route IS NOT NULL',
+  exemptions: 'SELECT COUNT(*) AS n FROM identity_persons WHERE exemption_article IS NOT NULL',
+  searches: 'SELECT COUNT(*) AS n FROM identity_search_log',
+});
+export function getIdentityCount<T extends Row = Row>(db: Db, which: IdentityCount, params: readonly Param[] = []): T | undefined {
+  return db.get<T>(IDENTITY_COUNTS[which], params);
+}
+
+// sqlite_master: the trigger that blocks deleting from a table, if there is one (the retention list says so)
+export function getSqliteMasterNameByTblName<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = ? AND upper(sql) LIKE '%BEFORE DELETE%'", params);
+}

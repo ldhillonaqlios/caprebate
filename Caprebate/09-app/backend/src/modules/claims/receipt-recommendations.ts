@@ -37,7 +37,7 @@
 import type { Db } from '../../core/index.ts';
 import { authorise, type Actor, type Obj } from '../../core/index.ts';
 import { stripReading, NO_RECEIPT_POLICY, type StripReading } from './documents.ts';
-import { getDocumentTypesHandlerTypeByCode } from './data-borrowed.ts';
+import { getDocumentTypesHandlerTypeByCode } from '../admin/index.ts';
 
 export type RecommendedStrip = 'KEEP_WHOLE' | 'STRIP_INDIVIDUALS_KEEP_FIGURES' | 'REFUSE_AS_UPLOAD';
 

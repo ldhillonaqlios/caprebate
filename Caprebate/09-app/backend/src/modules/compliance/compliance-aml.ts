@@ -243,10 +243,6 @@ type CheckRow = {
   state: string; completed_at: string | null; withdrawn_reason: string | null; created_at: string; updated_at: string;
 };
 
-const CHECK_SELECT =
-  'SELECT id, business_id, claim_id, claimant_type, claimant_type_note, identified, verification_method, register_ref, evidence_document_id, ' +
-  'beneficial_ownership, authority_basis, authority_contact_id, authority_evidence, entity_status, sanctions_screen, sanctions_screened_on, ' +
-  'risk_rating, risk_level, risk_rating_basis, checked_on, checked_by, state, completed_at, withdrawn_reason, created_at, updated_at FROM cdd_checks ';
 
 function loadCheck(db: Db, id: string): CheckRow {
   const r = getCddChecksIdBusinessIdById<CheckRow>(db, [id]);

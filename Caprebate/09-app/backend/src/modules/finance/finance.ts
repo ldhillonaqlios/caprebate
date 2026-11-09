@@ -275,11 +275,6 @@ type InvoiceDbRow = {
   period_start: string | null; name: string;
 };
 
-const INVOICE_SELECT =
-  'SELECT i.id, i.business_id, i.claim_value_pence, i.fee_pence, i.invoice_status, ' +
-  'i.payment_status, i.vat_position, i.created_at, i.entity_type, i.tax_rate, ' +
-  'i.pool_split_main_pence, i.pool_split_special_pence, i.period_start, b.name ' +
-  'FROM invoices i JOIN businesses b ON b.id = i.business_id ';
 
 /**
  * Pounds from pence, for the engine.

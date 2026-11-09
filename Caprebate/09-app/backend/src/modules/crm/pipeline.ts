@@ -65,7 +65,10 @@ import {
 } from '../../shared/index.ts';
 import { portalStepLine } from '../portal/index.ts';
 import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../claims/index.ts';
-import { getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint, getInvoicesCountByClaimIdKind, getInvoicesSentOnByClaimIdKind, getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyPackApprovalsVersionApprovedAtByClaimId, getSurveyorCommitmentsCommittedAtByClaimId, listClaimStageMovesAtKindByClaimId2, listReasonListsCodeLabelByList } from './data-borrowed.ts';
+import { getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint, getSurveyPackApprovalsVersionApprovedAtByClaimId, listClaimStageMovesAtKindByClaimId2 } from './data-borrowed.ts';
+import { getInvoicesFeeCountByClaimId, getInvoicesSentOnByClaimIdKind } from '../finance/index.ts';
+import { getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, listReasonListsCodeLabelActiveByList } from '../admin/index.ts';
+import { getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyorCommitmentsCommittedAtByClaimId } from '../survey/index.ts';
 import { getBusinessesSectorById, getBusinessesStageById, getLeadsIdBusinessIdById4, getLeadsIdByClaimId, updateBusinessesStageUpdatedAtById, updateLeadsUpdatedAtById } from './data.ts';
 import { insertEnquiryChecks } from '../public-site/index.ts';
 import { getClaimDeliverablesIssuedOnKindByClaimIdState, getClaimMilestonesAtByClaimIdMilestone, getClaimReconciliationsFiledOnByClaimId, getClaimStageMovesAtByClaimIdToStage, getClaimsCountByBusinessIdStage, getClaimsIdBusinessIdById3, insertClaimMilestones, insertClaimStageMoves, insertClaimStageMoves2, listClaimStageMovesFromStageToStageByClaimId, listClaimsIdStageByBusinessId, listPropertiesBusinessIdLabelByBusinessId, updateClaimsStageHoldReturnStageById } from '../claims/index.ts';
@@ -327,7 +330,6 @@ type CheckDbRow = {
   seq: number; check_key: string; answer: string; note: string | null; recorded_at: string; recorder: string | null;
 };
 
-
 /**
  * THE ENQUIRY GATE, READ. For a claim, its own checks and its lead's together —
  * a claim converted from a lead passed the gate on the lead, and a claim a person
@@ -503,7 +505,7 @@ export function feeTriggerReached(db: Db, c: PipelineClaim, trigger: FeeTrigger 
  * and one credited in full are none of them this claim's fee.
  */
 export function liveFeeInvoiceCount(db: Db, claim_id: string): number {
-  return getInvoicesCountByClaimIdKind<{ n: number }>(db, [claim_id])?.n ?? 0;
+  return getInvoicesFeeCountByClaimId<{ n: number }>(db, [claim_id])?.n ?? 0;
 }
 
 /**
@@ -689,7 +691,7 @@ export type MoveResult =
 type ReasonRow = { code: string; label: string; active: number };
 
 export function reasonList(db: Db, list: 'LEAD_LOST' | 'CLAIM_EXIT', activeOnly = true): { code: string; label: string }[] {
-  return listReasonListsCodeLabelByList<ReasonRow>(db, [list])
+  return listReasonListsCodeLabelActiveByList<ReasonRow>(db, [list])
     .filter((r) => !activeOnly || r.active === 1)
     .map((r) => ({ code: r.code, label: r.label }));
 }

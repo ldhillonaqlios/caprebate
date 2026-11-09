@@ -64,6 +64,8 @@ import { getDocumentsIdById, listLogicalDocumentsId } from '../claims/index.ts';
 import { getContactsIdById, getContactsIdFullNameById, listIntroducerShareConsentsRecordedAtDecisionByBusinessId, updateContactsContactConsentUpdatedAtById, updateContactsMarketingOptinUpdatedAtById } from '../crm/index.ts';
 import { insertConsentAnswers, listConsentAnswersRecordedAtKindByContactId } from '../assessment/index.ts';
 import { getIdentityPersonsPersonRefNoticeTemplateByPersonRef, insertIdentityPersons, insertIdentitySearchLog, listComplaintsIdRefByPersonRef, listIdentityPersonsPersonRefRole, listRightsRequestsIdRefByPersonRef, updateIdentityPersonsExemptionArticleExemptionReasonByPerson, updateIdentityPersonsNoticeTemplateNoticeRouteByPersonRef } from './data.ts';
+import { getIdentityCount, getSqliteMasterNameByTblName, type IdentityCount } from './data.ts';
+import { countRecordKind, listRecordKindClockRows, recordKindHasClock } from './data-borrowed.ts';
 import { getIdentityPersonsPersonRefNameByPersonRef } from './data-borrowed.ts';
 
 class Refusal extends Error {}
@@ -237,14 +239,14 @@ export { Refusal as IdentityRefusal };
 /** The store's shape, in counts. There is no list view of S2. */
 export function identityCounts(db: Db, actor: Actor): { people: number; route_a: number; route_b: number; notices: number; exemptions: number; searches: number } {
   assertIdentityRead(actor);
-  const n = (sql: string): number => db.get<{ n: number }>(sql)?.n ?? 0;
+  const n = (which: IdentityCount): number => getIdentityCount<{ n: number }>(db, which)?.n ?? 0;
   return {
-    people: n('SELECT COUNT(*) AS n FROM identity_persons'),
-    route_a: n('SELECT COUNT(*) AS n FROM identity_persons WHERE contact_route IS NOT NULL'),
-    route_b: n('SELECT COUNT(*) AS n FROM identity_persons WHERE contact_route IS NULL'),
-    notices: n('SELECT COUNT(*) AS n FROM identity_persons WHERE notice_route IS NOT NULL'),
-    exemptions: n('SELECT COUNT(*) AS n FROM identity_persons WHERE exemption_article IS NOT NULL'),
-    searches: n('SELECT COUNT(*) AS n FROM identity_search_log'),
+    people: n('people'),
+    route_a: n('route_a'),
+    route_b: n('route_b'),
+    notices: n('notices'),
+    exemptions: n('exemptions'),
+    searches: n('searches'),
   };
 }
 
@@ -359,40 +361,40 @@ export const RETENTION_PARAMETERS: Readonly<Record<string, Parameter>> = Object.
 const BACKUP_CYCLE_WORDS: Readonly<Record<string, string>> = Object.freeze({ NOT_SET: 'not set yet', UNKNOWN: 'not known', SET: 'set' });
 
 type Kind = {
-  readonly kind: string; readonly label: string; readonly table: string; readonly ref: string | null; readonly count: string;
-  /** Rows with the moment their clock starts, where the determination gives one this build records. */
-  readonly clockRows: string | null; readonly why_unset: string;
+  readonly kind: string; readonly label: string; readonly table: string; readonly ref: string | null; readonly why_unset: string;
+  /* Its count, and the rows with the moment their clock starts where the determination gives one this build records, are
+     the data files' (countRecordKind, recordKindHasClock, listRecordKindClockRows), by this kind. */
 };
 
 const NOT_COVERED = 'No rule for this yet. Our retention rules do not cover it';
 
 export const RECORD_KINDS: readonly Kind[] = Object.freeze([
-  { kind: 'RIGHTS_REQUESTS', label: 'The rights-request register', table: 'rights_requests', ref: 'RET-4', count: 'SELECT COUNT(*) AS n FROM rights_requests', clockRows: null, why_unset: 'Drafted, not signed yet' },
-  { kind: 'COMPLAINTS', label: 'The complaints log', table: 'complaints', ref: 'RET-6', count: 'SELECT COUNT(*) AS n FROM complaints', clockRows: 'SELECT id, outcome_notified_at AS starts FROM complaints', why_unset: 'Not signed yet' },
-  { kind: 'BREACH_INCIDENTS', label: 'The breach register', table: 'breach_incidents', ref: 'RET-5', count: 'SELECT COUNT(*) AS n FROM breach_incidents', clockRows: 'SELECT id, closed_at AS starts FROM breach_incidents', why_unset: 'Not signed yet' },
-  { kind: 'IDENTITY_PERSON', label: 'People named on documents', table: 'identity_persons', ref: 'RET-8', count: 'SELECT COUNT(*) AS n FROM identity_persons', clockRows: null, why_unset: 'It follows the claim record’s date, and that rule is not signed yet' },
-  { kind: 'IDENTITY_SEARCH_LOG', label: 'The log of name searches', table: 'identity_search_log', ref: null, count: 'SELECT COUNT(*) AS n FROM identity_search_log', clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'DOCUMENT_VERSIONS', label: 'Client document versions — no date yet, so never due and never kept for ever', table: 'documents', ref: 'RET-7', count: 'SELECT COUNT(*) AS n FROM documents WHERE logical_document_id IS NOT NULL', clockRows: null, why_unset: 'Not signed yet, so no date is worked out. It needs two dates from each document’s claim. One is the accounting period end. The other is the day the client report was first sent. Each is shown as known or not known' },
-  { kind: 'LOGICAL_DOCUMENTS', label: 'Documents, with all their versions', table: 'logical_documents', ref: 'RET-7', count: 'SELECT COUNT(*) AS n FROM logical_documents', clockRows: null, why_unset: 'It follows its versions' },
-  { kind: 'DOCUMENT_LINKS', label: 'Document links', table: 'document_links', ref: 'RET-7', count: 'SELECT COUNT(*) AS n FROM document_links', clockRows: null, why_unset: 'It follows its versions' },
+  { kind: 'RIGHTS_REQUESTS', label: 'The rights-request register', table: 'rights_requests', ref: 'RET-4', why_unset: 'Drafted, not signed yet' },
+  { kind: 'COMPLAINTS', label: 'The complaints log', table: 'complaints', ref: 'RET-6', why_unset: 'Not signed yet' },
+  { kind: 'BREACH_INCIDENTS', label: 'The breach register', table: 'breach_incidents', ref: 'RET-5', why_unset: 'Not signed yet' },
+  { kind: 'IDENTITY_PERSON', label: 'People named on documents', table: 'identity_persons', ref: 'RET-8', why_unset: 'It follows the claim record’s date, and that rule is not signed yet' },
+  { kind: 'IDENTITY_SEARCH_LOG', label: 'The log of name searches', table: 'identity_search_log', ref: null, why_unset: NOT_COVERED },
+  { kind: 'DOCUMENT_VERSIONS', label: 'Client document versions — no date yet, so never due and never kept for ever', table: 'documents', ref: 'RET-7', why_unset: 'Not signed yet, so no date is worked out. It needs two dates from each document’s claim. One is the accounting period end. The other is the day the client report was first sent. Each is shown as known or not known' },
+  { kind: 'LOGICAL_DOCUMENTS', label: 'Documents, with all their versions', table: 'logical_documents', ref: 'RET-7', why_unset: 'It follows its versions' },
+  { kind: 'DOCUMENT_LINKS', label: 'Document links', table: 'document_links', ref: 'RET-7', why_unset: 'It follows its versions' },
   // Phase 132 — migration 022. RET-3 needs `verified_at` and, where backups are pending, the last copy's expiry: no date is computed here.
-  { kind: 'DELETION_LOG', label: 'The deletion log — one entry per deletion, never a name', table: 'deletion_log', ref: 'RET-3', count: 'SELECT COUNT(*) AS n FROM deletion_log', clockRows: null, why_unset: `Drafted, not signed yet, so no date is worked out. An entry still waiting on backups has no date while the host’s backup cycle is ${BACKUP_CYCLE_WORDS[BACKUP_CYCLE.state] ?? BACKUP_CYCLE.state}` },
-  { kind: 'REGISTER_RECORDS', label: 'Register records — people who control a company, and owners who are people', table: 'register_records', ref: 'RET-1', count: 'SELECT COUNT(*) AS n FROM register_records', clockRows: null, why_unset: 'Drafted, not signed yet' },
-  { kind: 'LEADS_NEVER_CONVERTED', label: 'Leads that never convert, with a referral’s property basics', table: 'leads', ref: null, count: "SELECT COUNT(*) AS n FROM leads WHERE status <> 'CONVERTED'", clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'LEAD_PEOPLE', label: 'A lead’s person with no organisation', table: 'contacts', ref: null, count: 'SELECT COUNT(*) AS n FROM contacts WHERE lead_id IS NOT NULL AND business_id IS NULL', clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'STAFF_TASKS', label: 'Staff tasks', table: 'staff_tasks', ref: null, count: 'SELECT COUNT(*) AS n FROM staff_tasks', clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'LEAD_FOLLOW_UP_TASKS', label: 'Follow-up tasks on a lead that never converts', table: 'staff_tasks', ref: null, count: "SELECT COUNT(*) AS n FROM staff_tasks t JOIN leads l ON l.id = t.lead_id WHERE l.status <> 'CONVERTED'", clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'AUTOMATION_RUNS', label: 'Automation runs', table: 'automation_runs', ref: null, count: 'SELECT COUNT(*) AS n FROM automation_runs', clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'OUTBOX_QUEUED', label: 'Emails we send from rules, templates, notices and registers', table: 'outbox', ref: null, count: "SELECT COUNT(*) AS n FROM outbox WHERE kind IN ('NOTIFICATION','TEMPLATE','COMPLIANCE_LETTER')", clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'INTRODUCERS', label: 'Introducing firms', table: 'introducers', ref: null, count: 'SELECT COUNT(*) AS n FROM introducers', clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'INTRODUCER_PEOPLE', label: 'The people at an introducing firm', table: 'contacts', ref: null, count: 'SELECT COUNT(*) AS n FROM contacts WHERE introducer_id IS NOT NULL', clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'SHARE_CONSENTS', label: 'The share-progress answers', table: 'introducer_share_consents', ref: null, count: 'SELECT COUNT(*) AS n FROM introducer_share_consents', clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'INTRODUCER_NOTICES', label: 'Stage notices to firms', table: 'introducer_notices', ref: null, count: 'SELECT COUNT(*) AS n FROM introducer_notices', clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'CONSENT_ANSWERS', label: 'The consent history', table: 'consent_answers', ref: null, count: 'SELECT COUNT(*) AS n FROM consent_answers', clockRows: null, why_unset: NOT_COVERED },
+  { kind: 'DELETION_LOG', label: 'The deletion log — one entry per deletion, never a name', table: 'deletion_log', ref: 'RET-3', why_unset: `Drafted, not signed yet, so no date is worked out. An entry still waiting on backups has no date while the host’s backup cycle is ${BACKUP_CYCLE_WORDS[BACKUP_CYCLE.state] ?? BACKUP_CYCLE.state}` },
+  { kind: 'REGISTER_RECORDS', label: 'Register records — people who control a company, and owners who are people', table: 'register_records', ref: 'RET-1', why_unset: 'Drafted, not signed yet' },
+  { kind: 'LEADS_NEVER_CONVERTED', label: 'Leads that never convert, with a referral’s property basics', table: 'leads', ref: null, why_unset: NOT_COVERED },
+  { kind: 'LEAD_PEOPLE', label: 'A lead’s person with no organisation', table: 'contacts', ref: null, why_unset: NOT_COVERED },
+  { kind: 'STAFF_TASKS', label: 'Staff tasks', table: 'staff_tasks', ref: null, why_unset: NOT_COVERED },
+  { kind: 'LEAD_FOLLOW_UP_TASKS', label: 'Follow-up tasks on a lead that never converts', table: 'staff_tasks', ref: null, why_unset: NOT_COVERED },
+  { kind: 'AUTOMATION_RUNS', label: 'Automation runs', table: 'automation_runs', ref: null, why_unset: NOT_COVERED },
+  { kind: 'OUTBOX_QUEUED', label: 'Emails we send from rules, templates, notices and registers', table: 'outbox', ref: null, why_unset: NOT_COVERED },
+  { kind: 'INTRODUCERS', label: 'Introducing firms', table: 'introducers', ref: null, why_unset: NOT_COVERED },
+  { kind: 'INTRODUCER_PEOPLE', label: 'The people at an introducing firm', table: 'contacts', ref: null, why_unset: NOT_COVERED },
+  { kind: 'SHARE_CONSENTS', label: 'The share-progress answers', table: 'introducer_share_consents', ref: null, why_unset: NOT_COVERED },
+  { kind: 'INTRODUCER_NOTICES', label: 'Stage notices to firms', table: 'introducer_notices', ref: null, why_unset: NOT_COVERED },
+  { kind: 'CONSENT_ANSWERS', label: 'The consent history', table: 'consent_answers', ref: null, why_unset: NOT_COVERED },
   // Phase 142a — the two chat threads. Their clean-up job is built and switched off (MESSAGE_RETENTION); the period is the officer's.
-  { kind: 'CLIENT_MESSAGE', label: 'Messages with the client — the portal’s Messages', table: 'client_messages', ref: null, count: 'SELECT COUNT(*) AS n FROM client_messages', clockRows: null, get why_unset() { return `${NOT_COVERED}. Lakhbir set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet`; } },
-  { kind: 'TEAM_MESSAGE', label: 'Team-only messages — the internal notes', table: 'internal_notes', ref: null, count: 'SELECT COUNT(*) AS n FROM internal_notes', clockRows: null, get why_unset() { return `${NOT_COVERED}. Lakhbir set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet`; } },
-  { kind: 'CDD_RECORDS', label: 'Customer due diligence records', table: 'cdd_checks', ref: null, count: 'SELECT COUNT(*) AS n FROM cdd_checks', clockRows: null, why_unset: `${NOT_COVERED}. Our position paper says five years from the end of the client relationship. That comes from the Money Laundering Regulations, so it applies only if they apply to us` },
+  { kind: 'CLIENT_MESSAGE', label: 'Messages with the client — the portal’s Messages', table: 'client_messages', ref: null, get why_unset() { return `${NOT_COVERED}. Lakhbir set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet`; } },
+  { kind: 'TEAM_MESSAGE', label: 'Team-only messages — the internal notes', table: 'internal_notes', ref: null, get why_unset() { return `${NOT_COVERED}. Lakhbir set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet`; } },
+  { kind: 'CDD_RECORDS', label: 'Customer due diligence records', table: 'cdd_checks', ref: null, why_unset: `${NOT_COVERED}. Our position paper says five years from the end of the client relationship. That comes from the Money Laundering Regulations, so it applies only if they apply to us` },
 ]);
 
 export type RetentionLine = {
@@ -426,7 +428,7 @@ function addYears(day: string, years: number): string {
 }
 
 function deleteRefusal(db: Db, table: string): string | null {
-  const t = db.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = ? AND upper(sql) LIKE '%BEFORE DELETE%'", [table]);
+  const t = getSqliteMasterNameByTblName<{ name: string }>(db, [table]);
   return t === undefined ? null : t.name;
 }
 
@@ -441,7 +443,7 @@ export function retentionList(d: ComplianceDeps, actor: Actor, today: string, pa
   assertComplianceRead(actor);
   const day = ukDay(today);
   const lines = RECORD_KINDS.map((k): RetentionLine => {
-    const records = d.db.get<{ n: number }>(k.count)?.n ?? 0;
+    const records = countRecordKind<{ n: number }>(d.db, k.kind)?.n ?? 0;
     const p = k.ref === null ? null : (parameters[k.ref] ?? null);
     const refused = deleteRefusal(d.db, k.table);
     const del = refused === null
@@ -451,14 +453,14 @@ export function retentionList(d: ComplianceDeps, actor: Actor, today: string, pa
         : 'The database blocks deleting these, so nothing is deleted from here. Someone must first decide about that block.';
     const held = liveHeldIds(d.db, k.kind);
     const limbs = k.kind === 'DOCUMENT_VERSIONS' ? { limbs: documentLimbs(d.db) } : {};
-    if (p === null || p.state !== 'APPROVED' || p.period_years === null || k.clockRows === null) {
+    if (p === null || p.state !== 'APPROVED' || p.period_years === null || !recordKindHasClock(k.kind)) {
       return {
         kind: k.kind, label: k.label, ref: k.ref, state: p === null ? 'NOT_COVERED' : p.state,
         clock: p === null ? `No deletion date set yet. ${k.why_unset}.` : `${p.says} ${p.state === 'APPROVED' ? 'Approved, but we do not record when this count starts.' : p.state === 'UNSET' ? 'No rule set yet.' : 'Worked out by us — not yet approved by the data protection officer.'} ${k.why_unset}. No deletion date set yet.${p.open === undefined ? '' : ` Still to be decided by the data protection officer: ${p.open}`}`,
         records, unscheduled: records, held: held.size, due: [], delete: del, ...limbs,
       };
     }
-    const rows = d.db.all<{ id: string; starts: string | null }>(k.clockRows);
+    const rows = listRecordKindClockRows<{ id: string; starts: string | null }>(d.db, k.kind);
     const due: { id: string; due_on: string }[] = [];
     let unscheduled = 0;
     for (const r of rows) {

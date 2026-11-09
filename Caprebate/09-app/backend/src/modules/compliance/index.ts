@@ -15,3 +15,4 @@ export { DISCLOSURE_LOG } from './disclosure-log.ts';
 export { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, identityChecks, identityPanel, receiveIdentityResult, storageReason } from './identity-checks.ts';
 export { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from './legal-approvals.ts';
 export type { TermsVersions } from './legal-approvals.ts';
+export { getComplaintFormsIdReceivedAtById, getSignatoryChecksCountByBusinessIdSource, getSignatoryChecksResultReasonByBusinessIdSource, insertComplaintForms, insertDeletionLog, insertDeletionLog2, insertSignatoryChecks, listComplaintFormsIdReceivedAtByLoggedComplaintId, listSignatoryChecksSourceByEngagementIdResult, updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl } from './data.ts';

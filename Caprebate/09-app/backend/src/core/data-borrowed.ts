@@ -24,22 +24,9 @@ export function listBookingChangesFromStartsAtToStartsAtByBookingId<T extends Ro
     'FROM booking_changes c LEFT JOIN users u ON u.id = c.changed_by ' +
     'WHERE c.booking_id = ? ORDER BY c.at ASC', params);
 }
-
-// saved_keys
-export function getSavedKeysCoalesceMaxRowidM<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT coalesce(max(rowid), 0) AS m FROM saved_keys', params);
-}
-export function insertSavedKeys(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO saved_keys (id, name, sealed, set_by, set_at) VALUES (?, ?, ?, ?, ?)', params);
-}
 export function listSavedKeysNameSealedByRowidName<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT k.name, k.sealed, k.set_at, u.display_name AS who FROM saved_keys k LEFT JOIN users u ON u.id = k.set_by ' +
     'WHERE k.rowid = (SELECT max(x.rowid) FROM saved_keys x WHERE x.name = k.name) ORDER BY k.name', params);
-}
-
-// surveyor_jobs
-export function listSurveyorJobsSurveyorIdByBusinessIdSurveyorId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', params);
 }
 
 // users

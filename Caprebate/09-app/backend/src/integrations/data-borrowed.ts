@@ -7,11 +7,6 @@
  */
 import type { Db, Param, Row } from '../core/index.ts';
 
-// email_sender
-export function getEmailSenderDisplayNameAddress<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT display_name, address, reply_to FROM email_sender ORDER BY rowid DESC LIMIT 1', params);
-}
-
 // users
 export function getUsersCountByClientStatusEmailCanonical<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT COUNT(*) AS n FROM users u JOIN businesses b ON b.id = u.business_id ' +

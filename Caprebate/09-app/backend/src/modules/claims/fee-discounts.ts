@@ -20,7 +20,8 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { multiSiteDiscount } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import { insertFeeDiscounts, listFeeDiscountsIdDiscountBpByClaimId } from './data-borrowed.ts';
+import { listFeeDiscountsIdDiscountBpByClaimId } from './data-borrowed.ts';
+import { insertFeeDiscounts } from '../finance/index.ts';
 import { getClaimsIdBusinessIdById } from './data.ts';
 
 export type FeeDiscountDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };

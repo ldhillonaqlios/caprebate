@@ -137,13 +137,6 @@ type JobDbRow = {
   claim_ref: string | null; property_label: string | null; property_postcode: string | null;
 };
 
-const JOB_SELECT =
-  'SELECT j.id, j.business_id, j.assessment_id, j.surveyor_id, j.state, j.committed_at, ' +
-  'j.created_at, b.name, b.sector, b.stage, u.display_name AS surveyor_name, j.claim_id, cl.stage AS claim_stage, ' +
-  'cl.claim_ref, p.label AS property_label, p.postcode AS property_postcode ' +
-  'FROM surveyor_jobs j JOIN businesses b ON b.id = j.business_id ' +
-  'LEFT JOIN users u ON u.id = j.surveyor_id LEFT JOIN claims cl ON cl.id = j.claim_id ' +
-  'LEFT JOIN properties p ON p.id = cl.property_id ';
 
 function objOf(r: JobDbRow): Extract<Obj, { type: 'surveyor_job' }> {
   return { type: 'surveyor_job', id: r.id, business_id: r.business_id, surveyor_id: r.surveyor_id };

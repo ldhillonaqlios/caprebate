@@ -38,7 +38,7 @@ import { latestFacts } from './claim-facts.ts';
 import { commitmentOnClaim, deliverableIssued, latestSignOff, type RecordDeps } from './claim-record.ts';
 import { caseStamp, type CaseStamp } from './case-stamp.ts';
 import { getClaimReconciliationsIdSnapshotHashByClaimId, getClaimsIdClaimRefById, listClaimDeliverablesIdKindByClaimIdState } from './data.ts';
-import { getAnchorLogCountByJobIdClaimId, getAnchorLogSeqHashByJobIdClaimId } from './data-borrowed.ts';
+import { getAnchorLogCountByJobIdClaimId, getAnchorLogSeqHashByJobIdClaimId } from '../survey/index.ts';
 
 export type DefencePackSwitch = { readonly enabled: boolean; readonly waits_on: string };
 

@@ -33,6 +33,7 @@ import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { instantsForLocalMinute, localDate } from '../../shared/index.ts';
+import { getHoldEntryId, getLinkedEntryRef, listLegalHoldsForEntry } from './data.ts';
 import { getCddChecksCompletedAtByBusinessIdState, getComplianceRefSeriesLastNByKind, getComplianceSettingsValueEffectiveFromBySettingEffectiveFro, getLegalHoldsLiftedAtById, insertComplianceLinks, insertComplianceSettings, insertLegalHolds, listComplianceLinksKIByFromKindFromId, listLegalHoldsIdHoldKindByRecordKindRecordId, listLegalHoldsRecordIdByRecordKindLiftedAt, updateComplianceRefSeriesLastNByKind, updateLegalHoldsLiftedAtLiftedByById } from './data.ts';
 
 export type ComplianceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
@@ -286,14 +287,14 @@ export function setHold(d: ComplianceDeps, actor: Actor, input: Fields): WriteRe
   const review = dateField(input['review_on'], 'The next review date');
   if (!review.ok) return review;
   if (review.value === null) return { ok: false, why: 'A hold carries the date it is next reviewed: one with no review date is treated as expired.' };
-  const pointer = (key: string, sql: string): Check<string | null> => {
+  const pointer = (key: 'rights_request_id' | 'complaint_id' | 'incident_id'): Check<string | null> => {
     const v = (input[key] ?? '').trim();
     if (v === '') return { ok: true, value: null };
-    return d.db.get<{ id: string }>(sql, [v]) ? { ok: true, value: v } : { ok: false, why: 'The register entry this hold is for was not found.' };
+    return getHoldEntryId<{ id: string }>(d.db, key, [v]) ? { ok: true, value: v } : { ok: false, why: 'The register entry this hold is for was not found.' };
   };
-  const rr = pointer('rights_request_id', 'SELECT id FROM rights_requests WHERE id = ?');
-  const cp = pointer('complaint_id', 'SELECT id FROM complaints WHERE id = ?');
-  const bi = pointer('incident_id', 'SELECT id FROM breach_incidents WHERE id = ?');
+  const rr = pointer('rights_request_id');
+  const cp = pointer('complaint_id');
+  const bi = pointer('incident_id');
   for (const c of [rr, cp, bi]) if (!c.ok) return c;
   const id = d.newId();
   try {
@@ -318,19 +319,12 @@ export function liftHold(d: ComplianceDeps, actor: Actor, id: string, input: Fie
   return { ok: true, id };
 }
 
-const HOLD_SELECT =
-  'SELECT id, hold_kind, record_kind, record_id, reason_kind, reason, review_on, set_at, lifted_at, lift_reason, ' +
-  'rights_request_id, complaint_id, incident_id FROM legal_holds ';
-
 export function holdsFor(db: Db, record_kind: string, record_id: string): HoldRow[] {
   return listLegalHoldsIdHoldKindByRecordKindRecordId<HoldRow>(db, [record_kind, record_id]);
 }
 
 export function holdsForEntry(db: Db, column: 'rights_request_id' | 'complaint_id' | 'incident_id', id: string): HoldRow[] {
-  const sql = column === 'rights_request_id' ? `${HOLD_SELECT}WHERE rights_request_id = ? ORDER BY set_at`
-    : column === 'complaint_id' ? `${HOLD_SELECT}WHERE complaint_id = ? ORDER BY set_at`
-      : `${HOLD_SELECT}WHERE incident_id = ? ORDER BY set_at`;
-  return db.all<HoldRow>(sql, [id]);
+  return listLegalHoldsForEntry<HoldRow>(db, column, [id]);
 }
 
 /** The live holds, by record kind — what the due-for-deletion list excludes. */
@@ -344,15 +338,8 @@ export function liveHeldIds(db: Db, record_kind: string): Set<string> {
 
 export const LINK_KINDS: Vocab = Object.freeze({ RIGHTS_REQUEST: 'Rights request', COMPLAINT: 'Complaint', BREACH: 'Breach entry' });
 
-const LINK_TABLE: Readonly<Record<string, { sql: string }>> = Object.freeze({
-  RIGHTS_REQUEST: { sql: 'SELECT request_ref AS ref FROM rights_requests WHERE id = ?' },
-  COMPLAINT: { sql: 'SELECT complaint_ref AS ref FROM complaints WHERE id = ?' },
-  BREACH: { sql: 'SELECT incident_ref AS ref FROM breach_incidents WHERE id = ?' },
-});
-
 function refOf(db: Db, kind: string, id: string): string | null {
-  const t = LINK_TABLE[kind];
-  return t === undefined ? null : (db.get<{ ref: string }>(t.sql, [id])?.ref ?? null);
+  return getLinkedEntryRef<{ ref: string }>(db, kind, [id])?.ref ?? null;
 }
 
 export function link(d: ComplianceDeps, actor: Actor, input: Fields): WriteResult {

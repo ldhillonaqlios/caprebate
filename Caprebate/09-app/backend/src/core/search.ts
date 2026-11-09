@@ -43,7 +43,7 @@ import { authorise, can, type Actor, type Obj } from './authz.ts';
 import { claimObjFor } from '../modules/crm/index.ts';
 import { claimName } from '../shared/index.ts';
 import { anyStageLabel } from '../shared/index.ts';
-import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId } from './data-borrowed.ts';
+import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId } from '../modules/survey/data.ts';
 import { SEARCH_STATEMENTS, searchClaims, searchClaimsAssigned, searchContacts, searchInvoices, searchNotes, searchOrganisations, searchProperties, searchPropertiesAssigned, searchProspects } from './data-borrowed.ts';
 
 export type SearchKind = 'ORGANISATION' | 'PROSPECT' | 'CONTACT' | 'PROPERTY' | 'CLAIM' | 'INVOICE' | 'NOTE';

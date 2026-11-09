@@ -67,7 +67,8 @@ import { SECTORS } from './leads.ts';
 import { ACTIVITY_TYPES, RECIPROCITY_ACTIVITY_TYPES, dueReading, insertTask } from './tasks.ts';
 import { vocabChoice, vocabLabel, vocabulary } from '../admin/index.ts';
 import { getContactsIdByIdIntroducerId, getContactsIdFullNameByIdIntroducerId, getIntroducerFeesCountByIntroducerId, getIntroducerFeesIdByClaimId, getIntroducerNoticesIdByLeadIdNotice, getIntroducerPercentageEntriesIdByInvoiceIdEntryKind, getIntroducerPercentageEntriesIntroducerIdClaimIdByInvoiceId, getIntroducerPercentageEntriesTByInvoiceId, getIntroducerTermsSignaturesTermsVersionSignedOnByIntroducer, getIntroducersFirmNameById, getIntroducersIdById, getIntroducersIdIntroducerTypeById, getIntroducersIdMergedIntoIdById, getLeadsClaimIdById, getLeadsIdBusinessIdByBusinessIdIntroducerId, getLeadsIdBusinessIdById2, getLeadsIdBusinessIdById7, getLeadsIdByClaimIdIntroducerId, getLeadsIntroducerIdByClaimIdIntroducerType, getLeadsIntroducerIdById, getStaffTasksCompletedAtActivityTypeByIntroducerIdStatus, getStaffTasksCountByIntroducerId, getStaffTasksDueOnTitleByIntroducerIdStatus, insertContacts5, insertIntroducerFees, insertIntroducerMerges, insertIntroducerNotices, insertIntroducerPercentageEntries, insertIntroducerPercentageEntries2, insertIntroducerShareConsents, insertIntroducerShareConsents2, insertIntroducerTermsSignatures, insertIntroducers, insertIntroducers2, insertLeads5, listContactsIdFullNameByIntroducerId, listIntroducerNoticesAtNoticeByLeadId, listIntroducersIdName, listIntroducersIdNameByIdMergedIntoId, listLeadsLeadIdIntroducerIdByBusinessId, updateContactsFullNameJobRoleOtherById2, updateContactsIntroducerIdUpdatedAtByIntroducerId, updateIntroducerFeesDisclosureGivenAtDisclosureRecordedByByI, updateIntroducerFeesStatePaidAtById, updateIntroducerMergesCompletedAtLeadsMovedById, updateIntroducerRewardSettingModelFeePenceById, updateIntroducersFirmNameIntroducerTypeById, updateIntroducersMergedIntoIdMergedAtById, updateIntroducersNoticeContactIdUpdatedAtByIdNoticeContactId, updateLeadsIntroducerIdUpdatedAtByIntroducerId, updateStaffTasksIntroducerIdUpdatedAtByIntroducerIdStatus, updateStaffTasksStatusCompletedAtById } from './data.ts';
-import { getClaimStageMovesLabelByClaimIdToStage, getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getInvoiceCreditNotesIdInvoiceIdById, getInvoiceCreditNotesNByInvoiceId, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesIdClaimIdById, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence, getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO, listInvoicesIdFeeByClaimIdIntroducerId, listLeadsIdBusinessIdByIntroducerId, listStaffTasksIdTitleByIntroducerIdStatus } from './data-borrowed.ts';
+import { getClaimStageMovesLabelByClaimIdToStage, getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence, getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO, listInvoicesIdFeeByClaimIdIntroducerId, listLeadsIdBusinessIdByIntroducerId, listStaffTasksIdTitleByIntroducerIdStatus } from './data-borrowed.ts';
+import { getInvoiceCreditNotesIdInvoiceIdById, getInvoiceCreditNotesNByInvoiceId, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesIdClaimIdById } from '../finance/index.ts';
 import { getClaimsStageHoldReturnStageById, listClaimStageMovesToStageByClaimId } from '../claims/index.ts';
 import { getIntroducerFeesIdIntroducerIdById, getIntroducersIdFirmNameById, listIntroducerFeesIdIntroducerId, listIntroducerFeesIdIntroducerIdByIntroducerId, listIntroducersIdFirmName2 } from './data-borrowed.ts';
 import { listIntroducerPercentageEntriesIdIntroducerId, listIntroducerPercentageEntriesIdIntroducerIdByIntroducerId } from './data-borrowed.ts';
@@ -348,7 +349,6 @@ type IntroducerDbRow = {
   notes: string | null; created_via: string; created_at: string; updated_at: string; owner_name: string | null;
   merged_into_id: string | null; merged_into_name: string | null; merged_at: string | null;
 };
-
 
 function loadIntroducer(db: Db, id: string): IntroducerDbRow {
   const r = getIntroducersIdFirmNameById<IntroducerDbRow>(db, [id]);
@@ -1437,7 +1437,6 @@ type FeeDbRow = {
   id: string; introducer_id: string; firm_name: string; claim_id: string; claim_ref: string; business_id: string; amount_pence: number;
   disclosure_given_at: string | null; discloser: string | null; state: string; paid_at: string | null; payer: string | null;
 };
-
 
 function feeObj(r: { id: string; business_id: string }): { type: 'introducer_fee'; id: string; business_id: string } {
   return { type: 'introducer_fee', id: r.id, business_id: r.business_id };

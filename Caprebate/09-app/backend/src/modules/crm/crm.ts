@@ -69,7 +69,8 @@ import { getRegisterRecordsFieldsJsonByBusinessIdSourceId4 } from '../../integra
 import { listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleDisabledAt } from '../../core/index.ts';
 import { getClaimContactsIdByClaimIdContactId, getClaimContactsIdClaimIdById, getClaimStageMovesAtByClaimId, getClaimsBusinessIdById, getClaimsCountByBusinessId, getPropertiesCountByBusinessId, getPropertiesIdByBusinessId2, getPropertiesPostcodeJurisdictionById, insertClaimContacts, insertClaimRefSeries, insertClaimStageMoves4, insertClaims, insertProperties4, listClaimsIdBusinessIdByPropertyId, listPropertiesIdByBusinessId, listPropertiesIdLabelByBusinessId, updateClaimContactsUnlinkedAtUnlinkedByByIdUnlinkedAt, updateClaimsOwnerIdSurveyorIdById, updatePropertiesClaimantRoleClaimantRoleSourceById, updatePropertiesLabelPostcodeById, updatePropertiesLandlordUpdatedAtById, updatePropertiesLeaseEndDateUpdatedAtById, updatePropertiesSaleInProspectUpdatedAtById, updatePropertiesTenureSourceById } from '../claims/index.ts';
 import { getBusinessesClaimantTypeById, getBusinessesSectorById, getBusinessesSourceById, getBusinessesStageById, getContactsCountByBusinessIdId, getContactsIdBusinessIdById, getLeadsIdBusinessIdByClaimId, insertContacts, listContactsIdFullNameByBusinessIdContactType, listLeadsIdFirmNameByBusinessId, updateBusinessesLegalNameCompanyNumberById, updateContactsFullNameJobRoleOtherById } from './data.ts';
-import { getClaimsBusinessIdCompanyById, getSurveyorCommitmentsNByAssessmentId, getSurveyorJobsSurveyorIdByBusinessIdSurveyorId, listClaimContactsIdContactIdByClaimIdUnlinkedAt, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3, listSurveyorJobsSurveyorIdByClaimIdSurveyorId2, updateSurveyorJobsClaimIdByBusinessIdAssessmentId } from './data-borrowed.ts';
+import { getClaimsBusinessIdCompanyById, listClaimContactsIdContactIdByClaimIdUnlinkedAt } from './data-borrowed.ts';
+import { getSurveyorCommitmentsNByAssessmentId, getSurveyorJobsSurveyorIdByBusinessIdSurveyorId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3, listSurveyorJobsSurveyorIdByClaimIdSurveyorId2, updateSurveyorJobsClaimIdByBusinessIdAssessmentId } from '../survey/index.ts';
 import { getAssessmentsIdByBusinessId2, getAssessmentsShownLowPenceShownHighPenceById, getEstimatesCountByBusinessId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId, listAssessmentAnswersStateValueByAssessmentIdQuestionId } from '../assessment/index.ts';
 import { getBusinessesIdNameById5, getPropertiesIdBusinessIdById4, getStaffTasksIdClaimRefByClaimIdIsNextAction, listBusinessesIdName5, listPropertiesIdBusinessId, listPropertiesIdBusinessIdByBusinessId, listStaffTasksIdClaimRefByClaimIdIsNextAction, listStaffTasksIdClaimRefByClaimIdIsNextAction2, listStaffTasksIdClaimRefByClaimIdIsNextAction3, listStaffTasksIdClaimRefByClaimIdIsNextAction4 } from './data-borrowed.ts';
 import { getContactsIdBusinessIdById4, listContactsIdBusinessIdByBusinessId } from './data.ts';
@@ -607,7 +608,6 @@ export type ClaimDbRow = {
   property_town: string | null;
 };
 
-
 /**
  * WHO REACHES A CLAIM THROUGH A SURVEY JOB: the surveyors assigned to a job ON
  * THIS CLAIM. CRM 2 of 10 gave `surveyor_jobs` a `claim_id` (migration 010,
@@ -719,7 +719,6 @@ type BusinessDbRow = {
   client_status: string; source: string | null; owner_id: string | null; updated_at: string | null;
   owner_name: string | null;
 };
-
 
 function organisationFacts(db: Db, actor: Actor, b: BusinessDbRow): { legal_name: Fact; company_number: Fact; claimant_type: Fact } {
   const ch = companiesHouse(db, actor, b.id);
@@ -942,7 +941,6 @@ type ContactDbRow = {
   notes: string | null;
 };
 
-
 function lastAndNext(db: Db, r: ContactDbRow): {
   last_contact_at: string | null; last_contact: string; next_follow_up_at: string | null; follow_ups_open: number;
 } {
@@ -1096,7 +1094,6 @@ type PropertyDbRow = {
   claimant_role: string | null; lease_end_date: string | null; landlord: string | null;
   business_name: string;
 };
-
 
 /**
  * WHO REACHES A PROPERTY THROUGH A SURVEY JOB: the surveyors assigned to a job
