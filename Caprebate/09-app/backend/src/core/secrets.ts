@@ -102,7 +102,7 @@ export type SecretKey = {
  *     get-energy-performance-data.communities.gov.uk. Its API is api.get-energy-performance-data.communities.gov.uk
  *     and takes ONE bearer token, "found on your my account page when you are logged in to the service" (GOV.UK One
  *     Login). The old service's e-mail-plus-key pair is not needed, so there is one EPC name, not two.
- *   · HM Land Registry Business Gateway — RETIRED BY PHASE 146k. the owner decided the title register
+ *   · HM Land Registry Business Gateway — RETIRED. the owner decided the title register
  *     is looked up by hand, and took its four details out of the key file. Its four names (HMLR_BG_USERNAME,
  *     HMLR_BG_PASSWORD, HMLR_BG_CERT_PATH with the alias HMLR_BG_CERTIFICATE_PATH, HMLR_BG_CERT_PASSPHRASE) are marked
  *     `retired` below and are no longer in secrets.example.env. Nothing a click runs reads them: the connector that
@@ -150,7 +150,7 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'WHATSAPP_TEMPLATE_LANGUAGE', owner: 'WHATSAPP', secret: false, phase: 'whatsapp', what: 'the language code of that template; en_GB if empty' },
   { name: 'OS_DATA_HUB_API_KEY', owner: 'OS_MAPS', secret: true, phase: 'site-plan', what: 'the Ordnance Survey Data Hub project key (the free OS OpenData plan, with the OS Features API added). It fetches the building outlines for the report’s site plan.' },
   { name: 'REPLY_TIMER_TOKEN', owner: 'REPLY_TIMER', secret: true, phase: 'reply-timer', what: 'a long random word, 32 characters or more. Only the outside timer sends it. It wakes the website to read email replies.' },
-  // The live website on Vercel (its runbook: 09-app/deploy/LIVE-RUNBOOK.md).
+  // The live website on Vercel (its runbook: 09-app/docs/LIVE-RUNBOOK.md).
   { name: 'CRON_SECRET', owner: 'TIMERS', secret: true, phase: '161h', what: 'a long random word, 32 characters or more. Vercel Cron sends it with every call to the live website\u2019s timers (/hooks/timer/...); without it every call is refused' },
   { name: 'CAPREBATE_BACKUP_KEY', owner: 'BACKUPS', secret: true, phase: '161h', what: 'the key every backup is locked with before it leaves the website: 32 random bytes, as base64 (openssl rand -base64 32). Keep a copy in the password manager: without it no backup can be opened' },
   { name: 'BACKUP_S3_BUCKET', owner: 'BACKUPS', secret: false, phase: '161h', what: 'the name of the bucket the nightly backup goes to, at the second firm (not secret)' },

@@ -1200,7 +1200,7 @@ test('Y4 one limb is not half a rule — RET-7 refuses rather than computing fro
 test('Y5 DERIVED IS NOT APPROVED — an unapproved RET-7 computes nothing, however complete the record', () => {
   assert.equal(RET7.approved, false, 'RET-7 belongs to the DPO and the appointment is not in force');
   // Phase 133i, 18 Sep 2026: the approver is the officer, Sadique Maskeen.
-  assert.match(RET7.approver, /^Sadique Maskeen, Data Protection Officer/);
+  assert.match(RET7.approver, /^The data protection officer/);
   assert.equal(FAIL_CLOSED_SETTINGS.ret7_approved, false);
   const rec = rawFile({ claim_period_end: '2026-03-31T00:00:00.000Z', report_delivered_at: '2026-09-01T00:00:00.000Z' });
   const unapproved: IngestionSettings = { ...FAIL_CLOSED_SETTINGS, raw_file_retention: 'RETAIN_FOR_DEFENCE_PERIOD' };

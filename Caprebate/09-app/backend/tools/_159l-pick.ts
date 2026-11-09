@@ -1,5 +1,5 @@
 import { walkLegalPaths, LEGAL_PATHS_NOW } from '../test/legal-paths-walk.ts';
-import { assessLegalUnder } from '../src/web/pack-legal.ts';
+import { assessLegalUnder } from '../src/modules/survey/pack-legal.ts';
 for (const l of walkLegalPaths('gp', 'company')) {
   if (l.answers['G14st8'] !== 'held') continue;
   const a = new Map(Object.entries(l.answers));

@@ -3,7 +3,7 @@
  * THEIR EXITS. CRM 2 of 10.
  *
  * The stages' words are src/shared/stages.ts; the schema is migration 010; the
- * scope is 09-app/CAPREBATE-CRM-DISPOSITION.md. The routes and pages are
+ * scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md. The routes and pages are
  * src/modules/crm/pipeline-pages.ts, which draws what this returns and decides nothing.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ import {
 } from './tasks.ts';
 import { fireAutomation } from './automation.ts';
 import { onClaimStageEntered } from './introducers.ts';
-import { cddGateNeed } from '../../web/compliance.ts';
+import { cddGateNeed } from '../compliance/index.ts';
 import { amendmentWindowReading, electionResolved, floorAreaOnRecord, grantsTraced } from '../claims/index.ts';
 import { grantProviderNeed, grantSplitNeed } from '../assessment/index.ts';
 import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from '../claims/index.ts';
@@ -65,7 +65,10 @@ import {
 } from '../../shared/index.ts';
 import { portalStepLine } from '../portal/index.ts';
 import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../claims/index.ts';
-import { getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint, getInvoicesCountByClaimIdKind, getInvoicesSentOnByClaimIdKind, getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyPackApprovalsVersionApprovedAtByClaimId, getSurveyorCommitmentsCommittedAtByClaimId, listClaimStageMovesAtKindByClaimId2, listReasonListsCodeLabelByList } from './data-borrowed.ts';
+import { getClientReportAcceptancesAcceptedAtNameByClaimIdFingerprint, getSurveyPackApprovalsVersionApprovedAtByClaimId, listClaimStageMovesAtKindByClaimId2 } from './data-borrowed.ts';
+import { getInvoicesFeeCountByClaimId, getInvoicesSentOnByClaimIdKind } from '../finance/index.ts';
+import { getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, listReasonListsCodeLabelActiveByList } from '../admin/index.ts';
+import { getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyorCommitmentsCommittedAtByClaimId } from '../survey/index.ts';
 import { getBusinessesSectorById, getBusinessesStageById, getLeadsIdBusinessIdById4, getLeadsIdByClaimId, updateBusinessesStageUpdatedAtById, updateLeadsUpdatedAtById } from './data.ts';
 import { insertEnquiryChecks } from '../public-site/index.ts';
 import { getClaimDeliverablesIssuedOnKindByClaimIdState, getClaimMilestonesAtByClaimIdMilestone, getClaimReconciliationsFiledOnByClaimId, getClaimStageMovesAtByClaimIdToStage, getClaimsCountByBusinessIdStage, getClaimsIdBusinessIdById3, insertClaimMilestones, insertClaimStageMoves, insertClaimStageMoves2, listClaimStageMovesFromStageToStageByClaimId, listClaimsIdStageByBusinessId, listPropertiesBusinessIdLabelByBusinessId, updateClaimsStageHoldReturnStageById } from '../claims/index.ts';
@@ -112,9 +115,9 @@ export const FEE_TRIGGERS: Readonly<Record<FeeTrigger, string>> = Object.freeze(
 });
 
 /**
- * WHAT MOVES A CLAIM PAST INVOICE — DECIDED ON, BUILT BY PHASE 132e.
+ * WHAT MOVES A CLAIM PAST INVOICE — DECIDED ON, AND BUILT.
  *
- * Until Phase 132e the procedure left it open and it shipped at the most
+ * Until the decision the procedure left it open and it shipped at the most
  * cautious of three readings, HMRC processing the relief. the owner's answer to
  * "When is our fee earned ...?": due when we complete the report and either
  * submit it for the client or send it to them to submit; we will not get
@@ -134,7 +137,7 @@ export const FEE_TRIGGER: {
 } = Object.freeze({
   reading: 'REPORT_DELIVERED_FOR_FILING',
   decided: true,
-  why: 'Lakhbir decided: our fee is due when we finish the report and send it for filing, to the client or their accountant. Sending it counts, because nobody will confirm the filing.',
+  why: 'The owner decided: our fee is due when we finish the report and send it for filing, to the client or their accountant. Sending it counts, because nobody will confirm the filing.',
   question: FEE_TRIGGER_QUESTION,
 });
 
@@ -229,7 +232,7 @@ export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
 }
 
 /**
- * THE SURVEYOR'S VALUATION IS THE SURVEYOR'S APPROVAL OF THE PACK (src/web/pack-approve.ts) - a version
+ * THE SURVEYOR'S VALUATION IS THE SURVEYOR'S APPROVAL OF THE PACK (src/modules/survey/pack-approve.ts) - a version
  * approved on a survey job on THIS claim. Approving needs every value, the legal check settled, every chapter opened,
  * the inspection basis and a RICS number, so no tick can stand in for it.
  */
@@ -327,7 +330,6 @@ type CheckDbRow = {
   seq: number; check_key: string; answer: string; note: string | null; recorded_at: string; recorder: string | null;
 };
 
-
 /**
  * THE ENQUIRY GATE, READ. For a claim, its own checks and its lead's together —
  * a claim converted from a lead passed the gate on the lead, and a claim a person
@@ -374,7 +376,7 @@ function checkReading(key: CheckKey, r: CheckDbRow | undefined): CheckReading {
  * the check in: none of these is the same fact as the check. A healthcare sector
  * is not a UK property; paying tax is not a qualifying activity (a dormant
  * company pays nothing, and a holding company that neither trades nor lets has
- * none — Phase 159g; a landlord that lets the building has one); "how did you come by this one" is
+ * none; a landlord that lets the building has one); "how did you come by this one" is
  * not authority to act; and a client's own "no prior claim" is not the same as no
  * conflict. So the evidence sits beside the question, with its source, and a
  * person answers it — which is SOP 1's own owner doing SOP 1's own step.
@@ -475,7 +477,7 @@ function confirmation(db: Db, c: PipelineClaim, m: MilestoneKey): Need {
 
 /**
  * THE FEE TRIGGER, READ — CRM 7 of 10. The gate out of INVOICE asks it, and so
- * does raising our fee in src/web/invoices.ts: one reading of FEE_TRIGGER, in one
+ * does raising our fee in src/modules/finance/invoices.ts: one reading of FEE_TRIGGER, in one
  * place, never re-decided by the finance view.
  */
 export function feeTriggerReached(db: Db, c: PipelineClaim, trigger: FeeTrigger = FEE_TRIGGER.reading): Need {
@@ -503,7 +505,7 @@ export function feeTriggerReached(db: Db, c: PipelineClaim, trigger: FeeTrigger 
  * and one credited in full are none of them this claim's fee.
  */
 export function liveFeeInvoiceCount(db: Db, claim_id: string): number {
-  return getInvoicesCountByClaimIdKind<{ n: number }>(db, [claim_id])?.n ?? 0;
+  return getInvoicesFeeCountByClaimId<{ n: number }>(db, [claim_id])?.n ?? 0;
 }
 
 /**
@@ -619,7 +621,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
               .map((r) => r.deadline).filter((x): x is string => x !== null).sort()[0] ?? amendmentWindowReading(db, c, today).deadline)
             : accountantFitNeed(db, c.id, since), // The accountant's own answer, not a staff tick
           reportsWindowNeed(db, c, today),
-          legalDeadlineNeed(db, c, today),   // PHASE 159d (C9)
+          legalDeadlineNeed(db, c, today),   // C9
         );
       }
       break;
@@ -631,7 +633,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // organisation, so one claim's invoice opened every claim of the same client.
       const live = liveFeeInvoiceCount(db, c.id);
       /* The claim moved on with the fee "raised, not sent" - the client had not been
-         invoiced. A live fee invoice must be recorded as SENT (finance's "sent", src/web/invoices.ts markSent). */
+         invoiced. A live fee invoice must be recorded as SENT (finance's "sent", src/modules/finance/invoices.ts markSent). */
       const sent = getInvoicesSentOnByClaimIdKind<{ sent_on: string | null }>(db, [c.id]);
       needs.push({
         what: 'Our fee invoice is sent to the client on this claim',
@@ -646,7 +648,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // CRM 6 of 10: the pack complete is the deliverables register's issued defence pack, immutable with its hash.
       // The confirmation that stood in for it is retired (MILESTONES below): nothing is left for a click to stand in for.
       needs.push(deliverableIssuedNeed(db, c.id, 'DEFENCE_PACK'));
-      needs.push(filingRecordedNeed(db, c.id, opts.today ?? new Date().toISOString())); // PHASE 158c (F42); per return since 159l
+      needs.push(filingRecordedNeed(db, c.id, opts.today ?? new Date().toISOString())); // the Friary House run, F42; one per return
       break;
   }
   return {
@@ -689,7 +691,7 @@ export type MoveResult =
 type ReasonRow = { code: string; label: string; active: number };
 
 export function reasonList(db: Db, list: 'LEAD_LOST' | 'CLAIM_EXIT', activeOnly = true): { code: string; label: string }[] {
-  return listReasonListsCodeLabelByList<ReasonRow>(db, [list])
+  return listReasonListsCodeLabelActiveByList<ReasonRow>(db, [list])
     .filter((r) => !activeOnly || r.active === 1)
     .map((r) => ({ code: r.code, label: r.label }));
 }
@@ -1198,7 +1200,7 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
     portal: {
       /* The portal's own line, numbered, in the shipped step names (NAME_SWITCHES.portalSteps is on).
          The claim page redraws it from the keys under the request's own switch (crm-pages.ts); this module does not
-         import navigation.ts, which reads the settings tiles as it loads (an import loop broke phase156e). */
+         import navigation.ts, which reads the settings tiles as it loads (an import loop broke test/admin/connections-and-regulator-lists.test.ts). */
       shows: clientStage(business?.stage ?? '') === undefined ? 'a step the client’s page does not show'
         : portalStepLine(business?.stage as StageKey, true),
       this_claim_evidences: evidences === null ? null

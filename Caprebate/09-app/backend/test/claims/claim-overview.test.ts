@@ -1,6 +1,6 @@
 /**
  * PHASE 160i — WHERE THIS CLAIM STANDS, 20 October 2026 (src/modules/claims/claim-overview.ts, drawn on the claim page by
- * src/modules/crm/crm-pages.ts; the one-client audit log in src/web/audit-log.ts and src/core/staff.ts; the fact form's source in
+ * src/modules/crm/crm-pages.ts; the one-client audit log in src/modules/compliance/audit-log.ts and src/core/staff.ts; the fact form's source in
  * src/modules/claims/claim-record-pages.ts). Every stage with its needs, still needed and gathered from the claim's own records,
  * where each fact came from, every value before, the survey pack's progress and the client's audit log.
  */
@@ -17,7 +17,7 @@ import { claimOverview, fieldWords, packProgress, sentence, sourceName, STAGE_WO
 import * as C from '../../src/modules/crm/crm.ts';
 import type { Actor } from '../../src/core/authz.ts';
 import type { FactsPanel } from '../../src/modules/claims/claim-facts.ts';
-import { kindWords } from '../../src/web/audit-log.ts';
+import { kindWords } from '../../src/modules/compliance/audit-log.ts';
 import { PROCEDURE_STAGES } from '../../src/shared/stages.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;

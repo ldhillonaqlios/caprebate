@@ -10,7 +10,7 @@
  * by path, and the cleanest way to guarantee that is for the application to
  * have NO route that maps a request onto the filesystem at all.
  * `assertNoStaticFileRoute()` in objectstore.ts checks exactly that, and it can
- * only stay true if assets work this way. PHASE 133c added the supplied logo the
+ * only stay true if assets work this way. The supplied logo was added the
  * same way — a base64 constant in src/shared/brand-logo.ts, served under img-src 'self'.
  *
  * There is also no inline style anywhere, because the CSP has no
@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * WHICH TAB OR SECTION IS CURRENT, BY POSITION. Phase 133a marked the current record tab by its id (details,
+ * WHICH TAB OR SECTION IS CURRENT, BY POSITION. The current record tab was first marked by its id (details,
  * related, activity). The five long screens name their own tabs, and admin settings names its sections from its lists, so
  * the current one is marked by POSITION instead: the n-th panel targeted marks the n-th link. One rule per position, up to
  * MAX_TABS in src/shared/components.ts, which refuses to draw more.
@@ -30,7 +30,7 @@ const CURRENT_BY_POSITION = Array.from({ length: 24 }, (_, i) => i + 1)
   .join(',\n');
 
 /**
- * THE CAP REBATE COLOUR TOKENS — PHASE 133c, from the brand book v1.0, slides 31 to 33 and 60.
+ * THE CAP REBATE COLOUR TOKENS — from the brand book v1.0, slides 31 to 33 and 60.
  *
  * Proportions 60 / 30 / 10: surfaces are white and Mist, type and structure are Cap Ink and Body Grey, and Cap Mint is
  * for emphasis only — the current tab, the current stage, one highlight per layout. Muted grey is for captions and the
@@ -38,7 +38,7 @@ const CURRENT_BY_POSITION = Array.from({ length: 24 }, (_, i) => i + 1)
  *
  * THE ACCENT IS NOT CHOSEN YET (slide 31 asks the design team for "one HEX that passes 4.5:1 on white — for links, CTAs
  * and in-app states"). It is ONE token, --accent, set to Cap Ink until then, with --on-accent the text drawn on it.
- * When the accent arrives, it is a one-line change here and test/phase133c.test.ts checks it against white and Mist.
+ * When the accent arrives, it is a one-line change here and test/core/brand-voice-and-first-use.test.ts checks it against white and Mist.
  */
 export const BRAND_TOKENS: Readonly<Record<string, string>> = Object.freeze({
   mint: '#ABEDD8',
@@ -72,7 +72,7 @@ export const BRAND_TOKENS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 /**
- * EVERY TEXT-ON-GROUND PAIRING THE STYLESHEET USES, by token. test/phase133c.test.ts requires each at 4.5:1 or better,
+ * EVERY TEXT-ON-GROUND PAIRING THE STYLESHEET USES, by token. test/core/brand-voice-and-first-use.test.ts requires each at 4.5:1 or better,
  * and `assertNoWhiteOnMint` below refuses the one pairing the brand book forbids outright (slide 33: 1.3:1).
  */
 export const TEXT_PAIRINGS: readonly (readonly [text: string, ground: string])[] = Object.freeze([
@@ -154,7 +154,7 @@ assertCssCarriesParts(SITE_CSS);
  *
  * Reads every rule of a stylesheet and refuses one that sets a mint background and a white (or --on-accent, while that
  * is white) text colour in the same rule. It runs on this stylesheet when the module loads, so a rule that pairs them
- * stops the application from starting; test/phase133c.test.ts runs it on the stylesheet and on a planted rule.
+ * stops the application from starting; test/core/brand-voice-and-first-use.test.ts runs it on the stylesheet and on a planted rule.
  */
 export function whiteOnMintRules(css: string): string[] {
   const mint = new RegExp(`(var\\(--mint\\)|${BRAND_TOKENS['mint']})`, 'i');

@@ -1,5 +1,5 @@
 /**
- * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CORE (Phase 161i1; 09-app/ARCHITECTURE.md rules 3
+ * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CORE (09-app/docs/ARCHITECTURE.md rules 3
  * and 4). These statements were in core's page and logic files, which may not run SQL (rule 4). They read or write
  * tables a business area owns, so they still go against rule 3 (each counted against the table's owner), and Phase
  * 161l (the tangle undone) moves each one to its owner's data file, reached through that owner's front door or an
@@ -24,22 +24,9 @@ export function listBookingChangesFromStartsAtToStartsAtByBookingId<T extends Ro
     'FROM booking_changes c LEFT JOIN users u ON u.id = c.changed_by ' +
     'WHERE c.booking_id = ? ORDER BY c.at ASC', params);
 }
-
-// saved_keys
-export function getSavedKeysCoalesceMaxRowidM<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT coalesce(max(rowid), 0) AS m FROM saved_keys', params);
-}
-export function insertSavedKeys(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO saved_keys (id, name, sealed, set_by, set_at) VALUES (?, ?, ?, ?, ?)', params);
-}
 export function listSavedKeysNameSealedByRowidName<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT k.name, k.sealed, k.set_at, u.display_name AS who FROM saved_keys k LEFT JOIN users u ON u.id = k.set_by ' +
     'WHERE k.rowid = (SELECT max(x.rowid) FROM saved_keys x WHERE x.name = k.name) ORDER BY k.name', params);
-}
-
-// surveyor_jobs
-export function listSurveyorJobsSurveyorIdByBusinessIdSurveyorId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', params);
 }
 
 // users
@@ -136,7 +123,7 @@ export function searchNotes<T extends Row = Row>(db: Db, params: readonly Param[
 }
 
 /**
- * EVERY STATEMENT SEARCH CAN RUN, exported so test/search.test.ts can assert that none of them names the identity
+ * EVERY STATEMENT SEARCH CAN RUN, exported so test/core/global-search.test.ts can assert that none of them names the identity
  * store, a compliance register, a document's content or the estimate. The prose at the top of this file names those
  * tables on purpose, so the test reads these and not the source text.
  */

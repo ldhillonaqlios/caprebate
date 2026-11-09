@@ -7,7 +7,7 @@
  *
  * So on a fresh copy (a clone, or GitHub's own check) those tests SKIP and say why, by name,
  * in the test output: never a silent skip. On the Mac's OneDrive copy every file is there and
- * every test runs. test/phase161e.test.ts proves both halves: in the OneDrive copy every file
+ * every test runs. test/core/fresh-copy-checks.test.ts proves both halves: in the OneDrive copy every file
  * below is on disk (so nothing skips there), and none of them is in git.
  *
  * To add one: put its path here, then pass `{ skip: oneDriveOnly('<key>') }` to the test that

@@ -1,5 +1,5 @@
 /* =============================================================================
-   CAPREBATE — JOB ECONOMICS (Phase 9)
+   CAPREBATE — JOB ECONOMICS
 
    Board 18422317809. Item 12955448913, "Cost the small end — where a desk-only
    claim stops paying for itself".
@@ -28,7 +28,7 @@
    ---------------------------------------------------------------------------
    WHAT THE DECISION COMMITTED US TO, AND WHY THIS EXISTS
 
-   On 1 September 2026 Lakhbir decided there is NO MINIMUM JOB SIZE. The smallest
+   the owner decided there is NO MINIMUM JOB SIZE. The smallest
    job is a £0 purchase price and the fee is a set percentage of the allowances
    identified. That answer closed a question and opened a larger one: with no
    floor, the desk-only route has to carry the small end on its own.
@@ -42,8 +42,8 @@
    ---------------------------------------------------------------------------
    WHAT ALREADY EXISTED, BECAUSE THE PHASE PROMPT SAID NOTHING DID
 
-   The Phase 100 prompt asserted "THERE IS NO PER-JOB COST MODEL ANYWHERE" and
-   "nothing computes what one job costs to produce". Re-derived 8 September 2026,
+   The prompt for this work asserted "THERE IS NO PER-JOB COST MODEL ANYWHERE" and
+   "nothing computes what one job costs to produce". Re-derived,
    that is not quite right and the correction matters:
 
      - 03-app/caprebate-business-plan-model.cjs DOES compute a cost per job. It
@@ -59,11 +59,11 @@
        the fee guard. Zero occurrences of "scenario" in the file.
 
      - The published paper "Minimum fee — the research" (item 12830205390,
-       28 August 2026) DOES carry per-job figures for three delivery scenarios.
+      ) DOES carry per-job figures for three delivery scenarios.
        But it says those came from re-running the business plan model "with the
        automation parameters changed", AND THAT VARIATION WAS NEVER COMMITTED.
        So the paper's numbers could not be re-derived by running anything. That
-       is the actual gap, and reproducePublishedPaper() below closes it: the
+       is the actual gap, and reproducePublishedPaper below closes it: the
        paper's tables are now regenerated from code and asserted by test.
 
    ---------------------------------------------------------------------------
@@ -73,12 +73,12 @@
    "where does a desk estimate stop being defensible — is there a size, a
    complexity, or a category of plant above which somebody has to attend?"
    (surveyor-call-agenda.md §1A.1). It is a professional judgement about the
-   surveyor's own liability, not a commercial preference of ours; Lakhbir's
+   surveyor's own liability, not a commercial preference of ours; the owner's
    answer of "yes — a desktop survey" is on record as the commercial preference
    and is expressly NOT an answer to it.
 
    So every function here takes the route as an ARGUMENT and there is no default.
-   routeDecision() reports what each route implies and REFUSES to name a winner
+   routeDecision reports what each route implies and REFUSES to name a winner
    while DESK_DEFENSIBILITY_ANSWERED is false. A model that assumes one route
    answers a question the surveyor has not been asked.
 
@@ -86,8 +86,8 @@
    THE RULE THIS FILE OBEYS, AND IT IS THE SAME ONE AS EVERYWHERE ELSE
 
    NO RATE IS RESTATED HERE. The fee rate belongs to CB_FEE in the shipped
-   engine (a flat 3% of allowances identified: the basis is Q55, Phase 74; the
-   3% is Lakhbir's answer read 15 September 2026, built by Phase 132e). Sector yield bands belong
+   engine (a flat 3% of allowances identified: the basis is Q55; the
+   3% is the owner's answer read 15 September 2026, built). Sector yield bands belong
    to Rulebook I. Tax rates belong to CB_RATES and the benefit model to
    CB_BENEFIT. Every one of them is INJECTED. Pass the wrong one and the
    arithmetic is wrong; that is deliberate, because the alternative is a second
@@ -98,14 +98,14 @@
    midpoint, or a pass. Read PARAMS.homedata_cost_per_lookup below: while it
    was null, reading it through cost functions yielded a result flagged
    known:false, and nothing silently treated a missing cost as a free one.
-   (Updated 28 September 2026, Phase 153: since Phase 151, 24 September 2026,
+   (Updated:
    it is 0.08 - Homedata's 8p list price, not a price on an account - and
    homedata_cost_per_lookup_basis says so in every result that reads it. The
    reader still returns known:false for a value that is not a number. The
    rule still shows in PARAMS.overhead_per_year and
    PARAMS.surveyor_review_and_sign_quote, which are null.)
-   (Updated 6 October 2026, Phase 157b: the 8p was read once on 23 September and
-   never read again, while Phase 156f changed what we call. It is now 17p a
+   (Updated 6 October 2026: the 8p was read once on 23 September and
+   never read again, while what we call changed. It is now 17p a
    property after signing, the price on our own account, and a separate 2p
    address search before signing is modelled - PARAMS below.)
 
@@ -141,10 +141,10 @@ const pos   = v => isNum(v) && v > 0;
    require, so it cannot be imported without running it.
 
    THEY ARE ESTIMATES, NOT QUOTES. No surveyor or CTA quote existed as at
-   8 September 2026 and the published research names this as its weakest input.
+   and the published research names this as its weakest input.
    ============================================================================= */
 
-/* PHASE 153b, 4 October 2026 (Word question 191, Lakhbir's: "Should our job cost model still count a tax adviser's
+/* (Word question 191, the owner's: "Should our job cost model still count a tax adviser's
    review on every surveyor job?"). The `cta` line is RENAMED, NOT CHANGED: under clause 1 of the engagement letter
    the client's own accountant or adviser signs the tax position, and we pay a tax adviser only if we introduce one
    (switched off). So the line is "our own tax adviser, if we introduce one" - LINE_NAMES below - kept on every
@@ -192,7 +192,7 @@ const ROUTES = {
     label: "Surveyor engaged to produce the valuation, attending the property",
     surveyor_factor: 1,          /* full sector surveyor cost */
     surveyor_absolute: null,
-    cta_share: 1,                /* our own tax adviser, if we introduce one, on every job - a safety margin (Phase 153b) */
+    cta_share: 1,                /* our own tax adviser, if we introduce one, on every job - a safety margin */
     hours_factor: 1,
     hours_absolute: null,
     fail_hours: 2,
@@ -285,29 +285,29 @@ const PARAMS = {
   /* ------------------------------------------------------------------------
      THE ADDRESS LOOKUP (Homedata). A COST OF A SIGNED JOB, ONCE PER PROPERTY.
 
-     REWRITTEN 24 SEPTEMBER 2026 BY PHASE 147. Until then this comment, the
+     REWRITTEN. Until then this comment, the
      function that reads it and section 6 of the .md modelled the lookup as the
      one cost spent BEFORE a client signs: fired per property on every enquiry,
      charged four times over to the one enquiry in four that converts, and
-     offered as a reason to cap the property count on the free tier. Lakhbir's
-     rule of 4 September 2026 ended that premise, and the 17 September note that
+     offered as a reason to cap the property count on the free tier. the owner's
+     rule ended that premise, and the 17 September note that
      said so left the code beneath it untouched. The old text is in
      caprebate-job-economics.cjs.bak-phase147.
 
      WHEN IT IS SPENT. A paid call fires only after the engagement letter is
      signed (assertSignedEngagement, server side) and a member of staff clicks
-     Run the research: 09-app/backend/src/connectors/homedata.ts (Phase 146d),
-     on for the test website since Phase 156f. This is a direct cost of a job
+     Run the research: 09-app/backend/src/connectors/homedata.ts,
+     on for the test website. This is a direct cost of a job
      that has landed, beside the £50 data line. It is NOT a loading on the
      enquiries that failed, and nothing here charges it to them.
 
-     CORRECTED 6 OCTOBER 2026 (PHASE 157b). Since Phase 156f an enquiry that
+     CORRECTED. Now an enquiry that
      never signs CAN cost something: "Find my address" at the assessment is a
      Homedata postcode search, 2p, capped at 50 a day (£1). That is a different
      call, before signing, and it is modelled on its own below
      (homedata_address_search_*, addressSearchCost), not folded into this one.
 
-     WHAT OUR LOOKUP COSTS, SINCE PHASE 156f (6 October 2026): 17 tokens, 17p a
+     WHAT OUR LOOKUP COSTS, : 17 tokens, 17p a
      property - 1 for the property call, 5 for the address, 1 for the title
      pre-check, 5 for the planning history, 5 for the site boundary. Where the
      client picked their address at the assessment its number is kept, so no
@@ -317,7 +317,7 @@ const PARAMS = {
      (Until 6 October this said 8 tokens - postcode search, address, title
      pre-check - from the price list read on 23 September and never re-read.)
 
-     SET TO THE LIST PRICE, 24 SEPTEMBER 2026 (Phase 151). Lakhbir called the
+     SET TO THE LIST PRICE. the owner called the
      price nominal (Word answer 35, closed that day), so the 8p list price now
      stands as the value, MARKED AS A LIST PRICE in
      homedata_cost_per_lookup_basis and in every result that reads it. It is
@@ -327,7 +327,7 @@ const PARAMS = {
 
      WHY IT STAYED NULL - and the reason is the thing that changed, not the blank.
      Not because the lookup might fire before signature: it cannot. And no
-     longer because nobody has decided to buy one: Lakhbir answered "yes, use
+     longer because nobody has decided to buy one: the owner answered "yes, use
      Homedata" on 22 September 2026 (Word question 36, "Do we need a paid
      address lookup at launch, or just use the typed address?"). It stays null
      because 8p is a LIST PRICE read off a web page, not a price on an account:
@@ -338,14 +338,14 @@ const PARAMS = {
      unknown is not zero. Suite D pins null and proves the two differ.
      ------------------------------------------------------------------------ */
   homedata_cost_per_lookup: 0.17,
-  /* What the figure above is. Phase 157b: the account is open (6 Oct 2026), so it is the price on it. */
+  /* What the figure above is. The account is open, so it is the price on it. */
   homedata_cost_per_lookup_basis: "our account's price, 6 October 2026: 17 tokens a property after signing (property 1, address 5, title check 1, planning 5, boundary 5), 19 where the address was typed rather than picked; 100 tokens = GBP 1",
 
   /* ------------------------------------------------------------------------
-     THE ADDRESS SEARCH AT THE ASSESSMENT ("Find my address"). PHASE 157b, 6 OCTOBER 2026.
+     THE ADDRESS SEARCH AT THE ASSESSMENT ("Find my address").
 
-     BEFORE SIGNING, AND SO CHARGED TO THE ENQUIRIES BEHIND A SIGNED JOB. Since
-     Phase 156f a person who presses "Find my address" makes one Homedata
+     BEFORE SIGNING, AND SO CHARGED TO THE ENQUIRIES BEHIND A SIGNED JOB. Now
+     a person who presses "Find my address" makes one Homedata
      postcode search: 2 tokens, 2p, the postcode only. It is capped: 50 a UK day
      (£1) and 5 for one visitor (ADDRESS_SEARCH_CAP in
      09-app/backend/src/connectors/address-lookup.ts). So the most it can cost
@@ -510,7 +510,7 @@ function loadedCost(sectorId, routeId, jobsPerYear, opts) {
        caller gets loaded_including_address_lookup and can use it. The paid
        lookup is added once per property of THIS job - never through the
        failed-enquiry drag, because an enquiry that did not sign cannot have
-       spent it. Phase 157b: the address search at the assessment IS spent by
+       spent it. The address search at the assessment IS spent by
        enquiries that never sign, so it comes in through the conversion rate
        (addressSearchCost), and only into this figure. */
     address_lookup: lookup,
@@ -527,9 +527,9 @@ function loadedCost(sectorId, routeId, jobsPerYear, opts) {
 /* -----------------------------------------------------------------------------
    THE ADDRESS LOOKUP — the Homedata line. Whose cost: OURS, on a SIGNED job.
 
-   Was preSignatureCost() until 24 September 2026 (Phase 147). The name and its
-   explanation asserted a cost spent before a client signs, which Lakhbir's rule
-   of 4 September 2026 makes impossible; see PARAMS.homedata_cost_per_lookup.
+   Was preSignatureCost. The name and its
+   explanation asserted a cost spent before a client signs, which the owner's rule
+   makes impossible; see PARAMS.homedata_cost_per_lookup.
 
    cost_per_conversion WAS REMOVED, NOT RELABELLED. It divided the lookup by the
    conversion rate to charge it to the three enquiries in four that fail - four
@@ -553,7 +553,7 @@ function addressLookupCost(opts) {
 
   const supplied = isNum(o.homedataCostPerLookup);
   const per = supplied ? o.homedataCostPerLookup : PARAMS.homedata_cost_per_lookup;
-  /* Phase 151: say which it is - a figure the caller supplied, or the list price. */
+  /* Say which it is - a figure the caller supplied, or the list price. */
   const basis = supplied ? "supplied" : PARAMS.homedata_cost_per_lookup_basis;
 
   const when = "after the engagement letter is signed, when a member of staff "+
@@ -587,7 +587,7 @@ function addressLookupCost(opts) {
 }
 
 /* -----------------------------------------------------------------------------
-   THE ADDRESS SEARCH AT THE ASSESSMENT — PHASE 157b, 6 OCTOBER 2026.
+   THE ADDRESS SEARCH AT THE ASSESSMENT OCTOBER 2026.
 
    "Find my address" before signing: a 2p Homedata postcode search per press,
    at most 5 for one visitor and 50 a UK day (£1). Every enquiry may spend it,
@@ -624,7 +624,7 @@ function addressSearchCost(opts) {
 /* =============================================================================
    5. WHERE EACH ROUTE STOPS PAYING FOR ITSELF
 
-   The fee is a percentage of ALLOWANCES IDENTIFIED (Q55, Phase 74, and
+   The fee is a percentage of ALLOWANCES IDENTIFIED (Q55, and
    CB_FEE.RATE in the shipped engine). So the allowances figure at which a route
    breaks even is simply:
 
@@ -637,21 +637,21 @@ function addressSearchCost(opts) {
    ---------------------------------------------------------------------------
    AND A WARNING ABOUT THE PUBLISHED BREAK-EVEN PURCHASE PRICES.
 
-   "Minimum fee — the research" (28 August 2026) reports break-even purchase
+   "Minimum fee — the research" reports break-even purchase
    prices of £797,778 (S1), £404,444 (S2) and £187,778 (S3) for dental at
    100 jobs/year. Those are correct ON THE BASIS THAT PAPER USED — 5% of
-   LIFETIME RELIEF. The basis was changed on 3 September 2026 (Q55, Phase 74) to
+   LIFETIME RELIEF. The basis was changed to
    5% of ALLOWANCES IDENTIFIED, which is larger by a factor of 1/tax_rate, and
-   the rate was changed on 15 September 2026 (Phase 132e) to a flat 3%.
+   the rate was changed to a flat 3%.
 
    At 5% of allowances the smallest dental job that paid for itself on the
    surveyor-visit route at 100 jobs a year was about £319,000 of purchase
    price. At 3% it is about £532,000 (and about £517,000 at the 120 jobs a year
-   Lakhbir gave for the engagement gate). Both are still well below the
+   the owner gave for the engagement gate). Both are still well below the
    paper's £798,000, which was a lifetime-relief figure.
 
-   breakEvenPurchasePrice() below computes it on the CURRENT basis and
-   reportsBasisChange() states the comparison, so nobody re-publishes the old
+   breakEvenPurchasePrice below computes it on the CURRENT basis and
+   reportsBasisChange states the comparison, so nobody re-publishes the old
    number from memory.
    ============================================================================= */
 
@@ -837,9 +837,9 @@ function routeDecision(sectorId, allowances, jobsPerYear, feeRate, opts) {
 /* =============================================================================
    7. THE CROSS-CHECK AGAINST THE FEE GUARD
 
-   The fee guard (CB_FEEGUARD / CB_BENEFIT, Phase 77) established that at 5%
+   The fee guard established that at 5%
    the fee exceeded every company client's year-one benefit at any pool split.
-   At 3% (Phase 132e) that is no longer true: a company on main-pool plant
+   At 3% that is no longer true: a company on main-pool plant
    clears the fee in year one and a company on special-rate plant does not, so
    the pool split now decides it. This module establishes where a job stops
    paying US.
@@ -850,7 +850,7 @@ function routeDecision(sectorId, allowances, jobsPerYear, feeRate, opts) {
    bought — and the phase asked for it to be named rather than discovered.
 
    THIS FUNCTION DOES NOT RE-IMPLEMENT CB_BENEFIT. It takes the comparison
-   object CB_BENEFIT.compare() already returns. The test loads the shipped
+   object CB_BENEFIT.compare already returns. The test loads the shipped
    engine and passes a real one, so this cross-check is against the real fee
    guard and not against a copy of it that could drift.
    ============================================================================= */
@@ -911,7 +911,7 @@ function classifyBand(decision, benefitComparison) {
     fee: decision.fee,
     allowances: decision.allowances,
 
-    /* The third option Lakhbir has already said is live: the fee rate (3%, with
+    /* The third option the owner has already said is live: the fee rate (3%, with
        a discretionary multi-site discount) is a variable sales discusses with
        the client. CB_BENEFIT computes the rate at which
        the fee stops exceeding the client's year-one benefit. Carried through
@@ -941,7 +941,7 @@ function classifyBand(decision, benefitComparison) {
 /* =============================================================================
    8. REPRODUCING THE PUBLISHED PAPER
 
-   "Minimum fee — the research" (item 12830205390, 28 August 2026) published
+   "Minimum fee — the research" published
    marginal and loaded cost tables that could not be re-derived by running
    anything, because the parameter variation behind them was never committed.
 
@@ -977,13 +977,13 @@ function reproducePublishedPaper(opts) {
 
 /* =============================================================================
    9. THE REBASE — PRICING A JOB ON THE DECIDED BASE
-   (Phase 112, 9 September 2026)
+
 
    WHY THIS SECTION EXISTS. Sections 5 to 8 above answer "where does a job stop
    paying US". They do not price a job. Five documents on the board DO price
    jobs, and every fee figure in them was computed on LIFETIME RELIEF — the base
-   the fee-basis options paper recommended and Q55 did not choose. Phase 101
-   banned quoting from them; this section is what makes their numbers derivable
+   the fee-basis options paper recommended and Q55 did not choose. Quoting
+   from them is banned; this section is what makes their numbers derivable
    again, so that no replacement figure is typed by hand into prose.
 
    THE ONE THING TO UNDERSTAND BEFORE READING ANY FUNCTION HERE.
@@ -996,7 +996,7 @@ function reproducePublishedPaper(opts) {
    first question asked", "incorporating raises the break-even by roughly 60%" —
    is not merely understated. It has no referent. C7 above already asserts that
    two clients at different tax rates share one break-even; the functions here
-   carry that through to the fee itself, and claimantTypeEntersTheFee() states it
+   carry that through to the fee itself, and claimantTypeEntersTheFee states it
    so a document can cite something runnable rather than a sentence.
 
    WHAT IS STILL INJECTED, AND IT IS THE SAME LIST AS EVERYWHERE ABOVE. The fee
@@ -1004,15 +1004,15 @@ function reproducePublishedPaper(opts) {
    holds no fee rate (the test reads CB_FEE.RATE out of the shipped engine), no
    yield (they belong to Rulebook I) and no minimum.
 
-   PHASE 132e, 16 SEPTEMBER 2026 — THE FEE IS NOW DECIDED IN FULL. Lakhbir's
+   THE FEE IS NOW DECIDED IN FULL. the owner's
    answer, read 15 September 2026: "yes, flat fee of 3% of the allowances for 1
    or more properties", with no bands and no minimum, and "A further multi-site
    discount can be applied depending on site/opportunities". FEE_DECISION below
    records it. Consequences here:
      - there is NO MINIMUM FEE. The £5,000 / £7,500 candidates survive only as
        inputs a caller may pass to reproduce the old papers; no default holds
-       them, and priceJobBothReadings() now says which reading was decided;
-     - there are NO BANDS. bandedFee() and rescaledBands() no longer default to
+       them, and priceJobBothReadings now says which reading was decided;
+     - there are NO BANDS. bandedFee and rescaledBands no longer default to
        the rate card's published bands: a caller must pass bands explicitly,
        which only a record of the old card should ever do;
      - the multi-site discount is discretionary and is not modelled. Its
@@ -1033,7 +1033,7 @@ const FEE_DECISION = {
     asked: "the largest discount and who approves it",
     applied_automatically: false
   },
-  decided_by: "Lakhbir Dhillon",
+  decided_by: "The owner (Head of Business Development)",
   answer_read: "2026-09-15",
   built: "2026-09-16"
 };
@@ -1085,10 +1085,10 @@ function allowancesFromPurchasePrice(purchasePrice, yieldRate) {
 }
 
 /* -----------------------------------------------------------------------------
-   THE RATE CARD'S MARGINAL BANDS — A RECORD. THERE ARE NO BANDS (Phase 132e).
+   THE RATE CARD'S MARGINAL BANDS — A RECORD. THERE ARE NO BANDS.
 
    The rate card as published banded the fee like income tax: each band applied
-   only to the slice inside it. Lakhbir's answer of 15 September 2026 removed the
+   only to the slice inside it. the owner's answer removed the
    bands ("no banding - flat fee of 3%"). The table and the function are kept so
    the old card's figures can be reproduced, and NEITHER IS A DEFAULT ANY MORE:
    a caller must pass bands explicitly. Its published breakpoints — £250,000 and £1,000,000 — are
@@ -1148,7 +1148,7 @@ function bandedFee(base, opts) {
 /* Rescaling the published breakpoints so the SAME physical jobs sit in the same
    bands after the base change. Divides by the tax rate the old card's
    breakpoints were implicitly expressed at. Returned as a candidate, not as the
-   answer — the card's breakpoints are Lakhbir's and Saddique's to set. */
+   answer — the card's breakpoints are the owner's and Saddique's to set. */
 function rescaledBands(taxRate, opts) {
   const o = opts || {};
   if (!pos(taxRate) || taxRate > 1) {
@@ -1225,8 +1225,8 @@ function crossoverPurchasePrice(minimumFee, feeRate, yieldRate, opts) {
 /* -----------------------------------------------------------------------------
    PRICING ONE JOB BOTH WAYS — AND THE QUESTION IS NOW CLOSED.
 
-   Lakhbir decided on 1 September 2026 that there is no minimum JOB SIZE, and
-   on 15 September 2026 (answer read that day, Phase 132e) that there is no
+   the owner decided that there is no minimum JOB SIZE, and
+   on 15 September 2026 that there is no
    minimum FEE either: a flat 3% "with no minimum and no bands". So the
    "minimum_withdrawn" reading below IS the decided price. The retained reading
    is still computed, so the old papers' comparison can be reproduced, and it
@@ -1280,7 +1280,7 @@ function priceJobBothReadings(sectorId, routeId, purchasePrice, yieldRate,
     /* Resolved, and named. */
     decided_reading: "minimum_withdrawn",
     decision: "there is no minimum fee: a flat percentage of the allowances "+
-      "identified, with no bands (Lakhbir Dhillon, answer read 15 September "+
+      "identified, with no bands (the owner, answer read 15 September "+
       "2026). The old question - whether the launch minimum survived the 1 "+
       "September 2026 no-minimum-job-size decision - is closed."
   };
@@ -1368,7 +1368,7 @@ function effectiveRateOnLifetimeRelief(fee, allowances, taxRate) {
    ============================================================================= */
 
 /* =============================================================================
-   10. THE ENGAGEMENT GATE'S COST INPUT — PHASE 113d, board item 13005159647
+   10. THE ENGAGEMENT GATE'S COST INPUT — board item 13005159647
 
    THE GATE ITSELF IS NOT HERE. It lives in the site engine, as CB_GATE, next
    to the fee module whose quote it withholds. What lives here is the ONE thing
@@ -1383,12 +1383,12 @@ function effectiveRateOnLifetimeRelief(fee, allowances, taxRate) {
    regression harness wires the two together and asserts the gate's arithmetic
    is this function's output rather than a copy of it.
 
-   IT DOES NOT THROW, AND THAT IS DELIBERATE. loadedCost() throws E_BAD_VOLUME
+   IT DOES NOT THROW, AND THAT IS DELIBERATE. loadedCost throws E_BAD_VOLUME
    on a volume it cannot use, which is right for a modelling call a person
    wrote. It is wrong for a gate: a missing annual volume is a fact about the
    business, not a programming error, and a gate that throws on it takes a
    screen down. So this returns {known:false} naming the parameter, exactly as
-   addressLookupCost() does for the Homedata price. Unknown is not a branch.
+   addressLookupCost does for the Homedata price. Unknown is not a branch.
    ============================================================================= */
 
 /* The gate's own settings, as far as they are arithmetic rather than policy.
@@ -1410,9 +1410,9 @@ const GATE = {
   delivery_scenario_today: "SURVEYOR_VISIT",
 
   /* S7.3, second requirement: the CURRENT YEAR'S ACTUAL job volume, not an
-     assumed 100. SUPPLIED 15 SEPTEMBER 2026: Lakhbir Dhillon gave 120 jobs
-     this year when he switched the gate on (answer read that day, built by
-     Phase 132e on 16 September 2026). It was null until then. The site's
+     assumed 100. SUPPLIED: the owner gave 120 jobs
+     this year when he switched the gate on (answer read that day, built
+     then). It was null until then. The site's
      CB_GATE_CONFIG.jobs_per_year restates it and Suite T asserts the two agree.
      120 is about five to seven times the business plan's own volume (16 in
      year one; the papers use 25), so the warning below applies to it.
@@ -1513,7 +1513,7 @@ function gateThreshold(loaded, targetMargin) {
 }
 
 /* =============================================================================
-   11. THE DISPOSAL FEE — PHASE 153d, 4 October 2026 (Word question 23, the director's)
+   11. THE DISPOSAL FEE (Word question 23, the director's)
 
    Built on our recommendation, for the director to check: when a client sells a property, our help - reading the
    sale and the claim file, working out the disposal value for each pool, and drafting the s.198 election and its
@@ -1522,7 +1522,7 @@ function gateThreshold(loaded, targetMargin) {
    election figure would pay us more for the outcome that costs our client more tax. No allowance is found on a
    disposal, so 3% of the allowances would be nothing.
 
-   AT COST, NO MARGIN: £290. Any margin is the director's to set. Lakhbir's note on question 23 ("a flat 3%" when no
+   AT COST, NO MARGIN: £290. Any margin is the director's to set. the owner's note on question 23 ("a flat 3%" when no
    allowance is made) did not say 3% of what, so it is recorded with the question rather than built. A TEST DEFAULT,
    NOT AGREED: the disposal note and the staff task say so wherever the figure is shown.
    ============================================================================= */
@@ -1561,12 +1561,12 @@ module.exports = {
   routeDecision, classifyBand,
   reproducePublishedPaper,
 
-  /* Section 9 — the rebase (Phase 112) */
+  /* Section 9 — the rebase */
   RATE_CARD_BANDS_AS_PUBLISHED,
   claimantTypeEntersTheFee, feeOnAllowances, allowancesFromPurchasePrice,
   bandedFee, rescaledBands, crossoverPurchasePrice,
   priceJobBothReadings, blendedFeePerJob, effectiveRateOnLifetimeRelief,
 
-  /* Section 10 — the engagement gate's cost input (Phase 113d) */
+  /* Section 10 — the engagement gate's cost input */
   GATE, costingForGate, gateThreshold
 };

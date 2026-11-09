@@ -10,8 +10,8 @@
  * role" and branches. A role check at the top of a handler is how the fourth
  * one gets forgotten.
  *
- * WHAT WAS NOT HERE, AND NOW IS. Phase 103 built the enforcement and said
- * "Phases 104 to 107 build what sits on it". Phase 104 built the first of
+ * WHAT WAS NOT HERE, AND NOW IS. The enforcement was built first, saying
+ * "Phases 104 to 107 build what sits on it". The first of
  * them — the public site, the assessment, the login and the client portal —
  * and it is mounted BEFORE the JSON API below, in src/core/router.ts.
  *
@@ -34,7 +34,7 @@ import { authorise, can, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj
 import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAILURE, type LoginResult } from './auth.ts';
 import * as SI from './sign-in.ts';
 import { toActor } from './users.ts';
-import { payloadFor, assertSurveySection } from '../web/surveyor.ts';
+import { payloadFor, assertSurveySection } from '../modules/survey/index.ts';
 import { handleWeb, refusalAsPage, sendRefusalPage } from './router.ts';
 import { bindResponse, clientIp, PayloadTooLarge, readBody } from './http.ts';
 import { FsObjectStore } from '../shared/objectstore.ts';
@@ -47,6 +47,8 @@ import { openKeptOriginal } from '../modules/claims/index.ts';
 import { formToken, formTokensMode, onceToken, type FormTokens } from './form-token.ts';
 import { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';
 import { listOutboxIdToEmailBySendRequestedSentAt2, updateOutboxLastErrorByIdLastError2, updateOutboxLastErrorByIdLastError3, updateOutboxLastErrorByIdLastError4 } from '../integrations/index.ts';
+import { getSurveyorJobsIdBusinessIdById4 } from '../modules/survey/index.ts';
+import { getInvoicesIdBusinessIdById2, getInvoicesIdBusinessIdById4 } from '../modules/finance/index.ts';
 
 function readCookie(req: IncomingMessage, name: string): string | undefined {
   const raw = req.headers.cookie;
@@ -128,7 +130,7 @@ export type ServerOptions = {
   testLetter?: boolean;
   /** The public notices page and its complaint form (src/modules/public-site/notices-site.ts). api/index.mjs passes it; nothing else does. */
   testNotices?: boolean;
-  /** The legal pages for the live website, each a Draft until approved (src/web/legal-approvals.ts). Off unless CAPREBATE_LEGAL_PAGES=on. */
+  /** The legal pages for the live website, each a Draft until approved (src/modules/compliance/legal-approvals.ts). Off unless CAPREBATE_LEGAL_PAGES=on. */
   legal?: boolean;
   /** Signing on for testing — the test copy of the letter only (ENGAGEMENT_SIGNING_TEST). Needs testLetter. api/index.mjs passes it; locally CAPREBATE_SIGNING_TEST=1. */
   testSigning?: boolean;
@@ -238,7 +240,7 @@ export async function createApp(
        {"ok":true} when the database answers, and 503 {"ok":false} when it does not - nothing else, so it tells nobody
        which parts are built or switched on. It is answered first, before any sign-in is read, so an uptime check sees
        the database and nothing in front of it. The list of what is built and switched off (STUBS) is for Admin only,
-       at /staff/connections/switches.json (src/web/connections.ts). */
+       at /staff/connections/switches.json (src/modules/admin/connections.ts). */
     if (path === '/api/health' && req.method === 'GET') {
       try { app.db.get('SELECT 1 AS ok'); } catch { return send(res, 503, { ok: false }); }
       return send(res, 200, { ok: true });
@@ -367,29 +369,22 @@ export async function createApp(
 
     if (path.startsWith('/api/invoices/') && req.method === 'GET') {
       const id = path.slice('/api/invoices/'.length);
-      const row = app.db.get<{ id: string; business_id: string }>(
-        'SELECT id, business_id FROM invoices WHERE id = ?', [id],
-      );
+      const row = getInvoicesIdBusinessIdById2<{ id: string; business_id: string }>(app.db, [id]);
       if (row === undefined) return send(res, 404, { error: 'not found' });
       authorise(actor, 'invoice.read', { type: 'invoice', id: row.id, business_id: row.business_id });
-      const full = app.db.get(
-        'SELECT id, business_id, claim_value_pence, fee_pence, invoice_status, payment_status, vat_position ' +
-          'FROM invoices WHERE id = ?', [id],
-      );
+      const full = getInvoicesIdBusinessIdById4(app.db, [id]);
       return send(res, 200, { invoice: full });
     }
 
     if (path.startsWith('/api/surveyor-jobs/') && req.method === 'GET') {
       const id = path.slice('/api/surveyor-jobs/'.length);
-      const job = app.db.get<{ id: string; business_id: string; surveyor_id: string | null }>(
-        'SELECT id, business_id, surveyor_id FROM surveyor_jobs WHERE id = ?', [id],
-      );
+      const job = getSurveyorJobsIdBusinessIdById4<{ id: string; business_id: string; surveyor_id: string | null }>(app.db, [id]);
       if (job === undefined) return send(res, 404, { error: 'not found' });
       authorise(actor, 'surveyor_job.read', {
         type: 'surveyor_job', id: job.id, business_id: job.business_id, surveyor_id: job.surveyor_id,
       });
       /* CORRECTED. THIS RETURNED 501 AND SAID
-         "the surveyor workspace is Phase 107". Phase 107 built it on
+         "the surveyor workspace is Phase 107". The workspace was built on
          9 September, and a route that still announces the feature as future
          work is a stub that lies about the state of the system — which is
          precisely what the developer spec's stub table exists to prevent.

@@ -31,7 +31,7 @@
  *
  * 3. WORKING TIMES ARE LOCAL HOURS. STORED TIMES ARE UTC INSTANTS. THE TWO ARE
  *    DIFFERENT KINDS OF THING AND THIS DECISION IS THE HEART OF THE FILE.
- *    (Phase 113a. Until then everything here was UTC and said
+ *    (Until this decision everything here was UTC and said
  *    so, which was honest and wrong for eight months of the year — see below.)
  *
  *    `bookings.starts_at` is an INSTANT: a specific moment that happened or
@@ -137,7 +137,7 @@ export const HORIZON_DAYS = 14;
 
 /**
  * HOW SOON A NEW TIME CHOSEN BY A CLIENT MAY BE — two hours.
- * NARROWED BY PHASE 132e ON.
+ * NARROWED ON THE OWNER'S ANSWER.
  *
  * WHAT CHANGED, AND WHY. the owner, answering "How late may a client move their
  * own call, and may they cancel it outright?": "Give the client full control to
@@ -325,7 +325,7 @@ export type Availability =
 /* ------------------------------------------------------------------ *
  * LOCAL DAYS.
  *
- * THE THREE FUNCTIONS BELOW WERE RENAMED IN PHASE 113a AND THE RENAME IS THE
+ * THE THREE FUNCTIONS BELOW WERE RENAMED AND THE RENAME IS THE
  * POINT. They were `startOfDay`, `startOfWeek` and `addDays`, and they worked
  * in UTC midnights — which reads as harmless right up until you notice that in
  * June a "day" beginning at 00:00Z begins at one o'clock in the morning, so a

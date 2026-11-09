@@ -58,7 +58,10 @@ import { latestApprovalOnClaim, laterOf, voidLine } from './valuation-lock.ts';
 import { freezeReturnContext, returnContext } from './return-entries.ts';
 import { getClaimDeliverablesByClaimIdKind, getClaimDeliverablesCountByClaimIdKind, getClaimDeliverablesIdByClaimIdKind, getClaimDeliverablesIssuedOnVersionByClaimIdKind, getClaimDeliverablesNByClaimIdKind, getClaimDeliverablesVersionIssuedOnByClaimIdKind, getClaimReconciliationsByClaimId, getClaimReconciliationsFiledOnByClaimId, getClaimReconciliationsFiledOnSnapshotHashByClaimId, getClaimReconciliationsIdByClaimId, getClaimsClaimRefById, getClaimsIdBusinessIdById4, getClaimsIdClaimRefById2, getClaimsIdCreatedAtById, getHmrcEnquiriesClosedOnOutcomeByClaimIdClosedOn, getHmrcEnquiriesIdByClaimIdClosedOn, getHmrcEnquiriesIdOpenedOnByIdClaimId, getTaxAdviserSignoffsIdRecordHashByClaimIdRecordedAt, insertClaimDeliverables, insertClaimReconciliations, insertClaimReturnFilings, insertDefencePackManifests, insertHmrcEnquiries, insertTaxAdviserSignoffs, listClaimDeliverablesByBusinessIdState, listClaimDeliverablesByClaimId, listClaimReturnFilingsPeriodEndFiledOnByClaimId, updateClaimDeliverablesStateIssuedOnById, updateClaimDeliverablesStateUpdatedByByClaimIdKind, updateClaimReconciliationsDValuePenceDDateCapturedById, updateClaimReconciliationsFiledOnFiledRecordedByById, updateClaimReconciliationsVarianceCategoryVarianceNotesById, updateHmrcEnquiriesClosedOnOutcomeById } from './data.ts';
 import { getBusinessesSectorById, getStaffTasksIdByPropertyIdTitle, listStaffTasksIdTitleByPropertyIdTitle } from '../crm/index.ts';
-import { getInvoiceNumbersSeqByInvoiceIdKind, getSurveyPackApprovalsJsonExtractSnapshotJsonFById, getSurveyorCommitmentsIdJobIdByClaimId, listDocumentTypesCodeLabel, listHmrcEnquiriesIdOpenedOnByClaimId, listSurveyPackApprovalsFingerprintSnapshotJsonByClaimId } from './data-borrowed.ts';
+import { listHmrcEnquiriesIdOpenedOnByClaimId, listSurveyPackApprovalsFingerprintSnapshotJsonByClaimId } from './data-borrowed.ts';
+import { getInvoiceNumbersSeqByInvoiceIdKind } from '../finance/index.ts';
+import { getSurveyPackApprovalsJsonExtractSnapshotJsonFById, getSurveyorCommitmentsIdJobIdByClaimId } from '../survey/index.ts';
+import { listDocumentTypesCodeLabel } from '../admin/index.ts';
 import { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing } from '../portal/index.ts';
 import { getAssessmentsShownLowPenceShownHighPenceById, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm2, getEstimatesQualifyingExpenditurePenceSealedAtByAssessmentId } from '../assessment/index.ts';
 import { getTaxAdviserSignoffsIdClaimIdByClaimId, getTaxAdviserSignoffsIdClaimIdByClaimIdRecordedAt } from './data-borrowed.ts';
@@ -111,13 +114,12 @@ type SignoffRow = {
   approval_id: string | null;
 };
 
-
 export function latestSignOff(db: Db, claim_id: string): SignoffRow | undefined {
   return getTaxAdviserSignoffsIdClaimIdByClaimId<SignoffRow>(db, [claim_id]);
 }
 
 /**
- * The sign-off record a gate may use: one recorded since the claim last ENTERED TAX_ADVISER_SIGNOFF — and, PHASE 159a,
+ * The sign-off record a gate may use: one recorded since the claim last ENTERED TAX_ADVISER_SIGNOFF — and also
  * since the valuation was last reopened (src/modules/claims/valuation-lock.ts), which sets every earlier sign-off aside.
  */
 export function signOffSinceEntry(db: Db, c: { id: string; created_at: string }): SignoffRow | undefined {
@@ -329,7 +331,7 @@ function signoffVersion(db: Db, claim_id: string): { id: string; version: number
  * ================================================================== */
 
 /**
- * The engine package this build ships, and its version. PHASE 132 MOVED BOTH TO src/modules/claims/case-stamp.ts, which stamps the
+ * The engine package this build ships, and its version. BOTH NOW LIVE IN src/modules/claims/case-stamp.ts, which stamps the
  * version on every issued deliverable; the reconciliation still reads it here, from there, and the path is re-exported
  * so nothing that named it moves.
  */
@@ -902,7 +904,7 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
         stored: MADE_FROM_REPORT.has(kind)
           ? 'Made here from the survey report the surveyor approved, once a tax adviser has signed off its figure. Its fingerprint is recorded when it is issued.'
           : kind === 'DEFENCE_PACK'
-            // PHASE 158d (F47)
+            // the Friary House run, F47
             ? 'Made here from the claim’s own records, from the approved report to the filing. Its fingerprint is recorded when it is issued.'
             : `It cannot be stored yet. ${NO_RECEIPT_POLICY} Still to decide: ${RECEIPT_QUESTION}`,
         history: mine.map((r) => ({ version: r.version, state: DELIVERABLE_STATES[r.state] ?? r.state, issued_on: r.issued_on })),
@@ -1116,7 +1118,7 @@ export const FEE_CLAWBACK: FeeClawbackSwitch = Object.freeze({
     refund: 'YES' as const,
     time_limit: 'for so long as the claim remains open to enquiry',
     still_open: Object.freeze(['the trigger — any reduction, or only one above a threshold', 'whether it applies to a settlement the client accepts']),
-    source: 'Lakhbir was asked if we give money back when a claim is reduced after we are paid. He said yes, with no time limit. Clause 13 now says “for so long as the claim remains open to enquiry”.',
+    source: 'The owner was asked if we give money back when a claim is reduced after we are paid. He said yes, with no time limit. Clause 13 now says “for so long as the claim remains open to enquiry”.',
   }),
 });
 

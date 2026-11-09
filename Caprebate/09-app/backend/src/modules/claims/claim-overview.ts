@@ -29,12 +29,13 @@ import { waitingForCheck, type ToCheck } from '../crm/index.ts';
 import { plainDashText } from '../../shared/index.ts';
 import { claimObjFor, loadClaimRow } from '../crm/index.ts';
 import type { ClaimDocumentsPanel } from './documents.ts';
-import { chaptersToRead, CHAPTERS } from '../../web/pack-chapters.ts';
+import { chaptersToRead, CHAPTERS } from '../survey/index.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
-import { clientAuditCount } from '../../web/audit-log.ts';
+import { clientAuditCount } from '../compliance/index.ts';
 import { SOURCES as REGISTER_SOURCES } from '../../integrations/index.ts';
 import { listRegisterRecordsSourceIdEntityIdByBusinessIdPropertyId } from '../../integrations/index.ts';
-import { getResearchRunsWhoAtByBusinessIdAt, getSurveyPackApprovalsCountByPackId, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyPacksIdByJobId, getSurveyorJobsIdSurveyorIdByClaimId, listClaimFactsIdFactKeyByClaimIdFactKey, listClientTasksQuestionAnswerByBusinessIdState, listSurveyPackReadsChapterSeqByJobIdUserId } from './data-borrowed.ts';
+import { getResearchRunsWhoAtByBusinessIdAt, getSurveyorJobsIdSurveyorIdByClaimId, listClaimFactsIdFactKeyByClaimIdFactKey, listClientTasksQuestionAnswerByBusinessIdState } from './data-borrowed.ts';
+import { getSurveyPackApprovalsCountByPackId, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyPacksIdByJobId, listSurveyPackReadsChapterSeqByJobIdUserId } from '../survey/index.ts';
 import { listClientTasksFactIdByBusinessIdState, listClientTasksQuestionKindByBusinessIdState } from '../crm/index.ts';
 
 /* ================================================================== *

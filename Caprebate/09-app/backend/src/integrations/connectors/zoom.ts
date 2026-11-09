@@ -13,7 +13,7 @@
  *     4 Oct 2026: to read how long a call lasted and who came, two more - added by the owner and used by
  *     zoomPastCall:
  *     meeting:read:past_meeting:admin (GET /v2/past_meetings/{meetingId}: its duration) and
- *     meeting:read:list_past_participants:admin (GET /v2/past_meetings/{meetingId}/participants). Phase 156 A6.
+ *     meeting:read:list_past_participants:admin (GET /v2/past_meetings/{meetingId}/participants). Zoom check A6.
  *     EACH CALL HAS ITS OWN HOST: the meeting is made under the assigned member of staff's email, which
  *     must be a user on our Zoom account (a paid licence each, for calls over 40 minutes).
  *   · a MEETING SDK app — ZOOM_SDK_CLIENT_ID, ZOOM_SDK_CLIENT_SECRET. Its secret signs each join ON THIS SERVER (a JWT,
@@ -200,7 +200,7 @@ function hostUnknown(r: { readonly status: number | null; readonly body: string 
 function zoomTime(iso: string): string { return new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z'); }
 
 /** Make the meeting for one call. At most one token call and one meeting call; never throws. */
-/** `record` — a survey walkthrough call (src/web/survey-evidence.ts) is recorded to Zoom's cloud. */
+/** `record` — a survey walkthrough call (src/modules/survey/survey-evidence.ts) is recorded to Zoom's cloud. */
 /**
  * `host` — the email of the member of staff the call is assigned to, so each call has its
  * own Zoom host and two calls at the same time can both run (one Zoom user hosts one meeting at a time). Absent: the

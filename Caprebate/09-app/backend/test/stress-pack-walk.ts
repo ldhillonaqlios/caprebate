@@ -13,8 +13,8 @@
  *   returns   random pools through the return entries: on every row, brought forward less the allowance is carried
  *             forward, to the penny (C16).
  */
-import { LIMITS, packSums, type PackInputs, type PackLine } from '../src/web/pack-sums.ts';
-import { applyGrants, type PackGrant } from '../src/web/pack-grants.ts';
+import { LIMITS, packSums, type PackInputs, type PackLine } from '../src/modules/survey/pack-sums.ts';
+import { applyGrants, type PackGrant } from '../src/modules/survey/pack-grants.ts';
 import { returnEntries, RETURN_YEARS, type ReturnEntry } from '../src/modules/claims/return-entries.ts';
 
 /** xorshift32 from a fixed seed: the same draws every run. */

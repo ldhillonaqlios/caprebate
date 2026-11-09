@@ -18,8 +18,8 @@ import { createApp } from '../../src/core/server.ts';
 import { testApp, actor } from '../helpers.ts';
 import type { App } from '../../src/core/app.ts';
 import * as C from '../../src/modules/crm/crm.ts';
-import * as SO from '../../src/web/survey-open.ts';
-import { commitFigures, workspace } from '../../src/web/surveyor.ts';
+import * as SO from '../../src/modules/survey/survey-open.ts';
+import { commitFigures, workspace } from '../../src/modules/survey/surveyor.ts';
 
 const T0 = '2026-10-07T09:00:00.000Z';
 let n = 0;

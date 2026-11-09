@@ -8,7 +8,7 @@
  * the card shows.
  *
  * A need this table does not know is shown in its own words, so a new gate can never be hidden by a missing row.
- * test/phase133c.test.ts reads every stage's needs on the seed and requires each to have a plain reading.
+ * test/core/brand-voice-and-first-use.test.ts reads every stage's needs on the seed and requires each to have a plain reading.
  *
  * THE ANCHORS are the claim page's own (src/modules/crm/crm-pages.ts): #move, #claim-facts, #claim-documents, #claim-tasks,
  * #add-task, #claim-deliverables, #claim-figures.

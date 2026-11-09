@@ -26,22 +26,22 @@
 
 import type { EngagementSigning } from '../modules/claims/index.ts';
 import { handleWhatsAppImport } from '../modules/crm/index.ts';
-import { handleConnections } from '../web/connections.ts';
+import { handleConnections } from '../modules/admin/index.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import * as SI from './sign-in.ts';
 import type { App } from './app.ts';
 import { type Actor } from './authz.ts';
 import { changeOwnPassword, SESSION_COOKIE_NAME, AuthError } from './auth.ts';
 import { APP_ROLES } from './roles.ts';
-import { handleRoleEditor, madeRoleChoices } from '../web/role-editor-pages.ts';
-import { handleBilling } from '../web/billing.ts';
+import { handleRoleEditor, madeRoleChoices } from '../modules/admin/index.ts';
+import { handleBilling } from '../modules/finance/index.ts';
 import { customRoleOf } from './custom-roles.ts';
 import { findById, hashToken } from './users.ts';
 import type { FsObjectStore } from '../shared/objectstore.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import { staffShell, portalShell, opens, navContext, filterBar, LEAD_FILTERS, setSubMenu } from './navigation.ts';
 import { kpiRow, lateBadge, nobodyBadge } from './look.ts';
-import { settingsBody, settingsTiles } from '../web/admin-tiles.ts';
+import { settingsBody, settingsTiles } from '../modules/admin/index.ts';
 import { homeRows } from '../modules/public-site/index.ts';
 import { dashboard, dashView } from '../modules/crm/index.ts';
 import { addBlock, removeBlock } from '../modules/crm/index.ts';
@@ -52,29 +52,29 @@ import { welcomeCard, why } from '../shared/index.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
 import { keepSectionChoice } from './sections.ts';
 import { staffHelp } from './help.ts';
-import * as S from '../web/settings.ts';
+import { settingsModule as S } from '../modules/admin/index.ts';
 import * as B from './backoffice.ts';
 import { handleEngaged } from '../modules/claims/index.ts';
 import { handleClientPage } from '../modules/crm/index.ts';
 import { handleClientFiles } from '../modules/portal/index.ts';
 import { handleFreeEmail } from '../modules/crm/index.ts';
 import { handleStaffMessages } from '../modules/crm/index.ts';
-import { handleSurveyor } from '../web/surveyor-pages.ts';
-import { handleSurveyPack } from '../web/survey-pack-pages.ts';
+import { handleSurveyor } from '../modules/survey/index.ts';
+import { handleSurveyPack } from '../modules/survey/index.ts';
 import { handleReportStaff } from '../modules/claims/index.ts';
 import { handleAccountantConfirmStaff } from '../modules/portal/index.ts';
-import { handleStaffEvidence } from '../web/evidence-pages.ts';
-import { handleFinance } from '../web/finance-pages.ts';
+import { handleStaffEvidence } from '../modules/survey/index.ts';
+import { handleFinance } from '../modules/finance/index.ts';
 import { handleCrm } from '../modules/crm/index.ts';
 import { handlePipeline } from '../modules/crm/index.ts';
 import { handleTasks } from '../modules/crm/index.ts';
 import { handleDocuments } from '../modules/claims/index.ts';
 import { handleIntroducers } from '../modules/crm/index.ts';
 import { handleClaimRecord } from '../modules/claims/index.ts';
-import { handleCompliance } from '../web/compliance-pages.ts';
+import { handleCompliance } from '../modules/compliance/index.ts';
 import { handleDashboard } from '../modules/crm/index.ts';
 import { handleLists } from '../shared/lists-pages.ts';
-import { handleConfiguration } from '../web/configuration-pages.ts';
+import { handleConfiguration } from '../modules/admin/index.ts';
 import { setPhoto, clearPhoto, readPhoto, photoFor, PHOTO_HEADERS, IMAGE_LIMITS } from './avatar.ts';
 import { HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments, startOfLocalDay, staffSlots, type Availability, type WorkingTimeInput } from '../modules/crm/index.ts';
 import {
@@ -82,7 +82,7 @@ import {
 } from '../shared/index.ts';
 import { singleFile } from './multipart.ts';
 import { RANGE_QUALIFIER } from '../shared/index.ts';
-import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from '../web/audit-log.ts';
+import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from '../modules/compliance/index.ts';
 import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine, SAME_TIME_WORDS, VIDEO_PAGE_HEADERS } from '../modules/crm/index.ts';
 import { sendVideoInvite } from '../modules/crm/index.ts';
 import { hostZak, joinSignature } from '../integrations/index.ts';
@@ -460,7 +460,7 @@ export async function handleStaff(
     { app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form,
   );
   if (survey === 'handled') return 'handled';
-  // The survey pack — the sums, the surveyor's stamped changes (src/web/survey-pack-pages.ts).
+  // The survey pack — the sums, the surveyor's stamped changes (src/modules/survey/survey-pack-pages.ts).
   const pack = await handleSurveyPack({ app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form);
   if (pack === 'handled') return 'handled';
   // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/modules/claims/report-pages.ts).
@@ -469,7 +469,7 @@ export async function handleStaff(
   // Email the client's accountant a link to confirm for themselves (src/modules/portal/accountant-confirm-pages.ts).
   const confirmLink = await handleAccountantConfirmStaff({ app: d.app, newId: d.newId, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (confirmLink === 'handled') return 'handled';
-  // The client's photos, the walkthrough call and how the surveyor inspected (src/web/evidence-pages.ts).
+  // The client's photos, the walkthrough call and how the surveyor inspected (src/modules/survey/evidence-pages.ts).
   const evidence = await handleStaffEvidence({ app: d.app, store: d.store, newId: d.newId, nav, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (evidence === 'handled') return 'handled';
 
@@ -1243,7 +1243,7 @@ function settingsPage(
      It holds messages addressed to every client, so drawing it conditionally
      while still fetching it would be a screen omitting a field — the thing this
      application refuses to call a control. It is not read at all. */
-  /* AND WHETHER IT BOUNCED. Phase 146f recorded bounces and nothing showed them, so an email the
+  /* AND WHETHER IT BOUNCED. Bounces were recorded and nothing showed them, so an email the
      server would not deliver looked exactly like one that had not been sent yet. The newest bounce for each
      message, its kind and the server's CODE — never the server's words. */
   const outbox = inBackOffice
@@ -1349,8 +1349,8 @@ function settingsPage(
 /**
  * ADDRESSES WE CANNOT EMAIL. Admin only.
  *
- * An address the mail server refused for good is stopped, and nothing more is sent to it. That was built by Phase
- * 146f with no way back: `liftSuppression` existed and no screen called it. This is the screen.
+ * An address the mail server refused for good is stopped, and nothing more is sent to it. That was built
+ * with no way back: `liftSuppression` existed and no screen called it. This is the screen.
  *
  * A LIFT IS A NEW ROW, not an edit. The bounce stays on record and so does the stop; the lift sits after them with
  * who pressed the button and when. Pressing it for an address that is not stopped is not an error and says so.

@@ -38,7 +38,7 @@ import { buildApp, STUBS } from '../../src/core/app.ts';
 import { seed } from '../../src/core/seed.ts';
 import { newId } from '../../src/core/users.ts';
 import { testApp, actor, fakeHasher, fixedClock } from '../helpers.ts';
-import * as S from '../../src/web/surveyor.ts';
+import * as S from '../../src/modules/survey/surveyor.ts';
 import { ingestRegisterRecord } from '../../src/integrations/register-ingest.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -326,7 +326,7 @@ describe('CQC: the key in its header; searched by council area because the API h
   });
 
   // PHASE 155 (lines 1-2), 4 October 2026: built, from each regulator's downloaded list on this server — so this test now
-  // asserts the opposite of what it did, and test/phase155.test.ts proves what they do.
+  // asserts the opposite of what it did, and test/admin/unread-replies-and-imports.test.ts proves what they do.
   test('CIW and the Care Inspectorate are built (Phase 155), and the panel no longer calls them unbuilt', () => {
     assert.ok(FREE_CONNECTORS['CIW'] !== undefined && FREE_CONNECTORS['CARE_INSPECTORATE'] !== undefined);
     assert.equal(NOT_BUILT['CIW'], undefined);
@@ -459,7 +459,7 @@ describe('HM Land Registry sale prices: every sector (Phase 159g), the latest sa
     // The two screens that draw a register record's values: the client page's checks (approvals) and the surveyor's evidence.
     assert.match(readFileSync(join(SRC, 'modules', 'claims', 'approvals.ts'), 'utf8'), /attribution: registerAttribution\(r\.source_id\)/);
     assert.match(readFileSync(join(SRC, 'modules', 'claims', 'approvals-pages.ts'), 'utf8'), /f\.attribution/);
-    assert.match(readFileSync(join(SRC, 'web', 'surveyor-pages.ts'), 'utf8'), /registerAttribution\(r\.source_id\)/);
+    assert.match(readFileSync(join(SRC, 'modules', 'survey', 'surveyor-pages.ts'), 'utf8'), /registerAttribution\(r\.source_id\)/);
     assert.equal(R.registerAttribution('HMLR_PPD'), PRICE_PAID_ATTRIBUTION);
     assert.equal(R.registerAttribution('NOT_A_SOURCE'), null);
   });

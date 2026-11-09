@@ -63,7 +63,7 @@ HOUSE RULES (follow them exactly)
   node 03-app/caprebate-figure-drift.cjs --fast --expect 1279,439,403,<backend total>
   and npm run typecheck in 09-app/backend. When code lines move, update the
   developer spec's line references (the CRM fold check finds them).
-- Update 09-app/CAPREBATE-DEVELOPER-SPEC.md (a section per change, the test
+- Update 09-app/docs/CAPREBATE-DEVELOPER-SPEC.md (a section per change, the test
   counts) and hub/PHASE-HISTORY.md.
 - Font sizes 12px or more. Screen text in plain words (reading grade 9 or under);
   the guide grade 7 or under.

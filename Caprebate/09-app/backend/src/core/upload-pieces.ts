@@ -4,7 +4,7 @@
  * The stress test sent a 6 MB document to the test website: Vercel refused it before the website saw
  * it, with its own page ("Request Entity Too Large"). Vercel takes at most 4.5 MB a request, and every document form
  * sent its file whole, while the portal says "The most we take is 50 MB". Photos and videos already go round the limit
- * (src/web/photo-upload.ts, src/web/survey-video.ts); documents did not.
+ * (src/modules/survey/photo-upload.ts, src/modules/survey/survey-video.ts); documents did not.
  *
  * HOW. The page's script (src/core/upload-pieces-script.ts) sees a chosen file over `PIECED_ABOVE`, asks to START
  * (`startPieces`: the size, so the server says how many pieces), sends each piece of at most `PIECE_BYTES` (`putPiece`),

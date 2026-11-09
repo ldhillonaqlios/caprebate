@@ -5,7 +5,7 @@
  * VIEW MODELS AND WRITES. The routes are src/modules/crm/crm.routes.ts and the
  * rendering src/modules/crm/crm-pages.ts, which draws what these return and
  * decides nothing. The section gates are src/modules/crm/crm.permissions.ts. The scope — every field
- * and why it is shaped the way it is — is 09-app/CAPREBATE-CRM-DISPOSITION.md,
+ * and why it is shaped the way it is — is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md,
  * and the schema is migration 009.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ import { postcodeStore, POSTCODE_GATE } from '../../integrations/postcodes/postc
 import { resolveServedAuthority, type PostcodeStore } from '../../integrations/postcodes/postcode-port.ts';
 import { formatPence, formatShownRange, toPence } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import { claimMoneyLines, type ClaimMoneyLine } from '../../web/invoices.ts';
+import { claimMoneyLines, type ClaimMoneyLine } from '../finance/index.ts';
 import { claimTaskPanel, followUpsFor, type ClaimTaskPanel } from './tasks.ts';
 import { lastContactFor, timelineIfPermitted, type Timeline } from './timeline.ts';
 import { fireAutomation } from './automation.ts';
@@ -58,8 +58,8 @@ import { claimDocumentsPanel, type ClaimDocumentsPanel, organisationDocumentsPan
 import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from '../claims/index.ts';
 import { propertyTenure, ROLE_LABELS } from '../assessment/index.ts';
 import { aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask, type AftercarePanel, type DeliverablesPanel, type FiguresPanel } from '../claims/index.ts';
-import { assembleReleasedFacts, type ReleasedFacts } from '../../payload.ts';
-import { vocabChoice, vocabLabel } from '../../web/vocabularies.ts';
+import { assembleReleasedFacts, type ReleasedFacts } from '../survey/index.ts';
+import { vocabChoice, vocabLabel } from '../admin/index.ts';
 import { funnelStateFor } from '../assessment/index.ts';
 import { expectedFeeFor } from '../assessment/index.ts';
 import { latestSignOff } from '../claims/index.ts';
@@ -69,7 +69,8 @@ import { getRegisterRecordsFieldsJsonByBusinessIdSourceId4 } from '../../integra
 import { listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleDisabledAt } from '../../core/index.ts';
 import { getClaimContactsIdByClaimIdContactId, getClaimContactsIdClaimIdById, getClaimStageMovesAtByClaimId, getClaimsBusinessIdById, getClaimsCountByBusinessId, getPropertiesCountByBusinessId, getPropertiesIdByBusinessId2, getPropertiesPostcodeJurisdictionById, insertClaimContacts, insertClaimRefSeries, insertClaimStageMoves4, insertClaims, insertProperties4, listClaimsIdBusinessIdByPropertyId, listPropertiesIdByBusinessId, listPropertiesIdLabelByBusinessId, updateClaimContactsUnlinkedAtUnlinkedByByIdUnlinkedAt, updateClaimsOwnerIdSurveyorIdById, updatePropertiesClaimantRoleClaimantRoleSourceById, updatePropertiesLabelPostcodeById, updatePropertiesLandlordUpdatedAtById, updatePropertiesLeaseEndDateUpdatedAtById, updatePropertiesSaleInProspectUpdatedAtById, updatePropertiesTenureSourceById } from '../claims/index.ts';
 import { getBusinessesClaimantTypeById, getBusinessesSectorById, getBusinessesSourceById, getBusinessesStageById, getContactsCountByBusinessIdId, getContactsIdBusinessIdById, getLeadsIdBusinessIdByClaimId, insertContacts, listContactsIdFullNameByBusinessIdContactType, listLeadsIdFirmNameByBusinessId, updateBusinessesLegalNameCompanyNumberById, updateContactsFullNameJobRoleOtherById } from './data.ts';
-import { getClaimsBusinessIdCompanyById, getSurveyorCommitmentsNByAssessmentId, getSurveyorJobsSurveyorIdByBusinessIdSurveyorId, listClaimContactsIdContactIdByClaimIdUnlinkedAt, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3, listSurveyorJobsSurveyorIdByClaimIdSurveyorId2, updateSurveyorJobsClaimIdByBusinessIdAssessmentId } from './data-borrowed.ts';
+import { getClaimsBusinessIdCompanyById, listClaimContactsIdContactIdByClaimIdUnlinkedAt } from './data-borrowed.ts';
+import { getSurveyorCommitmentsNByAssessmentId, getSurveyorJobsSurveyorIdByBusinessIdSurveyorId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3, listSurveyorJobsSurveyorIdByClaimIdSurveyorId2, updateSurveyorJobsClaimIdByBusinessIdAssessmentId } from '../survey/index.ts';
 import { getAssessmentsIdByBusinessId2, getAssessmentsShownLowPenceShownHighPenceById, getEstimatesCountByBusinessId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId, listAssessmentAnswersStateValueByAssessmentIdQuestionId } from '../assessment/index.ts';
 import { getBusinessesIdNameById5, getPropertiesIdBusinessIdById4, getStaffTasksIdClaimRefByClaimIdIsNextAction, listBusinessesIdName5, listPropertiesIdBusinessId, listPropertiesIdBusinessIdByBusinessId, listStaffTasksIdClaimRefByClaimIdIsNextAction, listStaffTasksIdClaimRefByClaimIdIsNextAction2, listStaffTasksIdClaimRefByClaimIdIsNextAction3, listStaffTasksIdClaimRefByClaimIdIsNextAction4 } from './data-borrowed.ts';
 import { getContactsIdBusinessIdById4, listContactsIdBusinessIdByBusinessId } from './data.ts';
@@ -607,7 +608,6 @@ export type ClaimDbRow = {
   property_town: string | null;
 };
 
-
 /**
  * WHO REACHES A CLAIM THROUGH A SURVEY JOB: the surveyors assigned to a job ON
  * THIS CLAIM. CRM 2 of 10 gave `surveyor_jobs` a `claim_id` (migration 010,
@@ -719,7 +719,6 @@ type BusinessDbRow = {
   client_status: string; source: string | null; owner_id: string | null; updated_at: string | null;
   owner_name: string | null;
 };
-
 
 function organisationFacts(db: Db, actor: Actor, b: BusinessDbRow): { legal_name: Fact; company_number: Fact; claimant_type: Fact } {
   const ch = companiesHouse(db, actor, b.id);
@@ -942,7 +941,6 @@ type ContactDbRow = {
   notes: string | null;
 };
 
-
 function lastAndNext(db: Db, r: ContactDbRow): {
   last_contact_at: string | null; last_contact: string; next_follow_up_at: string | null; follow_ups_open: number;
 } {
@@ -1018,7 +1016,7 @@ function contactValues(input: Fields, stored: ContactValues): Check<ContactValue
  *   - a client saved from the website cannot be saved without one (the funnel's close, src/core/router.ts);
  *   - a change here that would leave a client with no contact we can reach is refused (`updateContact`);
  *   - a client that has none is flagged on its page until it does (src/modules/crm/client-page.ts); and
- *   - an identity check goes only to a contact who has one (src/web/identity-checks.ts).
+ *   - an identity check goes only to a contact who has one (src/modules/compliance/identity-checks.ts).
  * A contact added here may still lack both: the rule is about the client, and the flag stays until one has them.
  */
 export const NO_WAY_TO_REACH_WORDS = 'We must have a way to reach this client: a contact with an email address or a telephone number.';
@@ -1096,7 +1094,6 @@ type PropertyDbRow = {
   claimant_role: string | null; lease_end_date: string | null; landlord: string | null;
   business_name: string;
 };
-
 
 /**
  * WHO REACHES A PROPERTY THROUGH A SURVEY JOB: the surveyors assigned to a job
@@ -1454,7 +1451,7 @@ export function claimList(db: Db, actor: Actor, limit = 200): ClaimRow[] {
     });
 }
 
-/** CRM 7 of 10: a line of the claim's own invoices — src/web/invoices.ts builds it. */
+/** CRM 7 of 10: a line of the claim's own invoices — src/modules/finance/invoices.ts builds it. */
 export type MoneyLine = ClaimMoneyLine;
 
 export type ClaimView = {

@@ -5,7 +5,7 @@
  *   HOMEDATA_ADDRESS   the paid address lookup — a UPRN, an address, a postcode and coordinates, plus the penny
  *                      title pre-check                                          src/integrations/connectors/homedata.ts
  *   HMLR_TITLE         HM Land Registry's title register, about £7 a title      src/integrations/connectors/hmlr-title.ts
- *                      RETIRED FROM THE CLICK BY PHASE 146k: the owner decided the title register is
+ *                      RETIRED FROM THE CLICK: the owner decided the title register is
  *                      looked up by hand, and took the Business Gateway details out of the key file. It is in
  *                      `PAID_RETIRED` below, not in `PAID_CONNECTORS`, and src/modules/claims/title-by-hand.ts is where a person
  *                      records what the official copy says.

@@ -23,7 +23,7 @@
  *
  * NOT BUILT, AND SAYING SO: the valuation office — `NOT_BUILT` below. Its licence restricts its rating list to business
  * rates purposes. The Welsh and Scottish care regulators were here until
- * Phase 155 built them.
+ * they were built.
  *
  * THE PAID LOOKUPS ARE NOW BUILT, and they live in their own map: PAID_CONNECTORS in src/integrations/connectors/paid-registers.ts
  *. `consultAllowed` reads both maps. They are separate because the two tiers are gated differently — a
@@ -121,7 +121,7 @@ export function runOrder(source_ids: readonly string[]): string[] {
 
 /**
  * WHAT THE RESEARCH PANEL SAYS FOR AN ALLOWED LOOKUP WITH NO CONNECTOR IN THIS BUILD. In plain words, because they
- * reach the panel. The paid lookups are not listed: their gate shuts first, and Phase 146d builds them.
+ * reach the panel. The paid lookups are not listed: their gate shuts first, and they are built in paid-registers.ts.
  */
 export const NOT_BUILT: Readonly<Record<string, string>> = Object.freeze({
   /* Read at last. Not "we do not hold it" — the licence itself does not allow our use. */

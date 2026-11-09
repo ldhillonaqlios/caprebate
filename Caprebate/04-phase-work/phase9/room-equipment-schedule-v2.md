@@ -425,7 +425,7 @@ that factor into the question flow rather than asking you again on every job.
 **Built in the test system, 4 October 2026 (Phase 153e) — test defaults for you to confirm, not decisions.**
 From the answers typed under Word questions 134 and 135, the back end's survey pack now places these
 rows by default, each labelled "Test default (Phase 153e), for the surveyor to confirm" on the pack line
-(`09-app/backend/src/web/pack-lines.ts`, `PLACEMENT`; the fixture list itself is unchanged):
+(`09-app/backend/src/modules/survey/pack-lines.ts`, `PLACEMENT`; the fixture list itself is unchanged):
 XS-7 — dental extract (`LS-DEN-015`) and ordinary GP treatment-room ventilation (`LS-GP-008`) are special
 rate as normal air flow; theatre ultra-clean ventilation (`LS-PH-002`) and isolation ventilation
 (`LS-PH-003`) are flagged with no pool, for you to decide on each job by function, specification and

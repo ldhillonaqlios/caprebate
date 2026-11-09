@@ -1,6 +1,6 @@
 /**
  * RESTORE A BACKUP — one night's database, and the documents, from a copy of the backup bucket. Phase 161h, 7 November
- * 2026 (src/core/backup.ts makes the backup; 09-app/deploy/LIVE-RUNBOOK.md, "Restore a backup", says when and how).
+ * 2026 (src/core/backup.ts makes the backup; 09-app/docs/LIVE-RUNBOOK.md, "Restore a backup", says when and how).
  *
  *   1. Copy the bucket to a folder on this computer, OUTSIDE the code folder:
  *        aws s3 sync s3://<BACKUP_S3_BUCKET> ~/caprebate-restore/bucket

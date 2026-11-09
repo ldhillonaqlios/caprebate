@@ -68,7 +68,7 @@
    digit preceded by a comma - and the project total is ALWAYS written that way:
    "1,806 passing assertions". So the single most-quoted number in the corpus,
    the one a developer is handed, was outside this check entirely while it
-   reported green. It was found in `09-app/CAPREBATE-DEVELOPER-SPEC.md`, asserting
+   reported green. It was found in `09-app/docs/CAPREBATE-DEVELOPER-SPEC.md`, asserting
    1,763 with the site at 676, twelve lines under a fenced block that had 719
    correct - the same file the COMMAND_ON_LINE rule was added to protect. Added:
    an optional comma-grouped form, with the commas stripped before the compare. */
@@ -235,7 +235,7 @@ function isRetiredFigure(line, idx, len) {
 
    WHAT DOES *NOT* WORK AS THE DISCRIMINATOR, AND IT IS WORTH RECORDING BECAUSE
    IT WAS THE FIRST ANSWER: a date in the caption. This project date-stamps
-   everything. The live baseline in 09-app/CAPREBATE-DEVELOPER-SPEC.md — the one
+   everything. The live baseline in 09-app/docs/CAPREBATE-DEVELOPER-SPEC.md — the one
    document this whole job exists to protect — is captioned "the figures, every
    one re-derived on 9 September 2026 by running it". A date rule would have
    exempted precisely the block it was built to watch.

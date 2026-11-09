@@ -1,12 +1,12 @@
 # Changelog: the dated notes that were in the code
 
-Written by Phase 161i1 (8 November 2026) and added to by Phase 161j. Until then many comments in the code said when something was decided, by
+Written by Phase 161i1 (8 November 2026) and added to by Phases 161j and 161k. Until then many comments in the code said when something was decided, by
 which phase and who asked for it. That history now lives here, and the code keeps comments that say why the code is as
 it is. Every note below is the comment as it stood in the code, word for word, under the file it was in and the line
 it started on that day (the file may have changed since). Notes from the files of the core, the shared parts and the
 outside services (`src/core/`, `src/shared/`, `src/integrations/`, Phase 161i1) and of the five modules Phase
-161j moved (`src/modules/public-site/`, `assessment/`, `portal/`, `crm/`, `claims/`) are here; Phase 161k brings the
-rest of the business modules' notes the same way.
+161j moved (`src/modules/public-site/`, `assessment/`, `portal/`, `crm/`, `claims/`) and of the four Phase 161k
+moved (`survey/`, `finance/`, `compliance/`, `admin/`) are here: every business module's notes.
 
 How far the notes come out was put to the developer (question D16 of the developer question pack). Until they answer,
 this follows our recommendation: keep a short comment that says why; move every dated note, and every name, here.
@@ -114,6 +114,91 @@ neither says.
 - Line 804:
 
   > Phase 64: the service moved from epc.opendatacommunities.org on 30 May 2026;
+
+## 28 Aug 2026: Phase 132e
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 624:
+
+  > =============================================================================
+  >    5. WHERE EACH ROUTE STOPS PAYING FOR ITSELF
+  >
+  >    The fee is a percentage of ALLOWANCES IDENTIFIED (Q55, Phase 74, and
+  >    CB_FEE.RATE in the shipped engine). So the allowances figure at which a route
+  >    breaks even is simply:
+  >
+  >        break-even allowances = loaded cost / fee rate
+  >
+  >    THE FEE RATE IS NOT DEFINED IN THIS FILE. Pass it. The test reads CB_FEE.RATE
+  >    out of the shipped engine and asserts the two agree, so this cannot drift
+  >    away from what we actually charge.
+  >
+  >    ---------------------------------------------------------------------------
+  >    AND A WARNING ABOUT THE PUBLISHED BREAK-EVEN PURCHASE PRICES.
+  >
+  >    "Minimum fee — the research" (28 August 2026) reports break-even purchase
+  >    prices of £797,778 (S1), £404,444 (S2) and £187,778 (S3) for dental at
+  >    100 jobs/year. Those are correct ON THE BASIS THAT PAPER USED — 5% of
+  >    LIFETIME RELIEF. The basis was changed on 3 September 2026 (Q55, Phase 74) to
+  >    5% of ALLOWANCES IDENTIFIED, which is larger by a factor of 1/tax_rate, and
+  >    the rate was changed on 15 September 2026 (Phase 132e) to a flat 3%.
+  >
+  >    At 5% of allowances the smallest dental job that paid for itself on the
+  >    surveyor-visit route at 100 jobs a year was about £319,000 of purchase
+  >    price. At 3% it is about £532,000 (and about £517,000 at the 120 jobs a year
+  >    Lakhbir gave for the engagement gate). Both are still well below the
+  >    paper's £798,000, which was a lifetime-relief figure.
+  >
+  >    breakEvenPurchasePrice() below computes it on the CURRENT basis and
+  >    reportsBasisChange() states the comparison, so nobody re-publishes the old
+  >    number from memory.
+  >    =============================================================================
+
+## 28 Aug 2026: no phase named
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 941:
+
+  > =============================================================================
+  >    8. REPRODUCING THE PUBLISHED PAPER
+  >
+  >    "Minimum fee — the research" (item 12830205390, 28 August 2026) published
+  >    marginal and loaded cost tables that could not be re-derived by running
+  >    anything, because the parameter variation behind them was never committed.
+  >
+  >    This regenerates them. The test asserts every published cell. From here the
+  >    paper is maintainable: change a route and the test tells you which published
+  >    figure moved.
+  >    =============================================================================
+
+### `src/modules/survey/surveyor-crm.ts`
+
+- Line 1080:
+
+  > ------------------------------------------------------------------ *
+  > 10. What is being measured — recorded before the first job, not after
+  >
+  > The board confirmed (item 12818132946, 28 Aug 2026) that engagements are
+  > ad-hoc one-offs with no retained surveyor. That changes what the adoption
+  > rate MEANS without changing what it looks like:
+  >
+  >   WITHIN_SURVEYOR   does this surveyor keep accepting our number as they get
+  >                     used to it? Contains an anchoring/familiarity component.
+  >   CROSS_SURVEYOR    do independent professionals, each seeing the field for
+  >                     the first time, land where we said they would? Stronger
+  >                     calibration evidence, because there is less anchoring in
+  >                     it — and a worse product, because it removes the returning
+  >                     surveyor's own library the CRM was built to offer back.
+  >
+  > The two produce an identical-looking number and it is NOT recoverable
+  > afterwards which one a given figure was. So it is stamped on the feed now.
+  > ------------------------------------------------------------------
+
+- Line 1101:
+
+  > Set to match the ad-hoc engagement model confirmed on 28 August 2026.
 
 ## 29 Aug 2026: Phase 40
 
@@ -410,6 +495,166 @@ neither says.
   > protection that does not exist. The field survives the withdrawal so
   > that reinstating the rule is one guard to lift, not a schema change.
 
+## 31 Aug 2026: Phase 51
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 1469:
+
+  > ============================================================================
+  >    LEG-E5b - WHOLE-BUILDING DEPRECIATION
+  >    ============================================================================
+  >    ONE SOURCE, ONE BLOCK. Unlike E5 this needs only the VOA whole-building
+  >    obsolescence allowance. There is no plant-life table because a building does
+  >    not have a plant life.
+  >
+  >    WHAT IT DOES. Takes the building's age in years, reads a surviving
+  >    proportion off a single age-banded scale, and applies that ONE factor to
+  >    every element in the schedule.
+  >
+  >    WHY THIS IS NOT SIMPLY WORSE THAN E5. E5's header sets out the case against
+  >    it and the case is a good one: plant lives differ by an order of magnitude,
+  >    and depreciating a lift, a boiler, a nurse-call system and the drainage
+  >    under the slab at one rate moves value between pools that attract 14%, 6%
+  >    and 3%. All true. But three things weigh the other way, and none of them is
+  >    ours to settle:
+  >
+  >      1. The per-element method applies a whole-BUILDING obsolescence scale per
+  >         plant ELEMENT over a CIBSE life. That hybrid is not stock VOA
+  >         methodology (ATP-F-3, item 12927234437). It may be perfectly defensible; it
+  >         has not been ruled on by anybody.
+  >      2. Whole-building depreciation IS the stock contractor's-basis treatment,
+  >         so it is the one an HMRC valuer is likeliest to recognise on sight.
+  >      3. E5 needs a 95-row crosswalk between the fixture taxonomy and CIBSE's own
+  >         component vocabulary that does not exist. E5b needs no crosswalk at all.
+  >
+  >    SO THIS MODULE DOES NOT CHOOSE. Both methods are built, both are gated off,
+  >    and the default is neither - which is today's behaviour exactly. Same
+  >    discipline as the CTA switches in Phase 51: build both, ship neither, and
+  >    put the choice in front of the person qualified to make it.
+  >
+  >    THE SAME FLOOR GUARD APPLIES. A building past the end of its scale does not
+  >    depreciate to zero, an age beyond the last band is clamped rather than
+  >    extrapolated, and the residual floor is read from the scale, never assumed.
+  >    ============================================================================
+
+## 31 Aug 2026: Phase 52
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 147:
+
+  > LEG-E5b (12927234437, Phase 52) - WHOLE-BUILDING depreciation: one
+  >      age-derived factor applied to every element, the VOA contractor's-basis
+  >      shape. The alternative to E5, not an addition to it.
+  >
+  >      WHY IT EXISTS. E5's own header argues per-element is the right method for
+  >      a capital allowances claim, and that argument is sound - but it is OUR
+  >      argument, not a surveyor's, and the ATP-F-3 finding (item 12927234437) is that
+  >      applying a whole-BUILDING obsolescence scale per plant ELEMENT over a
+  >      CIBSE life is a methodological hybrid nobody has ruled on. If the ruling
+  >      comes back against it, E5 does not ship in its current form and there is
+  >      currently no second method to fall back to. This is that method, built now
+  >      so the choice is a switch rather than a rebuild.
+  >
+  >      BLOCKED on the VOA obsolescence licence, same as E5. It needs only ONE
+  >      table, not two - a whole building has no CIBSE plant life - which is
+  >      itself the clearest statement of how the two methods differ.
+
+- Line 1671:
+
+  > THE ONE BACK-COMPATIBILITY RULE, AND WHY IT IS NOT A CHOICE.
+  >
+  >      Before Phase 52 there was exactly one method, and turning the E5 gate on
+  >      applied it. "Default to current behaviour" means that configuration must
+  >      keep behaving identically: E5 gate on, E5b gate off, no method stated ->
+  >      per_element, exactly as before. Nothing about a number changes.
+  >
+  >      It does NOT run the other way. E5b's gate on with no method stated resolves
+  >      to none, because E5b is new: nothing was behaving that way before, so
+  >      falling into it would not be preserving behaviour, it would be choosing.
+  >      Both gates on with no method stated also resolves to none - that is the
+  >      configuration in which a genuine choice exists, and it is the one place
+  >      where inaction must not become a decision.
+
+- Line 1796:
+
+  > Available means "some depreciation method could run", not "E5 specifically".
+  >      Widened in Phase 52 when LEG-E5b landed: a DRC label over undepreciated
+  >      arithmetic is a quiet lie whichever method was going to supply the factor,
+  >      so the DRC_SELECTED_BUT_DEPRECIATION_UNAVAILABLE flag has to consider both.
+
+### `src/modules/survey/surveyor-crm.ts`
+
+- Line 155:
+
+  > NOT_REVIEWED added in Phase 52 (calibration instrument, item 12830166861).
+  >
+  > UNTOUCHED and NOT_REVIEWED look identical in the data — in both cases the
+  > final value equals the pre-filled value — and they mean opposite things. One
+  > is a surveyor who looked at our number and agreed with it; the other is a
+  > surveyor who never looked. Pooled together, a high adoption rate could mean
+  > the pre-fills are good OR that nobody is checking them, which are opposite
+  > conclusions from the same number.
+  >
+  > The distinction cannot be inferred after the fact. It has to come from a
+  > positive confirmation step in the surveyor's own flow, which is why
+  > RecordInput carries `reviewed` rather than this being derived here.
+  >
+  > `reviewed` defaults to true, so every existing call site and every event
+  > already recorded keeps its current meaning. That default is a compatibility
+  > choice, not a claim: until the confirmation step exists in the UI, `true`
+  > means "we did not ask", and adoptionStats.not_reviewed will read 0 because
+  > nothing is yet able to set it.
+
+- Line 505:
+
+  > Pre-fills the surveyor never opened. Counted and reported, never included
+  > in n — silence is not agreement (Phase 52, item 12830166861 §4.3).
+
+- Line 720:
+
+  > ------------------------------------------------------------------ *
+  > 8. Drift — is the pre-fill getting better, worse, or neither?
+  >
+  > Added Phase 52 (calibration instrument, item 12830166861).
+  >
+  > adoption() is a SNAPSHOT. It pools every observation ever recorded and
+  > reports one median. That is the right shape for "is this pre-fill any good",
+  > and the wrong shape for "is it drifting" — a field whose first ten jobs ran
+  > 8% high and whose last ten run 8% low reports a pooled median near zero and
+  > looks perfectly calibrated. It is not; it has crossed over, and the pooled
+  > figure has hidden exactly the thing that matters.
+  >
+  > Drift is measured over ORDERED COHORTS, not over calendar time. Under ad-hoc
+  > engagement, jobs arrive irregularly — three in a week, then nothing for two
+  > months — so a monthly bucket is mostly empty buckets. Fixed-size cohorts of
+  > consecutive observations keep every bucket comparable in weight, which is
+  > what a comparison between buckets requires.
+  > ------------------------------------------------------------------
+
+- Line 857:
+
+  > ------------------------------------------------------------------ *
+  > 9. The blank-field control
+  >
+  > Added Phase 52. Specified in the Calibration Research Protocol v1 §7 and
+  > named there as the single most valuable line in it: issue one case in N with
+  > the field BLANK and no peer figure shown, and compare where those surveyors
+  > land against the pre-filled population.
+  >
+  > WHY IT MUST START AT JOB ONE. A control needs an uncontaminated comparison
+  > population. Start it at job twenty and the first nineteen are already
+  > anchored and cannot serve as either arm. This is the whole reason it is built
+  > now, before any job exists, rather than when there is data to analyse.
+  >
+  > WHAT IT DETECTS THAT ADOPTION CANNOT. A high adoption rate is consistent with
+  > two opposite worlds: our pre-fill is accurate, or our pre-fill is an anchor
+  > that surveyors drift toward. adoption() cannot separate them, because both
+  > worlds produce the same data. The control can: if unanchored surveyors land
+  > somewhere materially different, the adoption rate was measuring the anchor.
+  > ------------------------------------------------------------------
+
 ## 31 Aug 2026: Phase 53
 
 ### `src/modules/claims/documents/upload-handler.ts`
@@ -520,6 +765,187 @@ neither says.
   > RET-7 as data. Derived by Phase 55 from the longest window in which somebody
   > could still act, and NOT approved — the approved flag is the only thing that
   > lets it compute a date in deletionDueAt.
+
+## 1 Sept 2026: Phase 132e
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 1225:
+
+  > -----------------------------------------------------------------------------
+  >    PRICING ONE JOB BOTH WAYS — AND THE QUESTION IS NOW CLOSED.
+  >
+  >    Lakhbir decided on 1 September 2026 that there is no minimum JOB SIZE, and
+  >    on 15 September 2026 (answer read that day, Phase 132e) that there is no
+  >    minimum FEE either: a flat 3% "with no minimum and no bands". So the
+  >    "minimum_withdrawn" reading below IS the decided price. The retained reading
+  >    is still computed, so the old papers' comparison can be reproduced, and it
+  >    is labelled as the reading that was not chosen.
+  >    ---------------------------------------------------------------------------
+
+## 1 Sept 2026: Phase 156f
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 1:
+
+  > =============================================================================
+  >    CAPREBATE — JOB ECONOMICS (Phase 9)
+  >
+  >    Board 18422317809. Item 12955448913, "Cost the small end — where a desk-only
+  >    claim stops paying for itself".
+  >
+  >    ---------------------------------------------------------------------------
+  >    READ THIS FIRST: THIS IS NOT caprebate-cost-model.cjs, AND THE NAMES ARE A TRAP
+  >
+  >    There are now two files in this folder with "cost" in their subject and they
+  >    cost COMPLETELY DIFFERENT THINGS:
+  >
+  >      caprebate-cost-model.cjs   costs the CLIENT'S BUILDING. It is the residual
+  >                                 replacement-cost model that sizes the client's
+  >                                 capital allowances claim. Its "cost" is
+  >                                 construction cost, in the client's building, on
+  >                                 the client's side of the invoice.
+  >
+  >      THIS FILE                  costs OUR JOB. What Caprebate spends to produce
+  >                                 one claim, what one claim earns us, and the
+  >                                 allowances figure below which producing it
+  >                                 loses money.
+  >
+  >    A phase that conflates them will produce nonsense that type-checks. If you are
+  >    about to add a "cost" function, say whose cost in the first line of its
+  >    comment. That is why this file is called job-economics and not cost-model-2.
+  >
+  >    ---------------------------------------------------------------------------
+  >    WHAT THE DECISION COMMITTED US TO, AND WHY THIS EXISTS
+  >
+  >    On 1 September 2026 Lakhbir decided there is NO MINIMUM JOB SIZE. The smallest
+  >    job is a £0 purchase price and the fee is a set percentage of the allowances
+  >    identified. That answer closed a question and opened a larger one: with no
+  >    floor, the desk-only route has to carry the small end on its own.
+  >
+  >    The surveyor call agenda (§1A.2, phase9) already states the consequence in
+  >    terms and it is the sentence this module quantifies:
+  >
+  >      "no-minimum plus desktop-only commits us to desk-only working on small
+  >       jobs, with no visit to fall back on."
+  >
+  >    ---------------------------------------------------------------------------
+  >    WHAT ALREADY EXISTED, BECAUSE THE PHASE PROMPT SAID NOTHING DID
+  >
+  >    The Phase 100 prompt asserted "THERE IS NO PER-JOB COST MODEL ANYWHERE" and
+  >    "nothing computes what one job costs to produce". Re-derived 8 September 2026,
+  >    that is not quite right and the correction matters:
+  >
+  >      - 03-app/caprebate-business-plan-model.cjs DOES compute a cost per job. It
+  >        holds DIRECT[sector] = {surveyor, cta, hours, rate, data}, an overhead
+  >        loading and a failed-enquiry drag, and prints a section headed
+  >        "2. COST PER JOB". Those constants are the real cost base and THIS FILE
+  >        DOES NOT INVENT A SECOND ONE — see SECTOR_DIRECT below, which restates
+  >        them and is held to them by test.
+  >
+  >      - What genuinely did not exist is a ROUTE. That model charges a full
+  >        surveyor cost on every job in every sector. It has no notion of desk-only
+  >        versus a site visit, no break-even, no routing rule and no connection to
+  >        the fee guard. Zero occurrences of "scenario" in the file.
+  >
+  >      - The published paper "Minimum fee — the research" (item 12830205390,
+  >        28 August 2026) DOES carry per-job figures for three delivery scenarios.
+  >        But it says those came from re-running the business plan model "with the
+  >        automation parameters changed", AND THAT VARIATION WAS NEVER COMMITTED.
+  >        So the paper's numbers could not be re-derived by running anything. That
+  >        is the actual gap, and reproducePublishedPaper() below closes it: the
+  >        paper's tables are now regenerated from code and asserted by test.
+  >
+  >    ---------------------------------------------------------------------------
+  >    TWO ROUTES, AND WHY THIS FILE REFUSES TO PICK ONE
+  >
+  >    Which route a job needs depends on a question the surveyor has not been asked:
+  >    "where does a desk estimate stop being defensible — is there a size, a
+  >    complexity, or a category of plant above which somebody has to attend?"
+  >    (surveyor-call-agenda.md §1A.1). It is a professional judgement about the
+  >    surveyor's own liability, not a commercial preference of ours; Lakhbir's
+  >    answer of "yes — a desktop survey" is on record as the commercial preference
+  >    and is expressly NOT an answer to it.
+  >
+  >    So every function here takes the route as an ARGUMENT and there is no default.
+  >    routeDecision() reports what each route implies and REFUSES to name a winner
+  >    while DESK_DEFENSIBILITY_ANSWERED is false. A model that assumes one route
+  >    answers a question the surveyor has not been asked.
+  >
+  >    ---------------------------------------------------------------------------
+  >    THE RULE THIS FILE OBEYS, AND IT IS THE SAME ONE AS EVERYWHERE ELSE
+  >
+  >    NO RATE IS RESTATED HERE. The fee rate belongs to CB_FEE in the shipped
+  >    engine (a flat 3% of allowances identified: the basis is Q55, Phase 74; the
+  >    3% is Lakhbir's answer read 15 September 2026, built by Phase 132e). Sector yield bands belong
+  >    to Rulebook I. Tax rates belong to CB_RATES and the benefit model to
+  >    CB_BENEFIT. Every one of them is INJECTED. Pass the wrong one and the
+  >    arithmetic is wrong; that is deliberate, because the alternative is a second
+  >    copy of a rate that drifts silently. The test file reads them out of the
+  >    shipped engine and asserts they agree.
+  >
+  >    UNKNOWN IS NOT A BRANCH. A parameter with no value NEVER becomes 0, a
+  >    midpoint, or a pass. Read PARAMS.homedata_cost_per_lookup below: while it
+  >    was null, reading it through cost functions yielded a result flagged
+  >    known:false, and nothing silently treated a missing cost as a free one.
+  >    (Updated 28 September 2026, Phase 153: since Phase 151, 24 September 2026,
+  >    it is 0.08 - Homedata's 8p list price, not a price on an account - and
+  >    homedata_cost_per_lookup_basis says so in every result that reads it. The
+  >    reader still returns known:false for a value that is not a number. The
+  >    rule still shows in PARAMS.overhead_per_year and
+  >    PARAMS.surveyor_review_and_sign_quote, which are null.)
+  >    (Updated 6 October 2026, Phase 157b: the 8p was read once on 23 September and
+  >    never read again, while Phase 156f changed what we call. It is now 17p a
+  >    property after signing, the price on our own account, and a separate 2p
+  >    address search before signing is modelled - PARAMS below.)
+  >
+  >    RUN THE TESTS
+  >      node --test caprebate-job-economics.test.cjs
+  >    =============================================================================
+
+## 1 Sept 2026: no phase named
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 1604:
+
+  > THE COMPANY WORKING METHOD - surveyor pack I5, answered 1 September 2026.
+  >
+  >    Lakhbir Dhillon, asked how ageing should be applied, answered "one reduction
+  >    across the whole building". That is recorded here so it is a written
+  >    position rather than a remembered conversation.
+  >
+  >    WHAT THIS IS NOT, AND THE DISTINCTION IS THE WHOLE POINT.
+  >
+  >    It is NOT the default. DEPRECIATION_METHOD_DEFAULT stays NONE and the
+  >    resolution rules above are untouched. Making a client's stated preference
+  >    the default would turn inaction into a decision, which is the one thing the
+  >    comment above says must not happen.
+  >
+  >    It is NOT set by a surveyor. Lakhbir is the Head of Business Development, not the chartered
+  >    surveyor whose signature the schema requires on anything graded D. Anything
+  >    resolved from this constant still raises
+  >    DEPRECIATION_METHOD_NOT_SET_BY_SURVEYOR, and that flag is correct.
+  >
+  >    It is NOT effective. leg_e5b_whole_building_depreciation is OFF and stays
+  >    off - it is blocked on the VOA obsolescence licence, which is a purchase
+  >    and not an opinion. Resolving with this method today returns
+  >    effective:false and WHOLE_BUILDING_METHOD_SELECTED_BUT_GATE_OFF.
+  >
+  >    SO WHAT DOES IT DO. It records which of the two built methods the business
+  >    intends to use when the licence lands, so that the choice is already made
+  >    and visibly attributed rather than being made silently by whoever wires the
+  >    caller up. It changes no number today and it is designed not to.
+  >
+  >    ONE THING TO CARRY TO THE SURVEYOR, AND NOT AS A SEPARATE POINT. I5 accepts
+  >    LESS precision in ageing - one factor for the whole building. I4, answered
+  >    in the same sitting, asks for MORE precision in counting - room by room
+  >    rather than by floor area, deliberately over-engineered. That pairing may be
+  >    right (counting is cheap once a room list exists; per-element ageing needs
+  >    CIBSE lives we do not hold and would be false precision on estimated
+  >    quantities) but it is a PAIR, and putting either half to the surveyor
+  >    without the other invites an answer to the wrong question.
 
 ## 2 Sept 2026: Phase 55
 
@@ -913,6 +1339,20 @@ neither says.
   > it is the rule the centre of this page (panel 2) already turns on. One rule,
   > for the section and for the thing the section is for.
 
+## 7 Sept 2026: Phase 97
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 1945:
+
+  > NO LOCATION FACTOR HERE, AND THAT IS THE POINT. Spon's says its location
+  >        and contract-size adjustments must be applied to the total cost plan
+  >        value and not to individual element or material items. An element line is
+  >        therefore quantity x rate, depreciated, on-costed and indexed - and
+  >        nothing else. The single LEG-E4 factor is applied to the summed total
+  >        below. (Phase 97, 7 Sep 2026; this multiplication used to read
+  >        "qty * rate * loc.factor * dep.factor * ...".)
+
 ## 7 Sept 2026: no phase named
 
 ### `src/integrations/postcodes/postcode-authority.ts`
@@ -1070,6 +1510,24 @@ neither says.
   > Grade A: a register lookup over a published dataset, which is §0.5's own
   > worked example of an A.
 
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 133:
+
+  > =============================================================================
+  >    1. THE COST BASE
+  >
+  >    These are NOT new numbers. They are 03-app/caprebate-business-plan-model.cjs
+  >    lines 24-27 verbatim, and caprebate-job-economics.test.cjs parses that file
+  >    and asserts the two agree. If you change one, the test fails until you change
+  >    the other. That is the whole point of duplicating them rather than requiring
+  >    across the tree: the business plan model is a SCRIPT that prints a report on
+  >    require, so it cannot be imported without running it.
+  >
+  >    THEY ARE ESTIMATES, NOT QUOTES. No surveyor or CTA quote existed as at
+  >    8 September 2026 and the published research names this as its weakest input.
+  >    =============================================================================
+
 ## 9 Sept 2026: Phase 64
 
 ### `src/integrations/postcodes/postcode.ts`
@@ -1108,6 +1566,68 @@ neither says.
   > is decided — England and Wales today, Phase 64 — and it is Lakhbir's to
   > flip rather than the tax adviser's. A copy here would be a second place to
   > change and the two would disagree on the day it moved.
+
+## 9 Sept 2026: Phase 107
+
+### `src/modules/survey/surveyor-crm.ts`
+
+- Line 93:
+
+  > NOTHING WAS PROPOSED. The surveyor was shown an empty box and typed their
+  > own figure into it. Added Phase 107a, 9 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────
+  > WHY THE OTHER FOUR COULD NOT COVER THIS, AND HOW IT WAS FOUND
+  >
+  > Every one of the four above is a thing WE PUT IN FRONT OF THE SURVEYOR.
+  > The type had no way to say that we put nothing there — and until a
+  > workspace existed, nothing ever did.
+  >
+  > Phase 107 built the workspace and hit it immediately. Caprebate holds no
+  > platform default rates at all: the only price books on the disk are
+  > quarantined pending an explanation of their provenance, so a surveyor's
+  > FIRST figure for a field in a sector is always entered against a blank.
+  > The only origin that could be recorded was PLATFORM_DEFAULT, which is
+  > FALSE — and, being false, it was also UNTOUCHED (the prefilled and final
+  > values are the same number, because they are both the surveyor's), which
+  > `RateLibrary.learn` correctly refuses. THE CONSEQUENCE WAS THAT THE
+  > LIBRARY COULD NEVER ACQUIRE A FIRST ENTRY, so no surveyor's figures were
+  > ever proposed back to them.
+  >
+  > ───────────────────────────────────────────────────────────────────────
+  > WHAT EVERY METRIC DOES WITH IT — worked out before it was added, because
+  > an origin no metric knows about is worse than no origin at all.
+  >
+  >   adoption()        EXCLUDES it, and counts it separately at
+  >                     `excluded_nothing_proposed`. There was no number of
+  >                     ours to adopt or reject, so it is evidence about our
+  >                     estimates in neither direction. It is NOT merged into
+  >                     `excluded_not_platform_default`, because "they used
+  >                     their own library figure" and "we offered nothing"
+  >                     are different facts about the capture flow.
+  >   selfConsistency() EXCLUDES it. It counts acceptance of the surveyor's
+  >                     OWN library figure; accepting nothing is not that.
+  >   drift()           EXCLUDES it. Drift is measured on PLATFORM_DEFAULT
+  >                     pre-fills only, and this is definitionally not one.
+  >   divergences()     EXCLUDES it, for the same reason.
+  >   controlComparison() EXCLUDES it — the blank-field control's whole point
+  >                     is to compare a pre-filled arm against a blank one,
+  >                     and a NOTHING_PROPOSED event is already blank.
+  >
+  > ALL FIVE EXCLUDE IT BY CONSTRUCTION rather than by a new clause: each
+  > already filters POSITIVELY on `CALIBRATION_ORIGIN` or `SURVEYOR_LIBRARY`.
+  > That is why this addition is safe, and it is the reason the value was
+  > chosen to sit outside both rather than to shadow either.
+  >
+  > ───────────────────────────────────────────────────────────────────────
+  > ITS OUTCOME IS `UNTOUCHED`, AND THAT WORD IS MISLEADING ON ITS OWN.
+  >
+  > `classifyOutcome` compares prefilled against final, and on one of these
+  > they are the same number, so it returns UNTOUCHED. Nothing was touched
+  > because nothing was there. READ THE OUTCOME ONLY TOGETHER WITH THE
+  > ORIGIN: no metric reads the outcome of a NOTHING_PROPOSED event, because
+  > all five exclude it first, so nothing downstream is misled — but a person
+  > reading a row in the table would be.
 
 ## 9 Sept 2026: Phase 110
 
@@ -1396,6 +1916,68 @@ neither says.
   >
   > Runs on Node >= 22.6 with type stripping. No enums, no namespaces.
   > Run:  cd phase9 && node --test caprebate-postcode-store.test.ts
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 415:
+
+  > EXPORTED SINCE PHASE 110, and the reason is worth a line. The wiring in
+  >    caprebate-location-key.ts has to know whether LEG-E4 is on before it decides
+  >    whether a missing location_key is a refusal or simply irrelevant. It could
+  >    have read CB_P9_GATES directly - and would then have missed the opts.gates
+  >    override below, which is how every test in this project forces a gate on.
+  >    A second copy of a three-line rule is still a second copy.
+
+### `src/modules/survey/surveyor-pages.ts`
+
+- Line 467:
+
+  > THE REGION IS DERIVED FROM THE PROPERTY'S POSTCODE. Phase 110. It is
+  >            named on the screen rather than implied, because a surveyor needs to
+  >            know which of their own past figures they are being shown.
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 70:
+
+  > Phase 110. The region a rate library entry is keyed on. resolveProperty
+  >    never throws and never guesses — see the comment on REGION_NOT_CAPTURED.
+
+- Line 551:
+
+  > THE REGION NOW COMES FROM THE PROPERTY'S POSTCODE. Phase 110, board item
+  > 13004035199 job 3.
+  >
+  > A rate library entry is keyed on surveyor, field, sector AND region, because
+  > a figure that is right in one part of the country is not automatically right
+  > in another. Until 9 September 2026 nothing in this system had a region to
+  > give it, every entry was keyed on the constant below, and a surveyor's own
+  > figures were proposed back to them ACROSS THE WHOLE COUNTRY.
+  >
+  > WHAT CHANGED, AND WHAT DID NOT. `caprebate-region.ts` maps the council area
+  > the postcode resolver returns to one of the THIRTEEN regions the price book
+  > uses — the vocabulary this project already had, rather than a third one.
+  > The CONSTANT STAYS as the answer when a region cannot be derived, and it is
+  > still exported under this name so a `region` column can be searched for it.
+  >
+  > IT IS STILL THE ANSWER TODAY, ON EVERY DEPLOYMENT, and saying so is more
+  > useful than the change: the postcode table is a 75 MB deployment artefact
+  > that nobody has built yet, so `postcodeStore()` returns null and every
+  > region is undERIVED. What is different is that the screen can now say WHICH
+  > of the four things is missing — no postcode, no table, outside our
+  > coverage, or the open Inner-London question — instead of printing
+  > "region-not-captured" and leaving a surveyor to guess.
+  >
+  > A silent default of "London" would still look like data. It is still not
+  > there.
+
+## 9 Sept 2026: Phase 112
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 1564:
+
+  > Section 9 — the rebase (Phase 112)
 
 ## 9 Sept 2026: Phase 113a
 
@@ -1776,6 +2358,54 @@ neither says.
   >     The back office's calendar lists it as cancelled. A cancelled call is final
   >     on its row (migration 025).
   > ============================================================================
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 978:
+
+  > =============================================================================
+  >    9. THE REBASE — PRICING A JOB ON THE DECIDED BASE
+  >    (Phase 112, 9 September 2026)
+  >
+  >    WHY THIS SECTION EXISTS. Sections 5 to 8 above answer "where does a job stop
+  >    paying US". They do not price a job. Five documents on the board DO price
+  >    jobs, and every fee figure in them was computed on LIFETIME RELIEF — the base
+  >    the fee-basis options paper recommended and Q55 did not choose. Phase 101
+  >    banned quoting from them; this section is what makes their numbers derivable
+  >    again, so that no replacement figure is typed by hand into prose.
+  >
+  >    THE ONE THING TO UNDERSTAND BEFORE READING ANY FUNCTION HERE.
+  >
+  >        old fee = feeRate x allowances x the claimant's marginal tax rate
+  >        new fee = feeRate x allowances
+  >
+  >    So the client's tax rate has left our fee entirely. Every conclusion in those
+  >    documents that turned on CLAIMANT TYPE — "the largest single factor", "the
+  >    first question asked", "incorporating raises the break-even by roughly 60%" —
+  >    is not merely understated. It has no referent. C7 above already asserts that
+  >    two clients at different tax rates share one break-even; the functions here
+  >    carry that through to the fee itself, and claimantTypeEntersTheFee() states it
+  >    so a document can cite something runnable rather than a sentence.
+  >
+  >    WHAT IS STILL INJECTED, AND IT IS THE SAME LIST AS EVERYWHERE ABOVE. The fee
+  >    rate, the sector yield and the candidate minimum are PARAMETERS. This file
+  >    holds no fee rate (the test reads CB_FEE.RATE out of the shipped engine), no
+  >    yield (they belong to Rulebook I) and no minimum.
+  >
+  >    PHASE 132e, 16 SEPTEMBER 2026 — THE FEE IS NOW DECIDED IN FULL. Lakhbir's
+  >    answer, read 15 September 2026: "yes, flat fee of 3% of the allowances for 1
+  >    or more properties", with no bands and no minimum, and "A further multi-site
+  >    discount can be applied depending on site/opportunities". FEE_DECISION below
+  >    records it. Consequences here:
+  >      - there is NO MINIMUM FEE. The £5,000 / £7,500 candidates survive only as
+  >        inputs a caller may pass to reproduce the old papers; no default holds
+  >        them, and priceJobBothReadings() now says which reading was decided;
+  >      - there are NO BANDS. bandedFee() and rescaledBands() no longer default to
+  >        the rate card's published bands: a caller must pass bands explicitly,
+  >        which only a record of the old card should ever do;
+  >      - the multi-site discount is discretionary and is not modelled. Its
+  >        largest size and who approves it are named nulls, never numbers.
+  >    =============================================================================
 
 ## 9 Sept 2026: Phase 146f
 
@@ -2297,6 +2927,46 @@ neither says.
   > back office: the surveyor's task on the job assigned to them, a finance task
   > waiting with Accounting, a follow-up with Dunmarrow's finance contact, and a
   > follow-up on the referral that has not converted.
+
+### `src/modules/admin/templates.ts`
+
+- Line 1:
+
+  > EMAIL TEMPLATES, MERGED INTO THE OUTBOX. CRM 3 of 10, 11 September 2026.
+  >
+  > The table is migration 012's `email_templates`; the pages are
+  > src/modules/crm/tasks-pages.ts. ADMIN writes a template; ADMIN and SALES merge one for
+  > a claim's contact and queue it.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > SIX MERGE FIELDS, AND NO OTHERS
+  >
+  >   {{contact_name}}      the contact chosen — the client's own contact, not a third party
+  >   {{organisation}}      the organisation's name
+  >   {{property_address}}  the claim's property's recorded address lines and postcode
+  >   {{claim_reference}}   the claim's reference
+  >   {{next_action}}       the claim's current next action
+  >   {{due_date}}          that next action's due date
+  >
+  > A template naming anything else is refused by the store: a merge field nobody
+  > fills in is a gap waiting to be sent.
+  >
+  > EVERY MERGED VALUE IS ESCAPED, and a subject line loses its line breaks. A
+  > MISSING VALUE IS A VISIBLE GAP — "[property address not recorded]" — and never
+  > an empty string, because "Dear ," is what a person sends when a gap is silent.
+  > A claim with no property and a property with no address read identically: the
+  > address was not recorded (N4).
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE OUTBOX ONLY, AND NEVER BANK DETAILS OR AN INVOICE
+  >
+  > A merge is queued through `outboxTransport`, built here from the database and
+  > not the application's transport, with the organisation named — so a
+  > DO_NOT_CONTACT organisation is refused by the transport and by the outbox's
+  > trigger. A template carrying bank details or an invoice is refused by this
+  > store — by keyword, and by the shape of a sort code, an account number and an
+  > IBAN — and by the table's own trigger. The invoice email waits on the
+  > invoice-fraud procedure (Developer Spec §5.1 item 6).
 
 ### `src/modules/assessment/assessment.ts`
 
@@ -2831,6 +3501,65 @@ neither says.
   > them without a sound, so the lead's timeline reads `lead_id`, and an
   > organisation's reads its leads' rows as well as its own.
 
+### `src/modules/finance/finance-pages.ts`
+
+- Line 1:
+
+  > THE ACCOUNTING VIEW — routes and rendering. Block F, part four; extended by
+  > CRM 7 of 10, 11 September 2026, with finance on the claim.
+  >
+  > Same shape as `handleEngaged` and `handleSurveyor`: 'not-mine' for anything
+  > it does not own. The three rules from router.ts apply unchanged.
+  >
+  > NOTHING HERE DECIDES ANYTHING. src/modules/finance/finance.ts (an organisation's invoices
+  > from before), src/modules/finance/invoices.ts (a claim's), src/modules/assessment/vat.ts and
+  > src/modules/claims/fee-controls.ts do every authorisation and every derivation; this
+  > draws what they return. In particular the fee-versus-benefit comparison is
+  > rendered exactly as the engine computed it, including its three-valued answer;
+  > a due date nobody set is drawn as UNSET; and a blank in the engagement letter is
+  > drawn as BLANK, in capitals.
+  >
+  > NO AMOUNT OF AN INVOICE IS A FIELD ON ANY FORM HERE. The one amount a person
+  > types is the money that arrived, which is a record of what they saw.
+
+### `src/modules/finance/invoices.ts`
+
+- Line 1:
+
+  > FINANCE ON THE CLAIM — INVOICES, CREDIT NOTES AND MONEY RECEIVED.
+  > CRM 7 of 10, 11 September 2026.
+  >
+  > The schema is migration 016; the fee is src/modules/claims/fee-controls.ts; the VAT and
+  > its monitoring are src/modules/assessment/vat.ts; the pages are src/modules/finance/finance-pages.ts. The
+  > scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, section 13.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > AN INVOICE BELONGS TO A CLAIM, AND ITS AMOUNT IS NEVER TYPED
+  >
+  > Our fee is raised on a claim at the invoice stage, once the fee trigger is
+  > reached — FEE_TRIGGER in src/modules/crm/pipeline.ts, read and never re-decided — and
+  > inside the amendment window. Its figure is the tax adviser's signed-off figure;
+  > its fee derives from that through CB_FEE and the fee controls; its VAT from the
+  > recorded VAT position. A claim that has exited is refused, and a claim that left
+  > OUTSIDE_AMENDMENT_WINDOW is refused every kind of invoice: that exit stops the
+  > job before a fee is incurred (SOP 9).
+  >
+  > A NUMBER from one gapless series, never reused; an invoice cancelled before it
+  > was sent keeps its number, recorded as cancelled. THE DUE DATE comes from the
+  > letter's payment terms — blank today, so it is UNSET and says so, never thirty
+  > days by default. A CREDIT NOTE is the only way a raised amount changes, and it
+  > takes no typed amount either: in full, or clause 13's recalculation.
+  >
+  > RECORDED, NOT COLLECTED. Money received is a row a person writes after seeing
+  > the bank: the day, the amount, bank transfer, who, and whether the client
+  > confirmed our bank details on a channel other than email. The outstanding
+  > balance, the payment state and OVERDUE are read from the rows, never stored.
+  >
+  > ACCOUNTING REACHES MONEY ONLY. Nothing here joins the answers, the register
+  > data, the notes, the surveyor's workings or the estimate: the sign-off record is
+  > read inside the server to copy one figure onto the invoice, as migration 006
+  > decided for its five facts, and nothing of it is returned but that figure.
+
 ## 12 Sept 2026: Phase 129
 
 ### `src/core/audit.ts`
@@ -3007,12 +3736,171 @@ neither says.
   > register holds those as refusals (0 days, every outward channel false), and
   > this panel says so rather than letting the row look complete.
 
+### `src/modules/compliance/disclosure-log.ts`
+
+- Line 1:
+
+  > THE PER-DISCLOSURE LOG — BUILT, AND SWITCHED OFF. Phase 129, 12 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHY IT EXISTS
+  >
+  > UK GDPR Article 19 is owed to "each recipient to whom the personal data have been disclosed", and Article 15(1)(c) asks
+  > an access response to name them. That is a fact PER CLIENT, not per firm, and the document "Who we pass client personal
+  > data on to" (06-commercial-and-governance/Caprebate-Recipients-of-Client-Personal-Data-v1.md) says in its section 4 that
+  > a static list of categories cannot discharge it: something has to record the disclosure when it happens. This is that
+  > something — one row per disclosure: when, to whom, which data, on what lawful basis, and by whom.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE VOCABULARY IS THE DOCUMENT'S, WORD FOR WORD
+  >
+  > R1 to R4 are its recipients and P1 to P7 its processors, each with the occasion and the route its tables give. R5 — the
+  > registers — is refused by name: a source is not a recipient, and merging the two lists is the mistake the document
+  > exists to prevent. The lawful bases are the governance policies' section D2 — contract, legitimate interests, a legal
+  > obligation, and consent only where a policy says so — plus, for a processor, its Article 28 instruction.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > OFF, NOTHING IS WRITTEN AND NOTHING IS SAID — AND "NOT KEPT" IS NEVER "NONE" (N4)
+  >
+  > `DISCLOSURE_LOG` ships `enabled: false`. While it is off, recording is refused before anything is written, and the
+  > reading for a client says the log is not kept, never that nobody received their data. Switched on, it must carry the
+  > date it came into force, and even then an empty log says "none recorded since that date", because before it the log
+  > cannot say. What it waits on is written in `waits_on`.
+  >
+  > NO PERSON'S NAME IS WRITTEN HERE, and the audit line carries codes and counts only.
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 102:
+
+  > F-1 (12927234375) - the professional-fee rate by BUILDING TYPE: the VOA
+  >      fee scale's adders for highly serviced buildings and for hospitals, on
+  >      top of the banded base rate. Built by Phase 129 on 12 September 2026 from
+  >      the prepared patch of 29 August; its values are an EMPTY STUB, same
+  >      licence as the base scale. INTERLOCKED with leg_e3_voa_fee_scale:
+  >      feesFactor refuses if the base scale is on and this is not, because the
+  >      base bands alone under-read fees on every job this business will do.
+
+- Line 127:
+
+  > ATP-F-3 (12927234437) - the CIBSE-to-taxonomy CROSSWALK COMPLETENESS GATE.
+  >      Built by Phase 129 on 12 September 2026 from the prepared patch of 29
+  >      August. elementDepreciationFactor already refuses an unlisted element when
+  >      it meets one (E_PLANT_LIFE_NOT_IN_TABLE); that guard is correct but
+  >      reactive, so a partial crosswalk is only found mid-job. With this gate on,
+  >      per-element depreciation first checks the loaded CIBSE lives against EVERY
+  >      element id the fixture taxonomy can emit (opts.taxonomy_element_refs) and
+  >      refuses the job if one is missing, before any element is priced. It
+  >      relieves nobody - it only refuses - and off it changes nothing. A life that
+  >      is absent and a life recorded as not known are the same missing entry (N4).
+  >      Turning LEG-E5 on without this check passing is the Gate Activation
+  >      Record's mandatory pre-flip step skipped.
+
+- Line 919:
+
+  > F-1 (Phase 129). The base bands alone under-read fees on every healthcare
+  >      property, so once the base scale is live the adder is not optional: both
+  >      gates on together, never one without the other.
+
+- Line 1293:
+
+  > ATP-F-3 (Phase 129). Off by default, and off it does nothing. On, the whole
+  >      crosswalk is checked before this element - or any element - is priced.
+
+- Line 1980:
+
+  > F-1 (Phase 129): read only once both fee gates are on; never defaulted.
+
 ### `src/shared/upload-handler-port.ts`
 
 - Line 96:
 
   > Phase 129. The legal-form test, the roles that are always a person, and the human-capture rule's role tokens and
   > backstop patterns, AS THE INGESTION MODULE STATES THEM. src/web/conveyancing-strip.ts reads them here and restates none.
+
+## 12 Sept 2026: Phase 129a
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 1367:
+
+  > ============================================================================
+  >    ATP-F-3 - THE CIBSE-TO-TAXONOMY CROSSWALK COMPLETENESS CHECK (Phase 129)
+  >    ============================================================================
+  >    The load-time twin of E_PLANT_LIFE_NOT_IN_TABLE. Given every element id the
+  >    fixture taxonomy can emit (Caprebate-Fixture-Taxonomy-v1.csv: 103 ids across
+  >    nine prefixes on 12 September 2026 - the prepared patch of 29 August said 95
+  >    across five; the file has grown since), it refuses unless the loaded CIBSE
+  >    lives cover every one. Callable on its own as the pre-flip step; called by
+  >    elementDepreciationFactor when leg_e5_crosswalk_completeness_gate is on.
+  >
+  >    Corrected 13 September 2026 (Phase 129a): "nine prefixes" above is wrong.
+  >    Counted by code with taxonomyElementRefs, the 103 ids sit under eight
+  >    prefixes - the five sector ones (LS-CH, LS-DEN, LS-SL, LS-GP, LS-PH) and
+  >    three that apply across sectors (LS-SR, LS-MP, LS-SBA).
+  >
+  >    N4. A life that is ABSENT and a life recorded as NOT KNOWN are the same thing
+  >    here. Neither is a pass, neither becomes 0, neither becomes a default life.
+  >    Known means a finite number above zero; anything else is missing. An absent
+  >    or empty taxonomy list refuses too, so the check cannot pass by having been
+  >    given nothing to check.
+  >    ============================================================================
+
+## 12 Sept 2026: Phase 132
+
+### `src/modules/compliance/compliance-identity.ts`
+
+- Line 1:
+
+  > S2 THE IDENTITY STORE, ONE CONSENT HISTORY PER CONTACT, AND THE RETENTION LIST.
+  > CRM 8 of 10, 12 September 2026.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > S2 (Dashboard Data Specification 3.2, 4 and 7; Retention Procedure 2.3B)
+  >
+  > The people printed on a document a client uploaded, under an opaque person_ref:
+  > the name and the contact route AS PRINTED, their role, the document, whether a
+  > notice was sent or the exemption relied on. NOTHING LOOKED UP. NEVER EXPORTED —
+  > there is no export of it, no list of it and no page that lists names. NEVER IN
+  > SEARCH — the rights-request search and CRM 9 of 10's search do not reach it;
+  > its own search is logged, term and all, in its own table. NEVER FOR MARKETING.
+  > EVERY READ AUDITED. NOTHING CROSSES INTO THE CLAIM RECORD: nothing here writes
+  > anywhere but S2.
+  >
+  > `compliance.identity_read` and `compliance.identity_write` are narrower than the
+  > registers' own actions and inherited from nothing.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > ONE CONSENT HISTORY PER CONTACT
+  >
+  > Being contacted and marketing: the capture flags, then every recorded change,
+  > with the words asked, the time and the route. Sharing progress with a referring
+  > firm is READ from introducer_share_consents, where CRM 5 of 10 keeps it — folded
+  > in, never copied.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE RETENTION LIST — A LIST, NOT A DELETER
+  >
+  > A clock on every record kind the determinations cover and on every kind the
+  > earlier CRM phases created, UNSET shown as unset. A date is computed only from
+  > an APPROVED parameter, and none is approved: RET-5, RET-6, RET-7 and RET-8 are
+  > derived, and RET-1 to RET-4 drafted (Retention Determinations section 12), and
+  > every one waits on the data protection officer — RET-1 with the tax adviser.
+  > So today every record is UNSCHEDULED — never due, and never kept for ever.
+  > WHETHER A TABLE REFUSES A DELETE IS READ FROM THE DATABASE, not claimed: a kind
+  > whose table carries a BEFORE DELETE trigger says so instead of offering one.
+  > Deletion itself is not automated: whether client-document folders can be kept
+  > out of the host's backup is still open, and a file alive in a backup has not
+  > been deleted.
+  >
+  > PHASE 132, 14 SEPTEMBER 2026. THE DELETION LOG IS A KIND ON THIS LIST (migration
+  > 022), under RET-3 — six years from the day a deletion is complete everywhere,
+  > `verified_at` or the last backup copy's expiry, as Retention Determinations v1.2
+  > section 12.4 drafts it. Drafted is not approved, and an entry with backups
+  > pending has no date at all while the host's backup cycle is NOT SET. And
+  > RET-7's two dates are no longer "not recorded": they are READ per document from
+  > its claim and shown on the document versions' line, known or not known —
+  > still with no date computed, because RET-7 is not approved.
 
 ## 12 Sept 2026: Phase 151b
 
@@ -3249,6 +4137,256 @@ neither says.
   > WRITTEN AS ROWS, as every seeded row is, and each passes the database's own triggers. THE FIGURES ARE CHOSEN SO THAT NO
   > DIGIT RUN OF THEM IS ONE OF THE SEALED ESTIMATE'S SEVEN VALUES — tools/payload-proof.ts searches for those as raw text.
 
+### `src/modules/admin/configuration-pages.ts`
+
+- Line 1:
+
+  > THE ADMIN SETTINGS SCREEN — routes and page. CRM 9 of 10, 12 September 2026.
+  >
+  > Same shape as every other section: 'not-mine' for anything it does not own.
+  > NOTHING HERE DECIDES ANYTHING. src/modules/admin/configuration.ts authorises every read and
+  > write, refuses every setting no screen may move, and reads the document types,
+  > the automation rules, the templates and the finance and compliance settings from
+  > their own stores; this page draws them and links to where each is written.
+
+### `src/modules/admin/configuration.ts`
+
+- Line 1:
+
+  > THE ADMIN SETTINGS SCREEN'S STORE — THE LISTS, THE REASONS, AND WHAT NO SETTING
+  > MAY CHANGE. CRM 9 of 10, 12 September 2026.
+  >
+  > The scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, section 20, and the decisions
+  > this file takes are that table's Part E from E119. The screen is
+  > src/modules/admin/configuration-pages.ts; the lists are src/modules/admin/vocabularies.ts and
+  > migration 019.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > CONFIGURABLE WHERE IT IS A PREFERENCE, FIXED WHERE IT IS A RULE (row 20.6).
+  >
+  > A PREFERENCE is a value on a list — a lead source, a priority, a task type, a
+  > property type, an introducer type — or a lost or exit reason. ADMIN adds one,
+  > relabels one or retires one here; SALES reads them. A value is never deleted and
+  > its code never changes, because records name it.
+  >
+  > A RULE is refused BY THE STORE, BY NAME, WITH ITS REASON — not missing from a
+  > form. `FORBIDDEN_SETTINGS` is built from the real things: every procedure stage's
+  > gate, both register gates, every one of the tax adviser's switches as the engine
+  > holds them, every fee control, the reward model, clause 13's clawback, the fee
+  > trigger, AML_IN_SCOPE as a general setting, the client's share-progress switch,
+  > the public referral form, the invoice-fraud procedure, the reconciliation's 15%
+  > threshold, the retention parameters, the boundary of the five roles, a document
+  > type's receipt policy, a value-carrying type marked as carrying none, and the
+  > claim's fact keys, capture sources and payer classes. Asking for one writes a
+  > REFUSED audit line and changes nothing; test/configuration.test.ts asks for every
+  > one and reads each thing back unchanged.
+  >
+  > THE THINGS THIS SCREEN FOLDS IN ARE READ FROM THEIR OWN STORES, never copied: the
+  > document types (`typeList`), the automation rules (`rulesPage`), the templates
+  > (`templatesPage`), the finance settings (`settingsView`) and the compliance
+  > settings (`settingReading`). Each is written where it always was, under its own
+  > action, and this screen links there.
+
+### `src/modules/admin/vocabularies.ts`
+
+- Line 1:
+
+  > THE CONFIGURABLE LISTS — READ FROM THE DATABASE, NEVER FROM A CONSTANT.
+  > CRM 9 of 10, 12 September 2026.
+  >
+  > `vocabularies` (migration 019) holds the lead sources, the priorities, the task
+  > activity types, the property types and the introducer types, seeded from the
+  > lists the code shipped with. An ADMIN adds a value, relabels one or retires one
+  > on the settings screen (src/modules/admin/configuration.ts); nothing is ever deleted, a code
+  > is permanent, and a value the application writes itself — WEBSITE for the funnel,
+  > TASK for a rule's task, a firm's type that decides its referral source — is
+  > `fixed` and cannot be retired. The database's named triggers read the same table,
+  > so a store and the table agree on what is on a list.
+  >
+  > A RETIRED VALUE STILL READS. A record keeps the value it was given: its label is
+  > read from the table whatever its state, and a form that edits the record offers
+  > the retired value back as the current one — `keep` — rather than silently changing
+  > it. A new record may only take an active value.
+  >
+  > THE SHIPPED CONSTANTS STAY EXPORTED — `SOURCES`, `PRIORITIES`, `ACTIVITY_TYPES`,
+  > `INTRODUCER_TYPES` — as the record of what migration 019 seeded. No store
+  > validates against them any more.
+  >
+  > NOT A LIST HERE, ON PURPOSE: the procedure's stages, the exits, a claim fact's
+  > key, the capture sources, the payer classes, the roles and the reciprocity kinds.
+  > Each is a rule, and changing one is a migration (configuration.ts refuses each).
+
+### `src/modules/compliance/audit-log.ts`
+
+- Line 1:
+
+  > THE AUDIT LOG, READ BY THE SUPER USER — the CRM follow-on, 12 September 2026.
+  >
+  > Developer Spec section 1 said Admin reads the audit log. `audit.read` was registered for ADMIN and nothing asked it, and
+  > `AuditLog.verify()` was called by the tests alone. This is the page that asks it, and `npm run verify-audit`
+  > (src/core/cli.ts) is the command that verifies the chain without the server.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > KINDS, IDS AND OUTCOMES — NEVER A VALUE
+  >
+  > The statement below does not select `detail`. What a line says happened is its kind; who did it is a role and an id;
+  > what it was about is an object type and an id; and whether it was allowed is its outcome. The detail is screened on the
+  > way in and carries no personal data — but it can carry codes and counts that mean something only beside the row they
+  > name, and a page that printed it would be the first screen in the application to show a log line's contents to a person.
+  > It is not read at all.
+  >
+  > THE CHAIN IS VERIFIED ON EVERY READ, and the page says whether it is intact — recomputed from the rows, the way the
+  > command does it, not taken from the object that wrote them.
+  >
+  > READING IT IS ITSELF A LINE: AUDIT_LOG_READ, naming the filter keys and the row count.
+  >
+  > FILTERS ARE KEYS IN A FIXED TABLE, NEVER SQL. A kind is one of the kinds present in the log; an outcome is one of the
+  > three; anything else is dropped and said.
+
+### `src/modules/compliance/compliance-aml.ts`
+
+- Line 1:
+
+  > CUSTOMER DUE DILIGENCE — BUILT, AND OFF. CRM 8 of 10, 12 September 2026.
+  >
+  > Built to the AML/KYC Position Paper (08-monday-doc-exports/12830178449),
+  > sections 5 and 6. The setting that switches it on is AML_IN_SCOPE in
+  > src/modules/compliance/compliance.ts, and it ships false: whether supervision is required is
+  > with the accountant and a solicitor.
+  >
+  > OFF, NOTHING HERE BLOCKS A CLAIM — the register can still be kept. ON, a claim
+  > cannot leave ENGAGEMENT without a finished check (src/modules/crm/pipeline.ts asks
+  > `cddGateNeed`).
+  >
+  > WHAT THE PAPER DOES NOT SAY IS NOT TYPED HERE. It names five claimant types, no
+  > risk-rating scale, no ownership threshold and evidence documents for
+  > individuals only. So a type outside the five is OTHER with a note, a risk
+  > rating is words or nothing, and a beneficial owner's basis is what the evidence
+  > shows.
+  >
+  > PSC DATA DOES NOT SILENTLY STAND FOR BENEFICIAL OWNERSHIP. Caprebate pulls
+  > Companies House persons-with-significant-control data for the allowance
+  > common-control test. An owner identified from that pull needs a separate, dated
+  > decision on THIS check that cross-references the pull — the database refuses
+  > the owner without it, and the pull on its own never records anybody.
+  >
+  > NO TIPPING OFF. Nothing here reaches a client or an accountant: every read and
+  > write is `compliance.read` or `compliance.write`, which no CLIENT holds.
+
+### `src/modules/compliance/compliance-breach.ts`
+
+- Line 1:
+
+  > THE BREACH REGISTER. CRM 8 of 10, 12 September 2026.
+  >
+  > Built to the Personal Data Breach Register and Incident Response Procedure
+  > (08-monday-doc-exports/12927581028) — Table A the facts, Table B the decisions,
+  > the closure test at its 3.8, the deputy route of its ADDENDUM 3 — and the ICO
+  > breach report pre-filled answer sheet (12927942615), which is a TEMPLATE here:
+  > a page drawn from the entry and the standing answers, never stored, never sent.
+  >
+  > CATEGORIES AND COUNTS, NEVER NAMES. Somebody who had to be identified is in the
+  > restricted names annex, which stays where it is; the entry carries its
+  > `annex_ref` and nothing else. NEVER BANK DETAILS either — refused in words by
+  > migration 017 and in shapes here.
+  >
+  > TWO KINDS. A security incident; and ATTEMPTED INVOICE FRAUD, which SOP 9's draft
+  > procedure treats as an incident decided under this procedure — the claim and the
+  > date, and whether it is a personal data breach is the data protection officer's
+  > classification, left open until given. Until it is, no Article 33 clock is
+  > presented as running or as not running: the page says the classification awaits.
+  >
+  > THE 72 HOURS ARE READ from awareness, fixed on the day. A correction is a row
+  > beside it. THE FOUR ARTICLE 34 FACTS feed the limbs they decide: UNKNOWN and
+  > never recorded both refuse 34(3)(a) and 34(3)(b) (N4).
+  >
+  > NO POLICY IN FORCE IS A RECORDED VALUE. The insurer row of every new entry is
+  > written as NO_POLICY_IN_FORCE while that is the dated insurance position, and
+  > the database refuses to record an insurer as told on silence.
+
+### `src/modules/compliance/compliance-pages.ts`
+
+- Line 1:
+
+  > THE COMPLIANCE REGISTERS — THE ROUTES. CRM 8 of 10, 12 September 2026.
+  >
+  > Same shape as src/modules/crm/introducers-pages.ts: 'not-mine' for anything outside
+  > /staff/compliance, so the mounting in staff.ts is one line. NOTHING HERE DECIDES
+  > ANYTHING: every read and write authorises itself in the store — src/web/
+  > compliance.ts, compliance-aml.ts, compliance-rights.ts, compliance-breach.ts and
+  > compliance-identity.ts — and this file reads a form and draws the answer.
+
+### `src/modules/compliance/compliance-rights.ts`
+
+- Line 1:
+
+  > THE RIGHTS-REQUEST REGISTER, THE COMPLAINTS LOG, THEIR LETTERS AND THE SEARCH.
+  > CRM 8 of 10, 12 September 2026.
+  >
+  > Built to the Rights-Request Register, Complaints Log and s.164A pack
+  > (08-monday-doc-exports/12927908435) and the Retention and Rights-Request
+  > Operating Procedure (12818099921), section 5.
+  >
+  > TABLE A IS THE REQUEST; TABLE B IS ONE ROW PER LIMB. The Article 12A deadlines
+  > are READ, per limb, by src/modules/compliance/compliance-clock.ts from the inputs recorded
+  > here — never stored, and never one date for a letter that engages two rights.
+  >
+  > THE COMPLAINTS LOG IS COUNTABLE (s.164B): classified on receipt, never revised
+  > once classified, and an unclassified complaint is counted apart — never as no.
+  > The thirty-day acknowledgement deadline is read, and nothing moves it.
+  >
+  > A LETTER REACHES THE OUTBOX AND NOWHERE ELSE. Every letter is a DRAFT, not
+  > approved, is refused if it carries a word that would tip somebody off, and is
+  > written as a COMPLIANCE_LETTER row the outbox marks not sent.
+  >
+  > THE SEARCH FINDS A PERSON WHEREVER THIS APPLICATION HOLDS THEM — through an
+  > organisation, through a lead with no organisation, and at an introducing firm,
+  > with the tasks that name them — and never reaches inside a document: a person
+  > printed on one is in S2, searched separately and logged there.
+
+### `src/modules/compliance/compliance-views.ts`
+
+- Line 1:
+
+  > THE COMPLIANCE REGISTERS — THE PAGES. CRM 8 of 10, 12 September 2026.
+  >
+  > Drawing only. Every value a person typed goes through `h` and is escaped. Every
+  > page carries the known limitation — one person today — because a register that
+  > looks like it has a two-person check, and has not, is worse than one that says so.
+  > S2 has no list page: a person is opened by person_ref, and the search page shows
+  > person_refs, never names.
+
+### `src/modules/compliance/compliance.ts`
+
+- Line 1:
+
+  > THE COMPLIANCE REGISTERS — THE CORE. CRM 8 of 10, 12 September 2026.
+  >
+  > The schema is migration 017. This file holds what every register shares: the
+  > section gate, the dated compliance settings, the reference series, legal holds
+  > and restrictions, cross-references, and the one reading the pipeline asks —
+  > whether customer due diligence stops a claim leaving ENGAGEMENT. The registers
+  > themselves are src/modules/compliance/compliance-aml.ts, compliance-rights.ts,
+  > compliance-breach.ts and compliance-identity.ts; the pages are
+  > src/modules/compliance/compliance-pages.ts; every choice that is not obvious is a row of
+  > Part E of 09-app/docs/CAPREBATE-CRM-DISPOSITION.md from E94.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHO — ADMIN, TODAY, AND ONLY BECAUSE NOBODY ELSE CAN
+  >
+  > None of this is for SALES, ACCOUNTING or SURVEYING. There is no data
+  > protection officer role and ADMIN is a super user, not an officer. The
+  > design's two-person check — the DPO decides, the controller countersigns — is
+  > ONE PERSON in this build: one login types both names. That is recorded on
+  > every register page as a known limitation and is never presented as a check.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > NOTHING IS DELETED AND NOTHING IS DUE BY A STORED FLAG
+  >
+  > Statutory clocks are read by src/modules/compliance/compliance-clock.ts; retention clocks by
+  > src/modules/compliance/compliance-identity.ts from parameters none of which is approved. A
+  > hold blocks a record from the due-for-deletion list; there is no deleter.
+
 ### `src/modules/crm/dashboard-pages.ts`
 
 - Line 1:
@@ -3366,6 +4504,23 @@ neither says.
   > tab or a carriage return is neutralised against spreadsheet formula injection.
   > No export reaches the compliance registers, S2 or the retention list: nothing
   > here reads them.
+
+## 14 Sept 2026: Phase 97
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 115:
+
+  > PHASE 132 (14 September 2026) - a contract OUTSIDE the price book's
+  >      contract-size window (about GBP 2m to GBP 5m). WAITS ON THE SURVEYOR.
+  >      Off, interpolateScale refuses off either end, exactly as it has since
+  >      Phase 97. On, the adjustment is HELD AT THE NEAREST LIMIT and the result
+  >      says which way that errs: above valid_to the valid_to value OVERSTATES
+  >      cost (larger contracts carry lower rates than the book's last point);
+  >      below valid_from the valid_from value UNDERSTATES it. Holding at a limit
+  >      is a convention a surveyor has to accept - it is not the publisher's data -
+  >      which is why it is a gate and not a fix. Only the LEG-E4 contract-size
+  >      scale reads this; the fee bands and every other scale are unaffected.
 
 ## 14 Sept 2026: Phase 132
 
@@ -3528,6 +4683,172 @@ neither says.
 - Line 603:
 
   > (SOP 8's words since Phase 132, 14 September 2026; they said "No CTA sign-off" — clause 1: any tax adviser signs off.)
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 78:
+
+  > PHASE 132 (14 September 2026) - "Stop counting site overheads twice in the
+  >      cost build-up". WHETHER THE UNIT RATE ALREADY CARRIES ON-COSTS IS A FACT
+  >      ABOUT THE PRICE BOOK, NOT ABOUT THE JOB. A replacement-cost rate that
+  >      includes on-costs makes the 18% preliminaries uplift a double count; an
+  >      element rate that excludes them does not. leg_e2_drop_prelims_from_erc
+  >      drops prelims on EVERY residual job whatever book priced it; this gate
+  >      instead reads rates_include_oncosts off the named entry in CB_PRICE_SOURCES
+  >      and drops prelims only where the book says its rates carry them. An
+  >      unnamed book, an unlisted one, or a book whose answer is not recorded
+  >      refuses - it never defaults either way (N4). The two leg_e2 gates are
+  >      alternatives: both on refuses with E_GATE_CONFLICT.
+
+- Line 252:
+
+  > PHASE 132 (14 September 2026). THE PRICE BOOKS, AS FACTS ABOUT EACH BOOK.
+  >    One entry per price source, keyed by an id the job names as price_source:
+  >
+  >      label                 which book and edition
+  >      rates_include_oncosts true | false | null - whether its unit rates already
+  >                            carry site on-costs (prelims). null until someone
+  >                            has READ the book's preamble and recorded the answer.
+  >                            Never defaulted either way (leg_e2_oncosts_by_price_source).
+  >      index_base            the base its location table is indexed to - the same
+  >                            shape as CB_LOCATION_FACTORS.index_base, and it must
+  >                            match that table's declaration exactly
+  >      rates_priced_at_key   the row of the location table the book's unit rates
+  >                            are priced at, so a factor can move them off it
+  >
+  >    EMPTY - every entry describes a book we have not bought, and each fact comes
+  >    from reading that book, not from memory. The shape of an entry is:
+
+- Line 281:
+
+  > LEG-E4b. Contract size adjustment. Larger contracts carry lower unit rates;
+  >    a price book quotes at an assumed contract size and the adjustment moves the
+  >    cost plan off that assumption.
+  >
+  >    THIS TABLE IS A CONTINUOUS SCALE, NOT A SET OF BANDS. Corrected 7 September
+  >    2026 (Phase 97). It shipped as bands: [floor, ceiling, factor] read through
+  >    bandLookup, and that was wrong in two ways at once:
+  >
+  >      (a) the published scale is INTERPOLATED between its tabulated points, not a
+  >          step function. A step function puts a discontinuity in the middle of
+  >          the scale - two jobs GBP 1 apart either side of a band edge get
+  >          materially different replacement costs, which the source does not say
+  >          and cannot defend.
+  >      (b) the source publishes a PERCENTAGE ADJUSTMENT (e.g. -5%), and the band
+  >          slot held a FACTOR (0.95). Loading published figures straight into that
+  >          slot would have silently multiplied every cost by about -5 rather than
+  >          by 0.95. quoted_as now states which of the two the points hold, and
+  >          percentageAdjustmentToFactor does the conversion in one place.
+  >
+  >    AND IT HAS A VALIDITY WINDOW, WHICH REFUSES RATHER THAN EXTRAPOLATES. The
+  >    book declares its adjustment valid only over a stated contract-value range -
+  >    about GBP 2m to GBP 5m. Outside that range there is no published adjustment,
+  >    and a linear extrapolation off the end of a curve the publisher did not draw
+  >    is our invention, not their data. valid_from / valid_to are therefore
+  >    REQUIRED on a loaded table and an out-of-range contract value throws.
+  >    This is not a theoretical path: the standing worked example on the board is a
+  >    GBP 6m contract, so refusal is what will fire first when the book is bought.
+  >    Phase 132 (14 September 2026) added the surveyor's alternative behind
+  >    leg_e4_contract_size_outside_window, OFF: hold at the nearer limit and say
+  >    which way that errs. Off, the refusal above is unchanged.
+  >
+  >    points are [contract_value, published_value] pairs, ascending on
+  >    contract_value, at least two, all inside the validity window.
+  >    EMPTY - same purchase.
+
+- Line 383:
+
+  > N4 (Phase 132, 14 September 2026). A key a job states is KNOWN only if it is
+  >    a non-empty string that is not one of the ways a form records "I don't know".
+  >    "unsure" and an absent value are the same fact - nothing was stated - and
+  >    must reach the same refusal. Without this, "unsure" is looked up as if it
+  >    were a region name and fails with a different code from an absent key,
+  >    which is two behaviours for one fact.
+
+- Line 460:
+
+  > Linear interpolation across a published, tabulated scale, with the
+  >    publisher's own validity window enforced as a REFUSAL.
+  >
+  >    WHY NOT bandLookup. A banded lookup is right for a scale the source itself
+  >    publishes as bands - the VOA professional fee scale is one, where every
+  >    contract in a band genuinely carries the same rate. It is wrong for a scale
+  >    the source publishes as points on a curve, because it invents a step the
+  >    publisher did not draw and makes two near-identical jobs diverge at the edge.
+  >
+  >    WHY IT REFUSES OFF THE ENDS. Interpolation stays inside data the publisher
+  >    stands behind. Extrapolation is us continuing their line for them. Where the
+  >    book states a validity range, outside it there is no published adjustment at
+  >    all - so this throws, exactly as an unlisted location throws rather than
+  >    falling back to the mean. Unknown is not a branch.
+  >
+  >    ONE OPTION, AND ITS DEFAULT IS THE REFUSAL (Phase 132, 14 September 2026).
+  >    options.outside is "refuse" (the default, and what every caller got before)
+  >    or "hold_at_limit": outside the window, read the scale AT the nearer limit
+  >    and say so in held_at_limit ("upper" | "lower"). That is still not
+  >    extrapolation - no value is invented past the publisher's range - but it is
+  >    a convention, and only the LEG-E4 contract-size caller may ask for it, and
+  >    only behind leg_e4_contract_size_outside_window. An option this function
+  >    does not recognise refuses rather than falling back to either behaviour.
+  >
+  >    scale: { quoted_as, valid_from, valid_to, points: [[x, y], ...] }
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 637:
+
+  > THE BLANK-FIELD CONTROL, SERVED. Phase 132, 14 September 2026 — calibration
+  > instrument open item O-2.
+  >
+  > ONE FIELD IN TEN, PER JOB, IS SHOWN WITH NOTHING IN IT, and the module decides
+  > which: `isBlankControl` is FNV-1a over `job_id::field_id`, so the same job is in
+  > the same arm on every request and the arm can be reconstructed from the job id
+  > when the data is audited. A random draw here would be unreconstructable, and an
+  > unreconstructable control arm is not a control.
+  >
+  > THE PROPOSAL IS FORCED TO NULL, INCLUDING THE SURVEYOR'S OWN LIBRARY FIGURE.
+  > The control measures where an UNANCHORED surveyor lands; their own earlier
+  > figure is an anchor too, so it is withheld on a control field exactly as a
+  > platform default would be. It is not lost — it is offered again on the next
+  > job where this field is not a control.
+  >
+  > BUILT LIVE, NOT SWITCHED OFF. It changes no client's figure, and a switch would
+  > defeat the one requirement it has: it must be running on the first job, because
+  > it cannot be retrofitted onto jobs that were already shown a pre-fill.
+
+- Line 897:
+
+  > THE CONTROL OBSERVATION — AND THE DECISION ABOUT WHERE A CONTROL FIELD'S
+  > FIGURE GOES. Phase 132, 14 September 2026.
+  >
+  > IT GOES IN BOTH PLACES, AND THE RATE EVENT ABOVE IS NOT OPTIONAL. The job's
+  > rates ARE `surveyor_rate_events`: the job list's "rates recorded" count, the
+  > workspace's "recorded on this job" column and the surveyor's own library are
+  > all read from it, and nothing else holds a job's rate. A blank control
+  > measures anchoring; it must not drop a field from the job the surveyor
+  > measured. So the figure is recorded as the job's rate — flagged
+  > `blank_control = 1`, origin NOTHING_PROPOSED, which every calibration metric
+  > already excludes — AND, where all four conditions below hold, as a control
+  > observation.
+  >
+  > ONLY ON THE COMMITMENT. An amendment is made after our estimate was released,
+  > by someone who has now seen our figures; its value is not unanchored. The
+  > insert is ON CONFLICT DO NOTHING and migration 023 refuses an edit, so the
+  > value committed before release is the observation for good.
+  >
+  > ONLY ON A CLEAN JOB, AND WITHOUT REFUSING THE COMMITMENT OTHERWISE.
+  > `ControlStore.record` refuses a non-CLEAN observation — "an anchored control
+  > arm measures nothing" — and that refusal is right for the arm and wrong for
+  > the surveyor. A job marked EXPOSED because a client read our figure down the
+  > telephone has done nothing to deserve a refused commitment, so on a non-CLEAN
+  > job no control row is written and the commitment proceeds.
+  >
+  > ONLY WHERE THE SURVEYOR CONFIRMED THEY LOOKED. The pre-filled arm this is
+  > compared with (`blankControlComparison`) excludes NOT_REVIEWED events, so the
+  > control arm excludes unconfirmed ones too — the two arms have to be drawn the
+  > same way, or the gap between them measures the difference in how they were
+  > drawn. N4: a box left unticked and a box posted as "not sure" are the same
+  > `reviewed: false`, and neither writes a control row.
 
 ### `src/shared/engine.ts`
 
@@ -3755,7 +5076,93 @@ neither says.
   > approval, or an approval missing who gave it or its reference, is refused. A
   > record that was never deleted has nothing to restore and passes.
 
+### `src/modules/compliance/compliance-identity.ts`
+
+- Line 344:
+
+  > The determinations, as they stand. NOT ONE IS APPROVED; changing that is the data protection officer's signature, then one line here.
+  > Phase 132: RET-1 to RET-4 as Retention Determinations section 12 drafts them (12.2–12.6, restated at 13.2) — drafted, so
+  > DERIVED, NOT APPROVED. RET-5, RET-6 and RET-7 checked against sections 2.3, 3.3, 4.3, 11 and 13.2: period, trigger and state agree.
+
+- Line 380:
+
+  > Phase 132 — migration 022. RET-3 needs `verified_at` and, where backups are pending, the last copy's expiry: no date is computed here.
+
+- Line 404:
+
+  > DOCUMENT_VERSIONS only (Phase 132): RET-7's two dates for each document, read from its claim — known or not known.
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 766:
+
+  > PHASE 132. THE TWO leg_e2 GATES ARE ALTERNATIVES, NOT LAYERS. One drops
+  >      prelims on every residual job; the other decides per price book. Both on
+  >      means nobody has decided which rule governs - refused, as the fee gates
+  >      refuse when only one of their pair is on.
+
+- Line 1093:
+
+  > PHASE 132. The bare mean is gone; a table still carrying one refuses rather
+  >      than being divided by it.
+
+- Line 1178:
+
+  > PHASE 132, N4. A contract value is required once the gate is on. An absent
+  >      one and one recorded as not known refuse identically; neither is the book's
+  >      assumed contract size.
+
+- Line 1200:
+
+  > Off: throws E_SCALE_VALUE_OUT_OF_RANGE outside the book's stated window
+  >      rather than extrapolating - see interpolateScale. On (Phase 132, waits on
+  >      the surveyor): held at the nearer limit and flagged with the direction of
+  >      the error.
+
+- Line 1877:
+
+  > price_source is read only by leg_e2_oncosts_by_price_source (Phase 132);
+  >      with that gate off it is carried and ignored.
+
+### `src/modules/survey/surveyor-pages.ts`
+
+- Line 489:
+
+  > PHASE 132 — THE BLANK-FIELD CONTROL. No figure and no proposal text: the
+  >              label names whose figure a proposal is, and on a control field there is
+  >              none to name. What the surveyor IS told is that the gap is deliberate,
+  >              which anchors nothing.
+
+- Line 561:
+
+  > PHASE 132, 14 SEPTEMBER 2026 — THE "I LOOKED AT THIS FIELD" BOX NO LONGER STARTS TICKED.
+  >
+  > Ticked by default, it recorded `reviewed` for every field nobody touched, so
+  > NOT_REVIEWED could never fire and the instrument's unreviewed rate read zero by
+  > construction: the confirmation was the form's, not the surveyor's. A review is
+  > now a positive act. An unticked box, and a posted value other than "on" such as
+  > "not sure", both read as not reviewed — see `ratesFrom`.
+  >
+  > A BLANK-CONTROL FIELD IS SERVED EMPTY HERE TOO. `rateLibrary` has already nulled
+  > its proposal; the `blank_control` check on the input's value says so where the
+  > input is built, so a later change to the proposal cannot put a figure back in it.
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 461:
+
+  > PHASE 132. True where `isBlankControl(job, field)` puts this field in the
+  > control arm on this job: it is shown EMPTY, whatever we or the surveyor's own
+  > library would otherwise have proposed. Deterministic, so a reload serves the
+  > same arm.
+
 ## 15 Sept 2026: Phase 132c
+
+### `src/modules/compliance/compliance-rights.ts`
+
+- Line 162:
+
+  > DRAFT (Phase 132c wording, Block A), for the data protection officer
 
 ### `src/modules/crm/introducers.ts`
 
@@ -3787,6 +5194,66 @@ neither says.
   >     with boundary data once we have it; it never switches fetching on.
   >   - anything else, including "not sure" and undefined: refused, with the
   >     same answer every time.
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 1087:
+
+  > -----------------------------------------------------------------------------
+  >    THE RATE CARD'S MARGINAL BANDS — A RECORD. THERE ARE NO BANDS (Phase 132e).
+  >
+  >    The rate card as published banded the fee like income tax: each band applied
+  >    only to the slice inside it. Lakhbir's answer of 15 September 2026 removed the
+  >    bands ("no banding - flat fee of 3%"). The table and the function are kept so
+  >    the old card's figures can be reproduced, and NEITHER IS A DEFAULT ANY MORE:
+  >    a caller must pass bands explicitly. Its published breakpoints — £250,000 and £1,000,000 — are
+  >    breakpoints IN THE BASE, and the base changed. This function takes the
+  >    breakpoints as a parameter for exactly that reason: which breakpoints the
+  >    rebuilt card should carry is a decision, not arithmetic, and this file
+  >    refuses to make it. It will price either.
+  >    ---------------------------------------------------------------------------
+
+## 15 Sept 2026: Phase 132f
+
+### `src/modules/compliance/compliance-rights.ts`
+
+- Line 114:
+
+  > Pack 5.7, the onward route, as it must be stated — in every refusal and every access response.
+  >
+  > DRAFT 15 September 2026 (Phase 132c), FOR THE DATA PROTECTION OFFICER: the regulator named both ways. Copied by
+  > Phase 132f (16 September 2026) from 03-app/caprebate-notices-page.html, where the dated dual wording is Block A's
+  > and the option 2 and 3 text below is Block F's, word for word: S.I. 2026/1015 reg 2(c) moves the functions to the
+  > Information Commission on 30 September 2026 and s.118 abolishes the office of Information Commissioner, so "the
+  > Information Commissioner" alone is wrong from that day. Not approved; shortening it after that date is the officer's.
+
+## 15 Sept 2026: Phase 151b
+
+### `src/modules/finance/finance.ts`
+
+- Line 180:
+
+  > THE NO-CLAIM THRESHOLD, WHERE THE FEE IS SHOWN AGAINST THE BENEFIT — Phase 132f, reading Phase 132e's engine output.
+  >
+  > CB_FEE.display returns `recommendation_threshold` on every call: the five-year relief (CB_BENEFIT's cumulative
+  > benefit) less our fee, against £1,000 (NO_CLAIM_THRESHOLD, Lakhbir, read 15 September 2026). It REFUSES NOTHING,
+  > withholds nothing and moves no figure: the figures are printed, the client chooses, and the reading is marked for
+  > the tax adviser, whose review of it is outstanding (its own `awaiting_tax_adviser_review`).
+  >
+  > ONE READING PER RATE, COMBINED AS THE COMPARISON IS. It is BELOW_THRESHOLD only where every reading is determined
+  > and fires; AT_OR_ABOVE_THRESHOLD only where every reading is determined and none fires; otherwise UNDETERMINED.
+  > No reading at all — no entity type, so no rate — is UNDETERMINED. An unknown relief is never nil relief, so an
+  > unknown never tells anyone not to claim (N4).
+  >
+  > PHASE 151b, 25 September 2026 — VAT. Word question 61, Lakhbir, closed 24 September 2026: "The relief is
+  > calculated over the 5 years – and must include VAT". The five years was already the measure (CB_BENEFIT's horizon)
+  > and is unchanged. The VAT rule is the ENGINE'S (CB_FEE.NO_CLAIM_VAT), and this file only says what it did:
+  >   · we are not VAT-registered (today) — there is no VAT on our fee, and the test is exactly what it was;
+  >   · registered, and the client cannot reclaim VAT — the fee plus VAT is what comes off the relief;
+  >   · registered, and the client can reclaim it — the fee alone;
+  >   · registered, and the client's position not known — UNDETERMINED, never "do not claim".
+  > NO INVOICE RECORDS THE CLIENT'S VAT POSITION ON OUR FEE, so nothing here passes one, and while we are not registered
+  > that changes nothing. `ComparisonFacts.client_vat` is there for a caller that does know it.
 
 ## 16 Sept 2026: Phase 132
 
@@ -4160,6 +5627,23 @@ neither says.
   > src/modules/claims/fee-controls.ts never sees it; no ceiling is checked because none is
   > decided, and nothing is refused for want of one.
 
+### `src/modules/compliance/compliance.ts`
+
+- Line 202:
+
+  > PHASE 132e, 16 SEPTEMBER 2026 — READ AGAINST LAKHBIR'S "we need to do AML check on every client", AND LEFT OFF.
+  > The phase brief said: switch it on as business policy only if doing so records checks without refusing a claim for
+  > want of a risk rating nobody has defined; if switching it on would refuse or block any work, leave it off. Re-derived
+  > in code: ON, `cddGateNeed` below refuses every claim's move out of ENGAGEMENT until a FINISHED check is on record for
+  > its organisation (src/modules/crm/pipeline.ts). Finishing needs what was identified, how it was verified, an evidence
+  > document or register number, the beneficial ownership position (and at least one owner where it is RECORDED), the
+  > authority to bind and its evidence, and the date — `missingForCompletion` in compliance-aml.ts. It does NOT need a
+  > risk rating (free text or nothing). So it would not refuse for want of a scale, but it WOULD block work at
+  > ENGAGEMENT, and so it stays off. A check can be kept on the register for every client today, with the switch off.
+  > Turning it on is one dated, sourced record on the compliance page — no code change.
+  > NOTHING HERE DECIDES WHETHER MONEY LAUNDERING SUPERVISION LEGALLY APPLIES TO CAPREBATE. That is the question
+  > "Is AML supervision legally required for this business?", with the accountant and a solicitor.
+
 ### `src/modules/crm/automation.ts`
 
 - Line 556:
@@ -4269,6 +5753,82 @@ neither says.
   > twenty minutes' time is doing it while talking to the client, which is the
   > one circumstance in which it is the right thing to do.
 
+### `src/modules/finance/finance.ts`
+
+- Line 1:
+
+  > THE ACCOUNTING VIEW — Caprebate's own finance. Block F, part three.
+  >
+  > SETTLED 6 SEPTEMBER 2026, AND THE FIRST SENTENCE IS THE WHOLE DESIGN: this
+  > is CAPREBATE'S finance, not the client's accountant. The client's accountant
+  > is a different actor, has no login at all, and receives the computation pack
+  > offline — the Developer Brief's actor table still says so and it is still
+  > true.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > WHAT THIS ROLE SEES, AND IT IS A CLOSED LIST
+  >
+  >   the client's name · the claim value · the fee · invoice raised or not ·
+  >   payment received or not · the VAT position
+  >
+  > WHAT IT DOES NOT SEE, AND EACH IS REFUSED BY A RULE WITH A TEST AGAINST IT:
+  >
+  >   the questions and answers   — not on assessment.read or answer.read
+  >   the register data           — not on register_record.read
+  >   the internal notes          — not on internal_note.read
+  >   the surveyor's workings     — not on surveyor_job.read or .enter
+  >   our estimate                — not on estimate.read
+  >
+  > ENFORCED TWICE, AND THE SECOND TIME IS THE ONE THAT LASTS. `can()` refuses
+  > each of those, and the `invoices` table carries no join to any of them, so a
+  > finance screen that wanted one would have to go and get it from somewhere
+  > this file cannot reach. Migration 006 says at length why the five facts the
+  > fee comparison needs were COPIED ONTO THE INVOICE rather than joined at
+  > display time: the alternative was this file reading `assessment_answers` and
+  > `estimates`, which is exactly the reach the shape restriction exists to
+  > prevent.
+  >
+  > ───────────────────────────────────────────────────────────────────────────
+  > THE FEE VERSUS WHAT THE CLIENT ACTUALLY GETS BACK
+  >
+  > CB_FEE computes the fee, CB_BENEFIT models the relief, and the comparison
+  > between them is returned on EVERY call whether or not a switch is on. It is
+  > shown here because this is the role that most needs it and the only one that
+  > sees the fee at all.
+  >
+  > BOTH CB_FEEGUARD SWITCHES ARE OFF AND THIS FILE DOES NOT TOUCH THEM. The
+  > rendered amount is 3% of the allowances identified, as it ships (5% until Phase 132e). Displaying
+  > the comparison changes no figure — capping the fee at the year-one benefit
+  > is Q90(a) and attaching a case-specific warning is Q90(b), and both are
+  > decisions for Lakhbir rather than for a screen.
+  >
+  > AND THE ARITHMETIC IS STILL UNCOMFORTABLE, ON PURPOSE — BUT IT MOVED WITH THE FEE.
+  > At 5% a company's year-one relief fell short of the fee at any rate and any
+  > pool split (18% × 26.5% is 4.77%). At 3% (Phase 132e, 16 September 2026) it
+  > depends on the split: on the main pool, 18% × 26.5% = 4.77% and 14% × 26.5% =
+  > 3.71% both exceed 3%, and on the special-rate pool 6% × 26.5% = 1.59% does
+  > not. So this view shows the comparison the engine returns, and says nothing of
+  > its own about which way it falls.
+
+### `src/modules/finance/invoices.ts`
+
+- Line 468:
+
+  > Phase 132e: reward model C accrues its percentage on the fee AS INVOICED — silent unless C is the setting.
+
+- Line 539:
+
+  > Phase 132e: a fee reduced under clause 13 reverses reward model C's percentage on it — a reversing entry, never a delete.
+
+- Line 662:
+
+  > Phase 132e: WHEN THE FEE IS EXPECTED — the date our report was delivered for filing, which is when the fee is
+  > earned (FEE_TRIGGER). Null where no delivery is recorded: an unknown delivery has no date, and is never today.
+
+- Line 733:
+
+  > Phase 132e: a fee is expected in the month our report was delivered for filing; with no delivery recorded it is in no month.
+
 ### `src/modules/portal/client-filing.ts`
 
 - Line 1:
@@ -4336,6 +5896,49 @@ neither says.
   > schedule.ts), one `booking_changes` row with `cancelled = 1`, one outbox line
   > (not sent) and one audit line. WHAT IT DOES NOT DO: delete anything, or touch
   > the lead, the claim or the organisation — the enquiry stays open.
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 837:
+
+  > =============================================================================
+  >    7. THE CROSS-CHECK AGAINST THE FEE GUARD
+  >
+  >    The fee guard (CB_FEEGUARD / CB_BENEFIT, Phase 77) established that at 5%
+  >    the fee exceeded every company client's year-one benefit at any pool split.
+  >    At 3% (Phase 132e) that is no longer true: a company on main-pool plant
+  >    clears the fee in year one and a company on special-rate plant does not, so
+  >    the pool split now decides it. This module establishes where a job stops
+  >    paying US.
+  >
+  >    PUT TOGETHER, THERE IS A BAND WHERE BOTH ARE TRUE AT ONCE: the job loses us
+  >    money AND the client is out of pocket in year one. That band is the worst
+  >    possible engagement — we subsidise work the client would rather not have
+  >    bought — and the phase asked for it to be named rather than discovered.
+  >
+  >    THIS FUNCTION DOES NOT RE-IMPLEMENT CB_BENEFIT. It takes the comparison
+  >    object CB_BENEFIT.compare() already returns. The test loads the shipped
+  >    engine and passes a real one, so this cross-check is against the real fee
+  >    guard and not against a copy of it that could drift.
+  >    =============================================================================
+
+- Line 1412:
+
+  > S7.3, second requirement: the CURRENT YEAR'S ACTUAL job volume, not an
+  >      assumed 100. SUPPLIED 15 SEPTEMBER 2026: Lakhbir Dhillon gave 120 jobs
+  >      this year when he switched the gate on (answer read that day, built by
+  >      Phase 132e on 16 September 2026). It was null until then. The site's
+  >      CB_GATE_CONFIG.jobs_per_year restates it and Suite T asserts the two agree.
+  >      120 is about five to seven times the business plan's own volume (16 in
+  >      year one; the papers use 25), so the warning below applies to it.
+  >
+  >      WHY THIS ONE MATTERS MORE THAN IT LOOKS. At 25 jobs a year the S1 loaded
+  >      cost for dental is £5,390 against £3,590 at 100 — 50% higher — and the
+  >      business plan model's own ramp reaches 16 jobs in year one, not 25. A gate
+  >      calibrated on 100 does not merely mis-price: it passes every job that
+  >      loses money for the whole of year one, which is the exact failure the gate
+  >      exists to stop. Defaulting this to 100 would build the defect into the
+  >      control.
 
 ### `src/shared/engine.ts`
 
@@ -4442,6 +6045,23 @@ neither says.
   > `outcome` FIRE routes this fee to the engine's own words, "we will come back to you with a price": nothing is
   > quoted automatically, and the figures stay for the person pricing it by hand. UNDETERMINED — an unknown fee, an
   > unknown sector, supported living — is neither. The placeholder caveat is carried on every reading.
+
+### `src/modules/finance/finance-pages.ts`
+
+- Line 403:
+
+  > PHASE 132f — the engine's no-claim threshold, beside the fee against the benefit. Marked for the tax adviser,
+  > printing the figures, refusing nothing. UNDETERMINED says why and draws no verdict.
+
+### `src/modules/finance/finance.ts`
+
+- Line 176:
+
+  > PHASE 132f — the engine's £1,000 no-claim threshold (CB_FEE.recommendationThreshold), for the tax adviser.
+
+- Line 224:
+
+  > The sentence the tax adviser reviews. Phase 151b added the VAT sentence (question 61); the rest is Phase 132f's.
 
 ### `src/shared/engine.ts`
 
@@ -4844,6 +6464,22 @@ neither says.
   > NOTHING HERE WIDENS WHAT A LOGIN MAY OPEN. Every button is an address that login's own menu already offers, and
   > test/phase133c.test.ts opens each one as that login and requires 200.
 
+### `src/modules/admin/settings.ts`
+
+- Line 442:
+
+  > PHASE 133a — THE GATE OF USERS AND ROLES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+  > src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
+  > every menu link for every login, so a gate that drifted from its route fails there.
+
+### `src/modules/admin/templates.ts`
+
+- Line 347:
+
+  > PHASE 133a — THE GATE OF THE EMAIL TEMPLATES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+  > src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
+  > every menu link for every login, so a gate that drifted from its route fails there.
+
 ### `src/modules/claims/documents.ts`
 
 - Line 1681:
@@ -4855,6 +6491,14 @@ neither says.
 - Line 1690:
 
   > PHASE 133a — THE GATE OF THE DOCUMENT TYPES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
+  > src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
+  > every menu link for every login, so a gate that drifted from its route fails there.
+
+### `src/modules/compliance/audit-log.ts`
+
+- Line 105:
+
+  > PHASE 133a — THE GATE OF THE AUDIT LOG, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
   > src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
   > every menu link for every login, so a gate that drifted from its route fails there.
 
@@ -4961,6 +6605,19 @@ neither says.
 
 ## 17 Sept 2026: Phase 133b
 
+### `src/modules/admin/configuration-pages.ts`
+
+- Line 50:
+
+  > PHASE 133b — after a save, land on the section saved. A list code is capitals and underscores (the routes' own pattern); anything else lands at the top.
+
+- Line 146:
+
+  > PHASE 133b — ADMIN SETTINGS AS A LEFT-HAND SECTION LIST. Every list, every set of reasons, the four summaries of other
+  > admin screens and what a setting may not change are each a section, in the order the page drew them, with the same
+  > words and the same forms; the list down the left links to each by anchor, and the stylesheet shows one at a time. With
+  > the stylesheet off every section shows, one after another. The view is the same one `configurationView` returned.
+
 ### `src/modules/claims/documents-pages.ts`
 
 - Line 558:
@@ -4986,6 +6643,21 @@ neither says.
   > A QUICK ACTION IS OFFERED ONLY WHERE ITS CONTROL IS ON THE PAGE for this login: Run the research only when the rate
   > allows it (panel 2 draws the button then), Ask for a missing fact only when something is missing (panel 3 draws the
   > forms then), Add a note only for a login that may read and write notes (panel 5 draws the form then).
+
+### `src/modules/survey/surveyor-pages.ts`
+
+- Line 294:
+
+  > PHASE 133b — THE WORKSPACE ON THE RECORD LAYOUT. The six numbered sections become six tabs, in their order, each drawn
+  > by the same panel function from the same workspace; "Our estimate" — withheld or released — moves to the right-hand
+  > panel, so it is beside every tab rather than above the first. The workspace and its payload are built exactly as before,
+  > forwards, before a line of this is drawn: the layout reads the view, it never shapes it.
+  >
+  > THE HIGHLIGHTS CARRY NO FIGURE. They say whether our estimate is withheld or released — never what it is — and the
+  > counts of rooms and rates this job's own tables already show. `payload-proof` is re-run on this page.
+  >
+  > "YOUR FIGURES" IS THE QUICK ACTION, offered only where section 5 draws a form for this login: commit before, amend
+  > after. Recording a room count is offered where section 2 draws its forms.
 
 ### `src/shared/components.ts`
 
@@ -5108,6 +6780,12 @@ neither says.
 - Line 227:
 
   > PHASE 133c: a deciding fact with nothing recorded is not known, and says so
+
+### `src/modules/compliance/compliance.ts`
+
+- Line 193:
+
+  > Phase 133c: a setting nobody has recorded reads "Not set"
 
 ### `src/modules/crm/crm-pages.ts`
 
@@ -5386,6 +7064,30 @@ neither says.
 
   > PHASE 133e (D4, continued): the only thing a password change can be refused on here is the current one.
 
+### `src/modules/admin/configuration.ts`
+
+- Line 55:
+
+  > PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one.
+
+### `src/modules/admin/settings.ts`
+
+- Line 53:
+
+  > PHASE 133e (D4, continued): the posted field this refusal is about, where it is about one, so the account
+  > settings and the Create-a-user form can draw the message beside that field instead of at the top. A refusal
+  > about the account rather than a field — no such user, the last administrator, your own role — carries none.
+
+### `src/modules/admin/templates.ts`
+
+- Line 200:
+
+  > PHASE 133e (D4, continued): a refusal names the posted field it is about, where it is about one.
+
+- Line 307:
+
+  > PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one.
+
 ### `src/modules/claims/claim-facts.ts`
 
 - Line 58:
@@ -5420,6 +7122,31 @@ neither says.
 - Line 301:
 
   > PHASE 133e (D4, continued): a refusal names the field it is about, so the form can draw it beside that field.
+
+### `src/modules/finance/finance.ts`
+
+- Line 468:
+
+  > PHASE 133e (D4, continued): `field` names the posted field a refusal is about, where it is about one.
+
+### `src/modules/finance/invoices.ts`
+
+- Line 59:
+
+  > PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one, so the
+  >  message is drawn beside that field rather than at the top of the form. A refusal about the invoice's own
+  >  state — already sent, already cancelled, nothing owed — is about no one field and carries none.
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 374:
+
+  > PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. A refusal
+  >  about the job's own state — already committed, no sealed estimate — is about no one field and carries none.
+
+- Line 702:
+
+  > PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one.
 
 ## 18 Sept 2026: Phase 133i
 
@@ -5624,6 +7351,15 @@ neither says.
 - Line 450:
 
   > ------------------ SECTION 3 · the one client page, and a claim inside it (Phase 134)
+
+### `src/modules/admin/templates.ts`
+
+- Line 277:
+
+  > PHASE 134 — AN EMAIL'S SUBJECT LEADS WITH THE COMPANY. Lakhbir, 18 September 2026: the client is the company, and a
+  > person reads the company's name first. A merged subject that does not already start with it gets it in front:
+  > "Elverton Private Hospital Limited — Documents we still need". Where the company has no name recorded, nothing is
+  > invented — the subject is left as merged.
 
 ### `src/modules/claims/documents.ts`
 
@@ -5927,6 +7663,20 @@ neither says.
 - Line 291:
 
   > ------------------------------------------ PHASE 135 · Settings, one page of tiles (Admin)
+
+### `src/modules/admin/admin-tiles.ts`
+
+- Line 1:
+
+  > SETTINGS — ONE PAGE OF TILES, FOR ADMIN. PHASE 135, 21 September 2026.
+  >
+  > Until this phase Admin's menu was eight tabs of setup screens — Users, Admin settings, Document types, Automation, Email
+  > templates, Compliance, Audit log — and the reward model under More. Lakhbir asked for menus that do not repeat and are
+  > not bloated, so the setup screens moved behind one "Settings" tab: a page of tiles, one per screen.
+  >
+  > NOTHING HERE DECIDES WHO MAY DO WHAT. Each tile names the gate its screen's store calls first, and is drawn only where
+  > that gate admits the login. The page's own gate is `user.list`, Admin's, because the brief made Settings Admin's page;
+  > every screen behind a tile still answers its own address, for every login its own gate admits, exactly as before.
 
 ### `src/modules/claims/engaged-pages.ts`
 
@@ -6751,6 +8501,28 @@ neither says.
 
   > PHASE 141 — what a person reads after saving an email while sending is off. Lakhbir's words.
 
+### `src/modules/admin/configuration-pages.ts`
+
+- Line 126:
+
+  > PHASE 141 — WHO EVERY EMAIL COMES FROM, AS ONE SETTING. Read by the outbox for every email it writes. Admin changes it;
+  > Sales reads it. Whether emails are actually sent is not a setting: it is EMAIL_SENDING, in code, off until its three
+  > conditions are met.
+
+### `src/modules/admin/templates.ts`
+
+- Line 114:
+
+  > PHASE 141 — WHY A FREE-TYPED EMAIL IS REFUSED, OR NULL. The same words and shapes a template is refused for: never bank
+  > details, never an invoice (it waits on the invoice-fraud procedure), and nothing that would tip somebody off. Typing an
+  > email yourself does not step round a rule a template is held to.
+
+- Line 129:
+
+  > PHASE 141 — A TEMPLATE MERGED AS PLAIN TEXT, to start a free-typed email from. The same values and the same visible gap
+  > for a value nobody recorded; nothing is escaped here because the text goes into a box to be edited, and the page
+  > escapes it when drawing it.
+
 ### `src/modules/crm/client-page.ts`
 
 - Line 178:
@@ -7310,6 +9082,12 @@ neither says.
   > ACCOUNTING_PERIOD_END fact, a VALUE only — UNKNOWN reads null, as no row does, N4) and the EARLIEST issue of the client
   > report. Each YYYY-MM-DD, or null where not known. One reader, so the two can never disagree about a claim.
 
+### `src/modules/compliance/compliance-identity.ts`
+
+- Line 394:
+
+  > Phase 142a — the two chat threads. Their clean-up job is built and switched off (MESSAGE_RETENTION); the period is the officer's.
+
 ### `src/modules/crm/inbound-email.ts`
 
 - Line 59:
@@ -7365,6 +9143,12 @@ neither says.
   > PHASE 142b — THE THREAD WITH THE CLIENT, FOR THE SURVEYOR ON AN ASSIGNED JOB. Read only: no form, and nothing marked
   > read. Lakhbir, 22 September 2026: the surveyor sees "With the client", never "Team only". Null for a login the rule
   > does not admit, so the tab is not drawn at all.
+
+### `src/modules/survey/surveyor-pages.ts`
+
+- Line 323:
+
+  > PHASE 142b: the thread with the client, read only, where the rule admits this login.
 
 ## 22 Sept 2026: Phase 143
 
@@ -7495,6 +9279,13 @@ neither says.
 
 ## 22 Sept 2026: Phase 144a
 
+### `src/modules/admin/configuration.ts`
+
+- Line 98:
+
+  > PHASE 144a — THE NAME A PERSON READS FOR EACH OF THOSE SETTINGS. The key (STAGE_GATE:INVOICE, FEE_TRIGGER …) is
+  > still the value a form posts and the store records; the screen shows this label instead of the key.
+
 ### `src/modules/assessment/assessment.ts`
 
 - Line 1:
@@ -7531,6 +9322,13 @@ neither says.
   > CB_FUNNEL's, the channels and consents are CB_BOOKING's. Nothing in this
   > file decides a tax question, and `grep` for a rate or a band here returns
   > nothing.
+
+### `src/modules/finance/finance-pages.ts`
+
+- Line 475:
+
+  > PHASE 144a — THE FEE-CAP BOX READS THE TWO SWITCHES. It said "both are off" in fixed words whatever the switches
+  > said; now each sentence is chosen by the switch it describes, so the words cannot disagree with the brackets.
 
 ### `src/modules/portal/portal.ts`
 
@@ -8742,6 +10540,16 @@ neither says.
   > would invent a retrieval, which is the one thing the source register exists to prevent. `failure_code` is written
   > for a FAILED lookup and cleared for any other.
 
+### `src/modules/survey/surveyor.ts`
+
+- Line 258:
+
+  > PHASE 146c: A PRICE A REGISTER GIVES IS NOT A SURVEYOR'S INPUT. Before this phase no register could give one; the sale
+  > price lookup (HM Land Registry's Price Paid Data) now can. "An amount agreed between buyer and seller is a number a
+  > surveyor could anchor on as readily as our own, so it waits with our estimate" — the rule CRM 6 wrote for the claim's
+  > facts (RELEASED_FACTS_TO_SURVEYOR in src/payload.ts), applied here to the register records the same way: the field
+  > is left out of the surveyor's job, never read into it. The rest of the record — the date, the tenure — still goes.
+
 ## 23 Sept 2026: Phase 146d
 
 ### `src/core/secrets.ts`
@@ -9200,6 +11008,17 @@ neither says.
   >          the supplier's own terms say ("any 4xx other than a 402 and any 5xx is never billed"). A charge we could
   >          not read at all is null, never 0, and is left out of the sum rather than counted as free.
 
+### `src/modules/survey/surveyor.ts`
+
+- Line 267:
+
+  > PHASE 146d: THE TITLE REGISTER'S PRICE IS THE SAME KIND OF NUMBER AND WAITS THE SAME WAY. An official copy
+  >      records the price paid, or the value stated where no price was paid, and either is an amount agreed between a
+  >      buyer and a seller — a number a surveyor could anchor on as readily as our own. It is left out of the
+  >      surveyor's job; the tenure, the dates and the title number still go. This matters MORE here than it does for
+  >      the free sale-price lookup, not less: this is the source that carries a price for COMMERCIAL property, which
+  >      is the four sectors a surveyor is most often valuing.
+
 ## 23 Sept 2026: Phase 146e
 
 ### `src/modules/claims/uploads.ts`
@@ -9262,6 +11081,26 @@ neither says.
   > server-side — `assertSignedEngagement`, which since Phase 146f reads the signature RECORD and not merely a letter
   > marked SIGNED. Then the source's own switch, then its key. Every one of those is off or absent today, so a click
   > contacts nobody.
+
+### `src/modules/admin/settings.ts`
+
+- Line 451:
+
+  > ================================================================== *
+  > ADDRESSES WE CANNOT EMAIL — PHASE 146g, 23 September 2026
+  >
+  > Phase 146f recorded bounces and stopped sending to an address that bounced
+  > for good, and `liftSuppression` (src/integrations/email/email-provider.ts) was written for
+  > a member of staff to say the address works again — with no screen to say it
+  > from. So an address stopped for good was stopped for ever, and the only way
+  > back was somebody with the database file.
+  >
+  > ADMIN ONLY, and a lift is a NEW ROW. Nothing is edited and nothing is
+  > deleted: the bounce stays on record, and the lift sits after it with who
+  > lifted it and when. Lifting an address that is not stopped does nothing and
+  > says so — it is not an error, because two people pressing the same button is
+  > not a fault.
+  > ==================================================================
 
 ## 23 Sept 2026: Phase 146g
 
@@ -9701,6 +11540,26 @@ neither says.
   > it. No certificate, or no passphrase, is a REFUSED call with a sentence naming the key that is missing BY NAME —
   > never a value, never a throw, never a screen error.
 
+## 23 Sept 2026: Phase 147
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 338:
+
+  > LEG-E5b. CIBSE expected plant lives, in years, per element. A SEPARATE
+  >    SOURCE from the VOA scales with its own terms - clearing one does not clear
+  >    the other, and E5 needs both. EMPTY.
+  >
+  >    PHASE 147, 24 SEPTEMBER 2026 - the source now has an owner and its terms are
+  >    read: licence CIBSE_KNOWLEDGE in 04-phase-work/phase3/caprebate-source-
+  >    register.ts, research in caprebate-cibse-plant-lives-source-register-row.md
+  >    beside it. The current edition is Guide M11 Appendix 11.A1 (June 2026), free
+  >    to download, but CIBSE grants it for the sole use of the person who downloads
+  >    it; putting its lives into a report a client pays for needs CIBSE's
+  >    permission. So this stays EMPTY and the completeness gate stays OFF. And the
+  >    surveyor's ruling comes first: if a whole-building obsolescence scale may not
+  >    be applied per plant element, E5 does not ship and this table is not needed.
+
 ## 23 Sept 2026: Phase 151b
 
 ### `src/integrations/connectors/companies-house.ts`
@@ -9977,6 +11836,30 @@ neither says.
   > lists and a member of staff fires, and it must carry a tier and a switch. This is a reference table
   > loaded once, under a licence we do not hold. Its SOURCES row is written with its loader, if the table
   > is ever loaded; until then no cell can be minted from it at all.
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 527:
+
+  > -----------------------------------------------------------------------------
+  >    THE ADDRESS LOOKUP — the Homedata line. Whose cost: OURS, on a SIGNED job.
+  >
+  >    Was preSignatureCost() until 24 September 2026 (Phase 147). The name and its
+  >    explanation asserted a cost spent before a client signs, which Lakhbir's rule
+  >    of 4 September 2026 makes impossible; see PARAMS.homedata_cost_per_lookup.
+  >
+  >    cost_per_conversion WAS REMOVED, NOT RELABELLED. It divided the lookup by the
+  >    conversion rate to charge it to the three enquiries in four that fail - four
+  >    times the truth, for enquiries that cannot have cost a lookup. It was not
+  >    kept as a what-if for a world where the gate moves: that world is a decision
+  >    nobody has taken and the 4 September rule forbids, a figure that exists gets
+  >    quoted, and if the rule ever changes the cost is re-modelled from the rule
+  >    as then written, not from a number kept warm here. Suite D asserts it is gone.
+  >
+  >    Returns known:false when the per-lookup price is not supplied. It does NOT
+  >    return 0 and it does NOT throw. Unknown is not a branch: a caller that reads
+  >    .cost without checking .known gets undefined, not a free lookup.
+  >    ---------------------------------------------------------------------------
 
 ## 24 Sept 2026: Phase 150
 
@@ -10301,6 +12184,32 @@ neither says.
 
   > Phase 151, 24 September 2026. The free postcode check at the address question. See POSTCODES_IO_OPEN.
 
+### `src/modules/admin/role-editor.ts`
+
+- Line 1:
+
+  > THE ROLE EDITOR — MAKE, CHANGE AND RETIRE A ROLE. Phase 151, 24 September 2026.
+  >
+  > The design and the hard limits are src/core/custom-roles.ts. This file is the only place a made role is written, and
+  > every write is on the server, for the super admin alone (`role.manage`, which no made role can be given):
+  >
+  >   makeRole     a new role: its name and what it can see and do, each borrowed from a built-in staff role;
+  >   changeRole   a new list of grants for an existing role — the people holding it are signed out, because a role
+  >                change is a privilege change (the same rule as src/modules/admin/settings.ts, assignRole);
+  >   retireRole   a role nobody holds, kept for the audit log's sake, never deleted.
+  >
+  > EVERY ROLE CHANGE IS IN THE AUDIT LOG: ROLE_CREATED, ROLE_CHANGED, and ROLE_REFUSED for an attempt the hard limits
+  > stopped — with the reason, and the grants as action and borrowed role (never a person). Giving a person a role is
+  > src/modules/admin/settings.ts's assignRole, which writes ROLE_ASSIGNED and now accepts a made role.
+  >
+  > A REFUSAL IS ONE PLAIN SENTENCE and nothing is saved, in part or at all.
+
+### `src/modules/admin/settings.ts`
+
+- Line 373:
+
+  > Phase 151: or a role the super admin made (src/core/custom-roles.ts) — a staff role, so never on a client account.
+
 ### `src/modules/claims/claim-facts.ts`
 
 - Line 148:
@@ -10344,6 +12253,70 @@ neither says.
   >      replaced by a statement and a link to the privacy notice: a person who sends an enquiry has asked to be answered, and
   >      a tick box would misdescribe the basis as consent. `contact_consent` stays 1 — it records that the person asked to be
   >      contacted about this enquiry, by sending it — and is never marketing consent.
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 285:
+
+  > ------------------------------------------------------------------------
+  >      THE ADDRESS LOOKUP (Homedata). A COST OF A SIGNED JOB, ONCE PER PROPERTY.
+  >
+  >      REWRITTEN 24 SEPTEMBER 2026 BY PHASE 147. Until then this comment, the
+  >      function that reads it and section 6 of the .md modelled the lookup as the
+  >      one cost spent BEFORE a client signs: fired per property on every enquiry,
+  >      charged four times over to the one enquiry in four that converts, and
+  >      offered as a reason to cap the property count on the free tier. Lakhbir's
+  >      rule of 4 September 2026 ended that premise, and the 17 September note that
+  >      said so left the code beneath it untouched. The old text is in
+  >      caprebate-job-economics.cjs.bak-phase147.
+  >
+  >      WHEN IT IS SPENT. A paid call fires only after the engagement letter is
+  >      signed (assertSignedEngagement, server side) and a member of staff clicks
+  >      Run the research: 09-app/backend/src/connectors/homedata.ts (Phase 146d),
+  >      on for the test website since Phase 156f. This is a direct cost of a job
+  >      that has landed, beside the £50 data line. It is NOT a loading on the
+  >      enquiries that failed, and nothing here charges it to them.
+  >
+  >      CORRECTED 6 OCTOBER 2026 (PHASE 157b). Since Phase 156f an enquiry that
+  >      never signs CAN cost something: "Find my address" at the assessment is a
+  >      Homedata postcode search, 2p, capped at 50 a day (£1). That is a different
+  >      call, before signing, and it is modelled on its own below
+  >      (homedata_address_search_*, addressSearchCost), not folded into this one.
+  >
+  >      WHAT OUR LOOKUP COSTS, SINCE PHASE 156f (6 October 2026): 17 tokens, 17p a
+  >      property - 1 for the property call, 5 for the address, 1 for the title
+  >      pre-check, 5 for the planning history, 5 for the site boundary. Where the
+  >      client picked their address at the assessment its number is kept, so no
+  >      postcode search is needed; where they typed it, the 2-token postcode search
+  >      runs again, 19p. 100 tokens = £1. The weights are HOMEDATA_SLUG_TOKENS and
+  >      HOMEDATA_PATH_TOKENS in 09-app/backend/src/connectors/homedata.ts.
+  >      (Until 6 October this said 8 tokens - postcode search, address, title
+  >      pre-check - from the price list read on 23 September and never re-read.)
+  >
+  >      SET TO THE LIST PRICE, 24 SEPTEMBER 2026 (Phase 151). Lakhbir called the
+  >      price nominal (Word answer 35, closed that day), so the 8p list price now
+  >      stands as the value, MARKED AS A LIST PRICE in
+  >      homedata_cost_per_lookup_basis and in every result that reads it. It is
+  >      still not a price on an account: the first top-up and the first real
+  >      lookup's X-Call-Weight confirm it or correct it. The paragraph below is
+  >      how the blank was explained until then.
+  >
+  >      WHY IT STAYED NULL - and the reason is the thing that changed, not the blank.
+  >      Not because the lookup might fire before signature: it cannot. And no
+  >      longer because nobody has decided to buy one: Lakhbir answered "yes, use
+  >      Homedata" on 22 September 2026 (Word question 36, "Do we need a paid
+  >      address lookup at launch, or just use the typed address?"). It stays null
+  >      because 8p is a LIST PRICE read off a web page, not a price on an account:
+  >      no account is open, no token has been bought, and the price question (Word
+  >      question 35, "How much does a Homedata address lookup cost us each time?")
+  >      carries an unsigned answer. The value goes in when the first top-up and the
+  >      first real lookup's X-Call-Weight confirm it. Until then it is unknown, and
+  >      unknown is not zero. Suite D pins null and proves the two differ.
+  >      ------------------------------------------------------------------------
+
+- Line 556:
+
+  > Phase 151: say which it is - a figure the caller supplied, or the list price.
 
 ## 24 Sept 2026: Phase 151a
 
@@ -10703,6 +12676,41 @@ neither says.
   > make a few small, logged test lookups to check a data connector works?" was
   > answered on 25 September 2026; the first download runs as a test lookup
   > (Phase 151l, `smoke HMLR_INSPIRE`), and turning this on is Lakhbir's.
+
+## 24 Sept 2026: Phase 153
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 208:
+
+  > LEG-E4a. Regional location factors. The board's worked example is Cardiff at
+  >    94 against a national mean of 100 - i.e. building in Cardiff costs about 6%
+  >    less than the national mean, so a national rate applied to a Cardiff property
+  >    overstates replacement cost by about 6%. EMPTY - these are priced data from
+  >    BCIS (the cost source since 24 September 2026, Word answers 6 and 8; Spon's
+  >    is not bought), loaded only once Word question 218 names the product and its
+  >    order form shows the licence covers this use.
+  >
+  >    THE BASE IS DECLARED, NOT ASSUMED. Corrected 14 September 2026 (Phase 132).
+  >    This stub used to carry "mean: 100" and the factor was raw / mean. That is
+  >    right only for a table indexed to a national mean of 100, and the books we
+  >    would buy are not all that: Spon's is indexed to Outer London = 1.00, and the
+  >    Mechanical and Electrical book uses a third base again. Dividing a table
+  >    indexed to Outer London by a mean of 100 gives a factor near 0.01 and still
+  >    returns a number. So a loaded table now declares:
+  >
+  >      price_source  the CB_PRICE_SOURCES entry it was published with
+  >      index_base    { basis: "outer_london" | "national_mean" | "publisher_other",
+  >                      base_key, base_value } - which row of THIS table is the
+  >                    base, and the value that row carries (checked, not trusted)
+  >      factors       { key: value }, all on that one base
+  >
+  >    and the factor is factors[property] / factors[where the rates are priced],
+  >    both read from this one table. A table still carrying a bare mean refuses
+  >    (E_LOCATION_MEAN_DEPRECATED) rather than being read the old way.
+  >    (Updated 28 September 2026, Phase 153: BCIS publishes its factors against a
+  >    UK mean of 100, which is basis "national_mean" with the UK mean as the base
+  >    row - read from BCIS's own page; see the LEG-E4 note. The stub stays empty.)
 
 ## 24 Sept 2026: no phase named
 
@@ -11185,6 +13193,32 @@ neither says.
   >        (didit.me/pricing). 33 below is that published figure in US CENTS, not pence, and it is the price AFTER the
   >        free 500: a cost read from here overstates a month under 500, never understates one.
 
+### `src/modules/admin/role-editor-pages.ts`
+
+- Line 1:
+
+  > THE ROLE EDITOR'S SCREENS — /staff/admin/roles. Phase 151b, 25 September 2026.
+  >
+  > Phase 151 built the role editor itself (src/modules/admin/role-editor.ts: makeRole, changeRole, retireRole, every step in the
+  > audit log) and its hard limits (src/core/custom-roles.ts, roleRefusal), and left them with no screen. This is the screen.
+  > NOTHING HERE DECIDES ANYTHING: every write goes through the editor, which authorises `role.manage` (the super admin's
+  > alone, and never given to a made role) and refuses with roleRefusal's own sentence, shown here word for word.
+  >
+  >   GET  /staff/admin/roles                 every role the super admin made, live first: what it can do, who has it
+  >   GET  /staff/admin/roles/new             make one: a name, and each thing it can see or do as a plain choice
+  >   POST /staff/admin/roles                 makeRole
+  >   GET  /staff/admin/roles/{role}          change one: the same choices, with what it has now chosen
+  >   POST /staff/admin/roles/{role}          changeRole — everybody holding it signs in again
+  >   POST /staff/admin/roles/{role}/retire   retireRole — only once nobody holds it
+  >
+  > EACH CHOICE IS ONE THING THE BACK OFFICE DOES, IN WORDS, GROUPED BY AREA, AND EACH IS BORROWED FROM A BUILT-IN ROLE:
+  > "Record a payment received — like Accounting". A made role can only ever do what a built-in role already does, with
+  > that role's own test on each object (src/core/custom-roles.ts). So for each thing the screen offers only the built-in
+  > roles that do it, and "No". Things no staff role does, and the things only the super admin may do, are not offered.
+  >
+  > EVERY REGISTERED ACTION HAS WORDS HERE, OR IS NAMED AS NEVER OFFERED. test/phase151b.test.ts fails on a new action with
+  > no words, so a new right cannot reach this screen as a code word.
+
 ### `src/modules/assessment/address-check.ts`
 
 - Line 1:
@@ -11209,6 +13243,48 @@ neither says.
   >     assessment is sent (migration 051, lookups_declined, and LOOKUPS_DECLINED in the audit log), and the research run
   >     leaves the free lookups for that client unrun, with a plain line saying the client chose to answer themselves.
   >     Not chosen, or never offered, changes nothing (N4: an absent choice is not a refusal).
+
+### `src/modules/compliance/identity-checks.ts`
+
+- Line 1:
+
+  > THE ONLINE IDENTITY CHECK, WIRED IN — SENDING ONE, AND RECEIVING THE SIGNED RESULT. Phase 151b, 25 September 2026.
+  >
+  > WHAT WAS DECIDED. Lakhbir chose Veriff (Word question 225, closed 24 September 2026), and on 25 September 2026 switched
+  > to Didit, which is free for 500 checks a month (Phase 151f; the reasons are in the connector). Identity is checked whether or
+  > not money-laundering supervision applies (Word question 10, recorded 24 September 2026, Lakhbir in chat: "we still
+  > check for identity"), so NOTHING HERE READS AML_IN_SCOPE: a check can be sent for any client, from the client's own
+  > record or from an open customer due diligence check.
+  >
+  > THE CONNECTOR IS src/integrations/connectors/identity-check.ts (Phase 151), and it decides whether anything leaves this server:
+  > `startIdentityCheck` refuses before any call while `identityCheckMissing` lists anything — the service named in the
+  > privacy notice and in clause 7 of the engagement letter, its three entries in the key file, and the IDENTITY_CHECK switch,
+  > which ships false. OFF, A PERSON WHO PRESSES "SEND" IS TOLD, IN WORDS, WHAT IS STILL MISSING, AND NOTHING IS SENT.
+  > This file adds no second switch and no second gate.
+  >
+  >   sendIdentityCheck      compliance.write only (Admin today). The contact being checked must be a contact of the
+  >                          organisation; a due diligence check it is sent from must be that organisation's and open.
+  >                          The first and last name go to the service in the call and nowhere else — not in a row, not
+  >                          in the audit log. What is kept is migration 047's identity_checks row: whose check, from
+  >                          where, the service's session id and the link the client follows, who sent it and when.
+  >   receiveIdentityResult  the route the service calls, POST /hooks/identity-check, with no login (the service has
+  >                          none; the address is set in Didit's console). The body is believed only when a signature
+  >                          holds and it is under five minutes old (`readIdentityDecision`): A BAD OR MISSING SIGNATURE,
+  >                          OR A STALE ONE, IS REFUSED, AUDITED AS IDENTITY_RESULT_REFUSED, AND NOTHING IS WRITTEN. A
+  >                          signed word that the check is still under way, or about something other than a check's
+  >                          status, is acknowledged and not kept (IDENTITY_RESULT_NOT_KEPT): it is not a result.
+  >                          So is a signed result for a session we never sent. A result that holds is kept as OUR OWN
+  >                          COPY (identity_check_results, append-only: the decision's fields, the SHA-256 of the exact
+  >                          body, never a name, a document number or an image — `identityResultCopy`), because the
+  >                          service keeps its copy for a short time only and the money-laundering rules ask a firm to
+  >                          keep its evidence for five years.
+  >   A PASS IS EVIDENCE OF HOW IDENTITY WAS VERIFIED. When the latest result on a check sent from an OPEN due diligence
+  >                          check is PASS and that check's "How it was verified" is still empty, it is filled in with a
+  >                          dated sentence naming the service, and CDD_CHECK_UPDATED says so. A person still finishes
+  >                          the check (`completeCheck`), as before; a PASS never finishes anything on its own.
+  >
+  > N4. An unknown status is REFER, never PASS (the connector). A check with no result yet reads "no result yet" — never
+  > as a pass and never as a failure.
 
 ## 25 Sept 2026: Phase 151a
 
@@ -11405,6 +13481,12 @@ neither says.
 - Line 1093:
 
   > Phase 151b (Word answer 156, read 25 September 2026): names read in memory for the signatory check, never kept
+
+### `src/modules/admin/settings.ts`
+
+- Line 308:
+
+  > PHASE 151b: or a role the super admin made — a staff role, so the account belongs to no business (checked below).
 
 ### `src/modules/claims/claim-record.ts`
 
@@ -11616,12 +13698,74 @@ neither says.
   > WHO SIGNED, AND WHETHER THE REGISTER SAYS THEY MAY — Phase 151b, Word answer 156
   > ==================================================================
 
+### `src/modules/compliance/compliance-aml.ts`
+
+- Line 398:
+
+  > PHASE 151b: a PASS from the online identity check is evidence of how identity was verified (it also fills the field).
+
+### `src/modules/compliance/compliance-pages.ts`
+
+- Line 135:
+
+  > PHASE 151b: the online identity check, sent from this check while it is open.
+
+- Line 138:
+
+  > PHASE 151b · THE ONLINE IDENTITY CHECK: sent from a due diligence check, or from the client's page. compliance.write,
+  >      asserted inside sendIdentityCheck. Off with IDENTITY_CHECK: the refusal says, in words, what is still missing.
+
+### `src/modules/compliance/compliance-views.ts`
+
+- Line 79:
+
+  > PHASE 151b: a result that needs a sentence rather than its code word. Anything else is shown as before.
+
 ### `src/modules/crm/client-page.ts`
 
 - Line 282:
 
   > PHASE 151b: THE ONLINE IDENTITY CHECK, for a login that keeps the registers (compliance.read; sending is
   >      compliance.write). Sent from here or from an open due diligence check, and switched off with IDENTITY_CHECK.
+
+### `src/modules/finance/billing.ts`
+
+- Line 1:
+
+  > THE CLIENTS AREA FOR ACCOUNTING — RAISE, CHASE, RECORD PAYMENT. Phase 151b, 25 September 2026.
+  >
+  > WHAT WAS DECIDED. Lakhbir, Word answer 40 (closed 24 September 2026): "I think best the accounting team have access to
+  > this specific area so they can get notified to raise the invoice and chase, and also update once payment has been
+  > received". Closed as: Accounting should see the clients area, so it is told to raise the invoice, chases it and
+  > records payment.
+  >
+  > WHAT WAS ALREADY THERE, AND WHAT WAS NOT. Being told to raise the invoice was built: when a claim reaches the invoice
+  > stage, rule-invoice-finance-task gives Accounting a task (migration 012), and the finance page lists every claim
+  > waiting to be invoiced. Recording payment was built (recordReceived, src/modules/finance/invoices.ts). Two things were missing:
+  >   1. THE CLIENTS AREA. The Clients tab was gated on `organisation.read` — the WHOLE client record — which Accounting
+  >      does not hold, on purpose (src/core/authz.ts): the record carries internal notes, the research, the answers the
+  >      client gave, and where the client came from. Opening it to Accounting failed fifteen tests that guard exactly
+  >      those boundaries. So Accounting gets its own view of the same area, `client_billing.read`: each client's name,
+  >      the people to chase and how to reach them, the claims waiting for an invoice, and the invoices with what is
+  >      owed, what is overdue and every chase. Nothing else, and nothing it may not already read on the finance page.
+  >   2. THE CHASE. Nowhere to record one. `recordChase` records a chase a person made — the day, how, a short note —
+  >      authorised as recording money received is (`invoice.record_received`). IT SENDS NOTHING: no rule may chase an
+  >      invoice by email while the invoice-fraud procedure is unwritten (src/modules/crm/automation.ts, INVOICE_REMINDER).
+  >
+  > A LOGIN THAT HOLDS THE WHOLE RECORD (Admin, Sales) SEES THE CLIENT PAGE AS BEFORE. This view is drawn only for a
+  > login that holds `client_billing.read` and not `organisation.read` — today, Accounting.
+
+### `src/modules/finance/finance.ts`
+
+- Line 210:
+
+  > Phase 151b — how VAT on our fee was treated in this test, read off the engine, in words for the finance view.
+
+- Line 296:
+
+  > PHASE 151b — the client's VAT position ON OUR FEE ('can_reclaim' / 'cannot_reclaim'), where a caller knows it.
+  > No invoice records it, so it is normally absent, and absent is "not known" — which counts for nothing while we are
+  > not VAT-registered, and is UNDETERMINED (never "do not claim") once we are.
 
 ### `src/shared/engine.ts`
 
@@ -11822,6 +13966,21 @@ neither says.
 
   > PHASE 151e (line 4): the token of a remote database named by `location` (src/core/db.ts). Absent for memory and file.
 
+### `src/modules/compliance/identity-checks.ts`
+
+- Line 192:
+
+  > A signed result that names no check we sent: REFUSED, AUDITED, NOTHING WRITTEN, and never matched to the nearest check.
+  > On a database in memory the refusal also says why that may be, and what to do (Phase 151e, line 4).
+
+- Line 248:
+
+  > PHASE 151e (line 6): a check goes only to a contact with an email address or a telephone number.
+
+- Line 266:
+
+  > PHASE 151e (line 6): only a contact we can reach is offered; the rest are named, with what to add
+
 ### `src/modules/crm/crm.ts`
 
 - Line 1091:
@@ -11869,6 +14028,12 @@ neither says.
 
   > TESTING ONLY, as the identity check's (Phase 151h): a person's decision to send before the privacy notice and the
   > engagement letter name IONOS. It never makes either `named_in_*` true. Absent is false.
+
+### `src/modules/compliance/identity-checks.ts`
+
+- Line 124:
+
+  > Phase 151h: a check sent before the papers name the service says so, in the row that records it
 
 ## 25 Sept 2026: no phase named
 
@@ -11969,6 +14134,24 @@ neither says.
   > included), so nothing above this class changes. A Postgres driver answers later (a promise), and would change
   > every one of those calls. The package is loaded only when it is asked for, so memory and file never touch it.
 
+### `src/modules/compliance/identity-checks.ts`
+
+- Line 130:
+
+  > PHASE 151e (line 4), 27 September 2026 — SAYING SO, WHEN THIS SERVER FORGETS.
+  >
+  > On a database in memory (the test website until it is given a lasting one, and the demo), a check is kept only by the
+  > copy of the server that sent it. A restart forgets it, and on Vercel a second copy never saw it. A result that arrives
+  > at such a copy finds no check and is REFUSED, exactly as before: it is never matched to the nearest. These words say
+  > that, and what to do. They come from `app.db.kind`, the server's own knowledge of its database, and from nothing a
+  > page or a request can set. On a file or a remote database they are null and nothing is shown.
+
+- Line 242:
+
+  > PHASE 151e (line 5), 27 September 2026: a client with no contacts showed no form and said nothing, so nobody could tell
+  > how to send a check (Lakhbir, 25 September 2026). A check goes only to a contact of the client, so the panel says so,
+  > with a link to the form that adds one.
+
 ## 28 Sept 2026: Phase 129
 
 ### `src/modules/claims/letter.ts`
@@ -12031,6 +14214,12 @@ neither says.
   > optional (line 6), so a client with none is flagged; Lakhbir asked for one invented contact on each seeded client
   > that had none, so the demo and the test website show clients as they should be. Dunmarrow keeps its two. A CHANNEL,
   > not a person, as everywhere in this file: a role name and a role mailbox, and a number in Ofcom's drama range.
+
+### `src/modules/compliance/identity-checks.ts`
+
+- Line 102:
+
+  > PHASE 151e (line 6): we send the link to the person, so we must be able to reach them (Lakhbir, 28 Sep 2026)
 
 ### `src/modules/crm/client-page.ts`
 
@@ -12304,6 +14493,18 @@ neither says.
   >   verifyCode       a code checked against the step before, the step now and the step after (a phone's clock may
   >                    be up to thirty seconds out), and NEVER a step at or before the last one accepted, so a code
   >                    seen over someone's shoulder cannot be used again. Returns the step it matched, or null.
+
+### `src/modules/admin/settings.ts`
+
+- Line 302:
+
+  > PHASE 151j: the password is a temporary one, good until this time; the person chooses their own at first sign-in.
+
+### `src/modules/compliance/compliance-breach.ts`
+
+- Line 458:
+
+  > Phase 151j, 28 Sep 2026: the second step at sign-in is built; Cyber Essentials is still a readiness pack.
 
 ## 28 Sept 2026: Phase 151k
 
@@ -12656,6 +14857,109 @@ neither says.
 
 ## 28 Sept 2026: Phase 153
 
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 958:
+
+  > ============================================================================
+  >    LEG-E4 - LOCATION FACTOR AND CONTRACT SIZE ADJUSTMENT
+  >    ============================================================================
+  >    THE DEFECT. Rates are applied nationally. A national mean rate applied to a
+  >    property in a cheaper region overstates replacement cost, and to a property
+  >    in a dearer region understates it. The board's example: Cardiff sits at 94
+  >    against a mean of 100, so a national rate overstates Cardiff replacement cost
+  >    by roughly 6%. Contract size bites the same way - price books quote at an
+  >    assumed contract value and a much larger or smaller job does not carry those
+  >    unit rates.
+  >
+  >    CORRECTED 24 SEPTEMBER 2026 (Phase 151): BCIS, NOT SPON'S, AND A LICENCE AS
+  >    WELL AS A PURCHASE. Lakhbir chose BCIS (Word answers 6 and 8); no Spon's book
+  >    is bought. This paragraph used to say the block was a purchase only, about
+  >    GBP 330, with no licence question. BCIS is a subscription, not a book, and its
+  >    licence (Annex One of its terms of sale) grants internal use to named users
+  >    and extracts to clients only: BCIS_COMMERCIAL in phase3's source register
+  >    holds every term it does not publish as a refusal. Word question 218 closed
+  >    10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir); the export is board
+  >    item 13254356802 (and 12804374406 the blind re-run). The Spon's
+  >    paragraphs below record what Spon's said; BCIS's own guidance on applying
+  >    its factors is read when its product is named.
+  >
+  >    WHERE IT LANDS, AND THE SOURCE IS EXPLICIT ABOUT THIS. Spon's Architects' and
+  >    Builders' Price Book states of its own location and contract-size adjustments
+  >    that they "need to be applied to the total cost plan value, not to individual
+  >    material or element items", and "should be applied to the whole project and
+  >    not just to individual elements or materials". So the pair is ONE adjustment
+  >    made ONCE, to the summed cost plan - never a column on an element line.
+  >
+  >    THIS IS A CORRECTION, MADE 7 SEPTEMBER 2026 (Phase 97). Until then this
+  >    module multiplied loc.factor into every element inside the costing loop, and
+  >    the specification's worked example printed "Cardiff 94" in the source column
+  >    of five separate element rows. The ARITHMETIC was not wrong - one factor,
+  >    uniform across every element, distributes out of the sum - but the SHAPE was
+  >    exactly the shape the source forbids, and it is the shape that fails when
+  >    anyone adds a per-element override. residualApportionment now sums the
+  >    element lines UNADJUSTED, applies the factor once to that total, and asserts
+  >    the tie-back so "applied once" is machine-checked rather than commented.
+  >
+  >    ORDER STILL MATTERS. location x contract_size, both multiplicative, applied
+  >    BEFORE indexation and before prelims/fees - i.e. to the construction cost
+  >    total, not to a figure that already carries an uplift. Applying them after an
+  >    uplift compounds the uplift by a regional factor, which is not what either
+  >    adjustment means. The order is asserted in the tests so a later refactor
+  >    cannot quietly transpose it.
+  >
+  >    THE INDEX BASE WAS A SEPARATE DEFECT, AND PHASE 97 DID NOT FIX IT. The
+  >    comment on CB_LOCATION_FACTORS said "mean 100"; Spon's is indexed to Outer
+  >    London = 1.00 and the Mechanical and Electrical book uses a third base again.
+  >    Fixing WHERE the factor is applied is independent of fixing WHAT the factor
+  >    is indexed to, and Phase 97 did the first only.
+  >
+  >    FIXED 14 SEPTEMBER 2026 (Phase 132), under this same gate - no new gate,
+  >    because the gate was never on and the old arithmetic never reached a figure.
+  >    The factor is no longer raw / mean. It is
+  >
+  >        factors[location_key] / factors[rates_priced_at_key]
+  >
+  >    both read from the ONE location table, where rates_priced_at_key is declared
+  >    by the job's price book (CB_PRICE_SOURCES) - the row the book's unit rates
+  >    are priced at. On a national-mean table with rates priced at the mean that
+  >    is Cardiff 94 / 100 = 0.94, as before. On an Outer-London table with rates
+  >    priced at Outer London it is the raw factor itself. On any table with rates
+  >    priced somewhere else it moves the rates from where they were priced to
+  >    where the property is, which dividing by a mean never did. Refusals:
+  >      E_LOCATION_MEAN_DEPRECATED       a loaded table still carrying a bare mean
+  >      E_LOCATION_INDEX_BASE_MISSING    no well-formed index_base declared
+  >      E_LOCATION_BASE_NOT_IN_TABLE     factors[base_key] !== base_value
+  >      E_PRICE_SOURCE_REQUIRED          no price_source, or one not listed
+  >      E_LOCATION_INDEX_BASE_MISMATCH   the table and the rates are from different
+  >                                       books, or declare different bases
+  >      E_RATES_PRICING_LOCATION_MISSING the book does not say where its rates are priced
+  >
+  >    CHECKED AGAINST BCIS, 28 SEPTEMBER 2026 (Phase 153). The declared base
+  >    was designed against Spon's (Outer London = 1.00); BCIS, not Spon's, is
+  >    being bought (Word question 218, "Which BCIS product did you agree to, and
+  >    does its licence let our software use its rates?", open). BCIS's own public
+  >    page says: "All of our location factors are set in relation to a UK mean
+  >    factor of 100", available for regions, counties or districts and searchable
+  >    by postcode or local authority name
+  >    (https://www.bcis.co.uk/insight/bcis-basics-using-location-factors-in-construction/).
+  >    That is the national_mean basis above, base row the UK mean at 100. So the
+  >    design needed no change to take a BCIS table: the price source is an id,
+  >    not a book's name, and nothing here hard-codes Outer London. Tests D30 to
+  >    D34 prove it on an INVENTED BCIS-shaped table. Only this refusal's message
+  >    was reworded to name BCIS's base. Not settled, and not built: whether the
+  >    BCIS product has a contract-size scale in the shape CB_CONTRACT_SIZE_
+  >    ADJUSTMENT takes. A 2015 RICS/BCIS tutorial lists a "Contract sum" tender
+  >    price study, but its shape is not public. With this gate on, the location
+  >    factor still needs that table loaded. That waits on the purchase.
+  >
+  >    AND AN ABSENT CONTRACT VALUE IS NO LONGER A PASS (Phase 132, N4). Until this
+  >    date a job with no contract_value took a contract-size factor of 1 and a
+  >    flag (LEG_E4_NO_CONTRACT_SIZE) - "not stated" became "exactly the book's
+  >    assumed size". With the gate on, an absent contract value and one recorded
+  >    as not known now both refuse with E_CONTRACT_VALUE_REQUIRED.
+  >    ============================================================================
+
 ### `src/shared/components.ts`
 
 - Line 228:
@@ -12892,6 +15196,12 @@ neither says.
 
   > 29 Sep 2026: an address in parts, as the four-stage funnel's stage 3 asks it (building and street, town, postcode).
 
+### `src/modules/compliance/identity-checks.ts`
+
+- Line 152:
+
+  > 29 Sep 2026: the reason the server gave at start-up, as one sentence. It never holds an address or a token.
+
 ### `src/modules/public-site/home.ts`
 
 - Line 54:
@@ -12899,6 +15209,14 @@ neither says.
   > Text on a tile, whitespace collapsed and NEVER CUT (29 September 2026, Lakhbir: "too many texts have been cut off").
   > Until then every tile's text stopped at 48 characters with "…", so a next action read "Confirm who owns the
   > building, and that we…". A tile now wraps its whole text; the grid gives every tile in a row the same height.
+
+## 30 Sept 2026: Phase 132f
+
+### `src/modules/compliance/compliance-breach.ts`
+
+- Line 444:
+
+  > ------------------------------------------------ the regulator’s answer sheet — a template (dual wording, Phase 132f: the Information Commissioner (from 30 September 2026, the Information Commission))
 
 ## 30 Sept 2026: Phase 156
 
@@ -13543,6 +15861,64 @@ neither says.
   > Nothing here is new information: each card reads what the portal's own sections read, asked of the same rules. No
   > figure, no fact and no value is shown — only words, dates and counts.
 
+## 1 Oct 2026: Phase 159f
+
+### `src/modules/survey/pack-lines.ts`
+
+- Line 1:
+
+  > THE SURVEY PACK'S LINES — from the fixture list, never invented. 1 October 2026.
+  >
+  > Every line a pack starts with is a row of `02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv` (103 rows,
+  > each with its statutory authority and its pool), for the building's sector and the rows every sector shares. This
+  > file reads that list from the app's own copy (`backend/copies/`, Phase 161d1), kept byte for byte the same as the
+  > original by `npm run lint:copies`; nothing here re-types it.
+  >
+  > WHICH ROWS: those that can go in a pool through a survey — main pool (MP), special rate (SR), and the two the list
+  > leaves to the surveyor (APPORTION, and builder's work that FOLLOWS_PLANT, whose pool is the plant's). NOT: loose
+  > equipment (MP_AIA — the accountant's claim from the fixed-asset register, not a fixture), anything excluded (NONE),
+  > and the structures allowance (SBA — a different relief).
+  >
+  > WHAT IS DRAFTED, AND ONLY FROM EVIDENCE (src/modules/crm/rooms.ts: "a seeded count would be this system inventing a property
+  > fact"):
+  >   · the share that qualifies, where the list gives one (a number, with its authority): Cap Rebate's DRAFT;
+  >   · the pool, where the list gives one: DRAFT;
+  >   · how much, ONLY where the list measures the row against something we hold — the floor area (from the energy
+  >     certificate) for a whole-building system, or a room count the surveyor has recorded, for a row counted per room.
+  >     Everything else is left for the surveyor.
+  >   · the rate: PHASE 159f (Lakhbir, 9 October 2026: "With BCIS data loaded, the pack could draft each rate from the
+  >     right building type — this needs to happen"). The whole-building rate and every line measured by floor area are
+  >     drafted from BCIS in src/modules/survey/bcis-data.ts (NRM_OF_LINE), at the purchase date; the surveyor accepts or overrides
+  >     each, with a source. A line counted per room or per item is not drafted: BCIS prices elements per m² of floor.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 1:
+
+  > THE SURVEY PACK — the drafts, the surveyor's stamped changes, and the sums. 1 October 2026.
+  >
+  > Lakhbir: "the idea is API's do most of the work, they check and approve" and "any edits made by the surveyor needs to
+  > essentially have their stamp to say thats their number".
+  >
+  > A VALUE IS ONE OF THREE THINGS, AND THE PACK ALWAYS SAYS WHICH:
+  >   EVIDENCE  read from a record we hold: the energy certificate's floor area, the title register's price, the room
+  >             counts recorded on the job;
+  >   DRAFT     Cap Rebate's, from the fixture list: a line's pool and the share that qualifies, with its authority;
+  >   SURVEYOR  typed by the surveyor: their name, the time and their reason, kept for ever (migration 070).
+  > Nothing else fills a box. A value we do not hold is NEEDED, and the sums give no total until it is there
+  > (src/modules/survey/pack-sums.ts). PHASE 159f: rates are DRAFTED from BCIS (src/modules/survey/bcis-data.ts) — the whole-building rate and every
+  > line measured by floor area — at the purchase date; the surveyor accepts each or types their own with its source.
+  >
+  > WHO MAY CHANGE IT: the surveyor the job is assigned to (`surveyor_job.commit`, the rule the workspace's figures use).
+  > Everyone who may open the job may read the pack.
+  >
+  > TWO TABS NEVER OVERWRITE EACH OTHER UNSEEN. Every page carries the pack's counter as it was drawn; a change sent from
+  > an older page is refused and the page is drawn again with what changed. The check and the write are one transaction.
+  >
+  > THE PRICE IS IN THE PACK. The workspace withholds a register's price from a surveyor (REGISTER_AMOUNTS_WITHHELD, so
+  > they cannot anchor on it). The pack cannot: section 562 shares out the price, so the price is its first input. This
+  > follows Lakhbir's decision of 1 October 2026 that the surveyor works from a pre-filled pack and approves it.
+
 ## 1 Oct 2026: no phase named
 
 ### `src/core/audit.ts`
@@ -14015,6 +16391,78 @@ neither says.
 
   > 1 Oct 2026: the red dot — messages from the client this person has not read, in words for a screen reader.
 
+### `src/modules/survey/pack-sums.ts`
+
+- Line 1:
+
+  > THE SURVEY PACK'S SUMS — how the price paid becomes the spend that qualifies. 1 October 2026.
+  >
+  > Lakhbir: "build the comprehensive report, as best we can and then we engage with a surveyor … each section allowing
+  > the surveyor to edit if needed and the numbers matching what they put in, change or take out" — and, of these sums,
+  > "this is one thing that cannot fail".
+  >
+  > THE METHOD IS SECTION 562 OF THE CAPITAL ALLOWANCES ACT 2001, BY REBUILD COST. The price paid, less the bare land, is
+  > the price of the building. The building's rebuild cost today is its floor area times a whole-building rate (BCIS).
+  > Each element that may qualify — the electrics, a lift, the clinical basins — has its own rebuild cost (how much times
+  > a rate) and the share of it that qualifies. The price of the building is then shared out in the same proportion as
+  > the rebuild cost: what qualifies = the building's price × the qualifying rebuild cost ÷ the whole rebuild cost. The
+  > main pool and the special rate pool are shared out the same way.
+  >
+  > THIS FILE ONLY ADDS UP. No database, no clock, no page: given the inputs, the same answer every time, so it can be
+  > tested on tens of thousands of made-up packs (test/pack-sums.test.ts). The rules it keeps, each tested:
+  >
+  >   · EVERY AMOUNT IS WHOLE PENCE, worked in BigInt, so nothing is lost to floating point and nothing overflows. Each
+  >     rounding is to the nearest penny, a half penny up — and there are exactly four of them (a line's rebuild cost,
+  >     its qualifying part, the whole rebuild cost, and the two shares), each named where it happens.
+  >   · THE POOLS ADD UP EXACTLY. The main pool is rounded; the special rate pool is what qualifies less the main pool.
+  >     So main + special = what qualifies, to the penny, always.
+  >   · NOTHING IS GUESSED (N4). One value missing anywhere — a count, a rate, a percentage, a pool, the price, the land,
+  >     the floor area, the building rate — and there is NO total: `qualifying_pence` is null and `needed` names every
+  >     gap. A partial total would read as an answer.
+  >   · A PROBLEM STOPS THE TOTAL TOO: the land at or above the price; elements that cost more than the whole building;
+  >     a whole building that costs nothing. Each is named in words.
+  >   · A LINE TAKEN OUT counts for nothing, and a line counted as 0 is the same as taking it out.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 1:
+
+  > THE SURVEY PACK'S PAGES — chapters on the left, the book in the middle, the totals and the changes on the right.
+  > 1 October 2026; the layout Lakhbir approved as a mock-up that day.
+  >
+  >   GET  /staff/survey/{job}/pack?ch=10[&edit=LINE|&add=1]    a chapter (an edit form opens in place, no script)
+  >   POST /staff/survey/{job}/pack/value      one of the four values that belong to the whole pack
+  >   POST /staff/survey/{job}/pack/line       a line's how much, rate, share and pool
+  >   POST /staff/survey/{job}/pack/revert     our draft back on a line
+  >   POST /staff/survey/{job}/pack/remove     take a line out
+  >   POST /staff/survey/{job}/pack/restore    put it back
+  >   POST /staff/survey/{job}/pack/add        add a line
+  >   POST /staff/survey/{job}/pack/property   say which property the pack is for
+  >   POST /staff/survey/{job}/pack/legal      answer one of the legal check's questions (chapter 7)
+  >   POST /staff/survey/{job}/pack/details    the surveyor's RICS number and firm (chapter 23)
+  >   POST /staff/survey/{job}/pack/approve    the one click: approve this exact state of the pack (chapter 23)
+  >   GET  /staff/survey/{job}/pack/version/N  an approved version, exactly as it was approved, and whether its fingerprint holds
+  >
+  > Opening a chapter is recorded for the assigned surveyor: the Approve button stays grey until every built chapter
+  > has been opened (src/modules/survey/pack-approve.ts).
+  >
+  > Every number on these pages says where it came from: the evidence, our draft, or the surveyor's own name. Every form
+  > carries the pack's counter (`seq`), so a change from an out-of-date page is refused, never applied blind.
+
+### `src/modules/survey/surveyor-pages.ts`
+
+- Line 313:
+
+  > 1 Oct 2026: the survey pack — every element, the sums, and the surveyor's stamped changes.
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 190:
+
+  > 1 Oct 2026: THE JOB, FOR THE SURVEY PACK (src/modules/survey/survey-pack.ts) — read under the same rule as the workspace
+  > (`surveyor_job.read` on the specific job), and its authorisation object, so the pack asks `surveyor_job.commit` of the
+  > same object the workspace does. Nothing else of the job is handed out.
+
 ## 2 Oct 2026: Phase 1
 
 ### `src/core/look.ts`
@@ -14035,6 +16483,14 @@ neither says.
   > - **A bar of the groups**, each as wide as its count.
   >
   > Nothing here decides what a person may see: a page passes in only what its own gates already let it show.
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 361:
+
+  > The real overhead. £60,000 is the placeholder inherited from the Phase 1
+  >      options paper and named there as a placeholder. It contains no founder
+  >      salary. Both readings are modelled; neither is asserted as the truth.
 
 ### `src/shared/assets.ts`
 
@@ -14087,6 +16543,62 @@ neither says.
   > ------------------------------------------------------------------ *
   > THE PIPELINE AS ONE TABLE — UI TIDY PHASE 3, 2 October 2026
   > ------------------------------------------------------------------
+
+### `src/modules/survey/anchor-quarantine.ts`
+
+- Line 1:
+
+  > Caprebate — Anchor Quarantine
+  > Board item 12830183464. Phase 3, item 4.
+  >
+  > Anchoring is real and well evidenced: a surveyor who has seen our estimate
+  > before forming their own view drifts toward it. That drift destroys the
+  > independence which is the only thing making their signature worth anything.
+  >
+  > So the client-facing ESTIMATE is withheld from the surveyor until they have
+  > committed their own figures. Three parts:
+  >
+  >   1. the quarantine     — structurally unreadable, not merely hidden in a UI
+  >   2. the release        — automatic on commitment; no discretion, no queue-jumping
+  >   3. the log            — append-only, hash-chained, timestamped. The evidence
+  >                           that the process was followed.
+  >
+  > The quarantine does a second job nobody asked for but everyone needs: by
+  > freezing the surveyor's pre-release figures it MEASURES anchoring, because
+  > post-release amendments can be compared against the estimate they were
+  > exposed to. That measurement feeds 12830166861 and 12818968809.
+
+### `src/modules/survey/surveyor-crm.ts`
+
+- Line 1:
+
+  > Caprebate — Surveyor CRM: rate library and adoption metric
+  > Board item 12818968809. Phase 3, item 6.
+  >
+  > When a surveyor overrides one of our pre-filled rates, that override is kept
+  > and becomes part of that surveyor's own rate library, offered back to them on
+  > later jobs. And we track the adoption rate per field — how often our pre-fill
+  > survives untouched.
+  >
+  > THE POINT OF THE ADOPTION RATE. It is the only honest evidence we will ever
+  > have about whether our estimates are any good. Nobody grades our pre-fills;
+  > a chartered surveyor either leaves them alone or does not, on real jobs, with
+  > their own signature at the end of it. That is a revealed preference, and it
+  > is worth more than any amount of internal review.
+  >
+  > WHICH IS WHY IT MUST BE MEASURED HONESTLY. Two disciplines do most of the work:
+  >
+  >   1. STRATIFY BY WHAT WAS SHOWN. If we pre-fill from the surveyor's OWN
+  >      library and they accept it, that is not evidence our estimate is good —
+  >      it is evidence they agree with themselves. Only PLATFORM_DEFAULT
+  >      pre-fills count toward calibration.
+  >
+  >   2. DIRECTION BEATS MAGNITUDE. Overrides scattered symmetrically around zero
+  >      mean our central estimate is right and our precision is poor. Overrides
+  >      that all go one way mean we are biased, which is a different and more
+  >      fixable problem. Report both.
+  >
+  > Feeds the blocked calibration item 12830166861.
 
 ## 2 Oct 2026: Phase 4
 
@@ -14235,6 +16747,61 @@ neither says.
   > HOW IT IS DRAWN. One model, two drawings, as the report: an SVG in the page (presentation attributes only, so the
   > page's style policy holds) and boxes of paths in the PDF (src/shared/pdf-canvas.ts, `poly`). The client's building is
   > dark, the others light grey. North is up. A 20 m scale bar. The credit line Ordnance Survey's licence asks for.
+
+## 2 Oct 2026: Phase 156d
+
+### `src/modules/survey/evidence-pages.ts`
+
+- Line 1:
+
+  > THE SURVEY'S EVIDENCE — ITS PAGES. 2 October 2026; the mock-up Lakhbir approved that day (src/modules/survey/survey-evidence.ts).
+  >
+  > THE CLIENT'S PORTAL — "Show us your building":
+  >   GET  /portal/building[?job=]            the ways (the photo checklist, a video, a video call - recorded on a paid Zoom plan only, Phase 156d) and the checklist
+  >   GET  /portal/building/item/{key}?job=   one item, as a phone shows it, with the next item after it
+  >   GET  /portal/building/guide?job=        the filming guide, for the call
+  >   POST /portal/building/photo             one photo for one item (a form with a file; no script)
+  >   POST /portal/building/mark              "not in our building", "not safe or not ours", or that taken back
+  >   POST /portal/building/photo/{id}/remove take a photo back
+  >   GET  /portal/building/photo/{id}        the photo itself
+  >   POST /portal/building/ask               ask for a recorded video call
+  > THE SURVEYOR'S PACK — chapter 2 "Your inspection", and each line's photos in chapter 10:
+  >   GET  /staff/survey/{job}/pack/photos[?line=]    every photo, or a line's
+  >   GET  /staff/survey/{job}/pack/photo/{id}        one photo
+  >   POST /staff/survey/{job}/pack/photo/{id}/withdraw  take one back (Admin, Sales), with why
+  >   POST /staff/survey/{job}/pack/basis             how the surveyor inspected
+  >   POST /staff/survey/{job}/pack/walkthrough       book the recorded video call
+  >   POST /staff/survey/{job}/pack/recording         fetch its recording from Zoom
+  >   GET  /staff/survey/{job}/pack/recording/{id}    open it (recorded), on Zoom
+
+## 2 Oct 2026: Phase 159a
+
+### `src/modules/survey/pack-approve.ts`
+
+- Line 1:
+
+  > THE SURVEY PACK'S APPROVAL — read every chapter, then one click; the report frozen and fingerprinted. 2 October 2026.
+  >
+  > Lakhbir: "whole pack needs to be read through then approve button ungreys like someone reading and accepting T&C";
+  > "when the surveyor signs it should be a single CTA approve click"; and the fingerprint, approved ("5) approved").
+  >
+  > THE BUTTON UNGREYS ONLY WHEN EVERY ONE OF THESE HOLDS, each said in words with a link to where it is put right:
+  >   · it is the assigned surveyor;
+  >   · the pack says which property it is for;
+  >   · the sums are complete — every value in, no problem standing (src/modules/survey/pack-sums.ts);
+  >   · the legal check allows it — clear, or clear with a deadline, and the figure not above a cap (src/modules/survey/pack-legal.ts);
+  >   · the surveyor has opened every built chapter — and the legal check again since anyone else last answered it;
+  >   · their RICS number is on file;
+  >   · the job has its locked estimate (approving commits the figures, which releases it — the existing rule);
+  >   · this exact state of the pack is not already approved;
+  >   · PHASE 159a (C3, C5, L3): the claim is not past the tax adviser's sign-off, and has not stopped. After that the
+  >     signed figures are fixed, and only "Reopen the valuation" on the claim page changes that (src/modules/claims/valuation-lock.ts).
+  >
+  > ONE CLICK, AND THEN: the whole report as it stands is written down as one JSON document (keys in a fixed order), its
+  > SHA-256 is its fingerprint, and both are kept for ever as the next version. In the same transaction the surveyor's
+  > figures are committed to the job (or, after the first time, amended with the version as the reason), so the claim's
+  > own stages read them exactly as before. If any of that is refused, nothing is kept. The form carries both counters,
+  > so a page drawn before a change cannot approve the changed pack, and a second click on the same state is refused.
 
 ## 2 Oct 2026: no phase named
 
@@ -14473,6 +17040,291 @@ neither says.
 
   > 2 Oct 2026: a survey walkthrough call (src/web/survey-evidence.ts) is recorded, so the surveyor can watch it.
 
+### `src/modules/survey/evidence-pages.ts`
+
+- Line 89:
+
+  > 2 Oct 2026, Lakhbir: the list needs "I don't have this", which takes the item off the list.
+
+- Line 126:
+
+  > 2 Oct 2026: three plain drawings for the three choices — no picture files, no style, nothing to load.
+
+- Line 140:
+
+  > "Show us your building": three choices, each to its own page (the mock-up Lakhbir approved, 2 Oct 2026).
+
+- Line 338:
+
+  > 2 Oct 2026: a send straight to the file store, each photo locked on the phone (src/modules/survey/photo-upload.ts). JSON for the
+  >      page's script only.
+
+- Line 384:
+
+  > 2 Oct 2026: A VIDEO, in locked pieces straight to the file store (src/modules/survey/survey-video.ts). JSON for the page's script.
+
+- Line 446:
+
+  > 2 Oct 2026: a step of a send that fails ANSWERS IN WORDS, with what went wrong (U.failureWords: never an address or a
+  > token), and says it in the log — so a failure on the test website is never only "the website did not answer". A
+  > refusal of who may do it is not caught: it is the router's 403, as everywhere.
+
+- Line 531:
+
+  > 2 Oct 2026: the client's videos, watched in pieces; Admin or Sales may take one back.
+
+### `src/modules/survey/pack-approve.ts`
+
+- Line 139:
+
+  > 2 Oct 2026: how the surveyor inspected (chapter 2, src/modules/survey/survey-evidence.ts) goes in the report.
+
+- Line 177:
+
+  > 2 Oct 2026: how the building was inspected, and what the client sent, for the approved version.
+
+- Line 187:
+
+  > 2 Oct 2026: the client's own videos of the building (src/modules/survey/survey-video.ts).
+
+- Line 247:
+
+  > 2 Oct 2026, stage 6: the site plan as it stood at approval (src/modules/claims/site-plan.ts), so the report never changes after.
+
+### `src/modules/survey/pack-legal.ts`
+
+- Line 1:
+
+  > THE SURVEY PACK'S LEGAL CHECK — can the client claim on these fixtures at all? 2 October 2026.
+  >
+  > Lakhbir, 1 October 2026, agreeing that the legal check comes before the survey: on a building bought from an owner
+  > who could claim, the buyer's claim on the fixtures can be worth nothing unless the value was fixed — a section 198
+  > election, or a tribunal application, within two years (CAA 2001 s.187A) — however good the survey is.
+  >
+  > THE LAW IS THE ENGINE'S, NOT THIS FILE'S. The questions are the sector's own (its "What happened" and "History of …"
+  > groups, built by CB_S187A.questions and the election questions), chosen by WHICH FACTS THEY SET, so the five sectors'
+  > question sets are read the same way without a list of ids to keep in step. The answers are replayed through each
+  > question's own `showIf` and `onSet`, in the sector's order, exactly as the engine's flow does; then the engine's two
+  > assessments, CB_ELECTION.assess and CB_S187A.assess, give the position. This file only turns that into a verdict:
+  >
+  >   GREEN    the rules do not reach this claim, or they are met (OFF, SATISFIED; no election, or a complete one).
+  >   URGENT   there is still time to fix the value — the claim can go ahead, and the deadline is shown (LIVE).
+  >   AMBER    not known yet: a question unanswered, or a position the engine cannot settle (INDET). Blocks approval.
+  >   RED      the claim on these fixtures fails (NIL, or a nominal election over the fixtures generally). Blocks it.
+  >
+  > "NOT KNOWN" IS NEVER A PASS (the engine's own rule, kept): an unanswered question is AMBER, and "not sure" is an
+  > answer the engine treats as unknown. Where an election or a disposal value statement caps the claim, the cap is
+  > returned, and the pack may not be approved above it (stage 3).
+
+### `src/modules/survey/photo-upload-script.ts`
+
+- Line 1:
+
+  > THE PHOTO PAGE'S ONE SCRIPT — served at /assets/photo-upload.js, and named only by "Show us your building" (the
+  > client portal), whose security policy alone allows it (src/modules/survey/evidence-pages.ts, photoPageCsp). 2 October 2026.
+  >
+  > It takes over "Send lots of photos at once": each photo chosen is checked (JPEG or PNG by its first bytes, at most
+  > 25 MB), LOCKED ON THE PHONE (a fresh AES-256-GCM key for each photo, itself locked with the send's public key, RSA-OAEP
+  > with SHA-256 — src/modules/survey/photo-upload.ts opens it), sent straight to the file store at the one-time address the server
+  > gives, and then reported done. The page shows each photo's state and the count. No photo is read by anything but this
+  > script and our server.
+  >
+  > 2 Oct 2026: it also sends a video, in locked pieces of 4 MB (initVideo; src/modules/survey/survey-video.ts).
+  >
+  > IF IT CANNOT RUN (no script, an old browser, no Web Crypto), nothing changes: the form posts to the page as before,
+  > up to 15 photos and 4.4 MB a send. It sets no style (the security policy allows none): it only sets classes, text and
+  > the `hidden` attribute. `lockPhoto` is also on CapRebatePhotoLock, so a test can lock a photo exactly as a phone does.
+
+### `src/modules/survey/photo-upload.ts`
+
+- Line 1:
+
+  > FULL-SIZE PHOTOS, SENT STRAIGHT TO THE FILE STORE, LOCKED ON THE PHONE. 2 October 2026.
+  >
+  > Lakhbir asked whether the test website's 4.5 MB a send could be raised. It cannot: it is Vercel's fixed limit on a
+  > request to the website. So each photo goes from the phone STRAIGHT TO THE PRIVATE FILE STORE (Vercel Blob), never
+  > through the website: "go with option 2"; "Lock on the phone"; "100 photos, 25 MB each"; the mock-up, "Yes, build it
+  > as shown".
+  >
+  > HOW. The page's one script (src/modules/survey/photo-upload-script.ts) asks to START a send (`startUpload`): the server makes a
+  > ONE-TIME LOCK for it — an RSA-2048 key pair — and gives the phone its public half; the private half is kept in the
+  > database, itself encrypted with the store's key. For each photo the phone makes a fresh AES-256-GCM key, locks the
+  > photo with it, and locks that key with the public half (RSA-OAEP, SHA-256). It asks for a SLOT (`slotFor`): one
+  > address in the store for exactly that file, for half an hour, at most the size it said (on the test website a Blob
+  > presigned PUT; on any other copy, our own route, `putLocal`). It sends the locked photo there, then says it is DONE
+  > (`finishSlot`): the server reads it, opens it with the private half, and treats the photo exactly as a photo sent
+  > through the page — JPEG or PNG by its first bytes, at most 25 MB, hidden details taken out, ENCRYPTED with the
+  > store's key and kept as not yet sorted (survey-evidence.ts `keep`) — then removes the locked upload. Vercel never
+  > holds a photo it can read.
+  >
+  > WHO. A client of the job's company, for their own send only; with "nobody is in any of these photos" ticked. An
+  > upload never finished is removed by the SWEEP (`sweepUploads`) after a day: at the next send, and whenever the outside
+  > timer wakes the website (/hooks/read-replies). Each slot's outcome — KEPT, REFUSED or ABANDONED — is recorded once
+  > (migration 076). Admin or Sales sort the photos as before (survey-evidence.ts `sortPhotos`).
+
+- Line 32:
+
+  > The most photos in one send, and the most one photo may be (Lakhbir, 2 Oct 2026).
+
+- Line 43:
+
+  > 2 Oct 2026, the first send on the test website: every photo failed at "the website did not answer". The fallback: if
+  > the store will not give its one-time address, the locked photo comes through our own route instead — on the test
+  > website at most 4.4 MB a photo (its limit on a request). Such a slot's key ends `.site.lock`, so our route knows it.
+
+### `src/modules/survey/survey-checklist.ts`
+
+- Line 1:
+
+  > THE PHOTO CHECKLIST — what a client photographs so the surveyor can see inside the building. 2 October 2026.
+  >
+  > Lakhbir: "a recorded phone walkthrough … and add the option for … a guided photo checklist in the client portal";
+  > the mock-up approved the same day ("Yes, build it as shown").
+  >
+  > IN THE FILMING GUIDE'S ORDER (04-phase-work/phase9/video-walkthrough-capture-script-v1.md, Part B): the outside, the
+  > plant room, the electrics, comms and data, water, then every room type of the sector (src/modules/crm/rooms.ts), then
+  > corridors and life safety, the kitchen and utility, and last the ceiling and floor voids — building-wide things
+  > first, the fiddly ones last. Each item says what to photograph in the guide's own words, and which lines of the
+  > survey pack it is evidence for (the fixture list's ids, Caprebate-Fixture-Taxonomy-v1.csv), so the surveyor sees
+  > each photo against the line it supports. An item for a line the pack does not have links to nothing; it is still
+  > worth a photograph.
+  >
+  > Nothing here is stored: the list is made from the sector each time, and only what the client did is kept
+  > (src/modules/survey/survey-evidence.ts). An item's key never changes once used, so a photo stays with its item.
+
+### `src/modules/survey/survey-evidence.ts`
+
+- Line 1:
+
+  > THE SURVEY'S EVIDENCE FROM THE CLIENT — the photo checklist, the recorded walkthrough call, and how the surveyor
+  > inspected. 2 October 2026; the mock-up Lakhbir approved that day.
+  >
+  > Lakhbir: "a recorded phone walkthrough … and add the option for … a guided photo checklist in the client portal".
+  > Asked on 2 Oct 2026: the photos are KEPT, FOR TESTING ("Keep them, test only"); the walkthrough is a RECORDED ZOOM
+  > CALL ("Recorded Zoom call") — the test website takes at most 4.5 MB a request, so a 20–40 minute phone video cannot be
+  > uploaded, and a page may run no script to send it in pieces.
+  >
+  > THE PHOTOS. A client of the company takes one photo at a time for a checklist item (src/modules/survey/survey-checklist.ts),
+  > saying nobody is in it. It must be a JPEG or PNG — read from its first bytes, not its name — of at most 4.4 MB. Its
+  > hidden details are taken out before it is kept: a JPEG's EXIF, XMP and IPTC blocks and comments (where the phone was,
+  > which phone, when), a PNG's text and EXIF chunks. Then it is ENCRYPTED with the store's key (AES-256-GCM, the key a
+  > kept original uses) and kept under survey-photos/; with no key it is refused, and the page says why. The row keeps
+  > where it is, its type, size and SHA-256, who took it, when, and the client's "nobody is in it". A photo is never
+  > edited or deleted here: it is taken back (withdrawn), by the client or by staff, and is then shown to nobody.
+  >
+  > MANY AT ONCE (2 Oct 2026, Lakhbir: "not only … individually but also in one go. admin can then split"). A client
+  > may send up to 15 photos in one go, with one "nobody is in them", up to 4.4 MB in all (the test website's limit is
+  > for the whole send). Each is checked and cleaned like a single one; if any is refused, none is kept, and the page
+  > says which. They are kept under UNSORTED until Admin or Sales put each under a checklist item (`sortPhotos`, migration
+  > 075): the newest move is the photo's item. One that is not useful is taken back.
+  >
+  > WHO SEES A PHOTO. The client of that company; Admin and Sales; and the surveyor assigned to the job — every request
+  > asked of the rules (`surveyor_job.read` for staff). Lakhbir's waiver for testing names Admin, Sales, the data
+  > protection officer, the client and the assigned surveyor, and the 7-year keep (SURVEY_PHOTOS below). Real use waits
+  > for the officer and the privacy notice.
+  >
+  > THE WALKTHROUGH CALL. The client asks for one in their portal (a message to us). Admin or Sales books it as a video
+  > call at one of their free times — they own client calls in the diary, and a surveyor is kept out of the diary on
+  > purpose (src/core/authz.ts, booking.read). It is marked as this job's walkthrough, so its Zoom meeting is made to RECORD TO
+  > ZOOM'S CLOUD (src/integrations/connectors/zoom.ts). After the call, the assigned surveyor, Admin or Sales fetches the recording's
+  > link, passcode and length from Zoom, and they are kept; the video stays with Zoom. Opening it is recorded.
+  >
+  > HOW THE SURVEYOR INSPECTED — desktop with the client's evidence, a live video survey, or a site visit — is said by
+  > the assigned surveyor in chapter 2, and goes in the approved report.
+
+- Line 58:
+
+  > Lakhbir's decision for testing, 2 October 2026, as asked.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 120:
+
+  > 2 Oct 2026, stage 6: the site plan for the report's cover, from Ordnance Survey's free maps (src/modules/claims/site-plan.ts).
+
+- Line 781:
+
+  > 2 Oct 2026, stage 6: the site plan for the report's cover. Fetched with one button; the newest is shown.
+
+- Line 799:
+
+  > 2 Oct 2026: each line's photos from the client (src/modules/survey/survey-evidence.ts).
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 1:
+
+  > THE CLIENT'S SURVEY REPORT — the approved version, drawn for the client: as a page, and as a PDF. 2 October 2026.
+  >
+  > Lakhbir: "once the surveyor approves it gets sent to the client and they would want something visually appealing";
+  > the design approved as a mock-up the same day ("Yes, build it as shown").
+  >
+  > ONE SET OF CONTENTS, TWO DRAWINGS. `reportModel` reads an approved version (src/modules/survey/pack-approve.ts, the JSON kept with
+  > its fingerprint) and puts every word and figure of the report in one place; `reportHtml` and `reportPdf` only draw it.
+  > So the page and the PDF can never say different things, and both are made again, the same, from the kept version
+  > whenever they are asked for: nothing new is stored, and the fingerprint on page 5 is the version's own.
+  >
+  >   1  the cover: who it is for and by, the spend that qualifies and its two pools, the building's key facts, the approval
+  >   2  how the figure is worked out: price, land, building, rebuild cost, what qualifies; the sum in full; the four values
+  >      and where each came from
+  >   3  what qualifies, item by item, each value with its source; the items checked and not in the building
+  >   4  the legal check, and what happens next
+  >   5  the surveyor's declaration, their name and RICS number, the fingerprint, and how the report was made
+  >
+  > Page 1 also shows the site plan, when the version has one (stage 6, 2 Oct 2026): the client's building and the buildings
+  > round it, from Ordnance Survey's free maps (src/modules/claims/site-plan.ts). The site boundary (INSPIRE) is never in it
+  > (Lakhbir's rule, 1 Oct 2026).
+
+- Line 73:
+
+  > 2 Oct 2026: how the building was inspected, and what the client sent (src/modules/survey/survey-evidence.ts). Null in a version approved before.
+
+- Line 77:
+
+  > 2 Oct 2026, stage 6: the site plan from Ordnance Survey's free maps, as approved; null when the version has none.
+
+- Line 188:
+
+  > 2 Oct 2026: the client's own videos; a version approved before they existed has none.
+
+- Line 619:
+
+  > 2 Oct 2026, stage 6: the site plan, from Ordnance Survey's free maps, when the version has one.
+
+### `src/modules/survey/survey-video.ts`
+
+- Line 1:
+
+  > A VIDEO OF THE BUILDING, SENT FROM THE PHONE IN LOCKED PIECES. 2 October 2026.
+  >
+  > Lakhbir: "we need to add an option of upload video"; the limits, "10 minutes, 1 GB each"; how videos are kept,
+  > "Same as photos" — locked on the phone, the place it was filmed taken out, encrypted, kept for testing 7 years, seen by
+  > the client, the assigned surveyor, Admin, Sales and the data protection officer.
+  >
+  > HOW. A video is far bigger than one request to the test website may carry (4.5 MB), and than a phone can lock in one
+  > go. So the page's script (src/modules/survey/photo-upload-script.ts) cuts it into pieces of 4 MB. The send gets a one-time lock
+  > (`startVideo`, as a photo send does); each piece is locked on the phone with a fresh key, given its own place
+  > (`videoSlot`: a Blob presigned PUT on the test website, or our own route — `putVideoLocal` — on any other copy or
+  > when the store gives no address), sent, and reported (`finishPiece`): the server opens it, checks its size, and keeps
+  > it ENCRYPTED with the store's key at survey-videos/<video>/<n>; the locked piece is removed. When every piece has come
+  > (`finishVideo`) the video is checked — an MP4 or QuickTime file (its `ftyp`), at most ten minutes (its `mvhd`) — and
+  > every place written in its header (ISO 6709 co-ordinates, as phones write them: `©xyz`, or the Apple location key)
+  > is blanked IN PLACE, the same length, so nothing else in the file moves. Then it is kept. A refused or abandoned video's
+  > pieces are removed.
+  >
+  > PLAYBACK in pieces (`videoBytes`): a browser asks for a range of bytes, and is answered at most one piece at a time —
+  > which is what an iPhone needs to play and seek, and keeps every answer under the test website's limit.
+
+- Line 48:
+
+  > UI tidy phase 11: a video's length, short — "32 s", "2 min", "2 min 12 s" — never "0 min 32 s" (Lakhbir, 2 October 2026).
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 200:
+
+  > 2 Oct 2026: whether a job has its locked estimate — without one, committing figures releases nothing and is refused.
+
 ### `src/shared/objectstore.ts`
 
 - Line 89:
@@ -14603,6 +17455,103 @@ neither says.
   > lists folded, each saying how many it holds — the claims with no next step (Tasks' own filter has them too), my claims
   > and who each waits on, and the other questions waiting on a client. Every list is still here.
 
+## 3 Oct 2026: Phase 10
+
+### `src/modules/survey/surveyor-crm.ts`
+
+- Line 417:
+
+  > Below this an adoption rate is not a rate, it is an anecdote.
+  >
+  > RE-DERIVED against the AD-HOC engagement model (item 12927112944, Phase 10
+  > finding: MIN_N_FOR_RATE and selfConsistency() were both set assuming repeat
+  > engagements with the same surveyor). Raised from 5 to 7. This constant gates
+  > the POOLED, cross-surveyor adoption()/divergences() cohort signal, which was
+  > never itself repeat-engagement-dependent — `adoption()` already pools across
+  > ALL_SURVEYORS by default. What ad-hoc engagement changes is the composition
+  > of that pool: instead of a handful of repeat observations from one surveyor
+  > whose personal calibration is already known, each observation now comes from
+  > a different, unfamiliar surveyor. That adds a between-surveyor variance
+  > component (differing house style, risk appetite, familiarity with a platform
+  > seen for the first time) on top of the estimate error the metric exists to
+  > measure, so more observations are needed before the pooled median is a
+  > trustworthy signal rather than noise from whichever surveyors happened to be
+  > in the sample. Still provisional — a reasoned adjustment for a changed
+  > assumption, not a value fitted to real ad-hoc data, because none exists yet.
+
+### `src/modules/survey/surveyor-pages.ts`
+
+- Line 211:
+
+  > UI TIDY PHASE 10, 3 October 2026. Lakhbir opened the wrong one of Dunmarrow's two surveys: each job now names its site
+  > and its claim number under the client, and its stage is in its colour. Solid boxes count the jobs, those waiting for
+  > the surveyor's figures, those with figures in, and the rooms still to count.
+
+- Line 325:
+
+  > UI TIDY PHASE 10: the job names its site and claim; the client's other jobs are a link away; the menu opens out.
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 122:
+
+  > UI TIDY PHASE 10: the job's own claim — its number, its site and its stage — so two jobs for one client are told
+  >  apart. Null for a job on no claim. The site is the property's label; the surveyor's payload already carries it.
+
+## 3 Oct 2026: Phase 11
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 233:
+
+  > UI TIDY PHASE 11, 3 October 2026 — WHICH PACK THIS IS. Lakhbir: "The survey pack doesn't say which of a client's surveys
+  > you are looking at. Dunmarrow has two, and I opened the wrong one first." A dark band names the client and the site (the
+  > pack's own property, else its claim's), the claim number and postcode, which of the client's survey jobs it is, and a
+  > button to each of the others' packs, at the same chapter.
+
+- Line 309:
+
+  > UI TIDY PHASE 11: STILL NEEDED, IN GROUPS. Forty-one links in two columns was a wall. The values of chapter 9 are few
+  > and listed; the lines of chapter 10 are counted, with one link to the chapter; every one is still listed, one per line,
+  > behind "Show all".
+
+## 3 Oct 2026: Phase 12
+
+### `src/modules/finance/finance-pages.ts`
+
+- Line 238:
+
+  > UI TIDY PHASE 12: Finance's sections in the left-hand menu, with how many invoices each list holds.
+
+- Line 250:
+
+  > UI TIDY PHASE 12: the red box's label, "Late, on 1 invoice" or "Late, on 2 invoices".
+
+- Line 255:
+
+  > UI TIDY PHASE 12: one line naming every claim ready to invoice, and Raise our fee where the login may raise one.
+
+- Line 262:
+
+  > UI TIDY PHASE 12: an invoice's Due cell. Late is a red label; no due date a grey one; on time the words.
+
+- Line 268:
+
+  > PHASE 133b — FINANCE ON TABS. The eight numbered sections keep their numbers and their words, and each heading now has
+  > an id, so a link can land on one (Accounting's home cards do). They are grouped into six tabs, by the job a person comes
+  > to do: the money; VAT; invoices (what is waiting to be invoiced, and what is invoiced); the fee controls and the fees
+  > to firms; the settings; and the organisations' invoices from before. Every section is on the page, drawn from the same
+  > two views as before, whichever tab is showing. The three closing notes sit with the section they are about.
+  >
+  > UI TIDY PHASE 12 (3 October 2026): the right-hand panel is gone. Its three links were said again at the top (Raise our
+  > fee, Run the VAT check) and in the left-hand menu (Finance settings), and it pushed the invoices table sideways on a
+  > laptop. Four boxes count the money; a line names every claim ready to invoice; invoices open first; each claim's
+  > number sits under its company instead of in a column of its own; a late invoice is a red label.
+
+- Line 284:
+
+  > UI TIDY PHASE 12: Finance's sections in the left-hand menu, opening out under Finance; on a laptop they replace the
+
 ## 3 Oct 2026: Phase 13
 
 ### `src/core/staff.ts`
@@ -14679,6 +17628,13 @@ neither says.
   > actions: the three that were there, and Change role, folded in their own row, a list of the roles instead of six
   > buttons. Add a user is folded until its button, a link to it, or a refusal opens it. Nobody's own row offers a role.
 
+### `src/modules/compliance/compliance-views.ts`
+
+- Line 115:
+
+  > UI TIDY PHASE 15 (3 October 2026): the landing page opens with what it is and three boxes, one a register, each a link;
+  > a breach on the register makes its box red. The form for a new dated value folds until asked for (or a refusal).
+
 ### `src/modules/crm/tasks-pages.ts`
 
 - Line 595:
@@ -14719,6 +17675,12 @@ neither says.
   > UI TIDY PHASE 17 (3 October 2026): a column this login may not read on any row is left out, and the page says so,
   > instead of a dash in every row — Accounting reads the company and the reference, so its list is those two. A column
   > read on some rows keeps the dash on the others, as before.
+
+### `src/modules/finance/billing.ts`
+
+- Line 161:
+
+  > UI TIDY PHASE 17 (3 October 2026): a client with an invoice overdue shows it as a red label, as every other list does.
 
 ## 3 Oct 2026: Phase 18
 
@@ -14777,6 +17739,161 @@ neither says.
 - Line 198:
 
   > FASTER CLICKS, 3 Oct 2026: each request remembers its own reads until anything is written (src/core/db.ts withReadMemo).
+
+## 4 Oct 2026: Phase 132
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 590:
+
+  > ============================================================================
+  >    LEG-E2 - PRELIMINARIES
+  >    ============================================================================
+  >    THE DEFECT. Specification section 4.2 builds both replacement-cost components
+  >    as
+  >
+  >        A = sum(qty x rate x (1 + prelims) x (1 + fees) x index)
+  >        B = nonqual_rate_per_m2 x area x (1 + prelims) x (1 + fees) x index
+  >
+  >    with prelims defaulting to 0.18. VOA guidance on estimated replacement cost
+  >    is that on-costs - site set-up, scaffolding, plant hire, site management,
+  >    insurances - are ALREADY INSIDE the estimated replacement cost. Multiplying
+  >    by a further 1.18 counts them twice, and it inflates A and B together.
+  >
+  >    WHY THE SIZE OF THE ERROR IS NOT 18%. The residual model divides:
+  >    m = PC / (A + B + C). A common uplift on A and B partly cancels in the ratio
+  >    m x A. It does not cancel completely, because C - bare-site land value - is
+  >    not uplifted. So the double count shifts value from land into buildings and
+  >    plant, and the qualifying figure moves by materially less than 18%. It still
+  >    moves, always in the direction of OVERSTATING the claim, and it moves most on
+  >    the properties with the highest land fraction. Overstatement is the direction
+  >    that loses an enquiry.
+  >
+  >    ------------------------------------------------------------------------
+  >    IS THIS ACTUALLY LICENCE-GATED? A QUESTION FOR LAKHBIR, NOT A DECISION.
+  >
+  >    The board marked this blocked on VOA licence clearance (that licence was
+  >    dropped on 4 Oct 2026; Phase 157a corrected this text). Reading the change
+  >    itself: turning this gate on sets a multiplier to 1.0 and deletes a
+  >    parameter. It reproduces no VOA table, quotes no VOA figure, and needs no
+  >    VOA data to compute. The only VOA-derived thing involved is the KNOWLEDGE
+  >    that on-costs sit inside ERC - and that knowledge is what tells us our own
+  >    arithmetic counts them twice.
+  >
+  >    Knowing a double count exists is not the same as republishing the data that
+  >    revealed it. On that reading this looks over-blocked, and it is the one fix
+  >    of the four that could ship on its own.
+  >
+  >    Two arguments the other way, which is why this is a question and not a
+  >    conclusion. First, if the licence terms restrict DERIVED WORKS rather than
+  >    reproduction, a model shaped by VOA methodology may be caught even where no
+  >    VOA number appears in it. Second, E2 and E3 touch the same expression: ship
+  >    E2 alone and A and B carry a corrected prelims term beside an uncorrected
+  >    flat 15% fee term, which is a defensible interim but is a state someone has
+  >    to be told about rather than discover.
+  >
+  >    NOT UNBLOCKED HERE. The gate is false like the others. Flagged for decision.
+  >    ------------------------------------------------------------------------
+  >
+  >    DO NOT "TIDY" THIS INTO THE FIT-OUT PATH. There is a trap here and it has
+  >    caught people before. JD Wetherspoon plc v HMRC [2012] UKUT 42 holds that
+  >    preliminaries and professional fees DO apportion to qualifying plant and
+  >    machinery, pro rata, on an invoice-based claim - and that they are routinely
+  >    missed, which understates claims. Module-00-Master-Engine-Specification.md
+  >    line 104 says exactly that.
+  >
+  >    Wetherspoon and LEG-E2 are not in conflict. They are about different paths:
+  >
+  >      INVOICE / FIT-OUT path     real prelims and fees appear as their own lines
+  >                                 in a cost package. Wetherspoon says apportion
+  >                                 them to qualifying P&M rather than dropping
+  >                                 them. ADD.
+  >      RESIDUAL / VALUATION path  the price-book rate already contains on-costs.
+  >                                 Adding a further uplift double counts.
+  >                                 DO NOT ADD.
+  >
+  >    Same words, opposite treatment, because one is a real invoiced cost being
+  >    allocated and the other is a modelled cost already inclusive. LEG-E2 changes
+  >    the residual path ONLY. Anyone applying it to the invoice path would
+  >    understate every fit-out claim and would be reversing Wetherspoon. Hence
+  >    costBasis below, which must be stated and is never defaulted.
+  >
+  >    ------------------------------------------------------------------------
+  >    PHASE 132, 14 SEPTEMBER 2026 - ON-COSTS ARE A FACT ABOUT THE BOOK.
+  >    "There is no parameter anywhere for whether the unit rate is on-cost-
+  >    inclusive" (4 September). The residual-path argument above holds for a
+  >    replacement-cost rate that already includes on-costs. It does NOT hold for
+  >    an element rate that excludes them - there, adding preliminaries once is
+  >    right and dropping them understates. leg_e2_drop_prelims_from_erc cannot
+  >    tell the two apart; it drops prelims on every residual job. So a second,
+  >    alternative gate, leg_e2_oncosts_by_price_source, reads the answer off the
+  >    job's named price book (CB_PRICE_SOURCES[price_source].rates_include_oncosts):
+  >      true    factor 1, flag LEG_E2_ONCOSTS_IN_RATES
+  >      false   1 + preliminaries, today's figure, flag LEG_E2_ONCOSTS_EXCLUDED_BY_SOURCE
+  >      null, "unsure" or absent   E_ONCOSTS_BASIS_UNKNOWN - never defaulted either way
+  >    An unnamed or unlisted book refuses with E_PRICE_SOURCE_REQUIRED. Both
+  >    leg_e2 gates on refuses with E_GATE_CONFLICT, the same interlock shape as the
+  >    fee gates. The invoice path is untouched by either gate.
+  >    ------------------------------------------------------------------------
+  >    ============================================================================
+
+## 4 Oct 2026: Phase 151
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 1:
+
+  > =============================================================================
+  >    CAPREBATE — RESIDUAL COST MODEL (Phase 9)
+  >
+  >    Board 18422317809. Plan doc 46256300.
+  >    Items: 12804374366 (LEG-E2), 12804380489 (LEG-E3), 12804374707 (LEG-E4),
+  >           12804317685 (LEG-E5), 12804374838 (valuation basis switch).
+  >
+  >    ---------------------------------------------------------------------------
+  >    STATUS: PREPARED, NOT SHIPPED.
+  >
+  >    Nothing in this file is wired into caprebate-site.html. The shipped engine
+  >    values a claim from sector YIELD BANDS (QE = base x band). This module is the
+  >    RESIDUAL REPLACEMENT-COST model that Build-Prep-Care-Homes-Estimate-Engine-
+  >    Specification.md sections 4.1-4.3 describes and that nothing has yet
+  >    implemented. The four LEG-E fixes are fixes to THIS model, which is why they
+  >    could not be applied to the shipped engine: the code they correct did not
+  >    exist. It exists now, with the corrections designed in from the start and
+  >    held behind gates.
+  >
+  >    THE RULE THIS FILE OBEYS
+  >      Every gate in CB_P9_GATES defaults to FALSE, and false means "behave as the
+  >      specification currently says", not "behave correctly". Turning a gate on is
+  >      a deliberate act that belongs to whoever clears the licence or buys the
+  >      book. The data tables that the gated behaviour needs are EMPTY STUBS. A
+  >      gate turned on over an empty table does NOT quietly fall back to a
+  >      plausible number - it throws E_TABLE_NOT_LOADED. Silence is how a stub
+  >      becomes a fabricated figure.
+  >
+  >    WHAT IS LICENSED AND WHAT IS NOT - read this before touching the gates
+  >      LEG-E2  needs NO data at all. It removes a multiplier. See the note at
+  >              prelimsFactor(). It was once marked blocked on the VOA licence;
+  >              since 4 Oct 2026 nothing here waits on that licence.
+  >      LEG-E3  needs a professional-fees figure. Since 4 Oct 2026 the surveyor
+  >              sets the percentage (call question 9a, SV-S10); the Valuation
+  >              Office's fee scale is not used and its table stays empty.
+  >      LEG-E4  needs a commercial cost library: BCIS, chosen over Spon's on
+  >              24 September 2026 (Word answers 6 and 8). No Spon's book is
+  >              bought. It IS a licence question after all: BCIS's licence
+  >              (Annex One of its terms of sale, read by Phase 151) grants
+  >              internal use to named users and extracts to clients only - see
+  >              BCIS_COMMERCIAL in phase3's source register. Word question 218
+  >              closed 10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir),
+  >              reports included. Board items 12804374406 and, for the export,
+  >              13254356802.
+  >      LEG-E5  needs VOA obsolescence scales (licensed) AND CIBSE plant lives
+  >              (a separate source with its own terms). Two tables, two sources.
+  >      BASIS   needs nothing. It is a switch. It is complete and it is live.
+  >
+  >    RUN THE TESTS
+  >      node --test caprebate-cost-model.test.cjs
+  >    =============================================================================
 
 ## 4 Oct 2026: Phase 153
 
@@ -14849,6 +17966,58 @@ neither says.
 - Line 175:
 
   > Exported for Phase 153a's grant check (src/modules/assessment/grant-checks.ts): the grant papers, received on the claim.
+
+### `src/modules/survey/pack-approve.ts`
+
+- Line 228:
+
+  > PHASE 153a — chapter 15: the claim's grants and what each took off. `sums` above is the figure after them.
+
+### `src/modules/survey/pack-vat.ts`
+
+- Line 1:
+
+  > CHAPTER 15'S VAT HALF — PHASE 153e, 4 October 2026 (added to the phase by Phase 153a).
+  >
+  > Module 00 C23: "Irrecoverable VAT is included in qualifying expenditure. Healthcare is largely VAT-exempt, so this is
+  > usually a meaningful uplift — but watch partial exemption (cosmetic / dispensing / NHS-contract mixes)." Built on
+  > that, for the surveyor and the tax adviser to check: two pack inputs, each set by the surveyor with a reason (their
+  > source), and the VAT that could not be reclaimed is added to the price before it is shared out.
+  >
+  >   EXEMPT          the client could reclaim none of it: the VAT amount is added to the price paid.
+  >   RECLAIMS        the client reclaimed it all: nothing is added.
+  >   PARTLY_EXEMPT   partial exemption is UNRESOLVED (Module 00): nothing is added, and the tax adviser is asked.
+  >   NOT_KNOWN       nothing is added (N4: an unknown never adds to a claim).
+  > No position recorded reads exactly as NOT_KNOWN, and an exempt position with no amount adds nothing.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 501:
+
+  > PHASE 153a, 4 October 2026 — F-15's remainder. The claim's grants, read from the claim record, and what each takes off
+  > (src/modules/survey/pack-grants.ts). Nothing is typed here: a grant is recorded, matched and removed on the claim, by Sales or
+  > Admin, so the surveyor sees what the claim holds and the figure it gives. VAT is not in the pack yet.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 49:
+
+  > `grantSwitches` (Phase 153a) is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be
+  > proved both ways. Nothing in src/ or api/ passes it, so a pack always takes the switches as they ship.
+
+- Line 221:
+
+  > The pack's sums AFTER the claim's grants (Phase 153a, chapter 15); the figures before them are `grants.reading.before`.
+
+- Line 537:
+
+  > PHASE 153a — the claim's grants come off the sums here, so every total, the legal check, approval and the report
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 223:
+
+  > PHASE 153a: a version approved before grants came off has no `grants`; one with grants that took nothing off reads as before.
 
 ### `src/shared/next-step.ts`
 
@@ -14971,6 +18140,29 @@ neither says.
 
   > PHASE 153a (Phase 153b lines 12 and 13): no grant split in equal share without its papers or the tax adviser's
 
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 147:
+
+  > PHASE 153b, 4 October 2026 (Word question 191, Lakhbir's: "Should our job cost model still count a tax adviser's
+  >    review on every surveyor job?"). The `cta` line is RENAMED, NOT CHANGED: under clause 1 of the engagement letter
+  >    the client's own accountant or adviser signs the tax position, and we pay a tax adviser only if we introduce one
+  >    (switched off). So the line is "our own tax adviser, if we introduce one" - LINE_NAMES below - kept on every
+  >    surveyor job as a safety margin until ten real jobs show how often a client asks us for one; then cta_share is set
+  >    to that share. Every figure is unchanged, and the key stays `cta` because the business plan model and the agreement
+  >    test read it by that name.
+
+- Line 195:
+
+  > our own tax adviser, if we introduce one, on every job - a safety margin (Phase 153b)
+
+### `src/modules/survey/pack-legal.ts`
+
+- Line 322:
+
+  > PHASE 153b (Word question 98): with CB_CTA.election_value_cut_to_lawful_max on, the engine has already cut an
+  >          elected figure above what the seller paid, or above the price, down to that limit; the cap says so.
+
 ### `src/shared/engine.ts`
 
 - Line 114:
@@ -15078,6 +18270,64 @@ neither says.
 
   > Phase 153c: the document's kind travels with it, and only the kinds on SCANNED_PAGE_KINDS are sent (Word question 193).
 
+### `src/modules/compliance/breach-names.ts`
+
+- Line 1:
+
+  > THE RESTRICTED BREACH NAMES LIST. PHASE 153c, 4 October 2026.
+  >
+  > Word question 181, Sadique's: "Once the back office is live, which breach record is the official one?" Built on our
+  > recommendation for him to check: the back office's breach register is the official record, and the names of anyone
+  > who had to be identified are kept apart from it, in this list, which only two people may open — the data protection
+  > officer and the deputy named in writing (the letter of authority, Word question 184).
+  >
+  > THE REGISTER STILL CARRIES NO NAME. A breach entry carries only its annex reference (ANX-nnn, migration 017's
+  > `annex_ref`), and the entry's page shows that reference and a link — never a name, a count of names or a role. The
+  > list holds, per name: the reference, the entry, the name, how the person was involved, a note. Append-only.
+  >
+  > WHO MAY OPEN IT. The officer (the DPO role, switched off until it exists) and ONE Admin: the latest deputy named in
+  > `breach_names_deputies`, with the paper that names them. Every other Admin — and every other role — is refused, and
+  > the refusal is in the audit log as well as every read. Naming the deputy is itself an Admin's recorded act.
+
+### `src/modules/compliance/compliance-clock.ts`
+
+- Line 348:
+
+  > ================================================================== *
+  > A COMPLAINT'S OWN TARGETS — PHASE 153c, 4 October 2026 (Word question 178, Sadique's: "How often
+  > should someone who complained get updates, and when should it be finished?"). Built on our recommendation for him
+  > to check: an update at least every 28 days, and our own target of one calendar month from receipt to the outcome.
+  > NEITHER IS A LEGAL DEADLINE and the words say so: the law asks only that a complaint is answered "without undue
+  > delay" (s.164A(4)), and these are what we hold ourselves to. Pure: the same days give the same dates.
+  > ==================================================================
+
+### `src/modules/compliance/compliance-identity.ts`
+
+- Line 97:
+
+  > PHASE 153c, 4 October 2026 (Word question 162, Sadique's: "May we ask our client to pass our privacy notice to a
+  > stranger named in our records?"). Built on our recommendation for him to check: "Through the client" is never the
+  > only route. It saves only when the notice is also published on our notices page and that is recorded for the same
+  > person — and the record shows both. The database refuses it too (migration 080).
+
+### `src/modules/compliance/compliance-pages.ts`
+
+- Line 216:
+
+  > Phase 153c (Word question 181): the restricted names list — the officer and the named deputy only.
+
+### `src/modules/compliance/compliance-rights.ts`
+
+- Line 678:
+
+  > Phase 153c (Word question 178): our own targets — the next update and the outcome. Not legal deadlines.
+
+### `src/modules/compliance/compliance-views.ts`
+
+- Line 361:
+
+  > Phase 153c (Word question 181): the restricted names list for one breach entry. Only its two readers reach this page.
+
 ### `src/modules/crm/premises-import.ts`
 
 - Line 1:
@@ -15100,6 +18350,22 @@ neither says.
   > THE COLUMN NAMES are as each register describes its download (read 4 October 2026, not yet against a real file).
   > The first real file is checked against them before anything is kept; a file whose columns do not match is refused
   > whole. In the test system it runs on invented rows only.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 65:
+
+  > False for the surveyor (Phase 153c): what each grant paid, and what each takes off, is not shown to them.
+
+- Line 69:
+
+  > PHASE 153c, 4 October 2026 — MAY THE SURVEYOR SEE WHAT EACH GRANT PAID? Built on our recommendation, for Sadique Maskeen
+  > (data protection officer) to check. The surveyor's released list (src/payload.ts, releasedFactReader) carries no
+  > amount, so the pack does not show one either: chapter 15 shows the surveyor who paid (as a class), what it paid for
+  > and how it comes off, but not each grant's amount or what each takes off. The pack's totals — before grants, less
+  > grants, the spend that qualifies — are still shown, because they are in the figures the surveyor approves. Every
+  > other role sees the amounts. If Sadique says the surveyor may see them, this becomes true and the pack goes on the
+  > released list instead.
 
 ### `src/shared/originals.ts`
 
@@ -15171,6 +18437,38 @@ neither says.
 - Line 206:
 
   > Phase 153d: the test-only copy carries terms nobody has agreed. It is shown on the test website and never signed.
+
+### `src/modules/compliance/compliance-aml.ts`
+
+- Line 86:
+
+  > PHASE 153d, 4 October 2026 (Word question 45): three more kinds, TEST DEFAULTS, NOT AGREED — for the solicitor.
+
+- Line 134:
+
+  > PHASE 153d, 4 October 2026 — THE CHECK'S TEST DEFAULTS (Word question 45, the director's, for the solicitor). Built on
+  > our recommendation so the test system runs end to end: a low, medium or high risk level; anyone owning more than 25%
+  > treated as an owner to check; and ordinary partnerships, LLPs and trusts as kinds of claimant. NOT AGREED: the
+  > solicitor checks each. The check is still switched off with AML_IN_SCOPE, and the level is never required to finish.
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 1515:
+
+  > =============================================================================
+  >    11. THE DISPOSAL FEE — PHASE 153d, 4 October 2026 (Word question 23, the director's)
+  >
+  >    Built on our recommendation, for the director to check: when a client sells a property, our help - reading the
+  >    sale and the claim file, working out the disposal value for each pool, and drafting the s.198 election and its
+  >    covering note - is a FIXED FEE, costed here from the same inputs as every other job: our own hours at the model's
+  >    £60 rate, plus the data line. Never a percentage of the sale price or of the election figure: a percentage of the
+  >    election figure would pay us more for the outcome that costs our client more tax. No allowance is found on a
+  >    disposal, so 3% of the allowances would be nothing.
+  >
+  >    AT COST, NO MARGIN: £290. Any margin is the director's to set. Lakhbir's note on question 23 ("a flat 3%" when no
+  >    allowance is made) did not say 3% of what, so it is recorded with the question rather than built. A TEST DEFAULT,
+  >    NOT AGREED: the disposal note and the staff task say so wherever the figure is shown.
+  >    =============================================================================
 
 ## 4 Oct 2026: Phase 153e
 
@@ -15262,6 +18560,221 @@ neither says.
   > PHASE 153e, 4 October 2026 (Word question 148): each space in a theatre suite is counted, not the suite. Lakhbir
   >        answered "Several"; the draft in the box agrees. A TEST DEFAULT for the surveyor to confirm which spaces carry
   >        which equipment (src/web/pack-lines.ts, SUITE_ROWS).
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 91:
+
+  > PHASE 153e (4 October 2026, Word question 136): preliminaries by JOB SIZE, from a PLACEHOLDER banded table
+  >      (PRELIMS_BANDS_PLACEHOLDER), wherever the flat 18% default would be used. A job with no stated size refuses (N4).
+  >      Off as shipped; on in TEST_SYSTEM_GATES with the by-source rule, for the surveyor to set the bands.
+
+- Line 707:
+
+  > PHASE 153e, 4 October 2026 (Word question 136, the surveyor's). The answer typed under the question: "The percentage
+  >    should not be fixed at 18% for every job; it should reflect project size…". PLACEHOLDER BANDS, by the job's
+  >    construction cost in pounds before preliminaries: [floor, ceiling, rate], ceiling null = open top. Not calibrated:
+  >    the surveyor sets them.
+
+- Line 1884:
+
+  > PHASE 153e (Word question 147): the index factor can be worked out from an index table and two dates
+  >      (input.index_dates = { purchase, valuation }) instead of being typed. Both at once refuses.
+
+### `src/modules/survey/evidence-pages.ts`
+
+- Line 688:
+
+  > PHASE 153e (Word questions 129 to 131): the desk-first reading. The surveyor sees the level only; staff also see why.
+
+- Line 706:
+
+  > PHASE 153e (Word question 130): the coverage of the filming guide's required items, and the PLACEHOLDER pass mark.
+  > It measures how much of the guide was captured, never whether the figure is right.
+
+### `src/modules/survey/pack-approve.ts`
+
+- Line 199:
+
+  > PHASE 153e (Word question 150): each finding, seen on site or from documents, frozen with the version.
+
+- Line 243:
+
+  > PHASE 153e: chapter 15's VAT half, frozen with the version. Its counted VAT is already in `sums`.
+
+- Line 245:
+
+  > PHASE 153e (Word question 145): the planning assumption, frozen with the version (a test reading for the surveyor).
+
+### `src/modules/survey/pack-lines.ts`
+
+- Line 89:
+
+  > PHASE 153e, 4 October 2026 — TEST DEFAULTS FOR THE SURVEYOR TO CONFIRM, laid over the fixture list without changing it.
+  >
+  > SUITE_ROWS (Word question 148): a theatre row is counted from the suite's spaces that carry its equipment, each
+  > counted, not from the theatres alone. Ultra-clean ventilation and the operating lights stay with the theatre.
+  >
+  > PLACEMENT (Word questions 134 and 135), from the answers typed under the questions:
+  >   - ordinary powered ventilation, air cooling and air purification are integral features (special rate). Dental
+  >     extract and ordinary GP treatment-room ventilation are NOT automatically medical equipment: special rate here.
+  >   - theatre ultra-clean ventilation and isolation-room ventilation are FLAGGED: the pool is left to the surveyor on
+  >     each job, by the system's function, specification and purpose.
+  >   - emergency lighting is part of the electrical and lighting system (LS-SR-001); commercial kitchen extract is part
+  >     of the ventilation system (LS-SR-004); clinical flooring and ordinary security glazing stay with the building
+  >     (nothing qualifies unless a specific rule applies); drug storage and standby generators are their own plant.
+  > Each default says so in its source text, so a surveyor reads it as a default, not a decision.
+
+- Line 145:
+
+  > PHASE 153e: supported living's common parts, from the shared areas on the floor plans (else the 25% fallback).
+
+- Line 181:
+
+  > PHASE 153e (Word question 133): drafted from the shared areas the surveyor reads off the floor plans instead; with
+
+### `src/modules/survey/pack-sheets.ts`
+
+- Line 1:
+
+  > THE SURVEY PACK'S OTHER TEN CHAPTERS — PHASE 153g, 4 October 2026.
+  >
+  > Chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22 (the report template's sections of the same numbers,
+  > 04-phase-work/phase9/surveyor-valuation-report-template-v2.md). Each is a SHEET: rows read from the pack, the claim, the
+  > registers we hold, or the surveyor's own words (src/modules/survey/pack-words.ts), and nothing else. One reading, used three ways:
+  > the pack's pages (src/modules/survey/survey-pack-pages.ts), the approved version (src/modules/survey/pack-approve.ts) and the client's report
+  > (src/modules/survey/survey-report.ts), so the page, the version and the report never disagree.
+  >
+  > N4: a row with nothing behind it is null, shown as "not on file" (a record), "not written yet" (the surveyor's words)
+  > or "not worked out yet" (a sum), never a guess and never a default. No land fraction, dwelling fraction or qualifying
+  > percentage is ever drafted here (the template's own rule).
+  >
+  > The Phase 153e lines each chapter carries are named on the chapter (the order: 04-phase-work/phase153f/
+  > survey-pack-chapters-order.md).
+
+- Line 70:
+
+  > The Phase 153e lines it carries, for the developer's record; not shown to the client.
+
+- Line 142:
+
+  > Phase 153e line 16: Homedata's floor-area estimate, only where it was fetched (its switch ships off), always labelled.
+
+- Line 144:
+
+  > Phase 153e line 4: supported living's shared areas, from the floor plans.
+
+- Line 182:
+
+  > Phase 153e line 11: the planning assumption, as it goes in the report.
+
+- Line 336:
+
+  > Phase 153e line 9: the range proposed from approved packs for this sector, once five exist.
+
+- Line 380:
+
+  > Phase 153e line 15 (Word question 150): like for like cannot be told from a visit alone.
+
+### `src/modules/survey/survey-checklist.ts`
+
+- Line 46:
+
+  > PHASE 153e (Word question 134): what decides a ventilation system's group is what it is for and how it is specified,
+  >      not the room it serves, so the client is asked both. Their answer goes in the photo's note. A test default.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 360:
+
+  > Chapter 3 — what the report is for, and the basis it was made on (Phase 153e lines 1 to 3: the evidence level).
+
+- Line 419:
+
+  > Chapter 21 — the report's limits and standard assumptions, with the planning assumption (Phase 153e line 11).
+
+- Line 546:
+
+  > PHASE 153e — CHAPTER 15'S VAT HALF (src/modules/survey/pack-vat.ts; Module 00 C23). The surveyor records whether the client could
+  > reclaim the VAT, and the VAT not reclaimed, each with a reason. Only "exempt" adds it to the price paid; partly exempt
+  > waits for the tax adviser; not known adds nothing (N4).
+
+- Line 766:
+
+  > PHASE 153e (Word question 133): supported living's shared areas, measured from the floor plans. The common-parts
+  > rows are drafted from it; with none, a flat 25% of the floor area, labelled as the fallback it is.
+
+- Line 801:
+
+  > PHASE 153e (Word question 150): each line says whether it was seen on site or comes from documents.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 224:
+
+  > PHASE 153e: chapter 15's VAT half (src/modules/survey/pack-vat.ts). Its counted VAT is in `sums`, added to the price paid.
+
+- Line 226:
+
+  > PHASE 153e: supported living's shared areas from the floor plans, in thousandths of a m² (the surveyor's, with a reason).
+
+- Line 418:
+
+  > PHASE 153e (Word question 133): the share of the floor area used when no floor plans give the shared areas.
+
+- Line 460:
+
+  > PHASE 153e (Word question 133): the common parts, by floor area from the floor plans, or the labelled 25% fallback.
+
+- Line 551:
+
+  > PHASE 153e: VAT the client could not reclaim is part of the price that is shared out (Module 00 C23). The price
+
+- Line 778:
+
+  > PHASE 153e — THE PACK'S EXTRA VALUES: chapter 15's VAT position (one of four) and the amount not reclaimed, and
+  > supported living's shared areas from the floor plans. Each the surveyor's, with a reason. Empty: back to not recorded.
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 46:
+
+  > PHASE 153e: seen on site, or from documents. Null in a version approved before.
+
+- Line 75:
+
+  > PHASE 153e: the assumptions the version was approved on (the planning assumption). Empty in a version approved before.
+
+- Line 269:
+
+  > PHASE 153e: VAT the client could not reclaim, where the version counted any. A version approved before has none.
+
+### `src/modules/survey/surveyor-crm.ts`
+
+- Line 883:
+
+  > PHASE 153e, 4 October 2026 (Word question 149, the surveyor's): the limit for a GBP/m2 field, a TEST DEFAULT built on
+  > the answer typed under the question ("For price-per-square-metre figures, use a 10% tolerance as the initial
+  > threshold … flagged for review rather than automatically treated as a failure"). Relative to the pre-filled median.
+  > Outside it the field is FLAGGED FOR REVIEW, never retired automatically. For the surveyor to confirm.
+
+- Line 976:
+
+  > Phase 153e: a GBP/m2 field within the test limit of 10%.
+
+- Line 978:
+
+  > Phase 153e: a GBP/m2 field more than 10% apart. Flagged for the surveyor's review, not a fail.
+
+- Line 1041:
+
+  > PHASE 153e: a GBP/m2 field has a test limit now: 10% of the pre-filled median, as a flag, never a retirement.
+
+### `src/modules/survey/surveyor-pages.ts`
+
+- Line 382:
+
+  > PHASE 153e (Word question 131): the evidence level, worked out from the price paid. The level only.
 
 ### `src/shared/finding-source.ts`
 
@@ -15429,11 +18942,76 @@ neither says.
   > PHASE 153f, 4 OCTOBER 2026 — A FILE SOMEONE SENT US ON WHATSAPP, KEPT HERE
   > ==================================================================
 
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 336:
+
+  > ------------------------------------------------------------ PHASE 153f: chapters 1, 3, 6, 12, 13 and 21
+
 ### `src/shared/objectstore.ts`
 
 - Line 96:
 
   > PHASE 153f, 4 Oct 2026: a file someone sent us on WhatsApp, fetched from Meta and kept sealed (src/web/whatsapp.ts).
+
+## 4 Oct 2026: Phase 153g
+
+### `src/modules/survey/pack-approve.ts`
+
+- Line 250:
+
+  > PHASE 153g: chapters 5, 8, 11, 14, 16 to 20 and 22, as they stood at approval (src/modules/survey/pack-sheets.ts).
+
+### `src/modules/survey/pack-chapters.ts`
+
+- Line 6:
+
+  > PHASE 153f, 4 October 2026: chapters 1, 3, 6, 12, 13 and 21 built — each shows what the pack already holds.
+  >    PHASE 153g, the same day: the other ten (5, 8, 11, 14, 16, 17, 18, 19, 20, 22), from src/modules/survey/pack-sheets.ts, with the
+  >    surveyor's own words where the template asks for them (src/modules/survey/pack-words.ts). Every chapter is now built.
+
+### `src/modules/survey/pack-words.ts`
+
+- Line 1:
+
+  > THE SURVEYOR'S OWN WORDS IN THE SURVEY PACK — PHASE 153g, 4 October 2026.
+  >
+  > Eight of the pack's chapters ask the surveyor for words rather than a number (the report template's [SURVEYOR]
+  > fields, 04-phase-work/phase9/surveyor-valuation-report-template-v2.md). Each is kept like every other pack change:
+  > with a reason, under the surveyor's name, never edited (migration 087). The newest row for a field is shown; an empty
+  > box clears it. Nothing here is ever drafted for the surveyor: a field nobody wrote reads "not written yet".
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 134:
+
+  > PHASE 153g: the surveyor's own words in chapters 5, 8, 11, 14, 16, 19, 20 and 22 (src/modules/survey/pack-words.ts).
+
+- Line 433:
+
+  > ------------------------------------------------------------ PHASE 153g: the other ten chapters
+
+- Line 437:
+
+  > PHASE 153g — chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22, from one reading (src/modules/survey/pack-sheets.ts): each row
+  > says where it comes from, and a row with nothing behind it says so in words. The surveyor's words are each a form, kept
+  > with a reason under their name; Admin and Sales read them.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 699:
+
+  > PHASE 153g: the same guard for the surveyor's own words (src/modules/survey/pack-words.ts): who may, the reason, a page out of date.
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 79:
+
+  > PHASE 153g: the surveyor's chapters (5, 8, 11, 14, 16 to 20, 22) as approved. Empty in a version approved before.
+
+- Line 869:
+
+  > ---------------------------------------------------------- 6 · PHASE 153g: the surveyor's chapters
 
 ## 4 Oct 2026: Phase 154a1
 
@@ -15472,6 +19050,34 @@ neither says.
   >   - the direction marks, embeddings, overrides and isolates (U+061C, U+200E, U+200F, U+202A-U+202E, U+2066-U+2069).
   > Everything else - accents, dashes, any language's letters, emoji - is kept. Read by every form the web half reads
   > (src/core/router.ts form(), src/core/multipart.ts, src/web/messages-pages.ts); a password is never changed (KEEP_AS_SENT).
+
+### `src/modules/admin/configuration-pages.ts`
+
+- Line 116:
+
+  > PHASE 154a1 (line 4): the label box and this list sit in a table row with no label of their own, so each says
+
+### `src/modules/compliance/compliance-rights.ts`
+
+- Line 741:
+
+  > PHASE 154a1 (line 1): what was searched, at most SEARCH_TERM_MAX characters, and whether the typed term was longer.
+
+- Line 745:
+
+  > PHASE 154a1 (line 1), 4 October 2026: THE TERM IS CAPPED, AS THE OTHER SEARCHES ARE. The 3 October sweep posted 50,000
+  > characters here and got a 500: the LIKE pattern built from it was over SQLite's 50,000-byte limit. The S2 name search
+  > stops at 200 (compliance-identity.ts) and the back office search cuts to 100 (search.ts); this one cuts to 200 and the
+  > page says so, so nobody thinks the whole of what they typed was searched.
+
+### `src/modules/compliance/compliance-views.ts`
+
+- Line 33:
+
+  > PHASE 154a1 (line 4), 4 October 2026: EVERY LABEL NAMES ITS BOX. These three wrote <label class="fl"> with no for=
+  > and not around the box, so a screen reader read every compliance form's boxes with no name (the 3 October sweep).
+  > Each box now has an id of its own - a page can carry the same field in several forms, so the id is numbered - and its
+  > label says for= that id.
 
 ### `src/modules/crm/crm-pages.ts`
 
@@ -15680,6 +19286,21 @@ neither says.
 
   > PHASE 155 (line 5): Admin is told, on whichever home view, when email replies have not been read for over an hour in working hours.
 
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 2171:
+
+  > PHASE 155 (line 4), 4 October 2026 — THE REAL INDEX, FROM A FILE LAKHBIR DOWNLOADS. BCIS publishes no API licence
+  >    and nothing here calls BCIS (Word question 218, closed 10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir, 9 Oct 2026); the export is board item 13254356802). Lakhbir downloads
+  >    the index series from BCIS as a spreadsheet saved as CSV, and `parseIndexTable` turns it into a table of exactly
+  >    CB_BCIS_INDEX's shape. The back end keeps it OUTSIDE the repository (09-app/backend/src/modules/survey/bcis-index.ts, the
+  >    command `import-bcis-index`): BCIS's licence (BCIS_COMMERCIAL in the source register) lets named users use the rates
+  >    and does not let the table be reproduced, so it is never committed and never published.
+  >    WHAT IT READS: two columns per row - a period and an index figure. A period is a month (2024-01, 2024-01-31,
+  >    "Jan 2024", "January 2024") or a quarter ("1Q 2024", "Q1 2024", "2024 Q1", taken as its first month). A row whose
+  >    figure is not a number (a heading, a note, a blank) is passed over and counted. REFUSED WHOLE, never guessed (N4):
+  >    a period that cannot be read, a figure of nil or less, the same period twice, or fewer than two points.
+
 ## 4 Oct 2026: Phase 156
 
 ### `src/modules/crm/inbound-email.ts`
@@ -15741,6 +19362,40 @@ neither says.
   > A LIVE LEGAL HOLD STOPS IT (record kind WEBSITE_ENQUIRY, by its id; LEAD and COMPANY for a funnel enquiry). N4: an
   > enquiry with no closing day is never due.
 
+## 4 Oct 2026: Phase 157a
+
+### `src/modules/survey/bcis-index.ts`
+
+- Line 1:
+
+  > THE BCIS INDEX TABLE, FROM A FILE LAKHBIR DOWNLOADS — KEPT OUTSIDE THE REPOSITORY. Phase 155 (line 4), 4 October 2026.
+  >
+  > BCIS is the chosen cost source (Word answers 6 and 8) but publishes no API licence, so nothing here calls BCIS (our
+  > use is confirmed: Word question 218, closed 10 Oct 2026). Once the export arrives, Lakhbir downloads the index series as a
+  > spreadsheet saved as CSV and runs `node src/core/cli.ts import-bcis-index <file>`. The cost model's own reader
+  > (09-app/backend/src/modules/survey/costing/cost-model.cjs, parseIndexTable) turns it into a table of exactly CB_BCIS_INDEX's
+  > shape, and this file writes it to CAPREBATE_BCIS_INDEX_FILE, or ~/.caprebate-bcis-index.json — NEVER inside the
+  > repository, which is refused: BCIS's licence lets named users use the rates and does not let the table be reproduced
+  > (BCIS_COMMERCIAL in the source register), so it is never committed and never published on the test website.
+  >
+  > UNTIL THEN: the shipped CB_BCIS_INDEX stays an empty stub, and the cost model's test system uses its PLACEHOLDER table
+  > of invented points, labelled as such. PHASE 157a (6 October 2026) wired the survey pack to it: chapter 11's index factor
+  > reads this table first (src/modules/survey/pack-cost-model.ts, indexTableHere), the placeholder only in the test system, and
+  > otherwise nothing.
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 2140:
+
+  > ============================================================================
+  >    PHASE 153e, 4 October 2026 — FOUR OF THE SURVEYOR'S QUESTIONS, BUILT ON OUR RECOMMENDATION, IN THIS MODEL'S OWN
+  >    TEST SYSTEM (its suites, and TEST_SYSTEM_GATES / TEST_SYSTEM_TABLES below). NOTE WHICH TEST SYSTEM: the back end's
+  >    survey pack (09-app/backend/src/modules/survey/pack-sums.ts) does not call this model at all, so none of this reaches the test
+  >    website until the pack is wired to it. PHASE 157a (6 October 2026) wired it: 09-app/backend/src/modules/survey/pack-cost-model.ts
+  >    reads the preliminaries bands, the index factor and the insurance check for one pack, as test placeholders (chapters
+  >    11 and 14), and every gate here stays off.
+  >    ============================================================================
+
 ## 4 Oct 2026: Phase 158b
 
 ### `src/modules/crm/pipeline.ts`
@@ -15787,6 +19442,55 @@ neither says.
   > that version is made from them (`returnContextFor`). Before then it reads the claim as it stands. Every cell is quoted
   > where it must be, and a cell that a spreadsheet would read as a formula is made plain text.
 
+## 4 Oct 2026: Phase 159i
+
+### `src/modules/survey/pack-grants.ts`
+
+- Line 1:
+
+  > THE SURVEY PACK'S GRANTS — chapter 15. Phase 153a, 4 October 2026: F-15's remainder.
+  >
+  > Rulebook F (01-rulebooks/Caprebate-Statutory-Rules-Register-F-Contributions-And-Grants-v1.md): money from someone
+  > else reduces the spend "to the extent that" it met it (s.532, F-R1), and F3 says "trace it to cost elements; do not
+  > pro-rate yet". Until this file, a grant on the claim record (claim_grants, migration 015) was matched only in words,
+  > and nothing took it off anything: the survey pack's sums (src/modules/survey/pack-sums.ts) had no grant in them at all.
+  >
+  > TWO ROUTES, AND THE SWITCH CB_CTA.grant_traced_to_elements CHOOSES BETWEEN THEM. It ships OFF.
+  >
+  >   EQUAL SHARE   the grant_fraction route the public estimate has always used: the grant is a share of the price
+  >                 paid, and every item loses that share. A £100,000 grant on a £500,000 price takes 20% off what
+  >                 qualifies. OFF, EVERY GRANT TAKES THIS ROUTE.
+  >   ITEMS         ON, a grant matched to named rows of the fixture list (claim_grant_elements, migration 078) comes off
+  >                 only those rows: it met their spend, so their qualifying part comes down by the share of their spend
+  >                 it met, and no other row moves. Split across several rows by their rebuild cost. A grant whose rows
+  >                 are none of the pack's counted lines — it paid only for items that never qualify, such as the walls
+  >                 or the flats — takes nothing off (Word question 79). A grant matched only in words, or not matched
+  >                 at all, keeps the equal share.
+  >
+  > WHO PAID (F4, F5). Only insurance money after damage is known not to reduce the spend (F-R7). A connected payer — a
+  > landlord linked to the client, a company in its group — reduces it unless CB_CTA.connected_contributor_no_reduction is
+  > on (F-R10, F-Q1), the same switch the public estimate reads. Everyone else, and a payer not known, reduces it: whether
+  > a private payer could claim relief itself (F-R9) is not a fact we hold, and N4 never lets an unknown relieve.
+  >
+  > N4, IN THIS FILE.
+  >   · A grant matched only in words, or not at all, is UNTRACED — never taken as having paid for nothing.
+  >   · A grant that reduces and whose amount is not known gives NO TOTAL, and is named in `needed`. A total without it
+  >     would read as an answer.
+  >   · A pack with no total before grants has none after them.
+  >
+  > THE ORDER. Grants matched to items come off first, line by line; the equal-share grants then take their share of what
+  > is left. Every amount is whole pence in BigInt, each rounding the nearest penny, a half up (pack-sums.ts's own rule).
+  > Main pool + special rate pool = what qualifies, to the penny, after grants as before them.
+  >
+  > PHASE 159i (item 1, Rulebook F F-R12): A THIRD ROUTE, FULL, replaces the equal share where `untraced_full` is on (on
+  > in test): a grant that cannot be traced to the items it paid for comes off what qualifies in full — the conservative
+  > deduction — after the traced ones. A grant paid to an EARLIER owner (PAST_OWNER) takes nothing off the buyer's sums;
+  > it lowers the cap from the earlier sale (s.185, pack-legal.ts). And C23: every route's rows add up to its total.
+  >
+  > NOTHING HERE READS A DATABASE, A CLOCK OR A SWITCH: the switches are arguments, so both ways are tested
+  > (test/pack-grants.test.ts) while the one that ships is off. Whether a grant reduces qualifying spend item by item is
+  > the tax adviser's to confirm — FOR THE ACCOUNTANT, ACC-A16.
+
 ## 4 Oct 2026: no phase named
 
 ### `src/modules/claims/register-files.ts`
@@ -15798,6 +19502,58 @@ neither says.
   > Persons, telephone, email, website and the provider's name and address; the Care Inspectorate's a manager's name,
   > telephone and email, and the provider's name. None of them is ever read. The Care Inspectorate's year-suffixed
   > columns (complaints, enforcements, inspections) are renamed as the years roll on, so none of them is read either.
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 96:
+
+  > LEG-E3 (12804380489) - replace the flat 15% professional fee uplift with
+  >      a banded fee table. Waits on the SURVEYOR, who sets the fees percentage
+  >      (call question 9a, SV-S10), not on the Valuation Office, whose licence
+  >      email was dropped on 4 Oct 2026.
+
+- Line 141:
+
+  > LEG-E5 (12804317685) - per-element depreciation from obsolescence scales
+  >      and CIBSE plant lives. Waits on the SURVEYOR's ageing method (call
+  >      question 9, the valuation basis; tracker 12927234437) and on CIBSE; not on the Valuation Office, whose
+  >      licence email was dropped on 4 Oct 2026.
+
+## 5 Oct 2026: Phase 155
+
+### `src/modules/admin/connections.ts`
+
+- Line 1:
+
+  > PHASE 156e, 5 October 2026 — THE ADMIN "CONNECTIONS" PAGE (B3), AND THE TWO CARE REGULATORS' LISTS (B4).
+  >
+  >   GET  /staff/connections                          every outside service on one page, read only. Admin only.
+  >   GET  /staff/connections/import?list={CIW|CARE_INSPECTORATE}   the import page, with its one script. Admin only.
+  >   POST /staff/connections/register/{CIW|CARE_INSPECTORATE}   import that regulator's downloaded list. Admin only.
+  >   GET  /staff/connections/switches.json            PHASE 161c: the list of what is built and switched off (STUBS in
+  >                                                    src/core/app.ts), which /api/health served to anyone until 4 Nov 2026.
+  >                                                    Admin only; anyone else gets 403 and nothing of it.
+  > The Connections page itself carries no script, as every page reached from Home must (test/phase133a); the import
+  > page, which needs one, is opened by a button, as the WhatsApp upload page is (Phase 156c).
+  >
+  > WHY. "So nobody has to read code to know": one row per outside service - is its key there (yes or no, NEVER the
+  > value), is it switched on (and what switch says so), is it on for testing under a waiver or for real clients, when it
+  > was last called and how that went, and what it still waits on. Built from what the code already decides - the key
+  > list (src/core/secrets.ts), each service's own switch (src/core/saved-keys.ts, `serviceOn`), the outside-call policies
+  > (src/integrations/connectors/sources.ts) and the audit log's CONNECTOR_CALLED rows - so the page can never say something the code
+  > does not do. Nothing on it changes anything; keys are changed in Home's Admin tab, switches in code.
+  >
+  > NOTHING IS ON FOR REAL CLIENTS. Every service that is on, is on for testing only, under a recorded waiver or approval
+  > (Lakhbir, and Sadique for the US transfers); the column says so, and what turns it on for real is in "Waits on".
+  >
+  > THE TWO LISTS (Lakhbir, 5 Oct 2026, asked whether his 2 Oct "All the free ones" covers them: "Yes, include them").
+  > Care Inspectorate Wales and the Care Inspectorate (Scotland) publish a file, not an API (src/modules/claims/register-files.ts).
+  > The Scottish file is about 10 MB (31 August 2026's: 9,859,714 bytes, read 5 Oct 2026) and the test website takes about
+  > 4.5 MB a request. So the page's script (src/modules/claims/register-import-script.ts) reads the file ON THE ADMIN'S COMPUTER and
+  > sends only the columns we keep - the names, telephone numbers and emails in these files never leave that computer.
+  > With no script, a file under 4.4 MB goes as it is and the server reads only the same columns. Either way the import
+  > is the one Phase 155 built (`importRegisterFile`): refused whole on wrong columns, replacing that list whole.
+  > A list not imported this calendar month is shown on Home's Admin view, so each new monthly file is imported.
 
 ## 5 Oct 2026: Phase 156a
 
@@ -16138,6 +19894,21 @@ neither says.
 
   > PHASE 156d: the free plan's limit, said in the invitation too.
 
+### `src/modules/survey/evidence-pages.ts`
+
+- Line 242:
+
+  > PHASE 156d: the walkthrough call's words for our Zoom plan (src/modules/survey/survey-evidence.ts, WALK_WORDS).
+
+### `src/modules/survey/survey-evidence.ts`
+
+- Line 364:
+
+  > PHASE 156d, 5 October 2026 — THE WALKTHROUGH CALL'S WORDS, BY ZOOM PLAN. On the free plan (src/integrations/connectors/zoom.ts,
+  > zoomPlanIsFree) Zoom keeps no recording and a call stops at 40 minutes, so nothing promises a recording: the person
+  > who leads the call writes down what they see on the job, and the client can still send photos and a video.
+  > The paid words are the ones Lakhbir approved on 2 Oct 2026 ("Recorded Zoom call"); they come back with ZOOM_PLAN=pro.
+
 ## 5 Oct 2026: Phase 156e
 
 ### `src/core/router.ts`
@@ -16171,6 +19942,22 @@ neither says.
   > here, with no name, address or number of anyone: it goes through the pipeline's own strip (`sanitise`) and its guard,
   > exactly as a client's would. The reading switch is turned on FOR THIS ONE CALL ONLY, in this process; the switch that
   > ships stays off. Nothing is kept: the answer is counted and thrown away.
+
+### `src/modules/admin/admin-tiles.ts`
+
+- Line 36:
+
+  > PHASE 156e: every outside service, its key and its switch, on one read-only page; Admin's, as Users is.
+
+### `src/modules/admin/connections.ts`
+
+- Line 191:
+
+  > PHASE 156e: a regulator's list not imported this calendar month, for Home's Admin view. Null when both are current.
+
+- Line 225:
+
+  > PHASE 156e: the import page for one list - the form the script trims a file from.
 
 ### `src/modules/claims/register-import-script.ts`
 
@@ -16225,6 +20012,40 @@ neither says.
   > append-only row (migration 094); model C accrues only for a firm with one. The terms are a draft: the director agrees
   > them and the solicitor checks them. Until then model C stays off, and a signature can be recorded only in the test
   > system, against the draft's version.
+
+## 6 Oct 2026: Phase 153e
+
+### `src/modules/survey/pack-cost-model.ts`
+
+- Line 1:
+
+  > THE COST MODEL IN THE SURVEY PACK — PHASE 157a, 6 October 2026 (from Phase 153e, with 153g's and 155's additions).
+  >
+  > 09-app/backend/src/modules/survey/costing/cost-model.cjs has had four of the surveyor's questions built in its own test system
+  > since 4 October (Phase 153e): preliminaries by job size (Word question 136), the insurance cross-check (137), the
+  > past-claim limits (139) and the index factor (147). The pack did not call it at all. This file reads it for one pack,
+  > and the chapters show what it says (src/modules/survey/pack-sheets.ts):
+  >
+  >   chapter 11  THE INDEX DATES. The purchase date (the property record) and the valuation date (the surveyor's, chapter
+  >               11), the index at each and the factor between them: index(purchase) / index(valuation), which turns a
+  >               cost priced at the valuation date back to the purchase date. The table is the real BCIS index where one
+  >               has been imported (src/modules/survey/bcis-index.ts, `node src/core/cli.ts import-bcis-index`); the cost model's
+  >               PLACEHOLDER table of invented points ONLY in the test system; otherwise nothing — never a guess.
+  >   chapter 14  THE CHECKS. Preliminaries: the model as shipped uses a flat 18% with its switch off; the placeholder bands
+  >               by job size are shown, in the test system only, against this pack's rebuild cost. The insurance figure:
+  >               SUPPORTS, DOES NOT SUPPORT or NOT COMPARABLE, after the like-for-like adjustment, against a 10% test
+  >               limit for the surveyor to confirm. The past-claim limits are for checking the model against past claims,
+  >               not for one pack, and the chapter says so.
+  >   chapter 22  THE £/m² REVIEW FLAG (Word question 149, the phase3 CRM's BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2): this
+  >               pack's whole-building rate against the middle rate of the sector's approved packs, once five exist.
+  >               More than 10% apart is FLAGGED FOR REVIEW — never a fail.
+  >
+  > NOTHING HERE CHANGES A FIGURE. Every cost-model gate stays off in the shipped model; these are readings shown to the
+  > surveyor, kept out of the approved version and the client's report (SheetRow.internal), because each rests on a
+  > placeholder or a test limit. "Not known" is never a pass (N4): a missing date, figure or answer says so.
+  >
+  > THE TEST SYSTEM is the deployed test website (src/integrations/connectors/place.ts), or a copy started with
+  > CAPREBATE_COST_MODEL_TEST=1.
 
 ## 6 Oct 2026: Phase 156f
 
@@ -16523,6 +20344,12 @@ neither says.
   > which "cannot" establish the extent of a title. HOMEDATA_TERMS keeps every report channel closed: internal only,
   > as the INSPIRE area is, until Homedata's terms for title outlines are confirmed.
 
+### `src/modules/admin/connections.ts`
+
+- Line 65:
+
+  > PHASE 156f: a count for today, in words, shown under the service (the address box's searches against its cap).
+
 ### `src/modules/assessment/address-lookup-script.ts`
 
 - Line 1:
@@ -16617,6 +20444,29 @@ neither says.
 
   > PHASE 156f (B4): the area from Homedata's title outline for this property, as a line, or null.
 
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 344:
+
+  > ------------------------------------------------------------------------
+  >      THE ADDRESS SEARCH AT THE ASSESSMENT ("Find my address"). PHASE 157b, 6 OCTOBER 2026.
+  >
+  >      BEFORE SIGNING, AND SO CHARGED TO THE ENQUIRIES BEHIND A SIGNED JOB. Since
+  >      Phase 156f a person who presses "Find my address" makes one Homedata
+  >      postcode search: 2 tokens, 2p, the postcode only. It is capped: 50 a UK day
+  >      (£1) and 5 for one visitor (ADDRESS_SEARCH_CAP in
+  >      09-app/backend/src/connectors/address-lookup.ts). So the most it can cost
+  >      is £1 a day, whatever happens. A person who types their address costs
+  >      nothing. Modelled per enquiry, then per signed job through the conversion
+  >      rate, because the enquiries that never sign did spend it.
+  >      ------------------------------------------------------------------------
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 252:
+
+  > PHASE 156f (B3): once Homedata has answered planning, the free route's planning records are kept, not shown.
+
 ## 6 Oct 2026: Phase 157
 
 ### `src/core/audit.ts`
@@ -16678,6 +20528,65 @@ neither says.
 
   > PHASE 157: the funnel leads past the period, each deleted with its own rows, or kept with the reason.
 
+## 6 Oct 2026: Phase 157a
+
+### `src/modules/survey/pack-sheets.ts`
+
+- Line 54:
+
+  > PHASE 157a: shown to the surveyor and kept out of the approved version and the client's report (a test placeholder).
+
+- Line 98:
+
+  > PHASE 157a: where this copy runs, for the cost model's test placeholders (src/modules/survey/pack-cost-model.ts).
+
+- Line 184:
+
+  > Phase 153e line 12 (Word question 147), wired by Phase 157a: the index dates and the factor between them.
+
+- Line 191:
+
+  > PHASE 157a — chapter 11's index dates (Word question 147): the purchase date, the valuation date, and the factor.
+
+- Line 206:
+
+  > PHASE 157a — chapter 14's checks (Word questions 136, 137 and 139).
+
+- Line 249:
+
+  > Phase 153e lines 7, 8 and 10, wired by Phase 157a (src/modules/survey/pack-cost-model.ts): test placeholders, for the surveyor.
+
+- Line 402:
+
+  > Phase 153e line 14 (Word question 149), wired by Phase 157a: the phase3 module's £/m² review flag.
+
+- Line 428:
+
+  > PHASE 157a: a test placeholder (the cost model's readings) is the surveyor's to see, never the version's or the report's.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 465:
+
+  > PHASE 157a — the cost model's values (src/modules/survey/pack-cost-model.ts): chapter 11's valuation date, chapter 14's
+  > insurance figure, its date, and what each figure includes. Each the surveyor's, with a reason; empty clears it.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 101:
+
+  > PHASE 157a, 6 October 2026 — THE COST MODEL'S FIVE VALUES (migration 095; src/modules/survey/pack-cost-model.ts). Each the
+  > surveyor's, with a reason, for the index dates in chapter 11 and the insurance check in chapter 14. A date is kept as
+  > YYYYMMDD; what a figure includes is 1 demolition + 2 professional fees + 4 preliminaries. Never drafted (N4).
+
+- Line 228:
+
+  > PHASE 157a: the cost model's five values (chapter 11's valuation date, chapter 14's insurance check).
+
+- Line 830:
+
+  > PHASE 157a: one of the cost model's five values (COST_FIELDS). Empty: back to not recorded.
+
 ## 6 Oct 2026: Phase 157b
 
 ### `src/modules/claims/case-stamp.ts`
@@ -16710,6 +20619,38 @@ neither says.
 
   > PHASE 157b: the old extra charges, only with their switch on. Not on top of a fee the first-year control has just
   >      lowered: that control is a ceiling, and adding to it would undo it.
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 341:
+
+  > What the figure above is. Phase 157b: the account is open (6 Oct 2026), so it is the price on it.
+
+- Line 509:
+
+  > Never added into `loaded` while it is unknown. When it IS known the
+  >        caller gets loaded_including_address_lookup and can use it. The paid
+  >        lookup is added once per property of THIS job - never through the
+  >        failed-enquiry drag, because an enquiry that did not sign cannot have
+  >        spent it. Phase 157b: the address search at the assessment IS spent by
+  >        enquiries that never sign, so it comes in through the conversion rate
+  >        (addressSearchCost), and only into this figure.
+
+- Line 589:
+
+  > -----------------------------------------------------------------------------
+  >    THE ADDRESS SEARCH AT THE ASSESSMENT — PHASE 157b, 6 OCTOBER 2026.
+  >
+  >    "Find my address" before signing: a 2p Homedata postcode search per press,
+  >    at most 5 for one visitor and 50 a UK day (£1). Every enquiry may spend it,
+  >    signed or not, so a signed job carries the searches of the enquiries behind
+  >    it: searches per enquiry × the cost × 1 / the conversion rate. The daily cap
+  >    is reported, not divided in: it bounds what all enquiries together can cost
+  >    in one day, £1, which no conversion rate changes.
+  >
+  >    opts: searchesPerEnquiry (default 1; 0 for a person who types the address;
+  >    at most the per-visitor cap), conversionRate (default the model's 1 in 4).
+  >    ---------------------------------------------------------------------------
 
 ## 6 Oct 2026: Phase 157c
 
@@ -16917,6 +20858,15 @@ neither says.
 - Line 195:
 
   > PHASE 157c: the moment the client first opened it is kept, for the certificate of completion.
+
+### `src/modules/survey/pack-legal.ts`
+
+- Line 201:
+
+  > The engine's claimant type. Unknown is read as a company: its earlier start date never relieves (CB_S187A).
+  > PHASE 157c (the Friary House run, F15): read as every other gate reads it (claimantTypeForGate) - the client's own
+  > answer at the assessment first, then what staff recorded. It read only the recorded column, so a partnership that
+  > said so at the assessment was checked on a company's dates.
 
 ### `src/shared/pdf.ts`
 
@@ -17326,6 +21276,44 @@ neither says.
   > labels with no number, and "Engagement - letter, data & AI consent" read as a step BEFORE "The engine runs" when it is
   > the one after it.
 
+### `src/modules/survey/survey-open.ts`
+
+- Line 1:
+
+  > OPENING A SURVEY JOB — Phase 158b, 7 October 2026.
+  >
+  > The Friary House run (04-phase-work/sim-2026-10-06, finding F31) reached Survey and stopped: nothing in the
+  > application opened a survey job. `surveyor_jobs` and `estimates` were written only by the seed and the tests, and a
+  > surveyor's commit refuses a job with no locked estimate ("Tell the office - do not work around it"). So no real
+  > claim could pass Survey.
+  >
+  > Staff (Admin and Sales: the existing `surveyor_job.assign`, "Give a survey job to a surveyor") now open one from the
+  > claim at Survey, choosing a SURVEYING login. Opening it, in one transaction:
+  >
+  >   1. SEALS THE ESTIMATE for the claim's assessment, unless one is already sealed (that one is kept as it was, never
+  >      re-sealed). What is sealed is what the four-stage funnel actually worked out and showed the client: the spend
+  >      that counts (the "up to" figure, `assessments.shown_high_pence`) and its share of what the client said was
+  >      spent. The funnel does not split the pools, value the land or work out a tax saving, so those are 0 and the
+  >      row's `basis` (migration 100) says FUNNEL_CEILING; a page showing the released estimate says "not estimated at
+  >      the assessment" for them. The hash binds the values and the time, as the seed's rows are bound.
+  >   2. OPENS THE JOB, SEALED, on the claim and its assessment, for the surveyor chosen.
+  >   3. LOGS IT (SURVEY_JOB_OPENED): whether an estimate was sealed with it. Never a figure: the log is read by roles the
+  >      estimate is hidden from.
+  >
+  > ONE JOB PER CLAIM. A claim with a job already on it is refused, in words that say whose it is.
+
+### `src/modules/survey/surveyor-pages.ts`
+
+- Line 577:
+
+  > PHASE 158b: an estimate sealed from the funnel's figure holds no pool split or land value; say so, not "£0".
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 1163:
+
+  > PHASE 158b: what the RELEASED estimate was built from (migration 100); null before release, or for an older row.
+
 ### `src/shared/html.ts`
 
 - Line 87:
@@ -17642,6 +21630,14 @@ neither says.
 
   > PHASE 158d (F48): the same step the rest of the portal reads — signed at Engagement, and "Claim filed" only once filed.
 
+### `src/modules/survey/pack-cost-model.ts`
+
+- Line 97:
+
+  > PHASE 159a (the Lockwood run, L7): THE ONE PURCHASE DATE, as the amendment window reads it (src/modules/claims/claim-facts.ts
+  > acquisitionDateReading, Phase 158d): the property record, else the surveyor's legal check, else the client's checked
+  > answer. Chapter 11 read the property record alone, so it said "not on file" while the legal check held the date.
+
 ### `src/shared/next-step.ts`
 
 - Line 45:
@@ -17832,6 +21828,46 @@ neither says.
 - Line 1236:
 
   > PHASE 159a: the valuation's state for the claim page — fixed or not, and the latest reopen that set things aside.
+
+### `src/modules/survey/pack-approve.ts`
+
+- Line 105:
+
+  > PHASE 159a: first, because nothing else on the pack matters once the claim's figures are fixed.
+
+### `src/modules/survey/pack-cost-model.ts`
+
+- Line 86:
+
+  > PHASE 159a (L7): where the purchase date came from, in words — the property record, the legal check, the client.
+
+### `src/modules/survey/pack-legal.ts`
+
+- Line 534:
+
+  > PHASE 159a (C3, L3): once the claim is past the tax adviser's sign-off, or has stopped, the legal check is fixed too.
+
+### `src/modules/survey/pack-sums.ts`
+
+- Line 180:
+
+  > PHASE 159a (C22): A LINE OF NOTHING NEEDS NO POOL. A count of 0 is the line taken out by its number: it adds
+  >        nothing and asks for nothing more. A rate or a share of 0 still adds its cost to the elements, but qualifies
+  >        nothing, so it needs no pool either. Before, such a line blocked the total until a pool was chosen for it.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 245:
+
+  > PHASE 159a (L6): the postcode once — not again here when the site's own words already end with it.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 197:
+
+  > PHASE 159a (the Lockwood run, L6): A PROPERTY AS ONE LINE — its label, then its postcode only where the label does not
+  > already end with it. A label typed as a full address ("3 Meltham Road, Huddersfield, HD1 3XH") printed its postcode
+  > twice on the report and the pack.
 
 ### `src/shared/engine.ts`
 
@@ -18156,6 +22192,163 @@ neither says.
 
   > PHASE 159c: each piece of work
 
+### `src/modules/survey/pack-approve.ts`
+
+- Line 261:
+
+  > PHASE 159c: where the building has work done since, each spend as approved: the purchase's own sums and each piece of
+
+- Line 298:
+
+  > PHASE 159c: the events part of a version, only where there is work since.
+
+- Line 363:
+
+  > PHASE 159c: with work since, the figure is the purchase and every piece of work. The building figure is the
+  >          purchase's building plus what the work cost; with no purchase it is what the work cost, on no land; the share
+  >          is what qualifies of that. A pack with no work commits exactly as before.
+
+### `src/modules/survey/pack-sheets.ts`
+
+- Line 31:
+
+  > PHASE 159c: the funnel's own words for each kind of event.
+
+- Line 352:
+
+  > PHASE 159c (item 5): PER PIECE OF WORK. Where the building's events are recorded (migration 105), the chapter runs for
+  >      each piece of work since the first event, and for a first event that was itself work (a new build, a fit-out). Each
+  >      says what the client said it cost and when, and, once the pack prices it, the part that is a repair — a deduction
+  >      from profits in the year it was spent, not an allowance, and not in the figure.
+
+- Line 359:
+
+  > PHASE 159c: the client's own words were read from funnel['buildings'] — but the state keeps them under 'properties'
+  >      (src/modules/assessment/funnel4.ts), so this row always said "not on file". It reads 'properties', and every piece of work.
+
+### `src/modules/survey/pack-sums.ts`
+
+- Line 83:
+
+  > INPUT: chapter 9. LINE: chapter 10. GRANT (Phase 153a): a grant on the claim whose amount is not known, chapter 15 —
+  >  `line_id` then holds the grant's id. WORKS (Phase 159c): a cost-led value for a piece of work, chapter 9 — `line_id`
+  >  holds the event's id.
+
+- Line 89:
+
+  > PHASE 159c: a piece of work priced on its own cost
+
+- Line 263:
+
+  > ------------------------------------------------------------------ PHASE 159c: works priced on their own cost
+
+- Line 265:
+
+  > THE COST-LED MODE, FOR WORK THE CLIENT PAID FOR (Phase 159c, item 4). Section 562 shares a PRICE out by rebuild cost,
+  > which is how a purchase is claimed. Work the client paid for — a refit, an extension, a fit-out, a new build — is
+  > claimed on what it COST, from the final account or the contract sum by element. So each piece of work has its own
+  > values, the surveyor's from the final account, in whole pence:
+  >
+  >   total        the final account (or contract sum): the check every part must add up to
+  >   main         plant and machinery (main pool)            special   integral features (special rate pool)
+  >   bwic         builder's work in connection with the plant (s.25) — it follows the plant it serves
+  >   demolition   taking out old plant (s.26) — it follows the new plant
+  >   other        building work that does not qualify        repairs   the part that is a repair (a revenue deduction)
+  >   prelims      preliminaries                               fees      professional fees
+  >
+  > THE SUM: what qualifies directly is the plant (main + special) with the builder's work and the demolition that follow
+  > it; the preliminaries and the fees are shared out over every direct cost in the same proportion, so the share on the
+  > plant qualifies and the share on the repairs goes with the repairs. The pools split what qualifies as the plant does:
+  > main rounded, special the rest, so the two add up to the penny. With no plant in it, nothing qualifies.
+  >
+  > N4 AND THE CHECK. Every value must be given (0 is a value); one missing and there is no total. The parts must add up to
+  > the final account exactly, or there is no total and the difference is named.
+
+### `src/modules/survey/survey-open.ts`
+
+- Line 81:
+
+  > What the client said was spent on the buildings (the funnel's `Q2-N-spend` answers, and since Phase 159c each piece of
+  >  work's `Q3-N-wJ-spend`, which the figure now counts too), in pounds; null if none.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 141:
+
+  > PHASE 159c: a piece of work's cost-led values, from its final account (chapter 9).
+
+- Line 289:
+
+  > PHASE 159c: where the building has work done since, each part of the total on its own line.
+
+- Line 708:
+
+  > PHASE 159c — WORK DONE SINCE, PRICED ON ITS OWN COST. Each piece of work on the building, from its final account (or
+  > contract sum) by element: what it cost in all, and its parts. The plant, with the builder's work and the demolition
+  > that serve it, qualifies; the preliminaries and the fees are shared out over the rest; the repair part is a deduction
+  > from profits, never an allowance (chapter 20). The parts must add up to the final account.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 84:
+
+  > PHASE 159c: one piece of work on the building, priced on its own cost (chapter 9; src/modules/survey/pack-sums.ts worksSums).
+
+- Line 230:
+
+  > PHASE 159c: what happened to the building, in order (migration 105). Empty for a building with none recorded.
+
+- Line 232:
+
+  > PHASE 159c: false where the building was not bought (no purchase recorded among its events): no price to share out.
+
+- Line 234:
+
+  > PHASE 159c: the purchase's own sums (section 562, after grants). `sums` is these plus every piece of work.
+
+- Line 236:
+
+  > PHASE 159c: each piece of work since, on its own cost.
+
+- Line 527:
+
+  > PHASE 159c: a works value's line is the event; it is named by its kind and date.
+
+- Line 615:
+
+  > PHASE 159c: each piece of work on the building, on its own cost. The final account is drafted from what the client
+
+- Line 859:
+
+  > PHASE 159c: A PIECE OF WORK'S COST-LED VALUES, from its final account. Only what differs from the value as it stands
+  > is written, each as its own entry under the one reason. An empty box leaves that value as it is.
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 81:
+
+  > PHASE 159c: each spend on the building, with its own figure, where there is work since. Empty otherwise.
+
+- Line 83:
+
+  > PHASE 159c: what the cover's figure is for, where it is more than one purchase. Null otherwise (the cover says the share).
+
+- Line 85:
+
+  > PHASE 159c: the opening of section 01, which says how the figure was worked out.
+
+- Line 217:
+
+  > PHASE 159c: a version with work since keeps each spend (`events`); `sums` is their total. The section 562 sum below is
+
+- Line 346:
+
+  > PHASE 159c: each spend on the building, and what the cover's figure is for. A version with no work since: nothing.
+
+- Line 670:
+
+  > PHASE 159c: each spend on the building, where there is work since.
+
 ## 9 Oct 2026: Phase 159d
 
 ### `src/core/router.ts`
@@ -18249,11 +22442,74 @@ neither says.
   >        owned, or the purchase fails the legal check). A closed window with the building still owned is W2, through this
   >        year's pool, and a part with no route yet is not settled: neither stops the job.
 
+### `src/modules/survey/pack-approve.ts`
+
+- Line 116:
+
+  > PHASE 159d (item 8): a purchase that fails the legal check, with work since, is not claimed; the works go on.
+
+- Line 271:
+
+  > PHASE 159d (item 6): which way each part of the claim goes in, as it stood at approval (src/modules/claims/claim-route.ts).
+
+- Line 311:
+
+  > PHASE 159d (item 8): the purchase failed the legal check, so it is not claimed; the report says so.
+
+- Line 367:
+
+  > PHASE 159d (item 8)
+
+### `src/modules/survey/pack-legal.ts`
+
+- Line 390:
+
+  > PHASE 159d: THE LEGAL CHECK FOR A CLAIM, read without a login — for the claim's routes (src/modules/claims/claim-route.ts) and
+  > the gates that re-check a deadline (C9). The newest survey job on the claim, its pack's answers, today's verdict. Null
+  > where the claim has no survey pack yet: no answer, and nothing is decided on it.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 238:
+
+  > PHASE 159d (item 8): the purchase fails the legal check (RED) and there is work since: the purchase is W3 — not
+  >  claimed — and the works stand on their own. False otherwise: a pack with no work stops at the legal check as before.
+
+- Line 653:
+
+  > PHASE 159d (item 8): the legal check is the purchase's. Failed, with work since, it stops the purchase only.
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 87:
+
+  > PHASE 159d (item 6): which way each part of the claim goes in, as approved. Empty in a version approved before.
+
+- Line 350:
+
+  > PHASE 159d (item 8): a purchase that failed the legal check is named, with no figure.
+
+- Line 795:
+
+  > PHASE 159d (item 6): which way each part of the claim goes in.
+
 ### `src/shared/next-step.ts`
 
 - Line 50:
 
   > PHASE 159d: the route each part of the claim takes (src/web/claim-route.ts), and a legal deadline read again.
+
+## 9 Oct 2026: no phase named
+
+### `src/modules/survey/bcis-data.ts`
+
+- Line 59:
+
+  > THE SECTOR'S BCIS BUILDING FUNCTION. BCIS files average prices by building function (its own classification, after
+  > CI/SfB). The names below are BCIS's function names as its online service lists them; the first that the loaded data
+  > holds is used. SOURCE: BCIS's building function list, read 9 October 2026 for the brief; check the codes against the
+  > first real export (the importer matches names, not codes). Dental practices have no function of their own: they are
+  > priced as health centres and surgeries, the nearest, and the draft says so.
 
 ## 10 Oct 2026: Phase 159d
 
@@ -18375,6 +22631,38 @@ neither says.
   > PHASE 159e: the facts a version's figures are made from, found from the version alone (the report and the portal
   >  have the approval, not the claim): as first sent, or the claim as it stands.
 
+### `src/modules/survey/pack-approve.ts`
+
+- Line 143:
+
+  > PHASE 159e (item 4; C15, L4): each part's year comes from the client's year end, read once at approval.
+
+- Line 273:
+
+  > PHASE 159e (items 4, 7, 8): with each part's own period and, for W2, the first open one — so the return entries
+  >          put each spend in its own period from the facts as they stood at approval, the same period the window read.
+
+### `src/modules/survey/pack-sheets.ts`
+
+- Line 286:
+
+  > PHASE 159e (item 2): whether the seller's statement (s.270IA) is on file — the buyer's allowance runs on its figure.
+
+- Line 290:
+
+  > PHASE 159e (item 2): each piece of work's own base — the final account less the plant and the repair part — worked
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 89:
+
+  > PHASE 159e (item 6): each part's year, its allowances and the pools carried on, from the version and the facts it
+  >  was sent on (src/modules/assessment/allowances.ts) — the same figures as the return entries.
+
+- Line 803:
+
+  > PHASE 159e (item 6): each part's year and allowances, then year by year.
+
 ## 10 Oct 2026: Phase 159f
 
 ### `src/core/cli.ts`
@@ -18404,6 +22692,182 @@ neither says.
 - Line 592:
 
   > PHASE 159f (item 3): every rate sourced — the stage's own gate, now a test of the approved version.
+
+### `src/modules/survey/bcis-data.ts`
+
+- Line 1:
+
+  > BCIS RATES IN THE SURVEY PACK — PHASE 159f, 10 October 2026.
+  >
+  > Lakhbir, 9 October 2026: "With BCIS data loaded, the pack could draft each rate from the right building type — this
+  > needs to happen." And: "we spoke to BCIS and they said its fine for us to do what we are doing" — relayed by Lakhbir,
+  > recorded against Word question 218: storing BCIS rates, drafting from them and printing them in a client's report is
+  > not a question any more. The Lockwood run (L12) printed every rate as "Surveyor", with no source.
+  >
+  > WHAT THIS FILE DOES:
+  >   1. THE IMPORTER (`importBcisData`, `node src/core/cli.ts import-bcis-data`): BCIS's own CSV exports — the average prices
+  >      by building function (£/m², rebased to a stated quarter at the UK mean location), the elemental analyses (£/m²
+  >      of floor by NRM element), and the location factors. Columns are found by their header words, not their place,
+  >      so an export with extra columns still reads; a file this cannot read is refused whole, never half-read. The data
+  >      is kept OUTSIDE the repository (CAPREBATE_BCIS_DATA_FILE, or ~/.caprebate-bcis-data.json): it is BCIS's, for
+  >      our named users, and is never committed or published. The index (the All-in Tender Price Index or the building
+  >      price index) comes in by `import-bcis-index`, as before (src/modules/survey/bcis-index.ts).
+  >   2. THE DRAFTS (`bcisDrafts`): the whole-building rate from the sector's BCIS building function, and the rate of every
+  >      line measured by floor area from its NRM element — each × the location factor for the pack's area × the index
+  >      from BCIS's base quarter to the PURCHASE date. A draft is a DRAFT: the surveyor accepts it by leaving it, or
+  >      overrides it with a reason and a source of their own (src/modules/survey/survey-pack.ts).
+  >   3. UNTIL BCIS'S DATA ARRIVES it is off and says so. On the test website (or a copy started with
+  >      CAPREBATE_COST_MODEL_TEST=1) a PLACEHOLDER of invented figures drafts instead, labelled on every rate, every
+  >      screen and the report as a test rate, not BCIS — so a reader of the PDF can always tell (L12).
+  >
+  > WHY A MISSING LOCATION OR INDEX DOES NOT STOP A DRAFT: section 562 shares the price by the qualifying parts' share of
+  > the rebuild cost. The location factor and the index multiply the whole-building rate and every element alike, so they
+  > cancel in that share; they move the rebuild cost shown, not the claim. A draft without them says so (at the UK mean,
+  > or at BCIS's base quarter) and is never a guess that relieves the client (N4).
+
+### `src/modules/survey/bcis-index.ts`
+
+- Line 51:
+
+  > PHASE 159f: the All-in Tender Price Index (--tpi) or the building price index, named; BCIS confirmed our use.
+
+### `src/modules/survey/pack-approve.ts`
+
+- Line 128:
+
+  > PHASE 159f (item 3): EVERY RATE SOURCED — the SOP's Valuation gate, made a test. A BCIS draft carries its own; a rate the
+
+- Line 267:
+
+  > PHASE 159f: how the rates were priced — the day they are all at, BCIS's drafts and location, and section 562 the
+
+### `src/modules/survey/pack-cost-model.ts`
+
+- Line 212:
+
+  > PHASE 159f (C20): EVERY RATE REBASED TO ONE DAY before it is compared — this pack's own pricing day. A rate priced
+  >      at another day is brought to it by the index; one that cannot be (an older version with no pricing day, or no
+  >      index) is left out of the middle rate, and the sentence says how many.
+
+- Line 245:
+
+  > PHASE 159f (C21): THE QUALIFYING SHARE AGAINST THE SECTOR'S CEILING. The engine's purchase band (CB_BAND) tops out at a
+  > share for each sector; a pack whose share is above it is FLAGGED FOR REVIEW — never refused. A whole building that
+  > qualifies is possible, but rare, and the surveyor should look again.
+
+### `src/modules/survey/pack-sheets.ts`
+
+- Line 199:
+
+  > PHASE 159f: the BCIS drafts, and the one day every rate is priced at (C19).
+
+- Line 404:
+
+  > PHASE 159f (C21, item 6): the share against the sector's ceiling, and section 562 the residual way beside ours.
+
+### `src/modules/survey/pack-sums.ts`
+
+- Line 44:
+
+  > PHASE 159f: a rate's structured source — BCIS (its reference, base date, location factor and index), a QS's priced
+  >  schedule, the contractor's invoice or a price book — and the day it is priced at. A rate without one is not sourced.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 127:
+
+  > PHASE 159f: a typed rate's source, from the three boxes every rate form carries.
+
+- Line 131:
+
+  > PHASE 159f: the BCIS location the drafts are read for.
+
+- Line 162:
+
+  > PHASE 159f: a drafted rate names BCIS (or says it is a test rate); a typed rate names its own source.
+
+- Line 175:
+
+  > PHASE 159f (item 3): the three boxes a typed rate's source needs — what, which one, and the day it is priced at.
+
+- Line 688:
+
+  > PHASE 159f — THE BCIS DRAFTS AND THE LOCATION. What the drafts rest on, in words; the location the factor is read for,
+  > chosen from the loaded BCIS table (none: the UK mean, which never changes the share); a test rate said plainly.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 116:
+
+  > PHASE 159f (migration 108): a typed rate's source, all three or none; on 'location', rate_ref is the BCIS area.
+
+- Line 120:
+
+  > PHASE 159f — HOW THE PACK'S RATES ARE PRICED (chapters 9, 10 and 11). The BCIS drafts, the day every rate is brought to
+  > (the purchase date, C19), the rates that could not be brought to it, the rates with no source, and section 562 both
+  > ways (item 6): the proportional apportionment the report uses, and the residual one beside it for the surveyor.
+
+- Line 241:
+
+  > PHASE 159f: how the rates are priced — the BCIS drafts, one day, their sources, and section 562 both ways.
+
+- Line 439:
+
+  > PHASE 159f: BCIS's drafts, at the purchase date, for the pack's chosen location (src/modules/survey/bcis-data.ts).
+
+- Line 501:
+
+  > PHASE 159f (C19): EVERY RATE AT ONE DAY. The share is the qualifying parts' rebuild cost over the whole building's,
+  >      so the two must be priced at the same day or the arithmetic does not match the words. Every sourced rate priced at a
+  >      day other than the purchase date is brought to it by the index; one that cannot be (no index, or no purchase date)
+  >      stays at its own day and is listed, and the pack is not approved while its rates sit at more than one day.
+
+- Line 590:
+
+  > PHASE 159f (item 6): section 562 the other way, beside the proportional sum the report uses. The building's own
+
+- Line 707:
+
+  > PHASE 159f: the sources a surveyor may give a rate they type (BCIS's own drafts carry theirs).
+
+- Line 758:
+
+  > PHASE 159f: THE PACK'S BCIS LOCATION — the area the location factor is read for, as the loaded location table names
+  > it. Empty puts the UK mean back. The surveyor's, with a reason. The factor is kept with it, so the version says what
+  > was used even if the table is imported again.
+
+- Line 911:
+
+  > PHASE 159f: a rate typed with its source; a source with no rate typed is refused, so nothing is half-said.
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 92:
+
+  > PHASE 159f (item 4): where each rate comes from, in full — the short chip in the table, the whole source here.
+
+- Line 94:
+
+  > PHASE 159f (L12): true where any rate is a test rate (invented figures, not BCIS): the report says so at the top.
+
+- Line 146:
+
+  > PHASE 159f (item 4): a rate's own source as a label — BCIS, a QS schedule, an invoice, a price book, a test rate, or no
+  >  source — never just "Surveyor". The full reference is listed under "Where each rate comes from".
+
+- Line 332:
+
+  > PHASE 159f (C19, item 6): THE METHOD, IN WORDS THAT MATCH THE ARITHMETIC. Every rate is priced at one day (the purchase
+  > date where the index reaches it), so the report says that day, not "build again today"; and it names the way section
+  > 562's just apportionment is done. A version approved before Phase 159f keeps the words it was approved with.
+
+- Line 637:
+
+  > PHASE 159f (L12): a report with any test rate says so before anything else in the method.
+
+- Line 760:
+
+  > PHASE 159f (item 4): where each rate comes from, in full.
 
 ### `src/shared/next-step.ts`
 
@@ -18662,6 +23126,45 @@ neither says.
 
   > PHASE 159g (L2, item 2): the register's company — a dormant one flagged — and how the client holds each building.
 
+### `src/modules/survey/bcis-data.ts`
+
+- Line 300:
+
+  > PHASE 159g (item 7): the loaded location table's own name for an area (a council area, say), or null when it has none.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 672:
+
+  > PHASE 159g — WHAT THE REGISTERS ALREADY SAY, for the surveyor to confirm: Price Paid's sale at the address (a lead,
+  > never the price, where it is category B or "Other"), a site area far larger than the building (never the plot), and
+  > how the client holds the building. Shown here; nothing in it is counted.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 136:
+
+  > PHASE 159g (item 7): where the BCIS location came from — the surveyor's choice, the property's council area, or
+  >  neither (the UK mean). The council area is a draft: still the surveyor's to change, with a reason.
+
+- Line 180:
+
+  > PHASE 159g: what the registers already say, for the surveyor to confirm — never a value the pack counts.
+
+- Line 248:
+
+  > PHASE 159g: the register leads for chapter 9.
+
+- Line 443:
+
+  > PHASE 159g (item 7, carried from 159f): THE LOCATION FROM THE PROPERTY'S COUNCIL AREA. Until the surveyor chooses
+  >      (an entry, the UK mean included), the drafts are read at the property's council area where the loaded BCIS table
+  >      names it. The surveyor's choice always wins.
+
+- Line 602:
+
+  > PHASE 159g: what the registers already say, for chapter 9 — shown, never counted.
+
 ## 10 Oct 2026: Phase 159h
 
 ### `src/modules/claims/claim-route.ts`
@@ -18674,6 +23177,84 @@ neither says.
 - Line 181:
 
   > PHASE 159h (item 7): a tenant's claim is on its own fit-out, never a share of the purchase price.
+
+### `src/modules/survey/pack-legal.ts`
+
+- Line 52:
+
+  > PHASE 159h (C7, C8): `earlier_disposal_value` (G12bv — the value fixed when an earlier owner sold on, the s.185 cap)
+  >    and `transaction_type` (G14s — how the client took the property on) were missing, so neither was ever asked.
+
+- Line 55:
+
+  > PHASE 159h, 10 October 2026 — READINGS BUILT ON OUR RECOMMENDATION AND SWITCHED ON IN TEST (Lakhbir, 29 September
+  > 2026: build it, then ask). Each is a viability question to the tax adviser in the Word questions document (268-272).
+  > Off, the legal check reads exactly as before Phase 159h on that point.
+
+- Line 138:
+
+  > PHASE 159h (C8): HOW THE CLIENT TOOK THE PROPERTY ON is asked on every purchase of the property, not only where an
+  >        election is held: a new lease for a premium, or a transfer below value, changes the route whether or not there
+  >        is an election (no election is available at all on s.196 Table items 2 and 3).
+
+- Line 170:
+
+  > PHASE 159h (C11): where an election over the fixtures generally gives separate figures, the integral features'
+  >  figure caps the special rate pool and the rest caps the main pool. Null where there is no split.
+
+- Line 173:
+
+  > PHASE 159h (item 7): the purchase is not the client's to claim on as a tenant (the route reads it as W3).
+
+- Line 217:
+
+  > PHASE 159h (item 7): how the client holds the building, from the property (who-claims.ts propertyTenure). Absent:
+  >  not read at all (a caller with no property). Present and null: not known — asked, never assumed (N4).
+
+- Line 250:
+
+  > PHASE 159h (C26, OUR READING): a landlord barred by s.35 was never entitled to claim; look past them.
+
+- Line 268:
+
+  > PHASE 159h (C6): ANSWERS THAT CANNOT ALL BE TRUE ARE NEVER CLEAR. "A previous owner claimed", with a seller who
+  >        could never claim and nobody earlier who could, contradicts itself; the engine read the last two and switched the
+  >        rules off. Until a person settles which answer is wrong, the check is not known.
+
+- Line 276:
+
+  > PHASE 159h (C8, OUR READING): THE LEASE ROUTE. A premium for a new lease: the fixtures pass to the tenant only on a
+  >        joint s.183 election where the landlord could claim; where it could not (an NHS body, a developer, a charity),
+  >        s.184 treats the tenant as owner. Whether an election was made, where it matters, must be known.
+
+- Line 337:
+
+  > PHASE 159h (C7, OUR READING): SECTION 185 LOOKS PAST A SELLER WHO COULD NEVER CLAIM to the earlier owner who
+  >        could. The claim is capped at the value fixed when that owner sold on (G12bv), and is not settled while it is not
+  >        known.
+
+- Line 349:
+
+  > PHASE 159h (C11): AN ELECTION IS CHECKED POOL BY POOL. Where it gives the integral features a figure of their own,
+  >        that figure caps the special rate pool and the rest caps the main pool — not only the total.
+
+- Line 367:
+
+  > PHASE 159h (item 7, carried from 159g): WHO CLAIMS, READ BY THE LEGAL CHECK.
+  >   TENANT    its claim is on the fixtures it paid for (its own fit-out), never a share of a purchase price — unless it
+  >             paid a premium for a new lease, which takes the lease route above (s.183 / s.184). A tenant who bought
+  >             an existing lease takes over only the outgoing tenant's fixtures, never the landlord's: a person must say
+  >             which. Either way the purchase is not settled here.
+  >   LANDLORD  its claim is on the fixtures it owns; a fixture the tenant put in is the tenant's (s.176).
+  >   not known asked, never assumed (N4): the check says so and decides nothing on it.
+
+- Line 436:
+
+  > PHASE 159h (item 7): how the client holds the pack's building — the pack's chosen property, else its claim's.
+
+- Line 457:
+
+  > PHASE 159h (C11): each pool against its own part of the election.
 
 ## 10 Oct 2026: Phase 159i
 
@@ -18724,6 +23305,109 @@ neither says.
 - Line 339:
 
   > ----------------------------------------------- PHASE 159i (item 4): one event's VAT
+
+### `src/modules/survey/pack-grants.ts`
+
+- Line 58:
+
+  > PHASE 159i: who received it. A PAST owner's grant lowered what that owner could claim, so it lowers the s.185 cap
+  >  (pack-legal.ts), never the buyer's price. Absent is the client's own, as before.
+
+- Line 61:
+
+  > PHASE 159i (item 4): the event on the building it paid for (property_events.id); null: not recorded.
+
+- Line 75:
+
+  > PHASE 159i (item 1, Rulebook F F-R12): a grant that cannot be traced to the items it paid for comes off what
+  >  qualifies IN FULL — the conservative reading of "to the extent that" (s.532) — in place of the equal share. On in
+  >  test. Absent is off.
+
+- Line 209:
+
+  > 1b. PHASE 159i: FULL — each untraced grant's whole amount off what is left, the pools sharing it in proportion.
+
+- Line 226:
+
+  > PHASE 159i (C23): THE ROWS ADD UP TO THE TOTAL. Each route's total is shared across its grants by amount, the
+  >      pennies left by rounding going to the largest remainders, so the rows always sum to what the route took off.
+
+### `src/modules/survey/pack-legal.ts`
+
+- Line 414:
+
+  > PHASE 159i (item 1): the grants an EARLIER owner received, on the job's claim — their amounts, in pence (null: not known).
+
+- Line 419:
+
+  > PHASE 159i (item 1, Rulebook F; s.185 with s.62): AN EARLIER OWNER'S GRANT LOWERS THE CAP FROM THE EARLIER SALE, never
+  > the buyer's price. That owner could claim only what it paid less the grant, so what passes on is lower by it. Where
+  > a cap stands it comes down by the grant; an amount not known leaves the check not settled (N4); with no cap, the
+  > surveyor is told to size one.
+
+- Line 442:
+
+  > PHASE 159i (item 3): what the cap is checked against — the pack's figure and pools, less the buyer's own alterations
+  >  (s.25), which are claimed on top of the cap.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 537:
+
+  > PHASE 159i: what the money readings added to or took off the purchase (src/shared/money-readings.ts), in words.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 141:
+
+  > PHASE 159i: the purchase's money adjustments (money-readings.ts), each shown with what it did.
+
+- Line 155:
+
+  > PHASE 159i (item 4): a piece of work's own grants and its irrecoverable VAT, applied to its cost-led sums. VAT the
+  >  client could not reclaim follows every part of the cost; a grant that paid for this work comes off what qualifies in
+  >  full (it cannot be traced to rows of a final account), the pools sharing it.
+
+- Line 243:
+
+  > PHASE 159i: the money added to or taken off the purchase, in words and pence.
+
+- Line 351:
+
+  > PHASE 159c: THE PACK'S TOTAL IS THE PURCHASE AND EVERY PIECE OF WORK. Where the building was bought (or has no events
+  > recorded: every pack from before), the purchase's section 562 sums stand as they were. Each piece of work adds its own
+  > cost-led figure. There is a total only when every part has one (N4). A grant on a building with work since is not
+  > yet taken off any part but the purchase, so it stops the total until Phase 159i says which spend it paid for: a grant
+  > left on the wrong spend is an over-claim.
+
+- Line 362:
+
+  > PHASE 159i (item 4): only a grant whose spend is not recorded stops the total now; one recorded against an event comes off it.
+
+- Line 539:
+
+  > PHASE 159i: the money readings (on in test, money-readings.ts) choose the grant routes too: traced grants off their
+
+- Line 544:
+
+  > PHASE 159i (item 4): a grant recorded against a piece of work comes off that work, below; the rest are the purchase's.
+
+- Line 554:
+
+  > PHASE 159i (item 3, OUR READINGS, on in test): the stamp duty or land transaction tax paid (#11) and the legal and
+  >      other acquisition fees (#13) are part of the price shared out. And C12: that money, and the VAT, is shared between
+  >      the land and the building in the same proportion as the price, so the land takes its part and the fixtures do not
+  >      take all of it. Off, the VAT goes to the building alone, as before.
+
+- Line 569:
+
+  > PHASE 159i (item 3, s.185 plus own s.25, #1, on in test): the buyer's own alterations to install plant are its own
+  >      spend under s.25, claimed in the main pool on top of whatever caps the price's share. Only on a recorded yes with an
+  >      amount.
+
+- Line 634:
+
+  > PHASE 159i (item 4): this work's own grants (the client's, recorded against it) and its irrecoverable VAT.
 
 ### `src/shared/money-readings.ts`
 
@@ -18868,6 +23552,12 @@ neither says.
 
   > PHASE 159j (Lockwood L16): the warning is for before the dates are checked. Once every part of the claim has its
   >      route on the recorded dates (W1, W2 or W3), it has said what it was for, so it goes.
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 324:
+
+  > PHASE 159j (L17): the PDF as the page
 
 ### `src/shared/money-readings.ts`
 
@@ -19049,6 +23739,96 @@ neither says.
 
   > PHASE 159k (item 1): a seller's structures allowance statement, received, puts SBA_STATEMENT_HELD on its claims.
 
+### `src/modules/survey/pack-approve.ts`
+
+- Line 264:
+
+  > PHASE 159k (item 2): the readings' parts as approved, and whether each reading was on. Only where a part is given:
+
+- Line 280:
+
+  > PHASE 159k (item 2): the long-life and asbestos parts the allowances read, frozen with the version, with the readings
+  >  as they stood (money-readings.ts). s.33B is already in the sums.
+
+### `src/modules/survey/pack-sums.ts`
+
+- Line 90:
+
+  > PHASE 159k: a reading's part is more than the figure it is part of
+
+- Line 344:
+
+  > PHASE 159k (item 2) — THE THREE READINGS' PARTS OF A PIECE OF WORK. Each is a PART of a value above, optional, the
+  > surveyor's from the final account, with a reason. Not given: that reading is not applied to the work, and says so.
+  >   long_life       of the plant (works_main), what has an expected life of 25 years or more (s.91)
+  >   asbestos        of the work that does not qualify (works_other), what was spent removing asbestos (CTA 2009 Part 14)
+  >   repairs_if      of the repair part (works_repairs), what was spent on integral features (s.33B)
+  >   if_replacement  what replacing those integral features would cost: s.33B's yardstick, not a part of the account
+
+- Line 364:
+
+  > PHASE 159k: a part more than the figure it is part of is a problem, and the work has no total until it is put right.
+
+### `src/modules/survey/survey-pack-pages.ts`
+
+- Line 736:
+
+  > PHASE 159k (item 2): a piece of work's parts for the three readings, shown where any is given or a reading has
+  > something to say. Each is a part of a value above, from the final account.
+
+- Line 751:
+
+  > PHASE 159k (item 2): the purchase's long-life part — of its main pool, what has an expected life of 25 years or more.
+  > The surveyor's, with a reason; the return entries apply the test year by year.
+
+### `src/modules/survey/survey-pack.ts`
+
+- Line 82:
+
+  > PHASE 159k (item 2): the three readings' parts
+
+- Line 91:
+
+  > PHASE 159k (item 2): the readings' parts of this work — each optional, the surveyor's, with a reason.
+
+- Line 93:
+
+  > PHASE 159k: s.33B on this work — the repairs on integral features made capital, in pence (0: not), and why.
+
+- Line 95:
+
+  > PHASE 159k: of this work's main pool, what is long-life (s.91), and of its cost, the asbestos removal with its share
+  >  of the preliminaries and fees (Part 14); null where not given.
+
+- Line 245:
+
+  > PHASE 159k (item 2): of the purchase's main pool, what has an expected life of 25 years or more (s.91) — the
+  >  surveyor's, with a reason; not given, the long-life test is not applied to the purchase.
+
+- Line 380:
+
+  > PHASE 159k (item 2, OUR READING, on in test) — s.33B ACROSS THE BUILDING'S PIECES OF WORK. Where, in any twelve months,
+  > repairs on integral features pass half of what replacing them would cost, the spend is capital, not a repair: it goes
+  > to the special rate pool. Each piece of work gives its repairs on integral features and that replacement cost (both
+  > parts of its final account, the surveyor's). A work's repairs are read with every other work's within twelve months of
+  > it (by month), against its own replacement cost. A work with no month known is read on its own. Not given: not applied.
+
+- Line 411:
+
+  > PHASE 159k: a work with a repair part whose s.33B parts are not given says so (while the reading is on).
+
+- Line 625:
+
+  > PHASE 159k (item 2): the readings' parts, each optional; a part more than its whole stops the work's total.
+
+- Line 636:
+
+  > PHASE 159k (item 2, s.33B): repairs on integral features made capital go to the special rate pool, before VAT and grants.
+
+- Line 865:
+
+  > PHASE 159k (item 2): the readings' parts are saved the same way, each with the one reason.
+
 ### `src/shared/money-readings.ts`
 
 - Line 27:
@@ -19168,6 +23948,58 @@ neither says.
   > when the purchase's amended return was filed in 2026) does not hold the claim open — it is held in aftercare with its
   > due date. A link sent before this phase, for the claim as a whole, counts for the earliest return only.
   > Null where the claim goes into one return or fewer, or its returns are not settled (one answer, as before).
+
+### `src/modules/survey/bcis-data.ts`
+
+- Line 163:
+
+  > PHASE 159l (item 6, L17): BCIS's base quarter in words, by its first month ("2026-01" is "January 2026"). Anything
+  >  else is said as it is.
+
+### `src/modules/survey/pack-approve.ts`
+
+- Line 318:
+
+  > PHASE 159l (item 5, L20): where each value came from, so the report can say it as it does for every rate.
+
+### `src/modules/survey/pack-legal.ts`
+
+- Line 73:
+
+  > PHASE 159l (item 8, #9; Word question 284): the s.187A(6)(b) statements route — where an owner in between could
+  >  never claim, two written statements fix the value with no deadline. The engine's CB_CTA.s187a_6b_statements_route,
+  >  held on for the pack's legal check only (G14ivne and G14st8 are asked).
+
+- Line 77:
+
+  > PHASE 159l (item 8, #10; Word question 285): the fixed value requirement needs a past owner who CLAIMED; a past
+  >  owner known never to have claimed brings no disposal value, so the requirement does not bite. The engine's
+  >  CB_CTA.fvr_requires_past_owner_claim, held on for the pack's legal check only.
+
+- Line 83:
+
+  > PHASE 159l (item 8): the engine's own switches the pack's legal check reads, by the reading that holds them.
+
+- Line 87:
+
+  > THE ENGINE'S TWO SWITCHES, HELD FOR ONE CALL (Phase 159l, item 8). CB_S187A.assess and the two questions' showIf read
+  > CB_CTA as they run, so the pack sets them, runs the whole legal flow, and puts them back — in a finally, and
+  > synchronously, so no other request ever sees them set. The public estimate never runs inside this, and keeps CB_CTA as
+  > it ships (the site harness asserts it off).
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 106:
+
+  > PHASE 159l (item 5): each value's source, as approved. A version approved before has none.
+
+- Line 110:
+
+  > PHASE 159l (item 5, L20): each piece of work's final-account values, in the order the pack asks them.
+
+- Line 163:
+
+  > PHASE 159l (item 6): a version approved before says BCIS's quarter as "at 2026-01"; it is read as "at January 2026".
 
 ### `src/shared/money-readings.ts`
 
@@ -19325,6 +24157,36 @@ neither says.
 
   > PHASE 160d: the title tasks were raised under before the long dash went. Still found, so no second task is raised.
 
+### `src/modules/survey/pack-approve.ts`
+
+- Line 204:
+
+  > PHASE 160d, 19 October 2026: a version approved from now on is drawn without long dashes (src/modules/survey/survey-report.ts,
+
+### `src/modules/survey/survey-report.ts`
+
+- Line 51:
+
+  > PHASE 160d: drawn without long dashes, because the version says so (`words: 'plain'`); an older version is drawn as made.
+
+- Line 194:
+
+  > PHASE 160d, 19 October 2026 — A REPORT IS DRAWN IN THE WORDS ITS VERSION WAS MADE IN. The report is drawn again from its
+  > approved version every time it is opened, so changing the words here would change how an approved or signed-off
+  > version reads. A version approved from now on carries `words: 'plain'` and is drawn without long dashes (each becomes
+  > a colon or a comma, src/shared/plain-dashes.ts); one approved before carries nothing and is drawn exactly as it was, here,
+  > in the PDF and on screen (`data-as-made`, which the page's own dash rule leaves alone).
+
+- Line 550:
+
+  > PHASE 160d: the canvas a version made from now on is drawn on. Every string handed to one of its methods (the words of a
+  > line, a heading, a cell) loses its long dashes on the way in; a font's name has none, so it passes unchanged. An older
+  > version gets the canvas itself, untouched.
+
+- Line 567:
+
+  > PHASE 160d: a version made from now on also loses the long dashes in the words written here, not only the model's.
+
 ### `src/shared/plain-dashes.ts`
 
 - Line 1:
@@ -19463,6 +24325,12 @@ neither says.
   >
   > WHO. Only the person who started a send may add to it or take it. A send is one file, taken once.
 
+### `src/modules/admin/configuration-pages.ts`
+
+- Line 33:
+
+  > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+
 ### `src/modules/claims/documents-pages.ts`
 
 - Line 51:
@@ -19527,6 +24395,12 @@ neither says.
 
   > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
 
+### `src/modules/finance/finance-pages.ts`
+
+- Line 43:
+
+  > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+
 ### `src/modules/portal/client-files-pages.ts`
 
 - Line 114:
@@ -19536,6 +24410,12 @@ neither says.
 - Line 128:
 
   > PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+
+### `src/modules/survey/surveyor-pages.ts`
+
+- Line 60:
+
+  > PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
 
 ### `src/shared/lists-pages.ts`
 
@@ -19590,6 +24470,18 @@ neither says.
 - Line 128:
 
   > PHASE 160f: the public notices page and its complaint form (src/web/notices-site.ts). api/index.mjs passes it; nothing else does.
+
+### `src/modules/compliance/compliance-pages.ts`
+
+- Line 183:
+
+  > PHASE 160f: a complaint sent through the public notices page's form, logged with the time it arrived.
+
+### `src/modules/compliance/compliance-views.ts`
+
+- Line 303:
+
+  > PHASE 160f: complaints sent through the public notices page's form, kept with when they arrived, until logged.
 
 ### `src/modules/public-site/legal-pages.ts`
 
@@ -19678,6 +24570,25 @@ neither says.
   >   - a short glossary.
   > Admin and Sales only: the pipeline is theirs (pipeline.read), and so are the facts. No script: the rail is links and
   > each source opens in place (<details>). Nothing here writes; every change is made by the forms below it, which audit.
+
+### `src/modules/compliance/audit-log.ts`
+
+- Line 45:
+
+  > PHASE 160i: who, by name, and what happened in plain words.
+
+- Line 69:
+
+  > PHASE 160i: one client's entries, from the claim page's "Open the audit log for this client".
+
+- Line 114:
+
+  > PHASE 160i — WHAT AN ENTRY'S KIND MEANS, in plain words, for the one-client view. A kind without its own words is said
+  > from its name ("CLAIM_FACT_RECORDED" reads "Claim fact recorded"), never left as a code.
+
+- Line 136:
+
+  > PHASE 160i — the audit log's entries about one client: the company, its claims and properties, or naming them.
 
 ### `src/modules/crm/crm-pages.ts`
 
@@ -19935,7 +24846,19 @@ neither says.
   > PHASE 161c: a key file others could open stops a live start (CAPREBATE_PRODUCTION=1) and is a warning anywhere
   >      else. The words name the file and its permissions, never a key.
 
+### `src/modules/admin/connections.ts`
+
+- Line 272:
+
+  > PHASE 161c: where the list of what is built and switched off is served, to Admin only.
+
 ## 4 Nov 2026: Phase 161d
+
+### `src/modules/survey/costing/cost-model.d.cts`
+
+- Line 1:
+
+  > Types for caprebate-cost-model.cjs (Phase 161d, 4 Nov 2026). The model is CommonJS with no types of its own; every
 
 ### `src/shared/upload-handler-port.ts`
 
@@ -20006,6 +24929,12 @@ neither says.
 - Line 26:
 
   > the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, `Caprebate site.html` in Development/, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs).
+
+### `src/modules/survey/pack-lines.ts`
+
+- Line 30:
+
+  > the app's own copy (Phase 161d1, 5 Nov 2026): edit the original, 02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs).
 
 ## 5 Nov 2026: Phase 161g
 
@@ -20126,6 +25055,25 @@ neither says.
   >
   > Kept outside src/web/ on purpose, like src/integrations/analytics.ts: the analytics allow-list check scans every src/web view for
   > Google's tag names, and this list names Google.
+
+### `src/modules/compliance/legal-approvals.ts`
+
+- Line 1:
+
+  > WHO APPROVED EACH LEGAL PAGE, AND WHO AGREED TO THE TERMS — PHASE 161g, 5 November 2026 (migration 121).
+  >
+  > APPROVALS. Lakhbir, 5 Nov 2026: the legal pages are built ready for the live website "but not switched on ... each
+  > page shows the 'Draft' line until an approval is recorded (who approved it, and the date, kept in the database and
+  > the audit log). With no approval nothing goes live." An admin records each approval in the back office at
+  > /staff/legal: the page, who approved it, as solicitor or as data protection officer, and the date. A page is in force
+  > when both have approved its CURRENT version (LEGAL_PAGES in src/modules/public-site/legal-pages.ts); a new version starts again.
+  > An approval is never changed or deleted (migration 121's triggers).
+  >
+  > AGREEMENTS. Lakhbir, 5 Nov 2026: "the sign-up asks the person to tick that they have read them (the tick, its date
+  > and the version are kept, and the audit log records it)". The sign-up offered after the free assessment carries the
+  > tick (src/core/signup.ts keeps it until the login is made); a client who has not agreed to the current versions is
+  > asked once at /portal/agree before the portal opens. Both only where the legal pages are served (the test website's
+  > `notices`, or the `legal` setting), so a link never leads to "being prepared".
 
 ### `src/modules/public-site/notices-site.ts`
 
@@ -20479,6 +25427,40 @@ neither says.
   > 161l (the tangle undone) moves each one to its owner's data file, reached through that owner's front door or an
   > event. Nothing new belongs here: this file only gets shorter. Text unchanged from the caller.
 
+## 8 Nov 2026: Phase 161j
+
+### `src/modules/assessment/data.ts`
+
+- Line 174:
+
+  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+
+### `src/modules/claims/data.ts`
+
+- Line 1042:
+
+  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+
+### `src/modules/crm/data.ts`
+
+- Line 1063:
+
+  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+
+### `src/modules/portal/data.ts`
+
+- Line 62:
+
+  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
+
+## 31 Dec 2026: Phase 133c
+
+### `src/modules/admin/templates.ts`
+
+- Line 272:
+
+  > PHASE 133c: the date a client reads in a message is a UK date, "31 Dec 2026". The stored value stays ISO.
+
 ## Date not recorded: Phase 21
 
 ### `src/modules/claims/documents/document-pipeline.ts`
@@ -20790,6 +25772,17 @@ neither says.
   > with its `dropped` list for the same reason, and a removal log that quoted
   > the content would recreate the exposure it exists to record.
 
+## Date not recorded: Phase 74
+
+### `src/modules/finance/finance.ts`
+
+- Line 544:
+
+  > VAT IS RECORDED, NOT DERIVED. Caprebate is not VAT registered — confirmed in
+  > Phase 74, and the engagement letter says so — and the position is a column
+  > on every invoice rather than a constant in this file, because the day that
+  > changes it changes for new invoices and not for old ones.
+
 ## Date not recorded: Phase 104
 
 ### `src/core/server.ts`
@@ -20960,6 +25953,28 @@ neither says.
   > value, never as an empty string, because an empty string reads as unanswered
   > three months later. N4 again, on a screen this time.
 
+### `src/modules/survey/surveyor.ts`
+
+- Line 1114:
+
+  > What the client has given us, and what is still outstanding for THIS pack.
+  >
+  > AUTHORISED ON THE JOB, NOT ON THE BUSINESS. A surveyor is on
+  > `surveyor_job.read` only for a job assigned to them, which is narrower than
+  > `business.read` and is the entitlement that actually applies: these are the
+  > papers of a job they are doing.
+  >
+  > THE MISSING LIST IS `missingFacts` FILTERED, NOT REBUILT. Phase 106 derived
+  > it from the engine and classified what each fact blocks, with anything
+  > unrecognised reported as blocking BOTH packs rather than neither. Writing a
+  > second one here is how the two would drift, so this takes that list and
+  > drops only the facts attributed to the accountant's pack alone.
+  >
+  > THERE ARE NO ORIGINALS TO SERVE, and the note says so. Under the settings
+  > this build uses the unredacted file is deleted from quarantine once the
+  > receipt strip has run and is never promoted to durable storage. What is kept
+  > is the structured information read out of it.
+
 ### `src/shared/stages.ts`
 
 - Line 1:
@@ -21063,6 +26078,76 @@ neither says.
 - Line 1179:
 
   > decision: Phase 107 mounts client data behind a different gate, and a
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 497:
+
+  > PHASE 107a DELETED A FALLBACK THAT USED TO SIT HERE, and the reason is worth
+  > keeping because the fallback's own comment was the specification for the fix.
+  >
+  > `RateLibrary.learn` refuses an UNTOUCHED event unless the figure is the
+  > surveyor's own — rightly, because learning our own default back as "theirs"
+  > would launder a platform default into a surveyor library and destroy the
+  > stratification the whole adoption metric rests on. But `PrefillOrigin` had no
+  > value meaning "we proposed nothing", and this build has no platform defaults
+  > at all, so a surveyor's FIRST figure in a sector could only be recorded as
+  > PLATFORM_DEFAULT + UNTOUCHED — false, and refused. THE LIBRARY COULD NEVER
+  > ACQUIRE A FIRST ENTRY, so nobody's figures ever came back to them.
+  >
+  > Phase 107 answered that one case here, in application code, and said in terms
+  > that the module was the right place for it. Phase 107a added
+  > `NOTHING_PROPOSED` to the module, worked out what all five metrics do with it
+  > (they exclude it by construction, and `adoption` now counts it on its own
+  > line), and the call site below is `propose` again with nothing wrapped round
+  > it. There is no second proposal path in this application.
+
+## Date not recorded: Phase 107a
+
+### `src/modules/survey/surveyor-crm.ts`
+
+- Line 528:
+
+  > Fields where the surveyor was shown an EMPTY BOX (Phase 107a). Excluded
+  > because there was no number of ours to adopt or reject, and counted
+  > separately because it measures something quite different from the line
+  > above: `excluded_not_platform_default` says the pre-fill came from
+  > somewhere else, this says THERE WAS NO PRE-FILL. A high number here means
+  > we are not putting our own figures in front of the surveyor at all, which
+  > is the state Caprebate is actually in — no licensed price book, so no
+  > platform defaults — and it should be visible rather than folded into a
+  > count that reads as "they preferred another source".
+
+- Line 555:
+
+  > Adoption for one field.
+  >
+  > THREE exclusions, all deliberate and all counted so the exclusion is visible:
+  >   - anything not a PLATFORM_DEFAULT pre-fill (it tells us about the surveyor,
+  >     not about our estimate);
+  >   - anything where NOTHING WAS PROPOSED at all — an empty box the surveyor
+  >     filled in themselves. Added Phase 107a and counted on its own line,
+  >     because "they used a different source" and "we offered nothing" are
+  >     different facts and merging them hides which one we are looking at;
+  >   - anything from a job the anchor quarantine did not mark CLEAN (the surveyor
+  >     had already seen our estimate, so their figure is contaminated).
+
+### `src/modules/survey/surveyor.ts`
+
+- Line 476:
+
+  > MIRRORS `RateLibrary.learn`'s OWN GUARD, and the mirror has to be kept
+  > in step — Phase 107a is the second time it has mattered.
+  >
+  > The module refuses an UNTOUCHED event unless the figure is the
+  > surveyor's own, which since Phase 107a means SURVEYOR_LIBRARY or
+  > NOTHING_PROPOSED. Skipping the refused ones here rather than catching
+  > the exception is deliberate: a caught exception in a rebuild loop hides
+  > the day the rule changes. THE COST OF THAT CHOICE is that this line
+  > restates the rule, and when Phase 107a widened the module's guard this
+  > line still had the old one — so every first figure a surveyor entered
+  > was learned by the module and then dropped here, and the library still
+  > looked empty. The suite caught it; nothing else would have.
 
 ## Date not recorded: Phase 108
 
@@ -21317,6 +26402,40 @@ neither says.
   > (@node-rs/argon2). node:zlib does the inflating; this file adds nothing to
   > package.json.
 
+## Date not recorded: Phase 113d
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 1370:
+
+  > =============================================================================
+  >    10. THE ENGAGEMENT GATE'S COST INPUT — PHASE 113d, board item 13005159647
+  >
+  >    THE GATE ITSELF IS NOT HERE. It lives in the site engine, as CB_GATE, next
+  >    to the fee module whose quote it withholds. What lives here is the ONE thing
+  >    the gate must not compute for itself: the loaded cost of the job it is being
+  >    asked to price.
+  >
+  >    WHY THE SPLIT IS THE WHOLE POINT. Four documents specify the gate and none
+  >    of them implements it; the risk in finally building it was that the site
+  >    would grow a second cost model, drift from this one, and be wrong in the
+  >    direction that suited whoever last touched it. So the site holds a DECISION
+  >    and injects its COSTING, this file is the only calculator, and the
+  >    regression harness wires the two together and asserts the gate's arithmetic
+  >    is this function's output rather than a copy of it.
+  >
+  >    IT DOES NOT THROW, AND THAT IS DELIBERATE. loadedCost() throws E_BAD_VOLUME
+  >    on a volume it cannot use, which is right for a modelling call a person
+  >    wrote. It is wrong for a gate: a missing annual volume is a fact about the
+  >    business, not a programming error, and a gate that throws on it takes a
+  >    screen down. So this returns {known:false} naming the parameter, exactly as
+  >    addressLookupCost() does for the Homedata price. Unknown is not a branch.
+  >    =============================================================================
+
+- Line 1570:
+
+  > Section 10 — the engagement gate's cost input (Phase 113d)
+
 ## Date not recorded: Phase 146g
 
 ### `src/core/router.ts`
@@ -21527,32 +26646,6 @@ neither says.
   > IT OPENS NOTHING. A pick reaches a connector through the same `decided` list as any other lookup, so the two
   > gates and the source's own switch have already had their say above. src/modules/claims/match-review.ts adds one more
   > condition on top — a signed engagement, whatever the source's tier — and it asserts that itself.
-
-## Date not recorded: Phase 161j
-
-### `src/modules/assessment/data.ts`
-
-- Line 174:
-
-  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
-
-### `src/modules/claims/data.ts`
-
-- Line 1042:
-
-  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
-
-### `src/modules/crm/data.ts`
-
-- Line 1063:
-
-  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
-
-### `src/modules/portal/data.ts`
-
-- Line 62:
-
-  > Moved here by Phase 161j from the lower layers' borrowed files: their statements are on this module's tables.
 
 ## Date not recorded: Phase 161l
 
@@ -21981,6 +27074,31 @@ neither says.
 - Line 305:
 
   > EVERY ROW OF THIS LOGIN'S HOME, in Lakhbir's order.
+
+### `src/modules/survey/costing/cost-model.cjs`
+
+- Line 2149:
+
+  > Question 147: which index turns today's rebuild cost back to the purchase date. Lakhbir: "BCIS is the guide we will
+  >    use". BCIS is not bought (Word question 218), so the real table is an EMPTY STUB, and a PLACEHOLDER table with
+  >    INVENTED points stands in for the test system. Never extrapolated: a date outside the table refuses.
+
+### `src/modules/survey/costing/job-economics.cjs`
+
+- Line 914:
+
+  > The third option Lakhbir has already said is live: the fee rate (3%, with
+  >        a discretionary multi-site discount) is a variable sales discusses with
+  >        the client. CB_BENEFIT computes the rate at which
+  >        the fee stops exceeding the client's year-one benefit. Carried through
+  >        here so a band this bad arrives with the number that fixes it.
+
+- Line 1148:
+
+  > Rescaling the published breakpoints so the SAME physical jobs sit in the same
+  >    bands after the base change. Divides by the tax rate the old card's
+  >    breakpoints were implicitly expressed at. Returned as a candidate, not as the
+  >    answer — the card's breakpoints are Lakhbir's and Saddique's to set.
 
 ### `src/shared/assets.ts`
 

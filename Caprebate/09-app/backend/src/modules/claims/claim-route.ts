@@ -24,11 +24,11 @@
 import type { Db } from '../../core/index.ts';
 import { acquisitionDateReading, amendmentWindowReading, latestFacts, periodFromYearEnd, windowForPeriod, type WindowReading } from './claim-facts.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, type EventKind, type PropertyEvent } from './property-events.ts';
-import { legalVerdictForClaim } from '../../web/pack-legal.ts';
+import { legalVerdictForClaim } from '../survey/index.ts';
 import { propertyTenure, registerNamesClientPerson } from '../assessment/index.ts';
 import { localDate } from '../../shared/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId8 } from '../../integrations/index.ts';
-import { getSurveyPackApprovalsSnapshotJsonByClaimId } from './data-borrowed.ts';
+import { getSurveyPackApprovalsSnapshotJsonByClaimId } from '../survey/index.ts';
 import { getBusinessesClaimantTypeById, getBusinessesCompanyNumberById } from '../crm/index.ts';
 import { getAssessmentAnswersValueByBusinessIdQuestionId } from '../assessment/index.ts';
 import { getPropertiesDisposalDateById } from './data.ts';
@@ -136,7 +136,7 @@ function firstOpen(db: Db, c: { id: string; business_id: string }, from: { start
   return null;
 }
 
-/** The period the PURCHASE falls in — the recorded one, else from the client's year end — for the W2 search. PHASE 159e
+/** The period the PURCHASE falls in — the recorded one, else from the client's year end — for the W2 search.
  *  (C15, L4): the return entries read this same period, so the window and the spreadsheet can never disagree. */
 export function purchasePeriod(db: Db, c: { id: string; business_id: string; property_id: string | null }): { start: string; end: string } | null {
   const f = latestFacts(db, c.id);

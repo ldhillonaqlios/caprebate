@@ -15,7 +15,7 @@
  * WHY IT IS OFF, AND WHAT TURNS IT ON. `IDENTITY_CHECK.enabled` ships false. `identityCheckMissing` lists what must be
  * true first, in plain words, and every one is a person's decision, not Claude's:
  *   1. the provider chosen — Didit, the owner's choice;
- *   2. the provider named as a processor in the privacy notice AND in clause 7 of the engagement letter (the Phase 115
+ *   2. the provider named as a processor in the privacy notice AND in clause 7 of the engagement letter (the processor
  *      rule: nothing carries client data through a processor the client was not told about);
  *   3. its key, its webhook secret and the id of the check we set up in its console (the "workflow") in the key file
  *      (DIDIT_API_KEY, DIDIT_WEBHOOK_SECRET, DIDIT_WORKFLOW_ID), never in code;
@@ -49,7 +49,7 @@
  * acknowledged and ignored.
  *
  * WHAT IT DOES NOT DO. It never finishes a check on its own. A PASS is recorded on the check as evidence of how
- * identity was verified; a person still completes the check (`completeCheck` in src/web/compliance-aml.ts), as today.
+ * identity was verified; a person still completes the check (`completeCheck` in src/modules/compliance/compliance-aml.ts), as today.
  * And we keep our own record of the decision, whatever retention is set in Didit's console: the money-laundering
  * rules ask us to keep our evidence for five years.
  */
@@ -100,7 +100,7 @@ export const IDENTITY_CHECK: IdentityCheckConfig = Object.freeze({
   named_in_privacy_notice: false,
   named_in_engagement_letter: false,
   papers_waived_for_testing: true,
-  waiver_record: 'Lakhbir Dhillon said it on 25 September 2026, in the chat with Claude. He is Head of Business Development. ' +
+  waiver_record: 'The owner said it on 25 September 2026, in the chat with Claude. He is Head of Business Development. ' +
     'He said: "switch it on we are still in a testing enviroment". The privacy notice is a draft. It is not published. Clause 7 names Didit only in a comment.',
   question: IDENTITY_CHECK_QUESTION,
 });

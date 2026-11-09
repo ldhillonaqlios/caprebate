@@ -2,7 +2,7 @@
  * BUILD THE REFERENCE DATABASE — the quarterly refresh of the ONS postcode table and the OSTN15 grid. Phase 161h,
  * 7 November 2026 (src/integrations/postcodes/reference-db.ts says why it is a database of its own).
  *
- * RUN ON A COMPUTER, NEVER BY THE WEBSITE, in three steps (09-app/deploy/LIVE-RUNBOOK.md, "Refresh the postcode table"):
+ * RUN ON A COMPUTER, NEVER BY THE WEBSITE, in three steps (09-app/docs/LIVE-RUNBOOK.md, "Refresh the postcode table"):
  *
  *   1. The postcode table, with the ingest the postcode module already has (it reads the CSV you downloaded; it makes no
  *      network call):

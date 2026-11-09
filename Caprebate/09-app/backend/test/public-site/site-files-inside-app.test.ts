@@ -16,7 +16,7 @@ import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { SITE_PATH } from '../../src/modules/public-site/public-site.ts';
 import { NOTICES_PATH } from '../../src/modules/public-site/notices-site.ts';
-import { TAXONOMY_FILE } from '../../src/web/pack-lines.ts';
+import { TAXONOMY_FILE } from '../../src/modules/survey/pack-lines.ts';
 import { LETTER_PATH, TEST_LETTER_PATH } from '../../src/modules/claims/letter.ts';
 /* PHASE 161h: vercel.json became vercel.ts (both projects build from it); vercelConfig({}) is the old file, exactly. */
 const VERCEL_CONFIG: unknown = ((await import(new URL('../../../../../vercel.ts', import.meta.url).href)) as { vercelConfig: (e: Record<string, string>) => unknown }).vercelConfig({});

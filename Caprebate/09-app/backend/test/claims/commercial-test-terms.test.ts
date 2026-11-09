@@ -5,7 +5,7 @@
  *   line 1        Word question 23  — a fixed disposal fee from the job cost model, never a percentage; a test default
  *   lines 2, 3, 7 Word questions 33, 34, 196 — the TEST-ONLY engagement letter: clauses 5, 7(d) and 13 filled, each
  *                 "test default, not agreed"; shown by the test website alone; never signed; the real letter untouched
- *                 (line 3's refund run against it is in test/finance-claim.test.ts, beside the refund's own test)
+ *                 (line 3's refund run against it is in test/finance/invoices-and-fee-controls.test.ts, beside the refund's own test)
  *   line 5        Word question 45  — the money-laundering check's test defaults: a low/medium/high level, 25%, and
  *                 ordinary partnerships, LLPs and trusts
  */
@@ -21,8 +21,8 @@ import { loadLetter, LETTER_PATH, TEST_LETTER_PATH, TEST_COPY_MARK, TEST_DEFAULT
 import { letterFees } from '../../src/modules/claims/fee-controls.ts';
 import { clawbackReading, DISPOSAL_FEE } from '../../src/modules/claims/claim-record.ts';
 import { shownLetter, signingMissing, signEngagement } from '../../src/modules/claims/signing.ts';
-import * as A from '../../src/web/compliance-aml.ts';
-import type * as C from '../../src/web/compliance.ts';
+import * as A from '../../src/modules/compliance/compliance-aml.ts';
+import type * as C from '../../src/modules/compliance/compliance.ts';
 import { actor, testApp } from '../helpers.ts';
 import { plainDashText } from '../../src/shared/plain-dashes.ts';
 

@@ -3,11 +3,42 @@
 **Blocks B, C, D, E and F of the Developer Build Order. Phases 103 to 107,
 8–9 September 2026.**
 
-> **The spec that describes the whole of this is `09-app/CAPREBATE-DEVELOPER-SPEC.md`**
+> **The spec that describes the whole of this is `09-app/docs/CAPREBATE-DEVELOPER-SPEC.md`**
 > (Phase 108, 9 September 2026): the user cases, every screen, every internal
 > and external API, **what is stubbed and exactly where**, and what a developer
 > still has to do before any of it may be deployed. Read its first paragraph
 > before you run anything.
+
+## The folders, one line each
+
+The code is grouped by business area (09-app/docs/ARCHITECTURE.md). Another area reaches a module only through its
+front door, `index.ts`; only a module's `data.ts` runs SQL on the tables it owns, and its `data-borrowed.ts` holds the
+statements on other areas' tables that Phase 161l moves to their owners.
+
+| Folder | What is in it |
+|---|---|
+| `src/core/` | the server, the router shell, the database gate, sign-in, permissions, the audit log, keys, the back office's own pages |
+| `src/shared/` | page templates and parts, PDF, ZIP, dates, money and the other pieces every area uses |
+| `src/integrations/` | the outside services: email, identity checks, Zoom, WhatsApp, Claude, Companies House, the registers and postcodes |
+| `src/modules/public-site/` | the home page, sector pages, the enquiry form and the legal pages |
+| `src/modules/assessment/` | the eligibility check, its figures and sign-up |
+| `src/modules/portal/` | the client's dashboard, their files, confirmations and report acceptance |
+| `src/modules/crm/` | organisations, leads, the pipeline, tasks, messages, the calendar, video calls and introducers |
+| `src/modules/claims/` | the claim record, its facts, documents (`documents/`), signing, research and the report |
+| `src/modules/survey/` | the surveyor workspace, the survey pack, the report, photos, video and the costings (`costing/`) |
+| `src/modules/finance/` | invoices, VAT, billing and filing |
+| `src/modules/compliance/` | identity checks, data protection, the breach log, retention, complaints, legal approvals and the audit log screen |
+| `src/modules/admin/` | settings, roles, templates, connections, configuration and lists |
+| `src/styles/` | the one stylesheet, `site.css` |
+| `test/` | the tests, in the same folders as `src/` and named by feature; shared helpers at the top; `fixtures/` holds their files |
+| `migrations/` | the database changes, in order (never edited once applied) |
+| `architecture/` | the module map, the table owners and the boundary check's baseline, read by `tools/boundaries.cjs` |
+| `tools/` | the checks (`npm run check`), the demo server and helper scripts |
+| `copies/` | copies of files from outside the app it needs to run (kept equal by `tools/app-copies.cjs`) |
+| `docs/` | the changelog of notes that were in the code, and the old and new test names |
+
+The specs and guides are in `09-app/docs/`: the Developer Spec, the architecture, the admin and user guide, the CRM
+disposition, the live runbook, the go-live checklist, the key file set-up and how the calculator reaches the page.
 
 Phase 103 built authentication, five application roles, server-side
 authorisation and an append-only audit log. **One process, both applications.**
@@ -15,9 +46,9 @@ Nothing visible came out of it — it decides whether the two applications are
 shippable or a demonstration wearing a suit.
 
 Phase 104 put the public half on top of it: the site, the six-screen assessment,
-the customer login and the client portal (`src/web/` then; since Phase 161j each in its module under
-`src/modules/`: `public-site/`, `assessment/`, `portal/`, `crm/` and `claims/`, each with its front door `index.ts`,
-its `data.ts` and its `routes.ts`; `src/core/router.ts` is the shell that asks each module in turn).
+the customer login and the client portal (`src/web/` then; since Phases 161j and 161k every business area is a
+module under `src/modules/`, each with its front door `index.ts` and its `data.ts`, as the folder map above says;
+`src/core/router.ts` is the shell that asks each module in turn).
 
 Phases 106 and 107 finished the back office — the engaged-client list and the
 five-panel business page, then the surveyor's review-and-sign workspace and the
@@ -268,7 +299,7 @@ year and make them re-enter it. `schedule.ts` decision 3 has the full reasoning.
 **The offset is asked of `Intl`, never assumed.** A hard-coded `+1` is wrong for four months
 of the year, a `0` for eight, and both are wrong on the two mornings that matter — so
 `instantsForLocalMinute` returns **zero** instants for a local time in the March gap and
-**two** for one in the October overlap. `test/localtime.test.ts` asserts everything twice, on
+**two** for one in the October overlap. `test/shared/local-time.test.ts` asserts everything twice, on
 real dates either side of both 2026 transitions, and **fails on either constant**; that was
 proved by inserting them.
 

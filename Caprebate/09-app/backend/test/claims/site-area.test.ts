@@ -470,10 +470,10 @@ describe('Phase 151c, line 4: the licence row and the boundary module say the sa
     const report = checkBoundaryUse('CLIENT_REPORT_DISPLAY');
     assert.equal(report.permitted, false);
     assert.doesNotMatch(report.reason, /may be reported/);
-    assert.match(report.reason, /for our own checks too, until Lakhbir decides/);
+    assert.match(report.reason, /for our own checks too, until the owner decides/);
     const row = LICENCES.find((l) => l.licence_id === 'HMLR_INSPIRE');
     assert.equal(row?.redistribution.client_report, false);
-    assert.match(row?.notes ?? '', /until Lakhbir decides whether the number itself may go in a client report/);
+    assert.match(row?.notes ?? '', /until the owner decides whether the number itself may go in a client report/);
     assert.equal(checkBoundaryUse('INTERNAL_CALCULATION').permitted, true);
   });
 });

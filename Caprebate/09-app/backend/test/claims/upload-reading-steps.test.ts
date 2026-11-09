@@ -32,7 +32,7 @@ import { randomUUID } from 'node:crypto';
 import type { Actor } from '../../src/core/authz.ts';
 import { outboxTransport } from '../../src/integrations/email/email.ts';
 import { recordBounce, isSuppressed } from '../../src/integrations/email/email-provider.ts';
-import { stoppedAddresses, liftStoppedAddress } from '../../src/web/settings.ts';
+import { stoppedAddresses, liftStoppedAddress } from '../../src/modules/admin/settings.ts';
 import { testApp, actor } from '../helpers.ts';
 import { smokeOne, smokeSubject, SMOKE_SOURCES, SMOKE_DEFAULTS } from '../../src/integrations/connectors/smoke.ts';
 import { REGISTER_SWITCHES } from '../../src/integrations/connectors/registers.ts';

@@ -60,9 +60,10 @@ import { insertTask } from '../crm/index.ts';
 import { latestSignOff } from '../claims/index.ts';
 import { computeFee, FEE_CONTROLS, type FeeControls } from '../claims/index.ts';
 import { feeGate, type FeeGateReading } from '../../shared/index.ts';
-import { assertFinanceSection, financeSectionObj } from '../../web/finance.ts';
+import { assertFinanceSection, financeSectionObj } from '../finance/index.ts';
 import { getStaffTasksIdByCompanySubjectStatus } from '../crm/index.ts';
-import { getInvoiceCreditNotesNByIssuedOn, getInvoicesCountByClaimIdInvoiceStatus, getInvoicesNByClaimIdInvoiceStatus, insertFinanceSettings, listClaimsIdClaimRefByStageClaimId } from './data-borrowed.ts';
+import { getInvoicesNByClaimIdInvoiceStatus, listClaimsIdClaimRefByStageClaimId } from './data-borrowed.ts';
+import { getInvoiceCreditNotesNByIssuedOn, getInvoicesCountByClaimIdInvoiceStatus, insertFinanceSettings } from '../finance/index.ts';
 import { getFinanceSettingsIdSettingBySettingEffectiveFrom, listFinanceSettingsIdSetting } from './data-borrowed.ts';
 
 type Vocab = Readonly<Record<string, string>>;
@@ -90,7 +91,6 @@ export const VAT_POSITIONS: Vocab = Object.freeze({
 type SettingRow = {
   id: string; setting: string; value: string; effective_from: string; source: string; recorded_at: string; recorder: string | null;
 };
-
 
 /** The value in effect on `today`: the latest row whose date has arrived. None is not known. */
 export function currentSetting(db: Db, setting: string, today: string): SettingRow | undefined {

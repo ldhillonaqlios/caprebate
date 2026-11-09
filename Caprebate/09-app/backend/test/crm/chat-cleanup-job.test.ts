@@ -137,7 +137,7 @@ describe('1 · the message clean-up job is built and switched off', () => {
     assert.equal(MESSAGE_RETENTION.enabled, true);
     assert.equal(MESSAGE_RETENTION.with_claim_years, 7);
     assert.equal(MESSAGE_RETENTION.without_claim_months, 84);
-    assert.equal(MESSAGE_RETENTION.approved_by, 'Lakhbir Dhillon');
+    assert.equal(MESSAGE_RETENTION.approved_by, 'The owner (Head of Business Development)');
     assert.match(MESSAGE_RETENTION.review_ref ?? '', /answered 22 September 2026/);
     assert.equal(MESSAGE_RETENTION.question, 'How long do we keep client messages and the team chat?');
     assert.deepEqual(MESSAGE_RETENTION_RECOMMENDED, { with_claim_years: 6, without_claim_months: 12 });

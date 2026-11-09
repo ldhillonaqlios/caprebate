@@ -12,14 +12,15 @@ import { createHash } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import { plainDashLines } from '../../shared/index.ts';
 import { insertOutbox, insertOutboxAttachments, insertOutboxInlineFiles } from '../data.ts';
-import { getEmailSenderDisplayNameAddress, getUsersCountByClientStatusEmailCanonical } from '../data-borrowed.ts';
+import { getUsersCountByClientStatusEmailCanonical } from '../data-borrowed.ts';
+import { getEmailSenderDisplayNameAddress } from '../../modules/admin/data.ts';
 // Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
 import { getBusinessesCountByClientStatus, getBusinessesCountByIdClientStatus, getContactsCountByClientStatus } from '../../modules/crm/data.ts';
 
 /**
  * CALENDAR_INVITE IS THE SECOND STUBBED TRANSPORT AND IT IS NOT A SECOND STUB.
  *
- * Phase 105's brief names two things as stubbed: outbound email AND calendar
+ * The booking work's brief names two things as stubbed: outbound email AND calendar
  * invitations, and says both write to this table. An invitation is an email
  * with an attachment, so it goes down the same path rather than acquiring an
  * interface of its own — one thing to replace, and one row shape a screen can

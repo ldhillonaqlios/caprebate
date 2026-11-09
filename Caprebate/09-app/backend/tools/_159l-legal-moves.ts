@@ -1,6 +1,6 @@
 // Scratch for Phase 159l item 8: every path of the walk with the readings ON, read again with both OFF and each alone.
 import { walkLegalPaths, LEGAL_PATHS_NOW } from '../test/legal-paths-walk.ts';
-import { assessLegalUnder } from '../src/web/pack-legal.ts';
+import { assessLegalUnder } from '../src/modules/survey/pack-legal.ts';
 const leaves = walkLegalPaths('gp', 'company');
 const rank: Record<string, number> = { RED: 0, AMBER: 1, URGENT: 2, GREEN: 3 };
 const tally = new Map<string, number>();

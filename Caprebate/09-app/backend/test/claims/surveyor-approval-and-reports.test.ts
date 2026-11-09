@@ -379,7 +379,7 @@ describe('F37 — on the claim page', () => {
 /* ================================================================== *
  * F41 — the invoice sent before the claim moves past Invoice
  * ================================================================== */
-import * as I from '../../src/web/invoices.ts';
+import * as I from '../../src/modules/finance/invoices.ts';
 
 describe('F41 — the Invoice gate needs the fee invoice sent, not only raised', () => {
   test('raised: not met, and it says so; recorded as sent: met', async () => {

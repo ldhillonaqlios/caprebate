@@ -23,10 +23,10 @@ import type { Actor } from '../../core/index.ts';
 import { rateLimit } from '../../core/index.ts';
 import { hashToken } from '../../core/index.ts';
 import type { Db } from '../../core/index.ts';
-import { logComplaint } from '../../web/compliance-rights.ts';
-import { assertComplianceWrite, type ComplianceDeps } from '../../web/compliance.ts';
+import { logComplaint } from '../compliance/index.ts';
+import { assertComplianceWrite, type ComplianceDeps } from '../compliance/index.ts';
 import { plainDashes } from '../../shared/index.ts';
-import { getComplaintFormsIdReceivedAtById, insertComplaintForms, listComplaintFormsIdReceivedAtByLoggedComplaintId, updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl } from './data-borrowed.ts';
+import { getComplaintFormsIdReceivedAtById, insertComplaintForms, listComplaintFormsIdReceivedAtByLoggedComplaintId, updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl } from '../compliance/index.ts';
 
 /** the app's own copy: edit the original, 03-app/caprebate-notices-page.html, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const NOTICES_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'caprebate-notices-page.html');
@@ -35,7 +35,7 @@ export const DP_MAIL = 'data.protection@caprebate.co.uk';
 /** Complaints from one network address in the 15-minute window, before the form says to wait. */
 export const COMPLAINT_SOURCE_LIMIT = 10;
 
-/* The eight facts Phase 160f proposed are confirmed by the data protection officer
+/* The eight facts the notices proposed are confirmed by the data protection officer
   , so the page is no longer a draft; the banner says only where it is. */
 const BANNER = '<p class="draft-banner" role="note"><strong>Our test website.</strong> It holds invented information '
   + 'only. Our public website will carry this page too.</p>';
@@ -70,7 +70,7 @@ export function buildNoticesEdition(source: string): NoticesEdition {
 /**
  * THE SAME PAGE ON THE LIVE WEBSITE (the `legal` setting). The test website's banner ("Our test website")
  * is replaced by the page's own Draft line, which goes once our solicitor and our data protection officer have both
- * approved its version (src/web/legal-approvals.ts).
+ * approved its version (src/modules/compliance/legal-approvals.ts).
  */
 export function noticesForLiveSite(html: string, line: string): string {
   if (!html.includes(BANNER)) throw new Error('the notices page has no test banner to replace');

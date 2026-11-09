@@ -347,7 +347,7 @@ describe('every page works with JavaScript switched off', () => {
     assert.ok(claim);
     const lead = h.made.app.db.get<{ id: string }>('SELECT id FROM leads LIMIT 1');
     assert.ok(lead);
-    // Phase 134: the organisation's page is the one client page, whose tabs test/phase133b.test.ts reads.
+    // Phase 134: the organisation's page is the one client page, whose tabs test/core/long-screens-layout.test.ts reads.
     // Phase 138: the claim page is coloured sections that open and close, not tabs — test/crm/client-page-sections.test.ts reads them;
     // here it is enough that each is a <details> with its own id, which needs no script.
     const claimPage = await as('sales').get(`/staff/claims/${claim.id}`);

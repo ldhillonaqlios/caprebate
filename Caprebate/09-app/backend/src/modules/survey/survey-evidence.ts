@@ -1,0 +1,515 @@
+/**
+ * THE SURVEY'S EVIDENCE FROM THE CLIENT — the photo checklist, the recorded walkthrough call, and how the surveyor
+ * inspected. 2 October 2026; the mock-up the owner approved that day.
+ *
+ * the owner: "a recorded phone walkthrough … and add the option for … a guided photo checklist in the client portal".
+ * Asked: the photos are KEPT, FOR TESTING ("Keep them, test only"); the walkthrough is a RECORDED ZOOM
+ * CALL ("Recorded Zoom call") — the test website takes at most 4.5 MB a request, so a 20–40 minute phone video cannot be
+ * uploaded, and a page may run no script to send it in pieces.
+ *
+ * THE PHOTOS. A client of the company takes one photo at a time for a checklist item (src/modules/survey/survey-checklist.ts),
+ * saying nobody is in it. It must be a JPEG or PNG — read from its first bytes, not its name — of at most 4.4 MB. Its
+ * hidden details are taken out before it is kept: a JPEG's EXIF, XMP and IPTC blocks and comments (where the phone was,
+ * which phone, when), a PNG's text and EXIF chunks. Then it is ENCRYPTED with the store's key (AES-256-GCM, the key a
+ * kept original uses) and kept under survey-photos/; with no key it is refused, and the page says why. The row keeps
+ * where it is, its type, size and SHA-256, who took it, when, and the client's "nobody is in it". A photo is never
+ * edited or deleted here: it is taken back (withdrawn), by the client or by staff, and is then shown to nobody.
+ *
+ * MANY AT ONCE. A client
+ * may send up to 15 photos in one go, with one "nobody is in them", up to 4.4 MB in all (the test website's limit is
+ * for the whole send). Each is checked and cleaned like a single one; if any is refused, none is kept, and the page
+ * says which. They are kept under UNSORTED until Admin or Sales put each under a checklist item (`sortPhotos`, migration
+ * 075): the newest move is the photo's item. One that is not useful is taken back.
+ *
+ * WHO SEES A PHOTO. The client of that company; Admin and Sales; and the surveyor assigned to the job — every request
+ * asked of the rules (`surveyor_job.read` for staff). the owner's waiver for testing names Admin, Sales, the data
+ * protection officer, the client and the assigned surveyor, and the 7-year keep (SURVEY_PHOTOS below). Real use waits
+ * for the officer and the privacy notice.
+ *
+ * THE WALKTHROUGH CALL. The client asks for one in their portal (a message to us). Admin or Sales books it as a video
+ * call at one of their free times — they own client calls in the diary, and a surveyor is kept out of the diary on
+ * purpose (src/core/authz.ts, booking.read). It is marked as this job's walkthrough, so its Zoom meeting is made to RECORD TO
+ * ZOOM'S CLOUD (src/integrations/connectors/zoom.ts). After the call, the assigned surveyor, Admin or Sales fetches the recording's
+ * link, passcode and length from Zoom, and they are kept; the video stays with Zoom. Opening it is recorded.
+ *
+ * HOW THE SURVEYOR INSPECTED — desktop with the client's evidence, a live video survey, or a site visit — is said by
+ * the assigned surveyor in chapter 2, and goes in the approved report.
+ */
+import { createHash } from 'node:crypto';
+import type { App } from '../../core/app.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, can, NotAuthorised, type Actor } from '../../core/index.ts';
+import type { FsObjectStore } from '../../shared/objectstore.ts';
+import { packJob } from './surveyor.ts';
+import { checklistFor, type ChecklistItem } from './survey-checklist.ts';
+import { postClientMessage } from '../crm/index.ts';
+import { isBookable, SLOT_MINUTES } from '../crm/index.ts';
+import { reconcileVideoMeeting, zoomDeps } from '../crm/index.ts';
+import { sendVideoInvite } from '../crm/index.ts';
+import { zoomRecording } from '../../integrations/index.ts';
+import { getContactsXByBusinessId, insertBookings3 } from '../crm/index.ts';
+import { getSurveyPhotoWithdrawalsXByPhotoId, getSurveyPhotosJobIdBusinessIdById, getSurveyPhotosJobIdBusinessIdById2, getSurveyRecordingsShareUrlByIdJobId, getSurveyWalkthroughAsksXByJobId, insertSurveyChecklistMarks, insertSurveyInspectionBasis, insertSurveyPhotoSorts, insertSurveyPhotoWithdrawals, insertSurveyPhotos, insertSurveyRecordingViews, insertSurveyRecordings, insertSurveyWalkthroughAsks, insertSurveyWalkthroughs, listSurveyChecklistMarksItemKeyMarkByJobIdRowid, listSurveyRecordingViewsIdShareUrlByRecordingIdWalkthroughId } from './data.ts';
+import { getSurveyInspectionBasisBasisNoteByJobId, getSurveyorJobsIdBusinessIdById, listSurveyPhotoSortsIdItemKeyByPhotoIdJO, listSurveyWalkthroughAsksAtByNameByJobId, listSurveyorJobsIdBusinessIdByBusinessId, listVideoMeetingsIdBookingIdByBookingIdJO } from './data-borrowed.ts';
+
+export type EvidenceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
+export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
+
+/** the owner's decision for testing, as asked. */
+export const SURVEY_PHOTOS = Object.freeze({
+  kept_for_testing: true,
+  waiver_record: 'On 2 Oct 2026 the owner was asked if we keep survey photos before the data officer has said. ' +
+    'The answer: "Keep them, test only". Kept 7 years, encrypted. Opened by Admin, Sales, the DPO, the client and the surveyor.',
+  retention_days: 2557,
+});
+
+/** Under the test website's 4.5 MB a request, with room for the form around it. */
+export const MAX_PHOTO_BYTES = 4_400_000;
+
+/* ================================================================== *
+ * A PHOTO'S HIDDEN DETAILS, TAKEN OUT
+ * ================================================================== */
+
+export type Sniffed = 'image/jpeg' | 'image/png' | null;
+
+export function sniffImage(b: Uint8Array): Sniffed {
+  if (b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (b.length > 8 && png.every((x, i) => b[i] === x)) return 'image/png';
+  return null;
+}
+
+/**
+ * A JPEG without its EXIF (APP1, which carries GPS and the camera), XMP, IPTC (APP13), other application blocks
+ * (APP2–APP15, except the ICC colour profile in APP2) and comments. The image data is copied as it is. Null if the
+ * file is not a JPEG we can walk to its image data.
+ */
+export function stripJpeg(b: Uint8Array): Uint8Array | null {
+  if (sniffImage(b) !== 'image/jpeg') return null;
+  const out: number[] = [0xff, 0xd8];
+  let i = 2;
+  while (i + 4 <= b.length) {
+    if (b[i] !== 0xff) return null;
+    const marker = b[i + 1] ?? 0;
+    if (marker === 0xff) { i++; continue; }
+    if (marker === 0xda) { for (let k = i; k < b.length; k++) out.push(b[k] ?? 0); return new Uint8Array(out); } // start of scan: the rest is image
+    if (marker === 0xd9) return null;
+    const len = ((b[i + 2] ?? 0) << 8) | (b[i + 3] ?? 0);
+    if (len < 2 || i + 2 + len > b.length) return null;
+    const isIcc = marker === 0xe2 && Buffer.from(b.subarray(i + 4, i + 15)).toString('latin1') === 'ICC_PROFILE';
+    const drop = (marker >= 0xe1 && marker <= 0xef && !isIcc) || marker === 0xfe;
+    if (!drop) for (let k = i; k < i + 2 + len; k++) out.push(b[k] ?? 0);
+    i += 2 + len;
+  }
+  return null;
+}
+
+/** A PNG without its text, EXIF and time chunks. Null if it is not a PNG we can walk to its end. */
+export function stripPng(b: Uint8Array): Uint8Array | null {
+  if (sniffImage(b) !== 'image/png') return null;
+  const parts: Uint8Array[] = [b.subarray(0, 8)];
+  let i = 8;
+  while (i + 12 <= b.length) {
+    const len = (((b[i] ?? 0) << 24) >>> 0) + ((b[i + 1] ?? 0) << 16) + ((b[i + 2] ?? 0) << 8) + (b[i + 3] ?? 0);
+    const type = Buffer.from(b.subarray(i + 4, i + 8)).toString('latin1');
+    const end = i + 12 + len;
+    if (end > b.length) return null;
+    if (!['tEXt', 'zTXt', 'iTXt', 'eXIf', 'tIME'].includes(type)) parts.push(b.subarray(i, end));
+    i = end;
+    if (type === 'IEND') return new Uint8Array(Buffer.concat(parts));
+  }
+  return null;
+}
+
+/* ================================================================== *
+ * THE CHECKLIST, AS THE CLIENT HAS DONE IT
+ * ================================================================== */
+
+export type EvidenceJob = { readonly id: string; readonly business_id: string; readonly sector: string; readonly place: string; readonly surveyor_id: string | null };
+
+/** The company's survey jobs, with the property each pack is for. */
+export function jobsOfBusiness(db: Db, business_id: string): EvidenceJob[] {
+  return listSurveyorJobsIdBusinessIdByBusinessId<EvidenceJob>(db, [business_id]);
+}
+
+function jobRow(db: Db, job_id: string): EvidenceJob | null {
+  return getSurveyorJobsIdBusinessIdById<EvidenceJob>(db, [job_id]) ?? null;
+}
+
+/** A client of the job's own company — the only person who adds photos and marks items. */
+export function clientOf(db: Db, actor: Actor, job_id: string): EvidenceJob {
+  const j = jobRow(db, job_id);
+  if (j === null || actor.role !== 'CLIENT' || actor.business_id !== j.business_id) throw new NotAuthorised('survey_evidence.add', 'surveyor_job');
+  return j;
+}
+
+export type PhotoRow = { readonly id: string; readonly item_key: string; readonly content_type: string; readonly byte_size: number; readonly note: string | null; readonly taken_at: string; readonly taken_by_name: string };
+export type ItemView = ChecklistItem & {
+  readonly photos: readonly PhotoRow[];
+  readonly mark: 'NOT_HERE' | 'NOT_SAFE' | null;
+  readonly done: boolean;
+};
+/** `photos` counts the photos under a checklist item; `unsorted` those sent in one go and not yet sorted. */
+export type ChecklistView = { readonly job: EvidenceJob; readonly items: readonly ItemView[]; readonly done: number; readonly marked: number; readonly total: number; readonly photos: number; readonly unsorted: number };
+
+/** The item key of a photo sent in one go, before Admin or Sales sort it. Never a checklist item. */
+export const UNSORTED = 'UNSORTED';
+
+export function photosOf(db: Db, job_id: string): PhotoRow[] {
+  return listSurveyPhotoSortsIdItemKeyByPhotoIdJO<PhotoRow>(db, [job_id]);
+}
+
+export function checklistView(db: Db, job_id: string): ChecklistView | null {
+  const job = jobRow(db, job_id);
+  if (job === null) return null;
+  const photos = photosOf(db, job_id);
+  const marks = new Map(listSurveyChecklistMarksItemKeyMarkByJobIdRowid<{ item_key: string; mark: string }>(db, [job_id]).map((r) => [r.item_key, r.mark] as const));
+  const items = checklistFor(job.sector).map((i): ItemView => {
+    const ps = photos.filter((p) => p.item_key === i.key);
+    const m = marks.get(i.key);
+    const mark = m === 'NOT_HERE' || m === 'NOT_SAFE' ? m : null;
+    return { ...i, photos: ps, mark, done: ps.length > 0 || mark !== null };
+  });
+  return { job, items, done: items.filter((i) => i.photos.length > 0).length, marked: items.filter((i) => i.photos.length === 0 && i.mark !== null).length, total: items.length,
+    photos: items.reduce((a, i) => a + i.photos.length, 0), unsorted: photos.filter((p) => p.item_key === UNSORTED).length };
+}
+
+/** The photos each pack line has, by the fixture list's id: how many, and from which items. */
+export function evidenceByLine(db: Db, job_id: string): Map<string, { count: number; items: string[] }> {
+  const v = checklistView(db, job_id);
+  const out = new Map<string, { count: number; items: string[] }>();
+  if (v === null) return out;
+  for (const i of v.items) {
+    if (i.photos.length === 0) continue;
+    for (const l of i.lines) {
+      const e = out.get(l) ?? { count: 0, items: [] };
+      e.count += i.photos.length;
+      if (!e.items.includes(i.title)) e.items.push(i.title);
+      out.set(l, e);
+    }
+  }
+  return out;
+}
+
+/* ================================================================== *
+ * THE CLIENT'S ACTIONS
+ * ================================================================== */
+
+export async function addPhoto(
+  d: EvidenceDeps, store: FsObjectStore, actor: Actor,
+  f: { job_id: string; item_key: string; bytes: Uint8Array; nobody: string; note: string },
+): Promise<Result> {
+  const job = clientOf(d.db, actor, f.job_id);
+  const item = checklistFor(job.sector).find((i) => i.key === f.item_key);
+  if (item === undefined) return { ok: false, why: 'That is not one of the checklist’s items.' };
+  if (f.nobody !== 'yes') return { ok: false, field: 'nobody', why: 'Tick to say nobody is in the photo: no patients, residents, staff, screens or records.' };
+  if (f.bytes.length === 0) return { ok: false, field: 'file', why: 'Choose or take a photo first.' };
+  if (f.bytes.length > MAX_PHOTO_BYTES) return { ok: false, field: 'file', why: 'That photo is too big. The most is 4.4 MB. Take it again at a smaller size, or send a screenshot of it.' };
+  const c = cleaned(f.bytes);
+  if (!c.ok) return { ok: false, field: 'file', why: c.why };
+  const note = f.note.trim().replace(/\s+/g, ' ');
+  if (note.length > 500) return { ok: false, field: 'note', why: 'Keep the note under 500 characters.' };
+  if (!store.canSeal) return { ok: false, why: NO_KEY };
+  return { ok: true, id: await keep(d, store, actor, job.id, item.key, c, note) };
+}
+
+export const NO_KEY = 'We cannot keep photos yet: the key that encrypts them is not set. We have been told.';
+export type Cleaned = { readonly ok: true; readonly type: 'image/jpeg' | 'image/png'; readonly bytes: Uint8Array } | { readonly ok: false; readonly why: string };
+
+/** A photo known by its first bytes, with its hidden details taken out. */
+export function cleaned(bytes: Uint8Array): Cleaned {
+  const type = sniffImage(bytes);
+  if (type === null) return { ok: false, why: 'Send a photo as a JPEG or PNG. An iPhone turns its photos into JPEG when you choose one here.' };
+  const clean = type === 'image/jpeg' ? stripJpeg(bytes) : stripPng(bytes);
+  if (clean === null) return { ok: false, why: 'That photo could not be read. Take it again, please.' };
+  return { ok: true, type, bytes: clean };
+}
+
+/** Encrypt it, keep it, and say so in the audit log. */
+export async function keep(d: EvidenceDeps, store: FsObjectStore, actor: Actor, job_id: string, item_key: string, c: Extract<Cleaned, { ok: true }>, note: string): Promise<string> {
+  const id = d.newId();
+  const key = `survey-photos/${job_id}/${id}.${c.type === 'image/jpeg' ? 'jpg' : 'png'}`;
+  await store.putSealed(key, c.bytes);
+  const at = d.now();
+  insertSurveyPhotos(d.db, [id, job_id, item_key, key, c.type, c.bytes.length, createHash('sha256').update(c.bytes).digest('hex'), note === '' ? null : note, actor.id, at]);
+  d.audit.append({ at, kind: 'SURVEY_EVIDENCE_ADDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'surveyor_job', object_id: job_id,
+    detail: { photo: id, item: item_key } });
+  return id;
+}
+
+/** The most a client sends in one go. */
+export const MAX_PHOTOS_AT_ONCE = 15;
+
+/**
+ * Several photos in one go, from a client of that company, with one "nobody is in them". All are checked first: if
+ * any is refused, none is kept, and the words say which (by its place in the list, 1 being the first). They are kept
+ * under UNSORTED, for Admin or Sales to sort.
+ */
+export async function addPhotos(
+  d: EvidenceDeps, store: FsObjectStore, actor: Actor,
+  f: { job_id: string; files: readonly Uint8Array[]; nobody: string; note: string },
+): Promise<{ readonly ok: true; readonly ids: readonly string[] } | { readonly ok: false; readonly why: string; readonly field?: string }> {
+  const job = clientOf(d.db, actor, f.job_id);
+  if (f.nobody !== 'yes') return { ok: false, field: 'nobody', why: 'Tick to say nobody is in the photos: no patients, residents, staff, screens or records.' };
+  const files = f.files.filter((b) => b.length > 0);
+  if (files.length === 0) return { ok: false, field: 'files', why: 'Choose your photos first.' };
+  if (files.length > MAX_PHOTOS_AT_ONCE) return { ok: false, field: 'files', why: `Send at most ${String(MAX_PHOTOS_AT_ONCE)} photos at a time.` };
+  if (files.reduce((a, b) => a + b.length, 0) > MAX_PHOTO_BYTES) return { ok: false, field: 'files', why: 'Those photos are too big together. The most is 4.4 MB in one go. Send fewer at a time.' };
+  const all: Extract<Cleaned, { ok: true }>[] = [];
+  for (const [k, b] of files.entries()) {
+    const c = cleaned(b);
+    if (!c.ok) return { ok: false, field: 'files', why: `Photo ${String(k + 1)}: ${c.why} None was sent.` };
+    all.push(c);
+  }
+  const note = f.note.trim().replace(/\s+/g, ' ');
+  if (note.length > 500) return { ok: false, field: 'note', why: 'Keep the note under 500 characters.' };
+  if (!store.canSeal) return { ok: false, why: NO_KEY };
+  const ids: string[] = [];
+  for (const c of all) ids.push(await keep(d, store, actor, job.id, UNSORTED, c, note));
+  return { ok: true, ids };
+}
+
+export function markItem(d: EvidenceDeps, actor: Actor, f: { job_id: string; item_key: string; mark: string }): Result {
+  const job = clientOf(d.db, actor, f.job_id);
+  if (!checklistFor(job.sector).some((i) => i.key === f.item_key)) return { ok: false, why: 'That is not one of the checklist’s items.' };
+  if (!['NOT_HERE', 'NOT_SAFE', 'CLEARED'].includes(f.mark)) return { ok: false, why: 'Choose “not in our building” or “not safe or not ours”.' };
+  const id = d.newId();
+  insertSurveyChecklistMarks(d.db, [id, job.id, f.item_key, f.mark, actor.id, d.now()]);
+  return { ok: true, id };
+}
+
+/** A photo taken back: by the client of that company, or by Admin or Sales with a reason. It is then shown to nobody. */
+export function withdrawPhoto(d: EvidenceDeps, actor: Actor, photo_id: string, reason: string): Result {
+  const p = getSurveyPhotosJobIdBusinessIdById<{ job_id: string; business_id: string }>(d.db, [photo_id]);
+  if (p === undefined) return { ok: false, why: 'That photo is not one of ours.' };
+  const own = actor.role === 'CLIENT' && actor.business_id === p.business_id;
+  if (!own) authorise(actor, 'email.queue', { type: 'email', id: p.business_id, business_id: p.business_id });
+  const why = own && reason.trim() === '' ? 'Taken back by the client.' : reason.trim().replace(/\s+/g, ' ');
+  if (why === '' || why.length > 300) return { ok: false, field: 'reason', why: 'Say why the photo is taken back, in under 300 characters.' };
+  if (getSurveyPhotoWithdrawalsXByPhotoId(d.db, [photo_id]) !== undefined) return { ok: false, why: 'That photo has already been taken back.' };
+  insertSurveyPhotoWithdrawals(d.db, [photo_id, actor.id, why, d.now()]);
+  return { ok: true, id: photo_id };
+}
+
+/**
+ * A photo's bytes, for the client of that company or for staff who may read the job (the assigned surveyor, Admin,
+ * Sales). A withdrawn photo is shown to nobody. Null when there is nothing to show; a refusal throws.
+ */
+export async function photoBytes(d: EvidenceDeps, store: FsObjectStore, actor: Actor, photo_id: string): Promise<{ bytes: Buffer; content_type: string } | null> {
+  const p = getSurveyPhotosJobIdBusinessIdById2<{ job_id: string; business_id: string; object_key: string; content_type: string; withdrawn: number }>(d.db, [photo_id]);
+  if (p === undefined) return null;
+  if (actor.role === 'CLIENT') {
+    if (actor.business_id !== p.business_id) throw new NotAuthorised('survey_evidence.read', 'surveyor_job');
+  } else {
+    const { obj } = packJob(d.db, actor, p.job_id);
+    authorise(actor, 'surveyor_job.read', obj);
+  }
+  if (p.withdrawn === 1) return null;
+  return { bytes: await store.getSealed(p.object_key), content_type: p.content_type };
+}
+
+/* ================================================================== *
+ * SORTING PHOTOS SENT IN ONE GO — Admin or Sales
+ * ================================================================== */
+
+/** The choice that takes a photo back while sorting. */
+export const TAKE_BACK = 'TAKE_BACK';
+
+/** The photos sent in one go and not yet sorted, oldest first. */
+export function unsortedOf(db: Db, job_id: string): PhotoRow[] {
+  return photosOf(db, job_id).filter((p) => p.item_key === UNSORTED);
+}
+
+/**
+ * Put each chosen photo under a checklist item, or take it back as not useful. Admin or Sales only. `choices` maps a
+ * photo to an item key, TAKE_BACK, or '' (leave it for now). Every choice is checked first; if any is wrong, nothing
+ * is saved. Each move is kept under the sorter's name.
+ */
+export function sortPhotos(d: EvidenceDeps, actor: Actor, job_id: string, choices: Readonly<Record<string, string>>): { readonly ok: true; readonly sorted: number; readonly taken_back: number } | { readonly ok: false; readonly why: string } {
+  const { job } = packJob(d.db, actor, job_id);
+  authorise(actor, 'email.queue', { type: 'email', id: job.business_id, business_id: job.business_id });
+  const keys = new Set(checklistFor(job.sector).map((i) => i.key));
+  const live = new Map(photosOf(d.db, job_id).map((p) => [p.id, p] as const));
+  const moves = Object.entries(choices).filter(([, to]) => to !== '');
+  for (const [photo, to] of moves) {
+    if (!live.has(photo)) return { ok: false, why: 'One of those photos is not this survey’s, or was taken back. Nothing was saved.' };
+    if (to !== TAKE_BACK && !keys.has(to)) return { ok: false, why: 'Choose an item from the checklist for each photo. Nothing was saved.' };
+  }
+  let sorted = 0;
+  let taken_back = 0;
+  d.db.tx(() => {
+    for (const [photo, to] of moves) {
+      if (to === TAKE_BACK) {
+        insertSurveyPhotoWithdrawals(d.db, [photo, actor.id, 'Not useful, taken back when sorting.', d.now()]);
+        taken_back++;
+      } else if (live.get(photo)?.item_key !== to) {
+        insertSurveyPhotoSorts(d.db, [d.newId(), photo, to, actor.id, d.now()]);
+        sorted++;
+      }
+    }
+    if (sorted + taken_back > 0) {
+      d.audit.append({ at: d.now(), kind: 'SURVEY_PHOTOS_SORTED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'surveyor_job', object_id: job_id,
+        detail: { sorted, taken_back } });
+    }
+  });
+  return { ok: true, sorted, taken_back };
+}
+
+/* ================================================================== *
+ * THE WALKTHROUGH CALL
+ * ================================================================== */
+
+export const ASK_WORDS = 'I would like a recorded video call to show you around the building for the survey.';
+
+/**
+ * THE WALKTHROUGH CALL'S WORDS, BY ZOOM PLAN. On the free plan (src/integrations/connectors/zoom.ts,
+ * zoomPlanIsFree) Zoom keeps no recording and a call stops at 40 minutes, so nothing promises a recording: the person
+ * who leads the call writes down what they see on the job, and the client can still send photos and a video.
+ * The paid words are the ones the owner approved on 2 Oct 2026 ("Recorded Zoom call"); they come back with ZOOM_PLAN=pro.
+ */
+export type WalkWords = { readonly [k in 'name' | 'choice' | 'lead' | 'ask' | 'message' | 'guide' | 'staffName' | 'staffLede' | 'book' | 'booked' | 'staffHelp' | 'surveyorHelp' | 'noRecording']: string };
+
+export const WALK_WORDS: { readonly paid: WalkWords; readonly free: WalkWords } = Object.freeze({
+  paid: Object.freeze({
+    name: 'A recorded video call',
+    choice: 'We guide you round on a video call. It is recorded so your surveyor can watch it.',
+    lead: 'Join a video call on your phone and walk round while we guide you. The call is recorded so your surveyor can watch it. It takes about 20 to 40 minutes.',
+    ask: 'Ask for a recorded video call', message: ASK_WORDS, guide: 'For the recorded video call, and for the photos.',
+    staffName: 'A recorded walkthrough call', staffLede: 'the recorded walkthrough call', book: 'Book the recorded walkthrough call',
+    booked: 'Booked. Its Zoom meeting records, and the client has the invitation.',
+    staffHelp: 'A Zoom video call, recorded to Zoom’s cloud. You host it and guide the client round; they join on their phone. They get the invitation and the filming guide.',
+    surveyorHelp: 'Admin or Sales book the walkthrough call: they own client calls in the diary. Its recording appears here.',
+    noRecording: 'No recording fetched yet.',
+  }),
+  free: Object.freeze({
+    name: 'A video call',
+    choice: 'We guide you round on a video call, and write down what we see for your surveyor.',
+    lead: 'Join a video call on your phone and walk round while we guide you. We write down what we see for your surveyor. It takes about 20 to 40 minutes. A call ends after 40 minutes; if it does, use the same link to start again.',
+    ask: 'Ask for a video call', message: 'I would like a video call to show you around the building for the survey.', guide: 'For the video call, and for the photos.',
+    staffName: 'A walkthrough call', staffLede: 'the walkthrough call', book: 'Book the walkthrough call',
+    booked: 'Booked. The client has the invitation. Our Zoom plan does not record it, so write down what you see on the job.',
+    staffHelp: 'A Zoom video call. Our Zoom plan does not record it, and a call ends after 40 minutes. You host it and guide the client round; they join on their phone. Write down what you see on the job. They get the invitation and the filming guide.',
+    surveyorHelp: 'Admin or Sales book the walkthrough call: they own client calls in the diary. What they saw is written on the job.',
+    noRecording: 'Not recorded: our Zoom plan keeps no recordings.',
+  }),
+});
+
+export function walkWords(freePlan: boolean): WalkWords { return freePlan ? WALK_WORDS.free : WALK_WORDS.paid; }
+
+export function askWalkthrough(d: EvidenceDeps, actor: Actor, job_id: string, freePlan = false): Result {
+  const job = clientOf(d.db, actor, job_id);
+  const open = getSurveyWalkthroughAsksXByJobId(d.db, [job_id]);
+  if (open !== undefined) return { ok: false, why: 'We have your request. We will offer you a time.' };
+  return d.db.tx((): Result => {
+    const m = postClientMessage(d, actor, job.business_id, { body: walkWords(freePlan).message, claim_id: null });
+    if (!m.ok) return m;
+    const id = d.newId();
+    insertSurveyWalkthroughAsks(d.db, [id, job_id, actor.id, d.now()]);
+    return { ok: true, id };
+  });
+}
+
+export type Walkthrough = {
+  readonly id: string; readonly booking_id: string; readonly starts_at: string | null; readonly cancelled: boolean; readonly booked_by_name: string;
+  readonly meeting_id: string | null;
+  readonly recordings: readonly { readonly id: string; readonly share_url: string; readonly passcode: string | null; readonly minutes: number; readonly recorded_at: string; readonly views: number }[];
+};
+
+export function walkthroughsOf(db: Db, job_id: string): Walkthrough[] {
+  return listVideoMeetingsIdBookingIdByBookingIdJO<{ id: string; booking_id: string; starts_at: string | null; cancelled_at: string | null; booked_by_name: string; meeting_id: string | null }>(db, [job_id]).map((w) => ({
+    id: w.id, booking_id: w.booking_id, starts_at: w.starts_at, cancelled: w.cancelled_at !== null, booked_by_name: w.booked_by_name, meeting_id: w.meeting_id,
+    recordings: listSurveyRecordingViewsIdShareUrlByRecordingIdWalkthroughId<{ id: string; share_url: string; passcode: string | null; minutes: number; recorded_at: string; views: number }>(db, [w.id]),
+  }));
+}
+
+export function asksOf(db: Db, job_id: string): { at: string; by_name: string }[] {
+  return listSurveyWalkthroughAsksAtByNameByJobId(db, [job_id]);
+}
+
+/** Who may fetch the walkthrough's recording: the assigned surveyor, Admin or Sales. */
+function mayArrange(db: Db, actor: Actor, job_id: string): ReturnType<typeof packJob> {
+  const pj = packJob(db, actor, job_id);
+  if (!can(actor, 'surveyor_job.commit', pj.obj)) authorise(actor, 'email.queue', { type: 'email', id: pj.job.business_id, business_id: pj.job.business_id });
+  return pj;
+}
+
+/** Book the walkthrough as a video call at one of the booker's free times (Admin or Sales); its Zoom meeting records. */
+export async function bookWalkthrough(app: App, newId: () => string, actor: Actor, job_id: string, f: { slot: string; to: string; origin: string }): Promise<Result & { zoom?: boolean }> {
+  const { job, obj } = packJob(app.db, actor, job_id);
+  authorise(actor, 'surveyor_job.read', obj);
+  authorise(actor, 'booking.write', { type: 'booking', id: 'walkthrough', business_id: job.business_id });
+  const to = f.to.trim();
+  if (to === '' || getContactsXByBusinessId(app.db, [job.business_id, to]) === undefined) {
+    return { ok: false, field: 'to', why: 'Choose who the call is with: one of their contacts with an email address.' };
+  }
+  const now = app.now();
+  const ok = isBookable(app.db, f.slot.trim(), { forUser: actor.id, now });
+  if (!ok.ok) return { ok: false, field: 'slot', why: `That time cannot be booked: ${ok.why}. Choose another.` };
+  const starts = new Date(Date.parse(f.slot.trim())).toISOString();
+  const ends = new Date(Date.parse(starts) + SLOT_MINUTES * 60_000).toISOString();
+  const booking = newId();
+  const id = newId();
+  app.db.tx(() => {
+    insertBookings3(app.db, [booking, job.business_id, actor.id, starts, ends, now]);
+    insertSurveyWalkthroughs(app.db, [id, job_id, booking, actor.id, now]);
+    app.audit.append({ at: now, kind: 'BOOKING_CREATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'booking', object_id: booking,
+      detail: { business: job.business_id, channel: 'video', walkthrough: true } });
+  });
+  const zoomed = await reconcileVideoMeeting(app, booking);
+  sendVideoInvite(app, f.origin, booking, 'arranged', to);
+  return { ok: true, id, zoom: zoomed === 'MADE' };
+}
+
+/** Fetch a walkthrough's recording from Zoom and keep its link, passcode and length. */
+export async function fetchRecording(app: App, newId: () => string, actor: Actor, job_id: string, walkthrough_id: string): Promise<Result> {
+  mayArrange(app.db, actor, job_id);
+  const w = walkthroughsOf(app.db, job_id).find((x) => x.id === walkthrough_id);
+  if (w === undefined) return { ok: false, why: 'That is not one of this job’s walkthrough calls.' };
+  if (w.meeting_id === null) return { ok: false, why: 'That call has no Zoom meeting, so Zoom has no recording of it.' };
+  const r = await zoomRecording(zoomDeps(app), w.meeting_id);
+  if (r.state !== 'FOUND') return { ok: false, why: r.why };
+  if (w.recordings.some((x) => x.share_url === r.share_url)) return { ok: false, why: 'We already have that recording.' };
+  const id = newId();
+  insertSurveyRecordings(app.db, [id, w.id, r.share_url, r.passcode, r.minutes, r.recorded_at, actor.id, app.now()]);
+  return { ok: true, id };
+}
+
+/** Opening a recording, recorded. Its link for whoever may read the job. */
+export function watchRecording(d: EvidenceDeps, actor: Actor, job_id: string, recording_id: string): string | null {
+  const { obj } = packJob(d.db, actor, job_id);
+  authorise(actor, 'surveyor_job.read', obj);
+  const r = getSurveyRecordingsShareUrlByIdJobId<{ share_url: string }>(d.db, [recording_id, job_id]);
+  if (r === undefined) return null;
+  insertSurveyRecordingViews(d.db, [d.newId(), recording_id, actor.id, d.now()]);
+  return r.share_url;
+}
+
+/* ================================================================== *
+ * HOW THE SURVEYOR INSPECTED
+ * ================================================================== */
+
+export const BASIS_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  DESKTOP_EVIDENCE: 'Desktop, with the client’s photos and video',
+  LIVE_VIDEO: 'A live video survey',
+  SITE_VISIT: 'A site visit',
+});
+
+export type Basis = { readonly basis: string; readonly words: string; readonly note: string | null; readonly by_name: string; readonly at: string };
+
+export function basisOf(db: Db, job_id: string): Basis | null {
+  const r = getSurveyInspectionBasisBasisNoteByJobId<{ basis: string; note: string | null; by_name: string; at: string }>(db, [job_id]);
+  return r === undefined ? null : { ...r, words: BASIS_WORDS[r.basis] ?? r.basis };
+}
+
+export function setBasis(d: EvidenceDeps, actor: Actor, job_id: string, f: { basis: string; note: string }): Result {
+  const { obj } = packJob(d.db, actor, job_id);
+  authorise(actor, 'surveyor_job.commit', obj);
+  if (BASIS_WORDS[f.basis] === undefined) return { ok: false, field: 'basis', why: 'Choose how you inspected the building.' };
+  const note = f.note.trim().replace(/\s+/g, ' ');
+  if (note.length > 500) return { ok: false, field: 'note', why: 'Keep the note under 500 characters.' };
+  const now = basisOf(d.db, job_id);
+  if (now !== null && now.basis === f.basis && (now.note ?? '') === note) return { ok: false, why: 'That is already how you inspected it.' };
+  const id = d.newId();
+  insertSurveyInspectionBasis(d.db, [id, job_id, f.basis, note === '' ? null : note, actor.id, d.now()]);
+  return { ok: true, id };
+}

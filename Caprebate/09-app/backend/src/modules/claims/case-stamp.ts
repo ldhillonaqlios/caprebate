@@ -45,7 +45,7 @@ import { _canonical } from '../../core/audit.ts';
 import { DPO_ROLE_SWITCH } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { ctaSwitchReadings, registryGate } from '../../shared/index.ts';
-import { DISCLOSURE_LOG } from '../../web/disclosure-log.ts';
+import { DISCLOSURE_LOG } from '../compliance/index.ts';
 import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../crm/index.ts';
 import { CONVEYANCING_STRIP } from '../assessment/index.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
@@ -69,7 +69,7 @@ import { REGISTER_SWITCHES } from '../../integrations/index.ts';
 import { CLAUDE_SWITCHES } from '../../integrations/connectors/claude.ts';
 import { PICK_SWITCHES } from './match-review.ts';
 import { getClaimsIdAssessmentIdById, insertClaimVersionStamps, listTaxAdviserSignoffsIdRecordHashByClaimId } from './data.ts';
-import { getAnchorLogHash } from './data-borrowed.ts';
+import { getAnchorLogHash } from '../survey/index.ts';
 import { getEstimatesEstimateHashByAssessmentId } from '../assessment/index.ts';
 
 function sha256(v: unknown): string {
@@ -140,7 +140,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
 /**
  * EVERY BACK-END SWITCH, BY NAME, WITH ITS POSITION AS THIS BUILD SHIPS IT.
  *
- *   DISCLOSURE_LOG               the per-disclosure log                          src/web/disclosure-log.ts
+ *   DISCLOSURE_LOG               the per-disclosure log                          src/modules/compliance/disclosure-log.ts
  *   DPO_ROLE_SWITCH              a data protection officer role                  src/core/authz.ts
  *   FEE_CLAWBACK                 clause 13 — the fee follows a reduced claim     src/modules/claims/claim-record.ts
  *   REFERRAL_FORM                the public referral form                        src/modules/crm/introducers.ts
@@ -170,7 +170,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  * FEE_CONTROLS.minimum_fee left this list: the minimum fee is decided none, and the
  * control is retired — MINIMUM_FEE_DECISION in src/modules/claims/fee-controls.ts records it.
  *
- * ALLOWANCE_PROFIT_COMPARISON was added by another Phase 132 workstream while this
+ * ALLOWANCE_PROFIT_COMPARISON was added by another workstream while this
  * list was being written; the grep test found it the same day, which is what it is for.
  * The funnel's switch is not an `enabled` flag, so the grep cannot see it: it is
  * stamped by its own key, and the test counts FUNNEL_SWITCHES's booleans.
@@ -181,7 +181,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  */
 export function backendSwitchReadings(): readonly BackendSwitchReading[] {
   return [
-    { switch: 'DISCLOSURE_LOG', on: DISCLOSURE_LOG.enabled, home: 'src/web/disclosure-log.ts' },
+    { switch: 'DISCLOSURE_LOG', on: DISCLOSURE_LOG.enabled, home: 'src/modules/compliance/disclosure-log.ts' },
     { switch: 'DPO_ROLE_SWITCH', on: DPO_ROLE_SWITCH.enabled, home: 'src/core/authz.ts' },
     { switch: 'FEE_CLAWBACK', on: FEE_CLAWBACK.enabled, home: 'src/modules/claims/claim-record.ts' },
     { switch: 'REFERRAL_FORM', on: REFERRAL_FORM.enabled, home: 'src/modules/crm/introducers.ts' },

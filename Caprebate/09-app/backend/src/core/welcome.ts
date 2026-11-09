@@ -2,11 +2,11 @@
  * THE WELCOME CARD.
  *
  * A person who has never seen the system is shown, on Home, the three jobs their login does most — taken from the
- * Phase 133a audit of each login's five most frequent jobs (04-phase-work/phase133a/ui-audit.md) — as buttons, until
+ * first UI audit of each login's five most frequent jobs (04-phase-work/phase133a/ui-audit.md) — as buttons, until
  * they hide the card. Hiding it is stored on the user (migration 030) and audited; it never comes back.
  *
  * NOTHING HERE WIDENS WHAT A LOGIN MAY OPEN. Every button is an address that login's own menu already offers, and
- * test/phase133c.test.ts opens each one as that login and requires 200.
+ * test/core/brand-voice-and-first-use.test.ts opens each one as that login and requires 200.
  */
 
 import type { Db } from './db.ts';

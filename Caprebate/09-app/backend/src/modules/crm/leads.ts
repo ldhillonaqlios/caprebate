@@ -47,7 +47,7 @@ import {
 } from './pipeline.ts';
 import { fireAutomation } from './automation.ts';
 import { createTask, insertTask, setNextAction, setTaskStatus } from './tasks.ts';
-import { mayTake, vocabLabel } from '../../web/vocabularies.ts';
+import { mayTake, vocabLabel } from '../admin/index.ts';
 import {
   PROSPECT_EVENTS, REFERRAL_SOURCES, introducerChoices, introducerExists, leadReferral, onLeadConverted, type LeadReferral,
 } from './introducers.ts';
@@ -527,7 +527,7 @@ export function updateLead(d: CrmDeps, actor: Actor, id: string, input: Fields):
 }
 
 /**
- * LOG A CALL ON A LEAD — PHASE 137, the leads page's "Log a call" button. A call is a task of the kind Call, owned by the
+ * LOG A CALL ON A LEAD — the leads page's "Log a call" button. A call is a task of the kind Call, owned by the
  * person who made it and completed as it is written, so it is on the lead's timeline like every other piece of work. A
  * call where somebody answered is what "contacted" means, so a NEW lead becomes CONTACTED with it — through updateLead,
  * the same write and the same audit line as choosing it by hand. A call nobody answered leaves the status alone.

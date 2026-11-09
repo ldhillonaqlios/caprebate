@@ -13,7 +13,7 @@
  *   Claims          one tile per claim — property and town, stage, next action, the reference as a small grey label —
  *                   each opening the claim INSIDE this page, at /staff/clients/:id/claims/:claim, under a breadcrumb
  *   Timeline        ONE timeline for the company, every claim's events in it, each saying which claim it is about
- *   Chat            PHASE 142: two tabs — "Team only", which is the internal notes as a conversation, each message
+ *   Chat            two tabs — "Team only", which is the internal notes as a conversation, each message
  *                   optionally tagged with a claim, and "With the client", the thread the client reads in the portal
  *   the rest        contacts, properties, documents, the details; and for a login that works the research, the questions
  *                   put to the client, what is still missing, their answers and the research
@@ -54,9 +54,9 @@ import { clientFolder } from '../claims/index.ts';
 import { letterState, letterSteps } from '../claims/index.ts';
 import { filesButton, folderTiles } from '../portal/index.ts';
 import { emailButton } from './free-email-pages.ts';
-import { identityChecks, identityPanel } from '../../web/identity-checks.ts';
+import { identityChecks, identityPanel } from '../compliance/index.ts';
 import { IDENTITY_PROVIDER_NAME } from '../../integrations/index.ts';
-import { complianceObj } from '../../web/compliance.ts';
+import { complianceObj } from '../compliance/index.ts';
 import { claimBoxes, headerActions, lookupsCard, nextStepCard, presentTabs, progressBar, setClientMenu, tabbed, TAB_OF_SECTION, type TabKey } from '../portal/index.ts';
 import { piecesPage } from '../../core/index.ts';
 import { listUsersIdNameByBusinessIdRole } from '../../core/index.ts';
@@ -130,7 +130,7 @@ function clientStatusBadge(key: string | null, label: string): Safe {
 const SAVED: Readonly<Record<string, string>> = Object.freeze({
   saved: 'Saved.', contact: 'The contact is saved.', task: 'The task is saved.',
   'identity-sent': 'The identity check was sent. Give the person their link, in Identity check below.',
-  // PHASE 157c (F21)
+  // the Friary House run, F21
   'letter-sent': 'The engagement letter is sent. The client is emailed a link to read and sign it in their portal.',
   'letter-resent': 'The link to the engagement letter is sent again.',
   'letter-signers': 'Who must sign the letter is saved.',
@@ -157,7 +157,7 @@ function unique(xs: readonly string[]): string[] {
 }
 
 /**
- * THE ONE CLIENT PAGE, PHASE 138: THE COMPANY'S SECTIONS, COLOURED, EACH OPENING AND CLOSING. What every section shows is
+ * THE ONE CLIENT PAGE: THE COMPANY'S SECTIONS, COLOURED, EACH OPENING AND CLOSING. What every section shows is
  * the bloat cut in the Developer Spec (B5/B6). Each section is built only from a view this page already asked for, and
  * only where that view exists — nothing here widens what a login may read.
  */

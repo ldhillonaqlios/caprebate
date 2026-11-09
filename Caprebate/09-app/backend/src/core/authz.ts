@@ -455,8 +455,8 @@ const RULES: RuleTable = {
    * sections it cannot open rather than a page it should not have.
    *
    * ACCOUNTING HAS SOMETHING TO OPEN SINCE 9 SEPTEMBER 2026. This comment read
-   * "has nothing to open yet. Its view is Phase 107"; Phase 107
-   * built /staff/finance the same week, so the note outlived its own fact. The
+   * "has nothing to open yet. Its view is Phase 107"; that view,
+   * /staff/finance, was built the same week, so the note outlived its own fact. The
    * row is unchanged and was always right — what changed is only that the
    * landing page now leads somewhere.
    */
@@ -549,11 +549,11 @@ const RULES: RuleTable = {
   'invoice.write': { ADMIN: always, ACCOUNTING: always },
   /*
    * CRM 7 of 10 — FINANCE ON THE CLAIM. EVERY ROW BELOW IS NEW AND EVERY ROLE NOT
-   * NAMED IS REFUSED — test/finance-claim.test.ts asserts it per role, per action.
+   * NAMED IS REFUSED — test/finance/invoices-and-fee-controls.test.ts asserts it per role, per action.
    *
    * RAISING, CREDITING AND RECORDING MONEY RECEIVED ARE ACCOUNTING'S AND ADMIN'S,
    * as the invoice is. None of them takes money: `record_received` records what a
-   * person saw arrive, and test/finance.test.ts still refuses any action named for
+   * person saw arrive, and test/finance/accounting-view.test.ts still refuses any action named for
    * taking a payment. A FINANCE SETTING — the VAT position, the threshold, the
    * margin — IS ADMIN'S ALONE: the monitoring is a director's check, and the person
    * whose invoices it monitors does not move its line.
@@ -627,7 +627,7 @@ const RULES: RuleTable = {
    * see the clients area, so it is told to raise the invoice, chases it and records payment. NOT `organisation.read`:
    * the whole record carries the notes, the research, the answers and where the client came from, and opening it to
    * Accounting failed fifteen tests that guard those boundaries. This is the billing view of the same area
-   * (src/web/billing.ts): each client's name, the people to chase and how to reach them, the claims waiting for an
+   * (src/modules/finance/billing.ts): each client's name, the people to chase and how to reach them, the claims waiting for an
    * invoice, and the invoices with every chase. Read only.
    */
   'client_billing.read': { ADMIN: always, ACCOUNTING: always },
@@ -800,7 +800,7 @@ const RULES: RuleTable = {
    * people who talk to the client, ADMIN and SALES; that it was settled with the
    * firm, by the people who keep the money, ADMIN and ACCOUNTING. NOTHING HERE
    * TAKES MONEY: `record_settled` records that Caprebate paid a firm, and
-   * test/finance.test.ts still refuses any action named for taking a payment.
+   * test/finance/accounting-view.test.ts still refuses any action named for taking a payment.
    *
    * CONTACT WITH A FIRM IS A STAFF TASK (row E48), so logging or planning it also
    * asks `staff_task.create`, which is ADMIN's and SALES's already.
@@ -857,13 +857,13 @@ const RULES: RuleTable = {
   /* --- the compliance registers. CRM 8 of 10 ---------------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * compliance.test.ts asserts the refusal for each one, per action.
+   * test/compliance/compliance-registers.test.ts asserts the refusal for each one, per action.
    *
    * NONE OF THIS IS FOR SALES, ACCOUNTING OR SURVEYING, and ADMIN holds it TODAY
    * ONLY because nobody else can. There is no data protection officer role and
    * ADMIN is a super user, not an officer: whether compliance needs a role of its
    * own is the owner's question, "Do we need a compliance role separate from Admin?",
-   * and a sixth role is not ENABLED here. Phase 129 DEFINED one and switched it off —
+   * and a sixth role is not ENABLED here. One is DEFINED and switched off —
    * `DPO_RULES` and `canAsDpo` below — and while `DPO_ROLE_SWITCH` is off it reaches nothing.
    *
    * THE IDENTITY STORE IS NARROWER THAN EVERYTHING ELSE. `compliance.read` does not
@@ -879,16 +879,16 @@ const RULES: RuleTable = {
   'compliance.write': { ADMIN: always },
   'compliance.identity_read': { ADMIN: always },
   'compliance.identity_write': { ADMIN: always },
-  /* The restricted breach names list. ADMIN here only as the door: src/web/breach-names.ts
+  /* The restricted breach names list. ADMIN here only as the door: src/modules/compliance/breach-names.ts
      lets an Admin through only when they are the deputy named in breach_names_deputies (migration 080). */
   'compliance.breach_names': { ADMIN: always },
   'share_consent.client_record': { CLIENT: ownBusiness as Rule<ObjType> },
 
   /* --- the per-disclosure log. -------------------
    *
-   * BOTH ROWS ARE NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/phase129.test.ts
+   * BOTH ROWS ARE NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/compliance/data-protection-switches.test.ts
    * asserts the refusal for each one, per action. The log is switched off
-   * (`DISCLOSURE_LOG` in src/web/disclosure-log.ts), so today these rows admit a
+   * (`DISCLOSURE_LOG` in src/modules/compliance/disclosure-log.ts), so today these rows admit a
    * person to a refusal that says so, and nothing more.
    *
    * RECORDING a disclosure is ADMIN's and SALES's — the people who send a
@@ -937,7 +937,7 @@ const RULES: RuleTable = {
   /*
    * THE ADMIN SETTINGS SCREEN. SALES READS IT, as it reads the automation rules, the templates and the document types
    * it folds in; ADMIN alone changes a list or a reason. What no setting may change — a gate, a switch, a role — is
-   * refused by the store (src/web/configuration.ts), and no action here reaches one.
+   * refused by the store (src/modules/admin/configuration.ts), and no action here reaches one.
    */
   'configuration.read': { ADMIN: always, SALES: always },
   'configuration.write': { ADMIN: always },

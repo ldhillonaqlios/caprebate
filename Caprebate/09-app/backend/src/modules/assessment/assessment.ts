@@ -291,7 +291,7 @@ export function submit(
   // The ceiling the client was shown, in integer pence. `total` is a ceiling,
   // so it is the HIGH end; the low end comes from the same breakdown.
   const high = typeof figure.total === 'number' ? Math.round(figure.total * 100) : null;
-  /* NO LOW END IS STORED. Since Phase 159a the client is shown "up to £X" alone, and the band's
+  /* NO LOW END IS STORED. The client is shown "up to £X" alone, and the band's
      low end was above the engine's own low on a purchase (where an unknown seller can leave nothing). Storing it made a
      low end nobody was shown, and the reconciliation's "range shown" read it. The client saw the ceiling only, so that
      is what is kept; the reconciliation says so. */

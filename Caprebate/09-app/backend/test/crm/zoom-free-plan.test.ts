@@ -6,7 +6,7 @@
  * video call is booked, on its pages and in its invitation; two video calls at the same time on the one Zoom user are
  * warned about, never refused; and staff can ask Zoom how long a call lasted and how many joined (zoomPastCall,
  * checkCallLength, migration 091) - or the screen says our plan does not give it. The walkthrough call's free-plan
- * words are proved in test/survey-evidence.test.ts.
+ * words are proved in test/survey/survey-evidence.test.ts.
  *
  * Recorded answers only: nothing here reaches Zoom. The keys are invented; the transfer is approved through the test
  * hook, as test/crm/video-calls.test.ts does.

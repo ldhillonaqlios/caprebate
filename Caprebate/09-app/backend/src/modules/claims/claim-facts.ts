@@ -1,7 +1,7 @@
 /**
  * THE CLAIM'S CAPITAL ALLOWANCES FACTS — CRM 6 of 10.
  *
- * The schema is migration 015; the scope is 09-app/CAPREBATE-CRM-DISPOSITION.md
+ * The schema is migration 015; the scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md
  * Part B2; the figures, the sign-off, the deliverables and aftercare are
  * src/modules/claims/claim-record.ts. The routes and pages are src/modules/claims/claim-record-pages.ts,
  * which draws what these return and decides nothing.
@@ -40,8 +40,8 @@ import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { SOURCES as REGISTER_SOURCES } from '../../integrations/index.ts';
 import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type EngineWindow, type SectorId } from '../../shared/index.ts';
 import { packSwitchReadings } from '../../shared/index.ts';
-import { TAXONOMY_SECTOR, taxonomy } from '../../web/pack-lines.ts';
-import type { PackGrant } from '../../web/pack-grants.ts';
+import { TAXONOMY_SECTOR, taxonomy } from '../survey/index.ts';
+import type { PackGrant } from '../survey/index.ts';
 import { CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, claimObjFor, claimantTypeForGate, isCompanyOrRoleToken, propertyJurisdiction } from '../crm/index.ts';
 import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from '../assessment/index.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
@@ -616,7 +616,7 @@ export function elementName(element_id: string): string {
 }
 
 /**
- * THE CLAIM'S GRANTS AS THE SURVEY PACK TAKES THEM (src/web/pack-grants.ts, chapter 15): every grant not
+ * THE CLAIM'S GRANTS AS THE SURVEY PACK TAKES THEM (src/modules/survey/pack-grants.ts, chapter 15): every grant not
  * withdrawn, with its payer class, its amount and the fixture-list rows it paid for.
  */
 export function packGrantsFor(db: Db, claim_id: string): (PackGrant & { readonly kind: string; readonly traced: string })[] {
@@ -1241,7 +1241,7 @@ export function yearEndReading(db: Db, business_id: string): YearEndReading {
   return yearEndFrom(said === null ? null : clientYearEnd(said.answer), registerCompany(db, business_id));
 }
 
-/** The accounting period the purchase falls in, from the claim's year end (Phase 159g: the register's,
+/** The accounting period the purchase falls in, from the claim's year end (the register's,
  *  else the client's checked answer), or null. */
 export function periodFromYearEnd(db: Db, business_id: string, acquired: string): { start: string; end: string } | null {
   const ye = yearEndReading(db, business_id).used;

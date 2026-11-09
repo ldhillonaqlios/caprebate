@@ -3,7 +3,7 @@
  *
  * Word question 121, "In what format would you like us to send our results?", for the accountant. the owner: "Any
  * format". Our recommendation, built for the accountant to check: the signed PDF report (built on 2 October,
- * src/web/survey-report.ts) and BESIDE IT a small spreadsheet of what goes on each year's tax return, so nobody
+ * src/modules/survey/survey-report.ts) and BESIDE IT a small spreadsheet of what goes on each year's tax return, so nobody
  * retypes figures. Change it if the accountant names a format their software imports.
  *
  * ONE ROW PER ENTRY. The first return adds the qualifying spend to each pool; then, for five returns, the writing-down
@@ -25,12 +25,12 @@
  * where it must be, and a cell that a spreadsheet would read as a formula is made plain text.
  */
 import type { Db } from '../../core/index.ts';
-import type { Snapshot } from '../../web/pack-approve.ts';
+import type { Snapshot } from '../survey/index.ts';
 import { acquisitionDateReading, latestFacts } from './claim-facts.ts';
 import { claimantTypeForGate } from '../crm/index.ts';
 import { allowancesFor, isCompanyType, rateWords, RETURN_YEARS, type AllowanceFacts, type PartResult, type PoolName } from '../assessment/index.ts';
 import { cashBasis, purchasePeriod } from './claim-route.ts';
-import { getSurveyPackApprovalsClaimIdBusinessIdById } from './data-borrowed.ts';
+import { getSurveyPackApprovalsClaimIdBusinessIdById } from '../survey/index.ts';
 import { getClaimsPropertyIdById, getReturnEntryContextsPeriodStartIsCompanyByApprovalId, insertReturnEntryContexts } from './data.ts';
 import { getBusinessesSectorById } from '../crm/index.ts';
 

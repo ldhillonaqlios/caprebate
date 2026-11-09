@@ -26,7 +26,7 @@
  * this server OUTSIDE the repository and named by CAPREBATE_OSTN15_FILE — like the ONS postcode table, a deployment
  * artefact, absent by default. ABSENT, every latitude and longitude is refused and nothing else changes. The first
  * copy put on a server must be checked against the pack's own test points (tools/ostn15-verify.ts) before it is
- * trusted. No file was downloaded by the phase that built this. Phase 151a's addendum put OS's full
+ * trusted. No file was downloaded when this was built. A later addendum put OS's full
  * developer pack on the Mac, in ~/caprebate-data/ostn15/, outside the repository, and the check passed on all forty
  * test points. The demo launcher names that file when it is there (tools/demo-server.cjs).
  */

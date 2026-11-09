@@ -16,7 +16,7 @@ export const UPLOAD_PIECES_JS = `(function () {
   'use strict';
   if (typeof document === 'undefined' || typeof window === 'undefined') return;
   var root = window;
-  // PHASE 161b: our form token, from the page, for the x-cb-form header (src/core/form-token.ts).
+  // Our form token, from the page, for the x-cb-form header (src/core/form-token.ts).
   function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
   if (!root.fetch) return;
   var ABOVE = ${String(PIECED_ABOVE)};

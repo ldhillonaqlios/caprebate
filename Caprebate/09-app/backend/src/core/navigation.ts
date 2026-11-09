@@ -23,7 +23,7 @@
  *
  * A MENU IS A LOGIN'S DAILY WORK, NOT EVERYTHING IT MAY OPEN. the owner found tabs repeating
  * each other and a dozen entries under More. Each login's menu is now named in `MENUS`, More holds at most four, and a
- * section off the menu still opens by its address for every login its gate admits. Both halves of the Phase 133a worry
+ * section off the menu still opens by its address for every login its gate admits. Both halves of the first menu audit's worry
  * still hold: a listed section is still drawn only where its gate admits the login, and test/core/menus.test.ts asserts
  * every login's exact menu and every address's answer, so neither a menu nor a permission can drift unseen.
  */
@@ -38,12 +38,12 @@ import { searchGate } from './search.ts';
 import { mayCreateTask, myWork, nextActionsGate } from '../modules/crm/index.ts';
 import { assertLeadSection } from '../modules/crm/index.ts';
 import { pipelineBoardGate } from '../modules/crm/index.ts';
-import { billingViewFor, clientsAreaGate } from '../web/billing.ts';
+import { billingViewFor, clientsAreaGate } from '../modules/finance/index.ts';
 import { claimListGate } from '../shared/lists.ts';
 import { assertIntroducerSection, rewardModelGate } from '../modules/crm/index.ts';
-import { assertSurveySection } from '../web/surveyor.ts';
-import { assertFinanceSection } from '../web/finance.ts';
-import { adminSettingsGate, SETTINGS_TILES } from '../web/admin-tiles.ts';
+import { assertSurveySection } from '../modules/survey/index.ts';
+import { assertFinanceSection } from '../modules/finance/index.ts';
+import { adminSettingsGate, SETTINGS_TILES } from '../modules/admin/index.ts';
 import { getUsersDisplayNameById } from './data.ts';
 
 // The request's context, the name switches and the menu a page opens out are in nav-context.ts, which loads no business
@@ -73,7 +73,7 @@ export type Section = {
 export const SECTIONS: readonly Section[] = Object.freeze([
   { key: 'home', href: '/staff', label: 'Home', gate: assertBackOffice, under: ['/staff/reports'] },
   { key: 'leads', href: '/staff/leads', label: 'Leads', gate: assertLeadSection, under: ['/staff/assessments'] },
-  // The whole record (Admin, Sales, read-only) or Accounting's billing view of it (src/web/billing.ts).
+  // The whole record (Admin, Sales, read-only) or Accounting's billing view of it (src/modules/finance/billing.ts).
   { key: 'clients', href: '/staff/clients', label: 'Clients', gate: clientsAreaGate, under: ['/staff/organisations'] },
   { key: 'pipeline', href: '/staff/pipeline', label: 'Pipeline', gate: pipelineBoardGate },
   { key: 'claims', href: '/staff/claims', label: 'Claims', gate: claimListGate },
@@ -96,7 +96,7 @@ export const SECTIONS: readonly Section[] = Object.freeze([
  * (00-START-HERE/hub/UI-TIDY-PLAN.md): the menu runs down the left in named groups, so nothing is hidden. Admin's Survey
  * jobs, Calendar and Introducers, Sales's Calendar and Accounting's Introducer fees came out of More into their groups;
  * no section joined or left any login's menu. The verdict for every section is the table "The menus" in
- * 09-app/CAPREBATE-DEVELOPER-SPEC.md, section 2.
+ * 09-app/docs/CAPREBATE-DEVELOPER-SPEC.md, section 2.
  *
  * THE MENU NEVER GRANTS OR REMOVES A PERMISSION. A listed section is still drawn only where its gate admits the login,
  * and a section on no menu answers its address exactly as before.
@@ -167,7 +167,7 @@ export function tabsFor(actor: Actor): Tabs {
   return { groups, primary: groups.flatMap((g) => g.sections) };
 }
 
-/** Every address a login's menu links to — what the Phase 133a test opens. */
+/** Every address a login's menu links to — what the test that opens every menu link opens. */
 export function menuHrefs(actor: Actor): string[] {
   const t = tabsFor(actor);
   const out = t.primary.map((s) => s.href);
@@ -408,7 +408,7 @@ export function helpScreenFor(path: string, actor?: Actor): string {
   // A company's files have their own training section, inside the Clients address.
   if (/^\/staff\/clients\/([A-Za-z0-9-]+)\/files$/.test(path)) return 'B47';
   /* THE SAME ADDRESS, A DIFFERENT SCREEN. A login that reads the billing view of the Clients tab rather than
-     the client record (Accounting, src/web/billing.ts) is trained in B55, not B5 — so the link asks who is looking, not
+     the client record (Accounting, src/modules/finance/billing.ts) is trained in B55, not B5 — so the link asks who is looking, not
      only where. The same question the Clients tab itself asks (`billingViewFor`), never a role name. */
   if (actor !== undefined && (path === '/staff/clients' || path.startsWith('/staff/clients/')) && billingViewFor(actor)) return 'B55';
   for (const [prefix, code] of HELP_SCREENS) if (path === prefix || path.startsWith(`${prefix}/`)) return code;

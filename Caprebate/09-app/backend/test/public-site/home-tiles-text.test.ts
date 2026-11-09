@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { createApp } from '../../src/core/server.ts';
 import { seed, SEED_PASSWORD } from '../../src/core/seed.ts';
 import { short } from '../../src/modules/public-site/home.ts';
-import { forgetfulDatabaseWarning, FORGETFUL_DATABASE_WORDS, storageReason } from '../../src/web/identity-checks.ts';
+import { forgetfulDatabaseWarning, FORGETFUL_DATABASE_WORDS, storageReason } from '../../src/modules/compliance/identity-checks.ts';
 import { stepGoneWhy, STEP_LOST_ON_MEMORY } from '../../src/core/router.ts';
 import { SITE_CSS } from '../../src/shared/assets.ts';
 

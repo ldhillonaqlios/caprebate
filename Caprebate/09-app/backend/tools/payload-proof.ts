@@ -3,7 +3,7 @@
  *
  *   cd 09-app/backend && CAPREBATE_ALLOW_SEED=1 node tools/payload-proof.ts
  *
- * WHY THIS EXISTS ALONGSIDE `test/surveyor.test.ts`, WHICH ALREADY ASSERTS IT.
+ * WHY THIS EXISTS ALONGSIDE `test/survey/surveyor-workspace.test.ts`, WHICH ALREADY ASSERTS IT.
  * The test says pass or fail. This PRINTS WHAT WAS CAPTURED — the status, the
  * bytes, the top-level keys, the estimate that was sealed for that job read
  * straight out of the table, and the result of searching the captured body for

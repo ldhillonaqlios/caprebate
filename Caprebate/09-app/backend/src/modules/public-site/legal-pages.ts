@@ -1,9 +1,9 @@
 /**
- * THE WEBSITE'S LEGAL PAGES, AND THE COOKIE BANNER; PHASE 161g.
+ * THE WEBSITE'S LEGAL PAGES, AND THE COOKIE BANNER.
  *
  * The owner: "draft up some T&C, Policy docs, Cookies (add a cookie consent banner), Privacy policy, all the
- * usual things you see on the website". The public notices are Phases 160f and 160g (src/modules/public-site/notices-site.ts). This
- * file holds everything else: the website terms of use, the client's portal terms and the privacy policy (Phase 161g,
+ * usual things you see on the website". The public notices are in src/modules/public-site/notices-site.ts. This
+ * file holds everything else: the website terms of use, the client's portal terms and the privacy policy (see
  * src/modules/public-site/privacy-policy.ts), the cookie policy, acceptable use, the accessibility statement and the disclaimer, each a
  * DRAFT for our solicitor and our data protection officer (FOR THE SOLICITOR, DPO AND DEVELOPER), and the banner.
  *
@@ -13,7 +13,7 @@
  *
  * DRAFT UNTIL APPROVED. Each page has a VERSION (its date). It carries the Draft line until BOTH our
  * solicitor and our data protection officer have an approval of that version recorded (legal_approvals, migration 121;
- * src/web/legal-approvals.ts). A new version is a draft again.
+ * src/modules/compliance/legal-approvals.ts). A new version is a draft again.
  *
  * A FACT WE DO NOT HAVE IS NEVER MADE UP. It is written as "to be added" and listed in LEGAL_GAPS.
  *

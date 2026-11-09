@@ -18,7 +18,7 @@
  * to exactly one file. THE OTHER EIGHT are the eight files and the eight councils the rule leaves over, and they are
  * written out by hand in NAMED_PAIRS, each with the reason, because HM Land Registry names those councils differently
  * from ONS ("Hull_City_Council" for "Kingston upon Hull, City of"). They pair one to one: after the rule, eight files
- * and eight codes are left, and each file carries the council's own distinctive word. test/phase151a.test.ts re-runs
+ * and eight codes are left, and each file carries the council's own distinctive word. test/integrations/boundary-site-area.test.ts re-runs
  * the rule over this table with no network and fails if any row is not what the rule and the named pairs say.
  *
  * A COUNCIL WITH NO ROW IS REFUSED (`inspireFileForLad`), never matched to the nearest name. ONS codes change when

@@ -1,7 +1,7 @@
 /**
  * "(REQUIRED)" IN WORDS BESIDE EVERY REQUIRED FIELD.
  *
- * Phase 133c wrote "(required)" by hand into three forms (the task, the lead and the enquiry check). Every other form
+ * "(required)" was first written by hand into three forms (the task, the lead and the enquiry check). Every other form
  * that carries `required` showed nothing a person could read: the browser's own marker only appears after a failed
  * submit, and a screen reader or a printout never sees it. Rather than edit some ninety labels one by one — and miss
  * the next one somebody adds — `page()` in src/shared/html.ts passes every page body through this, as it already passes

@@ -1,5 +1,5 @@
 /**
- * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CLIENT PORTAL (09-app/ARCHITECTURE.md rules 3 and 4). These statements
+ * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE CLIENT PORTAL (09-app/docs/ARCHITECTURE.md rules 3 and 4). These statements
  * were in this module's page and logic files, which may not run SQL (rule 4). They read or write tables another area
  * owns, or join this module's tables to another's, so they still go against rule 3 (each counted against the table's
  * owner). Phase 161l moves each to its owner's data file, reached through that owner's front door or an event. Nothing
@@ -23,21 +23,6 @@ export function listAccountantConfirmRequestsIdKindByClaimId<T extends Row = Row
 // claims
 export function getClaimsIdBusinessIdById8<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT c.id, c.business_id, c.stage, c.claim_ref, b.name AS company FROM claims c JOIN businesses b ON b.id = c.business_id WHERE c.id = ?', params);
-}
-
-// document_types
-export function getDocumentTypesLabelByCode2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT label FROM document_types WHERE code = ?', params);
-}
-
-// signatory_checks
-export function getSignatoryChecksCountByBusinessIdSource<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT COUNT(*) AS n FROM signatory_checks WHERE business_id = ? AND source = ? AND checked_at >= ?', params);
-}
-
-// surveyor_jobs
-export function getSurveyorJobsCountByBusinessIdState<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>("SELECT COUNT(*) AS n FROM surveyor_jobs WHERE business_id = ? AND (state = 'SEALED' OR committed_at >= ?)", params);
 }
 
 // documents

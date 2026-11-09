@@ -212,8 +212,8 @@ export function presentTabs(sections: readonly { readonly id: string }[]): (read
 
 /**
  * THE CLIENT'S OWN MENU, opening out under Clients in the left-hand menu (src/core/navigation.ts, `setSubMenu`): the
- * client's name; Overview; each claim by its site and stage (never its number, which is never a link's words — Phase
- * 134) with its next step's lateness; then the page's parts. `current` is the claim open, or null on the company's page.
+ * client's name; Overview; each claim by its site and stage (never its number, which is never a link's words, as on
+ * the client page) with its next step's lateness; then the page's parts. `current` is the claim open, or null on the company's page.
  */
 export function setClientMenu(business_id: string, company: string, claims: readonly ClaimSummary[], parts: readonly (readonly [TabKey, string])[],
   current: string | null, nowIso: string): void {

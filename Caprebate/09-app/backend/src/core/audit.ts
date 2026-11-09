@@ -25,7 +25,7 @@
 import { createHash } from 'node:crypto';
 import type { Db } from './db.ts';
 import { carriesSecret } from './secrets.ts';
-import { GENESIS } from '../modules/survey/anchor-quarantine.ts';
+import { GENESIS } from '../modules/survey/index.ts';
 import { getAuditLogSeqHash, insertAuditLog, listAuditLog } from './data.ts';
 
 export type AuditKind =
@@ -41,7 +41,7 @@ export type AuditKind =
   | 'RECOVERY_CODES_MADE' | 'RECOVERY_CODE_USED'
   | 'RATE_LIMITED'
   | 'USER_CREATED' | 'USER_UPDATED' | 'USER_DISABLED' | 'ROLE_ASSIGNED'
-  /** A role the super admin made, changed, or tried to make and was refused (src/web/role-editor.ts). */
+  /** A role the super admin made, changed, or tried to make and was refused (src/modules/admin/role-editor.ts). */
   | 'ROLE_CREATED' | 'ROLE_CHANGED' | 'ROLE_REFUSED'
   | 'DOCUMENT_ACCESSED'
   | 'RESEARCH_FIRED'
@@ -82,7 +82,7 @@ export type AuditKind =
   | 'ENGAGEMENT_LETTER_SENT'
   // Staff recorded who must sign the letter
   | 'ENGAGEMENT_SIGNERS_SET'
-  // Staff opened a survey job on a claim (src/web/survey-open.ts); whether an estimate was sealed with it. No figure.
+  // Staff opened a survey job on a claim (src/modules/survey/survey-open.ts); whether an estimate was sealed with it. No figure.
   | 'SURVEY_JOB_OPENED'
   // A client accepted the survey report released to them (src/modules/portal/report-accept.ts). The version, never a figure.
   | 'CLIENT_REPORT_ACCEPTED'
@@ -90,7 +90,7 @@ export type AuditKind =
   | 'ACCOUNTANT_CONFIRM_ANSWERED'
   /**
    * A member of staff said an address that bounced for good works again
-   * (src/web/settings.ts). Whether a lift happened, and nothing else: the address itself is the new row in
+   * (src/modules/admin/settings.ts). Whether a lift happened, and nothing else: the address itself is the new row in
    * email_suppressions, which carries who lifted it and when. No log line carries an address.
    */
   | 'EMAIL_ADDRESS_LIFTED'
@@ -371,7 +371,7 @@ export type AuditKind =
    */
   | 'TITLE_RECORDED_BY_HAND' | 'TITLE_BY_HAND_TAKEN_BACK'
   /**
-   * The online identity check (src/web/identity-checks.ts). A check sent, or not sent and
+   * The online identity check (src/modules/compliance/identity-checks.ts). A check sent, or not sent and
    * why in words; the outside service's signed result received, or refused because its signature did not hold or it
    * named no check we sent. Ids, the outcome and the service's status word only — NEVER a name, a document number, a
    * date of birth or an image. What the service tells us is kept in the check's own row, not here.
@@ -402,14 +402,14 @@ export type AuditKind =
   | 'PROPERTY_EVENT_ADDED'
   /** A person recorded an event's VAT on its claim: the event and the field — never an amount. */
   | 'PROPERTY_EVENT_CHANGED'
-  /** A surveyor changed the survey pack (src/web/survey-pack.ts): what, which line, which fields — never a value. */
+  /** A surveyor changed the survey pack (src/modules/survey/survey-pack.ts): what, which line, which fields — never a value. */
   | 'SURVEY_PACK_CHANGED'
-  /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/web/pack-approve.ts): the version and its fingerprint. */
+  /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/modules/survey/pack-approve.ts): the version and its fingerprint. */
   | 'SURVEY_PACK_APPROVED'
   /** The survey report emailed to the client's accountant for sign-off; their answer by the private link
    *  (src/modules/claims/report-signoff.ts). Ids, the version and the outcome — never the link, never a figure. */
   | 'REPORT_SENT_FOR_SIGNOFF' | 'REPORT_SIGNOFF_ANSWERED'
-  /** A client's photo for the survey checklist (src/web/survey-evidence.ts). The photo's id and item only. */
+  /** A client's photo for the survey checklist (src/modules/survey/survey-evidence.ts). The photo's id and item only. */
   | 'SURVEY_EVIDENCE_ADDED'
   /** Photos sent in one go put under checklist items by Admin or Sales, or taken back. Counts only. */
   | 'SURVEY_PHOTOS_SORTED'
@@ -441,7 +441,7 @@ export type AuditKind =
   | 'AUTHORISATION_REFUSED'
   /** A signed-in person's form refused for a missing, wrong or used token (src/core/form-token.ts). */
   | 'FORM_TOKEN_REFUSED'
-  /** An admin recorded a solicitor's or the DPO's approval of a legal page's version (src/web/legal-approvals.ts). */
+  /** An admin recorded a solicitor's or the DPO's approval of a legal page's version (src/modules/compliance/legal-approvals.ts). */
   | 'LEGAL_PAGE_APPROVED'
   /** A client ticked that they have read the portal terms, the website terms and the privacy policy; the versions are kept. */
   | 'TERMS_AGREED';

@@ -22,7 +22,7 @@ import type { Db } from '../src/core/db.ts';
 import type { AuditLog } from '../src/core/audit.ts';
 import * as F from '../src/modules/claims/claim-facts.ts';
 import * as R from '../src/modules/claims/claim-record.ts';
-import { allocateNumber } from '../src/web/invoices.ts';
+import { allocateNumber } from '../src/modules/finance/invoices.ts';
 import { actor } from './helpers.ts';
 
 export type FixtureApp = { db: Db; audit: AuditLog; now: () => string };
@@ -337,8 +337,8 @@ export function readyForReports(app: FixtureApp, business: string, property: str
 /**
  * CRM 7 of 10 — A CLAIM'S FEE INVOICE, WRITTEN AS ITS ROW, with the next number in
  * the series: for a claim a test places straight at a stage, as `claimAt` places
- * the claim. The store that raises one is `raiseInvoice` in src/web/invoices.ts,
- * and test/finance-claim.test.ts tries every refusal it makes; this is the row a
+ * the claim. The store that raises one is `raiseInvoice` in src/modules/finance/invoices.ts,
+ * and test/finance/invoices-and-fee-controls.test.ts tries every refusal it makes; this is the row a
  * gate, a timeline or a dashboard reads. It passes every CHECK and trigger
  * migration 016 puts on a claim's invoice.
  */

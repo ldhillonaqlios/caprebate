@@ -1,7 +1,7 @@
 /**
  * THE LISTS — FILTERS, SORTS, SAVED VIEWS AND EXPORT. CRM 9 of 10.
  *
- * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, rows 16.2 to 16.6, and the
+ * The scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, rows 16.2 to 16.6, and the
  * decisions this file takes are that table's Part E from E119. The pages are the
  * claims and leads lists (src/modules/crm/crm-pages.ts, src/modules/crm/pipeline-pages.ts), which
  * draw `listControls` from src/shared/lists-pages.ts; saved views are migration 018.
@@ -36,12 +36,12 @@ import type { AuditLog } from '../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../core/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { JURISDICTIONS, WORKSTREAMS, claimObjFor, derivedJurisdiction, type ClaimRow } from '../modules/crm/index.ts';
-import { priorityRank, vocabLabel, vocabulary } from '../web/vocabularies.ts';
+import { priorityRank, vocabLabel, vocabulary } from '../modules/admin/index.ts';
 import { LEAD_ORIGINS, LEAD_STATUSES, NO_RANGE_NO_ASSESSMENT, RANGE_NOT_SHOWN, SECTORS, assertLeadSection, type LeadRow } from '../modules/crm/index.ts';
 import { CLOSED_STAGE, EXITS, ON_HOLD_STAGE, PROCEDURE_STAGES, claimStage } from './stages.ts';
 import { formatShownRange } from './shown-range.ts';
 import { localDate, localStamp } from './localtime.ts';
-import { getSavedViewsIdListById, insertSavedViews, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from './data-borrowed.ts';
+import { getSavedViewsIdListById, insertSavedViews, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from '../modules/admin/data.ts';
 import { listClaimsRows, listLeadsRows } from './data-borrowed.ts';
 
 type Vocab = Readonly<Record<string, string>>;

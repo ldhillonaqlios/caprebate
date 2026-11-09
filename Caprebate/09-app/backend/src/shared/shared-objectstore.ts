@@ -1,7 +1,7 @@
 /**
  * THE DOCUMENT STORE EVERY COPY OF THE TEST WEBSITE REACHES. BUILT AND SWITCHED OFF.
  *
- * Phase 151e gave the test website one lasting database (Turso) for every copy of it. Its uploaded documents still went
+ * The test website has one lasting database (Turso) for every copy of it. Its uploaded documents still went
  * to a folder on each copy's temporary disk, so a document uploaded through one copy was missing from the next while its
  * row said it was there. This store keeps them in ONE PRIVATE VERCEL BLOB STORE instead. api/index.mjs uses it only when
  * the lasting database is in use AND a Blob store is connected (`sharedDocumentStore` there); anything less keeps the
@@ -24,7 +24,7 @@
  *   - every read skips Blob's cache (useCache: false) — the latest bytes, and nothing served from a copy on the way;
  *   - every write says application/octet-stream, so nothing is ever rendered as a page, and the least cache time
  *     Blob allows (60 seconds). Blob's docs: a deleted object "may take up to one minute" to leave its cache. That
- *     cache is behind the same authentication; the Developer Spec's "Built by Phase 151i" section says so plainly.
+ *     cache is behind the same authentication; the Developer Spec says so plainly.
  *
  * ONE UPLOAD LINK SECRET FOR EVERY COPY. A link issued by one copy is sent back to whichever copy Vercel picks. With a
  * secret made fresh in each process, the second copy refuses a good link. So the shared store signs links with a secret

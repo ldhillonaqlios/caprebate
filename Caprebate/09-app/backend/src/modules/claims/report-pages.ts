@@ -12,23 +12,23 @@
  *   GET  /signoff/{token}/return-entries.csv                 and its return entries, beside the PDF
  *   GET  /portal/report    · GET /portal/report.pdf          the client's released version (src/modules/claims/report-signoff.ts)
  *
- * The report and the PDF are made again from the approved version every time (src/web/survey-report.ts): nothing about
+ * The report and the PDF are made again from the approved version every time (src/modules/survey/survey-report.ts): nothing about
  * them is stored but the version itself.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
 import { can, type Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
-import { approvedVersion, type Readiness } from '../../web/pack-approve.ts';
-import type { PackView } from '../../web/survey-pack.ts';
-import { reportHtml, reportModel, reportPdf, longDate, REPORT_TITLE } from '../../web/survey-report.ts';
+import { approvedVersion, type Readiness } from '../survey/index.ts';
+import type { PackView } from '../survey/index.ts';
+import { reportHtml, reportModel, reportPdf, longDate, REPORT_TITLE } from '../survey/index.ts';
 import * as S from './report-signoff.ts';
 import { ACCEPT_WORDS, myAcceptance } from '../portal/index.ts';
 import { ukDate } from '../../shared/index.ts';
-import { poundsWords } from '../../web/pack-sums.ts';
+import { poundsWords } from '../survey/index.ts';
 import { contextForApproval, csvName, returnContextFor, returnEntriesCsv } from './return-entries.ts';
-import { packJob } from '../../web/surveyor.ts';
-import { getSurveyPackApprovalsJsonExtractSnapshotJsonQById } from './data-borrowed.ts';
+import { packJob } from '../survey/index.ts';
+import { getSurveyPackApprovalsJsonExtractSnapshotJsonQById } from '../survey/index.ts';
 
 export type ReportPageDeps = {
   app: App;

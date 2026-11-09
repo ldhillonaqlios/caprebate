@@ -1,0 +1,432 @@
+/**
+ * THE SURVEY PACK'S OTHER TEN CHAPTERS.
+ *
+ * Chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22 (the report template's sections of the same numbers,
+ * 04-phase-work/phase9/surveyor-valuation-report-template-v2.md). Each is a SHEET: rows read from the pack, the claim, the
+ * registers we hold, or the surveyor's own words (src/modules/survey/pack-words.ts), and nothing else. One reading, used three ways:
+ * the pack's pages (src/modules/survey/survey-pack-pages.ts), the approved version (src/modules/survey/pack-approve.ts) and the client's report
+ * (src/modules/survey/survey-report.ts), so the page, the version and the report never disagree.
+ *
+ * N4: a row with nothing behind it is null, shown as "not on file" (a record), "not written yet" (the surveyor's words)
+ * or "not worked out yet" (a sum), never a guess and never a default. No land fraction, dwelling fraction or qualifying
+ * percentage is ever drafted here (the template's own rule).
+ *
+ * The Phase 153e lines each chapter carries are named on the chapter (the order: 04-phase-work/phase153f/
+ * survey-pack-chapters-order.md).
+ */
+import type { Db } from '../../core/index.ts';
+import type { PackView, ViewLine } from './survey-pack.ts';
+import { packWords, WORD_FIELDS, type WordField } from './pack-words.ts';
+import { claimantTypeReading, captured, latestFacts } from '../claims/index.ts';
+import { funnelStateFor, sessionFromFunnel } from '../assessment/index.ts';
+import { proposeRanges } from '../assessment/index.ts';
+import { deskFirstReading } from '../assessment/index.ts';
+import { basisOf, evidenceByLine } from './survey-evidence.ts';
+import { findingSeen, FINDING_LABELS } from '../../shared/index.ts';
+import { REPORT_ASSUMPTIONS } from '../assessment/index.ts';
+import { RATES } from '../../shared/index.ts';
+import { ESTIMATED_AREA_LABEL } from '../../integrations/index.ts';
+import { BAND, FUNNEL } from '../../shared/index.ts';
+
+/** The funnel's own words for each kind of event. */
+const FUNNEL_LABEL = (FUNNEL as unknown as { EVENT_LABEL: Record<string, string> }).EVENT_LABEL;
+import { poundsWords, percentWords, quantityWords } from './pack-sums.ts';
+import { indexReading, insuranceReading, prelimsReading, rateFlagReading, shareFlagReading, INCLUDES_WORDS } from './pack-cost-model.ts';
+import { packDateIso, propertyLine } from './survey-pack.ts';
+import type { Env } from '../../integrations/index.ts';
+import { getRegisterRecordsFieldsJsonByBusinessIdSourceId } from '../../integrations/index.ts';
+import { getLogicalDocumentsCountByBusinessIdTypeCode } from '../claims/index.ts';
+import { getSurveyPhotosCountByJobIdPhotoId, getSurveyorJobsAssessmentIdById } from './data.ts';
+
+/** Where a row's value comes from — shown beside it, so nothing reads as more certain than it is. */
+export type RowFrom = 'the pack' | 'the claim' | 'Land Registry' | 'the energy certificate' | 'Homedata (estimate)' | 'the client'
+  | 'worked out' | 'fixed wording' | 'the surveyor' | 'the documents' | 'the property record' | 'the cost model (test)';
+
+export type SheetRow = {
+  readonly label: string;
+  /** Null when nothing is behind it (N4). */
+  readonly value: string | null;
+  readonly from: RowFrom;
+  /** For the surveyor's words: who wrote them and when. */
+  readonly by?: string;
+  /** The word for a missing value: "not on file", "not written yet", "not worked out yet". */
+  readonly missing: string;
+  /** Shown to the surveyor and kept out of the approved version and the client's report (a test placeholder). */
+  readonly internal?: boolean;
+};
+
+export type Sheet = {
+  readonly n: number;
+  readonly title: string;
+  readonly lede: string;
+  /** False where the chapter does not apply to this job (a dwelling split for a dental practice); it still shows why. */
+  readonly applies: boolean;
+  readonly not_applies_words: string | null;
+  readonly rows: readonly SheetRow[];
+  /** The surveyor's words this chapter asks for (each a form on the page). */
+  readonly words: readonly WordField[];
+  /** A list of items (chapter 19's judgement calls). */
+  readonly items: readonly { readonly label: string; readonly detail: string }[];
+  /** The Phase 153e lines it carries, for the developer's record; not shown to the client. */
+  readonly carries: string;
+};
+
+export const SHEET_CHAPTERS: readonly number[] = Object.freeze([5, 8, 11, 14, 16, 17, 18, 19, 20, 22]);
+
+const NOT_ON_FILE = 'not on file';
+const NOT_WRITTEN = 'not written yet';
+const NOT_WORKED = 'not worked out yet';
+
+function record(db: Db, business_id: string, property_id: string | null, source: string): Record<string, unknown> | null {
+  const r = getRegisterRecordsFieldsJsonByBusinessIdSourceId<{ fields_json: string }>(db, [business_id, source, property_id, property_id]);
+  if (r === undefined) return null;
+  try { const o = JSON.parse(r.fields_json) as unknown; return o !== null && typeof o === 'object' ? o as Record<string, unknown> : null; } catch { return null; }
+}
+
+const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim() : typeof v === 'number' && Number.isFinite(v) ? String(v) : null);
+
+function docsHeld(db: Db, business_id: string, type_code: string): number {
+  return getLogicalDocumentsCountByBusinessIdTypeCode<{ n: number }>(db, [business_id, type_code])?.n ?? 0;
+}
+
+/** The job's own facts the sheets need, read once. */
+type Ctx = {
+  readonly db: Db; readonly v: PackView;
+  readonly words: ReturnType<typeof packWords>;
+  readonly triggers: readonly string[] | null;
+  readonly funnel: Record<string, unknown> | undefined;
+  /** Where this copy runs, for the cost model's test placeholders (src/modules/survey/pack-cost-model.ts). */
+  readonly env: Env;
+};
+
+function wordsRow(c: Ctx, f: WordField): SheetRow {
+  const w = c.words.get(f);
+  return { label: WORD_FIELDS[f].label, value: w?.words ?? null, from: 'the surveyor', ...(w === undefined || w.words === null ? {} : { by: w.by_name }), missing: NOT_WRITTEN };
+}
+
+function triggersOf(db: Db, v: PackView): { triggers: readonly string[] | null; funnel: Record<string, unknown> | undefined } {
+  const a = getSurveyorJobsAssessmentIdById<{ assessment_id: string | null }>(db, [v.job.id])?.assessment_id ?? null;
+  const state = a === null ? undefined : funnelStateFor(db, a);
+  if (state === undefined) return { triggers: null, funnel: undefined };
+  const t = (sessionFromFunnel(v.job.sector as Parameters<typeof sessionFromFunnel>[0], state).session as { trigger?: unknown }).trigger;
+  return { triggers: Array.isArray(t) ? t.filter((x): x is string => typeof x === 'string') : null, funnel: state };
+}
+
+const TRIGGER_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  purchase: 'a purchase', new_build: 'a new building', fitout: 'a fit-out', fit_out: 'a fit-out', refurb: 'refurbishment works',
+  conversion: 'a conversion', refurb_fitout: 'refurbishment or fit-out',
+});
+
+/* ------------------------------------------------------------------ the ten sheets */
+
+function building(c: Ctx): Sheet {
+  const { db, v } = c;
+  const pid = v.property?.id ?? null;
+  const title = record(db, v.job.business_id, pid, 'HMLR_TITLE');
+  const epc = record(db, v.job.business_id, pid, 'EPC');
+  const hd = record(db, v.job.business_id, pid, 'HOMEDATA_ADDRESS');
+  const est = hd?.['estimated_floor_area'] as { floor_area_m2?: unknown } | undefined;
+  const gia = v.inputs.gia_milli_m2.value;
+  const photos = getSurveyPhotosCountByJobIdPhotoId<{ n: number }>(db, [v.job.id])?.n ?? 0;
+  const plans = docsHeld(db, v.job.business_id, 'PLANS');
+  return {
+    n: 5, title: 'The building', applies: true, not_applies_words: null,
+    lede: 'What the building is, from the records we hold and your own words. Floor area and construction drive the whole split.',
+    rows: [
+      { label: 'Address', value: v.property === null ? null : propertyLine(v.property), from: 'the pack', missing: NOT_ON_FILE },
+      { label: 'Title number', value: str(title?.['title_number']), from: 'Land Registry', missing: NOT_ON_FILE },
+      { label: 'Floor area in the pack', value: gia === null ? null : `${quantityWords(gia)} m²`, from: 'the pack', missing: 'needed (chapter 9)' },
+      { label: 'Floor area on the energy certificate', value: str(epc?.['epc_total_floor_area_m2']) === null ? null : `${str(epc?.['epc_total_floor_area_m2'])} m²`, from: 'the energy certificate', missing: NOT_ON_FILE },
+      { label: 'Age band on the energy certificate', value: str(epc?.['epc_construction_age_band']), from: 'the energy certificate', missing: NOT_ON_FILE },
+      { label: 'Property type on the energy certificate', value: str(epc?.['epc_property_type']), from: 'the energy certificate', missing: NOT_ON_FILE },
+      // Phase 153e line 16: Homedata's floor-area estimate, only where it was fetched (its switch ships off), always labelled.
+      ...(typeof est?.floor_area_m2 === 'number' ? [{ label: `Floor area, ${ESTIMATED_AREA_LABEL}`, value: `${String(est.floor_area_m2)} m²`, from: 'Homedata (estimate)' as const, missing: NOT_ON_FILE }] : []),
+      // Phase 153e line 4: supported living's shared areas, from the floor plans.
+      ...(v.job.sector === 'supported_living' ? [{ label: 'Shared areas, from the floor plans', value: v.shared_area.value === null ? null : `${quantityWords(v.shared_area.value)} m²`, from: 'the pack' as const, missing: 'not measured (chapter 9)' }] : []),
+      { label: 'Floor plans held', value: plans === 0 ? null : `${String(plans)}`, from: 'the documents', missing: 'none held' },
+      { label: 'Photographs from the client', value: photos === 0 ? null : `${String(photos)}`, from: 'the client', missing: 'none' },
+      wordsRow(c, 'construction_type'), wordsRow(c, 'build_year'), wordsRow(c, 'building_other'),
+    ],
+    words: ['construction_type', 'build_year', 'building_other'], items: [], carries: '153e lines 4 and 16',
+  };
+}
+
+function dwellings(c: Ctx): Sheet {
+  const { v } = c;
+  const applies = v.job.sector === 'supported_living' || v.job.sector === 'care_homes';
+  const slSwitch = (BAND as { SWITCHES?: { sl_band_by_trigger?: unknown } }).SWITCHES?.sl_band_by_trigger === true;
+  return {
+    n: 8, title: 'Dwellings', applies,
+    not_applies_words: applies ? null : 'Only for supported living and care homes with homes in them. This job has none, so nothing is split out as a dwelling.',
+    lede: 'How much of the building is homes, which do not qualify, and how that line was drawn. No fraction is offered: the method and the figure are yours.',
+    rows: !applies ? [] : [
+      ...(v.job.sector === 'supported_living' ? [
+        { label: 'Shared areas, from the floor plans', value: v.shared_area.value === null ? null : `${quantityWords(v.shared_area.value)} m²`, from: 'the pack' as const, missing: 'not measured: the 25% fallback is used, and labelled (chapter 9)' },
+        { label: 'Range read by the kind of work', value: slSwitch ? 'on: the range for this job’s own kind of work' : 'off: the refurbishment range, whatever the work (a test switch)', from: 'fixed wording' as const, missing: NOT_ON_FILE },
+      ] : []),
+      wordsRow(c, 'dwelling_method'), wordsRow(c, 'dwelling_segregation'),
+    ],
+    words: applies ? ['dwelling_method', 'dwelling_segregation'] : [], items: [], carries: '153e lines 4 and 9',
+  };
+}
+
+function bareLand(c: Ctx): Sheet {
+  const { v } = c;
+  const land = v.inputs.land_pence;
+  return {
+    n: 11, title: 'Bare land', applies: true, not_applies_words: null,
+    lede: 'What the site is worth as bare land, and on what evidence. It is the biggest single lever on the split, and no default is offered.',
+    rows: [
+      { label: 'Bare land value', value: land.value === null ? null : poundsWords(land.value), from: land.source?.kind === 'SURVEYOR' ? 'the surveyor' : 'the pack', ...(land.source?.by_name ? { by: land.source.by_name } : {}), missing: 'needed (chapter 9)' },
+      wordsRow(c, 'land_comparables'), wordsRow(c, 'land_voa'), wordsRow(c, 'land_date'), wordsRow(c, 'land_planning_basis'),
+      // Phase 153e line 11: the planning assumption, as it goes in the report.
+      ...REPORT_ASSUMPTIONS.map((a) => ({ label: 'What we assume about planning', value: a, from: 'fixed wording' as const, missing: NOT_ON_FILE })),
+      // Phase 153e line 12 (Word question 147), wired: the index dates and the factor between them.
+      ...indexRows(c),
+    ],
+    words: ['land_comparables', 'land_voa', 'land_date', 'land_planning_basis'], items: [], carries: '153e lines 11 and 12 (12 wired by Phase 157a)',
+  };
+}
+
+/** Chapter 11's index dates (Word question 147): the purchase date, the valuation date, and the factor. */
+function indexRows(c: Ctx): SheetRow[] {
+  const r = indexReading(c.db, c.v, c.env);
+  const vd = c.v.cost.valuation_date;
+  return [
+    { label: 'Purchase date', value: r.purchase, from: r.purchase_from, missing: NOT_ON_FILE, internal: true },
+    { label: 'Valuation date (the date the rebuild cost is priced at)', value: packDateIso(vd.value), from: 'the surveyor', ...(vd.source?.by_name ? { by: vd.source.by_name } : {}), missing: 'not given yet', internal: true },
+    { label: 'Index factor, purchase date to valuation date', value: r.words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
+    // The BCIS drafts, and the one day every rate is priced at (C19).
+    { label: 'BCIS drafts', value: c.v.pricing.bcis.words, from: 'worked out', missing: NOT_WORKED, internal: true },
+    { label: 'Every rate priced at', value: c.v.pricing.priced_at === null ? null : `${c.v.pricing.priced_at}${c.v.pricing.priced_at === c.v.pricing.purchase ? ' (the purchase date)' : ''}`,
+      from: 'worked out', missing: c.v.pricing.mixed.length > 0 ? `not one day: ${c.v.pricing.mixed.join('; ')}` : 'no rate yet', internal: true },
+  ];
+}
+
+/** Chapter 14's checks (Word questions 136, 137 and 139). */
+function checkRows(c: Ctx): SheetRow[] {
+  const ins = c.v.cost.insurance;
+  const inc = (x: number | null) => (x === null ? null : INCLUDES_WORDS[x] ?? null);
+  return [
+    { label: 'Site costs (preliminaries) by job size', value: prelimsReading(c.v, c.env).words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
+    { label: 'Insurance rebuild figure', value: ins.value === null ? null : `${poundsWords(ins.value)}${packDateIso(c.v.cost.insurance_date.value) === null ? '' : `, dated ${packDateIso(c.v.cost.insurance_date.value) as string}`}`,
+      from: 'the surveyor', ...(ins.source?.by_name ? { by: ins.source.by_name } : {}), missing: 'not recorded', internal: true },
+    { label: 'What the insurance figure includes', value: inc(c.v.cost.insurance_includes.value), from: 'the surveyor', missing: 'not recorded', internal: true },
+    { label: 'What our rebuild cost includes', value: inc(c.v.cost.rebuild_includes.value), from: 'the surveyor', missing: 'not recorded', internal: true },
+    { label: 'Insurance figure against our rebuild cost', value: insuranceReading(c.v, c.env).words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
+    { label: 'Past-claim limits', value: 'We use these to test the cost model on past claims, not on one pack. They are 5%, £25,000 and 0.01 on the split. The surveyor and the accountant set them.', from: 'fixed wording', missing: NOT_ON_FILE, internal: true },
+  ];
+}
+
+/** Qualifying spend as a share of cost, over the counted lines of one kind; null if any of them is not complete. */
+function share(v: PackView, pick: (l: ViewLine) => boolean): { pct: string | null; count: number } {
+  const sum = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
+  const ls = v.lines.filter((l) => !l.removed && pick(l));
+  let cost = 0, q = 0;
+  for (const l of ls) {
+    const s = sum.get(l.id);
+    if (s === undefined || s.cost_pence === null || s.qualifying_pence === null) return { pct: null, count: ls.length };
+    cost += s.cost_pence; q += s.qualifying_pence;
+  }
+  return { pct: ls.length === 0 || cost === 0 ? null : percentWords(Math.round((q * 10000) / cost)), count: ls.length };
+}
+
+const judgement = (l: ViewLine) => /JUDGEMENT|CONTESTED/.test(l.template?.status ?? '');
+
+function qualifyingShare(c: Ctx): Sheet {
+  const { v } = c;
+  const sr = share(v, (l) => l.pool === 'SR'), mp = share(v, (l) => l.pool === 'MP'), jd = share(v, judgement);
+  const residual = v.sums.qualifying_pence === null || v.sums.building_price_pence === null ? null : v.sums.building_price_pence - v.sums.qualifying_pence;
+  return {
+    n: 14, title: 'Qualifying share', applies: true, not_applies_words: null,
+    lede: 'Every percentage from chapters 10 and 12 in one place, for one visible sign-off. Worked out from the lines; none is drafted.',
+    rows: [
+      { label: `Special rate items (${String(sr.count)})`, value: sr.pct, from: 'worked out', missing: NOT_WORKED },
+      { label: `Main pool items (${String(mp.count)})`, value: mp.pct, from: 'worked out', missing: NOT_WORKED },
+      { label: `Judgement or contested items (${String(jd.count)})`, value: jd.pct, from: 'worked out', missing: jd.count === 0 ? 'none in this pack' : NOT_WORKED },
+      { label: 'The building’s structure (what is left after the plant)', value: residual === null ? null : poundsWords(residual), from: 'worked out', missing: NOT_WORKED },
+      wordsRow(c, 'qpct_basis'),
+      // Phase 153e lines 7, 8 and 10, wired (src/modules/survey/pack-cost-model.ts): test placeholders, for the surveyor.
+      ...checkRows(c),
+    ],
+    words: ['qpct_basis'], items: [], carries: '153e lines 7, 8 and 10 (wired by Phase 157a)',
+  };
+}
+
+function leaseback(c: Ctx): Sheet {
+  return {
+    n: 16, title: 'Leaseback', applies: true, not_applies_words: null,
+    lede: 'Whether the property was sold and leased back, and its disposal value. No figure is offered: a disposal value is its own piece of work.',
+    rows: [
+      { label: 'Sale and leaseback', value: null, from: 'the claim', missing: 'not on file: we do not ask yet' },
+      wordsRow(c, 'disposal_value'),
+    ],
+    words: ['disposal_value'], items: [], carries: 'none',
+  };
+}
+
+/** The structures allowance's rate today, from the engine's dated table (Rulebook I rule 7.1: no rate stated here). */
+const SBA_NOW: number = ((RATES as { SBA: { table: readonly (readonly [string, string, number])[] } }).SBA.table.at(-1)?.[2]) ?? Number.NaN;
+
+function structures(c: Ctx): Sheet {
+  const { db, v } = c;
+  const facts = v.job.claim_id === null ? null : latestFacts(db, v.job.claim_id);
+  const sba = facts === null ? null : captured(facts, 'SBA_QUALIFYING_EXPENDITURE');
+  const statement = facts === null ? null : captured(facts, 'SBA_STATEMENT_HELD');
+  // The LATEST year written: a renovation after 29 October 2018 counts as much as the build (the template's own field).
+  const years = [...(c.words.get('build_year')?.words ?? '').matchAll(/\b(?:19|20)\d{2}\b/g)].map((m) => Number(m[0]));
+  const year = years.length === 0 ? null : String(Math.max(...years));
+  const post2018 = year === null ? null : Number(year) >= 2019 ? 'Yes, from the latest year in chapter 5' : Number(year) <= 2017 ? 'No, from the latest year in chapter 5' : null;
+  const residual = v.sums.qualifying_pence === null || v.sums.building_price_pence === null ? null : v.sums.building_price_pence - v.sums.qualifying_pence;
+  return {
+    n: 17, title: 'Structures allowance', applies: true, not_applies_words: null,
+    lede: 'The structures and buildings allowance, which is tested separately from plant. The tax adviser decides it; this chapter holds the facts.',
+    rows: [
+      { label: 'Built or renovated after 29 October 2018', value: post2018, from: 'worked out', missing: year === null ? 'not known: no year in chapter 5' : 'not known: 2018 needs the exact date' },
+      // Whether the seller's statement (s.270IA) is on file — the buyer's allowance runs on its figure.
+      { label: 'The seller’s allowance statement', value: statement === null ? null : statement.known && statement.value === 'YES' ? 'On file' : statement.known && statement.value === 'NO' ? 'Not on file' : null,
+        from: 'the claim', missing: 'not recorded: ask for it where the building was bought from 29 October 2018' },
+      { label: 'What is left after the plant and the land', value: residual === null ? null : poundsWords(residual), from: 'worked out', missing: NOT_WORKED },
+      // Each piece of work's own base — the final account less the plant and the repair part — worked
+      // out at 3% a year (2% before April 2020) on the return entries and the report, from the month after the work.
+      ...v.works.map((w) => {
+        const t = w.inputs.works_total.value, q = w.sums.qualifying_pence, r = w.sums.repairs_pence;
+        const base = t === null || q === null || r === null ? null : Math.max(0, t - q - r);
+        return { label: `${w.label}: the building work that is not plant or repair`, value: base === null ? null : `${poundsWords(base)}, about ${poundsWords(Math.round(base * SBA_NOW))} a year at ${String(SBA_NOW * 100)}%`,
+          from: 'worked out' as const, missing: NOT_WORKED };
+      }),
+      { label: 'Recorded on the claim', value: sba !== null && sba.known && typeof sba.value === 'string' ? sba.display : null, from: 'the claim', missing: NOT_ON_FILE },
+      { label: 'On a later sale', value: 'The structures allowance lowers the base cost for capital gains tax; plant allowances do not.', from: 'fixed wording', missing: NOT_ON_FILE },
+    ],
+    words: [], items: [], carries: 'none',
+  };
+}
+
+function otherReliefs(c: Ctx): Sheet {
+  const ct = claimantTypeReading(c.db, c.v.job.business_id);
+  return {
+    n: 18, title: 'Other reliefs', applies: true, not_applies_words: null,
+    lede: 'Land remediation relief sits beside capital allowances. These are flags for the tax adviser, not findings.',
+    rows: [
+      { label: 'A company, for land remediation relief', value: ct.known ? (ct.value === 'COMPANY' ? 'Yes' : `No: ${ct.display}`) : null, from: 'the claim', missing: NOT_ON_FILE },
+      { label: 'Contamination taken on from someone else', value: null, from: 'the claim', missing: 'not on file' },
+      { label: 'Who caused it', value: 'For the tax adviser.', from: 'fixed wording', missing: NOT_ON_FILE },
+    ],
+    words: [], items: [], carries: 'none',
+  };
+}
+
+const CORE: Readonly<Record<string, string>> = Object.freeze({
+  care_homes: 'How the shared areas were split from the homes, and whether the property and the care business are in the same group.',
+  dental: 'Whether each chair is a fixture or a chattel, and the value of fixtures in a pension scheme’s property.',
+  supported_living: 'Whether this is supported living or a registered care home.',
+  gp: 'No judgement of its own beyond the fixtures (the template asks whether that is right).',
+  private_hospital: 'Main pool against special rate for each item, and the value on a sale and leaseback.',
+});
+
+function judgementCalls(c: Ctx): Sheet {
+  const { v } = c;
+  const items = v.lines.filter((l) => !l.removed && judgement(l)).map((l) => {
+    const by = [l.qty_milli.source, l.rate_pence.source, l.qpct_bp.source, l.pool_source].some((s) => s?.kind === 'SURVEYOR') ? 'you set it' : 'our draft';
+    const pool = l.pool === null ? 'no pool yet' : l.pool === 'SR' ? 'special rate' : 'main pool';
+    const pct = l.qpct_bp.value === null ? 'share needed' : `${percentWords(l.qpct_bp.value)} qualifies`;
+    const why = l.template?.authority ? ` · ${l.template.authority}` : '';
+    return { label: l.label, detail: `${l.template?.status ?? ''}: ${pool}, ${pct} (${by})${why}` };
+  });
+  // Phase 153e line 9: the range proposed from approved packs for this sector, once five exist.
+  const p = proposeRanges(c.db).proposals.filter((x) => x.sector === v.job.sector);
+  return {
+    n: 19, title: 'Judgement calls', applies: true, not_applies_words: null,
+    lede: 'Every item where the answer is a judgement, and this sector’s main question. Our defaults are labelled; the decision is yours.',
+    rows: [
+      { label: 'This sector’s main question', value: CORE[v.job.sector] ?? null, from: 'fixed wording', missing: NOT_ON_FILE },
+      wordsRow(c, 'sector_core'),
+      { label: 'Range from approved packs', value: p.length === 0 ? null : p.map((x) => x.words).join(' '), from: 'worked out', missing: 'none approved yet; five are needed' },
+    ],
+    words: ['sector_core'], items, carries: '153e lines 5, 6, 9 and 13',
+  };
+}
+
+function repairsOrCapital(c: Ctx): Sheet {
+  const t = c.triggers;
+  /* PER PIECE OF WORK. Where the building's events are recorded (migration 105), the chapter runs for
+     each piece of work since the first event, and for a first event that was itself work (a new build, a fit-out). Each
+     says what the client said it cost and when, and, once the pack prices it, the part that is a repair — a deduction
+     from profits in the year it was spent, not an allowance, and not in the figure. */
+  const works = c.v.works;
+  const fromTriggers = t !== null && t.some((x) => /refurb|fit_?out|conversion/.test(x));
+  const applies = works.length > 0 || fromTriggers;
+  /* The client's own words were read from funnel['buildings'] — but the state keeps them under 'properties'
+     (src/modules/assessment/funnel4.ts), so this row always said "not on file". It reads 'properties', and every piece of work. */
+  const said = (() => {
+    const b = c.funnel?.['properties'];
+    const first = Array.isArray(b) ? b[0] as Record<string, unknown> | undefined : undefined;
+    if (first === undefined) return null;
+    const later = (FUNNEL as unknown as { eventsOf: (p: Record<string, unknown>) => { type: string | null; cost: number | null; date: string | null }[] }).eventsOf(first).slice(1);
+    const parts = later.map((e) => [FUNNEL_LABEL[e.type ?? ''] ?? e.type, e.cost === null ? null : `£${Math.round(e.cost).toLocaleString('en-GB')}`, e.date].filter((x): x is string => typeof x === 'string' && x !== '').join(', '));
+    return parts.length === 0 ? null : parts.join('; ');
+  })();
+  const perWork: SheetRow[] = works.flatMap((w) => [
+    { label: `${w.label}: what the claim records`, value: [w.event.cost_pence === null ? null : `${poundsWords(w.event.cost_pence)} in all`, w.event.source === 'ASSESSMENT' ? 'as the client said at the assessment' : 'as recorded on the claim'].filter((x): x is string => x !== null).join(', '), from: 'the claim' as const, missing: NOT_ON_FILE },
+    { label: `${w.label}: the repair part`, value: w.sums.complete ? (w.sums.repairs_pence === 0 ? 'None: all of it is an improvement or new.' : `${poundsWords(w.sums.repairs_pence)}. A repair comes off the profits in the year it was spent. It is a deduction, not an allowance, and it is not in the figure.`) : null, from: 'worked out' as const, missing: 'not worked out yet (chapter 9)' },
+  ]);
+  return {
+    n: 20, title: 'Repairs or capital', applies,
+    not_applies_words: applies ? null : `Only for refurbishment or fit-out works. This job is ${t === null ? 'of a kind not recorded' : t.map((x) => TRIGGER_WORDS[x] ?? x).join(' and ')}.`,
+    lede: 'For refurbishment works: what physically changed. The tax adviser decides repair or capital; your part is what was done.',
+    rows: !applies ? [] : [
+      ...(works.length === 0 ? [{ label: 'What the client said about the works', value: said, from: 'the client' as const, missing: NOT_ON_FILE }] : perWork),
+      wordsRow(c, 'works_scope'),
+      // Phase 153e line 15 (Word question 150): like for like cannot be told from a visit alone.
+      { label: 'Like for like', value: 'Whether old kit was swapped for the same kind cannot be told from a visit alone. Each item says whether it was seen on site or comes from documents.', from: 'fixed wording', missing: NOT_ON_FILE },
+      { label: 'Grants', value: 'Grant-funded spend is taken off first (chapter 15), and never classified here.', from: 'fixed wording', missing: NOT_ON_FILE },
+    ],
+    words: applies ? ['works_scope'] : [], items: [], carries: '153e line 15; 159c item 5',
+  };
+}
+
+function findings(c: Ctx): Sheet {
+  const { db, v } = c;
+  const basis = basisOf(db, v.job.id)?.basis ?? null;
+  const photos = evidenceByLine(db, v.job.id);
+  const live = v.lines.filter((l) => !l.removed);
+  const site = live.filter((l) => findingSeen(basis, l, photos.get(l.element_id ?? '')?.count ?? 0) === FINDING_LABELS.SITE).length;
+  const level = deskFirstReading(db, v.job.id);
+  return {
+    n: 22, title: 'Findings', applies: true, not_applies_words: null,
+    lede: 'Your narrative. Nothing is drafted for you: each box asks the question, and the report carries your answer.',
+    rows: [
+      { label: 'Items seen on site', value: `${String(site)} of ${String(live.length)}`, from: 'worked out', missing: NOT_WORKED },
+      { label: 'Items from documents', value: `${String(live.length - site)} of ${String(live.length)}`, from: 'worked out', missing: NOT_WORKED },
+      { label: 'How much evidence this job needs', value: level?.level_words ?? null, from: 'worked out', missing: NOT_WORKED },
+      // Phase 153e line 14 (Word question 149), wired: the phase3 module's £/m² review flag.
+      { label: 'Whole-building rate against approved packs', value: rateFlagReading(db, v, undefined, c.env).words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
+      // The share against the sector's ceiling, and section 562 the residual way beside ours.
+      { label: 'The share that qualifies against the sector’s ceiling', value: shareFlagReading(v).words, from: 'worked out', missing: NOT_WORKED, internal: true },
+      { label: 'Section 562 the residual way', value: v.pricing.residual.words, from: 'worked out', missing: NOT_WORKED, internal: true },
+      wordsRow(c, 'narrative_description'), wordsRow(c, 'narrative_condition'), wordsRow(c, 'narrative_departures'), wordsRow(c, 'narrative_opinion'),
+    ],
+    words: ['narrative_description', 'narrative_condition', 'narrative_departures', 'narrative_opinion'], items: [], carries: '153e lines 1 to 3, 14 and 15 (14 wired by Phase 157a)',
+  };
+}
+
+/** All ten sheets, in chapter order. */
+export function packSheets(db: Db, v: PackView, env: Env = process.env): Sheet[] {
+  const t = triggersOf(db, v);
+  const c: Ctx = { db, v, words: packWords(db, v.pack_id), triggers: t.triggers, funnel: t.funnel, env };
+  return [building(c), dwellings(c), bareLand(c), qualifyingShare(c), leaseback(c), structures(c), otherReliefs(c), judgementCalls(c), repairsOrCapital(c), findings(c)];
+}
+
+export function packSheet(db: Db, v: PackView, n: number, env: Env = process.env): Sheet | null {
+  return packSheets(db, v, env).find((s) => s.n === n) ?? null;
+}
+
+/** The sheets as an approved version keeps them: words and figures only, nothing that would change later. */
+export function sheetsForVersion(db: Db, v: PackView): { n: number; title: string; applies: boolean; not_applies_words: string | null; rows: { label: string; value: string | null; from: string; by: string | null; missing: string }[]; items: { label: string; detail: string }[] }[] {
+  return packSheets(db, v).map((s) => ({
+    n: s.n, title: s.title, applies: s.applies, not_applies_words: s.not_applies_words,
+    // A test placeholder (the cost model's readings) is the surveyor's to see, never the version's or the report's.
+    rows: s.rows.filter((r) => r.internal !== true).map((r) => ({ label: r.label, value: r.value, from: r.from, by: r.by ?? null, missing: r.missing })),
+    items: s.items.map((i) => ({ ...i })),
+  }));
+}

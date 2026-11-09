@@ -1,5 +1,5 @@
 /**
- * CHECKED AND APPROVED, AND TELLING THE CLIENT — PHASE 139, 21 September 2026. "Clean-up 6 of 11."
+ * CHECKED AND APPROVED, AND TELLING THE CLIENT — 21 September 2026. "Clean-up 6 of 11."
  *
  * The owner: "When viewing the client's portfolio there needs to be where the information has come from
  * (API) with a secondary approve box. When a user clicks approve this then pushes the details to say Cap Rebate has
@@ -23,7 +23,7 @@
  *
  * WHAT THE CLIENT'S VIEW CAN NEVER CARRY. `clientSteps` reads `client_step_notices` and nothing else: a step's key, its
  * claim and a date. It has no path to a fact, a value, a register record, a figure, an estimate, a reason or a name, so
- * none of them can reach the portal from here — test/phase139.test.ts proves it on the wire.
+ * none of them can reach the portal from here — test/claims/fact-sources-and-approve-box.test.ts proves it on the wire.
  *
  * THE PAID-RESEARCH RULE STANDS. Approval is on the RESULTS, never on the calls: "Run the research" still runs every call
  * it may, in one press, with no per-call confirmation (src/modules/claims/research.ts). Nothing here calls a register. The
@@ -44,7 +44,8 @@ import { listRegisterRecordsIdSourceIdByBusinessId } from '../../integrations/in
 import { insertClientStepNotices, insertClientStepNotices2, listClientStepNoticesClaimIdStepByBusinessId2 } from '../portal/index.ts';
 import { insertFactApprovals, insertFactApprovals2, listClaimDeliverablesIdVersionByClaimIdKind, listClaimsIdClaimRefByBusinessId, listTaxAdviserSignoffsIdSignedOnByClaimId } from './data.ts';
 import { getBusinessesIdNameById, listClientTasksIdFactIdByBusinessIdKind } from '../crm/index.ts';
-import { listClientStepNoticesClaimIdStepByBusinessId, listFactApprovalsFactRefActionByBusinessId, listSurveyorJobsIdSurveyorIdByClaimId } from './data-borrowed.ts';
+import { listClientStepNoticesClaimIdStepByBusinessId, listFactApprovalsFactRefActionByBusinessId } from './data-borrowed.ts';
+import { listSurveyorJobsIdSurveyorIdByClaimId } from '../survey/index.ts';
 
 export type ApprovalDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true } | { readonly ok: false; readonly why: string; readonly field?: string };

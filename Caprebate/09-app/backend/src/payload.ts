@@ -15,7 +15,7 @@
  * assembler is one forgotten key, one new field, or one `...spread` away from
  * leaking. Building the surveyor's object from the RELEASED list forwards means
  * a new estimate field is absent by default, which is the only direction that
- * fails safe. Phase 107 proves it by inspecting the payload; this makes it true.
+ * fails safe. A test proves it by inspecting the payload; this makes it true.
  *
  * INPUTS FLOW FREELY. The client's own answers, their documents and the
  * register data are what the survey is FOR — withholding them would degrade

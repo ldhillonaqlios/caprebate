@@ -2,7 +2,7 @@
  * THE TITLE REGISTER, BY HAND.
  *
  * The owner: HM Land Registry's title register "will be done manually and not via API". The
- * Business Gateway details were taken out of the key file the same day. So the paid lookup Phase 146d built
+ * Business Gateway details were taken out of the key file the same day. So the paid lookup that was built
  * (src/integrations/connectors/hmlr-title.ts) no longer runs on "Run the research" — it is retired, not deleted — and a person who
  * has bought the official copy of the register (HM Land Registry's own portal, about £7 a title) records what it says
  * here, on the property page.
@@ -23,7 +23,7 @@
  * server against the signature record — the same moment the paid lookup waited for (business rule 13(c)), because the
  * official copy is a purchase made for a client.
  *
- * AND IT CAN BE TAKEN BACK, which Phase 146j learned the hard way is not optional: a separate act, with a reason, that
+ * AND IT CAN BE TAKEN BACK, which a wrong pick that could not be undone showed is not optional: a separate act, with a reason, that
  * removes the one record this entry wrote, refuses while a person has approved a fact from it, lists what was worked
  * out from it while it stood (src/modules/portal/take-back.ts), and keeps the entry with who took it back and why.
  */
@@ -269,7 +269,7 @@ function valueWords(k: string, v: unknown): string {
 
 /**
  * THE BLOCK, OR NOTHING. Register data is read only by a login that may read register records, and NOT by the
- * surveyor here: the price paid is withheld from the surveyor everywhere else (src/web/surveyor.ts), and a property
+ * surveyor here: the price paid is withheld from the surveyor everywhere else (src/modules/survey/surveyor.ts), and a property
  * page is not a way round that.
  */
 export function titleByHandView(db: Db, actor: Actor, property_id: string): TitleByHandView | null {

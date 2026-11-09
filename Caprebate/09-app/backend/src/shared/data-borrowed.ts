@@ -1,26 +1,11 @@
 /**
- * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE SHARED (Phase 161i1; 09-app/ARCHITECTURE.md rules 3
+ * BORROWED: SQL ON OTHER AREAS' TABLES, RUN FROM THE SHARED (09-app/docs/ARCHITECTURE.md rules 3
  * and 4). These statements were in shared's page and logic files, which may not run SQL (rule 4). They read or write
  * tables a business area owns, so they still go against rule 3 (each counted against the table's owner), and Phase
  * 161l (the tangle undone) moves each one to its owner's data file, reached through that owner's front door or an
  * event. Nothing new belongs here: this file only gets shorter. Text unchanged from the caller.
  */
 import type { Db, Param, Row } from '../core/index.ts';
-
-// saved_views
-export function getSavedViewsIdListById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT id, list, name, params, shared, created_by, retired_at FROM saved_views WHERE id = ?', params);
-}
-export function insertSavedViews(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO saved_views (id, list, name, params, shared, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)', params);
-}
-export function listSavedViewsIdListByListRetiredAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT id, list, name, params, shared, created_by, retired_at FROM saved_views ' +
-    'WHERE list = ? AND retired_at IS NULL AND (shared = 1 OR created_by = ?) ORDER BY shared DESC, name ASC, id ASC', params);
-}
-export function updateSavedViewsRetiredAtRetiredByById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('UPDATE saved_views SET retired_at = ?, retired_by = ? WHERE id = ?', params);
-}
 
 // the claim and lead lists (src/shared/lists.ts): the fixed statements, moved with their notes
 /** CLIENT AND REFERENCE — the whole of what ACCOUNTING reads of a claim. No join to anything else. */

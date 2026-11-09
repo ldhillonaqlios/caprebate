@@ -2,7 +2,7 @@
  * STAFF TASKS, AND ONE NEXT ACTION PER CLAIM. CRM 3 of 10.
  *
  * The schema is migration 012; the routes and pages are src/modules/crm/tasks-pages.ts;
- * the scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 10 and Part E from
+ * the scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, section 10 and Part E from
  * row E23.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ import { claimNaming, claimObjFor, claimWords, PRIORITIES, type Fields } from '.
 import { anyStageLabel, claimStage } from '../../shared/index.ts';
 import { waitingOn, type WaitingOn } from '../claims/index.ts';
 import { fireAutomation } from './automation.ts';
-import { mayTake, vocabLabel } from '../../web/vocabularies.ts';
+import { mayTake, vocabLabel } from '../admin/index.ts';
 import { listUsersIdDisplayNameByRoleADM2 } from '../../core/index.ts';
 import { getBusinessesIdById, getContactsIdBusinessIdById3, getLeadsBusinessIdById, getLeadsIdBusinessIdById, getStaffTasksDueOnNByContactIdStatus, getStaffTasksIdByCreatedByOrigin, insertStaffTasks, listClientTasksQuestionDueOnByAskedByState, listClientTasksQuestionDueOnByAskedByState2, listClientTasksQuestionDueOnByBusinessIdState, updateStaffTasksIsNextActionUpdatedAtByClaimIdIsNextAction, updateStaffTasksIsNextActionUpdatedAtById, updateStaffTasksStatusCancelledAtById, updateStaffTasksStatusCompletedAtById, updateStaffTasksStatusStartedAtById, updateStaffTasksStatusUpdatedAtById, updateStaffTasksTitleDescriptionById } from './data.ts';
 import { getStaffTasksIdTitleByClaimIdIsNextAction, listClaimsIdClaimRef, listClaimsIdClaimRefByOwnerId2, listClientTasksIdTypeLabelByAskedByKind } from './data-borrowed.ts';

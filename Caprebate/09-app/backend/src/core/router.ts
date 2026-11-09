@@ -50,20 +50,20 @@ import { handleStaff, handlePortalSettings } from './staff.ts';
 import { mayEnterBackOffice, NotFoundAsRefusal } from './backoffice.ts';
 import { staffShell, portalShell } from './navigation.ts';
 import { inboundEmailModule as IE } from '../modules/crm/index.ts';
-import { PHOTO_UPLOAD_JS } from '../web/photo-upload-script.ts';
+import { PHOTO_UPLOAD_JS } from '../modules/survey/index.ts';
 import { SIGNATURE_PAD_JS } from '../shared/index.ts';
-import { sweepUploads } from '../web/photo-upload.ts';
+import { sweepUploads } from '../modules/survey/index.ts';
 import { runTimerJob, timerJobOf, timerWordRefusal, TIMER_PATH_PREFIX } from './timers.ts';
-import { sweepVideos } from '../web/survey-video.ts';
+import { sweepVideos } from '../modules/survey/index.ts';
 import { receiveWhatsApp } from '../modules/crm/index.ts';
 import { webhookChallenge } from '../integrations/index.ts';
 import { ga4MeasurementId } from '../integrations/index.ts';
 import { localDate, ukDate } from '../shared/index.ts';
 import { SITE_JS_HEADERS } from '../modules/public-site/index.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
-import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from '../web/identity-checks.ts';
+import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from '../modules/compliance/index.ts';
 import { CONSENT_COOKIE, consentChoice, cookieBanner, wantsBanner } from '../modules/public-site/index.ts';
-import { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from '../web/legal-approvals.ts';
+import { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from '../modules/compliance/index.ts';
 import { nav as staffNav } from './staff.ts';
 // Each module's addresses, asked below at the point where they have always been matched.
 import { publicSiteEnquiry, publicSiteRoutes } from '../modules/public-site/index.ts';
@@ -206,7 +206,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assets/signature-pad.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(SIGNATURE_PAD_JS); return 'handled';
   }
-  // The photo page's one script (src/web/photo-upload-script.ts).
+  // The photo page's one script (src/modules/survey/photo-upload-script.ts).
   if (path === '/assets/photo-upload.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(PHOTO_UPLOAD_JS); return 'handled';
   }
@@ -289,7 +289,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       return 'handled';
     }
     const r = await IE.readRepliesIfDue(d.app);
-    // The same wake clears photo uploads never finished within a day (src/web/photo-upload.ts).
+    // The same wake clears photo uploads never finished within a day (src/modules/survey/photo-upload.ts).
     await sweepUploads({ db: d.app.db, now: d.app.now }, d.store);
     await sweepVideos({ db: d.app.db, now: d.app.now }, d.store);
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
@@ -298,7 +298,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     return 'handled';
   }
   /* THE IDENTITY CHECK'S SIGNED RESULT. The service has no login, so this sits outside it — and believes
-     nothing it is sent unless the signature holds (src/web/identity-checks.ts). A bad signature is refused and audited.
+     nothing it is sent unless the signature holds (src/modules/compliance/identity-checks.ts). A bad signature is refused and audited.
      The answer is a status and nothing else: the service reads no page, and a refusal says nothing about why. */
   if (path === IDENTITY_HOOK_PATH && method === 'POST') {
     const raw0 = (await readBody(req, IDENTITY_HOOK_MAX_BYTES)).toString('utf8');
@@ -456,7 +456,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* ------------------------------------------------------ back office */
   if (path === '/staff' || path.startsWith('/staff/')) {
     if (actor === undefined) { redirect(res, '/login'); return 'handled'; }
-    /* The legal pages' approvals (src/web/legal-approvals.ts). Admins only; recorded once, never changed. */
+    /* The legal pages' approvals (src/modules/compliance/legal-approvals.ts). Admins only; recorded once, never changed. */
     if ((path === '/staff/legal' && method === 'GET') || (path === '/staff/legal/approve' && method === 'POST')) {
       if (actor.role !== 'ADMIN') { html(res, 403, simple('Not allowed', 'Only an admin can see or record the legal pages’ approvals.')); return 'handled'; }
       return inContext(d, path, async () => {

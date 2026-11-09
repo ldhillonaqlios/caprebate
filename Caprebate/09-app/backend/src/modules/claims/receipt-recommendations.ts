@@ -6,7 +6,7 @@
  * WHY THIS EXISTS
  *
  * CRM 4 of 10 recorded fourteen document types from the CRM specification's list with no receipt policy (migration 013;
- * 09-app/CAPREBATE-CRM-DISPOSITION.md row E34). Choosing a strip is the data protection officer's decision, asked in
+ * 09-app/docs/CAPREBATE-CRM-DISPOSITION.md row E34). Choosing a strip is the data protection officer's decision, asked in
  * CAPREBATE QUESTIONS under exactly this title:
  *   "Which receipt strip should each new document type carry before anyone may upload one?"
  * Whatever can be built before the person answers is built and switched off, so the officer approves or amends a
@@ -31,13 +31,13 @@
  * a receipt policy of its own name, so it can now be received. Its row below is NOT deleted and NOT changed: it is the
  * record of what the officer was asked, the table in migration 021 is never edited, and the two must stay identical.
  * What changes is how it reads: a type that now has its own receipt policy reads BOUND, with the policy's own words,
- * whatever the recommendation says. Nine of the fourteen are still unbound: Phase 157d (migration 099) bound the completion statement, accounts, contractor's invoices and plans, on these recommendations.
+ * whatever the recommendation says. Nine of the fourteen are still unbound: migration 099 bound the completion statement, accounts, contractor's invoices and plans, on these recommendations.
  */
 
 import type { Db } from '../../core/index.ts';
 import { authorise, type Actor, type Obj } from '../../core/index.ts';
 import { stripReading, NO_RECEIPT_POLICY, type StripReading } from './documents.ts';
-import { getDocumentTypesHandlerTypeByCode } from './data-borrowed.ts';
+import { getDocumentTypesHandlerTypeByCode } from '../admin/index.ts';
 
 export type RecommendedStrip = 'KEEP_WHOLE' | 'STRIP_INDIVIDUALS_KEEP_FIGURES' | 'REFUSE_AS_UPLOAD';
 

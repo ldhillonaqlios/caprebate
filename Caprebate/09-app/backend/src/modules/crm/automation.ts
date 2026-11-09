@@ -59,11 +59,12 @@ import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts'
 import { missingFacts } from '../claims/index.ts';
 import { POOL_ROLES, addDaysToDate, insertTask } from './tasks.ts';
 import { claimWords, type Fields } from './crm.ts';
-import { mayTake, vocabLabel } from '../../web/vocabularies.ts';
+import { mayTake, vocabLabel } from '../admin/index.ts';
 import { createDocumentRequest, NO_RECEIPT_POLICY } from '../claims/index.ts';
 import { getUsersEmailRoleById, getUsersRoleDisabledAtById } from '../../core/index.ts';
 import { getAutomationRulesN, getBusinessesClientStatusById, getBusinessesIdOwnerIdById, getBusinessesNameById, getLeadsIdBusinessIdById3, insertAutomationRules, insertAutomationRuns, listStaffTasksFactIdByBusinessIdFactId, updateAutomationRulesLabelTriggerEventById } from './data.ts';
-import { getDocumentTypesHandlerTypeActiveByCode, getStaffTasksIdBusinessIdById, getVocabulariesCountByListCode, listAutomationRunsAtTriggerEvent, listDocumentTypesCodeLabelByActiveHandlerType2 } from './data-borrowed.ts';
+import { getStaffTasksIdBusinessIdById, listAutomationRunsAtTriggerEvent } from './data-borrowed.ts';
+import { getDocumentTypesHandlerTypeActiveByCode, getVocabulariesActivityTypeCountByCode, listDocumentTypesCodeLabelByActiveHandlerType2 } from '../admin/index.ts';
 import { getClaimsIdClaimRefById3 } from '../claims/index.ts';
 import { getAutomationRulesIdLabelById, listAutomationRulesIdLabel, listAutomationRulesIdLabelByActiveTriggerEvent } from './data.ts';
 
@@ -117,10 +118,10 @@ export const FORBIDDEN_EFFECTS: Vocab = Object.freeze({
  * THE INVOICE-FRAUD PROCEDURE — WHERE IT STANDS. CRM 7 of 10.
  *
  * The invoice email is not built, and every refusal of it above and in
- * src/web/templates.ts holds while this says `in_force: false`. The procedure did
+ * src/modules/admin/templates.ts holds while this says `in_force: false`. The procedure did
  * not exist in the operating procedure's export; CRM 7 of 10 drafted it into SOP 9
  * as a FLAGGED DRAFT ADDITION and entered its sign-off in the register for the
- * solicitor, the data protection officer and the developer. test/finance-claim.test.ts
+ * solicitor, the data protection officer and the developer. test/finance/invoices-and-fee-controls.test.ts
  * reads the export and fails if this says in force while the export says draft.
  *
  * TURNING IT ON IS NOT THIS FLAG. When the procedure is signed off, building the
@@ -187,7 +188,6 @@ type RuleDbRow = {
   attach_to: string; active: number; ord: number; source: string; created_at: string; updated_at: string;
   request_type: string | null;
 };
-
 
 export type RuleView = {
   readonly id: string;
@@ -330,7 +330,7 @@ function ruleValues(db: Db, input: Fields, stored: RuleDbRow | null = null): Che
   const activity = clean(input['trigger_activity']);
   if (activity !== null && trigger !== 'TASK_COMPLETED') return { ok: false, why: 'Only a “task completed” rule listens for an activity.', field: 'trigger_activity' };
   if (activity !== null && activity !== stored?.trigger_activity
-    && getVocabulariesCountByListCode<{ n: number }>(db, [activity])?.n === 0) {
+    && getVocabulariesActivityTypeCountByCode<{ n: number }>(db, [activity])?.n === 0) {
     return { ok: false, why: 'The activity is not one on the list.', field: 'trigger_activity' };
   }
   const attach = clean(input['attach_to']) ?? 'SUBJECT';

@@ -1,5 +1,5 @@
 /**
- * PHASE 161h1, 7 November 2026 — THE MODULE MAP AND THE BOUNDARY CHECK (09-app/ARCHITECTURE.md, rules 1 to 4).
+ * PHASE 161h1, 7 November 2026 — THE MODULE MAP AND THE BOUNDARY CHECK (09-app/docs/ARCHITECTURE.md, rules 1 to 4).
  *
  * No code moves and no behaviour changes in this phase: it adds the map of every file and table, the check, and the
  * ratchet. These tests hold the check to the real tree: it passes on today's code with today's baseline, its own

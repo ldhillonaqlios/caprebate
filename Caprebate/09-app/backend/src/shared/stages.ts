@@ -7,7 +7,7 @@
  *
  *   · `businesses.stage` carries MACHINE KEYS —
  *     ASSESSMENT_SUBMITTED, RESEARCH_PART_RUN, ENGAGEMENT_SIGNED, AT_SURVEY,
- *     INVOICED, PAID. Phase 106 sorts the engaged-client list on them.
+ *     INVOICED, PAID. The engaged-client list sorts on them.
  *
  *   · `caprebate-business-flow-v2.html` carries the CLIENT-FACING WORDING as
  *     eleven step titles across two named parts — "The funnel" and "Building

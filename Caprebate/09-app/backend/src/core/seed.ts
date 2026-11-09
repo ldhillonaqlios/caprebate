@@ -37,7 +37,7 @@ import { ingestRegisterRecord, insertResearchSourcesNotPermittedYet } from '../i
 import type { AppRole } from './roles.ts';
 import { catalogue } from '../modules/claims/index.ts';
 import { backfillClaimFor, insertClaim } from '../modules/crm/index.ts';
-import { allocateNumber } from '../web/invoices.ts';
+import { allocateNumber } from '../modules/finance/index.ts';
 import { backfillLeadFor } from '../modules/crm/index.ts';
 import { recordOpened } from '../modules/crm/index.ts';
 import { insertTask, type TaskInsert } from '../modules/crm/index.ts';
@@ -45,6 +45,8 @@ import { insertEnquiryChecks2 } from '../modules/public-site/index.ts';
 import { getContactsCountByBusinessId, getContactsIdByBusinessIdContactType, getLeadsIdByOriginStatus, insertBookings, insertBusinesses2, insertContacts2, insertLeads3, insertStaffTasks2, insertWorkingTimes, updateBusinessesClaimantTypeById, updateBusinessesClientStatusById, updateBusinessesLegalNameCompanyNumberById2, updateBusinessesSourceUpdatedAt } from '../modules/crm/index.ts';
 import { getClaimsIdByBusinessIdAssessmentId, getClaimsIdByBusinessIdLabel, getPropertiesIdByBusinessId, getPropertiesIdByBusinessId3, insertClaimDeliverables2, insertClaimFacts2, insertClaimMilestones2, insertClaimStageMoves3, insertEngagements2, insertProperties2, insertProperties3, insertProperties5, insertTaxAdviserSignoffs2, updateClaimDeliverablesStateIssuedOnById2, updateClaimsOwnerIdPriorityByBusinessId, updatePropertiesAddressLine1TownByBusinessId, updatePropertiesTenureTownById } from '../modules/claims/index.ts';
 import { getAssessmentsIdByBusinessId, insertAssessmentAnswers, insertAssessments2, insertEstimates2 } from '../modules/assessment/index.ts';
+import { insertInvoicePayments, insertInvoices2 } from '../modules/finance/index.ts';
+import { insertSurveyorCommitments, insertSurveyorJobs } from '../modules/survey/index.ts';
 
 /**
  * Development credentials. Printed by `npm run seed`, never a default in any
@@ -64,7 +66,7 @@ const USERS: readonly { email: string; display_name: string; role: AppRole }[] =
 /**
  * THE CONTACT CHANNEL IS CB_BOOKING'S, AND IT USED NOT TO BE.
  *
- * Until Phase 105 this list carried 'virtual' and 'post'. 'virtual' is VIDEO,
+ * This list once carried 'virtual' and 'post'. 'virtual' is VIDEO,
  * which CB_BOOKING deliberately removed and whose own
  * comment says "do not quietly re-add it here"; 'post' was never a channel at
  * all. Neither is a thing a client can choose, so the seed was demonstrating a
@@ -221,14 +223,9 @@ function seedClaimAtInvoice(
   move(at, 'SURVEY'); at = 'SURVEY';
   const job = newId();
   const committed = now();
-  db.run(
-    'INSERT INTO surveyor_jobs (id, business_id, assessment_id, surveyor_id, state, committed_at, created_at, claim_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [job, b4, assessment.id, surveying, 'COMMITTED_AND_RELEASED', committed, committed, claim.id]);
+  insertSurveyorJobs(db, [job, b4, assessment.id, surveying, 'COMMITTED_AND_RELEASED', committed, committed, claim.id]);
   const commitment = newId();
-  db.run(
-    'INSERT INTO surveyor_commitments (id, job_id, surveyor_id, a_qualifying_plant_pence, b_building_pence, c_bare_land_pence, ' +
-      'qualifying_pct, method_note, committed_at, figures_hash, released_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [commitment, job, surveying, 16_450_000, 52_300_000, 3_900_000, 0.23,
+  insertSurveyorCommitments(db, [commitment, job, surveying, 16_450_000, 52_300_000, 3_900_000, 0.23,
       'Invented for the seed: the branch surgery measured from the drawings the client supplied.', committed, 'e'.repeat(64), committed]);
   for (const to of ['VALUATION'] as const) { move(at, to); at = to; }
   fact('GRANTS_EXIST', 'NO', 'text');
@@ -255,7 +252,7 @@ function seedClaimAtInvoice(
 }
 
 /**
- * WORKING TIMES FIRST, THEN BOOKINGS — the same order Phase 105 builds in, and
+ * WORKING TIMES FIRST, THEN BOOKINGS — the same order the calendar builds in, and
  * for the same reason: a booking that does not fall inside somebody's hours is
  * a booking the calendar could not have made, and a seed that contained one
  * would be demonstrating a state the application refuses to produce.
@@ -297,7 +294,7 @@ function seedWorkingTimesAndBookings(
    * close writes when a client asks for a call without picking a moment — so
    * the seeded back office opens on a real work queue rather than on a diary
    * that somebody has already tidied. Booking one of these in and watching it
-   * appear in the client's own portal is the demonstration Phase 105's brief
+   * appear in the client's own portal is the demonstration the booking work
    * asks for, and it cannot be demonstrated on data that arrived pre-booked.
    */
   for (const b of BUSINESSES) {
@@ -355,7 +352,7 @@ function seedPipeline(
     // today: the privacy notice is not published and no connector exists.
     //
     // THE LIST AND THE TIERS COME FROM THE CATALOGUE, NOT FROM HERE. Until
-    // Phase 106 this was five hand-written pairs, and by the time that phase
+    // a later check this was five hand-written pairs, and by the time that check
     // read them two were WRONG: HMLR Price Paid and VOA open data were marked
     // PAID, where the Build Order's two-tier table and the Provenance Map both
     // put them in tier 1. A seed is what a developer reads as the schema, so a
@@ -391,7 +388,7 @@ function seedPipeline(
    * `entity_type` IS `company` ON ALL SIX AND IT AGREES WITH THE ANSWERS.
    * Every seeded assessment answers Q1 "How is the business set up?" as
    * `company`, so anything else here would be a seed contradicting itself —
-   * which is the class of defect Phase 106 found in this same file when two
+   * which is the class of defect once found in this same file when two
    * source tiers disagreed with the two documents that decided them.
    *
    * `tax_rate` IS DELIBERATELY LEFT NULL, and it is the more interesting half.
@@ -410,7 +407,7 @@ function seedPipeline(
   /**
    * TWO SURVEY JOBS, BOTH ASSIGNED, AND NEITHER COMMITTED.
    *
-   * Until Phase 107 there was one, unassigned — and an unassigned job belongs
+   * Until the surveyor workspace there was one, unassigned — and an unassigned job belongs
    * to NOBODY, because `assignedSurveyor` says so. So the surveying user
    * signed in, opened the section and correctly saw an empty list, which reads
    * exactly like a broken screen. A seed whose only demonstration of a feature
@@ -553,24 +550,15 @@ function seedCrm(
     const claim = getClaimsIdByBusinessIdAssessmentId<{ id: string }>(db, [get(inv.key)]);
     if (claim === undefined) throw new Error(`seed: no assessed claim for ${inv.key} to invoice`);
     const invoiceId = newId();
-    db.run(
-      'INSERT INTO invoices (id, business_id, claim_id, kind, claim_value_pence, fee_pence, fee_rate, invoice_status, payment_status, ' +
-        'vat_position, vat_setting_id, vat_pence, invoice_date, due_on, due_basis, sent_on, fee_basis, fee_warning, raised_by, created_at, ' +
-        'entity_type, tax_rate, pool_split_main_pence, pool_split_special_pence, period_start) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [invoiceId, get(inv.key), claim.id, 'FEE', 30_000_000, 900_000, 0.03, inv.sent_on === null ? 'RAISED' : 'SENT', 'UNPAID',
+    insertInvoices2(db, [invoiceId, get(inv.key), claim.id, 'FEE', 30_000_000, 900_000, 0.03, inv.sent_on === null ? 'RAISED' : 'SENT', 'UNPAID',
         'Cap Rebate is not VAT registered; no VAT is charged on this fee', 'finance-setting-vat-position-2026-08-28', 0,
         // Clause 4 now states the payment terms — within 14 days of the date of the invoice.
         '2026-09-02', '2026-09-16', 'due within 14 days of the invoice, as clause 4 states',
         inv.sent_on, '3% of the allowances identified, £300,000.00 — £9,000.00 (the seed); every fee control off', null, raisedBy, t,
-        'company', null, inv.split === null ? null : inv.split[0], inv.split === null ? null : inv.split[1], null],
-    );
+        'company', null, inv.split === null ? null : inv.split[0], inv.split === null ? null : inv.split[1], null]);
     allocateNumber(db, 'INVOICE', invoiceId, null, raisedBy, t);
     for (const p of inv.received) {
-      db.run(
-        'INSERT INTO invoice_payments (id, invoice_id, received_on, amount_pence, method, bank_details_confirmed, recorded_by, recorded_at) ' +
-          'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [newId(), invoiceId, p.on, p.pence, 'BANK_TRANSFER', p.confirmed, raisedBy, t]);
+      insertInvoicePayments(db, [newId(), invoiceId, p.on, p.pence, 'BANK_TRANSFER', p.confirmed, raisedBy, t]);
     }
   }
 

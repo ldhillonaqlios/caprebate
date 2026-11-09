@@ -1,15 +1,15 @@
 /**
  * THE PRIVACY POLICY AND THE CLIENT'S PORTAL TERMS. Both DRAFTS.
  *
- * The owner: "draft the privacy policy" (from the Phase 160f notice, for the live website and the client
+ * The owner: "draft the privacy policy" (from the public notice, for the live website and the client
  * portal) and "draft the client's terms and their links". src/modules/public-site/legal-pages.ts serves them with the other legal
- * pages, each with its Draft line until an approval is recorded (src/web/legal-approvals.ts).
+ * pages, each with its Draft line until an approval is recorded (src/modules/compliance/legal-approvals.ts).
  *
  * NOTHING HERE IS INVENTED. Every fact nobody has given us (the ICO number, the data protection officer's name and
  * contact, a telephone number, where the live website's host keeps data) is a marked gap: `LATER` on the page, listed
  * in LEGAL_GAPS. The free lookups are LEGITIMATE INTERESTS, never consent (standing rule 13(b)): the only consent here is
  * the optional analytics cookie. The outside services come from OUTSIDE_SERVICES (src/integrations/outside-services.ts), tied to
- * SECRET_KEYS by a test; the retention periods come from RETENTION_PARAMETERS (src/web/compliance-identity.ts), the
+ * SECRET_KEYS by a test; the retention periods come from RETENTION_PARAMETERS (src/modules/compliance/compliance-identity.ts), the
  * retention schedule, and say they are not yet approved while they are not.
  *
  * The engagement letter's own clauses are not touched here: it governs the work, and these terms say so.
@@ -17,7 +17,7 @@
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../../integrations/index.ts';
 import { BACKUP_KEEP_DAYS } from '../../core/index.ts';
-import { RETENTION_PARAMETERS } from '../../web/compliance-identity.ts';
+import { RETENTION_PARAMETERS } from '../compliance/index.ts';
 
 export const COMPANY = 'CAP REBATE LTD';
 export const COMPANY_NUMBER = '17307313';

@@ -5,7 +5,7 @@
  *    SITE_CONSENT; src/modules/public-site/legal-pages.ts).
  * 2. The cookie list is tested, not typed: every cookie the app can set and every storage key a page it serves writes.
  * 3. The privacy policy, with every outside service tied to SECRET_KEYS (src/integrations/outside-services.ts).
- * 4. The client's portal terms, the links, and the sign-up's tick kept with its versions (src/web/legal-approvals.ts).
+ * 4. The client's portal terms, the links, and the sign-up's tick kept with its versions (src/modules/compliance/legal-approvals.ts).
  * 5. The `legal` setting: every page a Draft until both approvals are recorded; with it off, nothing changes.
  *
  * Each of these fails on the code before Phase 161g: the old router gave the site page its measurement id with no
@@ -28,7 +28,7 @@ import { siteEdition, SITE_PAGE_CSP } from '../../src/modules/public-site/public
 import {
   CONSENT_COOKIE, CONSENT_MAX_AGE, COOKIE_LIST, LEGAL_GAPS, LEGAL_PAGES, cookieBanner, legalPageHtml, optionalAllowed, versionOf,
 } from '../../src/modules/public-site/legal-pages.ts';
-import { currentApprovals, currentTermsVersions, hasAgreedCurrent } from '../../src/web/legal-approvals.ts';
+import { currentApprovals, currentTermsVersions, hasAgreedCurrent } from '../../src/modules/compliance/legal-approvals.ts';
 import { offerSignup, requestSignup, confirmSignup } from '../../src/core/signup.ts';
 import { STEP_TTL_MS } from '../../src/core/sign-in.ts';
 

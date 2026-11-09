@@ -2,9 +2,9 @@
  * GLOBAL SEARCH — LIMITED BY can INSIDE THE QUERY, NEVER FILTERED AFTERWARDS.
  * CRM 9 of 10.
  *
- * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, row 16.1, and the decisions
+ * The scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, row 16.1, and the decisions
  * this file takes are that table's Part E from E119. The page is
- * src/shared/lists-pages.ts; the proof is test/search.test.ts and
+ * src/shared/lists-pages.ts; the proof is test/core/global-search.test.ts and
  * tools/payload-proof.ts.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -33,7 +33,7 @@
  *   the estimate            no statement here reads `estimates`
  *   note bodies             for a role without internal_note.read — the kind is not searched
  *
- * `NEVER_SEARCHED` lists them, and test/search.test.ts reads this file's source
+ * `NEVER_SEARCHED` lists them, and test/core/global-search.test.ts reads this file's source
  * and fails if any of those tables is named in it, then plants a name in each and
  * searches for it.
  */
@@ -43,7 +43,7 @@ import { authorise, can, type Actor, type Obj } from './authz.ts';
 import { claimObjFor } from '../modules/crm/index.ts';
 import { claimName } from '../shared/index.ts';
 import { anyStageLabel } from '../shared/index.ts';
-import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId } from './data-borrowed.ts';
+import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId } from '../modules/survey/data.ts';
 import { SEARCH_STATEMENTS, searchClaims, searchClaimsAssigned, searchContacts, searchInvoices, searchNotes, searchOrganisations, searchProperties, searchPropertiesAssigned, searchProspects } from './data-borrowed.ts';
 
 export type SearchKind = 'ORGANISATION' | 'PROSPECT' | 'CONTACT' | 'PROPERTY' | 'CLAIM' | 'INVOICE' | 'NOTE';
@@ -218,7 +218,7 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
 export const RESULT_LIMIT = LIMIT;
 
 /**
- * EVERY STATEMENT SEARCH CAN RUN, for test/search.test.ts (see SEARCH_STATEMENTS in src/core/data-borrowed.ts, where the
+ * EVERY STATEMENT SEARCH CAN RUN, for test/core/global-search.test.ts (see SEARCH_STATEMENTS in src/core/data-borrowed.ts, where the
  * statements now live).
  */
 export const STATEMENTS: readonly string[] = SEARCH_STATEMENTS;

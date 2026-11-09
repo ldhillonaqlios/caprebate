@@ -1,7 +1,7 @@
 /**
  * THE SITE AREA'S CALLER: "RUN THE RESEARCH", AFTER SIGNING — AND ITS LINE ON THE RESEARCH PANEL.
  *
- * Phase 151a built `siteAreaFromLandBoundary` (src/integrations/connectors/site-area.ts) and left it with nothing calling it. This
+ * `siteAreaFromLandBoundary` (src/integrations/connectors/site-area.ts) was built and left with nothing calling it. This
  * file is the one caller. It runs on the operator's one click, the same way the paid lookups do (src/modules/claims/research.ts):
  * the operator picks the moment, not the calls, and nothing refuses and nothing throws.
  *

@@ -28,17 +28,18 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
-import { packJob } from '../../web/surveyor.ts';
-import { approvedVersion, type ApprovalRow, type Snapshot } from '../../web/pack-approve.ts';
-import { reportModel, reportPdf, longDate, REPORT_TITLE } from '../../web/survey-report.ts';
+import { packJob } from '../survey/index.ts';
+import { approvedVersion, type ApprovalRow, type Snapshot } from '../survey/index.ts';
+import { reportModel, reportPdf, longDate, REPORT_TITLE } from '../survey/index.ts';
 import { freezeReturnContext, returnContext, returnContextFor, returnEntriesCsv } from './return-entries.ts';
 import { voidLine } from './valuation-lock.ts';
 import { recordSignOff } from './claim-record.ts';
 import { postClientMessage } from '../crm/index.ts';
 import { localDate } from '../../shared/index.ts';
-import { poundsWords } from '../../web/pack-sums.ts';
+import { poundsWords } from '../survey/index.ts';
 import { getOutboxRById } from '../../integrations/index.ts';
-import { getPackClientNoticesToldAtToldByNameByApprovalId, getPackSignoffRequestsIdApprovalIdByTokenSha256, insertPackClientNotices, insertPackSignoffAnswers, insertPackSignoffRecorded, insertPackSignoffRequests, listPackSignoffRequestsIdApprovalIdByJobId, listSurveyPackApprovalsIdVersionByBusinessIdClaimId } from './data-borrowed.ts';
+import { getPackClientNoticesToldAtToldByNameByApprovalId, getPackSignoffRequestsIdApprovalIdByTokenSha256, listPackSignoffRequestsIdApprovalIdByJobId, listSurveyPackApprovalsIdVersionByBusinessIdClaimId } from './data-borrowed.ts';
+import { insertPackClientNotices, insertPackSignoffAnswers, insertPackSignoffRecorded, insertPackSignoffRequests } from '../survey/index.ts';
 import { getTaxAdviserSignoffsCountByApprovalIdRecordedAt } from './data.ts';
 import { listContactsIdNameByBusinessIdContactType2 } from '../crm/index.ts';
 
@@ -115,7 +116,7 @@ export function sendForSignoff(
   const expires = new Date(Date.parse(at) + LINK_DAYS * 86_400_000).toISOString();
   const pdf = reportPdf(reportModel(kept.snapshot, kept.row.fingerprint, returnContextFor(d.db, kept.row.id, job.claim_id, job.business_id)));
   return d.db.tx(() => {
-    // The return entries for each year, as a spreadsheet, beside the PDF. PHASE 159a
+    // The return entries for each year, as a spreadsheet, beside the PDF.
     // (C29): the facts it is made from are kept with the version the first time it is sent, and read from then on.
     const csv = returnEntriesCsv(kept.snapshot, freezeReturnContext(d.db, kept.row.id, returnContext(d.db, job.claim_id, job.business_id), 'SENT_FOR_SIGNOFF', at), kept.row.fingerprint);
     const sent = d.email.send({

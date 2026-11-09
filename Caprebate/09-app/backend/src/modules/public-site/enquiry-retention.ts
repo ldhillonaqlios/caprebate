@@ -12,7 +12,7 @@
  *      FIRST, then deletes the row, in one transaction — one entry per enquiry, naming its kind and id, never a word of
  *      it and never the person. An enquiry that became a lead (status LEAD) is a lead now, and is not this job's.
  *  *   2. THE FOUR-STAGE FUNNEL (`leads` with an `enquiry_id`, migration 061). A funnel enquiry is a CRM lead, tied to its
- *      organisation, its contacts and any booking. PHASE 157 BUILT ITS DELETION PATH, under
+ *      organisation, its contacts and any booking. ITS DELETION PATH IS BUILT, under
  *      the same switch and the same period: a lead LOST more than the period ago (its `updated_at`, the day it was
  *      marked lost) is deleted with the funnel's own rows that hang off it — `leadDeletionPlan` says exactly which.
  *        WHAT GOES: the lead; its contacts and what they answered about consent; its bookings, their changes and video
@@ -31,14 +31,14 @@
 
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
-import { liveHeldIds } from '../../web/compliance.ts';
+import { liveHeldIds } from '../compliance/index.ts';
 import { addMonths } from '../crm/index.ts';
 import { BACKUP_CYCLE, knownBackupCycleDays } from '../../shared/upload-handler-port.ts';
 import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../assessment/index.ts';
 import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from '../assessment/index.ts';
 import { getUsersCountByBusinessId } from '../../core/index.ts';
 import { deleteWebsiteEnquiriesById, listWebsiteEnquiriesIdHandledAtByStatus } from './data.ts';
-import { insertDeletionLog2 } from './data-borrowed.ts';
+import { insertDeletionLog2 } from '../compliance/index.ts';
 import { getBusinessesIdByRowid, getBusinessesRowidById, getLeadsIdBusinessIdById5, getLeadsIdByRowid, getLeadsRowidById, listLeadsIdStatusByBusinessId, listLeadsIdUpdatedAtByEnquiryIdStatus, listLeadsUpdatedAtByEnquiryIdStatus } from '../crm/index.ts';
 
 export type EnquiryRetention = {

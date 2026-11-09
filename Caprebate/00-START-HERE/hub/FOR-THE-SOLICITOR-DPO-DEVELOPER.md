@@ -770,7 +770,7 @@ For the developer, from the ITRoadway audit's third finding (forms protected by 
 
 ## Added 9 September 2026 — the handover pack has been rebuilt, and one thing in it was flatly wrong
 
- **Entry SDP-V1 above has been rewritten rather than annotated**, because what is being handed to a developer is no longer a set of design documents. It is **two working applications and one specification that describes them**, and the specification — `09-app/CAPREBATE-DEVELOPER-SPEC.md` — is now the first thing a developer reads.
+ **Entry SDP-V1 above has been rewritten rather than annotated**, because what is being handed to a developer is no longer a set of design documents. It is **two working applications and one specification that describes them**, and the specification — `09-app/docs/CAPREBATE-DEVELOPER-SPEC.md` — is now the first thing a developer reads.
 
 ### For the developer — what actually changed in the ask
 
@@ -1208,7 +1208,7 @@ Signed .............................  Date ..........................
 
  Confirm that the invoice email, when it is built, is a deliberate piece of work — its template, its channel and the confirmation check — and is not turned on by a flag. Every refusal today sits in two places only: the automation rule store, and the email template store with its table trigger.
 
- **Where it is.** SOP 9 of the standard operating procedures export, attached to "Create standard operating procedures"; `INVOICE_FRAUD_PROCEDURE` in `09-app/backend/src/modules/crm/automation.ts`; decision E89 in `09-app/CAPREBATE-CRM-DISPOSITION.md`.
+ **Where it is.** SOP 9 of the standard operating procedures export, attached to "Create standard operating procedures"; `INVOICE_FRAUD_PROCEDURE` in `09-app/backend/src/modules/crm/automation.ts`; decision E89 in `09-app/docs/CAPREBATE-CRM-DISPOSITION.md`.
 
 ## Added 12 September 2026 — the compliance registers are built: seven entries more, SDP-L8 and SDP-P12 to SDP-P17
 
@@ -1248,7 +1248,7 @@ Signed .............................  Date ..........................
  **What is built.** A retention clock on every record kind — twenty-one — with UNSET shown as unset; nothing computes a date, because none of RET-1 to RET-8 is approved. A legal hold keeps a record off the list. **There is no deleter**: whether client-document folders can be kept out of the host's backup is still open. Seven letters — the complaint acknowledgement and the complaint outcome, the identity request, the extension notice, the refusal and the objection decision with the three onward routes, and the access response's cover — are drafts that reach the outbox and nowhere else. **For the developer:** confirm that deletion, when it is built, is a deliberate piece of work that answers the backup question first, and that several tables refuse a delete by trigger today — the list says which.
 
 
- **Where it is.** `09-app/backend/migrations/017-compliance-registers.sql`; `src/web/compliance*.ts`; decisions E94 to E118 and Part O in `09-app/CAPREBATE-CRM-DISPOSITION.md`.
+ **Where it is.** `09-app/backend/migrations/017-compliance-registers.sql`; `src/web/compliance*.ts`; decisions E94 to E118 and Part O in `09-app/docs/CAPREBATE-CRM-DISPOSITION.md`.
 
  **Internal index, for whoever maintains this register:** SDP-L8 and SDP-P12 to SDP-P17 — board item 13032264597, Built — awaiting sign-off.
 
@@ -2057,7 +2057,7 @@ Name:                                  Date:
 -  **The test website's function log no longer prints emails.** It printed every new email in the outbox — the address, the subject and the body, sign-up links included — against the Developer Spec's rule of no personal data in logs. It now prints how many, of which kinds, and how many were sent: "3 new emails in the outbox - FREE_TYPED 1, SIGN_UP 2; 1 sent, 2 not sent". Nothing else changed in what is sent.
 -  **Invisible characters are taken out of what people type.** A null and a right-to-left override typed into a claim note or a portal message were stored and shown back as typed; the override can make a file name read backwards. Every form the website reads now drops control characters (keeping tabs and line breaks) and the direction marks and overrides. A password is never altered.
 
- **For the developer.** No migration and no new route. Line by line, with its test in `09-app/backend/test/phase154a1.test.ts`:
+ **For the developer.** No migration and no new route. Line by line, with its test in `09-app/backend/test/core/sweep-fixes.test.ts`:
 -  A body over its cap is read and dropped (up to 8 MB more) and the 413 says `Connection: close` (`src/core/router.ts` `readBody`, `bindResponse`); the JSON API's cap is now a 413 too, not a 500 (`src/core/server.ts` `readJson`). Before, the next request on that connection hung six seconds and was reset.
 -  The compliance person search cuts its term to 200 characters and says so (`SEARCH_TERM_MAX`); 50,000 characters was a 500.
 -  A contact, an introducer's person or a firm with no name field at all is refused (`crm.ts`, `introducers.ts`); the firm was a 500.
@@ -2095,7 +2095,7 @@ Name:                                  Date:
 ## Phase 157a, 6 October 2026 — for the developer: the survey pack reads the cost model; nothing moved in or out
 
 -  **Migration 095** rebuilds `survey_pack_entries` the way 082 did (the own-transaction shape, every row copied, its index and both never-edited and never-deleted triggers made again, the foreign-key guard), adding five whole-pack values, each the surveyor's with a reason: the valuation date, the insurance rebuild figure, its date, and what each figure includes. A date is kept as YYYYMMDD and an "includes" answer as 0 to 7; the table refuses anything else.
--  **`src/web/pack-cost-model.ts`** reads `09-app/backend/src/modules/survey/costing/cost-model.cjs` for one pack, as `bcis-index.ts` already did (the deploy's `includeFiles` takes `Caprebate/**`), and the phase3 CRM's £/m² limit. Its readings show in chapters 11, 14 and 22 and are kept out of the approved version and the client's report (`SheetRow.internal`). No personal data, no outside call, no new route: the values post to the pack's existing `/extra` route.
+-  **`src/modules/survey/pack-cost-model.ts`** reads `09-app/backend/src/modules/survey/costing/cost-model.cjs` for one pack, as `bcis-index.ts` already did (the deploy's `includeFiles` takes `Caprebate/**`), and the phase3 CRM's £/m² limit. Its readings show in chapters 11, 14 and 22 and are kept out of the approved version and the client's report (`SheetRow.internal`). No personal data, no outside call, no new route: the values post to the pack's existing `/extra` route.
 -  **The test system** for its placeholders is the deployed test website, or a copy started with `CAPREBATE_COST_MODEL_TEST=1`. The real BCIS index file, once imported, is read first and stays outside the repository, as Phase 155 set it.
 
  **And the board's own total at the close of Phase 157a, 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.

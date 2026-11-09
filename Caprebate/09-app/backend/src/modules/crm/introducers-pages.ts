@@ -21,7 +21,7 @@ import { breadcrumb, claimRef, dataLink, savedMessage } from '../../shared/index
 import { kpiRow, lateBadge, nobodyBadge } from '../../core/index.ts';
 import { setSubMenu } from '../../core/navigation.ts';
 import * as I from './introducers.ts';
-import { vocabulary } from '../../web/vocabularies.ts';
+import { vocabulary } from '../admin/index.ts';
 import { SECTORS } from './leads.ts';
 import { STUB_NOTICE } from '../../integrations/index.ts';
 import { piecesPage } from '../../core/index.ts';
@@ -529,7 +529,7 @@ function rewardPage(d: IntroducerPageDeps, actor: Actor, v: I.RewardView, msg: s
         That is model A, where we give the firm something back. Model B is a fixed fee for each successful claim. It is paid
         to the firm, never to a person. Model C is a share of the fee we invoice. It is paid to a registered accountancy
         firm that referred the claim. Nothing is paid until we record that the client was told about it. Which one, if any,
-        is for Lakhbir to decide: “${v.question}”</div>
+        is for the owner to decide: “${v.question}”</div>
       ${v.clause_one_blanks.length === 0 ? h`<p class="help">Clause 1 of the engagement letter has no blank left.</p>`
         : h`<p><strong>This cannot be switched on while clause 1 of the engagement letter is blank.</strong> It still reads:</p>
           <ul>${v.clause_one_blanks.map((t) => h`<li><q class="letter-quote">${t}</q></li>`)}</ul>`}

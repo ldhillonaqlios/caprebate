@@ -71,8 +71,11 @@ import type { FsObjectStore } from '../../shared/objectstore.ts';
 import { getUsersRoleById } from '../../core/index.ts';
 import { getClaimDeliverablesCountByClaimIdKind2, getClaimDeliverablesCountByLogicalDocumentIdTypeCode, getClaimDeliverablesFirstByClaimIdKind, getClaimFactsAnswerValueDateByClaimIdFactKey, getClaimsBusinessIdById, getClaimsBusinessIdPropertyIdById, getClaimsIdBusinessIdById, getClaimsPById, getDocumentFieldVouchesAnsweredByByRequestIdFieldId, getDocumentLinksCountByLogicalDocumentIdUnlinkedAt, getDocumentLinksIdByLogicalDocumentIdClaimId, getDocumentLinksIdByLogicalDocumentIdPropertyId, getDocumentLinksIdLogicalDocumentIdById, getDocumentVisibilityShownToClientByLogicalDocumentId, getDocumentsIdBusinessIdById3, getDocumentsIdByLogicalDocumentIdOriginalKeptAt, getDocumentsMByLogicalDocumentId, getEngagementsCountByBusinessIdSignedAt, getLogicalDocumentsCountByBusinessIdTypeCode2, getLogicalDocumentsEById, getLogicalDocumentsIdKindById, getLogicalDocumentsMByBusinessIdTypeCode, getPropertiesBusinessIdById, insertDocumentLinks, insertDocumentLinks2, insertDocumentVisibility, insertLogicalDocuments, listClaimsIdByBusinessIdStage, listClaimsIdClaimRefByBusinessId2, listDocumentEventsContractStepDetailJsonByDocIdContractStep, listDocumentLinksClaimIdByLogicalDocumentIdUnlinkedAt, listDocumentLinksClaimIdByLogicalDocumentIdUnlinkedAt2, listDocumentLinksIdClaimIdByLogicalDocumentId, listDocumentLinksIdClaimRefByLogicalDocumentIdUnlinkedAt, listDocumentsIdVersionNoByLogicalDocumentId, listPropertyEventsIdKindByBusinessId, updateDocumentFieldVouchesWithdrawnAtWithdrawnByByLogicalDoc, updateDocumentLinksUnlinkedAtUnlinkedByByIdUnlinkedAt, updateLogicalDocumentsEventIdById } from './data.ts';
 import { getBusinessesIdById, getClientMessageFilesIdDirectionByLogicalDocumentId, getClientTasksCountByKindState, getClientTasksIdBusinessIdById, getClientTasksIdBusinessIdById2, getClientTasksIdClaimIdByBusinessIdKind, getClientTasksIdClaimIdByIdKind, insertClientTasks2, listBusinessesIdName, updateClientTasksStateAnswerStateByIdState, updateClientTasksStateWithdrawnAtByIdState } from '../crm/index.ts';
-import { getDocumentTypesCodeByCode, getDocumentTypesM, getDocumentTypesOrdByCode, getDocumentsIdBusinessIdById, getDocumentsRoleById, getLogicalDocumentsRoleById, getUsersRoleById2, insertDocumentTypes, listBusinessesOByIdBusinessId, listDocumentTypesCodeLabelByActiveHandlerType, listLogicalDocumentsIdBusinessIdByBusinessId, listRegisterRecordsIdSourceIdBySourceIdBusinessId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2, listSurveyorJobsSurveyorIdByClaimIdSurveyorId, listSurveyorJobsSurveyorIdBySurveyorIdClaimId, updateDocumentTypesLabelReadersByCode } from './data-borrowed.ts';
-import { getDocumentTypesCodeLabelByCode, getLogicalDocumentsIdBusinessIdById, listDocumentTypesCodeLabel2, listDocumentsIdLogicalDocumentIdByLogicalDocumentId, listLogicalDocumentsIdBusinessId, listLogicalDocumentsIdBusinessIdByBusinessId2, listLogicalDocumentsIdBusinessIdByBusinessId3, listLogicalDocumentsIdBusinessIdByIdJO, listLogicalDocumentsIdBusinessIdByIdUnlinkedAt } from './data-borrowed.ts';
+import { getDocumentsIdBusinessIdById, getDocumentsRoleById, getLogicalDocumentsRoleById, getUsersRoleById2, listBusinessesOByIdBusinessId, listLogicalDocumentsIdBusinessIdByBusinessId, listRegisterRecordsIdSourceIdBySourceIdBusinessId, listSurveyorJobsSurveyorIdBySurveyorIdClaimId } from './data-borrowed.ts';
+import { getDocumentTypesCodeByCode, getDocumentTypesM, getDocumentTypesOrdByCode, insertDocumentTypes, listDocumentTypesCodeLabelByActiveHandlerType, updateDocumentTypesLabelReadersByCode } from '../admin/index.ts';
+import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2, listSurveyorJobsSurveyorIdByClaimIdSurveyorId } from '../survey/index.ts';
+import { getLogicalDocumentsIdBusinessIdById, listDocumentsIdLogicalDocumentIdByLogicalDocumentId, listLogicalDocumentsIdBusinessId, listLogicalDocumentsIdBusinessIdByBusinessId2, listLogicalDocumentsIdBusinessIdByBusinessId3, listLogicalDocumentsIdBusinessIdByIdJO, listLogicalDocumentsIdBusinessIdByIdUnlinkedAt } from './data-borrowed.ts';
+import { getDocumentTypesCodeLabelByCode, listDocumentTypesCodeLabel2 } from '../admin/index.ts';
 import { listDocumentFieldVouchesIdBusinessIdByRequestIdJO, listDocumentFieldVouchesIdBusinessIdByRequestIdJO2 } from './data-borrowed.ts';
 import { CENTRE_OBJ, mayVouchFor, staffMayOpen, TYPES_OBJ } from './documents.permissions.ts';
 
@@ -242,7 +245,6 @@ export function stripReading(handler_type: string | null): StripReading {
  * 2 · TYPES — configurable by ADMIN
  * ================================================================== */
 
-
 export type TypeRow = {
   code: string; label: string; source: string; handler_type: string | null; readers: string; carries_value: number;
   retention_ref: string | null; active: number; ord: number; note: string; created_at: string; updated_at: string;
@@ -373,7 +375,6 @@ export function updateType(d: DocDeps, actor: Actor, code: string, input: Fields
  * 3 · THE DOCUMENT AS AN OBJECT can() IS ASKED ABOUT
  * ================================================================== */
 
-
 type LogicalRow = {
   id: string; business_id: string; type_code: string; seq: number; created_at: string; label: string; readers: string;
   carries_value: number; handler_type: string | null; type_retention: string | null;
@@ -488,7 +489,6 @@ export function versionObj(db: Db, doc_id: string): DocObj | undefined {
 /* ================================================================== *
  * 4 · VERSIONS
  * ================================================================== */
-
 
 type VersionRow = {
   id: string; logical_document_id: string | null; version_no: number | null; type_code: string | null; retention_ref: string | null;
@@ -928,7 +928,6 @@ export function withdrawDocumentRequest(d: DocDeps, actor: Actor, id: string): D
   if (n !== 1) return { ok: false, why: 'that request changed while you were looking at it.' };
   return { ok: true, id: r.id, business_id: r.business_id, claim_id: r.claim_id };
 }
-
 
 type RequestRow = {
   id: string; business_id: string; claim_id: string | null; claim_ref: string | null; requested_type: string; type_label: string;
@@ -1371,7 +1370,7 @@ export type WithdrawResult =
   | { readonly ok: false; readonly why: string; readonly field?: 'reason' };
 
 /**
- * TAKE A YES BACK, WITH A REASON. The same shape as taking back a pick (src/modules/claims/match-review.ts) and Phase 139's tick:
+ * TAKE A YES BACK, WITH A REASON. The same shape as taking back a pick (src/modules/claims/match-review.ts) and a ticked fact (src/modules/claims/approvals.ts):
  * its own act, asking why, keeping the reason.
  *
  *   · it takes THAT FIELD, AND NO OTHER, out of every record the yes let it into (`removeRegisterField`, the one door

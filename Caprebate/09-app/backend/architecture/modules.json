@@ -1,5 +1,5 @@
 {
- "note": "THE MODULE MAP (Phase 161h1, 7 Nov 2026; 09-app/ARCHITECTURE.md). Every file under src/: its area and its kind (page, logic, data, routes, other). doors: the one file of each area another area may import; until it exists, every import into the area is a break of rule 1. Read by tools/boundaries.cjs. A new file is placed here on purpose; moving a file to another area is a change to review.",
+ "note": "THE MODULE MAP (Phase 161h1, 7 Nov 2026; 09-app/docs/ARCHITECTURE.md). Every file under src/: its area and its kind (page, logic, data, routes, other). doors: the one file of each area another area may import; until it exists, every import into the area is a break of rule 1. Read by tools/boundaries.cjs. A new file is placed here on purpose; moving a file to another area is a change to review.",
  "doors": {
   "core": "src/core/index.ts",
   "shared": "src/shared/index.ts",
@@ -443,6 +443,54 @@
    "area": "integrations",
    "kind": "logic"
   },
+  "src/modules/admin/admin-tiles.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
+  "src/modules/admin/configuration-pages.ts": {
+   "area": "admin",
+   "kind": "page"
+  },
+  "src/modules/admin/configuration.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
+  "src/modules/admin/connections.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
+  "src/modules/admin/data-borrowed.ts": {
+   "area": "admin",
+   "kind": "data"
+  },
+  "src/modules/admin/data.ts": {
+   "area": "admin",
+   "kind": "data"
+  },
+  "src/modules/admin/index.ts": {
+   "area": "admin",
+   "kind": "other"
+  },
+  "src/modules/admin/role-editor-pages.ts": {
+   "area": "admin",
+   "kind": "page"
+  },
+  "src/modules/admin/role-editor.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
+  "src/modules/admin/settings.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
+  "src/modules/admin/templates.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
+  "src/modules/admin/vocabularies.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
   "src/modules/assessment/address-check.ts": {
    "area": "assessment",
    "kind": "logic"
@@ -707,6 +755,70 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/compliance/audit-log.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/breach-names.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/compliance-aml.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/compliance-breach.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/compliance-clock.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/compliance-identity.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/compliance-pages.ts": {
+   "area": "compliance",
+   "kind": "page"
+  },
+  "src/modules/compliance/compliance-rights.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/compliance-views.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/compliance.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/data-borrowed.ts": {
+   "area": "compliance",
+   "kind": "data"
+  },
+  "src/modules/compliance/data.ts": {
+   "area": "compliance",
+   "kind": "data"
+  },
+  "src/modules/compliance/disclosure-log.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/identity-checks.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/index.ts": {
+   "area": "compliance",
+   "kind": "other"
+  },
+  "src/modules/compliance/legal-approvals.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
   "src/modules/crm/automation.ts": {
    "area": "crm",
    "kind": "logic"
@@ -891,6 +1003,34 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/finance/billing.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
+  "src/modules/finance/data-borrowed.ts": {
+   "area": "finance",
+   "kind": "data"
+  },
+  "src/modules/finance/data.ts": {
+   "area": "finance",
+   "kind": "data"
+  },
+  "src/modules/finance/finance-pages.ts": {
+   "area": "finance",
+   "kind": "page"
+  },
+  "src/modules/finance/finance.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
+  "src/modules/finance/index.ts": {
+   "area": "finance",
+   "kind": "other"
+  },
+  "src/modules/finance/invoices.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
   "src/modules/portal/accountant-confirm-pages.ts": {
    "area": "portal",
    "kind": "page"
@@ -999,6 +1139,18 @@
    "area": "survey",
    "kind": "logic"
   },
+  "src/modules/survey/anchor-store.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/bcis-data.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/bcis-index.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
   "src/modules/survey/costing/cost-model.cjs": {
    "area": "survey",
    "kind": "other"
@@ -1011,7 +1163,107 @@
    "area": "survey",
    "kind": "other"
   },
+  "src/modules/survey/data-borrowed.ts": {
+   "area": "survey",
+   "kind": "data"
+  },
+  "src/modules/survey/data.ts": {
+   "area": "survey",
+   "kind": "data"
+  },
+  "src/modules/survey/evidence-pages.ts": {
+   "area": "survey",
+   "kind": "page"
+  },
+  "src/modules/survey/index.ts": {
+   "area": "survey",
+   "kind": "other"
+  },
+  "src/modules/survey/pack-approve.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/pack-chapters.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/pack-cost-model.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/pack-grants.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/pack-legal.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/pack-lines.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/pack-sheets.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/pack-sums.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/pack-vat.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/pack-words.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/photo-upload-script.ts": {
+   "area": "survey",
+   "kind": "other"
+  },
+  "src/modules/survey/photo-upload.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/survey-checklist.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/survey-evidence.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/survey-open.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/survey-pack-pages.ts": {
+   "area": "survey",
+   "kind": "page"
+  },
+  "src/modules/survey/survey-pack.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/survey-report.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/survey-video.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
   "src/modules/survey/surveyor-crm.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/surveyor-pages.ts": {
+   "area": "survey",
+   "kind": "page"
+  },
+  "src/modules/survey/surveyor.ts": {
    "area": "survey",
    "kind": "logic"
   },
@@ -1133,210 +1385,6 @@
   },
   "src/shared/zip.ts": {
    "area": "shared",
-   "kind": "logic"
-  },
-  "src/web/admin-tiles.ts": {
-   "area": "admin",
-   "kind": "logic"
-  },
-  "src/web/anchor-store.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/audit-log.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/bcis-data.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/bcis-index.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/billing.ts": {
-   "area": "finance",
-   "kind": "logic"
-  },
-  "src/web/breach-names.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/compliance-aml.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/compliance-breach.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/compliance-clock.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/compliance-identity.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/compliance-pages.ts": {
-   "area": "compliance",
-   "kind": "page"
-  },
-  "src/web/compliance-rights.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/compliance-views.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/compliance.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/configuration-pages.ts": {
-   "area": "admin",
-   "kind": "page"
-  },
-  "src/web/configuration.ts": {
-   "area": "admin",
-   "kind": "logic"
-  },
-  "src/web/connections.ts": {
-   "area": "admin",
-   "kind": "logic"
-  },
-  "src/web/disclosure-log.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/evidence-pages.ts": {
-   "area": "survey",
-   "kind": "page"
-  },
-  "src/web/finance-pages.ts": {
-   "area": "finance",
-   "kind": "page"
-  },
-  "src/web/finance.ts": {
-   "area": "finance",
-   "kind": "logic"
-  },
-  "src/web/identity-checks.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/invoices.ts": {
-   "area": "finance",
-   "kind": "logic"
-  },
-  "src/web/legal-approvals.ts": {
-   "area": "compliance",
-   "kind": "logic"
-  },
-  "src/web/pack-approve.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/pack-chapters.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/pack-cost-model.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/pack-grants.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/pack-legal.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/pack-lines.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/pack-sheets.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/pack-sums.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/pack-vat.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/pack-words.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/photo-upload-script.ts": {
-   "area": "survey",
-   "kind": "other"
-  },
-  "src/web/photo-upload.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/role-editor-pages.ts": {
-   "area": "admin",
-   "kind": "page"
-  },
-  "src/web/role-editor.ts": {
-   "area": "admin",
-   "kind": "logic"
-  },
-  "src/web/settings.ts": {
-   "area": "admin",
-   "kind": "logic"
-  },
-  "src/web/survey-checklist.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/survey-evidence.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/survey-open.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/survey-pack-pages.ts": {
-   "area": "survey",
-   "kind": "page"
-  },
-  "src/web/survey-pack.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/survey-report.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/survey-video.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/surveyor-pages.ts": {
-   "area": "survey",
-   "kind": "page"
-  },
-  "src/web/surveyor.ts": {
-   "area": "survey",
-   "kind": "logic"
-  },
-  "src/web/templates.ts": {
-   "area": "admin",
-   "kind": "logic"
-  },
-  "src/web/vocabularies.ts": {
-   "area": "admin",
    "kind": "logic"
   }
  }

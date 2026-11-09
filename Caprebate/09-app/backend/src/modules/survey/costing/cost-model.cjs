@@ -1,5 +1,5 @@
 /* =============================================================================
-   CAPREBATE — RESIDUAL COST MODEL (Phase 9)
+   CAPREBATE — RESIDUAL COST MODEL
 
    Board 18422317809. Plan doc 46256300.
    Items: 12804374366 (LEG-E2), 12804380489 (LEG-E3), 12804374707 (LEG-E4),
@@ -28,18 +28,18 @@
 
    WHAT IS LICENSED AND WHAT IS NOT - read this before touching the gates
      LEG-E2  needs NO data at all. It removes a multiplier. See the note at
-             prelimsFactor(). It was once marked blocked on the VOA licence;
-             since 4 Oct 2026 nothing here waits on that licence.
-     LEG-E3  needs a professional-fees figure. Since 4 Oct 2026 the surveyor
+             prelimsFactor. It was once marked blocked on the VOA licence;
+             nothing here waits on that licence.
+     LEG-E3  needs a professional-fees figure. the surveyor
              sets the percentage (call question 9a, SV-S10); the Valuation
              Office's fee scale is not used and its table stays empty.
      LEG-E4  needs a commercial cost library: BCIS, chosen over Spon's on
-             24 September 2026 (Word answers 6 and 8). No Spon's book is
+             (Word answers 6 and 8). No Spon's book is
              bought. It IS a licence question after all: BCIS's licence
-             (Annex One of its terms of sale, read by Phase 151) grants
+             grants
              internal use to named users and extracts to clients only - see
              BCIS_COMMERCIAL in phase3's source register. Word question 218
-             closed 10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir),
+             closed: BCIS confirmed our use,
              reports included. Board items 12804374406 and, for the export,
              13254356802.
      LEG-E5  needs VOA obsolescence scales (licensed) AND CIBSE plant lives
@@ -75,7 +75,7 @@ const CB_P9_GATES = {
      2026 and nothing here needs it - see prelimsFactor. */
   leg_e2_drop_prelims_from_erc: false,
 
-  /* PHASE 132 (14 September 2026) - "Stop counting site overheads twice in the
+  /* "Stop counting site overheads twice in the
      cost build-up". WHETHER THE UNIT RATE ALREADY CARRIES ON-COSTS IS A FACT
      ABOUT THE PRICE BOOK, NOT ABOUT THE JOB. A replacement-cost rate that
      includes on-costs makes the 18% preliminaries uplift a double count; an
@@ -88,7 +88,7 @@ const CB_P9_GATES = {
      alternatives: both on refuses with E_GATE_CONFLICT. */
   leg_e2_oncosts_by_price_source: false,
 
-  /* PHASE 153e (4 October 2026, Word question 136): preliminaries by JOB SIZE, from a PLACEHOLDER banded table
+  /* Preliminaries by JOB SIZE, from a PLACEHOLDER banded table
      (PRELIMS_BANDS_PLACEHOLDER), wherever the flat 18% default would be used. A job with no stated size refuses (N4).
      Off as shipped; on in TEST_SYSTEM_GATES with the by-source rule, for the surveyor to set the bands. */
   leg_e2_prelims_banded_by_job_size: false,
@@ -96,12 +96,12 @@ const CB_P9_GATES = {
   /* LEG-E3 (12804380489) - replace the flat 15% professional fee uplift with
      a banded fee table. Waits on the SURVEYOR, who sets the fees percentage
      (call question 9a, SV-S10), not on the Valuation Office, whose licence
-     email was dropped on 4 Oct 2026. */
+     email was dropped. */
   leg_e3_voa_fee_scale: false,
 
   /* F-1 (12927234375) - the professional-fee rate by BUILDING TYPE: the VOA
      fee scale's adders for highly serviced buildings and for hospitals, on
-     top of the banded base rate. Built by Phase 129 on 12 September 2026 from
+     top of the banded base rate. Built from
      the prepared patch of 29 August; its values are an EMPTY STUB, same
      licence as the base scale. INTERLOCKED with leg_e3_voa_fee_scale:
      feesFactor refuses if the base scale is on and this is not, because the
@@ -112,10 +112,10 @@ const CB_P9_GATES = {
      size adjustment. BLOCKED on the cost library purchase (12804374406). */
   leg_e4_location_and_contract_size: false,
 
-  /* PHASE 132 (14 September 2026) - a contract OUTSIDE the price book's
+  /* A contract OUTSIDE the price book's
      contract-size window (about GBP 2m to GBP 5m). WAITS ON THE SURVEYOR.
      Off, interpolateScale refuses off either end, exactly as it has since
-     Phase 97. On, the adjustment is HELD AT THE NEAREST LIMIT and the result
+     On, the adjustment is HELD AT THE NEAREST LIMIT and the result
      says which way that errs: above valid_to the valid_to value OVERSTATES
      cost (larger contracts carry lower rates than the book's last point);
      below valid_from the valid_from value UNDERSTATES it. Holding at a limit
@@ -125,7 +125,7 @@ const CB_P9_GATES = {
   leg_e4_contract_size_outside_window: false,
 
   /* ATP-F-3 (12927234437) - the CIBSE-to-taxonomy CROSSWALK COMPLETENESS GATE.
-     Built by Phase 129 on 12 September 2026 from the prepared patch of 29
+     Built from the prepared patch of 29
      August. elementDepreciationFactor already refuses an unlisted element when
      it meets one (E_PLANT_LIFE_NOT_IN_TABLE); that guard is correct but
      reactive, so a partial crosswalk is only found mid-job. With this gate on,
@@ -141,10 +141,10 @@ const CB_P9_GATES = {
   /* LEG-E5 (12804317685) - per-element depreciation from obsolescence scales
      and CIBSE plant lives. Waits on the SURVEYOR's ageing method (call
      question 9, the valuation basis; tracker 12927234437) and on CIBSE; not on the Valuation Office, whose
-     licence email was dropped on 4 Oct 2026. */
+     licence email was dropped. */
   leg_e5_per_element_depreciation: false,
 
-  /* LEG-E5b (12927234437, Phase 52) - WHOLE-BUILDING depreciation: one
+  /* LEG-E5b - WHOLE-BUILDING depreciation: one
      age-derived factor applied to every element, the VOA contractor's-basis
      shape. The alternative to E5, not an addition to it.
 
@@ -209,11 +209,11 @@ const BUILDING_TYPE = { STANDARD: "standard", HIGHLY_SERVICED: "highly_serviced"
    94 against a national mean of 100 - i.e. building in Cardiff costs about 6%
    less than the national mean, so a national rate applied to a Cardiff property
    overstates replacement cost by about 6%. EMPTY - these are priced data from
-   BCIS (the cost source since 24 September 2026, Word answers 6 and 8; Spon's
+   BCIS (the cost source, Word answers 6 and 8; Spon's
    is not bought), loaded only once Word question 218 names the product and its
    order form shows the licence covers this use.
 
-   THE BASE IS DECLARED, NOT ASSUMED. Corrected 14 September 2026 (Phase 132).
+   THE BASE IS DECLARED, NOT ASSUMED. Corrected.
    This stub used to carry "mean: 100" and the factor was raw / mean. That is
    right only for a table indexed to a national mean of 100, and the books we
    would buy are not all that: Spon's is indexed to Outer London = 1.00, and the
@@ -230,7 +230,7 @@ const BUILDING_TYPE = { STANDARD: "standard", HIGHLY_SERVICED: "highly_serviced"
    and the factor is factors[property] / factors[where the rates are priced],
    both read from this one table. A table still carrying a bare mean refuses
    (E_LOCATION_MEAN_DEPRECATED) rather than being read the old way.
-   (Updated 28 September 2026, Phase 153: BCIS publishes its factors against a
+   (Updated: BCIS publishes its factors against a
    UK mean of 100, which is basis "national_mean" with the UK mean as the base
    row - read from BCIS's own page; see the LEG-E4 note. The stub stays empty.) */
 const CB_LOCATION_FACTORS = emptyTable(
@@ -249,7 +249,7 @@ const INDEX_BASIS = {
   PUBLISHER_OTHER: "publisher_other"
 };
 
-/* PHASE 132 (14 September 2026). THE PRICE BOOKS, AS FACTS ABOUT EACH BOOK.
+/* THE PRICE BOOKS, AS FACTS ABOUT EACH BOOK.
    One entry per price source, keyed by an id the job names as price_source:
 
      label                 which book and edition
@@ -283,7 +283,7 @@ const CB_PRICE_SOURCES = emptyTable(
    cost plan off that assumption.
 
    THIS TABLE IS A CONTINUOUS SCALE, NOT A SET OF BANDS. Corrected 7 September
-   2026 (Phase 97). It shipped as bands: [floor, ceiling, factor] read through
+   2026. It shipped as bands: [floor, ceiling, factor] read through
    bandLookup, and that was wrong in two ways at once:
 
      (a) the published scale is INTERPOLATED between its tabulated points, not a
@@ -305,7 +305,7 @@ const CB_PRICE_SOURCES = emptyTable(
    REQUIRED on a loaded table and an out-of-range contract value throws.
    This is not a theoretical path: the standing worked example on the board is a
    GBP 6m contract, so refusal is what will fire first when the book is bought.
-   Phase 132 (14 September 2026) added the surveyor's alternative behind
+   The surveyor's alternative was added behind
    leg_e4_contract_size_outside_window, OFF: hold at the nearer limit and say
    which way that errs. Off, the refusal above is unchanged.
 
@@ -339,7 +339,7 @@ const CB_VOA_OBSOLESCENCE = emptyTable(
    SOURCE from the VOA scales with its own terms - clearing one does not clear
    the other, and E5 needs both. EMPTY.
 
-   PHASE 147, 24 SEPTEMBER 2026 - the source now has an owner and its terms are
+   The source now has an owner and its terms are
    read: licence CIBSE_KNOWLEDGE in 04-phase-work/phase3/caprebate-source-
    register.ts, research in caprebate-cibse-plant-lives-source-register-row.md
    beside it. The current edition is Guide M11 Appendix 11.A1 (June 2026), free
@@ -380,7 +380,7 @@ const CB_P9_TABLES = {
   CB_VOA_BUILDING_OBSOLESCENCE
 };
 
-/* N4 (Phase 132, 14 September 2026). A key a job states is KNOWN only if it is
+/* N4. A key a job states is KNOWN only if it is
    a non-empty string that is not one of the ways a form records "I don't know".
    "unsure" and an absent value are the same fact - nothing was stated - and
    must reach the same refusal. Without this, "unsure" is looked up as if it
@@ -412,7 +412,7 @@ function requireTable(opts, id, gateName) {
   return t;
 }
 
-/* EXPORTED SINCE PHASE 110, and the reason is worth a line. The wiring in
+/* EXPORTED and the reason is worth a line. The wiring in
    caprebate-location-key.ts has to know whether LEG-E4 is on before it decides
    whether a missing location_key is a refusal or simply irrelevant. It could
    have read CB_P9_GATES directly - and would then have missed the opts.gates
@@ -472,7 +472,7 @@ function percentageAdjustmentToFactor(pct, what) {
    all - so this throws, exactly as an unlisted location throws rather than
    falling back to the mean. Unknown is not a branch.
 
-   ONE OPTION, AND ITS DEFAULT IS THE REFUSAL (Phase 132, 14 September 2026).
+   ONE OPTION, AND ITS DEFAULT IS THE REFUSAL.
    options.outside is "refuse" (the default, and what every caller got before)
    or "hold_at_limit": outside the window, read the scale AT the nearer limit
    and say so in held_at_limit ("upper" | "lower"). That is still not
@@ -611,10 +611,10 @@ function interpolateScale(scale, value, what, options) {
    that loses an enquiry.
 
    ------------------------------------------------------------------------
-   IS THIS ACTUALLY LICENCE-GATED? A QUESTION FOR LAKHBIR, NOT A DECISION.
+   IS THIS ACTUALLY LICENCE-GATED? A QUESTION FOR THE OWNER, NOT A DECISION.
 
    The board marked this blocked on VOA licence clearance (that licence was
-   dropped on 4 Oct 2026; Phase 157a corrected this text). Reading the change
+   dropped, so this text was corrected). Reading the change
    itself: turning this gate on sets a multiplier to 1.0 and deletes a
    parameter. It reproduces no VOA table, quotes no VOA figure, and needs no
    VOA data to compute. The only VOA-derived thing involved is the KNOWLEDGE
@@ -660,7 +660,7 @@ function interpolateScale(scale, value, what, options) {
    costBasis below, which must be stated and is never defaulted.
 
    ------------------------------------------------------------------------
-   PHASE 132, 14 SEPTEMBER 2026 - ON-COSTS ARE A FACT ABOUT THE BOOK.
+   ON-COSTS ARE A FACT ABOUT THE BOOK.
    "There is no parameter anywhere for whether the unit rate is on-cost-
    inclusive" (4 September). The residual-path argument above holds for a
    replacement-cost rate that already includes on-costs. It does NOT hold for
@@ -704,7 +704,7 @@ const COST_BASIS = { RESIDUAL: "residual_replacement_cost", INVOICE: "invoice_co
 
 const SPEC_PRELIMS_DEFAULT = 0.18;   /* spec 4.2. No source cited - register R-B9. */
 
-/* PHASE 153e, 4 October 2026 (Word question 136, the surveyor's). The answer typed under the question: "The percentage
+/* The answer typed under the question: "The percentage
    should not be fixed at 18% for every job; it should reflect project size…". PLACEHOLDER BANDS, by the job's
    construction cost in pounds before preliminaries: [floor, ceiling, rate], ceiling null = open top. Not calibrated:
    the surveyor sets them. */
@@ -763,7 +763,7 @@ function prelimsFactor(input, opts) {
   const dropOn = gateOn("leg_e2_drop_prelims_from_erc", opts);
   const bySourceOn = gateOn("leg_e2_oncosts_by_price_source", opts);
 
-  /* PHASE 132. THE TWO leg_e2 GATES ARE ALTERNATIVES, NOT LAYERS. One drops
+  /* THE TWO leg_e2 GATES ARE ALTERNATIVES, NOT LAYERS. One drops
      prelims on every residual job; the other decides per price book. Both on
      means nobody has decided which rule governs - refused, as the fee gates
      refuse when only one of their pair is on. */
@@ -916,7 +916,7 @@ function feesFactor(input, opts) {
   const table = requireTable(opts, "CB_VOA_FEE_SCALE", "leg_e3_voa_fee_scale");
   const baseRate = bandLookup(table.bands, cost, "construction_cost");
 
-  /* F-1 (Phase 129). The base bands alone under-read fees on every healthcare
+  /* F-1. The base bands alone under-read fees on every healthcare
      property, so once the base scale is live the adder is not optional: both
      gates on together, never one without the other. */
   if (!gateOn("leg_e3_building_type_adder", opts)) {
@@ -966,14 +966,14 @@ function feesFactor(input, opts) {
    assumed contract value and a much larger or smaller job does not carry those
    unit rates.
 
-   CORRECTED 24 SEPTEMBER 2026 (Phase 151): BCIS, NOT SPON'S, AND A LICENCE AS
-   WELL AS A PURCHASE. Lakhbir chose BCIS (Word answers 6 and 8); no Spon's book
+   CORRECTED: BCIS, NOT SPON'S, AND A LICENCE AS
+   WELL AS A PURCHASE. the owner chose BCIS (Word answers 6 and 8); no Spon's book
    is bought. This paragraph used to say the block was a purchase only, about
    GBP 330, with no licence question. BCIS is a subscription, not a book, and its
    licence (Annex One of its terms of sale) grants internal use to named users
    and extracts to clients only: BCIS_COMMERCIAL in phase3's source register
    holds every term it does not publish as a refusal. Word question 218 closed
-   10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir); the export is board
+   BCIS confirmed our use; the export is board
    item 13254356802 (and 12804374406 the blind re-run). The Spon's
    paragraphs below record what Spon's said; BCIS's own guidance on applying
    its factors is read when its product is named.
@@ -985,7 +985,7 @@ function feesFactor(input, opts) {
    not just to individual elements or materials". So the pair is ONE adjustment
    made ONCE, to the summed cost plan - never a column on an element line.
 
-   THIS IS A CORRECTION, MADE 7 SEPTEMBER 2026 (Phase 97). Until then this
+   THIS IS A CORRECTION, MADE. Until then this
    module multiplied loc.factor into every element inside the costing loop, and
    the specification's worked example printed "Cardiff 94" in the source column
    of five separate element rows. The ARITHMETIC was not wrong - one factor,
@@ -1002,13 +1002,13 @@ function feesFactor(input, opts) {
    adjustment means. The order is asserted in the tests so a later refactor
    cannot quietly transpose it.
 
-   THE INDEX BASE WAS A SEPARATE DEFECT, AND PHASE 97 DID NOT FIX IT. The
+   THE INDEX BASE WAS A SEPARATE DEFECT, AND THE CORRECTION ABOVE DID NOT FIX IT. The
    comment on CB_LOCATION_FACTORS said "mean 100"; Spon's is indexed to Outer
    London = 1.00 and the Mechanical and Electrical book uses a third base again.
    Fixing WHERE the factor is applied is independent of fixing WHAT the factor
-   is indexed to, and Phase 97 did the first only.
+   is indexed to, and the correction above did the first only.
 
-   FIXED 14 SEPTEMBER 2026 (Phase 132), under this same gate - no new gate,
+   FIXED, under this same gate - no new gate,
    because the gate was never on and the old arithmetic never reached a figure.
    The factor is no longer raw / mean. It is
 
@@ -1029,7 +1029,7 @@ function feesFactor(input, opts) {
                                       books, or declare different bases
      E_RATES_PRICING_LOCATION_MISSING the book does not say where its rates are priced
 
-   CHECKED AGAINST BCIS, 28 SEPTEMBER 2026 (Phase 153). The declared base
+   CHECKED AGAINST BCIS, 28 SEPTEMBER 2026. The declared base
    was designed against Spon's (Outer London = 1.00); BCIS, not Spon's, is
    being bought (Word question 218, "Which BCIS product did you agree to, and
    does its licence let our software use its rates?", open). BCIS's own public
@@ -1047,7 +1047,7 @@ function feesFactor(input, opts) {
    price study, but its shape is not public. With this gate on, the location
    factor still needs that table loaded. That waits on the purchase.
 
-   AND AN ABSENT CONTRACT VALUE IS NO LONGER A PASS (Phase 132, N4). Until this
+   AND AN ABSENT CONTRACT VALUE IS NO LONGER A PASS. Until this
    date a job with no contract_value took a contract-size factor of 1 and a
    flag (LEG_E4_NO_CONTRACT_SIZE) - "not stated" became "exactly the book's
    assumed size". With the gate on, an absent contract value and one recorded
@@ -1090,7 +1090,7 @@ function locationAndContractSizeFactor(input, opts) {
   }
   const locTable = requireTable(opts, "CB_LOCATION_FACTORS", GATE);
 
-  /* PHASE 132. The bare mean is gone; a table still carrying one refuses rather
+  /* The bare mean is gone; a table still carrying one refuses rather
      than being divided by it. */
   if (locTable.mean !== undefined && locTable.mean !== null) {
     fail("E_LOCATION_MEAN_DEPRECATED",
@@ -1175,7 +1175,7 @@ function locationAndContractSizeFactor(input, opts) {
   }
   const locationFactor = raw / pricedAtIndex;
 
-  /* PHASE 132, N4. A contract value is required once the gate is on. An absent
+  /* N4. A contract value is required once the gate is on. An absent
      one and one recorded as not known refuse identically; neither is the book's
      assumed contract size. */
   const value = input.contract_value;
@@ -1198,7 +1198,7 @@ function locationAndContractSizeFactor(input, opts) {
       { given: sizeTable.assumed_contract_value });
   }
   /* Off: throws E_SCALE_VALUE_OUT_OF_RANGE outside the book's stated window
-     rather than extrapolating - see interpolateScale. On (Phase 132, waits on
+     rather than extrapolating - see interpolateScale. On (waits on
      the surveyor): held at the nearer limit and flagged with the direction of
      the error. */
   const outsideOn = gateOn("leg_e4_contract_size_outside_window", opts);
@@ -1290,7 +1290,7 @@ function elementDepreciationFactor(element, opts) {
       flags: ["LEG_E5_NO_DEPRECIATION"]
     };
   }
-  /* ATP-F-3 (Phase 129). Off by default, and off it does nothing. On, the whole
+  /* ATP-F-3. Off by default, and off it does nothing. On, the whole
      crosswalk is checked before this element - or any element - is priced. */
   const crosswalkChecked = gateOn("leg_e5_crosswalk_completeness_gate", opts);
   if (crosswalkChecked) {
@@ -1365,16 +1365,16 @@ function elementDepreciationFactor(element, opts) {
 }
 
 /* ============================================================================
-   ATP-F-3 - THE CIBSE-TO-TAXONOMY CROSSWALK COMPLETENESS CHECK (Phase 129)
+   ATP-F-3 - THE CIBSE-TO-TAXONOMY CROSSWALK COMPLETENESS CHECK
    ============================================================================
    The load-time twin of E_PLANT_LIFE_NOT_IN_TABLE. Given every element id the
    fixture taxonomy can emit (Caprebate-Fixture-Taxonomy-v1.csv: 103 ids across
-   nine prefixes on 12 September 2026 - the prepared patch of 29 August said 95
+   nine prefixes - the prepared patch of 29 August said 95
    across five; the file has grown since), it refuses unless the loaded CIBSE
    lives cover every one. Callable on its own as the pre-flip step; called by
    elementDepreciationFactor when leg_e5_crosswalk_completeness_gate is on.
 
-   Corrected 13 September 2026 (Phase 129a): "nine prefixes" above is wrong.
+   Corrected: "nine prefixes" above is wrong.
    Counted by code with taxonomyElementRefs, the 103 ids sit under eight
    prefixes - the five sector ones (LS-CH, LS-DEN, LS-SL, LS-GP, LS-PH) and
    three that apply across sectors (LS-SR, LS-MP, LS-SBA).
@@ -1495,7 +1495,7 @@ function taxonomyElementRefs(csvText) {
 
    SO THIS MODULE DOES NOT CHOOSE. Both methods are built, both are gated off,
    and the default is neither - which is today's behaviour exactly. Same
-   discipline as the CTA switches in Phase 51: build both, ship neither, and
+   discipline as the CTA switches: build both, ship neither, and
    put the choice in front of the person qualified to make it.
 
    THE SAME FLOOR GUARD APPLIES. A building past the end of its scale does not
@@ -1601,9 +1601,9 @@ const DEPRECIATION_METHOD = {
 };
 const DEPRECIATION_METHOD_DEFAULT = DEPRECIATION_METHOD.NONE;
 
-/* THE COMPANY WORKING METHOD - surveyor pack I5, answered 1 September 2026.
+/* THE COMPANY WORKING METHOD - surveyor pack I5, answered.
 
-   Lakhbir Dhillon, asked how ageing should be applied, answered "one reduction
+   the owner, asked how ageing should be applied, answered "one reduction
    across the whole building". That is recorded here so it is a written
    position rather than a remembered conversation.
 
@@ -1614,7 +1614,7 @@ const DEPRECIATION_METHOD_DEFAULT = DEPRECIATION_METHOD.NONE;
    the default would turn inaction into a decision, which is the one thing the
    comment above says must not happen.
 
-   It is NOT set by a surveyor. Lakhbir is the Head of Business Development, not the chartered
+   It is NOT set by a surveyor. the owner is the Head of Business Development, not the chartered
    surveyor whose signature the schema requires on anything graded D. Anything
    resolved from this constant still raises
    DEPRECIATION_METHOD_NOT_SET_BY_SURVEYOR, and that flag is correct.
@@ -1639,7 +1639,7 @@ const DEPRECIATION_METHOD_DEFAULT = DEPRECIATION_METHOD.NONE;
    without the other invites an answer to the wrong question. */
 const CB_P9_WORKING_METHOD = {
   depreciation_method: DEPRECIATION_METHOD.WHOLE_BUILDING,
-  stated_by: "Lakhbir Dhillon (Head of Business Development)",
+  stated_by: "The owner (Head of Business Development)",
   stated_on: "2026-09-01",
   source: "surveyor pack question I5",
   set_by_surveyor: false,
@@ -1670,7 +1670,7 @@ function resolveDepreciationMethod(input, opts) {
 
   /* THE ONE BACK-COMPATIBILITY RULE, AND WHY IT IS NOT A CHOICE.
 
-     Before Phase 52 there was exactly one method, and turning the E5 gate on
+     Before E5b there was exactly one method, and turning the E5 gate on
      applied it. "Default to current behaviour" means that configuration must
      keep behaving identically: E5 gate on, E5b gate off, no method stated ->
      per_element, exactly as before. Nothing about a number changes.
@@ -1794,7 +1794,7 @@ function resolveValuationBasis(input, opts) {
   const bySurveyor = !!(input.basis_set_by);
 
   /* Available means "some depreciation method could run", not "E5 specifically".
-     Widened in Phase 52 when LEG-E5b landed: a DRC label over undepreciated
+     Widened when LEG-E5b landed: a DRC label over undepreciated
      arithmetic is a quiet lie whichever method was going to supply the factor,
      so the DRC_SELECTED_BUT_DEPRECIATION_UNAVAILABLE flag has to consider both. */
   const depreciationAvailable = gateOn("leg_e5_per_element_depreciation", opts) ||
@@ -1874,14 +1874,14 @@ function residualApportionment(input, opts) {
   const loc = locationAndContractSizeFactor(input, opts);
   flags.push.apply(flags, loc.flags);
 
-  /* price_source is read only by leg_e2_oncosts_by_price_source (Phase 132);
+  /* price_source is read only by leg_e2_oncosts_by_price_source;
      with that gate off it is carried and ignored. */
   const prelims = prelimsFactor(
     { cost_basis: costBasis, prelims_rate: input.prelims_rate,
       price_source: input.price_source, job_size_pounds: input.job_size_pounds }, opts);
   flags.push.apply(flags, prelims.flags);
 
-  /* PHASE 153e (Word question 147): the index factor can be worked out from an index table and two dates
+  /* The index factor can be worked out from an index table and two dates
      (input.index_dates = { purchase, valuation }) instead of being typed. Both at once refuses. */
   const hasDates = input.index_dates !== undefined && input.index_dates !== null;
   if (hasDates && input.index_factor !== undefined && input.index_factor !== null) {
@@ -1947,7 +1947,7 @@ function residualApportionment(input, opts) {
        value and not to individual element or material items. An element line is
        therefore quantity x rate, depreciated, on-costed and indexed - and
        nothing else. The single LEG-E4 factor is applied to the summed total
-       below. (Phase 97, 7 Sep 2026; this multiplication used to read
+       below. (7 Sep 2026; this multiplication used to read
        "qty * rate * loc.factor * dep.factor * ...".) */
     const cost = qty * rate * dep.factor * prelims.factor * index;
     if (pool === "nonqual") rawB += cost; else rawA += cost;
@@ -1977,7 +1977,7 @@ function residualApportionment(input, opts) {
     cost_basis: costBasis,
     fees_rate: input.fees_rate,
     construction_cost: locatedA + locatedB,
-    /* F-1 (Phase 129): read only once both fee gates are on; never defaulted. */
+    /* F-1: read only once both fee gates are on; never defaulted. */
     building_type: input.building_type
   }, opts);
   flags.push.apply(flags, fees.flags);
@@ -2138,15 +2138,15 @@ function residualApportionment(input, opts) {
 }
 
 /* ============================================================================
-   PHASE 153e, 4 October 2026 — FOUR OF THE SURVEYOR'S QUESTIONS, BUILT ON OUR RECOMMENDATION, IN THIS MODEL'S OWN
+   FOUR OF THE SURVEYOR'S QUESTIONS, BUILT ON OUR RECOMMENDATION, IN THIS MODEL'S OWN
    TEST SYSTEM (its suites, and TEST_SYSTEM_GATES / TEST_SYSTEM_TABLES below). NOTE WHICH TEST SYSTEM: the back end's
-   survey pack (09-app/backend/src/web/pack-sums.ts) does not call this model at all, so none of this reaches the test
-   website until the pack is wired to it. PHASE 157a (6 October 2026) wired it: 09-app/backend/src/web/pack-cost-model.ts
+   survey pack (09-app/backend/src/modules/survey/pack-sums.ts) does not call this model at all, so none of this reaches the test
+   website until the pack is wired to it. It is wired: 09-app/backend/src/modules/survey/pack-cost-model.ts
    reads the preliminaries bands, the index factor and the insurance check for one pack, as test placeholders (chapters
    11 and 14), and every gate here stays off.
    ============================================================================ */
 
-/* Question 147: which index turns today's rebuild cost back to the purchase date. Lakhbir: "BCIS is the guide we will
+/* Question 147: which index turns today's rebuild cost back to the purchase date. the owner: "BCIS is the guide we will
    use". BCIS is not bought (Word question 218), so the real table is an EMPTY STUB, and a PLACEHOLDER table with
    INVENTED points stands in for the test system. Never extrapolated: a date outside the table refuses. */
 const CB_BCIS_INDEX = Object.freeze({
@@ -2168,10 +2168,10 @@ const CB_BCIS_INDEX_PLACEHOLDER = Object.freeze({
   ].map(p => Object.freeze(p)))
 });
 
-/* PHASE 155 (line 4), 4 October 2026 — THE REAL INDEX, FROM A FILE LAKHBIR DOWNLOADS. BCIS publishes no API licence
-   and nothing here calls BCIS (Word question 218, closed 10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir, 9 Oct 2026); the export is board item 13254356802). Lakhbir downloads
+/* — THE REAL INDEX, FROM A FILE THE OWNER DOWNLOADS. BCIS publishes no API licence
+   and nothing here calls BCIS (Word question 218, closed: BCIS confirmed our use; the export is board item 13254356802). the owner downloads
    the index series from BCIS as a spreadsheet saved as CSV, and `parseIndexTable` turns it into a table of exactly
-   CB_BCIS_INDEX's shape. The back end keeps it OUTSIDE the repository (09-app/backend/src/web/bcis-index.ts, the
+   CB_BCIS_INDEX's shape. The back end keeps it OUTSIDE the repository (09-app/backend/src/modules/survey/bcis-index.ts, the
    command `import-bcis-index`): BCIS's licence (BCIS_COMMERCIAL in the source register) lets named users use the rates
    and does not let the table be reproduced, so it is never committed and never published.
    WHAT IT READS: two columns per row - a period and an index figure. A period is a month (2024-01, 2024-01-31,
@@ -2219,7 +2219,7 @@ function parseIndexTable(text, meta) {
     table: Object.freeze({
       loaded: true,
       source: meta.source || "BCIS building price index, imported from a file",
-      licence: meta.licence || "BCIS (RICS) subscription - our use confirmed by BCIS, reports included (relayed by Lakhbir, 9 Oct 2026); the table itself is never reproduced (BCIS_COMMERCIAL)",
+      licence: meta.licence || "BCIS (RICS) subscription - our use confirmed by BCIS, reports included (relayed by the owner, 9 Oct 2026); the table itself is never reproduced (BCIS_COMMERCIAL)",
       verified_at: meta.verified_at || null,
       points: Object.freeze(points)
     }),

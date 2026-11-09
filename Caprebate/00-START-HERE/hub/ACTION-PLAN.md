@@ -514,12 +514,12 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     offered, else Ireland (Phase 161h, 7 Nov 2026: Turso's servers answer
     London from Ireland, aws-eu-west-1, and no London or Paris place was
     found; Word question 291); keys in Vercel's encrypted settings. Built by
-    Phase 161h (09-app/deploy/LIVE-RUNBOOK.md). No VPS, systemd unit, proxy
+    Phase 161h (09-app/docs/LIVE-RUNBOOK.md). No VPS, systemd unit, proxy
     or firewall is built; 161c's systemd key store stays in the code, unused.
   THE STRUCTURE (Lakhbir, 6 Nov 2026: "make a change on one thing without
     breaking others"): one application split into modules with front doors,
     one-way dependencies, one owner per table, versioned rules, each with a
-    check, built by Phases 161h1 to 161m (09-app/ARCHITECTURE.md). The
+    check, built by Phases 161h1 to 161m (09-app/docs/ARCHITECTURE.md). The
     database stays SQLite on Turso; it is not ported to Postgres (441
     triggers and 524 calls would change at once). Look again only if Turso
     fails the DPO's checks; then Postgres in London, one module at a time.
@@ -906,7 +906,7 @@ close of Phase 151d. RUN A NEGATIVE CONTROL'S EXIT CODE ON ITS OWN LINE:
 never ran (23 Sep 2026).
 NO FIGURES IN THIS BLOCK, ON PURPOSE: a figure copied here goes stale, and the
 register check reads this document. The live figures are the first lines the
-drift checker prints, and section 4 of 09-app/CAPREBATE-DEVELOPER-SPEC.md.
+drift checker prints, and section 4 of 09-app/docs/CAPREBATE-DEVELOPER-SPEC.md.
 A COUNT FOR ONE FILE IS CHECKED BY NOTHING. The drift checker derives five
 totals only, so "`x.test.ts` (N assertions)" can never be compared. Write the
 command that counts it, never the number.
@@ -948,7 +948,7 @@ command that counts it, never the number.
   node 03-app/caprebate-figure-classify.cjs --self-test --against <an older copy>
                                                       proves a new case can fail
   cd 09-app/backend && node tools/boundaries.cjs      THE BOUNDARY CHECK (Phase 161h1): rules 1 to 4 of
-                                                      09-app/ARCHITECTURE.md against architecture/baseline.json;
+                                                      09-app/docs/ARCHITECTURE.md against architecture/baseline.json;
                                                       any new break fails, and a gone one must be lowered
                                                       (--lower, which never adds); --counts by area and rule;
                                                       --self-test plants a break of each rule (in npm run check
@@ -1147,11 +1147,11 @@ command that counts it, never the number.
 
  **The order is the dependency order.** The backbone — organisation, property, claim — comes first because every other phase hangs off it; the pipeline next, because tasks, automation and dashboards are keyed on its stages; then tasks, documents, introducers, the claim's tax facts, finance, the compliance registers, dashboards and search; and the fold into the Developer Spec last. **Run them straight down the page, like every other phase.** Each block carries the same CRM ground rules, so they are not repeated here.
 
- **Where a CRM document and the running application disagree, the application is right.** The conflicts already known, so no phase rediscovers them: seven roles against the five built; a client portal listed as future work that is already built; an accountant portal, when the client's accountant has no login by decision; a surveyor who sees claim information and value, against the anchor quarantine; finance editing the agreed fee, when the fee derives from the engine; seventeen generic stages, against the ten-stage operating procedure with a gate at every stage and a reasoned exit; survey booked, against a desktop-first model; payment tracking, against no card processor and an invoice email that waits on a fraud procedure; mandatory fields and lead scoring, against unknown never routing to the favourable branch; AI document extraction as future work, when extraction and the receipt strip already run behind the upload handler; and documents as simple uploads, against the receipt contract and the three stores. **CRM 1 writes each into a disposition table, 09-app/CAPREBATE-CRM-DISPOSITION.md, which is the scope of all ten.**
+ **Where a CRM document and the running application disagree, the application is right.** The conflicts already known, so no phase rediscovers them: seven roles against the five built; a client portal listed as future work that is already built; an accountant portal, when the client's accountant has no login by decision; a surveyor who sees claim information and value, against the anchor quarantine; finance editing the agreed fee, when the fee derives from the engine; seventeen generic stages, against the ten-stage operating procedure with a gate at every stage and a reasoned exit; survey booked, against a desktop-first model; payment tracking, against no card processor and an invoice email that waits on a fraud procedure; mandatory fields and lead scoring, against unknown never routing to the favourable branch; AI document extraction as future work, when extraction and the receipt strip already run behind the upload handler; and documents as simple uploads, against the receipt contract and the three stores. **CRM 1 writes each into a disposition table, 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, which is the scope of all ten.**
 
  **Phase 115 changed one thing here, and it is small.** It redrafted clause 7 of the engagement letter and section 4 of the privacy notice so both name the processors — so any CRM host, email provider or accounting integration this work introduces is a processor that must be added to both before it carries client data. It also built the break-even reading, which CRM 6 reads rather than re-implements.
 
- **Progress, and the board.** All ten CRM phases have run, and all ten are Done. CRM 1 of 10 to CRM 9 of 10 ran between 10 and 12 September 2026, together with the gated-exit repair that CRM 2 of 10 found was needed. They built, on migrations 009 to 019: the organisation, property and claim record; leads and the procedure's ten stages, each with a gate; staff tasks and automation; documents on the claim; introducers and the referral channel; the claim's capital allowances facts and figures; finance on the claim; the compliance registers; and dashboards, search, lists and admin settings. PHASE HISTORY records what each did, and the disposition table's Parts G to P are their evidence. CRM 10 of 10 ran on 12 September 2026 and is Done. It closed the disposition table with a check that can fail, 03-app/caprebate-crm-fold-check.cjs, and wrote its evidence as Part Q. It made the Developer Spec read as one system, with what the CRM needs and this build cannot have at section 5.5. It wrote the administrator guide and the user guide, 09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md, with training for every CRM screen. And it archived the two Word documents into _archive/superseded/. **T****h****e**** ****C****R****M**** follow-on**** ****r****a****n on 12**** ****Se****p****t****e****mb****er**** ****2026 and ****i****s D****on****e****.** It built the eleven adopted rows CRM 10 of 10's check found unbuilt, on migration 020: the introducer and the source read through the lead; the claim team; the document centre; the dashboard over a period as the reports screen; the estimated fee on the claim; the prior-claim position derived; and mandatory documents, built and switched off. It fixed the nine defects the guide's exercises found, a client's upload from a browser among them, and gave Admin an audit log page and npm run verify-audit. Its evidence is Part R. The fold check is green on a refreshed snapshot, with no row carried. Which Stage 2 documents are mandatory, and at which stage, is put to Lakhbir in CAPREBATE QUESTIONS, and the data import is still a one-line confirmation there. The one correction the gated-exit repair left undone - the site file's own renderer - was made by the Phase 127 sweep on 12 September 2026. **Phase 128 ****ran on 12 September**** 2026 and is Done** - it moved forty finished drafts from Done, and two built items from Blocked - question, to Built - awaiting sign-off, each housed in one register. **Phase 129 ran on 12 September 2026 and Phase 129a on 13 September 2026, and both are Done. W****h****at**** ****ru****ns**** n****e****x****t**** is Phas****e**** ****129b,**** th****en ****t****he**** sweep.** Do not re-cut the span in this heading as phases finish: it names the block, as THE BUILD - phases 102 to 108 does, and shaving it leaves the heading contradicting its own body. Record progress in this paragraph instead.
+ **Progress, and the board.** All ten CRM phases have run, and all ten are Done. CRM 1 of 10 to CRM 9 of 10 ran between 10 and 12 September 2026, together with the gated-exit repair that CRM 2 of 10 found was needed. They built, on migrations 009 to 019: the organisation, property and claim record; leads and the procedure's ten stages, each with a gate; staff tasks and automation; documents on the claim; introducers and the referral channel; the claim's capital allowances facts and figures; finance on the claim; the compliance registers; and dashboards, search, lists and admin settings. PHASE HISTORY records what each did, and the disposition table's Parts G to P are their evidence. CRM 10 of 10 ran on 12 September 2026 and is Done. It closed the disposition table with a check that can fail, 03-app/caprebate-crm-fold-check.cjs, and wrote its evidence as Part Q. It made the Developer Spec read as one system, with what the CRM needs and this build cannot have at section 5.5. It wrote the administrator guide and the user guide, 09-app/docs/CAPREBATE-ADMIN-AND-USER-GUIDE.md, with training for every CRM screen. And it archived the two Word documents into _archive/superseded/. **T****h****e**** ****C****R****M**** follow-on**** ****r****a****n on 12**** ****Se****p****t****e****mb****er**** ****2026 and ****i****s D****on****e****.** It built the eleven adopted rows CRM 10 of 10's check found unbuilt, on migration 020: the introducer and the source read through the lead; the claim team; the document centre; the dashboard over a period as the reports screen; the estimated fee on the claim; the prior-claim position derived; and mandatory documents, built and switched off. It fixed the nine defects the guide's exercises found, a client's upload from a browser among them, and gave Admin an audit log page and npm run verify-audit. Its evidence is Part R. The fold check is green on a refreshed snapshot, with no row carried. Which Stage 2 documents are mandatory, and at which stage, is put to Lakhbir in CAPREBATE QUESTIONS, and the data import is still a one-line confirmation there. The one correction the gated-exit repair left undone - the site file's own renderer - was made by the Phase 127 sweep on 12 September 2026. **Phase 128 ****ran on 12 September**** 2026 and is Done** - it moved forty finished drafts from Done, and two built items from Blocked - question, to Built - awaiting sign-off, each housed in one register. **Phase 129 ran on 12 September 2026 and Phase 129a on 13 September 2026, and both are Done. W****h****at**** ****ru****ns**** n****e****x****t**** is Phas****e**** ****129b,**** th****en ****t****he**** sweep.** Do not re-cut the span in this heading as phases finish: it names the block, as THE BUILD - phases 102 to 108 does, and shaving it leaves the heading contradicting its own body. Record progress in this paragraph instead.
 
 
  **Added 13 September 2026 by Phase 129b, and corrected the same day by the Phase 130 sweep.** The paragraph above says what runs next is Phase 129b, then the sweep. That is out of date twice over: Phase 129b ran on 13 September 2026 and is Done, and so did the Phase 130 sweep, which found work in the board's comments that nothing stops and wrote it into two new phases. What runs next is Phase 131, then Phase 132, then the sweep as Phase 133. A note rather than an edit, because that paragraph carries more than a hundred formatting runs and update_block replaces every one of them.
@@ -1172,164 +1172,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161k — Regroup 3: survey, finance, compliance and admin as modules, tests by feature, and the specs out of the code
-
- **Model: Opus.** Board item 13462572225. **Written 4 November 2026** from the ITRoadway technical audit and Lakhbir's note on the legal pages (one of eleven, 161a to 161k: run them in order, one chat each). **Why:** Audit section 6: the last of three moves. After it, src/web/ is empty and the folder map in the audit's section 6.2 is true. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-RULES FOR ALL THREE REGROUP PHASES (161i, 161j, 161k), from the audit's
-section 6.2 ("each module holds its own routes, page files, permissions and
-database queries", for example crm/leads.routes.ts, leads.pages.ts,
-leads.repo.ts and leads.permissions.ts):
-- Moves, not rewrites. git mv to keep history; nothing a person sees
-  changes. The full suites give the same pass list before and after.
-- A test lists every route (method and path, in matching order) before the
-  first move; after each move the list must be identical.
-- The dated notes in the comments of every file you move go to
-  docs/CHANGELOG.md (date, phase, what was decided and why), leaving short
-  comments that say why the code is as it is. Names of people stay out of
-  the code.
-- Tests move with their code and are named by feature; docs/TEST-NAMES.md
-  maps each old name to the new one, so PHASE-HISTORY's references still
-  resolve. The drift checker and the register checks that count test files
-  still pass.
-- One area at a time, one commit per area, so any move can be undone alone.
-
-BUILD
-1. modules/survey/ (surveyor workspace, survey pack, report, photos, video),
-   finance/ (invoices, VAT, billing, filing), compliance/ (identity checks,
-   data protection, breach log, retention, complaints), admin/ (users,
-   roles, settings, lists).
-2. backend/test/ in the same folders as src/, named by feature (the map in
-   docs/TEST-NAMES.md).
-3. Specs and guides that sit beside the code move to docs/; a short README
-   in backend/ maps every folder in a line each.
-4. Tell the developer (ITRoadway) the new map: add it to the 161h runbook
-   and the 146g handover.
-5. ADDED 8 NOV 2026 BY PHASE 161i1: 161j's item 4 (notes to the
-   changelog, tests by feature, the borrowed SQL) for this phase's modules;
-   and what 161i1 left in core, shared and integrations: (a) about 84
-   comments whose sentence names a phase as its subject ("Phase 108 found
-   it...", "the Phase 133a test opens"), listed by grep -nE
-   '(PHASE|Phase) [0-9]{2,3}' in src/core, src/shared and
-   src/integrations: reword each to say why, with no phase; (b) people's
-   names in screen text and records there: the Help pages
-   (src/core/help-content.ts is built from the guide by tools/build-help.cjs,
-   so change the guide and rebuild), the strings in core/app.ts,
-   shared/engine.ts, shared/originals.ts, email/email-provider.ts, the
-   connectors (address-lookup, company-search, identity-check, inspire,
-   postcode-check, registers, site-area, test-lookups), registers/
-   boundary-import.ts and registers/source-register.ts: a role in place of
-   each name, and the tests that read them (test/phase153c.test.ts reads the
-   identity check's waiver record) changed with them; src/styles/site.css
-   names a person in two comments, and its bytes are held by
-   test/core/front-doors.test.ts, so change the file and its hash together;
-   (c) the 10 tests that reach business screens through the app
-   (client-redesign, phase133b, phase133i, phase144-crm, phase151a,
-   phase139, phase153, phase160e, phase160p, whatsapp) into their modules'
-   folders, named by feature.
-6. ADDED 8 NOV 2026 BY PHASE 161j, what it left for this phase: (a) about
-   130 comments in the five modules it moved (src/modules/public-site,
-   assessment, portal, crm, claims) whose sentence names a phase as its
-   subject: grep -nE '(PHASE|Phase) [0-9]{2,3}' there, and reword each to
-   say why, with no phase; (b) 18 tests that span areas stayed in test/
-   (configuration, settings, ui-tidy-settings, finance-claim, lists,
-   localtime, extract-text, phase129, phase133c, phase144, phase144a,
-   phase146f, phase151b, phase151e5, phase155, phase160d, staff, web): move
-   each to the folder of what it mostly tests once this phase's modules
-   exist, or split it, named by feature, with its old name added to
-   docs/TEST-NAMES.md; (c) two comments name old places: 03-app/
-   caprebate-gated-exit-renderer-proof.cjs says closePage is in router.ts
-   (it is in src/modules/assessment/routes.ts), and the calculator's source
-   (09-app/engine/src/calculator/shared.js) names src/web/sector-ranges.ts
-   (now src/modules/assessment/): the calculator is copied into the page
-   byte for byte, so change it and run npm run page in 09-app/engine, never
-   the page by hand; (d) this phase's modules follow 161j's rule for load
-   order: the core's, shared parts' and outside services' front doors never
-   load a business module (a lower layer that needs a module's statements
-   names its data.ts), and test/core/load-alone.test.ts must stay green.
-
-THE BOUNDARY CHECK (ADDED 6 NOV 2026, from 09-app/ARCHITECTURE.md and
-Phase 161h1): each module this phase moves gets its front door (index.ts),
-its data.ts (the only file running SQL on the tables it owns), pages with
-no SQL and logic with no HTML or SQL. Its breaks of rules 1, 3 and 4 go to
-zero and the baseline is lowered to match; no new break anywhere.
-
-THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
-what can be run before going live, restructure them"): every phase from
-161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
-161k, 161l, 161m. None of them waits on a person. Going live waits on
-people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
-the code is regrouped while they work, with no real client on it. After
-161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
-its gate is open, then the sweep again before the first client. If the gate
-opens before 161m has run, finish the phase in progress, run the sweep, then
-161n; the phases left run after go-live, in the same order. Every phase
-leaves the website working, so stopping between two is safe.
-NEXT: Phase 161l.
-
-ACCEPT
-- src/web/ is gone; the route list and the pass list are unchanged; every
-  check that names a path still passes; the preview works.
-```
-
 ## PHASE 161l — Undo the tangle: modules depend one way, events in place of upward imports, permissions per module
 
- **Model: Opus.** Board item 13486969371. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. After 161k every module has a front door; this phase removes the loops between them, so a change in one module cannot reach round into another. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
+ **Model: Opus.** Board item 13486969371. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/docs/ARCHITECTURE.md**. After 161k every module has a front door; this phase removes the loops between them, so a change in one module cannot reach round into another. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1388,7 +1233,7 @@ right register.
 
 WHAT IS THERE NOW: after 161h1 to 161k, every module is behind its front
 door and the boundary check's counts for rules 1, 3 and 4 are zero, except
-what items 5 and 6 list, which no move can clear. What is left is
+what items 5, 6 and 7 list, which no move can clear. What is left is
 rule 2: modules still depend on each other in both directions
 (CRM and the portal, claims and survey were the worst on 6 Nov 2026), and
 authz.ts holds all 130 actions in one table.
@@ -1416,10 +1261,11 @@ BUILD
    runs and WhatsApp lines). Split each into the owner's own query and a
    call through the other area's front door, keeping what the screen shows
    the same (a test per screen first). Two by hand: the audit log page
-   (src/web/audit-log.ts) chooses between a core-only statement and one
-   that also reads claims and properties; the retention page
-   (src/web/compliance-identity.ts) runs count statements held as strings
-   in a table, two of them on outside-service tables. And empty the three
+   chooses between a core-only statement and one that also reads claims
+   and properties, and the retention page runs count statements held in a
+   table, most of them on other areas' tables (both now in
+   src/modules/compliance/data-borrowed.ts: listAuditLogLines and
+   RECORD_KIND_STATEMENTS, moved there by 161k). And empty the three
    data-borrowed.ts files (161j and 161k move most of them; what is left
    here is a bottom-layer file reading a business table, which becomes an
    event or a front-door call). The check then reads zero for rule 3.
@@ -1440,18 +1286,49 @@ BUILD
    PARTS: router.ts hands the routes files the parts of the core and of
    compliance that load business code (the signed-in header, the sign-up
    functions and MIN_PASSWORD, handlePortalSettings, NotFoundAsRefusal, and
-   the legal pages' approval functions from src/web/legal-approvals.ts) at
+   the legal pages' approval functions from
+   src/modules/compliance/legal-approvals.ts) at
    start (lendShellParts in router.ts, shellParts() in src/core/http.ts);
    the boundary check cannot count those links, so replace each with a
    front-door import once the loops are gone. (d) Four load-order
    workarounds to take out when the loops go, each the same value read
-   later: the getters in src/web/compliance-identity.ts (RET-7's state, the
-   message rows' why_unset) and src/core/navigation.ts (Settings' under),
-   and maxLockedPiece() in src/web/survey-video.ts (was MAX_LOCKED_PIECE).
+   later: the getters in src/modules/compliance/compliance-identity.ts
+   (RET-7's state, the message rows' why_unset) and src/core/navigation.ts
+   (Settings' under), and maxLockedPiece() in
+   src/modules/survey/survey-video.ts (was MAX_LOCKED_PIECE).
    (e) The generated names of some data functions describe the first table
    their statement names, not what it reads (for example
    getStaffTasksIdBusinessIdByLeadIdStatus reads a lead): rename them by
    what they return as each is touched.
+7. ADDED 9 NOV 2026 BY PHASE 161k: what moving survey, finance,
+   compliance and admin could not clear. (a) THE JOINS: 31 rule-3 breaks
+   against those four (survey 16, finance 10, admin 5; node
+   tools/boundaries.cjs --counts), statements in their data-borrowed.ts
+   files (and the other areas' borrowed files) that join their tables to
+   another owner's; split each as in item 5. (b) Nine rule-1 breaks into
+   them: core/search.ts names survey's data.ts; core/saved-keys.ts,
+   integrations/email/email.ts and shared/lists.ts name admin's data.ts;
+   core/cli.ts names survey's two BCIS files; shared/engine.ts,
+   integrations/postcodes/location-key.ts and claims/claim-record.ts name
+   the costing files (survey/costing/). core/seed.ts and core/server.ts
+   name survey's and finance's data.ts too (the check does not count those
+   two kinds of file). Each lower-layer one becomes an event or a port the
+   lower layer owns, as in item 6b; claim-record.ts goes through the
+   survey's door once the loops are gone. (c) ROUTES AND PERMISSIONS
+   FILES for the four, as 161j did for the CRM and the documents: their
+   handlers (handleSurveyor, handleSurveyPack,
+   handleStaffEvidence, handleFinance, handleBilling, handleCompliance,
+   handleConnections, handleConfiguration) sit in their pages files and
+   core/staff.ts asks each in turn, and router.ts still answers the legal
+   pages' approvals and the identity check's hook itself; give each
+   module a routes.ts (and its gates a .permissions.ts), the route list
+   unchanged. (d) Two load-order workarounds: approvable() in
+   compliance/legal-approvals.ts (was APPROVABLE) is worked out when asked
+   because the privacy policy reads compliance through its front door
+   while the legal pages load; and the survey walkthrough check
+   (getSurveyWalkthroughsXByBookingId) stays in crm/data-borrowed.ts
+   because reading it through the survey's door from video-calls.ts loops
+   back into the CRM. Undo both once the loops are gone.
 
 THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
 what can be run before going live, restructure them"): every phase from
@@ -1477,7 +1354,7 @@ ACCEPT
 
 ## PHASE 161m — Rules as versioned data: rules registers, the engine's version, and versions on every sealed result
 
- **Model: Opus.** Board item 13486967146. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/ARCHITECTURE.md**. Changing a tax rule must never quietly change a result a client has already been given. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
+ **Model: Opus.** Board item 13486967146. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/docs/ARCHITECTURE.md**. Changing a tax rule must never quietly change a result a client has already been given. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1630,7 +1507,7 @@ setting stops it), vercel.ts (the timers on the live project only), the
 release workflow (.github/workflows/release-live.yml, branch "live"), the
 timers, the nightly backup and its restore, and the reference database for
 the postcode table and the grid; and wrote the runbook and the go-live
-checklist (09-app/deploy/LIVE-RUNBOOK.md, GO-LIVE-CHECKLIST.md). It proved
+checklist (09-app/docs/LIVE-RUNBOOK.md, GO-LIVE-CHECKLIST.md). It proved
 them on a database FILE (test/core/live-website.test.ts). It made NO live project,
 database or store: Vercel Pro is not bought and the Turso account needs
 Lakhbir's sign-in, so the real-preview proof is BUILD item 1 below. Phases
@@ -1714,7 +1591,7 @@ ACCEPT
 
  **Why this exists.** Every sweep so far has found something, and several found things that had survived multiple earlier passes. Re-run it after a meaningful batch of phases has landed, and **always before anything external goes out** — the adviser pack, the solicitor brief, the Valuation Office letter, the insurance broker brief.
 
- **Added 5 November 2026 by Phase 161e, for this sweep to do.** Ten untracked leftovers sit in the back end; git does not hold them and no check names them: four `.mutsave` copies in `src/connectors/` and `src/web/` (from a mutation run), `tools/_159l-legal-moves.ts`, `_159l-pick.ts`, `_159l-red.ts` and `_159l-red2.ts`, `_trg.ts` and the folder `.demo156/`. Ask Lakhbir in the chat, then zip them into `Caprebate/_archive/` and delete them, as Phase 161e did with the .bak copies; commit any that turn out to be real tools.
+ **Added 5 November 2026 by Phase 161e, for this sweep to do.** Eight untracked leftovers sit in the back end (ten on 5 November 2026); git does not hold them and no check names them: two `.mutsave` copies in `src/connectors/` (from a mutation run; `src/web/` is gone since Phase 161k, and its copies were already out), `tools/_159l-legal-moves.ts`, `_159l-pick.ts`, `_159l-red.ts` and `_159l-red2.ts`, `_trg.ts` and the folder `.demo156/`. Ask Lakhbir in the chat, then zip them into `Caprebate/_archive/` and delete them, as Phase 161e did with the .bak copies; commit any that turn out to be real tools.
 
  **Added 5 November 2026 by Phase 161f, for this sweep to do.** Once pull request 80 (Phase 161f) is merged and the test website has redeployed, check its eligibility check still gives the same answers: `node 04-phase-work/stress-2026-10-09/engine/site-cases.mjs https://caprebate-test.vercel.app <a file in your scratch folder>` drives the same 26 invented cases through it (it stops at the figure page and sends no enquiry), then compare each case's pages and figures with `site-cases-live-main-161f.json` beside it (main, before the change). Phase 161f found them identical on main live and on its own code run locally, because Vercel refused the session access to the branch preview. A difference is a finding for Lakhbir, not something to adjust.
 
@@ -2210,7 +2087,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  **Valuation and cost model groundwork** |  `04-phase-work/phase9/`. Run `cd 04-phase-work/phase9 && node --test`. Mechanisms built with clearly labelled empty stubs waiting on licences, and the engagement gate built and switched off |
 |  **The back end and the client portal** |  `09-app/backend` — five roles, authorisation on the server for each object, an append-only audit log, and a portal that renders the engagement letter from the document itself. Run `cd 09-app/backend && npm run check` |
 |  **The surveyor never receives our estimate** |  Proved on the wire, not on screen: `cd 09-app/backend && CAPREBATE_ALLOW_SEED=1 node tools/payload-proof.ts` finds none of the sealed estimate's seven fields in a surveyor's response, searched three ways, and all seven as admin. Re-run 10 September 2026 |
-|  **The Developer Spec** |  `09-app/CAPREBATE-DEVELOPER-SPEC.md` — user cases, every screen, every API, a table naming every stub by file and line, and the current test figures in its section 4. **The figures live there and are deliberately not repeated here**: the ones this table used to carry went three days stale and no check could see them |
+|  **The Developer Spec** |  `09-app/docs/CAPREBATE-DEVELOPER-SPEC.md` — user cases, every screen, every API, a table naming every stub by file and line, and the current test figures in its section 4. **The figures live there and are deliberately not repeated here**: the ones this table used to carry went three days stale and no check could see them |
 |  **Eleven statutory rulebooks** |  `01-rulebooks/`. All written, all awaiting the tax adviser |
 |  **Twenty-four tax-adviser switches, all off**
  |  (Phase 158 sweep, 7 Oct 2026: twenty-nine switches now - 17 bigger, 4 smaller, 6 either way, 2 working file only; the rest of this cell is the count of 15 September.) Fifteen would make a claim bigger if switched on; three can only make one smaller; four move money either way — the Scottish rate band, whether a lease granted for a premium with no joint election is item 9 of the disposal table, the corporation tax rate from the associated-company count, and the 60% band where the personal allowance is withdrawn; and two change a basis or remove false negatives. Three of them were readings already live before they were switched. Five were added by Phase 132 on 14 September 2026. The count is taken at runtime by node 09-app/engine/tools/verify-extraction.cjs, and the harness fails if any switch is flipped without its assertions being changed deliberately
@@ -2383,7 +2260,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (**done 7 Nov 2026**: the live start, timers, backup and restore, release workflow, runbook and go-live checklist, built and proved on a database file; no live project made until Pro is bought), then, before go-live (order changed 6 Nov 2026), 161h1 the boundary check (**done 7 Nov 2026**: 2,162 breaks counted, any new one refused), 161i to 161k the regroup by business area, 161l the tangle undone and 161m versioned rules; then the sweep, and 161n goes live once its gate is open |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (**done 7 Nov 2026**: the live start, timers, backup and restore, release workflow, runbook and go-live checklist, built and proved on a database file; no live project made until Pro is bought), then, before go-live (order changed 6 Nov 2026), 161h1 the boundary check (**done 7 Nov 2026**: 2,162 breaks counted, any new one refused), 161i to 161k the regroup by business area (**161k done 9 Nov 2026**: every business area a module behind its front door, src/web/ gone, tests by feature, the specs in 09-app/docs/), 161l the tangle undone and 161m versioned rules; then the sweep, and 161n goes live once its gate is open |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161m, before 161n goes live, and again after 161n, before the first client (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

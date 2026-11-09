@@ -3,7 +3,7 @@
  *
  * Two decisions a person makes put register data into a client's file: choosing one entry from a close-match list
  * and saying that a name on a client document belongs to an organisation
- *. Both can now be taken back, in the shape Phase 139 uses for a fact
+ *. Both can now be taken back, in the shape approvals.ts uses for a fact
  * somebody ticked — a separate act that ASKS WHY and keeps the reason. Before either removes anything it has to answer
  * the same two questions, and they are answered HERE so the two cannot drift apart:
  *
@@ -27,7 +27,8 @@ import type { Db } from '../../core/index.ts';
 import { screenDetail } from '../../core/audit.ts';
 import { countRegisterRecordsSince } from '../../integrations/index.ts';
 import { getClaimDeliverablesCountByBusinessIdState, getClaimGrantsCountByBusinessIdSourceId, listFactApprovalsFactRefActionByBusinessId2 } from '../claims/index.ts';
-import { getSignatoryChecksCountByBusinessIdSource, getSurveyorJobsCountByBusinessIdState } from './data-borrowed.ts';
+import { getSignatoryChecksCountByBusinessIdSource } from '../compliance/index.ts';
+import { getSurveyorJobsCountByBusinessIdState } from '../survey/index.ts';
 import { listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep } from './data.ts';
 
 /* ================================================================== *
@@ -91,7 +92,7 @@ const SIGNATORY_READS: Readonly<Record<string, string>> = Object.freeze({ CH_COM
  *   · CLIENT_TOLD — a step on the client's portal told as done since the record arrived, and not taken back. The
  *     record's facts sat on that step; the client may have been told "checked" on the strength of this one.
  *   · REPORT_ISSUED — a report or pack issued since. Issued is issued: it is not re-cut here.
- *   · SURVEYOR_JOB — the surveyor's payload carries register records (src/web/surveyor.ts). An open job saw it; a job
+ *   · SURVEYOR_JOB — the surveyor's payload carries register records (src/modules/survey/surveyor.ts). An open job saw it; a job
  *     committed since may have used it.
  *   · GRANT_RECORDED — only for the name of whoever paid a grant: a grant recorded from a client document since.
  */
@@ -176,7 +177,7 @@ export function lookAgainSummary(list: readonly LookAgain[]): string {
  * ================================================================== */
 
 /**
- * WHY, IN THE PERSON'S OWN WORDS — or why not. Required, trimmed, at most 2000 characters, as Phase 139's reason is.
+ * WHY, IN THE PERSON'S OWN WORDS — or why not. Required, trimmed, at most 2000 characters, as an approval's reason is.
  * It goes on the audit chain as well as on the row, so it must pass the chain's screen: an email address or a
  * supplier key is refused here, before anything is written, with words that say what to leave out.
  */

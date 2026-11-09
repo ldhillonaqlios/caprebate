@@ -13,7 +13,7 @@
 export const REGISTER_IMPORT_JS = `(function () {
   'use strict';
   var root = typeof window !== 'undefined' ? window : globalThis;
-// PHASE 161b: our form token, from the page, for the x-cb-form header (src/core/form-token.ts).
+// Our form token, from the page, for the x-cb-form header (src/core/form-token.ts).
 function cbForm() { try { var d = root.document; var m = d && d.querySelector ? d.querySelector('meta[name="cb-form"]') : null; return m && m.getAttribute ? (m.getAttribute('content') || '') : ''; } catch (e) { return ''; } }
 
   function say(el, words) { if (el) el.textContent = words; }
@@ -41,7 +41,7 @@ function cbForm() { try { var d = root.document; var m = d && d.querySelector ? 
 
   function quoted(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }
 
-  /* Only the named columns, the header first. Exported for the test (test/phase156e.test.ts runs this file). */
+  /* Only the named columns, the header first. Exported for the test (test/admin/connections-and-regulator-lists.test.ts runs this file). */
   function trim(text, delim, wanted) {
     var all = rows(text.charCodeAt(0) === 0xfeff ? text.slice(1) : text, delim);
     if (all.length === 0) return '';

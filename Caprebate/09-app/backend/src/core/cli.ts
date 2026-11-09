@@ -198,14 +198,14 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'import-bcis-index') {
-    /* The BCIS index from a file the owner downloads, kept OUTSIDE the repository (src/web/bcis-index.ts). */
+    /* The BCIS index from a file the owner downloads, kept OUTSIDE the repository (src/modules/survey/bcis-index.ts). */
     /* --tpi names it BCIS's All-in Tender Price Index, the series the pack's drafts are indexed by. */
     const args = process.argv.slice(3);
     const tpi = args.includes('--tpi');
     const file = args.find((x) => !x.startsWith('--'));
     if (file === undefined) { console.error('Usage: node src/core/cli.ts import-bcis-index [--tpi] <the CSV downloaded from BCIS>'); return 1; }
     const { readFileSync } = await import('node:fs');
-    const { importBcisIndex } = await import('../web/bcis-index.ts');
+    const { importBcisIndex } = await import('../modules/survey/bcis-index.ts');
     const r = importBcisIndex(readFileSync(file, 'utf8'), file, new Date().toISOString(), process.env, undefined, tpi ? 'TPI' : 'BPI');
     if (!r.ok) { console.error(r.why); return 1; }
     console.log(`${r.points} index points, ${r.from} to ${r.to}, kept at ${r.path}${r.passed_over === 0 ? '' : ` (${r.passed_over} row${r.passed_over === 1 ? '' : 's'} with no figure passed over)`}. ` +
@@ -215,13 +215,13 @@ async function main(): Promise<number> {
 
   if (cmd === 'import-bcis-data') {
     /* BCIS's exports — the average prices by building function (required), the elemental analyses and the
-       location factors — kept OUTSIDE the repository (src/web/bcis-data.ts). The pack drafts its rates from them. */
+       location factors — kept OUTSIDE the repository (src/modules/survey/bcis-data.ts). The pack drafts its rates from them. */
     const args = process.argv.slice(3);
     const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
     const rates = opt('--rates');
     if (rates === undefined) { console.error('Usage: node src/core/cli.ts import-bcis-data --rates <average prices CSV> [--elements <elemental CSV>] [--locations <location factors CSV>] [--base 2026-04]'); return 1; }
     const { readFileSync } = await import('node:fs');
-    const { importBcisData } = await import('../web/bcis-data.ts');
+    const { importBcisData } = await import('../modules/survey/bcis-data.ts');
     const read = (f: string | undefined) => (f === undefined ? undefined : { text: readFileSync(f, 'utf8'), name: f });
     const el = read(opt('--elements')), lo = read(opt('--locations')), base = opt('--base');
     const r = importBcisData({ rates: { text: readFileSync(rates, 'utf8'), name: rates }, ...(el === undefined ? {} : { elements: el }), ...(lo === undefined ? {} : { locations: lo }) },
@@ -371,7 +371,7 @@ async function main(): Promise<number> {
     });
   }
 
-  /* Ask Zoom how long ONE call lasted and how many joined: Phase 156d's step B1, to learn
+  /* Ask Zoom how long ONE call lasted and how many joined (step B1 of the Zoom checks), to learn
      whether our free Zoom plan gives it. Read only; it makes, moves and keeps nothing, and prints two numbers or Zoom's
      own code and words, never a name or an email. Like every Zoom call from a copy that is not the test website, it
      needs CAPREBATE_LOCAL_ZOOM=1 (src/integrations/connectors/zoom.ts, zoomPlaceRefusal). The audit line goes to a scratch log. */

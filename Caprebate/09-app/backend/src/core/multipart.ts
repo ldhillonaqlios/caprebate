@@ -166,7 +166,7 @@ export function piecedFields(body: Uint8Array, contentType: string | undefined):
 }
 
 /**
- * SEVERAL PHOTOS IN ONE FORM — the client's "send lots of photos at once" (src/web/evidence-pages.ts).
+ * SEVERAL PHOTOS IN ONE FORM — the client's "send lots of photos at once" (src/modules/survey/evidence-pages.ts).
  * The same ungenerous reader; every file part is returned, in order, up to `max` of them (the parts cap above still
  * holds). A form that posts more than `max` is refused, not cut short.
  */

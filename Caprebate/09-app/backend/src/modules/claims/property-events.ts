@@ -12,14 +12,15 @@
  *
  * EACH EVENT'S OWN FIGURE is the engine's band for that event on its own cost (`eventCeiling`, CB_BAND.rangeFor), until
  * the survey pack prices it: a purchase by section 562 from the price, any work by its own cost (the pack's cost-led
- * values, src/web/survey-pack.ts). EACH EVENT'S OWN DOCUMENTS are the ones that prove it (`DOCUMENTS_FOR`).
+ * values, src/modules/survey/survey-pack.ts). EACH EVENT'S OWN DOCUMENTS are the ones that prove it (`DOCUMENTS_FOR`).
  *
  * N4: a cost not known is NULL and gets no figure; a date not known is NULL. Nothing is ever read as 0.
  */
 import type { Db } from '../../core/index.ts';
 import { BAND } from '../../shared/index.ts';
 import { getLogicalDocumentsCountByBusinessIdTypeCode2, getLogicalDocumentsCountByBusinessIdTypeCode3, getPropertyEventsIdByIdPropertyId, getPropertyEventsIdPropertyIdByIdBusinessId, insertPropertyEvents, insertPropertyEvents2, listPropertyEventsIdPropertyIdByPropertyId, updatePropertyEventsVatVatPenceById } from './data.ts';
-import { getDocumentTypesLabelByCode, getSurveyPackApprovalsVersionSnapshotJsonByClaimId } from './data-borrowed.ts';
+import { getDocumentTypesLabelByCode } from '../admin/index.ts';
+import { getSurveyPackApprovalsVersionSnapshotJsonByClaimId } from '../survey/index.ts';
 
 export const EVENT_KINDS = ['PURCHASE', 'NEW_BUILD', 'EXTENSION', 'REFURBISHMENT', 'FIT_OUT', 'CONVERSION', 'REPAIRS', 'OTHER'] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];

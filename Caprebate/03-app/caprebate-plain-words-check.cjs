@@ -45,7 +45,7 @@
      node 03-app/caprebate-plain-words-check.cjs --guide        read only the admin and user guide
 
    PHASE 144a, 22 September 2026: the check also reads THE ADMIN AND USER GUIDE
-   (09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md) and the Help pages built from it
+   (09-app/docs/CAPREBATE-ADMIN-AND-USER-GUIDE.md) and the Help pages built from it
    (help-content.ts, no longer exempt), both at GRADE 7, and the public
    assessment (assessment.ts, no longer exempt) at grade 9 like every screen.
    `--suffix .bak-phase144a` reads the guide's and Help's pre-change copies and
@@ -60,10 +60,14 @@ const WEB = path.join(ROOT, '09-app', 'backend', 'src', 'web');
 /* PHASE 161i, 7 Nov 2026: screens, sign-in, page parts and the core moved from src/web/ into src/core/ and src/shared/;
    every file in those two folders is read as src/web/ is (the core's own files, never read before, are read too). */
 const CORE = path.join(WEB, '..', 'core'), SHARED = path.join(WEB, '..', 'shared'), INTEG = path.join(WEB, '..', 'integrations');
-/* The business modules' folders (Phases 161j and 161k move the screens there from src/web/): each folder's own files,
+/* The business modules' folders (the screens that were in src/web/, which is gone since Phase 161k): each folder's own files,
    not its data files or front door, which hold no words for a person. */
-const MODULE_DIRS = ['public-site', 'assessment', 'portal', 'crm', 'claims'].map((m) => path.join(WEB, '..', 'modules', m));
+const MODULE_DIRS = ['public-site', 'assessment', 'portal', 'crm', 'claims', 'survey', 'finance', 'compliance', 'admin'].map((m) => path.join(WEB, '..', 'modules', m));
 const NOT_SCREENS_IN_MODULES = new Set(['data.ts', 'data-borrowed.ts', 'index.ts']);
+/* The survey module's two measurement files (the anchor quarantine and the surveyor CRM, moved from survey/ by Phase
+   161i1) were never read as screens: they are the protocol's measuring code (the rate library and adoption metric, the
+   quarantine rules), and the same 249 files are read as before the move. */
+const NOT_SCREENS_IN_SURVEY = new Set(['anchor-quarantine.ts', 'surveyor-crm.ts']);
 /* The core's files that were never in src/web/ and were never read (the server, database, sign-in rules, permissions,
    the audit log and the rest): their words are for developers, not a screen. seed.ts and secrets.ts were read before
    and still are. A new core file is read unless it is named here with that reason. */
@@ -89,7 +93,7 @@ const EXEMPT_TEXT = [
   /* the privacy notice's own words, where a screen quotes them */
   /^We use your information because we have a legitimate interest/i,
   /* the three ways to complain, sent in rights letters word for word from the public notices page (the data
-     protection officer's wording, ONWARD_ROUTE_TEXT in src/web/compliance-rights.ts; a test keeps the two identical) */
+     protection officer's wording, ONWARD_ROUTE_TEXT in src/modules/compliance/compliance-rights.ts; a test keeps the two identical) */
   /^1\. Complain to us\. You have a right to complain to us about how we have handled your personal data/,
   /^2\. Complain to the data protection regulator\. You have a right to complain to the Information Commissioner/,
   /^3\. Go to court\. You can also take your own case to court/,
@@ -99,7 +103,7 @@ const EXEMPT_TEXT = [
   /* a question's title in CAPREBATE QUESTIONS, quoted exactly so the two stay one question (src/web/postcode.ts) */
   /^Does the permission gate apply to a council-area lookup with no personal data in it\?$/,
   /* Phase 151b: a question's title in the Word questions document (closed 24 September 2026), quoted exactly by
-     src/connectors/identity-check.ts and asserted word for word by test/phase151.test.ts. No screen shows it. */
+     src/connectors/identity-check.ts and asserted word for word by test/compliance/identity-check-and-custom-roles.test.ts. No screen shows it. */
   /^Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD\?$/,
   /* the assessment's first question (src/modules/assessment/assessment.ts SCREENS.Q1, and the site's screenQ1, word for word). Its
      wording could change what a client answers, so a plainer version waits in FOR THE ACCOUNTANT for the tax
@@ -341,7 +345,7 @@ function checkStrings(strings, swaps) {
    typed exactly and reads as one short word. A fenced block is a command and is not read.
    Text between <!-- plain-words: quotes-old-words --> and <!-- /plain-words --> quotes the banned words ON PURPOSE (the
    table of old words and their swaps): the grade is still checked there; the banned list is not. */
-const GUIDE = path.join(ROOT, '09-app', 'CAPREBATE-ADMIN-AND-USER-GUIDE.md');
+const GUIDE = path.join(ROOT, '09-app', 'docs', 'CAPREBATE-ADMIN-AND-USER-GUIDE.md');
 const GUIDE_GRADE = 7;
 
 function markdownPieces(md) {
@@ -443,7 +447,7 @@ function altOf(f, suffix, dir) {
 
 function screenFiles(suffix, dir) {
   const dirTs = (d) => fs.readdirSync(d).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f) && f !== 'index.ts').sort().map((f) => path.join(d, f));
-  const all = [...dirTs(WEB), ...MODULE_DIRS.filter((d) => fs.existsSync(d)).flatMap((d) => dirTs(d).filter((f) => !NOT_SCREENS_IN_MODULES.has(path.basename(f)))), ...dirTs(CORE).filter((f) => !CORE_NOT_SCREENS.has(path.basename(f))), ...dirTs(SHARED)].concat(EXTRA);
+  const all = [...MODULE_DIRS.filter((d) => fs.existsSync(d)).flatMap((d) => dirTs(d).filter((f) => !NOT_SCREENS_IN_MODULES.has(path.basename(f)) && !(path.basename(d) === 'survey' && NOT_SCREENS_IN_SURVEY.has(path.basename(f))))), ...dirTs(CORE).filter((f) => !CORE_NOT_SCREENS.has(path.basename(f))), ...dirTs(SHARED)].concat(EXTRA);
   return all.map((f) => {
     const alt = altOf(f, suffix, dir);
     return { label: path.relative(path.join(WEB, '..', '..'), f), file: alt && fs.existsSync(alt) ? alt : f };
@@ -452,7 +456,7 @@ function screenFiles(suffix, dir) {
 
 function guideFiles(suffix, dir) {
   const alt = altOf(GUIDE, suffix, dir);
-  return [{ label: '09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md', file: alt && fs.existsSync(alt) ? alt : GUIDE }];
+  return [{ label: '09-app/docs/CAPREBATE-ADMIN-AND-USER-GUIDE.md', file: alt && fs.existsSync(alt) ? alt : GUIDE }];
 }
 
 function readAny(f) {

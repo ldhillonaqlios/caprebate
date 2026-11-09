@@ -102,8 +102,8 @@ describe('the enquiry on Vercel', () => {
 
 describe('the rest', () => {
   test('the claim page’s "Raise it on the finance page" goes to a section the finance page has', () => {
-    const billing = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'web', 'billing.ts'), 'utf8');
-    const finance = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'web', 'finance-pages.ts'), 'utf8');
+    const billing = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'modules', 'finance', 'billing.ts'), 'utf8');
+    const finance = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'modules', 'finance', 'finance-pages.ts'), 'utf8');
     const target = /href="\/staff\/finance#([a-z-]+)">Raise it on the finance page/.exec(billing)?.[1];
     assert.equal(target, 'to-invoice');
     assert.match(finance, new RegExp(`id="${target}"`));

@@ -2,7 +2,7 @@
  * THE MANAGEMENT DASHBOARD — EVERY TILE A QUERY, EVERY TILE ASKED OF can.
  * CRM 9 of 10.
  *
- * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 15, and the decisions
+ * The scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, section 15, and the decisions
  * this file takes are that table's Part E from E119. The page is
  * src/modules/crm/dashboard-pages.ts; the proof is test/crm/management-dashboard.test.ts and
  * tools/payload-proof.ts.
@@ -36,14 +36,14 @@ import { EXITS, PROCEDURE_STAGES, anyStageLabel, claimStage, procedureIndex } fr
 import { dueReading, isTerminalStage, nextActionBreakers } from './tasks.ts';
 import { localDate } from '../../shared/index.ts';
 import { formatPence } from '../../shared/index.ts';
-import { financeDashboard, type FinanceDashboard } from '../../web/invoices.ts';
+import { financeDashboard, type FinanceDashboard } from '../finance/index.ts';
 import { DELIVERABLES, QUOTE_GAP_REVIEW_PCT, VARIANCE_CATEGORIES, deliverableIssued, latestSignOff, varianceOf } from '../claims/index.ts';
 import { pipelineFigures } from './introducers.ts';
 import { reasonLabel } from './pipeline.ts';
-import { rightsRegister, complaintsLog } from '../../web/compliance-rights.ts';
-import { breachRegister } from '../../web/compliance-breach.ts';
+import { rightsRegister, complaintsLog } from '../compliance/index.ts';
+import { breachRegister } from '../compliance/index.ts';
 import { claimObjFor, claimWords } from './crm.ts';
-import { vocabLabel } from '../../web/vocabularies.ts';
+import { vocabLabel } from '../admin/index.ts';
 import { SECTORS } from './leads.ts';
 import { listClaimsIdCompletedAtByStage, listEstimatesIdClaimRefByAssessmentIdJO, listSurveyorJobsIdBusinessIdBySurveyorId } from './data-borrowed.ts';
 import { listClientTasksIdBusinessIdByStateDueOn, listIntroducersIdFirmName, listLeadsIdBusinessId, listLeadsIdBusinessIdByStatus, listStaffTasksIdBusinessIdByStatus } from './data.ts';

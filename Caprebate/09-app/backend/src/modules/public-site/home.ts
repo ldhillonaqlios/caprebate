@@ -27,15 +27,15 @@ import { assertDashboard } from '../crm/index.ts';
 import { assertLeadSection } from '../crm/index.ts';
 import { leadsList, type LeadListRow } from '../../shared/lists.ts';
 import { pipelineBoard, pipelineBoardGate } from '../crm/index.ts';
-import { financeDashboard } from '../../web/invoices.ts';
-import { assertFinanceSection } from '../../web/finance.ts';
-import { assertSurveySection, surveyorJobs } from '../../web/surveyor.ts';
-import { auditLogView } from '../../web/audit-log.ts';
+import { financeDashboard } from '../finance/index.ts';
+import { assertFinanceSection } from '../finance/index.ts';
+import { assertSurveySection, surveyorJobs } from '../survey/index.ts';
+import { auditLogView } from '../compliance/index.ts';
 import { isLateNewLead, waitedWords, workingDaysSince } from '../../shared/index.ts';
 import { tasksModule as T } from '../crm/index.ts';
 import { messagesModule as M } from '../crm/index.ts';
 import { inboundEmailModule as IE } from '../crm/index.ts';
-import * as S from '../../web/settings.ts';
+import { settingsModule as S } from '../admin/index.ts';
 import { STAGE_GROUPS } from '../../core/index.ts';
 
 /** One tile: a name and at most two more lines. `late` draws it red. */
@@ -243,7 +243,7 @@ export function pipelineRow(actor: Actor, app: App, nowIso: string): Safe[] {
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({
   BELOW: 'Below the VAT limit',
   INSIDE_MARGIN: 'Close to the VAT limit',
-  OVER: 'Over the VAT limit — tell Lakhbir',
+  OVER: 'Over the VAT limit — tell the owner',
   CANNOT_SAY: 'Cannot tell — a setting is missing',
 });
 
@@ -292,7 +292,7 @@ export function adminRow(actor: Actor, app: App): Safe[] {
     { href: '/staff/connections', name: 'Connections', lines: ['Every outside service'] },
     {
       href: '/staff/audit', name: 'Audit log', late: !log.chain.intact,
-      lines: [log.chain.intact ? 'Checked — nothing changed' : 'Problem found — tell Lakhbir'],
+      lines: [log.chain.intact ? 'Checked — nothing changed' : 'Problem found — tell the owner'],
     },
     {
       href: '/staff/audit?kind=LOGIN_FAILED', name: 'Refused sign-ins', late: refusedSignIns > 0,

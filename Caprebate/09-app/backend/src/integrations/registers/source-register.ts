@@ -240,7 +240,7 @@ export const LICENCES: readonly Licence[] = [
     notes: 'Free under the OGL. Republished on the first Sunday of each month, showing the previous month, so a copy ' +
       'is kept no longer than about five weeks. Freehold only. A site area worked out from a polygon is for our own ' +
       'checks, and so stays out of every outgoing report with the polygon, a map of it and its coordinates, until ' +
-      'Lakhbir decides whether the number itself may go in a client report.',
+      'the owner decides whether the number itself may go in a client report.',
   },
   {
     licence_id: 'HMLR_TITLE',
@@ -254,7 +254,7 @@ export const LICENCES: readonly Licence[] = [
     notes:
       'Purchased official copies. Onward supply to a third party is restricted. CLEARED 27 September 2026: the ' +
       'solicitor answered yes — a figure from an official copy may go in the pack for the client\'s own accountant ' +
-      '(relayed by Lakhbir; register entry SDP-L22). Since Phase 146k/146l the copy is bought, typed and uploaded ' +
+      '(relayed by the owner; register entry SDP-L22). Since Phase 146k/146l the copy is bought, typed and uploaded ' +
       'by hand; the licence is the same. Not in the client report: that channel was not asked and stays shut.'
   },
   {
@@ -365,18 +365,18 @@ export const LICENCES: readonly Licence[] = [
      *     contactbcis@bcis.co.uk; API access: api@bcis.co.uk.
      */
     licence_id: 'BCIS_COMMERCIAL',
-    name: 'BCIS subscription licence — Annex One of BCIS Ltd\'s terms of sale; our use confirmed by BCIS (relayed by Lakhbir, 9 Oct 2026); NO ATTRIBUTION WORDING PUBLISHED',
+    name: 'BCIS subscription licence — Annex One of BCIS Ltd\'s terms of sale; our use confirmed by BCIS (relayed by the owner, 9 Oct 2026); NO ATTRIBUTION WORDING PUBLISHED',
     publisher_of_licence: 'Building Cost Information Service Ltd (BCIS, owned by RICS)',
     attribution_required: true,
     attribution_text:
       'NOT PUBLISHED BY BCIS — its licence (Annex One, cl. 7.3) requires a credit to BCIS wherever feasible but gives no ' +
       'wording. Ours: every rate drawn from BCIS names "BCIS" and the series it came from, in the report\'s "Where each rate ' +
-      'comes from" (src/web/survey-report.ts).',
+      'comes from" (src/modules/survey/survey-report.ts).',
     /*: OPENED ON BCIS'S OWN ANSWER. The owner: "we spoke to BCIS and they
        said its fine for us to do what we are doing" — loading BCIS's data, drafting the pack's rates from it and showing
        them in our reports. Those reports go to the client, into the accountant's
        pack and into the defence pack, so all three are opened, as the solicitor's answer opened HMLR_TITLE's. The rate
-       TABLE itself is still never reproduced (cl. 2.2), and the data is still never committed (src/web/bcis-index.ts). */
+       TABLE itself is still never reproduced (cl. 2.2), and the data is still never committed (src/modules/survey/bcis-index.ts). */
     redistribution: { client_report: true, accountant_report: true, hmrc_pack: true, internal: true },
     cache_max_age_days: 365,
     legal_review_required: false,
@@ -387,7 +387,7 @@ export const LICENCES: readonly Licence[] = [
       'accountant_report false and hmrc_pack false are our refusals where BCIS publishes no grant; 365 days is the ' +
       'subscription term, and on expiry the data is deleted (cl. 9.2). Rates may be USED to compute, but the underlying ' +
       'rate table may not be reproduced. Word question 218 (which product, and whether its licence lets our software use ' +
-      'its rates) closed 10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir, 9 Oct 2026); the channels opened then.',
+      'its rates) closed 10 Oct 2026: BCIS confirmed our use (relayed by the owner, 9 Oct 2026); the channels opened then.',
   },
   {
     licence_id: 'CLIENT_SUPPLIED',
@@ -440,8 +440,8 @@ export const LICENCES: readonly Licence[] = [
   },
   {
     /**
-     * THE ADDRESS LOOKUP. Board item 13003875907. Written by
-     * Phase 129 from the supplier's OWN PUBLISHED PAGES, read that day:
+     * THE ADDRESS LOOKUP. Board item 13003875907. Written
+     * from the supplier's OWN PUBLISHED PAGES, read that day:
      *   https://homedata.co.uk/terms            (Terms of Service, "Last updated: November 2024")
      *   https://homedata.co.uk/about            ("Sourced from ... OS AddressBase ...";
      *                                            "Licensed under Open Government Licence and commercial agreements")
@@ -499,7 +499,7 @@ export const LICENCES: readonly Licence[] = [
       'non-exclusive licence to use the data in accordance with your subscription plan", and nothing is said about ' +
       'title outlines, HM Land Registry data or reports. So the site area from a title outline is for our own checks ' +
       'only, as the INSPIRE one is, until Homedata says in writing it may go in a client report (Word question for ' +
-      'Lakhbir, Phase 156f).',
+      'the owner, Phase 156f).',
   },
   {
     /**
@@ -1221,7 +1221,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
   },
   {
     source_id: 'PLANNING',
-    /* PHASE 146d adds api.homedata.co.uk as a THIRD address this source can be asked at — built, switched off, and
+    /* api.homedata.co.uk is a THIRD address this source can be asked at — built, switched off, and
        not chosen. PlanIt remains the source of record; see src/integrations/connectors/homedata-planning.ts for why the choice is
        not a build decision. An address listed here is how a service row stays tied to its register source when the
        source has more than one publisher, which planning has had. */

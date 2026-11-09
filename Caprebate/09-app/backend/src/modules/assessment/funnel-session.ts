@@ -1,5 +1,5 @@
 /**
- * THE FUNNEL STATE, MAPPED ONTO AN ENGINE SESSION.        Phase 113b
+ * THE FUNNEL STATE, MAPPED ONTO AN ENGINE SESSION.
  *
  * The six screens write a CB_FUNNEL state; the engine takes a Session, which is
  * a different shape with about 190 named facts. This file is the mapping, and
@@ -188,7 +188,7 @@ const PROFIT: Readonly<Record<string, string>> = Object.freeze({
 });
 
 /**
- * THE BREAK-EVEN SWITCH — SHIPPED OFF.                     Phase 115
+ * THE BREAK-EVEN SWITCH — SHIPPED OFF.
  *
  * The reading the engine's own profit question points at, built and left inert
  * so that the tax adviser's answer to the question above is a one-line change
@@ -394,7 +394,7 @@ export function sessionFromFunnel(
  *   client, and the funnel never asks for the accounting period end anyway, so
  *   the window cannot be derived from what the six screens hold.
  *
- * Q3 works -> `base_amount`   (PHASE 159c: the works ARE now mapped, as `events`
+ * Q3 works -> `base_amount`   (the works ARE now mapped, as `events`
  *   above, each event on its own cost; what follows is why they are never added
  *   to the one amount.) IT WOULD DOUBLE-COUNT, AND CB_FRONTDOOR HAS A
  *   FUNCTION WHOSE ONLY JOB IS TO PREVENT THAT. `worksHeadingFor` re-words the

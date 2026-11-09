@@ -30,7 +30,7 @@ import * as P from '../../src/modules/crm/pipeline.ts';
 import * as T from '../../src/modules/crm/tasks.ts';
 import * as R from '../../src/modules/claims/claim-record.ts';
 import * as D from '../../src/modules/claims/documents.ts';
-import * as S from '../../src/web/compliance-identity.ts';
+import * as S from '../../src/modules/compliance/compliance-identity.ts';
 import * as CS from '../../src/modules/claims/case-stamp.ts';
 import * as DP from '../../src/modules/claims/defence-pack.ts';
 import { CTA, ctaSwitchReadings } from '../../src/shared/engine.ts';

@@ -149,7 +149,7 @@ function checks(app: App, subject: P.EnquirySubject, answers: Partial<Record<P.C
   }
 }
 
-/** CRM 7 of 10: THE CLAIM'S OWN fee invoice. An organisation's invoice no longer opens the gate — test/finance-claim.test.ts.
+/** CRM 7 of 10: THE CLAIM'S OWN fee invoice. An organisation's invoice no longer opens the gate — test/finance/invoices-and-fee-controls.test.ts.
  *  PHASE 158c (F41): and it is SENT to the client — raised and not sent does not open it (test/claims/surveyor-approval-and-reports.test.ts). */
 function raiseInvoice(app: App, business: string, claim: string): void {
   CF.claimInvoiceRow(app, business, claim, { status: 'SENT' });
@@ -704,7 +704,7 @@ describe('exits keep the record — nothing is deleted', () => {
       staff(app);
       const org = organisation(app);
       // CRM 7 of 10: an invoice on the organisation opens no claim's gate, and raising one on an exited claim is refused
-      // by the store (test/finance-claim.test.ts) — it is kept here so the exit is still tried with an invoice on record.
+      // by the store (test/finance/invoices-and-fee-controls.test.ts) — it is kept here so the exit is still tried with an invoice on record.
       app.db.run("INSERT INTO invoices (id,business_id,claim_value_pence,fee_pence,invoice_status,payment_status,vat_position,created_at) VALUES (?,?,NULL,NULL,'RAISED','UNPAID','not VAT registered',?)",
         [randomUUID(), org.business, T0]);
       // PHASE 159d: the exit ends a claim only where nothing is left to claim — every part W3. The property sold is that.

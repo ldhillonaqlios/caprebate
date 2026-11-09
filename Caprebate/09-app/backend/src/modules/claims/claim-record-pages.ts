@@ -28,7 +28,7 @@ import * as F from './claim-facts.ts';
 import * as R from './claim-record.ts';
 import { recordClientFilingConfirmation } from '../portal/index.ts';
 import { recordFeeDiscount } from './fee-discounts.ts';
-import type { ReleasedFacts } from '../../payload.ts';
+import type { ReleasedFacts } from '../survey/index.ts';
 import { getClaimsBusinessIdById, getClaimsPById } from './data.ts';
 
 export type WebResult = 'handled' | 'not-mine';
@@ -244,7 +244,7 @@ export function factsBlock(claim_id: string, facts: F.FactsPanel | ReleasedFacts
   const p = facts;
   const w = p.amendment_window;
   // Inside the claim page's "The claim's facts" section, which names it; the sentence behind "Why?"; the
-  // recording forms behind one fold. PHASE 143 moved grants and contributions out to a section of their own (grantsBlock).
+  // recording forms behind one fold. Grants and contributions have a section of their own (grantsBlock).
   return h`<div class="pblock">
     <div class="help">${why('We work a fact out from a public record first, and only type it in where nothing gives it. Every value says where it came from. “Not known” and “never recorded” are treated the same, and neither counts in the client’s favour.')}</div>
     <table><tbody>

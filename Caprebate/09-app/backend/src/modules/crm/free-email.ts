@@ -44,13 +44,13 @@ import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import * as C from './crm.ts';
 import { documentsModule as D } from '../claims/index.ts';
 import { assertLeadSection } from './leads.ts';
-import { activeTemplates, freeTextRefusal, mergePlain, mergeValues, templateRefusal } from '../../web/templates.ts';
+import { activeTemplates, freeTextRefusal, mergePlain, mergeValues, templateRefusal } from '../admin/index.ts';
 import { propertyIn } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { KEEP_ORIGINALS } from '../../shared/index.ts';
 import { emailChains, reSubject, STATE_WORDS, type EmailChain } from './email-chains.ts';
 import { getOutboxAttachmentsCountByOutboxId, listOutboxIdCreatedAtByBusinessIdKind, listOutboxIdCreatedAtByLeadIdKind } from '../../integrations/index.ts';
-import { getEmailTemplatesLabelSubjectByIdActive, insertEmailSender } from './data-borrowed.ts';
+import { getEmailTemplatesLabelSubjectByIdActive, insertEmailSender } from '../admin/index.ts';
 import { getBusinessesEById, getContactsCountByClientStatus2, getLeadsIdBusinessIdById6, listContactsIdFullNameByLeadIdBusinessId } from './data.ts';
 
 export type EmailDeps = {
@@ -204,7 +204,6 @@ function isDoNotContactAddress(db: Db, email: string): boolean {
 function baseFor(d: EmailDeps, actor: Actor, s: EmailSubject): Base {
   return s.kind === 'company' ? companyBase(d, actor, s.id) : leadBase(d, actor, s.id);
 }
-
 
 function sentRows(db: Db, b: Base): SentRow[] {
   type Row = { created_at: string; to_email: string; subject: string; sent_at: string | null; send_requested: number; last_error: string | null; claim_id: string | null; id: string };

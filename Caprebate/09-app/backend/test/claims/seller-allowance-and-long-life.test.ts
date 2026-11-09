@@ -28,9 +28,9 @@ import { acceptClientBytes, finishUpload, issuedJob } from '../../src/modules/cl
 import { pdfOf } from '../document-fixtures.ts';
 import { testApp, actor } from '../helpers.ts';
 import * as C from '../../src/modules/crm/crm.ts';
-import * as SP from '../../src/web/survey-pack.ts';
-import * as L from '../../src/web/pack-legal.ts';
-import { snapshotOf } from '../../src/web/pack-approve.ts';
+import * as SP from '../../src/modules/survey/survey-pack.ts';
+import * as L from '../../src/modules/survey/pack-legal.ts';
+import { snapshotOf } from '../../src/modules/survey/pack-approve.ts';
 import { writeAssessmentEvents } from '../../src/modules/claims/property-events.ts';
 import { MONEY_READINGS_OFF, MONEY_READINGS_ON } from '../../src/shared/money-readings.ts';
 import { allowancesFor, NO_FACTS, type AllowanceFacts } from '../../src/modules/assessment/allowances.ts';

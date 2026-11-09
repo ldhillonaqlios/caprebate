@@ -9,7 +9,7 @@
  * the only file under src/ that writes register_records — one door, so the N2 check below guards every path in.
  *
  * NOTHING FIRES YET. Every connector switch is off (REGISTER_SWITCHES), so no register is contacted by any code
- * path; Phases 146c and 146d build the real connectors behind the shape, switched off.
+ * path; the real connectors are built behind the shape, switched off.
  *
  * N2 — THE NAME EXCLUSION REGISTER — IS WIRED IN, NOT RESTATED.
  * caprebate-name-exclusion.ts is the rule. Every record passes through

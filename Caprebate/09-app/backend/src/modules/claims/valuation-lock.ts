@@ -9,8 +9,8 @@
  *
  * THE RULE NOW:
  *   · LOCKED. Once a claim is past the tax adviser's sign-off (Reports, Invoice, Defence pack, Closed), or has stopped
- *     at an exit, its valuation is fixed: no pack approval and no legal-check answer is taken (src/web/pack-approve.ts,
- *     src/web/pack-legal.ts). A claim on hold is judged by the stage it returns to.
+ *     at an exit, its valuation is fixed: no pack approval and no legal-check answer is taken (src/modules/survey/pack-approve.ts,
+ *     src/modules/survey/pack-legal.ts). A claim on hold is judged by the stage it returns to.
  *   · REOPENED, ON PURPOSE. The only way to change the figures then is "Reopen the valuation": an admin moves the claim
  *     back to Valuation, with a reason (the claim's own REOPEN move, src/modules/crm/pipeline.ts). A reopen to any stage up to
  *     and including the tax adviser's sign-off SETS ASIDE what was released on the old figures, and the claim page says
@@ -23,7 +23,8 @@
  */
 import type { Db } from '../../core/index.ts';
 import { PROCEDURE_KEYS, anyStageLabel, claimStage } from '../../shared/index.ts';
-import { getClaimStageMovesAtWhoByClaimIdKind, getSurveyPackApprovalsIdVersionByClaimId } from './data-borrowed.ts';
+import { getClaimStageMovesAtWhoByClaimIdKind } from './data-borrowed.ts';
+import { getSurveyPackApprovalsIdVersionByClaimId } from '../survey/index.ts';
 import { getClaimStageMovesAtByClaimIdKind2, getClaimsStageHoldReturnStageById, updateClaimDeliverablesStateUpdatedByByClaimIdKind2 } from './data.ts';
 import { getClaimDeliverablesCountByClaimIdKind3, getClaimDeliverablesCountByClaimIdKind4, getTaxAdviserSignoffsCountByClaimId } from './data.ts';
 import { getClientReportAcceptancesCountByClaimId } from '../portal/index.ts';

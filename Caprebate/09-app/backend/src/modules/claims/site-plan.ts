@@ -10,7 +10,7 @@
  * (src/integrations/connectors/registers.ts, `lookupsWaivedHere`), and only with the Ordnance Survey key.
  *
  * WHAT IS KEPT. Each fetch is a new row; the newest is shown. Outlines are kept in decimetres from the postcode's point,
- * so the plan draws the same every time. An approved version copies the plan into its own JSON (src/web/pack-approve.ts),
+ * so the plan draws the same every time. An approved version copies the plan into its own JSON (src/modules/survey/pack-approve.ts),
  * so the report it makes never changes after approval, whatever is fetched later.
  *
  * HOW IT IS DRAWN. One model, two drawings, as the report: an SVG in the page (presentation attributes only, so the
@@ -27,11 +27,11 @@ import type { SecretStore } from '../../core/index.ts';
 import type { Env } from '../../integrations/index.ts';
 import { lookupsWaivedHere } from '../../integrations/index.ts';
 import { buildingsAround, OS_ATTRIBUTION, PLAN_HALF_M, PLAN_MAX_BUILDINGS, pickBuilding, pointOfPostcode, type Asker } from '../../integrations/index.ts';
-import { packJob } from '../../web/surveyor.ts';
-import { packView } from '../../web/survey-pack.ts';
+import { packJob } from '../survey/index.ts';
+import { packView } from '../survey/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import type { Op, Rgb } from '../../shared/index.ts';
-import { getSitePlansPostcodeHalfMByJobId, insertSitePlans } from './data-borrowed.ts';
+import { getSitePlansPostcodeHalfMByJobId, insertSitePlans } from '../survey/index.ts';
 
 /** A site plan as kept and as drawn. Rings are [east, north] in DECIMETRES from the postcode's point. */
 export type SitePlan = {

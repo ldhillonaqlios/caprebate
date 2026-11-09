@@ -5,7 +5,7 @@
  * for the public referral form, src/core/router.ts. The mechanics are the
  * Accountant Referral Network paper, section 5 — 08-monday-doc-exports/
  * 12552691718__Accountant-Referral-Network.md — and every decision below that is
- * not obvious is a row of Part E of 09-app/CAPREBATE-CRM-DISPOSITION.md.
+ * not obvious is a row of Part E of 09-app/docs/CAPREBATE-CRM-DISPOSITION.md.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * AN INTRODUCER IS A FIRM, AND NEVER A USER
@@ -65,9 +65,10 @@ import { fireAutomation } from './automation.ts';
 import { ownerChoices } from './crm.ts';
 import { SECTORS } from './leads.ts';
 import { ACTIVITY_TYPES, RECIPROCITY_ACTIVITY_TYPES, dueReading, insertTask } from './tasks.ts';
-import { vocabChoice, vocabLabel, vocabulary } from '../../web/vocabularies.ts';
+import { vocabChoice, vocabLabel, vocabulary } from '../admin/index.ts';
 import { getContactsIdByIdIntroducerId, getContactsIdFullNameByIdIntroducerId, getIntroducerFeesCountByIntroducerId, getIntroducerFeesIdByClaimId, getIntroducerNoticesIdByLeadIdNotice, getIntroducerPercentageEntriesIdByInvoiceIdEntryKind, getIntroducerPercentageEntriesIntroducerIdClaimIdByInvoiceId, getIntroducerPercentageEntriesTByInvoiceId, getIntroducerTermsSignaturesTermsVersionSignedOnByIntroducer, getIntroducersFirmNameById, getIntroducersIdById, getIntroducersIdIntroducerTypeById, getIntroducersIdMergedIntoIdById, getLeadsClaimIdById, getLeadsIdBusinessIdByBusinessIdIntroducerId, getLeadsIdBusinessIdById2, getLeadsIdBusinessIdById7, getLeadsIdByClaimIdIntroducerId, getLeadsIntroducerIdByClaimIdIntroducerType, getLeadsIntroducerIdById, getStaffTasksCompletedAtActivityTypeByIntroducerIdStatus, getStaffTasksCountByIntroducerId, getStaffTasksDueOnTitleByIntroducerIdStatus, insertContacts5, insertIntroducerFees, insertIntroducerMerges, insertIntroducerNotices, insertIntroducerPercentageEntries, insertIntroducerPercentageEntries2, insertIntroducerShareConsents, insertIntroducerShareConsents2, insertIntroducerTermsSignatures, insertIntroducers, insertIntroducers2, insertLeads5, listContactsIdFullNameByIntroducerId, listIntroducerNoticesAtNoticeByLeadId, listIntroducersIdName, listIntroducersIdNameByIdMergedIntoId, listLeadsLeadIdIntroducerIdByBusinessId, updateContactsFullNameJobRoleOtherById2, updateContactsIntroducerIdUpdatedAtByIntroducerId, updateIntroducerFeesDisclosureGivenAtDisclosureRecordedByByI, updateIntroducerFeesStatePaidAtById, updateIntroducerMergesCompletedAtLeadsMovedById, updateIntroducerRewardSettingModelFeePenceById, updateIntroducersFirmNameIntroducerTypeById, updateIntroducersMergedIntoIdMergedAtById, updateIntroducersNoticeContactIdUpdatedAtByIdNoticeContactId, updateLeadsIntroducerIdUpdatedAtByIntroducerId, updateStaffTasksIntroducerIdUpdatedAtByIntroducerIdStatus, updateStaffTasksStatusCompletedAtById } from './data.ts';
-import { getClaimStageMovesLabelByClaimIdToStage, getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getInvoiceCreditNotesIdInvoiceIdById, getInvoiceCreditNotesNByInvoiceId, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesIdClaimIdById, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence, getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO, listInvoicesIdFeeByClaimIdIntroducerId, listLeadsIdBusinessIdByIntroducerId, listStaffTasksIdTitleByIntroducerIdStatus } from './data-borrowed.ts';
+import { getClaimStageMovesLabelByClaimIdToStage, getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence, getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, listEstimatesStageQualifyingExpenditurePenceByAssessmentIdJO, listInvoicesIdFeeByClaimIdIntroducerId, listLeadsIdBusinessIdByIntroducerId, listStaffTasksIdTitleByIntroducerIdStatus } from './data-borrowed.ts';
+import { getInvoiceCreditNotesIdInvoiceIdById, getInvoiceCreditNotesNByInvoiceId, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesIdClaimIdById } from '../finance/index.ts';
 import { getClaimsStageHoldReturnStageById, listClaimStageMovesToStageByClaimId } from '../claims/index.ts';
 import { getIntroducerFeesIdIntroducerIdById, getIntroducersIdFirmNameById, listIntroducerFeesIdIntroducerId, listIntroducerFeesIdIntroducerIdByIntroducerId, listIntroducersIdFirmName2 } from './data-borrowed.ts';
 import { listIntroducerPercentageEntriesIdIntroducerId, listIntroducerPercentageEntriesIdIntroducerIdByIntroducerId } from './data-borrowed.ts';
@@ -128,7 +129,7 @@ export const REWARD_MODELS: Vocab = Object.freeze({
  */
 export const REFERRAL_PERCENTAGE = Object.freeze({
   percent_bp: 1000,
-  source: 'Lakhbir’s answer to “Is anything paid to the accountant?”. An accountant registered as an introducer may be offered 10% of our fee',
+  source: 'The owner’s answer to “Is anything paid to the accountant?”. An accountant registered as an introducer may be offered 10% of our fee',
 });
 
 export const REWARD_QUESTION = 'Is anything paid to the accountant?';
@@ -348,7 +349,6 @@ type IntroducerDbRow = {
   notes: string | null; created_via: string; created_at: string; updated_at: string; owner_name: string | null;
   merged_into_id: string | null; merged_into_name: string | null; merged_at: string | null;
 };
-
 
 function loadIntroducer(db: Db, id: string): IntroducerDbRow {
   const r = getIntroducersIdFirmNameById<IntroducerDbRow>(db, [id]);
@@ -1399,7 +1399,7 @@ export function setRewardModel(
       return {
         ok: false,
         why: `Introducer fees stay off while clause 1 of the engagement letter is blank. It still reads ${blanks.map((t) => t.text).join(' ')} ` +
-          `Lakhbir decides whether we pay an introducer: “${REWARD_QUESTION}”.`,
+          `The owner decides whether we pay an introducer: “${REWARD_QUESTION}”.`,
       };
     }
   }
@@ -1437,7 +1437,6 @@ type FeeDbRow = {
   id: string; introducer_id: string; firm_name: string; claim_id: string; claim_ref: string; business_id: string; amount_pence: number;
   disclosure_given_at: string | null; discloser: string | null; state: string; paid_at: string | null; payer: string | null;
 };
-
 
 function feeObj(r: { id: string; business_id: string }): { type: 'introducer_fee'; id: string; business_id: string } {
   return { type: 'introducer_fee', id: r.id, business_id: r.business_id };
@@ -1516,9 +1515,9 @@ export function recordFeeSettled(d: IntroducerDeps, actor: Actor, fee_id: string
 }
 
 /* ================================================================== *
- * 7 · MODEL C — A PERCENTAGE OF OUR FEE ACTUALLY INVOICED   Phase 132e
+ * 7 · MODEL C — A PERCENTAGE OF OUR FEE ACTUALLY INVOICED
  *
- * Switched off, as the setting ships. Two hooks, both called by src/web/invoices.ts
+ * Switched off, as the setting ships. Two hooks, both called by src/modules/finance/invoices.ts
  * after its own write has committed, and both silent when there is nothing to do:
  *   onFeeInvoiced         our fee invoice raised on a referred claim, while C is
  *                         the setting and the referring firm is a registered

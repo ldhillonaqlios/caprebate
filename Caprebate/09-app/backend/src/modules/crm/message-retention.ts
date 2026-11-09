@@ -10,7 +10,7 @@
  *   "How long do we keep client messages and the team chat?"
  * A message deleted early cannot be brought back, so nothing deletes one until that is answered.
  *
- * OFF WAS EXACTLY PHASE 142a's STATE. With the setting off, `messagesDue` returns nothing and `sweepMessages` deletes
+ * OFF IS EXACTLY THE STATE BEFORE MESSAGES COULD BE DELETED. With the setting off, `messagesDue` returns nothing and `sweepMessages` deletes
  * nothing, writes nothing and returns OFF with what is missing, in plain words.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -53,11 +53,11 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { claimFileDays } from '../claims/index.ts';
-import { liveHeldIds } from '../../web/compliance.ts';
+import { liveHeldIds } from '../compliance/index.ts';
 import { BACKUP_CYCLE, RET7, knownBackupCycleDays } from '../../shared/upload-handler-port.ts';
 import { deleteInboundEmailById, deleteInboundEmailFileSavesByInboundEmailFileIdInboundEmailI, deleteInboundEmailFilesByInboundEmailId, deleteInboundEmailFilingsByInboundEmailId, listInboundEmailIdByClientMessageId, listInboundEmailIdReceivedAtByOutcomeInboundEmailId } from '../../integrations/index.ts';
 import { deleteClientMessageFilesByMessageId, deleteClientMessagesById, deleteInternalNotesById, listClientMessagesBusinessId, listClientMessagesIdCreatedAtByBusinessId, listInternalNotesIdCreatedAtByBusinessId } from './data.ts';
-import { insertDeletionLog } from './data-borrowed.ts';
+import { insertDeletionLog } from '../compliance/index.ts';
 import { listClaimsIdByBusinessId } from '../claims/index.ts';
 
 export type MessageRetention = {
@@ -86,7 +86,7 @@ export const MESSAGE_RETENTION: MessageRetention = Object.freeze({
   enabled: true,
   with_claim_years: 7,
   without_claim_months: 84,
-  approved_by: 'Lakhbir Dhillon',
+  approved_by: 'The owner (Head of Business Development)',
   review_ref: 'CAPREBATE QUESTIONS, "How long do we keep client messages and the team chat?", answered 22 September 2026',
   question: MESSAGE_RETENTION_QUESTION,
 });
