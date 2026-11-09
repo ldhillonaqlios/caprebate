@@ -41,7 +41,7 @@ export type NameSwitches = {
 
 /**
  * THE SWITCH: ON SINCE. the owner answered CAPREBATE QUESTIONS, "The new names and the client's step
- * names - which do we switch on?", in the Phase 144 chat: "Switch on". Clients read "1 Your estimate" to "6 Aftercare".
+ * names - which do we switch on?", in the chat that asked it: "Switch on". Clients read "1 Your estimate" to "6 Aftercare".
  * A test still passes both positions.
  *
  * THE MENU NAMES ARE NO LONGER A SWITCH. Of the three proposed "Introducer fees" is now the

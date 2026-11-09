@@ -1,7 +1,7 @@
 /**
  * THE BRAND BOOK'S AVOID LIST, IN ONE PLACE.
  *
- * Phase 133c wrote this list inside test/phase133c.test.ts. Phase 133d needs the same rules for the public site, the
+ * This list was first written inside a test. The same rules are needed for the public site, the
  * notices page and the complaint form (03-app/caprebate-brand-check.cjs), and for the engagement letter now that the
  * test no longer exempts it, so the list lives here and both import it. Brand book v1.0, slide 15 (and 14 and 52).
  *

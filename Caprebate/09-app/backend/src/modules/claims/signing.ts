@@ -230,7 +230,7 @@ export type SignatureFields = {
   readonly ip: string;
   readonly letter_sha256: string;
   readonly pdf_sha256: string;
-  /** Absent or 1, the record as Phase 146f made it; 2, with the signature and the certificate's times. */
+  /** Absent or 1, the record as first made; 2, with the signature and the certificate's times. */
   readonly record_version?: 1 | 2 | 3;
   readonly signature_method?: 'DRAWN' | 'TYPED' | null;
   /** The drawn strokes as stored (JSON), or null for a typed signature. */

@@ -4,7 +4,7 @@
  *
  * WHAT THE OWNER ASKED (Word answers 16, 17, 35 and 36). Homedata, the paid address lookup, runs after signing, when staff
  * start the research — built (src/integrations/connectors/homedata.ts). At the address question, add a FREE address lookup if one
- * exists. PHASE 151 FOUND NONE THAT A PAID SERVICE MAY USE: getAddress.io stopped trading, and every
+ * exists. THE RESEARCH FOUND NONE THAT A PAID SERVICE MAY USE: getAddress.io stopped trading, and every
  * other postcode-to-address list is paid or a trial (the source register, POSTCODES_IO_OPEN; the research is
  * 04-phase-work/phase151/free-address-lookup.md). So this is the best free thing there is: a POSTCODE CHECK. The client
  * types their postcode; this confirms it exists and fills in the council area, the region and the country; the client

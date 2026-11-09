@@ -119,7 +119,7 @@ export function latestSignOff(db: Db, claim_id: string): SignoffRow | undefined 
 }
 
 /**
- * The sign-off record a gate may use: one recorded since the claim last ENTERED TAX_ADVISER_SIGNOFF — and, PHASE 159a,
+ * The sign-off record a gate may use: one recorded since the claim last ENTERED TAX_ADVISER_SIGNOFF — and also
  * since the valuation was last reopened (src/modules/claims/valuation-lock.ts), which sets every earlier sign-off aside.
  */
 export function signOffSinceEntry(db: Db, c: { id: string; created_at: string }): SignoffRow | undefined {
@@ -331,7 +331,7 @@ function signoffVersion(db: Db, claim_id: string): { id: string; version: number
  * ================================================================== */
 
 /**
- * The engine package this build ships, and its version. PHASE 132 MOVED BOTH TO src/modules/claims/case-stamp.ts, which stamps the
+ * The engine package this build ships, and its version. BOTH NOW LIVE IN src/modules/claims/case-stamp.ts, which stamps the
  * version on every issued deliverable; the reconciliation still reads it here, from there, and the path is re-exported
  * so nothing that named it moves.
  */
@@ -904,7 +904,7 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
         stored: MADE_FROM_REPORT.has(kind)
           ? 'Made here from the survey report the surveyor approved, once a tax adviser has signed off its figure. Its fingerprint is recorded when it is issued.'
           : kind === 'DEFENCE_PACK'
-            // PHASE 158d (F47)
+            // the Friary House run, F47
             ? 'Made here from the claim’s own records, from the approved report to the filing. Its fingerprint is recorded when it is issued.'
             : `It cannot be stored yet. ${NO_RECEIPT_POLICY} Still to decide: ${RECEIPT_QUESTION}`,
         history: mine.map((r) => ({ version: r.version, state: DELIVERABLE_STATES[r.state] ?? r.state, issued_on: r.issued_on })),

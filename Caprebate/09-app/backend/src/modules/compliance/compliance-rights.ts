@@ -114,8 +114,8 @@ export const ONWARD_ROUTE_ITEMS: Vocab = Object.freeze({
 /**
  * Pack 5.7, the onward route, as it must be stated — in every refusal and every access response.
  *
- * DRAFT, FOR THE DATA PROTECTION OFFICER: the regulator named both ways. Copied by
- * Phase 132f from 03-app/caprebate-notices-page.html, where the dated dual wording is Block A's
+ * DRAFT, FOR THE DATA PROTECTION OFFICER: the regulator named both ways. Copied
+ * from 03-app/caprebate-notices-page.html, where the dated dual wording is Block A's
  * and the option 2 and 3 text below is Block F's, word for word: S.I. 2026/1015 reg 2(c) moves the functions to the
  * Information Commission and s.118 abolishes the office of Information Commissioner, so "the
  * Information Commissioner" alone is wrong from that day. Not approved; shortening it after that date is the officer's.

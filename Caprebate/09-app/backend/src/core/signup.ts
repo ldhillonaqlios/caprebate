@@ -1,5 +1,5 @@
 /**
- * A CLIENT'S OWN LOGIN, CHECKED BY EMAIL — PHASE 133j, 18 September 2026.
+ * A CLIENT'S OWN LOGIN, CHECKED BY EMAIL — 18 September 2026.
  *
  * Until now a client login existed only if somebody created it. A person who finishes the assessment is now offered
  * one on the thank-you page, for the organisation the assessment has just recorded.

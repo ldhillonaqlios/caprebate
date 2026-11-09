@@ -309,7 +309,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     publisher: 'Local planning authority / PlanIt / planning.data.gov.uk',
     datasetLabel: 'Planning applications',
     riskLevel: 'highest',
-    /* Phase 146d adds `planning_uprn`, which the source register has always permitted and this one did not keep —
+    /* `planning_uprn` is kept, which the source register has always permitted and this one did not keep —
        so a planning record carrying the property's own identifier would have been refused at the one door as an
        unclassified field. It is the least personal thing on the row: it names a building. */
     keptFields: [
@@ -386,7 +386,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
   },
   {
     /**
-     * Board item 13003875907. ADDED BY PHASE 146d — and until it was added, nothing from the paid
+     * Board item 13003875907. ADDED WITH THE PAID LOOKUP — and until it was added, nothing from the paid
      * address lookup could be written at all: `findPolicy` fails closed on a source it does not know, so the one
      * door would have refused every record with E_UNKNOWN_SOURCE. That is the register working as designed, and it
      * is why the entry comes with the connector rather than after it.
@@ -528,7 +528,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     // HIGHEST RISK, and for a sharper reason than PLANNING's. A planning API
     // response reaches this policy before it is written. An uploaded planning
     // PDF reaches nothing: the pipeline's four layers are all model-boundary
-    // controls, and Phase 40 §3.2 establishes that every one of them sits
+    // controls, and the Article 14 Assessment §3.2 establishes that every one of them sits
     // AFTER the moment the document is obtained. This entry governs the
     // structured claims. What governs the document itself is the receipt
     // policy in caprebate-client-doc-ingestion.ts, which is upstream of
@@ -612,9 +612,9 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'sba_earliest_contract_date', 'sba_first_use_date', 'sba_qualifying_expenditure_pence',
     ],
     // No spec has any of these fields today. They are listed because the roles
-    // EXIST on the face of the documents (Phase 40 §4.2 works them through type
+    // EXIST on the face of the documents (the Article 14 Assessment §4.2 works them through type
     // by type) and the cheapest moment to refuse them is before somebody adds
-    // one to a spec believing it harmless. Ordered as Phase 40 orders them:
+    // one to a spec believing it harmless. Ordered as that assessment orders them:
     // transaction roles, then the three roles that are natural persons one
     // hundred per cent of the time (§4.3), then the Class D roles that have no
     // lawful basis at all (§4.5), then free text.
@@ -632,7 +632,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'fee_earner_*', 'conveyancer_*', 'solicitor_name', 'solicitor_name_*',
       'case_officer_*', 'grant_officer_*', 'agent_name', 'agent_name_*',
       'contact_*', 'managing_agent_name',
-      // Class D — no lawful basis is claimed for any of these. Phase 40 §4.5
+      // Class D — no lawful basis is claimed for any of these. Article 14 Assessment §4.5
       'applicant_name', 'applicant_name_*', 'objector_*', 'neighbour_*', 'consultee_*',
       'representation_*', 'comment_*', 'correspondence_*',
       // People named inside the document rather than party to it
@@ -870,7 +870,7 @@ export function assertNoUnauthorisedName(rec: IngestedRecord): void {
  * ingestion.ts section 6 for the same reason.
  *
  * WHAT WAS ACTUALLY MISSING, WHICH IS NARROWER THAN "NOTHING RECORDS THIS".
- * Phase 98's prompt said `art14_notice_sent` appears nowhere in 04-phase-work,
+ * An earlier brief said `art14_notice_sent` appears nowhere in 04-phase-work,
  * and that grep was correct. The conclusion drawn from it was not: a full
  * Article 14 transparency record ALREADY EXISTS for the uploaded-document
  * population, with per-person notices, 14(5)(e) exemption reasons and a

@@ -135,7 +135,7 @@ export async function handleCompliance(
     // The online identity check, sent from this check while it is open.
     return html(res, V.checkPage(nav, v, msg, identityPanel(d.app, actor, { business_id: v.check.business_id, cdd_check_id: v.check.id }, v.contacts)));
   }
-  /* PHASE 151b · THE ONLINE IDENTITY CHECK: sent from a due diligence check, or from the client's page. compliance.write,
+  /* THE ONLINE IDENTITY CHECK: sent from a due diligence check, or from the client's page. compliance.write,
      asserted inside sendIdentityCheck. Off with IDENTITY_CHECK: the refusal says, in words, what is still missing. */
   const sendFromCheck = m(`/aml/checks/${ID}/identity`);
   if ((sendFromCheck || path === '/staff/compliance/identity-checks') && method === 'POST') {

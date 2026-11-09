@@ -1,7 +1,7 @@
 /**
- * THE DOCUMENT READER'S TWO FOLLOW-ONS.   Phase 146i.
+ * THE DOCUMENT READER'S TWO FOLLOW-ONS.
  *
- * Phase 146g wired the reader into the upload flow and left it switched off. Two things about it were true from
+ * The reader is wired into the upload flow and was left switched off. Two things about it were true from
  * that day and neither had anywhere to live. They are here together because they are one story: what a reading can
  * keep, and what a person is told about a reading that did not work.
  *
@@ -43,7 +43,7 @@
  * NEVER A WORD OF THE DOCUMENT, on the screen or in the row. What is kept is a state, a count and a reason.
  *
  * ------------------------------------------------------------------------------------------------------------
- * 3 · PHASE 146j — THE TWO ONE-WAY DOORS 146i LEFT, CLOSED THE WAY A PICK IS TAKEN BACK
+ * 3 · THE TWO ONE-WAY DOORS SECTIONS 1 AND 2 LEFT, CLOSED THE WAY A PICK IS TAKEN BACK
  *
  * (a) A YES CAN BE TAKEN BACK. A 'yes' lets the next reading keep the name, through `ingestRegisterRecord`, as part
  *     of that version's CLIENT_DOC record. Changing the answer to 'no' afterwards changed nothing already written.

@@ -15,7 +15,7 @@
  * WHY IT IS OFF, AND WHAT TURNS IT ON. `IDENTITY_CHECK.enabled` ships false. `identityCheckMissing` lists what must be
  * true first, in plain words, and every one is a person's decision, not Claude's:
  *   1. the provider chosen — Didit, the owner's choice;
- *   2. the provider named as a processor in the privacy notice AND in clause 7 of the engagement letter (the Phase 115
+ *   2. the provider named as a processor in the privacy notice AND in clause 7 of the engagement letter (the processor
  *      rule: nothing carries client data through a processor the client was not told about);
  *   3. its key, its webhook secret and the id of the check we set up in its console (the "workflow") in the key file
  *      (DIDIT_API_KEY, DIDIT_WEBHOOK_SECRET, DIDIT_WORKFLOW_ID), never in code;

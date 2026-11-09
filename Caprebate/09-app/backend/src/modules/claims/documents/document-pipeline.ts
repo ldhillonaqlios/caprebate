@@ -153,8 +153,8 @@ export type SegmentKind =
 /**
  * Never sent to a model. Not for any document type, not with any flag, not
  * with any override. UNCLASSIFIED is on the list because "we could not tell
- * what this section was" must fail closed. Phase 151b added the two kinds a
- * tax return carries about people: nine kinds, where there had been seven.
+ * what this section was" must fail closed. The two kinds a
+ * tax return carries about people were added later: nine kinds, where there had been seven.
  */
 export const NEVER_TO_MODEL: readonly SegmentKind[] = [
   'REPRESENTATIONS',
@@ -425,7 +425,7 @@ export const DOC_SPECS: readonly DocSpec[] = [
       'individual taxpayer\'s tax reference or National Insurance number, are not needed and are not kept.',
   },
   /*
-   * FOUR MORE TYPES THE CLAIM ASKS FOR (the Friary House run, F16). On Phase 129's recorded
+   * FOUR MORE TYPES THE CLAIM ASKS FOR (the Friary House run, F16). On the recorded
    * recommendation for each (src/modules/claims/receipt-recommendations.ts): strip the individuals, keep the figures. The
    * completion statement and the accounts are read by the claim team only, so their figures are GATE, never
    * APPORTIONMENT (which sends a review to a surveyor). A contractor's invoice and plans are claim evidence, which a
@@ -530,12 +530,12 @@ export const DOC_SPECS: readonly DocSpec[] = [
  *
  * ALL FALSE, AS SHIPPED, UNTIL. Which types warrant a person on
  * every field is a decision for whoever owns the extraction's error rate, not a
- * build step — and Phase 146e was told to take one: FIRE_RISK_ASSESSMENT IS ON. A
+ * build step — and the document reader's brief took one: FIRE_RISK_ASSESSMENT IS ON. A
  * fire risk assessment can hold residents' health details (who needs help to leave
  * the building, and why), so every field read from one is checked by a person
  * before it stands, however confident the model was. The other eight are as they
  * were. Recorded in 09-app/docs/CAPREBATE-DEVELOPER-SPEC.md; test M1 holds the table.
- * Phase 151b added the tax return and the tax computation, OFF: whether a person
+ * The tax return and the tax computation were added later, OFF: whether a person
  * checks every figure read from them is the same kind of decision, and nobody has
  * taken it.
  */
@@ -552,7 +552,7 @@ export const PERSON_REVIEW_BY_DOC_TYPE: Readonly<Record<ExtractableDocType, bool
   BUILDING_REGS_COMPLETION: false,
   GRANT_FUNDING_AGREEMENT: false,
   // Off, as every type is until somebody who owns the error rate
-  // decides otherwise — Phase 146e's rule for this table. Not decided here.
+  // decides otherwise — the rule for this table. Not decided here.
   TAX_RETURN: false,
   TAX_COMPUTATION: false,
   // Off, by the same rule.

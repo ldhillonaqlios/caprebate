@@ -1515,7 +1515,7 @@ export function recordFeeSettled(d: IntroducerDeps, actor: Actor, fee_id: string
 }
 
 /* ================================================================== *
- * 7 · MODEL C — A PERCENTAGE OF OUR FEE ACTUALLY INVOICED   Phase 132e
+ * 7 · MODEL C — A PERCENTAGE OF OUR FEE ACTUALLY INVOICED
  *
  * Switched off, as the setting ships. Two hooks, both called by src/modules/finance/invoices.ts
  * after its own write has committed, and both silent when there is nothing to do:

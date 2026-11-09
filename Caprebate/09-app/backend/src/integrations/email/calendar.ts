@@ -16,7 +16,7 @@
  * adding a second, and a cancellation removes the right one.
  *
  * TIMES ARE UTC ("Z"). The stored value is UTC; the calendar shows it in the reader's own time. The words in the
- * email body stay UK time (localWhen), as Phase 113a requires.
+ * email body stay UK time (localWhen), because a client reads them as UK time.
  */
 
 import type { InlineFile } from './email.ts';

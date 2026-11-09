@@ -1,7 +1,7 @@
 /**
  * READING TEXT OUT OF AN UPLOADED DOCUMENT — AND REFUSING TO INVENT ANY.
  *
- * This is the module behind the `TextExtractor` port. Before Phase 113c the
+ * This is the module behind the `TextExtractor` port. Before it existed the
  * port was filled by a reader that handled text-bearing uploads honestly and
  * returned ONE MARKER LINE for everything else — so the receipt strip, on a
  * PDF or a .docx, ran over a marker rather than over the document. Two of

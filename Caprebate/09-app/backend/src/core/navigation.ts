@@ -23,7 +23,7 @@
  *
  * A MENU IS A LOGIN'S DAILY WORK, NOT EVERYTHING IT MAY OPEN. the owner found tabs repeating
  * each other and a dozen entries under More. Each login's menu is now named in `MENUS`, More holds at most four, and a
- * section off the menu still opens by its address for every login its gate admits. Both halves of the Phase 133a worry
+ * section off the menu still opens by its address for every login its gate admits. Both halves of the first menu audit's worry
  * still hold: a listed section is still drawn only where its gate admits the login, and test/core/menus.test.ts asserts
  * every login's exact menu and every address's answer, so neither a menu nor a permission can drift unseen.
  */
@@ -167,7 +167,7 @@ export function tabsFor(actor: Actor): Tabs {
   return { groups, primary: groups.flatMap((g) => g.sections) };
 }
 
-/** Every address a login's menu links to — what the Phase 133a test opens. */
+/** Every address a login's menu links to — what the test that opens every menu link opens. */
 export function menuHrefs(actor: Actor): string[] {
   const t = tabsFor(actor);
   const out = t.primary.map((s) => s.href);

@@ -30,7 +30,7 @@
  *
  * The .docx is a SPECIMEN. It names "Quenmoor Care Group" and quotes an
  * indicative range of £27,788–£73,125 — an invented client and an illustrative
- * figure. (Until Phase 153, the specimen was "Oakfield Care
+ * figure. (The specimen used to be "Oakfield Care
  * Group", company number 09183422, and that number is a real, dissolved
  * company's. Name and number were both replaced in the .docx itself.) Rendering it unchanged into a real client's portal would show them
  * somebody else's name in their own contract. So the specimen values are
@@ -112,7 +112,7 @@ const SPECIMEN_RANGE = '£27,788–£73,125';
  * The letter's own XML, read through THE PROJECT'S ONE ZIP READER.
  *
  * THE FORTY-LINE CENTRAL-DIRECTORY WALK THAT USED TO LIVE HERE NOW LIVES IN
- * `zip.ts`, unchanged, because Phase 113c needed the same reading for uploaded
+ * `zip.ts`, unchanged, because the upload reader needed the same reading for uploaded
  * .docx files and a second copy would have been a second place to get the two
  * traps wrong. Both traps are documented at the top of that file: the
  * BACKSLASH entry paths this corpus really uses — `word\\document.xml`, whose

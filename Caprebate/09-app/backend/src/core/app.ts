@@ -153,11 +153,11 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
  * src/modules/claims/uploads.ts opened with the words "and it is a STUB, declared as one"
  * — it was declared in its own file, in `src/stubs/` in spirit, and named
  * nowhere a reader would look. A stub that declares itself only where it lives
- * is a stub nobody counts. Phase 108 found it while writing the developer
+ * is a stub nobody counts. It was found while writing the developer
  * spec's stub table and added it here rather than describing the discrepancy.
  *
  * AND ENTRY FOUR GOT SMALLER LATER THE SAME DAY WITHOUT DISAPPEARING, which is
- * the harder discipline. Phase 113c built a real .docx and PDF reader behind
+ * the harder discipline. A real .docx and PDF reader was then built behind
  * that port. OCR and scanned PDFs are still not read, so the entry stays and
  * says exactly what is left — deleting a row to make a list shorter is the
  * failure this list exists to prevent, and a four-line list that has quietly
@@ -167,8 +167,8 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
  * is: WOULD A DEVELOPER WHO RAN THIS BUILD BELIEVE THIS PART WORKS? FIVE things
  * fail that test today, and one of them is smaller than it was.
  *
- * AND THE FIFTH WAS ADDED BY PHASE 146g ON, for exactly the reason
- * this list exists. Phase 146e built the real reader for a client document and left it
+ * AND THE FIFTH WAS ADDED when the reader got its caller, for exactly the reason
+ * this list exists. The real reader for a client document was built and first left
  * with no caller in src/ at all: the upload flow ended at DISCHARGED and never ran steps
  * 8, 9 or 10 of the receipt contract. So a developer who ran this build and watched an
  * upload finish could reasonably have concluded that uploads were read. They were not,

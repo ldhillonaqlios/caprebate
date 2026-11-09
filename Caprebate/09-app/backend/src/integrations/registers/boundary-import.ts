@@ -448,7 +448,7 @@ function permissionFor(
  * nothing else in this file. Every function that needs a permission defaults
  * to reading it here.
  *
- * DECIDED, Phase 132e. Until this phase the value
+ * DECIDED. Until the decision the value
  * below was the same outcome, but only as an unconfirmed default. It is now a
  * recorded decision:
  *   - Decided by the owner, Head of Business Development. His answer "Yes" to "Switch on
@@ -473,8 +473,8 @@ function permissionFor(
  * Polygons was built, and left switched off
  * at 09-app/backend/src/connectors/inspire.ts. The data protection officer's
  * question on small, logged test lookups was answered by the owner on 25
- * (yes, on five conditions), and Phase 151l
- * built the first download as a test lookup under them: `smoke HMLR_INSPIRE`
+ * (yes, on five conditions), and
+ * the first download is built as a test lookup under them: `smoke HMLR_INSPIRE`
  * in the back end, which switches the fetcher on for its one call and never
  * touches this module. Switching fetching on for the application is the owner's
  * decision; a PASS from that test lookup, which proves the file's shape, comes
@@ -898,7 +898,7 @@ function emptyStub<T>(dataset_id: string, notes: string): ReferenceTableStub<T> 
   return Object.freeze({ dataset_id, loaded: false, rows: Object.freeze([]) as readonly T[], notes });
 }
 
-/** Empty. No data pulled, and none is kept here: the Phase 150 fetcher reads a council's file for one point and keeps only that polygon. */
+/** Empty. No data pulled, and none is kept here: the land boundary fetcher reads a council's file for one point and keeps only that polygon. */
 export const HMLR_INSPIRE_INDEX_POLYGON_TABLE: ReferenceTableStub<unknown> = emptyStub(
   'HMLR_INSPIRE_INDEX_POLYGON',
   'Empty stub — board item 12830205914 licence pending. No live rows have ever been loaded here.',

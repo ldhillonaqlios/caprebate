@@ -441,7 +441,7 @@ export function breachRegister(db: Db, actor: Actor, nowIso: string): { id: stri
   });
 }
 
-/* ------------------------------------------------ the regulator’s answer sheet — a template (dual wording, Phase 132f: the Information Commissioner) */
+/* ------------------------------------------------ the regulator’s answer sheet — a template (dual wording: the Information Commissioner) */
 
 export type SheetLine = { readonly field: string; readonly answer: string };
 export type SheetSection = { readonly title: string; readonly lines: readonly SheetLine[] };

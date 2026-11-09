@@ -8,7 +8,7 @@
  * free-type emails from contact@caprebate.co.uk. Sending them for real needs three things this build cannot decide:
  *
  *   1. an email provider chosen — a supplier, so the owner's decision;
- *   2. that provider named as a processor in the privacy notice AND in clause 7 of the engagement letter — the Phase 115
+ *   2. that provider named as a processor in the privacy notice AND in clause 7 of the engagement letter — the processor
  *      rule: nothing carries client data through a processor the client was not told about;
  *   3. the contact@caprebate.co.uk mailbox existing, with SPF, DKIM and DMARC set on caprebate.co.uk — without them the
  *      mail is marked as spam or refused, and anyone could send mail that looks like ours.

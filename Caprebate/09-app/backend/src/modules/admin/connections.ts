@@ -4,7 +4,7 @@
  *   GET  /staff/connections                          every outside service on one page, read only. Admin only.
  *   GET  /staff/connections/import?list={CIW|CARE_INSPECTORATE}   the import page, with its one script. Admin only.
  *   POST /staff/connections/register/{CIW|CARE_INSPECTORATE}   import that regulator's downloaded list. Admin only.
- *   GET  /staff/connections/switches.json            PHASE 161c: the list of what is built and switched off (STUBS in
+ *   GET  /staff/connections/switches.json            the list of what is built and switched off (STUBS in
  *                                                    src/core/app.ts), which /api/health served to anyone.
  *                                                    Admin only; anyone else gets 403 and nothing of it.
  * The Connections page itself carries no script, as every page reached from Home must (test/phase133a); the import
@@ -26,7 +26,7 @@
  * 4.5 MB a request. So the page's script (src/modules/claims/register-import-script.ts) reads the file ON THE ADMIN'S COMPUTER and
  * sends only the columns we keep - the names, telephone numbers and emails in these files never leave that computer.
  * With no script, a file under 4.4 MB goes as it is and the server reads only the same columns. Either way the import
- * is the one Phase 155 built (`importRegisterFile`): refused whole on wrong columns, replacing that list whole.
+ * is the one in `importRegisterFile`: refused whole on wrong columns, replacing that list whole.
  * A list not imported this calendar month is shown on Home's Admin view, so each new monthly file is imported.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';

@@ -323,7 +323,7 @@ export const homedataAddress = defineSteppedConnector<HomedataQuery>({
     };
     const typed = addressFromLines([q.property.address_line_1, q.property.address_line_2], q.property.postcode, q.property.town);
 
-    /* 0 · PHASE 156f (B1): THE UPRN THE CLIENT PICKED AT THE ASSESSMENT, so the 2p postcode search is not made again. It
+    /* 0 · (B1): THE UPRN THE CLIENT PICKED AT THE ASSESSMENT, so the 2p postcode search is not made again. It
        is used only when its own answer belongs to the address and postcode they gave (uprnBelongs); a mismatch goes
        back to the postcode search below. A back-office pick (`chosen`, `review`) is about the search's list, so a
        click carrying one goes straight to the search. */

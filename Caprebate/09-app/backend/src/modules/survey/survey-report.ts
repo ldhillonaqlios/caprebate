@@ -865,7 +865,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
   ai.forEach((line, i) => c.text(L + 16, c.y + 38 + i * 13, line, 'Helvetica', 9.5, C.body));
   c.y += ai.length * 13 + 52;
 
-  /* ---------------------------------------------------------- 6 · PHASE 153g: the surveyor's chapters */
+  /* ---------------------------------------------------------- 6 · the surveyor's chapters */
   if (m.chapters.length > 0) {
     c.page();
     c.heading('06', 'The surveyor’s chapters');

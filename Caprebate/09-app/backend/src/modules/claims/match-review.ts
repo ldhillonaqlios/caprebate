@@ -66,10 +66,10 @@
  * TAKING A PICK BACK
  *
  * Once a choice lands, the lookup is FIRED and leaves the REVIEW band, so `pickState` refuses to offer the list again
- * — and it should, because at that point there is nothing to choose between. Until Phase 146j that made a wrong
+ * — and it should, because at that point there is nothing to choose between. Until take-back existed that made a wrong
  * choice permanent: another building's floor area, age band or sale price sat in the claim file with no way out.
  *
- * `takeBackPick` is the way out, and it is NOT a second pick screen. It is the shape Phase 139 uses for a fact
+ * `takeBackPick` is the way out, and it is NOT a second pick screen. It is the shape approvals.ts uses for a fact
  * somebody ticked: a separate act, on the lookup's own row, that ASKS WHY and keeps the reason. It
  *
  *   · removes the ONE register record that pick wrote — found through `register_match_picks.record_id`, which the

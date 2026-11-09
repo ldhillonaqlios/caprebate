@@ -1,5 +1,5 @@
 /**
- * CHECKED AND APPROVED, AND TELLING THE CLIENT — PHASE 139, 21 September 2026. "Clean-up 6 of 11."
+ * CHECKED AND APPROVED, AND TELLING THE CLIENT — 21 September 2026. "Clean-up 6 of 11."
  *
  * The owner: "When viewing the client's portfolio there needs to be where the information has come from
  * (API) with a secondary approve box. When a user clicks approve this then pushes the details to say Cap Rebate has

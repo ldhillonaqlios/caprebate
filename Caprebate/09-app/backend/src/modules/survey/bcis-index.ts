@@ -10,7 +10,7 @@
  * (BCIS_COMMERCIAL in the source register), so it is never committed and never published on the test website.
  *
  * UNTIL THEN: the shipped CB_BCIS_INDEX stays an empty stub, and the cost model's test system uses its PLACEHOLDER table
- * of invented points, labelled as such. PHASE 157a wired the survey pack to it: chapter 11's index factor
+ * of invented points, labelled as such. The survey pack is wired to it: chapter 11's index factor
  * reads this table first (src/modules/survey/pack-cost-model.ts, indexTableHere), the placeholder only in the test system, and
  * otherwise nothing.
  */

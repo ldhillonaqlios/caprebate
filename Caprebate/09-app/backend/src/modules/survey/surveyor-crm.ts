@@ -92,7 +92,7 @@ export type PrefillOrigin =
   | 'PRIOR_JOB_SAME_PROPERTY'
   /**
    * NOTHING WAS PROPOSED. The surveyor was shown an empty box and typed their
-   * own figure into it. Added Phase 107a.
+   * own figure into it. Added after the workspace was built.
    *
    * ───────────────────────────────────────────────────────────────────────
    * WHY THE OTHER FOUR COULD NOT COVER THIS, AND HOW IT WAS FOUND
@@ -101,7 +101,7 @@ export type PrefillOrigin =
    * The type had no way to say that we put nothing there — and until a
    * workspace existed, nothing ever did.
    *
-   * Phase 107 built the workspace and hit it immediately. Caprebate holds no
+   * The surveyor workspace hit it as soon as it was built. Caprebate holds no
    * platform default rates at all: the only price books on the disk are
    * quarantined pending an explanation of their provenance, so a surveyor's
    * FIRST figure for a field in a sector is always entered against a blank.
@@ -417,7 +417,7 @@ export class OverrideStore {
 /**
  * Below this an adoption rate is not a rate, it is an anecdote.
  *
- * RE-DERIVED against the AD-HOC engagement model (item 12927112944, Phase 10
+ * RE-DERIVED against the AD-HOC engagement model (item 12927112944, a walkthrough
  * finding: MIN_N_FOR_RATE and selfConsistency were both set assuming repeat
  * engagements with the same surveyor). Raised from 5 to 7. This constant gates
  * the POOLED, cross-surveyor adoption/divergences cohort signal, which was
@@ -559,7 +559,7 @@ function verdictFor(n: number, adoption: number, med: number): Verdict {
  *   - anything not a PLATFORM_DEFAULT pre-fill (it tells us about the surveyor,
  *     not about our estimate);
  *   - anything where NOTHING WAS PROPOSED at all — an empty box the surveyor
- *     filled in themselves. Added Phase 107a and counted on its own line,
+ *     filled in themselves. Added later and counted on its own line,
  *     because "they used a different source" and "we offered nothing" are
  *     different facts and merging them hides which one we are looking at;
  *   - anything from a job the anchor quarantine did not mark CLEAN (the surveyor
@@ -720,7 +720,7 @@ export function calibrationFeed(store: OverrideStore, now: string): CalibrationF
 /* ------------------------------------------------------------------ *
  * 8. Drift — is the pre-fill getting better, worse, or neither?
  *
- * Added Phase 52 (calibration instrument, item 12830166861).
+ * Added with the calibration instrument (item 12830166861).
  *
  * adoption is a SNAPSHOT. It pools every observation ever recorded and
  * reports one median. That is the right shape for "is this pre-fill any good",
@@ -857,7 +857,7 @@ export function drift(store: OverrideStore, field_id: string): Drift {
 /* ------------------------------------------------------------------ *
  * 9. The blank-field control
  *
- * Added Phase 52. Specified in the Calibration Research Protocol v1 §7 and
+ * Added with it. Specified in the Calibration Research Protocol v1 §7 and
  * named there as the single most valuable line in it: issue one case in N with
  * the field BLANK and no peer figure shown, and compare where those surveyors
  * land against the pre-filled population.

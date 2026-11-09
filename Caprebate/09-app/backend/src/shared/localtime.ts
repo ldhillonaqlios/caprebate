@@ -244,7 +244,7 @@ export function localClock(iso: string): string {
 }
 
 /* ------------------------------------------------------------------ *
- * UK DATES FOR A PERSON — PHASE 133c, 17 September 2026.
+ * UK DATES FOR A PERSON — 17 September 2026.
  *
  * Every date a screen shows reads the same way: "24 Sep 2026"; a moment as
  * "24 Sep 2026, 12:32"; a recent moment as "Today, 12:32" or "Yesterday, 12:32";

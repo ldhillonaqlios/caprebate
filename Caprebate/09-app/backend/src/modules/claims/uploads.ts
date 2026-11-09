@@ -260,7 +260,7 @@ function readingContext(d: UploadDeps): ClaudeContext | null {
 
 /**
  * The audit log every reading writes to. `UploadDeps.audit` is optional because the handler's own tests run without
- * one; a reading cannot, because an unlogged call to an outside service is the one thing Phase 146b forbids. So a
+ * one; a reading cannot, because an unlogged call to an outside service is the one thing the connectors forbid. So a
  * caller that supplies `reading` and no `audit` gets no reading at all — see `readAndClaim`.
  */
 function audit_of(d: UploadDeps): AuditLog {
@@ -439,8 +439,8 @@ export async function finishUpload(
  * STEPS 9 AND 10.
  *
  * THE UPLOAD FLOW NEVER RAN STEP 9. `runExtraction` and `writeClaims` were exported by the port and called from
- * nowhere in src/: every upload stopped at TRIAGED, with the strip done and nothing read. Phase 146e built the real
- * reader and left it with no caller. This is the caller.
+ * nowhere in src/: every upload stopped at TRIAGED, with the strip done and nothing read. The real
+ * reader was built and left with no caller. This is the caller.
  *
  * WHAT IT DOES NOT DO, AND THIS IS THE WHOLE OF THE SAFETY OF IT:
  *

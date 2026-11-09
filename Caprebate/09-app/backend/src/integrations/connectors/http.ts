@@ -74,7 +74,7 @@ export function isLiveTransport(t: Transport): boolean {
  * has no way to present one — there is no option for it in the standard — so a call made with `fetch` cannot reach
  * the Gateway at all, whatever else is right.
  *
- * WHY IT IS IN THIS FILE. Phase 146b's rule is that this is the only file under src/ that may call outside, and a
+ * WHY IT IS IN THIS FILE. The connectors' rule is that this is the only file under src/ that may call outside, and a
  * test walks src/ and fails on any other. That rule is worth more than the tidiness of a separate file, so the one
  * place that needs `node:https` is here, beside `fetch`, under the same time limits, the same rate limit, the same
  * size cap and the same audit row. `callOutside` does not know which transport it was handed.

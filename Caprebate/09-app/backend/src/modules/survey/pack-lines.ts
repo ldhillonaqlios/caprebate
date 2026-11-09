@@ -18,7 +18,7 @@
  *   · how much, ONLY where the list measures the row against something we hold — the floor area (from the energy
  *     certificate) for a whole-building system, or a room count the surveyor has recorded, for a row counted per room.
  *     Everything else is left for the surveyor.
- *   · the rate: PHASE 159f (The owner: "With BCIS data loaded, the pack could draft each rate from the
+ *   · the rate: (The owner: "With BCIS data loaded, the pack could draft each rate from the
  *     right building type — this needs to happen"). The whole-building rate and every line measured by floor area are
  *     drafted from BCIS in src/modules/survey/bcis-data.ts (NRM_OF_LINE), at the purchase date; the surveyor accepts or overrides
  *     each, with a source. A line counted per room or per item is not drafted: BCIS prices elements per m² of floor.

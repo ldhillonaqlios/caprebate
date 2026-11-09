@@ -29,7 +29,7 @@
  * feature it cannot read makes the whole file unreadable, because a polygon we skipped could be the one that holds
  * the point, and "exactly one polygon contains it" would then be a guess. THE FIRST ALLOWED DOWNLOAD MUST CONFIRM
  * THE SHAPE. "Can we make a few small, logged test lookups to check a data connector works?" was answered by the owner on
- * (yes, on five conditions), and Phase 151l built the download as a test lookup
+ * (yes, on five conditions), and the download is built as a test lookup
  * under them: `smoke HMLR_INSPIRE`, src/integrations/connectors/boundary-test-lookup.ts. Until a person runs it, no file has been
  * downloaded, and every test here runs on an invented fixture with no network.
  *

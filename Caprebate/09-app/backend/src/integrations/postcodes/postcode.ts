@@ -28,7 +28,7 @@
  * THE SERVED SET IS READ FROM CB_JURIS AND IS NOT RESTATED
  *
  * `CB_JURIS.SERVED` in the engine is the one place our operational coverage
- * is decided — England and Wales today, Phase 64 — and it is the owner's to
+ * is decided — England and Wales today, by the owner's decision — and it is his to
  * flip rather than the tax adviser's. A copy here would be a second place to
  * change and the two would disagree on the day it moved.
  */
@@ -206,7 +206,7 @@ export function resolveProperty(
       store, served: servedSet(),
       ...(opts.asAt === undefined ? {} : { asAt: opts.asAt }),
     });
-    /* THE REGION SWITCHES ARE PASSED, NOT DEFAULTED BY OMISSION. Phase 132e gave regionOf a switches
+    /* THE REGION SWITCHES ARE PASSED, NOT DEFAULTED BY OMISSION. regionOf takes a switches
        argument (SURVEYOR_INNER_LONDON_ONS_FOURTEEN). This application passes the module's own REGION_SWITCHES,
        which ship it OFF: London still refuses, with the same code, message and detail as before. Only the boolean
        `true` turns it on, and turning it on is the surveyor's answer, not this file's; `opts.regionSwitches` exists

@@ -1,7 +1,7 @@
 /**
  * Caprebate — THE WIRING. Postcode in, location_key out, LEG-E4 still off.
  *
- * Board item 12993800139, Phase 110.
+ * Board item 12993800139.
  *
  * ─────────────────────────────────────────────────────────────────────────
  * WHAT WAS MISSING, AND IT WAS NOT CODE
@@ -61,7 +61,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  * THE JURISDICTION REFUSAL, WHICH IS WHERE OPTION (c) WENT
  *
- * Phase 110's first job offered "trim the table to England and Wales" as a
+ * The first plan for this work offered "trim the table to England and Wales" as a
  * storage option. Measured, it saves 4% of the heap — see
  * caprebate-postcode-store.ts. But the CORRECTNESS point inside it is real
  * and survives: a Scottish postcode must refuse as OUTSIDE THE SERVED

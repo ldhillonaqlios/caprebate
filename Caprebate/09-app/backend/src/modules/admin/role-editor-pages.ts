@@ -1,8 +1,8 @@
 /**
  * THE ROLE EDITOR'S SCREENS — /staff/admin/roles.
  *
- * Phase 151 built the role editor itself (src/modules/admin/role-editor.ts: makeRole, changeRole, retireRole, every step in the
- * audit log) and its hard limits (src/core/custom-roles.ts, roleRefusal), and left them with no screen. This is the screen.
+ * The role editor itself (src/modules/admin/role-editor.ts: makeRole, changeRole, retireRole, every step in the
+ * audit log) and its hard limits (src/core/custom-roles.ts, roleRefusal) were built with no screen. This is the screen.
  * NOTHING HERE DECIDES ANYTHING: every write goes through the editor, which authorises `role.manage` (the super admin's
  * alone, and never given to a made role) and refuses with roleRefusal's own sentence, shown here word for word.
  *

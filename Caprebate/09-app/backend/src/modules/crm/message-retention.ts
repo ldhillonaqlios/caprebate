@@ -10,7 +10,7 @@
  *   "How long do we keep client messages and the team chat?"
  * A message deleted early cannot be brought back, so nothing deletes one until that is answered.
  *
- * OFF WAS EXACTLY PHASE 142a's STATE. With the setting off, `messagesDue` returns nothing and `sweepMessages` deletes
+ * OFF IS EXACTLY THE STATE BEFORE MESSAGES COULD BE DELETED. With the setting off, `messagesDue` returns nothing and `sweepMessages` deletes
  * nothing, writes nothing and returns OFF with what is missing, in plain words.
  *
  * ───────────────────────────────────────────────────────────────────────────

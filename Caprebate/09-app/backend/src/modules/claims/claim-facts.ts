@@ -1241,7 +1241,7 @@ export function yearEndReading(db: Db, business_id: string): YearEndReading {
   return yearEndFrom(said === null ? null : clientYearEnd(said.answer), registerCompany(db, business_id));
 }
 
-/** The accounting period the purchase falls in, from the claim's year end (Phase 159g: the register's,
+/** The accounting period the purchase falls in, from the claim's year end (the register's,
  *  else the client's checked answer), or null. */
 export function periodFromYearEnd(db: Db, business_id: string, acquired: string): { start: string; end: string } | null {
   const ye = yearEndReading(db, business_id).used;

@@ -96,7 +96,7 @@ export type IndexReading = {
 
 /**
  * THE ONE PURCHASE DATE, as the amendment window reads it (src/modules/claims/claim-facts.ts
- * acquisitionDateReading, Phase 158d): the property record, else the surveyor's legal check, else the client's checked
+ * acquisitionDateReading): the property record, else the surveyor's legal check, else the client's checked
  * answer. Chapter 11 read the property record alone, so it said "not on file" while the legal check held the date.
  */
 function purchaseDateOf(db: Db, v: PackView): { date: string | null; from: IndexReading['purchase_from'] } {

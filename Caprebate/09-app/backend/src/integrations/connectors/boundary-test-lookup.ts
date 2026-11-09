@@ -4,7 +4,7 @@
  * WHY IT EXISTS. The land boundary fetcher is built and switched off, and HM Land
  * Registry does not publish the element names inside its GML, so its reader was written tolerantly and the one page
  * says "the first allowed download must confirm the shape". Word question 170 was answered (yes,
- * on five conditions), and Phase 151g built the conditions into the smoke command, which did not cover a download. This
+ * on five conditions), and the conditions are built into the smoke command, which did not cover a download. This
  * file is the download, as a test lookup: `smoke HMLR_INSPIRE`.
  *
  * WHY THE SMOKE COMMAND AND NOT A COMMAND OF ITS OWN. So the five conditions are the SAME CODE, not a copy: the notice,

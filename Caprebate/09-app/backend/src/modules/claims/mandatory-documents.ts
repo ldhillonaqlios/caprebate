@@ -1,5 +1,5 @@
 /**
- * MANDATORY DOCUMENTS AT A STAGE — BUILT, AND SWITCHED ON IN PHASE 151b. The CRM follow-on.
+ * MANDATORY DOCUMENTS AT A STAGE — BUILT, AND SWITCHED ON. The CRM follow-on.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * SWITCHED ON
@@ -9,7 +9,7 @@
  * client bought the building, as built. Word question 223 was answered yes by the data protection officer on
  * Clients may upload tax returns and tax computations, and until the officer says what must be
  * removed, the figures and the company details are kept and individuals' names, addresses and tax references removed.
- * The one thing still missing was buildable, and Phase 151b built it: a receipt policy for each tax document in the
+ * The one thing still missing was buildable, and it is built: a receipt policy for each tax document in the
  * upload handler, bound by migration 049. So each of the four can now be received, and a claim is never held at the
  * gate by a document nobody can upload — test/claims/tax-documents-and-retention.test.ts proves that for each of the four.
  *
@@ -80,11 +80,11 @@ export const MANDATORY_DOCUMENTS_QUESTION = 'May we accept tax returns and tax c
 export const MANDATORY_DOCUMENTS_ALSO_WAITS_ON = 'nothing now: the receipt policy for the tax return and the tax computation in the upload handler was built in Phase 151b';
 
 /**
- * THE OWNER'S LIST, SWITCHED ON IN PHASE 151b. Four documents: the sale contract and the CPSE
+ * THE OWNER'S LIST, SWITCHED ON. Four documents: the sale contract and the CPSE
  * replies ONLY WHEN THE CLIENT BOUGHT THE BUILDING — the claim's own fact BOUGHT_THE_BUILDING (migration 045), because a
  * client who built or refitted has neither (Word question 220, closed yes) — and the tax return and the tax computation
- * on every claim. It shipped off because neither tax document could be received; Phase 151b gave each a
- * receipt policy (migration 049), so it is on. Until Phase 151 the list was our own recommendation: the fire risk
+ * on every claim. It shipped off because neither tax document could be received; each now has a
+ * receipt policy (migration 049), so it is on. Before the owner's list it was our own recommendation: the fire risk
  * assessment always, the grant funding agreement where grant-funded, the sale contract where an election was made, and
  * the lease where leasehold (caprebate's .bak-phase151 copy keeps it).
  */

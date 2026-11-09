@@ -10,7 +10,7 @@
  * by path, and the cleanest way to guarantee that is for the application to
  * have NO route that maps a request onto the filesystem at all.
  * `assertNoStaticFileRoute()` in objectstore.ts checks exactly that, and it can
- * only stay true if assets work this way. PHASE 133c added the supplied logo the
+ * only stay true if assets work this way. The supplied logo was added the
  * same way — a base64 constant in src/shared/brand-logo.ts, served under img-src 'self'.
  *
  * There is also no inline style anywhere, because the CSP has no
@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * WHICH TAB OR SECTION IS CURRENT, BY POSITION. Phase 133a marked the current record tab by its id (details,
+ * WHICH TAB OR SECTION IS CURRENT, BY POSITION. The current record tab was first marked by its id (details,
  * related, activity). The five long screens name their own tabs, and admin settings names its sections from its lists, so
  * the current one is marked by POSITION instead: the n-th panel targeted marks the n-th link. One rule per position, up to
  * MAX_TABS in src/shared/components.ts, which refuses to draw more.
@@ -30,7 +30,7 @@ const CURRENT_BY_POSITION = Array.from({ length: 24 }, (_, i) => i + 1)
   .join(',\n');
 
 /**
- * THE CAP REBATE COLOUR TOKENS — PHASE 133c, from the brand book v1.0, slides 31 to 33 and 60.
+ * THE CAP REBATE COLOUR TOKENS — from the brand book v1.0, slides 31 to 33 and 60.
  *
  * Proportions 60 / 30 / 10: surfaces are white and Mist, type and structure are Cap Ink and Body Grey, and Cap Mint is
  * for emphasis only — the current tab, the current stage, one highlight per layout. Muted grey is for captions and the

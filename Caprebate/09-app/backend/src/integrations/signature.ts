@@ -1,5 +1,5 @@
 /**
- * STUB 2 of 3 — document signature. REPLACED FOR THE ENGAGEMENT LETTER BY PHASE 146f.
+ * STUB 2 of 3 — document signature. REPLACED FOR THE ENGAGEMENT LETTER (src/modules/claims/signing.ts).
  *
  * The stub provider that lived here (`stubSignatureProvider`, which contacted nothing and executed nothing) is gone.
  * the owner decided the engagement letter is signed inside the application, so the signature is built in:

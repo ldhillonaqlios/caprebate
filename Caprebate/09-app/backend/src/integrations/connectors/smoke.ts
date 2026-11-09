@@ -51,8 +51,8 @@ export const SMOKE_SOURCES: Readonly<Record<string, 'free' | 'paid' | 'not chose
  *   · the company is CAP REBATE LTD, 17307313 — our own, confirmed;
  *   · the address is 70 Whitehall, London SW1A 2AS — the Cabinet Office, and about as public as a building gets.
  *
- * `--postcode`, `--company-number` and `--company-name` replace them. A CLIENT'S VALUE IS NEVER PASSED, and since
- * Phase 151g the command refuses one: held in CAPREBATE_DB, or, with no database, anything but these without
+ * `--postcode`, `--company-number` and `--company-name` replace them. A CLIENT'S VALUE IS NEVER PASSED, and the
+ * command refuses one: held in CAPREBATE_DB, or, with no database, anything but these without
  * --not-a-client.
  */
 export const SMOKE_DEFAULTS = Object.freeze({

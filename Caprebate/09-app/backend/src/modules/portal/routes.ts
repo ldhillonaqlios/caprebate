@@ -576,7 +576,7 @@ function portalPage(
     title: business.name, nav: nav(actor), wide: true,
     /* THE PORTAL, IN THE ORDER A CLIENT NEEDS IT. At the top, how to reach us and book a call; then where
        the claim is; the range with its basis underneath; what we need from you; then everything else. The long step
-       explanations sit behind "What happens at each step". Every section Phase 133a drew is still on the page.
+       explanations sit behind "What happens at each step". Every section of the first layout is still on the page.
        The header also offers Send us a document; the questions and the documents asked
        for are drawn only when there is one (the "What we need from you" card already says when nothing is); How to
        contact us moves to the end, its words unchanged; the parts are listed under Your claims in the left-hand menu. */

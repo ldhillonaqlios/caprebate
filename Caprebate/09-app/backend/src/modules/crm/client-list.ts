@@ -1,7 +1,7 @@
 /**
  * THE ONE CLIENTS LIST.
  *
- * Phase 134 made one client page per company, but left two lists of the same companies — "Engaged clients" at
+ * There is one client page per company, but there were two lists of the same companies — "Engaged clients" at
  * /staff/clients and "Organisations" at /staff/organisations — each opening that one page. This is the one list, at
  * /staff/clients. The old list address sends the reader here, after asking the gate it always asked.
  *

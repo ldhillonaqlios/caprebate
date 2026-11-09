@@ -222,7 +222,7 @@ export type PostcodeAuthorityRow = {
    * region is UNKNOWN, never a default region — see caprebate-region.ts,
    * which is the only thing that reads it.
    *
-   * ADDED BY PHASE 110. Before it, a surveyor's rate library was keyed on the
+   * WHY IT EXISTS. Before it, a surveyor's rate library was keyed on the
    * constant REGION_NOT_CAPTURED across the whole country.
    */
   readonly region_code?: string | null;
@@ -305,7 +305,7 @@ export const CB_LAD_TO_LOCATION_KEY: LocationKeyTable = {
 /**
  * WHERE THE ROWS COME FROM, AS A SHAPE RATHER THAN AS A FILE.
  *
- * ADDED BY PHASE 110. The whole UK table is 2.66 million rows and holding it
+ * WHY A SHAPE. The whole UK table is 2.66 million rows and holding it
  * in a JavaScript object costs about 310 MB of heap and 630 MB of resident
  * memory per process — measured, not assumed; see
  * caprebate-postcode-store-costing.cjs. That is a deployment decision, and a
@@ -560,7 +560,7 @@ export const NSPL_COLUMNS_VERIFIED = {
   lad_code: 'lad26cd',
   country: 'ctry26cd',
   /**
-   * THE REGION COLUMN, ADDED BY PHASE 110 AND NOT VERIFIED AGAINST A REAL
+   * THE REGION COLUMN, ADDED LATER AND NOT VERIFIED AGAINST A REAL
    * FILE — which is why it is treated as optional everywhere below and why
    * this comment says so rather than the name implying otherwise.
    *

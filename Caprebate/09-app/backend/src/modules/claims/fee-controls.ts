@@ -116,9 +116,9 @@ export const UPLIFTS_QUESTION = 'Do the old extra charges stay: the add-on for c
 export type UpliftFactor = 'ENTITLEMENT_CHAIN' | 'PRIOR_ELECTION' | 'GRANT_FUNDING' | 'DWELLING_ELEMENT' | 'NO_COMPLETION_STATEMENT';
 
 /**
- * THE OLD RATE CARD'S EXTRA CHARGES, AS TEST DEFAULTS — NOT AGREED. Built the way Phase 153d built Word questions 33
- * and 34: the figures the old banded card used (the rate card paper, board item 12804368154, §3 Step 3, before Phase
- * 132e suspended them), each marked "test default, not agreed", behind a switch that ships OFF, so the owner can see
+ * THE OLD RATE CARD'S EXTRA CHARGES, AS TEST DEFAULTS — NOT AGREED. Built the way Word questions 33
+ * and 34 were: the figures the old banded card used (the rate card paper, board item 12804368154, §3 Step 3, before the
+ * flat fee suspended them), each marked "test default, not agreed", behind a switch that ships OFF, so the owner can see
  * what they would do to real-looking fees before deciding (the viability check, Word question 235). Nothing here is a
  * decision: the flat 3% stands, and with the switch off no fee anywhere moves.
  *   · a complicated job: +0.5 percentage points for each factor below, at most +1.5 points however many apply

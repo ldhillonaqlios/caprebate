@@ -440,8 +440,8 @@ export const LICENCES: readonly Licence[] = [
   },
   {
     /**
-     * THE ADDRESS LOOKUP. Board item 13003875907. Written by
-     * Phase 129 from the supplier's OWN PUBLISHED PAGES, read that day:
+     * THE ADDRESS LOOKUP. Board item 13003875907. Written
+     * from the supplier's OWN PUBLISHED PAGES, read that day:
      *   https://homedata.co.uk/terms            (Terms of Service, "Last updated: November 2024")
      *   https://homedata.co.uk/about            ("Sourced from ... OS AddressBase ...";
      *                                            "Licensed under Open Government Licence and commercial agreements")
@@ -1221,7 +1221,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
   },
   {
     source_id: 'PLANNING',
-    /* PHASE 146d adds api.homedata.co.uk as a THIRD address this source can be asked at — built, switched off, and
+    /* api.homedata.co.uk is a THIRD address this source can be asked at — built, switched off, and
        not chosen. PlanIt remains the source of record; see src/integrations/connectors/homedata-planning.ts for why the choice is
        not a build decision. An address listed here is how a service row stays tied to its register source when the
        source has more than one publisher, which planning has had. */

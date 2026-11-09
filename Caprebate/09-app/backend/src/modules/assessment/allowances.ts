@@ -7,7 +7,7 @@
  * we can defend". So each PART of a claim — the purchase, and each piece of work since — is worked out on
  * its own, from the approved version alone:
  *
- *   ITS PERIOD (items 4, 7, 8). The route Phase 159d gave it, frozen with the version: W1 goes into the period its own
+ *   ITS PERIOD (items 4, 7, 8). Its route, frozen with the version: W1 goes into the period its own
  *   date falls in; W2 into the first period whose return is still open; W3 is not claimed. Those are the periods the
  *   amendment window read, from the client's checked year end — one period source, so the window and the spreadsheet
  *   cannot disagree (C15).
@@ -244,7 +244,7 @@ export function allowancesFor(s: Snapshot, ctx: { period_start: string | null; i
   const count = Math.min(MAX_RETURNS, Math.max(RETURN_YEARS, lastIndex + 2));
   const periods = periodsFrom(first, count);
 
-  /* 2b · PHASE 159k (item 2, OUR READING, on in test) — THE LONG-LIFE TEST (s.90-104). Plant with an expected life of
+  /* 2b · (item 2, OUR READING, on in test) — THE LONG-LIFE TEST (s.90-104). Plant with an expected life of
      25 years or more is long-life asset expenditure where a period's long-life spend passes the s.99 de minimis
      (£100,000, in proportion for a short period); it then goes to the special rate pool. A building used as homes is
      outside it (s.93). A period not known cannot be decided: the part stays where the survey put it, and says so. */

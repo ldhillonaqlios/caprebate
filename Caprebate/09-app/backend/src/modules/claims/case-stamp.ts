@@ -170,7 +170,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  * FEE_CONTROLS.minimum_fee left this list: the minimum fee is decided none, and the
  * control is retired — MINIMUM_FEE_DECISION in src/modules/claims/fee-controls.ts records it.
  *
- * ALLOWANCE_PROFIT_COMPARISON was added by another Phase 132 workstream while this
+ * ALLOWANCE_PROFIT_COMPARISON was added by another workstream while this
  * list was being written; the grep test found it the same day, which is what it is for.
  * The funnel's switch is not an `enabled` flag, so the grep cannot see it: it is
  * stamped by its own key, and the test counts FUNNEL_SWITCHES's booleans.

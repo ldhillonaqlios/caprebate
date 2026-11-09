@@ -1,7 +1,7 @@
 /**
  * THE POSTCODE CHECK AT THE ADDRESS QUESTION, AND "ANSWER IT MYSELF".
  *
- * 1 · THE POSTCODE CHECK, WIRED INTO THE BACK END'S OWN ASSESSMENT AS A SERVER-SIDE STEP. Phase 151 built the check
+ * 1 · THE POSTCODE CHECK, WIRED INTO THE BACK END'S OWN ASSESSMENT AS A SERVER-SIDE STEP. The check is built
  *     (src/integrations/connectors/postcode-check.ts: Postcodes.io, the postcode only, switched off behind the free-tier gate and
  *     until the privacy notice names the service). This runs it when a client saves the property screen (Q2), on this
  *     server, never in the page: THE SITE FILE STILL MAKES NO NETWORK CALL, and neither does the form the back end

@@ -4,11 +4,11 @@
  * Amended (board items 12928214881 and 12928215019).
  * Amended (Q56 answered — section 7B).
  *
- * WHAT PHASE 44 CHANGED, READ THIS BEFORE THE PARAGRAPH BELOW. Phase 41 wrote
+ * WHAT THE BOUNDARY CORRECTION CHANGED, READ THIS BEFORE THE PARAGRAPH BELOW. The first version said
  * that the strip runs "before anything is written to durable storage". Under
  * the architecture recorded in STORAGE_POSITION — pre-signed URL uploads
- * direct to S3 — that was never true, and the sweep at Phase 42 found it.
- * Phase 44 (i) records the ingestion boundary this codebase now assumes and
+ * direct to S3 — that was never true, and a later sweep found it.
+ * The correction (item 12928214881) (i) records the ingestion boundary this codebase now assumes and
  * builds the mechanism that bounds it (sections 1A and 1B), (ii) corrects
  * every sentence that overstated the guarantee rather than weakening the
  * control to match them, (iii) re-checks condition A14-D4 and records it as PARTLY
@@ -19,7 +19,7 @@
  * WHY THIS EXISTS, IN ONE PARAGRAPH.
  *
  * caprebate-document-pipeline.ts is an excellent set of controls on what
- * reaches an extraction model. Phase 40 (board item 12927987812) §3.2 walked
+ * reaches an extraction model. The Article 14 Assessment (board item 12927987812) §3.2 walked
  * every one of them — the seven NEVER_TO_MODEL segment kinds, the branded
  * ModelPayload type, the L4 person-name scrubber, the E_PERSON_NAME egress
  * refusal, Gate A and Gate B — and found that every single row of that table
@@ -43,7 +43,7 @@
  *
  *   2. THE NAME EXCLUSION REGISTER ALREADY IS THIS CONTROL, FOR REGISTERS.
  *      Its assertion, its fail-closed source lookup and its unclassified-field
- *      refusal are the right mechanism. Phase 41 adds the CLIENT_DOC entry it
+ *      refusal are the right mechanism. This control adds the CLIENT_DOC entry it
  *      was missing (subitem 13) and calls the existing assertion rather than
  *      writing a second one — see assertClaimsWritable.
  *
@@ -64,7 +64,7 @@
  *
  * Q40 is not decided here either. INGESTION_BOUNDARY carries the fail-closed
  * default this codebase builds against and an is_a_decision field saying, in
- * data, that no human has chosen it. Two things Phase 44 DOES settle, because
+ * data, that no human has chosen it. Two things this file DOES settle, because
  * neither is a judgement: an option that cannot be performed is withdrawn
  * rather than offered (section 7A), and a condition already owned by the
  * Developer is enforced where it removes an option (CONDITION_D4_STATUS). Both
@@ -130,7 +130,7 @@ export class ClientDocIngestionError extends Error {
 /* ------------------------------------------------------------------ *
  * 1. THE STORAGE FACT — established, board item 12928031577
  *
- * Phase 40 §3.4 proceeded on an INFERENCE that the raw uploaded file is
+ * The Article 14 Assessment §3.4 proceeded on an INFERENCE that the raw uploaded file is
  * retained, said so, and created an item to establish it. This is the answer,
  * and it is not the binary the inference expected. It is recorded here as
  * data, in the module that depends on it, so that a future reader cannot
@@ -159,12 +159,12 @@ export class ClientDocIngestionError extends Error {
  *   "retention policy" as a thing still to be produced.
  *
  * WHY THIS IS NOT THE "documents are not retained" FINDING that would have
- * collapsed most of this phase. Phase 40's review trigger 3 anticipated a
+ * collapsed most of this work. The assessment's review trigger 3 anticipated a
  * finding that documents are not retained, which would have required §7 and
  * §10 to be re-run. That is NOT what was found. What was found is that the
  * question is UNDECIDED BECAUSE THE COMPONENT DOES NOT EXIST YET — the
  * intended design retains, nothing is built, and no deletion mechanism has
- * ever been specified. Phase 40's working inference was therefore right about
+ * ever been specified. The assessment's working inference was therefore right about
  * the destination and wrong only about the tense.
  *
  * The consequence for this module is the reason it is written the way it is:
@@ -189,9 +189,9 @@ export const STORAGE_POSITION = {
 } as const;
 
 /* ------------------------------------------------------------------ *
- * 1A. WHERE THE INGESTION BOUNDARY ACTUALLY IS — Phase 44, item 12928214881
+ * 1A. WHERE THE INGESTION BOUNDARY ACTUALLY IS — item 12928214881
  *
- * THE CORRECTION THIS SECTION EXISTS TO MAKE. Phase 41 wrote, in this file,
+ * THE CORRECTION THIS SECTION EXISTS TO MAKE. This file once said,
  * that applyReceiptPolicy "runs on receipt, before anything is written to
  * durable storage" and that what it removes "is never written anywhere". Read
  * against STORAGE_POSITION above — which records the architecture of record as
@@ -203,9 +203,9 @@ export const STORAGE_POSITION = {
  * the EXTRACTED TEXT. Everything it reports as `removed` stays in the stored
  * original for the whole retention period.
  *
- * That is the third time this shape has been found. Phase 40 found every
+ * That is the third time this shape has been found. The assessment found every
  * control sitting at the model boundary while the duty attaches at the door.
- * Phase 41 moved the control to "receipt". Phase 42 found that "receipt" was
+ * The first control moved it to "receipt". A later sweep found that "receipt" was
  * itself downstream of the first durable write. Each pass was careful and each
  * reasoned from an incomplete picture of the architecture, which is why the
  * architecture is now written down HERE, as data, next to the control it
@@ -240,7 +240,7 @@ export const STORAGE_POSITION = {
  *
  * WHAT THIS SECTION DOES NOT CLAIM. It does not claim quarantine storage is
  * not storage. It is: it is durable, it is a write, and a controller that
- * holds a file for an hour has held it. Phase 40 §3.4 settles that obtaining
+ * holds a file for an hour has held it. The assessment's §3.4 settles that obtaining
  * alone engages Article 14 and that "we looked at it and deleted it" does not
  * undo it. What the quarantine model buys is not innocence at the door — it is
  * a bounded, asserted, evidenced holding instead of an unbounded one, which is
@@ -248,7 +248,7 @@ export const STORAGE_POSITION = {
  * whole third-party personal data holding lives.
  *
  * NAME COLLISION, FLAGGED SO IT IS NOT INHERITED AS CONFUSION. There is an
- * unrelated caprebate-anchor-quarantine.ts in this directory (Phase 10, the
+ * unrelated caprebate-anchor-quarantine.ts in this directory (from the
  * surveyor walkthrough). It quarantines ANCHOR VALUES pending professional
  * judgement. It has nothing to do with this and the two must not be wired
  * together.
@@ -292,7 +292,7 @@ export const QUARANTINE_TTL_MINUTES: number = INGESTION_BOUNDARY.quarantine_ttl_
  * point for connectors: retrieve -> assert -> write, and if the assertion
  * throws the write never happens.
  *
- * REWRITTEN BY PHASE 44. The previous version described a sequence in which
+ * REWRITTEN WITH THE BOUNDARY CORRECTION. The previous version described a sequence in which
  * nothing was written until after the strip. That was never the architecture.
  * This version states the real order INCLUDING the quarantine write and its
  * deletion, because the point of a contract stated as data is that a developer
@@ -321,7 +321,7 @@ export const RECEIPT_CONTRACT: readonly string[] = [
 
 /**
  * Where the first durable write of the unredacted file sits relative to the
- * strip, under each boundary model. This is the table Phase 40 §3.2 would have
+ * strip, under each boundary model. This is the table the assessment's §3.2 would have
  * drawn for the storage boundary if the storage boundary had been known.
  */
 export const BOUNDARY_POSITION: readonly {
@@ -496,7 +496,7 @@ export function assertQuarantineDischarged(objects: readonly QuarantineObject[],
  * correspondence are removed from an uploaded planning document on receipt,
  * not merely kept out of the model."
  *
- * Phase 41 stated A14-D4 as MET and as absolute. It is neither, and the reason is
+ * The first version stated A14-D4 as MET and as absolute. It is neither, and the reason is
  * the boundary above. Recorded as data so the next phase does not have to
  * re-derive it a fourth time.
  * ------------------------------------------------------------------ */
@@ -564,7 +564,7 @@ export const CONDITION_D4_STATUS = {
  * string looks like a name". A company called "A N Other Consulting Ltd" is
  * not a natural person; a sole trader's provider name is.
  *
- * Phase 40 §4.1 adds three cases the register population never needed, because
+ * The Article 14 Assessment §4.1 adds three cases the register population never needed, because
  * a register returns fields and a document has parties, signatories and
  * witnesses. All three are implemented below.
  * ------------------------------------------------------------------ */
@@ -596,7 +596,7 @@ export type PartyLegalForm =
  * lease naming "Dr A, Dr B and Dr C practising as the X Medical Partnership"
  * in England names three data subjects and no entity. An LLP is a body
  * corporate and is not affected. This matters for volume, not for engagement:
- * Phase 40 §4.4 records that a GP partnership's premises is one of the three
+ * The Article 14 Assessment §4.4 records that a GP partnership's premises is one of the three
  * ordinary counter-cases to the DPIA's "mostly corporate" reassurance.
  */
 export const PARTNERSHIP_ACT_1890_S4 = {
@@ -692,7 +692,7 @@ export function classifyPartyReference(p: PartyReference): PartyClassification {
 }
 
 /**
- * The roles Phase 40 §4.3 isolates as natural persons one hundred per cent of
+ * The roles the Article 14 Assessment §4.3 isolates as natural persons one hundred per cent of
  * the time. Kept as a separate predicate from classifyPartyReference because
  * that is the whole finding: these three sit OUTSIDE the parties clause, so a
  * rule about "party names" reaches none of them.
@@ -735,7 +735,7 @@ export function roleIsAlwaysNaturalPerson(role: PersonRole): boolean {
  * Roles for which Caprebate has NO LAWFUL BASIS AT ALL, so there is nothing
  * for a transparency notice to describe and the answer is not to hold the data.
  * Item 5 §4.4: "For Class D, Article 6(1)(f) is not available and is not
- * claimed." Phase 40 §4.5 shows that LIA-C10 governs the planning API and not an
+ * claimed." The Article 14 Assessment §4.5 shows that LIA-C10 governs the planning API and not an
  * uploaded planning PDF — which is what condition A14-D4 and section 3 below fix.
  */
 export const NO_LAWFUL_BASIS_ROLES: readonly PersonRole[] = ['PLANNING_OBJECTOR_OR_CONSULTEE'];
@@ -757,7 +757,7 @@ export const NO_LAWFUL_BASIS_ROLES: readonly PersonRole[] = ['PLANNING_OBJECTOR_
 /**
  * Removed on receipt from EVERY document type, including the two
  * HUMAN_READ_ONLY ones, under EVERY setting, with no override anywhere in this
- * module. This is Phase 40 condition A14-D4 and it is the one item in this phase
+ * module. This is the assessment's condition A14-D4 and it is the one item here
  * that should not wait for the rest.
  *
  * The reason these three are absolute where the rest of the strip is
@@ -796,9 +796,9 @@ export type ClientDocReceiptPolicy = {
   /** Written to durable storage on receipt. Empty for the human-read modes. */
   retained_segments: readonly SegmentKind[];
   /**
-   * The roles Phase 40 §4.2 works through for this type, with how often the
+   * The roles the Article 14 Assessment §4.2 works through for this type, with how often the
    * role is occupied by a natural person. This is what makes the per-upload
-   * triage at condition A14-D1 performable by a person who has not read Phase 40:
+   * triage at condition A14-D1 performable by a person who has not read that assessment:
    * it tells them who to look for in this document type.
    */
   roles_to_triage: readonly { role: PersonRole; frequency: 'always' | 'usually' | 'sometimes' | 'never'; note?: string }[];
@@ -1099,7 +1099,7 @@ export const CLIENT_DOC_RECEIPT_POLICY: readonly ClientDocReceiptPolicy[] = [
   },
   /*
    * Four types the claim asks clients for, bound on
-   * Phase 129's recorded recommendation for each: STRIP_INDIVIDUALS_KEEP_FIGURES. Spec-derived, like the tax types:
+   * the recorded recommendation for each (receipt-recommendations.ts): STRIP_INDIVIDUALS_KEEP_FIGURES. Spec-derived, like the tax types:
    * only the figures' segments are kept; the parties, the people and the bank details land in no permitted segment.
    */
   {
@@ -1192,7 +1192,7 @@ export type ReceiptResult = {
   /**
    * Removed FROM THE EXTRACTED TEXT, before that text is written onward.
    *
-   * CORRECTED BY PHASE 44 (item 12928214881), and the correction matters. This
+   * CORRECTED (item 12928214881), and the correction matters. This
    * does NOT mean the content has been removed from the uploaded file. It has
    * not: applyReceiptPolicy takes Segment[] and returns Segment[], and never
    * touches the file. Under every boundary model in BOUNDARY_POSITION except
@@ -1218,14 +1218,14 @@ export type ReceiptResult = {
  *
  * WHAT IT DOES NOT DO, corrected (item 12928214881): it does not
  * alter the uploaded file, and it does not run before the file is in storage.
- * Phase 41 described it as running "before anything is written to durable
+ * The first version described it as running "before anything is written to durable
  * storage" and as dropping segments "out of the document". Both were written
  * from an incomplete picture of the upload path — the architecture of record
  * has the browser writing to S3 by pre-signed URL, so the file is in storage
  * before any Caprebate code sees it. Section 1A records the boundary this
  * codebase now assumes and why; section 1B holds the mechanism that bounds it.
  *
- * The asymmetry with sanitise is therefore narrower than Phase 41 claimed,
+ * The asymmetry with sanitise is therefore narrower than the first version claimed,
  * and stating it accurately is the point: sanitise decides what reaches a
  * MODEL; this decides what reaches STORAGE AS TEXT and what the rest of the
  * system may ever see. Both operate on a document already held. The control
@@ -1406,7 +1406,7 @@ export const ROLE_TOKENS: readonly string[] = [
   '[FEE EARNER]', '[SIGNATORY]', '[OCCUPIER]', '[NEIGHBOUR]', '[NAMED INDIVIDUAL]',
 ];
 
-/** The fields captured verbatim, across both paths. Phase 40 §4.7. */
+/** The fields captured verbatim, across both paths. Article 14 Assessment §4.7. */
 export const VERBATIM_FIELDS: readonly string[] = [
   'cpse_ca_question_text',
   'cpse_ca_reply_text',
@@ -1483,12 +1483,12 @@ export function assertHumanCaptureClean(a: HumanCaptureAttestation): void {
 /* ------------------------------------------------------------------ *
  * 6. THE PER-UPLOAD TRANSPARENCY RECORD — conditions A14-D1, A14-D2 and A14-D5
  *
- * Phase 40 §11: nothing anywhere records that an Article 14 notice was sent to
+ * The Article 14 Assessment §11: nothing anywhere records that an Article 14 notice was sent to
  * a named individual, and this population is worse off than the register
  * population because it has no store at all to add a field to.
  *
  * THE CHAPEAU IS WHY THIS IS PER PERSON. Article 14(5) was substituted on
- * 5 February 2026 to read "do not apply TO THE EXTENT THAT" (Phase 40 §1.3,
+ * 5 February 2026 to read "do not apply TO THE EXTENT THAT" (the assessment's §1.3,
  * annotation F7, read in the current text on legislation.gov.uk). So reliance
  * on the exemption is a per-person, per-item assertion, and a position that
  * cannot be evidenced person by person is not a position.
@@ -1514,13 +1514,13 @@ export function assertHumanCaptureClean(a: HumanCaptureAttestation): void {
  * assertTransparencyRecordComplete still refuses a name-shaped ref (test T7,
  * unchanged and passing). Article 11(2) is NO LONGER AVAILABLE for this
  * population and must not be claimed — a controller with a name index is in a
- * position to identify, so Articles 15 to 20 apply in full. Phase 40's L5 is
+ * position to identify, so Articles 15 to 20 apply in full. The assessment's L5 is
  * withdrawn as resolved-by-decision, not answered.
  *
  * DO NOT implement the reversal by adding a third nameException to the
  * CLIENT_DOC entry. The exception is a separate store with its own rule — see
- * the Dashboard Data Specification (board item 12948738680) and the Phase 41
- * reconciliation (item 12928074627, Document 2). No behaviour changed here.
+ * the Dashboard Data Specification (board item 12948738680) and the ingestion
+ * control's reconciliation (item 12928074627, Document 2). No behaviour changed here.
  * ------------------------------------------------------------------ */
 
 export type RouteGroup =
@@ -1568,7 +1568,7 @@ export function openTransparencyRecord(doc_id: string, doc_type: DocType, receiv
   return { doc_id, doc_type, received_at, people: [] };
 }
 
-/** Route group follows from the document, not from convenience. Phase 40 §7.1. */
+/** Route group follows from the document, not from convenience. Article 14 Assessment §7.1. */
 export function routeGroupFor(address_on_document: boolean): RouteGroup {
   return address_on_document ? 'R_A' : 'R_B';
 }
@@ -1592,12 +1592,12 @@ const REF_LOOKS_LIKE_A_NAME = /(^|[^A-Za-z])(Mr|Mrs|Ms|Miss|Dr|Prof|Sir|Dame)\.?
  *     the claim record and the raw file as well as the identity store, so a
  *     name here spreads into records that are exported, reported on and handed
  *     to an accountant. The name belongs in the identity store, keyed by this
- *     reference. (Restated, Phase 60 — the refusal is unchanged;
+ *     reference. (Restated later — the refusal is unchanged;
  *     its reason is no longer "we hold no names".)
  *
  *   E_TRANSPARENCY_PERSON_UNRESOLVED — the ordinary case: somebody has been
  *     identified and neither told nor recorded as exempt. Note that an R_A
- *     person can NEVER be resolved by the exemption: Phase 40 §7.5 concludes
+ *     person can NEVER be resolved by the exemption: the assessment's §7.5 concludes
  *     that one letter to an address printed on the document is not a
  *     disproportionate effort, it is an argument that fails.
  */
@@ -1665,7 +1665,7 @@ export function assertTransparencyRecordComplete(rec: TransparencyRecord): void 
  *
  * Q34 IS THE DECISION AND IT IS NOT MADE HERE. What is built here is the
  * mechanism, so that whichever way Q34 lands, deletion actually happens and is
- * evidenced. Phase 40 §10's own words: a retention rule with no deletion
+ * evidenced. In the Article 14 Assessment's own words (§10): a retention rule with no deletion
  * mechanism is a retention rule that says "forever".
  *
  * WHAT FAIL-CLOSED MEANS FOR A RETENTION RULE, since it is the opposite of
@@ -1676,9 +1676,9 @@ export function assertTransparencyRecordComplete(rec: TransparencyRecord): void 
  * ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ *
- * 7A. THE OPTION WITHDRAWN, AND WHY — Phase 44, board item 12928215019
+ * 7A. THE OPTION WITHDRAWN, AND WHY — board item 12928215019
  *
- * Phase 41 offered three retention rules. One of them,
+ * The first version offered three retention rules. One of them,
  * RETAIN_REDACTED_DELETE_ORIGINAL — "keep a copy with the receipt strip
  * applied; delete the unredacted original" — had nothing behind it.
  * applyReceiptPolicy returns Segment[], which is text. There is no PDF,
@@ -1687,14 +1687,14 @@ export function assertTransparencyRecordComplete(rec: TransparencyRecord): void 
  * identical to DELETE_ON_EXTRACTION_COMPLETE, so not even the clock
  * distinguished it. redacted_copy_retained was a boolean a caller asserted.
  *
- * WHY THAT IS WORSE THAN A DORMANT ENUM MEMBER. This is the option Phase 40
+ * WHY THAT IS WORSE THAN A DORMANT ENUM MEMBER. This is the option the assessment's
  * §7.7 measure 2 recommends where deleting the source early is unacceptable,
  * and Q34 offers it to the owner and the data protection officer as a live answer. A decision put
  * to a human with an option that cannot be performed is not a decision. If
  * they had picked it, the developer would have inherited a rule name and the
  * protection they thought they were buying would not exist.
  *
- * WHAT WAS DONE, AND WHY THIS RATHER THAN BUILDING IT. Withdrawn. Phase 44's
+ * WHAT WAS DONE, AND WHY THIS RATHER THAN BUILDING IT. Withdrawn. The correction's
  * Part A lands on a quarantine step that DOES have the file in hand, which
  * makes a producer buildable where it previously was not — buildable, but not
  * built, and shipping an enum member whose guarantee nothing delivers is the
@@ -1828,7 +1828,7 @@ export function assertRetentionRuleImplementable(rule: string): void {
  *   quietly. So "keep it" without a clock is not the cheap answer it looks
  *   like. It is indefinite retention, arrived at by omission.
  *
- * SO THE CLOCK IS WIRED HERE. Phase 55 derived RET-7 for this exact file — six
+ * SO THE CLOCK IS WIRED HERE. The Retention Determinations derived RET-7 for this exact file — six
  * years from the later of claim_period_end and report_delivered_at — and wrote
  * that a Reading B answer would carry the period, the instrument and the
  * trigger over to the original unchanged. RET7 below is that derivation as
@@ -1842,7 +1842,7 @@ export function assertRetentionRuleImplementable(rule: string): void {
  * date would make the schedule look finished, which is the failure the
  * Developer Build Order already warns about in terms.
  *
- * THE CARVE-OUT PHASE 55 DID NOT HAVE. Retention Determinations 7.3 says a
+ * THE CARVE-OUT THE DERIVATION DID NOT HAVE. Retention Determinations 7.3 says a
  * Reading B answer changes "one sentence and no arithmetic". Right about the
  * arithmetic, one sentence short. deletionDueAt refuses the long clock to any
  * document whose strip removed NO_LAWFUL_BASIS content (condition A14-D4, section
@@ -2138,7 +2138,7 @@ export function rawFileRecordFromReceipt(
  *
  * ADDS ONE CONSTRAINT, and it constrains an answer rather than making
  * one. Where the strip removed NO_LAWFUL_BASIS content, that content is still
- * in the file (section 1A), and Phase 40 condition A14-D4 says Caprebate must
+ * in the file (section 1A), and the assessment's condition A14-D4 says Caprebate must
  * not hold it. So the defence-period clock is not available for that document
  * and it falls back to the extraction clock. This is not a choice between
  * Q34's options: it is condition A14-D4, which is already owned by the Developer,
@@ -2173,7 +2173,7 @@ export function deletionDueAt(rec: RawFileRecord, settings: IngestionSettings): 
       // that footing: each period exists because somebody may need the file
       // until it ends — the defence pack for an enquiry, RET-7 for the
       // discovery windows — so deleting at the first end defeats the second.
-      // Phase 151b made the change; tests Y7 and Y9-Y12 hold it.
+      // Tests Y7 and Y9-Y12 hold the change.
       //
       // Unchanged, and still a different rule: where only one clock is known
       // it governs, and where neither is, null reaches assertNoOverdueUndeleted

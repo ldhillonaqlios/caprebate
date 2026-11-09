@@ -371,7 +371,7 @@ async function main(): Promise<number> {
     });
   }
 
-  /* Ask Zoom how long ONE call lasted and how many joined: Phase 156d's step B1, to learn
+  /* Ask Zoom how long ONE call lasted and how many joined (step B1 of the Zoom checks), to learn
      whether our free Zoom plan gives it. Read only; it makes, moves and keeps nothing, and prints two numbers or Zoom's
      own code and words, never a name or an email. Like every Zoom call from a copy that is not the test website, it
      needs CAPREBATE_LOCAL_ZOOM=1 (src/integrations/connectors/zoom.ts, zoomPlaceRefusal). The audit line goes to a scratch log. */

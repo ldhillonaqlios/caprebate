@@ -10,8 +10,8 @@
  * role" and branches. A role check at the top of a handler is how the fourth
  * one gets forgotten.
  *
- * WHAT WAS NOT HERE, AND NOW IS. Phase 103 built the enforcement and said
- * "Phases 104 to 107 build what sits on it". Phase 104 built the first of
+ * WHAT WAS NOT HERE, AND NOW IS. The enforcement was built first, saying
+ * "Phases 104 to 107 build what sits on it". The first of
  * them — the public site, the assessment, the login and the client portal —
  * and it is mounted BEFORE the JSON API below, in src/core/router.ts.
  *
@@ -384,7 +384,7 @@ export async function createApp(
         type: 'surveyor_job', id: job.id, business_id: job.business_id, surveyor_id: job.surveyor_id,
       });
       /* CORRECTED. THIS RETURNED 501 AND SAID
-         "the surveyor workspace is Phase 107". Phase 107 built it on
+         "the surveyor workspace is Phase 107". The workspace was built on
          9 September, and a route that still announces the feature as future
          work is a stub that lies about the state of the system — which is
          precisely what the developer spec's stub table exists to prevent.

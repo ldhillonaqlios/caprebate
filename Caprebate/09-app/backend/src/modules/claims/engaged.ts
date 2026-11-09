@@ -874,7 +874,7 @@ export type TaskResult = { ok: true; task_id: string } | { ok: false; why: strin
 /**
  * ROUTE ONE — SEND IT TO THE CLIENT'S PORTAL.
  *
- * Phase 104 built the receiving half: `client_tasks` rows appear in the portal
+ * The portal is the receiving half: `client_tasks` rows appear in the portal
  * with what is asked, WHY, and WHAT IT HOLDS UP, and the client answers them
  * there. This writes the row and stamps `sent_to_portal_at`, which is what
  * makes the question visible to them and what makes the list say the claim is
@@ -1176,7 +1176,7 @@ export function businessPage(db: Db, actor: Actor, business_id: string): Busines
     // NO ROLE REACHES THIS BRANCH THROUGH `/staff/clients` TODAY, because the
     // section gate above is the same ADMIN-and-SALES rule that reads a note.
     // It is kept because this is a VIEW MODEL and the section gate is a ROUTE
-    // decision: Phase 107 mounts client data behind a different gate, and a
+    // decision: the surveyor workspace mounts client data behind a different gate, and a
     // model that read notes unconditionally would leak them the moment it was
     // called from there. `can()` is the control; the branch is what makes the
     // model safe to reuse.

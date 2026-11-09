@@ -1,14 +1,14 @@
 /**
  * INBOUND_EMAIL — READING REPLIES TO contact@caprebate.co.uk. BUILT, AND SWITCHED OFF.
  *
- * Phase 141 wrote the design into the Developer Spec (B48, "Where replies to contact@ will land"); this builds it.
+ * The design is in the Developer Spec (B48, "Where replies to contact@ will land"); this builds it.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHY IT IS OFF
  *
  * There is no mailbox to read. contact@caprebate.co.uk has to exist first, with its email security records — a board item
  * for the owner, "Create the contact@caprebate.co.uk mailbox and check its email security records" — and which service
- * hosts it is the same question Phase 141 put to him: "Which email service should send our emails from
+ * hosts it is the same question the outbound sender put to him: "Which email service should send our emails from
  * contact@caprebate.co.uk?". The recommendation there is IONOS, the host the privacy notice already names, so this reader
  * speaks IMAP, which IONOS offers. OFF IS EXACTLY TODAY: `readMailbox` returns OFF without opening a connection.
  *
@@ -27,7 +27,7 @@
  * contacts, or else to a staff queue. Never by the sender's address alone.
  *
  * A small, dependency-free IMAP client over `node:tls`, tested against a fake server in test/crm/client-chat.test.ts, in the
- * same way Phase 141's SMTP client is.
+ * same way the SMTP client (src/integrations/email/email-provider.ts) is.
  */
 
 import { connect as tlsConnect } from 'node:tls';
