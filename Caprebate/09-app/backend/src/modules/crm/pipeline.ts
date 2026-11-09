@@ -137,7 +137,7 @@ export const FEE_TRIGGER: {
 } = Object.freeze({
   reading: 'REPORT_DELIVERED_FOR_FILING',
   decided: true,
-  why: 'Lakhbir decided: our fee is due when we finish the report and send it for filing, to the client or their accountant. Sending it counts, because nobody will confirm the filing.',
+  why: 'The owner decided: our fee is due when we finish the report and send it for filing, to the client or their accountant. Sending it counts, because nobody will confirm the filing.',
   question: FEE_TRIGGER_QUESTION,
 });
 

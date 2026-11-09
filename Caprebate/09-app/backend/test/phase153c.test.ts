@@ -367,7 +367,7 @@ describe('line 17 — Word question 222: closed website enquiries deleted twelve
 describe('line 19 — the testing waiver names Lakhbir’s role rightly', () => {
   test('Lakhbir is Head of Business Development, never "the director"; the director is Jalil Ahmed', () => {
     const waiver = IDENTITY_CHECK.waiver_record ?? '';
-    assert.match(waiver, /Lakhbir Dhillon said it[\s\S]*He is Head of Business Development\./);
+    assert.match(waiver, /The owner said it[\s\S]*He is Head of Business Development\./);
     assert.doesNotMatch(waiver, /director/i);
     const lookups = readFileSync(join(import.meta.dirname, '..', 'src', 'integrations', 'connectors', 'test-lookups.ts'), 'utf8');
     assert.doesNotMatch(lookups, /as the director/);

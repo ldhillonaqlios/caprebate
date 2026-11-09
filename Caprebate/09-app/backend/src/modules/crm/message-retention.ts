@@ -86,7 +86,7 @@ export const MESSAGE_RETENTION: MessageRetention = Object.freeze({
   enabled: true,
   with_claim_years: 7,
   without_claim_months: 84,
-  approved_by: 'Lakhbir Dhillon',
+  approved_by: 'The owner (Head of Business Development)',
   review_ref: 'CAPREBATE QUESTIONS, "How long do we keep client messages and the team chat?", answered 22 September 2026',
   question: MESSAGE_RETENTION_QUESTION,
 });

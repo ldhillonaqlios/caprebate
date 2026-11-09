@@ -11,7 +11,7 @@
  *     where the postcode is — and the client's typed address is never changed by it.
  *
  * 2 · "ANSWER IT MYSELF" — Word answer 180, "Should people be able to skip the automatic lookups and answer the
- *     questions themselves?", closed 24 September 2026 by Lakhbir ("I think a manual option is best to have as dont
+ *     questions themselves?", closed 24 September 2026 by the owner ("I think a manual option is best to have as dont
  *     want customers to get put off by not able to look up there property"). A choice at the address question: answer
  *     the property questions yourself instead of the lookups. SWITCHED OFF WITH THE LOOKUPS: it is offered only when
  *     the free lookups could run at all (the free-tier gate, CB_REGISTRY.precondition, read through registryGate — no

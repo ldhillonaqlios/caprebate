@@ -58,7 +58,7 @@ export type Result = { readonly ok: true; readonly id: string } | { readonly ok:
 /** the owner's decision for testing, as asked. */
 export const SURVEY_PHOTOS = Object.freeze({
   kept_for_testing: true,
-  waiver_record: 'On 2 Oct 2026 Lakhbir was asked if we keep survey photos before the data officer has said. ' +
+  waiver_record: 'On 2 Oct 2026 the owner was asked if we keep survey photos before the data officer has said. ' +
     'The answer: "Keep them, test only". Kept 7 years, encrypted. Opened by Admin, Sales, the DPO, the client and the surveyor.',
   retention_days: 2557,
 });

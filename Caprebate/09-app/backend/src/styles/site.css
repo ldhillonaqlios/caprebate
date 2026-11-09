@@ -1134,7 +1134,7 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
 
 /* ================================================================== *
  * THE SHARED LOOK, 2 October 2026 (src/core/look.ts).
- * Lakhbir chose "design 2" and asked for colours and darker boxes, so a
+ * The owner chose "design 2" and asked for colours and darker boxes, so a
  * busy person reads a page at a glance. The back office and the portal
  * only: every rule starts body.app or names a class only look.ts draws.
  * ================================================================== */
@@ -1413,7 +1413,7 @@ a.packhead-switch:hover{text-decoration:underline}
 .subnav li.subsub a{padding-left:1.75rem;font-size:13px}
 
 /* ================================================================== *
- * THE BACK OFFICE IN THE LAYOUT LAKHBIR CHOSE, 19 October 2026.
+ * THE BACK OFFICE IN THE LAYOUT THE OWNER CHOSE, 19 October 2026.
  * From the Cap Rebate Simple CRM design (04-phase-work/phase160a/): a
  * navy menu down the left with an icon per section, a white top bar
  * with where you are, the search, Help and the user menu, a light grey
@@ -1657,7 +1657,7 @@ body.crm .cov-gloss dd{margin:0}
 
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
- * Lakhbir: "when someone clicks am i eligible it matches the colours of
+ * The owner: "when someone clicks am i eligible it matches the colours of
  * the new home page". The assessment, sign-in and the enquiry's
  * thank-you (body.public) take the home page's ink ground, ivory type,
  * Cap Mint actions and its mark. The back office and the portal are

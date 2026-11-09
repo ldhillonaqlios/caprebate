@@ -1126,7 +1126,7 @@ export const HUMAN_CAPTURE_SPECS: readonly HumanCaptureDocSpec[] = [
   },
   {
     doc_type: 'TITLE_REGISTER',
-    gate: 'Lakhbir, 25 and 27 September 2026 — the title register is looked up by hand, not by the API',
+    gate: 'The owner, 25 and 27 September 2026 — the title register is looked up by hand, not by the API',
     fields: [
       h('oc_title_number', 'NARRATIVE', 'as the register writes it, for example WYK123456'),
       h('oc_tenure', 'TAXONOMY', 'freehold or leasehold, from the class of title'),

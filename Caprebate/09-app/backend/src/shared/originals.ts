@@ -72,9 +72,9 @@ export const KEEP_ORIGINALS_TEST_WEBSITE: KeepOriginals & { readonly waiver_reco
   enabled: true,
   retention_days: 2557,
   question: KEEP_ORIGINALS_QUESTION,
-  waiver_record: 'Lakhbir Dhillon, Head of Business Development, 24 September 2026 in the chat (Word question 219): keep uploads ' +
+  waiver_record: 'The owner (Head of Business Development), 24 September 2026 in the chat (Word question 219): keep uploads ' +
     '7 years; Sales, Admin and the data protection officer may open them. 2 October 2026, on the survey photos: "Keep them, ' +
-    'test only". On for the test website, with invented files, until Sadique Maskeen approves; Sales opens a kept original ' +
+    'test only". On for the test website, with invented files, until the data protection officer approves; Sales opens a kept original ' +
     'only on a client it owns.',
 });
 

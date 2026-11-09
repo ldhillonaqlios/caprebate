@@ -69,7 +69,7 @@ function pdfText(bytes: Uint8Array): string {
 describe('the free lookups, switched on for the test website only', () => {
   test('the waiver holds on the test website and a copy that asks for it, for EPC, price paid, planning, CQC, (Phase 156e) the Welsh and Scottish lists and (Phase 159g) Companies House only', () => {
     assert.deepEqual([...C.TEST_WEBSITE_LOOKUPS.sources].sort(), FOUR);
-    assert.match(C.TEST_WEBSITE_LOOKUPS.waiver_record, /Lakhbir Dhillon, 2 October 2026.*"All the free ones"/);
+    assert.match(C.TEST_WEBSITE_LOOKUPS.waiver_record, /The owner \(Head of Business Development\), 2 October 2026.*"All the free ones"/);
     for (const env of [TEST_SITE, PREVIEW, { CAPREBATE_LOOKUPS_HERE: '1' }]) {
       assert.equal(C.lookupsWaivedHere(env), true, JSON.stringify(env));
       const sw = C.switchesHere(env);
@@ -144,7 +144,7 @@ describe('the free lookups, switched on for the test website only', () => {
 
   test('6 Oct 2026: Homedata (paid) is on for the test website only, waives nothing, and runs only for a client whose letter is signed', async () => {
     assert.deepEqual([...C.TEST_WEBSITE_PAID_LOOKUPS.sources], PAID);
-    assert.match(C.TEST_WEBSITE_PAID_LOOKUPS.record, /Lakhbir Dhillon, 6 October 2026/);
+    assert.match(C.TEST_WEBSITE_PAID_LOOKUPS.record, /The owner \(Head of Business Development\), 6 October 2026/);
     for (const id of PAID) {
       assert.equal(C.TEST_WEBSITE_LOOKUPS.sources.includes(id), false, `${id} must not have its free gate waived`);
       assert.equal(C.freeGateWaived(id, TEST_SITE), false, id);

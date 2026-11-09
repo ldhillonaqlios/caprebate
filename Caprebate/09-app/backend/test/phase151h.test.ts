@@ -45,7 +45,7 @@ describe('151h · on for testing, the papers waived — and saying so everywhere
     assert.equal(IDENTITY_CHECK.named_in_privacy_notice, false, 'the notice is a draft, not published: the flag must not say otherwise');
     assert.equal(IDENTITY_CHECK.named_in_engagement_letter, false, 'clause 7 names Didit only in a comment: the flag must not say otherwise');
     assert.equal(IDENTITY_CHECK.papers_waived_for_testing, true);
-    assert.match(IDENTITY_CHECK.waiver_record ?? '', /Lakhbir Dhillon.*25 September 2026.*testing/);
+    assert.match(IDENTITY_CHECK.waiver_record ?? '', /The owner.*25 September 2026.*testing/);
     assert.equal(sentUnderTestingWaiver(IDENTITY_CHECK), true);
     assert.match(identityTestingWarning(IDENTITY_CHECK) ?? '', /^Testing only\..*Never check a client\.$/);
   });

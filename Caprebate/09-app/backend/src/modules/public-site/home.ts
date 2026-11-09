@@ -243,7 +243,7 @@ export function pipelineRow(actor: Actor, app: App, nowIso: string): Safe[] {
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({
   BELOW: 'Below the VAT limit',
   INSIDE_MARGIN: 'Close to the VAT limit',
-  OVER: 'Over the VAT limit — tell Lakhbir',
+  OVER: 'Over the VAT limit — tell the owner',
   CANNOT_SAY: 'Cannot tell — a setting is missing',
 });
 
@@ -292,7 +292,7 @@ export function adminRow(actor: Actor, app: App): Safe[] {
     { href: '/staff/connections', name: 'Connections', lines: ['Every outside service'] },
     {
       href: '/staff/audit', name: 'Audit log', late: !log.chain.intact,
-      lines: [log.chain.intact ? 'Checked — nothing changed' : 'Problem found — tell Lakhbir'],
+      lines: [log.chain.intact ? 'Checked — nothing changed' : 'Problem found — tell the owner'],
     },
     {
       href: '/staff/audit?kind=LOGIN_FAILED', name: 'Refused sign-ins', late: refusedSignIns > 0,

@@ -461,7 +461,7 @@ test('T36 the permission is a recorded decision: internal calculation only, who 
   assert.equal(CURRENT_LICENCE_PERMISSION.outcome, 'INTERNAL_CALCULATION_ONLY');
   assert.equal(CURRENT_LICENCE_PERMISSION.allow_internal_calculation, true);
   assert.equal(CURRENT_LICENCE_PERMISSION.allow_report_reproduction, false);
-  assert.equal(CURRENT_LICENCE_PERMISSION.decided_by, 'Lakhbir Dhillon, Head of Business Development');
+  assert.equal(CURRENT_LICENCE_PERMISSION.decided_by, 'The owner (Head of Business Development)');
   assert.doesNotMatch(CURRENT_LICENCE_PERMISSION.decided_by, /director|controller|principal/i, 'Lakhbir is not a director of CAP REBATE LTD (18 Sep 2026)');
   assert.equal(CURRENT_LICENCE_PERMISSION.decided_at, '2026-09-15');
   assert.equal(CURRENT_LICENCE_PERMISSION.built_at, '2026-09-16');

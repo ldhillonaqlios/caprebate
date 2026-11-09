@@ -1118,7 +1118,7 @@ export const FEE_CLAWBACK: FeeClawbackSwitch = Object.freeze({
     refund: 'YES' as const,
     time_limit: 'for so long as the claim remains open to enquiry',
     still_open: Object.freeze(['the trigger — any reduction, or only one above a threshold', 'whether it applies to a settlement the client accepts']),
-    source: 'Lakhbir was asked if we give money back when a claim is reduced after we are paid. He said yes, with no time limit. Clause 13 now says “for so long as the claim remains open to enquiry”.',
+    source: 'The owner was asked if we give money back when a claim is reduced after we are paid. He said yes, with no time limit. Clause 13 now says “for so long as the claim remains open to enquiry”.',
   }),
 });
 

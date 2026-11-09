@@ -414,7 +414,7 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
 
   // Condition 5, on every run, before anything else.
   d.out(NOT_A_DEMONSTRATION);
-  d.out('Lakhbir allowed test lookups on 25 September 2026 on five conditions, and this command applies all five:');
+  d.out('The owner allowed test lookups on 25 September 2026 on five conditions, and this command applies all five:');
   for (const c of TEST_LOOKUP_CONDITIONS) d.out(`  ${c}`);
   d.out('');
 

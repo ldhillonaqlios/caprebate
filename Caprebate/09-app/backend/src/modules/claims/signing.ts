@@ -109,7 +109,7 @@ export const ENGAGEMENT_SIGNING_TEST: EngagementSigning = Object.freeze({
   question: SIGNING_QUESTION,
   test_copy_only: true,
   links: true,
-  waiver_record: 'Lakhbir Dhillon, 6 October 2026, in the chat with Claude: "Signing itself is still switched off. switch this on for test purposes at the moment". The test copy of the letter only, invented clients only; the real letter keeps its blanks and ENGAGEMENT_SIGNING stays off.',
+  waiver_record: 'The owner (Head of Business Development), 6 October 2026, in the chat with Claude: "Signing itself is still switched off. switch this on for test purposes at the moment". The test copy of the letter only, invented clients only; the real letter keeps its blanks and ENGAGEMENT_SIGNING stays off.',
 });
 
 /** Which signing setting this copy runs under: the test one only where it was asked for. */

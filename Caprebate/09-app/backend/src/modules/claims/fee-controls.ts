@@ -66,7 +66,7 @@ export const FLAT_FEE_QUESTION = 'Is our fee now a flat 3% of the allowances ide
  */
 export const MINIMUM_FEE_DECISION = Object.freeze({
   decided: 'NONE' as const,
-  by: 'Lakhbir',
+  by: 'The owner',
   answer: 'yes, flat fee of 3% of the allowances for 1 or more properties',
   question: FLAT_FEE_QUESTION,
   retired: 'the old minimum fee for each sector. It was never switched on, and was removed on 16 September 2026',
@@ -76,7 +76,7 @@ export const BREAK_FEE_QUESTION = 'What is the break fee, and is there ever an a
 export const PAYMENT_TERMS_QUESTION = 'How long does a client have to pay our invoice?';
 
 export const NO_MINIMUM_JOB_SIZE =
-  'There is no minimum job size — Lakhbir decided so on 1 September 2026 — so there is no switch for one. ' +
+  'There is no minimum job size — the owner decided so on 1 September 2026 — so there is no switch for one. ' +
   'There is no minimum fee either — decided on 15 September 2026 with the flat 3% fee.';
 
 /* ================================================================== *
@@ -475,7 +475,7 @@ export type LetterFeeOutcome =
 export function letterFee(kind: LetterFeeKind, controls: FeeControls = FEE_CONTROLS, letter?: LetterSource): LetterFeeOutcome {
   const what = kind === 'BREAK_FEE' ? 'break fee' : 'abort fee';
   if (!controls.break_and_abort.enabled) {
-    return { ok: false, code: 'SWITCH_OFF', why: `No ${what} is raised: break fees and abort fees are switched off, and “${BREAK_FEE_QUESTION}” is for Lakhbir to decide.` };
+    return { ok: false, code: 'SWITCH_OFF', why: `No ${what} is raised: break fees and abort fees are switched off, and “${BREAK_FEE_QUESTION}” is for the owner to decide.` };
   }
   const term = kind === 'BREAK_FEE' ? letterFees(letter).break_fee : letterFees(letter).abort_fee;
   if (term.state === 'BLANK') return { ok: false, code: 'LETTER_BLANK', why: `No ${what} is raised. ${term.label}` };

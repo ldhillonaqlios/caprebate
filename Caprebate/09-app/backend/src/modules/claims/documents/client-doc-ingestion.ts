@@ -1858,7 +1858,7 @@ export const Q56_ANSWER = {
     'what did "keep it as redacted" mean — keep a properly redacted copy (Reading A), or simply do not ' +
     'delete the client document (Reading B)?',
   answered_on: '2026-09-02',
-  answered_by: 'Lakhbir Dhillon, Head of Business Development',
+  answered_by: 'The owner (Head of Business Development)',
   reading: 'B',
   in_terms:
     'do not delete the client document. No redaction tool is bought or built, and no per-document human ' +
@@ -1902,7 +1902,7 @@ export const RET7 = {
   ],
   derived_in: 'Retention Determinations, board item 12945903194, section 4.3',
   approved: false,
-  approver: 'Sadique Maskeen, Data Protection Officer — the instrument of appointment is not yet signed',
+  approver: 'The data protection officer — the instrument of appointment is not yet signed',
   still_needed: 'the CTA confirming which return types are in scope. Q59, Q60 and Q61 all bear on it',
 } as const;
 

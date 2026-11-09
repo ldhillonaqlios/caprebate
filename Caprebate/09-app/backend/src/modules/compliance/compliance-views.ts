@@ -127,7 +127,7 @@ export function landingPage(nav: Nav, aml: AmlView, settings: readonly SettingRe
         { label: 'Breaches', value: String(counts.breaches), tone: counts.breaches > 0 ? 'late' : 'plain', href: '/staff/compliance/breaches' },
       ])}
       <p class="help">Only Admin can use this section today, because no other role can. There is no data protection officer login.
-      Whether one is needed is Lakhbir’s question. Sales, Accounting, Surveying and clients cannot reach anything here.</p>
+      Whether one is needed is the owner’s question. Sales, Accounting, Surveying and clients cannot reach anything here.</p>
       <h2>Settings — dated, and sourced</h2>
       <table><tbody>${settings.map((s) => h`<tr><td>${SETTINGS[s.setting] ?? s.setting}</td><td><strong>${s.label}</strong></td>
         <td>${s.effective_from ?? ''}</td><td class="help">${s.source ?? ''}</td></tr>`)}</tbody></table>

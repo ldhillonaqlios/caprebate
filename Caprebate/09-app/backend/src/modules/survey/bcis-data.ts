@@ -51,7 +51,7 @@ export type BcisData = {
 };
 
 export const DEFAULT_BCIS_DATA_FILE = '~/.caprebate-bcis-data.json';
-export const BCIS_LICENCE_WORDS = 'BCIS (RICS) subscription. BCIS confirmed our use: storing, drafting from and printing its rates (relayed by Lakhbir, 9 October 2026; Word question 218).';
+export const BCIS_LICENCE_WORDS = 'BCIS (RICS) subscription. BCIS confirmed our use: storing, drafting from and printing its rates (relayed by the owner, 9 October 2026; Word question 218).';
 export const PLACEHOLDER_WORDS = 'TEST RATE — invented figures, not BCIS. Test site only';
 
 /* ------------------------------------------------------------------ which BCIS building function each sector is */

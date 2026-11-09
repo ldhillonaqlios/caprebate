@@ -213,7 +213,7 @@ export function planSiteArea(d: Pick<SiteAreaDeps, 'db' | 'grid'>, input: SiteAr
   const on = input.switched_on ?? BOUNDARY_FETCHING_SWITCHED_ON;
   if (on !== true) {
     return stop(outcome('SWITCHED_OFF',
-      'Working out the site area from HM Land Registry\'s land boundaries is switched off. Only Lakhbir can switch it ' +
+      'Working out the site area from HM Land Registry\'s land boundaries is switched off. Only the owner can switch it ' +
       'on. A test download checks the file first. Nothing was read or sent, and the site area stays asked.'));
   }
   const use = checkBoundaryUse('INTERNAL_CALCULATION');

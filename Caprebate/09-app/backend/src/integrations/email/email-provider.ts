@@ -126,7 +126,7 @@ export const EMAIL_SENDING: EmailSending = Object.freeze({
   mailbox_and_dns_ready: true,
   question: EMAIL_PROVIDER_QUESTION,
   papers_waived_for_testing: true,
-  waiver_record: 'Lakhbir Dhillon, 30 September 2026, in chat: "swithc on sending emails". This is a test build. The privacy notice and engagement letter do not name IONOS yet.',
+  waiver_record: 'The owner (Head of Business Development), 30 September 2026, in chat: "swithc on sending emails". This is a test build. The privacy notice and engagement letter do not name IONOS yet.',
 });
 
 /** The provider's login, from the key file. Never in code, never in the database, never in the environment. */

@@ -129,7 +129,7 @@ export const REWARD_MODELS: Vocab = Object.freeze({
  */
 export const REFERRAL_PERCENTAGE = Object.freeze({
   percent_bp: 1000,
-  source: 'Lakhbir’s answer to “Is anything paid to the accountant?”. An accountant registered as an introducer may be offered 10% of our fee',
+  source: 'The owner’s answer to “Is anything paid to the accountant?”. An accountant registered as an introducer may be offered 10% of our fee',
 });
 
 export const REWARD_QUESTION = 'Is anything paid to the accountant?';
@@ -1399,7 +1399,7 @@ export function setRewardModel(
       return {
         ok: false,
         why: `Introducer fees stay off while clause 1 of the engagement letter is blank. It still reads ${blanks.map((t) => t.text).join(' ')} ` +
-          `Lakhbir decides whether we pay an introducer: “${REWARD_QUESTION}”.`,
+          `The owner decides whether we pay an introducer: “${REWARD_QUESTION}”.`,
       };
     }
   }

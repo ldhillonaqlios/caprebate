@@ -392,8 +392,8 @@ export const RECORD_KINDS: readonly Kind[] = Object.freeze([
   { kind: 'INTRODUCER_NOTICES', label: 'Stage notices to firms', table: 'introducer_notices', ref: null, why_unset: NOT_COVERED },
   { kind: 'CONSENT_ANSWERS', label: 'The consent history', table: 'consent_answers', ref: null, why_unset: NOT_COVERED },
   // The two chat threads. Their clean-up job is built and switched off (MESSAGE_RETENTION); the period is the officer's.
-  { kind: 'CLIENT_MESSAGE', label: 'Messages with the client — the portal’s Messages', table: 'client_messages', ref: null, get why_unset() { return `${NOT_COVERED}. Lakhbir set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet`; } },
-  { kind: 'TEAM_MESSAGE', label: 'Team-only messages — the internal notes', table: 'internal_notes', ref: null, get why_unset() { return `${NOT_COVERED}. Lakhbir set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet`; } },
+  { kind: 'CLIENT_MESSAGE', label: 'Messages with the client — the portal’s Messages', table: 'client_messages', ref: null, get why_unset() { return `${NOT_COVERED}. The owner set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet`; } },
+  { kind: 'TEAM_MESSAGE', label: 'Team-only messages — the internal notes', table: 'internal_notes', ref: null, get why_unset() { return `${NOT_COVERED}. The owner set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet`; } },
   { kind: 'CDD_RECORDS', label: 'Customer due diligence records', table: 'cdd_checks', ref: null, why_unset: `${NOT_COVERED}. Our position paper says five years from the end of the client relationship. That comes from the Money Laundering Regulations, so it applies only if they apply to us` },
 ]);
 

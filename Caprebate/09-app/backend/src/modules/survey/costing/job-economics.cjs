@@ -1033,7 +1033,7 @@ const FEE_DECISION = {
     asked: "the largest discount and who approves it",
     applied_automatically: false
   },
-  decided_by: "Lakhbir Dhillon",
+  decided_by: "The owner (Head of Business Development)",
   answer_read: "2026-09-15",
   built: "2026-09-16"
 };
@@ -1280,7 +1280,7 @@ function priceJobBothReadings(sectorId, routeId, purchasePrice, yieldRate,
     /* Resolved, and named. */
     decided_reading: "minimum_withdrawn",
     decision: "there is no minimum fee: a flat percentage of the allowances "+
-      "identified, with no bands (Lakhbir Dhillon, answer read 15 September "+
+      "identified, with no bands (the owner, answer read 15 September "+
       "2026). The old question - whether the launch minimum survived the 1 "+
       "September 2026 no-minimum-job-size decision - is closed."
   };

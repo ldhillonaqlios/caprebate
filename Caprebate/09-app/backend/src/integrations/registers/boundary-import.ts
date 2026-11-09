@@ -484,7 +484,7 @@ export const CURRENT_LICENCE_PERMISSION: LicencePermission = {
   outcome: 'INTERNAL_CALCULATION_ONLY',
   allow_internal_calculation: true,
   allow_report_reproduction: false,
-  decided_by: 'Lakhbir Dhillon, Head of Business Development',
+  decided_by: 'The owner (Head of Business Development)',
   decided_at: '2026-09-15',
   decision_record:
     'Answer "Yes" in caprebate-questions.md, question "Switch on automatic site area from the land ' +
@@ -588,7 +588,7 @@ export function checkBoundaryUse(
              Word question "May the site area we work out from a land boundary go in a client's report?". */
           reason:
             'Refused: boundary maps stay out of client reports. The boundary may be used for internal ' +
-            'calculation only. A site area worked out from it is for our own checks too, until Lakhbir decides ' +
+            'calculation only. A site area worked out from it is for our own checks too, until the owner decides ' +
             'whether the number may go in a client report. The map, an image of it and its coordinates never may.',
         };
   }

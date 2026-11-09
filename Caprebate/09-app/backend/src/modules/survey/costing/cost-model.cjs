@@ -1639,7 +1639,7 @@ const DEPRECIATION_METHOD_DEFAULT = DEPRECIATION_METHOD.NONE;
    without the other invites an answer to the wrong question. */
 const CB_P9_WORKING_METHOD = {
   depreciation_method: DEPRECIATION_METHOD.WHOLE_BUILDING,
-  stated_by: "Lakhbir Dhillon (Head of Business Development)",
+  stated_by: "The owner (Head of Business Development)",
   stated_on: "2026-09-01",
   source: "surveyor pack question I5",
   set_by_surveyor: false,
@@ -2219,7 +2219,7 @@ function parseIndexTable(text, meta) {
     table: Object.freeze({
       loaded: true,
       source: meta.source || "BCIS building price index, imported from a file",
-      licence: meta.licence || "BCIS (RICS) subscription - our use confirmed by BCIS, reports included (relayed by Lakhbir, 9 Oct 2026); the table itself is never reproduced (BCIS_COMMERCIAL)",
+      licence: meta.licence || "BCIS (RICS) subscription - our use confirmed by BCIS, reports included (relayed by the owner, 9 Oct 2026); the table itself is never reproduced (BCIS_COMMERCIAL)",
       verified_at: meta.verified_at || null,
       points: Object.freeze(points)
     }),

@@ -107,7 +107,7 @@ export function inspireBoundaryFetcher(input: InspireFetchInput): BoundaryFetche
     const on = input.switched_on ?? BOUNDARY_FETCHING_SWITCHED_ON;
     if (on !== true) {
       refuse('E_FETCHING_SWITCHED_OFF',
-        'Fetching land boundaries is switched off. Only Lakhbir can switch it on. A test download checks the file ' +
+        'Fetching land boundaries is switched off. Only the owner can switch it on. A test download checks the file ' +
         'first. Nothing was sent.');
     }
     if (item.kind !== 'PARCEL_BOUNDARY' || item.dataset !== 'HMLR_INSPIRE_INDEX_POLYGON') {
