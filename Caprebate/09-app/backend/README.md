@@ -17,7 +17,8 @@ statements on other areas' tables that Phase 161l moves to their owners.
 
 | Folder | What is in it |
 |---|---|
-| `src/core/` | the server, the router shell, the database gate, sign-in, permissions, the audit log, keys, the back office's own pages |
+| `src/app/` | the start-up wiring (Phase 161l): the server, the router shell, the back office's own pages, the timers, the sign-up, the seed and the command line; it may import every area's front door and no area imports it |
+| `src/core/` | the database gate, sign-in, permissions, the audit log, keys, the menus and the back office's views |
 | `src/shared/` | page templates and parts, PDF, ZIP, dates, money and the other pieces every area uses |
 | `src/integrations/` | the outside services: email, identity checks, Zoom, WhatsApp, Claude, Companies House, the registers and postcodes |
 | `src/modules/public-site/` | the home page, sector pages, the enquiry form and the legal pages |
@@ -48,7 +49,7 @@ shippable or a demonstration wearing a suit.
 Phase 104 put the public half on top of it: the site, the six-screen assessment,
 the customer login and the client portal (`src/web/` then; since Phases 161j and 161k every business area is a
 module under `src/modules/`, each with its front door `index.ts` and its `data.ts`, as the folder map above says;
-`src/core/router.ts` is the shell that asks each module in turn).
+`src/app/router.ts` is the shell that asks each module in turn).
 
 Phases 106 and 107 finished the back office — the engaged-client list and the
 five-panel business page, then the surveyor's review-and-sign workspace and the

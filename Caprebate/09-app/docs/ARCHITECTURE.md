@@ -51,7 +51,9 @@ business area is a module with a front door, and a check refuses any route round
 
 ```
 09-app/backend/src/
-  core/          server, router shell, config, database gate (db.ts), sign-in, permissions, audit log, secrets
+  app/           the start-up wiring (Phase 161l): server, router shell, back-office pages, timers, seed, command line
+                 (it may import every front door; nothing imports it)
+  core/          config, database gate (db.ts), sign-in, permissions, audit log, secrets
   shared/        page templates, components, dates, PDF, ZIP, plain-words helpers  (no business logic)
   integrations/  every outside service (connectors/, the email sender)             (no business logic)
   modules/

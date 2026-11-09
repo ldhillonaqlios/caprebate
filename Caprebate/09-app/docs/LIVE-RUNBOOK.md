@@ -18,7 +18,7 @@ The go-live checklist, the list of what must be true before the first client, is
 
 The test website (project `caprebate-test`) is unchanged: it still builds every merge to `main`, runs in Washington beside its US database, and is woken every five minutes by the outside timer (cron-job.org, Lakhbir's account), because Vercel's free plan allows a timer only once a day. **cron-job.org stays for the test website.** Nothing of the test website is used by the live one.
 
-**How one repository makes two websites.** Both projects run `api/index.mjs`. With `CAPREBATE_PRODUCTION=1` in a project's settings, it starts the live website (`Caprebate/09-app/backend/src/core/live-website.ts`): no invented people, no demo logins, no test letter or signing, no notices test banner, every staff login with a second step, form tokens on, and never a database in memory. Without it, the test website, as before. `vercel.ts` (the settings file at the top of the repository) is worked out by each project when it builds, and adds the timers only where `CAPREBATE_PRODUCTION=1`.
+**How one repository makes two websites.** Both projects run `api/index.mjs`. With `CAPREBATE_PRODUCTION=1` in a project's settings, it starts the live website (`Caprebate/09-app/backend/src/app/live-website.ts`): no invented people, no demo logins, no test letter or signing, no notices test banner, every staff login with a second step, form tokens on, and never a database in memory. Without it, the test website, as before. `vercel.ts` (the settings file at the top of the repository) is worked out by each project when it builds, and adds the timers only where `CAPREBATE_PRODUCTION=1`.
 
 ## 2. Set up the live project (once)
 
@@ -109,7 +109,7 @@ It writes new files only and says whether the tables are complete and the audit 
 - `CAPREBATE_DB_TOKEN`: `turso db tokens invalidate caprebate-live` after the redeploy (this ends every older token);
 - `CRON_SECRET`: nothing else; Vercel sends the new word from the next call;
 - `CAPREBATE_BACKUP_KEY`: keep the old key in the password manager for 35 days, to open the backups made with it;
-- `CAPREBATE_MFA_KEY`: **do not simply replace it**: every authenticator app secret is sealed with it, and a new key alone locks everyone out of their app. First move them, from a computer, all or nothing: `CAPREBATE_DB=<CAPREBATE_DB_URL> CAPREBATE_DB_TOKEN=<token> CAPREBATE_MFA_KEY_OLD=<old> CAPREBATE_MFA_KEY=<new> node src/core/cli.ts reseal-app-secrets` (in `Caprebate/09-app/backend`). Then set the new key in the project and Redeploy at once: between the two steps the website cannot check app codes, so do both within a few minutes, out of hours.
+- `CAPREBATE_MFA_KEY`: **do not simply replace it**: every authenticator app secret is sealed with it, and a new key alone locks everyone out of their app. First move them, from a computer, all or nothing: `CAPREBATE_DB=<CAPREBATE_DB_URL> CAPREBATE_DB_TOKEN=<token> CAPREBATE_MFA_KEY_OLD=<old> CAPREBATE_MFA_KEY=<new> node src/app/cli.ts reseal-app-secrets` (in `Caprebate/09-app/backend`). Then set the new key in the project and Redeploy at once: between the two steps the website cannot check app codes, so do both within a few minutes, out of hours.
 
 ## 9. The timers
 
@@ -141,11 +141,11 @@ Set `CAPREBATE_REFERENCE_DB_URL` and `CAPREBATE_REFERENCE_DB_TOKEN` to the new d
 | What | File |
 |---|---|
 | The entry, both websites | `api/index.mjs` |
-| The live start and its checks | `Caprebate/09-app/backend/src/core/live-website.ts` |
+| The live start and its checks | `Caprebate/09-app/backend/src/app/live-website.ts` |
 | The build step (tables; never a seed on live) | `Caprebate/09-app/backend/tools/prepare-lasting.mjs` |
 | The settings file, both projects | `vercel.ts` |
 | The release | `.github/workflows/release-live.yml` |
-| The timers | `Caprebate/09-app/backend/src/core/timers.ts` |
+| The timers | `Caprebate/09-app/backend/src/app/timers.ts` |
 | The backup and restore | `src/core/backup.ts`, `src/integrations/connectors/s3-backup.ts`, `tools/restore-backup.ts` |
 | The reference database | `src/integrations/postcodes/reference-db.ts`, `tools/build-reference-db.ts` |
 | The tests | `test/core/live-website.test.ts` |
