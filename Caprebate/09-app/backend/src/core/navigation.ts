@@ -28,73 +28,29 @@
  * every login's exact menu and every address's answer, so neither a menu nor a permission can drift unseen.
  */
 
-import { unreadCount } from '../web/messages.ts';
-import { AsyncLocalStorage } from 'node:async_hooks';
+import { unreadCount } from '../modules/crm/index.ts';
 import type { Db } from './db.ts';
 import { NotAuthorised, type Actor } from './authz.ts';
 import type { AppRole } from './roles.ts';
 import { h, raw, Safe } from '../shared/index.ts';
 import { assertBackOffice, assertSection } from './backoffice.ts';
 import { searchGate } from './search.ts';
-import { mayCreateTask, myWork, nextActionsGate } from '../web/tasks.ts';
-import { assertLeadSection } from '../web/leads.ts';
-import { pipelineBoardGate } from '../web/crm.ts';
+import { mayCreateTask, myWork, nextActionsGate } from '../modules/crm/index.ts';
+import { assertLeadSection } from '../modules/crm/index.ts';
+import { pipelineBoardGate } from '../modules/crm/index.ts';
 import { billingViewFor, clientsAreaGate } from '../web/billing.ts';
 import { claimListGate } from '../shared/lists.ts';
-import { assertIntroducerSection, rewardModelGate } from '../web/introducers.ts';
+import { assertIntroducerSection, rewardModelGate } from '../modules/crm/index.ts';
 import { assertSurveySection } from '../web/surveyor.ts';
 import { assertFinanceSection } from '../web/finance.ts';
 import { adminSettingsGate, SETTINGS_TILES } from '../web/admin-tiles.ts';
 import { getUsersDisplayNameById } from './data.ts';
 
-/* ------------------------------------------------------------------ *
- * THE REQUEST'S CONTEXT
- * ------------------------------------------------------------------ */
-
-/**
- * WHAT THE HEADER NEEDS THAT `nav(actor)` WAS NEVER GIVEN — the database for the task count, the clock, and the address
- * for the current tab. Sixty page functions take `nav(actor)`; threading three more arguments through every one of them
- * would touch every screen for no change in what any of them shows. The router runs each back-office and portal
- * request inside this store instead. Outside it (a unit test calling a page function directly) the header is drawn
- * without a count and without a current tab, which is the honest reading of "not known".
- */
-export type NavContext = {
-  readonly db: Db; readonly now: () => string; readonly path: string;
-  /** The two name switches for this request (B7, B9). Absent is `NAME_SWITCHES`. */
-  readonly names?: NameSwitches;
-  /**
-   * A REFUSED FORM KEEPS WHAT WAS TYPED (B6). The router records what a POST carried here, and `problem()` in
-   * src/core/staff.ts redraws the page the form was on with those values in it. `rerender` draws a GET of the back office
-   * for that. Mutable on purpose: it is this one request's scratch space, and nothing outlives the request.
-   */
-  readonly form?: { typed?: URLSearchParams; action?: string; pending?: Promise<void>; rerender?: (href: string) => Promise<{ status: number; body: string }> };
-};
-export const navContext = new AsyncLocalStorage<NavContext>();
-
-/* ------------------------------------------------------------------ *
- * THE NAMES — BUILT, SWITCHED OFF, AND ASKED
- * ------------------------------------------------------------------ */
-
-export type NameSwitches = {
-  /** B9: the proposed names for the client's six steps (src/web/portal-steps.ts), instead of the current ones. */
-  readonly portalSteps: boolean;
-};
-
-/**
- * THE SWITCH: ON SINCE. the owner answered CAPREBATE QUESTIONS, "The new names and the client's step
- * names - which do we switch on?", in the Phase 144 chat: "Switch on". Clients read "1 Your estimate" to "6 Aftercare".
- * A test still passes both positions.
- *
- * THE MENU NAMES ARE NO LONGER A SWITCH. Of the three proposed "Introducer fees" is now the
- * section's name; "Client files" and "Claims needing an owner" no longer apply, because Engaged clients became the one
- * Clients list and Next actions became a filter on Tasks. The `menu` switch went with them.
- */
-export const NAME_SWITCHES: NameSwitches = Object.freeze({ portalSteps: true });
-
-/** The switches this request reads. */
-export function nameSwitches(): NameSwitches {
-  return navContext.getStore()?.names ?? NAME_SWITCHES;
-}
+// The request's context, the name switches and the menu a page opens out are in nav-context.ts, which loads no business
+// module; they are named here too, for this file's existing callers.
+export { NAME_SWITCHES, SUB_MENUS, addUnderCurrent, navContext, nameSwitches, setSubMenu } from './nav-context.ts';
+export type { NameSwitches, NavContext, SubMenu } from './nav-context.ts';
+import { SUB_MENUS, navContext, type SubMenu } from './nav-context.ts';
 
 /* ------------------------------------------------------------------ *
  * THE SECTIONS
@@ -128,7 +84,7 @@ export const SECTIONS: readonly Section[] = Object.freeze([
   { key: 'introducer-rewards', href: '/staff/introducer-rewards', label: 'Introducer fees', gate: rewardModelGate },
   { key: 'calendar', href: '/staff/calendar', label: 'Calendar', gate: (a) => assertSection(a, 'booking.read') },
   { key: 'settings', href: '/staff/admin', label: 'Settings', gate: adminSettingsGate,
-    under: SETTINGS_TILES.map((t) => t.href) },
+    get under() { return SETTINGS_TILES.map((t) => t.href); } },
 ]);
 
 /**
@@ -220,42 +176,6 @@ export function menuHrefs(actor: Actor): string[] {
   return [...new Set(out)];
 }
 
-/* ------------------------------------------------------------------ *
- * A MENU THAT OPENS OUT
- * ------------------------------------------------------------------ */
-
-/**
- * THE ENTRIES UNDER THE CURRENT SECTION. On an inner page the menu opens out under the section a person is in: Settings
- * lists each setting; later phases add a client's own claims and sections, a survey job's parts and Finance's. An entry is
- * a page or a place on one, and a page passes in only what its own gates already show (`setSubMenu`). `title` names
- * the thing open, such as a client.
- */
-export type SubMenu = {
-  readonly title?: string;
-  readonly items: readonly { readonly href: string; readonly label: string; readonly note?: string; readonly current?: boolean; readonly sub?: boolean }[];
-};
-
-const SUB_MENUS = new WeakMap<NavContext, SubMenu>();
-
-/** A page names the entries that open out under its section, for this request only. Outside a request it does nothing. */
-export function setSubMenu(menu: SubMenu): void {
-  const ctx = navContext.getStore();
-  if (ctx !== undefined) SUB_MENUS.set(ctx, menu);
-}
-
-/**
- * A page inside another's frame adds its own parts under the entry marked current — a claim's sections
- * under that claim, in its client's menu. With no menu set yet, they become the menu, under `title`.
- */
-export function addUnderCurrent(title: string, items: SubMenu['items']): void {
-  const ctx = navContext.getStore();
-  if (ctx === undefined) return;
-  const menu = SUB_MENUS.get(ctx);
-  const sub = items.map((i) => ({ ...i, sub: true }));
-  const at = menu === undefined ? -1 : menu.items.findIndex((i) => i.current === true);
-  if (menu === undefined || at < 0) { SUB_MENUS.set(ctx, { title, items: sub }); return; }
-  SUB_MENUS.set(ctx, { ...menu, items: [...menu.items.slice(0, at + 1), ...sub, ...menu.items.slice(at + 1)] });
-}
 
 /** The entries under `section` for this request: the page's own, or Settings' list of settings. None elsewhere. */
 function subMenuFor(actor: Actor, section: Section, path: string | null): SubMenu | null {
@@ -367,7 +287,7 @@ function userMenu(name: string, actor: Actor, settingsHref: string): Safe {
 /**
  * ADMIN'S VIEWS IN THE TOP BAR. the owner: "i want the sales, accounting, survayor, admin these tabs to be
  * shifted next to the search box in the white space from logo to search box". Admin's choice of Home dashboard, on every
- * back-office page; the one Home is showing is marked. Nobody else has them (src/web/staff-dashboard.ts, dashView).
+ * back-office page; the one Home is showing is marked. Nobody else has them (src/modules/crm/staff-dashboard.ts, dashView).
  */
 function viewTabs(actor: Actor, current: string | null): Safe {
   if (actor.role !== 'ADMIN') return raw('');

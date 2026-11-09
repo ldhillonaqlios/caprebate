@@ -17,7 +17,7 @@
  *   toBundle(body, q)    the answer as register records (for the one door) and facts, or null if it cannot be read.
  *
  * `runConnector` puts one through its paces in the only safe order: the gate decision first (made by
- * `stateUnderGates` in src/web/research.ts and passed in — NOT re-decided here, so there is no second gate), then the
+ * `stateUnderGates` in src/modules/claims/research.ts and passed in — NOT re-decided here, so there is no second gate), then the
  * source's own switch, then its keys, then the call, then the reading. Anything short of a clean reading is a source
  * that did not run or did not work, and its facts stay asked (N4). Nothing refuses and nothing throws.
  *
@@ -135,7 +135,7 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
   PLANNING: false,
   ONS_POSTCODE: false,
   HOMEDATA_ADDRESS: false,
-  /* RETIRED. The title register is looked up by hand (src/web/title-by-hand.ts); its connector is in
+  /* RETIRED. The title register is looked up by hand (src/modules/claims/title-by-hand.ts); its connector is in
      PAID_RETIRED, in no map a click reads, so this switch turns nothing on. It stays so a case stamp reads as before. */
   HMLR_TITLE: false,
   BCIS: false,

@@ -322,7 +322,8 @@ function expandRegex(src) {
 function codeRoutes(inp) {
   const routes = new Map();
   for (const [f, t] of inp.codeText) {
-    if (!/\/src\/(web\/[^/]+|app|server)\.ts$/.test(f)) continue;
+    // the screens' folder, and since Phase 161j the five business modules' own folders (their files moved there)
+    if (!/\/src\/(web\/[^/]+|modules\/(?:public-site|assessment|portal|crm|claims)\/[^/]+|app|server)\.ts$/.test(f)) continue;
     for (const m of t.matchAll(/path === '(\/[^']*)'/g)) if (PREFIX.test(m[1]) || m[1] === '/') routes.set(m[1], path.basename(f));
     for (const m of t.matchAll(/\/\^(\\\/[^\n]*?)\$\/[a-z]*\.(?:exec|test)\(/g)) for (const r of expandRegex(m[1])) if (PREFIX.test(r)) routes.set(r, path.basename(f));
   }
@@ -372,8 +373,8 @@ function checkB(inp) {
 // reference is `file:NN`, or `:NN` after a file in the same cell, or - the prose form §4 uses for
 // phase3 - "`name` at line NN" / "`name` at NN" after a file in the same cell.
 const C_FILE = /^(src\/[^\s:]+\.ts|Caprebate site\.html|\d\d-[^\s:]+\.(?:ts|js|cjs|mjs|html|sql))(?::(\d+))?$/;
-// Phase 152 (28 September 2026): a file with a colon and NO clean line number after it - "`src/web/crm.ts:`",
-// "`src/web/crm.ts:12a`", "`src/web/crm.ts: 12`" - matched neither C_FILE nor the `:NN` form, so the reference
+// Phase 152 (28 September 2026): a file with a colon and NO clean line number after it - "`src/modules/crm/crm.ts:`",
+// "`src/modules/crm/crm.ts:12a`", "`src/modules/crm/crm.ts: 12`" - matched neither C_FILE nor the `:NN` form, so the reference
 // vanished and C passed it silently until a person saw it (Phase 151e line 6). Each is now a failure of its own.
 const C_FILE_BROKEN = /^(src\/[^\s:]+\.ts|Caprebate site\.html|\d\d-[^\s:]+\.(?:ts|js|cjs|mjs|html|sql)):(?!\d+$)/;
 const C_FORMS = ['back end', 'site', 'package', 'phase9', 'phase3', 'other'];

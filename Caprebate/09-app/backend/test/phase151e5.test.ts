@@ -17,7 +17,7 @@ import { join } from 'node:path';
 
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
-import { reachableContacts } from '../src/web/crm.ts';
+import { reachableContacts } from '../src/modules/crm/crm.ts';
 
 const NOW = '2026-09-28T12:00:00.000Z';
 const opts = () => ({ documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e5-')), now: () => NOW, sealKey: randomBytes(32) });

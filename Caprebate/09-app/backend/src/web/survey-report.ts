@@ -17,7 +17,7 @@
  *   5  the surveyor's declaration, their name and RICS number, the fingerprint, and how the report was made
  *
  * Page 1 also shows the site plan, when the version has one (stage 6, 2 Oct 2026): the client's building and the buildings
- * round it, from Ordnance Survey's free maps (src/web/site-plan.ts). The site boundary (INSPIRE) is never in it
+ * round it, from Ordnance Survey's free maps (src/modules/claims/site-plan.ts). The site boundary (INSPIRE) is never in it
  * (Lakhbir's rule, 1 Oct 2026).
  */
 import { propertyLine } from './survey-pack.ts';
@@ -26,11 +26,11 @@ import { percentWords, poundsWords, quantityWords, type Source, type Valued } fr
 import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { BASIS_WORDS, baseWords } from './bcis-data.ts';
-import { allowancesFor, allowanceWords, type AllowanceWords } from './allowances.ts';
-import type { ReturnContext } from './return-entries.ts';
+import { allowancesFor, allowanceWords, type AllowanceWords } from '../modules/assessment/index.ts';
+import type { ReturnContext } from '../modules/claims/index.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from '../shared/index.ts';
 import { minutesWords } from './survey-video.ts';
-import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from './site-plan.ts';
+import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from '../modules/claims/index.ts';
 import { ukDatesIn } from '../shared/index.ts';
 import { plainDashLines } from '../shared/index.ts';
 
@@ -87,7 +87,7 @@ export type ReportModel = {
   /** PHASE 159d (item 6): which way each part of the claim goes in, as approved. Empty in a version approved before. */
   readonly routes: readonly { readonly label: string; readonly words: string }[];
   /** PHASE 159e (item 6): each part's year, its allowances and the pools carried on, from the version and the facts it
-   *  was sent on (src/web/allowances.ts) — the same figures as the return entries. */
+   *  was sent on (src/modules/assessment/allowances.ts) — the same figures as the return entries. */
   readonly allowances: AllowanceWords;
   /** PHASE 159f (item 4): where each rate comes from, in full — the short chip in the table, the whole source here. */
   readonly rate_sources: readonly { readonly label: string; readonly words: string }[];

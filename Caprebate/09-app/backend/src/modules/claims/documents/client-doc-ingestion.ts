@@ -1,8 +1,8 @@
 /**
  * Caprebate — CLIENT_DOC Ingestion Minimisation Control
- * Board item 12928074627. Phase 41.
- * Amended by Phase 44 (board items 12928214881 and 12928215019), 30 Aug 2026.
- * Amended by Phase 65 (Q56 answered — section 7B), 2 Sep 2026.
+ * Board item 12928074627.
+ * Amended (board items 12928214881 and 12928215019).
+ * Amended (Q56 answered — section 7B).
  *
  * WHAT PHASE 44 CHANGED, READ THIS BEFORE THE PARAGRAPH BELOW. Phase 41 wrote
  * that the strip runs "before anything is written to durable storage". Under
@@ -35,8 +35,8 @@
  *   1. NO FIELD IN ANY OF THE ELEVEN SPECIFICATIONS IS A PERSON'S NAME.
  *      Re-checked field by field against DOC_SPECS and HUMAN_CAPTURE_SPECS for
  *      this module — test C7 asserts it mechanically rather than trusting the
- *      reading. (Thirteen since Phase 151b added the tax return and the tax
- *      computation, re-checked the same way: still none. Fourteen since Phase 146l
+ *      reading. (Thirteen added the tax return and the tax
+ *      computation, re-checked the same way: still none. Fourteen
  *      added the Land Registry official copy, read by a person: still none.) So the parties clause, the execution block and the
  *      representations are needed by NOTHING downstream, and removing them on
  *      receipt costs the extraction exactly nothing.
@@ -45,7 +45,7 @@
  *      Its assertion, its fail-closed source lookup and its unclassified-field
  *      refusal are the right mechanism. Phase 41 adds the CLIENT_DOC entry it
  *      was missing (subitem 13) and calls the existing assertion rather than
- *      writing a second one — see assertClaimsWritable().
+ *      writing a second one — see assertClaimsWritable.
  *
  *   3. THE PIPELINE ALREADY WRITES source_id: 'CLIENT_DOC'.
  *      A source id the exclusion policy did not contain. Under its own
@@ -68,7 +68,7 @@
  * neither is a judgement: an option that cannot be performed is withdrawn
  * rather than offered (section 7A), and a condition already owned by the
  * Developer is enforced where it removes an option (CONDITION_D4_STATUS). Both
- * are put to Lakhbir and the DPO as Q44 and Q45 rather than left in a comment.
+ * are put to the owner and the DPO as Q44 and Q45 rather than left in a comment.
  * ----------------------------------------------------------------------------
  *
  * Runs on Node >= 22.6 with type stripping (`node file.ts`). No enums, no
@@ -99,7 +99,7 @@ export type IngestionErrorCode =
   | 'E_CONDITIONAL_FIELD_UNDISCRIMINATED'
   | 'E_RETENTION_OVERDUE'
   | 'E_DELETION_UNEVIDENCED'
-  /* --- added by Phase 44, board items 12928214881 and 12928215019 --- */
+  /* --- added board items 12928214881 and 12928215019 --- */
   /** A pre-signed URL was issued for a key outside the quarantine prefix. */
   | 'E_UPLOAD_KEY_NOT_QUARANTINED'
   /** A quarantine object is past its TTL and still held. */
@@ -110,7 +110,7 @@ export type IngestionErrorCode =
   | 'E_RETENTION_RULE_WITHDRAWN'
   /** A deletion claimed a redacted copy survives, and nothing can produce one. */
   | 'E_REDACTED_COPY_UNPRODUCIBLE'
-  /* --- added by Phase 132, 14 September 2026 --- */
+  /* --- added --- */
   /** A caller asserted a backup position the host's backup cycle does not support. */
   | 'E_BACKUP_CYCLE_ASSERTED'
   /** A deleted record was about to be restored with no approval from the data protection officer. */
@@ -128,7 +128,7 @@ export class ClientDocIngestionError extends Error {
 }
 
 /* ------------------------------------------------------------------ *
- * 1. THE STORAGE FACT — established 29 August 2026, board item 12928031577
+ * 1. THE STORAGE FACT — established, board item 12928031577
  *
  * Phase 40 §3.4 proceeded on an INFERENCE that the raw uploaded file is
  * retained, said so, and created an item to establish it. This is the answer,
@@ -228,7 +228,7 @@ export const STORAGE_POSITION = {
  *       application servers, which is slower, dearer and a scaling problem.
  *
  * WHICH IS BUILT HERE, AND ON WHOSE AUTHORITY. (a). Q40 puts the choice to
- * Lakhbir and the developer with a recommendation of (a); as at 30 August 2026
+ * the owner and the developer with a recommendation of (a); as at
  * Q40 IS UNANSWERED. So this is a FAIL-CLOSED DEFAULT, NOT A DECISION, and
  * INGESTION_BOUNDARY.is_a_decision records that in a field rather than in a
  * paragraph somebody may skim. Fail-closed here means: the shorter the
@@ -490,9 +490,9 @@ export function assertQuarantineDischarged(objects: readonly QuarantineObject[],
 }
 
 /* ------------------------------------------------------------------ *
- * 1C. CONDITION A14-D4, RE-CHECKED — Phase 44
+ * 1C. CONDITION A14-D4, RE-CHECKED
  *
- * A14-D4 (Phase 40 §10): "Planning representations, consultee responses and
+ * A14-D4: "Planning representations, consultee responses and
  * correspondence are removed from an uploaded planning document on receipt,
  * not merely kept out of the model."
  *
@@ -537,7 +537,7 @@ export const CONDITION_D4_STATUS = {
   constrains_q34: true,
 
   /**
-   * PHASE 65, 2 September 2026. Q56 was answered Reading B — do not delete
+   * Q56 was answered Reading B — do not delete
    * the client document — which closes the FIRST of the two routes listed in
    * what_would_make_it_met, by decision rather than by argument. Recorded
    * here and not in that list because both entries still WOULD make A14-D4 met;
@@ -581,7 +581,7 @@ export type PartyLegalForm =
 
 /**
  * Partnership Act 1890 s.4, read in the current revised text on
- * legislation.gov.uk on 29 August 2026:
+ * legislation.gov.uk:
  *
  *   s.4(1) "Persons who have entered into partnership with one another are for
  *   the purposes of this Act called collectively a firm, and the name under
@@ -748,9 +748,9 @@ export const NO_LAWFUL_BASIS_ROLES: readonly PersonRole[] = ['PLANNING_OBJECTOR_
  * document type's specification come from it? If no field needs it, it goes.
  *
  * That question has a mechanical answer for the nine model-extractable types
- * (eleven since Phase 151b), because DocSpec.permitted_segments already IS the answer, and test C1
+ *, because DocSpec.permitted_segments already IS the answer, and test C1
  * asserts the derivation rather than trusting this table. It has no mechanical
- * answer for the HUMAN_READ_ONLY types (three since Phase 146l), and section 3.2 says so plainly
+ * answer for the HUMAN_READ_ONLY types, and section 3.2 says so plainly
  * instead of inventing one.
  * ------------------------------------------------------------------ */
 
@@ -953,10 +953,10 @@ export const CLIENT_DOC_RECEIPT_POLICY: readonly ClientDocReceiptPolicy[] = [
       'the human-capture rule in section 5 applies to it even on the model path.',
   },
   /*
-   * THE TAX RETURN AND THE TAX COMPUTATION — Phase 151b, 25 September 2026.
+   * THE TAX RETURN AND THE TAX COMPUTATION.
    *
-   * Word question 223. The data protection officer, relayed by Lakhbir on 24
-   * September 2026: "yes, clients may upload tax returns and tax computations.
+   * Word question 223. The data protection officer, relayed by the owner on 24
+   *: "yes, clients may upload tax returns and tax computations.
    * Still open: what must be removed from them. Until the officer says
    * otherwise we will treat them like the other financial documents: keep the
    * figures and the company details, and remove individuals' names, addresses
@@ -1076,7 +1076,7 @@ export const CLIENT_DOC_RECEIPT_POLICY: readonly ClientDocReceiptPolicy[] = [
       'natural persons and the execution block is the point of the document. contract_schedule_index is captured ' +
       'in full deliberately, which means the human capture rule in section 5 is the operative control here.',
   },
-  /* PHASE 146l (Lakhbir, 25 and 27 September 2026): the official copy of HM Land Registry's title register and the
+  /* The official copy of HM Land Registry's title register and the
      title plan, bought and uploaded by a person, because the title register is looked up by hand, not by the API. */
   {
     doc_type: 'TITLE_REGISTER',
@@ -1098,7 +1098,7 @@ export const CLIENT_DOC_RECEIPT_POLICY: readonly ClientDocReceiptPolicy[] = [
       'retention clock. The title plan is a map and names nobody.',
   },
   /*
-   * PHASE 157d, 6 OCTOBER 2026 (the Friary House run, finding F16). Four types the claim asks clients for, bound on
+   * Four types the claim asks clients for, bound on
    * Phase 129's recorded recommendation for each: STRIP_INDIVIDUALS_KEEP_FIGURES. Spec-derived, like the tax types:
    * only the figures' segments are kept; the parties, the people and the bank details land in no permitted segment.
    */
@@ -1152,7 +1152,7 @@ export const CLIENT_DOC_RECEIPT_POLICY: readonly ClientDocReceiptPolicy[] = [
       'receipt: the title block. Only the text layer passes the strip; the picture is kept only if the raw-file rule keeps the file.',
   },
   /*
-   * PHASE 159k (item 1) — the seller's structures and buildings allowance statement, on the same recommendation: strip
+   * The seller's structures and buildings allowance statement, on the same recommendation: strip
    * the individuals, keep the figures. The seller may be a person; the statement is signed by someone.
    */
   {
@@ -1202,7 +1202,7 @@ export type ReceiptResult = {
    * in section 7 — not by this function.
    *
    * Note also what this list carries and what it does not: kind, heading, page
-   * and reason — never the text. The pipeline's sanitise() takes the same care
+   * and reason — never the text. The pipeline's sanitise takes the same care
    * with its `dropped` list for the same reason, and a removal log that quoted
    * the content would recreate the exposure it exists to record.
    */
@@ -1216,7 +1216,7 @@ export type ReceiptResult = {
  * onward, per document type, and refuses to return a NO_LAWFUL_BASIS kind
  * under any setting. That is real and it is the control condition A14-D4 needs.
  *
- * WHAT IT DOES NOT DO, corrected by Phase 44 (item 12928214881): it does not
+ * WHAT IT DOES NOT DO, corrected (item 12928214881): it does not
  * alter the uploaded file, and it does not run before the file is in storage.
  * Phase 41 described it as running "before anything is written to durable
  * storage" and as dropping segments "out of the document". Both were written
@@ -1225,8 +1225,8 @@ export type ReceiptResult = {
  * before any Caprebate code sees it. Section 1A records the boundary this
  * codebase now assumes and why; section 1B holds the mechanism that bounds it.
  *
- * The asymmetry with sanitise() is therefore narrower than Phase 41 claimed,
- * and stating it accurately is the point: sanitise() decides what reaches a
+ * The asymmetry with sanitise is therefore narrower than Phase 41 claimed,
+ * and stating it accurately is the point: sanitise decides what reaches a
  * MODEL; this decides what reaches STORAGE AS TEXT and what the rest of the
  * system may ever see. Both operate on a document already held. The control
  * that operates on the file is the quarantine discharge, not this.
@@ -1372,7 +1372,7 @@ export function assertClaimsWritable(
 }
 
 /* ------------------------------------------------------------------ *
- * 5. THE HUMAN-CAPTURE RULE — Phase 40 condition A14-D3
+ * 5. THE HUMAN-CAPTURE RULE condition A14-D3
  *
  * CPSE_REPLIES and SALE_CONTRACT are HUMAN_READ_ONLY and their specs capture
  * reply text VERBATIM. A person keying that in passes through no control at
@@ -1493,8 +1493,8 @@ export function assertHumanCaptureClean(a: HumanCaptureAttestation): void {
  * on the exemption is a per-person, per-item assertion, and a position that
  * cannot be evidenced person by person is not a position.
  *
- * THE DESIGN CONSTRAINT THAT SHAPES EVERYTHING BELOW — RESTATED 1 Sep 2026
- * (Phase 60). This block used to say that Caprebate' structured
+ * THE DESIGN CONSTRAINT THAT SHAPES EVERYTHING BELOW — RESTATED
+ *. This block used to say that Caprebate' structured
  * records contain no third-party name by design, and that a compliance record
  * keyed by name would destroy that. Q37 has since been answered — "we can hold
  * the details in our custom backend" — so a name-bearing identity store IS
@@ -1592,7 +1592,7 @@ const REF_LOOKS_LIKE_A_NAME = /(^|[^A-Za-z])(Mr|Mrs|Ms|Miss|Dr|Prof|Sir|Dame)\.?
  *     the claim record and the raw file as well as the identity store, so a
  *     name here spreads into records that are exported, reported on and handed
  *     to an accountant. The name belongs in the identity store, keyed by this
- *     reference. (Restated 1 Sep 2026, Phase 60 — the refusal is unchanged;
+ *     reference. (Restated, Phase 60 — the refusal is unchanged;
  *     its reason is no longer "we hold no names".)
  *
  *   E_TRANSPARENCY_PERSON_UNRESOLVED — the ordinary case: somebody has been
@@ -1689,7 +1689,7 @@ export function assertTransparencyRecordComplete(rec: TransparencyRecord): void 
  *
  * WHY THAT IS WORSE THAN A DORMANT ENUM MEMBER. This is the option Phase 40
  * §7.7 measure 2 recommends where deleting the source early is unacceptable,
- * and Q34 offers it to Lakhbir and the data protection officer as a live answer. A decision put
+ * and Q34 offers it to the owner and the data protection officer as a live answer. A decision put
  * to a human with an option that cannot be performed is not a decision. If
  * they had picked it, the developer would have inherited a rule name and the
  * protection they thought they were buying would not exist.
@@ -1714,7 +1714,7 @@ export function assertTransparencyRecordComplete(rec: TransparencyRecord): void 
  * exactly what the long clock held, under a name that said otherwise.
  * ------------------------------------------------------------------ */
 
-/** Withdrawn 30 August 2026. Kept as a type so the string stays knowable and refusable. */
+/** Withdrawn. Kept as a type so the string stays knowable and refusable. */
 export type WithdrawnRetentionRule = 'RETAIN_REDACTED_DELETE_ORIGINAL';
 
 export const WITHDRAWN_RETENTION_RULES: readonly {
@@ -1798,10 +1798,10 @@ export function assertRetentionRuleImplementable(rule: string): void {
 
 /* ------------------------------------------------------------------ *
  * 7B. THE ANSWER, AND THE CLOCK IT TURNS OUT TO NEED
- * Phase 65, board item 12878920167, 2 September 2026
+ * Board item 12878920167
  *
- * Q56 asked what Lakhbir meant by "keep it as redacted". Answered on
- * 2 September 2026: READING B — do not delete the client's document. No
+ * Q56 asked what the owner meant by "keep it as redacted". Answered on
+ * READING B — do not delete the client's document. No
  * redaction capability is bought or built and no per-document human step is
  * introduced.
  *
@@ -1877,7 +1877,7 @@ export const Q56_ANSWER = {
 } as const;
 
 /**
- * RET-7 as data. Derived by Phase 55 from the longest window in which somebody
+ * RET-7 as data. Derived from the longest window in which somebody
  * could still act, and NOT approved — the approved flag is the only thing that
  * lets it compute a date in deletionDueAt.
  */
@@ -1909,7 +1909,7 @@ export const RET7 = {
 const RET7_YEARS = 6;
 
 /**
- * THE HOST'S BACKUP CYCLE — A NAMED BLANK. Phase 132, 14 September 2026.
+ * THE HOST'S BACKUP CYCLE — A NAMED BLANK.
  *
  * Retention Procedure 4.1 point 4: a record leaves the live systems at once and
  * the backups only when the backup cycle expires, "with no restoration of a
@@ -2010,7 +2010,7 @@ export function ret7DueAt(rec: RawFileRecord): string | null {
 
 export type IngestionSettings = {
   /**
-   * Q34's retention limb, ANSWERED by Q56 on 2 September 2026 as
+   * Q34's retention limb, ANSWERED by Q56 as
    * RETAIN_FOR_DEFENCE_PERIOD (section 7B). The default below is unchanged and
    * is still the shorter rule, because a default is what an unconfigured
    * system does, not what the controller decided.
@@ -2030,7 +2030,7 @@ export type IngestionSettings = {
    * true, ret7DueAt's result is not used, and a file held under the long clock
    * with no supplied defence-pack date stays undeletable and surfaced. Turning
    * it on is the act of setting a retention period and belongs to the DPO,
-   * Sadique Maskeen (named 18 Sep 2026, Phase 133i; Shafeek Ali had been named for now on 17 Sep).
+   * the data protection officer.
    */
   ret7_approved: boolean;
 };
@@ -2039,7 +2039,7 @@ export type IngestionSettings = {
  * The fail-closed defaults. NOT a recommendation and NOT a decision — the
  * shortest clock the mechanism supports, so that an unconfigured system holds
  * the least, and so that holding more is a visible act rather than a default
- * nobody chose. Q34, Q35 and Q36 belong to Lakhbir and the DPO.
+ * nobody chose. Q34, Q35 and Q36 belong to the owner and the DPO.
  */
 export const FAIL_CLOSED_SETTINGS: IngestionSettings = {
   raw_file_retention: 'DELETE_ON_EXTRACTION_COMPLETE',
@@ -2061,10 +2061,10 @@ export type RawFileRecord = {
    * assessment (IT) the claim relates to. Set by the CTA at claim close, and
    * NOT the same date as claim_closed_at: the discovery windows run from the
    * end of the period, which is normally earlier and can be a year earlier.
-   * Phase 65.
+   *
    */
   claim_period_end?: string;
-  /** RET-7 limb (b) — the date the report went to the client. Set by the system. Phase 65. */
+  /** RET-7 limb (b) — the date the report went to the client. Set by the system. */
   report_delivered_at?: string;
   deleted_at?: string;
   /**
@@ -2082,7 +2082,7 @@ export type RawFileRecord = {
      * Whether a redacted copy survives.
      *
      * MUST BE FALSE as this codebase stands. The rule that made it true —
-     * RETAIN_REDACTED_DELETE_ORIGINAL — was withdrawn on 30 August 2026
+     * RETAIN_REDACTED_DELETE_ORIGINAL — was withdrawn
      * because nothing produces a redacted copy (section 7A), and recordDeletion
      * refuses a `true` here rather than letting an evidence record assert a
      * protection that does not exist. The field survives the withdrawal so
@@ -2090,7 +2090,7 @@ export type RawFileRecord = {
      */
     redacted_copy_retained: boolean;
     /**
-     * Phase 132. WHETHER A COPY MAY STILL BE ALIVE IN THE HOST'S BACKUPS, the
+     * WHETHER A COPY MAY STILL BE ALIVE IN THE HOST'S BACKUPS, the
      * cycle the deletion relied on, and the day the last copy expires — Retention
      * Procedure 4.3's "whether backups are pending expiry". WRITTEN BY
      * recordDeletion FROM BACKUP_CYCLE, never by a caller. While the cycle is not
@@ -2136,7 +2136,7 @@ export function rawFileRecordFromReceipt(
  * that has been sitting undeletable as the thing to surface, because "we could
  * not compute a date" is exactly how "forever" gets built by accident.
  *
- * PHASE 44 ADDS ONE CONSTRAINT, and it constrains an answer rather than making
+ * ADDS ONE CONSTRAINT, and it constrains an answer rather than making
  * one. Where the strip removed NO_LAWFUL_BASIS content, that content is still
  * in the file (section 1A), and Phase 40 condition A14-D4 says Caprebate must
  * not hold it. So the defence-period clock is not available for that document
@@ -2144,7 +2144,7 @@ export function rawFileRecordFromReceipt(
  * Q34's options: it is condition A14-D4, which is already owned by the Developer,
  * removing one option for one class of document. Fail-closed for a retention
  * rule means DELETE SOONER, and this deletes sooner. Q44 puts the consequence
- * to Lakhbir and the DPO, because the alternative — building the redaction
+ * to the owner and the DPO, because the alternative — building the redaction
  * producer so the long clock becomes available again — is their call to fund.
  */
 export function deletionDueAt(rec: RawFileRecord, settings: IngestionSettings): string | null {
@@ -2164,7 +2164,7 @@ export function deletionDueAt(rec: RawFileRecord, settings: IngestionSettings): 
       const supplied = rec.defence_period_ends_at ?? null;
       const ret7 = settings.ret7_approved ? ret7DueAt(rec) : null;
       // WHERE BOTH CLOCKS ARE KNOWN, THE LATER ONE GOVERNS. Word answer 173,
-      // closed 24 September 2026: "Where two retention periods apply to a
+      // closed: "Where two retention periods apply to a
       // client file, use the later of the two keep-until dates. The file
       // should be retained until both applicable retention periods have
       // expired." Until then this took the EARLIER, on the footing that a
@@ -2222,7 +2222,7 @@ export function sweepForDeletion(
 /**
  * Records a deletion. A deletion with no evidence is indistinguishable from no deletion.
  *
- * PHASE 132: THE EVIDENCE CARRIES THE BACKUP CYCLE, AND THIS FUNCTION WRITES IT.
+ * THE EVIDENCE CARRIES THE BACKUP CYCLE, AND THIS FUNCTION WRITES IT.
  * The cycle is read from `cycle` — BACKUP_CYCLE unless a test passes another —
  * and a caller that states a backup position the cycle does not support is
  * refused with E_BACKUP_CYCLE_ASSERTED, on the same reasoning that refuses
@@ -2291,7 +2291,7 @@ export type RestoreApproval = { readonly approved_by: string; readonly approval_
 
 /**
  * NO RESTORATION OF A DELETED RECORD WITHOUT THE DPO'S APPROVAL — Retention
- * Procedure 4.1 point 4. Phase 132. Nothing in this codebase restores a file;
+ * Procedure 4.1 point 4. Nothing in this codebase restores a file;
  * this is the guard any restore path must pass first. A deleted record with no
  * approval, or an approval missing who gave it or its reference, is refused. A
  * record that was never deleted has nothing to restore and passes.

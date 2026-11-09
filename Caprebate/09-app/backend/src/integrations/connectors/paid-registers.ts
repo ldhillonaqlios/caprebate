@@ -7,7 +7,7 @@
  *   HMLR_TITLE         HM Land Registry's title register, about £7 a title      src/integrations/connectors/hmlr-title.ts
  *                      RETIRED FROM THE CLICK BY PHASE 146k: the owner decided the title register is
  *                      looked up by hand, and took the Business Gateway details out of the key file. It is in
- *                      `PAID_RETIRED` below, not in `PAID_CONNECTORS`, and src/web/title-by-hand.ts is where a person
+ *                      `PAID_RETIRED` below, not in `PAID_CONNECTORS`, and src/modules/claims/title-by-hand.ts is where a person
  *                      records what the official copy says.
  *   HOMEDATA_PLANNING  planning by UPRN — CHOSEN: after signing it answers the PLANNING row in place of
  *                      the free route, keyed on the UPRN the address lookup found   src/integrations/connectors/homedata-planning.ts
@@ -19,7 +19,7 @@
  * whether £7 is worth spending, and the paid planning route has no key at all without a UPRN. A click that runs them
  * in any other order spends more and finds less.
  *
- * THE GATE IS NOT HERE, AND THERE IS NO SECOND ONE. `consultAllowed` in src/web/research.ts hands a connector a
+ * THE GATE IS NOT HERE, AND THERE IS NO SECOND ONE. `consultAllowed` in src/modules/claims/research.ts hands a connector a
  * lookup only after `stateUnderGates` has allowed it, and for a paid source that means a signed engagement asserted
  * server-side — `assertSignedEngagement`, which reads the signature RECORD and not merely a letter
  * marked SIGNED. Then the source's own switch, then its key. Every one of those is off or absent today, so a click
@@ -75,7 +75,7 @@ export const PAID_CONNECTORS: Readonly<Record<string, Built<unknown>>> = Object.
   HOMEDATA_ADDRESS: built<HomedataQuery>({
     connector: homedataAddress,
     /* The title outline is asked for on the same call when HOMEDATA_BOUNDARY is on. A click passes its own
-       switches (src/web/research.ts sets `boundary` from them); this default reads the copy's own. */
+       switches (src/modules/claims/research.ts sets `boundary` from them); this default reads the copy's own. */
     query: (s) => ({ property: s.property, boundary: switchedOn('HOMEDATA_BOUNDARY', switchesHere()) }),
     before_pence: homedataCostPence(homedataSlugs()),
   }),
@@ -87,7 +87,7 @@ export const PAID_CONNECTORS: Readonly<Record<string, Built<unknown>>> = Object.
     before_pence: TITLE_BOUNDARY_TOKENS,
   }),
   /* CHOSEN AND RUNNABLE. It is not a row of
-     its own: after signing it answers the PLANNING row in place of the free route (src/web/research.ts,
+     its own: after signing it answers the PLANNING row in place of the free route (src/modules/claims/research.ts,
      planningRoute), keyed on the UPRN the address lookup found and checked on this click. */
   HOMEDATA_PLANNING: built<HomedataPlanningQuery>({
     connector: homedataPlanning,
@@ -118,7 +118,7 @@ export const PAID_RETIRED: Readonly<Record<string, Built<unknown>>> = Object.fre
 export const PAID_NOT_CHOSEN: Readonly<Record<string, Built<unknown>>> = Object.freeze({});
 
 /** The order a click runs the paid lookups in. The address lookup first; everything else is keyed on what it found.
- *  HOMEDATA_PLANNING is in it but is never a row of its own: it answers the PLANNING row (src/web/research.ts). */
+ *  HOMEDATA_PLANNING is in it but is never a row of its own: it answers the PLANNING row (src/modules/claims/research.ts). */
 export const PAID_ORDER: readonly string[] = Object.freeze(Object.keys(PAID_CONNECTORS));
 
 /**

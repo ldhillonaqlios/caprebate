@@ -16,12 +16,12 @@
    WHERE THE PAGE'S CALCULATOR RUNS, SO NOBODY IS SURPRISED (found 5 Nov 2026)
      In "Caprebate site.html" the calculator's script sits inside the in-page
      assessment (<template id="assessTpl">), which the served website leaves out
-     (src/web/public-site.ts). So the test website's eligibility check does not
+     (src/modules/public-site/public-site.ts). So the test website's eligibility check does not
      run the page's copy at all: it runs THIS PACKAGE, on the server
      (backend/src/web/engine.ts imports src/index.ts). The page's copy is what
      the file preview, the regression harness (its default mode) and the 03-app
      proofs read. Both are the same text, and this check is what keeps them so.
-     The back end's test/phase161f.test.ts checks the served edition too.
+     The back end's test/public-site/claim-calculator-source.test.ts checks the served edition too.
 
    IT ALSO CHECKS WHAT PHASE 102 PROMISED, now of the source
      no fetch(, no DOM, no storage, no secrets; every CTA switch still false;

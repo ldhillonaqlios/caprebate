@@ -1,5 +1,5 @@
 /**
- * UI TIDY PHASE 15 — SETTINGS, 3 October 2026 (src/core/staff.ts usersPage, src/web/tasks-pages.ts, src/web/compliance-views.ts).
+ * UI TIDY PHASE 15 — SETTINGS, 3 October 2026 (src/core/staff.ts usersPage, src/modules/crm/tasks-pages.ts, src/web/compliance-views.ts).
  * Users and roles: a header with its two buttons, four boxes, one table with each person's role as a label, their state
  * in colour and their role change folded in their own row; Add a user folded until asked for. Automation: four boxes,
  * the things no rule may do folded with their count, each rule's source in its second row. Email templates: Add a
@@ -9,9 +9,9 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import * as S from '../src/web/settings.ts';
-import * as A from '../src/web/automation.ts';
+import * as A from '../src/modules/crm/automation.ts';
 import { userCounts, ADD_USER_HREF } from '../src/core/staff.ts';
-import { distinctReasons } from '../src/web/tasks-pages.ts';
+import { distinctReasons } from '../src/modules/crm/tasks-pages.ts';
 import { escapeHtml } from '../src/shared/html.ts';
 
 let H: Harness;

@@ -1,6 +1,6 @@
 /**
  * 30 SEPTEMBER 2026 — THE CLIENT PAGE, LAID OUT AGAIN; AND "TELL THE CLIENT AND MOVE ON"
- * (src/web/client-layout.ts, src/web/tell-and-move.ts).
+ * (src/modules/portal/client-layout.ts, src/modules/crm/tell-and-move.ts).
  *
  * Lakhbir: "the whole interfact for a client needs to be designed ... look at the quick action, i feel like email the
  * client can change to chat ... we need something which shows which API's have fired and been completed and we then need
@@ -70,7 +70,7 @@ describe('the client page, laid out again', () => {
     assert.match(bar, /<li class="now" aria-current="step"><span class="bar"><\/span><span class="name">Expert sign-off<\/span><\/li>/, 'Dunmarrow is at survey: "Expert sign-off"');
     assert.equal((bar.match(/class="done"/g) ?? []).length, 3);
     const actions = /<div class="cactions">[\s\S]*?<\/div>/.exec(r.body)?.[0] ?? '';
-    // 1 Oct 2026: "the chat word turns in to communication" (src/web/communication.ts).
+    // 1 Oct 2026: "the chat word turns in to communication" (src/modules/crm/communication.ts).
     assert.match(actions, new RegExp(`<a class="cta chatbtn" href="/staff/clients/${dunmarrow}\\?chat=all#chat">Communication`));
     assert.match(actions, /<a class="btn" href="#add-task">Log a call<\/a>/);
     assert.match(actions, /class="filesbtn"/);

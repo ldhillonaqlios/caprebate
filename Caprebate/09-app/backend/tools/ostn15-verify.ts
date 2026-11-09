@@ -14,7 +14,7 @@
  * ~/caprebate-data/ostn15/, and all forty of its ETRS89-to-OSGB36 test points agree to the millimetre. Run it again on
  * the server the first time CAPREBATE_OSTN15_FILE is set there.
  *
- * THE EXIT CODES, and test/phase151c.test.ts proves each on a generated, INVENTED full grid in a temporary folder:
+ * THE EXIT CODES, and test/claims/site-area.test.ts proves each on a generated, INVENTED full grid in a temporary folder:
  *   0  every point Ordnance Survey converted agrees to the millimetre, every point it did not is refused here too,
  *      and at least one point was compared;
  *   1  a point disagrees, is refused where Ordnance Survey gives an answer, or is converted where it gives none

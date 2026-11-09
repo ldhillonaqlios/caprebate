@@ -1,7 +1,7 @@
 /**
  * PHASE 160d — NO LONG DASHES IN THE EMAILS, THE LETTER AND REPORTS GOING FORWARD, THE TEXT THE SYSTEM WRITES, AND THE
- * EXPORT'S COLUMN NAMES, 19 October 2026 (src/integrations/email/email.ts, src/web/letter.ts, src/web/claim-record.ts, src/web/leads.ts,
- * src/shared/lists.ts, src/web/booking-invite.ts, src/web/templates.ts, migration 117; the report's versions are in
+ * EXPORT'S COLUMN NAMES, 19 October 2026 (src/integrations/email/email.ts, src/modules/claims/letter.ts, src/modules/claims/claim-record.ts, src/modules/crm/leads.ts,
+ * src/shared/lists.ts, src/modules/crm/booking-invite.ts, src/web/templates.ts, migration 117; the report's versions are in
  * test/survey-report.test.ts).
  */
 import { test, describe, before, after } from 'node:test';
@@ -13,8 +13,8 @@ import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { outboxTransport } from '../src/integrations/email/email.ts';
 import { plainDashLines } from '../src/shared/plain-dashes.ts';
-import { loadLetter, letterExists, LETTER_PATH, TEST_LETTER_PATH } from '../src/web/letter.ts';
-import { DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE } from '../src/web/claim-record.ts';
+import { loadLetter, letterExists, LETTER_PATH, TEST_LETTER_PATH } from '../src/modules/claims/letter.ts';
+import { DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE } from '../src/modules/claims/claim-record.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 let made: Made;
@@ -81,13 +81,17 @@ describe('Phase 160d: the text the system writes', () => {
   test('the Disposal Note task is raised without a long dash, and a task raised under the old title is still found', () => {
     assert.doesNotMatch(DISPOSAL_TASK_TITLE, DASH);
     assert.match(DISPOSAL_TASK_TITLE_BEFORE, DASH);
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'claim-record.ts'), 'utf8');
-    assert.equal((src.match(/title IN \(\?, \?\)[^\n]*DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE/g) ?? []).length, 2, 'both lookups read the old title too');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'claims', 'claim-record.ts'), 'utf8');
+    const calls = [...src.matchAll(/(\w+)<[^>]*>\([^\n]*DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE/g)].map((m) => m[1] ?? '');
+    assert.equal(calls.length, 2, 'both lookups read the old title too');
+    // Each asks the CRM's data file, whose statement reads both titles.
+    const data = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'crm', 'data.ts'), 'utf8');
+    for (const f of calls) assert.match(data, new RegExp(`export function ${f}\\b[^\\n]*\\n[^\\n]*title IN \\(\\?, \\?\\)`), f);
   });
 
   test('no task title the code writes, and no seeded task, holds a long dash', () => {
-    for (const f of ['claim-record.ts', 'leads.ts']) {
-      const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', f), 'utf8');
+    for (const f of ['claims/claim-record.ts', 'crm/leads.ts']) {
+      const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', f), 'utf8');
       for (const m of src.matchAll(/^\s*title: (['`])([^'`]*)\1/gm)) assert.doesNotMatch(m[2] ?? '', DASH, `${f}: ${m[2]}`);
     }
     const titles = made.app.db.all<{ title: string }>('SELECT title FROM staff_tasks');
@@ -105,7 +109,7 @@ describe('Phase 160d: the export and the calendar file', () => {
   });
 
   test('the video call’s calendar entry says "or in the Zoom app" with a comma', () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'booking-invite.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'crm', 'booking-invite.ts'), 'utf8');
     assert.match(src, /`, or in the Zoom app: \$\{m\.join_url\}`/);
   });
 });

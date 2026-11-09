@@ -75,7 +75,7 @@
  * A PERSON'S PICK
  *
  * A REVIEW-band match still keeps nothing here. What changed is that the ranked list can be handed to the back office
- * — after a signed engagement only — and a person can choose one certificate or none (src/web/match-review.ts). The
+ * — after a signed engagement only — and a person can choose one certificate or none (src/modules/claims/match-review.ts). The
  * choice arrives as `chosen`, a certificate NUMBER, and the lookup then reads that certificate exactly as an ACCEPT
  * would. It names a record and not a position in a list, so a list that came back in a different order cannot move
  * the choice onto another building.

@@ -46,7 +46,7 @@ export function withMeasurementId(html: string, id: string | null): string {
 /**
  * GOOGLE ANALYTICS ONLY AFTER A CLICK.
  *
- * The served site page, for one visitor. `accepted` is `optionalAllowed` (src/web/legal-pages.ts): true only when the
+ * The served site page, for one visitor. `accepted` is `optionalAllowed` (src/modules/public-site/legal-pages.ts): true only when the
  * visitor's `cb_cookies` answer is "all", which only a click on "Accept all" sets. Until then the page is given NO
  * measurement id and its policy names no Google address, so nothing of Google's can load and no request can go to
  * Google, whatever the page's script does: not on a page view, a scroll, a timer or an earlier visit with no answer.

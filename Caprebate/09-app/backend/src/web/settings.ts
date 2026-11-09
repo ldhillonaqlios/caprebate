@@ -4,7 +4,7 @@
  *
  * VIEW MODELS AND MUTATIONS. Every function here takes an ACTOR and calls
  * `authorise` on the SPECIFIC OBJECT before it reads or writes, exactly as
- * src/web/portal.ts does. Not one of them consults a route name or branches on
+ * src/modules/portal/portal.ts does. Not one of them consults a route name or branches on
  * a role, which is why the tests can prove that the four non-admin roles are
  * refused BY THE ENDPOINT rather than merely missing a menu item.
  *
@@ -41,14 +41,12 @@ import {
   canonicalEmail, createUser, disableUser as storeDisable, findById, listUsers,
   assignRole as storeAssignRole, newId, type User,
 } from '../core/index.ts';
-import {
-  replaceWorkingTimes, workingTimesFor, WorkingTimeError, WEEKDAY_NAMES,
-  minutesToClock, type WorkingTime, type WorkingTimeInput,
-} from './schedule.ts';
+import { replaceWorkingTimes, workingTimesFor, WorkingTimeError, WEEKDAY_NAMES, minutesToClock, type WorkingTime, type WorkingTimeInput } from '../modules/crm/index.ts';
 import { photoFor, type PhotoRecord } from '../core/index.ts';
 import { liftSuppression } from '../integrations/index.ts';
 import { listEmailSuppressionsAddressAtByStateId } from '../integrations/index.ts';
 import { getSessionsCountByUserIdRevokedReason, getUsersCountByRoleDisabledAt, getUsersIdByEmailCanonical, getUsersIdByEmailCanonicalId, listUserPhotosUserId, updateUsersDisplayNameUpdatedAtById, updateUsersEmailEmailCanonicalById, updateUsersPasswordTemporaryUntilById } from '../core/index.ts';
+import { listWorkingTimesUserIdN } from '../modules/crm/index.ts';
 
 export class SettingsError extends Error {
   readonly code: string;
@@ -277,9 +275,7 @@ export function staffList(db: Db, actor: Actor): StaffRow[] {
   // shape of every other call in this file.
   authorise(actor, 'user.list', { type: 'user', id: actor.id, role: actor.role });
   const counts = new Map<string, number>();
-  for (const w of db.all<{ user_id: string; n: number }>(
-    'SELECT user_id, COUNT(*) AS n FROM working_times GROUP BY user_id',
-  )) counts.set(w.user_id, w.n);
+  for (const w of listWorkingTimesUserIdN<{ user_id: string; n: number }>(db)) counts.set(w.user_id, w.n);
   const photos = new Set(
     listUserPhotosUserId<{ user_id: string }>(db).map((r) => r.user_id),
   );

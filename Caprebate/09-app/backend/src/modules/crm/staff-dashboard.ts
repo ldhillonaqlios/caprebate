@@ -1,0 +1,407 @@
+/**
+ * HOME AS A DASHBOARD —.
+ *
+ * the owner: "the users (both client and also works) home page should behave more like a dashboard … this needs to be
+ * focused … for workers, it should be client driven whos a new lead (where did the lead come from) whats in the pipeline
+ * at which stage, any new messages received, a calendar allowing users to block off time look what what they have booked
+ * in the future, and below it should be activities for today if its a telephone call, teams call and if they need to
+ * send any initial emails. which each of the section for contact there should be a CTA on each, if its a zoom call
+ * clicking the CTA launches zoom and the same goes for email. Phone will be manual." And: "Admin should have a full
+ * overview allowing them to click tabs across the top to see the sales dashboard and essentially only what someone in
+ * sales see, same does for accounting and survayor, admin should then have a special tab which is admin".
+ *
+ * ONE PAGE, FOUR VIEWS — what each role sees; Admin sees every one, as tabs across the top (`?view=`):
+ *   SALES       the figures at a glance · new leads (and where each came from) · new messages · the pipeline by stage ·
+ *               the calendar · today's activities (calls and first emails, each with its button) · today and overdue ·
+ *               leads' next actions
+ *   ACCOUNTING  the figures at a glance · money · the calendar · today's activities · today and overdue
+ *   SURVEYING   the figures at a glance · survey jobs · the calendar · today's activities · today and overdue
+ *   ADMIN       (Admin only) who is working and when · the admin tiles
+ * The view-only login sees the Sales view, with no buttons that change anything.
+ *
+ * THE BUTTONS: a video call's is "Start the Zoom call" (the host's page inside the site, src/modules/crm/video-calls.ts); a
+ * first email's is "Write the first email" (the email page, filled in); a telephone call is made by hand, so its button
+ * opens the call's page to note it, and the number is shown beside it.
+ *
+ * NOTHING HERE DECIDES WHO SEES WHAT: every list reads through the store its own screen reads, which asks `can()` on
+ * each row. A view of another role's work for Admin is Admin's own permissions, drawn in that role's shape.
+ */
+
+import type { App } from '../../core/app.ts';
+import { can, type Actor } from '../../core/index.ts';
+import { h, raw, type Safe } from '../../shared/index.ts';
+import { opens } from '../../core/navigation.ts';
+import { assertLeadSection } from './leads.ts';
+import { leadsList } from '../../shared/lists.ts';
+import { pipelineBoard, organisationList } from './crm.ts';
+import { pipelineBoardGate } from './crm.permissions.ts';
+import { financeDashboard } from '../../web/invoices.ts';
+import { assertFinanceSection } from '../../web/finance.ts';
+import { assertSurveySection, surveyorJobs } from '../../web/surveyor.ts';
+import { isLateNewLead } from '../../shared/index.ts';
+import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES } from '../../shared/index.ts';
+import { addLocalDays, startOfLocalDay, startOfLocalWeek } from './schedule.ts';
+import * as B from '../../core/backoffice.ts';
+import * as M from './messages.ts';
+import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from '../public-site/index.ts';
+import { kpiRow, type Kpi } from '../../core/index.ts';
+import { blocksFor, mayBlockTime } from './time-blocks.ts';
+import { newDot } from '../portal/index.ts';
+import { keysView } from '../../core/saved-keys.ts';
+import { repliesStale } from './inbound-email.ts';
+import { listsToImport } from '../../web/connections.ts';
+import { listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole } from '../../core/index.ts';
+import { getDocumentsCountByBusinessIdRole, getOutboxXByKindLeadId } from './data-borrowed.ts';
+import { getContactsFullNamePhoneByBusinessId } from './data.ts';
+
+export type DashView = 'sales' | 'accounting' | 'surveying' | 'admin';
+
+const VIEW_LABEL: Readonly<Record<DashView, string>> = { sales: 'Sales', accounting: 'Accounting', surveying: 'Surveyor', admin: 'Admin' };
+
+/** The view this login is drawn: Admin chooses; everyone else sees their own role's. Null for a login with no dashboard. */
+export function dashView(actor: Actor, asked: string | null): DashView | null {
+  if (actor.role === 'ADMIN') return asked === 'accounting' || asked === 'surveying' || asked === 'admin' ? asked : 'sales';
+  if (actor.role === 'SALES' || actor.role === 'READ_ONLY') return 'sales';
+  if (actor.role === 'ACCOUNTING') return 'accounting';
+  if (actor.role === 'SURVEYING') return 'surveying';
+  return null;
+}
+
+/* ================================================================== *
+ * PIECES
+ * ================================================================== */
+
+function card(id: string, title: string, body: Safe, extra: Safe = raw('')): Safe {
+  return h`<section class="dash-card" id="${id}" aria-labelledby="${id}-h"><div class="dash-card-h"><h2 id="${id}-h">${title}</h2>${extra}</div>${body}</section>`;
+}
+
+/* ------------------------------------------------------------------ the calls in a window */
+
+export type CallItem = {
+  readonly id: string; readonly at: string; readonly channel: string; readonly company: string; readonly mine: boolean;
+  readonly who: string | null; readonly phone: string | null; readonly href: string; readonly cta: string; readonly cta_href: string;
+};
+
+/** The calls with a time in [from, to) that are this person's or nobody's yet — for a login that may read bookings. */
+export function callsBetween(app: App, actor: Actor, fromIso: string, toIso: string): CallItem[] {
+  if (!can(actor, 'booking.read', { type: 'booking', id: '__staff_section__', business_id: '__staff_section__' })) return [];
+  const v = B.calendar(app.db, actor, { view: 'week', date: fromIso, now: app.now() });
+  const rows = [...v.scheduled];
+  // The window may run past the week the calendar drew (a fortnight ahead): ask again for the next one.
+  if (toIso > v.to) rows.push(...B.calendar(app.db, actor, { view: 'week', date: v.to, now: app.now() }).scheduled);
+  return rows
+    .filter((b) => b.starts_at !== null && b.starts_at >= fromIso && b.starts_at < toIso && b.cancelled_at === null)
+    .filter((b) => b.assigned_to === null || b.assigned_to === actor.id || actor.role === 'READ_ONLY')
+    .map((b) => {
+      const person = getContactsFullNamePhoneByBusinessId<{ full_name: string; phone: string | null }>(app.db, [b.business_id ?? '', b.lead_id ?? '']);
+      const video = b.channel === 'video';
+      return {
+        id: b.id, at: b.starts_at ?? '', channel: video ? 'Zoom call' : 'Telephone call', company: b.business_name, mine: b.assigned_to === actor.id,
+        who: person?.full_name ?? null, phone: video ? null : (person?.phone ?? null), href: `/staff/calendar/${b.id}`,
+        cta: video ? 'Start the Zoom call' : 'Open the call', cta_href: video ? `/staff/calendar/${b.id}/video` : `/staff/calendar/${b.id}`,
+      };
+    });
+  // In time order already: the calendar reads them by start, and a second week only ever follows the first.
+}
+
+/* ------------------------------------------------------------------ first emails */
+
+export type FirstEmail = { readonly lead_id: string; readonly company: string; readonly from: string; readonly late: boolean };
+
+/** New leads nobody has written to yet: "if they need to send any initial emails". */
+export function firstEmails(app: App, actor: Actor): FirstEmail[] {
+  if (!opens(actor, assertLeadSection) || !can(actor, 'email.queue', { type: 'email', id: '__home__', business_id: '__home__' })) return [];
+  const now = app.now();
+  return leadsList(app.db, actor, { filters: {}, sort: 'age' }).rows
+    .filter((l) => l.claim === null && l.status.key === 'NEW')
+    .filter((l) => getOutboxXByKindLeadId(app.db, [l.id, l.id]) === undefined)
+    .map((l) => ({ lead_id: l.id, company: l.organisation, from: l.source, late: isLateNewLead(l.lead_at, now) }));
+}
+
+function todayActivities(app: App, actor: Actor): Safe {
+  const now = app.now();
+  const from = startOfLocalDay(now);
+  const calls = callsBetween(app, actor, from, addLocalDays(from, 1));
+  const emails = firstEmails(app, actor);
+  const writes = actor.role !== 'READ_ONLY';
+  const items: Safe[] = [
+    ...calls.map((c) => h`<li class="act act-${c.channel === 'Zoom call' ? 'video' : 'phone'}${c.at < now ? ' past' : ''}">
+      <span class="act-when">${localClock(c.at)}</span>
+      <span class="act-what"><span class="chip">${c.channel}</span> <a href="${c.href}">${c.company}</a>${c.who === null ? raw('') : h` · ${c.who}`}${
+        c.phone === null ? raw('') : h` · <span class="act-phone">${c.phone}</span>`}${c.mine ? raw('') : h` <span class="help">· nobody has taken it yet</span>`}</span>
+      ${writes ? h`<a class="${c.channel === 'Zoom call' ? 'cta' : 'btn'} act-cta" href="${c.cta_href}">${c.cta}</a>` : raw('')}</li>`),
+    ...emails.map((e) => h`<li class="act act-email${e.late ? ' late' : ''}">
+      <span class="act-when">Email</span>
+      <span class="act-what"><span class="chip">First email</span> <a href="/staff/leads/${e.lead_id}">${e.company}</a> · from ${e.from}${e.late ? h` <span class="help">· waiting too long</span>` : raw('')}</span>
+      ${writes ? h`<a class="cta act-cta" href="/staff/leads/${e.lead_id}/email">Write the first email</a>` : raw('')}</li>`),
+  ];
+  const body = items.length === 0
+    ? h`<p class="empty">No calls today, and no first emails waiting.</p>`
+    : h`<ol class="acts">${items}</ol><p class="help">A telephone call is made by hand: ring the number, then open the call to note how it went.</p>`;
+  const p = localPartsOf(Date.parse(now));
+  return card('today-activities', 'Today’s activities', body, h`<span class="help">${WEEKDAY_NAMES[p.weekday] ?? ''} ${ukDate(localDate(now))}</span>`);
+}
+
+/* ------------------------------------------------------------------ the calendar */
+
+function weekStart(asked: string | null, nowIso: string): string {
+  const ok = asked !== null && /^\d{4}-\d{2}-\d{2}$/.test(asked) && Number.isFinite(Date.parse(`${asked}T12:00:00Z`));
+  return startOfLocalWeek(ok ? `${asked}T12:00:00.000Z` : nowIso);
+}
+
+function calendarCard(app: App, actor: Actor, view: DashView, asked: string | null, done: string | null): Safe {
+  const now = app.now();
+  const from = weekStart(asked, now);
+  const to = addLocalDays(from, 7);
+  const calls = callsBetween(app, actor, from, to);
+  const blocks = blocksFor(app.db, actor.id, from, to);
+  const today = localDate(now);
+  const days = Array.from({ length: 7 }, (_, i) => addLocalDays(from, i));
+  const prev = localDate(addLocalDays(from, -7));
+  const next = localDate(addLocalDays(from, 7));
+  const viewQ = actor.role === 'ADMIN' ? `view=${view}&` : '';
+  const back = `/staff?${viewQ}week=${localDate(from)}#calendar`;
+  const grid = h`<ol class="wk">${days.map((d) => {
+    const end = addLocalDays(d, 1);
+    const date = localDate(d);
+    const p = localPartsOf(Date.parse(d));
+    const dayCalls = calls.filter((c) => c.at >= d && c.at < end);
+    const dayBlocks = blocks.filter((b) => b.starts_at < end && b.ends_at > d);
+    return h`<li class="wk-day${date === today ? ' today' : ''}${date < today ? ' past' : ''}"${date === today ? raw(' aria-current="date"') : raw('')}>
+      <p class="wk-h"><span>${WEEKDAY_NAMES[p.weekday]?.slice(0, 3) ?? ''}</span> ${String(p.day)}</p>
+      ${dayCalls.length === 0 && dayBlocks.length === 0 ? h`<p class="wk-free">Free</p>` : raw('')}
+      <ul class="wk-items">${dayCalls.map((c) => h`<li class="wk-call"><a href="${c.href}"><strong>${localClock(c.at)}</strong> ${c.channel === 'Zoom call' ? 'Zoom' : 'Phone'} · ${c.company}</a></li>`)}${
+        dayBlocks.map((b) => h`<li class="wk-block"><strong>${b.starts_at < d ? 'All day' : localClock(b.starts_at)}${b.ends_at > end ? '' : `–${localClock(b.ends_at)}`}</strong> Blocked${b.reason === '' ? '' : ` · ${b.reason}`}
+          ${b.ends_at > now ? h`<form method="post" action="/staff/time-blocks/${b.id}/remove" class="inline"><input type="hidden" name="back" value="${back}"><button class="linkish" type="submit">Free it</button></form>` : raw('')}</li>`)}</ul></li>`;
+  })}</ol>`;
+  const form = mayBlockTime(actor) ? h`<details class="wk-add"${done === 'blocked' || done === 'block-refused' ? raw(' open') : raw('')}><summary>Block off time</summary>
+    <form method="post" action="/staff/time-blocks" class="wk-form">
+      <input type="hidden" name="back" value="${back}">
+      <label class="fl" for="tb-date">Day</label><input class="fi" id="tb-date" name="date" type="date" required value="${date10(asked, today)}">
+      <label class="fl" for="tb-from">From</label><input class="fi" id="tb-from" name="from" type="time" required value="09:00">
+      <label class="fl" for="tb-to">Until</label><input class="fi" id="tb-to" name="to" type="time" required value="17:00">
+      <label class="fl" for="tb-until">Last day, for more than one day <span class="help">(you do not have to)</span></label><input class="fi" id="tb-until" name="until_date" type="date">
+      <label class="fl" for="tb-reason">What for <span class="help">(only staff see it; you do not have to)</span></label><input class="fi" id="tb-reason" name="reason" maxlength="120">
+      <button class="cta" type="submit">Block it off</button>
+      <p class="help">Nobody can book you a call in time you have blocked — not the client’s booking page, and not a colleague.</p>
+    </form></details>` : raw('');
+  return card('calendar', 'Your calendar', h`${done === 'blocked' ? h`<p class="saved" role="status">Blocked off. Nobody can book you a call then.</p>` : raw('')}${
+    done === 'freed' ? h`<p class="saved" role="status">Freed. That time can be booked again.</p>` : raw('')}${grid}${form}`,
+  h`<span class="wk-nav"><a href="/staff?${viewQ}week=${prev}#calendar">Last week</a> · <a href="${actor.role === 'ADMIN' ? `/staff?view=${view}` : '/staff'}#calendar">This week</a> · <a href="/staff?${viewQ}week=${next}#calendar">Next week</a></span>`);
+}
+
+function date10(asked: string | null, today: string): string {
+  return asked !== null && /^\d{4}-\d{2}-\d{2}$/.test(asked) && asked >= today ? asked : today;
+}
+
+/* ------------------------------------------------------------------ new messages */
+
+function messagesCard(app: App, actor: Actor): Safe | null {
+  if (!can(actor, 'client_message.read', { type: 'client_message', id: '__home__', business_id: '__home__' })) return null;
+  const fresh = organisationList(app.db, actor)
+    .map((o) => ({ id: o.id, name: o.trading_name, n: M.newFromClient(app.db, actor, o.id) }))
+    .filter((x) => x.n > 0)
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+  return card('new-messages', 'New messages', fresh.length === 0 ? h`<p class="empty">Nothing new from a client.</p>`
+    : h`<ul class="dash-list">${fresh.map((x) => h`<li><a href="/staff/clients/${x.id}?chat=all#chat">${x.name}</a>${newDot(x.n)}
+        <a class="btn act-cta" href="/staff/clients/${x.id}?chat=all#chat">Read and reply</a></li>`)}</ul>`);
+}
+
+/* ------------------------------------------------------------------ new documents from clients */
+
+/** Files a client sent from the portal in the last 14 days. Nobody was told. */
+export const NEW_DOCUMENT_DAYS = 14;
+
+export function newClientDocuments(app: App, actor: Actor, now: string): { id: string; name: string; n: number }[] {
+  const since = new Date(Date.parse(now) - NEW_DOCUMENT_DAYS * 86_400_000).toISOString();
+  return organisationList(app.db, actor)
+    .map((o) => ({ id: o.id, name: o.trading_name, n: getDocumentsCountByBusinessIdRole<{ n: number }>(app.db, [o.id, since])?.n ?? 0 }))
+    .filter((x) => x.n > 0)
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+}
+
+function documentsCard(app: App, actor: Actor, now: string): Safe | null {
+  if (!can(actor, 'client_message.read', { type: 'client_message', id: '__home__', business_id: '__home__' })) return null;
+  const fresh = newClientDocuments(app, actor, now);
+  return card('new-documents', 'New documents from clients', fresh.length === 0 ? h`<p class="empty">No client has sent a file in the last ${String(NEW_DOCUMENT_DAYS)} days.</p>`
+    : h`<ul class="dash-list">${fresh.map((x) => h`<li><a href="/staff/clients/${x.id}#tab-files">${x.name}</a>${newDot(x.n)}
+        <a class="btn act-cta" href="/staff/clients/${x.id}#tab-files">Open their files</a></li>`)}</ul>`);
+}
+
+/* ------------------------------------------------------------------ who is working (Admin) */
+
+export type WorkingRow = { readonly name: string; readonly role: string; readonly now: boolean; readonly first: string | null; readonly last: string | null };
+
+/** Every member of staff who can sign in: working now (seen in the last 30 minutes), and today's first and last moments. */
+export function staffWorking(app: App, actor: Actor): WorkingRow[] {
+  if (actor.role !== 'ADMIN') return [];
+  const now = app.now();
+  const dayStart = startOfLocalDay(now);
+  const recent = new Date(Date.parse(now) - 30 * 60_000).toISOString();
+  return listSessionsDisplayNameRoleByUserIdLastSeenAt<{ display_name: string; role: string; first: string | null; last: string | null; live: number }>(app.db, [dayStart, dayStart, now, recent])
+    .map((r) => ({ name: r.display_name, role: r.role, now: r.live > 0, first: r.first === null ? null : (r.first < dayStart ? dayStart : r.first), last: r.last }));
+}
+
+/** People who can sign in, and those archived: Admin's tools for each, on the Admin tab. */
+function peopleCard(app: App, actor: Actor): Safe {
+  const people = listSessionsIdDisplayNameByUserIdRole<{ id: string; display_name: string; role: string; disabled_at: string | null; last: string | null }>(app.db);
+  const now = app.now();
+  const active = people.filter((p) => p.disabled_at === null);
+  const archived = people.filter((p) => p.disabled_at !== null);
+  const back = h`<input type="hidden" name="back" value="/staff?view=admin">`;
+  return card('people', 'People', h`<table class="stack dash-table"><thead><tr><th>Who</th><th>Role</th><th>Last signed in</th><th>Do</th></tr></thead><tbody>${
+    active.map((p) => h`<tr><td data-label="Who">${p.display_name}</td><td data-label="Role">${p.role.replace(/_/g, ' ').toLowerCase()}</td>
+      <td data-label="Last signed in">${p.last === null ? h`<span class="help">Never</span>` : localStamp(p.last, now)}</td>
+      <td data-label="Do"><form method="post" action="/staff/users/${p.id}/temporary-password" class="inline"><button class="linkish" type="submit">Reset password</button></form>${
+        p.id === actor.id ? raw('') : h` · <form method="post" action="/staff/users/${p.id}/disable" class="inline">${back}<button class="linkish" type="submit">Archive</button></form>`}</td></tr>`)}</tbody></table>
+    <p><a class="cta" href="/staff/users?add=1#create-user">Add a person</a> <a href="/staff/users">Roles and second steps</a></p>
+    <p class="help">Reset password makes a temporary one, shown to you once, and signs them out. Archive stops them signing in at once; what they did stays.</p>
+    ${archived.length === 0 ? raw('') : h`<details><summary>Archived (${String(archived.length)})</summary><ul class="dash-list">${archived.map((p) => h`<li>${p.display_name} <span class="help">· ${p.role.replace(/_/g, ' ').toLowerCase()} · archived ${localStamp(p.disabled_at ?? '', now)}</span></li>`)}</ul></details>`}`);
+}
+
+const FROM_WORDS: Readonly<Record<string, string>> = { SAVED: 'Saved here', FILE: 'From the key file or the website’s settings', NOT_SET: 'Not set', UNREADABLE: 'Saved here, but this server cannot open it' };
+/** "not set = red, active = green, set but not active = amber". Colour is never the only sign. */
+const STATE_CHIP: Readonly<Record<string, { cls: string; words: string }>> = {
+  ACTIVE: { cls: 'key-on', words: 'In use' },
+  SET_OFF: { cls: 'key-idle', words: 'Set, not in use' },
+  NOT_SET: { cls: 'key-off', words: 'Not set' },
+};
+
+/** Every key Admin may change: where each comes from, and a box to save a new one. Never a value. */
+function keysCard(app: App, actor: Actor, done: string | null): Safe {
+  const v = keysView(app, actor);
+  return card('keys', 'API keys', h`${done === 'key-saved' ? h`<p class="saved" role="status">Saved and locked. It is in use from now on.</p>` : raw('')}${
+    done === 'key-unsaved' ? h`<p class="saved" role="status">Taken off. The key file’s value, or the website’s setting, is in use again.</p>` : raw('')}
+    ${v.why_not === null ? raw('') : h`<div class="gate" role="note">${v.why_not}</div>`}
+    <p class="help">A key you save is locked before it is stored, and is never shown again — here or anywhere. To save one, type the password you sign in to this site with (not the key’s own password).</p>
+    <ul class="dash-list keylist">${v.rows.map((r) => h`<li id="key-${r.name}"><details><summary><code>${r.name}</code> <span class="chip ${STATE_CHIP[r.state]?.cls ?? ''}">${STATE_CHIP[r.state]?.words ?? r.state}</span></summary>
+      <p class="help">${r.what.replace(/\.$/, '')}. ${r.from === 'NOT_SET' ? 'Not set anywhere.' : `${FROM_WORDS[r.from] ?? r.from}${r.saved === null ? '' : `, ${r.saved}`}.`}</p>
+      ${r.why_off === null ? raw('') : h`<p class="help key-why">Why it is not in use: ${r.why_off}</p>`}
+      ${!v.can_save ? raw('') : h`<form method="post" action="/staff/keys/${r.name}" class="keyform">
+        <div><label class="fl" for="kv-${r.name}">New value for ${r.name}</label><input class="fi" id="kv-${r.name}" name="value" type="${r.secret ? 'password' : 'text'}" autocomplete="off" required maxlength="4096"></div>
+        <div><label class="fl" for="kp-${r.name}">The password you sign in to this site with</label><input class="fi" id="kp-${r.name}" name="password" type="password" autocomplete="current-password" required></div>
+        <button class="cta" type="submit">Save it</button></form>`}
+      ${r.from !== 'SAVED' && r.from !== 'UNREADABLE' ? raw('') : h`<form method="post" action="/staff/keys/${r.name}/unsave" class="keyform">
+        <div><label class="fl" for="ku-${r.name}">The password you sign in to this site with</label><input class="fi" id="ku-${r.name}" name="password" type="password" autocomplete="current-password" required></div>
+        <button class="btn-quiet" type="submit">Use the key file’s value again</button></form>`}</details></li>`)}</ul>`);
+}
+
+function adminView(app: App, actor: Actor, done: string | null = null): Safe[] {
+  const rows = staffWorking(app, actor);
+  const working = rows.filter((r) => r.now).length;
+  const today = rows.filter((r) => r.last !== null).length;
+  const table = rows.length === 0 ? h`<p class="empty">Nobody yet.</p>` : h`<table class="stack dash-table"><thead><tr><th>Who</th><th>Role</th><th>Now</th><th>Today</th></tr></thead><tbody>${
+    rows.map((r) => h`<tr><td data-label="Who">${r.name}</td><td data-label="Role">${r.role.replace(/_/g, ' ').toLowerCase()}</td>
+      <td data-label="Now">${r.now ? h`<span class="chip chip-ok">Working</span>` : h`<span class="help">Away</span>`}</td>
+      <td data-label="Today">${r.first === null || r.last === null ? h`<span class="help">Not signed in today</span>` : `${localClock(r.first)} to ${localClock(r.last)}`}</td></tr>`)}</tbody></table>`;
+  return [
+    kpiRow([
+      { label: 'Working now', value: String(working), tone: working > 0 ? 'money' : 'plain', href: '#staff-working' },
+      { label: `Signed in today, of ${String(rows.length)} staff`, value: String(today), tone: 'total', href: '#staff-working' },
+    ]),
+    card('staff-working', 'Who is working', h`${table}<p class="help">Working now means seen in the last 30 minutes. Times are from their sign-ins today.</p>`),
+    ...(done === 'archived' ? [h`<p class="saved" role="status">Archived. They cannot sign in, and what they did stays.</p>`] : []),
+    peopleCard(app, actor),
+    keysCard(app, actor, done),
+    ...adminRow(actor, app),
+  ];
+}
+
+/* ================================================================== *
+ * THE PAGE BODY
+ * ================================================================== */
+
+/**
+ * HOME IN TWO COLUMNS. the owner chose design 2 (00-START-HERE/hub/UI-TIDY-PLAN.md): one
+ * line saying what is late, solid number boxes, then the work on the left — "Do these first", today's calls and emails,
+ * new leads and messages, leads' next steps — and the pipeline and the calendar on the right. Every part that was on
+ * Home is still here, for the same logins; only where it sits and how it is drawn changed.
+ */
+const FULL_MONTHS = Object.freeze(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']);
+
+function head(now: string, late: number, actions: Safe = raw('')): Safe {
+  const p = localPartsOf(Date.parse(now));
+  const day = `${WEEKDAY_NAMES[p.weekday] ?? ''} ${String(p.day)} ${FULL_MONTHS[p.month - 1] ?? ''}`.trim();
+  return h`<div class="pagehead"><div><h1>Home</h1><p class="lede">${day}. ${late === 0 ? 'Nothing is late.' : late === 1 ? '1 job is late — start at the top.' : `${String(late)} jobs are late — start at the top.`}</p></div>${actions}</div>`;
+}
+
+function columns(main: readonly Safe[], side: readonly Safe[]): Safe {
+  return h`<div class="home-cols"><div class="home-main">${main}</div><div class="home-side">${side}</div></div>`;
+}
+
+/** Admin is told, on whichever home view, when email replies have not been read for over an hour in working hours. */
+function repliesWarning(app: App, actor: Actor, now: string): Safe {
+  if (actor.role !== 'ADMIN') return raw('');
+  const why = repliesStale(app, now);
+  return why === null ? raw('') : h`<div class="flag" role="alert" id="replies-stale"><strong>Email replies are not being read.</strong> ${why}</div>`;
+}
+
+/** Admin is reminded, on whichever home view, to import each care regulator's new monthly list. */
+function listsWarning(app: App, actor: Actor): Safe {
+  if (actor.role !== 'ADMIN') return raw('');
+  const why = listsToImport(app);
+  return why === null ? raw('') : h`<div class="flag" role="note" id="lists-due"><strong>A care regulator’s list is due.</strong> <a href="/staff/connections">${why}</a></div>`;
+}
+
+export function dashboard(app: App, actor: Actor, view: DashView, q: { week: string | null; done: string | null }): Safe {
+  const now = app.now();
+  const lateJobs = todayItems(actor, app, now).filter((t) => t.late === true).length;
+  if (view === 'admin') {
+    return h`${head(now, lateJobs)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${adminView(app, actor, q.done)}`;
+  }
+  const from = startOfLocalDay(now);
+  const calls = callsBetween(app, actor, from, addLocalDays(from, 1)).length;
+  const lateBox: Kpi = { label: lateJobs === 1 ? 'Job late' : 'Jobs late', value: String(lateJobs), tone: lateJobs > 0 ? 'late' : 'plain', href: '#row-today' };
+  const callBox: Kpi = { label: calls === 1 ? 'Call today' : 'Calls today', value: String(calls), tone: 'plain', href: '#today-activities' };
+  if (view === 'sales') {
+    const leads = opens(actor, assertLeadSection)
+      ? leadsList(app.db, actor, { filters: {}, sort: 'age' }).rows.filter((l) => l.claim === null && l.status.key === 'NEW') : [];
+    const board = opens(actor, pipelineBoardGate) ? pipelineBoard(app.db, actor, now) : null;
+    const inPipe = board === null ? 0 : board.columns.reduce((n, c) => n + c.cards.length, 0);
+    const msgs = can(actor, 'client_message.read', { type: 'client_message', id: '__home__', business_id: '__home__' })
+      ? organisationList(app.db, actor).reduce((n, o) => n + M.newFromClient(app.db, actor, o.id), 0) : 0;
+    const [newLeads, nextActions] = leadsRows(actor, app, now);
+    const msgCard = messagesCard(app, actor);
+    const docCard = documentsCard(app, actor, now);
+    const record = can(actor, 'lead.write', { type: 'lead', id: '__lead_section__', business_id: null })
+      ? h`<p><a class="btn btn-primary" href="/staff/leads?record=1#record-lead">Record a lead</a></p>` : raw('');
+    return h`${head(now, lateJobs, record)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${kpiRow([
+      lateBox,
+      { label: leads.length === 1 ? 'New lead' : 'New leads', value: String(leads.length), tone: leads.length > 0 ? 'win' : 'plain', href: '#row-new-leads' },
+      { label: msgs === 1 ? 'New message' : 'New messages', value: String(msgs), tone: msgs > 0 ? 'warn' : 'plain', href: '#new-messages' },
+      callBox,
+      { label: 'Claims in progress', value: String(inPipe), tone: 'total', href: '/staff/pipeline' },
+    ])}${columns(
+      [todayRow(actor, app, now), todayActivities(app, actor), h`<div class="home-pair">${newLeads ?? raw('')}${msgCard ?? raw('')}</div>`, docCard ?? raw(''), nextActions ?? raw('')],
+      [...pipelineRow(actor, app, now), calendarCard(app, actor, view, q.week, q.done)],
+    )}`;
+  }
+  if (view === 'accounting') {
+    const boxes: Kpi[] = [lateBox];
+    if (opens(actor, assertFinanceSection)) {
+      const f = financeDashboard(app.db, actor, now);
+      boxes.push(
+        { label: 'Not yet paid', value: f.totals.outstanding, tone: 'money', href: '/staff/finance#claim-invoices' },
+        { label: f.totals.overdue_count === 1 ? 'Invoice late' : 'Invoices late', value: String(f.totals.overdue_count), tone: f.totals.overdue_count > 0 ? 'late' : 'plain', href: '/staff/finance#claim-invoices' },
+        { label: f.expected.claims.length === 1 ? 'Claim ready for our fee' : 'Claims ready for our fee', value: String(f.expected.claims.length), tone: f.expected.claims.length > 0 ? 'warn' : 'plain', href: '/staff/finance#to-invoice' },
+      );
+    }
+    return h`${head(now, lateJobs)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${kpiRow([...boxes, callBox])}${columns(
+      [todayRow(actor, app, now), todayActivities(app, actor)],
+      [...moneyRow(actor, app, now), calendarCard(app, actor, view, q.week, q.done)],
+    )}`;
+  }
+  const boxes: Kpi[] = [lateBox];
+  if (opens(actor, assertSurveySection)) {
+    const jobs = surveyorJobs(app.db, actor);
+    const waiting = jobs.filter((j) => j.state === 'SEALED').length;
+    boxes.push(
+      { label: waiting === 1 ? 'Job waiting for your figures' : 'Jobs waiting for your figures', value: String(waiting), tone: waiting > 0 ? 'warn' : 'plain', href: '/staff/survey' },
+      { label: jobs.length === 1 ? 'Survey job' : 'Survey jobs', value: String(jobs.length), tone: 'survey', href: '/staff/survey' },
+    );
+  }
+  return h`${head(now, lateJobs)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${kpiRow([...boxes, callBox])}${columns(
+    [todayRow(actor, app, now), todayActivities(app, actor)],
+    [...jobsRow(actor, app), calendarCard(app, actor, view, q.week, q.done)],
+  )}`;
+}

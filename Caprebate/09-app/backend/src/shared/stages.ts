@@ -160,7 +160,7 @@ export function progressFor(storedStage: string): Progress {
  * transcribed from 08-monday-doc-exports/12552682457__Item-2-Standard-
  * Operating-Procedures-enquiry-to-defence-pack.md. `label` is the words of that
  * stage's SOP heading before its parenthesis; `gate` is the process map's own
- * GATE line; the exit words are the map's own EXIT lines. test/pipeline.test.ts
+ * GATE line; the exit words are the map's own EXIT lines. test/crm/pipeline.test.ts
  * reads the export and checks every one of them is in it.
  *
  * Where a board reference sat inside a transcribed line it is left out and the
@@ -299,7 +299,7 @@ export const ON_HOLD_STAGE = Object.freeze({ key: 'ON_HOLD' as const, label: 'On
 /**
  * THE OLD SIX KEYS, AS THE PROCEDURE STAGE EACH NAMES — before migration 010
  * places a converted claim no later than its records evidence. The migration's
- * CASE and `backfillClaimFor` in src/web/crm.ts both follow this table.
+ * CASE and `backfillClaimFor` in src/modules/crm/crm.ts both follow this table.
  */
 export const LEGACY_STAGE_TO_PROCEDURE: Readonly<Record<StageKey, ProcedureKey>> = Object.freeze({
   ASSESSMENT_SUBMITTED: 'ASSESSMENT',

@@ -6,11 +6,11 @@ import type { AppRole } from '../src/core/roles.ts';
 import { randomUUID } from 'node:crypto';
 import type { Db } from '../src/core/db.ts';
 import { AuditLog } from '../src/core/audit.ts';
-import { seedSignatureRecord } from '../src/web/signing.ts';
+import { seedSignatureRecord } from '../src/modules/claims/signing.ts';
 
 /**
  * PHASE 146f: A LETTER A FIXTURE MARKS SIGNED ALSO NEEDS ITS SIGNATURE RECORD, because assertSignedEngagement now
- * reads the record (src/web/signing.ts). Writes one marked SEED if the engagement has none. Idempotent.
+ * reads the record (src/modules/claims/signing.ts). Writes one marked SEED if the engagement has none. Idempotent.
  */
 export function signatureRecordFor(db: Db, business_id: string, at: string): void {
   const has = db.get<{ n: number }>(

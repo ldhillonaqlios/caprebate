@@ -63,9 +63,9 @@ import {
   CrmError, type Context, type PrefillEvent, type Proposal, type Sector,
 } from '../modules/survey/surveyor-crm.ts';
 import { DbAnchorLog, hydrateQuarantine, storeCommitment, type StoredJob } from './anchor-store.ts';
-import { roomsFor, SOURCE_DOCUMENT, type RoomType, type SectorRooms } from './rooms.ts';
-import { missingFacts, NotFoundAsRefusal, type MissingFact } from './engaged.ts';
-import { versionObj } from './documents.ts';
+import { roomsFor, SOURCE_DOCUMENT, type RoomType, type SectorRooms } from '../modules/crm/index.ts';
+import { missingFacts, NotFoundAsRefusal, type MissingFact } from '../modules/claims/index.ts';
+import { versionObj } from '../modules/claims/index.ts';
 import { anyStageLabel, stage as stageOf } from '../shared/index.ts';
 /* Phase 110. The region a rate library entry is keyed on. resolveProperty
    never throws and never guesses — see the comment on REGION_NOT_CAPTURED. */
@@ -73,6 +73,8 @@ import { resolveProperty } from '../integrations/postcodes/postcode.ts';
 import { preferHomedataPlanning, supersededPlanning } from '../integrations/index.ts';
 import { estimateBasis } from './survey-open.ts';
 import { listRegisterRecordsSourceIdEntityIdByBusinessId } from '../integrations/index.ts';
+import { getPropertiesPostcodeByBusinessId, listDocumentsIdFilenameByBusinessId, listPropertiesLabelPostcodeByBusinessId2 } from '../modules/claims/index.ts';
+import { getEstimatesByAssessmentId, listAssessmentAnswersOrdQuestionIdByAssessmentId2 } from '../modules/assessment/index.ts';
 
 export { NotFoundAsRefusal };
 
@@ -225,11 +227,11 @@ export function packJob(db: Db, actor: Actor, job_id: string): { job: PackJob; o
 
 /** The sealed estimate for a job. Read ONLY to hand to the quarantine. */
 function sealedEstimate(db: Db, assessment_id: string): EstimateOutputs | null {
-  const e = db.get<{
+  const e = getEstimatesByAssessmentId<{
     qualifying_expenditure_pence: number; qualifying_pct: number;
     pool_split_main_pence: number; pool_split_special_pence: number;
     bare_land_pence: number; multiplier: number; indicative_lifetime_saving_pence: number;
-  }>('SELECT * FROM estimates WHERE assessment_id = ?', [assessment_id]);
+  }>(db, [assessment_id]);
   if (e === undefined) return null;
   return {
     qualifying_expenditure_pence: e.qualifying_expenditure_pence,
@@ -256,15 +258,10 @@ function inputsFor(db: Db, r: JobDbRow): JobInputs {
     business_id: r.business_id,
     business_name: r.name,
     sector: r.sector,
-    answers: db.all<{ ord: number; question_id: string; question_text: string; state: string; value: string | null }>(
-      'SELECT ord, question_id, question_text, state, value FROM assessment_answers ' +
-        'WHERE assessment_id = ? ORDER BY ord ASC', [r.assessment_id],
-    ),
+    answers: listAssessmentAnswersOrdQuestionIdByAssessmentId2<{ ord: number; question_id: string; question_text: string; state: string; value: string | null }>(db, [r.assessment_id]),
     // PHASE 156f (B3): once Homedata has answered planning, the free route's planning records are kept, not shown.
     register_records: listRegisterRecordsSourceIdEntityIdByBusinessId<{ source_id: string; entity_id: string; fields_json: string }>(db, [r.business_id]).filter((x) => !supersededPlanning(x, preferHomedataPlanning(db, r.business_id))).map((x) => ({ source_id: x.source_id, fields: withoutAmounts(x.source_id, safeParse(x.fields_json)) })),
-    properties: db.all<{ label: string; postcode: string | null }>(
-      'SELECT label, postcode FROM properties WHERE business_id = ? ORDER BY label ASC', [r.business_id],
-    ),
+    properties: listPropertiesLabelPostcodeByBusinessId2<{ label: string; postcode: string | null }>(db, [r.business_id]),
   };
 }
 
@@ -641,10 +638,7 @@ export function rateLibrary(db: Db, actor: Actor, job_id: string): {
      on one of several regions would be a quiet wrong answer, so the multi-
      property case is the open question rather than an average. Ordered by
      label so the choice is at least stable between requests. */
-  const property = db.get<{ postcode: string | null }>(
-    'SELECT postcode FROM properties WHERE business_id = ? ORDER BY label ASC LIMIT 1',
-    [r.business_id],
-  );
+  const property = getPropertiesPostcodeByBusinessId<{ postcode: string | null }>(db, [r.business_id]);
   const postcode = property?.postcode ?? null;
   const context = contextFor(r.sector, postcode);
   const region_note = regionContextFor(r.sector, postcode);
@@ -1176,11 +1170,7 @@ export function evidenceFor(db: Db, actor: Actor, job_id: string): Evidence {
     // CRM 4 of 10: each one asked of `document.read` on its own document — so a
     // surveyor's evidence is claim evidence, of this job's reach, and never the
     // engagement letter, an invoice or anything else that can carry a value.
-    documents: db.all<EvidenceDoc>(
-      'SELECT id, filename, doc_type, state, byte_size, strip_recorded_at, ' +
-        'quarantine_discharged_at FROM documents WHERE business_id = ? ORDER BY created_at DESC',
-      [r.business_id],
-    ).filter((x) => { const o = versionObj(db, x.id); return o !== undefined && can(actor, 'document.read', o); }),
+    documents: listDocumentsIdFilenameByBusinessId<EvidenceDoc>(db, [r.business_id]).filter((x) => { const o = versionObj(db, x.id); return o !== undefined && can(actor, 'document.read', o); }),
     released_always: RELEASED_TO_SURVEYOR_ALWAYS,
     missing: missingFacts(db, actor, r.business_id).filter((f) => f.blocks !== 'ACCOUNTANT'),
     originals_note:

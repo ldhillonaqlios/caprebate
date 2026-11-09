@@ -13,7 +13,7 @@
  *     web root, deletion proved not assumed  src/shared/objectstore.ts
  *   no route maps a path onto the filesystem asserted from the web sources
  *
- * Nothing here re-decides any of them, for the same reason src/web/uploads.ts
+ * Nothing here re-decides any of them, for the same reason src/modules/claims/uploads.ts
  * restates no rule from the upload handler: a second implementation of a
  * control is a second thing to get wrong, and the copy is always the one that
  * is not updated.

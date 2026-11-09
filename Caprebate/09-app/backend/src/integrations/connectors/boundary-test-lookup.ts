@@ -39,7 +39,8 @@ import { inspireBoundaryFetcher } from './inspire.ts';
 import { INSPIRE_COUNCILS, inspireFileForLad } from './inspire-councils.ts';
 import { pointInBritishNationalGrid } from './site-area.ts';
 import { listRegisterRecordsFieldsJsonBySourceId } from '../data.ts';
-import { listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../data-borrowed.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../../modules/claims/data.ts';
 
 /** The connector's name in the test lookup log and on the command line: the source register's own. */
 export const BOUNDARY_TEST_SOURCE = 'HMLR_INSPIRE';

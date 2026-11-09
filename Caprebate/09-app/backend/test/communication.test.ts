@@ -1,5 +1,5 @@
 /**
- * 1 OCTOBER 2026 — CHAT BECOMES COMMUNICATION (src/web/communication.ts; mock-up approved by Lakhbir).
+ * 1 OCTOBER 2026 — CHAT BECOMES COMMUNICATION (src/modules/crm/communication.ts; mock-up approved by Lakhbir).
  *
  * One form on the left — Send by: Email, WhatsApp, Portal message, Team only, Zoom call, Log a call — and the whole
  * conversation on the right, each box a link that makes the left a reply to it, the address or number filled in;
@@ -100,7 +100,7 @@ describe('Communication', () => {
     // Pat answers our email (as if sent), and writes on WhatsApp.
     const ours = db.get<{ id: string }>("SELECT id FROM outbox WHERE subject = 'Your survey'")!.id;
     db.run('UPDATE outbox SET sent_at = ?, provider_ref = ? WHERE id = ?', [now, 'ours-cm@caprebate.co.uk', ours]);
-    const { ingest } = await import('../src/web/inbound-email.ts');
+    const { ingest } = await import('../src/modules/crm/inbound-email.ts');
     now = '2026-10-01T09:20:00.000Z';
     const raw = (from: string, words: string) => new Uint8Array(Buffer.from([`From: Pat Owner <${from}>`, 'To: contact@caprebate.co.uk', 'Subject: Re: Your survey',
       `Message-ID: <${randomUUID()}@invented.co.uk>`, 'In-Reply-To: <ours-cm@caprebate.co.uk>', 'Content-Type: text/plain; charset=utf-8', '', words].join('\r\n'), 'utf8'));

@@ -32,7 +32,7 @@
  * THE ADAPTER BUILT IS SMTP OVER TLS, because the recommendation is to send through the mailbox's own host — IONOS,
  * which the privacy notice already names as "our email" — so condition 2 needs no new processor and every reply lands
  * in the same mailbox. It is a small, dependency-free client (EHLO, AUTH PLAIN, MAIL, RCPT, DATA, QUIT) over
- * `node:tls`, tested against a fake server in test/phase141.test.ts. If the owner picks a service with its own web API
+ * `node:tls`, tested against a fake server in test/crm/free-typed-email.test.ts. If the owner picks a service with its own web API
  * instead, that is a second `EmailProvider` beside this one; nothing else changes.
  *
  * POINTED AT IONOS, AND STILL OFF.
@@ -46,11 +46,11 @@
  *   · BOUNCES. A refusal while sending is read by its code: 5xx is permanent (HARD) and 4xx is for now (SOFT, tried
  *     again on the next run). A HARD bounce is written to email_bounces and the address to email_suppressions, and
  *     nothing more is sent to it until a member of staff lifts it. A delivery report that arrives later is read by
- *     the mailbox reader (src/web/inbound-email.ts) and recorded the same way — never filed as a reply.
+ *     the mailbox reader (src/modules/crm/inbound-email.ts) and recorded the same way — never filed as a reply.
  *   · CALENDAR INVITES AND THE SIGNED LETTER travel as outbox_inline_files, attached like any other file.
  *   · STILL OFF. The mailbox and its SPF, DKIM and DMARC records, and IONOS named in the privacy notice and in
  *     clause 7 of the engagement letter, are not yet true. The invoice and bank-detail refusals in
- *     src/web/free-email.ts are untouched.
+ *     src/modules/crm/free-email.ts are untouched.
  *
  * THE RULES DO NOT MOVE WHEN IT IS ON. A do-not-contact company is asked again at the moment of sending, not only when
  * the email was saved. From and Reply-To come from the stored row, which was stamped from the one sender setting. An
@@ -559,7 +559,7 @@ type Waiting = {
    link that works once and for 24 hours (src/core/signup.ts), the same sort of secret; only its hash is kept in
    client_signups, so the link still works after its words leave the outbox. The sentence now names all three.
    Migration 060 lets this sentence through for the three kinds; a row 058 blanked keeps 058's sentence for good. */
-/* REPORT_FOR_SIGNOFF too — the accountant's one-use sign-off link (src/web/report-signoff.ts); migration 073. */
+/* REPORT_FOR_SIGNOFF too — the accountant's one-use sign-off link (src/modules/claims/report-signoff.ts); migration 073. */
 export const SENT_SECRET_KINDS: readonly string[] = Object.freeze(['SIGN_IN_CODE', 'PASSWORD_RESET', 'ACCOUNT_VERIFY', 'REPORT_FOR_SIGNOFF']);
 export const SENT_SECRET_BODY = 'This email held a sign-in code or a one-use link. It was sent, and then its words were removed so the code or link is not kept.';
 

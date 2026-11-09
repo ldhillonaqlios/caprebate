@@ -26,8 +26,8 @@ import { fixtureTransport } from '../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import { IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, type IdentityCheckConfig } from '../src/integrations/connectors/identity-check.ts';
 import { identityPanel, sendIdentityCheck, UNREACHABLE_CONTACT_WORDS } from '../src/web/identity-checks.ts';
-import * as C from '../src/web/crm.ts';
-import { contactValueProblem } from '../src/core/router.ts';
+import * as C from '../src/modules/crm/crm.ts';
+import { contactValueProblem } from '../src/modules/assessment/index.ts';
 
 /**
  * A CLIENT WITH NO CONTACT, INVENTED FOR THE TEST. Since Phase 151e line 7 every seeded client has a contact, so the

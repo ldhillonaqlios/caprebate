@@ -8,10 +8,10 @@
  *
  * So: one entry for EVERY owner in SECRET_KEYS (src/core/secrets.ts), even the ones that receive nothing (they say so), and
  * one for each service that needs no key (the hosting company, the database, the document store, the free public
- * registers). test/phase161g.test.ts fails on a key owner with no entry, on an entry naming an owner that no longer
+ * registers). test/public-site/cookie-and-privacy-pages.test.ts fails on a key owner with no entry, on an entry naming an owner that no longer
  * exists, and on any place outside the UK (or not yet known) whose transfer basis is not exactly TRANSFER_TO_CONFIRM.
  *
- * The privacy policy (src/web/privacy-policy.ts) draws its table from this list, and the review pack's "outside
+ * The privacy policy (src/modules/public-site/privacy-policy.ts) draws its table from this list, and the review pack's "outside
  * services" attachment is printed from it. A FACT WE DO NOT HAVE IS NEVER MADE UP: where we do not know where a
  * service holds data, `where` says so and `outsideUk` is 'unknown'.
  *

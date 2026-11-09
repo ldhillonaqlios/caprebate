@@ -2441,7 +2441,7 @@ if (startSuite("J", "Phase 13 — document_property_match")) {
    §10) at the mechanism level — SALE_CONTRACT is the type that will use it,
    but the mechanism itself does not depend on that type existing.
 
-   This suite does not duplicate phase3/caprebate-document-pipeline.test.ts
+   This suite does not duplicate phase3/claims/document-pipeline.test.ts
    (P27-P32, F1-F2) or the T5 addition to
    phase3/caprebate-document-property-match.test.ts; it asserts the same
    handful of things from OUTSIDE phase3/, the way Suites I and J do.
@@ -3131,7 +3131,7 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
   check("M4a — and a stub table naming every stub's file",
     /* PHASE 161i, 7 Nov 2026: the stubs moved into src/integrations/ */
     ["src/integrations/email/email.ts", "src/integrations/signature.ts", "src/integrations/register-ingest.ts",
-     "src/web/uploads.ts"].filter(f => spec.indexOf(f) < 0), []);
+     "src/modules/claims/uploads.ts"].filter(f => spec.indexOf(f) < 0), []);
 
   /* THE ONE THAT CATCHES THE FAILURE THIS DOCUMENT EXISTS TO PREVENT.
      src/app.ts holds the machine-readable stub list (served to Admin at /staff/connections/switches.json since Phase 161c). Every
@@ -6598,7 +6598,7 @@ if (startSuite("X", "Phase 132 — s.33B, the company rate, the taper band, part
    that the two names the engine permits are the policy's two exceptions.
 
    THE KEY MAP is the inverse of REGISTRY_ID_OF in
-   09-app/backend/src/web/research.ts (read 14 September 2026): CQC and CIW ->
+   09-app/backend/src/modules/claims/research.ts (read 14 September 2026): CQC and CIW ->
    cqc, CH_COMPANY and CH_PSC -> companies_house, HMLR_PPD and HMLR_TITLE ->
    hmlr, EPC -> epc, VOA -> voa, HOMEDATA_ADDRESS -> homedata.
 

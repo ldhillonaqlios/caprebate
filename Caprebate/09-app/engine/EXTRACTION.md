@@ -94,7 +94,7 @@ runs, never quoted) and that the free-register gate is shut.
 `node tools/verify-page.cjs --self-test` plants edits in a copy of the page (a
 figure in the shared layer, one character in each sector's `runEngine`, a
 re-indent) and proves each one turns the check red, while an edit to the page's
-own renderer does not. The back end's `test/phase161f.test.ts` holds the same,
+own renderer does not. The back end's `test/public-site/claim-calculator-source.test.ts` holds the same,
 so `npm run check` and GitHub's checks fail on a page edited by hand.
 
 **2. The behaviour is the same.** The regression harness runs against **either**
@@ -115,10 +115,10 @@ test.
 
 The engine script in `Caprebate site.html` sits inside the in-page assessment
 (`<template id="assessTpl">`). The served website leaves that template out
-(`backend/src/web/public-site.ts`), so **the served page carries no calculator**.
+(`backend/src/modules/public-site/public-site.ts`), so **the served page carries no calculator**.
 The test website's eligibility check runs **this package**, on the server
 (`backend/src/web/engine.ts` imports `src/index.ts`). The back end's
-`test/phase161f.test.ts` checks both: the served page has no calculator, and the
+`test/public-site/claim-calculator-source.test.ts` checks both: the served page has no calculator, and the
 server's `CB` modules are the objects `src/calculator/shared.js` exports.
 
 ### What the package mode does not test, and you should know it

@@ -69,7 +69,7 @@ export type Obj =
    * `assigned_surveyor_ids` IS HOW A SURVEYOR REACHES A PROPERTY OR A CLAIM, AND
    * THE ONLY WAY. It is the set of surveyors holding a survey job that covers the
    * object — for a property, a job on its organisation; for a claim, a job on
-   * that claim's own assessment — computed by src/web/crm.ts from
+   * that claim's own assessment — computed by src/modules/crm/crm.ts from
    * `surveyor_jobs`, exactly as `surveyor_id` above is read from the job row.
    * `claims.surveyor_id` is deliberately NOT consulted: naming a surveyor on a
    * claim is a record, not an access grant. An empty list reaches nobody.
@@ -129,7 +129,7 @@ export type Obj =
    * versions — a document type, and a document request.
    *
    * A DOCUMENT CARRIES WHAT ITS READING TURNS ON, READ OFF ITS TYPE AND ITS
-   * CLAIMS BY src/web/documents.ts: who its type admits (`readers`), whether the
+   * CLAIMS BY src/modules/claims/documents.ts: who its type admits (`readers`), whether the
    * type can hold a claim value, a tax benefit or a fee (`carries_value`, N1),
    * whether the organisation's engagement letter is signed, and the surveyors
    * holding a job on a claim the document is linked to — or, for a document
@@ -147,7 +147,7 @@ export type Obj =
       readonly released_to_client?: boolean;
       /**
        * Whether the client may see this file at all — theirs if they sent it, ours only once staff say so. Read by
-       * src/web/documents.ts (`shownToClient`). Absent is not true: a client is refused a document that does not say.
+       * src/modules/claims/documents.ts (`shownToClient`). Absent is not true: a client is refused a document that does not say.
        */
       readonly shown_to_client?: boolean;
       /** The client's owners — read by `document.read_original` for Sales. Absent is nobody. */
@@ -172,7 +172,7 @@ export type Obj =
    * reconciliation, a deliverable, and an HMRC enquiry.
    *
    * A DELIVERABLE CARRIES WHAT ITS CLIENT RELEASE TURNS ON, read by
-   * src/web/claim-record.ts: its kind, its state, and whether the claim's figure
+   * src/modules/claims/claim-record.ts: its kind, its state, and whether the claim's figure
    * is released — the tax adviser's sign-off record exists.
    */
   | {
@@ -288,7 +288,7 @@ type DocumentFacts = {
   /**
    * CRM 6 of 10. True only for a capital allowances report that is an ISSUED
    * client report on a claim whose tax adviser's sign-off record exists — read by
-   * src/web/documents.ts. Absent on every other document, and absent is not true.
+   * src/modules/claims/documents.ts. Absent on every other document, and absent is not true.
    */
   released_to_client?: boolean;
   /** See the `document` object. Absent is not true. */
@@ -509,12 +509,12 @@ const RULES: RuleTable = {
    * writing exactly as the staff path does.
    */
   'booking.move_own': { CLIENT: ownBusiness as Rule<ObjType> },
-  /* The client accepts the survey report released to them, in their portal (src/web/report-accept.ts). Their own act. */
+  /* The client accepts the survey report released to them, in their portal (src/modules/portal/report-accept.ts). Their own act. */
   'client_report.accept': { CLIENT: ownBusiness as Rule<ObjType> },
   'engagement.read': {
     ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>,
   },
-  /* Prepare the engagement letter and send it to the client's logins (src/web/engagement-send.ts). */
+  /* Prepare the engagement letter and send it to the client's logins (src/modules/claims/engagement-send.ts). */
   'engagement.send': { ADMIN: always, SALES: always },
   'research.run': { ADMIN: always, SALES: always },
   'research.read': { ADMIN: always, SALES: always },
@@ -523,7 +523,7 @@ const RULES: RuleTable = {
    * CHECKED AND APPROVED, AND TELLING THE CLIENT. Ticking a fact as checked, and pressing "Tell the client" on
    * a step, are ADMIN's and SALES's — the people who work the client. TAKING A STEP BACK, after the client has been told,
    * is ADMIN's alone. The client reads what it was told, on its own company, and nothing else: the view model
-   * (src/web/approvals.ts, `clientSteps`) carries a step's words and a date, never a fact, a value or a reason.
+   * (src/modules/claims/approvals.ts, `clientSteps`) carries a step's words and a date, never a fact, a value or a reason.
    */
   'fact.approve': { ADMIN: always, SALES: always },
   'client_step.tell': { ADMIN: always, SALES: always },
@@ -592,7 +592,7 @@ const RULES: RuleTable = {
   /* --- the CRM backbone. CRM 1 of 10 ---------------------
    *
    * EVERY ROW BELOW IS NEW, AND EVERY ROLE NOT NAMED ON A ROW IS REFUSED IT —
-   * test/crm.test.ts asserts the refusal for each one, per action, rather than
+   * test/crm/crm.test.ts asserts the refusal for each one, per action, rather than
    * trusting that an absent key means what it should.
    *
    * THE ORGANISATION IS THE `business` OBJECT. It is the same row, extended;
@@ -615,7 +615,7 @@ const RULES: RuleTable = {
    * proof searches the response for all seven.
    *
    * ACCOUNTING READS A CLAIM AS CLIENT, REFERENCE AND MONEY. `claim.read`
-   * admits it; src/web/crm.ts builds its view from those three and the money
+   * admits it; src/modules/crm/crm.ts builds its view from those three and the money
    * comes through `invoice.read`, which it already holds. No join to the
    * answers, the register data, the notes, the workings or the estimate.
    *
@@ -651,7 +651,7 @@ const RULES: RuleTable = {
   'claim.write': { ADMIN: always, SALES: always },
   /*
    * A CLIENT SEES THEIR OWN COMPANY'S CLAIMS: each one's property and how far it has got, in the portal's six
-   * client words (src/web/portal.ts). `ownBusiness` on the claim itself, asked of every claim on every request. Nothing
+   * client words (src/modules/portal/portal.ts). `ownBusiness` on the claim itself, asked of every claim on every request. Nothing
    * else about a claim reaches a client through it: not the ten staff stages, a hold reason, an exit note, a value, a
    * next action or a person. ADMIN and SALES may look at a client's portal, as they may today.
    */
@@ -660,14 +660,14 @@ const RULES: RuleTable = {
   /* --- leads and the pipeline. CRM 2 of 10 --------------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * pipeline.test.ts asserts the refusal for each one, per action.
+   * crm/pipeline.test.ts asserts the refusal for each one, per action.
    *
    * LEADS ARE ADMIN AND SALES. A lead is a prospect being worked, with the
    * estimate the client was shown beside it; nothing about it is money or
    * survey work, so ACCOUNTING and SURVEYING are on none of these rows.
    *
    * `claim.move` IS A MOVE THROUGH A GATE, and the gate is asked on the server
-   * at every write — src/web/pipeline.ts. Holding this action lets a person ASK
+   * at every write — src/modules/crm/pipeline.ts. Holding this action lets a person ASK
    * for a move; it never lets them past a gate that is shut. `claim.reopen`,
    * the one move backwards, is ADMIN alone and needs a reason.
    *
@@ -685,7 +685,7 @@ const RULES: RuleTable = {
   /* --- tasks, the timeline, automation and templates. CRM 3 of 10 ----------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * tasks.test.ts asserts the refusal for each one, per action.
+   * crm/tasks.test.ts asserts the refusal for each one, per action.
    *
    * A TASK IS READ AND WORKED BY WHOEVER IT BELONGS TO. ADMIN and SALES read and
    * change every task. ACCOUNTING reads and progresses its own tasks and the ones
@@ -697,7 +697,7 @@ const RULES: RuleTable = {
    *
    * THE TIMELINE ADMITS ACCOUNTING AND IS BUILT FORWARDS FOR IT. `timeline.read`
    * lets ACCOUNTING open a claim's timeline — it is already on `claim.read` — and
-   * src/web/timeline.ts builds that timeline from `invoice.read` alone, so it
+   * src/modules/crm/timeline.ts builds that timeline from `invoice.read` alone, so it
    * holds financial events and nothing else. SURVEYING reaches only the timeline
    * of a claim an assigned job is on, built from that job's reach.
    *
@@ -730,7 +730,7 @@ const RULES: RuleTable = {
   /* --- documents on the claim. CRM 4 of 10 ---------------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * documents.test.ts asserts the refusal for each one, per action, and
+   * claims/documents.test.ts asserts the refusal for each one, per action, and
    * `document.read` per role PER READER CLASS.
    *
    * `document.read` IS ASKED OF THE DOCUMENT ITSELF, never of its organisation:
@@ -780,7 +780,7 @@ const RULES: RuleTable = {
   /* --- introducers and the referral channel. CRM 5 of 10 ---
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * introducers.test.ts asserts the refusal for each one, per action.
+   * crm/introducers.test.ts asserts the refusal for each one, per action.
    *
    * AN INTRODUCER IS A FIRM AND NEVER A USER. No row here, and no row anywhere,
    * gives a firm or a person at it a way in: CLIENT and SURVEYING are on none.
@@ -789,7 +789,7 @@ const RULES: RuleTable = {
    * the estimated claim value of what it referred — is ADMIN and SALES, as
    * `claim.read_value` is. `introducer.read_money` — the fees invoiced and paid
    * from those claims — is ADMIN and ACCOUNTING, as `invoice.read` is, and
-   * ACCOUNTING opens a firm with that alone: src/web/introducers.ts builds its
+   * ACCOUNTING opens a firm with that alone: src/modules/crm/introducers.ts builds its
    * view forwards from the money, with no join to the answers, the register data,
    * the notes, the workings or the estimate.
    *
@@ -821,7 +821,7 @@ const RULES: RuleTable = {
   /* --- the claim's facts, figures, sign-off, deliverables and aftercare. CRM 6 of 10 ---
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * claim-record.test.ts asserts the refusal for each one, per action.
+   * claims/claim-record.test.ts asserts the refusal for each one, per action.
    *
    * THE FACTS ARE ADMIN'S AND SALES'S. ACCOUNTING IS ON NONE OF THESE ROWS: a
    * fact about the tax position, an election or a grant is not money.
@@ -847,10 +847,10 @@ const RULES: RuleTable = {
   'deliverable.record': { ADMIN: always, SALES: always },
   'hmrc_enquiry.record': { ADMIN: always, SALES: always },
   /* Recording the client's own written filing confirmation, where the client has no accountant — the
-     people who hold the claim's papers, as a deliverable is. Nobody else; test/phase132e.test.ts asserts it per role. */
+     people who hold the claim's papers, as a deliverable is. Nobody else; test/claims/engagement-terms-and-fees.test.ts asserts it per role. */
   'client_filing.record': { ADMIN: always, SALES: always },
   /* A multi-site discount is proposed by the people who agree terms with a client, and read by them and by
-     finance. It is a record and is never applied: see src/web/fee-discounts.ts. */
+     finance. It is a record and is never applied: see src/modules/claims/fee-discounts.ts. */
   'fee_discount.record': { ADMIN: always, SALES: always },
   'fee_discount.read': { ADMIN: always, SALES: always, ACCOUNTING: always },
 
@@ -901,9 +901,9 @@ const RULES: RuleTable = {
 
   /* --- the defence pack generator. ---------------
    *
-   * NEW, AND EVERY ROLE NOT NAMED IS REFUSED — test/phase132-records.test.ts asserts
+   * NEW, AND EVERY ROLE NOT NAMED IS REFUSED — test/claims/defence-pack-and-case-stamp.test.ts asserts
    * the refusal for each one. The generator is switched off (`DEFENCE_PACK_GENERATOR`
-   * in src/web/defence-pack.ts), so today this row admits a person to a refusal that
+   * in src/modules/claims/defence-pack.ts), so today this row admits a person to a refusal that
    * says so. Switched on it builds a manifest from the claim's sealed records and
    * issues nothing: ADMIN and SALES, who hold the claim's figures and its papers, as
    * `claim_figures.read` and `deliverable.record` are. No route asks it yet.
@@ -912,7 +912,7 @@ const RULES: RuleTable = {
 
   /* --- dashboards, search, saved views, export and admin settings. CRM 9 of 10 ---
    *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/dashboard.test.ts
+   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/crm/management-dashboard.test.ts
    * asserts the refusal for each one, per action.
    *
    * `dashboard.enter` OPENS THE MANAGEMENT DASHBOARD AND NOTHING INSIDE IT. Every tile
@@ -949,7 +949,7 @@ const RULES: RuleTable = {
 
   /* --- the CRM follow-on ------------------------------------
    *
-   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/follow-on.test.ts
+   * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/crm/introducer-source-claim-team.test.ts
    * asserts the refusal for each one, per action.
    *
    * THE CLAIM TEAM. Reading the team is the actions its parts already need — `contact.read` for the organisation's

@@ -5,7 +5,7 @@
  * THE SAME SHAPE AS THE ENGLISH ONE (src/integrations/connectors/cqc.ts) — registration, places, provider — and the same match:
  * the services at the typed postcode, scored on their address lines against the typed address, and only one clear
  * ACCEPT taken (or a person's pick of a close one). BUT NOTHING IS SENT OUTSIDE. Neither regulator has an API; each
- * publishes a downloadable list, which a person imports into a table on this server (src/web/register-files.ts,
+ * publishes a downloadable list, which a person imports into a table on this server (src/modules/claims/register-files.ts,
  * `node src/core/cli.ts import-register`). This reads that table, as the ONS postcode lookup reads its own. No list
  * imported, no lookup: it says so, and the fact stays asked (N4).
  *
@@ -22,7 +22,8 @@ import type { Db } from '../../core/index.ts';
 import { defineSteppedConnector, type LookupResult } from './registers.ts';
 import { addressFromLines, matchAddress, applyPick, pickedNote, PICK_GONE_WHY, MATCH_THRESHOLDS, postcodeKey, type Candidate, type PickQuery } from './matching.ts';
 import { jurisSource, type Nation, type TypedProperty } from './nations.ts';
-import { rowsAtPostcode, type FileRow, type FileSourceId } from '../../web/register-files.ts';
+// Straight from the claims file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { rowsAtPostcode, type FileRow, type FileSourceId } from '../../modules/claims/register-files.ts';
 
 export type FileRegisterQuery = {
   readonly property: TypedProperty | null;

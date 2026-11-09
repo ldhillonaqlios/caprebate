@@ -6,7 +6,7 @@
  * tests and, until this file, NO CONSUMER. Its own header says so: "Eighty-two
  * tests passed against a module with no consumer, which proves the design is
  * coherent and proves nothing about whether a single client document is
- * protected." This is the store it takes, and src/web/uploads.ts is the caller.
+ * protected." This is the store it takes, and src/modules/claims/uploads.ts is the caller.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * REQUIREMENT DB-W1, WHICH IS WHY THIS FILE IS SHAPED THE WAY IT IS
@@ -93,10 +93,10 @@ export const SEALED_PREFIX = 'survey-photos/';
 export const INCOMING_PREFIX = 'survey-incoming/';
 /** Where a client's video is kept, in pieces, each sealed (src/web/survey-video.ts). */
 export const VIDEO_PREFIX = 'survey-videos/';
-/** A file someone sent us on WhatsApp, fetched from Meta and kept sealed (src/web/whatsapp.ts). */
+/** A file someone sent us on WhatsApp, fetched from Meta and kept sealed (src/modules/crm/whatsapp.ts). */
 export const WHATSAPP_PREFIX = 'whatsapp-files/';
 /** A WhatsApp chat exported on the phone and uploaded for checking — its text, and a small .zip
- *  whole (src/web/whatsapp-import.ts). Kept sealed, like the files themselves. */
+ *  whole (src/modules/crm/whatsapp-import.ts). Kept sealed, like the files themselves. */
 export const WHATSAPP_IMPORT_PREFIX = 'whatsapp-imports/';
 const isSealedKey = (key: string): boolean => key.startsWith(SEALED_PREFIX) || key.startsWith(VIDEO_PREFIX) || key.startsWith(WHATSAPP_PREFIX) || key.startsWith(WHATSAPP_IMPORT_PREFIX);
 
@@ -183,7 +183,7 @@ export class FsObjectStore implements ObjectStore {
     }
   }
 
-  /** A kept original, decrypted. Only src/web/uploads.ts calls this, after `document.read_original`. */
+  /** A kept original, decrypted. Only src/modules/claims/uploads.ts calls this, after `document.read_original`. */
   async openOriginal(key: string): Promise<Buffer> {
     if (!isOriginalKey(key)) throw new Error('not an original');
     if (this.#sealKey === null) throw new Error('no key to open a kept original');

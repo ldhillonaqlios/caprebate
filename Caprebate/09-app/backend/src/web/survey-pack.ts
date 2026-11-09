@@ -33,15 +33,16 @@ import {
   packSums, parseMoney, parsePercent, parseQuantity, parseRate, poundsWords, worksSums, WORKS_FIELDS, WORKS_PART_FIELDS, worksPartProblems, type WorksPartField,
   mulDivRound, type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued, type WorksField, type WorksInputs, type WorksSums,
 } from './pack-sums.ts';
-import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from './property-events.ts';
+import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from '../modules/claims/index.ts';
 import { legalVerdictForJob } from './pack-legal.ts';
 import { applyGrants, payerReduces, type GrantReading, type GrantSwitches } from './pack-grants.ts';
 import { moneyReadingsHere, type MoneyReadings } from '../shared/index.ts';
-import { acquisitionDateReading, elementName, latestFacts, packGrantsFor } from './claim-facts.ts';
+import { acquisitionDateReading, elementName, latestFacts, packGrantsFor } from '../modules/claims/index.ts';
 import { bcisDataHere, bcisDrafts, bcisLocationNamed, indexBetween, type BcisDraft, type RateBasis } from './bcis-data.ts';
-import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from './who-claims.ts';
-import { shippedGrantSwitches } from './grant-checks.ts';
+import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from '../modules/assessment/index.ts';
+import { shippedGrantSwitches } from '../modules/assessment/index.ts';
 import { getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId4, listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId2 } from '../integrations/index.ts';
+import { getClaimsPById, listPropertiesIdLabelByBusinessId3 } from '../modules/claims/index.ts';
 
 /**
  * `grantSwitches` (Phase 153a) is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be
@@ -270,10 +271,10 @@ function safeJson(s: string): Record<string, unknown> {
 }
 
 function propertyOf(db: Db, job: PackJob, packProperty: string | null | undefined): { property: PropertyChoice | null; choices: PropertyChoice[] } {
-  const all = db.all<PropertyChoice>('SELECT id, label, postcode FROM properties WHERE business_id = ? ORDER BY label ASC, id ASC', [job.business_id]);
+  const all = listPropertiesIdLabelByBusinessId3<PropertyChoice>(db, [job.business_id]);
   if (packProperty !== undefined && packProperty !== null) return { property: all.find((p) => p.id === packProperty) ?? null, choices: all };
   if (job.claim_id !== null) {
-    const pid = db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [job.claim_id])?.p ?? null;
+    const pid = getClaimsPById<{ p: string | null }>(db, [job.claim_id])?.p ?? null;
     const found = all.find((p) => p.id === pid);
     if (found !== undefined) return { property: found, choices: all };
   }

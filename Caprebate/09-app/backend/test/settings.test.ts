@@ -26,7 +26,7 @@ import { join } from 'node:path';
 import { createApp } from '../src/core/server.ts';
 import { APP_ROLES, type AppRole } from '../src/core/roles.ts';
 import { encodePng } from '../src/shared/images.ts';
-import { clockToMinutes, minutesToClock, workingTimesFor } from '../src/web/schedule.ts';
+import { clockToMinutes, minutesToClock, workingTimesFor } from '../src/modules/crm/schedule.ts';
 
 const PASSWORD = 'a-very-long-development-password';
 

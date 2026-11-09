@@ -287,7 +287,7 @@ export type MatchResult<T> = {
   readonly top: Scored<T> | null;
   /**
    * EVERY SCORED CANDIDATE, BEST FIRST. IN MEMORY ONLY, exactly as `top` is, and for one more reader:
-   * the back-office pick (src/web/match-review.ts), where a person chooses one of them or none. No connector keeps
+   * the back-office pick (src/modules/claims/match-review.ts), where a person chooses one of them or none. No connector keeps
    * it, nothing writes it to the database, and no audit row carries it — a candidate's address lines are the
    * register's, under its own notice, and A.8 point 8 says they are not stored or logged.
    */
@@ -385,7 +385,7 @@ export function matchCompanyName<T>(
 
 /**
  * THE MEASUREMENT HOOK. An address connector's query may carry `measure`, and the connector hands it each match it
- * scores. ONLY tools/match-measure.ts sets it; the research flow never does (test/phase146c.test.ts checks that no query
+ * scores. ONLY tools/match-measure.ts sets it; the research flow never does (test/claims/register-research-sources.test.ts checks that no query
  * FREE_CONNECTORS builds carries one). What it sees stays in memory in that tool, run only with the data protection
  * officer's permission.
  */
@@ -413,7 +413,7 @@ export type MeasureHook = (seen: {
  *
  * WHEN IT MAY BE OFFERED AT ALL is not this file's to say. A.8 point 7 rules out showing a prospect other buildings'
  * records, so the pick is a BACK-OFFICE thing and it waits for a signed engagement. That gate is asserted in
- * src/web/match-review.ts, server-side, against the record — the same place and the same way as the paid tier's.
+ * src/modules/claims/match-review.ts, server-side, against the record — the same place and the same way as the paid tier's.
  *
  * NOTHING HERE IS KEPT. The offer is built from `ranked`, which lives for the length of one request. What a pick
  * writes is the chosen candidate's own permitted fields, through the one door, and the choice itself: who, when, and

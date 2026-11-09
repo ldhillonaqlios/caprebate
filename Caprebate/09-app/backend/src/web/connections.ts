@@ -21,9 +21,9 @@
  * (Lakhbir, and Sadique for the US transfers); the column says so, and what turns it on for real is in "Waits on".
  *
  * THE TWO LISTS (Lakhbir, 5 Oct 2026, asked whether his 2 Oct "All the free ones" covers them: "Yes, include them").
- * Care Inspectorate Wales and the Care Inspectorate (Scotland) publish a file, not an API (src/web/register-files.ts).
+ * Care Inspectorate Wales and the Care Inspectorate (Scotland) publish a file, not an API (src/modules/claims/register-files.ts).
  * The Scottish file is about 10 MB (31 August 2026's: 9,859,714 bytes, read 5 Oct 2026) and the test website takes about
- * 4.5 MB a request. So the page's script (src/web/register-import-script.ts) reads the file ON THE ADMIN'S COMPUTER and
+ * 4.5 MB a request. So the page's script (src/modules/claims/register-import-script.ts) reads the file ON THE ADMIN'S COMPUTER and
  * sends only the columns we keep - the names, telephone numbers and emails in these files never leave that computer.
  * With no script, a file under 4.4 MB goes as it is and the server reads only the same columns. Either way the import
  * is the one Phase 155 built (`importRegisterFile`): refused whole on wrong columns, replacing that list whole.
@@ -37,7 +37,7 @@ import { SECRET_KEYS, type SecretOwner } from '../core/index.ts';
 import { serviceOn } from '../core/saved-keys.ts';
 import { switchedOn, switchesHere, TEST_WEBSITE_LOOKUPS, lookupsWaivedHere } from '../integrations/index.ts';
 import { POSTCODE_CHECK } from '../integrations/index.ts';
-import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from './register-files.ts';
+import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from '../modules/claims/index.ts';
 import { singleFile } from '../core/index.ts';
 import { localStamp, localPartsOf } from '../shared/index.ts';
 import { ADDRESS_SEARCH_CAP, searchesToday } from '../integrations/index.ts';

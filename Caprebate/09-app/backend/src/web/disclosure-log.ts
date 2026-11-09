@@ -34,6 +34,8 @@ import type { AuditLog } from '../core/audit.ts';
 import { authorise, type Actor, type Obj } from '../core/index.ts';
 import { localStamp } from '../shared/index.ts';
 import { getUsersRoleById } from '../core/index.ts';
+import { getBusinessesIdById, getContactsBusinessIdById } from '../modules/crm/index.ts';
+import { getClaimsBusinessIdById } from '../modules/claims/index.ts';
 
 export type DisclosureDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -157,12 +159,12 @@ export function recordDisclosure(d: DisclosureDeps, actor: Actor, input: Fields,
   if (s.in_force_from === null) return { ok: false, why: 'the log is switched on with no date it came into force, so it records nothing until it has one.' };
 
   const business_id = (input['business_id'] ?? '').trim();
-  if (d.db.get<{ id: string }>('SELECT id FROM businesses WHERE id = ?', [business_id]) === undefined) {
+  if (getBusinessesIdById<{ id: string }>(d.db, [business_id]) === undefined) {
     return { ok: false, why: 'say whose data it was: an organisation on record.' };
   }
   const claimIn = (input['claim_id'] ?? '').trim();
   const claim_id = claimIn === '' ? null : claimIn;
-  if (claim_id !== null && d.db.get<{ business_id: string }>('SELECT business_id FROM claims WHERE id = ?', [claim_id])?.business_id !== business_id) {
+  if (claim_id !== null && getClaimsBusinessIdById<{ business_id: string }>(d.db, [claim_id])?.business_id !== business_id) {
     return { ok: false, why: 'the claim named is not this organisation’s.' };
   }
 
@@ -181,7 +183,7 @@ export function recordDisclosure(d: DisclosureDeps, actor: Actor, input: Fields,
     return { ok: false, why: 'a processor is named by its code alone; it has no contact or login here.' };
   }
   if (recipient_contact_id !== null
-    && d.db.get<{ business_id: string | null }>('SELECT business_id FROM contacts WHERE id = ?', [recipient_contact_id])?.business_id !== business_id) {
+    && getContactsBusinessIdById<{ business_id: string | null }>(d.db, [recipient_contact_id])?.business_id !== business_id) {
     return { ok: false, why: 'the contact named is not one of this organisation’s.' };
   }
   if (recipient_user_id !== null

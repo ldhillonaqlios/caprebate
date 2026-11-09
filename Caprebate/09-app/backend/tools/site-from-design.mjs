@@ -13,7 +13,7 @@
  * WHAT IT CHANGES, AND NOTHING ELSE:
  *  1. NOTHING INLINE. Every style attribute becomes a generated class whose rule is added to the page's one <style>
  *     block, with !important on each declaration so it still beats the page's own rules, as the attribute did. The
- *     server then serves that block and the scripts as /assets files (src/web/home-site.ts) and refuses a page with
+ *     server then serves that block and the scripts as /assets files (src/modules/public-site/home-site.ts) and refuses a page with
  *     anything inline left.
  *  2. THE FONTS ARE OURS. Google Fonts is replaced by @font-face rules for IBM Plex (SIL Open Font License), served
  *     from /assets/fonts/ (site/fonts/), so the page policy needs only font-src 'self'.
@@ -69,7 +69,7 @@ const LEGAL_NAV = '<nav aria-label="Legal"><h2>Legal</h2><ul>' +
   '<li><a href="/cookies/">Cookie policy</a></li><li><a href="/cookies/#choice">Cookie settings</a></li>' +
   '<li><a href="/accessibility/">Accessibility</a></li><li><a href="/disclaimer/">Disclaimer</a></li></ul></nav>';
 
-/** The live enquiry form, in the design's frame (Phase 160k). Field names are /enquiry's (src/web/enquiries.ts). */
+/** The live enquiry form, in the design's frame (Phase 160k). Field names are /enquiry's (src/modules/public-site/enquiries.ts). */
 const FORM = `<form class="form" id="contactform" action="/enquiry" method="post" novalidate aria-labelledby="f-hd-t">
     <div class="f-hd"><span id="f-hd-t">Enquiry</span><span>Free assessment</span></div>
     <div class="fld"><label for="c-name">Your name (required)</label><input id="c-name" name="name" type="text" autocomplete="name" maxlength="200" required><span class="c-msg" id="c-name-msg"></span></div>

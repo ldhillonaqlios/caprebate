@@ -3,19 +3,19 @@
  *
  * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, rows 16.2 to 16.6, and the
  * decisions this file takes are that table's Part E from E119. The pages are the
- * claims and leads lists (src/web/crm-pages.ts, src/web/pipeline-pages.ts), which
+ * claims and leads lists (src/modules/crm/crm-pages.ts, src/modules/crm/pipeline-pages.ts), which
  * draw `listControls` from src/shared/lists-pages.ts; saved views are migration 018.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * A FILTER OR A SORT IS A KEY IN A FIXED TABLE, NEVER SQL. `readParams` reads a
  * request through `CLAIM_FILTERS`, `LEAD_FILTERS` and the two sort tables; an
  * unknown key is dropped and said, and an ORDER BY is never built from a request
- * value — the rule src/web/engaged-pages.ts already follows (row 16.4). The rows
+ * value — the rule src/modules/claims/engaged-pages.ts already follows (row 16.4). The rows
  * are read once, each asked of `can()`, and then filtered and sorted in code.
  *
  * A LIST IS BUILT FORWARDS FOR ITS READER, EXACTLY AS THE LIST BEFORE IT WAS.
  * ACCOUNTING reads a claim as client and reference — the test `claimList` in
- * src/web/crm.ts makes, and the statement it reads carries no join to the
+ * src/modules/crm/crm.ts makes, and the statement it reads carries no join to the
  * property, the lead, the assessment or the estimate. SURVEYING reads the working
  * line and never a value: its statement carries no estimate at all. A filter or a
  * sort on a column the reader does not read is ignored, and the page says which
@@ -35,9 +35,9 @@ import type { Db } from '../core/index.ts';
 import type { AuditLog } from '../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../core/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
-import { JURISDICTIONS, WORKSTREAMS, claimObjFor, derivedJurisdiction, type ClaimRow } from '../web/crm.ts';
+import { JURISDICTIONS, WORKSTREAMS, claimObjFor, derivedJurisdiction, type ClaimRow } from '../modules/crm/index.ts';
 import { priorityRank, vocabLabel, vocabulary } from '../web/vocabularies.ts';
-import { LEAD_ORIGINS, LEAD_STATUSES, NO_RANGE_NO_ASSESSMENT, RANGE_NOT_SHOWN, SECTORS, assertLeadSection, type LeadRow } from '../web/leads.ts';
+import { LEAD_ORIGINS, LEAD_STATUSES, NO_RANGE_NO_ASSESSMENT, RANGE_NOT_SHOWN, SECTORS, assertLeadSection, type LeadRow } from '../modules/crm/index.ts';
 import { CLOSED_STAGE, EXITS, ON_HOLD_STAGE, PROCEDURE_STAGES, claimStage } from './stages.ts';
 import { formatShownRange } from './shown-range.ts';
 import { localDate, localStamp } from './localtime.ts';

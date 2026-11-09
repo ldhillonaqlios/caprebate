@@ -11,7 +11,7 @@
  *   2. Ordnance Survey's Features API (OS_FEATURES): a square of map around that point. Back: the outlines of the
  *      buildings in it, from OS Open Zoomstack (open data, Open Government Licence). Never a name or an address.
  *
- * Nothing here decides whether the calls may be made: the caller (src/web/site-plan.ts) asks that first. Every call is
+ * Nothing here decides whether the calls may be made: the caller (src/modules/claims/site-plan.ts) asks that first. Every call is
  * one audit row (src/integrations/connectors/http.ts). A call that does not work comes back as words, never a guess.
  */
 import { callOutside, type CallDeps, type GateSnapshot } from './http.ts';

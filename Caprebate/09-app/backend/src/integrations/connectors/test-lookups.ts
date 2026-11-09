@@ -60,8 +60,11 @@ import {
 } from './boundary-test-lookup.ts';
 import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
 import { readPayloadWithClaude, SERVICE_ID as CLAUDE_SERVICE_ID } from './claude.ts';
-import { sanitise, type Segment } from '../../modules/claims/documents/document-pipeline.ts';
-import { listBusinessesNameLegalName, listLeadsProspectOrganisationProspectPostcode, listPropertiesPostcode } from '../data-borrowed.ts';
+import { sanitise, type Segment } from '../../modules/claims/index.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { listBusinessesNameLegalName, listLeadsProspectOrganisationProspectPostcode } from '../../modules/crm/data.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { listPropertiesPostcode } from '../../modules/claims/data.ts';
 
 /** The Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */
 export const OS_TEST_SOURCE = OS_SERVICE_ID;

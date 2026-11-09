@@ -40,7 +40,7 @@ import { execFileSync } from 'node:child_process';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { SITE_CSS } from '../src/shared/assets.ts';
-import { gateOut } from '../src/web/pipeline.ts';
+import { gateOut } from '../src/modules/crm/pipeline.ts';
 import { PROCEDURE_KEYS } from '../src/shared/stages.ts';
 import { avoidHits } from '../src/shared/voice.ts';
 import { oneDriveOnly, oneDrivePath } from './onedrive-only.ts';
@@ -99,7 +99,7 @@ async function crawl(c: Client, start: string): Promise<Map<string, Res>> {
       const href = (x[1] ?? '').replace(/&amp;/g, '&');
       if (!href.startsWith('/') || href.startsWith('//')) continue;
       // 29 Sep 2026: `/` is the public home page: its title is the search engines' ("… | Cap Rebate", SEO-SPEC.md) and its
-      // voice is checked in test/home-page.test.ts. The notices page's "Back to the home page" link made it reachable.
+      // voice is checked in test/public-site/home-page.test.ts. The notices page's "Back to the home page" link made it reachable.
       if (href === '/') continue;
       if (/^\/(assets|logout)|\.csv(\?|$)|\.json(\?|$)|\/upload\//.test(href)) continue;
       const shape = href.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, '{id}').replace(/=[^&]*/g, '=');

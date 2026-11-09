@@ -17,7 +17,7 @@
  *     each REFUSES the enquiry: nothing is kept, the audit says which, and the person is told in plain words.
  *
  * THE SITE KEY (TURNSTILE_SITE_KEY) is public by design — it is printed in the page — and is put into the home page's
- * script when it is served (src/web/home-site.ts). Without one, the page keeps Cloudflare's published TEST key.
+ * script when it is served (src/modules/public-site/home-site.ts). Without one, the page keeps Cloudflare's published TEST key.
  * No key is ever printed: the secret goes only into the call's body, which no record keeps.
  */
 

@@ -13,7 +13,7 @@
  * repossessions, transfers — and a healthcare building that was once a house, or was bought by a company, can be in
  * it. So it is asked for every sector, by postcode and the building's number and street, and the sale's category is
  * kept (`ppd_category`, A or B). A category B sale, or one of type "Other", is a LEAD for the surveyor to confirm and
- * never the price (src/web/who-claims.ts isPricePaidLead; the desk-first reading skips it). A property outside England
+ * never the price (src/modules/assessment/who-claims.ts isPricePaidLead; the desk-first reading skips it). A property outside England
  * and Wales, or whose nation nobody has recorded, is still not asked about.
  *
  * THE LOOKUP: every sale at the typed postcode, their addresses split and scored against the typed one; sales at the
@@ -24,7 +24,7 @@
  *   "Contains HM Land Registry data © Crown copyright and database right 2021. This data is licensed under the Open
  *    Government Licence v3.0."
  * It is the HMLR_PPD licence's `attribution_text` in the source register, and `PRICE_PAID_ATTRIBUTION` below reads it
- * from there. Every screen that shows a price paid carries it (test/phase146c.test.ts checks each one).
+ * from there. Every screen that shows a price paid carries it (test/claims/register-research-sources.test.ts checks each one).
  */
 
 import type { CallResult } from './http.ts';

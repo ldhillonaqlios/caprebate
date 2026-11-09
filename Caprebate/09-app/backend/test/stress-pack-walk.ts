@@ -3,7 +3,7 @@
  *
  * The stress test of 9 October 2026 ran these by hand (04-phase-work/stress-2026-10-09/claim/h1-packsums.ts and
  * h4-returns.ts, in OneDrive). Here they draw from a fixed seed, so every run makes the same packs, and each returns
- * the properties that broke rather than printing them: test/phase159j.test.ts fails on any.
+ * the properties that broke rather than printing them: test/claims/stress-suite.test.ts fails on any.
  *
  *   packs     random complete and incomplete packs: the pools add up to what qualifies, what qualifies is never more
  *             than the building's price, the share stays in 0-100%, and the total is exactly round(BP x q / R) worked
@@ -15,7 +15,7 @@
  */
 import { LIMITS, packSums, type PackInputs, type PackLine } from '../src/web/pack-sums.ts';
 import { applyGrants, type PackGrant } from '../src/web/pack-grants.ts';
-import { returnEntries, RETURN_YEARS, type ReturnEntry } from '../src/web/return-entries.ts';
+import { returnEntries, RETURN_YEARS, type ReturnEntry } from '../src/modules/claims/return-entries.ts';
 
 /** xorshift32 from a fixed seed: the same draws every run. */
 export function seeded(seed: number): { rnd: () => number; ri: (lo: number, hi: number) => number; pick: <T>(xs: readonly T[]) => T } {

@@ -38,7 +38,7 @@ import * as E from '../src/web/survey-evidence.ts';
 import { packView } from '../src/web/survey-pack.ts';
 import { fixtureTransport, type Fixture } from '../src/integrations/connectors/http.ts';
 import { forgetZoomToken, makeZoomMeeting } from '../src/integrations/connectors/zoom.ts';
-import { zoomDeps } from '../src/web/video-calls.ts';
+import { zoomDeps } from '../src/modules/crm/video-calls.ts';
 import { secretsFromValues } from '../src/core/secrets.ts';
 import { actor } from './helpers.ts';
 

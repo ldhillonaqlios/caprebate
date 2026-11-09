@@ -6,7 +6,7 @@
  * runs green on the tree and catches planted faults, and that the carried screens (items 6 to 10 of the phase) now read
  * in plain words while every rule under them holds: an unknown is still said, never shown as a date or £0; the portal
  * document page gives counts, never the file's words; the client still sees only what is theirs.
- * (Helpers copied from test/phase140.test.ts, which exports none.)
+ * (Helpers copied from test/portal/client-files.test.ts, which exports none.)
  */
 /* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
    twoFactor: 'off'. The second step itself is proved in test/core/sign-in-steps.test.ts, on the default (staff must). */
@@ -20,7 +20,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import type { Actor } from '../src/core/authz.ts';
-import * as D from '../src/web/documents.ts';
+import * as D from '../src/modules/claims/documents.ts';
 import { KEEP_ORIGINALS_QUESTION } from '../src/shared/originals.ts';
 import { pdfOf } from './document-fixtures.ts';
 import { PLAIN_SWAPS } from '../src/shared/voice.ts';

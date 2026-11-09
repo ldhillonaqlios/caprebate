@@ -3,7 +3,7 @@
  *
  * Phase 144 rewrote every back-office and portal screen. This phase takes the same plain words to what Phase 144
  * exempted by name — the admin and user guide and the Help pages built from it, and the public assessment (changed in
- * the site file and in src/web/assessment.ts together) — to words stored in rows by the migrations, and to six small
+ * the site file and in src/modules/assessment/assessment.ts together) — to words stored in rows by the migrations, and to six small
  * things its crawl found. Words changed; no rule, route, role or store did. These tests prove:
  *   1  the check reads the guide and the Help pages at grade 7 and the assessment at grade 9, and is green on the tree;
  *   2  the assessment's words are the site renderer's words, so the two cannot drift apart again;
@@ -22,10 +22,10 @@ import { spawnSync } from 'node:child_process';
 import { createApp } from '../src/core/server.ts';
 import { seed } from '../src/core/seed.ts';
 import { Db, migrate } from '../src/core/db.ts';
-import { SCREENS, COSMETIC_NOTE } from '../src/web/assessment.ts';
+import { SCREENS, COSMETIC_NOTE } from '../src/modules/assessment/assessment.ts';
 import { FORBIDDEN_SETTINGS, settingLabel } from '../src/web/configuration.ts';
 import { feeSwitchesBox } from '../src/web/finance-pages.ts';
-import * as P from '../src/web/portal.ts';
+import * as P from '../src/modules/portal/portal.ts';
 import { PLAIN_SWAPS } from '../src/shared/voice.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
@@ -188,7 +188,7 @@ describe('4 · the six small things, and the breadcrumb', () => {
     assert.equal(P.stageInWords(null), 'No step is recorded yet.');
     assert.equal(P.stageInWords('NOT_A_STAGE'), 'Our records show a step we do not recognise.');
     for (const k of ['ENQUIRY', 'INVOICE', 'ON_HOLD', 'CLOSED']) assert.equal(/[A-Z]{2,}_|<code>/.test(P.stageInWords(k)), false, k);
-    const router = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'router.ts'), 'utf8');
+    const router = ['core', 'modules/portal'].map((d) => readFileSync(join(import.meta.dirname, '..', 'src', d, d === 'core' ? 'router.ts' : 'routes.ts'), 'utf8')).join('\n');
     assert.equal(router.includes('(Step: <code>${business.stage}</code>)'), false);
   });
 

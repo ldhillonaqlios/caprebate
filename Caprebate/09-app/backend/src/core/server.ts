@@ -21,8 +21,8 @@
  * than run as a second server.
  */
 
-import { TEST_LETTER_PATH } from '../web/letter.ts';
-import { ENGAGEMENT_SIGNING_TEST } from '../web/signing.ts';
+import { TEST_LETTER_PATH } from '../modules/claims/index.ts';
+import { ENGAGEMENT_SIGNING_TEST } from '../modules/claims/index.ts';
 import { turnstileWhy } from '../integrations/index.ts';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
@@ -35,14 +35,15 @@ import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAIL
 import * as SI from './sign-in.ts';
 import { toActor } from './users.ts';
 import { payloadFor, assertSurveySection } from '../web/surveyor.ts';
-import { bindResponse, clientIp, handleWeb, PayloadTooLarge, readBody, refusalAsPage, sendRefusalPage } from './router.ts';
+import { handleWeb, refusalAsPage, sendRefusalPage } from './router.ts';
+import { bindResponse, clientIp, PayloadTooLarge, readBody } from './http.ts';
 import { FsObjectStore } from '../shared/objectstore.ts';
 import { SharedObjectStore, type BlobClient } from '../shared/shared-objectstore.ts';
 import { sealKeyFromEnv, type KeepOriginals } from '../shared/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { isInventedAddress } from '../integrations/index.ts';
 import { refreshSavedKeys } from './saved-keys.ts';
-import { openKeptOriginal } from '../web/uploads.ts';
+import { openKeptOriginal } from '../modules/claims/index.ts';
 import { formToken, formTokensMode, onceToken, type FormTokens } from './form-token.ts';
 import { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';
 import { listOutboxIdToEmailBySendRequestedSentAt2, updateOutboxLastErrorByIdLastError2, updateOutboxLastErrorByIdLastError3, updateOutboxLastErrorByIdLastError4 } from '../integrations/index.ts';
@@ -107,7 +108,7 @@ export type ServerOptions = {
   sharedDocuments?: { readonly client: BlobClient; readonly linkSecret: Buffer };
   /**
    * THE PUBLIC REFERRAL FORM'S SWITCH — CRM 5 of 10. Absent means the shipped
-   * gate, `REFERRAL_FORM` in src/web/introducers.ts, which is off. A test passes
+   * gate, `REFERRAL_FORM` in src/modules/crm/introducers.ts, which is off. A test passes
    * an open gate to prove the form works; nothing that runs outside a test does.
    */
   referralForm?: { readonly enabled: boolean; readonly requires: string };
@@ -125,7 +126,7 @@ export type ServerOptions = {
   keepOriginals?: KeepOriginals;
   /** Show the TEST-ONLY engagement letter (test defaults, never signed). Absent is the real letter. api/index.mjs alone passes it. */
   testLetter?: boolean;
-  /** The public notices page and its complaint form (src/web/notices-site.ts). api/index.mjs passes it; nothing else does. */
+  /** The public notices page and its complaint form (src/modules/public-site/notices-site.ts). api/index.mjs passes it; nothing else does. */
   testNotices?: boolean;
   /** The legal pages for the live website, each a Draft until approved (src/web/legal-approvals.ts). Off unless CAPREBATE_LEGAL_PAGES=on. */
   legal?: boolean;

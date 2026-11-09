@@ -3,7 +3,7 @@
  *
  * VIEW MODELS. The renderer in src/core/staff.ts draws what these return and
  * decides nothing; every authorisation is here, on the specific object, exactly
- * as src/web/portal.ts does it for the client half.
+ * as src/modules/portal/portal.ts does it for the client half.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * N1 REACHES THIS FILE, AND IT IS THE REASON `range` IS OPTIONAL
@@ -36,16 +36,19 @@ import type { Db } from './db.ts';
 import { authorise, can, type Actor } from './authz.ts';
 import { formatShownRange, type ShownRange } from '../shared/index.ts';
 import { BOOKING } from '../shared/index.ts';
-import { booksATime } from '../web/video-calls.ts';
-import {
-  SLOT_MINUTES, addLocalDays, isBookable, startOfLocalDay, startOfLocalWeek, staffSlots,
-  type Availability,
-} from '../web/schedule.ts';
+import { booksATime } from '../modules/crm/index.ts';
+import { SLOT_MINUTES, addLocalDays, isBookable, startOfLocalDay, startOfLocalWeek, staffSlots, type Availability } from '../modules/crm/index.ts';
 import { localWhen } from '../shared/index.ts';
 import type { AuditLog } from './audit.ts';
 import type { EmailTransport } from '../integrations/index.ts';
-import { bookingInviteFile } from '../web/booking-invite.ts';
-import { getAssessmentsIdBusinessIdById, getBookingsChannelSmsVariantByBusinessId, getBookingsChannelSmsVariantByLeadId, getBusinessesContactEmailNameById, getContactsContactEmailNameByLeadId, insertBookingChanges, listAssessmentAnswersOrdQuestionIdByAssessmentId, listAssessmentsIdBusinessId, listBookingChangesFromStartsAtToStartsAtByBookingId, listPropertiesLabelPostcodeByBusinessId, listUsersIdDisplayNameByDisabledAt, updateBookingsStartsAtEndsAtById } from './data-borrowed.ts';
+import { bookingInviteFile } from '../modules/crm/index.ts';
+import { getAssessmentsIdBusinessIdById, listAssessmentsIdBusinessId, listBookingChangesFromStartsAtToStartsAtByBookingId, listUsersIdDisplayNameByDisabledAt } from './data-borrowed.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { getBookingsChannelSmsVariantByBusinessId, getBookingsChannelSmsVariantByLeadId, getBusinessesContactEmailNameById, getContactsContactEmailNameByLeadId, insertBookingChanges, updateBookingsStartsAtEndsAtById } from '../modules/crm/data.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { listAssessmentAnswersOrdQuestionIdByAssessmentId } from '../modules/assessment/data.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { listPropertiesLabelPostcodeByBusinessId } from '../modules/claims/data.ts';
 import { getBookingById, listBookingsCancelled, listBookingsScheduled, listBookingsWithNoTime } from './data-borrowed.ts';
 
 export class BackOfficeError extends Error {
@@ -326,7 +329,6 @@ export type BookingRow = {
   /** The role of whoever cancelled — CLIENT for a portal cancellation. */
   readonly cancelled_by_role: string | null;
 };
-
 
 type BookingSource = Omit<BookingRow, 'channel_label' | 'business_name'> & { readonly business_name: string | null };
 

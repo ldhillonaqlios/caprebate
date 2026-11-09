@@ -15,7 +15,9 @@ Nothing visible came out of it — it decides whether the two applications are
 shippable or a demonstration wearing a suit.
 
 Phase 104 put the public half on top of it: the site, the six-screen assessment,
-the customer login and the client portal (`src/web/`).
+the customer login and the client portal (`src/web/` then; since Phase 161j each in its module under
+`src/modules/`: `public-site/`, `assessment/`, `portal/`, `crm/` and `claims/`, each with its front door `index.ts`,
+its `data.ts` and its `routes.ts`; `src/core/router.ts` is the shell that asks each module in turn).
 
 Phases 106 and 107 finished the back office — the engaged-client list and the
 five-panel business page, then the surveyor's review-and-sign workspace and the
@@ -204,7 +206,7 @@ a redacting logger teaches callers that it is safe to pass anything.
 | Email | `src/integrations/email/email.ts` | Delivery. Messages are written to the `outbox` table and shown on screen, labelled as not sent. **The token mechanics are real.** |
 | Registers | `src/integrations/register-ingest.ts` | The connectors. Nothing is called. **Both gates are real** and are reported honestly. |
 | Signature | `src/integrations/signature.ts` | The provider. Nothing is executed. |
-| Text extraction | `src/web/uploads.ts` (`documentTextExtractor`) → `src/shared/extract-text.ts` | **What is still not read:** a **scanned** PDF (page images, no text operators — that is OCR), an **encrypted** PDF, LZW/ASCII85/JBIG2/CCITT-filtered content, `.doc`, `.xlsx`, `.pptx`. Each returns **one marker line**, so on those the receipt strip runs over a marker rather than over the document. **NARROWED 9 September 2026 (Phase 113c):** `.docx` and PDFs whose text sits in uncompressed or FlateDecode streams **are now read and are stripped**, proved end to end by a name planted in each and removed by the receipt policy. The row changes wording rather than disappearing — added to this table and to `STUBS` on 9 September 2026 (Phase 108), when it had declared itself a stub in its own file and appeared in no list. |
+| Text extraction | `src/modules/claims/uploads.ts` (`documentTextExtractor`) → `src/shared/extract-text.ts` | **What is still not read:** a **scanned** PDF (page images, no text operators — that is OCR), an **encrypted** PDF, LZW/ASCII85/JBIG2/CCITT-filtered content, `.doc`, `.xlsx`, `.pptx`. Each returns **one marker line**, so on those the receipt strip runs over a marker rather than over the document. **NARROWED 9 September 2026 (Phase 113c):** `.docx` and PDFs whose text sits in uncompressed or FlateDecode streams **are now read and are stripped**, proved end to end by a name planted in each and removed by the receipt policy. The row changes wording rather than disappearing — added to this table and to `STUBS` on 9 September 2026 (Phase 108), when it had declared itself a stub in its own file and appeared in no list. |
 
 **Everything else is real.** Each stub is one named module behind an interface,
 so replacing it is a swap and not a search. **`STUBS` in `src/core/app.ts` is the
@@ -237,7 +239,7 @@ objects behind it.
 
 ### Working times are the booking system's only input
 
-`src/web/schedule.ts` holds **one function that decides whether a moment is bookable**, and
+`src/modules/crm/schedule.ts` holds **one function that decides whether a moment is bookable**, and
 the staff calendar, the staff booking page and the client's own funnel-close picker all ask
 it. The write path asks it **again** at the moment of writing, so a time that never appeared
 on a screen is refused: **a picker is a courtesy, the refusal is the control.**

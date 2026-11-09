@@ -11,17 +11,17 @@
  * both still pass the database's own triggers.
  *
  * NONE OF THESE IS A STAND-IN FOR A RECORD: the database refuses the retired
- * sign-off column, and test/claim-record.test.ts proves each gate stays shut
+ * sign-off column, and test/claims/claim-record.test.ts proves each gate stays shut
  * without the record these write.
  */
 
 import assert from 'node:assert/strict';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import * as AC from '../src/web/accountant-confirm.ts';
+import * as AC from '../src/modules/portal/accountant-confirm.ts';
 import type { Db } from '../src/core/db.ts';
 import type { AuditLog } from '../src/core/audit.ts';
-import * as F from '../src/web/claim-facts.ts';
-import * as R from '../src/web/claim-record.ts';
+import * as F from '../src/modules/claims/claim-facts.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
 import { allocateNumber } from '../src/web/invoices.ts';
 import { actor } from './helpers.ts';
 
@@ -304,7 +304,7 @@ export function defenceReady(app: FixtureApp, claim: string): void {
 }
 
 /**
- * PHASE 132e — OUR REPORT DELIVERED FOR FILING, which is when our fee is earned (FEE_TRIGGER in src/web/pipeline.ts):
+ * PHASE 132e — OUR REPORT DELIVERED FOR FILING, which is when our fee is earned (FEE_TRIGGER in src/modules/crm/pipeline.ts):
  * the claim's computation pack issued in the deliverables register, dated. It stands for delivery to the client's
  * accountant; `issue(app, claim, 'CLIENT_REPORT')` stands for delivery to the client, and either reaches the trigger.
  */
@@ -364,12 +364,12 @@ export function claimInvoiceRow(
 }
 
 /**
- * PHASE 151b — THE DOCUMENTS THAT MUST ARRIVE, ARRIVED. MANDATORY_DOCUMENTS is on (src/web/mandatory-documents.ts), so a
+ * PHASE 151b — THE DOCUMENTS THAT MUST ARRIVE, ARRIVED. MANDATORY_DOCUMENTS is on (src/modules/claims/mandatory-documents.ts), so a
  * claim leaves DATA_GATHERING only once the client's tax return and tax computation are received, and the sale
  * contract and CPSE replies too where the client bought the building. A test that is about something else walks its
  * claim past the gate with this: the client did not buy the building (recorded NO, which excuses those two), and a
  * received tax return and tax computation linked to the claim — rows as the one handler leaves them: stripped,
- * discharged, not failed. test/phase151b-documents.test.ts proves the real uploads open the gate; this only stands in.
+ * discharged, not failed. test/claims/tax-documents-and-retention.test.ts proves the real uploads open the gate; this only stands in.
  */
 export function mustArriveDocuments(app: FixtureApp, business: string, claim: string, who = 'u-SALES'): void {
   fact(app, claim, 'BOUGHT_THE_BUILDING', 'NO', 'CLIENT_ANSWER');

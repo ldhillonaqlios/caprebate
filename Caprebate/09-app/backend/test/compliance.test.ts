@@ -26,9 +26,9 @@ import * as A from '../src/web/compliance-aml.ts';
 import * as R from '../src/web/compliance-rights.ts';
 import * as B from '../src/web/compliance-breach.ts';
 import * as S from '../src/web/compliance-identity.ts';
-import * as I from '../src/web/introducers.ts';
-import * as L from '../src/web/leads.ts';
-import * as P from '../src/web/pipeline.ts';
+import * as I from '../src/modules/crm/introducers.ts';
+import * as L from '../src/modules/crm/leads.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
 import { templateRefusal, tipsOff } from '../src/web/templates.ts';
 import { actor, signatureRecordFor, testApp } from './helpers.ts';
 

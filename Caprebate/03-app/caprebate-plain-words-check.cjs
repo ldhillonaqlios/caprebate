@@ -60,6 +60,10 @@ const WEB = path.join(ROOT, '09-app', 'backend', 'src', 'web');
 /* PHASE 161i, 7 Nov 2026: screens, sign-in, page parts and the core moved from src/web/ into src/core/ and src/shared/;
    every file in those two folders is read as src/web/ is (the core's own files, never read before, are read too). */
 const CORE = path.join(WEB, '..', 'core'), SHARED = path.join(WEB, '..', 'shared'), INTEG = path.join(WEB, '..', 'integrations');
+/* The business modules' folders (Phases 161j and 161k move the screens there from src/web/): each folder's own files,
+   not its data files or front door, which hold no words for a person. */
+const MODULE_DIRS = ['public-site', 'assessment', 'portal', 'crm', 'claims'].map((m) => path.join(WEB, '..', 'modules', m));
+const NOT_SCREENS_IN_MODULES = new Set(['data.ts', 'data-borrowed.ts', 'index.ts']);
 /* The core's files that were never in src/web/ and were never read (the server, database, sign-in rules, permissions,
    the audit log and the rest): their words are for developers, not a screen. seed.ts and secrets.ts were read before
    and still are. A new core file is read unless it is named here with that reason. */
@@ -89,7 +93,7 @@ const EXEMPT_TEXT = [
   /^1\. Complain to us\. You have a right to complain to us about how we have handled your personal data/,
   /^2\. Complain to the data protection regulator\. You have a right to complain to the Information Commissioner/,
   /^3\. Go to court\. You can also take your own case to court/,
-  /* versioned consent wording (SHARE-PROGRESS-1, src/web/introducers.ts): each recorded answer points at these exact
+  /* versioned consent wording (SHARE-PROGRESS-1, src/modules/crm/introducers.ts): each recorded answer points at these exact
      words, so plainer words are a new version, approved by the data protection officer */
   /^May we tell \u2063? ?how your claim is progressing\?|^May we tell \{firm\} how your claim is progressing\?/,
   /* a question's title in CAPREBATE QUESTIONS, quoted exactly so the two stay one question (src/web/postcode.ts) */
@@ -97,7 +101,7 @@ const EXEMPT_TEXT = [
   /* Phase 151b: a question's title in the Word questions document (closed 24 September 2026), quoted exactly by
      src/connectors/identity-check.ts and asserted word for word by test/phase151.test.ts. No screen shows it. */
   /^Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD\?$/,
-  /* the assessment's first question (src/web/assessment.ts SCREENS.Q1, and the site's screenQ1, word for word). Its
+  /* the assessment's first question (src/modules/assessment/assessment.ts SCREENS.Q1, and the site's screenQ1, word for word). Its
      wording could change what a client answers, so a plainer version waits in FOR THE ACCOUNTANT for the tax
      adviser (Phase 144a): "Have you already claimed capital allowances on this building's fixtures, such as its
      wiring or heating?" */
@@ -106,7 +110,7 @@ const EXEMPT_TEXT = [
      opening words - see EXEMPT_CONSTS below. */
   /* Phase 146b: planResearch's reasons and the register STUB_NOTICE (src/connectors/registers.ts), moved there word for
      word from src/stubs/registers.ts. No screen shows them — the research panel's words are stateUnderGates's, in
-     src/web/research.ts — and test/core/seed.test.ts reads them exactly, and must pass unchanged. */
+     src/modules/claims/research.ts — and test/core/seed.test.ts reads them exactly, and must pass unchanged. */
   /^already fired$/,
   /^free sources are gated on a published privacy notice:\s*$/,
   /^paid sources are gated on a signed engagement, asserted server-side$/,
@@ -307,7 +311,7 @@ const MAX_GRADE = 9;
 
 /* Values code compares or stores, which no screen shows. Exact strings only. */
 const CODE_VALUES = new Set([
-  'cash gate', // engaged.ts: the `origin` of a missing fact, a type-literal value compared in test/engaged.test.ts
+  'cash gate', // engaged.ts: the `origin` of a missing fact, a type-literal value compared in test/claims/engaged-clients.test.ts
 ]);
 
 function exemptText(t) { return CODE_VALUES.has(t) || EXEMPT_TEXT.some((re) => re.test(t)); }
@@ -439,7 +443,7 @@ function altOf(f, suffix, dir) {
 
 function screenFiles(suffix, dir) {
   const dirTs = (d) => fs.readdirSync(d).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f) && f !== 'index.ts').sort().map((f) => path.join(d, f));
-  const all = [...dirTs(WEB), ...dirTs(CORE).filter((f) => !CORE_NOT_SCREENS.has(path.basename(f))), ...dirTs(SHARED)].concat(EXTRA);
+  const all = [...dirTs(WEB), ...MODULE_DIRS.filter((d) => fs.existsSync(d)).flatMap((d) => dirTs(d).filter((f) => !NOT_SCREENS_IN_MODULES.has(path.basename(f)))), ...dirTs(CORE).filter((f) => !CORE_NOT_SCREENS.has(path.basename(f))), ...dirTs(SHARED)].concat(EXTRA);
   return all.map((f) => {
     const alt = altOf(f, suffix, dir);
     return { label: path.relative(path.join(WEB, '..', '..'), f), file: alt && fs.existsSync(alt) ? alt : f };

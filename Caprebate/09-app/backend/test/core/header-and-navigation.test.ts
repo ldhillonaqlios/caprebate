@@ -132,7 +132,7 @@ async function crawl(c: Client, start: string): Promise<Map<string, Res>> {
       const href = (x[1] ?? '').replace(/&amp;/g, '&');
       if (!href.startsWith('/') || href.startsWith('//')) continue;
       // 29 Sep 2026: `/` is the public home page, under its own policy and with its own script, and is held to its own
-      // rules in test/home-page.test.ts. The notices page's "Back to the home page" link made it reachable from here.
+      // rules in test/public-site/home-page.test.ts. The notices page's "Back to the home page" link made it reachable from here.
       if (href === '/') continue;
       if (/^\/(assets|logout)|\.csv(\?|$)|\/upload\//.test(href)) continue;
       const shape = href.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, '{id}').replace(/=[^&]*/g, '=');
@@ -247,7 +247,7 @@ describe('no page carries inline script or style, and the CSP is unchanged', () 
       if (r.status !== 200) continue;
       /* PHASE 133j: `/` IS THE WEBSITE, and it carries exactly one script: its own, from this origin, as a file. Its CSP
          is the back end's with `script-src 'self'` added and nothing else loosened. Every other rule still holds. */
-      /* 29 SEPTEMBER 2026: `/` IS THE NEW HOME PAGE (src/web/home-site.ts). Its policy is the back end's with its own
+      /* 29 SEPTEMBER 2026: `/` IS THE NEW HOME PAGE (src/modules/public-site/home-site.ts). Its policy is the back end's with its own
          script and Cloudflare's security check (scripts and frames from that one origin) added, nothing else loosened.
          Its scripts are files from this origin, and the search engines' structured data, which a browser never runs. */
       if (path === '/') {
@@ -348,7 +348,7 @@ describe('every page works with JavaScript switched off', () => {
     const lead = h.made.app.db.get<{ id: string }>('SELECT id FROM leads LIMIT 1');
     assert.ok(lead);
     // Phase 134: the organisation's page is the one client page, whose tabs test/phase133b.test.ts reads.
-    // Phase 138: the claim page is coloured sections that open and close, not tabs — test/phase138.test.ts reads them;
+    // Phase 138: the claim page is coloured sections that open and close, not tabs — test/crm/client-page-sections.test.ts reads them;
     // here it is enough that each is a <details> with its own id, which needs no script.
     const claimPage = await as('sales').get(`/staff/claims/${claim.id}`);
     for (const id of ['move', 'claim-documents', 'activity']) {

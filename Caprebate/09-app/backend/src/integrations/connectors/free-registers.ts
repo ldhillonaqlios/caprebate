@@ -16,7 +16,7 @@
  *   CIW           Care Inspectorate Wales's directory, imported on this server — no call outside
  *   CARE_INSPECTORATE  the Care Inspectorate's datastore (Scotland), the same way   src/integrations/connectors/register-files.ts
  *
- * THE GATES ARE NOT HERE. `consultAllowed` in src/web/research.ts hands a connector a lookup only after
+ * THE GATES ARE NOT HERE. `consultAllowed` in src/modules/claims/research.ts hands a connector a lookup only after
  * `stateUnderGates` has allowed it; while CB_REGISTRY.precondition is false that is never. A connector then checks its
  * own switch and its key (`runConnector`), and a typed address or name must MATCH (src/integrations/connectors/matching.ts) before
  * anything is kept. Anything short of that leaves the question asked (N4).
@@ -128,7 +128,7 @@ export const NOT_BUILT: Readonly<Record<string, string>> = Object.freeze({
   VOA: 'not built. The valuation office’s licence lets its rating list be used for business rates only. ' +
     'A capital allowances claim is not that. Nothing was contacted',
   /* The land boundary has its own connector, src/integrations/connectors/inspire.ts, which reads a whole council's file
-     for one point. This button now runs it, as its own step for each property (src/web/site-area-run.ts),
+     for one point. This button now runs it, as its own step for each property (src/modules/claims/site-area-run.ts),
      not as one lookup for the client — so this row points at the site area lines, which say what happened. */
   HMLR_INSPIRE: 'allowed. The land boundary is read for each property by its own step of this button, and the site area ' +
     'lines above say what happened. It is switched off. Nothing was contacted',
@@ -143,7 +143,7 @@ export const NOT_BUILT: Readonly<Record<string, string>> = Object.freeze({
  * `register_records` keeps each register's fields under the SOURCE REGISTER's names (epc_total_floor_area_m2 …);
  * CB_REGISTRY.derive() reads its own (floor_area_m2 …). This is the one table between them, and it maps ONLY a field
  * both sides permit: the left side is on the source's `permitted_fields` (and the name exclusion register keeps it),
- * the right side is on CB_REGISTRY.SOURCES[…].fields. test/phase146c.test.ts checks both, for every row.
+ * the right side is on CB_REGISTRY.SOURCES[…].fields. test/claims/register-research-sources.test.ts checks both, for every row.
  *
  * NOT MAPPED, ON PURPOSE: "what kind of business are you" (entity_type). Companies House says a company's type, but the
  * source register keeps no company-type field, so it stays asked. And a PSC's name feeds nothing here.

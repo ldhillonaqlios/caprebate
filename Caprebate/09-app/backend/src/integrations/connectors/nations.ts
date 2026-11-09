@@ -8,7 +8,10 @@
 import type { Db } from '../../core/index.ts';
 import type { Bundle } from './registers.ts';
 import { CB } from '../../shared/index.ts';
-import { getBusinessesNameLegalNameById, getPropertiesIdAddressLine1ByBusinessId } from '../data-borrowed.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { getBusinessesNameLegalNameById } from '../../modules/crm/data.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { getPropertiesIdAddressLine1ByBusinessId } from '../../modules/claims/data.ts';
 
 export type Nation = 'england' | 'wales' | 'scotland' | 'northern_ireland';
 

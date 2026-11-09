@@ -21,6 +21,10 @@
  * failure the extraction of the engine was done to prevent.
  */
 
+// These come straight from the claims module's document files, not through its front door: the shared parts and the
+// core load them, and the front door would load the whole claims module into the bottom layers (a loop that leaves a
+// value unset while files load). Counted by the boundary check (rule 1) until Phase 161l turns the upward imports
+// into events or ports the lower layers own.
 export {
   UPLOAD_LIMITS,
   UploadHandlerError,
@@ -68,7 +72,7 @@ export { DOC_SPECS, HUMAN_READ_ONLY_TYPES } from '../modules/claims/documents/do
 /**
  * CRM 4 of 10. The one deletion clock the Retention Procedure gives a client
  * document, AS THE INGESTION MODULE STATES IT — its period, its trigger and
- * whether it is approved. src/web/documents.ts reads `RET7.approved` here rather
+ * whether it is approved. src/modules/claims/documents.ts reads `RET7.approved` here rather
  * than writing "not approved" into a screen, so the day the data protection
  * officer approves it the reading changes with no second edit.
  */
@@ -87,7 +91,7 @@ export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryCl
 /**
  * The deletion clock itself — and its rule that where two clocks are known the LATER governs (Word answer
  * 173; it was the earlier) — as the ingestion module states it, so the RET-7
- * dates src/web/documents.ts reads can be proved against the one function that
+ * dates src/modules/claims/documents.ts reads can be proved against the one function that
  * would turn them into a date. Nothing in src/ calls it: RET-7 is not approved.
  */
 export { deletionDueAt } from '../modules/claims/documents/client-doc-ingestion.ts';
@@ -95,7 +99,7 @@ export type { IngestionSettings, RawFileRecord } from '../modules/claims/documen
 
 /**
  * The legal-form test, the roles that are always a person, and the human-capture rule's role tokens and
- * backstop patterns, AS THE INGESTION MODULE STATES THEM. src/web/conveyancing-strip.ts reads them here and restates none.
+ * backstop patterns, AS THE INGESTION MODULE STATES THEM. src/modules/assessment/conveyancing-strip.ts reads them here and restates none.
  */
 export {
   classifyPartyReference, ALWAYS_NATURAL_PERSON_ROLES, ROLE_TOKENS, CAPTURE_NAME_PATTERNS, assertHumanCaptureClean,

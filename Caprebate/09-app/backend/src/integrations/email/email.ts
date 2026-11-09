@@ -12,7 +12,9 @@ import { createHash } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import { plainDashLines } from '../../shared/index.ts';
 import { insertOutbox, insertOutboxAttachments, insertOutboxInlineFiles } from '../data.ts';
-import { getBusinessesCountByClientStatus, getBusinessesCountByIdClientStatus, getContactsCountByClientStatus, getEmailSenderDisplayNameAddress, getUsersCountByClientStatusEmailCanonical } from '../data-borrowed.ts';
+import { getEmailSenderDisplayNameAddress, getUsersCountByClientStatusEmailCanonical } from '../data-borrowed.ts';
+// Straight from the data file, not the front door: a lower layer must not load a whole business module (Phase 161l).
+import { getBusinessesCountByClientStatus, getBusinessesCountByIdClientStatus, getContactsCountByClientStatus } from '../../modules/crm/data.ts';
 
 /**
  * CALENDAR_INVITE IS THE SECOND STUBBED TRANSPORT AND IT IS NOT A SECOND STUB.
@@ -46,7 +48,7 @@ export type OutboundMessage = {
   /** SIGN_IN_CODE: a six-digit sign-in code (src/core/sign-in.ts). With PASSWORD_RESET, its words are taken
    *  out of the outbox once it has really been sent (src/integrations/email/email-provider.ts, blankSentSecrets). */
   /** REPORT_FOR_SIGNOFF —: the client's survey report sent to their accountant, the PDF attached, with a
-   *  private link that works once (src/web/report-signoff.ts). Its words leave the outbox once sent, like a sign-in code's. */
+   *  private link that works once (src/modules/claims/report-signoff.ts). Its words leave the outbox once sent, like a sign-in code's. */
   /** RECOVERY_CODE_USED: a recovery code was used to sign in, and how many are left. It carries NO code, so
    *  it is not one of the kinds blankSentSecrets empties: its words stay, as every other email's do. */
   kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY' | 'FREE_TYPED' | 'SIGNED_LETTER' | 'SIGN_IN_CODE' | 'RECOVERY_CODE_USED' | 'REPORT_FOR_SIGNOFF';

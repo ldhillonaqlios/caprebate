@@ -4,13 +4,13 @@
  * A gate's needs are written for the record: "The surveyor’s commitment is recorded, on a survey job on this claim".
  * A person new to the system needs the answer first: what is still needed, and the one thing that fixes it. This file
  * holds that translation, in ONE table, and decides nothing. Whether a gate is open is still `gateOut` in
- * src/web/pipeline.ts, read on the request; a move is still refused on the server when the gate is not open, whatever
+ * src/modules/crm/pipeline.ts, read on the request; a move is still refused on the server when the gate is not open, whatever
  * the card shows.
  *
  * A need this table does not know is shown in its own words, so a new gate can never be hidden by a missing row.
  * test/phase133c.test.ts reads every stage's needs on the seed and requires each to have a plain reading.
  *
- * THE ANCHORS are the claim page's own (src/web/crm-pages.ts): #move, #claim-facts, #claim-documents, #claim-tasks,
+ * THE ANCHORS are the claim page's own (src/modules/crm/crm-pages.ts): #move, #claim-facts, #claim-documents, #claim-tasks,
  * #add-task, #claim-deliverables, #claim-figures.
  */
 
@@ -47,7 +47,7 @@ const TABLE: readonly (readonly [RegExp, PlainNeed])[] = [
   [/^The client confirmed in writing/, { words: 'The client’s written confirmation that they will file the amendment', fix: { href: '#claim-facts', label: 'Record it' } }],
   [/^The claim is within the amendment window/, { words: 'The claim must go in inside the amendment window', fix: { href: '#claim-facts', label: 'Check the dates' } }],
   [/^The amendment window is open/, { words: 'The amendment window must still be open', fix: { href: '#claim-facts', label: 'Check the dates' } }],
-  // The route each part of the claim takes (src/web/claim-route.ts), and a legal deadline read again.
+  // The route each part of the claim takes (src/modules/claims/claim-route.ts), and a legal deadline read again.
   [/^Each part of the claim has a route/, { words: 'Each part of the claim needs its route: the year it goes in, or this year’s pool if the client still owns the building', fix: { href: '#claim-facts', label: 'Check the dates and ownership' } }],
   [/^A legal check that was clear only until a deadline/, { words: 'The deadline to fix the value must not have passed, or the election made in time must be recorded', fix: { href: '#claim-facts', label: 'Check the election' } }],
   [/^The fee trigger is reached/, { words: 'The point at which our fee is due', fix: { href: '#move', label: 'Confirm it' } }],

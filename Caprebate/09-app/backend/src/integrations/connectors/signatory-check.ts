@@ -20,7 +20,7 @@
  * WHAT IT DOES
  *
  * `checkSignatory` takes the name the signer typed on the engagement letter (engagement_signatures.signer_name,
- * migration 040 — read by src/web/research.ts on the server, never from a form), the client's company number and care
+ * migration 040 — read by src/modules/claims/research.ts on the server, never from a form), the client's company number and care
  * regulator ids that we already hold, and the client's claimant type. For each of the two registers it gives:
  *
  *   YES          the register names them in a role that can sign: a CURRENT director (or an LLP's designated
@@ -37,7 +37,7 @@
  * `cqcNamedPeople`) and dropped there. The outcome carries a source, a result, a reason CODE and the words for it. No
  * name is in the outcome, the stored row (migration 050 has no name column, and its reason is a closed list of codes),
  * the audit row (SIGNATORY_CHECKED: source and result), a log line or an error. Nothing here throws, and nothing
- * here writes: src/web/research.ts stores the outcome.
+ * here writes: src/modules/claims/research.ts stores the outcome.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * THE GATES AND THE SWITCHES — THE LOOKUPS' OWN, NOT NEW ONES

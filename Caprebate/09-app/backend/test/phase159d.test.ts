@@ -23,12 +23,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { testApp, actor } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
-import * as C from '../src/web/crm.ts';
-import * as F from '../src/web/claim-facts.ts';
-import * as R from '../src/web/claim-record.ts';
-import * as P from '../src/web/pipeline.ts';
-import * as RT from '../src/web/claim-route.ts';
-import * as PE from '../src/web/property-events.ts';
+import * as C from '../src/modules/crm/crm.ts';
+import * as F from '../src/modules/claims/claim-facts.ts';
+import * as R from '../src/modules/claims/claim-record.ts';
+import * as P from '../src/modules/crm/pipeline.ts';
+import * as RT from '../src/modules/claims/claim-route.ts';
+import * as PE from '../src/modules/claims/property-events.ts';
 import * as SP from '../src/web/survey-pack.ts';
 import * as L from '../src/web/pack-legal.ts';
 import * as A from '../src/web/pack-approve.ts';
@@ -72,7 +72,7 @@ function claimWith(app: App, tag: string, o: { acquired?: string; events?: Ev[];
   if (period !== null) { CF.fact(app, claim.id, 'ACCOUNTING_PERIOD_START', period[0]); CF.fact(app, claim.id, 'ACCOUNTING_PERIOD_END', period[1]); }
   return { b, p, as, claim: claim.id, ref: { id: claim.id, business_id: b, property_id: p } };
 }
-/** The client's year end, answered in the portal and ticked as checked by Sales (as test/phase158d.test.ts records one). */
+/** The client's year end, answered in the portal and ticked as checked by Sales (as test/portal/portal-claim-knowledge.test.ts records one). */
 function yearEnd(app: App, business: string, answer = '31 December'): void {
   const id = `ct-${randomUUID()}`;
   app.db.run('INSERT INTO client_tasks (id, business_id, asked_by, question, why, holds_up, state, answer_state, answer, answered_at, answered_by, answered_by_role, created_at, fact_id, sent_to_portal_at) ' +

@@ -62,7 +62,7 @@ export type AuditKind =
   | 'DOCUMENT_READ_BY_MODEL' | 'DOCUMENT_PAGES_READ_BY_MODEL'
   /**
    * WHAT LEFT THE BUILDING, once per document, written by the upload flow
-   * (src/web/uploads.ts) from the pipeline's own egress record when steps 9 and 10 run. The payload's fingerprint,
+   * (src/modules/claims/uploads.ts) from the pipeline's own egress record when steps 9 and 10 run. The payload's fingerprint,
    * the KIND and PAGE of each segment sent and each segment the strip dropped with its reason, and the fields asked
    * for. NEVER A WORD OF THE DOCUMENT. It is the answer to "what exactly did you send", and it is the pipeline's
    * record rather than the reader's: the reader's own row is DOCUMENT_READ_BY_MODEL, beside it.
@@ -72,7 +72,7 @@ export type AuditKind =
    * MAIL_SERVER_CONNECTED is one conversation with the IONOS mail server, sending or
    * reading: the service, what for, the outcome, the reply code, how many messages, how long. Never a password, an
    * address or the server's words. EMAIL_BOUNCED is one email the server would not deliver: HARD or SOFT, and the
-   * code. ENGAGEMENT_SIGNED is the built-in signature (src/web/signing.ts): the signature record's own SHA-256, the
+   * code. ENGAGEMENT_SIGNED is the built-in signature (src/modules/claims/signing.ts): the signature record's own SHA-256, the
    * SHA-256 of the exact letter shown and of the signed PDF, and the session's id. The signer's name, role and
    * address are in the signature record, which this row's hash binds; they are not written here, because no log
    * line carries a name (the rule at the top of this file).
@@ -84,7 +84,7 @@ export type AuditKind =
   | 'ENGAGEMENT_SIGNERS_SET'
   // Staff opened a survey job on a claim (src/web/survey-open.ts); whether an estimate was sealed with it. No figure.
   | 'SURVEY_JOB_OPENED'
-  // A client accepted the survey report released to them (src/web/report-accept.ts). The version, never a figure.
+  // A client accepted the survey report released to them (src/modules/portal/report-accept.ts). The version, never a figure.
   | 'CLIENT_REPORT_ACCEPTED'
   | 'ACCOUNTANT_CONFIRM_SENT'
   | 'ACCOUNTANT_CONFIRM_ANSWERED'
@@ -254,9 +254,9 @@ export type AuditKind =
   | 'RIGHTS_SEARCH_RUN' | 'COMPLIANCE_LETTER_QUEUED'
   | 'LEGAL_HOLD_SET' | 'LEGAL_HOLD_LIFTED' | 'COMPLIANCE_LINKED'
   | 'COMPLAINT_LOGGED' | 'COMPLAINT_CLASSIFIED' | 'COMPLAINT_PROGRESS_RECORDED' | 'COMPLAINT_UPDATED' | 'COMPLAINT_CLOSED'
-  // A complaint sent through the public notices page's form (src/web/notices-site.ts).
+  // A complaint sent through the public notices page's form (src/modules/public-site/notices-site.ts).
   | 'COMPLAINT_FORM_RECEIVED'
-  // Staff checked what a client sent through their portal (src/web/client-checks.ts): accepted, or asked
+  // Staff checked what a client sent through their portal (src/modules/crm/client-checks.ts): accepted, or asked
   // again with a reason. The ids only.
   | 'CLIENT_SENT_ACCEPTED'
   | 'CLIENT_SENT_ASKED_AGAIN'
@@ -336,7 +336,7 @@ export type AuditKind =
    */
   /**
    * One person resolving one close-but-not-certain register match
-   * (src/web/match-review.ts). The lookup, whether anything was chosen, what the matcher scored it, the confidence
+   * (src/modules/claims/match-review.ts). The lookup, whether anything was chosen, what the matcher scored it, the confidence
    * grade the choice mints, and whether a record was stored. NEVER THE CANDIDATE, NEVER ITS LABEL: what a person
    * read on the way to the decision is the register's own address line, and A.8 point 8 says it is neither stored
    * nor logged. Who made it is the row's own actor.
@@ -344,7 +344,7 @@ export type AuditKind =
   | 'REGISTER_MATCH_PICKED'
   /**
    * One person answering, for one document, whether a name belongs to an
-   * organisation rather than to somebody (src/web/document-reading.ts). Two CLIENT_DOC fields are kept on that
+   * organisation rather than to somebody (src/modules/claims/document-reading.ts). Two CLIENT_DOC fields are kept on that
    * footing alone and the register cannot check it, because it classifies by field name and never sees a value.
    * The row carries the field, the answer and what it replaced. NEVER THE NAME ITSELF: the answer is about a value
    * this build refuses to log, and the document it came from has already been read and deleted.
@@ -361,11 +361,11 @@ export type AuditKind =
    * lookup, the reason in their own words, that the one record the pick wrote was removed, and what must be looked at
    * again as kinds and counts. DOCUMENT_FIELD_VOUCH_WITHDRAWN: a 'yes' about a name on a client document taken back —
    * the field, the reason, and how many records the field was taken out of. NEVER THE ENTRY, THE NAME OR THE VALUE,
-   * and the reason passes the same screen as every other detail (src/web/take-back.ts refuses one that would not).
+   * and the reason passes the same screen as every other detail (src/modules/portal/take-back.ts refuses one that would not).
    */
   | 'REGISTER_MATCH_TAKEN_BACK' | 'DOCUMENT_FIELD_VOUCH_WITHDRAWN'
   /**
-   * HM Land Registry's title register is looked up by hand (src/web/title-by-hand.ts).
+   * HM Land Registry's title register is looked up by hand (src/modules/claims/title-by-hand.ts).
    * TITLE_RECORDED_BY_HAND: a person recorded what the official copy says — the property, and WHICH facts were given,
    * never their values. TITLE_BY_HAND_TAKEN_BACK: that entry taken back, with the reason and what to look at again.
    */
@@ -378,17 +378,17 @@ export type AuditKind =
    */
   | 'IDENTITY_CHECK_SENT' | 'IDENTITY_CHECK_NOT_SENT' | 'IDENTITY_RESULT_RECEIVED' | 'IDENTITY_RESULT_REFUSED'
   /**
-   * WhatsApp with each client (src/web/whatsapp.ts). Sent, or not sent and why; received and filed (or left
+   * WhatsApp with each client (src/modules/crm/whatsapp.ts). Sent, or not sent and why; received and filed (or left
    * for a person to file); a webhook body refused because Meta's signature did not hold; filed by hand. Ids, counts and
    * outcomes only — NEVER a number or the words.
    */
   | 'WHATSAPP_SENT' | 'WHATSAPP_NOT_SENT' | 'WHATSAPP_RECEIVED' | 'WHATSAPP_REFUSED' | 'WHATSAPP_FILED'
-  // A person blocking off, or freeing, time in their own diary (src/web/time-blocks.ts).
+  // A person blocking off, or freeing, time in their own diary (src/modules/crm/time-blocks.ts).
   | 'TIME_BLOCKED' | 'TIME_FREED'
   // Admin saved a key's new value (sealed), or went back to the key file's (src/core/saved-keys.ts). The name only.
   | 'KEY_SAVED' | 'KEY_UNSAVED'
   // The Communication tab — a Zoom call staff started or booked, a telephone call staff logged, a video call
-  // first opened by its host (src/web/communication.ts). Ids and outcomes only.
+  // first opened by its host (src/modules/crm/communication.ts). Ids and outcomes only.
   | 'BOOKING_CREATED' | 'CALL_LOGGED' | 'VIDEO_CALL_OPENED'
   // A video call made under the shared Zoom host because its member of staff has no Zoom user.
   | 'VIDEO_CALL_SHARED_HOST'
@@ -398,7 +398,7 @@ export type AuditKind =
   | 'WHATSAPP_MEDIA_FETCHED' | 'WHATSAPP_MEDIA_NOT_FETCHED'
   // A chat exported on the WhatsApp phone, uploaded for checking, then saved to the record (counts only).
   | 'WHATSAPP_EXPORT_UPLOADED' | 'WHATSAPP_EXPORT_SAVED'
-  /** A person added an event to a building on its claim (src/web/property-events.ts): ids and the kind — never a cost. */
+  /** A person added an event to a building on its claim (src/modules/claims/property-events.ts): ids and the kind — never a cost. */
   | 'PROPERTY_EVENT_ADDED'
   /** A person recorded an event's VAT on its claim: the event and the field — never an amount. */
   | 'PROPERTY_EVENT_CHANGED'
@@ -407,13 +407,13 @@ export type AuditKind =
   /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/web/pack-approve.ts): the version and its fingerprint. */
   | 'SURVEY_PACK_APPROVED'
   /** The survey report emailed to the client's accountant for sign-off; their answer by the private link
-   *  (src/web/report-signoff.ts). Ids, the version and the outcome — never the link, never a figure. */
+   *  (src/modules/claims/report-signoff.ts). Ids, the version and the outcome — never the link, never a figure. */
   | 'REPORT_SENT_FOR_SIGNOFF' | 'REPORT_SIGNOFF_ANSWERED'
   /** A client's photo for the survey checklist (src/web/survey-evidence.ts). The photo's id and item only. */
   | 'SURVEY_EVIDENCE_ADDED'
   /** Photos sent in one go put under checklist items by Admin or Sales, or taken back. Counts only. */
   | 'SURVEY_PHOTOS_SORTED'
-  /** A site plan fetched for a survey job's report (src/web/site-plan.ts): how many buildings, and how the
+  /** A site plan fetched for a survey job's report (src/modules/claims/site-plan.ts): how many buildings, and how the
    *  client's was picked. Never the postcode, never a coordinate. */
   | 'SITE_PLAN_FETCHED'
   /** A signed word from the service that the check is still under way, or about something other than a

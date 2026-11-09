@@ -5,14 +5,14 @@
  * in OneDrive), moved here so it runs on every check. It drives the four-stage funnel through its real screen parser and
  * the engine itself over fixed grids (every sector x trigger x spend x date; every answer at a fixed spend; the engine's
  * triggers x bases x facts) and 3,000 multi-building funnels drawn from a fixed seed, so the same run is made every time.
- * Each broken property is a violation CLASS with a count and its smallest reproducer; test/phase159j.test.ts fails on any
+ * Each broken property is a violation CLASS with a count and its smallest reproducer; test/claims/stress-suite.test.ts fails on any
  * class that is not one of the readings kept on purpose (each named there with the Word question that asks about it).
  * Every "Phase 159x" note below is the harness's own: each marks where a later phase moved an expectation, and why.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any -- the engine is untyped JavaScript; this walks it as it is */
 import * as ENGINE from '../../engine/src/index.ts';
-import * as FUNNEL4 from '../src/web/funnel4.ts';
-import * as SESSION from '../src/web/funnel-session.ts';
+import * as FUNNEL4 from '../src/modules/assessment/funnel4.ts';
+import * as SESSION from '../src/modules/assessment/funnel-session.ts';
 import * as SR from '../src/shared/shown-range.ts';
 
 // Walked as untyped, as the harness walked them: the grids feed every string a person could type, typed or not.
@@ -43,7 +43,7 @@ export function runEngineStress(): EngineStress {
   }
   const bad = (n: unknown): boolean => typeof n !== 'number' || !Number.isFinite(n) || n < 0;
 
-  /* lowOf — TRANSCRIBED from backend/src/web/assessment.ts:357 (not exported). Sum of breakdown[].low, in pence. */
+  /* lowOf — TRANSCRIBED from backend/src/modules/assessment/assessment.ts:357 (not exported). Sum of breakdown[].low, in pence. */
   function lowOf(figure: { breakdown?: { low?: number }[] }): number | null {
     const rows = figure.breakdown ?? []; let total = 0; let any = false;
     for (const r of rows) if (typeof r.low === 'number') { total += r.low; any = true; }

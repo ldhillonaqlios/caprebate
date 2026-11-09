@@ -2,15 +2,15 @@
  * FINANCE ON THE CLAIM — INVOICES, CREDIT NOTES AND MONEY RECEIVED.
  * CRM 7 of 10, 11 September 2026.
  *
- * The schema is migration 016; the fee is src/web/fee-controls.ts; the VAT and
- * its monitoring are src/web/vat.ts; the pages are src/web/finance-pages.ts. The
+ * The schema is migration 016; the fee is src/modules/claims/fee-controls.ts; the VAT and
+ * its monitoring are src/modules/assessment/vat.ts; the pages are src/web/finance-pages.ts. The
  * scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 13.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * AN INVOICE BELONGS TO A CLAIM, AND ITS AMOUNT IS NEVER TYPED
  *
  * Our fee is raised on a claim at the invoice stage, once the fee trigger is
- * reached — FEE_TRIGGER in src/web/pipeline.ts, read and never re-decided — and
+ * reached — FEE_TRIGGER in src/modules/crm/pipeline.ts, read and never re-decided — and
  * inside the amendment window. Its figure is the tax adviser's signed-off figure;
  * its fee derives from that through CB_FEE and the fee controls; its VAT from the
  * recorded VAT position. A claim that has exited is refused, and a claim that left
@@ -40,22 +40,18 @@ import { authorise, can, type Actor } from '../core/index.ts';
 import { NotFoundAsRefusal } from '../core/backoffice.ts';
 import { localDate, localStamp } from '../shared/index.ts';
 import { formatPence, toPence } from '../shared/index.ts';
-import { addDaysToDate, dueReading, taskObj, type DueReading } from './tasks.ts';
+import { addDaysToDate, dueReading, taskObj, type DueReading } from '../modules/crm/index.ts';
 import { claimStage } from '../shared/index.ts';
-import { enteredAt, feeTriggerReached, liveFeeInvoiceCount, loadPipelineClaim, reportDeliveredOn, type FeeTrigger } from './pipeline.ts';
-import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from './claim-record.ts';
-import { claimantTypeForGate, claimObjFor } from './crm.ts';
-import {
-  computeFee, controlsView, letterFee, letterFees, FEE_CONTROLS, PAYMENT_TERMS_QUESTION,
-  type ControlsView, type FeeControls,
-} from './fee-controls.ts';
-import {
-  ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading,
-  type SettingsView, type VatReading,
-} from './vat.ts';
+import { enteredAt, feeTriggerReached, liveFeeInvoiceCount, loadPipelineClaim, reportDeliveredOn, type FeeTrigger } from '../modules/crm/index.ts';
+import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from '../modules/claims/index.ts';
+import { claimantTypeForGate, claimObjFor } from '../modules/crm/index.ts';
+import { computeFee, controlsView, letterFee, letterFees, FEE_CONTROLS, PAYMENT_TERMS_QUESTION, type ControlsView, type FeeControls } from '../modules/claims/index.ts';
+import { ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading, type SettingsView, type VatReading } from '../modules/assessment/index.ts';
 import { assertFinanceSection, feeVersusBenefit, financeSectionObj, type FeeVersusBenefit } from './finance.ts';
-import { feeList, onClause13Credit, onFeeInvoiced, type FeeView } from './introducers.ts';
-import type { Letter } from './letter.ts';
+import { feeList, onClause13Credit, onFeeInvoiced, type FeeView } from '../modules/crm/index.ts';
+import type { Letter } from '../modules/claims/index.ts';
+import { getBusinessesSectorById, getStaffTasksIdTitleByClaimIdRuleId } from '../modules/crm/index.ts';
+import { getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn } from '../modules/claims/index.ts';
 
 export type InvoiceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one, so the
@@ -610,11 +606,9 @@ export function creditClause13(d: InvoiceDeps, actor: Actor, id: string, input: 
     return { ok: false, why: `No clause 13 credit note is issued: ${reading.why.replace(/\.$/, '')}.` };
   }
   if (r.kind !== 'FEE' || r.invoice_status === 'CANCELLED') return { ok: false, why: 'Clause 13 reduces our fee on a raised invoice.' };
-  const reduced = d.db.get<{ amended_figure_pence: number }>(
-    'SELECT amended_figure_pence FROM hmrc_enquiries WHERE claim_id = ? AND closed_on IS NOT NULL AND amended_figure_pence IS NOT NULL ' +
-      'ORDER BY closed_on DESC, rowid DESC LIMIT 1', [r.claim_id]);
+  const reduced = getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn<{ amended_figure_pence: number }>(d.db, [r.claim_id]);
   if (reduced === undefined) return { ok: false, why: 'No reduced figure is recorded on this claim — clause 13 recalculates on the corrected figure, and there is none.' };
-  const sector = d.db.get<{ sector: string | null }>('SELECT sector FROM businesses WHERE id = ?', [r.business_id])?.sector ?? null;
+  const sector = getBusinessesSectorById<{ sector: string | null }>(d.db, [r.business_id])?.sector ?? null;
   let corrected = 0;
   if (reduced.amended_figure_pence > 0) {
     const f = computeFee({
@@ -749,10 +743,7 @@ export function financeDashboard(db: Db, actor: Actor, nowIso: string, opts: Inv
       const c = db.get<{ created_at: string; name: string }>(
         'SELECT c.created_at, b.name FROM claims c JOIN businesses b ON b.id = c.business_id WHERE c.id = ?', [e.claim_id]);
       const entered = localDate(enteredAt(db, { id: e.claim_id, created_at: c?.created_at ?? nowIso }, 'INVOICE'));
-      const t = db.get<{ id: string; title: string; status: string; due_on: string | null; owner_id: string | null; owner_role: string | null; business_id: string | null; claim_id: string | null }>(
-        'SELECT t.id, t.title, t.status, t.due_on, t.owner_id, t.owner_role, t.business_id, t.claim_id FROM staff_tasks t ' +
-          'JOIN automation_runs r ON r.id = t.automation_run_id WHERE t.claim_id = ? AND r.rule_id = ? ORDER BY t.created_at DESC LIMIT 1',
-        [e.claim_id, FINANCE_TASK_RULE]);
+      const t = getStaffTasksIdTitleByClaimIdRuleId<{ id: string; title: string; status: string; due_on: string | null; owner_id: string | null; owner_role: string | null; business_id: string | null; claim_id: string | null }>(db, [e.claim_id, FINANCE_TASK_RULE]);
       const task = t !== undefined && can(actor, 'staff_task.read', taskObj(db, t))
         ? { id: t.id, title: t.title, status: t.status, due: dueReading(t.due_on, nowIso, t.status === 'COMPLETED' || t.status === 'CANCELLED') }
         : null;

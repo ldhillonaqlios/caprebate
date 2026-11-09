@@ -36,6 +36,7 @@ import {
   type Check, type ComplianceDeps, type Fields, type HoldRow, type LinkLine, type Vocab, type WriteResult,
 } from './compliance.ts';
 import { localWhen } from '../shared/index.ts';
+import { getClaimsBusinessIdById, getClaimsClaimRefById } from '../modules/claims/index.ts';
 
 class Refusal extends Error {}
 
@@ -130,7 +131,7 @@ export function openIncident(d: ComplianceDeps, actor: Actor, input: Fields): Wr
     let business_id: string | null = null;
     let claim_id: string | null = check(textField(input['claim_id'], 100, 'The claim'));
     if (claim_id !== null) {
-      business_id = d.db.get<{ business_id: string }>('SELECT business_id FROM claims WHERE id = ?', [claim_id])?.business_id ?? null;
+      business_id = getClaimsBusinessIdById<{ business_id: string }>(d.db, [claim_id])?.business_id ?? null;
       if (business_id === null) return { ok: false, why: 'That claim was not found.' };
     }
     const fraudOn = check(dateField(input['fraud_attempted_on'], 'The date of the attempt'));
@@ -440,7 +441,7 @@ export function incidentView(db: Db, actor: Actor, id: string, nowIso: string): 
   return {
     incident: {
       ...i, kind_label: words(INCIDENT_KINDS, i.kind, i.kind),
-      claim_ref: i.claim_id === null ? null : (db.get<{ claim_ref: string }>('SELECT claim_ref FROM claims WHERE id = ?', [i.claim_id])?.claim_ref ?? null),
+      claim_ref: i.claim_id === null ? null : (getClaimsClaimRefById<{ claim_ref: string }>(db, [i.claim_id])?.claim_ref ?? null),
     },
     clock: article33Reading(i, dec, corrections, nowIso),
     corrections, decision: dec ?? null,

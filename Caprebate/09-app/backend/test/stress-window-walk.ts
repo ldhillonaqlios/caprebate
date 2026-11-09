@@ -4,14 +4,14 @@
  * The stress test of 9 October 2026 printed this by hand (04-phase-work/stress-2026-10-09/claim/h3-window.ts, in
  * OneDrive). Here it is made the same way every time — today is fixed at WINDOW_NOW — and each row (the claimant, the
  * year end, the purchase, the period recorded, and the window's state, deadline and words) is recorded in
- * test/fixtures/phase159j/window-table.csv by `node tools/window-table-record.ts`. test/phase159j.test.ts checks every
+ * test/fixtures/phase159j/window-table.csv by `node tools/window-table-record.ts`. test/claims/stress-suite.test.ts checks every
  * row, so a window that opens or closes differently is never silent. To move rows on purpose: re-record, read the diff.
  */
 import { randomUUID } from 'node:crypto';
 import { testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
-import { insertClaim } from '../src/web/crm.ts';
-import { amendmentWindowReading } from '../src/web/claim-facts.ts';
+import { insertClaim } from '../src/modules/crm/crm.ts';
+import { amendmentWindowReading } from '../src/modules/claims/claim-facts.ts';
 import type { App } from '../src/core/app.ts';
 
 export const WINDOW_NOW = '2026-10-09T12:00:00.000Z';

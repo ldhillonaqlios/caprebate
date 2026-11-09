@@ -28,6 +28,7 @@ import type { AuditLog } from '../core/audit.ts';
 import { authorise, type Actor } from '../core/index.ts';
 import { localStamp } from '../shared/index.ts';
 import { getAuditLogCount, listAuditLogKind } from '../core/index.ts';
+import { getBusinessesIdNameById } from '../modules/crm/index.ts';
 
 export type AuditLogDeps = { db: Db; audit: AuditLog; now: () => string };
 
@@ -66,7 +67,7 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
   if (askedOutcome !== '' && outcome === null) said.push('Outcome: not allowed, refused or error, so it was not used');
   // PHASE 160i: one client's entries, from the claim page's "Open the audit log for this client".
   const askedClient = (q.get('client') ?? '').trim();
-  const clientRow = askedClient === '' ? undefined : d.db.get<{ id: string; name: string }>('SELECT id, name FROM businesses WHERE id = ?', [askedClient]);
+  const clientRow = askedClient === '' ? undefined : getBusinessesIdNameById<{ id: string; name: string }>(d.db, [askedClient]);
   const client = clientRow === undefined ? null : { id: clientRow.id, name: clientRow.name };
   if (askedClient !== '' && client === null) said.push('Client: not a client in this system, so it was not used');
   for (const k of new Set(q.keys())) if (k !== 'kind' && k !== 'outcome' && k !== 'client') said.push(`${k.slice(0, 40)}: not a filter on this page, so it was not used`);

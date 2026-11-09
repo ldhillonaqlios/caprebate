@@ -21,20 +21,21 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { statementDoors } from './sql-doors.ts';
 import { can, type Obj } from '../src/core/authz.ts';
 import * as S from '../src/web/compliance-identity.ts';
 import * as B from '../src/web/compliance-breach.ts';
 import * as N from '../src/web/breach-names.ts';
 import type * as C from '../src/web/compliance.ts';
 import { addCalendarMonth, complaintTargets, COMPLAINT_TARGET_NOTE, COMPLAINT_UPDATE_EVERY_DAYS } from '../src/web/compliance-clock.ts';
-import { importPremises, mayNameAPerson, sectorFromServiceTypes, PREMISES_SOURCES } from '../src/web/premises-import.ts';
+import { importPremises, mayNameAPerson, sectorFromServiceTypes, PREMISES_SOURCES } from '../src/modules/crm/premises-import.ts';
 import { scannedPagesAllowedFor, SCANNED_PAGE_KINDS } from '../src/integrations/connectors/claude.ts';
 import { grantsChapter } from '../src/web/survey-pack-pages.ts';
 import { GRANT_AMOUNTS_TO_SURVEYOR, type PackView } from '../src/web/survey-pack.ts';
-import { F4_STEP_LABELS } from '../src/web/funnel4.ts';
+import { F4_STEP_LABELS } from '../src/modules/assessment/funnel4.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../src/shared/originals.ts';
-import { clientOwners } from '../src/web/documents.ts';
-import { ENQUIRY_RETENTION, enquiryRetentionMissing, sweepEnquiries, type EnquiryRetention } from '../src/web/enquiry-retention.ts';
+import { clientOwners } from '../src/modules/claims/documents.ts';
+import { ENQUIRY_RETENTION, enquiryRetentionMissing, sweepEnquiries, type EnquiryRetention } from '../src/modules/public-site/enquiry-retention.ts';
 import { ADDRESS_KEEP_UNTIL } from '../src/integrations/connectors/address-lookup.ts';
 import { IDENTITY_CHECK } from '../src/integrations/connectors/identity-check.ts';
 import { LICENCES, SOURCES } from '../src/integrations/registers/source-register.ts';
@@ -205,7 +206,10 @@ describe('line 9 — Word question 183: healthcare premises from open registers,
       }
     };
     walk(src);
-    assert.deepEqual(readers.sort(), ['web/premises-import.ts'], 'something other than the import reads the premises list');
+    // The statements live in the CRM's data file (the import still names the table in its audit entry); the import is
+    // still the only file that runs them.
+    assert.deepEqual(readers.sort(), ['modules/crm/data.ts', 'modules/crm/premises-import.ts'], 'something other than the import reads the premises list');
+    assert.deepEqual(statementDoors(src, /healthcare_premises/).callers, ['modules/crm/premises-import.ts'], 'something other than the import reads the premises list');
   });
 
   test('the name guard and the sector map, both ways', () => {
@@ -225,8 +229,8 @@ describe('line 12 — Word question 193: page pictures go to the reader only for
     for (const k of ['LEASE', 'ACCOUNTS', 'FIRE_RISK_ASSESSMENT', '', null, undefined]) assert.equal(scannedPagesAllowedFor(k), false, String(k));
   });
   test('the upload path passes each document’s kind to the reader', () => {
-    const uploads = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'uploads.ts'), 'utf8');
-    assert.match(uploads, /SELECT type_code FROM documents WHERE id = \?/);
+    const uploads = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'claims', 'uploads.ts'), 'utf8');
+    assert.deepEqual(statementDoors(join(import.meta.dirname, '..', 'src'), /SELECT type_code FROM documents WHERE id = \?/).callers, ['modules/claims/uploads.ts']);
     assert.match(uploads, /readScannedPages\(ctx, doc_id, images, kind\)/);
   });
 });
@@ -351,11 +355,11 @@ describe('line 17 — Word question 222: closed website enquiries deleted twelve
     } finally { a.close(); }
   });
 
-  // PHASE 157 (the sweep) built the funnel leads' deletion path, under the same switch; test/phase157.test.ts proves it.
+  // PHASE 157 (the sweep) built the funnel leads' deletion path, under the same switch; test/assessment/lost-enquiry-deletion.test.ts proves it.
   test('funnel leads are deleted only through their own plan and deletion-log entries, never by a plain statement', async () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'enquiry-retention.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'public-site', 'enquiry-retention.ts'), 'utf8');
     assert.ok(!/DELETE FROM leads/i.test(src), 'the enquiry clean-up deletes leads in bulk');
-    assert.match(src, /FROM leads WHERE enquiry_id IS NOT NULL AND status = 'LOST'/);
+    assert.ok(statementDoors(join(import.meta.dirname, '..', 'src'), /FROM leads WHERE enquiry_id IS NOT NULL AND status = 'LOST'/).callers.includes('modules/public-site/enquiry-retention.ts'));
     assert.match(src, /leadDeletionPlan/);
   });
 });

@@ -7,7 +7,7 @@
  * THE LIST IS COPIED FROM GOV.UK (https://www.gov.uk/bank-holidays.json, "england-and-wales"), read on 21 September 2026.
  * gov.uk publishes about two years ahead. `BANK_HOLIDAYS_KNOWN_TO` is the last day the list speaks for; after it, every
  * Monday to Friday counts as a working day again — so a lead turns red a day early after a holiday, never a day late.
- * test/phase137.test.ts fails 90 days before the list runs out, so somebody copies the next year in before it matters.
+ * test/crm/lead-card-sections.test.ts fails 90 days before the list runs out, so somebody copies the next year in before it matters.
  */
 
 import { localDate } from './localtime.ts';

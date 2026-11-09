@@ -24,8 +24,8 @@
  * claim in a footer.
  */
 
-import type { EngagementSigning } from '../web/signing.ts';
-import { handleWhatsAppImport } from '../web/whatsapp-import-pages.ts';
+import type { EngagementSigning } from '../modules/claims/index.ts';
+import { handleWhatsAppImport } from '../modules/crm/index.ts';
 import { handleConnections } from '../web/connections.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import * as SI from './sign-in.ts';
@@ -42,11 +42,11 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 import { staffShell, portalShell, opens, navContext, filterBar, LEAD_FILTERS, setSubMenu } from './navigation.ts';
 import { kpiRow, lateBadge, nobodyBadge } from './look.ts';
 import { settingsBody, settingsTiles } from '../web/admin-tiles.ts';
-import { homeRows } from '../web/home.ts';
-import { dashboard, dashView } from '../web/staff-dashboard.ts';
-import { addBlock, removeBlock } from '../web/time-blocks.ts';
+import { homeRows } from '../modules/public-site/index.ts';
+import { dashboard, dashView } from '../modules/crm/index.ts';
+import { addBlock, removeBlock } from '../modules/crm/index.ts';
 import { saveKey } from './saved-keys.ts';
-import { mayReadQueue, readRepliesIfDue } from '../web/inbound-email.ts';
+import { mayReadQueue, readRepliesIfDue } from '../modules/crm/index.ts';
 import { refillForm, typedValues } from './refill.ts';
 import { welcomeCard, why } from '../shared/index.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
@@ -54,44 +54,42 @@ import { keepSectionChoice } from './sections.ts';
 import { staffHelp } from './help.ts';
 import * as S from '../web/settings.ts';
 import * as B from './backoffice.ts';
-import { handleEngaged } from '../web/engaged-pages.ts';
-import { handleClientPage } from '../web/client-page.ts';
-import { handleClientFiles } from '../web/client-files-pages.ts';
-import { handleFreeEmail } from '../web/free-email-pages.ts';
-import { handleStaffMessages } from '../web/messages-pages.ts';
+import { handleEngaged } from '../modules/claims/index.ts';
+import { handleClientPage } from '../modules/crm/index.ts';
+import { handleClientFiles } from '../modules/portal/index.ts';
+import { handleFreeEmail } from '../modules/crm/index.ts';
+import { handleStaffMessages } from '../modules/crm/index.ts';
 import { handleSurveyor } from '../web/surveyor-pages.ts';
 import { handleSurveyPack } from '../web/survey-pack-pages.ts';
-import { handleReportStaff } from '../web/report-pages.ts';
-import { handleAccountantConfirmStaff } from '../web/accountant-confirm-pages.ts';
+import { handleReportStaff } from '../modules/claims/index.ts';
+import { handleAccountantConfirmStaff } from '../modules/portal/index.ts';
 import { handleStaffEvidence } from '../web/evidence-pages.ts';
 import { handleFinance } from '../web/finance-pages.ts';
-import { handleCrm } from '../web/crm-pages.ts';
-import { handlePipeline } from '../web/pipeline-pages.ts';
-import { handleTasks } from '../web/tasks-pages.ts';
-import { handleDocuments } from '../web/documents-pages.ts';
-import { handleIntroducers } from '../web/introducers-pages.ts';
-import { handleClaimRecord } from '../web/claim-record-pages.ts';
+import { handleCrm } from '../modules/crm/index.ts';
+import { handlePipeline } from '../modules/crm/index.ts';
+import { handleTasks } from '../modules/crm/index.ts';
+import { handleDocuments } from '../modules/claims/index.ts';
+import { handleIntroducers } from '../modules/crm/index.ts';
+import { handleClaimRecord } from '../modules/claims/index.ts';
 import { handleCompliance } from '../web/compliance-pages.ts';
-import { handleDashboard } from '../web/dashboard-pages.ts';
+import { handleDashboard } from '../modules/crm/index.ts';
 import { handleLists } from '../shared/lists-pages.ts';
 import { handleConfiguration } from '../web/configuration-pages.ts';
 import { setPhoto, clearPhoto, readPhoto, photoFor, PHOTO_HEADERS, IMAGE_LIMITS } from './avatar.ts';
-import {
-  HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments,
-  startOfLocalDay, staffSlots, type Availability, type WorkingTimeInput,
-} from '../web/schedule.ts';
+import { HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments, startOfLocalDay, staffSlots, type Availability, type WorkingTimeInput } from '../modules/crm/index.ts';
 import {
   localClock, localDate, localPartsOf, localStamp, localWhen, zoneNotice,
 } from '../shared/index.ts';
 import { singleFile } from './multipart.ts';
 import { RANGE_QUALIFIER } from '../shared/index.ts';
 import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from '../web/audit-log.ts';
-import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine, SAME_TIME_WORDS, VIDEO_PAGE_HEADERS } from '../web/video-calls.ts';
-import { sendVideoInvite } from '../web/booking-invite.ts';
+import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine, SAME_TIME_WORDS, VIDEO_PAGE_HEADERS } from '../modules/crm/index.ts';
+import { sendVideoInvite } from '../modules/crm/index.ts';
 import { hostZak, joinSignature } from '../integrations/index.ts';
 import { piecesPage } from './upload-pieces.ts';
 import { listOutboxCreatedAtToEmailByOutboxId, updateVideoMeetingsHostOpenedAtHostOpenedByByIdHostOpenedAt } from '../integrations/index.ts';
 import { getSessionsIdByTokenHashRevokedAt, getUsersNById } from './data.ts';
+import { getBookingsSById } from '../modules/crm/index.ts';
 
 export type StaffDeps = {
   app: App;
@@ -99,7 +97,7 @@ export type StaffDeps = {
   newId: () => string;
   /** The site's address, for a video call's join page in its invitation. */
   publicOrigin?: string;
-  /** The signing setting this copy runs under (src/web/signing.ts), for the letter's links. */
+  /** The signing setting this copy runs under (src/modules/claims/signing.ts), for the letter's links. */
   signing?: EngagementSigning;
 };
 
@@ -248,7 +246,7 @@ export async function handleStaff(
 
   /* ------------------------------------------------------------ home */
   if (path === '/staff' && method === 'GET') {
-    // Home is a dashboard, in the shape of the login's role; Admin has a tab for each (src/web/staff-dashboard.ts).
+    // Home is a dashboard, in the shape of the login's role; Admin has a tab for each (src/modules/crm/staff-dashboard.ts).
     const view = dashView(actor, url.searchParams.get('view'));
     // 1 Oct 2026: the inbox is read first (at most every two minutes), so "new messages" counts a reply that just came.
     if (mayReadQueue(actor)) await readRepliesIfDue(d.app);
@@ -332,7 +330,7 @@ export async function handleStaff(
     if (starts === '') {
       return problem(res, actor, 'Not scheduled', 'Pick a time.', '/staff/calendar');
     }
-    const hadTime = db.get<{ s: string | null }>('SELECT starts_at AS s FROM bookings WHERE id = ?', [id])?.s ?? null;
+    const hadTime = getBookingsSById<{ s: string | null }>(db, [id])?.s ?? null;
     const r = B.scheduleBooking(
       { db, audit: d.app.audit, email: d.app.email, now, newId: d.newId },
       actor,
@@ -465,10 +463,10 @@ export async function handleStaff(
   // The survey pack — the sums, the surveyor's stamped changes (src/web/survey-pack-pages.ts).
   const pack = await handleSurveyPack({ app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form);
   if (pack === 'handled') return 'handled';
-  // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/web/report-pages.ts).
+  // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/modules/claims/report-pages.ts).
   const report = await handleReportStaff({ app: d.app, newId: d.newId, nav, stamp, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (report === 'handled') return 'handled';
-  // Email the client's accountant a link to confirm for themselves (src/web/accountant-confirm-pages.ts).
+  // Email the client's accountant a link to confirm for themselves (src/modules/portal/accountant-confirm-pages.ts).
   const confirmLink = await handleAccountantConfirmStaff({ app: d.app, newId: d.newId, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (confirmLink === 'handled') return 'handled';
   // The client's photos, the walkthrough call and how the surveyor inspected (src/web/evidence-pages.ts).
@@ -864,7 +862,7 @@ function currentSessionId(d: StaffDeps, req: IncomingMessage): string {
  * ================================================================== */
 
 /* ------------------------------------------------------------------ *
- * HOME: ROWS OF TILES, IN THE OWNER'S ORDER (src/web/home.ts)
+ * HOME: ROWS OF TILES, IN THE OWNER'S ORDER (src/modules/public-site/home.ts)
  * ------------------------------------------------------------------ */
 
 /**
@@ -885,7 +883,7 @@ function withDone(back: string, done: string): string {
 }
 
 function homePage(actor: Actor, rows: Safe, view: string | null = null): string {
-  // A dashboard draws its own heading, with the day and what is late beside it (src/web/staff-dashboard.ts).
+  // A dashboard draws its own heading, with the day and what is late beside it (src/modules/crm/staff-dashboard.ts).
   return page({ title: 'Home', nav: nav(actor, view), wide: true, body: view === null ? h`<h1>Home</h1>${rows}` : rows });
 }
 
@@ -1227,7 +1225,7 @@ const OUTBOX_KIND_WORDS: Readonly<Record<string, string>> = Object.freeze({
   PASSWORD_RESET: 'Password reset', WELCOME: 'Welcome', COMPLIANCE_LETTER: 'Rights or complaint letter', ACCOUNT_VERIFY: 'Email address check', SIGNED_LETTER: 'Signed letter',
 });
 
-/** The kinds a company's Email page lists (src/web/free-email.ts) — only these rows link there. */
+/** The kinds a company's Email page lists (src/modules/crm/free-email.ts) — only these rows link there. */
 const ON_EMAIL_PAGE: readonly string[] = ['FREE_TYPED', 'TEMPLATE'];
 
 function settingsPage(

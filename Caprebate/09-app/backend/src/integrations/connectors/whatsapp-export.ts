@@ -3,7 +3,7 @@
  *
  * the owner chose a manual upload: staff talk to clients on the
  * WhatsApp phone, and to keep a conversation they export that one chat (Export chat > Attach media) and upload the
- * .zip on the client's WhatsApp page. This file turns the export's text into messages; src/web/whatsapp-import.ts
+ * .zip on the client's WhatsApp page. This file turns the export's text into messages; src/modules/crm/whatsapp-import.ts
  * checks them with a person and saves them.
  *
  * THE TWO LAYOUTS (read from a real iPhone export's 5 October lines only, every word masked, used with consent; and

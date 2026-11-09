@@ -3,7 +3,7 @@
  *
  * The stub provider that lived here (`stubSignatureProvider`, which contacted nothing and executed nothing) is gone.
  * the owner decided the engagement letter is signed inside the application, so the signature is built in:
- * src/web/signing.ts — the client types their full name and role, ticks that they may sign for the business, and
+ * src/modules/claims/signing.ts — the client types their full name and role, ticks that they may sign for the business, and
  * presses Sign; the record, its fingerprint in the audit chain and a signed PDF are kept. It is switched off
  * (ENGAGEMENT_SIGNING) until our solicitor confirms a typed name suits the letter and the letter's open terms are
  * settled.
@@ -12,7 +12,7 @@
  * built-in provider's description of itself. The surveyor's "commit figures" is not a signature and never was.
  *
  * WHAT MUST NOT BE BUILT ON TOP OF THIS: a signed engagement is what gates the PAID register calls, and that
- * assertion is SERVER-SIDE. `assertSignedEngagement` (src/web/research.ts) reads the engagements table and the
+ * assertion is SERVER-SIDE. `assertSignedEngagement` (src/modules/claims/research.ts) reads the engagements table and the
  * signature record; it must never read a value returned to a browser.
  */
 

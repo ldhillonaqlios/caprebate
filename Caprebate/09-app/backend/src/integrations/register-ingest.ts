@@ -59,7 +59,7 @@ export function ingestRegisterRecord(
  * Two decisions a person makes put register data in: choosing one entry from a close-match list and
  * saying a name on a client document belongs to an organisation. Both can now be taken back, and taking
  * one back takes out what it put in — so, like the way in, the way out is in this file and nowhere else, and
- * test/phase146j.test.ts asserts it. Neither function decides WHETHER something may be removed: that is the caller's,
+ * test/claims/take-back-picks.test.ts asserts it. Neither function decides WHETHER something may be removed: that is the caller's,
  * who has already checked that nobody approved it and that this decision is what wrote it. These only do it, and
  * refuse to do more than they were asked.
  * ------------------------------------------------------------------ */

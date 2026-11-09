@@ -564,7 +564,7 @@ export function updateWhatsappMessagesStatusStatusAtById(db: Db, params: readonl
 }
 
 // moved by hand: a statement whose text depends on one switch, kept exactly as its caller built it
-/** research_sources: a source's row after a run (src/web/research.ts); a fired source also records when and by which route. */
+/** research_sources: a source's row after a run (src/modules/claims/research.ts); a fired source also records when and by which route. */
 export function updateResearchSourcesAfterRun(db: Db, fired: boolean, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run(
     'UPDATE research_sources SET tier = ?, state = ?, detail = ?, publisher = ?, licence_id = ?, attempts = ?, ' +
@@ -572,7 +572,7 @@ export function updateResearchSourcesAfterRun(db: Db, fired: boolean, params: re
     params,
   );
 }
-/** register_records: how many records of a source a company gained since a time (src/web/take-back.ts), for one building when it has one. */
+/** register_records: how many records of a source a company gained since a time (src/modules/portal/take-back.ts), for one building when it has one. */
 export function countRegisterRecordsSince<T extends Row = Row>(db: Db, forBuilding: boolean, params: readonly Param[] = []): T | undefined {
   return db.get<T>(
     'SELECT COUNT(*) AS n FROM register_records WHERE business_id = ? AND source_id = ? AND obtained_at >= ?' +

@@ -5,7 +5,7 @@
  * the mock-up approved the same day ("Yes, build it as shown").
  *
  * IN THE FILMING GUIDE'S ORDER (04-phase-work/phase9/video-walkthrough-capture-script-v1.md, Part B): the outside, the
- * plant room, the electrics, comms and data, water, then every room type of the sector (src/web/rooms.ts), then
+ * plant room, the electrics, comms and data, water, then every room type of the sector (src/modules/crm/rooms.ts), then
  * corridors and life safety, the kitchen and utility, and last the ceiling and floor voids — building-wide things
  * first, the fiddly ones last. Each item says what to photograph in the guide's own words, and which lines of the
  * survey pack it is evidence for (the fixture list's ids, Caprebate-Fixture-Taxonomy-v1.csv), so the surveyor sees
@@ -15,7 +15,7 @@
  * Nothing here is stored: the list is made from the sector each time, and only what the client did is kept
  * (src/web/survey-evidence.ts). An item's key never changes once used, so a photo stays with its item.
  */
-import { roomsFor } from './rooms.ts';
+import { roomsFor } from '../modules/crm/index.ts';
 
 export type ChecklistItem = {
   /** Stable: a building item's name, or ROOM-<room id>. */
