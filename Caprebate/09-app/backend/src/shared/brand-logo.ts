@@ -5,7 +5,7 @@
  * stacked lockup, transparent, 924 x 620). The brand book forbids rebuilding the lockup (slide 29), so this is the
  * designer's PNG and not a drawing of it. It is held here as base64 and served from memory, the same way the stylesheet
  * is, so the application still has no route that maps a request onto the filesystem (assertNoStaticFileRoute) and the
- * Content-Security-Policy's img-src 'self' already covers it. test/phase133c.test.ts compares the served bytes with the
+ * Content-Security-Policy's img-src 'self' already covers it. test/core/brand-voice-and-first-use.test.ts compares the served bytes with the
  * supplied file.
  *
  * ONLY THE MONO-INK LOCKUP IS SERVED. It is the one for a white ground. The stacked lockup is illegible below 100 px

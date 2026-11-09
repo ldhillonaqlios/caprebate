@@ -81,7 +81,7 @@
  * The two must not be allowed to become one check.
  *
  * Runs on Node >= 22.6 with type stripping.
- * Run:  cd phase9 && node --test caprebate-location-key.test.ts
+ * Run:  cd phase9 && node --test test/integrations/location-key.test.ts
  */
 
 import {

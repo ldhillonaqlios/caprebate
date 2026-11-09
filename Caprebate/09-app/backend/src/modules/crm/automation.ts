@@ -121,7 +121,7 @@ export const FORBIDDEN_EFFECTS: Vocab = Object.freeze({
  * src/modules/admin/templates.ts holds while this says `in_force: false`. The procedure did
  * not exist in the operating procedure's export; CRM 7 of 10 drafted it into SOP 9
  * as a FLAGGED DRAFT ADDITION and entered its sign-off in the register for the
- * solicitor, the data protection officer and the developer. test/finance-claim.test.ts
+ * solicitor, the data protection officer and the developer. test/finance/invoices-and-fee-controls.test.ts
  * reads the export and fails if this says in force while the export says draft.
  *
  * TURNING IT ON IS NOT THIS FLAG. When the procedure is signed off, building the

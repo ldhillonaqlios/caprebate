@@ -1200,7 +1200,7 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
     portal: {
       /* The portal's own line, numbered, in the shipped step names (NAME_SWITCHES.portalSteps is on).
          The claim page redraws it from the keys under the request's own switch (crm-pages.ts); this module does not
-         import navigation.ts, which reads the settings tiles as it loads (an import loop broke phase156e). */
+         import navigation.ts, which reads the settings tiles as it loads (an import loop broke test/admin/connections-and-regulator-lists.test.ts). */
       shows: clientStage(business?.stage ?? '') === undefined ? 'a step the client’s page does not show'
         : portalStepLine(business?.stage as StageKey, true),
       this_claim_evidences: evidences === null ? null

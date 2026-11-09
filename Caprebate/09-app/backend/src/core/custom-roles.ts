@@ -17,7 +17,7 @@
  *      right to sign a survey off — may hold none of the actions that reveal the estimate or the value of a claim
  *      (SEALED_FROM_SURVEY). And a made role is sent to the estimate quarantine AS THE SURVEYOR unless it holds
  *      `estimate.read` itself (src/core/roles.ts, toQuarantineRole), so the survey workspace's payload withholds the sealed
- *      estimate from it; test/phase151.test.ts runs payload-proof's check on such a role.
+ *      estimate from it; test/compliance/identity-check-and-custom-roles.test.ts runs payload-proof's check on such a role.
  *   2. ONLY THE SUPER ADMIN RUNS ACCOUNTS AND ROLES. Creating, changing and disabling users, giving roles, and making
  *      or changing roles (NEVER_GRANTED) cannot be given to a made role.
  *   3. A GRANT MUST BE ONE THE BUILT-IN ROLE ACTUALLY HOLDS. A client's rule is never borrowed: a made role is a staff

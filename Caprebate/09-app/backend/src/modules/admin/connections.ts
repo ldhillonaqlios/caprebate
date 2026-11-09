@@ -70,7 +70,7 @@ const yes = { on: true, why: '' };
 const off = (why: string) => ({ on: false, why });
 
 /**
- * EVERY OUTSIDE SERVICE, in the order the work meets them. Each `calls` id is a CALL_POLICIES row (test/phase156e
+ * EVERY OUTSIDE SERVICE, in the order the work meets them. Each `calls` id is a CALL_POLICIES row (test/admin/connections-and-regulator-lists.test.ts
  * proves every row is on this page, so a new service cannot be added and left off it).
  */
 export const CONNECTIONS: readonly Connection[] = Object.freeze([

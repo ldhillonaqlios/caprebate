@@ -549,11 +549,11 @@ const RULES: RuleTable = {
   'invoice.write': { ADMIN: always, ACCOUNTING: always },
   /*
    * CRM 7 of 10 — FINANCE ON THE CLAIM. EVERY ROW BELOW IS NEW AND EVERY ROLE NOT
-   * NAMED IS REFUSED — test/finance-claim.test.ts asserts it per role, per action.
+   * NAMED IS REFUSED — test/finance/invoices-and-fee-controls.test.ts asserts it per role, per action.
    *
    * RAISING, CREDITING AND RECORDING MONEY RECEIVED ARE ACCOUNTING'S AND ADMIN'S,
    * as the invoice is. None of them takes money: `record_received` records what a
-   * person saw arrive, and test/finance.test.ts still refuses any action named for
+   * person saw arrive, and test/finance/accounting-view.test.ts still refuses any action named for
    * taking a payment. A FINANCE SETTING — the VAT position, the threshold, the
    * margin — IS ADMIN'S ALONE: the monitoring is a director's check, and the person
    * whose invoices it monitors does not move its line.
@@ -800,7 +800,7 @@ const RULES: RuleTable = {
    * people who talk to the client, ADMIN and SALES; that it was settled with the
    * firm, by the people who keep the money, ADMIN and ACCOUNTING. NOTHING HERE
    * TAKES MONEY: `record_settled` records that Caprebate paid a firm, and
-   * test/finance.test.ts still refuses any action named for taking a payment.
+   * test/finance/accounting-view.test.ts still refuses any action named for taking a payment.
    *
    * CONTACT WITH A FIRM IS A STAFF TASK (row E48), so logging or planning it also
    * asks `staff_task.create`, which is ADMIN's and SALES's already.
@@ -857,7 +857,7 @@ const RULES: RuleTable = {
   /* --- the compliance registers. CRM 8 of 10 ---------------
    *
    * EVERY ROW BELOW IS NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/
-   * compliance.test.ts asserts the refusal for each one, per action.
+   * test/compliance/compliance-registers.test.ts asserts the refusal for each one, per action.
    *
    * NONE OF THIS IS FOR SALES, ACCOUNTING OR SURVEYING, and ADMIN holds it TODAY
    * ONLY because nobody else can. There is no data protection officer role and
@@ -886,7 +886,7 @@ const RULES: RuleTable = {
 
   /* --- the per-disclosure log. -------------------
    *
-   * BOTH ROWS ARE NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/phase129.test.ts
+   * BOTH ROWS ARE NEW AND EVERY ROLE NOT NAMED IS REFUSED — test/compliance/data-protection-switches.test.ts
    * asserts the refusal for each one, per action. The log is switched off
    * (`DISCLOSURE_LOG` in src/modules/compliance/disclosure-log.ts), so today these rows admit a
    * person to a refusal that says so, and nothing more.

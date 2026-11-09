@@ -6,7 +6,7 @@
  * they hide the card. Hiding it is stored on the user (migration 030) and audited; it never comes back.
  *
  * NOTHING HERE WIDENS WHAT A LOGIN MAY OPEN. Every button is an address that login's own menu already offers, and
- * test/phase133c.test.ts opens each one as that login and requires 200.
+ * test/core/brand-voice-and-first-use.test.ts opens each one as that login and requires 200.
  */
 
 import type { Db } from './db.ts';

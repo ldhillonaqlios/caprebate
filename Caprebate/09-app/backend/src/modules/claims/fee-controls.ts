@@ -2,7 +2,7 @@
  * THE FEE CONTROLS — BUILT, SHIPPED OFF, ONE SWITCH EACH. CRM 7 of 10.
  *
  * Commercial decisions that are open may not be guessed into a screen. So each
- * is BUILT, carries ONE SWITCH, and SHIPS OFF — and test/finance-claim.test.ts
+ * is BUILT, carries ONE SWITCH, and SHIPS OFF — and test/finance/invoices-and-fee-controls.test.ts
  * proves that off is exactly today's behaviour: the plain 3% of the allowances
  * identified, no warning, and nothing but our fee raised on a claim at the
  * invoice stage.

@@ -24,7 +24,7 @@
  * threshold, the retention parameters, the boundary of the five roles, a document
  * type's receipt policy, a value-carrying type marked as carrying none, and the
  * claim's fact keys, capture sources and payer classes. Asking for one writes a
- * REFUSED audit line and changes nothing; test/configuration.test.ts asks for every
+ * REFUSED audit line and changes nothing; test/admin/configuration.test.ts asks for every
  * one and reads each thing back unchanged.
  *
  * THE THINGS THIS SCREEN FOLDS IN ARE READ FROM THEIR OWN STORES, never copied: the

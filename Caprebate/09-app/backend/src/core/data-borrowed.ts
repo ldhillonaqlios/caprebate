@@ -123,7 +123,7 @@ export function searchNotes<T extends Row = Row>(db: Db, params: readonly Param[
 }
 
 /**
- * EVERY STATEMENT SEARCH CAN RUN, exported so test/search.test.ts can assert that none of them names the identity
+ * EVERY STATEMENT SEARCH CAN RUN, exported so test/core/global-search.test.ts can assert that none of them names the identity
  * store, a compliance register, a document's content or the estimate. The prose at the top of this file names those
  * tables on purpose, so the test reads these and not the source text.
  */

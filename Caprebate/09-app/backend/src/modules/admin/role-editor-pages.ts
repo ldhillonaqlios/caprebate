@@ -18,7 +18,7 @@
  * that role's own test on each object (src/core/custom-roles.ts). So for each thing the screen offers only the built-in
  * roles that do it, and "No". Things no staff role does, and the things only the super admin may do, are not offered.
  *
- * EVERY REGISTERED ACTION HAS WORDS HERE, OR IS NAMED AS NEVER OFFERED. test/phase151b.test.ts fails on a new action with
+ * EVERY REGISTERED ACTION HAS WORDS HERE, OR IS NAMED AS NEVER OFFERED. test/compliance/identity-check-wiring.test.ts fails on a new action with
  * no words, so a new right cannot reach this screen as a code word.
  */
 

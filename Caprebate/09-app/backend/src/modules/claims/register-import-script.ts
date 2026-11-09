@@ -41,7 +41,7 @@ function cbForm() { try { var d = root.document; var m = d && d.querySelector ? 
 
   function quoted(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }
 
-  /* Only the named columns, the header first. Exported for the test (test/phase156e.test.ts runs this file). */
+  /* Only the named columns, the header first. Exported for the test (test/admin/connections-and-regulator-lists.test.ts runs this file). */
   function trim(text, delim, wanted) {
     var all = rows(text.charCodeAt(0) === 0xfeff ? text.slice(1) : text, delim);
     if (all.length === 0) return '';

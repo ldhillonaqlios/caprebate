@@ -13,7 +13,7 @@
  * main pool and the special rate pool are shared out the same way.
  *
  * THIS FILE ONLY ADDS UP. No database, no clock, no page: given the inputs, the same answer every time, so it can be
- * tested on tens of thousands of made-up packs (test/pack-sums.test.ts). The rules it keeps, each tested:
+ * tested on tens of thousands of made-up packs (test/survey/pack-sums.test.ts). The rules it keeps, each tested:
  *
  *   · EVERY AMOUNT IS WHOLE PENCE, worked in BigInt, so nothing is lost to floating point and nothing overflows. Each
  *     rounding is to the nearest penny, a half penny up — and there are exactly four of them (a line's rebuild cost,

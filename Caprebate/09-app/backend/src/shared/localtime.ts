@@ -38,7 +38,7 @@
  * abbreviation printed on screen ("BST" or "GMT") is asked of it too rather
  * than chosen by an `if`.
  *
- * Two tests in test/staff.test.ts pick real dates either side of the 2026
+ * Two tests in test/core/filled-assessments-and-calendar.test.ts pick real dates either side of the 2026
  * transitions — 29 March and 25 October — and would fail on any fixed offset in
  * either direction. One of them asserts a difference of exactly one hour
  * between the same clock time in June and in January, which no constant can

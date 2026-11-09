@@ -39,7 +39,7 @@
  * it lowers the cap from the earlier sale (s.185, pack-legal.ts). And C23: every route's rows add up to its total.
  *
  * NOTHING HERE READS A DATABASE, A CLOCK OR A SWITCH: the switches are arguments, so both ways are tested
- * (test/pack-grants.test.ts) while the one that ships is off. Whether a grant reduces qualifying spend item by item is
+ * (test/survey/pack-grants.test.ts) while the one that ships is off. Whether a grant reduces qualifying spend item by item is
  * the tax adviser's to confirm — FOR THE ACCOUNTANT, ACC-A16.
  */
 import { mulDivRound, type Needed, type PackInputs, type PackLine, type PackSums } from './pack-sums.ts';

@@ -23,7 +23,7 @@
  *
  * WHAT THE CLIENT'S VIEW CAN NEVER CARRY. `clientSteps` reads `client_step_notices` and nothing else: a step's key, its
  * claim and a date. It has no path to a fact, a value, a register record, a figure, an estimate, a reason or a name, so
- * none of them can reach the portal from here — test/phase139.test.ts proves it on the wire.
+ * none of them can reach the portal from here — test/claims/fact-sources-and-approve-box.test.ts proves it on the wire.
  *
  * THE PAID-RESEARCH RULE STANDS. Approval is on the RESULTS, never on the calls: "Run the research" still runs every call
  * it may, in one press, with no per-call confirmation (src/modules/claims/research.ts). Nothing here calls a register. The
