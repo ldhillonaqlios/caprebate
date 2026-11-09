@@ -36,7 +36,7 @@ import * as P from '../../src/modules/crm/pipeline.ts';
 import * as L from '../../src/modules/crm/leads.ts';
 import * as T from '../../src/modules/crm/tasks.ts';
 import * as A from '../../src/modules/crm/automation.ts';
-import * as M from '../../src/web/templates.ts';
+import * as M from '../../src/modules/admin/templates.ts';
 import * as E from '../../src/modules/claims/engaged.ts';
 import { registryGate, feeGuard } from '../../src/shared/engine.ts';
 import { localDate } from '../../src/shared/localtime.ts';
@@ -437,7 +437,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       for (const name of ['moveClaim', 'recordMilestone', 'recordEnquiryCheck', 'runResearch', 'retryFailedSource', 'ingestRegisterRecord', 'assertSignedEngagement']) {
         assert.equal(new RegExp(`\\b${name}\\b`).test(auto), false, `automation.ts names ${name}`);
       }
-      for (const file of ['modules/crm/automation.ts', 'web/templates.ts']) {
+      for (const file of ['modules/crm/automation.ts', 'modules/admin/templates.ts']) {
         const src = readFileSync(join(SRC, file), 'utf8');
         assert.equal(/\b(d|app)\.email\b/.test(src), false, `${file} uses the application's transport`);
         assert.match(src, /outboxTransport\(d\.db, d\.newId, d\.now\)/, `${file} does not build its own outbox transport`);

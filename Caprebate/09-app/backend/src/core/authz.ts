@@ -937,7 +937,7 @@ const RULES: RuleTable = {
   /*
    * THE ADMIN SETTINGS SCREEN. SALES READS IT, as it reads the automation rules, the templates and the document types
    * it folds in; ADMIN alone changes a list or a reason. What no setting may change — a gate, a switch, a role — is
-   * refused by the store (src/web/configuration.ts), and no action here reaches one.
+   * refused by the store (src/modules/admin/configuration.ts), and no action here reaches one.
    */
   'configuration.read': { ADMIN: always, SALES: always },
   'configuration.write': { ADMIN: always },

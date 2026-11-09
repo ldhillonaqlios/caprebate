@@ -238,7 +238,7 @@ export async function createApp(
        {"ok":true} when the database answers, and 503 {"ok":false} when it does not - nothing else, so it tells nobody
        which parts are built or switched on. It is answered first, before any sign-in is read, so an uptime check sees
        the database and nothing in front of it. The list of what is built and switched off (STUBS) is for Admin only,
-       at /staff/connections/switches.json (src/web/connections.ts). */
+       at /staff/connections/switches.json (src/modules/admin/connections.ts). */
     if (path === '/api/health' && req.method === 'GET') {
       try { app.db.get('SELECT 1 AS ok'); } catch { return send(res, 503, { ok: false }); }
       return send(res, 200, { ok: true });

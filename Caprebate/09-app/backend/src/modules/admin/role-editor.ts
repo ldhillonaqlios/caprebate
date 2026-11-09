@@ -6,21 +6,21 @@
  *
  *   makeRole     a new role: its name and what it can see and do, each borrowed from a built-in staff role;
  *   changeRole   a new list of grants for an existing role — the people holding it are signed out, because a role
- *                change is a privilege change (the same rule as src/web/settings.ts, assignRole);
+ *                change is a privilege change (the same rule as src/modules/admin/settings.ts, assignRole);
  *   retireRole   a role nobody holds, kept for the audit log's sake, never deleted.
  *
  * EVERY ROLE CHANGE IS IN THE AUDIT LOG: ROLE_CREATED, ROLE_CHANGED, and ROLE_REFUSED for an attempt the hard limits
  * stopped — with the reason, and the grants as action and borrowed role (never a person). Giving a person a role is
- * src/web/settings.ts's assignRole, which writes ROLE_ASSIGNED and now accepts a made role.
+ * src/modules/admin/settings.ts's assignRole, which writes ROLE_ASSIGNED and now accepts a made role.
  *
  * A REFUSAL IS ONE PLAIN SENTENCE and nothing is saved, in part or at all.
  */
 
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, builtInHolds, REGISTERED_ACTIONS, type Actor } from '../core/index.ts';
-import { customRoleKey, loadCustomRoles, roleRefusal, type Grant } from '../core/index.ts';
-import { deleteCustomRoleGrantsByRole, getCustomRolesNameRetiredAtByRole, getCustomRolesRoleByName, getRolesRoleByRole, getUsersCountByRole, insertCustomRoleGrants, insertCustomRoles, insertRoles, listCustomRoleGrantsActionAsRoleByRole, listCustomRolesRoleName, listUsersIdByRole, updateCustomRolesRetiredAtUpdatedAtByRole, updateCustomRolesUpdatedAtByRole, updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt } from '../core/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, builtInHolds, REGISTERED_ACTIONS, type Actor } from '../../core/index.ts';
+import { customRoleKey, loadCustomRoles, roleRefusal, type Grant } from '../../core/index.ts';
+import { deleteCustomRoleGrantsByRole, getCustomRolesNameRetiredAtByRole, getCustomRolesRoleByName, getRolesRoleByRole, getUsersCountByRole, insertCustomRoleGrants, insertCustomRoles, insertRoles, listCustomRoleGrantsActionAsRoleByRole, listCustomRolesRoleName, listUsersIdByRole, updateCustomRolesRetiredAtUpdatedAtByRole, updateCustomRolesUpdatedAtByRole, updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt } from '../../core/index.ts';
 
 /** All or nothing: a role is never saved in part. */
 function tx(db: Db, fn: () => void): void {

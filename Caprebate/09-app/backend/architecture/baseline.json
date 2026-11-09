@@ -3,31 +3,31 @@
  "breaks": {
   "1": {
    "admin": [
-    "src/core/navigation.ts -> src/web/admin-tiles.ts",
-    "src/core/staff.ts -> src/web/admin-tiles.ts",
-    "src/core/staff.ts -> src/web/configuration-pages.ts",
-    "src/core/staff.ts -> src/web/connections.ts",
-    "src/core/staff.ts -> src/web/role-editor-pages.ts",
-    "src/core/staff.ts -> src/web/settings.ts",
-    "src/modules/compliance/compliance-breach.ts -> src/web/templates.ts",
-    "src/modules/compliance/compliance-rights.ts -> src/web/templates.ts",
-    "src/modules/crm/automation.ts -> src/web/vocabularies.ts",
-    "src/modules/crm/crm-pages.ts -> src/web/templates.ts",
-    "src/modules/crm/crm-pages.ts -> src/web/vocabularies.ts",
-    "src/modules/crm/crm.ts -> src/web/vocabularies.ts",
-    "src/modules/crm/dashboard.ts -> src/web/vocabularies.ts",
-    "src/modules/crm/free-email.ts -> src/web/templates.ts",
-    "src/modules/crm/introducers-pages.ts -> src/web/vocabularies.ts",
-    "src/modules/crm/introducers.ts -> src/web/vocabularies.ts",
-    "src/modules/crm/leads.ts -> src/web/vocabularies.ts",
-    "src/modules/crm/pipeline-pages.ts -> src/web/vocabularies.ts",
-    "src/modules/crm/staff-dashboard.ts -> src/web/connections.ts",
-    "src/modules/crm/tasks-pages.ts -> src/web/templates.ts",
-    "src/modules/crm/tasks-pages.ts -> src/web/vocabularies.ts",
-    "src/modules/crm/tasks.ts -> src/web/vocabularies.ts",
-    "src/modules/crm/timeline.ts -> src/web/vocabularies.ts",
-    "src/modules/public-site/home.ts -> src/web/settings.ts",
-    "src/shared/lists.ts -> src/web/vocabularies.ts"
+    "src/core/navigation.ts -> src/modules/admin/admin-tiles.ts",
+    "src/core/staff.ts -> src/modules/admin/admin-tiles.ts",
+    "src/core/staff.ts -> src/modules/admin/configuration-pages.ts",
+    "src/core/staff.ts -> src/modules/admin/connections.ts",
+    "src/core/staff.ts -> src/modules/admin/role-editor-pages.ts",
+    "src/core/staff.ts -> src/modules/admin/settings.ts",
+    "src/modules/compliance/compliance-breach.ts -> src/modules/admin/templates.ts",
+    "src/modules/compliance/compliance-rights.ts -> src/modules/admin/templates.ts",
+    "src/modules/crm/automation.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/crm/crm-pages.ts -> src/modules/admin/templates.ts",
+    "src/modules/crm/crm-pages.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/crm/crm.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/crm/dashboard.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/crm/free-email.ts -> src/modules/admin/templates.ts",
+    "src/modules/crm/introducers-pages.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/crm/introducers.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/crm/leads.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/crm/pipeline-pages.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/crm/staff-dashboard.ts -> src/modules/admin/connections.ts",
+    "src/modules/crm/tasks-pages.ts -> src/modules/admin/templates.ts",
+    "src/modules/crm/tasks-pages.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/crm/tasks.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/crm/timeline.ts -> src/modules/admin/vocabularies.ts",
+    "src/modules/public-site/home.ts -> src/modules/admin/settings.ts",
+    "src/shared/lists.ts -> src/modules/admin/vocabularies.ts"
    ],
    "assessment": [
     "src/core/backoffice.ts -> src/modules/assessment/data.ts"
@@ -46,6 +46,9 @@
     "src/core/signup.ts -> src/modules/compliance/legal-approvals.ts",
     "src/core/staff.ts -> src/modules/compliance/audit-log.ts",
     "src/core/staff.ts -> src/modules/compliance/compliance-pages.ts",
+    "src/modules/admin/admin-tiles.ts -> src/modules/compliance/audit-log.ts",
+    "src/modules/admin/admin-tiles.ts -> src/modules/compliance/compliance.ts",
+    "src/modules/admin/configuration.ts -> src/modules/compliance/compliance.ts",
     "src/modules/claims/case-stamp.ts -> src/modules/compliance/disclosure-log.ts",
     "src/modules/claims/claim-overview.ts -> src/modules/compliance/audit-log.ts",
     "src/modules/crm/client-page.ts -> src/modules/compliance/compliance.ts",
@@ -59,14 +62,15 @@
     "src/modules/public-site/home.ts -> src/modules/compliance/audit-log.ts",
     "src/modules/public-site/notices-site.ts -> src/modules/compliance/compliance-rights.ts",
     "src/modules/public-site/notices-site.ts -> src/modules/compliance/compliance.ts",
-    "src/modules/public-site/privacy-policy.ts -> src/modules/compliance/compliance-identity.ts",
-    "src/web/admin-tiles.ts -> src/modules/compliance/audit-log.ts",
-    "src/web/admin-tiles.ts -> src/modules/compliance/compliance.ts",
-    "src/web/configuration.ts -> src/modules/compliance/compliance.ts"
+    "src/modules/public-site/privacy-policy.ts -> src/modules/compliance/compliance-identity.ts"
    ],
    "core": [
     "src/integrations/connectors/test-lookups.ts -> src/core/app.ts",
     "src/integrations/connectors/test-lookups.ts -> src/core/audit.ts",
+    "src/modules/admin/configuration.ts -> src/core/backoffice.ts",
+    "src/modules/admin/connections.ts -> src/core/app.ts",
+    "src/modules/admin/connections.ts -> src/core/saved-keys.ts",
+    "src/modules/admin/templates.ts -> src/core/backoffice.ts",
     "src/modules/claims/approvals.ts -> src/core/backoffice.ts",
     "src/modules/claims/case-stamp.ts -> src/core/audit.ts",
     "src/modules/claims/case-stamp.ts -> src/core/backoffice.ts",
@@ -111,11 +115,7 @@
     "src/modules/survey/surveyor-pages.ts -> src/core/navigation.ts",
     "src/shared/lists-pages.ts -> src/core/navigation.ts",
     "src/shared/lists-pages.ts -> src/core/search.ts",
-    "src/shared/lists.ts -> src/core/backoffice.ts",
-    "src/web/configuration.ts -> src/core/backoffice.ts",
-    "src/web/connections.ts -> src/core/app.ts",
-    "src/web/connections.ts -> src/core/saved-keys.ts",
-    "src/web/templates.ts -> src/core/backoffice.ts"
+    "src/shared/lists.ts -> src/core/backoffice.ts"
    ],
    "crm": [
     "src/core/backoffice.ts -> src/modules/crm/data.ts",
@@ -356,6 +356,10 @@
    "admin": [
     "src/core/data-borrowed.ts : saved_keys",
     "src/integrations/data-borrowed.ts : email_sender",
+    "src/modules/admin/configuration.ts : reason_lists",
+    "src/modules/admin/configuration.ts : vocabularies",
+    "src/modules/admin/templates.ts : email_templates",
+    "src/modules/admin/vocabularies.ts : vocabularies",
     "src/modules/claims/data-borrowed.ts : document_types",
     "src/modules/crm/data-borrowed.ts : document_types",
     "src/modules/crm/data-borrowed.ts : email_sender",
@@ -363,11 +367,7 @@
     "src/modules/crm/data-borrowed.ts : reason_lists",
     "src/modules/crm/data-borrowed.ts : vocabularies",
     "src/modules/portal/data-borrowed.ts : document_types",
-    "src/shared/data-borrowed.ts : saved_views",
-    "src/web/configuration.ts : reason_lists",
-    "src/web/configuration.ts : vocabularies",
-    "src/web/templates.ts : email_templates",
-    "src/web/vocabularies.ts : vocabularies"
+    "src/shared/data-borrowed.ts : saved_views"
    ],
    "assessment": [
     "src/core/data-borrowed.ts : assessments",
@@ -385,6 +385,7 @@
     "src/core/data-borrowed.ts : properties",
     "src/core/seed.ts : claims",
     "src/core/seed.ts : engagements",
+    "src/modules/admin/templates.ts : claims",
     "src/modules/assessment/data-borrowed.ts : claim_deliverables",
     "src/modules/assessment/data-borrowed.ts : claims",
     "src/modules/compliance/audit-log.ts : claims",
@@ -411,8 +412,7 @@
     "src/modules/survey/surveyor.ts : claims",
     "src/modules/survey/surveyor.ts : properties",
     "src/shared/data-borrowed.ts : claims",
-    "src/shared/data-borrowed.ts : properties",
-    "src/web/templates.ts : claims"
+    "src/shared/data-borrowed.ts : properties"
    ],
    "compliance": [
     "src/modules/claims/data-borrowed.ts : signatory_checks",
@@ -462,6 +462,7 @@
    ],
    "core": [
     "src/integrations/data-borrowed.ts : users",
+    "src/modules/admin/connections.ts : users",
     "src/modules/assessment/data-borrowed.ts : users",
     "src/modules/claims/data-borrowed.ts : users",
     "src/modules/compliance/audit-log.ts : audit_log",
@@ -482,8 +483,7 @@
     "src/modules/survey/survey-pack.ts : users",
     "src/modules/survey/survey-video.ts : users",
     "src/modules/survey/surveyor.ts : users",
-    "src/shared/data-borrowed.ts : users",
-    "src/web/connections.ts : users"
+    "src/shared/data-borrowed.ts : users"
    ],
    "crm": [
     "src/core/data-borrowed.ts : booking_changes",
@@ -495,6 +495,7 @@
     "src/core/data-borrowed.ts : working_times",
     "src/core/seed.ts : businesses",
     "src/integrations/data-borrowed.ts : businesses",
+    "src/modules/admin/templates.ts : businesses",
     "src/modules/assessment/data-borrowed.ts : businesses",
     "src/modules/claims/data-borrowed.ts : businesses",
     "src/modules/claims/data-borrowed.ts : client_task_checks",
@@ -524,8 +525,7 @@
     "src/shared/data-borrowed.ts : businesses",
     "src/shared/data-borrowed.ts : introducers",
     "src/shared/data-borrowed.ts : leads",
-    "src/shared/data-borrowed.ts : staff_tasks",
-    "src/web/templates.ts : businesses"
+    "src/shared/data-borrowed.ts : staff_tasks"
    ],
    "finance": [
     "src/core/data-borrowed.ts : invoice_numbers",
@@ -552,6 +552,7 @@
     "src/modules/finance/invoices.ts : invoices"
    ],
    "integrations": [
+    "src/modules/admin/connections.ts : register_file_imports",
     "src/modules/claims/data-borrowed.ts : outbox",
     "src/modules/claims/data-borrowed.ts : register_records",
     "src/modules/claims/data-borrowed.ts : research_runs",
@@ -565,8 +566,7 @@
     "src/modules/crm/data-borrowed.ts : whatsapp_import_lines",
     "src/modules/crm/data-borrowed.ts : whatsapp_imports",
     "src/modules/crm/data-borrowed.ts : whatsapp_messages",
-    "src/modules/survey/survey-evidence.ts : video_meetings",
-    "src/web/connections.ts : register_file_imports"
+    "src/modules/survey/survey-evidence.ts : video_meetings"
    ],
    "portal": [
     "src/modules/claims/data-borrowed.ts : client_step_notices",
@@ -653,10 +653,10 @@
   },
   "4": {
    "admin": [
-    "src/web/configuration.ts : logic runs SQL",
-    "src/web/connections.ts : logic runs SQL",
-    "src/web/templates.ts : logic runs SQL",
-    "src/web/vocabularies.ts : logic runs SQL"
+    "src/modules/admin/configuration.ts : logic runs SQL",
+    "src/modules/admin/connections.ts : logic runs SQL",
+    "src/modules/admin/templates.ts : logic runs SQL",
+    "src/modules/admin/vocabularies.ts : logic runs SQL"
    ],
    "compliance": [
     "src/modules/compliance/audit-log.ts : logic runs SQL",

@@ -29,7 +29,7 @@
 
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
-import { carriesBankDetails } from '../../web/templates.ts';
+import { carriesBankDetails } from '../admin/templates.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, holdsForEntry, linksFor, momentField, nextRef, NotFoundAsRefusal,
   record, requiredText, settingReading, textField, TWO_PERSON_LIMITATION, ukDay, vocabField, words,

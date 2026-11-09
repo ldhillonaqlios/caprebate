@@ -1,7 +1,7 @@
 /**
  * THE ROLE EDITOR'S SCREENS — /staff/admin/roles. Phase 151b, 25 September 2026.
  *
- * Phase 151 built the role editor itself (src/web/role-editor.ts: makeRole, changeRole, retireRole, every step in the
+ * Phase 151 built the role editor itself (src/modules/admin/role-editor.ts: makeRole, changeRole, retireRole, every step in the
  * audit log) and its hard limits (src/core/custom-roles.ts, roleRefusal), and left them with no screen. This is the screen.
  * NOTHING HERE DECIDES ANYTHING: every write goes through the editor, which authorises `role.manage` (the super admin's
  * alone, and never given to a made role) and refuses with roleRefusal's own sentence, shown here word for word.
@@ -23,10 +23,10 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../core/app.ts';
-import { builtInHolds, type Actor } from '../core/index.ts';
-import { BORROWABLE_ROLES, NEVER_GRANTED, type BorrowableRole } from '../core/index.ts';
-import { h, page, raw, type Safe, HTML_HEADERS } from '../shared/index.ts';
+import type { App } from '../../core/app.ts';
+import { builtInHolds, type Actor } from '../../core/index.ts';
+import { BORROWABLE_ROLES, NEVER_GRANTED, type BorrowableRole } from '../../core/index.ts';
+import { h, page, raw, type Safe, HTML_HEADERS } from '../../shared/index.ts';
 import { changeRole, listMadeRoles, makeRole, retireRole } from './role-editor.ts';
 
 export type RoleEditorPageDeps = {

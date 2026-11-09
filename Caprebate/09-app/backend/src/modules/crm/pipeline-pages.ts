@@ -35,7 +35,7 @@ import * as P from './pipeline.ts';
 import * as T from './tasks.ts';
 import { newTaskForm, timelineBlock } from './tasks-pages.ts';
 import * as LI from '../../shared/lists.ts';
-import { taskChoices, vocabulary } from '../../web/vocabularies.ts';
+import { taskChoices, vocabulary } from '../admin/vocabularies.ts';
 import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from '../../shared/lists-pages.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';

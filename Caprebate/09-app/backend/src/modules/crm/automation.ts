@@ -59,7 +59,7 @@ import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts'
 import { missingFacts } from '../claims/index.ts';
 import { POOL_ROLES, addDaysToDate, insertTask } from './tasks.ts';
 import { claimWords, type Fields } from './crm.ts';
-import { mayTake, vocabLabel } from '../../web/vocabularies.ts';
+import { mayTake, vocabLabel } from '../admin/vocabularies.ts';
 import { createDocumentRequest, NO_RECEIPT_POLICY } from '../claims/index.ts';
 import { getUsersEmailRoleById, getUsersRoleDisabledAtById } from '../../core/index.ts';
 import { getAutomationRulesN, getBusinessesClientStatusById, getBusinessesIdOwnerIdById, getBusinessesNameById, getLeadsIdBusinessIdById3, insertAutomationRules, insertAutomationRuns, listStaffTasksFactIdByBusinessIdFactId, updateAutomationRulesLabelTriggerEventById } from './data.ts';
@@ -117,7 +117,7 @@ export const FORBIDDEN_EFFECTS: Vocab = Object.freeze({
  * THE INVOICE-FRAUD PROCEDURE — WHERE IT STANDS. CRM 7 of 10.
  *
  * The invoice email is not built, and every refusal of it above and in
- * src/web/templates.ts holds while this says `in_force: false`. The procedure did
+ * src/modules/admin/templates.ts holds while this says `in_force: false`. The procedure did
  * not exist in the operating procedure's export; CRM 7 of 10 drafted it into SOP 9
  * as a FLAGGED DRAFT ADDITION and entered its sign-off in the register for the
  * solicitor, the data protection officer and the developer. test/finance-claim.test.ts

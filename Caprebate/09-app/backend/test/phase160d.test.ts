@@ -1,7 +1,7 @@
 /**
  * PHASE 160d — NO LONG DASHES IN THE EMAILS, THE LETTER AND REPORTS GOING FORWARD, THE TEXT THE SYSTEM WRITES, AND THE
  * EXPORT'S COLUMN NAMES, 19 October 2026 (src/integrations/email/email.ts, src/modules/claims/letter.ts, src/modules/claims/claim-record.ts, src/modules/crm/leads.ts,
- * src/shared/lists.ts, src/modules/crm/booking-invite.ts, src/web/templates.ts, migration 117; the report's versions are in
+ * src/shared/lists.ts, src/modules/crm/booking-invite.ts, src/modules/admin/templates.ts, migration 117; the report's versions are in
  * test/survey-report.test.ts).
  */
 import { test, describe, before, after } from 'node:test';
@@ -61,7 +61,7 @@ describe('Phase 160d: the emails', () => {
   test('the seeded template’s subject lost its long dash (migration 117); the company goes first with a colon', () => {
     assert.equal(made.app.db.get<{ s: string }>("SELECT subject AS s FROM email_templates WHERE id = 'template-next-step'")?.s,
       '{{organisation}}: the next step on your claim');
-    assert.match(readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'templates.ts'), 'utf8'), /return subject\.startsWith\(name\) \? subject : `\$\{name\}: \$\{subject\}`;/);
+    assert.match(readFileSync(join(import.meta.dirname, '..', 'src', 'modules', 'admin', 'templates.ts'), 'utf8'), /return subject\.startsWith\(name\) \? subject : `\$\{name\}: \$\{subject\}`;/);
   });
 });
 

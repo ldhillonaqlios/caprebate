@@ -58,7 +58,7 @@ import { ENQUIRY_CHECKS, MILESTONES, MOVE_WORDS, reasonLabel } from './pipeline.
 import { INVOICE_WORDS, PAYMENT_WORDS } from '../finance/finance.ts';
 import { CREDIT_BASES, INVOICE_KINDS, formatInvoiceNumber } from '../finance/invoices.ts';
 import { RECIPROCITY_ACTIVITY_TYPES, TASK_ORIGINS, taskObj } from './tasks.ts';
-import { vocabLabel } from '../../web/vocabularies.ts';
+import { vocabLabel } from '../admin/vocabularies.ts';
 import { RUN_REASONS } from './automation.ts';
 import { documentObj, versionObj } from '../claims/index.ts';
 import { getOutboxAtBySentAt2 } from '../../integrations/index.ts';

@@ -43,7 +43,7 @@ import { claimListGate } from '../shared/lists.ts';
 import { assertIntroducerSection, rewardModelGate } from '../modules/crm/index.ts';
 import { assertSurveySection } from '../modules/survey/surveyor.ts';
 import { assertFinanceSection } from '../modules/finance/finance.ts';
-import { adminSettingsGate, SETTINGS_TILES } from '../web/admin-tiles.ts';
+import { adminSettingsGate, SETTINGS_TILES } from '../modules/admin/admin-tiles.ts';
 import { getUsersDisplayNameById } from './data.ts';
 
 // The request's context, the name switches and the menu a page opens out are in nav-context.ts, which loads no business

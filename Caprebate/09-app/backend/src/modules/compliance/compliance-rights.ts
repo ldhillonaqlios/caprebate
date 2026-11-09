@@ -27,7 +27,7 @@
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import { outboxTransport } from '../../integrations/index.ts';
-import { tipsOff } from '../../web/templates.ts';
+import { tipsOff } from '../admin/templates.ts';
 import {
   ClockInputError, LIMB_LABELS, LIMBS, EXTENSION_GROUNDS, acknowledgementClock, limbClock, complaintTargets,
   type AckClock, type ComplaintTargets, type Limb, type LimbClock, type LimbClockInput,

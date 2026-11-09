@@ -1135,7 +1135,7 @@
    "area": "shared",
    "kind": "logic"
   },
-  "src/web/admin-tiles.ts": {
+  "src/modules/admin/admin-tiles.ts": {
    "area": "admin",
    "kind": "logic"
   },
@@ -1195,15 +1195,15 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/web/configuration-pages.ts": {
+  "src/modules/admin/configuration-pages.ts": {
    "area": "admin",
    "kind": "page"
   },
-  "src/web/configuration.ts": {
+  "src/modules/admin/configuration.ts": {
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/connections.ts": {
+  "src/modules/admin/connections.ts": {
    "area": "admin",
    "kind": "logic"
   },
@@ -1283,15 +1283,15 @@
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/role-editor-pages.ts": {
+  "src/modules/admin/role-editor-pages.ts": {
    "area": "admin",
    "kind": "page"
   },
-  "src/web/role-editor.ts": {
+  "src/modules/admin/role-editor.ts": {
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/settings.ts": {
+  "src/modules/admin/settings.ts": {
    "area": "admin",
    "kind": "logic"
   },
@@ -1331,11 +1331,11 @@
    "area": "survey",
    "kind": "logic"
   },
-  "src/web/templates.ts": {
+  "src/modules/admin/templates.ts": {
    "area": "admin",
    "kind": "logic"
   },
-  "src/web/vocabularies.ts": {
+  "src/modules/admin/vocabularies.ts": {
    "area": "admin",
    "kind": "logic"
   }

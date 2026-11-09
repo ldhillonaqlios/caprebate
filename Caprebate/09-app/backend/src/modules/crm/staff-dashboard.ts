@@ -49,7 +49,7 @@ import { blocksFor, mayBlockTime } from './time-blocks.ts';
 import { newDot } from '../portal/index.ts';
 import { keysView } from '../../core/saved-keys.ts';
 import { repliesStale } from './inbound-email.ts';
-import { listsToImport } from '../../web/connections.ts';
+import { listsToImport } from '../admin/connections.ts';
 import { listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole } from '../../core/index.ts';
 import { getDocumentsCountByBusinessIdRole, getOutboxXByKindLeadId } from './data-borrowed.ts';
 import { getContactsFullNamePhoneByBusinessId } from './data.ts';

@@ -21,7 +21,7 @@ import { breadcrumb, claimRef, dataLink, savedMessage } from '../../shared/index
 import { kpiRow, lateBadge, nobodyBadge } from '../../core/index.ts';
 import { setSubMenu } from '../../core/navigation.ts';
 import * as I from './introducers.ts';
-import { vocabulary } from '../../web/vocabularies.ts';
+import { vocabulary } from '../admin/vocabularies.ts';
 import { SECTORS } from './leads.ts';
 import { STUB_NOTICE } from '../../integrations/index.ts';
 import { piecesPage } from '../../core/index.ts';

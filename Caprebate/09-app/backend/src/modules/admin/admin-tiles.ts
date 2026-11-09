@@ -10,16 +10,16 @@
  * every screen behind a tile still answers its own address, for every login its own gate admits, exactly as before.
  */
 
-import type { Actor } from '../core/index.ts';
-import { h, type Safe } from '../shared/index.ts';
+import type { Actor } from '../../core/index.ts';
+import { h, type Safe } from '../../shared/index.ts';
 import { usersGate } from './settings.ts';
 import { assertConfigurationRead } from './configuration.ts';
-import { documentTypesGate } from '../modules/claims/index.ts';
-import { automationGate } from '../modules/crm/index.ts';
+import { documentTypesGate } from '../claims/index.ts';
+import { automationGate } from '../crm/index.ts';
 import { templatesGate } from './templates.ts';
-import { assertComplianceRead } from '../modules/compliance/compliance.ts';
-import { auditLogGate } from '../modules/compliance/audit-log.ts';
-import { rewardModelGate } from '../modules/crm/index.ts';
+import { assertComplianceRead } from '../compliance/compliance.ts';
+import { auditLogGate } from '../compliance/audit-log.ts';
+import { rewardModelGate } from '../crm/index.ts';
 
 export type Tile = {
   readonly href: string;

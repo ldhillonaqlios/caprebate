@@ -35,7 +35,7 @@ import { isLateNewLead, waitedWords, workingDaysSince } from '../../shared/index
 import { tasksModule as T } from '../crm/index.ts';
 import { messagesModule as M } from '../crm/index.ts';
 import { inboundEmailModule as IE } from '../crm/index.ts';
-import * as S from '../../web/settings.ts';
+import * as S from '../admin/settings.ts';
 import { STAGE_GROUPS } from '../../core/index.ts';
 
 /** One tile: a name and at most two more lines. `late` draws it red. */

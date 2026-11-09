@@ -35,9 +35,9 @@ const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({ INCLUDED_NOT
 import { poundsWords } from '../survey/pack-sums.ts';
 import { claimTasksBlock, emailBlock, newTaskForm, notesBlock, timelineBlock } from './tasks-pages.ts';
 import type { Timeline } from './timeline.ts';
-import { activeTemplates } from '../../web/templates.ts';
+import { activeTemplates } from '../admin/templates.ts';
 import { claimDocumentsBlock, placeDocumentsBlock } from '../claims/index.ts';
-import { taskChoices, vocabulary } from '../../web/vocabularies.ts';
+import { taskChoices, vocabulary } from '../admin/vocabularies.ts';
 import type { SortBy } from '../../shared/lists-pages.ts';
 import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock } from '../claims/index.ts';
 import { addUnderCurrent, opens } from '../../core/navigation.ts';

@@ -2,21 +2,21 @@
  * THE ADMIN SETTINGS SCREEN — routes and page. CRM 9 of 10, 12 September 2026.
  *
  * Same shape as every other section: 'not-mine' for anything it does not own.
- * NOTHING HERE DECIDES ANYTHING. src/web/configuration.ts authorises every read and
+ * NOTHING HERE DECIDES ANYTHING. src/modules/admin/configuration.ts authorises every read and
  * write, refuses every setting no screen may move, and reads the document types,
  * the automation rules, the templates and the finance and compliance settings from
  * their own stores; this page draws them and links to where each is written.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { App } from '../core/app.ts';
-import type { Actor } from '../core/index.ts';
-import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
+import type { App } from '../../core/app.ts';
+import type { Actor } from '../../core/index.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import * as CF from './configuration.ts';
-import { savedMessage, sectionList, why, type RecordTab } from '../shared/index.ts';
-import { senderSetting, setSender } from '../modules/crm/index.ts';
-import { EMAIL_SENDING, sendingMissing, smtpLoginFromKeyFile } from '../integrations/index.ts';
-import { piecesPage } from '../core/index.ts';
+import { savedMessage, sectionList, why, type RecordTab } from '../../shared/index.ts';
+import { senderSetting, setSender } from '../crm/index.ts';
+import { EMAIL_SENDING, sendingMissing, smtpLoginFromKeyFile } from '../../integrations/index.ts';
+import { piecesPage } from '../../core/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

@@ -40,7 +40,7 @@ import * as FC from '../src/modules/claims/fee-controls.ts';
 import * as F from '../src/modules/finance/finance.ts';
 import * as R from '../src/modules/claims/claim-record.ts';
 import * as A from '../src/modules/crm/automation.ts';
-import * as M from '../src/web/templates.ts';
+import * as M from '../src/modules/admin/templates.ts';
 import * as TL from '../src/modules/crm/timeline.ts';
 import { feeDisplay, multiSiteDiscount } from '../src/shared/engine.ts';
 import { loadLetter, unresolvedTerms, TEST_LETTER_PATH } from '../src/modules/claims/letter.ts';

@@ -457,7 +457,7 @@ describe('overdue — stored in UTC, shown in UK time, and no due date is neithe
     const none = T.dueReading(null, '2026-09-10T23:30:00.000Z');
     assert.deepEqual(none, { state: 'NO_DUE_DATE', overdue: false, label: T.NO_DUE_DATE });
 
-    for (const f of ['modules/crm/tasks.ts', 'modules/crm/timeline.ts', 'modules/crm/automation.ts', 'web/templates.ts', 'modules/crm/tasks-pages.ts']) {
+    for (const f of ['modules/crm/tasks.ts', 'modules/crm/timeline.ts', 'modules/crm/automation.ts', 'modules/admin/templates.ts', 'modules/crm/tasks-pages.ts']) {
       assert.equal(/Europe\/|timeZone|getTimezoneOffset/.test(readFileSync(join(SRC, f), 'utf8')), false, `${f} names a zone`);
     }
 

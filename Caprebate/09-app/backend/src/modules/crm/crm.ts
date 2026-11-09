@@ -59,7 +59,7 @@ import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from '../cl
 import { propertyTenure, ROLE_LABELS } from '../assessment/index.ts';
 import { aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask, type AftercarePanel, type DeliverablesPanel, type FiguresPanel } from '../claims/index.ts';
 import { assembleReleasedFacts, type ReleasedFacts } from '../../payload.ts';
-import { vocabChoice, vocabLabel } from '../../web/vocabularies.ts';
+import { vocabChoice, vocabLabel } from '../admin/vocabularies.ts';
 import { funnelStateFor } from '../assessment/index.ts';
 import { expectedFeeFor } from '../assessment/index.ts';
 import { latestSignOff } from '../claims/index.ts';

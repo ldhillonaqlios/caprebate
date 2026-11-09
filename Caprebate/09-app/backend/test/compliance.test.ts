@@ -29,7 +29,7 @@ import * as S from '../src/modules/compliance/compliance-identity.ts';
 import * as I from '../src/modules/crm/introducers.ts';
 import * as L from '../src/modules/crm/leads.ts';
 import * as P from '../src/modules/crm/pipeline.ts';
-import { templateRefusal, tipsOff } from '../src/web/templates.ts';
+import { templateRefusal, tipsOff } from '../src/modules/admin/templates.ts';
 import { actor, signatureRecordFor, testApp } from './helpers.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;

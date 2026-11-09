@@ -4,7 +4,7 @@
  *
  * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, section 20, and the decisions
  * this file takes are that table's Part E from E119. The screen is
- * src/web/configuration-pages.ts; the lists are src/web/vocabularies.ts and
+ * src/modules/admin/configuration-pages.ts; the lists are src/modules/admin/vocabularies.ts and
  * migration 019.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -34,21 +34,21 @@
  * action, and this screen links there.
  */
 
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, can, type Actor, type Obj } from '../core/index.ts';
-import { NotFoundAsRefusal } from '../core/backoffice.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
+import { NotFoundAsRefusal } from '../../core/backoffice.ts';
 import { VOCAB_LISTS, isVocabList, vocabularyValues, type VocabList, type VocabValue } from './vocabularies.ts';
-import { PROCEDURE_KEYS, anyStageLabel } from '../shared/index.ts';
-import { ctaSwitchReadings } from '../shared/index.ts';
-import { FEE_CONTROLS } from '../modules/claims/index.ts';
-import { RECIPROCITY_ACTIVITY_TYPES } from '../modules/crm/index.ts';
-import { typeList, type TypeView } from '../modules/claims/index.ts';
-import { rulesPage, type RuleView } from '../modules/crm/index.ts';
+import { PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
+import { ctaSwitchReadings } from '../../shared/index.ts';
+import { FEE_CONTROLS } from '../claims/index.ts';
+import { RECIPROCITY_ACTIVITY_TYPES } from '../crm/index.ts';
+import { typeList, type TypeView } from '../claims/index.ts';
+import { rulesPage, type RuleView } from '../crm/index.ts';
 import { templatesPage } from './templates.ts';
-import { settingsView, type SettingsView } from '../modules/assessment/index.ts';
-import { settingReading, type SettingReading } from '../modules/compliance/compliance.ts';
-import { getAutomationRulesCOUNTByActiveTaskPriority } from '../modules/crm/index.ts';
+import { settingsView, type SettingsView } from '../assessment/index.ts';
+import { settingReading, type SettingReading } from '../compliance/compliance.ts';
+import { getAutomationRulesCOUNTByActiveTaskPriority } from '../crm/index.ts';
 
 export type ConfigDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133e (D4, continued): `field` is the posted name a refusal is about, where it is about one. */

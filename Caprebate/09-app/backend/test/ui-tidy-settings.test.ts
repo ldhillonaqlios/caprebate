@@ -8,7 +8,7 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, type Harness } from './ui-tidy-harness.ts';
-import * as S from '../src/web/settings.ts';
+import * as S from '../src/modules/admin/settings.ts';
 import * as A from '../src/modules/crm/automation.ts';
 import { userCounts, ADD_USER_HREF } from '../src/core/staff.ts';
 import { distinctReasons } from '../src/modules/crm/tasks-pages.ts';

@@ -41,7 +41,7 @@ export type AuditKind =
   | 'RECOVERY_CODES_MADE' | 'RECOVERY_CODE_USED'
   | 'RATE_LIMITED'
   | 'USER_CREATED' | 'USER_UPDATED' | 'USER_DISABLED' | 'ROLE_ASSIGNED'
-  /** A role the super admin made, changed, or tried to make and was refused (src/web/role-editor.ts). */
+  /** A role the super admin made, changed, or tried to make and was refused (src/modules/admin/role-editor.ts). */
   | 'ROLE_CREATED' | 'ROLE_CHANGED' | 'ROLE_REFUSED'
   | 'DOCUMENT_ACCESSED'
   | 'RESEARCH_FIRED'
@@ -90,7 +90,7 @@ export type AuditKind =
   | 'ACCOUNTANT_CONFIRM_ANSWERED'
   /**
    * A member of staff said an address that bounced for good works again
-   * (src/web/settings.ts). Whether a lift happened, and nothing else: the address itself is the new row in
+   * (src/modules/admin/settings.ts). Whether a lift happened, and nothing else: the address itself is the new row in
    * email_suppressions, which carries who lifted it and when. No log line carries an address.
    */
   | 'EMAIL_ADDRESS_LIFTED'

@@ -36,16 +36,16 @@
  * invoice-fraud procedure (Developer Spec §5.1 item 6).
  */
 
-import type { Db } from '../core/index.ts';
-import type { AuditLog } from '../core/audit.ts';
-import { authorise, can, type Actor } from '../core/index.ts';
-import { outboxTransport } from '../integrations/index.ts';
-import { NotFoundAsRefusal } from '../core/backoffice.ts';
-import { escapeHtml } from '../shared/index.ts';
-import { localStamp, ukDate } from '../shared/index.ts';
-import { claimObjFor, type Fields } from '../modules/crm/index.ts';
-import { getContactsFullNameById, getContactsIdBusinessIdById2, getStaffTasksTitleDueOnByClaimIdIsNextAction } from '../modules/crm/index.ts';
-import { getClaimsIdBusinessIdById, getPropertiesAddressLine1AddressLine2ById } from '../modules/claims/index.ts';
+import type { Db } from '../../core/index.ts';
+import type { AuditLog } from '../../core/audit.ts';
+import { authorise, can, type Actor } from '../../core/index.ts';
+import { outboxTransport } from '../../integrations/index.ts';
+import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { escapeHtml } from '../../shared/index.ts';
+import { localStamp, ukDate } from '../../shared/index.ts';
+import { claimObjFor, type Fields } from '../crm/index.ts';
+import { getContactsFullNameById, getContactsIdBusinessIdById2, getStaffTasksTitleDueOnByClaimIdIsNextAction } from '../crm/index.ts';
+import { getClaimsIdBusinessIdById, getPropertiesAddressLine1AddressLine2ById } from '../claims/index.ts';
 
 export type TemplateDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 

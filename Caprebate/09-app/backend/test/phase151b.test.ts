@@ -33,7 +33,7 @@ import { checkView } from '../src/modules/compliance/compliance-aml.ts';
 import type { Db } from '../src/core/db.ts';
 import { builtInHolds, can, REGISTERED_ACTIONS } from '../src/core/authz.ts';
 import { NEVER_GRANTED } from '../src/core/custom-roles.ts';
-import { ACTION_WORDS, AREAS, offered } from '../src/web/role-editor-pages.ts';
+import { ACTION_WORDS, AREAS, offered } from '../src/modules/admin/role-editor-pages.ts';
 import { gateStatus } from '../src/integrations/connectors/registers.ts';
 import { newDraft, loadDraft } from '../src/modules/assessment/assessment.ts';
 import {

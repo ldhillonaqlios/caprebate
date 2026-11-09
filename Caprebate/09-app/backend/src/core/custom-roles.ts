@@ -22,7 +22,7 @@
  *      or changing roles (NEVER_GRANTED) cannot be given to a made role.
  *   3. A GRANT MUST BE ONE THE BUILT-IN ROLE ACTUALLY HOLDS. A client's rule is never borrowed: a made role is a staff
  *      role, and the client's own-organisation rule would give a staff member a client's view.
- *   4. EVERY CHANGE IS IN THE AUDIT LOG — made, changed, refused and given (src/web/role-editor.ts).
+ *   4. EVERY CHANGE IS IN THE AUDIT LOG — made, changed, refused and given (src/modules/admin/role-editor.ts).
  *
  * WHERE THEY LIVE. The `custom_roles` and `custom_role_grants` tables (migration 046), and a row in `roles`, so a user
  * holding one is held by the database's own reference. This module keeps the set in memory for `can()`, which is pure;

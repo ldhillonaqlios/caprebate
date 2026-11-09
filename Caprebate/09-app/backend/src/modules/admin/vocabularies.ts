@@ -5,7 +5,7 @@
  * `vocabularies` (migration 019) holds the lead sources, the priorities, the task
  * activity types, the property types and the introducer types, seeded from the
  * lists the code shipped with. An ADMIN adds a value, relabels one or retires one
- * on the settings screen (src/web/configuration.ts); nothing is ever deleted, a code
+ * on the settings screen (src/modules/admin/configuration.ts); nothing is ever deleted, a code
  * is permanent, and a value the application writes itself — WEBSITE for the funnel,
  * TASK for a rule's task, a firm's type that decides its referral source — is
  * `fixed` and cannot be retired. The database's named triggers read the same table,
@@ -25,7 +25,7 @@
  * Each is a rule, and changing one is a migration (configuration.ts refuses each).
  */
 
-import type { Db } from '../core/index.ts';
+import type { Db } from '../../core/index.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 

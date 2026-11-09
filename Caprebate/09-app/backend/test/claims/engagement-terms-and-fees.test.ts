@@ -23,7 +23,7 @@ import { createApp } from '../../src/core/server.ts';
 import { seed } from '../../src/core/seed.ts';
 import { isAppRole } from '../../src/core/roles.ts';
 import { can, type Actor } from '../../src/core/authz.ts';
-import { createStaffUser } from '../../src/web/settings.ts';
+import { createStaffUser } from '../../src/modules/admin/settings.ts';
 import { actor, fixedClock, testApp } from '../helpers.ts';
 import { APP_ROLES } from '../../src/core/roles.ts';
 import * as C from '../../src/modules/crm/crm.ts';
