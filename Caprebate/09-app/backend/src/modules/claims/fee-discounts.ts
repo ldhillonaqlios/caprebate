@@ -20,8 +20,8 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { multiSiteDiscount } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import { listFeeDiscountsIdDiscountBpByClaimId } from './data-borrowed.ts';
-import { insertFeeDiscounts } from '../finance/index.ts';
+// The fee discounts are this module's table (Phase 161l2; finance's before, which never read it).
+import { insertFeeDiscounts, listFeeDiscountsIdDiscountBpByClaimId } from './data.ts';
 import { getClaimsIdBusinessIdById } from './data.ts';
 
 export type FeeDiscountDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };

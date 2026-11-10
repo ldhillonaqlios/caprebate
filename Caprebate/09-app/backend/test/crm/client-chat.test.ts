@@ -34,6 +34,7 @@ import { timelineFor } from '../../src/modules/crm/timeline.ts';
 import { backendSwitchReadings } from '../../src/modules/claims/case-stamp.ts';
 import { pdfOf } from '../document-fixtures.ts';
 import { shownToClient } from '../../src/modules/claims/documents.ts';
+import { type MessageDeps, postClientMessage } from '../../src/modules/clients/index.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string };
@@ -77,7 +78,7 @@ type World = {
   as(role: string): Actor;
   client: Actor; corvale: string; dunmarrow: string; dunClaim: string;
   contacts: { id: string; email: string }[];
-  deps(): M.MessageDeps;
+  deps(): MessageDeps;
 };
 
 async function boot(): Promise<World> {
@@ -160,7 +161,7 @@ describe('two threads per company, and the rule table', () => {
 
   test('a message is never edited and never deleted; nor is a team message', () => {
     const d = w.deps();
-    const r = M.postClientMessage(d, w.as('SALES'), w.dunmarrow, { body: 'Phase 142 fixed words', claim_id: null });
+    const r = postClientMessage(d, w.as('SALES'), w.dunmarrow, { body: 'Phase 142 fixed words', claim_id: null });
     assert.ok(r.ok);
     const db = w.made.app.db;
     assert.throws(() => db.run('UPDATE client_messages SET body = ? WHERE id = ?', ['changed', r.id]), /never edited/);
@@ -172,18 +173,18 @@ describe('two threads per company, and the rule table', () => {
   test('a claim of another company is refused; a do-not-contact company cannot be written to by staff', () => {
     const d = w.deps();
     const otherClaim = w.made.app.db.get<{ id: string }>('SELECT id FROM claims WHERE business_id <> ? LIMIT 1', [w.dunmarrow])?.id ?? '';
-    const r = M.postClientMessage(d, w.as('SALES'), w.dunmarrow, { body: 'wrong claim', claim_id: otherClaim });
+    const r = postClientMessage(d, w.as('SALES'), w.dunmarrow, { body: 'wrong claim', claim_id: otherClaim });
     assert.deepEqual(r, { ok: false, why: 'Choose one of this company’s claims.' });
     const dnc = w.made.app.db.get<{ id: string }>("SELECT id FROM businesses WHERE client_status = 'DO_NOT_CONTACT'")?.id;
     if (dnc !== undefined) {
-      const x = M.postClientMessage(d, w.as('SALES'), dnc, { body: 'hello', claim_id: null });
+      const x = postClientMessage(d, w.as('SALES'), dnc, { body: 'hello', claim_id: null });
       assert.equal(x.ok, false);
     }
   });
 
   test('every message is audited, and the line never carries the words', () => {
     const d = w.deps();
-    const r = M.postClientMessage(d, w.as('ADMIN'), w.dunmarrow, { body: 'Phase 142 AUDIT-WORDS-XYZ', claim_id: w.dunClaim });
+    const r = postClientMessage(d, w.as('ADMIN'), w.dunmarrow, { body: 'Phase 142 AUDIT-WORDS-XYZ', claim_id: w.dunClaim });
     assert.ok(r.ok);
     const line = w.made.app.db.get<{ kind: string; detail: string }>("SELECT kind, detail FROM audit_log WHERE object_id = ? AND kind = 'CLIENT_MESSAGE_WRITTEN'", [r.id]);
     assert.ok(line, 'no audit line');
@@ -273,7 +274,7 @@ describe('the portal: Messages, a file that lands in Files, and a team thread it
   });
 
   test('a client asking for a team message by id gets 404 — the same as another company’s message and an id that does not exist', async () => {
-    const theirs = M.postClientMessage(w.deps(), w.as('SALES'), w.dunmarrow, { body: 'Dunmarrow only', claim_id: null });
+    const theirs = postClientMessage(w.deps(), w.as('SALES'), w.dunmarrow, { body: 'Dunmarrow only', claim_id: null });
     assert.ok(theirs.ok);
     const mine = w.made.app.db.get<{ id: string }>('SELECT id FROM client_messages WHERE business_id = ? LIMIT 1', [w.corvale])?.id ?? '';
     assert.equal((await client.get(`/portal/messages/${mine}`)).status, 200);
@@ -347,7 +348,7 @@ describe('Home: a client message waiting more than one working day', () => {
 
   test('red on the Today and overdue row after one working day; gone once we answer', async () => {
     w.clock.now = '2026-09-18T15:00:00.000Z'; // a Friday
-    const r = M.postClientMessage(w.deps(), w.client, w.corvale, { body: 'Are you there?', claim_id: null });
+    const r = postClientMessage(w.deps(), w.client, w.corvale, { body: 'Are you there?', claim_id: null });
     assert.ok(r.ok);
     // Signed in afresh at each moment: a session does not last across the days the clock is moved.
     w.clock.now = '2026-09-21T09:00:00.000Z'; // Monday: one working day — not late
@@ -363,7 +364,7 @@ describe('Home: a client message waiting more than one working day', () => {
     // Neither the surveyor nor Accounting is told: they cannot read the thread.
     assert.equal(M.clientMessagesWaiting(w.made.app.db, w.as('SURVEYING'), w.clock.now).length, 0);
     assert.equal(M.clientMessagesWaiting(w.made.app.db, w.as('ACCOUNTING'), w.clock.now).length, 0);
-    assert.ok(M.postClientMessage(w.deps(), w.as('SALES'), w.corvale, { body: 'Yes — sorry.', claim_id: null }).ok);
+    assert.ok(postClientMessage(w.deps(), w.as('SALES'), w.corvale, { body: 'Yes — sorry.', claim_id: null }).ok);
     assert.equal(/A message waiting for a reply/.test((await sales.get('/staff')).body), false);
   });
 });
@@ -601,6 +602,6 @@ describe('a do-not-contact company’s reply', () => {
     assert.equal(IE.ingest(w.deps(), { uid: 1, raw: rawEmail({ from: contact.email, inReplyTo: ref, text: 'Please stop.' }) }), 'DO_NOT_CONTACT');
     assert.equal(db.get<{ n: number }>('SELECT COUNT(*) AS n FROM outbox')?.n, outboxBefore, 'something was queued to be sent back');
     assert.ok(M.clientThread(db, w.as('SALES'), w.dunmarrow).messages.some((m) => m.body === 'Please stop.'));
-    assert.equal(M.postClientMessage(w.deps(), w.as('SALES'), w.dunmarrow, { body: 'Sorry to hear that', claim_id: null }).ok, false);
+    assert.equal(postClientMessage(w.deps(), w.as('SALES'), w.dunmarrow, { body: 'Sorry to hear that', claim_id: null }).ok, false);
   });
 });

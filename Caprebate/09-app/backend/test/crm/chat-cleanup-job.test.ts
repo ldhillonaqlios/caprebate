@@ -26,13 +26,11 @@ import * as M from '../../src/modules/crm/messages.ts';
 import * as IE from '../../src/modules/crm/inbound-email.ts';
 import { addNote } from '../../src/modules/claims/engaged.ts';
 import { backendSwitchReadings } from '../../src/modules/claims/case-stamp.ts';
-import {
-  MESSAGE_RETENTION, MESSAGE_RETENTION_QUESTION, MESSAGE_RETENTION_RECOMMENDED, addMonths, messagesDue, retentionMissing, sweepMessages,
-  type MessageRetention,
-} from '../../src/modules/crm/message-retention.ts';
+import { MESSAGE_RETENTION_RECOMMENDED, addMonths, messagesDue, retentionMissing, sweepMessages } from '../../src/modules/crm/message-retention.ts';
 import type { EmailSending } from '../../src/integrations/email/email-provider.ts';
 import { pdfOf } from '../document-fixtures.ts';
 import { statementDoors } from '../sql-doors.ts';
+import { MESSAGE_RETENTION, MESSAGE_RETENTION_QUESTION, type MessageDeps, type MessageRetention, alertNewMessage, alertWords, postClientMessage } from '../../src/modules/clients/index.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string };
@@ -64,7 +62,7 @@ function makeClient(base: string): { get(p: string): Promise<Res>; post(p: strin
 type World = {
   made: Made; close(): void; clock: { now: string }; base: string; password: string;
   as(role: string): Actor; client: Actor; corvale: string; dunmarrow: string;
-  deps(extra?: Partial<M.MessageDeps>): M.MessageDeps;
+  deps(extra?: Partial<MessageDeps>): MessageDeps;
   count(sql: string, p?: (string | number | null)[]): number;
 };
 
@@ -150,7 +148,7 @@ describe('1 · the message clean-up job is built and switched off', () => {
   test('PHASE 142b: as shipped, nothing written today is due — a company with no claim keeps everything for seven years', () => {
     const p = prospect(w, 'Sevenyear Dental Limited');
     w.clock.now = '2026-09-22T09:00:00.000Z';
-    assert.ok(M.postClientMessage(w.deps(), w.as('SALES'), p, { body: 'Phase 142b seven years', claim_id: null }).ok);
+    assert.ok(postClientMessage(w.deps(), w.as('SALES'), p, { body: 'Phase 142b seven years', claim_id: null }).ok);
     assert.deepEqual(messagesDue(w.made.app.db, MESSAGE_RETENTION, '2033-09-22T12:00:00.000Z').filter((r) => r.business_id === p), []);
     const due = messagesDue(w.made.app.db, MESSAGE_RETENTION, '2033-09-23T09:00:00.000Z').filter((r) => r.business_id === p);
     assert.equal(due.length, 1);
@@ -161,7 +159,7 @@ describe('1 · the message clean-up job is built and switched off', () => {
   test('OFF DELETES NOTHING — switched off, and each half-set way — even with every message decades old', () => {
     const d = w.deps();
     const p = prospect(w, 'Oldcastle Dental Limited');
-    assert.ok(M.postClientMessage(d, w.as('SALES'), p, { body: 'Phase 142a words kept while off', claim_id: null }).ok);
+    assert.ok(postClientMessage(d, w.as('SALES'), p, { body: 'Phase 142a words kept while off', claim_id: null }).ok);
     assert.ok(addNote(d, w.as('SALES'), p, 'Phase 142a team words kept while off').ok);
     const before = {
       client: w.count('SELECT COUNT(*) AS n FROM client_messages'), team: w.count('SELECT COUNT(*) AS n FROM internal_notes'),
@@ -205,11 +203,11 @@ describe('1 · on, it deletes only what is past its period', () => {
     const p = prospect(w, 'Harrowgate Dental Limited');
     w.clock.now = '2026-10-15T09:00:00.000Z';
     const neighbour = prospect(w, 'Neighbour Dental Limited');
-    assert.ok(M.postClientMessage(d, w.as('SALES'), neighbour, { body: 'Phase 142a neighbour words', claim_id: null }).ok);
+    assert.ok(postClientMessage(d, w.as('SALES'), neighbour, { body: 'Phase 142a neighbour words', claim_id: null }).ok);
     w.clock.now = '2027-06-01T09:00:00.000Z';
     assert.ok(addNote(d, w.as('SALES'), neighbour, 'Phase 142a neighbour keeps talking').ok);
     w.clock.now = '2026-10-15T09:00:00.000Z';
-    const a = M.postClientMessage(d, w.as('SALES'), p, { body: 'Phase 142a first words', claim_id: null });
+    const a = postClientMessage(d, w.as('SALES'), p, { body: 'Phase 142a first words', claim_id: null });
     assert.ok(a.ok);
     w.clock.now = '2026-11-02T09:00:00.000Z';
     const n = addNote(d, w.as('SALES'), p, 'Phase 142a last team words');
@@ -263,7 +261,7 @@ describe('1 · on, it deletes only what is past its period', () => {
     const claims = db.all<{ id: string }>('SELECT id FROM claims WHERE business_id = ? ORDER BY claim_ref', [w.dunmarrow]);
     assert.equal(claims.length, 2);
     w.clock.now = '2026-09-22T09:00:00.000Z';
-    const m = M.postClientMessage(d, w.as('SALES'), w.dunmarrow, { body: 'Phase 142a claim words', claim_id: null });
+    const m = postClientMessage(d, w.as('SALES'), w.dunmarrow, { body: 'Phase 142a claim words', claim_id: null });
     assert.ok(m.ok);
     const far = '2070-01-01T09:00:00.000Z';
     const onDun = (at: string, cfg: MessageRetention = ON) => messagesDue(db, cfg, at).filter((r) => r.business_id === w.dunmarrow);
@@ -286,7 +284,7 @@ describe('1 · on, it deletes only what is past its period', () => {
 
     // A message written after the claim files closed keeps its own twelve months — or all of it, with that rule off.
     w.clock.now = '2034-06-01T09:00:00.000Z';
-    const late = M.postClientMessage(d, w.as('SALES'), w.dunmarrow, { body: 'Phase 142a after the file', claim_id: null });
+    const late = postClientMessage(d, w.as('SALES'), w.dunmarrow, { body: 'Phase 142a after the file', claim_id: null });
     assert.ok(late.ok);
     const lateDue = onDun('2034-06-02T09:00:00.000Z');
     assert.equal(lateDue.some((r) => late.ok && r.id === late.id), false);
@@ -298,7 +296,7 @@ describe('1 · on, it deletes only what is past its period', () => {
     const db = w.made.app.db;
     const p = prospect(w, 'Holdfast Dental Limited');
     w.clock.now = '2026-09-22T09:00:00.000Z';
-    assert.ok(M.postClientMessage(w.deps(), w.as('SALES'), p, { body: 'Phase 142a held', claim_id: null }).ok);
+    assert.ok(postClientMessage(w.deps(), w.as('SALES'), p, { body: 'Phase 142a held', claim_id: null }).ok);
     db.run("INSERT INTO legal_holds (id, hold_kind, record_kind, record_id, reason_kind, reason, review_on, set_by, set_at) VALUES (?, 'LEGAL_HOLD', 'COMPANY', ?, 'DISPUTE', 'A dispute about the fee', '2030-01-01', ?, ?)",
       [randomUUID(), p, w.as('ADMIN').id, w.clock.now]);
     assert.deepEqual(messagesDue(db, ON, '2040-01-01T09:00:00.000Z').filter((r) => r.business_id === p), []);
@@ -373,7 +371,7 @@ describe('2 · the job is the only path that can delete a message', () => {
   test('the database refuses every delete the job did not log first — and a log entry under any other rule opens nothing', () => {
     const db = w.made.app.db;
     const d = w.deps();
-    const m = M.postClientMessage(d, w.as('SALES'), w.dunmarrow, { body: 'Phase 142a guarded', claim_id: null });
+    const m = postClientMessage(d, w.as('SALES'), w.dunmarrow, { body: 'Phase 142a guarded', claim_id: null });
     assert.ok(m.ok);
     const n = addNote(d, w.as('SALES'), w.dunmarrow, 'Phase 142a guarded note');
     assert.ok(n.ok);
@@ -427,20 +425,20 @@ describe('3 · a new message tells the other side — only while sending is on',
 
   test('OFF: nothing is queued at all — not even "saved, not sent"', () => {
     const before = w.count('SELECT COUNT(*) AS n FROM outbox');
-    const a = M.postClientMessage(w.deps(), w.client, w.corvale, { body: 'Phase 142a while off', claim_id: null });
+    const a = postClientMessage(w.deps(), w.client, w.corvale, { body: 'Phase 142a while off', claim_id: null });
     assert.ok(a.ok);
-    const b = M.postClientMessage(w.deps(), w.as('SALES'), w.corvale, { body: 'Phase 142a reply while off', claim_id: null });
+    const b = postClientMessage(w.deps(), w.as('SALES'), w.corvale, { body: 'Phase 142a reply while off', claim_id: null });
     assert.ok(b.ok);
     assert.equal(w.count('SELECT COUNT(*) AS n FROM outbox'), before);
-    assert.deepEqual(M.alertNewMessage(w.deps(), a.ok ? a.id : ''), { state: 'OFF' });
+    assert.deepEqual(alertNewMessage(w.deps(), a.ok ? a.id : ''), { state: 'OFF' });
     // Every condition but the login: still off.
-    assert.deepEqual(M.alertNewMessage(w.deps({ sending: SENDING_ON, login: null }), a.ok ? a.id : ''), { state: 'OFF' });
+    assert.deepEqual(alertNewMessage(w.deps({ sending: SENDING_ON, login: null }), a.ok ? a.id : ''), { state: 'OFF' });
     assert.equal(w.count("SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'CLIENT_MESSAGE_ALERT'"), 0);
   });
 
   test('ON: the client writes — Sales is told (the company has no owner); we write — the client’s login is told; never the words', () => {
     const on = w.deps({ sending: SENDING_ON, login: LOGIN, origin: 'https://caprebate.example.invalid' });
-    const a = M.postClientMessage(on, w.client, w.corvale, { body: 'Phase 142a secret words from the client', claim_id: null });
+    const a = postClientMessage(on, w.client, w.corvale, { body: 'Phase 142a secret words from the client', claim_id: null });
     assert.ok(a.ok);
     let n = notices(w);
     assert.equal(n.length, 1);
@@ -450,7 +448,7 @@ describe('3 · a new message tells the other side — only while sending is on',
     assert.equal(n[0]?.subject, 'Corvale Supported Living Limited: a client has sent a new message', 'the subject carries more than the switch allows');
     assert.match(n[0]?.body ?? '', /https:\/\/caprebate\.example\.invalid\/staff\/clients\/[A-Za-z0-9-]+\?chat=client#chat/);
 
-    const b = M.postClientMessage(on, w.as('SALES'), w.corvale, { body: 'Phase 142a secret words from us', claim_id: null });
+    const b = postClientMessage(on, w.as('SALES'), w.corvale, { body: 'Phase 142a secret words from us', claim_id: null });
     assert.ok(b.ok);
     n = notices(w);
     assert.equal(n.length, 2);
@@ -470,7 +468,7 @@ describe('3 · a new message tells the other side — only while sending is on',
     const admin = w.as('ADMIN');
     w.made.app.db.run('UPDATE businesses SET owner_id = ? WHERE id = ?', [admin.id, w.corvale]);
     const before = notices(w).length;
-    assert.ok(M.postClientMessage(on, w.client, w.corvale, { body: 'Phase 142a to the owner', claim_id: null }).ok);
+    assert.ok(postClientMessage(on, w.client, w.corvale, { body: 'Phase 142a to the owner', claim_id: null }).ok);
     const n = notices(w);
     assert.equal(n.length, before + 1);
     assert.equal(n.at(-1)?.to_email, 'admin@example.invalid');
@@ -482,16 +480,16 @@ describe('3 · a new message tells the other side — only while sending is on',
     const was = w.made.app.db.get<{ s: string }>('SELECT client_status AS s FROM businesses WHERE id = ?', [w.corvale])?.s ?? '';
     w.made.app.db.run("UPDATE businesses SET client_status = 'DO_NOT_CONTACT' WHERE id = ?", [w.corvale]);
     const before = w.count('SELECT COUNT(*) AS n FROM outbox');
-    const a = M.postClientMessage(on, w.client, w.corvale, { body: 'Phase 142a from a do-not-contact company', claim_id: null });
+    const a = postClientMessage(on, w.client, w.corvale, { body: 'Phase 142a from a do-not-contact company', claim_id: null });
     assert.ok(a.ok, 'a client writing to us is always taken');
     assert.equal(w.count('SELECT COUNT(*) AS n FROM outbox'), before);
-    assert.deepEqual(M.alertNewMessage(on, a.ok ? a.id : ''), { state: 'NOT_QUEUED', why: 'DO_NOT_CONTACT' });
+    assert.deepEqual(alertNewMessage(on, a.ok ? a.id : ''), { state: 'NOT_QUEUED', why: 'DO_NOT_CONTACT' });
     w.made.app.db.run('UPDATE businesses SET client_status = ? WHERE id = ?', [was, w.corvale]);
   });
 
   test('the words of an alert: the company leads the subject only if the switch says so', () => {
-    assert.equal(M.alertWords('STAFF', 'Corvale Supported Living Limited', 'b1', null).subject, 'Corvale Supported Living Limited — a client has sent a new message');
-    assert.equal(M.alertWords('CLIENT', null, 'b1', null).body.includes('Sign in to your portal to read it.'), true);
+    assert.equal(alertWords('STAFF', 'Corvale Supported Living Limited', 'b1', null).subject, 'Corvale Supported Living Limited — a client has sent a new message');
+    assert.equal(alertWords('CLIENT', null, 'b1', null).body.includes('Sign in to your portal to read it.'), true);
   });
 });
 
@@ -555,7 +553,7 @@ describe('5 · Lakhbir, 22 September 2026: the surveyor sees "With the client" o
     const job = db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM surveyor_jobs WHERE surveyor_id = ? LIMIT 1', [s.id]);
     assert.ok(job, 'the seed gives the surveyor no job');
     const d = w.deps();
-    assert.ok(M.postClientMessage(d, w.as('SALES'), job.business_id, { body: 'Phase 142b the survey is on Tuesday', claim_id: null }).ok);
+    assert.ok(postClientMessage(d, w.as('SALES'), job.business_id, { body: 'Phase 142b the survey is on Tuesday', claim_id: null }).ok);
     assert.ok(addNote(d, w.as('SALES'), job.business_id, 'Phase 142b TEAM SECRET our range is 180k').ok);
     const c = makeClient(w.base);
     assert.equal((await c.post('/login', { email: 'surveying@example.invalid', password: w.password })).status, 303);

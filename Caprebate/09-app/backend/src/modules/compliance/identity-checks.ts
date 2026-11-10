@@ -44,7 +44,8 @@ import type { Actor } from '../../core/index.ts';
 import { can } from '../../core/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { localWhen } from '../../shared/index.ts';
-import { assertComplianceRead, assertComplianceWrite, complianceObj, record, userNames, type ComplianceDeps } from './compliance.ts';
+import { record, userNames, type ComplianceDeps } from './compliance.ts';
+import { assertComplianceRead, assertComplianceWrite, complianceObj } from './compliance.permissions.ts';
 import { isReachable } from '../clients/index.ts';
 import {
   IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision,
@@ -52,7 +53,7 @@ import {
 } from '../../integrations/index.ts';
 import { getBusinessesIdById, getContactsIdEmailByIdBusinessId, listContactsIdByBusinessId } from '../clients/index.ts';
 import { getCddChecksStateByIdBusinessId, getCddChecksStateVerificationMethodById, getIdentityCheckResultsOutcomeReceivedAtByIdentityCheckId, getIdentityChecksIdBusinessIdBySessionId, getIdentityChecksIdBySessionId, insertIdentityCheckResults, insertIdentityChecks, updateCddChecksVerificationMethodUpdatedAtById } from './data.ts';
-import { listIdentityChecksIdContactByBusinessId, listIdentityChecksIdContactByCddCheckId } from './data-borrowed.ts';
+import { listIdentityChecksIdContactByBusinessId, listIdentityChecksIdContactByCddCheckId } from './data.ts';
 
 /** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/app/router.ts, outside the login. */
 export const IDENTITY_HOOK_PATH = '/hooks/identity-check';

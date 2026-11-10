@@ -7,10 +7,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from './app.ts';
 import type { Actor } from './authz.ts';
 import type { authenticate } from './auth.ts';
-import type { NotFoundAsRefusal } from './backoffice.ts';
-import type { confirmSignup, offerSignup, requestSignup, verifyOpen } from '../modules/portal/signup.ts';
-import type { handlePortalSettings } from '../app/staff.ts';
-import type { agreementPage, agreementTick, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement } from '../modules/compliance/index.ts';
+import { mayEnterBackOffice } from './backoffice.ts';
+import { portalShell, staffShell } from './navigation.ts';
 import { cleanForm } from './typed.ts';
 import { navContext, type NavContext, type NameSwitches } from './nav-context.ts';
 import { piecesPage } from './upload-pieces.ts';
@@ -166,7 +164,8 @@ export function nav(actor: Actor | undefined): Safe {
     // The public header says what the home page's button says.
     ? h`<nav><a class="navcta" href="/assessment">Am I eligible?</a><a href="/login">Log in</a></nav>`
     // A signed-in person gets their application's header — the back office's for staff, the portal's for a client.
-    : shellParts().signedInHeader(actor);
+    // Both are the core's own (src/core/navigation.ts); since Phase 161l the menu reads no module, so they are imported.
+    : mayEnterBackOffice(actor) ? staffShell(actor) : portalShell(actor);
 }
 
 export type WebResult = 'handled' | 'not-mine';
@@ -214,35 +213,3 @@ export type WebRequest = {
   /** The legal pages are served on the test website (`notices`) or wherever the `legal` setting is on. */
   readonly legalServed: boolean;
 };
-
-/**
- * WHAT THE SHELL LENDS THE ROUTE FILES. A few parts read business modules themselves (the signed-in header, the
- * sign-up, a client's own settings), so the core's front door cannot offer them. The legal pages' approvals and
- * agreements are lent too: their file reads the public site's door as it loads, so a route file that imported it would
- * stop the public site loading when the public site is the first thing loaded. The router shell hands them over when it
- * loads, which is before any request reaches a module.
- */
-export type ShellParts = {
-  /** A signed-in person's header: the back office's for staff, the portal's for a client. */
-  readonly signedInHeader: (actor: Actor) => Safe;
-  readonly offerSignup: typeof offerSignup;
-  readonly requestSignup: typeof requestSignup;
-  readonly verifyOpen: typeof verifyOpen;
-  readonly confirmSignup: typeof confirmSignup;
-  readonly MIN_PASSWORD: number;
-  readonly handlePortalSettings: typeof handlePortalSettings;
-  readonly NotFoundAsRefusal: typeof NotFoundAsRefusal;
-  readonly currentApprovals: typeof currentApprovals;
-  readonly currentTermsVersions: typeof currentTermsVersions;
-  readonly agreementTick: typeof agreementTick;
-  readonly agreementPage: typeof agreementPage;
-  readonly hasAgreedCurrent: typeof hasAgreedCurrent;
-  readonly keepAgreement: typeof keepAgreement;
-};
-
-let lent: ShellParts | undefined;
-export function lendShellParts(parts: ShellParts): void { lent = parts; }
-export function shellParts(): ShellParts {
-  if (lent === undefined) throw new Error('The router shell (src/app/router.ts) has not lent its parts: it has not loaded.');
-  return lent;
-}

@@ -28,7 +28,7 @@ import { INBOUND_EMAIL } from '../../integrations/index.ts';
 import { IDENTITY_CHECK } from '../../integrations/index.ts';
 import { COMPANY_SEARCH } from '../../integrations/index.ts';
 import { lookupsWaivedHere, switchedOn, switchesHere } from '../../integrations/index.ts';
-import { CLAUDE_SWITCHES } from '../../integrations/connectors/claude.ts';
+import { CLAUDE_SWITCHES } from '../../integrations/index.ts';
 import { whatsappMissing, zoomMissing } from '../../integrations/index.ts';
 import { turnstileWhy } from '../../integrations/index.ts';
 import { ga4MeasurementId } from '../../integrations/index.ts';
@@ -125,7 +125,7 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
     case 'ZOOM': { const m = zoomMissing(app.secrets, app.zoomPolicy, { outside: app.outside }); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'WHATSAPP': { const m = whatsappMissing(st, app.whatsappPolicy, { outside: app.outside }); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'REPLY_TIMER': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
-    // The report's site plan (src/modules/claims/site-plan.ts), fetched on the test website only, for now.
+    // The report's site plan (src/modules/survey/site-plan.ts), fetched on the test website only, for now.
     case 'OS_MAPS': return lookupsWaivedHere() ? { on: true, why: '' } : off('Site plans are fetched on the test website only, for now.');
     default: return off('Nothing uses this key yet.');
   }

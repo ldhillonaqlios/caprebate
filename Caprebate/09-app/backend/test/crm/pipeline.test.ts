@@ -44,6 +44,9 @@ import { actor, signatureRecordFor, testApp } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';
 import { oneDriveOnly, oneDrivePath } from '../onedrive-only.ts';
 import * as R from '../../src/modules/claims/claim-record.ts';
+import { claimObjFor, loadClaimRow, loadPipelineClaim, reportDeliveredOn } from '../../src/modules/claims/index.ts';
+import { type FeeTrigger } from '../../src/modules/finance/index.ts';
+import { insertTask } from '../../src/modules/clients/index.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
@@ -100,7 +103,7 @@ function claimAt(app: App, org: Org, stage: string, opts: { signoff?: boolean } 
   // refused. A fixture carries one, so each gate below is tried on its own; test/crm/tasks.test.ts tries the rule.
   const owner = app.db.get<{ id: string }>("SELECT id FROM users WHERE role IN ('ADMIN','SALES') ORDER BY id LIMIT 1");
   if (owner !== undefined) {
-    T.insertTask(app.db, app.now, randomUUID, {
+    insertTask(app.db, app.now, randomUUID, {
       title: 'a fixture next action', description: null, owner_id: owner.id, owner_role: null, due_on: '2026-12-31',
       priority: null, activity_type: 'TASK', business_id: org.business, property_id: null, claim_id: made.id, lead_id: null,
       contact_id: null, fact_id: null, recurrence: null, recurred_from_id: null, is_next_action: true, origin: 'STAFF',
@@ -490,7 +493,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       for (const m of ['TAX_ADVISER_SIGNED_OFF', 'CTA_SIGNOFF', 'VALUATION_SIGNED']) {
         assert.equal(P.recordMilestone(deps(app), actor('ADMIN'), c, m, null).ok, false, `${m} was recorded at the sign-off stage`);
       }
-      assert.equal(P.claimableFigureReleased(app.db, P.loadPipelineClaim(app.db, c)).released, false);
+      assert.equal(P.claimableFigureReleased(app.db, loadPipelineClaim(app.db, c)).released, false);
       // The column CRM 2 of 10 built the gate against is retired: a date typed into it is refused by the database.
       assert.throws(() => app.db.run('UPDATE claims SET tax_adviser_signoff_at = ? WHERE id = ?', [app.now(), c]), /E_SIGNOFF_IS_A_RECORD/);
       assert.equal(fwd(app, 'SALES', c, 'REPORTS').ok, false);
@@ -514,7 +517,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       // THE NEGATIVE CONTROL — the sign-off record itself (CRM 6 of 10).
       CF.signOffRow(app, org.business, org.assessment ?? '', c);
       assert.equal(fwd(app, 'SALES', c, 'REPORTS').ok, true);
-      assert.equal(P.claimableFigureReleased(app.db, P.loadPipelineClaim(app.db, c)).released, true);
+      assert.equal(P.claimableFigureReleased(app.db, loadPipelineClaim(app.db, c)).released, true);
     } finally { app.close(); }
   });
 
@@ -555,13 +558,13 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       CF.readyForReports(app, org.business, org.property, org.assessment ?? '', c);
       CF.clientAccepted(app, c); // PHASE 158c (F39): the client accepts in their portal
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, true);
-      const gate = (claim: string, trigger?: P.FeeTrigger) =>
-        P.gateOut(app.db, P.loadPipelineClaim(app.db, claim), 'INVOICE',
+      const gate = (claim: string, trigger?: FeeTrigger) =>
+        P.gateOut(app.db, loadPipelineClaim(app.db, claim), 'INVOICE',
           trigger === undefined ? { today: app.now() } : { feeTrigger: trigger, today: app.now() }).open;
 
       raiseInvoice(app, org.business, c);
       // The reports went to the client and the accountant on their issue date: delivered for filing, so earned.
-      assert.equal(P.reportDeliveredOn(app.db, c)?.on, '2026-09-01');
+      assert.equal(reportDeliveredOn(app.db, c)?.on, '2026-09-01');
       assert.equal(gate(c), true, 'the decided reading did not read the delivered report');
       assert.equal(gate(c, 'CLIENT_ACCEPTED_REPORT'), true);
       assert.equal(gate(c, 'AMENDED_RETURN_FILED'), false);
@@ -574,12 +577,12 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       const d = claimAt(app, bare, 'INVOICE', { signoff: true });
       CF.openWindow(app, bare.business, bare.property, d);
       confirm(app, d, 'HMRC_PROCESSED_RELIEF');
-      assert.equal(P.reportDeliveredOn(app.db, d), null);
+      assert.equal(reportDeliveredOn(app.db, d), null);
       assert.equal(gate(d, 'HMRC_PROCESSED_RELIEF'), false, 'no invoice, and the gate opened');
       raiseInvoice(app, bare.business, d);
       assert.equal(gate(d, 'HMRC_PROCESSED_RELIEF'), true, 'the negative control: the old reading with its confirmation and an invoice');
       assert.equal(gate(d), false, 'the decided reading passed with no report delivered');
-      assert.match(P.feeTriggerReached(app.db, P.loadPipelineClaim(app.db, d)).why, /not known is not reached/);
+      assert.match(P.feeTriggerReached(app.db, loadPipelineClaim(app.db, d)).why, /not known is not reached/);
 
       assert.equal(fwd(app, 'SALES', c, 'DEFENCE_PACK').ok, true);
       assert.equal(fwd(app, 'SALES', d, 'DEFENCE_PACK').ok, false);
@@ -837,7 +840,7 @@ describe('surveyor reach is the job’s claim, not its assessment', () => {
       const mine = claimAt(app, org, 'SURVEY');
       const sibling = claimAt(app, org, 'SURVEY');
       const s = actor('SURVEYING');
-      const reach = (id: string) => can(s, 'claim.read', C.claimObjFor(app.db, { id, business_id: org.business }));
+      const reach = (id: string) => can(s, 'claim.read', claimObjFor(app.db, { id, business_id: org.business }));
       app.db.run('INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,created_at,claim_id) VALUES (?,?,?,?,?,?,NULL)',
         ['j-1', org.business, org.assessment, 'u-SURVEYING', 'SEALED', T0]);
       assert.equal(reach(mine), false, 'a job on no claim reached a claim through its assessment');
@@ -873,7 +876,7 @@ describe('the pipeline board', () => {
 
       // BUILT FORWARDS: the same card for a role that may not read the estimate carries no value at all.
       const db = h.made.app.db;
-      const row = C.loadClaimRow(db, withAssessment.id);
+      const row = loadClaimRow(db, withAssessment.id);
       for (const who of ['SURVEYING', 'ACCOUNTING', 'CLIENT'] as const) {
         const card = C.boardCard(db, actor(who, `u-${who}`, who === 'CLIENT' ? row.business_id : null), row, h.made.app.now());
         assert.equal('value' in card, false, `${who}’s card carries a value`);

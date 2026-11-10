@@ -14,7 +14,7 @@
  * `via` and does exactly what that way of writing always did, with every rule it always had:
  *   email      F.saveEmail (To filled in and changeable; a reply keeps the conversation's Message-IDs), sent now if on
  *   whatsapp   W.sendWhatsApp (the contact's number; the 24-hour rule)
- *   portal     M.postClientMessage
+ *   portal     postClientMessage
  *   team       addNote (the team thread; the client never sees it)
  *   zoom       start now (a meeting at once; the host page opens) or book a free hour from your own diary; the client is
  *              emailed the time and the link (sendVideoInvite), which then shows in the conversation
@@ -63,6 +63,7 @@ import { namesByIds } from '../../core/index.ts';
 import { getVideoMeetingsHostOpenedAtHostOpenedByByBookingId } from '../../integrations/index.ts';
 import { listWhatsappMessagesIdCreatedAtSenderByBusinessId } from '../../integrations/index.ts';
 import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from '../clients/index.ts';
+import { postClientMessage, unreadCount } from '../clients/index.ts';
 
 export type Via = 'email' | 'whatsapp' | 'portal' | 'team' | 'zoom' | 'call';
 export type Kind = Via;
@@ -401,7 +402,7 @@ export function communicationPanel(
   const obj = { type: 'client_message' as const, id: business_id, business_id };
   if (!can(actor, 'client_message.read', obj) && !can(actor, 'internal_note.read', { type: 'internal_note', id: business_id, business_id })) return null;
   const c: Ctx = { app, actor, business_id, now: app.now() };
-  const unread = M.newFromClient(app.db, actor, business_id) + M.unreadCount(app.db, actor, business_id, 'TEAM');
+  const unread = M.newFromClient(app.db, actor, business_id) + unreadCount(app.db, actor, business_id, 'TEAM');
   const all = feed(c);
   // Opening the tab reads it all: the red dot goes. The lines marked new are the ones from before this visit.
   if (q.opened) {
@@ -499,7 +500,7 @@ export async function communicate(d: SendDeps, actor: Actor, business_id: string
     return { ok: true, to: back(opening ? 'sent-opening' : 'sent-whatsapp') };
   }
   if (via === 'portal') {
-    const r = M.postClientMessage(deps, actor, business_id, { body, claim_id: claim === '' ? null : claim });
+    const r = postClientMessage(deps, actor, business_id, { body, claim_id: claim === '' ? null : claim });
     if (!r.ok) return keep(r.why);
     return { ok: true, to: back('sent-portal') };
   }

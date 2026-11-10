@@ -37,9 +37,9 @@ import { workingDaysSince, LATE_AFTER_WORKING_DAYS } from '../../shared/index.ts
 import { documentObj } from '../claims/index.ts';
 import { getWhatsappMessagesCountByBusinessIdDirection } from '../../integrations/index.ts';
 import { getClientMessageFilesIdBusinessIdByLogicalDocumentId, getClientMessagesCountByBusinessIdDirection2, insertChannelReads, insertThreadReads, listClientMessagesBusinessIdNameByDirectionCreatedAt } from '../clients/index.ts';
-import { listInternalNotesIdAuthorIdByBusinessId } from '../clients/index.ts';
+import { listInternalNotesIdAuthorIdByBusinessId } from './split-reads.ts';
 import { listClaimsIdClaimRefByBusinessIdLabel } from '../claims/index.ts';
-import { getClientMessagesIdBusinessIdByIdBusinessId, listClientMessagesIdBusinessIdByBusinessId } from '../clients/index.ts';
+import { getClientMessagesIdBusinessIdByIdBusinessId, listClientMessagesIdBusinessIdByBusinessId } from './split-reads.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { listDocumentTypesCodeReadersLabelByCodes } from '../admin/index.ts';
 import { listLogicalDocumentsIdTypeCodeVersionByIds } from '../claims/index.ts';
@@ -48,8 +48,6 @@ import { byId, idsOf, listClientMessageFilesLogicalDocumentIdByMessageId, lookUp
 // Writing on the thread with the client, its alert, and what is unread: the client record's
 // (src/modules/clients/messages.ts), as the modules below write on it too.
 import { MAX_MESSAGE, alertNewMessage, alertWords, clientThreadObj as clientObj, lastChannelRead, lastThreadRead as lastRead, laterOf as later, messageRefusal, postClientMessage, teamThreadObj as noteObj, threadCompany as company, unreadCount, type AlertResult, type Channel, type MessageDeps, type Thread, type WriteResult } from '../clients/index.ts';
-export { MAX_MESSAGE, alertNewMessage, alertWords, lastChannelRead, messageRefusal, postClientMessage, unreadCount };
-export type { AlertResult, Channel, MessageDeps, Thread, WriteResult };
 
 export type MessageFile = { readonly name: string; readonly href: string };
 

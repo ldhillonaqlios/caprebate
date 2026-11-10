@@ -6,11 +6,21 @@
 // Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
 export { CRM_ACTIONS } from './actions.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
+// The accountant's confirmations' port, filled by the portal's door (Phase 161l2).
+export { setAccountantConfirmations } from './accountant-port.ts';
+export type { AccountantConfirmations, AccountantNeed } from './accountant-port.ts';
 // (Phase 161l1: the client record's data, calendar, tasks, messages and vocabularies are the clients area's now, read
 // through src/modules/clients/index.ts; the claim's object, stage read and checks the claims', the claimant type the
 // assessment's, the live fee invoices the finance's, the sender setting and the rules as read the admin's.)
 export { importPremises, PREMISES_SOURCES } from './premises-import.ts';
 export { pipelineBoardGate } from './crm.permissions.ts';
+// The client page's layout and its folder tiles (moved from the portal, Phase 161l2); the staff Files page draws the tiles too.
+export { folderTiles } from './client-layout.ts';
+// The client's step names, as the portal draws them and the back office quotes them (moved from the portal, Phase 161l2).
+export { portalStepLine, PROPOSED_STEP_NAMES, stepName } from './portal-steps.ts';
+// The website's property types, as the public site's form offers them and Sales' inbox reads them (Phase 161l2).
+export { PROPERTY_TYPES } from './enquiries.ts';
+export type { EnquiryRow } from './enquiries.ts';
 export { WHATSAPP_IMPORT_JS } from './whatsapp-import-script.ts';
 export { fireAutomation } from './automation.ts';
 export * as crmModule from './crm.ts';
@@ -37,6 +47,8 @@ export { clientMessage } from './messages.ts';
 export { handlePipeline } from './pipeline-pages.ts';
 export { feeTriggerReached, gateOut, recordOpened } from './pipeline.ts';
 export { dashboard, dashView } from './staff-dashboard.ts';
+// Home's rows of tiles (moved from the public site, Phase 161l2).
+export { homeRows } from './home.ts';
 export { handleTasks } from './tasks-pages.ts';
 export { clientProgress, tellAndMoveOn, whyNotMoved } from './tell-and-move.ts';
 export { handleWhatsAppImport } from './whatsapp-import-pages.ts';
@@ -58,3 +70,5 @@ import './events.ts';
 import './nav.ts';
 // What the modules below ask the CRM (the ports they own, Phase 161l1). Last, as it reaches the module's own files.
 import './ports.ts';
+// The port the client portal fills as it loads (Phase 161l2: the client's acceptance of the report).
+export { setReportAcceptanceReader } from './report-acceptance-port.ts';

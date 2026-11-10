@@ -35,28 +35,11 @@ import { formatPence } from '../../shared/index.ts';
 import { getBusinessesIdNameById, getBusinessesNameById, listContactsFullNameJobRoleByBusinessId } from '../clients/index.ts';
 import { getClaimsBById, listClaimsIdByBusinessId } from '../claims/index.ts';
 import { getInvoicesIdBusinessIdByIdClaimId2, insertInvoiceChases, listInvoiceChasesChasedOnHowByInvoiceId } from './data.ts';
+import { billingViewFor, billingObj } from './finance.permissions.ts';
 
 export const CHASE_WAYS: Vocab = Object.freeze({
   PHONE: 'A phone call', EMAIL: 'An email', LETTER: 'A letter', IN_PERSON: 'In person',
 });
-
-const SECTION = '__clients_billing__';
-
-/** Whether this login reads the billing view of a client — the object test, for one client or the whole area. */
-function billingObj(id: string = SECTION): { type: 'business'; id: string } {
-  return { type: 'business', id };
-}
-
-/** The Clients tab's gate: the whole record (Admin, Sales, read-only) or the billing view of it (Accounting). */
-export function clientsAreaGate(actor: Actor): void {
-  if (can(actor, 'organisation.read', { type: 'business', id: '__section__' })) return;
-  authorise(actor, 'client_billing.read', billingObj());
-}
-
-/** Whether to draw the billing view rather than the client record: billing yes, the whole record no. */
-export function billingViewFor(actor: Actor, id: string = SECTION): boolean {
-  return !can(actor, 'organisation.read', { type: 'business', id }) && can(actor, 'client_billing.read', billingObj(id));
-}
 
 export type ChaseLine = { readonly chased_on: string; readonly how: string; readonly note: string | null; readonly by: string };
 

@@ -1,7 +1,7 @@
 /**
  * 2 OCTOBER 2026 — THE SURVEY PACK, STAGE 6: THE FREE LOOKUPS SWITCHED ON FOR THE TEST WEBSITE, AND THE REPORT'S SITE PLAN
  * FROM ORDNANCE SURVEY'S FREE BUILDING OUTLINES (src/integrations/connectors/registers.ts TEST_WEBSITE_LOOKUPS, src/modules/claims/research.ts,
- * src/integrations/connectors/os-buildings.ts, src/modules/claims/site-plan.ts, migration 083, written as 078).
+ * src/integrations/connectors/os-buildings.ts, src/modules/survey/site-plan.ts, migration 083, written as 078).
  *
  * Lakhbir, asked which lookups to switch on for the test website: "All the free ones"; asked how the client's building is
  * chosen on the site plan: "Automatic".
@@ -29,7 +29,7 @@ import { fixtureTransport, type Fixture } from '../../src/integrations/connector
 import * as C from '../../src/integrations/connectors/registers.ts';
 import * as R from '../../src/modules/claims/research.ts';
 import * as OS from '../../src/integrations/connectors/os-buildings.ts';
-import * as SP from '../../src/modules/claims/site-plan.ts';
+import * as SP from '../../src/modules/survey/site-plan.ts';
 import { secretsFromValues, emptySecrets } from '../../src/core/secrets.ts';
 import { seed } from '../../src/app/seed.ts';
 import { newId } from '../../src/core/users.ts';

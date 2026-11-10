@@ -7,7 +7,7 @@
  * whether customer due diligence stops a claim leaving ENGAGEMENT. The registers
  * themselves are src/modules/compliance/compliance-aml.ts, compliance-rights.ts,
  * compliance-breach.ts and compliance-identity.ts; the pages are
- * src/modules/compliance/compliance-pages.ts; every choice that is not obvious is a row of
+ * src/modules/compliance/compliance.routes.ts; every choice that is not obvious is a row of
  * Part E of 09-app/docs/CAPREBATE-CRM-DISPOSITION.md from E94.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -37,6 +37,7 @@ import { instantsForLocalMinute, localDate } from '../../shared/index.ts';
 import { getHoldEntryId, getLinkedEntryRef, listLegalHoldsForEntry } from './data.ts';
 import { getCddChecksCompletedAtByBusinessIdState, getComplianceRefSeriesLastNByKind, getComplianceSettingsValueEffectiveFromBySettingEffectiveFro, getLegalHoldsLiftedAtById, insertComplianceLinks, insertComplianceSettings, insertLegalHolds, listComplianceLinksKIByFromKindFromId, listLegalHoldsIdHoldKindByRecordKindRecordId, listLegalHoldsRecordIdByRecordKindLiftedAt, updateComplianceRefSeriesLastNByKind, updateLegalHoldsLiftedAtLiftedByById } from './data.ts';
 import { dateField, has, requiredText, textField, words, type Check, type FormFields as Fields, type Vocab } from '../../shared/index.ts';
+import { assertComplianceWrite } from './compliance.permissions.ts';
 
 export type ComplianceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type WriteResult = { ok: true; id: string } | { ok: false; why: string };
@@ -65,25 +66,6 @@ export const TWO_PERSON_LIMITATION =
 /* ================================================================== *
  * 1 · THE GATE, AND SMALL THINGS
  * ================================================================== */
-
-const SECTION = '__compliance_section__';
-
-export function complianceObj(id: string = SECTION): { type: 'compliance'; id: string } {
-  return { type: 'compliance', id };
-}
-
-export function assertComplianceRead(actor: Actor): void {
-  authorise(actor, 'compliance.read', complianceObj());
-}
-
-export function assertComplianceWrite(actor: Actor): void {
-  authorise(actor, 'compliance.write', complianceObj());
-}
-
-
-
-
-
 
 /**
  * A MOMENT — the statutory clocks run from one. A full ISO instant is taken as it

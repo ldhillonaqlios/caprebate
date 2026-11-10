@@ -40,6 +40,7 @@ import * as L from '../../src/modules/crm/leads.ts';
 import * as P from '../../src/modules/crm/pipeline.ts';
 import { actor, testApp, keys, scalars } from '../helpers.ts';
 import { plainDashText } from '../../src/shared/plain-dashes.ts';
+import { isCompanyOrRoleToken } from '../../src/modules/clients/index.ts';
 
 const PASSWORD = 'a-very-long-development-password';
 const T = '2026-09-08T00:00:00.000Z';
@@ -656,11 +657,11 @@ describe('N4 — existing capital allowances claimed: UNKNOWN and never-asked ar
 describe('N2 — a previous owner or an occupier is a company or a role, never a person', () => {
   test('the guard', () => {
     for (const person of ['John Smith', 'Mrs Jane Doe', 'Dr A Patel', 'smith']) {
-      assert.equal(C.isCompanyOrRoleToken(person), false, `${person} was accepted`);
+      assert.equal(isCompanyOrRoleToken(person), false, `${person} was accepted`);
     }
     for (const ok of ['Aldergate Holdings Limited', 'Smith Ltd', 'Brackenfell Dental Partnership LLP', 'Example plc',
       'Care Homes Cyfyngedig', 'INDIVIDUAL_NOT_RECORDED', 'DEVELOPER']) {
-      assert.equal(C.isCompanyOrRoleToken(ok), true, `${ok} was refused`);
+      assert.equal(isCompanyOrRoleToken(ok), true, `${ok} was refused`);
     }
   });
 

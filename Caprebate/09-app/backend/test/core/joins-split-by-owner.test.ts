@@ -80,8 +80,8 @@ const ORIGINAL: Readonly<Record<string, readonly ['get' | 'all', string]>> = {
   'portal.getClaimsIdBusinessIdById8': ['get', 'SELECT c.id, c.business_id, c.stage, c.claim_ref, b.name AS company FROM claims c JOIN businesses b ON b.id = c.business_id WHERE c.id = ?'],
   'portal.getDocumentsIdBusinessIdById4': ['get', 'SELECT d.id, d.business_id, d.filename, d.declared_type, d.doc_type, d.byte_size, d.sniffed_as, d.state, d.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.logical_document_id, d.version_no, d.original_kept_at, d.original_deleted_at, t.label AS type_label, l.seq FROM documents d LEFT JOIN document_types t ON t.code = d.type_code LEFT JOIN logical_documents l ON l.id = d.logical_document_id WHERE d.id = ?'],
   'portal.listDocumentsIdBusinessIdByBusinessId': ['all', 'SELECT d.id, d.business_id, d.filename, d.declared_type, d.doc_type, d.byte_size, d.sniffed_as, d.state, d.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.logical_document_id, d.version_no, d.original_kept_at, d.original_deleted_at, t.label AS type_label, l.seq FROM documents d LEFT JOIN document_types t ON t.code = d.type_code LEFT JOIN logical_documents l ON l.id = d.logical_document_id WHERE d.business_id = ? ORDER BY d.created_at DESC'],
-  'assessment.getFinanceSettingsIdSettingBySettingEffectiveFrom': ['get', 'SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by WHERE s.setting = ? AND s.effective_from <= ? ORDER BY s.effective_from DESC, s.recorded_at DESC, s.rowid DESC LIMIT 1'],
-  'assessment.listFinanceSettingsIdSetting': ['all', 'SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by ORDER BY s.setting ASC, s.effective_from DESC, s.rowid DESC'],
+  'finance.getFinanceSettingsIdSettingBySettingEffectiveFrom': ['get', 'SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by WHERE s.setting = ? AND s.effective_from <= ? ORDER BY s.effective_from DESC, s.recorded_at DESC, s.rowid DESC LIMIT 1'],
+  'finance.listFinanceSettingsIdSetting': ['all', 'SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by ORDER BY s.setting ASC, s.effective_from DESC, s.rowid DESC'],
   'claims.listClaimFactsIdFactKeyByClaimIdFactKey': ['all', 'SELECT f.id, f.fact_key, f.answer, f.value_text, f.value_pence, f.value_date, f.source_id, f.note, f.recorded_at, ' +
     'u.display_name AS recorder FROM claim_facts f LEFT JOIN users u ON u.id = f.recorded_by ' +
     'WHERE f.claim_id = ? AND f.fact_key = ? ORDER BY f.recorded_at DESC, f.rowid DESC'],
@@ -123,7 +123,7 @@ const ORIGINAL: Readonly<Record<string, readonly ['get' | 'all', string]>> = {
     'FROM businesses b ORDER BY b.created_at DESC, b.name ASC LIMIT ?'],
   'claims.listClientStepNoticesClaimIdStepByBusinessId': ['all', 'SELECT e.claim_id, e.step, e.action, e.reason, e.at, u.display_name AS who FROM client_step_notices e ' +
     'LEFT JOIN users u ON u.id = e.actor_id WHERE e.business_id = ? ORDER BY e.at ASC, e.rowid ASC'],
-  'claims.listClientTasksQuestionAnswerByBusinessIdState': ['all', "SELECT t.question, t.answer, t.answer_state, t.answered_at, t.answered_by_role AS role, u.display_name AS who, " +
+  'clients.listClientTasksQuestionAnswerByBusinessIdState': ['all', "SELECT t.question, t.answer, t.answer_state, t.answered_at, t.answered_by_role AS role, u.display_name AS who, " +
     'c.display_name AS checker, k.checked_at FROM client_tasks t LEFT JOIN users u ON u.id = t.answered_by ' +
     'LEFT JOIN client_task_checks k ON k.task_id = t.id LEFT JOIN users c ON c.id = k.checked_by ' +
     "WHERE t.business_id = ? AND t.state = 'ANSWERED' AND t.kind = 'QUESTION' AND (t.claim_id = ? OR t.claim_id IS NULL) " +
@@ -133,29 +133,29 @@ const ORIGINAL: Readonly<Record<string, readonly ['get' | 'all', string]>> = {
     'JOIN businesses b ON b.id = e.business_id JOIN users u ON u.id = k.user_id WHERE k.token_sha256 = ?'],
   'claims.listFeeDiscountsIdDiscountBpByClaimId': ['all', 'SELECT f.id, f.discount_bp, f.reason, f.recorded_at, u.display_name AS who FROM fee_discounts f LEFT JOIN users u ON u.id = f.recorded_by ' +
     'WHERE f.claim_id = ? ORDER BY f.recorded_at DESC, f.rowid DESC'],
-  'claims.listInternalNotesIdBodyByBusinessId': ['all', 'SELECT n.id, n.body, n.created_at, u.display_name AS author_name ' +
+  'clients.listInternalNotesIdBodyByBusinessId': ['all', 'SELECT n.id, n.body, n.created_at, u.display_name AS author_name ' +
     'FROM internal_notes n LEFT JOIN users u ON u.id = n.author_id ' +
     'WHERE n.business_id = ? ORDER BY n.created_at DESC'],
   'claims.listLogicalDocumentsIdBusinessIdByBusinessId': ['all', 'SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, ' +
     't.retention_ref AS type_retention, u.role AS created_role, u.display_name AS created_name FROM logical_documents l ' +
     'JOIN document_types t ON t.code = l.type_code LEFT JOIN users u ON u.id = l.created_by WHERE l.business_id = ? ' +
     'ORDER BY l.created_at DESC, l.seq DESC'],
-  'claims.getPackClientNoticesToldAtToldByNameByApprovalId': ['get', 'SELECT n.told_at, u.display_name AS told_by_name FROM pack_client_notices n JOIN users u ON u.id = n.told_by WHERE n.approval_id = ?'],
-  'claims.listPackSignoffRequestsIdApprovalIdByJobId': ['all', 'SELECT r.id, r.approval_id, a.version, c.full_name AS contact_name, r.to_email, r.permission_note, u.display_name AS sent_by_name, r.sent_at, r.expires_at, ' +
+  'survey.getPackClientNoticesToldAtToldByNameByApprovalId': ['get', 'SELECT n.told_at, u.display_name AS told_by_name FROM pack_client_notices n JOIN users u ON u.id = n.told_by WHERE n.approval_id = ?'],
+  'survey.listPackSignoffRequestsIdApprovalIdByJobId': ['all', 'SELECT r.id, r.approval_id, a.version, c.full_name AS contact_name, r.to_email, r.permission_note, u.display_name AS sent_by_name, r.sent_at, r.expires_at, ' +
     'o.sent_at AS sent_at_outbox, o.last_error AS send_error, x.id AS a_id, x.outcome, x.signer_name, x.signer_firm, x.signer_credential, x.reason, x.answered_at, ' +
     'k.signoff_id AS recorded_signoff ' +
     'FROM pack_signoff_requests r JOIN survey_pack_approvals a ON a.id = r.approval_id JOIN survey_packs p ON p.id = a.pack_id ' +
     'JOIN contacts c ON c.id = r.contact_id JOIN users u ON u.id = r.sent_by JOIN outbox o ON o.id = r.outbox_id ' +
     'LEFT JOIN pack_signoff_answers x ON x.request_id = r.id LEFT JOIN pack_signoff_recorded k ON k.answer_id = x.id ' +
     'WHERE p.job_id = ? ORDER BY r.sent_at DESC, r.rowid DESC'],
-  'claims.listSurveyPackApprovalsIdVersionByBusinessIdClaimId': ['all', 'SELECT a.id, a.version, a.pack_seq, a.legal_seq, a.fingerprint, a.approved_by, u.display_name AS approver_name, a.approved_at, a.snapshot_json, j.id AS job_id, j.claim_id ' +
+  'survey.listSurveyPackApprovalsIdVersionByBusinessIdClaimId': ['all', 'SELECT a.id, a.version, a.pack_seq, a.legal_seq, a.fingerprint, a.approved_by, u.display_name AS approver_name, a.approved_at, a.snapshot_json, j.id AS job_id, j.claim_id ' +
     'FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id JOIN users u ON u.id = a.approved_by ' +
     'WHERE j.business_id = ? AND j.claim_id IS NOT NULL AND EXISTS (SELECT 1 FROM tax_adviser_signoffs s WHERE s.claim_id = j.claim_id ' +
     "AND s.approval_id = a.id AND s.figure_pence = json_extract(a.snapshot_json, '$.sums.qualifying_pence')) " +
     'ORDER BY a.approved_at DESC, a.version DESC'],
-  'claims.getSurveyorJobsIdSurveyorIdByClaimId': ['get', 'SELECT j.id, j.surveyor_id, u.display_name AS who FROM surveyor_jobs j LEFT JOIN users u ON u.id = j.surveyor_id ' +
+  'survey.getSurveyorJobsIdSurveyorIdByClaimId': ['get', 'SELECT j.id, j.surveyor_id, u.display_name AS who FROM surveyor_jobs j LEFT JOIN users u ON u.id = j.surveyor_id ' +
     'WHERE j.claim_id = ? ORDER BY j.created_at DESC LIMIT 1'],
-  'claims.listClientTasksIdFactIdByBusinessIdKind2': ['all', 'SELECT t.id, t.fact_id, t.question, t.why, t.holds_up, t.state, t.answer_state, t.answer, t.answered_at, t.answered_by_role, t.sent_to_portal_at, t.created_at, t.withdrawn_at, t.due_on, ab.display_name AS asked_by_name, an.display_name AS answered_by_name, wb.display_name AS withdrawn_by_name FROM client_tasks t LEFT JOIN users ab ON ab.id = t.asked_by LEFT JOIN users an ON an.id = t.answered_by LEFT JOIN users wb ON wb.id = t.withdrawn_by WHERE t.business_id = ? AND t.kind = \'QUESTION\' ORDER BY t.created_at ASC'],
+  'clients.listClientTasksIdFactIdByBusinessIdKind2': ['all', 'SELECT t.id, t.fact_id, t.question, t.why, t.holds_up, t.state, t.answer_state, t.answer, t.answered_at, t.answered_by_role, t.sent_to_portal_at, t.created_at, t.withdrawn_at, t.due_on, ab.display_name AS asked_by_name, an.display_name AS answered_by_name, wb.display_name AS withdrawn_by_name FROM client_tasks t LEFT JOIN users ab ON ab.id = t.asked_by LEFT JOIN users an ON an.id = t.answered_by LEFT JOIN users wb ON wb.id = t.withdrawn_by WHERE t.business_id = ? AND t.kind = \'QUESTION\' ORDER BY t.created_at ASC'],
   'claims.listDocumentFieldVouchesIdBusinessIdByRequestIdJO': ['all', 'SELECT ct.id, ct.business_id, ct.claim_id, c.claim_ref, ct.requested_type, t.label AS type_label, ct.state, ct.why, ct.holds_up, ct.due_on, ct.created_at, ct.withdrawn_at, ct.answered_at, ab.display_name AS asked_by, d.logical_document_id AS received_document, d.version_no AS received_version, (SELECT v.answer FROM document_field_vouches v WHERE v.request_id = ct.id LIMIT 1) AS early_answer, ct.event_id, pe.kind AS event_kind, pe.event_date AS event_date FROM client_tasks ct JOIN document_types t ON t.code = ct.requested_type LEFT JOIN claims c ON c.id = ct.claim_id LEFT JOIN users ab ON ab.id = ct.asked_by LEFT JOIN documents d ON d.id = ct.received_document_id LEFT JOIN property_events pe ON pe.id = ct.event_id WHERE ct.kind = \'DOCUMENT\' AND ct.business_id = ? AND ct.claim_id = ? ORDER BY CASE WHEN ct.state = \'OPEN\' THEN 0 ELSE 1 END, ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC'],
   'claims.listDocumentFieldVouchesIdBusinessIdByRequestIdJO2': ['all', 'SELECT ct.id, ct.business_id, ct.claim_id, c.claim_ref, ct.requested_type, t.label AS type_label, ct.state, ct.why, ct.holds_up, ct.due_on, ct.created_at, ct.withdrawn_at, ct.answered_at, ab.display_name AS asked_by, d.logical_document_id AS received_document, d.version_no AS received_version, (SELECT v.answer FROM document_field_vouches v WHERE v.request_id = ct.id LIMIT 1) AS early_answer, ct.event_id, pe.kind AS event_kind, pe.event_date AS event_date FROM client_tasks ct JOIN document_types t ON t.code = ct.requested_type LEFT JOIN claims c ON c.id = ct.claim_id LEFT JOIN users ab ON ab.id = ct.asked_by LEFT JOIN documents d ON d.id = ct.received_document_id LEFT JOIN property_events pe ON pe.id = ct.event_id WHERE ct.kind = \'DOCUMENT\' AND ct.business_id = ? ORDER BY CASE WHEN ct.state = \'OPEN\' THEN 0 ELSE 1 END, ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC'],
 
@@ -164,7 +164,8 @@ const ORIGINAL: Readonly<Record<string, readonly ['get' | 'all', string]>> = {
 type Read = (db: Db, params?: readonly Param[]) => unknown;
 /** Where a read is found: its area's borrowed file, else its data file, else the outside services' front door. */
 async function readsOf(area: string): Promise<Record<string, Read>> {
-  const borrowed = await import(`../../src/modules/${area}/data-borrowed.ts`) as Record<string, Read>;
+  // An area whose borrowed file is gone (its statements all moved to their owners) reads from its data file alone.
+  const borrowed = await import(`../../src/modules/${area}/data-borrowed.ts`).catch(() => ({})) as Record<string, Read>;
   const data = await import(`../../src/modules/${area}/data.ts`) as Record<string, Read>;
   const outside = await import('../../src/integrations/index.ts') as unknown as Record<string, Read>;
   return new Proxy({}, { get: (_t, k: string) => borrowed[k] ?? data[k] ?? outside[k] }) as Record<string, Read>;
@@ -212,7 +213,7 @@ const ASKED: Readonly<Record<string, string>> = {
   'portal.getClaimsIdBusinessIdById8': 'SELECT id FROM claims',
   'portal.getDocumentsIdBusinessIdById4': 'SELECT id FROM documents',
   'portal.listDocumentsIdBusinessIdByBusinessId': 'SELECT id FROM businesses',
-  'assessment.getFinanceSettingsIdSettingBySettingEffectiveFrom': "SELECT DISTINCT setting, '9999-12-31' FROM finance_settings",
+  'finance.getFinanceSettingsIdSettingBySettingEffectiveFrom': "SELECT DISTINCT setting, '9999-12-31' FROM finance_settings",
   'claims.listClaimFactsIdFactKeyByClaimIdFactKey': 'SELECT DISTINCT claim_id, fact_key FROM claim_facts',
   'claims.listClaimFactsSeqIdByClaimId': 'SELECT id FROM claims',
   'claims.listClaimGrantsIdKindByClaimId': 'SELECT id FROM claims',
@@ -234,21 +235,21 @@ const ASKED: Readonly<Record<string, string>> = {
   'claims.getAssessmentsBusinessIdNameByBusinessIdId': 'SELECT id FROM businesses',
   'claims.listAssessmentsBusinessIdNameByBusinessId': 'SELECT 100 UNION ALL SELECT 3',
   'claims.listClientStepNoticesClaimIdStepByBusinessId': 'SELECT id FROM businesses',
-  'claims.listClientTasksQuestionAnswerByBusinessIdState': 'SELECT b.id AS b, c.id AS c FROM businesses b JOIN claims c ON c.business_id = b.id',
+  'clients.listClientTasksQuestionAnswerByBusinessIdState': 'SELECT b.id AS b, c.id AS c FROM businesses b JOIN claims c ON c.business_id = b.id',
   'claims.getEngagementSignLinksIdEngagementIdByTokenSha256': 'SELECT token_sha256 FROM engagement_sign_links',
   'claims.listFeeDiscountsIdDiscountBpByClaimId': 'SELECT id FROM claims',
-  'claims.listInternalNotesIdBodyByBusinessId': 'SELECT id FROM businesses',
+  'clients.listInternalNotesIdBodyByBusinessId': 'SELECT id FROM businesses',
   'claims.listLogicalDocumentsIdBusinessIdByBusinessId': 'SELECT id FROM businesses',
-  'claims.getPackClientNoticesToldAtToldByNameByApprovalId': 'SELECT id FROM survey_pack_approvals',
-  'claims.listPackSignoffRequestsIdApprovalIdByJobId': 'SELECT id FROM surveyor_jobs',
-  'claims.listSurveyPackApprovalsIdVersionByBusinessIdClaimId': 'SELECT id FROM businesses',
-  'claims.getSurveyorJobsIdSurveyorIdByClaimId': 'SELECT id FROM claims',
-  'claims.listClientTasksIdFactIdByBusinessIdKind2': 'SELECT id FROM businesses',
+  'survey.getPackClientNoticesToldAtToldByNameByApprovalId': 'SELECT id FROM survey_pack_approvals',
+  'survey.listPackSignoffRequestsIdApprovalIdByJobId': 'SELECT id FROM surveyor_jobs',
+  'survey.listSurveyPackApprovalsIdVersionByBusinessIdClaimId': 'SELECT id FROM businesses',
+  'survey.getSurveyorJobsIdSurveyorIdByClaimId': 'SELECT id FROM claims',
+  'clients.listClientTasksIdFactIdByBusinessIdKind2': 'SELECT id FROM businesses',
   'claims.listDocumentFieldVouchesIdBusinessIdByRequestIdJO': 'SELECT b.id AS b, c.id AS c FROM businesses b JOIN claims c ON c.business_id = b.id',
   'claims.listDocumentFieldVouchesIdBusinessIdByRequestIdJO2': 'SELECT id FROM businesses',
 };
 // Two reads take no parameter: they are asked once, with none.
-const NO_PARAMS = new Set(['admin.listSavedKeysNameSealedByRowidName', 'assessment.listFinanceSettingsIdSetting']);
+const NO_PARAMS = new Set(['admin.listSavedKeysNameSealedByRowidName', 'finance.listFinanceSettingsIdSetting']);
 
 /** One fixture row (a test may write rows; the walls are for src/), saying which statement failed if one does. */
 function put(db: Db, sql: string, params: readonly Param[]): void {

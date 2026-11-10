@@ -31,7 +31,7 @@ import * as IE from './inbound-email.ts';
 import { page } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { imapLoginFromKeyFile, imapMailbox, readingMissing, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../../integrations/index.ts';
-import { earlyQuestions, receiveFile } from '../portal/index.ts';
+import { earlyQuestions, receiveFile } from '../claims/index.ts';
 import * as W from './whatsapp.ts';
 import { whatsappPage } from './whatsapp-page.ts';
 import { communicate, composer } from './communication.ts';
@@ -43,6 +43,7 @@ import { cleanField } from '../../core/index.ts';
 import { piecesPage } from '../../core/index.ts';
 import { getBusinessesNameById, getClientMessagesExistsByBusinessId, getInternalNotesExistsByBusinessId, listBusinessesIdName2 } from '../clients/index.ts';
 import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from '../survey/index.ts';
+import { MAX_MESSAGE, messageRefusal, postClientMessage, unreadCount } from '../clients/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -59,7 +60,7 @@ export function chatTab(db: Db, actor: Actor, business_id: string, asked: string
   if (asked === 'team' && team) return 'team';
   if (asked === 'client' && client) return 'client';
   if (asked === 'all' && client) return 'all';
-  if (client && M.unreadCount(db, actor, business_id, 'CLIENT') > 0) return 'client';
+  if (client && unreadCount(db, actor, business_id, 'CLIENT') > 0) return 'client';
   return team ? 'team' : client ? 'client' : null;
 }
 
@@ -139,8 +140,8 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
   const deps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
   const mayTeam = can(actor, 'internal_note.read', { type: 'internal_note', id: business_id, business_id });
   const mayClient = can(actor, 'client_message.read', { type: 'client_message', id: business_id, business_id });
-  const teamN = mayTeam ? M.unreadCount(db, actor, business_id, 'TEAM') : null;
-  const clientN = mayClient ? M.unreadCount(db, actor, business_id, 'CLIENT') : null;
+  const teamN = mayTeam ? unreadCount(db, actor, business_id, 'TEAM') : null;
+  const clientN = mayClient ? unreadCount(db, actor, business_id, 'CLIENT') : null;
   const top = tabs(business_id, tab, teamN, clientN);
   const unread = (teamN ?? 0) + (clientN ?? 0);
   // Whether either thread this login may read has anything in it — for the section's chip.
@@ -159,7 +160,7 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
       ${t.messages.length === 0 ? h`<p class="empty">No messages yet. Start the conversation below.</p>` : h`<ol class="chat">${t.messages.map((m) => bubble(m, true))}</ol>`}
       ${t.may_write ? h`<form method="post" action="/staff/clients/${business_id}/notes" class="pblock chatform">
         <label class="fl" for="team-body">Write to your team</label>
-        <textarea class="fi" id="team-body" name="body" required maxlength="${String(M.MAX_MESSAGE)}" rows="3"></textarea>
+        <textarea class="fi" id="team-body" name="body" required maxlength="${String(MAX_MESSAGE)}" rows="3"></textarea>
         ${claimPicker('team-claim', claims, false)}
         <button class="cta" type="submit">Send to the team</button></form>` : raw('')}`,
     };
@@ -177,7 +178,7 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
       ? h`<div class="gate" role="note"><strong>You cannot write to this company.</strong> They asked us not to contact them.</div>`
       : h`<form method="post" action="/staff/clients/${business_id}/messages" class="pblock chatform">
         <label class="fl" for="client-body">Write to ${c.company}</label>
-        <textarea class="fi" id="client-body" name="body" required maxlength="${String(M.MAX_MESSAGE)}" rows="4"></textarea>
+        <textarea class="fi" id="client-body" name="body" required maxlength="${String(MAX_MESSAGE)}" rows="4"></textarea>
         ${claimPicker('client-claim', c.claims, false)}
         <button class="cta" type="submit">Send to the client</button>
         <p class="help">${sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(), { live: true })
@@ -281,7 +282,7 @@ export async function handleStaffMessages(
   if (m && method === 'POST') {
     const id = m[1] ?? '';
     const f = await form(req);
-    const r = M.postClientMessage(deps, actor, id, { body: f.get('body') ?? '', claim_id: f.get('claim_id') });
+    const r = postClientMessage(deps, actor, id, { body: f.get('body') ?? '', claim_id: f.get('claim_id') });
     if (!r.ok) return d.problem(res, actor, 'Not sent', r.why, `/staff/clients/${id}?chat=client#chat`);
     redirect(res, `/staff/clients/${id}?chat=client&done=message#chat`);
     return 'handled';
@@ -469,7 +470,7 @@ export function portalMessagesBody(
       ${t.may_write ? h`<section class="card" id="write"><div class="card-h"><h2>Write to us</h2></div>
         <form method="post" action="/portal/messages" enctype="multipart/form-data" class="chatform" data-pieces>
           <label class="fl" for="pm-body">Your message</label>
-          <textarea class="fi" id="pm-body" name="body" required maxlength="${String(M.MAX_MESSAGE)}" rows="5">${refused?.body ?? ''}</textarea>
+          <textarea class="fi" id="pm-body" name="body" required maxlength="${String(MAX_MESSAGE)}" rows="5">${refused?.body ?? ''}</textarea>
           ${claimPicker('pm-claim', t.claims, true)}
           <fieldset class="chatfile"><legend class="fl">Send a file too (you do not have to)</legend>
             <label class="dropzone" for="pm-file"><span class="dropwords">Drop the file here, or tap to choose it</span>
@@ -532,7 +533,7 @@ export async function sendFromPortal(
 ): Promise<{ ok: true; with_file: boolean } | { ok: false; why: string }> {
   const db = d.app.db;
   const claim_id = s.claim_id === null || s.claim_id === '' ? null : s.claim_id;
-  const refusal = M.messageRefusal(db, actor, business_id, { body: s.body, claim_id });
+  const refusal = messageRefusal(db, actor, business_id, { body: s.body, claim_id });
   if (refusal !== null) return { ok: false, why: refusal };
   const files: string[] = [];
   if (s.bytes !== null && s.bytes.length > 0) {
@@ -541,7 +542,7 @@ export async function sendFromPortal(
     if (!r.ok) return { ok: false, why: r.why };
     files.push(r.logical_document_id);
   }
-  const w = M.postClientMessage({ db, audit: d.app.audit, now: d.app.now, newId: d.newId }, actor, business_id, { body: s.body, claim_id }, files);
+  const w = postClientMessage({ db, audit: d.app.audit, now: d.app.now, newId: d.newId }, actor, business_id, { body: s.body, claim_id }, files);
   if (!w.ok) return w;
   return { ok: true, with_file: files.length > 0 };
 }

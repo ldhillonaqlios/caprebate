@@ -37,6 +37,8 @@ import * as CH from '../../src/modules/survey/pack-chapters.ts';
 import * as REP from '../../src/modules/survey/survey-report.ts';
 import { createApp } from '../../src/app/server.ts';
 import { seed } from '../../src/app/seed.ts';
+import { CLAIMANT_TYPES } from '../../src/modules/clients/index.ts';
+import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T = '2026-09-08T00:00:00.000Z';
@@ -234,7 +236,7 @@ describe('6 · C9 — a legal check clear only until a deadline is read again', 
     const r = R.recordSignOff(late, ADMIN, a.claim, { adviser: 'Test Tax Advisers LLP', credential: 'Chartered Tax Adviser', signed_on: '2027-06-02', scope: 'the report', method_note: 'read it', figure: '1.00', confirmed_switches: '' });
     assert.equal(r.ok, false);
     assert.match(r.ok ? '' : r.why, /Not signed off: the value had to be fixed by 2027-05-31/);
-    const gate = P.gateOut(app.db, P.loadPipelineClaim(app.db, a.claim), 'TAX_ADVISER_SIGNOFF', { today: '2027-06-02T10:00:00.000Z' });
+    const gate = P.gateOut(app.db, loadPipelineClaim(app.db, a.claim), 'TAX_ADVISER_SIGNOFF', { today: '2027-06-02T10:00:00.000Z' });
     const n = gate.needs.find((x) => x.what === 'A legal check that was clear only until a deadline is still clear');
     assert.equal(n?.met, false, 'the sign-off gate does not read it');
     app.close();
@@ -251,7 +253,7 @@ describe('7 · C24 the charity types; C25 basis period reform', () => {
     assert.match(F.amendmentWindowReading(app.db, co.ref, TODAY).assumption ?? '', /charitable company/);
     assert.equal(F.amendmentWindowReading(app.db, tr.ref, TODAY).deadline, '2027-01-31', 'C25: a period ending 31 December 2025 reaches the 2024-25 return');
     assert.match(F.amendmentWindowReading(app.db, ch.ref, TODAY).why, /charitable company .* or a charitable trust/);
-    assert.ok(C.CLAIMANT_TYPES['CHARITY_COMPANY'] && C.CLAIMANT_TYPES['CHARITABLE_TRUST']);
+    assert.ok(CLAIMANT_TYPES['CHARITY_COMPANY'] && CLAIMANT_TYPES['CHARITABLE_TRUST']);
     app.close();
   });
   test('C25: a sole trader’s 12 months to 30 June 2025 reaches the 2024-25 return: amendable until 31 January 2027, not 2028', async () => {

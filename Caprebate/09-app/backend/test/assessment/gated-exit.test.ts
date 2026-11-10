@@ -43,6 +43,7 @@ import * as L from '../../src/modules/crm/leads.ts';
 import * as P from '../../src/modules/crm/pipeline.ts';
 import { actor, testApp } from '../helpers.ts';
 import { plainDashText } from '../../src/shared/plain-dashes.ts';
+import { openLeadForGatedExit } from '../../src/modules/clients/index.ts';
 
 /* ------------------------------------------------------------- fixtures */
 
@@ -388,7 +389,7 @@ describe('a contact and a booking may belong to a lead until it has an organisat
         'INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
         [`u-${role}`, `${role.toLowerCase()}@example.invalid`, `${role.toLowerCase()}@example.invalid`, `${role} Person`, role, 'x', T0, T0]);
     }
-    const lead = L.openLeadForGatedExit(app.db, randomUUID, { prospect_organisation: 'Example Care Limited', at: T0 });
+    const lead = openLeadForGatedExit(app.db, randomUUID, { prospect_organisation: 'Example Care Limited', at: T0 });
     const contact = randomUUID();
     app.db.run('INSERT INTO contacts (id, business_id, lead_id, full_name, contact_consent, marketing_optin, email, created_at) VALUES (?, NULL, ?, ?, 1, 0, ?, ?)',
       [contact, lead, 'Robin Example', 'robin@example.invalid', T0]);

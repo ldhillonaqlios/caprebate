@@ -21,7 +21,8 @@ import { createApp } from '../../src/app/server.ts';
 import { seed } from '../../src/app/seed.ts';
 import { HTML_HEADERS } from '../../src/shared/html.ts';
 import { privacyNoticeForCheck } from '../onedrive-only.ts';
-import { buildNoticesEdition, COMPLAINT_SOURCE_LIMIT, DP_MAIL, NOTICES_PATH, refOf } from '../../src/modules/public-site/notices-site.ts';
+import { buildNoticesEdition, COMPLAINT_SOURCE_LIMIT, DP_MAIL, NOTICES_PATH } from '../../src/modules/public-site/notices-site.ts';
+import { refOf } from '../../src/modules/compliance/complaint-forms.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const CHECK = join(ROOT, '03-app', 'caprebate-notices-acceptance.cjs');

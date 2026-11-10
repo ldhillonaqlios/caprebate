@@ -28,11 +28,8 @@
 
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
-import {
-  assertComplianceRead, assertComplianceWrite, dateField, has, NotFoundAsRefusal, record, requiredText, textField,
-  TWO_PERSON_LIMITATION, settingReading, ukDay, userNames, vocabField, words,
-  type Check, type ComplianceDeps, type Fields, type SettingReading, type Vocab, type WriteResult,
-} from './compliance.ts';
+import { dateField, has, NotFoundAsRefusal, record, requiredText, textField, TWO_PERSON_LIMITATION, settingReading, ukDay, userNames, vocabField, words, type Check, type ComplianceDeps, type Fields, type SettingReading, type Vocab, type WriteResult } from './compliance.ts';
+import { assertComplianceRead, assertComplianceWrite } from './compliance.permissions.ts';
 import { identityPassed } from './identity-checks.ts';
 import { getResearchSourcesIdStateByBusinessIdSourceId } from '../../integrations/index.ts';
 import { getUsersIdByIdRole } from '../../core/index.ts';
@@ -40,7 +37,7 @@ import { getClaimsIdByIdBusinessId, getDocumentsIdByIdBusinessId, listDocumentsI
 import { getBusinessesIdById, getBusinessesNameById, getContactsIdByIdBusinessId, listContactsIdFullNameByBusinessId } from '../clients/index.ts';
 import { getAmlFirmRiskAssessmentsAssessedOnDocumentRef, getAmlOfficersAppointedOnEndedOnById, getCddBeneficialOwnersCountByCheckId, getCddChecksIdBusinessIdById, getCddChecksIdByIdBusinessId, getCddPscDecisionsIdByCheckIdDecision, insertAmlFirmRiskAssessments, insertAmlOfficers, insertCddBeneficialOwners, insertCddChecks, insertCddMonitoringNotes, insertCddPscDecisions, listCddMonitoringNotesNotedOnNoteByBusinessId, listCddPscDecisionsIdDecisionByCheckId, updateAmlOfficersEndedOnById, updateCddChecksIdentifiedVerificationMethodById, updateCddChecksStateCompletedAtById, updateCddChecksStateWithdrawnReasonById } from './data.ts';
 import { listAmlOfficersIdOfficeUserId } from './data.ts';
-import { listCddBeneficialOwnersIdContactIdByCheckId, listCddChecksIdBusinessId } from './data-borrowed.ts';
+import { listCddBeneficialOwnersIdContactIdByCheckId, listCddChecksIdBusinessId } from './data.ts';
 
 /* ================================================================== *
  * 1 · THE VOCABULARIES — the paper's own, section 5

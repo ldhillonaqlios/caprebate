@@ -13,6 +13,9 @@ import {
   type FeeControls, type FeeFacts,
 } from '../../src/modules/claims/fee-controls.ts';
 import { backendSwitchReadings } from '../../src/modules/claims/case-stamp.ts';
+// The case stamp reads switches compliance and the public site keep, through the ports their doors fill (Phase 161l2).
+import '../../src/modules/compliance/index.ts';
+import '../../src/modules/public-site/index.ts';
 
 /** £100,000 of allowances: Word question 235's own example. */
 const FACTS: FeeFacts = Object.freeze({

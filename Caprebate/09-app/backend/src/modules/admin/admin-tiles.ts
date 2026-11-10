@@ -12,7 +12,7 @@
 
 import type { Actor } from '../../core/index.ts';
 import { h, type Safe } from '../../shared/index.ts';
-import { usersGate } from './settings.ts';
+import { usersGate } from './admin.permissions.ts';
 import { assertConfigurationRead } from './configuration.ts';
 import { documentTypesGate } from '../claims/index.ts';
 import { automationGate } from '../clients/index.ts';
@@ -20,6 +20,7 @@ import { templatesGate } from './templates.ts';
 import { assertComplianceRead } from '../compliance/index.ts';
 import { auditLogGate } from '../compliance/index.ts';
 import { rewardModelGate } from '../clients/index.ts';
+import { adminSettingsGate } from './admin.permissions.ts';
 
 export type Tile = {
   readonly href: string;
@@ -42,11 +43,6 @@ export const SETTINGS_TILES: readonly Tile[] = Object.freeze([
   { href: '/staff/audit', label: 'Audit log', does: 'Who did what, and when. Nothing in it can be changed.', gate: auditLogGate },
   { href: '/staff/introducer-rewards', label: 'Introducer fees', does: 'What we pay firms that send us clients.', gate: rewardModelGate },
 ]);
-
-/** The page's gate: Admin's, as the brief set it. */
-export function adminSettingsGate(actor: Actor): void {
-  usersGate(actor);
-}
 
 /** The tiles this login's gates admit. The page gate is asked first. */
 export function settingsTiles(actor: Actor, opens: (actor: Actor, gate: (actor: Actor) => void) => boolean): readonly Tile[] {

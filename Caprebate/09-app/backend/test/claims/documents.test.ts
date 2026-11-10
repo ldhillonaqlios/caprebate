@@ -45,6 +45,7 @@ import { acceptClientBytes, finishUpload, eventsFor, issuedJob } from '../../src
 import { DOC_SPECS, HUMAN_READ_ONLY_TYPES, RET7, quarantineKeyFor } from '../../src/modules/claims/upload-handler-port.ts';
 import { pdfOf } from '../document-fixtures.ts';
 import { actor, signatureRecordFor } from '../helpers.ts';
+import * as clientsDoor from '../../src/modules/clients/index.ts';
 
 const T0 = '2026-09-08T12:00:00.000Z';
 const SCRIPT = '<script>alert(1)</script><img src=x onerror=alert(2)>';
@@ -571,7 +572,7 @@ describe('requests — a client question of kind DOCUMENT, RECEIVED by an upload
       for (const reading of [planning?.due, mine.find((r) => r.type_label.startsWith('Planning'))?.due]) {
         assert.equal(reading?.state, 'NO_DUE_DATE');
         assert.equal(reading?.overdue, false);
-        assert.equal(reading?.label, T.NO_DUE_DATE);
+        assert.equal(reading?.label, clientsDoor.NO_DUE_DATE);
       }
       assert.equal(C.claimView(db, sales, w.job.claim, { now: '2026-09-10T22:30:00.000Z' }).documents.overdue, 0, 'at 23:30 BST on the 10th it is due today, not overdue');
     } finally { w.close(); }

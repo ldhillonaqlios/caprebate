@@ -9,7 +9,7 @@ import { joinSignature } from '../../integrations/index.ts';
 import { SITE_JS_HEADERS } from '../../shared/index.ts';
 import { getContactsNByBusinessIdLeadId } from '../clients/index.ts';
 
-import { PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen } from './introducers.ts';
+import { PROSPECT_EVENTS, intakeReferral, referralFormOpen } from './introducers.ts';
 import { SECTORS } from './leads.ts';
 import { VIDEO_CALL_JS } from '../clients/index.ts';
 import { VIDEO_PAGE_HEADERS, clientMayJoin, joinPanel, withJoinScripts } from '../clients/index.ts';
@@ -17,6 +17,7 @@ import { WHATSAPP_IMPORT_JS } from './whatsapp-import-script.ts';
 import type { Db, Param, Row } from '../../core/index.ts';
 import { getVideoMeetingsBookingIdMeetingIdByClientToken } from '../../integrations/index.ts';
 import { getBookingsStartsAtEndsAtBusinessIdLeadIdById } from '../clients/index.ts';
+import { REFERRAL_FORM } from '../clients/index.ts';
 
 /** The join pages' script and the WhatsApp pages' script. */
 export async function crmAssets(w: WebRequest): Promise<WebResult | undefined> {

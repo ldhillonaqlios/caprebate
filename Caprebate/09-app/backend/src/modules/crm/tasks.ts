@@ -42,16 +42,18 @@ import type { AuditKind, AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
-import { claimNaming, claimObjFor, claimWords, type Fields } from './crm.ts';
+import { claimNaming, claimObjFor, claimWords } from '../claims/index.ts';
+import { type Fields } from '../clients/index.ts';
 import { anyStageLabel, claimStage } from '../../shared/index.ts';
 import { waitingOn, type WaitingOn } from '../claims/index.ts';
 import { fireAutomation } from './automation.ts';
 import { mayTake, vocabLabel } from '../admin/index.ts';
 import { listUsersIdDisplayNameByRoleADM2 } from '../../core/index.ts';
 import { getBusinessesIdById, getContactsIdBusinessIdById3, getLeadsBusinessIdById, getLeadsIdBusinessIdById, getStaffTasksDueOnNByContactIdStatus, getStaffTasksIdByCreatedByOrigin, listClientTasksQuestionDueOnByAskedByState, listClientTasksQuestionDueOnByAskedByState2, listClientTasksQuestionDueOnByBusinessIdState, updateStaffTasksIsNextActionUpdatedAtByClaimIdIsNextAction, updateStaffTasksIsNextActionUpdatedAtById, updateStaffTasksStatusCancelledAtById, updateStaffTasksStatusCompletedAtById, updateStaffTasksStatusStartedAtById, updateStaffTasksStatusUpdatedAtById, updateStaffTasksTitleDescriptionById } from '../clients/index.ts';
-import { getStaffTasksIdTitleByClaimIdIsNextAction, listClaimsIdClaimRef, listClaimsIdClaimRefByOwnerId2 } from '../clients/index.ts';
+import { getStaffTasksIdTitleByClaimIdIsNextAction } from '../clients/index.ts';
+import { listClaimsIdClaimRef, listClaimsIdClaimRefByOwnerId2 } from './split-reads.ts';
 import { getClaimsIdBusinessIdById7, getClaimsIdStageById, getClaimsStageById, getPropertiesIdBusinessIdById, listClaimsIdClaimRefByOwnerId } from '../claims/index.ts';
-import { getIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO2, listIntroducersIdTitleByIdJO3, listIntroducersIdTitleByIdJO4 } from '../clients/index.ts';
+import { getIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO2, listIntroducersIdTitleByIdJO3, listIntroducersIdTitleByIdJO4 } from './split-reads.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { listDocumentTypesCodeReadersLabelByCodes } from '../admin/index.ts';
 import { listClaimsIdClaimRefStageByIds } from '../claims/index.ts';
@@ -60,8 +62,6 @@ import { byId, idsOf, listClientTasksIdRequestedTypeByAskedByKind, lookUp } from
 // The activity lists, the dates, the due reading, the task's object and the row written: the client record's
 // (src/modules/clients/tasks.ts), as the modules below raise tasks too.
 import { ACTIVITY_TYPES, NO_DUE_DATE, POOL_ROLES, RECIPROCITY_ACTIVITY_TYPES, addDaysToDate, addMonthsToDate, dueReading, insertTask, taskObj, type DueReading, type DueState, type TaskInsert } from '../clients/index.ts';
-export { ACTIVITY_TYPES, NO_DUE_DATE, POOL_ROLES, RECIPROCITY_ACTIVITY_TYPES, addDaysToDate, addMonthsToDate, dueReading, insertTask, taskObj };
-export type { DueReading, DueState, TaskInsert };
 
 export type TaskDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type TaskResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };

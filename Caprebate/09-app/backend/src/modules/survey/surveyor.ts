@@ -76,26 +76,10 @@ import { listRegisterRecordsSourceIdEntityIdByBusinessId } from '../../integrati
 import { getPropertiesPostcodeByBusinessId, listDocumentsIdFilenameByBusinessId, listPropertiesLabelPostcodeByBusinessId2 } from '../claims/index.ts';
 import { getEstimatesByAssessmentId, listAssessmentAnswersOrdQuestionIdByAssessmentId2 } from '../assessment/index.ts';
 import { getEstimatesXById, getSurveyorRateEventsCountByJobId, getSurveyorRoomCountsCountByJobIdRoomCount, insertSurveyorControlObservations, insertSurveyorRateEvents, insertSurveyorRoomCounts, listSurveyorRateEventsBySurveyorId, listSurveyorRateEventsFieldIdFinalValueByJobId, listSurveyorRoomCountsRoomIdRoomCountByJobId3 } from './data.ts';
-import { getSurveyorJobsIdBusinessIdById2, listSurveyorJobsIdBusinessId } from './data-borrowed.ts';
+import { getSurveyorJobsIdBusinessIdById2, listSurveyorJobsIdBusinessId } from './data.ts';
+import { assertSurveySection } from './survey.permissions.ts';
 
 export { NotFoundAsRefusal };
-
-/**
- * THE SECTION GATE. `surveyor_job.enter` — its own action rather than a
- * sentinel object, and authz.ts says at length why this one collection cannot
- * use the sentinel the other three use.
- *
- * The object's `surveyor_id` is null because no rule for this action reads it:
- * all three admitted roles are unconditional. A sentinel carrying the
- * requester's own id would be a fixture built to pass the test being asked.
- */
-const SURVEY_SECTION = '__surveyor_jobs__';
-
-export function assertSurveySection(actor: Actor): void {
-  authorise(actor, 'surveyor_job.enter', {
-    type: 'surveyor_job', id: SURVEY_SECTION, business_id: SURVEY_SECTION, surveyor_id: null,
-  });
-}
 
 /* ================================================================== *
  * THE JOB

@@ -19,7 +19,7 @@ import { authorise, can, type Actor } from '../../core/index.ts';
 import { h, raw, page, type Safe } from '../../shared/index.ts';
 import { savedMessage } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import { markChannelRead, lastChannelRead } from './messages.ts';
+import { markChannelRead } from './messages.ts';
 import { attachmentOf, phoneContacts, ATTACHMENT_WORDS, type PhoneContact } from './whatsapp.ts';
 import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../../integrations/index.ts';
 import { isDoNotContact } from '../../integrations/index.ts';
@@ -30,6 +30,7 @@ import type { Param, Row } from '../../core/index.ts';
 import { namesByIds } from '../../core/index.ts';
 import { listWhatsappMessagesIdCreatedAtSenderByBusinessIdPhone } from '../../integrations/index.ts';
 import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from '../clients/index.ts';
+import { lastChannelRead } from '../clients/index.ts';
 
 
 /** One person (or one number we filed under the company) we have a WhatsApp conversation with, or could. */

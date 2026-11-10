@@ -3,9 +3,9 @@
  * hands the menu its own gates and counts. Loaded last by the front door, as it reaches the module's own files.
  */
 import { provideNav } from '../../core/index.ts';
-import { assertIntroducerSection, rewardModelGate } from './introducers.ts';
+import { assertIntroducerSection } from './introducers.ts';
 import { assertLeadSection } from './leads.ts';
-import { unreadCount } from './messages.ts';
+import { rewardModelGate, unreadCount } from '../clients/index.ts';
 import { pipelineBoardGate } from './crm.permissions.ts';
 import { searchGate } from './search.ts';
 import { mayCreateTask, myWork, nextActionsGate } from './tasks.ts';

@@ -9,6 +9,20 @@
 import { AuditLog, Db, MIGRATIONS_DIR, defaultHasher, loadCustomRoles, migrate, newId, pendingMigrations, primeTimingDefence, processSecrets } from '../core/index.ts';
 import type { App, BuildOptions, Deps } from '../core/index.ts';
 import { EMAIL_SENDING, builtInSignatureProvider, liveTransport, mailWhere, outboxTransport, sendingOn, smtpLoginFromKeyFile } from '../integrations/index.ts';
+/* EVERY AREA'S FRONT DOOR, wherever an application is built (the server, the command line, the tests): each door
+   registers its area's permissions and fills the ports the areas below it own (src/modules/claims/above-ports.ts, the
+   outside services' test lookups, the survey's jobs). Phase 161l2: until then the outside services' Claude client
+   happened to load the claims, and they the rest; now nothing below loads an area above, so the start-up loads them. */
+import '../modules/clients/index.ts';
+import '../modules/assessment/index.ts';
+import '../modules/claims/index.ts';
+import '../modules/survey/index.ts';
+import '../modules/finance/index.ts';
+import '../modules/compliance/index.ts';
+import '../modules/admin/index.ts';
+import '../modules/crm/index.ts';
+import '../modules/portal/index.ts';
+import '../modules/public-site/index.ts';
 
 export async function buildApp(opts: BuildOptions = {}): Promise<App> {
   const db = new Db(opts.location ?? ':memory:', {

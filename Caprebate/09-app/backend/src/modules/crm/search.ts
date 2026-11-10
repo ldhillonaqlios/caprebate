@@ -40,11 +40,12 @@
 
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { claimObjFor } from './crm.ts';
+import { claimObjFor } from '../claims/index.ts';
 import { claimName } from '../../shared/index.ts';
 import { anyStageLabel } from '../../shared/index.ts';
 import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId } from '../survey/index.ts';
-import { SEARCH_STATEMENTS, searchClaims, searchClaimsOfIds, searchContacts, searchNotes, searchOrganisations, searchProperties, searchPropertiesOfBusinesses, searchProspects } from '../clients/index.ts';
+import { searchContacts, searchNotes, searchOrganisations, searchProspects } from '../clients/index.ts';
+import { SEARCH_STATEMENTS, searchClaims, searchClaimsOfIds, searchProperties, searchPropertiesOfBusinesses } from './split-reads.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { listSurveyorJobsBusinessIdClaimIdBySurveyorId } from '../survey/index.ts';
 import { INVOICE_NUMBER_SEARCH, listInvoiceNumbersSeqInvoiceIdBySeqLike } from '../finance/index.ts';

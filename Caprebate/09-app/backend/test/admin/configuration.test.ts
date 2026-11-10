@@ -42,6 +42,7 @@ import { ctaSwitchReadings } from '../../src/shared/engine.ts';
 import { FEE_CONTROLS } from '../../src/modules/claims/fee-controls.ts';
 import { localDate } from '../../src/shared/localtime.ts';
 import { actor, testApp } from '../helpers.ts';
+import { RECIPROCITY_ACTIVITY_TYPES, type RunOutcome, addDaysToDate, insertTask } from '../../src/modules/clients/index.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 
@@ -188,7 +189,7 @@ describe('what no setting may change — refused by the store, by name, recorded
   test('THE RECIPROCITY KINDS stay reward model A’s: refused by the store and by the table', async () => {
     const a = await app();
     try {
-      for (const code of Object.keys(T.RECIPROCITY_ACTIVITY_TYPES)) {
+      for (const code of Object.keys(RECIPROCITY_ACTIVITY_TYPES)) {
         const r = CF.addValue(deps(a), ADMIN, { list: 'ACTIVITY_TYPE', code, label: 'x' });
         assert.equal(r.ok, false);
         assert.equal(r.ok ? '' : r.why, CF.FORBIDDEN_SETTINGS['RECIPROCITY_KINDS']);
@@ -341,7 +342,7 @@ describe('a rule that asks the client for a document — through createDocumentR
 
       const org = organisation(a);
       const requests = () => count(a, "SELECT COUNT(*) AS n FROM client_tasks WHERE business_id = ? AND kind = 'DOCUMENT'", [org.business]);
-      const mine = (out: readonly A.RunOutcome[]) => out.filter((o) => o.rule_id === rule.id).map((o) => [o.outcome, o.reason]);
+      const mine = (out: readonly RunOutcome[]) => out.filter((o) => o.rule_id === rule.id).map((o) => [o.outcome, o.reason]);
 
       assert.deepEqual(mine(A.fireAutomation(d, null, { trigger: 'STAGE_ENTERED', claim_id: org.claim, stage: 'VALUATION' })), [['NOT_RUN', 'NO_ONE_TO_RAISE_THE_REQUEST']]);
       assert.equal(requests(), 0);
@@ -352,7 +353,7 @@ describe('a rule that asks the client for a document — through createDocumentR
         "SELECT requested_type, why, holds_up, due_on, claim_id, state FROM client_tasks WHERE business_id = ? AND kind = 'DOCUMENT'", [org.business]);
       assert.deepEqual(JSON.parse(JSON.stringify(made)), {
         requested_type: receivable, why: 'The valuation reads the lease term', holds_up: 'The valuation',
-        due_on: T.addDaysToDate(localDate(a.now()), 7), claim_id: org.claim, state: 'OPEN',
+        due_on: addDaysToDate(localDate(a.now()), 7), claim_id: org.claim, state: 'OPEN',
       });
       assert.equal(a.audit.entries().filter((e) => e.kind === 'DOCUMENT_REQUESTED').length, 1, 'the request was not raised through createDocumentRequest');
 
@@ -384,7 +385,7 @@ describe('merging a firm — leads, people and open tasks move under one merge r
       assert.ok(into.ok);
       if (!into.ok) return;
       const task = (title: string) => {
-        T.insertTask(a.db, a.now, randomUUID, {
+        insertTask(a.db, a.now, randomUUID, {
           title, description: null, owner_id: 'u-SALES', owner_role: null, due_on: null, priority: null, activity_type: 'CALL',
           business_id: null, property_id: null, claim_id: null, lead_id: null, introducer_id: from, contact_id: null, fact_id: null,
           recurrence: null, recurred_from_id: null, is_next_action: false, origin: 'STAFF', automation_run_id: null, created_by: 'u-SALES',

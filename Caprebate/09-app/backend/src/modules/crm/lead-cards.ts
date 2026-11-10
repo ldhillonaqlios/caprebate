@@ -28,10 +28,9 @@ import { plainNeed } from '../../shared/index.ts';
 import { ukDatesIn } from '../../shared/index.ts';
 import type { LeadListRow } from './claim-lists.ts';
 import type { LeadView } from './leads.ts';
-import type { EnquiryRow } from '../public-site/index.ts';
-import { PROPERTY_TYPES } from '../public-site/index.ts';
+import { PROPERTY_TYPES, type EnquiryRow } from './enquiries.ts';
 import { SECTORS } from './leads.ts';
-import { dueReading } from './tasks.ts';
+import { dueReading } from '../clients/index.ts';
 import { isLateNewLead, waitedWords, workingDaysSince } from '../../shared/index.ts';
 
 export type LeadSectionKey = 'new' | 'going' | 'later' | 'closed';

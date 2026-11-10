@@ -35,7 +35,7 @@ import * as C from '../../src/modules/crm/crm.ts';
 import * as P from '../../src/modules/crm/pipeline.ts';
 import * as T from '../../src/modules/crm/tasks.ts';
 import * as I from '../../src/modules/finance/invoices.ts';
-import * as V from '../../src/modules/assessment/vat.ts';
+import * as V from '../../src/modules/finance/vat.ts';
 import * as FC from '../../src/modules/claims/fee-controls.ts';
 import * as F from '../../src/modules/finance/finance.ts';
 import * as R from '../../src/modules/claims/claim-record.ts';
@@ -47,6 +47,10 @@ import { loadLetter, unresolvedTerms, TEST_LETTER_PATH } from '../../src/modules
 import { actor, fixedClock, testApp } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';
 import { oneDriveOnly, oneDrivePath } from '../onedrive-only.ts';
+import { liveFeeInvoiceCount } from '../../src/modules/finance/index.ts';
+import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
+import { FORBIDDEN_EFFECTS, addDaysToDate } from '../../src/modules/clients/index.ts';
+import * as clientsDoor from '../../src/modules/clients/index.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
@@ -93,7 +97,7 @@ function claimAt(app: Base, org: Org, stage: string, figure: number | null = 240
   });
   P.recordOpened({ ...app, newId: randomUUID }, null, made.id, stage, 'a finance test fixture');
   if (figure !== null) CF.signOffRow(app, org.business, org.assessment, made.id, figure);
-  T.insertTask(app.db, app.now, randomUUID, {
+  clientsDoor.insertTask(app.db, app.now, randomUUID, {
     title: 'a fixture next action', description: null, owner_id: 'u-SALES', owner_role: null, due_on: '2026-12-31',
     priority: null, activity_type: 'TASK', business_id: org.business, property_id: null, claim_id: made.id, lead_id: null,
     contact_id: null, fact_id: null, recurrence: null, recurred_from_id: null, is_next_action: true, origin: 'STAFF',
@@ -229,7 +233,7 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       assert.equal(row?.['vat_pence'], 0);
       assert.equal(row?.['vat_setting_id'], 'finance-setting-vat-position-2026-08-28', 'the VAT was not read from the recorded position');
       // Phase 132e: clause 4 now reads "within 14 days of the date of the invoice", so the due date is the invoice date + 14.
-      assert.equal(row?.['due_on'], T.addDaysToDate(String(row?.['invoice_date']), 14), 'the due date is not the invoice date plus the letter’s 14 days');
+      assert.equal(row?.['due_on'], addDaysToDate(String(row?.['invoice_date']), 14), 'the due date is not the invoice date plus the letter’s 14 days');
       assert.match(String(row?.['due_basis']), /within 14 days of the invoice/);
       assert.equal(/\b30\b|thirty/i.test(String(row?.['due_basis'])), false);
       // AND THE OTHER WAY: with the payment terms blank, no due date is defaulted.
@@ -242,7 +246,7 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
 
       const v = I.claimInvoiceById(app.db, ACC, id, app.now());
       assert.equal(v.number, 'CB-000001');
-      assert.equal(v.due_shown, T.addDaysToDate(String(row?.['invoice_date']), 14));
+      assert.equal(v.due_shown, addDaysToDate(String(row?.['invoice_date']), 14));
       assert.equal(v.money.state, 'NOTHING_RECEIVED');
       assert.equal(v.money.outstanding, '£7,200');
       assert.equal(v.money.overdue, false);
@@ -417,7 +421,7 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       assert.equal(v.money.state, 'CREDITED_IN_FULL');
       assert.deepEqual(v.credit_notes.map((c) => c.number), ['CB-000002', 'CB-000003']);
       assert.equal(I.creditInFull(deps(app), ACC, id, { reason: 'again' }).ok, false);
-      assert.equal(P.liveFeeInvoiceCount(app.db, claim), 0, 'an invoice credited in full still counts as the claim’s live fee');
+      assert.equal(liveFeeInvoiceCount(app.db, claim), 0, 'an invoice credited in full still counts as the claim’s live fee');
 
       assert.throws(() => app.db.run("INSERT INTO invoice_credit_notes (id, invoice_id, basis, amount_pence, vat_pence, issued_on, reason, recorded_by, recorded_at) VALUES ('x', ?, 'CREDIT_IN_FULL', 1, 0, '2026-09-08', 'x', 'u-ACCOUNTING', ?)", [id, T0]), /E_CREDIT_EXCEEDS_INVOICE/);
       assert.throws(() => app.db.run('UPDATE invoice_credit_notes SET amount_pence = 1'), /never changed/);
@@ -525,7 +529,7 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       const srow = app.db.get<{ id: string; fee_pence: number; vat_pence: number; invoice_status: string; due_on: string | null; invoice_date: string }>(
         'SELECT id, fee_pence, vat_pence, invoice_status, due_on, invoice_date FROM invoices WHERE id = ?', [s]);
       assert.ok(srow);
-      assert.equal(srow.due_on, T.addDaysToDate(srow.invoice_date, 14));
+      assert.equal(srow.due_on, addDaysToDate(srow.invoice_date, 14));
       assert.equal(I.invoiceMoney(app.db, srow, app.now()).overdue, false);
       assert.equal(I.invoiceMoney(app.db, srow, '2026-09-23T12:00:00.000Z').overdue, true, 'not overdue the day after it fell due');
       assert.equal(I.recordReceived(deps(app), ACC, s, { received_on: '2026-09-08', amount: '7200' }).ok, true);
@@ -753,7 +757,7 @@ describe('3 · VAT monitoring: dated settings, the two tests, one task, and no i
       assert.equal(/£|70,000/.test(String(task?.['title']) + String(task?.['description'])), false, 'the task carries a figure');
       assert.ok(T.myWork(app.db, ACC, app.now()).tasks.some((t) => t.id === first.task.id && t.about.some((x) => x.kind === 'company')));
       assert.equal(T.myWork(app.db, SURVEYING, app.now()).tasks.some((t) => t.id === first.task.id), false);
-      assert.equal(T.dueReading(String(task?.['due_on']), '2026-10-01T12:00:00.000Z').overdue, true);
+      assert.equal(clientsDoor.dueReading(String(task?.['due_on']), '2026-10-01T12:00:00.000Z').overdue, true);
 
       assert.equal(V.runVatCheck(deps(app), ADMIN).task.state, 'ALREADY_OPEN');
       raise(app, readyToInvoice(app).claim);
@@ -761,7 +765,7 @@ describe('3 · VAT monitoring: dated settings, the two tests, one task, and no i
       assert.equal(JSON.stringify(app.db.all("SELECT * FROM invoices WHERE id IN (SELECT id FROM invoices ORDER BY id) AND claim_id = ? ORDER BY id", [a.claim])),
         JSON.stringify(JSON.parse(before).filter((x: { claim_id: string }) => x.claim_id === a.claim)), 'the VAT check changed an invoice');
 
-      assert.throws(() => T.insertTask(app.db, app.now, randomUUID, {
+      assert.throws(() => clientsDoor.insertTask(app.db, app.now, randomUUID, {
         title: 'x', description: null, owner_id: null, owner_role: 'ACCOUNTING', due_on: null, priority: null, activity_type: 'TASK',
         business_id: a.org.business, property_id: null, claim_id: null, lead_id: null, contact_id: null, fact_id: null, recurrence: null,
         recurred_from_id: null, is_next_action: false, origin: 'VAT_MONITOR', automation_run_id: null, created_by: null, company_subject: 'VAT_THRESHOLD',
@@ -914,7 +918,7 @@ describe('5 · the invoice email is not built', () => {
 
   test('while the invoice-fraud procedure is not in force, every refusal holds, at the rule store, the template store and the table', async () => {
     assert.equal(A.INVOICE_FRAUD_PROCEDURE.in_force, false);
-    for (const key of ['INVOICE_EMAIL', 'INVOICE_REMINDER', 'SEND_BANK_DETAILS']) assert.ok(Object.hasOwn(A.FORBIDDEN_EFFECTS, key), key);
+    for (const key of ['INVOICE_EMAIL', 'INVOICE_REMINDER', 'SEND_BANK_DETAILS']) assert.ok(Object.hasOwn(FORBIDDEN_EFFECTS, key), key);
     const app = await testApp();
     try {
       staff(app);
@@ -947,7 +951,7 @@ describe('6 · the claim’s own invoice, everywhere the organisation’s was re
       staff(app);
       const x = readyToInvoice(app);
       const y = readyToInvoice(app, { org: x.org });
-      const need = (claim: string): boolean => P.gateOut(app.db, P.loadPipelineClaim(app.db, claim), 'INVOICE', { today: app.now() })
+      const need = (claim: string): boolean => P.gateOut(app.db, loadPipelineClaim(app.db, claim), 'INVOICE', { today: app.now() })
         .needs.find((q) => /fee invoice is sent to the client on this claim/.test(q.what))?.met ?? false;
       app.db.run("INSERT INTO invoices (id,business_id,claim_value_pence,fee_pence,invoice_status,payment_status,vat_position,created_at) VALUES ('org-invoice', ?, NULL, 150000, 'RAISED', 'UNPAID', 'x', ?)", [x.org.business, T0]);
       assert.equal(need(x.claim), false, 'an organisation’s invoice opened a claim’s gate');

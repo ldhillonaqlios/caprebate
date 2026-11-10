@@ -27,45 +27,16 @@ import { claimStage, progressFor, type Progress } from '../../shared/index.ts';
 // Read inside functions only, so the import loop through pipeline.ts is never touched while the modules load.
 import { clientStageForClaim } from '../claims/index.ts';
 import { RECEIVED_ONLY_BY_UPLOAD, requestsFor, versionObj, type RequestView } from '../claims/index.ts';
-import { getBookingsIdBusinessIdById, getBusinessesContactEmailNameById2, getBusinessesIdNameById3, getClientTasksIdBusinessIdById4, insertBookingChanges2, insertBookingChanges3, insertBookingChanges4, listBookingsIdChannelByBusinessId, listClientTasksIdQuestionByBusinessIdState, updateBookingsCancelledAtCancelledByById, updateBookingsStartsAtEndsAtById2, updateBookingsStartsAtEndsAtById3, updateClientTasksStateAnswerStateById } from '../clients/index.ts';
-import { getEngagementsIdLetterStateByBusinessId3, getEngagementsSByBusinessId, updateEngagementsLetterStateViewedAtByBusinessIdLetterState } from '../claims/index.ts';
+import { getBookingsIdBusinessIdById, getBusinessesContactEmailNameById2, getClientTasksIdBusinessIdById4, insertBookingChanges2, insertBookingChanges3, insertBookingChanges4, listBookingsIdChannelByBusinessId, listClientTasksIdQuestionByBusinessIdState, updateBookingsCancelledAtCancelledByById, updateBookingsStartsAtEndsAtById2, updateBookingsStartsAtEndsAtById3, updateClientTasksStateAnswerStateById } from '../clients/index.ts';
+import { getEngagementsSByBusinessId, updateEngagementsLetterStateViewedAtByBusinessIdLetterState } from '../claims/index.ts';
+// The client's business and its letter as a login may read them, moved to the claims (Phase 161l2); named here as before.
+import { ClientNotFoundAsRefusal as NotFoundAsRefusal, engagement, readBusiness, type Business, type EngagementView } from '../claims/index.ts';
+export { engagement, NotFoundAsRefusal, readBusiness };
+export type { Business, EngagementView };
 import { getAssessmentsAssessmentIdSubmittedAtByBusinessId } from '../assessment/index.ts';
 import { getClaimsIdClaimRefByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel2 } from '../claims/index.ts';
 import { getDocumentsIdBusinessIdById4, listDocumentsIdBusinessIdByBusinessId } from './data.ts';
 
-export type Business = {
-  id: string; name: string; sector: string; stage: string;
-  contact_email: string | null; contact_phone: string | null;
-  /** Optional so existing fixtures stand. Read so the engagement letter can replace its specimen number. */
-  company_number?: string | null;
-};
-
-/**
- * The business this actor is asking about, or a refusal.
- *
- * `business.read` for a CLIENT is `isOwnBusiness`, and the object it is asked
- * about is the one that was FETCHED — not the one in the URL. Authorising
- * against an id taken straight from the request would authorise a row nobody
- * had looked up.
- */
-export function readBusiness(db: Db, actor: Actor, business_id: string): Business {
-  const row = getBusinessesIdNameById3<Business>(db, [business_id]);
-  // A MISSING ROW AND A FORBIDDEN ROW MUST LOOK THE SAME FROM OUTSIDE. Telling
-  // a caller "no such business" for one id and "not authorised" for another is
-  // an enumeration oracle: it confirms which ids exist.
-  if (row === undefined) {
-    authorise(actor, 'business.read', { type: 'business', id: business_id });
-    throw new NotFoundAsRefusal();
-  }
-  authorise(actor, 'business.read', { type: 'business', id: row.id });
-  return row;
-}
-
-/** Thrown where the row is absent. Rendered identically to a refusal. */
-export class NotFoundAsRefusal extends Error {
-  readonly code = 'E_NOT_AUTHORISED';
-  constructor() { super('not authorised'); this.name = 'NotFoundAsRefusal'; }
-}
 
 /* ------------------------------------------------- 0 · YOUR CLAIMS */
 
@@ -168,19 +139,6 @@ export function shownRange(db: Db, actor: Actor, business_id: string): ShownRang
 }
 
 /* ---------------------------------------------- 2 · THE ENGAGEMENT LETTER */
-
-export type EngagementView = {
-  state: 'NOT_SENT' | 'SENT' | 'VIEWED' | 'SIGNED';
-  signed_at: string | null;
-};
-
-export function engagement(db: Db, actor: Actor, business_id: string): EngagementView | null {
-  const b = readBusiness(db, actor, business_id);
-  const row = getEngagementsIdLetterStateByBusinessId3<{ id: string; letter_state: string; signed_at: string | null }>(db, [b.id]);
-  if (row === undefined) return null;
-  authorise(actor, 'engagement.read', { type: 'engagement', id: row.id, business_id: b.id });
-  return { state: row.letter_state as EngagementView['state'], signed_at: row.signed_at };
-}
 
 /**
  * SENT → VIEWED, recorded the first time the client opens it.

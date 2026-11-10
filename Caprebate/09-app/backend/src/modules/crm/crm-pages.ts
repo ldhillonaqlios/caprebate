@@ -54,11 +54,13 @@ import { siteAreaInputsModule as SI } from '../claims/index.ts';
 import { titleByHandModule as TH } from '../claims/index.ts';
 import { surveyOpenModule as SO } from '../survey/index.ts';
 import { earlyWindowWarning } from '../claims/index.ts';
-import { portalStepLine } from '../portal/index.ts';
-import { accountantConfirmBlock } from '../portal/index.ts';
-import { claimOverview, overviewBlock } from '../claims/index.ts';
+import { portalStepLine } from './portal-steps.ts';
+import { accountantConfirmations } from './accountant-port.ts';
+import { claimOverview, overviewBlock } from './claim-overview.ts';
 import { getBusinessesSectorById } from '../clients/index.ts';
 import { getClaimsStageBusinessIdById } from '../claims/index.ts';
+import { claimObjFor, loadClaimRow } from '../claims/index.ts';
+import { CLAIMANT_TYPES, JURISDICTIONS, OWNER_ROLE_TOKENS, WORKSTREAMS } from '../clients/index.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };
 
@@ -364,7 +366,7 @@ export function organisationSections(
             : h`<label>Company number <input name="company_number" value="${v.company_number.value ?? ''}"></label>`}
           ${v.claimant_type.derived ? h`<p class="help">The claimant type is known from ${v.claimant_type.source} and is not asked.</p>`
             : h`<label>Claimant type
-                <select name="claimant_type">${options(C.CLAIMANT_TYPES, v.claimant_type.value, 'not recorded')}</select></label>`}
+                <select name="claimant_type">${options(CLAIMANT_TYPES, v.claimant_type.value, 'not recorded')}</select></label>`}
           <label>Registered address <textarea name="registered_address">${v.registered_address ?? ''}</textarea></label>
           <label>Trading address <textarea name="trading_address">${v.trading_address ?? ''}</textarea></label>
           <label>Website <input name="website" value="${v.website ?? ''}"></label>
@@ -575,19 +577,19 @@ export function propertyPage(
           <label>Postcode <input name="postcode" value="${v.postcode ?? ''}"></label>
           ${v.jurisdiction.derived ? h`<p class="help">The jurisdiction comes from the postcode, so we do not ask.</p>`
             : h`<label>Jurisdiction
-                <select name="jurisdiction">${options(C.JURISDICTIONS, v.jurisdiction.value, 'not known')}</select></label>`}
+                <select name="jurisdiction">${options(JURISDICTIONS, v.jurisdiction.value, 'not known')}</select></label>`}
           <label>Property type <select name="property_type">${options(vocabulary(d.app.db, 'PROPERTY_TYPE', v.property_type), v.property_type, 'not recorded')}</select></label>
           <label>Property use <input name="property_use" value="${v.property_use ?? ''}"></label>
           <label>Tenure <select name="tenure">${options(C.TENURES, v.tenure.value, 'not recorded')}</select></label>
           <label>How the client holds it <select name="claimant_role">${options(C.CLAIMANT_ROLES, v.holding.role, 'not known')}</select></label>
           <label>The day the lease ends <input name="lease_end_date" type="date" value="${v.holding.lease_end_date ?? ''}"></label>
-          <label>Landlord — a company name, or one of ${Object.keys(C.OWNER_ROLE_TOKENS).join(', ')} <input name="landlord" value="${v.holding.landlord ?? ''}"></label>
+          <label>Landlord — a company name, or one of ${Object.keys(OWNER_ROLE_TOKENS).join(', ')} <input name="landlord" value="${v.holding.landlord ?? ''}"></label>
           <label>Occupier — a company name or a role, never a person <input name="occupier"></label>
           <label>Acquisition date <input name="acquisition_date" type="date" value="${v.acquisition_date ?? ''}"></label>
           <label>Acquisition price, in pounds <input name="acquisition_price"></label>
           <label>Completion date <input name="completion_date" type="date" value="${v.completion_date ?? ''}"></label>
           <label>Disposal date <input name="disposal_date" type="date" value="${v.disposal_date ?? ''}"></label>
-          <label>Previous owner — a company name, or one of ${Object.keys(C.OWNER_ROLE_TOKENS).join(', ')} <input name="previous_owner"></label>
+          <label>Previous owner — a company name, or one of ${Object.keys(OWNER_ROLE_TOKENS).join(', ')} <input name="previous_owner"></label>
           <label>Construction or refurbishment <textarea name="construction_notes">${v.construction_notes ?? ''}</textarea></label>
           ${v.existing_ca_claimed.derived ? h`<p class="help">Whether allowances were claimed before is known from ${v.existing_ca_claimed.source} and is not asked.</p>`
             : h`<label>Allowances claimed before?
@@ -606,7 +608,7 @@ export function propertyPage(
           need: [], from: ['you and your team'], body: h`
       <div class="pblock">${claimTilesFor(v.claims, undefined, v.business.name)}
       ${v.may_open_claim ? h`<form method="post" action="/staff/properties/${v.id}/claims">
-        <label>Open a claim for <select name="workstream">${options(C.WORKSTREAMS, null, null)}</select></label>
+        <label>Open a claim for <select name="workstream">${options(WORKSTREAMS, null, null)}</select></label>
         <button type="submit">Open claim</button></form>` : raw('')}
       </div>
 ` },
@@ -836,14 +838,14 @@ function claimPage(
         ${windowBlock}
         ${pipe}
         ${surveyJob}
-        ${accountantConfirmBlock(db, actor, v.id)}
+        ${accountantConfirmations().accountantConfirmBlock(db, actor, v.id)}
         ${v.edit === undefined ? raw('') : h`<details id="change-claim"><summary>Change the owner, surveyor or priority</summary>
           <div class="help">The stage is not changed here.${why('It moves through the steps above.')}</div>
           <form method="post" action="/staff/claims/${v.id}">
             <label>Owner <select name="owner_id">${people(v.edit.owners, v.edit.current.owner_id, 'nobody yet')}</select></label>
             <label>Surveyor <select name="surveyor_id">${people(v.edit.surveyors, v.edit.current.surveyor_id, 'none named')}</select></label>
             <label>Priority <select name="priority">${options(vocabulary(db, 'PRIORITY', v.edit.current.priority), v.edit.current.priority, 'not set')}</select></label>
-            <label>Workstream <select name="workstream">${options(C.WORKSTREAMS, v.edit.current.workstream, null)}</select></label>
+            <label>Workstream <select name="workstream">${options(WORKSTREAMS, v.edit.current.workstream, null)}</select></label>
             <label>Property <select name="property_id">${people(v.edit.properties.map((p) => ({ id: p.id, name: p.label })), v.edit.current.property_id, 'none recorded')}</select></label>
             <label>Expected completion <input name="expected_completion" type="date" value="${v.edit.current.expected_completion ?? ''}"></label>
             <label>Hold reason <input name="hold_reason" value="${v.edit.current.hold_reason ?? ''}"></label>
@@ -956,8 +958,8 @@ function claimPage(
      figure and the documents that prove it. The figure (the engine's band on that event's own cost, until the survey
      prices it) and the cost are the claim's value: shown only to a login that may read it. */
   {
-    const row = C.loadClaimRow(db, v.id);
-    const obj = C.claimObjFor(db, row);
+    const row = loadClaimRow(db, v.id);
+    const obj = claimObjFor(db, row);
     const sector = getBusinessesSectorById<{ sector: string | null }>(db, [row.business_id])?.sector ?? null;
     const evs = eventsOnClaim(db, { property_id: row.property_id, business_id: row.business_id, sector });
     const value = can(actor, 'claim.read_value', obj);

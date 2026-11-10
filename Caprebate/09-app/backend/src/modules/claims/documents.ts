@@ -66,17 +66,21 @@ import {
   type ReadingView, type VouchAnswer, type VouchView,
 } from './document-reading.ts';
 import { removeRegisterField } from '../../integrations/index.ts';
-import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from '../portal/index.ts';
+import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from './take-back.ts';
 import type { FsObjectStore } from '../../shared/index.ts';
 import { getUsersRoleById } from '../../core/index.ts';
 import { getClaimDeliverablesCountByClaimIdKind2, getClaimDeliverablesCountByLogicalDocumentIdTypeCode, getClaimDeliverablesFirstByClaimIdKind, getClaimFactsAnswerValueDateByClaimIdFactKey, getClaimsBusinessIdById, getClaimsBusinessIdPropertyIdById, getClaimsIdBusinessIdById, getClaimsPById, getDocumentFieldVouchesAnsweredByByRequestIdFieldId, getDocumentLinksCountByLogicalDocumentIdUnlinkedAt, getDocumentLinksIdByLogicalDocumentIdClaimId, getDocumentLinksIdByLogicalDocumentIdPropertyId, getDocumentLinksIdLogicalDocumentIdById, getDocumentVisibilityShownToClientByLogicalDocumentId, getDocumentsIdBusinessIdById, getDocumentsIdBusinessIdById3, getDocumentsIdByLogicalDocumentIdOriginalKeptAt, getDocumentsMByLogicalDocumentId, getDocumentsRoleById, getEngagementsCountByBusinessIdSignedAt, getLogicalDocumentsCountByBusinessIdTypeCode2, getLogicalDocumentsEById, getLogicalDocumentsIdKindById, getLogicalDocumentsMByBusinessIdTypeCode, getLogicalDocumentsRoleById, getPropertiesBusinessIdById, getUsersRoleById2, insertDocumentLinks, insertDocumentLinks2, insertDocumentVisibility, insertLogicalDocuments, listClaimsIdByBusinessIdStage, listClaimsIdClaimRefByBusinessId2, listDocumentEventsContractStepDetailJsonByDocIdContractStep, listDocumentLinksClaimIdByLogicalDocumentIdUnlinkedAt, listDocumentLinksClaimIdByLogicalDocumentIdUnlinkedAt2, listDocumentLinksIdClaimIdByLogicalDocumentId, listDocumentLinksIdClaimRefByLogicalDocumentIdUnlinkedAt, listDocumentsIdLogicalDocumentIdByLogicalDocumentId, listDocumentsIdVersionNoByLogicalDocumentId, listPropertyEventsIdKindByBusinessId, listRegisterRecordsIdSourceIdBySourceIdBusinessId, updateDocumentFieldVouchesWithdrawnAtWithdrawnByByLogicalDoc, updateDocumentLinksUnlinkedAtUnlinkedByByIdUnlinkedAt, updateLogicalDocumentsEventIdById } from './data.ts';
 import { getBusinessesIdById, getClientMessageFilesIdDirectionByLogicalDocumentId, getClientTasksCountByKindState, getClientTasksIdBusinessIdById, getClientTasksIdBusinessIdById2, getClientTasksIdClaimIdByBusinessIdKind, getClientTasksIdClaimIdByIdKind, insertClientTasks2, listBusinessesIdName, updateClientTasksStateAnswerStateByIdState, updateClientTasksStateWithdrawnAtByIdState } from '../clients/index.ts';
-import { listBusinessesOByIdBusinessId, listLogicalDocumentsIdBusinessIdByBusinessId, listSurveyorJobsSurveyorIdBySurveyorIdClaimId } from './data-borrowed.ts';
-import { getDocumentTypesCodeByCode, getDocumentTypesM, getDocumentTypesOrdByCode, insertDocumentTypes, listDocumentTypesCodeLabelByActiveHandlerType, updateDocumentTypesLabelReadersByCode } from '../admin/index.ts';
-import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2, listSurveyorJobsSurveyorIdByClaimIdSurveyorId } from '../survey/index.ts';
-import { getLogicalDocumentsIdBusinessIdById, listLogicalDocumentsIdBusinessId, listLogicalDocumentsIdBusinessIdByBusinessId2, listLogicalDocumentsIdBusinessIdByBusinessId3, listLogicalDocumentsIdBusinessIdByIdJO, listLogicalDocumentsIdBusinessIdByIdUnlinkedAt } from './data-borrowed.ts';
-import { getDocumentTypesCodeLabelByCode, listDocumentTypesCodeLabel2 } from '../admin/index.ts';
-import { listDocumentFieldVouchesIdBusinessIdByRequestIdJO, listDocumentFieldVouchesIdBusinessIdByRequestIdJO2 } from './data-borrowed.ts';
+import { listBusinessesOByIdBusinessId } from './data.ts';
+import { listSurveyorJobsSurveyorIdBySurveyorIdClaimId } from './data.ts';
+import { listLogicalDocumentsIdBusinessIdByBusinessId } from './data.ts';
+// The document types are this module's table (Phase 161l2; the administration's before).
+import { getDocumentTypesCodeByCode, getDocumentTypesM, getDocumentTypesOrdByCode, insertDocumentTypes, listDocumentTypesCodeLabelByActiveHandlerType, updateDocumentTypesLabelReadersByCode } from './data.ts';
+// Who holds a survey job, through the port the core owns (the survey hands its reads in as it loads; Phase 161l2).
+import { surveyorsOnBusiness, surveyorsOnClaim } from '../../core/index.ts';
+import { getLogicalDocumentsIdBusinessIdById, listLogicalDocumentsIdBusinessId, listLogicalDocumentsIdBusinessIdByBusinessId2, listLogicalDocumentsIdBusinessIdByBusinessId3, listLogicalDocumentsIdBusinessIdByIdJO, listLogicalDocumentsIdBusinessIdByIdUnlinkedAt } from './data.ts';
+import { getDocumentTypesCodeLabelByCode, listDocumentTypesCodeLabel2 } from './data.ts';
+import { listDocumentFieldVouchesIdBusinessIdByRequestIdJO, listDocumentFieldVouchesIdBusinessIdByRequestIdJO2 } from './data.ts';
 import { CENTRE_OBJ, mayVouchFor, staffMayOpen, TYPES_OBJ } from './documents.permissions.ts';
 
 export type DocDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
@@ -403,10 +407,9 @@ function letterSigned(db: Db, business_id: string): boolean {
  */
 function documentSurveyors(db: Db, logical_id: string, business_id: string): string[] {
   const linked = getDocumentLinksCountByLogicalDocumentIdUnlinkedAt<{ n: number }>(db, [logical_id])?.n ?? 0;
-  const rows = linked === 0
-    ? listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2<{ surveyor_id: string }>(db, [business_id])
-    : listSurveyorJobsSurveyorIdBySurveyorIdClaimId<{ surveyor_id: string }>(db, [logical_id, logical_id]);
-  return rows.map((r) => r.surveyor_id);
+  return linked === 0
+    ? surveyorsOnBusiness(db, business_id)
+    : listSurveyorJobsSurveyorIdBySurveyorIdClaimId<{ surveyor_id: string }>(db, [logical_id, logical_id]).map((r) => r.surveyor_id);
 }
 
 export function documentObj(db: Db, l: { id: string; business_id: string; readers: string; carries_value: number }): DocObj {
@@ -1587,7 +1590,7 @@ export function documentCentre(db: Db, actor: Actor, q: URLSearchParams): Docume
       const anyReceived = versions.some((v) => v.strip_recorded_at !== null && v.quarantine_discharged_at !== null && v.failure_code === null);
       const stateKey = anyReceived ? 'RECEIVED' : newest !== undefined && newest.failure_code !== null ? 'REFUSED' : 'NOT_RECEIVED';
       const claims = listDocumentLinksIdClaimRefByLogicalDocumentIdUnlinkedAt<{ id: string; claim_ref: string; business_id: string; property: string | null }>(db, [l.id]).map((c) => {
-        const surveyors = listSurveyorJobsSurveyorIdByClaimIdSurveyorId<{ surveyor_id: string }>(db, [c.id]).map((r) => r.surveyor_id);
+        const surveyors = surveyorsOnClaim(db, c.id);
         const open = can(actor, 'claim.read', { type: 'claim', id: c.id, business_id: c.business_id, assigned_surveyor_ids: surveyors });
         return { id: c.id, claim_ref: c.claim_ref, property: c.property, href: open ? `/staff/claims/${c.id}` : null };
       });

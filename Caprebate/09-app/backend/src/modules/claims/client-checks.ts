@@ -12,7 +12,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
-import { loadClaimRow } from '../clients/index.ts';
+import { loadClaimRow } from './claim-row.ts';
 import { claimObjFor } from './claim-object.ts';
 import { sendTaskToPortal } from './engaged.ts';
 import { createDocumentRequest } from './documents.ts';

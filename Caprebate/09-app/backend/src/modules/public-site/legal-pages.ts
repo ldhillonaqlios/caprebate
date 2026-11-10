@@ -30,6 +30,8 @@
 import type { IncomingMessage } from 'node:http';
 import { h, raw, page, type Safe } from '../../shared/index.ts';
 import { COMPANY, COMPANY_NUMBER, OFFICE, CONTACT, DP_MAIL, SECURITY, mail, LATER, privacyPolicyBody, portalTermsBody } from './privacy-policy.ts';
+// The pages' register (addresses, titles, versions, approvals) is compliance's (src/modules/compliance/legal-register.ts).
+import { LEGAL_PAGES, NO_APPROVALS, inForce, versionOf, type Approvals, type LegalPageKey, type PageApproval } from '../compliance/index.ts';
 
 /** The cookie that keeps the visitor's answer, and how long it is kept. */
 export const CONSENT_COOKIE = 'cb_cookies';
@@ -46,26 +48,6 @@ export const LEGAL_GAPS: readonly (readonly [fact: string, where: string])[] = O
   ['The safeguard for each outside service that may hold data outside the UK', 'Privacy policy'],
 ]);
 
-/** The legal pages: address, title, key (as legal_approvals names it) and version (the date it last changed). */
-export const LEGAL_PAGES: readonly (readonly [path: string, title: string, key: LegalPageKey, version: string])[] = Object.freeze([
-  ['/terms/', 'Website terms of use', 'terms', '2026-11-05'],
-  ['/portal-terms/', 'Client portal terms', 'portal-terms', '2026-11-05'],
-  ['/privacy-policy/', 'Privacy policy', 'privacy-policy', '2026-11-05'],
-  ['/cookies/', 'Cookie policy', 'cookies', '2026-11-05'],
-  ['/acceptable-use/', 'Acceptable use', 'acceptable-use', '2026-10-20'],
-  ['/accessibility/', 'Accessibility statement', 'accessibility', '2026-10-20'],
-  ['/disclaimer/', 'Disclaimer', 'disclaimer', '2026-10-20'],
-]);
-export type LegalPageKey = 'terms' | 'portal-terms' | 'privacy-policy' | 'cookies' | 'acceptable-use' | 'accessibility' | 'disclaimer' | 'notices';
-/** The public notices page's version (src/modules/public-site/notices-site.ts serves it; 03-app/caprebate-notices-page.html is its text). */
-export const NOTICES_VERSION = '2026-11-05';
-export const versionOf = (key: LegalPageKey): string => key === 'notices' ? NOTICES_VERSION : LEGAL_PAGES.find((p) => p[2] === key)?.[3] ?? '';
-
-/** Who has approved the current version of a page: the solicitor, the data protection officer, or both. */
-export type PageApproval = { readonly solicitor: { by: string; on: string } | null; readonly dpo: { by: string; on: string } | null };
-export type Approvals = ReadonlyMap<LegalPageKey, PageApproval>;
-export const NO_APPROVALS: Approvals = new Map();
-export const inForce = (a: PageApproval | undefined): boolean => a !== undefined && a.solicitor !== null && a.dpo !== null;
 
 const DRAFTED = '20 October 2026';
 const ukDay = (iso: string): string => {
@@ -359,12 +341,6 @@ export function consentSetCookie(choice: ConsentChoice): string {
   return `${CONSENT_COOKIE}=${choice}; Max-Age=${String(CONSENT_MAX_AGE)}; Path=/; HttpOnly; Secure; SameSite=Lax`;
 }
 
-/** Where to go back to after answering: one of our own pages, never another website. */
-export function safeBack(back: string | null): string {
-  if (back === null || !/^\/(?!\/)[^\s\\]*$/.test(back)) return '/';
-  return back;
-}
-
 /** Whether a public page should carry the banner: a visitor (not signed in) who has not answered, on a page of ours. */
 export function wantsBanner(path: string, signedIn: boolean, choice: ConsentChoice | null): boolean {
   if (signedIn || choice !== null) return false;
@@ -393,10 +369,4 @@ export function legalPageHtml(path: string, choice: ConsentChoice | null, saved 
     }
   })();
   return legalPage(key, title, body, approvals);
-}
-
-/** The words a link to the three documents a client agrees to: used by the agreement page and the letter page. */
-export function agreementLinks(): Safe {
-  return h`our <a href="/portal-terms/">client portal terms</a>, our <a href="/terms/">website terms of use</a> and our
-    <a href="/privacy-policy/">privacy policy</a>`;
 }

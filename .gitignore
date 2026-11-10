@@ -50,6 +50,8 @@
 *.pre-132b
 .DS_Store
 node_modules/
+# Phase 161l2: a link named node_modules too (a helper's git copy linked it, and "node_modules/" matches folders only)
+node_modules
 dist/
 *.db
 *.db-*

@@ -57,31 +57,25 @@ import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localDate } from '../../shared/index.ts';
 import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
 import { missingFacts } from '../claims/index.ts';
-import { POOL_ROLES, addDaysToDate, insertTask } from './tasks.ts';
-import type { Fields } from './crm.ts';
+import { type Fields, POOL_ROLES, addDaysToDate, insertTask } from '../clients/index.ts';
 import { mayTake } from '../admin/index.ts';
 import { createDocumentRequest, NO_RECEIPT_POLICY } from '../claims/index.ts';
 import { getUsersEmailRoleById, getUsersRoleDisabledAtById } from '../../core/index.ts';
 import { getAutomationRulesN, getBusinessesClientStatusById, getBusinessesIdOwnerIdById, getBusinessesNameById, getLeadsIdBusinessIdById3, insertAutomationRules, insertAutomationRuns, listStaffTasksFactIdByBusinessIdFactId, updateAutomationRulesLabelTriggerEventById } from '../clients/index.ts';
-import { getStaffTasksIdBusinessIdById } from '../clients/index.ts';
+import { getStaffTasksIdBusinessIdById } from './split-reads.ts';
 import { getDocumentTypesHandlerTypeActiveByCode, getVocabulariesActivityTypeCountByCode } from '../admin/index.ts';
 import { getClaimsIdClaimRefById3 } from '../claims/index.ts';
 import { getAutomationRulesIdLabelById, listAutomationRulesIdLabelByActiveTriggerEvent } from '../clients/index.ts';
 
 // The notice's subject words: the client record's (src/modules/clients/messages.ts), as its message alert uses them too.
 import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from '../clients/index.ts';
-export { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject };
 
 // The rules' words and the section's gate: the client record's (src/modules/clients/automation-words.ts).
 import { ASSIGN, ATTACH, EFFECTS, FORBIDDEN_EFFECTS, RULES_SECTION, RUN_REASONS, TRIGGERS, automationGate, type RuleDbRow } from '../clients/index.ts';
 // The rules as read moved to the admin (Phase 161l1).
 import { recentRuns, rulesPage, type RuleView, type RulesPage, type RunView } from '../admin/index.ts';
-export { recentRuns, rulesPage };
 // What an event carries and what a run did: the client record's port's (src/modules/clients/automation-port.ts).
 import type { AutomationDeps, AutomationEvent, RunOutcome } from '../clients/index.ts';
-export type { AutomationDeps, AutomationEvent, RunOutcome };
-export type { RuleView, RulesPage, RunView };
-export { ASSIGN, ATTACH, EFFECTS, FORBIDDEN_EFFECTS, RUN_REASONS, TRIGGERS, automationGate };
 /** `field` is the posted name a refusal is about, where it is about one. */
 export type RuleResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
 

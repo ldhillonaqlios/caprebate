@@ -56,6 +56,8 @@ import * as T from '../../src/modules/crm/tasks.ts';
 import { actor, scalars, signatureRecordFor, testApp } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';
 import { ONEDRIVE_ONLY, oneDriveOnly } from '../onedrive-only.ts';
+import { type Need, loadPipelineClaim } from '../../src/modules/claims/index.ts';
+import { insertTask } from '../../src/modules/clients/index.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const SCRIPT = '<script>alert(1)</script>';
@@ -93,7 +95,7 @@ function claimAt(app: App, org: Org, stage: string): string {
     stage, owner_id: null, surveyor_id: null,
   });
   P.recordOpened(CF.recordDeps(app), null, made.id, stage, 'a test fixture');
-  T.insertTask(app.db, app.now, randomUUID, {
+  insertTask(app.db, app.now, randomUUID, {
     title: 'the next action', description: null, owner_id: 'u-SALES', owner_role: null, due_on: '2026-12-31', priority: null,
     activity_type: 'TASK', business_id: org.business, property_id: null, claim_id: made.id, lead_id: null, contact_id: null,
     fact_id: null, recurrence: null, recurred_from_id: null, is_next_action: true, origin: 'STAFF', automation_run_id: null,
@@ -112,8 +114,8 @@ function confirm(app: App, claim: string, milestone: string): void {
   assert.equal(r.ok, true, r.ok ? '' : r.why);
 }
 
-function need(app: App, claim: string, from: Parameters<typeof P.gateOut>[2], what: string, today?: string): P.Need | undefined {
-  return P.gateOut(app.db, P.loadPipelineClaim(app.db, claim), from, today === undefined ? {} : { today }).needs.find((x) => x.what === what);
+function need(app: App, claim: string, from: Parameters<typeof P.gateOut>[2], what: string, today?: string): Need | undefined {
+  return P.gateOut(app.db, loadPipelineClaim(app.db, claim), from, today === undefined ? {} : { today }).needs.find((x) => x.what === what);
 }
 
 /** A claim walked to TAX_ADVISER_SIGNOFF with a commitment, and the sign-off recorded through the store. */
@@ -601,10 +603,10 @@ describe('THE SIGN-OFF RECORD — a record, not a signature, and the gate opens 
 
       // A reopen back to the sign-off invalidates the record made before it; a fresh one opens it again.
       assert.equal(P.moveClaim(d, actor('ADMIN'), c, { kind: 'REOPEN', to: 'TAX_ADVISER_SIGNOFF', reason: 'the scope was wrong' }).ok, true);
-      assert.equal(P.gateOut(app.db, P.loadPipelineClaim(app.db, c), 'TAX_ADVISER_SIGNOFF').open, false, 'a sign-off from before the reopen still counted');
-      assert.equal(P.claimableFigureReleased(app.db, P.loadPipelineClaim(app.db, c)).released, false);
+      assert.equal(P.gateOut(app.db, loadPipelineClaim(app.db, c), 'TAX_ADVISER_SIGNOFF').open, false, 'a sign-off from before the reopen still counted');
+      assert.equal(P.claimableFigureReleased(app.db, loadPipelineClaim(app.db, c)).released, false);
       assert.equal(sign().ok, true);
-      assert.equal(P.gateOut(app.db, P.loadPipelineClaim(app.db, c), 'TAX_ADVISER_SIGNOFF').open, true);
+      assert.equal(P.gateOut(app.db, loadPipelineClaim(app.db, c), 'TAX_ADVISER_SIGNOFF').open, true);
     } finally { app.close(); }
   });
 });

@@ -3,7 +3,7 @@
  * CRM 7 of 10.
  *
  * The schema is migration 016; the fee is src/modules/claims/fee-controls.ts; the VAT and
- * its monitoring are src/modules/assessment/vat.ts; the pages are src/modules/finance/finance-pages.ts. The
+ * its monitoring are src/modules/finance/vat.ts; the pages are src/modules/finance/finance-pages.ts. The
  * scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, section 13.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -48,15 +48,16 @@ import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from '../claims
 import { claimantTypeForGate } from '../assessment/index.ts';
 import { claimObjFor } from '../claims/index.ts';
 import { computeFee, controlsView, letterFee, letterFees, FEE_CONTROLS, PAYMENT_TERMS_QUESTION, type ControlsView, type FeeControls } from '../claims/index.ts';
-import { ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading, type SettingsView, type VatReading } from '../assessment/index.ts';
-import { assertFinanceSection, feeVersusBenefit, financeSectionObj, type FeeVersusBenefit } from './finance.ts';
+import { ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading, type SettingsView, type VatReading } from './vat.ts';
+import { feeVersusBenefit, type FeeVersusBenefit } from './finance.ts';
+import { assertFinanceSection, financeSectionObj } from './finance.permissions.ts';
 import { feeList, type FeeView } from '../clients/index.ts';
 import { announce } from '../../core/index.ts';
 import type { Letter } from '../claims/index.ts';
 import { getBusinessesSectorById, getStaffTasksIdTitleByClaimIdRuleId } from '../clients/index.ts';
 import { getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn } from '../claims/index.ts';
 import { getInvoiceCreditNotesAVByInvoiceId, getInvoiceNumbersCOALESCEMAXSeqN, getInvoicePaymentsCountByInvoiceIdVoidedAt, getInvoicePaymentsIdInvoiceIdById, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesCountByClaimId, getInvoicesCountByClaimIdKind, getInvoicesIdByIdClaimId, insertInvoiceCreditNotes, insertInvoiceNumbers, insertInvoicePayments, insertInvoices, listInvoiceCreditNotesIdBasisByInvoiceId, listInvoiceCreditNotesInvoiceIdAmountPence, listInvoicePaymentsIdReceivedOnByInvoiceId, listInvoicePaymentsInvoiceIdAmountPenceByVoidedAt, updateInvoiceNumbersStateCancelledAtByInvoiceIdKind, updateInvoicePaymentsVoidedAtVoidedByById, updateInvoicesInvoiceStatusCancelledAtById, updateInvoicesInvoiceStatusSentOnById } from './data.ts';
-import { getClaimsCreatedAtNameById, getClaimsIdBusinessIdById, getInvoicesIdBusinessIdById, listInvoicesIdBusinessId, listInvoicesIdBusinessIdByClaimId } from './data-borrowed.ts';
+import { getClaimsCreatedAtNameById, getClaimsIdBusinessIdById, getInvoicesIdBusinessIdById, listInvoicesIdBusinessId, listInvoicesIdBusinessIdByClaimId } from './data.ts';
 
 export type InvoiceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** `field` is the posted name a refusal is about, where it is about one, so the

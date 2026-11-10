@@ -6,6 +6,8 @@
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).
  */
 import type { Db, Param, Row } from '../../core/index.ts';
+// The users' names and roles, the core's, put in place of a join to users (Phase 161l2; src/core/data.ts fillUsers).
+import { fillUser, fillUsers, getUsersCountByBusinessIdsEmailCanonical, listUsersIdDisplayNameByIdsDisabledAt } from '../../core/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -1181,4 +1183,493 @@ export function sqlOrder(a: unknown, b: unknown): number {
 }
 export function listContactsIdFullNameContactTypeByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT c.id, c.full_name, c.contact_type FROM contacts c WHERE c.id IN (SELECT value FROM json_each(?))', params);
+}
+
+// Phase 161l2: the retention list's record kinds on the client record's tables (src/modules/compliance/compliance-identity.ts
+// RECORD_KINDS): each kind's count, text unchanged from compliance's borrowed file. A kind not here reads nothing.
+const RECORD_KIND_STATEMENTS: Readonly<Record<string, string>> = Object.freeze({
+  LEADS_NEVER_CONVERTED: "SELECT COUNT(*) AS n FROM leads WHERE status <> 'CONVERTED'",
+  LEAD_PEOPLE: 'SELECT COUNT(*) AS n FROM contacts WHERE lead_id IS NOT NULL AND business_id IS NULL',
+  STAFF_TASKS: 'SELECT COUNT(*) AS n FROM staff_tasks',
+  LEAD_FOLLOW_UP_TASKS: "SELECT COUNT(*) AS n FROM staff_tasks t JOIN leads l ON l.id = t.lead_id WHERE l.status <> 'CONVERTED'",
+  AUTOMATION_RUNS: 'SELECT COUNT(*) AS n FROM automation_runs',
+  INTRODUCERS: 'SELECT COUNT(*) AS n FROM introducers',
+  INTRODUCER_PEOPLE: 'SELECT COUNT(*) AS n FROM contacts WHERE introducer_id IS NOT NULL',
+  SHARE_CONSENTS: 'SELECT COUNT(*) AS n FROM introducer_share_consents',
+  INTRODUCER_NOTICES: 'SELECT COUNT(*) AS n FROM introducer_notices',
+  CLIENT_MESSAGE: 'SELECT COUNT(*) AS n FROM client_messages',
+  TEAM_MESSAGE: 'SELECT COUNT(*) AS n FROM internal_notes',
+});
+export function countClientRecordKind<T extends Row = Row>(db: Db, kind: string, params: readonly Param[] = []): T | undefined {
+  const sql = RECORD_KIND_STATEMENTS[kind];
+  return sql === undefined ? undefined : db.get<T>(sql, params);
+}
+
+// Phase 161l2: read by a list of ids (a JSON array), for the areas above that joined these tables to their own rows.
+export function listBusinessesIdNameSectorStageByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, name, sector, stage FROM businesses WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+export function listBookingsIdStartsAtCancelledAtByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, starts_at, cancelled_at FROM bookings WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+
+/*
+ * Phase 161l2: THE STATEMENTS THAT WAITED IN THIS MODULE'S BORROWED FILE, AT HOME. Each read the client record's own
+ * tables and joined the core's users (or, for the enquiry checks, a table that is now this module's: see
+ * architecture/tables.json). Each now reads this module's rows with the user's id standing where the joined column stood,
+ * and the core's fillUsers puts the user's column in its place: the same rows, in the same order, with the same keys,
+ * NULL where the LEFT JOIN found no one (test/crm/borrowed-split-161l2.test.ts keeps each old statement and compares).
+ * The statements that joined the claims' or the assessment's tables are split in the CRM (src/modules/crm/split-reads.ts)
+ * or the claims (src/modules/claims/claim-row.ts), above this module; the rows of this module they need are here.
+ */
+// booking_changes
+export function listBookingChangesAtFromStartsAtByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT c.at, c.from_starts_at, c.to_starts_at, c.changed_by AS who, c.cancelled FROM booking_changes c ' +
+    'WHERE c.booking_id = ? ORDER BY c.at', params), { who: 'display_name' });
+}
+export function listBookingChangesFromStartsAtToStartsAtByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT c.from_starts_at, c.to_starts_at, c.changed_by AS changed_by_name, c.at, c.cancelled ' +
+    'FROM booking_changes c WHERE c.booking_id = ? ORDER BY c.at ASC', params), { changed_by_name: 'display_name' });
+}
+
+// bookings
+/** The booking's assigned member of staff, when that user is there, not disabled and not a client (was: JOIN users u ON u.id = b.assigned_to). */
+export function getBookingsIdEmailByIdDisabledAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const b = db.get<{ assigned_to: unknown }>('SELECT b.assigned_to FROM bookings b WHERE b.id = ?', params);
+  const u = b === undefined ? undefined : fillUser(db, { id: b.assigned_to, email: b.assigned_to, display_name: b.assigned_to, disabled_at: b.assigned_to, role: b.assigned_to },
+    { email: 'email', display_name: 'display_name', disabled_at: 'disabled_at', role: 'role' });
+  if (u === undefined || u.role === null || u.disabled_at !== null || u.role === 'CLIENT') return undefined;
+  return { id: u.id, email: u.email, display_name: u.display_name } as Row as T;
+}
+export function listBookingsIdChannelByBusinessIdChannel<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>("SELECT b.id, b.channel, b.starts_at, b.ends_at, b.created_at, b.cancelled_at, b.assigned_to AS who FROM bookings b " +
+    "WHERE b.business_id = ? AND b.channel IN ('video','phone') ORDER BY b.created_at, b.id", params), { who: 'display_name' });
+}
+/*
+ * The calendar (src/modules/crm/assessments-and-calendar.ts), with the note it came with:
+ * LEFT JOINS, AND THAT IS PART OF THE GATED-EXIT REPAIR. This was an inner join
+ * onto `businesses`, so a booking with no organisation — a call asked for at the
+ * reasoned negative (migration 011) — would have been recorded and then vanished
+ * from the calendar's queue, invisible to the people who have to make the call.
+ */
+const BOOKING_SELECT =
+  'SELECT k.id, k.business_id, k.lead_id, COALESCE(b.name, l.prospect_organisation) AS business_name, k.channel, ' +
+  'k.sms_variant, k.entry_point, k.starts_at, k.ends_at, k.assigned_to, k.assigned_to AS assigned_name, ' +
+  'k.created_at, k.cancelled_at, k.cancelled_by AS cancelled_by_name, k.cancelled_by AS cancelled_by_role ' +
+  'FROM bookings k LEFT JOIN businesses b ON b.id = k.business_id ' +
+  'LEFT JOIN leads l ON l.id = k.lead_id ';
+function bookingRows<T extends Row>(db: Db, rows: T[]): T[] {
+  return fillUsers(db, rows, { assigned_name: 'display_name', cancelled_by_name: 'display_name', cancelled_by_role: 'role' });
+}
+export function listBookingsScheduled<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return bookingRows(db, db.all<T>(BOOKING_SELECT + 'WHERE k.starts_at IS NOT NULL AND k.starts_at >= ? AND k.starts_at < ? ' +
+    'ORDER BY k.starts_at ASC', params));
+}
+export function listBookingsWithNoTime<T extends Row = Row>(db: Db): T[] {
+  return bookingRows(db, db.all<T>(BOOKING_SELECT + 'WHERE k.starts_at IS NULL AND k.cancelled_at IS NULL ORDER BY k.created_at ASC'));
+}
+export function listBookingsCancelled<T extends Row = Row>(db: Db): T[] {
+  return bookingRows(db, db.all<T>(BOOKING_SELECT + 'WHERE k.cancelled_at IS NOT NULL ORDER BY k.cancelled_at DESC LIMIT 100'));
+}
+export function getBookingById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return bookingRows(db, db.all<T>(BOOKING_SELECT + 'WHERE k.id = ?', params))[0];
+}
+
+// businesses
+export function getBusinessesIdNameById5<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT b.id, b.name, b.sector, b.stage, b.created_at, b.legal_name, b.company_number, b.claimant_type, b.registered_address, b.trading_address, b.website, b.client_status, b.source, b.owner_id, b.updated_at, b.owner_id AS owner_name FROM businesses b WHERE b.id = ?', params), { owner_name: 'display_name' });
+}
+export function listBusinessesIdName5<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT b.id, b.name, b.sector, b.stage, b.created_at, b.legal_name, b.company_number, b.claimant_type, b.registered_address, b.trading_address, b.website, b.client_status, b.source, b.owner_id, b.updated_at, b.owner_id AS owner_name FROM businesses b ORDER BY b.name ASC LIMIT ?', params), { owner_name: 'display_name' });
+}
+
+// call_logs
+export function listCallLogsIdLoggedAtByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT k.id, k.logged_at, k.outcome, k.notes, k.contact_id, c.full_name AS contact, k.logged_by AS writer FROM call_logs k LEFT JOIN contacts c ON c.id = k.contact_id ' +
+    'WHERE k.business_id = ? ORDER BY k.logged_at, k.id', params), { writer: 'display_name' });
+}
+
+// client_task_checks
+export function getClientTaskChecksOutcomeWhoByTaskId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT k.outcome, k.checked_by AS who, k.checked_at, k.reason FROM client_task_checks k WHERE k.task_id = ?', params), { who: 'display_name' });
+}
+
+// enquiry_checks (this module's since Phase 161l2: architecture/tables.json; the public site never read or wrote them)
+export function insertEnquiryChecks(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO enquiry_checks (id, lead_id, claim_id, check_key, answer, note, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function insertEnquiryChecks2(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO enquiry_checks (id, lead_id, claim_id, check_key, answer, note, recorded_by, recorded_at) ' +
+    'VALUES (?, ?, NULL, ?, ?, NULL, ?, ?)', params);
+}
+export function listEnquiryChecksRecordedAtCheckKeyByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT e.recorded_at, e.check_key, e.answer, e.recorded_by AS who FROM enquiry_checks e WHERE e.claim_id = ? ORDER BY e.recorded_at', params), { who: 'display_name' });
+}
+export function listEnquiryChecksRecordedAtCheckKeyByLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT e.recorded_at, e.check_key, e.answer, e.recorded_by AS who FROM enquiry_checks e WHERE e.lead_id = ? ORDER BY e.recorded_at', params), { who: 'display_name' });
+}
+export function listEnquiryChecksSeqCheckKeyByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT e.rowid AS seq, e.check_key, e.answer, e.note, e.recorded_at, e.recorded_by AS recorder FROM enquiry_checks e WHERE e.claim_id = ?', params), { recorder: 'display_name' });
+}
+export function listEnquiryChecksSeqCheckKeyByLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT e.rowid AS seq, e.check_key, e.answer, e.note, e.recorded_at, e.recorded_by AS recorder FROM enquiry_checks e WHERE e.lead_id = ?', params), { recorder: 'display_name' });
+}
+
+// introducer_fees and introducer_percentage_entries: the claim's reference is the claims' (an inner JOIN on claims), so
+// each row carries the claim's id where the reference stood, for the caller to put in place (withClaimRefs).
+const FEE_SELECT = 'SELECT f.id, f.introducer_id, i.firm_name, f.claim_id, f.claim_id AS claim_ref, f.business_id, f.amount_pence, f.disclosure_given_at, ' +
+  'f.disclosure_recorded_by AS discloser, f.state, f.paid_at, f.paid_recorded_by AS payer FROM introducer_fees f JOIN introducers i ON i.id = f.introducer_id ';
+function feeRows<T extends Row>(db: Db, rows: T[]): T[] {
+  return fillUsers(db, rows, { discloser: 'display_name', payer: 'display_name' });
+}
+export function getIntroducerFeesIdIntroducerIdByIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return feeRows(db, db.all<T>(FEE_SELECT + 'WHERE f.id = ?', params))[0];
+}
+export function listIntroducerFeesIdIntroducerIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return feeRows(db, db.all<T>(FEE_SELECT + 'ORDER BY f.created_at DESC, f.id ASC', params));
+}
+export function listIntroducerFeesIdIntroducerIdByIntroducerIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return feeRows(db, db.all<T>(FEE_SELECT + 'WHERE f.introducer_id = ? ORDER BY f.created_at DESC, f.id ASC', params));
+}
+const PERCENTAGE_SELECT = 'SELECT e.id, e.introducer_id, i.firm_name, e.claim_id, e.claim_id AS claim_ref, e.business_id, e.entry_kind, e.basis_pence, e.percent_bp, e.amount_pence, e.created_at ' +
+  'FROM introducer_percentage_entries e JOIN introducers i ON i.id = e.introducer_id ';
+export function listIntroducerPercentageEntriesIdIntroducerIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(PERCENTAGE_SELECT + 'ORDER BY e.created_at DESC, e.rowid DESC', params);
+}
+export function listIntroducerPercentageEntriesIdIntroducerIdByIntroducerIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(PERCENTAGE_SELECT + 'WHERE e.introducer_id = ? ORDER BY e.created_at DESC, e.rowid DESC', params);
+}
+/** Each row's claim_ref (holding the claim's id) as the claim's reference; a row whose claim is not found is left out (the inner JOIN). */
+export function withClaimRefs<T extends Row>(rows: readonly T[], refs: ReadonlyMap<string, unknown>): T[] {
+  const out: T[] = [];
+  for (const r of rows) {
+    const id = r.claim_ref;
+    if (typeof id !== 'string' || !refs.has(id)) continue;
+    out.push({ ...r, claim_ref: refs.get(id) ?? null });
+  }
+  return out;
+}
+
+// introducer_reward_setting
+export function getIntroducerRewardSettingModelFeePenceById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT s.model, s.fee_pence, s.percent_bp, s.changed_at, s.changed_by AS who FROM introducer_reward_setting s WHERE s.id = 1', params), { who: 'display_name' });
+}
+
+// introducer_share_consents
+export function getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT s.id, s.decision, s.wording_version, s.recorded_at, s.recorded_by AS who FROM introducer_share_consents s ' +
+    'WHERE s.introducer_id = ? AND (s.lead_id = ? OR s.business_id = ? ' +
+    'OR s.lead_id IN (SELECT l.id FROM leads l WHERE l.business_id = ?)) ORDER BY s.rowid DESC LIMIT 1', params), { who: 'display_name' });
+}
+
+// introducers
+const INTRODUCER_SELECT = 'SELECT i.id, i.firm_name, i.introducer_type, i.owner_id, i.relationship_started_on, i.notice_contact_id, i.notes, i.created_via, i.created_at, i.updated_at, ' +
+  'i.owner_id AS owner_name, i.merged_into_id, m.firm_name AS merged_into_name, i.merged_at FROM introducers i LEFT JOIN introducers m ON m.id = i.merged_into_id ';
+export function getIntroducersIdFirmNameById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>(INTRODUCER_SELECT + 'WHERE i.id = ?', params), { owner_name: 'display_name' });
+}
+export function listIntroducersIdFirmName2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>(INTRODUCER_SELECT + 'ORDER BY i.firm_name ASC, i.id ASC LIMIT ?', params), { owner_name: 'display_name' });
+}
+
+// staff_tasks
+export function getStaffTasksIdTitleByClaimIdIsNextAction<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT t.id, t.title, t.owner_id, t.owner_role, t.owner_id AS owner_name, t.due_on FROM staff_tasks t ' +
+    "WHERE t.claim_id = ? AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')", params), { owner_name: 'display_name' });
+}
+export function listStaffTasksIdTitleByIntroducerIdStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT t.id, t.title, t.description, t.activity_type, t.status, t.due_on, t.completed_at, t.cancelled_at, t.owner_id, ' +
+    't.owner_role, t.owner_id AS owner, t.completed_by AS completer, c.full_name AS person FROM staff_tasks t ' +
+    'LEFT JOIN contacts c ON c.id = t.contact_id ' +
+    "WHERE t.introducer_id = ? ORDER BY t.status IN ('COMPLETED','CANCELLED'), t.due_on IS NULL, t.due_on ASC, " +
+    't.completed_at DESC, t.created_at DESC', params), { owner: 'display_name', completer: 'display_name' });
+}
+const TASK_HISTORY_SELECT = 'SELECT t.id, t.title, t.activity_type, t.origin, t.status, t.owner_id, t.owner_role, t.business_id, t.claim_id, t.lead_id, t.created_at, t.started_at, ' +
+  't.completed_at, t.cancelled_at, t.cancel_reason, t.created_by, t.completed_by, t.cancelled_by FROM staff_tasks t ';
+function taskHistoryRows<T extends Row>(db: Db, rows: T[]): T[] {
+  return fillUsers(db, rows, { created_by: 'display_name', completed_by: 'display_name', cancelled_by: 'display_name' });
+}
+export function listStaffTasksIdTitleByBusinessIdLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return taskHistoryRows(db, db.all<T>(TASK_HISTORY_SELECT + 'WHERE t.business_id = ? OR t.lead_id IN (SELECT l.id FROM leads l WHERE l.business_id = ?) ORDER BY t.created_at', params));
+}
+export function listStaffTasksIdTitleByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return taskHistoryRows(db, db.all<T>(TASK_HISTORY_SELECT + 'WHERE t.claim_id = ? ORDER BY t.created_at', params));
+}
+export function listStaffTasksIdTitleByLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return taskHistoryRows(db, db.all<T>(TASK_HISTORY_SELECT + 'WHERE t.lead_id = ? ORDER BY t.created_at', params));
+}
+/** A property's tasks and its claims' (the claims' ids given as a JSON list: the claims are the claims', above this module). */
+export function listStaffTasksIdTitleByPropertyIdClaimIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return taskHistoryRows(db, db.all<T>(TASK_HISTORY_SELECT + 'WHERE t.property_id = ? OR t.claim_id IN (SELECT value FROM json_each(?)) ORDER BY t.created_at', params));
+}
+
+// users who keep working times (was: users u JOIN working_times w, DISTINCT): the people are the core's
+export function listUsersIdDisplayNameByDisabledAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const ids = db.all<{ user_id: unknown }>('SELECT DISTINCT w.user_id FROM working_times w', params).map((r) => r.user_id);
+  return listUsersIdDisplayNameByIdsDisabledAt<T>(db, [idsOf(ids)]);
+}
+
+// the do-not-contact check (src/modules/clients/do-not-contact.ts): a client login of an organisation marked do not
+// contact (was: users u JOIN businesses b ON b.id = u.business_id); the logins are the core's
+export function getUsersCountByClientStatusEmailCanonical<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const marked = db.all<{ id: unknown }>("SELECT b.id FROM businesses b WHERE b.client_status = 'DO_NOT_CONTACT'").map((r) => r.id);
+  return getUsersCountByBusinessIdsEmailCanonical<T>(db, [idsOf(marked), params[0] ?? null]);
+}
+
+// search (the global search, src/modules/crm/search.ts): the fixed statements on this module's tables, moved with their
+// notes. The properties and claims are the claims' (src/modules/crm/split-reads.ts puts them together).
+const ORGANISATIONS_ALL =
+  'SELECT b.id, b.name, b.legal_name, b.sector FROM businesses b ' +
+  "WHERE lower(b.name) LIKE ? ESCAPE '\\' OR lower(COALESCE(b.legal_name, '')) LIKE ? ESCAPE '\\' " +
+  "OR lower(COALESCE(b.company_number, '')) LIKE ? ESCAPE '\\' ORDER BY b.name ASC, b.id ASC LIMIT 25";
+
+const PROSPECTS_ALL =
+  'SELECT l.id, l.prospect_organisation FROM leads l ' +
+  "WHERE l.business_id IS NULL AND lower(COALESCE(l.prospect_organisation, '')) LIKE ? ESCAPE '\\' " +
+  'ORDER BY l.lead_date DESC, l.id ASC LIMIT 25';
+
+/** The client's own contacts, and a prospect's — never a person at an introducing firm. */
+const CONTACTS_ALL =
+  'SELECT c.id, c.full_name, c.business_id, c.lead_id, b.name AS business_name FROM contacts c ' +
+  'LEFT JOIN businesses b ON b.id = c.business_id WHERE c.introducer_id IS NULL ' +
+  "AND (lower(c.full_name) LIKE ? ESCAPE '\\' OR lower(COALESCE(c.email, '')) LIKE ? ESCAPE '\\') " +
+  'ORDER BY c.full_name ASC, c.id ASC LIMIT 25';
+
+const NOTES_ALL =
+  'SELECT n.id, n.business_id, n.claim_id, n.property_id, substr(n.body, 1, 160) AS snippet, b.name AS business_name ' +
+  'FROM internal_notes n JOIN businesses b ON b.id = n.business_id ' +
+  "WHERE lower(n.body) LIKE ? ESCAPE '\\' ORDER BY n.created_at DESC, n.id ASC LIMIT 25";
+
+/** The organisations whose trading name matches, for a claim found by its company's name (the claims' search). */
+const ORGANISATION_NAMES =
+  "SELECT b.id, b.name FROM businesses b WHERE lower(b.name) LIKE ? ESCAPE '\\'";
+export function searchOrganisations<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(ORGANISATIONS_ALL, params);
+}
+export function searchProspects<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(PROSPECTS_ALL, params);
+}
+export function searchContacts<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(CONTACTS_ALL, params);
+}
+export function searchNotes<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(NOTES_ALL, params);
+}
+export function searchOrganisationNames<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(ORGANISATION_NAMES, params);
+}
+/** Every statement the search runs on this module's tables (src/modules/crm/search.ts statements(), for test/core/global-search.test.ts). */
+export const CLIENT_SEARCH_STATEMENTS: readonly string[] = Object.freeze([ORGANISATIONS_ALL, PROSPECTS_ALL, CONTACTS_ALL, NOTES_ALL, ORGANISATION_NAMES]);
+
+// Phase 161l2: the client record's half of the claims' lists (src/modules/claims/claim-row.ts, src/modules/crm/split-reads.ts).
+/** The claims' next actions (one per claim at most: migration 012's unique index), by a list of claim ids. */
+export function listStaffTasksNextActionByClaimIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT t.claim_id, t.title, t.due_on FROM staff_tasks t WHERE t.claim_id IN (SELECT value FROM json_each(?)) ' +
+    "AND t.is_next_action = 1 AND t.status IN ('OPEN','IN_PROGRESS')", params);
+}
+/** The leads on the claims named (one per claim at most: leads_one_per_claim_uq), with the introducing firm's name. */
+export function listLeadsClaimIdSourceIntroducerByClaimIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.claim_id, l.lead_date, l.source, l.introducer_id, i.firm_name FROM leads l LEFT JOIN introducers i ON i.id = l.introducer_id ' +
+    'WHERE l.claim_id IN (SELECT value FROM json_each(?))', params);
+}
+export function listBusinessesIdNameSectorSourceByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, name, sector, source FROM businesses WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+/** The automation rules' runs, newest first, with the rule's label; the claim's id as recorded (the admin page nulls one that is not there). */
+export function listAutomationRunsAtTriggerEventOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT r.at, r.trigger_event, r.outcome, r.reason, r.tasks_created, r.outbox_id, r.claim_id, r.lead_id, r.task_id, ' +
+    'ar.label FROM automation_runs r JOIN automation_rules ar ON ar.id = r.rule_id ' +
+    'ORDER BY r.at DESC, r.rowid DESC LIMIT ?', params);
+}
+/*
+ * Phase 161l2: THE CLIENT RECORD'S HALF OF THE CRM'S STATEMENTS THAT JOINED THE CLAIMS OR THE ASSESSMENT (the whole
+ * statement is put together in src/modules/crm/split-reads.ts, above both). Each is this module's rows, with the other
+ * owner's id (or the user's) standing where each of its columns stood, every join on this module's own tables kept.
+ */
+// leads
+export function getLeadsIdStatusByAssessmentId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT l.id AS lead_id, l.status AS lead_status FROM leads l WHERE l.assessment_id = ?', params);
+}
+export function getLeadsAssessmentIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT l.assessment_id FROM leads l WHERE l.id = ?', params);
+}
+export function getLeadsReferredOpenedByIntroducerId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT (SELECT COUNT(*) FROM leads WHERE introducer_id = ?) AS referred, ' +
+    '(SELECT COUNT(*) FROM leads WHERE introducer_id = ? AND claim_id IS NOT NULL) AS opened', params);
+}
+export function getLeadsIntroducerIdClaimIdByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT l.introducer_id, l.claim_id FROM leads l WHERE l.claim_id = ? AND l.introducer_id IS NOT NULL', params);
+}
+export function listLeadsIdOrganisationByIntroducerId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.id, l.business_id, COALESCE(b.name, l.prospect_organisation) AS organisation, l.lead_date, l.status, l.claim_id, ' +
+    'l.claim_id AS claim_ref, l.claim_id AS stage FROM leads l LEFT JOIN businesses b ON b.id = l.business_id ' +
+    'WHERE l.introducer_id = ? ORDER BY l.lead_date DESC, l.id ASC', params);
+}
+/** The lead backfilled for an organisation (src/modules/crm/leads.ts backfillLeadFor): every column, as worked out by the CRM. */
+export function insertLeadsBackfilled(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO leads (id, business_id, assessment_id, booking_id, claim_id, origin, source, introducer_id, ' +
+    'prospect_organisation, prospect_sector, lead_date, owner_id, priority, next_action, next_action_due, status, ' +
+    'lost_reason, lost_note, converted_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function getBusinessesIdSourceCreatedAtOwnerIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT b.id, b.source, b.created_at, b.owner_id FROM businesses b WHERE b.id = ?', params);
+}
+export function getBookingsFirstIdEntryPointByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT y.id, y.entry_point, y.created_at FROM bookings y WHERE y.business_id = ? ORDER BY y.created_at ASC, y.id ASC LIMIT 1', params);
+}
+/** A lead's page and the leads board: the lead, its organisation, its next action; the owner's and the claim's ids where their columns stood. */
+const LEAD_ROW = 'SELECT l.id, l.business_id, l.assessment_id, l.booking_id, l.claim_id, l.origin, l.source, l.introducer_id, l.prospect_postcode, l.prospect_event, ' +
+  'l.prospect_event_year, l.prospect_organisation, l.prospect_sector, l.lead_date, l.owner_id, l.priority, ' +
+  "(SELECT t.title FROM staff_tasks t WHERE t.lead_id = l.id AND t.status IN ('OPEN','IN_PROGRESS') ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC, t.id ASC LIMIT 1) AS next_action, " +
+  "(SELECT t.due_on FROM staff_tasks t WHERE t.lead_id = l.id AND t.status IN ('OPEN','IN_PROGRESS') ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC, t.id ASC LIMIT 1) AS next_action_due, " +
+  'l.status, l.lost_reason, l.lost_note, l.converted_at, l.created_at, l.updated_at, b.name AS business_name, b.sector AS business_sector, ' +
+  'l.owner_id AS owner_name, l.claim_id AS claim_ref FROM leads l LEFT JOIN businesses b ON b.id = l.business_id ';
+export function getLeadRowByIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>(LEAD_ROW + 'WHERE l.id = ?', params);
+}
+export function listLeadRowsOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(LEAD_ROW + 'ORDER BY l.lead_date DESC, l.id ASC LIMIT ?', params);
+}
+/** The leads list (src/modules/crm/claim-lists.ts): its lines, the owner's, claim's and assessment's ids where their columns stood. */
+export function listLeadListLinesOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.id, l.business_id, l.assessment_id, l.origin, l.source, l.introducer_id, i.firm_name, l.prospect_organisation, ' +
+    'l.prospect_sector, l.lead_date, l.owner_id, l.owner_id AS owner_name, l.priority, l.status, l.claim_id, l.claim_id AS claim_ref, ' +
+    'b.name AS business_name, b.sector AS business_sector, ' +
+    "(SELECT t.title FROM staff_tasks t WHERE t.lead_id = l.id AND t.status IN ('OPEN','IN_PROGRESS') " +
+    'ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC, t.id ASC LIMIT 1) AS next_action, ' +
+    "(SELECT t.due_on FROM staff_tasks t WHERE t.lead_id = l.id AND t.status IN ('OPEN','IN_PROGRESS') " +
+    'ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC, t.id ASC LIMIT 1) AS next_action_due, ' +
+    'l.assessment_id AS shown_low_pence, l.assessment_id AS shown_high_pence ' +
+    'FROM leads l LEFT JOIN businesses b ON b.id = l.business_id ' +
+    'LEFT JOIN introducers i ON i.id = l.introducer_id ORDER BY l.lead_date DESC, l.id ASC LIMIT 1000', params);
+}
+
+// staff_tasks
+export function getStaffTasksIdBusinessIdByIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT t.id, t.business_id, t.property_id, t.claim_id, t.lead_id, t.owner_id, t.activity_type, t.claim_id AS claim_ref FROM staff_tasks t WHERE t.id = ?', params);
+}
+/** A task's whole row and every label it is shown with; the users', claim's and property's ids where their columns stood. */
+const TASK_ROW = 'SELECT t.id, t.title, t.description, t.owner_id, t.owner_role, t.due_on, t.priority, t.status, t.activity_type, t.business_id, t.property_id, t.claim_id, ' +
+  't.lead_id, t.contact_id, t.fact_id, t.recurrence, t.recurred_from_id, t.is_next_action, t.origin, t.automation_run_id, t.created_by, t.created_at, t.updated_at, ' +
+  't.started_at, t.completed_at, t.completed_by, t.cancelled_at, t.cancelled_by, t.cancel_reason, t.introducer_id, t.company_subject, t.owner_id AS owner_name, ' +
+  't.created_by AS created_by_name, t.completed_by AS completed_by_name, t.cancelled_by AS cancelled_by_name, t.claim_id AS claim_ref, b.name AS business_name, ' +
+  'COALESCE(lb.name, l.prospect_organisation) AS lead_label, ct.full_name AS contact_label, t.property_id AS property_label, ar.label AS rule_label, ' +
+  '(SELECT i.firm_name FROM introducers i WHERE i.id = t.introducer_id) AS introducer_label FROM staff_tasks t ' +
+  'LEFT JOIN businesses b ON b.id = t.business_id LEFT JOIN leads l ON l.id = t.lead_id LEFT JOIN businesses lb ON lb.id = l.business_id ' +
+  'LEFT JOIN contacts ct ON ct.id = t.contact_id LEFT JOIN automation_runs run ON run.id = t.automation_run_id LEFT JOIN automation_rules ar ON ar.id = run.rule_id ';
+export function getTaskRowByIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>(TASK_ROW + 'WHERE t.id = ?', params);
+}
+export function listTaskRowsByClaimIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(TASK_ROW + "WHERE t.claim_id = ? ORDER BY CASE WHEN t.status IN ('OPEN','IN_PROGRESS') THEN 0 ELSE 1 END, t.due_on IS NULL, t.due_on ASC, t.created_at DESC", params);
+}
+export function listTaskRowsOpenByOwnerOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(TASK_ROW + "WHERE t.status IN ('OPEN','IN_PROGRESS') AND (t.owner_id = ? OR (t.owner_id IS NULL AND t.owner_role = ?)) ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC", params);
+}
+export function listTaskRowsOpenDueByOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(TASK_ROW + "WHERE t.status IN ('OPEN','IN_PROGRESS') AND t.due_on IS NOT NULL AND t.due_on <= ? ORDER BY t.due_on ASC, t.created_at ASC LIMIT ?", params);
+}
+export function listTaskRowsOpenOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(TASK_ROW + "WHERE t.status IN ('OPEN','IN_PROGRESS') ORDER BY t.due_on IS NULL, t.due_on ASC, t.created_at ASC LIMIT ?", params);
+}
+
+// client_messages
+const MESSAGE_ROW = 'SELECT m.id, m.business_id, m.claim_id, m.direction, m.source, m.author_id, m.created_at, m.body, m.author_id AS author, m.author_id AS author_role, ' +
+  'ct.full_name AS contact, m.claim_id AS claim_ref, m.claim_id AS claim_property FROM client_messages m LEFT JOIN contacts ct ON ct.id = m.contact_id ';
+export function getClientMessagesIdBusinessIdByIdBusinessIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>(MESSAGE_ROW + 'WHERE m.id = ? AND m.business_id = ?', params);
+}
+export function listClientMessagesIdBusinessIdByBusinessIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(MESSAGE_ROW + 'WHERE m.business_id = ? ORDER BY m.created_at ASC, m.rowid ASC', params);
+}
+const MESSAGE_LINE = 'SELECT m.created_at, m.direction, m.source, m.author_id AS who, ct.full_name AS contact, m.claim_id AS claim_ref, ' +
+  '(SELECT COUNT(*) FROM client_message_files f WHERE f.message_id = m.id) AS files FROM client_messages m LEFT JOIN contacts ct ON ct.id = m.contact_id ';
+export function listClientMessageLinesByBusinessIdClaimIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(MESSAGE_LINE + 'WHERE m.business_id = ? AND (m.claim_id = ? OR m.claim_id IS NULL) ORDER BY m.created_at', params);
+}
+export function listClientMessageLinesByBusinessIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(MESSAGE_LINE + 'WHERE m.business_id = ? ORDER BY m.created_at', params);
+}
+
+// internal_notes
+export function listInternalNotesIdAuthorIdByBusinessIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT n.id, n.author_id, n.created_at, n.body, n.author_id AS who, n.claim_id AS claim_ref, n.claim_id AS claim_property, n.property_id AS property_label ' +
+    'FROM internal_notes n WHERE n.business_id = ? ORDER BY n.created_at ASC, n.rowid ASC', params);
+}
+/** The timeline's notes, with their organisation's name (__company) for naming a claim's property in its frame. */
+const NOTE_LINE = 'SELECT n.created_at, n.body, n.author_id AS who, n.claim_id AS claim_ref, n.claim_id AS claim_property, n.property_id AS property_label, nb.name AS __company ' +
+  'FROM internal_notes n JOIN businesses nb ON nb.id = n.business_id ';
+export function listNoteLinesByBusinessIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(NOTE_LINE + 'WHERE n.business_id = ? ORDER BY n.created_at DESC', params);
+}
+export function listNoteLinesByBusinessIdClaimIdOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(NOTE_LINE + 'WHERE n.business_id = ? AND (n.claim_id = ? OR (n.claim_id IS NULL AND n.property_id IS NULL)) ORDER BY n.created_at DESC', params);
+}
+/** A property's notes and its claims' (the claims' ids given as a JSON list). */
+export function listNoteLinesByPropertyIdClaimIdsOwn<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(NOTE_LINE + 'WHERE n.property_id = ? OR n.claim_id IN (SELECT value FROM json_each(?)) ORDER BY n.created_at DESC', params);
+}
+/* FOR THE CLAIMS (Phase 161l2): the statements the claims borrowed on this module's tables (src/modules/claims/
+   data-borrowed.ts). The three that read only these tables moved here whole, their text unchanged; the others are the
+   client record's half of a statement the claims split, the claims putting their own half in place (claims/data.ts).
+   test/claims/borrowed-split-by-owner.test.ts keeps each replaced statement and checks the rows are the same. */
+export function listClientTasksQuestionAnswerByBusinessIdState<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>("SELECT t.question, t.answer, t.answer_state, t.answered_at, t.answered_by_role AS role, t.answered_by AS who, " +
+    'k.checked_by AS checker, k.checked_at FROM client_tasks t ' +
+    'LEFT JOIN client_task_checks k ON k.task_id = t.id ' +
+    "WHERE t.business_id = ? AND t.state = 'ANSWERED' AND t.kind = 'QUESTION' AND (t.claim_id = ? OR t.claim_id IS NULL) " +
+    "AND (t.answered_by_role = 'STAFF' OR k.outcome = 'ACCEPTED') ORDER BY t.answered_at DESC", params), { who: 'display_name', checker: 'display_name' });
+}
+export function listClientTasksIdFactIdByBusinessIdKind2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT t.id, t.fact_id, t.question, t.why, t.holds_up, t.state, t.answer_state, t.answer, t.answered_at, t.answered_by_role, t.sent_to_portal_at, t.created_at, t.withdrawn_at, t.due_on, t.asked_by AS asked_by_name, t.answered_by AS answered_by_name, t.withdrawn_by AS withdrawn_by_name FROM client_tasks t WHERE t.business_id = ? AND t.kind = \'QUESTION\' ORDER BY t.created_at ASC', params), { asked_by_name: 'display_name', answered_by_name: 'display_name', withdrawn_by_name: 'display_name' });
+}
+export function listInternalNotesIdBodyByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT n.id, n.body, n.created_at, n.author_id AS author_name ' +
+    'FROM internal_notes n ' +
+    'WHERE n.business_id = ? ORDER BY n.created_at DESC', params), { author_name: 'display_name' });
+}
+export function listBusinessesBusinessIdNameSectorStageById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT b.id AS business_id, b.name, b.sector, b.stage, NULL AS submitted_at ' +
+    'FROM businesses b WHERE b.id = ? LIMIT 1', params);
+}
+export function listBusinessesBusinessIdNameSectorStageNewest<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT b.id AS business_id, b.name, b.sector, b.stage, NULL AS submitted_at ' +
+    'FROM businesses b ORDER BY b.created_at DESC, b.name ASC LIMIT ?', params);
+}
+/** A client's document requests, in the order the claims' panel lists them; the claims put the claim, type, version and event in place. */
+export function listClientTasksDocumentRequestsByBusinessIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT ct.id, ct.business_id, ct.claim_id, ct.requested_type, ct.state, ct.why, ct.holds_up, ct.due_on, ct.created_at, ct.withdrawn_at, ct.answered_at, ct.asked_by, ct.received_document_id, ct.event_id FROM client_tasks ct WHERE ct.kind = \'DOCUMENT\' AND ct.business_id = ? AND ct.claim_id = ? ORDER BY CASE WHEN ct.state = \'OPEN\' THEN 0 ELSE 1 END, ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC', params);
+}
+export function listClientTasksDocumentRequestsByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT ct.id, ct.business_id, ct.claim_id, ct.requested_type, ct.state, ct.why, ct.holds_up, ct.due_on, ct.created_at, ct.withdrawn_at, ct.answered_at, ct.asked_by, ct.received_document_id, ct.event_id FROM client_tasks ct WHERE ct.kind = \'DOCUMENT\' AND ct.business_id = ? ORDER BY CASE WHEN ct.state = \'OPEN\' THEN 0 ELSE 1 END, ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC', params);
+}
+
+
+// website_enquiries (this module's since Phase 161l2, architecture/tables.json: the CRM opens each as a lead or closes it,
+// and the lead it becomes keeps its id; the public site's form only adds one, and its retention sweep deletes one)
+export function deleteWebsiteEnquiriesById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('DELETE FROM website_enquiries WHERE id = ?', params);
+}
+export function getWebsiteEnquiriesCountByStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM website_enquiries WHERE status = 'NEW'", params);
+}
+export function getWebsiteEnquiriesIdCreatedAtById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, created_at, full_name, firm, email, phone, property_type, message, status, lead_id FROM website_enquiries WHERE id = ?', params);
+}
+export function insertWebsiteEnquiries(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO website_enquiries (id, created_at, full_name, firm, email, phone, property_type, message, contact_consent, status) ' +
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 'NEW')", params);
+}
+export function listWebsiteEnquiriesIdCreatedAtByStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, created_at, full_name, firm, email, phone, property_type, message, status, lead_id FROM website_enquiries ' +
+    "WHERE status = 'NEW' ORDER BY created_at DESC", params);
+}
+export function listWebsiteEnquiriesIdHandledAtByStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT id, handled_at FROM website_enquiries WHERE status = 'CLOSED'", params);
+}
+export function updateWebsiteEnquiriesStatusHandledByByIdStatus(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run("UPDATE website_enquiries SET status = 'CLOSED', handled_by = ?, handled_at = ? WHERE id = ? AND status = 'NEW'", params);
+}
+export function updateWebsiteEnquiriesStatusLeadIdById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run("UPDATE website_enquiries SET status = 'LEAD', lead_id = ?, handled_by = ?, handled_at = ? WHERE id = ?", params);
 }

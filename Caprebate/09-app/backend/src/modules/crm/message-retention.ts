@@ -61,8 +61,6 @@ import { insertDeletionLog } from '../compliance/index.ts';
 import { listClaimsIdByBusinessId } from '../claims/index.ts';
 // The switch and its question: the client record's (src/modules/clients/message-retention.ts).
 import { MESSAGE_RETENTION, MESSAGE_RETENTION_QUESTION, type MessageRetention } from '../clients/index.ts';
-export { MESSAGE_RETENTION, MESSAGE_RETENTION_QUESTION };
-export type { MessageRetention };
 
 /** What the question recommends: the claim file's own period, and twelve months. Stated, never switched on here. */
 export const MESSAGE_RETENTION_RECOMMENDED = Object.freeze({ with_claim_years: RET7.period_years, without_claim_months: 12 });

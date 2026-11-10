@@ -29,8 +29,10 @@ import * as S from '../../src/modules/compliance/compliance-identity.ts';
 import * as I from '../../src/modules/crm/introducers.ts';
 import * as L from '../../src/modules/crm/leads.ts';
 import * as P from '../../src/modules/crm/pipeline.ts';
-import { templateRefusal, tipsOff } from '../../src/modules/admin/templates.ts';
+import { templateRefusal } from '../../src/modules/admin/templates.ts';
+import { tipsOff } from '../../src/modules/compliance/refused-words.ts';
 import { actor, signatureRecordFor, testApp } from '../helpers.ts';
+import { CLIENT_SHARE_GIVE } from '../../src/modules/clients/index.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T0 = '2026-09-08T00:00:00.000Z';
@@ -560,7 +562,7 @@ describe('CONSENT — one history per contact, share-with-accountant folded in a
       const client = actor('CLIENT', clientUser(a, biz), biz);
       // Phase 151: Lakhbir answered — ask the client's permission from their portal. The switch ships on; the off branch
       // below is still proved, by passing the switch off.
-      assert.equal(I.CLIENT_SHARE_GIVE.enabled, true);
+      assert.equal(CLIENT_SHARE_GIVE.enabled, true);
       assert.equal(I.clientShareChoices(a.db, client, biz)[0]?.can_give, true, 'giving from the portal is on');
       const OFF = { enabled: false };
       // never asked

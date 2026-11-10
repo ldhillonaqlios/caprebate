@@ -27,22 +27,19 @@
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import { outboxTransport } from '../../integrations/index.ts';
-import { tipsOff } from '../admin/index.ts';
+import { tipsOff } from './refused-words.ts';
 import {
   ClockInputError, LIMB_LABELS, LIMBS, EXTENSION_GROUNDS, acknowledgementClock, limbClock, complaintTargets,
   type AckClock, type ComplaintTargets, type Limb, type LimbClock, type LimbClockInput,
 } from './compliance-clock.ts';
-import {
-  assertComplianceRead, assertComplianceWrite, dateField, has, holdsForEntry, linksFor, momentField, nextRef, NotFoundAsRefusal,
-  record, requiredText, textField, TWO_PERSON_LIMITATION, ukDay, vocabField, words,
-  type Check, type ComplianceDeps, type Fields, type HoldRow, type LinkLine, type Vocab, type WriteResult,
-} from './compliance.ts';
+import { dateField, has, holdsForEntry, linksFor, momentField, nextRef, NotFoundAsRefusal, record, requiredText, textField, TWO_PERSON_LIMITATION, ukDay, vocabField, words, type Check, type ComplianceDeps, type Fields, type HoldRow, type LinkLine, type Vocab, type WriteResult } from './compliance.ts';
+import { assertComplianceRead, assertComplianceWrite } from './compliance.permissions.ts';
 import { listUsersIdDisplayNameByRoleEmailCanonical } from '../../core/index.ts';
 import { listConsentAnswersIdKindByContactId } from '../assessment/index.ts';
 import { getBusinessesIdById, getContactsIdById, getLeadsIdById, listClientTasksIdRequestedTypeByBusinessIdKind, listContactsIdFullName, listIntroducerShareConsentsIdDecisionByBusinessId, listStaffTasksIdTitleByContactId } from '../clients/index.ts';
 import { getClaimsIdByIdBusinessId } from '../claims/index.ts';
 import { getComplaintsById, getComplaintsRefReceivedAtById, getRightsRequestLimbsIdRequestIdByRequestIdLimb, getRightsRequestsById, insertComplaintProgressUpdates, insertComplaints, insertRightsRequestLimbs, insertRightsRequestLimbs2, insertRightsRequests, listComplaintProgressUpdatesToldOnByComplaintId, listComplaintProgressUpdatesToldOnSaidByComplaintId, listComplaints, listComplaintsIdComplaintRef, listComplaintsReceivedAtIs164a, listRightsRequestLimbsIdRequestIdByRequestId, listRightsRequestLimbsIdRequestIdByRequestId2, listRightsRequests, listRightsRequestsIdRequestRef, updateComplaintsAllegedInfringementInfringementMappingById, updateComplaintsIs164aClassificationReasonById, updateComplaintsStatusOnwardRouteGivenById, updateRightsRequestLimbsClarificationRequestedAtClarificatio, updateRightsRequestsRequesterAsDescribedClassificationAltern, updateRightsRequestsStatusResponseContentCheckById } from './data.ts';
-import { getRightsRequestsRefReceivedAtById } from './data-borrowed.ts';
+import { getRightsRequestsRefReceivedAtById } from './data.ts';
 
 class Refusal extends Error {}
 

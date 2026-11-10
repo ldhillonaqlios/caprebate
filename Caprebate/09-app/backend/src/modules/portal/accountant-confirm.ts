@@ -4,7 +4,7 @@
  * The second Friary House run (04-phase-work/sim-2026-10-06, finding F46): two steps were still ticked by Sales for the
  * client's accountant — "The client's accountant confirmed the claim fits the return and the amendment window"
  * (ACCOUNTANT_CONFIRMED_RETURN) and the filing date on the reconciliation — while the same accountant had just signed off
- * the figures through their own private link (src/modules/claims/report-signoff.ts). Now each is the accountant's own answer:
+ * the figures through their own private link (src/modules/survey/report-signoff.ts). Now each is the accountant's own answer:
  *
  *   SENT     Admin or Sales (`email.queue`, as the sign-off link) emails one of the company's accountants or advisers a
  *            private link: RETURN_FIT at Reports, FILED at Invoice or the defence pack. Only the link's SHA-256 is kept;
@@ -17,7 +17,7 @@
  *   READ     The Reports gate reads a confirmed RETURN_FIT answered since the claim entered Reports
  *            (`accountantFitNeed`); closing a claim at the defence pack reads a confirmed FILED answer
  *            (`filingRecordedNeed` in src/modules/claims/claim-record.ts). The staff tick is retired; typing a filing date is
- *            refused where the accountant files. Where the client has no accountant (src/modules/portal/client-filing.ts), nothing
+ *            refused where the accountant files. Where the client has no accountant (src/modules/claims/client-filing.ts), nothing
  *            here applies and that route is unchanged.
  */
 import { createHash, randomBytes } from 'node:crypto';
@@ -28,9 +28,9 @@ import { authorise, type Actor } from '../../core/index.ts';
 import { localDate, ukDate } from '../../shared/index.ts';
 // Read inside functions only: pipeline.ts reads this module's need the same way, so the loop is never touched at load.
 import { raiseBusinessStage } from '../claims/index.ts';
-import { claimReturns, claimRoutes, type ClaimReturn } from '../claims/index.ts';
+import { returnsOf, type ClaimReturn } from '../claims/index.ts';
 import { getOutboxRById } from '../../integrations/index.ts';
-import { getClaimReconciliationsIdFiledOnByClaimId, getClaimsBusinessIdById, getClaimsIdBusinessIdById5, updateClaimReconciliationsFiledOnFiledRecordedByById } from '../claims/index.ts';
+import { getClaimReconciliationsIdFiledOnByClaimId, getClaimsBusinessIdById, updateClaimReconciliationsFiledOnFiledRecordedByById } from '../claims/index.ts';
 import { getAccountantConfirmRequestsClaimIdSentByById, getAccountantConfirmRequestsIdKindByTokenSha256, getClaimsIdBusinessIdById8, insertAccountantConfirmAnswers, insertAccountantConfirmRequests, listAccountantConfirmRequestsIdKindByClaimId } from './data.ts';
 import { listContactsIdNameByBusinessIdContactType } from '../clients/index.ts';
 
@@ -65,11 +65,8 @@ export function askFor(kind: ConfirmKind, period_end: string | null): string {
     : CONFIRM_ASKS[kind].ask;
 }
 
-/** The returns this claim goes into, from its parts' routes (src/modules/claims/claim-route.ts), or null where they are not settled. */
-export function returnsOf(db: Db, claim_id: string, todayIso: string): ClaimReturn[] | null {
-  const c = getClaimsIdBusinessIdById5<{ id: string; business_id: string; property_id: string | null }>(db, [claim_id]);
-  return c === undefined ? null : claimReturns(claimRoutes(db, c, todayIso));
-}
+// The returns this claim goes into: the claims' own reading since Phase 161l2 (src/modules/claims/claim-route.ts), named here as before.
+export { returnsOf };
 
 export const RETURN_FIT_NEED = 'The client’s accountant confirmed, through their own link, that the claim fits the return and the amendment window';
 

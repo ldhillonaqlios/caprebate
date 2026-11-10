@@ -10,7 +10,8 @@ import { join } from 'node:path';
 import { createApp } from '../../src/app/server.ts';
 import { seed } from '../../src/app/seed.ts';
 import type { IncomingMessage } from 'node:http';
-import { CONSENT_COOKIE, LEGAL_GAPS, LEGAL_PAGES, consentSetCookie, legalPageHtml, optionalAllowed, safeBack, wantsBanner } from '../../src/modules/public-site/legal-pages.ts';
+import { CONSENT_COOKIE, LEGAL_GAPS, consentSetCookie, legalPageHtml, optionalAllowed, wantsBanner } from '../../src/modules/public-site/legal-pages.ts';
+import { LEGAL_PAGES, safeBack } from '../../src/modules/compliance/legal-register.ts';
 import { HOME_PATH } from '../../src/modules/public-site/home-site.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;

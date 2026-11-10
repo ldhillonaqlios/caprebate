@@ -36,6 +36,7 @@ import { MONEY_READINGS_OFF, MONEY_READINGS_ON } from '../../src/shared/money-re
 import { allowancesFor, NO_FACTS, type AllowanceFacts } from '../../src/modules/assessment/allowances.ts';
 import { returnEntries } from '../../src/modules/claims/return-entries.ts';
 import { longLifeLimitFor } from '../../src/modules/assessment/long-life-and-remediation.ts';
+import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 
@@ -102,7 +103,7 @@ describe('item 1 — the seller’s structures and buildings allowance statement
   test('required at the gate only where the claim takes the structures allowance on a purchase from 29 October 2018', async () => {
     const w = await world();
     try {
-      const need = () => MD.mandatoryDocumentNeeds(w.db, P.loadPipelineClaim(w.db, w.j.claim_id)).find((x) => x.what.startsWith('The seller'));
+      const need = () => MD.mandatoryDocumentNeeds(w.db, loadPipelineClaim(w.db, w.j.claim_id)).find((x) => x.what.startsWith('The seller'));
       assert.equal(need()?.met, true);
       assert.match(need()?.why ?? '', /no structures allowance is taken on the purchase/);
       assert.equal(F.recordFact(w.deps, w.sales, w.j.claim_id, { fact_key: 'SBA_QUALIFYING_EXPENDITURE', answer: 'VALUE', value: '450000', source_id: 'CLIENT_DOC', note: null }).ok, true);

@@ -6,7 +6,7 @@
  * it does not own. The three rules from router.ts apply unchanged.
  *
  * NOTHING HERE DECIDES ANYTHING. src/modules/finance/finance.ts (an organisation's invoices
- * from before), src/modules/finance/invoices.ts (a claim's), src/modules/assessment/vat.ts and
+ * from before), src/modules/finance/invoices.ts (a claim's), src/modules/finance/vat.ts and
  * src/modules/claims/fee-controls.ts do every authorisation and every derivation; this
  * draws what they return. In particular the fee-versus-benefit comparison is
  * rendered exactly as the engine computed it, including its three-valued answer;
@@ -27,8 +27,9 @@ import { kpiRow, lateBadge, noDateBadge } from '../../core/index.ts';
 import { setSubMenu } from '../../core/index.ts';
 import * as F from './finance.ts';
 import * as I from './invoices.ts';
-import { vatModule as V } from '../assessment/index.ts';
+import * as V from './vat.ts';
 import { piecesPage } from '../../core/index.ts';
+import { assertFinanceSection } from './finance.permissions.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -124,7 +125,7 @@ export async function handleFinance(
 
   const one = /^\/staff\/finance\/([A-Za-z0-9-]+)$/.exec(path);
   if (one && method === 'GET') {
-    F.assertFinanceSection(actor);
+    assertFinanceSection(actor);
     const id = one[1] ?? '';
     html(res, 200, I.isClaimInvoice(d.app.db, id)
       ? claimInvoicePage(d, actor, I.claimInvoiceById(d.app.db, actor, id, d.app.now()), saved)

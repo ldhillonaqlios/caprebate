@@ -280,7 +280,7 @@ describe('F46 — the accountant confirms the return fit and the filing through 
     for (const role of ['SALES', 'ADMIN'] as const) {
       assert.equal(P.recordMilestone(CF.recordDeps(app), actor(role), c.claim, 'ACCOUNTANT_CONFIRMED_RETURN', null).ok, false, role);
     }
-    const need = P.gateOut(app.db, P.loadPipelineClaim(app.db, c.claim), 'REPORTS', { today: app.now() }).needs.find((n) => n.what.startsWith('The client’s accountant'));
+    const need = P.gateOut(app.db, loadPipelineClaim(app.db, c.claim), 'REPORTS', { today: app.now() }).needs.find((n) => n.what.startsWith('The client’s accountant'));
     assert.equal(need?.what, AC.RETURN_FIT_NEED);
     assert.equal(need?.met, false);
     assert.match(need?.why ?? '', /has not answered yet/);
@@ -300,7 +300,7 @@ describe('F46 — the accountant confirms the return fit and the filing through 
     assert.equal(token.length, 43);
     // The link's token is never stored; only its fingerprint.
     assert.equal(app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM accountant_confirm_requests WHERE token_sha256 = ?', [token])?.n, 0);
-    const need = () => P.gateOut(app.db, P.loadPipelineClaim(app.db, c.claim), 'REPORTS', { today: app.now() }).needs.find((n) => n.what === AC.RETURN_FIT_NEED);
+    const need = () => P.gateOut(app.db, loadPipelineClaim(app.db, c.claim), 'REPORTS', { today: app.now() }).needs.find((n) => n.what === AC.RETURN_FIT_NEED);
     assert.equal(answer(app, token, { firm: 'Just A Name' }).ok, false, 'a firm with no registered ending');
     assert.equal(answer(app, token, { sure: '' }).ok, false, 'confirmed without the tick');
     assert.equal(answer(app, token, {}).ok, true);
@@ -314,7 +314,7 @@ describe('F46 — the accountant confirms the return fit and the filing through 
     const app = await testApp(); staff(app);
     const c = client(app, 'REPORTS', 'AT_SURVEY');
     CF.accountantAnswers(app, c.claim, 'RETURN_FIT', { outcome: 'NOT_CONFIRMED', reason: 'The 2024 return is already closed.' });
-    const need = P.gateOut(app.db, P.loadPipelineClaim(app.db, c.claim), 'REPORTS', { today: app.now() }).needs.find((n) => n.what === AC.RETURN_FIT_NEED);
+    const need = P.gateOut(app.db, loadPipelineClaim(app.db, c.claim), 'REPORTS', { today: app.now() }).needs.find((n) => n.what === AC.RETURN_FIT_NEED);
     assert.equal(need?.met, false);
     assert.match(need?.why ?? '', /said it does not: “The 2024 return is already closed\.”/);
     app.close();
@@ -324,7 +324,7 @@ describe('F46 — the accountant confirms the return fit and the filing through 
     const app = await testApp(); staff(app);
     const c = client(app, 'DEFENCE_PACK', 'AT_SURVEY');
     CF.signOffRow(app, c.business, c.assessment, c.claim);
-    const need = () => P.gateOut(app.db, P.loadPipelineClaim(app.db, c.claim), 'DEFENCE_PACK', { today: app.now() }).needs.find((n) => n.what.startsWith('The claim’s filing is recorded'));
+    const need = () => P.gateOut(app.db, loadPipelineClaim(app.db, c.claim), 'DEFENCE_PACK', { today: app.now() }).needs.find((n) => n.what.startsWith('The claim’s filing is recorded'));
     assert.match(need()?.why ?? '', /has not confirmed the filing yet/);
     // A reconciliation to hold the date (the fixture opens one with the sign-off).
     CF.filingRecorded(app, c.claim, '2026-09-01');
@@ -466,6 +466,7 @@ describe('F47 — the defence pack is made from the claim’s own records, its f
  * F48 — the portal's claim tile reads the same step as the rest of the portal (found by this phase's own run)
  * ================================================================== */
 import * as PO from '../../src/modules/portal/portal.ts';
+import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
 
 describe('F48 — the claim tile shows the step the client is at', () => {
   const tile = (app: App, c: { business: string; user: string; claim: string }) =>

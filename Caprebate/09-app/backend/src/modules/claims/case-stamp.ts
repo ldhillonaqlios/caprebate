@@ -45,14 +45,12 @@ import { _canonical } from '../../core/index.ts';
 import { DPO_ROLE_SWITCH } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
 import { ctaSwitchReadings, registryGate } from '../../shared/index.ts';
-import { DISCLOSURE_LOG } from '../compliance/index.ts';
 import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../clients/index.ts';
 import { CONVEYANCING_STRIP } from './conveyancing-strip.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../../shared/index.ts';
-import { ENQUIRY_RETENTION } from '../public-site/index.ts';
-import { MESSAGE_RETENTION } from '../clients/index.ts';
+import { ENQUIRY_RETENTION, MESSAGE_RETENTION } from '../clients/index.ts';
 import { EMAIL_SENDING } from '../../integrations/index.ts';
 import { ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST } from './signing.ts';
 import { INBOUND_EMAIL } from '../../integrations/index.ts';
@@ -62,14 +60,15 @@ import { COMPANY_SEARCH, COMPANY_TYPE_FROM_REGISTER } from '../../integrations/i
 import { ADDRESS_LOOKUP } from '../../integrations/index.ts';
 import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
-import { ALLOWANCE_PROFIT_COMPARISON } from '../assessment/index.ts';
+import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
 import { FUNNEL_SWITCHES } from '../assessment/index.ts';
 import { HOMEDATA_DIMENSIONS } from '../../integrations/index.ts';
 import { REGISTER_SWITCHES } from '../../integrations/index.ts';
-import { CLAUDE_SWITCHES } from '../../integrations/connectors/claude.ts';
+import { CLAUDE_SWITCHES } from '../../integrations/index.ts';
 import { PICK_SWITCHES } from './match-review.ts';
 import { getClaimsIdAssessmentIdById, insertClaimVersionStamps, listTaxAdviserSignoffsIdRecordHashByClaimId } from './data.ts';
-import { getAnchorLogHash } from '../survey/index.ts';
+// The anchor log is the survey's, and two switches are compliance's and the public site's: asked through the claims' ports (Phase 161l2).
+import { getAnchorLogHash, stampedSwitchOn } from './above-ports.ts';
 import { getEstimatesEstimateHashByAssessmentId } from '../assessment/index.ts';
 
 function sha256(v: unknown): string {
@@ -160,9 +159,9 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   ENGAGEMENT_SIGNING           the built-in letter signature      src/modules/claims/signing.ts
  *   ENGAGEMENT_SIGNING_TEST      signing on for testing, test copy only (6 Oct)  src/modules/claims/signing.ts
  *   MESSAGE_RETENTION            the message clean-up job           src/modules/crm/message-retention.ts
- *   ENQUIRY_RETENTION            the closed-enquiry clean-up job    src/modules/public-site/enquiry-retention.ts
+ *   ENQUIRY_RETENTION            the closed-enquiry clean-up job    src/modules/clients/enquiry-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/modules/claims/defence-pack.ts
- *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/modules/assessment/allowance-profit-comparison.ts
+ *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/modules/claims/allowance-profit-comparison.ts
  *   HOMEDATA_DIMENSIONS          Homedata's floor-area estimate     src/integrations/connectors/homedata.ts
  *   FUNNEL_SWITCHES.breakeven_is_insufficient_profit
  *                                break-even read as insufficient profit          src/modules/assessment/funnel-session.ts
@@ -181,7 +180,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  */
 export function backendSwitchReadings(): readonly BackendSwitchReading[] {
   return [
-    { switch: 'DISCLOSURE_LOG', on: DISCLOSURE_LOG.enabled, home: 'src/modules/compliance/disclosure-log.ts' },
+    { switch: 'DISCLOSURE_LOG', on: stampedSwitchOn('DISCLOSURE_LOG'), home: 'src/modules/compliance/disclosure-log.ts' },
     { switch: 'DPO_ROLE_SWITCH', on: DPO_ROLE_SWITCH.enabled, home: 'src/core/authz.ts' },
     { switch: 'FEE_CLAWBACK', on: FEE_CLAWBACK.enabled, home: 'src/modules/claims/claim-record.ts' },
     { switch: 'REFERRAL_FORM', on: REFERRAL_FORM.enabled, home: 'src/modules/clients/introducers.ts' },
@@ -203,9 +202,9 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'ENGAGEMENT_SIGNING', on: ENGAGEMENT_SIGNING.enabled, home: 'src/modules/claims/signing.ts' },
     { switch: 'ENGAGEMENT_SIGNING_TEST', on: ENGAGEMENT_SIGNING_TEST.enabled, home: 'src/modules/claims/signing.ts' }, // The test copy only, test website
     { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/modules/clients/message-retention.ts' },
-    { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/modules/public-site/enquiry-retention.ts' },
+    { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/modules/clients/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/modules/claims/defence-pack.ts' },
-    { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/modules/assessment/allowance-profit-comparison.ts' },
+    { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/modules/claims/allowance-profit-comparison.ts' },
     { switch: 'HOMEDATA_DIMENSIONS', on: HOMEDATA_DIMENSIONS.enabled, home: 'src/integrations/connectors/homedata.ts' },
     { switch: 'FUNNEL_SWITCHES.breakeven_is_insufficient_profit', on: FUNNEL_SWITCHES.breakeven_is_insufficient_profit, home: 'src/modules/assessment/funnel-session.ts' },
   ];

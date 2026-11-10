@@ -37,6 +37,7 @@ import { APP_ROLES, type AppRole } from '../../src/core/roles.ts';
 import { can, REGISTERED_ACTIONS } from '../../src/core/authz.ts';
 import { feeDisplay, feeGuard, feeRate, marginalRateRange } from '../../src/shared/engine.ts';
 import * as F from '../../src/modules/finance/finance.ts';
+import { assertFinanceSection } from '../../src/modules/finance/finance.permissions.ts';
 import { actor } from '../helpers.ts';
 
 const PASSWORD = 'a-very-long-development-password';
@@ -462,6 +463,6 @@ describe('the finance section admits ADMIN and ACCOUNTING and nobody else', () =
     // Even a client whose business id WAS the sentinel is refused: the rule for
     // invoice.read has no CLIENT entry at all.
     assert.equal(can(client, 'invoice.read', { type: 'invoice', id: '__finance__', business_id: '__finance__' }), false);
-    assert.throws(() => F.assertFinanceSection(client), /not authorised/);
+    assert.throws(() => assertFinanceSection(client), /not authorised/);
   });
 });

@@ -319,7 +319,7 @@ describe('F28 — the client said they bought it, and the claim reads that', () 
 /* ================================================================== *
  * F27 — the claim page quotes the client's step as the portal shows it, numbered, so a later step never reads as an earlier one
  * ================================================================== */
-import { portalStepLine } from '../../src/modules/portal/portal-steps.ts';
+import { portalStepLine } from '../../src/modules/crm/portal-steps.ts';
 import * as P from '../../src/modules/crm/pipeline.ts';
 
 describe('F27 — "the client’s page shows" is the portal’s own line', () => {
@@ -336,8 +336,8 @@ describe('F27 — "the client’s page shows" is the portal’s own line', () =>
     const seen: number[] = [];
     for (const stage of ['ENGAGEMENT', 'DATA_GATHERING', 'SURVEY']) {
       app.db.run('UPDATE claims SET stage = ? WHERE id = ?', [stage, c.claim]);
-      P.raiseBusinessStage(app.db, c.business, app.now());
-      const pc = app.db.get<P.PipelineClaim>('SELECT * FROM claims WHERE id = ?', [c.claim])!;
+      raiseBusinessStage(app.db, c.business, app.now());
+      const pc = app.db.get<PipelineClaim>('SELECT * FROM claims WHERE id = ?', [c.claim])!;
       const shows = P.pipelinePanel(app.db, actor('SALES'), pc).portal?.shows ?? '';
       const m = /^Step (\d) of 6: /.exec(shows);
       assert.ok(m !== null, shows);
@@ -371,13 +371,13 @@ describe('F30 — what the client is shown once the research has run', () => {
     const c = claimAt(app, 'DATA_GATHERING');
     const stageOf = () => app.db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [c.business])?.stage;
     app.db.run("UPDATE businesses SET stage = 'ENGAGEMENT_SIGNED' WHERE id = ?", [c.business]);
-    assert.equal(P.raiseToResearch(app.db, c.business, T0, { signed: false, fired: 3 }), false);
-    assert.equal(P.raiseToResearch(app.db, c.business, T0, { signed: true, fired: 0 }), false);
+    assert.equal(clientsDoor.raiseToResearch(app.db, c.business, T0, { signed: false, fired: 3 }), false);
+    assert.equal(clientsDoor.raiseToResearch(app.db, c.business, T0, { signed: true, fired: 0 }), false);
     assert.equal(stageOf(), 'ENGAGEMENT_SIGNED');
-    assert.equal(P.raiseToResearch(app.db, c.business, T0, { signed: true, fired: 2 }), true);
+    assert.equal(clientsDoor.raiseToResearch(app.db, c.business, T0, { signed: true, fired: 2 }), true);
     assert.equal(stageOf(), 'RESEARCH_PART_RUN');
     app.db.run("UPDATE businesses SET stage = 'AT_SURVEY' WHERE id = ?", [c.business]);
-    assert.equal(P.raiseToResearch(app.db, c.business, T0, { signed: true, fired: 2 }), false);
+    assert.equal(clientsDoor.raiseToResearch(app.db, c.business, T0, { signed: true, fired: 2 }), false);
     assert.equal(stageOf(), 'AT_SURVEY', 'never lowered');
     app.close();
   });
@@ -386,7 +386,7 @@ describe('F30 — what the client is shown once the research has run', () => {
 /* ================================================================== *
  * F23, F24, F32 — the wording
  * ================================================================== */
-import { lookupsCard } from '../../src/modules/portal/client-layout.ts';
+import { lookupsCard } from '../../src/modules/crm/client-layout.ts';
 import { STAFF_FOOTER } from '../../src/shared/html.ts';
 
 describe('F23, F24, F32 — words that said something no longer true', () => {
@@ -418,6 +418,8 @@ describe('F29 — ST at the start of a name is a saint', () => {
 
 /* F40 (from 158b's own run): "We issued your The client report" */
 import { issuedLine } from '../../src/modules/portal/portal-dashboard.ts';
+import { type PipelineClaim, raiseBusinessStage } from '../../src/modules/claims/index.ts';
+import * as clientsDoor from '../../src/modules/clients/index.ts';
 
 describe('F40 — what the portal says when we issue a deliverable', () => {
   test('"We issued your client report", not "your The client report"', () => {

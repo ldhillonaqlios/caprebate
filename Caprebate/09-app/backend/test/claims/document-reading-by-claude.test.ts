@@ -16,6 +16,8 @@ import { secretsFromValues, emptySecrets, forgetRegisteredSecretsForTest } from 
 import { fixtureTransport, fetchThroughCallOutside, RateLimiter, OutsideCallFailed, type CallDeps, type GateSnapshot, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { CALL_POLICIES } from '../../src/integrations/connectors/sources.ts';
 import * as CL from '../../src/integrations/connectors/claude.ts';
+// Phase 161l2: reading a document's segments is the claims' document reader; the Claude client stays with the outside services.
+import * as CR from '../../src/modules/claims/document-reader-claude.ts';
 import {
   extractPages, isMarkerPages, isScanMarker, pdfPageImages, UNREADABLE_MARKER_PREFIX,
 } from '../../src/shared/extract-text.ts';
@@ -88,7 +90,7 @@ const AT = '2026-09-22T12:00:00.000Z';
 const FRA_FIELDS = specFor('FIRE_RISK_ASSESSMENT').fields.map((f) => f.field_id);
 
 async function readFra(ctx: CL.ClaudeContext) {
-  const { model, read } = await CL.prepareClaudeModel(ctx, 'doc-146e', 'FIRE_RISK_ASSESSMENT', SEGS);
+  const { model, read } = await CR.prepareClaudeModel(ctx, 'doc-146e', 'FIRE_RISK_ASSESSMENT', SEGS);
   const egress: Parameters<typeof extract>[4]['egress'] = [];
   const result = extract('doc-146e', 'FIRE_RISK_ASSESSMENT', SEGS, model, { at: AT, egress });
   return { read, result, egress };
@@ -184,7 +186,7 @@ describe('a reading goes through the one way out, sends only what the strip pass
   test('a payload with nothing permitted left is not sent at all', async () => {
     const w = await world({ [MSG]: answer(GOOD) });
     const onlyForbidden = SEGS.filter((s) => s.kind !== 'FINDINGS');
-    const { read } = await CL.prepareClaudeModel(w.ctx, 'doc-empty', 'FIRE_RISK_ASSESSMENT', onlyForbidden);
+    const { read } = await CR.prepareClaudeModel(w.ctx, 'doc-empty', 'FIRE_RISK_ASSESSMENT', onlyForbidden);
     assert.equal(read.state, 'NOTHING_TO_SEND');
     assert.equal(w.t.seen.length, 0);
     w.app.close();
@@ -194,9 +196,9 @@ describe('a reading goes through the one way out, sends only what the strip pass
     const w = await world({ [MSG]: answer(GOOD) });
     const { payload } = sanitise('doc-g', 'FIRE_RISK_ASSESSMENT', SEGS);
     const forged = { ...payload, segments: [...payload.segments, { kind: 'CORRESPONDENCE', heading: 'LETTER', text: 'x', page: 9 }] } as unknown as ModelPayload;
-    await assert.rejects(CL.readPayloadWithClaude(w.ctx, forged), /E_FORBIDDEN_SEGMENT/);
+    await assert.rejects(CR.readPayloadWithClaude(w.ctx, forged), /E_FORBIDDEN_SEGMENT/);
     const named = { ...payload, segments: [{ kind: 'FINDINGS', heading: 'FINDINGS', text: 'Checked by Mr Smith', page: 2 }] } as unknown as ModelPayload;
-    await assert.rejects(CL.readPayloadWithClaude(w.ctx, named), /E_PERSON_NAME/);
+    await assert.rejects(CR.readPayloadWithClaude(w.ctx, named), /E_PERSON_NAME/);
     assert.equal(w.t.seen.length, 0, 'a refused payload reached the network');
     w.app.close();
   });
@@ -238,7 +240,7 @@ describe('a reading goes through the one way out, sends only what the strip pass
 
   test('the ModelFn answers only the payload it was prepared for', async () => {
     const w = await world({ [MSG]: answer(GOOD) });
-    const { model } = await CL.prepareClaudeModel(w.ctx, 'doc-146e', 'FIRE_RISK_ASSESSMENT', SEGS);
+    const { model } = await CR.prepareClaudeModel(w.ctx, 'doc-146e', 'FIRE_RISK_ASSESSMENT', SEGS);
     const other = SEGS.map((s) => (s.kind === 'FINDINGS' ? { ...s, text: 'Alarm system: Category L2.' } : s));
     assert.throws(() => extract('doc-146e', 'FIRE_RISK_ASSESSMENT', other, model, { at: AT, egress: [] }), /E_PAYLOAD_CHANGED/);
     w.app.close();

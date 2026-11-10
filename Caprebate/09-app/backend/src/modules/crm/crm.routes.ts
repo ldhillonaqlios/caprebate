@@ -32,6 +32,8 @@ import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { getContactsBusinessIdLeadIdById } from '../clients/index.ts';
 import { provideNav } from '../../core/index.ts';
+import { claimObjFor, loadClaimRow } from '../claims/index.ts';
+import { type Fields } from '../clients/index.ts';
 // The Claims tab's gate is the claims list's own (the menu asks it; src/core/navigation.ts).
 provideNav({ gates: { claims: LI.claimListGate } });
 
@@ -62,7 +64,7 @@ function redirect(res: ServerResponse, to: string): void {
 }
 
 /** The posted fields a form carried — absent keys untouched, an empty box clears. */
-function posted(f: URLSearchParams, names: readonly string[]): C.Fields {
+function posted(f: URLSearchParams, names: readonly string[]): Fields {
   const out: Record<string, string | null> = {};
   for (const n of names) {
     if (!f.has(n)) continue;
@@ -294,8 +296,8 @@ export async function handleCrm(
   const eventVat = /^\/staff\/claims\/([A-Za-z0-9-]+)\/events\/([A-Za-z0-9-]+)\/vat$/.exec(path);
   if (eventVat && method === 'POST') {
     const id = eventVat[1] ?? '';
-    const row = C.loadClaimRow(db, id);
-    authorise(actor, 'claim.write', C.claimObjFor(db, row));
+    const row = loadClaimRow(db, id);
+    authorise(actor, 'claim.write', claimObjFor(db, row));
     if (row.property_id === null) return d.problem(res, actor, 'Not saved', 'This claim has no building yet.', `/staff/claims/${id}`);
     const f = await form(req);
     const raw0 = (f.get('amount') ?? '').replace(/[£,\s]/g, '');
@@ -323,8 +325,8 @@ export async function handleCrm(
   const addEvent = /^\/staff\/claims\/([A-Za-z0-9-]+)\/events$/.exec(path);
   if (addEvent && method === 'POST') {
     const id = addEvent[1] ?? '';
-    const row = C.loadClaimRow(db, id);
-    authorise(actor, 'claim.write', C.claimObjFor(db, row));
+    const row = loadClaimRow(db, id);
+    authorise(actor, 'claim.write', claimObjFor(db, row));
     if (row.property_id === null) return d.problem(res, actor, 'Not added', 'This claim has no building yet. Choose its property first.', `/staff/claims/${id}`);
     const f = await form(req);
     const at = d.app.now();

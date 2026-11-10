@@ -5,7 +5,7 @@
  * page shows the 'Draft' line until an approval is recorded (who approved it, and the date, kept in the database and
  * the audit log). With no approval nothing goes live." An admin records each approval in the back office at
  * /staff/legal: the page, who approved it, as solicitor or as data protection officer, and the date. A page is in force
- * when both have approved its CURRENT version (LEGAL_PAGES in src/modules/public-site/legal-pages.ts); a new version starts again.
+ * when both have approved its CURRENT version (LEGAL_PAGES in src/modules/compliance/legal-register.ts); a new version starts again.
  * An approval is never changed or deleted (migration 121's triggers).
  *
  * AGREEMENTS. the owner, 5 Nov 2026: "the sign-up asks the person to tick that they have read them (the tick, its date
@@ -18,17 +18,15 @@ import type { App } from '../../core/app.ts';
 import type { Actor } from '../../core/index.ts';
 import type { Db } from '../../core/index.ts';
 import { h, raw, page, type Safe } from '../../shared/index.ts';
-import { LEGAL_PAGES, NOTICES_VERSION, agreementLinks, inForce, versionOf, type Approvals, type LegalPageKey, type PageApproval } from '../public-site/index.ts';
+import { LEGAL_PAGES, NOTICES_VERSION, agreementLinks, inForce, versionOf, type Approvals, type LegalPageKey, type PageApproval } from './legal-register.ts';
 import { getLegalApprovalsCountByPageVersion, getTermsAgreementsCountByUserIdPortalTermsVersion, insertLegalApprovals, insertTermsAgreements, listLegalApprovalsPageVersion } from './data.ts';
 
-/** Every page an approval can be recorded for, with its title. Worked out when asked, not while the file loads: the
- * public site's privacy policy reads this module through its front door, so the legal pages may still be loading. */
-export function approvable(): readonly (readonly [key: LegalPageKey, title: string])[] {
-  return Object.freeze([
-    ...LEGAL_PAGES.map(([, title, key]) => [key, title] as const),
-    ['notices', 'Public notices'] as const,
-  ]);
-}
+/** Every page an approval can be recorded for, with its title. The register is compliance's own file
+ * (src/modules/compliance/legal-register.ts), loaded before this one, so the list is made once as the file loads. */
+const APPROVABLE: readonly (readonly [key: LegalPageKey, title: string])[] = Object.freeze([
+  ...LEGAL_PAGES.map(([, title, key]) => [key, title] as const),
+  ['notices', 'Public notices'] as const,
+]);
 
 /** What a client agrees to: the version of each of the three documents. */
 export type TermsVersions = { readonly portal_terms: string; readonly website_terms: string; readonly privacy: string };
@@ -39,7 +37,7 @@ export const currentTermsVersions = (): TermsVersions =>
 export function currentApprovals(db: Db): Approvals {
   const rows = listLegalApprovalsPageVersion<{ page: LegalPageKey; version: string; approved_by: string; approver_role: 'SOLICITOR' | 'DPO'; approved_on: string }>(db);
   const out = new Map<LegalPageKey, PageApproval>();
-  for (const [key] of approvable()) {
+  for (const [key] of APPROVABLE) {
     const mine = rows.filter((r) => r.page === key && r.version === versionOf(key));
     const of = (role: 'SOLICITOR' | 'DPO') => { const r = mine.find((x) => x.approver_role === role); return r === undefined ? null : { by: r.approved_by, on: r.approved_on }; };
     if (mine.length > 0) out.set(key, { solicitor: of('SOLICITOR'), dpo: of('DPO') });
@@ -54,7 +52,7 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/;
 export function recordApproval(app: App, actor: Actor, f: URLSearchParams, newId: () => string): { ok: true } | { ok: false; why: string } {
   if (actor.role !== 'ADMIN') return { ok: false, why: 'Only an admin can record an approval.' };
   const key = f.get('page') as LegalPageKey | null;
-  if (key === null || !approvable().some(([k]) => k === key)) return { ok: false, why: 'Choose the page that was approved.' };
+  if (key === null || !APPROVABLE.some(([k]) => k === key)) return { ok: false, why: 'Choose the page that was approved.' };
   const role = f.get('role');
   if (role !== 'SOLICITOR' && role !== 'DPO') return { ok: false, why: 'Choose who approved it.' };
   const by = (f.get('approved_by') ?? '').trim();
@@ -114,12 +112,12 @@ export function approvalsPage(nav: Safe, approvals: Approvals, msg?: { ok: boole
     <p class="help">A page stays a draft until both reviewers approve this version. One is our solicitor. The other is
     our data protection officer. A new version needs new approvals. Once kept, an approval cannot be changed or removed.</p>
     <div class="tablewrap"><table><thead><tr><th>Page</th><th>Version</th><th>Solicitor</th><th>Data protection officer</th><th>In force</th></tr></thead>
-    <tbody>${approvable().map(([key, title]) => { const a = approvals.get(key); return h`<tr><td>${title}</td><td>${key === 'notices' ? NOTICES_VERSION : versionOf(key)}</td>
+    <tbody>${APPROVABLE.map(([key, title]) => { const a = approvals.get(key); return h`<tr><td>${title}</td><td>${key === 'notices' ? NOTICES_VERSION : versionOf(key)}</td>
       <td>${cell(a?.solicitor ?? null)}</td><td>${cell(a?.dpo ?? null)}</td><td>${inForce(a) ? 'Yes' : 'No, a draft'}</td></tr>`; })}</tbody></table></div>
     <h2>Record an approval</h2>
     <form method="post" action="/staff/legal/approve">
       <label class="fl" for="la-page">Page</label>
-      <select class="fi" id="la-page" name="page" required>${approvable().map(([key, title]) => h`<option value="${key}">${title}, version ${versionOf(key)}</option>`)}</select>
+      <select class="fi" id="la-page" name="page" required>${APPROVABLE.map(([key, title]) => h`<option value="${key}">${title}, version ${versionOf(key)}</option>`)}</select>
       <label class="fl" for="la-role">Approved by our</label>
       <select class="fi" id="la-role" name="role" required><option value="SOLICITOR">Solicitor</option><option value="DPO">Data protection officer</option></select>
       <label class="fl" for="la-by">Their name</label><input class="fi" id="la-by" name="approved_by" maxlength="200" required>

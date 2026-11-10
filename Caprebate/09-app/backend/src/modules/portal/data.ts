@@ -25,16 +25,6 @@ export function insertAccountantConfirmRequests(db: Db, params: readonly Param[]
   return db.run('INSERT INTO accountant_confirm_requests (id, claim_id, kind, contact_id, to_email, token_sha256, outbox_id, sent_by, sent_at, expires_at, period_end) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
 }
 
-// client_filing_confirmations
-export function getClientFilingConfirmationsByClaimIdRecordedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT * FROM client_filing_confirmations WHERE claim_id = ? AND recorded_at >= ? ORDER BY recorded_at DESC, rowid DESC LIMIT 1', params);
-}
-export function insertClientFilingConfirmations(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO client_filing_confirmations (id, claim_id, business_id, confirmed_by_party, no_accountant_or_adviser, will_file_amendment, ' +
-    'last_day_acknowledged, last_day_stated, remains_responsible, written_evidence, recorded_by, recorded_at) ' +
-    "VALUES (?, ?, ?, 'CLIENT', ?, ?, ?, ?, ?, ?, ?, ?)", params);
-}
-
 // client_report_acceptances
 export function getClientReportAcceptancesAcceptedAtByApprovalIdUserId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT accepted_at FROM client_report_acceptances WHERE approval_id = ? AND user_id = ?', params);
@@ -42,22 +32,15 @@ export function getClientReportAcceptancesAcceptedAtByApprovalIdUserId<T extends
 export function getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT accepted_at, fingerprint FROM client_report_acceptances WHERE claim_id = ? AND fingerprint = ? AND accepted_at >= ? ORDER BY accepted_at LIMIT 1', params);
 }
+// The client's acceptance with who accepted it, for the CRM's pipeline card (Phase 161l2: from the client record's
+// borrowed file, text unchanged; the CRM asks through its port, src/modules/crm/report-acceptance-port.ts).
+export function getClientReportAcceptancesAcceptedAtUserIdByClaimIdFingerprint<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT x.accepted_at, x.user_id FROM client_report_acceptances x ' +
+    // An acceptance from before the valuation was last reopened is set aside (src/modules/claims/valuation-lock.ts).
+    'WHERE x.claim_id = ? AND x.fingerprint = ? AND x.accepted_at >= ? ORDER BY x.accepted_at ASC LIMIT 1', params);
+}
 export function insertClientReportAcceptances(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO client_report_acceptances (id, claim_id, approval_id, fingerprint, user_id, accepted_at) VALUES (?, ?, ?, ?, ?, ?)', params);
-}
-
-// client_step_notices
-export function insertClientStepNotices(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO client_step_notices (id, business_id, claim_id, step, action, reason, actor_id, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
-}
-export function insertClientStepNotices2(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO client_step_notices (id, business_id, claim_id, step, action, reason, actor_id, at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?)', params);
-}
-export function listClientStepNoticesClaimIdStepByBusinessId2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT claim_id, step, action, at FROM client_step_notices WHERE business_id = ? ORDER BY at ASC, rowid ASC', params);
-}
-export function listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>("SELECT COALESCE(claim_id, '') AS k, action, at FROM client_step_notices WHERE business_id = ? AND step = ? ORDER BY at ASC, rowid ASC", params);
 }
 
 // client_report_acceptances

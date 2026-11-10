@@ -1,6 +1,6 @@
 /**
  * PHASE 160, 10 October 2026 — THE SWEEP'S BUILD (job B, carried in by Phase 159l): A FILING PER RETURN WHERE STAFF
- * RECORD IT. The client has no accountant (src/modules/portal/client-filing.ts route CLIENT), so staff record each return's filing
+ * RECORD IT. The client has no accountant (src/modules/claims/client-filing.ts route CLIENT), so staff record each return's filing
  * (migration 116), as the accountant confirms each by its own link on the other route (Phase 159l). The claim closes
  * once every return already due is recorded as filed; a later one is held in aftercare with its due date (Word question
  * 283). Each test fails on the code before this phase: migration 116 and `staffReturnFilings` do not exist.
@@ -15,6 +15,7 @@ import * as PE from '../../src/modules/claims/property-events.ts';
 import * as PL from '../../src/modules/crm/pipeline.ts';
 import * as R from '../../src/modules/claims/claim-record.ts';
 import { figuresBlock } from '../../src/modules/claims/claim-record-pages.ts';
+import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T = '2026-09-01T00:00:00.000Z';
@@ -59,7 +60,7 @@ function staffRoute(app: App, refit = true) {
   return { b, p, claim };
 }
 const record = (app: App, claim: string, f: Record<string, string>) => R.recordFiling(CF.recordDeps(app), actor('SALES'), claim, f);
-const closing = (app: App, claim: string) => PL.gateOut(app.db, PL.loadPipelineClaim(app.db, claim), 'DEFENCE_PACK', { today: app.now() }).needs.find((n) => /filed|filing/.test(n.what));
+const closing = (app: App, claim: string) => PL.gateOut(app.db, loadPipelineClaim(app.db, claim), 'DEFENCE_PACK', { today: app.now() }).needs.find((n) => /filed|filing/.test(n.what));
 
 describe('job B — a filing per return, where staff record it', () => {
   test('two returns: each recorded on its own; the claim closes once the return already due is filed; the later one waits in aftercare', async () => {
