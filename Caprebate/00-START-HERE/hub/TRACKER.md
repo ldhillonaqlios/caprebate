@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 362 |
-| Working on it | 1 |
+| Done | 363 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1265,7 +1265,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-42 items.
+41 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1534,13 +1534,6 @@
 - Note 2026-11-06 (Developer question pack, 6 Nov 2026): Written at Lakhbir's request after Phase 161g: where each audit finding stands (with its pull request), twenty questions for the developer (D1-D4 checking the fixes, D5-D12 the live server for Phase 161h, D13-D14 going live, D15-D20 the code after go-live) and what is still to do. D8, D9 and D18 are Word questions 155, 157 and 286. Lakhbir sends it; the answers go into Phase 161h. OneDrive only (the repository is public).
 - Note 2026-11-07 (Phase 161h): No answers back, so 161h built our recommendations for D2 and D5-D12; new finding for D6: Turso's nearest place to London is Ireland. Runbook: 09-app/deploy/LIVE-RUNBOOK.md.
 
-### Phase 161l2 - The tangle undone, part 3: the last joins through the clients door, the pairs that still point up, and zero breaks (Phase 161l1, 10 Nov 2026)
-
-`13512253860` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-10 (Phase 161l1): Written by Phase 161l1 for the last 67 breaks: the joins now splittable through the clients door, the joins on higher owners, 15 pairs still pointing up, 8 imports round a door, the routes files and lent parts. The block is in ACTION-PLAN.md and on the run sheet.
-
 ### Phase 161m - Rules as versioned data: rules registers, the engine's version, and versions on every sealed result (Lakhbir, 6 Nov 2026)
 
 `13486967146` · **Ready - Claude can build** · owner Claude
@@ -1561,7 +1554,7 @@
 
 ## Z · Complete / Not Applicable
 
-362 items.
+363 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3795,6 +3788,14 @@
 - Note 2026-11-09 (Phase 161l): Written by Phase 161l for what it could not finish (148 breaks left: the client record owned by the CRM near the top, 22 pairs of modules importing upwards, 110 joins across owners, 16 imports round a door, routes files for four modules, the parts the router lends, the load-order workarounds). The block is in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-10 (Phase 161l1): Done 10 Nov 2026: the joins across owners split by owner wherever the owner sits below (three helpers, a pin test each), the CRM split into a lower area, clients (its 27 tables and the services every module used) and its screens on top, so no module imports the CRM; the boundary check decides type-only imports per statement; the core's backup moved into the outside services; breaks 148 -> 67. The rest is Phase 161l2 (board item 13512253860). PR on GitHub; Lakhbir merges.
 - Note 2026-11-10 (Phase 161l1): Merged 10 Nov 2026 on Lakhbir's yes in the chat: PR #94, merge commit e17d57c on main; the run sheet's 161l1 block deleted on the same yes.
+
+### Phase 161l2 - The tangle undone, part 3: the last joins through the clients door, the pairs that still point up, and zero breaks (Phase 161l1, 10 Nov 2026)
+
+`13512253860` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-10 (Phase 161l1): Written by Phase 161l1 for the last 67 breaks: the joins now splittable through the clients door, the joins on higher owners, 15 pairs still pointing up, 8 imports round a door, the routes files and lent parts. The block is in ACTION-PLAN.md and on the run sheet.
+- Note 2026-11-10 (Phase 161l2): Done: the boundary check at 0 breaks of every rule, no cycle between areas; every borrowed file split by owner and deleted; seven tables to the areas that write them; named ports in place of the router's lent parts; back end 4,053 (the 4,018 the same, plus 35). Finance's and admin's routes files and the test-website sign-in check are in the sweep. PR on GitHub.
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 
