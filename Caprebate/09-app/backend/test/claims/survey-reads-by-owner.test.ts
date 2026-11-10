@@ -91,10 +91,10 @@ const BEFORE: Readonly<Record<string, Pin>> = {
 };
 
 type Read = (db: Db, params?: readonly Param[]) => unknown;
-/** Where a read is found now: the claims' or the survey's data files, borrowed first. */
+/** Where a read is found now: the claims' or the survey's data files, borrowed first (a borrowed file that is gone reads as empty). */
 async function reads(): Promise<(name: string) => Read | undefined> {
   const files = await Promise.all(['claims/data-borrowed.ts', 'claims/data.ts', 'survey/data-borrowed.ts', 'survey/data.ts']
-    .map(async (f) => await import(`../../src/modules/${f}`) as Record<string, unknown>));
+    .map(async (f) => await import(`../../src/modules/${f}`).catch(() => ({})) as Record<string, unknown>));
   return (name) => files.map((m) => m[name]).find((x): x is Read => typeof x === 'function');
 }
 

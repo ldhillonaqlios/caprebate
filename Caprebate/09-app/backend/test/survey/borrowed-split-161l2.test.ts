@@ -26,6 +26,8 @@ function theWorld(): Promise<World> {
     put(db, 'surveyor_jobs', { id: 'sj-3', business_id: biz2, claim_id: null, surveyor_id: null, state: 'OPEN', created_at: t(2) });
     put(db, 'surveyor_jobs', { id: 'sj-4', business_id: 'biz-none', claim_id: claim.id, surveyor_id: staff, state: 'OPEN', created_at: t(3) });
     put(db, 'surveyor_jobs', { id: 'sj-5', business_id: biz, claim_id: claim.id, surveyor_id: staff, state: 'OPEN', created_at: t(3) });
+    // a second job on the second organisation, so the case does not depend on how many jobs the seed gives it
+    put(db, 'surveyor_jobs', { id: 'sj-6', business_id: biz2, claim_id: null, surveyor_id: staff, state: 'OPEN', created_at: t(2) });
     // packs: one on the claim's property, one on no property, one on a property not there
     put(db, 'survey_packs', { id: 'sp-1', job_id: 'sj-1', property_id: claim.property_id });
     put(db, 'survey_packs', { id: 'sp-2', job_id: 'sj-2', property_id: null });
