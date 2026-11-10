@@ -3796,6 +3796,7 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-10 (Phase 161l1): Written by Phase 161l1 for the last 67 breaks: the joins now splittable through the clients door, the joins on higher owners, 15 pairs still pointing up, 8 imports round a door, the routes files and lent parts. The block is in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-10 (Phase 161l2): Done: the boundary check at 0 breaks of every rule, no cycle between areas; every borrowed file split by owner and deleted; seven tables to the areas that write them; named ports in place of the router's lent parts; back end 4,053 (the 4,018 the same, plus 35). Finance's and admin's routes files and the test-website sign-in check are in the sweep. PR on GitHub.
+- Note 2026-11-10 (Phase 161l2): Merged: PR 96 into main (da450ca) on Lakhbir's yes in the chat; the run sheet's 161l2 block deleted. Next: Phase 161m.
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 

@@ -14294,3 +14294,5 @@ NOT DONE      Finance's and admin's addresses still matched from src/app/staff.t
               question pack, D16 (unchanged by this phase; our recommendation is built meanwhile).
 NOTHING LEFT  beyond those lines.
 ```
+
+- **Merged, 10 Nov 2026.** Lakhbir said yes in the chat ("Yes, both"): PR #96 is merged into main (merge commit da450ca, GitHub's checks green: the fresh-copy check and the Vercel preview), and the run sheet's 161l2 block is deleted, with a line saying so at the end of the run sheet. The first phase on the run sheet is now 161m.
