@@ -1271,9 +1271,9 @@ export function listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep<T extends 
 export function listClaimsIdByPropertyId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT id FROM claims WHERE property_id = ?', params);
 }
-/** The sign-offs naming any of these approved versions. */
+/** The sign-offs naming any of these approved versions, in the order they were recorded. */
 export function listTaxAdviserSignoffsApprovalIdClaimIdByApprovalIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT approval_id, claim_id, figure_pence, recorded_at FROM tax_adviser_signoffs WHERE approval_id IN (SELECT value FROM json_each(?))', params);
+  return db.all<T>('SELECT approval_id, claim_id, figure_pence, recorded_at FROM tax_adviser_signoffs WHERE approval_id IN (SELECT value FROM json_each(?)) ORDER BY rowid', params);
 }
 /** The claims a document is linked to, directly or through its building, while the link stands. */
 export function listDocumentLinksClaimIdByLogicalDocumentIdLinked<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
@@ -1315,7 +1315,14 @@ export function getSurveyPackApprovalsSnapshotJsonVersionByPropertyId<T extends 
     if (!since.has(claim_id)) since.set(claim_id, getClaimStageMovesAtByClaimIdKind2<{ at: string | null }>(db, [claim_id, stages ?? null])?.at ?? '');
     return since.get(claim_id) ?? '';
   };
-  const v = versions.find((a) => signoffs.some((s) => s.approval_id === a.id && s.claim_id === a.claim_id && s.recorded_at >= reopened(a.claim_id)));
+  /* The statement met the sign-offs first, in the order they were recorded, and kept the first of the newest: so two
+     versions approved at the same moment with the same number go to the one whose sign-off was recorded first. */
+  let v: (typeof versions)[number] | undefined;
+  for (const s of signoffs) {
+    const a = versions.find((x) => x.id === s.approval_id && x.claim_id === s.claim_id);
+    if (a === undefined || s.recorded_at < reopened(a.claim_id)) continue;
+    if (v === undefined || a.approved_at > v.approved_at || (a.approved_at === v.approved_at && a.version > v.version)) v = a;
+  }
   return v === undefined ? undefined : { snapshot_json: v.snapshot_json, version: v.version, approved_at: v.approved_at, claim_id: v.claim_id } as Row as T;
 }
 
