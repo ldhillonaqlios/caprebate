@@ -26,8 +26,9 @@ import { OUTSIDE_SERVICES, TRANSFER_TO_CONFIRM } from '../../src/integrations/ou
 import { sitePageFor } from '../../src/integrations/analytics.ts';
 import { siteEdition, SITE_PAGE_CSP } from '../../src/modules/public-site/public-site.ts';
 import {
-  CONSENT_COOKIE, CONSENT_MAX_AGE, COOKIE_LIST, LEGAL_GAPS, LEGAL_PAGES, cookieBanner, legalPageHtml, optionalAllowed, versionOf,
+  CONSENT_COOKIE, CONSENT_MAX_AGE, COOKIE_LIST, LEGAL_GAPS, cookieBanner, legalPageHtml, optionalAllowed,
 } from '../../src/modules/public-site/legal-pages.ts';
+import { LEGAL_PAGES, versionOf } from '../../src/modules/compliance/legal-register.ts';
 import { currentApprovals, currentTermsVersions, hasAgreedCurrent } from '../../src/modules/compliance/legal-approvals.ts';
 import { offerSignup, requestSignup, confirmSignup } from '../../src/modules/portal/signup.ts';
 import { STEP_TTL_MS } from '../../src/core/sign-in.ts';

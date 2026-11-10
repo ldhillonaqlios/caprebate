@@ -5,21 +5,22 @@
  * which every address is tried is unchanged; the portal's pages are asked from its entry, as before.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { NotAuthorised, WELCOME_JOBS, can, clientHelp, clientIp, clockOf, dismissWelcome, form, html, inContext, nameSwitches, nav, piecesOf, readBody, redirect, setSubMenu, shellParts, simple, welcomeShown, type Actor, type Db, type WebDeps, type WebRequest, type WebResult } from '../../core/index.ts';
+import { NotAuthorised, NotFoundAsRefusal, WELCOME_JOBS, can, clientHelp, clientIp, clockOf, dismissWelcome, form, html, inContext, nameSwitches, nav, piecesOf, readBody, redirect, setSubMenu, simple, welcomeShown, type Actor, type Db, type WebDeps, type WebRequest, type WebResult } from '../../core/index.ts';
 import { HTML_HEADERS, READ_AND_DELETED, badge, breadcrumb, card, claimRef, clientStageBar, formatShownRange, h, localDate, localStamp, localWhen, page, propertyIn, raw, savedMessage, ukDate, ukDatesIn, welcomeCard, why, zoneNotice, type Safe } from '../../shared/index.ts';
 import { getResearchSourcesCountByBusinessIdState2 } from '../../integrations/index.ts';
 import { ENGAGEMENT_SIGNING, SIGN_WORDS, claimRoutes, clientDeliverables, clientSteps, clientStepsCard, getClaimsPropertyIdByIdBusinessId, getEngagementsStateSignedAtById, letterFacts, letterOptions, letterState, letterSteps, loadLetter, readLines, receivableTypes, shownLetter, signByLink, signEngagement, signLinkFor, signedCopy, signingMissing, startDocumentUpload, updateEngagementsLetterStateViewedAtByIdLetterState, type ClientDeliverable, type ClientStep, type EngagementSigning, type LetterFacts, type RequestView } from '../claims/index.ts';
 import { portalReport, portalReportCard } from './report-portal-pages.ts';
 import { activeMeeting, booksATime, publicSlots, reconcileVideoMeeting } from '../clients/index.ts';
 import { clientMessage, clientShareChoices, portalMessagesBody, readPortalSend, recordShareConsentByClient, sendFromPortal, type ClientShareChoice, type ThreadMessage as MessageView } from '../crm/index.ts';
-import { agreementLinks, safeBack } from '../public-site/index.ts';
+import { agreementLinks, agreementPage, currentTermsVersions, hasAgreedCurrent, keepAgreement, safeBack } from '../compliance/index.ts';
 import { handlePortalEvidence, portalEvidenceCard } from '../survey/index.ts';
 import { handleConfirmLink } from './accountant-confirm-pages.ts';
 import { readUpload, receiveFile } from '../claims/index.ts';
 import { portalDashboard } from './portal-dashboard.ts';
-import { stepName } from './portal-steps.ts';
+import { stepName } from '../crm/index.ts';
 import * as P from './portal.ts';
 import { acceptReport } from './report-accept.ts';
+import { portalSettings } from './settings-port.ts';
 
 /** Signing the engagement letter from the link in its email, with no login. */
 export async function portalSignLink(w: WebRequest): Promise<WebResult | undefined> {
@@ -75,7 +76,6 @@ export async function portalConfirmLink(w: WebRequest): Promise<WebResult | unde
 /** The portal: a client agrees to the current terms first, then the portal's own pages. */
 export async function portalEntry(w: WebRequest): Promise<WebResult | undefined> {
   const { d, req, res, url, path, method, actor, newId, now, legalServed, session } = w;
-  const { agreementPage, currentTermsVersions, hasAgreedCurrent, keepAgreement } = shellParts();
   /* ----------------------------------------------------------- portal */
   if (path === '/portal' || path.startsWith('/portal/')) {
     if (actor === undefined) { redirect(res, '/login'); return 'handled'; }
@@ -116,7 +116,6 @@ async function portalRoutes(
   const db = d.app.db;
   const now = d.app.now;
   const path = url.pathname;
-  const { handlePortalSettings, NotFoundAsRefusal } = shellParts();
 
   /**
    * THE BUSINESS THIS REQUEST IS ABOUT.
@@ -154,7 +153,7 @@ async function portalRoutes(
    * Until this phase there was nowhere at all.
    */
   if (path === '/portal/settings' || path.startsWith('/portal/settings/')) {
-    return handlePortalSettings(
+    return portalSettings()(
       { app: d.app, store: d.store, newId }, req, res, url, method, actor,
       (r) => form(r), readBody,
     );

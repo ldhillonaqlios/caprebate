@@ -14,19 +14,15 @@
  * THE COMPLAINT FORM. A complaint counts however it arrives and its thirty days run from when it arrives, so
  * `receiveComplaintForm` keeps it at once (complaint_forms, migration 118), emails it to the data protection address,
  * and the staff complaints page lists it until a member of staff logs it into the complaints log with the same arrival
- * time (`logFormComplaint`). Nothing the person typed is ever drawn as HTML.
+ * time (`logFormComplaint`, src/modules/compliance/complaint-forms.ts). Nothing the person typed is ever drawn as HTML.
  */
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import type { App } from '../../core/app.ts';
-import type { Actor } from '../../core/index.ts';
 import { rateLimit } from '../../core/index.ts';
 import { hashToken } from '../../core/index.ts';
-import type { Db } from '../../core/index.ts';
-import { logComplaint } from '../compliance/index.ts';
-import { assertComplianceWrite, type ComplianceDeps } from '../compliance/index.ts';
 import { plainDashes } from '../../shared/index.ts';
-import { getComplaintFormsIdReceivedAtById, insertComplaintForms, listComplaintFormsIdReceivedAtByLoggedComplaintId, updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl } from '../compliance/index.ts';
+import { insertComplaintForms, refOf } from '../compliance/index.ts';
 
 /** the app's own copy: edit the original, 03-app/caprebate-notices-page.html, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const NOTICES_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'caprebate-notices-page.html');
@@ -132,39 +128,4 @@ export function receiveComplaintForm(app: App, f: URLSearchParams, source: strin
   });
   app.audit.append({ at, kind: 'COMPLAINT_FORM_RECEIVED', outcome: 'ALLOWED', object_type: 'complaint_form', object_id: id, detail: { ref } });
   return { ok: true, id, ref, received_at: at };
-}
-
-/** A short reference the person can quote: CF- and the first eight characters of the id. */
-export function refOf(id: string): string {
-  return `CF-${id.replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toUpperCase()}`;
-}
-
-export type WaitingForm = { id: string; ref: string; received_at: string; name: string; reply_to: string; complaint_verbatim: string };
-
-/** The complaints sent through the form and not yet logged, oldest first. */
-export function waitingForms(db: Db): WaitingForm[] {
-  return listComplaintFormsIdReceivedAtByLoggedComplaintId<{ id: string; received_at: string; name: string; reply_to: string; complaint_verbatim: string }>(db).map((r) => ({ ...r, ref: refOf(r.id) }));
-}
-
-/** Log a form complaint into the complaints log, received when it arrived, and mark it logged. */
-export function logFormComplaint(d: ComplianceDeps, actor: Actor, id: string): { ok: true; id: string } | { ok: false; why: string } {
-  assertComplianceWrite(actor);
-  const f = getComplaintFormsIdReceivedAtById<{ id: string; received_at: string; name: string; reply_to: string; on_behalf: string | null; authority_detail: string | null;
-    matching_info: string | null; complaint_verbatim: string; remedy_sought: string | null; rights: string; logged_complaint_id: string | null }>(d.db, [id]);
-  if (f === undefined) return { ok: false, why: 'That complaint was not found.' };
-  if (f.logged_complaint_id !== null) return { ok: false, why: 'That complaint is already in the log.' };
-  const rights = JSON.parse(f.rights) as string[];
-  const described = `${f.name}, reply to ${f.reply_to}`
-    + `${f.on_behalf === 'other' ? `, made for someone else (authority: ${f.authority_detail ?? 'not given'})` : ''}`
-    + `${f.matching_info === null ? '' : `. To find their records: ${f.matching_info}`}`;
-  const verbatim = f.complaint_verbatim
-    + `${f.remedy_sought === null ? '' : `\n\nWhat they want: ${f.remedy_sought}`}`
-    + `${rights.length === 0 ? '' : `\n\nRights they asked about: ${rights.join(', ')}`}`;
-  const r = logComplaint(d, actor, {
-    received_at: f.received_at, received_via: 'FORM', received_via_detail: `the complaint form on the public notices page (${refOf(f.id)})`,
-    complainant_as_described: described.slice(0, 2000), complaint_verbatim: verbatim.slice(0, 20000),
-  });
-  if (!r.ok) return { ok: false, why: r.why ?? 'It could not be logged.' };
-  updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl(d.db, [r.id, d.now(), actor.id, id]);
-  return { ok: true, id: r.id };
 }

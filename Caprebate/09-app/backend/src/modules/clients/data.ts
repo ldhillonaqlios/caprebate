@@ -1644,3 +1644,32 @@ export function listClientTasksDocumentRequestsByBusinessId<T extends Row = Row>
   return db.all<T>('SELECT ct.id, ct.business_id, ct.claim_id, ct.requested_type, ct.state, ct.why, ct.holds_up, ct.due_on, ct.created_at, ct.withdrawn_at, ct.answered_at, ct.asked_by, ct.received_document_id, ct.event_id FROM client_tasks ct WHERE ct.kind = \'DOCUMENT\' AND ct.business_id = ? ORDER BY CASE WHEN ct.state = \'OPEN\' THEN 0 ELSE 1 END, ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC', params);
 }
 
+
+// website_enquiries (this module's since Phase 161l2, architecture/tables.json: the CRM opens each as a lead or closes it,
+// and the lead it becomes keeps its id; the public site's form only adds one, and its retention sweep deletes one)
+export function deleteWebsiteEnquiriesById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('DELETE FROM website_enquiries WHERE id = ?', params);
+}
+export function getWebsiteEnquiriesCountByStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM website_enquiries WHERE status = 'NEW'", params);
+}
+export function getWebsiteEnquiriesIdCreatedAtById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, created_at, full_name, firm, email, phone, property_type, message, status, lead_id FROM website_enquiries WHERE id = ?', params);
+}
+export function insertWebsiteEnquiries(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO website_enquiries (id, created_at, full_name, firm, email, phone, property_type, message, contact_consent, status) ' +
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 'NEW')", params);
+}
+export function listWebsiteEnquiriesIdCreatedAtByStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, created_at, full_name, firm, email, phone, property_type, message, status, lead_id FROM website_enquiries ' +
+    "WHERE status = 'NEW' ORDER BY created_at DESC", params);
+}
+export function listWebsiteEnquiriesIdHandledAtByStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT id, handled_at FROM website_enquiries WHERE status = 'CLOSED'", params);
+}
+export function updateWebsiteEnquiriesStatusHandledByByIdStatus(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run("UPDATE website_enquiries SET status = 'CLOSED', handled_by = ?, handled_at = ? WHERE id = ? AND status = 'NEW'", params);
+}
+export function updateWebsiteEnquiriesStatusLeadIdById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run("UPDATE website_enquiries SET status = 'LEAD', lead_id = ?, handled_by = ?, handled_at = ? WHERE id = ?", params);
+}

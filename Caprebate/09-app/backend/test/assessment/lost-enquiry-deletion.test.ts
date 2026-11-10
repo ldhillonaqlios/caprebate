@@ -18,9 +18,8 @@ import { Db, migrate } from '../../src/core/db.ts';
 import { MIGRATIONS_DIR } from '../../src/core/app.ts';
 import { FUNNEL_EDGES } from '../../src/modules/assessment/funnel-edges.ts';
 import { funnelEdges, render } from '../../tools/gen-funnel-edges.ts';
-import {
-  ENQUIRY_RETENTION, FUNNEL_DELETABLE, leadDeletionPlan, sweepEnquiries, type EnquiryRetention,
-} from '../../src/modules/public-site/enquiry-retention.ts';
+import { FUNNEL_DELETABLE, leadDeletionPlan, sweepEnquiries } from '../../src/modules/public-site/enquiry-retention.ts';
+import { ENQUIRY_RETENTION, type EnquiryRetention } from '../../src/modules/clients/enquiry-retention.ts';
 
 const ON: EnquiryRetention = { ...ENQUIRY_RETENTION, enabled: true, approved_by: 'Invented officer (test only)', review_ref: 'TEST-REVIEW-157' };
 const NOW = '2026-10-06T09:00:00.000Z';

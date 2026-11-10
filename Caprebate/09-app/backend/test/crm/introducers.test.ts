@@ -44,6 +44,7 @@ import * as P from '../../src/modules/crm/pipeline.ts';
 import * as T from '../../src/modules/crm/tasks.ts';
 import { actor, signatureRecordFor, testApp } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';
+import { type TaskInsert, feeList, insertTask } from '../../src/modules/clients/index.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const MIGRATIONS = fileURLToPath(new URL('../../migrations/', import.meta.url));
@@ -259,17 +260,17 @@ describe('THE SCHEMA — migration 014', () => {
       assert.ok(person);
       assert.throws(() => a.db.run('UPDATE contacts SET introducer_id = NULL, business_id = ? WHERE id = ?', [biz, person.id]), /stays at that introducer/);
 
-      const base: T.TaskInsert = {
+      const base: TaskInsert = {
         title: 'A call', description: null, owner_id: 'u-SALES', owner_role: null, due_on: null, priority: null, activity_type: 'CALL',
         business_id: null, property_id: null, claim_id: null, lead_id: null, introducer_id: firm, contact_id: null, fact_id: null,
         recurrence: null, recurred_from_id: null, is_next_action: false, origin: 'STAFF', automation_run_id: null, created_by: 'u-SALES',
       };
-      assert.throws(() => T.insertTask(a.db, a.now, randomUUID, { ...base, business_id: biz }), /CHECK constraint/);
+      assert.throws(() => insertTask(a.db, a.now, randomUUID, { ...base, business_id: biz }), /CHECK constraint/);
       const theirs = I.createIntroducer(deps(a), SALES, { firm_name: 'Another Firm' });
       assert.ok(theirs.ok);
-      assert.throws(() => T.insertTask(a.db, a.now, randomUUID, { ...base, introducer_id: theirs.id, contact_id: person.id }), /own organisation/);
+      assert.throws(() => insertTask(a.db, a.now, randomUUID, { ...base, introducer_id: theirs.id, contact_id: person.id }), /own organisation/);
       // Negative control: the firm's own task, naming the firm's own person.
-      T.insertTask(a.db, a.now, randomUUID, { ...base, contact_id: person.id });
+      insertTask(a.db, a.now, randomUUID, { ...base, contact_id: person.id });
       const names = a.db.all<{ name: string }>("SELECT name FROM sqlite_master WHERE tbl_name = 'staff_tasks' AND type = 'trigger' ORDER BY name").map((r) => r.name);
       assert.deepEqual(names, [
         'staff_tasks_closed_is_final', 'staff_tasks_contact_belongs_insert', 'staff_tasks_contact_belongs_update',
@@ -663,16 +664,16 @@ describe('THE REWARD MODEL — both built, both off, and the switch refuses whil
       const { firm } = refer(a);
       const cpd = { kind: 'CPD_SESSION', title: 'A CPD session on capital allowances basics' };
       assert.equal(I.logContact(deps(a), SALES, firm, cpd).ok, false);
-      const raw: T.TaskInsert = {
+      const raw: TaskInsert = {
         title: 'x', description: null, owner_id: 'u-SALES', owner_role: null, due_on: null, priority: null, activity_type: 'CPD_SESSION',
         business_id: null, property_id: null, claim_id: null, lead_id: null, introducer_id: firm, contact_id: null, fact_id: null,
         recurrence: null, recurred_from_id: null, is_next_action: false, origin: 'STAFF', automation_run_id: null, created_by: 'u-SALES',
       };
-      assert.throws(() => T.insertTask(a.db, a.now, randomUUID, raw), /E_REWARD_OFF/);
+      assert.throws(() => insertTask(a.db, a.now, randomUUID, raw), /E_REWARD_OFF/);
       assert.ok(I.setRewardModel(deps(a), ADMIN, { model: 'A_RECIPROCITY' }, { openTerms: [] }).ok);
       // Even under A, reciprocity belongs on a firm and on nothing else.
       const biz = business(a, 'Someone Limited');
-      assert.throws(() => T.insertTask(a.db, a.now, randomUUID, { ...raw, introducer_id: null, business_id: biz }), /E_REWARD_OFF/);
+      assert.throws(() => insertTask(a.db, a.now, randomUUID, { ...raw, introducer_id: null, business_id: biz }), /E_REWARD_OFF/);
       const logged = I.logContact(deps(a), SALES, firm, cpd);
       assert.ok(logged.ok, logged.ok ? '' : logged.why);
       assert.deepEqual(plain(a.db.get('SELECT activity_type, status, introducer_id, business_id FROM staff_tasks WHERE id = ?', [logged.id])),
@@ -707,10 +708,10 @@ describe('THE REWARD MODEL — both built, both off, and the switch refuses whil
       const early = I.recordFeeSettled(deps(a), ACCOUNTING, fee.id);
       assert.equal(early.ok, false);
       assert.throws(() => a.db.run("UPDATE introducer_fees SET state = 'PAID', paid_at = ?, paid_recorded_by = 'u-ACCOUNTING' WHERE id = ?", [T0, fee.id]), /CHECK constraint/);
-      assert.equal(I.feeList(a.db, ACCOUNTING)[0]?.payable, false);
+      assert.equal(feeList(a.db, ACCOUNTING)[0]?.payable, false);
       assert.throws(() => I.recordFeeDisclosure(deps(a), ACCOUNTING, fee.id), NotAuthorised);
       assert.ok(I.recordFeeDisclosure(deps(a), SALES, fee.id).ok);
-      assert.equal(I.feeList(a.db, ACCOUNTING)[0]?.payable, true);
+      assert.equal(feeList(a.db, ACCOUNTING)[0]?.payable, true);
       assert.ok(I.recordFeeSettled(deps(a), ACCOUNTING, fee.id).ok);
       assert.throws(() => a.db.run('UPDATE introducer_fees SET disclosure_given_at = NULL, disclosure_recorded_by = NULL WHERE id = ?', [fee.id]), /final|stays given/);
       assert.equal(a.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'INTRODUCER_FEE_PAID' AND outcome = 'REFUSED'")?.n, 1);

@@ -25,6 +25,7 @@ import { vocabulary } from '../admin/index.ts';
 import { SECTORS } from './leads.ts';
 import { STUB_NOTICE } from '../../integrations/index.ts';
 import { piecesPage } from '../../core/index.ts';
+import { type FeeView } from '../clients/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -370,7 +371,7 @@ function listPage(d: IntroducerPageDeps, actor: Actor, rows: readonly I.Introduc
  * ONE FIRM
  * ------------------------------------------------------------------ */
 
-function feeTable(fees: readonly I.FeeView[]): Safe {
+function feeTable(fees: readonly FeeView[]): Safe {
   return fees.length === 0 ? h`<p class="help">No fee has accrued to any firm.</p>` : h`<table>
     <thead><tr><th>Firm</th><th>Claim</th><th>Amount</th><th>Disclosure to the client</th><th>State</th><th></th></tr></thead>
     <tbody>${fees.map((f) => h`<tr><td>${f.firm.name}</td><td>${claimRef(f.claim.claim_ref)}</td><td>${f.amount}</td>

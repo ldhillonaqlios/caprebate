@@ -16,6 +16,9 @@
  * the pipeline board, the finance view, the survey jobs, the audit log — each of which asks `can()` on every row. A row
  * whose section refuses the login is not drawn; a row the login may see but that has nothing in it says so in one line,
  * so empty is never mistaken for broken. No tile carries a claim's value, and no tile carries more than three lines.
+ *
+ * The back office's Home, so the CRM's (Phase 161l2; it sat in the public site, whose door the staff dashboard
+ * (src/modules/crm/staff-dashboard.ts) reached up to). Every module it reads sits below the CRM.
  */
 
 import type { App } from '../../core/app.ts';
@@ -23,20 +26,22 @@ import { can, type Actor } from '../../core/index.ts';
 import { openEnquiries } from './enquiries.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { opens } from '../../core/index.ts';
-import { assertDashboard } from '../crm/index.ts';
-import { assertLeadSection } from '../crm/index.ts';
-import { leadsList, type LeadListRow } from '../crm/index.ts';
-import { pipelineBoard, pipelineBoardGate } from '../crm/index.ts';
+import { assertDashboard } from './dashboard.ts';
+import { assertLeadSection } from './leads.ts';
+import { leadsList, type LeadListRow } from './claim-lists.ts';
+import { pipelineBoard } from './crm.ts';
+import { pipelineBoardGate } from './crm.permissions.ts';
 import { financeDashboard } from '../finance/index.ts';
 import { assertFinanceSection } from '../finance/index.ts';
 import { assertSurveySection, surveyorJobs } from '../survey/index.ts';
 import { auditLogView } from '../compliance/index.ts';
 import { isLateNewLead, waitedWords, workingDaysSince } from '../../shared/index.ts';
-import { tasksModule as T } from '../crm/index.ts';
-import { messagesModule as M } from '../crm/index.ts';
-import { inboundEmailModule as IE } from '../crm/index.ts';
+import * as T from './tasks.ts';
+import * as M from './messages.ts';
+import * as IE from './inbound-email.ts';
 import { settingsModule as S } from '../admin/index.ts';
 import { STAGE_GROUPS } from '../../core/index.ts';
+import { dueReading } from '../clients/index.ts';
 
 /** One tile: a name and at most two more lines. `late` draws it red. */
 export type HomeTile = {
@@ -131,7 +136,7 @@ export function leadsRows(actor: Actor, app: App, nowIso: string): Safe[] {
   const going = rows.filter((l) => IN_PROGRESS.has(l.status.key))
     .sort((x, y) => (x.next_action_due ?? '9999-99-99').localeCompare(y.next_action_due ?? '9999-99-99'));
   const goingTiles: HomeTile[] = going.map((l: LeadListRow) => {
-    const due = T.dueReading(l.next_action_due, nowIso);
+    const due = dueReading(l.next_action_due, nowIso);
     return {
       href: `/staff/leads/${l.id}`, name: short(l.organisation),
       lines: l.next_action === null ? ['No next step yet — add one'] : [`Next: ${short(l.next_action)}`, due.state === 'NO_DUE_DATE' ? 'No due date' : due.label],

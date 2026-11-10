@@ -217,7 +217,7 @@ describe('gone from the page', () => {
 
 describe('working days, and phone width', () => {
   test('Friday to Monday is one working day; Friday to Tuesday is two', async () => {
-    const { workingDaysSince } = await import('../../src/modules/public-site/home.ts');
+    const { workingDaysSince } = await import('../../src/modules/crm/home.ts');
     assert.equal(workingDaysSince('2026-09-18T09:00:00.000Z', '2026-09-18T15:00:00.000Z'), 0);
     assert.equal(workingDaysSince('2026-09-18T09:00:00.000Z', '2026-09-21T09:00:00.000Z'), 1);
     assert.equal(workingDaysSince('2026-09-18T09:00:00.000Z', '2026-09-22T09:00:00.000Z'), 2);

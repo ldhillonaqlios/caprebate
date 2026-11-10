@@ -44,7 +44,8 @@ import type { Actor } from '../../core/index.ts';
 import { can } from '../../core/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { localWhen } from '../../shared/index.ts';
-import { assertComplianceRead, assertComplianceWrite, complianceObj, record, userNames, type ComplianceDeps } from './compliance.ts';
+import { record, userNames, type ComplianceDeps } from './compliance.ts';
+import { assertComplianceRead, assertComplianceWrite, complianceObj } from './compliance.permissions.ts';
 import { isReachable } from '../clients/index.ts';
 import {
   IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision,

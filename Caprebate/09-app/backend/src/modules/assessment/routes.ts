@@ -4,7 +4,7 @@
  * where its addresses have always been matched, so the order in which every address is tried is unchanged.
  */
 import type { ServerResponse } from 'node:http';
-import { JSON_HEADERS, clockOf, cookie, form, html, nav, redirect, setCookie, shellParts, simple, type Actor, type WebDeps, type WebRequest, type WebResult } from '../../core/index.ts';
+import { JSON_HEADERS, clockOf, cookie, form, html, nav, redirect, setCookie, simple, type Actor, type WebDeps, type WebRequest, type WebResult } from '../../core/index.ts';
 import { BOOKING, FRONTDOOR, FUNNEL, HTML_HEADERS, formatPence, formatShownRange, h, localWhen, noticeAtAddress, page, raw, registryGate, toPence, why, zoneNotice, type Safe } from '../../shared/index.ts';
 import { ADDRESS_LOOKUP, COMPANY_SEARCH, EMAIL_SENDING, POSTCODE_CHECK, addressLookupMissing, checkPostcode, companySearchOffered, findAddresses, mailWhere, normalisePostcode, postcodeCheckMissing, searchCompanies, searchesToday, sendingOn, smtpLoginFromKeyFile } from '../../integrations/index.ts';
 import { SLOT_MINUTES, activeMeeting, bookingInviteFile, fireAutomation, getBusinessesEById, insertBookings2, insertContacts4, isBookable, linkBookingToLead, publicSlots, reconcileVideoMeeting, sendVideoInvite } from '../clients/index.ts';
@@ -12,6 +12,7 @@ import { SITE_JS_HEADERS } from '../../shared/index.ts';
 import { freeGate, recordLookupsDeclined } from './address-check.ts';
 import { ADDRESS_LOOKUP_JS } from './address-lookup-script.ts';
 import { closeGatedExit, isGatedExit, loadDraft, newDraft, saveDraft, submit, type Draft } from './assessment.ts';
+import { signupParts, termsParts } from './signup-port.ts';
 import { F4_ROUTE, F4_SCREENS, F4_TEXT, allGated, applyF4, applyReach, buildings, figureBody, firstIncomplete, isFunnel4, screenBody, stageBar, stageOf, submitEnquiry, type F4Screen } from './funnel4.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
@@ -29,7 +30,8 @@ export async function assessmentAssets(w: WebRequest): Promise<WebResult | undef
 /** A client's own login from the assessment, and the assessment itself. */
 export async function assessmentRoutes(w: WebRequest): Promise<WebResult | undefined> {
   const { d, req, res, url, path, method, actor, newId, now, legalServed } = w;
-  const { requestSignup, verifyOpen, confirmSignup, offerSignup, currentTermsVersions } = shellParts();
+  const { requestSignup, verifyOpen, confirmSignup, offerSignup } = signupParts();
+  const { currentTermsVersions } = termsParts();
   /* ------------------------------------------ a client's own login */
   if (path === '/account/create' && method === 'POST') {
     const r = await requestSignup(d.app, d.publicOrigin ?? 'http://localhost:8103', await form(req), legalServed ? currentTermsVersions() : null);
@@ -636,7 +638,8 @@ function submittedPage(
   /** Where the legal pages are served, the sign-up asks for the tick that the person has read them. */
   agreement = false,
 ): string {
-  const { MIN_PASSWORD, agreementTick } = shellParts();
+  const { MIN_PASSWORD } = signupParts();
+  const { agreementTick } = termsParts();
   return page({
     title: 'Thank you', nav: nav(actor),
     body: h`

@@ -64,7 +64,7 @@ import { PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
 import { fireAutomation } from './automation.ts';
 import { ownerChoices } from './crm.ts';
 import { SECTORS } from './leads.ts';
-import { ACTIVITY_TYPES, RECIPROCITY_ACTIVITY_TYPES, dueReading, insertTask } from './tasks.ts';
+import { ACTIVITY_TYPES, RECIPROCITY_ACTIVITY_TYPES, dueReading, insertTask } from '../clients/index.ts';
 import { vocabChoice, vocabLabel, vocabulary } from '../admin/index.ts';
 import { getContactsIdByIdIntroducerId, getContactsIdFullNameByIdIntroducerId, getIntroducerFeesCountByIntroducerId, getIntroducerFeesIdByClaimId, getIntroducerNoticesIdByLeadIdNotice, getIntroducerPercentageEntriesIdByInvoiceIdEntryKind, getIntroducerPercentageEntriesIntroducerIdClaimIdByInvoiceId, getIntroducerPercentageEntriesTByInvoiceId, getIntroducerTermsSignaturesTermsVersionSignedOnByIntroducer, getIntroducersFirmNameById, getIntroducersIdById, getIntroducersIdIntroducerTypeById, getIntroducersIdMergedIntoIdById, getLeadsClaimIdById, getLeadsIdBusinessIdByBusinessIdIntroducerId, getLeadsIdBusinessIdById2, getLeadsIdBusinessIdById7, getLeadsIdByClaimIdIntroducerId, getLeadsIntroducerIdByClaimIdIntroducerType, getLeadsIntroducerIdById, getStaffTasksCompletedAtActivityTypeByIntroducerIdStatus, getStaffTasksCountByIntroducerId, getStaffTasksDueOnTitleByIntroducerIdStatus, insertContacts5, insertIntroducerFees, insertIntroducerMerges, insertIntroducerNotices, insertIntroducerPercentageEntries, insertIntroducerPercentageEntries2, insertIntroducerShareConsents, insertIntroducerShareConsents2, insertIntroducerTermsSignatures, insertIntroducers, insertIntroducers2, insertLeads5, listContactsIdFullNameByIntroducerId, listIntroducerNoticesAtNoticeByLeadId, listIntroducersIdName, listIntroducersIdNameByIdMergedIntoId, listLeadsLeadIdIntroducerIdByBusinessId, updateContactsFullNameJobRoleOtherById2, updateContactsIntroducerIdUpdatedAtByIntroducerId, updateIntroducerFeesDisclosureGivenAtDisclosureRecordedByByI, updateIntroducerFeesStatePaidAtById, updateIntroducerMergesCompletedAtLeadsMovedById, updateIntroducerRewardSettingModelFeePenceById, updateIntroducersFirmNameIntroducerTypeById, updateIntroducersMergedIntoIdMergedAtById, updateIntroducersNoticeContactIdUpdatedAtByIdNoticeContactId, updateLeadsIntroducerIdUpdatedAtByIntroducerId, updateStaffTasksIntroducerIdUpdatedAtByIntroducerIdStatus, updateStaffTasksStatusCompletedAtById } from '../clients/index.ts';
 import { getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, listStaffTasksIdTitleByIntroducerIdStatus } from '../clients/index.ts';
@@ -85,9 +85,6 @@ import { byId, idsOf, listLeadsClaimIdByIntroducerIdEvery, listLeadsClaimIdByInt
 import { CLIENT_SHARE_GIVE, REFERRAL_FORM, REWARD_OBJECT, rewardModelGate } from '../clients/index.ts';
 // Model B's fees as a list: the client record's (src/modules/clients/introducers.ts).
 import { FEE_STATES, feeList, feeObj, type FeeDbRow, type FeeView } from '../clients/index.ts';
-export { FEE_STATES, feeList };
-export type { FeeView };
-export { CLIENT_SHARE_GIVE, REFERRAL_FORM, rewardModelGate };
 
 export type IntroducerDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;

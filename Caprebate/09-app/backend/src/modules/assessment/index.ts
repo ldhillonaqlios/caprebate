@@ -6,6 +6,9 @@
 // Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
 export { ASSESSMENT_ACTIONS } from './actions.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
+// The sign-up's ports, filled by the portal's and compliance's doors (Phase 161l2).
+export { setSignupParts, setTermsParts } from './signup-port.ts';
+export type { SignupParts, SignupTerms, TermsParts } from './signup-port.ts';
 // The claimant type as a gate reads it (moved from the CRM, Phase 161l1).
 export { claimantFromAnswers, claimantTypeForGate } from './claimant-type.ts';
 // Where a submitted assessment puts each building: the port the claims fill as their door loads (Phase 161l2).

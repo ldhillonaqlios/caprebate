@@ -41,6 +41,8 @@ import * as FC from '../../src/modules/claims/fee-controls.ts';
 import * as FD from '../../src/modules/claims/fee-discounts.ts';
 import { feeRate } from '../../src/shared/engine.ts';
 import * as AC from '../../src/modules/portal/accountant-confirm.ts';
+import { type Need, loadPipelineClaim } from '../../src/modules/claims/index.ts';
+import { addDaysToDate, insertTask } from '../../src/modules/clients/index.ts';
 
 type Res = { status: number; body: string; location: string | null };
 type Client = { get(path: string): Promise<Res>; post(path: string, fields: Record<string, string>): Promise<Res> };
@@ -166,7 +168,7 @@ async function reportsClaim(): Promise<{ app: TApp; business: string; claim: str
     stage: 'REPORTS', owner_id: null, surveyor_id: null,
   });
   P.recordOpened(CF.recordDeps(app), null, made.id, 'REPORTS', 'a test fixture');
-  T.insertTask(app.db, app.now, randomUUID, {
+  insertTask(app.db, app.now, randomUUID, {
     title: 'the next action', description: null, owner_id: 'u-SALES', owner_role: null, due_on: '2026-12-31', priority: null,
     activity_type: 'TASK', business_id: business, property_id: null, claim_id: made.id, lead_id: null, contact_id: null,
     fact_id: null, recurrence: null, recurred_from_id: null, is_next_action: true, origin: 'STAFF', automation_run_id: null, created_by: 'u-SALES',
@@ -183,9 +185,9 @@ const CLIENT_NEED = /the client’s own confirmation, not an accountant’s/;
 const ACCOUNTANT_NEED = AC.RETURN_FIT_NEED;
 
 function gate(app: TApp, claim: string, today = TODAY): P.GateReading {
-  return P.gateOut(app.db, P.loadPipelineClaim(app.db, claim), 'REPORTS', { today });
+  return P.gateOut(app.db, loadPipelineClaim(app.db, claim), 'REPORTS', { today });
 }
-function clientNeed(app: TApp, claim: string, today = TODAY): P.Need | undefined {
+function clientNeed(app: TApp, claim: string, today = TODAY): Need | undefined {
   return gate(app, claim, today).needs.find((n) => CLIENT_NEED.test(n.what));
 }
 function confirmByClient(app: TApp, claim: string, fields: Record<string, string | null>): { ok: boolean } {
@@ -332,7 +334,7 @@ async function referredAtInvoice(firmType = 'ACCOUNTANT_FIRM', signed = true): P
   });
   P.recordOpened(CF.recordDeps(app), null, made.id, 'INVOICE', 'a test fixture');
   CF.signOffRow(app, business, assessment, made.id, 240_000_00);
-  T.insertTask(app.db, app.now, randomUUID, {
+  insertTask(app.db, app.now, randomUUID, {
     title: 'a fixture next action', description: null, owner_id: 'u-SALES', owner_role: null, due_on: '2026-12-31', priority: null,
     activity_type: 'TASK', business_id: business, property_id: null, claim_id: made.id, lead_id: null, contact_id: null, fact_id: null,
     recurrence: null, recurred_from_id: null, is_next_action: true, origin: 'STAFF', automation_run_id: null, created_by: 'u-SALES',
@@ -619,7 +621,7 @@ describe('line 2 — the engagement letter’s commercial terms, as the back end
       assert.equal(set.ok, true, set.ok ? '' : set.why);
       const row = app.db.get<{ invoice_date: string; due_on: string | null }>('SELECT invoice_date, due_on FROM invoices WHERE id = ?', [set.ok ? set.id : '']);
       assert.ok(row);
-      assert.equal(row.due_on, T.addDaysToDate(row.invoice_date, 14));
+      assert.equal(row.due_on, addDaysToDate(row.invoice_date, 14));
     } finally { app.close(); }
     const other = await referredAtInvoice();
     try {
@@ -661,7 +663,7 @@ describe('line 2 — the engagement letter’s commercial terms, as the back end
       assert.match(undelivered.expected_on_reading, /^NO DATE/);
       const sept = (d: typeof dash2) => d.months.find((m) => m.month === '2026-09')?.expected_pence ?? 0;
       assert.equal(sept(dash2), sept(dash), 'an undelivered claim was counted in a month');
-      assert.equal(P.feeTriggerReached(app.db, P.loadPipelineClaim(app.db, made.id)).met, false);
+      assert.equal(P.feeTriggerReached(app.db, loadPipelineClaim(app.db, made.id)).met, false);
       const refused = INV.raiseInvoice(invoiceDeps(app), actor('ACCOUNTING'), made.id, { kind: 'FEE' });
       assert.equal(refused.ok, false, 'our fee was raised on a claim whose report is not delivered');
     } finally { app.close(); }

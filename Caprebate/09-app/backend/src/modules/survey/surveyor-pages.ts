@@ -44,6 +44,7 @@ import { formatPence } from '../../shared/index.ts';
 import { FUNNEL_CEILING, SURVEY_JOB_WORDS as SO_WORDS } from './survey-open.ts';
 import { deskFirstReading } from './desk-first.ts';
 import { piecesPage } from '../../core/index.ts';
+import { assertSurveySection } from './survey.permissions.ts';
 
 /*
  * THE THREAD WITH THE CLIENT, AS THE SURVEYOR READS IT, IS THE CRM'S TO DRAW (src/modules/crm/messages-pages.ts
@@ -116,7 +117,7 @@ export async function handleSurveyor(
 
   const one = /^\/staff\/survey\/([A-Za-z0-9-]+)$/.exec(path);
   if (one && method === 'GET') {
-    S.assertSurveySection(actor);
+    assertSurveySection(actor);
     const w = S.workspace(deps, actor, one[1] ?? '');
     html(res, 200, workspacePage(d, actor, w,
       url.searchParams.get('done') ?? undefined, url.searchParams.get('room') ?? undefined));
@@ -133,7 +134,7 @@ export async function handleSurveyor(
    */
   const json = /^\/staff\/survey\/([A-Za-z0-9-]+)\/payload\.json$/.exec(path);
   if (json && method === 'GET') {
-    S.assertSurveySection(actor);
+    assertSurveySection(actor);
     const body = S.payloadFor(deps, actor, json[1] ?? '');
     res.writeHead(200, JSON_HEADERS);
     res.end(JSON.stringify(body, null, 2));

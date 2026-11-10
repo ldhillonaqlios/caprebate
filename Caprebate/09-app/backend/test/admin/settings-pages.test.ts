@@ -13,6 +13,7 @@ import * as A from '../../src/modules/crm/automation.ts';
 import { userCounts, ADD_USER_HREF } from '../../src/app/staff.ts';
 import { distinctReasons } from '../../src/modules/crm/tasks-pages.ts';
 import { escapeHtml } from '../../src/shared/html.ts';
+import { rulesPage } from '../../src/modules/admin/index.ts';
 
 let H: Harness;
 let off = '';
@@ -80,7 +81,7 @@ describe('UI tidy phase 15: Users and roles', () => {
 
 describe('UI tidy phase 15: Automation and Email templates', () => {
   test('Automation: four boxes from the rules and their runs; what no rule may do, folded with its count, each said once', async () => {
-    const p = A.rulesPage(H.made.app.db, H.actor('admin'));
+    const p = rulesPage(H.made.app.db, H.actor('admin'));
     const body = (await H.get('admin', '/staff/automation')).body;
     assert.deepEqual(kpis(body), [
       ['total', 'Rules', String(p.rules.length)], ['paid', 'Active', String(p.rules.filter((r) => r.active).length)],
@@ -97,7 +98,7 @@ describe('UI tidy phase 15: Automation and Email templates', () => {
   });
 
   test('Automation: each rule’s source sits in its second row with its Change; Add a rule opens from its button', async () => {
-    const p = A.rulesPage(H.made.app.db, H.actor('admin'));
+    const p = rulesPage(H.made.app.db, H.actor('admin'));
     const body = (await H.get('admin', '/staff/automation')).body;
     assert.match(body, /<thead><tr><th>Rule<\/th><th>When<\/th><th>Does<\/th><th>Goes to<\/th><th>Active<\/th><\/tr><\/thead>/);
     for (const r of p.rules) assert.ok(body.includes(`<tr class="rulefrom"><td colspan="5"><span class="help">Where it came from: ${escapeHtml(r.source)}</span>`), r.label);

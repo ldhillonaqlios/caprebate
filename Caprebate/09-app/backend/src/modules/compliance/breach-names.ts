@@ -17,7 +17,8 @@
 import type { Db } from '../../core/index.ts';
 import { can, type Actor } from '../../core/index.ts';
 import { DPO_ROLE } from '../../core/index.ts';
-import { complianceObj, record, requiredText, textField, type ComplianceDeps, type Fields, type WriteResult } from './compliance.ts';
+import { record, requiredText, textField, type ComplianceDeps, type Fields, type WriteResult } from './compliance.ts';
+import { complianceObj } from './compliance.permissions.ts';
 import { getUsersRoleDisabledAtById } from '../../core/index.ts';
 import { getBreachIncidentsAnnexRefById, getBreachIncidentsCountByAnnexRef, getBreachIncidentsExistsByAnnexRef, getBreachNamesDeputiesUserIdSource, insertBreachNames, insertBreachNamesDeputies, listBreachNamesAnnexRefNameByIncidentId, updateBreachIncidentsAnnexRefUpdatedAtById } from './data.ts';
 

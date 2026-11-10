@@ -51,6 +51,7 @@ import { anyStageLabel, stage as stageOf } from '../../src/shared/stages.ts';
 import { distinctReasons } from '../../src/modules/crm/tasks-pages.ts';
 import { actor, fixedClock, keys } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';
+import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; body: string; location: string | null };
@@ -631,7 +632,7 @@ describe('mandatory documents at a stage — built, and switched off', () => {
       const db = h.made.app.db;
       const corvale = db.get<{ id: string }>("SELECT c.id FROM claims c JOIN businesses b ON b.id = c.business_id WHERE b.name = 'Corvale Supported Living Limited'");
       assert.ok(corvale);
-      const pc = P.loadPipelineClaim(db, corvale.id);
+      const pc = loadPipelineClaim(db, corvale.id);
       assert.equal(pc.stage, 'DATA_GATHERING');
       const off = P.gateOut(db, pc, 'DATA_GATHERING', { mandatoryDocuments: { ...MD.MANDATORY_DOCUMENTS, enabled: false } });
       assert.deepEqual(off.needs.map((n) => n.what), ['No unresolved s.198 or s.199 election', P.MILESTONES.DATA_GATHERING_COMPLETE.label]);
@@ -667,7 +668,7 @@ describe('mandatory documents at a stage — built, and switched off', () => {
       assert.equal(F.recordFact(d, sales, c.id, { fact_key: 'ELECTION_EXISTS', answer: 'VALUE', value: 'NO', source_id: 'CLIENT_DOC', note: null }).ok, true);
       CF.floorAreaForClaim(h.made.app, c.id); // PHASE 158d (F44): a floor area on record first
       assert.equal(P.recordMilestone(d, sales, c.id, 'DATA_GATHERING_COMPLETE', null).ok, true);
-      const pc = () => P.loadPipelineClaim(db, c.id);
+      const pc = () => loadPipelineClaim(db, c.id);
       assert.equal(P.gateOut(db, pc(), 'DATA_GATHERING', { mandatoryDocuments: { ...MD.MANDATORY_DOCUMENTS, enabled: false } }).open, true, 'off, the gate is open on the same records — both ways');
 
       const need = (label: RegExp) => { const n = P.gateOut(db, pc(), 'DATA_GATHERING', { mandatoryDocuments: on }).needs.find((x) => label.test(x.what)); assert.ok(n, String(label)); return n; };
@@ -711,7 +712,7 @@ describe('mandatory documents at a stage — built, and switched off', () => {
       const c = db.get<{ id: string; property_id: string }>(
         "SELECT c.id, c.property_id FROM claims c JOIN businesses b ON b.id = c.business_id WHERE b.name = 'Corvale Supported Living Limited'");
       assert.ok(c);
-      const pc = P.loadPipelineClaim(db, c.id);
+      const pc = loadPipelineClaim(db, c.id);
       const need = (label: RegExp) => { const n = MD.mandatoryDocumentNeeds(db, pc, on).find((x) => label.test(x.what)); assert.ok(n, String(label)); return n; };
       assert.ok(db.get("SELECT code FROM document_types WHERE code = 'TAX_RETURN'"), 'migration 045 adds the tax return type');
       assert.equal(need(/^Tax return/).met, false);
@@ -731,7 +732,7 @@ describe('mandatory documents at a stage — built, and switched off', () => {
       // Recorded YES: both are needed again.
       assert.equal(F.recordFact(d, sales, c.id, { fact_key: 'BOUGHT_THE_BUILDING', answer: 'VALUE', value: 'YES', source_id: 'CLIENT_ANSWER', note: null }).ok, true);
       assert.equal(need(/^Sale or purchase contract/).met, false);
-      assert.equal(P.gateOut(db, P.loadPipelineClaim(db, c.id), 'DATA_GATHERING', { mandatoryDocuments: on }).open, false);
+      assert.equal(P.gateOut(db, loadPipelineClaim(db, c.id), 'DATA_GATHERING', { mandatoryDocuments: on }).open, false);
     } finally { h.close(); }
   });
 });
@@ -1010,7 +1011,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
       assert.deepEqual(db.all<{ kind: string }>("SELECT kind FROM claim_deliverables WHERE claim_id = ? AND state = 'ISSUED' ORDER BY kind", [d.atInvoice]).map((x) => x.kind),
         ['ACCOUNTANT_COMPUTATION_PACK', 'CLIENT_REPORT']);
       assert.equal(count(db, 'SELECT COUNT(*) AS n FROM invoices WHERE claim_id = ?', [d.atInvoice]), 0);
-      const pc = P.loadPipelineClaim(db, d.atInvoice);
+      const pc = loadPipelineClaim(db, d.atInvoice);
       assert.equal(invoiceWindowNeed(db, pc, h.made.app.now()).met, true);
       assert.equal(P.feeTriggerReached(db, pc).met, true);
       assert.equal(T.nextActionReading(db, pc, h.made.app.now()).breaks, null, 'the seeded claim breaks the one-next-action rule');

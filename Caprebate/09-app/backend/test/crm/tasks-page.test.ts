@@ -10,6 +10,8 @@ import * as T from '../../src/modules/crm/tasks.ts';
 import { dueCell } from '../../src/modules/crm/tasks-pages.ts';
 import { SITE_CSS } from '../../src/shared/assets.ts';
 import { plainDashText } from '../../src/shared/plain-dashes.ts';
+import { type DueReading } from '../../src/modules/clients/index.ts';
+import * as clientsDoor from '../../src/modules/clients/index.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit9'); });
@@ -41,11 +43,11 @@ describe('UI tidy phase 9: the top of Tasks', () => {
 
 describe('UI tidy phase 9: each task', () => {
   test('late: a red label, its date under it; no date: a grey label; on time: the words', () => {
-    assert.equal(dueCell({ state: 'OVERDUE', overdue: true, label: '3 days overdue (29 Sep 2026)' } satisfies T.DueReading).html,
+    assert.equal(dueCell({ state: 'OVERDUE', overdue: true, label: '3 days overdue (29 Sep 2026)' } satisfies DueReading).html,
       '<span class="badge b-late">3 days overdue</span><br><span class="help">29 Sep 2026</span>');
-    assert.equal(dueCell({ state: 'NO_DUE_DATE', overdue: false, label: T.NO_DUE_DATE } satisfies T.DueReading).html,
+    assert.equal(dueCell({ state: 'NO_DUE_DATE', overdue: false, label: clientsDoor.NO_DUE_DATE } satisfies DueReading).html,
       '<span class="badge b-nodate">no due date — so it is not overdue, and it is not on time either</span>');
-    assert.equal(dueCell({ state: 'NOT_YET_DUE', overdue: false, label: 'Due in 3 days (5 Oct 2026)' } satisfies T.DueReading).html, 'Due in 3 days (5 Oct 2026)');
+    assert.equal(dueCell({ state: 'NOT_YET_DUE', overdue: false, label: 'Due in 3 days (5 Oct 2026)' } satisfies DueReading).html, 'Due in 3 days (5 Oct 2026)');
   });
 
   test('every late task is red on its row, and a company already named in a claim is not named again', async () => {

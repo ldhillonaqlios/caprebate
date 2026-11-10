@@ -29,6 +29,7 @@ import * as F from './finance.ts';
 import * as I from './invoices.ts';
 import * as V from './vat.ts';
 import { piecesPage } from '../../core/index.ts';
+import { assertFinanceSection } from './finance.permissions.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -124,7 +125,7 @@ export async function handleFinance(
 
   const one = /^\/staff\/finance\/([A-Za-z0-9-]+)$/.exec(path);
   if (one && method === 'GET') {
-    F.assertFinanceSection(actor);
+    assertFinanceSection(actor);
     const id = one[1] ?? '';
     html(res, 200, I.isClaimInvoice(d.app.db, id)
       ? claimInvoicePage(d, actor, I.claimInvoiceById(d.app.db, actor, id, d.app.now()), saved)

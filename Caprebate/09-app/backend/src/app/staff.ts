@@ -39,8 +39,7 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
    back office's views, the saved keys), so the door cannot name them (see src/core/index.ts). */
 import { staffShell, portalShell, opens, filterBar, LEAD_FILTERS } from '../core/index.ts';
 import { settingsBody, settingsTiles } from '../modules/admin/index.ts';
-import { homeRows } from '../modules/public-site/index.ts';
-import { dashboard, dashView } from '../modules/crm/index.ts';
+import { dashboard, dashView, homeRows } from '../modules/crm/index.ts';
 import { addBlock, removeBlock } from '../modules/clients/index.ts';
 import { saveKey } from '../modules/admin/index.ts';
 import { mayReadQueue, readRepliesIfDue } from '../modules/crm/index.ts';
@@ -49,7 +48,7 @@ import { settingsModule as S } from '../modules/admin/index.ts';
 import { backOffice as B } from '../modules/crm/index.ts';
 import { handleEngaged } from '../modules/claims/index.ts';
 import { handleClientPage } from '../modules/crm/index.ts';
-import { handleClientFiles } from '../modules/portal/index.ts';
+import { handleClientFiles, setPortalSettings } from '../modules/portal/index.ts';
 import { handleFreeEmail } from '../modules/crm/index.ts';
 import { handleStaffMessages } from '../modules/crm/index.ts';
 import { handleSurveyor } from '../modules/survey/index.ts';
@@ -819,7 +818,8 @@ async function handleSettings(
   return 'not-mine';
 }
 
-/** The portal's mount of the same settings. See `handleSettings`. */
+/** The portal's mount of the same settings. See `handleSettings`. Handed in to the portal's port as this file loads
+ * (src/modules/portal/settings-port.ts): the portal sits below the start-up wiring, so it cannot import it. */
 export function handlePortalSettings(
   d: StaffDeps, req: IncomingMessage, res: ServerResponse, url: URL,
   method: string, actor: Actor,
@@ -828,6 +828,7 @@ export function handlePortalSettings(
 ): Promise<WebResult> {
   return handleSettings(d, req, res, url, method, actor, form, body, '/portal/settings');
 }
+setPortalSettings(handlePortalSettings);
 
 /**
  * The session id in the caller's hand. `changeOwnPassword` rotates it, so it
@@ -851,7 +852,7 @@ function currentSessionId(d: StaffDeps, req: IncomingMessage): string {
  * ================================================================== */
 
 /* ------------------------------------------------------------------ *
- * HOME: ROWS OF TILES, IN THE OWNER'S ORDER (src/modules/public-site/home.ts)
+ * HOME: ROWS OF TILES, IN THE OWNER'S ORDER (src/modules/crm/home.ts)
  * ------------------------------------------------------------------ */
 
 /**

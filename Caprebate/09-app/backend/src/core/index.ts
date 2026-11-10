@@ -19,7 +19,7 @@ export { getAuditLogCountByObjectIds, listAuditLogLines, listAuditLogLinesByObje
 export { listAuditLogAtDetailActorIdByInvoiceUpdatedObjectIds, namesByIds, peopleByIds } from './data.ts';
 export { Db, migrate, pendingMigrations, withReadMemo } from './db.ts';
 export { clientHelp, staffHelp } from './help.ts';
-export { JSON_HEADERS, PayloadTooLarge, bindResponse, clientIp, clockOf, cookie, form, html, inContext, lendShellParts, nav, readBody, redirect, setCookie, shellParts, simple } from './http.ts';
+export { JSON_HEADERS, PayloadTooLarge, bindResponse, clientIp, clockOf, cookie, form, html, inContext, nav, readBody, redirect, setCookie, simple } from './http.ts';
 export { STAGE_GROUPS, groupBand, groupBar, kpiRow, lateBadge, noDateBadge, nobodyBadge, siteOf, stageBadge, stageGroupOf, stageLabel } from './look.ts';
 export { nameSwitches, navContext, setSubMenu } from './nav-context.ts';
 export { LEAD_FILTERS, TASK_FILTERS, addUnderCurrent, filterBar, opens, portalShell, provideNav, staffShell } from './navigation.ts';

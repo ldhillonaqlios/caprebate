@@ -31,6 +31,8 @@ import { authorise, type Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { badge, breadcrumb, claimRef, highlights, propertyIn, savedMessage, why } from '../../shared/index.ts';
 import { crmModule as C } from '../crm/index.ts';
+// The folder icon, the Files button and the folder tiles are the client page's (src/modules/crm/client-layout.ts).
+import { folderTiles } from '../crm/index.ts';
 import { documentsModule as D } from '../claims/index.ts';
 import type { FsObjectStore } from '../../shared/index.ts';
 import { piecesOf, piecesPage } from '../../core/index.ts';
@@ -49,19 +51,6 @@ export type ClientFilesDeps = {
   nav: (actor: Actor) => Safe;
   problem: (res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string) => 'handled';
 };
-
-/** A folder icon, drawn inline. Decoration only: the words beside it say what it is. */
-export const FOLDER_ICON = '<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2h8.5A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/>';
-
-export function folderIcon(): Safe {
-  return h`<svg class="fold-svg" aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${raw(FOLDER_ICON)}</svg>`;
-}
-
-/** The folder button in a client page's header: the icon, the word, and how many files this login may open. */
-export function filesButton(business_id: string, count: number, beside: Safe = raw('')): Safe {
-  return h`<p class="filesbtn-row"><a class="filesbtn" href="/staff/clients/${business_id}/files">${folderIcon()}<span>Files</span>
-    <span class="filecount" aria-label="${count} ${count === 1 ? 'file' : 'files'}">${count}</span></a>${beside}</p>`;
-}
 
 function html(res: ServerResponse, status: number, body: string): void {
   // An upload form's page also gets the script that sends a big file in pieces.
@@ -173,16 +162,6 @@ function uploadForm(f: D.ClientFolder): Safe {
     <button class="cta" type="submit">Upload</button>
     <div class="help">${why('Your file goes through the same safety checks as a client’s. We read it, keep what we need, and delete the original. The client cannot see it unless you tick the box.')}</div>
   </form>`;
-}
-
-/** One tile per folder, each opening the Files page at that folder. Used there and in the client page's Files section. */
-export function folderTiles(f: D.ClientFolder, key: string | null = null): Safe {
-  const tile = (x: D.Folder): Safe => h`<li class="tile foldertile${key === x.key ? ' current' : ''}">
-    <a class="tilelink" href="/staff/clients/${f.business_id}/files?folder=${x.key}"${key === x.key ? raw(' aria-current="page"') : raw('')}>
-      ${folderIcon()}<span class="tilename">${x.key.startsWith('claim-') ? (propertyIn(f.company, x.name) ?? x.name) : x.name}</span>
-      <span class="tileline">${x.count} ${x.key === 'asked' ? (x.count === 1 ? 'thing' : 'things') : (x.count === 1 ? 'file' : 'files')}</span></a>
-    ${x.ref === undefined ? raw('') : h`<p class="tileref">${claimRef(x.ref)}</p>`}</li>`;
-  return h`<ul class="tiles foldertiles">${f.folders.map(tile)}</ul>`;
 }
 
 function folderPage(d: ClientFilesDeps, actor: Actor, f: D.ClientFolder, key: string | null, done: string | undefined): string {

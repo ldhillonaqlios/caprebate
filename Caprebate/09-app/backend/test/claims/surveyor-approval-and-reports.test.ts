@@ -41,7 +41,7 @@ function claimAt(app: App, stage: string): { business: string; assessment: strin
 }
 
 const gateNeed = (app: App, claim: string, starts: string) =>
-  P.pipelinePanel(app.db, actor('SALES'), P.loadPipelineClaim(app.db, claim)).gate?.needs.find((x) => x.what.startsWith(starts));
+  P.pipelinePanel(app.db, actor('SALES'), loadPipelineClaim(app.db, claim)).gate?.needs.find((x) => x.what.startsWith(starts));
 
 describe('F34, F35 — the surveyor’s valuation is the surveyor’s approval of the pack, not a staff tick', () => {
   test('the Valuation gate needs an approved pack on a job on this claim', async () => {
@@ -212,7 +212,7 @@ describe('F39 — the client accepts the report in the portal', () => {
     assert.equal(need()?.met, true);
     assert.match(need()?.why ?? '', /accepted by Client Person/);
     // The fee trigger's cautious reading reads the same acceptance.
-    assert.equal(P.feeTriggerReached(app.db, P.loadPipelineClaim(app.db, c.claim), 'CLIENT_ACCEPTED_REPORT').met, true);
+    assert.equal(P.feeTriggerReached(app.db, loadPipelineClaim(app.db, c.claim), 'CLIENT_ACCEPTED_REPORT').met, true);
     app.close();
   });
 });
@@ -300,7 +300,7 @@ describe('F37 — a window the client’s own date already puts out of reach is 
     const app = await testApp(); staff(app);
     const c = claimAt(app, 'ENGAGEMENT');
     said(app, c.assessment, 'Main site', '06/2019');
-    const w = F.earlyWindowWarning(app.db, P.loadPipelineClaim(app.db, c.claim), '2026-10-07T12:00:00.000Z');
+    const w = F.earlyWindowWarning(app.db, loadPipelineClaim(app.db, c.claim), '2026-10-07T12:00:00.000Z');
     assert.ok(w !== null);
     assert.match(w ?? '', /On the client’s own date \(06\/2019\)/);
     assert.match(w ?? '', /it closed on \d{1,2} [A-Z][a-z]{2} 20\d\d\./);
@@ -312,9 +312,9 @@ describe('F37 — a window the client’s own date already puts out of reach is 
     const app = await testApp(); staff(app);
     const c = claimAt(app, 'ENGAGEMENT');
     said(app, c.assessment, 'Main site', '06/2025');
-    assert.equal(F.earlyWindowWarning(app.db, P.loadPipelineClaim(app.db, c.claim), '2026-10-07T12:00:00.000Z'), null);
+    assert.equal(F.earlyWindowWarning(app.db, loadPipelineClaim(app.db, c.claim), '2026-10-07T12:00:00.000Z'), null);
     const d = claimAt(app, 'ENGAGEMENT');
-    assert.equal(F.earlyWindowWarning(app.db, P.loadPipelineClaim(app.db, d.claim), '2026-10-07T12:00:00.000Z'), null);
+    assert.equal(F.earlyWindowWarning(app.db, loadPipelineClaim(app.db, d.claim), '2026-10-07T12:00:00.000Z'), null);
     app.close();
   });
 
@@ -322,7 +322,7 @@ describe('F37 — a window the client’s own date already puts out of reach is 
     const app = await testApp(); staff(app);
     const c = claimAt(app, 'REPORTS');
     said(app, c.assessment, 'Main site', '06/2019');
-    assert.equal(F.earlyWindowWarning(app.db, P.loadPipelineClaim(app.db, c.claim), '2026-10-07T12:00:00.000Z'), null);
+    assert.equal(F.earlyWindowWarning(app.db, loadPipelineClaim(app.db, c.claim), '2026-10-07T12:00:00.000Z'), null);
     app.close();
   });
 });
@@ -380,6 +380,7 @@ describe('F37 — on the claim page', () => {
  * F41 — the invoice sent before the claim moves past Invoice
  * ================================================================== */
 import * as I from '../../src/modules/finance/invoices.ts';
+import { loadPipelineClaim, raiseBusinessStage } from '../../src/modules/claims/index.ts';
 
 describe('F41 — the Invoice gate needs the fee invoice sent, not only raised', () => {
   test('raised: not met, and it says so; recorded as sent: met', async () => {
@@ -442,9 +443,9 @@ describe('F42 — closing needs the filing recorded, and "Claim filed" waits for
     const app = await testApp(); staff(app);
     const c = claimAt(app, 'DEFENCE_PACK');
     const stage = () => app.db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [c.business])?.stage;
-    P.raiseBusinessStage(app.db, c.business, app.now());
+    raiseBusinessStage(app.db, c.business, app.now());
     assert.equal(stage(), 'AT_SURVEY', 'the portal said "Claim filed" with no filing recorded');
-    const panel = () => P.pipelinePanel(app.db, actor('SALES'), P.loadPipelineClaim(app.db, c.claim));
+    const panel = () => P.pipelinePanel(app.db, actor('SALES'), loadPipelineClaim(app.db, c.claim));
     assert.equal(panel().portal?.evidences_key, 'AT_SURVEY');
     CF.filingRecorded(app, c.claim);
     assert.equal(stage(), 'INVOICED', 'recording the filing did not move the client to "Claim filed"');

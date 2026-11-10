@@ -45,6 +45,8 @@ import * as TL from '../../src/modules/crm/timeline.ts';
 import * as E from '../../src/modules/claims/engaged.ts';
 import { actor, fixedClock, testApp } from '../helpers.ts';
 import { localDate } from '../../src/shared/localtime.ts';
+import { type TaskInsert, addMonthsToDate, dueReading, insertTask, openLeadForGatedExit } from '../../src/modules/clients/index.ts';
+import * as clientsDoor from '../../src/modules/clients/index.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const SCRIPT = '<script>alert(1)</script><img src=x onerror=alert(2)>';
@@ -84,7 +86,7 @@ function organisation(app: App): Org {
   return { business, property, assessment };
 }
 
-function task(t: Partial<T.TaskInsert>): T.TaskInsert {
+function task(t: Partial<TaskInsert>): TaskInsert {
   return {
     title: 'a task', description: null, owner_id: 'u-SALES', owner_role: null, due_on: null, priority: null,
     activity_type: 'TASK', business_id: null, property_id: null, claim_id: null, lead_id: null, contact_id: null,
@@ -101,7 +103,7 @@ function claimAt(app: App, org: Org, stage: string, next: 'full' | 'none' | 'no-
   });
   P.recordOpened(deps(app), null, made.id, stage, 'a test fixture');
   if (next !== 'none') {
-    T.insertTask(app.db, app.now, randomUUID, task({
+    insertTask(app.db, app.now, randomUUID, task({
       title: 'the next action', business_id: org.business, claim_id: made.id, is_next_action: true,
       owner_id: next === 'no-owner' ? null : 'u-SALES', owner_role: next === 'no-owner' ? 'SALES' : null,
       due_on: next === 'no-due' ? null : '2026-12-31',
@@ -281,9 +283,9 @@ describe('staff tasks — a job a colleague does, not a question the client answ
       assert.match(why(T.createTask(d, actor('SALES'), { claim_id: c, property_id: b.property, title: 'x', activity_type: 'TASK', owner_id: 'u-SALES' })), /claim’s own organisation/);
       assert.match(why(T.createTask(d, actor('SALES'), { business_id: a.business, title: 'x', activity_type: 'PHONE', owner_id: 'u-SALES' })), /kind of activity/);
       assert.match(why(T.createTask(d, actor('SALES'), { business_id: a.business, title: 'x', activity_type: 'TASK' })), /who owns this task/);
-      assert.throws(() => T.insertTask(app.db, app.now, randomUUID, task({})), /CHECK constraint/);
-      assert.throws(() => T.insertTask(app.db, app.now, randomUUID, task({ business_id: b.business, claim_id: c })), /FOREIGN KEY/);
-      assert.throws(() => T.insertTask(app.db, app.now, randomUUID, task({ business_id: a.business, activity_type: 'PHONE' })), /activity_type/);
+      assert.throws(() => insertTask(app.db, app.now, randomUUID, task({})), /CHECK constraint/);
+      assert.throws(() => insertTask(app.db, app.now, randomUUID, task({ business_id: b.business, claim_id: c })), /FOREIGN KEY/);
+      assert.throws(() => insertTask(app.db, app.now, randomUUID, task({ business_id: a.business, activity_type: 'PHONE' })), /activity_type/);
       const ok = T.createTask(d, actor('SALES'), { business_id: a.business, title: 'x', activity_type: 'TASK', owner_role: 'SALES' });
       assert.equal(ok.ok, true);
       if (ok.ok) assert.match(why(T.setTaskStatus(d, actor('SALES'), ok.id, 'DONE', null)), /not a status/);
@@ -331,8 +333,8 @@ describe('staff tasks — a job a colleague does, not a question the client answ
         next === undefined ? null : { due_on: next.due_on, status: next.status, is_next_action: next.is_next_action, origin: next.origin },
         { due_on: '2026-02-28', status: 'OPEN', is_next_action: 1, origin: 'RECURRENCE' });
       assert.match(why(T.setTaskStatus(d, actor('SALES'), made.id, 'COMPLETED', null)), /keeps its record/);
-      assert.throws(() => T.insertTask(app.db, app.now, randomUUID, task({ business_id: org.business, recurred_from_id: made.id, origin: 'RECURRENCE' })), /UNIQUE/);
-      assert.equal(T.addMonthsToDate('2026-03-31', 3), '2026-06-30');
+      assert.throws(() => insertTask(app.db, app.now, randomUUID, task({ business_id: org.business, recurred_from_id: made.id, origin: 'RECURRENCE' })), /UNIQUE/);
+      assert.equal(addMonthsToDate('2026-03-31', 3), '2026-06-30');
       assert.equal(T.nextDueOn('2026-12-28', 'WEEKLY'), '2027-01-04');
     } finally { app.close(); }
   });
@@ -384,7 +386,7 @@ describe('one next action per claim, with an owner and a due date', () => {
       const atEngagement = claimAt(app, org, 'ENGAGEMENT', 'none');
       assert.match(why(P.moveClaim(d, actor('SALES'), atEngagement, { kind: 'FORWARD', to: 'DATA_GATHERING' })), /Not ready to move on from Engagement yet/);
       // And at most one, at the database.
-      assert.throws(() => T.insertTask(app.db, app.now, randomUUID, task({ business_id: org.business, claim_id: kept, is_next_action: true, due_on: '2026-12-31' })), /UNIQUE/);
+      assert.throws(() => insertTask(app.db, app.now, randomUUID, task({ business_id: org.business, claim_id: kept, is_next_action: true, due_on: '2026-12-31' })), /UNIQUE/);
     } finally { app.close(); }
   });
 
@@ -451,11 +453,11 @@ describe('one next action per claim, with an owner and a due date', () => {
 describe('overdue — stored in UTC, shown in UK time, and no due date is neither', () => {
   test('at 00:30 BST on 11 September the UTC date is still the 10th: a task due on the 10th is OVERDUE by the UK date; in January the two agree', async () => {
     assert.equal('2026-09-10' < '2026-09-10T23:30:00.000Z'.slice(0, 10), false, 'the control: by the UTC date it is not overdue');
-    assert.equal(T.dueReading('2026-09-10', '2026-09-10T23:30:00.000Z').state, 'OVERDUE');
-    assert.equal(T.dueReading('2026-09-11', '2026-09-10T23:30:00.000Z').state, 'DUE_TODAY');
-    assert.equal(T.dueReading('2026-01-10', '2026-01-10T23:30:00.000Z').state, 'DUE_TODAY');
-    const none = T.dueReading(null, '2026-09-10T23:30:00.000Z');
-    assert.deepEqual(none, { state: 'NO_DUE_DATE', overdue: false, label: T.NO_DUE_DATE });
+    assert.equal(dueReading('2026-09-10', '2026-09-10T23:30:00.000Z').state, 'OVERDUE');
+    assert.equal(dueReading('2026-09-11', '2026-09-10T23:30:00.000Z').state, 'DUE_TODAY');
+    assert.equal(dueReading('2026-01-10', '2026-01-10T23:30:00.000Z').state, 'DUE_TODAY');
+    const none = dueReading(null, '2026-09-10T23:30:00.000Z');
+    assert.deepEqual(none, { state: 'NO_DUE_DATE', overdue: false, label: clientsDoor.NO_DUE_DATE });
 
     for (const f of ['modules/crm/tasks.ts', 'modules/crm/timeline.ts', 'modules/crm/automation.ts', 'modules/admin/templates.ts', 'modules/crm/tasks-pages.ts']) {
       assert.equal(/Europe\/|timeZone|getTimezoneOffset/.test(readFileSync(join(SRC, f), 'utf8')), false, `${f} names a zone`);
@@ -644,7 +646,7 @@ describe('the timeline is a read over what is already recorded — not a second 
     const app = await testApp();
     try {
       staff(app);
-      const lead = L.openLeadForGatedExit(app.db, randomUUID, { prospect_organisation: 'Gated Invented Limited', at: T0 });
+      const lead = openLeadForGatedExit(app.db, randomUUID, { prospect_organisation: 'Gated Invented Limited', at: T0 });
       app.db.run(
         'INSERT INTO contacts (id, business_id, lead_id, full_name, contact_consent, marketing_optin, phone, created_at) VALUES (?, NULL, ?, ?, 1, 0, ?, ?)',
         [randomUUID(), lead, 'Asked At The Gate', '01632 960001', T0]);

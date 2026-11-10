@@ -6,16 +6,9 @@
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
 export { fontFile, gsapScript, HOME_PAGE_HEADERS, homeEdition, isSectorSlug, sectorEdition } from './home-site.ts';
 export { SITE_JS_HEADERS, SITE_PAGE_CSP, SITE_PAGE_HEADERS, siteEdition } from './public-site.ts';
-export { agreementLinks, CONSENT_COOKIE, consentChoice, consentSetCookie, COOKIE_BANNER_CSS, cookieBanner, draftLine, inForce, LEGAL_PAGES, legalPageHtml, NOTICES_VERSION, optionalAllowed, safeBack, versionOf, wantsBanner } from './legal-pages.ts';
-export * as enquiriesModule from './enquiries.ts';
-export { PROPERTY_TYPES, receiveEnquiry } from './enquiries.ts';
-export { ENQUIRY_RETENTION, sweepEnquiries } from './enquiry-retention.ts';
-export { adminRow, homeRows, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from './home.ts';
-export { logFormComplaint, noticesEdition, noticesForLiveSite, receiveComplaintForm, waitingForms } from './notices-site.ts';
-export type { Approvals, LegalPageKey, PageApproval } from './legal-pages.ts';
-export type { EnquiryRow } from './enquiries.ts';
-export type { WaitingForm } from './notices-site.ts';
+export { CONSENT_COOKIE, consentChoice, consentSetCookie, COOKIE_BANNER_CSS, cookieBanner, draftLine, legalPageHtml, optionalAllowed, wantsBanner } from './legal-pages.ts';
+export { receiveEnquiry } from './enquiries.ts';
+export { sweepEnquiries } from './enquiry-retention.ts';
+export { noticesEdition, noticesForLiveSite, receiveComplaintForm } from './notices-site.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { publicSiteEnquiry, publicSiteRoutes } from './routes.ts';
-// What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
-import './claims-ports.ts';

@@ -26,6 +26,7 @@ import { seed } from '../../src/app/seed.ts';
 import * as L from '../../src/modules/crm/leads.ts';
 import * as P from '../../src/modules/crm/pipeline.ts';
 import { actor, testApp } from '../helpers.ts';
+import { openLeadForSubmission } from '../../src/modules/clients/index.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const SCRIPT = '<script>alert(1)</script><img src=x onerror=alert(2)>';
@@ -56,7 +57,7 @@ function funnelOrganisation(app: App, name: string, withLead = true): { business
   const assessment = randomUUID();
   app.db.run('INSERT INTO assessments (id,business_id,sector,submitted_at,shown_low_pence,shown_high_pence,created_at) VALUES (?,?,?,?,?,?,?)',
     [assessment, business, 'care_homes', T0, 1_000_00, 2_000_00, T0]);
-  const lead = withLead ? L.openLeadForSubmission(app.db, randomUUID, { business_id: business, assessment_id: assessment, at: T0 }) : null;
+  const lead = withLead ? openLeadForSubmission(app.db, randomUUID, { business_id: business, assessment_id: assessment, at: T0 }) : null;
   return { business, property, assessment, lead };
 }
 

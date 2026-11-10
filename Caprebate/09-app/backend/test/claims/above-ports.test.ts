@@ -1,7 +1,7 @@
 /**
  * THE CLAIMS' PORTS FOR WHAT THEY ASK THE AREAS ABOVE THEM (Phase 161l2; src/modules/claims/above-ports.ts).
  *
- * The survey, the portal, finance, compliance and the public site each hand their part in as their front door
+ * The survey, the portal, finance and compliance each hand their part in as their front door
  * loads. This test checks that, once the app is built, every port is filled with that area's own function (the same
  * answer as asking the area itself), and that a port asked before its area has loaded refuses, by name, rather than
  * guess: a file that loads the ports alone, with no area above, gets an error from every one.
@@ -22,7 +22,6 @@ import * as PD from '../../src/modules/portal/data.ts';
 import { latestAnswer, returnFilings } from '../../src/modules/portal/accountant-confirm.ts';
 import { getInvoiceNumbersSeqByInvoiceIdKind } from '../../src/modules/finance/data.ts';
 import { DISCLOSURE_LOG } from '../../src/modules/compliance/disclosure-log.ts';
-import { ENQUIRY_RETENTION } from '../../src/modules/public-site/enquiry-retention.ts';
 
 const PORTS = join(import.meta.dirname, '..', '..', 'src', 'modules', 'claims', 'above-ports.ts');
 
@@ -50,7 +49,6 @@ test('every port is filled by its area as the app loads, and answers as the area
   }
   same(P.getAnchorLogHash(db), SD.getAnchorLogHash(db), 'the anchor log head');
   assert.equal(P.stampedSwitchOn('DISCLOSURE_LOG'), DISCLOSURE_LOG.enabled);
-  assert.equal(P.stampedSwitchOn('ENQUIRY_RETENTION'), ENQUIRY_RETENTION.enabled);
   app.close();
 });
 
@@ -64,7 +62,6 @@ test('a port asked before its area has loaded refuses, by name, rather than gues
     ask('portal', () => P.latestAnswer(null, 'c', 'FILED'));
     ask('finance', () => P.getInvoiceNumbersSeqByInvoiceIdKind(null, ['c']));
     ask('compliance', () => P.stampedSwitchOn('DISCLOSURE_LOG'));
-    ask('public site', () => P.stampedSwitchOn('ENQUIRY_RETENTION'));
     console.log(JSON.stringify(out));`;
   const out = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' }).trim()) as string[];
   assert.deepEqual(out, [
@@ -73,6 +70,5 @@ test('a port asked before its area has loaded refuses, by name, rather than gues
     'portal: What the claims ask the portal is not set up. The portal sets it up when it loads, so nothing was decided.',
     'finance: What the claims ask finance is not set up. Finance sets it up when it loads, so nothing was decided.',
     'compliance: What the claims ask compliance is not set up. Compliance sets it up when it loads, so nothing was decided.',
-    'public site: What the claims ask the public site is not set up. The public site sets it up when it loads, so nothing was decided.',
   ]);
 });

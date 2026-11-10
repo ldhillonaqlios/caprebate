@@ -3,6 +3,7 @@
  * hands the menu its own gates and counts. Loaded last by the front door, as it reaches the module's own files.
  */
 import { provideNav } from '../../core/index.ts';
-import { adminSettingsGate, SETTINGS_TILES } from './admin-tiles.ts';
+import { SETTINGS_TILES } from './admin-tiles.ts';
+import { adminSettingsGate } from './admin.permissions.ts';
 
 provideNav({ gates: { settings: adminSettingsGate }, settingsTiles: () => SETTINGS_TILES });

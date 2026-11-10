@@ -24,12 +24,13 @@ import type { AuditLog } from '../../core/audit.ts';
 import type { Actor } from '../../core/index.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
 import { checksPanel, stepDef, tellClient, type ChecksPanel, type StepView } from '../claims/index.ts';
-import { gateOut, loadPipelineClaim, moveClaim } from './pipeline.ts';
+import { gateOut, moveClaim } from './pipeline.ts';
 import { claimStage, clientStageFor, nextProcedureKey, STAGES, type ProcedureKey } from '../../shared/index.ts';
-import { PROPOSED_STEP_NAMES } from '../portal/index.ts';
+import { PROPOSED_STEP_NAMES } from './portal-steps.ts';
 import { localStamp } from '../../shared/index.ts';
 import { getBusinessesEById, getBusinessesSById2, getContactsEByBusinessIdEmail } from '../clients/index.ts';
 import { listClaimsIdByBusinessId2 } from '../claims/index.ts';
+import { loadPipelineClaim } from '../claims/index.ts';
 
 export type TellDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };
 

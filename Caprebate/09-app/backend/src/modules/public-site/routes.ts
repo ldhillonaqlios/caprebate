@@ -3,19 +3,19 @@
  * the enquiry form. The router shell (src/app/router.ts) asks each function at the point where its addresses have
  * always been matched, so the order in which every address is tried is unchanged.
  */
-import { clientIp, cookie, form, html, nav, redirect, shellParts, type Actor, type WebRequest, type WebResult } from '../../core/index.ts';
+import { clientIp, cookie, form, html, nav, redirect, type Actor, type WebRequest, type WebResult } from '../../core/index.ts';
 import { CSS_HEADERS, HTML_HEADERS, h, localDate, page, registryGate, ukDate, why } from '../../shared/index.ts';
 import { TURNSTILE_FIELD, checkTurnstile, ga4MeasurementId, refusalWords, sitePageFor, turnstileSiteKey, withSiteKey } from '../../integrations/index.ts';
 import { receiveEnquiry } from './enquiries.ts';
 import { HOME_PAGE_HEADERS, fontFile, gsapScript, homeEdition, isSectorSlug, sectorEdition } from './home-site.ts';
-import { CONSENT_COOKIE, COOKIE_BANNER_CSS, consentChoice, consentSetCookie, draftLine, legalPageHtml, optionalAllowed, safeBack } from './legal-pages.ts';
+import { CONSENT_COOKIE, COOKIE_BANNER_CSS, consentChoice, consentSetCookie, draftLine, legalPageHtml, optionalAllowed } from './legal-pages.ts';
+import { currentApprovals, safeBack } from '../compliance/index.ts';
 import { noticesEdition, noticesForLiveSite, receiveComplaintForm } from './notices-site.ts';
 import { SITE_JS_HEADERS, SITE_PAGE_CSP, SITE_PAGE_HEADERS, siteEdition } from './public-site.ts';
 
 /** The legal pages, the notices, the home page, the sector pages and their files. */
 export async function publicSiteRoutes(w: WebRequest): Promise<WebResult | undefined> {
   const { d, req, res, url, path, method, actor, newId, legalServed } = w;
-  const { currentApprovals } = shellParts();
   /* STRESS TEST: THE PRIVACY NOTICE AND THE PUBLIC NOTICES ARE NOT PUBLISHED YET (03-app's notices page is a
      draft with facts not set, and the privacy notice waits on the data protection officer), but every page links to them
      and the links answered 401. Until they are published, a page that says so and how to reach us - nothing more. */

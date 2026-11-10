@@ -29,7 +29,7 @@
 
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { AuthError, GENERIC_AUTH_FAILURE, JSON_HEADERS, NotAuthorised, PIECE_BYTES, RECOVERY_CODES_LOW, SESSION_COOKIE_NAME, TEMPORARY_PASSWORD_EXPIRED, authenticate, clientIp, completePasswordReset, cookie, form, html, inContext, lendShellParts, logout, nav, navContext, putPiece, readBody, redirect, requestPasswordReset, simple, singleFile, startPieces, sweepPieces, toActor } from '../core/index.ts';
+import { AuthError, GENERIC_AUTH_FAILURE, JSON_HEADERS, NotAuthorised, PIECE_BYTES, RECOVERY_CODES_LOW, SESSION_COOKIE_NAME, TEMPORARY_PASSWORD_EXPIRED, authenticate, clientIp, completePasswordReset, cookie, form, html, inContext, logout, nav, navContext, putPiece, readBody, redirect, requestPasswordReset, simple, singleFile, startPieces, sweepPieces, toActor } from '../core/index.ts';
 import type { Actor, App, LoginResult, WebDeps, WebRequest, WebResult } from '../core/index.ts';
 import * as SI from '../core/index.ts'; // the sign-in steps (src/core/sign-in.ts), through the core's door
 import { SITE_CSS, CSS_HEADERS, PNG_HEADERS } from '../shared/index.ts';
@@ -38,13 +38,9 @@ import { h, page, raw } from '../shared/index.ts';
 import { portalModule as P } from '../modules/portal/index.ts';
 import { acceptClientBytes, finishUpload, issuedJob, readerFor } from '../modules/claims/index.ts';
 import { UPLOAD_PIECES_JS } from './upload-pieces-script.ts';
-import { handleStaff, handlePortalSettings } from './staff.ts';
-/* Straight from these two core files, not the core's door: each reads business modules as it loads, so the door cannot
-   name them (see src/core/index.ts). */
-import { mayEnterBackOffice, NotFoundAsRefusal } from '../core/index.ts';
-import { staffShell, portalShell } from '../core/index.ts';
+import { handleStaff } from './staff.ts';
+import { mayEnterBackOffice } from '../core/index.ts';
 import { inboundEmailModule as IE } from '../modules/crm/index.ts';
-import { PHOTO_UPLOAD_JS } from '../modules/survey/index.ts';
 import { SIGNATURE_PAD_JS } from '../shared/index.ts';
 import { sweepUploads } from '../modules/survey/index.ts';
 import { runTimerJob, timerJobOf, timerWordRefusal, TIMER_PATH_PREFIX } from './timers.ts';
@@ -54,25 +50,16 @@ import { webhookChallenge } from '../integrations/index.ts';
 import { ga4MeasurementId } from '../integrations/index.ts';
 import { localDate, ukDate } from '../shared/index.ts';
 import { SITE_JS_HEADERS } from '../modules/public-site/index.ts';
-import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from '../modules/portal/index.ts';
-import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from '../modules/compliance/index.ts';
+import { storageReason } from '../modules/compliance/index.ts';
 import { CONSENT_COOKIE, consentChoice, cookieBanner, wantsBanner } from '../modules/public-site/index.ts';
-import { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from '../modules/compliance/index.ts';
-import { nav as staffNav } from './staff.ts';
 // Each module's addresses, asked below at the point where they have always been matched.
 import { publicSiteEnquiry, publicSiteRoutes } from '../modules/public-site/index.ts';
 import { assessmentAssets, assessmentRoutes } from '../modules/assessment/index.ts';
 import { portalConfirmLink, portalEntry, portalSignLink } from '../modules/portal/index.ts';
 import { crmAssets, crmCallPage, crmReferralForm } from '../modules/crm/index.ts';
 import { claimsAssets } from '../modules/claims/index.ts';
-import { surveySignoffLink } from '../modules/survey/index.ts';
-
-/* What the route files cannot reach through the core's front door, because each part reads business modules itself. */
-lendShellParts({
-  signedInHeader: (actor) => mayEnterBackOffice(actor) ? staffShell(actor) : portalShell(actor),
-  offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD, handlePortalSettings, NotFoundAsRefusal,
-  currentApprovals, currentTermsVersions, agreementTick, agreementPage, hasAgreedCurrent, keepAgreement,
-});
+import { surveyAssets, surveySignoffLink } from '../modules/survey/index.ts';
+import { complianceIdentityHook, complianceLegalApprovals } from '../modules/compliance/index.ts';
 
 
 /* ------------------------------------------------------------------ *
@@ -201,10 +188,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assets/signature-pad.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(SIGNATURE_PAD_JS); return 'handled';
   }
-  // The photo page's one script (src/modules/survey/photo-upload-script.ts).
-  if (path === '/assets/photo-upload.js' && method === 'GET') {
-    res.writeHead(200, SITE_JS_HEADERS); res.end(PHOTO_UPLOAD_JS); return 'handled';
-  }
+  if ((mine = await surveyAssets(w)) !== undefined) return mine;
   // The upload forms' one script (src/app/upload-pieces-script.ts), which sends a big file in pieces.
   if (path === '/assets/upload-pieces.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(UPLOAD_PIECES_JS); return 'handled';
@@ -292,20 +276,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       : r.state === 'OFF' ? 'reading replies is off' : `read ${String(r.read)}, filed ${String(r.filed)}, to sort ${String(r.queued)}`);
     return 'handled';
   }
-  /* THE IDENTITY CHECK'S SIGNED RESULT. The service has no login, so this sits outside it — and believes
-     nothing it is sent unless the signature holds (src/modules/compliance/identity-checks.ts). A bad signature is refused and audited.
-     The answer is a status and nothing else: the service reads no page, and a refusal says nothing about why. */
-  if (path === IDENTITY_HOOK_PATH && method === 'POST') {
-    const raw0 = (await readBody(req, IDENTITY_HOOK_MAX_BYTES)).toString('utf8');
-    // Didit signs with two headers and dates the result; any may be missing, and then nothing is believed.
-    const one = (name: string): string | null => { const v = req.headers[name]; return typeof v === 'string' ? v : null; };
-    const r = receiveIdentityResult(d.app, newId, raw0, {
-      v2: one(IDENTITY_SIGNATURE_HEADERS.v2), raw: one(IDENTITY_SIGNATURE_HEADERS.raw), timestamp: one(IDENTITY_SIGNATURE_HEADERS.timestamp),
-    });
-    res.writeHead(r.status, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
-    res.end(r.status === 200 ? 'ok' : r.note === undefined ? 'refused' : `refused. ${r.note}`);
-    return 'handled';
-  }
+  if ((mine = await complianceIdentityHook(w)) !== undefined) return mine;
   if ((mine = await publicSiteEnquiry(w)) !== undefined) return mine;
 
   if ((mine = await assessmentRoutes(w)) !== undefined) return mine;
@@ -451,16 +422,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* ------------------------------------------------------ back office */
   if (path === '/staff' || path.startsWith('/staff/')) {
     if (actor === undefined) { redirect(res, '/login'); return 'handled'; }
-    /* The legal pages' approvals (src/modules/compliance/legal-approvals.ts). Admins only; recorded once, never changed. */
-    if ((path === '/staff/legal' && method === 'GET') || (path === '/staff/legal/approve' && method === 'POST')) {
-      if (actor.role !== 'ADMIN') { html(res, 403, simple('Not allowed', 'Only an admin can see or record the legal pages’ approvals.')); return 'handled'; }
-      return inContext(d, path, async () => {
-        if (method === 'GET') { html(res, 200, approvalsPage(staffNav(actor), currentApprovals(d.app.db))); return 'handled'; }
-        const r = recordApproval(d.app, actor, await form(req), newId);
-        html(res, r.ok ? 200 : 400, approvalsPage(staffNav(actor), currentApprovals(d.app.db), r.ok ? { ok: true, text: 'The approval is recorded.' } : { ok: false, text: r.why }));
-        return 'handled';
-      });
-    }
+    if ((mine = await complianceLegalApprovals(w)) !== undefined) return mine;
     // The header reads the database, the clock and the address from this context — see src/core/navigation.ts.
     const rerender = async (href: string): Promise<{ status: number; body: string }> => {
       const u = new URL(href, 'http://localhost');

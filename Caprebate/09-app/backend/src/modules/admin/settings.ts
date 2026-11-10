@@ -439,15 +439,6 @@ export function disableUser(d: Deps, actor: Actor, target_id: string): User {
   return after;
 }
 
-/**
- * THE GATE OF USERS AND ROLES, EXPORTED FOR THE NAVIGATION. The same call its store function makes first;
- * src/core/navigation.ts asks it to decide whether the section is in a login's menu, and test/core/header-and-navigation.test.ts opens
- * every menu link for every login, so a gate that drifted from its route fails there.
- */
-export function usersGate(actor: Actor): void {
-  authorise(actor, 'user.list', { type: 'user', id: actor.id, role: actor.role });
-}
-
 /* ================================================================== *
  * ADDRESSES WE CANNOT EMAIL
  *

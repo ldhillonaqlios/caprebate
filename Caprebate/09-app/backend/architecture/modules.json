@@ -474,6 +474,10 @@
    "area": "admin",
    "kind": "logic"
   },
+  "src/modules/admin/admin.permissions.ts": {
+   "area": "admin",
+   "kind": "logic"
+  },
   "src/modules/admin/automation-rules.ts": {
    "area": "admin",
    "kind": "logic"
@@ -609,6 +613,10 @@
   "src/modules/assessment/routes.ts": {
    "area": "assessment",
    "kind": "routes"
+  },
+  "src/modules/assessment/signup-port.ts": {
+   "area": "assessment",
+   "kind": "logic"
   },
   "src/modules/claims/above-ports.ts": {
    "area": "claims",
@@ -890,6 +898,10 @@
    "area": "clients",
    "kind": "logic"
   },
+  "src/modules/clients/enquiry-retention.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
   "src/modules/clients/index.ts": {
    "area": "clients",
    "kind": "other"
@@ -970,6 +982,10 @@
    "area": "compliance",
    "kind": "logic"
   },
+  "src/modules/compliance/complaint-forms.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
   "src/modules/compliance/compliance-aml.ts": {
    "area": "compliance",
    "kind": "logic"
@@ -986,10 +1002,6 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/modules/compliance/compliance-pages.ts": {
-   "area": "compliance",
-   "kind": "page"
-  },
   "src/modules/compliance/compliance-rights.ts": {
    "area": "compliance",
    "kind": "logic"
@@ -997,6 +1009,14 @@
   "src/modules/compliance/compliance-views.ts": {
    "area": "compliance",
    "kind": "logic"
+  },
+  "src/modules/compliance/compliance.permissions.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/compliance.routes.ts": {
+   "area": "compliance",
+   "kind": "routes"
   },
   "src/modules/compliance/compliance.ts": {
    "area": "compliance",
@@ -1022,6 +1042,26 @@
    "area": "compliance",
    "kind": "logic"
   },
+  "src/modules/compliance/legal-register.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/ports.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/refused-words.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/routes.ts": {
+   "area": "compliance",
+   "kind": "routes"
+  },
+  "src/modules/crm/accountant-port.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
   "src/modules/crm/actions.ts": {
    "area": "crm",
    "kind": "logic"
@@ -1045,6 +1085,10 @@
   "src/modules/crm/claim-overview.ts": {
    "area": "crm",
    "kind": "logic"
+  },
+  "src/modules/crm/client-layout.ts": {
+   "area": "crm",
+   "kind": "page"
   },
   "src/modules/crm/client-list.ts": {
    "area": "crm",
@@ -1086,6 +1130,10 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/crm/enquiries.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
   "src/modules/crm/events.ts": {
    "area": "crm",
    "kind": "logic"
@@ -1097,6 +1145,10 @@
   "src/modules/crm/free-email.ts": {
    "area": "crm",
    "kind": "logic"
+  },
+  "src/modules/crm/home.ts": {
+   "area": "crm",
+   "kind": "page"
   },
   "src/modules/crm/inbound-email.ts": {
    "area": "crm",
@@ -1143,6 +1195,10 @@
    "kind": "page"
   },
   "src/modules/crm/pipeline.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/modules/crm/portal-steps.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1234,6 +1290,10 @@
    "area": "finance",
    "kind": "page"
   },
+  "src/modules/finance/finance.permissions.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
   "src/modules/finance/finance.ts": {
    "area": "finance",
    "kind": "logic"
@@ -1274,10 +1334,6 @@
    "area": "portal",
    "kind": "page"
   },
-  "src/modules/portal/client-layout.ts": {
-   "area": "portal",
-   "kind": "page"
-  },
   "src/modules/portal/crm-ports.ts": {
    "area": "portal",
    "kind": "logic"
@@ -1298,11 +1354,11 @@
    "area": "portal",
    "kind": "page"
   },
-  "src/modules/portal/portal-steps.ts": {
+  "src/modules/portal/portal.ts": {
    "area": "portal",
    "kind": "logic"
   },
-  "src/modules/portal/portal.ts": {
+  "src/modules/portal/ports.ts": {
    "area": "portal",
    "kind": "logic"
   },
@@ -1318,19 +1374,15 @@
    "area": "portal",
    "kind": "routes"
   },
+  "src/modules/portal/settings-port.ts": {
+   "area": "portal",
+   "kind": "logic"
+  },
   "src/modules/portal/signup.ts": {
    "area": "portal",
    "kind": "logic"
   },
-  "src/modules/public-site/claims-ports.ts": {
-   "area": "public-site",
-   "kind": "logic"
-  },
   "src/modules/public-site/data-borrowed.ts": {
-   "area": "public-site",
-   "kind": "data"
-  },
-  "src/modules/public-site/data.ts": {
    "area": "public-site",
    "kind": "data"
   },
@@ -1343,10 +1395,6 @@
    "kind": "logic"
   },
   "src/modules/public-site/home-site.ts": {
-   "area": "public-site",
-   "kind": "page"
-  },
-  "src/modules/public-site/home.ts": {
    "area": "public-site",
    "kind": "page"
   },
@@ -1539,6 +1587,10 @@
    "kind": "logic"
   },
   "src/modules/survey/survey-video.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/survey.permissions.ts": {
    "area": "survey",
    "kind": "logic"
   },

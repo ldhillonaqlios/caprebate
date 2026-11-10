@@ -40,7 +40,7 @@
 
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { claimObjFor } from './crm.ts';
+import { claimObjFor } from '../claims/index.ts';
 import { claimName } from '../../shared/index.ts';
 import { anyStageLabel } from '../../shared/index.ts';
 import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId } from '../survey/index.ts';

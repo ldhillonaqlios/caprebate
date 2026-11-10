@@ -61,7 +61,7 @@ import { insertTask } from '../clients/index.ts';
 import { latestSignOff } from '../claims/index.ts';
 import { computeFee, FEE_CONTROLS, type FeeControls } from '../claims/index.ts';
 import { feeGate, type FeeGateReading } from '../assessment/index.ts';
-import { assertFinanceSection, financeSectionObj } from './finance.ts';
+import { assertFinanceSection, financeSectionObj } from './finance.permissions.ts';
 import { getStaffTasksIdByCompanySubjectStatus } from '../clients/index.ts';
 import { listBusinessesIdNameSectorByIds } from '../clients/index.ts';
 import { listClaimDeliverablesClaimIdFirstIssuedOnByKind, listClaimsIdClaimRefByStage2 } from '../claims/index.ts';

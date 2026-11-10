@@ -35,7 +35,8 @@ import { GRANT_AMOUNTS_TO_SURVEYOR, type PackView } from '../../src/modules/surv
 import { F4_STEP_LABELS } from '../../src/modules/assessment/funnel4.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../../src/shared/originals.ts';
 import { clientOwners } from '../../src/modules/claims/documents.ts';
-import { ENQUIRY_RETENTION, enquiryRetentionMissing, sweepEnquiries, type EnquiryRetention } from '../../src/modules/public-site/enquiry-retention.ts';
+import { sweepEnquiries } from '../../src/modules/public-site/enquiry-retention.ts';
+import { ENQUIRY_RETENTION, enquiryRetentionMissing, type EnquiryRetention } from '../../src/modules/clients/enquiry-retention.ts';
 import { ADDRESS_KEEP_UNTIL } from '../../src/integrations/connectors/address-lookup.ts';
 import { IDENTITY_CHECK } from '../../src/integrations/connectors/identity-check.ts';
 import { LICENCES, SOURCES } from '../../src/integrations/registers/source-register.ts';

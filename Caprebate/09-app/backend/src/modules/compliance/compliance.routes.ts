@@ -6,6 +6,9 @@
  * ANYTHING: every read and write authorises itself in the store — src/web/
  * compliance.ts, compliance-aml.ts, compliance-rights.ts, compliance-breach.ts and
  * compliance-identity.ts — and this file reads a form and draws the answer.
+ *
+ * Named compliance.routes.ts since Phase 161l2 (it was compliance-pages.ts): it holds no page, only the handler, and
+ * the pages are drawn by src/modules/compliance/compliance-views.ts. The same split as crm.routes.ts and crm-pages.ts.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -20,9 +23,10 @@ import * as S from './compliance-identity.ts';
 import * as N from './breach-names.ts';
 import * as V from './compliance-views.ts';
 import { identityPanel, sendIdentityCheck } from './identity-checks.ts';
-import { logFormComplaint, waitingForms } from '../public-site/index.ts';
+import { logFormComplaint, waitingForms } from './complaint-forms.ts';
 import { listUsersIdNameByRoleDisabledAt } from '../../core/index.ts';
 import { listBusinessesIdName4 } from '../clients/index.ts';
+import { assertComplianceRead } from './compliance.permissions.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -274,6 +278,6 @@ export async function handleCompliance(
   if (path === '/staff/compliance/retention/view.json' && method === 'GET') return json(res, S.retentionList(deps, actor, now()));
 
   // Anything else under the prefix is still this section's: a refusal first, so a role that may not enter learns nothing.
-  C.assertComplianceRead(actor);
+  assertComplianceRead(actor);
   return 'not-mine';
 }

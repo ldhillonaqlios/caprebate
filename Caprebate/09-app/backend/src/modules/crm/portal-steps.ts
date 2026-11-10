@@ -14,6 +14,10 @@
  *     point 1): "5 Claim filed" says the claim is filed and NOT who files it, so it promises neither answer.
  *
  * A STEP'S NAME CHANGES; ITS MEANING DOES NOT. The key, the order and what counts as done are stages.ts's, unchanged.
+ *
+ * In the CRM since Phase 161l2 (it was the portal's): the back office's claim page, pipeline and "tell the client and
+ * move on" quote these names as the client sees them, and the CRM sits below the portal. It reads nothing but the
+ * shared parts; the portal draws its steps from here through the CRM's front door.
  */
 
 import { STAGES, type StageKey } from '../../shared/index.ts';

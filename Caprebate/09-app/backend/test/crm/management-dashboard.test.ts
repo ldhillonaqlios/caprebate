@@ -33,6 +33,7 @@ import { quarantinedKeysAndValues } from '../../src/payload.ts';
 import * as D from '../../src/modules/crm/dashboard.ts';
 import * as T from '../../src/modules/crm/tasks.ts';
 import { actor, testApp, keys, scalars } from '../helpers.ts';
+import { insertTask } from '../../src/modules/clients/index.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 
@@ -233,7 +234,7 @@ describe('overdue tasks — the UK date, and a task with no due date apart', () 
     assert.ok(biz !== undefined);
     const before = tile(D.dashboard(app.db, admin, now), 'overdue_tasks');
     for (const due of ['2026-09-08', '2026-09-09', null]) {
-      T.insertTask(app.db, app.now, randomUUID, {
+      insertTask(app.db, app.now, randomUUID, {
         title: `A task due ${due ?? 'never'}`, description: null, owner_id: null, owner_role: 'SALES', due_on: due, priority: null,
         activity_type: 'TASK', business_id: biz.id, property_id: null, claim_id: null, lead_id: null, contact_id: null, fact_id: null,
         recurrence: null, recurred_from_id: null, is_next_action: false, origin: 'STAFF', automation_run_id: null, created_by: admin.id,

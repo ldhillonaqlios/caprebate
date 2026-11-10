@@ -45,7 +45,7 @@ import { authorise, can, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal, answerLabel } from '../../core/index.ts';
 import { assertSignedEngagement } from '../claims/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import { claimObjFor, priorClaimFor } from './crm.ts';
+import { priorClaimFor } from './crm.ts';
 import { MANDATORY_DOCUMENTS, mandatoryDocumentNeeds, type MandatoryDocuments } from '../claims/index.ts';
 import {
   isTerminalStage, nextActionRefusal, validNextAction, writeNextAction, type NextActionInput, type NextActionWrite,
@@ -56,14 +56,14 @@ import { cddGateNeed } from '../compliance/index.ts';
 import { amendmentWindowReading, electionResolved, floorAreaOnRecord, grantsTraced } from '../claims/index.ts';
 import { grantProviderNeed, grantSplitNeed } from '../survey/index.ts';
 import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from '../claims/index.ts';
-import { clientConfirmationNeed, filingRoute } from '../portal/index.ts';
-import { accountantFitNeed } from '../portal/index.ts';
+import { clientConfirmationNeed, filingRoute } from '../claims/index.ts';
+import { accountantConfirmations } from './accountant-port.ts';
 import {
   EXITS, PROCEDURE_KEYS, PROCEDURE_STAGES, anyStageLabel, claimStage, clientStageFor, exitStage,
   nextProcedureKey, procedureIndex, procedureStage, stage as clientStage, stageIndex,
   type ExitKey, type ProcedureKey, type StageKey,
 } from '../../shared/index.ts';
-import { portalStepLine } from '../portal/index.ts';
+import { portalStepLine } from './portal-steps.ts';
 import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../claims/index.ts';
 
 import { getInvoicesSentOnByClaimIdKind } from '../finance/index.ts';
@@ -85,9 +85,7 @@ import { raiseToResearch } from '../clients/index.ts';
 // Moved below (Phase 161l1): the claim's stage read to the claims, its live fee invoices to the finance.
 import { clientStageForClaim, enteredAt, loadPipelineClaim, raiseBusinessStage, reportDeliveredOn, type Need, type PipelineClaim } from '../claims/index.ts';
 import { liveFeeInvoiceCount, type FeeTrigger } from '../finance/index.ts';
-export { clientStageForClaim, enteredAt, liveFeeInvoiceCount, loadPipelineClaim, raiseBusinessStage, reportDeliveredOn };
-export type { FeeTrigger, Need, PipelineClaim };
-export { raiseToResearch };
+import { claimObjFor } from '../claims/index.ts';
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
@@ -583,7 +581,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
             // The deadline of the return the route names — under W2 the first open year's, not the closed one.
             ? clientConfirmationNeed(db, c, since, claimRoutes(db, c, today).filter((r) => r.route === 'W1' || r.route === 'W2')
               .map((r) => r.deadline).filter((x): x is string => x !== null).sort()[0] ?? amendmentWindowReading(db, c, today).deadline)
-            : accountantFitNeed(db, c.id, since), // The accountant's own answer, not a staff tick
+            : accountantConfirmations().accountantFitNeed(db, c.id, since), // The accountant's own answer, not a staff tick
           reportsWindowNeed(db, c, today),
           legalDeadlineNeed(db, c, today),   // C9
         );

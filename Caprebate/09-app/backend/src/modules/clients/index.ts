@@ -138,3 +138,8 @@ export { fireAutomation, setAutomationRunner } from './automation-port.ts';
 export type { AutomationDeps, AutomationEvent, AutomationRunner, RunOutcome } from './automation-port.ts';
 // Phase 161l2: what the claims read here in place of their borrowed statements (src/modules/claims/data-borrowed.ts).
 export { listBusinessesBusinessIdNameSectorStageById, listBusinessesBusinessIdNameSectorStageNewest, listClientTasksDocumentRequestsByBusinessId, listClientTasksDocumentRequestsByBusinessIdClaimId, listClientTasksIdFactIdByBusinessIdKind2, listClientTasksQuestionAnswerByBusinessIdState, listInternalNotesIdBodyByBusinessId } from './data.ts';
+// The website's enquiries (this module's table since Phase 161l2): the CRM's inbox reads and handles them, the public site's form adds them.
+export { deleteWebsiteEnquiriesById, getWebsiteEnquiriesCountByStatus, getWebsiteEnquiriesIdCreatedAtById, insertWebsiteEnquiries, listWebsiteEnquiriesIdCreatedAtByStatus, listWebsiteEnquiriesIdHandledAtByStatus, updateWebsiteEnquiriesStatusHandledByByIdStatus, updateWebsiteEnquiriesStatusLeadIdById } from './data.ts';
+// The closed-enquiry clean-up's switch, period and question (moved from the public site, Phase 161l2).
+export { ENQUIRY_RETENTION, ENQUIRY_RETENTION_QUESTION, ENQUIRY_RETENTION_RULE, enquiryRetentionMissing } from './enquiry-retention.ts';
+export type { EnquiryRetention } from './enquiry-retention.ts';

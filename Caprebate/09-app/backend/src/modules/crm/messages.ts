@@ -48,8 +48,6 @@ import { byId, idsOf, listClientMessageFilesLogicalDocumentIdByMessageId, lookUp
 // Writing on the thread with the client, its alert, and what is unread: the client record's
 // (src/modules/clients/messages.ts), as the modules below write on it too.
 import { MAX_MESSAGE, alertNewMessage, alertWords, clientThreadObj as clientObj, lastChannelRead, lastThreadRead as lastRead, laterOf as later, messageRefusal, postClientMessage, teamThreadObj as noteObj, threadCompany as company, unreadCount, type AlertResult, type Channel, type MessageDeps, type Thread, type WriteResult } from '../clients/index.ts';
-export { MAX_MESSAGE, alertNewMessage, alertWords, lastChannelRead, messageRefusal, postClientMessage, unreadCount };
-export type { AlertResult, Channel, MessageDeps, Thread, WriteResult };
 
 export type MessageFile = { readonly name: string; readonly href: string };
 

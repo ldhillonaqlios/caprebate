@@ -2,19 +2,7 @@
  "note": "THE RATCHET (tools/boundaries.cjs). Breaks of rules 1 to 4 of ARCHITECTURE.md, by rule and area. It may only go down: node tools/boundaries.cjs --lower.",
  "breaks": {
   "1": {},
-  "2": {
-   "compliance": [
-    "compliance -> admin",
-    "compliance -> public-site"
-   ],
-   "crm": [
-    "crm -> portal",
-    "crm -> public-site"
-   ],
-   "portal": [
-    "portal -> public-site"
-   ]
-  },
+  "2": {},
   "3": {},
   "4": {}
  },

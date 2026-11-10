@@ -41,6 +41,7 @@ import {
 import { pdfOf } from '../document-fixtures.ts';
 import { fixedClock } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';
+import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 
@@ -224,7 +225,7 @@ describe('3 · the must-arrive documents are switched on — Lakhbir’s four, a
       assert.equal(F.recordFact(d, sales, c.id, { fact_key: 'ELECTION_EXISTS', answer: 'VALUE', value: 'NO', source_id: 'CLIENT_DOC', note: null }).ok, true);
       CF.floorAreaForClaim(w.made.app, c.id); // PHASE 158d (F44): a floor area on record first
       assert.equal(P.recordMilestone(d, sales, c.id, 'DATA_GATHERING_COMPLETE', null).ok, true);
-      const pc = () => P.loadPipelineClaim(db, c.id);
+      const pc = () => loadPipelineClaim(db, c.id);
       const off = P.gateOut(db, pc(), 'DATA_GATHERING', { mandatoryDocuments: { ...MD.MANDATORY_DOCUMENTS, enabled: false } });
       assert.equal(off.open, true, 'off, the same records open the gate — so the documents are what shut it');
       const need = (label: RegExp) => {
@@ -284,7 +285,7 @@ describe('3 · the must-arrive documents are switched on — Lakhbir’s four, a
         "SELECT c.id FROM claims c JOIN businesses b ON b.id = c.business_id WHERE b.name = 'Corvale Supported Living Limited'");
       assert.ok(c);
       assert.equal(F.recordFact(deps(w.made), sales, c.id, { fact_key: 'BOUGHT_THE_BUILDING', answer: 'VALUE', value: 'NO', source_id: 'CLIENT_ANSWER', note: null }).ok, true);
-      const needs = MD.mandatoryDocumentNeeds(db, P.loadPipelineClaim(db, c.id));
+      const needs = MD.mandatoryDocumentNeeds(db, loadPipelineClaim(db, c.id));
       assert.deepEqual(needs.map((n) => n.met), [true, true, false, false, true]); // Phase 159k: no structures allowance taken, so no statement
       assert.match(needs[0]?.why ?? '', /did not buy the building/);
     } finally { w.close(); }

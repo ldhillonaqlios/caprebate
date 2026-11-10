@@ -15,6 +15,7 @@ import * as PE from '../../src/modules/claims/property-events.ts';
 import * as PL from '../../src/modules/crm/pipeline.ts';
 import * as R from '../../src/modules/claims/claim-record.ts';
 import { figuresBlock } from '../../src/modules/claims/claim-record-pages.ts';
+import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T = '2026-09-01T00:00:00.000Z';
@@ -59,7 +60,7 @@ function staffRoute(app: App, refit = true) {
   return { b, p, claim };
 }
 const record = (app: App, claim: string, f: Record<string, string>) => R.recordFiling(CF.recordDeps(app), actor('SALES'), claim, f);
-const closing = (app: App, claim: string) => PL.gateOut(app.db, PL.loadPipelineClaim(app.db, claim), 'DEFENCE_PACK', { today: app.now() }).needs.find((n) => /filed|filing/.test(n.what));
+const closing = (app: App, claim: string) => PL.gateOut(app.db, loadPipelineClaim(app.db, claim), 'DEFENCE_PACK', { today: app.now() }).needs.find((n) => /filed|filing/.test(n.what));
 
 describe('job B — a filing per return, where staff record it', () => {
   test('two returns: each recorded on its own; the claim closes once the return already due is filed; the later one waits in aftercare', async () => {

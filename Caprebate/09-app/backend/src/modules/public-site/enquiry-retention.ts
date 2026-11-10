@@ -37,40 +37,13 @@ import { BACKUP_CYCLE, knownBackupCycleDays } from '../claims/index.ts';
 import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from '../assessment/index.ts';
 import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from '../assessment/index.ts';
 import { getUsersCountByBusinessId } from '../../core/index.ts';
-import { deleteWebsiteEnquiriesById, listWebsiteEnquiriesIdHandledAtByStatus } from './data.ts';
+import { deleteWebsiteEnquiriesById, listWebsiteEnquiriesIdHandledAtByStatus } from '../clients/index.ts';
 import { insertDeletionLog2 } from '../compliance/index.ts';
+// The switch, its period and its question are the client record's (src/modules/clients/enquiry-retention.ts, Phase 161l2).
+import { ENQUIRY_RETENTION, ENQUIRY_RETENTION_RULE, enquiryRetentionMissing, type EnquiryRetention } from '../clients/index.ts';
 import { getBusinessesIdByRowid, getBusinessesRowidById, getLeadsIdBusinessIdById5, getLeadsIdByRowid, getLeadsRowidById, listLeadsIdStatusByBusinessId, listLeadsIdUpdatedAtByEnquiryIdStatus, listLeadsUpdatedAtByEnquiryIdStatus } from '../clients/index.ts';
 
-export type EnquiryRetention = {
-  readonly enabled: boolean;
-  /** Months after the enquiry was closed. Null: off. */
-  readonly closed_months: number | null;
-  readonly approved_by: string | null;
-  readonly review_ref: string | null;
-  readonly question: string;
-};
-
-export const ENQUIRY_RETENTION_QUESTION = 'How long do we keep a closed website enquiry before it is deleted?';
-export const ENQUIRY_RETENTION_RULE = 'ENQ-RETENTION';
-
-/** OFF, with our recommended twelve months written in, waiting for the officer's approval and its record. */
-export const ENQUIRY_RETENTION: EnquiryRetention = Object.freeze({
-  enabled: false,
-  closed_months: 12,
-  approved_by: null,
-  review_ref: null,
-  question: ENQUIRY_RETENTION_QUESTION,
-});
-
 const textOrNull = (s: string | null): string | null => (s !== null && s.trim().length >= 2 ? s.trim() : null);
-
-export function enquiryRetentionMissing(cfg: EnquiryRetention): string[] {
-  const out: string[] = [];
-  if (!(cfg.closed_months !== null && Number.isInteger(cfg.closed_months) && cfg.closed_months >= 1)) out.push('Set how long a closed enquiry is kept. The data protection officer decides.');
-  if (textOrNull(cfg.approved_by) === null || textOrNull(cfg.review_ref) === null) out.push('Record who approved it, and where.');
-  if (cfg.enabled !== true) out.push('Then switch the clean-up on.');
-  return out;
-}
 
 export type DueEnquiry = { readonly id: string; readonly closed_on: string; readonly due_on: string };
 

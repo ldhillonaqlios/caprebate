@@ -28,11 +28,8 @@
 
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
-import {
-  assertComplianceRead, assertComplianceWrite, dateField, has, NotFoundAsRefusal, record, requiredText, textField,
-  TWO_PERSON_LIMITATION, settingReading, ukDay, userNames, vocabField, words,
-  type Check, type ComplianceDeps, type Fields, type SettingReading, type Vocab, type WriteResult,
-} from './compliance.ts';
+import { dateField, has, NotFoundAsRefusal, record, requiredText, textField, TWO_PERSON_LIMITATION, settingReading, ukDay, userNames, vocabField, words, type Check, type ComplianceDeps, type Fields, type SettingReading, type Vocab, type WriteResult } from './compliance.ts';
+import { assertComplianceRead, assertComplianceWrite } from './compliance.permissions.ts';
 import { identityPassed } from './identity-checks.ts';
 import { getResearchSourcesIdStateByBusinessIdSourceId } from '../../integrations/index.ts';
 import { getUsersIdByIdRole } from '../../core/index.ts';

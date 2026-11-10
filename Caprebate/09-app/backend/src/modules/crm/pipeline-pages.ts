@@ -39,10 +39,11 @@ import { taskChoices, vocabulary } from '../admin/index.ts';
 import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from './claim-lists-pages.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';
-import { enquiriesModule as E } from '../public-site/index.ts';
+import * as E from './enquiries.ts';
 import { surveyOpenModule as SO } from '../survey/index.ts';
 import { leadSectionCounts, leadSections, type CardDeps } from './lead-cards.ts';
 import { piecesPage } from '../../core/index.ts';
+import { type Fields } from '../clients/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -78,7 +79,7 @@ function redirect(res: ServerResponse, to: string): void {
   res.end('');
 }
 
-function posted(f: URLSearchParams, names: readonly string[]): C.Fields {
+function posted(f: URLSearchParams, names: readonly string[]): Fields {
   const out: Record<string, string | null> = {};
   for (const n of names) {
     if (!f.has(n)) continue;
@@ -317,7 +318,7 @@ function orNot(v: string | null | undefined, none: string): Safe {
 
 /**
  * THE WEBSITE'S ENQUIRY FORM, WAITING FOR SALES. Each enquiry is opened as a lead (with a contact
- * holding the person) or closed. Nothing here decides anything: src/modules/public-site/enquiries.ts authorises and writes.
+ * holding the person) or closed. Nothing here decides anything: src/modules/crm/enquiries.ts authorises and writes.
  */
 function enquiriesPage(d: PipelinePageDeps, actor: Actor, rows: readonly E.EnquiryRow[], msg: string | undefined): string {
   return page({

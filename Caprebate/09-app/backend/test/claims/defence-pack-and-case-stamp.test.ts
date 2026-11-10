@@ -42,6 +42,7 @@ import {
 import { actor, testApp } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';
 import { oneDriveOnly } from '../onedrive-only.ts';
+import { insertTask } from '../../src/modules/clients/index.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 type Org = { business: string; property: string; assessment: string };
@@ -80,7 +81,7 @@ function claimAt(a: App, org: Org, stage: string): string {
     stage, owner_id: null, surveyor_id: null,
   });
   P.recordOpened(CF.recordDeps(a), null, made.id, stage, 'a test fixture');
-  T.insertTask(a.db, a.now, randomUUID, {
+  insertTask(a.db, a.now, randomUUID, {
     title: 'the next action', description: null, owner_id: 'u-SALES', owner_role: null, due_on: '2026-12-31', priority: null,
     activity_type: 'TASK', business_id: org.business, property_id: null, claim_id: made.id, lead_id: null, contact_id: null,
     fact_id: null, recurrence: null, recurred_from_id: null, is_next_action: true, origin: 'STAFF', automation_run_id: null,

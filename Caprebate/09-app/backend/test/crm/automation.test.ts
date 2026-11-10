@@ -43,6 +43,8 @@ import { localDate } from '../../src/shared/localtime.ts';
 import { actor, signatureRecordFor, testApp } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';
 import * as R from '../../src/modules/claims/claim-record.ts';
+import { type AutomationDeps, FORBIDDEN_EFFECTS, addDaysToDate, insertTask, openLeadForGatedExit } from '../../src/modules/clients/index.ts';
+import { rulesPage } from '../../src/modules/admin/index.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const SRC = fileURLToPath(new URL('../../src/', import.meta.url));
@@ -52,7 +54,7 @@ const SHARED = require('../../../engine/src/calculator/shared.js') as { CB_CTA: 
 type App = Awaited<ReturnType<typeof testApp>>;
 type Org = { business: string; property: string; assessment: string | null };
 
-function deps(app: App): A.AutomationDeps {
+function deps(app: App): AutomationDeps {
   return { db: app.db, audit: app.audit, now: app.now, newId: randomUUID };
 }
 
@@ -88,7 +90,7 @@ function claimAt(app: App, org: Org, stage: string, opts: { property?: string | 
     assessment_id: org.assessment, workstream: 'UNKNOWN', stage, owner_id: null, surveyor_id: null,
   });
   P.recordOpened(deps(app), null, made.id, stage, 'a test fixture');
-  T.insertTask(app.db, app.now, randomUUID, {
+  insertTask(app.db, app.now, randomUUID, {
     title: 'the next action', description: null, owner_id: 'u-SALES', owner_role: null, due_on: '2026-12-31', priority: null,
     activity_type: 'TASK', business_id: org.business, property_id: null, claim_id: made.id, lead_id: null, contact_id: null,
     fact_id: null, recurrence: null, recurred_from_id: null, is_next_action: true, origin: 'STAFF', automation_run_id: null,
@@ -148,7 +150,7 @@ describe('the seeded rules are the full specification’s list, re-keyed onto th
     const app = await testApp();
     try {
       staff(app);
-      const page = A.rulesPage(app.db, actor('SALES'));
+      const page = rulesPage(app.db, actor('SALES'));
       const shape = page.rules.map((r) => [r.id, r.trigger.key, r.trigger.stage, r.effect.key]);
       assert.deepEqual(shape, [
         ['rule-lead-first-follow-up', 'LEAD_CREATED', null, 'FOLLOW_UP'],
@@ -163,9 +165,9 @@ describe('the seeded rules are the full specification’s list, re-keyed onto th
       ]);
       for (const r of page.rules) assert.match(r.source, /specification,? 14\.\d/, `${r.id} does not say where it came from`);
       assert.equal(page.may_write, false);
-      assert.equal(A.rulesPage(app.db, actor('ADMIN')).may_write, true);
-      for (const who of ['ACCOUNTING', 'SURVEYING'] as const) assert.throws(() => A.rulesPage(app.db, actor(who)), NotAuthorised);
-      assert.throws(() => A.rulesPage(app.db, actor('CLIENT', 'u-C', 'b')), NotAuthorised);
+      assert.equal(rulesPage(app.db, actor('ADMIN')).may_write, true);
+      for (const who of ['ACCOUNTING', 'SURVEYING'] as const) assert.throws(() => rulesPage(app.db, actor(who)), NotAuthorised);
+      assert.throws(() => rulesPage(app.db, actor('CLIENT', 'u-C', 'b')), NotAuthorised);
       assert.throws(() => A.createRule(deps(app), actor('SALES'), { label: 'x' }), NotAuthorised);
       assert.throws(() => app.db.run("DELETE FROM automation_rules WHERE id = 'rule-owner-notify'"), /never deleted/);
 
@@ -196,7 +198,7 @@ describe('lead created → an owner and a first follow-up', () => {
       const follow = app.db.get<{ owner_id: string | null; owner_role: string | null; activity_type: string; origin: string; due_on: string }>(
         'SELECT owner_id, owner_role, activity_type, origin, due_on FROM staff_tasks WHERE lead_id = ?', [made.id]);
       assert.deepEqual(plain(follow), {
-        owner_id: 'u-SALES', owner_role: null, activity_type: 'CALL', origin: 'AUTOMATION', due_on: T.addDaysToDate(localDate(app.now()), 1),
+        owner_id: 'u-SALES', owner_role: null, activity_type: 'CALL', origin: 'AUTOMATION', due_on: addDaysToDate(localDate(app.now()), 1),
       });
 
       const needsOrg = A.createRule(d, actor('ADMIN'), {
@@ -204,7 +206,7 @@ describe('lead created → an owner and a first follow-up', () => {
         task_activity_type: 'TASK', due_in_days: '2', assign_to: 'ROLE', assign_role: 'SALES', attach_to: 'ORGANISATION',
       });
       assert.ok(needsOrg.ok, needsOrg.ok ? '' : needsOrg.why);
-      const gated = L.openLeadForGatedExit(app.db, randomUUID, { prospect_organisation: 'Gated Invented Limited', at: T0 });
+      const gated = openLeadForGatedExit(app.db, randomUUID, { prospect_organisation: 'Gated Invented Limited', at: T0 });
       const out = A.fireAutomation(d, null, { trigger: 'LEAD_CREATED', lead_id: gated });
       assert.deepEqual(out.map((o) => [o.rule_id === needsOrg.id ? 'needs-org' : o.rule_id, o.outcome, o.reason]), [
         ['rule-lead-first-follow-up', 'RAN', null],
@@ -340,9 +342,9 @@ describe('what no rule may do — each refused, and each with a test', () => {
     try {
       staff(app);
       for (const k of ['OPEN_FREE_GATE', 'OPEN_PAID_GATE', 'MOVE_CLAIM', 'FLIP_CTA_SWITCH', 'FIRE_REGISTER_CALL', 'SEND_EMAIL', 'WRITE_TO_DO_NOT_CONTACT', 'INVOICE_EMAIL']) {
-        assert.ok(Object.hasOwn(A.FORBIDDEN_EFFECTS, k), `${k} is not a named refusal`);
+        assert.ok(Object.hasOwn(FORBIDDEN_EFFECTS, k), `${k} is not a named refusal`);
       }
-      for (const [key, reason] of Object.entries(A.FORBIDDEN_EFFECTS)) {
+      for (const [key, reason] of Object.entries(FORBIDDEN_EFFECTS)) {
         const r = A.createRule(deps(app), actor('ADMIN'), {
           label: `Try ${key}`, trigger_event: 'STAGE_ENTERED', effect: key, task_title: 'x', task_activity_type: 'TASK',
           due_in_days: '1', assign_to: 'ROLE', assign_role: 'SALES',

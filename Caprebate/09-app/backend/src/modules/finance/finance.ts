@@ -64,28 +64,9 @@ import { formatPence } from '../../shared/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
 import { getInvoicesIdBusinessIdById3, updateInvoicesInvoiceStatusPaymentStatusById } from './data.ts';
 import { getInvoicesIdBusinessIdByIdClaimId, listInvoicesIdBusinessIdByClaimId2 } from './data.ts';
+import { assertFinanceSection } from './finance.permissions.ts';
 
 export { NotFoundAsRefusal };
-
-/**
- * THE SECTION GATE — the sentinel-object idiom, which works here.
- *
- * `invoice.read` is ADMIN and ACCOUNTING, both unconditional, and every rule
- * that lets a CLIENT through anywhere in the table is `ownBusiness`. No
- * client's business is this sentinel, so a client is refused by the same table
- * that admits the two finance roles — no new concept and nothing to keep in
- * step. (The surveyor section could not use this; authz.ts explains why.)
- */
-const FINANCE_SECTION = '__finance__';
-
-export function assertFinanceSection(actor: Actor): void {
-  authorise(actor, 'invoice.read', financeSectionObj());
-}
-
-/** The section's sentinel object, for the section-wide actions — a VAT check, a finance setting. CRM 7 of 10. */
-export function financeSectionObj(): { readonly type: 'invoice'; readonly id: string; readonly business_id: string } {
-  return { type: 'invoice', id: FINANCE_SECTION, business_id: FINANCE_SECTION };
-}
 
 /* ================================================================== *
  * THE ROW

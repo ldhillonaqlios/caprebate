@@ -43,9 +43,7 @@ import {
   type ProcedureKey,
 } from '../../shared/index.ts';
 import { assertSignedEngagement } from '../claims/index.ts';
-import {
-  BOARD_COLUMNS, FEE_TRIGGER, FEE_TRIGGERS, liveFeeInvoiceCount, loadPipelineClaim, pipelinePanel, recordOpened, type PipelinePanel,
-} from './pipeline.ts';
+import { BOARD_COLUMNS, FEE_TRIGGER, FEE_TRIGGERS, pipelinePanel, recordOpened, type PipelinePanel } from './pipeline.ts';
 import type { PostcodeStore } from '../../integrations/index.ts';
 import { formatPence, formatShownRange, toPence } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
@@ -88,12 +86,8 @@ import { claimNaming, claimWords, loadClaimRow, loadClaimRow as loadClaim, type 
 // Moved below (Phase 161l1): the claim's object and jurisdiction to the claims, the claimant type to the assessment.
 import { claimObjFor, derivedJurisdiction, jurisdictionOf, propertyJurisdiction, type JurisdictionReading } from '../claims/index.ts';
 import { claimantFromAnswers, claimantTypeForGate } from '../assessment/index.ts';
-export { claimObjFor, claimantTypeForGate, derivedJurisdiction, propertyJurisdiction };
-export type { JurisdictionReading };
-export { claimNaming, claimWords, loadClaimRow };
-export type { ClaimDbRow };
-export { CLAIMANT_TYPES, JURISDICTIONS, OWNER_ROLE_TOKENS, WORKSTREAMS, isCompanyOrRoleToken, isReachable };
-export type { Fields };
+import { liveFeeInvoiceCount } from '../finance/index.ts';
+import { loadPipelineClaim } from '../claims/index.ts';
 
 export type CrmDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type WriteResult = { ok: true; id: string } | { ok: false; why: string; field?: string };

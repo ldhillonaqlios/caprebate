@@ -29,12 +29,9 @@
 
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
-import { carriesBankDetails } from '../admin/index.ts';
-import {
-  assertComplianceRead, assertComplianceWrite, dateField, has, holdsForEntry, linksFor, momentField, nextRef, NotFoundAsRefusal,
-  record, requiredText, settingReading, textField, TWO_PERSON_LIMITATION, ukDay, vocabField, words,
-  type Check, type ComplianceDeps, type Fields, type HoldRow, type LinkLine, type Vocab, type WriteResult,
-} from './compliance.ts';
+import { carriesBankDetails } from './refused-words.ts';
+import { dateField, has, holdsForEntry, linksFor, momentField, nextRef, NotFoundAsRefusal, record, requiredText, settingReading, textField, TWO_PERSON_LIMITATION, ukDay, vocabField, words, type Check, type ComplianceDeps, type Fields, type HoldRow, type LinkLine, type Vocab, type WriteResult } from './compliance.ts';
+import { assertComplianceRead, assertComplianceWrite } from './compliance.permissions.ts';
 import { localWhen } from '../../shared/index.ts';
 import { getClaimsBusinessIdById, getClaimsClaimRefById } from '../claims/index.ts';
 import { getBreachDecisionsByIncidentId, getBreachIncidentsById, getBreachNotificationPhasesCOALESCEMAXPhaseNoNByIncidentId, getBreachNotificationPhasesCountByIncidentId, getBreachOtherNotificationsIdByIncidentIdRecipientKind, insertBreachAwarenessCorrections, insertBreachDecisions, insertBreachIncidents, insertBreachNotificationPhases, insertBreachOtherNotifications, insertBreachOtherNotifications2, listBreachAwarenessCorrectionsCorrectedToReasonByIncidentId, listBreachIncidents, listBreachNotificationPhasesPhaseNoSentAtByIncidentId, listBreachOtherNotificationsRecipientKindPositionByIncidentI, updateBreachDecisionsArt33DecisionArt33ReasoningById, updateBreachIncidentsDescriptionSubjectCategoriesAndNumberBy, updateBreachIncidentsStatusClosedAtById, updateBreachIncidentsStatusUpdatedAtByIdStatus, updateBreachOtherNotificationsPositionToldAtById } from './data.ts';

@@ -103,12 +103,13 @@ export function getInvoiceNumbersSeqByInvoiceIdKind<T extends Row = Row>(db: Db,
  * THE CASE STAMP'S SWITCHES KEPT ABOVE: whether each is on, read when a stamp is taken (src/modules/claims/case-stamp.ts)
  * ================================================================== */
 
-/** DISCLOSURE_LOG is compliance's (src/modules/compliance/disclosure-log.ts); ENQUIRY_RETENTION the public site's. */
-export type StampedSwitch = 'DISCLOSURE_LOG' | 'ENQUIRY_RETENTION';
+/** DISCLOSURE_LOG is compliance's (src/modules/compliance/disclosure-log.ts). (ENQUIRY_RETENTION is the client record's since
+ * Phase 161l2, src/modules/clients/enquiry-retention.ts, and the stamp reads it through the clients' door.) */
+export type StampedSwitch = 'DISCLOSURE_LOG';
 var stampedSwitches: Partial<Record<StampedSwitch, () => boolean>> | undefined;
 export function setStampedSwitch(name: StampedSwitch, on: () => boolean): void { stampedSwitches = { ...stampedSwitches, [name]: on }; }
 /** Whether the switch is on now. */
 export function stampedSwitchOn(name: StampedSwitch): boolean {
   const on = stampedSwitches?.[name];
-  return on === undefined ? refused(name === 'DISCLOSURE_LOG' ? 'compliance' : 'the public site') : on();
+  return on === undefined ? refused('compliance') : on();
 }

@@ -50,6 +50,7 @@ import * as CH from '../../src/modules/survey/pack-chapters.ts';
 import * as REP from '../../src/modules/survey/survey-report.ts';
 import { baseWords } from '../../src/modules/survey/bcis-data.ts';
 import { CB } from '../../src/shared/engine.ts';
+import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T = '2026-10-10T09:00:00.000Z';
@@ -153,7 +154,7 @@ const send = (app: App, claim: string, contact_id: string, period_end?: string) 
   { kind: 'FILED', contact_id, origin: 'https://caprebate.example.invalid', ...(period_end === undefined ? {} : { period_end }) });
 const answer = (app: App, filed_on: string) => AC.answerConfirmLink({ db: app.db, audit: app.audit, now: app.now, newId: randomUUID }, tokenIn(app),
   { outcome: 'CONFIRMED', name: 'Test Accountant', firm: 'Test Accountants LLP', filed_on, reason: '', sure: 'yes' });
-const closing = (app: App, claim: string) => PL.gateOut(app.db, PL.loadPipelineClaim(app.db, claim), 'DEFENCE_PACK', { today: app.now() }).needs.find((n) => /filed|filing/.test(n.what));
+const closing = (app: App, claim: string) => PL.gateOut(app.db, loadPipelineClaim(app.db, claim), 'DEFENCE_PACK', { today: app.now() }).needs.find((n) => /filed|filing/.test(n.what));
 
 describe('item 2 (L15) — a filing per return', () => {
   test('the due day is twelve months before the amendment window ends; each claimed part names its return', () => {

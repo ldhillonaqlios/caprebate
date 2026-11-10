@@ -32,7 +32,8 @@ import { templatesModule as M } from '../admin/index.ts';
 import { emailButton } from './free-email-pages.ts';
 import { addNote } from '../claims/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
-import type { Fields } from './crm.ts';
+import { ASSIGN, ATTACH, type DueReading, EFFECTS, type Fields, POOL_ROLES, TRIGGERS } from '../clients/index.ts';
+import { type RuleView, type RulesPage, rulesPage } from '../admin/index.ts';
 import { taskChoices, type TaskChoices } from '../admin/index.ts';
 import { EXITS, PROCEDURE_STAGES } from '../../shared/index.ts';
 import type { Timeline } from './timeline.ts';
@@ -201,7 +202,7 @@ export async function handleTasks(
 
   /* --------------------------------------------------------- automation */
   if (path === '/staff/automation' && method === 'GET') {
-    html(res, 200, rulesPageHtml(d, actor, A.rulesPage(db, actor), done, url.searchParams.get('add') === '1'));
+    html(res, 200, rulesPageHtml(d, actor, rulesPage(db, actor), done, url.searchParams.get('add') === '1'));
     return 'handled';
   }
   if (path === '/staff/automation' && method === 'POST') {
@@ -273,7 +274,7 @@ function saved(msg: string | undefined): Safe {
 }
 
 /** A due reading, drawn. OVERDUE is loud; no due date says so in words. */
-export function dueCell(due: T.DueReading): Safe {
+export function dueCell(due: DueReading): Safe {
   // UI tidy phase 9: late is a solid red label, no due date a grey one (src/core/look.ts), wherever a task list is drawn.
   // The label is "31 days overdue (1 Sep 2026)": the words in the label, the date under it, so the column stays narrow.
   const m = /^(.*?) \((.+)\)$/.exec(due.label);
@@ -332,7 +333,7 @@ export function newTaskForm(
     ${contacts.length === 0 ? raw('') : h`<label>With a contact
       <select name="contact_id"><option value="">Nobody in particular</option>${
       contacts.map((c) => h`<option value="${c.id}">${c.name}</option>`)}</select></label>`}
-    <label>Or the team it waits with <select name="owner_role">${vocabOptions(T.POOL_ROLES, null, 'No team')}</select></label>
+    <label>Or the team it waits with <select name="owner_role">${vocabOptions(POOL_ROLES, null, 'No team')}</select></label>
     <label>Priority <select name="priority">${vocabOptions(choices.priority, null, 'Not set')}</select></label>
     <label>Repeats on completion <select name="recurrence">${vocabOptions(T.RECURRENCES, null, 'Does not repeat')}</select></label>
     ${Object.hasOwn(subject, 'claim_id') ? h`<label><input type="checkbox" name="as_next_action" value="yes"> Make this the claim’s next action — it needs an owner and a due date</label>` : raw('')}
@@ -524,7 +525,7 @@ function taskDetailPage(d: TaskPageDeps, actor: Actor, p: T.TaskPage, msg: strin
           <label>Description <textarea name="description">${t.description ?? ''}</textarea></label>
           <label>Activity <select name="activity_type">${vocabOptions(choices.activity, t.activity.key, null)}</select></label>
           <label>Owner <select name="owner_id">${ownerOptions(p.owner_choices, t.owner.id, 'nobody yet — it waits with a team')}</select></label>
-          <label>Or the team it waits with <select name="owner_role">${vocabOptions(T.POOL_ROLES, null, 'no team')}</select></label>
+          <label>Or the team it waits with <select name="owner_role">${vocabOptions(POOL_ROLES, null, 'no team')}</select></label>
           <label>Due <input name="due_on" type="date" value="${t.due_on ?? ''}"></label>
           <label>Priority <select name="priority">${vocabOptions(choices.priority, t.priority.key, 'not set')}</select></label>
           <label>Repeats on completion <select name="recurrence">${vocabOptions(T.RECURRENCES, t.recurrence.key, 'does not repeat')}</select></label>
@@ -556,22 +557,22 @@ function breakersPage(d: TaskPageDeps, actor: Actor, b: T.Breakers): string {
   });
 }
 
-function ruleForm(action: string, r: A.RuleView | null, choices: TaskChoices, requestTypes: Readonly<Record<string, string>>): Safe {
+function ruleForm(action: string, r: RuleView | null, choices: TaskChoices, requestTypes: Readonly<Record<string, string>>): Safe {
   return h`<form method="post" action="${action}">
     <label>Label <input name="label" value="${r?.label ?? ''}" required></label>
-    <label>Trigger <select name="trigger_event">${vocabOptions(A.TRIGGERS, r?.trigger.key ?? null, null)}</select></label>
+    <label>Trigger <select name="trigger_event">${vocabOptions(TRIGGERS, r?.trigger.key ?? null, null)}</select></label>
     <label>Stage, for “a claim enters a stage” <select name="trigger_stage">${stageOptions(r?.trigger.stage ?? null)}</select></label>
     <label>Activity, for “a task is completed” <select name="trigger_activity">${vocabOptions(choices.activity, r?.trigger.activity ?? null, 'any activity')}</select></label>
-    <label>Effect <select name="effect">${vocabOptions(A.EFFECTS, r?.effect.key ?? null, null)}</select></label>
+    <label>Effect <select name="effect">${vocabOptions(EFFECTS, r?.effect.key ?? null, null)}</select></label>
     <label>Document asked for, for “a document request” <select name="request_type">${vocabOptions(requestTypes, r?.request_type ?? null, 'not a document request')}</select></label>
     <label>Task <input name="task_title" value="${r?.task?.title ?? ''}"></label>
     <label>Task description <textarea name="task_description">${r?.task?.description ?? ''}</textarea></label>
     <label>Task activity <select name="task_activity_type">${vocabOptions(choices.activity, r?.task?.activity ?? 'TASK', null)}</select></label>
     <label>Priority <select name="task_priority">${vocabOptions(choices.priority, r?.task?.priority ?? null, 'not set')}</select></label>
     <label>Due, in days after the event <input name="due_in_days" type="number" min="0" max="365" value="${r?.task?.due_in_days ?? ''}"></label>
-    <label>Goes to <select name="assign_to">${vocabOptions(A.ASSIGN, r?.assign.to ?? 'SUBJECT_OWNER', null)}</select></label>
-    <label>Team <select name="assign_role">${vocabOptions(T.POOL_ROLES, r?.assign.role ?? null, 'no team')}</select></label>
-    <label>Attached to <select name="attach_to">${vocabOptions(A.ATTACH, r?.attach_to.key ?? 'SUBJECT', null)}</select></label>
+    <label>Goes to <select name="assign_to">${vocabOptions(ASSIGN, r?.assign.to ?? 'SUBJECT_OWNER', null)}</select></label>
+    <label>Team <select name="assign_role">${vocabOptions(POOL_ROLES, r?.assign.role ?? null, 'no team')}</select></label>
+    <label>Attached to <select name="attach_to">${vocabOptions(ATTACH, r?.attach_to.key ?? 'SUBJECT', null)}</select></label>
     <label>Active <select name="active"><option value="yes"${r === null || r.active ? raw(' selected') : raw('')}>yes</option>
       <option value="no"${r !== null && !r.active ? raw(' selected') : raw('')}>no — retired</option></select></label>
     <button type="submit">Save the rule</button></form>`;
@@ -597,7 +598,7 @@ export function distinctReasons(list: readonly { readonly key: string; readonly 
  * things no rule may do fold away with their count (each still said once, and still refused by the store); Add a rule
  * opens from its button. The templates page: Add a template folds until its button opens it.
  */
-function rulesPageHtml(d: TaskPageDeps, actor: Actor, p: A.RulesPage, msg: string | undefined, adding = false): string {
+function rulesPageHtml(d: TaskPageDeps, actor: Actor, p: RulesPage, msg: string | undefined, adding = false): string {
   const choices = taskChoices(d.app.db);
   return page({
     title: 'Automation', nav: d.nav(actor), wide: true,

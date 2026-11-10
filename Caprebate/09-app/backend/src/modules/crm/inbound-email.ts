@@ -35,10 +35,10 @@ import { authorise, can, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localPartsOf, localStamp } from '../../shared/index.ts';
 import type { FsObjectStore } from '../../shared/index.ts';
-import { receiveFile } from '../portal/index.ts';
+import { receiveFile } from '../claims/index.ts';
 import { setShownToClient } from '../claims/index.ts';
 import type { VouchAnswer } from '../claims/index.ts';
-import { alertNewMessage } from './messages.ts';
+import { alertNewMessage } from '../clients/index.ts';
 import type { EmailSending, SmtpLogin } from '../../integrations/index.ts';
 import { recordBounce } from '../../integrations/index.ts';
 import {

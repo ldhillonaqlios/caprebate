@@ -33,7 +33,7 @@
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
 import { EXITS, PROCEDURE_STAGES, anyStageLabel, claimStage, procedureIndex } from '../../shared/index.ts';
-import { dueReading, isTerminalStage, nextActionBreakers } from './tasks.ts';
+import { isTerminalStage, nextActionBreakers } from './tasks.ts';
 import { localDate } from '../../shared/index.ts';
 import { formatPence } from '../../shared/index.ts';
 import { financeDashboard, type FinanceDashboard } from '../finance/index.ts';
@@ -42,7 +42,8 @@ import { pipelineFigures } from './introducers.ts';
 import { reasonLabel } from './pipeline.ts';
 import { rightsRegister, complaintsLog } from '../compliance/index.ts';
 import { breachRegister } from '../compliance/index.ts';
-import { claimObjFor, claimWords } from './crm.ts';
+import { dueReading } from '../clients/index.ts';
+import { claimObjFor, claimWords } from '../claims/index.ts';
 import { vocabLabel } from '../admin/index.ts';
 import { SECTORS } from './leads.ts';
 import { listClaimsIdCompletedAtByStage } from './split-reads.ts';

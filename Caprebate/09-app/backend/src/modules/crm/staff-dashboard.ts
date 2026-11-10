@@ -43,10 +43,10 @@ import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES 
 import { addLocalDays, startOfLocalDay, startOfLocalWeek } from '../clients/index.ts';
 import * as B from './assessments-and-calendar.ts';
 import * as M from './messages.ts';
-import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from '../public-site/index.ts';
+import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from './home.ts';
 import { kpiRow, type Kpi } from '../../core/index.ts';
 import { blocksFor, mayBlockTime } from '../clients/index.ts';
-import { newDot } from '../portal/index.ts';
+import { newDot } from './client-layout.ts';
 import { keysView } from '../admin/index.ts';
 import { repliesStale } from './inbound-email.ts';
 import { listsToImport } from '../admin/index.ts';

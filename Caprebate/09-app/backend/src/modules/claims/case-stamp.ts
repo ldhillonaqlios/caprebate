@@ -50,7 +50,7 @@ import { CONVEYANCING_STRIP } from './conveyancing-strip.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
 import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from '../../shared/index.ts';
-import { MESSAGE_RETENTION } from '../clients/index.ts';
+import { ENQUIRY_RETENTION, MESSAGE_RETENTION } from '../clients/index.ts';
 import { EMAIL_SENDING } from '../../integrations/index.ts';
 import { ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST } from './signing.ts';
 import { INBOUND_EMAIL } from '../../integrations/index.ts';
@@ -159,7 +159,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   ENGAGEMENT_SIGNING           the built-in letter signature      src/modules/claims/signing.ts
  *   ENGAGEMENT_SIGNING_TEST      signing on for testing, test copy only (6 Oct)  src/modules/claims/signing.ts
  *   MESSAGE_RETENTION            the message clean-up job           src/modules/crm/message-retention.ts
- *   ENQUIRY_RETENTION            the closed-enquiry clean-up job    src/modules/public-site/enquiry-retention.ts
+ *   ENQUIRY_RETENTION            the closed-enquiry clean-up job    src/modules/clients/enquiry-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/modules/claims/defence-pack.ts
  *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/modules/claims/allowance-profit-comparison.ts
  *   HOMEDATA_DIMENSIONS          Homedata's floor-area estimate     src/integrations/connectors/homedata.ts
@@ -202,7 +202,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'ENGAGEMENT_SIGNING', on: ENGAGEMENT_SIGNING.enabled, home: 'src/modules/claims/signing.ts' },
     { switch: 'ENGAGEMENT_SIGNING_TEST', on: ENGAGEMENT_SIGNING_TEST.enabled, home: 'src/modules/claims/signing.ts' }, // The test copy only, test website
     { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/modules/clients/message-retention.ts' },
-    { switch: 'ENQUIRY_RETENTION', on: stampedSwitchOn('ENQUIRY_RETENTION'), home: 'src/modules/public-site/enquiry-retention.ts' },
+    { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/modules/clients/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/modules/claims/defence-pack.ts' },
     { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/modules/claims/allowance-profit-comparison.ts' },
     { switch: 'HOMEDATA_DIMENSIONS', on: HOMEDATA_DIMENSIONS.enabled, home: 'src/integrations/connectors/homedata.ts' },

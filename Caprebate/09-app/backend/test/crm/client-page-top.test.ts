@@ -1,5 +1,5 @@
 /**
- * UI TIDY PHASE 7 — A CLIENT'S PAGE, PART 1, 3 October 2026 (src/modules/crm/client-page.ts, src/modules/portal/client-layout.ts).
+ * UI TIDY PHASE 7 — A CLIENT'S PAGE, PART 1, 3 October 2026 (src/modules/crm/client-page.ts, src/modules/crm/client-layout.ts).
  * The client's own header; each claim in a box of its own, headed in its stage's colour, named by its site, its next step
  * in a dark box; and the left-hand menu opening out to the client — its claims, then the page's parts.
  */

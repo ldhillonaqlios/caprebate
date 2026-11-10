@@ -1,6 +1,10 @@
 /**
  * THE CLIENT PAGE, LAID OUT AGAIN —.
  *
+ * The back office's client page (src/modules/crm/client-page.ts) is drawn from these parts; they read nothing above the
+ * CRM, so they moved here from the portal in Phase 161l2, with the folder icon, the Files button and the folder tiles
+ * (from src/modules/portal/client-files-pages.ts, whose staff Files page now draws its tiles from here).
+ *
  * the owner: "the whole interfact for a client needs to be designed - theres too much going on and its hard to find
  * things". Agreed in the chat from a drawn layout ("Yes, build it"). Nothing is removed; everything is regrouped:
  *
@@ -24,14 +28,37 @@ import type { ChecksPanel, StepView } from '../claims/index.ts';
 import type { SourcesPanel } from '../claims/index.ts';
 import type { QuickAction, SectionContext, SectionSpec, SectionStatus } from '../../shared/index.ts';
 import { section, SECTION_STATUS_WORDS } from '../../shared/index.ts';
-import { clientProgress, whyNotMoved } from '../crm/index.ts';
-import { filesButton } from './client-files-pages.ts';
+import { clientProgress, whyNotMoved } from './tell-and-move.ts';
 import type { Db } from '../../core/index.ts';
-import type { ClaimSummary } from '../crm/index.ts';
+import type { ClaimSummary } from './crm.ts';
+import type { documentsModule as D } from '../claims/index.ts';
 import { claimHref, claimRef, propertyIn } from '../../shared/index.ts';
 import { dueReading } from '../../shared/index.ts';
 import { groupBand, lateBadge, noDateBadge, stageGroupOf } from '../../core/index.ts';
 import { setSubMenu } from '../../core/index.ts';
+
+/** A folder icon, drawn inline. Decoration only: the words beside it say what it is. */
+export const FOLDER_ICON = '<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2h8.5A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/>';
+
+export function folderIcon(): Safe {
+  return h`<svg class="fold-svg" aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${raw(FOLDER_ICON)}</svg>`;
+}
+
+/** The folder button in a client page's header: the icon, the word, and how many files this login may open. */
+export function filesButton(business_id: string, count: number, beside: Safe = raw('')): Safe {
+  return h`<p class="filesbtn-row"><a class="filesbtn" href="/staff/clients/${business_id}/files">${folderIcon()}<span>Files</span>
+    <span class="filecount" aria-label="${count} ${count === 1 ? 'file' : 'files'}">${count}</span></a>${beside}</p>`;
+}
+
+/** One tile per folder, each opening the Files page at that folder. Used there and in the client page's Files section. */
+export function folderTiles(f: D.ClientFolder, key: string | null = null): Safe {
+  const tile = (x: D.Folder): Safe => h`<li class="tile foldertile${key === x.key ? ' current' : ''}">
+    <a class="tilelink" href="/staff/clients/${f.business_id}/files?folder=${x.key}"${key === x.key ? raw(' aria-current="page"') : raw('')}>
+      ${folderIcon()}<span class="tilename">${x.key.startsWith('claim-') ? (propertyIn(f.company, x.name) ?? x.name) : x.name}</span>
+      <span class="tileline">${x.count} ${x.key === 'asked' ? (x.count === 1 ? 'thing' : 'things') : (x.count === 1 ? 'file' : 'files')}</span></a>
+    ${x.ref === undefined ? raw('') : h`<p class="tileref">${claimRef(x.ref)}</p>`}</li>`;
+  return h`<ul class="tiles foldertiles">${f.folders.map(tile)}</ul>`;
+}
 
 export type TabKey = 'chat' | 'claims' | 'properties' | 'questions' | 'people' | 'checks' | 'files' | 'activity';
 

@@ -35,6 +35,7 @@ import * as PS from '../../src/modules/survey/pack-sums.ts';
 import * as CM from '../../src/modules/survey/pack-cost-model.ts';
 import { formatShownRange } from '../../src/shared/shown-range.ts';
 import { callOutside, RateLimiter, type CallDeps, type Transport } from '../../src/integrations/connectors/http.ts';
+import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
 
 const T = '2026-09-08T00:00:00.000Z';
 type App = Awaited<ReturnType<typeof testApp>>;
@@ -144,7 +145,7 @@ describe('C3, C5, L3 — one version after sign-off', () => {
     ok(R.recordDeliverable(CF.recordDeps(app), SALES, a.claim, { kind: 'CLIENT_REPORT', action: 'ISSUE', issued_on: '2026-09-08' }));
     CF.clientAccepted(app, a.claim);
     app.db.run("UPDATE claims SET stage = 'REPORTS' WHERE id = ?", [a.claim]);
-    const pc = () => P.loadPipelineClaim(app.db, a.claim);
+    const pc = () => loadPipelineClaim(app.db, a.claim);
     assert.equal(P.clientAcceptedNeed(app.db, pc()).met, true);
     assert.equal(RS.releasedVersion(app.db, a.b)?.row.version, 1);
     // The admin's button, with a reason.
@@ -186,7 +187,7 @@ describe('C4 — the sign-off names the version it signed', () => {
     assert.equal(R.releasedReportFingerprint(app.db, b.claim), b1.row.fingerprint, 'the version the adviser never saw was released');
     assert.equal(RS.releasedVersion(app.db, b.b)?.row.version, 1);
     // And the gate out of sign-off is shut until the newest version is signed.
-    const need = R.signOffRecordNeed(app.db, P.loadPipelineClaim(app.db, b.claim));
+    const need = R.signOffRecordNeed(app.db, loadPipelineClaim(app.db, b.claim));
     assert.equal(need.met, false);
     assert.match(need.why, /version 2/);
     // A sign-off of a figure that is not the newest version's own is refused.
