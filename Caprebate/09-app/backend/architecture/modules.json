@@ -1338,10 +1338,6 @@
    "area": "portal",
    "kind": "logic"
   },
-  "src/modules/portal/data-borrowed.ts": {
-   "area": "portal",
-   "kind": "data"
-  },
   "src/modules/portal/data.ts": {
    "area": "portal",
    "kind": "data"
@@ -1381,10 +1377,6 @@
   "src/modules/portal/signup.ts": {
    "area": "portal",
    "kind": "logic"
-  },
-  "src/modules/public-site/data-borrowed.ts": {
-   "area": "public-site",
-   "kind": "data"
   },
   "src/modules/public-site/enquiries.ts": {
    "area": "public-site",

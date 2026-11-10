@@ -451,14 +451,8 @@ export function listSurveyorJobsIdSurveyorIdByClaimId<T extends Row = Row>(db: D
 export function listSurveyorJobsSurveyorIdByBusinessIdSurveyorId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', params);
 }
-export function listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', params);
-}
 export function listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', params);
-}
-export function listSurveyorJobsSurveyorIdByClaimIdSurveyorId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE claim_id = ? AND surveyor_id IS NOT NULL', params);
 }
 export function listSurveyorJobsSurveyorIdByClaimIdSurveyorId2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE claim_id = ? AND surveyor_id IS NOT NULL', params);
