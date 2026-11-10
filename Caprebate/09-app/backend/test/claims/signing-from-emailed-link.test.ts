@@ -27,7 +27,7 @@ import { letterState, letterSteps, sendEngagementLetter, signedCopy } from '../.
 import { assertSignedEngagement } from '../../src/modules/claims/research.ts';
 import { pdfLooksComplete } from '../../src/modules/claims/upload-handler-port.ts';
 import { acceptClientBytes, DAMAGED_PDF } from '../../src/modules/claims/uploads.ts';
-import { receiveFile } from '../../src/modules/portal/client-files-pages.ts';
+import { receiveFile } from '../../src/modules/claims/receive-file.ts';
 import * as D from '../../src/modules/claims/documents.ts';
 import { FsObjectStore } from '../../src/shared/objectstore.ts';
 import { classifyHeading, NEVER_TO_MODEL } from '../../src/modules/claims/documents/document-pipeline.ts';

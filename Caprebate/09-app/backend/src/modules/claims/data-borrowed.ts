@@ -39,12 +39,6 @@ export function listBusinessesOByIdBusinessId<T extends Row = Row>(db: Db, param
   return db.all<T>('SELECT owner_id AS o FROM businesses WHERE id = ? UNION SELECT owner_id AS o FROM claims WHERE business_id = ?', params);
 }
 
-// client_step_notices
-export function listClientStepNoticesClaimIdStepByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return fillUsers(db, db.all<T>('SELECT e.claim_id, e.step, e.action, e.reason, e.at, e.actor_id AS who FROM client_step_notices e ' +
-    'WHERE e.business_id = ? ORDER BY e.at ASC, e.rowid ASC', params), { who: 'display_name' });
-}
-
 // client_tasks
 export function listClientTasksQuestionAnswerByBusinessIdState<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return fillUsers(db, db.all<T>("SELECT t.question, t.answer, t.answer_state, t.answered_at, t.answered_by_role AS role, t.answered_by AS who, " +
@@ -61,25 +55,11 @@ export function getEngagementSignLinksIdEngagementIdByTokenSha256<T extends Row 
     'JOIN businesses b ON b.id = e.business_id WHERE k.token_sha256 = ?', params), { disabled_at: 'disabled_at' });
 }
 
-// fact_approvals
-export function listFeeDiscountsIdDiscountBpByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return fillUsers(db, db.all<T>('SELECT f.id, f.discount_bp, f.reason, f.recorded_at, f.recorded_by AS who FROM fee_discounts f ' +
-    'WHERE f.claim_id = ? ORDER BY f.recorded_at DESC, f.rowid DESC', params), { who: 'display_name' });
-}
-
 // internal_notes
 export function listInternalNotesIdBodyByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return fillUsers(db, db.all<T>('SELECT n.id, n.body, n.created_at, n.author_id AS author_name ' +
     'FROM internal_notes n ' +
     'WHERE n.business_id = ? ORDER BY n.created_at DESC', params), { author_name: 'display_name' });
-}
-
-// logical_documents
-export function listLogicalDocumentsIdBusinessIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return fillUsers(db, db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, ' +
-    't.retention_ref AS type_retention, l.created_by AS created_role, l.created_by AS created_name FROM logical_documents l ' +
-    'JOIN document_types t ON t.code = l.type_code WHERE l.business_id = ? ' +
-    'ORDER BY l.created_at DESC, l.seq DESC', params), { created_role: 'role', created_name: 'display_name' });
 }
 
 // pack_client_notices
@@ -150,26 +130,6 @@ export function listSurveyorJobsSurveyorIdBySurveyorIdClaimId<T extends Row = Ro
     'SELECT k.claim_id FROM document_links k WHERE k.logical_document_id = ? AND k.unlinked_at IS NULL AND k.claim_id IS NOT NULL ' +
     'UNION SELECT c.id FROM document_links k JOIN claims c ON c.property_id = k.property_id ' +
     'WHERE k.logical_document_id = ? AND k.unlinked_at IS NULL AND k.property_id IS NOT NULL)', params);
-}
-
-// logical_documents
-export function getLogicalDocumentsIdBusinessIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code WHERE l.id = ?', params);
-}
-export function listLogicalDocumentsIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code ORDER BY l.created_at DESC, l.id ASC LIMIT 2000', params);
-}
-export function listLogicalDocumentsIdBusinessIdByBusinessId2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code WHERE l.business_id = ?', params);
-}
-export function listLogicalDocumentsIdBusinessIdByBusinessId3<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code WHERE l.business_id = ? ORDER BY t.ord ASC, l.seq ASC', params);
-}
-export function listLogicalDocumentsIdBusinessIdByIdJO<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code WHERE l.id IN (SELECT k.logical_document_id FROM document_links k LEFT JOIN claims c ON c.property_id = k.property_id WHERE k.unlinked_at IS NULL AND (k.claim_id = ? OR c.id = ?)) ORDER BY t.ord ASC, l.seq ASC', params);
-}
-export function listLogicalDocumentsIdBusinessIdByIdUnlinkedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code WHERE l.id IN (SELECT k.logical_document_id FROM document_links k WHERE k.unlinked_at IS NULL AND k.property_id = ?) ORDER BY t.ord ASC, l.seq ASC', params);
 }
 
 // client_tasks

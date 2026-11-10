@@ -32,7 +32,7 @@ import { secretsFromValues, forgetRegisteredSecretsForTest } from '../../src/cor
 import { inMemoryPostcodeStore, type PostcodeAuthorityTable } from '../../src/integrations/postcodes/postcode-port.ts';
 import * as R from '../../src/modules/claims/research.ts';
 import * as MR from '../../src/modules/claims/match-review.ts';
-import * as TB from '../../src/modules/portal/take-back.ts';
+import * as TB from '../../src/modules/claims/take-back.ts';
 import { REGISTRY } from '../../src/shared/engine.ts';
 import { signEngagement, SIGNING_QUESTION, shownLetter, type EngagementSigning } from '../../src/modules/claims/signing.ts';
 import { seed } from '../../src/app/seed.ts';
@@ -43,7 +43,7 @@ import { CLAUDE_SWITCHES, type ClaudeSwitches } from '../../src/integrations/con
 import { acceptClientBytes, finishUpload, issuedJob, type ReadingOutcome, type UploadDeps, type UploadReading } from '../../src/modules/claims/uploads.ts';
 import * as D from '../../src/modules/claims/documents.ts';
 import { discriminantsFor, earlyVouchesFrom, vouchesFor, vouchView } from '../../src/modules/claims/document-reading.ts';
-import { earlyQuestions } from '../../src/modules/portal/client-files-pages.ts';
+import { earlyQuestions } from '../../src/modules/claims/documents-pages.ts';
 import { docxOf } from '../document-fixtures.ts';
 import { testApp, actor } from '../helpers.ts';
 import type { Actor } from '../../src/core/authz.ts';

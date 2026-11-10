@@ -427,12 +427,6 @@ export function insertTermsAgreements(db: Db, params: readonly Param[] = []): { 
 export function getComplaintFormsIdReceivedAtById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT id, received_at, name, reply_to, on_behalf, authority_detail, matching_info, complaint_verbatim, remedy_sought, rights, logged_complaint_id FROM complaint_forms WHERE id = ?', params);
 }
-export function getSignatoryChecksCountByBusinessIdSource<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT COUNT(*) AS n FROM signatory_checks WHERE business_id = ? AND source = ? AND checked_at >= ?', params);
-}
-export function getSignatoryChecksResultReasonByBusinessIdSource<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
-  return db.get<T>('SELECT result, reason, checked_at FROM signatory_checks WHERE business_id = ? AND source = ? ORDER BY checked_at DESC, rowid DESC LIMIT 1', params);
-}
 export function insertComplaintForms(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO complaint_forms (id, received_at, name, reply_to, on_behalf, authority_detail, matching_info, about, complaint_verbatim, remedy_sought, rights) '
     + 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
@@ -445,15 +439,8 @@ export function insertDeletionLog2(db: Db, params: readonly Param[] = []): { cha
   return db.run('INSERT INTO deletion_log (deletion_ref, record_kind, record_id, category, basis_rule, basis_due_on, approved_by, review_ref, executed_by, ' +
     'executed_at, stores_json, backups_pending, backup_cycle_days, backup_copies_expire_at, verified_by, verified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)', params);
 }
-export function insertSignatoryChecks(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO signatory_checks (id, business_id, engagement_id, source, result, reason, checked_at, checked_by) ' +
-    'VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
-}
 export function listComplaintFormsIdReceivedAtByLoggedComplaintId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT id, received_at, name, reply_to, complaint_verbatim FROM complaint_forms WHERE logged_complaint_id IS NULL ORDER BY received_at', params);
-}
-export function listSignatoryChecksSourceByEngagementIdResult<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>("SELECT DISTINCT source FROM signatory_checks WHERE engagement_id = ? AND result IN ('YES','NO')", params);
 }
 export function updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE complaint_forms SET logged_complaint_id = ?, logged_at = ?, logged_by = ? WHERE id = ? AND logged_complaint_id IS NULL', params);

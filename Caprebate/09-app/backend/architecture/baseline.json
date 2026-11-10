@@ -9,7 +9,6 @@
     "assessment -> survey"
    ],
    "claims": [
-    "claims -> admin",
     "claims -> compliance",
     "claims -> finance",
     "claims -> portal",
@@ -29,9 +28,6 @@
    ]
   },
   "3": {
-   "admin": [
-    "src/modules/claims/data-borrowed.ts : document_types"
-   ],
    "assessment": [
     "src/modules/clients/data-borrowed.ts : assessments"
    ],
@@ -69,11 +65,9 @@
    "finance": [
     "src/modules/assessment/data-borrowed.ts : finance_settings",
     "src/modules/assessment/data-borrowed.ts : invoice_credit_notes",
-    "src/modules/assessment/data-borrowed.ts : invoices",
-    "src/modules/claims/data-borrowed.ts : fee_discounts"
+    "src/modules/assessment/data-borrowed.ts : invoices"
    ],
    "portal": [
-    "src/modules/claims/data-borrowed.ts : client_step_notices",
     "src/modules/clients/data-borrowed.ts : client_report_acceptances"
    ],
    "public-site": [

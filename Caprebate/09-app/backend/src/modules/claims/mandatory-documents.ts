@@ -52,7 +52,7 @@
 import type { Db } from '../../core/index.ts';
 import type { Need } from './claim-stage.ts';
 import { acquisitionDateReading, clientSaidBought, latestFacts } from './claim-facts.ts';
-import { getDocumentTypesLabelByCode } from '../admin/index.ts';
+import { getDocumentTypesLabelByCode } from './data.ts';
 import { getDocumentsAtByTypeCodeStripRecordedAt, getPropertiesTenureById } from './data.ts';
 
 export type DocumentCondition = 'ALWAYS' | 'GRANT_FUNDED' | 'ELECTION_MADE' | 'LEASEHOLD' | 'BOUGHT' | 'SBA_ON_PURCHASE';

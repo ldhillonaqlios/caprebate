@@ -682,6 +682,14 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/client-engagement.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/client-filing.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/conveyancing-strip.ts": {
    "area": "claims",
    "kind": "logic"
@@ -754,6 +762,10 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/fixture-taxonomy.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/index.ts": {
    "area": "claims",
    "kind": "other"
@@ -783,6 +795,10 @@
    "kind": "logic"
   },
   "src/modules/claims/receipt-recommendations.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/receive-file.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -827,6 +843,14 @@
    "kind": "logic"
   },
   "src/modules/claims/site-plan.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/survey-jobs-seen.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/take-back.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -1242,10 +1266,6 @@
    "area": "portal",
    "kind": "page"
   },
-  "src/modules/portal/client-filing.ts": {
-   "area": "portal",
-   "kind": "logic"
-  },
   "src/modules/portal/client-layout.ts": {
    "area": "portal",
    "kind": "page"
@@ -1283,10 +1303,6 @@
    "kind": "routes"
   },
   "src/modules/portal/signup.ts": {
-   "area": "portal",
-   "kind": "logic"
-  },
-  "src/modules/portal/take-back.ts": {
    "area": "portal",
    "kind": "logic"
   },
@@ -1447,6 +1463,10 @@
    "kind": "logic"
   },
   "src/modules/survey/survey-evidence.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/survey-jobs-seen.ts": {
    "area": "survey",
    "kind": "logic"
   },

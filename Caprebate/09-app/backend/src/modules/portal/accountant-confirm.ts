@@ -17,7 +17,7 @@
  *   READ     The Reports gate reads a confirmed RETURN_FIT answered since the claim entered Reports
  *            (`accountantFitNeed`); closing a claim at the defence pack reads a confirmed FILED answer
  *            (`filingRecordedNeed` in src/modules/claims/claim-record.ts). The staff tick is retired; typing a filing date is
- *            refused where the accountant files. Where the client has no accountant (src/modules/portal/client-filing.ts), nothing
+ *            refused where the accountant files. Where the client has no accountant (src/modules/claims/client-filing.ts), nothing
  *            here applies and that route is unchanged.
  */
 import { createHash, randomBytes } from 'node:crypto';

@@ -1244,3 +1244,149 @@ export function listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId<T extends
     'LEFT JOIN claims c ON c.id = k.claim_id LEFT JOIN properties p ON p.id = k.property_id ' +
     'WHERE l.business_id = ? ORDER BY k.linked_at', params);
 }
+
+/* Phase 161l2: TWO TABLES WHOSE ONLY WRITER IS THE CLAIMS, given to the claims (architecture/tables.json).
+   signatory_checks: the check of who signed the letter of engagement, written and read by the claims' research
+   (research.ts, runSignatoryCheck) and read by the take-back (take-back.ts); the compliance module never touched it.
+   client_step_notices: a step of the client's checks told to the client or taken back, written by the claims'
+   checks panel (approvals.ts) and read by it and by the take-back; the portal only read it, for the take-back that
+   has moved here. Each statement moved here with its text unchanged. */
+// signatory_checks
+export function getSignatoryChecksCountByBusinessIdSource<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM signatory_checks WHERE business_id = ? AND source = ? AND checked_at >= ?', params);
+}
+export function getSignatoryChecksResultReasonByBusinessIdSource<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT result, reason, checked_at FROM signatory_checks WHERE business_id = ? AND source = ? ORDER BY checked_at DESC, rowid DESC LIMIT 1', params);
+}
+export function insertSignatoryChecks(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO signatory_checks (id, business_id, engagement_id, source, result, reason, checked_at, checked_by) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function listSignatoryChecksSourceByEngagementIdResult<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT DISTINCT source FROM signatory_checks WHERE engagement_id = ? AND result IN ('YES','NO')", params);
+}
+
+// client_step_notices
+export function insertClientStepNotices(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO client_step_notices (id, business_id, claim_id, step, action, reason, actor_id, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function insertClientStepNotices2(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO client_step_notices (id, business_id, claim_id, step, action, reason, actor_id, at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?)', params);
+}
+export function listClientStepNoticesClaimIdStepByBusinessId2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT claim_id, step, action, at FROM client_step_notices WHERE business_id = ? ORDER BY at ASC, rowid ASC', params);
+}
+export function listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT COALESCE(claim_id, '') AS k, action, at FROM client_step_notices WHERE business_id = ? AND step = ? ORDER BY at ASC, rowid ASC", params);
+}
+export function listClientStepNoticesClaimIdStepByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT e.claim_id, e.step, e.action, e.reason, e.at, e.actor_id AS who FROM client_step_notices e ' +
+    'WHERE e.business_id = ? ORDER BY e.at ASC, e.rowid ASC', params), { who: 'display_name' });
+}
+
+/* Phase 161l2: client_filing_confirmations, given to the claims with the file that is its only reader and writer
+   (client-filing.ts, moved here from the portal): staff record, on the claim's page, the client's own written
+   confirmation that they file the claim where they have no accountant. Text unchanged. */
+// client_filing_confirmations
+export function getClientFilingConfirmationsByClaimIdRecordedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT * FROM client_filing_confirmations WHERE claim_id = ? AND recorded_at >= ? ORDER BY recorded_at DESC, rowid DESC LIMIT 1', params);
+}
+export function insertClientFilingConfirmations(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO client_filing_confirmations (id, claim_id, business_id, confirmed_by_party, no_accountant_or_adviser, will_file_amendment, ' +
+    'last_day_acknowledged, last_day_stated, remains_responsible, written_evidence, recorded_by, recorded_at) ' +
+    "VALUES (?, ?, ?, 'CLIENT', ?, ?, ?, ?, ?, ?, ?, ?)", params);
+}
+
+/* Phase 161l2: document_types, given to the claims (architecture/tables.json). The list of document types is the
+   document centre's (documents.ts writes it: insertDocumentTypes, updateDocumentTypesLabelReadersByCode), and every
+   read of it joins or labels the claims' own documents. The administration's settings pages only show it, and read it
+   through the claims' door, as the CRM and the portal do (the administration's door names these as before).
+   Each statement moved here from src/modules/admin/data.ts with its text unchanged. */
+// document_types
+export function getDocumentTypesCodeByCode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT code FROM document_types WHERE code = ?', params);
+}
+export function getDocumentTypesCodeLabelByCode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT code, label, source, handler_type, readers, carries_value, retention_ref, active, ord, note, created_at, updated_at FROM document_types WHERE code = ?', params);
+}
+export function getDocumentTypesHandlerTypeActiveByCode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT handler_type, active FROM document_types WHERE code = ?', params);
+}
+export function getDocumentTypesHandlerTypeByCode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT handler_type FROM document_types WHERE code = ?', params);
+}
+export function getDocumentTypesLabelByCode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT label FROM document_types WHERE code = ?', params);
+}
+export function getDocumentTypesLabelByCode2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT label FROM document_types WHERE code = ?', params);
+}
+export function getDocumentTypesM<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT MAX(ord) AS m FROM document_types', params);
+}
+export function getDocumentTypesOrdByCode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT ord FROM document_types WHERE code = ?', params);
+}
+export function insertDocumentTypes(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO document_types (code, label, source, handler_type, readers, carries_value, retention_ref, active, ord, note, created_at, updated_at) ' +
+    'VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function listDocumentTypesCodeLabel<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT code, label FROM document_types', params);
+}
+export function listDocumentTypesCodeLabel2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT code, label, source, handler_type, readers, carries_value, retention_ref, active, ord, note, created_at, updated_at FROM document_types ORDER BY ord ASC, code ASC', params);
+}
+export function listDocumentTypesCodeLabelByActiveHandlerType<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT code, label, handler_type FROM document_types WHERE active = 1 AND handler_type IS NOT NULL ORDER BY ord ASC, code ASC', params);
+}
+export function listDocumentTypesCodeLabelByActiveHandlerType2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT code, label FROM document_types WHERE active = 1 AND handler_type IS NOT NULL ORDER BY ord ASC, code ASC', params);
+}
+// For the CRM (Phase 161l1): the document types the given codes name, in place of the CRM's joins to document_types.
+export function listDocumentTypesCodeReadersLabelByCodes<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT t.code, t.readers, t.carries_value, t.label FROM document_types t WHERE t.code IN (SELECT value FROM json_each(?))', params);
+}
+export function updateDocumentTypesLabelReadersByCode(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('UPDATE document_types SET label = ?, readers = ?, carries_value = ?, retention_ref = ?, active = ?, updated_at = ? WHERE code = ?', params);
+}
+
+/* Phase 161l2: the logical documents with their type, moved here from the borrowed file now that both tables are the
+   claims'. Text unchanged. */
+// logical_documents with document_types
+export function listLogicalDocumentsIdBusinessIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, ' +
+    't.retention_ref AS type_retention, l.created_by AS created_role, l.created_by AS created_name FROM logical_documents l ' +
+    'JOIN document_types t ON t.code = l.type_code WHERE l.business_id = ? ' +
+    'ORDER BY l.created_at DESC, l.seq DESC', params), { created_role: 'role', created_name: 'display_name' });
+}
+export function getLogicalDocumentsIdBusinessIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code WHERE l.id = ?', params);
+}
+export function listLogicalDocumentsIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code ORDER BY l.created_at DESC, l.id ASC LIMIT 2000', params);
+}
+export function listLogicalDocumentsIdBusinessIdByBusinessId2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code WHERE l.business_id = ?', params);
+}
+export function listLogicalDocumentsIdBusinessIdByBusinessId3<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code WHERE l.business_id = ? ORDER BY t.ord ASC, l.seq ASC', params);
+}
+export function listLogicalDocumentsIdBusinessIdByIdJO<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code WHERE l.id IN (SELECT k.logical_document_id FROM document_links k LEFT JOIN claims c ON c.property_id = k.property_id WHERE k.unlinked_at IS NULL AND (k.claim_id = ? OR c.id = ?)) ORDER BY t.ord ASC, l.seq ASC', params);
+}
+export function listLogicalDocumentsIdBusinessIdByIdUnlinkedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, t.retention_ref AS type_retention FROM logical_documents l JOIN document_types t ON t.code = l.type_code WHERE l.id IN (SELECT k.logical_document_id FROM document_links k WHERE k.unlinked_at IS NULL AND k.property_id = ?) ORDER BY t.ord ASC, l.seq ASC', params);
+}
+
+/* Phase 161l2: fee_discounts, given to the claims (architecture/tables.json). A multi-site discount a person enters is a
+   record on the claim and nothing more (fee-discounts.ts: "No invoice reads this module"); only the claims write and
+   read it. The insert moved here from src/modules/finance/data.ts, the read from the borrowed file; text unchanged. */
+// fee_discounts
+export function insertFeeDiscounts(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO fee_discounts (id, claim_id, business_id, discount_bp, reason, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function listFeeDiscountsIdDiscountBpByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT f.id, f.discount_bp, f.reason, f.recorded_at, f.recorded_by AS who FROM fee_discounts f ' +
+    'WHERE f.claim_id = ? ORDER BY f.recorded_at DESC, f.rowid DESC', params), { who: 'display_name' });
+}

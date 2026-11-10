@@ -569,7 +569,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // CRM 6 of 10: the reports are issued (the deliverables register), and the amendment window is open — UNKNOWN does not pass.
       // WHO CONFIRMS THE CLAIM FITS THE RETURN. Where the client has no accountant or tax adviser — a
       // recorded yes from the client, and no such contact on the organisation — the client's own written confirmation
-      // (src/modules/portal/client-filing.ts) stands where the accountant's does, and is never recorded as the accountant's. The
+      // (src/modules/claims/client-filing.ts) stands where the accountant's does, and is never recorded as the accountant's. The
       // computation pack is still issued: whoever files needs the computation. Otherwise, exactly as before.
       {
         const today = opts.today ?? new Date().toISOString();

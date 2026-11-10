@@ -19,7 +19,7 @@ import { mayWriteTypes } from './documents.permissions.ts';
 import { centrePage, documentPageHtml, typesPage, type DocumentPageDeps } from './documents-pages.ts';
 import { openKeptOriginal, sweepOriginals } from './uploads.ts';
 import { earlyVouchesFrom } from './document-reading.ts';
-import { readUpload, receiveFile } from '../portal/index.ts';
+import { readUpload, receiveFile } from './receive-file.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 

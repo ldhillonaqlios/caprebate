@@ -22,8 +22,11 @@ export * as templatesModule from './templates.ts';
 export { activeTemplates, carriesBankDetails, freeTextRefusal, mergePlain, mergeValues, templateRefusal, tipsOff } from './templates.ts';
 export { mayTake, priorityRank, taskChoices, vocabChoice, vocabLabel, vocabulary } from './vocabularies.ts';
 export type { TaskChoices } from './vocabularies.ts';
-export { getDocumentTypesCodeByCode, getDocumentTypesCodeLabelByCode, getDocumentTypesHandlerTypeActiveByCode, getDocumentTypesHandlerTypeByCode, getDocumentTypesLabelByCode, getDocumentTypesLabelByCode2, getDocumentTypesM, getDocumentTypesOrdByCode, getEmailSenderA, getEmailTemplatesLabelSubjectByIdActive, getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, getSavedViewsIdListById, getVocabulariesActivityTypeCountByCode, insertDocumentTypes, insertEmailSender, insertSavedViews, listDocumentTypesCodeLabel, listDocumentTypesCodeLabel2, listDocumentTypesCodeLabelByActiveHandlerType, listDocumentTypesCodeLabelByActiveHandlerType2, listReasonListsCodeLabelActiveByList, listSavedViewsIdListByListRetiredAt, updateDocumentTypesLabelReadersByCode, updateSavedViewsRetiredAtRetiredByById } from './data.ts';
+export { getEmailSenderA, getEmailTemplatesLabelSubjectByIdActive, getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, getSavedViewsIdListById, getVocabulariesActivityTypeCountByCode, insertEmailSender, insertSavedViews, listReasonListsCodeLabelActiveByList, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from './data.ts';
 // Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
 import './nav.ts';
 // Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
-export { listDocumentTypesCodeReadersLabelByCodes, listReasonListsCodeLabelByList } from './data.ts';
+export { listReasonListsCodeLabelByList } from './data.ts';
+// Phase 161l2: the document types are the claims' table now (the document centre's); named here as before for the CRM
+// and the portal, which read them through this door.
+export { getDocumentTypesHandlerTypeActiveByCode, getDocumentTypesLabelByCode2, listDocumentTypesCodeLabel, listDocumentTypesCodeReadersLabelByCodes } from '../claims/index.ts';

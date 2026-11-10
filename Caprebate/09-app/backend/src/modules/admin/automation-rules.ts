@@ -9,7 +9,7 @@ import { authorise, can, type Actor } from '../../core/index.ts';
 import { anyStageLabel, localStamp } from '../../shared/index.ts';
 import { ATTACH, EFFECTS, FORBIDDEN_EFFECTS, POOL_ROLES, RULES_SECTION, RUN_REASONS, TRIGGERS, claimWords, listAutomationRulesIdLabel, listAutomationRunsAtTriggerEvent, type RuleDbRow } from '../clients/index.ts';
 import { vocabLabel } from './vocabularies.ts';
-import { listDocumentTypesCodeLabelByActiveHandlerType2 } from './data.ts';
+import { listDocumentTypesCodeLabelByActiveHandlerType2 } from '../claims/index.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 

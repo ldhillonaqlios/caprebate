@@ -25,14 +25,17 @@
  * can only be CLIENT, and nothing here writes or reads the accountant's
  * milestone. The operating procedures' stages 8 and 9 are edited by another
  * workstream; this is the application's half.
+ *
+ * WHERE IT SITS (Phase 161l2, 10 November 2026): moved here from the portal (src/modules/portal/client-filing.ts) with its
+ * table, as staff record it on the claim's page (claim-record-pages.ts) and the claim record reads it (claim-record.ts);
+ * the CRM's pipeline reads it through the portal's door, which names it from the claims' as before.
  */
 
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import { getClientFilingConfirmationsByClaimIdRecordedAt, insertClientFilingConfirmations } from './data.ts';
-import { getClaimsIdBusinessIdById } from '../claims/index.ts';
+import { getClaimsIdBusinessIdById, getClientFilingConfirmationsByClaimIdRecordedAt, insertClientFilingConfirmations } from './data.ts';
 import { getContactsIdByBusinessIdContactType2 } from '../clients/index.ts';
 
 export type Answer = 'YES' | 'NO' | 'UNSURE';
