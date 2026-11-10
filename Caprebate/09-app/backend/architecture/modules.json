@@ -62,10 +62,6 @@
    "area": "app",
    "kind": "routes"
   },
-  "src/app/test-lookups.ts": {
-   "area": "app",
-   "kind": "logic"
-  },
   "src/app/timers.ts": {
    "area": "app",
    "kind": "logic"
@@ -359,6 +355,14 @@
    "kind": "logic"
   },
   "src/integrations/connectors/sources.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/integrations/connectors/test-lookup-claims.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
+  "src/integrations/connectors/test-lookups.ts": {
    "area": "integrations",
    "kind": "logic"
   },
@@ -851,6 +855,10 @@
    "kind": "logic"
   },
   "src/modules/claims/take-back.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/test-lookup-claims.ts": {
    "area": "claims",
    "kind": "logic"
   },

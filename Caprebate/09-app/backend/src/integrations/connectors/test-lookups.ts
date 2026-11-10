@@ -41,32 +41,30 @@
  *
  * NOTHING HERE READS THE KEY FILE OR REACHES THE NETWORK. The caller hands in the transport and the key store:
  * src/app/cli.ts hands in the live ones, and the tests hand in recorded answers.
- *
- * WHERE IT SITS (Phase 161l2, 10 November 2026): moved from src/integrations/connectors/ to the start-up wiring beside the
- * command line that runs it, because it reads the claims' data and the claims' document reader; from here it reaches
- * the outside services and the claims through their front doors.
  */
 
 import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { isAbsolute, join, resolve, resolve as resolvePath } from 'node:path';
 
-import { AuditLog, Db, MIGRATIONS_DIR, migrate } from '../core/index.ts';
-import { isInside, repositoryRoot, type SecretStore } from '../core/index.ts';
-import type { Nation, PostcodeStore, Transport } from '../integrations/index.ts';
-import { smokeOne, SMOKE_DEFAULTS, SMOKE_SOURCES, type SmokeValues } from '../integrations/index.ts';
+import { AuditLog, Db, MIGRATIONS_DIR, migrate } from '../../core/index.ts';
+import { isInside, repositoryRoot, type SecretStore } from '../../core/index.ts';
+import type { Transport } from './http.ts';
+import type { PostcodeStore } from '../postcodes/postcode-port.ts';
+import { smokeOne, SMOKE_DEFAULTS, SMOKE_SOURCES, type SmokeValues } from './smoke.ts';
+import type { Nation } from './nations.ts';
 import {
   type BoundaryTestValues,
   BOUNDARY_TEST_DEFAULTS, BOUNDARY_TEST_SOURCE, CLIENT_POINT_RADIUS_M, boundaryTestOne, boundaryValuesFrom, notTheBoundaryDefaults,
-} from '../integrations/index.ts';
-import { buildingsAround, OS_SERVICE_ID } from '../integrations/index.ts';
-import { CLAUDE_SERVICE_ID } from '../integrations/index.ts';
-import { readPayloadWithClaude, sanitise, type Segment } from '../modules/claims/index.ts';
-// The client record's values through the port the outside services own (Phase 161l1): the client record hands them in as it loads.
-import { clientValues } from '../integrations/index.ts';
-// Phase 161l2: the start-up wiring may read every area, through its front door.
-import { listPropertiesPostcode, listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../modules/claims/index.ts';
-import { listRegisterRecordsFieldsJsonBySourceId } from '../integrations/index.ts';
+} from './boundary-test-lookup.ts';
+import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
+import { SERVICE_ID as CLAUDE_SERVICE_ID } from './claude.ts';
+// The client record's values through the port this layer owns (Phase 161l1): the client record hands them in as it loads.
+import { clientValues } from './client-values.ts';
+// The claims' properties, site area inputs and document reader through the port this layer owns (Phase 161l2): the
+// claims hand them in as their front door loads, so this file imports no business module and loads through the door.
+import { testLookupClaims, type TestSegment } from './test-lookup-claims.ts';
+import { listRegisterRecordsFieldsJsonBySourceId } from '../data.ts';
 
 /** The Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */
 export const OS_TEST_SOURCE = OS_SERVICE_ID;
@@ -79,13 +77,13 @@ export const OS_TEST_SOURCE = OS_SERVICE_ID;
  * ships stays off. Nothing is kept: the answer is counted and thrown away.
  */
 export const CLAUDE_TEST_SOURCE = CLAUDE_SERVICE_ID;
-export const CLAUDE_TEST_PAGE: readonly Segment[] = Object.freeze([
+export const CLAUDE_TEST_PAGE: readonly TestSegment[] = Object.freeze([
   { kind: 'COST_SCHEDULE', heading: 'COST SCHEDULE', page: 1,
     text: 'Element | Description | Qty | Unit | Rate | Total\nElectrical | Lighting to treatment rooms | 6 | nr | 1,250.00 | 7,500.00\n' +
       'Mechanical | Extract ventilation to sterilisation room | 1 | item | 9,800.00 | 9,800.00\nProvisional sum | Fire alarm upgrade | 1 | item | 4,000.00 | 4,000.00\n' +
       'Contingency | 5% of works | 1 | item | 1,065.00 | 1,065.00' },
   { kind: 'PRELIMS_AND_FEES', heading: 'PRELIMINARIES AND FEES', page: 2, text: 'Preliminaries: 12% of works. Professional fees: 10% of works plus preliminaries.' },
-]) as readonly Segment[];
+]) as readonly TestSegment[];
 
 /**
  * EVERY CONNECTOR A TEST LOOKUP CAN BE RUN FOR: the registers the smoke test knows, and the land boundary
@@ -256,7 +254,7 @@ export function clientMatchIn(db: Db, v: SmokeValues): ClientCheck {
   try {
     const held = clientValues(db);
     businesses = held.businesses;
-    properties = listPropertiesPostcode(db);
+    properties = testLookupClaims().propertyPostcodes(db);
     leads = held.leads;
   } catch (e: unknown) {
     return { ok: false, why: `the clients in CAPREBATE_DB could not be read (${e instanceof Error ? e.message : String(e)}), so it is not known that these values are nobody's` };
@@ -289,8 +287,8 @@ export function boundaryClientMatchIn(db: Db, v: BoundaryTestValues): { readonly
   let councils: { lad_code: string | null }[];
   let supplier: { fields_json: string }[];
   try {
-    entered = listSiteAreaInputsEastingNorthingByKind(db);
-    councils = listSiteAreaInputsLadCodeByKind(db);
+    entered = testLookupClaims().siteAreaPoints(db);
+    councils = testLookupClaims().siteAreaCouncils(db);
     supplier = listRegisterRecordsFieldsJsonBySourceId(db);
   } catch (e: unknown) {
     return { ok: false, why: `the clients in CAPREBATE_DB could not be read (${e instanceof Error ? e.message : String(e)}), so it is not known that these values are nobody's` };
@@ -490,13 +488,13 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
     }
     ask = 'asking Anthropic to read one invented page: a contractor\'s cost breakdown with no one\'s name, address or number in it.\n';
     call = async (audit) => {
-      const { payload } = sanitise('test-lookup-page', 'CONTRACTOR_COST_BREAKDOWN', CLAUDE_TEST_PAGE);
-      const { read } = await readPayloadWithClaude({
+      // The claims' document reader: the pipeline's own strip (`sanitise`) and its guard, then the read.
+      const read = await testLookupClaims().readTestPage({
         deps: { audit, now: d.now, transport: d.transport, ...(d.sleep === undefined ? {} : { sleep: d.sleep }) },
         secrets: d.secrets, switches: { DOCUMENT_READING: true, SCANNED_PAGES: false },
         actor_id: null, actor_role: 'test', claim_id: null,
         gate: { free_gate_open: false, engagement_signed: false, switched_on: true },
-      }, payload);
+      }, 'test-lookup-page', 'CONTRACTOR_COST_BREAKDOWN', CLAUDE_TEST_PAGE);
       const result = read.state === 'READ' ? 'PASS' : 'NO';
       d.out(`${result}  ${CLAUDE_TEST_SOURCE} (paid, by the token)`);
       d.out(`  ${read.why}${read.model === null ? '' : `; answered by ${read.model}`}.`);

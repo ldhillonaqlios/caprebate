@@ -16,6 +16,8 @@ export { setSurveyorJobsSeenReader } from './survey-jobs-seen.ts';
 export type { SurveyorJobsSeenReader } from './survey-jobs-seen.ts';
 // What the outside services ask it (their ports): handed in first, as it reaches only its own data and their door.
 import './research-subject.ts';
+// What the test lookups ask it (the outside services' port, Phase 161l2).
+import './test-lookup-claims.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
 // Phase 161l2: the fixture list (moved from the survey's pack lines); it reads only its file.
 export { parseCsv, taxonomy, TAXONOMY_FILE, TAXONOMY_SECTOR } from './fixture-taxonomy.ts';
