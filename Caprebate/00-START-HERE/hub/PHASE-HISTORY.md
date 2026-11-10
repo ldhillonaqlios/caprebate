@@ -14326,3 +14326,5 @@ NOT DONE      Nine rules tested one way only (the four legal readings read as co
               sweep), in terms.
 NOTHING LEFT  beyond those lines.
 ```
+
+- **Merged, 10 Nov 2026.** PR #98 is merged into main (merge commit 4b43661), GitHub's checks green: the fresh-copy check and the Vercel preview. The first run of the fresh-copy check failed on one test: the eleven rulebook entries named `01-rulebooks/README.md` as their home, a file only OneDrive holds, so a fresh copy could not find it. Fixed before the merge (6f8322e): their home is `src/modules/claims/case-stamp.ts`, the code that stamps them, and the rules test now requires every home to be a file of the back end's code. The run sheet's 161m block still waits for Lakhbir's yes before it is deleted. Next: the sweep (Phase 162), then Phase 161n.
