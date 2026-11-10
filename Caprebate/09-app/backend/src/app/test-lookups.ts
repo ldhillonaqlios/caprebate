@@ -41,30 +41,32 @@
  *
  * NOTHING HERE READS THE KEY FILE OR REACHES THE NETWORK. The caller hands in the transport and the key store:
  * src/app/cli.ts hands in the live ones, and the tests hand in recorded answers.
+ *
+ * WHERE IT SITS (Phase 161l2, 10 November 2026): moved from src/integrations/connectors/ to the start-up wiring beside the
+ * command line that runs it, because it reads the claims' data and the claims' document reader; from here it reaches
+ * the outside services and the claims through their front doors.
  */
 
 import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { isAbsolute, join, resolve, resolve as resolvePath } from 'node:path';
 
-import { AuditLog, Db, MIGRATIONS_DIR, migrate } from '../../core/index.ts';
-import { isInside, repositoryRoot, type SecretStore } from '../../core/index.ts';
-import type { Transport } from './http.ts';
-import type { PostcodeStore } from '../postcodes/postcode-port.ts';
-import { smokeOne, SMOKE_DEFAULTS, SMOKE_SOURCES, type SmokeValues } from './smoke.ts';
-import type { Nation } from './nations.ts';
+import { AuditLog, Db, MIGRATIONS_DIR, migrate } from '../core/index.ts';
+import { isInside, repositoryRoot, type SecretStore } from '../core/index.ts';
+import type { Nation, PostcodeStore, Transport } from '../integrations/index.ts';
+import { smokeOne, SMOKE_DEFAULTS, SMOKE_SOURCES, type SmokeValues } from '../integrations/index.ts';
 import {
   type BoundaryTestValues,
   BOUNDARY_TEST_DEFAULTS, BOUNDARY_TEST_SOURCE, CLIENT_POINT_RADIUS_M, boundaryTestOne, boundaryValuesFrom, notTheBoundaryDefaults,
-} from './boundary-test-lookup.ts';
-import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
-import { readPayloadWithClaude, SERVICE_ID as CLAUDE_SERVICE_ID } from './claude.ts';
-import { sanitise, type Segment } from '../../modules/claims/index.ts';
-// The client record's values through the port this layer owns (Phase 161l1): the client record hands them in as it loads.
-import { clientValues } from './client-values.ts';
-// Straight from the data file, not the front door: a lower layer must not load a whole business module.
-import { listPropertiesPostcode, listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../../modules/claims/data.ts';
-import { listRegisterRecordsFieldsJsonBySourceId } from '../data.ts';
+} from '../integrations/index.ts';
+import { buildingsAround, OS_SERVICE_ID } from '../integrations/index.ts';
+import { CLAUDE_SERVICE_ID } from '../integrations/index.ts';
+import { readPayloadWithClaude, sanitise, type Segment } from '../modules/claims/index.ts';
+// The client record's values through the port the outside services own (Phase 161l1): the client record hands them in as it loads.
+import { clientValues } from '../integrations/index.ts';
+// Phase 161l2: the start-up wiring may read every area, through its front door.
+import { listPropertiesPostcode, listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind } from '../modules/claims/index.ts';
+import { listRegisterRecordsFieldsJsonBySourceId } from '../integrations/index.ts';
 
 /** The Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */
 export const OS_TEST_SOURCE = OS_SERVICE_ID;

@@ -95,7 +95,7 @@ import { checkPostcode } from '../../integrations/index.ts';
 import { nationFromCountry } from '../../integrations/index.ts';
 import type { Transport, RateLimiter } from '../../integrations/index.ts';
 import type { SecretStore } from '../../core/index.ts';
-import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../../integrations/connectors/free-registers.ts';
+import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../../integrations/index.ts';
 import type { PickQuery } from '../../integrations/index.ts';
 import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds, uprnFrom } from '../../integrations/index.ts';
 import { ingestRegisterRecord } from '../../integrations/index.ts';

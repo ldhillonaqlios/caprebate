@@ -99,7 +99,12 @@ describe('Phase 150: the land boundary fetcher cannot fire while the switch is o
     assert.doesNotMatch(test, /import\s*\{[^}]*BOUNDARY_FETCHING_SWITCHED_ON/, 'the test lookup imports the shipped switch');
     const reaching = walk(SRC).filter((p) => p.endsWith('.ts') && !p.endsWith('/connectors/boundary-test-lookup.ts'))
       .filter((p) => /from\s*['"][^'"]*boundary-test-lookup(?:\.ts)?['"]|import\(\s*['"][^'"]*boundary-test-lookup/.test(readFileSync(p, 'utf8')));
-    assert.deepEqual(reaching.map((p) => p.slice(SRC.length + 1)), ['integrations/connectors/test-lookups.ts'], 'something other than the smoke command reaches the test lookup');
+    /* PHASE 161l2: the smoke command (src/app/test-lookups.ts) reaches it through the outside services' front door, so the
+       door is the one file that names it, and the smoke command is the one file that takes boundaryTestOne from the door. */
+    assert.deepEqual(reaching.map((p) => p.slice(SRC.length + 1)), ['integrations/index.ts'], 'something other than the front door names the test lookup');
+    const takers = walk(SRC).filter((p) => p.endsWith('.ts') && !p.endsWith('/connectors/boundary-test-lookup.ts') && !p.endsWith('/integrations/index.ts'))
+      .filter((p) => /\bboundaryTestOne\b/.test(readFileSync(p, 'utf8')));
+    assert.deepEqual(takers.map((p) => p.slice(SRC.length + 1)), ['app/test-lookups.ts'], 'something other than the smoke command reaches the test lookup');
   });
 });
 

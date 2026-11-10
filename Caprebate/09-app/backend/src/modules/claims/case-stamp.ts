@@ -66,7 +66,7 @@ import { ALLOWANCE_PROFIT_COMPARISON } from '../assessment/index.ts';
 import { FUNNEL_SWITCHES } from '../assessment/index.ts';
 import { HOMEDATA_DIMENSIONS } from '../../integrations/index.ts';
 import { REGISTER_SWITCHES } from '../../integrations/index.ts';
-import { CLAUDE_SWITCHES } from '../../integrations/connectors/claude.ts';
+import { CLAUDE_SWITCHES } from '../../integrations/index.ts';
 import { PICK_SWITCHES } from './match-review.ts';
 import { getClaimsIdAssessmentIdById, insertClaimVersionStamps, listTaxAdviserSignoffsIdRecordHashByClaimId } from './data.ts';
 import { getAnchorLogHash } from '../survey/index.ts';

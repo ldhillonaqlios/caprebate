@@ -369,7 +369,7 @@ describe('line 19 — the testing waiver names Lakhbir’s role rightly', () => 
     const waiver = IDENTITY_CHECK.waiver_record ?? '';
     assert.match(waiver, /The owner said it[\s\S]*He is Head of Business Development\./);
     assert.doesNotMatch(waiver, /director/i);
-    const lookups = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'integrations', 'connectors', 'test-lookups.ts'), 'utf8');
+    const lookups = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'app', 'test-lookups.ts'), 'utf8');
     assert.doesNotMatch(lookups, /as the director/);
     // PHASE 161i1: names of people are out of the code's comments; the role is what is checked.
     assert.match(lookups, /Head of Business Development \(not the director/);

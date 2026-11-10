@@ -12,6 +12,16 @@ export { amount } from './connectors/hmlr-title.ts';
 export { preferHomedataPlanning, supersededPlanning } from './connectors/homedata-planning.ts';
 export { ESTIMATED_AREA_LABEL, HOMEDATA_DIMENSIONS } from './connectors/homedata.ts';
 export { RateLimiter, liveTransport } from './connectors/http.ts';
+// Phase 161l2: the Claude client (the transport only; the claims read a document with it), the free registers, the smoke
+// test lookups and the client values port's reader. Each imports nothing above the outside services, so each loads here.
+export { CLAUDE_FALLBACK_BETA, CLAUDE_MAX_TOKENS, CLAUDE_MODEL, CLAUDE_SWITCHES, PAGES_PER_CALL, SCANNED_PAGE_KINDS, SERVICE_ID as CLAUDE_SERVICE_ID, claudeAnswerText, claudeClient, claudeReadiness, readScannedPages, scannedPagesAllowedFor, whyClaudeFailed } from './connectors/claude.ts';
+export { DERIVE_FIELD_OF, FREE_CONNECTORS, NOT_BUILT, runOrder } from './connectors/free-registers.ts';
+export { researchSubject } from './connectors/nations.ts';
+export { SMOKE_DEFAULTS, SMOKE_SOURCES, smokeOne } from './connectors/smoke.ts';
+export { BOUNDARY_TEST_DEFAULTS, BOUNDARY_TEST_SOURCE, CLIENT_POINT_RADIUS_M, boundaryTestOne, boundaryValuesFrom, notTheBoundaryDefaults } from './connectors/boundary-test-lookup.ts';
+export { OS_SERVICE_ID } from './connectors/os-buildings.ts';
+export { clientValues } from './connectors/client-values.ts';
+export { listRegisterRecordsFieldsJsonBySourceId } from './data.ts';
 export { IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision, sentUnderTestingWaiver, startIdentityCheck } from './connectors/identity-check.ts';
 export { INSPIRE_COUNCILS, inspireFileForLad } from './connectors/inspire-councils.ts';
 export { INSPIRE_KEEP_DAYS, inspireStoreFromEnv } from './connectors/inspire-store.ts';
@@ -56,7 +66,12 @@ export { LICENCES, SOURCES, worstGrade } from './registers/source-register.ts';
 export { builtInSignatureProvider } from './signature.ts';
 export type { AddressLookupConfig, FoundAddress } from './connectors/address-lookup.ts';
 export type { CompanyCandidate, CompanySearchConfig } from './connectors/company-search.ts';
-export type { GateSnapshot, Transport } from './connectors/http.ts';
+export type { CallDeps, CallResult, GateSnapshot, Transport } from './connectors/http.ts';
+// Phase 161l2: the Claude client's, the smoke test lookups' and the boundary test lookup's types.
+export type { ClaudeContext, ClaudeReadiness, ClaudeSwitches, ReadState } from './connectors/claude.ts';
+export type { SmokeValues } from './connectors/smoke.ts';
+export type { BoundaryTestValues } from './connectors/boundary-test-lookup.ts';
+export type { Nation, ResearchSubject, TypedProperty } from './connectors/nations.ts';
 export type { IdentityCheckConfig, IdentityOutcome, IdentitySignature } from './connectors/identity-check.ts';
 export type { InspireFileStore } from './connectors/inspire-store.ts';
 export type { PickQuery, ReviewCandidate } from './connectors/matching.ts';

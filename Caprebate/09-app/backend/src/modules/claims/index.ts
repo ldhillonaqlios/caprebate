@@ -20,6 +20,9 @@ export { getClaimContactsIdByClaimIdContactId, getClaimContactsIdClaimIdById, ge
 export { ANSWER_WORDS, EARLY_VOUCH_PREFIX, earlyVouchesFrom, VOUCH_ANSWERS } from './document-reading.ts';
 export { ALWAYS_NATURAL_PERSON_ROLES, assertHumanCaptureClean, assertRestoreApproved, BACKUP_CYCLE, CAPTURE_NAME_PATTERNS, classifyPartyReference, deletionDueAt, knownBackupCycleDays, ret3DueAt, RET7, ROLE_TOKENS } from './documents/client-doc-ingestion.ts';
 export { callModel, DOC_SPECS, HUMAN_READ_ONLY_TYPES, PERSON_NAME_PATTERNS, PipelineError, sanitise, specFor } from './documents/document-pipeline.ts';
+// Phase 161l2: the document reader on the Claude API, moved here from the outside services' Claude client.
+export { prepareClaudeModel, readPayloadWithClaude, toRawExtraction } from './document-reader-claude.ts';
+export type { ModelRead } from './document-reader-claude.ts';
 export { assertContractCovered, closeJob, CONTRACT_COVERAGE, deleteDueRawFile, durableKeyFor, FAIL_CLOSED_SETTINGS, INGESTION_BOUNDARY, issueUploadUrl, openTransparency, pdfLooksComplete, processUpload, quarantineKeyFor, RECEIPT_CONTRACT, receiptPolicyFor, recordUploadComplete, retainedTextKeyFor, runExtraction, runScheduledSweeps, shouldPromoteRawFile, sniffAccepted, UPLOAD_LIMITS, UploadHandlerError, writeClaims } from './documents/upload-handler.ts';
 export { discountsFor } from './fee-discounts.ts';
 export { loadLetter, TEST_LETTER_PATH } from './letter.ts';

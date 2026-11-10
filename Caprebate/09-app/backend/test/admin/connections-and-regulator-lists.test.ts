@@ -22,7 +22,7 @@ import { TEST_WEBSITE_LOOKUPS } from '../../src/integrations/connectors/register
 import { CLAUDE_SWITCHES } from '../../src/integrations/connectors/claude.ts';
 import { secretsFromValues, forgetRegisteredSecretsForTest } from '../../src/core/secrets.ts';
 import { fixtureTransport, type Fixture } from '../../src/integrations/connectors/http.ts';
-import * as L from '../../src/integrations/connectors/test-lookups.ts';
+import * as L from '../../src/app/test-lookups.ts';
 import { CONNECTIONS, RETIRED_CALLS, connectionsView, listsToImport, ONE_REQUEST_BYTES } from '../../src/modules/admin/connections.ts';
 import { REGISTER_IMPORT_JS } from '../../src/modules/claims/register-import-script.ts';
 import { FILE_SOURCES } from '../../src/integrations/registers/file-registers.ts';

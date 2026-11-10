@@ -92,7 +92,7 @@ function lookupWorld(): { env: Record<string, string>; lines: () => Record<strin
 const WHO156 = ['--who', 'Invented Tester', '--why', 'Phase 156a: the key went into Vercel'];
 
 async function runLookup(source: string, extra: string[]): Promise<{ code: number; said: string; calls: number }> {
-  const L = await import('../../src/integrations/connectors/test-lookups.ts');
+  const L = await import('../../src/app/test-lookups.ts');
   const { fixtureTransport } = await import('../../src/integrations/connectors/http.ts');
   const { secretsFromValues, forgetRegisteredSecretsForTest } = await import('../../src/core/secrets.ts');
   const w = lookupWorld();
@@ -148,7 +148,7 @@ describe('156a B3 · a test lookup of EPC or CQC can be told the nation', () => 
 
 describe('156a B3 · a test lookup of the Ordnance Survey building outlines', () => {
   async function osLookup(extra: string[], keys: Record<string, string>): Promise<{ code: number; said: string; calls: number; urls: string[]; headers: Record<string, string>[] }> {
-    const L = await import('../../src/integrations/connectors/test-lookups.ts');
+    const L = await import('../../src/app/test-lookups.ts');
     const { fixtureTransport } = await import('../../src/integrations/connectors/http.ts');
     const { secretsFromValues, forgetRegisteredSecretsForTest } = await import('../../src/core/secrets.ts');
     const w = lookupWorld();

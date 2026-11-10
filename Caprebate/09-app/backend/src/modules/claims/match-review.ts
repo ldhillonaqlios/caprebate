@@ -101,7 +101,7 @@ import {
   assertResearchSection, assertSignedEngagement, catalogue, consultAllowed, freeGate, stateUnderGates,
   storeResearchOutcomes, type CatalogueEntry, type RunDeps, type SourceOutcome,
 } from './research.ts';
-import { FREE_CONNECTORS } from '../../integrations/connectors/free-registers.ts';
+import { FREE_CONNECTORS } from '../../integrations/index.ts';
 import { PAID_CONNECTORS } from '../../integrations/index.ts';
 import { switchedOn, REGISTER_SWITCHES } from '../../integrations/index.ts';
 import { UNMEASURED_MATCH_GRADE_CAP, type ReviewCandidate } from '../../integrations/index.ts';

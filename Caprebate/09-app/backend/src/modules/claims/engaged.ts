@@ -59,7 +59,7 @@ import { formatShownRange } from '../../shared/index.ts';
 import { stage as stageOf } from '../../shared/index.ts';
 import { answerLabel, NotFoundAsRefusal } from '../../core/index.ts';
 import { RECEIVED_ONLY_BY_UPLOAD } from './documents.ts';
-import { DERIVE_FIELD_OF } from '../../integrations/connectors/free-registers.ts';
+import { DERIVE_FIELD_OF } from '../../integrations/index.ts';
 import {
   assertSignedEngagement, catalogue, LETTER_WORDS, REGISTRY_ID_OF, type SignedEngagement,
 } from './research.ts';

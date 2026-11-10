@@ -36,7 +36,7 @@ import { sweepMessages } from '../modules/crm/index.ts';
 import { inspireStoreFromEnv, INSPIRE_KEEP_DAYS } from '../integrations/index.ts';
 import { randomUUID } from 'node:crypto';
 import { liveTransport, postcodeStore } from '../integrations/index.ts';
-import { runSmokeCommand, runSwitchedOnCommand } from '../integrations/connectors/test-lookups.ts';
+import { runSmokeCommand, runSwitchedOnCommand } from './test-lookups.ts';
 import { zoomPastCall } from '../integrations/index.ts';
 
 const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
@@ -346,7 +346,7 @@ async function main(): Promise<number> {
    * IT NOW KEEPS THE OWNER'S FIVE CONDITIONS (Word question 170, answered 25 September
    * 2026) as refusals, not as a printed warning — who and why required, a log outside the repository that keeps only
    * the connector, the time, PASS or NO, who and why, three lookups per connector each time it is switched on, never
-   * a client's values, and never a demonstration. src/integrations/connectors/test-lookups.ts does all of it; this hands it the
+   * a client's values, and never a demonstration. src/app/test-lookups.ts does all of it; this hands it the
    * live transport and the key file.
    * ------------------------------------------------------------------ */
   if (cmd === 'smoke') {

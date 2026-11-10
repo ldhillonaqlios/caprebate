@@ -293,7 +293,7 @@ describe('condition 5 — never a demonstration', () => {
 
 describe('a PASS, in-process on a recorded answer', () => {
   test('R1 — the service took the call: PASS is logged, and nothing of the answer is', async () => {
-    const L = await import('../../src/integrations/connectors/test-lookups.ts');
+    const L = await import('../../src/app/test-lookups.ts');
     const { fixtureTransport } = await import('../../src/integrations/connectors/http.ts');
     const { secretsFromValues, forgetRegisteredSecretsForTest } = await import('../../src/core/secrets.ts');
     const w = world();
@@ -318,7 +318,7 @@ describe('a PASS, in-process on a recorded answer', () => {
   });
 
   test('R2 — the normalising that the client check relies on', async () => {
-    const L = await import('../../src/integrations/connectors/test-lookups.ts');
+    const L = await import('../../src/app/test-lookups.ts');
     assert.equal(L.normalisePostcode(' sw1a 2as '), 'SW1A2AS');
     assert.equal(L.normaliseCompanyNumber('1234567'), '01234567');
     assert.equal(L.normaliseCompanyNumber('sc123456'), 'SC123456');
