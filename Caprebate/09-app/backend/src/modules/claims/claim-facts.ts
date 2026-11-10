@@ -40,7 +40,7 @@ import { NotFoundAsRefusal } from '../../core/index.ts';
 import { SOURCES as REGISTER_SOURCES } from '../../integrations/index.ts';
 import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type EngineWindow, type SectorId } from '../../shared/index.ts';
 import { packSwitchReadings } from '../../shared/index.ts';
-import { TAXONOMY_SECTOR, taxonomy } from '../survey/index.ts';
+import { TAXONOMY_SECTOR, taxonomy } from './fixture-taxonomy.ts';
 import type { PackGrant } from '../survey/index.ts';
 import { CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, isCompanyOrRoleToken } from '../clients/index.ts';
 import { claimObjFor } from './claim-object.ts';

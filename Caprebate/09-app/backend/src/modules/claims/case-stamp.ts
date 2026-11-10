@@ -64,7 +64,7 @@ import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
 import { FUNNEL_SWITCHES } from '../assessment/index.ts';
 import { HOMEDATA_DIMENSIONS } from '../../integrations/index.ts';
 import { REGISTER_SWITCHES } from '../../integrations/index.ts';
-import { CLAUDE_SWITCHES } from '../../integrations/connectors/claude.ts';
+import { CLAUDE_SWITCHES } from '../../integrations/index.ts';
 import { PICK_SWITCHES } from './match-review.ts';
 import { getClaimsIdAssessmentIdById, insertClaimVersionStamps, listTaxAdviserSignoffsIdRecordHashByClaimId } from './data.ts';
 // The anchor log is the survey's, and two switches are compliance's and the public site's: asked through the claims' ports (Phase 161l2).

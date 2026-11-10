@@ -20,8 +20,7 @@ import { h, raw, page, type Safe } from '../../shared/index.ts';
 import * as D from './documents.ts';
 import { badge, claimRef, dataLink, savedMessage, sectionList, why, type RecordTab } from '../../shared/index.ts';
 import type { FsObjectStore } from '../../shared/index.ts';
-import { ANSWER_WORDS, LEFT_OUT_NOTE, VOUCH_ANSWERS } from './document-reading.ts';
-import { earlyQuestions } from '../portal/index.ts';
+import { ANSWER_WORDS, EARLY_VOUCH_PREFIX, LEFT_OUT_NOTE, VOUCH_ANSWERS } from './document-reading.ts';
 
 export type DocumentPageDeps = {
   app: App;
@@ -334,4 +333,25 @@ export function typesPage(d: DocumentPageDeps, actor: Actor, types: readonly D.T
       <p class="help">${types.length} ${types.length === 1 ? 'type' : 'types'}, grouped by who may read them.</p>
       ${sectionList('Document types, by who may read them', sections)}`,
   });
+}
+
+/**
+ * THE QUESTION ABOUT A NAME, ASKED WHERE THE TYPE IS CHOSEN. The upload forms and the request form draw
+ * this; each question says which kinds of file it is about, because the form runs no script and cannot hide it until a
+ * type is picked. Only the answer that belongs to the type chosen is kept. "Leave it for now" sends nothing, and the
+ * question is then asked on the file's own page, as before — it is never read as a no.
+ *
+ * Moved here from the portal's client files by Phase 161l2: the claims' request and upload forms draw it, and the
+ * portal's and the CRM's forms draw it through the claims' front door.
+ */
+export function earlyQuestions(
+  qs: readonly { readonly field_id: string; readonly question: string; readonly types: readonly string[] }[] | undefined, idp: string,
+): Safe {
+  if (qs === undefined || qs.length === 0) return raw('');
+  return h`<fieldset class="early"><legend>Only if it is one of these</legend>
+    ${qs.map((q) => h`<p><strong>If it is ${q.types.join(' or ')}:</strong> ${q.question}</p>
+      <p class="choices">${VOUCH_ANSWERS.map((a) => h`<label class="tickbox"><input type="radio" id="${idp}-${q.field_id}-${a}" name="${EARLY_VOUCH_PREFIX}${q.field_id}" value="${a}"> ${ANSWER_WORDS[a]}</label>`)}
+        <label class="tickbox"><input type="radio" name="${EARLY_VOUCH_PREFIX}${q.field_id}" value="" checked> Leave it for now</label></p>`)}
+    <p class="help">Only yes lets us keep the name the first time we read the file. You can change it later on the file’s own page.</p>
+  </fieldset>`;
 }

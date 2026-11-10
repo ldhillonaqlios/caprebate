@@ -11,15 +11,26 @@ export { derivedJurisdiction, jurisdictionOf, propertyJurisdiction } from './jur
 export type { JurisdictionReading } from './jurisdiction.ts';
 export { clientStageForClaim, enteredAt, loadPipelineClaim, raiseBusinessStage, reportDeliveredOn, setGateOutReader } from './claim-stage.ts';
 export type { GateNeeds, Need, PipelineClaim } from './claim-stage.ts';
+// What it asks the survey (its port, Phase 161l2): the survey hands its read in as its door loads.
+export { setSurveyorJobsSeenReader } from './survey-jobs-seen.ts';
+export type { SurveyorJobsSeenReader } from './survey-jobs-seen.ts';
 // What the outside services ask it (their ports): handed in first, as it reaches only its own data and their door.
 import './research-subject.ts';
+// What the test lookups ask it (the outside services' port, Phase 161l2).
+import './test-lookup-claims.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
+// Phase 161l2: the fixture list (moved from the survey's pack lines); it reads only its file.
+export { parseCsv, taxonomy, TAXONOMY_FILE, TAXONOMY_SECTOR } from './fixture-taxonomy.ts';
+export type { TaxonomyRow } from './fixture-taxonomy.ts';
 export { computeFee, controlsView, FEE_CONTROLS, letterFee, letterFees, PAYMENT_TERMS_QUESTION } from './fee-controls.ts';
 export { checksBlock, checksSummary, claimChecksBlock, clientStepsCard, STEP_ANCHOR } from './approvals-pages.ts';
 export { getClaimContactsIdByClaimIdContactId, getClaimContactsIdClaimIdById, getClaimDeliverablesCountByBusinessIdState, getClaimDeliverablesIssuedOnKindByClaimIdState, getClaimFactsAnswerByClaimIdFactKey, getClaimGrantsCountByBusinessIdSourceId, getClaimMilestonesAtByClaimIdMilestone, getClaimReconciliationsFiledOnByClaimId, getClaimReconciliationsIdFiledOnByClaimId, getClaimsBById, getClaimsBusinessIdById, getClaimsBusinessIdStageById, getClaimsClaimRefById, getClaimsCountByBusinessId, getClaimsCountByBusinessIdStage, getClaimsIdBusinessIdById, getClaimsIdBusinessIdById2, getClaimsIdBusinessIdById3, getClaimsIdBusinessIdById5, getClaimsIdBusinessIdById7, getClaimsIdByBusinessIdAssessmentId, getClaimsIdByBusinessIdLabel, getClaimsIdByIdBusinessId, getClaimsIdClaimRefById3, getClaimsIdStageById, getClaimsPById, getClaimsPropertyIdByIdBusinessId, getClaimsStageBusinessIdById, getClaimsStageById, getClaimsStageHoldReturnStageById, getClaimStageMovesAtByClaimId, getClaimStageMovesAtByClaimIdKind, getClaimStageMovesAtByClaimIdToStage, getClaimStageMovesReasonCodeByClaimIdKind, getDocumentsIdById, getDocumentsIdByIdBusinessId, getEngagementsAtByBusinessIdLetterState, getEngagementsIdLetterStateByBusinessId3, getEngagementsLetterStateSignedAtByBusinessId2, getEngagementsSByBusinessId, getEngagementsStateSignedAtById, getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn, getLogicalDocumentsCountByBusinessIdTypeCode, getPropertiesAddressLine1AddressLine2ById, getPropertiesBusinessIdById, getPropertiesBusinessIdTenureById, getPropertiesClaimantRoleClaimantRoleSourceById, getPropertiesCouncilAreaById, getPropertiesCouncilAreaCouncilAreaSourceById, getPropertiesCountByBusinessId, getPropertiesIdAddressLine1ByBusinessId, getPropertiesIdBusinessIdById, getPropertiesIdByBusinessId, getPropertiesIdByBusinessId2, getPropertiesIdByBusinessId3, getPropertiesIdByIdBusinessId, getPropertiesPostcodeByBusinessId, getPropertiesPostcodeJurisdictionById, getPropertiesTenureTenureSourceById, insertClaimContacts, insertClaimDeliverables2, insertClaimFacts2, insertClaimMilestones, insertClaimMilestones2, insertClaimRefSeries, insertClaims, insertClaimStageMoves, insertClaimStageMoves2, insertClaimStageMoves3, insertClaimStageMoves4, insertEngagements2, insertProperties, insertProperties2, insertProperties3, insertProperties4, insertProperties5, insertTaxAdviserSignoffs2, listClaimReconciliationsClaimIdBusinessId, listClaimsIdBusinessId, listClaimsIdBusinessIdByPropertyId, listClaimsIdByBusinessId, listClaimsIdByBusinessId2, listClaimsIdClaimRefByBusinessId3, listClaimsIdClaimRefByBusinessIdLabel, listClaimsIdClaimRefByOwnerId, listClaimsIdClaimRefByStage, listClaimsIdPropertyIdByBusinessIdStage, listClaimsIdStageByBusinessId, listClaimStageMovesAtKindByClaimId, listClaimStageMovesClaimIdAt, listClaimStageMovesFromStageToStageByClaimId, listClaimStageMovesToStageByClaimId, listDocumentEventsAtContractStepByDocId, listDocumentsIdFilenameByBusinessId, listDocumentsIdTypeCodeByBusinessId, listFactApprovalsFactRefActionByBusinessId2, listLogicalDocumentsId, listPropertiesBusinessIdLabelByBusinessId, listPropertiesIdByBusinessId, listPropertiesIdByBusinessId2, listPropertiesIdLabelByBusinessId, listPropertiesIdLabelByBusinessId3, listPropertiesLabelPostcodeByBusinessId, listPropertiesLabelPostcodeByBusinessId2, listPropertiesPostcode, listPropertyEventsLabelKindByAssessmentId, listSiteAreaInputsEastingNorthingByKind, listSiteAreaInputsLadCodeByKind, updateClaimContactsUnlinkedAtUnlinkedByByIdUnlinkedAt, updateClaimDeliverablesStateIssuedOnById2, updateClaimReconciliationsFiledOnFiledRecordedByById, updateClaimsOwnerIdPriorityByBusinessId, updateClaimsOwnerIdSurveyorIdById, updateClaimsStageHoldReturnStageById, updateEngagementsLetterStateViewedAtByBusinessIdLetterState, updateEngagementsLetterStateViewedAtByIdLetterState, updatePropertiesAddressLine1TownByBusinessId, updatePropertiesClaimantRoleClaimantRoleSourceById, updatePropertiesCouncilAreaCouncilAreaSourceById, updatePropertiesLabelPostcodeById, updatePropertiesLandlordUpdatedAtById, updatePropertiesLeaseEndDateUpdatedAtById, updatePropertiesSaleInProspectUpdatedAtById, updatePropertiesTenureSourceById, updatePropertiesTenureTenureSourceById, updatePropertiesTenureTownById } from './data.ts';
 export { ANSWER_WORDS, EARLY_VOUCH_PREFIX, earlyVouchesFrom, VOUCH_ANSWERS } from './document-reading.ts';
 export { ALWAYS_NATURAL_PERSON_ROLES, assertHumanCaptureClean, assertRestoreApproved, BACKUP_CYCLE, CAPTURE_NAME_PATTERNS, classifyPartyReference, deletionDueAt, knownBackupCycleDays, ret3DueAt, RET7, ROLE_TOKENS } from './documents/client-doc-ingestion.ts';
 export { callModel, DOC_SPECS, HUMAN_READ_ONLY_TYPES, PERSON_NAME_PATTERNS, PipelineError, sanitise, specFor } from './documents/document-pipeline.ts';
+// Phase 161l2: the document reader on the Claude API, moved here from the outside services' Claude client.
+export { prepareClaudeModel, readPayloadWithClaude, toRawExtraction } from './document-reader-claude.ts';
+export type { ModelRead } from './document-reader-claude.ts';
 export { assertContractCovered, closeJob, CONTRACT_COVERAGE, deleteDueRawFile, durableKeyFor, FAIL_CLOSED_SETTINGS, INGESTION_BOUNDARY, issueUploadUrl, openTransparency, pdfLooksComplete, processUpload, quarantineKeyFor, RECEIPT_CONTRACT, receiptPolicyFor, recordUploadComplete, retainedTextKeyFor, runExtraction, runScheduledSweeps, shouldPromoteRawFile, sniffAccepted, UPLOAD_LIMITS, UploadHandlerError, writeClaims } from './documents/upload-handler.ts';
 export { discountsFor } from './fee-discounts.ts';
 export { loadLetter, TEST_LETTER_PATH } from './letter.ts';
@@ -35,17 +46,20 @@ export { claimDocumentsPanel, claimFileDays, clientFolder, createDocumentRequest
 export { checksPanel, checksPanelIfPermitted, clientSteps, stepDef, tellClient } from './approvals.ts';
 export * as claimFactsModule from './claim-facts.ts';
 export { acquisitionDateReading, amendmentWindowReading, captured, claimantTypeReading, earlyWindowWarning, electionResolved, elementName, factsObj, factsPanel, floorAreaOnRecord, grantsTraced, latestFacts, packGrantsFor, PAYER_CLASSES, releasedFactReader, yearEndKnown } from './claim-facts.ts';
+// Phase 161l2: the client's own filing confirmation, moved here from the portal.
+export { clientConfirmationNeed, filingRoute, recordClientFilingConfirmation } from './client-filing.ts';
+export type { FilingRoute } from './client-filing.ts';
 export { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock, handleClaimRecord } from './claim-record-pages.ts';
 export { accountantFiles, aftercarePanel, clawbackReading, clientDeliverables, deliverableIssued, deliverableIssuedNeed, DELIVERABLES, deliverablesPanel, figuresPanel, filingRecordedNeed, invoiceWindowNeed, latestSignOff, QUOTE_GAP_REVIEW_PCT, raiseDisposalTask, reportsWindowNeed, signOffRecordNeed, signOffSinceEntry, VARIANCE_CATEGORIES, varianceOf } from './claim-record.ts';
 export { claimReturns, claimRoutes, legalDeadlineNeed, returnsOf, routesWhy } from './claim-route.ts';
 // Phase 161l2: the ports the claims own for what they ask the areas above them, each filled by that area's door; and
 // what the survey reads here in place of its joins to the claims' sign-offs.
-export { setAdminAsked, setFinanceAsked, setPortalAsked, setStampedSwitch, setSurveyAsked } from './above-ports.ts';
-export type { AdminAsked, FinanceAsked, PortalAsked, StampedSwitch, SurveyAsked } from './above-ports.ts';
+export { setFinanceAsked, setPortalAsked, setStampedSwitch, setSurveyAsked } from './above-ports.ts';
+export type { FinanceAsked, PortalAsked, StampedSwitch, SurveyAsked } from './above-ports.ts';
 export { listTaxAdviserSignoffsApprovalIdClaimIdByApprovalIds, sameFigure } from './data.ts';
-// The steps the client is told of (client_step_notices, the claims' table since Phase 161l2), for the portal's take-back.
-export { listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep } from './data.ts';
-export { claimDocumentsBlock, placeDocumentsBlock } from './documents-pages.ts';
+export { claimDocumentsBlock, earlyQuestions, placeDocumentsBlock } from './documents-pages.ts';
+// Phase 161l2: one way in for a file from a member of staff, moved here from the portal's client files.
+export { readUpload, receiveFile } from './receive-file.ts';
 export { handleDocuments } from './documents.routes.ts';
 export { askButton, businessPageHtml, DONE_WORDS, handleEngaged, panel1, panel2, panel3, panel4 } from './engaged-pages.ts';
 export * as engagedModule from './engaged.ts';
@@ -54,6 +68,9 @@ export { letterState, letterSteps, signedCopy } from './engagement-send.ts';
 export { MANDATORY_DOCUMENTS, mandatoryDocumentNeeds, missingDocuments, receivedOnClaim } from './mandatory-documents.ts';
 export * as researchModule from './research.ts';
 export { assertSignedEngagement, catalogue, registerAttribution } from './research.ts';
+// Phase 161l2: the client's business and its letter as a login may read them, moved here from the portal.
+export { ClientNotFoundAsRefusal, engagement, readBusiness } from './client-engagement.ts';
+export type { Business, EngagementView } from './client-engagement.ts';
 export { ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST, letterFacts, letterOptions, seedSignatureRecord, shownLetter, SIGN_WORDS, signByLink, signEngagement, signingMissing, signLinkFor } from './signing.ts';
 export * as siteAreaInputsModule from './site-area-inputs.ts';
 export * as titleByHandModule from './title-by-hand.ts';
@@ -85,7 +102,6 @@ export { getTaxAdviserSignoffsCountByApprovalIdRecordedAt } from './data.ts';
 export { CAPTURE_SOURCES, FACTS } from './claim-facts.ts';
 export type { FactReading } from './claim-facts.ts';
 export { listClaimFactsIdFactKeyByClaimIdFactKey } from './data.ts';
-export { listClientTasksQuestionAnswerByBusinessIdState } from './data-borrowed.ts';
 export type { EngagementSigning, LetterFacts } from './signing.ts';
 export { getClaimsIdClaimRefByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel2 } from './data.ts';
 // Phase 161l1: read by ids, for the areas above that joined these tables to their own rows; and for the seed.
@@ -110,6 +126,8 @@ export { claimsAssets } from './routes.ts';
 // Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
 export { listClaimContactsIdContactIdLinkedByByClaimIdLinked, listClaimMilestonesRecordedAtMilestoneRecordedByByClaimId, listClaimsIdClaimRefOwnerIdByClaimRef, listClaimsIdClaimRefStageByIds, listClaimStageMovesAtKindActorIdByClaimIdNewest, listClaimStageMovesAtKindActorIdByClaimIdOldest, listClaimStageMovesReasonCodeByClaimIdToNegative } from './data.ts';
 export { getClaimDeliverablesContentHashByClaimIdIssuedReport, listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId, listDocumentsIdDeclaredTypeTypeCodeByBusinessId, listDocumentsIdLogicalDocumentIdVersionNoByIds, listDocumentsUploadedByByBusinessIdSince, listLogicalDocumentsIdTypeCodeVersionByIds } from './data.ts';
+// Phase 161l2: the document types (this module's table now), for the administration, the CRM and the portal.
+export { getDocumentTypesHandlerTypeActiveByCode, getDocumentTypesLabelByCode2, listDocumentTypesCodeLabel, listDocumentTypesCodeLabelByActiveHandlerType2, listDocumentTypesCodeReadersLabelByCodes } from './data.ts';
 // What the client record asks the claims (its port, src/modules/clients/messages.ts). Last, as it reaches the client record's door.
 import './claim-of-business.ts';
 // Phase 161l2: the claim row and a claim's name for a person (moved up from the client record, src/modules/claims/claim-row.ts),

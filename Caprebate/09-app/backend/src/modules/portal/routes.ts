@@ -15,7 +15,7 @@ import { clientMessage, clientShareChoices, portalMessagesBody, readPortalSend, 
 import { agreementLinks, safeBack } from '../public-site/index.ts';
 import { handlePortalEvidence, portalEvidenceCard } from '../survey/index.ts';
 import { handleConfirmLink } from './accountant-confirm-pages.ts';
-import { readUpload, receiveFile } from './client-files-pages.ts';
+import { readUpload, receiveFile } from '../claims/index.ts';
 import { portalDashboard } from './portal-dashboard.ts';
 import { stepName } from './portal-steps.ts';
 import * as P from './portal.ts';

@@ -21,15 +21,20 @@
  *
  * NOTHING HERE WRITES. It reads and it says. Removing is `removeRegisterRecord` and `removeRegisterField` in
  * src/integrations/register-ingest.ts — the one door in is the one door out.
+ *
+ * WHERE IT SITS (Phase 161l2, 10 November 2026): moved here from the portal (src/modules/portal/take-back.ts), as only
+ * the claims' take-backs (documents.ts, match-review.ts, title-by-hand.ts) and research use it. Its reads are the
+ * claims' own, the outside services' through their door, and the survey's jobs through the claims' port
+ * (survey-jobs-seen.ts).
  */
 
 import type { Db } from '../../core/index.ts';
 import { screenDetail } from '../../core/index.ts';
 import { countRegisterRecordsSince } from '../../integrations/index.ts';
-import { getClaimDeliverablesCountByBusinessIdState, getClaimGrantsCountByBusinessIdSourceId, listFactApprovalsFactRefActionByBusinessId2 } from '../claims/index.ts';
-import { getSignatoryChecksCountByBusinessIdSource } from '../compliance/index.ts';
-import { getSurveyorJobsCountByBusinessIdState } from '../survey/index.ts';
-import { listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep } from '../claims/index.ts';
+import { getClaimDeliverablesCountByBusinessIdState, getClaimGrantsCountByBusinessIdSourceId, listFactApprovalsFactRefActionByBusinessId2 } from './data.ts';
+import { getSignatoryChecksCountByBusinessIdSource, listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep } from './data.ts';
+// The survey's jobs, through the port the claims own (the survey hands its read in as it loads).
+import { surveyorJobsSeenSince } from './survey-jobs-seen.ts';
 
 /* ================================================================== *
  * 1 · WHO HAS ALREADY APPROVED IT
@@ -128,7 +133,7 @@ export function lookAgainAfter(db: Db, business_id: string, rec: RecordAsItStood
   add('REPORT_ISSUED', issued, 'A report or pack for this client was issued while it stood. Check whether it used this entry.');
 
   if (field === undefined) {
-    const jobs = getSurveyorJobsCountByBusinessIdState<{ n: number }>(db, [business_id, since])?.n ?? 0;
+    const jobs = surveyorJobsSeenSince(db, business_id, since);
     add('SURVEYOR_JOB', jobs, 'A surveyor’s job for this client could see this entry. Tell the surveyor it has been taken out.');
   }
 

@@ -358,6 +358,10 @@
    "area": "integrations",
    "kind": "logic"
   },
+  "src/integrations/connectors/test-lookup-claims.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
   "src/integrations/connectors/test-lookups.ts": {
    "area": "integrations",
    "kind": "logic"
@@ -471,10 +475,6 @@
    "kind": "logic"
   },
   "src/modules/admin/automation-rules.ts": {
-   "area": "admin",
-   "kind": "logic"
-  },
-  "src/modules/admin/claims-ports.ts": {
    "area": "admin",
    "kind": "logic"
   },
@@ -674,6 +674,14 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/client-engagement.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/client-filing.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/client-ports.ts": {
    "area": "claims",
    "kind": "logic"
@@ -682,15 +690,15 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/modules/claims/data-borrowed.ts": {
-   "area": "claims",
-   "kind": "data"
-  },
   "src/modules/claims/data.ts": {
    "area": "claims",
    "kind": "data"
   },
   "src/modules/claims/defence-pack.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/document-reader-claude.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -746,6 +754,10 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/fixture-taxonomy.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/index.ts": {
    "area": "claims",
    "kind": "other"
@@ -778,6 +790,10 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/receive-file.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/register-import-script.ts": {
    "area": "claims",
    "kind": "other"
@@ -807,6 +823,18 @@
    "kind": "logic"
   },
   "src/modules/claims/site-area-run.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/survey-jobs-seen.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/take-back.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/test-lookup-claims.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -1246,10 +1274,6 @@
    "area": "portal",
    "kind": "page"
   },
-  "src/modules/portal/client-filing.ts": {
-   "area": "portal",
-   "kind": "logic"
-  },
   "src/modules/portal/client-layout.ts": {
    "area": "portal",
    "kind": "page"
@@ -1295,10 +1319,6 @@
    "kind": "routes"
   },
   "src/modules/portal/signup.ts": {
-   "area": "portal",
-   "kind": "logic"
-  },
-  "src/modules/portal/take-back.ts": {
    "area": "portal",
    "kind": "logic"
   },
@@ -1495,6 +1515,10 @@
    "kind": "logic"
   },
   "src/modules/survey/survey-evidence.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/survey-jobs-seen.ts": {
    "area": "survey",
    "kind": "logic"
   },

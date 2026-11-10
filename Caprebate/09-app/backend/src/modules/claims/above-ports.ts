@@ -2,7 +2,7 @@
  * WHAT THE CLAIMS ASK THE AREAS ABOVE THEM (Phase 161l2; 09-app/docs/ARCHITECTURE.md rule 2). The claims sit below the
  * survey, finance, compliance, admin, the portal and the public site in the order, so they never import them. Where a
  * claim's rule must read something one of them keeps (the survey's approved versions and its legal check, the portal's
- * accountant confirmations and the client's acceptance, the fee invoice, the document types' names, two switches the
+ * accountant confirmations and the client's acceptance, the fee invoice, two switches the
  * case stamp records), it asks here: these are PORTS THE CLAIMS OWN, and each of those areas hands its own functions in,
  * unchanged, as its front door loads (its `claims-ports.ts`).
  *
@@ -12,7 +12,7 @@
  */
 import type { Db, Param, Row } from '../../core/index.ts';
 import type { LegalVerdict } from '../survey/index.ts';
-import type { ConfirmKind, ConfirmRow, FilingRoute, ReturnFiling } from '../portal/index.ts';
+import type { ConfirmKind, ConfirmRow, ReturnFiling } from '../portal/index.ts';
 
 /** A read of one row, as every data file's reads are. */
 type GetRow = <T extends Row = Row>(db: Db, params?: readonly Param[]) => T | undefined;
@@ -70,11 +70,10 @@ export function getSurveyPackLegalAnswersValueJsonAtByPropertyIdClaimIdsG9d<T ex
 export function listSurveyorJobsSurveyorIdByClaimIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] { return survey().listSurveyorJobsSurveyorIdByClaimIds<T>(db, params); }
 
 /* ================================================================== *
- * THE PORTAL: the accountant's confirmations, the client's filing route and their acceptance of the report
+ * THE PORTAL: the accountant's confirmations and the client's acceptance of the report
  * ================================================================== */
 
 export type PortalAsked = {
-  readonly filingRoute: (db: Db, c: { id: string; business_id: string }, since: string) => FilingRoute;
   readonly latestAnswer: (db: Db, claim_id: string, kind: ConfirmKind, since?: string, period_end?: string) => ConfirmRow['answer'] | null;
   readonly returnFilings: (db: Db, claim_id: string, todayIso: string) => ReturnFiling[] | null;
   readonly getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing: GetRow;
@@ -84,7 +83,6 @@ var portalAsked: PortalAsked | undefined;
 export function setPortalAsked(p: PortalAsked): void { portalAsked = p; }
 function portal(): PortalAsked { return portalAsked ?? refused('the portal'); }
 
-export function filingRoute(db: Db, c: { id: string; business_id: string }, since: string): FilingRoute { return portal().filingRoute(db, c, since); }
 export function latestAnswer(db: Db, claim_id: string, kind: ConfirmKind, since = '', period_end?: string): ConfirmRow['answer'] | null { return portal().latestAnswer(db, claim_id, kind, since, period_end); }
 export function returnFilings(db: Db, claim_id: string, todayIso: string): ReturnFiling[] | null { return portal().returnFilings(db, claim_id, todayIso); }
 export function getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined { return portal().getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing<T>(db, params); }
@@ -100,16 +98,6 @@ export function setFinanceAsked(p: FinanceAsked): void { financeAsked = p; }
 export function getInvoiceNumbersSeqByInvoiceIdKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return (financeAsked ?? refused('finance')).getInvoiceNumbersSeqByInvoiceIdKind<T>(db, params);
 }
-
-/* ================================================================== *
- * ADMIN: the document types' names
- * ================================================================== */
-
-export type AdminAsked = { readonly listDocumentTypesCodeLabel: ListRows; readonly getDocumentTypesLabelByCode: GetRow };
-var adminAsked: AdminAsked | undefined;
-export function setAdminAsked(p: AdminAsked): void { adminAsked = p; }
-export function listDocumentTypesCodeLabel<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] { return (adminAsked ?? refused('admin')).listDocumentTypesCodeLabel<T>(db, params); }
-export function getDocumentTypesLabelByCode<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined { return (adminAsked ?? refused('admin')).getDocumentTypesLabelByCode<T>(db, params); }
 
 /* ================================================================== *
  * THE CASE STAMP'S SWITCHES KEPT ABOVE: whether each is on, read when a stamp is taken (src/modules/claims/case-stamp.ts)

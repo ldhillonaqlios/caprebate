@@ -36,7 +36,7 @@ import { sweepMessages } from '../modules/crm/index.ts';
 import { inspireStoreFromEnv, INSPIRE_KEEP_DAYS } from '../integrations/index.ts';
 import { randomUUID } from 'node:crypto';
 import { liveTransport, postcodeStore } from '../integrations/index.ts';
-import { runSmokeCommand, runSwitchedOnCommand } from '../integrations/connectors/test-lookups.ts';
+import { runSmokeCommand, runSwitchedOnCommand } from '../integrations/index.ts';
 import { zoomPastCall } from '../integrations/index.ts';
 
 const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';

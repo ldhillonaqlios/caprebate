@@ -42,7 +42,8 @@ import { clientAuditCount } from '../compliance/index.ts';
 import { SOURCES as REGISTER_SOURCES, getResearchRunsWhoAtByBusinessIdAt } from '../../integrations/index.ts';
 import { listRegisterRecordsSourceIdEntityIdByBusinessIdPropertyId } from '../../integrations/index.ts';
 import { getSurveyorJobsIdSurveyorIdByClaimId } from '../survey/index.ts';
-import { listClientTasksQuestionAnswerByBusinessIdState } from '../claims/index.ts';
+// Phase 161l2: the client's answers and their checks are the client record's, read through its door.
+import { listClientTasksQuestionAnswerByBusinessIdState } from '../clients/index.ts';
 import { getSurveyPackApprovalsCountByPackId, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyPacksIdByJobId, listSurveyPackReadsChapterSeqByJobIdUserId } from '../survey/index.ts';
 import { listClientTasksFactIdByBusinessIdState, listClientTasksQuestionKindByBusinessIdState } from '../clients/index.ts';
 import { listClaimFactsIdFactKeyByClaimIdFactKey } from '../claims/index.ts';

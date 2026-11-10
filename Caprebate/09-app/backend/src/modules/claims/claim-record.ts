@@ -40,7 +40,8 @@ import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
 import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from '../clients/index.ts';
 import { enteredAt, raiseBusinessStage, type Need } from './claim-stage.ts';
-import { filingRoute, latestAnswer, returnFilings } from './above-ports.ts';
+import { filingRoute } from './client-filing.ts';
+import { latestAnswer, returnFilings } from './above-ports.ts';
 import type { ReturnFiling } from '../portal/index.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from '../../shared/index.ts';
@@ -58,8 +59,10 @@ import { freezeReturnContext, returnContext } from './return-entries.ts';
 import { getClaimDeliverablesByClaimIdKind, getClaimDeliverablesCountByClaimIdKind, getClaimDeliverablesIdByClaimIdKind, getClaimDeliverablesIssuedOnVersionByClaimIdKind, getClaimDeliverablesNByClaimIdKind, getClaimDeliverablesVersionIssuedOnByClaimIdKind, getClaimReconciliationsByClaimId, getClaimReconciliationsFiledOnByClaimId, getClaimReconciliationsFiledOnSnapshotHashByClaimId, getClaimReconciliationsIdByClaimId, getClaimsClaimRefById, getClaimsIdBusinessIdById4, getClaimsIdClaimRefById2, getClaimsIdCreatedAtById, getHmrcEnquiriesClosedOnOutcomeByClaimIdClosedOn, getHmrcEnquiriesIdByClaimIdClosedOn, getHmrcEnquiriesIdOpenedOnByIdClaimId, getTaxAdviserSignoffsIdClaimIdByClaimId, getTaxAdviserSignoffsIdClaimIdByClaimIdRecordedAt, getTaxAdviserSignoffsIdRecordHashByClaimIdRecordedAt, insertClaimDeliverables, insertClaimReconciliations, insertClaimReturnFilings, insertDefencePackManifests, insertHmrcEnquiries, insertTaxAdviserSignoffs, listClaimDeliverablesByBusinessIdState, listClaimDeliverablesByClaimId, listClaimReturnFilingsPeriodEndFiledOnByClaimId, listHmrcEnquiriesIdOpenedOnByClaimId, updateClaimDeliverablesStateIssuedOnById, updateClaimDeliverablesStateUpdatedByByClaimIdKind, updateClaimReconciliationsDValuePenceDDateCapturedById, updateClaimReconciliationsFiledOnFiledRecordedByById, updateClaimReconciliationsVarianceCategoryVarianceNotesById, updateHmrcEnquiriesClosedOnOutcomeById } from './data.ts';
 import { getBusinessesSectorById, getStaffTasksIdByPropertyIdTitle, listStaffTasksIdTitleByPropertyIdTitle } from '../clients/index.ts';
 import { listSurveyPackApprovalsFingerprintSnapshotJsonByClaimId } from './data.ts';
-// What the survey, finance, admin and the portal keep, through the ports the claims own (Phase 161l2).
-import { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing, getInvoiceNumbersSeqByInvoiceIdKind, getSurveyPackApprovalsJsonExtractSnapshotJsonFById, getSurveyorCommitmentsIdJobIdByClaimId, listDocumentTypesCodeLabel } from './above-ports.ts';
+// What the survey, finance and the portal keep, through the ports the claims own (Phase 161l2).
+import { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing, getInvoiceNumbersSeqByInvoiceIdKind, getSurveyPackApprovalsJsonExtractSnapshotJsonFById, getSurveyorCommitmentsIdJobIdByClaimId } from './above-ports.ts';
+// The document types are this module's table (Phase 161l2).
+import { listDocumentTypesCodeLabel } from './data.ts';
 import { getAssessmentsShownLowPenceShownHighPenceById, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm2, getEstimatesQualifyingExpenditurePenceSealedAtByAssessmentId } from '../assessment/index.ts';
 
 export type RecordDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
@@ -620,7 +623,7 @@ function reconAudit(d: RecordDeps, actor: Actor, c: ClaimRow, step: string, at: 
 }
 
 /**
- * Whether the client's accountant files this claim — the Reports route (src/modules/portal/client-filing.ts) is
+ * Whether the client's accountant files this claim — the Reports route (src/modules/claims/client-filing.ts) is
  * ACCOUNTANT. Then the filing date is theirs to give, through their own link (src/modules/portal/accountant-confirm.ts).
  */
 export function accountantFiles(db: Db, claim_id: string): boolean {
@@ -630,7 +633,7 @@ export function accountantFiles(db: Db, claim_id: string): boolean {
 
 /**
  * EACH RETURN, WHERE STAFF RECORD THE FILING. The client has no
- * accountant (src/modules/portal/client-filing.ts route CLIENT), so staff record each return's filing (migration 116), as the
+ * accountant (src/modules/claims/client-filing.ts route CLIENT), so staff record each return's filing (migration 116), as the
  * accountant confirms each by its own link on the other route (accountant-confirm.ts returnFilings). The same reading
  * (Word question 283): a return already due must be recorded as filed; one not yet due is held in aftercare with its
  * due date. A filing recorded before, for the whole claim (the reconciliation's filed_on), counts for the earliest

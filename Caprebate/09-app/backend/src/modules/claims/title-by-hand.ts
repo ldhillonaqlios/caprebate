@@ -25,7 +25,7 @@
  *
  * AND IT CAN BE TAKEN BACK, which a wrong pick that could not be undone showed is not optional: a separate act, with a reason, that
  * removes the one record this entry wrote, refuses while a person has approved a fact from it, lists what was worked
- * out from it while it stood (src/modules/portal/take-back.ts), and keeps the entry with who took it back and why.
+ * out from it while it stood (src/modules/claims/take-back.ts), and keeps the entry with who took it back and why.
  */
 
 import { personIsClients, fillTenureFromRegisters } from './who-claims.ts';
@@ -35,7 +35,7 @@ import { authorise, can, type Actor } from '../../core/index.ts';
 import { assertSignedEngagement } from './research.ts';
 import { ingestRegisterRecord, removeRegisterRecord } from '../../integrations/index.ts';
 import { amount } from '../../integrations/index.ts';
-import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from '../portal/index.ts';
+import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from './take-back.ts';
 import { getRegisterRecordsFieldsJsonById, getRegisterRecordsIdByBusinessIdSourceId, getRegisterRecordsIdSourceIdByIdBusinessId } from '../../integrations/index.ts';
 import { getUsersDisplayNameById } from '../../core/index.ts';
 import { getPropertiesIdBusinessIdById2, getTitleByHandIdRecordIdByPropertyIdTakenBackAt, getTitleByHandRecordedByById, insertTitleByHand, listLogicalDocumentsIdSeqByBusinessIdTypeCode, listTitleByHandTitleNumberTakenBackByByPropertyIdTakenBackAt, updateTitleByHandRecordIdRemovedRecordIdById } from './data.ts';

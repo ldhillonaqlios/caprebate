@@ -4,8 +4,7 @@
  * module's own function, unchanged. Loaded last by the portal's front door.
  */
 import { setPortalAsked } from '../claims/index.ts';
-import { filingRoute } from './client-filing.ts';
 import { latestAnswer, returnFilings } from './accountant-confirm.ts';
 import { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing, getClientReportAcceptancesCountByClaimId } from './data.ts';
 
-setPortalAsked({ filingRoute, latestAnswer, returnFilings, getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing, getClientReportAcceptancesCountByClaimId });
+setPortalAsked({ latestAnswer, returnFilings, getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing, getClientReportAcceptancesCountByClaimId });

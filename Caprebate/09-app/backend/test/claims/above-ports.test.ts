@@ -1,10 +1,13 @@
 /**
  * THE CLAIMS' PORTS FOR WHAT THEY ASK THE AREAS ABOVE THEM (Phase 161l2; src/modules/claims/above-ports.ts).
  *
- * The survey, the portal, finance, admin, compliance and the public site each hand their part in as their front door
+ * The survey, the portal, finance, compliance and the public site each hand their part in as their front door
  * loads. This test checks that, once the app is built, every port is filled with that area's own function (the same
  * answer as asking the area itself), and that a port asked before its area has loaded refuses, by name, rather than
  * guess: a file that loads the ports alone, with no area above, gets an error from every one.
+ *
+ * Phase 161l2 (helper A2): the document types became the claims' own table and the client's filing confirmation moved
+ * to the claims with its table, so admin's port and the portal's filing route are no longer asked here.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,10 +19,8 @@ import * as P from '../../src/modules/claims/above-ports.ts';
 import * as SD from '../../src/modules/survey/data.ts';
 import { legalVerdictForClaim } from '../../src/modules/survey/pack-legal.ts';
 import * as PD from '../../src/modules/portal/data.ts';
-import { filingRoute } from '../../src/modules/portal/client-filing.ts';
 import { latestAnswer, returnFilings } from '../../src/modules/portal/accountant-confirm.ts';
 import { getInvoiceNumbersSeqByInvoiceIdKind } from '../../src/modules/finance/data.ts';
-import { getDocumentTypesLabelByCode, listDocumentTypesCodeLabel } from '../../src/modules/admin/data.ts';
 import { DISCLOSURE_LOG } from '../../src/modules/compliance/disclosure-log.ts';
 import { ENQUIRY_RETENTION } from '../../src/modules/public-site/enquiry-retention.ts';
 
@@ -41,7 +42,6 @@ test('every port is filled by its area as the app loads, and answers as the area
       same(P[n](db, [c.id]), SD[n](db, [c.id]), n);
     }
     same(P.listSurveyorJobsSurveyorIdByClaimIds(db, [JSON.stringify([c.id])]), SD.listSurveyorJobsSurveyorIdByClaimIds(db, [JSON.stringify([c.id])]), 'the surveyors');
-    same(P.filingRoute(db, c, ''), filingRoute(db, c, ''), 'the filing route');
     same(P.latestAnswer(db, c.id, 'FILED'), latestAnswer(db, c.id, 'FILED'), 'the latest answer');
     same(P.returnFilings(db, c.id, today), returnFilings(db, c.id, today), 'the return filings');
     same(P.getClientReportAcceptancesCountByClaimId(db, [c.id]), PD.getClientReportAcceptancesCountByClaimId(db, [c.id]), 'the acceptances');
@@ -49,9 +49,6 @@ test('every port is filled by its area as the app loads, and answers as the area
     same(P.getInvoiceNumbersSeqByInvoiceIdKind(db, [c.id]), getInvoiceNumbersSeqByInvoiceIdKind(db, [c.id]), 'the fee invoice');
   }
   same(P.getAnchorLogHash(db), SD.getAnchorLogHash(db), 'the anchor log head');
-  same(P.listDocumentTypesCodeLabel(db), listDocumentTypesCodeLabel(db), 'the document types');
-  const code = db.get<{ code: string }>('SELECT code FROM document_types ORDER BY ord LIMIT 1')?.code ?? '';
-  same(P.getDocumentTypesLabelByCode(db, [code]), getDocumentTypesLabelByCode(db, [code]), 'a document type');
   assert.equal(P.stampedSwitchOn('DISCLOSURE_LOG'), DISCLOSURE_LOG.enabled);
   assert.equal(P.stampedSwitchOn('ENQUIRY_RETENTION'), ENQUIRY_RETENTION.enabled);
   app.close();
@@ -64,9 +61,8 @@ test('a port asked before its area has loaded refuses, by name, rather than gues
     const ask = (what, f) => { try { f(); out.push(what + ': answered'); } catch (e) { out.push(what + ': ' + e.message); } };
     ask('survey', () => P.getAnchorLogHash(null));
     ask('legal', () => P.legalVerdictForClaim(null, 'c', ''));
-    ask('portal', () => P.filingRoute(null, { id: 'c', business_id: 'b' }, ''));
+    ask('portal', () => P.latestAnswer(null, 'c', 'FILED'));
     ask('finance', () => P.getInvoiceNumbersSeqByInvoiceIdKind(null, ['c']));
-    ask('admin', () => P.listDocumentTypesCodeLabel(null));
     ask('compliance', () => P.stampedSwitchOn('DISCLOSURE_LOG'));
     ask('public site', () => P.stampedSwitchOn('ENQUIRY_RETENTION'));
     console.log(JSON.stringify(out));`;
@@ -76,7 +72,6 @@ test('a port asked before its area has loaded refuses, by name, rather than gues
     'legal: What the claims ask the survey is not set up. The survey sets it up when it loads, so nothing was decided.',
     'portal: What the claims ask the portal is not set up. The portal sets it up when it loads, so nothing was decided.',
     'finance: What the claims ask finance is not set up. Finance sets it up when it loads, so nothing was decided.',
-    'admin: What the claims ask admin is not set up. Admin sets it up when it loads, so nothing was decided.',
     'compliance: What the claims ask compliance is not set up. Compliance sets it up when it loads, so nothing was decided.',
     'public site: What the claims ask the public site is not set up. The public site sets it up when it loads, so nothing was decided.',
   ]);

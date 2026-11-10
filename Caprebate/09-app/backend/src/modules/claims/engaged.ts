@@ -59,7 +59,7 @@ import { formatShownRange } from '../../shared/index.ts';
 import { stage as stageOf } from '../../shared/index.ts';
 import { answerLabel, NotFoundAsRefusal } from '../../core/index.ts';
 import { RECEIVED_ONLY_BY_UPLOAD } from './documents.ts';
-import { DERIVE_FIELD_OF } from '../../integrations/connectors/free-registers.ts';
+import { DERIVE_FIELD_OF } from '../../integrations/index.ts';
 import {
   assertSignedEngagement, catalogue, LETTER_WORDS, REGISTRY_ID_OF, type SignedEngagement,
 } from './research.ts';
@@ -67,8 +67,9 @@ import { getResearchSourcesCountByBusinessIdState, listRegisterRecordsSourceIdFi
 import { getBusinessesIdNameById4, getClientTasksIdBusinessIdById3, getClientTasksIdBusinessIdById4, getClientTasksOpenSentByBusinessId, insertClientTasks, insertClientTasks3, insertInternalNotes, listClientTasksFactIdByBusinessIdClaimId, listClientTasksFactIdStateByBusinessIdFactId, updateClientTasksStateAnswerStateById, updateClientTasksStateWithdrawnAtByIdState } from '../clients/index.ts';
 import { getAssessmentsAtByBusinessId, getAssessmentsIdSectorByBusinessId, listAssessmentAnswersOrdQuestionIdByAssessmentId2, listAssessmentAnswersQuestionIdQuestionTextByAssessmentIdSta } from '../assessment/index.ts';
 import { getClaimsIdByIdBusinessId, getPropertiesIdByIdBusinessId2 } from './data.ts';
-import { getAssessmentsBusinessIdNameByBusinessIdId, listAssessmentsBusinessIdNameByBusinessId, listInternalNotesIdBodyByBusinessId } from './data-borrowed.ts';
-import { listClientTasksIdFactIdByBusinessIdKind2 } from './data-borrowed.ts';
+import { getAssessmentsBusinessIdNameByBusinessIdId, listAssessmentsBusinessIdNameByBusinessId } from './data.ts';
+// Phase 161l2: the notes and the questions are the client record's, read through its door.
+import { listClientTasksIdFactIdByBusinessIdKind2, listInternalNotesIdBodyByBusinessId } from '../clients/index.ts';
 
 export { NotFoundAsRefusal };
 

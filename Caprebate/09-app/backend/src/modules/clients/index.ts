@@ -136,3 +136,5 @@ export { raiseToResearch } from './stage.ts';
 // Running the automation rules, through the port the CRM fills (src/modules/clients/automation-port.ts).
 export { fireAutomation, setAutomationRunner } from './automation-port.ts';
 export type { AutomationDeps, AutomationEvent, AutomationRunner, RunOutcome } from './automation-port.ts';
+// Phase 161l2: what the claims read here in place of their borrowed statements (src/modules/claims/data-borrowed.ts).
+export { listBusinessesBusinessIdNameSectorStageById, listBusinessesBusinessIdNameSectorStageNewest, listClientTasksDocumentRequestsByBusinessId, listClientTasksDocumentRequestsByBusinessIdClaimId, listClientTasksIdFactIdByBusinessIdKind2, listClientTasksQuestionAnswerByBusinessIdState, listInternalNotesIdBodyByBusinessId } from './data.ts';

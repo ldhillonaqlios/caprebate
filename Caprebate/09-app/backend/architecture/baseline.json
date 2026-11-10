@@ -1,28 +1,8 @@
 {
  "note": "THE RATCHET (tools/boundaries.cjs). Breaks of rules 1 to 4 of ARCHITECTURE.md, by rule and area. It may only go down: node tools/boundaries.cjs --lower.",
  "breaks": {
-  "1": {
-   "claims": [
-    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts"
-   ],
-   "integrations": [
-    "src/app/cli.ts -> src/integrations/connectors/test-lookups.ts",
-    "src/modules/admin/saved-keys.ts -> src/integrations/connectors/claude.ts",
-    "src/modules/claims/case-stamp.ts -> src/integrations/connectors/claude.ts",
-    "src/modules/claims/engaged.ts -> src/integrations/connectors/free-registers.ts",
-    "src/modules/claims/match-review.ts -> src/integrations/connectors/free-registers.ts",
-    "src/modules/claims/research.ts -> src/integrations/connectors/free-registers.ts",
-    "src/modules/claims/uploads.ts -> src/integrations/connectors/claude.ts"
-   ]
-  },
+  "1": {},
   "2": {
-   "claims": [
-    "claims -> admin",
-    "claims -> compliance",
-    "claims -> finance",
-    "claims -> portal",
-    "claims -> survey"
-   ],
    "compliance": [
     "compliance -> admin",
     "compliance -> public-site"
@@ -31,27 +11,11 @@
     "crm -> portal",
     "crm -> public-site"
    ],
-   "integrations": [
-    "integrations -> claims"
-   ],
    "portal": [
     "portal -> public-site"
    ]
   },
-  "3": {
-   "admin": [
-    "src/modules/claims/data-borrowed.ts : document_types"
-   ],
-   "clients": [
-    "src/modules/claims/data-borrowed.ts : businesses",
-    "src/modules/claims/data-borrowed.ts : client_task_checks",
-    "src/modules/claims/data-borrowed.ts : client_tasks",
-    "src/modules/claims/data-borrowed.ts : internal_notes"
-   ],
-   "finance": [
-    "src/modules/claims/data-borrowed.ts : fee_discounts"
-   ]
-  },
+  "3": {},
   "4": {}
  },
  "history": [

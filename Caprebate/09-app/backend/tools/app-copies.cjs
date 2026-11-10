@@ -42,7 +42,7 @@ const COPIES = [
   { original: 'Caprebate/03-app/caprebate-notices-page.html',
     why: 'the privacy and cookie notices (src/modules/public-site/notices-site.ts); four 03-app checks read the original' },
   { original: 'Caprebate/02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv',
-    why: "the fixture list a claim's survey pack is drafted from (src/modules/survey/pack-lines.ts)" },
+    why: "the fixture list a claim's survey pack is drafted from (src/modules/claims/fixture-taxonomy.ts, read by src/modules/survey/pack-lines.ts)" },
   { original: 'Caprebate/06-commercial-and-governance/Caprebate Engagement Letter.docx',
     why: "the engagement letter (src/modules/claims/letter.ts); the director's and the solicitor's document" },
   { original: 'Caprebate/06-commercial-and-governance/Caprebate Engagement Letter - TEST DEFAULTS, not agreed.docx',

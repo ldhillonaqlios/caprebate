@@ -30,10 +30,8 @@ import { freeGate, assertSignedEngagement } from './research.ts';
 import type { RateLimiter, Transport, GateSnapshot } from '../../integrations/index.ts';
 import { createHash } from 'node:crypto';
 import type { SecretStore } from '../../core/index.ts';
-import {
-  CLAUDE_SWITCHES, claudeReadiness, prepareClaudeModel, readScannedPages,
-  type ClaudeContext, type ClaudeSwitches, type ModelRead,
-} from '../../integrations/connectors/claude.ts';
+import { CLAUDE_SWITCHES, claudeReadiness, readScannedPages, type ClaudeContext, type ClaudeSwitches } from '../../integrations/index.ts';
+import { prepareClaudeModel, type ModelRead } from './document-reader-claude.ts';
 import type { EgressEntry } from './documents/document-pipeline.ts';
 import type { ClientDocDiscriminants } from './documents/client-doc-ingestion.ts';
 import { discriminantsFor, recordReading, VOUCHED_FIELDS } from './document-reading.ts';

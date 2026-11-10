@@ -22,6 +22,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import * as L from '../../src/integrations/connectors/test-lookups.ts';
+// Phase 161l2: the client checks read the claims' site area inputs through the port the claims fill as their door
+// loads; the command line loads that door, and so does this test.
+import '../../src/modules/claims/index.ts';
 import { fixtureTransport, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { emptySecrets } from '../../src/core/secrets.ts';
 import { Db, migrate } from '../../src/core/db.ts';

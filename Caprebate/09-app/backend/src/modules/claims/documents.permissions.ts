@@ -9,7 +9,8 @@ import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
 import type { DocObj, LinkView, TypeRow } from './documents.ts';
 import { getClaimsBusinessIdById, getPropertiesBusinessIdById } from './data.ts';
-import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2, listSurveyorJobsSurveyorIdByClaimIdSurveyorId } from '../survey/index.ts';
+// Who holds a survey job, through the port the core owns (Phase 161l2).
+import { surveyorsOnBusiness, surveyorsOnClaim } from '../../core/index.ts';
 
 /** The sentinel objects the section gates ask about: the document types, and the centre itself. */
 export const TYPES_OBJ: Obj = { type: 'document_type', id: '__document_types__' };
@@ -38,12 +39,12 @@ export function staffMayOpen(db: Db, actor: Actor, k: LinkView): boolean {
   if (k.to === 'claim') {
     const c = getClaimsBusinessIdById<{ business_id: string }>(db, [id]);
     if (c === undefined) return false;
-    const surveyors = listSurveyorJobsSurveyorIdByClaimIdSurveyorId<{ surveyor_id: string }>(db, [id]).map((r) => r.surveyor_id);
+    const surveyors = surveyorsOnClaim(db, id);
     return can(actor, 'claim.read', { type: 'claim', id, business_id: c.business_id, assigned_surveyor_ids: surveyors });
   }
   const p = getPropertiesBusinessIdById<{ business_id: string }>(db, [id]);
   if (p === undefined) return false;
-  const surveyors = listSurveyorJobsSurveyorIdByBusinessIdSurveyorId2<{ surveyor_id: string }>(db, [p.business_id]).map((r) => r.surveyor_id);
+  const surveyors = surveyorsOnBusiness(db, p.business_id);
   return can(actor, 'property.read', { type: 'property', id, business_id: p.business_id, assigned_surveyor_ids: surveyors });
 }
 

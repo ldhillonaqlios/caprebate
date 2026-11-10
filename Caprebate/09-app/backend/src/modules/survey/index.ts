@@ -50,6 +50,8 @@ export type { ReleasedFacts } from '../../payload.ts';
 import './nav.ts';
 // Who holds a survey job, for the core's port (src/core/assigned-surveyors.ts). Last, as it reaches the module's own data.
 import './assigned-surveyors.ts';
+// How many survey jobs saw a register record, for the claims' port (src/modules/claims/survey-jobs-seen.ts; Phase 161l2).
+import './survey-jobs-seen.ts';
 // Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts, emptied in Phase 161l2).
 export { getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId, listSurveyorCommitmentsCommittedAtJobIdSurveyorIdByClaimId, listSurveyorJobsBusinessIdClaimIdBySurveyorId, listSurveyorJobsIdBusinessIdClaimIdBySurveyorId } from './data.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.

@@ -11,7 +11,7 @@ import { ATTACH, EFFECTS, FORBIDDEN_EFFECTS, POOL_ROLES, RULES_SECTION, RUN_REAS
 import { claimWords } from '../claims/index.ts';
 import { listAutomationRunsAtTriggerEvent } from './data.ts';
 import { vocabLabel } from './vocabularies.ts';
-import { listDocumentTypesCodeLabelByActiveHandlerType2 } from './data.ts';
+import { listDocumentTypesCodeLabelByActiveHandlerType2 } from '../claims/index.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 

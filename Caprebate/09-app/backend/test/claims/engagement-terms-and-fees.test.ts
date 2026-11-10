@@ -31,7 +31,7 @@ import * as C from '../../src/modules/crm/crm.ts';
 import * as P from '../../src/modules/crm/pipeline.ts';
 import * as F from '../../src/modules/claims/claim-facts.ts';
 import * as T from '../../src/modules/crm/tasks.ts';
-import * as CFL from '../../src/modules/portal/client-filing.ts';
+import * as CFL from '../../src/modules/claims/client-filing.ts';
 import * as CF from '../claim-fixtures.ts';
 import * as I from '../../src/modules/crm/introducers.ts';
 import * as INV from '../../src/modules/finance/invoices.ts';
