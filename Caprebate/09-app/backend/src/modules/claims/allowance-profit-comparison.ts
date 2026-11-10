@@ -70,9 +70,9 @@ import {
   estimate, feeDisplay, BENEFIT, clientVatFromWorks,
   type SectorId, type Session, type BenefitContext, type EngineResult,
 } from '../../shared/index.ts';
-import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
-import { getAssessmentsSectorById } from './data.ts';
-import { getClaimFactsAnswerByClaimIdFactKey, listClaimsIdBusinessId } from '../claims/index.ts';
+import { funnelStateFor, sessionFromFunnel } from '../assessment/index.ts';
+import { getAssessmentsSectorById } from '../assessment/index.ts';
+import { getClaimFactsAnswerByClaimIdFactKey, listClaimsIdBusinessId } from './data.ts';
 import { listClientTasksAnswerStateByBusinessIdFactId } from '../clients/index.ts';
 
 /* ================================================================== *

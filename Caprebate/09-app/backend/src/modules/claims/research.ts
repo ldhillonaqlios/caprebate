@@ -82,7 +82,7 @@
  * any call outside. The land boundary's own row in the table points at those lines.
  */
 
-import { keepCouncilArea, fillTenureFromRegisters } from '../assessment/index.ts';
+import { keepCouncilArea, fillTenureFromRegisters } from './who-claims.ts';
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';

@@ -42,7 +42,7 @@ import * as S from './surveyor.ts';
 import { registerAttribution } from '../claims/index.ts';
 import { formatPence } from '../../shared/index.ts';
 import { FUNNEL_CEILING, SURVEY_JOB_WORDS as SO_WORDS } from './survey-open.ts';
-import { deskFirstReading } from '../assessment/index.ts';
+import { deskFirstReading } from './desk-first.ts';
 import { piecesPage } from '../../core/index.ts';
 
 /*

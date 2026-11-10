@@ -23,7 +23,7 @@ import type { Db } from '../../core/index.ts';
 import type { Need } from '../claims/index.ts';
 import { latestFacts, packGrantsFor } from '../claims/index.ts';
 import { receivedOnClaim } from '../claims/index.ts';
-import { grantRoute, type GrantSwitches } from '../survey/index.ts';
+import { grantRoute, type GrantSwitches } from './pack-grants.ts';
 import { CTA } from '../../shared/index.ts';
 
 /** The two switches the survey pack reads, as they ship. */

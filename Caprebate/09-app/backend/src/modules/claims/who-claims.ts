@@ -21,14 +21,16 @@
  * the claim's (264, the accountant); that a category B or "Other" sale is a lead, not a price, and that a site ten times
  * the building is the warning point (265-266, the surveyor); and the owner-name check that keeps no name (267, the DPO).
  *
- * This file imports nothing from claim-facts.ts, which imports from here.
+ * This file imports nothing from claim-facts.ts, which imports from here. (Moved up from the assessment, Phase 161l2: it
+ * reads and writes the claims' properties, and only the claims, the survey and the CRM read it.)
  */
 import type { Db } from '../../core/index.ts';
 import { isDormant, DORMANT_WORDS } from '../../integrations/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId11, getRegisterRecordsFieldsJsonByBusinessIdSourceId2, getRegisterRecordsFieldsJsonByBusinessIdSourceId5, getRegisterRecordsFieldsJsonByBusinessIdSourceId6, getRegisterRecordsFieldsJsonByBusinessIdSourceId7, getRegisterRecordsFieldsJsonByBusinessIdSourceId9, getRegisterRecordsFieldsJsonObtainedAtByBusinessIdSourceId3 } from '../../integrations/index.ts';
-import { getPropertiesBusinessIdTenureById, getPropertiesClaimantRoleClaimantRoleSourceById, getPropertiesCouncilAreaById, getPropertiesCouncilAreaCouncilAreaSourceById, getPropertiesTenureTenureSourceById, listPropertiesIdLabelByBusinessId, updatePropertiesCouncilAreaCouncilAreaSourceById, updatePropertiesTenureTenureSourceById } from '../claims/index.ts';
+import { getPropertiesBusinessIdTenureById, getPropertiesClaimantRoleClaimantRoleSourceById, getPropertiesCouncilAreaById, getPropertiesCouncilAreaCouncilAreaSourceById, getPropertiesTenureTenureSourceById, listPropertiesIdLabelByBusinessId, updatePropertiesCouncilAreaCouncilAreaSourceById, updatePropertiesTenureTenureSourceById } from './data.ts';
 import { getBusinessesClaimantTypeById, listContactsFullNameByBusinessId } from '../clients/index.ts';
-import { getAssessmentsCompanyNumberCompanyStatusByBusinessIdCompanyN } from './data.ts';
+import { getAssessmentsCompanyNumberCompanyStatusByBusinessIdCompanyN } from '../assessment/index.ts';
+import type { ClaimantRole } from '../assessment/index.ts';
 
 const json = (s: string | null | undefined): Record<string, unknown> => {
   if (typeof s !== 'string') return {};
@@ -131,10 +133,9 @@ export function dormantWarning(db: Db, business_id: string): string | null {
  * 2 · HOW THE CLIENT HOLDS THE BUILDING — WHOSE CLAIM IT IS (item 2)
  * ================================================================== */
 
-export type ClaimantRole = 'OWNER_OCCUPIER' | 'LANDLORD' | 'TENANT';
-
-/** The assessment's answer to "who uses the building?", onto the property's claimant role. "Not sure" is not known. */
-export const USE_TO_ROLE: Readonly<Record<string, ClaimantRole>> = Object.freeze({ own_use: 'OWNER_OCCUPIER', let_out: 'LANDLORD', rented: 'TENANT' });
+// The roles, and the assessment's answer onto them, are the assessment's (src/modules/assessment/claimant-role.ts).
+export { USE_TO_ROLE } from '../assessment/index.ts';
+export type { ClaimantRole } from '../assessment/index.ts';
 
 export const ROLE_WORDS: Readonly<Record<ClaimantRole, string>> = Object.freeze({
   OWNER_OCCUPIER: 'Owns the building and works from it: an owner’s claim, through its trade or profession.',

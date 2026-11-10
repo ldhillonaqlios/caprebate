@@ -55,12 +55,12 @@ import { lastContactFor, timelineIfPermitted, type Timeline } from './timeline.t
 import { fireAutomation } from './automation.ts';
 import { claimDocumentsPanel, type ClaimDocumentsPanel, organisationDocumentsPanel, propertyDocumentsPanel, type PlaceDocumentsPanel } from '../claims/index.ts';
 import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from '../claims/index.ts';
-import { propertyTenure, ROLE_LABELS } from '../assessment/index.ts';
+import { propertyTenure, ROLE_LABELS } from '../claims/index.ts';
 import { aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask, type AftercarePanel, type DeliverablesPanel, type FiguresPanel } from '../claims/index.ts';
 import { assembleReleasedFacts, type ReleasedFacts } from '../survey/index.ts';
 import { vocabChoice, vocabLabel } from '../admin/index.ts';
 import { funnelStateFor } from '../assessment/index.ts';
-import { expectedFeeFor } from '../assessment/index.ts';
+import { expectedFeeFor } from '../finance/index.ts';
 import { latestSignOff } from '../claims/index.ts';
 import { LEAD_ORIGINS } from './leads.ts';
 import { discountsFor, type FeeDiscountView } from '../claims/index.ts';
@@ -122,7 +122,7 @@ export const CONTACT_TYPES: Vocab = Object.freeze({
 });
 
 export const TENURES: Vocab = Object.freeze({ FREEHOLD: 'Freehold', LEASEHOLD: 'Leasehold', UNKNOWN: 'Not known' });
-/** How the client holds the building — whose claim it is (src/modules/assessment/who-claims.ts ROLE_LABELS, the same words). */
+/** How the client holds the building — whose claim it is (src/modules/claims/who-claims.ts ROLE_LABELS, the same words). */
 export const CLAIMANT_ROLES: Vocab = Object.freeze({ OWNER_OCCUPIER: 'Owner who uses it', LANDLORD: 'Landlord (lets it out)', TENANT: 'Tenant (rents it)' });
 
 export const PRIOR_CLAIM: Vocab = Object.freeze({ YES: 'Yes', NO: 'No', UNKNOWN: 'Not known' });
@@ -1732,7 +1732,7 @@ export type EstimatedFee = {
 
 /**
  * ROW 23.8 — THE FEE THE FINANCE VIEW EXPECTS, ON THE CLAIM, BEFORE ANY FEE INVOICE EXISTS. Read through `expectedFeeFor`
- * in src/modules/assessment/vat.ts — the one computation `expectedFees` makes — never typed, and there is no agreed-fee field (row 8.14).
+ * in src/modules/finance/vat.ts — the one computation `expectedFees` makes — never typed, and there is no agreed-fee field (row 8.14).
  * `invoice.read` alone: ADMIN and ACCOUNTING. Never SALES, never SURVEYING — tools/payload-proof.ts holds both. Once a
  * live fee invoice is raised the claim's money lines carry the fee, and this is not drawn.
  */

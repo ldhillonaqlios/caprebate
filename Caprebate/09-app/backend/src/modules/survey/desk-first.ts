@@ -21,14 +21,16 @@
  * NOTHING HERE DECIDES: the surveyor records the inspection basis (survey-evidence.ts, chapter 2), and approval waits
  * for that, as before. This is a reading beside it.
  */
-import { isPricePaidLead } from './who-claims.ts';
+import { isPricePaidLead } from '../claims/index.ts';
 import type { Db } from '../../core/index.ts';
-import { checklistView, type ChecklistView } from '../survey/index.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { checklistView, type ChecklistView } from './survey-evidence.ts';
 import { mandatoryDocumentNeeds } from '../claims/index.ts';
 import { latestFacts } from '../claims/index.ts';
 import { listRegisterRecordsFieldsJsonPropertyIdByBusinessIdSourceId } from '../../integrations/index.ts';
 import { getClaimsPById } from '../claims/index.ts';
-import { getSurveyorJobsBusinessIdClaimIdById } from './data-borrowed.ts';
+import { getSurveyorJobsBusinessIdClaimIdById2 } from './data.ts';
+import { getBusinessesSectorById } from '../clients/index.ts';
 
 export const DESK_FIRST_TEST = Object.freeze({
   status: 'TEST_ONLY_PLACEHOLDERS' as const,
@@ -102,6 +104,18 @@ export type DeskFirstReading = {
 };
 
 type JobRow = { business_id: string; claim_id: string | null; sector: string };
+
+/**
+ * A job with its organisation's sector (Phase 161l2: one statement joining the client record's organisations before;
+ * now the survey's own read and the sector through the client record's door, pinned to the old statement word for
+ * word by test/assessment/borrowed-split.test.ts). A job whose organisation is not on the record is not found.
+ */
+export function getSurveyorJobsBusinessIdClaimIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const job = getSurveyorJobsBusinessIdClaimIdById2<{ business_id: string; claim_id: string | null }>(db, params);
+  if (job === undefined) return undefined;
+  const b = getBusinessesSectorById<{ sector: string }>(db, [job.business_id]);
+  return b === undefined ? undefined : { business_id: job.business_id, claim_id: job.claim_id, sector: b.sector } as unknown as T;
+}
 
 function band(x: number, limits: readonly number[], inclusive: boolean): 1 | 2 | 3 | 4 {
   const i = limits.findIndex((l) => (inclusive ? x <= l : x < l));

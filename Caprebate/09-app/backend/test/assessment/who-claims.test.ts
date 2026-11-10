@@ -30,7 +30,7 @@ import { searchCompanies, accountsTypeOfProfile } from '../../src/integrations/c
 import { companyFields, isDormant, DORMANT_WORDS } from '../../src/integrations/connectors/companies-house.ts';
 import { categoryOf } from '../../src/integrations/connectors/price-paid.ts';
 import { TEST_WEBSITE_LOOKUPS, freeGateWaived } from '../../src/integrations/connectors/registers.ts';
-import * as W from '../../src/modules/assessment/who-claims.ts';
+import * as W from '../../src/modules/claims/who-claims.ts';
 import * as F4 from '../../src/modules/assessment/funnel4.ts';
 import * as PL from '../../src/modules/crm/pipeline.ts';
 import * as C from '../../src/modules/crm/crm.ts';

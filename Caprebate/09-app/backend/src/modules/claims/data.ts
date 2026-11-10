@@ -422,6 +422,18 @@ export function updateClaimsStageHoldReturnStageById(db: Db, params: readonly Pa
   return db.run('UPDATE claims SET stage = ?, hold_return_stage = ?, hold_reason = ?, completed_at = ?, updated_at = ? WHERE id = ?', params);
 }
 
+// FOR FINANCE'S VAT READING (Phase 161l2, src/modules/finance/vat.ts): its statements joined these tables to the client
+// record's organisations and finance's own invoices; each now reads its own rows and looks these up by the claim.
+/** The claims at the invoice stage, in claim reference order. */
+export function listClaimsIdClaimRefByStage2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT c.id, c.claim_ref, c.business_id FROM claims c WHERE c.stage = 'INVOICE' ORDER BY c.claim_ref ASC", params);
+}
+/** Each claim's first issued client report: the date the VAT tax point may be brought forward to. */
+export function listClaimDeliverablesClaimIdFirstIssuedOnByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT d.claim_id, MIN(d.issued_on) AS first_issued_on FROM claim_deliverables d WHERE d.kind = 'CLIENT_REPORT' " +
+    'AND d.issued_on IS NOT NULL GROUP BY d.claim_id', params);
+}
+
 // defence_pack_manifests
 export function insertDefencePackManifests(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO defence_pack_manifests (deliverable_id, claim_id, manifest_json, fingerprint, made_at) VALUES (?, ?, ?, ?, ?)', params);

@@ -25,7 +25,7 @@ import type { Db } from '../../core/index.ts';
 import { acquisitionDateReading, amendmentWindowReading, latestFacts, periodFromYearEnd, windowForPeriod, type WindowReading } from './claim-facts.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, type EventKind, type PropertyEvent } from './property-events.ts';
 import { legalVerdictForClaim } from '../survey/index.ts';
-import { propertyTenure, registerNamesClientPerson } from '../assessment/index.ts';
+import { propertyTenure, registerNamesClientPerson } from './who-claims.ts';
 import { localDate } from '../../shared/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId8 } from '../../integrations/index.ts';
 import { getSurveyPackApprovalsSnapshotJsonByClaimId } from '../survey/index.ts';

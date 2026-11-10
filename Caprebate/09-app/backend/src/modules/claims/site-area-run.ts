@@ -30,7 +30,7 @@
  * WHAT NEVER APPEARS HERE: the polygon, a map of it, or any coordinate from it. A line carries a number, a grade, the
  * councils read and a reason.
  */
-import { siteAreaFlag, floorAreaForSite } from '../assessment/index.ts';
+import { siteAreaFlag, floorAreaForSite } from './who-claims.ts';
 import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
