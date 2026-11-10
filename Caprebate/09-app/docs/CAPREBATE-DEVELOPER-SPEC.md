@@ -3187,7 +3187,7 @@ node 03-app/caprebate-regression.cjs                1428 pass / 0 fail / 3 xfail
 node 03-app/caprebate-regression.cjs --package      1428 pass / 0 fail / 3 xfail
 cd 04-phase-work/phase3 && node --test              71 pass / 0 fail    (4 files; re-derived 5 Nov 2026 by Phase 161e)
 cd 04-phase-work/phase9 && node --test              29 pass / 0 fail    (1 file; re-derived 5 Nov 2026 by Phase 161e)
-cd 09-app/backend && npm run check                  4053 pass / 0 fail   (242 tracked files, every one in a folder by feature: test/core/, test/shared/, test/integrations/ and one folder per module; re-derived 10 Nov 2026 by Phase 161l2, at zero boundary breaks)
+cd 09-app/backend && npm run check                  4072 pass / 0 fail   (243 tracked files, every one in a folder by feature: test/core/, test/shared/, test/integrations/, test/rules/ and one folder per module; re-derived 10 Nov 2026 by Phase 161m)
 node 09-app/engine/tools/verify-page.cjs            17 checks, 0 failures — 29 CTA switches counted (re-derived 5 Nov 2026 by Phase 161f; it was verify-extraction.cjs, 21 checks, until then)
 node 09-app/engine/tools/verify-page.cjs --self-test   11 cases, every one holds (a planted edit in the page is red)
 node 09-app/engine/tools/build.cjs --check          exit 0 — the derived session types match the questions (extract.cjs, retired)
