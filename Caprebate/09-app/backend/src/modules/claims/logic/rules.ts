@@ -3,7 +3,7 @@
  *
  *   the claims' switches   each keeps its words (its question, what it waits on) where its code lives; this pins its
  *                          position, so a switch moved without a new version here is a red test
- *   the eleven rulebooks   the file each one is, as 01-rulebooks/README.md lists them. THE FILENAME IS THE ONLY CARRIER
+ *   the eleven rulebooks   the file each one is, as 01-rulebooks/README.md lists them (their code: case-stamp.ts). THE FILENAME IS THE ONLY CARRIER
  *                          OF A RULEBOOK'S OWN VERSION ("-v2"); a rulebook re-issued as v3 is a new version of its
  *                          entry here, and every result sealed before it still says the old one. Moved here from
  *                          src/modules/claims/case-stamp.ts, which reads them from here.
@@ -83,7 +83,7 @@ export function claimsRules(): readonly RuleEntry[] {
     ...RULEBOOK_MODULES.map((m) => ({
       id: `claims.rulebook.${m.module}`, title: `Rulebook ${m.module} (${m.version})`, version: 1, effective_from: FIRST_RECORDED_ON,
       approver: 'the tax adviser', approval: 'Written; awaiting the tax adviser\'s review.',
-      value: { file: m.file, rulebook_version: m.version }, home: '01-rulebooks/README.md', change: FIRST_RECORDED,
+      value: { file: m.file, rulebook_version: m.version }, home: 'src/modules/claims/case-stamp.ts', change: FIRST_RECORDED,
       tested_in: 'test/claims/defence-pack-and-case-stamp.test.ts',
     })),
   ]);

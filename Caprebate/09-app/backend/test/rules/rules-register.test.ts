@@ -35,7 +35,6 @@ import { createApp } from '../../src/app/server.ts';
 import { allRules } from './all-rules.ts';
 
 const BACKEND = fileURLToPath(new URL('../../', import.meta.url));
-const CAPREBATE = join(BACKEND, '..', '..');
 const LOCK = JSON.parse(readFileSync(join(BACKEND, 'architecture', 'rules-lock.json'), 'utf8')) as RulesLock;
 const RULES = allRules();
 
@@ -68,8 +67,9 @@ describe('the registers', () => {
       assert.ok(Number.isInteger(r.version) && r.version >= 1, r.id);
       assert.match(r.effective_from, /^\d{4}-\d{2}-\d{2}$/, r.id);
       for (const k of ['title', 'approver', 'approval', 'change'] as const) assert.ok(r[k].trim().length > 0, `${r.id}: ${k}`);
-      const home = r.home.startsWith('src/') ? join(BACKEND, r.home) : join(CAPREBATE, r.home);
-      assert.ok(existsSync(home), `${r.id}: its home ${r.home} does not exist`);
+      // The code that reads it, in the repository: a fresh copy (GitHub's check) holds no OneDrive-only file.
+      assert.ok(r.home.startsWith('src/'), `${r.id}: its home ${r.home} is not a file of the back end's code`);
+      assert.ok(existsSync(join(BACKEND, r.home)), `${r.id}: its home ${r.home} does not exist`);
       const t = join(BACKEND, r.tested_in);
       assert.ok(existsSync(t), `${r.id}: its test ${r.tested_in} does not exist`);
       const name = r.id.slice(r.area.length + 1);
