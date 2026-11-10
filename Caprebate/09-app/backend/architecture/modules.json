@@ -486,10 +486,6 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/modules/admin/data-borrowed.ts": {
-   "area": "admin",
-   "kind": "data"
-  },
   "src/modules/admin/data.ts": {
    "area": "admin",
    "kind": "data"
@@ -1186,10 +1182,6 @@
    "area": "finance",
    "kind": "logic"
   },
-  "src/modules/finance/data-borrowed.ts": {
-   "area": "finance",
-   "kind": "data"
-  },
   "src/modules/finance/data.ts": {
    "area": "finance",
    "kind": "data"
@@ -1361,10 +1353,6 @@
   "src/modules/survey/costing/cost-model.d.cts": {
    "area": "survey",
    "kind": "other"
-  },
-  "src/modules/survey/data-borrowed.ts": {
-   "area": "survey",
-   "kind": "data"
   },
   "src/modules/survey/data.ts": {
    "area": "survey",

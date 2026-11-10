@@ -164,7 +164,8 @@ const ORIGINAL: Readonly<Record<string, readonly ['get' | 'all', string]>> = {
 type Read = (db: Db, params?: readonly Param[]) => unknown;
 /** Where a read is found: its area's borrowed file, else its data file, else the outside services' front door. */
 async function readsOf(area: string): Promise<Record<string, Read>> {
-  const borrowed = await import(`../../src/modules/${area}/data-borrowed.ts`) as Record<string, Read>;
+  // An area whose borrowed file is gone (emptied and deleted, Phase 161l2) has its reads in its data file.
+  const borrowed = await import(`../../src/modules/${area}/data-borrowed.ts`).catch(() => ({})) as Record<string, Read>;
   const data = await import(`../../src/modules/${area}/data.ts`) as Record<string, Read>;
   const outside = await import('../../src/integrations/index.ts') as unknown as Record<string, Read>;
   return new Proxy({}, { get: (_t, k: string) => borrowed[k] ?? data[k] ?? outside[k] }) as Record<string, Read>;

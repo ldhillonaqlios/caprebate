@@ -6,6 +6,9 @@
  */
 import type { Db, Param, Row } from '../../core/index.ts';
 import { fillUsers } from '../../core/index.ts';
+// A claim and its organisation's name, read through the claims' and the client record's front doors (Phase 161l2).
+import { listClaimsIdBusinessIdStageClaimRefByIds } from '../claims/index.ts';
+import { getBusinessesNameById } from '../clients/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -172,4 +175,15 @@ export function listSavedKeysNameSealedByRowidName<T extends Row = Row>(db: Db, 
 // FOR THE CRM (Phase 161l1): the document types the given codes name, in place of the CRM's joins to document_types.
 export function listDocumentTypesCodeReadersLabelByCodes<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT t.code, t.readers, t.carries_value, t.label FROM document_types t WHERE t.code IN (SELECT value FROM json_each(?))', params);
+}
+
+// Phase 161l2: a claim's reference and its organisation's name (was: claims c JOIN businesses b ON b.id = c.business_id),
+// from this module's borrowed file. The claim is the claims' and the organisation the client record's: each read
+// through its front door, and nothing is returned when either is not found, as the join gave
+// (test/admin/borrowed-split-161l2.test.ts keeps the statement and compares).
+export function getClaimsClaimRefBusinessNameById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const c = listClaimsIdBusinessIdStageClaimRefByIds<{ business_id: string; claim_ref: unknown; property_id: unknown }>(db, [JSON.stringify([params[0]])])[0];
+  if (c === undefined) return undefined;
+  const b = getBusinessesNameById<{ name: unknown }>(db, [c.business_id]);
+  return b === undefined ? undefined : ({ claim_ref: c.claim_ref, business_name: b.name, property_id: c.property_id } as Row as T);
 }

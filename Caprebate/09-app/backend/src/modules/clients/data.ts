@@ -1202,3 +1202,11 @@ export function countClientRecordKind<T extends Row = Row>(db: Db, kind: string,
   const sql = RECORD_KIND_STATEMENTS[kind];
   return sql === undefined ? undefined : db.get<T>(sql, params);
 }
+
+// Phase 161l2: read by a list of ids (a JSON array), for the areas above that joined these tables to their own rows.
+export function listBusinessesIdNameSectorStageByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, name, sector, stage FROM businesses WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+export function listBookingsIdStartsAtCancelledAtByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, starts_at, cancelled_at FROM bookings WHERE id IN (SELECT value FROM json_each(?))', params);
+}

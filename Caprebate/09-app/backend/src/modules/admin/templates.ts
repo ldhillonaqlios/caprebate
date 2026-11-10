@@ -48,7 +48,7 @@ import { type Fields } from '../clients/index.ts';
 import { getContactsFullNameById, getContactsIdBusinessIdById2, getStaffTasksTitleDueOnByClaimIdIsNextAction } from '../clients/index.ts';
 import { getClaimsIdBusinessIdById, getPropertiesAddressLine1AddressLine2ById } from '../claims/index.ts';
 import { getEmailTemplatesIdLabelById, getEmailTemplatesIdLabelByIdActive, insertEmailTemplates, listEmailTemplatesIdLabel, listEmailTemplatesIdLabelByActive, updateEmailTemplatesLabelSubjectById } from './data.ts';
-import { getClaimsClaimRefBusinessNameById } from './data-borrowed.ts';
+import { getClaimsClaimRefBusinessNameById } from './data.ts';
 
 export type TemplateDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 
