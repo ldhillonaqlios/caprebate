@@ -34,14 +34,13 @@
  */
 
 import { USE_TO_ROLE } from './claimant-role.ts';
-import { writeAssessmentEvents } from '../claims/index.ts';
 import { normalisePostcode } from '../../integrations/index.ts';
 import { randomUUID } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import { FUNNEL, FRONTDOOR } from '../../shared/index.ts';
 import { openLeadForGatedExit, openLeadForSubmission } from '../clients/index.ts';
 import { getAssessmentDraftsStateJsonScreenByToken, insertAssessmentAnswers, insertAssessmentDrafts, insertAssessments, updateAssessmentDraftsClosedLeadIdUpdatedAtByToken, updateAssessmentDraftsStateJsonScreenByToken, updateAssessmentDraftsSubmittedAssessmentIdByToken } from './data.ts';
-import { insertProperties } from '../claims/index.ts';
+import { assessedPropertyWriter } from './property-writer.ts';
 import { insertBusinesses } from '../clients/index.ts';
 
 export const SCREEN_IDS = ['Q1', 'Q1a', 'Q1b', 'Q1c', 'Q2', 'Q3'] as const;
@@ -331,8 +330,12 @@ export function submit(
       const role = typeof pr['use'] === 'string' ? USE_TO_ROLE[pr['use']] ?? null : null;
       const pcc = pr['postcode_check'] as { council_area?: unknown } | undefined;
       const council = pcc !== undefined && typeof pcc.council_area === 'string' && pcc.council_area.trim() !== '' ? pcc.council_area.trim().slice(0, 100) : null;
-      insertProperties(db, [property_id, business_id, p.address ?? 'Unnamed property', pc, text(p.line1, 200), text(p.town, 100), uprn, at, at,
-          role, role === null ? null : 'the client’s own answer in the assessment', council, council === null ? null : 'the postcode check at the assessment (postcodes.io)']);
+      // The property is the claims' table: written through the port they fill (property-writer.ts).
+      assessedPropertyWriter().writeProperty(db, {
+        id: property_id, business_id, label: p.address ?? 'Unnamed property', postcode: pc, address_line_1: text(p.line1, 200),
+        town: text(p.town, 100), uprn, at, claimant_role: role, claimant_role_source: role === null ? null : 'the client’s own answer in the assessment',
+        council_area: council, council_area_source: council === null ? null : 'the postcode check at the assessment (postcodes.io)',
+      });
     }
     /* What the company search read of the company picked — its status and its latest accounts' type —
        kept with the assessment, so a dormant company shows on the lead before the letter, not only after the research. */
@@ -344,7 +347,7 @@ export function submit(
     /* WHAT HAPPENED TO EACH BUILDING, IN ORDER — its first event, then each piece of work since, each with its
        own date and cost (CB_FUNNEL.eventsOf), kept on the property (migration 105) for the lead, the claim and the pack. */
     const eventsOf = (FUNNEL as unknown as { eventsOf: (p: Record<string, unknown>) => { type: unknown; cost: unknown; cost_unknown: unknown; date: unknown; date_unknown: unknown }[] }).eventsOf;
-    for (const w of written) writeAssessmentEvents(db, id, { property_id: w.property_id, business_id, assessment_id, at }, eventsOf(w.p));
+    for (const w of written) assessedPropertyWriter().writeEvents(db, id, { property_id: w.property_id, business_id, assessment_id, at }, eventsOf(w.p));
     /* THE LEAD — CRM 2 of 10. A submission is a lead, NEW, from the website,
        carrying this organisation and this assessment. CRM 1 of 10 opened a claim
        here, and that put every prospect into the procedure's second stage with

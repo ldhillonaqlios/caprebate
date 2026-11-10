@@ -598,6 +598,10 @@
    "area": "assessment",
    "kind": "logic"
   },
+  "src/modules/assessment/property-writer.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
   "src/modules/assessment/report-assumptions.ts": {
    "area": "assessment",
    "kind": "logic"
@@ -619,6 +623,10 @@
    "kind": "page"
   },
   "src/modules/claims/approvals.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/assessed-properties.ts": {
    "area": "claims",
    "kind": "logic"
   },

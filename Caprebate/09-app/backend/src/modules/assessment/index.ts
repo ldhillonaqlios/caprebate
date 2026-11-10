@@ -8,6 +8,9 @@ export { ASSESSMENT_ACTIONS } from './actions.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
 // The claimant type as a gate reads it (moved from the CRM, Phase 161l1).
 export { claimantFromAnswers, claimantTypeForGate } from './claimant-type.ts';
+// Where a submitted assessment puts each building: the port the claims fill as their door loads (Phase 161l2).
+export { setAssessedPropertyWriter } from './property-writer.ts';
+export type { AssessedEvent, AssessedProperty, AssessedPropertyWriter } from './property-writer.ts';
 // How the client holds the building, as the assessment hears it (Phase 161l2; the claims' who-claims.ts reads it back).
 export { USE_TO_ROLE } from './claimant-role.ts';
 export type { ClaimantRole } from './claimant-role.ts';

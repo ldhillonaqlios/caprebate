@@ -16,9 +16,6 @@
    ]
   },
   "2": {
-   "assessment": [
-    "assessment -> claims"
-   ],
    "claims": [
     "claims -> admin",
     "claims -> compliance",
