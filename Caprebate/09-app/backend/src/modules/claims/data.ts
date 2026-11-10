@@ -7,6 +7,9 @@
 import type { Db, Param, Row } from '../../core/index.ts';
 import { fillUser, fillUsers } from '../../core/index.ts';
 import { listRegisterRecordsIdSourceIdBySourceIdBusinessIdEntityIds } from '../../integrations/index.ts';
+// Phase 161l2: the client record's half of the statements the claims split, and the assessment's dates (both below).
+import { getBusinessesIdOwnerIdById, getBusinessesNameCompanyNumberById, listBusinessesBusinessIdNameSectorStageById, listBusinessesBusinessIdNameSectorStageNewest, listClientTasksDocumentRequestsByBusinessId, listClientTasksDocumentRequestsByBusinessIdClaimId } from '../clients/index.ts';
+import { listAssessmentsBusinessIdSubmittedAtByBusinessIds } from '../assessment/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -1389,4 +1392,102 @@ export function insertFeeDiscounts(db: Db, params: readonly Param[] = []): { cha
 export function listFeeDiscountsIdDiscountBpByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return fillUsers(db, db.all<T>('SELECT f.id, f.discount_bp, f.reason, f.recorded_at, f.recorded_by AS who FROM fee_discounts f ' +
     'WHERE f.claim_id = ? ORDER BY f.recorded_at DESC, f.rowid DESC', params), { who: 'display_name' });
+}
+
+/* Phase 161l2: THE CLAIMS' HALF OF THE STATEMENTS THEY SPLIT with the client record (each was in data-borrowed.ts and
+   joined businesses or client_tasks). The client record's half is read through its door; these put the claims' own
+   rows in place, so each function gives what its statement gave: the same rows, keys, order and nulls. The replaced
+   statements are kept word for word in test/claims/borrowed-split-by-owner.test.ts. */
+/** (SELECT MAX(a.submitted_at) FROM assessments a WHERE a.business_id = b.id) AS submitted_at, from the assessment. */
+function submittedAt<T extends Row>(db: Db, rows: readonly Row[]): T[] {
+  const ids = [...new Set(rows.map((r) => r.business_id).filter((x): x is string => typeof x === 'string'))];
+  const at = new Map(ids.length === 0 ? [] : listAssessmentsBusinessIdSubmittedAtByBusinessIds<{ business_id: string; submitted_at: unknown }>(db, [JSON.stringify(ids)]).map((a) => [a.business_id, a.submitted_at]));
+  return rows.map((r) => ({ ...r, submitted_at: at.get(String(r.business_id)) ?? null }) as Row as T);
+}
+
+export function getAssessmentsBusinessIdNameByBusinessIdId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return submittedAt<T>(db, listBusinessesBusinessIdNameSectorStageById(db, params))[0];
+}
+export function listAssessmentsBusinessIdNameByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return submittedAt<T>(db, listBusinessesBusinessIdNameSectorStageNewest(db, params));
+}
+
+export function listClaimsOwnerIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT owner_id AS o FROM claims WHERE business_id = ?', params);
+}
+/**
+ * The organisation's owner and its claims' owners, each once (was: SELECT owner_id AS o FROM businesses WHERE id = ?
+ * UNION SELECT owner_id AS o FROM claims WHERE business_id = ?). A UNION gives each value once, in its order: no owner
+ * first, then the ids in order, byte by byte. Params as before: [business_id, business_id].
+ */
+export function listBusinessesOByIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const b = getBusinessesIdOwnerIdById<{ owner_id: string | null }>(db, [params[0] ?? null]);
+  const all = [...(b === undefined ? [] : [b.owner_id]), ...listClaimsOwnerIdByBusinessId<{ o: string | null }>(db, [params[1] ?? null]).map((r) => r.o)];
+  const once = [...new Set(all)];
+  const bytes = (x: string): Buffer => Buffer.from(x, 'utf8');
+  once.sort((x, y) => (x === y ? 0 : x === null ? -1 : y === null ? 1 : Buffer.compare(bytes(x), bytes(y))));
+  return once.map((o) => ({ o }) as Row as T);
+}
+
+/** The link's letter, with the organisation's name and number put in place from the client record (was a JOIN). */
+export function getEngagementSignLinksIdEngagementIdByTokenSha256<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const k = db.get<Row>('SELECT k.id, k.engagement_id, k.user_id, k.sent_to, k.used_at, k.expires_at, e.business_id, e.letter_state, NULL AS business_name, ' +
+    'NULL AS company_number, k.user_id AS disabled_at FROM engagement_sign_links k JOIN engagements e ON e.id = k.engagement_id ' +
+    'WHERE k.token_sha256 = ?', params);
+  if (k === undefined) return undefined;
+  const b = getBusinessesNameCompanyNumberById<{ name: unknown; company_number: unknown }>(db, [k.business_id as Param]);
+  if (b === undefined) return undefined; // JOIN businesses: no organisation, no row
+  return fillUser(db, { ...k, business_name: b.name, company_number: b.company_number } as Row as T, { disabled_at: 'disabled_at' });
+}
+
+export function listDocumentTypesCodeLabelByCodes<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT t.code, t.label FROM document_types t WHERE t.code IN (SELECT value FROM json_each(?))', params);
+}
+export function listClaimsIdClaimRefByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.claim_ref FROM claims c WHERE c.id IN (SELECT value FROM json_each(?))', params);
+}
+export function listPropertyEventsIdKindEventDateByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT pe.id, pe.kind, pe.event_date FROM property_events pe WHERE pe.id IN (SELECT value FROM json_each(?))', params);
+}
+export function getDocumentFieldVouchesAnswerByRequestId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT v.answer FROM document_field_vouches v WHERE v.request_id = ? LIMIT 1', params);
+}
+
+type RequestFromClients = {
+  id: string; business_id: string; claim_id: string | null; requested_type: string | null; state: unknown; why: unknown; holds_up: unknown;
+  due_on: unknown; created_at: unknown; withdrawn_at: unknown; answered_at: unknown; asked_by: string | null;
+  received_document_id: string | null; event_id: string | null;
+};
+/**
+ * A client's document requests with the claim, the type's label, the version received, the first early answer and the
+ * event put in place, in the client record's order (was one statement joining client_tasks to document_types, claims,
+ * documents and property_events). JOIN document_types: a request whose type is not on the list is left out.
+ */
+function requestsWithClaimsRows<T extends Row>(db: Db, rows: readonly RequestFromClients[]): T[] {
+  const ids = (xs: readonly (string | null)[]): string => JSON.stringify([...new Set(xs.filter((x): x is string => x !== null))]);
+  const claims = new Map(listClaimsIdClaimRefByIds<{ id: string; claim_ref: unknown }>(db, [ids(rows.map((r) => r.claim_id))]).map((c) => [c.id, c.claim_ref]));
+  const types = new Map(listDocumentTypesCodeLabelByCodes<{ code: string; label: unknown }>(db, [ids(rows.map((r) => r.requested_type))]).map((t) => [t.code, t.label]));
+  const docs = new Map(listDocumentsIdLogicalDocumentIdVersionNoByIds<{ id: string; logical_document_id: unknown; version_no: unknown }>(db, [ids(rows.map((r) => r.received_document_id))]).map((d) => [d.id, d]));
+  const events = new Map(listPropertyEventsIdKindEventDateByIds<{ id: string; kind: unknown; event_date: unknown }>(db, [ids(rows.map((r) => r.event_id))]).map((e) => [e.id, e]));
+  const out: Row[] = [];
+  for (const r of rows) {
+    if (r.requested_type === null || !types.has(r.requested_type)) continue;
+    const d = r.received_document_id === null ? undefined : docs.get(r.received_document_id);
+    const e = r.event_id === null ? undefined : events.get(r.event_id);
+    out.push({
+      id: r.id, business_id: r.business_id, claim_id: r.claim_id, claim_ref: (r.claim_id === null ? undefined : claims.get(r.claim_id)) ?? null,
+      requested_type: r.requested_type, type_label: types.get(r.requested_type) ?? null, state: r.state, why: r.why, holds_up: r.holds_up,
+      due_on: r.due_on, created_at: r.created_at, withdrawn_at: r.withdrawn_at, answered_at: r.answered_at, asked_by: r.asked_by,
+      received_document: d?.logical_document_id ?? null, received_version: d?.version_no ?? null,
+      early_answer: getDocumentFieldVouchesAnswerByRequestId<{ answer: unknown }>(db, [r.id])?.answer ?? null,
+      event_id: r.event_id, event_kind: e?.kind ?? null, event_date: e?.event_date ?? null,
+    } as Row);
+  }
+  return fillUsers(db, out as T[], { asked_by: 'display_name' });
+}
+export function listDocumentFieldVouchesIdBusinessIdByRequestIdJO<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return requestsWithClaimsRows<T>(db, listClientTasksDocumentRequestsByBusinessIdClaimId<RequestFromClients>(db, params));
+}
+export function listDocumentFieldVouchesIdBusinessIdByRequestIdJO2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return requestsWithClaimsRows<T>(db, listClientTasksDocumentRequestsByBusinessId<RequestFromClients>(db, params));
 }

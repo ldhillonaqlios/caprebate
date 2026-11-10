@@ -6,6 +6,7 @@
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).
  */
 import type { Db, Param, Row } from '../../core/index.ts';
+import { fillUsers } from '../../core/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -1181,4 +1182,39 @@ export function sqlOrder(a: unknown, b: unknown): number {
 }
 export function listContactsIdFullNameContactTypeByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT c.id, c.full_name, c.contact_type FROM contacts c WHERE c.id IN (SELECT value FROM json_each(?))', params);
+}
+
+/* FOR THE CLAIMS (Phase 161l2): the statements the claims borrowed on this module's tables (src/modules/claims/
+   data-borrowed.ts). The three that read only these tables moved here whole, their text unchanged; the others are the
+   client record's half of a statement the claims split, the claims putting their own half in place (claims/data.ts).
+   test/claims/borrowed-split-by-owner.test.ts keeps each replaced statement and checks the rows are the same. */
+export function listClientTasksQuestionAnswerByBusinessIdState<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>("SELECT t.question, t.answer, t.answer_state, t.answered_at, t.answered_by_role AS role, t.answered_by AS who, " +
+    'k.checked_by AS checker, k.checked_at FROM client_tasks t ' +
+    'LEFT JOIN client_task_checks k ON k.task_id = t.id ' +
+    "WHERE t.business_id = ? AND t.state = 'ANSWERED' AND t.kind = 'QUESTION' AND (t.claim_id = ? OR t.claim_id IS NULL) " +
+    "AND (t.answered_by_role = 'STAFF' OR k.outcome = 'ACCEPTED') ORDER BY t.answered_at DESC", params), { who: 'display_name', checker: 'display_name' });
+}
+export function listClientTasksIdFactIdByBusinessIdKind2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT t.id, t.fact_id, t.question, t.why, t.holds_up, t.state, t.answer_state, t.answer, t.answered_at, t.answered_by_role, t.sent_to_portal_at, t.created_at, t.withdrawn_at, t.due_on, t.asked_by AS asked_by_name, t.answered_by AS answered_by_name, t.withdrawn_by AS withdrawn_by_name FROM client_tasks t WHERE t.business_id = ? AND t.kind = \'QUESTION\' ORDER BY t.created_at ASC', params), { asked_by_name: 'display_name', answered_by_name: 'display_name', withdrawn_by_name: 'display_name' });
+}
+export function listInternalNotesIdBodyByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT n.id, n.body, n.created_at, n.author_id AS author_name ' +
+    'FROM internal_notes n ' +
+    'WHERE n.business_id = ? ORDER BY n.created_at DESC', params), { author_name: 'display_name' });
+}
+export function listBusinessesBusinessIdNameSectorStageById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT b.id AS business_id, b.name, b.sector, b.stage, NULL AS submitted_at ' +
+    'FROM businesses b WHERE b.id = ? LIMIT 1', params);
+}
+export function listBusinessesBusinessIdNameSectorStageNewest<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT b.id AS business_id, b.name, b.sector, b.stage, NULL AS submitted_at ' +
+    'FROM businesses b ORDER BY b.created_at DESC, b.name ASC LIMIT ?', params);
+}
+/** A client's document requests, in the order the claims' panel lists them; the claims put the claim, type, version and event in place. */
+export function listClientTasksDocumentRequestsByBusinessIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT ct.id, ct.business_id, ct.claim_id, ct.requested_type, ct.state, ct.why, ct.holds_up, ct.due_on, ct.created_at, ct.withdrawn_at, ct.answered_at, ct.asked_by, ct.received_document_id, ct.event_id FROM client_tasks ct WHERE ct.kind = \'DOCUMENT\' AND ct.business_id = ? AND ct.claim_id = ? ORDER BY CASE WHEN ct.state = \'OPEN\' THEN 0 ELSE 1 END, ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC', params);
+}
+export function listClientTasksDocumentRequestsByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT ct.id, ct.business_id, ct.claim_id, ct.requested_type, ct.state, ct.why, ct.holds_up, ct.due_on, ct.created_at, ct.withdrawn_at, ct.answered_at, ct.asked_by, ct.received_document_id, ct.event_id FROM client_tasks ct WHERE ct.kind = \'DOCUMENT\' AND ct.business_id = ? ORDER BY CASE WHEN ct.state = \'OPEN\' THEN 0 ELSE 1 END, ct.due_on IS NULL, ct.due_on ASC, ct.created_at ASC', params);
 }
