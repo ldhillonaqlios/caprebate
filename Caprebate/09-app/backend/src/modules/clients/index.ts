@@ -72,6 +72,8 @@ export {
   updateStaffTasksIsNextActionUpdatedAtById, updateStaffTasksStatusCancelledAtById, updateStaffTasksStatusCompletedAtById, updateStaffTasksStatusStartedAtById, updateStaffTasksStatusUpdatedAtById, updateStaffTasksTitleDescriptionById,
   updateTimeBlocksRemovedAtRemovedByByIdRemovedAt,
 } from './data.ts';
+// The retention list's counts of the client record's kinds (Phase 161l2, for compliance).
+export { countClientRecordKind } from './data.ts';
 export {
   SEARCH_STATEMENTS, getAssessmentsIdBusinessIdById, getAssessmentsIdLeadIdByBusinessId, getBookingById, getBookingsIdEmailByIdDisabledAt, getBusinessesIdNameById5,
   getClaimsBusinessIdCompanyById, getClaimsIdClaimRefById4, getClientMessagesIdBusinessIdByIdBusinessId, getClientReportAcceptancesAcceptedAtUserIdByClaimIdFingerprint, getClientTaskChecksOutcomeWhoByTaskId, getIntroducerFeesIdIntroducerIdById,

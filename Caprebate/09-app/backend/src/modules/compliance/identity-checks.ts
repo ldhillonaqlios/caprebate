@@ -52,7 +52,7 @@ import {
 } from '../../integrations/index.ts';
 import { getBusinessesIdById, getContactsIdEmailByIdBusinessId, listContactsIdByBusinessId } from '../clients/index.ts';
 import { getCddChecksStateByIdBusinessId, getCddChecksStateVerificationMethodById, getIdentityCheckResultsOutcomeReceivedAtByIdentityCheckId, getIdentityChecksIdBusinessIdBySessionId, getIdentityChecksIdBySessionId, insertIdentityCheckResults, insertIdentityChecks, updateCddChecksVerificationMethodUpdatedAtById } from './data.ts';
-import { listIdentityChecksIdContactByBusinessId, listIdentityChecksIdContactByCddCheckId } from './data-borrowed.ts';
+import { listIdentityChecksIdContactByBusinessId, listIdentityChecksIdContactByCddCheckId } from './data.ts';
 
 /** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/app/router.ts, outside the login. */
 export const IDENTITY_HOOK_PATH = '/hooks/identity-check';

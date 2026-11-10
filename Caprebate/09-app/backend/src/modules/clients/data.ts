@@ -1182,3 +1182,23 @@ export function sqlOrder(a: unknown, b: unknown): number {
 export function listContactsIdFullNameContactTypeByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT c.id, c.full_name, c.contact_type FROM contacts c WHERE c.id IN (SELECT value FROM json_each(?))', params);
 }
+
+// Phase 161l2: the retention list's record kinds on the client record's tables (src/modules/compliance/compliance-identity.ts
+// RECORD_KINDS): each kind's count, text unchanged from compliance's borrowed file. A kind not here reads nothing.
+const RECORD_KIND_STATEMENTS: Readonly<Record<string, string>> = Object.freeze({
+  LEADS_NEVER_CONVERTED: "SELECT COUNT(*) AS n FROM leads WHERE status <> 'CONVERTED'",
+  LEAD_PEOPLE: 'SELECT COUNT(*) AS n FROM contacts WHERE lead_id IS NOT NULL AND business_id IS NULL',
+  STAFF_TASKS: 'SELECT COUNT(*) AS n FROM staff_tasks',
+  LEAD_FOLLOW_UP_TASKS: "SELECT COUNT(*) AS n FROM staff_tasks t JOIN leads l ON l.id = t.lead_id WHERE l.status <> 'CONVERTED'",
+  AUTOMATION_RUNS: 'SELECT COUNT(*) AS n FROM automation_runs',
+  INTRODUCERS: 'SELECT COUNT(*) AS n FROM introducers',
+  INTRODUCER_PEOPLE: 'SELECT COUNT(*) AS n FROM contacts WHERE introducer_id IS NOT NULL',
+  SHARE_CONSENTS: 'SELECT COUNT(*) AS n FROM introducer_share_consents',
+  INTRODUCER_NOTICES: 'SELECT COUNT(*) AS n FROM introducer_notices',
+  CLIENT_MESSAGE: 'SELECT COUNT(*) AS n FROM client_messages',
+  TEAM_MESSAGE: 'SELECT COUNT(*) AS n FROM internal_notes',
+});
+export function countClientRecordKind<T extends Row = Row>(db: Db, kind: string, params: readonly Param[] = []): T | undefined {
+  const sql = RECORD_KIND_STATEMENTS[kind];
+  return sql === undefined ? undefined : db.get<T>(sql, params);
+}

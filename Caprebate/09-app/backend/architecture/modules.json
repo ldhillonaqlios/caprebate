@@ -982,10 +982,6 @@
    "area": "compliance",
    "kind": "logic"
   },
-  "src/modules/compliance/data-borrowed.ts": {
-   "area": "compliance",
-   "kind": "data"
-  },
   "src/modules/compliance/data.ts": {
    "area": "compliance",
    "kind": "data"
