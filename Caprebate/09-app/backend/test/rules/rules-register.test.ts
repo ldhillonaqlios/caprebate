@@ -161,7 +161,7 @@ describe('a sealed result keeps the versions it was made with, and is told what 
       const text = readFileSync(f, 'utf8');
       for (const m of text.matchAll(/INSERT INTO (estimates|survey_pack_approvals|invoices) \(([^)]*)\)/g)) {
         statements += 1;
-        assert.match(m[2] ?? '', /\bversions_json\b/, `${relative(BACKEND, f)}: an INSERT INTO ${m[1]} does not write versions_json`);
+        assert.match(m[2] ?? '', /\bversions_json\b/, `${relative(BACKEND, f)}: a statement that seals a row of ${m[1]} does not write versions_json`);
       }
       for (const m of text.matchAll(/\b(insertEstimates2?|insertInvoices2?|insertSurveyPackApprovals)\((?:d\.)?db,([\s\S]*?)\]\);/g)) {
         assert.match(m[2] ?? '', /resultVersions\(/, `${relative(BACKEND, f)}: a call of ${m[1]} passes no versions`);
@@ -229,7 +229,7 @@ describe('Admin\'s page of the rules in force', () => {
     assert.equal(positionWords(true), 'On');
     assert.equal(positionWords({ test_system: true, elsewhere: false }), 'On on the test website, off everywhere else');
     assert.equal(positionWords({ enabled: false, retention_days: 2557 }), 'Off; retention days: 2557');
-    assert.equal(positionWords({ file: 'A-v2.md', rulebook_version: 'v2' }), 'A-v2.md');
+    assert.equal(positionWords({ file: 'A-v2.md', rulebook_version: 'v2' }), 'Version 2');
   });
 
   describe('over HTTP', () => {

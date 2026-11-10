@@ -55,7 +55,7 @@ export function claimsRules(): readonly RuleEntry[] {
   if (built !== undefined) return built;
   built = defineRules('claims', [
     switchEntry({ id: 'claims.FEE_CLAWBACK', title: 'Our fee follows a claim HMRC reduces (clause 13)', approver: 'the solicitor', approval: OFF,
-      settings: FEE_CLAWBACK, home: `${HOME}claim-record.ts`, tested_in: 'test/claims/engagement-terms-and-fees.test.ts' }),
+      settings: FEE_CLAWBACK, home: `${HOME}claim-record.ts`, tested_in: 'test/claims/claim-record.test.ts' }),
     switchEntry({ id: 'claims.CONVEYANCING_STRIP', title: 'Company names are kept on conveyancing papers', approver: 'the data protection officer', approval: OFF,
       settings: CONVEYANCING_STRIP, home: `${HOME}conveyancing-strip.ts`, tested_in: 'test/compliance/data-protection-switches.test.ts' }),
     switchEntry({ id: 'claims.FEE_CONTROLS.above_benefit', title: 'What happens when our fee is more than the benefit', approver: 'Lakhbir', approval: OFF,

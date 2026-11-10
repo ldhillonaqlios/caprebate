@@ -34,7 +34,8 @@ export function positionWords(v: RuleValue): string {
   if (typeof o['test_system'] === 'boolean' && typeof o['elsewhere'] === 'boolean') {
     return `${o['test_system'] ? 'On' : 'Off'} on the test website, ${o['elsewhere'] ? 'on' : 'off'} everywhere else`;
   }
-  if (typeof o['file'] === 'string') return String(o['file']);
+  // A rulebook: its own version (the file it is, by name, is on the rulebooks' list, never on a screen).
+  if (typeof o['rulebook_version'] === 'string') return `Version ${String(o['rulebook_version']).replace(/^v/, '')}`;
   const parts: string[] = [];
   if (typeof o['enabled'] === 'boolean') parts.push(o['enabled'] ? 'On' : 'Off');
   for (const k of Object.keys(o).sort()) {
@@ -54,7 +55,7 @@ export function rulesInForcePage(nav: Safe, rules: readonly RuleEntry[] = rulesT
   const areas = [...new Set(rules.map((r) => r.area))];
   const body = h`<div class="pagehead"><div><h1>Rules in force</h1>
     <p class="lede">Every tax reading and switch the system uses: its version, the date it takes effect from, and who approves it. ${String(rules.length)} rules.</p></div></div>
-    <p class="help">This page changes nothing. A rule is changed in the code, with its tests, and checked before it goes live. A changed rule gets a new version, and every estimate, pack, report and invoice keeps the versions it was made with, so its figures never move.</p>
+    <p class="help">This page changes nothing. A rule is changed in the code, with its tests, and checked before it goes live. A changed rule gets a new version. Each estimate, pack, report and invoice keeps the versions it was made with. Its figures never move.</p>
     <h2>The claim calculator</h2>
     <p>Version <strong>${engine}</strong>. Its own switches: ${String(cta.length)}, of which ${String(on)} ${on === 1 ? 'is' : 'are'} on. They change only with a new version of the calculator.</p>
     ${areas.map((a) => h`<h2>${AREA_WORDS[a] ?? a}</h2>

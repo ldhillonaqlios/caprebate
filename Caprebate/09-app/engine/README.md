@@ -25,8 +25,10 @@ typed by hand.
    This builds the calculator into `dist/page/` (`tools/build.cjs`), writes it
    into `Caprebate site.html` (`tools/page-from-engine.cjs`), and brings the back
    end's copy of the page up to date (`09-app/backend/copies/`).
-3. Run the checks (below), then commit `src/calculator/`, the site file and the
-   back end's copy together.
+3. Raise `version` in `package.json`, add its heading to `CHANGELOG.md`, and run
+   `npm run version:record` (see "The engine's version" below).
+4. Run the checks (below), then commit `src/calculator/`, the site file, the
+   back end's copy, `package.json`, `CHANGELOG.md` and `VERSIONS.json` together.
 
 **Never edit the calculator inside `Caprebate site.html`.** The next
 `npm run page` would overwrite it, and until then `tools/verify-page.cjs` (and
@@ -35,6 +37,15 @@ the back end's `npm run check`) fails, naming the file to change instead.
 A new `CB_` module in `shared.js` must also be added to `module.exports` at the
 end of `shared.js` and to the `const { ... } = SHARED;` line of each sector
 file. The build stops and says so if one is missing.
+
+## The engine's version (Phase 161m)
+
+Every change to `src/calculator/` raises `version` in `package.json` (semver; a change that moves a figure is at least a
+minor one) and adds a `## <version> - <date>` heading to `CHANGELOG.md` saying what changed and why; then
+`npm run version:record` writes the version and the calculator's fingerprint to `VERSIONS.json`. `npm run verify`
+(section 6 of `tools/verify-page.cjs`) fails a calculator change without a new version, a version never recorded, a
+version listed twice and a version with no change-log heading. The back end stamps this version on every sealed
+estimate, survey pack, report and invoice, which keep their figures when the calculator changes.
 
 ## Where the calculator runs
 

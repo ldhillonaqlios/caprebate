@@ -1172,111 +1172,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161m — Rules as versioned data: rules registers, the engine's version, and versions on every sealed result
-
- **Model: Opus.** Board item 13486967146. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". The target structure, its seven rules and the measurements behind them are in **09-app/docs/ARCHITECTURE.md**. Changing a tax rule must never quietly change a result a client has already been given. **Order (6 Nov 2026):** runs before go-live; see THE ORDER in the block.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE AUDIT this phase answers: "CAP Rebate - Technical Audit Report.docx"
-(ITRoadway, Naeem, audit of 30 Oct 2026, report dated 2 Nov 2026, v1.0), in
-OneDrive at Caprebate/06-commercial-and-governance/. It read the developer
-pack of 29 Oct 2026 (main at a029859) and the test website. Lakhbir, 4 Nov
-2026: "we fix each thing that needs to be fixed on the audit report, as this
-needs to get to a point of production".
-
-EVERY PHASE IN THIS SET (161a to 161k): each fix gets a test that fails on
-the code before it. Plain words at grade 9 on every screen. Behaviour that
-is not named below does not change: run all four suites before you start
-and again at the end, and say any difference. Fix what is small and safe;
-anything larger goes in a new lettered phase before the sweep; anything that
-needs a person goes in the Word questions document (AMENDMENT 2) and the
-right register.
-
-WHAT IS THERE NOW: the tax readings and switches are frozen constants in
-code (money-readings.ts, pack-legal.ts LEGAL_READINGS, the 22 "enabled:
-false" switches, the engine's CB_ modules); a rulebook's version is only
-its filename (case-stamp.ts); the engine package is still 0.1.0, and
-claim_figures.a_engine_version exists but nothing makes it change.
-
-BUILD
-1. A RULES REGISTER in each module that has rules (logic/rules.ts): every
-   reading and switch with an id, a version, the date it takes effect
-   from, who approved it (the tax adviser, the surveyor, the DPO), and its
-   value. The existing constants become entries; nothing changes value.
-2. THE ENGINE'S VERSION: semver in 09-app/engine/package.json, raised by
-   every change to src/calculator (engine/tools/verify-page.cjs fails a
-   calculator change with the same version), and a change log beside it.
-3. VERSIONS ON EVERY RESULT: a sealed estimate, a survey pack, a report
-   and an invoice record the engine version and the version of each rule
-   they used (a migration adds what is missing). A re-run shows what
-   changed and why. Old results keep their figures.
-4. AN ADMIN PAGE listing the rules in force, their versions, dates and
-   approvers, read-only (changing a rule is still a code change with its
-   tests, reviewed in a pull request).
-5. Each rule tested both ways (on and off, old version and new); a test
-   that every sealed result carries its versions.
-
-THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
-what can be run before going live, restructure them"): every phase from
-161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161j,
-161k, 161l, 161m. None of them waits on a person. Going live waits on
-people (the solicitor's and DPO's approvals, the ICO number, Vercel Pro), so
-the code is regrouped while they work, with no real client on it. After
-161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
-its gate is open, then the sweep again before the first client. If the gate
-opens before 161m has run, finish the phase in progress, run the sweep, then
-161n; the phases left run after go-live, in the same order. Every phase
-leaves the website working, so stopping between two is safe.
-NEXT: the sweep (Phase 162), out of order, then Phase 161n.
-
-ACCEPT
-- A planted change to one rule's value without a new version fails a test;
-  a planted calculator change without a new engine version fails
-  verify-page.
-- A result sealed before a rule change shows the same figure after it.
-- All four suites pass with the same figures (plus the new tests).
-```
-
-
 ## PHASE 161n — Go live: the gate (people's approvals and purchases), then the live website switched on and proved
 
  **Model: Opus.** Board item 13488910486. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "review all the phases see exactly what can be run before going live, restructure them". Everything Claude can build runs before this one (161h to 161m, then the sweep). This phase is the switch: it waits for its gate, which is people's work, then turns the live website on. **Order (6 Nov 2026):** after 161m and the sweep; the sweep runs again after it, before the first client.
@@ -1418,6 +1313,8 @@ ACCEPT
  **Added 8 November 2026 by Phase 161j, for this sweep to do.** Four outside-service connectors do not load when they are the first file loaded (`src/integrations/connectors/hmlr-title.ts`, `homedata-planning.ts`, `homedata.ts`, `title-boundary.ts`): each meets the paid connectors' list while it is still loading ("Cannot access ... before initialization"). It was so on main before Phase 161j; nothing loads them first, so nothing breaks, and `test/core/load-alone.test.ts` lists them as known. Make each load alone (for example, the list built when first asked), then take them off the test's list.
 
  **Added 5 November 2026 by Phase 161g, for this sweep to do.** Once pull request 82 (Phase 161g) is merged and the test website has redeployed, check it in the browser pane: on a fresh visit the cookie banner shows "Accept all" and "Reject non-essential" the same size; the network shows no request to Google before a click, after "Reject non-essential", or after "Accept all" (the test website has no Analytics id, so nothing of Google's should ever load there); /privacy-policy/ and /portal-terms/ open with their Draft line, and /privacy goes to /privacy-policy/; signing in as the invented client asks once for the tick ("Before you go on") and then opens the portal. Phase 161g proved the click rule on a local copy with an invented id (no Google before the click or after Reject; the tag requested after Accept). A difference is a finding for Lakhbir.
+
+ **Added 10 November 2026 by Phase 161m, for this sweep to do.** Rules are versioned data now (`09-app/docs/ARCHITECTURE.md` rule 6): 72 rules in the areas' `logic/rules.ts`, each naming the test that runs it. Phase 161m read every one: 52 of the 61 switches and readings (the 11 rulebook entries aside) are tested both ways, on and off. Nine are tested one way only; give each a test that runs it both ways, and point its `tested_in` at that test: (1) the four legal readings `s35_seller_not_entitled`, `non_taxpayer_seller`, `lease_route` and `s185_earlier_cap` are read straight from `LEGAL_READINGS` in `src/modules/survey/pack-legal.ts` (at the non-taxpayer question's showIf, the seller step, the lease route and the earlier cap), so first let `assessLegalUnder` take all six readings, not only the two engine switches, with the pack still reading them from the survey's register; (2) `shared.KEEP_ORIGINALS_TEST_WEBSITE` (only its position and its wiring in `api/index.mjs` are asserted); (3) `integrations.ADDRESS_LOOKUP` and `integrations.COMPANY_SEARCH` (never run with `enabled: false`); (4) `REGISTER_SWITCHES.BCIS` (only its shipped off position) and `REGISTER_SWITCHES.POSTCODES_IO` (never run with its switch on). No value changes, so no version moves: `node 09-app/backend/tools/rules-record.ts --check` must stay green. Once Phase 161m's pull request is merged and the test website has redeployed, sign in there as Admin and open Settings, then Rules: every rule is listed with its position, version and approver, and nothing on the page changes anything.
 
  **Added 10 November 2026 by Phase 161l2, for this sweep to do.** Finance's and admin's addresses are still matched from `src/app/staff.ts` (the staff pages' dispatch), not from a `routes.ts` of their own as the survey, compliance and the other modules now have. Give `src/modules/finance/` and `src/modules/admin/` each a `routes.ts` that the dispatch asks at the same point, so `node 09-app/backend/tools/route-list.cjs` prints the same list in the same order before and after (diff the two), and the boundary check stays at 0. A tidy-up, not a break: nothing counts it. Also, once Phase 161l2's pull request is merged and the test website has redeployed, sign in there as staff and as a client (the invented example.invalid logins) and open the pages that moved between modules: a client's page and its Files, Home, the enquiry inbox, a claim's report and its sign-off, the site plan, the legal approvals and the client's report acceptance; each must look and behave as before (the suites drive them through the app, but nobody has opened them on the website since the move).
 
@@ -2082,7 +1979,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (**done 7 Nov 2026**: the live start, timers, backup and restore, release workflow, runbook and go-live checklist, built and proved on a database file; no live project made until Pro is bought), then, before go-live (order changed 6 Nov 2026), 161h1 the boundary check (**done 7 Nov 2026**: 2,162 breaks counted, any new one refused), 161i to 161k the regroup by business area (**161k done 9 Nov 2026**: every business area a module behind its front door, src/web/ gone, tests by feature, the specs in 09-app/docs/), 161l the tangle undone (**part 1 done 9 Nov 2026**: the one-way order written and checked, events, permissions per module, the start-up wiring in src/app/, the lower layers off the modules; 350 breaks to 148), 161l1 the tangle, part 2 (**done 10 Nov 2026**: the joins split by owner where the owner is below, the CRM split into a lower clients area and its screens; 148 breaks to 67), 161l2 the last of it (**done 10 Nov 2026**: every borrowed statement split by owner, files moved to their owners, named ports in place of the router's lent parts; 67 breaks to 0), and 161m versioned rules; then the sweep, and 161n goes live once its gate is open |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (**done 7 Nov 2026**: the live start, timers, backup and restore, release workflow, runbook and go-live checklist, built and proved on a database file; no live project made until Pro is bought), then, before go-live (order changed 6 Nov 2026), 161h1 the boundary check (**done 7 Nov 2026**: 2,162 breaks counted, any new one refused), 161i to 161k the regroup by business area (**161k done 9 Nov 2026**: every business area a module behind its front door, src/web/ gone, tests by feature, the specs in 09-app/docs/), 161l the tangle undone (**part 1 done 9 Nov 2026**: the one-way order written and checked, events, permissions per module, the start-up wiring in src/app/, the lower layers off the modules; 350 breaks to 148), 161l1 the tangle, part 2 (**done 10 Nov 2026**: the joins split by owner where the owner is below, the CRM split into a lower clients area and its screens; 148 breaks to 67), 161l2 the last of it (**done 10 Nov 2026**: every borrowed statement split by owner, files moved to their owners, named ports in place of the router's lent parts; 67 breaks to 0), and 161m versioned rules (**done 10 Nov 2026**: a rules register in each area, 72 rules each with its version, date and approver, the lock that refuses a value changed without a new version, the engine's version moving with the calculator, versions on every sealed estimate, pack, report and invoice, and Admin's read-only Rules page); then the sweep, and 161n goes live once its gate is open |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161m, before 161n goes live, and again after 161n, before the first client (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

@@ -30,7 +30,7 @@ export type Tile = {
   readonly gate: (actor: Actor) => void;
 };
 
-/** THE EIGHT TILES, in the brief's order. */
+/** THE TILES, in the brief's order (Rules added by Phase 161m). */
 export const SETTINGS_TILES: readonly Tile[] = Object.freeze([
   { href: '/staff/users', label: 'Users', does: 'Add a colleague, change their role, or stop their sign-in.', gate: usersGate },
   { href: '/staff/admin-settings', label: 'Switches', does: 'Turn features on or off, and set the numbers the system uses.', gate: assertConfigurationRead },
