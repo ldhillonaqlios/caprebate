@@ -1,0 +1,10 @@
+{
+ "note": "THE ENGINE'S VERSIONS (Phase 161m, 10 Nov 2026): each version the engine has had, with the SHA-256 of every file in src/calculator/ at that version. Written by node tools/engine-version.cjs --record; checked by tools/verify-page.cjs section 6. Never edit a recorded line: raise the version.",
+ "versions": [
+  {
+   "version": "0.1.0",
+   "calculator_sha256": "162c5ca04cbb9a300f6af40055bc2d786285325b0296ec4c85f48be99d8292e1",
+   "recorded": "2026-11-10"
+  }
+ ]
+}

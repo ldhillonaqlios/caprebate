@@ -138,6 +138,17 @@ describe('4 · item 4 — each piece of work’s own grants and VAT', () => {
   });
 });
 
+describe('PHASE 161m · grant_untraced_full, as the shared rules register sets it, both ways', () => {
+  test('on (the test system), an untraced £15,000 grant comes off in full; off (elsewhere), it comes off as a share', () => {
+    const g = [G('g-161m', 15_000)];
+    const on = run(g, { element_trace: true, connected_no_reduction: false, untraced_full: MONEY_READINGS_ON.grant_untraced_full });
+    const off = run(g, { element_trace: true, connected_no_reduction: false, untraced_full: MONEY_READINGS_OFF.grant_untraced_full });
+    assert.equal(MONEY_READINGS_ON.grant_untraced_full, true);
+    assert.equal(MONEY_READINGS_OFF.grant_untraced_full, false);
+    assert.notDeepEqual(on.sums.qualifying_pence, off.sums.qualifying_pence);
+  });
+});
+
 describe('2, 3 · the purchase in the pack: VAT and costs shared with the land, alterations on top', () => {
   test('C12: £200,000 VAT on a £1m price with £300,000 land — the land takes £60,000 of it; stamp duty and fees are shared the same way; the alterations are added on top', async () => {
     const app = await testApp();
@@ -184,6 +195,15 @@ describe('2, 3 · the purchase in the pack: VAT and costs shared with the land, 
     // Off, none of it moves the figure.
     const off2 = SP.packView(deps(MONEY_READINGS_OFF), sam, job);
     assert.deepEqual([off2.money.costs_pence, off2.money.alterations_pence], [0, 0]);
+    // PHASE 161m: each reading one at a time, both ways, every other reading off (the shared rules register,
+    // src/shared/logic/rules.ts, is where each one's position is kept).
+    const one = (k: keyof typeof MONEY_READINGS_ON) => SP.packView(deps({ ...MONEY_READINGS_OFF, [k]: true }), sam, job);
+    const none = off2;
+    assert.deepEqual([one('transaction_tax_in_base').money.costs_pence, none.money.costs_pence], [gbp(40_000), 0], 'transaction_tax_in_base');
+    assert.deepEqual([one('legal_fees_in_base').money.costs_pence, none.money.costs_pence], [gbp(10_000), 0], 'legal_fees_in_base');
+    assert.deepEqual([one('s185_plus_own_s25').money.alterations_pence, none.money.alterations_pence], [gbp(25_000), 0], 's185_plus_own_s25');
+    assert.deepEqual([one('vat_shared_with_land').money.land_share_pence, none.money.land_share_pence], [gbp(60_000), 0], 'vat_shared_with_land');
+    assert.deepEqual([one('vat_shared_with_land').purchase_sums.building_price_pence, none.purchase_sums.building_price_pence], [gbp(840_000), gbp(900_000)]);
     app.close();
   });
 });

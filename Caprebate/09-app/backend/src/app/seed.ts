@@ -44,6 +44,8 @@ import { getClaimsIdByBusinessIdAssessmentId, getClaimsIdByBusinessIdAssessmentI
 import { getAssessmentsIdByBusinessId, insertAssessmentAnswers, insertAssessments2, insertEstimates2 } from '../modules/assessment/index.ts';
 import { insertInvoicePayments, insertInvoices2 } from '../modules/finance/index.ts';
 import { insertSurveyorCommitments, insertSurveyorJobs } from '../modules/survey/index.ts';
+import { resultVersions } from '../shared/index.ts';
+import { rulesThroughCompliance } from '../modules/compliance/index.ts';
 
 /**
  * Development credentials. Printed by `npm run seed`, never a default in any
@@ -343,7 +345,7 @@ function seedPipeline(
     });
 
     insertEstimates2(db, [newId(), aId, businessId, 30_000_000, 0.3, 18_000_000, 12_000_000, 5_000_000, 0.25,
-        7_500_000, t, 'seed-not-a-real-hash']);
+        7_500_000, t, 'seed-not-a-real-hash', JSON.stringify(resultVersions(rulesThroughCompliance()))]);
 
     // Both tiers, and both gates shut. NOT_PERMITTED_YET is the honest state
     // today: the privacy notice is not published and no connector exists.
@@ -550,7 +552,8 @@ function seedCrm(
         // Clause 4 now states the payment terms — within 14 days of the date of the invoice.
         '2026-09-02', '2026-09-16', 'due within 14 days of the invoice, as clause 4 states',
         inv.sent_on, '3% of the allowances identified, £300,000.00 — £9,000.00 (the seed); every fee control off', null, raisedBy, t,
-        'company', null, inv.split === null ? null : inv.split[0], inv.split === null ? null : inv.split[1], null]);
+        'company', null, inv.split === null ? null : inv.split[0], inv.split === null ? null : inv.split[1], null,
+        JSON.stringify(resultVersions(rulesThroughCompliance()))]);
     allocateNumber(db, 'INVOICE', invoiceId, null, raisedBy, t);
     for (const p of inv.received) {
       insertInvoicePayments(db, [newId(), invoiceId, p.on, p.pence, 'BANK_TRANSFER', p.confirmed, raisedBy, t]);

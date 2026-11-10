@@ -43,6 +43,8 @@ import { actor, testApp } from '../helpers.ts';
 import * as CF from '../claim-fixtures.ts';
 import { oneDriveOnly } from '../onedrive-only.ts';
 import { insertTask } from '../../src/modules/clients/index.ts';
+import { resultVersions } from '../../src/shared/index.ts';
+import { rulesThroughClaims } from '../../src/modules/claims/index.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 type Org = { business: string; property: string; assessment: string };
@@ -146,6 +148,8 @@ describe('line 2 — every sealed case stamped with the engine version, the rule
       assert.equal(sw.cta.length, counted, 'the stamp does not carry every CB_CTA switch');
       assert.equal(sw.cta.length, ctaSwitchReadings().length);
       assert.equal(sw.registry_free_enabled, false, 'the free register gate ships shut');
+      // Phase 161m: the version of every rule in the claims' register and below, as it was issued.
+      assert.deepEqual((JSON.parse(s.switch_readings_json) as { rules: unknown }).rules, JSON.parse(JSON.stringify(resultVersions(rulesThroughClaims()).rules)));
       assert.deepEqual(sw.backend.map((x) => x.switch), CS.backendSwitchReadings().map((x) => x.switch));
       assert.deepEqual(sw.backend.find((x) => x.switch === 'DEFENCE_PACK_GENERATOR'), { switch: 'DEFENCE_PACK_GENERATOR', on: false, home: 'src/modules/claims/defence-pack.ts' });
 

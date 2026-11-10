@@ -965,6 +965,15 @@ function approveCard(v: P.PackView, r: A.Readiness): Safe {
 
 /* ------------------------------------------------------------ an approved version */
 
+/** Phase 161m: the calculator's version and the rules this version was made with, and what has changed since. */
+function madeWithPart(m: A.MadeWith): Safe {
+  if (m.sealed === null) return h`<p class="help pk-made-with">This version was approved before we recorded the rules each version is made with.</p>`;
+  const engine = m.sealed.engine ?? 'not known';
+  if (m.changes.length === 0) return h`<p class="help pk-made-with">Made with calculator ${engine} and the rules in force today. A version approved now would use the same rules.</p>`;
+  return h`<div class="pk-made-with" role="status"><p><strong>The rules have changed since this version was approved.</strong> Its figures stay as they were approved. A version approved now would use:</p>
+    <ul>${m.changes.map((c) => h`<li>${c.title}: ${c.was}, now ${c.now}. ${c.why}</li>`)}</ul></div>`;
+}
+
 function versionPage(d: PackPageDeps, actor: Actor, v: P.PackView, kept: NonNullable<ReturnType<typeof A.approvedVersion>>): string {
   const x = kept.snapshot;
   const live = x.lines.filter((l) => !l.removed);
@@ -977,6 +986,7 @@ function versionPage(d: PackPageDeps, actor: Actor, v: P.PackView, kept: NonNull
       : h`<div class="pk-fp-bad" role="alert"><strong>The fingerprint does not match.</strong> This copy is not what was approved. Do not rely on it, and tell the office.</div>`}
     <p>Approved by <strong>${x.surveyor.name}</strong>, RICS number ${x.surveyor.rics_number}${x.surveyor.firm === null ? '' : `, ${x.surveyor.firm}`}, ${d.stamp(x.approved_at)}.</p>
     <p class="help">Fingerprint: <span class="pk-fp">${kept.row.fingerprint}</span></p>
+    ${madeWithPart(kept.made_with)}
     <p>Property: ${x.property === null ? '—' : P.propertyLine(x.property)}</p>
     <h2>The sums</h2>
     <dl class="pk-dl">

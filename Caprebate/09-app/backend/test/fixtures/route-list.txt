@@ -356,6 +356,8 @@ GET = /staff/claims
 * ~ /^\/staff\/claims\/([A-Za-z0-9-]+)\/team$/
 * ~ /^\/staff\/claim-team\/([A-Za-z0-9-]+)\/end$/
 --
+GET = /staff/rules
+--
 GET = /staff/search
 GET = /staff/search/view.json
 * ~ /^\/staff\/(claims|leads)\/export\.csv$/

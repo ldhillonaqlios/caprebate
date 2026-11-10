@@ -32,3 +32,5 @@ export { complianceIdentityHook, complianceLegalApprovals } from './routes.ts';
 import './claims-ports.ts';
 // What the modules below ask compliance (the ports they own, Phase 161l2). Last, as it reaches the module's own files.
 import './ports.ts';
+// Phase 161m: its rules register (logic/rules.ts), and every area's below it.
+export { COMPLIANCE_RULES, rulesThroughCompliance } from './logic/rules.ts';

@@ -36,6 +36,8 @@ export const SETTINGS_TILES: readonly Tile[] = Object.freeze([
   { href: '/staff/admin-settings', label: 'Switches', does: 'Turn features on or off, and set the numbers the system uses.', gate: assertConfigurationRead },
   // Every outside service, its key and its switch, on one read-only page; Admin's, as Users is.
   { href: '/staff/connections', label: 'Connections', does: 'Every outside service: its key, its switch and its last call.', gate: usersGate },
+  // Every rule in force, its version and who approves it; read only, Admin's (Phase 161m).
+  { href: '/staff/rules', label: 'Rules', does: 'Every tax reading and switch: its version and who approves it.', gate: usersGate },
   { href: '/staff/document-types', label: 'Document types', does: 'The kinds of document we ask clients for.', gate: documentTypesGate },
   { href: '/staff/automation', label: 'Automation', does: 'Tasks and reminders that start by themselves when a claim moves.', gate: automationGate },
   { href: '/staff/templates', label: 'Email templates', does: 'The wording of the emails we send to clients.', gate: templatesGate },

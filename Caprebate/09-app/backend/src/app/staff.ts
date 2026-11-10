@@ -26,7 +26,7 @@
 
 import type { EngagementSigning } from '../modules/claims/index.ts';
 import { handleWhatsAppImport } from '../modules/crm/index.ts';
-import { handleConnections } from '../modules/admin/index.ts';
+import { handleConnections, handleRulesPage } from '../modules/admin/index.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import * as SI from '../core/index.ts'; // the sign-in steps (src/core/sign-in.ts), through the core's door
 import { APP_ROLES, AuthError, IMAGE_LIMITS, PHOTO_HEADERS, SESSION_COOKIE_NAME, WELCOME_JOBS, changeOwnPassword, clearPhoto, customRoleOf, dismissWelcome, findById, getSessionsIdByTokenHashRevokedAt, getUsersNById, hashToken, keepSectionChoice, kpiRow, lateBadge, navContext, nobodyBadge, photoFor, piecesPage, readPhoto, refillForm, setPhoto, setSubMenu, singleFile, staffHelp, typedValues, welcomeShown } from '../core/index.ts';
@@ -424,6 +424,10 @@ export async function handleStaff(
   /* ------------------ · every outside service on one page, and the care regulators' lists (Admin) */
   const conn = await handleConnections({ app: d.app, nav, problem }, req, res, url, method, actor, body);
   if (conn === 'handled') return 'handled';
+
+  /* ------------------ · every rule in force, its version and who approves it, read only (Admin; Phase 161m) */
+  const rulesShown = await handleRulesPage({ nav, problem }, req, res, url, method, actor);
+  if (rulesShown === 'handled') return 'handled';
 
   /* ------------------ SECTION 3 · writing to the client on the company's chat, and email replies to sort */
   const chat = await handleStaffMessages({ app: d.app, store: d.store, newId: d.newId, nav, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form);

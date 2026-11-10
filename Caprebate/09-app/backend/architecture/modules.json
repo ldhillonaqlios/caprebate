@@ -142,6 +142,10 @@
    "area": "core",
    "kind": "other"
   },
+  "src/core/logic/rules.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
   "src/core/look.ts": {
    "area": "core",
    "kind": "page"
@@ -410,6 +414,10 @@
    "area": "integrations",
    "kind": "other"
   },
+  "src/integrations/logic/rules.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
   "src/integrations/outside-services.ts": {
    "area": "integrations",
    "kind": "logic"
@@ -518,6 +526,10 @@
    "area": "admin",
    "kind": "logic"
   },
+  "src/modules/admin/rules-page.ts": {
+   "area": "admin",
+   "kind": "page"
+  },
   "src/modules/admin/saved-keys.ts": {
    "area": "admin",
    "kind": "logic"
@@ -597,6 +609,10 @@
   "src/modules/assessment/index.ts": {
    "area": "assessment",
    "kind": "other"
+  },
+  "src/modules/assessment/logic/rules.ts": {
+   "area": "assessment",
+   "kind": "logic"
   },
   "src/modules/assessment/long-life-and-remediation.ts": {
    "area": "assessment",
@@ -778,6 +794,10 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/logic/rules.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/mandatory-documents.ts": {
    "area": "claims",
    "kind": "logic"
@@ -914,6 +934,10 @@
    "area": "clients",
    "kind": "logic"
   },
+  "src/modules/clients/logic/rules.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
   "src/modules/clients/message-retention.ts": {
    "area": "clients",
    "kind": "logic"
@@ -1043,6 +1067,10 @@
    "kind": "logic"
   },
   "src/modules/compliance/legal-register.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/logic/rules.ts": {
    "area": "compliance",
    "kind": "logic"
   },
@@ -1306,6 +1334,10 @@
    "area": "finance",
    "kind": "logic"
   },
+  "src/modules/finance/logic/rules.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
   "src/modules/finance/nav.ts": {
    "area": "finance",
    "kind": "other"
@@ -1478,6 +1510,10 @@
    "area": "survey",
    "kind": "logic"
   },
+  "src/modules/survey/logic/rules.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
   "src/modules/survey/nav.ts": {
    "area": "survey",
    "kind": "other"
@@ -1646,6 +1682,10 @@
    "area": "shared",
    "kind": "logic"
   },
+  "src/shared/logic/rules.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
   "src/shared/money-readings.ts": {
    "area": "shared",
    "kind": "logic"
@@ -1679,6 +1719,10 @@
    "kind": "logic"
   },
   "src/shared/required.ts": {
+   "area": "shared",
+   "kind": "logic"
+  },
+  "src/shared/rules-register.ts": {
    "area": "shared",
    "kind": "logic"
   },

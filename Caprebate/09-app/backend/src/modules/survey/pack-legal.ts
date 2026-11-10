@@ -33,6 +33,7 @@ import { claimantRole, type ClaimantRole } from '../claims/index.ts';
 import { LEGAL_ENGINE_SWITCHES } from '../../shared/index.ts';
 import { getBusinessesSectorById } from '../clients/index.ts';
 import { getSurveyPacksIdByJobId, getSurveyorJobsIdBusinessIdById3, getSurveyorJobsIdByClaimId, getSurveyorJobsPropertyIdPById, insertSurveyPackLegalAnswersByPackId, insertSurveyPacks, listClaimGrantsAmountPenceByIdPaidTo, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId2 } from './data.ts';
+import { LEGAL_READING_NAMES, SURVEY_RULES } from './logic/rules.ts';
 
 export type EngineQuestion = {
   readonly id: string;
@@ -56,28 +57,29 @@ const LEGAL_FACT = /^(trigger|deal|event_date|acquisition_date|prior_owner_(clai
  * 2026: build it, then ask). Each is a viability question to the tax adviser in the Word questions document (268-272).
  * Off, the legal check reads exactly as on that point.
  */
-export const LEGAL_READINGS = Object.freeze({
-  /** C26 (engine switch E-8's reading): a landlord who let the building as homes was barred from claiming by s.35, so
-   *  is not an owner "entitled to claim"; the check looks past them to an earlier owner, as for an NHS seller. */
-  s35_seller_not_entitled: true,
-  /** C28: a seller recorded as "a private individual / other" is asked whether it was a charity or another body that
-   *  pays no UK tax; yes means it could never claim. */
-  non_taxpayer_seller: true,
-  /** C8: a new lease for a premium takes the lease route — with a joint s.183 election the fixtures pass to the tenant;
-   *  with none, they stay the landlord's where the landlord could claim (s.183), and pass where it could not (s.184). */
-  lease_route: true,
-  /** C7: a non-entitled seller with an earlier owner who could claim — the claim is capped at the value fixed when that
-   *  earlier owner sold on (s.185), and is not settled while that value is not known. */
-  s185_earlier_cap: true,
-  /** The s.187A(6)(b) statements route — where an owner in between could
-   *  never claim, two written statements fix the value with no deadline. The engine's CB_CTA.s187a_6b_statements_route,
-   *  held on for the pack's legal check only (G14ivne and G14st8 are asked). */
-  s187a_6b_statements_route: true,
-  /** The fixed value requirement needs a past owner who CLAIMED; a past
-   *  owner known never to have claimed brings no disposal value, so the requirement does not bite. The engine's
-   *  CB_CTA.fvr_requires_past_owner_claim, held on for the pack's legal check only. */
-  fvr_requires_past_owner_claim: true,
-} as const);
+export const LEGAL_READINGS = legalReadingsFromRegister();
+
+/**
+ * THE SIX LEGAL READINGS, READ FROM THE SURVEY'S RULES REGISTER (src/modules/survey/logic/rules.ts, Phase 161m): each
+ * one's position, its version, the date it takes effect from and who approves it are there.
+ *   s35_seller_not_entitled       C26 (engine switch E-8's reading): a landlord who let the building as homes was barred
+ *                                 from claiming by s.35, so the check looks past them to an earlier owner
+ *   non_taxpayer_seller           C28: a seller recorded as "a private individual / other" is asked whether it pays no
+ *                                 UK tax; yes means it could never claim
+ *   lease_route                   C8: a new lease for a premium takes the lease route (s.183, s.184)
+ *   s185_earlier_cap              C7: capped at the value fixed when an earlier owner who could claim sold on (s.185)
+ *   s187a_6b_statements_route     the engine's CB_CTA switch, held on for the pack's legal check only
+ *   fvr_requires_past_owner_claim the engine's CB_CTA switch, held on for the pack's legal check only
+ */
+function legalReadingsFromRegister(): Readonly<Record<(typeof LEGAL_READING_NAMES)[number], boolean>> {
+  const out: Record<string, boolean> = {};
+  for (const name of LEGAL_READING_NAMES) {
+    const v = SURVEY_RULES.find((r) => r.id === `survey.legal.${name}`)?.value;
+    if (typeof v !== 'boolean') throw new Error(`the legal reading ${name} has no position in src/modules/survey/logic/rules.ts`);
+    out[name] = v;
+  }
+  return Object.freeze(out) as Readonly<Record<(typeof LEGAL_READING_NAMES)[number], boolean>>;
+}
 
 /** The engine's own switches the pack's legal check reads, by the reading that holds them. */
 export { LEGAL_ENGINE_SWITCHES };

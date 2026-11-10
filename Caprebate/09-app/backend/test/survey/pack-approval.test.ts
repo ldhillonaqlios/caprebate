@@ -29,6 +29,8 @@ import { approvePack, approvedVersion, canonical, fingerprintOf, readiness, save
 import { chaptersToRead } from '../../src/modules/survey/pack-chapters.ts';
 import { setBasis } from '../../src/modules/survey/survey-evidence.ts';
 import { actor } from '../helpers.ts';
+import { resultVersions } from '../../src/shared/index.ts';
+import { rulesThroughSurvey } from '../../src/modules/survey/index.ts';
 
 const T = '2026-10-02T09:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
@@ -293,6 +295,9 @@ describe('the approval of the survey pack', () => {
     assert.match(page, /<h1>Version 2, as approved<\/h1>/);
     assert.match(page, /The fingerprint holds\./);
     assert.match(page, /Approved by <strong>Sam Surveyor<\/strong>, RICS number 1234567, Sam Surveyors LLP/);
+    // Phase 161m: each approved version keeps the engine's version and every rule's (migration 122), and says nothing changed since.
+    assert.deepEqual(v2.made_with, { sealed: JSON.parse(JSON.stringify(resultVersions(rulesThroughSurvey()))), changes: [] });
+    assert.match(page, /Made with calculator \S+ and the rules in force today\./);
     assert.ok(page.includes(v2.row.fingerprint));
     assert.match((await req('u-ap-admin', `${P()}/version/9`)).body, /This pack has no approved version with that number\./);
     for (const who of ['u-ap-ola', 'u-ap-acc', 'u-ap-ro']) {

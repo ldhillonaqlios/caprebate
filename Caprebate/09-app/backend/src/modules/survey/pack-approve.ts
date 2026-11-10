@@ -38,7 +38,9 @@ import { videosOf } from './survey-video.ts';
 import { sitePlanOf, type SitePlan } from './site-plan.ts';
 import { valuationLock } from '../claims/index.ts';
 import { getUsersNById } from '../../core/index.ts';
-import { getSurveyPackApprovalsIdVersionByJobIdVersion, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyorDetailsRicsNumberFirmByUserId, insertSurveyPackApprovals, insertSurveyPackReads, insertSurveyorDetails, listSurveyPackApprovalsIdVersionByPackId, listSurveyPackReadsChapterSeqByJobIdUserId } from './data.ts';
+import { getSurveyPackApprovalsIdVersionByJobIdVersion, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyorDetailsRicsNumberFirmByUserId, getSurveyPackApprovalsVersionsJsonById, insertSurveyPackApprovals, insertSurveyPackReads, insertSurveyorDetails, listSurveyPackApprovalsIdVersionByPackId, listSurveyPackReadsChapterSeqByJobIdUserId } from './data.ts';
+import { readResultVersions, resultVersions, versionChanges, type ResultVersions, type VersionChange } from '../../shared/index.ts';
+import { rulesThroughSurvey } from './logic/rules.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',
@@ -356,7 +358,8 @@ export function approvePack(d: PackDeps, actor: Actor, job_id: string, f: { seq:
       const name = getUsersNById<{ n: string }>(d.db, [actor.id])?.n ?? actor.id;
       const json = canonical(snapshotOf(v, lv, { version, at, by: { id: actor.id, name }, details }, d));
       const fingerprint = fingerprintOf(json);
-      insertSurveyPackApprovals(d.db, [d.newId(), pack_id, version, v.seq, lv.seq, json, fingerprint, actor.id, at]);
+      // Phase 161m: the engine's version and every rule's, with the approved version (migration 122).
+      insertSurveyPackApprovals(d.db, [d.newId(), pack_id, version, v.seq, lv.seq, json, fingerprint, actor.id, at, JSON.stringify(resultVersions(rulesThroughSurvey()))]);
 
       // The surveyor's figures, committed to the job as the workspace commits them — so the claim reads them as before.
       /* With work since, the figure is the purchase and every piece of work. The building figure is the
@@ -410,11 +413,23 @@ export function saveDetails(d: PackDeps, actor: Actor, job_id: string, f: { rics
 
 /** One approved version, as kept, and whether its fingerprint still matches what is kept. */
 export function approvedVersion(d: PackDeps, actor: Actor, job_id: string, version: number): {
-  row: ApprovalRow; snapshot: Snapshot; fingerprint_holds: boolean;
+  row: ApprovalRow; snapshot: Snapshot; fingerprint_holds: boolean; made_with: MadeWith;
 } | null {
   packJob(d.db, actor, job_id);
   const r = getSurveyPackApprovalsIdVersionByJobIdVersion<ApprovalRow & { snapshot_json: string }>(d.db, [job_id, version]);
   if (r === undefined) return null;
   const { snapshot_json, ...row } = r;
-  return { row, snapshot: JSON.parse(snapshot_json) as Snapshot, fingerprint_holds: fingerprintOf(snapshot_json) === r.fingerprint };
+  return { row, snapshot: JSON.parse(snapshot_json) as Snapshot, fingerprint_holds: fingerprintOf(snapshot_json) === r.fingerprint, made_with: madeWith(d.db, row.id) };
+}
+
+/**
+ * WHAT AN APPROVED VERSION WAS MADE WITH, AND WHAT HAS CHANGED SINCE (Phase 161m). Its figures never move: they are
+ * the snapshot. `changes` is what a pack approved today would be made with that this one was not, each with why.
+ * `sealed` is null where the version was approved before versions were recorded (migration 122).
+ */
+export type MadeWith = { readonly sealed: ResultVersions | null; readonly changes: readonly VersionChange[] };
+export function madeWith(db: PackDeps['db'], approval_id: string): MadeWith {
+  const sealed = readResultVersions(getSurveyPackApprovalsVersionsJsonById<{ versions_json: string | null }>(db, [approval_id])?.versions_json);
+  const rules = rulesThroughSurvey();
+  return { sealed, changes: sealed === null ? [] : versionChanges(sealed, resultVersions(rules), rules) };
 }

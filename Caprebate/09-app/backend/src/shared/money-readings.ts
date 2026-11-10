@@ -13,10 +13,15 @@
  *   s185_plus_own_s25       (#1)  the buyer's own alterations to install plant (s.25) are claimed on top of the cap
  *   vat_shared_with_land    (C12) irrecoverable VAT, and those costs, are shared between the land and the building
  *
+ * THE POSITIONS ARE DATA (Phase 161m, 10 Nov 2026): each reading is an entry in the shared area's rules register
+ * (src/shared/logic/rules.ts), with its version, the date it takes effect from and who approves it. The two sets below
+ * are read from those entries; a reading changes there, with a new version, and nowhere else.
+ *
  * The public estimate's own switches (CB_CTA, in the site file) are not touched: the site harness asserts them off, and
  * they move the figure every visitor sees. The pack reads these instead, as arguments, so both ways are tested.
  */
 import { onTestWebsite, type Env } from './test-website.ts';
+import { MONEY_READING_NAMES, SHARED_RULES } from './logic/rules.ts';
 
 export type MoneyReadings = {
   readonly grant_untraced_full: boolean;
@@ -35,10 +40,20 @@ export type MoneyReadings = {
   readonly s33b_aggregation: boolean;
 };
 
-const ALL_ON: MoneyReadings = Object.freeze({ grant_untraced_full: true, transaction_tax_in_base: true, legal_fees_in_base: true, s185_plus_own_s25: true, vat_shared_with_land: true,
-  long_life_test: true, asbestos_lrr: true, s33b_aggregation: true });
-const ALL_OFF: MoneyReadings = Object.freeze({ grant_untraced_full: false, transaction_tax_in_base: false, legal_fees_in_base: false, s185_plus_own_s25: false, vat_shared_with_land: false,
-  long_life_test: false, asbestos_lrr: false, s33b_aggregation: false });
+/** One position of every reading, read from the register: `test_system` or `elsewhere`. */
+function readingsAt(where: 'test_system' | 'elsewhere'): MoneyReadings {
+  const out: Record<string, boolean> = {};
+  for (const name of MONEY_READING_NAMES) {
+    const e = SHARED_RULES.find((r) => r.id === `shared.money.${name}`);
+    const v = e?.value as { readonly [k: string]: unknown } | undefined;
+    if (v === undefined || typeof v[where] !== 'boolean') throw new Error(`the money reading ${name} has no ${where} position in src/shared/logic/rules.ts`);
+    out[name] = v[where] as boolean;
+  }
+  return Object.freeze(out) as MoneyReadings;
+}
+
+const ALL_ON: MoneyReadings = readingsAt('test_system');
+const ALL_OFF: MoneyReadings = readingsAt('elsewhere');
 
 /** True on the test system: the test website, or a copy started with CAPREBATE_COST_MODEL_TEST=1. */
 export function testSystemHere(env: Env = process.env): boolean {
