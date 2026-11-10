@@ -538,3 +538,11 @@ export function listAuditLogAtDetailActorIdByInvoiceUpdatedObjectIds<T extends R
   return db.all<T>("SELECT a.at, a.detail, a.actor_id FROM audit_log a WHERE a.kind = 'INVOICE_UPDATED' " +
     'AND a.object_id IN (SELECT value FROM json_each(?)) ORDER BY a.seq', params);
 }
+// Phase 161l2: the users the client record's statements joined, by a list of ids (a JSON array): the logins of the
+// organisations marked do not contact, and the people who keep working times (src/modules/clients/data.ts).
+export function getUsersCountByBusinessIdsEmailCanonical<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM users u WHERE u.business_id IN (SELECT value FROM json_each(?)) AND u.email_canonical = lower(?)', params);
+}
+export function listUsersIdDisplayNameByIdsDisabledAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT DISTINCT u.id, u.display_name FROM users u WHERE u.id IN (SELECT value FROM json_each(?)) AND u.disabled_at IS NULL ORDER BY u.display_name ASC', params);
+}

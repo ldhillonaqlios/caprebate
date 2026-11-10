@@ -528,7 +528,7 @@ export function getSurveyorJobsPropertyIdPById<T extends Row = Row>(db: Db, para
 }
 
 // FOR THE CRM (Phase 161l1): its statements that joined these tables to the core's users or the claims now read here
-// and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts).
+// and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts, emptied in Phase 161l2).
 export function getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT a.version, a.approved_at, a.approved_by FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
     'JOIN surveyor_jobs j ON j.id = p.job_id WHERE j.claim_id = ? ' +
@@ -631,4 +631,10 @@ export function listVideoMeetingsIdBookingIdByBookingIdJO<T extends Row = Row>(d
   });
   const rows = fillUsers(db, joined, { booked_by_name: 'display_name' });
   return rows.map((r) => ({ ...r, meeting_id: getVideoMeetingsMeetingIdByBookingId<{ meeting_id: unknown }>(db, [r.booking_id as string])?.meeting_id ?? null }) as Row as T);
+}
+
+// survey_walkthroughs: whether a booking is a walk-through (Phase 161l2: from the client record's borrowed file, text
+// unchanged; the client record asks through its port, src/modules/clients/walkthrough-port.ts)
+export function getSurveyWalkthroughsXByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT 1 AS x FROM survey_walkthroughs WHERE booking_id = ?', params);
 }

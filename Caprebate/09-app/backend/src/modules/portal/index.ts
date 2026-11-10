@@ -25,3 +25,5 @@ export type { LookAgain } from './take-back.ts';
 export { getClientReportAcceptancesCountByClaimId } from './data.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH, LETTER_PAGE_CSP, portalConfirmLink, portalEntry, portalSignLink, rangeBasisFor } from './routes.ts';
+// What the CRM asks the portal (its port, src/modules/crm/report-acceptance-port.ts; Phase 161l2). Last, as it reaches the CRM's door.
+import './crm-ports.ts';

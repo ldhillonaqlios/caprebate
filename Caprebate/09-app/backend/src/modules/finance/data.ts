@@ -162,7 +162,7 @@ export function listInvoicePaymentsIdReceivedOnByInvoiceId<T extends Row = Row>(
 }
 
 // FOR THE CRM (Phase 161l1): its statements that joined these tables to the core's users or the audit log now read
-// here and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts).
+// here and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts, emptied in Phase 161l2).
 export function listInvoiceCreditNotesRecordedAtBasisRecordedByByInvoiceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT c.recorded_at, c.basis, n.seq, c.recorded_by FROM invoice_credit_notes c LEFT JOIN invoice_numbers n ON n.credit_note_id = c.id ' +
     'WHERE c.invoice_id = ? ORDER BY c.recorded_at', params);

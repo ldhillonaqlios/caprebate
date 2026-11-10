@@ -70,7 +70,7 @@ import { getInvoicesSentOnByClaimIdKind } from '../finance/index.ts';
 import { getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, listReasonListsCodeLabelActiveByList } from '../admin/index.ts';
 import { getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyorCommitmentsCommittedAtByClaimId } from '../survey/index.ts';
 import { getBusinessesSectorById, getBusinessesStageById, getLeadsIdBusinessIdById4, getLeadsIdByClaimId, updateLeadsUpdatedAtById } from '../clients/index.ts';
-import { insertEnquiryChecks } from '../public-site/index.ts';
+import { insertEnquiryChecks } from '../clients/index.ts';
 import { getClaimMilestonesAtByClaimIdMilestone, getClaimsCountByBusinessIdStage, insertClaimMilestones, insertClaimStageMoves, insertClaimStageMoves2, listClaimStageMovesFromStageToStageByClaimId, listPropertiesBusinessIdLabelByBusinessId, updateClaimsStageHoldReturnStageById } from '../claims/index.ts';
 import { getAssessmentsIdByBusinessId2, getAssessmentsSubmittedAtByBusinessId, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId } from '../assessment/index.ts';
 import { listEnquiryChecksSeqCheckKeyByClaimId, listEnquiryChecksSeqCheckKeyByLeadId } from '../clients/index.ts';
@@ -79,7 +79,7 @@ import { namesByIds } from '../../core/index.ts';
 import { listClaimStageMovesAtKindActorIdByClaimIdNewest } from '../claims/index.ts';
 import { getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId } from '../survey/index.ts';
 import { getClaimDeliverablesContentHashByClaimIdIssuedReport } from '../claims/index.ts';
-import { getClientReportAcceptancesAcceptedAtUserIdByClaimIdFingerprint } from '../clients/index.ts';
+import { getClientReportAcceptancesAcceptedAtUserIdByClaimIdFingerprint } from './report-acceptance-port.ts';
 // The client's step raised by the research: the client record's (src/modules/clients/stage.ts).
 import { raiseToResearch } from '../clients/index.ts';
 // Moved below (Phase 161l1): the claim's stage read to the claims, its live fee invoices to the finance.

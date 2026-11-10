@@ -14,7 +14,11 @@ import assert from 'node:assert/strict';
 import { testApp, fakeHasher, fixedClock } from '../helpers.ts';
 import { seed } from '../../src/app/seed.ts';
 import type { Db, Param, Row } from '../../src/core/index.ts';
-import * as B from '../../src/modules/clients/data-borrowed.ts';
+// Phase 161l2: the client record's borrowed file is gone; its statements are in its data file (its door), the CRM's
+// split reads and the claims' door.
+import * as B from '../../src/modules/clients/index.ts';
+import * as SPLIT from '../../src/modules/crm/split-reads.ts';
+import * as CLAIMS from '../../src/modules/claims/index.ts';
 import * as SURVEY from '../../src/modules/survey/index.ts';
 import * as INTEGRATIONS from '../../src/integrations/index.ts';
 import * as TIMELINE from '../../src/modules/crm/timeline.ts';
@@ -40,7 +44,7 @@ import * as MESSAGES from '../../src/modules/crm/messages.ts';
 /** The function the CRM now calls by this name: still in its borrowed file, moved to the owner's front door, or split
  * in the CRM file that calls it. */
 function from(name: string): Call {
-  for (const space of [SEARCH, CLAIM_LISTS, B, SURVEY, INTEGRATIONS, TIMELINE, INTRODUCERS, PIPELINE, CRM, DASHBOARD, ROUTES, COMMUNICATION, VIDEO, STAFF_DASHBOARD, INBOUND, EMAIL_CHAINS, WHATSAPP_IMPORT, WHATSAPP, WHATSAPP_PAGE, SEARCH, CLAIM_LISTS, CLIENT_CHECKS, TASKS, MESSAGES] as object[]) {
+  for (const space of [SEARCH, CLAIM_LISTS, B, SPLIT, CLAIMS, SURVEY, INTEGRATIONS, TIMELINE, INTRODUCERS, PIPELINE, CRM, DASHBOARD, ROUTES, COMMUNICATION, VIDEO, STAFF_DASHBOARD, INBOUND, EMAIL_CHAINS, WHATSAPP_IMPORT, WHATSAPP, WHATSAPP_PAGE, SEARCH, CLAIM_LISTS, CLIENT_CHECKS, TASKS, MESSAGES] as object[]) {
     const f = (space as Record<string, unknown>)[name];
     if (typeof f === 'function') return f as Call;
   }

@@ -8,7 +8,7 @@ import type { Db, Param, Row } from '../../core/index.ts';
 import { fillUsers } from '../../core/index.ts';
 // A claim and its organisation's name, read through the claims' and the client record's front doors (Phase 161l2).
 import { listClaimsIdBusinessIdStageClaimRefByIds } from '../claims/index.ts';
-import { getBusinessesNameById } from '../clients/index.ts';
+import { getBusinessesNameById, listAutomationRunsAtTriggerEventOwn } from '../clients/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -186,4 +186,14 @@ export function getClaimsClaimRefBusinessNameById<T extends Row = Row>(db: Db, p
   if (c === undefined) return undefined;
   const b = getBusinessesNameById<{ name: unknown }>(db, [c.business_id]);
   return b === undefined ? undefined : ({ claim_ref: c.claim_ref, business_name: b.name, property_id: c.property_id } as Row as T);
+}
+
+// Phase 161l2: the automation rules' runs (the client record's) as the admin page lists them, from the client record's
+// borrowed file (was: ... LEFT JOIN claims c ON c.id = r.claim_id, showing c.id AS claim_id). The claim's id stays only
+// where the claim is there, asked of the claims' front door (test/admin/borrowed-split-161l2.test.ts compares).
+export function listAutomationRunsAtTriggerEvent<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const runs = listAutomationRunsAtTriggerEventOwn<Row>(db, params);
+  const ids = [...new Set(runs.map((r) => r.claim_id).filter((x): x is string => typeof x === 'string'))];
+  const there = new Set(ids.length === 0 ? [] : listClaimsIdBusinessIdStageClaimRefByIds<{ id: string }>(db, [JSON.stringify(ids)]).map((c) => c.id));
+  return runs.map((r) => ({ ...r, claim_id: typeof r.claim_id === 'string' && there.has(r.claim_id) ? r.claim_id : null }) as Row as T);
 }

@@ -28,7 +28,7 @@ import { CAPTURE_SOURCES, FACTS, captured, latestFacts, type FactReading, type F
 import { waitingForCheck, type ToCheck } from './client-checks.ts';
 import { plainDashText } from '../../shared/index.ts';
 import { claimObjFor } from './claim-object.ts';
-import { loadClaimRow } from '../clients/index.ts';
+import { loadClaimRow } from './claim-row.ts';
 import type { ClaimDocumentsPanel } from './documents.ts';
 import { chaptersToRead, CHAPTERS } from '../survey/index.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';

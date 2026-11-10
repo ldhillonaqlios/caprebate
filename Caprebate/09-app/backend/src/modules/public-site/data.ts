@@ -6,15 +6,6 @@
  */
 import type { Db, Param, Row } from '../../core/index.ts';
 
-// enquiry_checks
-export function insertEnquiryChecks(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO enquiry_checks (id, lead_id, claim_id, check_key, answer, note, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
-}
-export function insertEnquiryChecks2(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO enquiry_checks (id, lead_id, claim_id, check_key, answer, note, recorded_by, recorded_at) ' +
-    'VALUES (?, ?, NULL, ?, ?, NULL, ?, ?)', params);
-}
-
 // website_enquiries
 export function deleteWebsiteEnquiriesById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('DELETE FROM website_enquiries WHERE id = ?', params);

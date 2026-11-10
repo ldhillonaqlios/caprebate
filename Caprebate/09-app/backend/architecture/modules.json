@@ -670,11 +670,19 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/claim-row.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/claim-stage.ts": {
    "area": "claims",
    "kind": "logic"
   },
   "src/modules/claims/client-checks.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/client-ports.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -854,17 +862,13 @@
    "area": "clients",
    "kind": "logic"
   },
-  "src/modules/clients/claim-row.ts": {
+  "src/modules/clients/claims-port.ts": {
    "area": "clients",
    "kind": "logic"
   },
   "src/modules/clients/client-values.ts": {
    "area": "clients",
    "kind": "logic"
-  },
-  "src/modules/clients/data-borrowed.ts": {
-   "area": "clients",
-   "kind": "data"
   },
   "src/modules/clients/data.ts": {
    "area": "clients",
@@ -931,6 +935,10 @@
    "kind": "logic"
   },
   "src/modules/clients/vocab.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
+  "src/modules/clients/walkthrough-port.ts": {
    "area": "clients",
    "kind": "logic"
   },
@@ -1126,6 +1134,10 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/crm/report-acceptance-port.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
   "src/modules/crm/routes.ts": {
    "area": "crm",
    "kind": "routes"
@@ -1133,6 +1145,10 @@
   "src/modules/crm/search.ts": {
    "area": "crm",
    "kind": "logic"
+  },
+  "src/modules/crm/split-reads.ts": {
+   "area": "crm",
+   "kind": "data"
   },
   "src/modules/crm/staff-dashboard.ts": {
    "area": "crm",
@@ -1233,6 +1249,10 @@
   "src/modules/portal/client-layout.ts": {
    "area": "portal",
    "kind": "page"
+  },
+  "src/modules/portal/crm-ports.ts": {
+   "area": "portal",
+   "kind": "logic"
   },
   "src/modules/portal/data-borrowed.ts": {
    "area": "portal",
@@ -1343,6 +1363,10 @@
    "kind": "logic"
   },
   "src/modules/survey/bcis-index.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/client-ports.ts": {
    "area": "survey",
    "kind": "logic"
   },

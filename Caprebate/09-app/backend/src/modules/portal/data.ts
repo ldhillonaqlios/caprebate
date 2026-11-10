@@ -42,6 +42,13 @@ export function getClientReportAcceptancesAcceptedAtByApprovalIdUserId<T extends
 export function getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT accepted_at, fingerprint FROM client_report_acceptances WHERE claim_id = ? AND fingerprint = ? AND accepted_at >= ? ORDER BY accepted_at LIMIT 1', params);
 }
+// The client's acceptance with who accepted it, for the CRM's pipeline card (Phase 161l2: from the client record's
+// borrowed file, text unchanged; the CRM asks through its port, src/modules/crm/report-acceptance-port.ts).
+export function getClientReportAcceptancesAcceptedAtUserIdByClaimIdFingerprint<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT x.accepted_at, x.user_id FROM client_report_acceptances x ' +
+    // An acceptance from before the valuation was last reopened is set aside (src/modules/claims/valuation-lock.ts).
+    'WHERE x.claim_id = ? AND x.fingerprint = ? AND x.accepted_at >= ? ORDER BY x.accepted_at ASC LIMIT 1', params);
+}
 export function insertClientReportAcceptances(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO client_report_acceptances (id, claim_id, approval_id, fingerprint, user_id, accepted_at) VALUES (?, ?, ?, ?, ?, ?)', params);
 }

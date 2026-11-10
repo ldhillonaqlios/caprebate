@@ -78,7 +78,8 @@ export function put(db: Db, table: string, values: Record<string, Param>): void 
   for (const k of Object.keys(values)) assert.ok(info.has(k), `${table}.${k} exists`);
   db.run(sql, names.map((n) => {
     const c = info.get(n)!;
-    if (Object.hasOwn(values, n)) return values[n] as Param;
+    // A null the schema refuses becomes an id that names nothing: the case still meets a row whose other half is not there.
+    if (Object.hasOwn(values, n)) return values[n] === null && c.notnull === 1 ? `${n}-names-nothing` : values[n] as Param;
     if (c.notnull !== 1) return null;
     if (c.dflt_value !== null) return String(c.dflt_value).replace(/^'(.*)'$/, '$1');
     filler++;

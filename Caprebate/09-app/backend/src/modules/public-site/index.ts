@@ -4,7 +4,6 @@
  * another area needs it, never a whole file.
  */
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
-export { insertEnquiryChecks, insertEnquiryChecks2 } from './data.ts';
 export { fontFile, gsapScript, HOME_PAGE_HEADERS, homeEdition, isSectorSlug, sectorEdition } from './home-site.ts';
 export { SITE_JS_HEADERS, SITE_PAGE_CSP, SITE_PAGE_HEADERS, siteEdition } from './public-site.ts';
 export { agreementLinks, CONSENT_COOKIE, consentChoice, consentSetCookie, COOKIE_BANNER_CSS, cookieBanner, draftLine, inForce, LEGAL_PAGES, legalPageHtml, NOTICES_VERSION, optionalAllowed, safeBack, versionOf, wantsBanner } from './legal-pages.ts';

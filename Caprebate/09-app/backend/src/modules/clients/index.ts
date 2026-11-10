@@ -74,25 +74,33 @@ export {
 } from './data.ts';
 // The retention list's counts of the client record's kinds (Phase 161l2, for compliance).
 export { countClientRecordKind } from './data.ts';
+// What the client record asks the claims and the survey (Phase 161l2): its ports, filled by their doors as they load.
+export { claimRefsFor, setClaimRefsReader } from './claims-port.ts';
+export { isSurveyWalkthrough, setWalkthroughBookingReader } from './walkthrough-port.ts';
 // Read by a list of ids, for the areas above that joined these tables to their own rows (Phase 161l2).
 export { listBookingsIdStartsAtCancelledAtByIds, listBusinessesIdNameSectorStageByIds } from './data.ts';
+// Phase 161l2: the statements that waited in the borrowed file, at home in the data file (each split by owner: the
+// users through the core's fillUsers; the claims' and the assessment's halves put together by the CRM,
+// src/modules/crm/split-reads.ts, and the claims, src/modules/claims/claim-row.ts).
 export {
-  SEARCH_STATEMENTS, getAssessmentsIdBusinessIdById, getAssessmentsIdLeadIdByBusinessId, getBookingById, getBookingsIdEmailByIdDisabledAt, getBusinessesIdNameById5,
-  getClaimsBusinessIdCompanyById, getClaimsIdClaimRefById4, getClientMessagesIdBusinessIdByIdBusinessId, getClientReportAcceptancesAcceptedAtUserIdByClaimIdFingerprint, getClientTaskChecksOutcomeWhoByTaskId, getIntroducerFeesIdIntroducerIdById,
-  getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId, getIntroducersIdFirmNameById, getIntroducersIdTitleByIdJO, getLeadsCOUNTByIntroducerId, getLeadsCountByIdShownLowPence,
-  getLeadsIntroducerIdBusinessIdByClaimIdIntroducerId, getPropertiesIdBusinessIdById4, getStaffTasksIdBusinessIdById, getStaffTasksIdBusinessIdByLeadIdStatus, getStaffTasksIdClaimRefByClaimIdIsNextAction, getStaffTasksIdTitleByClaimIdIsNextAction,
-  getSurveyWalkthroughsXByBookingId, getUsersCountByClientStatusEmailCanonical, insertLeadsByBusinessIdId, listAssessmentsIdBusinessId, listAutomationRunsAtTriggerEvent, listBookingChangesAtFromStartsAtByBookingId,
-  listBookingChangesFromStartsAtToStartsAtByBookingId, listBookingsCancelled, listBookingsIdChannelByBusinessIdChannel, listBookingsScheduled, listBookingsWithNoTime, listBusinessesIdName5,
-  listCallLogsIdLoggedAtByBusinessId, listClaimsIdClaimRef, listClaimsIdClaimRefByBusinessId4, listClaimsIdClaimRefByOwnerId2, listClaimsIdClaimRefByPropertyId, listClaimsIdCompletedAtByStage,
-  listClaimsRows, listClientMessageFilesCreatedAtDirectionByMessageIdJO, listClientMessageFilesCreatedAtDirectionByMessageIdJO2, listClientMessagesIdBusinessIdByBusinessId, listEnquiryChecksRecordedAtCheckKeyByClaimId, listEnquiryChecksRecordedAtCheckKeyByLeadId,
-  listEnquiryChecksSeqCheckKeyByClaimId, listEnquiryChecksSeqCheckKeyByLeadId, listInternalNotesCreatedAtBodyByBusinessId, listInternalNotesCreatedAtBodyByBusinessIdClaimId, listInternalNotesCreatedAtBodyByPropertyIdClaimId, listInternalNotesIdAuthorIdByBusinessId,
-  listIntroducerFeesIdIntroducerId, listIntroducerFeesIdIntroducerIdByIntroducerId, listIntroducerPercentageEntriesIdIntroducerId, listIntroducerPercentageEntriesIdIntroducerIdByIntroducerId, listIntroducersIdFirmName2, listIntroducersIdTitleByIdJO,
-  listIntroducersIdTitleByIdJO2, listIntroducersIdTitleByIdJO3, listIntroducersIdTitleByIdJO4, listLeadsIdBusinessIdByIntroducerId, listLeadsRows, listPropertiesIdBusinessId,
-  listPropertiesIdBusinessIdByBusinessId, listStaffTasksIdBusinessIdByLeadIdStatus, listStaffTasksIdClaimRefByClaimIdIsNextAction, listStaffTasksIdClaimRefByClaimIdIsNextAction2, listStaffTasksIdClaimRefByClaimIdIsNextAction3, listStaffTasksIdClaimRefByClaimIdIsNextAction4,
-  listStaffTasksIdTitleByBusinessIdLeadId, listStaffTasksIdTitleByClaimId, listStaffTasksIdTitleByIntroducerIdStatus, listStaffTasksIdTitleByLeadId, listStaffTasksIdTitleByPropertyIdClaimId, listUsersIdDisplayNameByDisabledAt,
-  searchClaims, searchClaimsOfIds, searchContacts, searchNotes, searchOrganisations, searchProperties,
-  searchPropertiesOfBusinesses, searchProspects,
-} from './data-borrowed.ts';
+  CLIENT_SEARCH_STATEMENTS, getBookingById, getBookingsFirstIdEntryPointByBusinessId, getBookingsIdEmailByIdDisabledAt, getBusinessesIdNameById5,
+  getBusinessesIdSourceCreatedAtOwnerIdById, getClientMessagesIdBusinessIdByIdBusinessIdOwn, getClientTaskChecksOutcomeWhoByTaskId,
+  getIntroducerFeesIdIntroducerIdByIdOwn, getIntroducerRewardSettingModelFeePenceById, getIntroducerShareConsentsIdDecisionByIntroducerIdLeadId,
+  getIntroducersIdFirmNameById, getLeadRowByIdOwn, getLeadsAssessmentIdById, getLeadsIdStatusByAssessmentId, getLeadsIntroducerIdClaimIdByClaimId,
+  getLeadsReferredOpenedByIntroducerId, getStaffTasksIdBusinessIdByIdOwn, getStaffTasksIdTitleByClaimIdIsNextAction, getTaskRowByIdOwn,
+  getUsersCountByClientStatusEmailCanonical, insertEnquiryChecks, insertEnquiryChecks2, insertLeadsBackfilled, listAutomationRunsAtTriggerEventOwn,
+  listBookingChangesAtFromStartsAtByBookingId, listBookingChangesFromStartsAtToStartsAtByBookingId, listBookingsCancelled, listBookingsIdChannelByBusinessIdChannel,
+  listBookingsScheduled, listBookingsWithNoTime, listBusinessesIdName5, listBusinessesIdNameSectorSourceByIds, listCallLogsIdLoggedAtByBusinessId,
+  listClientMessageLinesByBusinessIdClaimIdOwn, listClientMessageLinesByBusinessIdOwn, listClientMessagesIdBusinessIdByBusinessIdOwn,
+  listEnquiryChecksRecordedAtCheckKeyByClaimId, listEnquiryChecksRecordedAtCheckKeyByLeadId, listEnquiryChecksSeqCheckKeyByClaimId, listEnquiryChecksSeqCheckKeyByLeadId,
+  listInternalNotesIdAuthorIdByBusinessIdOwn, listIntroducerFeesIdIntroducerIdByIntroducerIdOwn, listIntroducerFeesIdIntroducerIdOwn,
+  listIntroducerPercentageEntriesIdIntroducerIdByIntroducerIdOwn, listIntroducerPercentageEntriesIdIntroducerIdOwn, listIntroducersIdFirmName2, listLeadListLinesOwn,
+  listLeadRowsOwn, listLeadsClaimIdSourceIntroducerByClaimIds, listLeadsIdOrganisationByIntroducerId, listNoteLinesByBusinessIdClaimIdOwn, listNoteLinesByBusinessIdOwn,
+  listNoteLinesByPropertyIdClaimIdsOwn, listStaffTasksIdTitleByBusinessIdLeadId, listStaffTasksIdTitleByClaimId, listStaffTasksIdTitleByIntroducerIdStatus,
+  listStaffTasksIdTitleByLeadId, listStaffTasksIdTitleByPropertyIdClaimIds, listStaffTasksNextActionByClaimIds, listTaskRowsByClaimIdOwn, listTaskRowsOpenByOwnerOwn,
+  listTaskRowsOpenDueByOwn, listTaskRowsOpenOwn, listUsersIdDisplayNameByDisabledAt, searchContacts, searchNotes, searchOrganisationNames, searchOrganisations,
+  searchProspects, withClaimRefs,
+} from './data.ts';
 // The calendar, the booking and its invitation, the video calls, the time blocks and the rooms a survey walks.
 export { CLIENT_MOVE_NOTICE_MINUTES, HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, WorkingTimeError, addLocalDays, clockToMinutes, distinctMoments, isBookable, minutesToClock, publicSlots, replaceWorkingTimes, slotsBetween, staffSlots, startOfLocalDay, startOfLocalWeek, workingTimesFor } from './schedule.ts';
 export { MAX_DAYS, slotDayProblem, slotPicker } from './slot-picker.ts';
@@ -125,9 +133,6 @@ export { MESSAGE_RETENTION, MESSAGE_RETENTION_QUESTION } from './message-retenti
 export type { MessageRetention } from './message-retention.ts';
 // The client's step raised by the research (carved from the CRM's pipeline.ts).
 export { raiseToResearch } from './stage.ts';
-// The claim row and a claim's name for a person (carved from the CRM's crm.ts).
-export { claimNaming, claimWords, loadClaimRow } from './claim-row.ts';
-export type { ClaimDbRow } from './claim-row.ts';
 // Running the automation rules, through the port the CRM fills (src/modules/clients/automation-port.ts).
 export { fireAutomation, setAutomationRunner } from './automation-port.ts';
 export type { AutomationDeps, AutomationEvent, AutomationRunner, RunOutcome } from './automation-port.ts';

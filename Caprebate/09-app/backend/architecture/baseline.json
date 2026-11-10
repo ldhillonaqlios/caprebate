@@ -48,14 +48,9 @@
    "admin": [
     "src/modules/claims/data-borrowed.ts : document_types"
    ],
-   "assessment": [
-    "src/modules/clients/data-borrowed.ts : assessments"
-   ],
    "claims": [
     "src/modules/assessment/data-borrowed.ts : claim_deliverables",
-    "src/modules/assessment/data-borrowed.ts : claims",
-    "src/modules/clients/data-borrowed.ts : claims",
-    "src/modules/clients/data-borrowed.ts : properties"
+    "src/modules/assessment/data-borrowed.ts : claims"
    ],
    "clients": [
     "src/modules/assessment/data-borrowed.ts : businesses",
@@ -65,9 +60,6 @@
     "src/modules/claims/data-borrowed.ts : contacts",
     "src/modules/claims/data-borrowed.ts : internal_notes"
    ],
-   "core": [
-    "src/modules/clients/data-borrowed.ts : users"
-   ],
    "finance": [
     "src/modules/assessment/data-borrowed.ts : finance_settings",
     "src/modules/assessment/data-borrowed.ts : invoice_credit_notes",
@@ -75,11 +67,7 @@
     "src/modules/claims/data-borrowed.ts : fee_discounts"
    ],
    "portal": [
-    "src/modules/claims/data-borrowed.ts : client_step_notices",
-    "src/modules/clients/data-borrowed.ts : client_report_acceptances"
-   ],
-   "public-site": [
-    "src/modules/clients/data-borrowed.ts : enquiry_checks"
+    "src/modules/claims/data-borrowed.ts : client_step_notices"
    ],
    "survey": [
     "src/modules/assessment/data-borrowed.ts : surveyor_jobs",
@@ -90,8 +78,7 @@
     "src/modules/claims/data-borrowed.ts : survey_pack_approvals",
     "src/modules/claims/data-borrowed.ts : survey_pack_legal_answers",
     "src/modules/claims/data-borrowed.ts : survey_packs",
-    "src/modules/claims/data-borrowed.ts : surveyor_jobs",
-    "src/modules/clients/data-borrowed.ts : survey_walkthroughs"
+    "src/modules/claims/data-borrowed.ts : surveyor_jobs"
    ]
   },
   "4": {}
