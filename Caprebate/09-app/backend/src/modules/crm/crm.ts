@@ -60,7 +60,7 @@ import { aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask, typ
 import { assembleReleasedFacts, type ReleasedFacts } from '../survey/index.ts';
 import { vocabChoice, vocabLabel } from '../admin/index.ts';
 import { funnelStateFor } from '../assessment/index.ts';
-import { expectedFeeFor } from '../assessment/index.ts';
+import { expectedFeeFor } from '../finance/index.ts';
 import { latestSignOff } from '../claims/index.ts';
 import { LEAD_ORIGINS } from './leads.ts';
 import { discountsFor, type FeeDiscountView } from '../claims/index.ts';
@@ -1732,7 +1732,7 @@ export type EstimatedFee = {
 
 /**
  * ROW 23.8 — THE FEE THE FINANCE VIEW EXPECTS, ON THE CLAIM, BEFORE ANY FEE INVOICE EXISTS. Read through `expectedFeeFor`
- * in src/modules/assessment/vat.ts — the one computation `expectedFees` makes — never typed, and there is no agreed-fee field (row 8.14).
+ * in src/modules/finance/vat.ts — the one computation `expectedFees` makes — never typed, and there is no agreed-fee field (row 8.14).
  * `invoice.read` alone: ADMIN and ACCOUNTING. Never SALES, never SURVEYING — tools/payload-proof.ts holds both. Once a
  * live fee invoice is raised the claim's money lines carry the fee, and this is not drawn.
  */

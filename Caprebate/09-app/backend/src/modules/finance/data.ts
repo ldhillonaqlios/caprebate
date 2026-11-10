@@ -5,7 +5,7 @@
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).
  */
 import type { Db, Param, Row } from '../../core/index.ts';
-import { fillUsers } from '../../core/index.ts';
+import { fillUser, fillUsers } from '../../core/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -140,6 +140,25 @@ export function insertFinanceSettings(db: Db, params: readonly Param[] = []): { 
 }
 export function listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT created_at, invoice_status, payment_status FROM invoices WHERE business_id = ? AND claim_id IS NULL ORDER BY created_at', params);
+}
+
+// THE VAT READING'S OWN ROWS (Phase 161l2, src/modules/finance/vat.ts; from src/modules/assessment/data-borrowed.ts).
+// The dated settings, text unchanged: the recorder's name is the core's, put in its place by fillUser(s).
+export function getFinanceSettingsIdSettingBySettingEffectiveFrom<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, s.recorded_by AS recorder FROM finance_settings s WHERE s.setting = ? AND s.effective_from <= ? ORDER BY s.effective_from DESC, s.recorded_at DESC, s.rowid DESC LIMIT 1', params), { recorder: 'display_name' });
+}
+export function listFinanceSettingsIdSetting<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, s.recorded_by AS recorder FROM finance_settings s ORDER BY s.setting ASC, s.effective_from DESC, s.rowid DESC', params), { recorder: 'display_name' });
+}
+// The two reads that joined the claims' tables, split: the invoices' side here, the claims' side through their door.
+/** The claims with a live fee invoice: raised or sent, and not wholly credited. */
+export function listInvoicesClaimIdByKindInvoiceStatusLive<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT DISTINCT i.claim_id FROM invoices i WHERE i.claim_id IS NOT NULL AND i.kind = 'FEE' " +
+    "AND i.invoice_status IN ('RAISED','SENT') AND i.fee_pence > COALESCE((SELECT SUM(n.amount_pence) FROM invoice_credit_notes n WHERE n.invoice_id = i.id), 0)", params);
+}
+/** Every raised or sent invoice on a claim, with what its tax point is read from. */
+export function listInvoicesClaimIdKindByInvoiceStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT i.claim_id, i.kind, i.invoice_date, i.fee_pence FROM invoices i WHERE i.claim_id IS NOT NULL AND i.invoice_status IN ('RAISED','SENT')", params);
 }
 
 // Phase 161l1: these joined users (the core); each user's name is put in its place by the core's fillUsers.

@@ -622,10 +622,6 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/modules/assessment/vat.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
   "src/modules/assessment/who-claims.ts": {
    "area": "assessment",
    "kind": "logic"
@@ -1221,6 +1217,10 @@
   "src/modules/finance/nav.ts": {
    "area": "finance",
    "kind": "other"
+  },
+  "src/modules/finance/vat.ts": {
+   "area": "finance",
+   "kind": "logic"
   },
   "src/modules/portal/accountant-confirm-pages.ts": {
    "area": "portal",

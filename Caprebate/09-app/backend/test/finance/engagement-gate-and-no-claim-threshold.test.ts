@@ -26,7 +26,7 @@ import { fixedClock } from '../helpers.ts';
 import * as E from '../../src/shared/engine.ts';
 import * as G from '../../src/modules/assessment/fee-gate.ts';
 import * as R from '../../src/modules/claims/research.ts';
-import * as V from '../../src/modules/assessment/vat.ts';
+import * as V from '../../src/modules/finance/vat.ts';
 import * as C from '../../src/modules/crm/crm.ts';
 import * as FIN from '../../src/modules/finance/finance.ts';
 import * as INV from '../../src/modules/finance/invoices.ts';
