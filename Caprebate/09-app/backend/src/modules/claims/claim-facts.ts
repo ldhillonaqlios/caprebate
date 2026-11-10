@@ -174,7 +174,7 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
      Land remediation relief on its removal needs it; not known, none is given. */
   ASBESTOS_AT_ACQUISITION: { label: 'Asbestos was in the building when the client acquired the land', kind: 'choice', choices: YES_NO },
   /* Migration 078 adds both keys.
-     Read by src/modules/assessment/grant-checks.ts, the gate out of valuation. */
+     Read by src/modules/survey/grant-checks.ts, the gate out of valuation. */
   GRANT_PROVIDER_CHECKED: {
     label: 'The client has checked with whoever paid the grant that claiming will not make them pay it back', kind: 'choice', choices: YES_NO,
   },
@@ -704,7 +704,7 @@ export type FactsPanel = {
   };
   readonly grants: {
     readonly exist: FactReading; readonly lines: readonly GrantLine[]; readonly traced: { readonly met: boolean; readonly why: string };
-    /* The two grant facts the valuation gate reads (src/modules/assessment/grant-checks.ts), and the switch the pack reads. */
+    /* The two grant facts the valuation gate reads (src/modules/survey/grant-checks.ts), and the switch the pack reads. */
     readonly provider_checked: FactReading; readonly split_view: FactReading; readonly switch: SwitchLine;
   };
   readonly acquisition_costs: { readonly costs: FactReading; readonly transaction_tax: FactReading; readonly switch: SwitchLine };

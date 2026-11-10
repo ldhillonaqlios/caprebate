@@ -34,7 +34,7 @@ import { activeMeeting, clientJoinUrl } from '../clients/index.ts';
 import { zoomPlanIsFree } from '../../integrations/index.ts';
 import * as U from './photo-upload.ts';
 import * as SV from './survey-video.ts';
-import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from '../assessment/index.ts';
+import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from './desk-first.ts';
 import { listContactsEmailNameByBusinessIdEmail } from '../clients/index.ts';
 
 function redirect(res: ServerResponse, to: string): void {

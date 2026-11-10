@@ -25,6 +25,10 @@ export { PHOTO_UPLOAD_JS } from './photo-upload-script.ts';
 export { sweepUploads } from './photo-upload.ts';
 export { checklistView } from './survey-evidence.ts';
 export type { ChecklistView } from './survey-evidence.ts';
+// Moved up from the assessment (Phase 161l2): the grant checks (they read the pack's grant routes) and the sector
+// ranges from finished packs, for the CRM's pipeline and the command line. The desk-first reading is the survey's own.
+export { grantProviderNeed, grantSplitNeed } from './grant-checks.ts';
+export { proposeRanges } from './sector-ranges.ts';
 export * as surveyOpenModule from './survey-open.ts';
 export { handleSurveyPack } from './survey-pack-pages.ts';
 export { packView } from './survey-pack.ts';

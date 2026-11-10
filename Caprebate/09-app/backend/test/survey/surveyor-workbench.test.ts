@@ -21,7 +21,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../../src/app/server.ts';
 import { packView, savePackValue, saveLine, setLineRemoved, savePackExtra, SHARED_FALLBACK_WORDS, type PackDeps } from '../../src/modules/survey/survey-pack.ts';
-import { coverageOf, deskFirstVerdict, deskFirstReading, DESK_FIRST_TEST, OPTIONAL_ITEMS, TIER_WORDS, type DeskFirstFacts } from '../../src/modules/assessment/desk-first.ts';
+import { coverageOf, deskFirstVerdict, deskFirstReading, DESK_FIRST_TEST, OPTIONAL_ITEMS, TIER_WORDS, type DeskFirstFacts } from '../../src/modules/survey/desk-first.ts';
 import { linesForSector, taxonomy, SUITE_ROWS, TEST_DEFAULT_WORDS } from '../../src/modules/survey/pack-lines.ts';
 import { checklistFor } from '../../src/modules/survey/survey-checklist.ts';
 import { roomsFor } from '../../src/modules/clients/rooms.ts';
@@ -29,7 +29,7 @@ import { vatReading } from '../../src/modules/survey/pack-vat.ts';
 import { findingSeen, FINDING_LABELS } from '../../src/shared/finding-source.ts';
 import { PLANNING_ASSUMPTION, REPORT_ASSUMPTIONS } from '../../src/modules/assessment/report-assumptions.ts';
 import { homedataSlugs, dimensionsEstimate, compareEstimatedAreas, HOMEDATA_DIMENSIONS, ESTIMATED_AREA_LABEL, homedataCostPence } from '../../src/integrations/connectors/homedata.ts';
-import { proposeRanges, MIN_CLAIMS } from '../../src/modules/assessment/sector-ranges.ts';
+import { proposeRanges, MIN_CLAIMS } from '../../src/modules/survey/sector-ranges.ts';
 import type { ChecklistView } from '../../src/modules/survey/survey-evidence.ts';
 import { actor } from '../helpers.ts';
 

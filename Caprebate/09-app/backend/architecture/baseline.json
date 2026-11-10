@@ -17,8 +17,7 @@
   },
   "2": {
    "assessment": [
-    "assessment -> claims",
-    "assessment -> survey"
+    "assessment -> claims"
    ],
    "claims": [
     "claims -> admin",
@@ -56,7 +55,6 @@
    ],
    "clients": [
     "src/modules/admin/data-borrowed.ts : businesses",
-    "src/modules/assessment/data-borrowed.ts : businesses",
     "src/modules/claims/data-borrowed.ts : businesses",
     "src/modules/claims/data-borrowed.ts : client_task_checks",
     "src/modules/claims/data-borrowed.ts : client_tasks",
@@ -90,7 +88,6 @@
     "src/modules/clients/data-borrowed.ts : enquiry_checks"
    ],
    "survey": [
-    "src/modules/assessment/data-borrowed.ts : surveyor_jobs",
     "src/modules/claims/data-borrowed.ts : pack_client_notices",
     "src/modules/claims/data-borrowed.ts : pack_signoff_answers",
     "src/modules/claims/data-borrowed.ts : pack_signoff_recorded",

@@ -54,7 +54,7 @@ import { fireAutomation } from './automation.ts';
 import { onClaimStageEntered } from './introducers.ts';
 import { cddGateNeed } from '../compliance/index.ts';
 import { amendmentWindowReading, electionResolved, floorAreaOnRecord, grantsTraced } from '../claims/index.ts';
-import { grantProviderNeed, grantSplitNeed } from '../assessment/index.ts';
+import { grantProviderNeed, grantSplitNeed } from '../survey/index.ts';
 import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from '../claims/index.ts';
 import { clientConfirmationNeed, filingRoute } from '../portal/index.ts';
 import { accountantFitNeed } from '../portal/index.ts';

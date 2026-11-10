@@ -566,17 +566,9 @@
    "area": "assessment",
    "kind": "other"
   },
-  "src/modules/assessment/data-borrowed.ts": {
-   "area": "assessment",
-   "kind": "data"
-  },
   "src/modules/assessment/data.ts": {
    "area": "assessment",
    "kind": "data"
-  },
-  "src/modules/assessment/desk-first.ts": {
-   "area": "assessment",
-   "kind": "logic"
   },
   "src/modules/assessment/fee-gate.ts": {
    "area": "assessment",
@@ -598,10 +590,6 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/modules/assessment/grant-checks.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
   "src/modules/assessment/index.ts": {
    "area": "assessment",
    "kind": "other"
@@ -617,10 +605,6 @@
   "src/modules/assessment/routes.ts": {
    "area": "assessment",
    "kind": "routes"
-  },
-  "src/modules/assessment/sector-ranges.ts": {
-   "area": "assessment",
-   "kind": "logic"
   },
   "src/modules/claims/actions.ts": {
    "area": "claims",
@@ -1378,9 +1362,17 @@
    "area": "survey",
    "kind": "data"
   },
+  "src/modules/survey/desk-first.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
   "src/modules/survey/evidence-pages.ts": {
    "area": "survey",
    "kind": "page"
+  },
+  "src/modules/survey/grant-checks.ts": {
+   "area": "survey",
+   "kind": "logic"
   },
   "src/modules/survey/index.ts": {
    "area": "survey",
@@ -1439,6 +1431,10 @@
    "kind": "other"
   },
   "src/modules/survey/photo-upload.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/sector-ranges.ts": {
    "area": "survey",
    "kind": "logic"
   },

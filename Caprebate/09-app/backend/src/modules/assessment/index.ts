@@ -24,15 +24,11 @@ export { getAssessmentsCompanyNumberCompanyStatusByBusinessIdCompanyN } from './
 export { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from './funnel-edges.ts';
 export { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
 export { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
-export { MIN_CLAIMS, proposeRanges } from './sector-ranges.ts';
 export { closeGatedExit, isGatedExit, loadDraft, newDraft, saveDraft, SCREENS, submit } from './assessment.ts';
-export { coverageOf, deskFirstReading, videoCoverage } from './desk-first.ts';
 export { allGated, applyF4, applyReach, buildings, F4_ROUTE, F4_SCREENS, F4_TEXT, figureBody, firstIncomplete, isFunnel4, screenBody, stageBar, stageOf, submitEnquiry } from './funnel4.ts';
-export { grantProviderNeed, grantSplitNeed, shippedGrantSwitches } from './grant-checks.ts';
 export type { FunnelEdge } from './funnel-deletable.ts';
 export type { AllowanceFacts, AllowanceWords, PartResult, PoolName } from './allowances.ts';
 export type { Draft, ScreenId } from './assessment.ts';
-export type { Coverage } from './desk-first.ts';
 export type { F4Screen } from './funnel4.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { ADDRESS_PAGE_CSP, assessmentAssets, assessmentRoutes, contactValueProblem } from './routes.ts';

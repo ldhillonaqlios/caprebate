@@ -18,14 +18,14 @@ import assert from 'node:assert/strict';
 import { testApp, fakeHasher, fixedClock } from '../helpers.ts';
 import { seed } from '../../src/app/seed.ts';
 import type { Db, Param, Row } from '../../src/core/index.ts';
-import * as B from '../../src/modules/assessment/data-borrowed.ts';
 import * as VAT from '../../src/modules/finance/vat.ts';
+import * as DESK_FIRST from '../../src/modules/survey/desk-first.ts';
 
 type Call = (db: Db, params: readonly Param[]) => unknown;
 
 /** The function the caller now calls by this name. */
 function from(name: string): Call {
-  for (const space of [VAT, B] as object[]) {
+  for (const space of [VAT, DESK_FIRST] as object[]) {
     const f = (space as Record<string, unknown>)[name];
     if (typeof f === 'function') return f as Call;
   }

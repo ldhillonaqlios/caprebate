@@ -172,7 +172,7 @@ function applies(db: Db, c: { id: string; property_id: string | null }, conditio
   return { applies: false, known: false, why: 'the property’s tenure is not known — record it on the property; not known does not pass' };
 }
 
-/** Exported's grant check (src/modules/assessment/grant-checks.ts): the grant papers, received on the claim. */
+/** Exported's grant check (src/modules/survey/grant-checks.ts): the grant papers, received on the claim. */
 export function receivedOnClaim(db: Db, c: { id: string }, type_code: string): { at: string } | undefined {
   const r = getDocumentsAtByTypeCodeStripRecordedAt<{ at: string | null }>(db, [type_code, c.id, c.id]);
   return r === undefined || r.at === null ? undefined : { at: r.at };
