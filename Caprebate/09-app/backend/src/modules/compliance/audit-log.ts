@@ -27,9 +27,9 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localStamp } from '../../shared/index.ts';
-import { getAuditLogCount, listAuditLogKind } from '../../core/index.ts';
-import { getBusinessesIdNameById } from '../crm/index.ts';
-import { getAuditLogCountByObjectId, listAuditLogLines } from './data-borrowed.ts';
+import { getAuditLogCount, getAuditLogCountByObjectIds, listAuditLogKind, listAuditLogLines, listAuditLogLinesByObjectIds } from '../../core/index.ts';
+import { getBusinessesIdNameById } from '../clients/index.ts';
+import { listClaimsIdByBusinessId, listPropertiesIdByBusinessId } from '../claims/index.ts';
 
 export type AuditLogDeps = { db: Db; audit: AuditLog; now: () => string };
 
@@ -75,12 +75,13 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
 
   const entries = getAuditLogCount<{ n: number }>(d.db)?.n ?? 0;
   const v = d.audit.verify();
-  const lines = listAuditLogLines<{
+  type Line = {
     seq: number; at: string; kind: string; actor_role: string | null; actor_id: string | null; object_type: string | null; object_id: string | null; outcome: string;
     who: string | null;
-  }>(
-    d.db, client !== null,
-    [kind, kind, outcome, outcome, ...(client === null ? [] : clientAuditParams(client.id)), AUDIT_PAGE_SIZE],
+  };
+  const lines = (client === null
+    ? listAuditLogLines<Line>(d.db, [kind, kind, outcome, outcome, AUDIT_PAGE_SIZE])
+    : listAuditLogLinesByObjectIds<Line>(d.db, [kind, kind, outcome, outcome, ...clientAuditParams(d.db, client.id), AUDIT_PAGE_SIZE])
   ).map((r) => ({ ...r, at: localStamp(r.at), what: kindWords(r.kind) }));
 
   d.audit.append({
@@ -133,10 +134,17 @@ export function kindWords(kind: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/** The audit log's entries about one client: the company, its claims and properties, or naming them. */
-export const clientAuditParams = (business_id: string): string[] => [business_id, business_id, business_id, business_id, business_id, business_id];
+/**
+ * The audit log's entries about one client: the company, its claims and properties, or naming them. The claims and
+ * properties are the claims module's, so their ids are asked of it and handed to the core's statement as JSON arrays.
+ */
+export function clientAuditParams(db: Db, business_id: string): string[] {
+  const claims = JSON.stringify(listClaimsIdByBusinessId<{ id: string }>(db, [business_id]).map((r) => r.id));
+  const properties = JSON.stringify(listPropertiesIdByBusinessId<{ id: string }>(db, [business_id]).map((r) => r.id));
+  return [business_id, claims, properties, business_id, business_id, claims];
+}
 
 export function clientAuditCount(db: Db, business_id: string): number {
-  return getAuditLogCountByObjectId<{ n: number }>(db, clientAuditParams(business_id))?.n ?? 0;
+  return getAuditLogCountByObjectIds<{ n: number }>(db, clientAuditParams(db, business_id))?.n ?? 0;
 }
 

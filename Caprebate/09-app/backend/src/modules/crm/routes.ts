@@ -7,18 +7,21 @@ import { clockOf, form, html, nav, simple, type Actor, type WebRequest, type Web
 import { h, page, raw, type Safe } from '../../shared/index.ts';
 import { joinSignature } from '../../integrations/index.ts';
 import { SITE_JS_HEADERS } from '../../shared/index.ts';
-import { getContactsNByBusinessIdLeadId } from './data.ts';
-import { getVideoMeetingsBookingIdMeetingIdByClientTokenCancelledAt } from './data-borrowed.ts';
+import { getContactsNByBusinessIdLeadId } from '../clients/index.ts';
+
 import { PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen } from './introducers.ts';
 import { SECTORS } from './leads.ts';
-import { VIDEO_CALL_JS } from './video-call-script.ts';
-import { VIDEO_PAGE_HEADERS, clientMayJoin, joinPanel, withJoinScripts } from './video-calls.ts';
+import { VIDEO_CALL_JS } from '../clients/index.ts';
+import { VIDEO_PAGE_HEADERS, clientMayJoin, joinPanel, withJoinScripts } from '../clients/index.ts';
 import { WHATSAPP_IMPORT_JS } from './whatsapp-import-script.ts';
+import type { Db, Param, Row } from '../../core/index.ts';
+import { getVideoMeetingsBookingIdMeetingIdByClientToken } from '../../integrations/index.ts';
+import { getBookingsStartsAtEndsAtBusinessIdLeadIdById } from '../clients/index.ts';
 
 /** The join pages' script and the WhatsApp pages' script. */
 export async function crmAssets(w: WebRequest): Promise<WebResult | undefined> {
   const { res, path, method } = w;
-  // The join pages' one script (src/modules/crm/video-call-script.ts).
+  // The join pages' one script (src/modules/clients/video-call-script.ts).
   if (path === '/assets/video-call.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(VIDEO_CALL_JS); return 'handled';
   }
@@ -115,4 +118,14 @@ function referralFormPage(actor: Actor | undefined, why: string | undefined): st
         <button type="submit">Send the referral</button>
       </form>`,
   });
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function getVideoMeetingsBookingIdMeetingIdByClientTokenCancelledAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const v = getVideoMeetingsBookingIdMeetingIdByClientToken<{ booking_id: Param; meeting_id: unknown; join_url: unknown; passcode: unknown }>(db, params);
+  if (v === undefined) return undefined;
+  const b = getBookingsStartsAtEndsAtBusinessIdLeadIdById<Row>(db, [v.booking_id]);
+  if (b === undefined) return undefined; // JOIN bookings
+  return { booking_id: v.booking_id, meeting_id: v.meeting_id, join_url: v.join_url, passcode: v.passcode, ...b } as unknown as T;
 }

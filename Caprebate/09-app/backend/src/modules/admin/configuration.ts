@@ -42,13 +42,13 @@ import { VOCAB_LISTS, isVocabList, vocabularyValues, type VocabList, type VocabV
 import { PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
 import { ctaSwitchReadings } from '../../shared/index.ts';
 import { FEE_CONTROLS } from '../claims/index.ts';
-import { RECIPROCITY_ACTIVITY_TYPES } from '../crm/index.ts';
+import { RECIPROCITY_ACTIVITY_TYPES } from '../clients/index.ts';
 import { typeList, type TypeView } from '../claims/index.ts';
-import { rulesPage, type RuleView } from '../crm/index.ts';
+import { rulesPage, type RuleView } from './automation-rules.ts';
 import { templatesPage } from './templates.ts';
 import { settingsView, type SettingsView } from '../assessment/index.ts';
 import { settingReading, type SettingReading } from '../compliance/index.ts';
-import { getAutomationRulesCOUNTByActiveTaskPriority } from '../crm/index.ts';
+import { getAutomationRulesCOUNTByActiveTaskPriority } from '../clients/index.ts';
 import { getReasonListsCountByListCode, getReasonListsLabelActiveByListCode, getReasonListsNByList, getVocabulariesCountByListCode, getVocabulariesLabelActiveByListCode, getVocabulariesNByList, insertReasonLists, insertVocabularies, listReasonListsCodeLabelByList, updateReasonListsLabelActiveByListCode, updateVocabulariesLabelActiveByListCode } from './data.ts';
 
 export type ConfigDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };

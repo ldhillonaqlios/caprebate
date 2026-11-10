@@ -16,11 +16,11 @@ import { formatShownRange, type ShownRange } from '../../shared/index.ts';
 import { BOOKING } from '../../shared/index.ts';
 import { localWhen } from '../../shared/index.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
-import { booksATime } from './video-calls.ts';
-import { SLOT_MINUTES, addLocalDays, isBookable, startOfLocalDay, startOfLocalWeek, staffSlots, type Availability } from './schedule.ts';
-import { bookingInviteFile } from './booking-invite.ts';
-import { getBookingsChannelSmsVariantByBusinessId, getBookingsChannelSmsVariantByLeadId, getBusinessesContactEmailNameById, getContactsContactEmailNameByLeadId, insertBookingChanges, updateBookingsStartsAtEndsAtById } from './data.ts';
-import { getAssessmentsIdBusinessIdById, listAssessmentsIdBusinessId, listBookingChangesFromStartsAtToStartsAtByBookingId, listUsersIdDisplayNameByDisabledAt, getBookingById, listBookingsCancelled, listBookingsScheduled, listBookingsWithNoTime } from './data-borrowed.ts';
+import { booksATime } from '../clients/index.ts';
+import { SLOT_MINUTES, addLocalDays, isBookable, startOfLocalDay, startOfLocalWeek, staffSlots, type Availability } from '../clients/index.ts';
+import { bookingInviteFile } from '../clients/index.ts';
+import { getBookingsChannelSmsVariantByBusinessId, getBookingsChannelSmsVariantByLeadId, getBusinessesContactEmailNameById, getContactsContactEmailNameByLeadId, insertBookingChanges, updateBookingsStartsAtEndsAtById } from '../clients/index.ts';
+import { getAssessmentsIdBusinessIdById, listAssessmentsIdBusinessId, listBookingChangesFromStartsAtToStartsAtByBookingId, listUsersIdDisplayNameByDisabledAt, getBookingById, listBookingsCancelled, listBookingsScheduled, listBookingsWithNoTime } from '../clients/index.ts';
 import { listAssessmentAnswersOrdQuestionIdByAssessmentId } from '../assessment/index.ts';
 import { listPropertiesLabelPostcodeByBusinessId } from '../claims/index.ts';
 

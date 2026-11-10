@@ -34,10 +34,10 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor, type Obj } from '../../core/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { getUsersRoleById } from '../../core/index.ts';
-import { getBusinessesIdById, getContactsBusinessIdById } from '../crm/index.ts';
+import { getBusinessesIdById, getContactsBusinessIdById } from '../clients/index.ts';
 import { getClaimsBusinessIdById } from '../claims/index.ts';
-import { listDisclosureLogIdRecipientByBusinessId } from './data-borrowed.ts';
-import { getDisclosureLogBusinessIdById, insertDisclosureLog } from './data.ts';
+import { getDisclosureLogBusinessIdById, insertDisclosureLog, listDisclosureLogIdRecipientRecordedByByBusinessId } from './data.ts';
+import { userNames } from './compliance.ts';
 
 export type DisclosureDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Fields = Readonly<Record<string, string | null>>;
@@ -264,10 +264,13 @@ export const NOT_KEPT_LABEL =
 export function disclosuresFor(db: Db, actor: Actor, business_id: string, s: DisclosureLogSwitch = DISCLOSURE_LOG): DisclosureReading {
   authorise(actor, 'disclosure.read', LOG_OBJ);
   if (!s.enabled || s.in_force_from === null) return { state: 'NOT_KEPT', label: NOT_KEPT_LABEL, rows: [] };
-  const rows = listDisclosureLogIdRecipientByBusinessId<{
+  const logged = listDisclosureLogIdRecipientRecordedByByBusinessId<{
     id: string; recipient: string; data_categories: string; occasion: string; route: string; lawful_basis: string;
-    disclosed_at: string; corrects_id: string | null; recorder: string;
-  }>(db, [business_id]).map((r) => ({
+    disclosed_at: string; corrects_id: string | null; recorded_by: string;
+  }>(db, [business_id]);
+  // Who recorded each, by name (the users are the core's); a line whose recorder is gone is not listed.
+  const names = userNames(db, logged.map((r) => r.recorded_by));
+  const rows = logged.flatMap((r) => { const recorder = names.get(r.recorded_by); return recorder === undefined ? [] : [{ ...r, recorder }]; }).map((r) => ({
     id: r.id,
     recipient: { code: r.recipient, label: has(RECIPIENTS, r.recipient) ? RECIPIENTS[r.recipient].label : r.recipient },
     categories: (JSON.parse(r.data_categories) as string[]).map((c) => (has(DATA_CATEGORIES, c) ? DATA_CATEGORIES[c] : c)),

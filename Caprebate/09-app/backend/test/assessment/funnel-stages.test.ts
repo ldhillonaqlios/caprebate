@@ -18,8 +18,8 @@ import { secretsFromValues } from '../../src/core/secrets.ts';
 import { COMPANY_SEARCH } from '../../src/integrations/connectors/company-search.ts';
 import { ADDRESS_LOOKUP, addressLookupMissing, readAddresses } from '../../src/integrations/connectors/address-lookup.ts';
 import { CALL_POLICIES } from '../../src/integrations/connectors/sources.ts';
-import { MAX_DAYS } from '../../src/modules/crm/slot-picker.ts';
-import { SLOT_MINUTES } from '../../src/modules/crm/schedule.ts';
+import { MAX_DAYS } from '../../src/modules/clients/slot-picker.ts';
+import { SLOT_MINUTES } from '../../src/modules/clients/schedule.ts';
 import { localDate, localClock } from '../../src/shared/localtime.ts';
 
 const T = '2026-09-08T00:00:00.000Z';

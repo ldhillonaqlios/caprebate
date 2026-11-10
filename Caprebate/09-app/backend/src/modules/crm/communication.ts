@@ -44,9 +44,9 @@ import { emailChains, reSubject } from './email-chains.ts';
 import { addNote } from '../claims/index.ts';
 import { createTask } from './tasks.ts';
 import { mayArrangeCalls } from '../../core/index.ts';
-import { addLocalDays, isBookable, SLOT_MINUTES, staffSlots, startOfLocalDay } from './schedule.ts';
-import { activeMeeting, callLengthOf, callLengthWords, reconcileVideoMeeting, videoCallsAtSameTime, zoomBlockers, zoomPlanLine, SAME_TIME_WORDS } from './video-calls.ts';
-import { sendVideoInvite } from './booking-invite.ts';
+import { addLocalDays, isBookable, SLOT_MINUTES, staffSlots, startOfLocalDay } from '../clients/index.ts';
+import { activeMeeting, callLengthOf, callLengthWords, reconcileVideoMeeting, videoCallsAtSameTime, zoomBlockers, zoomPlanLine, SAME_TIME_WORDS } from '../clients/index.ts';
+import { sendVideoInvite } from '../clients/index.ts';
 import { sendSavedEmailNow } from './free-email-pages.ts';
 import { EMAIL_SENDING, mailWhere, smtpLoginFromKeyFile, sendingOn, SENT_SECRET_KINDS } from '../../integrations/index.ts';
 import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../../integrations/index.ts';
@@ -55,9 +55,14 @@ import * as IE from './inbound-email.ts';
 import { emailedFiles } from './messages-pages.ts';
 import { receivableTypes } from '../claims/index.ts';
 import { getWhatsappMessagesCByBusinessIdContactId } from '../../integrations/index.ts';
-import { getBusinessesEById, getBusinessesSById, getContactsXByBusinessId, getContactsXByIdBusinessId, insertBookings3, insertCallLogs, listContactsIdFullNameByBusinessId2 } from './data.ts';
+import { getBusinessesEById, getBusinessesSById, getContactsXByBusinessId, getContactsXByIdBusinessId, insertBookings3, insertCallLogs, listContactsIdFullNameByBusinessId2 } from '../clients/index.ts';
 import { listClaimsIdClaimRefByBusinessId3 } from '../claims/index.ts';
-import { getVideoMeetingsHostOpenedAtOpenerByBookingId, listBookingsIdChannelByBusinessIdChannel, listCallLogsIdLoggedAtByBusinessId, listWhatsappMessagesIdCreatedAtByBusinessId } from './data-borrowed.ts';
+import { listBookingsIdChannelByBusinessIdChannel, listCallLogsIdLoggedAtByBusinessId } from '../clients/index.ts';
+import type { Db, Param, Row } from '../../core/index.ts';
+import { namesByIds } from '../../core/index.ts';
+import { getVideoMeetingsHostOpenedAtHostOpenedByByBookingId } from '../../integrations/index.ts';
+import { listWhatsappMessagesIdCreatedAtSenderByBusinessId } from '../../integrations/index.ts';
+import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from '../clients/index.ts';
 
 export type Via = 'email' | 'whatsapp' | 'portal' | 'team' | 'zoom' | 'call';
 export type Kind = Via;
@@ -544,4 +549,22 @@ export async function communicate(d: SendDeps, actor: Actor, business_id: string
   sendVideoInvite(d.app, d.origin, id, 'arranged', to);
   return { ok: true, to: go !== 'zoom-book' ? `/staff/calendar/${id}/video`
     : back(zoomed !== 'MADE' ? 'booked-no-zoom' : videoCallsAtSameTime(db, id) > 0 ? 'booked-zoom-same-time' : 'booked-zoom') };
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function getVideoMeetingsHostOpenedAtOpenerByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const v = getVideoMeetingsHostOpenedAtHostOpenedByByBookingId<{ host_opened_at: unknown; host_opened_by: unknown; meeting: unknown }>(db, params);
+  if (v === undefined) return undefined;
+  return { host_opened_at: v.host_opened_at, opener: namesByIds(db, [v.host_opened_by])(v.host_opened_by), meeting: v.meeting } as unknown as T;
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listWhatsappMessagesIdCreatedAtByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listWhatsappMessagesIdCreatedAtSenderByBusinessId<{ id: unknown; created_at: unknown; direction: unknown; body: unknown; status: unknown; error: unknown; contact_id: unknown; written_by: unknown; phone: unknown; sender: unknown }>(db, params);
+  const contacts = byId(listContactsIdFullNameByIds<{ id: string; full_name: unknown }>(db, [idsOf(rows.map((r) => r.contact_id))]));
+  const name = namesByIds(db, rows.map((r) => r.written_by));
+  return rows.map((w) => ({ id: w.id, created_at: w.created_at, direction: w.direction, body: w.body, status: w.status, error: w.error, contact_id: w.contact_id,
+    contact: lookUp(contacts, w.contact_id)?.full_name ?? null, writer: name(w.written_by), phone: w.phone, sender: w.sender })) as unknown as T[];
 }

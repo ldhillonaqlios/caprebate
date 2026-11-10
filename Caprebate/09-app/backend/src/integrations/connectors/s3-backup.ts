@@ -8,7 +8,7 @@
  * same way, so the developer may choose another; the four BACKUP_S3_* settings say which. Switched off until they are
  * set: the backup then says it has nowhere to go, and keeps nothing.
  *
- * WHAT GOES. Only files the backup has already locked with our own key (src/core/backup.ts): the provider stores bytes it
+ * WHAT GOES. Only files the backup has already locked with our own key (src/integrations/backup.ts): the provider stores bytes it
  * cannot read. The user whose key this is may only add, read and delete files in that one bucket (the runbook's policy).
  *
  * THROUGH src/integrations/connectors/http.ts's transport, the one way this application reaches outside. The signing is ours (about

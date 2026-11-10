@@ -5,6 +5,7 @@
  * area through the outside services' front door. Each statement is the one its caller ran before, text unchanged.
  */
 import type { Db, Param, Row } from '../core/index.ts';
+import { fillUser } from '../core/index.ts';
 
 // email_bounces
 export function insertEmailBounces(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
@@ -145,6 +146,11 @@ export function insertMailboxWatermarkByUid(db: Db, params: readonly Param[] = [
 }
 
 // outbox
+// The retention list's count of the emails we send from rules, templates, notices and registers
+// (src/modules/compliance/compliance-identity.ts), text unchanged from it.
+export function getOutboxCountQueued<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM outbox WHERE kind IN ('NOTIFICATION','TEMPLATE','COMPLIANCE_LETTER')", params);
+}
 export function getOutboxAtBySentAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT max(sent_at) AS at FROM outbox WHERE sent_at IS NOT NULL', params);
 }
@@ -304,6 +310,10 @@ export function updateRegisterMatchPicksRecordIdRemovedRecordIdById(db: Db, para
 }
 
 // register_records
+// The retention list's count of register records (src/modules/compliance/compliance-identity.ts), text unchanged from it.
+export function getRegisterRecordsCount<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM register_records', params);
+}
 export function deleteRegisterRecordsByIdBusinessId(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('DELETE FROM register_records WHERE id = ? AND business_id = ?', params);
 }
@@ -587,4 +597,97 @@ export function insertResearchSourcesNotPermittedYet(db: Db, params: readonly Pa
       'publisher, licence_id) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)',
     params,
   );
+}
+
+// Phase 161l1: for the areas above that joined these tables to their own rows (each reads its own rows, then these).
+export function getVideoMeetingsMeetingIdByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT m.meeting_id FROM video_meetings m WHERE m.booking_id = ? ORDER BY m.created_at DESC LIMIT 1', params);
+}
+export function getRegisterFileImportsImportedAtRowsKeptBySourceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>(`SELECT i.imported_at, i.rows_kept, i.rows_skipped, i.by_user AS who FROM register_file_imports i
+    WHERE i.source_id = ? ORDER BY i.imported_at DESC, i.rowid DESC LIMIT 1`, params), { who: 'display_name' });
+}
+export function listRegisterRecordsIdSourceIdBySourceIdBusinessIdEntityIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT r.id, r.source_id, r.obtained_at, r.property_id, r.fields_json FROM register_records r " +
+    "WHERE r.source_id = 'CLIENT_DOC' AND r.business_id = ? AND r.entity_id IN (SELECT value FROM json_each(?)) ORDER BY r.obtained_at ASC, r.id ASC", params);
+}
+export function getResearchRunsWhoAtByBusinessIdAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT r.actor_id AS who, r.at FROM research_runs r ' +
+    'WHERE r.business_id = ? AND r.at <= ? ORDER BY r.at DESC LIMIT 1', params), { who: 'display_name' });
+}
+export function listOutboxIdSentAtLastErrorByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, sent_at, last_error FROM outbox WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+
+// FOR THE CRM (Phase 161l1): its statements that joined these tables to its own, or to the core's users, now read
+// here and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts).
+export function listResearchRunsAtKindActorIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT r.at, r.kind, r.considered, r.fired, r.not_permitted, r.failed, r.actor_id FROM research_runs r ' +
+    'WHERE r.business_id = ? ORDER BY r.at', params);
+}
+export function getVideoMeetingsBookingIdMeetingIdByClientToken<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT v.booking_id, v.meeting_id, v.join_url, v.passcode FROM video_meetings v WHERE v.client_token = ? AND v.cancelled_at IS NULL', params);
+}
+export function getVideoMeetingsHostOpenedAtHostOpenedByByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT v.host_opened_at, v.host_opened_by, 1 AS meeting FROM video_meetings v WHERE v.booking_id = ? ORDER BY v.created_at DESC LIMIT 1', params);
+}
+/** The live meeting's host for each booking named (one live meeting per booking: index video_meetings_one_live). */
+export function listVideoMeetingsBookingIdHostUserIdByBookingIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT m.booking_id, m.host_user_id FROM video_meetings m WHERE m.cancelled_at IS NULL ' +
+    'AND m.booking_id IN (SELECT value FROM json_each(?))', params);
+}
+export function getOutboxXByKindLeadIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT 1 AS x FROM outbox o WHERE o.kind IN ('FREE_TYPED','TEMPLATE') AND (o.lead_id = ? OR o.business_id = ?) LIMIT 1", params);
+}
+export function listOutboxAtToEmailBusinessIdByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT o.created_at AS at, o.to_email, o.business_id, o.subject, o.sent_at, o.send_requested, o.last_error, o.provider_ref FROM outbox o ' +
+    "WHERE o.kind IN ('FREE_TYPED','TEMPLATE','NOTIFICATION') ORDER BY o.created_at DESC LIMIT 8", params);
+}
+export function listOutboxIdCreatedAtWrittenByByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT o.id, o.created_at, o.to_email, o.subject, o.body, o.sent_at, o.send_requested, o.last_error, o.kind, o.provider_ref, o.thread_key, o.claim_id, ' +
+    'o.written_by FROM outbox o WHERE o.business_id = ? ORDER BY o.created_at, o.id', params);
+}
+export function listOutboxIdCreatedAtWrittenByByLeadIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT o.id, o.created_at, o.to_email, o.subject, o.body, o.sent_at, o.send_requested, o.last_error, o.kind, o.provider_ref, o.thread_key, o.claim_id, ' +
+    'o.written_by FROM outbox o WHERE o.lead_id = ? AND o.business_id IS NULL ORDER BY o.created_at, o.id', params);
+}
+export function listOutboxCreatedAtKindClaimIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT o.created_at, o.kind, o.subject, o.sent_at, o.claim_id, o.written_by, o.contact_id FROM outbox o WHERE o.business_id = ? ORDER BY o.created_at', params);
+}
+export function listOutboxCreatedAtKindClaimIdByLeadIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT o.created_at, o.kind, o.subject, o.sent_at, o.claim_id, o.written_by, o.contact_id FROM outbox o WHERE o.lead_id = ? AND o.business_id IS NULL ORDER BY o.created_at', params);
+}
+export function listInboundEmailIdReceivedAtContactIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT e.id, e.received_at, e.from_address, e.subject, e.text_body, e.message_id, e.matched_outbox_id, e.claim_id, e.contact_id, ' +
+    'COALESCE(e.client_message_id, g.client_message_id) AS client_message_id ' +
+    'FROM inbound_email e LEFT JOIN inbound_email_filings g ON g.inbound_email_id = e.id ' +
+    'WHERE COALESCE(e.business_id, g.business_id) = ? ORDER BY e.received_at, e.id', params);
+}
+export function listInboundEmailUidAtBusinessIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT e.mailbox_uid AS uid, e.received_at AS at, e.from_address, e.subject, e.outcome, e.queue_reason, e.matched_outbox_id AS matched, ' +
+    'o.business_id AS ours_business_id, e.business_id AS direct_business_id, g.business_id AS filed_business_id, g.filed_by, g.rule ' +
+    'FROM inbound_email e LEFT JOIN outbox o ON o.id = e.matched_outbox_id LEFT JOIN inbound_email_filings g ON g.inbound_email_id = e.id ' +
+    'ORDER BY CAST(e.mailbox_uid AS INTEGER) DESC LIMIT 12', params);
+}
+export function listWhatsappImportLinesImportIdUploadedAtUploadedByByMessageId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT l.import_id, i.uploaded_at, i.uploaded_by FROM whatsapp_import_lines l JOIN whatsapp_imports i ON i.id = l.import_id ' +
+    'WHERE l.message_id = ?', params);
+}
+export function listWhatsappImportsIdContactIdByBusinessIdStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT i.id, i.contact_id, i.status, i.uploaded_at, i.uploaded_by, i.added FROM whatsapp_imports i ' +
+    'WHERE i.business_id = ? AND i.status <> ? ORDER BY i.uploaded_at DESC, i.id', params);
+}
+export function listWhatsappMessagesCreatedAtDirectionContactIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT w.created_at, w.direction, w.body, w.status, w.error, w.contact_id, w.written_by, w.phone FROM whatsapp_messages w ' +
+    'WHERE w.business_id = ? ORDER BY w.created_at', params);
+}
+export function listWhatsappMessagesIdCreatedAtSenderByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT w.id, w.created_at, w.direction, w.body, w.status, w.error, w.contact_id, w.written_by, w.phone, l.sender FROM whatsapp_messages w ' +
+    'LEFT JOIN whatsapp_import_lines l ON l.message_id = w.id ' +
+    'WHERE w.business_id = ? ORDER BY w.created_at, w.id', params);
+}
+export function listWhatsappMessagesIdCreatedAtSenderByBusinessIdPhone<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT w.id, w.created_at, w.direction, w.body, w.status, w.error, w.contact_id, w.written_by, l.sender FROM whatsapp_messages w ' +
+    'LEFT JOIN whatsapp_import_lines l ON l.message_id = w.id ' +
+    'WHERE w.business_id = ? AND w.phone = ? ORDER BY w.created_at, w.id', params);
 }

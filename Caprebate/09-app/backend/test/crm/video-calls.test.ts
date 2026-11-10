@@ -1,5 +1,5 @@
 /**
- * 30 SEPTEMBER 2026 — VIDEO CALLS THROUGH ZOOM (src/integrations/connectors/zoom.ts, src/modules/crm/video-calls.ts).
+ * 30 SEPTEMBER 2026 — VIDEO CALLS THROUGH ZOOM (src/integrations/connectors/zoom.ts, src/modules/clients/video-calls.ts).
  *
  * Lakhbir: "with the video call link this should be sent automatically, and i feel zoom would be best for this as we
  * can run it via our platform, is there a way to have zoom embeded on our back end so its done though there?"
@@ -17,7 +17,7 @@ import { createApp } from '../../src/app/server.ts';
 import { fixtureTransport, liveTransport, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
 import { forgetZoomToken, joinSignature, makeZoomMeeting, zoomMissing, MEETING_TOPIC } from '../../src/integrations/connectors/zoom.ts';
-import { clientMayJoin, reconcileVideoMeeting, VIDEO_PAGE_CSP, zoomDeps } from '../../src/modules/crm/video-calls.ts';
+import { clientMayJoin, reconcileVideoMeeting, VIDEO_PAGE_CSP, zoomDeps } from '../../src/modules/clients/video-calls.ts';
 import { CALL_POLICIES } from '../../src/integrations/connectors/sources.ts';
 
 const T = '2026-09-08T00:00:00.000Z';

@@ -3,17 +3,7 @@
  "breaks": {
   "1": {
    "claims": [
-    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts",
-    "src/modules/assessment/conveyancing-strip.ts -> src/modules/claims/upload-handler-port.ts"
-   ],
-   "core": [
-    "src/integrations/connectors/test-lookups.ts -> src/core/app.ts",
-    "src/integrations/connectors/test-lookups.ts -> src/core/audit.ts",
-    "src/modules/admin/connections.ts -> src/core/app.ts",
-    "src/modules/crm/claim-lists.ts -> src/core/backoffice.ts"
-   ],
-   "crm": [
-    "src/integrations/connectors/test-lookups.ts -> src/modules/crm/data.ts"
+    "src/integrations/connectors/test-lookups.ts -> src/modules/claims/data.ts"
    ],
    "integrations": [
     "src/app/cli.ts -> src/integrations/connectors/test-lookups.ts",
@@ -23,26 +13,17 @@
     "src/modules/claims/match-review.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/research.ts -> src/integrations/connectors/free-registers.ts",
     "src/modules/claims/uploads.ts -> src/integrations/connectors/claude.ts"
-   ],
-   "shared": [
-    "src/app/live-website.ts -> src/shared/shared-objectstore.ts",
-    "src/app/server.ts -> src/shared/shared-objectstore.ts"
    ]
   },
   "2": {
-   "admin": [
-    "admin -> crm"
-   ],
    "assessment": [
     "assessment -> claims",
-    "assessment -> crm",
     "assessment -> finance",
     "assessment -> survey"
    ],
    "claims": [
     "claims -> admin",
     "claims -> compliance",
-    "claims -> crm",
     "claims -> finance",
     "claims -> portal",
     "claims -> public-site",
@@ -50,84 +31,33 @@
    ],
    "compliance": [
     "compliance -> admin",
-    "compliance -> crm",
     "compliance -> public-site"
    ],
    "crm": [
     "crm -> portal",
     "crm -> public-site"
    ],
-   "finance": [
-    "finance -> crm"
-   ],
    "integrations": [
-    "integrations -> claims",
-    "integrations -> crm"
+    "integrations -> claims"
    ],
    "portal": [
     "portal -> public-site"
-   ],
-   "survey": [
-    "survey -> crm"
    ]
   },
   "3": {
    "admin": [
-    "src/modules/claims/data-borrowed.ts : document_types",
-    "src/modules/crm/data-borrowed.ts : document_types",
-    "src/modules/crm/data-borrowed.ts : reason_lists",
-    "src/modules/portal/data-borrowed.ts : document_types"
+    "src/modules/claims/data-borrowed.ts : document_types"
    ],
    "assessment": [
-    "src/app/seed.ts : assessments",
-    "src/modules/claims/data-borrowed.ts : assessments",
-    "src/modules/compliance/data-borrowed.ts : consent_answers",
-    "src/modules/crm/data-borrowed.ts : assessments",
-    "src/modules/crm/data-borrowed.ts : estimates",
-    "src/modules/survey/data-borrowed.ts : estimates"
+    "src/modules/clients/data-borrowed.ts : assessments"
    ],
    "claims": [
-    "src/app/seed.ts : claims",
-    "src/app/seed.ts : engagements",
-    "src/modules/admin/data-borrowed.ts : claims",
     "src/modules/assessment/data-borrowed.ts : claim_deliverables",
     "src/modules/assessment/data-borrowed.ts : claims",
-    "src/modules/compliance/data-borrowed.ts : claims",
-    "src/modules/compliance/data-borrowed.ts : document_links",
-    "src/modules/compliance/data-borrowed.ts : documents",
-    "src/modules/compliance/data-borrowed.ts : logical_documents",
-    "src/modules/compliance/data-borrowed.ts : properties",
-    "src/modules/crm/data-borrowed.ts : claim_contacts",
-    "src/modules/crm/data-borrowed.ts : claim_deliverables",
-    "src/modules/crm/data-borrowed.ts : claim_milestones",
-    "src/modules/crm/data-borrowed.ts : claim_stage_moves",
-    "src/modules/crm/data-borrowed.ts : claims",
-    "src/modules/crm/data-borrowed.ts : document_links",
-    "src/modules/crm/data-borrowed.ts : documents",
-    "src/modules/crm/data-borrowed.ts : logical_documents",
-    "src/modules/crm/data-borrowed.ts : properties",
-    "src/modules/finance/data-borrowed.ts : claims",
-    "src/modules/portal/data-borrowed.ts : claims",
-    "src/modules/portal/data-borrowed.ts : documents",
-    "src/modules/portal/data-borrowed.ts : logical_documents",
-    "src/modules/survey/data-borrowed.ts : claim_grants",
-    "src/modules/survey/data-borrowed.ts : claims",
-    "src/modules/survey/data-borrowed.ts : properties"
+    "src/modules/clients/data-borrowed.ts : claims",
+    "src/modules/clients/data-borrowed.ts : properties"
    ],
-   "core": [
-    "src/modules/admin/data-borrowed.ts : users",
-    "src/modules/assessment/data-borrowed.ts : users",
-    "src/modules/claims/data-borrowed.ts : users",
-    "src/modules/compliance/data-borrowed.ts : audit_log",
-    "src/modules/compliance/data-borrowed.ts : users",
-    "src/modules/crm/data-borrowed.ts : audit_log",
-    "src/modules/crm/data-borrowed.ts : users",
-    "src/modules/finance/data-borrowed.ts : users",
-    "src/modules/portal/data-borrowed.ts : users",
-    "src/modules/survey/data-borrowed.ts : users"
-   ],
-   "crm": [
-    "src/app/seed.ts : businesses",
+   "clients": [
     "src/modules/admin/data-borrowed.ts : businesses",
     "src/modules/assessment/data-borrowed.ts : businesses",
     "src/modules/claims/data-borrowed.ts : businesses",
@@ -146,47 +76,26 @@
     "src/modules/compliance/data-borrowed.ts : leads",
     "src/modules/compliance/data-borrowed.ts : staff_tasks",
     "src/modules/finance/data-borrowed.ts : businesses",
-    "src/modules/portal/data-borrowed.ts : businesses",
-    "src/modules/portal/data-borrowed.ts : contacts",
     "src/modules/survey/data-borrowed.ts : bookings",
     "src/modules/survey/data-borrowed.ts : businesses"
+   ],
+   "core": [
+    "src/modules/clients/data-borrowed.ts : users"
    ],
    "finance": [
     "src/modules/assessment/data-borrowed.ts : finance_settings",
     "src/modules/assessment/data-borrowed.ts : invoice_credit_notes",
     "src/modules/assessment/data-borrowed.ts : invoices",
-    "src/modules/claims/data-borrowed.ts : fee_discounts",
-    "src/modules/crm/data-borrowed.ts : invoice_credit_notes",
-    "src/modules/crm/data-borrowed.ts : invoice_numbers",
-    "src/modules/crm/data-borrowed.ts : invoice_payments",
-    "src/modules/crm/data-borrowed.ts : invoices"
-   ],
-   "integrations": [
-    "src/modules/admin/data-borrowed.ts : register_file_imports",
-    "src/modules/claims/data-borrowed.ts : outbox",
-    "src/modules/claims/data-borrowed.ts : register_records",
-    "src/modules/claims/data-borrowed.ts : research_runs",
-    "src/modules/compliance/data-borrowed.ts : outbox",
-    "src/modules/compliance/data-borrowed.ts : register_records",
-    "src/modules/crm/data-borrowed.ts : inbound_email",
-    "src/modules/crm/data-borrowed.ts : inbound_email_filings",
-    "src/modules/crm/data-borrowed.ts : outbox",
-    "src/modules/crm/data-borrowed.ts : research_runs",
-    "src/modules/crm/data-borrowed.ts : video_meetings",
-    "src/modules/crm/data-borrowed.ts : whatsapp_import_lines",
-    "src/modules/crm/data-borrowed.ts : whatsapp_imports",
-    "src/modules/crm/data-borrowed.ts : whatsapp_messages",
-    "src/modules/survey/data-borrowed.ts : video_meetings"
+    "src/modules/claims/data-borrowed.ts : fee_discounts"
    ],
    "portal": [
     "src/modules/claims/data-borrowed.ts : client_step_notices",
-    "src/modules/crm/data-borrowed.ts : client_report_acceptances"
+    "src/modules/clients/data-borrowed.ts : client_report_acceptances"
    ],
    "public-site": [
-    "src/modules/crm/data-borrowed.ts : enquiry_checks"
+    "src/modules/clients/data-borrowed.ts : enquiry_checks"
    ],
    "survey": [
-    "src/app/seed.ts : surveyor_jobs",
     "src/modules/assessment/data-borrowed.ts : surveyor_jobs",
     "src/modules/claims/data-borrowed.ts : pack_client_notices",
     "src/modules/claims/data-borrowed.ts : pack_signoff_answers",
@@ -196,11 +105,7 @@
     "src/modules/claims/data-borrowed.ts : survey_pack_legal_answers",
     "src/modules/claims/data-borrowed.ts : survey_packs",
     "src/modules/claims/data-borrowed.ts : surveyor_jobs",
-    "src/modules/crm/data-borrowed.ts : survey_pack_approvals",
-    "src/modules/crm/data-borrowed.ts : survey_packs",
-    "src/modules/crm/data-borrowed.ts : survey_walkthroughs",
-    "src/modules/crm/data-borrowed.ts : surveyor_commitments",
-    "src/modules/crm/data-borrowed.ts : surveyor_jobs"
+    "src/modules/clients/data-borrowed.ts : survey_walkthroughs"
    ]
   },
   "4": {}

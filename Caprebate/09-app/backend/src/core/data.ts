@@ -58,6 +58,30 @@ export function listAuditLogDetailSByKindM<T extends Row = Row>(db: Db, params: 
 export function listAuditLogKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT DISTINCT kind FROM audit_log ORDER BY kind ASC', params);
 }
+// The audit log page's lines (src/modules/compliance/audit-log.ts), text unchanged from it.
+export function listAuditLogLines<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT a.seq, a.at, a.kind, a.actor_role, a.actor_id, a.object_type, a.object_id, a.outcome, u.display_name AS who FROM audit_log a ' +
+    'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) ORDER BY a.seq DESC LIMIT ?', params);
+}
+/* ONE CLIENT'S AUDIT LINES: about the client, its claims or its properties, or naming them. The client's claims and
+   properties are the claims module's, so the caller hands their ids in as JSON arrays (in this order: the client, its
+   claims, its properties, the client twice, its claims); each is compared as text, as the claims' own id column was. */
+export function listAuditLogLinesByObjectIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT a.seq, a.at, a.kind, a.actor_role, a.actor_id, a.object_type, a.object_id, a.outcome, u.display_name AS who FROM audit_log a ' +
+    'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) AND ' +
+    '(a.object_id = ? OR a.object_id IN (SELECT CAST(value AS TEXT) FROM json_each(?)) ' +
+    'OR a.object_id IN (SELECT CAST(value AS TEXT) FROM json_each(?)) ' +
+    "OR json_extract(a.detail, '$.business') = ? OR json_extract(a.detail, '$.business_id') = ? " +
+    "OR json_extract(a.detail, '$.claim') IN (SELECT CAST(value AS TEXT) FROM json_each(?))) " +
+    'ORDER BY a.seq DESC LIMIT ?', params);
+}
+export function getAuditLogCountByObjectIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM audit_log a WHERE ' +
+    '(a.object_id = ? OR a.object_id IN (SELECT CAST(value AS TEXT) FROM json_each(?)) ' +
+    'OR a.object_id IN (SELECT CAST(value AS TEXT) FROM json_each(?)) ' +
+    "OR json_extract(a.detail, '$.business') = ? OR json_extract(a.detail, '$.business_id') = ? " +
+    "OR json_extract(a.detail, '$.claim') IN (SELECT CAST(value AS TEXT) FROM json_each(?))) ", params);
+}
 
 // custom_role_grants
 export function deleteCustomRoleGrantsByRole(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
@@ -265,6 +289,46 @@ export function listUserPhotosUserId<T extends Row = Row>(db: Db, params: readon
   return db.all<T>('SELECT user_id FROM user_photos', params);
 }
 
+// users, by ids: the one read that serves every other area's join on users. An area reads its own rows
+// with the user's id standing where the joined column stood (`x.recorded_by AS recorder`), then fillUsers puts the
+// user's column in its place: same rows, same order, same keys in the same places, NULL where a LEFT JOIN found no one.
+export function listUsersDisplayNameByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, display_name FROM users WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+export function listUsersIdDisplayNameRoleEmailByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, display_name, role, email, disabled_at FROM users WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+/** A user's column another area showed by a join: which one each key of a row takes from the user whose id it holds. */
+export type UserColumn = 'display_name' | 'role' | 'email' | 'disabled_at';
+/**
+ * Each key named in `columns` holds a user's id; it is replaced, where it stands, by that user's column (NULL for no id
+ * or no such user, as a LEFT JOIN gave). One read for every row. An inner JOIN on a NOT NULL column that refers to
+ * users (the database refuses a row without its user) finds a user for every row, so it reads the same way.
+ */
+export function fillUsers<T extends Row>(db: Db, rows: readonly T[], columns: Readonly<Record<string, UserColumn>>): T[] {
+  const keys = Object.keys(columns);
+  const ids = new Set<string>();
+  for (const r of rows) for (const k of keys) { const v = r[k]; if (typeof v === 'string') ids.add(v); }
+  const wide = keys.some((k) => columns[k] !== 'display_name');
+  const found = new Map<string, Row>();
+  if (ids.size > 0) {
+    const read = wide ? listUsersIdDisplayNameRoleEmailByIds : listUsersDisplayNameByIds;
+    for (const u of read(db, [JSON.stringify([...ids])])) found.set(String(u.id), u);
+  }
+  return rows.map((r) => {
+    const out: Row = {};
+    for (const [k, v] of Object.entries(r)) {
+      const col = columns[k];
+      out[k] = col === undefined ? v : (typeof v === 'string' ? (found.get(v)?.[col] ?? null) : null);
+    }
+    return out as T;
+  });
+}
+/** fillUsers for one row (a `get`): undefined stays undefined. */
+export function fillUser<T extends Row>(db: Db, row: T | undefined, columns: Readonly<Record<string, UserColumn>>): T | undefined {
+  return row === undefined ? undefined : fillUsers(db, [row], columns)[0];
+}
+
 // users
 export function getUsersCountByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT COUNT(*) AS n FROM users WHERE business_id = ?', params);
@@ -443,4 +507,34 @@ export function updateUsersRoleUpdatedAtById(db: Db, params: readonly Param[] = 
 }
 export function updateUsersWelcomeDismissedAtByIdWelcomeDismissedAt(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE users SET welcome_dismissed_at = ? WHERE id = ? AND welcome_dismissed_at IS NULL', params);
+}
+
+// LOOKUPS IN PLACE OF A JOIN (Phase 161l1): an area that showed a person's name by joining the core's users now reads
+// its own rows, then asks here once for the people those rows name. A LEFT JOIN users became a lookup that gives null
+// for an id that is null or names nobody, as the join did. One read, by a list of ids, serves every caller.
+export function listUsersIdDisplayNameByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, display_name, email, role, disabled_at FROM users WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+
+/** What the lookup gives for one person. */
+export interface PersonFacts { id: string; display_name: string | null; email: string | null; role: string | null; disabled_at: string | null }
+
+/** The people the given ids name, by id. Null, empty and repeated ids are skipped; an id that names nobody is absent. */
+export function peopleByIds(db: Db, ids: Iterable<unknown>): Map<string, PersonFacts> {
+  const wanted = [...new Set([...ids].filter((id): id is string => typeof id === 'string' && id !== ''))];
+  const found = new Map<string, PersonFacts>();
+  if (wanted.length === 0) return found;
+  for (const p of listUsersIdDisplayNameByIds<PersonFacts & Row>(db, [JSON.stringify(wanted)])) found.set(p.id, p);
+  return found;
+}
+
+/** A person's display name by id, null when the id is null or names nobody (what LEFT JOIN users u ... u.display_name gave). */
+export function namesByIds(db: Db, ids: Iterable<unknown>): (id: unknown) => string | null {
+  const people = peopleByIds(db, ids);
+  return (id) => (typeof id === 'string' ? people.get(id)?.display_name ?? null : null);
+}
+/** The invoice changes recorded against the invoices named (the CRM's invoice history, Phase 161l1). */
+export function listAuditLogAtDetailActorIdByInvoiceUpdatedObjectIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT a.at, a.detail, a.actor_id FROM audit_log a WHERE a.kind = 'INVOICE_UPDATED' " +
+    'AND a.object_id IN (SELECT value FROM json_each(?)) ORDER BY a.seq', params);
 }

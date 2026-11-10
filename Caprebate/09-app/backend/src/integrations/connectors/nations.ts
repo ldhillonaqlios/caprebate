@@ -41,7 +41,7 @@ const NATIONS: readonly Nation[] = ['england', 'wales', 'scotland', 'northern_ir
 
 /*
  * WHAT A LOOKUP IS ASKED ABOUT IS THE MODULES' TO SAY: TWO PORTS THIS FILE OWNS. The organisation's names,
- * number and sector are the CRM's (src/modules/crm/research-subject.ts); its first property is the claims module's
+ * number and sector are the CRM's (src/modules/clients/research-subject.ts); its first property is the claims module's
  * (src/modules/claims/research-subject.ts). Each hands its reading in as its front door loads, so the outside services
  * import nothing of a business module; the statements are the modules' own, unchanged. Declared with `var`, so a
  * hand-in that comes while this file is still loading (a loop through a front door) is kept.

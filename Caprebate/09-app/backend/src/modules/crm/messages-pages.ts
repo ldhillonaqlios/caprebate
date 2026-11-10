@@ -41,7 +41,7 @@ import { earlyQuestionsFor, receivableTypes } from '../claims/index.ts';
 import { earlyVouchesFrom } from '../claims/index.ts';
 import { cleanField } from '../../core/index.ts';
 import { piecesPage } from '../../core/index.ts';
-import { getBusinessesNameById, getClientMessagesExistsByBusinessId, getInternalNotesExistsByBusinessId, listBusinessesIdName2 } from './data.ts';
+import { getBusinessesNameById, getClientMessagesExistsByBusinessId, getInternalNotesExistsByBusinessId, listBusinessesIdName2 } from '../clients/index.ts';
 import { listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3 } from '../survey/index.ts';
 
 export type WebResult = 'handled' | 'not-mine';

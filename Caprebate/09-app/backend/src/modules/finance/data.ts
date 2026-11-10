@@ -5,6 +5,7 @@
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).
  */
 import type { Db, Param, Row } from '../../core/index.ts';
+import { fillUsers } from '../../core/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -139,4 +140,55 @@ export function insertFinanceSettings(db: Db, params: readonly Param[] = []): { 
 }
 export function listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT created_at, invoice_status, payment_status FROM invoices WHERE business_id = ? AND claim_id IS NULL ORDER BY created_at', params);
+}
+
+// Phase 161l1: these joined users (the core); each user's name is put in its place by the core's fillUsers.
+export function listInvoiceChasesChasedOnHowByInvoiceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT c.chased_on, c.how, c.note, c.chased_by AS who FROM invoice_chases c ' +
+    'WHERE c.invoice_id = ? ORDER BY c.chased_on DESC, c.rowid DESC', params), { who: 'display_name' });
+}
+export function listInvoiceCreditNotesIdBasisByInvoiceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT c.id, c.basis, c.amount_pence, c.vat_pence, c.issued_on, c.reason, c.recorded_at, c.recorded_by AS who, n.seq ' +
+    'FROM invoice_credit_notes c LEFT JOIN invoice_numbers n ON n.credit_note_id = c.id ' +
+    'WHERE c.invoice_id = ? ORDER BY c.recorded_at ASC, c.rowid ASC', params), { who: 'display_name' });
+}
+export function listInvoicePaymentsIdReceivedOnByInvoiceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return fillUsers(db, db.all<T>('SELECT p.id, p.received_on, p.amount_pence, p.bank_details_confirmed, p.recorded_at, p.recorded_by AS who, p.voided_at, ' +
+    'p.void_reason, p.voided_by AS voider FROM invoice_payments p ' +
+    'WHERE p.invoice_id = ? ORDER BY p.received_on ASC, p.rowid ASC', params), { who: 'display_name', voider: 'display_name' });
+}
+
+// FOR THE CRM (Phase 161l1): its statements that joined these tables to the core's users or the audit log now read
+// here and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts).
+export function listInvoiceCreditNotesRecordedAtBasisRecordedByByInvoiceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.recorded_at, c.basis, n.seq, c.recorded_by FROM invoice_credit_notes c LEFT JOIN invoice_numbers n ON n.credit_note_id = c.id ' +
+    'WHERE c.invoice_id = ? ORDER BY c.recorded_at', params);
+}
+export function listInvoicePaymentsRecordedAtVoidedAtRecordedByByInvoiceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT p.recorded_at, p.voided_at, p.recorded_by, p.voided_by FROM invoice_payments p ' +
+    'WHERE p.invoice_id = ? ORDER BY p.recorded_at', params);
+}
+export function listInvoicesIdKindRaisedByByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT i.id, i.kind, i.created_at, i.cancelled_at, n.seq, i.raised_by, i.cancelled_by FROM invoices i ' +
+    "LEFT JOIN invoice_numbers n ON n.invoice_id = i.id AND n.kind = 'INVOICE' " +
+    'WHERE i.claim_id = ? ORDER BY i.created_at', params);
+}
+export function listInvoicesIdByBusinessIdWithoutClaim<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT i.id FROM invoices i WHERE i.business_id = ? AND i.claim_id IS NULL', params);
+}
+export function listInvoicesIdFeeByClaimIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT i.id, i.fee_pence AS fee FROM invoices i WHERE i.claim_id IN (SELECT value FROM json_each(?)) ' +
+    "AND i.invoice_status IN ('RAISED','SENT')", params);
+}
+/**
+ * The search's invoices by number (src/modules/crm/search.ts): every match on a claim, by number; the search keeps 25.
+ * An invoice by its number — CB-000123, 000123 or 123 — or by the start of it as it is printed: "CB-0", "CB-00012". Never
+ * by an amount. The CRM follow-on added the prefix: a whole number was the only thing that found anything. Exported as
+ * text too, for test/core/global-search.test.ts, which reads every statement the search can run.
+ */
+export const INVOICE_NUMBER_SEARCH =
+  'SELECT n.seq, i.id, i.business_id, i.claim_id FROM invoice_numbers n JOIN invoices i ON i.id = n.invoice_id ' +
+  "WHERE n.kind = 'INVOICE' AND (n.seq = ? OR printf('%06d', n.seq) LIKE ?) AND i.claim_id IS NOT NULL ORDER BY n.seq ASC";
+export function listInvoiceNumbersSeqInvoiceIdBySeqLike<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(INVOICE_NUMBER_SEARCH, params);
 }

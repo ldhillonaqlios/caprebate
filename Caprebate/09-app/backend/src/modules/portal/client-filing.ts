@@ -33,7 +33,7 @@ import { authorise, type Actor } from '../../core/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { getClientFilingConfirmationsByClaimIdRecordedAt, insertClientFilingConfirmations } from './data.ts';
 import { getClaimsIdBusinessIdById } from '../claims/index.ts';
-import { getContactsIdByBusinessIdContactType2 } from '../crm/index.ts';
+import { getContactsIdByBusinessIdContactType2 } from '../clients/index.ts';
 
 export type Answer = 'YES' | 'NO' | 'UNSURE';
 const ANSWERS: readonly string[] = ['YES', 'NO', 'UNSURE'];

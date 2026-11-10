@@ -29,8 +29,12 @@ import { WHATSAPP_IMPORT_PREFIX, WHATSAPP_PREFIX, type FsObjectStore } from '../
 import { phoneContacts } from './whatsapp.ts';
 import { listZipEntries, readZipEntryFromBuffer } from '../../shared/index.ts';
 import { getWhatsappImportLinesExistsByFingerprint, getWhatsappImportsByIdBusinessId, insertWhatsappImportLines, insertWhatsappImports, insertWhatsappMedia, insertWhatsappMessages2, listWhatsappImportLinesAttachmentByImportIdAttachment, listWhatsappImportLinesMessageIdByImportIdAttachment, updateWhatsappImportsStatusById, updateWhatsappImportsStatusUsNameById } from '../../integrations/index.ts';
-import { getWhatsappImportLinesImportIdUploadedAtByMessageId, listWhatsappImportsIdContactByBusinessIdStatus } from './data-borrowed.ts';
-import { getContactsFullNameWhatsappOptinById } from './data.ts';
+
+import { getContactsFullNameWhatsappOptinById } from '../clients/index.ts';
+import type { Db, Param, Row } from '../../core/index.ts';
+import { peopleByIds } from '../../core/index.ts';
+import { listWhatsappImportLinesImportIdUploadedAtUploadedByByMessageId, listWhatsappImportsIdContactIdByBusinessIdStatus } from '../../integrations/index.ts';
+import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from '../clients/index.ts';
 
 /** Where an upload's text and .zip are kept, sealed. */
 export const IMPORT_PREFIX = WHATSAPP_IMPORT_PREFIX;
@@ -319,4 +323,28 @@ export function importsFor(app: App, business_id: string): ImportListed[] {
 /** Whether a message came from an export, and which. */
 export function importedFrom(app: App, message_id: string): { import_id: string; uploaded_at: string; by: string } | null {
   return getWhatsappImportLinesImportIdUploadedAtByMessageId<{ import_id: string; uploaded_at: string; by: string }>(app.db, [message_id]) ?? null;
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function getWhatsappImportLinesImportIdUploadedAtByMessageId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const lines = listWhatsappImportLinesImportIdUploadedAtUploadedByByMessageId<{ import_id: unknown; uploaded_at: unknown; uploaded_by: unknown }>(db, params);
+  const people = peopleByIds(db, lines.map((l) => l.uploaded_by));
+  for (const l of lines) {
+    const who = typeof l.uploaded_by === 'string' ? people.get(l.uploaded_by) : undefined;
+    if (who !== undefined) return { import_id: l.import_id, uploaded_at: l.uploaded_at, by: who.display_name } as unknown as T; // JOIN users
+  }
+  return undefined;
+}
+export function listWhatsappImportsIdContactByBusinessIdStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listWhatsappImportsIdContactIdByBusinessIdStatus<{ id: unknown; contact_id: unknown; status: unknown; uploaded_at: unknown; uploaded_by: unknown; added: unknown }>(db, params);
+  const contacts = byId(listContactsIdFullNameByIds<{ id: string; full_name: unknown }>(db, [idsOf(rows.map((r) => r.contact_id))]));
+  const people = peopleByIds(db, rows.map((r) => r.uploaded_by));
+  const out: Row[] = [];
+  for (const i of rows) {
+    const contact = lookUp(contacts, i.contact_id), who = typeof i.uploaded_by === 'string' ? people.get(i.uploaded_by) : undefined;
+    if (contact === undefined || who === undefined) continue; // JOIN contacts, JOIN users
+    out.push({ id: i.id, contact: contact.full_name, status: i.status, uploaded_at: i.uploaded_at, by: who.display_name, added: i.added });
+  }
+  return out as unknown as T[];
 }

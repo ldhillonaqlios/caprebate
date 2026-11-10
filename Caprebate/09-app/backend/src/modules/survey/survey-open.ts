@@ -29,8 +29,7 @@ import { stageLabel } from '../../core/index.ts';
 import { getUsersIdByIdRole2, listUsersIdNameByRoleDisabledAt2 } from '../../core/index.ts';
 import { getAssessmentsShownHighPenceById, getEstimatesBasisByAssessmentId, getEstimatesIdByAssessmentId, insertEstimates, listAssessmentAnswersValueByAssessmentIdState } from '../assessment/index.ts';
 import { getClaimsIdBusinessIdById2 } from '../claims/index.ts';
-import { insertSurveyorJobs2 } from './data.ts';
-import { getSurveyorJobsIdSurveyorByClaimId, getSurveyorJobsSurveyorByClaimId } from './data-borrowed.ts';
+import { getSurveyorJobsIdSurveyorByClaimId, getSurveyorJobsSurveyorByClaimId, insertSurveyorJobs2 } from './data.ts';
 
 export const FUNNEL_CEILING = 'FUNNEL_CEILING';
 

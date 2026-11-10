@@ -14213,3 +14213,50 @@ NOTHING LEFT  beyond those lines.
 ```
 
 - **Merged, 9 Nov 2026.** Lakhbir said yes in the chat ("Yes, both"): PR #92 is merged into main (merge commit cd9ca4f, GitHub's three checks green), and the run sheet's 161l block is deleted, with a line saying so at the end of the run sheet. The first phase on the run sheet is now 161l1.
+
+## Phase 161l1 — The tangle undone, part 2: the joins split by owner, and the CRM split into a lower clients area and its screens — 10 November 2026
+
+**ACTIONS AND OUTCOMES.** Phase 161l1, 10 Nov 2026: Statements that read another area's tables were split so each area reads only its own tables and asks the others through their front doors, wherever the other area sits below it; three new tests prove every split read gives exactly the rows the old one did. The CRM was split in two: the client record and the services every module uses (the calendar, tasks, leads, messages) are now a lower area called clients, and the CRM keeps its screens, so no module reaches up into the CRM any more. Breaks counted by the boundary check: 148 to 67. Every suite passes with the same pass list, plus 49 new tests. The last 67 are the new Phase 161l2, before 161m. PR on GitHub; Lakhbir merges.
+
+- **Read first.** PR #92 and PR #93 (Phase 161l) merged on main (ca80456). The block read in ACTION-PLAN.md and on the run sheet (written by 161l, read back equal on 9 Nov 2026). The claim taken (CLAIM.md, the board item Working on it, the tracker). The before figures are main's: site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,969 (re-run on a clean copy of main for the name-by-name comparison, the six OneDrive-only tests skipping there).
+- **Measured, and the plan changed.** The block's step 1 assumed most upward imports were reads of the CRM's client company and contacts. They were not only that: the lower modules used client questions, staff tasks, bookings and the calendar, video calls, client messages, automation and the pipeline too (133 names across seven areas). Moving two tables alone would have cleared almost no pair. A read-only planner worked out a file-by-file split of the CRM instead, which was then built.
+- **Built 1, the joins split by owner.** Three helper agents in their own git copies, merged here: the CRM's borrowed statements (27 of 34 keys), the other modules' borrowed statements and the seed (29 keys; 73 statements), and compliance's (10 of 20, with the audit log page's two statements and the retention list's counts given to their owners). Each statement became the area's own read plus the owner's read through its front door, the rows put back together in code; one users-by-ids read in the core serves every join for a person's name. Three pin tests keep every replaced statement word for word and check each new read gives exactly its rows on a seeded database with awkward rows added (`test/core/joins-split-by-owner.test.ts`, `test/crm/borrowed-split.test.ts`, `test/compliance/borrowed-statements-by-owner.test.ts`); one helper also ran the whole suite with each new read beside its old statement (129,843 comparisons, none different). Statements whose owner sits above the reader were left for 161l2.
+- **Built 2, the imports and the check.** Seven imports round a door now go through it; the conveyancing strip moved into claims, its only user. The boundary check decides type-only imports per statement (it hid a value import from a path another statement imported as a type; a new self-test case); the one break it then found, the core's backup importing the outside services, went by moving the backup into `src/integrations/backup.ts`.
+- **Built 3, the CRM split.** By a helper in its own copy, in sixteen checked steps, merged here as one commit (one step had committed a local link file by mistake; the squash keeps it out of the public history). A new area `clients` (`src/modules/clients/`, between the outside services and the assessment) owns the 27 CRM tables and their data files, the calendar and bookings, video calls, rooms and the CRM's word lists, tasks, leads, client messages and automation words; the CRM keeps the screens. Functions the lower modules needed moved to their owners (the claim object, jurisdiction and stage to claims, the claimant type to the assessment, fee invoices to finance, the sender setting and automation rules to admin). What still pointed up became ports the lower area owns, filled by the CRM's door (`src/modules/crm/ports.ts`); a core port says who holds a survey job (`src/core/assigned-surveyors.ts`, filled by the survey). The automation runner is a port rather than an event, because it runs each rule in its own transaction after the change commits. Every module's import of the CRM is gone (seven rule-2 pairs). The 130 actions are the same; clients declares the ones its code asks.
+
+```
+area           rule1 rule2 rule3 rule4 total
+core               0     0     1     0     1
+integrations       7     1     0     0     8
+clients            0     0    20     0    20
+public-site        0     0     1     0     1
+assessment         0     3     1     0     4
+portal             0     1     2     0     3
+crm                0     2     0     0     2
+claims             1     6     4     0    11
+survey             0     0    10     0    10
+finance            0     0     4     0     4
+compliance         0     2     0     0     2
+admin              0     0     1     0     1
+all                8    15    44     0    67
+```
+
+- **Accept, the figures.** Before (main at ca80456): site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,969, project 5,497. After: site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 4,018 of 4,018 across 227 files, project 5,546; the pass lists the same name for name, the back end plus exactly the 49 new tests. `npm run check` green; every file loads alone; the route list identical. One test (the site plan's chapter 9 button) failed once with "fetch failed" while two full suites ran at once on this machine; it passed three times on its own and in `npm run check`. Drift checker (0 wrong), CRM fold check (and self-test), register check, tracker check and self-test, plain words, brand, analytics (26), notices acceptance, payload proof, verify-page and the boundary self-test (28) green. Not done here: signing in on the preview as staff and as a client; the suites drive both through the app.
+- **Not done as the block said, and why.** "Zero breaks of every rule": 67 are left. 44 are joins (most now splittable downward through the clients door, which did not exist until this phase's last step; the rest join a higher owner), 15 are pairs still pointing up that do not involve the CRM, 8 are imports round the outside services' door kept for load order. All are Phase 161l2, written with the counts by file.
+- **Board and plan.** 161l1 Done (group Z, claim cleared) on the board and the tracker; 161l2 made (board item 13512253860, Ready - Claude can build) and written before 161m in ACTION-PLAN.md and on the run sheet (read back equal); COORDINATES' order line and section 6's row name it; ARCHITECTURE.md (the order with clients, the ratchet at 67, the phase table), the Developer Spec (an entry, the figures 5,546) and the backend README follow. 4B: the build queue is 161l2 and 161m, each a phase; no orphans. The run sheet's 161l1 block waits for Lakhbir's yes in the chat before it is deleted.
+
+```
+DONE          The joins across owners split by owner wherever the owner sits below (three pin tests); seven imports
+              through their doors; the check decides type-only imports per statement; the backup in the outside
+              services; the CRM split into a lower clients area and its screens, so no module imports the CRM;
+              the baseline 148 -> 67; every suite green, the pass list the same plus 49 tests.
+NOT DONE      The joins now splittable through the clients door, the joins on higher owners, 15 pairs still
+              pointing up, 8 imports round a door, routes and permissions files for survey, finance, compliance and
+              admin, the parts the router lends, the load-order workarounds - BUILDABLE - new Phase 161l2, written
+              and inserted before 161m.
+              Deleting the run sheet's 161l1 block - BLOCKED on Lakhbir's yes in the chat - asked in the report.
+              Signing in on the preview as staff and as a client - BUILDABLE - after the merge, on the test website.
+              The developer's answer to D16 (how far the notes come out) - BLOCKED on the developer - the developer
+              question pack, D16 (our recommendation is built meanwhile).
+NOTHING LEFT  beyond those lines.
+```

@@ -10,15 +10,18 @@ export { IMAGE_LIMITS, PHOTO_HEADERS, clearPhoto, photoFor, readPhoto, setPhoto 
 export { AuditLog, GENESIS, _canonical, screenDetail } from './audit.ts';
 export { BackOfficeError, NotFoundAsRefusal, answerLabel, assertBackOffice, assertSection, mayArrangeCalls, mayEnterBackOffice } from './backoffice.ts';
 export { EventOutsideTransaction, ListenerFailed, announce, listen, listenersOf } from './events.ts';
-export { BACKUP_KEEP_DAYS, runNightlyBackup } from './backup.ts';
 export { BORROWABLE_ROLES, NEVER_GRANTED, customRoleKey, customRoleOf, isCustomRoleKey, loadCustomRoles, roleRefusal } from './custom-roles.ts';
-export { deleteCustomRoleGrantsByRole, getAuditLogCount, getAuditLogCountByKindAt, getAuditLogCountByKindObjectId, getCustomRolesNameRetiredAtByRole, getCustomRolesRoleByName, getRolesRoleByRole, getSessionsCountByUserIdRevokedReason, getSessionsIdByTokenHashRevokedAt, getUsersCountByBusinessId, getUsersCountByBusinessIdRole, getUsersCountByEmailCanonical, getUsersCountByIdBusinessId, getUsersCountByRole, getUsersCountByRoleDisabledAt, getUsersDisplayNameById, getUsersEmailById, getUsersEmailDisplayNameById, getUsersEmailRoleById, getUsersHByIdDisabledAt, getUsersIdByEmailCanonical, getUsersIdByEmailCanonicalId, getUsersIdByIdEmailCanonical, getUsersIdByIdRole, getUsersIdByIdRole2, getUsersIdEmailByIdDisabledAt, getUsersNById, getUsersRoleById, getUsersRoleByIdDisabledAt, getUsersRoleDisabledAtById, insertCustomRoleGrants, insertCustomRoles, insertRoles, listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, listAuditLogAtKindByOutcomeKind3, listAuditLogAtKindByOutcomeKind4, listAuditLogAtWhoByKindObjectId, listAuditLogDetailSByKindM, listAuditLogKind, listCustomRoleGrantsActionAsRoleByRole, listCustomRolesRoleName, listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole, listUserPhotosUserId, listUsersIdByRole, listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleADM2, listUsersIdDisplayNameByRoleDisabledAt, listUsersIdDisplayNameByRoleEmailCanonical, listUsersIdEmailByBusinessIdRole, listUsersIdEmailByRoleBusinessId, listUsersIdEmailByRoleDisabledAt, listUsersIdNameByBusinessIdRole, listUsersIdNameByRoleDisabledAt, listUsersIdNameByRoleDisabledAt2, listUsersIdRoleByDisabledAt, updateCustomRolesRetiredAtUpdatedAtByRole, updateCustomRolesUpdatedAtByRole, updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt, updateUsersDisplayNameUpdatedAtById, updateUsersEmailEmailCanonicalById, updateUsersPasswordTemporaryUntilById } from './data.ts';
+export { deleteCustomRoleGrantsByRole, fillUser, fillUsers, getAuditLogCount, getAuditLogCountByKindAt, getAuditLogCountByKindObjectId, getCustomRolesNameRetiredAtByRole, getCustomRolesRoleByName, getRolesRoleByRole, getSessionsCountByUserIdRevokedReason, getSessionsIdByTokenHashRevokedAt, getUsersCountByBusinessId, getUsersCountByBusinessIdRole, getUsersCountByEmailCanonical, getUsersCountByIdBusinessId, getUsersCountByRole, getUsersCountByRoleDisabledAt, getUsersDisplayNameById, getUsersEmailById, getUsersEmailDisplayNameById, getUsersEmailRoleById, getUsersHByIdDisabledAt, getUsersIdByEmailCanonical, getUsersIdByEmailCanonicalId, getUsersIdByIdEmailCanonical, getUsersIdByIdRole, getUsersIdByIdRole2, getUsersIdEmailByIdDisabledAt, getUsersNById, getUsersRoleById, getUsersRoleByIdDisabledAt, getUsersRoleDisabledAtById, insertCustomRoleGrants, insertCustomRoles, insertRoles, listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, listAuditLogAtKindByOutcomeKind3, listAuditLogAtKindByOutcomeKind4, listAuditLogAtWhoByKindObjectId, listAuditLogDetailSByKindM, listAuditLogKind, listCustomRoleGrantsActionAsRoleByRole, listCustomRolesRoleName, listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole, listUserPhotosUserId, listUsersDisplayNameByIds, listUsersIdByRole, listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleADM2, listUsersIdDisplayNameByRoleDisabledAt, listUsersIdDisplayNameByRoleEmailCanonical, listUsersIdDisplayNameRoleEmailByIds, listUsersIdEmailByBusinessIdRole, listUsersIdEmailByRoleBusinessId, listUsersIdEmailByRoleDisabledAt, listUsersIdNameByBusinessIdRole, listUsersIdNameByRoleDisabledAt, listUsersIdNameByRoleDisabledAt2, listUsersIdRoleByDisabledAt, updateCustomRolesRetiredAtUpdatedAtByRole, updateCustomRolesUpdatedAtByRole, updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt, updateUsersDisplayNameUpdatedAtById, updateUsersEmailEmailCanonicalById, updateUsersPasswordTemporaryUntilById } from './data.ts';
+export { getAuditLogCountByObjectIds, listAuditLogLines, listAuditLogLinesByObjectIds } from './data.ts';
+// The lookup by ids that takes the place of another area's join to users.
+export { listAuditLogAtDetailActorIdByInvoiceUpdatedObjectIds, namesByIds, peopleByIds } from './data.ts';
 export { Db, migrate, pendingMigrations, withReadMemo } from './db.ts';
 export { clientHelp, staffHelp } from './help.ts';
 export { JSON_HEADERS, PayloadTooLarge, bindResponse, clientIp, clockOf, cookie, form, html, inContext, lendShellParts, nav, readBody, redirect, setCookie, shellParts, simple } from './http.ts';
 export { STAGE_GROUPS, groupBand, groupBar, kpiRow, lateBadge, noDateBadge, nobodyBadge, siteOf, stageBadge, stageGroupOf, stageLabel } from './look.ts';
 export { nameSwitches, navContext, setSubMenu } from './nav-context.ts';
 export { LEAD_FILTERS, TASK_FILTERS, addUnderCurrent, filterBar, opens, portalShell, provideNav, staffShell } from './navigation.ts';
+export { setAssignedSurveyorsReader, surveyorsOnBusiness, surveyorsOnClaim } from './assigned-surveyors.ts';
 export { MultipartError, boundaryOf, manyFiles, parseMultipart, piecedFields, singleFile } from './multipart.ts';
 export { APP_ROLES, DPO_ROLE, isAppRole, toQuarantineRole } from './roles.ts';
 export { SECRET_KEYS, isInside, isProduction, keyFileStartCheck, overlaySecrets, processSecrets, redactSecrets, repositoryRoot, secretsFromEnvironment, useProcessSecrets } from './secrets.ts';
@@ -28,7 +31,7 @@ export { PIECED_ABOVE, PIECE_BYTES, piecesOf, piecesPage, putPiece, setDocumentM
 export { assignRole, canonicalEmail, createUser, disableUser, findById, hashToken, listUsers, newId, toActor } from './users.ts';
 export { WELCOME_JOBS, dismissWelcome, welcomeShown } from './welcome.ts';
 // What the start-up wiring (src/app/) uses of the core. Each file named here loads no business module.
-export { MIGRATIONS_DIR } from './app.ts';
+export { MIGRATIONS_DIR, STUBS } from './app.ts';
 export { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';
 export { formToken, formTokensMode, onceToken } from './form-token.ts';
 export { MFA_KEY_NAME, mfaKeyFrom, resealSecrets, sealTextSecrets } from './mfa-seal.ts';
@@ -43,13 +46,16 @@ export type { PhotoRecord } from './avatar.ts';
 export type { EventContext, EventMap, EventName, Listener } from './events.ts';
 export type { BorrowableRole, Grant } from './custom-roles.ts';
 export type { Param, Row } from './db.ts';
+export type { UserColumn } from './data.ts';
 export type { WebDeps, WebRequest, WebResult } from './http.ts';
 export type { GroupKey, Kpi, KpiTone } from './look.ts';
 export type { NavParts } from './navigation.ts';
+export type { AssignedSurveyorsReader } from './assigned-surveyors.ts';
 export type { Part } from './multipart.ts';
 export type { AppRole } from './roles.ts';
 export type { OwnerSecrets, SecretKey, SecretOwner, SecretStore } from './secrets.ts';
 export type { User } from './users.ts';
+export type { PersonFacts } from './data.ts';
 export type { App, BuildOptions } from './app.ts';
 export type { FormTokens } from './form-token.ts';
 export type { PasswordHasher } from './password.ts';

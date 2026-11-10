@@ -42,7 +42,10 @@ import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, zoomP
 import { getVideoMeetingsCallMinutesCallPeopleByBookingIdCancelledAt, getVideoMeetingsIdBookingIdByBookingIdCancelledAt, insertVideoMeetings, updateVideoMeetingsCallCheckStateCallCheckedAtById, updateVideoMeetingsCallMinutesCallPeopleById, updateVideoMeetingsCancelledAtById } from '../../integrations/index.ts';
 import { getUsersEmailDisplayNameById } from '../../core/index.ts';
 import { getBookingsChannelById, getBookingsChannelStartsAtById, getBookingsStartsAtEndsAtById } from './data.ts';
-import { getBookingsCountByIdChannel, getBookingsIdEmailByIdDisabledAt, getSurveyWalkthroughsXByBookingId } from './data-borrowed.ts';
+import { getBookingsIdEmailByIdDisabledAt, getSurveyWalkthroughsXByBookingId } from './data-borrowed.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { listVideoMeetingsBookingIdHostUserIdByBookingIds } from '../../integrations/index.ts';
+import { idsOf, listBookingsIdByIdChannelOverlap } from './data.ts';
 
 /** A call that holds a moment: a telephone call (CB_BOOKING) or, a video call. */
 export function booksATime(channel: string): boolean {
@@ -289,3 +292,14 @@ export function clientMayJoin(startsAt: string, endsAt: string, nowIso: string):
 }
 
 export function whenWords(startsAt: string): string { return localWhen(startsAt); }
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function getBookingsCountByIdChannel<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  // The other live video bookings that overlap, counted where the live meeting's host (or '' for none) is the one asked.
+  const [id = null, before = null, after = null, host = null] = params;
+  const ids = listBookingsIdByIdChannelOverlap<{ id: unknown }>(db, [id, before, after]).map((r) => r.id);
+  if (ids.length === 0) return { n: 0 } as unknown as T;
+  const hosts = new Map(listVideoMeetingsBookingIdHostUserIdByBookingIds<{ booking_id: unknown; host_user_id: unknown }>(db, [idsOf(ids)]).map((m) => [m.booking_id, m.host_user_id]));
+  return { n: ids.filter((b) => (hosts.get(b) ?? '') === host).length } as unknown as T;
+}

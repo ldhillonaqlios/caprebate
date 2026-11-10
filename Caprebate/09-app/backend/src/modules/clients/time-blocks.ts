@@ -4,7 +4,7 @@
  * the owner: "a calendar allowing users to block off time look what what they have booked in the future".
  *
  * WHO: any member of staff who can work (not the view-only login, not a client) blocks and frees their OWN time; Admin
- * may free anyone's. A block holds its span exactly as a call does: `bookedSpans` and `isBookable` (src/modules/crm/schedule.ts)
+ * may free anyone's. A block holds its span exactly as a call does: `bookedSpans` and `isBookable` (src/modules/clients/schedule.ts)
  * read both, so no slot is offered and no call is booked into it — by the client's picker or by staff.
  * REFUSED: a span that is not a span (the end not after the start), longer than 31 days, wholly in the past, or that
  * overlaps a call already in that person's diary (move the call first — a block must never strand a client).

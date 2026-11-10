@@ -14,7 +14,7 @@ import type { Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import * as CF from './configuration.ts';
 import { savedMessage, sectionList, why, type RecordTab } from '../../shared/index.ts';
-import { senderSetting, setSender } from '../crm/index.ts';
+import { senderSetting, setSender } from './sender-setting.ts';
 import { EMAIL_SENDING, sendingMissing, smtpLoginFromKeyFile } from '../../integrations/index.ts';
 import { piecesPage } from '../../core/index.ts';
 

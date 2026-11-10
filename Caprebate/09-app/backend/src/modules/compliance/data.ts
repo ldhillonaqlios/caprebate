@@ -20,6 +20,10 @@ export function insertAmlFirmRiskAssessments(db: Db, params: readonly Param[] = 
 export function getAmlOfficersAppointedOnEndedOnById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT appointed_on, ended_on FROM aml_officers WHERE id = ?', params);
 }
+// The officers' register, each with the user who holds the office (that user's name is the core's: src/modules/compliance/compliance-aml.ts)
+export function listAmlOfficersIdOfficeUserId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT o.id, o.office, o.user_id, o.appointed_on, o.ended_on, o.source FROM aml_officers o ORDER BY o.appointed_on DESC', params);
+}
 export function insertAmlOfficers(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO aml_officers (id, office, user_id, appointed_on, source, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)', params);
 }
@@ -276,6 +280,11 @@ export function insertComplianceSettings(db: Db, params: readonly Param[] = []):
 export function getDisclosureLogBusinessIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT business_id FROM disclosure_log WHERE id = ?', params);
 }
+// One client's disclosures, each with who recorded it (that user's name is the core's: src/modules/compliance/disclosure-log.ts)
+export function listDisclosureLogIdRecipientRecordedByByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT d.id, d.recipient, d.data_categories, d.occasion, d.route, d.lawful_basis, d.disclosed_at, d.corrects_id, d.recorded_by ' +
+    'FROM disclosure_log d WHERE d.business_id = ? ORDER BY d.disclosed_at ASC, d.recorded_at ASC', params);
+}
 export function insertDisclosureLog(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO disclosure_log (id, business_id, claim_id, recipient, recipient_contact_id, recipient_user_id, data_categories, occasion, route, ' +
     'lawful_basis, disclosed_at, recorded_by, recorded_at, corrects_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
@@ -301,6 +310,11 @@ export function insertIdentityChecks(db: Db, params: readonly Param[] = []): { c
 }
 
 // identity_persons
+// One person named on a document, with the document version it points at (that document is the claims module's: readPerson)
+export function getIdentityPersonsPersonRefNameByPersonRef<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT p.person_ref, p.name, p.role, p.contact_route, p.contact_route_kind, p.doc_id, p.notice_template, p.notice_route, p.notice_sent_on, p.notice_published_too, ' +
+    'p.exemption_article, p.exemption_reason, p.source_record_ref FROM identity_persons p WHERE p.person_ref = ?', params);
+}
 export function getIdentityPersonsPersonRefNoticeTemplateByPersonRef<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT person_ref, notice_template, exemption_article FROM identity_persons WHERE person_ref = ?', params);
 }
@@ -479,6 +493,30 @@ const IDENTITY_COUNTS: Readonly<Record<IdentityCount, string>> = Object.freeze({
 });
 export function getIdentityCount<T extends Row = Row>(db: Db, which: IdentityCount, params: readonly Param[] = []): T | undefined {
   return db.get<T>(IDENTITY_COUNTS[which], params);
+}
+
+// The retention list's record kinds on this module's tables (compliance-identity.ts RECORD_KINDS): each kind's count, and the
+// rows with the moment its clock starts where the determination gives one this build records; text unchanged. The other
+// kinds' counts are their owners' (compliance-identity.ts says whose); a kind not here reads nothing.
+const RECORD_KIND_STATEMENTS: Readonly<Record<string, { count: string; clockRows: string | null }>> = Object.freeze({
+  RIGHTS_REQUESTS: { count: 'SELECT COUNT(*) AS n FROM rights_requests', clockRows: null },
+  COMPLAINTS: { count: 'SELECT COUNT(*) AS n FROM complaints', clockRows: 'SELECT id, outcome_notified_at AS starts FROM complaints' },
+  BREACH_INCIDENTS: { count: 'SELECT COUNT(*) AS n FROM breach_incidents', clockRows: 'SELECT id, closed_at AS starts FROM breach_incidents' },
+  IDENTITY_PERSON: { count: 'SELECT COUNT(*) AS n FROM identity_persons', clockRows: null },
+  IDENTITY_SEARCH_LOG: { count: 'SELECT COUNT(*) AS n FROM identity_search_log', clockRows: null },
+  DELETION_LOG: { count: 'SELECT COUNT(*) AS n FROM deletion_log', clockRows: null },
+  CDD_RECORDS: { count: 'SELECT COUNT(*) AS n FROM cdd_checks', clockRows: null },
+});
+export function countRecordKind<T extends Row = Row>(db: Db, kind: string, params: readonly Param[] = []): T | undefined {
+  const s = RECORD_KIND_STATEMENTS[kind];
+  return s === undefined ? undefined : db.get<T>(s.count, params);
+}
+export function recordKindHasClock(kind: string): boolean {
+  return (RECORD_KIND_STATEMENTS[kind]?.clockRows ?? null) !== null;
+}
+export function listRecordKindClockRows<T extends Row = Row>(db: Db, kind: string, params: readonly Param[] = []): T[] {
+  const sql = RECORD_KIND_STATEMENTS[kind]?.clockRows ?? null;
+  return sql === null ? [] : db.all<T>(sql, params);
 }
 
 // sqlite_master: the trigger that blocks deleting from a table, if there is one (the retention list says so)

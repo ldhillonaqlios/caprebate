@@ -27,13 +27,12 @@ import type { EmailTransport } from '../../integrations/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localDate, ukDate } from '../../shared/index.ts';
 // Read inside functions only: pipeline.ts reads this module's need the same way, so the loop is never touched at load.
-import { raiseBusinessStage } from '../crm/index.ts';
+import { raiseBusinessStage } from '../claims/index.ts';
 import { claimReturns, claimRoutes, type ClaimReturn } from '../claims/index.ts';
 import { getOutboxRById } from '../../integrations/index.ts';
-import { getAccountantConfirmRequestsIdKindByTokenSha256, getClaimsIdBusinessIdById8, listAccountantConfirmRequestsIdKindByClaimId } from './data-borrowed.ts';
 import { getClaimReconciliationsIdFiledOnByClaimId, getClaimsBusinessIdById, getClaimsIdBusinessIdById5, updateClaimReconciliationsFiledOnFiledRecordedByById } from '../claims/index.ts';
-import { getAccountantConfirmRequestsClaimIdSentByById, insertAccountantConfirmAnswers, insertAccountantConfirmRequests } from './data.ts';
-import { listContactsIdNameByBusinessIdContactType } from '../crm/index.ts';
+import { getAccountantConfirmRequestsClaimIdSentByById, getAccountantConfirmRequestsIdKindByTokenSha256, getClaimsIdBusinessIdById8, insertAccountantConfirmAnswers, insertAccountantConfirmRequests, listAccountantConfirmRequestsIdKindByClaimId } from './data.ts';
+import { listContactsIdNameByBusinessIdContactType } from '../clients/index.ts';
 
 export type ConfirmKind = 'RETURN_FIT' | 'FILED';
 export type ConfirmDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };

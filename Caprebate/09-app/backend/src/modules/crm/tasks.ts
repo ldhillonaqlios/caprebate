@@ -41,17 +41,27 @@ import type { Db } from '../../core/index.ts';
 import type { AuditKind, AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
-import { localDate, localStamp, ukDate, dueWords } from '../../shared/index.ts';
-import { claimNaming, claimObjFor, claimWords, PRIORITIES, type Fields } from './crm.ts';
+import { localDate, localStamp } from '../../shared/index.ts';
+import { claimNaming, claimObjFor, claimWords, type Fields } from './crm.ts';
 import { anyStageLabel, claimStage } from '../../shared/index.ts';
 import { waitingOn, type WaitingOn } from '../claims/index.ts';
 import { fireAutomation } from './automation.ts';
 import { mayTake, vocabLabel } from '../admin/index.ts';
 import { listUsersIdDisplayNameByRoleADM2 } from '../../core/index.ts';
-import { getBusinessesIdById, getContactsIdBusinessIdById3, getLeadsBusinessIdById, getLeadsIdBusinessIdById, getStaffTasksDueOnNByContactIdStatus, getStaffTasksIdByCreatedByOrigin, insertStaffTasks, listClientTasksQuestionDueOnByAskedByState, listClientTasksQuestionDueOnByAskedByState2, listClientTasksQuestionDueOnByBusinessIdState, updateStaffTasksIsNextActionUpdatedAtByClaimIdIsNextAction, updateStaffTasksIsNextActionUpdatedAtById, updateStaffTasksStatusCancelledAtById, updateStaffTasksStatusCompletedAtById, updateStaffTasksStatusStartedAtById, updateStaffTasksStatusUpdatedAtById, updateStaffTasksTitleDescriptionById } from './data.ts';
-import { getStaffTasksIdTitleByClaimIdIsNextAction, listClaimsIdClaimRef, listClaimsIdClaimRefByOwnerId2, listClientTasksIdTypeLabelByAskedByKind } from './data-borrowed.ts';
+import { getBusinessesIdById, getContactsIdBusinessIdById3, getLeadsBusinessIdById, getLeadsIdBusinessIdById, getStaffTasksDueOnNByContactIdStatus, getStaffTasksIdByCreatedByOrigin, listClientTasksQuestionDueOnByAskedByState, listClientTasksQuestionDueOnByAskedByState2, listClientTasksQuestionDueOnByBusinessIdState, updateStaffTasksIsNextActionUpdatedAtByClaimIdIsNextAction, updateStaffTasksIsNextActionUpdatedAtById, updateStaffTasksStatusCancelledAtById, updateStaffTasksStatusCompletedAtById, updateStaffTasksStatusStartedAtById, updateStaffTasksStatusUpdatedAtById, updateStaffTasksTitleDescriptionById } from '../clients/index.ts';
+import { getStaffTasksIdTitleByClaimIdIsNextAction, listClaimsIdClaimRef, listClaimsIdClaimRefByOwnerId2 } from '../clients/index.ts';
 import { getClaimsIdBusinessIdById7, getClaimsIdStageById, getClaimsStageById, getPropertiesIdBusinessIdById, listClaimsIdClaimRefByOwnerId } from '../claims/index.ts';
-import { getIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO2, listIntroducersIdTitleByIdJO3, listIntroducersIdTitleByIdJO4 } from './data-borrowed.ts';
+import { getIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO, listIntroducersIdTitleByIdJO2, listIntroducersIdTitleByIdJO3, listIntroducersIdTitleByIdJO4 } from '../clients/index.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { listDocumentTypesCodeReadersLabelByCodes } from '../admin/index.ts';
+import { listClaimsIdClaimRefStageByIds } from '../claims/index.ts';
+import { byId, idsOf, listClientTasksIdRequestedTypeByAskedByKind, lookUp } from '../clients/index.ts';
+
+// The activity lists, the dates, the due reading, the task's object and the row written: the client record's
+// (src/modules/clients/tasks.ts), as the modules below raise tasks too.
+import { ACTIVITY_TYPES, NO_DUE_DATE, POOL_ROLES, RECIPROCITY_ACTIVITY_TYPES, addDaysToDate, addMonthsToDate, dueReading, insertTask, taskObj, type DueReading, type DueState, type TaskInsert } from '../clients/index.ts';
+export { ACTIVITY_TYPES, NO_DUE_DATE, POOL_ROLES, RECIPROCITY_ACTIVITY_TYPES, addDaysToDate, addMonthsToDate, dueReading, insertTask, taskObj };
+export type { DueReading, DueState, TaskInsert };
 
 export type TaskDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type TaskResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -60,24 +70,6 @@ type Vocab = Readonly<Record<string, string>>;
 
 export const TASK_STATUSES: Vocab = Object.freeze({
   OPEN: 'Open', IN_PROGRESS: 'In progress', COMPLETED: 'Completed', CANCELLED: 'Cancelled',
-});
-
-/** The full specification's 10.4, in its own words. */
-export const ACTIVITY_TYPES: Vocab = Object.freeze({
-  CALL: 'Call', EMAIL: 'Email', MEETING: 'Meeting', NOTE: 'Note', TASK: 'Task', SURVEY: 'Survey',
-  DOCUMENT_REQUEST: 'Document request', REVIEW: 'Review', OTHER: 'Other',
-});
-
-/**
- * CRM 5 of 10: reward model A's three kinds of reciprocity. On the activity list
- * (migration 014 replaced the trigger pair) but NOT in `ACTIVITY_TYPES`, because
- * the database allows them only on a task on an introducing firm, and only while
- * model A is the setting — src/modules/crm/introducers.ts is the one place that writes one.
- */
-export const RECIPROCITY_ACTIVITY_TYPES: Vocab = Object.freeze({
-  CPD_SESSION: 'A CPD session for the practice',
-  CO_BRANDED_ONE_PAGER: 'A co-branded one-pager for the firm’s client newsletter',
-  PRIORITY_TURNAROUND: 'Priority turnaround on a referred case',
 });
 
 export const RECURRENCES: Vocab = Object.freeze({
@@ -95,11 +87,6 @@ export const TASK_ORIGINS: Vocab = Object.freeze({
 /** CRM 7 of 10: what a task about Caprebate itself is about. Migration 016's CHECK is the list. */
 export const COMPANY_SUBJECTS: Vocab = Object.freeze({
   VAT_THRESHOLD: 'Our own VAT — when we must register',
-});
-
-/** The teams a task may wait with while nobody has taken it. Never CLIENT. */
-export const POOL_ROLES: Vocab = Object.freeze({
-  ADMIN: 'Admin', SALES: 'Sales', ACCOUNTING: 'Accounting', SURVEYING: 'Surveying',
 });
 
 const OPEN_STATES: readonly string[] = ['OPEN', 'IN_PROGRESS'];
@@ -153,23 +140,6 @@ function take<T>(input: Fields, key: string, stored: T, check: (v: string | null
  * person's clock, none is compared with one, and none is stored.
  * ================================================================== */
 
-function parts(date: string): [number, number, number] {
-  const [y, m, d] = date.split('-').map((x) => Number(x));
-  return [y ?? 1970, m ?? 1, d ?? 1];
-}
-
-export function addDaysToDate(date: string, days: number): string {
-  const [y, m, d] = parts(date);
-  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
-}
-
-/** A month on, keeping the day where the month has it: 31 January plus a month is 28 or 29 February. */
-export function addMonthsToDate(date: string, months: number): string {
-  const [y, m, d] = parts(date);
-  const lastDay = new Date(Date.UTC(y, m - 1 + months + 1, 0)).getUTCDate();
-  return new Date(Date.UTC(y, m - 1 + months, Math.min(d, lastDay))).toISOString().slice(0, 10);
-}
-
 export function nextDueOn(from: string, recurrence: string): string {
   if (recurrence === 'WEEKLY') return addDaysToDate(from, 7);
   if (recurrence === 'FORTNIGHTLY') return addDaysToDate(from, 14);
@@ -180,25 +150,6 @@ export function nextDueOn(from: string, recurrence: string): string {
 /* ================================================================== *
  * 2 · DUE, OVERDUE, AND NO DUE DATE AT ALL
  * ================================================================== */
-
-export type DueState = 'OVERDUE' | 'DUE_TODAY' | 'NOT_YET_DUE' | 'NO_DUE_DATE' | 'CLOSED';
-export type DueReading = { readonly state: DueState; readonly overdue: boolean; readonly label: string };
-
-/** THE WORDS for a task, a question or a request with no due date — one sentence, everywhere (N4). */
-export const NO_DUE_DATE = 'no due date — so it is not overdue, and it is not on time either';
-
-export function dueReading(due_on: string | null, nowIso: string, closed = false): DueReading {
-  // THE WORDS ARE THE ONE UK-DATE HELPER'S — "3 days overdue (14 Sep 2026)", "Due today (17 Sep 2026)", "Due in
-  // 3 days". The STATES are unchanged, and still decided here, on the UK date.
-  if (closed) {
-    return { state: 'CLOSED', overdue: false, label: due_on === null ? 'Closed. It had no due date.' : `Closed. It was due ${ukDate(due_on)}.` };
-  }
-  if (due_on === null) return { state: 'NO_DUE_DATE', overdue: false, label: NO_DUE_DATE };
-  const today = localDate(nowIso);
-  if (due_on < today) return { state: 'OVERDUE', overdue: true, label: dueWords(due_on, nowIso) };
-  if (due_on === today) return { state: 'DUE_TODAY', overdue: false, label: dueWords(due_on, nowIso) };
-  return { state: 'NOT_YET_DUE', overdue: false, label: dueWords(due_on, nowIso) };
-}
 
 /** A claim that has closed or left the procedure keeps no next action. On hold is not either. */
 export function isTerminalStage(stage: string | null): boolean {
@@ -231,19 +182,6 @@ function loadTask(db: Db, id: string): TaskDbRow {
   // A missing row and a forbidden row look the same from outside.
   if (r === undefined) throw new NotFoundAsRefusal();
   return r;
-}
-
-/** The task as `can()` is asked about it. */
-export function taskObj(
-  db: Db, r: { id: string; business_id: string | null; owner_id: string | null; owner_role: string | null; claim_id: string | null },
-): Extract<Obj, { type: 'staff_task' }> {
-  const assigned = r.claim_id !== null && r.business_id !== null
-    ? claimObjFor(db, { id: r.claim_id, business_id: r.business_id }).assigned_surveyor_ids
-    : [];
-  return {
-    type: 'staff_task', id: r.id, business_id: r.business_id, owner_id: r.owner_id, owner_role: r.owner_role,
-    assigned_surveyor_ids: assigned,
-  };
 }
 
 const SECTION = '__task_section__';
@@ -371,32 +309,6 @@ export function taskOwnerChoices(db: Db): { id: string; name: string; role: stri
  * 4 · WRITING A TASK
  * ================================================================== */
 
-export type TaskInsert = {
-  readonly title: string;
-  readonly description: string | null;
-  readonly owner_id: string | null;
-  readonly owner_role: string | null;
-  readonly due_on: string | null;
-  readonly priority: string | null;
-  readonly activity_type: string;
-  readonly business_id: string | null;
-  readonly property_id: string | null;
-  readonly claim_id: string | null;
-  readonly lead_id: string | null;
-  readonly contact_id: string | null;
-  readonly fact_id: string | null;
-  readonly recurrence: string | null;
-  readonly recurred_from_id: string | null;
-  readonly is_next_action: boolean;
-  readonly origin: 'STAFF' | 'AUTOMATION' | 'RECURRENCE' | 'MIGRATION' | 'VAT_MONITOR';
-  readonly automation_run_id: string | null;
-  readonly created_by: string | null;
-  /** CRM 5 of 10: an introducing firm — and then no organisation, property, claim or lead (migration 014). */
-  readonly introducer_id?: string | null;
-  /** CRM 7 of 10: Caprebate itself — the VAT threshold — and then nothing else, from the VAT monitoring alone (migration 016). */
-  readonly company_subject?: string | null;
-};
-
 /**
  * — A DOUBLE CLICK MAKES ONE TASK. The 3 October sweep posted the same task twice
  * at once and got two. The same person adding the same task - every field the form sets, about the same things - within
@@ -415,23 +327,6 @@ function sameTaskJustMade(
   const since = new Date(Date.parse(d.now()) - DOUBLE_CLICK_MS).toISOString();
   return getStaffTasksIdByCreatedByOrigin<{ id: string }>(d.db, [actor.id, since, v.title ?? '', v.description, v.owner_id, v.owner_id === null ? v.owner_role : null, v.due_on, v.priority,
       v.activity_type ?? 'TASK', v.recurrence, asNext ? 1 : 0, s.business_id, s.property_id, s.claim_id, s.lead_id, s.contact_id])?.id ?? null;
-}
-
-/**
- * THE ROW, WRITTEN. No authorisation and no validation: every caller has done
- * both — the store functions below, the automation runner, the seed, and the
- * introducer's contact log. The database's own CHECKs and triggers still refuse a
- * task about nothing, a property of another organisation, a second next action,
- * a word not on a list, and a task on a firm that is about anything else too.
- */
-export function insertTask(db: Db, now: () => string, newId: () => string, t: TaskInsert): string {
-  const id = newId();
-  const at = now();
-  insertStaffTasks(db, [id, t.title, t.description, t.owner_id, t.owner_id === null ? t.owner_role : null, t.due_on, t.priority, 'OPEN',
-      t.activity_type, t.business_id, t.property_id, t.claim_id, t.lead_id, t.contact_id, t.fact_id, t.recurrence,
-      t.recurred_from_id, t.is_next_action ? 1 : 0, t.origin, t.automation_run_id, t.created_by, at, at, t.introducer_id ?? null,
-      t.company_subject ?? null]);
-  return id;
 }
 
 function audit(d: TaskDeps, actor: Actor, kind: AuditKind, object_type: string, id: string, detail: Record<string, unknown>): void {
@@ -1030,4 +925,20 @@ export function followUpsFor(db: Db, contact_id: string): { due_on: string | nul
  */
 export function nextActionsGate(actor: Actor): void {
   authorise(actor, 'pipeline.read', { type: 'pipeline', id: '__next_actions__' });
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listClientTasksIdTypeLabelByAskedByKind<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const tasks = listClientTasksIdRequestedTypeByAskedByKind<{ id: unknown; requested_type: unknown; due_on: unknown; business_id: unknown; business_name: unknown; claim_id: unknown }>(db, params);
+  const types = new Map(listDocumentTypesCodeReadersLabelByCodes<{ code: string; label: unknown }>(db, [idsOf(tasks.map((t) => t.requested_type))]).map((d) => [d.code, d]));
+  const claims = byId(listClaimsIdClaimRefStageByIds<{ id: string; claim_ref: unknown }>(db, [idsOf(tasks.map((t) => t.claim_id))]));
+  const rows: Row[] = [];
+  for (const t of tasks) {
+    const type = lookUp(types, t.requested_type);
+    if (type === undefined) continue; // JOIN document_types
+    rows.push({ id: t.id, type_label: type.label, due_on: t.due_on, business_id: t.business_id, business_name: t.business_name, claim_id: t.claim_id,
+      claim_ref: lookUp(claims, t.claim_id)?.claim_ref ?? null });
+  }
+  return rows as unknown as T[];
 }

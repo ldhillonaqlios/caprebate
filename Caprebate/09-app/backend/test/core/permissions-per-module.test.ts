@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import '../../src/modules/clients/index.ts';
 import '../../src/modules/assessment/index.ts';
 import '../../src/modules/claims/index.ts';
 import '../../src/modules/survey/index.ts';
@@ -18,7 +19,7 @@ import '../../src/modules/portal/index.ts';
 import { REGISTERED_ACTIONS, actionOwner, registerActions, PREDICATES } from '../../src/core/authz.ts';
 
 const SRC = join(import.meta.dirname, '..', '..', 'src');
-const MODULES = ['assessment', 'claims', 'survey', 'finance', 'compliance', 'admin', 'crm', 'portal'];
+const MODULES = ['clients', 'assessment', 'claims', 'survey', 'finance', 'compliance', 'admin', 'crm', 'portal'];
 
 test('every module with permissions declares them in its own actions.ts, loaded first by its front door', () => {
   for (const m of MODULES) {

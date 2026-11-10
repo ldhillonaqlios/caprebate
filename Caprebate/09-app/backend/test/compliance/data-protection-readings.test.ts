@@ -208,7 +208,7 @@ describe('line 9 — Word question 183: healthcare premises from open registers,
     walk(src);
     // The statements live in the CRM's data file (the import still names the table in its audit entry); the import is
     // still the only file that runs them.
-    assert.deepEqual(readers.sort(), ['modules/crm/data.ts', 'modules/crm/premises-import.ts'], 'something other than the import reads the premises list');
+    assert.deepEqual(readers.sort(), ['modules/clients/data.ts', 'modules/crm/premises-import.ts'], 'something other than the import reads the premises list');
     assert.deepEqual(statementDoors(src, /healthcare_premises/).callers, ['modules/crm/premises-import.ts'], 'something other than the import reads the premises list');
   });
 

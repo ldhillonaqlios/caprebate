@@ -50,8 +50,10 @@ import { localStamp } from '../../shared/index.ts';
 import { KEEP_ORIGINALS } from '../../shared/index.ts';
 import { emailChains, reSubject, STATE_WORDS, type EmailChain } from './email-chains.ts';
 import { getOutboxAttachmentsCountByOutboxId, listOutboxIdCreatedAtByBusinessIdKind, listOutboxIdCreatedAtByLeadIdKind } from '../../integrations/index.ts';
-import { getEmailTemplatesLabelSubjectByIdActive, insertEmailSender } from '../admin/index.ts';
-import { getBusinessesEById, getContactsCountByClientStatus2, getLeadsIdBusinessIdById6, listContactsIdFullNameByLeadIdBusinessId } from './data.ts';
+import { getEmailTemplatesLabelSubjectByIdActive } from '../admin/index.ts';
+import { getBusinessesEById, getContactsCountByClientStatus2, getLeadsIdBusinessIdById6, listContactsIdFullNameByLeadIdBusinessId } from '../clients/index.ts';
+// The one sender setting moved to the admin (Phase 161l1).
+export { senderSetting, setSender } from '../admin/index.ts';
 
 export type EmailDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -334,28 +336,3 @@ export function saveEmail(d: EmailDeps, actor: Actor, s: EmailSubject, input: Re
  * ================================================================== */
 
 const ADDRESS = /^[^\s@<>"(),;:]+@[^\s@<>"(),;:]+\.[^\s@<>"(),;:]+$/;
-
-export function senderSetting(db: Db, actor: Actor): { sender: Sender; may_write: boolean } {
-  authorise(actor, 'configuration.read', { type: 'configuration', id: 'settings' });
-  return { sender: currentSender(db), may_write: can(actor, 'configuration.write', { type: 'configuration', id: 'settings' }) };
-}
-
-/** CHANGE WHO EMAILS COME FROM. A new row; the old one stays, as the record of what earlier emails were sent under. */
-export function setSender(d: EmailDeps, actor: Actor, input: Readonly<Record<string, string | null>>): { ok: true } | { ok: false; why: string; field?: string } {
-  authorise(actor, 'configuration.write', { type: 'configuration', id: 'settings' });
-  const name = (input['display_name'] ?? '').replace(/[\r\n<>"]+/g, ' ').trim();
-  const address = (input['address'] ?? '').trim().toLowerCase();
-  const reply = ((input['reply_to'] ?? '').trim() || address).toLowerCase();
-  if (name === '' || name.length > 80) return { ok: false, why: 'Give the name people see, up to 80 characters.', field: 'display_name' };
-  if (!ADDRESS.test(address) || address.length > 254) return { ok: false, why: 'That is not an email address.', field: 'address' };
-  if (!ADDRESS.test(reply) || reply.length > 254) return { ok: false, why: 'The reply address is not an email address.', field: 'reply_to' };
-  const now = currentSender(d.db);
-  if (now.display_name === name && now.address === address && now.reply_to === reply) return { ok: true };
-  const id = d.newId();
-  insertEmailSender(d.db, [id, name, address, reply, actor.id, d.now()]);
-  d.audit.append({
-    at: d.now(), kind: 'EMAIL_SENDER_SET', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
-    object_type: 'configuration', object_id: 'email_sender', detail: { row: id },
-  });
-  return { ok: true };
-}

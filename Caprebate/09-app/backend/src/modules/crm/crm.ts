@@ -46,8 +46,7 @@ import { assertSignedEngagement } from '../claims/index.ts';
 import {
   BOARD_COLUMNS, FEE_TRIGGER, FEE_TRIGGERS, liveFeeInvoiceCount, loadPipelineClaim, pipelinePanel, recordOpened, type PipelinePanel,
 } from './pipeline.ts';
-import { postcodeStore, POSTCODE_GATE } from '../../integrations/index.ts';
-import { resolveServedAuthority, type PostcodeStore } from '../../integrations/index.ts';
+import type { PostcodeStore } from '../../integrations/index.ts';
 import { formatPence, formatShownRange, toPence } from '../../shared/index.ts';
 import { localStamp } from '../../shared/index.ts';
 import { claimMoneyLines, type ClaimMoneyLine } from '../finance/index.ts';
@@ -67,41 +66,41 @@ import { LEAD_ORIGINS } from './leads.ts';
 import { discountsFor, type FeeDiscountView } from '../claims/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId4 } from '../../integrations/index.ts';
 import { listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleDisabledAt } from '../../core/index.ts';
-import { getClaimContactsIdByClaimIdContactId, getClaimContactsIdClaimIdById, getClaimStageMovesAtByClaimId, getClaimsBusinessIdById, getClaimsCountByBusinessId, getPropertiesCountByBusinessId, getPropertiesIdByBusinessId2, getPropertiesPostcodeJurisdictionById, insertClaimContacts, insertClaimRefSeries, insertClaimStageMoves4, insertClaims, insertProperties4, listClaimsIdBusinessIdByPropertyId, listPropertiesIdByBusinessId, listPropertiesIdLabelByBusinessId, updateClaimContactsUnlinkedAtUnlinkedByByIdUnlinkedAt, updateClaimsOwnerIdSurveyorIdById, updatePropertiesClaimantRoleClaimantRoleSourceById, updatePropertiesLabelPostcodeById, updatePropertiesLandlordUpdatedAtById, updatePropertiesLeaseEndDateUpdatedAtById, updatePropertiesSaleInProspectUpdatedAtById, updatePropertiesTenureSourceById } from '../claims/index.ts';
-import { getBusinessesClaimantTypeById, getBusinessesSectorById, getBusinessesSourceById, getBusinessesStageById, getContactsCountByBusinessIdId, getContactsIdBusinessIdById, getLeadsIdBusinessIdByClaimId, insertContacts, listContactsIdFullNameByBusinessIdContactType, listLeadsIdFirmNameByBusinessId, updateBusinessesLegalNameCompanyNumberById, updateContactsFullNameJobRoleOtherById } from './data.ts';
-import { getClaimsBusinessIdCompanyById, listClaimContactsIdContactIdByClaimIdUnlinkedAt } from './data-borrowed.ts';
-import { getSurveyorCommitmentsNByAssessmentId, getSurveyorJobsSurveyorIdByBusinessIdSurveyorId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3, listSurveyorJobsSurveyorIdByClaimIdSurveyorId2, updateSurveyorJobsClaimIdByBusinessIdAssessmentId } from '../survey/index.ts';
-import { getAssessmentsIdByBusinessId2, getAssessmentsShownLowPenceShownHighPenceById, getEstimatesCountByBusinessId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId, listAssessmentAnswersStateValueByAssessmentIdQuestionId } from '../assessment/index.ts';
-import { getBusinessesIdNameById5, getPropertiesIdBusinessIdById4, getStaffTasksIdClaimRefByClaimIdIsNextAction, listBusinessesIdName5, listPropertiesIdBusinessId, listPropertiesIdBusinessIdByBusinessId, listStaffTasksIdClaimRefByClaimIdIsNextAction, listStaffTasksIdClaimRefByClaimIdIsNextAction2, listStaffTasksIdClaimRefByClaimIdIsNextAction3, listStaffTasksIdClaimRefByClaimIdIsNextAction4 } from './data-borrowed.ts';
-import { getContactsIdBusinessIdById4, listContactsIdBusinessIdByBusinessId } from './data.ts';
+import { getClaimContactsIdByClaimIdContactId, getClaimContactsIdClaimIdById, getClaimStageMovesAtByClaimId, getClaimsBusinessIdById, getClaimsCountByBusinessId, getPropertiesCountByBusinessId, getPropertiesIdByBusinessId2, insertClaimContacts, insertClaimRefSeries, insertClaimStageMoves4, insertClaims, insertProperties4, listClaimsIdBusinessIdByPropertyId, listPropertiesIdByBusinessId, listPropertiesIdLabelByBusinessId, updateClaimContactsUnlinkedAtUnlinkedByByIdUnlinkedAt, updateClaimsOwnerIdSurveyorIdById, updatePropertiesClaimantRoleClaimantRoleSourceById, updatePropertiesLabelPostcodeById, updatePropertiesLandlordUpdatedAtById, updatePropertiesLeaseEndDateUpdatedAtById, updatePropertiesSaleInProspectUpdatedAtById, updatePropertiesTenureSourceById } from '../claims/index.ts';
+import { getBusinessesSectorById, getBusinessesSourceById, getBusinessesStageById, getContactsCountByBusinessIdId, getContactsIdBusinessIdById, getLeadsIdBusinessIdByClaimId, insertContacts, listContactsIdFullNameByBusinessIdContactType, listLeadsIdFirmNameByBusinessId, updateBusinessesLegalNameCompanyNumberById, updateContactsFullNameJobRoleOtherById } from '../clients/index.ts';
+import { getSurveyorCommitmentsNByAssessmentId, getSurveyorJobsSurveyorIdByBusinessIdSurveyorId, listSurveyorJobsSurveyorIdByBusinessIdSurveyorId3, updateSurveyorJobsClaimIdByBusinessIdAssessmentId } from '../survey/index.ts';
+import { getAssessmentsIdByBusinessId2, getAssessmentsShownLowPenceShownHighPenceById, getEstimatesCountByBusinessId, getEstimatesQualifyingExpenditurePenceQualifyingPctByAssessm, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId } from '../assessment/index.ts';
+import { getBusinessesIdNameById5, getPropertiesIdBusinessIdById4, listBusinessesIdName5, listPropertiesIdBusinessId, listPropertiesIdBusinessIdByBusinessId, listStaffTasksIdClaimRefByClaimIdIsNextAction, listStaffTasksIdClaimRefByClaimIdIsNextAction2, listStaffTasksIdClaimRefByClaimIdIsNextAction3, listStaffTasksIdClaimRefByClaimIdIsNextAction4 } from '../clients/index.ts';
+import { getContactsIdBusinessIdById4, listContactsIdBusinessIdByBusinessId } from '../clients/index.ts';
 import { assertClaimSection, assertOrganisationSection, assertPropertySection } from './crm.permissions.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { namesByIds } from '../../core/index.ts';
+import { listClaimContactsIdContactIdLinkedByByClaimIdLinked } from '../claims/index.ts';
+import { byId, idsOf, listContactsIdFullNameContactTypeByIds, lookUp, sqlOrder } from '../clients/index.ts';
 
 export { NotFoundAsRefusal };
+// The vocabularies and small readings the modules below read too: the client record's (src/modules/clients/vocab.ts).
+import { CLAIMANT_TYPES, JURISDICTIONS, OWNER_ROLE_TOKENS, WORKSTREAMS, isCompanyOrRoleToken, isReachable, type Fields } from '../clients/index.ts';
+// The claim row and a claim's name for a person: the client record's (src/modules/clients/claim-row.ts).
+import { claimNaming, claimWords, loadClaimRow, loadClaimRow as loadClaim, type ClaimDbRow } from '../clients/index.ts';
+// Moved below (Phase 161l1): the claim's object and jurisdiction to the claims, the claimant type to the assessment.
+import { claimObjFor, derivedJurisdiction, jurisdictionOf, propertyJurisdiction, type JurisdictionReading } from '../claims/index.ts';
+import { claimantFromAnswers, claimantTypeForGate } from '../assessment/index.ts';
+export { claimObjFor, claimantTypeForGate, derivedJurisdiction, propertyJurisdiction };
+export type { JurisdictionReading };
+export { claimNaming, claimWords, loadClaimRow };
+export type { ClaimDbRow };
+export { CLAIMANT_TYPES, JURISDICTIONS, OWNER_ROLE_TOKENS, WORKSTREAMS, isCompanyOrRoleToken, isReachable };
+export type { Fields };
 
 export type CrmDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type WriteResult = { ok: true; id: string } | { ok: false; why: string; field?: string };
-/** A form's fields as posted: absent keys are untouched, `null` clears. */
-export type Fields = Readonly<Record<string, string | null>>;
 
 type Vocab = Readonly<Record<string, string>>;
 
 /* ================================================================== *
  * 1 · THE VOCABULARIES — each one's source is in the disposition table
  * ================================================================== */
-
-/** Tax Implication Summary variants and the AML/KYC Position Paper §5. */
-export const CLAIMANT_TYPES: Vocab = Object.freeze({
-  COMPANY: 'Limited company',
-  LLP: 'Limited liability partnership',
-  PARTNERSHIP: 'Partnership',
-  SOLE_TRADER: 'Sole trader',
-  INDIVIDUAL: 'An individual holding the property personally',
-  CHARITY: 'Charity',
-  // Which kind of charity decides which tax return it files, and so its deadline.
-  CHARITY_COMPANY: 'Charitable company (files a company tax return)',
-  CHARITABLE_TRUST: 'Charitable trust (files a trust tax return)',
-  UNKNOWN: 'Not known',
-});
 
 export const CLIENT_STATUSES: Vocab = Object.freeze({
   PROSPECT: 'Prospect',
@@ -128,46 +127,8 @@ export const CLAIMANT_ROLES: Vocab = Object.freeze({ OWNER_OCCUPIER: 'Owner who 
 
 export const PRIOR_CLAIM: Vocab = Object.freeze({ YES: 'Yes', NO: 'No', UNKNOWN: 'Not known' });
 
-export const JURISDICTIONS: Vocab = Object.freeze({
-  england: 'England', wales: 'Wales', scotland: 'Scotland', northern_ireland: 'Northern Ireland',
-});
-
-/** The rulebooks' reliefs: Registers A and D; Register I §4 and F; Register H. */
-export const WORKSTREAMS: Vocab = Object.freeze({
-  PLANT_AND_MACHINERY: 'Plant and machinery',
-  STRUCTURES_AND_BUILDINGS: 'Structures and buildings',
-  LAND_REMEDIATION: 'Land remediation',
-  UNKNOWN: 'Not yet known',
-});
-
 /** Validated here rather than by a CHECK, so CRM 9 of 10 can make it configurable. */
 export const PRIORITIES: Vocab = Object.freeze({ LOW: 'Low', NORMAL: 'Normal', HIGH: 'High' });
-
-/**
- * THE ROLES A PREVIOUS OWNER OR AN OCCUPIER MAY BE RECORDED AS, where it is not
- * a company. N2: a person is never named on a property. Where the previous owner
- * WAS a person, that fact is recorded as INDIVIDUAL_NOT_RECORDED and nothing
- * more — their identity, if it is ever needed, belongs in the identity store.
- */
-export const OWNER_ROLE_TOKENS: Vocab = Object.freeze({
-  INDIVIDUAL_NOT_RECORDED: 'An individual — not named here',
-  DEVELOPER: 'A developer',
-  LOCAL_AUTHORITY: 'A local authority',
-  NHS_BODY: 'An NHS body',
-  HOUSING_ASSOCIATION: 'A housing association',
-  CHARITY: 'A charity',
-  PUBLIC_BODY: 'Another public body',
-  UNKNOWN: 'Not known',
-});
-
-/** The funnel's own entity keys onto the claimant list — CB_FUNNEL.ENTITY_LABEL. */
-const FUNNEL_ENTITY: Vocab = Object.freeze({
-  ltd: 'COMPANY', llp: 'LLP', partnership: 'PARTNERSHIP', sole_trader: 'SOLE_TRADER',
-});
-
-const NATION_TO_JURISDICTION: Vocab = Object.freeze({
-  england: 'england', wales: 'wales', scotland: 'scotland', ni: 'northern_ireland',
-});
 
 function has(vocab: Vocab, v: string | null | undefined): v is string {
   return typeof v === 'string' && Object.hasOwn(vocab, v);
@@ -273,23 +234,6 @@ export function decisionMakerReading(v: number | null): Reading {
   if (v === 1) return { known: true, value: 'yes', label: 'Yes' };
   if (v === 0) return { known: true, value: 'no', label: 'No' };
   return { known: false, value: null, label: 'not recorded' };
-}
-
-/**
- * A COMPANY DESIGNATION AT THE END OF A NAME. A registered company is required
- * to carry one (Limited, LLP, plc, CIC, and their Welsh forms); a person's name
- * does not. That is the whole test and it is deliberately a refusal rather than
- * a guess: a value that is neither a designated company name nor a role token
- * is refused, so the store cannot be talked into holding a person's name.
- */
-const COMPANY_DESIGNATION =
-  /(?:^|\s)(?:limited|ltd\.?|llp|l\.l\.p\.|plc|p\.l\.c\.|cic|c\.i\.c\.|community interest company|cyfyngedig|cyf\.?|ccc|c\.c\.c\.|unlimited|nhs foundation trust|nhs trust|council)$/i;
-
-export function isCompanyOrRoleToken(raw: string): boolean {
-  const v = raw.trim();
-  if (v === '') return false;
-  if (Object.hasOwn(OWNER_ROLE_TOKENS, v)) return true;
-  return v.length >= 4 && COMPANY_DESIGNATION.test(v);
 }
 
 /* ================================================================== *
@@ -438,67 +382,6 @@ function claimantFromAssessment(db: Db, actor: Actor, business_id: string): stri
   return claimantFromAnswers(db, latest.id);
 }
 
-/**
- * THE CLAIMANT TYPE AS A GATE READS IT — CRM 6 of 10. The same derivation as the
- * organisation page, asked by the server of the records on this request and
- * served to nobody: the amendment window turns on it. Derived where the client's
- * own answer settles it, else as recorded on the organisation, else null.
- * UNKNOWN recorded and never recorded both come back null.
- */
-export function claimantTypeForGate(db: Db, business_id: string): { value: string | null; source: string | null } {
-  const latest = getAssessmentsIdByBusinessId2<{ id: string }>(db, [business_id]);
-  const derived = latest === undefined ? null : claimantFromAnswers(db, latest.id);
-  if (derived !== null) return { value: derived, source: 'the client’s own answer in the assessment' };
-  const b = getBusinessesClaimantTypeById<{ claimant_type: string | null }>(db, [business_id]);
-  const recorded = b?.claimant_type ?? null;
-  return recorded === null || recorded === 'UNKNOWN' ? { value: null, source: null } : { value: recorded, source: 'recorded on the organisation by staff' };
-}
-
-/** A property's jurisdiction and where it came from — CRM 6 of 10, for the facts panel. The same reading the property page shows. */
-export function propertyJurisdiction(
-  db: Db, property_id: string | null, store?: PostcodeStore | null,
-): { value: string | null; label: string; derived: boolean; why: string } {
-  if (property_id === null) return { value: null, label: 'not known — no property is recorded on this claim', derived: false, why: 'no property' };
-  const p = getPropertiesPostcodeJurisdictionById<{ postcode: string | null; jurisdiction: string | null }>(db, [property_id]);
-  if (p === undefined) return { value: null, label: 'not known', derived: false, why: 'no property' };
-  return jurisdictionOf(p, store);
-}
-
-function claimantFromAnswers(db: Db, assessment_id: string): string | null {
-  const latest = { id: assessment_id };
-  const rows = listAssessmentAnswersStateValueByAssessmentIdQuestionId<{ state: string; value: string | null }>(db, [latest.id]);
-  if (rows.length === 0) return null;
-  const mapped = rows.map((r) => (r.state === 'ANSWERED' && has(FUNNEL_ENTITY, r.value) ? FUNNEL_ENTITY[r.value] : undefined));
-  const first = mapped[0];
-  if (first === undefined || mapped.some((m) => m !== first)) return null;
-  return first;
-}
-
-export type JurisdictionReading = { readonly value: string | null; readonly derived: boolean; readonly why: string };
-
-/**
- * A POSTCODE'S NATION, THROUGH THE EXISTING RESOLVER — or a reason.
- *
- * No served set is passed, on purpose: the nation of a Scottish postcode is a
- * fact whether or not we serve Scotland, and refusing to know it would leave a
- * property's jurisdiction blank precisely where it matters most. The served-
- * jurisdiction refusal belongs to the funnel, which already has it.
- */
-export function derivedJurisdiction(postcode: string | null, store: PostcodeStore | null = postcodeStore()): JurisdictionReading {
-  if (postcode === null || postcode.trim() === '') return { value: null, derived: false, why: 'no postcode is recorded' };
-  if (store === null) {
-    return { value: null, derived: false, why: 'the postcode lookup is not switched on yet, so we cannot tell the nation from the postcode' };
-  }
-  if (POSTCODE_GATE.gated) return { value: null, derived: false, why: 'this lookup waits until our privacy notice is published' };
-  try {
-    const { nation } = resolveServedAuthority(postcode, { store });
-    const j = NATION_TO_JURISDICTION[nation];
-    return j === undefined ? { value: null, derived: false, why: 'we could not tell the nation from the postcode' } : { value: j, derived: true, why: '' };
-  } catch (e) {
-    return { value: null, derived: false, why: (e as Error).message };
-  }
-}
-
 /* ================================================================== *
  * 6 · CLAIM REFERENCES AND CLAIM ROWS — no authorisation here; callers do it
  * ================================================================== */
@@ -595,35 +478,6 @@ export function placeLegacyStage(
 /* ================================================================== *
  * 7 · THE CLAIM — objects, value, summary
  * ================================================================== */
-
-export type ClaimDbRow = {
-  id: string; claim_ref: string; business_id: string; property_id: string | null; assessment_id: string | null;
-  workstream: string; stage: string | null; owner_id: string | null; surveyor_id: string | null;
-  priority: string | null; next_action: string | null; next_action_due: string | null;
-  hold_reason: string | null; lost_reason: string | null; expected_completion: string | null;
-  created_at: string; updated_at: string;
-  hold_return_stage: string | null; tax_adviser_signoff_at: string | null;
-  business_name: string; owner_name: string | null; surveyor_name: string | null; property_label: string | null;
-  /** A claim is named by its company and its property, and a tile shows the property's town. */
-  property_town: string | null;
-};
-
-/**
- * WHO REACHES A CLAIM THROUGH A SURVEY JOB: the surveyors assigned to a job ON
- * THIS CLAIM. CRM 2 of 10 gave `surveyor_jobs` a `claim_id` (migration 010,
- * disposition Part E, row E5) and this reads it — no longer the claim's
- * assessment, so two claims sharing an organisation's assessment cannot share a
- * surveyor by accident. A claim with no job on it is reachable by no surveyor,
- * and its page says so. `claims.surveyor_id` is not read here.
- */
-function claimSurveyors(db: Db, claim_id: string): string[] {
-  return listSurveyorJobsSurveyorIdByClaimIdSurveyorId2<{ surveyor_id: string }>(db, [claim_id]).map((r) => r.surveyor_id);
-}
-
-/** The claim as `can()` is asked about it. Exported for src/modules/crm/pipeline.ts, which moves it. */
-export function claimObjFor(db: Db, r: { id: string; business_id: string }): Extract<Obj, { type: 'claim' }> {
-  return { type: 'claim', id: r.id, business_id: r.business_id, assigned_surveyor_ids: claimSurveyors(db, r.id) };
-}
 
 /** The seven sealed fields, named exactly as `estimates` names them. */
 export type SealedEstimate = {
@@ -1023,11 +877,6 @@ export const NO_WAY_TO_REACH_WORDS = 'We must have a way to reach this client: a
 export const LAST_WAY_TO_REACH_WORDS =
   'This is the only way we have to reach this client. Keep an email address or a telephone number, or add another contact who has one first.';
 
-/** Whether a contact has an email address or a telephone number. Blank is not a value. */
-export function isReachable(c: { readonly email: string | null; readonly phone: string | null }): boolean {
-  return (c.email ?? '').trim() !== '' || (c.phone ?? '').trim() !== '';
-}
-
 /** How many of a client's contacts we can reach, leaving out one contact when asked (the one being changed). */
 export function reachableContacts(db: CrmDeps['db'], business_id: string, leaving_out: string | null = null): number {
   return getContactsCountByBusinessIdId<{ n: number }>(db, [business_id, leaving_out])?.n ?? 0;
@@ -1107,19 +956,6 @@ function propertySurveyors(db: Db, business_id: string): string[] {
 
 function propertyObj(db: Db, r: { id: string; business_id: string }): Extract<Obj, { type: 'property' }> {
   return { type: 'property', id: r.id, business_id: r.business_id, assigned_surveyor_ids: propertySurveyors(db, r.business_id) };
-}
-
-function jurisdictionOf(r: { postcode: string | null; jurisdiction: string | null }, store?: PostcodeStore | null): {
-  value: string | null; label: string; derived: boolean; why: string;
-} {
-  const d = store === undefined ? derivedJurisdiction(r.postcode) : derivedJurisdiction(r.postcode, store);
-  if (d.derived && d.value !== null) {
-    return { value: d.value, label: `${words(JURISDICTIONS, d.value, d.value)} — worked out from the postcode`, derived: true, why: '' };
-  }
-  if (r.jurisdiction !== null) {
-    return { value: r.jurisdiction, label: `${words(JURISDICTIONS, r.jurisdiction, r.jurisdiction)} — recorded by staff`, derived: false, why: d.why };
-  }
-  return { value: null, label: 'not known', derived: false, why: d.why };
 }
 
 function propertyRowsFor(db: Db, actor: Actor, business_id: string): PropertyRow[] {
@@ -1519,34 +1355,6 @@ export type ClaimView = {
     };
   };
 };
-
-function loadClaim(db: Db, id: string): ClaimDbRow {
-  const r = getStaffTasksIdClaimRefByClaimIdIsNextAction<ClaimDbRow>(db, [id]);
-  if (r === undefined) throw new NotFoundAsRefusal();
-  return r;
-}
-
-/**
- * A CLAIM'S NAME FOR A PERSON: its company, its property, and its reference for the small grey label.
- * No authorisation: the caller has already asked `claim.read` of the claim it is naming.
- */
-export function claimNaming(db: Db, claim_id: string): { readonly business_id: string; readonly company: string; readonly property: string | null; readonly ref: string } | null {
-  const r = getClaimsBusinessIdCompanyById<{ business_id: string; company: string; property: string | null; ref: string }>(db, [claim_id]);
-  return r ?? null;
-}
-
-/** "Company — Property": the words of a link to a claim. Never the reference, which is a label beside it. */
-export function claimWords(db: Db, claim_id: string): string {
-  const n = claimNaming(db, claim_id);
-  if (n === null) return 'a claim';
-  if (n.property === null || n.property.trim() === '') return `${n.company} — claim`;
-  return n.property.startsWith(n.company) ? n.property : `${n.company} — ${n.property}`;
-}
-
-/** The claim row a board card is built from. No authorisation: the caller asks. */
-export function loadClaimRow(db: Db, id: string): ClaimDbRow {
-  return loadClaim(db, id);
-}
 
 /**
  * THE CLAIM PAGE'S OBJECT — the header and the overview panel — AND IT IS WHAT
@@ -2042,4 +1850,20 @@ function feeDiscountsOn(db: Db, actor: Actor, claim_id: string): { fee_discounts
   const c = getClaimsBusinessIdById<{ business_id: string }>(db, [claim_id]);
   if (c === undefined || !can(actor, 'fee_discount.read', { type: 'claim', id: claim_id, business_id: c.business_id, assigned_surveyor_ids: [] })) return {};
   return { fee_discounts: discountsFor(db, actor, claim_id) };
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listClaimContactsIdContactIdByClaimIdUnlinkedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const links = listClaimContactsIdContactIdLinkedByByClaimIdLinked<{ id: unknown; contact_id: unknown; linked_at: unknown; linked_by: unknown }>(db, params);
+  const contacts = byId(listContactsIdFullNameContactTypeByIds<{ id: string; full_name: unknown; contact_type: unknown }>(db, [idsOf(links.map((k) => k.contact_id))]));
+  const name = namesByIds(db, links.map((k) => k.linked_by));
+  const rows: { id: unknown; contact_id: unknown; linked_at: unknown; full_name: unknown; contact_type: unknown; linked_by: string | null }[] = [];
+  for (const k of links) {
+    const ct = lookUp(contacts, k.contact_id);
+    if (ct === undefined) continue; // JOIN contacts: a link to a contact that is not there is not shown
+    rows.push({ id: k.id, contact_id: k.contact_id, linked_at: k.linked_at, full_name: ct.full_name, contact_type: ct.contact_type, linked_by: name(k.linked_by) });
+  }
+  // ORDER BY ct.full_name ASC, k.id ASC
+  return rows.sort((a, b) => sqlOrder(a.full_name, b.full_name) || sqlOrder(a.id, b.id)) as unknown as T[];
 }

@@ -34,13 +34,16 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
-import { NotFoundAsRefusal } from '../../core/backoffice.ts';
+import { NotFoundAsRefusal } from '../../core/index.ts';
 import { JURISDICTIONS, WORKSTREAMS, claimObjFor, derivedJurisdiction, type ClaimRow } from './crm.ts';
 import { priorityRank, vocabLabel, vocabulary } from '../admin/index.ts';
 import { LEAD_ORIGINS, LEAD_STATUSES, NO_RANGE_NO_ASSESSMENT, RANGE_NOT_SHOWN, SECTORS, assertLeadSection, type LeadRow } from './leads.ts';
 import { CLOSED_STAGE, EXITS, ON_HOLD_STAGE, PROCEDURE_STAGES, claimStage, formatShownRange, localDate, localStamp } from '../../shared/index.ts';
 import { getSavedViewsIdListById, insertSavedViews, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from '../admin/index.ts';
-import { listClaimsRows, listLeadsRows } from './data-borrowed.ts';
+import { listClaimsRows as listClaimsRowsBorrowed, listLeadsRows } from '../clients/index.ts';
+import type { Row } from '../../core/index.ts';
+import { listEstimatesQualifyingExpenditurePenceByAssessmentIds } from '../assessment/index.ts';
+import { idsOf } from '../clients/index.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -613,4 +616,18 @@ export function exportList(d: ListDeps, actor: Actor, list: ListKey, q: URLSearc
  */
 export function claimListGate(actor: Actor): void {
   assertClaimList(actor);
+}
+
+// THE CLAIM LIST'S ESTIMATE, SPLIT (Phase 161l1; test/crm/borrowed-split.test.ts): for the value shape, the latest
+// estimate's qualifying expenditure and how many estimates there are come from the assessment area by the claim's
+// assessment (value_of), in place of the two subqueries on estimates; the columns keep their places.
+export function listClaimsRows<T extends Row = Row>(db: Db, shape: 'MONEY' | 'VALUE' | 'WORKING'): T[] {
+  const rows = listClaimsRowsBorrowed<Row>(db, shape);
+  if (shape !== 'VALUE') return rows as T[];
+  const estimates = new Map(listEstimatesQualifyingExpenditurePenceByAssessmentIds<{ assessment_id: unknown; qualifying_expenditure_pence: unknown; n: unknown }>(db, [idsOf(rows.map((r) => r.value_of))])
+    .map((e) => [e.assessment_id, e]));
+  return rows.map(({ value_of, ...r }) => {
+    const e = typeof value_of === 'string' ? estimates.get(value_of) : undefined;
+    return { ...r, q: e?.qualifying_expenditure_pence ?? null, has_estimate: e?.n ?? 0 };
+  }) as unknown as T[];
 }

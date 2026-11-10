@@ -331,7 +331,7 @@ export async function cancelZoomMeeting(d: ZoomDeps, meetingId: string): Promise
 
 /**
  * The host's start token (ZAK), so a member of staff starts the call as its host inside our page. Null if refused.
- * `host` — the email the meeting was made under (src/modules/crm/video-calls.ts, meetingHost); absent, the shared host.
+ * `host` — the email the meeting was made under (src/modules/clients/video-calls.ts, meetingHost); absent, the shared host.
  */
 export async function hostZak(d: ZoomDeps, host?: string): Promise<string | null> {
   if (blocked(d).length > 0) return null;

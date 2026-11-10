@@ -146,7 +146,7 @@ Set `CAPREBATE_REFERENCE_DB_URL` and `CAPREBATE_REFERENCE_DB_TOKEN` to the new d
 | The settings file, both projects | `vercel.ts` |
 | The release | `.github/workflows/release-live.yml` |
 | The timers | `Caprebate/09-app/backend/src/app/timers.ts` |
-| The backup and restore | `src/core/backup.ts`, `src/integrations/connectors/s3-backup.ts`, `tools/restore-backup.ts` |
+| The backup and restore | `src/integrations/backup.ts`, `src/integrations/connectors/s3-backup.ts`, `tools/restore-backup.ts` |
 | The reference database | `src/integrations/postcodes/reference-db.ts`, `tools/build-reference-db.ts` |
 | The tests | `test/core/live-website.test.ts` |
 

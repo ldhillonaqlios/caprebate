@@ -268,7 +268,7 @@ describe('4 · a standard .ics on every booked, moved or cancelled call', () => 
     const admin: Actor = { id: w.s.users.find((u) => u.role === 'ADMIN')?.id ?? '', role: 'ADMIN', business_id: null, disabled: false };
     const client: Actor = { id: w.s.users.find((u) => u.role === 'CLIENT')?.id ?? '', role: 'CLIENT', business_id: biz, disabled: false };
     const deps = { db, audit: w.made.app.audit, email: w.made.app.email, now: w.made.app.now, newId: randomUUID };
-    const avail = (await import('../../src/modules/crm/schedule.ts')).publicSlots(db, T0);
+    const avail = (await import('../../src/modules/clients/schedule.ts')).publicSlots(db, T0);
     const slots = avail.available ? avail.slots : [];
     const [a, b] = [slots[slots.length - 12], slots[slots.length - 3]];
     assert.ok(a !== undefined && b !== undefined, 'no free slots in the seed');

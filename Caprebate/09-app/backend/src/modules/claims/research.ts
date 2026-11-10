@@ -108,7 +108,7 @@ import {
   type SignatoryGates, type SignatoryOutcome, type SignatoryReason, type SignatoryResult, type SignatorySource,
 } from '../../integrations/index.ts';
 import { runSiteAreas, siteAreaLines, storeSiteAreaRuns, type SiteAreaLine, type SiteAreaSetup } from './site-area-run.ts';
-import { raiseToResearch } from '../crm/index.ts';
+import { raiseToResearch } from '../clients/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId3, getRegisterRecordsIdByBusinessIdSourceId, getRegisterRecordsObtainedAtByBusinessIdSourceId, getResearchRunsCostPenceAtByBusinessId, getResearchRunsCountByBusinessIdKind, getResearchSourcesIdAttemptsByBusinessIdSourceId, insertResearchRuns, insertResearchRuns2, insertResearchSources, listRegisterMatchPicksSourceIdByBusinessIdTakenBackAt, listRegisterMatchPicksSourceIdTakenBackAtByBusinessIdTakenBa, listResearchSourcesSourceIdStateByBusinessId } from '../../integrations/index.ts';
 import { updateResearchSourcesAfterRun } from '../../integrations/index.ts';
 import { getSignatoryChecksResultReasonByBusinessIdSource, insertSignatoryChecks, listSignatoryChecksSourceByEngagementIdResult } from '../compliance/index.ts';
@@ -1203,7 +1203,7 @@ export async function runSignatoryCheck(
   const cqcHeld = found('CQC');
   /* Loaded when the check runs, not when this file loads: crm.ts imports this file, and a load-time import back would
      be a cycle that leaves the navigation's gates unset while the app starts. */
-  const { claimantTypeForGate } = await import('../crm/index.ts');
+  const { claimantTypeForGate } = await import('../assessment/index.ts');
   const checked = await checkSignatory(
     {
       deps: {

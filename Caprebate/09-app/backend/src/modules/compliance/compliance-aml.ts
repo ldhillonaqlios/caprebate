@@ -30,16 +30,17 @@ import type { Db } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, NotFoundAsRefusal, record, requiredText, textField,
-  TWO_PERSON_LIMITATION, settingReading, ukDay, vocabField, words,
+  TWO_PERSON_LIMITATION, settingReading, ukDay, userNames, vocabField, words,
   type Check, type ComplianceDeps, type Fields, type SettingReading, type Vocab, type WriteResult,
 } from './compliance.ts';
 import { identityPassed } from './identity-checks.ts';
 import { getResearchSourcesIdStateByBusinessIdSourceId } from '../../integrations/index.ts';
 import { getUsersIdByIdRole } from '../../core/index.ts';
 import { getClaimsIdByIdBusinessId, getDocumentsIdByIdBusinessId, listDocumentsIdTypeCodeByBusinessId } from '../claims/index.ts';
-import { getBusinessesIdById, getBusinessesNameById, getContactsIdByIdBusinessId, listContactsIdFullNameByBusinessId } from '../crm/index.ts';
+import { getBusinessesIdById, getBusinessesNameById, getContactsIdByIdBusinessId, listContactsIdFullNameByBusinessId } from '../clients/index.ts';
 import { getAmlFirmRiskAssessmentsAssessedOnDocumentRef, getAmlOfficersAppointedOnEndedOnById, getCddBeneficialOwnersCountByCheckId, getCddChecksIdBusinessIdById, getCddChecksIdByIdBusinessId, getCddPscDecisionsIdByCheckIdDecision, insertAmlFirmRiskAssessments, insertAmlOfficers, insertCddBeneficialOwners, insertCddChecks, insertCddMonitoringNotes, insertCddPscDecisions, listCddMonitoringNotesNotedOnNoteByBusinessId, listCddPscDecisionsIdDecisionByCheckId, updateAmlOfficersEndedOnById, updateCddChecksIdentifiedVerificationMethodById, updateCddChecksStateCompletedAtById, updateCddChecksStateWithdrawnReasonById } from './data.ts';
-import { listAmlOfficersIdOffice, listCddBeneficialOwnersIdContactIdByCheckId, listCddChecksIdBusinessId } from './data-borrowed.ts';
+import { listAmlOfficersIdOfficeUserId } from './data.ts';
+import { listCddBeneficialOwnersIdContactIdByCheckId, listCddChecksIdBusinessId } from './data-borrowed.ts';
 
 /* ================================================================== *
  * 1 · THE VOCABULARIES — the paper's own, section 5
@@ -477,6 +478,16 @@ function plusYear(day: string): string {
   return md === '02-29' ? `${y}-02-28` : `${y}-${md}`;
 }
 
+/** The officers, newest appointment first, each with the name of the user who holds the office (an office whose user is gone is not listed). */
+function officersByName(db: Db): { id: string; office: string; who: string; appointed_on: string; ended_on: string | null; source: string }[] {
+  const rows = listAmlOfficersIdOfficeUserId<{ id: string; office: string; user_id: string; appointed_on: string; ended_on: string | null; source: string }>(db);
+  const names = userNames(db, rows.map((o) => o.user_id));
+  return rows.flatMap((o) => {
+    const who = names.get(o.user_id);
+    return who === undefined ? [] : [{ id: o.id, office: o.office, who, appointed_on: o.appointed_on, ended_on: o.ended_on, source: o.source }];
+  });
+}
+
 export function amlView(db: Db, actor: Actor, today: string): AmlView {
   assertComplianceRead(actor);
   const scope = settingReading(db, 'AML_IN_SCOPE', today);
@@ -488,8 +499,7 @@ export function amlView(db: Db, actor: Actor, today: string): AmlView {
       ? 'ON — a claim cannot pass the engagement step until its organisation has a finished check.'
       : 'OFF — nothing here blocks a claim. The register can still be kept. Whether it must be is with the accountant and a solicitor.',
     limitation: TWO_PERSON_LIMITATION,
-    officers: listAmlOfficersIdOffice<{ id: string; office: string; who: string; appointed_on: string; ended_on: string | null; source: string }>(db)
-      .map((o) => ({ ...o, office: words(OFFICES, o.office, o.office) })),
+    officers: officersByName(db).map((o) => ({ ...o, office: words(OFFICES, o.office, o.office) })),
     risk_assessment: ra === undefined ? null
       : { assessed_on: ra.assessed_on, document_ref: ra.document_ref, covers: ra.covers, contingent_fee_named: ra.contingent_fee_named === 1, review_due: plusYear(ra.assessed_on) },
     risk_assessment_reading: ra === undefined

@@ -32,6 +32,7 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
+import { listUsersDisplayNameByIds } from '../../core/index.ts';
 import { instantsForLocalMinute, localDate } from '../../shared/index.ts';
 import { getHoldEntryId, getLinkedEntryRef, listLegalHoldsForEntry } from './data.ts';
 import { getCddChecksCompletedAtByBusinessIdState, getComplianceRefSeriesLastNByKind, getComplianceSettingsValueEffectiveFromBySettingEffectiveFro, getLegalHoldsLiftedAtById, insertComplianceLinks, insertComplianceSettings, insertLegalHolds, listComplianceLinksKIByFromKindFromId, listLegalHoldsIdHoldKindByRecordKindRecordId, listLegalHoldsRecordIdByRecordKindLiftedAt, updateComplianceRefSeriesLastNByKind, updateLegalHoldsLiftedAtLiftedByById } from './data.ts';
@@ -44,6 +45,16 @@ export { NotFoundAsRefusal };
 /* The plain form checks are shared (src/shared/form-fields.ts); named here too, for this module's files. */
 export { dateField, has, requiredText, textField, words };
 export type { Check, Fields, Vocab };
+
+/**
+ * WHO DID IT, BY NAME: each user's name by id, asked of the core (the users are its table). A user who is not there is not
+ * in the map, so a list that needs the user drops the line and one that does not says nobody, as the joins did.
+ */
+export function userNames(db: Db, ids: readonly (string | null)[]): ReadonlyMap<string, string> {
+  const wanted = [...new Set(ids.filter((id): id is string => id !== null))];
+  if (wanted.length === 0) return new Map();
+  return new Map(listUsersDisplayNameByIds<{ id: string; display_name: string }>(db, [JSON.stringify(wanted)]).map((u) => [u.id, u.display_name]));
+}
 
 /** Said on every register page, in these words. */
 export const TWO_PERSON_LIMITATION =

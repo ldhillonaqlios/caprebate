@@ -29,7 +29,7 @@ import { propertyTenure, registerNamesClientPerson } from '../assessment/index.t
 import { localDate } from '../../shared/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId8 } from '../../integrations/index.ts';
 import { getSurveyPackApprovalsSnapshotJsonByClaimId } from '../survey/index.ts';
-import { getBusinessesClaimantTypeById, getBusinessesCompanyNumberById } from '../crm/index.ts';
+import { getBusinessesClaimantTypeById, getBusinessesCompanyNumberById } from '../clients/index.ts';
 import { getAssessmentAnswersValueByBusinessIdQuestionId } from '../assessment/index.ts';
 import { getPropertiesDisposalDateById } from './data.ts';
 

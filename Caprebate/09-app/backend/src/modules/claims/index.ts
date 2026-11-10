@@ -5,6 +5,12 @@
  */
 // Its permissions first: the core's table needs them before any of its rules is asked (src/core/authz.ts).
 export { CLAIMS_ACTIONS } from './actions.ts';
+// Moved from the CRM (Phase 161l1): the claim's object for can(), its jurisdiction, its stage read, and the client's checks.
+export { claimObjFor } from './claim-object.ts';
+export { derivedJurisdiction, jurisdictionOf, propertyJurisdiction } from './jurisdiction.ts';
+export type { JurisdictionReading } from './jurisdiction.ts';
+export { clientStageForClaim, enteredAt, loadPipelineClaim, raiseBusinessStage, reportDeliveredOn, setGateOutReader } from './claim-stage.ts';
+export type { GateNeeds, Need, PipelineClaim } from './claim-stage.ts';
 // What the outside services ask it (their ports): handed in first, as it reaches only its own data and their door.
 import './research-subject.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
@@ -71,5 +77,20 @@ export type { ReturnContext } from './return-entries.ts';
 export type { EngagementSigning, LetterFacts } from './signing.ts';
 export type { SitePlan } from './site-plan.ts';
 export { getClaimsIdClaimRefByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel2 } from './data.ts';
+// Phase 161l1: read by ids, for the areas above that joined these tables to their own rows; and for the seed.
+export { getClaimsIdByBusinessIdAssessmentIdNotNull, getClaimsIdByBusinessIdAssessmentIdNull, getDocumentsIdBusinessIdTypeCodeById, listEngagementsBusinessIdByLetterStateSigned, listClaimGrantsAmountPenceByClaimIdPaidTo, listClaimsIdBusinessIdStageClaimRefByIds, listDocumentsIdBusinessIdTypeCodeByBusinessId, listPropertiesIdLabelPostcodeByIds } from './data.ts';
+export { getDocumentLinksCount, getDocumentsCountVersions, getDocumentsTypeCodeCreatedAtRetentionRefById, getLogicalDocumentsCount } from './data.ts';
+// The client's checks (moved from the CRM, Phase 161l1): they reach the claims' documents and engaged files, so late.
+export * as clientChecksModule from './client-checks.ts';
+export { waitingForCheck } from './client-checks.ts';
+export type { ToCheck } from './client-checks.ts';
+// The clients list and telling the client, through the port the CRM fills (Phase 161l1).
+export { setClientsPorts } from './engaged-pages.ts';
+export type { ClientsPorts, ClientSort, TellDeps, TellResult } from './engaged-pages.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { claimsAssets, claimsSignoffLink } from './routes.ts';
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
+export { listClaimContactsIdContactIdLinkedByByClaimIdLinked, listClaimMilestonesRecordedAtMilestoneRecordedByByClaimId, listClaimsIdClaimRefOwnerIdByClaimRef, listClaimsIdClaimRefStageByIds, listClaimStageMovesAtKindActorIdByClaimIdNewest, listClaimStageMovesAtKindActorIdByClaimIdOldest, listClaimStageMovesReasonCodeByClaimIdToNegative } from './data.ts';
+export { getClaimDeliverablesContentHashByClaimIdIssuedReport, listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId, listDocumentsIdDeclaredTypeTypeCodeByBusinessId, listDocumentsIdLogicalDocumentIdVersionNoByIds, listDocumentsUploadedByByBusinessIdSince, listLogicalDocumentsIdTypeCodeVersionByIds } from './data.ts';
+// What the client record asks the claims (its port, src/modules/clients/messages.ts). Last, as it reaches the client record's door.
+import './claim-of-business.ts';

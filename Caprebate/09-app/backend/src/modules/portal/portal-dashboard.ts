@@ -22,7 +22,7 @@ import { h, raw, type Safe } from '../../shared/index.ts';
 import { clientProgress } from '../crm/index.ts';
 import { STAGES } from '../../shared/index.ts';
 import { localClock, localDate, localPartsOf, ukDate, ukDatesIn, WEEKDAY_NAMES } from '../../shared/index.ts';
-import { unreadCount } from '../crm/index.ts';
+import { unreadCount } from '../clients/index.ts';
 import type { ClientStep } from '../claims/index.ts';
 import type { ClientDeliverable } from '../claims/index.ts';
 import { releasedVersion } from '../claims/index.ts';

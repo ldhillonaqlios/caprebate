@@ -22,9 +22,8 @@ import { authorise, can, type Actor } from '../../core/index.ts';
 import { localWhen } from '../../shared/index.ts';
 import { checkSignature, createSignLink, requiredSigners, ENGAGEMENT_SIGNING, SIGN_LINK_DAYS, type EngagementSigning } from './signing.ts';
 import { getUsersCountByBusinessIdRole, listUsersIdEmailByBusinessIdRole } from '../../core/index.ts';
-import { getEngagementSignaturesPdfSignedAtByEngagementId, getEngagementsIdByBusinessId, getEngagementsIdLetterStateByBusinessId2, insertEngagements, listEngagementSignaturesUserIdNameByEngagementId, updateEngagementsLetterStateSentAtByBusinessIdLetterState } from './data.ts';
-import { getBusinessesIdNameById } from '../crm/index.ts';
-import { getEngagementsIdLetterStateByBusinessId } from './data-borrowed.ts';
+import { getEngagementSignaturesPdfSignedAtByEngagementId, getEngagementsIdByBusinessId, getEngagementsIdLetterStateByBusinessId, getEngagementsIdLetterStateByBusinessId2, insertEngagements, listEngagementSignaturesUserIdNameByEngagementId, updateEngagementsLetterStateSentAtByBusinessIdLetterState } from './data.ts';
+import { getBusinessesIdNameById } from '../clients/index.ts';
 
 export type SendDeps = {
   db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string; origin?: string;

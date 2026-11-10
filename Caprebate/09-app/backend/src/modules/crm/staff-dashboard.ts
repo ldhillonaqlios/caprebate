@@ -19,7 +19,7 @@
  *   ADMIN       (Admin only) who is working and when · the admin tiles
  * The view-only login sees the Sales view, with no buttons that change anything.
  *
- * THE BUTTONS: a video call's is "Start the Zoom call" (the host's page inside the site, src/modules/crm/video-calls.ts); a
+ * THE BUTTONS: a video call's is "Start the Zoom call" (the host's page inside the site, src/modules/clients/video-calls.ts); a
  * first email's is "Write the first email" (the email page, filled in); a telephone call is made by hand, so its button
  * opens the call's page to note it, and the number is shown beside it.
  *
@@ -40,19 +40,24 @@ import { assertFinanceSection } from '../finance/index.ts';
 import { assertSurveySection, surveyorJobs } from '../survey/index.ts';
 import { isLateNewLead } from '../../shared/index.ts';
 import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES } from '../../shared/index.ts';
-import { addLocalDays, startOfLocalDay, startOfLocalWeek } from './schedule.ts';
+import { addLocalDays, startOfLocalDay, startOfLocalWeek } from '../clients/index.ts';
 import * as B from './assessments-and-calendar.ts';
 import * as M from './messages.ts';
 import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from '../public-site/index.ts';
 import { kpiRow, type Kpi } from '../../core/index.ts';
-import { blocksFor, mayBlockTime } from './time-blocks.ts';
+import { blocksFor, mayBlockTime } from '../clients/index.ts';
 import { newDot } from '../portal/index.ts';
 import { keysView } from '../admin/index.ts';
 import { repliesStale } from './inbound-email.ts';
 import { listsToImport } from '../admin/index.ts';
 import { listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole } from '../../core/index.ts';
-import { getDocumentsCountByBusinessIdRole, getOutboxXByKindLeadId } from './data-borrowed.ts';
-import { getContactsFullNamePhoneByBusinessId } from './data.ts';
+
+import { getContactsFullNamePhoneByBusinessId } from '../clients/index.ts';
+import type { Db, Param, Row } from '../../core/index.ts';
+import { getOutboxXByKindLeadIdBusinessId } from '../../integrations/index.ts';
+import { getLeadsBusinessIdById } from '../clients/index.ts';
+import { peopleByIds } from '../../core/index.ts';
+import { listDocumentsUploadedByByBusinessIdSince } from '../claims/index.ts';
 
 export type DashView = 'sales' | 'accounting' | 'surveying' | 'admin';
 
@@ -404,4 +409,22 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
     [todayRow(actor, app, now), todayActivities(app, actor)],
     [...jobsRow(actor, app), calendarCard(app, actor, view, q.week, q.done)],
   )}`;
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function getOutboxXByKindLeadId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  // An email to the lead, or to its company (the lead's business_id; none when the lead has no company or is not there).
+  const [leadId = null, ofLead = null] = params;
+  const company = getLeadsBusinessIdById<{ business_id: Param }>(db, [ofLead])?.business_id ?? null;
+  return getOutboxXByKindLeadIdBusinessId<T>(db, [leadId, company]);
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function getDocumentsCountByBusinessIdRole<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  // The company's documents since the date, counted where the person who uploaded each one is a client login.
+  const uploads = listDocumentsUploadedByByBusinessIdSince<{ uploaded_by: unknown }>(db, params);
+  const people = peopleByIds(db, uploads.map((d) => d.uploaded_by));
+  return { n: uploads.filter((d) => typeof d.uploaded_by === 'string' && people.get(d.uploaded_by)?.role === 'CLIENT').length } as unknown as T;
 }

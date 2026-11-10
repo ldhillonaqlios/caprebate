@@ -10,7 +10,7 @@
  *   nightly             the clean-up jobs: kept originals past their time (sweep-originals), messages and closed
  *                       enquiries past theirs (each switched off until the data protection officer sets the periods,
  *                       and then it says so), and the audit chain checked end to end.
- *   backup              the nightly backup (src/core/backup.ts): the database and the document store, locked, to the second
+ *   backup              the nightly backup (src/integrations/backup.ts): the database and the document store, locked, to the second
  *                       place. Its own call, so its time limit is its own.
  * The land boundary sweep (sweep-land-boundaries) is not here: the live website keeps no land boundary file (no
  * CAPREBATE_INSPIRE_STORE_DIR; LIVE-RUNBOOK.md says why), so it has nothing to sweep.
@@ -24,14 +24,16 @@
  * A LOG LINE EACH RUN: "timer <job>: ..." with the same counts, so the function log shows every run and what it did.
  */
 import { randomUUID, timingSafeEqual } from 'node:crypto';
-import { AuditLog, runNightlyBackup, sweepPieces } from '../core/index.ts';
+import { AuditLog, sweepPieces } from '../core/index.ts';
+import { runNightlyBackup } from '../integrations/index.ts';
 import type { App, SecretStore } from '../core/index.ts';
 import type { FsObjectStore } from '../shared/index.ts';
 import { inboundEmailModule as IE } from '../modules/crm/index.ts';
 import { sweepUploads } from '../modules/survey/index.ts';
 import { sweepVideos } from '../modules/survey/index.ts';
 import { sweepOriginals, openKeptOriginal } from '../modules/claims/index.ts';
-import { MESSAGE_RETENTION, sweepMessages } from '../modules/crm/index.ts';
+import { MESSAGE_RETENTION } from '../modules/clients/index.ts';
+import { sweepMessages } from '../modules/crm/index.ts';
 import { ENQUIRY_RETENTION, sweepEnquiries } from '../modules/public-site/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sendingOn, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { isInventedAddress } from '../integrations/index.ts';

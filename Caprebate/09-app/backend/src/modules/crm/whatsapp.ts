@@ -35,8 +35,12 @@ import {
 } from '../../integrations/index.ts';
 import { WHATSAPP_PREFIX, type FsObjectStore } from '../../shared/index.ts';
 import { getWhatsappMediaMediaIdByMessageId, getWhatsappMediaMessageIdBusinessIdByMessageId, getWhatsappMessagesAtByPhoneDirection, getWhatsappMessagesIdStatusByWaIdDirection, insertWhatsappMedia2, insertWhatsappMessages, insertWhatsappMessages3, listOutboxCreatedAtToEmailByBusinessId, listWhatsappMessagesIdPhoneByBusinessIdDirection, updateWhatsappMediaObjectKeyBytesByMessageIdFetchedAt, updateWhatsappMessagesBusinessIdFiledByByIdBusinessId, updateWhatsappMessagesStatusStatusAtById } from '../../integrations/index.ts';
-import { listWhatsappMessagesCreatedAtDirectionByBusinessId } from './data-borrowed.ts';
-import { getBusinessesXById, listContactsEByBusinessIdEmail, listContactsIdBusinessIdByBusinessIdPhone, listContactsIdFullNameByBusinessIdPhone } from './data.ts';
+
+import { getBusinessesXById, listContactsEByBusinessIdEmail, listContactsIdBusinessIdByBusinessIdPhone, listContactsIdFullNameByBusinessIdPhone } from '../clients/index.ts';
+import type { Param, Row } from '../../core/index.ts';
+import { namesByIds } from '../../core/index.ts';
+import { listWhatsappMessagesCreatedAtDirectionContactIdByBusinessId } from '../../integrations/index.ts';
+import { byId, idsOf, listContactsIdFullNameByIds, lookUp } from '../clients/index.ts';
 
 export function whatsappDeps(app: App): WhatsAppDeps {
   return { audit: app.audit, now: app.now, transport: app.outside, secrets: app.secrets,
@@ -242,4 +246,14 @@ export async function whatsAppAttachmentBytes(app: App, store: FsObjectStore, ac
   const ext = (a.mime ?? '').split('/')[1]?.replace(/[^a-z0-9]/gi, '').slice(0, 8) ?? 'bin';
   const name = (a.filename ?? `whatsapp-${a.media_type}.${ext || 'bin'}`).replace(/[^A-Za-z0-9 ._-]/g, '_').slice(0, 120);
   return { bytes: await store.getSealed(a.object_key), mime: a.mime ?? 'application/octet-stream', filename: name };
+}
+
+// THE CRM'S READS THAT JOINED OTHER AREAS' TABLES, SPLIT (Phase 161l1): its own rows and the other area's, read
+// through that area's front door and put together here as the old join did (test/crm/borrowed-split.test.ts).
+export function listWhatsappMessagesCreatedAtDirectionByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = listWhatsappMessagesCreatedAtDirectionContactIdByBusinessId<{ created_at: unknown; direction: unknown; body: unknown; status: unknown; error: unknown; contact_id: unknown; written_by: unknown; phone: unknown }>(db, params);
+  const contacts = byId(listContactsIdFullNameByIds<{ id: string; full_name: unknown }>(db, [idsOf(rows.map((r) => r.contact_id))]));
+  const name = namesByIds(db, rows.map((r) => r.written_by));
+  return rows.map((w) => ({ created_at: w.created_at, direction: w.direction, body: w.body, status: w.status, error: w.error,
+    contact: lookUp(contacts, w.contact_id)?.full_name ?? null, writer: name(w.written_by), phone: w.phone })) as unknown as T[];
 }

@@ -31,9 +31,14 @@ export { packView } from './survey-pack.ts';
 export type { PackView } from './survey-pack.ts';
 export { longDate, REPORT_TITLE, reportHtml, reportModel, reportPdf } from './survey-report.ts';
 export { sweepVideos } from './survey-video.ts';
-export { handleSurveyor } from './surveyor-pages.ts';
+export { handleSurveyor, setSurveyorThreadPanel } from './surveyor-pages.ts';
+export type { SurveyorThreadPanel } from './surveyor-pages.ts';
 export { assertSurveySection, packJob, payloadFor, surveyorJobs } from './surveyor.ts';
 export { assembleReleasedFacts } from '../../payload.ts';
 export type { ReleasedFacts } from '../../payload.ts';
 // Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
 import './nav.ts';
+// Who holds a survey job, for the core's port (src/core/assigned-surveyors.ts). Last, as it reaches the module's own data.
+import './assigned-surveyors.ts';
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
+export { getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId, listSurveyorCommitmentsCommittedAtJobIdSurveyorIdByClaimId, listSurveyorJobsBusinessIdClaimIdBySurveyorId, listSurveyorJobsIdBusinessIdClaimIdBySurveyorId } from './data.ts';

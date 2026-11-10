@@ -1,6 +1,6 @@
 /**
  * PHASE 160j — WHAT THE CLIENT SENT, CHECKED, AND A FACT FOUND WHERE IT STANDS, 20 October 2026
- * (src/modules/crm/client-checks.ts, migration 119, the routes in src/modules/claims/claim-record-pages.ts, the panels in
+ * (src/modules/claims/client-checks.ts, migration 119, the routes in src/modules/claims/claim-record-pages.ts, the panels in
  * src/modules/claims/claim-overview.ts; asking from the overview returns there, src/modules/claims/engaged-pages.ts).
  */
 import { test, describe, before, after } from 'node:test';
@@ -12,7 +12,7 @@ import { randomBytes } from 'node:crypto';
 import { createApp } from '../../src/app/server.ts';
 import { seed } from '../../src/app/seed.ts';
 import * as D from '../../src/modules/claims/documents.ts';
-import { ASK_AGAIN_DAYS, waitingForCheck } from '../../src/modules/crm/client-checks.ts';
+import { ASK_AGAIN_DAYS, waitingForCheck } from '../../src/modules/claims/client-checks.ts';
 import { pdfOf } from '../document-fixtures.ts';
 import type { Actor } from '../../src/core/authz.ts';
 

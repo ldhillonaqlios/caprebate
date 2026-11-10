@@ -29,7 +29,7 @@ import { BOOKING } from '../../src/shared/engine.ts';
 import {
   SLOT_MINUTES, distinctMoments, isBookable, publicSlots, slotsBetween,
   startOfLocalDay, startOfLocalWeek, addLocalDays,
-} from '../../src/modules/crm/schedule.ts';
+} from '../../src/modules/clients/schedule.ts';
 import { localClock, localDate, localPartsOf, localWhen } from '../../src/shared/localtime.ts';
 import { formatPence, formatShownRange, toPence } from '../../src/shared/shown-range.ts';
 import { answerLabel } from '../../src/core/backoffice.ts';
@@ -711,7 +711,7 @@ describe('one booking, two views', () => {
     const h = await boot();
     try {
       const run = await h.runFunnel();
-      // PHASE 153f: the four-stage close asks for the moment as a date, then a time on it (src/modules/crm/slot-picker.ts).
+      // PHASE 153f: the four-stage close asks for the moment as a date, then a time on it (src/modules/clients/slot-picker.ts).
       assert.match(run.closeBody, /1\. Choose a date[\s\S]*2\. Choose a time/);
       assert.match(run.submittedBody, /We have held/);
       const row = h.app.db.get<{ starts_at: string | null; assigned_to: string | null; entry_point: string }>(

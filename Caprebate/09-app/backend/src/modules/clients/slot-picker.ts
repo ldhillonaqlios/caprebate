@@ -5,7 +5,7 @@
  * end calendar for telephone calls and virtual 2) choose time (again pull form back end)". It was one long list of up
  * to 24 moments. Now the dates with a free call come first, as a row of day cards; choosing one shows that day's times.
  *
- * BOTH COME FROM THE DIARIES. The moments are `publicSlots` (src/modules/crm/schedule.ts): the working times staff set, less
+ * BOTH COME FROM THE DIARIES. The moments are `publicSlots` (src/modules/clients/schedule.ts): the working times staff set, less
  * every call already held, one entry per moment however many people are free at it. Nothing here invents a time.
  *
  * NO JAVASCRIPT. Public pages carry none (the security policy allows none inline). The date is a radio button; the

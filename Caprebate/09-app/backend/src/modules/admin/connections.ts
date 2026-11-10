@@ -30,12 +30,12 @@
  * A list not imported this calendar month is shown on Home's Admin view, so each new monthly file is imported.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { STUBS, type App } from '../../core/app.ts';
+import { STUBS, type App } from '../../core/index.ts';
 import type { Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import { SECRET_KEYS, type SecretOwner } from '../../core/index.ts';
 import { serviceOn } from './saved-keys.ts';
-import { switchedOn, switchesHere, TEST_WEBSITE_LOOKUPS, lookupsWaivedHere } from '../../integrations/index.ts';
+import { switchedOn, switchesHere, TEST_WEBSITE_LOOKUPS, lookupsWaivedHere, getRegisterFileImportsImportedAtRowsKeptBySourceId } from '../../integrations/index.ts';
 import { POSTCODE_CHECK } from '../../integrations/index.ts';
 import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from '../../integrations/index.ts';
 import { singleFile } from '../../core/index.ts';
@@ -43,7 +43,6 @@ import { localStamp, localPartsOf } from '../../shared/index.ts';
 import { ADDRESS_SEARCH_CAP, searchesToday } from '../../integrations/index.ts';
 import { getMailboxReadsAtFailedById, getOutboxAtBySentAt } from '../../integrations/index.ts';
 import { listAuditLogDetailSByKindM } from '../../core/index.ts';
-import { getRegisterFileImportsImportedAtRowsKeptBySourceId } from './data-borrowed.ts';
 
 /** One outside service as the page shows it. */
 export type Connection = {

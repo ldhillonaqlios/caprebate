@@ -57,7 +57,7 @@ import { earlyWindowWarning } from '../claims/index.ts';
 import { portalStepLine } from '../portal/index.ts';
 import { accountantConfirmBlock } from '../portal/index.ts';
 import { claimOverview, overviewBlock } from '../claims/index.ts';
-import { getBusinessesSectorById } from './data.ts';
+import { getBusinessesSectorById } from '../clients/index.ts';
 import { getClaimsStageBusinessIdById } from '../claims/index.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };

@@ -117,7 +117,7 @@ export async function startLiveWebsite(env: Env, deps: {
   const lines: string[] = [];
   const createApp = deps.createApp ?? ((await import('./server.ts')).createApp as unknown as CreateApp);
   const legalOn = (deps.legal ?? (await import('./server.ts')).legalPagesSetting as (e: Env) => boolean)(env);
-  const { uploadLinkSecret, vercelBlobClient } = await import('../shared/shared-objectstore.ts');
+  const { uploadLinkSecret, vercelBlobClient } = await import('../shared/index.ts');
   const db = liveDatabase(env);
   const token = (env['CAPREBATE_BLOB_TOKEN'] ?? '').trim() || (env['BLOB_READ_WRITE_TOKEN'] ?? '').trim();
   let client: unknown;

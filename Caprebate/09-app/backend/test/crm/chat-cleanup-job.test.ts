@@ -144,7 +144,7 @@ describe('1 · the message clean-up job is built and switched off', () => {
     assert.deepEqual(retentionMissing(MESSAGE_RETENTION), []);
     assert.equal(retentionMissing({ ...MESSAGE_RETENTION, enabled: false, with_claim_years: null, without_claim_months: null, approved_by: null }).length, 3);
     assert.deepEqual(backendSwitchReadings().filter((x) => x.switch === 'MESSAGE_RETENTION'),
-      [{ switch: 'MESSAGE_RETENTION', on: true, home: 'src/modules/crm/message-retention.ts' }]);
+      [{ switch: 'MESSAGE_RETENTION', on: true, home: 'src/modules/clients/message-retention.ts' }]);
   });
 
   test('PHASE 142b: as shipped, nothing written today is due — a company with no claim keeps everything for seven years', () => {
@@ -406,7 +406,7 @@ describe('2 · the job is the only path that can delete a message', () => {
     walk(root);
     // PHASE 161i1: the inbound email statements live in the outside services' data file; the job is still the only caller.
     // The CRM's statements live in its data file since it became a module; the job is still the only caller.
-    assert.deepEqual(hits, ['integrations/data.ts', 'modules/crm/data.ts']);
+    assert.deepEqual(hits, ['integrations/data.ts', 'modules/clients/data.ts']);
     const door = statementDoors(root, /DELETE\s+FROM\s+(client_messages|internal_notes|client_message_files|inbound_email)\b/i);
     assert.ok(door.functions.length > 0);
     assert.deepEqual(door.callers, ['modules/crm/message-retention.ts']);

@@ -27,13 +27,12 @@ import { CB, getSector, newSession } from '../../shared/index.ts';
 import { packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
 import { poundsWords } from './pack-sums.ts';
-import { claimantTypeForGate } from '../crm/index.ts';
+import { claimantTypeForGate } from '../assessment/index.ts';
 import { valuationLock } from '../claims/index.ts';
 import { claimantRole, type ClaimantRole } from '../assessment/index.ts';
 import { LEGAL_ENGINE_SWITCHES } from '../../shared/index.ts';
-import { getBusinessesSectorById } from '../crm/index.ts';
-import { getSurveyPacksIdByJobId, getSurveyorJobsIdBusinessIdById3, getSurveyorJobsIdByClaimId, insertSurveyPackLegalAnswersByPackId, insertSurveyPacks, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId2 } from './data.ts';
-import { getSurveyorJobsPropertyIdPById, listClaimGrantsAmountPenceByIdPaidTo, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId } from './data-borrowed.ts';
+import { getBusinessesSectorById } from '../clients/index.ts';
+import { getSurveyPacksIdByJobId, getSurveyorJobsIdBusinessIdById3, getSurveyorJobsIdByClaimId, getSurveyorJobsPropertyIdPById, insertSurveyPackLegalAnswersByPackId, insertSurveyPacks, listClaimGrantsAmountPenceByIdPaidTo, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId, listSurveyPackLegalAnswersQuestionIdValueJsonByPackId2 } from './data.ts';
 
 export type EngineQuestion = {
   readonly id: string;

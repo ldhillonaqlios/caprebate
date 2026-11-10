@@ -525,7 +525,7 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     fails the DPO's checks; then Postgres in London, one module at a time.
   THE ORDER TO GO LIVE (Lakhbir, 6 Nov 2026: "review all the phases see
     exactly what can be run before going live, restructure them"): 161h,
-    161h1, 161i, 161i1 (added 7 Nov 2026 by Phase 161i), 161j, 161k, 161l, 161l1 (added 9 Nov 2026 by Phase 161l) and 161m all run before go-live; none
+    161h1, 161i, 161i1 (added 7 Nov 2026 by Phase 161i), 161j, 161k, 161l, 161l1 (added 9 Nov 2026 by Phase 161l), 161l2 (added 10 Nov 2026 by Phase 161l1) and 161m all run before go-live; none
     waits on a person. Then the sweep (162) out of order, then 161n goes
     live once its gate is open (Vercel Pro, the ICO number, every legal page
     approved, the other sign-offs), then the sweep again before the first
@@ -1172,9 +1172,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161l1 — The tangle undone, part 2: the client record low in the order, the modules' own upward imports, the joins split by owner
+## PHASE 161l2 — The tangle undone, part 3: the last joins through the clients door, the pairs that still point up, and zero breaks
 
- **Model: Opus.** Board item 13502997938. **Written 9 November 2026 by Phase 161l.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". Phase 161l wrote the order into the module map and checked it, built the events and the ports, put each module's permissions in its own file, moved the start-up wiring into src/app/ and took the core, the shared parts and the outside services off the modules (350 breaks to 148). What is left is the modules' own upward imports and the joins across owners. The target structure is in **09-app/docs/ARCHITECTURE.md**. **Order (9 Nov 2026):** runs before go-live, after 161l and before 161m.
+ **Model: Opus.** Board item 13512253860. **Written 10 November 2026 by Phase 161l1.** **Why:** Lakhbir, 6 Nov 2026: "the ability for the structure to allow us to make a change on one thing without breaking others". Phase 161l1 split the joins across owners where the owner sat below, and split the CRM: the client record and the services every module used (the tables, the calendar, tasks, messages, leads) are now a lower area, clients, and no module imports the CRM any more (148 breaks to 67). This phase takes the last 67 to zero. The target structure is in **09-app/docs/ARCHITECTURE.md**. **Order (10 Nov 2026):** runs before go-live, after 161l1 and before 161m.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1224,89 +1224,69 @@ green and test/core/load-alone.test.ts passing; only lower the boundary
 baseline (--lower; --moved for a rename; a --rebase only for a reviewed
 re-map that lowers the total, with the reason logged).
 
-WHAT IS THERE NOW (9 Nov 2026, after Phase 161l; re-derive with
-node tools/boundaries.cjs --counts in 09-app/backend): 148 breaks (rule 1:
-16, rule 2: 22, rule 3: 110, rule 4: 0). The order is in
-architecture/modules.json (shared, core, integrations, assessment, claims,
-survey, finance, compliance, admin, crm, portal, public-site, app) and
-rule 2 counts every pair of areas where one imports another above it. The
-core and the shared parts are out of the cycle. src/core/events.ts
-(announce/listen, in the change's own transaction, audit-logged, a failing
-listener undoing the change) and the ports the lower layers own (the
-menu's provideNav in src/core/navigation.ts, the outbox's
-setDoNotContactCheck and setSenderReader in src/integrations/email/
-email.ts, the document store's setDocumentKeys, the lookups' subject
-readers) are the two ways a lower area hands something up. Each module's
-permissions are in its actions.ts. The start-up wiring is in src/app/.
+WHAT IS THERE NOW (10 Nov 2026, after Phase 161l1; re-derive with
+node tools/boundaries.cjs --counts in 09-app/backend): 67 breaks (rule 1: 8,
+rule 2: 15 pairs, rule 3: 44, rule 4: 0). The order is shared, core,
+integrations, clients, assessment, claims, survey, finance, compliance,
+admin, crm, portal, public-site, app. src/modules/clients/ holds the 27
+tables the CRM owned and the services every module reads; the CRM keeps the
+screens. Ports the lower areas own are filled by the higher doors (the CRM's
+in src/modules/crm/ports.ts; who holds a survey job in
+src/core/assigned-surveyors.ts, filled by the survey).
 
 BUILD
-1. THE CLIENT RECORD FIRST. Most upward imports between modules are reads
-   of the CRM's businesses and contacts tables (the client company and its
-   people: claimObjFor, claimantTypeForGate, the getBusinesses... and
-   getContacts... statements), which nearly every module needs and which
-   the CRM, near the top of the order, owns. Decide and build one of:
-   (a) give the client record an owner low in the order: a new area
-   "clients" between integrations and assessment, the two tables and their
-   reads moved to it, re-mapped in architecture/modules.json and
-   tables.json (a reviewed re-map: --rebase, logged); or (b) keep them in
-   the CRM and give every lower module a port the CRM fills. Our
-   recommendation is (a): one move, and every module then reads the client
-   downward through one door. Measure the pairs before and after.
-2. THE MODULES' UPWARD IMPORTS, pair by pair (the rule-2 keys in
-   architecture/baseline.json; node tools/boundaries.cjs --counts). On 9
-   Nov 2026, by file imports: claims -> crm 30, claims -> survey 21,
-   claims -> portal 14, survey -> crm 14, crm -> portal 12,
-   assessment -> claims 11, assessment -> crm 10, admin -> crm 10,
-   compliance -> crm 9, finance -> crm 6, claims -> admin 6, and small
-   pairs (each one gone is one break: assessment -> survey 3,
-   claims -> compliance 3, compliance -> public-site 2, claims -> finance 2,
-   claims -> public-site 2, compliance -> admin 2, assessment -> finance 2,
-   crm -> public-site 4, portal -> public-site 1). Each becomes a read
-   through a lower door (after 1), an event (a change upwards), a port (a
-   question upwards), or a move of the code to the module that owns what
-   it does. The outside services still import claims (claude.ts uses the
-   claims pipeline's sanitise and callModel: split claude.ts into a
-   transport and the claims' document reader) and crm (test-lookups.ts,
-   the command line's smoke test, reads client tables: it belongs in
-   src/app/); free-registers.ts goes round the claims door for load order.
-3. THE JOINS ACROSS OWNERS (rule 3, 110; 161l's items 5, 6a and 7a): split
-   each into the owner's own query plus a call through the other owner's
-   front door, keeping what the screen shows the same, with a test of that
-   screen's output first. Most join users for a person's name: one
-   names-by-ids read in the core's data file serves them all (six on
-   integrations' tables only LEFT JOIN users: admin
-   getRegisterFileImportsImportedAtRowsKeptBySourceId, claims
-   getResearchRunsWhoAtByBusinessIdAt, crm
-   listResearchRunsAtKindByBusinessId, listOutboxIdCreatedAtByBusinessId,
-   listOutboxIdCreatedAtByLeadIdBusinessId,
-   getVideoMeetingsHostOpenedAtOpenerByBookingId). Two by hand: the audit
-   log page's two statements and the retention list's record-kind counts
-   (listAuditLogLines and RECORD_KIND_STATEMENTS in
-   src/modules/compliance/data-borrowed.ts). Then empty and delete every
-   data-borrowed.ts.
+1. THE JOINS NOW SPLITTABLE DOWNWARD (rule 3): since the client record is
+   low, every statement in a lower module's borrowed file that joins the
+   client tables (businesses, contacts, client_tasks, client_task_checks,
+   internal_notes, leads, staff_tasks, client_messages, bookings,
+   introducers and their consents and notices, automation_runs) can be
+   split into the module's own query plus a read through the clients door,
+   as 161l1 did (a test pinning each output first; the pin tests in
+   test/core/joins-split-by-owner.test.ts, test/crm/borrowed-split.test.ts
+   and test/compliance/borrowed-statements-by-owner.test.ts show how). On
+   10 Nov 2026: claims/data-borrowed.ts 16 keys (5 on client tables),
+   compliance/data-borrowed.ts 10 (all client tables), assessment 7 (1),
+   survey 2 (2), admin 1, finance 1. The rest join a higher owner: claims
+   reading survey's pack tables, admin's document_types, finance's
+   fee_discounts and the portal's client_step_notices; the assessment
+   reading claims, finance and survey (VAT); clients/data-borrowed.ts (7:
+   assessments, claims, properties, users, survey_walkthroughs, the
+   portal's acceptances and the public site's enquiry checks). Each of
+   those becomes a move of the statement to its owner, a port, or (for
+   the assessment's VAT reads) the reading moved up to finance.
+2. THE PAIRS THAT STILL POINT UP (rule 2, 15): assessment -> claims,
+   finance, survey; claims -> admin, compliance, finance, portal,
+   public-site, survey; compliance -> admin, public-site; crm -> portal,
+   public-site; integrations -> claims; portal -> public-site. List the
+   files behind each with grep, then use the same tools: a read through a
+   lower door, an event (src/core/events.ts), a port the lower area owns,
+   or moving a function to the module that owns what it does. The legal
+   pages and SITE_JS_HEADERS-like constants the lower modules take from the
+   public site and the portal are likely to belong lower (shared or
+   compliance).
+3. THE IMPORTS ROUND A DOOR (rule 1, 8): claude.ts and free-registers.ts
+   are imported round the outside services' door because through it the
+   connectors fail to load alone (claude.ts loads the claims pipeline's
+   sanitise and callModel, which reach back into the outside services:
+   split claude.ts into a transport and the claims' document reader);
+   test-lookups.ts (the command line's smoke test) reads claims' data file
+   and is imported by src/app/cli.ts (it belongs in src/app/, once
+   smoke.ts and boundary-test-lookup.ts can be reached through the door).
 4. WHAT 161j AND 161k LEFT: routes and permissions files for survey,
-   finance, compliance and admin (handleSurveyor, handleSurveyPack,
-   handleStaffEvidence, handleFinance, handleBilling, handleCompliance,
-   handleConnections, handleConfiguration; the route list unchanged); the
-   parts the router lends at start (lendShellParts in src/core/http.ts)
-   replaced by front-door imports; the load-order workarounds undone once
-   the loops are gone (compliance-identity.ts's getters, approvable() in
-   compliance/legal-approvals.ts, maxLockedPiece() in survey-video.ts, the
-   survey walkthrough check in crm/data-borrowed.ts); generated
-   data-function names renamed by what they return as each is touched.
-5. THE CHECK ITSELF: tools/boundaries.cjs's importsIn treats a whole
-   import path as type-only if any `import type` names it, so a value
-   import from the same path in another statement is not counted. Fix it
-   (count by statement), and give each break it then finds a home.
-6. The boundary check reads zero for every rule; its self-test still fails
+   finance, compliance and admin (the route list unchanged); the parts the
+   router lends at start (lendShellParts) replaced by front-door imports;
+   the load-order workarounds undone once the loops are gone; the CRM
+   source files' re-exports of what moved to clients dropped once their
+   tests import the new homes.
+5. The boundary check reads zero for every rule; its self-test still fails
    each planted break.
 
 THE ORDER (CHANGED 6 NOV 2026; Lakhbir: "review all the phases see exactly
 what can be run before going live, restructure them"): every phase from
 161h to 161m runs BEFORE go-live, in this order: 161h, 161h1, 161i, 161i1,
-161j, 161k, 161l, 161l1, 161m. None of them waits on a person. After 161m:
-the sweep (Phase 162), out of order, then Phase 161n (go live) once its
-gate is open, then the sweep again before the first client. If the gate
+161j, 161k, 161l, 161l1, 161l2, 161m. None of them waits on a person. After
+161m: the sweep (Phase 162), out of order, then Phase 161n (go live) once
+its gate is open, then the sweep again before the first client. If the gate
 opens first, finish the phase in progress, run the sweep, then 161n; the
 phases left run after go-live, in the same order.
 NEXT: Phase 161m.
@@ -1314,8 +1294,6 @@ NEXT: Phase 161m.
 ACCEPT
 - The boundary check reports zero breaks of every rule, and its self-test
   still fails each planted break.
-- Every listener has a test that it runs, and one that a failure in it
-  undoes the change that caused it.
 - All four suites pass with the same figures (plus the new tests); every
   file loads alone; the route list is unchanged.
 ```
@@ -2229,7 +2207,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (**done 7 Nov 2026**: the live start, timers, backup and restore, release workflow, runbook and go-live checklist, built and proved on a database file; no live project made until Pro is bought), then, before go-live (order changed 6 Nov 2026), 161h1 the boundary check (**done 7 Nov 2026**: 2,162 breaks counted, any new one refused), 161i to 161k the regroup by business area (**161k done 9 Nov 2026**: every business area a module behind its front door, src/web/ gone, tests by feature, the specs in 09-app/docs/), 161l the tangle undone (**part 1 done 9 Nov 2026**: the one-way order written and checked, events, permissions per module, the start-up wiring in src/app/, the lower layers off the modules; 350 breaks to 148), 161l1 the rest of the tangle, and 161m versioned rules; then the sweep, and 161n goes live once its gate is open |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
+|  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (**done 7 Nov 2026**: the live start, timers, backup and restore, release workflow, runbook and go-live checklist, built and proved on a database file; no live project made until Pro is bought), then, before go-live (order changed 6 Nov 2026), 161h1 the boundary check (**done 7 Nov 2026**: 2,162 breaks counted, any new one refused), 161i to 161k the regroup by business area (**161k done 9 Nov 2026**: every business area a module behind its front door, src/web/ gone, tests by feature, the specs in 09-app/docs/), 161l the tangle undone (**part 1 done 9 Nov 2026**: the one-way order written and checked, events, permissions per module, the start-up wiring in src/app/, the lower layers off the modules; 350 breaks to 148), 161l1 the tangle, part 2 (**done 10 Nov 2026**: the joins split by owner where the owner is below, the CRM split into a lower clients area and its screens; 148 breaks to 67), 161l2 the last of it, and 161m versioned rules; then the sweep, and 161n goes live once its gate is open |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
 |  Claude |  Phase 162 — the sweep, always last; run it once out of order after 161m, before 161n goes live, and again after 161n, before the first client (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
