@@ -14243,7 +14243,7 @@ all                8    15    44     0    67
 
 - **Accept, the figures.** Before (main at ca80456): site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 3,969, project 5,497. After: site 1,428 / 0 / 3 both modes, phase3 71, phase9 29, back end 4,018 of 4,018 across 227 files, project 5,546; the pass lists the same name for name, the back end plus exactly the 49 new tests. `npm run check` green; every file loads alone; the route list identical. One test (the site plan's chapter 9 button) failed once with "fetch failed" while two full suites ran at once on this machine; it passed three times on its own and in `npm run check`. Drift checker (0 wrong), CRM fold check (and self-test), register check, tracker check and self-test, plain words, brand, analytics (26), notices acceptance, payload proof, verify-page and the boundary self-test (28) green. Not done here: signing in on the preview as staff and as a client; the suites drive both through the app.
 - **Not done as the block said, and why.** "Zero breaks of every rule": 67 are left. 44 are joins (most now splittable downward through the clients door, which did not exist until this phase's last step; the rest join a higher owner), 15 are pairs still pointing up that do not involve the CRM, 8 are imports round the outside services' door kept for load order. All are Phase 161l2, written with the counts by file.
-- **Board and plan.** 161l1 Done (group Z, claim cleared) on the board and the tracker; 161l2 made (board item 13512253860, Ready - Claude can build) and written before 161m in ACTION-PLAN.md and on the run sheet (read back equal); COORDINATES' order line and section 6's row name it; ARCHITECTURE.md (the order with clients, the ratchet at 67, the phase table), the Developer Spec (an entry, the figures 5,546) and the backend README follow. 4B: the build queue is 161l2 and 161m, each a phase; no orphans. The run sheet's 161l1 block waits for Lakhbir's yes in the chat before it is deleted.
+- **Board and plan.** 161l1 Done (group Z, claim cleared) on the board and the tracker; 161l2 made (board item 13512253860, Ready - Claude can build) and written before 161m in ACTION-PLAN.md and on the run sheet (read back equal); COORDINATES' order line and section 6's row name it; ARCHITECTURE.md (the order with clients, the ratchet at 67, the phase table), the Developer Spec (an entry, the figures 5,546) and the backend README follow. 4B: the build queue is 161l2 and 161m, each a phase; no orphans. The run sheet's 161l1 block was deleted after Lakhbir's yes in the chat ("Yes, both"), the same yes that merged the pull request.
 
 ```
 DONE          The joins across owners split by owner wherever the owner sits below (three pin tests); seven imports
@@ -14254,9 +14254,10 @@ NOT DONE      The joins now splittable through the clients door, the joins on hi
               pointing up, 8 imports round a door, routes and permissions files for survey, finance, compliance and
               admin, the parts the router lends, the load-order workarounds - BUILDABLE - new Phase 161l2, written
               and inserted before 161m.
-              Deleting the run sheet's 161l1 block - BLOCKED on Lakhbir's yes in the chat - asked in the report.
               Signing in on the preview as staff and as a client - BUILDABLE - after the merge, on the test website.
               The developer's answer to D16 (how far the notes come out) - BLOCKED on the developer - the developer
               question pack, D16 (our recommendation is built meanwhile).
 NOTHING LEFT  beyond those lines.
 ```
+
+- **Merged, 10 Nov 2026.** Lakhbir said yes in the chat ("Yes, both"): PR #94 is merged into main (merge commit e17d57c, GitHub's checks green), and the run sheet's 161l1 block is deleted, with a line saying so at the end of the run sheet. The first phase on the run sheet is now 161l2.
