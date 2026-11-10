@@ -38,13 +38,13 @@
  */
 
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import type { Db } from '../../core/index.ts';
 import { _canonical } from '../../core/index.ts';
 import { DPO_ROLE_SWITCH } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
-import { ctaSwitchReadings, registryGate } from '../../shared/index.ts';
+import { ctaSwitchReadings, engineVersion, registryGate } from '../../shared/index.ts';
+import { RULEBOOK_MODULES, rulesThroughClaims, type RulebookModule } from './logic/rules.ts';
+import { resultVersions } from '../../shared/index.ts';
 import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from '../clients/index.ts';
 import { CONVEYANCING_STRIP } from './conveyancing-strip.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
@@ -79,56 +79,19 @@ function sha256(v: unknown): string {
  * 1 · THE ENGINE VERSION
  * ================================================================== */
 
-/** The engine package this build ships — a file of the build, as the engagement letter is (src/modules/claims/letter.ts), never a request path. */
-export const ENGINE_PACKAGE_PATH = join(import.meta.dirname, '..', '..', '..', '..', 'engine', 'package.json');
+/** The engine package this build ships (src/shared/rules-register.ts reads it since Phase 161m). */
+export { ENGINE_PACKAGE_PATH } from '../../shared/index.ts';
 
-let engineVersion: string | null | undefined;
-
-/** The engine package's own `version`, or null where it states none. Moved here from src/modules/claims/claim-record.ts. */
-export function readEngineVersion(): string | null {
-  if (engineVersion !== undefined) return engineVersion;
-  try {
-    const p = JSON.parse(readFileSync(ENGINE_PACKAGE_PATH, 'utf8')) as { version?: unknown };
-    engineVersion = typeof p.version === 'string' ? p.version : null;
-  } catch { engineVersion = null; }
-  return engineVersion;
-}
+/** The engine package's own `version`, or null where it states none. */
+export function readEngineVersion(): string | null { return engineVersion(); }
 
 /* ================================================================== *
  * 2 · THE RULEBOOK MODULES
  * ================================================================== */
 
-export type RulebookModule = {
-  readonly module: string;
-  readonly version: string;
-  readonly file: string;
-  readonly board_item: string;
-  readonly monday_doc: string | null;
-};
-
-/**
- * THE ELEVEN RULEBOOK FILES, AS 01-rulebooks/README.md LISTS THEM.
- *
- * THE FILENAME IS THE ONLY CARRIER OF A RULEBOOK'S VERSION. No rulebook states
- * its version in a field, no manifest lists them and the engine does not know
- * them: the `-v1` or `-v2` at the end of the file's name is all there is. So this
- * list is those names, as the README gives them, and the test reads the README
- * and fails the day the two disagree. A rulebook re-issued as v3 is a new line
- * here, and every case stamped before it still says v2.
- */
-export const RULEBOOK_MODULES: readonly RulebookModule[] = Object.freeze([
-  { module: 'A', version: 'v2', file: 'Caprebate-Statutory-Rules-Register-A-Claim-Timing-v2.md', board_item: '12830178875', monday_doc: null },
-  { module: 'B', version: 'v2', file: 'Caprebate-Entitlement-Branch-Truth-Table-B-v2.md', board_item: '12830182172', monday_doc: null },
-  { module: 'C', version: 'v1', file: 'Caprebate-Statutory-Rules-Register-C-Elections-v1.md', board_item: '12841288962', monday_doc: null },
-  { module: 'D', version: 'v1', file: 'Caprebate-Statutory-Rules-Register-D-What-Qualifies-As-Plant-v1.md', board_item: '12851645135', monday_doc: null },
-  { module: 'E', version: 'v1', file: 'Caprebate-Statutory-Rules-Register-E-Dwelling-House-v1.md', board_item: '12910751557', monday_doc: null },
-  { module: 'F', version: 'v1', file: 'Caprebate-Statutory-Rules-Register-F-Contributions-And-Grants-v1.md', board_item: '12910769642', monday_doc: null },
-  { module: 'G', version: 'v1', file: 'Caprebate-Statutory-Rules-Register-G-Repairs-vs-Capital-v1.md', board_item: '12830061107', monday_doc: '18427873138' },
-  { module: 'H', version: 'v1', file: 'Caprebate-Statutory-Rules-Register-H-Land-Remediation-Relief-v1.md', board_item: '12830043662', monday_doc: '18427873476' },
-  { module: 'I', version: 'v1', file: 'Caprebate-Statutory-Rules-Register-I-Rates-And-Reliefs-Table-v1.md', board_item: '12830060773', monday_doc: '18427874000' },
-  { module: 'I-ADDENDUM-1', version: 'v1', file: 'Caprebate-Statutory-Rules-Register-I-Addendum-1-Scottish-Income-Tax-v1.md', board_item: '12889350666', monday_doc: '18428034700' },
-  { module: 'A-ADDENDUM-1', version: 'v1', file: 'Caprebate-Statutory-Rules-Register-A-Addendum-1-Two-Year-Fixed-Value-Window-v1.md', board_item: '12921255840', monday_doc: '18428623683' },
-].map((m) => Object.freeze(m)));
+/** THE ELEVEN RULEBOOK FILES: in the claims' rules register since Phase 161m (src/modules/claims/logic/rules.ts). */
+export { RULEBOOK_MODULES } from './logic/rules.ts';
+export type { RulebookModule } from './logic/rules.ts';
 
 /* ================================================================== *
  * 3 · EVERY SWITCH
@@ -253,6 +216,8 @@ export type CaseStamp = {
   readonly backend_switches: readonly BackendSwitchReading[];
   /** Every connector switch — each register lookup's, and the document reader's. */
   readonly connector_switches: readonly BackendSwitchReading[];
+  /** Phase 161m: the version of every rule in the claims' register and the registers below it (src/modules/claims/logic/rules.ts). */
+  readonly rules_versions: Readonly<Record<string, number>>;
   readonly signoffs: readonly { readonly id: string; readonly record_hash: string }[];
   readonly estimate_hash: string | null;
   readonly anchor_log_head_hash: string | null;
@@ -278,6 +243,7 @@ export function caseStamp(db: Db, claim_id: string): CaseStamp {
     registry_free_enabled: registryGate().enabled,
     backend_switches: backendSwitchReadings(),
     connector_switches: connectorSwitchReadings(),
+    rules_versions: resultVersions(rulesThroughClaims(), engine).rules,
     signoffs: listTaxAdviserSignoffsIdRecordHashByClaimId<{ id: string; record_hash: string }>(db, [c.id]),
     estimate_hash: estimate?.estimate_hash ?? null,
     anchor_log_head_hash: getAnchorLogHash<{ hash: string }>(db)?.hash ?? null,
@@ -309,7 +275,7 @@ export function writeCaseStamp(
   const stamp = caseStamp(db, input.claim_id);
   const switch_readings = {
     cta: stamp.cta_switches, registry_free_enabled: stamp.registry_free_enabled, backend: stamp.backend_switches,
-    connectors: stamp.connector_switches,
+    connectors: stamp.connector_switches, rules: stamp.rules_versions,
   };
   const row = {
     ...input, engine_version: stamp.engine_version, rulebook_modules: stamp.rulebook_modules, switch_readings,

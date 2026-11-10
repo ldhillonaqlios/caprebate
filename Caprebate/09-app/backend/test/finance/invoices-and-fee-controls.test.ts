@@ -51,6 +51,8 @@ import { liveFeeInvoiceCount } from '../../src/modules/finance/index.ts';
 import { loadPipelineClaim } from '../../src/modules/claims/index.ts';
 import { FORBIDDEN_EFFECTS, addDaysToDate } from '../../src/modules/clients/index.ts';
 import * as clientsDoor from '../../src/modules/clients/index.ts';
+import { resultVersions } from '../../src/shared/index.ts';
+import { rulesThroughFinance } from '../../src/modules/finance/index.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
@@ -119,6 +121,11 @@ function readyToInvoice(app: Base, opts: { figure?: number; sector?: string; org
 function raise(app: Base, claim: string, opts: I.InvoiceOptions = {}, kind = 'FEE'): string {
   const r = I.raiseInvoice(deps(app), ACC, claim, { kind }, opts);
   assert.equal(r.ok, true, r.ok ? '' : r.why);
+  // Phase 161m: every invoice raised carries the engine's version and every rule's, as it was raised (migration 122).
+  if (r.ok) {
+    const v = app.db.get<{ versions_json: string | null }>('SELECT versions_json FROM invoices WHERE id = ?', [r.id]);
+    assert.deepEqual(JSON.parse(String(v?.versions_json)), JSON.parse(JSON.stringify(resultVersions(rulesThroughFinance()))));
+  }
   return r.ok ? r.id : '';
 }
 

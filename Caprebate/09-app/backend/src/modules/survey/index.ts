@@ -63,3 +63,5 @@ import './claims-ports.ts';
 // Last, as it reaches the client record's door.
 export { getSurveyWalkthroughsXByBookingId } from './data.ts';
 import './client-ports.ts';
+// Phase 161m: its rules register (logic/rules.ts), and every area's below it.
+export { LEGAL_READING_NAMES, SURVEY_RULES, rulesThroughSurvey } from './logic/rules.ts';

@@ -98,3 +98,5 @@ export type { SignatureProvider } from './signature.ts';
 // Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
 export { getVideoMeetingsBookingIdMeetingIdByClientToken, getVideoMeetingsHostOpenedAtHostOpenedByByBookingId, listResearchRunsAtKindActorIdByBusinessId, listVideoMeetingsBookingIdHostUserIdByBookingIds } from './data.ts';
 export { getOutboxXByKindLeadIdBusinessId, listInboundEmailIdReceivedAtContactIdByBusinessId, listInboundEmailUidAtBusinessIds, listOutboxAtToEmailBusinessIdByKind, listOutboxCreatedAtKindClaimIdByBusinessId, listOutboxCreatedAtKindClaimIdByLeadIdBusinessId, listOutboxIdCreatedAtWrittenByByBusinessId, listOutboxIdCreatedAtWrittenByByLeadIdBusinessId, listWhatsappImportLinesImportIdUploadedAtUploadedByByMessageId, listWhatsappImportsIdContactIdByBusinessIdStatus, listWhatsappMessagesCreatedAtDirectionContactIdByBusinessId, listWhatsappMessagesIdCreatedAtSenderByBusinessId, listWhatsappMessagesIdCreatedAtSenderByBusinessIdPhone } from './data.ts';
+// Phase 161m: the outside services' rules register.
+export { INTEGRATIONS_RULES, rulesThroughIntegrations } from './logic/rules.ts';

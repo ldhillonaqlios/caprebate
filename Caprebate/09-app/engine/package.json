@@ -11,7 +11,9 @@
     "dist",
     "tools",
     "README.md",
-    "EXTRACTION.md"
+    "EXTRACTION.md",
+    "VERSIONS.json",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build:page": "node tools/build.cjs",
@@ -20,7 +22,8 @@
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "build": "node tools/build.cjs && tsc --project tsconfig.json",
     "test": "npm run verify && npm run typecheck && npm run typecheck:types",
-    "typecheck:types": "tsc --project tsconfig.typetests.json"
+    "typecheck:types": "tsc --project tsconfig.typetests.json",
+    "version:record": "node tools/engine-version.cjs --record"
   },
   "devDependencies": {
     "typescript": "^5.6.0"

@@ -62,3 +62,5 @@ export type { App, BuildOptions } from './app.ts';
 export type { FormTokens } from './form-token.ts';
 export type { PasswordHasher } from './password.ts';
 export type { Method } from './sign-in.ts';
+// Phase 161m: the core's rules register.
+export { CORE_RULES, rulesThroughCore } from './logic/rules.ts';

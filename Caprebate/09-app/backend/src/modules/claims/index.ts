@@ -137,3 +137,5 @@ export type { ClaimDbRow } from './claim-row.ts';
 export { CLAIM_SEARCH_STATEMENTS, getClaimsFirstIdByBusinessId, getClaimsFirstIdByBusinessIdAssessmentId, getClaimsIdClaimRefPropertyLabelById, getPropertyRowById, listClaimListLines, listClaimsIdByPropertyId, listClaimsIdClaimRefBusinessIdStageByOwnerNull, listClaimsIdClaimRefBusinessIdStageOwner, listClaimsIdClaimRefPropertyLabelByBusinessId, listClaimsIdClaimRefPropertyLabelByIds, listClaimsIdClaimRefPropertyLabelByPropertyId, listClaimsIdCompletedAtByStageClosed, listPropertyRows, listPropertyRowsByBusinessId, searchClaimsFound, searchClaimsOfIdsFound, searchPropertiesFound, searchPropertiesOfBusinessesFound } from './data.ts';
 // What the client record asks the claims (its port, src/modules/clients/claims-port.ts). Last, as it reaches the client record's door.
 import './client-ports.ts';
+// Phase 161m: its rules register (logic/rules.ts), and every area's below it.
+export { claimsRules, rulesThroughClaims } from './logic/rules.ts';

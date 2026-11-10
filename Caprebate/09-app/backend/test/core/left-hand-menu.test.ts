@@ -29,8 +29,8 @@ const GROUPS: Readonly<Record<Exclude<Who, 'client'>, readonly (readonly [string
   readonly: [[null, ['Home']], ['Winning clients', ['Leads', 'Pipeline']], ['Clients and claims', ['Clients']]],
 };
 
-// PHASE 156e (5 Oct 2026): Connections, after Switches.
-const SETTINGS = ['Users', 'Switches', 'Connections', 'Document types', 'Automation', 'Email templates', 'Compliance', 'Audit log', 'Introducer fees'];
+// PHASE 156e (5 Oct 2026): Connections, after Switches. PHASE 161m (10 Nov 2026): Rules, after Connections.
+const SETTINGS = ['Users', 'Switches', 'Connections', 'Rules', 'Document types', 'Automation', 'Email templates', 'Compliance', 'Audit log', 'Introducer fees'];
 
 const words = (html: string): string => html.replace(/<span class="(vh|tabcount|subnote)[^"]*">[\s\S]*?<\/span>(<\/span>)?/g, '')
   .replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();

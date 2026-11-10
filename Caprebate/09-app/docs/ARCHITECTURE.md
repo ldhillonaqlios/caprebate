@@ -103,6 +103,20 @@ business area is a module with a front door, and a check refuses any route round
    estimate, a pack and a report record the engine version and the rules versions they used, so changing a rule never
    quietly changes an old result: old claims keep their figures, and a re-run says what changed. *Check:* tests for each
    rule both ways (on and off), and a test that every sealed result carries its versions.
+   **Built by Phase 161m (10 Nov 2026).** Each area that holds rules has a register, `logic/rules.ts` (shared, core,
+   integrations, clients, assessment, claims, survey, compliance; finance's is empty in code, because its rates are
+   already dated settings in its own table): 72 rules, each with an id, a version, the date it takes effect from, who
+   approves it and where that stands, its position, the file that reads it and the test that runs it. The money
+   readings and the legal readings are data there (the code reads its positions from the register); every other switch
+   keeps its words where its code is and the register reads its position. `architecture/rules-lock.json` pins each
+   rule's value for each version (written only by `node tools/rules-record.ts`, which refuses a value changed under the
+   same version), and `test/rules/rules-register.test.ts` fails a value changed without a new version. The engine's
+   version: `09-app/engine/VERSIONS.json` records the calculator's fingerprint for each version and `CHANGELOG.md` says
+   what changed; `tools/verify-page.cjs` (section 6) and the back end's test both fail a calculator change without a
+   new version. Every sealed estimate, approved pack and invoice writes `versions_json` (the engine's version and the
+   version of every rule in its writer's register and the ones below it; migration 122), and every case stamp (a
+   report and each other issued deliverable) carries the same in its switch readings. An approved pack's page says
+   what has changed since, and why; its figures stay as approved. Admin's Settings has a read-only Rules page.
 7. **A change is tested where it lands, then everywhere.** Each module's own tests and its front-door contract tests
    run first; then the full suite, as now. *Check:* GitHub's fresh-copy check, unchanged.
 
@@ -137,7 +151,7 @@ keeps all tests green, so behaviour never changes while the walls go up.
 | 161l | The tangle undone, part 1: the one-way order written and checked, events, permissions per module, the start-up wiring in `src/app/`, the lower layers off the modules (done 9 Nov 2026) | Before go-live, after 161k |
 | 161l1 | The tangle undone, part 2: the joins split by owner where the owner is below, the CRM split into `clients` and its screens (done 10 Nov 2026) | Before go-live, after 161l |
 | 161l2 | The tangle undone, part 3: the last joins through the clients door, the pairs that still point up; zero breaks (done 10 Nov 2026) | Before go-live, after 161l1 |
-| 161m | Rules as versioned data: the rules registers, the engine's version, versions on every sealed result | Before go-live, after 161l |
+| 161m | Rules as versioned data: the rules registers, the engine's version, versions on every sealed result (done 10 Nov 2026) | Before go-live, after 161l2 |
 | 162 | The sweep: every check, and the go-live gate checked | After 161m, out of order |
 | 161n | Go live: the gate (Vercel Pro, the ICO number, every legal page approved, the other sign-offs), then the live website switched on and proved | Once its gate is open |
 | 162 | The sweep again, against the live website | Before the first client |
@@ -149,6 +163,6 @@ learns the final layout once, and the sweep checks the code we actually launch. 
 so if the gate opens early we finish the phase in progress, run the sweep and go live; the phases left run afterwards,
 in the same order.
 
-When 161m is done: a change to (say) the finance module's invoice rules touches the finance module only; the check
-proves no other module reaches inside it; the finance tests run first; old invoices and sealed estimates keep the rules
-they were made with.
+Since 161m (10 Nov 2026): a change to (say) the claims' fee rules touches the claims' register and its code only; the
+boundary check proves no other module reaches inside it; the lock test refuses the change until its version is raised;
+old invoices and sealed estimates keep the versions they were made with, and a re-run says what changed.

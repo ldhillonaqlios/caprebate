@@ -42,3 +42,5 @@ export { ADDRESS_PAGE_CSP, assessmentAssets, assessmentRoutes, contactValueProbl
 export { listEstimatesQualifyingExpenditurePenceByAssessmentIds } from './data.ts';
 // Phase 161l2: what the CRM reads here in place of the client record's borrowed joins (src/modules/crm/split-reads.ts).
 export { getAssessmentLineById, getAssessmentsFirstSubmittedAtByBusinessId, listAssessmentLines, listAssessmentsIdShownByIds } from './data.ts';
+// Phase 161m: its rules register (logic/rules.ts), and every area's below it.
+export { ASSESSMENT_RULES, rulesThroughAssessment } from './logic/rules.ts';

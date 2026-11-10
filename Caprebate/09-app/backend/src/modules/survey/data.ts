@@ -60,7 +60,7 @@ export function insertSurveyPackAddedLines(db: Db, params: readonly Param[] = []
 
 // survey_pack_approvals
 export function insertSurveyPackApprovals(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('INSERT INTO survey_pack_approvals (id, pack_id, version, pack_seq, legal_seq, snapshot_json, fingerprint, approved_by, approved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
+  return db.run('INSERT INTO survey_pack_approvals (id, pack_id, version, pack_seq, legal_seq, snapshot_json, fingerprint, approved_by, approved_at, versions_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
 }
 export function listSurveyPackApprovalsSnapshotJsonJobIdByVersionPackId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT a.snapshot_json, p.job_id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
@@ -735,4 +735,8 @@ export function listVideoMeetingsIdBookingIdByBookingIdJO<T extends Row = Row>(d
 // unchanged; the client record asks through its port, src/modules/clients/walkthrough-port.ts)
 export function getSurveyWalkthroughsXByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT 1 AS x FROM survey_walkthroughs WHERE booking_id = ?', params);
+}
+/** Phase 161m: the versions an approved pack was made with (migration 122); null before then. */
+export function getSurveyPackApprovalsVersionsJsonById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT versions_json FROM survey_pack_approvals WHERE id = ?', params);
 }

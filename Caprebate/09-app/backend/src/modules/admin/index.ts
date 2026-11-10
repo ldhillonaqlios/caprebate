@@ -16,6 +16,8 @@ export { SETTINGS_TILES, settingsBody, settingsTiles } from './admin-tiles.ts';
 export { adminSettingsGate } from './admin.permissions.ts';
 export { handleConfiguration } from './configuration-pages.ts';
 export { handleConnections, listsToImport } from './connections.ts';
+// Phase 161m: every rule in force, read only.
+export { handleRulesPage, positionWords, rulesInForcePage, RULES_IN_FORCE_PATH } from './rules-page.ts';
 export { handleRoleEditor, madeRoleChoices } from './role-editor-pages.ts';
 export { keysView, refreshSavedKeys, saveKey, serviceOn } from './saved-keys.ts';
 export * as settingsModule from './settings.ts';

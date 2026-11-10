@@ -807,6 +807,13 @@ value, a "Takes effect" date and "Where it comes from".
 its key is there, but never shows the key. It says if the service is on, what its switch is called, and when it was
 last used. It also says what the service still waits on. Nothing on this page changes anything.
 
+**The Rules page shows every rule in force.** Go to **Settings**, then **Rules** (Address: `/staff/rules`). Only
+Admin can open it. Each row is one rule. It says what the rule does and if it is on. It gives its version and the date
+it began. It says who must approve it. The page also shows the version of the claim calculator. Nothing on this page
+changes anything. A rule is changed in the code, and then it gets a new version. Each estimate, pack, report and
+invoice keeps the versions it was made with. So its figures stay the same. A survey pack says if a rule has changed
+since it was approved.
+
 **Import the care regulators' lists each month.** Wales and Scotland publish their lists of care services as a file.
 Get the new file from the regulator's site. Choose it under that row, then press **Import it**. The page sends
 only the columns we keep. Names, phone numbers and emails in the file stay on your computer. Home shows a reminder when

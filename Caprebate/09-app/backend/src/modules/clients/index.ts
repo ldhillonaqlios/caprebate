@@ -143,3 +143,5 @@ export { deleteWebsiteEnquiriesById, getWebsiteEnquiriesCountByStatus, getWebsit
 // The closed-enquiry clean-up's switch, period and question (moved from the public site, Phase 161l2).
 export { ENQUIRY_RETENTION, ENQUIRY_RETENTION_QUESTION, ENQUIRY_RETENTION_RULE, enquiryRetentionMissing } from './enquiry-retention.ts';
 export type { EnquiryRetention } from './enquiry-retention.ts';
+// Phase 161m: its rules register (logic/rules.ts), and every area's below it.
+export { CLIENTS_RULES, rulesThroughClients } from './logic/rules.ts';

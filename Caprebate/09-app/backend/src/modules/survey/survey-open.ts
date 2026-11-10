@@ -30,6 +30,8 @@ import { getUsersIdByIdRole2, listUsersIdNameByRoleDisabledAt2 } from '../../cor
 import { getAssessmentsShownHighPenceById, getEstimatesBasisByAssessmentId, getEstimatesIdByAssessmentId, insertEstimates, listAssessmentAnswersValueByAssessmentIdState } from '../assessment/index.ts';
 import { getClaimsIdBusinessIdById2 } from '../claims/index.ts';
 import { getSurveyorJobsIdSurveyorByClaimId, getSurveyorJobsSurveyorByClaimId, insertSurveyorJobs2 } from './data.ts';
+import { resultVersions } from '../../shared/index.ts';
+import { rulesThroughSurvey } from './logic/rules.ts';
 
 export const FUNNEL_CEILING = 'FUNNEL_CEILING';
 
@@ -98,7 +100,9 @@ function sealFunnelEstimate(d: OpenDeps, business_id: string, assessment_id: str
     bare_land_pence: 0, multiplier: 0, indicative_lifetime_saving_pence: 0, basis: FUNNEL_CEILING,
   };
   const hash = createHash('sha256').update(JSON.stringify({ assessment_id, sealed_at: at, ...values })).digest('hex');
-  insertEstimates(d.db, [d.newId(), assessment_id, business_id, values.qualifying_expenditure_pence, values.qualifying_pct, 0, 0, 0, 0, 0, at, hash, FUNNEL_CEILING]);
+  // Phase 161m: the engine's version and every rule's, with the estimate and never after (migration 122).
+  insertEstimates(d.db, [d.newId(), assessment_id, business_id, values.qualifying_expenditure_pence, values.qualifying_pct, 0, 0, 0, 0, 0, at, hash, FUNNEL_CEILING,
+    JSON.stringify(resultVersions(rulesThroughSurvey()))]);
   return { ok: true, sealed: true };
 }
 

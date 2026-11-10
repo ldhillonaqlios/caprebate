@@ -159,14 +159,14 @@ export function getEstimatesQualifyingExpenditurePenceSealedAtByAssessmentId<T e
 }
 export function insertEstimates(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO estimates (id, assessment_id, business_id, qualifying_expenditure_pence, qualifying_pct, pool_split_main_pence, ' +
-    'pool_split_special_pence, bare_land_pence, multiplier, indicative_lifetime_saving_pence, sealed_at, estimate_hash, basis) ' +
-    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
+    'pool_split_special_pence, bare_land_pence, multiplier, indicative_lifetime_saving_pence, sealed_at, estimate_hash, basis, versions_json) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
 }
 export function insertEstimates2(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO estimates (id, assessment_id, business_id, qualifying_expenditure_pence, qualifying_pct, ' +
     'pool_split_main_pence, pool_split_special_pence, bare_land_pence, multiplier, ' +
-    'indicative_lifetime_saving_pence, sealed_at, estimate_hash) ' +
-    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
+    'indicative_lifetime_saving_pence, sealed_at, estimate_hash, versions_json) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
 }
 
 // lookups_declined
@@ -211,4 +211,8 @@ export function listAssessmentsIdShownByIds<T extends Row = Row>(db: Db, params:
 }
 export function getAssessmentsFirstSubmittedAtByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT MIN(x.submitted_at) AS first FROM assessments x WHERE x.business_id = ?', params);
+}
+/** Phase 161m: the versions a sealed estimate was made with (migration 122); null before then. */
+export function getEstimatesVersionsJsonByAssessmentId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT versions_json FROM estimates WHERE assessment_id = ?', params);
 }

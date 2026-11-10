@@ -1,0 +1,581 @@
+{
+ "note": "THE RULES LOCK (Phase 161m, 10 Nov 2026; 09-app/docs/ARCHITECTURE.md rule 6). Every rule in every area's logic/rules.ts, with the SHA-256 of its value for each of its versions. Written only by node tools/rules-record.ts, which refuses a value changed under the same version; checked by test/rules/rules-register.test.ts. A retired rule is moved to \"retired\" with the date, never deleted.",
+ "rules": {
+  "assessment.FUNNEL_SWITCHES.breakeven_is_insufficient_profit": [
+   {
+    "version": 1,
+    "value_sha256": "b016c9a241071f3679ca3d5f3a239e3e6a44e1afdc8c27343cb3d93090b61405",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.ALLOWANCE_PROFIT_COMPARISON": [
+   {
+    "version": 1,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.CONVEYANCING_STRIP": [
+   {
+    "version": 1,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.DEFENCE_PACK_GENERATOR": [
+   {
+    "version": 1,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.ENGAGEMENT_SIGNING": [
+   {
+    "version": 1,
+    "value_sha256": "deb4964d126e232ff1f6213783a7dd28187efaaa0d8438a6d27f24f89e4eed06",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.ENGAGEMENT_SIGNING_TEST": [
+   {
+    "version": 1,
+    "value_sha256": "7c3124ac1ff258dce0f4a904028f10c8177a7add76cfd9d60823a8c408d14438",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.FEE_CLAWBACK": [
+   {
+    "version": 1,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.FEE_CONTROLS.above_benefit": [
+   {
+    "version": 1,
+    "value_sha256": "981970b4cfc4199a28c1787afb17f8146c4bccc275e03a7748c00643797ce3fb",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.FEE_CONTROLS.break_and_abort": [
+   {
+    "version": 1,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.FEE_CONTROLS.uplifts": [
+   {
+    "version": 1,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.MANDATORY_DOCUMENTS": [
+   {
+    "version": 1,
+    "value_sha256": "26b3426b2593763c96d0890b4a77a0bbf66d13fc512b0c6b138a23c290f30a2a",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.PICK_SWITCHES.MATCH_REVIEW_PICK": [
+   {
+    "version": 1,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.A": [
+   {
+    "version": 1,
+    "value_sha256": "239294b83e97932f8eb4152a39a4a97f57f563c8bade0e9931a9980bf30268b5",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.A-ADDENDUM-1": [
+   {
+    "version": 1,
+    "value_sha256": "67bbf1b60e67ff62b533aff4a1bcde7af14d57423f4b336eaf30c6cf5470c2fd",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.B": [
+   {
+    "version": 1,
+    "value_sha256": "85f77918ddad03cfe3e446eb4776f293a3f338998212fae96ef90ec7665a1f6f",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.C": [
+   {
+    "version": 1,
+    "value_sha256": "c831fe8e17e16eeecc3c35ea9a415f6f61e5244be4f8619890eb8740b0d7ef64",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.D": [
+   {
+    "version": 1,
+    "value_sha256": "95c66f62883623e740c164f732116110566275624a1ffd0276c9441fff04af26",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.E": [
+   {
+    "version": 1,
+    "value_sha256": "b7e7a7caa5044ce4c2559e38c037151d9ae2e1c32028c9189b2ca7669983a51d",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.F": [
+   {
+    "version": 1,
+    "value_sha256": "b4f5d3035103671be4f032bcd2c198391e89e3e7eedfc08f4f33089ecb3b4f59",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.G": [
+   {
+    "version": 1,
+    "value_sha256": "8455c1e63afcc86157133cf131ea43c10306e3e73700fe9130f8c277ec2ca858",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.H": [
+   {
+    "version": 1,
+    "value_sha256": "59e8bdf1800490e24b282f8593d53f0c6f010d29eb8f3e0ed5381fa61857a621",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.I": [
+   {
+    "version": 1,
+    "value_sha256": "3943138fb35dc0d1c93430c6099744b9c12c9fe1a79af3c3e244839b997039a7",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "claims.rulebook.I-ADDENDUM-1": [
+   {
+    "version": 1,
+    "value_sha256": "e87dce4e06faa75703515ac227f73aa4441d4d970184eda490dca75460eb2f2f",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "clients.CLIENT_SHARE_GIVE": [
+   {
+    "version": 1,
+    "value_sha256": "26b3426b2593763c96d0890b4a77a0bbf66d13fc512b0c6b138a23c290f30a2a",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "clients.ENQUIRY_RETENTION": [
+   {
+    "version": 1,
+    "value_sha256": "7a095618cc672f99be0d19698dd94a8d1451014e1e197f4acaed30675f2a0216",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "clients.MESSAGE_RETENTION": [
+   {
+    "version": 1,
+    "value_sha256": "e39f086958ca6e73eff6ce6448560d41e641fb0056db6a9ddcdc4942f6c763df",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "clients.REFERRAL_FORM": [
+   {
+    "version": 1,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "compliance.DISCLOSURE_LOG": [
+   {
+    "version": 1,
+    "value_sha256": "c10b12e102138799ec374cf73f03b431666f7e26b87b9d1d590ac06a0971f824",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "core.DPO_ROLE_SWITCH": [
+   {
+    "version": 1,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.ADDRESS_LOOKUP": [
+   {
+    "version": 1,
+    "value_sha256": "25b0bc3185bccabd55f293195a8849d29325ffab91484ab6ea42dff4b40b6c79",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.CLAUDE_SWITCHES.DOCUMENT_READING": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.CLAUDE_SWITCHES.SCANNED_PAGES": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.COMPANY_SEARCH": [
+   {
+    "version": 1,
+    "value_sha256": "25b0bc3185bccabd55f293195a8849d29325ffab91484ab6ea42dff4b40b6c79",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.COMPANY_TYPE_FROM_REGISTER": [
+   {
+    "version": 1,
+    "value_sha256": "1ac3750a92d2d073cf256dc30168a0ea77da70fe4b724153107a2c2d4b5e63ed",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.EMAIL_SENDING": [
+   {
+    "version": 1,
+    "value_sha256": "07f937c61388febd524a1c5e086505b330c439c7724bb4ed9114ca07d4832be4",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.HOMEDATA_DIMENSIONS": [
+   {
+    "version": 1,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.IDENTITY_CHECK": [
+   {
+    "version": 1,
+    "value_sha256": "e745cda179b2e66253099b73413ea1865f851673fbd60a58d4432f009b9baaa7",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.INBOUND_EMAIL": [
+   {
+    "version": 1,
+    "value_sha256": "5454b1137aac31b09041b6326e2a7d7e12d285e4d49fda3028a5826be0445c00",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.POSTCODE_CHECK": [
+   {
+    "version": 1,
+    "value_sha256": "25b0bc3185bccabd55f293195a8849d29325ffab91484ab6ea42dff4b40b6c79",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.BCIS": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.CARE_INSPECTORATE": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.CH_COMPANY": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.CH_PSC": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.CIW": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.CQC": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.EPC": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.HMLR_INSPIRE": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.HMLR_PPD": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.HMLR_TITLE": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.HOMEDATA_ADDRESS": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.HOMEDATA_BOUNDARY": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.HOMEDATA_PLANNING": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.ONS_POSTCODE": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.PLANNING": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.POSTCODES_IO": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "integrations.REGISTER_SWITCHES.VOA": [
+   {
+    "version": 1,
+    "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "shared.KEEP_ORIGINALS": [
+   {
+    "version": 1,
+    "value_sha256": "30b2de511cd90e4615f3d68c7e42f8cfa2f11949f5038760aef4cfcca28a0217",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "shared.KEEP_ORIGINALS_TEST_WEBSITE": [
+   {
+    "version": 1,
+    "value_sha256": "a20a6e8228b16384755bcb4f0ba07807df4877e2679962c930b4f720a9ebc657",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "shared.money.asbestos_lrr": [
+   {
+    "version": 1,
+    "value_sha256": "20613b49e36368fd65bb7d40868fc10d809792ecdf72c829eab2f51560ce17e4",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "shared.money.grant_untraced_full": [
+   {
+    "version": 1,
+    "value_sha256": "20613b49e36368fd65bb7d40868fc10d809792ecdf72c829eab2f51560ce17e4",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "shared.money.legal_fees_in_base": [
+   {
+    "version": 1,
+    "value_sha256": "20613b49e36368fd65bb7d40868fc10d809792ecdf72c829eab2f51560ce17e4",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "shared.money.long_life_test": [
+   {
+    "version": 1,
+    "value_sha256": "20613b49e36368fd65bb7d40868fc10d809792ecdf72c829eab2f51560ce17e4",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "shared.money.s185_plus_own_s25": [
+   {
+    "version": 1,
+    "value_sha256": "20613b49e36368fd65bb7d40868fc10d809792ecdf72c829eab2f51560ce17e4",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "shared.money.s33b_aggregation": [
+   {
+    "version": 1,
+    "value_sha256": "20613b49e36368fd65bb7d40868fc10d809792ecdf72c829eab2f51560ce17e4",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "shared.money.transaction_tax_in_base": [
+   {
+    "version": 1,
+    "value_sha256": "20613b49e36368fd65bb7d40868fc10d809792ecdf72c829eab2f51560ce17e4",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "shared.money.vat_shared_with_land": [
+   {
+    "version": 1,
+    "value_sha256": "20613b49e36368fd65bb7d40868fc10d809792ecdf72c829eab2f51560ce17e4",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "survey.legal.fvr_requires_past_owner_claim": [
+   {
+    "version": 1,
+    "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "survey.legal.lease_route": [
+   {
+    "version": 1,
+    "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "survey.legal.non_taxpayer_seller": [
+   {
+    "version": 1,
+    "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "survey.legal.s185_earlier_cap": [
+   {
+    "version": 1,
+    "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "survey.legal.s187a_6b_statements_route": [
+   {
+    "version": 1,
+    "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ],
+  "survey.legal.s35_seller_not_entitled": [
+   {
+    "version": 1,
+    "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+    "effective_from": "2026-11-10",
+    "recorded": "2026-11-10"
+   }
+  ]
+ }
+}

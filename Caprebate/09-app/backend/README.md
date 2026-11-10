@@ -36,10 +36,18 @@ it through a port the higher one fills, and each module declares its own permiss
 | `src/styles/` | the one stylesheet, `site.css` |
 | `test/` | the tests, in the same folders as `src/` and named by feature; shared helpers at the top; `fixtures/` holds their files |
 | `migrations/` | the database changes, in order (never edited once applied) |
-| `architecture/` | the module map, the table owners and the boundary check's baseline, read by `tools/boundaries.cjs` |
+| `architecture/` | the module map, the table owners and the boundary check's baseline, read by `tools/boundaries.cjs`; and the rules lock, `rules-lock.json` (Phase 161m) |
 | `tools/` | the checks (`npm run check`), the demo server and helper scripts |
 | `copies/` | copies of files from outside the app it needs to run (kept equal by `tools/app-copies.cjs`) |
 | `docs/` | the changelog of notes that were in the code, and the old and new test names |
+
+**Rules are versioned data (Phase 161m).** Every tax reading and switch is an entry in its area's rules register,
+`src/<area>/logic/rules.ts` (what a rule is: `src/shared/rules-register.ts`). To change one: change its value (or the
+switch where its code is), raise its `version`, give the date it takes effect from and say why in `change`, then run
+`node tools/rules-record.ts` and commit the lock with it. `test/rules/rules-register.test.ts` fails a value changed
+under the same version. Every sealed estimate, approved pack, invoice and case stamp records the engine's version and
+every rule's version (`versions_json`, migration 122), so its figures never move. Admin sees every rule at
+`/staff/rules`, read only.
 
 The specs and guides are in `09-app/docs/`: the Developer Spec, the architecture, the admin and user guide, the CRM
 disposition, the live runbook, the go-live checklist, the key file set-up and how the calculator reaches the page.

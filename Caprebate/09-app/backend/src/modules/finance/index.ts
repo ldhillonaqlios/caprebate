@@ -24,3 +24,5 @@ import './nav.ts';
 export { listInvoiceCreditNotesRecordedAtBasisRecordedByByInvoiceId, listInvoicePaymentsRecordedAtVoidedAtRecordedByByInvoiceId, listInvoicesIdByBusinessIdWithoutClaim, listInvoicesIdKindRaisedByByClaimId, listInvoiceNumbersSeqInvoiceIdBySeqLike, listInvoicesIdFeeByClaimIds, INVOICE_NUMBER_SEARCH } from './data.ts';
 // What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
 import './claims-ports.ts';
+// Phase 161m: its rules register (logic/rules.ts), and every area's below it.
+export { FINANCE_RULES, rulesThroughFinance } from './logic/rules.ts';

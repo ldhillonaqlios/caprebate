@@ -43,3 +43,7 @@ export type { Env } from './test-website.ts';
 export type { ExitKey, ProcedureKey, Progress, StageKey } from './stages.ts';
 export { dateField, has, requiredText, textField, words } from './form-fields.ts';
 export type { Check, Fields as FormFields, Vocab } from './form-fields.ts';
+// Phase 161m: the rules registers (what a rule is, the lock, what a sealed result records) and the shared area's register.
+export { ENGINE_PACKAGE_PATH, FIRST_RECORDED, FIRST_RECORDED_ON, RulesRegisterError, canonicalValue, defineRules, engineVersion, lockProblems, mapEntries, readResultVersions, recordInLock, resultVersions, ruleValueHash, settingsOf, switchEntry, versionChanges } from './rules-register.ts';
+export type { LockVersion, ResultVersions, RuleEntry, RuleValue, RulesLock, VersionChange } from './rules-register.ts';
+export { MONEY_READING_NAMES, SHARED_RULES, rulesThroughShared } from './logic/rules.ts';

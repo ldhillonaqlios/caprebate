@@ -70,6 +70,9 @@ describe('F31 — staff open a survey job from the claim at Survey, and it seals
     }
     assert.equal(e['basis'], SO.FUNNEL_CEILING);
     assert.match(String(e['estimate_hash']), /^[0-9a-f]{64}$/);
+    // Phase 161m: the engine's version and every rule's, sealed with it, and never changed after (migration 122).
+    assert.deepEqual(JSON.parse(String(e['versions_json'])), JSON.parse(JSON.stringify(resultVersions(rulesThroughSurvey()))));
+    assert.throws(() => app.db.run('UPDATE estimates SET versions_json = ? WHERE assessment_id = ?', ['{"engine":null,"rules":{}}', c.assessment]), /never change/);
     const a = app.audit.entries().filter((x) => x.kind === 'SURVEY_JOB_OPENED');
     assert.equal(a.length, 1);
     // PHASE 158d: read without the job's random id, which can itself contain "255" (a flaky failure on 8 Oct 2026).
@@ -420,6 +423,8 @@ describe('F29 — ST at the start of a name is a saint', () => {
 import { issuedLine } from '../../src/modules/portal/portal-dashboard.ts';
 import { type PipelineClaim, raiseBusinessStage } from '../../src/modules/claims/index.ts';
 import * as clientsDoor from '../../src/modules/clients/index.ts';
+import { resultVersions } from '../../src/shared/index.ts';
+import { rulesThroughSurvey } from '../../src/modules/survey/index.ts';
 
 describe('F40 — what the portal says when we issue a deliverable', () => {
   test('"We issued your client report", not "your The client report"', () => {

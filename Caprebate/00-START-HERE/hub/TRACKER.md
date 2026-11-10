@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -14,7 +14,7 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 363 |
+| Done | 364 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -1265,7 +1265,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-41 items.
+40 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1534,14 +1534,6 @@
 - Note 2026-11-06 (Developer question pack, 6 Nov 2026): Written at Lakhbir's request after Phase 161g: where each audit finding stands (with its pull request), twenty questions for the developer (D1-D4 checking the fixes, D5-D12 the live server for Phase 161h, D13-D14 going live, D15-D20 the code after go-live) and what is still to do. D8, D9 and D18 are Word questions 155, 157 and 286. Lakhbir sends it; the answers go into Phase 161h. OneDrive only (the repository is public).
 - Note 2026-11-07 (Phase 161h): No answers back, so 161h built our recommendations for D2 and D5-D12; new finding for D6: Turso's nearest place to London is Ireland. Runbook: 09-app/deploy/LIVE-RUNBOOK.md.
 
-### Phase 161m - Rules as versioned data: rules registers, the engine's version, and versions on every sealed result (Lakhbir, 6 Nov 2026)
-
-`13486967146` · **Ready - Claude can build** · owner Claude
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-06 (Planning, 6 Nov 2026): Lakhbir asked for a structure that lets one thing change without breaking others. The target structure, its seven rules and the measurements are in 09-app/ARCHITECTURE.md; the phase is in ACTION-PLAN.md and on the run sheet.
-- Note 2026-11-06 (Planning): Order changed 6 Nov 2026 (Lakhbir: "review all the phases see exactly what can be run before going live, restructure them"): 161h, 161h1, 161i, 161j, 161k, 161l and 161m all run before go-live, none waits on a person; then the sweep (162) out of order, then 161n goes live once its gate is open (board 13488910486), then the sweep again before the first client. Same text in ACTION-PLAN.md and on the run sheet.
-
 ### Phase 161n - Go live: the gate (people's approvals and purchases), then switch the live website on and prove it (Lakhbir, 6 Nov 2026)
 
 `13488910486` · **Ready - Lakhbir action** · owner Lakhbir
@@ -1554,7 +1546,7 @@
 
 ## Z · Complete / Not Applicable
 
-363 items.
+364 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3797,6 +3789,15 @@
 - Note 2026-11-10 (Phase 161l1): Written by Phase 161l1 for the last 67 breaks: the joins now splittable through the clients door, the joins on higher owners, 15 pairs still pointing up, 8 imports round a door, the routes files and lent parts. The block is in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-10 (Phase 161l2): Done: the boundary check at 0 breaks of every rule, no cycle between areas; every borrowed file split by owner and deleted; seven tables to the areas that write them; named ports in place of the router's lent parts; back end 4,053 (the 4,018 the same, plus 35). Finance's and admin's routes files and the test-website sign-in check are in the sweep. PR on GitHub.
 - Note 2026-11-10 (Phase 161l2): Merged: PR 96 into main (da450ca) on Lakhbir's yes in the chat; the run sheet's 161l2 block deleted. Next: Phase 161m.
+
+### Phase 161m - Rules as versioned data: rules registers, the engine's version, and versions on every sealed result (Lakhbir, 6 Nov 2026)
+
+`13486967146` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-06 (Planning, 6 Nov 2026): Lakhbir asked for a structure that lets one thing change without breaking others. The target structure, its seven rules and the measurements are in 09-app/ARCHITECTURE.md; the phase is in ACTION-PLAN.md and on the run sheet.
+- Note 2026-11-06 (Planning): Order changed 6 Nov 2026 (Lakhbir: "review all the phases see exactly what can be run before going live, restructure them"): 161h, 161h1, 161i, 161j, 161k, 161l and 161m all run before go-live, none waits on a person; then the sweep (162) out of order, then 161n goes live once its gate is open (board 13488910486), then the sweep again before the first client. Same text in ACTION-PLAN.md and on the run sheet.
+- Note 2026-11-10 (Phase 161m): Done: rules registers in each area (72 rules), the lock, the engine's version with the calculator, versions on every sealed estimate, pack, invoice and case stamp (migration 122), Admin's Rules page; back end 4,072; PR on GitHub, Lakhbir merges. Nine one-way rules carried to the sweep (Phase 162).
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 

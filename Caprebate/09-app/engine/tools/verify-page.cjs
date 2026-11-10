@@ -41,6 +41,7 @@
 const fs = require("fs");
 const path = require("path");
 const B = require("./build.cjs");
+const V = require("./engine-version.cjs");
 
 let fails = 0, checks = 0;
 function ok(name) { checks++; console.log("  ok    " + name); }
@@ -83,6 +84,20 @@ function selfTest() {
   const r = page.indexOf("//  RENDERER", w.sectors.gp[1]);
   const outside = page.slice(0, r) + "//  RENDERER (planted, outside the calculator)" + page.slice(r + "//  RENDERER".length);
   expect("an edit outside the calculator (a renderer banner) passes", outside, false);
+
+  /* section 6 (Phase 161m): a calculator change without a new engine version is RED */
+  const st = V.readState();
+  const vexpect = (name, state, wantRed) => { const p = V.versionProblems(state); cases.push([name, wantRed ? p.length > 0 : p.length === 0, p]); };
+  vexpect("the engine's version as it is passes", st, false);
+  const files = V.calculatorFiles();
+  const shared2 = Object.assign({}, files, { "shared.js": files["shared.js"].replace(/\b0\.(\d)/, (m, d) => "0." + (d === "9" ? "8" : "9")) });
+  vexpect("a calculator change with the same engine version is RED", Object.assign({}, st, { hash: V.calculatorHash(shared2) }), true);
+  const bumped = Object.assign({}, st.versions, { versions: st.versions.versions.concat([{ version: "9.9.9", calculator_sha256: V.calculatorHash(shared2), recorded: "2099-01-01" }]) });
+  vexpect("the same change with a new version, recorded, and no change-log heading is RED", Object.assign({}, st, { hash: V.calculatorHash(shared2), pkgVersion: "9.9.9", versions: bumped }), true);
+  vexpect("the same change with a new version, recorded, with its heading passes", Object.assign({}, st, { hash: V.calculatorHash(shared2), pkgVersion: "9.9.9", versions: bumped, changelog: st.changelog + "\n## 9.9.9 - planted\n" }), false);
+  vexpect("a new version in package.json that was never recorded is RED", Object.assign({}, st, { pkgVersion: "9.9.9" }), true);
+  const twice = Object.assign({}, st.versions, { versions: st.versions.versions.concat([st.versions.versions[st.versions.versions.length - 1]]) });
+  vexpect("a version listed twice is RED", Object.assign({}, st, { versions: twice }), true);
 
   /* the page writer puts it right */
   expect("writing the engine into the planted page makes it pass again", B.pageWith(planted, parts), false);
@@ -162,6 +177,13 @@ function main() {
   is("src/calculator/session.d.ts matches the questions",
      fs.existsSync(dtsPath) && fs.readFileSync(dtsPath, "utf8") === B.sessionDts(B.deriveSessionFacts()),
      "run `npm run build:page` in 09-app/engine");
+
+  console.log("\n── 6. The engine's version moves with the calculator (Phase 161m) ──\n");
+
+  const vs = V.readState();
+  const vp = V.versionProblems(vs);
+  is("engine " + vs.pkgVersion + ": the calculator is the one recorded for it, and CHANGELOG.md has its heading",
+     vp.length === 0, vp.join("\n        "));
 
   console.log("\n" + "=".repeat(72));
   console.log("  " + (fails ? "FAILED " + fails + " of " + checks : "verified — " + checks + " checks, 0 failures"));

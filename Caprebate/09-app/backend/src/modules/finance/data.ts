@@ -88,14 +88,14 @@ export function getInvoicesIdByIdClaimId<T extends Row = Row>(db: Db, params: re
 }
 export function insertInvoices(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO invoices (id, business_id, claim_id, kind, claim_value_pence, fee_pence, fee_rate, invoice_status, payment_status, ' +
-    'vat_position, vat_setting_id, vat_pence, invoice_date, due_on, due_basis, fee_basis, fee_warning, raised_by, created_at, entity_type) ' +
-    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
+    'vat_position, vat_setting_id, vat_pence, invoice_date, due_on, due_basis, fee_basis, fee_warning, raised_by, created_at, entity_type, versions_json) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
 }
 export function insertInvoices2(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO invoices (id, business_id, claim_id, kind, claim_value_pence, fee_pence, fee_rate, invoice_status, payment_status, ' +
     'vat_position, vat_setting_id, vat_pence, invoice_date, due_on, due_basis, sent_on, fee_basis, fee_warning, raised_by, created_at, ' +
-    'entity_type, tax_rate, pool_split_main_pence, pool_split_special_pence, period_start) ' +
-    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
+    'entity_type, tax_rate, pool_split_main_pence, pool_split_special_pence, period_start, versions_json) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
 }
 export function updateInvoicesInvoiceStatusCancelledAtById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run("UPDATE invoices SET invoice_status = 'CANCELLED', cancelled_at = ?, cancelled_by = ?, cancel_reason = ? WHERE id = ?", params);
@@ -282,4 +282,8 @@ export function getInvoicesIdBusinessIdByIdClaimId<T extends Row = Row>(db: Db, 
 export function listInvoicesIdBusinessIdByClaimId2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   const rows = withClientName(db, db.all(OWN_INVOICE + 'WHERE i.claim_id IS NULL ORDER BY i.created_at DESC'), 'name');
   return rows.sort((a, b) => sqlOrder(b.created_at, a.created_at) || sqlOrder(a.name, b.name)).slice(0, limitOf(params)) as T[];
+}
+/** Phase 161m: the versions an invoice was raised with (migration 122); null before then. */
+export function getInvoicesVersionsJsonById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT versions_json FROM invoices WHERE id = ?', params);
 }

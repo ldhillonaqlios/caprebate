@@ -58,6 +58,8 @@ import { getBusinessesSectorById, getStaffTasksIdTitleByClaimIdRuleId } from '..
 import { getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn } from '../claims/index.ts';
 import { getInvoiceCreditNotesAVByInvoiceId, getInvoiceNumbersCOALESCEMAXSeqN, getInvoicePaymentsCountByInvoiceIdVoidedAt, getInvoicePaymentsIdInvoiceIdById, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesCountByClaimId, getInvoicesCountByClaimIdKind, getInvoicesIdByIdClaimId, insertInvoiceCreditNotes, insertInvoiceNumbers, insertInvoicePayments, insertInvoices, listInvoiceCreditNotesIdBasisByInvoiceId, listInvoiceCreditNotesInvoiceIdAmountPence, listInvoicePaymentsIdReceivedOnByInvoiceId, listInvoicePaymentsInvoiceIdAmountPenceByVoidedAt, updateInvoiceNumbersStateCancelledAtByInvoiceIdKind, updateInvoicePaymentsVoidedAtVoidedByById, updateInvoicesInvoiceStatusCancelledAtById, updateInvoicesInvoiceStatusSentOnById } from './data.ts';
 import { getClaimsCreatedAtNameById, getClaimsIdBusinessIdById, getInvoicesIdBusinessIdById, listInvoicesIdBusinessId, listInvoicesIdBusinessIdByClaimId } from './data.ts';
+import { resultVersions } from '../../shared/index.ts';
+import { rulesThroughFinance } from './logic/rules.ts';
 
 export type InvoiceDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** `field` is the posted name a refusal is about, where it is about one, so the
@@ -461,7 +463,9 @@ export function raiseInvoice(d: InvoiceDeps, actor: Actor, claim_id: string, inp
   const id = d.newId();
   d.db.tx(() => {
     insertInvoices(d.db, [id, c.business_id, c.id, kind, figure, fee_pence, fee_rate, 'RAISED', 'UNPAID', vat.words, vat.setting_id, vat.vat_pence,
-        today, due_on, due_basis, basis, warning, actor.id, at, entity]);
+        today, due_on, due_basis, basis, warning, actor.id, at, entity,
+        // Phase 161m: the engine's version and every rule's, with the invoice and never after (migration 122).
+        JSON.stringify(resultVersions(rulesThroughFinance()))]);
     const seq = allocateNumber(d.db, 'INVOICE', id, null, actor.id, at);
     // The kind, the number and whether a due date was set — never an amount.
     record(d, actor, 'INVOICE_RAISED', 'invoice', id, 'ALLOWED', {
