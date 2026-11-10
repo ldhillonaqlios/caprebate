@@ -28,7 +28,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { testApp, actor } from '../helpers.ts';
 import { DORMANT_WORDS } from '../../src/integrations/connectors/companies-house.ts';
-import * as W from '../../src/modules/assessment/who-claims.ts';
+import * as W from '../../src/modules/claims/who-claims.ts';
 import * as F4 from '../../src/modules/assessment/funnel4.ts';
 import * as PL from '../../src/modules/crm/pipeline.ts';
 import * as CF from '../claim-fixtures.ts';

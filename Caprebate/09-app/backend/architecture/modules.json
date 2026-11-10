@@ -546,15 +546,15 @@
    "area": "assessment",
    "kind": "other"
   },
-  "src/modules/assessment/allowance-profit-comparison.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
   "src/modules/assessment/allowances.ts": {
    "area": "assessment",
    "kind": "logic"
   },
   "src/modules/assessment/assessment.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/modules/assessment/claimant-role.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -622,11 +622,11 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/modules/assessment/who-claims.ts": {
-   "area": "assessment",
+  "src/modules/claims/actions.ts": {
+   "area": "claims",
    "kind": "logic"
   },
-  "src/modules/claims/actions.ts": {
+  "src/modules/claims/allowance-profit-comparison.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -835,6 +835,10 @@
    "kind": "logic"
   },
   "src/modules/claims/valuation-lock.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/who-claims.ts": {
    "area": "claims",
    "kind": "logic"
   },

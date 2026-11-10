@@ -55,7 +55,7 @@ import { lastContactFor, timelineIfPermitted, type Timeline } from './timeline.t
 import { fireAutomation } from './automation.ts';
 import { claimDocumentsPanel, type ClaimDocumentsPanel, organisationDocumentsPanel, propertyDocumentsPanel, type PlaceDocumentsPanel } from '../claims/index.ts';
 import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from '../claims/index.ts';
-import { propertyTenure, ROLE_LABELS } from '../assessment/index.ts';
+import { propertyTenure, ROLE_LABELS } from '../claims/index.ts';
 import { aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask, type AftercarePanel, type DeliverablesPanel, type FiguresPanel } from '../claims/index.ts';
 import { assembleReleasedFacts, type ReleasedFacts } from '../survey/index.ts';
 import { vocabChoice, vocabLabel } from '../admin/index.ts';
@@ -122,7 +122,7 @@ export const CONTACT_TYPES: Vocab = Object.freeze({
 });
 
 export const TENURES: Vocab = Object.freeze({ FREEHOLD: 'Freehold', LEASEHOLD: 'Leasehold', UNKNOWN: 'Not known' });
-/** How the client holds the building — whose claim it is (src/modules/assessment/who-claims.ts ROLE_LABELS, the same words). */
+/** How the client holds the building — whose claim it is (src/modules/claims/who-claims.ts ROLE_LABELS, the same words). */
 export const CLAIMANT_ROLES: Vocab = Object.freeze({ OWNER_OCCUPIER: 'Owner who uses it', LANDLORD: 'Landlord (lets it out)', TENANT: 'Tenant (rents it)' });
 
 export const PRIOR_CLAIM: Vocab = Object.freeze({ YES: 'Yes', NO: 'No', UNKNOWN: 'Not known' });

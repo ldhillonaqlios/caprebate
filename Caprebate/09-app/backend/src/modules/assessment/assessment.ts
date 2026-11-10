@@ -33,7 +33,7 @@
  * nothing.
  */
 
-import { USE_TO_ROLE } from './who-claims.ts';
+import { USE_TO_ROLE } from './claimant-role.ts';
 import { writeAssessmentEvents } from '../claims/index.ts';
 import { normalisePostcode } from '../../integrations/index.ts';
 import { randomUUID } from 'node:crypto';

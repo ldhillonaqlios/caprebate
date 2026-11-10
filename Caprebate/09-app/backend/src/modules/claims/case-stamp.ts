@@ -62,7 +62,7 @@ import { COMPANY_SEARCH, COMPANY_TYPE_FROM_REGISTER } from '../../integrations/i
 import { ADDRESS_LOOKUP } from '../../integrations/index.ts';
 import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
-import { ALLOWANCE_PROFIT_COMPARISON } from '../assessment/index.ts';
+import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
 import { FUNNEL_SWITCHES } from '../assessment/index.ts';
 import { HOMEDATA_DIMENSIONS } from '../../integrations/index.ts';
 import { REGISTER_SWITCHES } from '../../integrations/index.ts';
@@ -162,7 +162,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   MESSAGE_RETENTION            the message clean-up job           src/modules/crm/message-retention.ts
  *   ENQUIRY_RETENTION            the closed-enquiry clean-up job    src/modules/public-site/enquiry-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/modules/claims/defence-pack.ts
- *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/modules/assessment/allowance-profit-comparison.ts
+ *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/modules/claims/allowance-profit-comparison.ts
  *   HOMEDATA_DIMENSIONS          Homedata's floor-area estimate     src/integrations/connectors/homedata.ts
  *   FUNNEL_SWITCHES.breakeven_is_insufficient_profit
  *                                break-even read as insufficient profit          src/modules/assessment/funnel-session.ts
@@ -205,7 +205,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/modules/clients/message-retention.ts' },
     { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/modules/public-site/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/modules/claims/defence-pack.ts' },
-    { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/modules/assessment/allowance-profit-comparison.ts' },
+    { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/modules/claims/allowance-profit-comparison.ts' },
     { switch: 'HOMEDATA_DIMENSIONS', on: HOMEDATA_DIMENSIONS.enabled, home: 'src/integrations/connectors/homedata.ts' },
     { switch: 'FUNNEL_SWITCHES.breakeven_is_insufficient_profit', on: FUNNEL_SWITCHES.breakeven_is_insufficient_profit, home: 'src/modules/assessment/funnel-session.ts' },
   ];

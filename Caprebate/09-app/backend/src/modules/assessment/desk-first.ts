@@ -21,7 +21,7 @@
  * NOTHING HERE DECIDES: the surveyor records the inspection basis (survey-evidence.ts, chapter 2), and approval waits
  * for that, as before. This is a reading beside it.
  */
-import { isPricePaidLead } from './who-claims.ts';
+import { isPricePaidLead } from '../claims/index.ts';
 import type { Db } from '../../core/index.ts';
 import { checklistView, type ChecklistView } from '../survey/index.ts';
 import { mandatoryDocumentNeeds } from '../claims/index.ts';

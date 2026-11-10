@@ -37,7 +37,7 @@
  * and this file owns how it moves.
  */
 
-import { qualifyingActivityEvidence } from '../assessment/index.ts';
+import { qualifyingActivityEvidence } from '../claims/index.ts';
 import { claimRoutes, legalDeadlineNeed, routesWhy } from '../claims/index.ts';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';

@@ -32,7 +32,7 @@
  *     which can read nothing that is not on that list.
  */
 
-import { registerCompany, yearEndFrom, dormantWarning, propertyTenure, ROLE_LABELS, type YearEndReading } from '../assessment/index.ts';
+import { registerCompany, yearEndFrom, dormantWarning, propertyTenure, ROLE_LABELS, type YearEndReading } from './who-claims.ts';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor, type Obj } from '../../core/index.ts';
@@ -1238,7 +1238,7 @@ export function yearEndKnown(db: Db, c: { id: string; business_id: string }): bo
 }
 
 /** The claim's year end — Companies House's accounting reference date for a company that has one, else
- *  the client's checked answer — with the two compared (src/modules/assessment/who-claims.ts yearEndFrom). */
+ *  the client's checked answer — with the two compared (src/modules/claims/who-claims.ts yearEndFrom). */
 export function yearEndReading(db: Db, business_id: string): YearEndReading {
   const said = approvedClientAnswer(db, business_id, 'year_end');
   return yearEndFrom(said === null ? null : clientYearEnd(said.answer), registerCompany(db, business_id));

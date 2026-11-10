@@ -89,6 +89,9 @@ export { setClientsPorts } from './engaged-pages.ts';
 export type { ClientsPorts, ClientSort, TellDeps, TellResult } from './engaged-pages.ts';
 // Phase 161l2: what finance's VAT reading reads here in place of its joins (src/modules/finance/vat.ts).
 export { listClaimDeliverablesClaimIdFirstIssuedOnByKind, listClaimsIdClaimRefByStage2 } from './data.ts';
+// Who claims, and what the registers already say (moved up from the assessment, Phase 161l2: it reads the claims' properties).
+export { claimantRole, councilAreaOf, floorAreaForSite, isPricePaidLead, pricePaidSale, propertyTenure, qualifyingActivityEvidence, ROLE_LABELS, siteAreaFlag, siteAreaOf } from './who-claims.ts';
+export type { ClaimantRole } from './who-claims.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { claimsAssets, claimsSignoffLink } from './routes.ts';
 // Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
