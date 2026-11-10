@@ -3794,6 +3794,7 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-09 (Phase 161l): Written by Phase 161l for what it could not finish (148 breaks left: the client record owned by the CRM near the top, 22 pairs of modules importing upwards, 110 joins across owners, 16 imports round a door, routes files for four modules, the parts the router lends, the load-order workarounds). The block is in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-10 (Phase 161l1): Done 10 Nov 2026: the joins across owners split by owner wherever the owner sits below (three helpers, a pin test each), the CRM split into a lower area, clients (its 27 tables and the services every module used) and its screens on top, so no module imports the CRM; the boundary check decides type-only imports per statement; the core's backup moved into the outside services; breaks 148 -> 67. The rest is Phase 161l2 (board item 13512253860). PR on GitHub; Lakhbir merges.
+- Note 2026-11-10 (Phase 161l1): Merged 10 Nov 2026 on Lakhbir's yes in the chat: PR #94, merge commit e17d57c on main; the run sheet's 161l1 block deleted on the same yes.
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 
