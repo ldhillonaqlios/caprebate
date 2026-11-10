@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 362 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1536,7 +1536,7 @@
 
 ### Phase 161l2 - The tangle undone, part 3: the last joins through the clients door, the pairs that still point up, and zero breaks (Phase 161l1, 10 Nov 2026)
 
-`13512253860` · **Ready - Claude can build** · owner Claude
+`13512253860` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-10 (Phase 161l1): Written by Phase 161l1 for the last 67 breaks: the joins now splittable through the clients door, the joins on higher owners, 15 pairs still pointing up, 8 imports round a door, the routes files and lent parts. The block is in ACTION-PLAN.md and on the run sheet.
