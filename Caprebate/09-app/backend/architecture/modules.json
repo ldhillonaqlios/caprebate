@@ -490,10 +490,6 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/modules/admin/data-borrowed.ts": {
-   "area": "admin",
-   "kind": "data"
-  },
   "src/modules/admin/data.ts": {
    "area": "admin",
    "kind": "data"
@@ -666,11 +662,19 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/claim-row.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/claims/claim-stage.ts": {
    "area": "claims",
    "kind": "logic"
   },
   "src/modules/claims/client-checks.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/client-ports.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -842,17 +846,13 @@
    "area": "clients",
    "kind": "logic"
   },
-  "src/modules/clients/claim-row.ts": {
+  "src/modules/clients/claims-port.ts": {
    "area": "clients",
    "kind": "logic"
   },
   "src/modules/clients/client-values.ts": {
    "area": "clients",
    "kind": "logic"
-  },
-  "src/modules/clients/data-borrowed.ts": {
-   "area": "clients",
-   "kind": "data"
   },
   "src/modules/clients/data.ts": {
    "area": "clients",
@@ -922,6 +922,10 @@
    "area": "clients",
    "kind": "logic"
   },
+  "src/modules/clients/walkthrough-port.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
   "src/modules/compliance/actions.ts": {
    "area": "compliance",
    "kind": "logic"
@@ -969,10 +973,6 @@
   "src/modules/compliance/compliance.ts": {
    "area": "compliance",
    "kind": "logic"
-  },
-  "src/modules/compliance/data-borrowed.ts": {
-   "area": "compliance",
-   "kind": "data"
   },
   "src/modules/compliance/data.ts": {
    "area": "compliance",
@@ -1126,6 +1126,10 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/crm/report-acceptance-port.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
   "src/modules/crm/routes.ts": {
    "area": "crm",
    "kind": "routes"
@@ -1133,6 +1137,10 @@
   "src/modules/crm/search.ts": {
    "area": "crm",
    "kind": "logic"
+  },
+  "src/modules/crm/split-reads.ts": {
+   "area": "crm",
+   "kind": "data"
   },
   "src/modules/crm/staff-dashboard.ts": {
    "area": "crm",
@@ -1185,10 +1193,6 @@
   "src/modules/finance/claims-ports.ts": {
    "area": "finance",
    "kind": "logic"
-  },
-  "src/modules/finance/data-borrowed.ts": {
-   "area": "finance",
-   "kind": "data"
   },
   "src/modules/finance/data.ts": {
    "area": "finance",
@@ -1249,6 +1253,10 @@
   "src/modules/portal/client-layout.ts": {
    "area": "portal",
    "kind": "page"
+  },
+  "src/modules/portal/crm-ports.ts": {
+   "area": "portal",
+   "kind": "logic"
   },
   "src/modules/portal/data-borrowed.ts": {
    "area": "portal",
@@ -1374,6 +1382,10 @@
    "area": "survey",
    "kind": "logic"
   },
+  "src/modules/survey/client-ports.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
   "src/modules/survey/costing/cost-model.cjs": {
    "area": "survey",
    "kind": "other"
@@ -1381,10 +1393,6 @@
   "src/modules/survey/costing/cost-model.d.cts": {
    "area": "survey",
    "kind": "other"
-  },
-  "src/modules/survey/data-borrowed.ts": {
-   "area": "survey",
-   "kind": "data"
   },
   "src/modules/survey/data.ts": {
    "area": "survey",

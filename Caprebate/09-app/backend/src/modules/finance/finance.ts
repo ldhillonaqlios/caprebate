@@ -63,7 +63,7 @@ import {
 import { formatPence } from '../../shared/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
 import { getInvoicesIdBusinessIdById3, updateInvoicesInvoiceStatusPaymentStatusById } from './data.ts';
-import { getInvoicesIdBusinessIdByIdClaimId, listInvoicesIdBusinessIdByClaimId2 } from './data-borrowed.ts';
+import { getInvoicesIdBusinessIdByIdClaimId, listInvoicesIdBusinessIdByClaimId2 } from './data.ts';
 
 export { NotFoundAsRefusal };
 

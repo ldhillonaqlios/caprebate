@@ -37,3 +37,5 @@ export type { F4Screen } from './funnel4.ts';
 export { ADDRESS_PAGE_CSP, assessmentAssets, assessmentRoutes, contactValueProblem } from './routes.ts';
 // Phase 161l1: what the CRM reads here in place of its joins (src/modules/crm/dashboard.ts, introducers.ts, claim-lists.ts).
 export { listEstimatesQualifyingExpenditurePenceByAssessmentIds } from './data.ts';
+// Phase 161l2: what the CRM reads here in place of the client record's borrowed joins (src/modules/crm/split-reads.ts).
+export { getAssessmentLineById, getAssessmentsFirstSubmittedAtByBusinessId, listAssessmentLines, listAssessmentsIdShownByIds } from './data.ts';

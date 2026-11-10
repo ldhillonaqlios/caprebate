@@ -78,7 +78,7 @@
   "engagement_sign_links": "claims",
   "engagement_signatures": "claims",
   "engagements": "claims",
-  "enquiry_checks": "public-site",
+  "enquiry_checks": "clients",
   "estimates": "assessment",
   "fact_approvals": "claims",
   "fee_discounts": "finance",

@@ -5,6 +5,8 @@
  * ran before, moved here with its text unchanged; a caller's row type stays with the caller (the type argument).
  */
 import type { Db, Param, Row } from '../../core/index.ts';
+// The client record's contacts and organisations (clients, below this module), read through its front door (Phase 161l2).
+import { byId, getContactsBusinessIdById, idsOf, listBusinessesIdNameByIds, listContactsIdFullNameByIds } from '../clients/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -522,4 +524,62 @@ export function listRecordKindClockRows<T extends Row = Row>(db: Db, kind: strin
 // sqlite_master: the trigger that blocks deleting from a table, if there is one (the retention list says so)
 export function getSqliteMasterNameByTblName<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>("SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = ? AND upper(sql) LIKE '%BEFORE DELETE%'", params);
+}
+
+/*
+ * Phase 161l2: THE READS THAT JOINED THE CLIENT RECORD, SPLIT. Each statement below once joined this module's rows to the
+ * contacts or organisations, which are the client record's (src/modules/clients/, below this module). Now this module
+ * reads its own rows, with the other row's id standing where the joined column stood, and the client record's door gives
+ * that column, put in its place: the same rows, in the same order, with the same keys
+ * (test/compliance/borrowed-split-161l2.test.ts keeps each old statement and compares).
+ */
+/** Puts the client record's column in place of the id at `key`. An inner JOIN (inner: true) drops a row it finds nothing for. */
+function putInPlace<T extends Row>(rows: readonly Row[], key: string, found: Map<string, Row>, column: string, inner: boolean): T[] {
+  const out: T[] = [];
+  for (const r of rows) {
+    const id = r[key];
+    const hit = typeof id === 'string' ? found.get(id) : undefined;
+    if (hit === undefined && inner) continue;
+    out.push({ ...r, [key]: hit === undefined ? null : hit[column] ?? null } as T);
+  }
+  return out;
+}
+function contactNames(db: Db, rows: readonly Row[], key: string): Map<string, Row> {
+  return byId(listContactsIdFullNameByIds<{ id: string } & Row>(db, [idsOf(rows.map((r) => r[key]))]));
+}
+
+// cdd_beneficial_owners, each with its contact's name (was: JOIN contacts c ON c.id = o.contact_id)
+export function listCddBeneficialOwnersIdContactIdByCheckId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = db.all('SELECT o.id, o.contact_id, o.contact_id AS contact, o.basis_of_control, o.identified_from, o.psc_decision_id, o.verified_how ' +
+    'FROM cdd_beneficial_owners o WHERE o.check_id = ? ORDER BY o.recorded_at', params);
+  return putInPlace<T>(rows, 'contact', contactNames(db, rows, 'contact'), 'full_name', true);
+}
+
+// cdd_checks, each with its organisation's name (was: JOIN businesses b ON b.id = k.business_id ... LIMIT 500). Every
+// check is read, those whose organisation is found kept, then the first 500: what the join's LIMIT kept.
+export function listCddChecksIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = db.all('SELECT k.id, k.business_id, k.business_id AS organisation, k.claimant_type, k.state, k.completed_at FROM cdd_checks k ' +
+    'ORDER BY k.created_at DESC', params);
+  const names = byId(listBusinessesIdNameByIds<{ id: string } & Row>(db, [idsOf(rows.map((r) => r.organisation))]));
+  return putInPlace<T>(rows, 'organisation', names, 'name', true).slice(0, 500);
+}
+
+// identity_checks, each with its contact's name (was: JOIN contacts c ON c.id = i.contact_id)
+export function listIdentityChecksIdContactByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = db.all('SELECT i.id, i.contact_id AS contact, i.sent_at, i.link, i.cdd_check_id, i.sent_by FROM identity_checks i ' +
+    'WHERE i.business_id = ? ORDER BY i.sent_at DESC', params);
+  return putInPlace<T>(rows, 'contact', contactNames(db, rows, 'contact'), 'full_name', true);
+}
+export function listIdentityChecksIdContactByCddCheckId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = db.all('SELECT i.id, i.contact_id AS contact, i.sent_at, i.link, i.cdd_check_id, i.sent_by FROM identity_checks i ' +
+    'WHERE i.cdd_check_id = ? ORDER BY i.sent_at DESC', params);
+  return putInPlace<T>(rows, 'contact', contactNames(db, rows, 'contact'), 'full_name', true);
+}
+
+// rights_requests, with the organisation of the person who asked (was: LEFT JOIN contacts c ON c.id = r.contact_id)
+export function getRightsRequestsRefReceivedAtById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const r = db.get('SELECT r.request_ref AS ref, r.received_at, r.contact_id AS business_id FROM rights_requests r WHERE r.id = ?', params);
+  if (r === undefined) return undefined;
+  const contact = typeof r.business_id === 'string' ? getContactsBusinessIdById<{ business_id: unknown }>(db, [r.business_id]) : undefined;
+  return { ...r, business_id: contact === undefined ? null : contact.business_id ?? null } as Row as T;
 }

@@ -58,3 +58,5 @@ import './events.ts';
 import './nav.ts';
 // What the modules below ask the CRM (the ports they own, Phase 161l1). Last, as it reaches the module's own files.
 import './ports.ts';
+// The port the client portal fills as it loads (Phase 161l2: the client's acceptance of the report).
+export { setReportAcceptanceReader } from './report-acceptance-port.ts';

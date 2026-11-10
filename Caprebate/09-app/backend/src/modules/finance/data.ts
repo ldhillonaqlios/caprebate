@@ -6,6 +6,9 @@
  */
 import type { Db, Param, Row } from '../../core/index.ts';
 import { fillUser, fillUsers } from '../../core/index.ts';
+// The claims, and the organisations (the client record's), read through their front doors (Phase 161l2).
+import { listClaimsIdBusinessIdStageClaimRefByIds } from '../claims/index.ts';
+import { byId, getBusinessesNameById, getBusinessesSectorById, idsOf, listBusinessesIdNameByIds, sqlOrder } from '../clients/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -178,7 +181,7 @@ export function listInvoicePaymentsIdReceivedOnByInvoiceId<T extends Row = Row>(
 }
 
 // FOR THE CRM (Phase 161l1): its statements that joined these tables to the core's users or the audit log now read
-// here and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts).
+// here and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts, emptied in Phase 161l2).
 export function listInvoiceCreditNotesRecordedAtBasisRecordedByByInvoiceId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT c.recorded_at, c.basis, n.seq, c.recorded_by FROM invoice_credit_notes c LEFT JOIN invoice_numbers n ON n.credit_note_id = c.id ' +
     'WHERE c.invoice_id = ? ORDER BY c.recorded_at', params);
@@ -210,4 +213,76 @@ export const INVOICE_NUMBER_SEARCH =
   "WHERE n.kind = 'INVOICE' AND (n.seq = ? OR printf('%06d', n.seq) LIKE ?) AND i.claim_id IS NOT NULL ORDER BY n.seq ASC";
 export function listInvoiceNumbersSeqInvoiceIdBySeqLike<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>(INVOICE_NUMBER_SEARCH, params);
+}
+
+/*
+ * Phase 161l2: THE INVOICES AND CLAIMS THAT JOINED THE ORGANISATION, SPLIT (from this module's borrowed file). Each
+ * statement joined the organisation (businesses), the client record's (src/modules/clients/, below finance; not the
+ * CRM's since Phase 161l1). Now this module reads its own rows, with the organisation's id standing where its name
+ * stood, and the client record's door gives the name, put in its place. The JOIN was an inner one, so a row whose
+ * organisation is not found is left out, and any LIMIT is applied after that, as the join applied it. The claims
+ * through the claims' front door and the users through the core's fillUsers, as Phase 161l1 split them. A JOIN on
+ * claims (invoices.claim_id refers to claims) kept exactly the rows with a claim: claim_id IS NOT NULL.
+ * test/finance/borrowed-split-161l2.test.ts keeps each original statement and compares.
+ */
+type ClaimCols = { id: string; business_id: string; stage: unknown; claim_ref: unknown; created_at: unknown };
+function claimsById(db: Db, ids: readonly unknown[]): Map<string, ClaimCols> {
+  const want = [...new Set(ids.filter((x): x is string => typeof x === 'string'))];
+  return new Map(want.length === 0 ? [] : listClaimsIdBusinessIdStageClaimRefByIds<ClaimCols>(db, [JSON.stringify(want)]).map((c) => [c.id, c]));
+}
+/** The organisation's name in place of its id at `key`; a row whose organisation is not found is left out (the inner JOIN). */
+function withClientName(db: Db, rows: readonly Row[], key: string): Row[] {
+  const names = byId(listBusinessesIdNameByIds<{ id: string; name: unknown }>(db, [idsOf(rows.map((r) => r[key]))]));
+  const out: Row[] = [];
+  for (const r of rows) {
+    const b = typeof r[key] === 'string' ? names.get(r[key] as string) : undefined;
+    if (b !== undefined) out.push({ ...r, [key]: b.name ?? null });
+  }
+  return out;
+}
+/** The invoice rows' claim_ref (read as the claim's id) and raiser and canceller (read as users' ids), put in place. */
+function invoiceRows<T extends Row>(db: Db, rows: readonly Row[]): T[] {
+  const claims = claimsById(db, rows.map((r) => r.claim_ref));
+  return fillUsers(db, rows, { raiser: 'display_name', canceller: 'display_name' })
+    .map((r) => ({ ...r, claim_ref: typeof r.claim_ref === 'string' ? claims.get(r.claim_ref)?.claim_ref ?? null : null }) as Row as T);
+}
+/** The LIMIT ? the joined statement ended with (its last parameter), applied after the rows with no organisation are left out. */
+function limitOf(params: readonly Param[]): number {
+  const n = Number(params[params.length - 1]);
+  return Number.isFinite(n) && n >= 0 ? n : Infinity;
+}
+
+// claims, with the organisation's name or sector
+export function getClaimsCreatedAtNameById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const c = claimsById(db, [params[0]]).get(String(params[0]));
+  const b = c === undefined ? undefined : getBusinessesNameById<{ name: unknown }>(db, [c.business_id]);
+  return c === undefined || b === undefined ? undefined : ({ created_at: c.created_at, name: b.name } as Row as T);
+}
+export function getClaimsIdBusinessIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const c = claimsById(db, [params[0]]).get(String(params[0]));
+  const b = c === undefined ? undefined : getBusinessesSectorById<{ sector: unknown }>(db, [c.business_id]);
+  return c === undefined || b === undefined ? undefined
+    : ({ id: c.id, business_id: c.business_id, claim_ref: c.claim_ref, stage: c.stage, created_at: c.created_at, sector: b.sector } as Row as T);
+}
+
+// invoices on a claim, with the claim's reference, the organisation's name, the number, and who raised and cancelled each
+const CLAIM_INVOICE = 'SELECT i.id, i.business_id, i.claim_id, i.kind, i.claim_value_pence, i.fee_pence, i.fee_rate, i.invoice_status, i.vat_position, i.vat_pence, i.invoice_date, i.due_on, i.due_basis, i.sent_on, i.fee_basis, i.fee_warning, i.cancelled_at, i.cancel_reason, i.created_at, i.entity_type, i.tax_rate, i.pool_split_main_pence, i.pool_split_special_pence, i.period_start, i.claim_id AS claim_ref, i.business_id AS client_name, n.seq, n.state AS number_state, i.raised_by AS raiser, i.cancelled_by AS canceller FROM invoices i LEFT JOIN invoice_numbers n ON n.invoice_id = i.id AND n.kind = \'INVOICE\' ';
+export function getInvoicesIdBusinessIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return invoiceRows<T>(db, withClientName(db, db.all(CLAIM_INVOICE + 'WHERE i.claim_id IS NOT NULL AND i.id = ?', params), 'client_name').slice(0, 1))[0];
+}
+export function listInvoicesIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return invoiceRows<T>(db, withClientName(db, db.all(CLAIM_INVOICE + 'WHERE i.claim_id IS NOT NULL ORDER BY i.invoice_date DESC, n.seq DESC'), 'client_name').slice(0, limitOf(params)));
+}
+export function listInvoicesIdBusinessIdByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return invoiceRows<T>(db, withClientName(db, db.all(CLAIM_INVOICE + 'WHERE i.claim_id = ? ORDER BY i.invoice_date ASC, n.seq ASC', params), 'client_name'));
+}
+// the organisation's own invoices (no claim), with its name
+const OWN_INVOICE = 'SELECT i.id, i.business_id, i.claim_value_pence, i.fee_pence, i.invoice_status, i.payment_status, i.vat_position, i.created_at, i.entity_type, i.tax_rate, i.pool_split_main_pence, i.pool_split_special_pence, i.period_start, i.business_id AS name FROM invoices i ';
+export function getInvoicesIdBusinessIdByIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return withClientName(db, db.all(OWN_INVOICE + 'WHERE i.id = ? AND i.claim_id IS NULL', params), 'name')[0] as T | undefined;
+}
+/** ORDER BY i.created_at DESC, b.name ASC LIMIT ?: the name is the client record's, so the second key is sorted here, after the read. */
+export function listInvoicesIdBusinessIdByClaimId2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = withClientName(db, db.all(OWN_INVOICE + 'WHERE i.claim_id IS NULL ORDER BY i.created_at DESC'), 'name');
+  return rows.sort((a, b) => sqlOrder(b.created_at, a.created_at) || sqlOrder(a.name, b.name)).slice(0, limitOf(params)) as T[];
 }

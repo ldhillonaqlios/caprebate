@@ -30,3 +30,5 @@ export { getClientReportAcceptancesCountByClaimId } from './data.ts';
 export { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH, LETTER_PAGE_CSP, portalConfirmLink, portalEntry, portalSignLink, rangeBasisFor } from './routes.ts';
 // What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
 import './claims-ports.ts';
+// What the CRM asks the portal (its port, src/modules/crm/report-acceptance-port.ts; Phase 161l2). Last, as it reaches the CRM's door.
+import './crm-ports.ts';

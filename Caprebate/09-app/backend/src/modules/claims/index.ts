@@ -112,3 +112,10 @@ export { listClaimContactsIdContactIdLinkedByByClaimIdLinked, listClaimMilestone
 export { getClaimDeliverablesContentHashByClaimIdIssuedReport, listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId, listDocumentsIdDeclaredTypeTypeCodeByBusinessId, listDocumentsIdLogicalDocumentIdVersionNoByIds, listDocumentsUploadedByByBusinessIdSince, listLogicalDocumentsIdTypeCodeVersionByIds } from './data.ts';
 // What the client record asks the claims (its port, src/modules/clients/messages.ts). Last, as it reaches the client record's door.
 import './claim-of-business.ts';
+// Phase 161l2: the claim row and a claim's name for a person (moved up from the client record, src/modules/claims/claim-row.ts),
+// and the claims' half of the client record's statements split by owner (for the CRM's src/modules/crm/split-reads.ts).
+export { claimNaming, claimWords, getClaimsBusinessIdCompanyById, getStaffTasksIdClaimRefByClaimIdIsNextAction, listStaffTasksIdClaimRefByClaimIdIsNextAction, listStaffTasksIdClaimRefByClaimIdIsNextAction2, listStaffTasksIdClaimRefByClaimIdIsNextAction3, listStaffTasksIdClaimRefByClaimIdIsNextAction4, loadClaimRow } from './claim-row.ts';
+export type { ClaimDbRow } from './claim-row.ts';
+export { CLAIM_SEARCH_STATEMENTS, getClaimsFirstIdByBusinessId, getClaimsFirstIdByBusinessIdAssessmentId, getClaimsIdClaimRefPropertyLabelById, getPropertyRowById, listClaimListLines, listClaimsIdByPropertyId, listClaimsIdClaimRefBusinessIdStageByOwnerNull, listClaimsIdClaimRefBusinessIdStageOwner, listClaimsIdClaimRefPropertyLabelByBusinessId, listClaimsIdClaimRefPropertyLabelByIds, listClaimsIdClaimRefPropertyLabelByPropertyId, listClaimsIdCompletedAtByStageClosed, listPropertyRows, listPropertyRowsByBusinessId, searchClaimsFound, searchClaimsOfIdsFound, searchPropertiesFound, searchPropertiesOfBusinessesFound } from './data.ts';
+// What the client record asks the claims (its port, src/modules/clients/claims-port.ts). Last, as it reaches the client record's door.
+import './client-ports.ts';

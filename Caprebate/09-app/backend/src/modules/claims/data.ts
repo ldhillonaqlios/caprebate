@@ -1368,3 +1368,121 @@ export function listSurveyorJobsSurveyorIdBySurveyorIdClaimId<T extends Row = Ro
   const claims = listDocumentLinksClaimIdByLogicalDocumentIdLinked<{ id: string }>(db, params).map((c) => c.id);
   return claims.length === 0 ? [] : listSurveyorJobsSurveyorIdByClaimIds<T>(db, [JSON.stringify(claims)]);
 }
+
+/*
+ * Phase 161l2: THE CLAIMS' AND PROPERTIES' HALF OF THE CLIENT RECORD'S BORROWED STATEMENTS. Each statement once in
+ * src/modules/clients/data-borrowed.ts joined the claims and properties to the client record's organisations, leads,
+ * tasks or the core's users. Here is the claims' half: the claim (and its property: both the claims'), with the other
+ * owner's id standing where each of its columns stood, for the claim row (src/modules/claims/claim-row.ts) and the CRM
+ * (src/modules/crm/split-reads.ts) to put the rest in place. No LIMIT: where the join had one, it is applied after the
+ * rows whose organisation is not found are left out.
+ */
+const CLAIM_ROW = 'SELECT c.id, c.claim_ref, c.business_id, c.property_id, c.assessment_id, c.workstream, c.stage, c.owner_id, c.surveyor_id, c.priority, ' +
+  'c.id AS next_action, c.id AS next_action_due, c.hold_reason, c.lost_reason, c.expected_completion, c.created_at, c.updated_at, c.hold_return_stage, ' +
+  'c.tax_adviser_signoff_at, c.business_id AS business_name, c.owner_id AS owner_name, c.surveyor_id AS surveyor_name, p.label AS property_label, ' +
+  'p.town AS property_town FROM claims c LEFT JOIN properties p ON p.id = c.property_id ';
+export function getClaimRowById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>(CLAIM_ROW + 'WHERE c.id = ?', params);
+}
+export function listClaimRowsByClaimRefAsc<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(CLAIM_ROW + 'ORDER BY c.claim_ref ASC', params);
+}
+export function listClaimRowsByClaimRefDesc<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(CLAIM_ROW + 'ORDER BY c.claim_ref DESC', params);
+}
+export function listClaimRowsByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(CLAIM_ROW + 'WHERE c.business_id = ? ORDER BY c.claim_ref ASC', params);
+}
+export function listClaimRowsByPropertyId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(CLAIM_ROW + 'WHERE c.property_id = ? ORDER BY c.claim_ref ASC', params);
+}
+/** A claim's naming: its organisation (the id, for its name), its property's label and its reference. */
+export function getClaimsBusinessIdCompanyPropertyRefById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT c.business_id, c.business_id AS company, p.label AS property, c.claim_ref AS ref FROM claims c ' +
+    'LEFT JOIN properties p ON p.id = c.property_id WHERE c.id = ?', params);
+}
+/** The claims a task may be about, every one and those with no owner, by reference. */
+export function listClaimsIdClaimRefBusinessIdStageOwner<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.claim_ref, c.business_id, c.stage, c.business_id AS business_name, c.owner_id AS owner_name FROM claims c ORDER BY c.claim_ref ASC', params);
+}
+export function listClaimsIdClaimRefBusinessIdStageByOwnerNull<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.claim_ref, c.business_id, c.stage, c.business_id AS business_name FROM claims c WHERE c.owner_id IS NULL ORDER BY c.claim_ref ASC', params);
+}
+export function listClaimsIdCompletedAtByStageClosed<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT c.id, c.completed_at FROM claims c WHERE c.stage = 'CLOSED'", params);
+}
+/** A claim with its property's label, for a claim named in its organisation's frame. */
+const CLAIM_PLACE = 'SELECT c.id, c.claim_ref, c.business_id, p.label AS property_label FROM claims c LEFT JOIN properties p ON p.id = c.property_id ';
+export function getClaimsIdClaimRefPropertyLabelById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>(CLAIM_PLACE + 'WHERE c.id = ?', params);
+}
+export function listClaimsIdClaimRefPropertyLabelByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(CLAIM_PLACE + 'WHERE c.business_id = ? ORDER BY c.claim_ref', params);
+}
+export function listClaimsIdClaimRefPropertyLabelByPropertyId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(CLAIM_PLACE + 'WHERE c.property_id = ? ORDER BY c.claim_ref', params);
+}
+export function listClaimsIdClaimRefPropertyLabelByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(CLAIM_PLACE + 'WHERE c.id IN (SELECT value FROM json_each(?))', params);
+}
+/** A property's whole row, with its organisation's id where the organisation's name stood. */
+const PROPERTY_ROW = 'SELECT p.id, p.business_id, p.label, p.postcode, p.created_at, p.address_line_1, p.address_line_2, p.town, p.jurisdiction, p.property_type, ' +
+  'p.property_use, p.tenure, p.occupier, p.acquisition_date, p.acquisition_price_pence, p.completion_date, p.disposal_date, p.previous_owner, p.construction_notes, ' +
+  'p.existing_ca_claimed, p.prior_claim_notes, p.updated_at, p.sale_in_prospect, p.claimant_role, p.lease_end_date, p.landlord, p.business_id AS business_name FROM properties p ';
+export function getPropertyRowById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>(PROPERTY_ROW + 'WHERE p.id = ?', params);
+}
+export function listPropertyRows<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(PROPERTY_ROW + 'ORDER BY p.rowid', params);
+}
+export function listPropertyRowsByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(PROPERTY_ROW + 'WHERE p.business_id = ? ORDER BY p.created_at ASC, p.id ASC', params);
+}
+// The global search's statements on the claims' tables (src/modules/crm/search.ts), with the organisation's id where its
+// name stood; the organisation's name is matched by the client record (searchOrganisationNames) and given as a list.
+const PROPERTIES_FOUND =
+  'SELECT p.id, p.business_id, p.label, p.postcode, p.town, p.business_id AS business_name FROM properties p ' +
+  "WHERE lower(p.label) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.address_line_1, '')) LIKE ? ESCAPE '\\' " +
+  "OR lower(COALESCE(p.address_line_2, '')) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.town, '')) LIKE ? ESCAPE '\\' " +
+  "OR replace(lower(COALESCE(p.postcode, '')), ' ', '') LIKE ? ESCAPE '\\' ORDER BY p.label ASC, p.id ASC";
+const PROPERTIES_OF_BUSINESSES_FOUND =
+  'SELECT p.id, p.business_id, p.label, p.postcode, p.town, p.business_id AS business_name FROM properties p ' +
+  'WHERE p.business_id IN (SELECT value FROM json_each(?)) ' +
+  "AND (lower(p.label) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.address_line_1, '')) LIKE ? ESCAPE '\\' " +
+  "OR lower(COALESCE(p.address_line_2, '')) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.town, '')) LIKE ? ESCAPE '\\' " +
+  "OR replace(lower(COALESCE(p.postcode, '')), ' ', '') LIKE ? ESCAPE '\\') ORDER BY p.label ASC, p.id ASC";
+const CLAIMS_FOUND =
+  'SELECT c.id, c.claim_ref, c.business_id, c.stage, c.business_id AS business_name, p.label AS property_label FROM claims c ' +
+  'LEFT JOIN properties p ON p.id = c.property_id ' +
+  "WHERE lower(c.claim_ref) LIKE ? ESCAPE '\\' OR c.business_id IN (SELECT value FROM json_each(?))";
+const CLAIMS_OF_IDS_FOUND =
+  'SELECT c.id, c.claim_ref, c.business_id, c.stage, c.business_id AS business_name, p.label AS property_label FROM claims c ' +
+  'LEFT JOIN properties p ON p.id = c.property_id WHERE c.id IN (SELECT value FROM json_each(?)) ' +
+  "AND (lower(c.claim_ref) LIKE ? ESCAPE '\\' OR c.business_id IN (SELECT value FROM json_each(?)))";
+export function searchPropertiesFound<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(PROPERTIES_FOUND, params);
+}
+export function searchPropertiesOfBusinessesFound<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(PROPERTIES_OF_BUSINESSES_FOUND, params);
+}
+export function searchClaimsFound<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(CLAIMS_FOUND, params);
+}
+export function searchClaimsOfIdsFound<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(CLAIMS_OF_IDS_FOUND, params);
+}
+/** Every statement the search runs on the claims' tables (src/modules/crm/search.ts statements(), for test/core/global-search.test.ts). */
+export const CLAIM_SEARCH_STATEMENTS: readonly string[] = Object.freeze([PROPERTIES_FOUND, PROPERTIES_OF_BUSINESSES_FOUND, CLAIMS_FOUND, CLAIMS_OF_IDS_FOUND]);
+/** The claim list's lines (src/modules/crm/claim-lists.ts), the claims' and properties' columns, by reference, newest first. */
+export function listClaimListLines<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT c.id, c.claim_ref, c.business_id, c.created_at, c.stage, c.workstream, c.owner_id, c.priority, c.expected_completion, ' +
+    'p.label AS property_label, p.property_type, p.jurisdiction, p.postcode, c.assessment_id FROM claims c LEFT JOIN properties p ON p.id = c.property_id ' +
+    'ORDER BY c.claim_ref DESC', params);
+}
+/** An organisation's first claim (by when it was made), on the assessment given, and of any assessment (a backfilled lead's claim). */
+export function getClaimsFirstIdByBusinessIdAssessmentId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT z.id, z.created_at FROM claims z WHERE z.business_id = ? AND z.assessment_id = ? ORDER BY z.created_at, z.id LIMIT 1', params);
+}
+export function getClaimsFirstIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT z.id, z.created_at FROM claims z WHERE z.business_id = ? ORDER BY z.created_at, z.id LIMIT 1', params);
+}

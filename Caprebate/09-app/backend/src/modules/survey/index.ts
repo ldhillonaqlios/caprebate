@@ -50,9 +50,13 @@ export type { ReleasedFacts } from '../../payload.ts';
 import './nav.ts';
 // Who holds a survey job, for the core's port (src/core/assigned-surveyors.ts). Last, as it reaches the module's own data.
 import './assigned-surveyors.ts';
-// Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts, emptied in Phase 161l2).
 export { getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId, listSurveyorCommitmentsCommittedAtJobIdSurveyorIdByClaimId, listSurveyorJobsBusinessIdClaimIdBySurveyorId, listSurveyorJobsIdBusinessIdClaimIdBySurveyorId } from './data.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { surveySignoffLink } from './routes.ts';
 // What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
 import './claims-ports.ts';
+// Phase 161l2: whether a booking is a walk-through, for the client record's port (src/modules/clients/walkthrough-port.ts).
+// Last, as it reaches the client record's door.
+export { getSurveyWalkthroughsXByBookingId } from './data.ts';
+import './client-ports.ts';

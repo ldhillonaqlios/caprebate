@@ -196,3 +196,19 @@ export function listEstimatesQualifyingExpenditurePenceByAssessmentIds<T extends
     '(SELECT COUNT(*) FROM estimates x WHERE x.assessment_id = e.assessment_id) AS n FROM estimates e ' +
     'WHERE e.rowid IN (SELECT MAX(y.rowid) FROM estimates y WHERE y.assessment_id IN (SELECT value FROM json_each(?)) GROUP BY y.assessment_id)', params);
 }
+
+// Phase 161l2: what the CRM reads here in place of the client record's borrowed joins (src/modules/crm/split-reads.ts):
+// the assessment with its organisation's id where the organisation's name stood, the figures shown, and the first one sent.
+const ASSESSMENT_LINE = 'SELECT a.id, a.business_id, a.business_id AS business_name, a.sector, a.submitted_at, a.shown_low_pence, a.shown_high_pence FROM assessments a ';
+export function getAssessmentLineById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>(ASSESSMENT_LINE + 'WHERE a.id = ?', params);
+}
+export function listAssessmentLines<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>(ASSESSMENT_LINE + 'ORDER BY a.submitted_at DESC, a.id DESC', params);
+}
+export function listAssessmentsIdShownByIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, shown_low_pence, shown_high_pence FROM assessments WHERE id IN (SELECT value FROM json_each(?))', params);
+}
+export function getAssessmentsFirstSubmittedAtByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT MIN(x.submitted_at) AS first FROM assessments x WHERE x.business_id = ?', params);
+}
