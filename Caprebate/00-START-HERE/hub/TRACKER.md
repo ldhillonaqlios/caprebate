@@ -3798,6 +3798,8 @@
 - Note 2026-11-06 (Planning, 6 Nov 2026): Lakhbir asked for a structure that lets one thing change without breaking others. The target structure, its seven rules and the measurements are in 09-app/ARCHITECTURE.md; the phase is in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-06 (Planning): Order changed 6 Nov 2026 (Lakhbir: "review all the phases see exactly what can be run before going live, restructure them"): 161h, 161h1, 161i, 161j, 161k, 161l and 161m all run before go-live, none waits on a person; then the sweep (162) out of order, then 161n goes live once its gate is open (board 13488910486), then the sweep again before the first client. Same text in ACTION-PLAN.md and on the run sheet.
 - Note 2026-11-10 (Phase 161m): Done: rules registers in each area (72 rules), the lock, the engine's version with the calculator, versions on every sealed estimate, pack, invoice and case stamp (migration 122), Admin's Rules page; back end 4,072; PR on GitHub, Lakhbir merges. Nine one-way rules carried to the sweep (Phase 162).
+- Note 2026-11-10 (Phase 161m): Merged: PR 98 into main (4b43661), GitHub's checks green. The run sheet's 161m block waits for Lakhbir's yes. Next: the sweep (Phase 162).
+- Note 2026-11-10 (Phase 161m): The run sheet's 161m block deleted on Lakhbir's yes in the chat ("Yes, both"), and the record-only PR 99 merged.
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 
