@@ -28,19 +28,17 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
-import { packJob } from '../survey/index.ts';
-import { approvedVersion, type ApprovalRow, type Snapshot } from '../survey/index.ts';
-import { reportModel, reportPdf, longDate, REPORT_TITLE } from '../survey/index.ts';
-import { freezeReturnContext, returnContext, returnContextFor, returnEntriesCsv } from './return-entries.ts';
-import { voidLine } from './valuation-lock.ts';
-import { recordSignOff } from './claim-record.ts';
+import { packJob } from './surveyor.ts';
+import { approvedVersion, type ApprovalRow, type Snapshot } from './pack-approve.ts';
+import { reportModel, reportPdf, longDate, REPORT_TITLE } from './survey-report.ts';
+// The claim's own rules, through the claims' front door (Phase 161l2: this file came here from the claims).
+import { freezeReturnContext, recordSignOff, returnContext, returnContextFor, returnEntriesCsv, voidLine } from '../claims/index.ts';
 import { postClientMessage } from '../clients/index.ts';
 import { localDate } from '../../shared/index.ts';
-import { poundsWords } from '../survey/index.ts';
+import { poundsWords } from './pack-sums.ts';
 import { getOutboxRById } from '../../integrations/index.ts';
-import { getPackClientNoticesToldAtToldByNameByApprovalId, getPackSignoffRequestsIdApprovalIdByTokenSha256, listPackSignoffRequestsIdApprovalIdByJobId, listSurveyPackApprovalsIdVersionByBusinessIdClaimId } from './data-borrowed.ts';
-import { insertPackClientNotices, insertPackSignoffAnswers, insertPackSignoffRecorded, insertPackSignoffRequests } from '../survey/index.ts';
-import { getTaxAdviserSignoffsCountByApprovalIdRecordedAt } from './data.ts';
+import { getPackClientNoticesToldAtToldByNameByApprovalId, getPackSignoffRequestsIdApprovalIdByTokenSha256, insertPackClientNotices, insertPackSignoffAnswers, insertPackSignoffRecorded, insertPackSignoffRequests, listPackSignoffRequestsIdApprovalIdByJobId, listSurveyPackApprovalsIdVersionByBusinessIdClaimId } from './data.ts';
+import { getTaxAdviserSignoffsCountByApprovalIdRecordedAt } from '../claims/index.ts';
 import { listContactsIdNameByBusinessIdContactType2 } from '../clients/index.ts';
 
 export type SignoffDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };

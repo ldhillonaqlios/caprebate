@@ -17,7 +17,7 @@
  *   5  the surveyor's declaration, their name and RICS number, the fingerprint, and how the report was made
  *
  * Page 1 also shows the site plan, when the version has one: the client's building and the buildings
- * round it, from Ordnance Survey's free maps (src/modules/claims/site-plan.ts). The site boundary (INSPIRE) is never in it
+ * round it, from Ordnance Survey's free maps (src/modules/survey/site-plan.ts). The site boundary (INSPIRE) is never in it
  */
 import { propertyLine } from './survey-pack.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
@@ -29,7 +29,7 @@ import { allowancesFor, allowanceWords, type AllowanceWords } from '../assessmen
 import type { ReturnContext } from '../claims/index.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from '../../shared/index.ts';
 import { minutesWords } from './survey-video.ts';
-import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from '../claims/index.ts';
+import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from './site-plan.ts';
 import { ukDatesIn } from '../../shared/index.ts';
 import { plainDashLines } from '../../shared/index.ts';
 

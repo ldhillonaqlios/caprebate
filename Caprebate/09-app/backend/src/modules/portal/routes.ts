@@ -8,7 +8,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { NotAuthorised, WELCOME_JOBS, can, clientHelp, clientIp, clockOf, dismissWelcome, form, html, inContext, nameSwitches, nav, piecesOf, readBody, redirect, setSubMenu, shellParts, simple, welcomeShown, type Actor, type Db, type WebDeps, type WebRequest, type WebResult } from '../../core/index.ts';
 import { HTML_HEADERS, READ_AND_DELETED, badge, breadcrumb, card, claimRef, clientStageBar, formatShownRange, h, localDate, localStamp, localWhen, page, propertyIn, raw, savedMessage, ukDate, ukDatesIn, welcomeCard, why, zoneNotice, type Safe } from '../../shared/index.ts';
 import { getResearchSourcesCountByBusinessIdState2 } from '../../integrations/index.ts';
-import { ENGAGEMENT_SIGNING, SIGN_WORDS, claimRoutes, clientDeliverables, clientSteps, clientStepsCard, getClaimsPropertyIdByIdBusinessId, getEngagementsStateSignedAtById, letterFacts, letterOptions, letterState, letterSteps, loadLetter, portalReport, portalReportCard, readLines, receivableTypes, shownLetter, signByLink, signEngagement, signLinkFor, signedCopy, signingMissing, startDocumentUpload, updateEngagementsLetterStateViewedAtByIdLetterState, type ClientDeliverable, type ClientStep, type EngagementSigning, type LetterFacts, type RequestView } from '../claims/index.ts';
+import { ENGAGEMENT_SIGNING, SIGN_WORDS, claimRoutes, clientDeliverables, clientSteps, clientStepsCard, getClaimsPropertyIdByIdBusinessId, getEngagementsStateSignedAtById, letterFacts, letterOptions, letterState, letterSteps, loadLetter, readLines, receivableTypes, shownLetter, signByLink, signEngagement, signLinkFor, signedCopy, signingMissing, startDocumentUpload, updateEngagementsLetterStateViewedAtByIdLetterState, type ClientDeliverable, type ClientStep, type EngagementSigning, type LetterFacts, type RequestView } from '../claims/index.ts';
+import { portalReport, portalReportCard } from './report-portal-pages.ts';
 import { activeMeeting, booksATime, publicSlots, reconcileVideoMeeting } from '../clients/index.ts';
 import { clientMessage, clientShareChoices, portalMessagesBody, readPortalSend, recordShareConsentByClient, sendFromPortal, type ClientShareChoice, type ThreadMessage as MessageView } from '../crm/index.ts';
 import { agreementLinks, safeBack } from '../public-site/index.ts';
@@ -209,7 +210,7 @@ async function portalRoutes(
     const joins: Record<string, string> = {};
     for (const b of bks) { const m = b.channel === 'video' ? activeMeeting(db, b.id) : undefined; if (m !== undefined) joins[b.id] = `/call/${m.client_token}`; }
     // The top of the portal as a dashboard (src/modules/portal/portal-dashboard.ts).
-    // The survey report's card leads, once a tax adviser's sign-off has released it (src/modules/claims/report-pages.ts).
+    // The survey report's card leads, once a tax adviser's sign-off has released it (src/modules/portal/report-portal-pages.ts).
     const dashboard = h`${portalReportCard(d.app, business_id, actor)}${portalEvidenceCard(db, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
       publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(/^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('again') ?? '') ? { sentBefore: url.searchParams.get('again') as string } : {}), joins, dashboard, rangeBasis: rangeBasisFor(db, business_id), ...(welcome === undefined ? {} : { welcome }) }));
@@ -224,7 +225,7 @@ async function portalRoutes(
     const r = await handlePortalEvidence({ app: d.app, store: d.store, newId, nav: nav(actor), form, readBody }, req, res, url, method, actor, business_id);
     if (r === 'handled') return 'handled';
   }
-  /* THE CLIENT'S SURVEY REPORT — only the version a tax adviser's sign-off has released (src/modules/claims/report-pages.ts). */
+  /* THE CLIENT'S SURVEY REPORT — only the version a tax adviser's sign-off has released (src/modules/portal/report-portal-pages.ts). */
   /* The client accepts the released report (src/modules/portal/report-accept.ts). */
   if (path === '/portal/report/accept' && method === 'POST') {
     P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does

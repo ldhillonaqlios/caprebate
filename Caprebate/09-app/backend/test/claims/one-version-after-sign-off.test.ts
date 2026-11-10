@@ -28,7 +28,7 @@ import * as L from '../../src/modules/survey/pack-legal.ts';
 import * as A from '../../src/modules/survey/pack-approve.ts';
 import * as EV from '../../src/modules/survey/survey-evidence.ts';
 import * as CH from '../../src/modules/survey/pack-chapters.ts';
-import * as RS from '../../src/modules/claims/report-signoff.ts';
+import * as RS from '../../src/modules/survey/report-signoff.ts';
 import * as RE from '../../src/modules/claims/return-entries.ts';
 import * as E from '../../src/shared/engine.ts';
 import * as PS from '../../src/modules/survey/pack-sums.ts';

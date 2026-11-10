@@ -35,10 +35,16 @@ export { claimDocumentsPanel, claimFileDays, clientFolder, createDocumentRequest
 export { checksPanel, checksPanelIfPermitted, clientSteps, stepDef, tellClient } from './approvals.ts';
 export * as claimFactsModule from './claim-facts.ts';
 export { acquisitionDateReading, amendmentWindowReading, captured, claimantTypeReading, earlyWindowWarning, electionResolved, elementName, factsObj, factsPanel, floorAreaOnRecord, grantsTraced, latestFacts, packGrantsFor, PAYER_CLASSES, releasedFactReader, yearEndKnown } from './claim-facts.ts';
-export { claimOverview, overviewBlock } from './claim-overview.ts';
 export { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock, handleClaimRecord } from './claim-record-pages.ts';
 export { accountantFiles, aftercarePanel, clawbackReading, clientDeliverables, deliverableIssued, deliverableIssuedNeed, DELIVERABLES, deliverablesPanel, figuresPanel, filingRecordedNeed, invoiceWindowNeed, latestSignOff, QUOTE_GAP_REVIEW_PCT, raiseDisposalTask, reportsWindowNeed, signOffRecordNeed, signOffSinceEntry, VARIANCE_CATEGORIES, varianceOf } from './claim-record.ts';
-export { claimReturns, claimRoutes, legalDeadlineNeed, routesWhy } from './claim-route.ts';
+export { claimReturns, claimRoutes, legalDeadlineNeed, returnsOf, routesWhy } from './claim-route.ts';
+// Phase 161l2: the ports the claims own for what they ask the areas above them, each filled by that area's door; and
+// what the survey reads here in place of its joins to the claims' sign-offs.
+export { setAdminAsked, setFinanceAsked, setPortalAsked, setStampedSwitch, setSurveyAsked } from './above-ports.ts';
+export type { AdminAsked, FinanceAsked, PortalAsked, StampedSwitch, SurveyAsked } from './above-ports.ts';
+export { listTaxAdviserSignoffsApprovalIdClaimIdByApprovalIds, sameFigure } from './data.ts';
+// The steps the client is told of (client_step_notices, the claims' table since Phase 161l2), for the portal's take-back.
+export { listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep } from './data.ts';
 export { claimDocumentsBlock, placeDocumentsBlock } from './documents-pages.ts';
 export { handleDocuments } from './documents.routes.ts';
 export { askButton, businessPageHtml, DONE_WORDS, handleEngaged, panel1, panel2, panel3, panel4 } from './engaged-pages.ts';
@@ -46,13 +52,10 @@ export * as engagedModule from './engaged.ts';
 export { addNote, assertClientsSection, missingFacts, NotFoundAsRefusal, openClaimQuestions, sendTaskToPortal, waitingOn } from './engaged.ts';
 export { letterState, letterSteps, signedCopy } from './engagement-send.ts';
 export { MANDATORY_DOCUMENTS, mandatoryDocumentNeeds, missingDocuments, receivedOnClaim } from './mandatory-documents.ts';
-export { handleReportStaff, handleSignoffLink, portalReport, portalReportCard, sendPanel } from './report-pages.ts';
-export { releasedVersion } from './report-signoff.ts';
 export * as researchModule from './research.ts';
 export { assertSignedEngagement, catalogue, registerAttribution } from './research.ts';
 export { ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST, letterFacts, letterOptions, seedSignatureRecord, shownLetter, SIGN_WORDS, signByLink, signEngagement, signingMissing, signLinkFor } from './signing.ts';
 export * as siteAreaInputsModule from './site-area-inputs.ts';
-export { fetchSitePlan, pickWords, sitePlanOf, sitePlanOps, sitePlanSvg } from './site-plan.ts';
 export * as titleByHandModule from './title-by-hand.ts';
 export { acceptClientBytes, DAMAGED_PDF, finishUpload, issuedJob, openKeptOriginal, readerFor, sweepOriginals } from './uploads.ts';
 export type { ControlsView, FeeControls } from './fee-controls.ts';
@@ -74,8 +77,16 @@ export type { MissingFact, WaitingOn } from './engaged.ts';
 export type { MandatoryDocuments } from './mandatory-documents.ts';
 export type { SourcesPanel } from './research.ts';
 export type { ReturnContext } from './return-entries.ts';
+// Phase 161l2: for the survey's report and its sign-off, which came there from the claims.
+export { contextForApproval, csvName, freezeReturnContext, returnContext, returnContextFor, returnEntriesCsv } from './return-entries.ts';
+export { recordSignOff } from './claim-record.ts';
+export { getTaxAdviserSignoffsCountByApprovalIdRecordedAt } from './data.ts';
+// And for the claim's overview, which went to the CRM's claim page.
+export { CAPTURE_SOURCES, FACTS } from './claim-facts.ts';
+export type { FactReading } from './claim-facts.ts';
+export { listClaimFactsIdFactKeyByClaimIdFactKey } from './data.ts';
+export { listClientTasksQuestionAnswerByBusinessIdState } from './data-borrowed.ts';
 export type { EngagementSigning, LetterFacts } from './signing.ts';
-export type { SitePlan } from './site-plan.ts';
 export { getClaimsIdClaimRefByIdBusinessId, listClaimsIdClaimRefByBusinessIdLabel2 } from './data.ts';
 // Phase 161l1: read by ids, for the areas above that joined these tables to their own rows; and for the seed.
 export { getClaimsIdByBusinessIdAssessmentIdNotNull, getClaimsIdByBusinessIdAssessmentIdNull, getDocumentsIdBusinessIdTypeCodeById, listEngagementsBusinessIdByLetterStateSigned, listClaimGrantsAmountPenceByClaimIdPaidTo, listClaimsIdBusinessIdStageClaimRefByIds, listDocumentsIdBusinessIdTypeCodeByBusinessId, listPropertiesIdLabelPostcodeByIds } from './data.ts';
@@ -88,7 +99,7 @@ export type { ToCheck } from './client-checks.ts';
 export { setClientsPorts } from './engaged-pages.ts';
 export type { ClientsPorts, ClientSort, TellDeps, TellResult } from './engaged-pages.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
-export { claimsAssets, claimsSignoffLink } from './routes.ts';
+export { claimsAssets } from './routes.ts';
 // Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
 export { listClaimContactsIdContactIdLinkedByByClaimIdLinked, listClaimMilestonesRecordedAtMilestoneRecordedByByClaimId, listClaimsIdClaimRefOwnerIdByClaimRef, listClaimsIdClaimRefStageByIds, listClaimStageMovesAtKindActorIdByClaimIdNewest, listClaimStageMovesAtKindActorIdByClaimIdOldest, listClaimStageMovesReasonCodeByClaimIdToNegative } from './data.ts';
 export { getClaimDeliverablesContentHashByClaimIdIssuedReport, listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId, listDocumentsIdDeclaredTypeTypeCodeByBusinessId, listDocumentsIdLogicalDocumentIdVersionNoByIds, listDocumentsUploadedByByBusinessIdSince, listLogicalDocumentsIdTypeCodeVersionByIds } from './data.ts';

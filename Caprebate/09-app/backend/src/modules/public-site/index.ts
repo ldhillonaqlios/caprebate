@@ -18,3 +18,5 @@ export type { EnquiryRow } from './enquiries.ts';
 export type { WaitingForm } from './notices-site.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { publicSiteEnquiry, publicSiteRoutes } from './routes.ts';
+// What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
+import './claims-ports.ts';

@@ -27,11 +27,11 @@ import type { SecretStore } from '../../core/index.ts';
 import type { Env } from '../../integrations/index.ts';
 import { lookupsWaivedHere } from '../../integrations/index.ts';
 import { buildingsAround, OS_ATTRIBUTION, PLAN_HALF_M, PLAN_MAX_BUILDINGS, pickBuilding, pointOfPostcode, type Asker } from '../../integrations/index.ts';
-import { packJob } from '../survey/index.ts';
-import { packView } from '../survey/index.ts';
+import { packJob } from './surveyor.ts';
+import { packView } from './survey-pack.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import type { Op, Rgb } from '../../shared/index.ts';
-import { getSitePlansPostcodeHalfMByJobId, insertSitePlans } from '../survey/index.ts';
+import { getSitePlansPostcodeHalfMByJobId, insertSitePlans } from './data.ts';
 
 /** A site plan as kept and as drawn. Rings are [east, north] in DECIMETRES from the postcode's point. */
 export type SitePlan = {

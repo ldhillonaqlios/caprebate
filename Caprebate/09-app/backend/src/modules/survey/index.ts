@@ -18,6 +18,7 @@ export { CHAPTERS, chaptersToRead } from './pack-chapters.ts';
 export { grantRoute } from './pack-grants.ts';
 export type { GrantSwitches, PackGrant } from './pack-grants.ts';
 export { legalVerdictForClaim } from './pack-legal.ts';
+export type { LegalVerdict } from './pack-legal.ts';
 export { parseCsv, taxonomy, TAXONOMY_SECTOR } from './pack-lines.ts';
 export { poundsWords } from './pack-sums.ts';
 export type { Source, Valued } from './pack-sums.ts';
@@ -30,6 +31,11 @@ export { handleSurveyPack } from './survey-pack-pages.ts';
 export { packView } from './survey-pack.ts';
 export type { PackView } from './survey-pack.ts';
 export { longDate, REPORT_TITLE, reportHtml, reportModel, reportPdf } from './survey-report.ts';
+// Phase 161l2: the report's pages and its sign-off came here from the claims (the client's own pages are the portal's).
+export { handleReportStaff, pdfName, sendPdf } from './report-pages.ts';
+export { releasedVersion } from './report-signoff.ts';
+// And what the claim's overview (now the CRM's) read in the claims' borrowed file.
+export { getSurveyorJobsIdSurveyorIdByClaimId } from './data.ts';
 export { sweepVideos } from './survey-video.ts';
 export { handleSurveyor, setSurveyorThreadPanel } from './surveyor-pages.ts';
 export type { SurveyorThreadPanel } from './surveyor-pages.ts';
@@ -42,3 +48,7 @@ import './nav.ts';
 import './assigned-surveyors.ts';
 // Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
 export { getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId, listSurveyorCommitmentsCommittedAtJobIdSurveyorIdByClaimId, listSurveyorJobsBusinessIdClaimIdBySurveyorId, listSurveyorJobsIdBusinessIdClaimIdBySurveyorId } from './data.ts';
+// Its addresses, asked by the router shell; they reach other modules, so they load last.
+export { surveySignoffLink } from './routes.ts';
+// What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
+import './claims-ports.ts';

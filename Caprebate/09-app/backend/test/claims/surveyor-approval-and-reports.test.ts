@@ -219,7 +219,7 @@ describe('F39 — the client accepts the report in the portal', () => {
 
 describe('F39 — the portal’s accept box and its route', () => {
   test('the box offers "I accept this report", then says when this login accepted it', async () => {
-    const { acceptBox } = await import('../../src/modules/claims/report-pages.ts');
+    const { acceptBox } = await import('../../src/modules/portal/report-portal-pages.ts');
     const app = await testApp(); staff(app);
     const c = released(app);
     const me = clientLogin(app, c.business);

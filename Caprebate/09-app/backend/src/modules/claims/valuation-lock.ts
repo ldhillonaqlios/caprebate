@@ -23,10 +23,10 @@
  */
 import type { Db } from '../../core/index.ts';
 import { PROCEDURE_KEYS, anyStageLabel, claimStage } from '../../shared/index.ts';
-import { getSurveyPackApprovalsIdVersionByClaimId } from '../survey/index.ts';
+import { getSurveyPackApprovalsIdVersionByClaimId } from './above-ports.ts';
 import { getClaimStageMovesAtByClaimIdKind2, getClaimStageMovesAtWhoByClaimIdKind, getClaimsStageHoldReturnStageById, updateClaimDeliverablesStateUpdatedByByClaimIdKind2 } from './data.ts';
 import { getClaimDeliverablesCountByClaimIdKind3, getClaimDeliverablesCountByClaimIdKind4, getTaxAdviserSignoffsCountByClaimId } from './data.ts';
-import { getClientReportAcceptancesCountByClaimId } from '../portal/index.ts';
+import { getClientReportAcceptancesCountByClaimId } from './above-ports.ts';
 
 /** Stages at or after which the figures are fixed, in the procedure's order. */
 const SIGNOFF_INDEX = PROCEDURE_KEYS.indexOf('TAX_ADVISER_SIGNOFF');

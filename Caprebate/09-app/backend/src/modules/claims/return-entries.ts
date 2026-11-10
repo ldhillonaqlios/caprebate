@@ -30,7 +30,7 @@ import { acquisitionDateReading, latestFacts } from './claim-facts.ts';
 import { claimantTypeForGate } from '../assessment/index.ts';
 import { allowancesFor, isCompanyType, rateWords, RETURN_YEARS, type AllowanceFacts, type PartResult, type PoolName } from '../assessment/index.ts';
 import { cashBasis, purchasePeriod } from './claim-route.ts';
-import { getSurveyPackApprovalsClaimIdBusinessIdById } from '../survey/index.ts';
+import { getSurveyPackApprovalsClaimIdBusinessIdById } from './above-ports.ts';
 import { getClaimsPropertyIdById, getReturnEntryContextsPeriodStartIsCompanyByApprovalId, insertReturnEntryContexts } from './data.ts';
 import { getBusinessesSectorById } from '../clients/index.ts';
 

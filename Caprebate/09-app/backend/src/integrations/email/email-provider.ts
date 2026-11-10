@@ -559,7 +559,7 @@ type Waiting = {
    link that works once and for 24 hours (src/app/signup.ts), the same sort of secret; only its hash is kept in
    client_signups, so the link still works after its words leave the outbox. The sentence now names all three.
    Migration 060 lets this sentence through for the three kinds; a row 058 blanked keeps 058's sentence for good. */
-/* REPORT_FOR_SIGNOFF too — the accountant's one-use sign-off link (src/modules/claims/report-signoff.ts); migration 073. */
+/* REPORT_FOR_SIGNOFF too — the accountant's one-use sign-off link (src/modules/survey/report-signoff.ts); migration 073. */
 export const SENT_SECRET_KINDS: readonly string[] = Object.freeze(['SIGN_IN_CODE', 'PASSWORD_RESET', 'ACCOUNT_VERIFY', 'REPORT_FOR_SIGNOFF']);
 export const SENT_SECRET_BODY = 'This email held a sign-in code or a one-use link. It was sent, and then its words were removed so the code or link is not kept.';
 

@@ -7,6 +7,7 @@
 import type { Db, Param, Row } from '../../core/index.ts';
 import { fillUser, fillUsers } from '../../core/index.ts';
 import { listRegisterRecordsIdSourceIdBySourceIdBusinessIdEntityIds } from '../../integrations/index.ts';
+import { getSurveyPackLegalAnswersValueJsonAtByPropertyIdClaimIdsG9d, listSurveyorJobsSurveyorIdByClaimIds, listSurveyPackApprovalsIdFingerprintSnapshotJsonByClaimId, listSurveyPackApprovalsSnapshotJsonVersionByPropertyIdClaimIds } from './above-ports.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -1243,4 +1244,108 @@ export function listDocumentLinksLogicalDocumentIdTypeCodeByBusinessId<T extends
     'JOIN logical_documents l ON l.id = k.logical_document_id ' +
     'LEFT JOIN claims c ON c.id = k.claim_id LEFT JOIN properties p ON p.id = k.property_id ' +
     'WHERE l.business_id = ? ORDER BY k.linked_at', params);
+}
+
+// client_step_notices (Phase 161l2: the claims' table; moved from the portal's data file, text unchanged)
+export function insertClientStepNotices(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO client_step_notices (id, business_id, claim_id, step, action, reason, actor_id, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
+}
+export function insertClientStepNotices2(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO client_step_notices (id, business_id, claim_id, step, action, reason, actor_id, at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?)', params);
+}
+export function listClientStepNoticesClaimIdStepByBusinessId2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT claim_id, step, action, at FROM client_step_notices WHERE business_id = ? ORDER BY at ASC, rowid ASC', params);
+}
+export function listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT COALESCE(claim_id, '') AS k, action, at FROM client_step_notices WHERE business_id = ? AND step = ? ORDER BY at ASC, rowid ASC", params);
+}
+
+/*
+ * Phase 161l2: THE CLAIMS' PART OF FOUR READS THAT JOINED THE SURVEY'S TABLES (the packs, their approved versions, their
+ * legal answers, the survey jobs). The survey runs its part through the port it fills (./above-ports.ts); the claims run
+ * the part on their own tables (the claims, the tax adviser's sign-offs, the stage moves, the document links) here, and
+ * the rows are put together as the join gave them. test/claims/survey-reads-by-owner.test.ts keeps each statement as it
+ * was and checks these give its rows.
+ */
+/** The claims on a building. */
+export function listClaimsIdByPropertyId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id FROM claims WHERE property_id = ?', params);
+}
+/** The sign-offs naming any of these approved versions. */
+export function listTaxAdviserSignoffsApprovalIdClaimIdByApprovalIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT approval_id, claim_id, figure_pence, recorded_at FROM tax_adviser_signoffs WHERE approval_id IN (SELECT value FROM json_each(?))', params);
+}
+/** The claims a document is linked to, directly or through its building, while the link stands. */
+export function listDocumentLinksClaimIdByLogicalDocumentIdLinked<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT k.claim_id AS id FROM document_links k WHERE k.logical_document_id = ? AND k.unlinked_at IS NULL AND k.claim_id IS NOT NULL ' +
+    'UNION SELECT c.id FROM document_links k JOIN claims c ON c.property_id = k.property_id ' +
+    'WHERE k.logical_document_id = ? AND k.unlinked_at IS NULL AND k.property_id IS NOT NULL', params);
+}
+
+/**
+ * `s.figure_pence = json_extract(a.snapshot_json, '$.sums.qualifying_pence')` as SQLite decides it: a column of whole
+ * numbers against a value with no type of its own, so text that reads as a number is compared as that number, and
+ * NULL equals nothing.
+ */
+export function sameFigure(figure_pence: unknown, q: unknown): boolean {
+  if (figure_pence === null || figure_pence === undefined || q === null || q === undefined) return false;
+  if (typeof q === 'string' && !/^\s*[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?\s*$/.test(q)) return false;
+  return Number(q) === Number(figure_pence);
+}
+
+type Signoff = { approval_id: string; claim_id: string; figure_pence: number; recorded_at: string };
+function signoffsOf(db: Db, approval_ids: readonly string[]): Signoff[] {
+  return approval_ids.length === 0 ? [] : listTaxAdviserSignoffsApprovalIdClaimIdByApprovalIds<Signoff>(db, [JSON.stringify([...new Set(approval_ids)])]);
+}
+
+/**
+ * The newest approved version on a building's packs (or on a pack naming no building, whose job's claim is on it) that
+ * a sign-off on the job's claim names, recorded since that claim's valuation was last reopened (to one of the stages
+ * given). Was one statement joining the survey's tables to the claims, the sign-offs and the stage moves.
+ * Parameters: [property_id, property_id, the stages as a JSON list].
+ */
+export function getSurveyPackApprovalsSnapshotJsonVersionByPropertyId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const [property_id, , stages] = params;
+  const claims = listClaimsIdByPropertyId<{ id: string }>(db, [property_id ?? null]).map((c) => c.id);
+  const versions = listSurveyPackApprovalsSnapshotJsonVersionByPropertyIdClaimIds<{ id: string; snapshot_json: string; version: number; approved_at: string; claim_id: string }>(
+    db, [property_id ?? null, JSON.stringify(claims)]);
+  const signoffs = signoffsOf(db, versions.map((v) => v.id));
+  const since = new Map<string, string>();
+  const reopened = (claim_id: string): string => {
+    if (!since.has(claim_id)) since.set(claim_id, getClaimStageMovesAtByClaimIdKind2<{ at: string | null }>(db, [claim_id, stages ?? null])?.at ?? '');
+    return since.get(claim_id) ?? '';
+  };
+  const v = versions.find((a) => signoffs.some((s) => s.approval_id === a.id && s.claim_id === a.claim_id && s.recorded_at >= reopened(a.claim_id)));
+  return v === undefined ? undefined : { snapshot_json: v.snapshot_json, version: v.version, approved_at: v.approved_at, claim_id: v.claim_id } as Row as T;
+}
+
+/**
+ * The approved versions on a claim's survey jobs whose figure a sign-off on the claim names, recorded at or after the
+ * time given, newest first. Was one statement joining the survey's tables to the sign-offs. Parameters: [claim_id, since].
+ */
+export function listSurveyPackApprovalsFingerprintSnapshotJsonByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const [claim_id, since] = params;
+  const versions = listSurveyPackApprovalsIdFingerprintSnapshotJsonByClaimId<{ id: string; fingerprint: string; snapshot_json: string; q: unknown }>(db, [claim_id ?? null]);
+  const signoffs = signoffsOf(db, versions.map((v) => v.id)).filter((s) => s.claim_id === claim_id && since !== null && since !== undefined && s.recorded_at >= String(since));
+  return versions.filter((a) => signoffs.some((s) => s.approval_id === a.id && sameFigure(s.figure_pence, a.q)))
+    .map((a) => ({ fingerprint: a.fingerprint, snapshot_json: a.snapshot_json }) as Row as T);
+}
+
+/**
+ * The legal check's newest answer to G9d on a building's packs, or on a pack naming no building whose job's claim is on
+ * it. Was one statement joining the survey's tables to the claims. Parameters: [property_id, property_id].
+ */
+export function getSurveyPackLegalAnswersValueJsonAtByQuestionIdPropertyId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const [property_id] = params;
+  const claims = listClaimsIdByPropertyId<{ id: string }>(db, [property_id ?? null]).map((c) => c.id);
+  return getSurveyPackLegalAnswersValueJsonAtByPropertyIdClaimIdsG9d<T>(db, [property_id ?? null, JSON.stringify(claims)]);
+}
+
+/**
+ * The surveyors with a job on a claim a document is linked to (directly or through its building), each once. Was one
+ * statement joining the survey jobs to the links and the claims. Parameters: [logical_document_id, logical_document_id].
+ */
+export function listSurveyorJobsSurveyorIdBySurveyorIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const claims = listDocumentLinksClaimIdByLogicalDocumentIdLinked<{ id: string }>(db, params).map((c) => c.id);
+  return claims.length === 0 ? [] : listSurveyorJobsSurveyorIdByClaimIds<T>(db, [JSON.stringify(claims)]);
 }
