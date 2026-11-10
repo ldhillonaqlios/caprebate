@@ -1,7 +1,7 @@
 /**
  * PHASE 160j — WHAT THE CLIENT SENT, CHECKED, AND A FACT FOUND WHERE IT STANDS, 20 October 2026
  * (src/modules/claims/client-checks.ts, migration 119, the routes in src/modules/claims/claim-record-pages.ts, the panels in
- * src/modules/claims/claim-overview.ts; asking from the overview returns there, src/modules/claims/engaged-pages.ts).
+ * src/modules/crm/claim-overview.ts; asking from the overview returns there, src/modules/claims/engaged-pages.ts).
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';

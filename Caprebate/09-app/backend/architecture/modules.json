@@ -490,10 +490,6 @@
    "area": "admin",
    "kind": "logic"
   },
-  "src/modules/admin/data-borrowed.ts": {
-   "area": "admin",
-   "kind": "data"
-  },
   "src/modules/admin/data.ts": {
    "area": "admin",
    "kind": "data"
@@ -550,15 +546,15 @@
    "area": "assessment",
    "kind": "other"
   },
-  "src/modules/assessment/allowance-profit-comparison.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
   "src/modules/assessment/allowances.ts": {
    "area": "assessment",
    "kind": "logic"
   },
   "src/modules/assessment/assessment.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/modules/assessment/claimant-role.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -570,17 +566,9 @@
    "area": "assessment",
    "kind": "other"
   },
-  "src/modules/assessment/data-borrowed.ts": {
-   "area": "assessment",
-   "kind": "data"
-  },
   "src/modules/assessment/data.ts": {
    "area": "assessment",
    "kind": "data"
-  },
-  "src/modules/assessment/desk-first.ts": {
-   "area": "assessment",
-   "kind": "logic"
   },
   "src/modules/assessment/fee-gate.ts": {
    "area": "assessment",
@@ -602,15 +590,15 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/modules/assessment/grant-checks.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
   "src/modules/assessment/index.ts": {
    "area": "assessment",
    "kind": "other"
   },
   "src/modules/assessment/long-life-and-remediation.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/modules/assessment/property-writer.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -622,19 +610,15 @@
    "area": "assessment",
    "kind": "routes"
   },
-  "src/modules/assessment/sector-ranges.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
-  "src/modules/assessment/vat.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
-  "src/modules/assessment/who-claims.ts": {
-   "area": "assessment",
+  "src/modules/claims/above-ports.ts": {
+   "area": "claims",
    "kind": "logic"
   },
   "src/modules/claims/actions.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/allowance-profit-comparison.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -643,6 +627,10 @@
    "kind": "page"
   },
   "src/modules/claims/approvals.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/assessed-properties.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -662,10 +650,6 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/modules/claims/claim-overview.ts": {
-   "area": "claims",
-   "kind": "logic"
-  },
   "src/modules/claims/claim-record-pages.ts": {
    "area": "claims",
    "kind": "page"
@@ -675,6 +659,10 @@
    "kind": "logic"
   },
   "src/modules/claims/claim-route.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/claim-row.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -694,13 +682,13 @@
    "area": "claims",
    "kind": "logic"
   },
-  "src/modules/claims/conveyancing-strip.ts": {
+  "src/modules/claims/client-ports.ts": {
    "area": "claims",
    "kind": "logic"
   },
-  "src/modules/claims/data-borrowed.ts": {
+  "src/modules/claims/conveyancing-strip.ts": {
    "area": "claims",
-   "kind": "data"
+   "kind": "logic"
   },
   "src/modules/claims/data.ts": {
    "area": "claims",
@@ -810,14 +798,6 @@
    "area": "claims",
    "kind": "other"
   },
-  "src/modules/claims/report-pages.ts": {
-   "area": "claims",
-   "kind": "page"
-  },
-  "src/modules/claims/report-signoff.ts": {
-   "area": "claims",
-   "kind": "logic"
-  },
   "src/modules/claims/research-subject.ts": {
    "area": "claims",
    "kind": "logic"
@@ -843,10 +823,6 @@
    "kind": "logic"
   },
   "src/modules/claims/site-area-run.ts": {
-   "area": "claims",
-   "kind": "logic"
-  },
-  "src/modules/claims/site-plan.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -878,6 +854,10 @@
    "area": "claims",
    "kind": "logic"
   },
+  "src/modules/claims/who-claims.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
   "src/modules/clients/actions.ts": {
    "area": "clients",
    "kind": "logic"
@@ -894,17 +874,13 @@
    "area": "clients",
    "kind": "logic"
   },
-  "src/modules/clients/claim-row.ts": {
+  "src/modules/clients/claims-port.ts": {
    "area": "clients",
    "kind": "logic"
   },
   "src/modules/clients/client-values.ts": {
    "area": "clients",
    "kind": "logic"
-  },
-  "src/modules/clients/data-borrowed.ts": {
-   "area": "clients",
-   "kind": "data"
   },
   "src/modules/clients/data.ts": {
    "area": "clients",
@@ -974,6 +950,10 @@
    "area": "clients",
    "kind": "logic"
   },
+  "src/modules/clients/walkthrough-port.ts": {
+   "area": "clients",
+   "kind": "logic"
+  },
   "src/modules/compliance/actions.ts": {
    "area": "compliance",
    "kind": "logic"
@@ -983,6 +963,10 @@
    "kind": "logic"
   },
   "src/modules/compliance/breach-names.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
+  "src/modules/compliance/claims-ports.ts": {
    "area": "compliance",
    "kind": "logic"
   },
@@ -1017,10 +1001,6 @@
   "src/modules/compliance/compliance.ts": {
    "area": "compliance",
    "kind": "logic"
-  },
-  "src/modules/compliance/data-borrowed.ts": {
-   "area": "compliance",
-   "kind": "data"
   },
   "src/modules/compliance/data.ts": {
    "area": "compliance",
@@ -1059,6 +1039,10 @@
    "kind": "page"
   },
   "src/modules/crm/claim-lists.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
+  "src/modules/crm/claim-overview.ts": {
    "area": "crm",
    "kind": "logic"
   },
@@ -1170,6 +1154,10 @@
    "area": "crm",
    "kind": "logic"
   },
+  "src/modules/crm/report-acceptance-port.ts": {
+   "area": "crm",
+   "kind": "logic"
+  },
   "src/modules/crm/routes.ts": {
    "area": "crm",
    "kind": "routes"
@@ -1177,6 +1165,10 @@
   "src/modules/crm/search.ts": {
    "area": "crm",
    "kind": "logic"
+  },
+  "src/modules/crm/split-reads.ts": {
+   "area": "crm",
+   "kind": "data"
   },
   "src/modules/crm/staff-dashboard.ts": {
    "area": "crm",
@@ -1226,9 +1218,9 @@
    "area": "finance",
    "kind": "logic"
   },
-  "src/modules/finance/data-borrowed.ts": {
+  "src/modules/finance/claims-ports.ts": {
    "area": "finance",
-   "kind": "data"
+   "kind": "logic"
   },
   "src/modules/finance/data.ts": {
    "area": "finance",
@@ -1258,6 +1250,10 @@
    "area": "finance",
    "kind": "other"
   },
+  "src/modules/finance/vat.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
   "src/modules/portal/accountant-confirm-pages.ts": {
    "area": "portal",
    "kind": "page"
@@ -1270,6 +1266,10 @@
    "area": "portal",
    "kind": "logic"
   },
+  "src/modules/portal/claims-ports.ts": {
+   "area": "portal",
+   "kind": "logic"
+  },
   "src/modules/portal/client-files-pages.ts": {
    "area": "portal",
    "kind": "page"
@@ -1277,6 +1277,10 @@
   "src/modules/portal/client-layout.ts": {
    "area": "portal",
    "kind": "page"
+  },
+  "src/modules/portal/crm-ports.ts": {
+   "area": "portal",
+   "kind": "logic"
   },
   "src/modules/portal/data-borrowed.ts": {
    "area": "portal",
@@ -1306,12 +1310,20 @@
    "area": "portal",
    "kind": "logic"
   },
+  "src/modules/portal/report-portal-pages.ts": {
+   "area": "portal",
+   "kind": "page"
+  },
   "src/modules/portal/routes.ts": {
    "area": "portal",
    "kind": "routes"
   },
   "src/modules/portal/signup.ts": {
    "area": "portal",
+   "kind": "logic"
+  },
+  "src/modules/public-site/claims-ports.ts": {
+   "area": "public-site",
    "kind": "logic"
   },
   "src/modules/public-site/data-borrowed.ts": {
@@ -1386,6 +1398,14 @@
    "area": "survey",
    "kind": "logic"
   },
+  "src/modules/survey/claims-ports.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/client-ports.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
   "src/modules/survey/costing/cost-model.cjs": {
    "area": "survey",
    "kind": "other"
@@ -1394,17 +1414,21 @@
    "area": "survey",
    "kind": "other"
   },
-  "src/modules/survey/data-borrowed.ts": {
-   "area": "survey",
-   "kind": "data"
-  },
   "src/modules/survey/data.ts": {
    "area": "survey",
    "kind": "data"
   },
+  "src/modules/survey/desk-first.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
   "src/modules/survey/evidence-pages.ts": {
    "area": "survey",
    "kind": "page"
+  },
+  "src/modules/survey/grant-checks.ts": {
+   "area": "survey",
+   "kind": "logic"
   },
   "src/modules/survey/index.ts": {
    "area": "survey",
@@ -1463,6 +1487,26 @@
    "kind": "other"
   },
   "src/modules/survey/photo-upload.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/report-pages.ts": {
+   "area": "survey",
+   "kind": "page"
+  },
+  "src/modules/survey/report-signoff.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/routes.ts": {
+   "area": "survey",
+   "kind": "routes"
+  },
+  "src/modules/survey/sector-ranges.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/site-plan.ts": {
    "area": "survey",
    "kind": "logic"
   },

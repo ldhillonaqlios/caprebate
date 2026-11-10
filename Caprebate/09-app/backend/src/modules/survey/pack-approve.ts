@@ -35,7 +35,7 @@ import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { basisOf, checklistView, evidenceByLine, walkthroughsOf } from './survey-evidence.ts';
 import { findingSeen } from '../../shared/index.ts';
 import { videosOf } from './survey-video.ts';
-import { sitePlanOf, type SitePlan } from '../claims/index.ts';
+import { sitePlanOf, type SitePlan } from './site-plan.ts';
 import { valuationLock } from '../claims/index.ts';
 import { getUsersNById } from '../../core/index.ts';
 import { getSurveyPackApprovalsIdVersionByJobIdVersion, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyorDetailsRicsNumberFirmByUserId, insertSurveyPackApprovals, insertSurveyPackReads, insertSurveyorDetails, listSurveyPackApprovalsIdVersionByPackId, listSurveyPackReadsChapterSeqByJobIdUserId } from './data.ts';
@@ -243,7 +243,7 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     vat: { position: v.vat.position, amount_pence: v.vat.amount_pence, counted_pence: v.vat.counted_pence, words: v.vat.words },
     // The planning assumption, frozen with the version (a test reading for the surveyor).
     assumptions: [...REPORT_ASSUMPTIONS],
-    // The site plan as it stood at approval (src/modules/claims/site-plan.ts), so the report never changes after.
+    // The site plan as it stood at approval (src/modules/survey/site-plan.ts), so the report never changes after.
     // Only when there is one: a version approved without a plan keeps the shape every earlier version has.
     ...siteOf(d, v.job.id),
     // Chapters 5, 8, 11, 14, 16 to 20 and 22, as they stood at approval (src/modules/survey/pack-sheets.ts).

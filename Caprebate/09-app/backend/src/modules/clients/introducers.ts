@@ -6,7 +6,8 @@
 import type { Db } from '../../core/index.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { formatPence, localStamp } from '../../shared/index.ts';
-import { listIntroducerFeesIdIntroducerId, listIntroducerFeesIdIntroducerIdByIntroducerId } from './data-borrowed.ts';
+import { listIntroducerFeesIdIntroducerIdByIntroducerIdOwn, listIntroducerFeesIdIntroducerIdOwn, withClaimRefs } from './data.ts';
+import { claimRefsFor } from './claims-port.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -90,9 +91,11 @@ export function feeObj(r: { id: string; business_id: string }): { type: 'introdu
 }
 
 export function feeList(db: Db, actor: Actor, introducer_id?: string): FeeView[] {
-  const rows = introducer_id === undefined
-    ? listIntroducerFeesIdIntroducerId<FeeDbRow>(db)
-    : listIntroducerFeesIdIntroducerIdByIntroducerId<FeeDbRow>(db, [introducer_id]);
+  // Each fee's claim reference is the claims' (asked through the port they fill); a fee whose claim is not there is not listed (Phase 161l2).
+  const own = introducer_id === undefined
+    ? listIntroducerFeesIdIntroducerIdOwn<FeeDbRow>(db)
+    : listIntroducerFeesIdIntroducerIdByIntroducerIdOwn<FeeDbRow>(db, [introducer_id]);
+  const rows = withClaimRefs(own, claimRefsFor(db, own.map((r) => r.claim_ref)));
   return rows.filter((r) => can(actor, 'introducer_fee.read', feeObj(r))).map((r) => ({
     id: r.id,
     firm: { id: r.introducer_id, name: r.firm_name },

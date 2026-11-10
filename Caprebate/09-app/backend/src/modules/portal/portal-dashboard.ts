@@ -25,7 +25,7 @@ import { localClock, localDate, localPartsOf, ukDate, ukDatesIn, WEEKDAY_NAMES }
 import { unreadCount } from '../clients/index.ts';
 import type { ClientStep } from '../claims/index.ts';
 import type { ClientDeliverable } from '../claims/index.ts';
-import { releasedVersion } from '../claims/index.ts';
+import { releasedVersion } from '../survey/index.ts';
 import { myAcceptance } from './report-accept.ts';
 import { missingDocuments } from '../claims/index.ts';
 import { getDocumentTypesLabelByCode2 } from '../admin/index.ts';

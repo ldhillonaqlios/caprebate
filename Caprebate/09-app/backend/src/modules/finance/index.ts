@@ -14,7 +14,12 @@ export { handleFinance } from './finance-pages.ts';
 export { assertFinanceSection, financeSectionObj, INVOICE_WORDS, PAYMENT_WORDS } from './finance.ts';
 export { allocateNumber, claimMoneyLines, CREDIT_BASES, financeDashboard, formatInvoiceNumber, INVOICE_KINDS } from './invoices.ts';
 export type { ClaimMoneyLine, FinanceDashboard } from './invoices.ts';
+// The VAT monitoring (moved up from the assessment, Phase 161l2: it reads finance's invoices and dated settings).
+export { expectedFeeFor, settingsView } from './vat.ts';
+export type { SettingsView } from './vat.ts';
 // Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
 import './nav.ts';
-// Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts, emptied in Phase 161l2).
 export { listInvoiceCreditNotesRecordedAtBasisRecordedByByInvoiceId, listInvoicePaymentsRecordedAtVoidedAtRecordedByByInvoiceId, listInvoicesIdByBusinessIdWithoutClaim, listInvoicesIdKindRaisedByByClaimId, listInvoiceNumbersSeqInvoiceIdBySeqLike, listInvoicesIdFeeByClaimIds, INVOICE_NUMBER_SEARCH } from './data.ts';
+// What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
+import './claims-ports.ts';

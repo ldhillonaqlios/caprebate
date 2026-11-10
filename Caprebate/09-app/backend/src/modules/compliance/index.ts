@@ -18,3 +18,5 @@ export { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS
 export { agreementPage, agreementTick, approvalsPage, currentApprovals, currentTermsVersions, hasAgreedCurrent, keepAgreement, recordApproval } from './legal-approvals.ts';
 export type { TermsVersions } from './legal-approvals.ts';
 export { getComplaintFormsIdReceivedAtById, insertComplaintForms, insertDeletionLog, insertDeletionLog2, listComplaintFormsIdReceivedAtByLoggedComplaintId, updateComplaintFormsLoggedComplaintIdLoggedAtByIdLoggedCompl } from './data.ts';
+// What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
+import './claims-ports.ts';

@@ -64,7 +64,8 @@ import { publicSiteEnquiry, publicSiteRoutes } from '../modules/public-site/inde
 import { assessmentAssets, assessmentRoutes } from '../modules/assessment/index.ts';
 import { portalConfirmLink, portalEntry, portalSignLink } from '../modules/portal/index.ts';
 import { crmAssets, crmCallPage, crmReferralForm } from '../modules/crm/index.ts';
-import { claimsAssets, claimsSignoffLink } from '../modules/claims/index.ts';
+import { claimsAssets } from '../modules/claims/index.ts';
+import { surveySignoffLink } from '../modules/survey/index.ts';
 
 /* What the route files cannot reach through the core's front door, because each part reads business modules itself. */
 lendShellParts({
@@ -236,7 +237,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/favicon.svg' && method === 'GET') { res.writeHead(200, FAVICON_HEADERS); res.end(FAVICON_SVG); return 'handled'; }
   if (path === '/favicon.ico' && method === 'GET') { res.writeHead(204, { 'cache-control': 'public, max-age=86400' }); res.end(); return 'handled'; }
   if ((mine = await publicSiteRoutes(w)) !== undefined) return mine;
-  if ((mine = await claimsSignoffLink(w)) !== undefined) return mine;
+  if ((mine = await surveySignoffLink(w)) !== undefined) return mine;
   if ((mine = await portalConfirmLink(w)) !== undefined) return mine;
   /* WHATSAPP — THE ADDRESS META CALLS (src/modules/crm/whatsapp.ts). No login: Meta has none. GET is Meta checking
      the address with our verify word; POST carries messages and statuses, believed only under Meta's signature. */

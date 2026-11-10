@@ -37,9 +37,9 @@ import { workingDaysSince, LATE_AFTER_WORKING_DAYS } from '../../shared/index.ts
 import { documentObj } from '../claims/index.ts';
 import { getWhatsappMessagesCountByBusinessIdDirection } from '../../integrations/index.ts';
 import { getClientMessageFilesIdBusinessIdByLogicalDocumentId, getClientMessagesCountByBusinessIdDirection2, insertChannelReads, insertThreadReads, listClientMessagesBusinessIdNameByDirectionCreatedAt } from '../clients/index.ts';
-import { listInternalNotesIdAuthorIdByBusinessId } from '../clients/index.ts';
+import { listInternalNotesIdAuthorIdByBusinessId } from './split-reads.ts';
 import { listClaimsIdClaimRefByBusinessIdLabel } from '../claims/index.ts';
-import { getClientMessagesIdBusinessIdByIdBusinessId, listClientMessagesIdBusinessIdByBusinessId } from '../clients/index.ts';
+import { getClientMessagesIdBusinessIdByIdBusinessId, listClientMessagesIdBusinessIdByBusinessId } from './split-reads.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { listDocumentTypesCodeReadersLabelByCodes } from '../admin/index.ts';
 import { listLogicalDocumentsIdTypeCodeVersionByIds } from '../claims/index.ts';

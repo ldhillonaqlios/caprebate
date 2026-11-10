@@ -66,7 +66,7 @@ import { insertConsentAnswers, listConsentAnswersRecordedAtKindByContactId } fro
 import { getIdentityPersonsPersonRefNoticeTemplateByPersonRef, insertIdentityPersons, insertIdentitySearchLog, listComplaintsIdRefByPersonRef, listIdentityPersonsPersonRefRole, listRightsRequestsIdRefByPersonRef, updateIdentityPersonsExemptionArticleExemptionReasonByPerson, updateIdentityPersonsNoticeTemplateNoticeRouteByPersonRef } from './data.ts';
 import { getIdentityCount, getSqliteMasterNameByTblName, type IdentityCount } from './data.ts';
 import { countRecordKind, getIdentityPersonsPersonRefNameByPersonRef, listRecordKindClockRows, recordKindHasClock } from './data.ts';
-import { countCrmRecordKind } from './data-borrowed.ts';
+import { countClientRecordKind } from '../clients/index.ts';
 import { getDocumentLinksCount, getDocumentsCountVersions, getDocumentsTypeCodeCreatedAtRetentionRefById, getLogicalDocumentsCount } from '../claims/index.ts';
 import { getOutboxCountQueued, getRegisterRecordsCount } from '../../integrations/index.ts';
 import { getConsentAnswersCount } from '../assessment/index.ts';
@@ -387,7 +387,7 @@ const NOT_COVERED = 'No rule for this yet. Our retention rules do not cover it';
 
 /* THE COUNT OF EACH KIND, ASKED OF ITS TABLE'S OWNER: the claims module's documents, the outside services' register
    records and emails, the assessment's consent history through their front doors; this module's own from its data file;
-   the CRM's (above this module) from the borrowed file. */
+   the client record's through its front door. */
 const COUNT_BY_OWNER: Readonly<Record<string, (db: Db) => { n: number } | undefined>> = Object.freeze({
   DOCUMENT_VERSIONS: (db: Db) => getDocumentsCountVersions<{ n: number }>(db),
   LOGICAL_DOCUMENTS: (db: Db) => getLogicalDocumentsCount<{ n: number }>(db),
@@ -399,7 +399,7 @@ const COUNT_BY_OWNER: Readonly<Record<string, (db: Db) => { n: number } | undefi
 
 function recordCount(db: Db, kind: string): number {
   const lower = COUNT_BY_OWNER[kind];
-  return (lower !== undefined ? lower(db) : countRecordKind<{ n: number }>(db, kind) ?? countCrmRecordKind<{ n: number }>(db, kind))?.n ?? 0;
+  return (lower !== undefined ? lower(db) : countRecordKind<{ n: number }>(db, kind) ?? countClientRecordKind<{ n: number }>(db, kind))?.n ?? 0;
 }
 
 export const RECORD_KINDS: readonly Kind[] = Object.freeze([

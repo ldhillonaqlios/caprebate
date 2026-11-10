@@ -54,7 +54,7 @@ import { handleFreeEmail } from '../modules/crm/index.ts';
 import { handleStaffMessages } from '../modules/crm/index.ts';
 import { handleSurveyor } from '../modules/survey/index.ts';
 import { handleSurveyPack } from '../modules/survey/index.ts';
-import { handleReportStaff } from '../modules/claims/index.ts';
+import { handleReportStaff } from '../modules/survey/index.ts';
 import { handleAccountantConfirmStaff } from '../modules/portal/index.ts';
 import { handleStaffEvidence } from '../modules/survey/index.ts';
 import { handleFinance } from '../modules/finance/index.ts';
@@ -452,7 +452,7 @@ export async function handleStaff(
   // The survey pack — the sums, the surveyor's stamped changes (src/modules/survey/survey-pack-pages.ts).
   const pack = await handleSurveyPack({ app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form);
   if (pack === 'handled') return 'handled';
-  // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/modules/claims/report-pages.ts).
+  // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/modules/survey/report-pages.ts).
   const report = await handleReportStaff({ app: d.app, newId: d.newId, nav, stamp, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (report === 'handled') return 'handled';
   // Email the client's accountant a link to confirm for themselves (src/modules/portal/accountant-confirm-pages.ts).

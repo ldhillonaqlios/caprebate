@@ -6,7 +6,7 @@
  */
 import { setDoNotContactCheck, type DoNotContactCheck } from '../../integrations/index.ts';
 import { getBusinessesCountByClientStatus, getBusinessesCountByIdClientStatus, getContactsCountByClientStatus } from './data.ts';
-import { getUsersCountByClientStatusEmailCanonical } from './data-borrowed.ts';
+import { getUsersCountByClientStatusEmailCanonical } from './data.ts';
 
 export const isDoNotContactHere: DoNotContactCheck = (db, to_email, business_id) => {
   if (business_id !== null && business_id !== undefined) {

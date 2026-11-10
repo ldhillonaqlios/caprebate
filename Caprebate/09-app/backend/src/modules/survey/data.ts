@@ -8,6 +8,14 @@ import type { Db, Param, Row } from '../../core/index.ts';
 import { fillUser, fillUsers } from '../../core/index.ts';
 import { getEstimatesIdByAssessmentId } from '../assessment/index.ts';
 import { listClaimGrantsAmountPenceByClaimIdPaidTo, listClaimsIdBusinessIdStageClaimRefByIds } from '../claims/index.ts';
+import { listTaxAdviserSignoffsApprovalIdClaimIdByApprovalIds, sameFigure } from '../claims/index.ts';
+import { getBusinessesNameById, getContactsFullNameById, listContactsIdFullNameByIds } from '../clients/index.ts';
+import { listOutboxIdSentAtLastErrorByIds } from '../../integrations/index.ts';
+// The organisations and bookings (the client record's), the properties (the claims') and the video calls (the outside
+// services'), read through their front doors for the jobs and walk-throughs below (Phase 161l2).
+import { byId, idsOf, listBookingsIdStartsAtCancelledAtByIds, listBusinessesIdNameSectorStageByIds } from '../clients/index.ts';
+import { listPropertiesIdLabelPostcodeByIds } from '../claims/index.ts';
+import { getVideoMeetingsMeetingIdByBookingId } from '../../integrations/index.ts';
 // This module's permissions are registered whenever its data is, so every path into the module can ask them.
 import './actions.ts';
 
@@ -306,6 +314,11 @@ export function getSurveyorJobsIdBusinessIdById4<T extends Row = Row>(db: Db, pa
 export function getSurveyorJobsIdByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT id FROM surveyor_jobs WHERE claim_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1', params);
 }
+// The desk-first reading's job (Phase 161l2, src/modules/survey/desk-first.ts): the organisation's sector is the client
+// record's, looked up through its door.
+export function getSurveyorJobsBusinessIdClaimIdById2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT j.business_id, j.claim_id FROM surveyor_jobs j WHERE j.id = ?', params);
+}
 export function insertSurveyorJobs(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO surveyor_jobs (id, business_id, assessment_id, surveyor_id, state, committed_at, created_at, claim_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
 }
@@ -523,7 +536,7 @@ export function getSurveyorJobsPropertyIdPById<T extends Row = Row>(db: Db, para
 }
 
 // FOR THE CRM (Phase 161l1): its statements that joined these tables to the core's users or the claims now read here
-// and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts).
+// and look the rest up through the other area's front door (src/modules/clients/data-borrowed.ts, emptied in Phase 161l2).
 export function getSurveyPackApprovalsVersionApprovedAtApprovedByByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT a.version, a.approved_at, a.approved_by FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
     'JOIN surveyor_jobs j ON j.id = p.job_id WHERE j.claim_id = ? ' +
@@ -539,4 +552,193 @@ export function listSurveyorJobsIdBusinessIdClaimIdBySurveyorId<T extends Row = 
 }
 export function listSurveyorJobsBusinessIdClaimIdBySurveyorId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT j.business_id, j.claim_id FROM surveyor_jobs j WHERE j.surveyor_id = ?', params);
+}
+
+/*
+ * Phase 161l2: THE SURVEY'S OWN READS THAT THE CLAIMS RAN, joined to other owners' tables, now on this module's tables
+ * alone. The report's sign-off came here from the claims with them (src/modules/survey/report-signoff.ts); the claims ask
+ * the rest through the port they own (src/modules/claims/above-ports.ts), which this module fills as its front door
+ * loads (./claims-ports.ts). Where a statement joined the client record (a contact's name, a company's name) or the
+ * claims (the tax adviser's sign-offs), that part is asked through their front doors and put in place, so each row is
+ * what the join gave. test/claims/survey-reads-by-owner.test.ts keeps each statement as it was and checks these give its
+ * rows.
+ */
+// pack_client_notices (from the claims, text unchanged)
+export function getPackClientNoticesToldAtToldByNameByApprovalId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT n.told_at, n.told_by AS told_by_name FROM pack_client_notices n WHERE n.approval_id = ?', params), { told_by_name: 'display_name' });
+}
+// surveyor_jobs (from the claims, text unchanged)
+export function getSurveyorJobsIdSurveyorIdByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return fillUser(db, db.get<T>('SELECT j.id, j.surveyor_id, j.surveyor_id AS who FROM surveyor_jobs j ' +
+    'WHERE j.claim_id = ? ORDER BY j.created_at DESC LIMIT 1', params), { who: 'display_name' });
+}
+
+/** What a sign-off link opens: its request, the version, its answer, and the contact's and the company's names. */
+export function getPackSignoffRequestsIdApprovalIdByTokenSha256<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const r = db.get<Row>('SELECT r.id, r.approval_id, r.expires_at, r.contact_id AS name, j.business_id AS company, a.snapshot_json, a.fingerprint, x.outcome, x.answered_at, j.claim_id, j.business_id ' +
+    'FROM pack_signoff_requests r JOIN survey_pack_approvals a ON a.id = r.approval_id ' +
+    'JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+    'LEFT JOIN pack_signoff_answers x ON x.request_id = r.id WHERE r.token_sha256 = ?', params);
+  if (r === undefined) return undefined;
+  // JOIN contacts and JOIN businesses: a request whose contact or company is not there is not found.
+  const contact = getContactsFullNameById<{ full_name: unknown }>(db, [r.name as Param]);
+  const company = getBusinessesNameById<{ name: unknown }>(db, [r.company as Param]);
+  if (contact === undefined || company === undefined) return undefined;
+  return { ...r, name: contact.full_name, company: company.name } as Row as T;
+}
+
+/** Every sign-off request for a job's pack, newest first, with its answer, whether that is on the claim, and its email. */
+export function listPackSignoffRequestsIdApprovalIdByJobId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const raw = db.all<Row>('SELECT r.id, r.approval_id, a.version, r.contact_id AS contact_name, r.to_email, r.permission_note, r.sent_by AS sent_by_name, r.sent_at, r.expires_at, ' +
+    'r.outbox_id AS sent_at_outbox, r.outbox_id AS send_error, x.id AS a_id, x.outcome, x.signer_name, x.signer_firm, x.signer_credential, x.reason, x.answered_at, ' +
+    'k.signoff_id AS recorded_signoff ' +
+    'FROM pack_signoff_requests r JOIN survey_pack_approvals a ON a.id = r.approval_id JOIN survey_packs p ON p.id = a.pack_id ' +
+    'LEFT JOIN pack_signoff_answers x ON x.request_id = r.id LEFT JOIN pack_signoff_recorded k ON k.answer_id = x.id ' +
+    'WHERE p.job_id = ? ORDER BY r.sent_at DESC, r.rowid DESC', params);
+  // JOIN contacts: each row has its contact's name; a request whose contact is not there drops out.
+  const cids = [...new Set(raw.map((r) => r.contact_name).filter((x): x is string => typeof x === 'string'))];
+  const names = new Map(cids.length === 0 ? [] : listContactsIdFullNameByIds<{ id: string; full_name: unknown }>(db, [JSON.stringify(cids)]).map((c) => [c.id, c.full_name]));
+  const named = raw.flatMap((r) => (names.has(String(r.contact_name)) ? [{ ...r, contact_name: names.get(String(r.contact_name)) } as Row] : []));
+  const rows = fillUsers(db, named, { sent_by_name: 'display_name' });
+  // JOIN outbox: r.outbox_id is NOT NULL and refers to the outbox, so every row has its message.
+  const ids = [...new Set(rows.map((r) => r.sent_at_outbox).filter((x): x is string => typeof x === 'string'))];
+  const sent = new Map(ids.length === 0 ? [] : listOutboxIdSentAtLastErrorByIds<{ id: string; sent_at: unknown; last_error: unknown }>(db, [JSON.stringify(ids)]).map((o) => [o.id, o]));
+  return rows.flatMap((r) => {
+    const o = sent.get(String(r.sent_at_outbox));
+    return o === undefined ? [] : [{ ...r, sent_at_outbox: o.sent_at, send_error: o.last_error } as Row as T];
+  });
+}
+
+/**
+ * The approved versions of a company's survey packs on a claim that a sign-off on that claim names, for that version's
+ * figure, newest first (the version the client may see is the first of these whose fingerprint holds).
+ */
+export function listSurveyPackApprovalsIdVersionByBusinessIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const versions = db.all<Row & { id: string; claim_id: string; q: unknown }>('SELECT a.id, a.version, a.pack_seq, a.legal_seq, a.fingerprint, a.approved_by, a.approved_by AS approver_name, a.approved_at, a.snapshot_json, j.id AS job_id, j.claim_id, ' +
+    "json_extract(a.snapshot_json, '$.sums.qualifying_pence') AS q " +
+    'FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+    'WHERE j.business_id = ? AND j.claim_id IS NOT NULL ORDER BY a.approved_at DESC, a.version DESC', params);
+  // EXISTS (a sign-off on the job's claim naming this version, for its figure): the claims' sign-offs, through their door.
+  const ids = [...new Set(versions.map((v) => v.id))];
+  const signoffs = ids.length === 0 ? [] : listTaxAdviserSignoffsApprovalIdClaimIdByApprovalIds<{ approval_id: string; claim_id: string; figure_pence: number }>(db, [JSON.stringify(ids)]);
+  const kept = versions.filter((v) => signoffs.some((s) => s.approval_id === v.id && s.claim_id === v.claim_id && sameFigure(s.figure_pence, v.q)))
+    .map(({ q: _q, ...v }) => v as Row);
+  return fillUsers(db, kept, { approver_name: 'display_name' }) as Row[] as T[];
+}
+
+/** For the claims (through their port): the approved versions on a building's packs, or on packs naming no building whose job's claim is one of these. */
+export function listSurveyPackApprovalsSnapshotJsonVersionByPropertyIdClaimIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT a.id, a.snapshot_json, a.version, a.approved_at, j.claim_id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
+    'JOIN surveyor_jobs j ON j.id = p.job_id ' +
+    'WHERE j.claim_id IS NOT NULL AND (p.property_id = ? OR (p.property_id IS NULL AND j.claim_id IN (SELECT value FROM json_each(?)))) ' +
+    'ORDER BY a.approved_at DESC, a.version DESC', params);
+}
+/** For the claims: every approved version on a claim's survey jobs, with its figure, newest first. */
+export function listSurveyPackApprovalsIdFingerprintSnapshotJsonByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT a.id, a.fingerprint, a.snapshot_json, json_extract(a.snapshot_json, '$.sums.qualifying_pence') AS q " +
+    'FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+    'WHERE j.claim_id = ? ORDER BY a.approved_at DESC, a.version DESC', params);
+}
+/** For the claims: the legal check's newest G9d on a building's packs, or on packs naming no building whose job's claim is one of these. */
+export function getSurveyPackLegalAnswersValueJsonAtByPropertyIdClaimIdsG9d<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT a.value_json, a.at FROM survey_pack_legal_answers a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+    "WHERE a.question_id = 'G9d' AND (p.property_id = ? OR (p.property_id IS NULL AND j.claim_id IN (SELECT value FROM json_each(?)))) " +
+    'ORDER BY a.at DESC, a.seq DESC LIMIT 1', params);
+}
+/** For the claims: the surveyors with a job on any of these claims, each once. */
+export function listSurveyorJobsSurveyorIdByClaimIds<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT DISTINCT j.surveyor_id FROM surveyor_jobs j WHERE j.surveyor_id IS NOT NULL AND j.claim_id IN (SELECT value FROM json_each(?))', params);
+}
+
+/*
+ * Phase 161l2: THE JOBS AND WALK-THROUGHS THAT JOINED THE CLIENT RECORD, SPLIT (from this module's borrowed file).
+ * Each statement joined the organisation (businesses) or the booking (bookings), the client record's
+ * (src/modules/clients/, below this module). Now this module reads its own rows, with the other row's id standing where
+ * each joined column stood, and the client record's door gives those columns, put in their places. The JOIN was an
+ * inner one, so a row whose organisation or booking is not found is left out, and any LIMIT is applied after that, as
+ * the join applied it. Users (the core), claims and properties (the claims) and video meetings (the outside services)
+ * as 161l1 split them. test/survey/borrowed-split-161l2.test.ts keeps each original statement and compares.
+ */
+/** The keys of each row that stand for the named organisation's columns, put in place; a row with no organisation found is left out. */
+function withBusiness(db: Db, rows: readonly Row[], columns: Readonly<Record<string, 'name' | 'sector' | 'stage'>>): Row[] {
+  const businesses = byId(listBusinessesIdNameSectorStageByIds<{ id: string } & Row>(db, [idsOf(rows.map((r) => r.business_id))]));
+  const out: Row[] = [];
+  for (const r of rows) {
+    const b = typeof r.business_id === 'string' ? businesses.get(r.business_id) : undefined;
+    if (b === undefined) continue;
+    const row: Row = { ...r };
+    for (const [k, col] of Object.entries(columns)) row[k] = b[col] ?? null;
+    out.push(row);
+  }
+  return out;
+}
+type Placed = Row & { __place_property?: string | null; __place_name?: unknown };
+/** COALESCE(p.label, b.name) AS place, with p the pack's property: the property's label, else the organisation's name. */
+function placeFromProperties<T extends Row>(db: Db, rows: readonly Placed[]): T[] {
+  const ids = [...new Set(rows.map((r) => r.__place_property).filter((x): x is string => typeof x === 'string'))];
+  const label = new Map(ids.length === 0 ? [] : listPropertiesIdLabelPostcodeByIds<{ id: string; label: string | null }>(db, [JSON.stringify(ids)]).map((p) => [p.id, p.label]));
+  return rows.map(({ __place_property, __place_name, ...r }) => {
+    const l = typeof __place_property === 'string' ? label.get(__place_property) ?? null : null;
+    return { ...r, place: l ?? __place_name } as Row as T;
+  });
+}
+/** cl.stage AS claim_stage, cl.claim_ref, p.label AS property_label, p.postcode AS property_postcode, from j.claim_id. */
+function jobClaimColumns<T extends Row>(db: Db, rows: readonly Row[]): T[] {
+  const filled = fillUsers(db, rows, { surveyor_name: 'display_name' });
+  const claimIds = [...new Set(filled.map((r) => r.claim_id).filter((x): x is string => typeof x === 'string'))];
+  const claims = new Map(claimIds.length === 0 ? [] : listClaimsIdBusinessIdStageClaimRefByIds<{ id: string; stage: unknown; claim_ref: unknown; property_id: string | null }>(db, [JSON.stringify(claimIds)]).map((c) => [c.id, c]));
+  const propIds = [...new Set([...claims.values()].map((c) => c.property_id).filter((x): x is string => typeof x === 'string'))];
+  const props = new Map(propIds.length === 0 ? [] : listPropertiesIdLabelPostcodeByIds<{ id: string; label: unknown; postcode: unknown }>(db, [JSON.stringify(propIds)]).map((p) => [p.id, p]));
+  return filled.map((r) => {
+    const c = typeof r.claim_id === 'string' ? claims.get(r.claim_id) : undefined;
+    const p = typeof c?.property_id === 'string' ? props.get(c.property_id) : undefined;
+    return { ...r, claim_stage: c?.stage ?? null, claim_ref: c?.claim_ref ?? null, property_label: p?.label ?? null, property_postcode: p?.postcode ?? null } as Row as T;
+  });
+}
+/** The LIMIT ? the joined statement ended with (its last parameter), applied after the rows with no organisation are left out. */
+function limitOf(params: readonly Param[]): number {
+  const n = Number(params[params.length - 1]);
+  return Number.isFinite(n) && n >= 0 ? n : Infinity;
+}
+
+// surveyor_jobs with the organisation's sector and the place (the pack's property, else the organisation's name)
+export function getSurveyorJobsIdBusinessIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const rows = db.all('SELECT j.id, j.business_id, j.business_id AS sector, NULL AS place, j.surveyor_id, sp.property_id AS __place_property, j.business_id AS __place_name FROM surveyor_jobs j ' +
+    'LEFT JOIN survey_packs sp ON sp.job_id = j.id WHERE j.id = ?', params);
+  return placeFromProperties<T>(db, withBusiness(db, rows, { sector: 'sector', __place_name: 'name' }).slice(0, 1))[0];
+}
+export function listSurveyorJobsIdBusinessIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = db.all('SELECT j.id, j.business_id, j.business_id AS sector, NULL AS place, j.surveyor_id, sp.property_id AS __place_property, j.business_id AS __place_name FROM surveyor_jobs j ' +
+    'LEFT JOIN survey_packs sp ON sp.job_id = j.id WHERE j.business_id = ? ORDER BY j.created_at, j.id', params);
+  return placeFromProperties<T>(db, withBusiness(db, rows, { sector: 'sector', __place_name: 'name' }));
+}
+// surveyor_jobs with the organisation's name, sector and step, the surveyor's name, and the claim and its property
+const JOB_COLUMNS = 'SELECT j.id, j.business_id, j.assessment_id, j.surveyor_id, j.state, j.committed_at, j.created_at, j.business_id AS name, j.business_id AS sector, j.business_id AS stage, ' +
+  'j.surveyor_id AS surveyor_name, j.claim_id, NULL AS claim_stage, NULL AS claim_ref, NULL AS property_label, NULL AS property_postcode FROM surveyor_jobs j ';
+export function getSurveyorJobsIdBusinessIdById2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const rows = withBusiness(db, db.all(JOB_COLUMNS + 'WHERE j.id = ?', params), { name: 'name', sector: 'sector', stage: 'stage' });
+  return jobClaimColumns<T>(db, rows.slice(0, 1))[0];
+}
+export function listSurveyorJobsIdBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const rows = withBusiness(db, db.all(JOB_COLUMNS + 'ORDER BY j.created_at DESC'), { name: 'name', sector: 'sector', stage: 'stage' });
+  return jobClaimColumns<T>(db, rows.slice(0, limitOf(params)));
+}
+
+// survey_walkthroughs with the booking's times (the client record's), who booked it (the core's) and the video call
+export function listVideoMeetingsIdBookingIdByBookingIdJO<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  const own = db.all('SELECT w.id, w.booking_id, w.booking_id AS starts_at, w.booking_id AS cancelled_at, w.booked_by AS booked_by_name, NULL AS meeting_id ' +
+    'FROM survey_walkthroughs w WHERE w.job_id = ? ORDER BY w.booked_at DESC', params);
+  const bookings = byId(listBookingsIdStartsAtCancelledAtByIds<{ id: string } & Row>(db, [idsOf(own.map((r) => r.booking_id))]));
+  const joined = own.flatMap((r) => {
+    const b = typeof r.booking_id === 'string' ? bookings.get(r.booking_id) : undefined;
+    return b === undefined ? [] : [{ ...r, starts_at: b.starts_at ?? null, cancelled_at: b.cancelled_at ?? null } as Row];
+  });
+  const rows = fillUsers(db, joined, { booked_by_name: 'display_name' });
+  return rows.map((r) => ({ ...r, meeting_id: getVideoMeetingsMeetingIdByBookingId<{ meeting_id: unknown }>(db, [r.booking_id as string])?.meeting_id ?? null }) as Row as T);
+}
+
+// survey_walkthroughs: whether a booking is a walk-through (Phase 161l2: from the client record's borrowed file, text
+// unchanged; the client record asks through its port, src/modules/clients/walkthrough-port.ts)
+export function getSurveyWalkthroughsXByBookingId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT 1 AS x FROM survey_walkthroughs WHERE booking_id = ?', params);
 }

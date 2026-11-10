@@ -56,15 +56,18 @@ import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localDate, localStamp } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
+import type { Param, Row } from '../../core/index.ts';
 import { insertTask } from '../clients/index.ts';
 import { latestSignOff } from '../claims/index.ts';
 import { computeFee, FEE_CONTROLS, type FeeControls } from '../claims/index.ts';
-import { feeGate, type FeeGateReading } from './fee-gate.ts';
-import { assertFinanceSection, financeSectionObj } from '../finance/index.ts';
+import { feeGate, type FeeGateReading } from '../assessment/index.ts';
+import { assertFinanceSection, financeSectionObj } from './finance.ts';
 import { getStaffTasksIdByCompanySubjectStatus } from '../clients/index.ts';
-import { getInvoicesNByClaimIdInvoiceStatus, listClaimsIdClaimRefByStageClaimId } from './data-borrowed.ts';
-import { getInvoiceCreditNotesNByIssuedOn, getInvoicesCountByClaimIdInvoiceStatus, insertFinanceSettings } from '../finance/index.ts';
-import { getFinanceSettingsIdSettingBySettingEffectiveFrom, listFinanceSettingsIdSetting } from './data-borrowed.ts';
+import { listBusinessesIdNameSectorByIds } from '../clients/index.ts';
+import { listClaimDeliverablesClaimIdFirstIssuedOnByKind, listClaimsIdClaimRefByStage2 } from '../claims/index.ts';
+import { getInvoiceCreditNotesNByIssuedOn, getInvoicesCountByClaimIdInvoiceStatus, insertFinanceSettings } from './data.ts';
+import { getFinanceSettingsIdSettingBySettingEffectiveFrom, listFinanceSettingsIdSetting } from './data.ts';
+import { listInvoicesClaimIdByKindInvoiceStatusLive, listInvoicesClaimIdKindByInvoiceStatus } from './data.ts';
 
 type Vocab = Readonly<Record<string, string>>;
 
@@ -227,6 +230,42 @@ export const BAND_WORDS: Readonly<Record<Band, string>> = Object.freeze({
   OVER: 'AT OR OVER THE REGISTRATION THRESHOLD',
   CANNOT_SAY: 'cannot say — a setting it needs is not recorded',
 });
+
+/*
+ * THE TWO READS THAT JOINED OTHER AREAS' TABLES, SPLIT BY OWNER (Phase 161l2). Each was one statement on the claims,
+ * the client record's organisations and finance's invoices; each now reads finance's own rows here and the rest through
+ * the claims' and the client record's front doors, combined in code: the same rows, in the same order, with the same
+ * keys in the same order (pinned to the old statements, word for word, by test/assessment/borrowed-split.test.ts).
+ */
+
+/** The claims at the invoice stage with no live fee invoice (raised or sent and not wholly credited), each with its
+ * organisation's sector, in claim reference order. A claim whose organisation is not on the record is left out. */
+export function listClaimsIdClaimRefByStageClaimId<T extends Row = Row>(db: Db, _params: readonly Param[] = []): T[] {
+  const live = new Set(listInvoicesClaimIdByKindInvoiceStatusLive<{ claim_id: string }>(db).map((r) => r.claim_id));
+  const waiting = listClaimsIdClaimRefByStage2<{ id: string; claim_ref: string; business_id: string }>(db).filter((c) => !live.has(c.id));
+  const sector = new Map(listBusinessesIdNameSectorByIds<{ id: string; sector: string | null }>(db, [JSON.stringify([...new Set(waiting.map((c) => c.business_id))])])
+    .map((b) => [b.id, b.sector]));
+  return waiting.filter((c) => sector.has(c.business_id))
+    .map((c) => ({ id: c.id, claim_ref: c.claim_ref, business_id: c.business_id, sector: sector.get(c.business_id) ?? null }) as unknown as T);
+}
+
+/**
+ * The fees invoiced on claims, raised or sent, whose tax point falls from `params[0]` to `params[1]` (both days in):
+ * the invoice date, or for our fee the claim's first issued client report if earlier. An invoice with no date has no
+ * tax point and is not counted. `n` is null when nothing is counted, as SQL's SUM gives.
+ */
+export function getInvoicesNByClaimIdInvoiceStatus<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  const [from, to] = params as readonly [string, string];
+  const report = new Map(listClaimDeliverablesClaimIdFirstIssuedOnByKind<{ claim_id: string; first_issued_on: string }>(db).map((r) => [r.claim_id, r.first_issued_on]));
+  let n: number | null = null;
+  for (const i of listInvoicesClaimIdKindByInvoiceStatus<{ claim_id: string; kind: string; invoice_date: string | null; fee_pence: number | null }>(db)) {
+    if (i.invoice_date === null) continue;
+    const other = i.kind === 'FEE' ? report.get(i.claim_id) ?? i.invoice_date : i.invoice_date;
+    const point = other < i.invoice_date ? other : i.invoice_date;
+    if (point >= from && point <= to && i.fee_pence !== null) n = (n ?? 0) + i.fee_pence;
+  }
+  return { n } as unknown as T;
+}
 
 export type ExpectedFee = {
   readonly claim_id: string; readonly claim_ref: string; readonly business_id: string;

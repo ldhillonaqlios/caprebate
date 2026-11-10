@@ -3,18 +3,6 @@
  "breaks": {
   "1": {},
   "2": {
-   "assessment": [
-    "assessment -> claims",
-    "assessment -> finance",
-    "assessment -> survey"
-   ],
-   "claims": [
-    "claims -> compliance",
-    "claims -> finance",
-    "claims -> portal",
-    "claims -> public-site",
-    "claims -> survey"
-   ],
    "compliance": [
     "compliance -> admin",
     "compliance -> public-site"
@@ -27,62 +15,7 @@
     "portal -> public-site"
    ]
   },
-  "3": {
-   "assessment": [
-    "src/modules/clients/data-borrowed.ts : assessments"
-   ],
-   "claims": [
-    "src/modules/assessment/data-borrowed.ts : claim_deliverables",
-    "src/modules/assessment/data-borrowed.ts : claims",
-    "src/modules/clients/data-borrowed.ts : claims",
-    "src/modules/clients/data-borrowed.ts : properties"
-   ],
-   "clients": [
-    "src/modules/admin/data-borrowed.ts : businesses",
-    "src/modules/assessment/data-borrowed.ts : businesses",
-    "src/modules/claims/data-borrowed.ts : businesses",
-    "src/modules/claims/data-borrowed.ts : contacts",
-    "src/modules/compliance/data-borrowed.ts : automation_runs",
-    "src/modules/compliance/data-borrowed.ts : businesses",
-    "src/modules/compliance/data-borrowed.ts : client_messages",
-    "src/modules/compliance/data-borrowed.ts : contacts",
-    "src/modules/compliance/data-borrowed.ts : internal_notes",
-    "src/modules/compliance/data-borrowed.ts : introducer_notices",
-    "src/modules/compliance/data-borrowed.ts : introducer_share_consents",
-    "src/modules/compliance/data-borrowed.ts : introducers",
-    "src/modules/compliance/data-borrowed.ts : leads",
-    "src/modules/compliance/data-borrowed.ts : staff_tasks",
-    "src/modules/finance/data-borrowed.ts : businesses",
-    "src/modules/survey/data-borrowed.ts : bookings",
-    "src/modules/survey/data-borrowed.ts : businesses"
-   ],
-   "core": [
-    "src/modules/clients/data-borrowed.ts : users"
-   ],
-   "finance": [
-    "src/modules/assessment/data-borrowed.ts : finance_settings",
-    "src/modules/assessment/data-borrowed.ts : invoice_credit_notes",
-    "src/modules/assessment/data-borrowed.ts : invoices"
-   ],
-   "portal": [
-    "src/modules/clients/data-borrowed.ts : client_report_acceptances"
-   ],
-   "public-site": [
-    "src/modules/clients/data-borrowed.ts : enquiry_checks"
-   ],
-   "survey": [
-    "src/modules/assessment/data-borrowed.ts : surveyor_jobs",
-    "src/modules/claims/data-borrowed.ts : pack_client_notices",
-    "src/modules/claims/data-borrowed.ts : pack_signoff_answers",
-    "src/modules/claims/data-borrowed.ts : pack_signoff_recorded",
-    "src/modules/claims/data-borrowed.ts : pack_signoff_requests",
-    "src/modules/claims/data-borrowed.ts : survey_pack_approvals",
-    "src/modules/claims/data-borrowed.ts : survey_pack_legal_answers",
-    "src/modules/claims/data-borrowed.ts : survey_packs",
-    "src/modules/claims/data-borrowed.ts : surveyor_jobs",
-    "src/modules/clients/data-borrowed.ts : survey_walkthroughs"
-   ]
-  },
+  "3": {},
   "4": {}
  },
  "history": [

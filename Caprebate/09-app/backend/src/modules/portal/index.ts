@@ -24,7 +24,14 @@ export * as portalModule from './portal.ts';
 export { engagement, readBusiness } from './portal.ts';
 export { ACCEPT_WORDS, acceptReport, myAcceptance } from './report-accept.ts';
 export type { ReturnFiling } from './accountant-confirm.ts';
+// Phase 161l2: the types of what the claims ask here, through their port (src/modules/claims/above-ports.ts).
+export type { ConfirmKind, ConfirmRow } from './accountant-confirm.ts';
+export type { FilingRoute } from '../claims/index.ts';
 export type { TabKey } from './client-layout.ts';
 export { getClientReportAcceptancesCountByClaimId } from './data.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH, LETTER_PAGE_CSP, portalConfirmLink, portalEntry, portalSignLink, rangeBasisFor } from './routes.ts';
+// What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
+import './claims-ports.ts';
+// What the CRM asks the portal (its port, src/modules/crm/report-acceptance-port.ts; Phase 161l2). Last, as it reaches the CRM's door.
+import './crm-ports.ts';

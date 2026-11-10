@@ -413,13 +413,13 @@ export type AuditKind =
   /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/modules/survey/pack-approve.ts): the version and its fingerprint. */
   | 'SURVEY_PACK_APPROVED'
   /** The survey report emailed to the client's accountant for sign-off; their answer by the private link
-   *  (src/modules/claims/report-signoff.ts). Ids, the version and the outcome — never the link, never a figure. */
+   *  (src/modules/survey/report-signoff.ts). Ids, the version and the outcome — never the link, never a figure. */
   | 'REPORT_SENT_FOR_SIGNOFF' | 'REPORT_SIGNOFF_ANSWERED'
   /** A client's photo for the survey checklist (src/modules/survey/survey-evidence.ts). The photo's id and item only. */
   | 'SURVEY_EVIDENCE_ADDED'
   /** Photos sent in one go put under checklist items by Admin or Sales, or taken back. Counts only. */
   | 'SURVEY_PHOTOS_SORTED'
-  /** A site plan fetched for a survey job's report (src/modules/claims/site-plan.ts): how many buildings, and how the
+  /** A site plan fetched for a survey job's report (src/modules/survey/site-plan.ts): how many buildings, and how the
    *  client's was picked. Never the postcode, never a coordinate. */
   | 'SITE_PLAN_FETCHED'
   /** A signed word from the service that the check is still under way, or about something other than a

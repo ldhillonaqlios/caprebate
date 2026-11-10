@@ -17,30 +17,36 @@
  *   - a short glossary.
  * Admin and Sales only: the pipeline is theirs (pipeline.read), and so are the facts. No script: the rail is links and
  * each source opens in place (<details>). Nothing here writes; every change is made by the forms below it, which audit.
+ *
+ * Phase 161l2 moved this file from the claims to the CRM, whose claim page is the only one that draws it: it reads the
+ * survey's pack and compliance's audit log, which sit above the claims, and the CRM sits above them all. It reads the
+ * claims through their front door, and the gate's needs from the CRM's own pipeline (the function the claims' port is
+ * given).
  */
 import type { Db } from '../../core/index.ts';
 import { can, type Actor } from '../../core/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
-import { gateOut, loadPipelineClaim, type Need, type PipelineClaim } from './claim-stage.ts';
+import { loadPipelineClaim, type Need, type PipelineClaim } from '../claims/index.ts';
+import { gateOut } from './pipeline.ts';
 import { CLOSED_STAGE, PROCEDURE_STAGES, claimStage, type ProcedureKey } from '../../shared/index.ts';
 import { plainNeed } from '../../shared/index.ts';
-import { CAPTURE_SOURCES, FACTS, captured, latestFacts, type FactReading, type FactsPanel } from './claim-facts.ts';
-import { waitingForCheck, type ToCheck } from './client-checks.ts';
+import { CAPTURE_SOURCES, FACTS, captured, latestFacts, type FactReading, type FactsPanel } from '../claims/index.ts';
+import { waitingForCheck, type ToCheck } from '../claims/index.ts';
 import { plainDashText } from '../../shared/index.ts';
-import { claimObjFor } from './claim-object.ts';
-import { loadClaimRow } from '../clients/index.ts';
-import type { ClaimDocumentsPanel } from './documents.ts';
+import { claimObjFor } from '../claims/index.ts';
+import { loadClaimRow } from '../claims/index.ts';
+import type { ClaimDocumentsPanel } from '../claims/index.ts';
 import { chaptersToRead, CHAPTERS } from '../survey/index.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
 import { clientAuditCount } from '../compliance/index.ts';
 import { SOURCES as REGISTER_SOURCES, getResearchRunsWhoAtByBusinessIdAt } from '../../integrations/index.ts';
 import { listRegisterRecordsSourceIdEntityIdByBusinessIdPropertyId } from '../../integrations/index.ts';
-import { getSurveyorJobsIdSurveyorIdByClaimId } from './data-borrowed.ts';
+import { getSurveyorJobsIdSurveyorIdByClaimId } from '../survey/index.ts';
 // Phase 161l2: the client's answers and their checks are the client record's, read through its door.
 import { listClientTasksQuestionAnswerByBusinessIdState } from '../clients/index.ts';
 import { getSurveyPackApprovalsCountByPackId, getSurveyPackLegalAnswersSByPackIdByUser, getSurveyPacksIdByJobId, listSurveyPackReadsChapterSeqByJobIdUserId } from '../survey/index.ts';
 import { listClientTasksFactIdByBusinessIdState, listClientTasksQuestionKindByBusinessIdState } from '../clients/index.ts';
-import { listClaimFactsIdFactKeyByClaimIdFactKey } from './data.ts';
+import { listClaimFactsIdFactKeyByClaimIdFactKey } from '../claims/index.ts';
 
 /* ================================================================== *
  * 1 · THE STAGES, IN PLAIN WORDS

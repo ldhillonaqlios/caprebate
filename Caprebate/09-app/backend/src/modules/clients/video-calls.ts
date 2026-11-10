@@ -42,7 +42,8 @@ import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, zoomP
 import { getVideoMeetingsCallMinutesCallPeopleByBookingIdCancelledAt, getVideoMeetingsIdBookingIdByBookingIdCancelledAt, insertVideoMeetings, updateVideoMeetingsCallCheckStateCallCheckedAtById, updateVideoMeetingsCallMinutesCallPeopleById, updateVideoMeetingsCancelledAtById } from '../../integrations/index.ts';
 import { getUsersEmailDisplayNameById } from '../../core/index.ts';
 import { getBookingsChannelById, getBookingsChannelStartsAtById, getBookingsStartsAtEndsAtById } from './data.ts';
-import { getBookingsIdEmailByIdDisabledAt, getSurveyWalkthroughsXByBookingId } from './data-borrowed.ts';
+import { getBookingsIdEmailByIdDisabledAt } from './data.ts';
+import { isSurveyWalkthrough } from './walkthrough-port.ts';
 import type { Param, Row } from '../../core/index.ts';
 import { listVideoMeetingsBookingIdHostUserIdByBookingIds } from '../../integrations/index.ts';
 import { idsOf, listBookingsIdByIdChannelOverlap } from './data.ts';
@@ -168,7 +169,7 @@ export async function reconcileVideoMeeting(app: App, booking_id: string): Promi
     return ok ? 'MOVED' : { not_made: 'Zoom did not take the new time. The link still works; the host starts the call at the new time.' };
   }
   // A survey walkthrough call (src/modules/survey/survey-evidence.ts) is recorded, so the surveyor can watch it.
-  const record = getSurveyWalkthroughsXByBookingId(app.db, [booking_id]) !== undefined;
+  const record = isSurveyWalkthrough(app.db, booking_id);
   // Made under the assigned member of staff, so two calls at once can both run; if they have no Zoom user
   // on our account, under the shared host instead, and the audit line says so.
   /* On the free plan every call is the shared host's (as decided: "contact@caprebate

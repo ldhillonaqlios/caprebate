@@ -25,7 +25,7 @@ export type { TaskChoices } from './vocabularies.ts';
 export { getEmailSenderA, getEmailTemplatesLabelSubjectByIdActive, getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, getSavedViewsIdListById, getVocabulariesActivityTypeCountByCode, insertEmailSender, insertSavedViews, listReasonListsCodeLabelActiveByList, listSavedViewsIdListByListRetiredAt, updateSavedViewsRetiredAtRetiredByById } from './data.ts';
 // Its parts of the back office's menu (src/core/navigation.ts). Last, as it reaches the module's own files.
 import './nav.ts';
-// Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
+// Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts, emptied in Phase 161l2).
 export { listReasonListsCodeLabelByList } from './data.ts';
 // Phase 161l2: the document types are the claims' table now (the document centre's); named here as before for the CRM
 // and the portal, which read them through this door.
