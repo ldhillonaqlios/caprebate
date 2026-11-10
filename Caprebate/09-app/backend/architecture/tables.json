@@ -46,7 +46,7 @@
   "client_messages": "clients",
   "client_report_acceptances": "portal",
   "client_signups": "portal",
-  "client_step_notices": "portal",
+  "client_step_notices": "claims",
   "client_task_checks": "clients",
   "client_tasks": "clients",
   "complaint_forms": "compliance",

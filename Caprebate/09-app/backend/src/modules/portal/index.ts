@@ -7,7 +7,7 @@
 export { PORTAL_ACTIONS } from './actions.ts';
 export { confirmSignup, MIN_PASSWORD, offerSignup, requestSignup, verifyOpen } from './signup.ts';
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
-export { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing, getClientSignupsIdBusinessIdByOfferHash, getClientSignupsIdBusinessIdByVerifyHash, getClientSignupsTermsAgreedAtTermsVersionsById, getClientSignupsVerifyExpiresAtVerifiedAtByVerifyHash, insertClientSignups, insertClientStepNotices, insertClientStepNotices2, listClientStepNoticesClaimIdStepByBusinessId2, updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt, updateClientSignupsVerifiedAtUserIdById } from './data.ts';
+export { getClientReportAcceptancesAcceptedAtFingerprintByClaimIdFing, getClientSignupsIdBusinessIdByOfferHash, getClientSignupsIdBusinessIdByVerifyHash, getClientSignupsTermsAgreedAtTermsVersionsById, getClientSignupsVerifyExpiresAtVerifiedAtByVerifyHash, insertClientSignups, updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt, updateClientSignupsVerifiedAtUserIdById } from './data.ts';
 export { portalStepLine, PROPOSED_STEP_NAMES, stepName } from './portal-steps.ts';
 export { accountantConfirmBlock, handleAccountantConfirmStaff, handleConfirmLink } from './accountant-confirm-pages.ts';
 export { accountantFitNeed, latestAnswer, returnFilings, returnsOf } from './accountant-confirm.ts';
@@ -20,8 +20,13 @@ export { engagement, readBusiness } from './portal.ts';
 export { ACCEPT_WORDS, acceptReport, myAcceptance } from './report-accept.ts';
 export { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainShort, lookAgainSummary, takeBackReason } from './take-back.ts';
 export type { ReturnFiling } from './accountant-confirm.ts';
+// Phase 161l2: the types of what the claims ask here, through their port (src/modules/claims/above-ports.ts).
+export type { ConfirmKind, ConfirmRow } from './accountant-confirm.ts';
+export type { FilingRoute } from './client-filing.ts';
 export type { TabKey } from './client-layout.ts';
 export type { LookAgain } from './take-back.ts';
 export { getClientReportAcceptancesCountByClaimId } from './data.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.
 export { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH, LETTER_PAGE_CSP, portalConfirmLink, portalEntry, portalSignLink, rangeBasisFor } from './routes.ts';
+// What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
+import './claims-ports.ts';

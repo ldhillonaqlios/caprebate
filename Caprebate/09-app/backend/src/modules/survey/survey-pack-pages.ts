@@ -30,11 +30,11 @@ import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
 import * as P from './survey-pack.ts';
 import * as L from './pack-legal.ts';
 import * as A from './pack-approve.ts';
-import { sendPanel } from '../claims/index.ts';
+import { sendPanel } from './report-pages.ts';
 import { inspectionChapter, lineEvidence } from './evidence-pages.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
 import { findingSeen } from '../../shared/index.ts';
-import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from '../claims/index.ts';
+import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from './site-plan.ts';
 import { percentWords, poundsWords, quantityWords, WORKS_FIELDS, WORKS_WORDS, WORKS_PART_FIELDS, WORKS_PART_WORDS, type Source, type Valued, type WorksField, type WorksPartField } from './pack-sums.ts';
 
 export type PackPageDeps = {
@@ -117,7 +117,7 @@ export async function handleSurveyPack(
     return 'handled';
   }
   if (act === 'site-plan') {
-    // The site plan for the report's cover, from Ordnance Survey's free maps (src/modules/claims/site-plan.ts).
+    // The site plan for the report's cover, from Ordnance Survey's free maps (src/modules/survey/site-plan.ts).
     const r = await fetchSitePlan({ db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId, transport: d.app.outside, secrets: d.app.secrets }, actor, job);
     if (!r.ok) return d.problem(res, actor, 'No site plan', r.why, `${base(job)}?ch=9#site-plan`);
     redirect(res, `${base(job)}?ch=9&done=plan#site-plan`);

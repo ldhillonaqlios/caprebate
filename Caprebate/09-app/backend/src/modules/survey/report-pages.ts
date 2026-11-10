@@ -10,7 +10,10 @@
  *   POST /staff/survey/{job}/pack/version/{n}/tell         tell the client it is in their portal (client_message.write)
  *   GET  /signoff/{token}  · POST /signoff/{token} · GET /signoff/{token}/report.pdf     the accountant's link, no login
  *   GET  /signoff/{token}/return-entries.csv                 and its return entries, beside the PDF
- *   GET  /portal/report    · GET /portal/report.pdf          the client's released version (src/modules/claims/report-signoff.ts)
+ *
+ * The client's own report pages (GET /portal/report and /portal/report.pdf, the released version of ./report-signoff.ts)
+ * are the portal's: src/modules/portal/report-portal-pages.ts. Phase 161l2 moved this file here from the claims, as only
+ * the survey and the areas above it ask it.
  *
  * The report and the PDF are made again from the approved version every time (src/modules/survey/survey-report.ts): nothing about
  * them is stored but the version itself.
@@ -19,16 +22,14 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../../core/app.ts';
 import { can, type Actor } from '../../core/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../../shared/index.ts';
-import { approvedVersion, type Readiness } from '../survey/index.ts';
-import type { PackView } from '../survey/index.ts';
-import { reportHtml, reportModel, reportPdf, longDate, REPORT_TITLE } from '../survey/index.ts';
+import { approvedVersion, type Readiness } from './pack-approve.ts';
+import type { PackView } from './survey-pack.ts';
+import { reportHtml, reportModel, reportPdf, longDate, REPORT_TITLE } from './survey-report.ts';
 import * as S from './report-signoff.ts';
-import { ACCEPT_WORDS, myAcceptance } from '../portal/index.ts';
-import { ukDate } from '../../shared/index.ts';
-import { poundsWords } from '../survey/index.ts';
-import { contextForApproval, csvName, returnContextFor, returnEntriesCsv } from './return-entries.ts';
-import { packJob } from '../survey/index.ts';
-import { getSurveyPackApprovalsJsonExtractSnapshotJsonQById } from '../survey/index.ts';
+import { poundsWords } from './pack-sums.ts';
+import { contextForApproval, csvName, returnContextFor, returnEntriesCsv } from '../claims/index.ts';
+import { packJob } from './surveyor.ts';
+import { getSurveyPackApprovalsJsonExtractSnapshotJsonQById } from './data.ts';
 
 export type ReportPageDeps = {
   app: App;
@@ -45,7 +46,8 @@ function redirect(res: ServerResponse, to: string): void {
   res.end('');
 }
 
-function sendPdf(res: ServerResponse, bytes: Uint8Array, filename: string): void {
+/** A PDF to download: the report's, here and in the client's portal. */
+export function sendPdf(res: ServerResponse, bytes: Uint8Array, filename: string): void {
   res.writeHead(200, { 'content-type': 'application/pdf', 'content-disposition': `attachment; filename="${filename}"`,
     'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'content-length': String(bytes.length) });
   res.end(Buffer.from(bytes));
@@ -61,7 +63,8 @@ function sendCsv(res: ServerResponse, text: string, filename: string): void {
 
 const csvLink = (href: string) => h`<p class="help">Beside the PDF: <a href="${href}">the return entries for each year, as a spreadsheet (CSV)</a> — what goes on each tax return, so nobody retypes the figures.</p>`;
 
-const pdfName = (company: string, version: number) =>
+/** The report PDF's file name. */
+export const pdfName = (company: string, version: number) =>
   `${company.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'client'}-survey-report-v${String(version)}.pdf`;
 
 /* ================================================================== *
@@ -253,51 +256,4 @@ export async function handleSignoffLink(
     ${reportHtml(model, { pdf: `/signoff/${token}/report.pdf` })}
     ${v.fingerprint_holds ? csvLink(`/signoff/${token}/return-entries.csv`) : raw('')}
     ${v.fingerprint_holds ? linkForms(token, err, posted) : raw('')}`);
-}
-
-/* ================================================================== *
- * THE CLIENT'S PORTAL
- * ================================================================== */
-
-/** The portal's report pages, for the business the portal resolved for this request. 'not-mine' for any other path. */
-export function portalReport(app: App, actor: Actor, business_id: string, path: string, res: ServerResponse, nav: Safe): 'handled' | 'not-mine' {
-  if (path !== '/portal/report' && path !== '/portal/report.pdf') return 'not-mine';
-  const r = S.releasedVersion(app.db, business_id);
-  if (r === null) {
-    res.writeHead(404, HTML_HEADERS);
-    res.end(page({ title: 'Your survey report', nav, wide: true, body: h`<div class="card"><h1>Your survey report is not ready yet</h1><p>It appears here once your surveyor has approved it and a tax adviser has signed off its figures. We will tell you.</p><p><a href="/portal">Back to your portal</a></p></div>` }));
-    return 'handled';
-  }
-  const m = reportModel(r.snapshot, r.row.fingerprint, contextForApproval(app.db, r.row.id));
-  if (path === '/portal/report.pdf') { sendPdf(res, reportPdf(m).bytes, pdfName(m.company, m.version)); return 'handled'; }
-  res.writeHead(200, HTML_HEADERS);
-  res.end(page({ title: `Your survey report · ${m.company}`, nav, wide: true, body: h`<p><a href="/portal">Back to your portal</a></p>${acceptBox(app, actor, business_id)}${reportHtml(m, { pdf: '/portal/report.pdf' })}` }));
-  return 'handled';
-}
-
-/**
- * "I accept this report", on the report page and the home card - or when this login accepted it. A
- * plain form, no script: the portal's pages stay script-free.
- */
-export function acceptBox(app: App, actor: Actor, business_id: string): Safe {
-  const mine = myAcceptance(app.db, actor, business_id);
-  if (mine !== null) return h`<p class="saved" role="status">You accepted this report on ${ukDate(mine.accepted_at)}.</p>`;
-  return h`<form method="post" action="/portal/report/accept" class="rp-accept"><p>Read the report. If it is right, tell us you accept it.
-    We go on to the next step once you do.</p><button class="cta" type="submit">${ACCEPT_WORDS.button}</button></form>`;
-}
-
-/** The portal home's card, when a version is released. */
-export function portalReportCard(app: App, business_id: string, actor?: Actor): Safe {
-  const r = S.releasedVersion(app.db, business_id);
-  if (r === null) return raw('');
-  const m = reportModel(r.snapshot, r.row.fingerprint, contextForApproval(app.db, r.row.id));
-  return h`<section class="card rp-portal" id="survey-report" aria-labelledby="survey-report-h">
-    <h2 id="survey-report-h">Your survey report is ready</h2>
-    <p>Approved by your surveyor, ${m.surveyor.name}, and signed off by a tax adviser.</p>
-    <p class="rp-lbl">Spend that qualifies</p><p class="rp-fig">${m.headline.qualifying}</p>
-    <p>${m.headline.share} of the ${m.headline.building} paid for the building</p>
-    <div class="rp-split" role="img" aria-label="Main pool ${String(m.headline.main_pct)} per cent, special rate pool ${String(100 - m.headline.main_pct)} per cent"><span class="rp-mp pk-w${String(Math.round(m.headline.main_pct / 5) * 5)}"></span><span class="rp-sr"></span></div>
-    <p class="rp-legend"><span>Main pool ${m.headline.main}</span><span>Special rate pool ${m.headline.special}</span></p>
-    <p><a class="cta" href="/portal/report">Read the report</a> <a class="btn" href="/portal/report.pdf">Download the PDF</a></p>
-    ${actor === undefined ? raw('') : acceptBox(app, actor, business_id)}</section>`;
 }

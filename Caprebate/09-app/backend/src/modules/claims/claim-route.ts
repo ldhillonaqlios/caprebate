@@ -24,14 +24,14 @@
 import type { Db } from '../../core/index.ts';
 import { acquisitionDateReading, amendmentWindowReading, latestFacts, periodFromYearEnd, windowForPeriod, type WindowReading } from './claim-facts.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, type EventKind, type PropertyEvent } from './property-events.ts';
-import { legalVerdictForClaim } from '../survey/index.ts';
+import { legalVerdictForClaim } from './above-ports.ts';
 import { propertyTenure, registerNamesClientPerson } from './who-claims.ts';
 import { localDate } from '../../shared/index.ts';
 import { getRegisterRecordsFieldsJsonByBusinessIdSourceId8 } from '../../integrations/index.ts';
-import { getSurveyPackApprovalsSnapshotJsonByClaimId } from '../survey/index.ts';
+import { getSurveyPackApprovalsSnapshotJsonByClaimId } from './above-ports.ts';
 import { getBusinessesClaimantTypeById, getBusinessesCompanyNumberById } from '../clients/index.ts';
 import { getAssessmentAnswersValueByBusinessIdQuestionId } from '../assessment/index.ts';
-import { getPropertiesDisposalDateById } from './data.ts';
+import { getClaimsIdBusinessIdById5, getPropertiesDisposalDateById } from './data.ts';
 
 export type Route = 'W1' | 'W2' | 'W3' | 'NOT_KNOWN';
 
@@ -253,6 +253,15 @@ export function claimReturns(routes: readonly EventRoute[]): ClaimReturn[] | nul
   }
   return [...by.entries()].sort(([a], [b]) => (a < b ? -1 : 1))
     .map(([period_end, g]) => ({ period_end, amend_by: g.amend_by, due_on: g.amend_by === null ? null : dueFromAmendBy(g.amend_by), parts: g.parts }));
+}
+
+/**
+ * The returns this claim goes into, from its parts' routes, or null where they are not settled (or there is no such
+ * claim). Moved from the portal (Phase 161l2): it reads only the claim, and the claim record asks it too.
+ */
+export function returnsOf(db: Db, claim_id: string, todayIso: string): ClaimReturn[] | null {
+  const c = getClaimsIdBusinessIdById5<{ id: string; business_id: string; property_id: string | null }>(db, [claim_id]);
+  return c === undefined ? null : claimReturns(claimRoutes(db, c, todayIso));
 }
 
 /** One line per route, for a gate's "why". */

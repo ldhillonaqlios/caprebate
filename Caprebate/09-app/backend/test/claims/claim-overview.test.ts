@@ -1,5 +1,5 @@
 /**
- * PHASE 160i — WHERE THIS CLAIM STANDS, 20 October 2026 (src/modules/claims/claim-overview.ts, drawn on the claim page by
+ * PHASE 160i — WHERE THIS CLAIM STANDS, 20 October 2026 (src/modules/crm/claim-overview.ts, drawn on the claim page by
  * src/modules/crm/crm-pages.ts; the one-client audit log in src/modules/compliance/audit-log.ts and src/app/staff.ts; the fact form's source in
  * src/modules/claims/claim-record-pages.ts). Every stage with its needs, still needed and gathered from the claim's own records,
  * where each fact came from, every value before, the survey pack's progress and the client's audit log.
@@ -13,7 +13,7 @@ import { createHash } from 'node:crypto';
 import { createApp } from '../../src/app/server.ts';
 import { seed } from '../../src/app/seed.ts';
 import { SITE_CSS } from '../../src/shared/assets.ts';
-import { claimOverview, fieldWords, packProgress, sentence, sourceName, STAGE_WORDS } from '../../src/modules/claims/claim-overview.ts';
+import { claimOverview, fieldWords, packProgress, sentence, sourceName, STAGE_WORDS } from '../../src/modules/crm/claim-overview.ts';
 import * as C from '../../src/modules/crm/crm.ts';
 import type { Actor } from '../../src/core/authz.ts';
 import type { FactsPanel } from '../../src/modules/claims/claim-facts.ts';

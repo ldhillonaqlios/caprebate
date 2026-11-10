@@ -29,7 +29,7 @@ import { countRegisterRecordsSince } from '../../integrations/index.ts';
 import { getClaimDeliverablesCountByBusinessIdState, getClaimGrantsCountByBusinessIdSourceId, listFactApprovalsFactRefActionByBusinessId2 } from '../claims/index.ts';
 import { getSignatoryChecksCountByBusinessIdSource } from '../compliance/index.ts';
 import { getSurveyorJobsCountByBusinessIdState } from '../survey/index.ts';
-import { listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep } from './data.ts';
+import { listClientStepNoticesCOALESCEClaimIdKByBusinessIdStep } from '../claims/index.ts';
 
 /* ================================================================== *
  * 1 · WHO HAS ALREADY APPROVED IT

@@ -27,3 +27,5 @@ export { getDocumentTypesCodeByCode, getDocumentTypesCodeLabelByCode, getDocumen
 import './nav.ts';
 // Phase 161l1: what the CRM reads here in place of its joins (src/modules/clients/data-borrowed.ts).
 export { listDocumentTypesCodeReadersLabelByCodes, listReasonListsCodeLabelByList } from './data.ts';
+// What the claims ask this module (their port, src/modules/claims/above-ports.ts). Last, as it reaches the claims' door.
+import './claims-ports.ts';
