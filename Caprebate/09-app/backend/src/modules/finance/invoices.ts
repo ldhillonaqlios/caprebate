@@ -3,7 +3,7 @@
  * CRM 7 of 10.
  *
  * The schema is migration 016; the fee is src/modules/claims/fee-controls.ts; the VAT and
- * its monitoring are src/modules/assessment/vat.ts; the pages are src/modules/finance/finance-pages.ts. The
+ * its monitoring are src/modules/finance/vat.ts; the pages are src/modules/finance/finance-pages.ts. The
  * scope is 09-app/docs/CAPREBATE-CRM-DISPOSITION.md, section 13.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from '../claims
 import { claimantTypeForGate } from '../assessment/index.ts';
 import { claimObjFor } from '../claims/index.ts';
 import { computeFee, controlsView, letterFee, letterFees, FEE_CONTROLS, PAYMENT_TERMS_QUESTION, type ControlsView, type FeeControls } from '../claims/index.ts';
-import { ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading, type SettingsView, type VatReading } from '../assessment/index.ts';
+import { ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading, type SettingsView, type VatReading } from './vat.ts';
 import { assertFinanceSection, feeVersusBenefit, financeSectionObj, type FeeVersusBenefit } from './finance.ts';
 import { feeList, type FeeView } from '../clients/index.ts';
 import { announce } from '../../core/index.ts';

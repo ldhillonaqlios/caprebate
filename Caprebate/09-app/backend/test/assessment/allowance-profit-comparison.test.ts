@@ -26,7 +26,7 @@ import { sessionFromFunnel } from '../../src/modules/assessment/funnel-session.t
 import {
   ALLOWANCE_PROFIT_COMPARISON, runComparison, compareWithAndWithout, classifyFact,
   type BenefitBasis, type ComparisonReport,
-} from '../../src/modules/assessment/allowance-profit-comparison.ts';
+} from '../../src/modules/claims/allowance-profit-comparison.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T0 = '2026-09-14T09:00:00.000Z';

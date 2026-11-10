@@ -104,7 +104,7 @@ export async function handleClaimRecord(
     return finish(id, F.recordGrant(deps, actor, id, posted(await form(req),
       ['kind', 'payer_class', 'amount', 'amount_basis', 'traced', 'traced_elements', 'element_ids', 'source_id', 'note', 'paid_to', 'event_id'])), 'Grant not saved', 'grants', GRANTS_ANCHOR);
   }
-  // The two grant facts the gate out of valuation reads (src/modules/assessment/grant-checks.ts), from the grants section,
+  // The two grant facts the gate out of valuation reads (src/modules/survey/grant-checks.ts), from the grants section,
   // and back to it. Only those two keys: every other fact is recorded on the facts panel, as before.
   m = new RegExp(`^/staff/claims/${ID}/grants/fact$`).exec(path);
   if (m) {

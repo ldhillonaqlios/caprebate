@@ -13,8 +13,8 @@
  */
 import type { Db } from '../../core/index.ts';
 import { BAND } from '../../shared/index.ts';
-import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
-import { listSurveyPackApprovalsSnapshotJsonAssessmentIdByVersionPack } from '../survey/index.ts';
+import { funnelStateFor, sessionFromFunnel } from '../assessment/index.ts';
+import { listSurveyPackApprovalsSnapshotJsonAssessmentIdByVersionPack } from './data.ts';
 
 export const MIN_CLAIMS = 5;
 

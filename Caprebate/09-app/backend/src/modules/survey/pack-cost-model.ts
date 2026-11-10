@@ -36,7 +36,7 @@ import { indexBetween } from './bcis-data.ts';
 import { BAND } from '../../shared/index.ts';
 import { acquisitionDateReading } from '../claims/index.ts';
 import { onTestWebsite, type Env } from '../../integrations/index.ts';
-import { MIN_CLAIMS } from '../assessment/index.ts';
+import { MIN_CLAIMS } from './sector-ranges.ts';
 import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from './surveyor-crm.ts';
 import { listSurveyPackApprovalsSnapshotJsonJobIdByVersionPackId } from './data.ts';
 

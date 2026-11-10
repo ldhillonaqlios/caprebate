@@ -35,7 +35,7 @@ import * as C from '../../src/modules/crm/crm.ts';
 import * as P from '../../src/modules/crm/pipeline.ts';
 import * as T from '../../src/modules/crm/tasks.ts';
 import * as I from '../../src/modules/finance/invoices.ts';
-import * as V from '../../src/modules/assessment/vat.ts';
+import * as V from '../../src/modules/finance/vat.ts';
 import * as FC from '../../src/modules/claims/fee-controls.ts';
 import * as F from '../../src/modules/finance/finance.ts';
 import * as R from '../../src/modules/claims/claim-record.ts';

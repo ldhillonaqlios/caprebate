@@ -51,7 +51,7 @@ import * as S from './surveyor.ts';
 import { jobSite, setJobMenu } from './surveyor-pages.ts';
 import { lateBadge, siteOf } from '../../core/index.ts';
 import { PAYER_CLASSES } from '../claims/index.ts';
-import { deskFirstReading } from '../assessment/index.ts';
+import { deskFirstReading } from './desk-first.ts';
 import { roomsFor } from '../clients/index.ts';
 import { REPORT_ASSUMPTIONS } from '../assessment/index.ts';
 import { TEST_DEFAULT_WORDS } from './pack-lines.ts';

@@ -542,15 +542,15 @@
    "area": "assessment",
    "kind": "other"
   },
-  "src/modules/assessment/allowance-profit-comparison.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
   "src/modules/assessment/allowances.ts": {
    "area": "assessment",
    "kind": "logic"
   },
   "src/modules/assessment/assessment.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/modules/assessment/claimant-role.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -562,17 +562,9 @@
    "area": "assessment",
    "kind": "other"
   },
-  "src/modules/assessment/data-borrowed.ts": {
-   "area": "assessment",
-   "kind": "data"
-  },
   "src/modules/assessment/data.ts": {
    "area": "assessment",
    "kind": "data"
-  },
-  "src/modules/assessment/desk-first.ts": {
-   "area": "assessment",
-   "kind": "logic"
   },
   "src/modules/assessment/fee-gate.ts": {
    "area": "assessment",
@@ -594,15 +586,15 @@
    "area": "assessment",
    "kind": "logic"
   },
-  "src/modules/assessment/grant-checks.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
   "src/modules/assessment/index.ts": {
    "area": "assessment",
    "kind": "other"
   },
   "src/modules/assessment/long-life-and-remediation.ts": {
+   "area": "assessment",
+   "kind": "logic"
+  },
+  "src/modules/assessment/property-writer.ts": {
    "area": "assessment",
    "kind": "logic"
   },
@@ -614,19 +606,11 @@
    "area": "assessment",
    "kind": "routes"
   },
-  "src/modules/assessment/sector-ranges.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
-  "src/modules/assessment/vat.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
-  "src/modules/assessment/who-claims.ts": {
-   "area": "assessment",
-   "kind": "logic"
-  },
   "src/modules/claims/actions.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/allowance-profit-comparison.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -635,6 +619,10 @@
    "kind": "page"
   },
   "src/modules/claims/approvals.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/assessed-properties.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -843,6 +831,10 @@
    "kind": "logic"
   },
   "src/modules/claims/valuation-lock.ts": {
+   "area": "claims",
+   "kind": "logic"
+  },
+  "src/modules/claims/who-claims.ts": {
    "area": "claims",
    "kind": "logic"
   },
@@ -1226,6 +1218,10 @@
    "area": "finance",
    "kind": "other"
   },
+  "src/modules/finance/vat.ts": {
+   "area": "finance",
+   "kind": "logic"
+  },
   "src/modules/portal/accountant-confirm-pages.ts": {
    "area": "portal",
    "kind": "page"
@@ -1382,9 +1378,17 @@
    "area": "survey",
    "kind": "data"
   },
+  "src/modules/survey/desk-first.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
   "src/modules/survey/evidence-pages.ts": {
    "area": "survey",
    "kind": "page"
+  },
+  "src/modules/survey/grant-checks.ts": {
+   "area": "survey",
+   "kind": "logic"
   },
   "src/modules/survey/index.ts": {
    "area": "survey",
@@ -1443,6 +1447,10 @@
    "kind": "other"
   },
   "src/modules/survey/photo-upload.ts": {
+   "area": "survey",
+   "kind": "logic"
+  },
+  "src/modules/survey/sector-ranges.ts": {
    "area": "survey",
    "kind": "logic"
   },

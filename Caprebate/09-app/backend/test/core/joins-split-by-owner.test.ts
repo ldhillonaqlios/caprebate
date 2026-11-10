@@ -80,8 +80,8 @@ const ORIGINAL: Readonly<Record<string, readonly ['get' | 'all', string]>> = {
   'portal.getClaimsIdBusinessIdById8': ['get', 'SELECT c.id, c.business_id, c.stage, c.claim_ref, b.name AS company FROM claims c JOIN businesses b ON b.id = c.business_id WHERE c.id = ?'],
   'portal.getDocumentsIdBusinessIdById4': ['get', 'SELECT d.id, d.business_id, d.filename, d.declared_type, d.doc_type, d.byte_size, d.sniffed_as, d.state, d.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.logical_document_id, d.version_no, d.original_kept_at, d.original_deleted_at, t.label AS type_label, l.seq FROM documents d LEFT JOIN document_types t ON t.code = d.type_code LEFT JOIN logical_documents l ON l.id = d.logical_document_id WHERE d.id = ?'],
   'portal.listDocumentsIdBusinessIdByBusinessId': ['all', 'SELECT d.id, d.business_id, d.filename, d.declared_type, d.doc_type, d.byte_size, d.sniffed_as, d.state, d.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.logical_document_id, d.version_no, d.original_kept_at, d.original_deleted_at, t.label AS type_label, l.seq FROM documents d LEFT JOIN document_types t ON t.code = d.type_code LEFT JOIN logical_documents l ON l.id = d.logical_document_id WHERE d.business_id = ? ORDER BY d.created_at DESC'],
-  'assessment.getFinanceSettingsIdSettingBySettingEffectiveFrom': ['get', 'SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by WHERE s.setting = ? AND s.effective_from <= ? ORDER BY s.effective_from DESC, s.recorded_at DESC, s.rowid DESC LIMIT 1'],
-  'assessment.listFinanceSettingsIdSetting': ['all', 'SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by ORDER BY s.setting ASC, s.effective_from DESC, s.rowid DESC'],
+  'finance.getFinanceSettingsIdSettingBySettingEffectiveFrom': ['get', 'SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by WHERE s.setting = ? AND s.effective_from <= ? ORDER BY s.effective_from DESC, s.recorded_at DESC, s.rowid DESC LIMIT 1'],
+  'finance.listFinanceSettingsIdSetting': ['all', 'SELECT s.id, s.setting, s.value, s.effective_from, s.source, s.recorded_at, u.display_name AS recorder FROM finance_settings s LEFT JOIN users u ON u.id = s.recorded_by ORDER BY s.setting ASC, s.effective_from DESC, s.rowid DESC'],
   'claims.listClaimFactsIdFactKeyByClaimIdFactKey': ['all', 'SELECT f.id, f.fact_key, f.answer, f.value_text, f.value_pence, f.value_date, f.source_id, f.note, f.recorded_at, ' +
     'u.display_name AS recorder FROM claim_facts f LEFT JOIN users u ON u.id = f.recorded_by ' +
     'WHERE f.claim_id = ? AND f.fact_key = ? ORDER BY f.recorded_at DESC, f.rowid DESC'],
@@ -164,7 +164,7 @@ const ORIGINAL: Readonly<Record<string, readonly ['get' | 'all', string]>> = {
 type Read = (db: Db, params?: readonly Param[]) => unknown;
 /** Where a read is found: its area's borrowed file, else its data file, else the outside services' front door. */
 async function readsOf(area: string): Promise<Record<string, Read>> {
-  // An area whose borrowed file is gone (emptied and deleted, Phase 161l2) has its reads in its data file.
+  // An area whose borrowed file is gone (its statements all moved to their owners) reads from its data file alone.
   const borrowed = await import(`../../src/modules/${area}/data-borrowed.ts`).catch(() => ({})) as Record<string, Read>;
   const data = await import(`../../src/modules/${area}/data.ts`) as Record<string, Read>;
   const outside = await import('../../src/integrations/index.ts') as unknown as Record<string, Read>;
@@ -213,7 +213,7 @@ const ASKED: Readonly<Record<string, string>> = {
   'portal.getClaimsIdBusinessIdById8': 'SELECT id FROM claims',
   'portal.getDocumentsIdBusinessIdById4': 'SELECT id FROM documents',
   'portal.listDocumentsIdBusinessIdByBusinessId': 'SELECT id FROM businesses',
-  'assessment.getFinanceSettingsIdSettingBySettingEffectiveFrom': "SELECT DISTINCT setting, '9999-12-31' FROM finance_settings",
+  'finance.getFinanceSettingsIdSettingBySettingEffectiveFrom': "SELECT DISTINCT setting, '9999-12-31' FROM finance_settings",
   'claims.listClaimFactsIdFactKeyByClaimIdFactKey': 'SELECT DISTINCT claim_id, fact_key FROM claim_facts',
   'claims.listClaimFactsSeqIdByClaimId': 'SELECT id FROM claims',
   'claims.listClaimGrantsIdKindByClaimId': 'SELECT id FROM claims',
@@ -249,7 +249,7 @@ const ASKED: Readonly<Record<string, string>> = {
   'claims.listDocumentFieldVouchesIdBusinessIdByRequestIdJO2': 'SELECT id FROM businesses',
 };
 // Two reads take no parameter: they are asked once, with none.
-const NO_PARAMS = new Set(['admin.listSavedKeysNameSealedByRowidName', 'assessment.listFinanceSettingsIdSetting']);
+const NO_PARAMS = new Set(['admin.listSavedKeysNameSealedByRowidName', 'finance.listFinanceSettingsIdSetting']);
 
 /** One fixture row (a test may write rows; the walls are for src/), saying which statement failed if one does. */
 function put(db: Db, sql: string, params: readonly Param[]): void {

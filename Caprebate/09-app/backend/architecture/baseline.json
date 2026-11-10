@@ -16,11 +16,6 @@
    ]
   },
   "2": {
-   "assessment": [
-    "assessment -> claims",
-    "assessment -> finance",
-    "assessment -> survey"
-   ],
    "claims": [
     "claims -> admin",
     "claims -> compliance",
@@ -48,12 +43,7 @@
    "admin": [
     "src/modules/claims/data-borrowed.ts : document_types"
    ],
-   "claims": [
-    "src/modules/assessment/data-borrowed.ts : claim_deliverables",
-    "src/modules/assessment/data-borrowed.ts : claims"
-   ],
    "clients": [
-    "src/modules/assessment/data-borrowed.ts : businesses",
     "src/modules/claims/data-borrowed.ts : businesses",
     "src/modules/claims/data-borrowed.ts : client_task_checks",
     "src/modules/claims/data-borrowed.ts : client_tasks",
@@ -61,16 +51,12 @@
     "src/modules/claims/data-borrowed.ts : internal_notes"
    ],
    "finance": [
-    "src/modules/assessment/data-borrowed.ts : finance_settings",
-    "src/modules/assessment/data-borrowed.ts : invoice_credit_notes",
-    "src/modules/assessment/data-borrowed.ts : invoices",
     "src/modules/claims/data-borrowed.ts : fee_discounts"
    ],
    "portal": [
     "src/modules/claims/data-borrowed.ts : client_step_notices"
    ],
    "survey": [
-    "src/modules/assessment/data-borrowed.ts : surveyor_jobs",
     "src/modules/claims/data-borrowed.ts : pack_client_notices",
     "src/modules/claims/data-borrowed.ts : pack_signoff_answers",
     "src/modules/claims/data-borrowed.ts : pack_signoff_recorded",

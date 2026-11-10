@@ -311,6 +311,11 @@ export function getSurveyorJobsIdBusinessIdById4<T extends Row = Row>(db: Db, pa
 export function getSurveyorJobsIdByClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT id FROM surveyor_jobs WHERE claim_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1', params);
 }
+// The desk-first reading's job (Phase 161l2, src/modules/survey/desk-first.ts): the organisation's sector is the client
+// record's, looked up through its door.
+export function getSurveyorJobsBusinessIdClaimIdById2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT j.business_id, j.claim_id FROM surveyor_jobs j WHERE j.id = ?', params);
+}
 export function insertSurveyorJobs(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO surveyor_jobs (id, business_id, assessment_id, surveyor_id, state, committed_at, created_at, claim_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params);
 }

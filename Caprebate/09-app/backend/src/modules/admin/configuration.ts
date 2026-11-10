@@ -46,7 +46,7 @@ import { RECIPROCITY_ACTIVITY_TYPES } from '../clients/index.ts';
 import { typeList, type TypeView } from '../claims/index.ts';
 import { rulesPage, type RuleView } from './automation-rules.ts';
 import { templatesPage } from './templates.ts';
-import { settingsView, type SettingsView } from '../assessment/index.ts';
+import { settingsView, type SettingsView } from '../finance/index.ts';
 import { settingReading, type SettingReading } from '../compliance/index.ts';
 import { getAutomationRulesCOUNTByActiveTaskPriority } from '../clients/index.ts';
 import { getReasonListsCountByListCode, getReasonListsLabelActiveByListCode, getReasonListsNByList, getVocabulariesCountByListCode, getVocabulariesLabelActiveByListCode, getVocabulariesNByList, insertReasonLists, insertVocabularies, listReasonListsCodeLabelByList, updateReasonListsLabelActiveByListCode, updateVocabulariesLabelActiveByListCode } from './data.ts';

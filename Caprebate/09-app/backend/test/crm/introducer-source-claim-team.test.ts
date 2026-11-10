@@ -39,7 +39,7 @@ import * as D from '../../src/modules/claims/documents.ts';
 import * as DB from '../../src/modules/crm/dashboard.ts';
 import * as P from '../../src/modules/crm/pipeline.ts';
 import * as I from '../../src/modules/crm/introducers.ts';
-import * as V from '../../src/modules/assessment/vat.ts';
+import * as V from '../../src/modules/finance/vat.ts';
 import * as T from '../../src/modules/crm/tasks.ts';
 import * as F from '../../src/modules/claims/claim-facts.ts';
 import * as MD from '../../src/modules/claims/mandatory-documents.ts';
