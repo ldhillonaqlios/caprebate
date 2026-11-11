@@ -174,7 +174,7 @@ export function getOutboxToEmailById<T extends Row = Row>(db: Db, params: readon
 }
 export function insertOutbox(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO outbox (id, created_at, to_email, subject, body, kind, sent_at, transport, business_id, from_header, reply_to, ' +
-    'claim_id, lead_id, contact_id, written_by, send_requested, thread_key, in_reply_to, references_ids) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
+    'claim_id, lead_id, contact_id, written_by, send_requested, thread_key, in_reply_to, references_ids, html_body) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
 }
 export function listOutboxCreatedAtToEmailByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT created_at, to_email, subject, body, sent_at, kind FROM outbox WHERE business_id = ? ORDER BY created_at', params);
@@ -199,13 +199,13 @@ export function listOutboxIdToEmailBySendRequestedSentAt2<T extends Row = Row>(d
   return db.all<T>('SELECT id, to_email FROM outbox WHERE send_requested = 1 AND sent_at IS NULL AND last_error IS NULL AND created_at >= ? ORDER BY created_at', params);
 }
 export function listOutboxIdToEmailBySentAtSendRequested<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT id, to_email, subject, body, business_id, from_header, reply_to, in_reply_to, references_ids FROM outbox WHERE sent_at IS NULL AND send_requested = 1 AND id = ?', params);
+  return db.all<T>('SELECT id, to_email, subject, body, html_body, business_id, from_header, reply_to, in_reply_to, references_ids FROM outbox WHERE sent_at IS NULL AND send_requested = 1 AND id = ?', params);
 }
 export function listOutboxIdToEmailBySentAtSendRequested2<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
-  return db.all<T>('SELECT id, to_email, subject, body, business_id, from_header, reply_to, in_reply_to, references_ids FROM outbox WHERE sent_at IS NULL AND send_requested = 1 ORDER BY created_at', params);
+  return db.all<T>('SELECT id, to_email, subject, body, html_body, business_id, from_header, reply_to, in_reply_to, references_ids FROM outbox WHERE sent_at IS NULL AND send_requested = 1 ORDER BY created_at', params);
 }
 export function updateOutboxBodyByIdSentAt(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run("UPDATE outbox SET body = ? WHERE id = ? AND sent_at IS NOT NULL AND kind IN ('SIGN_IN_CODE', 'PASSWORD_RESET', 'ACCOUNT_VERIFY', 'REPORT_FOR_SIGNOFF') AND body <> ?", params);
+  return db.run("UPDATE outbox SET body = ?, html_body = NULL WHERE id = ? AND sent_at IS NOT NULL AND kind IN ('SIGN_IN_CODE', 'PASSWORD_RESET', 'ACCOUNT_VERIFY', 'REPORT_FOR_SIGNOFF') AND body <> ?", params);
 }
 export function updateOutboxLastErrorById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE outbox SET last_error = ? WHERE id = ?', params);

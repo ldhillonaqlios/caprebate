@@ -25,6 +25,7 @@ POST = /upload/pieces/start
 * ~ /^\/sign\/([0-9a-f]{64})$/
 * ~ /^\/call\/([0-9a-f]{64})$/
 GET = /assets/cap-rebate-logo.png
+GET = /email/cap-rebate-logo.png
 GET = /favicon.svg
 GET = /favicon.ico
 GET = /assets/cookie-banner.css

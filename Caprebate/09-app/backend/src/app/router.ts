@@ -48,6 +48,7 @@ import { sweepVideos } from '../modules/survey/index.ts';
 import { receiveWhatsApp } from '../modules/crm/index.ts';
 import { webhookChallenge } from '../integrations/index.ts';
 import { ga4MeasurementId } from '../integrations/index.ts';
+import { EMAIL_LOGO_HEADERS, emailLogoPng } from '../integrations/index.ts';
 import { localDate, ukDate } from '../shared/index.ts';
 import { SITE_JS_HEADERS } from '../modules/public-site/index.ts';
 import { storageReason } from '../modules/compliance/index.ts';
@@ -215,6 +216,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   // The supplied logo, from memory, like the stylesheet — never from a path on disk.
   if (path === '/assets/cap-rebate-logo.png' && method === 'GET') {
     res.writeHead(200, PNG_HEADERS); res.end(LOGO_INK_PNG); return 'handled';
+  }
+  // The emails' logo (Phase 161m2, src/integrations/email/email-logo.ts): public and cacheable, as a mail program fetches it.
+  if (path === '/email/cap-rebate-logo.png' && method === 'GET') {
+    res.writeHead(200, EMAIL_LOGO_HEADERS); res.end(emailLogoPng()); return 'handled';
   }
   // STRESS TEST: the house mark as the browser tab's icon. A browser asked for /favicon.ico on every page
   // and met a 401, which it logged as an error; pages now name /favicon.svg, and /favicon.ico answers "nothing here".

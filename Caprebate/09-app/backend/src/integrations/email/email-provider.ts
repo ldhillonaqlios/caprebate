@@ -241,6 +241,8 @@ export type Envelope = {
   readonly to: string;
   readonly subject: string;
   readonly body: string;
+  /** The branded HTML version (Phase 161m2). With it the message is multipart/alternative, text first. */
+  readonly html?: string | null;
   readonly attachments: readonly Attachment[];
   readonly date: Date;
   /** A reply's In-Reply-To and References — Message-IDs without the angle brackets. */
@@ -287,7 +289,18 @@ export function buildMessage(e: Envelope, messageId: string): string {
       : [`References: ${(e.references ?? []).filter((r) => MESSAGE_ID.test(r)).slice(-20).map((r) => `<${r}>`).join(' ')}`]),
     'MIME-Version: 1.0',
   ];
-  const text = ['Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: base64', '', base64Lines(Buffer.from(e.body, 'utf8'))];
+  const plain = ['Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: base64', '', base64Lines(Buffer.from(e.body, 'utf8'))];
+  /* THE BRANDED VERSION (Phase 161m2): the same words twice, text first and HTML last, as multipart/alternative, so
+     a mail program shows the HTML and falls back to the text. A message without HTML is exactly as it always was. */
+  let text = plain;
+  if (typeof e.html === 'string' && e.html !== '') {
+    const alt = `cb-alt-${randomBytes(12).toString('hex')}`;
+    text = [
+      `Content-Type: multipart/alternative; boundary="${alt}"`, '', `--${alt}`, ...plain,
+      `--${alt}`, 'Content-Type: text/html; charset=utf-8', 'Content-Transfer-Encoding: base64', '', base64Lines(Buffer.from(e.html, 'utf8')),
+      `--${alt}--`,
+    ];
+  }
   if (e.attachments.length === 0) return [...head, ...text].join('\r\n');
   const b = `cb-${randomBytes(12).toString('hex')}`;
   const parts = [
@@ -542,7 +555,7 @@ export type DispatchResult =
   | { readonly state: 'RAN'; readonly sent: number; readonly failed: number; readonly refused: number };
 
 type Waiting = {
-  id: string; to_email: string; subject: string; body: string; business_id: string | null;
+  id: string; to_email: string; subject: string; body: string; html_body: string | null; business_id: string | null;
   from_header: string | null; reply_to: string | null; in_reply_to: string | null; references_ids: string | null;
 };
 
@@ -563,6 +576,7 @@ type Waiting = {
 export const SENT_SECRET_KINDS: readonly string[] = Object.freeze(['SIGN_IN_CODE', 'PASSWORD_RESET', 'ACCOUNT_VERIFY', 'REPORT_FOR_SIGNOFF']);
 export const SENT_SECRET_BODY = 'This email held a sign-in code or a one-use link. It was sent, and then its words were removed so the code or link is not kept.';
 
+/* Its HTML version goes in the same statement (Phase 161m2, migration 123): set to NULL, as the code or link is in it too. */
 export function blankSentSecrets(db: Db, outbox_id: string): boolean {
   const r = updateOutboxBodyByIdSentAt(db, [SENT_SECRET_BODY, outbox_id, SENT_SECRET_BODY]);
   return r.changes > 0;
@@ -598,7 +612,7 @@ export async function dispatchOutbox(
     if (missing) { failed++; fail('A file it carries is no longer kept, so it was not sent.'); continue; }
     files.push(...inlineFilesOf(d.db, r.id));
     const out = await provider.deliver({
-      from_header: r.from_header, reply_to: r.reply_to, to: r.to_email, subject: r.subject, body: r.body,
+      from_header: r.from_header, reply_to: r.reply_to, to: r.to_email, subject: r.subject, body: r.body, html: r.html_body,
       attachments: files, date: new Date(d.now()),
       in_reply_to: r.in_reply_to, references: r.references_ids === null ? [] : r.references_ids.split(' '),
     });

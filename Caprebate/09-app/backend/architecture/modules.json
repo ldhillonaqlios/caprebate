@@ -402,6 +402,14 @@
    "area": "integrations",
    "kind": "logic"
   },
+  "src/integrations/email/email-layout.ts": {
+   "area": "integrations",
+   "kind": "page"
+  },
+  "src/integrations/email/email-logo.ts": {
+   "area": "integrations",
+   "kind": "other"
+  },
   "src/integrations/email/email-provider.ts": {
    "area": "integrations",
    "kind": "logic"
