@@ -111,8 +111,9 @@ describe('the lock: a value changes only with a new version', () => {
     assert.match(p[0] ?? '', /shared\.money\.transaction_tax_in_base: its value changed but its version \(1\) did not/);
     assert.throws(() => recordInLock(planted, LOCK, '2026-11-11'), /raise the version first/);
     // A switch flipped in its own file is the same: the register reads its position.
-    const flipped = changed('claims.FEE_CLAWBACK', { value: settingsOf({ ...FEE_CLAWBACK, enabled: true }) });
-    assert.match(lockProblems(flipped, LOCK).join('\n'), /claims\.FEE_CLAWBACK: its value changed but its version \(1\) did not/);
+    // (FEE_CLAWBACK is on at version 2 since 11 Nov 2026, so flipping it back off is the planted change.)
+    const flipped = changed('claims.FEE_CLAWBACK', { value: settingsOf({ ...FEE_CLAWBACK, enabled: false }) });
+    assert.match(lockProblems(flipped, LOCK).join('\n'), /claims\.FEE_CLAWBACK: its value changed but its version \(2\) did not/);
   });
 
   test('with a new version, a date and a reason it is recorded, and then green; the lock keeps version 1 beside it', () => {
@@ -188,7 +189,7 @@ describe('the readings are read from the registers, not written twice', () => {
 
   test('switchEntry reads a switch where its code lives: its words stay there, its position is pinned here', () => {
     const e = switchEntry({ id: 'claims.X', title: 'X', approver: 'Lakhbir', approval: 'Off.', settings: FEE_CLAWBACK, home: 'h', tested_in: 't' });
-    assert.deepEqual(e.value, { enabled: false });
+    assert.deepEqual(e.value, { enabled: true }, 'FEE_CLAWBACK is on since 11 Nov 2026');
     assert.equal(e.version, 1);
   });
 });

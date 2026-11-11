@@ -1266,9 +1266,9 @@ which lines are left, set this item to its true status, and stop.
  6. The safeguard and data processing terms for each outside service that
     may hold data outside the UK (the outside services list, attachment 9
     of the legal review pack), and the retention periods approved.
- 7. The engagement letter's final wording approved by Lakhbir (its terms
-    were decided on 11 Nov 2026 and written in by Phase 161m1; he approves
-    it himself, no solicitor).
+ 7. OPEN since 11 Nov 2026: the engagement letter's final wording approved
+    by Lakhbir ("Approved, switch on"; no solicitor). Online signing and the
+    fee adjustment are on (Phase 161m1).
  8. Every register entry marked as needed before go-live signed, or its
     feature left switched off and said so (FOR-THE-ACCOUNTANT.md,
     FOR-THE-SURVEYOR.md, FOR-THE-SOLICITOR-DPO-DEVELOPER.md).

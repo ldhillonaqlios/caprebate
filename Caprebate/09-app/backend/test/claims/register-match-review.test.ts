@@ -289,7 +289,7 @@ describe('2 · every connector that scores candidates offers its REVIEW list and
  * 3 · THE BACK-OFFICE PICK — the gate, the switch, and what it writes
  * ================================================================== */
 
-const SIGNING_ON: EngagementSigning = Object.freeze({ enabled: true, solicitor_confirmed: true, question: SIGNING_QUESTION });
+const SIGNING_ON: EngagementSigning = Object.freeze({ enabled: true, signature_confirmed: true, question: SIGNING_QUESTION });
 
 /** A client whose engagement letter is really signed — the record, not a letter_state somebody typed. */
 const records = (app: Awaited<ReturnType<typeof testApp>>): number => app.db.all('SELECT id FROM register_records').length;

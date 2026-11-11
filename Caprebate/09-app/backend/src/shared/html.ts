@@ -86,10 +86,11 @@ export const PUBLIC_MARK =
 
 /**
  * The staff footer said "no signature provider is connected" after signing was
- * built in house (157c) and switched on for the test copy (PR 32). What stays true: nothing is paid, and no real
- * contract can be signed - the test copy is never one.
+ * built in house (157c) and switched on for the test copy (PR 32). It then said "no real contract can be signed",
+ * which stopped being true on 11 Nov 2026, when Lakhbir switched on signing for the real letter (ENGAGEMENT_SIGNING).
+ * What stays true: nothing is paid here.
  */
-export const STAFF_FOOTER = 'This is a test system. No payment is taken, and no real contract can be signed.';
+export const STAFF_FOOTER = 'This is a test system. No payment is taken.';
 
 /** The trail a page drew for itself (`breadcrumb`, src/shared/components.ts) — its first one only. */
 const OWN_TRAIL = /<nav class="crumbs" aria-label="Where you are"><ol>[\s\S]*?<\/ol><\/nav>/;

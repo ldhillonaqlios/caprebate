@@ -1,8 +1,10 @@
 /**
  * SIGNING ON FOR TESTING — 6 October 2026. Lakhbir: "Signing itself is still switched off. switch this on for test
  * purposes at the moment". The test website, and a local copy started with CAPREBATE_SIGNING_TEST=1, let an invented
- * client sign the TEST COPY of the engagement letter end to end. The real letter can never be signed under it, and
- * ENGAGEMENT_SIGNING, the switch real clients would use, stays off. Everything here is invented.
+ * client sign the TEST COPY of the engagement letter end to end. The real letter can never be signed under it.
+ * ENGAGEMENT_SIGNING, the switch real clients use, is ON since 11 November 2026 (Lakhbir: "Yes, confirmed" to a typed
+ * name with a tick, then "Approved, switch on"; no solicitor): a real letter with no open term, no specimen and a known
+ * party signs end to end, and the test copy is still refused under it. Everything here is invented.
  */
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -44,13 +46,16 @@ async function world() {
 }
 
 describe('signing on for testing: the test copy only', () => {
-  test('the switch for real clients is still off; the test setting is on, for the test copy only, with Lakhbir’s words', () => {
-    assert.equal(ENGAGEMENT_SIGNING.enabled, false);
-    assert.equal(ENGAGEMENT_SIGNING.solicitor_confirmed, false);
+  test('the switch for real clients ships ON since 11 Nov 2026 (links off); the test setting is on, for the test copy only, with Lakhbir’s words', () => {
+    assert.equal(ENGAGEMENT_SIGNING.enabled, true);
+    assert.equal(ENGAGEMENT_SIGNING.signature_confirmed, true);
     assert.equal(ENGAGEMENT_SIGNING.test_copy_only, undefined);
+    assert.equal(ENGAGEMENT_SIGNING.links, undefined, 'signing from an emailed link is a separate question (Word question 246)');
+    assert.equal(ENGAGEMENT_SIGNING_TEST.signature_confirmed, false);
     assert.equal(ENGAGEMENT_SIGNING_TEST.enabled, true);
     assert.equal(ENGAGEMENT_SIGNING_TEST.test_copy_only, true);
     assert.match(ENGAGEMENT_SIGNING_TEST.waiver_record ?? '', /6 October 2026.*"Signing itself is still switched off\. switch this on for test purposes at the moment"/);
+    assert.match(ENGAGEMENT_SIGNING_TEST.waiver_record ?? '', /Since 11 November 2026 the real letter has no blanks and ENGAGEMENT_SIGNING is on/);
     assert.equal(signingHere(false), ENGAGEMENT_SIGNING);
     assert.equal(signingHere(true), ENGAGEMENT_SIGNING_TEST);
   });
@@ -85,12 +90,47 @@ describe('signing on for testing: the test copy only', () => {
     } finally { w.a.close(); }
   });
 
-  test('without the test setting the same client is refused, and nothing is written', async () => {
+  test('under the real switch (on since 11 Nov 2026) the same client is still refused the test copy, and nothing is written', async () => {
     const w = await world();
     try {
+      assert.equal(ENGAGEMENT_SIGNING.enabled, true);
       const r = w.sign(ENGAGEMENT_SIGNING, TEST_LETTER_PATH);
       assert.equal(r.ok, false);
+      assert.match(r.ok ? '' : r.why, /test copy of the letter.*can never be signed/);
       assert.equal(w.a.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM engagement_signatures')?.n, 0);
+    } finally { w.a.close(); }
+  });
+
+  test('THE REAL SWITCH, AS SHIPPED: a real letter with no open term, no specimen and a known party is signed end to end by the client login, ticked as authorised', async () => {
+    const w = await world();
+    try {
+      // The range the client was shown at the assessment, so the letter carries no specimen figure.
+      w.a.db.run('INSERT INTO assessments (id,business_id,sector,submitted_at,shown_low_pence,shown_high_pence,created_at) VALUES (?,?,?,?,?,?,?)',
+        [randomUUID(), w.biz, 'gp', T0, 10_000_00, 255_000_00, T0]);
+      const letter = shownLetter({ name: 'Invented Signing Surgery' }, undefined, letterFacts(w.a.db, w.biz));
+      assert.equal(letter.test_copy, false);
+      assert.equal(letter.open_terms, 0);
+      assert.equal(letter.specimens, 0);
+      assert.equal(letter.party_unknown, false);
+      assert.deepEqual(signingMissing(ENGAGEMENT_SIGNING, letter), [], 'the real switch still refuses a complete real letter');
+      // Every other check still holds under it: no tick, no signature.
+      const d = { db: w.a.db, audit: w.a.audit, email: w.a.email, now: w.a.now, newId: randomUUID };
+      const base = { full_name: 'Ivy Inventedperson', role: 'Partner', letter_sha256: letter.sha256, typed_as_signature: true };
+      const sid = w.a.db.get<{ id: string }>("SELECT id FROM sessions WHERE user_id = 'u-cl'")!.id;
+      const noTick = signEngagement(d, actor('CLIENT', 'u-cl', w.biz), w.biz, { ...base, authorised: false }, { ip: '203.0.113.9', session_id: sid });
+      assert.equal(noTick.ok, false);
+      assert.match(noTick.ok ? '' : noTick.why, /Tick the box/);
+      // No cfg handed in: ENGAGEMENT_SIGNING as shipped, and the real letter.
+      const r = signEngagement(d, actor('CLIENT', 'u-cl', w.biz), w.biz, { ...base, authorised: true }, { ip: '203.0.113.9', session_id: sid });
+      assert.equal(r.ok, true, r.ok ? '' : r.why);
+      assert.equal(r.ok && r.complete, true);
+      const row = w.a.db.get<{ engagement_id: string; pdf: Uint8Array; origin: string }>('SELECT engagement_id, pdf, origin FROM engagement_signatures')!;
+      assert.equal(row.origin, 'PORTAL');
+      assert.equal(checkSignature(w.a.db, row.engagement_id).ok, true);
+      assert.equal(w.a.db.get<{ s: string }>('SELECT letter_state AS s FROM engagements')?.s, 'SIGNED');
+      const pdf = Buffer.from(row.pdf).toString('latin1');
+      assert.ok(pdf.includes(hexOf('Certificate of completion')));
+      assert.ok(!pdf.includes(hexOf('TEST: signed on the test system')), 'the real letter was marked as a test');
     } finally { w.a.close(); }
   });
 
@@ -146,6 +186,23 @@ describe('signing on for testing: the test copy only', () => {
       const signed = await p.post('/portal/letter/sign', { full_name: 'Ivy Inventedperson', signer_role: 'Partner', authorised: 'on', letter_sha256: sha, typed_as_signature: 'on' });
       assert.equal(signed.status, 400);
       assert.notEqual(p.made.app.db.get<{ s: string }>('SELECT letter_state AS s FROM engagements')?.s, 'SIGNED');
+    } finally { p.made.close(); }
+  });
+
+  test('THE REAL WEBSITE’S WAY (no test options): with the client’s range on record the pad is drawn, and the client login signs the real letter', async () => {
+    const p = await portal({});
+    try {
+      const biz = p.made.app.db.get<{ id: string }>('SELECT id FROM businesses')!.id;
+      p.made.app.db.run('INSERT INTO assessments (id,business_id,sector,submitted_at,shown_low_pence,shown_high_pence,created_at) VALUES (?,?,?,?,?,?,?)',
+        [randomUUID(), biz, 'gp', T0, 10_000_00, 255_000_00, T0]);
+      const page = await p.req('/portal/letter');
+      assert.match(page.body, /data-sig-pad/);
+      assert.doesNotMatch(page.body, /TEST COPY/);
+      assert.doesNotMatch(page.body, /cannot be signed yet|not switched on yet/);
+      const sha = /name="letter_sha256" value="([0-9a-f]{64})"/.exec(page.body)?.[1] ?? '';
+      const signed = await p.post('/portal/letter/sign', { full_name: 'Ivy Inventedperson', signer_role: 'Partner', authorised: 'on', letter_sha256: sha, typed_as_signature: 'on' });
+      assert.ok(signed.status === 200 || signed.status === 303, `the sign post answered ${String(signed.status)}: ${signed.body.slice(0, 300)}`);
+      assert.equal(p.made.app.db.get<{ s: string }>('SELECT letter_state AS s FROM engagements')?.s, 'SIGNED');
     } finally { p.made.close(); }
   });
 

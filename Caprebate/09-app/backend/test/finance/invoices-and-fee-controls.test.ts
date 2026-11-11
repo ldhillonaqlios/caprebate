@@ -407,7 +407,7 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
     } finally { app.close(); }
   });
 
-  test('CREDIT NOTES ARE THEIR OWN ROWS: in full with no amount typed, numbered in the series; clause 13 refused while its switch is off and while the letter is blank, and exact when both are met', async () => {
+  test('CREDIT NOTES ARE THEIR OWN ROWS: in full with no amount typed, numbered in the series; clause 13 refused while its switch is off and while the letter is blank, and exact as shipped (on since 11 Nov 2026)', async () => {
     const app = await testApp();
     try {
       staff(app);
@@ -415,7 +415,9 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       const id = raise(app, claim);
       assert.equal(I.markSent(deps(app), ACC, id, {}).ok, true);
 
-      const off = I.creditClause13(deps(app), ACC, id, {});
+      // FEE_CLAWBACK ships ON since 11 Nov 2026 (Lakhbir approved, no solicitor); off is proved with the switch handed in.
+      assert.equal(R.FEE_CLAWBACK.enabled, true, 'the clawback switch ships off again');
+      const off = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: false } });
       assert.equal(off.ok, false);
       if (!off.ok) assert.match(off.why, /switched off/i);
       // PHASE 161m1: the real letter's clause 13 is complete; the refusal while it is blank is proved with a blank put back.
@@ -433,7 +435,8 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       const closed = R.closeEnquiry(rdeps, SALES, claim, opened.ok ? opened.id : '', { closed_on: '2026-09-05', outcome, amended_figure: '200000' });
       assert.equal(closed.ok, true, closed.ok ? '' : closed.why);
       assert.deepEqual(real.openTerms, [], 'the real letter has an open term again');
-      const c13 = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: true }, letter: real });
+      // As shipped: the real switch and the real letter, nothing handed in.
+      const c13 = I.creditClause13(deps(app), ACC, id, {});
       assert.equal(c13.ok, true, c13.ok ? '' : c13.why);
       assert.equal(app.db.get<{ amount_pence: number }>('SELECT amount_pence FROM invoice_credit_notes WHERE basis = ?', ['CLAUSE_13_REDUCTION'])?.amount_pence,
         7_200_00 - 6_000_00, 'clause 13 did not credit 3% of the difference');

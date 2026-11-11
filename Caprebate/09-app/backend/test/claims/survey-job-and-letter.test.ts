@@ -401,9 +401,10 @@ describe('F23, F24, F32 — words that said something no longer true', () => {
     assert.match(html, /Not used 1/);
   });
 
-  test('F32: the staff footer no longer says no signature provider is connected', () => {
+  test('F32: the staff footer no longer says no signature provider is connected, nor (since 11 Nov 2026, signing on) that no contract can be signed', () => {
     assert.doesNotMatch(STAFF_FOOTER, /no signature provider is connected/);
-    assert.equal(STAFF_FOOTER, 'This is a test system. No payment is taken, and no real contract can be signed.');
+    assert.doesNotMatch(STAFF_FOOTER, /no real contract can be signed/);
+    assert.equal(STAFF_FOOTER, 'This is a test system. No payment is taken.');
   });
 });
 

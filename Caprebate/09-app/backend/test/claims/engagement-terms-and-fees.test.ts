@@ -670,7 +670,7 @@ describe('line 2 — the engagement letter’s commercial terms, as the back end
     } finally { app.close(); }
   });
 
-  test('(iv) CLAUSE 13: refund decided (a) yes, time limit completed, and (Phase 161m1) the trigger and settlement decided: any reduction, a settlement counts; switched on it applies, and a blank put back still refuses', () => {
+  test('(iv) CLAUSE 13: refund decided (a) yes, time limit completed, and (Phase 161m1) the trigger and settlement decided: any reduction, a settlement counts; switched ON since 11 Nov 2026 (Lakhbir approved, no solicitor) it applies as shipped, and a blank put back still refuses', () => {
     const real = loadLetter();
     assert.deepEqual(real.openTerms.filter((t) => /^clause 13 —/.test(t.clause)), [], 'clause 13 has a blank again');
     const text = real.paragraphs.map((p) => p.text).join('\n');
@@ -681,8 +681,12 @@ describe('line 2 — the engagement letter’s commercial terms, as the back end
     assert.doesNotMatch(text, /not yet settled and are marked for completion/);
     assert.equal(R.FEE_CLAWBACK.decided.refund, 'YES');
     assert.equal(R.FEE_CLAWBACK.decided.time_limit, 'until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim');
-    assert.equal(R.FEE_CLAWBACK.enabled, false, 'the clawback switch was turned on');
-    assert.equal(R.clawbackReading().reason, 'SWITCH_OFF');
+    assert.equal(R.FEE_CLAWBACK.decided.trigger, 'any reduction, with no threshold');
+    assert.equal(R.FEE_CLAWBACK.decided.settlements, 'a settlement the client accepts counts as a reduction');
+    assert.deepEqual(R.FEE_CLAWBACK.decided.still_open, [], 'a clause 13 term is open again');
+    assert.equal(R.FEE_CLAWBACK.enabled, true, 'the clawback switch was turned off');
+    assert.equal(R.clawbackReading().reason, 'APPLIES', 'as shipped, with clause 13 complete, it applies');
+    assert.equal(R.clawbackReading({ gate: { enabled: false } }).reason, 'SWITCH_OFF', 'the other way: off still refuses');
     assert.equal(R.clawbackReading({ gate: { enabled: true } }).applies, true, 'complete and on, it applies');
     const blank = letterWith((t) => t.replace('Trigger: this clause applies to any reduction in the capital allowances identified.', '[Trigger: this clause applies to any reduction / applies only to a reduction of more than [X]% or £[amount].]'));
     const on = R.clawbackReading({ gate: { enabled: true }, openTerms: blank.openTerms });

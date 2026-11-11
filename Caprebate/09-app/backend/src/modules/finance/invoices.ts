@@ -680,7 +680,7 @@ export function creditInFull(d: InvoiceDeps, actor: Actor, id: string, input: Fi
 
 /**
  * CLAUSE 13 — THE FEE RECALCULATED ON THE CORRECTED FIGURE. CRM 6 of 10's
- * FEE_CLAWBACK is the switch and it is OFF; while it is off, or clause 13 is blank,
+ * FEE_CLAWBACK is the switch and it is ON since 11 Nov 2026; while it is off, or clause 13 is blank,
  * this refuses and is audited as that module audits it. On, it reads the reduced
  * figure from the claim's closed HMRC enquiry and credits the difference — the
  * calculation the letter says the client can perform.

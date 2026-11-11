@@ -115,23 +115,24 @@ describe('lines 2, 3 and 7 — Word questions 33, 34 and 196: the test-only enga
     }
   });
 
-  test('line 3: with clause 13 decided the refund applies once switched on, in both letters; it is still off as shipped', () => {
+  test('line 3: with clause 13 decided the refund applies, in both letters; the switch ships ON since 11 Nov 2026, so it applies as shipped', () => {
     assert.equal(clawbackReading({ openTerms: testCopy.openTerms, gate: { enabled: true } }).reason, 'APPLIES');
     assert.equal(clawbackReading({ openTerms: real.openTerms, gate: { enabled: true } }).reason, 'APPLIES');
-    assert.equal(clawbackReading({ openTerms: testCopy.openTerms }).reason, 'SWITCH_OFF');
-    assert.equal(clawbackReading({ openTerms: real.openTerms }).reason, 'SWITCH_OFF');
+    assert.equal(clawbackReading({ openTerms: testCopy.openTerms }).reason, 'APPLIES');
+    assert.equal(clawbackReading({ openTerms: real.openTerms }).reason, 'APPLIES');
+    assert.equal(clawbackReading({ openTerms: real.openTerms, gate: { enabled: false } }).reason, 'SWITCH_OFF');
   });
 
   test('A TEST COPY IS NEVER SIGNED, whatever the switch says and even with no term open', () => {
-    const missing = signingMissing({ enabled: true, solicitor_confirmed: true, question: '' }, { open_terms: 0, specimens: 0, test_copy: true });
+    const missing = signingMissing({ enabled: true, signature_confirmed: true, question: '' }, { open_terms: 0, specimens: 0, test_copy: true });
     assert.equal(missing.length, 1);
     assert.match(missing[0] ?? '', /test copy of the letter.*never be signed/);
-    assert.equal(signingMissing({ enabled: true, solicitor_confirmed: true, question: '' }, { open_terms: 0, specimens: 0, test_copy: false }).length, 0);
+    assert.equal(signingMissing({ enabled: true, signature_confirmed: true, question: '' }, { open_terms: 0, specimens: 0, test_copy: false }).length, 0);
     assert.equal(shownLetter({ name: 'Invented Care Limited' }, TEST_LETTER_PATH).test_copy, true);
     assert.equal(shownLetter({ name: 'Invented Care Limited' }).test_copy, false);
   });
 
-  test('a client asked to sign the test copy is refused, with the switch on and the solicitor’s yes', async () => {
+  test('a client asked to sign the test copy is refused, with the switch on and the signature confirmed', async () => {
     const a = await testApp();
     try {
       const biz = randomUUID();
@@ -141,7 +142,7 @@ describe('lines 2, 3 and 7 — Word questions 33, 34 and 196: the test-only enga
       const letter = shownLetter({ name: 'Invented Dental Limited' }, TEST_LETTER_PATH);
       const r = signEngagement({ db: a.db, audit: a.audit, email: a.email, now: a.now, newId: randomUUID }, actor('CLIENT', 'u-cl', biz), biz,
         { full_name: 'Ivy Inventedperson', role: 'Director', authorised: true, letter_sha256: letter.sha256 },
-        { ip: '127.0.0.1', session_id: 's-1' }, { cfg: { enabled: true, solicitor_confirmed: true, question: '' }, letterPath: TEST_LETTER_PATH });
+        { ip: '127.0.0.1', session_id: 's-1' }, { cfg: { enabled: true, signature_confirmed: true, question: '' }, letterPath: TEST_LETTER_PATH });
       assert.equal(r.ok, false);
       assert.match(r.ok ? '' : r.why, /test copy/);
       assert.equal(a.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM engagement_signatures')?.n, 0);

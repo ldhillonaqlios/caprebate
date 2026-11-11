@@ -39,6 +39,12 @@
     "value_sha256": "deb4964d126e232ff1f6213783a7dd28187efaaa0d8438a6d27f24f89e4eed06",
     "effective_from": "2026-11-10",
     "recorded": "2026-11-10"
+   },
+   {
+    "version": 2,
+    "value_sha256": "bebfd8a8354f9002dbc20e7c781a2a08fee2b1f4763ed4dffd4b5a6133e9ef3b",
+    "effective_from": "2026-11-11",
+    "recorded": "2026-11-11"
    }
   ],
   "claims.ENGAGEMENT_SIGNING_TEST": [
@@ -47,6 +53,12 @@
     "value_sha256": "7c3124ac1ff258dce0f4a904028f10c8177a7add76cfd9d60823a8c408d14438",
     "effective_from": "2026-11-10",
     "recorded": "2026-11-10"
+   },
+   {
+    "version": 2,
+    "value_sha256": "c4dd763bb35c461c6665f12c69c71219e1dad92c3d4aa90b8a42ad30bc59f9e3",
+    "effective_from": "2026-11-11",
+    "recorded": "2026-11-11"
    }
   ],
   "claims.FEE_CLAWBACK": [
@@ -55,6 +67,12 @@
     "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
     "effective_from": "2026-11-10",
     "recorded": "2026-11-10"
+   },
+   {
+    "version": 2,
+    "value_sha256": "26b3426b2593763c96d0890b4a77a0bbf66d13fc512b0c6b138a23c290f30a2a",
+    "effective_from": "2026-11-11",
+    "recorded": "2026-11-11"
    }
   ],
   "claims.FEE_CONTROLS.above_benefit": [

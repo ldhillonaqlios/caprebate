@@ -860,13 +860,14 @@ describe('AFTERCARE — HMRC enquiries, clause 13 and the Disposal Note', () => 
     } finally { app.close(); }
   });
 
-  test('CLAUSE 13 IS A SWITCH, OFF, READING THE LETTER’S BLANK — nothing raised off; nothing raised on while the clause is blank; a finance task on, with the clause complete', async () => {
-    assert.equal(R.FEE_CLAWBACK.enabled, false, 'the switch ships on');
+  test('CLAUSE 13 IS A SWITCH, ON SINCE 11 NOV 2026, READING THE LETTER’S BLANK — nothing raised off; nothing raised on while the clause is blank; a finance task as shipped, with the clause complete', async () => {
+    assert.equal(R.FEE_CLAWBACK.enabled, true, 'the switch ships ON since 11 Nov 2026 (Lakhbir approved, no solicitor)');
     // PHASE 161m1 (11 November 2026): the owner decided clause 13 (any reduction; a settlement counts), so the real letter
     // reads complete. The refusal while the clause is blank is proved with a blank put back, as the letter had it.
     assert.deepEqual(R.clauseThirteenBlanks(), [], 'clause 13 of the real letter has a blank again');
     const blank13 = [{ clause: 'clause 13 — Fee Adjustment Where a Claim is Reduced', text: '[Trigger: this clause applies to any reduction / applies only to a reduction of more than [X]% or £[amount].]' }];
-    assert.equal(R.clawbackReading().reason, 'SWITCH_OFF');
+    assert.equal(R.clawbackReading().reason, 'APPLIES', 'as shipped, the real letter’s complete clause 13 did not apply');
+    assert.equal(R.clawbackReading({ gate: { enabled: false } }).reason, 'SWITCH_OFF');
     assert.equal(R.clawbackReading({ gate: { enabled: true } }).reason, 'APPLIES', 'on, the real letter’s complete clause 13 did not apply');
     assert.equal(R.clawbackReading({ gate: { enabled: true }, openTerms: blank13 }).reason, 'CLAUSE_13_BLANK', 'on, a blank did not refuse');
     assert.equal(R.clawbackReading({ gate: { enabled: true }, openTerms: [] }).applies, true);
@@ -886,7 +887,7 @@ describe('AFTERCARE — HMRC enquiries, clause 13 and the Disposal Note', () => 
       const financeTasks = (c: string) => app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM staff_tasks WHERE claim_id = ? AND owner_role = 'ACCOUNTING'", [c])?.n ?? -1;
       const refusal = (c: string) => app.audit.entries().find((x) => x.kind === 'FEE_CLAWBACK_NOT_APPLIED' && x.object_id === c)?.detail['reason'];
 
-      const off = reduce({});
+      const off = reduce({ gate: { enabled: false } });
       assert.equal(financeTasks(off), 0);
       assert.equal(refusal(off), 'SWITCH_OFF');
       const blank = reduce({ gate: { enabled: true }, openTerms: blank13 });
@@ -895,6 +896,10 @@ describe('AFTERCARE — HMRC enquiries, clause 13 and the Disposal Note', () => 
       const on = reduce({ gate: { enabled: true }, openTerms: [] });
       assert.equal(financeTasks(on), 1, 'the negative control raised no task');
       assert.equal(refusal(on), undefined);
+      // As shipped: the real switch and the real letter, nothing handed in.
+      const shipped = reduce({});
+      assert.equal(financeTasks(shipped), 1, 'as shipped, a reduced claim raised no finance task');
+      assert.equal(refusal(shipped), undefined);
     } finally { app.close(); }
   });
 

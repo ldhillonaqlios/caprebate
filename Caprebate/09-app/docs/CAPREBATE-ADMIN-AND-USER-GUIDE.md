@@ -222,7 +222,7 @@ Each screen is named by its heading. Its web address is on a small "Address:" li
 - Fenmoor Nursing Homes Limited
 
 Their people, sites, postcodes and figures are made up too. Never put a real client, a real person or a real document
-into it. The foot of every staff page says that no payment is taken. It says no signature provider is connected. It
+into it. The foot of every staff page says that no payment is taken. It
 starts: "This is a test system."
 
 **Never load the demo data into a live system.** Loading it makes one login for each role. All five share a password
@@ -259,9 +259,11 @@ would be too easy to forget a flag. On a live system, nobody should ever set it.
   on. You can still run the research on a client. Each lookup is then noted as not allowed yet, or not switched on yet.
   The reason is noted too. The free lookups wait for a published privacy notice. The paid ones wait for a signed
   engagement letter.
-- **No money moves and nothing is signed.** The finance screen says "RECORDED, NOT COLLECTED". The client can read
-  the letter and fill in the Sign box. Signing is not switched on yet, so pressing Sign says so. When it is on, the
-  client types their name and role, ticks a box and presses Sign. We keep a record, and they get a copy by email.
+- **No money moves. Only the client signs.** The finance screen says "RECORDED, NOT COLLECTED". Signing the letter
+  is on since 11 November 2026. Lakhbir approved it. No solicitor was needed. The client reads the letter in their
+  portal. They type their name and role. They tick a box to say they may sign for the business. Then they press Sign.
+  We keep a record, and they get a copy by email. A letter with a gap, or with sample wording still in it, cannot be
+  signed. Neither can the test copy. The page says why. Signing from a link in an email is still off.
 
 ---
 
@@ -403,7 +405,7 @@ them:
 | "Tax adviser’s switch:" and its name, one for each of these: `s185_plus_own_s25`, `urenco_provision_of`, `specialised_supported_housing`, `trade_not_s35`, `s187a_needs_entitled_owner`, `grant_traced_after_dwelling`, `connected_contributor_no_reduction`, `s538_carveout`, `s187a_6b_statements_route`, `fvr_requires_past_owner_claim`, `transaction_tax_in_base`, `grant_after_ceilings` | It is a tax adviser's switch. It stays off until a chartered tax adviser answers. "Changing it is their call and a system change, never a setting." |
 | "Fee rule: when our fee is more than the tax saved". "Fee rule: a claim that is stopped part way". There is no minimum fee, so none is listed. | "A fee rule. If a setting could change our pricing, whoever found the setting would decide it." |
 | The introducer reward model | "An admin changes it on its own page, and not while clause 1 of the engagement letter is blank." |
-| Taking back a fee (clause 13) | "Clause 13's fee clawback is a system change, not a setting. It stays off until it is switched on in the system." |
+| Taking back a fee (clause 13) | "Clause 13's fee clawback is a system change, not a setting. It was switched on in the system on 11 November 2026, when Lakhbir approved the letter. No setting can turn it off." |
 | When our fee is earned | "The owner decided when our fee is earned: when our report is delivered for filing. This is built in, so no setting can change it." |
 | Money laundering checks | "That is set on the compliance page, with a date and a source. It is checked before we take on a client." |
 | Clients agreeing to share progress | "That waits on wording our data protection officer agrees." |
@@ -839,7 +841,7 @@ Get the new file from the regulator's site. Choose it under that row, then press
 only the columns we keep. Names, phone numbers and emails in the file stay on your computer. Home shows a reminder when
 a list has not been imported this month.
 
-Each of these is built and tested, and **starts switched off**. No screen turns any of them on. The admin settings page
+Each of these is built and tested, and **starts switched off**. A few have since been switched on in the code, and the table says so. No screen turns any of them on. The admin settings page
 refuses each one by name (A3). To change one, someone must change the code. That is done only once the person named
 below has answered.
 
@@ -852,7 +854,8 @@ below has answered.
 | **The public referral form** | `REFERRAL_FORM` (`enabled: false`) — `src/modules/crm/introducers.ts:180` | The page does not exist. It answers as an unknown address | Whoever publishes a privacy notice for it. It must be linked from the referral form. It must tell a client what their firm sent us |
 | **A client saying yes to sharing, from the portal** | `CLIENT_SHARE_GIVE` (`enabled: true` since 24 September 2026) — `src/modules/crm/introducers.ts` | Switched on. Clients give or take back a yes in their portal. Staff can still record a yes after asking | The owner decided it: ask the client first, from their portal |
 | **The fee controls** (two) | `FEE_CONTROLS` — `src/modules/claims/fee-controls.ts`: `above_benefit`, `break_and_abort`, each `enabled: false`. The minimum fee is no longer a switch. `MINIMUM_FEE_DECISION` records that it is decided as none. Since 11 November 2026 `break_and_abort` does nothing, on or off: `BREAK_FEE_DECISION` records why | The fee is not capped or changed. The app never raises a break fee or an abort fee. An admin raises a break fee by hand | A pricing choice. The code names two open questions, but not a person. One asks: do we cap the fee, warn about it, or adjust the percentage? The other asks: what is the break fee, and is there ever an abort fee or a fixed fee? |
-| **Clause 13 fee clawback** | `FEE_CLAWBACK` (`enabled: false`) — `src/modules/claims/claim-record.ts` | A smaller claim raises nothing. The audit log says why | Part (a) is answered yes. The time limit is now in the letter. It changed on 11 November 2026. It now lasts until HMRC can no longer look into the tax return with the claim. Any cut counts. So does a deal the client makes with HMRC. Clause 13 has no blank left |
+| **Clause 13 fee clawback** | `FEE_CLAWBACK` (`enabled: true` since 11 November 2026), in `src/modules/claims/claim-record.ts` | **On.** When HMRC cuts a claim, Accounting gets a task. They work out our fee again on the new figure. **Apply clause 13** then credits the difference. If clause 13 ever had a gap again, nothing would happen, and the audit log would say why | Lakhbir decided it and switched it on (11 November 2026). No solicitor. Any cut counts. So does a deal the client makes with HMRC. It lasts until HMRC can no longer look into the tax return with the claim. Clause 13 has no blank left |
+| **Signing the engagement letter** | `ENGAGEMENT_SIGNING` (`enabled: true`, `signature_confirmed: true`, since 11 November 2026), in `src/modules/claims/signing.ts` | **On.** A client login signs the letter in the portal. They type their name and tick to say they may sign. A letter with a gap or sample wording is refused. So is the test copy. Signing from a link in an email (`links`) is still off | Lakhbir. He said a typed name with a tick is a good enough signature. Then he approved the letter's final wording: "Approved, switch on". No solicitor. Signing from an email link is a separate question (Word question 246) |
 | **The fee trigger** — decided | `FEE_TRIGGER` (`reading: 'REPORT_DELIVERED_FOR_FILING'`, `decided: true`) — `src/modules/crm/pipeline.ts` | Our fee is earned when our report is delivered for filing. It goes to the client or their accountant. The system reads this from the list of what we have sent. That means the client report or computation pack, on the day it was sent. If nothing was sent, the fee is not earned yet | Decided by the owner. Nothing here says we file the tax return. Nothing says we sign the filing position |
 | **The invoice-fraud procedure** | `INVOICE_FRAUD_PROCEDURE` (`in_force: false`) — `src/modules/crm/automation.ts:124` | No invoice email and no chasing email can exist | The solicitor signs it off. The data protection officer signs it off too. So does the developer. Even then, the invoice email is **new work**, not a flag |
 | **The data protection officer role** | `DPO_ROLE_SWITCH` (`enabled: false`) — `09-app/backend/src/core/authz.ts:1089` | Nobody can hold the role. If you force it, you are refused | The owner decides. He asks: "Do we need a compliance role separate from Admin?" |
@@ -1189,7 +1192,7 @@ share progress with this firm".
   off, you cannot draft a report with a figure in it. The system never writes a report. It says: "We track these
   here, but we do not write them here."
 - **Aftercare** holds three things. **HMRC enquiries** (**Record an enquiry**). **Clause 13 — the fee on a reduced
-  claim**, which is switched off. And **The election on a future sale**.
+  claim**, which is switched on (since 11 November 2026). And **The election on a future sale**.
 
 **10. Search, lists, saved views and export.**
 - **Search**: type at least two letters and press **Search**. The page lists what it searched and what it did not.
@@ -1267,8 +1270,10 @@ is what a refusal looks like:
 
 **Credit notes.** A credit note is the only way a raised amount changes. The section is headed **Credit notes — the
 only way a raised amount changes**. Give **Why it is credited in full**. Then press **Credit what is left in full**.
-**Apply clause 13** is switched off. (Clause 13 is a fee worked out again on a reduced claim.) The clause has no gap left
-in the letter. Any cut counts. So does a deal the client agrees with HMRC.
+**Apply clause 13** is switched on (since 11 November 2026). (Clause 13 is a fee worked out again on a reduced claim.)
+The clause has no gap left in the letter. Any cut counts. So does a deal the client agrees with HMRC. Once HMRC's
+cut is recorded on the claim, press **Apply clause 13**. It works out our fee on the new figure and credits the
+difference.
 
 **Recording money received.** We record money. We never collect it. There is no card processor and no bank feed.
 1. Under **Record money received**, give **The day it arrived**. Then give **The amount that arrived, in pounds**.
@@ -1912,7 +1917,7 @@ invoiced** opens section 3. **Invoices due and overdue** opens section 4. **The 
 - Crediting a second time: "This invoice is already credited in full."
 - More than is owed: "That is more than this invoice still asks for (£4,000). Record what arrived against what is owed, and nothing more."
 - No amount: "Give the amount that arrived, in pounds."
-- Clause 13: "No clause 13 credit note is issued: Switched off. Nothing happens when a claim is reduced until clause 13 is complete. …"
+- Clause 13, if it is ever switched off: "No clause 13 credit note is issued: Switched off. …"
 - **No typed amounts.** Raising and crediting have no amount box. An amount sent anyway is ignored.
 - **The due date is 14 days after the invoice date** now that clause 4 states it; it would read **No due date set yet** only if the payment terms were blank again.
 - If Sales or Surveying try anything here, it is refused. They see "not authorised".

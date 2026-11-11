@@ -307,7 +307,7 @@ async function portalRoutes(
   }
 
   /* THE BUILT-IN SIGNATURE (src/modules/claims/signing.ts). Every check is there, on the record: the switch
-     (ENGAGEMENT_SIGNING, off), the letter complete, sent and not yet signed, a full name, a role, the tick, and the
+     (ENGAGEMENT_SIGNING, on since 11 Nov 2026), the letter complete, sent and not yet signed, a full name, a role, the tick, and the
      fingerprint of the letter the page drew. A refusal is a page the client reads, with what they typed kept. */
   if (path === '/portal/letter/sign' && method === 'POST') {
     const f = await form(req);
@@ -855,7 +855,7 @@ function letterPage(
         ${legalLinks ? h`<p class="help">Please also read ${agreementLinks()}. This letter governs our work for you, and wins if they ever say something different.</p>` : raw('')}
         <button class="cta" type="submit">Sign</button>
       </form>
-      ${missing.length === 0 ? raw('') : h`<div class="gate">Signing is not switched on yet.${why(h`${missing.join(' ')}`)}</div>`}` : raw('')}
+      ${missing.length === 0 ? raw('') : h`<div class="gate">${signing.enabled === true ? 'This letter cannot be signed yet.' : 'Signing is not switched on yet.'}${why(h`${missing.join(' ')}`)}</div>`}` : raw('')}
       <div class="gate">When you sign, we keep a record of it.${why(h`We keep your name, your role, your signature and the time. We keep the internet address you signed from. We keep a fingerprint of this exact letter. You get a copy of the signed letter by email, and you can download it here. We never take a payment here.`)}</div>`,
   });
 }

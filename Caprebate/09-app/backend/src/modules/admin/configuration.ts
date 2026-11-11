@@ -78,7 +78,7 @@ export const FORBIDDEN_SETTINGS: Readonly<Record<string, string>> = Object.freez
   ...Object.fromEntries(ctaSwitchReadings().map((s) => [`CTA_SWITCH:${s.switch}`, CTA_WHY])),
   ...Object.fromEntries(Object.keys(FEE_CONTROLS).map((k) => [`FEE_CONTROL:${k}`, FEE_WHY])),
   REWARD_MODEL: 'The introducer reward model is a fee switch. An admin changes it on its own page, and not while clause 1 of the engagement letter is blank.',
-  FEE_CLAWBACK: 'Clause 13’s fee clawback is a system change, not a setting. It stays off until it is switched on in the system.',
+  FEE_CLAWBACK: 'Clause 13’s fee clawback is a system change, not a setting. It was switched on in the system on 11 November 2026, when Lakhbir approved the letter. No setting can turn it off.',
   FEE_TRIGGER: 'The owner decided when our fee is earned: when our report is delivered for filing. This is built in, so no setting can change it.',
   AML_IN_SCOPE: 'Does money laundering supervision apply to us? That is set on the compliance page, with a date and a source. It is checked before we take on a client.',
   CLIENT_SHARE_GIVE: 'Clients cannot yet agree to share progress in the portal. That waits on wording our data protection officer agrees.',
