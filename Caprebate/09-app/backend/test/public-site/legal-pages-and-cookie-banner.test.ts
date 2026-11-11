@@ -49,7 +49,8 @@ describe('Phase 160h: the legal pages', () => {
     for (const [path, title] of LEGAL_PAGES) {
       const r = await get(baseOn, path, `${CONSENT_COOKIE}=essential`);
       assert.equal(r.status, 200, path);
-      assert.match(r.body, new RegExp(`<h1>${title}</h1><p class="draft-note" role="note"><strong>Draft\\.</strong> Our solicitor and our data protection officer`), path);
+      // PHASE 161m1: the data protection officer alone approves a page.
+      assert.match(r.body, new RegExp(`<h1>${title}</h1><p class="draft-note" role="note"><strong>Draft\\.</strong> Our data protection officer has not yet approved`), path);
       assert.doesNotMatch(r.body, /—|<script|\sstyle=/i, path);
     }
     const noSlash = await get(baseOn, '/terms');
@@ -70,11 +71,32 @@ describe('Phase 160h: the legal pages', () => {
     assert.match(terms, /CAP REBATE LTD, trading as Cap Rebate/);
     assert.match(terms, /number 17307313/);
     assert.match(terms, /1st Floor, 1-9 Castle Street, Hinckley, LE10 1DA/);
-    assert.match(terms, /Our telephone number: <span class="gap">to be added<\/span>\./);
     assert.match(terms, /Our registration number with the Information Commissioner: <span class="gap">to be added<\/span>\./);
-    // PHASE 161g: four more gaps, for the privacy policy (the DPO, the money-laundering basis, the live host, the transfer safeguards).
-    assert.equal(LEGAL_GAPS.length, 6);
-    assert.match(legalPageHtml('/accessibility/', null) ?? '', /Telephone:\s*<span class="gap">to be added<\/span>/);
+    // PHASE 161g: four more gaps, for the privacy policy (the DPO, the money-laundering basis, the live host, the transfer
+    // safeguards). PHASE 161m1: the telephone is no longer one ("go with email only for now"), so five.
+    assert.equal(LEGAL_GAPS.length, 5);
+  });
+
+  test('PHASE 161m1: email only. No page shows a telephone line or a telephone gap, and each says we answer by email', async () => {
+    // Lakhbir, 11 Nov 2026: "go with email only for now".
+    assert.ok(!LEGAL_GAPS.some(([fact, where]) => /phone/i.test(fact) || /phone/i.test(where)), 'the telephone is still a gap');
+    const pages = LEGAL_PAGES.map(([path]) => [path, legalPageHtml(path, null) ?? ''] as const);
+    pages.push(['/notices/', (await get(baseOn, '/notices/', `${CONSENT_COOKIE}=essential`)).body]);
+    for (const [path, html] of pages) {
+      assert.ok(html.length > 1000, path);
+      assert.doesNotMatch(html, /Telephone:|Our telephone number/i, `${path} still has a telephone line`);
+      assert.doesNotMatch(html, /phone[^<.]{0,60}<span class="gap">/i, `${path} still has a telephone gap`);
+      assert.doesNotMatch(html, /href="tel:/i, path);
+    }
+    const terms = legalPageHtml('/terms/', null) ?? '';
+    assert.match(terms, /You can reach us by email at <a href="mailto:contact@caprebate\.co\.uk">contact@caprebate\.co\.uk<\/a>\. We answer by email only\./);
+    // The terms' one gap left is the Information Commissioner's number; the accessibility statement has none.
+    assert.equal(terms.split('<span class="gap">to be added</span>').length - 1, 1);
+    const access = legalPageHtml('/accessibility/', null) ?? '';
+    assert.doesNotMatch(access, /to be added/, 'the accessibility statement still has a gap');
+    assert.match(access, /email <a href="mailto:contact@caprebate\.co\.uk">contact@caprebate\.co\.uk<\/a>\. Tell us the page and what went wrong\. We answer by\s+email only, and we will reply within five working days\./);
+    const privacy = legalPageHtml('/privacy-policy/', null) ?? '';
+    assert.match(privacy, /<li>Email about your data: <a href="mailto:data\.protection@caprebate\.co\.uk">/);
   });
 
   test('the cookie policy names every cookie we set, with what it does and how long it lasts', () => {

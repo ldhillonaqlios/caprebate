@@ -131,7 +131,7 @@ export const SENSITIVE: readonly { readonly match: RegExp; readonly why: string 
   { match: /^\/(staff|portal)\/settings\/(password|username)$/, why: 'your own password or sign-in name' },
   { match: /^\/api\/account\/recovery-codes$/, why: 'your own recovery codes' },
   // An approval of a legal page is never changed or deleted once recorded, so it is sent once.
-  { match: /^\/staff\/legal\/approve$/, why: 'a legal page\'s approval by our solicitor or our data protection officer' },
+  { match: /^\/staff\/legal\/approve$/, why: 'a legal page\'s approval by our data protection officer' },
 ]);
 
 export function isSensitive(path: string): boolean {

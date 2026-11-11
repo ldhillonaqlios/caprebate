@@ -278,12 +278,14 @@ describe('Phase 161g item 3: the privacy policy', () => {
   test('who we are, as registered, and every gap marked, never made up', () => {
     assert.match(policy, /CAP REBATE LTD, trading as Cap Rebate/);
     assert.match(policy, /number\s+17307313/);
-    for (const gap of ['Telephone', 'Our data protection officer', 'Our registration number with the Information Commissioner']) {
+    for (const gap of ['Our data protection officer', 'Our registration number with the Information Commissioner']) {
       assert.match(policy, new RegExp(`${gap}: <span class="gap">to be added</span>`), gap);
     }
     assert.ok(LEGAL_GAPS.some(([f]) => /data protection officer/.test(f)));
     assert.ok(LEGAL_GAPS.some(([f]) => /Information Commissioner/.test(f)));
-    assert.ok(LEGAL_GAPS.some(([f]) => /telephone/i.test(f)));
+    // PHASE 161m1, Lakhbir, 11 Nov 2026: "go with email only for now". No telephone line, and no telephone gap.
+    assert.doesNotMatch(policy, /Telephone/);
+    assert.ok(!LEGAL_GAPS.some(([f]) => /phone/i.test(f)), 'the telephone is still listed as a gap');
   });
 
   test('the free lookups are legitimate interests, never consent; the only consent is the optional analytics', () => {
@@ -301,7 +303,7 @@ describe('Phase 161g item 3: the privacy policy', () => {
     assert.match(policy, /Information Commissioner at any time/);
     assert.match(policy, /0303 123 1113/);
     assert.match(policy, /href="\/cookies\/"/);
-    assert.match(policy, /Last updated: 5 November 2026\./);
+    assert.match(policy, /Last updated: 11 November 2026\./); // moved by Phase 161m1 (email only)
   });
 });
 
@@ -422,25 +424,26 @@ describe('Phase 161g item 5: the legal setting, and every page a draft until app
     assert.equal((await get(baseLive, '/privacy')).headers.get('location'), '/privacy-policy/');
   });
 
-  test('an admin records an approval; a page is in force only when both the solicitor and the DPO approved its version', async () => {
+  // PHASE 161m1, Lakhbir, 11 Nov 2026: "no solicitor, its a DPO pack". The DPO's approval alone puts a page in force
+  // (until then a solicitor's was needed too); test/compliance/legal-pages-dpo-approves-alone.test.ts proves the rest.
+  test('an admin records an approval; the DPO\'s approval of its version alone puts a page in force', async () => {
     const admin = await signIn(baseLive, 'admin@example.invalid');
     const page0 = await get(baseLive, '/staff/legal', admin);
     assert.equal(page0.status, 200);
     assert.match(page0.body, /<h1>Legal pages<\/h1>/);
-    const sol = await post(baseLive, '/staff/legal/approve', { page: 'disclaimer', role: 'SOLICITOR', approved_by: 'An Invented Solicitor', approved_on: '2026-11-04' }, admin);
-    assert.equal(sol.status, 200);
-    assert.match(sol.body, /The approval is recorded\./);
-    assert.match((await get(baseLive, '/disclaimer/', `${CONSENT_COOKIE}=essential`)).body, DRAFT, 'one approval is not enough');
-    assert.equal((await post(baseLive, '/staff/legal/approve', { page: 'disclaimer', role: 'SOLICITOR', approved_by: 'Again', approved_on: '2026-11-04' }, admin)).status, 400);
     assert.equal((await post(baseLive, '/staff/legal/approve', { page: 'disclaimer', role: 'DPO', approved_by: 'An Invented Officer', approved_on: '2999-01-01' }, admin)).status, 400);
-    assert.equal((await post(baseLive, '/staff/legal/approve', { page: 'disclaimer', role: 'DPO', approved_by: 'An Invented Officer', approved_on: '2026-11-05' }, admin)).status, 200);
+    assert.match((await get(baseLive, '/disclaimer/', `${CONSENT_COOKIE}=essential`)).body, DRAFT, 'a refused approval put the page in force');
+    const dpo = await post(baseLive, '/staff/legal/approve', { page: 'disclaimer', role: 'DPO', approved_by: 'An Invented Officer', approved_on: '2026-11-05' }, admin);
+    assert.equal(dpo.status, 200);
+    assert.match(dpo.body, /The approval is recorded\./);
     const now = (await get(baseLive, '/disclaimer/', `${CONSENT_COOKIE}=essential`)).body;
-    assert.doesNotMatch(now, DRAFT);
+    assert.doesNotMatch(now, DRAFT, 'the DPO\'s approval alone did not put the page in force');
     assert.match(now, /<p class="in-force-note" role="note">In force\./);
+    assert.equal((await post(baseLive, '/staff/legal/approve', { page: 'disclaimer', role: 'DPO', approved_by: 'Again', approved_on: '2026-11-05' }, admin)).status, 400);
     assert.match((await get(baseLive, '/terms/', `${CONSENT_COOKIE}=essential`)).body, DRAFT, 'another page went live');
-    assert.equal(live.app.db.all("SELECT 1 FROM audit_log WHERE kind = 'LEGAL_PAGE_APPROVED'").length, 2);
+    assert.equal(live.app.db.all("SELECT 1 FROM audit_log WHERE kind = 'LEGAL_PAGE_APPROVED'").length, 1);
     const a = currentApprovals(live.app.db).get('disclaimer');
-    assert.deepEqual(a, { solicitor: { by: 'An Invented Solicitor', on: '2026-11-04' }, dpo: { by: 'An Invented Officer', on: '2026-11-05' } });
+    assert.deepEqual(a, { dpo: { by: 'An Invented Officer', on: '2026-11-05' } });
   });
 
   test('an approval is never changed or deleted, and only an admin may record one', async () => {

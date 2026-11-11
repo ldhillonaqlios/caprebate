@@ -4,8 +4,6 @@
 23) What do we charge for help when a client sells a property?
 31) Have we actually registered with the Information Commissioner (the UK data protection regulator)?
 32) Should we buy the British Standards our equipment-counting model relies on?
-33) What is our break fee, and do we charge an abort fee or a fixed fee?
-34) If HMRC cuts a claim after we are paid, how much do we refund?
 37) Who owns the address data, what are the rules, and how long can we keep it?
 38) Who updates the postcode table every three months?
 42) Do we pay anything to an accountant who sends us a client?
@@ -33,8 +31,6 @@
 238) Which solicitor gave the answers of 24 and 27 September, and are they instructed?
 245) Will you ask Homedata, in writing, if a site area from its title outline may go in a client's report?
 286) Should the test website install exactly the package versions we tested? (a lock file at the top of the repository)
-287) Who will review our legal pages: which solicitor, and which data protection officer?
-288) Will the website show a telephone number, or only an email address?
 72) When buying a building, can the buyer add their own fitting costs on top of an agreed value?
 73) If the seller was never allowed to claim, does the pooling rule still apply?
 74) Is there a third way to fix the value of fixtures that we are missing?
@@ -267,6 +263,10 @@
 231) Can the test website keep uploaded files in a private store on Vercel?
 187) Do the four draft documents go to the surveyor as they are, or with two passages taken out?
 218) Which BCIS product did you agree to, and does its licence let our software use its rates?
+33) What is our break fee, and do we charge an abort fee or a fixed fee?
+34) If HMRC cuts a claim after we are paid, how much do we refund?
+287) Who will review our legal pages: which solicitor, and which data protection officer?
+288) Will the website show a telephone number, or only an email address?
 93) In a Scottish sale, which date starts our time limits?
 154) Should WordPress replace our whole system, or sit beside it?
 156) May we briefly check two public register names without saving them?

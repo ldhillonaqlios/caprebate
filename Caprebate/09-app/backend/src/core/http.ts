@@ -37,7 +37,8 @@ export type WebDeps = {
   /**
    * THE LEGAL SETTING, for the live website. The legal pages, the notices page, the cookie
    * banner and the client's tick are served wherever it is on, as on the test website, but each page carries its Draft
-   * line until our solicitor and our data protection officer have both approved its version (src/modules/compliance/legal-approvals.ts).
+   * line until our data protection officer has approved its version (src/modules/compliance/legal-approvals.ts; the DPO
+   * alone since Phase 161m1).
    * Off unless CAPREBATE_LEGAL_PAGES=on (src/app/server.ts). With it and `notices` both off, nothing changes.
    */
   legal?: boolean;

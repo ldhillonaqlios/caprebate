@@ -447,7 +447,8 @@ export type AuditKind =
   | 'AUTHORISATION_REFUSED'
   /** A signed-in person's form refused for a missing, wrong or used token (src/core/form-token.ts). */
   | 'FORM_TOKEN_REFUSED'
-  /** An admin recorded a solicitor's or the DPO's approval of a legal page's version (src/modules/compliance/legal-approvals.ts). */
+  /** An admin recorded the DPO's approval of a legal page's version (src/modules/compliance/legal-approvals.ts). Before
+   *  Phase 161m1 it could also be a solicitor's; those entries stay as they were. */
   | 'LEGAL_PAGE_APPROVED'
   /** A client ticked that they have read the portal terms, the website terms and the privacy policy; the versions are kept. */
   | 'TERMS_AGREED'

@@ -5,15 +5,19 @@
  * usual things you see on the website". The public notices are in src/modules/public-site/notices-site.ts. This
  * file holds everything else: the website terms of use, the client's portal terms and the privacy policy (see
  * src/modules/public-site/privacy-policy.ts), the cookie policy, acceptable use, the accessibility statement and the disclaimer, each a
- * DRAFT for our solicitor and our data protection officer (FOR THE SOLICITOR, DPO AND DEVELOPER), and the banner.
+ * DRAFT for our data protection officer (FOR THE DPO AND DEVELOPER), and the banner.
  *
  * WHERE THEY ARE SERVED. On the test website (the `notices` switch, which api/index.mjs alone passes), and
  * wherever the new `legal` setting is on (CAPREBATE_LEGAL_PAGES=on, for the live website once its checklist is done).
  * Anywhere else their addresses say they are being prepared, as before.
  *
- * DRAFT UNTIL APPROVED. Each page has a VERSION (its date). It carries the Draft line until BOTH our
- * solicitor and our data protection officer have an approval of that version recorded (legal_approvals, migration 121;
- * src/modules/compliance/legal-approvals.ts). A new version is a draft again.
+ * DRAFT UNTIL APPROVED. Each page has a VERSION (its date). It carries the Draft line until our data protection
+ * officer has an approval of that version recorded (legal_approvals, migration 121;
+ * src/modules/compliance/legal-approvals.ts). A new version is a draft again. PHASE 161m1, Lakhbir, 11 Nov 2026: "no
+ * solicitor, its a DPO pack": the DPO's approval alone puts a page in force; until then a solicitor's was needed too.
+ *
+ * NO TELEPHONE. Lakhbir, 11 Nov 2026: "go with email only for now". The website shows no telephone number, and the
+ * terms, the accessibility statement and the privacy policy say we are reached by email. It is no longer a gap.
  *
  * A FACT WE DO NOT HAVE IS NEVER MADE UP. It is written as "to be added" and listed in LEGAL_GAPS.
  *
@@ -41,7 +45,6 @@ export type ConsentChoice = 'all' | 'essential';
 /** Facts these pages need that nobody has given us yet. Each is shown on the page as "to be added". */
 export const LEGAL_GAPS: readonly (readonly [fact: string, where: string])[] = Object.freeze([
   ['Our registration number with the Information Commissioner (we have not registered yet)', 'Website terms of use, Privacy policy'],
-  ['A telephone number (we answer by email only for now), or a decision not to have one', 'Three pages: the terms, accessibility, privacy'],
   ['Our data protection officer’s name and how to reach them', 'Privacy policy'],
   ['Whether the law makes us check who our clients are', 'Privacy policy'],
   ['Where the live website’s hosting company, database and document store keep data', 'Privacy policy'],
@@ -55,16 +58,16 @@ const ukDay = (iso: string): string => {
   return new Date(Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 };
 
-/** The line at the top of a page: Draft until both approvals of this version are recorded; then when it took effect. */
+/** The line at the top of a page: Draft until our data protection officer's approval of this version is recorded;
+ *  then when it took effect. The DPO alone approves (Phase 161m1). */
 export function draftLine(key: LegalPageKey, a: PageApproval | undefined): Safe {
   const version = ukDay(versionOf(key));
   if (inForce(a)) {
-    return h`<p class="in-force-note" role="note">In force. This version, of ${version}, was approved by our solicitor on
-      ${ukDay(a!.solicitor!.on)} and our data protection officer on ${ukDay(a!.dpo!.on)}.</p>`;
+    return h`<p class="in-force-note" role="note">In force. This version, of ${version}, was approved by our data
+      protection officer on ${ukDay(a!.dpo!.on)}.</p>`;
   }
-  const one = a?.solicitor ? `Our solicitor approved it on ${ukDay(a.solicitor.on)}. ` : a?.dpo ? `Our data protection officer approved it on ${ukDay(a.dpo.on)}. ` : '';
-  return h`<p class="draft-note" role="note"><strong>Draft.</strong> Our solicitor and our data protection officer
-  have not yet both checked this page, so it is not yet in force. ${one}This version is of ${version}.</p>`;
+  return h`<p class="draft-note" role="note"><strong>Draft.</strong> Our data protection officer has not yet approved
+  this page, so it is not yet in force. This version is of ${version}.</p>`;
 }
 
 function legalPage(key: LegalPageKey, title: string, body: Safe, approvals: Approvals): string {
@@ -81,7 +84,7 @@ function termsBody(): Safe {
   <h2>Who we are</h2>
   <p>This website is run by ${COMPANY}, trading as Cap Rebate. We are a company registered in England and Wales,
   number ${COMPANY_NUMBER}. Our registered office is ${OFFICE}.</p>
-  <p>You can reach us by email at ${mail(CONTACT)}. Our telephone number: ${LATER}.
+  <p>You can reach us by email at ${mail(CONTACT)}. We answer by email only.
   Our registration number with the Information Commissioner: ${LATER}.</p>
 
   <h2>What these terms cover</h2>
@@ -261,8 +264,8 @@ function accessibilityBody(): Safe {
     <li>Video calls use Zoom, which has its own accessibility features and limits.</li>
   </ul>
   <h2>Ask us for help</h2>
-  <p>If something does not work for you, email ${mail(CONTACT)}. Tell us the page and what went wrong. Telephone:
-  ${LATER}. We will reply within five working days.</p>
+  <p>If something does not work for you, email ${mail(CONTACT)}. Tell us the page and what went wrong. We answer by
+  email only, and we will reply within five working days.</p>
   <h2>If you are not happy with our answer</h2>
   <p>You can contact the Equality Advisory and Support Service (EASS) for advice.</p>
   <p>This statement was prepared on ${DRAFTED}.</p>`;
