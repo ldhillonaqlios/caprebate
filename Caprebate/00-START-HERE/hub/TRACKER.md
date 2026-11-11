@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 371 |
-| Working on it | 0 |
+| Done | 370 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1242,7 +1242,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-40 items.
+41 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1520,11 +1520,20 @@
 - Note 2026-11-07 (Phase 161h): Gate line 12 added (GO-LIVE-CHECKLIST.md); BUILD item 1 proves the live project on a real Vercel preview first, with the three paths only real services show. Same in ACTION-PLAN.md and the run sheet.
 - Note 2026-11-11 (Phase 162): The sweep (Phase 162) checked the gate: 11 of its 12 lines are still closed - 1 Vercel Pro (13486923814), 2 the ICO number (12552682424), 3 the legal pages approved (13475983553; the reviewers not yet chosen, 13475961024), 4 the DPO's appointment (12983546774), 5 a telephone or email only (13475983571), 6 the safeguards and the retention periods (12945903194), 7 the engagement letter (12984553034, 12984730922), 8 the register entries, 9 the live keys (no live project yet), 10 the developer's answers (13486597256), 12 GO-LIVE-CHECKLIST.md lines 1 to 11 and Word questions 291 and 292. Line 11 (the sweep) opens once the sweep's pull request is merged. 161n's prompt and the checklist no longer name the sweep by number (it is Phase 163 now).
 
+### Phase 161m1 - Lakhbir's go-live decisions of 11 Nov 2026: legal pages in force on the DPO's approval alone, email only, the engagement letter's final terms and a document authority
+
+`13522847676` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac**
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-11 (Phase 161m1): Claimed. Lakhbir in the chat, 11 Nov 2026: "vercel pro this will be the developer who does this"; "ICO i can do this myself"; "no solicitor, its a DPO pack"; "go with email only for now"; "review the final engagement letter ensure we are covered for everything ensure the flat fee is 3% ensure there are terms which explicitly state we can request documents from their behalf, we will need company sensative documents". Then, asked: every open letter term at its test default (break fee £995 a property plus a booked surveyor at cost; nothing payable if no material claim; the fee credited back on any reduction, settlements included; processors named in the privacy notice); our own tax adviser's offer out until one is appointed; HMRC dealt with directly; new clauses for accurate information, the fee if our work is used, late payment and e-signature, the identity check and reliance; he approves the letter himself, no solicitor.
+- Note 2026-11-11 (Phase 161m1): Done: the legal pages in force on the DPO's approval alone; email only; the engagement letter final (clauses 14 to 18, no blank, no long dash); approvers moved to Lakhbir; eight Word questions answered, four closed. 5,622 checks green. Left: Lakhbir approves the letter's wording (12984545390); he deletes 'TEMP check 161m1 - Caprebate_Questions.docx' from the Health Capital Allowances folder by hand.
+- Note 2026-11-11 (Phase 161m1): Reopened for Lakhbir's answers on the letter's review note, 11 Nov 2026: (1) agent authority with HMRC in clause 14; (2) clause 16 limited to six years; (4) liability cap at least GBP 5,000; (5) break fee reworded to the current test; (9) clause 7(a) any adviser the client engages; (10) the letter supersedes any engagement form or terms of business; (13) the two reviewer comments deleted; (3) the fee adjustment until HMRC can no longer open an enquiry; (6) business clients only; (11) an introducer disclosure line; (12) research typed-name signatures; (7) Didit named, and the person checked must be a director or owner, which an admin can bypass; (14) nothing charged first: the only fee is the 3%, and an admin sends any invoice by hand; (15) the test copy's name left until all is done.
+
 ---
 
 ## Z · Complete / Not Applicable
 
-371 items.
+370 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3845,12 +3854,4 @@
 - Note 2026-11-11 (Phase 162): CAUSE FOUND (11 Nov 2026, after PR 100 was merged): Admin's home on the test website, signed in by Lakhbir, gives the server's reason: 'The lasting database could not be opened (Error: Hrana(StreamError(Error { message: "Operation was blocked: SQL read operations are forbidden (reads are blocked, do you need to upgrade your plan?)", code: "BLOCKED" })))'. Turso has blocked reads on the account: its plan's read allowance is used up. Nothing in our code or settings is broken. What is left is Lakhbir's: in the Turso dashboard, read the usage page (how many reads, and when the allowance resets), then either move to a paid plan or wait for the reset. The sweep's two open checks (the portal's letter and report pages) wait on that. If the usage shows the test website itself reads far more than expected, cutting its reads is buildable (a new phase).
 - Note 2026-11-11 (Phase 162): CORRECTED the same day, from Turso's own dashboard (the Vercel-managed organisation vercel-icfg-..., opened by Lakhbir in the browser pane): 'Your account is temporarily blocked because you exceeded your usage quota.' The quota crossed is SYNCS, not reads: syncs 3.12 GB of the free plan's 3 GB this month; reads 25.09K of 500M; writes 416 of 10M; storage 15.66 MB of 5 GB (database-aero-nest, aws-us-east-1). Syncs come only from the local copy (CAPREBATE_DB_LOCAL_COPY=on, 'faster clicks part 2', 3 Oct 2026): each new copy of the website downloads the whole database, and every page brings in what other copies wrote (server.ts, app.db.refresh). The block lasts until Turso's monthly allowance resets or the plan is changed in Vercel (My integrations, Turso, Settings, Change Plan). What stops it happening again: the local copy switched off in Vercel's settings (CAPREBATE_DB_LOCAL_COPY off or removed), so every query goes to the database itself and nothing is synced.
 - Note 2026-11-11 (Phase 162): FIXED, 11 Nov 2026: Lakhbir moved the Turso integration to the Developer plan in Vercel (10 GB syncs, $5.99 a month); on his word Claude deleted CAPREBATE_DB_LOCAL_COPY from the caprebate-test project's Production settings in the browser pane, and Lakhbir verified the redeploy. Turso's banner is gone, the plan shows Developer, the database Active, and its syncs stayed at 3.12 GB after the redeploy. On the test website, signed in as Admin: no 'records in memory' warning, the sign-in held across six pages, and the first client's id was the same each time. As the client: the portal's letter page shows the whole letter, the report page says it is not ready yet (no seeded claim has an issued report), and the letter's signing date is the lasting database's own (1 Oct 2026, 14:02), not today's. Every query now goes to Turso directly; nothing is synced. With the local copy off the usage fits the free plan, so the plan could go back to free from December if wanted.
-
-### Phase 161m1 - Lakhbir's go-live decisions of 11 Nov 2026: legal pages in force on the DPO's approval alone, email only, the engagement letter's final terms and a document authority
-
-`13522847676` · **Done** · owner Claude
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-11 (Phase 161m1): Claimed. Lakhbir in the chat, 11 Nov 2026: "vercel pro this will be the developer who does this"; "ICO i can do this myself"; "no solicitor, its a DPO pack"; "go with email only for now"; "review the final engagement letter ensure we are covered for everything ensure the flat fee is 3% ensure there are terms which explicitly state we can request documents from their behalf, we will need company sensative documents". Then, asked: every open letter term at its test default (break fee £995 a property plus a booked surveyor at cost; nothing payable if no material claim; the fee credited back on any reduction, settlements included; processors named in the privacy notice); our own tax adviser's offer out until one is appointed; HMRC dealt with directly; new clauses for accurate information, the fee if our work is used, late payment and e-signature, the identity check and reliance; he approves the letter himself, no solicitor.
-- Note 2026-11-11 (Phase 161m1): Done: the legal pages in force on the DPO's approval alone; email only; the engagement letter final (clauses 14 to 18, no blank, no long dash); approvers moved to Lakhbir; eight Word questions answered, four closed. 5,622 checks green. Left: Lakhbir approves the letter's wording (12984545390); he deletes 'TEMP check 161m1 - Caprebate_Questions.docx' from the Health Capital Allowances folder by hand.
 
