@@ -680,10 +680,15 @@ export function homedataPlanningDue(row: { readonly state: string; readonly rout
 export function sourcesFor(
   db: Db, actor: Actor, business_id: string,
   /** Where the site area's grid, store and postcode table come from. Absent: the server's own settings. */
-  opts: { readonly site?: SiteAreaSetup; /** Where this copy runs, for the test website's waiver. Absent: the process's. */ readonly env?: Env } = {},
+  opts: {
+    readonly site?: SiteAreaSetup; /** Where this copy runs, for the test website's waiver. Absent: the process's. */ readonly env?: Env;
+    /** TESTS ONLY (Phase 162), as ResearchOutside's: the lookups' switches. Absent: switchesHere(env), as before. */
+    readonly switches?: Readonly<Record<string, boolean>>;
+  } = {},
 ): SourcesPanel {
   assertResearchSection(actor, 'research.read');
   authorise(actor, 'research.read', { type: 'research', id: business_id, business_id });
+  const switches = opts.switches ?? switchesHere(opts.env);
 
   const free = freeGate();
   const engagement = assertSignedEngagement(db, business_id);
@@ -732,7 +737,7 @@ export function sourcesFor(
       detail: (resolved.state === 'FAILED' || (resolved.state === 'NOT_RUN' && row?.state === 'NOT_RUN' && (row.attempts ?? 0) > 0 && !due)) && row?.detail
         ? row.detail : resolved.detail,
       may_retry: resolved.state === 'FAILED',
-      switched_on: switchedOn(entry.source_id, switchesHere(opts.env)),
+      switched_on: switchedOn(entry.source_id, switches),
       picked: picked.has(entry.source_id) && resolved.state === 'FIRED',
       taken_back: takenBack.get(entry.source_id) ?? null,
       by_hand: false,
@@ -740,7 +745,7 @@ export function sourcesFor(
   });
 
   const outstandingPaid = sources.filter((s) => s.state !== 'FIRED').map((s) => s.source_id);
-  const before = totalBeforePence(outstandingPaid, (id) => switchedOn(id, switchesHere(opts.env)));
+  const before = totalBeforePence(outstandingPaid, (id) => switchedOn(id, switches));
   const last = getResearchRunsCostPenceAtByBusinessId<{ cost_pence: number | null; at: string }>(db, [business_id]);
   return {
     free, engagement, sources,

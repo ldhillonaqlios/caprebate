@@ -15,11 +15,14 @@
  *   line 16  Word question 219 — kept originals on the test website only; Sales opens only its own clients'
  *   line 17  Word question 222 — closed website enquiries deleted after twelve months, a deletion-log line each; off
  *   line 19  the testing waiver no longer calls Lakhbir the director
+ *   Phase 162 the test website's own switch, KEEP_ORIGINALS_TEST_WEBSITE, run both ways: on, an upload's original is kept
+ *            for seven years, encrypted; off, nothing is kept
  */
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { statementDoors } from '../sql-doors.ts';
 import { can, type Obj } from '../../src/core/authz.ts';
@@ -41,6 +44,10 @@ import { ADDRESS_KEEP_UNTIL } from '../../src/integrations/connectors/address-lo
 import { IDENTITY_CHECK } from '../../src/integrations/connectors/identity-check.ts';
 import { LICENCES, SOURCES } from '../../src/integrations/registers/source-register.ts';
 import { actor, testApp } from '../helpers.ts';
+import { createApp } from '../../src/app/server.ts';
+import { seed, SEED_PASSWORD } from '../../src/app/seed.ts';
+import { durableKeyFor } from '../../src/modules/claims/upload-handler-port.ts';
+import { pdfOf } from '../document-fixtures.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T0 = '2026-10-04T09:00:00.000Z';
@@ -374,5 +381,52 @@ describe('line 19 — the testing waiver names Lakhbir’s role rightly', () => 
     assert.doesNotMatch(lookups, /as the director/);
     // PHASE 161i1: names of people are out of the code's comments; the role is what is checked.
     assert.match(lookups, /Head of Business Development \(not the director/);
+  });
+});
+
+/* PHASE 162 (carried by Phase 161m: rules are versioned data, 09-app/docs/ARCHITECTURE.md rule 6). Line 16 asserted only
+   this switch's position and its wiring in api/index.mjs. Here it is run as api/index.mjs runs it, on a copy of the
+   website handed KEEP_ORIGINALS_TEST_WEBSITE, and again with it switched off; invented files only. */
+describe('Phase 162 — KEEP_ORIGINALS_TEST_WEBSITE run both ways: what the test website keeps when it is on, and when it is off', () => {
+  const T = '2026-11-11T10:00:00.000Z';
+  async function uploadOnce(keepOriginals: typeof KEEP_ORIGINALS_TEST_WEBSITE) {
+    const root = mkdtempSync(join(tmpdir(), 'cb-162-keep-'));
+    const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: root, now: () => T, keepOriginals, sealKey: randomBytes(32) });
+    try {
+      await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
+      const addr = made.server.address();
+      const base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;
+      await seed(made.app.db, made.app.hasher, made.app.now);
+      const biz = made.app.db.get<{ business_id: string }>("SELECT business_id FROM users WHERE role = 'CLIENT' LIMIT 1")?.business_id ?? '';
+      const login = await fetch(`${base}/login`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ email: 'sales@example.invalid', password: SEED_PASSWORD }).toString() });
+      assert.equal(login.status, 303, 'Sales could not sign in');
+      const cookie = login.headers.getSetCookie().map((x) => x.split(';')[0] ?? '').join('; ');
+      const b = `----cb162${randomBytes(8).toString('hex')}`;
+      const body = Buffer.concat([
+        Buffer.from(`--${b}\r\nContent-Disposition: form-data; name="type_code"\r\n\r\nLEASE\r\n`),
+        Buffer.from(`--${b}\r\nContent-Disposition: form-data; name="file"; filename="invented-lease.pdf"\r\nContent-Type: application/pdf\r\n\r\n`),
+        Buffer.from(pdfOf([['DEMISE AND TERM:', 'Annual rent 25000']], { compress: true })), Buffer.from(`\r\n--${b}--\r\n`)]);
+      const up = await fetch(`${base}/staff/clients/${biz}/files`, { method: 'POST', redirect: 'manual', headers: { cookie, 'content-type': `multipart/form-data; boundary=${b}` }, body });
+      assert.equal(up.status, 303, await up.text());
+      const v = made.app.db.get<{ id: string; original_kept_at: string | null; original_delete_after: string | null }>(
+        'SELECT id, original_kept_at, original_delete_after FROM documents ORDER BY created_at DESC, rowid DESC LIMIT 1');
+      assert.ok(v);
+      return { keptDays: made.store.keptDays, kept_at: v.original_kept_at, delete_after: v.original_delete_after, onDisk: existsSync(join(root, durableKeyFor(v.id))) };
+    } finally { made.close(); }
+  }
+
+  test('ON, as the test website ships it: the original is kept, encrypted, for 2,557 days from the day it was read', async () => {
+    const on = await uploadOnce(KEEP_ORIGINALS_TEST_WEBSITE);
+    assert.equal(on.keptDays, 2557);
+    assert.ok(on.kept_at, 'nothing was kept with the test website\u2019s switch on');
+    assert.equal(on.delete_after, new Date(Date.parse(T) + 2557 * 86_400_000).toISOString(), 'seven years after it was read');
+    assert.equal(on.onDisk, true, 'no kept original in the store');
+  });
+
+  test('OFF: the same upload on the same copy keeps nothing, and the store holds no original', async () => {
+    const off = await uploadOnce({ ...KEEP_ORIGINALS_TEST_WEBSITE, enabled: false });
+    assert.equal(off.keptDays, null);
+    assert.deepEqual([off.kept_at, off.delete_after, off.onDisk], [null, null, false]);
   });
 });

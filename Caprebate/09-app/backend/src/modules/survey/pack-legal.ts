@@ -59,6 +59,17 @@ const LEGAL_FACT = /^(trigger|deal|event_date|acquisition_date|prior_owner_(clai
  */
 export const LEGAL_READINGS = legalReadingsFromRegister();
 
+/** The six legal readings by name, each on or off. */
+export type LegalReadings = Readonly<Record<(typeof LEGAL_READING_NAMES)[number], boolean>>;
+
+/**
+ * THE READINGS THE LEGAL CHECK RUNS UNDER (Phase 162). The register's, LEGAL_READINGS, except inside one call of
+ * `assessLegalUnder`, which holds the readings a test names for that call and puts these back in a finally,
+ * synchronously, as `withLegalEngineReadings` does with the engine's two switches. The four readings this file reads
+ * itself (the non-taxpayer question's showIf, the seller step, the lease route and the earlier cap) read it here.
+ */
+let held: LegalReadings = LEGAL_READINGS;
+
 /**
  * THE SIX LEGAL READINGS, READ FROM THE SURVEY'S RULES REGISTER (src/modules/survey/logic/rules.ts, Phase 161m): each
  * one's position, its version, the date it takes effect from and who approves it are there.
@@ -104,7 +115,7 @@ const NON_TAXPAYER_Q: EngineQuestion = Object.freeze({
   ask: 'Was that seller a charity, or another body that pays no UK tax?',
   help: 'A charity or another body that pays no tax could never claim allowances on the fixtures. Then we look further back, to an earlier owner who could.',
   opts: Object.freeze([['yes', 'Yes, a charity or another body that pays no tax'], ['no', 'No, a person or a business that pays tax'], ['unsure', 'Not sure']] as const) as unknown as readonly (readonly [string, string])[],
-  showIf: (s: Record<string, unknown>) => s['__seller_answer'] === 'other' && LEGAL_READINGS.non_taxpayer_seller,
+  showIf: (s: Record<string, unknown>) => s['__seller_answer'] === 'other' && held.non_taxpayer_seller,
   onSet: (s: Record<string, unknown>, v: unknown) => { if (v === 'yes') { s['prior_owner_entitled'] = 'no'; s['__seller_non_taxpayer'] = true; } },
 });
 
@@ -222,11 +233,19 @@ export function assessLegal(sector: string, answers: ReadonlyMap<string, unknown
   return assessLegalUnder(LEGAL_READINGS, sector, answers, nowIso, claimant, holding);
 }
 
-/** The same, under readings a caller names: the tests, to show what each reading moves. The pack uses `assessLegal`. */
-export function assessLegalUnder(readings: LegalEngineReadings, sector: string, answers: ReadonlyMap<string, unknown>, nowIso: string, claimant: string,
+/**
+ * The same, under readings a caller names: the tests, to show what each reading moves. The pack uses `assessLegal`.
+ * Any of the six may be named (Phase 162); a reading not named is the register's, so naming none is `assessLegal`.
+ */
+export function assessLegalUnder(readings: Partial<LegalReadings>, sector: string, answers: ReadonlyMap<string, unknown>, nowIso: string, claimant: string,
   holding?: { readonly role: ClaimantRole | null },
 ): { asked: EngineQuestion[]; unanswered: EngineQuestion[]; verdict: LegalVerdict } {
-  return withLegalEngineReadings(readings, () => assessLegalHeld(sector, answers, nowIso, claimant, holding));
+  const r: Record<string, boolean> = {};
+  for (const name of LEGAL_READING_NAMES) r[name] = readings[name] ?? LEGAL_READINGS[name];
+  const these = Object.freeze(r) as LegalReadings;
+  const was = held;
+  held = these;
+  try { return withLegalEngineReadings(these, () => assessLegalHeld(sector, answers, nowIso, claimant, holding)); } finally { held = was; }
 }
 
 function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, nowIso: string, claimant: string,
@@ -249,7 +268,7 @@ function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, 
     if (setsSeller(q)) {
       s['__seller_answer'] = answers.get(q.id);
       // A landlord barred by s.35 was never entitled to claim; look past them.
-      if (LEGAL_READINGS.s35_seller_not_entitled && s['prior_owner_s35_barred'] === true) s['prior_owner_entitled'] = 'no';
+      if (held.s35_seller_not_entitled && s['prior_owner_s35_barred'] === true) s['prior_owner_entitled'] = 'no';
     }
   }
   const verdict = ((): LegalVerdict => {
@@ -277,7 +296,7 @@ function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, 
     /* THE LEASE ROUTE. A premium for a new lease: the fixtures pass to the tenant only on a
        joint s.183 election where the landlord could claim; where it could not (an NHS body, a developer, a charity),
        s.184 treats the tenant as owner. Whether an election was made, where it matters, must be known. */
-    if (LEGAL_READINGS.lease_route && s['transaction_type'] === 'lease_premium') {
+    if (held.lease_route && s['transaction_type'] === 'lease_premium') {
       const landlordCould = s['prior_owner_entitled'];
       const s183 = s['s183_election_made'];
       if (landlordCould === 'yes' && s183 === 'no') {
@@ -338,7 +357,7 @@ function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, 
     /* SECTION 185 LOOKS PAST A SELLER WHO COULD NEVER CLAIM to the earlier owner who
        could. The claim is capped at the value fixed when that owner sold on (G12bv), and is not settled while it is not
        known. */
-    if (LEGAL_READINGS.s185_earlier_cap && s['prior_owner_entitled'] === 'no' && s['earlier_entitled_owner'] === 'yes') {
+    if (held.s185_earlier_cap && s['prior_owner_entitled'] === 'no' && s['earlier_entitled_owner'] === 'yes') {
       const v = poundsToPence(s['earlier_disposal_value']);
       if (v === null || v === 0) {
         return { level: 'AMBER', headline: 'Find the value the fixtures were fixed at when the earlier owner sold on. Section 185 caps the claim at it.',
