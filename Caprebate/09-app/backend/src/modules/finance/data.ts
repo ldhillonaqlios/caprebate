@@ -86,6 +86,11 @@ export function getInvoicesIdBusinessIdByIdClaimId2<T extends Row = Row>(db: Db,
 export function getInvoicesIdByIdClaimId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT id FROM invoices WHERE id = ? AND claim_id IS NOT NULL', params);
 }
+/** Phase 161m1: an organisation's live break-fee invoices (raised or sent, not cancelled, not credited in full). One break fee an agreement. */
+export function listInvoicesLiveBreakFeeByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT i.id, i.claim_id FROM invoices i WHERE i.business_id = ? AND i.kind = 'BREAK_FEE' AND i.invoice_status IN ('RAISED','SENT') " +
+    'AND i.fee_pence > COALESCE((SELECT SUM(c.amount_pence) FROM invoice_credit_notes c WHERE c.invoice_id = i.id), 0)', params);
+}
 export function insertInvoices(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('INSERT INTO invoices (id, business_id, claim_id, kind, claim_value_pence, fee_pence, fee_rate, invoice_status, payment_status, ' +
     'vat_position, vat_setting_id, vat_pence, invoice_date, due_on, due_basis, fee_basis, fee_warning, raised_by, created_at, entity_type, versions_json) ' +

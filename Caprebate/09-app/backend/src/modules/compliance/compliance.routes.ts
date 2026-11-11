@@ -149,6 +149,8 @@ export async function handleCompliance(
     const at = cdd !== null ? `/staff/compliance/aml/checks/${cdd}` : `/staff/clients/${business_id}`;
     const r = await sendIdentityCheck({ app: d.app, newId: d.newId }, actor, {
       business_id, contact_id: f['contact_id'] ?? '', cdd_check_id: cdd, first_name: f['first_name'] ?? '', last_name: f['last_name'] ?? '',
+      // Phase 161m1: an Admin sending it to someone who is not a director or an owner; sendIdentityCheck decides
+      bypass: f['bypass'] === 'yes' ? { reason: f['bypass_reason'] ?? '' } : null,
     });
     return r.ok ? redirect(res, cdd !== null ? `${at}?done=identity-sent` : `${at}?done=identity-sent#identity`) : d.problem(res, actor, 'Identity check not sent', r.why, at);
   }

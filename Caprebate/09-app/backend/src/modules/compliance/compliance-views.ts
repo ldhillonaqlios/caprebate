@@ -78,7 +78,7 @@ function limitation(): Safe {
 
 /** A result that needs a sentence rather than its code word. Anything else is shown as before. */
 const DONE_SENTENCES: Readonly<Record<string, string>> = Object.freeze({
-  'identity-sent': 'The identity check was sent. Give the person their link, below.',
+  'identity-sent': 'The identity check was sent. Give the person their link, below. Tell them the check is done for us by Didit.',
 });
 
 function done(msg: string | undefined): Safe {

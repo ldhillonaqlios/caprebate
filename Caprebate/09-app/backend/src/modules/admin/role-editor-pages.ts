@@ -140,6 +140,7 @@ export const ACTION_WORDS: Readonly<Record<string, readonly [string, string]>> =
   'invoice.read': ['Money', 'See invoices'],
   'invoice.write': ['Money', 'Change an invoice'],
   'invoice.raise': ['Money', 'Raise an invoice'],
+  'invoice.raise_by_hand': ['Money', 'Raise a break fee by hand'],
   'invoice.credit': ['Money', 'Credit an invoice'],
   'invoice.record_received': ['Money', 'Record a payment received, and chase one'],
   'finance_setting.write': ['Money', 'Change the money settings'],

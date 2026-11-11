@@ -149,8 +149,17 @@ export function insertCddBeneficialOwners(db: Db, params: readonly Param[] = [])
   return db.run('INSERT INTO cdd_beneficial_owners (id, check_id, contact_id, basis_of_control, identified_from, evidence_document_id, psc_decision_id, verified_how, recorded_by, recorded_at) ' +
     'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params);
 }
+/* Phase 161m1: whether a contact is a beneficial owner on one of the organisation's checks that is not withdrawn
+   (who may be sent an identity check, identity-who.ts). Both tables are this module's. */
+export function getCddBeneficialOwnersCountByBusinessIdContactId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>("SELECT COUNT(*) AS n FROM cdd_beneficial_owners o JOIN cdd_checks k ON k.id = o.check_id WHERE k.business_id = ? AND o.contact_id = ? AND k.state <> 'WITHDRAWN'", params);
+}
 
 // cdd_checks
+/* Phase 161m1: the authority each of the organisation's checks that is not withdrawn records for one contact (identity-who.ts). */
+export function listCddChecksAuthorityBasisByBusinessIdAuthorityContactId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT authority_basis FROM cdd_checks WHERE business_id = ? AND authority_contact_id = ? AND authority_basis IS NOT NULL AND state <> 'WITHDRAWN'", params);
+}
 export function getCddChecksCompletedAtByBusinessIdState<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>("SELECT completed_at FROM cdd_checks WHERE business_id = ? AND state = 'COMPLETE' ORDER BY completed_at DESC LIMIT 1", params);
 }

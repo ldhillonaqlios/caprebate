@@ -36,7 +36,7 @@ export { PRICE_PAID_ATTRIBUTION } from './connectors/price-paid.ts';
 export { PLANNING_ROUTE, REGISTER_SWITCHES, TEST_WEBSITE_LOOKUPS, freeGateWaived, gateStatus, lookupsWaivedHere, runConnector, switchedOn, switchesHere } from './connectors/registers.ts';
 export { s3LoginFrom, s3Target } from './connectors/s3-backup.ts';
 export { BACKUP_KEEP_DAYS, runNightlyBackup } from './backup.ts';
-export { SIGNATORY_SOURCES, checkSignatory, notYet, outcome, signatoryWords } from './connectors/signatory-check.ts';
+export { SIGNATORY_SOURCES, checkSignatory, notYet, outcome, sameName, signatoryWords } from './connectors/signatory-check.ts';
 export { TITLE_BOUNDARY_LABEL, TITLE_BOUNDARY_SOURCE_ID } from './connectors/title-boundary.ts';
 export { TURNSTILE_FIELD, checkTurnstile, refusalWords, turnstileSiteKey, turnstileWhy, withSiteKey } from './connectors/turnstile.ts';
 export { parseChat } from './connectors/whatsapp-export.ts';

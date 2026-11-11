@@ -15,6 +15,16 @@
  *
  *   sendIdentityCheck      compliance.write only (Admin today). The contact being checked must be a contact of the
  *                          organisation; a due diligence check it is sent from must be that organisation's and open.
+ *                          AND A DIRECTOR OR AN OWNER OF IT, as we already hold them (Phase 161m1, Lakhbir, 11 Nov 2026:
+ *                          "ensure the person who is performing the ID check is the director or owner, admin can
+ *                          bypass"): the rule, and which kind of client asks for which role, is identity-who.ts
+ *                          `mayBeChecked`; the name typed as on their ID must be the contact's name too. Anyone else is
+ *                          REFUSED, audited as IDENTITY_CHECK_NOT_SENT with the rule's code, and told why and how to go
+ *                          on. AN ADMIN (the role ADMIN itself, never a role that borrows compliance.write) MAY SEND IT
+ *                          ANYWAY, FOR THIS ONE CHECK, WITH A REASON: none, or one the audit chain's screen refuses, and
+ *                          nothing is sent. The reason goes on the chain as IDENTITY_CHECK_RULE_BYPASSED (who, which
+ *                          rule, the reason, the check), as a take-back's reason does, and the SENT row says
+ *                          `rule_bypassed`. A bypass asked for someone who meets the rule is not one, and is not recorded.
  *                          The first and last name go to the service in the call and nowhere else — not in a row, not
  *                          in the audit log. What is kept is migration 047's identity_checks row: whose check, from
  *                          where, the service's session id and the link the client follows, who sent it and when.
@@ -41,7 +51,9 @@
 import { createHash } from 'node:crypto';
 import type { App } from '../../core/app.ts';
 import type { Actor } from '../../core/index.ts';
-import { can } from '../../core/index.ts';
+import { can, screenDetail } from '../../core/index.ts';
+import { clientKindOf, howToGoOnWords, mayBeChecked, roleWords, whoMayBeCheckedWords } from './identity-who.ts';
+import { getBusinessesClaimantTypeById } from '../clients/index.ts';
 import { h, raw, type Safe } from '../../shared/index.ts';
 import { localWhen } from '../../shared/index.ts';
 import { record, userNames, type ComplianceDeps } from './compliance.ts';
@@ -83,6 +95,8 @@ export type SendInput = {
   readonly cdd_check_id: string | null;
   readonly first_name: string;
   readonly last_name: string;
+  /** An Admin sending it to someone who is not a director or an owner: for this check only, with the reason. */
+  readonly bypass?: { readonly reason: string } | null;
 };
 export type SendResult = { readonly ok: true; readonly id: string; readonly link: string } | { readonly ok: false; readonly why: string };
 
@@ -107,6 +121,22 @@ export async function sendIdentityCheck(
     if (c === undefined) return { ok: false, why: 'That due diligence check is not one of this organisation’s.' };
     if (c.state !== 'IN_PROGRESS') return { ok: false, why: 'That due diligence check is finished or withdrawn. Send it from the client’s page instead.' };
   }
+  // A director or an owner of the client, as we hold them, in their own name; or an Admin's reasoned bypass
+  const who = mayBeChecked(db, input.business_id, input.contact_id, { first_name: input.first_name, last_name: input.last_name });
+  let bypassed: { readonly rule: string; readonly reason: string } | null = null;
+  if (!who.ok) {
+    const refuse = (code: string, why: string): SendResult => {
+      record(cd, actor, 'IDENTITY_CHECK_NOT_SENT', 'REFUSED', 'business', input.business_id, { contact: input.contact_id, cdd_check: input.cdd_check_id, why: code });
+      return { ok: false, why: `Not sent. ${why}` };
+    };
+    const isAdmin = actor.role === 'ADMIN';
+    if (who.code === 'NOT_A_CONTACT') return refuse(who.code, who.why);
+    if (input.bypass === undefined || input.bypass === null) return refuse(who.code, `${who.why} ${isAdmin ? ADMIN_MAY_BYPASS_WORDS : ASK_AN_ADMIN_WORDS}`);
+    if (!isAdmin) return refuse('BYPASS_NOT_ADMIN', `${who.why} ${ONLY_ADMIN_BYPASSES_WORDS}`);
+    const reason = bypassReason(input.bypass.reason);
+    if (!reason.ok) return refuse('BYPASS_WITHOUT_REASON', reason.why);
+    bypassed = { rule: who.code, reason: reason.reason };
+  }
   const id = d.newId();
   const out = await startIdentityCheck({
     first_name: input.first_name, last_name: input.last_name, check_ref: id,
@@ -120,12 +150,40 @@ export async function sendIdentityCheck(
     return { ok: false, why: `Not sent. ${out.why}` };
   }
   insertIdentityChecks(db, [id, input.business_id, input.contact_id, input.cdd_check_id, 'DIDIT', out.session_id, out.link, actor.id, d.app.now()]);
+  if (bypassed !== null) {
+    record(cd, actor, 'IDENTITY_CHECK_RULE_BYPASSED', 'ALLOWED', 'identity_check', id, {
+      business: input.business_id, contact: input.contact_id, rule: bypassed.rule, reason: bypassed.reason,
+    });
+  }
   record(cd, actor, 'IDENTITY_CHECK_SENT', 'ALLOWED', 'identity_check', id, {
     business: input.business_id, contact: input.contact_id, cdd_check: input.cdd_check_id,
     // A check sent before the papers name the service says so, in the row that records it
     ...(sentUnderTestingWaiver(opts.config ?? IDENTITY_CHECK) ? { papers_waived_for_testing: true } : {}),
+    // And one an Admin sent to someone who is not a director or an owner, with the reason in the row before it
+    ...(bypassed === null ? {} : { rule_bypassed: bypassed.rule }),
   });
   return { ok: true, id, link: out.link };
+}
+
+/** Said to an Admin when the person is not a director or an owner. */
+export const ADMIN_MAY_BYPASS_WORDS = 'As an Admin, you can send it anyway for this one check: tick “Send it anyway” and say why.';
+/** Said to anyone else. */
+export const ASK_AN_ADMIN_WORDS = 'Or ask an Admin to send it anyway, with a reason.';
+/** Said to someone who is not an Admin and asked to send it anyway. */
+export const ONLY_ADMIN_BYPASSES_WORDS = 'Only an Admin can send it anyway. Ask an Admin, with your reason.';
+
+/**
+ * THE BYPASS'S REASON, in the Admin's own words. Required, trimmed, at most 2000 characters, as a take-back's reason is
+ * (src/modules/claims/take-back.ts `takeBackReason`). It goes on the audit chain, so it must pass the chain's screen:
+ * an email address or a supplier key is refused here, before anything is sent.
+ */
+export function bypassReason(v: string | null | undefined): { ok: true; reason: string } | { ok: false; why: string } {
+  const t = (v ?? '').trim().slice(0, 2000);
+  if (t === '') return { ok: false, why: 'Say why you are sending it to someone who is not a director or an owner. The reason is kept in the audit log.' };
+  try { screenDetail({ reason: t }); } catch {
+    return { ok: false, why: 'Leave email addresses and codes out of the reason. Say why in your own words.' };
+  }
+  return { ok: true, reason: t };
 }
 
 /**
@@ -271,9 +329,16 @@ export function identityPanel(app: App, actor: Actor, where: { readonly business
   const reachableIds = new Set(listContactsIdByBusinessId<{ id: string }>(app.db, [where.business_id]).map((r) => r.id));
   const offered = contacts.filter((c) => reachableIds.has(c.id));
   const unreachable = contacts.filter((c) => !reachableIds.has(c.id));
+  // Phase 161m1: who of them we hold as a director or an owner (identity-who.ts), and who not
+  const kind = clientKindOf(getBusinessesClaimantTypeById<{ claimant_type: string | null }>(app.db, [where.business_id])?.claimant_type);
+  const roles = new Map(offered.map((c) => [c.id, mayBeChecked(app.db, where.business_id, c.id, null)]));
+  const notOneOfThem = offered.filter((c) => roles.get(c.id)?.ok !== true);
+  const isAdmin = actor.role === 'ADMIN';
   const action = where.cdd_check_id !== undefined ? `/staff/compliance/aml/checks/${where.cdd_check_id}/identity` : '/staff/compliance/identity-checks';
   return h`<div id="identity-check">
     <p class="help">We send the person a link. They photograph their ID and take a selfie on their phone, and ${IDENTITY_PROVIDER_NAME} tells us the result. Their photographs never come to us.</p>
+    <p class="help" id="identity-by-didit">When you give them the link, tell them the check is done for us by ${IDENTITY_PROVIDER_NAME}.</p>
+    <p class="help" id="identity-who">${whoMayBeCheckedWords(kind)}</p>
     ${ready.on ? raw('') : h`<p class="help"><strong>Not ready.</strong> Nothing is sent until these are done: ${ready.missing.join(' ')}</p>`}
     ${testing === null ? raw('') : h`<p class="err" id="identity-testing-only"><strong>${testing}</strong></p>`}
     ${forgetful === null ? raw('') : h`<p class="help" id="identity-forgetful-database"><strong>Records kept in memory.</strong> ${forgetful}</p>`}
@@ -281,12 +346,15 @@ export function identityPanel(app: App, actor: Actor, where: { readonly business
       ${lines.map((l) => h`<tr><td>${l.contact}</td><td>${l.sent}</td><td>${l.outcome_words}${l.result_at === null ? '' : `, ${localWhen(l.result_at)}`}</td><td><a href="${l.link}">Their link</a></td></tr>`)}</tbody></table>`}
     ${mayWrite && contacts.length === 0 ? h`<p class="help" id="identity-no-contacts"><strong>Nobody to check yet.</strong> ${NO_CONTACTS_WORDS} <a href="/staff/clients/${where.business_id}#contacts">Add a contact</a></p>` : raw('')}
     ${mayWrite && unreachable.length > 0 ? h`<p class="help" id="identity-unreachable"><strong>${offered.length === 0 ? 'Nobody we can reach yet.' : 'Not offered:'}</strong> ${unreachable.map((c) => c.full_name).join(', ')} ${unreachable.length === 1 ? 'has' : 'have'} no email address or telephone number. <a href="/staff/clients/${where.business_id}#contacts">Add them to the contact details</a></p>` : raw('')}
+    ${mayWrite && notOneOfThem.length > 0 ? h`<p class="help" id="identity-not-director-or-owner"><strong>Not a director or an owner on our records:</strong> ${notOneOfThem.map((c) => c.full_name).join(', ')}. A check to them is refused. ${howToGoOnWords(kind)} ${isAdmin ? 'As an Admin, you can send one anyway, with a reason.' : ASK_AN_ADMIN_WORDS}</p>` : raw('')}
     ${!mayWrite || offered.length === 0 ? raw('') : h`<form method="post" action="${action}">
       <input type="hidden" name="business_id" value="${where.business_id}">
       <label class="fl" for="idc-contact">Who to check</label>
-      <select class="fi" id="idc-contact" name="contact_id">${offered.map((c) => h`<option value="${c.id}">${c.full_name}</option>`)}</select>
+      <select class="fi" id="idc-contact" name="contact_id">${offered.map((c) => { const r = roles.get(c.id); return h`<option value="${c.id}">${c.full_name}${r?.ok === true ? ` (${roleWords(r.role)})` : ''}</option>`; })}</select>
       <label class="fl" for="idc-first">First name, as on their ID</label><input class="fi" id="idc-first" name="first_name" required>
       <label class="fl" for="idc-last">Last name, as on their ID</label><input class="fi" id="idc-last" name="last_name" required>
+      ${isAdmin ? h`<label class="fl" for="idc-bypass"><input type="checkbox" id="idc-bypass" name="bypass" value="yes"> Send it anyway, even though our rule refuses it. Admin only, for this one check.</label>
+      <label class="fl" for="idc-bypass-reason">Why, if you send it anyway. This is kept in the audit log.</label><textarea class="fi" id="idc-bypass-reason" name="bypass_reason" maxlength="2000"></textarea>` : raw('')}
       <button class="cta" type="submit">Send an identity check</button></form>`}
   </div>`;
 }

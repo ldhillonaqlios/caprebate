@@ -128,7 +128,7 @@ function clientStatusBadge(key: string | null, label: string): Safe {
 /** The words shown after a change. Each is said once, at the top of the page. */
 const SAVED: Readonly<Record<string, string>> = Object.freeze({
   saved: 'Saved.', contact: 'The contact is saved.', task: 'The task is saved.',
-  'identity-sent': 'The identity check was sent. Give the person their link, in Identity check below.',
+  'identity-sent': 'The identity check was sent. Give the person their link, in Identity check below. Tell them the check is done for us by Didit.',
   // the Friary House run, F21
   'letter-sent': 'The engagement letter is sent. The client is emailed a link to read and sign it in their portal.',
   'letter-resent': 'The link to the engagement letter is sent again.',

@@ -13,8 +13,10 @@
  * a due date nobody set is drawn as UNSET; and a blank in the engagement letter is
  * drawn as BLANK, in capitals.
  *
- * NO AMOUNT OF AN INVOICE IS A FIELD ON ANY FORM HERE. The one amount a person
- * types is the money that arrived, which is a record of what they saw.
+ * NO AMOUNT OF AN INVOICE IS A FIELD ON ANY FORM HERE, BUT ONE. The amounts a person
+ * types are the money that arrived, which is a record of what they saw, and (Phase 161m1,
+ * Lakhbir, 11 November 2026) a break fee an ADMIN raises by hand when a client ends early:
+ * the app never raises one by itself, so the admin enters it, pre-filled from the guide.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -60,6 +62,7 @@ function redirect(res: ServerResponse, to: string): void {
 const SAVED: Readonly<Record<string, string>> = Object.freeze({
   status: 'Recorded.',
   raised: 'The invoice is raised, with the next number in the series.',
+  'break-fee': 'The break fee invoice is raised by hand, with the next number in the series.',
   sent: 'Recorded as sent.',
   cancel: 'Cancelled. Its number stays in the series, recorded as cancelled.',
   'credit-in-full': 'The credit note is issued, with the next number in the series.',
@@ -111,6 +114,16 @@ export async function handleFinance(
     const r = I.raiseInvoice(ideps, actor, raise[1] ?? '', Object.fromEntries(f.entries()));
     if (!r.ok) return d.problem(res, actor, 'Not raised', r.why, '/staff/finance', r.field);
     redirect(res, `/staff/finance/${r.id}?saved=raised`);
+    return 'handled';
+  }
+
+  // Phase 161m1: clause 5's break fee, raised by hand by an admin, with the amount they enter. Never by the app.
+  const breakFee = /^\/staff\/finance\/claims\/([A-Za-z0-9-]+)\/break-fee$/.exec(path);
+  if (breakFee && method === 'POST') {
+    const f = await form(req);
+    const r = I.raiseBreakFeeByHand(ideps, actor, breakFee[1] ?? '', Object.fromEntries(f.entries()));
+    if (!r.ok) return d.problem(res, actor, 'Not raised', r.why, '/staff/finance#ended-early', r.field);
+    redirect(res, `/staff/finance/${r.id}?saved=break-fee`);
     return 'handled';
   }
 
@@ -218,6 +231,29 @@ function controlsBlock(c: I.FinanceDashboard['controls']): Safe {
       : raw('')}`;
 }
 
+/**
+ * THE CLIENTS WHO ENDED EARLY (Phase 161m1). What clause 5's break fee comes to, as a guide, and for an admin a form to
+ * raise it by hand: the amount pre-filled from the guide and theirs to change. Nothing is raised from here by itself.
+ */
+export function endedEarlyBlock(rows: I.FinanceDashboard['ended_early']): Safe {
+  if (rows.length === 0) return h`<p class="help">No client has withdrawn or cancelled a claim.</p>`;
+  return h`
+    <p class="help">${rows[0]?.guide.guidance_only ?? ''}</p>
+    <table><thead><tr><th>Company</th><th>The break fee, as a guide</th><th></th></tr></thead>
+      <tbody>${rows.map((r) => h`<tr><td>${r.client_name}<br>${r.claims.map((c) => h`${claimRef(c.claim_ref)} <span class="help">${c.stage}</span><br>`)}</td>
+        <td>${r.guide.lines.map((l) => h`${l}<br>`)}</td>
+        <td>${r.invoice !== null
+          ? h`<a href="/staff/finance/${r.invoice.id}">A break fee invoice is raised</a>`
+          : r.may_raise_by_hand ? h`
+            <form method="post" action="/staff/finance/claims/${r.raise_on}/break-fee">
+              <p><label for="bf-${r.raise_on}">Break fee to invoice, in pounds</label>
+                <input id="bf-${r.raise_on}" name="amount" inputmode="decimal" value="${r.prefill}"></p>
+              <p><label for="bfn-${r.raise_on}">Note, such as the surveyor’s charges added</label>
+                <input id="bfn-${r.raise_on}" name="note"></p>
+              <p><button type="submit">Raise the break fee by hand</button></p>
+            </form>` : h`<span class="help">Only an admin can raise a break fee.</span>`}</td></tr>`)}</tbody></table>`;
+}
+
 function settingsBlock(v: I.FinanceDashboard): Safe {
   return h`
     <table><thead><tr><th>Setting</th><th>In effect</th><th>From</th><th>Source</th></tr></thead>
@@ -313,6 +349,9 @@ function listPage(
             <td>${c.finance_task === null ? h`<span class="help">none recorded</span>` : h`${c.finance_task.title} — ${c.finance_task.due.label}`}</td>
             <td>${c.may_raise ? h`<form method="post" action="/staff/finance/claims/${c.claim_id}/raise"><input type="hidden" name="kind" value="FEE">
               <button type="submit">Raise our fee</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}
+
+      <h2 id="ended-early">Clients who ended early</h2>
+      ${endedEarlyBlock(v.ended_early)}
 
       <h2 id="claim-invoices">The claims’ invoices</h2>
       ${v.invoices.length === 0 ? h`<p class="help">No invoice is raised on any claim.</p>` : h`

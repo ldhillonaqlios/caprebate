@@ -111,6 +111,8 @@ async function world() {
   const db = made.app.db;
   const admin = { id: s.users.find((u) => u.role === 'ADMIN')!.id, role: 'ADMIN', business_id: null, disabled: false } as Actor;
   const c = db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM contacts ORDER BY id LIMIT 1')!;
+  /* Phase 161m1: a check goes only to a director or an owner of the client, in their own name (identity-who.ts), so the seed's contact is made the client's "Owner / director", named as typed. */
+  db.run("UPDATE contacts SET full_name = 'Ada Invented', job_role = 'owner_director' WHERE id = ?", [c.id]);
   db.run("INSERT INTO cdd_checks (id, business_id, claim_id, claimant_type, claimant_type_note, state, created_by, created_at, updated_at) VALUES ('cdd-151f', ?, NULL, 'LIMITED_COMPANY', NULL, 'IN_PROGRESS', ?, ?, ?)",
     [c.business_id, admin.id, NOW, NOW]);
   made.app.outside = fixtureTransport({ [`POST ${IDENTITY_SESSION_ENDPOINT}`]: SESSION_OK });
@@ -187,7 +189,8 @@ describe('151f · migration 053: Didit is a provider, Veriff stays valid, and Di
       w.app.secrets = emptySecrets();
       const c = w.db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM contacts ORDER BY id LIMIT 1')!;
       const admin = { id: w.db.get<{ id: string }>("SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1")!.id, role: 'ADMIN', business_id: null, disabled: false } as Actor;
-      const r = await sendIdentityCheck({ app: w.app, newId: () => 'x' }, admin, { business_id: c.business_id, contact_id: c.id, cdd_check_id: null, first_name: 'A', last_name: 'B' });
+      // the world made this contact the client's "Owner / director" (Phase 161m1), so only the keys stand in the way
+      const r = await sendIdentityCheck({ app: w.app, newId: () => 'x' }, admin, { business_id: c.business_id, contact_id: c.id, cdd_check_id: null, first_name: 'Ada', last_name: 'Invented' });
       assert.equal(r.ok, false);
       assert.match(r.ok ? '' : r.why, /keys to the server/);
     } finally { w.close(); }

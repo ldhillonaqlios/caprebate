@@ -666,7 +666,7 @@ from — a document, a page and the day it was read."
 - **a minimum fee — "none — decided"**. The owner decided there is no minimum fee, so the old switch here is retired;
 - **a multi-site discount — "a choice, never taken off a fee by the system"**. How large it may be, and who approves it,
   are both "NOT DECIDED";
-- the break fee and the abort fee — off.
+- the break fee and the abort fee: "off: the app never raises a break fee or an abort fee by itself".
 
 Each one names the question it waits on. No screen turns them on. They are switches in the code (see A10). There is no
 smallest job size at all: "The owner decided so on 1 September 2026".
@@ -678,15 +678,33 @@ it. No invoice changes because of it. Nothing asks for a top limit, because none
 
 **The engagement letter's terms are read from the letter.** Since 11 November 2026 the letter has no blank left. The
 break fee (clause 5) reads "£995, as clause 5 states". The letter says £995 per property, plus the charges of any
-surveyor already booked, at cost. The abort fee (clause 4) reads "nil". Clause 4 says no fee is due if the survey
-finds no real claim. Clause 4 reads "within 14 days of the date of the invoice". So an invoice raised today is due in 14
+surveyor already booked, at cost. The client pays it only if they end the agreement early. We send an invoice for
+it. The abort fee (clause 4) reads "nil". Clause 4 says no fee is due if the survey finds no real claim. It also says
+the 3% is the only fee for the work, and that we take no payment up front. Clause 4 reads "within 14 days of the date of the invoice". So an invoice raised today is due in 14
 days: "within 14 days of the invoice, as clause 4 states". A term left blank would read "BLANK IN THE
 ENGAGEMENT LETTER". A blank due date would read **No due date set yet**. An invoice with no due date is never
 counted as late. The page would give the reason: "A term in the engagement letter is BLANK. We show it blank on purpose.
 A made-up number here could end up in a contract."
 
-**Nobody should type a number to fill a gap.** No field on the screen takes an invoice amount, a fee or a letter term.
-That is on purpose. The answers belong to the people who own those choices. A guessed figure could quietly end up in a
+**The app never charges a break fee by itself.** The owner decided this on 11 November 2026. The only fee the app
+works out is our 3%. Nothing is ever taken up front. There is no abort fee at all. The letter says no fee is due if the
+survey finds no real claim.
+
+**A client who ends early is shown under "Clients who ended early".** It is on the **Invoices** tab. A client is listed
+there once a claim of theirs is at Client withdrawal or Cancelled. The page shows what the break fee in clause 5 comes
+to. It is £995 for each property on those claims. So one property is £995, and three are £2,985. The app does not know
+what a surveyor charges. If one was booked, add their charges by hand, at cost. The page tells you if a surveyor is on
+the claim. This is a guide only. The fee is due only if the client ended the
+agreement. If we ended it, no break fee is due.
+
+**Only an admin raises the break fee, by hand.** The form has the amount filled in from the guide. Change it if you
+need to, for example to add the surveyor's charges. Say what you added in the note. Then press **Raise the break fee by
+hand**. The invoice gets the next number and its due date, like any other. Its amount cannot be changed after that. To
+change it, issue a credit note. The audit log records that an admin typed the amount, and whether it matched the guide.
+Accounting sees the guide but not the form. A client gets one break fee invoice at most.
+
+**Nobody should type a number to fill a gap.** No field on the screen takes our fee or a letter term. The one amount
+you type is a break fee, as above. That is on purpose. The answers belong to the people who own those choices. A guessed figure could quietly end up in a
 contract.
 
 ---
@@ -833,8 +851,8 @@ below has answered.
 | **Break-even counted as too little profit** | `FUNNEL_SWITCHES.breakeven_is_insufficient_profit: false` — `09-app/backend/src/modules/assessment/funnel-session.ts:216` | "Roughly break-even", "not sure" and never asked all read the same | The tax adviser. They are asked: is roughly break-even enough profit? Is it enough for the relief to bite on? |
 | **The public referral form** | `REFERRAL_FORM` (`enabled: false`) — `src/modules/crm/introducers.ts:180` | The page does not exist. It answers as an unknown address | Whoever publishes a privacy notice for it. It must be linked from the referral form. It must tell a client what their firm sent us |
 | **A client saying yes to sharing, from the portal** | `CLIENT_SHARE_GIVE` (`enabled: true` since 24 September 2026) — `src/modules/crm/introducers.ts` | Switched on. Clients give or take back a yes in their portal. Staff can still record a yes after asking | The owner decided it: ask the client first, from their portal |
-| **The fee controls** (two) | `FEE_CONTROLS` — `src/modules/claims/fee-controls.ts`: `above_benefit`, `break_and_abort`, each `enabled: false`. The minimum fee is no longer a switch. `MINIMUM_FEE_DECISION` records that it is decided as none | The fee is not capped or changed. There is no break fee and no abort fee | A pricing choice. The code names two open questions, but not a person. One asks: do we cap the fee, warn about it, or adjust the percentage? The other asks: what is the break fee, and is there ever an abort fee or a fixed fee? |
-| **Clause 13 fee clawback** | `FEE_CLAWBACK` (`enabled: false`) — `src/modules/claims/claim-record.ts` | A smaller claim raises nothing. The audit log says why | Part (a) is answered yes. The time limit is now in the letter. It reads "for so long as the claim remains open to enquiry". It still waits on clause 13's other two blanks. They are the trigger and settlements |
+| **The fee controls** (two) | `FEE_CONTROLS` — `src/modules/claims/fee-controls.ts`: `above_benefit`, `break_and_abort`, each `enabled: false`. The minimum fee is no longer a switch. `MINIMUM_FEE_DECISION` records that it is decided as none. Since 11 November 2026 `break_and_abort` does nothing, on or off: `BREAK_FEE_DECISION` records why | The fee is not capped or changed. The app never raises a break fee or an abort fee. An admin raises a break fee by hand | A pricing choice. The code names two open questions, but not a person. One asks: do we cap the fee, warn about it, or adjust the percentage? The other asks: what is the break fee, and is there ever an abort fee or a fixed fee? |
+| **Clause 13 fee clawback** | `FEE_CLAWBACK` (`enabled: false`) — `src/modules/claims/claim-record.ts` | A smaller claim raises nothing. The audit log says why | Part (a) is answered yes. The time limit is now in the letter. It changed on 11 November 2026. It now lasts until HMRC can no longer look into the tax return with the claim. Any cut counts. So does a deal the client makes with HMRC. Clause 13 has no blank left |
 | **The fee trigger** — decided | `FEE_TRIGGER` (`reading: 'REPORT_DELIVERED_FOR_FILING'`, `decided: true`) — `src/modules/crm/pipeline.ts` | Our fee is earned when our report is delivered for filing. It goes to the client or their accountant. The system reads this from the list of what we have sent. That means the client report or computation pack, on the day it was sent. If nothing was sent, the fee is not earned yet | Decided by the owner. Nothing here says we file the tax return. Nothing says we sign the filing position |
 | **The invoice-fraud procedure** | `INVOICE_FRAUD_PROCEDURE` (`in_force: false`) — `src/modules/crm/automation.ts:124` | No invoice email and no chasing email can exist | The solicitor signs it off. The data protection officer signs it off too. So does the developer. Even then, the invoice email is **new work**, not a flag |
 | **The data protection officer role** | `DPO_ROLE_SWITCH` (`enabled: false`) — `09-app/backend/src/core/authz.ts:1089` | Nobody can hold the role. If you force it, you are refused | The owner decides. He asks: "Do we need a compliance role separate from Admin?" |
@@ -2823,7 +2841,7 @@ Address: /staff/introducer-rewards
 
 **What it will refuse, and why**
 - Any change from Off while clause 1 is blank is refused. The message starts "Introducer fees stay off while clause 1 of the engagement letter is blank."
-- Clause 1 has had no blank since 11 November 2026. So that check no longer stops the switch. The letter still says nothing about paying an introducer. Do not switch on a model that pays one. Wait until the owner decides and the letter tells the client.
+- Clause 1 has had no blank since 11 November 2026. So that check no longer stops the switch. Clause 4 now tells the client we may pay a fee to the firm that sent them. It comes out of our own fee. It does not add to what the client pays, and we tell the client the amount if they ask. Whether we pay one is still the owner's choice. Do not switch on a model that pays one until the owner decides.
 - Model B needs an amount. Without one it says "Model B is a fixed fee" and asks for the amount in pounds. (from the code)
 - A fee cannot be marked paid before we record that the client was told. The database refuses it.
 - Sales pressing Save is refused with "not authorised".
@@ -3770,16 +3788,27 @@ Admin. It sits in two places. One is the client's page, under **Identity check**
 under **Online identity check**. Other logins do not see it.
 
 **It is on for testing only**
-It is switched on so we can try it. But our privacy notice and our letter do not name Didit yet. So the box says
-**Testing only**. Check yourself, or a colleague who agrees. Never check a client until the box has gone. If the box
+It is switched on so we can try it. Our engagement letter names Didit now. But our privacy notice is not published
+yet, so it does not name Didit yet. So the box says **Testing only**. Check yourself, or a colleague who agrees. Never check a client until the box has gone. If the box
 says **Not ready**, it lists what is missing, such as the keys on the server. We check identity for every client. It
 does not wait for the money laundering setting.
 
+**Who can be checked**
+Only a director or an owner of the client. We must already hold them as one. One of these must be true:
+- Companies House lists them as a director. Or it lists them as an owner, which it calls a person with control.
+- Their due diligence check names them. It names them as the person with authority, or as an owner.
+- Their role on our record says so, such as **Owner / director**.
+
+Some clients are not a company, such as a sole trader or a partnership. They have no directors at Companies House.
+So the person must be the owner or a partner. Our client record must name them. A charity or a trust can also have a
+trustee checked. **Who to check** shows the role we hold next to each name. The box names anyone we do not hold as one.
+
 **How to do the common job**
 1. Open the client's page and find **Identity check**. Or open their due diligence check.
-2. Choose **Who to check**. Type their first and last name as they are on their ID.
+2. Choose **Who to check**. Type their first and last name as they are on their ID. It must be the name we hold for
+   them.
 3. Press **Send an identity check**.
-4. The page shows their link. Send it to them yourself.
+4. The page shows their link. Send it to them yourself. Tell them the check is done for us by Didit.
 5. The result shows in the list when it comes back. It says **Passed**, **Failed**, **A person must look at it** or
    **The client did not finish it**.
 
@@ -3807,12 +3836,23 @@ finish the check yourself. A pass never finishes it for you.
 - A result for a check this copy of the website has forgotten. It is refused like any other. It is never matched to
   the nearest check.
 - A due diligence check that is finished. Send it from the client's page instead.
+- A person who is not a director or an owner on our records. The page says why. If they are one, record it on the due
+  diligence check first. Or an Admin can send it anyway (below).
+- A name that is not the one we hold for the person. Type it as on their ID. If our record is wrong, fix their contact
+  details first.
+
+**If an Admin must send it anyway**
+Only an Admin can do this, and only for one check at a time. Tick **Send it anyway** and say why in the box below it.
+The reason is kept in the audit log, with who sent it. A check with the box ticked and no reason is refused. Anyone
+else who ticks it is refused too.
 
 **Check yourself**
 - *The result says "A person must look at it". Is that a fail?* — No. Didit was not sure. Look at it and decide.
 - *The list still says "No result yet", but the client says they started.* — That is right. Didit tells us when they
   start. We only show the answer at the end.
 - *Do we keep a copy of their passport?* — No. We keep the result, the kind of ID and its country. Nothing else.
+- *The finance manager wants to do the check. Can they?* — Not unless they are a director or an owner. Ask an Admin to
+  send it anyway, with the reason.
 
 ---
 ### Training — `B55` signing in: your password and your second step

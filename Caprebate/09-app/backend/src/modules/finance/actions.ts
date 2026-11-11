@@ -24,6 +24,11 @@ export const FINANCE_ACTIONS = registerActions('finance', {
    * whose invoices it monitors does not move its line.
    */
   'invoice.raise': { ADMIN: always, ACCOUNTING: always },
+  /*
+   * PHASE 161m1 (Lakhbir, 11 November 2026: "its only the 3% admin can send invoices manually"). A break fee is never
+   * raised by the app: an ADMIN raises it by hand, with the amount they enter, when a client ends early. Admin alone.
+   */
+  'invoice.raise_by_hand': { ADMIN: always },
   'invoice.credit': { ADMIN: always, ACCOUNTING: always },
   'invoice.record_received': { ADMIN: always, ACCOUNTING: always },
   'finance_setting.write': { ADMIN: always },

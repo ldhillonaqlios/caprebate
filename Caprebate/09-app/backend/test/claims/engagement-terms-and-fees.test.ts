@@ -676,10 +676,11 @@ describe('line 2 — the engagement letter’s commercial terms, as the back end
     const text = real.paragraphs.map((p) => p.text).join('\n');
     assert.match(text, /Trigger: this clause applies to any reduction in the capital allowances identified\./);
     assert.match(text, /Settlements: this clause also applies where the Client accepts a settlement with HM Revenue and Customs that reduces them\./);
-    assert.match(text, /Time limit: this clause applies for so long as the claim remains open to enquiry\./);
+    assert.match(text, /Time limit: this clause applies until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim\./);
+    assert.doesNotMatch(text, /for so long as the claim remains open to enquiry/);
     assert.doesNotMatch(text, /not yet settled and are marked for completion/);
     assert.equal(R.FEE_CLAWBACK.decided.refund, 'YES');
-    assert.equal(R.FEE_CLAWBACK.decided.time_limit, 'for so long as the claim remains open to enquiry');
+    assert.equal(R.FEE_CLAWBACK.decided.time_limit, 'until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim');
     assert.equal(R.FEE_CLAWBACK.enabled, false, 'the clawback switch was turned on');
     assert.equal(R.clawbackReading().reason, 'SWITCH_OFF');
     assert.equal(R.clawbackReading({ gate: { enabled: true } }).applies, true, 'complete and on, it applies');

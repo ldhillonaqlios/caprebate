@@ -585,11 +585,9 @@ describe('2 · the fee controls: built, shipped off, and off is exactly today’
         assert.equal(f.warning, null);
       }
     }
-    for (const kind of ['BREAK_FEE', 'ABORT_FEE'] as const) {
-      const r = FC.letterFee(kind);
-      assert.equal(r.ok, false);
-      if (!r.ok) assert.equal(r.code, 'SWITCH_OFF');
-    }
+    // PHASE 161m1: the app raises no break fee and no abort fee, on or off (test/finance/break-fee-by-hand.test.ts).
+    assert.equal(Object.hasOwn(FC, 'letterFee'), false, 'the flat-£995 raising is back');
+    assert.match(FC.controlReadings().break_and_abort, /^off: the app never raises a break fee or an abort fee by itself/);
     assert.equal(Object.keys(FC.FEE_CONTROLS).some((k) => /job/i.test(k)), false, 'a minimum job size switch exists for a decided no');
     assert.match(FC.NO_MINIMUM_JOB_SIZE, /1 September 2026/);
   });
@@ -647,7 +645,7 @@ describe('2 · the fee controls: built, shipped off, and off is exactly today’
     assert.match(FC.controlReadings().multi_site_discount, /NOT DECIDED/);
   });
 
-  test('THE BREAK FEE AND THE ABORT FEE ARE READ FROM THE LETTER: since Phase 161m1 £995 and nil, still off as shipped; a blank refuses even switched on; the break fee on a withdrawn claim, and the abort fee nowhere else', async () => {
+  test('THE BREAK FEE AND THE ABORT FEE ARE READ FROM THE LETTER: since Phase 161m1 £995 a property and nil; a blank gives no figure; and the app raises neither, switch on or off', async () => {
     const lf = FC.letterFees();
     // PHASE 161m1 (11 November 2026): clause 5 is £995 per property plus a booked surveyor at cost; clause 4 says no fee
     // is payable where no material claim is identified, so there is no abort fee.
@@ -660,15 +658,9 @@ describe('2 · the fee controls: built, shipped off, and off is exactly today’
     const blankFees = FC.letterFees(blankFeesLetter());
     assert.deepEqual([blankFees.break_fee.state, blankFees.abort_fee.state], ['BLANK', 'BLANK'], 'the blank-fees fixture no longer blanks them');
     assert.match(blankFees.break_fee.label, /^BLANK IN THE ENGAGEMENT LETTER/);
-    const onButBlank = FC.letterFee('BREAK_FEE', ALL_ON, blankFeesLetter());
-    assert.equal(onButBlank.ok, false);
-    if (!onButBlank.ok) assert.equal(onButBlank.code, 'LETTER_BLANK');
-    const nilAbort = FC.letterFee('ABORT_FEE', ALL_ON);
-    assert.equal(nilAbort.ok, false);
-    if (!nilAbort.ok) assert.equal(nilAbort.code, 'NIL');
-    const offReal = FC.letterFee('BREAK_FEE');
-    assert.equal(offReal.ok, false, 'a break fee is raised with the switch off');
-    if (!offReal.ok) assert.equal(offReal.code, 'SWITCH_OFF');
+    // A blank clause 5 gives the guide no figure, and none is made up.
+    const blankGuide = FC.breakFeeGuide({ properties: 2, claims_without_property: 0, surveyor_recorded: false }, blankFeesLetter());
+    assert.deepEqual([blankGuide.state, blankGuide.letter_pence], ['BLANK', null]);
 
     const done = FC.letterFees(completedLetter());
     assert.deepEqual([done.break_fee.state, done.abort_fee.state, done.payment_terms.state], ['SET', 'SET', 'DAYS'], 'the completed letter fixture no longer sets the abort fee');
@@ -681,9 +673,11 @@ describe('2 · the fee controls: built, shipped off, and off is exactly today’
       assert.equal(I.raiseInvoice(deps(app), ACC, claim, { kind: 'BREAK_FEE' }).ok, false, 'a break fee was raised with the switch off');
       assert.equal(I.raiseInvoice(deps(app), ACC, claim, { kind: 'BREAK_FEE' }, { controls: ALL_ON, letter: blankFeesLetter() }).ok, false, 'a break fee was raised on a blank letter');
       assert.equal(I.raiseInvoice(deps(app), ACC, claim, { kind: 'ABORT_FEE' }, { controls: ALL_ON, letter: completedLetter() }).ok, false, 'an abort fee on a withdrawn claim');
-      const id = raise(app, claim, { controls: ALL_ON }, 'BREAK_FEE');
-      assert.deepEqual(plain(app.db.get('SELECT kind, fee_pence, fee_rate, claim_value_pence FROM invoices WHERE id = ?', [id])),
-        { kind: 'BREAK_FEE', fee_pence: 995_00, fee_rate: null, claim_value_pence: null });
+      // PHASE 161m1: switched on, the app used to raise one flat £995 here. Now it raises nothing, on or off.
+      const on = I.raiseInvoice(deps(app), ADMIN, claim, { kind: 'BREAK_FEE' }, { controls: ALL_ON });
+      assert.equal(on.ok, false, 'the app raised a break fee by itself with the switch on');
+      if (!on.ok) assert.match(on.why, /never raises a break fee by itself/);
+      assert.equal(count(app.db, "SELECT COUNT(*) AS n FROM invoices WHERE kind <> 'FEE'"), 0);
     } finally { app.close(); }
 
     const h = await boot();
@@ -922,7 +916,7 @@ describe('4 · the finance dashboard: ACCOUNTING and ADMIN, and money only', () 
 
   test('THE RULE: every new action is refused to every role not granted it — and a CLIENT is on none', () => {
     const granted: Record<string, readonly AppRole[]> = {
-      'invoice.raise': ['ADMIN', 'ACCOUNTING'], 'invoice.credit': ['ADMIN', 'ACCOUNTING'],
+      'invoice.raise': ['ADMIN', 'ACCOUNTING'], 'invoice.raise_by_hand': ['ADMIN'], 'invoice.credit': ['ADMIN', 'ACCOUNTING'],
       'invoice.record_received': ['ADMIN', 'ACCOUNTING'], 'finance_setting.write': ['ADMIN'],
     };
     for (const [action, roles] of Object.entries(granted)) {

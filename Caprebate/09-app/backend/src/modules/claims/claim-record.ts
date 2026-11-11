@@ -1115,9 +1115,9 @@ export const FEE_CLAWBACK: FeeClawbackSwitch = Object.freeze({
   enabled: false, clause: 'clause 13 — Fee Adjustment Where a Claim is Reduced', question: CLAWBACK_QUESTION,
   decided: Object.freeze({
     refund: 'YES' as const,
-    time_limit: 'for so long as the claim remains open to enquiry',
+    time_limit: 'until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim',
     still_open: Object.freeze(['the trigger — any reduction, or only one above a threshold', 'whether it applies to a settlement the client accepts']),
-    source: 'The owner was asked if we give money back when a claim is reduced after we are paid. He said yes, with no time limit. Clause 13 now says “for so long as the claim remains open to enquiry”.',
+    source: 'The owner was asked if we give money back when a claim is reduced after we are paid. He said yes, with no time limit. Clause 13 said “for so long as the claim remains open to enquiry”; since Phase 161m1 (11 November 2026, the owner’s answer) it says “until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim”.',
   }),
 });
 

@@ -71,6 +71,12 @@
     "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
     "effective_from": "2026-11-10",
     "recorded": "2026-11-10"
+   },
+   {
+    "version": 2,
+    "value_sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+    "effective_from": "2026-11-11",
+    "recorded": "2026-11-11"
    }
   ],
   "claims.FEE_CONTROLS.uplifts": [
@@ -225,6 +231,14 @@
     "recorded": "2026-11-10"
    }
   ],
+  "compliance.IDENTITY_CHECK_WHO": [
+   {
+    "version": 1,
+    "value_sha256": "228632934c4209b8f6baaf013192b6a1ee2ff0bde812ac7f606192a226d0bd7e",
+    "effective_from": "2026-11-11",
+    "recorded": "2026-11-11"
+   }
+  ],
   "core.DPO_ROLE_SWITCH": [
    {
     "version": 1,
@@ -295,6 +309,12 @@
     "value_sha256": "e745cda179b2e66253099b73413ea1865f851673fbd60a58d4432f009b9baaa7",
     "effective_from": "2026-11-10",
     "recorded": "2026-11-10"
+   },
+   {
+    "version": 2,
+    "value_sha256": "42318f3e557740eac132e65464b838da6f2b00c808e478743ffd3d1c9ca2b000",
+    "effective_from": "2026-11-11",
+    "recorded": "2026-11-11"
    }
   ],
   "integrations.INBOUND_EMAIL": [

@@ -60,8 +60,13 @@ export function claimsRules(): readonly RuleEntry[] {
       settings: CONVEYANCING_STRIP, home: `${HOME}conveyancing-strip.ts`, tested_in: 'test/compliance/data-protection-switches.test.ts' }),
     switchEntry({ id: 'claims.FEE_CONTROLS.above_benefit', title: 'What happens when our fee is more than the benefit', approver: 'Lakhbir', approval: OFF,
       settings: FEE_CONTROLS.above_benefit, home: `${HOME}fee-controls.ts`, tested_in: 'test/finance/invoices-and-fee-controls.test.ts' }),
-    switchEntry({ id: 'claims.FEE_CONTROLS.break_and_abort', title: 'The break fee and the abort fee', approver: 'Lakhbir', approval: 'Decided by Lakhbir on 11 Nov 2026 (no solicitor); switched on once he approves the engagement letter\'s final wording.',
-      settings: FEE_CONTROLS.break_and_abort, home: `${HOME}fee-controls.ts`, tested_in: 'test/finance/invoices-and-fee-controls.test.ts' }),
+    switchEntry({ id: 'claims.FEE_CONTROLS.break_and_abort', title: 'The break fee and the abort fee', approver: 'Lakhbir',
+      approval: 'Off, and kept off on Lakhbir\'s word (11 Nov 2026): "we shouldnt charge anyone first its only the 3% admin can send invoices manually".',
+      version: 2, effective_from: '2026-11-11',
+      change: 'Its meaning changed, its value did not: on or off, the app no longer raises a break fee or an abort fee. ' +
+        'The finance page shows what clause 5 comes to (£995 a property, plus a booked surveyor\'s charges at cost, added by hand) and an admin raises it by hand. ' +
+        'Before, switched on, it raised one flat £995.',
+      settings: FEE_CONTROLS.break_and_abort, home: `${HOME}fee-controls.ts`, tested_in: 'test/finance/break-fee-by-hand.test.ts' }),
     switchEntry({ id: 'claims.FEE_CONTROLS.uplifts', title: 'The extra charges for complicated jobs', approver: 'Lakhbir', approval: OFF,
       settings: FEE_CONTROLS.uplifts ?? { enabled: false }, home: `${HOME}fee-controls.ts`, tested_in: 'test/claims/rate-card-uplifts.test.ts' }),
     switchEntry({ id: 'claims.MANDATORY_DOCUMENTS', title: 'The documents a claim needs before it moves on', approver: 'Lakhbir', approval: 'On, on Lakhbir\'s answer.',

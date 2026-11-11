@@ -26,6 +26,7 @@ import * as A from '../../src/modules/compliance/compliance-aml.ts';
 import type * as C from '../../src/modules/compliance/compliance.ts';
 import { actor, testApp } from '../helpers.ts';
 import { plainDashText } from '../../src/shared/plain-dashes.ts';
+import { readZipEntry, DOCX_DOCUMENT_ENTRIES } from '../../src/shared/zip.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
 const T0 = '2026-10-04T09:00:00.000Z';
@@ -75,6 +76,43 @@ describe('lines 2, 3 and 7 — Word questions 33, 34 and 196: the test-only enga
     assert.match(text, /they are named in our privacy notice\./);
     assert.match(text, /this clause applies to any reduction in the capital allowances identified/);
     assert.match(text, /applies where the Client accepts a settlement with HM Revenue and Customs/);
+  });
+
+  test("PHASE 161m1, THE OWNER'S ANSWERS (11 November 2026): the review note's points written into the letter, and its two reviewer comments gone", () => {
+    const text = real.paragraphs.map((p) => p.text).join('\n');
+    // 1 and 9: clause 1 supersedes any other document, and the Client is a business.
+    assert.match(clause(real, '1'), /It supersedes any engagement form, terms of business or other document issued about the Services, and where any of them differs from this Agreement, this Agreement prevails\./);
+    assert.match(clause(real, '1'), /in the course of its business, trade or profession and not as a consumer\./);
+    assert.doesNotMatch(text, /accompanying Terms of Business/);
+    assert.match(clause(real, '11'), /Where any such document differs from this Agreement, this Agreement prevails\./);
+    // Clause 4: the 3% is the only fee, nothing up front; the introducer disclosure.
+    assert.match(clause(real, '4'), /It is the only fee we charge for the Services\./);
+    assert.match(clause(real, '4'), /We take no payment up front\./);
+    assert.match(clause(real, '4'), /we may pay that firm an introduction fee out of our own fee\. It does not increase what the Client pays, and we will tell the Client the amount if asked\./);
+    // Clause 5: the current test, invoiced only on early termination, still £995 a property plus a booked surveyor at cost.
+    assert.match(clause(real, '5'), /protects our legitimate interest in recovering the costs we commit to when we are instructed.*proportionate to those costs/s);
+    assert.match(clause(real, '5'), /only on an invoice we send after that happens\. Nothing is charged in advance\./);
+    assert.doesNotMatch(text, /genuine pre-estimate|not a penalty|work carried out up to the date of termination|fees for work already carried out/);
+    // 7(a), 10, 13, 14, 16, 18.
+    assert.match(clause(real, '7'), /\(a\) the chartered surveyor engaged in connection with the Client's claim, and any chartered tax adviser the Client engages;/);
+    assert.match(clause(real, '10'), /the fees paid or payable by the Client under this Agreement or £5,000, whichever is greater, save that/);
+    assert.match(clause(real, '10'), /death or personal injury caused by negligence, fraud or fraudulent misrepresentation, or any other liability that cannot be limited or excluded by law\./);
+    assert.match(clause(real, '13'), /until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim\./);
+    assert.match(clause(real, '14'), /authorise Cap Rebate as its agent with HM Revenue and Customs for the claim, by form 64-8 or by HMRC's online agent authorisation/);
+    assert.match(clause(real, '16'), /within six years after it ends/);
+    assert.match(clause(real, '16'), /or to a claim made or amended more than six years after this Agreement ends\./);
+    assert.match(clause(real, '18'), /must be a director, partner, member or owner of the Client, or someone we agree to in writing\./);
+    assert.match(clause(real, '18'), /The check is carried out by Didit, our identity-check provider, as described in our privacy notice\./);
+    assert.match(clause(real, '19'), /the agent authority with HM Revenue and Customs at clause 14, and the fee at clause 16 where our work is used within six years/);
+    // The numbering is unchanged: clauses 1 to 19, in order.
+    assert.deepEqual(real.paragraphs.map((p) => /^(\d{1,2})\.\s/.exec(p.text)?.[1]).filter((n) => n !== undefined).map(Number), Array.from({ length: 19 }, (_, i) => i + 1));
+    assert.doesNotMatch(text, /—/, 'a long dash in the letter');
+    // 8: no reviewer comment is left in either Word file, and no anchor to one.
+    for (const path of [LETTER_PATH, TEST_LETTER_PATH]) {
+      const comments = readZipEntry(path, ['word/comments.xml', 'word\\comments.xml']).toString('utf8');
+      assert.doesNotMatch(comments, /<w:comment /, `a reviewer comment is left in ${path}`);
+      assert.doesNotMatch(readZipEntry(path, DOCX_DOCUMENT_ENTRIES).toString('utf8'), /w:comment(RangeStart|RangeEnd|Reference)/);
+    }
   });
 
   test('line 3: with clause 13 decided the refund applies once switched on, in both letters; it is still off as shipped', () => {

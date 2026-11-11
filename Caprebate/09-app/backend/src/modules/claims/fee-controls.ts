@@ -25,6 +25,13 @@
  *     person enters is recorded (src/modules/claims/fee-discounts.ts) and shown as awaiting
  *     those two decisions.
  *
+ * NOTHING IS EVER CHARGED BY ITSELF BUT THE 3% (Lakhbir, 11 November 2026: "we shouldnt charge anyone first its only
+ *   the 3% admin can send invoices manually"). The app raises no break fee and no abort fee, whatever the break-and-abort
+ *   switch says, and nothing is taken up front. When a client ends early, breakFeeGuide below shows what clause 5 comes
+ *   to (£995 a property, plus a booked surveyor's charges at cost, which the app does not hold), as a guide only; an
+ *   admin raises it by hand, with an amount they enter (raiseBreakFeeByHand, src/modules/finance/invoices.ts). Clause 4
+ *   now says no fee is payable where no material claim is identified, so there is no abort fee to raise at all.
+ *
  * CHANGING A SWITCH IS A LINE OF CODE, NOT A SETTING, as FEE_TRIGGER in
  * src/modules/crm/pipeline.ts and FEE_CLAWBACK in src/modules/claims/claim-record.ts are: each is a
  * pricing policy, and a pricing policy that an admin screen could flip on a
@@ -72,6 +79,16 @@ export const MINIMUM_FEE_DECISION = Object.freeze({
   retired: 'the old minimum fee for each sector. It was never switched on, and was removed on 16 September 2026',
 });
 export const BREAK_FEE_QUESTION = 'What is the break fee, and is there ever an abort fee or a fixed fee?';
+/** The owner's answer on 11 November 2026, quoted as he gave it. */
+export const BREAK_FEE_DECISION = Object.freeze({
+  by: 'Lakhbir',
+  on: '2026-11-11',
+  answer: 'fix this - again we shouldnt charge anyone first its only the 3% admin can send invoices manually',
+});
+/** The break-and-abort switch in words, on or off: it no longer raises anything. */
+export const NEVER_RAISED_BY_ITSELF =
+  'the app never raises a break fee or an abort fee by itself. When a client ends early, the finance page shows what the ' +
+  'break fee comes to, and an admin raises it by hand. There is no abort fee';
 /** Added to CAPREBATE QUESTIONS under the owner by CRM 7 of 10: clause 4's payment terms are blank. */
 export const PAYMENT_TERMS_QUESTION = 'How long does a client have to pay our invoice?';
 
@@ -341,9 +358,7 @@ export function controlReadings(controls: FeeControls = FEE_CONTROLS): ControlRe
       : `off — the fee is not changed by the client’s first-year saving (“${ABOVE_BENEFIT_QUESTION}” is open)`,
     minimum_fee: `none — decided: there is no minimum fee (“${FLAT_FEE_QUESTION}”, answered “${MINIMUM_FEE_DECISION.answer}”)`,
     multi_site_discount: discountReading(),
-    break_and_abort: controls.break_and_abort.enabled
-      ? 'on — a break fee or an abort fee is raised only as the letter states it'
-      : `off — no break fee and no abort fee is raised (“${BREAK_FEE_QUESTION}” is open)`,
+    break_and_abort: `${controls.break_and_abort.enabled ? 'on, and it changes nothing' : 'off'}: ${NEVER_RAISED_BY_ITSELF}`,
     uplifts: controls.uplifts?.enabled === true
       ? `on, at test defaults not agreed — +${RATE_CARD_UPLIFTS.points_each} points for each complication, at most +${RATE_CARD_UPLIFTS.points_cap}, and ${formatPence(RATE_CARD_UPLIFTS.manual_handling_pence)} for manual handling`
       : `off — no extra charge is added to the 3% (“${UPLIFTS_QUESTION}” is open)`,
@@ -465,23 +480,80 @@ export function computeFee(f: FeeFacts, controls: FeeControls = FEE_CONTROLS): F
  * 5 · THE BREAK FEE AND THE ABORT FEE
  * ================================================================== */
 
-export type LetterFeeKind = 'BREAK_FEE' | 'ABORT_FEE';
+/*
+ * PHASE 161m1 (11 November 2026): NEVER RAISED BY THE APP. Until today `letterFee` read the break fee off clause 5 and,
+ * with the break-and-abort switch on, raised it as one flat £995: not per property, and without the surveyor's charges.
+ * It is gone. Nothing here raises a break fee or an abort fee, on or off (BREAK_FEE_DECISION). What is left is a GUIDE:
+ * what clause 5 comes to on the facts held, for an admin who raises the invoice by hand and types the amount.
+ */
 
-export type LetterFeeOutcome =
-  | { readonly ok: true; readonly fee_pence: number; readonly basis: string }
-  | { readonly ok: false; readonly code: 'SWITCH_OFF' | 'LETTER_BLANK' | 'NOT_READABLE' | 'NIL'; readonly why: string };
+/** What the guide is worked out from: counted from the claims' own rows (listClaimsEndedEarly), never typed. */
+export type BreakFeeFacts = {
+  /** The different properties on the claims this client ended early. */
+  readonly properties: number;
+  /** Those claims with no property recorded, which the count cannot see. */
+  readonly claims_without_property: number;
+  /** A surveyor is recorded on one of those claims. */
+  readonly surveyor_recorded: boolean;
+};
 
-/** A break fee or an abort fee — only with its switch on, and only as the letter states it. */
-export function letterFee(kind: LetterFeeKind, controls: FeeControls = FEE_CONTROLS, letter?: LetterSource): LetterFeeOutcome {
-  const what = kind === 'BREAK_FEE' ? 'break fee' : 'abort fee';
-  if (!controls.break_and_abort.enabled) {
-    return { ok: false, code: 'SWITCH_OFF', why: `No ${what} is raised: break fees and abort fees are switched off, and “${BREAK_FEE_QUESTION}” is for the owner to decide.` };
+export type BreakFeeGuide = {
+  /** SET where clause 5 states an amount; otherwise there is no figure to show, and none is made up. */
+  readonly state: 'SET' | 'BLANK' | 'NOT_READABLE';
+  readonly per_property_pence: number | null;
+  /** Clause 5 charges its amount for each property (the letter since 11 November 2026 does). */
+  readonly per_property: boolean;
+  readonly properties: number;
+  /** The part the app can count: the amount for each property times the properties. Null where it cannot. */
+  readonly letter_pence: number | null;
+  /** What the app can say about the surveyor's charges, which it does not hold. */
+  readonly surveyor: string;
+  /** The guide in lines, for the screen. */
+  readonly lines: readonly string[];
+  readonly guidance_only: string;
+};
+
+export const SURVEYOR_BY_HAND = 'Plus the surveyor’s charges at cost, if a surveyor was booked: add them by hand.';
+export const SURVEYOR_RECORDED_BY_HAND =
+  'A surveyor is recorded on this claim. Add their charges, at cost, by hand. The app does not hold what a surveyor charges.';
+export const BREAK_FEE_GUIDE_ONLY =
+  'This is a guide only. Nothing is charged or invoiced by itself. The break fee is due only if the client ended the agreement ' +
+  'early, and not if we ended it. An admin raises it by hand and can change the amount.';
+
+const PER_PROPERTY_RE = /break fee of £\s?[\d,]+(?:\.\d{1,2})?\s+(?:per|a|for each)\s+property/i;
+
+/**
+ * WHAT CLAUSE 5'S BREAK FEE COMES TO, AS A GUIDE: the amount for each property times the properties counted, and a line
+ * for the surveyor's charges, which are added by hand. A blank or unreadable clause gives no figure. A claim with no
+ * property recorded is not counted and is named, so the admin can count it.
+ */
+export function breakFeeGuide(f: BreakFeeFacts, letter?: LetterSource): BreakFeeGuide {
+  const src = letter ?? loadLetter();
+  const term = letterFees(src).break_fee;
+  const surveyor = f.surveyor_recorded ? SURVEYOR_RECORDED_BY_HAND : SURVEYOR_BY_HAND;
+  const unseen = f.claims_without_property > 0
+    ? [`${f.claims_without_property} of these claims ${f.claims_without_property === 1 ? 'has' : 'have'} no property recorded, so ${f.claims_without_property === 1 ? 'it is' : 'they are'} not counted. Count ${f.claims_without_property === 1 ? 'it' : 'them'} by hand if ${f.claims_without_property === 1 ? 'it was' : 'they were'} part of the agreement.`]
+    : [];
+  if (term.state !== 'SET') {
+    const why = term.state === 'BLANK' || term.state === 'NOT_READABLE' ? term.label : 'clause 5 states no break fee';
+    return {
+      state: term.state === 'BLANK' ? 'BLANK' : 'NOT_READABLE', per_property_pence: null, per_property: false, properties: f.properties,
+      letter_pence: null, surveyor, lines: [`No break fee can be worked out: ${why}`, ...unseen, surveyor], guidance_only: BREAK_FEE_GUIDE_ONLY,
+    };
   }
-  const term = kind === 'BREAK_FEE' ? letterFees(letter).break_fee : letterFees(letter).abort_fee;
-  if (term.state === 'BLANK') return { ok: false, code: 'LETTER_BLANK', why: `No ${what} is raised. ${term.label}` };
-  if (term.state === 'NOT_READABLE') return { ok: false, code: 'NOT_READABLE', why: `No ${what} is raised: ${term.label}.` };
-  if (term.state === 'NIL') return { ok: false, code: 'NIL', why: `No ${what} is raised: ${term.label}.` };
-  return { ok: true, fee_pence: term.pence, basis: `the ${what}, ${term.label}` };
+  const settled = clauses(src).get('5')?.settled ?? '';
+  const perProperty = PER_PROPERTY_RE.test(settled);
+  const times = perProperty ? f.properties : 1;
+  const amount = perProperty && f.properties === 0 ? null : term.pence * times;
+  const first = !perProperty
+    ? `${formatPence(term.pence)}, once, as clause 5 states.`
+    : f.properties === 0
+      ? `${formatPence(term.pence)} a property, as clause 5 states. No property is recorded on these claims, so count them by hand.`
+      : `${formatPence(term.pence)} a property, for ${f.properties} ${f.properties === 1 ? 'property' : 'properties'}: ${formatPence(amount ?? 0)}, as clause 5 states.`;
+  return {
+    state: 'SET', per_property_pence: term.pence, per_property: perProperty, properties: f.properties,
+    letter_pence: amount, surveyor, lines: [first, ...unseen, surveyor], guidance_only: BREAK_FEE_GUIDE_ONLY,
+  };
 }
 
 /* ================================================================== *
