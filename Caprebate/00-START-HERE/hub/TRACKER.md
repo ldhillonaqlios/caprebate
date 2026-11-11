@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 372 |
-| Working on it | 1 |
+| Done | 373 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1233,7 +1233,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-41 items.
+40 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1511,18 +1511,11 @@
 - Note 2026-11-07 (Phase 161h): Gate line 12 added (GO-LIVE-CHECKLIST.md); BUILD item 1 proves the live project on a real Vercel preview first, with the three paths only real services show. Same in ACTION-PLAN.md and the run sheet.
 - Note 2026-11-11 (Phase 162): The sweep (Phase 162) checked the gate: 11 of its 12 lines are still closed - 1 Vercel Pro (13486923814), 2 the ICO number (12552682424), 3 the legal pages approved (13475983553; the reviewers not yet chosen, 13475961024), 4 the DPO's appointment (12983546774), 5 a telephone or email only (13475983571), 6 the safeguards and the retention periods (12945903194), 7 the engagement letter (12984553034, 12984730922), 8 the register entries, 9 the live keys (no live project yet), 10 the developer's answers (13486597256), 12 GO-LIVE-CHECKLIST.md lines 1 to 11 and Word questions 291 and 292. Line 11 (the sweep) opens once the sweep's pull request is merged. 161n's prompt and the checklist no longer name the sweep by number (it is Phase 163 now).
 
-### Phase 161m2 - The branded emails: one Cap Rebate layout (HTML and plain text) for every email, today's emails moved onto it, and the new automatic ones (Lakhbir, 11 Nov 2026)
-
-`13523921484` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac**
-
-- Document: 05-reports-and-templates/emails/preview.html
-- Note 2026-11-11 (Phase 161m2): Claimed. Lakhbir asked for professional, on-brand emails including automatic ones such as thank you for your submission; 33 were drafted (16 new, 15 restyled, 2 fixes) in 05-reports-and-templates/emails/ (emails.py is the wording; preview.html, published privately), and he said "Yes, build them in".
-
 ---
 
 ## Z · Complete / Not Applicable
 
-372 items.
+373 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3864,4 +3857,12 @@
 - Note 2026-11-11 (Phase 161m1): Done: the legal pages in force on the DPO's approval alone; email only; the engagement letter final (clauses 14 to 18, no blank, no long dash); approvers moved to Lakhbir; eight Word questions answered, four closed. 5,622 checks green. Left: Lakhbir approves the letter's wording (12984545390); he deletes 'TEMP check 161m1 - Caprebate_Questions.docx' from the Health Capital Allowances folder by hand.
 - Note 2026-11-11 (Phase 161m1): Reopened for Lakhbir's answers on the letter's review note, 11 Nov 2026: (1) agent authority with HMRC in clause 14; (2) clause 16 limited to six years; (4) liability cap at least GBP 5,000; (5) break fee reworded to the current test; (9) clause 7(a) any adviser the client engages; (10) the letter supersedes any engagement form or terms of business; (13) the two reviewer comments deleted; (3) the fee adjustment until HMRC can no longer open an enquiry; (6) business clients only; (11) an introducer disclosure line; (12) research typed-name signatures; (7) Didit named, and the person checked must be a director or owner, which an admin can bypass; (14) nothing charged first: the only fee is the 3%, and an admin sends any invoice by hand; (15) the test copy's name left until all is done.
 - Note 2026-11-11 (Phase 161m1): Follow-up done: every review-note answer built (letter clauses 1, 4, 5, 7, 8, 10, 11, 13, 14, 16, 18; the identity check only to a director or owner with an admin override; the break fee never raised by the app, raised by hand by an admin). 5,644 checks green. Left: Lakhbir approves the letter and confirms typed-name signing (Word question 194); then signing, the clawback switch go on.
+
+### Phase 161m2 - The branded emails: one Cap Rebate layout (HTML and plain text) for every email, today's emails moved onto it, and the new automatic ones (Lakhbir, 11 Nov 2026)
+
+`13523921484` · **Done** · owner Claude
+
+- Document: 05-reports-and-templates/emails/preview.html
+- Note 2026-11-11 (Phase 161m2): Claimed. Lakhbir asked for professional, on-brand emails including automatic ones such as thank you for your submission; 33 were drafted (16 new, 15 restyled, 2 fixes) in 05-reports-and-templates/emails/ (emails.py is the wording; preview.html, published privately), and he said "Yes, build them in".
+- Note 2026-11-11 (Phase 161m2): Done: every email on the branded layout with the approved words; the new automatic emails; money emails built and held; three faults fixed; ~2,400 files restored into OneDrive by a scratch folder's links archived and removed on Lakhbir's yes. 5,729 checks green. PR for Lakhbir to merge.
 
