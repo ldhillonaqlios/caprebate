@@ -178,7 +178,6 @@
 184) What written permission must CAP REBATE LTD give Lakhbir to decide on data breaches?
 190) How long do we keep client messages and the team chat?
 193) Can a scanned page be sent to the AI company whole, before we remove anyone's details?
-194) Is a typed name, with a tick to say they may sign for the business, a good enough signature on our engagement letter?
 195) How should our privacy notice name Google, now that the website will use Google Analytics?
 200) May we run our address-matching test on 200 real addresses?
 201) How up to date must information from the care regulator be when we use it?
@@ -290,3 +289,4 @@
 234) May figures from a Land Registry official copy go in the client's accountant's pack?
 244) Do you approve GoAddress for "Find my address"?
 207) Two things only someone with the supplier's own pack or a live key can confirm
+194) Is a typed name, with a tick to say they may sign for the business, a good enough signature on our engagement letter?
