@@ -286,3 +286,20 @@ describe('the client’s portal home as a dashboard', () => {
     assert.ok(done.indexOf('booked your survey') < done.indexOf('checked your company details'), 'not newest first');
   });
 });
+
+describe('Phase 162: Admin is told when the website keeps its records in memory', () => {
+  test('with a reason from the server, Admin’s home says so on every view, with the reason; nobody else sees it; without one (a test’s own database) nothing shows', async () => {
+    const was = made.app.storageWhy;
+    try {
+      made.app.storageWhy = 'the lasting database could not be opened';
+      assert.equal(made.app.db.kind, 'memory');
+      for (const path of ['/staff', '/staff?view=admin', '/staff?view=sales']) {
+        const body = (await req('admin', path)).body;
+        assert.match(body, /<div class="flag" role="alert" id="records-in-memory"><strong>This website is keeping its records in memory\.<\/strong>[^<]*Why: The lasting database could not be opened\.<\/div>/, path);
+      }
+      assert.doesNotMatch((await req('sales', '/staff')).body, /records-in-memory/);
+      delete made.app.storageWhy;
+      assert.doesNotMatch((await req('admin', '/staff')).body, /records-in-memory/);
+    } finally { if (was === undefined) delete made.app.storageWhy; else made.app.storageWhy = was; }
+  });
+});
