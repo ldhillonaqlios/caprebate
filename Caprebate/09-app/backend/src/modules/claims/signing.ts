@@ -102,7 +102,7 @@ export const ENGAGEMENT_SIGNING: EngagementSigning = Object.freeze({
  * SIGNING ON FOR TESTING —. The test website (and a local copy started with CAPREBATE_SIGNING_TEST=1)
  * lets an invented client sign the TEST COPY of the letter end to end: the drawn signature, the record, the certificate
  * of completion and the signed copy. The real letter cannot be signed under it (`signingMissing`), and the switch real
- * clients would use, ENGAGEMENT_SIGNING above, stays off until the solicitor answers Word question 194.
+ * clients would use, ENGAGEMENT_SIGNING above, stays off until Lakhbir approves the letter's final wording (no solicitor since 11 Nov 2026; Word question 194).
  */
 export const ENGAGEMENT_SIGNING_TEST: EngagementSigning = Object.freeze({
   enabled: true,
