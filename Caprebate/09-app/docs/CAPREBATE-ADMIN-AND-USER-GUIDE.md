@@ -403,7 +403,7 @@ them:
 | "Tax adviser’s switch:" and its name, one for each of these: `s185_plus_own_s25`, `urenco_provision_of`, `specialised_supported_housing`, `trade_not_s35`, `s187a_needs_entitled_owner`, `grant_traced_after_dwelling`, `connected_contributor_no_reduction`, `s538_carveout`, `s187a_6b_statements_route`, `fvr_requires_past_owner_claim`, `transaction_tax_in_base`, `grant_after_ceilings` | It is a tax adviser's switch. It stays off until a chartered tax adviser answers. "Changing it is their call and a system change, never a setting." |
 | "Fee rule: when our fee is more than the tax saved". "Fee rule: a claim that is stopped part way". There is no minimum fee, so none is listed. | "A fee rule. If a setting could change our pricing, whoever found the setting would decide it." |
 | The introducer reward model | "An admin changes it on its own page, and not while clause 1 of the engagement letter is blank." |
-| Taking back a fee (clause 13) | "Clause 13's fee clawback stays off until its three blanks are filled in. It is a system change, not a setting." |
+| Taking back a fee (clause 13) | "Clause 13's fee clawback is a system change, not a setting. It stays off until it is switched on in the system." |
 | When our fee is earned | "The owner decided when our fee is earned: when our report is delivered for filing. This is built in, so no setting can change it." |
 | Money laundering checks | "That is set on the compliance page, with a date and a source. It is checked before we take on a client." |
 | Clients agreeing to share progress | "That waits on wording our data protection officer agrees." |
@@ -676,12 +676,14 @@ smallest job size at all: "The owner decided so on 1 September 2026".
 **A multi-site discount** panel. It is marked **AWAITING THE DECISION**. That decision is the largest discount allowed, and who approves
 it. No invoice changes because of it. Nothing asks for a top limit, because none is decided.
 
-**Blanks in the engagement letter are shown as blanks.** The break fee (clause 5) and the abort fee (clause 4) each read
-"BLANK IN THE ENGAGEMENT LETTER". Each shows the clause's own gap, as it is in the letter. **The payment terms are no
-longer blank.** Clause 4 reads "within 14 days of the date of the invoice". So an invoice raised today is due in 14
-days: "within 14 days of the invoice, as clause 4 states". If the terms were ever blank again, the due date would read
-**No due date set yet**. An invoice with no due date is never counted as late. The page gives the reason: "A term in the
-engagement letter is BLANK. We show it blank on purpose. A made-up number here could end up in a contract."
+**The engagement letter's terms are read from the letter.** Since 11 November 2026 the letter has no blank left. The
+break fee (clause 5) reads "£995, as clause 5 states". The letter says £995 per property, plus the charges of any
+surveyor already booked, at cost. The abort fee (clause 4) reads "nil". Clause 4 says no fee is due if the survey
+finds no real claim. Clause 4 reads "within 14 days of the date of the invoice". So an invoice raised today is due in 14
+days: "within 14 days of the invoice, as clause 4 states". A term left blank would read "BLANK IN THE
+ENGAGEMENT LETTER". A blank due date would read **No due date set yet**. An invoice with no due date is never
+counted as late. The page would give the reason: "A term in the engagement letter is BLANK. We show it blank on purpose.
+A made-up number here could end up in a contract."
 
 **Nobody should type a number to fill a gap.** No field on the screen takes an invoice amount, a fee or a letter term.
 That is on purpose. The answers belong to the people who own those choices. A guessed figure could quietly end up in a
@@ -1247,8 +1249,8 @@ is what a refusal looks like:
 
 **Credit notes.** A credit note is the only way a raised amount changes. The section is headed **Credit notes — the
 only way a raised amount changes**. Give **Why it is credited in full**. Then press **Credit what is left in full**.
-**Apply clause 13** is switched off. (Clause 13 is a fee worked out again on a reduced claim.) The clause is blank in
-the letter.
+**Apply clause 13** is switched off. (Clause 13 is a fee worked out again on a reduced claim.) The clause has no gap left
+in the letter. Any cut counts. So does a deal the client agrees with HMRC.
 
 **Recording money received.** We record money. We never collect it. There is no card processor and no bank feed.
 1. Under **Record money received**, give **The day it arrived**. Then give **The amount that arrived, in pounds**.
@@ -2820,14 +2822,15 @@ Address: /staff/introducer-rewards
 3. Under model B, a fee appears in "Fees to introducers" when a referred claim closes. Sales or Admin records that the client was told about it. Only after that may Admin or Accounting mark it settled. (No fee exists on the demo, so these controls could not be seen.)
 
 **What it will refuse, and why**
-- Any change from Off while clause 1 is blank is refused. We cannot offer a reward that the letter does not tell the client about. The message starts "Introducer fees stay off while clause 1 of the engagement letter is blank."
+- Any change from Off while clause 1 is blank is refused. The message starts "Introducer fees stay off while clause 1 of the engagement letter is blank."
+- Clause 1 has had no blank since 11 November 2026. So that check no longer stops the switch. The letter still says nothing about paying an introducer. Do not switch on a model that pays one. Wait until the owner decides and the letter tells the client.
 - Model B needs an amount. Without one it says "Model B is a fixed fee" and asks for the amount in pounds. (from the code)
 - A fee cannot be marked paid before we record that the client was told. The database refuses it.
 - Sales pressing Save is refused with "not authorised".
 
 **Try it on the demo**
-1. As admin, choose "B — a fixed, disclosed fee per successful claim, paid to the firm". Enter 250 and press Save. *Observed:* "The reward model did not change — Introducer fees stay off while clause 1 of the engagement letter is blank. It still reads [Where the Client has none engaged, …]".
-2. Try "A — no cash. We give the firm something back …". *Observed:* the same refusal.
+1. Read the wording of clause 1 on the page. *Observed:* "Clause 1 of the engagement letter has no blank left."
+2. Leave the model at Off. Whether anything is paid is still the owner's question.
 3. Sign in as Accounting and open the page. *Observed:* it opens, shows "It is Off", and has no "Switch it" section.
 
 **Check yourself**

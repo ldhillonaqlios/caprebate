@@ -9,21 +9,19 @@
  * ───────────────────────────────────────────────────────────────────────────
  * WHAT THIS MODULE REFUSES TO DO, AND IT IS THE POINT OF IT
  *
- * TERMS IN THAT LETTER ARE STILL BLANK, AND HOW MANY IS DERIVED, NOT WRITTEN
- * HERE — `unresolvedTerms()` counts them from the document itself. This
- * sentence said FIVE re-derived EIGHT (the
- * prose had counted the clauses clause 13 names, not the placeholders), and it
- * said EIGHT redrafted clause 7 with three
- * more choices in square brackets. That is the point: the number moves when the
- * letter does. Run `unresolvedTerms()`. They are shown as blank, loudly.
- * A prototype that filled in a plausible break fee would be handing the next
- * reader a number with no decision behind it, and a number in a prototype
- * becomes a number in a contract. Board item 12984553034 is the question, it
- * is under the owner, and it is not this build's to answer.
+ * A TERM LEFT BLANK IN THE LETTER IS SHOWN AS BLANK, AND HOW MANY IS DERIVED, NOT WRITTEN
+ * HERE: `unresolvedTerms()` counts the square-bracket placeholders from the document itself.
+ * A prototype that filled in a plausible break fee would be handing the next reader a number
+ * with no decision behind it, and a number in a prototype becomes a number in a contract.
  *
- * The letter says so itself at clause 13: "These three terms are not yet
- * settled and are marked for completion before issue, in the same way as the
- * fee basis at clause 4 and the Break Fee at clause 5."
+ * PHASE 161m1, 11 November 2026: THE LETTER HAS NO BLANK LEFT. The owner decided every
+ * open term (clause 1 without our own tax adviser; clause 4 no fee where no material claim
+ * is found; clause 5 £995 a property plus a booked surveyor at cost; clause 7(b), (c) and (d);
+ * clause 13 any reduction, a settlement counts) and added clauses 14 to 18 (authority to
+ * obtain documents, accurate information, the fee where our work is used, late payment and
+ * signature, the identity check and reliance); Execution is now clause 19. So `openTerms`
+ * is empty and the portal shows no "not settled" box. The count still comes from the
+ * document: a bracket put back in the letter appears again without anybody editing this file.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * AND A SECOND THING THE PROTOTYPE MUST NOT DO QUIETLY
@@ -53,18 +51,18 @@ import { plainDashText } from '../../shared/index.ts';
 export const LETTER_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'Caprebate Engagement Letter.docx');
 
 /**
- * THE TEST-ONLY COPY (Word questions 33, 34 and 196, the director's). Built on our
- * recommendation, for the director and the solicitor to check: the same letter with clause 5 (£995 a property plus the
- * charges of a surveyor already booked, at cost), clause 7(d) ("named in our privacy notice") and clause 13 (any
- * reduction; a settlement the client accepts counts) filled, each marked "test default, not agreed", and a TEST COPY
- * line under the title. The real letter above keeps its brackets: they are the director's and the solicitor's.
+ * THE TEST-ONLY COPY. Since Phase 161m1 (11 November 2026) it is the real letter, word for word, with one line under
+ * the title, TEST_COPY_MARK and "This copy is never sent to a client." Its clauses 5, 7(d) and 13 used to be filled
+ * with test defaults, each marked "test default, not agreed" (Word questions 33, 34 and 196); the owner has decided
+ * them, so the marks are gone and the real letter has the same words.
  * ONLY THE TEST WEBSITE READS THIS COPY: createApp's `testLetter`, passed by api/index.mjs alone. A test copy is never
  * signed, whatever the switch says (signing.ts), so a real client can never be sent it as a contract.
  */
 export const TEST_LETTER_PATH = join(
   import.meta.dirname, '..', '..', '..', 'copies', 'Caprebate Engagement Letter - TEST DEFAULTS, not agreed.docx',
 ); // the app's copy, as LETTER_PATH; the original is beside the real letter in 06-commercial-and-governance
-export const TEST_COPY_MARK = 'TEST COPY — for the test system only.';
+export const TEST_COPY_MARK = 'TEST COPY: for the test system only.';
+/** The mark the test copy's filled terms carried until Phase 161m1. No paragraph of either letter carries it now. */
 export const TEST_DEFAULT_MARK = '(test default, not agreed)';
 
 /**
@@ -205,7 +203,7 @@ export function loadLetter(
 
 /**
  * Every square-bracket placeholder still in the letter, tagged with the clause
- * it sits in. Nested brackets — `[... £[amount]]` at clause 4 — are matched
+ * it sits in. Nested brackets, such as `[... £[amount]]` (clause 4 had one until Phase 161m1), are matched
  * outermost-first so one open term is reported once rather than twice.
  */
 export function unresolvedTerms(

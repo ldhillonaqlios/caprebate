@@ -862,10 +862,13 @@ describe('AFTERCARE — HMRC enquiries, clause 13 and the Disposal Note', () => 
 
   test('CLAUSE 13 IS A SWITCH, OFF, READING THE LETTER’S BLANK — nothing raised off; nothing raised on while the clause is blank; a finance task on, with the clause complete', async () => {
     assert.equal(R.FEE_CLAWBACK.enabled, false, 'the switch ships on');
-    const blanks = R.clauseThirteenBlanks();
-    assert.equal(blanks.length > 0, true, 'clause 13 of the real letter reads complete — the refusal below would prove nothing');
+    // PHASE 161m1 (11 November 2026): the owner decided clause 13 (any reduction; a settlement counts), so the real letter
+    // reads complete. The refusal while the clause is blank is proved with a blank put back, as the letter had it.
+    assert.deepEqual(R.clauseThirteenBlanks(), [], 'clause 13 of the real letter has a blank again');
+    const blank13 = [{ clause: 'clause 13 — Fee Adjustment Where a Claim is Reduced', text: '[Trigger: this clause applies to any reduction / applies only to a reduction of more than [X]% or £[amount].]' }];
     assert.equal(R.clawbackReading().reason, 'SWITCH_OFF');
-    assert.equal(R.clawbackReading({ gate: { enabled: true } }).reason, 'CLAUSE_13_BLANK', 'on, the real letter’s blank did not refuse');
+    assert.equal(R.clawbackReading({ gate: { enabled: true } }).reason, 'APPLIES', 'on, the real letter’s complete clause 13 did not apply');
+    assert.equal(R.clawbackReading({ gate: { enabled: true }, openTerms: blank13 }).reason, 'CLAUSE_13_BLANK', 'on, a blank did not refuse');
     assert.equal(R.clawbackReading({ gate: { enabled: true }, openTerms: [] }).applies, true);
 
     const app = await testApp();
@@ -873,7 +876,7 @@ describe('AFTERCARE — HMRC enquiries, clause 13 and the Disposal Note', () => 
       staff(app);
       const d = CF.recordDeps(app);
       const sales = actor('SALES');
-      const reduce = (opts: { gate?: { enabled: boolean }; openTerms?: readonly never[] }): string => {
+      const reduce = (opts: { gate?: { enabled: boolean }; openTerms?: readonly { clause: string; text: string }[] }): string => {
         const c = signedClaim(app, organisation(app), '240000');
         const e = R.openEnquiry(d, sales, c, { opened_on: '2026-09-01' });
         assert.equal(e.ok, true);
@@ -886,7 +889,7 @@ describe('AFTERCARE — HMRC enquiries, clause 13 and the Disposal Note', () => 
       const off = reduce({});
       assert.equal(financeTasks(off), 0);
       assert.equal(refusal(off), 'SWITCH_OFF');
-      const blank = reduce({ gate: { enabled: true } });
+      const blank = reduce({ gate: { enabled: true }, openTerms: blank13 });
       assert.equal(financeTasks(blank), 0, 'a task was raised while clause 13 is blank');
       assert.equal(refusal(blank), 'CLAUSE_13_BLANK');
       const on = reduce({ gate: { enabled: true }, openTerms: [] });

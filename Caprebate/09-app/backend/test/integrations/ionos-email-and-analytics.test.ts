@@ -335,11 +335,14 @@ async function signingWorld() {
 }
 
 describe('5 · the built-in signature', () => {
-  test('OFF TODAY: the switch is false, and the real letter still has open terms, so it cannot be signed at all', async (t) => {
+  test('OFF TODAY: the switch is false, and the real letter still shows specimen wording for this client, so it cannot be signed at all', async (t) => {
     assert.equal(ENGAGEMENT_SIGNING.enabled, false);
     assert.equal(ENGAGEMENT_SIGNING.solicitor_confirmed, false);
     const real = shownLetter({ name: 'Test Signing Ltd' });
-    assert.ok(real.open_terms > 0);
+    // PHASE 161m1: the letter has no open term left; what still refuses it here is the specimen wording this client's record
+    // does not replace (no company number, no indicative range).
+    assert.equal(real.open_terms, 0);
+    assert.ok(real.specimens > 0);
     assert.deepEqual(signingMissing(ENGAGEMENT_SIGNING, real), [
       'Our solicitor must confirm that typing your name is a good enough way to sign this letter.',
       'Some terms in the letter are not settled yet, so it cannot be signed.',
@@ -347,7 +350,7 @@ describe('5 · the built-in signature', () => {
       'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.',
       'Then signing must be switched on.',
     ]);
-    // switched on, a letter with a blank in it is still refused
+    // switched on, a letter with specimen wording in it is still refused
     assert.deepEqual(signingMissing(SIGNING_ON, real), ['Some terms in the letter are not settled yet, so it cannot be signed.',
       'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.']);
     const x = await signingWorld(); t.after(() => x.w.made.close());

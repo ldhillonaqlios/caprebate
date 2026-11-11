@@ -586,7 +586,7 @@ function claimInvoicePage(d: FinanceDeps, actor: Actor, v: I.ClaimInvoiceView, s
           <p><button type="submit">Credit what is left in full</button></p>
         </form>
         ${v.kind.key === 'FEE' ? h`<form method="post" action="/staff/finance/${v.id}/credit-clause-13">
-          <p class="help">Clause 13 recalculates the fee on a reduced figure. It is switched off, and the clause is blank in the letter.</p>
+          <p class="help">Clause 13 recalculates the fee on a reduced figure. It is switched off.</p>
           <p><button type="submit">Apply clause 13</button></p>
         </form>` : raw('')}` : raw('')}
 

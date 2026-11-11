@@ -7,7 +7,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../../src/app/server.ts';
@@ -38,7 +38,7 @@ function makeClient(base: string) {
   return c;
 }
 
-test('the client letter page says the open terms are CAP REBATE LTD’s to settle, and never names Lakhbir', async () => {
+test('the client letter page never names Lakhbir: no open term is left (Phase 161m1), and the box for one says they are CAP REBATE LTD’s to settle', async () => {
   const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-133i-')) });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   try {
@@ -76,8 +76,12 @@ test('the client letter page says the open terms are CAP REBATE LTD’s to settl
     assert.equal((await client.post('/login', { email: 'client@example.invalid', password: PASSWORD })).status, 303);
     const page = await client.req('/portal/letter');
     assert.equal(page.status, 200);
-    assert.match(page.body, /left blank on purpose/);
-    assert.match(page.body, /These terms are CAP REBATE LTD’s to settle\./);
+    // PHASE 161m1 (11 November 2026): the letter has no open term left, so the page shows no "not settled" box at all.
+    assert.doesNotMatch(page.body, /left blank on purpose/);
     assert.doesNotMatch(page.body, /Lakhbir/);
+    // Were a blank put back in the letter, the box would say the terms are the company's to settle, never a person's.
+    const routes = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'modules', 'portal', 'routes.ts'), 'utf8');
+    assert.match(routes, /These terms are CAP REBATE LTD’s to settle\./);
+    assert.doesNotMatch(routes, /sit with Lakhbir/);
   } finally { made.server.close(); made.app.db.close?.(); }
 });

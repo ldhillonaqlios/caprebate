@@ -34,8 +34,9 @@
  *
  *   1. Our solicitor has not yet confirmed that a typed name, with a tick for authority, is a good enough signature for
  *      this letter. It is asked in the Word questions document under the solicitor, under SIGNING_QUESTION's title.
- *   2. The letter still has terms in square brackets (clauses 4, 5, 7 and 13) and specimen wording. A letter with a
- *      blank in it is not signed, whatever the switch says: that refusal is here, not on the page.
+ *   2. A letter with a term in square brackets, or specimen wording, is not signed, whatever the switch says: that
+ *      refusal is here, not on the page. Since Phase 161m1 (11 November 2026) the letter itself has no bracket left;
+ *      the specimen client, number and range are replaced from the client's record, and refused where they are not.
  *   3. Then someone switches it on.
  *
  * NOTHING HERE THROWS ON AN ORDINARY REFUSAL. Off, already signed, not sent yet, a blank name, no tick, a changed
@@ -195,16 +196,16 @@ export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter,
      Refused in every mode, the test copy's included: the Friary House run signed a partnership in as "company number
      98604417". The client's kind of business (or a company's number) on their record clears it. */
   const party = 'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.';
-  /* Signing on for testing signs the test copy and nothing else. The test copy's open terms carry test
-     defaults (each marked "test default, not agreed"); they are what is being tested, so they do not refuse it here. */
+  /* Signing on for testing signs the test copy and nothing else. Since Phase 161m1 the test copy has the real letter's
+     words and no open term; an open term put back in it is what is being tested, so it does not refuse it here. */
   if (cfg.test_copy_only === true) {
     if (letter.test_copy !== true) out.push('Signing is switched on for testing only, and only the test copy of the letter can be signed there.');
     else if (letter.party_unknown === true) out.push(party);
     if (cfg.enabled !== true) out.push('Then signing must be switched on.');
     return out;
   }
-  // The test-only copy carries terms nobody has agreed. It is shown on the test website and never signed.
-  if (letter.test_copy === true) out.push('This is the test copy of the letter. Its terms are not agreed, so it can never be signed.');
+  // The test-only copy is for the test system. It is shown on the test website and never signed as a contract.
+  if (letter.test_copy === true) out.push('This is the test copy of the letter. It is for the test system only, so it can never be signed.');
   if (cfg.solicitor_confirmed !== true) out.push('Our solicitor must confirm that typing your name is a good enough way to sign this letter.');
   if (letter.open_terms > 0 || letter.specimens > 0) out.push('Some terms in the letter are not settled yet, so it cannot be signed.');
   if (letter.party_unknown === true) out.push(party);

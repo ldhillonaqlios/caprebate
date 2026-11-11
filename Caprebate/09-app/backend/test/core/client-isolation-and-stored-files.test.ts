@@ -23,7 +23,7 @@ import { FsObjectStore, assertNoStaticFileRoute, FILE_MODE } from '../../src/sha
 import { beginUpload, acceptClientBytes, finishUpload, eventsFor } from '../../src/modules/claims/uploads.ts';
 import { assertContractCovered, quarantineKeyFor, UPLOAD_LIMITS } from '../../src/modules/claims/upload-handler-port.ts';
 import { STAGES, progressFor, stageIndex } from '../../src/shared/stages.ts';
-import { loadLetter, letterExists } from '../../src/modules/claims/letter.ts';
+import { loadLetter, letterExists, unresolvedTerms } from '../../src/modules/claims/letter.ts';
 import { SCREEN_IDS, SCREENS, answerRows } from '../../src/modules/assessment/assessment.ts';
 import { escapeHtml, h } from '../../src/shared/html.ts';
 import { registryGate, FUNNEL, BOOKING } from '../../src/shared/engine.ts';
@@ -448,18 +448,21 @@ test('the stage vocabulary maps stored keys onto the business flow’s own words
   assert.deepEqual(unknown.steps, []);
 });
 
-test('the engagement letter is read from the docx and its open terms are shown, not filled', () => {
+test('the engagement letter is read from the docx and its open terms are derived from it, never filled; since Phase 161m1 there are none', () => {
   assert.ok(letterExists(), 'the letter exists where the brief says it does');
   const L = loadLetter({ clientName: 'Test Care Ltd' });
   assert.ok(L.paragraphs.length > 40);
-  assert.ok(L.openTerms.length >= 5, 'the unresolved terms are found, not hard-coded');
+  // PHASE 161m1 (11 November 2026): the owner decided every term, so the letter read from the .docx has no blank left.
+  assert.deepEqual(L.openTerms, [], 'the letter has an open term again');
 
-  const where = L.openTerms.map((t) => t.clause).join(' ');
-  assert.match(where, /clause 4 — Fees/, 'the fee basis and abort fee');
+  // THE UNRESOLVED TERMS ARE FOUND, NOT HARD-CODED: a bracket in a clause is found and tagged with that clause.
+  const found = unresolvedTerms([{ text: '4. Fees' }, { text: 'If no claim is found, [no fee / an abort fee of £[amount]].' },
+    { text: '5. Break Clause and Early Termination' }, { text: 'a break fee of £[X]' }]);
+  assert.deepEqual(found.map((t) => t.text), ['[no fee / an abort fee of £[amount]]', '[X]']);
+  const where = found.map((t) => t.clause).join(' ');
+  assert.match(where, /clause 4 — Fees/, 'the abort fee');
   assert.match(where, /clause 5 — Break Clause/, 'the break fee');
 
-  // NO NUMBER IS INVENTED. Every open term still reads as a placeholder.
-  for (const t of L.openTerms) assert.match(t.text, /^\[/);
   // The specimen client name is substituted; the specimen figure is flagged.
   assert.ok(!L.paragraphs.some((p) => p.text.includes('Quenmoor Care Group')));
   assert.ok(L.specimens.some((s) => s.includes('27,788')));

@@ -1247,7 +1247,7 @@ them on a database FILE (test/core/live-website.test.ts). It made NO live projec
 database or store: Vercel Pro is not bought and the Turso account needs
 Lakhbir's sign-in, so the real-preview proof is BUILD item 1 below. Phases
 161h1 to 161m regrouped the code behind the boundary check. The sweep ran after 161m (Phase 162, 11 Nov 2026). The legal pages are built and off
-until both approvals are recorded (Phase 161g). The developer question pack
+until the DPO's approval is recorded (Phase 161g; the DPO alone since Phase 161m1). The developer question pack
 (board 13486597256) asks Naeem D13 and D14 about going live.
 
 THE GATE: check every line and write it in the record as open or not, with
