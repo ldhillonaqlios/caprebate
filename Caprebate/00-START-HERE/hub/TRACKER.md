@@ -7,23 +7,23 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 36 |
+| Ready - Lakhbir action | 34 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 366 |
+| Done | 368 |
 | Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
 | Claude | 312 |
 | CTA | 61 |
-| Lakhbir | 93 |
+| Lakhbir | 94 |
 | Surveyor | 12 |
-| Solicitor/DPO | 63 |
+| Solicitor/DPO | 62 |
 | Developer | 26 |
 
 ---
@@ -71,7 +71,7 @@
 
 ## 01 · FOR LAKHBIR — decisions, appointments, company, governance
 
-83 items.
+81 items.
 
 ### Register with the ICO and put the data protection basics in place
 
@@ -295,28 +295,14 @@
 - Note 2026-09-25 (Phase 151f): Owner type back to Lakhbir: Lakhbir, 25 Sep 2026, "leave as lakhbir and not director".
 - Note 2026-11-05 (Phase 161g): Phase 161g: the privacy policy leaves the DPO's name and contact as a gap until the appointment is signed and the DPO agrees to be named (the review pack asks).
 
-### Decide the break fee, the abort fee and whether a fixed fee is ever offered — the engagement letter leaves all three blank
+### The client engagement letter - its final terms written in by Phase 161m1 (11 Nov 2026); Lakhbir approves the final wording himself, no solicitor (SDP-L3)
 
-`12984553034` · **Ready - Lakhbir action** · owner Lakhbir
-
-- File: `06-commercial-and-governance/Caprebate-Break-Fee-and-Abort-Fee-Derivation-v1.md` (attached as 12984553034__Break-fee-and-abort-fee-derivation.md)
-- Note 2026-09-28 (Phase 153): Word question 33 is partly answered: abort fee nil. The break fee reads "£995 per property?" with a question mark and no surveyor's charges, and the fixed fee "?" - Lakhbir wrote "Lets discuss together next week".
-- Note 2026-10-06 (Phase 157 (sweep)): Phase 153d built clause 5 in a test copy of the letter (break fee £995 a property plus a booked surveyor at cost; abort fee nil), marked as a test default. What is left is Lakhbir's confirmation (he wrote 'Lets discuss together next week'), then the solicitor.
-
-### The client engagement letter - written, unreviewed, on the register as SDP-L3. A solicitor has never seen it
-
-`12984545390` · **Built - awaiting sign-off** · owner Solicitor/DPO
+`12984545390` · **Built - awaiting sign-off** · owner Lakhbir
 
 - File: `06-commercial-and-governance/Caprebate Engagement Letter.docx`
 - Note 2026-09-25 (Phase 151d, closing Phase 151c): Phase 151c added Veriff's wording to clause 7 as a second Word comment, never a tracked change: the letter's visible text is unchanged (12,091 characters, same SHA-256). Waiting on the solicitor, with written Article 28 terms with Veriff (SDP-L3). Still Built - awaiting sign-off.
 - Note 2026-09-28 (Phase 153): Phase 153, 28 Sep: the clause 7 Word comment's two gaps filled as proposals for the solicitor - Didit Identity Spain, S.L. (Spain), and its Data Processing Addendum (Annex 2 of its business terms) as the Article 28 terms, both from the privacy notice draft of 25 Sep. The earlier note's 'Article 28 terms with Veriff' now means Didit (Word question 225). The specimen client 'Oakfield Care Group' / 09183422 (a real, dissolved company's number) is replaced by the invented 'Quenmoor Care Group Ltd' / 98604417 (no Companies House match on 28 Sep), with the portal renderer (src/web/letter.ts) and its test to match. Only word/document.xml and word/comments.xml rewritten; every entry name and CRC checked. Still Built - awaiting sign-off.
-
-### The engagement letter's clawback clause (clause 13) — at 3%, its trigger and settlement terms still bracketed for Lakhbir
-
-`12984730922` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-09-28 (Phase 153): What is in the way is Lakhbir's decision, not the solicitor's review: two of clause 13's bracketed terms are Word question 34 (any reduction or only a large one; and whether a settlement the client accepts counts). The solicitor's review (SDP-L4) follows the answer; the register now lists SDP-L4 as a mention until then.
-- Note 2026-10-06 (Phase 157 (sweep)): Phase 153d built clause 13 in a test copy of the letter (any reduction; a settlement the client accepts counts), marked as a test default. What is left is Lakhbir's confirmation (Word question 34), then the solicitor (SDP-L4).
+- Note 2026-11-11 (Phase 161m1): Lakhbir, 11 Nov 2026: "review the final engagement letter ensure we are covered for everything ensure the flat fee is 3% ensure there are terms which explicitly state we can request documents from their behalf"; no solicitor, he approves it himself. Phase 161m1 wrote every decided term in (no blank left), added clauses 14 to 18 (authority to obtain documents from named third parties, commercially sensitive ones included; accurate information; the fee where our work is used; late payment and e-signature; identity check and reliance) and took every long dash out. The review note, with the points still worth a look, is 06-commercial-and-governance/Engagement Letter - final terms review (Phase 161m1, 11 Nov 2026).md. Waits on Lakhbir reading and approving the final wording; online signing stays off until he does.
 
 ### The engagement letter names no signatory of the filing position where the client has no accountant — condition 4 of the chosen model is unmet
 
@@ -1559,7 +1545,7 @@
 
 ## Z · Complete / Not Applicable
 
-366 items.
+368 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -1601,6 +1587,23 @@
     - Note 2026-09-28 (Phase 152 (sweep)): Done: the mailboxes exist on IONOS (Word question 3, closed 24 Sep 2026) and Sadique Maskeen reads all three (Word question 216, closed). The one test email is 13093310525.
   - Design logo and branding materials — `12552680854` · Done
     - Note 2026-09-28 (Phase 152 (sweep)): Done: the logo is the one the design team supplied; the draft wordmark was archived on 17 Sep 2026 in its favour (comment of 22 Sep on the parent), and the brand pieces are the design team's (Word question 67, closed).
+
+### Decide the break fee, the abort fee and whether a fixed fee is ever offered — the engagement letter leaves all three blank
+
+`12984553034` · **Done** · owner Lakhbir
+
+- File: `06-commercial-and-governance/Caprebate-Break-Fee-and-Abort-Fee-Derivation-v1.md` (attached as 12984553034__Break-fee-and-abort-fee-derivation.md)
+- Note 2026-09-28 (Phase 153): Word question 33 is partly answered: abort fee nil. The break fee reads "£995 per property?" with a question mark and no surveyor's charges, and the fixed fee "?" - Lakhbir wrote "Lets discuss together next week".
+- Note 2026-10-06 (Phase 157 (sweep)): Phase 153d built clause 5 in a test copy of the letter (break fee £995 a property plus a booked surveyor at cost; abort fee nil), marked as a test default. What is left is Lakhbir's confirmation (he wrote 'Lets discuss together next week'), then the solicitor.
+- Note 2026-11-11 (Phase 161m1): Decided by Lakhbir, 11 Nov 2026, and written into the engagement letter by Phase 161m1: break fee GBP 995 a property plus a booked surveyor at cost; no fee if the survey finds no material claim; no fixed fee (a flat 3%); the fee credited back on any reduction, including a settlement the client accepts. Word questions 33 and 34 closed.
+
+### The engagement letter's clawback clause (clause 13) — at 3%, its trigger and settlement terms still bracketed for Lakhbir
+
+`12984730922` · **Done** · owner Lakhbir
+
+- Note 2026-09-28 (Phase 153): What is in the way is Lakhbir's decision, not the solicitor's review: two of clause 13's bracketed terms are Word question 34 (any reduction or only a large one; and whether a settlement the client accepts counts). The solicitor's review (SDP-L4) follows the answer; the register now lists SDP-L4 as a mention until then.
+- Note 2026-10-06 (Phase 157 (sweep)): Phase 153d built clause 13 in a test copy of the letter (any reduction; a settlement the client accepts counts), marked as a test default. What is left is Lakhbir's confirmation (Word question 34), then the solicitor (SDP-L4).
+- Note 2026-11-11 (Phase 161m1): Decided by Lakhbir, 11 Nov 2026, and written into the engagement letter by Phase 161m1: break fee GBP 995 a property plus a booked surveyor at cost; no fee if the survey finds no material claim; no fixed fee (a flat 3%); the fee credited back on any reduction, including a settlement the client accepts. Word questions 33 and 34 closed.
 
 ### Confirm there is no existing client data to import into the CRM - the developer's price assumes nothing to import
 
