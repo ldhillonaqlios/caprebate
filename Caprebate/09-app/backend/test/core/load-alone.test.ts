@@ -5,8 +5,12 @@
  * expects it to load. The core's, the shared parts' and the outside services' doors load no business module at all;
  * a lower layer that needs a module's statements names its data file.
  *
- * KNOWN, from before the regroup (the same on main before Phase 161j): four connectors, loaded first, meet the list of
- * connectors that names them while they are still loading. Nothing loads them first; the sweep looks at them.
+ * NO FILE IS EXCUSED (Phase 162). Phase 161j listed four connectors as known exceptions: homedata.ts, hmlr-title.ts,
+ * homedata-planning.ts and title-boundary.ts, loaded first, went registers.ts -> http.ts -> the core's door ->
+ * src/core/backup.ts -> the outside services' door -> paid-registers.ts, whose PAID_CONNECTORS then named a connector
+ * still loading. Phase 161l1 moved the backup into the outside services (src/integrations/backup.ts), so the core's
+ * door no longer loads the outside services and that loop is gone; boundaries rule 2 (the core may not import an
+ * area above it) keeps it gone. All four load alone, so no file is excused and this test proves it.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,12 +20,6 @@ import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 
 const BACKEND = join(import.meta.dirname, '..', '..');
-const KNOWN = new Set([
-  'src/integrations/connectors/hmlr-title.ts',
-  'src/integrations/connectors/homedata-planning.ts',
-  'src/integrations/connectors/homedata.ts',
-  'src/integrations/connectors/title-boundary.ts',
-]);
 
 function loadAlone(file: string): Promise<string | null> {
   return new Promise((done) => {
@@ -42,7 +40,7 @@ test('161j: every file under src/ loads when it is the first one loaded (no loop
     while (next < files.length) {
       const f = files[next++]!;
       const why = await loadAlone(f);
-      if (why !== null && !KNOWN.has(f)) failed.push(`${f}: ${why}`);
+      if (why !== null) failed.push(`${f}: ${why}`);
     }
   };
   await Promise.all(Array.from({ length: Math.max(2, availableParallelism() - 1) }, worker));
